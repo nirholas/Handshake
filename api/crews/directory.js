@@ -1,6 +1,6 @@
 // GET /api/crews/directory?limit=24
 // The public crew directory: every crew that has members, biggest first. This
-// is what a visitor with no crew sees — somewhere to look before deciding to
+// is what a visitor with no crew sees: somewhere to look before deciding to
 // found one, and the only way a crew is discoverable without knowing its tag.
 //
 // Public and cacheable: a roster is public exactly like the agent gallery, and

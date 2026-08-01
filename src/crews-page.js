@@ -1,11 +1,12 @@
-// Crew HQ (/crews and /crews/<TAG>) — the browser half of the crews system.
+// Crew HQ (/crews and /crews/<TAG>): the browser half of the crews system.
 //
 // The crews backend (api/crews/*, api/_lib/crews-store.js, the 2026-06-05
 // migration) has been complete and reachable since the /play world shipped, but
 // nothing in the product ever rendered it: the only reference anywhere in the
-// frontend was a `if (a.openCrew)` branch in the game HUD that nothing supplied,
-// so the button never drew. This page is the surface that closes that gap, and
-// src/game/hud/index.js now supplies openCrew so the in-world button opens it.
+// frontend was a `if (a.openCrew)` branch in src/game/hud/index.js that nothing
+// ever supplied. This page is the surface that closes that gap; the in-world
+// friends drawer (src/game/coincommunities.js) links here from its header, which
+// is how a player already being social in the world finds the group surface.
 //
 // What makes it a room rather than a list: every member stands in the HQ as
 // their own agent's avatar (crews-store.standeesFor resolves each account's
@@ -24,16 +25,12 @@
 // render as their avatar still, which is the same figure, just not animated.
 
 import { apiFetch } from './api.js';
+import { crestHues, presenceLine, sanitizeTag, tagFromPath, validateTag } from './crews-shared.js';
 
 const LIVE_FIGURE_BUDGET = 6;
 const DEFAULT_RIG = '/avatars/default.glb';
 const PRESENCE_POLL_MS = 20_000;
 const SEARCH_DEBOUNCE_MS = 250;
-const TAG_RE = /^[A-Z0-9]{2,6}$/;
-// Kept in sync with RESERVED_TAGS in api/_lib/crews-store.js. Duplicated rather
-// than fetched so the founding form can say "reserved" as you type instead of
-// after a round trip; the server remains the authority and rejects it anyway.
-const RESERVED_TAGS = new Set(['SEARCH', 'INDEX', 'API', 'ADMIN', 'NEW', 'ME', 'ALL', 'NULL']);
 
 const $ = (id) => document.getElementById(id);
 
@@ -43,18 +40,6 @@ const esc = (s) =>
 	);
 
 // ── crest ────────────────────────────────────────────────────────────────────
-// A crew's colour is derived from its tag, so it is stable everywhere the crew
-// appears (room, directory, share card) without anyone picking or storing one.
-function crestHues(tag) {
-	let h = 2166136261;
-	for (const ch of String(tag || '')) {
-		h ^= ch.charCodeAt(0);
-		h = Math.imul(h, 16777619) >>> 0;
-	}
-	const hue = h % 360;
-	return { hue, hue2: (hue + 58) % 360 };
-}
-
 function applyCrewHues(el, tag) {
 	const { hue, hue2 } = crestHues(tag);
 	el.style.setProperty('--crew-hue', String(hue));
@@ -67,22 +52,6 @@ function crestHtml(tag, small = false) {
 		`<div class="cw-crest${small ? ' sm' : ''}" aria-hidden="true" ` +
 		`style="--crew-hue:${hue};--crew-hue-2:${hue2}">${esc(tag)}</div>`
 	);
-}
-
-// ── presence wording ─────────────────────────────────────────────────────────
-// Matches src/game/friends-panel.js so the same person reads the same in both.
-function realmLabel(realm, server) {
-	if (!realm) return '';
-	const r = String(realm)
-		.replace(/[_-]+/g, ' ')
-		.replace(/\b\w/g, (c) => c.toUpperCase());
-	return server ? `${r} · Server ${server}` : r;
-}
-
-function presenceLine(m) {
-	if (!m.online) return 'Offline';
-	const where = realmLabel(m.realm, m.server);
-	return where ? `In ${where}` : 'Online';
 }
 
 function joinedLabel(iso) {
@@ -342,29 +311,14 @@ function wireFoundForm() {
 	const submit = $('cw-found-submit');
 
 	const validate = () => {
-		const tag = tagInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-		if (tagInput.value !== tag) tagInput.value = tag;
-		let msg = '';
-		let tone = '';
-		let ok = false;
-		if (!tag) {
-			msg = '2 to 6 letters or digits. This is the badge worn over your avatar in world.';
-		} else if (!TAG_RE.test(tag)) {
-			msg = tag.length < 2 ? 'A tag needs at least 2 characters.' : 'A tag is at most 6 characters.';
-			tone = 'bad';
-		} else if (RESERVED_TAGS.has(tag)) {
-			msg = `${tag} is reserved by the site.`;
-			tone = 'bad';
-		} else {
-			msg = `${tag} looks good.`;
-			tone = 'good';
-			ok = true;
-		}
-		note.textContent = msg;
-		note.dataset.tone = tone;
-		tagInput.setAttribute('aria-invalid', tone === 'bad' ? 'true' : 'false');
-		submit.disabled = !ok || nameInput.value.trim().length < 2;
-		return ok;
+		const clean = sanitizeTag(tagInput.value);
+		if (tagInput.value !== clean) tagInput.value = clean;
+		const verdict = validateTag(clean);
+		note.textContent = verdict.message;
+		note.dataset.tone = verdict.tone;
+		tagInput.setAttribute('aria-invalid', verdict.tone === 'bad' ? 'true' : 'false');
+		submit.disabled = !verdict.ok || nameInput.value.trim().length < 2;
+		return verdict.ok;
 	};
 
 	tagInput.addEventListener('input', validate);
@@ -673,7 +627,7 @@ function startPolling() {
 				renderMine();
 			}
 		} catch {
-			// A failed poll is not an error state — the last good render stands and
+			// A failed poll is not an error state. The last good render stands and
 			// the next tick tries again.
 		}
 	};
@@ -684,16 +638,11 @@ function startPolling() {
 }
 
 // ── boot ─────────────────────────────────────────────────────────────────────
-function tagFromPath() {
-	const m = location.pathname.match(/^\/crews\/([A-Za-z0-9]{2,6})\/?$/);
-	return m ? m[1].toUpperCase() : '';
-}
-
 async function boot() {
 	wireFoundForm();
 	wireInviteSearch();
 
-	const tag = tagFromPath();
+	const tag = tagFromPath(location.pathname);
 	if (tag) {
 		state.mode = 'public';
 		state.publicTag = tag;

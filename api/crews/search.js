@@ -5,7 +5,7 @@
 // already has an invite out to them. The Crew HQ renders those as a disabled
 // row with the real reason instead of letting the click 409.
 //
-// Auth required, and the caller must be in a crew — searching people to invite
+// Auth required, and the caller must be in a crew. Searching people to invite
 // when you have no crew to invite them to is a dead path, so it is closed here
 // rather than rendered and then rejected on submit.
 

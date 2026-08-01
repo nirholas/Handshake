@@ -2050,6 +2050,18 @@ html[data-bg="transparent"] #cc-lobby {
 	font-weight: 800; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
 	color: var(--cc-text);
 }
+/* Crew HQ link. `margin-left: auto` pushes it and the close button to the right
+   edge as a pair, so the head keeps its title-left / actions-right rhythm. */
+.cc-friends-panel-crew {
+	flex: none; margin-left: auto;
+	padding: 5px 10px; border-radius: 999px;
+	font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+	color: var(--cc-text); text-decoration: none;
+	border: 1px solid var(--cc-edge);
+	transition: border-color 0.14s ease, background 0.14s ease;
+}
+.cc-friends-panel-crew:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
+.cc-friends-panel-crew:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .cc-friends-panel-close {
 	flex: none; width: 30px; height: 30px;
 	display: inline-flex; align-items: center; justify-content: center;

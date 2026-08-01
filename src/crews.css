@@ -1,4 +1,4 @@
-/* Crew HQ (/crews) — the room, the roster, the directory.
+/* Crew HQ (/crews): the room, the roster, the directory.
  *
  * Everything here rides the site tokens in public/style.css. The only local
  * variables are the two the crest generator drives per crew (--crew-hue and

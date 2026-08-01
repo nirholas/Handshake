@@ -2126,9 +2126,21 @@ export class CoinCommunities {
 			title.className = 'cc-friends-panel-title';
 			title.textContent = 'Friends';
 
+			// The other half of the social system. Friends are one-to-one and live
+			// in this drawer; a crew is the group the same people fly as, and it has
+			// its own headquarters. Without this link the two never meet, which is
+			// how the crews backend sat shipped and unreachable for so long.
+			const crew = document.createElement('a');
+			crew.className = 'cc-friends-panel-crew';
+			crew.href = '/crews';
+			crew.target = '_blank';
+			crew.rel = 'noopener';
+			crew.textContent = 'Crew HQ';
+			crew.title = 'Found a crew, invite these people, and see the roster in 3D';
+
 			const head = document.createElement('div');
 			head.className = 'cc-friends-panel-head';
-			head.append(title, close);
+			head.append(title, crew, close);
 
 			const body = document.createElement('div');
 			body.className = 'cc-friends-panel-body';
