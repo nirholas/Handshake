@@ -246,7 +246,11 @@ export default wrapCron(async (req, res) => {
 		// sends is what pointed the 2026-07-31 investigation at RPC health for an
 		// AES-GCM OperationError.
 		const undecryptable = failedSends.filter((f) => String(f?.reason || '').startsWith('secret_undecryptable'));
-		const sendFailures = failedSends.filter((f) => f?.stage === 'send');
+		// Everything that is not a key problem is a send problem. Splitting on a
+		// `stage` field instead dropped legacy failure objects (which carry none)
+		// into neither bucket, and the alert then claimed "0 failed send(s)" while
+		// quoting a send error as its own sample.
+		const sendFailures = failedSends.filter((f) => !undecryptable.includes(f));
 		if (blocked) {
 			const strandedSol = undecryptable.reduce((s, f) => s + (Number(f?.sol) || 0), 0);
 			await sendOpsAlert(
