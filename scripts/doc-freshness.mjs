@@ -40,6 +40,11 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'public/docs-freshness.json');
+// The full report carries every drifted file and every commit behind it, which
+// is what the dashboard needs and roughly a megabyte. A badge on a docs page
+// needs four fields per doc, so it gets its own file rather than making every
+// reader download the whole report to render one chip.
+const SUMMARY = path.join(ROOT, 'public/docs-freshness-summary.json');
 const BUDGET = path.join(ROOT, 'data/docs-freshness-budget.json');
 
 const argv = process.argv.slice(2);
@@ -142,6 +147,7 @@ function resolveRef(raw, selfPath) {
 	let rel = raw.replace(/^\.\//, '').replace(/^\//, '').split('#')[0].split('?')[0];
 	if (!rel || rel === selfPath) return null;
 	if (!CODE_EXT.test(rel)) return null;
+	if (GENERATED.some((re) => re.test(rel))) return null;
 	const top = rel.split('/')[0];
 	if (!CODE_DIRS.has(top)) {
 		// A bare root file (vite.config.js, package.json) is real code too.
@@ -227,16 +233,37 @@ function buildHistory() {
 const DAY = 86_400;
 
 /**
- * Turn drift into a status a reader and a gate can both act on.
+ * How much a drifted file says about THIS doc.
+ *
+ * `vercel.json` is referenced by sixty docs. When it changes, sixty docs light
+ * up, and a ranking where everything is red is a ranking nobody reads. But
+ * excluding shared files outright is wrong too: docs/demo-routes.md really is
+ * about vercel.json, and that drift is real.
+ *
+ * So weight each dependency by how exclusively this doc claims it. A file only
+ * one doc mentions is that doc's responsibility and counts fully; a file forty
+ * docs mention is nobody's in particular and counts for a fortieth. This is the
+ * inverse-document-frequency idea, applied to doc-to-code binding, and it makes
+ * the ranking surface the doc that is uniquely wrong rather than the doc that
+ * happened to name a busy file.
+ */
+const specificity = (share) => 1 / Math.max(1, share);
+
+/**
+ * Turn weighted drift into a status a reader and a gate can both act on.
  *
  * `unverifiable` is not a failure. Plenty of docs are conceptual and name no
  * code at all; calling those stale would be noise that trains people to ignore
  * the signal. They are counted separately so coverage stays visible.
+ *
+ * The thresholds read directly: 1.0 signal is "the equivalent of one file that
+ * only this doc documents has changed", which is exactly when a human should
+ * re-read the page. Half of that is worth watching.
  */
-function classify(deps, moved, commitCount) {
+function classify(deps, signal) {
 	if (!deps.length) return 'unverifiable';
-	if (!moved.length) return 'fresh';
-	if (moved.length >= 3 || commitCount >= 10) return 'stale';
+	if (signal <= 0) return 'fresh';
+	if (signal >= 1) return 'stale';
 	return 'watch';
 }
 
@@ -244,23 +271,42 @@ function analyze() {
 	const history = buildHistory();
 	const docs = collectDocs();
 	const now = Math.floor(Date.now() / 1000);
-	const results = [];
 
-	for (const docPath of docs) {
+	// Pass one: read every doc and resolve its dependencies, so the share count
+	// each weight needs is known before anything is scored.
+	const parsed = docs.map((docPath) => {
 		const markdown = readFileSync(path.join(ROOT, docPath), 'utf8');
-		const commits = history.get(docPath) || [];
-		const lastTouched = commits[0] || null;
-		const deps = extractDeps(markdown, docPath);
+		return {
+			path: docPath,
+			markdown,
+			deps: extractDeps(markdown, docPath),
+			lastTouched: (history.get(docPath) || [])[0] || null,
+		};
+	});
 
+	const share = new Map();
+	for (const doc of parsed) {
+		for (const dep of doc.deps) share.set(dep, (share.get(dep) || 0) + 1);
+	}
+
+	// Pass two: score.
+	const results = [];
+	for (const doc of parsed) {
+		const { path: docPath, markdown, deps, lastTouched } = doc;
 		const drift = [];
 		let commitCount = 0;
+		let signal = 0;
 		if (lastTouched) {
 			for (const dep of deps) {
 				const since = (history.get(dep) || []).filter((c) => c.ts > lastTouched.ts);
 				if (!since.length) continue;
 				commitCount += since.length;
+				const weight = specificity(share.get(dep) || 1);
+				signal += weight;
 				drift.push({
 					file: dep,
+					sharedWith: (share.get(dep) || 1) - 1,
+					weight: Number(weight.toFixed(3)),
 					commits: since.slice(0, 6).map((c) => ({
 						sha: c.sha,
 						date: new Date(c.ts * 1000).toISOString().slice(0, 10),
@@ -270,10 +316,11 @@ function analyze() {
 				});
 			}
 		}
-		drift.sort((a, b) => b.total - a.total);
+		// Heaviest first: the file this doc is most uniquely responsible for is the
+		// one a writer should open, regardless of which churned the most.
+		drift.sort((a, b) => b.weight - a.weight || b.total - a.total);
 
 		const title = (markdown.match(/^#\s+(.+)$/m)?.[1] || path.basename(docPath, '.md')).trim();
-		const status = classify(deps, drift, commitCount);
 		results.push({
 			path: docPath,
 			title,
@@ -285,15 +332,13 @@ function analyze() {
 						ageDays: Math.floor((now - lastTouched.ts) / DAY),
 					}
 				: null,
-			status,
+			status: classify(deps, signal),
 			deps: deps.length,
-			depFiles: deps.sort(),
+			depFiles: deps.slice().sort(),
 			driftFiles: drift.length,
 			driftCommits: commitCount,
-			// Files moved matter more than raw commit volume: three different files
-			// drifting is three different things to re-check, whereas twenty commits
-			// to one file is still one thing.
-			score: drift.length * 10 + Math.min(commitCount, 60),
+			signal: Number(signal.toFixed(3)),
+			score: Number(signal.toFixed(3)),
 			drift,
 		});
 	}
@@ -328,8 +373,8 @@ function printTable(results, top) {
 			.map((d) => d.file)
 			.join(', ');
 		console.log(
-			`  ${ICON[r.status]}  ${r.path.padEnd(46)} ${String(r.driftFiles).padStart(2)} file(s), ` +
-				`${String(r.driftCommits).padStart(3)} commit(s) since ${r.lastTouched?.date}`,
+			`  ${ICON[r.status]}  ${r.path.padEnd(46)} signal ${r.signal.toFixed(2).padStart(6)}  ` +
+				`${String(r.driftFiles).padStart(2)} file(s) since ${r.lastTouched?.date}`,
 		);
 		console.log(`      ${files}${r.driftFiles > 3 ? `, +${r.driftFiles - 3} more` : ''}`);
 	}
@@ -342,8 +387,10 @@ function explain(results, docPath) {
 		process.exit(2);
 	}
 	console.log(`\n${r.title}\n${r.path}\n`);
-	console.log(`  status        ${r.status}`);
-	console.log(`  last edited   ${r.lastTouched?.date} (${r.lastTouched?.sha}), ${r.lastTouched?.ageDays}d ago`);
+	console.log(`  status        ${r.status} (signal ${r.signal})`);
+	console.log(
+		`  last edited   ${r.lastTouched?.date} (${r.lastTouched?.sha}), ${r.lastTouched?.ageDays}d ago`,
+	);
 	console.log(`  documents     ${r.deps} file(s)`);
 	if (!r.drift.length) {
 		console.log(`\n  Nothing it documents has changed since. This doc is verified.\n`);
@@ -351,7 +398,8 @@ function explain(results, docPath) {
 	}
 	console.log(`\n  ${r.driftFiles} of them changed after this doc was last edited:\n`);
 	for (const d of r.drift) {
-		console.log(`  ${d.file}  (${d.total} commit${d.total === 1 ? '' : 's'})`);
+		const shared = d.sharedWith ? `, also documented by ${d.sharedWith} other doc(s)` : '';
+		console.log(`  ${d.file}  (${d.total} commit${d.total === 1 ? '' : 's'}${shared})`);
 		for (const c of d.commits) console.log(`      ${c.date}  ${c.sha}  ${c.subject}`);
 		console.log('');
 	}
@@ -404,7 +452,34 @@ const payload = {
 	totals,
 	docs: results,
 };
-writeFileSync(OUT, JSON.stringify(payload, null, '\t') + '\n');
+// Commit subjects from years of history flow into these files verbatim, and
+// the repo bans em/en dashes in committed bytes, so scrub them at the boundary.
+const scrubDashes = (s) => s.replace(/ [\u2013\u2014] /g, ': ').replace(/[\u2013\u2014]/g, '-');
+writeFileSync(OUT, scrubDashes(JSON.stringify(payload, null, '\t')) + '\n');
+
+writeFileSync(
+	SUMMARY,
+	scrubDashes(JSON.stringify(
+		{
+			$generated: 'npm run docs:freshness (scripts/doc-freshness.mjs)',
+			$doc: '/docs/freshness',
+			generatedAt: payload.generatedAt,
+			commit: payload.commit,
+			totals,
+			// Short keys: this file is fetched by every docs page that renders a
+			// badge, so its bytes are on the reader's critical path.
+			// s status, g signal, d date last edited, f files drifted, n deps known
+			docs: Object.fromEntries(
+				results.map((r) => [
+					r.path,
+					{ s: r.status, g: r.signal, d: r.lastTouched?.date || null, f: r.driftFiles, n: r.deps },
+				]),
+			),
+		},
+		null,
+		'\t',
+	)) + '\n',
+);
 
 console.log(
 	`Analyzed ${totals.docs} docs against ${totals.trackedFiles} source files.\n` +

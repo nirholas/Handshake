@@ -1,0 +1,12 @@
+{
+	"$doc": "/docs/freshness",
+	"$comment": "Ratchet for `npm run check:docs-freshness`. maxStale is the number of docs allowed to be describing code that moved after they were written. It goes DOWN as docs are refreshed and never up without a reason recorded below, which is what stops drift from being permanently normal.",
+	"maxStale": 50,
+	"history": [
+		{
+			"date": "2026-07-31",
+			"maxStale": 50,
+			"reason": "Baseline. First measurement of the 467-doc corpus after the doc-to-code dependency graph landed."
+		}
+	]
+}

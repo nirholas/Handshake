@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot (no-flash); runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>Docs Freshness · three.ws</title>
+		<meta
+			name="description"
+			content="Which three.ws docs still describe the code that ships. Every doc is bound to the source files it names, and git decides whether that source moved after the doc was written."
+		/>
+		<link rel="canonical" href="https://three.ws/docs/freshness" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/docs/freshness" />
+		<meta property="og:title" content="Docs Freshness · three.ws" />
+		<meta
+			property="og:description"
+			content="Documentation drift, measured. Each doc is bound to the code it names; git decides whether that code moved after the doc was last written."
+		/>
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="robots" content="index, follow, max-snippet:-1" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/docs-freshness.css" />
+	</head>
+	<body>
+		<div class="df-wrap">
+			<nav class="df-crumb" aria-label="Breadcrumb">
+				<a href="/docs">Docs</a>
+				<span aria-hidden="true">/</span>
+				<span aria-current="page">Freshness</span>
+			</nav>
+
+			<h1 class="df-title">Does this documentation still describe the code?</h1>
+			<p class="df-lede">
+				Every doc names the files, npm scripts, and API routes it is about. That makes each page
+				measurable: bind it to the source it names, then ask git whether that source was committed
+				to after the doc was last written. Code that moved since is code the page has never been
+				checked against.
+			</p>
+			<p class="df-meta" id="df-meta">Loading the report…</p>
+
+			<div class="df-totals" id="df-totals" role="group" aria-label="Filter by status"></div>
+			<div class="df-bar" id="df-bar" role="img" aria-label="Share of docs by freshness status"></div>
+
+			<div class="df-controls">
+				<label class="df-search-label" for="df-search" hidden>Filter docs</label>
+				<input
+					class="df-search"
+					id="df-search"
+					type="search"
+					placeholder="Filter by title, path, or a source file that drifted…"
+					autocomplete="off"
+					spellcheck="false"
+				/>
+				<label for="df-sort" hidden>Sort order</label>
+				<select class="df-sort" id="df-sort">
+					<option value="signal">Most drift first</option>
+					<option value="files">Most files drifted</option>
+					<option value="age">Oldest doc first</option>
+					<option value="path">Path (A to Z)</option>
+				</select>
+				<span class="df-count" id="df-count" aria-live="polite"></span>
+			</div>
+
+			<div id="df-out">
+				<div class="df-skeleton" aria-hidden="true">
+					<span></span><span></span><span></span><span></span><span></span><span></span>
+				</div>
+			</div>
+		</div>
+
+		<script type="module">
+			// /docs/freshness: renders public/docs-freshness.json.
+			//
+			// The report is about a megabyte because it carries every drifted file and
+			// the commits behind it, which is exactly the evidence this page exists to
+			// show. It is fetched once, rendered incrementally, and never re-fetched.
+
+			const $ = (id) => document.getElementById(id);
+			const out = $('df-out');
+
+			const STATUS = {
+				stale: {
+					label: 'Stale',
+					blurb: 'Code these pages document changed after they were written.',
+				},
+				watch: { label: 'Watch', blurb: 'A little movement. Worth a skim, not urgent.' },
+				fresh: { label: 'Verified', blurb: 'Nothing they document has changed since.' },
+				unverifiable: {
+					label: 'Conceptual',
+					blurb: 'Name no code, so nothing to check. Not a problem.',
+				},
+			};
+			const ORDER = ['stale', 'watch', 'fresh', 'unverifiable'];
+
+			let report = null;
+			let filters = new Set();
+			let query = '';
+			let sort = 'signal';
+
+			const esc = (s) =>
+				String(s ?? '').replace(
+					/[&<>"']/g,
+					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+				);
+
+			function fmtDate(iso) {
+				if (!iso) return 'never committed';
+				const d = new Date(iso + 'T00:00:00Z');
+				return d.toLocaleDateString(undefined, {
+					year: 'numeric',
+					month: 'short',
+					day: 'numeric',
+					timeZone: 'UTC',
+				});
+			}
+
+			function renderTotals() {
+				const { totals } = report;
+				$('df-totals').innerHTML = ORDER.map(
+					(k) => `
+					<button class="df-total" type="button" data-k="${k}" aria-pressed="false">
+						<span class="df-total-n">${totals[k] ?? 0}</span>
+						<span class="df-total-k">${STATUS[k].label}</span>
+						<span class="df-total-d">${esc(STATUS[k].blurb)}</span>
+					</button>`,
+				).join('');
+
+				const sum = ORDER.reduce((n, k) => n + (totals[k] || 0), 0) || 1;
+				$('df-bar').innerHTML = ORDER.map(
+					(k) =>
+						`<span class="k-${k}" style="width:${((totals[k] || 0) / sum) * 100}%" title="${STATUS[k].label}: ${totals[k] || 0}"></span>`,
+				).join('');
+
+				$('df-meta').innerHTML =
+					`${totals.docs} docs bound to ${totals.trackedFiles} source files. ` +
+					`Measured at <code>${esc(report.commit)}</code> on ${fmtDate(report.generatedAt.slice(0, 10))}. ` +
+					`Regenerate with <code>npm run docs:freshness</code>.`;
+
+				$('df-totals').addEventListener('click', (e) => {
+					const btn = e.target.closest('.df-total');
+					if (!btn) return;
+					const k = btn.dataset.k;
+					if (filters.has(k)) filters.delete(k);
+					else filters.add(k);
+					btn.setAttribute('aria-pressed', String(filters.has(k)));
+					render();
+				});
+			}
+
+			function visible() {
+				const q = query.trim().toLowerCase();
+				return report.docs.filter((d) => {
+					if (filters.size && !filters.has(d.status)) return false;
+					if (!q) return true;
+					if (d.path.toLowerCase().includes(q)) return true;
+					if (d.title.toLowerCase().includes(q)) return true;
+					return d.drift.some((x) => x.file.toLowerCase().includes(q));
+				});
+			}
+
+			function sorted(list) {
+				const by = {
+					signal: (a, b) => b.signal - a.signal || a.path.localeCompare(b.path),
+					files: (a, b) => b.driftFiles - a.driftFiles || b.signal - a.signal,
+					age: (a, b) => (b.lastTouched?.ageDays ?? -1) - (a.lastTouched?.ageDays ?? -1),
+					path: (a, b) => a.path.localeCompare(b.path),
+				};
+				return list.slice().sort(by[sort]);
+			}
+
+			function rowHtml(d) {
+				const gh = 'https://github.com/nirholas/three.ws/blob/main/' + d.path;
+				const commands = `npm run docs:freshness -- --doc ${d.path}`;
+				const evidence = d.drift.length
+					? d.drift
+							.map(
+								(dep) => `
+						<div class="df-dep">
+							<div class="df-dep-file">
+								<span>${esc(dep.file)}</span>
+								<span class="df-dep-weight">weight ${dep.weight}${
+									dep.sharedWith
+										? ` · also documented by ${dep.sharedWith} other doc${dep.sharedWith === 1 ? '' : 's'}`
+										: ' · only this doc documents it'
+								}</span>
+							</div>
+							<ul class="df-commits">
+								${dep.commits
+									.map(
+										(c) => `<li class="df-commit">
+											<time datetime="${esc(c.date)}">${esc(c.date)}</time>
+											<span class="df-sha">${esc(c.sha)}</span>
+											<span class="df-subject" title="${esc(c.subject)}">${esc(c.subject)}</span>
+										</li>`,
+									)
+									.join('')}
+								${
+									dep.total > dep.commits.length
+										? `<li class="df-commit"><span></span><span></span><span class="df-subject">+${dep.total - dep.commits.length} older commit${dep.total - dep.commits.length === 1 ? '' : 's'}</span></li>`
+										: ''
+								}
+							</ul>
+						</div>`,
+							)
+							.join('')
+					: d.deps
+						? `<p class="df-empty-deps">Nothing this page documents has been committed to since it was last written. It is verified against ${d.deps} source file${d.deps === 1 ? '' : 's'}.</p>`
+						: `<p class="df-empty-deps">This page names no source files, so there is nothing to check it against. That is normal for conceptual and narrative docs, and it is not counted as drift.</p>`;
+
+				return `
+				<li>
+					<details class="df-row" data-status="${d.status}">
+						<summary class="df-head">
+							<span class="df-dot" aria-hidden="true"></span>
+							<span class="df-name">
+								<span class="df-doc-title">${esc(d.title)}</span>
+								<span class="df-doc-path">${esc(d.path)}</span>
+							</span>
+							<span class="df-stat">
+								<span title="${d.driftFiles} of ${d.deps} documented file(s) changed since"><b>${d.driftFiles}</b>/${d.deps} moved</span>
+								<span title="Last edited ${fmtDate(d.lastTouched?.date)}">${d.lastTouched ? d.lastTouched.ageDays + 'd' : '-'}</span>
+								<span class="df-stat-signal" title="Drift signal, weighted by how exclusively this doc documents each file"><b>${d.signal.toFixed(2)}</b></span>
+							</span>
+						</summary>
+						<div class="df-body">
+							<div class="df-actions">
+								${d.route ? `<a class="df-btn" href="${esc(d.route)}">Read the page</a>` : ''}
+								<a class="df-btn" href="${esc(gh)}" rel="noopener">Edit on GitHub</a>
+								<button class="df-btn df-copy" type="button" data-copy="${esc(commands)}">Copy the explain command</button>
+							</div>
+							${evidence}
+						</div>
+					</details>
+				</li>`;
+			}
+
+			function render() {
+				const list = sorted(visible());
+				$('df-count').textContent =
+					`${list.length} of ${report.docs.length}${filters.size ? ' (filtered)' : ''}`;
+
+				if (!list.length) {
+					out.innerHTML = `
+						<div class="df-state">
+							<h2>Nothing matches that</h2>
+							<p>No doc matches ${query ? `“${esc(query)}”` : 'the selected filters'}. Clear the filter to see the whole corpus.</p>
+							<button class="df-btn" type="button" id="df-reset">Clear filters</button>
+						</div>`;
+					$('df-reset').addEventListener('click', () => {
+						query = '';
+						filters.clear();
+						$('df-search').value = '';
+						document
+							.querySelectorAll('.df-total')
+							.forEach((b) => b.setAttribute('aria-pressed', 'false'));
+						render();
+					});
+					return;
+				}
+
+				out.innerHTML = `<ul class="df-list">${list.map(rowHtml).join('')}</ul>`;
+			}
+
+			/**
+			 * /docs/freshness#docs/forge.md opens that doc's evidence directly.
+			 *
+			 * This is the destination of the "See what changed" link on every drifting
+			 * docs page, so it has to land on the row rather than the top of a list of
+			 * 469. An unknown path is ignored rather than shown as an error: the reader
+			 * still gets the dashboard they asked for.
+			 */
+			function openFromHash() {
+				const wanted = decodeURIComponent(location.hash.slice(1));
+				if (!wanted) return;
+				if (!report.docs.some((d) => d.path === wanted)) return;
+				const row = [...out.querySelectorAll('.df-row')].find(
+					(el) => el.querySelector('.df-doc-path')?.textContent === wanted,
+				);
+				if (!row) return;
+				row.open = true;
+				row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+				row.querySelector('.df-head')?.focus?.();
+			}
+
+			out.addEventListener('click', async (e) => {
+				const btn = e.target.closest('.df-copy');
+				if (!btn) return;
+				try {
+					await navigator.clipboard.writeText(btn.dataset.copy);
+					btn.classList.add('is-copied');
+					btn.textContent = 'Copied';
+				} catch {
+					btn.textContent = btn.dataset.copy;
+				}
+				setTimeout(() => {
+					btn.classList.remove('is-copied');
+					btn.textContent = 'Copy the explain command';
+				}, 1800);
+			});
+
+			let debounce;
+			$('df-search').addEventListener('input', (e) => {
+				query = e.target.value;
+				clearTimeout(debounce);
+				debounce = setTimeout(render, 120);
+			});
+			$('df-sort').addEventListener('change', (e) => {
+				sort = e.target.value;
+				render();
+			});
+
+			async function boot() {
+				try {
+					const res = await fetch('/docs-freshness.json');
+					if (!res.ok) throw new Error('HTTP ' + res.status);
+					report = await res.json();
+					if (!Array.isArray(report.docs)) throw new Error('malformed report');
+				} catch (err) {
+					// A missing report is a build that never ran the generator, not a
+					// broken page. Say which command produces it rather than showing a
+					// spinner that never resolves.
+					$('df-meta').textContent = '';
+					out.innerHTML = `
+						<div class="df-state">
+							<h2>The freshness report has not been generated</h2>
+							<p>
+								This page renders <code>/docs-freshness.json</code>, which
+								<code>npm run docs:freshness</code> writes from the repository's git history.
+								It is missing or unreadable here (${esc(err.message)}).
+							</p>
+							<a class="df-btn" href="/docs">Back to the docs</a>
+						</div>`;
+					return;
+				}
+				renderTotals();
+				render();
+				openFromHash();
+				addEventListener('hashchange', openFromHash);
+			}
+
+			boot();
+		</script>
+		<script src="/footer.js" defer></script>
+	</body>
+</html>
