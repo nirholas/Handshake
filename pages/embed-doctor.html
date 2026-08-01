@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Embed Doctor · three.ws</title>
+	<meta name="description" content="Your 3D agent embed renders nothing and the console is empty. Paste the page URL and we load it in a real browser to tell you exactly which line to fix: a CSP that dropped the runtime, a container with no height, a private agent id, WebGL turned off." />
+	<link rel="canonical" href="https://three.ws/embed-doctor" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Embed Doctor · three.ws" />
+	<meta property="og:description" content="Find out in one click why your <agent-3d> embed is not showing up. We load your real page in a real browser and name the line to change." />
+	<meta property="og:url" content="https://three.ws/embed-doctor" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Embed+Doctor&amp;d=Find+out+in+one+click+why+your+3D+agent+embed+is+not+showing+up.&amp;p=%2Fembed-doctor" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Embed Doctor · three.ws" />
+	<meta name="twitter:description" content="One click tells you why your 3D agent embed is invisible, and which line to change." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Embed+Doctor&amp;d=Find+out+in+one+click+why+your+3D+agent+embed+is+not+showing+up.&amp;p=%2Fembed-doctor" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<style>
+		:root {
+			--ed-maxw: 1080px;
+			--ed-fatal: var(--danger);
+			--ed-error: var(--danger);
+			--ed-warn: var(--warn);
+			--ed-pass: var(--success);
+			--ed-unknown: var(--ink-dim);
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		.ed-wrap { max-width: var(--ed-maxw); margin: 0 auto; padding: 0 18px 96px; }
+
+		/* ── hero ──────────────────────────────────────────────────────── */
+		.ed-hero { padding: 40px 0 18px; }
+		.ed-kicker {
+			display: inline-flex; align-items: center; gap: 7px;
+			font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
+			color: var(--ink-dim); border: 1px solid var(--stroke); border-radius: 999px;
+			padding: 5px 11px; margin-bottom: 14px; background: var(--surface-1);
+		}
+		.ed-kicker::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+		.ed-hero h1 { font-size: clamp(1.9rem, 5vw, 2.9rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.025em; color: var(--ink-bright, var(--ink)); }
+		.ed-hero p { margin: 0; max-width: 64ch; color: var(--ink-dim); line-height: 1.65; font-size: 1.02rem; }
+		.ed-hero code { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 0.92em; color: var(--ink); background: var(--surface-2); padding: 1px 5px; border-radius: 5px; }
+
+		/* ── console ───────────────────────────────────────────────────── */
+		.ed-console {
+			margin-top: 28px; border: 1px solid var(--stroke-strong); border-radius: var(--radius-lg);
+			background: var(--surface-1); overflow: hidden;
+		}
+		.ed-modes { display: flex; gap: 2px; padding: 8px 8px 0; border-bottom: 1px solid var(--hairline); }
+		.ed-mode {
+			appearance: none; border: 0; background: transparent; color: var(--ink-dim);
+			font: inherit; font-size: 0.87rem; font-weight: 500; padding: 10px 15px;
+			border-radius: 9px 9px 0 0; cursor: pointer; position: relative;
+			transition: color 140ms ease, background 140ms ease;
+		}
+		.ed-mode:hover { color: var(--ink); background: var(--surface-2); }
+		.ed-mode[aria-selected='true'] { color: var(--ink-bright, var(--ink)); background: var(--surface-2); }
+		.ed-mode[aria-selected='true']::after {
+			content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px;
+			background: var(--accent); border-radius: 2px;
+		}
+		.ed-mode:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+		.ed-panel { padding: 18px; }
+		.ed-label { display: block; font-size: 0.83rem; color: var(--ink-dim); margin-bottom: 8px; }
+		.ed-row { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+		.ed-input, .ed-textarea {
+			flex: 1 1 320px; min-width: 0;
+			background: var(--bg-0); color: var(--ink); font: inherit;
+			border: 1px solid var(--stroke-strong); border-radius: var(--radius-control);
+			padding: 12px 14px; transition: border-color 140ms ease, box-shadow 140ms ease;
+		}
+		.ed-textarea {
+			font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 0.85rem;
+			line-height: 1.6; min-height: 132px; resize: vertical; width: 100%; flex-basis: 100%;
+		}
+		.ed-input:focus, .ed-textarea:focus {
+			outline: none; border-color: var(--accent);
+			box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+		}
+		.ed-input::placeholder, .ed-textarea::placeholder { color: color-mix(in srgb, var(--ink-dim) 75%, transparent); }
+
+		.ed-run {
+			appearance: none; border: 1px solid var(--btn-primary-border); border-radius: var(--radius-control);
+			background: var(--btn-primary-bg); color: var(--btn-primary-fg);
+			font: inherit; font-weight: 600; padding: 12px 22px; cursor: pointer; white-space: nowrap;
+			display: inline-flex; align-items: center; gap: 9px;
+			transition: background 140ms ease, transform 90ms ease;
+		}
+		.ed-run:hover:not(:disabled) { background: var(--btn-primary-bg-hover); }
+		.ed-run:active:not(:disabled) { transform: translateY(1px); }
+		.ed-run:disabled { opacity: 0.55; cursor: progress; }
+		.ed-run:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+		.ed-spinner {
+			width: 14px; height: 14px; border-radius: 50%;
+			border: 2px solid color-mix(in srgb, var(--btn-primary-fg) 30%, transparent);
+			border-top-color: var(--btn-primary-fg); animation: ed-spin 720ms linear infinite;
+		}
+		@keyframes ed-spin { to { transform: rotate(360deg); } }
+		@media (prefers-reduced-motion: reduce) {
+			.ed-spinner { animation-duration: 2.4s; }
+			* { scroll-behavior: auto !important; }
+		}
+
+		.ed-hint { margin: 12px 0 0; font-size: 0.82rem; color: var(--ink-dim); line-height: 1.6; }
+		.ed-hint a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+		.ed-hint button.ed-linkish {
+			appearance: none; background: none; border: 0; padding: 0; font: inherit;
+			color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+		}
+		.ed-hint button.ed-linkish:hover { color: var(--ink-bright, var(--ink)); }
+
+		/* ── status line (real elapsed time, never a fake bar) ──────────── */
+		.ed-status {
+			display: flex; align-items: center; gap: 10px; margin-top: 16px;
+			padding: 12px 14px; border: 1px solid var(--stroke); border-radius: var(--radius-control);
+			background: var(--surface-1); font-size: 0.86rem; color: var(--ink-dim);
+		}
+		.ed-status strong { color: var(--ink); font-weight: 500; }
+		.ed-elapsed { margin-left: auto; font-family: var(--font-mono, monospace); font-size: 0.8rem; }
+
+		/* ── verdict ───────────────────────────────────────────────────── */
+		.ed-verdict {
+			margin-top: 30px; border-radius: var(--radius-lg); padding: 22px;
+			border: 1px solid var(--stroke-strong); background: var(--surface-1);
+			display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: start;
+		}
+		.ed-verdict[data-verdict='broken'] { border-color: color-mix(in srgb, var(--danger) 45%, transparent); background: color-mix(in srgb, var(--danger) 7%, var(--surface-1)); }
+		.ed-verdict[data-verdict='degraded'] { border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: color-mix(in srgb, var(--warn) 7%, var(--surface-1)); }
+		.ed-verdict[data-verdict='healthy'] { border-color: color-mix(in srgb, var(--success) 45%, transparent); background: color-mix(in srgb, var(--success) 7%, var(--surface-1)); }
+		.ed-verdict-glyph {
+			width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+			background: var(--surface-2); color: var(--ink);
+		}
+		.ed-verdict[data-verdict='broken'] .ed-verdict-glyph { color: var(--danger); background: color-mix(in srgb, var(--danger) 15%, transparent); }
+		.ed-verdict[data-verdict='degraded'] .ed-verdict-glyph { color: var(--warn); background: color-mix(in srgb, var(--warn) 15%, transparent); }
+		.ed-verdict[data-verdict='healthy'] .ed-verdict-glyph { color: var(--success); background: color-mix(in srgb, var(--success) 15%, transparent); }
+		.ed-verdict-glyph svg { width: 24px; height: 24px; }
+		.ed-verdict h2 { margin: 0 0 6px; font-size: 1.24rem; letter-spacing: -0.015em; color: var(--ink-bright, var(--ink)); }
+		.ed-verdict p { margin: 0; color: var(--ink-dim); font-size: 0.92rem; line-height: 1.6; }
+		.ed-tally { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+		.ed-tally span {
+			font-size: 0.76rem; padding: 4px 10px; border-radius: 999px;
+			border: 1px solid var(--stroke); background: var(--surface-2); color: var(--ink-dim);
+		}
+		.ed-tally span b { color: var(--ink); font-weight: 600; }
+
+		/* ── screenshot ────────────────────────────────────────────────── */
+		.ed-shot { margin-top: 22px; }
+		.ed-shot h3, .ed-findings h3 { font-size: 0.78rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-dim); margin: 0 0 12px; font-weight: 600; }
+		.ed-shot-frame {
+			border: 1px solid var(--stroke-strong); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-0);
+		}
+		.ed-shot-bar {
+			display: flex; align-items: center; gap: 7px; padding: 9px 13px;
+			border-bottom: 1px solid var(--hairline); background: var(--surface-2);
+		}
+		.ed-shot-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--stroke-strong); }
+		.ed-shot-url {
+			margin-left: 8px; font-family: var(--font-mono, monospace); font-size: 0.74rem;
+			color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+		}
+		.ed-shot-frame img { display: block; width: 100%; height: auto; }
+
+		/* ── findings ──────────────────────────────────────────────────── */
+		.ed-findings { margin-top: 30px; }
+		.ed-finding {
+			border: 1px solid var(--stroke); border-radius: var(--radius-lg);
+			background: var(--surface-1); margin-bottom: 10px; overflow: hidden;
+			transition: border-color 140ms ease;
+		}
+		.ed-finding:hover { border-color: var(--stroke-strong); }
+		.ed-finding[data-status='fail'][data-severity='fatal'],
+		.ed-finding[data-status='fail'][data-severity='error'] { border-left: 3px solid var(--danger); }
+		.ed-finding[data-status='fail'][data-severity='warn'] { border-left: 3px solid var(--warn); }
+		.ed-finding[data-status='pass'] { border-left: 3px solid var(--success); opacity: 0.9; }
+		.ed-finding[data-status='unknown'] { border-left: 3px solid var(--ink-dim); }
+
+		.ed-finding-head {
+			width: 100%; appearance: none; background: none; border: 0; font: inherit; color: inherit;
+			display: flex; align-items: center; gap: 12px; padding: 15px 17px; cursor: pointer; text-align: left;
+		}
+		.ed-finding-head:hover { background: var(--surface-2); }
+		.ed-finding-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+		.ed-chip {
+			flex: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+			padding: 3px 8px; border-radius: 5px; border: 1px solid currentColor;
+		}
+		.ed-finding[data-severity='fatal'][data-status='fail'] .ed-chip,
+		.ed-finding[data-severity='error'][data-status='fail'] .ed-chip { color: var(--danger); }
+		.ed-finding[data-severity='warn'][data-status='fail'] .ed-chip { color: var(--warn); }
+		.ed-finding[data-status='pass'] .ed-chip { color: var(--success); }
+		.ed-finding[data-status='unknown'] .ed-chip { color: var(--ink-dim); }
+		.ed-finding-title { flex: 1; font-size: 0.95rem; font-weight: 500; color: var(--ink-bright, var(--ink)); }
+		.ed-caret { flex: none; width: 16px; height: 16px; color: var(--ink-dim); transition: transform 160ms ease; }
+		.ed-finding.is-open .ed-caret { transform: rotate(90deg); }
+
+		.ed-finding-body { padding: 0 17px 17px; display: none; }
+		.ed-finding.is-open .ed-finding-body { display: block; }
+		.ed-finding-body p { margin: 0 0 14px; color: var(--ink-dim); font-size: 0.9rem; line-height: 1.65; }
+		.ed-fix { border: 1px solid var(--stroke); border-radius: 10px; background: var(--bg-0); overflow: hidden; }
+		.ed-fix-head {
+			display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+			border-bottom: 1px solid var(--hairline); font-size: 0.74rem;
+			letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-dim); font-weight: 600;
+		}
+		.ed-copy {
+			margin-left: auto; appearance: none; border: 1px solid var(--stroke); background: var(--surface-2);
+			color: var(--ink); font: inherit; font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+			transition: background 140ms ease, color 140ms ease;
+		}
+		.ed-copy:hover { background: var(--surface-3); }
+		.ed-copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.ed-copy.is-done { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, transparent); }
+		.ed-fix pre {
+			margin: 0; padding: 13px; overflow-x: auto;
+			font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 0.8rem; line-height: 1.65;
+			color: var(--ink); white-space: pre-wrap; word-break: break-word;
+		}
+		.ed-evidence { margin-top: 12px; }
+		.ed-evidence summary {
+			cursor: pointer; font-size: 0.8rem; color: var(--ink-dim); padding: 6px 0;
+			list-style: none; display: flex; align-items: center; gap: 6px;
+		}
+		.ed-evidence summary::-webkit-details-marker { display: none; }
+		.ed-evidence summary::before { content: '▸'; font-size: 0.7rem; transition: transform 140ms ease; display: inline-block; }
+		.ed-evidence[open] summary::before { transform: rotate(90deg); }
+		.ed-evidence summary:hover { color: var(--ink); }
+		.ed-evidence summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+		.ed-evidence pre {
+			margin: 8px 0 0; padding: 12px; background: var(--bg-0); border: 1px solid var(--stroke);
+			border-radius: 8px; overflow-x: auto; font-family: var(--font-mono, monospace);
+			font-size: 0.75rem; line-height: 1.6; color: var(--ink-dim); white-space: pre-wrap; word-break: break-word;
+		}
+
+		/* ── tooltip ───────────────────────────────────────────────────── */
+		.ed-tip { position: relative; display: inline-flex; }
+		.ed-tip-btn {
+			appearance: none; border: 1px solid var(--stroke-strong); background: var(--surface-2);
+			color: var(--ink-dim); width: 16px; height: 16px; border-radius: 50%; cursor: help;
+			font-size: 0.62rem; font-weight: 700; line-height: 1; display: grid; place-items: center; padding: 0;
+			transition: color 140ms ease, border-color 140ms ease;
+		}
+		.ed-tip-btn:hover, .ed-tip-btn:focus-visible { color: var(--ink); border-color: var(--accent); }
+		.ed-tip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.ed-tip-pop {
+			position: absolute; bottom: calc(100% + 9px); left: 50%; transform: translateX(-50%);
+			width: max-content; max-width: 264px; padding: 9px 12px; z-index: 60;
+			background: var(--bg-1); color: var(--ink); border: 1px solid var(--stroke-strong);
+			border-radius: 9px; font-size: 0.78rem; line-height: 1.55; font-weight: 400;
+			text-transform: none; letter-spacing: 0; text-align: left;
+			box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+			opacity: 0; visibility: hidden; transition: opacity 130ms ease, visibility 130ms;
+		}
+		.ed-tip-pop::after {
+			content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+			border: 6px solid transparent; border-top-color: var(--stroke-strong);
+		}
+		.ed-tip:hover .ed-tip-pop, .ed-tip-btn:focus-visible + .ed-tip-pop, .ed-tip-pop:hover { opacity: 1; visibility: visible; }
+
+		/* ── empty + error states ──────────────────────────────────────── */
+		.ed-empty {
+			margin-top: 30px; border: 1px dashed var(--stroke-strong); border-radius: var(--radius-lg);
+			padding: 26px; background: var(--surface-1);
+		}
+		.ed-empty h3 { margin: 0 0 14px; font-size: 1rem; color: var(--ink-bright, var(--ink)); }
+		.ed-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); }
+		.ed-checks li { display: flex; gap: 9px; font-size: 0.86rem; color: var(--ink-dim); line-height: 1.5; }
+		.ed-checks li::before { content: '✓'; color: var(--success); flex: none; font-size: 0.82rem; }
+
+		.ed-error {
+			margin-top: 24px; border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+			background: color-mix(in srgb, var(--danger) 8%, var(--surface-1));
+			border-radius: var(--radius-lg); padding: 18px;
+		}
+		.ed-error h3 { margin: 0 0 7px; font-size: 0.98rem; color: var(--danger); }
+		.ed-error p { margin: 0; font-size: 0.88rem; color: var(--ink-dim); line-height: 1.6; }
+
+		.ed-next {
+			margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--hairline);
+			display: flex; flex-wrap: wrap; gap: 10px;
+		}
+		.ed-next a {
+			display: inline-flex; align-items: center; gap: 7px; font-size: 0.85rem;
+			padding: 9px 15px; border-radius: var(--radius-control);
+			border: 1px solid var(--stroke-strong); background: var(--surface-1);
+			color: var(--ink); text-decoration: none; transition: background 140ms ease, border-color 140ms ease;
+		}
+		.ed-next a:hover { background: var(--surface-2); border-color: var(--accent); }
+		.ed-next a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+		.ed-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+		@media (max-width: 640px) {
+			.ed-verdict { grid-template-columns: 1fr; }
+			.ed-run { width: 100%; justify-content: center; }
+			.ed-hero { padding-top: 26px; }
+		}
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main id="main-content" class="ed-wrap">
+		<section class="ed-hero">
+			<span class="ed-kicker">Live diagnostic</span>
+			<h1>Embed Doctor</h1>
+			<p>
+				Your <code>&lt;agent-3d&gt;</code> tag is on the page and nothing appears. The console is
+				empty, the markup looks right, and there is no error to search for. Paste the URL and we
+				load your real page in a real browser, watch the embed try to boot, and name the one line
+				to change.
+			</p>
+		</section>
+
+		<section class="ed-console" aria-labelledby="ed-console-title">
+			<h2 id="ed-console-title" class="ed-sr">Run a diagnosis</h2>
+			<div class="ed-modes" role="tablist" aria-label="What to check">
+				<button class="ed-mode" role="tab" id="ed-tab-url" aria-selected="true" aria-controls="ed-panel-url" data-mode="url">A live page</button>
+				<button class="ed-mode" role="tab" id="ed-tab-snippet" aria-selected="false" aria-controls="ed-panel-snippet" data-mode="snippet" tabindex="-1">A snippet, before you deploy</button>
+			</div>
+
+			<div class="ed-panel" id="ed-panel-url" role="tabpanel" aria-labelledby="ed-tab-url">
+				<label class="ed-label" for="ed-url">The page where you put the embed</label>
+				<div class="ed-row">
+					<input class="ed-input" id="ed-url" type="url" inputmode="url" spellcheck="false" autocomplete="url" placeholder="https://your-site.com/page-with-the-agent" />
+					<button class="ed-run" id="ed-run-url" type="button">Diagnose</button>
+				</div>
+				<p class="ed-hint">
+					The page has to be reachable from the public internet. Working on localhost or behind a
+					login? <button type="button" class="ed-linkish" data-goto-mode="snippet">Check your snippet instead</button>.
+				</p>
+			</div>
+
+			<div class="ed-panel" id="ed-panel-snippet" role="tabpanel" aria-labelledby="ed-tab-snippet" hidden>
+				<label class="ed-label" for="ed-snippet">Paste the two tags exactly as they appear in your HTML</label>
+				<textarea class="ed-textarea" id="ed-snippet" spellcheck="false" placeholder="&lt;script type=&quot;module&quot; src=&quot;https://three.ws/agent-3d/latest/agent-3d.js&quot;&gt;&lt;/script&gt;&#10;&lt;agent-3d agent-id=&quot;YOUR_AGENT_ID&quot; mode=&quot;floating&quot;&gt;&lt;/agent-3d&gt;"></textarea>
+				<div class="ed-row" style="margin-top:12px">
+					<button class="ed-run" id="ed-run-snippet" type="button">Diagnose snippet</button>
+				</div>
+				<p class="ed-hint">
+					We run it in a blank sandbox with no CSP and no other scripts, so anything that fails
+					here is a mistake in the markup itself rather than something your site did to it.
+				</p>
+			</div>
+		</section>
+
+		<div id="ed-status" class="ed-status" hidden>
+			<span class="ed-spinner" aria-hidden="true"></span>
+			<span><strong id="ed-status-text">Loading your page in a real browser</strong><br />Booting chromium, then waiting for the agent to paint its first frame.</span>
+			<span class="ed-elapsed" id="ed-elapsed">0.0s</span>
+		</div>
+
+		<div id="ed-result" aria-live="polite"></div>
+
+		<section class="ed-empty" id="ed-empty">
+			<h3>What gets checked</h3>
+			<ul class="ed-checks">
+				<li>The runtime script is present, downloaded, and actually executed</li>
+				<li>A Content-Security-Policy silently dropped it</li>
+				<li>The bundle was loaded without <code>type="module"</code></li>
+				<li>The element exists and was upgraded to a live component</li>
+				<li>The agent id resolves and is publicly readable</li>
+				<li>The element has real size and is not hidden by an ancestor</li>
+				<li>WebGL is available in the visiting browser</li>
+				<li>A canvas was created and painted actual pixels</li>
+				<li>Model and manifest requests succeeded</li>
+				<li>Mixed content, duplicate tags, and console errors</li>
+			</ul>
+			<p class="ed-hint" style="margin-top:16px">
+				Nothing is simulated. Every answer comes from your page running in a browser we drive,
+				and every failure carries the evidence that proves it.
+			</p>
+		</section>
+
+		<nav class="ed-next" aria-label="Related">
+			<a href="/tutorials/embed-in-30-seconds">Embed in 30 seconds</a>
+			<a href="/studio">Build an embed in the Studio</a>
+			<a href="/docs/embed-doctor">How the Doctor works</a>
+			<a href="/docs#embedding">Embedding reference</a>
+		</nav>
+	</main>
+
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
+
+	<script>
+		(function () {
+			'use strict';
+
+			const $ = (id) => document.getElementById(id);
+			const resultEl = $('ed-result');
+			const emptyEl = $('ed-empty');
+			const statusEl = $('ed-status');
+			const elapsedEl = $('ed-elapsed');
+			const statusText = $('ed-status-text');
+
+			function esc(s) {
+				return String(s ?? '').replace(/[&<>"']/g, (c) => ({
+					'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+				})[c]);
+			}
+
+			// ── Mode switching (real tabs, arrow-key navigable) ───────────────
+			const tabs = Array.from(document.querySelectorAll('.ed-mode'));
+			function setMode(mode, { focus = false } = {}) {
+				for (const tab of tabs) {
+					const on = tab.dataset.mode === mode;
+					tab.setAttribute('aria-selected', on ? 'true' : 'false');
+					tab.tabIndex = on ? 0 : -1;
+					$('ed-panel-' + tab.dataset.mode).hidden = !on;
+					if (on && focus) tab.focus();
+				}
+				const field = mode === 'url' ? $('ed-url') : $('ed-snippet');
+				if (focus) field.focus();
+			}
+			tabs.forEach((tab, i) => {
+				tab.addEventListener('click', () => setMode(tab.dataset.mode));
+				tab.addEventListener('keydown', (e) => {
+					if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+					e.preventDefault();
+					const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+					setMode(next.dataset.mode, { focus: true });
+				});
+			});
+			document.querySelectorAll('[data-goto-mode]').forEach((btn) => {
+				btn.addEventListener('click', () => setMode(btn.dataset.gotoMode, { focus: true }));
+			});
+
+			// ── Honest elapsed clock. No fake stages, no fake percentage: the
+			//    only thing we truthfully know while waiting is how long it has
+			//    taken so far.
+			let clockTimer = null;
+			function startClock() {
+				const t0 = performance.now();
+				elapsedEl.textContent = '0.0s';
+				clockTimer = setInterval(() => {
+					const s = (performance.now() - t0) / 1000;
+					elapsedEl.textContent = s.toFixed(1) + 's';
+					if (s > 8) statusText.textContent = 'Waiting for the agent to paint its first frame';
+				}, 100);
+			}
+			function stopClock() {
+				clearInterval(clockTimer);
+				clockTimer = null;
+			}
+
+			// ── Icons ─────────────────────────────────────────────────────────
+			const GLYPH = {
+				broken: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>',
+				degraded: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>',
+				healthy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+				inconclusive: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.6.2-.9.8-.9 1.4v.3M12 17h.01"/></svg>',
+			};
+			const CARET = '<svg class="ed-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+
+			const VERDICT_COPY = {
+				broken: 'The embed is not working on this page. Start with the first finding: the ones below it are frequently caused by it.',
+				degraded: 'The embed works, but something will cost you visitors. Worth fixing before you ship.',
+				healthy: 'Everything the runtime needs is in place, and the agent painted real pixels.',
+				inconclusive: 'The page did not finish booting inside the time budget, so some checks could not run. Nothing here is reported as passing that we did not actually observe.',
+			};
+			const VERDICT_TITLE = {
+				broken: 'Broken', degraded: 'Working, with problems', healthy: 'Healthy', inconclusive: 'Inconclusive',
+			};
+			const CHIP = { fatal: 'blocker', error: 'error', warn: 'warning', info: 'ok' };
+
+			function tip(text) {
+				return (
+					'<span class="ed-tip"><button type="button" class="ed-tip-btn" aria-label="' +
+					esc(text) + '">?</button><span class="ed-tip-pop" role="tooltip">' + esc(text) + '</span></span>'
+				);
+			}
+
+			const CHIP_TIP = {
+				fatal: 'A blocker. Nothing renders until this is fixed, and the findings under it are usually consequences of it.',
+				error: 'The runtime is running but something it needs is wrong. Visitors see nothing or see it broken.',
+				warn: 'It works today. This costs performance, robustness, or reach, and is worth fixing before you ship.',
+				info: 'A check that passed. Shown so a green result is verifiable rather than a single opaque tick.',
+			};
+
+			function findingHtml(f, index) {
+				const label = f.status === 'pass' ? 'ok' : f.status === 'unknown' ? 'unknown' : (CHIP[f.severity] || f.severity);
+				const tipText = f.status === 'unknown'
+					? 'This check could not run, so it is reported as unknown rather than passing.'
+					: (CHIP_TIP[f.status === 'pass' ? 'info' : f.severity] || '');
+				const open = f.status === 'fail' && index === 0;
+				return (
+					'<article class="ed-finding' + (open ? ' is-open' : '') + '" data-status="' + esc(f.status) + '" data-severity="' + esc(f.severity) + '">' +
+					'<button class="ed-finding-head" type="button" aria-expanded="' + (open ? 'true' : 'false') + '" aria-controls="ed-body-' + index + '">' +
+					'<span class="ed-chip">' + esc(label) + '</span>' +
+					'<span class="ed-finding-title">' + esc(f.title) + '</span>' +
+					(tipText ? tip(tipText) : '') + CARET +
+					'</button>' +
+					'<div class="ed-finding-body" id="ed-body-' + index + '">' +
+					'<p>' + esc(f.detail) + '</p>' +
+					(f.fix
+						? '<div class="ed-fix"><div class="ed-fix-head">The fix<button type="button" class="ed-copy" data-copy="' + index + '">Copy</button></div>' +
+							'<pre id="ed-fix-' + index + '">' + esc(f.fix) + '</pre></div>'
+						: '') +
+					(f.evidence
+						? '<details class="ed-evidence"><summary>Evidence from your page</summary><pre>' +
+							esc(JSON.stringify(f.evidence, null, 2)) + '</pre></details>'
+						: '') +
+					'</div></article>'
+				);
+			}
+
+			function render(report, targetLabel) {
+				const v = report.verdict || 'inconclusive';
+				const s = report.summary || {};
+				const shot = report.screenshot
+					? '<section class="ed-shot"><h3>What the browser actually rendered</h3>' +
+						'<div class="ed-shot-frame"><div class="ed-shot-bar">' +
+						'<span class="ed-shot-dot"></span><span class="ed-shot-dot"></span><span class="ed-shot-dot"></span>' +
+						'<span class="ed-shot-url">' + esc(targetLabel) + '</span></div>' +
+						'<img src="data:image/jpeg;base64,' + report.screenshot + '" alt="Screenshot of the page as our browser rendered it" loading="lazy" /></div></section>'
+					: '';
+
+				resultEl.innerHTML =
+					'<section class="ed-verdict" data-verdict="' + esc(v) + '">' +
+					'<div class="ed-verdict-glyph" aria-hidden="true">' + (GLYPH[v] || GLYPH.inconclusive) + '</div>' +
+					'<div><h2>' + esc(VERDICT_TITLE[v] || v) + ': ' + esc(s.headline || '') + '</h2>' +
+					'<p>' + esc(VERDICT_COPY[v] || '') + '</p>' +
+					'<div class="ed-tally">' +
+					'<span><b>' + (s.failed || 0) + '</b> to fix</span>' +
+					'<span><b>' + (s.passed || 0) + '</b> passing</span>' +
+					(s.unknown ? '<span><b>' + s.unknown + '</b> unknown</span>' : '') +
+					'<span>checked in <b>' + ((report.durationMs || 0) / 1000).toFixed(1) + 's</b></span>' +
+					'</div></div></section>' +
+					shot +
+					'<section class="ed-findings"><h3>' + (report.findings || []).length + ' checks</h3>' +
+					(report.findings || []).map(findingHtml).join('') +
+					'</section>';
+
+				wireResult();
+				resultEl.querySelector('.ed-verdict')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+			}
+
+			function wireResult() {
+				resultEl.querySelectorAll('.ed-finding-head').forEach((head) => {
+					head.addEventListener('click', () => {
+						const card = head.closest('.ed-finding');
+						const open = card.classList.toggle('is-open');
+						head.setAttribute('aria-expanded', open ? 'true' : 'false');
+					});
+				});
+				resultEl.querySelectorAll('.ed-copy').forEach((btn) => {
+					btn.addEventListener('click', async (e) => {
+						e.stopPropagation();
+						const pre = $('ed-fix-' + btn.dataset.copy);
+						try {
+							await navigator.clipboard.writeText(pre.textContent);
+							btn.textContent = 'Copied';
+							btn.classList.add('is-done');
+						} catch {
+							// Clipboard is blocked in some embedded contexts; select the
+							// text so the keyboard shortcut still works.
+							const r = document.createRange();
+							r.selectNodeContents(pre);
+							const sel = getSelection();
+							sel.removeAllRanges();
+							sel.addRange(r);
+							btn.textContent = 'Press ⌘C';
+						}
+						setTimeout(() => {
+							btn.textContent = 'Copy';
+							btn.classList.remove('is-done');
+						}, 1800);
+					});
+				});
+				// Dismiss any open tooltip on Escape, matching every other popover
+				// on the site.
+				resultEl.querySelectorAll('.ed-tip-btn').forEach((b) => {
+					b.addEventListener('keydown', (e) => { if (e.key === 'Escape') b.blur(); });
+				});
+			}
+
+			function renderError(title, message) {
+				resultEl.innerHTML =
+					'<div class="ed-error"><h3>' + esc(title) + '</h3><p>' + esc(message) + '</p></div>';
+			}
+
+			// ── Run ───────────────────────────────────────────────────────────
+			let running = false;
+			async function run(payload, targetLabel) {
+				if (running) return;
+				running = true;
+				emptyEl.hidden = true;
+				resultEl.innerHTML = '';
+				statusEl.hidden = false;
+				statusText.textContent = 'Loading your page in a real browser';
+				startClock();
+				document.querySelectorAll('.ed-run').forEach((b) => (b.disabled = true));
+
+				try {
+					const res = await fetch('/api/embed/diagnose', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify(payload),
+					});
+					const body = await res.json().catch(() => null);
+					if (!res.ok) {
+						renderError(
+							res.status === 429 ? 'Rate limited' : 'The diagnosis could not run',
+							body?.message || body?.error || ('The server answered ' + res.status + '.'),
+						);
+						return;
+					}
+					render(body, targetLabel);
+				} catch (err) {
+					renderError(
+						'Could not reach the diagnostic service',
+						'The request failed before it got an answer: ' + String(err && err.message ? err.message : err),
+					);
+				} finally {
+					stopClock();
+					statusEl.hidden = true;
+					document.querySelectorAll('.ed-run').forEach((b) => (b.disabled = false));
+					running = false;
+				}
+			}
+
+			function runUrl() {
+				const raw = $('ed-url').value.trim();
+				if (!raw) {
+					$('ed-url').focus();
+					renderError('No URL yet', 'Paste the address of the page where you placed the embed.');
+					return;
+				}
+				const url = raw.includes('://') ? raw : 'https://' + raw;
+				// Deep-linkable, so a result is shareable with a teammate.
+				try {
+					const next = new URL(location.href);
+					next.searchParams.set('url', url);
+					history.replaceState(null, '', next);
+				} catch { /* history unavailable in some embedded contexts */ }
+				run({ url }, url);
+			}
+
+			function runSnippet() {
+				const snippet = $('ed-snippet').value.trim();
+				if (!snippet) {
+					$('ed-snippet').focus();
+					renderError('Nothing to check', 'Paste the script tag and the <agent-3d> element.');
+					return;
+				}
+				run({ snippet }, 'sandbox (your snippet, nothing else)');
+			}
+
+			$('ed-run-url').addEventListener('click', runUrl);
+			$('ed-run-snippet').addEventListener('click', runSnippet);
+			$('ed-url').addEventListener('keydown', (e) => { if (e.key === 'Enter') runUrl(); });
+			$('ed-snippet').addEventListener('keydown', (e) => {
+				// Enter inserts a newline in a textarea, so the run shortcut is the
+				// conventional modifier form.
+				if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runSnippet();
+			});
+
+			// ── Deep link: ?url= runs immediately so a result can be shared ────
+			const params = new URLSearchParams(location.search);
+			const linked = params.get('url');
+			if (linked) {
+				$('ed-url').value = linked;
+				run({ url: linked.includes('://') ? linked : 'https://' + linked }, linked);
+			} else if (params.get('mode') === 'snippet') {
+				setMode('snippet');
+			}
+		})();
+	</script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

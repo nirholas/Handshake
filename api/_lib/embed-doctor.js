@@ -410,6 +410,23 @@ export function analyze(obs) {
 		);
 	}
 
+	// Clipping is checked even when the element itself measures fine, because
+	// that is exactly the case: every style on the element is correct and an
+	// ancestor is throwing the pixels away.
+	if (el.clippedBy) {
+		findings.push(
+			finding(
+				'element_clipped',
+				'error',
+				'fail',
+				'An ancestor is clipping the embed out of view',
+				`The element has real size, but \`${el.clippedBy.selector}\` is ${el.clippedBy.width}×${el.clippedBy.height}px with \`overflow: ${el.clippedBy.overflow}\`, so the agent is drawn and then cut away. Everything about the embed itself is correct here.`,
+				`Give \`${el.clippedBy.selector}\` room, or move the embed out of it. If that wrapper is a collapsed accordion or an inactive carousel slide, mount the embed when the panel opens instead of hiding it.`,
+				el.clippedBy,
+			),
+		);
+	}
+
 	if (el.offscreen === true) {
 		findings.push(
 			finding(
@@ -451,6 +468,19 @@ export function analyze(obs) {
 				'canvas_rendered',
 				'The agent rendered pixels',
 				`A ${Math.round(canvas.width)}×${Math.round(canvas.height)}px canvas is drawing inside the element.`,
+				{ width: canvas.width, height: canvas.height },
+			),
+		);
+	} else if (canvas?.present === true && canvas.blank === null) {
+		// The canvas exists with real dimensions but the paint measurement could
+		// not run (an off-screen box, a screenshot that failed). Reporting it as
+		// blank would invent a failure; reporting it as rendered would invent a
+		// success.
+		findings.push(
+			unknown(
+				'canvas_rendered',
+				'A canvas exists, but we could not confirm it painted',
+				`The element built a ${Math.round(canvas.width)}×${Math.round(canvas.height)}px drawing surface. Measuring whether pixels landed in it needs the element inside the viewport, and it was not.`,
 				{ width: canvas.width, height: canvas.height },
 			),
 		);
@@ -603,10 +633,23 @@ let _browserPromise = null;
 async function getBrowser() {
 	if (_browserPromise) return _browserPromise;
 	_browserPromise = (async () => {
-		const [{ default: puppeteer }, { default: chromium }] = await Promise.all([
-			import('puppeteer-core'),
-			import('@sparticuz/chromium-min'),
-		]);
+		const { default: puppeteer } = await import('puppeteer-core');
+
+		// A workstation already has a chromium (the one Playwright installs for
+		// the test suite). Pointing at it keeps the diagnostic runnable locally
+		// without downloading the 100 MB serverless pack, which is what makes it
+		// possible to develop a new check and see it fire on a real page.
+		const local = process.env.CHROMIUM_EXECUTABLE_PATH;
+		if (local) {
+			return puppeteer.launch({
+				args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'],
+				defaultViewport: { width: 1280, height: 800, deviceScaleFactor: 1 },
+				executablePath: local,
+				headless: true,
+			});
+		}
+
+		const { default: chromium } = await import('@sparticuz/chromium-min');
 		const pack = process.env.CHROMIUM_PACK_URL || DEFAULT_CHROMIUM_PACK;
 		const executablePath = await chromium.executablePath(pack);
 		return puppeteer.launch({
@@ -698,34 +741,43 @@ function inPageProbe(tag, sourceAttrs) {
 			}
 		}
 
-		// The runtime draws into a canvas inside its shadow root.
-		let canvas = { present: false, width: 0, height: 0, blank: true };
+		// The runtime draws into a canvas inside its shadow root. Whether it
+		// PAINTED cannot be answered here: a WebGL canvas without
+		// preserveDrawingBuffer is cleared the moment it composites, so reading
+		// it back in-page reports a blank surface for a perfectly good render.
+		// The screenshot pass in `harvest` answers that from composited pixels
+		// instead; `blank` is deliberately left null until then.
+		let canvas = { present: false, width: 0, height: 0, blank: null };
 		const root = node.shadowRoot || node;
 		const cv = root.querySelector('canvas');
-		if (cv) {
-			canvas = { present: true, width: cv.width, height: cv.height, blank: true };
-			try {
-				// A WebGL canvas cannot be read back with getImageData, so blankness
-				// is judged from a downscaled copy: cheap, and it only needs to
-				// answer "did anything paint at all".
-				const probe = document.createElement('canvas');
-				probe.width = 24;
-				probe.height = 24;
-				const ctx = probe.getContext('2d');
-				ctx.drawImage(cv, 0, 0, 24, 24);
-				const data = ctx.getImageData(0, 0, 24, 24).data;
-				let first = null;
-				for (let i = 0; i < data.length; i += 4) {
-					const px = `${data[i]},${data[i + 1]},${data[i + 2]},${data[i + 3]}`;
-					if (first === null) first = px;
-					else if (px !== first) {
-						canvas.blank = false;
-						break;
-					}
-				}
-			} catch {
-				// Tainted or unreadable: leave `blank` true rather than claiming a
-				// render we did not observe.
+		if (cv) canvas = { present: true, width: cv.width, height: cv.height, blank: null };
+
+		// An ancestor that clips is the other way an embed disappears while every
+		// style on the element itself looks correct: a collapsed accordion, a
+		// carousel slide, or a "height: 0 until loaded" wrapper that never grows.
+		let clippedBy = null;
+		for (let p = node.parentElement; p && p !== document.documentElement; p = p.parentElement) {
+			const s = getComputedStyle(p);
+			const clips = s.overflow !== 'visible' || s.overflowX !== 'visible' || s.overflowY !== 'visible';
+			if (!clips) continue;
+			const pr = p.getBoundingClientRect();
+			const noRoom = pr.width < 2 || pr.height < 2;
+			const outside =
+				rect.bottom <= pr.top || rect.top >= pr.bottom ||
+				rect.right <= pr.left || rect.left >= pr.right;
+			if (noRoom || outside) {
+				clippedBy = {
+					selector:
+						p.tagName.toLowerCase() +
+						(p.id ? '#' + p.id : '') +
+						(p.className && typeof p.className === 'string'
+							? '.' + p.className.trim().split(/\s+/).slice(0, 2).join('.')
+							: ''),
+					width: Math.round(pr.width),
+					height: Math.round(pr.height),
+					overflow: s.overflow,
+				};
+				break;
 			}
 		}
 
@@ -744,6 +796,7 @@ function inPageProbe(tag, sourceAttrs) {
 					rect.left > document.documentElement.clientWidth ||
 					rect.top > document.documentElement.scrollHeight),
 			canvas,
+			clippedBy,
 			source: sourceAttrs.find((a) => attributes[a]) || null,
 		};
 	}
@@ -764,19 +817,68 @@ function inPageProbe(tag, sourceAttrs) {
 async function waitForEmbed(page, tag, budgetMs) {
 	const started = Date.now();
 	while (Date.now() - started < budgetMs) {
-		const done = await page
+		const state = await page
 			.evaluate((t) => {
 				const el = document.querySelector(t);
-				if (!el) return false;
+				if (!el) return { canBoot: false, painted: false };
 				const root = el.shadowRoot || el;
 				const cv = root.querySelector('canvas');
-				return !!(cv && cv.width > 0 && cv.height > 0);
+				return {
+					canBoot: !!(window.customElements && window.customElements.get(t)),
+					painted: !!(cv && cv.width > 0 && cv.height > 0),
+				};
 			}, tag)
-			.catch(() => false);
-		if (done) return Date.now() - started;
+			.catch(() => ({ canBoot: false, painted: false }));
+
+		if (state.painted) return Date.now() - started;
+
+		// Nothing to wait for. With no element in the DOM, or an element the
+		// runtime never registered, a canvas will never appear and burning the
+		// remaining budget only makes the developer stare at a spinner for the
+		// most common failures of all.
+		if (!state.canBoot && Date.now() - started > 1200) return null;
+
 		await new Promise((r) => setTimeout(r, 250));
 	}
 	return null;
+}
+
+/**
+ * Did the embed actually paint? Answered from composited pixels, because the
+ * canvas itself cannot be read back (see the note in the in-page probe).
+ * A screenshot of the element's box is measured for per-channel variance: a
+ * flat fill has none, a rendered character has plenty.
+ *
+ * Returns null when the question could not be answered, never a guess.
+ */
+async function measurePainted(page, tag) {
+	try {
+		const box = await page.evaluate((t) => {
+			const el = document.querySelector(t);
+			if (!el) return null;
+			const r = el.getBoundingClientRect();
+			if (r.width < 4 || r.height < 4) return null;
+			// Clamp into the viewport: a clip that runs off-screen is rejected by
+			// the screenshot API rather than silently shrunk.
+			const x = Math.max(0, r.left);
+			const y = Math.max(0, r.top);
+			const w = Math.min(r.right, window.innerWidth) - x;
+			const h = Math.min(r.bottom, window.innerHeight) - y;
+			if (w < 4 || h < 4) return null;
+			return { x, y, width: w, height: h };
+		}, tag);
+		if (!box) return null;
+
+		const png = await page.screenshot({ type: 'png', clip: box });
+		const { default: sharp } = await import('sharp');
+		const stats = await sharp(png).stats();
+		// Three channels of near-zero deviation means every pixel is the same
+		// colour: the element is on screen and nothing was drawn into it.
+		const spread = Math.max(...stats.channels.slice(0, 3).map((c) => c.stdev));
+		return spread > 1.5;
+	} catch {
+		return null;
+	}
 }
 
 /** Resolve an agent id against the live platform so "that id is wrong" is an
@@ -868,6 +970,11 @@ async function harvest(page, { recorders, response, bootMs, platformOrigin, scre
 	const finalUrl = page.url();
 	const agentId = probe.element?.attributes?.['agent-id'] || null;
 	const agent = agentId ? await resolveAgent(agentId, { platformOrigin }) : null;
+
+	if (probe.element?.canvas?.present) {
+		const painted = await measurePainted(page, EMBED_TAG);
+		probe.element.canvas.blank = painted === null ? null : !painted;
+	}
 
 	let shot = null;
 	if (screenshot) {

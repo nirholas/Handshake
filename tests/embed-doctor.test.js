@@ -306,6 +306,30 @@ describe('analyze — visibility', () => {
 		expect(f.fix).toMatch(/floating/);
 	});
 
+	it('names the ancestor that clips a correctly-sized embed out of view', () => {
+		// The nastiest visibility bug: every style on the element is right, and a
+		// wrapper throws the pixels away.
+		const report = analyze(
+			healthyObservations({
+				element: {
+					...healthyObservations().element,
+					clippedBy: { selector: 'div.slide', width: 900, height: 0, overflow: 'hidden' },
+				},
+			}),
+		);
+		const f = byId(report, 'element_clipped');
+		expect(f.severity).toBe('error');
+		expect(f.detail).toContain('div.slide');
+		expect(f.detail).toContain('overflow: hidden');
+		expect(f.fix).toContain('div.slide');
+		// It must not be masked by the element's own measurements passing.
+		expect(byId(report, 'element_visible').status).toBe('pass');
+	});
+
+	it('stays quiet when no ancestor clips', () => {
+		expect(byId(analyze(healthyObservations()), 'element_clipped')).toBeUndefined();
+	});
+
 	it('reports an off-screen embed as a warning, not a failure to render', () => {
 		const report = analyze(
 			healthyObservations({ element: { ...healthyObservations().element, offscreen: true } }),
