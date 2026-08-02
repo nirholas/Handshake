@@ -160,17 +160,15 @@ PASS  Blender / Rigify (.L suffix)  (51 bones, ingest renamed 51)
              walk right arm  swing   49.3deg  RightHand travel 0.493
              walk left leg   swing   50.7deg  LeftFoot travel 0.760
              walk right leg  swing   54.4deg  RightFoot travel 0.821
-      warn runtime idle 94%  walk 94%   mapped 49 bones
-             idle left arm   swing   26.3deg  LeftHand travel 0.379
-             idle right arm  swing   28.3deg  RightHand travel 0.404
+      ok   runtime idle 98%  walk 98%   mapped 51 bones
+             idle left arm   swing   26.3deg  LeftHand travel 0.350
+             idle right arm  swing   28.3deg  RightHand travel 0.368
              idle left leg   swing   28.2deg  LeftFoot travel 0.060
              idle right leg  swing   31.0deg  RightFoot travel 0.049
-             walk left arm   swing   41.7deg  LeftHand travel 0.464
-             walk right arm  swing   49.3deg  RightHand travel 0.562
+             walk left arm   swing   41.7deg  LeftHand travel 0.491
+             walk right arm  swing   49.3deg  RightHand travel 0.493
              walk left leg   swing   50.7deg  LeftFoot travel 0.760
              walk right leg  swing   54.4deg  RightFoot travel 0.821
-             warning: LeftArm bound to "shoulderL" (a clavicle) while an upper-arm bone exists. remedy: port canonicalizeJointNodes pass 1.5/1.6 (the clavicle/upper-arm collision resolver in src/glb-canonicalize.js) into canonicalNodeMapFromObject in src/animation-retarget.js. Every avatar stored by three.ws is canonicalized at ingest (api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js, api/avatars/_actions.js, src/account.js), so this affects only a third-party GLB loaded straight into the viewer, and the arm still animates: it swings from the shoulder blade instead of the shoulder.
-             warning: RightArm bound to "shoulderR" (a clavicle) while an upper-arm bone exists. remedy: port canonicalizeJointNodes pass 1.5/1.6 (the clavicle/upper-arm collision resolver in src/glb-canonicalize.js) into canonicalNodeMapFromObject in src/animation-retarget.js. Every avatar stored by three.ws is canonicalized at ingest (api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js, api/avatars/_actions.js, src/account.js), so this affects only a third-party GLB loaded straight into the viewer, and the arm still animates: it swings from the shoulder blade instead of the shoulder.
 
 PASS  Simple shoulderL rig  (49 bones, ingest renamed 49)
       the hand-built / hobby rig: chest, shoulderL, elbowL, wristL, hipL, kneeL, ankleL
@@ -215,4 +213,3 @@ PASS  Anatomical Latin (novel)  (52 bones, ingest renamed 52)
              walk right leg  swing   54.4deg  RightFoot travel 0.821
 
 10/10 conventions animate both arms and both legs on both lanes.
-With warnings: Blender / Rigify (.L suffix)

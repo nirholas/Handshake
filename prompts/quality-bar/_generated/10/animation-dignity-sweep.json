@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T06:17:40.900Z",
+  "generatedAt": "2026-08-02T04:49:26.478Z",
   "minCoverage": 0.5,
   "thresholds": {
     "swingDeg": {
@@ -2702,12 +2702,12 @@
         },
         {
           "lane": "runtime",
-          "mappedBones": 49,
+          "mappedBones": 51,
           "clips": [
             {
               "clip": "idle",
-              "coverage": 0.9433962264150944,
-              "matched": 50,
+              "coverage": 0.9811320754716981,
+              "matched": 52,
               "total": 53,
               "gatePassed": true,
               "limbs": {
@@ -2716,7 +2716,7 @@
                   "swings": [
                     {
                       "bone": "LeftArm",
-                      "node": "shoulderL",
+                      "node": "upper_armL",
                       "deg": 26.30100607129127
                     },
                     {
@@ -2727,14 +2727,14 @@
                   ],
                   "effector": "LeftHand",
                   "effectorNode": "handL",
-                  "travelHipHeights": 0.37882317837123197
+                  "travelHipHeights": 0.350435841599901
                 },
                 "right arm": {
                   "swingDeg": 28.329194407550652,
                   "swings": [
                     {
                       "bone": "RightArm",
-                      "node": "shoulderR",
+                      "node": "upper_armR",
                       "deg": 28.329194407550652
                     },
                     {
@@ -2745,7 +2745,7 @@
                   ],
                   "effector": "RightHand",
                   "effectorNode": "handR",
-                  "travelHipHeights": 0.404255345941833
+                  "travelHipHeights": 0.3681389958492004
                 },
                 "left leg": {
                   "swingDeg": 28.24936628811913,
@@ -2785,15 +2785,12 @@
                 }
               },
               "failures": [],
-              "warnings": [
-                "LeftArm bound to \"shoulderL\" (a clavicle) while an upper-arm bone exists. remedy: port canonicalizeJointNodes pass 1.5/1.6 (the clavicle/upper-arm collision resolver in src/glb-canonicalize.js) into canonicalNodeMapFromObject in src/animation-retarget.js. Every avatar stored by three.ws is canonicalized at ingest (api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js, api/avatars/_actions.js, src/account.js), so this affects only a third-party GLB loaded straight into the viewer, and the arm still animates: it swings from the shoulder blade instead of the shoulder.",
-                "RightArm bound to \"shoulderR\" (a clavicle) while an upper-arm bone exists. remedy: port canonicalizeJointNodes pass 1.5/1.6 (the clavicle/upper-arm collision resolver in src/glb-canonicalize.js) into canonicalNodeMapFromObject in src/animation-retarget.js. Every avatar stored by three.ws is canonicalized at ingest (api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js, api/avatars/_actions.js, src/account.js), so this affects only a third-party GLB loaded straight into the viewer, and the arm still animates: it swings from the shoulder blade instead of the shoulder."
-              ]
+              "warnings": []
             },
             {
               "clip": "walk",
-              "coverage": 0.9433962264150944,
-              "matched": 50,
+              "coverage": 0.9811320754716981,
+              "matched": 52,
               "total": 53,
               "gatePassed": true,
               "limbs": {
@@ -2802,7 +2799,7 @@
                   "swings": [
                     {
                       "bone": "LeftArm",
-                      "node": "shoulderL",
+                      "node": "upper_armL",
                       "deg": 37.54912696372359
                     },
                     {
@@ -2813,14 +2810,14 @@
                   ],
                   "effector": "LeftHand",
                   "effectorNode": "handL",
-                  "travelHipHeights": 0.4635439277044953
+                  "travelHipHeights": 0.4905558235170513
                 },
                 "right arm": {
                   "swingDeg": 49.331852527636705,
                   "swings": [
                     {
                       "bone": "RightArm",
-                      "node": "shoulderR",
+                      "node": "upper_armR",
                       "deg": 49.331852527636705
                     },
                     {
@@ -2831,7 +2828,7 @@
                   ],
                   "effector": "RightHand",
                   "effectorNode": "handR",
-                  "travelHipHeights": 0.5622210518338789
+                  "travelHipHeights": 0.4934849450250485
                 },
                 "left leg": {
                   "swingDeg": 50.703146254218105,
@@ -2871,14 +2868,11 @@
                 }
               },
               "failures": [],
-              "warnings": [
-                "LeftArm bound to \"shoulderL\" (a clavicle) while an upper-arm bone exists. remedy: port canonicalizeJointNodes pass 1.5/1.6 (the clavicle/upper-arm collision resolver in src/glb-canonicalize.js) into canonicalNodeMapFromObject in src/animation-retarget.js. Every avatar stored by three.ws is canonicalized at ingest (api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js, api/avatars/_actions.js, src/account.js), so this affects only a third-party GLB loaded straight into the viewer, and the arm still animates: it swings from the shoulder blade instead of the shoulder.",
-                "RightArm bound to \"shoulderR\" (a clavicle) while an upper-arm bone exists. remedy: port canonicalizeJointNodes pass 1.5/1.6 (the clavicle/upper-arm collision resolver in src/glb-canonicalize.js) into canonicalNodeMapFromObject in src/animation-retarget.js. Every avatar stored by three.ws is canonicalized at ingest (api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js, api/avatars/_actions.js, src/account.js), so this affects only a third-party GLB loaded straight into the viewer, and the arm still animates: it swings from the shoulder blade instead of the shoulder."
-              ]
+              "warnings": []
             }
           ],
           "pass": true,
-          "warnings": 4
+          "warnings": 0
         }
       ]
     },
