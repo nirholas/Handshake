@@ -507,3 +507,62 @@ after the first Cloud Run boot; (b) an AI-provider credential on the service
 (`ANTHROPIC_API_KEY` preferred; `OPENAI_API_KEY` also works via the Codex CLI); (c) the
 deploy itself, owner-gated; (d) the commit, which needs owner approval under the
 other-coin commit gate.
+
+## 2026-08-02: 06 LLM lane resilience
+
+Measured (probes, not config reads): groq 200, ovh 200, pollinations 200,
+OpenRouter fallback keys #2/#3 200 on `:free`; fallback key #1 **401 "User not
+found"** (revoked, still in rotation); nvidia 429; openai 429
+`billing_not_active`. OpenRouter platform key: `total_credits: 30`,
+`total_usage: 30.24`, i.e. spent. Service env: no `ANTHROPIC_API_KEY`, no
+`CEREBRAS_API_KEY`, no `GEMINI_API_KEY`, no `GROK_API_KEY`;
+`VERTEX_CLAUDE_ENABLED=0`, `VERTEX_CLAUDE_PRIMARY=0`. Vertex Claude `rawPredict`
+404s every Claude 5 id in `global` and `us-east5` while the same token serves
+Gemini 200, so the project is unentitled and the flag is correctly off. Prod was
+at `main` HEAD; `healthz` degraded set was `helius` + `x402_settle`, no LLM
+subsystem.
+
+Did:
+- Metering. `openrouter` came off the blanket free-provider list (only `:free`
+  routes are free); vendor-namespaced and dotted mirror ids now price at the
+  underlying model; every OpenRouter request opts into `usage: {include: true}`
+  and records the charge OpenRouter reports, which outranks the table. An
+  unpriceable spending lane records `null` (unknown) plus a warning, never `0`.
+  `/brain` now writes a `kind:'llm'` usage event per turn (it wrote nothing at
+  all, which is why the $30 burn was invisible) and `api/chat.js` writes
+  provider/model/tokens/cost in their own columns instead of only `meta`. New
+  `api/_lib/openrouter-usage.js` wraps the AI SDK's fetch so the /brain lane can
+  read cost without touching the stream. The daily user spend cap now counts
+  paid OpenRouter mirrors instead of exempting all of OpenRouter.
+- The check: `npm run audit:llm-metering` (`scripts/audit-llm-metering.mjs`,
+  registered in `data/guards.json`) fails when any lane with traffic reports
+  exactly $0 without being genuinely free, records an unknown cost, or serves
+  tokens with no provider. Live run over 168h: clean, $0.6561 across 45,933
+  calls. The rule lives in `api/_lib/llm-metering-rule.js` and is unit-tested,
+  so proving the guard fires never means writing fake rows into the ledger.
+- Free-lane reachability: `tests/api/llm-free-chain-reachability.test.js` proves
+  all 9 free rungs reachable by killing the rungs above at the TRANSPORT level
+  (dropped socket, abort, empty 503), not with a parse error.
+- Claude readiness: the OpenRouter Claude mirror for `api/chat.js` and
+  `_lib/llm.js` is implemented behind `isPaidModel()` and
+  `OPENROUTER_CLAUDE_MIRROR_MODEL`, default OFF, paid tail only, skipped when a
+  BYOK key / server key / Vertex Claude exists. Cost stated in the doc: ~$0.006
+  per 1k-in/300-out Sonnet 5 turn, ~$6 per thousand turns.
+- Docs: new `docs/ops/llm-lanes.md` (live lane table, why each paid rung is
+  dead, the one-command Claude rollout with Tier 1 guidance, metering, per-lane
+  probe commands), linked from `docs/ops/README.md`. Corrected the
+  Vertex-Claude-is-live framing in `docs/ops/gcp-credits.md` and
+  `prompts/gcp-credits/README.md` with the 2026-08-02 404 evidence. Changelog
+  entry tagged `infra`/`fix`.
+
+Left (all owner actions, none blocking; the platform serves traffic without
+them):
+- Accept Anthropic terms in Vertex Model Garden for `aerial-vehicle-466722-p5`,
+  then re-probe `rawPredict` and set `VERTEX_CLAUDE_ENABLED=1`.
+- Reactivate OpenAI billing or drop the key (every OpenAI rung is a dead attempt
+  today).
+- Fund the OpenRouter platform key, or stay `:free`-only.
+- Supply `ANTHROPIC_API_KEY` for first-party Claude before Vertex lands (one
+  `--update-env-vars` command, in `docs/ops/llm-lanes.md`).
+- Housekeeping worth one minute: OpenRouter fallback key #1 is revoked (401) and
+  still burns a rung on every chain that reaches it.

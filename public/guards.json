@@ -651,6 +651,22 @@
 			}
 		},
 		{
+			"id": "audit-llm-metering",
+			"script": "scripts/audit-llm-metering.mjs",
+			"npm": "audit:llm-metering",
+			"title": "LLM spend metering",
+			"protects": "Every LLM lane that spends money reports a real cost, never exactly $0 and never an unknown.",
+			"why": "A cost lane reporting zero is worse than one reporting nothing: it reads as free traffic. OpenRouter was on the blanket free-provider list while the platform key routed paid vendor mirrors, so a real $30 balance drained with the dashboard showing $0 the whole way down, and nobody noticed until the key stopped working.",
+			"stages": [
+				"manual"
+			],
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "Aggregates the usage_events ledger over a time window, so it has no offline input. The rule it applies is unit-tested without a database in tests/llm-metering-rule.test.js."
+			}
+		},
+		{
 			"id": "check-relayer-balances",
 			"script": "scripts/check-relayer-balances.mjs",
 			"npm": "check:relayer-balances",
