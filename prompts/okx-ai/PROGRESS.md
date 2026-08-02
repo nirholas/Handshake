@@ -1608,6 +1608,54 @@ Item 1 alone allows a resubmission of the fixed listing (which is what the 2026-
 rejection asked for). Item 2 is what turns WO-04's NO-GO into a GO and makes the claim
 "payments settle" observed rather than unit-tested.
 
+### Addendum, same session: OKX's own QA passes the payload, and the example-line conflict is settled
+
+`onchainos agent validate-listing` is **pure-local, no network, no login** (`--help` says so),
+so it runs today despite the logged-out session. Ran it against the exact 11-row payload
+`scripts/okx-listing-payload.mjs` emits:
+
+```
+onchainos agent validate-listing --role asp --name "three.ws 3D Studio" --service "$(node scripts/okx-listing-payload.mjs)"
+-> {"pass": true, "findings": []}
+```
+
+**The usage `Example:` lines are NOT flagged.** The conflict recorded on 2026-07-26 (older
+skill invariants say "no example prompts", the reviewer's rejection email demands usage
+examples) is therefore not a real conflict at the QA layer: OKX's own validator accepts them.
+Keep the examples, and there is no longer a reason to raise the conflict in the submission
+chat unless a human reviewer objects.
+
+Proved the pass is not vacuous by feeding the same validator a deliberately bad row
+(`fee: "10 USDT"`, 1-char name, `http://` endpoint, 1-line description): `pass:false` with 4
+findings, one per defect. The tool really is checking.
+
+**New finding, deliberately NOT acted on this session:** the validator's own message says a
+**delivery note is a recommended 3rd line** ("a core-capability summary and what the user must
+provide, on separate lines (a delivery note is a recommended 3rd line)"). All 11 of our rows
+have 2 lines. Two probes established the shape of the decision:
+
+- A 3-line version of our widest row passes QA at 523 total characters, and a 300-character
+  part 1 also passes, so **`validate-listing` does not enforce the 200-per-part / 400-total
+  width rule at all**. That rule is backend-side; our own `validateCatalog()` is the only
+  thing enforcing it pre-write, so keep it.
+- Our widest rows already sit at 394 of the documented 400 total, so adding a third line
+  means rewriting parts 1 and 2 of every row down to roughly 130 each.
+
+Not done now because: the rows pass QA as they stand, the note is recommended rather than
+required, the total-width rule for a 3-line description is undocumented (a write could be
+rejected for length), and any string change forces an owner-gated redeploy before the
+submission may go out (three-copy rule). **If this round is rejected again on description
+completeness, adding delivery lines is the first change to make**, and it is a full copy pass
+plus a deploy, not a patch.
+
+Also re-verified reviewer-visible links: `https://three.ws/docs/okx-marketplace` 200,
+`https://three.ws/agent-identities` 200, `https://three.ws/api/okx/3d/catalog` 200.
+
+Login note: the session opened earlier this run expired unused (`--phase poll` answered
+"no login in progress"). A fresh one was opened, `authSessionId
+9ad76fb4-50ac-4e84-8df4-ada239c7b3cc`. These expire, so open a new one with
+`onchainos wallet login --phase init` rather than reusing an id from this file.
+
 ---
 
 ## 2026-08-01, Work Order 04: pre-funding sweep green, gauntlet tooling built, blocked on 2 owner actions
