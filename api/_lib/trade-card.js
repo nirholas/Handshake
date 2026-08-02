@@ -156,7 +156,7 @@ export function shapeTradeCard(row, { origin = 'https://three.ws' } = {}) {
 	const symbol = String(row.symbol || row.name || 'coin').replace(/^\$+/, '') || 'coin';
 	const agentName = String(row.agent_name || 'Agent').trim() || 'Agent';
 
-	const pnlSolStr = pnlSol != null ? fmtSol(pnlSol) : null;
+	const pnlSolStr = solStr(pnlSol);
 	const holdLabel = secs != null ? holdTime(secs) : null;
 
 	const model = {

@@ -144,6 +144,34 @@ export function canonicalNodeMapFromObject(root) {
 }
 
 /**
+ * Same walk as {@link canonicalNodeMapFromObject}, but keyed to the live nodes
+ * rather than their names. Callers that need to *write* to the skeleton (the
+ * skeleton-space proportion editor in src/avatar-proportions.js) need the node
+ * itself; resolving by name afterwards would break on the duplicate bone names
+ * a merged accessory or garment can introduce.
+ *
+ * @param {import('three').Object3D} root
+ * @returns {Map<string,import('three').Object3D>}
+ */
+export function canonicalBoneNodesFromObject(root) {
+	const map = new Map();
+	const consider = (node) => {
+		if (!node?.name) return;
+		const canonical = canonicalizeBoneName(node.name);
+		if (canonical && !map.has(canonical)) map.set(canonical, node);
+	};
+	const skinned = [];
+	root?.traverse?.((node) => {
+		if (node.isSkinnedMesh) skinned.push(node);
+		if (node.isBone) consider(node);
+	});
+	for (const sm of skinned) {
+		for (const bone of sm.skeleton?.bones || []) consider(bone);
+	}
+	return map;
+}
+
+/**
  * Build the same map from a GltfRig/MannequinRig (src/pose-rig.js), which has
  * already resolved canonical → node. We read each node's live `.name` so the
  * rewritten track binds to the real graph node.

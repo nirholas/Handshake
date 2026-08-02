@@ -481,6 +481,8 @@ async function submitGeometryJob({
 			engine: engineIdFor(backendId),
 			prompt: prompt || null,
 			source_image_url: isImageMode ? primaryImage : null,
+			cold_start: cold,
+			cold_start_seconds: cold ? coldStartSecondsFor(backendId) : undefined,
 			eta_seconds: etaSeconds,
 			estimated_credits: estimateCredits({ backendId, path, tier }),
 		},

@@ -23,7 +23,7 @@ This file's claims rot. Measure before you plan:
 ```bash
 gcloud run services list --region us-central1 --project aerial-vehicle-466722-p5 \
   --format="table(metadata.name, status.conditions[0].status)"
-gcloud alpha quotas preferences list --project=aerial-vehicle-466722-p5 2>&1 | head -40
+timeout 120 gcloud alpha quotas preferences list --project=aerial-vehicle-466722-p5 2>&1 | head -40
 gcloud run services describe three-ws-api --region us-central1 \
   --project aerial-vehicle-466722-p5 --format=yaml \
   | grep -E "GCP_(TRIPOSG|TEXT2MOTION|HUNYUAN3D)_URL|MODEL_TRELLIS_URL"
@@ -34,6 +34,11 @@ As of 2026-08-01, `model-triposg`, `model-text2motion`, `model-trellis`, `model-
 `model-hunyuan3d` and `model-rig` were all Ready, so the original work order's "fix TripoSG"
 and "deploy text2motion" tasks are shipped. Confirm that yourself, record the evidence, and
 spend the session on what is still open.
+
+The quota listing is slow and has returned empty in this workspace. Do not let it stall you:
+`docs/ops/gcp-credits-plan.md` records the fleet position and the pre-approved scaling, and an
+update that exceeds the grant fails with an explicit quota error, which is itself a measurement.
+Attempt the scale change, read the error if there is one, and report the real ceiling.
 
 ## Tasks
 

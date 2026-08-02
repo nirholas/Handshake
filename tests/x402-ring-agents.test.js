@@ -265,3 +265,111 @@ describe('ring on-chain step — cadence gate', () => {
 		}
 	});
 });
+
+// ── Buyer float pre-flight ─────────────────────────────────────────────────────
+// The 2026-08-01 defect: the roster kept shopping from empty custodial wallets.
+// Every one of those purchases probed the endpoint, signed a USDC transfer and
+// paid for a facilitator `verify` that simulates against an RPC node, only to
+// come back InstructionError:[2,{Custom:1}] (SPL insufficient funds) and be
+// recorded as `http_402`: which the settle sensor counts as a payment-RAIL
+// fault. 180 of them in one 3h window, ~9% of the settle rate, all of it an
+// empty wallet wearing a broken-rail costume.
+describe('assessAgentBuyingPower: a dry wallet is back-pressure, not a rail fault', () => {
+	it('refuses when the buyer cannot cover the price, and says by how much', () => {
+		const v = assessAgentBuyingPower({ usdcAtomic: 48_000, priceAtomic: 100_000 });
+		expect(v.ok).toBe(false);
+		// The SAME token the shared ring payer reports, so the settle sensor's
+		// existing benign-guard exclusion covers it with no sensor change.
+		expect(v.reason).toBe('insufficient_payer_usdc');
+		expect(v.detail).toBe('48000<100000');
+	});
+
+	it('admits when the balance covers the price exactly', () => {
+		expect(assessAgentBuyingPower({ usdcAtomic: 10_000, priceAtomic: 10_000 }).ok).toBe(true);
+	});
+
+	it('an UNREADABLE balance admits: null is unknown, not zero', () => {
+		// Number(null) is 0, so a nullish balance would otherwise read as "broke"
+		// and freeze every funded agent behind one RPC lane outage.
+		for (const unknown of [null, undefined, NaN, 'not-a-number']) {
+			expect(assessAgentBuyingPower({ usdcAtomic: unknown, priceAtomic: 10_000 }).ok).toBe(true);
+		}
+	});
+
+	it('a free endpoint (price 0) is always admitted', () => {
+		expect(assessAgentBuyingPower({ usdcAtomic: 0, priceAtomic: 0 }).ok).toBe(true);
+	});
+
+	it('a genuine zero balance refuses: a missing ATA is knowably broke', () => {
+		expect(assessAgentBuyingPower({ usdcAtomic: 0, priceAtomic: 1 }).ok).toBe(false);
+	});
+});
+
+describe('readAgentUsdcAtomic: knowable zero vs unknown', () => {
+	const BUYER = 'AGENTwa11et1111111111111111111111111111111';
+	const connWith = (impl) => ({ getTokenAccountBalance: impl });
+
+	it('reads the atomic amount and caches it within the tick', async () => {
+		resetAgentUsdcCache();
+		let calls = 0;
+		const conn = connWith(async () => { calls += 1; return { value: { amount: '250000' } }; });
+		expect(await readAgentUsdcAtomic(conn, BUYER)).toBe(250_000);
+		expect(await readAgentUsdcAtomic(conn, BUYER)).toBe(250_000);
+		expect(calls).toBe(1); // one read per wallet per tick, not per purchase
+	});
+
+	it('a missing ATA is 0 (knowably broke), an RPC fault is null (unknown)', async () => {
+		resetAgentUsdcCache();
+		const missing = connWith(async () => { throw new Error('could not find account'); });
+		expect(await readAgentUsdcAtomic(missing, BUYER)).toBe(0);
+
+		resetAgentUsdcCache();
+		const laneDown = connWith(async () => { throw new Error('429 Too Many Requests'); });
+		expect(await readAgentUsdcAtomic(laneDown, BUYER)).toBeNull();
+	});
+
+	it('never throws on a missing connection or address', async () => {
+		resetAgentUsdcCache();
+		expect(await readAgentUsdcAtomic(null, BUYER)).toBeNull();
+		expect(await readAgentUsdcAtomic(connWith(async () => ({})), '')).toBeNull();
+	});
+});
+
+describe('executePurchase: the dry buyer never reaches the payment path', () => {
+	const TREASURY_SET = new Set([TREASURY]);
+	const purchase = {
+		slug: 'three-intel', url: 'https://three.ws/api/x402/three-intel',
+		method: 'GET', body: null, priceAtomic: 10_000, kind: 'intel',
+	};
+
+	it('refuses without probing, signing or simulating', async () => {
+		resetAgentUsdcCache();
+		let paid = 0;
+		const out = await executePurchase({
+			agent: permissiveAgent(),
+			purchase,
+			solana: { conn: { getTokenAccountBalance: async () => ({ value: { amount: '0' } }) }, blockhash: 'hash', mintInfo: { decimals: 6 } },
+			allowed: TREASURY_SET,
+			persona: 'endpoint-shopper',
+			payImpl: async () => { paid += 1; return { success: true, paid: true, amountAtomic: 10_000, txSig: 'nope' }; },
+		});
+		expect(out.status).toBe('refused');
+		expect(out.reason).toBe('insufficient_payer_usdc:0<10000');
+		expect(out.txSig).toBeNull();
+		expect(paid).toBe(0); // the whole point: zero handshakes, zero simulations
+	});
+
+	it('still pays when the buyer is funded', async () => {
+		resetAgentUsdcCache();
+		const out = await executePurchase({
+			agent: permissiveAgent(),
+			purchase,
+			solana: { conn: { getTokenAccountBalance: async () => ({ value: { amount: '2000000' } }) }, blockhash: 'hash', mintInfo: { decimals: 6 } },
+			allowed: TREASURY_SET,
+			persona: 'endpoint-shopper',
+			payImpl: fakePay(TREASURY, 10_000),
+		});
+		expect(out.status).toBe('paid');
+		expect(out.txSig).toBe('settle-sig-1');
+	});
+});

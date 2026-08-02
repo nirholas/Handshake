@@ -1,0 +1,110 @@
+# Cloud Build → Cloud Run for the OKX.AI marketplace chat bot host
+# (workers/okx-chat-bot). Build context is the REPO ROOT.
+#
+#   gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml \
+#     --region us-central1 --project aerial-vehicle-466722-p5 \
+#     --substitutions=SHORT_SHA=manual$(date +%s) .
+#
+# ── WHY --max-instances=1 IS LOAD-BEARING ────────────────────────────────────
+# The bot's wallet/XMTP identity is a single GCS state object that this service
+# reads on boot and overwrites on a timer. Two concurrent instances would
+# interleave those writes and corrupt the identity, which costs a human OTP to
+# recover. min=1 keeps the XMTP connection held open between requests (this is a
+# daemon, not a request handler), and --no-cpu-throttling keeps it ticking when
+# no HTTP request is in flight.
+#
+# ── ONE-TIME SETUP (run once per project, never commit secret values) ─────────
+#   # 1. State bucket. Versioning is the undo button for a torn snapshot.
+#   gcloud storage buckets create gs://three-ws-okx-bot-state \
+#     --location=us-central1 --uniform-bucket-level-access --project aerial-vehicle-466722-p5
+#   gcloud storage buckets update gs://three-ws-okx-bot-state --versioning
+#   gcloud storage buckets add-iam-policy-binding gs://three-ws-okx-bot-state \
+#     --member=serviceAccount:three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
+#     --role=roles/storage.objectAdmin
+#
+#   # 2. Secrets. DATABASE_URL feeds the heartbeat that /api/healthz reads.
+#   printf '%s' "$DATABASE_URL" | gcloud secrets create okx-chat-bot-database-url --data-file=-
+#   # AI-provider credential (OWNER ACTION, see the README): one of
+#   printf '%s' "$ANTHROPIC_API_KEY" | gcloud secrets create anthropic-api-key --data-file=-
+#   printf '%s' "$OPENAI_API_KEY"    | gcloud secrets create openai-api-key --data-file=-
+#   for s in okx-chat-bot-database-url anthropic-api-key openai-api-key; do \
+#     gcloud secrets add-iam-policy-binding "$s" \
+#       --member=serviceAccount:three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
+#       --role=roles/secretmanager.secretAccessor; done
+#
+#   # 3. Optional Telegram push for the session-expired alert (it always lands on
+#   #    /admin/ops regardless). Reuse the existing alert secrets if present.
+#
+# ── AFTER THE FIRST DEPLOY ────────────────────────────────────────────────────
+# The bot boots logged out (there is no snapshot yet) and pages for a human OTP.
+# Read the exact commands off the service itself:
+#   curl -s -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+#     "$(gcloud run services describe okx-chat-bot --region us-central1 \
+#        --format='value(status.url)')/readyz" | jq .remedy
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: okx-chat-bot
+  _REPO: workers
+  # Deliberately not parameterised: see the max-instances note above.
+  _STATE_BUCKET: three-ws-okx-bot-state
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file
+      - workers/okx-chat-bot/Dockerfile
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - .
+    timeout: 1800s
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --no-cpu-throttling
+      - --cpu=2
+      - --memory=4Gi
+      # The state tree lives on the in-memory filesystem and the AI subsession
+      # is a whole CLI process; 4Gi leaves headroom for both.
+      - --min-instances=1
+      - --max-instances=1
+      - --timeout=3600
+      - --no-allow-unauthenticated
+      - --service-account=three-ws@$PROJECT_ID.iam.gserviceaccount.com
+      - --set-env-vars=NODE_ENV=production,OKX_BOT_HOME=/state,OKX_BOT_REPO_ROOT=/app,OKX_BOT_AGENT_ID=2632,OKX_BOT_STATE_BUCKET=${_STATE_BUCKET}
+      - --set-secrets=DATABASE_URL=okx-chat-bot-database-url:latest
+      # Liveness only. Readiness is deliberately NOT wired to Cloud Run: a
+      # logged-out session fails /readyz and no restart can fix it, so probing it
+      # here would put the service in a crash loop instead of paging a human.
+      - --startup-probe=httpGet.path=/healthz,initialDelaySeconds=20,periodSeconds=10,failureThreshold=30
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+timeout: 2400s

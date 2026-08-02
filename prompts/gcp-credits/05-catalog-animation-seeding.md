@@ -27,14 +27,36 @@ gcloud run services describe three-ws-api --region us-central1 \
   --project aerial-vehicle-466722-p5 --format=yaml | grep -E "GCP_TEXT2MOTION_URL|MODEL_TRELLIS_URL|FORGE_SELFHOST_PRIMARY|SEED_CRON_BATCH"
 sed -n '1,40p' api/cron/forge-seed-cron.js
 node -e "const d=require('./data/motion-prompts.json');console.log(Object.keys(d), d.prompts?.length)"
-curl -s "https://three.ws/api/animations/library?limit=1" | head -20
-psql "$DATABASE_URL" -c "select count(*) from avatars" 2>/dev/null || echo "use api/_lib/db helpers instead"
+
+# clip library: total, and how many are NOT the Mixamo import
+curl -s "https://three.ws/api/animations/library" | python3 -c \
+  "import sys,json;d=json.load(sys.stdin);n=[c['name'] for c in d['clips']];print('clips',d.get('total'),'non-mixamo',sum(1 for x in n if not x.startswith('mx-')))"
+
+# catalog size, through the repo's own db helper (psql is not installed here)
+cat > /tmp/catalog-count.mjs <<'EOF'
+import fs from 'node:fs';
+if (!process.env.DATABASE_URL) {
+  const m = fs.readFileSync('/workspaces/three.ws/.env', 'utf8').match(/^DATABASE_URL=(.*)$/m);
+  if (m) process.env.DATABASE_URL = m[1].replace(/^["']|["']$/g, '');
+}
+const { sql } = await import('/workspaces/three.ws/api/_lib/db.js');
+console.log('avatars', (await sql`select count(*)::int as n from avatars`)[0].n);
+console.log('last 7d', (await sql`select count(*)::int as n from avatars where created_at > now() - interval '7 days'`)[0].n);
+EOF
+node /tmp/catalog-count.mjs
 ```
 
-Known as of 2026-08-01: `data/motion-prompts.json` exists (the task-6 prompt library),
+**Measured 2026-08-01, re-measure before trusting it:** 18,622 avatars in the catalog with 104
+added in the previous 7 days, so the seed cron runs but at roughly 15 a day. The clip library
+serves 2,874 clips and **every one is the `mx-` Mixamo import: zero generated clips exist**, so
+section B below is entirely open. `data/motion-prompts.json` (the section B prompt library),
 `api/cron/forge-seed-cron.js`, `api/_lib/seed-prompts.js`, `api/marketplace/animations.js`,
 `api/x402/animation-download.js` and `api/animations/library.js` all exist;
-`scripts/gcp/seed-avatars.mjs` does not. Verify each before deciding what is left.
+`scripts/gcp/seed-avatars.mjs` does not.
+
+That shape sets the priorities: the cron is alive but slow and unproven on quality, and the
+generated-motion half has never run. Do not spend the session re-confirming that the cron
+exists.
 
 ## Tasks
 

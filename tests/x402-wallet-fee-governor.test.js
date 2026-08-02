@@ -23,6 +23,18 @@ describe('walletFeeGovernorConfig', () => {
 		expect(cfg.runwayDays).toBe(3);
 		expect(cfg.minBudgetLamports).toBe(10_000_000);
 		expect(cfg.spentCacheMs).toBe(20_000);
+		// Intraday pacing is opt-in: it moves which gate refuses a starved wallet
+		// first, so it must never switch on by accident.
+		expect(cfg.paceDay).toBe(false);
+		expect(cfg.paceMinSliceLamports).toBe(200_000);
+	});
+
+	it('only an explicit "true" enables intraday pacing', () => {
+		expect(walletFeeGovernorConfig({ X402_WALLET_FEE_PACE_DAY: 'true' }).paceDay).toBe(true);
+		expect(walletFeeGovernorConfig({ X402_WALLET_FEE_PACE_DAY: 'TRUE' }).paceDay).toBe(true);
+		expect(walletFeeGovernorConfig({ X402_WALLET_FEE_PACE_DAY: '1' }).paceDay).toBe(false);
+		expect(walletFeeGovernorConfig({ X402_WALLET_FEE_PACE_DAY: 'yes' }).paceDay).toBe(false);
+		expect(walletFeeGovernorConfig({}).paceDay).toBe(false);
 	});
 
 	it('only an explicit "false" disables it', () => {

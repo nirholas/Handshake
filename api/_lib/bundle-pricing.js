@@ -18,24 +18,67 @@
  * Amounts are ATOMIC integers throughout (the currency's smallest unit). Mixing
  * atomic and whole-token numbers is the classic way to publish a price 10^6 off,
  * so nothing here ever divides by decimals; formatting is the caller's job.
+ *
+ * Every amount is carried as a BigInt, and every amount that leaves this module
+ * leaves as a decimal string. A 9-decimal mint puts real balances past
+ * Number.MAX_SAFE_INTEGER (9007199254740991 atomic units is about 9,007,199
+ * whole tokens), and the sums here are larger than the individual amounts. Doing
+ * the arithmetic in Number and stringifying the result afterwards looks safe and
+ * is not: the rounding has already happened by then. The database agrees, which
+ * is why api/agents/[id]/bundles.js casts every SUM to ::text.
  */
 
 /** Discount below this reads as a rounding artifact rather than an offer. */
 export const MIN_MEANINGFUL_DISCOUNT_PERCENT = 1;
 
+/**
+ * Fallback discount when there is no history to learn from, as an exact ratio.
+ * The float below is derived from these two so the two spellings cannot drift.
+ */
+export const DEFAULT_DISCOUNT_NUMERATOR = 8n;
+export const DEFAULT_DISCOUNT_DENOMINATOR = 10n;
+
 /** Fallback discount when there is no history to learn from. */
-export const DEFAULT_DISCOUNT = 0.8;
+export const DEFAULT_DISCOUNT = Number(DEFAULT_DISCOUNT_NUMERATOR) / Number(DEFAULT_DISCOUNT_DENOMINATOR);
+
+/**
+ * Coerce one atomic amount to a BigInt.
+ *
+ * Accepts a BigInt, a decimal string, or a Number that is an exact integer. A
+ * Number past Number.MAX_SAFE_INTEGER THROWS rather than converting, because by
+ * the time such a value reaches here it has already been rounded and no
+ * downstream string can recover the lost digits. Callers reading money out of
+ * the database pass the ::text column, not Number(column).
+ *
+ * @param {bigint|number|string} v
+ * @returns {bigint}
+ */
+export function toAtomic(v) {
+	if (typeof v === 'bigint') return v;
+	if (typeof v === 'number') {
+		if (!Number.isSafeInteger(v))
+			throw new TypeError(`atomic amount ${v} is not an exact integer; pass a string or a BigInt`);
+		return BigInt(v);
+	}
+	if (typeof v === 'string' && /^-?\d+$/.test(v.trim())) return BigInt(v.trim());
+	throw new TypeError(`atomic amount ${JSON.stringify(v)} is not an integer`);
+}
+
+/** Half-up division that stays exact: no float ever touches the amount. */
+function divRoundHalfUp(numerator, denominator) {
+	return (numerator + denominator / 2n) / denominator;
+}
 
 /**
  * Median of an integer list, rounded to an integer so it stays a spendable price.
- * @param {number[]} sorted ascending
- * @returns {number|null} null for an empty list
+ * @param {(bigint|number|string)[]} sorted ascending
+ * @returns {bigint|null} null for an empty list
  */
 export function median(sorted) {
 	const n = sorted.length;
 	if (!n) return null;
-	if (n % 2) return sorted[(n - 1) / 2];
-	return Math.round((sorted[n / 2 - 1] + sorted[n / 2]) / 2);
+	if (n % 2) return toAtomic(sorted[(n - 1) / 2]);
+	return divRoundHalfUp(toAtomic(sorted[n / 2 - 1]) + toAtomic(sorted[n / 2]), 2n);
 }
 
 /**

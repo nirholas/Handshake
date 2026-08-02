@@ -34,17 +34,31 @@ function renderStats(bench) {
 	}
 	const r = bench.report;
 	const cls = r.accuracy_pct >= 80 ? 'fc-good' : r.accuracy_pct >= 60 ? 'fc-warn' : '';
-	const byClass = Object.entries(r.by_class || {})
-		.map(([k, v]) => `<div class="fc-stat"><div class="fc-stat-label">${esc(k)}</div><div class="fc-stat-value">${pct(v.accuracy_pct)}</div></div>`)
-		.join('');
+	// Only render a breakdown cell for a bucket that actually had claims: a 0-claim
+	// bucket scores null, and showing it as a dash next to real numbers reads like
+	// a failure rather than an absence.
+	const cells = (table) =>
+		Object.entries(table || {})
+			.filter(([, v]) => v && v.total > 0)
+			.map(
+				([k, v]) =>
+					`<div class="fc-stat"><div class="fc-stat-label">${esc(k)}</div><div class="fc-stat-value">${pct(v.accuracy_pct)}</div><div class="fc-stat-sub">${v.correct}/${v.total}</div></div>`,
+			)
+			.join('');
+	const byClass = cells(r.by_class);
+	const byDifficulty = cells(r.by_difficulty);
+	const ran = r.generated_at ? new Date(r.generated_at) : null;
 	return `
 		<div class="fc-stats-grid">
-			<div class="fc-stat"><div class="fc-stat-label">Overall accuracy</div><div class="fc-stat-value ${cls}">${pct(r.accuracy_pct)}</div></div>
-			<div class="fc-stat"><div class="fc-stat-label">Claims run</div><div class="fc-stat-value">${r.total ?? '—'}</div></div>
-			<div class="fc-stat"><div class="fc-stat-label">Errors</div><div class="fc-stat-value">${r.errors ?? 0}</div></div>
+			<div class="fc-stat"><div class="fc-stat-label">Overall accuracy</div><div class="fc-stat-value ${cls}">${pct(r.accuracy_pct)}</div><div class="fc-stat-sub">${r.correct ?? 0}/${r.total ?? 0} claims</div></div>
+			<div class="fc-stat"><div class="fc-stat-label">Claims run</div><div class="fc-stat-value">${r.total ?? 0}</div><div class="fc-stat-sub">${esc(String(r.fixture_version || '1.0.0'))} suite</div></div>
+			<div class="fc-stat"><div class="fc-stat-label">Errors</div><div class="fc-stat-value">${r.errors ?? 0}</div><div class="fc-stat-sub">unreachable checks</div></div>
 		</div>
-		<div class="fc-stats-grid">${byClass}</div>
-		<p class="fc-hint" style="margin-top:12px">Last run: ${r.generated_at ? new Date(r.generated_at).toLocaleString() : 'unknown'}</p>`;
+		${byClass ? `<h3 class="fc-stats-heading">By expected verdict</h3><div class="fc-stats-grid">${byClass}</div>` : ''}
+		${byDifficulty ? `<h3 class="fc-stats-heading">By difficulty</h3><div class="fc-stats-grid">${byDifficulty}</div>` : ''}
+		<p class="fc-hint" style="margin-top:12px">
+			Last run: ${ran ? `<time datetime="${esc(ran.toISOString())}">${esc(ran.toLocaleString())}</time>` : 'unknown'}
+		</p>`;
 }
 
 async function loadBenchmark() {

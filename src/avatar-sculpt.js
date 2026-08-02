@@ -29,7 +29,7 @@ import {
 	proportionsGroupHtml,
 	wireProportionsGroup,
 } from './avatar-proportions.js';
-import { canonicalizeBoneName } from './glb-canonicalize.js';
+import { canonicalBoneNodesFromObject } from './animation-retarget.js';
 import { log } from './shared/log.js';
 
 /* ────────────────────────────────────────────────────────────────────────── *
@@ -261,30 +261,6 @@ export function applyMorphsToRoot(root, morphs) {
 			node.morphTargetInfluences[idx] = Math.max(-1, Math.min(1, weight));
 		}
 	});
-}
-
-/**
- * Canonical bone → node map for the loaded rig, using the full name-variant
- * coverage of glb-canonicalize (Mixamo, VRM, Unreal, Daz, Blender, …) rather
- * than the lightweight fallback avatar-proportions ships for callers that
- * can't afford the import. First bone wins, matching the retargeter's order.
- */
-function boneNodeMap(root) {
-	const map = new Map();
-	const consider = (node) => {
-		if (!node?.name) return;
-		const canonical = canonicalizeBoneName(node.name);
-		if (canonical && !map.has(canonical)) map.set(canonical, node);
-	};
-	const skinned = [];
-	root?.traverse?.((node) => {
-		if (node.isSkinnedMesh) skinned.push(node);
-		if (node.isBone) consider(node);
-	});
-	for (const sm of skinned) {
-		for (const bone of sm.skeleton?.bones || []) consider(bone);
-	}
-	return map;
 }
 
 /**

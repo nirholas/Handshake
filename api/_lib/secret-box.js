@@ -66,6 +66,47 @@ function walletMasterSecret() {
 	return env.JWT_SECRET;
 }
 
+// Retired encryption keys, newest first, from WALLET_ENCRYPTION_KEY_PREVIOUS
+// (comma or whitespace separated so several rotations can stack).
+//
+// Why this exists: a WALLET_ENCRYPTION_KEY rotation used to be a one-way door.
+// The Vercel to Cloud Run migration (2026-07) changed the key with no read path
+// back to the old one, and every ciphertext written under the retired key became
+// permanently unopenable. That is not a degraded mode, it is destroyed custody:
+// the wallet's SOL stays visible on chain and can never be signed for again.
+// Measured 2026-08-01 by scripts/audit-custodial-key-health.mjs: 8 of 565
+// custodial wallets, holding 0.49 SOL, of which 0.35 SOL belongs to CUSTOMERS
+// who can no longer withdraw it.
+//
+// Decrypt therefore accepts retired keys; encrypt never does (see encryptSecret),
+// so a rotation upgrades records as they are rewritten and old keys can be
+// dropped from the list once nothing opens with them.
+function retiredSecrets() {
+	return String(env.WALLET_ENCRYPTION_KEY_PREVIOUS || '')
+		.split(/[\s,]+/)
+		.map((s) => s.trim())
+		.filter((s) => s.length >= 16);
+}
+
+/**
+ * Every secret a decrypt may try, in priority order: the current dedicated key,
+ * then retired keys newest-first, then JWT_SECRET (v2 records written before a
+ * dedicated key existed used it, and v1 records always did).
+ *
+ * Exported so a key-health audit can report WHICH key opened a record without
+ * re-deriving this precedence and drifting from it.
+ *
+ * @returns {string[]} deduped, non-empty candidates
+ */
+export function secretBoxKeyCandidates() {
+	const candidates = [];
+	try { candidates.push(walletMasterSecret()); } catch { /* prod w/o dedicated key: retired + JWT below */ }
+	candidates.push(...retiredSecrets());
+	const jwt = env.JWT_SECRET;
+	if (jwt) candidates.push(jwt);
+	return [...new Set(candidates.filter(Boolean))];
+}
+
 // Derive an AES-256 key from a secret + salt via HKDF-SHA256.
 async function deriveKey(secret, salt) {
 	const raw = new TextEncoder().encode(secret);
@@ -109,10 +150,7 @@ export async function decryptSecret(ciphertext) {
 		// real dedicated key in production, so NEW writes stay independent of JWT_SECRET.
 		// Retire the fallback after a re-encryption migration lifts every record to the
 		// dedicated key.
-		const candidates = [];
-		try { candidates.push(walletMasterSecret()); } catch { /* prod w/o dedicated key — JWT_SECRET below */ }
-		const jwt = env.JWT_SECRET;
-		if (jwt && !candidates.includes(jwt)) candidates.push(jwt);
+		const candidates = secretBoxKeyCandidates();
 		let lastErr;
 		for (const secret of candidates) {
 			try {
@@ -123,13 +161,21 @@ export async function decryptSecret(ciphertext) {
 		}
 		throw lastErr || new Error('[secret-box] v2 decrypt failed: no candidate key available');
 	}
-	// Legacy v1: JWT_SECRET + constant salt, no version tag.
+	// Legacy v1: constant salt, no version tag. v1 always derived from JWT_SECRET,
+	// but a retired JWT_SECRET strands v1 records exactly the way a retired
+	// WALLET_ENCRYPTION_KEY strands v2 ones, so the same candidate list applies.
 	const raw = Buffer.from(ciphertext, 'base64');
 	const iv = raw.subarray(0, 12);
 	const ct = raw.subarray(12);
-	const key = await deriveKey(env.JWT_SECRET, LEGACY_SALT);
-	const plain = await subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
-	return new TextDecoder().decode(plain);
+	let lastErr;
+	for (const secret of secretBoxKeyCandidates()) {
+		try {
+			const key = await deriveKey(secret, LEGACY_SALT);
+			const plain = await subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+			return new TextDecoder().decode(plain);
+		} catch (e) { lastErr = e; }
+	}
+	throw lastErr || new Error('[secret-box] v1 decrypt failed: no candidate key available');
 }
 
 /** True if a stored value is a v2 ciphertext (vs a legacy plaintext/base64 blob). */

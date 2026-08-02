@@ -134,6 +134,31 @@ export function classifySubject(text) {
 	return 'object';
 }
 
+/**
+ * classifySubject plus WHERE in the prompt the subject word was found.
+ *
+ * The position matters to any caller that has to weigh the subject against
+ * another signal read from the same sentence. api/_lib/glb-pbr-derive.js weighs
+ * it against material words: "a stainless steel chef knife" is a metal object
+ * that happens to contain an occupation word, while "a chef in a wool apron" is
+ * a person who happens to be wearing one, and only the ORDER of the two matches
+ * tells them apart. classifySubject alone returns 'person' for both.
+ *
+ * `index` is the character offset of the matched subject word, or -1 when the
+ * subject is the 'object' fallback (no word matched anything).
+ *
+ * @param {string} text
+ * @returns {{ subject: 'person'|'animal'|'vehicle'|'food'|'object', index: number }}
+ */
+export function classifySubjectAt(text) {
+	const t = String(text || '');
+	for (const [re, subject] of [[PERSON_RE, 'person'], [ANIMAL_RE, 'animal'], [VEHICLE_RE, 'vehicle'], [FOOD_RE, 'food']]) {
+		const m = re.exec(t);
+		if (m) return { subject, index: m.index };
+	}
+	return { subject: 'object', index: -1 };
+}
+
 // The complete negative-prompt string for a prompt: the universal reconstruction
 // failures, the photoreal failures (only when the result should look real), and
 // the failures specific to the detected subject. This is the one place negatives
