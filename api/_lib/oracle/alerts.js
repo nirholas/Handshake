@@ -13,7 +13,7 @@
 // Env:
 //   TELEGRAM_BOT_TOKEN            — same bot used across the platform
 //   TELEGRAM_ORACLE_CHAT_ID       — signals channel (@handle or -100… numeric)
-//   ORACLE_FEED_MIN_SCORE         — score floor for channel posts (default 56;
+//   ORACLE_FEED_MIN_SCORE: score floor for channel posts (default 56;
 //                                   set 101 to disable the score path)
 //
 // Dedup: an in-memory Set of alerted mints per process restart, plus a DB flag
@@ -31,7 +31,7 @@ const TIER_ORDER = { prime: 3, strong: 2, lean: 1, watch: 0, avoid: -1 };
 const MIN_TIER_RANK = TIER_ORDER[MIN_ALERT_TIER] ?? 2;
 
 // Score floor for the channel feed. 56 is the Lean tier boundary
-// (api/_lib/oracle/conviction.js TIERS) — the top slice of the real score
+// (api/_lib/oracle/conviction.js TIERS), the top slice of the real score
 // distribution, roughly a dozen coins a day at current volume.
 const FEED_MIN_SCORE = clampScore(process.env.ORACLE_FEED_MIN_SCORE, 56);
 

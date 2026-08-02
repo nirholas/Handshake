@@ -1,4 +1,4 @@
-// Oracle Telegram feed floor — unit tests.
+// Oracle Telegram feed floor: unit tests.
 //
 // The channel feed posts a coin when it crosses the tier floor OR the raw
 // score floor. The score path is load-bearing: the live score distribution

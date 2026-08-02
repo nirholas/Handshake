@@ -2,17 +2,17 @@
 //
 // Runs once daily (08:00 UTC). Three lanes:
 //
-//   1. Channel digest — a platform-wide summary posted to the public signals
+//   1. Channel digest: a platform-wide summary posted to the public signals
 //      channel (TELEGRAM_ORACLE_CHAT_ID): coins scored, top conviction of the
 //      day, agent action stats. Fires whenever the channel is configured,
 //      even with zero personal subscribers, so the feed always has a daily
 //      anchor post.
-//   2. Owner digests — each armed Oracle subscriber (telegram_chat_id on
+//   2. Owner digests: each armed Oracle subscriber (telegram_chat_id on
 //      their watch) gets their agent's armed status, action count, W/L,
 //      realized PnL, and top coins above their threshold.
-//   3. Follower digests — users following agents they don't own.
+//   3. Follower digests: users following agents they don't own.
 //
-// Fire-and-forget per recipient — one failure never blocks others. Respects
+// Fire-and-forget per recipient: one failure never blocks others. Respects
 // CRON_SECRET auth.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
@@ -282,7 +282,7 @@ export default wrapCron(async (req, res) => {
 	let sent = 0;
 	let failed = 0;
 
-	// Channel digest — the public signals channel gets a platform-wide daily
+	// Channel digest: the public signals channel gets a platform-wide daily
 	// anchor post whenever it is configured, independent of personal subscribers.
 	let channelSent = false;
 	const channelChatId = process.env.TELEGRAM_ORACLE_CHAT_ID;

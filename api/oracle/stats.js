@@ -26,7 +26,7 @@
  *
  *   open_actions   — oracle_watch_actions rows still open (not yet settled)
  *   agents_armed   — distinct agent_ids currently armed (armed = true)
- *   telegram_channel — public t.me URL of the Oracle signals channel, when
+ *   telegram_channel: public t.me URL of the Oracle signals channel, when
  *                      TELEGRAM_ORACLE_CHAT_ID is a public @handle (null for
  *                      numeric/private IDs or when unconfigured). The /oracle
  *                      page renders its "Join the Telegram feed" button from
@@ -45,7 +45,7 @@ const NETWORKS = new Set(['mainnet', 'devnet']);
 
 /**
  * Public join URL for the Oracle signals channel. Only @handle chat IDs are
- * public — a numeric -100… ID is a private channel with no join link, so it
+ * public: a numeric -100… ID is a private channel with no join link, so it
  * is deliberately not exposed.
  */
 function telegramChannelUrl() {
