@@ -1,14 +1,20 @@
 // Oracle — conviction alerts via Telegram.
 //
-// When the oracle-score cron produces a prime (≥86) or strong (≥72) conviction
-// coin for the first time, this module fires a Telegram message to the signals
-// channel. The channel is separate from the ops alerts (TELEGRAM_ALERTS_CHAT_ID)
+// When the oracle-score cron produces a high-conviction coin for the first
+// time, this module fires a Telegram message to the signals channel. A coin
+// qualifies by tier (prime ≥86 / strong ≥72, see ORACLE_ALERT_MIN_TIER) OR by
+// raw score (ORACLE_FEED_MIN_SCORE, default 56 = the Lean floor). The score
+// path exists because tier-only gating starved the channel: the live score
+// distribution tops out in the low 60s, so a strong-only feed never posts.
+// The channel is separate from the ops alerts (TELEGRAM_ALERTS_CHAT_ID)
 // and the changelog channel (TELEGRAM_CHANGELOG_CHAT_ID) — holders subscribe to
 // it for actionable pump.fun conviction signals.
 //
 // Env:
 //   TELEGRAM_BOT_TOKEN            — same bot used across the platform
 //   TELEGRAM_ORACLE_CHAT_ID       — signals channel (@handle or -100… numeric)
+//   ORACLE_FEED_MIN_SCORE         — score floor for channel posts (default 56;
+//                                   set 101 to disable the score path)
 //
 // Dedup: an in-memory Set of alerted mints per process restart, plus a DB flag
 // (oracle_conviction.alerted_at) that persists across restarts so we never fire
@@ -23,6 +29,27 @@ const ALERT_TIMEOUT_MS = 4000;
 const MIN_ALERT_TIER = process.env.ORACLE_ALERT_MIN_TIER || 'strong';
 const TIER_ORDER = { prime: 3, strong: 2, lean: 1, watch: 0, avoid: -1 };
 const MIN_TIER_RANK = TIER_ORDER[MIN_ALERT_TIER] ?? 2;
+
+// Score floor for the channel feed. 56 is the Lean tier boundary
+// (api/_lib/oracle/conviction.js TIERS) — the top slice of the real score
+// distribution, roughly a dozen coins a day at current volume.
+const FEED_MIN_SCORE = clampScore(process.env.ORACLE_FEED_MIN_SCORE, 56);
+
+function clampScore(raw, fallback) {
+	const n = Number(raw);
+	return Number.isFinite(n) ? Math.max(0, Math.min(101, n)) : fallback;
+}
+
+/**
+ * Whether a scored coin qualifies for the channel feed: by tier
+ * (ORACLE_ALERT_MIN_TIER, default strong) OR by raw score
+ * (ORACLE_FEED_MIN_SCORE, default 56). Exported for tests.
+ */
+export function feedEligible(coin) {
+	const rank = TIER_ORDER[coin?.tier] ?? -1;
+	const score = Number(coin?.score) || 0;
+	return rank >= MIN_TIER_RANK || score >= FEED_MIN_SCORE;
+}
 
 // In-memory dedup for this process lifetime — prevents double-fire within the
 // same worker even if alerted_at DB write is slow.
@@ -187,13 +214,10 @@ export async function alertNewHighConviction(coins, network = 'mainnet') {
 	const chatId = process.env.TELEGRAM_ORACLE_CHAT_ID;
 	if (!token || !chatId) return 0; // silently no-op when not configured
 
-	// Filter to coins that cross the min tier threshold and haven't been alerted.
-	const candidates = coins.filter((c) => {
-		const rank = TIER_ORDER[c.tier] ?? -1;
-		if (rank < MIN_TIER_RANK) return false;
-		if (_alerted.has(c.mint)) return false;
-		return true;
-	});
+	// Filter to coins that qualify (by tier OR by raw score) and haven't been
+	// alerted. The score path keeps the feed alive at the top of the real
+	// distribution even while no coin reaches the strong/prime tiers.
+	const candidates = coins.filter((c) => feedEligible(c) && !_alerted.has(c.mint));
 	if (!candidates.length) return 0;
 
 	// Check the DB to skip any already-alerted mints (across restarts).
