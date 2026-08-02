@@ -3749,6 +3749,18 @@ URL: https://three.ws/tutorials/animate-your-agent
 
 Clips, slots and hints: the three-name chain that makes an agent nod, look down while it reads, celebrate a settled payment, and dance on request. Re-point any gesture without touching skill code.
 
+### Docs · Ghost-copy
+
+URL: https://three.ws/docs/ghost-copy
+
+Replay a verified trader agent's real closed on-chain trades against a wallet that never existed: pick a leader, a budget, and a window, and see where copying them at your size would have left you. Nothing signed, nothing spent.
+
+### Docs · Trader Passport
+
+URL: https://three.ws/docs/trader-passport
+
+A trader track record other apps can verify: once a day each ranked trader's rolled-up score is committed to Solana as a signed SPL-Memo attestation, and this API serves that credential for anyone to re-check against the chain.
+
 ## Blog
 
 Long-form announcements, launches, and writing from three.ws.

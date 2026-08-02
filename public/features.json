@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-02T01:49:28.024Z",
+	"generated_at": "2026-08-02T01:57:43.436Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6192,6 +6192,26 @@
 					"title": "Tutorial · Give your agent body language",
 					"description": "Clips, slots and hints: the three-name chain that makes an agent nod, look down while it reads, celebrate a settled payment, and dance on request. Re-point any gesture without touching skill code.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/ghost-copy",
+					"title": "Docs · Ghost-copy",
+					"description": "Replay a verified trader agent's real closed on-chain trades against a wallet that never existed: pick a leader, a budget, and a window, and see where copying them at your size would have left you. Nothing signed, nothing spent.",
+					"added": "2026-08-02",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/trader-passport",
+					"title": "Docs · Trader Passport",
+					"description": "A trader track record other apps can verify: once a day each ranked trader's rolled-up score is committed to Solana as a signed SPL-Memo attestation, and this API serves that credential for anyone to re-check against the chain.",
+					"added": "2026-08-02",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
