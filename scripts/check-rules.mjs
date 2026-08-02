@@ -23,6 +23,13 @@
 // `git diff HEAD` shows everyone's in-flight work, not yours. Scope to the
 // files you touched and you get a verdict on YOUR change.
 //
+// In --base mode (the pre-push hook) it ALSO lints the subject line of every
+// commit in base..head. History filled up with "chore: sync working tree"
+// sweeps that say nothing about the diff they carry, which makes the log
+// useless for archaeology. A subject must describe the change: banned generic
+// subjects and sub-15-character subjects fail the push. Merge commits and the
+// deliberately-neutral revert messages CLAUDE.md mandates are exempt.
+//
 // Exit 1 on any violation, with file:line and the rule broken.
 
 import { execFileSync } from 'node:child_process';
@@ -120,6 +127,70 @@ const RULES = [
 		test: (line) => /^\s*(const|let|var)\s+(sample|mock|fake|dummy|placeholder)[A-Z]\w*\s*=\s*\[/.test(line),
 	},
 ];
+
+// Commit-subject lint, --base mode only: the pre-push hook hands us exactly
+// the commits leaving the machine, so this is the one place a message rule can
+// be enforced without judging other agents' in-flight work. A commit message
+// is the only documentation a diff carries into history; "chore: sync working
+// tree" documents nothing.
+const BANNED_SUBJECTS = new Set([
+	'sync working tree',
+	'sync',
+	'wip',
+	'update',
+	'updates',
+	'change',
+	'changes',
+	'misc',
+	'stuff',
+	'cleanup',
+	'clean up',
+	'minor changes',
+	'various fixes',
+	'more work',
+	'progress',
+	'checkpoint',
+	'save work',
+	'commit',
+	'work',
+]);
+if (base) {
+	let commits = [];
+	try {
+		commits = git(['log', '--format=%H%x00%s', `${base}..${head}`]).split('\n').filter(Boolean);
+	} catch (err) {
+		console.error(`[check-rules] could not read the commit list (${base}..${head}): ${err.message}`);
+		process.exit(1);
+	}
+	const bad = [];
+	for (const row of commits) {
+		const [sha, subject = ''] = row.split('\0');
+		const s = subject.trim();
+		// Merge commits are machine-written; neutral revert messages are
+		// mandated by CLAUDE.md (never echo the reverted content).
+		if (/^merge /i.test(s)) continue;
+		if (/^(revert previous change|roll back the prior commit)$/i.test(s)) continue;
+		// Strip a conventional-commit prefix so `chore: sync` and `sync` are
+		// judged by the same words.
+		const meat = s.replace(/^[a-z]+(\([^)]*\))?!?:\s*/i, '').trim();
+		if (BANNED_SUBJECTS.has(meat.toLowerCase())) {
+			bad.push({ sha, subject: s, why: 'generic sweep subject, says nothing about the diff' });
+		} else if (meat.length < 15) {
+			bad.push({ sha, subject: s, why: 'subject too short to describe the change (min 15 chars after the type prefix)' });
+		}
+	}
+	if (bad.length) {
+		console.error(`[check-rules] ${bad.length} commit(s) being pushed have a meaningless subject:\n`);
+		for (const b of bad) {
+			console.error(`[check-rules]   ${b.sha.slice(0, 9)}  "${b.subject}"`);
+			console.error(`[check-rules]     ${b.why}`);
+		}
+		console.error('\n[check-rules] CLAUDE.md rule: every commit message describes the actual diff,');
+		console.error('[check-rules] `type(scope): what changed and why a reader would care`.');
+		console.error('[check-rules] Reword with `git commit --amend` (last commit) or a rebase, then push again.');
+		process.exit(1);
+	}
+}
 
 let diffArgs;
 if (base) diffArgs = ['diff', '--unified=0', `${base}...${head}`];

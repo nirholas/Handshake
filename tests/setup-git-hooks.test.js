@@ -286,9 +286,9 @@ describe('pre-push hook (behavior)', () => {
 		install(repo);
 		baseSha = git(repo, ['rev-parse', 'HEAD']).trim();
 		writeFileSync(join(repo, 'added.js'), 'export const fine = 2;\n');
-		cleanSha = commitAll(repo, 'clean change');
+		cleanSha = commitAll(repo, 'feat(test): add a module that follows every hard rule');
 		writeFileSync(join(repo, 'bad.js'), `${STUB_COMMENT}\nexport const x = 1;\n`);
-		dirtySha = commitAll(repo, 'violating change');
+		dirtySha = commitAll(repo, 'feat(test): add a module whose body breaks a hard rule');
 	});
 
 	it('passes a clean push and hands the refs to git-lfs', () => {
@@ -304,6 +304,39 @@ describe('pre-push hook (behavior)', () => {
 		expect(code).toBe(1);
 		expect(out).toContain('bad.js');
 		expect(out).toContain('SKIP_PUSH_CHECKS=1');
+	});
+
+	it('blocks a push whose commit subject is a generic sweep message', () => {
+		// The 22-of-60 "chore: sync working tree" era: the message lint rejects
+		// the subject even when the diff itself is clean.
+		writeFileSync(join(repo, 'swept.js'), 'export const swept = 4;\n');
+		const sweepSha = commitAll(repo, 'chore: sync working tree');
+		try {
+			const { code, out } = runHook(repo, `refs/heads/main ${sweepSha} refs/heads/main ${dirtySha}\n`);
+			expect(code).toBe(1);
+			expect(out).toContain('meaningless subject');
+			expect(out).toContain('sync working tree');
+		} finally {
+			git(repo, ['reset', '-q', '--hard', dirtySha]);
+		}
+	});
+
+	it('blocks a subject too short to describe anything, allows a neutral revert', () => {
+		writeFileSync(join(repo, 'short.js'), 'export const s = 5;\n');
+		const shortSha = commitAll(repo, 'fix: tweak');
+		writeFileSync(join(repo, 'short.js'), 'export const s = 6;\n');
+		const revertSha = commitAll(repo, 'Revert previous change');
+		try {
+			const blocked = runHook(repo, `refs/heads/main ${shortSha} refs/heads/main ${dirtySha}\n`);
+			expect(blocked.code).toBe(1);
+			expect(blocked.out).toContain('too short');
+			// The neutral revert wording CLAUDE.md mandates must pass the lint.
+			const allowed = runHook(repo, `refs/heads/main ${revertSha} refs/heads/main ${shortSha}\n`);
+			expect(allowed.out).not.toContain('meaningless subject');
+			expect(allowed.code).toBe(0);
+		} finally {
+			git(repo, ['reset', '-q', '--hard', dirtySha]);
+		}
 	});
 
 	it('does not run git-lfs when it blocks, so a rejected push uploads nothing', () => {
