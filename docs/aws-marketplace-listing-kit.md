@@ -7,6 +7,13 @@ deployed — see [aws-marketplace.md](./aws-marketplace.md). This doc covers the
 listing itself, which has not yet been created (the AMMP "AI agents & tools
 products" page shows "No products to display").
 
+> **BLOCKER, verified 2026-08-02: the integration in this repo cannot serve a new
+> listing as written.** AWS stopped populating `CustomerIdentifier` for new SaaS
+> integrations, and all 51 references across 7 files key on it. Read
+> "Verified against AWS docs" and "Confirmed defects" at the bottom of this file
+> before touching the listing. Do not create the product expecting the backend to
+> work; it will fail the subscribe round-trip.
+
 - **Seller account:** three-ws @ 155407237916
 - **Delivery method:** API-based (SaaS fulfillment) — **not** container/Bedrock
   AgentCore. The whole backend is SaaS-style (ResolveCustomer + SNS + entitlements),
@@ -240,3 +247,100 @@ Not done (requires AWS console / seller creds — cannot be done from this repo)
 - Publishing the S3 EULA (currently 404 — never uploaded).
 - Creating the product in the AMMP wizard (manual web UI).
 - Obtaining and wiring `AWS_MP_PRODUCT_CODE`.
+
+---
+
+## Verified against AWS docs (2026-08-02)
+
+This section exists because this doc previously instructed the reader to paste a
+self-created SNS topic ARN into a wizard field that does not exist. Every claim
+below is cited to a primary AWS source. If you change a claim here, re-cite it.
+
+### Claim 1: the seller never supplies an SNS topic ARN
+
+Seven independent confirmations:
+
+| # | Source | Evidence |
+|---|---|---|
+| 1 | [saas-notification](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-notification.html) | "you subscribe to the Amazon SNS topics for AWS Marketplace **provided to you during product creation**" |
+| 2 | Same page, ARN format | `arn:aws:sns:us-east-1:123456789012:aws-mp-subscription-notification-PRODUCTCODE`. The name is derived from the product code, which does not exist until AWS assigns it. A seller cannot pre-create it. |
+| 3 | Same page, cross-account note | "You can only **subscribe to** AWS Marketplace SNS topics from the AWS account used to sell the products." You subscribe to it; you do not own it. |
+| 4 | [saas-integrate-subscription](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-integrate-subscription.html) | "Your SNS topic information was included in the **email message that you received from the AWS Marketplace Seller Operations team** when you created your product." |
+| 5 | [saas-create-product](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-create-product.html) | The complete asset list a seller collects is: logo URL, EULA URL, registration URL, metadata, support info. No SNS topic. |
+| 6 | [saas-product-settings](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-product-settings.html) | The exhaustive list of seller-editable fields (product info, architecture, allowlist, visibility, pricing, fulfillment URL, country, refund policy, EULA) contains no SNS field. |
+| 7 | [saas-create-product](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-create-product.html) | "Your product code and Amazon EventBridge event configuration will be **available to you on the product overview page**." Notification config is an output of creation, never an input. |
+
+Consequence: `scripts/aws-marketplace-provision.sh` creates a topic
+(`three-ws-marketplace-subscription`) that has no consumer. Worse, see defect 2 below.
+
+### Claim 2: `CustomerIdentifier` is dead for new listings
+
+[ResolveCustomer API reference](https://docs.aws.amazon.com/marketplacemetering/latest/APIReference/API_ResolveCustomer.html),
+stated three times on that page:
+
+> "For new SaaS product integrations, the `CustomerIdentifier` field is **not populated**
+> in the `ResolveCustomer` API response. New integrations must use `CustomerAWSAccountId`
+> and `LicenseArn` to identify customers. Existing integrations continue to work unchanged."
+
+Corroborated in [saas-integrate-subscription](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-integrate-subscription.html):
+"For new SaaS product integrations, the `CustomerIdentifier` field is not populated."
+
+We have never created a product, so our listing is a *new* integration by definition.
+
+### Claim 3: Concurrent Agreements is mandatory for us
+
+[saas-integrate-subscription](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-integrate-subscription.html):
+"Starting **June 1, 2026**, all new SaaS products will be required to support updated
+integration requirements." That date is in the past; it binds any product we create now.
+
+### Claim 4: public visibility takes 7-10 business days
+
+[saas-create-product](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-create-product.html):
+"AWS Marketplace Seller Operations uses a manual process... The process takes 7-10
+business days to update visibility to public, and longer if the team finds errors."
+
+There is no same-day path to a public listing URL. Plan around it; do not promise it.
+
+### Claim 5: EventBridge events cannot reach an HTTPS endpoint directly
+
+[notifications-eventbridge](https://docs.aws.amazon.com/marketplace/latest/userguide/notifications-eventbridge.html)
+and [saas-eventbridge-integration](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-eventbridge-integration.html):
+events are delivered to the seller's **default event bus** in their own AWS account
+with `source: aws.agreement-marketplace`. Targets are AWS resources (Lambda, Step
+Functions, API Gateway). An external HTTPS webhook needs an EventBridge rule plus an
+API destination to relay to it. `api/aws-marketplace/subscription.js` is an SNS HTTPS
+webhook and cannot be an EventBridge target as written.
+
+---
+
+## Confirmed defects (fix before the listing goes anywhere)
+
+**Defect 1 (critical, listing-breaking): the identity model is keyed on a field AWS
+no longer sends.** `resolveCustomer()` in `api/_lib/aws-marketplace.js` reads
+`result.CustomerIdentifier` and discards `LicenseArn` entirely. `register.js` uses it
+as the `ON CONFLICT` key. `subscription.js` returns 400 `missing_customer_identifier`
+without it. 51 references across 7 files: `aws-marketplace.js`,
+`aws-marketplace-bridge.js`, `x402-subscriptions.js`, `issue-key.js`, `register.js`,
+`subscription.js`, `link.js`. On a new listing every subscribe dies at the first
+insert. Fix: return and persist `LicenseArn` + `CustomerAWSAccountId`, key on those,
+keep `customer_identifier` nullable for any legacy row.
+
+**Defect 2 (critical, silent): the SNS topic guard rejects every real notification.**
+`verifySnsMessage()` compares `msg.TopicArn` against `env.AWS_MP_SNS_TOPIC_ARN`. The
+provision script emits the *self-created* topic ARN for that variable. Set it as the
+old docs instructed and every genuine AWS notification fails the check and returns 403,
+with the cause visible only in logs. Fix: set that var to the AWS-issued
+`aws-mp-subscription-notification-<PRODUCTCODE>` ARN, or leave it unset (the guard is
+skipped when empty) until the real ARN is known.
+
+**Defect 3 (latent): SNS signature verification hardcodes SHA1.**
+`verifySnsMessage()` always does `createVerify('SHA1')` and never reads
+`msg.SignatureVersion`. AWS SNS SignatureVersion 2 signs with SHA256. On a
+SignatureVersion 2 topic every message fails verification and returns 403. Fix: branch
+on `msg.SignatureVersion` (`'2'` implies SHA256, otherwise SHA1).
+
+**Open decision, resolvable only at product creation:** whether our product is issued
+SNS topics, EventBridge config, or both. `saas-create-product` says EventBridge config
+appears on the product overview page; `saas-integrate-subscription` still describes the
+SNS email from Seller Ops. Read the product overview page the moment the product is
+created and build the leg AWS actually gave us. Do not build both on spec.
