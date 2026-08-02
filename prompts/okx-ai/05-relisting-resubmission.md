@@ -31,14 +31,23 @@ Then be the reviewer for an hour, against production:
 
 ```bash
 curl -s https://three.ws/api/okx/3d/catalog | python3 -m json.tool | head -80
-for s in $(node scripts/okx-listing-payload.mjs --slugs 2>/dev/null || echo text-to-3d); do
+
+# probe every advertised endpoint unpaid, slugs read from the live catalog itself
+for s in $(curl -s https://three.ws/api/okx/3d/catalog \
+  | python3 -c "import sys,json;[print(x['endpoint'].rsplit('/',1)[-1]) for x in json.load(sys.stdin)['services']]"); do
   echo "== $s"; curl -si -X POST "https://three.ws/api/okx/3d/$s" \
     -H 'content-type: application/json' -d '{}' | head -12
 done
+
 onchainos agent get-agents --agent-ids 2632
-onchainos agent service-list --agent-id 2632
-node scripts/okx-listing-payload.mjs --delta   # feed it the service-list output per its usage
+node scripts/okx-listing-payload.mjs | head -40                # the 11 create-format entries
+onchainos agent service-list --agent-id 2632 \
+  | node scripts/okx-listing-payload.mjs --delta               # the full replace delta
 ```
+
+`scripts/okx-listing-payload.mjs` takes the live `service-list` output on stdin and supports
+`--delta` and `--briefing` only. Adjust the slug extraction above if the catalog's JSON shape
+has moved; the point is that the slugs come from the live catalog, never from this file.
 
 1. Every endpoint in the catalog returns an OKX-valid 402 unpaid (or free content for the free
    lane). Any drift from what OKX-04 recorded: stop and fix that first.

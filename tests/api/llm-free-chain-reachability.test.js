@@ -124,23 +124,22 @@ describe('free chain: every rung is reachable through a transport-level failure'
 	for (const [i, rung] of FREE_CHAIN.entries()) {
 		it(`reaches ${rung.provider} when the ${i} rung(s) above it fail at the transport level`, async () => {
 			configureFreeLanes();
-			const above = FREE_CHAIN.slice(0, i);
 			const tried = [];
 
-			globalThis.fetch = vi.fn(async (url) => {
+			globalThis.fetch = vi.fn(async (url, opts) => {
 				const u = String(url);
-				// The two Groq rungs share a host, so match on the requested model to
-				// tell them apart. Everything else is one host per rung.
-				const idx = FREE_CHAIN.findIndex((r) => u.includes(r.host));
-				const hit = FREE_CHAIN.find((r) => u.includes(r.host));
-				expect(hit, `unexpected fetch: ${u}`).toBeTruthy();
-				tried.push(hit.provider);
+				// The two Groq rungs share a host, so a rung is identified by
+				// host AND requested model. Matching on host alone would make the 70B
+				// lane and the instant lane indistinguishable, which is exactly the
+				// pair this suite has to tell apart.
+				const requested = JSON.parse(opts.body).model;
+				const idx = FREE_CHAIN.findIndex((r) => u.includes(r.host) && r.model === requested);
+				expect(idx, `unexpected fetch: ${u} (${requested})`).toBeGreaterThanOrEqual(0);
+				tried.push(FREE_CHAIN[idx].provider);
 				// A rung above the target dies at the transport level. Alternate the
 				// two shapes so both a dropped socket and an abort are covered.
-				if (idx < i || (idx === i && tried.filter((t) => t === hit.provider).length <= above.filter((a) => a.provider === hit.provider).length)) {
-					throw transportFailure(idx % 2 === 0 ? 'reset' : 'abort');
-				}
-				return okOpenAiShape(`served by ${hit.provider}`, rung.model);
+				if (idx < i) throw transportFailure(idx % 2 === 0 ? 'reset' : 'abort');
+				return okOpenAiShape(`served by ${FREE_CHAIN[idx].provider}`, rung.model);
 			});
 
 			const out = await llm.llmComplete({ system: 's', user: 'u', timeoutMs: 30_000 });

@@ -152,3 +152,70 @@ Left (all owner-gated, none of it config):
    PLAINTEXT env var on the Cloud Run service, while `X402_FEE_PAYER_SECRET_BASE58`
    beside it is a Secret Manager `secretRef`. Any principal with `run.services.get`
    can read that master wallet key. Recommend rotate + move to Secret Manager.
+
+## 2026-08-02: 03 sponsor-runway-automation (code complete, capital owner-gated)
+Measured, before (`/api/ops/payment-outcomes` with the ops secret from Secret
+Manager `ops-dashboard-secret`, plus `curl /api/x402/three-intel | jq
+'.accepts[].network'`): sponsor `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`
+at 0.0108 SOL, settle floor 0.002 (prod `X402_SPONSOR_SOL_FLOOR_LAMPORTS=2000000`,
+not the 0.02 code default), measured burn 0.058981 SOL/day over 7d from 50,001
+successful settles, runway 0.2d. Accepts carried BOTH networks; the settle sensor
+read `cause: rail`. Fifteen minutes later, mid-verification, the same wallet
+crossed its floor: 0.0018556 SOL, accepts collapsed to `['eip155:8453']` only,
+and the sensor flipped to `cause: sponsor_floor` with `noSolanaAccept: 148`.
+The failure this work order describes reproduced live, and the new sensor named
+it correctly in both regimes without a code change between the two reads.
+
+Did:
+- New `api/_lib/x402/sponsor-runway.js`: `measureSponsorBurn()` (fee_lamports over
+  a parameterised window, fail-soft), `computeSponsorRunway()` and
+  `formatSponsorRunwayAlert()` (both pure). Runway is reported twice: `runway_days`
+  to empty (what a funding ask is sized against) and `runway_days_to_floor`, which
+  is what the status and the alert key off, because settling stops at the floor.
+- `checkRingWallets()` now measures the burn every 10-minute tick and fires the
+  alert through `sendOpsAlert` (dashboard row always, Telegram when wired).
+  Thresholds: `X402_SPONSOR_RUNWAY_ALERT_DAYS` (3), `X402_SPONSOR_BURN_WINDOW_DAYS`
+  (7). `unknown` (unreadable balance, or an idle rail with no measurable burn)
+  never pages. The dashboard read passes a no-op sender, so it still cannot alert.
+- `/api/ops/payment-outcomes` and the `/admin/ops` card now consume that one
+  verdict instead of recomputing burn, so the board and the alert can never
+  disagree. Both floors are reported separately: `settle_floor_sol` (where
+  settling stops) and `sol_floor` (the ring's 1.5x watch floor).
+- `recordAgentReclaim()` / `buildAgentReclaimRows()` in `economy-ledger.js`, called
+  from `treasury-topup`: `inflow` per return, `inflow_failed` per failure with the
+  stage (`read` / `recover` / `send`), and an `agent_reclaim` summary written even
+  on a no-op, so "ran and found nothing" (`nothing_reclaimable`, needs money) and
+  "could not run" (`blocked`, an RPC or key problem, free) stop being the same
+  absence of rows. Read-error rows capped at 20/run with the true count kept in the
+  summary. The chain-append loop was extracted and is now shared by all three
+  recorders.
+- Tests: `tests/x402-sponsor-runway.test.js` (14, arithmetic + the rendered alert
+  string), `tests/x402-sponsor-runway-monitor.test.js` (6, that the monitor
+  actually sends it), 7 added to `tests/economy-sweepback.test.js` for the ledger
+  rows. Docs: `docs/ops/payment-outcomes.md` (thresholds table, statuses, why
+  `unknown` never pages), `docs/x402-ring-economy.md`. Changelog entry (infra).
+- Verified end to end against the real DB and live chain, not only in unit tests:
+  the endpoint returned `runway_status: critical` and the `/admin/ops` card
+  rendered `settle floor 0.002 - burn 0.058279/day over 7d (49557 settles) -
+  runway 0d to floor (alerts under 3d)` in a headless browser, no console errors
+  from page code.
+
+Gate: `check:rules` clean on the 11 files (diff-scoped). `test:gate` 86/86,
+`test:gate-3d` 527/527, all MCP/route/handler/page/x402/guard audits pass. Three
+pre-existing reds, none mine and none regressed: `workers/okx-chat-bot` has no
+README (another agent's WO-08, in flight), `pages/ghost-copy.html` has 1 token-hex
+drift (another agent), and `audit:tour-atlas` reports the same 17 problems at base
+commit `6cc0370dc` (verified in a detached worktree).
+
+Left, both stop-and-ask gate 1, numbers rendered for the owner:
+1. **Free first, no owner money.** `POST /api/cron/treasury-topup?dry=1` plans
+   0.122875505 SOL reclaimable into the master from two platform agent wallets
+   (`Atlas #22` 6FL9viFy2WrYMWPd3HAQA4Bxm5qxQWoQMn3T9GbcwxEB 0.068390963 SOL,
+   `Echo #22` 8u5raEaz7Qjm5hRzNxwzXiZtjTkdgQ3Co6G6S5WNxFTs 0.054484542 SOL), 0 read
+   errors, 110 sources at floor. That is ~2 days at the measured burn. Firing it
+   non-dry moves funds and needs an explicit yes.
+2. **Capital.** 0.816 SOL to the SPONSOR or the economy master buys 14 days at the
+   measured 0.0583 SOL/day. Never per-agent wallets. Note the master IS the
+   sponsor here (same address, same balance).
+3. **Deploy.** Production runs `6cc0370dc`; every item above ships with the next
+   deploy, which is owner-gated. Until then the alert is dormant.

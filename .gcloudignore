@@ -51,6 +51,16 @@
 !/walk-sdk/
 !/tour-sdk/
 !/agents/
+# tests/ stays out of the image, but tests/fixtures/ holds one runtime artifact:
+# the 40-claim fact-check benchmark suite. api/fact-check-benchmark.js reads it
+# to render the claim-count summary on /fact-check, and
+# api/cron/fact-check-benchmark.js runs it. Without this re-include the endpoint
+# answered `fixture: null` in every deployed revision and the scheduled re-run
+# could not load its own suite. Re-include the parent, drop everything else under
+# it, then re-include just the fixtures dir (236K).
+!/tests/
+/tests/*
+!/tests/fixtures/
 !/character-studio/
 /character-studio/*
 !/character-studio/package.json

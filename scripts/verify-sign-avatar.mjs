@@ -19,7 +19,12 @@ function check(label, ok, detail = '') {
 	}
 }
 
-const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+// Software WebGL, and /dev/shm off: a container's default 64 MB shared memory
+// segment is not enough for a GLB-heavy renderer, which shows up as a bare
+// "Page crashed" rather than any error the page could report.
+const browser = await chromium.launch({
+	args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 // A shared dev server restarts under other work; give navigation and the first
 // module transform room rather than reporting a cold cache as a broken page.

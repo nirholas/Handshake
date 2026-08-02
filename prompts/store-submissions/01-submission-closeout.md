@@ -39,9 +39,20 @@ curl -s -X POST https://three.ws/api/mcp-studio -H 'content-type: application/js
 curl -sI "https://three.ws/legal/privacy" | head -3
 curl -sI "https://three.ws/support" | head -3
 npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-catalog && npm run audit:mcp-safety
-node scripts/build-mcp-listing-source.mjs && node scripts/build-mcp-directory-docs.mjs
+ls scripts/ | grep -i mcp          # the live generator set; see the note below
 git diff --stat prompts/store-submissions/_generated/
 ```
+
+**Generator note, verified 2026-08-01:** the two scripts the tracker's older entries name
+(`build-mcp-listing-source.mjs`, `build-mcp-directory-docs.mjs`) no longer exist in the tree and
+nothing else writes `_generated/mcp-listing-source.json` any more, so that file and
+`_generated/mcp-registry-republish.sh` are now hand-maintained artifacts. The live tooling is
+`npm run build:mcp-catalog` (writes `public/mcp-catalog.json`, gated by `audit:mcp-catalog`),
+`npm run audit:mcp` (manifests), `npm run audit:mcp-golden` (contract snapshot) and
+`npm run audit:mcp-safety` (annotations derived from each handler's AST). Reconcile the
+`_generated/` artifacts against the real `server*.json` manifests plus `public/mcp-catalog.json`
+by hand, and say in the tracker that they are hand-maintained, so the next agent does not go
+looking for a generator that was retired.
 
 Rewrite `_generated/TRACKER.md` from what you measured. Every row gets a status, today's date,
 and the command that produced it. Any claim you cannot reproduce is downgraded, not carried
@@ -66,10 +77,13 @@ forward.
 
 ## Task 2: keep the surfaces consistent
 
-- The canonical metadata source is `_generated/mcp-listing-source.json`. Regenerate it and the
-  per-directory docs, and commit only if the output actually changed.
-- `_generated/mcp-registry-republish.sh` holds the staged `mcp-publisher` commands. Regenerate
-  it against the live registry so the batch is accurate, and leave it unrun.
+- `_generated/mcp-listing-source.json` is the canonical listing metadata and is hand-maintained
+  (see the generator note above). Reconcile it against the real `server*.json` manifests, the
+  live `tools/list` counts you captured in Step 0, and `public/mcp-catalog.json`. Commit only if
+  something actually changed.
+- `_generated/mcp-registry-republish.sh` holds the staged `mcp-publisher` commands. Check each
+  entry against the live registry (`https://registry.modelcontextprotocol.io/?q=io.github.nirholas`)
+  so the batch is accurate, and leave it unrun.
 - Compliance grep across manifests, directory docs and the canonical source: zero references to
   any crypto project other than `$THREE`, and zero coin surface anywhere in the OpenAI lane.
 - `STRUCTURE.md` and `docs/mcp.md` server counts must match the canonical source. Fix drift in

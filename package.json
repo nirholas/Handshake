@@ -292,6 +292,7 @@
 		"worker:sniper:live": "SNIPER_MODE=live node workers/agent-sniper/index.js",
 		"worker:orders": "node workers/agent-orders/index.js",
 		"worker:orders:live": "ORDERS_MODE=live node workers/agent-orders/index.js",
+		"worker:okx-bot": "node workers/okx-chat-bot/index.js",
 		"worker:mm": "node workers/agent-mm/index.js",
 		"worker:mm:live": "MM_MODE=live node workers/agent-mm/index.js",
 		"worker:okx-bot": "node workers/okx-chat-bot/index.js",

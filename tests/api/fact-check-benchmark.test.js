@@ -10,7 +10,12 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { scoreResults, validateFixture } from '../../scripts/fact-check-benchmark.mjs';
+import {
+	isDegraded,
+	runClaims,
+	scoreResults,
+	validateFixture,
+} from '../../api/_lib/fact-check-benchmark.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const fixture = JSON.parse(readFileSync(join(HERE, '../fixtures/fact-check-benchmark.json'), 'utf8'));
@@ -92,5 +97,91 @@ describe('scoreResults', () => {
 		const zero = fixture.claims.map((c) => ({ ...c, actual_verdict: null }));
 		expect(scoreResults(zero).accuracy_pct).toBe(0);
 		expect(scoreResults(zero).errors).toBe(fixture.claims.length);
+	});
+});
+
+describe('isDegraded', () => {
+	// The refusal exists because a run that mostly errored measures provider
+	// availability, not verdict accuracy: publishing it states a false accuracy
+	// figure for a paid product.
+	it('passes a clean run and a run at exactly the 10% ceiling', () => {
+		expect(isDegraded({ total: 40, errors: 0 })).toBe(false);
+		expect(isDegraded({ total: 40, errors: 4 })).toBe(false);
+	});
+
+	it('refuses a run above the ceiling, and an empty run', () => {
+		expect(isDegraded({ total: 40, errors: 5 })).toBe(true);
+		expect(isDegraded({ total: 40, errors: 30 })).toBe(true);
+		expect(isDegraded({ total: 0, errors: 0 })).toBe(true);
+	});
+});
+
+describe('runClaims', () => {
+	const claims = Array.from({ length: 9 }, (_, i) => ({
+		claim: `claim ${i}`,
+		expected_verdict: 'supported',
+		difficulty: 'easy',
+	}));
+
+	it('runs every claim and preserves fixture order regardless of completion order', async () => {
+		// Reverse the latency so later claims finish first: results must still line
+		// up with the input, otherwise the confusion matrix attributes verdicts to
+		// the wrong claims.
+		const results = await runClaims(
+			claims,
+			async (claim) => {
+				const i = Number(claim.split(' ')[1]);
+				await new Promise((r) => setTimeout(r, (claims.length - i) * 2));
+				return `v${i}`;
+			},
+			{ concurrency: 4 },
+		);
+		expect(results.map((r) => r.claim)).toEqual(claims.map((c) => c.claim));
+		expect(results.map((r) => r.actual_verdict)).toEqual(claims.map((_, i) => `v${i}`));
+	});
+
+	it('never exceeds the concurrency cap', async () => {
+		let inFlight = 0;
+		let peak = 0;
+		await runClaims(
+			claims,
+			async () => {
+				peak = Math.max(peak, ++inFlight);
+				await new Promise((r) => setTimeout(r, 5));
+				inFlight--;
+				return 'supported';
+			},
+			{ concurrency: 3 },
+		);
+		expect(peak).toBeLessThanOrEqual(3);
+	});
+
+	it('records a thrown claim as an error rather than dropping it', async () => {
+		const results = await runClaims(
+			claims,
+			async (claim) => {
+				if (claim === 'claim 2') throw new Error('provider down');
+				return 'supported';
+			},
+			{ concurrency: 2 },
+		);
+		expect(results).toHaveLength(claims.length);
+		expect(results[2].actual_verdict).toBeNull();
+		expect(scoreResults(results).errors).toBe(1);
+	});
+
+	it('counts deadline-cut claims as errors, so a truncated run trips the refusal', async () => {
+		const results = await runClaims(
+			claims,
+			async () => {
+				await new Promise((r) => setTimeout(r, 30));
+				return 'supported';
+			},
+			{ concurrency: 1, deadlineMs: 45 },
+		);
+		expect(results).toHaveLength(claims.length);
+		const score = scoreResults(results);
+		expect(score.errors).toBeGreaterThan(0);
+		expect(isDegraded(score)).toBe(true);
 	});
 });

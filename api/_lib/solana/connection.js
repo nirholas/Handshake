@@ -348,34 +348,54 @@ function publishCooldowns(now) {
 		.catch(() => {});
 }
 
-// Every way a provider says "not THIS call" while staying perfectly healthy for
-// every other call. Three distinct phrasings live here because three distinct
-// mechanisms produce them, and all three were previously scattered across two
-// near-duplicate matchers that disagreed about which strings counted:
-//
-//   • POLICY BLOCK — the node is configured to refuse a shape.
-//     PublicNode getTokenAccountsByOwner → `Request blocked. Details: blocked
-//     parameter: params.1.programId`; PublicNode getProgramAccounts → `… excluded
-//     from account secondary indexes; this RPC method unavailable for key`;
-//     MagicBlock getProgramAccounts → `Your IP or provider is blocked from this
-//     endpoint`.
-//   • TIER GATE — the method exists but the keyless/free plan may not call it.
-//     Tatum getBalance / getSignaturesForAddress → `available for paid plans only`.
-//   • METHOD DISABLED — an operator switched the shape off on that node.
-//
-// All three are lane-and-method specific: the next lane serves the same call
-// normally, and this lane serves every other call normally. That is precisely the
-// signature of a METHOD demotion, never of a lane bench, and never of an auth
-// fault. Matching on wording (not on the JSON-RPC code) is deliberate: PublicNode
-// returns -32602 for a policy block, the same code a genuine invalid-params error
-// uses, and a genuine invalid-params error must NOT demote anything because every
-// lane would reject it identically.
-const METHOD_REFUSAL =
-	/request blocked|blocked parameter|excluded from account secondary indexes|this rpc method unavailable|blocked from this endpoint|method .*(?:not supported|is not available|disabled)|not available for anonymous access|available for paid plans only|upgrade your subscription|please register at/i;
+// A provider refusing one CALL SHAPE, naming the shape in the refusal. The node is
+// healthy and the credential is fine; this request, and only this request, cannot
+// be served here. Measured phrasings:
+//   • PublicNode getTokenAccountsByOwner → `Request blocked. Details: blocked
+//     parameter: params.1.programId`
+//   • PublicNode getProgramAccounts → `… excluded from account secondary indexes;
+//     this RPC method unavailable for key`
+//   • an operator-disabled method → `method <x> is not available`
+// Matching on wording rather than on the JSON-RPC code is deliberate: PublicNode
+// returns -32602 for its policy block, the same code a genuine invalid-params
+// error uses, and a genuine invalid-params error must never demote anything
+// because every lane rejects it identically.
+const CALL_SHAPE_REFUSAL =
+	/request blocked|blocked parameter|excluded from account secondary indexes|this rpc method unavailable|method .*(?:not supported|is not available|disabled)/i;
 
-/** True when `text` is a provider refusing one call shape rather than the caller. */
+// A provider refusing the CALLER: our address, our plan, our lack of a key, 
+// rather than the call. The wording is the trap: the SAME sentence is emitted
+// per-method by a healthy node and caller-wide by a node that has banned us.
+// Measured 2026-08-01 with scripts/probe-rpc-lanes.mjs: MagicBlock and
+// api.mainnet-beta.solana.com both answer `Your IP or provider is blocked from
+// this endpoint` for getProgramAccounts alone while serving all six other shapes,
+// and Tatum answers `available for paid plans only` for three shapes while still
+// serving getLatestBlockhash and getSignatureStatuses. Nothing in the message
+// separates those from a real ban, so the text cannot decide it; only the BREADTH
+// can, which is what the rotating fetch's escalation counter measures. Benching the
+// lane on first sight would have parked our best free primary (MagicBlock) for 30
+// minutes over one holder-census call.
+const CALLER_REFUSAL =
+	/blocked from this endpoint|not available for anonymous access|available for paid plans only|upgrade your subscription|please register at/i;
+
+/**
+ * True when `text` is a provider declining to serve this request for a reason the
+ * NEXT lane will not share and that says nothing about our credential, so the
+ * request rotates and the (lane, method) pair is demoted, not the lane.
+ */
 export function isMethodRefusal(text) {
-	return METHOD_REFUSAL.test(text || '');
+	const t = text || '';
+	return CALL_SHAPE_REFUSAL.test(t) || CALLER_REFUSAL.test(t);
+}
+
+/**
+ * True when `text` names a call shape the node refuses. Narrower than
+ * isMethodRefusal on purpose: this is the question cooldownMsFor asks once a lane
+ * IS being benched, where a caller refusal must take the full auth window (it will
+ * refuse the next request too) and a shape refusal must not.
+ */
+function isCallShapeRefusal(text) {
+	return CALL_SHAPE_REFUSAL.test(text || '');
 }
 
 function cooldownMsFor(status, bodyText) {
@@ -412,7 +432,7 @@ function cooldownMsFor(status, bodyText) {
 	// the lane keeps serving every other call shape with no cooldown at all. The
 	// branch stays because markEndpointCooldown is exported and must still classify
 	// a blocked call shape as the cheapest window rather than a 30m auth bench.
-	if (status === 403 && isMethodRefusal(bodyText)) return NETWORK_COOLDOWN_MS;
+	if (status === 403 && isCallShapeRefusal(bodyText)) return NETWORK_COOLDOWN_MS;
 	if (status === 401 || status === 403) return AUTH_COOLDOWN_MS;
 	// 404/410: the endpoint URL is dead or misrouted (expired Quicknode/Alchemy
 	// app, wrong path) — a persistent misconfiguration, so park it like an auth
@@ -492,14 +512,43 @@ export function isAnyMethodDemoted(url, methods) {
 	return methods.some((m) => isMethodDemoted(url, m));
 }
 
+/** How many distinct methods `url` is currently demoted for. */
+export function methodDemotionBreadth(url, now = Date.now()) {
+	let n = 0;
+	const prefix = `${url} `;
+	for (const [key, until] of _methodDemotion) {
+		if (until > now && key.startsWith(prefix)) n++;
+	}
+	return n;
+}
+
+// A node refusing the CALLER and a node refusing a CALL SHAPE use the same words
+// (see CALLER_REFUSAL). Breadth is the only thing that tells them apart: a real IP
+// ban or a dead free tier refuses everything we ask, a policy block refuses one or
+// two shapes and serves the rest. Measured 2026-08-01, the widest LEGITIMATE
+// refusal set on any lane we run is three (Tatum's free tier gates getBalance,
+// getTokenAccountsByOwner and getProgramAccounts while still serving
+// getLatestBlockhash and getSignatureStatuses, which are worth keeping). A lane
+// past that is refusing us, not a shape, so it earns the full lane bench instead of
+// leaking one wasted request per method per window.
+const DEMOTION_BREADTH_BENCH = 4;
+
 /**
- * Demote `url` for each of `methods` for METHOD_DEMOTION_MS. Returns the window
- * so the caller can log it. Never touches the lane cooldown.
+ * Demote `url` for each of `methods` for METHOD_DEMOTION_MS, and bench the whole
+ * lane if the demotions have spread wide enough to mean the node is refusing us
+ * rather than a call shape. Returns `{ ms, benched }` so the caller can log which
+ * of the two happened.
  */
 export function markMethodDemotion(url, methods, now = Date.now()) {
 	const until = now + METHOD_DEMOTION_MS;
 	for (const m of methods) _methodDemotion.set(methodKey(url, m), until);
-	return METHOD_DEMOTION_MS;
+	if (methodDemotionBreadth(url, now) >= DEMOTION_BREADTH_BENCH) {
+		// AUTH_COOLDOWN_MS, and marked through markEndpointCooldown, so this park is
+		// published fleet-wide exactly like any other caller-level rejection. A node
+		// that has banned our egress IP has banned every instance's.
+		return { ms: markEndpointCooldown(url, 403, 'caller refused on every call shape'), benched: true };
+	}
+	return { ms: METHOD_DEMOTION_MS, benched: false };
 }
 
 /**
@@ -932,12 +981,14 @@ export function makeRotatingFetch(endpoints) {
 		const penalise = (url, status, bodyText, methodBlock, log) => {
 			if (methodBlock && methods.length) {
 				const fresh = methods.filter((m) => !isMethodDemoted(url, m));
-				const ms = markMethodDemotion(url, methods);
+				const { ms, benched } = markMethodDemotion(url, methods);
 				// Only the first caller to hit the refusal logs it; the rest see the
 				// demotion already in place and stay quiet.
 				if (fresh.length) {
 					console.log(
-						`[solana-rpc] ${maskUrl(url)} refused ${fresh.join(',')}, demoting that method for ${formatCooldown(ms)}, failing over`,
+						benched
+							? `[solana-rpc] ${maskUrl(url)} refused ${fresh.join(',')} and ${DEMOTION_BREADTH_BENCH}+ shapes in all, refusing the caller, not the call; cooling ${formatCooldown(ms)}, failing over`
+							: `[solana-rpc] ${maskUrl(url)} refused ${fresh.join(',')}, demoting that method for ${formatCooldown(ms)}, failing over`,
 					);
 				}
 				return;

@@ -274,6 +274,50 @@ describe('makeRotatingFetch: a method refusal demotes the method, never the lane
 		expect((await out.json()).result).toEqual({ ok: true });
 	});
 
+	// The dangerous direction of "never bench on a refusal". `Your IP or provider is
+	// blocked from this endpoint` is emitted per-method by MagicBlock (which serves
+	// six other shapes perfectly) AND caller-wide by a node that has genuinely banned
+	// our egress. The wording is identical, so only BREADTH separates them: a lane
+	// that refuses one or two shapes is refusing a call, a lane that refuses
+	// everything is refusing us and must leave the rotation properly.
+	it('benches a lane that refuses call shape after call shape, that is a caller ban, not a policy block', async () => {
+		const banned = 'https://cap-i1.test/';
+		const healthy = 'https://cap-i2.test/';
+		global.fetch = vi.fn(async (url) => (url === banned ? resp(MAGICBLOCK_IP_BLOCK) : resp(OK)));
+		const rf = makeRotatingFetch([banned, healthy]);
+
+		// Three distinct shapes refused is still inside the legitimate range: Tatum's
+		// free tier gates exactly three while serving two more we want to keep.
+		for (const m of ['getBalance', 'getTokenAccountsByOwner', 'getProgramAccounts']) {
+			await rf(null, rpc(m));
+		}
+		expect(isEndpointCooling(banned)).toBe(false);
+
+		// The fourth tips it: no real policy block is this wide.
+		await rf(null, rpc('getAccountInfo'));
+		expect(isEndpointCooling(banned)).toBe(true);
+	});
+
+	it('leaves a lane serving when only one shape is refused, however alarming the wording', async () => {
+		const magicblock = 'https://cap-j1.test/';
+		const healthy = 'https://cap-j2.test/';
+		global.fetch = vi.fn(async (url, init) =>
+			url === magicblock && JSON.parse(init.body).method === 'getProgramAccounts'
+				? resp(MAGICBLOCK_IP_BLOCK)
+				: resp(OK),
+		);
+		const rf = makeRotatingFetch([magicblock, healthy]);
+
+		// The real MagicBlock profile: refuse getProgramAccounts, serve everything
+		// else. Hammer it with the other shapes and it must stay the primary.
+		await rf(null, rpc('getProgramAccounts'));
+		for (const m of ['getBalance', 'getLatestBlockhash', 'getSignatureStatuses', 'getAccountInfo', 'simulateTransaction']) {
+			await rf(null, rpc(m));
+		}
+		expect(isEndpointCooling(magicblock)).toBe(false);
+		expect(isMethodDemoted(magicblock, 'getProgramAccounts')).toBe(true);
+	});
+
 	it('reports live demotions for the ops surface and reaps expired ones', async () => {
 		const blocked = 'https://cap-h1.test/';
 		const healthy = 'https://cap-h2.test/';

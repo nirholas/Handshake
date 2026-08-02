@@ -114,7 +114,19 @@ describe('collapseAppearance', () => {
 
 // ── hydrateAppearance ─────────────────────────────────────────────────────────
 
-const EMPTY = { outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [], garments: [] };
+// `proportions` is the skeleton-space body build (src/avatar-proportions.js).
+// hydrateAppearance normalizes it like every other field, so the empty shape
+// carries it too: a saved record from before the parametric editor shipped
+// hydrates to `{}` rather than to a missing key.
+const EMPTY = {
+	outfit: null,
+	accessories: [],
+	morphs: {},
+	colors: {},
+	hidden: [],
+	garments: [],
+	proportions: {},
+};
 
 describe('hydrateAppearance', () => {
 	it('returns defaults for null', () => {
@@ -145,8 +157,18 @@ describe('hydrateAppearance', () => {
 			colors: { hair: '#0e0e0e' },
 			hidden: ['outfit'],
 			garments: [{ slot: 'outerwear', id: 'parka' }],
+			proportions: { height: 1.08 },
 		};
 		expect(hydrateAppearance(raw)).toEqual(raw);
+	});
+
+	it('normalises proportions: neutral values drop out, unknown params are ignored', () => {
+		// normalizeProportions keeps only known params that differ from neutral
+		// (1), so a body saved at its defaults hydrates to {} rather than to a
+		// record full of 1s that would compare unequal to "no build set".
+		expect(hydrateAppearance({ proportions: { height: 1 } }).proportions).toEqual({});
+		expect(hydrateAppearance({ proportions: { notAParam: 1.4 } }).proportions).toEqual({});
+		expect(hydrateAppearance({ proportions: 'nope' }).proportions).toEqual({});
 	});
 
 	it('copies arrays — mutations do not affect the source', () => {

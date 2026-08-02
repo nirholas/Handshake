@@ -15,7 +15,7 @@
 		"api/cron/treasury-topup.js": {
 			"maxDuration": 120
 		},
-		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/quality-bench}.js": {
+		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/quality-bench,api/cron/fact-check-benchmark}.js": {
 			"maxDuration": 300
 		},
 		"{api/strategies,api/cron/payment-session-sweep,api/cron/three-market-refresh}.js": {
@@ -5965,6 +5965,10 @@
 		{
 			"path": "/api/cron/garment-job-sweep",
 			"schedule": "*/10 * * * *"
+		},
+		{
+			"path": "/api/cron/fact-check-benchmark",
+			"schedule": "41 4 * * 1"
 		}
 	]
 }

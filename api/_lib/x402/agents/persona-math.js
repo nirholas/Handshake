@@ -118,6 +118,10 @@ export function planFloatMove({ balanceAtomic, floorAtomic, targetAtomic, ceilin
  * @returns {{ ok: boolean, reason: string|null, detail?: string }}
  */
 export function assessAgentBuyingPower({ usdcAtomic, priceAtomic }) {
+	// null/undefined is UNKNOWN, and `Number(null)` is 0, which would read as
+	// "broke" and refuse a funded agent every time a balance read failed. Reject
+	// the nullish case before the numeric one.
+	if (usdcAtomic == null) return { ok: true, reason: null };
 	const have = Number(usdcAtomic);
 	if (!Number.isFinite(have)) return { ok: true, reason: null };
 	const need = Math.max(0, Number(priceAtomic) || 0);

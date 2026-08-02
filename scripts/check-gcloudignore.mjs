@@ -115,6 +115,11 @@ const REQUIRED = [
 	{ path: 'agents', kind: 'dir', why: 'api/x402/fact-check.js + tutor.js import ../../agents/*' },
 	{ path: 'agent-payments-sdk', kind: 'dir', why: 'copied by the sniper image build' },
 	{ path: 'data', kind: 'dir', why: 'handlers read data/*.json at runtime' },
+	{
+		path: 'tests/fixtures/fact-check-benchmark.json',
+		kind: 'file',
+		why: 'api/fact-check-benchmark.js renders it; api/cron/fact-check-benchmark.js runs it',
+	},
 	{ path: 'public', kind: 'dir', why: 'static assets served by the container' },
 ];
 

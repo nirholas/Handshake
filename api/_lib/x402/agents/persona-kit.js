@@ -27,6 +27,11 @@
 // row (`persona` + `internal:true`), never presented as organic users.
 
 import { PublicKey } from '@solana/web3.js';
+import {
+	getAssociatedTokenAddressSync,
+	TOKEN_PROGRAM_ID,
+	ASSOCIATED_TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
 
 import { payX402, USDC_MINT } from '../pay.js';
 import {
@@ -48,6 +53,7 @@ import {
 	isRingAddress,
 	summarizeLiveness,
 	buildUrl,
+	assessAgentBuyingPower,
 } from './persona-math.js';
 
 export {
@@ -59,11 +65,60 @@ export {
 	isRingAddress,
 	summarizeLiveness,
 	buildUrl,
+	assessAgentBuyingPower,
 };
 
 // ── Guarded purchase path ──────────────────────────────────────────────────────
 
 const ATOMIC_PER_USD = 1_000_000;
+
+// One tick's worth of buyer-balance reads. The driver runs every persona in the
+// same tick against the same RPC context, and a persona may make several buys,
+// so without this the pre-flight check would re-read the same ATA repeatedly.
+// Deliberately shorter than the ring tick's cadence (60s), so a float top-up
+// between ticks is visible immediately.
+const USDC_BALANCE_CACHE_MS = 15_000;
+const _usdcCache = new Map(); // addressB58 → { atomic, at }
+
+/** Test seam: drop cached buyer balances. */
+export function resetAgentUsdcCache() {
+	_usdcCache.clear();
+}
+
+/**
+ * Read one agent's USDC balance in atomic units, or null when it cannot be read.
+ * null is NOT zero: a missing ATA is a genuine zero, but an RPC failure is an
+ * unknown, and assessAgentBuyingPower() admits on unknown rather than freezing a
+ * funded agent behind a lane outage.
+ *
+ * @param {any} conn Solana connection
+ * @param {string} address buyer wallet, base58
+ * @returns {Promise<number|null>}
+ */
+export async function readAgentUsdcAtomic(conn, address) {
+	if (!conn || !address || !USDC_MINT) return null;
+	const hit = _usdcCache.get(address);
+	const now = Date.now();
+	if (hit && now - hit.at < USDC_BALANCE_CACHE_MS) return hit.atomic;
+
+	let atomic;
+	try {
+		const ata = getAssociatedTokenAddressSync(
+			new PublicKey(USDC_MINT), new PublicKey(address),
+			false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+		);
+		const bal = await conn.getTokenAccountBalance(ata, 'confirmed');
+		atomic = Number(bal?.value?.amount ?? 0);
+		if (!Number.isFinite(atomic)) atomic = null;
+	} catch (err) {
+		// An ATA that does not exist yet is a real, knowable zero. Anything else
+		// (rate limit, lane cooldown, timeout) is unknown and must fail open.
+		const msg = String(err?.message || err);
+		atomic = /could not find account|account does not exist|Invalid param/i.test(msg) ? 0 : null;
+	}
+	_usdcCache.set(address, { atomic, at: now });
+	return atomic;
+}
 
 /**
  * Execute ONE persona purchase through the full guard chain. Never throws — every
@@ -75,6 +130,10 @@ const ATOMIC_PER_USD = 1_000_000;
  *   1. enforceSpendLimit({ category:'x402', usdValue }) — the agent's own caps.
  *      A SpendLimitError is caught and surfaced as { status:'refused' }, NOT
  *      rethrown (the tick continues; the refusal is logged + custody-recorded).
+ *   1b. assessAgentBuyingPower(), does the buyer's own USDC cover the price?
+ *      A dry wallet refuses here (`insufficient_payer_usdc`, the same benign
+ *      back-pressure token the shared ring payer reports) instead of paying for
+ *      a probe, a signature and a facilitator simulation to be told no.
  *   2. Probe the endpoint's 402 challenge via payX402 to learn payTo, then assert
  *      payTo ∈ ringAllowedAddresses(). A non-ring recipient is refused BEFORE any
  *      payment (defence in depth over the facilitator's own payTo allowlist).
@@ -84,6 +143,8 @@ const ATOMIC_PER_USD = 1_000_000;
  *
  * @param {object} p
  * @param {{ id:string, name?:string, address:string, keypair:import('@solana/web3.js').Keypair, meta?:object }} p.agent
+ *   `address` is the buyer wallet the pre-flight balance check reads; omit it and
+ *   the check admits (fail-open), exactly as an unreadable balance does.
  * @param {{ slug:string, url:string, method:string, body:any, priceAtomic:number, kind:string, memo?:string }} p.purchase
  * @param {{ conn:any, blockhash:string, mintInfo:any }} p.solana
  * @param {Set<string>} p.allowed  pre-resolved ringAllowedAddresses()
@@ -137,6 +198,21 @@ export async function executePurchase({ agent, purchase, solana, allowed, person
 			return done({ status: 'refused', reason: `spend_limit:${err.code}` });
 		}
 		return done({ status: 'error', reason: `enforce_error:${String(err?.message || err).slice(0, 120)}` });
+	}
+
+	// 1b: can this agent actually pay? The persona's own wallet funds the
+	// transfer, and when the float top-up upstream is dry that wallet runs to
+	// zero. Shopping anyway costs a probe, a signature and a facilitator `verify`
+	// that simulates against an RPC node, and returns a 402 the settle sensor
+	// counts as a payment-rail fault. Ask first, refuse cleanly, spend nothing.
+	// Fails OPEN: an unreadable balance admits, and the simulation downstream is
+	// still the authoritative check.
+	const buyingPower = assessAgentBuyingPower({
+		usdcAtomic: await readAgentUsdcAtomic(solana.conn, agent.address),
+		priceAtomic: purchase.priceAtomic || 0,
+	});
+	if (!buyingPower.ok) {
+		return done({ status: 'refused', reason: `${buyingPower.reason}:${buyingPower.detail}` });
 	}
 
 	// 2 — probe first so we can allowlist the recipient BEFORE paying. payX402

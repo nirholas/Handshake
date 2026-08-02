@@ -84,7 +84,10 @@ export function simulateRunway(input = {}) {
 	const hours = Math.min(24 * 90, Math.max(1, int(input.hours, 24 * 7)));
 	const governorEnabled = input.governorEnabled !== false;
 	const startHourOfDay = ((int(input.startHourOfDay) % 24) + 24) % 24;
-	const paceDay = input.paceDay !== false;
+	// Opt-in, matching walletFeeGovernorConfig().paceDay: the lab must default to
+	// the shape production actually runs, or its verdicts describe a rail nobody
+	// is on.
+	const paceDay = input.paceDay === true;
 	const paceMinSliceLamports = Math.max(0, int(input.paceMinSliceLamports, 200_000));
 
 	// The budget the wallet may draw on at a given hour of the UTC day. Mirrors

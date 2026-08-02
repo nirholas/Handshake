@@ -22,7 +22,7 @@ share-worthy 3D result should be legible, alive, and impossible to dead-end.
 npm run dev            # port 3000, then walk /forge as a first-time user in a real browser
 ls src/forge-compare.js src/forge-prompt-gen.js api/_lib/forge-lane-health.js
 grep -n "starter\|chip" pages/forge.html | head -20
-npm run audit:web -- --only /forge 2>/dev/null || node scripts/page-audit.mjs
+npm run audit:web -- /forge      # page-audit takes explicit routes as positional args
 ```
 
 Known shipped as of 2026-07-30, verify then skip: generation history persistence, the

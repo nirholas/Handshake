@@ -8,6 +8,9 @@ import {
 	floatBand,
 	isRingAddress,
 	executePurchase,
+	assessAgentBuyingPower,
+	readAgentUsdcAtomic,
+	resetAgentUsdcCache,
 } from '../api/_lib/x402/agents/persona-kit.js';
 import {
 	PERSONAS,
