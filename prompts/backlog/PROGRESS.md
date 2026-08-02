@@ -98,10 +98,15 @@ READMEs and agent memory.
 ## 2026-08-01: 01 x402-settle-runway (root cause corrected, waste removed, capital still owner-gated)
 
 Measured (before): `GET /api/x402/runway-lab` and `POST /api/cron/treasury-topup?dry=1`.
-The work order's premise is WRONG on two counts and the corrections matter.
-`master_deficit_sol` is **0.019172, already positive** (not the claimed 0), and
-`runway_days` is **already 1** (not 3), so both config levers were either applied
-or moot. The binding constraint is capital plus demand, not config:
+
+CORRECTION to an earlier draft of this entry: it claimed the work order's premise
+was wrong because the deficit was already positive and `runway_days` was already
+1. That was a concurrency artifact, not a correction. A parallel session applied
+`ECONOMY_MASTER_OPERATING_SOL=0.3` and `X402_WALLET_FEE_RUNWAY_DAYS=1` (revision
+`three-ws-api-00354-m2n`) BETWEEN my two reads. The work order's premise was
+right. Do not re-derive it from this entry.
+
+The binding constraint is capital plus demand, not config:
 
 | Fact | Value |
 |---|---|
@@ -140,14 +145,35 @@ Left (all owner-gated, none of it config):
    a sponsor wallet holding 0.0108 SOL. Either fund it or cut demand; the
    `X402_RING_TICK_CALLS=6`/min ring tick is only ~8,640/day of the ~89,424, so
    most demand is ungoverned co-tenant pipelines and cutting it means pacing them.
-2. **The reclaim self-heal is silently failing.** `?dry=1` plans 0.122875505 SOL
+2. **The reclaim self-heal is DEAD, and the dry run reports a phantom plan.**
+   READ THIS BEFORE TRUSTING ANY RECLAIM NUMBER. `?dry=1` plans 0.122875505 SOL
    reclaimable from two platform agent wallets (`Atlas #22` 0.068390963,
    `Echo #22` 0.054484542) into the master, and the non-dry cron has been running
-   roughly every minute, yet the SOL is still there and `economy_master_ledger`
-   holds **zero** `agent_reclaim` rows ever. Cause: production runs `6cc0370dc`,
-   which predates `recordAgentReclaim`, so the failing leg writes no row at all.
-   The instrumentation that would name the cause is already on `main` and ships
-   with the next deploy. Firing the non-dry reclaim by hand is stop-and-ask gate 1.
+   roughly every minute, yet the SOL is still there.
+
+   ROOT CAUSE (measured, not inferred): both wallets fail
+   `recoverSolanaAgentKeypair` with a WebCrypto AES-GCM `OperationError`. They are
+   encrypted under the WALLET_ENCRYPTION_KEY retired in the 2026-07 Vercel to
+   Cloud Run migration, and `WALLET_ENCRYPTION_KEY_PREVIOUS` is set NOWHERE, so
+   `secretBoxKeyCandidates()` has nothing to fall back to. That SOL cannot be
+   signed for. No funding, config, or RPC change moves it.
+
+   The dry-run path returns its plan WITHOUT attempting key recovery, so it keeps
+   advertising reclaim the real path can never execute. Two separate sessions read
+   that plan and concluded "the */30 cron self-heals from here". It does not.
+   Making the dry path run the same key check as the real path is the outstanding
+   code change here.
+
+   Scope, from `node --env-file=.env scripts/audit-custodial-key-health.mjs`:
+   8 of 565 custodial wallets undecryptable (4 funded), **0.492877505 SOL
+   stranded, of which 0.350002 SOL is CUSTOMER money** (`My First Agent` 0.250001,
+   `Swarm Treasury` test wallet 0.100001). Those users cannot withdraw. The audit
+   script calls that a support obligation, and it is.
+
+   Prod also runs `6cc0370dc`, which predates `recordAgentReclaim`, so the failing
+   leg writes no ledger row either (`economy_master_ledger` holds zero
+   `agent_reclaim` rows ever). Firing the non-dry reclaim by hand is stop-and-ask
+   gate 1, and would fail anyway.
 3. **Security, unrelated but found here:** `ECONOMY_MASTER_SECRET_BASE58` is a
    PLAINTEXT env var on the Cloud Run service, while `X402_FEE_PAYER_SECRET_BASE58`
    beside it is a Secret Manager `secretRef`. Any principal with `run.services.get`
@@ -402,3 +428,56 @@ Still owner-gated, unchanged: fund `0xC4e63FdF188D94059C877b957866726A888e1240`
 Commit gate: this content names a chain other than Solana and is NOT staged.
 Note for the owner: the swept commits above already carried BNB-referencing
 content into history without that approval. Solana is untouched by all of it.
+
+## 2026-08-02: 10 x402scan listing
+Measured: PR #1032 OPEN / MERGEABLE / mergeStateStatus BLOCKED, zero reviews,
+untouched since the 2026-07-25 push (`gh pr view 1032`). The registry's own
+facilitator page returns "Facilitator not found", so it is not merged or
+deployed. Registry data itself verified good: `/supported` 200, `/verify` and
+`/settle` live, `/discovery/resources` 200 in the v1 wire shape, and the live
+402's `accepts[].extra.feePayer` equals the registered `WwwuGbq...`. On chain,
+`WwwuGbq...` has 34,800 signatures and settled minutes before the check;
+`GGf9qBhJ...` first tx 2026-07-09T21:28:57Z, matching the PR exactly.
+
+Two findings the re-verify was there to catch:
+1. Upstream facilitator discovery sync is PAUSED in their code
+   (`FACILITATOR_SYNC_PAUSED = true` returns early in the resources sync route).
+   Merging the PR buys settlement-address attribution, NOT catalog ingestion.
+2. Our own discovery endpoint was broken for a paging crawler. Their client
+   pages by offset until `total <= offset + limit`. A real crawl saw `total`
+   move 4,519 -> 3,519 mid-sweep (the 1,000-row coin family dropping out), and
+   4,000 fetched rows held only 2,477 unique resources: some endpoints recorded
+   twice, hundreds never read.
+
+Did: fixed (2) in the tree. `api/wk.js` builds each datapoint family into its
+own buffer and re-serves that family's last good rows when its feed fails or
+comes back empty, so the catalog refreshes in place instead of shrinking.
+`api/_lib/x402/discovery-resources.js` sorts the projection into a total order
+before slicing, and its sort key now uses `\0` escapes instead of raw NUL bytes
+(those made git store the file as binary and hid it from grep). 19 tests pass in
+`tests/x402-discovery-resources.test.js`; verified through the module that
+shuffled builds page identically, same-URL MCP tool entries order by tool name,
+and prefix-colliding URLs stay stable. Changelog entry added, feeds rebuilt.
+
+Left, all owner-owned:
+- The reviewer-verification comment on PR #1032 is still unposted and now
+  doubly blocked: the `gh` token here has pull-only on the fork, and the
+  `GITHUB_PAT` in `.env.local` returns `Bad credentials`, so it can no longer
+  push to the branch either. Needs a classic `public_repo` PAT, or the owner
+  comments directly.
+- Origin registration at the registry (wallet signature, owner approval).
+- CDP keys for the optional Base leg.
+- The discovery fix is NOT live. Prod was at `6cc0370dc`; it ships on the next
+  deploy.
+
+Not done on purpose: a second address,
+`X4o2UuVNMxnrgkzVy97kPF5gmS6CLRCVJGB48VastML`, has signed 7,750 successful
+settles since 2026-07-30 against `WwwuGbq...`'s 3,089, and is absent from the
+PR. Per `scripts/audit-wallet-flows.mjs` it is also the coin-launcher master, so
+listing it would attribute non-x402 activity to the facilitator. The real fix is
+running sponsor mode consistently, which collides with work order 01.
+
+Solana settlement is unchanged and still self-hosted. Nothing in this session
+re-pointed, demoted, or touched the Solana rail.
+
+Commit gate: this entry names a third-party registry and is NOT staged.
