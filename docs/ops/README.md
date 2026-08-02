@@ -14,6 +14,7 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | [production-log-triage.md](production-log-triage.md) | Known error/warning signature map: what each recurring log signature means and the fix. |
 | [payment-outcomes.md](payment-outcomes.md) | The payment-outcome board (`/api/ops/payment-outcomes` + the `/admin/ops` panel): verify-reject, settle-fail, replay, and sponsor-runway signals and how to read them in an incident. |
 | [solana-rpc-lanes.md](solana-rpc-lanes.md) | The Solana RPC tier end to end: one-sweep diagnosis, per-lane method capability, what must rotate vs fail, config traps, recovery. |
+| [llm-lanes.md](llm-lanes.md) | The LLM provider chain end to end: which rungs serve, why the paid ones are dead, how spend is metered, the one-command Claude rollout, and per-lane probes. |
 | [page-audit.md](page-audit.md) | `scripts/page-audit.mjs`: authed Chromium sweep of every public page, console-error gated. |
 | [db-retention.md](db-retention.md) | Keeping the Neon Postgres branch under its storage cap: what grows, what gets pruned. |
 | [redis.md](redis.md) | Upstash Redis quota, burn rate, and which limiters are distributed vs local. |

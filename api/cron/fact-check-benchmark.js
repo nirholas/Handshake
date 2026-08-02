@@ -26,6 +26,7 @@ import { constantTimeEquals } from '../_lib/crypto.js';
 import {
 	acquireLock,
 	buildReport,
+	degradationOf,
 	degradedReason,
 	isDegraded,
 	loadFixture,
@@ -90,10 +91,19 @@ export default wrapCron(async (req, res) => {
 		let results;
 		try {
 			const { _checkClaim } = await import('../x402/fact-check.js');
-			results = await runClaims(claims, (claim) => _checkClaim(claim, 'medium', null).then((r) => r?.verdict ?? null), {
-				concurrency: CONCURRENCY,
-				deadlineMs: RUN_DEADLINE_MS,
-			});
+			results = await runClaims(
+				claims,
+				async (claim) => {
+					const r = await _checkClaim(claim, 'medium', null);
+					// A degraded check never reached the full chain. Surface it as an
+					// error so it counts toward the refusal, rather than letting an
+					// LLM outage publish 40 fallback verdicts as an accuracy figure.
+					const degradation = degradationOf(r);
+					if (degradation) throw new Error(`degraded check: ${degradation}`);
+					return r?.verdict ?? null;
+				},
+				{ concurrency: CONCURRENCY, deadlineMs: RUN_DEADLINE_MS },
+			);
 		} finally {
 			for (const k of cacheKeys) {
 				if (saved[k] !== undefined) process.env[k] = saved[k];

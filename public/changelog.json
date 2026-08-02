@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-02T04:41:52.668Z",
+	"generated_at": "2026-08-02T04:44:21.953Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -39,6 +39,17 @@
 		{
 			"date": "2026-08-02",
 			"type": "update",
+			"title": "Avatar Studio: sculpt your build, not just your face",
+			"summary": "The Sculpt tab now has a Proportions panel above the face sliders: height, leg, torso, neck and arm length, shoulder and hip width, and head, hand and foot size. Morph sliders reshape a limb; these actually re-proportion the skeleton, which is the only way to lengthen one without tearing the mesh. Lengthen the legs and the hips ride up so the feet stay on the floor, and the animation library re-measures itself against the new hip height, so a taller avatar walks with a longer stride instead of sliding. Sliders you cannot use never appear: only the parameters your rig has bones for are offered, and because they need no blendshapes at all they work on rigs that have none. Randomize now rolls a build too, and everything saves into the avatar's re-editable appearance record.",
+			"link": "/create/studio",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"type": "update",
 			"title": "Every closed trade now has its own shareable card",
 			"summary": "Agent track records could already be shared as a whole, but the moment worth posting is a single trade: the one that just closed at 22x, or the one that stopped out. Each closed trade now has its own page at three.ws/trade/<id>, with a card image built from the real position: the coin, the result, SOL in and out, how long it was held, and why it exited. Both legs link to their transaction on Solscan, so anyone who sees the post can check it. Losses get the same card as wins, paper trades from simulate mode are marked as paper and never dressed up as live fills, and a moon-bag exit says plainly that the position was not fully sold. A share link sits on every row of an agent's track record.",
 			"link": null,
@@ -64,6 +75,27 @@
 			"link": "/ghost-copy",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"type": "update",
+			"title": "Honest LLM cost reporting, and every free model lane proven to fail over",
+			"summary": "The platform answers with whichever AI model lane is healthy, falling through a chain of providers on any failure. Two problems are fixed here. First, spend reporting was wrong in the worst direction: one paid lane was recorded as costing $0, so a real balance drained with the dashboard showing free traffic the whole way down. Every lane now records what it was actually charged, an unpriceable call is reported as unknown instead of zero, and a new audit fails outright if any spending lane claims $0. Second, the free lanes now carry production traffic, so each one is covered by a test that kills the lanes above it the way a provider really dies (a dropped connection, not a malformed reply) and proves the next one answers. Claude is also ready to switch on the moment a key is available.",
+			"link": null,
+			"tags": [
+				"infra",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"type": "update",
+			"title": "Keyboard focus, disabled controls and reduced motion now work the same way on every page",
+			"summary": "Three things that used to depend on whether an individual page remembered to handle them now hold everywhere. Tabbing through the site always shows a visible outline on whatever you have landed on, so you can tell where you are without a mouse; around 1,500 buttons, links and cards previously had no focus indicator at all. Controls that are switched off now consistently look switched off, including the custom ones that are not standard form buttons. And if your device is set to reduce motion, decorative animation across the site now settles instead of playing, while loading spinners and progress bars keep moving so a working page never looks frozen. Overlays that sit on top of screenshots and video also share one set of shades now, so captions and buttons read cleanly on light and dark imagery alike. Separately, pages that build their header as they load no longer flash a second logo in the top-left corner before settling.",
+			"link": null,
+			"tags": [
+				"improvement"
 			]
 		},
 		{

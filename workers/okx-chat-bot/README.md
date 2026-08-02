@@ -153,6 +153,23 @@ The service must run `--min-instances=1 --max-instances=1`. This is not a
 capacity choice: the GCS snapshot has exactly one writer, and concurrent
 revisions would interleave snapshots and corrupt the identity.
 
+Production deploys are owner-gated, so everything is pre-staged and shipping is
+one command:
+
+```bash
+gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml \
+  --region us-central1 --project aerial-vehicle-466722-p5 \
+  --substitutions=SHORT_SHA=manual$(date +%s) .
+```
+
+The build pins `three-ws-build@` and the service runs as `three-ws@`; the
+project's default compute service account was deleted, so both pins are
+required. The bucket and secret commands are at the top of
+[cloudbuild.yaml](cloudbuild.yaml).
+
+Cloud Run's startup probe is wired to `/healthz` and deliberately **not** to
+`/readyz`, for the same reason liveness is always-200.
+
 One-time setup:
 
 1. Create the state bucket and grant the runtime service account
@@ -174,7 +191,31 @@ best-effort by design, so an ungraceful kill loses minutes, not the identity.
 
 The worker writes a `bot_heartbeat` row (keyed on `worker = 'okx-chat-bot'`)
 carrying the current verdict, agent and client counts, provider, and restart
-count. That feeds `/api/healthz` subsystems and the `gcp-triage` skill.
+count. [api/_lib/ops/subsystem-health.js](../../api/_lib/ops/subsystem-health.js)
+turns it into the `okx_chat_bot` subsystem, so the bot's reachability shows up
+next to every other platform dependency:
+
+```bash
+curl -s https://three.ws/api/healthz \
+  | jq '.subsystems.subsystems[] | select(.name=="okx_chat_bot")'
+```
+
+A host that stops beating reads as `down` rather than silently vanishing, which
+is the whole point: a dead host cannot report that it is dead.
+
+What a human has to do, read off the service itself:
+
+```bash
+URL=$(gcloud run services describe okx-chat-bot --region us-central1 \
+  --project aerial-vehicle-466722-p5 --format='value(status.url)')
+curl -s -H "Authorization: Bearer $(gcloud auth print-identity-token)" "$URL/readyz" | jq .remedy
+```
+
+Two signatures are classified in
+[scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), so `npm run triage:gcp`
+explains them instead of filing them as unknown: `okx-bot-session-logged-out`
+(owner action, needs the OTP) and `okx-bot-daemon-restart` (self-healing unless
+the restart count climbs continuously).
 
 A transition into a bad state fires an ops alert through `sendOpsAlert`, at most
 once per `OKX_BOT_ALERT_REPEAT_MS` while it persists, so one overnight expiry

@@ -320,6 +320,24 @@ back out.
 
 ## Vertex Claude LLM lane (chat & completions) — prompt 02
 
+> **Status 2026-08-02: this is the DESIGN, not the deployed state. No Claude
+> traffic bills to GCP credits today.** Re-measured on the live service and the
+> live API, not remembered:
+>
+> - `VERTEX_CLAUDE_ENABLED=0` and `VERTEX_CLAUDE_PRIMARY=0` on `three-ws-api`.
+> - The project is **not entitled**: `rawPredict` returns `404 Publisher model
+>   ... not found` for `claude-opus-5`, `claude-sonnet-5` and
+>   `claude-haiku-4-5@20251001` in both `global` and `us-east5`, while the same
+>   token serves Gemini on Vertex fine. Flipping the flag alone would 404 every
+>   request, so the flag is correctly off.
+> - There is no `ANTHROPIC_API_KEY` on the service either, so the first-party
+>   fallback is absent too. See [llm-lanes.md](llm-lanes.md) for what actually
+>   serves traffic and the one-command Claude rollout.
+>
+> The owner action that changes this is Model Garden terms acceptance (step 1 of
+> "Still owed" below). Until then, treat every "Claude on credits" line in this
+> file as the plan.
+
 Routes the platform's Claude/Anthropic LLM traffic through Vertex AI so it bills
 the GCP credit pool instead of a paid Anthropic key. Wired across **every** text
 inference surface, behind two flags, with automatic fallthrough to the existing
@@ -532,9 +550,11 @@ instant rollback stays available via `VERTEX_IMAGEN_ENABLED=0`.
 1. **Enable Claude in Model Garden** — the ONE gate for all Vertex Claude
    traffic (prompt 02). Console → accept Anthropic partner-model terms → enable
    `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-opus-4-8`, `claude-sonnet-5`,
-   and `claude-fable-5` (if listed). **Confirmed still missing 2026-07-07:** the
-   smoke test returns `404 NOT_FOUND` on `publishers/anthropic/models/*` while
-   the same SA serves Gemini fine — terms acceptance is the only blocker. The
+   and `claude-fable-5` (if listed). **Re-confirmed still missing 2026-08-02:**
+   a direct `rawPredict` probe returns `404 NOT_FOUND` on
+   `publishers/anthropic/models/*` (every Claude 5 id, `global` and `us-east5`)
+   while the same token serves Gemini fine. Terms acceptance is the only
+   blocker, and it has now been outstanding for four weeks. The
    moment it lands, run `node scripts/gcp/vertex-smoke.mjs` for a green PASS
    (closes prompt 01's smoke criterion) and then file partner-model quota.
 2. **Confirm credits + partner-model coverage** — console Credits page; read the

@@ -475,9 +475,9 @@ const _methodDemotion = new Map(); // `${url}${METHOD_KEY_SEP}${method}` → exp
 
 // NUL, because neither a URL nor a JSON-RPC method name can contain one. Every
 // read of this map goes through methodKey or splits on this one constant, so the
-// write side and the prefix scan can never disagree about a key shape. They did
-// once, and the silently-zero breadth count that produced disabled the whole
-// escalation below without failing anything loudly.
+// write side and the prefix scan can never disagree about a key's shape. They did
+// once, and a prefix scan looking for the wrong separator counted zero every time,
+// silently disabling the escalation below without failing anything loudly.
 const METHOD_KEY_SEP = '\u0000';
 const methodKey = (url, method) => `${url}${METHOD_KEY_SEP}${method}`;
 

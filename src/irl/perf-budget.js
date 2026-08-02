@@ -21,10 +21,17 @@ export const TIER_ORDER = ['low', 'mid', 'high'];
 // shadow   = directional shadow-map size (0 disables shadows)
 // label    = max simultaneous HTML labels (nearest-first)
 // draw     = approximate draw-call ceiling; fulls demote to impostors above it
+// realism  = upgrade skin/eye/hair materials to MeshPhysicalMaterial (sheen +
+//            clearcoat). This is what makes an avatar read as a person standing
+//            on the floor rather than a plastic figurine, and it is the single
+//            biggest look lever in the scene. It is also the most expensive
+//            shader we compile, so the low tier keeps the flat glTF materials
+//            the forge exported: a 2-avatar budget phone would spend the frame
+//            on shading instead of tracking.
 export const BUDGETS = {
-	high: { maxGLB: 8, lodNear: 18, lodFar: 45, cull: 150, pixelRatio: 2,   shadow: 1024, label: 24, draw: 220 },
-	mid:  { maxGLB: 5, lodNear: 14, lodFar: 35, cull: 120, pixelRatio: 1.5, shadow: 512,  label: 16, draw: 140 },
-	low:  { maxGLB: 2, lodNear: 10, lodFar: 22, cull: 80,  pixelRatio: 1,   shadow: 0,    label: 8,  draw: 70  },
+	high: { maxGLB: 8, lodNear: 18, lodFar: 45, cull: 150, pixelRatio: 2,   shadow: 1024, label: 24, draw: 220, realism: true },
+	mid:  { maxGLB: 5, lodNear: 14, lodFar: 35, cull: 120, pixelRatio: 1.5, shadow: 512,  label: 16, draw: 140, realism: true },
+	low:  { maxGLB: 2, lodNear: 10, lodFar: 22, cull: 80,  pixelRatio: 1,   shadow: 0,    label: 8,  draw: 70,  realism: false },
 };
 
 // Score from the signals we actually have. Each branch only moves the score when

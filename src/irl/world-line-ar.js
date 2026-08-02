@@ -19,6 +19,17 @@ import {
 import { getMeshoptDecoder } from '../viewer/internal.js';
 import { mountPinIdle } from './pin-idle.js';
 import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from '../shared/cinematic-render.js';
+import { applyAvatarMaterialRealism, looksLikeAvatarMesh } from '../shared/avatar-material-realism.js';
+
+// The quest agent is a person you meet, so it gets the same skin/eye/hair
+// treatment the /avatar viewer and the /irl pins get (one shared module, never
+// re-implemented). Both surfaces here show ONE avatar at a time, so unlike the
+// /irl pin crowd there is no per-device budget to hold back for: a single
+// physically-shaded rig is affordable everywhere WebXR runs. Non-avatar models
+// are left exactly as authored.
+function dressAvatar(root) {
+	if (looksLikeAvatarMesh(root)) applyAvatarMaterialRealism(root);
+}
 
 // ── Agent voice (TTS) ────────────────────────────────────────────────────────
 let _voiceAudio = null;
@@ -301,6 +312,7 @@ export class WorldLineCeremony {
 			const loader = new GLTFLoader();
 			loader.setMeshoptDecoder(await getMeshoptDecoder());
 			const gltf = await loader.loadAsync(this.avatarUrl);
+			dressAvatar(gltf.scene);
 			root.add(gltf.scene);
 			gltf.scene.position.y = -1.2;
 			// Breathe: play the retargeted idle clip so the quest agent greets you
@@ -358,6 +370,7 @@ export class WorldLineCeremony {
 				const loader = new GLTFLoader();
 				loader.setMeshoptDecoder(await getMeshoptDecoder());
 				loader.loadAsync(this.avatarUrl).then(async (g) => {
+					dressAvatar(g.scene);
 					root.add(g.scene);
 					// Idle in place on the real floor — same living treatment as /irl pins.
 					arIdleMgr = await mountPinIdle(g.scene, { avatarUrl: this.avatarUrl });

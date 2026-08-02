@@ -63,6 +63,15 @@ function ensureShowcaseVoteStyles() {
 		.showcase-sort-btn.is-active { background: var(--accent, #fff); color: var(--bg-0, #0a0a0a); }
 		.showcase-sort-btn:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
 		.showcase-foot-actions { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+		/* The card footer is [when . category] ......... [votes] [Remix]. Both ends
+		   are deliberately non-shrinking (a truncated vote count or a hyphenated
+		   "Remix" reads as broken), so on a 320px-wide card the row has nowhere to
+		   give and the actions overflow past the card's right edge: Remix ends up
+		   clipped and untappable. Let the row wrap instead. The actions drop to a
+		   second line only when they genuinely do not fit, and space-between still
+		   holds them right-aligned. */
+		.showcase-foot { flex-wrap: wrap; row-gap: 6px; }
+		.showcase-when { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 		.showcase-vote { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; line-height: 1; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--stroke, rgba(255,255,255,.08)); background: transparent; color: var(--ink-dim, #9aa0a6); cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
 		.showcase-vote:hover { color: var(--ink, #fff); border-color: var(--accent, #fff); }
 		.showcase-vote:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }

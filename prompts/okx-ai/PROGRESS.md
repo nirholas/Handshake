@@ -1883,3 +1883,56 @@ steps, neither performable by an agent:
 
 A deploy is also pending but not blocking: fixes 1, 2 and 5 above are in the tree and reach
 buyers on the next `npm run deploy:gcp:full`.
+
+---
+
+## 2026-08-02: chat bot moved off the codespace (backlog work order 08)
+
+**Measured first.** `npm run okx:bot` exits 2: daemon running, runtime ready, briefing
+regenerated from the live catalog, 12 skills linked, bypass on, and the wallet session
+logged out. Unchanged from the last entry, and it will keep coming back, because a
+codespace sleeps.
+
+**Built:** [`workers/okx-chat-bot/`](../../workers/okx-chat-bot), an always-on Cloud Run
+host for the same stack. What it changes, beyond uptime:
+
+- **Identity survives a revision.** `~/.onchainos` + `~/.okx-agent-task` are tarred to a
+  GCS object on a timer and on SIGTERM (daemon stopped first, so sqlite is quiesced) and
+  restored at boot. Cloud Run's filesystem is in-memory, so without this every deploy would
+  have cost a fresh human OTP: trading one uptime problem for another.
+- **The daemon actually runs.** `okx-a2a daemon start` delegates to an OS autostart unit
+  and there is no systemd in a container, so it installs a unit and silently leaves the
+  daemon down. The supervisor owns `okx-a2a run` as a child instead, with capped backoff.
+- **The subsession knows what we sell.** The workspace is rebuilt from the image, never
+  from the snapshot, so a redeploy can never restore a stale briefing over a fresh one.
+  Extracted [`api/_lib/okx-chat-briefing.js`](../../api/_lib/okx-chat-briefing.js) as the
+  single source both the host and `okx-listing-payload.mjs --briefing` read, and added real
+  platform context so a buyer asking "what is three.ws?" gets an answer instead of a
+  price list. Written as both `CLAUDE.md` and `AGENTS.md` (which one is read depends on the
+  spawned CLI).
+- **The silent outage is now loud.** A `bot_heartbeat` row (`worker='okx-chat-bot'`)
+  becomes the `okx_chat_bot` subsystem on `/api/healthz`; a host that stops beating reads
+  as `down` rather than vanishing. Two signatures classified in `scripts/gcp-triage.mjs`.
+- **Session expiry is actionable, not just reported.** On detection the host mints the
+  login URL and pages with the exact three commands, carried on `/readyz` as `.remedy`.
+- **Provider selection is by credential.** `ANTHROPIC_API_KEY` picks Claude Code,
+  `OPENAI_API_KEY` picks Codex, neither reports `ai_provider_uncredentialed` rather than
+  spawning a keyless CLI that fails to authenticate and looks like silence to the buyer.
+
+**Verified, mock-free.** Ran the host locally against the real CLIs: workspace built
+(7391 bytes, 12 skills into `.claude/` and `.codex/`), daemon spawned and supervised,
+`/readyz` correctly 503 with `session_logged_out`, `.remedy` carrying a freshly minted live
+login URL, and a clean SIGTERM (daemon stopped, then exit). 29 unit tests pass
+(`tests/okx-chat-bot.test.js`). Local daemon restored to its staged state afterwards.
+
+**Left, both owner-only:**
+
+1. **The OKX email OTP** as `claude@three.ws`. Nothing agent-side can do this; OKX never
+   surfaces it as a CLI prompt. Needed once locally now, and once more after the first
+   Cloud Run boot (there is no snapshot yet, so it comes up logged out by design).
+2. **An AI-provider credential on the service.** `ANTHROPIC_API_KEY` preferred. This repo
+   has `OPENAI_API_KEY` in `.env` and the host will use it via the Codex CLI if that is
+   what gets set, so this is a choice, not a blocker.
+
+**Not committed.** The diff names a marketplace outside the `$THREE` ecosystem, so the
+CLAUDE.md commit gate applies and the owner has to approve it first.

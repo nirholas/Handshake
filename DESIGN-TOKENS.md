@@ -54,6 +54,25 @@ and `--nv-*` (nav) are thin alias layers that resolve *to* these tokens via
 variants (e.g. badge/button danger fills) are derived in the component layer of
 `style.css` — reuse those, don't re-derive.
 
+### Colour: scrim & on-scrim (B14)
+The one part of the palette that does **not** flip with the theme. A scrim sits
+on top of *media* (a screenshot, a video frame, a 3D canvas, a modal backdrop),
+not on a page surface, so its job is legibility over unknown pixels: it stays
+dark and its ink stays light in both themes.
+
+| Token | Use |
+|-------|-----|
+| `--scrim-soft` | gradient legibility wash under a caption |
+| `--scrim` | standard chip or label resting on media |
+| `--scrim-strong` | hover/pressed state of the above, heavy caption bars, letterboxing |
+| `--scrim-modal` | full-screen backdrop behind a dialog or lightbox |
+| `--on-scrim-bright` / `--on-scrim` / `--on-scrim-dim` | ink on a scrim |
+| `--on-scrim-stroke` | hairline on a scrim |
+
+Pair scrims with `--on-scrim*`, never with `--ink*` (which flips to near-black
+on light and would vanish). These four values replaced a cluster of 400+
+hand-typed `rgba(0, 0, 0, …)` overlays that had drifted across ~12 alphas.
+
 ### Spacing (φ = 1.618 scale)
 `--space-3xs` `--space-2xs` `--space-xs` `--space-sm` `--space-md` (16px base)
 `--space-lg` `--space-xl` `--space-2xl`. Use for padding, gap, margin.
@@ -115,6 +134,46 @@ these when an intention name reads clearer than the primitive:
   (nav/cards/forms) where dense layouts sit on a 4px grid.
 - **Radius:** `--radius-full`→`--radius-pill`.
 - **Motion:** `--dur-fast`→`--duration-fast` · `--dur-med`→`--duration-base`.
+
+## Platform floors (B14)
+
+Naming a focus ring only helps the components that remember to reach for it. A
+sweep found ~1,500 selectors that declare `cursor: pointer` yet define no
+focus-visible or disabled rule at all, and 26 stylesheets with `@keyframes` and
+no `prefers-reduced-motion` block. `public/tokens.css` now closes all three gaps
+once, for every page (it is imported by both `style.css` and `nav.css`).
+
+**These are floors, never ceilings.** The focus and disabled rules are wrapped in
+`:where()`, which forces their specificity to (0,0,0), so any component rule,
+however weakly written, still overrides them. Nothing that already styles its own
+state changes appearance.
+
+| Floor | What it guarantees |
+|-------|--------------------|
+| Focus | Every link, button, form control, `[tabindex]` and interactive ARIA role gets `outline: var(--focus-ring-width) solid var(--focus-ring-color)` on `:focus-visible`. Keyboard only, so mouse clicks are unaffected. |
+| Disabled | `[disabled]` and `[aria-disabled='true']` get `--disabled-opacity` and `--disabled-cursor`. The ARIA half matters for custom controls (a `div[role=button]` can't use the native attribute). |
+| Reduced motion | Under `prefers-reduced-motion: reduce`, animations and transitions collapse platform-wide, on top of the existing duration-token zeroing. |
+
+Want no ring on a control? Re-style it (a different colour, an inset shadow).
+Do not remove it.
+
+### Opting out of the reduced-motion floor
+
+"Reduce" does not mean "remove status". A spinner frozen mid-rotation reads as a
+hung page, which is worse than the motion. Two carve-outs keep animating:
+
+1. **Busy and progress indicators**, matched by `[aria-busy='true']`,
+   `[role='progressbar']`, and a substring class match on `spin` / `loader`
+   (this covers the ~28 differently-named spinner classes without maintaining a
+   list of them).
+2. **Anything you mark explicitly**: `data-motion="essential"` or the
+   `.motion-keep` class, plus its subtree. Reach for this only where the movement
+   *is* the information.
+
+```html
+<!-- movement carries meaning here, so keep it under reduced motion -->
+<div class="tx-progress" data-motion="essential">…</div>
+```
 
 ## The rule: no hardcoded values
 

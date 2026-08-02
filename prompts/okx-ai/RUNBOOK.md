@@ -80,10 +80,35 @@ What it wires, and why each matters:
 Measured reply latency through the real adapter path: ~12 s bare, ~46 s with the full skill
 set loaded. Both are far inside OKX's 30-minute test window.
 
-**Known limitation:** a codespace cannot stay up on its own, so the bot dies whenever this
-workspace sleeps. Run `npm run okx:bot` right before an OKX retest window, and treat an
-always-on host (a small always-on VM running the same stack) as the durable fix. That move
-needs an AI-provider credential for the headless box, an owner action.
+**The durable fix is built:** [`workers/okx-chat-bot/`](../../workers/okx-chat-bot) is an
+always-on Cloud Run host for the same stack. It restores the wallet/XMTP identity from GCS
+on boot, supervises `okx-a2a run` directly (`daemon start` is a no-op in a container),
+rebuilds the AI briefing from the live catalog every boot, and reports health as the
+`okx_chat_bot` subsystem on `/api/healthz`. Ship it with one command (owner-gated):
+
+```bash
+gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml \
+  --region us-central1 --project aerial-vehicle-466722-p5 \
+  --substitutions=SHORT_SHA=manual$(date +%s) .
+```
+
+Until that lands, `npm run okx:bot` before an OKX retest window is still the stopgap: a
+codespace cannot stay up on its own, so the local bot dies whenever this workspace sleeps.
+
+Two owner actions remain either way. The wallet OTP is unavoidable (OKX requires a human,
+and it never surfaces as a CLI prompt). The AI-provider credential is what lets the headless
+box author replies at all: set `ANTHROPIC_API_KEY` on the service (preferred), or
+`OPENAI_API_KEY` to run the Codex CLI instead. Without one the host still receives chat and
+reports `ai_provider_uncredentialed` rather than pretending to be healthy.
+
+Once deployed, the fix for a logged-out session is readable off the service itself, so
+nobody has to reconstruct it from this runbook:
+
+```bash
+URL=$(gcloud run services describe okx-chat-bot --region us-central1 \
+  --project aerial-vehicle-466722-p5 --format='value(status.url)')
+curl -s -H "Authorization: Bearer $(gcloud auth print-identity-token)" "$URL/readyz" | jq .remedy
+```
 
 ## 1. Daily status check
 

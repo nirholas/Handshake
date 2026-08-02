@@ -31,6 +31,14 @@
 			<description>Paper-copy any verified pump.fun trader agent with fake money over their real closed on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had, plus every trade your budget could not reach and why. No wallet, no signature, no custody, no account.</description>
 		</item>
 		<item>
+			<title>Avatar Studio: sculpt your build, not just your face</title>
+			<link>https://three.ws/create/studio</link>
+			<guid isPermaLink="false">2026-08-02:Avatar Studio: sculpt your build, not just your face</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Sculpt tab now has a Proportions panel above the face sliders: height, leg, torso, neck and arm length, shoulder and hip width, and head, hand and foot size. Morph sliders reshape a limb; these actually re-proportion the skeleton, which is the only way to lengthen one without tearing the mesh. Lengthen the legs and the hips ride up so the feet stay on the floor, and the animation library re-measures itself against the new hip height, so a taller avatar walks with a longer stride instead of sliding. Sliders you cannot use never appear: only the parameters your rig has bones for are offered, and because they need no blendshapes at all they work on rigs that have none. Randomize now rolls a build too, and everything saves into the avatar's re-editable appearance record.</description>
+		</item>
+		<item>
 			<title>Every closed trade now has its own shareable card</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-02:Every closed trade now has its own shareable card</guid>
@@ -53,6 +61,22 @@
 			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>three.ws already ranks pump.fun trader agents by a track record that is provable on-chain, and already lets you copy one with real money under hard spend limits. The gap between those two things was trust: a leaderboard row tells you an agent made money, but not what would have happened to YOUR budget, at YOUR size, with YOUR limits. Ghost-copy closes it. Pick any verified agent, type a budget, pick a window, and the platform replays that agent's real closed on-chain round-trips against a wallet that does not exist. You get the equity curve you would have had, every trade, and the answer in one line: if you had ghost-copied this agent for 7 days with 1 SOL, here is where you would be. It is deliberately unflattering. The sizing runs through the exact same engine that sizes live copy trades, so every trade your budget could not reach is listed with the reason it was skipped: your per-trade cap, your daily budget, or capital still locked in an open position. Losing trades are all counted. Positions the leader has not closed yet are marked at their last on-chain quote and reported separately, never folded into the headline. The result page states plainly that real copying adds slippage and latency against you, so the number is a ceiling rather than a promise. No wallet is connected, nothing is signed, no account is needed, and the result lives in the URL so you can send it to someone.</description>
+		</item>
+		<item>
+			<title>Honest LLM cost reporting, and every free model lane proven to fail over</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-02:Honest LLM cost reporting, and every free model lane proven to fail over</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The platform answers with whichever AI model lane is healthy, falling through a chain of providers on any failure. Two problems are fixed here. First, spend reporting was wrong in the worst direction: one paid lane was recorded as costing $0, so a real balance drained with the dashboard showing free traffic the whole way down. Every lane now records what it was actually charged, an unpriceable call is reported as unknown instead of zero, and a new audit fails outright if any spending lane claims $0. Second, the free lanes now carry production traffic, so each one is covered by a test that kills the lanes above it the way a provider really dies (a dropped connection, not a malformed reply) and proves the next one answers. Claude is also ready to switch on the moment a key is available.</description>
+		</item>
+		<item>
+			<title>Keyboard focus, disabled controls and reduced motion now work the same way on every page</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-02:Keyboard focus, disabled controls and reduced motion now work the same way on every page</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Three things that used to depend on whether an individual page remembered to handle them now hold everywhere. Tabbing through the site always shows a visible outline on whatever you have landed on, so you can tell where you are without a mouse; around 1,500 buttons, links and cards previously had no focus indicator at all. Controls that are switched off now consistently look switched off, including the custom ones that are not standard form buttons. And if your device is set to reduce motion, decorative animation across the site now settles instead of playing, while loading spinners and progress bars keep moving so a working page never looks frozen. Overlays that sit on top of screenshots and video also share one set of shades now, so captions and buttons read cleanly on light and dark imagery alike. Separately, pages that build their header as they load no longer flash a second logo in the top-left corner before settling.</description>
 		</item>
 		<item>
 			<title>Solana RPC: one provider refusing one call no longer sidelines the whole node</title>

@@ -205,6 +205,12 @@ registerWalletTab({
 			view: 'withdraw',       // 'withdraw' | 'limits' | 'activity'
 			holdings: null,         // { sol, tokens } | null
 			holdingsErr: null,
+			// Can the server still sign for this wallet? A custodial secret sealed
+			// under a retired encryption key reads back a healthy on-chain balance,
+			// so without this the form looks completely normal and only fails after
+			// the owner has typed an amount and confirmed. null = not yet known.
+			signable: null,
+			signableReason: null,
 			limits: null,           // { limits, spent_today_usd } | { error }
 			// withdraw form
 			selectedAsset: 0,
@@ -258,8 +264,38 @@ registerWalletTab({
 			return out;
 		}
 
+		function renderUnsignable() {
+			const retired = state.signableReason === 'key_retired';
+			return `
+				<div class="awh-card">
+					<div class="awh-err" role="alert" style="margin-bottom:0;">
+						<strong>This wallet can no longer be signed for.</strong>
+						<div class="why" style="text-transform:none; margin-top:6px; line-height:1.5;">
+							${retired
+								? 'It was created under an earlier encryption key that the platform no longer holds, so withdrawals and trades from this address cannot be authorised. The balance is real and still on chain, it simply cannot be moved from here. Retrying will not help.'
+								: 'The stored key for this address could not be read. Withdrawals are blocked until that is resolved so nothing is attempted against a wallet we cannot authorise.'}
+						</div>
+					</div>
+					<p class="awh-note" style="margin-top:12px;">
+						Contact support with this agent id before provisioning a replacement wallet:
+						a new wallet gets a new address, and the balance at the old one stays where it is.
+					</p>
+					<div class="awh-chips" style="margin-top:12px;">
+						<span class="awh-chip">Agent ${esc(String(ctx.agentId).slice(0, 8))}</span>
+						<span class="awh-chip">${retired ? 'key retired' : 'key unreadable'}</span>
+					</div>
+					<div class="awh-actions">
+						<a class="awh-btn" href="/support?topic=wallet-key&agent=${encodeURIComponent(ctx.agentId)}">Contact support</a>
+						<button class="awh-btn" type="button" data-act="recheck-signable">Re-check</button>
+					</div>
+				</div>`;
+		}
+
 		function renderWithdraw() {
 			if (state.phase === 'success') return renderSuccess();
+			// Checked before holdings: a balance the owner cannot move must never be
+			// rendered as a spendable amount with a live form under it.
+			if (state.signable === false) return renderUnsignable();
 			if (state.holdings === null && !state.holdingsErr) {
 				return `<div class="awh-card"><div class="awh-skel-line" style="width:40%"></div><div class="awh-skel-line"></div><div class="awh-skel-line"></div><div class="awh-skel-line" style="width:60%"></div></div>`;
 			}
@@ -360,6 +396,7 @@ registerWalletTab({
 
 		function wireWithdraw() {
 			panel.querySelector('[data-act="reload-holdings"]')?.addEventListener('click', () => { state.holdings = null; state.holdingsErr = null; render(); loadHoldings(); });
+			panel.querySelector('[data-act="recheck-signable"]')?.addEventListener('click', () => { state.signable = null; state.signableReason = null; render(); loadSignable(); loadHoldings(); });
 
 			if (state.phase === 'success') {
 				panel.querySelector('#awh-again')?.addEventListener('click', () => { resetForm(); state.holdings = null; render(); loadHoldings(); });
@@ -484,6 +521,22 @@ registerWalletTab({
 			if (destroyed) return;
 			if (!res.ok) { state.holdingsErr = res.message; state.holdings = null; }
 			else { state.holdingsErr = null; state.holdings = res.data; }
+			if (state.view === 'withdraw') render();
+		}
+
+		// The owner's own wallet read carries `signable`. An older deployment that
+		// does not send the field leaves it undefined, which stays null here and
+		// keeps the form exactly as it was: this gate blocks only on a definite no.
+		async function loadSignable() {
+			const res = await call(`/api/agents/${encodeURIComponent(ctx.agentId)}/wallet?network=${ctx.getNetwork()}`);
+			if (destroyed || !res.ok) return;
+			if (res.data?.signable === false) {
+				state.signable = false;
+				state.signableReason = res.data.signable_reason || null;
+			} else if (res.data?.signable === true) {
+				state.signable = true;
+				state.signableReason = null;
+			}
 			if (state.view === 'withdraw') render();
 		}
 
@@ -711,6 +764,7 @@ registerWalletTab({
 
 		return {
 			onShow() {
+				if (state.view === 'withdraw' && state.signable === null) loadSignable();
 				if (state.view === 'withdraw' && state.holdings === null && state.phase !== 'success') loadHoldings();
 				else if (state.view === 'limits' && state.limits === null) loadLimits();
 			},

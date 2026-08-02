@@ -252,6 +252,13 @@ describe('verifyOnChain', () => {
 		expect(v.reasons.join(' ')).toContain('not found');
 	});
 
+	it('reports a signature the RPC calls malformed as not-found, not as an outage', async () => {
+		getTransaction.mockRejectedValue(new Error('failed to get transaction: Invalid param: WrongSize'));
+		const v = await verifyOnChain({ signature: SIG, network: 'mainnet' });
+		expect(v).toMatchObject({ valid: false, found: false });
+		expect(v.reasons.join(' ')).toContain('malformed transaction signature');
+	});
+
 	it('surfaces an RPC failure as an error, never as a negative verdict', async () => {
 		getTransaction.mockRejectedValue(new Error('429 Too Many Requests'));
 		await expect(verifyOnChain({ signature: SIG, network: 'mainnet' }))

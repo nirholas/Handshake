@@ -13,7 +13,40 @@ the settle-floor and dispersion notes in the same file.
 
 ## Diagnose the whole tier in one sweep
 
-Do this before theorising. Probe **every** configured lane with a **metered** method:
+```sh
+node --env-file=.env scripts/probe-rpc-lanes.mjs          # lane x method matrix
+node --env-file=.env scripts/probe-rpc-lanes.mjs --ws      # also probe logsSubscribe
+node --env-file=.env scripts/probe-rpc-lanes.mjs --json    # machine-readable
+```
+
+[scripts/probe-rpc-lanes.mjs](../../scripts/probe-rpc-lanes.mjs) resolves every lane in
+the exact order `solanaRpcEndpoints()` does, then probes each one against the call
+shapes production actually makes: `getLatestBlockhash`, `getBalance`,
+`getSignatureStatuses`, `getTokenAccountsByOwner` (programId filter),
+`getProgramAccounts`, `getAccountInfo`, and `simulateTransaction` as a read-only
+stand-in for `sendTransaction`. It prints the matrix, then every refusal verbatim with
+its JSON-RPC code, then a per-lane verdict: `safe as primary`, `usable, NOT safe as
+primary - missing <methods>`, `quota spent`, `key rejected`, or `DEAD`. It exits 1 only
+on `DEAD` (serves nothing and gives no reason), so a routine daily cap does not cry
+wolf. It classifies refusals by importing `isMethodRefusal` from the router itself, so
+the matrix and the breaker cannot drift apart.
+
+Measured 2026-08-01 (10 lanes, 8 shapes with `--ws`):
+
+| Lane | shapes served | verdict |
+|---|---|---|
+| MagicBlock | 7/8 | safe as primary (refuses `getProgramAccounts`) |
+| `api.mainnet-beta.solana.com` | 7/8 | safe as primary (refuses `getProgramAccounts`) |
+| Alchemy (both apps) | 6/8 | safe as primary; `getProgramAccounts` over CU/s cap |
+| PublicNode | 5/8 | not a primary: refuses `getTokenAccountsByOwner` |
+| Tatum (both hosts) | 2/8 | free tier gates balance + token + program reads |
+| Leo RPC | 2/8 | thin, high latency |
+| QuickNode | 0/8 | quota spent (`-32003` daily cap) |
+| Helius | 0/8 | quota spent (bare HTTP 429) |
+
+Only MagicBlock and `api.mainnet-beta.solana.com` served `logsSubscribe`.
+
+To probe by hand instead, use a **metered** method on every configured lane:
 
 ```sh
 gcloud run services describe three-ws-api --region us-central1 \
@@ -93,6 +126,54 @@ Cooldown windows are asymmetric and worth knowing: quota 6h, rate limit 10m, aut
 the shared cache (`rpccool:v1`) so a cold Cloud Run instance inherits them instead of
 re-burning a request against a provider already over its cap.
 
+## A refusal demotes the METHOD, not the lane
+
+Benching a lane because it refused one call shape is the wrong disposition, and it was
+the live behaviour until 2026-08-01. Two defects compounded: the rotating fetch read the
+response body only on a 429, so on PublicNode's `403 blocked parameter` the classifier
+saw an empty string and fell through to the **auth** branch, parking a healthy free
+primary for 30 minutes on traffic the balance readers generate constantly. The rotation
+then cascaded onto the exhausted paid lanes the free chain exists to protect.
+
+The router now tracks capability per `(lane, method)`:
+
+- A refusal demotes that pair for **15 minutes**. The lane keeps serving every other
+  shape and never enters cooldown. It is never an auth fault.
+- Endpoint selection runs three passes: skip cooling + skip demoted, then forgive
+  cooling, then forgive both. The widest pass exists so stale bookkeeping can never
+  strand a request that every lane has refused at some point.
+- A JSON-RPC batch is skipped on a lane demoted for **any** method it carries: one
+  refused member breaks the whole reply.
+- Demotions are process-local by design. Re-discovering one on a cold instance costs one
+  request that transparently fails over; re-discovering a quota block costs a request
+  against a plan already over its cap, which is what keeps a daily cap pinned. That
+  asymmetry is why the quota verdict is fleet-shared and this one is not.
+
+**Breadth is what separates a policy block from a ban.** `Your IP or provider is blocked
+from this endpoint` is emitted per-method by MagicBlock and `api.mainnet-beta.solana.com`
+(for `getProgramAccounts` alone, while serving six other shapes) **and** caller-wide by a
+node that has genuinely banned our egress. The wording is identical, so the text cannot
+decide it. A lane that accumulates **4 or more** distinct demotions is refusing the
+caller, not the call, and takes the full auth-window lane bench, published fleet-wide.
+Four is the threshold because the widest legitimate refusal set we run is three (Tatum's
+free tier gates three shapes while still serving `getLatestBlockhash` and
+`getSignatureStatuses`, which are worth keeping).
+
+## Reading the cooldown state instead of re-diagnosing it
+
+`rpc_lanes` reports which lanes are parked and when each returns, on `/api/healthz` and
+on the public [/status](https://three.ws/status) page:
+
+```sh
+curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="rpc_lanes")'
+```
+
+The `detail` line carries a census (`1/3 paid lanes serving; mainnet.helius-rpc.com back
+in 4h12m, …`) and the `lanes` array carries `recoversAt` (absolute, so a cron-parked
+snapshot stays true), `recoversIn`, `paid`, and `blockedMethods` per lane. URLs are
+masked to scheme + host, so no API key leaves the process. A quota cooldown clears
+itself: read these before concluding the tier is dead.
+
 ## Config traps
 
 - **A reserve named anywhere else is not a reserve.** `solanaRpcEndpoints()` dedupes to
@@ -124,6 +205,27 @@ Beyond that, only two things actually clear a quota: **money** (top up or upgrad
 plan) or **less volume** (`X402_RING_TICK_CONCURRENCY` and the ring cadence knobs, which
 are config-only and free). Everything else just moves which free node absorbs the
 throttling.
+
+### Confirmation poll cadence (the hottest RPC consumer we control)
+
+Every server-signed send, x402 settle, and launch confirms through
+`pollConfirmation()` in [api/\_lib/solana/confirm.js](../../api/_lib/solana/confirm.js).
+At a flat cadence over the 90s ceiling, one transaction that never lands costs ~75
+`getSignatureStatuses` calls plus ~25 `getBlockHeight` calls, and a transaction that
+never lands is exactly what happens when the tier is throttled, so the flat cadence spent
+the most requests precisely when requests were scarcest.
+
+It now serves the opening polls at the base cadence (where nearly every healthy confirm
+lands, so the common path is unchanged) and backs off geometrically after that. Same 90s
+ceiling, roughly a third of the requests. All four knobs are read per call, so retuning
+is a config-only `--update-env-vars` with no rebuild:
+
+| Var | Default | Meaning |
+|---|---|---|
+| `SOLANA_CONFIRM_POLL_INTERVAL_MS` | `1200` | opening cadence |
+| `SOLANA_CONFIRM_FAST_POLLS` | `3` | polls at that cadence before backing off |
+| `SOLANA_CONFIRM_POLL_BACKOFF` | `1.5` | multiplier per poll after that (clamped to >= 1) |
+| `SOLANA_CONFIRM_POLL_MAX_INTERVAL_MS` | `6000` | ceiling (clamped to >= the base) |
 
 **GCP credits cannot help here.** Blockchain Node Engine is Ethereum-only and the
 BigQuery `blockchain-analytics-*` datasets are EVM chains plus analytics, so the standing

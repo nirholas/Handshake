@@ -10,7 +10,7 @@ the fleet and quota position live in `docs/ops/gcp-credits-plan.md`.
 | # | Work order | State |
 |---|---|---|
 | 01 | GCP foundation | Retired, shipped (readable in git history) |
-| 02 | Vertex Claude provider | Retired, shipped. Wired and dormant: production runs no Claude on Vertex until the entitlement plus key land. |
+| 02 | Vertex Claude provider | Retired, shipped. Wired and **dormant, re-verified 2026-08-02**: flags are `0` on the service AND the project is unentitled (`rawPredict` 404s every Claude id in `global` and `us-east5`), so the lane could not serve even if flipped. Owner action: accept Anthropic terms in Model Garden. See [docs/ops/llm-lanes.md](../../docs/ops/llm-lanes.md). |
 | 03 | Imagen activation | Retired, shipped |
 | 04 | GPU worker deploys | Retired, shipped: six workers, flag-gated routing, cost docs. The rig lane shipped as `workers/rig` (`model-rig`), replacing the unirig stub. |
 | 05 | [05-catalog-animation-seeding.md](05-catalog-animation-seeding.md) | **OPEN.** The credits-to-permanent-assets play: bulk curated avatar catalog plus a generated motion library. |

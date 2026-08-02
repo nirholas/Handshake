@@ -223,6 +223,17 @@ export async function verifyOnChain({ signature, network, expectSubject = null, 
 		);
 	} catch (err) {
 		if (err instanceof PassportError) throw err;
+		// A signature that passes the base-58 shape test can still fail to decode to
+		// 64 bytes, and the RPC rejects it as a bad param rather than answering
+		// "no such transaction". Reporting that as an outage would blame our
+		// infrastructure for the caller's typo, so it becomes a not-found verdict.
+		if (/invalid param|wrongsize|invalid signature/i.test(err.message || '')) {
+			return {
+				valid: false, found: false, network, signature,
+				reasons: ['the RPC rejected this as a malformed transaction signature'],
+				explorer_url: explorerTx(signature, network),
+			};
+		}
 		throw new PassportError('rpc_failed', `could not read the transaction: ${err.message}`, 502);
 	}
 	if (!tx) {

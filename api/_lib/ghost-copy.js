@@ -299,6 +299,13 @@ function honestyNotes({ fills, skipped, stillOpen, trades }) {
 
 // ---------------------------------------------------------------------------
 // Data access.
+//
+// These queries deliberately do NOT swallow their errors into an empty array. On
+// this surface an empty result is a real, meaningful answer ("this leader has no
+// settled record yet") that the page renders as a designed empty state. If a
+// database outage returned the same empty array, the page would confidently tell
+// a visitor a profitable trader has no track record. A failure has to surface as
+// a failure, so it reaches the endpoint's error boundary and the page's retry.
 // ---------------------------------------------------------------------------
 
 /**
@@ -363,7 +370,7 @@ export async function fetchGhostLeader(agentId, network = 'mainnet') {
 		where a.id = ${agentId} and a.deleted_at is null and a.is_public <> false
 		group by a.id, a.name, a.avatar_url, a.profile_image_url
 		limit 1
-	`.catch(() => []);
+	`;
 	const r = rows[0];
 	if (!r) return null;
 	return {
@@ -389,7 +396,7 @@ export async function fetchLeaderTrades(agentId, network = 'mainnet', sinceIso =
 			  and status in ('open', 'closed') and opened_at >= ${sinceIso}
 			order by opened_at asc
 			limit ${MAX_GHOST_TRADES}
-		`.catch(() => [])
+		`
 		: await sql`
 			select id, mint, symbol, name, status, exit_reason,
 			       entry_quote_lamports, realized_pnl_lamports, realized_pnl_pct,
@@ -399,7 +406,7 @@ export async function fetchLeaderTrades(agentId, network = 'mainnet', sinceIso =
 			  and status in ('open', 'closed')
 			order by opened_at asc
 			limit ${MAX_GHOST_TRADES}
-		`.catch(() => []);
+		`;
 	return rows;
 }
 
@@ -425,7 +432,7 @@ export async function fetchGhostableLeaders(network = 'mainnet', { window = '7d'
 			group by a.id, a.name, a.avatar_url, a.profile_image_url
 			order by sum(p.realized_pnl_lamports) desc nulls last
 			limit ${Math.min(100, Math.max(1, limit))}
-		`.catch(() => [])
+		`
 		: await sql`
 			select a.id, a.name, a.avatar_url, a.profile_image_url,
 			       count(p.id)::int as settled,
@@ -440,7 +447,7 @@ export async function fetchGhostableLeaders(network = 'mainnet', { window = '7d'
 			group by a.id, a.name, a.avatar_url, a.profile_image_url
 			order by sum(p.realized_pnl_lamports) desc nulls last
 			limit ${Math.min(100, Math.max(1, limit))}
-		`.catch(() => []);
+		`;
 
 	return rows.map((r) => {
 		const settled = Number(r.settled || 0);

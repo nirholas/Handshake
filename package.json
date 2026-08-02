@@ -171,6 +171,7 @@
 		"audit:rig-coverage": "node scripts/audit-rig-coverage.mjs",
 		"audit:service-wallets": "node --env-file=.env scripts/audit-service-wallets.mjs",
 		"audit:wallet-flows": "node --env-file=.env scripts/audit-wallet-flows.mjs",
+		"audit:llm-metering": "node scripts/audit-llm-metering.mjs",
 		"check:cron-drift": "node scripts/check-cron-drift.mjs",
 		"check:cron-syntax": "node scripts/check-cron-drift.mjs --offline",
 		"audit:custodial-keys": "node scripts/audit-custodial-key-health.mjs",

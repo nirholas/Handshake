@@ -481,3 +481,29 @@ Solana settlement is unchanged and still self-hosted. Nothing in this session
 re-pointed, demoted, or touched the Solana rail.
 
 Commit gate: this entry names a third-party registry and is NOT staged.
+
+## 2026-08-02: 08 OKX chat bot: move off the codespace
+
+Measured: `npm run okx:bot` → exit 2 (daemon running, runtime ready, briefing 6309 chars,
+12 skills linked, bypass on, wallet session logged out). Same wall as every prior session.
+
+Did: built `workers/okx-chat-bot/`, an always-on Cloud Run host. Supervises `okx-a2a run`
+directly (`daemon start` is a silent no-op in a container), persists the wallet/XMTP
+identity to GCS across revisions, rebuilds the AI workspace from the image every boot,
+serves `/healthz` + `/readyz`, writes a `bot_heartbeat` row that becomes the `okx_chat_bot`
+subsystem on `/api/healthz`, and pages with the exact login commands when the session
+expires. Extracted `api/_lib/okx-chat-briefing.js` as the single briefing source (added
+real platform context, written as both CLAUDE.md and AGENTS.md). Two signatures added to
+`scripts/gcp-triage.mjs`. Deploy prepared to one command in
+`workers/okx-chat-bot/cloudbuild.yaml` (build SA `three-ws-build@`, runtime SA `three-ws@`,
+`--max-instances=1` load-bearing: one GCS state writer).
+
+Verified mock-free against the real CLIs: workspace built (7391 bytes, 12 skills), daemon
+supervised, `/readyz` 503 `session_logged_out` with a live login URL in `.remedy`, clean
+SIGTERM. 29 tests pass in `tests/okx-chat-bot.test.js`.
+
+Left: (a) the OKX email OTP as `claude@three.ws`, owner-only, needed once now and once
+after the first Cloud Run boot; (b) an AI-provider credential on the service
+(`ANTHROPIC_API_KEY` preferred; `OPENAI_API_KEY` also works via the Codex CLI); (c) the
+deploy itself, owner-gated; (d) the commit, which needs owner approval under the
+other-coin commit gate.

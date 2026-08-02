@@ -49,14 +49,29 @@ Extend `tests/parametric-base.test.js` with the new group assertions.
 
 ## Task 2: skeleton-space proportions (phase 2)
 
-Morphs cannot lengthen an arm without breaking skinning; bone parameters can.
+**Shipped client-side (2026-08-02).** `src/avatar-proportions.js` holds the 10-parameter table
+(height, leg/torso/neck/arm length, shoulder/hip width, head/hand/foot size) and the maths;
+`src/avatar-sculpt.js` renders the Proportions group above the morph sliders on both the studio
+and the customizer; `AnimationManager.remeasureRigProportions()` re-measures hip height and
+rebuilds every bound action so the walk does not foot-slide; the record serializes as
+`appearance.proportions`, specified in `specs/AVATAR_PARAMETERS.md` and covered by
+`tests/avatar-proportions.test.js`.
 
-- Parameter set: height, leg and arm length, shoulder width, neck length, head size, hand and
-  foot scale, hip width. Implement as per-bone scale plus rest-pose offsets on the canonical
-  skeleton, applied at load and baked at export.
-- Extend `src/animation-retarget.js`'s hip-translation rescale to honor per-bone leg scale so
-  walks do not foot-slide. Add a regression case per changed path.
-- UI: a "Proportions" group in the sculpt panel. The sliders are already generic.
+Design notes worth keeping: offsets scale a joint's rest offset from its parent and `scale`
+params scale the joint, but rotations are NEVER written, which is what keeps the retargeter's
+captured rest frames (and bind-space morph deltas) valid. Ground contact is measured on the rig
+rather than derived from the ratios, with the left and right deltas averaged so a width edit
+cancels out and only a length edit lifts the hips. The re-measure deliberately does not call
+`attach()`, because attach re-captures rest frames and a mid-animation rig is not at rest.
+
+**Remaining:** the server-side bake. Avatar Studio saves via a client-side `GLTFExporter` of the
+live scene, so proportions bake in there for free, but `/avatars/:id/edit` PATCHes the appearance
+record and lets `api/_lib/bake.js` render the GLB. Until that path applies `proportions`, a build
+edited in the customizer persists and re-applies in the editor but does not reach the baked GLB
+that viewers download. The shared module is written to be consumed from Node (no three.js, no DOM
+imports): a sibling `api/_lib/bake-proportions.js` that resolves canonical bones with
+`canonicalizeBoneName`, feeds `computeProportionTransforms`, and writes `translation`/`scale`
+back, lazy-imported from `bake.js` the way `bake-garments.js` already is.
 
 ## Task 3: free sculpt (phase 4, the "change literally anything" guarantee)
 

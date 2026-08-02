@@ -143,6 +143,28 @@ export function degradedReason(score) {
 	);
 }
 
+/**
+ * A check that fell back does not count as a verdict measurement.
+ *
+ * The chain does NOT throw when its LLM providers are exhausted: agents/fact-
+ * checker/src/llm-verdict.js#analyzeResults returns every stance as "neutral"
+ * plus a `degraded` note, and computeVerdict turns that into "insufficient" at
+ * 0.3 confidence. So a total provider outage produces 40 confident-looking
+ * `insufficient` verdicts and ZERO errors, which sails past the error-rate
+ * refusal and publishes roughly 25% as the product's accuracy. Reading
+ * `result.degraded` (present on both the in-process return value and the HTTP
+ * response body) is the only signal that separates "we checked and the evidence
+ * was thin" from "we never got to check".
+ *
+ * @param {object|null} result
+ * @returns {string|null} the degradation summary, or null for a full check
+ */
+export function degradationOf(result) {
+	const d = result?.degraded;
+	if (!d) return null;
+	return Array.isArray(d) ? d.join('; ') : String(d);
+}
+
 /** Load and validate the committed claim suite. */
 export async function loadFixture() {
 	const fixture = JSON.parse(await readFile(FIXTURE_PATH, 'utf8'));

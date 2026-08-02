@@ -58,6 +58,7 @@ import { detectTier, BUDGETS, TIER_ORDER, shiftTier } from './irl/perf-budget.js
 import { sharedGLTFLoader, createLoadQueue } from './irl/load-queue.js';
 import { mountPinIdle, getIdleClipJson } from './irl/pin-idle.js';
 import { celebrationRingFrame, CELEBRATION_DURATION } from './irl/pin-celebration.js';
+import { applyAvatarMaterialRealism, looksLikeAvatarMesh } from './shared/avatar-material-realism.js';
 import { createWealthAura3D } from './shared/wealth-aura-3d.js';
 import { fetchWealthState } from './shared/agent-wealth-state.js';
 import { trackLevelUp, installLevelUpCelebrations } from './shared/wealth-levelup.js';
@@ -279,6 +280,19 @@ function sharpenModelTextures(root) {
 			}
 		}
 	});
+}
+
+// Every avatar that lands in the AR scene goes through here. The realism pass
+// (shared with the /avatar viewer, src/shared/avatar-material-realism.js, never
+// re-implemented) upgrades skin/eye/hair off the flat glTF PBR the forge lane
+// exported, which is the difference between a person standing on your floor and
+// a plastic figurine of one. It runs FIRST because it replaces the material
+// objects; sharpening afterwards then keys off the materials that will actually
+// render. Gated on the device tier and on the rig actually being an avatar, so a
+// prop pin and a low-end phone are both left alone.
+function dressAvatarMaterials(root) {
+	if (budget.realism && looksLikeAvatarMesh(root)) applyAvatarMaterialRealism(root);
+	sharpenModelTextures(root);
 }
 
 // Apply the active tier to the renderer + load queue. Called at boot and each
@@ -1145,13 +1159,13 @@ async function loadAvatar(idOrUrl, nameOverride) {
 	// and a per-swap loader allocated decoders the shared one already holds.
 	const gltf = await sharedGLTFLoader().loadAsync(glbUrl);
 	avatar = gltf.scene;
+	dressAvatarMaterials(avatar);
 	avatar.traverse(n => {
 		if (n.isMesh) {
 			n.castShadow = true;
 			if (n.material?.envMapIntensity !== undefined) n.material.envMapIntensity = 0.85;
 		}
 	});
-	sharpenModelTextures(avatar);
 	const box = new Box3().setFromObject(avatar);
 	avatar.position.y -= box.min.y;
 	avatarRig.add(avatar);
@@ -4556,8 +4570,8 @@ async function onPinGLBLoaded(pin, gltf) {
 	if (!pin.group) { disposeObject3D(gltf.scene); return; }
 	const model = gltf.scene;
 	const castShadow = budget.shadow > 0;
+	dressAvatarMaterials(model);
 	model.traverse(n => { if (n.isMesh) { n.castShadow = castShadow; n.frustumCulled = false; } });
-	sharpenModelTextures(model);
 	const box = new Box3().setFromObject(model);
 	model.position.y -= box.min.y;   // feet to ground
 

@@ -8,7 +8,7 @@ import { cors, json, method, error, readJson, rateLimited, serverError } from '.
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { generateSolanaAgentWallet, recoverSolanaAgentKeypair, encryptSecret } from '../_lib/agent-wallet.js';
-import { solanaConnection, solanaPublicConnection } from '../_lib/agent-pumpfun.js';
+import { solanaConnection, solanaPublicConnection, isUnrecoverableSecret } from '../_lib/agent-pumpfun.js';
 import { reverseLookupAddress } from '../../src/solana/sns.js';
 import { maybeWritePatronMemory } from '../_lib/patronage.js';
 import {
@@ -469,6 +469,25 @@ async function handleWallet(req, res, id) {
 		? await _reverseSnsCached(meta.solana_address)
 		: null;
 
+	// Can we still SIGN for this wallet, or are we showing the owner a balance they
+	// can never move? A custodial secret sealed under a retired WALLET_ENCRYPTION_KEY
+	// still reads back a perfectly healthy on-chain balance, so the wallet card looked
+	// identical to a working one right up until the owner typed an amount, confirmed a
+	// withdrawal, and got a 500. Measured 2026-08-01: two customer agents holding
+	// 0.35 SOL are in exactly that state. The check is a local AES-GCM attempt on one
+	// record (no network, sub-millisecond) and runs only on the owner's own read.
+	let signable = null;
+	let signableReason = null;
+	if (meta.encrypted_solana_secret) {
+		try {
+			await recoverSolanaAgentKeypair(meta.encrypted_solana_secret);
+			signable = true;
+		} catch (e) {
+			signable = false;
+			signableReason = isUnrecoverableSecret(e) ? 'key_retired' : 'key_error';
+		}
+	}
+
 	return json(res, req.method === 'POST' ? 201 : 200, {
 		data: {
 			address: meta.solana_address,
@@ -476,6 +495,8 @@ async function handleWallet(req, res, id) {
 			lamports,
 			sol: lamports == null ? null : lamports / 1e9,
 			...(balanceError ? { balance_error: balanceError } : {}),
+			signable,
+			...(signableReason ? { signable_reason: signableReason } : {}),
 			vanity_prefix: meta.solana_vanity_prefix || null,
 			vanity_suffix: meta.solana_vanity_suffix || null,
 			source: meta.solana_wallet_source || (meta.encrypted_solana_secret ? 'generated' : null),
@@ -790,9 +811,23 @@ async function handleWithdraw(req, res, id) {
 			meta: { asset, destination: dest.base58, network, custody_event_id: claimId },
 		});
 	} catch (e) {
-		await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'key_recover_failed' } }).catch(() => {});
-		console.error('[withdraw] key recovery failed', e?.message);
-		return error(res, 500, 'key_recover_failed', 'could not access the agent wallet key — no funds were moved');
+		// A definitive decrypt failure is permanent, not transient: this wallet's
+		// secret was sealed under an encryption key the platform no longer holds, and
+		// every retry will fail identically. Saying "500" invites the owner to retry
+		// forever, so it answers 409 with the one thing that is actually true.
+		const retired = isUnrecoverableSecret(e);
+		await updateCustodyEvent(claimId, {
+			status: 'failed',
+			meta: { error: retired ? 'wallet_key_retired' : 'key_recover_failed' },
+		}).catch(() => {});
+		console.error('[withdraw] key recovery failed', { agentId: id, retired, error: e?.message });
+		if (retired) {
+			return error(res, 409, 'wallet_key_retired',
+				'this wallet was created under an earlier encryption key that no longer exists, so it can no longer be signed for. ' +
+				'No funds were moved and retrying will not help. Contact support with this agent id before creating a new wallet: ' +
+				'provisioning a replacement abandons the balance at this address.');
+		}
+		return error(res, 500, 'key_recover_failed', 'could not access the agent wallet key, no funds were moved');
 	}
 	vtx.sign([keypair]);
 

@@ -3,6 +3,23 @@
 	"entries": [
 		{
 			"date": "2026-08-02",
+			"title": "Remix is reachable again on the narrowest phones",
+			"summary": "On a 320px-wide screen, the footer of every community model card in the Forge showcase ran off the right edge of the card, which pushed the Remix button out of view and made it impossible to tap. The row now wraps onto a second line when it genuinely runs out of space, so the vote count and Remix stay on screen and tappable at every width. Nothing changes on wider screens, where the footer already fit on one line.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-08-02",
+			"title": "Keyboard focus, disabled controls and reduced motion now work the same way on every page",
+			"summary": "Three things that used to depend on whether an individual page remembered to handle them now hold everywhere. Tabbing through the site always shows a visible outline on whatever you have landed on, so you can tell where you are without a mouse; around 1,500 buttons, links and cards previously had no focus indicator at all. Controls that are switched off now consistently look switched off, including the custom ones that are not standard form buttons. And if your device is set to reduce motion, decorative animation across the site now settles instead of playing, while loading spinners and progress bars keep moving so a working page never looks frozen. Overlays that sit on top of screenshots and video also share one set of shades now, so captions and buttons read cleanly on light and dark imagery alike. Separately, pages that build their header as they load no longer flash a second logo in the top-left corner before settling.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-02",
 			"title": "Generation progress now tells you which engine is running and when a GPU is waking up",
 			"summary": "The 3D generators scale down to nothing when they are idle, so the first request after a quiet spell spends its opening seconds booting a GPU rather than building your model. That wait used to look like a stall. Progress now says which engine picked up the job and, when the worker is still starting, how many seconds of warm-up are left before sculpting begins, counting down against the real clock. The engine name is read from the lane that actually ran instead of being assumed, so a job that falls over to a different generator says so. The AR studio also stops claiming it is building geometry before the worker has reported that it started, and the same wake-up detail now reaches agents driving generations through the MCP tools.",
 			"tags": [
@@ -17736,6 +17753,25 @@
 				"improvement"
 			],
 			"link": "/status"
+		},
+		{
+			"date": "2026-08-02",
+			"title": "Honest LLM cost reporting, and every free model lane proven to fail over",
+			"summary": "The platform answers with whichever AI model lane is healthy, falling through a chain of providers on any failure. Two problems are fixed here. First, spend reporting was wrong in the worst direction: one paid lane was recorded as costing $0, so a real balance drained with the dashboard showing free traffic the whole way down. Every lane now records what it was actually charged, an unpriceable call is reported as unknown instead of zero, and a new audit fails outright if any spending lane claims $0. Second, the free lanes now carry production traffic, so each one is covered by a test that kills the lanes above it the way a provider really dies (a dropped connection, not a malformed reply) and proves the next one answers. Claude is also ready to switch on the moment a key is available.",
+			"tags": [
+				"infra",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"title": "Avatar Studio: sculpt your build, not just your face",
+			"summary": "The Sculpt tab now has a Proportions panel above the face sliders: height, leg, torso, neck and arm length, shoulder and hip width, and head, hand and foot size. Morph sliders reshape a limb; these actually re-proportion the skeleton, which is the only way to lengthen one without tearing the mesh. Lengthen the legs and the hips ride up so the feet stay on the floor, and the animation library re-measures itself against the new hip height, so a taller avatar walks with a longer stride instead of sliding. Sliders you cannot use never appear: only the parameters your rig has bones for are offered, and because they need no blendshapes at all they work on rigs that have none. Randomize now rolls a build too, and everything saves into the avatar's re-editable appearance record.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/create/studio"
 		}
 	]
 }

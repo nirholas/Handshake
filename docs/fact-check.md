@@ -33,7 +33,7 @@ The LLM routes through the platform's shared free-first policy (Groq and OpenRou
 
 **The attestation** is a tamper-evident content digest: `sha256:` followed by the SHA-256 of a JSON object of `{ verdict, confidence, claim, source URLs }`. It is returned as a string field you can recompute to confirm the verdict was not altered. Note that this is a content hash, not an on-chain record; it is distinct from the platform's [SAS credentialed attestations](./sas-attestations.md) and [3D provenance anchoring](./provenance.md), which do write to Solana.
 
-**The benchmark** (`GET /api/fact-check-benchmark`) reads two committed files: a 40-claim fixture (10 per verdict class, deliberately time-stable and non-partisan) and a generated report from `scripts/fact-check-benchmark.mjs`, which runs those claims in-process against the real chain. The API never fabricates a score: if the runner has not executed in an environment, `ran` is false and `report` is null, and the page renders a designed "not yet run" empty state. Both the claim set and the scoring runner are linked from the page for inspection.
+**The benchmark** (`GET /api/fact-check-benchmark`) scores a 40-claim fixture (10 per verdict class, deliberately time-stable and non-partisan) against the real chain. The API never fabricates a score: with no run available, `ran` is false and `report` is null, and the page renders a designed "not yet run" empty state. Both the claim set and the scoring runner are linked from the page for inspection. See [Running the benchmark](#running-the-benchmark) for how a run is produced and published.
 
 ## Walkthrough
 
@@ -77,6 +77,56 @@ curl 'https://three.ws/api/fact-check-benchmark'
 ```
 
 Once the free quota is spent, the same POST returns `402` with an x402 challenge; pay it with any x402 client (for example `@three-ws/x402-fetch`) and retry. See [x402](./x402.md).
+
+## Running the benchmark
+
+A published accuracy figure is only worth what its run date is worth, so the benchmark is designed to be re-run by anyone with the service key, not only by whoever first set it up.
+
+### Where a run is stored
+
+Two places, read in this order by `GET /api/fact-check-benchmark`:
+
+1. **The database** (`app_settings`, key `fact_check_benchmark:latest_run`). Written by a `--publish` run or by the weekly cron. This wins, so a new run reaches the public page immediately with no deploy.
+2. **`data/_generated/fact-check-benchmark.json`**, committed and baked into the image. The fallback when nothing is published or the DB is unreachable, so an outage degrades to the last shipped run instead of an empty page.
+
+The response's `source` field says which one answered (`database` or `image`).
+
+### Scheduled re-run
+
+`/api/cron/fact-check-benchmark` runs the suite weekly (Mondays 04:41 UTC, see `vercel.json`) in-process on Cloud Run, against the real chain with the Redis verdict cache disabled, and publishes to the DB. No credential is needed for this path: it calls the chain directly, below the x402 payment layer. Tune with `FACT_CHECK_BENCHMARK_CONCURRENCY` (default 6) and `FACT_CHECK_BENCHMARK_DEADLINE_MS` (default 240000, kept under Cloud Scheduler's 320s attempt deadline).
+
+### Running it by hand
+
+```bash
+# Scores the deployed endpoint and publishes the result to the live page.
+node --env-file=.env scripts/fact-check-benchmark.mjs --publish
+```
+
+Drop `--publish` to write only the local file (takes effect on the next deploy). `FACT_CHECK_ENDPOINT` targets a different deployment; `--in-process` runs the chain in-process instead of over HTTP, which needs the search and LLM credentials locally.
+
+One caveat specific to the HTTP path: it goes through the deployed endpoint, so it shares production's 7-day verdict cache. A second run inside that window re-reads the first run's verdicts for any claim that was cached, which measures the cache rather than the chain. The in-process paths (`--in-process` and the cron) disable the cache for the duration of the run and do not have this problem, which is why the scheduled run is the authoritative producer. The `endpoint` field on every report records which path produced it.
+
+### The payment bypass
+
+The runner's HTTP path calls the paid endpoint 40 times, which the 3-per-day free lane cannot cover, so it needs one of the two bypasses in `api/_lib/x402/access-control.js`:
+
+- **`INTERNAL_API_KEY`** (what the published runs use). The internal service key, sent as the `X-API-Key` header. It lives as a plain env var on the `three-ws-api` Cloud Run service and mirrored in `.env`. Rotate it by generating a new value, updating the service, and updating `.env`:
+  ```bash
+  KEY="three_ws_internal_$(openssl rand -hex 24)"
+  gcloud run services update three-ws-api --region us-central1 \
+    --project aerial-vehicle-466722-p5 --update-env-vars "INTERNAL_API_KEY=$KEY"
+  ```
+  Use `--update-env-vars` (merges), never `--set-env-vars` (replaces the whole set). Every bypassed call is logged to `x402_access_log` with caller `internal`.
+- **`FACT_CHECK_BYPASS_TOKEN`**, an OAuth bearer carrying the `x402:bypass` scope, sent as `Authorization: Bearer`. Use this when you want a scoped, per-user credential rather than the service key.
+
+With neither, the runner exits before spending a run and writes nothing.
+
+### Why a run can be refused
+
+Two guards keep a bad run from becoming a published number:
+
+- **Errored-claim ceiling.** Above 10% unreachable claims the run measured provider availability, not verdict accuracy. Nothing is written and the previous run stays up.
+- **Degraded checks count as errors.** The chain does not throw when its LLM providers are exhausted: stance extraction falls back to all-neutral and every claim resolves to `insufficient`. That would publish roughly 25% as the product's accuracy with zero apparent errors. Both runners read the `degraded` field on the response and count such a check as unreachable, which is what makes the ceiling above fire during an outage.
 
 ## States and limits
 

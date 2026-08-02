@@ -13,40 +13,63 @@ the export runs locally from the push routine or the satellite rots.
 
 ## What the export does
 
-`scripts/export-examples.mjs` (wired as `npm run export:examples`) assembles a
-complete, self-contained copy of the examples repo into a gitignored build dir
-and rewrites every monorepo-relative reference to a working surface so nothing
-points back into the monorepo.
+`scripts/export-satellites.mjs` (wired as `npm run export:satellites`) assembles
+a complete, self-contained copy of the examples repo into a gitignored build dir,
+rewrites every monorepo-relative reference to a working surface so nothing points
+back into the monorepo, smoke-tests the result, and gives it a single-parent git
+history ready to push.
 
 ```bash
-npm run export:examples                 # build into dist/examples-repo/
-node scripts/export-examples.mjs --out /tmp/examples   # custom output dir
-node scripts/export-examples.mjs --smoke                # also npm-install + check each runnable example
+npm run export:satellites                                 # build + smoke-test into dist/examples-repo/
+node scripts/export-satellites.mjs --out /tmp/examples    # custom output dir
+node scripts/export-satellites.mjs --offline              # structural checks only, no network
+node scripts/export-satellites.mjs --no-git               # skip the staging git history
 ```
 
 Properties:
 
-- **Idempotent.** It wipes and rebuilds the output dir on every run; two runs
-  produce byte-identical output.
-- **Offline by default.** The assembly needs no network. `--smoke` is the only
-  step that reaches the npm registry (it really runs `npm install` plus each
-  example's check; do this right before publishing).
+- **Idempotent.** It wipes and rebuilds the output dir on every run.
+- **Gated, not best-effort.** The smoke stages run by default and any failure
+  aborts with a non-zero exit, because a broken public example is anti-marketing.
+  The staging tree is left in place for inspection but is not publishable.
 - **Curated, not a mirror.** Only the material listed in the script's manifest
   is exported. Adding an example means adding a manifest entry, nothing more.
+- **It never touches a remote.** It prints the org-creation and push commands;
+  the owner runs them (CLAUDE.md gate 2).
+
+### The smoke gate
+
+| Stage | Network | What it proves |
+|---|---|---|
+| 1. structure | no | No reference escapes the export or dangles; no `file:` dep survives; every `package.json` parses |
+| 2. registry | yes | Every pinned `@three-ws/*` version actually exists on npm |
+| 3. install | yes | `npm install` succeeds per staged package, then that example's own check runs (`npm test` where it has one, else a parse check of every source it ships) |
+| 4. links | yes | Every distinct `https://three.ws` URL in the export is reachable (405 counts: a POST-only endpoint answering 405 proves the route exists; a missing one answers 404) |
 
 ### The rewrites it applies
 
-| Source form in the monorepo | Rewritten to |
-|---|---|
-| `"file:../../solana-agent-sdk"` (and any `file:` SDK dep) | published `^<version>` read live from that package's `package.json` |
-| `../src/...`, `../../src/...` | `https://three.ws/src/...` (hosted raw modules, all resolve 200) |
-| `/avatars/...`, `/dist-lib/...`, `/src/...` | absolute `https://three.ws/...` |
-| `../../docs/<slug>.md` links | `https://three.ws/docs/<slug>` |
-| `agent-native-3d`'s `../../src/forge-embed-snippets.js` | vendored into `lib/` and imported as `./lib/forge-embed-snippets.js`; its output path is localised to `./out` |
+Every relative reference is resolved against the file's real monorepo location
+and routed by where it lands. A regex sweep over `../src/` would be wrong: an
+example with its own `src/` folder (`paid-mcp-server`, `sdk/example`) uses
+exactly that spelling for its own files, and rewriting those produces an example
+that cannot run.
 
-After a run, the script prints the produced tree and a file/dir count. The
-current export is 59 files across quickstarts, agents, embeds, tutorials, and
-skills.
+| Where the reference resolves to | Rewritten to |
+|---|---|
+| Inside the same exported unit | left alone (the target ships with it) |
+| Another exported unit | re-relativised to that unit's satellite path (`examples/skills/wave` becomes `skills/wave`, so an agent manifest's skill `uri` still resolves) |
+| A published package's own source (`sdk/src/...` from `sdk/example`) | `https://cdn.jsdelivr.net/npm/@three-ws/sdk@<version>/src/...` |
+| `docs/<slug>.md`, `docs/tutorials/<slug>.md` | `https://three.ws/docs/<slug>`, `https://three.ws/tutorials/<slug>` |
+| Anything else in the monorepo | a `github.com/nirholas/three.ws/blob|tree/main/...` permalink |
+| `"file:../../solana-agent-sdk"` (any `file:` SDK dep) | published `^<version>` read live from that package's `package.json` |
+| `/avatars/...`, `/dist-lib/...`, `/src/...`, `/api/...` | absolute `https://three.ws/...` |
+
+Two examples also get a targeted transform: `agent-native-3d` vendors
+`src/forge-embed-snippets.js` into `lib/` and writes its transcript to `./out`,
+and `wallet-sign-in` defaults its API base to `https://three.ws` (in the monorepo
+it is served same-origin behind the dev proxy).
+
+After a run the script prints the produced tree and a file/dir count.
 
 ### Output layout
 
@@ -57,11 +80,28 @@ dist/examples-repo/
   .gitignore
   quickstarts/         # one folder per SDK: install command + real Quick start section + npm/docs links
     sdk/  solana-agent-sdk/  agent-payments-sdk/  mcp-server/
-  agents/              # coach-leo  pump-fun-agent  three-concierge  metamask-agent-wallet
-  embeds/              # minimal / two-agents / web-component / widget-rpc  (single-file HTML)
-  tutorials/           # agenc-task-roundtrip  agent-native-3d  (long-form, runnable)
-  skills/              # pump-fun trading / strategy / compose / trade, solana-wallet
+  agents/              # coach-leo  metamask-agent-wallet
+  embeds/              # nine single-file HTML patterns
+  tutorials/           # agent-native-3d  paid-mcp-server  wallet-sign-in
+  skills/              # pump-fun trading / strategy / compose / trade, solana-wallet, wave
 ```
+
+### What is deliberately held out
+
+Three examples are excluded from the manifest under the CLAUDE.md commit gate,
+because each references a crypto project other than `$THREE`. Re-including any of
+them is a one-line manifest edit once the owner approves that specific content.
+
+| Example | Why |
+|---|---|
+| `pump-fun-agent` | installs `pump-fun-skills/`, whose SKILL.md and lib carry third-party program ids, a third-party sample mint, and a bundler integration |
+| `three-concierge` | same skill dependency |
+| `agenc-task-roundtrip` | depends on a third-party agent-commerce SDK and pins that project's on-chain program id |
+
+The rule behind the first two is also structural: an agent may only ship here if
+every skill its manifest installs ships too. A public agent with a dangling skill
+`uri` is broken for the first reader who tries it, and stage 1 fails the export
+rather than let that happen.
 
 ## License note before first publish
 
@@ -82,24 +122,20 @@ plain directory; the owner turns it into a repo.
      --description "Runnable examples, SDK quickstarts, and embeds for three.ws"
    ```
 
-2. **Build and smoke-test the export.**
+2. **Build and smoke-test the export.** A non-zero exit means do not publish.
    ```bash
-   npm run export:examples
-   node scripts/export-examples.mjs --smoke   # verifies the runnable examples install
+   npm run export:satellites
    ```
 
 3. **Confirm the license** in `dist/examples-repo/LICENSE` (see the note above).
 
-4. **Publish the built directory as the repo's single-parent history.** The
-   satellite history is disposable, so a fresh single commit is correct; never
-   preserve or merge prior satellite history.
+4. **Push the staging tree.** The export already made it a single-commit `main`;
+   the satellite history is disposable, so force-push is correct and prior
+   satellite history is never preserved or merged. The script prints these two
+   lines at the end of every successful run:
    ```bash
-   cd dist/examples-repo
-   git init -b main
-   git add -A
-   git commit -m "Sync examples from monorepo"
-   git remote add origin https://github.com/three-ws/examples.git
-   git push --force origin main
+   git -C dist/examples-repo remote add satellite https://github.com/three-ws/examples.git
+   git -C dist/examples-repo push --force satellite main
    ```
 
 5. **Never pull, fetch, or merge from the satellite.** To update it later,

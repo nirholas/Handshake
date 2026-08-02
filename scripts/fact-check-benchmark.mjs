@@ -46,6 +46,7 @@ import { fileURLToPath } from 'node:url';
 import {
 	MAX_ERROR_RATE,
 	buildReport,
+	degradationOf,
 	degradedReason,
 	isDegraded,
 	savePublishedRun,
@@ -120,8 +121,12 @@ async function checkOne(endpoint, access, claim) {
 		const e = new Error(`chain returned ${res.status}`); e.status = res.status; throw e;
 	}
 	const data = await res.json();
-	const verdict = data?.verdict ?? data?.result?.verdict ?? null;
-	return verdict;
+	const payload = data?.result ?? data;
+	const degradation = degradationOf(payload);
+	if (degradation) {
+		const e = new Error(`degraded check: ${degradation}`); e.degraded = true; throw e;
+	}
+	return payload?.verdict ?? null;
 }
 
 // One live check with a bounded retry. A single 502 or edge timeout on a 40-claim
@@ -231,6 +236,8 @@ async function mainInProcess(claims, fixture, { publish } = {}) {
 		let detail = null;
 		try {
 			const r = await _checkClaim(c.claim, 'medium', null);
+			const degradation = degradationOf(r);
+			if (degradation) throw new Error(`degraded check: ${degradation}`);
 			actual = r?.verdict ?? null;
 			detail = {
 				confidence: r?.confidence ?? null,
