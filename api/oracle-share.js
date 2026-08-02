@@ -20,6 +20,7 @@
 import { sql } from './_lib/db.js';
 import { cors, wrap } from './_lib/http.js';
 import { env } from './_lib/env.js';
+import { terminalLinks } from '../src/shared/trading-terminals.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const PUMP_V3 = 'https://frontend-api-v3.pump.fun';
@@ -228,6 +229,7 @@ function heroHtml({ mint, row, pump, origin }) {
 
 	const actions = `<div class="cv-pills oc-actions">
 		<a class="cv-pill" href="${esc(pumpUrl(mint))}" target="_blank" rel="noopener">pump.fun ↗</a>
+		${terminalLinks(mint).map((t) => `<a class="cv-pill" href="${esc(t.url)}" target="_blank" rel="noopener">${esc(t.label)} ↗</a>`).join('\n\t\t')}
 		<a class="cv-pill" href="https://solscan.io/token/${esc(mint)}" target="_blank" rel="noopener">Solscan ↗</a>
 		<a class="cv-pill" href="/coin3d?mint=${encodeURIComponent(mint)}" title="Open the full 3D coin profile">View in 3D</a>
 		<a class="cv-pill" href="/launches/${esc(mint)}">Launch details</a>

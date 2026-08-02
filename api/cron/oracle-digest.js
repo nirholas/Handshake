@@ -19,6 +19,7 @@ import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
+import { gmgnTokenUrl, referralUrl, TERMINAL_LABELS } from '../../src/shared/trading-terminals.js';
 
 const TIER_EMOJI = { prime: '🟣', strong: '🔵', lean: '🟡', watch: '⚪', avoid: '🔴' };
 const ALERT_TIMEOUT_MS = 5000;
@@ -215,7 +216,7 @@ export function buildChannelDigest({ scored, actions, top }) {
 		for (const c of top) {
 			const e = TIER_EMOJI[c.tier] || '⚪';
 			const cat = c.category && c.category !== 'unknown' ? ` · ${esc(c.category)}` : '';
-			lines.push(`${e} <b>$${esc(c.symbol || c.mint.slice(0, 6))}</b> · <code>${c.score}</code>${cat} · <a href="https://three.ws/oracle/coin/${encodeURIComponent(c.mint)}">view</a>`);
+			lines.push(`${e} <b>$${esc(c.symbol || c.mint.slice(0, 6))}</b> · <code>${c.score}</code>${cat} · <a href="https://three.ws/oracle/coin/${encodeURIComponent(c.mint)}">view</a> · <a href="${gmgnTokenUrl(c.mint)}">GMGN</a>`);
 		}
 		lines.push(``);
 	} else {
@@ -228,6 +229,10 @@ export function buildChannelDigest({ scored, actions, top }) {
 		lines.push(`<b>Agents</b>  ${actions.total} action${actions.total !== 1 ? 's' : ''}  ·  ${actions.wins}W / ${actions.losses}L${pnlStr}`, ``);
 	}
 
+	const offers = ['gmgn', 'axiom', 'padre', 'fomo']
+		.map((k) => `<a href="${referralUrl(k)}">${TERMINAL_LABELS[k]}</a>`)
+		.join(' · ');
+	lines.push(`Trade with a fee discount: ${offers}`);
 	lines.push(`<a href="https://three.ws/oracle">Open the live feed →</a>`);
 	return lines.join('\n');
 }

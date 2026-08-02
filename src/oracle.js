@@ -10,6 +10,7 @@
 // force graph. The coin drawer also streams live trades via oracle-tape.js.
 
 import { proxiedImageURL } from './ipfs.js';
+import { gmgnTokenUrl } from './shared/trading-terminals.js';
 
 const NETWORK = 'mainnet';
 const $ = (s, r = document) => r.querySelector(s);
@@ -1768,6 +1769,7 @@ function renderDrawer(d) {
 		<div class="dr-actions">
 			<a class="dr-act" href="/oracle/coin/${encodeURIComponent(c.mint)}" title="Open the full conviction page">Full page ↗</a>
 			<a class="dr-act" href="${pumpUrl(c.mint)}" target="_blank" rel="noopener">pump.fun ↗</a>
+			<a class="dr-act" href="${gmgnTokenUrl(c.mint)}" target="_blank" rel="noopener" title="Trade on GMGN">GMGN ↗</a>
 			<a class="dr-act" href="${solscan(c.mint)}" target="_blank" rel="noopener">solscan ↗</a>
 			<a class="dr-act" href="/launches/${esc(c.mint)}" target="_blank" rel="noopener">Details ↗</a>
 			<a class="dr-act" href="/coin3d?mint=${encodeURIComponent(c.mint)}" target="_blank" rel="noopener" title="Open the full 3D coin profile">View in 3D ↗</a>
@@ -2094,6 +2096,7 @@ function renderMarket(m) {
 	// Chart + explorer + social links.
 	const lk = m.links || {};
 	const linkBtns = [
+		lk.gmgn ? `<a class="dr-act" href="${esc(lk.gmgn)}" target="_blank" rel="noopener">GMGN ↗</a>` : '',
 		lk.dexscreener ? `<a class="dr-act" href="${esc(lk.dexscreener)}" target="_blank" rel="noopener">DexScreener ↗</a>` : '',
 		lk.geckoterminal ? `<a class="dr-act" href="${esc(lk.geckoterminal)}" target="_blank" rel="noopener">GeckoTerminal ↗</a>` : '',
 		lk.birdeye ? `<a class="dr-act" href="${esc(lk.birdeye)}" target="_blank" rel="noopener">Birdeye ↗</a>` : '',

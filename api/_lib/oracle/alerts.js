@@ -23,6 +23,7 @@
 // Fire-and-forget with a 4s abort — never delays the scoring loop.
 
 import { sql } from '../db.js';
+import { gmgnTokenUrl, axiomTokenUrl } from '../../../src/shared/trading-terminals.js';
 
 const ALERT_TIMEOUT_MS = 4000;
 // Minimum tier to alert on. 'prime' only = exclusive. 'strong' = more volume.
@@ -79,7 +80,7 @@ function format(coin) {
 		pillars ? `<i>${pillars}</i>` : '',
 		`<code>${escHtml(coin.mint)}</code>`,
 		`${category}${smart}`,
-		`<a href="https://pump.fun/coin/${encodeURIComponent(coin.mint)}">pump.fun</a>  ·  <a href="https://three.ws/oracle/coin/${encodeURIComponent(coin.mint)}">Oracle</a>`,
+		`<a href="https://pump.fun/coin/${encodeURIComponent(coin.mint)}">pump.fun</a>  ·  <a href="${gmgnTokenUrl(coin.mint)}">GMGN</a>  ·  <a href="${axiomTokenUrl(coin.mint)}">Axiom</a>  ·  <a href="https://three.ws/oracle/coin/${encodeURIComponent(coin.mint)}">Oracle</a>`,
 	].filter(Boolean).join('\n');
 }
 
@@ -156,7 +157,7 @@ export async function alertProfitableExit(exits) {
 		const text = [
 			`${emoji} <b>${agentName}</b> made <b>${escHtml(pnlStr)}</b> on <b>$${sym}</b>${modeLabel}`,
 			`Peak: <b>${peakStr}</b>  ·  Size: ${escHtml(sizeStr)}  ·  Entry: ${tierE} ${escHtml(e.tier)} conviction (${e.conviction ?? '?'})`,
-			`<a href="https://pump.fun/coin/${encodeURIComponent(e.mint)}">pump.fun</a>  ·  <a href="https://three.ws/oracle/coin/${encodeURIComponent(e.mint)}">Oracle</a>  ·  <a href="https://three.ws/agents/${encodeURIComponent(e.agent_id)}">Track record</a>`,
+			`<a href="https://pump.fun/coin/${encodeURIComponent(e.mint)}">pump.fun</a>  ·  <a href="${gmgnTokenUrl(e.mint)}">GMGN</a>  ·  <a href="https://three.ws/oracle/coin/${encodeURIComponent(e.mint)}">Oracle</a>  ·  <a href="https://three.ws/agents/${encodeURIComponent(e.agent_id)}">Track record</a>`,
 		].join('\n');
 
 		await send(text);
@@ -192,7 +193,7 @@ export async function alertAgentEntry(entries) {
 		const text = [
 			`${tierE} <b>${agentName}</b> entered <b>$${sym}</b>`,
 			`${escHtml(e.tier)} conviction${convStr}  ·  ${escHtml(sizeStr)}`,
-			`<a href="https://pump.fun/coin/${encodeURIComponent(e.mint)}">pump.fun</a>  ·  <a href="https://three.ws/oracle/coin/${encodeURIComponent(e.mint)}">Oracle ↗</a>  ·  <a href="https://three.ws/trader/${encodeURIComponent(e.agent_id)}">Copy trades →</a>`,
+			`<a href="https://pump.fun/coin/${encodeURIComponent(e.mint)}">pump.fun</a>  ·  <a href="${gmgnTokenUrl(e.mint)}">GMGN</a>  ·  <a href="https://three.ws/oracle/coin/${encodeURIComponent(e.mint)}">Oracle ↗</a>  ·  <a href="https://three.ws/trader/${encodeURIComponent(e.agent_id)}">Copy trades →</a>`,
 		].join('\n');
 
 		await send(text);
