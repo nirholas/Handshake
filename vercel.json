@@ -4686,6 +4686,14 @@
 			"dest": "/api/skills/categories"
 		},
 		{
+			"src": "/api/skills/license-onchain",
+			"dest": "/api/skills/license-onchain"
+		},
+		{
+			"src": "/api/skills/mint",
+			"dest": "/api/skills/mint"
+		},
+		{
 			"src": "/api/skills/([^/]+)/install",
 			"dest": "/api/skills/[id]/install?id=$1"
 		},
