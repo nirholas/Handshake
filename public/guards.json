@@ -791,6 +791,41 @@
 				"kind": "live",
 				"reason": "The audit currently reports a real backlog of 46 shadowed handlers, so it exits non-zero against the live repo and cannot yet pass the control half of a sandboxed proof. It stays a manual audit until that backlog is cleared, at which point it can move into the gate with a two-sided proof."
 			}
+		},
+		{
+			"id": "audit-cron-liveness",
+			"script": "scripts/audit-cron-liveness.mjs",
+			"npm": "audit:cron-liveness",
+			"npmAliases": [
+				"audit:cron-liveness:static"
+			],
+			"title": "Every declared cron is actually alive",
+			"protects": "Each cron in vercel.json resolves through the real route table to a handler file that exists, imports without throwing, answers a live request, and refuses an unauthenticated one.",
+			"why": "check-cron-drift answers 'is the schedule valid and is Cloud Scheduler running it?', which a silently dead cron passes: the job shows ENABLED, the schedule matches, the request lands, and the server 404s it or imports a handler that throws at module scope. Nothing anywhere notices. That exact gap killed all 30+ dispatcher jobs (payouts, subscriptions, buybacks, pumpfun monitors) until July 2026, because vercel.json's legacy routes array does not auto-route the [name] dynamic segment. This walks route, handler, load, and run per cron, and reports a cron that answers 200 without a bearer token as UNGATED rather than as a pass.",
+			"stages": [
+				"manual"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "live",
+				"reason": "The run stage boots the real server on a free port and probes every cron URL, so the check is inherently live. The probe is deliberately unauthenticated and every handler fails closed on CRON_SECRET, so no job body executes: nothing is paid, swapped, minted, transferred, or written. `--static` skips the boot for a route-and-load-only pass."
+			}
+		},
+		{
+			"id": "audit-custodial-key-health",
+			"script": "scripts/audit-custodial-key-health.mjs",
+			"npm": "audit:custodial-keys",
+			"title": "No custodial SOL is stranded behind an unreadable key",
+			"protects": "Every stored custodial Solana secret still decrypts under the current WALLET_ENCRYPTION_KEY, and reports the SOL sitting behind any that do not.",
+			"why": "The treasury self-heal reclaims idle SOL from platform-owned agent wallets when the master fee wallet runs short. A wallet whose encrypted_solana_secret fails AES-GCM decryption cannot be signed for, so its balance is invisible to that self-heal and to every other spend path, and the failure is silent by construction: the reclaim leg reports a failed SEND, and a WebCrypto OperationError wearing a Solana costume sends operators after RPC health and funding for a key problem neither can fix. A key rotation is the usual cause; the WALLET_ENCRYPTION_KEY changed during the 2026-07 Vercel to Cloud Run migration and every wallet written under the retired key became unreadable.",
+			"stages": [
+				"manual"
+			],
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "It reads the production wallet table and the live encryption key, then decrypts in memory to test each secret against the current key. There is no offline fixture for 'this ciphertext no longer opens' that would prove anything about the real fleet. Read-only: it never writes, signs, or broadcasts."
+			}
 		}
 	],
 	"exempt": [
