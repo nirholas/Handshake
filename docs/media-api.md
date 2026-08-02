@@ -20,6 +20,7 @@ Base URL: `https://three.ws`
 | [`/api/render/avatar-clip`](#render-any-glb-posed-and-camera-orbited) | GET, POST | none | Posed, camera-orbited PNG of any GLB |
 | [`/api/avatar/optimize`](#optimize-a-glb-at-runtime) | GET | none | Runtime GLB transcoder (LOD, textures, morphs, Draco) |
 | [`/api/glb`](#same-origin-glb-proxy) | GET | none | Same-origin GLB proxy with open CORS |
+| [`/cdn/<key>`](#how-bucket-objects-are-served-cdnkey) | GET, HEAD | none | First-party CDN for bucket objects |
 | [`/api/vision`](#image-understanding) | GET, POST | none | Ask a vision model about an image |
 | [`/api/asr`](#speech-to-text) | GET, POST | none | Speech-to-text (voice in) |
 | [`/api/avatars/library`](#character-library) | GET | none | Paginated manifest of rigged characters |
@@ -250,6 +251,10 @@ dependency on a third-party host's headers.
 Safe by construction: upstream objects are already public and keyless, and
 the fetch runs through the SSRF-hardened fetcher (scheme allowlist, DNS
 pinning, private-IP blocklist, redirect re-validation, byte cap, timeout).
+The response is always declared `model/gltf-binary` with `nosniff`,
+`content-security-policy: default-src 'none'; sandbox`, and
+`cross-origin-resource-policy: cross-origin`, so bytes fetched from a remote
+host can never be interpreted as a document on the `three.ws` origin.
 
 ### Query parameters
 
@@ -278,6 +283,33 @@ upstream timeout, rate-limited per IP.
 curl -sL -o model.glb \
   'https://three.ws/api/glb?src=https%3A%2F%2Fthree.ws%2Favatars%2Fcesium-man.glb'
 ```
+
+---
+
+## How bucket objects are served (`/cdn/<key>`)
+
+Every generated asset (avatars, forge output, thumbnails, posters, manifests)
+is reachable two ways: from the media bucket's own host, and from
+**`GET https://three.ws/cdn/<key>`**, which streams the same object through the
+site. The first-party path exists because the bucket's public dev host is
+rate-limited, and a gallery loading dozens of thumbnails at once gets throttled
+there. Both URLs return identical bytes; the `/cdn` one is CDN-cached and
+CORS-open (`access-control-allow-origin: *`), so it works from any origin
+without the proxy above.
+
+Because that path puts bucket content on the same origin as the app, the
+response is pinned to data rather than a document:
+
+| Rule | Effect |
+|---|---|
+| The `Content-Type` comes from the object key's extension | Every write path chooses the extension server-side from an allowlist, so an upstream provider's `Content-Type` header can never decide what `three.ws` serves. A stored type is honored only when the extension is unrecognized, and only if it is itself a media type. |
+| Anything not safe to render inline is sent `content-disposition: attachment` | Images (except SVG), glTF/GLB, USDZ, audio, video, and JSON render inline. SVG and unknown types download instead of rendering. |
+| Every response carries `content-security-policy: default-src 'none'; sandbox` and `x-content-type-options: nosniff` | Anything that does reach a top-level navigation lands in an opaque origin, so it cannot script against `three.ws` or read its storage. |
+
+None of this affects normal use: `<img>`, `<model-viewer>`, `<video>`, and
+`fetch()` are subresource loads, which ignore `content-disposition` entirely.
+An SVG thumbnail still renders through `<img>`; what it can no longer do is
+open as a page on the site's origin.
 
 ---
 
