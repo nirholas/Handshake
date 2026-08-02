@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-02T05:02:32.394Z",
+	"generated_at": "2026-08-02T05:16:03.142Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -180,6 +180,17 @@
 			"link": "/fact-check",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"type": "update",
+			"title": "The guided tour now points at things instead of dimming the screen",
+			"summary": "The site tour walks an avatar across three.ws and spotlights the feature it is talking about. On fourteen stops it was spotlighting nothing: pages like the trading arena, the agent wallet demo, Mission Control, the scene editor and the Avatar Studio are app shells with no page heading, so the tour's automatic anchor-finder came up empty and dimmed the whole page instead. Every one of those stops now points at the thing the narration is actually about, picked by reading what each page really renders: the Choose your avatar button in the arena, the wallet card on the agent-wallet demo, the live token feed in Mission Control. Separately, seventy-four stops had never been checked at all, because pages kept getting added to the tour faster than anyone re-ran the check. All of them have now been visited and verified, so 263 of the tour's 264 stops are confirmed to point at a real, visible element, and the narration on every stop matches what the tour actually says.",
+			"link": "/tour",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{

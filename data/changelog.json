@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-02",
+			"title": "The guided tour now points at things instead of dimming the screen",
+			"summary": "The site tour walks an avatar across three.ws and spotlights the feature it is talking about. On fourteen stops it was spotlighting nothing: pages like the trading arena, the agent wallet demo, Mission Control, the scene editor and the Avatar Studio are app shells with no page heading, so the tour's automatic anchor-finder came up empty and dimmed the whole page instead. Every one of those stops now points at the thing the narration is actually about, picked by reading what each page really renders: the Choose your avatar button in the arena, the wallet card on the agent-wallet demo, the live token feed in Mission Control. Separately, seventy-four stops had never been checked at all, because pages kept getting added to the tour faster than anyone re-ran the check. All of them have now been visited and verified, so 263 of the tour's 264 stops are confirmed to point at a real, visible element, and the narration on every stop matches what the tour actually says.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/tour"
+		},
+		{
+			"date": "2026-08-02",
 			"title": "The fact checker now publishes a real, measured accuracy score",
 			"summary": "The accuracy card on /fact-check showed a \"not yet run\" placeholder because the benchmark had never actually been executed against the live service. It has been now: all 40 curated claims were run through the real production chain, and the page shows what came back. The service scores 50 percent overall, with a breakdown by verdict type and by claim difficulty, the exact number of claims run, and the date it ran. It gets every clearly-supported claim right and struggles most with claims where the evidence genuinely cuts both ways. That is a modest number and it is the true one. The run now repeats itself weekly so the score on the page stays current, and a run that could not reach the search or language-model providers is thrown away rather than published, so an outage can never masquerade as a bad accuracy score.",
 			"tags": [
