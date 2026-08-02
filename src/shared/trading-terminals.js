@@ -30,9 +30,17 @@ export const REFERRAL_CODES = {
 	fomo: 'nichxbt',
 };
 
-/** GMGN chain slug for our two supported chains. */
+/**
+ * GMGN chain slug. GMGN serves a token page per chain under its own slug, and
+ * the smart-money feed surfaces Solana, Ethereum, Base and BNB Chain, so an
+ * unknown-chain fallback to `sol` must not swallow the other three: that would
+ * point an Ethereum token at a Solana URL that cannot resolve. Pass through the
+ * slugs GMGN documents and default only genuinely unknown input to Solana.
+ */
+const GMGN_CHAINS = new Set(['sol', 'eth', 'base', 'bsc', 'tron', 'blast']);
 function gmgnChain(chain) {
-	return chain === 'bsc' ? 'bsc' : 'sol';
+	const slug = String(chain || '').trim().toLowerCase();
+	return GMGN_CHAINS.has(slug) ? slug : 'sol';
 }
 
 /**

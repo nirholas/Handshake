@@ -234,11 +234,11 @@
 		<div class="stat-item"><span class="lbl" data-i18n="gmgn.smart_entries_seen">Smart entries seen</span><span class="val gmgn" id="stat-entries">0</span></div>
 		<div class="stat-item"><span class="lbl" data-i18n="gmgn.tokens_tracked">Tokens tracked</span><span class="val" id="stat-tracked">—</span></div>
 		<div class="stat-item"><span class="lbl" data-i18n="gmgn.last_poll">Last poll</span><span class="val" id="stat-polled">—</span></div>
-		<div class="stat-item"><span class="lbl" data-i18n="gmgn.source">Source</span><span class="val" id="stat-source" data-i18n-html="gmgn.gmgn_ai"><a href="https://gmgn.ai" target="_blank" rel="noopener" style="color:var(--gmgn);text-decoration:none">GMGN.ai</a></span></div>
+		<div class="stat-item"><span class="lbl" data-i18n="gmgn.source">Source</span><span class="val" id="stat-source" data-i18n-html="gmgn.gmgn_ai"><a href="https://gmgn.ai/r/nichxbt" target="_blank" rel="noopener" style="color:var(--gmgn);text-decoration:none">GMGN.ai</a></span></div>
 		<div class="stat-item" style="margin-left:auto">
 			<span class="lbl" data-i18n="gmgn.three_on_gmgn">$THREE on GMGN</span>
 			<span class="val" id="three-gmgn-status" style="display:inline-flex;align-items:center;gap:6px" data-i18n-html="gmgn.watch">
-				<a href="https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" target="_blank" rel="noopener" style="color:var(--gmgn);font-size:11px;text-decoration:none" id="three-gmgn-link">Watch ↗</a>
+				<a href="https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" target="_blank" rel="noopener" style="color:var(--gmgn);font-size:11px;text-decoration:none" id="three-gmgn-link">Watch ↗</a>
 				<span id="three-smart-count" style="font-size:11px;color:var(--muted)">—</span>
 			</span>
 		</div>
@@ -342,11 +342,13 @@
 				<a href="/gmgn" aria-current="page" data-i18n="gmgn.gmgn_smart_money_2">GMGN Smart Money</a>
 				<a href="https://x.com/trythreews" target="_blank" rel="noopener" data-i18n="gmgn.x_twitter">X / Twitter</a>
 			</nav>
-			<p class="h-footer-copy" data-i18n-html="gmgn.2026_three_ws_powered_by_gmgn_ai">&copy; 2026 three.ws. Powered by <a href="https://gmgn.ai" target="_blank" rel="noopener">GMGN.ai</a>.</p>
+			<p class="h-footer-copy" data-i18n-html="gmgn.2026_three_ws_powered_by_gmgn_ai">&copy; 2026 three.ws. Powered by <a href="https://gmgn.ai/r/nichxbt" target="_blank" rel="noopener">GMGN.ai</a>.</p>
 		</div>
 	</footer>
 
 	<script type="module">
+		import { gmgnTokenUrl } from '/src/shared/trading-terminals.js';
+
 		const $ = (id) => document.getElementById(id);
 		const url = new URL(location.href);
 
@@ -509,9 +511,12 @@
 
 			const badgeIcon = isDex ? '🚀' : '🧠';
 			const badgeLabel = isDex ? ev.smart_buy_24h : ev.smart_buy_24h;
+			// GMGN links go through the shared builder so they carry our referral
+			// code (GMGN documents `{chain}/token/{code}_{contract}`, so the deep
+			// link and the referral travel together). DexScreener has no such form.
 			const linkBase = isDex
 				? `https://dexscreener.com/${dexChains[chain] || 'solana'}/${escHtml(addr)}`
-				: `https://gmgn.ai/${chain}/token/${escHtml(addr)}`;
+				: escHtml(gmgnTokenUrl(addr, chain));
 			const linkLabel = isDex ? 'DexScreener' : 'GMGN';
 
 			const txnHtml = isDex && ev.txns_h1_buys != null
@@ -590,7 +595,7 @@
 				if (sideTitle) sideTitle.textContent = 'Trending Feed';
 				if (feedHeading) feedHeading.textContent = 'Live trending tokens';
 			} else {
-				srcEl.innerHTML = '<a href="https://gmgn.ai" target="_blank" rel="noopener" style="color:var(--gmgn);text-decoration:none">GMGN.ai</a>';
+				srcEl.innerHTML = '<a href="https://gmgn.ai/r/nichxbt" target="_blank" rel="noopener" style="color:var(--gmgn);text-decoration:none">GMGN.ai</a>';
 				if (sideTitle) sideTitle.textContent = 'Smart Money Feed';
 				if (feedHeading) feedHeading.textContent = 'Live smart money entries';
 			}
