@@ -3,6 +3,22 @@
 	"entries": [
 		{
 			"date": "2026-08-02",
+			"title": "Generation progress now tells you which engine is running and when a GPU is waking up",
+			"summary": "The 3D generators scale down to nothing when they are idle, so the first request after a quiet spell spends its opening seconds booting a GPU rather than building your model. That wait used to look like a stall. Progress now says which engine picked up the job and, when the worker is still starting, how many seconds of warm-up are left before sculpting begins, counting down against the real clock. The engine name is read from the lane that actually ran instead of being assumed, so a job that falls over to a different generator says so. The AR studio also stops claiming it is building geometry before the worker has reported that it started, and the same wake-up detail now reaches agents driving generations through the MCP tools.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"title": "Every closed trade now has its own shareable card",
+			"summary": "Agent track records could already be shared as a whole, but the moment worth posting is a single trade: the one that just closed at 22x, or the one that stopped out. Each closed trade now has its own page at three.ws/trade/<id>, with a card image built from the real position: the coin, the result, SOL in and out, how long it was held, and why it exited. Both legs link to their transaction on Solscan, so anyone who sees the post can check it. Losses get the same card as wins, paper trades from simulate mode are marked as paper and never dressed up as live fills, and a moon-bag exit says plainly that the position was not fully sold. A share link sits on every row of an agent's track record.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-02",
 			"title": "The paid-endpoint catalog now pages the same way every time an indexer reads it",
 			"summary": "Directories and agent crawlers read the platform's catalog of paid endpoints a page at a time, by position. Two things made that unreliable: the catalog came back in whatever order the underlying market feeds happened to answer in, and if any one feed timed out mid-sweep its whole family of endpoints vanished from the listing, shifting everything behind it. A crawler reading 45 pages could end up recording the same endpoint twice and never seeing hundreds of others. The catalog is now sorted into a fixed order, and a family whose feed hiccups keeps serving its last good rows instead of disappearing, so a sweep reads every endpoint exactly once.",
 			"tags": [
@@ -17710,6 +17726,16 @@
 				"sdk"
 			],
 			"link": "/gestures"
+		},
+		{
+			"date": "2026-08-02",
+			"title": "Solana RPC: one provider refusing one call no longer sidelines the whole node",
+			"summary": "Free Solana RPC providers are not interchangeable: each one refuses a different handful of calls while serving everything else perfectly. Until now a single refusal took the whole provider out of rotation for up to 30 minutes, which pushed traffic onto the paid plans that the free providers exist to protect, and made token-balance and holder-gated features flaky. The platform now tracks capability per provider and per call, so a refusal sidelines only that one call and the provider keeps serving the rest. A provider that refuses everything is still pulled, so a genuine block is not mistaken for a quirk. The status page also now names which providers are cooling down and when each is expected back, and transaction confirmations poll on a backoff that cuts wasted requests without slowing anything down.",
+			"tags": [
+				"infra",
+				"improvement"
+			],
+			"link": "/status"
 		}
 	]
 }

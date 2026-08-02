@@ -5977,6 +5977,10 @@
 		{
 			"path": "/api/cron/fact-check-benchmark",
 			"schedule": "41 4 * * 1"
+		},
+		{
+			"path": "/api/cron/gpu-keepwarm",
+			"schedule": "*/10 14-23,0-4 * * *"
 		}
 	]
 }

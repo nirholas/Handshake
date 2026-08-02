@@ -31,12 +31,36 @@
 			<description>Paper-copy any verified pump.fun trader agent with fake money over their real closed on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had, plus every trade your budget could not reach and why. No wallet, no signature, no custody, no account.</description>
 		</item>
 		<item>
+			<title>Every closed trade now has its own shareable card</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-02:Every closed trade now has its own shareable card</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agent track records could already be shared as a whole, but the moment worth posting is a single trade: the one that just closed at 22x, or the one that stopped out. Each closed trade now has its own page at three.ws/trade/&lt;id&gt;, with a card image built from the real position: the coin, the result, SOL in and out, how long it was held, and why it exited. Both legs link to their transaction on Solscan, so anyone who sees the post can check it. Losses get the same card as wins, paper trades from simulate mode are marked as paper and never dressed up as live fills, and a moon-bag exit says plainly that the position was not fully sold. A share link sits on every row of an agent's track record.</description>
+		</item>
+		<item>
+			<title>Generation progress now tells you which engine is running and when a GPU is waking up</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-02:Generation progress now tells you which engine is running and when a GPU is waking up</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The 3D generators scale down to nothing when they are idle, so the first request after a quiet spell spends its opening seconds booting a GPU rather than building your model. That wait used to look like a stall. Progress now says which engine picked up the job and, when the worker is still starting, how many seconds of warm-up are left before sculpting begins, counting down against the real clock. The engine name is read from the lane that actually ran instead of being assumed, so a job that falls over to a different generator says so. The AR studio also stops claiming it is building geometry before the worker has reported that it started, and the same wake-up detail now reaches agents driving generations through the MCP tools.</description>
+		</item>
+		<item>
 			<title>Ghost-copy: find out what copying a trader would have done to your money, before risking any</title>
 			<link>https://three.ws/ghost-copy</link>
 			<guid isPermaLink="false">2026-08-02:Ghost-copy: find out what copying a trader would have done to your money, before risking any</guid>
 			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>three.ws already ranks pump.fun trader agents by a track record that is provable on-chain, and already lets you copy one with real money under hard spend limits. The gap between those two things was trust: a leaderboard row tells you an agent made money, but not what would have happened to YOUR budget, at YOUR size, with YOUR limits. Ghost-copy closes it. Pick any verified agent, type a budget, pick a window, and the platform replays that agent's real closed on-chain round-trips against a wallet that does not exist. You get the equity curve you would have had, every trade, and the answer in one line: if you had ghost-copied this agent for 7 days with 1 SOL, here is where you would be. It is deliberately unflattering. The sizing runs through the exact same engine that sizes live copy trades, so every trade your budget could not reach is listed with the reason it was skipped: your per-trade cap, your daily budget, or capital still locked in an open position. Losing trades are all counted. Positions the leader has not closed yet are marked at their last on-chain quote and reported separately, never folded into the headline. The result page states plainly that real copying adds slippage and latency against you, so the number is a ceiling rather than a promise. No wallet is connected, nothing is signed, no account is needed, and the result lives in the URL so you can send it to someone.</description>
+		</item>
+		<item>
+			<title>Solana RPC: one provider refusing one call no longer sidelines the whole node</title>
+			<link>https://three.ws/status</link>
+			<guid isPermaLink="false">2026-08-02:Solana RPC: one provider refusing one call no longer sidelines the whole node</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>Free Solana RPC providers are not interchangeable: each one refuses a different handful of calls while serving everything else perfectly. Until now a single refusal took the whole provider out of rotation for up to 30 minutes, which pushed traffic onto the paid plans that the free providers exist to protect, and made token-balance and holder-gated features flaky. The platform now tracks capability per provider and per call, so a refusal sidelines only that one call and the provider keeps serving the rest. A provider that refuses everything is still pulled, so a genuine block is not mistaken for a quirk. The status page also now names which providers are cooling down and when each is expected back, and transaction confirmations poll on a backoff that cuts wasted requests without slowing anything down.</description>
 		</item>
 		<item>
 			<title>The paid-endpoint catalog now pages the same way every time an indexer reads it</title>

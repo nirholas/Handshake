@@ -23,9 +23,8 @@
 // Set FORGE_KEEPWARM_LANES (comma-separated lane ids) to override the default
 // set without a deploy, which is the one-flag change to make when quota lands.
 
-import { json, method, wrapCron } from '../_lib/http.js';
-import { requireCron } from '../_lib/cron-auth.js';
-import { env } from '../_lib/env.js';
+import { error, json, method, wrapCron } from '../_lib/http.js';
+import { constantTimeEquals } from '../_lib/crypto.js';
 
 // Every self-host GPU lane that scales to zero. `safeByDefault` records whether
 // warming it contends for a pool that a busier lane needs first (see above).
@@ -53,8 +52,24 @@ const PING_TIMEOUT_MS = 8_000;
 // is what booted it, which is exactly the cold start a user would have paid.
 const WARM_LATENCY_MS = 1_200;
 
+// Matches the local cron guard every other handler in this directory uses.
+function requireCron(req, res) {
+	const secret = process.env.CRON_SECRET;
+	if (!secret) {
+		error(res, 503, 'not_configured', 'CRON_SECRET unset');
+		return false;
+	}
+	const auth = req.headers['authorization'] || '';
+	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+	if (!constantTimeEquals(presented, secret)) {
+		error(res, 401, 'unauthorized', 'invalid cron secret');
+		return false;
+	}
+	return true;
+}
+
 function selectedLaneIds() {
-	const raw = String(env.FORGE_KEEPWARM_LANES || '').trim();
+	const raw = String(process.env.FORGE_KEEPWARM_LANES || '').trim();
 	if (!raw) return KEEPWARM_LANES.filter((l) => l.safeByDefault).map((l) => l.id);
 	return raw
 		.split(',')
@@ -67,7 +82,7 @@ function selectedLaneIds() {
 // success: it proves the worker is serving. Mirrors the probe in
 // api/_lib/forge-lane-health.js so both agree on what "warm" means.
 async function pingLane(lane, key) {
-	const url = env[lane.urlEnv];
+	const url = process.env[lane.urlEnv];
 	if (!url) return { id: lane.id, status: 'unconfigured' };
 	const started = Date.now();
 	try {
@@ -99,7 +114,7 @@ export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
 
-	const key = env.GCP_RECONSTRUCTION_KEY;
+	const key = process.env.GCP_RECONSTRUCTION_KEY;
 	if (!key) {
 		// Nothing to authenticate with, so report a clean skip rather than a
 		// failure: this deployment simply has no self-host workers wired.
