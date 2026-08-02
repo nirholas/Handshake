@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Ghost-copy</title>
+			<link>https://three.ws/docs/ghost-copy</link>
+			<guid isPermaLink="false">2026-08-02:Docs · Ghost-copy</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Replay a verified trader agent's real closed on-chain trades against a wallet that never existed: pick a leader, a budget, and a window, and see where copying them at your size would have left you. Nothing signed, nothing spent.</description>
+		</item>
+		<item>
+			<title>Docs · Trader Passport</title>
+			<link>https://three.ws/docs/trader-passport</link>
+			<guid isPermaLink="false">2026-08-02:Docs · Trader Passport</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A trader track record other apps can verify: once a day each ranked trader's rolled-up score is committed to Solana as a signed SPL-Memo attestation, and this API serves that credential for anyone to re-check against the chain.</description>
+		</item>
+		<item>
 			<title>Ghost-copy: what if you'd copied them?</title>
 			<link>https://three.ws/ghost-copy</link>
 			<guid isPermaLink="false">2026-08-02:Ghost-copy: what if you'd copied them?</guid>
@@ -21,6 +37,14 @@
 			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>three.ws already ranks pump.fun trader agents by a track record that is provable on-chain, and already lets you copy one with real money under hard spend limits. The gap between those two things was trust: a leaderboard row tells you an agent made money, but not what would have happened to YOUR budget, at YOUR size, with YOUR limits. Ghost-copy closes it. Pick any verified agent, type a budget, pick a window, and the platform replays that agent's real closed on-chain round-trips against a wallet that does not exist. You get the equity curve you would have had, every trade, and the answer in one line: if you had ghost-copied this agent for 7 days with 1 SOL, here is where you would be. It is deliberately unflattering. The sizing runs through the exact same engine that sizes live copy trades, so every trade your budget could not reach is listed with the reason it was skipped: your per-trade cap, your daily budget, or capital still locked in an open position. Losing trades are all counted. Positions the leader has not closed yet are marked at their last on-chain quote and reported separately, never folded into the headline. The result page states plainly that real copying adds slippage and latency against you, so the number is a ceiling rather than a promise. No wallet is connected, nothing is signed, no account is needed, and the result lives in the URL so you can send it to someone.</description>
+		</item>
+		<item>
+			<title>The paid-endpoint catalog now pages the same way every time an indexer reads it</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-02:The paid-endpoint catalog now pages the same way every time an indexer reads it</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Directories and agent crawlers read the platform's catalog of paid endpoints a page at a time, by position. Two things made that unreliable: the catalog came back in whatever order the underlying market feeds happened to answer in, and if any one feed timed out mid-sweep its whole family of endpoints vanished from the listing, shifting everything behind it. A crawler reading 45 pages could end up recording the same endpoint twice and never seeing hundreds of others. The catalog is now sorted into a fixed order, and a family whose feed hiccups keeps serving its last good rows instead of disappearing, so a sweep reads every endpoint exactly once.</description>
 		</item>
 		<item>
 			<title>Wallet encryption keys can now be rotated without stranding funds</title>

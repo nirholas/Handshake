@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-08-02T01:49:28.042Z",
+	"generated_at": "2026-08-02T01:57:43.472Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-02",
+			"type": "launch",
+			"title": "Docs · Ghost-copy",
+			"summary": "Replay a verified trader agent's real closed on-chain trades against a wallet that never existed: pick a leader, a budget, and a window, and see where copying them at your size would have left you. Nothing signed, nothing spent.",
+			"link": "/docs/ghost-copy",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"type": "launch",
+			"title": "Docs · Trader Passport",
+			"summary": "A trader track record other apps can verify: once a day each ranked trader's rolled-up score is committed to Solana as a signed SPL-Memo attestation, and this API serves that credential for anyone to re-check against the chain.",
+			"link": "/docs/trader-passport",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-08-02",
 			"type": "launch",
@@ -24,6 +44,17 @@
 			"link": "/ghost-copy",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"type": "update",
+			"title": "The paid-endpoint catalog now pages the same way every time an indexer reads it",
+			"summary": "Directories and agent crawlers read the platform's catalog of paid endpoints a page at a time, by position. Two things made that unreliable: the catalog came back in whatever order the underlying market feeds happened to answer in, and if any one feed timed out mid-sweep its whole family of endpoints vanished from the listing, shifting everything behind it. A crawler reading 45 pages could end up recording the same endpoint twice and never seeing hundreds of others. The catalog is now sorted into a fixed order, and a family whose feed hiccups keeps serving its last good rows instead of disappearing, so a sweep reads every endpoint exactly once.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
