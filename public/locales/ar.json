@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> جديد",
 		"1h": "س1",
 		"1m": "د1",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. مدعوم بواسطة <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. مدعوم بواسطة <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
 		"24h": "24 ساعة",
 		"5m": "د5",
 		"6h": "س6",
@@ -8418,7 +8418,7 @@
 		"ethereum": "إيثيريوم",
 		"follow_along_for_builds_demos_and_conversati": "تابعوا التطويرات، العروض التوضيحية، والمحادثات مع الفريق.",
 		"get_updates_on_new_features_agent_tooling": "احصل على تحديثات حول الميزات الجديدة، أدوات الوكلاء، وتغييرات البروتوكول.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> GMGN سمارت موني",
 		"gmgn_smart_money_2": "GMGN سمارت موني",
 		"home": "الرئيسية",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "الرموز المتتبعة",
 		"use": "استخدام",
 		"use_this_avatar": "استخدم هذا الأفاتار",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">شاهد ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">شاهد ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / تويتر"
 	},
 	"go": {

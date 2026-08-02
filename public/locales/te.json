@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> కొత్త",
 		"1h": "1గం",
 		"1m": "1ని",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> ద్వారా అందించబడింది.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> ద్వారా అందించబడింది.",
 		"24h": "24గం",
 		"5m": "5ని",
 		"6h": "6గం",
@@ -8418,7 +8418,7 @@
 		"ethereum": "Ethereum",
 		"follow_along_for_builds_demos_and_conversati": "బిల్డ్‌లు, డెమోలు మరియు బృందంతో సంభాషణల కోసం మాతో ఉండండి.",
 		"get_updates_on_new_features_agent_tooling": "కొత్త ఫీచర్‌లు, ఏజెంట్ టూలింగ్ మరియు ప్రోటోకాల్ మార్పులపై అప్‌డేట్‌లను పొందండి.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> GMGN స్మార్ట్ మనీ",
 		"gmgn_smart_money_2": "GMGN స్మార్ట్ మనీ",
 		"home": "హోమ్",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "ట్రాక్ చేయబడిన టోకెన్‌లు",
 		"use": "ఉపయోగించండి",
 		"use_this_avatar": "ఈ అవతార్‌ను ఉపయోగించండి",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">చూడండి ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">చూడండి ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / Twitter"
 	},
 	"go": {

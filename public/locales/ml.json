@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> പുതിയത്",
 		"1h": "1h",
 		"1m": "1m",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> നൽകുന്നത്.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> നൽകുന്നത്.",
 		"24h": "24h",
 		"5m": "5m",
 		"6h": "6h",
@@ -8418,7 +8418,7 @@
 		"ethereum": "എഥീറിയം",
 		"follow_along_for_builds_demos_and_conversati": "നിർമ്മാണങ്ങൾ, ഡെമോകൾ, ടീമുമായുള്ള സംഭാഷണങ്ങൾ എന്നിവയ്ക്കായി പിന്തുടരുക.",
 		"get_updates_on_new_features_agent_tooling": "പുതിയ ഫീച്ചറുകൾ, ഏജൻ്റ് ടൂളിംഗ്, പ്രോട്ടോക്കോൾ മാറ്റങ്ങൾ എന്നിവയെക്കുറിച്ചുള്ള അപ്‌ഡേറ്റുകൾ നേടുക.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> GMGN സ്മാർട്ട് മണി",
 		"gmgn_smart_money_2": "GMGN സ്മാർട്ട് മണി",
 		"home": "ഹോം",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "ട്രാക്ക് ചെയ്ത ടോക്കണുകൾ",
 		"use": "ഉപയോഗിക്കുക",
 		"use_this_avatar": "ഈ അവതാർ ഉപയോഗിക്കുക",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">കാണുക ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">കാണുക ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / Twitter"
 	},
 	"go": {

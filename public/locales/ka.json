@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> ახალი",
 		"1h": "1სთ",
 		"1m": "1წთ",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. მხარდაჭერილია <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>-ის მიერ.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. მხარდაჭერილია <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>-ის მიერ.",
 		"24h": "24სთ",
 		"5m": "5წთ",
 		"6h": "6სთ",
@@ -8418,7 +8418,7 @@
 		"ethereum": "Ethereum",
 		"follow_along_for_builds_demos_and_conversati": "გამოგვყევით განვითარებების, დემოების და გუნდთან საუბრებისთვის.",
 		"get_updates_on_new_features_agent_tooling": "მიიღეთ განახლებები ახალი ფუნქციების, აგენტის ხელსაწყოებისა და პროტოკოლის ცვლილებების შესახებ.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> GMGN Smart Money",
 		"gmgn_smart_money_2": "GMGN Smart Money",
 		"home": "მთავარი",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "თვალყურის ქვეშ მყოფი ტოკენები",
 		"use": "გამოყენება",
 		"use_this_avatar": "გამოიყენეთ ეს ავატარი",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">ნახვა ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">ნახვა ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / Twitter"
 	},
 	"go": {

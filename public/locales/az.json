@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> yeni",
 		"1h": "1s",
 		"1m": "1d",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> tərəfindən dəstəklənir.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> tərəfindən dəstəklənir.",
 		"24h": "24s",
 		"5m": "5d",
 		"6h": "6s",
@@ -8418,7 +8418,7 @@
 		"ethereum": "Ethereum",
 		"follow_along_for_builds_demos_and_conversati": "Qurğular, nümayişlər və komanda ilə söhbətlər üçün bizi izləyin.",
 		"get_updates_on_new_features_agent_tooling": "Yeni funksiyalar, agent alətləri və protokol dəyişiklikləri haqqında yenilikləri əldə edin.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> GMGN Ağıllı Pul",
 		"gmgn_smart_money_2": "GMGN Ağıllı Pul",
 		"home": "Ana Səhifə",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "İzlənən tokenlər",
 		"use": "İstifadə et",
 		"use_this_avatar": "Bu avatarı istifadə et",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">İzlə ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">İzlə ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / Twitter"
 	},
 	"go": {

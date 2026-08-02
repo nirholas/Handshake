@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> 新",
 		"1h": "1 小时",
 		"1m": "1 分钟",
-		"2026_three_ws_powered_by_gmgn_ai": "© 2026 three.ws。由 <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> 提供技术支持。",
+		"2026_three_ws_powered_by_gmgn_ai": "© 2026 three.ws。由 <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> 提供技术支持。",
 		"24h": "24 小时",
 		"5m": "5 分钟",
 		"6h": "6 小时",
@@ -8418,7 +8418,7 @@
 		"ethereum": "以太坊",
 		"follow_along_for_builds_demos_and_conversati": "关注我们，了解产品构建、演示和团队交流。",
 		"get_updates_on_new_features_agent_tooling": "获取新功能、代理工具和协议变更的最新动态。",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> GMGN 智能资金",
 		"gmgn_smart_money_2": "GMGN 智能资金",
 		"home": "首页",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "追踪的代币",
 		"use": "使用",
 		"use_this_avatar": "使用此头像",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">观看 ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">观看 ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / Twitter"
 	},
 	"go": {

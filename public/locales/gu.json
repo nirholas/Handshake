@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> નવા",
 		"1h": "1 કલાક",
 		"1m": "1 મિનિટ",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> દ્વારા સંચાલિત.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> દ્વારા સંચાલિત.",
 		"24h": "24 કલાક",
 		"5m": "5 મિનિટ",
 		"6h": "6 કલાક",
@@ -8418,7 +8418,7 @@
 		"ethereum": "ઇથેરિયમ",
 		"follow_along_for_builds_demos_and_conversati": "બિલ્ડ્સ, ડેમો અને ટીમ સાથેની વાતચીત માટે સાથે રહો.",
 		"get_updates_on_new_features_agent_tooling": "નવી સુવિધાઓ, એજન્ટ ટૂલિંગ અને પ્રોટોકોલ ફેરફારો પર અપડેટ્સ મેળવો.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> GMGN સ્માર્ટ મની",
 		"gmgn_smart_money_2": "GMGN સ્માર્ટ મની",
 		"home": "હોમ",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "ટ્રેક કરાયેલ ટોકન્સ",
 		"use": "ઉપયોગ કરો",
 		"use_this_avatar": "આ અવતારનો ઉપયોગ કરો",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">જુઓ ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">જુઓ ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / ટ્વિટર"
 	},
 	"go": {

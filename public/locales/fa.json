@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> جدید",
 		"1h": "۱س",
 		"1m": "۱د",
-		"2026_three_ws_powered_by_gmgn_ai": "© ۲۰۲۶ three.ws. قدرت گرفته از <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
+		"2026_three_ws_powered_by_gmgn_ai": "© ۲۰۲۶ three.ws. قدرت گرفته از <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
 		"24h": "۲۴س",
 		"5m": "۵د",
 		"6h": "۶س",
@@ -8418,7 +8418,7 @@
 		"ethereum": "Ethereum",
 		"follow_along_for_builds_demos_and_conversati": "ساخت‌ها، دموها و گفتگوها با تیم را دنبال کنید.",
 		"get_updates_on_new_features_agent_tooling": "از ویژگی‌های جدید، ابزارهای عامل و تغییرات پروتکل مطلع شوید.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> پول هوشمند GMGN",
 		"gmgn_smart_money_2": "پول هوشمند GMGN",
 		"home": "خانه",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "توکن‌های ردیابی شده",
 		"use": "استفاده کنید",
 		"use_this_avatar": "از این آواتار استفاده کنید",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">تماشا کنید ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">تماشا کنید ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / توییتر"
 	},
 	"go": {

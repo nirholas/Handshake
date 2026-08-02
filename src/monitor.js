@@ -7,6 +7,10 @@
  * tab is hidden and refreshes everything the moment it becomes visible again.
  */
 
+// Terminal links come from the shared builder so this board carries the same
+// referral codes as the rest of the product and cannot drift from them.
+import { gmgnTokenUrl } from './shared/trading-terminals.js';
+
 const $ = (id) => document.getElementById(id);
 
 const esc = (s) =>
@@ -334,6 +338,7 @@ function renderLaunches(launches) {
 			<div class="launch-row">
 				<a class="launch-sym" href="${esc(l.mint_explorer || '#')}" target="_blank" rel="noopener">$${esc(l.symbol || '?')}</a>
 				<span class="launch-name">${esc(l.coin_name || '')}${l.agent?.name ? ' · by ' + esc(l.agent.name) : ''}</span>
+				${l.mint ? `<a class="wire-tx" href="${esc(gmgnTokenUrl(l.mint))}" target="_blank" rel="noopener" aria-label="Open ${esc(l.symbol || 'this coin')} on GMGN">chart</a>` : ''}
 				<span class="wire-when">${rel(l.ts)}</span>
 			</div>`
 		)

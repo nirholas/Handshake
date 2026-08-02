@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> cusub",
 		"1h": "1 saac",
 		"1m": "1 daqiiqo",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. Waxaa ku shaqeeya <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. Waxaa ku shaqeeya <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
 		"24h": "24 saac",
 		"5m": "5 daqiiqo",
 		"6h": "6 saac",
@@ -8418,7 +8418,7 @@
 		"ethereum": "Ethereum",
 		"follow_along_for_builds_demos_and_conversati": "La soco dhismaha, bandhigyada, iyo wada sheekaysiga kooxda.",
 		"get_updates_on_new_features_agent_tooling": "Hel warar ku saabsan astaamo cusub, qalabka wakiilka, iyo isbeddelada borotokoolka.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> GMGN Smart Money",
 		"gmgn_smart_money_2": "GMGN Smart Money",
 		"home": "Bogga hore",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "Calaamadaha la raadraacay",
 		"use": "Isticmaal",
 		"use_this_avatar": "Isticmaal avatarkan",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">Daawo ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">Daawo ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / Twitter"
 	},
 	"go": {

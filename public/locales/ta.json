@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> புதியது",
 		"1h": "1ம",
 		"1m": "1நி",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> மூலம் இயக்கப்படுகிறது.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> மூலம் இயக்கப்படுகிறது.",
 		"24h": "24ம",
 		"5m": "5நி",
 		"6h": "6ம",
@@ -8418,7 +8418,7 @@
 		"ethereum": "எத்தேரியம்",
 		"follow_along_for_builds_demos_and_conversati": "உருவாக்கங்கள், டெமோக்கள் மற்றும் குழுவுடனான உரையாடல்களுக்கு எங்களுடன் இணைந்திருங்கள்.",
 		"get_updates_on_new_features_agent_tooling": "புதிய அம்சங்கள், ஏஜென்ட் கருவிகள் மற்றும் நெறிமுறை மாற்றங்கள் குறித்த அறிவிப்புகளைப் பெறுங்கள்.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> GMGN ஸ்மார்ட் மணி",
 		"gmgn_smart_money_2": "GMGN ஸ்மார்ட் மணி",
 		"home": "முகப்பு",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "கண்காணிக்கப்பட்ட டோக்கன்கள்",
 		"use": "பயன்படுத்து",
 		"use_this_avatar": "இந்த அவதாரைப் பயன்படுத்து",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">காண்க ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">காண்க ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / ட்விட்டர்"
 	},
 	"go": {

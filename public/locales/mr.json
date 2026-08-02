@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> नवीन",
 		"1h": "1ता",
 		"1m": "1मि",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> द्वारे समर्थित.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> द्वारे समर्थित.",
 		"24h": "24ता",
 		"5m": "5मि",
 		"6h": "6ता",
@@ -8418,7 +8418,7 @@
 		"ethereum": "इथेरियम",
 		"follow_along_for_builds_demos_and_conversati": "बिल्ड्स, डेमो आणि टीमसोबतच्या संवादांसाठी अनुसरण करा.",
 		"get_updates_on_new_features_agent_tooling": "नवीन वैशिष्ट्ये, एजंट टूलिंग आणि प्रोटोकॉल बदलांवरील अपडेट्स मिळवा.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> GMGN स्मार्ट मनी",
 		"gmgn_smart_money_2": "GMGN स्मार्ट मनी",
 		"home": "मुख्यपृष्ठ",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "ट्रॅक केलेले टोकन्स",
 		"use": "वापरा",
 		"use_this_avatar": "हा अवतार वापरा",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">पहा ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">पहा ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / ट्विटर"
 	},
 	"go": {

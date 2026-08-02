@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> نئے",
 		"1h": "1 گھنٹہ",
 		"1m": "1 منٹ",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> کے ذریعے تقویت یافتہ۔",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a> کے ذریعے تقویت یافتہ۔",
 		"24h": "24 گھنٹے",
 		"5m": "5 منٹ",
 		"6h": "6 گھنٹے",
@@ -8418,7 +8418,7 @@
 		"ethereum": "ایتھیریم",
 		"follow_along_for_builds_demos_and_conversati": "تعمیرات، ڈیموز، اور ٹیم کے ساتھ گفتگو کے لیے ساتھ رہیں۔",
 		"get_updates_on_new_features_agent_tooling": "نئی خصوصیات، ایجنٹ ٹولنگ، اور پروٹوکول کی تبدیلیوں پر اپ ڈیٹس حاصل کریں۔",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> جی ایم جی این سمارٹ منی",
 		"gmgn_smart_money_2": "جی ایم جی این سمارٹ منی",
 		"home": "ہوم",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "ٹریک کیے گئے ٹوکنز",
 		"use": "استعمال کریں",
 		"use_this_avatar": "یہ اوتار استعمال کریں",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">دیکھیں ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">دیکھیں ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "ایکس / ٹویٹر"
 	},
 	"go": {

@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> νέα",
 		"1h": "1ω",
 		"1m": "1λ",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. Με την υποστήριξη της <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. Με την υποστήριξη της <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
 		"24h": "24ω",
 		"5m": "5λ",
 		"6h": "6ω",
@@ -8418,7 +8418,7 @@
 		"ethereum": "Ethereum",
 		"follow_along_for_builds_demos_and_conversati": "Ακολουθήστε για κατασκευές, επιδείξεις και συζητήσεις με την ομάδα.",
 		"get_updates_on_new_features_agent_tooling": "Λάβετε ενημερώσεις για νέες λειτουργίες, εργαλεία agent και αλλαγές πρωτοκόλλου.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> Έξυπνο Χρήμα GMGN",
 		"gmgn_smart_money_2": "Έξυπνο Χρήμα GMGN",
 		"home": "Αρχική",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "Tokens που παρακολουθούνται",
 		"use": "Χρήση",
 		"use_this_avatar": "Χρήση αυτού του avatar",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">Παρακολούθηση ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">Παρακολούθηση ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / Twitter"
 	},
 	"go": {

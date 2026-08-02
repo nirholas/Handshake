@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> חדשים",
 		"1h": "שעה",
 		"1m": "דקה",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. מופעל על ידי <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. מופעל על ידי <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
 		"24h": "24 שעות",
 		"5m": "5 דקות",
 		"6h": "6 שעות",
@@ -8418,7 +8418,7 @@
 		"ethereum": "Ethereum",
 		"follow_along_for_builds_demos_and_conversati": "עקבו אחרינו לעדכונים על פיתוחים, הדגמות ושיחות עם הצוות.",
 		"get_updates_on_new_features_agent_tooling": "קבלו עדכונים על תכונות חדשות, כלי סוכן ושינויים בפרוטוקול.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> GMGN כסף חכם",
 		"gmgn_smart_money_2": "GMGN כסף חכם",
 		"home": "בית",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "אסימונים במעקב",
 		"use": "השתמש",
 		"use_this_avatar": "השתמש באווטאר זה",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">צפה ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">צפה ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / טוויטר"
 	},
 	"go": {

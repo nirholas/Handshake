@@ -8397,7 +8397,7 @@
 		"0_new": "↑ <span id=\"feed-jump-count\">0</span> mpya",
 		"1h": "Saa 1",
 		"1m": "Dakika 1",
-		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. Inaendeshwa na <a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
+		"2026_three_ws_powered_by_gmgn_ai": "&copy; 2026 three.ws. Inaendeshwa na <a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\">GMGN.ai</a>.",
 		"24h": "Masaa 24",
 		"5m": "Dakika 5",
 		"6h": "Masaa 6",
@@ -8418,7 +8418,7 @@
 		"ethereum": "Ethereum",
 		"follow_along_for_builds_demos_and_conversati": "Fuatilia ujenzi, maonyesho, na mazungumzo na timu.",
 		"get_updates_on_new_features_agent_tooling": "Pata taarifa mpya kuhusu vipengele vipya, zana za wakala, na mabadiliko ya itifaki.",
-		"gmgn_ai": "<a href=\"https://gmgn.ai\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
+		"gmgn_ai": "<a href=\"https://gmgn.ai/r/nichxbt\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);text-decoration:none\">GMGN.ai</a>",
 		"gmgn_smart_money": "<span class=\"dot connecting\" id=\"status-dot\" aria-label=\"Connecting\"></span> Pesa Mahiri za GMGN",
 		"gmgn_smart_money_2": "Pesa Mahiri za GMGN",
 		"home": "Nyumbani",
@@ -8449,7 +8449,7 @@
 		"tokens_tracked": "Tokeni zilizofuatiliwa",
 		"use": "Tumia",
 		"use_this_avatar": "Tumia avatari hii",
-		"watch": "<a href=\"https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">Tazama ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
+		"watch": "<a href=\"https://gmgn.ai/sol/token/nichxbt_FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gmgn);font-size:11px;text-decoration:none\" id=\"three-gmgn-link\">Tazama ↗</a> <span id=\"three-smart-count\" style=\"font-size:11px;color:var(--muted)\">—</span>",
 		"x_twitter": "X / Twitter"
 	},
 	"go": {
