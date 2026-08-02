@@ -39,6 +39,7 @@ import {
 } from './_lib/x402-spec.js';
 import { reservePaymentProof } from './_lib/x402/payment-identifier-server.js';
 import { getPumpSdk, getConnection, solanaPubkey, getAmmPoolState } from './_lib/pump.js';
+import { solPriceUsd } from './_lib/sol-price.js';
 import { pumpfunMcp, pumpfunBotEnabled } from './_lib/pumpfun-mcp.js';
 import { TOOLS, resolveToolName, rpcError, rpcEnvelope } from '../src/pump/mcp-tools.js';
 import { generateVanityKey } from '../src/pump/vanity-keygen.js';
@@ -591,8 +592,6 @@ async function handleSocialXPostImpact({ postUrl, mint, windowMin = 30, network 
 
 // ── pumpfun_watch_whales ───────────────────────────────────────────────────
 
-const NATIVE_SOL_MINT = 'So11111111111111111111111111111111111111112';
-
 async function handleWatchWhales({ mint, minUsd = 5000, durationMs = 5000 }) {
 	const pk = solanaPubkey(mint);
 	if (!pk) throw rpcError(-32602, 'invalid mint');
@@ -606,15 +605,13 @@ async function handleWatchWhales({ mint, minUsd = 5000, durationMs = 5000 }) {
 		import('@pump-fun/pump-sdk'),
 	]);
 
+	// Shared multi-source SOL/USD price (api/_lib/sol-price.js). The old inline
+	// fetch hit api.jup.ag/price/v2, which now 404s, so every call silently ran
+	// on a hardcoded $150 and the minUsd whale filter was off by the real price
+	// ratio. A hardcoded constant is kept only as the never-resolved fallback.
 	let solPrice = 150;
-	try {
-		const pr = await fetch(`https://api.jup.ag/price/v2?ids=${NATIVE_SOL_MINT}`, {
-			signal: AbortSignal.timeout(3000),
-		});
-		const pd = await pr.json();
-		const p = Number(pd?.data?.[NATIVE_SOL_MINT]?.price ?? 0);
-		if (p > 0) solPrice = p;
-	} catch {}
+	const livePrice = await solPriceUsd();
+	if (livePrice > 0) solPrice = livePrice;
 
 	const connection = getConnection({ network: 'mainnet' });
 	const coder = new BorshCoder(pumpIdl);
