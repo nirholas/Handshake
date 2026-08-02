@@ -3,6 +3,23 @@
 	"entries": [
 		{
 			"date": "2026-08-02",
+			"title": "Whale alerts price in real dollars again, and two skill-license endpoints are back",
+			"summary": "A registry-wide audit of the three.ws npm packages turned up two production defects, now fixed. The pump.fun whale watcher priced SOL through a price feed that had been retired, so every whale trade was valued at a stale hardcoded price roughly double the real one; it now uses the same multi-source live price the rest of the platform uses, so a $5,000 whale threshold means $5,000 again. And the two skill-license endpoints (reading an on-chain license, minting one) had been unreachable because a generic route swallowed their addresses; both answer again. The reputation SDK package also called two retired endpoint spellings and has been fixed and queued for release alongside pending updates to the walk, avatar, page-agent and pump.fun MCP packages.",
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"title": "Trading-terminal links now cover one more terminal, and offer a signup fee discount",
+			"summary": "Coin pages and the live launch feed link out to the trading terminals people actually use, so you can open any token straight from three.ws. Those links had drifted: the same terminal was linked through two different addresses in two places, one of which was the wrong one, and a fourth popular terminal was missing entirely. Every one of those links now comes from a single place in the code, so they stay consistent, and the missing terminal has been added. The trade panel also now shows a short line of signup links for the terminals that give a fee discount to people who arrive through one, so a new account starts on lower fees instead of the default rate.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-02",
 			"title": "Assets served from the site can no longer pretend to be a web page",
 			"summary": "Every avatar, thumbnail and generated model can be loaded either from the media bucket or from three.ws/cdn/<key>, which streams the same file through the site so galleries do not get rate-limited. The second path put that content on the same origin as the app, and it decided how to serve a file by trusting the content type recorded on the object. That type is sometimes copied from whatever a third-party generation provider sent back, so a provider answering with a web-page content type could have had its bytes served as a page on three.ws rather than as an asset. The rule is now the other way around: the file extension, which the site always chooses itself, decides the type; anything that is not safe to display inline downloads instead of rendering, and every response is sandboxed so it cannot touch the site around it. Images, models, audio and video embed exactly as before.",
 			"tags": [

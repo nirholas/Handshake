@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-02T09:23:27.817Z",
+	"generated_at": "2026-08-02T14:13:48.954Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -238,12 +238,33 @@
 		{
 			"date": "2026-08-02",
 			"type": "update",
+			"title": "Trading-terminal links now cover one more terminal, and offer a signup fee discount",
+			"summary": "Coin pages and the live launch feed link out to the trading terminals people actually use, so you can open any token straight from three.ws. Those links had drifted: the same terminal was linked through two different addresses in two places, one of which was the wrong one, and a fourth popular terminal was missing entirely. Every one of those links now comes from a single place in the code, so they stay consistent, and the missing terminal has been added. The trade panel also now shows a short line of signup links for the terminals that give a fee discount to people who arrive through one, so a new account starts on lower fees instead of the default rate.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"type": "update",
 			"title": "Wallet encryption keys can now be rotated without stranding funds",
 			"summary": "Custodial agent wallets are encrypted at rest, and until now changing that encryption key was a one-way door: any wallet sealed under the old key became permanently unopenable, its balance visible on chain and impossible to move. That is exactly what happened during last month's hosting migration. The platform now keeps retired keys readable, so a rotation upgrades wallets as they are used instead of locking them out, while new wallets are always written under the current key. A read-only audit tool reports how many custodial wallets can still be signed for and how much sits behind any that cannot, so this class of problem is measured rather than discovered.",
 			"link": null,
 			"tags": [
 				"security",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"type": "update",
+			"title": "Whale alerts price in real dollars again, and two skill-license endpoints are back",
+			"summary": "A registry-wide audit of the three.ws npm packages turned up two production defects, now fixed. The pump.fun whale watcher priced SOL through a price feed that had been retired, so every whale trade was valued at a stale hardcoded price roughly double the real one; it now uses the same multi-source live price the rest of the platform uses, so a $5,000 whale threshold means $5,000 again. And the two skill-license endpoints (reading an on-chain license, minting one) had been unreachable because a generic route swallowed their addresses; both answer again. The reputation SDK package also called two retired endpoint spellings and has been fixed and queued for release alongside pending updates to the walk, avatar, page-agent and pump.fun MCP packages.",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk"
 			]
 		},
 		{
