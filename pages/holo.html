@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Holo Sticker · three.ws</title>
+	<meta name="description" content="A real-time holographic foil sticker rendered in your browser. Tilt it with your pointer, peel the corner, switch foils, die-cut any text into a sticker, and download the frame as a PNG. All procedural, no assets." />
+	<link rel="canonical" href="https://three.ws/holo" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<link rel="stylesheet" href="/src/holo.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Holo Sticker · three.ws" />
+	<meta property="og:description" content="A live holographic foil sticker in your browser: tilt it, peel it, die-cut your own text, download the PNG." />
+	<meta property="og:url" content="https://three.ws/holo" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Holo+Sticker&amp;d=A+live+holographic+foil+sticker+in+your+browser.+Tilt+it%2C+peel+it%2C+die-cut+your+own+text.&amp;p=%2Fholo" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Holo Sticker · three.ws" />
+	<meta name="twitter:description" content="A live holographic foil sticker in your browser: tilt it, peel it, die-cut your own text, download the PNG." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Holo+Sticker&amp;d=A+live+holographic+foil+sticker+in+your+browser.&amp;p=%2Fholo" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image:alt" content="Holo Sticker / three.ws" />
+	<meta name="twitter:site" content="@trythreews" />
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="hs-wrap">
+		<section class="hs-hero">
+			<h1>Holo Sticker</h1>
+			<p>
+				A holographic foil sticker, rendered live. The die-cut outline, the iridescent foil, the light it
+				reflects, and the peeling corner are all computed in your browser: no images, no model files.
+				Tilt it with your pointer the way you would tilt the real thing, or type your own text and get it
+				cut into a sticker of its own.
+			</p>
+		</section>
+
+		<div class="hs-grid">
+			<section class="hs-stage-col">
+				<div class="hs-stage" id="stage" data-state="loading" data-hint="on" tabindex="0" role="img" aria-label="Interactive 3D holographic sticker. Drag or use arrow keys to tilt.">
+					<canvas id="holoCanvas" aria-hidden="true"></canvas>
+					<p class="hs-hint" aria-hidden="true">drag to tilt</p>
+					<div class="hs-error">
+						<p>
+							This page needs WebGL and your browser did not provide a context. Enable hardware
+							acceleration or try another browser, then reload.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<aside class="hs-rail">
+				<section class="hs-panel">
+					<h2 class="hs-panel-h">Mark</h2>
+					<div class="hs-chips" id="markChips" role="radiogroup" aria-label="Sticker mark">
+						<button type="button" class="hs-chip is-on" role="radio" aria-checked="true" data-mark="chevrons">Chevrons</button>
+						<button type="button" class="hs-chip" role="radio" aria-checked="false" data-mark="three">$THREE</button>
+						<button type="button" class="hs-chip" role="radio" aria-checked="false" data-mark="threews">three.ws</button>
+						<button type="button" class="hs-chip" role="radio" aria-checked="false" data-mark="custom">Your text</button>
+					</div>
+					<div class="hs-custom" id="customRow" hidden>
+						<label class="hs-label" for="customInput">Text to die-cut (up to 16 characters)</label>
+						<span class="hs-input-row">
+							<input type="text" id="customInput" class="hs-input" maxlength="16" placeholder="gm" spellcheck="false" autocomplete="off" />
+							<button type="button" class="hs-btn hs-btn-secondary" id="btnCustom">Cut it</button>
+						</span>
+					</div>
+				</section>
+
+				<section class="hs-panel">
+					<h2 class="hs-panel-h">Foil</h2>
+					<div class="hs-chips" id="foilChips" role="radiogroup" aria-label="Foil finish"></div>
+				</section>
+
+				<section class="hs-panel">
+					<h2 class="hs-panel-h">Peel</h2>
+					<label class="hs-label" for="peelRange">Corner peel <b id="peelVal">24%</b></label>
+					<input type="range" id="peelRange" class="hs-range" min="0" max="100" step="1" value="24" />
+				</section>
+
+				<section class="hs-panel hs-actions">
+					<button type="button" class="hs-btn hs-btn-primary" id="btnPng">Download PNG</button>
+					<button type="button" class="hs-btn hs-btn-secondary" id="btnResetView">Reset</button>
+				</section>
+
+				<section class="hs-panel hs-how">
+					<h2 class="hs-panel-h">How it works</h2>
+					<p>
+						The mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back
+						into vector outlines with marching squares, holes included. The foil is a physical material
+						with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on
+						the curled lip is real.
+					</p>
+				</section>
+			</aside>
+		</div>
+
+		<section class="hs-next">
+			<h2>Next</h2>
+			<div class="hs-next-grid">
+				<a class="hs-next-card" href="/create">
+					<strong>Make a 3D avatar</strong>
+					<span>Generate a rigged, animated avatar from a prompt or a photo.</span>
+				</a>
+				<a class="hs-next-card" href="/render-lab">
+					<strong>Render Lab</strong>
+					<span>Compose real avatar renders against the live API and copy the exact call.</span>
+				</a>
+				<a class="hs-next-card" href="/animations">
+					<strong>Animation Gallery</strong>
+					<span>Every animation clip in the library, previewed live on a real rig.</span>
+				</a>
+			</div>
+		</section>
+	</main>
+
+	<script type="module" src="/src/holo.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

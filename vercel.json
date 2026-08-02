@@ -5181,6 +5181,14 @@
 			"dest": "/render-lab.html"
 		},
 		{
+			"src": "/holo",
+			"dest": "/holo.html"
+		},
+		{
+			"src": "/holo/",
+			"dest": "/holo.html"
+		},
+		{
 			"src": "/features",
 			"dest": "/features.html"
 		},

@@ -952,6 +952,14 @@ async function loadGlobalStats() {
 		set('#stBaseSub', data.market_resolved
 			? `${(data.market_wins ?? 0).toLocaleString()} / ${data.market_resolved.toLocaleString()} launches`
 			: '');
+
+		// Telegram signal feed: the button only exists when the deployment has a
+		// public signals channel configured, so it never renders a dead link.
+		const tgBtn = $('#tgFeedBtn');
+		if (tgBtn && data.telegram_channel) {
+			tgBtn.href = data.telegram_channel;
+			tgBtn.hidden = false;
+		}
 	} catch { /* non-fatal — feed-window fallbacks already rendered */ }
 }
 

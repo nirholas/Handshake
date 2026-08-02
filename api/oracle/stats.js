@@ -26,6 +26,11 @@
  *
  *   open_actions   — oracle_watch_actions rows still open (not yet settled)
  *   agents_armed   — distinct agent_ids currently armed (armed = true)
+ *   telegram_channel — public t.me URL of the Oracle signals channel, when
+ *                      TELEGRAM_ORACLE_CHAT_ID is a public @handle (null for
+ *                      numeric/private IDs or when unconfigured). The /oracle
+ *                      page renders its "Join the Telegram feed" button from
+ *                      this, so the button appears only when the feed is live.
  *
  * Public, no auth, aggressively cached (60s). Used by the dashboard
  * overview card and the oracle landing-page hero.
@@ -37,6 +42,17 @@ import { sql } from '../_lib/db.js';
 import { QUOTE_MINT_LIST } from '../_lib/quote-mints.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
+
+/**
+ * Public join URL for the Oracle signals channel. Only @handle chat IDs are
+ * public — a numeric -100… ID is a private channel with no join link, so it
+ * is deliberately not exposed.
+ */
+function telegramChannelUrl() {
+	const chatId = (process.env.TELEGRAM_ORACLE_CHAT_ID || '').trim();
+	if (!/^@[A-Za-z0-9_]{3,32}$/.test(chatId)) return null;
+	return `https://t.me/${chatId.slice(1)}`;
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -141,6 +157,7 @@ export default wrap(async (req, res) => {
 		market_base_rate: marketBaseRate,
 		market_best_ath:  o.market_best_ath != null ? Number(o.market_best_ath) : null,
 		agents_armed:     Number(ar.agents_armed) || 0,
+		telegram_channel: telegramChannelUrl(),
 	}, {
 		'cache-control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=120',
 	});

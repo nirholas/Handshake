@@ -1,14 +1,19 @@
 // GET /api/cron/oracle-digest — daily Oracle conviction digest via Telegram.
 //
-// Runs once daily (08:00 UTC) and sends each armed Oracle subscriber a personal
-// summary of:
-//   • Their agent's armed status and mode
-//   • Today's action count, wins, losses, open positions
-//   • Realized PnL for the past 24 hours
-//   • Up to 3 top-conviction coins currently above their threshold
+// Runs once daily (08:00 UTC). Three lanes:
 //
-// Only fires for watches with telegram_chat_id set. Fire-and-forget per
-// subscriber — one failure never blocks others. Respects CRON_SECRET auth.
+//   1. Channel digest — a platform-wide summary posted to the public signals
+//      channel (TELEGRAM_ORACLE_CHAT_ID): coins scored, top conviction of the
+//      day, agent action stats. Fires whenever the channel is configured,
+//      even with zero personal subscribers, so the feed always has a daily
+//      anchor post.
+//   2. Owner digests — each armed Oracle subscriber (telegram_chat_id on
+//      their watch) gets their agent's armed status, action count, W/L,
+//      realized PnL, and top coins above their threshold.
+//   3. Follower digests — users following agents they don't own.
+//
+// Fire-and-forget per recipient — one failure never blocks others. Respects
+// CRON_SECRET auth.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
@@ -171,6 +176,62 @@ async function sendDigest(chatId, text) {
 	}
 }
 
+/** Platform-wide 24h stats for the channel digest. Exported for tests. */
+export async function platformDayStats(network) {
+	const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+	const [scored] = await sql`
+		select count(*)::int as n
+		from oracle_conviction
+		where network = ${network} and scored_at > ${since}::timestamptz
+	`.catch(() => [{ n: 0 }]);
+	const [actions] = await sql`
+		select count(*)::int as total,
+		       count(*) filter (where outcome = 'win')::int  as wins,
+		       count(*) filter (where outcome = 'loss')::int as losses,
+		       coalesce(sum(realized_pnl_sol), 0)            as pnl
+		from oracle_watch_actions
+		where network = ${network} and acted_at > ${since}::timestamptz
+	`.catch(() => [{ total: 0, wins: 0, losses: 0, pnl: 0 }]);
+	const top = await sql`
+		select mint, symbol, score, tier, category
+		from oracle_conviction
+		where network = ${network} and scored_at > ${since}::timestamptz
+		order by score desc
+		limit 5
+	`.catch(() => []);
+	return { scored: scored?.n ?? 0, actions: actions ?? { total: 0, wins: 0, losses: 0, pnl: 0 }, top };
+}
+
+/** Render the channel digest message. Exported for tests. */
+export function buildChannelDigest({ scored, actions, top }) {
+	const lines = [
+		`🔮 <b>Oracle daily digest</b>`,
+		`Scored <b>${scored.toLocaleString('en-US')}</b> pump.fun launches in the last 24h.`,
+		``,
+	];
+
+	if (top.length) {
+		lines.push(`<b>Top conviction today</b>`);
+		for (const c of top) {
+			const e = TIER_EMOJI[c.tier] || '⚪';
+			const cat = c.category && c.category !== 'unknown' ? ` · ${esc(c.category)}` : '';
+			lines.push(`${e} <b>$${esc(c.symbol || c.mint.slice(0, 6))}</b> · <code>${c.score}</code>${cat} · <a href="https://three.ws/oracle/coin/${encodeURIComponent(c.mint)}">view</a>`);
+		}
+		lines.push(``);
+	} else {
+		lines.push(`<i>No launches cleared the scoring floor today.</i>`, ``);
+	}
+
+	if (actions.total > 0) {
+		const pnl = Number(actions.pnl) || 0;
+		const pnlStr = pnl !== 0 ? `  ·  PnL <b>${pnl >= 0 ? '+' : ''}${pnl.toFixed(4)} SOL</b>` : '';
+		lines.push(`<b>Agents</b>  ${actions.total} action${actions.total !== 1 ? 's' : ''}  ·  ${actions.wins}W / ${actions.losses}L${pnlStr}`, ``);
+	}
+
+	lines.push(`<a href="https://three.ws/oracle">Open the live feed →</a>`);
+	return lines.join('\n');
+}
+
 function buildMessage(watch, stats, coins) {
 	const armedLabel = watch.armed
 		? (watch.mode === 'live' ? '🟢 Armed · live' : '🟡 Armed · simulate')
@@ -218,11 +279,20 @@ export default wrapCron(async (req, res) => {
 	const token = process.env.TELEGRAM_BOT_TOKEN;
 	if (!token) return json(res, 200, { ok: true, sent: 0, reason: 'TELEGRAM_BOT_TOKEN not set' });
 
-	const watches = await subscribedWatches(network);
-	if (!watches.length) return json(res, 200, { ok: true, sent: 0 });
-
 	let sent = 0;
 	let failed = 0;
+
+	// Channel digest — the public signals channel gets a platform-wide daily
+	// anchor post whenever it is configured, independent of personal subscribers.
+	let channelSent = false;
+	const channelChatId = process.env.TELEGRAM_ORACLE_CHAT_ID;
+	if (channelChatId) {
+		const day = await platformDayStats(network);
+		channelSent = await sendDigest(channelChatId, buildChannelDigest(day));
+		if (channelSent) sent++; else failed++;
+	}
+
+	const watches = await subscribedWatches(network);
 
 	// Digest for armed agent owners
 	for (const watch of watches) {
@@ -251,5 +321,5 @@ export default wrapCron(async (req, res) => {
 		if (ok) sent++; else failed++;
 	}
 
-	return json(res, 200, { ok: true, network, subscribers: watches.length + followers.length, sent, failed });
+	return json(res, 200, { ok: true, network, channel: channelChatId ? channelSent : null, subscribers: watches.length + followers.length, sent, failed });
 });

@@ -371,6 +371,7 @@ const appConfig = {
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
 				'render-lab': resolve(__dirname, 'pages/render-lab.html'),
+				holo: resolve(__dirname, 'pages/holo.html'),
 				bundles: resolve(__dirname, 'pages/bundles.html'),
 				'embed-doctor': resolve(__dirname, 'pages/embed-doctor.html'),
 				crews: resolve(__dirname, 'pages/crews.html'),

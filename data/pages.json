@@ -1063,6 +1063,15 @@
 					"changefreq": "daily",
 					"added": "2026-07-31",
 					"showcase": true
+				},
+				{
+					"path": "/holo",
+					"title": "Holo Sticker",
+					"description": "A live holographic foil sticker rendered in your browser: tilt it with your pointer, peel the corner, switch foils, die-cut your own text, and download the frame as a PNG. Fully procedural, no assets.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"showcase": true,
+					"added": "2026-08-02"
 				}
 			]
 		},
