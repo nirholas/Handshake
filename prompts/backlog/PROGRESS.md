@@ -309,3 +309,59 @@ Left, all of it downstream of one human action:
 Commit gate: this work order's diff names a chain other than Solana, so nothing
 here is staged. Solana position is unchanged by all of it; this is an additive
 testnet surface and no Solana infrastructure was touched.
+
+## 2026-08-02: 01 x402 settle runway (diagnosed to the bottom, correction to the work order)
+
+Measured (live, 2026-08-01T21:30 to 2026-08-02T01:45 UTC):
+
+- `x402_settle` down at 25.9% (504/1948, 3h). Reject classes since boot:
+  `fee_runway_exhausted` 85,331 vs `broadcast_failed` 562. Rail faults are noise.
+- Master / sponsor `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW` holds **0.0108 SOL**.
+  `POST /api/cron/treasury-topup?dry=1`: `spendable_sol 0`, `master_deficit_sol 0.0192`.
+- `treasury-topup` is NOT stalled. `economy-tick` fires it every minute and it
+  returns 200. Its `skipped: true` in the tick summary is a reporting artifact:
+  the orchestrator flags any truthy `body.skipped`, and this handler returns an
+  ARRAY of skipped targets. Do not read that as a skipped run.
+- The agent-reclaim leg plans 0.1229 SOL from `Atlas #22` and `Echo #22` every
+  tick and moves nothing. `usage_events` where `tool='economy_reclaim'` last
+  fired 2026-07-30.
+
+**Root cause, which is not what this work order assumed.** `ECONOMY_MASTER_OPERATING_SOL`
+is 0.02 against a 0.0108 balance, so the deficit is already positive and the
+reclaim leg already runs. The leg cannot complete: both wallets it targets fail
+AES-GCM decryption. Verified read-only against the live DB with the production
+key (local `WALLET_ENCRYPTION_KEY` and prod's share one sha256), and confirmed
+across the whole fleet by `scripts/audit-custodial-key-health.mjs`:
+
+- 8 of 565 custodial wallets are unopenable, 4 of them funded.
+- **0.49 SOL stranded: 0.143 platform, 0.350 CUSTOMER.** Two user-owned agents
+  (`My First Agent` 0.25 SOL, `Swarm Treasury - Test` 0.10 SOL) cannot withdraw.
+- Cause is the 2026-07 host-migration key rotation. The retired key exists in no
+  system we control: Secret Manager holds exactly one version of both
+  `WALLET_ENCRYPTION_KEY` and `JWT_SECRET`, created on the migration date.
+
+So no config change fixes the settle rate. The governor's budget is
+`max(0.01 SOL/day heartbeat, spendable/runwayDays)`, and at a 0.0108 SOL balance
+the heartbeat floor already dominates: lowering `X402_WALLET_FEE_RUNWAY_DAYS`
+changes nothing, and raising the heartbeat only spends the wallet into its hard
+floor faster. **Strike lever 2 from the work order at this balance.** Every
+platform wallet other than the two bricked ones is at or below its floor, so
+there is nothing left to reclaim either.
+
+Did: shipped the recurrence fix rather than a symptom patch.
+`WALLET_ENCRYPTION_KEY_PREVIOUS` now carries retired keys (newest first) through
+`secret-box.js` for both v2 and v1 records; encryption still always uses the
+current key. Three new cases in `tests/secret-box.test.js`, a three-step safe
+rotation runbook in `docs/ops/wallet-key-migration.md`, changelog entry.
+`npm run test:gate` 86/86, `check:rules` and `audit:docs` clean. (Swept into a
+concurrent agent's `chore: sync working tree` commit before mine landed; the
+content is on `main`.)
+
+Left, both owner-owned:
+
+1. **Fund the sponsor.** At the measured 0.06 to 0.09 SOL/day burn, ~1 SOL is
+   about 12 to 16 days. Nothing else lifts the settle rate; the fleet has no
+   reclaimable surplus and the two wallets that had one are permanently sealed.
+2. **Decide what happens for the two customers** holding 0.35 SOL behind the
+   retired key. Re-keying abandons their balance, so that call is not an agent's
+   to make. They are currently shown a balance they can never move.
