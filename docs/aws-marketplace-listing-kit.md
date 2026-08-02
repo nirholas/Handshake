@@ -223,10 +223,14 @@ the wizard anyway and backfill the env vars before the round-trip test in step 9
    ARNs. Set `AWS_MP_PRODUCT_CODE` on the Cloud Run service. No rebuild is needed:
    `gcloud run services update three-ws-api --region us-central1 --update-env-vars
    AWS_MP_PRODUCT_CODE=…` cuts a new revision on its own.
-9. Subscribe `https://three.ws/api/aws-marketplace/subscription` to the
-   `aws-mp-subscription-notification-<PRODUCTCODE>` topic (HTTPS subscription; the
-   handler already answers the `SubscriptionConfirmation` handshake). This must be
-   done from the seller account 155407237916. Then run one end-to-end
+9. Wire notifications per what the product overview page actually shows. For a new
+   listing expect **EventBridge**, not SNS (see Defect 4 below): create a rule on the
+   default event bus in seller account 155407237916 matching
+   `source: aws.agreement-marketplace`, with an API destination targeting
+   `https://three.ws/api/aws-marketplace/subscription`, and make that handler parse
+   EventBridge event JSON. Only if AWS also issues the legacy
+   `aws-mp-subscription-notification-<PRODUCTCODE>` topic, add an HTTPS subscription
+   to it as a secondary leg. Then run one end-to-end
    subscribe → redirect → welcome → issue-key test while the product is **limited**.
 10. Once the private round-trip works, **Request changes → Update visibility →
     Public**. This one needs AWS Marketplace Seller Operations approval, so it is the
@@ -275,15 +279,17 @@ Consequence: `scripts/aws-marketplace-provision.sh` creates a topic
 
 ### Claim 2: `CustomerIdentifier` is dead for new listings
 
-[ResolveCustomer API reference](https://docs.aws.amazon.com/marketplacemetering/latest/APIReference/API_ResolveCustomer.html),
-stated three times on that page:
+Seven independent confirmations:
 
-> "For new SaaS product integrations, the `CustomerIdentifier` field is **not populated**
-> in the `ResolveCustomer` API response. New integrations must use `CustomerAWSAccountId`
-> and `LicenseArn` to identify customers. Existing integrations continue to work unchanged."
-
-Corroborated in [saas-integrate-subscription](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-integrate-subscription.html):
-"For new SaaS product integrations, the `CustomerIdentifier` field is not populated."
+| # | Source | Evidence |
+|---|---|---|
+| 1 | [ResolveCustomer API reference](https://docs.aws.amazon.com/marketplacemetering/latest/APIReference/API_ResolveCustomer.html) | Stated three times on the page: "For new SaaS product integrations, the `CustomerIdentifier` field is **not populated**... New integrations must use `CustomerAWSAccountId` and `LicenseArn`." |
+| 2 | [saas-integrate-subscription](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-integrate-subscription.html) | Same statement, plus the June 1 2026 mandate for all new SaaS products. |
+| 3 | [BatchMeterUsage API reference](https://docs.aws.amazon.com/marketplacemetering/latest/APIReference/API_BatchMeterUsage.html) | "new SaaS products must use `CustomerAWSAccountId` (instead of `CustomerIdentifier`), `LicenseArn` (instead of `ProductCode`)... `BatchMeterUsage` does not support `CustomerIdentifier` for new integrations." |
+| 4 | [saas-code-examples](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-code-examples.html) | GetEntitlement example marks the `CUSTOMER_IDENTIFIER` filter "existing integrations only, not supported for new integrations" and prefers `CUSTOMER_AWS_ACCOUNT_ID`; a dedicated "BatchMeterUsage with License ARN" example exists for new products. |
+| 5 | [AWS Marketplace blog: Concurrent Agreements upgrade guide](https://aws.amazon.com/blogs/awsmarketplace/complete-guide-to-upgrading-your-saas-product-to-aws-marketplace-concurrent-agreements/) | "replace any existing primary keys based on `CustomerIdentifier` or `ProductCode` with `LicenseArn`" and restructure tables accordingly. |
+| 6 | [What's New, 2026-02-26](https://aws.amazon.com/about-aws/whats-new/2026/02/concurrent-agreements-february) | Concurrent Agreements launched; SaaS sellers must update entitlement + metering APIs and move notifications to EventBridge; mandatory for new products from June 1 2026. |
+| 7 | Installed SDK, `@aws-sdk/client-marketplace-metering` 3.1066.0 | `ResolveCustomerResult` and `UsageRecord` typings both carry `LicenseArn` and `CustomerAWSAccountId`, so the re-key is implementable with the SDK version already pinned in this repo; no upgrade needed. |
 
 We have never created a product, so our listing is a *new* integration by definition.
 
@@ -339,8 +345,19 @@ skipped when empty) until the real ARN is known.
 SignatureVersion 2 topic every message fails verification and returns 403. Fix: branch
 on `msg.SignatureVersion` (`'2'` implies SHA256, otherwise SHA1).
 
-**Open decision, resolvable only at product creation:** whether our product is issued
-SNS topics, EventBridge config, or both. `saas-create-product` says EventBridge config
-appears on the product overview page; `saas-integrate-subscription` still describes the
-SNS email from Seller Ops. Read the product overview page the moment the product is
-created and build the leg AWS actually gave us. Do not build both on spec.
+**Defect 4 (critical, transport-level): the SNS webhook is the wrong transport for a
+new listing.** The [Concurrent Agreements upgrade guide](https://aws.amazon.com/blogs/awsmarketplace/complete-guide-to-upgrading-your-saas-product-to-aws-marketplace-concurrent-agreements/)
+is explicit: "SNS doesn't send the `LicenseArn` parameter," so new integrations must
+consume EventBridge agreement events (`Purchase Agreement Created/Ended`,
+`License Updated/Deprovisioned`) instead. Those events land on the **default event bus
+of the seller AWS account** (155407237916), not on an HTTPS URL. Reaching
+`https://three.ws/api/aws-marketplace/subscription` therefore requires AWS-side
+resources: an EventBridge rule matching `source: aws.agreement-marketplace` plus an
+API destination (connection + auth) targeting our endpoint, and the endpoint must
+parse EventBridge event JSON, not SNS envelopes. `subscription.js` as written
+(SNS envelope parse, SNS signature verify, SubscribeURL handshake) never fires on a
+new listing. Defects 2 and 3 (topic-ARN guard, SHA1) remain real but only matter for
+the legacy SNS path; the primary fix is the EventBridge leg.
+`scripts/aws-marketplace-provision.sh` should provision the rule + API destination
+instead of the orphan SNS topic. Still verify against the product overview page at
+creation time (`saas-create-product` says the EventBridge configuration appears there).
