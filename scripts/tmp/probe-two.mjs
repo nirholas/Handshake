@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 
 const BASE = process.env.BASE || 'http://localhost:3002';
 const browser = await chromium.launch();
-for (const route of ['/terminal', '/x402/studio']) {
+for (const route of ['/scene']) {
 	const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 	const errors = [];
 	page.on('console', (m) => m.type() === 'error' && errors.push(m.text().slice(0, 140)));

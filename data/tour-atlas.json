@@ -1,10 +1,10 @@
 {
 	"version": 1,
 	"generatedBy": "scripts/capture-tour-atlas.mjs",
-	"generatedAt": "2026-08-02T04:53:36.904Z",
+	"generatedAt": "2026-08-02T05:04:19.559Z",
 	"base": "https://three.ws",
 	"curriculumVersion": 2,
-	"curriculumGeneratedAt": "2026-08-02T04:47:27.277Z",
+	"curriculumGeneratedAt": "2026-08-02T05:04:05.068Z",
 	"sections": [
 		{
 			"id": "main",
@@ -50,15 +50,15 @@
 		}
 	],
 	"summary": {
-		"total": 184,
-		"anchored": 170,
-		"missingAnchor": 12,
-		"curatedAnchor": 20,
-		"fallbackAnchor": 150,
-		"navScopedAnchor": 9,
-		"unreachable": 2,
-		"withConsoleErrors": 31,
-		"captured": 163
+		"total": 190,
+		"anchored": 190,
+		"missingAnchor": 0,
+		"curatedAnchor": 32,
+		"fallbackAnchor": 158,
+		"navScopedAnchor": 10,
+		"unreachable": 0,
+		"withConsoleErrors": 33,
+		"captured": 172
 	},
 	"stops": [
 		{
@@ -915,48 +915,6 @@
 			"capturedAt": "2026-07-31T18:47:44.863Z"
 		},
 		{
-			"id": "skills",
-			"index": 21,
-			"title": "Skills Marketplace",
-			"path": "/skills",
-			"section": "main",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "And this, Skills Marketplace. Browse, search, and install agent skills, tool packs, knowledge bases, and capabilities that make AI agents smarter.",
-			"status": 200,
-			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"load event did not fire within the timeout, captured at domcontentloaded",
-				"none of the 3 tour anchors matched a visible element"
-			],
-			"media": {
-				"hero": {
-					"url": "/media/tour/skills.webp",
-					"width": 1200,
-					"height": 750,
-					"bytes": 57646
-				},
-				"thumb": {
-					"url": "/media/tour/skills.thumb.webp",
-					"width": 520,
-					"height": 325,
-					"bytes": 11426
-				}
-			},
-			"capturedAt": "2026-07-31T18:48:07.838Z"
-		},
-		{
 			"id": "characters",
 			"index": 22,
 			"title": "Characters",
@@ -1080,7 +1038,6 @@
 			"consoleErrors": 0,
 			"consoleSamples": [],
 			"notes": [
-				"load event did not fire within the timeout, captured at domcontentloaded",
 				"anchored by the director's generic fallback, not a curated selector for this page"
 			],
 			"media": {
@@ -1088,16 +1045,16 @@
 					"url": "/media/tour/diorama.webp",
 					"width": 1200,
 					"height": 750,
-					"bytes": 23262
+					"bytes": 24640
 				},
 				"thumb": {
 					"url": "/media/tour/diorama.thumb.webp",
 					"width": 520,
 					"height": 325,
-					"bytes": 5998
+					"bytes": 6322
 				}
 			},
-			"capturedAt": "2026-08-02T04:51:34.821Z"
+			"capturedAt": "2026-08-02T04:54:35.576Z"
 		},
 		{
 			"id": "community",
@@ -1157,22 +1114,28 @@
 			],
 			"highlight": false,
 			"narration": "This is Mocap Studio. Drive a 3D avatar with your webcam: real-time facial motion capture in the browser, no rig and no download.",
-			"status": 0,
+			"status": 200,
 			"anchor": {
-				"state": "unresolved",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
+				"state": "resolved",
+				"selector": "a.cta, .btn-primary, button[type=\"submit\"], main a.button, .hero a",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "button",
+				"rect": {
+					"left": 45,
+					"top": 370.015625,
+					"width": 137,
+					"height": 60
+				}
 			},
 			"consoleErrors": 0,
 			"consoleSamples": [],
 			"notes": [
-				"page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://three.ws/mocap-studio\", waiting until \"domcontentloaded\"\n"
+				"anchored by the director's generic fallback, not a curated selector for this page",
+				"page.screenshot: Timeout 30000ms exceeded.\nCall log:\n  - taking page screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n"
 			],
 			"media": null,
-			"capturedAt": "2026-08-02T04:51:34.828Z"
+			"capturedAt": "2026-08-02T04:54:35.597Z"
 		},
 		{
 			"id": "create-agent",
@@ -1602,35 +1565,50 @@
 			"capturedAt": "2026-07-31T18:53:59.356Z"
 		},
 		{
-			"id": "agora",
-			"index": 37,
-			"title": "Agora: the Commons",
-			"path": "/agora",
-			"section": "build",
+			"id": "skills",
+			"index": 38,
+			"title": "Skills Marketplace",
+			"path": "/skills",
+			"section": "main",
 			"tracks": [
 				"full"
 			],
 			"highlight": false,
-			"narration": "Next up, Agora: the Commons. A watchable 3D world where AI agent and human citizens live, work, and earn $THREE. Walk the square, inspect any citizen's passport, and watch the economy come alive.",
+			"narration": "This is Skills Marketplace. Browse, search, and install agent skills: tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there.",
 			"status": 200,
 			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
+				"state": "resolved",
+				"selector": ".card, .grid, [data-skill], main",
+				"source": "curriculum",
+				"scope": "main",
+				"tag": "main",
+				"rect": {
+					"left": 232,
+					"top": 0,
+					"width": 1048,
+					"height": 800
+				}
 			},
-			"consoleErrors": 1,
-			"consoleSamples": [
-				"Failed to load resource: the server responded with a status of 401 ()"
-			],
+			"consoleErrors": 0,
+			"consoleSamples": [],
 			"notes": [
-				"none of the 3 tour anchors matched a visible element",
-				"page.screenshot: Timeout 30000ms exceeded.\nCall log:\n  - taking page screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n"
+				"load event did not fire within the timeout, captured at domcontentloaded"
 			],
-			"media": null,
-			"capturedAt": "2026-07-31T18:54:06.814Z"
+			"media": {
+				"hero": {
+					"url": "/media/tour/skills.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 61778
+				},
+				"thumb": {
+					"url": "/media/tour/skills.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 12370
+				}
+			},
+			"capturedAt": "2026-08-02T04:55:28.438Z"
 		},
 		{
 			"id": "genome",
@@ -1772,22 +1750,30 @@
 			],
 			"highlight": false,
 			"narration": "Let's visit Drive Your Avatar. Drive a 3D avatar around with a joystick or WASD, then toggle the back camera for AR-style passthrough on your phone.",
-			"status": 0,
+			"status": 200,
 			"anchor": {
-				"state": "unresolved",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "nav",
+				"tag": "h1",
+				"rect": {
+					"left": 132,
+					"top": 64,
+					"width": 559.484375,
+					"height": 72
+				}
 			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()"
+			],
 			"notes": [
-				"page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://three.ws/temporary\", waiting until \"domcontentloaded\"\n"
+				"anchored by the director's generic fallback, not a curated selector for this page",
+				"page.screenshot: Timeout 30000ms exceeded.\nCall log:\n  - taking page screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n"
 			],
 			"media": null,
-			"capturedAt": "2026-08-02T04:51:34.828Z"
+			"capturedAt": "2026-08-02T04:56:42.738Z"
 		},
 		{
 			"id": "forge-nim",
@@ -2020,35 +2006,6 @@
 				}
 			},
 			"capturedAt": "2026-07-31T18:57:00.026Z"
-		},
-		{
-			"id": "compose",
-			"index": 46,
-			"title": "Scene Composer",
-			"path": "/compose",
-			"section": "build",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "Check out Scene Composer. Real-time 3D scene composer: forge items from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export your creation or save it as an outfit.",
-			"status": 200,
-			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"none of the 3 tour anchors matched a visible element",
-				"page.screenshot: Timeout 30000ms exceeded.\nCall log:\n  - taking page screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n"
-			],
-			"media": null,
-			"capturedAt": "2026-07-31T18:57:14.761Z"
 		},
 		{
 			"id": "create-selfie",
@@ -2364,50 +2321,6 @@
 				}
 			},
 			"capturedAt": "2026-07-31T19:00:02.597Z"
-		},
-		{
-			"id": "x402-studio",
-			"index": 56,
-			"title": "x402 Studio: the Stripe of x402",
-			"path": "/x402/studio",
-			"section": "crypto",
-			"tracks": [
-				"full",
-				"quick"
-			],
-			"highlight": true,
-			"narration": "Meet x402 Studio: the Stripe of x402. Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security.",
-			"status": 200,
-			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 1,
-			"consoleSamples": [
-				"Failed to load resource: the server responded with a status of 401 ()"
-			],
-			"notes": [
-				"none of the 4 tour anchors matched a visible element"
-			],
-			"media": {
-				"hero": {
-					"url": "/media/tour/x402-studio.webp",
-					"width": 1200,
-					"height": 750,
-					"bytes": 6644
-				},
-				"thumb": {
-					"url": "/media/tour/x402-studio.thumb.webp",
-					"width": 520,
-					"height": 325,
-					"bytes": 1412
-				}
-			},
-			"capturedAt": "2026-07-31T19:00:11.211Z"
 		},
 		{
 			"id": "launch",
@@ -2827,6 +2740,53 @@
 			"capturedAt": "2026-07-31T19:03:33.677Z"
 		},
 		{
+			"id": "agora",
+			"index": 67,
+			"title": "Agora: the Commons",
+			"path": "/agora",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here's Agora: the Commons. A watchable 3D world where AI agent and human citizens live, work, and earn $THREE. Walk the square, inspect any citizen's passport, and watch the economy come alive.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": ".agora-h-card",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "div",
+				"rect": {
+					"left": 8,
+					"top": 702,
+					"width": 436,
+					"height": 90
+				}
+			},
+			"consoleErrors": 2,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()",
+				"Failed to load resource: the server responded with a status of 504 (Gateway Timeout)"
+			],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/agora.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 5142
+				},
+				"thumb": {
+					"url": "/media/tour/agora.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 1144
+				}
+			},
+			"capturedAt": "2026-08-02T04:56:45.612Z"
+		},
+		{
 			"id": "markets-archive",
 			"index": 67,
 			"title": "Crypto News Archive",
@@ -3207,6 +3167,50 @@
 			"capturedAt": "2026-07-31T19:07:02.223Z"
 		},
 		{
+			"id": "compose",
+			"index": 76,
+			"title": "Scene Composer",
+			"path": "/compose",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Now, Scene Composer. Real-time 3D scene composer: forge items from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export your creation or save it as an outfit.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "#fp",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "textarea",
+				"rect": {
+					"left": 995,
+					"top": 177.578125,
+					"width": 283,
+					"height": 88
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/compose.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 14574
+				},
+				"thumb": {
+					"url": "/media/tour/compose.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 2464
+				}
+			},
+			"capturedAt": "2026-08-02T04:57:11.315Z"
+		},
+		{
 			"id": "converter",
 			"index": 76,
 			"title": "Crypto Currency Converter",
@@ -3265,33 +3269,36 @@
 			"narration": "Let's visit Scene Studio. Full 3D scene editor in the browser: import GLB models, arrange them with transform gizmos, edit materials and lights, and export complete scenes.",
 			"status": 200,
 			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
+				"state": "resolved",
+				"selector": "#sidebar",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "div",
+				"rect": {
+					"left": 922,
+					"top": 84,
+					"width": 358,
+					"height": 716
+				}
 			},
 			"consoleErrors": 0,
 			"consoleSamples": [],
-			"notes": [
-				"none of the 3 tour anchors matched a visible element"
-			],
+			"notes": [],
 			"media": {
 				"hero": {
 					"url": "/media/tour/scene.webp",
 					"width": 1200,
 					"height": 750,
-					"bytes": 20550
+					"bytes": 19916
 				},
 				"thumb": {
 					"url": "/media/tour/scene.thumb.webp",
 					"width": 520,
 					"height": 325,
-					"bytes": 4942
+					"bytes": 4222
 				}
 			},
-			"capturedAt": "2026-08-02T04:52:20.571Z"
+			"capturedAt": "2026-08-02T05:04:05.881Z"
 		},
 		{
 			"id": "derivatives",
@@ -3374,16 +3381,16 @@
 					"url": "/media/tour/create-prompt.webp",
 					"width": 1200,
 					"height": 750,
-					"bytes": 29500
+					"bytes": 28720
 				},
 				"thumb": {
 					"url": "/media/tour/create-prompt.thumb.webp",
 					"width": 520,
 					"height": 325,
-					"bytes": 5320
+					"bytes": 5180
 				}
 			},
-			"capturedAt": "2026-08-02T04:52:20.639Z"
+			"capturedAt": "2026-08-02T04:59:00.754Z"
 		},
 		{
 			"id": "screener",
@@ -3890,6 +3897,53 @@
 				}
 			},
 			"capturedAt": "2026-07-31T19:10:10.280Z"
+		},
+		{
+			"id": "x402-studio",
+			"index": 89,
+			"title": "x402 Studio: the Stripe of x402",
+			"path": "/x402/studio",
+			"section": "crypto",
+			"tracks": [
+				"full",
+				"quick"
+			],
+			"highlight": true,
+			"narration": "Let's visit x402 Studio: the Stripe of x402. Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": ".empty a.btn, .empty h3",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "h3",
+				"rect": {
+					"left": 446,
+					"top": 350.46875,
+					"width": 388,
+					"height": 42.484375
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()"
+			],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/x402-studio.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 6936
+				},
+				"thumb": {
+					"url": "/media/tour/x402-studio.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 1562
+				}
+			},
+			"capturedAt": "2026-08-02T04:59:04.553Z"
 		},
 		{
 			"id": "vanity-premium",
@@ -4728,50 +4782,6 @@
 				}
 			},
 			"capturedAt": "2026-07-31T19:12:33.017Z"
-		},
-		{
-			"id": "terminal",
-			"index": 107,
-			"title": "Mission Control",
-			"path": "/terminal",
-			"section": "crypto",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "This one is Mission Control. The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet: a keyboard-driven cockpit with filters and saved views.",
-			"status": 200,
-			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 2,
-			"consoleSamples": [
-				"Failed to load resource: the server responded with a status of 401 ()",
-				"Failed to load resource: the server responded with a status of 404 ()"
-			],
-			"notes": [
-				"none of the 3 tour anchors matched a visible element"
-			],
-			"media": {
-				"hero": {
-					"url": "/media/tour/terminal.webp",
-					"width": 1200,
-					"height": 750,
-					"bytes": 42648
-				},
-				"thumb": {
-					"url": "/media/tour/terminal.thumb.webp",
-					"width": 520,
-					"height": 325,
-					"bytes": 9930
-				}
-			},
-			"capturedAt": "2026-07-31T19:12:34.526Z"
 		},
 		{
 			"id": "pulse",
@@ -5750,37 +5760,6 @@
 			"capturedAt": "2026-07-31T19:14:46.657Z"
 		},
 		{
-			"id": "play-arena",
-			"index": 129,
-			"title": "Sniper Arena: autonomous AI agents trading live",
-			"path": "/play/arena",
-			"section": "crypto",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "And this, Sniper Arena, autonomous AI agents trading live. Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.",
-			"status": 200,
-			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 1,
-			"consoleSamples": [
-				"Failed to load resource: the server responded with a status of 401 ()"
-			],
-			"notes": [
-				"none of the 3 tour anchors matched a visible element",
-				"page.screenshot: Timeout 30000ms exceeded.\nCall log:\n  - taking page screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n"
-			],
-			"media": null,
-			"capturedAt": "2026-07-31T19:14:49.195Z"
-		},
-		{
 			"id": "leaderboard",
 			"index": 130,
 			"title": "Trader Leaderboard",
@@ -5877,47 +5856,6 @@
 			"capturedAt": "2026-07-31T19:15:08.080Z"
 		},
 		{
-			"id": "play-agent-wallet",
-			"index": 132,
-			"title": "Agent Wallet (x402 on Solana)",
-			"path": "/play/agent-wallet",
-			"section": "crypto",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "Here we have Agent Wallet (x402 on Solana). Watch your 3D avatar walk up to a paid endpoint and pay for it with its agent wallet: a real USDC micropayment signed by the agent and settled on Solana.",
-			"status": 200,
-			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"none of the 3 tour anchors matched a visible element"
-			],
-			"media": {
-				"hero": {
-					"url": "/media/tour/play-agent-wallet.webp",
-					"width": 1200,
-					"height": 750,
-					"bytes": 33820
-				},
-				"thumb": {
-					"url": "/media/tour/play-agent-wallet.thumb.webp",
-					"width": 520,
-					"height": 325,
-					"bytes": 6820
-				}
-			},
-			"capturedAt": "2026-07-31T19:15:09.182Z"
-		},
-		{
 			"id": "club",
 			"index": 133,
 			"title": "Pole Club",
@@ -5949,47 +5887,6 @@
 			],
 			"media": null,
 			"capturedAt": "2026-07-31T19:15:28.466Z"
-		},
-		{
-			"id": "demo",
-			"index": 134,
-			"title": "Agent Economy: NOVA & ORACLE",
-			"path": "/demo",
-			"section": "crypto",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "This is Agent Economy: NOVA & ORACLE. Two three.ws AI agents with real Solana wallets discover services on the x402 bazaar, pay each other in SOL, and display a live market briefing on the TV in their world.",
-			"status": 200,
-			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"none of the 3 tour anchors matched a visible element"
-			],
-			"media": {
-				"hero": {
-					"url": "/media/tour/demo.webp",
-					"width": 1200,
-					"height": 750,
-					"bytes": 13218
-				},
-				"thumb": {
-					"url": "/media/tour/demo.thumb.webp",
-					"width": 520,
-					"height": 325,
-					"bytes": 2720
-				}
-			},
-			"capturedAt": "2026-07-31T19:15:50.907Z"
 		},
 		{
 			"id": "constellation",
@@ -6404,49 +6301,6 @@
 			"capturedAt": "2026-07-31T19:18:28.393Z"
 		},
 		{
-			"id": "unstoppable",
-			"index": 145,
-			"title": "Unstoppable Agent",
-			"path": "/unstoppable",
-			"section": "crypto",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "Next up, Unstoppable Agent. Live dashboard for an autonomous agent that funds itself via x402 micropayments. Watch its balance, earnings, costs, and daily reflections in real time.",
-			"status": 200,
-			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 1,
-			"consoleSamples": [
-				"Failed to load resource: the server responded with a status of 402 ()"
-			],
-			"notes": [
-				"none of the 3 tour anchors matched a visible element"
-			],
-			"media": {
-				"hero": {
-					"url": "/media/tour/unstoppable.webp",
-					"width": 1200,
-					"height": 750,
-					"bytes": 12060
-				},
-				"thumb": {
-					"url": "/media/tour/unstoppable.thumb.webp",
-					"width": 520,
-					"height": 325,
-					"bytes": 2684
-				}
-			},
-			"capturedAt": "2026-07-31T19:18:29.049Z"
-		},
-		{
 			"id": "gmgn",
 			"index": 146,
 			"title": "GMGN Smart Money",
@@ -6679,47 +6533,6 @@
 			"capturedAt": "2026-07-31T19:19:11.329Z"
 		},
 		{
-			"id": "pump-visualizer",
-			"index": 151,
-			"title": "Pump Visualizer",
-			"path": "/pump-visualizer",
-			"section": "crypto",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "Here's Pump Visualizer. 3D visualizer of trending pump.fun tokens: live market data rendered as an interactive scene.",
-			"status": 200,
-			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"none of the 3 tour anchors matched a visible element"
-			],
-			"media": {
-				"hero": {
-					"url": "/media/tour/pump-visualizer.webp",
-					"width": 1200,
-					"height": 750,
-					"bytes": 9714
-				},
-				"thumb": {
-					"url": "/media/tour/pump-visualizer.thumb.webp",
-					"width": 520,
-					"height": 325,
-					"bytes": 2162
-				}
-			},
-			"capturedAt": "2026-07-31T19:19:18.621Z"
-		},
-		{
 			"id": "pumpfun",
 			"index": 152,
 			"title": "Pump.fun Stream",
@@ -6764,6 +6577,52 @@
 				}
 			},
 			"capturedAt": "2026-07-31T19:19:26.076Z"
+		},
+		{
+			"id": "terminal",
+			"index": 153,
+			"title": "Mission Control",
+			"path": "/terminal",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "And this: Mission Control. The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet: a keyboard-driven cockpit with filters and saved views.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": ".mc-pane--feed",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "div",
+				"rect": {
+					"left": 0,
+					"top": 42,
+					"width": 385.984375,
+					"height": 758
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()"
+			],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/terminal.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 40104
+				},
+				"thumb": {
+					"url": "/media/tour/terminal.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 8742
+				}
+			},
+			"capturedAt": "2026-08-02T04:59:15.425Z"
 		},
 		{
 			"id": "ibm-hello",
@@ -6999,47 +6858,6 @@
 				}
 			},
 			"capturedAt": "2026-07-31T19:20:06.787Z"
-		},
-		{
-			"id": "viewer",
-			"index": 158,
-			"title": "glTF / GLB Viewer",
-			"path": "/viewer",
-			"section": "labs",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "This is glTF / GLB Viewer. Paste any public glTF/GLB URL and preview it inline: the lightweight, unauthenticated model viewer every 3D Studio tool's shared asset link opens.",
-			"status": 200,
-			"anchor": {
-				"state": "missing",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"none of the 3 tour anchors matched a visible element"
-			],
-			"media": {
-				"hero": {
-					"url": "/media/tour/viewer.webp",
-					"width": 1200,
-					"height": 750,
-					"bytes": 7862
-				},
-				"thumb": {
-					"url": "/media/tour/viewer.thumb.webp",
-					"width": 520,
-					"height": 325,
-					"bytes": 1786
-				}
-			},
-			"capturedAt": "2026-07-31T19:20:07.296Z"
 		},
 		{
 			"id": "spatial-mcp",
@@ -7782,6 +7600,52 @@
 			"capturedAt": "2026-07-31T19:22:13.532Z"
 		},
 		{
+			"id": "play-arena",
+			"index": 175,
+			"title": "Sniper Arena: autonomous AI agents trading live",
+			"path": "/play/arena",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here's Sniper Arena: autonomous AI agents trading live. Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "#pickBtn",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "button",
+				"rect": {
+					"left": 1075.28125,
+					"top": 6,
+					"width": 194.71875,
+					"height": 55.5
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()"
+			],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/play-arena.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 36690
+				},
+				"thumb": {
+					"url": "/media/tour/play-arena.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6998
+				}
+			},
+			"capturedAt": "2026-08-02T04:59:23.223Z"
+		},
+		{
 			"id": "events-build-3d-agents-live",
 			"index": 175,
 			"title": "Building 3D AI Agents Live",
@@ -7920,6 +7784,52 @@
 			"capturedAt": "2026-07-31T19:22:25.471Z"
 		},
 		{
+			"id": "play-agent-wallet",
+			"index": 178,
+			"title": "Agent Wallet (x402 on Solana)",
+			"path": "/play/agent-wallet",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Check out Agent Wallet (x402 on Solana). Watch your 3D avatar walk up to a paid endpoint and pay for it with its agent wallet: a real USDC micropayment signed by the agent and settled on Solana.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "#walletCard",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "div",
+				"rect": {
+					"left": 905,
+					"top": 60,
+					"width": 367,
+					"height": 263.078125
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 502 ()"
+			],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/play-agent-wallet.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 25366
+				},
+				"thumb": {
+					"url": "/media/tour/play-agent-wallet.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4918
+				}
+			},
+			"capturedAt": "2026-08-02T04:59:25.016Z"
+		},
+		{
 			"id": "glossary",
 			"index": 178,
 			"title": "Glossary",
@@ -8008,6 +7918,50 @@
 				}
 			},
 			"capturedAt": "2026-07-31T19:22:38.574Z"
+		},
+		{
+			"id": "demo",
+			"index": 180,
+			"title": "Agent Economy: NOVA & ORACLE",
+			"path": "/demo",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here we have Agent Economy: NOVA & ORACLE. Two three.ws AI agents with real Solana wallets discover services on the x402 bazaar, pay each other in SOL, and display a live market briefing on the TV in their world.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "#scene",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "canvas",
+				"rect": {
+					"left": 0,
+					"top": 44,
+					"width": 988,
+					"height": 720
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/demo.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 12064
+				},
+				"thumb": {
+					"url": "/media/tour/demo.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 2614
+				}
+			},
+			"capturedAt": "2026-08-02T05:00:52.264Z"
 		},
 		{
 			"id": "onboarding-avatar",
@@ -8218,16 +8172,16 @@
 					"url": "/media/tour/three-live.webp",
 					"width": 1200,
 					"height": 750,
-					"bytes": 24076
+					"bytes": 23802
 				},
 				"thumb": {
 					"url": "/media/tour/three-live.thumb.webp",
 					"width": 520,
 					"height": 325,
-					"bytes": 5892
+					"bytes": 5842
 				}
 			},
-			"capturedAt": "2026-08-02T04:52:45.602Z"
+			"capturedAt": "2026-08-02T05:00:54.576Z"
 		},
 		{
 			"id": "onboarding-profile",
@@ -8272,6 +8226,416 @@
 				}
 			},
 			"capturedAt": "2026-07-31T19:22:57.195Z"
+		},
+		{
+			"id": "unstoppable",
+			"index": 191,
+			"title": "Unstoppable Agent",
+			"path": "/unstoppable",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This one is Unstoppable Agent. Live dashboard for an autonomous agent that funds itself via x402 micropayments. Watch its balance, earnings, costs, and daily reflections in real time.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": ".hero-badges",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "div",
+				"rect": {
+					"left": 24,
+					"top": 380.875,
+					"width": 1232,
+					"height": 45.046875
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 402 ()"
+			],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/unstoppable.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 11508
+				},
+				"thumb": {
+					"url": "/media/tour/unstoppable.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 2298
+				}
+			},
+			"capturedAt": "2026-08-02T05:01:12.778Z"
+		},
+		{
+			"id": "pump-visualizer",
+			"index": 197,
+			"title": "Pump Visualizer",
+			"path": "/pump-visualizer",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Let's visit Pump Visualizer. 3D visualizer of trending pump.fun tokens: live market data rendered as an interactive scene.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": ".vz-status",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "div",
+				"rect": {
+					"left": 8,
+					"top": 60,
+					"width": 448.1875,
+					"height": 53.40625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/pump-visualizer.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 9404
+				},
+				"thumb": {
+					"url": "/media/tour/pump-visualizer.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 1990
+				}
+			},
+			"capturedAt": "2026-08-02T05:01:21.268Z"
+		},
+		{
+			"id": "viewer",
+			"index": 218,
+			"title": "glTF / GLB Viewer",
+			"path": "/viewer",
+			"section": "labs",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This is glTF / GLB Viewer. Preview any public glTF/GLB inline, then take it further: pose and animate it, restyle the material, build a scene, place it in AR, embed it on your site, or launch it as a pump.fun coin.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": ".stage",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "div",
+				"rect": {
+					"left": 0,
+					"top": 36,
+					"width": 1280,
+					"height": 764
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/viewer.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 9740
+				},
+				"thumb": {
+					"url": "/media/tour/viewer.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 2424
+				}
+			},
+			"capturedAt": "2026-08-02T05:01:22.546Z"
+		},
+		{
+			"id": "guards",
+			"index": 244,
+			"title": "Repository guards",
+			"path": "/guards",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Now, Repository guards. Every mechanical guard that protects the three.ws codebase, and the stage each one runs in. This repository has no CI, so correctness is enforced by fast local checks wired into the prebuild, the gate, the deploy build, and the git pre-push hook. Filter by stage, search by command, and read the incident behind each one.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 116.59375,
+					"top": 200.453125,
+					"width": 1046.8125,
+					"height": 67.828125
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/guards.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 33762
+				},
+				"thumb": {
+					"url": "/media/tour/guards.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7180
+				}
+			},
+			"capturedAt": "2026-08-02T04:59:10.065Z"
+		},
+		{
+			"id": "cookbook",
+			"index": 245,
+			"title": "Cookbook: runnable recipes for the 3D API",
+			"path": "/cookbook",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Let's visit Cookbook: runnable recipes for the 3D API. Recipes you can run, not walkthroughs. A text-to-3D command line tool, a parallel asset-pack builder, an MCP server that gives your AI assistant a 3D tool, a CI quality gate, and a self-correcting generation loop. Every recipe ships a file that was executed against the live API.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 62,
+					"top": 173.390625,
+					"width": 1156,
+					"height": 72.578125
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/cookbook.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 32948
+				},
+				"thumb": {
+					"url": "/media/tour/cookbook.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7460
+				}
+			},
+			"capturedAt": "2026-08-02T04:59:10.177Z"
+		},
+		{
+			"id": "cookbook-self-correcting-3d",
+			"index": 246,
+			"title": "Recipe: a self-correcting 3D collectible set",
+			"path": "/cookbook/self-correcting-3d",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Over here is Recipe: a self-correcting 3D collectible set. An AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, renders each result, inspects it with vision, grades it against the brief with structured outputs, and rebuilds whatever missed. Read it with interactive galleries, or download the notebook and run it.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 96,
+					"top": 77.40625,
+					"width": 1149,
+					"height": 74.0625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/cookbook-self-correcting-3d.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 64530
+				},
+				"thumb": {
+					"url": "/media/tour/cookbook-self-correcting-3d.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 13862
+				}
+			},
+			"capturedAt": "2026-08-02T04:59:10.201Z"
+		},
+		{
+			"id": "changelog",
+			"index": 255,
+			"title": "Changelog",
+			"path": "/changelog",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Take a look at Changelog. What is new on three.ws: features, improvements, and releases, newest first.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 252,
+					"top": 157,
+					"width": 776,
+					"height": 79
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/changelog.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 28386
+				},
+				"thumb": {
+					"url": "/media/tour/changelog.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5576
+				}
+			},
+			"capturedAt": "2026-08-02T04:59:19.554Z"
+		},
+		{
+			"id": "news",
+			"index": 256,
+			"title": "News and Announcements",
+			"path": "/news",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Now, News and Announcements. Product launches, integrations, and announcements from three.ws.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "other",
+				"tag": "h1",
+				"rect": {
+					"left": 256,
+					"top": 123.59375,
+					"width": 768,
+					"height": 111.1875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/news.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 31826
+				},
+				"thumb": {
+					"url": "/media/tour/news.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7054
+				}
+			},
+			"capturedAt": "2026-08-02T04:59:20.163Z"
+		},
+		{
+			"id": "aws",
+			"index": 257,
+			"title": "three.ws on AWS",
+			"path": "/aws",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Let's visit three.ws on AWS. three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 216,
+					"top": 201.796875,
+					"width": 848,
+					"height": 74.796875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/aws.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 24902
+				},
+				"thumb": {
+					"url": "/media/tour/aws.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6478
+				}
+			},
+			"capturedAt": "2026-08-02T04:59:22.030Z"
 		}
 	]
 }

@@ -110,7 +110,7 @@ export function simulateGhostCopy({ trades = [], budgetSol, subscription, maxCur
 	const fills = [];
 	const skipped = [];
 	const spentByDay = new Map();
-	const curve = [{ t: null, equity_sol: round4(start), label: 'start' }];
+	const curve = [{ t: null, equity_sol: round4(start) }];
 
 	// Close events free capital, so they must settle before same-instant opens.
 	const events = [];
