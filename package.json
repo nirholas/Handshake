@@ -295,7 +295,6 @@
 		"worker:okx-bot": "node workers/okx-chat-bot/index.js",
 		"worker:mm": "node workers/agent-mm/index.js",
 		"worker:mm:live": "MM_MODE=live node workers/agent-mm/index.js",
-		"worker:okx-bot": "node workers/okx-chat-bot/index.js",
 		"deploy:sniper": "node scripts/deploy-sniper.mjs",
 		"pump:smoke": "node scripts/pumpfun-lifecycle-smoke.js",
 		"pump:refresh-idls": "node scripts/refresh-pump-idls.mjs",

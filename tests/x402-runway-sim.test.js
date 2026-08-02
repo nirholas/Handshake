@@ -115,6 +115,38 @@ describe('simulateRunway — the 2026-07-31 starvation shape', () => {
 		expect(summary.firstRefusalHour).toBe(3);
 	});
 
+	it('pacing is off unless asked for, so the floor stays the visible limiter', () => {
+		const unpaced = simulateRunway({ ...STARVED, demandPerHour: 500, hours: 24 });
+		const explicitlyOff = simulateRunway({ ...STARVED, demandPerHour: 500, hours: 24, paceDay: false });
+		expect(explicitlyOff.summary.admitted).toBe(unpaced.summary.admitted);
+		expect(explicitlyOff.summary.limiter).toBe('floor');
+	});
+
+	it('pacing spreads the same day of budget instead of front-loading it', () => {
+		// A wallet with real spendable SOL, so the governor (not the floor) is the
+		// binding gate and pacing is the only thing under test.
+		const FUNDED = {
+			startLamports: 2_000_000_000, // 2 SOL
+			floorLamports: 10_000_000,
+			runwayDays: 3,
+			minBudgetLamports: 10_000_000,
+			feeLamports: 5_000,
+		};
+		const burst = simulateRunway({ ...FUNDED, demandPerHour: 5_000, hours: 24, startHourOfDay: 0 });
+		const paced = simulateRunway({
+			...FUNDED, demandPerHour: 5_000, hours: 24, startHourOfDay: 0, paceDay: true,
+		});
+
+		// Same day, same wallet: pacing must not hand out extra throughput.
+		expect(paced.summary.admitted).toBeLessThanOrEqual(burst.summary.admitted);
+
+		// The point of pacing: budget still available late in the day. Unpaced, the
+		// last hour is dead because the whole allowance went early.
+		const lastHour = (r) => r.series[r.series.length - 1].admitted;
+		expect(lastHour(burst)).toBe(0);
+		expect(lastHour(paced)).toBeGreaterThan(0);
+	});
+
 	it('a heartbeat raise cannot rescue a wallet that has no spendable SOL', () => {
 		const wider = simulateRunway({ ...STARVED, minBudgetLamports: 50_000_000, demandPerHour: 500, hours: 24 });
 		// Same 1,741: widening the governor changes nothing once the hard floor is

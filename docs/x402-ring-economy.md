@@ -110,6 +110,25 @@ decision logic in
 - **Kill switch:** `X402_WALLET_FEE_GOVERNOR_ENABLED=false`. Cache freshness:
   `X402_WALLET_FEE_SPENT_CACHE_MS` (default 20s; bounds multi-instance
   undercount to one window per instance).
+- **Intraday pacing (opt-in):** `X402_WALLET_FEE_PACE_DAY=true` releases the
+  daily budget gradually across the UTC day instead of making all of it
+  spendable at 00:00. Without it, a wallet whose budget is the heartbeat floor
+  can burn the whole allowance in a morning burst and then refuse every settle
+  until the next reset: production on 2026-08-01 paid 1,002 settles before
+  midday, then rejected roughly 3,500 per hour for the rest of the day with
+  `fee_runway_exhausted`. Pacing spreads the same total over 24 hours, so the
+  rail keeps a pulse all day. It grants **no** extra spend, and
+  `X402_WALLET_FEE_PACE_MIN_SLICE_LAMPORTS` (default 200,000) keeps a wallet
+  alive in the first minutes after the reset.
+
+  It is **off by default on purpose.** Pacing changes which gate refuses a
+  starved wallet first: the governor starts refusing early instead of the hard
+  SOL floor refusing later. That floor-vs-governor distinction is exactly what
+  `/economy-lab` exists to make visible, and it is how you tell "out of SOL"
+  apart from "throttled". Turn pacing on when you want the smoother shape and
+  are willing to read the limiter from the lab rather than from the reject
+  reason. `simulateRunway({ paceDay: true })` models both shapes before you
+  commit to either.
 
 ## Burning the least SOL — two levers
 
