@@ -31,12 +31,28 @@
 			<description>Paper-copy any verified pump.fun trader agent with fake money over their real closed on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had, plus every trade your budget could not reach and why. No wallet, no signature, no custody, no account.</description>
 		</item>
 		<item>
+			<title>An agent wallet that cannot be signed for now says so, before you try to withdraw</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-02:An agent wallet that cannot be signed for now says so, before you try to withdraw</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A small number of older agent wallets were created under an encryption key the platform no longer holds. Their balance is real and still on chain, but nothing can be signed for that address. Until now the Withdraw screen looked completely normal: you picked an asset, typed an amount, confirmed, and only then got a server error that read like a temporary glitch worth retrying. The wallet hub now checks whether the wallet can be signed for before showing the form, and replaces it with a plain explanation of what happened, what it means for the balance, and a direct line to support. The withdrawal endpoint answers the same way instead of a generic failure, so nothing suggests retrying will help when it cannot.</description>
+		</item>
+		<item>
 			<title>Avatar Studio: sculpt your build, not just your face</title>
 			<link>https://three.ws/create/studio</link>
 			<guid isPermaLink="false">2026-08-02:Avatar Studio: sculpt your build, not just your face</guid>
 			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The Sculpt tab now has a Proportions panel above the face sliders: height, leg, torso, neck and arm length, shoulder and hip width, and head, hand and foot size. Morph sliders reshape a limb; these actually re-proportion the skeleton, which is the only way to lengthen one without tearing the mesh. Lengthen the legs and the hips ride up so the feet stay on the floor, and the animation library re-measures itself against the new hip height, so a taller avatar walks with a longer stride instead of sliding. Sliders you cannot use never appear: only the parameters your rig has bones for are offered, and because they need no blendshapes at all they work on rigs that have none. Randomize now rolls a build too, and everything saves into the avatar's re-editable appearance record.</description>
+		</item>
+		<item>
+			<title>Avatars in AR now have real skin, eyes and hair</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-08-02:Avatars in AR now have real skin, eyes and hair</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Your avatar and every agent pin you meet in the /irl camera view were rendering with the flat materials the 3D generator exported, which read as shiny plastic once they were standing on your actual floor. They now use the same physically-tuned skin, eye and hair shading the avatar viewer already had: skin gets a soft warm falloff instead of a plastic highlight, eyes get a wet cornea with a real refractive index, and hair gets its own sheen. The World Line quest agent gets the same treatment in AR and in the panel view. Phones that fall to the lowest performance tier keep the lighter materials so tracking stays smooth.</description>
 		</item>
 		<item>
 			<title>Every closed trade now has its own shareable card</title>
@@ -79,12 +95,28 @@
 			<description>Three things that used to depend on whether an individual page remembered to handle them now hold everywhere. Tabbing through the site always shows a visible outline on whatever you have landed on, so you can tell where you are without a mouse; around 1,500 buttons, links and cards previously had no focus indicator at all. Controls that are switched off now consistently look switched off, including the custom ones that are not standard form buttons. And if your device is set to reduce motion, decorative animation across the site now settles instead of playing, while loading spinners and progress bars keep moving so a working page never looks frozen. Overlays that sit on top of screenshots and video also share one set of shades now, so captions and buttons read cleanly on light and dark imagery alike. Separately, pages that build their header as they load no longer flash a second logo in the top-left corner before settling.</description>
 		</item>
 		<item>
+			<title>Remix is reachable again on the narrowest phones</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-02:Remix is reachable again on the narrowest phones</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On a 320px-wide screen, the footer of every community model card in the Forge showcase ran off the right edge of the card, which pushed the Remix button out of view and made it impossible to tap. The row now wraps onto a second line when it genuinely runs out of space, so the vote count and Remix stay on screen and tappable at every width. Nothing changes on wider screens, where the footer already fit on one line.</description>
+		</item>
+		<item>
 			<title>Solana RPC: one provider refusing one call no longer sidelines the whole node</title>
 			<link>https://three.ws/status</link>
 			<guid isPermaLink="false">2026-08-02:Solana RPC: one provider refusing one call no longer sidelines the whole node</guid>
 			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>Free Solana RPC providers are not interchangeable: each one refuses a different handful of calls while serving everything else perfectly. Until now a single refusal took the whole provider out of rotation for up to 30 minutes, which pushed traffic onto the paid plans that the free providers exist to protect, and made token-balance and holder-gated features flaky. The platform now tracks capability per provider and per call, so a refusal sidelines only that one call and the provider keeps serving the rest. A provider that refuses everything is still pulled, so a genuine block is not mistaken for a quirk. The status page also now names which providers are cooling down and when each is expected back, and transaction confirmations poll on a backoff that cuts wasted requests without slowing anything down.</description>
+		</item>
+		<item>
+			<title>Split any generated model into downloadable parts</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-02:Split any generated model into downloadable parts</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Forge result panel can now break a finished model into its separate parts. Pick how it should split (automatically, by disconnected shells, or along sharp edges), set a maximum number of parts, and the model reappears with every part in its own colour alongside a list showing what each one is and how detailed it is. Click any part to pull it out on its own and download it as a separate file, so a single generation becomes a kit of pieces you can rig, reuse, or re-texture one at a time.</description>
 		</item>
 		<item>
 			<title>The paid-endpoint catalog now pages the same way every time an indexer reads it</title>

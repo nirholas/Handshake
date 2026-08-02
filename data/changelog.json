@@ -3,6 +3,33 @@
 	"entries": [
 		{
 			"date": "2026-08-02",
+			"title": "An agent wallet that cannot be signed for now says so, before you try to withdraw",
+			"summary": "A small number of older agent wallets were created under an encryption key the platform no longer holds. Their balance is real and still on chain, but nothing can be signed for that address. Until now the Withdraw screen looked completely normal: you picked an asset, typed an amount, confirmed, and only then got a server error that read like a temporary glitch worth retrying. The wallet hub now checks whether the wallet can be signed for before showing the form, and replaces it with a plain explanation of what happened, what it means for the balance, and a direct line to support. The withdrawal endpoint answers the same way instead of a generic failure, so nothing suggests retrying will help when it cannot.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"title": "Split any generated model into downloadable parts",
+			"summary": "The Forge result panel can now break a finished model into its separate parts. Pick how it should split (automatically, by disconnected shells, or along sharp edges), set a maximum number of parts, and the model reappears with every part in its own colour alongside a list showing what each one is and how detailed it is. Click any part to pull it out on its own and download it as a separate file, so a single generation becomes a kit of pieces you can rig, reuse, or re-texture one at a time.",
+			"tags": [
+				"feature"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-08-02",
+			"title": "Avatars in AR now have real skin, eyes and hair",
+			"summary": "Your avatar and every agent pin you meet in the /irl camera view were rendering with the flat materials the 3D generator exported, which read as shiny plastic once they were standing on your actual floor. They now use the same physically-tuned skin, eye and hair shading the avatar viewer already had: skin gets a soft warm falloff instead of a plastic highlight, eyes get a wet cornea with a real refractive index, and hair gets its own sheen. The World Line quest agent gets the same treatment in AR and in the panel view. Phones that fall to the lowest performance tier keep the lighter materials so tracking stays smooth.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/irl"
+		},
+		{
+			"date": "2026-08-02",
 			"title": "Remix is reachable again on the narrowest phones",
 			"summary": "On a 320px-wide screen, the footer of every community model card in the Forge showcase ran off the right edge of the card, which pushed the Remix button out of view and made it impossible to tap. The row now wraps onto a second line when it genuinely runs out of space, so the vote count and Remix stay on screen and tappable at every width. Nothing changes on wider screens, where the footer already fit on one line.",
 			"tags": [
