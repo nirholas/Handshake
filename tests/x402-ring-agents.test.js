@@ -316,7 +316,10 @@ describe('readAgentUsdcAtomic: knowable zero vs unknown', () => {
 	// The mint is injected: X402_ASSET_MINT_SOLANA is a production env var, and an
 	// unset one must read as UNKNOWN, so the check goes inert off-production
 	// instead of refusing every purchase.
-	const MINT = { mint: 'MiNTwa11et11111111111111111111111111111111' };
+	// Synthetic, but a REAL 32-byte key: an unparseable mint throws inside the ATA
+	// derivation and fails open to `unknown`, which silently disables the check
+	// these tests assert rather than failing them loudly.
+	const MINT = { mint: 'MiNTsynthetich6XLLwux871nzCuBNrdp4FokjXpyor' };
 	const connWith = (impl) => ({ getTokenAccountBalance: impl });
 
 	it('reads the atomic amount and caches it within the tick', async () => {
