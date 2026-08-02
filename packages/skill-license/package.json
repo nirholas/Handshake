@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/skill-license",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "On-chain skill licenses for agents — each purchased skill is a 1/1 SPL NFT plus a deterministic SkillLicense PDA. Mint, verify, and read trustless skill access in one import, no database required.",
   "type": "module",
   "main": "./src/index.js",

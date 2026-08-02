@@ -18,12 +18,12 @@
 		"source": "github",
 		"subfolder": "mcp-bridge"
 	},
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/mcp-bridge",
-			"version": "1.0.1",
+			"version": "1.0.2",
 			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"

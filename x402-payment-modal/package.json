@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/x402-payment-modal",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Drop-in x402 payment modal for any paid HTTP endpoint. One ES module, zero runtime dependencies — handles wallet connect (Phantom/Solana + EVM via EIP-3009), the 402 → sign → settle flow, SIWX re-entry, client-side spending caps, and a receipt. Vanilla JS, no bundler required.",
   "type": "module",
   "main": "./src/index.js",

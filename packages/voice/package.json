@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/voice",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Speech for avatars — ASR (speech→text), TTS (text→speech), and Audio2Face-3D lipsync visemes in one import. The voice layer for three.ws avatars.",
   "type": "module",
   "main": "./src/index.js",

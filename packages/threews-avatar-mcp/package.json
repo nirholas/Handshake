@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/avatar-mcp",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "MCP server for three.ws 3D avatars by three.ws — render a live, rotatable on-chain avatar inline (interactive MCP App), get a paste-anywhere embed iframe, or fetch avatar metadata. Free, no API key.",
 	"type": "module",
 	"author": "nirholas",

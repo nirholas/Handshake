@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/tutor-mcp",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"mcpName": "io.github.nirholas/tutor-mcp",
 	"description": "three.ws Pay-As-You-Learn tutor ledger from any AI agent — read a learning session's itemized running tab and close it for an attested invoice. Free, no key, no signer; answering questions is the paid action handled elsewhere.",
 	"type": "module",

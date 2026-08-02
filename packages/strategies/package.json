@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/strategies",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Automated on-chain trading strategies for agents — DCA, copy-trading, and mirror execution, in one import. Rule-based Strategy Objects that run inside the agent's spend leash.",
   "type": "module",
   "main": "./src/index.js",

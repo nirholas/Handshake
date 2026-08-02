@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/agenc",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Client for the AgenC agent-coordination protocol on Solana — discover tasks, read task status + lifecycle, and look up the agent registry in one import.",
   "type": "module",
   "main": "./src/index.js",

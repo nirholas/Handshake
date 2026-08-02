@@ -18,12 +18,12 @@
 		"source": "github",
 		"subfolder": "packages/ibm-watsonx-mcp"
 	},
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/ibm-watsonx-mcp",
-			"version": "0.2.0",
+			"version": "0.2.1",
 			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"

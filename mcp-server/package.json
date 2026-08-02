@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/mcp-server",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"mcpName": "io.github.nirholas/3d-agent-mcp",
 	"description": "MCP tools for the 3d-agent stack — free text→3D (TRELLIS) plus paid 3D/avatar/rigging, pump.fun snapshots, ERC-8004 reputation, vanity grinder. Paid calls settled in USDC via x402.",
 	"type": "module",

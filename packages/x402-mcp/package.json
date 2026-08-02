@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/x402-mcp",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"mcpName": "io.github.nirholas/x402-mcp",
 	"description": "Give any AI agent a self-custodial x402 wallet. Search the live bazaar, inspect an endpoint's price without paying, and pay_and_call any x402 service in USDC or $THREE from your own Solana key — real @x402 settlement, bounded by spend caps. No custodial wallet, no account.",
 	"type": "module",

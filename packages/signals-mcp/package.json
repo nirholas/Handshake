@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/signals-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/signals-mcp",
 	"description": "Discover, subscribe to, and track three.ws copy-trade signal feeds from any AI agent — a marketplace ranked by proven realized edge, a publisher leaderboard from real on-chain performance, and account-scoped subscribe + kill-switch controls over the live API.",
 	"type": "module",

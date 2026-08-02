@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/activity-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/activity-mcp",
 	"description": "three.ws live discovery surface from any AI agent — trending agents and coins, the $THREE holder leaderboard with tiers, and the site-wide activity ticker. Read-only over the live public API. No key, no signer, no payment.",
 	"type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/agent-payments",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "three.ws agent-payments engine — value-added fork of @pump-fun/agent-payments-sdk@3.0.3 (Solana agent-token payments with USDC/token-2022 + v2 trades, plus EVM/x402/a2a/cross-chain). See FORK_NOTES.md.",
   "publishConfig": {
     "access": "public"

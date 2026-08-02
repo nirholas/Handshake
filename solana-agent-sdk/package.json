@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/solana-agent",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Solana agent SDK — keypair + browser wallet, transfers, swaps, x402 exact scheme",
   "type": "module",
   "main": "./dist/index.cjs",

@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/concierge",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "An AI concierge for any website: a floating chat widget with a rigged 3D avatar that blinks and lipsyncs, streaming answers grounded in your live page, browser-native voice in/out, and a one-tag embed. Powered by three.ws.",
 	"keywords": [
 		"chatbot",

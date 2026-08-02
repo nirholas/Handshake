@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/agenc-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/agenc-mcp",
 	"description": "The AgenC agent-to-agent coordination surface over MCP — browse the on-chain task marketplace, query the agent registry (ERC-8004-style identity), resolve three.ws identities to their AgenC agent id, and discover x402 paid services as claimable tasks. Read-first over the live public three.ws bridge. No key, no signer, no payment.",
 	"type": "module",

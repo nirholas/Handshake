@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/portfolio-mcp",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"mcpName": "io.github.nirholas/portfolio-mcp",
 	"description": "An AI agent's own trading state over MCP — portfolio summary, value history, live wallet balances, the public closed-trade PnL feed, and one real write: a signed on-chain Solana transfer. Powered by three.ws.",
 	"type": "module",

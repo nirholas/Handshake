@@ -18,12 +18,12 @@
 		"source": "github",
 		"subfolder": "packages/ibm-x402-mcp"
 	},
-	"version": "1.1.2",
+	"version": "1.1.3",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/ibm-x402-mcp",
-			"version": "1.1.2",
+			"version": "1.1.3",
 			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"

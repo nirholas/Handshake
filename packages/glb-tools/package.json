@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/glb-tools",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Inspect, re-theme, and bake GLB models from the shell or CI. The client SDK behind the three.ws 3D asset pipeline — structural inspection, token-themed mesh synthesis, and appearance baking over live three.ws endpoints.",
   "type": "module",
   "main": "./src/index.js",

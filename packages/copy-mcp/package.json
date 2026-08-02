@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/copy-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/copy-mcp",
 	"description": "Manage your three.ws copy-trade follows from any AI agent — follow/unfollow leaders, tune sizing & guard rules, read the copy-intent inbox, and track fees owed. Account-scoped, non-custodial, over the live API.",
 	"type": "module",

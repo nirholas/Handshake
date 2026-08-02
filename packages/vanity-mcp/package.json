@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/vanity-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/vanity-mcp",
 	"description": "Read the three.ws vanity-address grind-bounty market and proof-of-grind rarity gallery from any AI agent. Quote a pattern's difficulty + USDC price, appraise any address's rarity, and browse the bounty board, claimable queue, stats, leaderboard, config, and gallery. Read-only — no key, no signer, no payment.",
 	"type": "module",

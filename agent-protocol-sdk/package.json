@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/agent-protocol-sdk",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "SDK for the on-chain agent-to-agent invocation protocol.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

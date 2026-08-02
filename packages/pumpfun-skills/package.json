@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/pumpfun-skills",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "pump.fun launch + trade skills as composable agent tools. Create a coin, swap on the bonding curve or AMM, and read creator fees — with a runtime-supplied mint.",
   "type": "module",
   "main": "./src/index.js",

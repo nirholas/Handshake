@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/intel-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/intel-mcp",
 	"description": "three.ws market intelligence from any AI agent — smart-money scoring, wallet intel, signal feeds, KOL leaderboards/trades, and the copy-trade Smart Money directory. Read-only over the live public API. No key, no signer, no payment.",
 	"type": "module",

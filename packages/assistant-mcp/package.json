@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/assistant-mcp",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"mcpName": "io.github.nirholas/assistant-widget",
 	"description": "Generate a paste-ready three.ws assistant widget from any AI agent. build_assistant_widget turns a config into an embeddable <script> tag, a frame URL, and a ThreeAssistant.init() snippet for a floating 3D avatar chatbot on any website; list_assistant_options enumerates every avatar, background, mode and data-* attribute you can set. Pure, offline, deterministic, no key, no signer, no payment.",
 	"type": "module",

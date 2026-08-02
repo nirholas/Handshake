@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/clash-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/clash-mcp",
 	"description": "Play three.ws Coin Clash — the community faction war backed by real holdings + pump.fun data — from any AI agent. Read the live battle board and leaderboard (public), or enlist your wallet and rally power for a faction (Solana-signed writes).",
 	"type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/agent-memory",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Persistent, embeddings-backed memory for agents. Store facts and entities, recall them semantically, and surface a working context — over the three.ws Memory engine.",
   "type": "module",
   "main": "./src/index.js",

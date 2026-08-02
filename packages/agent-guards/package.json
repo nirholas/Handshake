@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/agent-guards",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Safety rails for autonomous agents — per-agent spend policies and trade guards that cap what an agent can spend or trade before a transaction is signed. The three.ws agent custody SDK.",
   "type": "module",
   "main": "./src/index.js",

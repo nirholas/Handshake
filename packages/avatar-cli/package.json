@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/avatar-cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Terminal-native tooling for on-chain avatars: scaffold, validate, hash, and preview avatar manifests from your shell or CI.",
   "keywords": [
     "three.ws",

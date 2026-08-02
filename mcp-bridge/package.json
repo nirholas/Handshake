@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/mcp-bridge",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"mcpName": "io.github.nirholas/x402-bridge",
 	"description": "MCP stdio bridge that turns any x402-paid HTTP endpoint into a Claude-callable tool. Auto-pays via the @x402 client (EVM exact, SVM exact, EVM batch-settlement) and pre-loads tools from the Coinbase x402 Bazaar.",
 	"type": "module",

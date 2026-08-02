@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/alerts-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/alerts-mcp",
 	"description": "Manage your three.ws pump.fun alert rules from any AI agent — create, update, and delete monitoring rules with in-app, webhook, and Telegram delivery, and read the fired-alert history. Account-scoped over the live API.",
 	"type": "module",

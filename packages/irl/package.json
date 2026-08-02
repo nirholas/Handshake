@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/irl",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Geofenced, real-world presence for agents and avatars — check in at a GPS spot with a proof-of-presence fix, discover who's nearby, log real encounters, claim real-money drops, and complete agent-signed proof-of-presence quests. The three.ws IRL client.",
   "type": "module",
   "main": "./src/index.js",

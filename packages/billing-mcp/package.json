@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/billing-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/billing-mcp",
 	"description": "An AI agent's own account economics over MCP — plan quotas, metered usage, invoices, receipts, and earnings. Read-only, account-scoped. Powered by three.ws.",
 	"type": "module",

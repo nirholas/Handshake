@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/agent-ui",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"description": "Drop a 3D avatar into your UI and let it react to buttons, inputs, and navigation. The three.ws agent overlay SDK.",
 	"keywords": [
 		"3d",

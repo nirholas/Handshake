@@ -18,12 +18,12 @@
 		"source": "github",
 		"subfolder": "packages/portfolio-mcp"
 	},
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/portfolio-mcp",
-			"version": "0.1.0",
+			"version": "0.1.1",
 			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"
