@@ -210,8 +210,11 @@ function checkHelius() {
 // to the minute implies a precision the breaker does not have.
 function backIn(ms) {
 	if (ms >= 3_600_000) {
-		const h = Math.floor(ms / 3_600_000);
-		const m = Math.round((ms % 3_600_000) / 60_000);
+		// Round to whole minutes FIRST, then split. Splitting first and rounding the
+		// remainder lets 59.7 minutes render as "5h60m", which is not a time.
+		const totalMin = Math.round(ms / 60_000);
+		const h = Math.floor(totalMin / 60);
+		const m = totalMin % 60;
 		return m ? `${h}h${m}m` : `${h}h`;
 	}
 	if (ms >= 60_000) return `${Math.round(ms / 60_000)}m`;

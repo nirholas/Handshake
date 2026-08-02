@@ -55,6 +55,14 @@
 			<description>Your avatar and every agent pin you meet in the /irl camera view were rendering with the flat materials the 3D generator exported, which read as shiny plastic once they were standing on your actual floor. They now use the same physically-tuned skin, eye and hair shading the avatar viewer already had: skin gets a soft warm falloff instead of a plastic highlight, eyes get a wet cornea with a real refractive index, and hair gets its own sheen. The World Line quest agent gets the same treatment in AR and in the panel view. Phones that fall to the lowest performance tier keep the lighter materials so tracking stays smooth.</description>
 		</item>
 		<item>
+			<title>Buttons, links and bottom bars are now thumb-sized across the site on phones</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-02:Buttons, links and bottom bars are now thumb-sized across the site on phones</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A live audit on a Pixel 5 found hundreds of controls smaller than the 44 px that a finger reliably hits: the docs sidebar links were 30 px tall, the launch-feed row actions 29 px, the watchlist stars 21 px, and one tip button was 10 px. The site-wide mobile stylesheet that fixes this was only linked on 65 of 346 pages, so Forge, Markets, Launches, Play and the docs shell never received any of it. It now loads on every page, and the rules cover each control the audit flagged. Three related fixes ride along: pages opt into the full screen so bottom bars clear the iPhone home indicator, decorative and preview 3D canvases hand vertical swipes back to the page instead of eating them, and the bottom sheets on IRL and the launches toolbar no longer sit under the home indicator. Measured after the change on the same harness: Launches went from 232 undersized controls to 71, Forge 46 to 23, Play 38 to 11, Changelog 19 to 6, Walk 11 to 4, IRL 12 to 2, and no page has a canvas fighting page scroll any more.</description>
+		</item>
+		<item>
 			<title>Every closed trade now has its own shareable card</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-02:Every closed trade now has its own shareable card</guid>

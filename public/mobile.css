@@ -645,12 +645,6 @@
 	.forgot {
 		min-height: 44px;
 	}
-	#email,
-	#password,
-	#privy-email-input,
-	#submit {
-		display: block;
-	}
 	.brand,
 	.panel-brand,
 	.forgot {

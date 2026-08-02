@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-02T04:48:23.098Z",
+	"generated_at": "2026-08-02T04:54:58.130Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -66,6 +66,17 @@
 			"link": "/irl",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-02",
+			"type": "update",
+			"title": "Buttons, links and bottom bars are now thumb-sized across the site on phones",
+			"summary": "A live audit on a Pixel 5 found hundreds of controls smaller than the 44 px that a finger reliably hits: the docs sidebar links were 30 px tall, the launch-feed row actions 29 px, the watchlist stars 21 px, and one tip button was 10 px. The site-wide mobile stylesheet that fixes this was only linked on 65 of 346 pages, so Forge, Markets, Launches, Play and the docs shell never received any of it. It now loads on every page, and the rules cover each control the audit flagged. Three related fixes ride along: pages opt into the full screen so bottom bars clear the iPhone home indicator, decorative and preview 3D canvases hand vertical swipes back to the page instead of eating them, and the bottom sheets on IRL and the launches toolbar no longer sit under the home indicator. Measured after the change on the same harness: Launches went from 232 undersized controls to 71, Forge 46 to 23, Play 38 to 11, Changelog 19 to 6, Walk 11 to 4, IRL 12 to 2, and no page has a canvas fighting page scroll any more.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{

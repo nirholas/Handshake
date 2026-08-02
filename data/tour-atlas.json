@@ -1,10 +1,10 @@
 {
 	"version": 1,
 	"generatedBy": "scripts/capture-tour-atlas.mjs",
-	"generatedAt": "2026-07-31T19:23:13.394Z",
+	"generatedAt": "2026-08-02T04:53:36.904Z",
 	"base": "https://three.ws",
 	"curriculumVersion": 2,
-	"curriculumGeneratedAt": "2026-07-12T17:16:09.990Z",
+	"curriculumGeneratedAt": "2026-08-02T04:47:27.277Z",
 	"sections": [
 		{
 			"id": "main",
@@ -50,15 +50,15 @@
 		}
 	],
 	"summary": {
-		"total": 185,
-		"anchored": 168,
-		"missingAnchor": 11,
+		"total": 184,
+		"anchored": 170,
+		"missingAnchor": 12,
 		"curatedAnchor": 20,
-		"fallbackAnchor": 148,
+		"fallbackAnchor": 150,
 		"navScopedAnchor": 9,
-		"unreachable": 6,
+		"unreachable": 2,
 		"withConsoleErrors": 31,
-		"captured": 160
+		"captured": 163
 	},
 	"stops": [
 		{
@@ -421,62 +421,6 @@
 				}
 			},
 			"capturedAt": "2026-07-31T18:44:48.644Z"
-		},
-		{
-			"id": "diorama",
-			"index": 8,
-			"title": "Diorama",
-			"path": "/diorama",
-			"section": "main",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "Meet Diorama. Speak a little world into being: describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.",
-			"status": 0,
-			"anchor": {
-				"state": "unresolved",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://three.ws/diorama\", waiting until \"domcontentloaded\"\n"
-			],
-			"media": null,
-			"capturedAt": "2026-07-31T18:44:54.635Z"
-		},
-		{
-			"id": "mocap-studio",
-			"index": 9,
-			"title": "Mocap Studio",
-			"path": "/mocap-studio",
-			"section": "main",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "And this, Mocap Studio. Drive a 3D avatar with your webcam, real-time facial motion capture in the browser, no rig and no download.",
-			"status": 0,
-			"anchor": {
-				"state": "unresolved",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://three.ws/mocap-studio\", waiting until \"domcontentloaded\"\n"
-			],
-			"media": null,
-			"capturedAt": "2026-07-31T18:44:56.892Z"
 		},
 		{
 			"id": "create-video",
@@ -1109,32 +1053,51 @@
 			"capturedAt": "2026-07-31T18:48:54.685Z"
 		},
 		{
-			"id": "temporary",
-			"index": 24,
-			"title": "Drive Your Avatar",
-			"path": "/temporary",
+			"id": "diorama",
+			"index": 25,
+			"title": "Diorama",
+			"path": "/diorama",
 			"section": "main",
 			"tracks": [
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here we have Drive Your Avatar. Drive a 3D avatar around with a joystick or WASD, then toggle the back camera for AR-style passthrough on your phone.",
-			"status": 0,
+			"narration": "Next up, Diorama. Speak a little world into being: describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.",
+			"status": 200,
 			"anchor": {
-				"state": "unresolved",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 272,
+					"top": 173.4375,
+					"width": 736,
+					"height": 130.25
+				}
 			},
 			"consoleErrors": 0,
 			"consoleSamples": [],
 			"notes": [
-				"page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://three.ws/temporary\", waiting until \"domcontentloaded\"\n"
+				"load event did not fire within the timeout, captured at domcontentloaded",
+				"anchored by the director's generic fallback, not a curated selector for this page"
 			],
-			"media": null,
-			"capturedAt": "2026-07-31T18:49:10.988Z"
+			"media": {
+				"hero": {
+					"url": "/media/tour/diorama.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 23262
+				},
+				"thumb": {
+					"url": "/media/tour/diorama.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5998
+				}
+			},
+			"capturedAt": "2026-08-02T04:51:34.821Z"
 		},
 		{
 			"id": "community",
@@ -1182,6 +1145,34 @@
 				}
 			},
 			"capturedAt": "2026-07-31T18:49:52.835Z"
+		},
+		{
+			"id": "mocap-studio",
+			"index": 26,
+			"title": "Mocap Studio",
+			"path": "/mocap-studio",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This is Mocap Studio. Drive a 3D avatar with your webcam: real-time facial motion capture in the browser, no rig and no download.",
+			"status": 0,
+			"anchor": {
+				"state": "unresolved",
+				"selector": null,
+				"source": null,
+				"scope": null,
+				"tag": null,
+				"rect": null
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://three.ws/mocap-studio\", waiting until \"domcontentloaded\"\n"
+			],
+			"media": null,
+			"capturedAt": "2026-08-02T04:51:34.828Z"
 		},
 		{
 			"id": "create-agent",
@@ -1272,51 +1263,6 @@
 				}
 			},
 			"capturedAt": "2026-07-31T18:50:24.708Z"
-		},
-		{
-			"id": "scan",
-			"index": 28,
-			"title": "3D Scanner: Scan Yourself into 3D",
-			"path": "/scan",
-			"section": "build",
-			"tracks": [
-				"full",
-				"quick"
-			],
-			"highlight": true,
-			"narration": "Now, 3D Scanner, Scan Yourself into 3D. Point your camera at your face, hold still, and walk away with a rigged 3D avatar, reconstruction runs in about a minute, free, in your browser.",
-			"status": 200,
-			"anchor": {
-				"state": "resolved",
-				"selector": "button, .scan-start, video, .camera",
-				"source": "curriculum",
-				"scope": "main",
-				"tag": "button",
-				"rect": {
-					"left": 292,
-					"top": 24,
-					"width": 52,
-					"height": 52
-				}
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [],
-			"media": {
-				"hero": {
-					"url": "/media/tour/scan.webp",
-					"width": 1200,
-					"height": 750,
-					"bytes": 16742
-				},
-				"thumb": {
-					"url": "/media/tour/scan.thumb.webp",
-					"width": 520,
-					"height": 325,
-					"bytes": 2892
-				}
-			},
-			"capturedAt": "2026-07-31T18:50:49.026Z"
 		},
 		{
 			"id": "pose",
@@ -1816,6 +1762,34 @@
 			"capturedAt": "2026-07-31T18:55:06.597Z"
 		},
 		{
+			"id": "temporary",
+			"index": 41,
+			"title": "Drive Your Avatar",
+			"path": "/temporary",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Let's visit Drive Your Avatar. Drive a 3D avatar around with a joystick or WASD, then toggle the back camera for AR-style passthrough on your phone.",
+			"status": 0,
+			"anchor": {
+				"state": "unresolved",
+				"selector": null,
+				"source": null,
+				"scope": null,
+				"tag": null,
+				"rect": null
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://three.ws/temporary\", waiting until \"domcontentloaded\"\n"
+			],
+			"media": null,
+			"capturedAt": "2026-08-02T04:51:34.828Z"
+		},
+		{
 			"id": "forge-nim",
 			"index": 41,
 			"title": "Forge · NIM: Self-Hosted Image to 3D",
@@ -2075,62 +2049,6 @@
 			],
 			"media": null,
 			"capturedAt": "2026-07-31T18:57:14.761Z"
-		},
-		{
-			"id": "scene",
-			"index": 47,
-			"title": "Scene Studio",
-			"path": "/scene",
-			"section": "build",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "This one is Scene Studio. Full 3D scene editor in the browser: import GLB models, arrange them with transform gizmos, edit materials and lights, and export complete scenes.",
-			"status": 0,
-			"anchor": {
-				"state": "unresolved",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://three.ws/scene\", waiting until \"domcontentloaded\"\n"
-			],
-			"media": null,
-			"capturedAt": "2026-07-31T18:57:31.575Z"
-		},
-		{
-			"id": "create-prompt",
-			"index": 48,
-			"title": "Describe it to 3D",
-			"path": "/create/prompt",
-			"section": "build",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "Here we have Describe it to 3D. Type a description. About a minute later: a rigged 3D avatar you can animate and download.",
-			"status": 0,
-			"anchor": {
-				"state": "unresolved",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://three.ws/create/prompt\", waiting until \"domcontentloaded\"\n"
-			],
-			"media": null,
-			"capturedAt": "2026-07-31T18:57:42.697Z"
 		},
 		{
 			"id": "create-selfie",
@@ -3335,6 +3253,47 @@
 			"capturedAt": "2026-07-31T19:07:15.652Z"
 		},
 		{
+			"id": "scene",
+			"index": 77,
+			"title": "Scene Studio",
+			"path": "/scene",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Let's visit Scene Studio. Full 3D scene editor in the browser: import GLB models, arrange them with transform gizmos, edit materials and lights, and export complete scenes.",
+			"status": 200,
+			"anchor": {
+				"state": "missing",
+				"selector": null,
+				"source": null,
+				"scope": null,
+				"tag": null,
+				"rect": null
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"none of the 3 tour anchors matched a visible element"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/scene.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 20550
+				},
+				"thumb": {
+					"url": "/media/tour/scene.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4942
+				}
+			},
+			"capturedAt": "2026-08-02T04:52:20.571Z"
+		},
+		{
 			"id": "derivatives",
 			"index": 77,
 			"title": "Crypto Derivatives & Perpetual Futures",
@@ -3379,6 +3338,52 @@
 				}
 			},
 			"capturedAt": "2026-07-31T19:07:29.532Z"
+		},
+		{
+			"id": "create-prompt",
+			"index": 78,
+			"title": "Describe it to 3D",
+			"path": "/create/prompt",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Over here is Describe it to 3D. Type a description. About a minute later: a rigged 3D avatar you can animate and download.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 272,
+					"top": 148.6875,
+					"width": 736,
+					"height": 55.59375
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/create-prompt.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 29500
+				},
+				"thumb": {
+					"url": "/media/tour/create-prompt.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5320
+				}
+			},
+			"capturedAt": "2026-08-02T04:52:20.639Z"
 		},
 		{
 			"id": "screener",
@@ -6123,34 +6128,6 @@
 			"capturedAt": "2026-07-31T19:16:34.773Z"
 		},
 		{
-			"id": "three-live",
-			"index": 138,
-			"title": "$THREE Live · Protocol Pulse",
-			"path": "/three-live",
-			"section": "crypto",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "Over here is $THREE Live · Protocol Pulse. The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time: each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.",
-			"status": 0,
-			"anchor": {
-				"state": "unresolved",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://three.ws/three-live\", waiting until \"domcontentloaded\"\n"
-			],
-			"media": null,
-			"capturedAt": "2026-07-31T19:16:56.484Z"
-		},
-		{
 			"id": "forever",
 			"index": 139,
 			"title": "Forever: etch a message into Bitcoin",
@@ -8207,6 +8184,50 @@
 				}
 			},
 			"capturedAt": "2026-07-31T19:22:51.235Z"
+		},
+		{
+			"id": "three-live",
+			"index": 184,
+			"title": "$THREE Live · Protocol Pulse",
+			"path": "/three-live",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Now, $THREE Live · Protocol Pulse. The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time: each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "canvas",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "canvas",
+				"rect": {
+					"left": 0,
+					"top": 0,
+					"width": 1280,
+					"height": 800
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/three-live.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 24076
+				},
+				"thumb": {
+					"url": "/media/tour/three-live.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5892
+				}
+			},
+			"capturedAt": "2026-08-02T04:52:45.602Z"
 		},
 		{
 			"id": "onboarding-profile",

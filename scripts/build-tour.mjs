@@ -89,7 +89,10 @@ const TARGETS = {
 	'/voice': ['button, .record, audio'],
 	'/club': ['canvas, .tip-button, [data-tip]'],
 	'/pay': ['form, input, button'],
-	'/x402/studio': ['.console, nav, form, button'],
+	// Signed out (the state a tour visitor is in) the studio renders its sign-in
+	// card; signed in it renders the product panels, and the chain falls through
+	// to the generic heuristic.
+	'/x402/studio': ['.empty a.btn, .empty h3', '.console, form, button'],
 	'/launch': ['form, input, button'],
 	'/oracle': ['.score, canvas, .conviction, h1'],
 	'/vanity-wallet': ['input, button, .grinder'],
@@ -99,7 +102,24 @@ const TARGETS = {
 	'/chat': ['textarea, input, .composer, form'],
 	'/discover': ['.agent-card, .grid, [data-agent], main'],
 	'/marketplace': ['.card, .grid, [data-skill], main'],
+	// /skills is a redirect shell that forwards to the marketplace Skills tab,
+	// so the anchor has to resolve against what the visitor actually lands on.
+	'/skills': ['.card, .grid, [data-skill], main'],
 	'/docs': ['nav, .sidebar, main'],
+
+	// App shells with no page heading and no primary link, so the generic
+	// fallback (main h1 → cta) finds nothing and the guide dims the whole page
+	// instead of pointing at anything. Each selector below is the element that
+	// answers "what is this page for?", verified against the rendered DOM.
+	'/agora': ['.agora-h-card', '.agora-econ-board-panel', '#agora-canvas'],
+	'/compose': ['#fp', '#cw'],
+	'/terminal': ['.mc-pane--feed', '.mc-topbar'],
+	'/demo': ['#scene'],
+	'/viewer': ['.stage'],
+	'/unstoppable': ['.hero-badges', '#donateBtn'],
+	'/pump-visualizer': ['#vz-search-input', '.vz-status'],
+	'/play/arena': ['#pickBtn', '.panel-l'],
+	'/play/agent-wallet': ['#walletCard', '#payBtn'],
 };
 
 // Spoken connectors so 50+ stops don't all open the same way. Indexed
