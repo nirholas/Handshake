@@ -129,7 +129,7 @@ console.log(receipt.signature); // → on-chain tx signature
 Read an agent's reputation. `agent` is either a three.ws agent **UUID** (returns
 the platform wallet-trust score from `GET /api/agents/{id}/reputation`) or a
 **Solana asset/mint** base58 address (returns the on-chain attestation aggregate
-from `GET /api/agents/solana/reputation`). Any other value throws `invalid_input`.
+from `GET /api/agents/solana-reputation`). Any other value throws `invalid_input`.
 
 **Options**
 
@@ -202,7 +202,7 @@ validatorExplorer, validatedAt, reason, raw }`. When no attestation exists,
 Run an agent's GLB through the platform validator and record a signed on-chain
 validation. The target picks the lane:
 
-- **Solana asset** (base58) → `POST /api/agents/solana/validate`.
+- **Solana asset** (base58) → `POST /api/agents/solana-validate`.
 - **EVM** (uint ERC-8004 `agentId`, needs a `chain`) → `POST /api/erc8004/validate`.
 
 Requires a signed-in account or an `avatars:write`-scoped token (pass it as
@@ -251,7 +251,7 @@ const wallet = await fetch(
 
 // On-chain attestation aggregate by Solana asset
 const asset = await fetch(
-  'https://three.ws/api/agents/solana/reputation?asset=THREEsynthetic1111111111111111111111111111&network=mainnet',
+  'https://three.ws/api/agents/solana-reputation?asset=THREEsynthetic1111111111111111111111111111&network=mainnet',
 ).then((r) => r.json());
 
 // Live leaderboard
@@ -268,11 +268,11 @@ normalises the snake_case JSON into one camelCase trust block:
 
 ```
  agent UUID ──────────▶ GET /api/agents/{id}/reputation        ─▶ WalletReputation
- Solana asset (base58) ─▶ GET /api/agents/solana/reputation     ─▶ SolanaReputation
+ Solana asset (base58) ─▶ GET /api/agents/solana-reputation     ─▶ SolanaReputation
  (—) ─────────────────▶ GET /api/reputation/leaderboard        ─▶ Leaderboard
  chainId + agentId ────▶ GET /api/erc8004/validation           ─▶ ValidationRead
 
- attest, Solana asset ─▶ POST /api/agents/solana/validate  ┐
+ attest, Solana asset ─▶ POST /api/agents/solana-validate  ┐
  attest, EVM agentId ──▶ POST /api/erc8004/validate        ┴─▶ AttestReceipt (signed on-chain)
 ```
 

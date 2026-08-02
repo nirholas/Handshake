@@ -50,7 +50,7 @@ test('reputation(asset) reads the Solana attestation endpoint with network query
 	const client = createReputation({ fetch });
 	const rep = await client.reputation(SYNTH_ASSET, { network: 'mainnet' });
 
-	assert.equal(calls[0].url.pathname, '/api/agents/solana/reputation');
+	assert.equal(calls[0].url.pathname, '/api/agents/solana-reputation');
 	assert.equal(calls[0].url.searchParams.get('asset'), SYNTH_ASSET);
 	assert.equal(calls[0].url.searchParams.get('network'), 'mainnet');
 	assert.equal(rep.kind, 'solana');
@@ -118,7 +118,7 @@ test('attest() on a Solana asset posts to the Solana validate lane', async () =>
 	const client = createReputation({ fetch, apiKey: 'token_with_avatars_write' });
 	const receipt = await client.attest({ agent: SYNTH_ASSET, kind: 'validation' });
 
-	assert.equal(calls[0].url.pathname, '/api/agents/solana/validate');
+	assert.equal(calls[0].url.pathname, '/api/agents/solana-validate');
 	assert.equal(calls[0].init.method, 'POST');
 	assert.equal(JSON.parse(calls[0].init.body).asset_pubkey, SYNTH_ASSET);
 	assert.equal(calls[0].init.headers.authorization, 'Bearer token_with_avatars_write');

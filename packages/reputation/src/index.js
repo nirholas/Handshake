@@ -91,7 +91,7 @@ export function createReputation(options = {}) {
 	 *
 	 * `agent` accepts a three.ws agent UUID (the platform wallet-trust score from
 	 * GET /api/agents/{id}/reputation) or a Solana asset/mint base58 address (the
-	 * on-chain attestation aggregate from GET /api/agents/solana/reputation). The
+	 * on-chain attestation aggregate from GET /api/agents/solana-reputation). The
 	 * shape is normalised across both so a caller can render one trust block.
 	 */
 	async function reputation(agent, opts = {}) {
@@ -104,7 +104,7 @@ export function createReputation(options = {}) {
 		}
 		if (BASE58_RE.test(id)) {
 			const network = normalizeNetwork(opts.network);
-			const res = await request('/api/agents/solana/reputation', { query: { asset: id, network }, signal: opts.signal });
+			const res = await request('/api/agents/solana-reputation', { query: { asset: id, network }, signal: opts.signal });
 			return shapeSolanaReputation(res);
 		}
 		throw new ThreeWsError('reputation() agent must be a three.ws agent UUID or a Solana asset (base58) address.', { code: 'invalid_input' });
@@ -146,7 +146,7 @@ export function createReputation(options = {}) {
 	 * Record an agent-to-agent attestation on-chain through the platform's signed
 	 * attestation lane. Two real lanes back this, picked by the target:
 	 *   • EVM (chainId + uint agentId)  → POST /api/erc8004/validate
-	 *   • Solana (base58 asset address) → POST /api/agents/solana/validate
+	 *   • Solana (base58 asset address) → POST /api/agents/solana-validate
 	 * Both run the agent's GLB through the platform validator and record a signed
 	 * attestation; a retry re-records, idempotent on the lane's own dedupe key.
 	 * Requires a session or an `avatars:write`-scoped token (pass it as apiKey).
@@ -166,7 +166,7 @@ export function createReputation(options = {}) {
 				network: normalizeNetwork(input.network),
 				glb_url: input.glbUrl,
 			});
-			const res = await request('/api/agents/solana/validate', { method: 'POST', body, signal: input.signal });
+			const res = await request('/api/agents/solana-validate', { method: 'POST', body, signal: input.signal });
 			return shapeAttestReceipt(res, 'solana');
 		}
 
