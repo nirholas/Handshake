@@ -566,3 +566,85 @@ them):
   `--update-env-vars` command, in `docs/ops/llm-lanes.md`).
 - Housekeeping worth one minute: OpenRouter fallback key #1 is revoked (401) and
   still burns a rung on every chain that reaches it.
+
+## 2026-08-02: 04 fact-check benchmark run
+Measured: before, `curl -s https://three.ws/api/fact-check-benchmark` returned
+`ran: false` AND `fixture: null` (the second half was undiagnosed: `.gcloudignore`
+excluded `/tests/`, so the 40-claim suite was in no deployed image and the endpoint
+could not even count its own claims). `INTERNAL_API_KEY` was unset on the service.
+Two full runs against the live paid endpoint:
+
+| Run | Accuracy | Correct | Errored | Note |
+|---|---|---|---|---|
+| 21:59Z | 45.0% | 18/40 | 0/40 (0%) | before the degraded-check guard |
+| 04:59Z | **50.0%** | 20/40 | **0/40 (0%)** | published; guard active |
+
+Errored-claim rate on the published run: **0% (0 of 40)**, well under the 10%
+ceiling that would have refused it. Per class: supported 100% (10/10),
+insufficient 60%, contradicted 40%, mixed **0% (0/10)**. Per difficulty: easy
+69.2%, medium 40%, hard 42.9%.
+
+Did:
+- Set `INTERNAL_API_KEY` on `three-ws-api` (config-only, pre-approved; revision
+  `three-ws-api-00355-tmp`), mirrored into `.env`. Verified the bypass live: calls
+  1-3 returned `lane: "free"`, calls 4-5 returned `lane: "paid"` at 200 with no
+  payment. Chose the service key over `FACT_CHECK_BYPASS_TOKEN` because no
+  `x402:bypass`-scoped token exists and minting an OAuth client for a benchmark is
+  more moving parts than one env var. Rotation documented in `docs/fact-check.md`.
+- Taught `scripts/fact-check-benchmark.mjs` the `X-API-Key` path (it only spoke
+  `Authorization: Bearer`), plus one bounded retry on transient failures and a
+  `--publish` flag.
+- **Found and fixed a defect that would have published a false number.** The chain
+  does NOT throw when its LLM providers are exhausted: `analyzeResults` falls back
+  to all-neutral stances and every claim resolves to `insufficient` with ZERO
+  errors, so a total outage sails past the error-rate refusal and publishes ~25% as
+  the product's accuracy. Both runners now read `result.degraded` (already on the
+  wire) and count a degraded check as unreachable. This is what the second run
+  re-measured, and it is why the number moved 45% to 50%.
+- Made runs repeatable without a deploy: a published run is now a row in
+  `app_settings`, `GET /api/fact-check-benchmark` reads DB-first with the committed
+  file as fallback (`source` says which answered), and a new weekly cron
+  `/api/cron/fact-check-benchmark` (Mondays 04:41 UTC) re-runs the suite in-process
+  on Cloud Run with the Redis cache disabled. vercel.json crons 101 to 102 (103 by
+  the time it landed, a concurrent agent added one).
+- `.gcloudignore` now ships `tests/fixtures/` (236K), and
+  `scripts/check-gcloudignore.mjs` treats the fixture as a required build input so
+  it cannot silently drop out again.
+- Page renders the run with denominators, a per-difficulty table, and a fixed
+  presentation order (jsonb round-trips scramble key order; difficulty was
+  rendering easy/hard/medium). Verified in a real browser at 360/768/1440: no
+  console errors from page code, no horizontal overflow.
+
+Left:
+- **The deploy.** Owner-gated. Everything is committed and the run is already in
+  the DB, so the live page flips to the real score the moment
+  `npm run deploy:gcp:full` runs. Until then `/api/fact-check-benchmark` still
+  answers `ran: false`, because the DB-first handler is the part that has to ship.
+- **`mixed` scores 0/10 and is the single biggest lever on the headline number.**
+  The confusion matrix shows the chain never emits `mixed` at all: those 10 claims
+  went 6 contradicted, 4 insufficient. `computeVerdict` only returns `mixed` when
+  neither side clears 70% of stance-bearing weight, which real search results
+  rarely produce. Fixing that alone is worth up to +25 points. Owner: whoever takes
+  the verdict-tuning work; it is not this work order.
+- **The HTTP runner shares production's 7-day verdict cache**, so a second run
+  inside that window partly measures the cache. The in-process cron disables the
+  cache and is the authoritative producer. Documented, not worked around.
+
+## 2026-08-02: 04 fact-check-benchmark-run (measured + published, surfaces on next deploy)
+
+Measured: 40 claims through the live paid endpoint with the INTERNAL_API_KEY
+bypass (key set on the service by a parallel session; local .env synced to it).
+Result 55% exact-verdict (22/40), 0 errored claims, so the runner's 10% error
+gate passed. Weakest class by far is `mixed` (0/10 exact); the endpoint CAN
+emit `mixed` (checked before publishing), so that is real model behavior, not a
+taxonomy bug, and it is the obvious lever for the next accuracy pass.
+
+Did: published the run to `app_settings.fact_check_benchmark:latest_run` via
+`savePublishedRun` (verified the row), appended the holder-readable
+`data/changelog.json` entry, and committed the generated report as the baked
+image fallback. Live `/api/fact-check-benchmark` still says `ran: false`
+because production (6cc0370dc) predates the whole publish/read mechanism; the
+DB row and page wiring surface together with the next deploy, no further action.
+
+Left: one deploy (owner-gated, and gcloud auth is dead again). After it lands,
+re-read the endpoint and confirm `source: "database"` with accuracy 0.55.

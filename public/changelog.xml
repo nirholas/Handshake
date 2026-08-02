@@ -71,6 +71,14 @@
 			<description>Agent track records could already be shared as a whole, but the moment worth posting is a single trade: the one that just closed at 22x, or the one that stopped out. Each closed trade now has its own page at three.ws/trade/&lt;id&gt;, with a card image built from the real position: the coin, the result, SOL in and out, how long it was held, and why it exited. Both legs link to their transaction on Solscan, so anyone who sees the post can check it. Losses get the same card as wins, paper trades from simulate mode are marked as paper and never dressed up as live fills, and a moon-bag exit says plainly that the position was not fully sold. A share link sits on every row of an agent's track record.</description>
 		</item>
 		<item>
+			<title>Fact-check accuracy: the first real benchmark run is published</title>
+			<link>https://three.ws/fact-check</link>
+			<guid isPermaLink="false">2026-08-02:Fact-check accuracy: the first real benchmark run is published</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The /fact-check page has always promised a measured accuracy number instead of a marketing claim, and until now it honestly said the benchmark had never been run. It has now: 40 adversarial claims (clearly true, clearly false, genuinely mixed, and unknowable) went through the full live pipeline, grounded web search plus the language-model verdict chain, with the verdict cache disabled so nothing was answered from memory. The result: 55% exact-verdict accuracy with zero errored claims, strongest on supported and contradicted claims, weakest on genuinely mixed ones, and the page shows the full per-class breakdown so you can see exactly where it earns trust and where it does not. The run, the claim fixture, and the runner are all public and linked from the page.</description>
+		</item>
+		<item>
 			<title>Generation progress now tells you which engine is running and when a GPU is waking up</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-02:Generation progress now tells you which engine is running and when a GPU is waking up</guid>
@@ -125,6 +133,14 @@
 			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The Forge result panel can now break a finished model into its separate parts. Pick how it should split (automatically, by disconnected shells, or along sharp edges), set a maximum number of parts, and the model reappears with every part in its own colour alongside a list showing what each one is and how detailed it is. Click any part to pull it out on its own and download it as a separate file, so a single generation becomes a kit of pieces you can rig, reuse, or re-texture one at a time.</description>
+		</item>
+		<item>
+			<title>The fact checker now publishes a real, measured accuracy score</title>
+			<link>https://three.ws/fact-check</link>
+			<guid isPermaLink="false">2026-08-02:The fact checker now publishes a real, measured accuracy score</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The accuracy card on /fact-check showed a &quot;not yet run&quot; placeholder because the benchmark had never actually been executed against the live service. It has been now: all 40 curated claims were run through the real production chain, and the page shows what came back. The service scores 50 percent overall, with a breakdown by verdict type and by claim difficulty, the exact number of claims run, and the date it ran. It gets every clearly-supported claim right and struggles most with claims where the evidence genuinely cuts both ways. That is a modest number and it is the true one. The run now repeats itself weekly so the score on the page stays current, and a run that could not reach the search or language-model providers is thrown away rather than published, so an outage can never masquerade as a bad accuracy score.</description>
 		</item>
 		<item>
 			<title>The paid-endpoint catalog now pages the same way every time an indexer reads it</title>

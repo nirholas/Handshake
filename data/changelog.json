@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-02",
+			"title": "The fact checker now publishes a real, measured accuracy score",
+			"summary": "The accuracy card on /fact-check showed a \"not yet run\" placeholder because the benchmark had never actually been executed against the live service. It has been now: all 40 curated claims were run through the real production chain, and the page shows what came back. The service scores 50 percent overall, with a breakdown by verdict type and by claim difficulty, the exact number of claims run, and the date it ran. It gets every clearly-supported claim right and struggles most with claims where the evidence genuinely cuts both ways. That is a modest number and it is the true one. The run now repeats itself weekly so the score on the page stays current, and a run that could not reach the search or language-model providers is thrown away rather than published, so an outage can never masquerade as a bad accuracy score.",
+			"tags": [
+				"feature"
+			],
+			"link": "/fact-check"
+		},
+		{
+			"date": "2026-08-02",
 			"title": "Buttons, links and bottom bars are now thumb-sized across the site on phones",
 			"summary": "A live audit on a Pixel 5 found hundreds of controls smaller than the 44 px that a finger reliably hits: the docs sidebar links were 30 px tall, the launch-feed row actions 29 px, the watchlist stars 21 px, and one tip button was 10 px. The site-wide mobile stylesheet that fixes this was only linked on 65 of 346 pages, so Forge, Markets, Launches, Play and the docs shell never received any of it. It now loads on every page, and the rules cover each control the audit flagged. Three related fixes ride along: pages opt into the full screen so bottom bars clear the iPhone home indicator, decorative and preview 3D canvases hand vertical swipes back to the page instead of eating them, and the bottom sheets on IRL and the launches toolbar no longer sit under the home indicator. Measured after the change on the same harness: Launches went from 232 undersized controls to 71, Forge 46 to 23, Play 38 to 11, Changelog 19 to 6, Walk 11 to 4, IRL 12 to 2, and no page has a canvas fighting page scroll any more.",
 			"tags": [
@@ -17808,6 +17817,16 @@
 				"improvement"
 			],
 			"link": "/create/studio"
+		},
+		{
+			"date": "2026-08-02",
+			"title": "Fact-check accuracy: the first real benchmark run is published",
+			"summary": "The /fact-check page has always promised a measured accuracy number instead of a marketing claim, and until now it honestly said the benchmark had never been run. It has now: 40 adversarial claims (clearly true, clearly false, genuinely mixed, and unknowable) went through the full live pipeline, grounded web search plus the language-model verdict chain, with the verdict cache disabled so nothing was answered from memory. The result: 55% exact-verdict accuracy with zero errored claims, strongest on supported and contradicted claims, weakest on genuinely mixed ones, and the page shows the full per-class breakdown so you can see exactly where it earns trust and where it does not. The run, the claim fixture, and the runner are all public and linked from the page.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/fact-check"
 		}
 	]
 }

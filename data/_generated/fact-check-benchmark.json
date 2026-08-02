@@ -1,22 +1,22 @@
 {
-  "generated_at": "2026-08-01T21:59:04.168Z",
+  "generated_at": "2026-08-02T04:59:31.922Z",
   "endpoint": "https://three.ws/api/x402/fact-check",
   "fixture_version": "1.0.0",
   "claim_count": 40,
   "total": 40,
-  "correct": 18,
+  "correct": 20,
   "errors": 0,
-  "accuracy_pct": 45,
+  "accuracy_pct": 50,
   "by_class": {
     "supported": {
       "total": 10,
-      "correct": 7,
-      "accuracy_pct": 70
+      "correct": 10,
+      "accuracy_pct": 100
     },
     "contradicted": {
       "total": 10,
-      "correct": 6,
-      "accuracy_pct": 60
+      "correct": 4,
+      "accuracy_pct": 40
     },
     "mixed": {
       "total": 10,
@@ -25,15 +25,15 @@
     },
     "insufficient": {
       "total": 10,
-      "correct": 5,
-      "accuracy_pct": 50
+      "correct": 6,
+      "accuracy_pct": 60
     }
   },
   "by_difficulty": {
     "easy": {
       "total": 13,
-      "correct": 8,
-      "accuracy_pct": 61.5
+      "correct": 9,
+      "accuracy_pct": 69.2
     },
     "medium": {
       "total": 20,
@@ -42,26 +42,26 @@
     },
     "hard": {
       "total": 7,
-      "correct": 2,
-      "accuracy_pct": 28.6
+      "correct": 3,
+      "accuracy_pct": 42.9
     }
   },
   "confusion": {
     "supported": {
-      "supported": 7,
-      "insufficient": 3
+      "supported": 10
     },
     "contradicted": {
-      "contradicted": 6,
-      "insufficient": 4
+      "contradicted": 4,
+      "insufficient": 6
     },
     "mixed": {
-      "insufficient": 4,
-      "contradicted": 6
+      "supported": 1,
+      "contradicted": 7,
+      "insufficient": 2
     },
     "insufficient": {
-      "insufficient": 5,
-      "contradicted": 4,
+      "insufficient": 6,
+      "contradicted": 3,
       "supported": 1
     }
   }
