@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/page-agent",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "Drop a rigged 3D AI agent onto any website that talks visitors through the page. A diverse catalog of skeleton-rigged, lipsync-capable avatars, a built-in picker so visitors choose their guide, and a one-line embed. Powered by three.ws.",
 	"keywords": [
 		"3d",

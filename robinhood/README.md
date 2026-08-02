@@ -5,6 +5,15 @@ Orbit L2, chain ID 4663): Robinhood Crypto only. Solana remains the home
 chain; these are additional crypto surfaces, and each subproject below has its
 own README with install and usage.
 
+> **npm publishing note (2026-08-02):** the npm releases of these packages
+> (hood-cli 0.2.1, hood-traders 0.2.1, hood-mcp / hoodkit / hood402 / hood-api /
+> hood-js / hood-connect / erc8056 0.1.1) were published from their standalone
+> GitHub repos (`nirholas/robinhood-chain-*`), which are the source of truth.
+> The copies in this directory are older snapshots kept for reference. Do NOT
+> `npm publish` from here: you would ship stale code over a newer release. Sync
+> from the standalone repo (or the published tarball) first if a release must
+> happen from this tree.
+
 ## Developer tooling
 
 | Project | What it is |
