@@ -67,7 +67,7 @@ export const BNB_CHAINS = {
 			'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
 			'https://data-seed-prebsc-2-s1.bnbchain.org:8545',
 			'https://bsc-testnet.drpc.org',
-			'https://bsc-testnet-rpc.publicnode.com',
+			'https://bsc-testnet.bnbchain.org',
 		],
 	},
 };

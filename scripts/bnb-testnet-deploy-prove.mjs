@@ -188,7 +188,10 @@ async function proveLivePaths({ address, worldId, moves, account, rpcUrl }) {
 		backfillBlocks: 0n,
 		onMove: (ev) => {
 			observed.moved.push({ ...ev, blockNumber: Number(ev.blockNumber), timestamp: Number(ev.timestamp) });
-			ghosts.upsert(ev.player, { x: ev.x, y: ev.y, z: ev.z, facing: ev.facing }, Number(ev.timestamp) * 1000);
+			// Wall clock, not the block timestamp: staleness here means "how long
+			// since we saw this player", and it is what src/agora/onchain-presence.js
+			// feeds the tracker in production (upsert with no explicit timestamp).
+			ghosts.upsert(ev.player, { x: ev.x, y: ev.y, z: ev.z, facing: ev.facing });
 		},
 		onJoin: (ev) => observed.joined.push({ player: ev.player, timestamp: Number(ev.timestamp) }),
 		onLeave: (ev) => {

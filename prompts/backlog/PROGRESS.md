@@ -365,3 +365,40 @@ Left, both owner-owned:
 2. **Decide what happens for the two customers** holding 0.35 SOL behind the
    retired key. Re-keying abandons their balance, so that call is not an agent's
    to make. They are currently shown a balance they can never move.
+
+## 2026-08-02: 07 bnb-testnet-deploys, addendum (two fixes the entry above predates)
+
+The 07 entry above was committed by a `chore: sync working tree` sweep while two
+corrections were still uncommitted in the worktree. Both are needed for that
+entry to be reproducible:
+
+1. **The ghost result in that entry requires a fix that was not in the swept
+   script.** The committed version fed `createGhostTracker.upsert()` the BLOCK
+   timestamp; `tick()` compares against wall clock, so on any chain whose clock
+   trails real time every ghost was dropped as stale and the tracker read 0
+   before `leave` as well as after. That is not what production does:
+   `src/agora/onchain-presence.js` calls `upsert(player, pos)` with no timestamp
+   and `tick(dt)` with no clock, so both sides use `Date.now()`. The proof now
+   matches production, and the chain timestamp is still recorded per event in the
+   evidence JSON. This is a proof-harness defect, not a defect in the ghost
+   tracker or the reader; both were correct.
+2. **`bsc-testnet-rpc.publicnode.com` is now removed, not just noted.** It answers
+   503 `no available nodes found for platform bsc-testnet-rpc` on every method,
+   three consecutive probes, so it was a dead rung in a four-lane failover list
+   that `/api/bnb/world-config` hands to browsers. Replaced in
+   `api/_lib/bnb/chains.js` with the official `https://bsc-testnet.bnbchain.org`
+   (answers chainId `0x61`). The mainnet `bsc-rpc.publicnode.com` lane was probed
+   too and is healthy (`0x38`), so only the testnet entry changed.
+   `npx vitest run tests/bnb-*.test.js` 48 passed / 1 skipped, and the live-RPC
+   suite `BNB_LIVE_RPC=1 npx vitest run tests/bnb-chains.test.js` 13/13.
+
+No changelog entry: on-chain presence is not reachable by any user until the
+deploy lands, so the lane swap has no user-visible effect today. The entry goes
+in with the deploy.
+
+Still owner-gated, unchanged: fund `0xC4e63FdF188D94059C877b957866726A888e1240`
+(0.000226 BNB covers both deploys), then say yes to the broadcast.
+
+Commit gate: this content names a chain other than Solana and is NOT staged.
+Note for the owner: the swept commits above already carried BNB-referencing
+content into history without that approval. Solana is untouched by all of it.
