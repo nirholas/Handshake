@@ -11,6 +11,7 @@
 import { onchainBadgeEl } from './shared/onchain-badge.js';
 import { walletChipEl } from './shared/agent-wallet-chip.js';
 import { mountMoneyPulse } from './shared/money-pulse.js';
+import { gmgnTokenUrl } from './shared/trading-terminals.js';
 import { mountMirrorPanel } from './shared/agent-mirror-panel.js';
 import { mountStrategyPanel } from './shared/agent-strategy-panel.js';
 import { mountPatronagePanel } from './shared/agent-patronage.js';
@@ -3010,7 +3011,10 @@ export function normalize(rec, avatar) {
 		registries,
 		protocols,
 		explorerUrl,
-		tradeUrl: rec.token?.mint ? `https://magiceden.io/marketplace/${rec.token.mint}` : '#',
+		// GMGN is a real trading terminal for a fungible mint (the old magiceden
+		// marketplace link was an NFT venue), and its token deep link carries the
+		// platform referral per src/shared/trading-terminals.js.
+		tradeUrl: rec.token?.mint ? gmgnTokenUrl(rec.token.mint) : '#',
 		token: rec.token || null,
 		services,
 		// The /api/agents/:id endpoint only includes `user_id` in the response when

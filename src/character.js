@@ -12,6 +12,7 @@ import { hydrateAvatarWallet } from './shared/wallet-aura.js';
 import './ui-juice.css';
 import { countUp } from './ui-juice.js';
 import { fetchFirstOrNull } from './shared/failover-fetch.js';
+import { gmgnTokenUrl } from './shared/trading-terminals.js';
 
 let chNetWorthAura = null;
 
@@ -231,7 +232,7 @@ function buildTokenHtml(symbol, mint, marketCapUsd, priceUsd, change24h, holders
 		changeHtml = `<span class="ch-price-change ${cls}">${arrow} ${sign}${Number(change24h).toFixed(2)}%</span>`;
 	}
 
-	const tradeUrl = mint ? `https://dexscreener.com/solana/${mint}` : '#';
+	const tradeUrl = mint ? gmgnTokenUrl(mint) : '#';
 	const chartUrl = mint ? `https://birdeye.so/token/${mint}?chain=solana` : '#';
 
 	const metaItems = [];
@@ -304,9 +305,7 @@ async function renderToken(agent) {
 		changeHtml = `<span class="ch-price-change ${cls}">${arrow} ${sign}${Number(change24h).toFixed(2)}%</span>`;
 	}
 
-	const tradeUrl = mint
-		? `https://dexscreener.com/solana/${mint}`
-		: '#';
+	const tradeUrl = mint ? gmgnTokenUrl(mint) : '#';
 	const chartUrl = mint
 		? `https://birdeye.so/token/${mint}?chain=solana`
 		: '#';

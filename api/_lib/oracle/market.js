@@ -27,6 +27,7 @@
 import { cacheGet, cacheSet } from '../cache.js';
 import { createCache } from '../mem-cache.js';
 import { bondingProgressPct } from '../pump-bonding.js';
+import { gmgnTokenUrl } from '../../../src/shared/trading-terminals.js';
 
 const DEXSCREENER = 'https://api.dexscreener.com/latest/dex/tokens';
 const PUMP_V3 = 'https://frontend-api-v3.pump.fun';
@@ -336,6 +337,7 @@ export function mergeMarketSources(mint, network, p, fetchedAt) {
 		twitter: pick(linkOrder, 'links.twitter'),
 		telegram: pick(linkOrder, 'links.telegram'),
 		dexscreener: dex?.pairs?.[0]?.url || `https://dexscreener.com/solana/${mint}`,
+		gmgn: gmgnTokenUrl(mint),
 		geckoterminal: `https://www.geckoterminal.com/solana/pools/${mint}`,
 		birdeye: `https://birdeye.so/token/${mint}?chain=solana`,
 		solscan: `https://solscan.io/token/${mint}`,
