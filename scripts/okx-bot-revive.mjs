@@ -151,7 +151,7 @@ for (const name of SKILLS) {
 	const src = join(SKILLS_SRC, name);
 	if (!existsSync(src)) continue;
 	const dest = join(WORKSPACE, '.claude', 'skills', name);
-	rmSync(dest, { force: true, recursive: false });
+	rmSync(dest, { force: true, recursive: true });
 	symlinkSync(src, dest);
 	linked++;
 }
