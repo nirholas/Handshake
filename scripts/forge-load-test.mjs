@@ -117,6 +117,7 @@ async function runOne(index) {
 	} else {
 		const deadline = Date.now() + MAX_WAIT_MS;
 		let lastAnswerAt = Date.now();
+		let lastStatus = null;
 		while (Date.now() < deadline) {
 			await sleep(POLL_MS);
 			let data;
@@ -130,6 +131,7 @@ async function runOne(index) {
 				continue;
 			}
 			lastAnswerAt = Date.now();
+			if (typeof data.status === 'string' && data.status) lastStatus = data.status;
 			if (data.backend && data.backend !== rec.backend) {
 				rec.failoverFrom = data.failover_from || rec.backend;
 				rec.backend = data.backend;
@@ -147,11 +149,19 @@ async function runOne(index) {
 			}
 		}
 		if (!done) {
-			// No terminal status inside the ceiling: exactly the silent drop this
-			// test exists to surface.
-			rec.outcome = 'silent_drop';
-			rec.note = `no terminal status; last answer ${Math.round((Date.now() - lastAnswerAt) / 1000)}s before giving up`;
+			const quietForS = Math.round((Date.now() - lastAnswerAt) / 1000);
 			rec.elapsedMs = Date.now() - started;
+			// Two very different failures look alike at the ceiling, and conflating
+			// them sends you hunting a lost-job bug that is really lane saturation.
+			// A job the API is STILL reporting on is alive and starved of a GPU
+			// slot; only a job the API stopped accounting for is genuinely dropped.
+			if (quietForS < 30 && (lastStatus === 'queued' || lastStatus === 'running')) {
+				rec.outcome = 'queue_starved';
+				rec.note = `still "${lastStatus}" after ${Math.round(rec.elapsedMs / 1000)}s; the lane never freed a slot`;
+			} else {
+				rec.outcome = 'silent_drop';
+				rec.note = `no terminal status; API went quiet ${quietForS}s before giving up (last status ${lastStatus || 'none'})`;
+			}
 			return rec;
 		}
 	}
@@ -223,9 +233,12 @@ for (const [lane, rows] of Object.entries(byLane)) {
 
 console.log(`\noutcomes: ${JSON.stringify(byOutcome)}`);
 console.log(`overall p50=${s(pct(okDurations, 50))} p95=${s(pct(okDurations, 95))} over ${okDurations.length}/${N} finished`);
-console.log(`silent drops: ${results.filter((r) => r.outcome === 'silent_drop').length}`);
+const dropped = results.filter((r) => r.outcome === 'silent_drop').length;
+const starved = results.filter((r) => r.outcome === 'queue_starved').length;
+console.log(`silent drops: ${dropped} (job lost) | queue starved: ${starved} (job alive, no GPU slot)`);
 console.log(`wall clock: ${s(Date.now() - t0)}`);
 
-// Non-zero exit when a job died without a terminal status, so this is usable as
-// a gate and not just a report.
-process.exit(results.some((r) => r.outcome === 'silent_drop') ? 1 : 0);
+// Non-zero exit on either terminal-state failure, so this is usable as a gate
+// and not just a report. They are counted apart because the fixes differ: a
+// silent drop is a pipeline bug, starvation is a capacity or quota ceiling.
+process.exit(dropped + starved > 0 ? 1 : 0);
