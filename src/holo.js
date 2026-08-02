@@ -288,8 +288,36 @@ function buildStickerGeometry(markDraw) {
 		: null;
 	if (mark) mark.translate(0, 0, BASE_DEPTH + 0.002);
 
+	warpSticker(base);
+	if (mark) warpSticker(mark);
+
 	const halfH = ((maxY - minY) / 2) * scale;
 	return { base, mark, halfW: WORLD_W / 2, halfH };
+}
+
+// A real sticker sheet bows a little, and that bow is what smears the
+// reflected colors into gradients across each flat panel. Static gentle warp,
+// with the normals tilted to match so the shading follows the bend.
+function warpSticker(geometry) {
+	const pos = geometry.attributes.position;
+	const nor = geometry.attributes.normal;
+	const n = new THREE.Vector3();
+	for (let i = 0; i < pos.count; i++) {
+		const x = pos.getX(i);
+		const y = pos.getY(i);
+		const w =
+			0.038 * Math.sin(x * 1.9 + 0.7) +
+			0.03 * Math.sin(y * 2.3 - 0.4) +
+			0.014 * Math.sin((x + y) * 3.1);
+		const dwdx = 0.038 * 1.9 * Math.cos(x * 1.9 + 0.7) + 0.014 * 3.1 * Math.cos((x + y) * 3.1);
+		const dwdy = 0.03 * 2.3 * Math.cos(y * 2.3 - 0.4) + 0.014 * 3.1 * Math.cos((x + y) * 3.1);
+		pos.setZ(i, pos.getZ(i) + w);
+		n.fromBufferAttribute(nor, i);
+		n.x -= dwdx * n.z;
+		n.y -= dwdy * n.z;
+		n.normalize();
+		nor.setXYZ(i, n.x, n.y, n.z);
+	}
 }
 
 /* ── environment: the light the foil reflects ───────────────────────── */
@@ -336,23 +364,24 @@ function makeEnvTexture(blobColors) {
 	c.width = 1024;
 	c.height = 512;
 	const ctx = c.getContext('2d');
-	ctx.fillStyle = '#05060a';
+	ctx.fillStyle = '#14161c';
 	ctx.fillRect(0, 0, c.width, c.height);
+	// Additive blobs: overlapping colors blend toward white the way stacked
+	// stage lights do, which is what makes the foil sheet read as lit.
+	ctx.globalCompositeOperation = 'lighter';
 	BLOB_SEATS.forEach(([u, v, r], i) => {
 		const color = blobColors[i % blobColors.length];
 		const x = u * c.width;
 		const y = v * c.height;
-		const rad = r * c.height;
+		const rad = r * c.height * 1.45;
 		const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
 		g.addColorStop(0, color);
 		g.addColorStop(1, 'rgba(0,0,0,0)');
-		ctx.globalAlpha = 0.85;
 		ctx.fillStyle = g;
 		ctx.fillRect(x - rad, y - rad, rad * 2, rad * 2);
 	});
-	// Two soft white streaks: the "softbox" bands that give foil its sheen.
-	ctx.globalAlpha = 1;
-	for (const [y0, hgt, alpha] of [[0.16, 0.05, 0.9], [0.58, 0.03, 0.65]]) {
+	// Soft white streaks: the "softbox" bands that give foil its sheen.
+	for (const [y0, hgt, alpha] of [[0.18, 0.07, 1], [0.46, 0.045, 0.8], [0.72, 0.05, 0.7]]) {
 		const g = ctx.createLinearGradient(0, (y0 - hgt) * c.height, 0, (y0 + hgt) * c.height);
 		g.addColorStop(0, 'rgba(255,255,255,0)');
 		g.addColorStop(0.5, `rgba(255,255,255,${alpha})`);
@@ -360,6 +389,7 @@ function makeEnvTexture(blobColors) {
 		ctx.fillStyle = g;
 		ctx.fillRect(0, (y0 - hgt) * c.height, c.width, hgt * 2 * c.height);
 	}
+	ctx.globalCompositeOperation = 'source-over';
 	const tex = new THREE.CanvasTexture(c);
 	tex.mapping = THREE.EquirectangularReflectionMapping;
 	tex.colorSpace = THREE.SRGBColorSpace;
@@ -373,14 +403,14 @@ function makeGrainTexture() {
 	const ctx = c.getContext('2d');
 	const img = ctx.createImageData(size, size);
 	for (let i = 0; i < img.data.length; i += 4) {
-		const v = 200 + Math.floor(Math.random() * 55);
+		const v = 150 + Math.floor(Math.random() * 105);
 		img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
 		img.data[i + 3] = 255;
 	}
 	ctx.putImageData(img, 0, 0);
 	const tex = new THREE.CanvasTexture(c);
 	tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-	tex.repeat.set(1.6, 1.6);
+	tex.repeat.set(2.2, 2.2);
 	return tex;
 }
 
@@ -453,7 +483,7 @@ const state = {
 	mark: 'chevrons',
 	customText: '',
 	foil: 'holo',
-	peel: 0.24,
+	peel: 0.3,
 };
 
 const stage = $('stage');
@@ -473,14 +503,14 @@ if (renderer) init(renderer);
 
 function init(renderer) {
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
-	renderer.toneMappingExposure = 1.12;
+	renderer.toneMappingExposure = 1.3;
 	renderer.setClearColor(0x000000, 1);
 
 	const scene = new THREE.Scene();
 	const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 40);
 	camera.position.set(0, 0, 7.4);
 
-	const key = new THREE.DirectionalLight(0xffffff, 1.15);
+	const key = new THREE.DirectionalLight(0xffffff, 1.7);
 	key.position.set(2.4, 3.2, 4.5);
 	scene.add(key);
 	const rim = new THREE.DirectionalLight(0x8fb8ff, 0.35);
@@ -496,19 +526,19 @@ function init(renderer) {
 		iridescenceThicknessRange: [120, 480],
 		roughnessMap: grain,
 		side: THREE.DoubleSide,
-		envMapIntensity: 1.25,
+		envMapIntensity: 1.9,
 	}));
 	const markMaterial = injectPeel(new THREE.MeshPhysicalMaterial({
 		metalness: 1,
 		clearcoat: 1,
 		clearcoatRoughness: 0.18,
 		iridescenceIOR: 1.28,
-		iridescenceThicknessRange: [160, 620],
+		iridescenceThicknessRange: [140, 860],
 		roughnessMap: grain,
 		bumpMap: grain,
-		bumpScale: 0.35,
+		bumpScale: 0.08,
 		side: THREE.DoubleSide,
-		envMapIntensity: 1.4,
+		envMapIntensity: 2.2,
 	}));
 
 	const group = new THREE.Group();
@@ -525,7 +555,7 @@ function init(renderer) {
 			equirect.dispose();
 		}
 		scene.environment = envCache.get(name);
-		baseMaterial.color.set(foil.color).multiplyScalar(0.55);
+		baseMaterial.color.set(foil.color).multiplyScalar(0.7);
 		baseMaterial.roughness = Math.min(foil.roughness + 0.06, 1);
 		baseMaterial.iridescence = foil.iridescence;
 		markMaterial.color.set(foil.color);
@@ -551,10 +581,11 @@ function init(renderer) {
 
 	function updatePeel(amount) {
 		const cornerT = (sticker.halfW + sticker.halfH) * Math.SQRT1_2;
+		const reach = 0.5 + 0.7 * Math.min(sticker.halfW, sticker.halfH);
 		peelUniforms.uFoldT.value = amount <= 0.001
 			? cornerT + 1
-			: cornerT - amount * 1.35;
-		peelUniforms.uRadius.value = 0.13 + amount * 0.1;
+			: cornerT - amount * reach;
+		peelUniforms.uRadius.value = 0.17 + amount * 0.18;
 	}
 
 	/* interaction: pointer tilt with spring, drag for full control */
@@ -632,9 +663,9 @@ function init(renderer) {
 	}
 	new ResizeObserver(resize).observe(stage);
 
-	const clock = new THREE.Clock();
+	const t0 = performance.now();
 	function frame() {
-		const t = clock.getElapsedTime();
+		const t = (performance.now() - t0) / 1000;
 		const wobble = reducedMotion ? 0 : 1;
 		current.x += (target.x - current.x) * 0.09;
 		current.y += (target.y - current.y) * 0.09;
@@ -738,9 +769,9 @@ function init(renderer) {
 	});
 	$('btnResetView').addEventListener('click', () => {
 		target.x = target.y = 0;
-		state.peel = 0.24;
-		peelRange.value = '24';
-		$('peelVal').textContent = '24%';
+		state.peel = 0.3;
+		peelRange.value = '30';
+		$('peelVal').textContent = '30%';
 	});
 
 	/* boot */
