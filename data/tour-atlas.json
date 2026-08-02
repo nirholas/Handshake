@@ -1,10 +1,10 @@
 {
 	"version": 1,
 	"generatedBy": "scripts/capture-tour-atlas.mjs",
-	"generatedAt": "2026-08-02T05:04:19.559Z",
+	"generatedAt": "2026-08-02T05:12:47.017Z",
 	"base": "https://three.ws",
 	"curriculumVersion": 2,
-	"curriculumGeneratedAt": "2026-08-02T05:04:05.068Z",
+	"curriculumGeneratedAt": "2026-08-02T05:12:02.447Z",
 	"sections": [
 		{
 			"id": "main",
@@ -50,15 +50,15 @@
 		}
 	],
 	"summary": {
-		"total": 190,
-		"anchored": 190,
+		"total": 264,
+		"anchored": 263,
 		"missingAnchor": 0,
-		"curatedAnchor": 32,
-		"fallbackAnchor": 158,
-		"navScopedAnchor": 10,
-		"unreachable": 0,
-		"withConsoleErrors": 33,
-		"captured": 172
+		"curatedAnchor": 35,
+		"fallbackAnchor": 228,
+		"navScopedAnchor": 12,
+		"unreachable": 1,
+		"withConsoleErrors": 50,
+		"captured": 245
 	},
 	"stops": [
 		{
@@ -246,7 +246,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, Search. One search across every creation type on three.ws, avatars, agents, 3D models, worlds, and coins, with remixable models remixable straight from the results.",
+			"narration": "And this,  Search. One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins: with remixable models remixable straight from the results.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -283,6 +283,52 @@
 			"capturedAt": "2026-07-31T18:44:09.683Z"
 		},
 		{
+			"id": "atlas",
+			"index": 4,
+			"title": "Atlas",
+			"path": "/atlas",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Now, Atlas. The whole platform as one searchable map: every page grouped by what it is for, plus the task shortcuts the Cmd+K palette answers with. Press Cmd+K anywhere on the site to search it without leaving the page.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 108,
+					"top": 126.640625,
+					"width": 1064,
+					"height": 88.46875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/atlas.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 38602
+				},
+				"thumb": {
+					"url": "/media/tour/atlas.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6628
+				}
+			},
+			"capturedAt": "2026-08-02T05:04:46.754Z"
+		},
+		{
 			"id": "agenc-embodied",
 			"index": 5,
 			"title": "AgenC · Embodied",
@@ -292,7 +338,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit AgenC · Embodied. Watch two AI agents negotiate and coordinate a task, embodied as 3D characters: the AgenC coordination protocol made visible.",
+			"narration": "Check out AgenC · Embodied. Watch two AI agents negotiate and coordinate a task, embodied as 3D characters: the AgenC coordination protocol made visible.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -329,6 +375,54 @@
 			"capturedAt": "2026-07-31T18:44:23.742Z"
 		},
 		{
+			"id": "choreograph",
+			"index": 5,
+			"title": "Choreographer",
+			"path": "/choreograph",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Let's visit Choreographer. Compose agent gestures into a timed routine on a real timeline, preview the whole performance on a live 3D avatar, then save it to your agent and play it by name from any embed.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 32,
+					"top": 201.046875,
+					"width": 796,
+					"height": 74.796875
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/choreograph.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 34432
+				},
+				"thumb": {
+					"url": "/media/tour/choreograph.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7152
+				}
+			},
+			"capturedAt": "2026-08-02T05:04:46.758Z"
+		},
+		{
 			"id": "agenc-room",
 			"index": 6,
 			"title": "AgenC · Task Room",
@@ -338,7 +432,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is AgenC · Task Room. A live room where autonomous agents discover open work, bid for it, and settle on-chain: the labor market up close.",
+			"narration": "This one is AgenC · Task Room. A live room where autonomous agents discover open work, bid for it, and settle on-chain: the labor market up close.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -375,6 +469,54 @@
 			"capturedAt": "2026-07-31T18:44:44.496Z"
 		},
 		{
+			"id": "crews",
+			"index": 6,
+			"title": "Crew HQ",
+			"path": "/crews",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Over here is Crew HQ. Found a crew, invite your people, and watch the whole roster stand in one 3D headquarters. Every member appears as their own agent, lit when they are live in the world.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 92.5,
+					"top": 97.640625,
+					"width": 1095,
+					"height": 62
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/crews.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 21432
+				},
+				"thumb": {
+					"url": "/media/tour/crews.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4314
+				}
+			},
+			"capturedAt": "2026-08-02T05:04:46.770Z"
+		},
+		{
 			"id": "autopilot",
 			"index": 7,
 			"title": "Coin Autopilot",
@@ -384,7 +526,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's Coin Autopilot. A hands-off token cockpit: set the rules, buys, sells, and guardrails, and let your agent run the coin autonomously.",
+			"narration": "Here we have Coin Autopilot. A hands-off token cockpit: set the rules: buys, sells, and guardrails: and let your agent run the coin autonomously.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -423,6 +565,146 @@
 			"capturedAt": "2026-07-31T18:44:48.644Z"
 		},
 		{
+			"id": "tour-atlas",
+			"index": 7,
+			"title": "Tour Atlas",
+			"path": "/tour/atlas",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here's Tour Atlas. Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 185 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 12,
+					"top": 120,
+					"width": 1256,
+					"height": 65.671875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/tour-atlas.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 30894
+				},
+				"thumb": {
+					"url": "/media/tour/tour-atlas.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6000
+				}
+			},
+			"capturedAt": "2026-08-02T05:04:52.894Z"
+		},
+		{
+			"id": "conversions",
+			"index": 8,
+			"title": "Trial Conversions",
+			"path": "/conversions",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Meet Trial Conversions. Both sides of the moment a metered free trial runs out: the trials you are holding with the runs you have left and the price to keep them, and the trials running on skills you sell with the revenue waiting in the queue.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 102,
+					"top": 109,
+					"width": 1076,
+					"height": 50
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/conversions.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 19730
+				},
+				"thumb": {
+					"url": "/media/tour/conversions.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 3910
+				}
+			},
+			"capturedAt": "2026-08-02T05:04:54.991Z"
+		},
+		{
+			"id": "gestures",
+			"index": 9,
+			"title": "Agent Gestures",
+			"path": "/gestures",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "And this,  Agent Gestures. The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 32,
+					"top": 203.046875,
+					"width": 796,
+					"height": 76.3125
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/gestures.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 30696
+				},
+				"thumb": {
+					"url": "/media/tour/gestures.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7176
+				}
+			},
+			"capturedAt": "2026-08-02T05:04:55.513Z"
+		},
+		{
 			"id": "create-video",
 			"index": 10,
 			"title": "Talking Avatar Video",
@@ -432,7 +714,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Talking Avatar Video. Turn a three.ws avatar into a talking-head video: upload your audio and export a lip-synced clip.",
+			"narration": "Take a look at Talking Avatar Video. Turn a three.ws avatar into a talking-head video: upload your audio and export a lip-synced clip.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -471,6 +753,52 @@
 			"capturedAt": "2026-07-31T18:45:37.418Z"
 		},
 		{
+			"id": "nvidia",
+			"index": 10,
+			"title": "three.ws on NVIDIA",
+			"path": "/nvidia",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Check out three.ws on NVIDIA. three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key covering text-to-3D, chat, vision, embeddings, safety and speech, plus a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 186,
+					"top": 204.1875,
+					"width": 908,
+					"height": 133.59375
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/nvidia.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 31594
+				},
+				"thumb": {
+					"url": "/media/tour/nvidia.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 8292
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:01.103Z"
+		},
+		{
 			"id": "partners",
 			"index": 11,
 			"title": "Partner Ecosystem",
@@ -480,7 +808,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This one is Partner Ecosystem. three.ws partner ecosystem: AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle. The cloud and AI platforms powering 3D AI agents at enterprise scale.",
+			"narration": "Now, Partner Ecosystem. three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -517,6 +845,52 @@
 			"capturedAt": "2026-07-31T18:45:40.388Z"
 		},
 		{
+			"id": "press",
+			"index": 11,
+			"title": "Press kit",
+			"path": "/press",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This one is Press kit. Logos, announcement graphics, boilerplate, and usage rules for three.ws. Every asset is downloadable and current, and editorial use needs no permission.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 122,
+					"top": 144.5,
+					"width": 1036,
+					"height": 66.390625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/press.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 30552
+				},
+				"thumb": {
+					"url": "/media/tour/press.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7014
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:04.936Z"
+		},
+		{
 			"id": "alpha-copilot",
 			"index": 12,
 			"title": "Alpha Co-pilot: your agent narrates its own alpha",
@@ -526,7 +900,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here we have Alpha Co-pilot, your agent narrates its own alpha. Your 3D agent reads a real pump.fun launch in character, grounded in live liquidity, holder, and smart-money data, and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
+			"narration": "Let's visit Alpha Co-pilot: your agent narrates its own alpha. Your 3D agent reads a real pump.fun launch in character: grounded in live liquidity, holder, and smart-money data: and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -565,6 +939,52 @@
 			"capturedAt": "2026-07-31T18:45:42.538Z"
 		},
 		{
+			"id": "wardrobe",
+			"index": 12,
+			"title": "Wardrobe",
+			"path": "/wardrobe",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here we have Wardrobe. The open garment catalog for 3D avatars: browse every wearable, inspect it in 3D, and generate new pieces from a text prompt. Every piece binds to any humanoid avatar at runtime.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 32,
+					"top": 113.40625,
+					"width": 1216,
+					"height": 70.078125
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/wardrobe.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 29752
+				},
+				"thumb": {
+					"url": "/media/tour/wardrobe.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5858
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:05.656Z"
+		},
+		{
 			"id": "world-lines",
 			"index": 13,
 			"title": "World Lines: agent proof-of-presence quests",
@@ -574,7 +994,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Next up, World Lines: agent proof-of-presence quests. Walk to an AI agent's real-world spot, complete its AR challenge, and earn a cryptographically real, agent-signed proof of presence. Privacy-preserving (only a ~1 km area is ever recorded), independently verifiable, and ownable.",
+			"narration": "Over here is World Lines: agent proof-of-presence quests. Walk to an AI agent's real-world spot, complete its AR challenge, and earn a cryptographically real, agent-signed proof of presence. Privacy-preserving (only a ~1 km area is ever recorded), independently verifiable, and ownable.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -611,6 +1031,52 @@
 			"capturedAt": "2026-07-31T18:45:48.254Z"
 		},
 		{
+			"id": "forged",
+			"index": 13,
+			"title": "Agent-Forged Gallery",
+			"path": "/forged",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Next up, Agent-Forged Gallery. 3D props bought by autonomous AI agents with real USDC over x402. Every asset carries its on-chain receipt: the paying agent wallet, the price, and the Solana settlement transaction.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 47.4375,
+					"top": 185.046875,
+					"width": 1185.125,
+					"height": 70.078125
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/forged.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 38672
+				},
+				"thumb": {
+					"url": "/media/tour/forged.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 9330
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:08.732Z"
+		},
+		{
 			"id": "pitch",
 			"index": 14,
 			"title": "Pitch Deck",
@@ -620,7 +1086,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This is Pitch Deck. The three.ws story as a presentable slide deck: one platform that gives any AI a real-time 3D body you can embed anywhere in one line. Arrow-key navigation, a live in-browser 3D character, and one-click export to PDF.",
+			"narration": "Here's Pitch Deck. The three.ws story as a presentable slide deck: one platform that gives any AI a real-time 3D body you can embed anywhere in one line. Arrow-key navigation, a live in-browser 3D character, and one-click export to PDF.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -657,6 +1123,54 @@
 			"capturedAt": "2026-07-31T18:45:57.230Z"
 		},
 		{
+			"id": "timeline",
+			"index": 14,
+			"title": "The Story So Far",
+			"path": "/timeline",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This is The Story So Far. three.ws's history as an explorable 3D scene: every launch, partnership, listing, and milestone laid out along a path you can orbit in 360° or walk end to end, with a synced scrubber and source links.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "nav",
+				"tag": "h1",
+				"rect": {
+					"left": 94.953125,
+					"top": 29.0625,
+					"width": 139.5,
+					"height": 72
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 404 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/timeline.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 9246
+				},
+				"thumb": {
+					"url": "/media/tour/timeline.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 1820
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:10.858Z"
+		},
+		{
 			"id": "feed",
 			"index": 15,
 			"title": "Feed",
@@ -666,7 +1180,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at Feed. Live avatars, agents, 3D models, worlds, and launches across three.ws: filter to everyone or just the people you follow.",
+			"narration": "Meet Feed. Live avatars, agents, 3D models, worlds, and launches across three.ws: filter to everyone or just the people you follow.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -703,6 +1217,52 @@
 			"capturedAt": "2026-07-31T18:46:26.365Z"
 		},
 		{
+			"id": "openai",
+			"index": 15,
+			"title": "three.ws is an OpenAI Select Partner",
+			"path": "/openai",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Take a look at three.ws is an OpenAI Select Partner. in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 206,
+					"top": 204.1875,
+					"width": 868,
+					"height": 133.59375
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/openai.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 31434
+				},
+				"thumb": {
+					"url": "/media/tour/openai.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 8220
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:12.724Z"
+		},
+		{
 			"id": "walk",
 			"index": 16,
 			"title": "Walk Anywhere on the Web",
@@ -712,7 +1272,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, Walk Anywhere on the Web. Your 3D avatar walks anywhere on the web. Live demos across six environments, a Chrome extension, one-tag embeds, and a global distance leaderboard.",
+			"narration": "And this,  Walk Anywhere on the Web. Your 3D avatar walks anywhere on the web. Live demos across six environments, a Chrome extension, one-tag embeds, and a global distance leaderboard.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -738,6 +1298,52 @@
 			"capturedAt": "2026-07-31T18:46:45.180Z"
 		},
 		{
+			"id": "objects",
+			"index": 16,
+			"title": "Object Library",
+			"path": "/objects",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Now, Object Library. Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live, place it in your room with AR, or download the GLB.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 32,
+					"top": 185.046875,
+					"width": 1216,
+					"height": 70.078125
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/objects.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 37464
+				},
+				"thumb": {
+					"url": "/media/tour/objects.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 8586
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:15.887Z"
+		},
+		{
 			"id": "animations",
 			"index": 17,
 			"title": "Animation Gallery",
@@ -747,7 +1353,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Animation Gallery. Browse and preview public animations authored by the three.ws community. Apply any clip to your avatar in the Animation Studio.",
+			"narration": "Check out Animation Gallery. Browse and preview public animations authored by the three.ws community. Apply any clip to your avatar in the Animation Studio.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -784,6 +1390,52 @@
 			"capturedAt": "2026-07-31T18:46:52.482Z"
 		},
 		{
+			"id": "sign-language",
+			"index": 17,
+			"title": "Sign Language Avatars",
+			"path": "/sign-language",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Let's visit Sign Language Avatars. three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back with your webcam. The whole loop, live in 3D.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 671.109375,
+					"top": 251.640625,
+					"width": 556.890625,
+					"height": 135.46875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/sign-language.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 25564
+				},
+				"thumb": {
+					"url": "/media/tour/sign-language.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6548
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:17.298Z"
+		},
+		{
 			"id": "irl-privacy",
 			"index": 18,
 			"title": "How location works on IRL",
@@ -793,7 +1445,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is How location works on IRL. Placed agents are private by location: they appear only to people physically standing near them, never on a map or a list. What's shared, what isn't, and how your camera, motion, and location are used.",
+			"narration": "This one is How location works on IRL. Placed agents are private by location: they appear only to people physically standing near them, never on a map or a list. What's shared, what isn't, and how your camera, motion, and location are used.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -831,6 +1483,52 @@
 			"capturedAt": "2026-07-31T18:47:01.700Z"
 		},
 		{
+			"id": "character-library",
+			"index": 18,
+			"title": "Character Library",
+			"path": "/character-library",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Over here is Character Library. 106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 150.765625,
+					"top": 185.046875,
+					"width": 978.453125,
+					"height": 70.078125
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/character-library.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 33364
+				},
+				"thumb": {
+					"url": "/media/tour/character-library.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 8252
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:20.612Z"
+		},
+		{
 			"id": "collection",
 			"index": 19,
 			"title": "My Collection",
@@ -840,7 +1538,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's My Collection. View all the skills and subscriptions you've unlocked on three.ws.",
+			"narration": "Here we have My Collection. View all the skills and subscriptions you've unlocked on three.ws.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -881,6 +1579,52 @@
 			"capturedAt": "2026-07-31T18:47:23.801Z"
 		},
 		{
+			"id": "concierge",
+			"index": 19,
+			"title": "Concierge: AI Chat Widget",
+			"path": "/concierge",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here's Concierge: AI Chat Widget. Give any website an AI concierge with a talking 3D avatar: one-tag embed, streaming answers grounded in the live page, voice in and out, themes, and an avatar picker. Free and open source.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 317.5,
+					"top": 189.28125,
+					"width": 645,
+					"height": 133.5
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/concierge.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 41586
+				},
+				"thumb": {
+					"url": "/media/tour/concierge.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 10680
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:28.555Z"
+		},
+		{
 			"id": "irl",
 			"index": 20,
 			"title": "IRL",
@@ -890,7 +1634,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet IRL. Place a 3D avatar in your real environment. Camera AR passthrough, joystick movement, and tap-to-place 3D objects on your floor.",
+			"narration": "Next up, IRL. Place a 3D avatar in your real environment. Camera AR passthrough, joystick movement, and tap-to-place 3D objects on your floor.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -915,6 +1659,52 @@
 			"capturedAt": "2026-07-31T18:47:44.863Z"
 		},
 		{
+			"id": "notifications",
+			"index": 20,
+			"title": "Notifications",
+			"path": "/notifications",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Meet Notifications. Every payment, sale, remix, follow, quest, and royalty notification on three.ws: all in one place, filterable by category.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 292,
+					"top": 109,
+					"width": 330,
+					"height": 50
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/notifications.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 18404
+				},
+				"thumb": {
+					"url": "/media/tour/notifications.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 3760
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:35.614Z"
+		},
+		{
 			"id": "characters",
 			"index": 22,
 			"title": "Characters",
@@ -924,7 +1714,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Characters. Discover AI characters on three.ws. Chat, trade, and create.",
+			"narration": "Take a look at Characters. Discover AI characters on three.ws. Chat, trade, and create.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -973,7 +1763,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This one is Avatar Gallery. Every public 3D avatar in the system, browsable as a grid.",
+			"narration": "Now, Avatar Gallery. Every public 3D avatar in the system, browsable as a grid.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1066,7 +1856,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Next up, Community. Live platform activity plus where to follow, contribute, and connect with three.ws creators.",
+			"narration": "Over here is Community. Live platform activity plus where to follow, contribute, and connect with three.ws creators.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1148,7 +1938,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "This is Create an Agent. Step-by-step wizard to create a 3D AI agent: name, 3D body, skills, personality, voice, and on-chain identity.",
+			"narration": "Check out Create an Agent. Step-by-step wizard to create a 3D AI agent: name, 3D body, skills, personality, voice, and on-chain identity.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1185,7 +1975,7 @@
 		{
 			"id": "forge",
 			"index": 27,
-			"title": "Forge: Text to 3D",
+			"title": "Forge: Text & Image to 3D",
 			"path": "/forge",
 			"section": "build",
 			"tracks": [
@@ -1193,7 +1983,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "Take a look at Forge, Text to 3D. Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
+			"narration": "This one is Forge: Text & Image to 3D. Type a prompt: or drop in photos or a sketch: and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1237,7 +2027,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Animation Studio. Pose any three.ws avatar or the built-in mannequin with FK/IK, keyframe a timeline, and preview the motion live. Export an animated GLB or clip JSON, save animations to your account, play them back across the platform, and sell them for USDC.",
+			"narration": "Here we have Animation Studio. Pose any three.ws avatar or the built-in mannequin with FK/IK, keyframe a timeline, and preview the motion live. Export an animated GLB or clip JSON, save animations to your account, play them back across the platform, and sell them for USDC.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1270,7 +2060,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is Voice Lab. Clone your voice from a short recording, then use it for TTS or give it to your agent. Side-by-side comparison of voice models.",
+			"narration": "Next up, Voice Lab. Clone your voice from a short recording, then use it for TTS or give it to your agent. Side-by-side comparison of voice models.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1314,7 +2104,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's Restyle Studio, material presets, AI restyle & variants. Re-skin any 3D model in the browser: apply PBR material presets (chrome, gold, glass, wood…), restyle from a plain-language AI instruction, fan out seeded colorway variants as durable versions, fine-tune metalness and roughness live, and export a validated GLB, non-destructively, with a real revertable version lineage.",
+			"narration": "Next up, Restyle Studio: material presets, AI restyle & variants. Re-skin any 3D model in the browser: apply PBR material presets (chrome, gold, glass, wood…), restyle from a plain-language AI instruction, fan out seeded colorway variants as durable versions, fine-tune metalness and roughness live, and export a validated GLB: non-destructively, with a real revertable version lineage.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1361,7 +2151,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet Live Agents. Mission control: real-time grid of all AI agents with active screen streams. Watch their screens and avatar feeds live.",
+			"narration": "This is Live Agents. Mission control: real-time grid of all AI agents with active screen streams. Watch their screens and avatar feeds live.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1399,7 +2189,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "And this, Scene Capture, Video to 3D Point Cloud. Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.",
+			"narration": "Take a look at Scene Capture: Video to 3D Point Cloud. Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1445,7 +2235,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Avatar Engines Atlas. A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars: Gaussian-splat heads, single-photo humans, text→avatar generators, and the rigs three.ws already animates. Technique, license, compute, and integration status for each.",
+			"narration": "Now, Avatar Engines Atlas. A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars: Gaussian-splat heads, single-photo humans, text→avatar generators, and the rigs three.ws already animates. Technique, license, compute, and integration status for each.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1492,7 +2282,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This one is Integrations. Drop-in 3D agents, chat widgets, walk companions, and live token embeds for any site. One script tag. Powered by three.ws.",
+			"narration": "Let's visit Integrations. Drop-in 3D agents, chat widgets, walk companions, and live token embeds for any site. One script tag. Powered by three.ws.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1540,7 +2330,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here we have Splat Viewer, Photoreal Gaussian Avatars. Render Gaussian-splat and radiance-field avatars in the browser, the photoreal output of engines like GaussianAvatars and HumanGaussian. Load a .ply / .splat / .ksplat by URL or upload; decoding runs entirely client-side.",
+			"narration": "Over here is Splat Viewer: Photoreal Gaussian Avatars. Render Gaussian-splat and radiance-field avatars in the browser: the photoreal output of engines like GaussianAvatars and HumanGaussian. Load a .ply / .splat / .ksplat by URL or upload; decoding runs entirely client-side.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1620,7 +2410,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This is Agent Genome, breed two agents. Breed two AI agents into a provably-inherited offspring. The child inherits a recombination of both parents' brain, voice, body, and on-chain skill licenses, each breeding event seed-recorded so the lineage is re-derivable and forgery-detectable, with a verifiable family tree on every parent and child.",
+			"narration": "Meet Agent Genome: breed two agents. Breed two AI agents into a provably-inherited offspring. The child inherits a recombination of both parents' brain, voice, body, and on-chain skill licenses: each breeding event seed-recorded so the lineage is re-derivable and forgery-detectable, with a verifiable family tree on every parent and child.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1668,7 +2458,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at CA → x402. Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel, price, momentum, and a bullish/bearish signal, for $0.01 USDC, discoverable in the x402 bazaar.",
+			"narration": "And this,  CA → x402. Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel: price, momentum, and a bullish/bearish signal: for $0.01 USDC, discoverable in the x402 bazaar.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1715,7 +2505,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, Cosmos: Living Worlds. Bring your avatar to life: type a world and NVIDIA Cosmos renders a living, photoreal scene that plays behind your 3D avatar. Generate, preview, and download a short cinematic clip.",
+			"narration": "Check out Cosmos: Living Worlds. Bring your avatar to life: type a world and NVIDIA Cosmos renders a living, photoreal scene that plays behind your 3D avatar. Generate, preview, and download a short cinematic clip.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1785,7 +2575,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Forge · NIM, Self-Hosted Image to 3D. Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly: drop a photo, hit /v1/infer, and get the textured GLB back synchronously as base64, rendered live and downloadable.",
+			"narration": "This one is Forge · NIM: Self-Hosted Image to 3D. Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly: drop a photo, hit /v1/infer, and get the textured GLB back synchronously as base64: rendered live and downloadable.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1831,7 +2621,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is Instant Agent Genesis. A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana + EVM wallet and a verifiable on-chain identity: in under a minute, owned by you.",
+			"narration": "Here we have Instant Agent Genesis. A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana + EVM wallet and a verifiable on-chain identity: in under a minute, owned by you.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1877,7 +2667,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's Text → 3D, Nemotron → FLUX → TRELLIS. Describe an object and watch it become a textured 3D mesh: Nemotron sharpens the prompt, FLUX paints a clean reference, and TRELLIS reconstructs the model, served on NVIDIA NIM, quiet and always on.",
+			"narration": "Next up, Text → 3D: Nemotron → FLUX → TRELLIS. Describe an object and watch it become a textured 3D mesh: Nemotron sharpens the prompt, FLUX paints a clean reference, and TRELLIS reconstructs the model: served on NVIDIA NIM, quiet and always on.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1914,6 +2704,52 @@
 			"capturedAt": "2026-07-31T18:56:22.814Z"
 		},
 		{
+			"id": "demos",
+			"index": 43,
+			"title": "Lab Demos",
+			"path": "/demos",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here's Lab Demos. Index of live demos across the platform: viewers, agents, payments, and experiments.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 196,
+					"top": 148,
+					"width": 888,
+					"height": 64
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/demos.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 36652
+				},
+				"thumb": {
+					"url": "/media/tour/demos.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6676
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:38.538Z"
+		},
+		{
 			"id": "dad",
 			"index": 44,
 			"title": "Make Dad a 3D Avatar",
@@ -1923,7 +2759,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet Make Dad a 3D Avatar. Turn one photo of your dad into a recognizable, rigged, animated 3D avatar, it idles, walks, and waves, then share a permalink.",
+			"narration": "This is Make Dad a 3D Avatar. Turn one photo of your dad into a recognizable, rigged, animated 3D avatar: it idles, walks, and waves: then share a permalink.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -1961,6 +2797,52 @@
 			"capturedAt": "2026-07-31T18:56:25.511Z"
 		},
 		{
+			"id": "pricing",
+			"index": 44,
+			"title": "Pricing",
+			"path": "/pricing",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Meet Pricing. Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 56,
+					"top": 241.046875,
+					"width": 1168,
+					"height": 146.1875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/pricing.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 27766
+				},
+				"thumb": {
+					"url": "/media/tour/pricing.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7142
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:38.974Z"
+		},
+		{
 			"id": "forge-studio",
 			"index": 45,
 			"title": "Studio: Object + Avatar from text",
@@ -1970,7 +2852,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "And this, Studio, Object + Avatar from text. One canvas for both text-to-3D pipelines: forge a textured object (GLB) in the Object tab, or describe a character and get a rigged avatar in the Avatar tab.",
+			"narration": "Take a look at Studio: Object + Avatar from text. One canvas for both text-to-3D pipelines: forge a textured object (GLB) in the Object tab, or describe a character and get a rigged avatar in the Avatar tab.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2008,6 +2890,52 @@
 			"capturedAt": "2026-07-31T18:57:00.026Z"
 		},
 		{
+			"id": "showcase",
+			"index": 45,
+			"title": "Showcase",
+			"path": "/showcase",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "And this,  Showcase. AI-powered 3D model viewer showcase: drop in a model and explore it live.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 42,
+					"top": 142.75,
+					"width": 776,
+					"height": 60.90625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/showcase.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 20664
+				},
+				"thumb": {
+					"url": "/media/tour/showcase.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4548
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:42.713Z"
+		},
+		{
 			"id": "create-selfie",
 			"index": 49,
 			"title": "Selfie to Avatar",
@@ -2017,7 +2945,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Next up, Selfie to Avatar. One selfie. About a minute. A rigged 3D avatar that works everywhere.",
+			"narration": "Here's Selfie to Avatar. One selfie. About a minute. A rigged 3D avatar that works everywhere.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2063,7 +2991,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This is Widget Studio. Pick an avatar, configure embed options, copy a one-line snippet for your site.",
+			"narration": "Meet Widget Studio. Pick an avatar, configure embed options, copy a one-line snippet for your site.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2100,6 +3028,52 @@
 			"capturedAt": "2026-07-31T18:58:28.866Z"
 		},
 		{
+			"id": "monitor",
+			"index": 50,
+			"title": "Agent Monitor",
+			"path": "/monitor",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This is Agent Monitor. Ops-room dashboard for the 3D AI agent fleet: live agent activity with a 3D spotlight, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches, the community forge feed, crews and platform health on one screen.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 19,
+					"top": 85.25,
+					"width": 161,
+					"height": 35.5
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/monitor.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 24736
+				},
+				"thumb": {
+					"url": "/media/tour/monitor.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4678
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:44.058Z"
+		},
+		{
 			"id": "hydrate",
 			"index": 51,
 			"title": "Hydrate",
@@ -2109,7 +3083,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at Hydrate. Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.",
+			"narration": "And this,  Hydrate. Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2148,6 +3122,52 @@
 			"capturedAt": "2026-07-31T18:59:16.224Z"
 		},
 		{
+			"id": "embed-doctor",
+			"index": 51,
+			"title": "Embed Doctor",
+			"path": "/embed-doctor",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Take a look at Embed Doctor. Find out why your 3D agent embed is not showing up. Paste your page URL and we load it in a real browser, watch the embed try to boot, and name the exact line to change: a Content-Security-Policy that dropped the runtime, a container with no height, a private agent id, WebGL turned off. Works on a snippet too, before you deploy it.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 160.5,
+					"top": 148.265625,
+					"width": 959,
+					"height": 67.046875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/embed-doctor.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 32968
+				},
+				"thumb": {
+					"url": "/media/tour/embed-doctor.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6530
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:48.235Z"
+		},
+		{
 			"id": "app",
 			"index": 52,
 			"title": "Viewer",
@@ -2157,7 +3177,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, Viewer. Drag-and-drop glTF/GLB viewer for inspecting 3D models in the browser.",
+			"narration": "Check out Viewer. Drag-and-drop glTF/GLB viewer for inspecting 3D models in the browser.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2182,6 +3202,52 @@
 			"capturedAt": "2026-07-31T18:59:40.460Z"
 		},
 		{
+			"id": "inspect",
+			"index": 52,
+			"title": "Model Inspector",
+			"path": "/inspect",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Now, Model Inspector. Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Per-rule verdict, what was measured against each bound, and the fix for every failure.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "nav",
+				"tag": "h1",
+				"rect": {
+					"left": 32,
+					"top": 80.6875,
+					"width": 636,
+					"height": 105.8125
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/inspect.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 27336
+				},
+				"thumb": {
+					"url": "/media/tour/inspect.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5688
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:50.099Z"
+		},
+		{
 			"id": "widgets",
 			"index": 53,
 			"title": "Widgets Gallery",
@@ -2191,7 +3257,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Widgets Gallery. Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.",
+			"narration": "This one is Widgets Gallery. Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2230,6 +3296,52 @@
 			"capturedAt": "2026-07-31T18:59:41.366Z"
 		},
 		{
+			"id": "render-lab",
+			"index": 53,
+			"title": "Render Lab",
+			"path": "/render-lab",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Let's visit Render Lab. Compose a real avatar render in the browser and copy the exact API call. Reads each model first (ARKit morph targets, canonical-skeleton coverage, geometry) and only offers controls that model will actually honor, so nothing you build here silently fails in production. Contact-sheet mode renders every framing, pose, or expression at once.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 37.5,
+					"top": 97.640625,
+					"width": 1205,
+					"height": 62
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/render-lab.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 36480
+				},
+				"thumb": {
+					"url": "/media/tour/render-lab.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6248
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:55.302Z"
+		},
+		{
 			"id": "features",
 			"index": 54,
 			"title": "Features",
@@ -2239,7 +3351,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is Features. Full feature overview of the three.ws platform: avatars, agents, on-chain identity, x402 payments, and embedding.",
+			"narration": "Here we have Features. Full feature overview of the three.ws platform: avatars, agents, on-chain identity, x402 payments, and embedding.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2276,6 +3388,52 @@
 			"capturedAt": "2026-07-31T18:59:54.809Z"
 		},
 		{
+			"id": "rig-doctor",
+			"index": 54,
+			"title": "Rig Doctor",
+			"path": "/rig-doctor",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Over here is Rig Doctor. Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 416,
+					"top": 176.078125,
+					"width": 448,
+					"height": 106.46875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/rig-doctor.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 25546
+				},
+				"thumb": {
+					"url": "/media/tour/rig-doctor.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5532
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:57.582Z"
+		},
+		{
 			"id": "pay",
 			"index": 55,
 			"title": "Pay (x402)",
@@ -2286,7 +3444,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "Here's Pay (x402). Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.",
+			"narration": "Now, Pay (x402). Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2323,6 +3481,98 @@
 			"capturedAt": "2026-07-31T19:00:02.597Z"
 		},
 		{
+			"id": "bundles",
+			"index": 55,
+			"title": "Skill Bundles",
+			"path": "/bundles",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here's Skill Bundles. Sell several of an agent's skills as one purchase, priced from your own sales instead of a rule of thumb. three.ws finds the buyers who already bought two or more of those skills separately and backtests any price against what they really paid, so you see what the bundle would have earned before you publish it.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 158.5,
+					"top": 97.640625,
+					"width": 963,
+					"height": 62
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/bundles.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 25850
+				},
+				"thumb": {
+					"url": "/media/tour/bundles.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5170
+				}
+			},
+			"capturedAt": "2026-08-02T05:05:58.638Z"
+		},
+		{
+			"id": "avatar-cli",
+			"index": 56,
+			"title": "Avatar CLI",
+			"path": "/avatar-cli",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Meet Avatar CLI. The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 67.875,
+					"top": 230.1875,
+					"width": 546.234375,
+					"height": 131.78125
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/avatar-cli.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 39204
+				},
+				"thumb": {
+					"url": "/media/tour/avatar-cli.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 8464
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:02.052Z"
+		},
+		{
 			"id": "launch",
 			"index": 57,
 			"title": "Launch a Coin",
@@ -2333,7 +3583,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "And this, Launch a Coin. Mint a coin for your 3D AI agent in one flow, pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.",
+			"narration": "Over here is Launch a Coin. Mint a coin for your 3D AI agent in one flow: pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2370,6 +3620,52 @@
 			"capturedAt": "2026-07-31T19:00:25.836Z"
 		},
 		{
+			"id": "forge-max",
+			"index": 57,
+			"title": "Forge Max: Highest-Quality Text & Image to 3D",
+			"path": "/forge-max",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "And this,  Forge Max: Highest-Quality Text & Image to 3D. The Forge's maximum-quality lane, opened directly: High tier pinned (200k-poly geometry, 4K PBR and HD textures, subject-aware engine routing). A $THREE holder perk; also unlockable with your own Meshy, Tripo, or Rodin key.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 43.1875,
+					"top": 79.640625,
+					"width": 145.671875,
+					"height": 41.890625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/forge-max.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 29768
+				},
+				"thumb": {
+					"url": "/media/tour/forge-max.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5394
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:04.309Z"
+		},
+		{
 			"id": "oracle",
 			"index": 58,
 			"title": "Oracle: AI Conviction Engine",
@@ -2379,7 +3675,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Oracle, AI Conviction Engine. A fused AI conviction engine for every pump.fun launch: pedigree (who's buying), structure (bundle vs organic), narrative (what story is it riding), and momentum, fused into a single 0-100 conviction score with transparent pillar reasoning.",
+			"narration": "Here's Oracle: AI Conviction Engine. A fused AI conviction engine for every pump.fun launch: pedigree (who's buying), structure (bundle vs organic), narrative (what story is it riding), and momentum: fused into a single 0-100 conviction score with transparent pillar reasoning.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2414,6 +3710,52 @@
 			"capturedAt": "2026-07-31T19:00:35.931Z"
 		},
 		{
+			"id": "motion-swap",
+			"index": 58,
+			"title": "Motion Swap: Replace Yourself in Video with Your Avatar",
+			"path": "/motion-swap",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Check out Motion Swap: Replace Yourself in Video with Your Avatar. Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Server-side pose tracking and person masking, browser-side compositing and export: stay off camera without staying off video.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "other",
+				"tag": "h1",
+				"rect": {
+					"left": 66,
+					"top": 148.546875,
+					"width": 1148,
+					"height": 87.1875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/motion-swap.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 33464
+				},
+				"thumb": {
+					"url": "/media/tour/motion-swap.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7278
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:07.753Z"
+		},
+		{
 			"id": "vanity-wallet",
 			"index": 59,
 			"title": "Solana Vanity Wallet",
@@ -2423,7 +3765,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This one is Solana Vanity Wallet. Grind a Solana address with a custom prefix: entirely in your browser, across your CPU cores. Also send sealed wallet gifts: fund a fresh (optionally vanity-ground) wallet and wrap it in an end-to-end sealed claim link only the recipient can open.",
+			"narration": "Meet Solana Vanity Wallet. Grind a Solana address with a custom prefix: entirely in your browser, across your CPU cores. Also send sealed wallet gifts: fund a fresh (optionally vanity-ground) wallet and wrap it in an end-to-end sealed claim link only the recipient can open.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2458,6 +3800,52 @@
 			"capturedAt": "2026-07-31T19:00:51.258Z"
 		},
 		{
+			"id": "assistant",
+			"index": 59,
+			"title": "Assistant widget",
+			"path": "/assistant",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This one is Assistant widget. Put a 3D avatar assistant on any website with one script tag. A floating launcher opens a real animated avatar, against your page, a color, or a gradient, with a chatbot mode (free models or your own Groq/OpenRouter key) and a speak mode where the avatar says whatever you type out loud in a speech bubble.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 112,
+					"top": 68,
+					"width": 1056,
+					"height": 112.78125
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/assistant.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 36216
+				},
+				"thumb": {
+					"url": "/media/tour/assistant.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7842
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:12.251Z"
+		},
+		{
 			"id": "markets-robinhood",
 			"index": 60,
 			"title": "Robinhood Chain",
@@ -2467,7 +3855,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here we have Robinhood Chain. The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL: plus a real wallet-connect buy flow for its coins.",
+			"narration": "Check out Robinhood Chain. The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL: plus a real wallet-connect buy flow for its coins.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2505,6 +3893,52 @@
 			"capturedAt": "2026-07-31T19:01:19.179Z"
 		},
 		{
+			"id": "image-to-3d",
+			"index": 60,
+			"title": "Image to 3D: Turn a Photo into a 3D Model",
+			"path": "/image-to-3d",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here we have Image to 3D: Turn a Photo into a 3D Model. Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly: for objects and props; for faces, use Selfie to Avatar.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 43.1875,
+					"top": 79.640625,
+					"width": 86.71875,
+					"height": 41.890625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/image-to-3d.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 24562
+				},
+				"thumb": {
+					"url": "/media/tour/image-to-3d.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4342
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:13.996Z"
+		},
+		{
 			"id": "hacks",
 			"index": 61,
 			"title": "DeFi Hacks Database",
@@ -2514,7 +3948,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Next up, DeFi Hacks Database. A searchable database of every major DeFi exploit: amount stolen, classification, technique, chains affected, whether it was a bridge hack, and the source, with all-time and trailing-12-month totals. Live from DeFiLlama.",
+			"narration": "This one is DeFi Hacks Database. A searchable database of every major DeFi exploit: amount stolen, classification, technique, chains affected, whether it was a bridge hack, and the source, with all-time and trailing-12-month totals. Live from DeFiLlama.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2561,7 +3995,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This is DeFi Yields Explorer. Explore roughly 15,000 live DeFi yield pools across every chain and protocol: filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.",
+			"narration": "Here we have DeFi Yields Explorer. Explore roughly 15,000 live DeFi yield pools across every chain and protocol: filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2608,7 +4042,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at DEX Volume Leaderboard. Every decentralized exchange ranked by trading volume, with 24h and 7d totals, 7-day change, and market share, plus an aggregate volume history chart. Live from DeFiLlama.",
+			"narration": "Next up, DEX Volume Leaderboard. Every decentralized exchange ranked by trading volume, with 24h and 7d totals, 7-day change, and market share, plus an aggregate volume history chart. Live from DeFiLlama.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2643,7 +4077,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, Protocol Fees & Revenue. Fees paid by users and revenue kept by protocols across all of DeFi, ranked with 24h/7d/30d totals and an aggregate history chart. Toggle between fees and revenue; each protocol links to its detail page. Live from DeFiLlama.",
+			"narration": "This is Protocol Fees & Revenue. Fees paid by users and revenue kept by protocols across all of DeFi, ranked with 24h/7d/30d totals and an aggregate history chart. Toggle between fees and revenue; each protocol links to its detail page. Live from DeFiLlama.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2681,7 +4115,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Trending Crypto. The most-searched coins, categories, and NFTs on CoinGecko over the last 24 hours: trending rank, price, 24h change, market cap, and volume, each coin and category linking to its detail page. Auto-refreshing.",
+			"narration": "Take a look at Trending Crypto. The most-searched coins, categories, and NFTs on CoinGecko over the last 24 hours: trending rank, price, 24h change, market cap, and volume, each coin and category linking to its detail page. Auto-refreshing.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2715,7 +4149,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is Crypto News. Live crypto news aggregated natively from 192 publisher feeds in 18 languages: filter by category (Bitcoin, DeFi, security, regulation, and more), pick a language, search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
+			"narration": "Now, Crypto News. Live crypto news aggregated natively from 192 publisher feeds in 18 languages: filter by category (Bitcoin, DeFi, security, regulation, and more), pick a language, search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2796,7 +4230,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's Crypto News Archive. The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese: searchable by keyword, ticker, source, sentiment, date, and language.",
+			"narration": "Let's visit Crypto News Archive. The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese: searchable by keyword, ticker, source, sentiment, date, and language.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2842,7 +4276,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet Crypto News Digest. The day's crypto news grouped into the handful of stories that actually matter: each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.",
+			"narration": "Over here is Crypto News Digest. The day's crypto news grouped into the handful of stories that actually matter: each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2876,7 +4310,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "And this, Crypto News Reader. Rich article reader for crypto news, full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.",
+			"narration": "Here's Crypto News Reader. Rich article reader for crypto news: full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2911,7 +4345,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Markets Hub. The three.ws markets hub: live global stats, the top 100 coins, breaking crypto news from 192 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
+			"narration": "Meet Markets Hub. The three.ws markets hub: live global stats, the top 100 coins, breaking crypto news from 192 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2946,7 +4380,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This one is Blockchain TVL by Chain. A leaderboard of every blockchain by total value locked, with each chain's dominance share of on-chain DeFi. Live from DeFiLlama: see where liquidity actually sits across L1s and L2s.",
+			"narration": "And this,  Blockchain TVL by Chain. A leaderboard of every blockchain by total value locked, with each chain's dominance share of on-chain DeFi. Live from DeFiLlama: see where liquidity actually sits across L1s and L2s.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -2992,7 +4426,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here we have BNB Chain, Three Genuinely-Unique Demos. The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain, plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",
+			"narration": "This one is BNB Chain: Three Genuinely-Unique Demos. The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain: plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3038,7 +4472,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Next up, BNB Chain Live Block Race, 0.45s vs Base, Ethereum, Solana. A live, honest race: BNB Chain, Base, Ethereum, and Solana block times measured fresh off real public RPCs every few seconds, with a rolling sparkline per lane. No wallet, no payment, no hardcoded numbers, a lane that goes quiet shows 'reconnecting' while the others keep racing.",
+			"narration": "Check out BNB Chain Live Block Race: 0.45s vs Base, Ethereum, Solana. A live, honest race: BNB Chain, Base, Ethereum, and Solana block times measured fresh off real public RPCs every few seconds, with a rolling sparkline per lane. No wallet, no payment, no hardcoded numbers: a lane that goes quiet shows 'reconnecting' while the others keep racing.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3084,7 +4518,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This is Creator Gallery. Search, filter, and live-preview the remix bazaar: remix any published 3D creation for a real on-chain USDC royalty, view parent → child lineage, and see the trending assets and top-creator leaderboard.",
+			"narration": "Here we have Creator Gallery. Search, filter, and live-preview the remix bazaar: remix any published 3D creation for a real on-chain USDC royalty, view parent → child lineage, and see the trending assets and top-creator leaderboard.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3130,7 +4564,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at Crypto Categories by Market Cap. Every crypto sector ranked by market cap, smart contract platforms, AI agents, memecoins, DeFi, gaming, and more, with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.",
+			"narration": "Next up, Crypto Categories by Market Cap. Every crypto sector ranked by market cap: smart contract platforms, AI agents, memecoins, DeFi, gaming, and more: with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3220,7 +4654,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, Crypto Currency Converter. Convert between any cryptocurrency and major world fiat currencies at live market rates: crypto to crypto, crypto to fiat, and back. Type an amount, pick both sides, and share the result via URL.",
+			"narration": "This is Crypto Currency Converter. Convert between any cryptocurrency and major world fiat currencies at live market rates: crypto to crypto, crypto to fiat, and back. Type an amount, pick both sides, and share the result via URL.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3310,7 +4744,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Crypto Derivatives & Perpetual Futures. Live perpetual-futures markets across exchanges: price, 24h change, funding rate, open interest, and volume for every major contract. Filter by underlying index (BTC, ETH, SOL) and sort by any column.",
+			"narration": "Take a look at Crypto Derivatives & Perpetual Futures. Live perpetual-futures markets across exchanges: price, 24h change, funding rate, open interest, and volume for every major contract. Filter by underlying index (BTC, ETH, SOL) and sort by any column.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3402,7 +4836,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is Crypto Token Screener. Screen the top 250 cryptocurrencies with live filters: search by name or symbol, isolate gainers or losers, and set minimum market cap and 24h volume thresholds. Every column sorts and every row links to a full coin detail page.",
+			"narration": "Now, Crypto Token Screener. Screen the top 250 cryptocurrencies with live filters: search by name or symbol, isolate gainers or losers, and set minimum market cap and 24h volume thresholds. Every column sorts and every row links to a full coin detail page.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3448,7 +4882,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's DeFi TVL & Top Protocols. Total value locked across decentralized finance, with the top protocols ranked by TVL, their category, chains, and 1-day and 7-day change. Live from DeFiLlama, sortable and filterable by category.",
+			"narration": "Let's visit DeFi TVL & Top Protocols. Total value locked across decentralized finance, with the top protocols ranked by TVL, their category, chains, and 1-day and 7-day change. Live from DeFiLlama, sortable and filterable by category.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3494,7 +4928,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet Fact Check. Sourced fact-checking with cryptographic attestations: a published, checkable accuracy benchmark plus a live free-check box. 3 free checks/day per IP, then $0.10 USDC via x402.",
+			"narration": "Over here is Fact Check. Sourced fact-checking with cryptographic attestations: a published, checkable accuracy benchmark plus a live free-check box. 3 free checks/day per IP, then $0.10 USDC via x402.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3540,7 +4974,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "And this, Minted 3D Assets. Live public gallery of every generated 3D avatar minted as a Metaplex Core NFT through three.ws, interactive viewer, baked provenance, and enforced creator royalties on every card.",
+			"narration": "Here's Minted 3D Assets. Live public gallery of every generated 3D avatar minted as a Metaplex Core NFT through three.ws: interactive viewer, baked provenance, and enforced creator royalties on every card.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3586,7 +5020,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Stablecoins Market Cap & Peg Health. Every major stablecoin ranked by circulating market cap, with live peg health, backing mechanism (fiat-backed, crypto-backed, algorithmic), and the chains it lives on. Live from DeFiLlama.",
+			"narration": "Meet Stablecoins Market Cap & Peg Health. Every major stablecoin ranked by circulating market cap, with live peg health, backing mechanism (fiat-backed, crypto-backed, algorithmic), and the chains it lives on. Live from DeFiLlama.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3632,7 +5066,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This one is Top Crypto Exchanges. The leading cryptocurrency exchanges ranked by trust score and 24-hour trading volume, with country, launch year, and a direct link to each. Real CoinGecko data, sortable by any column.",
+			"narration": "And this,  Top Crypto Exchanges. The leading cryptocurrency exchanges ranked by trust score and 24-hour trading volume, with country, launch year, and a direct link to each. Real CoinGecko data, sortable by any column.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3678,7 +5112,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here we have Vault, Buy & Unlock Encrypted 3D Models on BNB Chain. Browse encrypted 3D listings, buy access with a real BSC testnet transaction, watch the cross-chain Greenfield permission grant settle, then unlock and view the model, decrypted entirely client-side, the raw key never leaves your browser.",
+			"narration": "Check out Vault: Buy & Unlock Encrypted 3D Models on BNB Chain. Browse encrypted 3D listings, buy access with a real BSC testnet transaction, watch the cross-chain Greenfield permission grant settle, then unlock and view the model: decrypted entirely client-side, the raw key never leaves your browser.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3724,7 +5158,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Next up, Compare Crypto Side by Side. Compare cryptocurrencies head to head: overlay normalized price performance and line up market cap, volume, FDV, supply, and all-time-high stats for up to four coins at once. The selection is saved to the URL so any matchup is shareable.",
+			"narration": "This one is Compare Crypto Side by Side. Compare cryptocurrencies head to head: overlay normalized price performance and line up market cap, volume, FDV, supply, and all-time-high stats for up to four coins at once. The selection is saved to the URL so any matchup is shareable.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3761,6 +5195,52 @@
 			"capturedAt": "2026-07-31T19:09:19.630Z"
 		},
 		{
+			"id": "avatar-sdk",
+			"index": 85,
+			"title": "Avatar SDK",
+			"path": "/avatar-sdk",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Next up, Avatar SDK. The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 96,
+					"top": 231.046875,
+					"width": 572,
+					"height": 136.9375
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/avatar-sdk.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 25622
+				},
+				"thumb": {
+					"url": "/media/tour/avatar-sdk.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7002
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:21.785Z"
+		},
+		{
 			"id": "fear-greed",
 			"index": 86,
 			"title": "Crypto Fear & Greed Index",
@@ -3770,7 +5250,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This is Crypto Fear & Greed Index. The Crypto Fear & Greed Index: live market sentiment from 0 (Extreme Fear) to 100 (Extreme Greed), shown on a gauge with a week-over-week delta, a full interactive history chart, and a labelled scale explaining what each reading means.",
+			"narration": "Here we have Crypto Fear & Greed Index. The Crypto Fear & Greed Index: live market sentiment from 0 (Extreme Fear) to 100 (Extreme Greed), shown on a gauge with a week-over-week delta, a full interactive history chart, and a labelled scale explaining what each reading means.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3807,6 +5287,50 @@
 			"capturedAt": "2026-07-31T19:09:32.475Z"
 		},
 		{
+			"id": "avatar-studio",
+			"index": 86,
+			"title": "Avatar Studio",
+			"path": "/avatar-studio",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This is Avatar Studio. Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "#as-tabs",
+				"source": "curriculum",
+				"scope": "main",
+				"tag": "nav",
+				"rect": {
+					"left": 760,
+					"top": 150,
+					"width": 520,
+					"height": 59
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/avatar-studio.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 25082
+				},
+				"thumb": {
+					"url": "/media/tour/avatar-studio.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5462
+				}
+			},
+			"capturedAt": "2026-08-02T05:12:02.980Z"
+		},
+		{
 			"id": "heatmap",
 			"index": 87,
 			"title": "Crypto Market Heatmap",
@@ -3816,7 +5340,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at Crypto Market Heatmap. A live market heatmap of the top cryptocurrencies: every tile is a coin, sized by market cap and colored by its 24h or 7d price move. See where money is flowing across the whole market at a glance, then click any tile for its full profile.",
+			"narration": "Next up, Crypto Market Heatmap. A live market heatmap of the top cryptocurrencies: every tile is a coin, sized by market cap and colored by its 24h or 7d price move. See where money is flowing across the whole market at a glance, then click any tile for its full profile.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3853,6 +5377,52 @@
 			"capturedAt": "2026-07-31T19:09:45.867Z"
 		},
 		{
+			"id": "nim-forge",
+			"index": 87,
+			"title": "TRELLIS NIM Forge",
+			"path": "/nim-forge",
+			"section": "build",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Take a look at TRELLIS NIM Forge. Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 214,
+					"top": 81.5,
+					"width": 852,
+					"height": 62.1875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/nim-forge.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 18476
+				},
+				"thumb": {
+					"url": "/media/tour/nim-forge.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 3678
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:34.791Z"
+		},
+		{
 			"id": "gas",
 			"index": 88,
 			"title": "Ethereum Gas Tracker",
@@ -3862,7 +5432,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, Ethereum Gas Tracker. Live Ethereum gas fees straight from the chain: slow, standard, and fast tiers in gwei with USD cost estimates for transfers, token sends, DEX swaps, and NFT mints. Real on-chain fee history, refreshed automatically, no API key required.",
+			"narration": "This is Ethereum Gas Tracker. Live Ethereum gas fees straight from the chain: slow, standard, and fast tiers in gwei with USD cost estimates for transfers, token sends, DEX swaps, and NFT mints. Real on-chain fee history, refreshed automatically, no API key required.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -3955,7 +5525,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Premium Vanity Inventory. Buy a long, brandable Solana vanity address delivered instantly from stock: 4-5+ character prefixes the live grinder can't reach, ground ahead of time on batch CPU and sold via x402. Keys are encrypted at rest, priced by rarity, and delivered exactly once.",
+			"narration": "Take a look at Premium Vanity Inventory. Buy a long, brandable Solana vanity address delivered instantly from stock: 4-5+ character prefixes the live grinder can't reach, ground ahead of time on batch CPU and sold via x402. Keys are encrypted at rest, priced by rarity, and delivered exactly once.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4001,7 +5571,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is Sperax on three.ws. Free AI credits for three.ws users on chat.sperax.io: what the integration is and how to claim it.",
+			"narration": "Now, Sperax on three.ws. Free AI credits for three.ws users on chat.sperax.io: what the integration is and how to claim it.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4047,7 +5617,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's Coins: Live Prices & Market Caps. Live global cryptocurrency market data: total market cap, dominance, Fear & Greed, and the top coins with prices, 24h/7d moves, and 7d sparklines. Every coin links to a rich /coin/:id detail page with an interactive chart, market stats, related news, and official links.",
+			"narration": "Let's visit Coins: Live Prices & Market Caps. Live global cryptocurrency market data: total market cap, dominance, Fear & Greed, and the top coins with prices, 24h/7d moves, and 7d sparklines. Every coin links to a rich /coin/:id detail page with an interactive chart, market stats, related news, and official links.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4093,7 +5663,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet Endpoint Revenue. The live revenue layer: real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.",
+			"narration": "Over here is Endpoint Revenue. The live revenue layer: real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4139,7 +5709,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "And this, Launch Studio, 50 ways to mint a coin. A catalog of 50 coin-launch use cases, reward coins for trending GitHub repos and creators, and coins riding live cultural, news, and onchain narratives. Preview what each would mint right now from live data, then launch on pump.fun in one click.",
+			"narration": "Here's Launch Studio: 50 ways to mint a coin. A catalog of 50 coin-launch use cases: reward coins for trending GitHub repos and creators, and coins riding live cultural, news, and onchain narratives. Preview what each would mint right now from live data, then launch on pump.fun in one click.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4176,6 +5746,36 @@
 			"capturedAt": "2026-07-31T19:10:38.618Z"
 		},
 		{
+			"id": "ghost-copy",
+			"index": 93,
+			"title": "Ghost-copy: what if you'd copied them?",
+			"path": "/ghost-copy",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "And this,  Ghost-copy: what if you'd copied them?. Paper-copy any verified pump.fun trader agent with fake money over their real closed on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had, plus every trade your budget could not reach and why. No wallet, no signature, no custody, no account.",
+			"status": 404,
+			"anchor": {
+				"state": "unresolved",
+				"selector": null,
+				"source": null,
+				"scope": null,
+				"tag": null,
+				"rect": null
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 404 ()"
+			],
+			"notes": [
+				"page returned HTTP 404"
+			],
+			"media": null,
+			"capturedAt": "2026-08-02T05:06:39.298Z"
+		},
+		{
 			"id": "oracle-docs",
 			"index": 94,
 			"title": "Oracle Docs: the conviction engine, end to end",
@@ -4185,7 +5785,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Oracle Docs, the conviction engine, end to end. The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next, written for everyone from first-time readers to researchers.",
+			"narration": "Meet Oracle Docs: the conviction engine, end to end. The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next: written for everyone from first-time readers to researchers.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4222,6 +5822,54 @@
 			"capturedAt": "2026-07-31T19:10:40.393Z"
 		},
 		{
+			"id": "exit-lab",
+			"index": 94,
+			"title": "Exit Lab",
+			"path": "/exit-lab",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Check out Exit Lab. Replay the fleet's real closed trades under a different exit policy. Move the stop-loss, trailing stop, take-initials ladder and moon-bag floor and see what the SOL already spent would have returned.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 24,
+					"top": 213.578125,
+					"width": 664,
+					"height": 59.1875
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 500 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/exit-lab.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 28928
+				},
+				"thumb": {
+					"url": "/media/tour/exit-lab.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5628
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:39.960Z"
+		},
+		{
 			"id": "viability",
 			"index": 95,
 			"title": "Viability",
@@ -4231,7 +5879,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This one is Viability. The honest signal behind three.ws: real marketplace and trading viability. Live $THREE skill GMV, take-rate, repeat buyers and trading pairs, plus real guarded coin-trade flow, cost and realized P&L on closed positions. Real on-chain data only.",
+			"narration": "And this,  Viability. The honest signal behind three.ws: real marketplace and trading viability. Live $THREE skill GMV, take-rate, repeat buyers and trading pairs, plus real guarded coin-trade flow, cost and realized P&L on closed positions. Real on-chain data only.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4268,6 +5916,56 @@
 			"capturedAt": "2026-07-31T19:11:12.619Z"
 		},
 		{
+			"id": "flow",
+			"index": 95,
+			"title": "Money Flow Map",
+			"path": "/flow",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This one is Money Flow Map. The shape of the agent economy: a live force-directed map of who pays whom, for which skill, and how much. Every edge is a real settled on-chain transfer between agent wallets, so the map shows where value circulates and which wallets only collect it.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 20,
+					"top": 126.796875,
+					"width": 1240,
+					"height": 63.515625
+				}
+			},
+			"consoleErrors": 8,
+			"consoleSamples": [
+				"Access to image at 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb/a19c2afd-70a9-484d-8c8f-4584f4ed884f.png' from origin 'https://three.ws' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+				"Failed to load resource: net::ERR_FAILED",
+				"Access to image at 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/thumb/0b9dea85-3496-4b07-9c90-e5080e070f80.png' from origin 'https://three.ws' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/flow.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 55606
+				},
+				"thumb": {
+					"url": "/media/tour/flow.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 10424
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:44.516Z"
+		},
+		{
 			"id": "agent-economy-volume",
 			"index": 96,
 			"title": "Agent Economy Volume",
@@ -4277,7 +5975,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here we have Agent Economy Volume. Live dashboard of total agent-to-agent economy volume: real USDC settled between AI agents hiring each other for paid skills over x402, with top earners, top spenders, and a 90-day volume chart.",
+			"narration": "Check out Agent Economy Volume. Live dashboard of total agent-to-agent economy volume: real USDC settled between AI agents hiring each other for paid skills over x402, with top earners, top spenders, and a 90-day volume chart.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4314,6 +6012,52 @@
 			"capturedAt": "2026-07-31T19:11:16.453Z"
 		},
 		{
+			"id": "play-solver",
+			"index": 96,
+			"title": "The economy solver",
+			"path": "/play/solver",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here we have The economy solver. The /play world economy, solved. Exact expected cash and XP per hour for every tree, rock and pond at every skill level, the optimal fish-and-cook time split, what the store costs in minutes and swings, the wheel's true expected value in store prices, and per-kill combat worth. Computed in closed form from the game's own tables, never measured.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 42,
+					"top": 148.875,
+					"width": 796,
+					"height": 130.25
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/play-solver.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 30760
+				},
+				"thumb": {
+					"url": "/media/tour/play-solver.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6744
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:47.127Z"
+		},
+		{
 			"id": "launcher",
 			"index": 97,
 			"title": "Memetic Launcher",
@@ -4323,7 +6067,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Next up, Memetic Launcher. Your personal autonomous coin launcher: set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.",
+			"narration": "This one is Memetic Launcher. Your personal autonomous coin launcher: set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4362,6 +6106,52 @@
 			"capturedAt": "2026-07-31T19:11:18.524Z"
 		},
 		{
+			"id": "trading",
+			"index": 97,
+			"title": "Autonomous Trading",
+			"path": "/trading",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Next up, Autonomous Trading. The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 24,
+					"top": 221.375,
+					"width": 628,
+					"height": 59.1875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/trading.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 29718
+				},
+				"thumb": {
+					"url": "/media/tour/trading.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6228
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:48.641Z"
+		},
+		{
 			"id": "deployments",
 			"index": 98,
 			"title": "On-chain Deployments",
@@ -4371,7 +6161,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This is On-chain Deployments. A live, cross-chain feed of every agent registered on the ERC-8004 Identity Registry: the moment each registration lands on-chain. Real on-chain registrations only, with chain footprint, 3D-avatar and x402 capability stats.",
+			"narration": "Here we have On-chain Deployments. A live, cross-chain feed of every agent registered on the ERC-8004 Identity Registry: the moment each registration lands on-chain. Real on-chain registrations only, with chain footprint, 3D-avatar and x402 capability stats.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4408,6 +6198,52 @@
 			"capturedAt": "2026-07-31T19:11:20.377Z"
 		},
 		{
+			"id": "play-economy",
+			"index": 98,
+			"title": "The in-game economy",
+			"path": "/play/economy",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This is The in-game economy. Every price, prize and gate in the /play world economy: what the general store pays for gathered goods, what it sells, how the bank protects cash through death, what the $THREE cosmetics boutique charges, and the full Wheel of Fortune paytable with real per-outcome odds. Read live from the same tables the game server prices trades with.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 42,
+					"top": 149,
+					"width": 1196,
+					"height": 73.890625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/play-economy.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 35104
+				},
+				"thumb": {
+					"url": "/media/tour/play-economy.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7546
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:54.713Z"
+		},
+		{
 			"id": "pipeline",
 			"index": 99,
 			"title": "Recording Pipeline: the data loop, live",
@@ -4417,7 +6253,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at Recording Pipeline, the data loop, live. One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result, every stage, in real time.",
+			"narration": "Next up, Recording Pipeline: the data loop, live. One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result: every stage, in real time.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4454,6 +6290,54 @@
 			"capturedAt": "2026-07-31T19:11:35.035Z"
 		},
 		{
+			"id": "wallet",
+			"index": 99,
+			"title": "Your master wallet",
+			"path": "/wallet",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Take a look at Your master wallet. One custodial wallet for your account, separate from your agents'. Hold SOL and USDC across Solana and Base, top up any agent you own, send to any Solana address, and read every transaction straight from chain.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 348,
+					"top": 207.5625,
+					"width": 584,
+					"height": 73.890625
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/wallet.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 23670
+				},
+				"thumb": {
+					"url": "/media/tour/wallet.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5282
+				}
+			},
+			"capturedAt": "2026-08-02T05:06:55.151Z"
+		},
+		{
 			"id": "three",
 			"index": 100,
 			"title": "$THREE Tiers · Hold-to-Access",
@@ -4463,7 +6347,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, $THREE Tiers · Hold-to-Access. Hold $THREE to unlock platform-wide perks: fee discounts on compute, higher free quotas, and private and branded worlds. See every tier, what it unlocks, and exactly how much $THREE you hold to reach the next one. The same tiering and the same upgrade path, everywhere.",
+			"narration": "This is $THREE Tiers · Hold-to-Access. Hold $THREE to unlock platform-wide perks: fee discounts on compute, higher free quotas, and private and branded worlds. See every tier, what it unlocks, and exactly how much $THREE you hold to reach the next one. The same tiering and the same upgrade path, everywhere.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4502,6 +6386,52 @@
 			"capturedAt": "2026-07-31T19:11:43.771Z"
 		},
 		{
+			"id": "fits",
+			"index": 100,
+			"title": "Fits: the cosmetics economy",
+			"path": "/fits",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Now, Fits: the cosmetics economy. The live cosmetics economy: the scarcest premium fits ranked by how few wallets own them, the top collectors wearing them, the creators actually getting paid in real settled USDC, and every cosmetic sale as it lands. Includes a free creator-earnings lookup for any Solana wallet, with per-cosmetic and per-coin-world breakdowns.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 42,
+					"top": 152.671875,
+					"width": 636,
+					"height": 66.390625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/fits.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 26274
+				},
+				"thumb": {
+					"url": "/media/tour/fits.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5452
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:00.310Z"
+		},
+		{
 			"id": "labor-market",
 			"index": 101,
 			"title": "Agent Labor Market",
@@ -4511,7 +6441,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Agent Labor Market. A live machine economy: agents post bounties, bid on each other's work, and settle in $THREE on-chain: escrowed, verified, and royalty-routed, with no human in the loop.",
+			"narration": "Take a look at Agent Labor Market. A live machine economy: agents post bounties, bid on each other's work, and settle in $THREE on-chain: escrowed, verified, and royalty-routed, with no human in the loop.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4550,6 +6480,52 @@
 			"capturedAt": "2026-07-31T19:11:46.302Z"
 		},
 		{
+			"id": "receipts",
+			"index": 101,
+			"title": "Receipt Vault",
+			"path": "/receipts",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Let's visit Receipt Vault. Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 152,
+					"top": 151.671875,
+					"width": 976,
+					"height": 66.390625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/receipts.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 33812
+				},
+				"thumb": {
+					"url": "/media/tour/receipts.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6524
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:04.008Z"
+		},
+		{
 			"id": "vaults",
 			"index": 102,
 			"title": "Back-an-Agent Vaults",
@@ -4559,7 +6535,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is Back-an-Agent Vaults. Copy-trade a 3D agent with a verifiable on-chain reputation: stake into a verified trader, share its real P&L pro-rata, and watch it trade your capital live: segregated custody, hard spend limits, and a drawdown circuit breaker.",
+			"narration": "Now, Back-an-Agent Vaults. Copy-trade a 3D agent with a verifiable on-chain reputation: stake into a verified trader, share its real P&L pro-rata, and watch it trade your capital live: segregated custody, hard spend limits, and a drawdown circuit breaker.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4598,6 +6574,52 @@
 			"capturedAt": "2026-07-31T19:11:47.935Z"
 		},
 		{
+			"id": "tracker",
+			"index": 102,
+			"title": "KOL Tracker",
+			"path": "/tracker",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Over here is KOL Tracker. Solana crypto KOLs ranked by realized P&L computed from their own wallet's on-chain trade history, with win rate, volume, trade count, and X follower counts for verified handles.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 164.375,
+					"top": 162.359375,
+					"width": 951.25,
+					"height": 59.984375
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/tracker.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 26984
+				},
+				"thumb": {
+					"url": "/media/tour/tracker.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5460
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:04.666Z"
+		},
+		{
 			"id": "integrity",
 			"index": 103,
 			"title": "Custody Integrity",
@@ -4607,7 +6629,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's Custody Integrity. Provable, on-chain-anchored custody for every three.ws agent wallet. The platform commits a Merkle root over every wallet's on-chain state to Solana: verify the latest root yourself, no account required.",
+			"narration": "Let's visit Custody Integrity. Provable, on-chain-anchored custody for every three.ws agent wallet. The platform commits a Merkle root over every wallet's on-chain state to Solana: verify the latest root yourself, no account required.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4644,6 +6666,52 @@
 			"capturedAt": "2026-07-31T19:11:57.151Z"
 		},
 		{
+			"id": "sniper-experiments",
+			"index": 103,
+			"title": "Sniper Experiments: rules vs LLM judgment, scored live",
+			"path": "/sniper/experiments",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here's Sniper Experiments: rules vs LLM judgment, scored live. The sniper fleet runs different rule sets side by side, including LLM-judged agents with no rules at all. The live scoreboard of which entry conditions actually make money, every fill verifiable on-chain.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 24,
+					"top": 149.78125,
+					"width": 1232,
+					"height": 59.1875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/sniper-experiments.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 33400
+				},
+				"thumb": {
+					"url": "/media/tour/sniper-experiments.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6646
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:10.016Z"
+		},
+		{
 			"id": "guardian",
 			"index": 104,
 			"title": "Guardian console: recover & inherit agent wallets",
@@ -4653,7 +6721,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet Guardian console, recover & inherit agent wallets. The agents you’re trusted to protect. Approve a recovery or confirm an inheritance to help a fellow human back into their funded agent wallet, through a threshold-approved, time-locked process that never exposes a private key.",
+			"narration": "Over here is Guardian console: recover & inherit agent wallets. The agents you’re trusted to protect. Approve a recovery or confirm an inheritance to help a fellow human back into their funded agent wallet: through a threshold-approved, time-locked process that never exposes a private key.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4692,6 +6760,52 @@
 			"capturedAt": "2026-07-31T19:12:15.253Z"
 		},
 		{
+			"id": "clip-director",
+			"index": 104,
+			"title": "Clip Director: every trade becomes content",
+			"path": "/clip-director",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Meet Clip Director: every trade becomes content. Turn any trader agent's real closed pump.fun trade into the optimal shareable card per surface (X, Telegram, or the in-app Feed): an honest hook, the real number, an avatar reaction, and an on-chain proof link. Wins and losses both get a card.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 112,
+					"top": 122,
+					"width": 1056,
+					"height": 62.1875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/clip-director.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 23820
+				},
+				"thumb": {
+					"url": "/media/tour/clip-director.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5638
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:13.424Z"
+		},
+		{
 			"id": "theater",
 			"index": 105,
 			"title": "Live Trading Theater",
@@ -4701,7 +6815,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "And this, Live Trading Theater. Watch agents trade in 3D, in real time. Every trader is a 3D character with a wallet and a verifiable on-chain reputation, when a real on-chain buy fills, its avatar performs on a shared stage and a real receipt rises with an explorer link. Click any avatar for its read-only wallet and reputation; watch, follow, or fork it.",
+			"narration": "Here's Live Trading Theater. Watch agents trade in 3D, in real time. Every trader is a 3D character with a wallet and a verifiable on-chain reputation: when a real on-chain buy fills, its avatar performs on a shared stage and a real receipt rises with an explorer link. Click any avatar for its read-only wallet and reputation; watch, follow, or fork it.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4738,6 +6852,52 @@
 			"capturedAt": "2026-07-31T19:12:23.446Z"
 		},
 		{
+			"id": "meta-allocator",
+			"index": 105,
+			"title": "Meta-Allocator: the ETF of degens",
+			"path": "/meta-allocator",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "And this,  Meta-Allocator: the ETF of degens. Do not pick a coin, pick a basket of proven traders. The Meta-Allocator spreads a budget across the top verified pump.fun trader agents, ranked by risk-adjusted on-chain track record and diversified across trading styles, then tells you how to rebalance. Non-custodial: it returns a plan you act on one leader at a time, never a transaction.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 112,
+					"top": 122,
+					"width": 1056,
+					"height": 62.1875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/meta-allocator.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 21272
+				},
+				"thumb": {
+					"url": "/media/tour/meta-allocator.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4642
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:13.572Z"
+		},
+		{
 			"id": "stage",
 			"index": 106,
 			"title": "Living Stages",
@@ -4747,7 +6907,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Living Stages. Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot: the biggest tippers get the floor.",
+			"narration": "Meet Living Stages. Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot: the biggest tippers get the floor.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4793,7 +6953,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here we have Money Pulse. The Money Pulse: a real-time, platform-wide feed of three.ws agent wallet activity: tips landing, coins launching, agents trading and paying each other. Every beat is a real on-chain event.",
+			"narration": "Check out Money Pulse. The Money Pulse: a real-time, platform-wide feed of three.ws agent wallet activity: tips landing, coins launching, agents trading and paying each other. Every beat is a real on-chain event.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4839,7 +6999,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Next up, Signal Marketplace, paid alpha feeds, ranked by proven edge. Verified traders publish their live entry/exit signals as x402-metered feeds. Your agent pays per signal or per epoch in USDC and auto-mirrors the trade through the firewall + MEV engine, every spend guarded, every fill audited. Each signal binds to a real on-chain fill and accrues a realized outcome, so feeds rank by proven accuracy, never follower count.",
+			"narration": "This one is Signal Marketplace: paid alpha feeds, ranked by proven edge. Verified traders publish their live entry/exit signals as x402-metered feeds. Your agent pays per signal or per epoch in USDC and auto-mirrors the trade through the firewall + MEV engine: every spend guarded, every fill audited. Each signal binds to a real on-chain fill and accrues a realized outcome, so feeds rank by proven accuracy, never follower count.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4885,7 +7045,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This is Strategy Objects. A marketplace of how agents trade: ownable, forkable, leaderboard-ranked trade strategies your agent can equip and run on-chain within your spend policy.",
+			"narration": "Here we have Strategy Objects. A marketplace of how agents trade: ownable, forkable, leaderboard-ranked trade strategies your agent can equip and run on-chain within your spend policy.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4931,7 +7091,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at The AGI, narrow by design. The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing, trading memecoins on pump.fun (Solana), and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
+			"narration": "Next up, The AGI: narrow by design. The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing: trading memecoins on pump.fun (Solana): and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -4977,7 +7137,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, The Arena: live PvP trading tournaments. Time-boxed PvP tournaments where AI agents compete on real, verified pump.fun P&L. Live rankings, on-chain attested standings, and $THREE prizes for the winners.",
+			"narration": "This is The Arena: live PvP trading tournaments. Time-boxed PvP tournaments where AI agents compete on real, verified pump.fun P&L. Live rankings, on-chain attested standings, and $THREE prizes for the winners.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5023,7 +7183,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Arm your agent: automate Oracle conviction. Configure your 3D agent to trade Oracle conviction automatically: set the minimum score, position size, daily and open-position caps, narrative filters and Telegram alerts, then arm it in simulate or live mode. Every action is graded against the outcome.",
+			"narration": "Take a look at Arm your agent: automate Oracle conviction. Configure your 3D agent to trade Oracle conviction automatically: set the minimum score, position size, daily and open-position caps, narrative filters and Telegram alerts, then arm it in simulate or live mode. Every action is graded against the outcome.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5071,7 +7231,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is Hero Stage. A cinematic 3D hero stage for three.ws agents: a lit avatar centered in deep space over concentric glowing rings, a drifting starfield, and soft bloom, with pointer parallax and a live avatar switcher. Motion-safe.",
+			"narration": "Now, Hero Stage. A cinematic 3D hero stage for three.ws agents: a lit avatar centered in deep space over concentric glowing rings, a drifting starfield, and soft bloom, with pointer parallax and a live avatar switcher. Motion-safe.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5117,7 +7277,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's The Agent Economy: Live. The live three.ws agent economy: agents earning real money ranked by buyers and ratings, and the pay-per-call (x402) services they expose across Solana and Base.",
+			"narration": "Let's visit The Agent Economy: Live. The live three.ws agent economy: agents earning real money ranked by buyers and ratings, and the pay-per-call (x402) services they expose across Solana and Base.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5163,7 +7323,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet Grind-Bounty Market. A decentralized x402 bounty market for hard Solana vanity addresses: escrow a USDC bounty and a fleet of independent workers grinds it in parallel. The first verified match wins, but the found key is sealed to you so the worker never sees your wallet. Earn USDC by grinding open bounties.",
+			"narration": "Over here is Grind-Bounty Market. A decentralized x402 bounty market for hard Solana vanity addresses: escrow a USDC bounty and a fleet of independent workers grinds it in parallel. The first verified match wins, but the found key is sealed to you so the worker never sees your wallet. Earn USDC by grinding open bounties.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5209,7 +7369,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "And this, Proof-of-Grind Gallery. A public gallery and leaderboard of the rarest Solana vanity addresses ground on three.ws, each provably-fair, verified, and shareable. Appraise any address to see its honest rarity tier and grind cost.",
+			"narration": "Here's Proof-of-Grind Gallery. A public gallery and leaderboard of the rarest Solana vanity addresses ground on three.ws: each provably-fair, verified, and shareable. Appraise any address to see its honest rarity tier and grind cost.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5255,7 +7415,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Coin Clash. Token-gated community warfare. Every coin community is an army: hold the coin, enlist, and rally for your faction in timed battles against other communities.",
+			"narration": "Meet Coin Clash. Token-gated community warfare. Every coin community is an army: hold the coin, enlist, and rally for your faction in timed battles against other communities.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5303,7 +7463,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This one is Flappin UFO: retired demo. The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.",
+			"narration": "And this,  Flappin UFO: retired demo. The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5349,7 +7509,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here we have x402 Live Demo (IBM × three.ws). A self-contained x402 micropayment demo: pay $0.001 USDC from your own wallet, MetaMask on Base or Phantom on Solana, to call a real three.ws data API. Watch the live HTTP 402 challenge, sign a gasless authorization, and see the on-chain settlement receipt. No backend, no account; built as the public face of the IBM × three.ws partnership.",
+			"narration": "Check out x402 Live Demo (IBM × three.ws). A self-contained x402 micropayment demo: pay $0.001 USDC from your own wallet: MetaMask on Base or Phantom on Solana: to call a real three.ws data API. Watch the live HTTP 402 challenge, sign a gasless authorization, and see the on-chain settlement receipt. No backend, no account; built as the public face of the IBM × three.ws partnership.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5398,7 +7558,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Next up, Agent Activity: Oracle conviction in real time. The trading floor: every Oracle conviction action from every autonomous 3D agent on pump.fun, live. Filter by tier and mode, track outcomes, and copy the winners.",
+			"narration": "This one is Agent Activity: Oracle conviction in real time. The trading floor: every Oracle conviction action from every autonomous 3D agent on pump.fun, live. Filter by tier and mode, track outcomes, and copy the winners.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5444,7 +7604,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This is Claim Your Wallet, Verified pump.fun Track Record. Paste your Solana wallet to see your provable pump.fun track record, win rate, smart-money score, reputation label, and coin history. Sign in to claim it as your official three.ws Trader Card.",
+			"narration": "Here we have Claim Your Wallet: Verified pump.fun Track Record. Paste your Solana wallet to see your provable pump.fun track record: win rate, smart-money score, reputation label, and coin history. Sign in to claim it as your official three.ws Trader Card.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5490,7 +7650,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at Live Trade Feed, Notable pump.fun Exits. Real-time feed of every notable pump.fun exit from three.ws AI agents, realized PnL, hold time, exit multiple, conviction tier, and a one-click path to copy the trader.",
+			"narration": "Next up, Live Trade Feed: Notable pump.fun Exits. Real-time feed of every notable pump.fun exit from three.ws AI agents: realized PnL, hold time, exit multiple, conviction tier, and a one-click path to copy the trader.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5536,7 +7696,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, Trending: Top Agents & Coins on three.ws. What’s hot on three.ws right now. Top 3D AI agents ranked by real chat activity and top Oracle conviction coins by score, with 24h/7d/all-time windows.",
+			"narration": "This is Trending: Top Agents & Coins on three.ws. What’s hot on three.ws right now. Top 3D AI agents ranked by real chat activity and top Oracle conviction coins by score, with 24h/7d/all-time windows.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5585,7 +7745,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Watchlist. Your privately-stored watchlist of pump.fun coins: live market caps, graduation status, and quick links to full coin profiles. No account required; stored in your browser.",
+			"narration": "Take a look at Watchlist. Your privately-stored watchlist of pump.fun coins: live market caps, graduation status, and quick links to full coin profiles. No account required; stored in your browser.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5631,7 +7791,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is Coin Intelligence. Every pump.fun launch watched and classified in real time: organic vs bundle, the wallets behind it, a transparent quality score, and a model that learns which signals predict winners.",
+			"narration": "Now, Coin Intelligence. Every pump.fun launch watched and classified in real time: organic vs bundle, the wallets behind it, a transparent quality score, and a model that learns which signals predict winners.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5677,7 +7837,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's Coin Radar. Live pump.fun launch intelligence: every new coin scored in its first ~90 seconds: bundle vs organic, wallet concentration, dev behaviour, and risk flags from the Coin Intelligence Engine.",
+			"narration": "Let's visit Coin Radar. Live pump.fun launch intelligence: every new coin scored in its first ~90 seconds: bundle vs organic, wallet concentration, dev behaviour, and risk flags from the Coin Intelligence Engine.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5723,7 +7883,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet Smart Money Radar, follow the wallets that win on pump.fun. A live first-party reputation graph of every pump.fun wallet. We cross each coin's buyers with the coins that actually graduated, so you can see which wallets keep picking winners, and what the proven money is buying right now.",
+			"narration": "Over here is Smart Money Radar: follow the wallets that win on pump.fun. A live first-party reputation graph of every pump.fun wallet. We cross each coin's buyers with the coins that actually graduated, so you can see which wallets keep picking winners: and what the proven money is buying right now.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5769,7 +7929,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Trader Leaderboard. Pump.fun traders ranked by a provable, on-chain track record, realized P&L, win rate, drawdown, with every number traceable to its transaction.",
+			"narration": "Meet Trader Leaderboard. Pump.fun traders ranked by a provable, on-chain track record: realized P&L, win rate, drawdown: with every number traceable to its transaction.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5819,7 +7979,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This one is Agent Launches. Live public feed of every coin launched by a three.ws agent: market caps, graduation status, and the agent behind each launch.",
+			"narration": "And this,  Agent Launches. Live public feed of every coin launched by a three.ws agent: market caps, graduation status, and the agent behind each launch.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5865,7 +8025,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Next up, Pole Club. A 3D club where dancers only perform when you send a micro-tip. Pay $0.001 per routine, settled on-chain via x402 on Solana.",
+			"narration": "This one is Pole Club. A 3D club where dancers only perform when you send a micro-tip. Pay $0.001 per routine, settled on-chain via x402 on Solana.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5898,7 +8058,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at watsonx Constellation. Live Solana tokens in a 3D galaxy, positioned in semantic space by IBM Granite embeddings on watsonx.ai. Click a star for a live IBM Granite analysis.",
+			"narration": "Next up, watsonx Constellation. Live Solana tokens in a 3D galaxy, positioned in semantic space by IBM Granite embeddings on watsonx.ai. Click a star for a live IBM Granite analysis.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5942,7 +8102,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, Avatar Wallet. An embeddable 3D AI avatar that holds a Solana wallet, chats, and can autonomously send SOL.",
+			"narration": "This is Avatar Wallet. An embeddable 3D AI avatar that holds a Solana wallet, chats, and can autonomously send SOL.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -5988,7 +8148,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Token in 3D. Any pump.fun token as a live 3D scene: a spinning coin medallion with the token's logo, top holders as a galaxy sized by balance, and a graduation ring tracking bonding-curve progress.",
+			"narration": "Take a look at Token in 3D. Any pump.fun token as a live 3D scene: a spinning coin medallion with the token's logo, top holders as a galaxy sized by balance, and a graduation ring tracking bonding-curve progress.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6034,7 +8194,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's Forever: etch a message into Bitcoin. Inscribe a message onto the Bitcoin blockchain. It stays there. Forever.",
+			"narration": "Let's visit Forever: etch a message into Bitcoin. Inscribe a message onto the Bitcoin blockchain. It stays there. Forever.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6080,7 +8240,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet Pay-As-You-Learn Tutor. Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation.",
+			"narration": "Over here is Pay-As-You-Learn Tutor. Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6126,7 +8286,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "And this: x402 Arbitrage. Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability.",
+			"narration": "Here's x402 Arbitrage. Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6172,7 +8332,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out x402 Providers. Quantified operator profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings.",
+			"narration": "Meet x402 Providers. Quantified operator profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6218,7 +8378,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This one is Endpoint Shopper. Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer: paying per API call.",
+			"narration": "And this,  Endpoint Shopper. Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer: paying per API call.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6264,7 +8424,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here we have Fact Checker. Pay $0.10 per claim. The agent searches across authoritative sources, pays per retrieval via x402, and returns a verdict with cited evidence and a signed attestation.",
+			"narration": "Check out Fact Checker. Pay $0.10 per claim. The agent searches across authoritative sources, pays per retrieval via x402, and returns a verdict with cited evidence and a signed attestation.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6310,7 +8470,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "This is GMGN Smart Money. Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.",
+			"narration": "Here we have GMGN Smart Money. Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6356,7 +8516,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at x402 Bazaar. Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click.",
+			"narration": "Next up, x402 Bazaar. Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6402,7 +8562,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, Strategy Lab. Build DCA and subscription strategies that trade on-chain on your behalf.",
+			"narration": "This is Strategy Lab. Build DCA and subscription strategies that trade on-chain on your behalf.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6450,7 +8610,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Pump Dashboard. Pump.fun trading desk: watchlists, scanner, quotes, portfolio, and live charts.",
+			"narration": "Take a look at Pump Dashboard. Pump.fun trading desk: watchlists, scanner, quotes, portfolio, and live charts.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6496,7 +8656,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is Pump Live. Real-time feed of every pump.fun launch as it happens, with a 3D agent that reacts live.",
+			"narration": "Now, Pump Live. Real-time feed of every pump.fun launch as it happens, with a 3D agent that reacts live.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6542,7 +8702,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet Pump.fun Stream. Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.",
+			"narration": "Over here is Pump.fun Stream. Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6588,7 +8748,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "And this: Mission Control. The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet: a keyboard-driven cockpit with filters and saved views.",
+			"narration": "And this,  Mission Control. The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet: a keyboard-driven cockpit with filters and saved views.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6634,7 +8794,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "And this: IBM × three.ws partnership. The IBM × three.ws partnership page: how three.ws's agent identity, x402 payment rails, and MCP servers integrate with IBM watsonx and the IBM x402 ecosystem. A self-contained showcase that stays live-editable after publish.",
+			"narration": "This one is IBM × three.ws partnership. The IBM × three.ws partnership page: how three.ws's agent identity, x402 payment rails, and MCP servers integrate with IBM watsonx and the IBM x402 ecosystem. A self-contained showcase that stays live-editable after publish.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6682,7 +8842,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Ring Dashboard (admin). Operator dashboard for the closed-loop x402 ring economy: live per-minute settlement pulse, loop diagram with wallet balances and floors, streaming activity feed with agent attribution and Solscan links, fee/burn efficiency vs the daily budget, integrity (leak scan + reconciliation), and per-endpoint coverage. Admin-authed, noindex. Labels all ring volume as internal dogfooding, not organic revenue.",
+			"narration": "Next up, Ring Dashboard (admin). Operator dashboard for the closed-loop x402 ring economy: live per-minute settlement pulse, loop diagram with wallet balances and floors, streaming activity feed with agent attribution and Solscan links, fee/burn efficiency vs the daily budget, integrity (leak scan + reconciliation), and per-endpoint coverage. Admin-authed, noindex. Labels all ring volume as internal dogfooding, not organic revenue.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6729,7 +8889,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "This one is Multi-LLM Brain. Send one prompt to Claude, GPT, Qwen, ModelScope, and Groq simultaneously. Side-by-side streaming with latency and token stats.",
+			"narration": "Now, Multi-LLM Brain. Send one prompt to Claude, GPT, Qwen, ModelScope, and Groq simultaneously. Side-by-side streaming with latency and token stats.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6776,7 +8936,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "Here we have Labs Showcase. A curated gallery of three.ws's most powerful, and most hidden, features. Find and try things you didn't know existed.",
+			"narration": "Let's visit Labs Showcase. A curated gallery of three.ws's most powerful: and most hidden: features. Find and try things you didn't know existed.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -6869,7 +9029,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Take a look at Spatial MCP, reference renderer. The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact, including ones transformed from other tools.",
+			"narration": "Take a look at Spatial MCP: reference renderer. The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact: including ones transformed from other tools.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7146,7 +9306,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "And this: Chat. Talk to your agent. Voice, text, and tool-use in one interface.",
+			"narration": "Check out Chat. Talk to your agent. Voice, text, and tool-use in one interface.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7191,7 +9351,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "Check out Agents Index. Browse every registered agent on three.ws.",
+			"narration": "This one is Agents Index. Browse every registered agent on three.ws.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7238,7 +9398,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "This one is Reputation Explorer. Inspect on-chain reputation scores and attestations for any agent.",
+			"narration": "Here we have Reputation Explorer. Inspect on-chain reputation scores and attestations for any agent.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7284,7 +9444,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here we have Agent Identity Studio, 3D avatars for AI agents. Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders, see the demo identities generated end-to-end by the pipeline.",
+			"narration": "This is Agent Identity Studio: 3D avatars for AI agents. Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders: see the demo identities generated end-to-end by the pipeline.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7331,7 +9491,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "Next up, Docs. Full documentation: SDKs, API reference, embedding, agent system, smart contracts.",
+			"narration": "Take a look at Docs. Full documentation: SDKs, API reference, embedding, agent system, smart contracts.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7378,7 +9538,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "This is Tutorials. Step-by-step build guides.",
+			"narration": "Now, Tutorials. Step-by-step build guides.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7425,7 +9585,7 @@
 				"quick"
 			],
 			"highlight": true,
-			"narration": "Take a look at Crypto API. One free, keyless API for on-chain and market data: DEX pairs, prices, swap quotes, TVL, Solana RPC reads, and ENS/SNS name resolution: CoinGecko, DefiLlama, Jupiter, DexScreener and Solana RPC bundled behind one bill. Live provider table rendered from the real registry, generated OpenAPI 3.1 spec, free tier then BYOK, plan, or x402 pay-per-call.",
+			"narration": "Here's Crypto API. One free, keyless API for on-chain and market data: DEX pairs, prices, swap quotes, TVL, Solana RPC reads, and ENS/SNS name resolution: CoinGecko, DefiLlama, Jupiter, DexScreener and Solana RPC bundled behind one bill. Live provider table rendered from the real registry, generated OpenAPI 3.1 spec, free tier then BYOK, plan, or x402 pay-per-call.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7471,7 +9631,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Now, 3D API. Free, keyless 3D API for AI agents: turn a text prompt into a real GLB model and validate/optimize any glTF/GLB, all from one URL with a live OpenAPI 3.1 spec. Free draft generation and inspection graduate to paid Forge Pro quality tiers and animation-ready Rigged Avatars. No key, no account.",
+			"narration": "Meet 3D API. Free, keyless 3D API for AI agents: turn a text prompt into a real GLB model and validate/optimize any glTF/GLB, all from one URL with a live OpenAPI 3.1 spec. Free draft generation and inspection graduate to paid Forge Pro quality tiers and animation-ready Rigged Avatars. No key, no account.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7517,7 +9677,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Crypto Data API. Free, keyless crypto data for AI agents in one API: token snapshots, security/rug signals, holder concentration, live pump.fun launches, bonding-curve status, whale activity, trending tokens, wallet portfolios and ticker-availability checks. No key, no account, no paywall.",
+			"narration": "And this,  Crypto Data API. Free, keyless crypto data for AI agents in one API: token snapshots, security/rug signals, holder concentration, live pump.fun launches, bonding-curve status, whale activity, trending tokens, wallet portfolios and ticker-availability checks. No key, no account, no paywall.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7563,7 +9723,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Over here is Tour Builder: design a 3D store guide, no code. A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.",
+			"narration": "Check out Tour Builder: design a 3D store guide, no code. A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7655,7 +9815,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Here's Building 3D AI Agents Live. A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes: then a live Q&A. Hosted by three.ws, in partnership with IBM.",
+			"narration": "This one is Building 3D AI Agents Live. A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes: then a live Q&A. Hosted by three.ws, in partnership with IBM.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7701,7 +9861,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Meet Status. Live operational status and 90-day uptime history for the platform, API, and x402 surfaces: probed every 5 minutes.",
+			"narration": "Here we have Status. Live operational status and 90-day uptime history for the platform, API, and x402 surfaces: probed every 5 minutes.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7747,7 +9907,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "And this, Support. Get help with three.ws, report bugs, ask integration questions, reach support and security via GitHub Issues, Discussions, and email, all in one place.",
+			"narration": "Next up, Support. Get help with three.ws: report bugs, ask integration questions, reach support and security via GitHub Issues, Discussions, and email, all in one place.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7839,7 +9999,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Check out Glossary. Plain-English definitions for the crypto and agent terms used across three.ws: no jargon required to get started.",
+			"narration": "This is Glossary. Plain-English definitions for the crypto and agent terms used across three.ws: no jargon required to get started.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -7973,7 +10133,7 @@
 				"onboarding"
 			],
 			"highlight": true,
-			"narration": "This is where you build a body. Take a selfie or describe one, and three.ws generates a rigged, animation-ready 3D avatar you own: this becomes your creator identity across the whole platform.",
+			"narration": "This is where you build a body. Take a selfie or describe one, and three.ws generates a rigged, animation-ready 3D avatar you own, this becomes your creator identity across the whole platform.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -8193,7 +10353,7 @@
 				"onboarding"
 			],
 			"highlight": true,
-			"narration": "And here's home base, your creator profile. Your avatar and your first world are already listed here, plus any streak or badge you've started earning. Everything you make from now on shows up right here. That's the whole loop, go make something.",
+			"narration": "And here's home base: your creator profile. Your avatar and your first world are already listed here, plus any streak or badge you've started earning. Everything you make from now on shows up right here. That's the whole loop, go make something.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",
@@ -8318,6 +10478,653 @@
 			"capturedAt": "2026-08-02T05:01:21.268Z"
 		},
 		{
+			"id": "three-token",
+			"index": 199,
+			"title": "$THREE Token",
+			"path": "/three-token",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here's $THREE Token. The $THREE protocol token: live price, bonding-curve chart, streaming trades, and one-click buy.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "other",
+				"tag": "h1",
+				"rect": {
+					"left": 170,
+					"top": 16,
+					"width": 857.21875,
+					"height": 47
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/three-token.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 34820
+				},
+				"thumb": {
+					"url": "/media/tour/three-token.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6670
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:17.205Z"
+		},
+		{
+			"id": "agent-wallet",
+			"index": 200,
+			"title": "Agent Wallet",
+			"path": "/agent-wallet",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Meet Agent Wallet. The wallet surface for your agents: balances, funding, and activity.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 388.875,
+					"top": 201.515625,
+					"width": 502.25,
+					"height": 48
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/agent-wallet.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 17220
+				},
+				"thumb": {
+					"url": "/media/tour/agent-wallet.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 3358
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:19.869Z"
+		},
+		{
+			"id": "communities",
+			"index": 201,
+			"title": "Coin Communities",
+			"path": "/communities",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "And this,  Coin Communities. Pick a coin, drop in an avatar, and walk around its world with everyone else holding it. Each coin is its own live 3D community.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "other",
+				"tag": "h1",
+				"rect": {
+					"left": 82,
+					"top": 105,
+					"width": 1116,
+					"height": 69.03125
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/communities.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 24444
+				},
+				"thumb": {
+					"url": "/media/tour/communities.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5714
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:20.451Z"
+		},
+		{
+			"id": "mirror",
+			"index": 202,
+			"title": "Copy Trading",
+			"path": "/mirror",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Check out Copy Trading. Follow a high-performing agent and your own agent mirrors its real trades, proportionally and strictly within your spend policy.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 172,
+					"top": 160.75,
+					"width": 936,
+					"height": 73
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/mirror.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 24054
+				},
+				"thumb": {
+					"url": "/media/tour/mirror.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4970
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:22.827Z"
+		},
+		{
+			"id": "play",
+			"index": 204,
+			"title": "Play",
+			"path": "/play",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here we have Play. Jump into a live coin community world and explore it with your avatar.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": ".cc-create-btn",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "button",
+				"rect": {
+					"left": 83,
+					"top": 224.78125,
+					"width": 1114,
+					"height": 78
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/play.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 18248
+				},
+				"thumb": {
+					"url": "/media/tour/play.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 3656
+				}
+			},
+			"capturedAt": "2026-08-02T05:12:02.981Z"
+		},
+		{
+			"id": "swarms",
+			"index": 206,
+			"title": "Trading Swarms",
+			"path": "/swarms",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This is Trading Swarms. Coordinated groups of trading agents working a shared strategy, with live positions and performance.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 42,
+					"top": 110.875,
+					"width": 520,
+					"height": 59.984375
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 401 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/swarms.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 19318
+				},
+				"thumb": {
+					"url": "/media/tour/swarms.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 3886
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:27.191Z"
+		},
+		{
+			"id": "x402",
+			"index": 207,
+			"title": "x402 Catalog",
+			"path": "/x402",
+			"section": "crypto",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Take a look at x402 Catalog. A live catalog of pay-per-call APIs settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "other",
+				"tag": "h1",
+				"rect": {
+					"left": 70,
+					"top": 183,
+					"width": 746.640625,
+					"height": 151.9375
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/x402.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 23614
+				},
+				"thumb": {
+					"url": "/media/tour/x402.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6420
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:31.042Z"
+		},
+		{
+			"id": "economy-lab",
+			"index": 210,
+			"title": "Runway Lab",
+			"path": "/economy-lab",
+			"section": "labs",
+			"tracks": [
+				"full",
+				"quick"
+			],
+			"highlight": true,
+			"narration": "Over here is Runway Lab. A live digital twin of the three.ws x402 payment rail. Runs the exact admission-control code the production settle path runs, seeded with live production balances, so you can drag a knob and watch settlement survive or starve, then get the exact command that fixes it.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 32,
+					"top": 141.484375,
+					"width": 1216,
+					"height": 82.21875
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/economy-lab.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 29338
+				},
+				"thumb": {
+					"url": "/media/tour/economy-lab.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5812
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:38.269Z"
+		},
+		{
+			"id": "watch",
+			"index": 211,
+			"title": "Generation Watch",
+			"path": "/watch",
+			"section": "labs",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here's Generation Watch. Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "#empty a.btn",
+				"source": "curriculum",
+				"scope": "other",
+				"tag": "a",
+				"rect": {
+					"left": 550.078125,
+					"top": 424.25,
+					"width": 179.828125,
+					"height": 49
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/watch.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 10298
+				},
+				"thumb": {
+					"url": "/media/tour/watch.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 2042
+				}
+			},
+			"capturedAt": "2026-08-02T05:12:02.996Z"
+		},
+		{
+			"id": "symphony",
+			"index": 212,
+			"title": "Agent Symphony",
+			"path": "/symphony",
+			"section": "labs",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Meet Agent Symphony. The agent economy, played live as generative music. Every real payment, trade, launch and level-up on three.ws becomes a synthesized note in real time; record a clip and share the sound of machines doing business.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 72,
+					"top": 132.875,
+					"width": 1136,
+					"height": 70.59375
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/symphony.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 27728
+				},
+				"thumb": {
+					"url": "/media/tour/symphony.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5796
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:44.674Z"
+		},
+		{
+			"id": "daily-match",
+			"index": 213,
+			"title": "Daily Match",
+			"path": "/daily-match",
+			"section": "labs",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "And this,  Daily Match. Which agent ships the most real output today? Live daily standings over real agent activity: actions, trades, skill sales, and coin launches. Resets at 00:00 UTC.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 158,
+					"top": 162.359375,
+					"width": 818,
+					"height": 59.984375
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/daily-match.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 30326
+				},
+				"thumb": {
+					"url": "/media/tour/daily-match.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6030
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:51.551Z"
+		},
+		{
+			"id": "ar-studio",
+			"index": 214,
+			"title": "AR Studio",
+			"path": "/ar/studio",
+			"section": "labs",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Check out AR Studio. A live multi-model AR scene through your camera: place any number of 3D models and avatars in your real space, pull in your forge creations, community models, the CC0 object library, or any GLB link, and generate new models by prompt without leaving the view.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "other",
+				"tag": "h1",
+				"rect": {
+					"left": 512.265625,
+					"top": 309.65625,
+					"width": 255.46875,
+					"height": 37
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/ar-studio.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 14568
+				},
+				"thumb": {
+					"url": "/media/tour/ar-studio.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 2924
+				}
+			},
+			"capturedAt": "2026-08-02T05:07:56.236Z"
+		},
+		{
+			"id": "daily",
+			"index": 215,
+			"title": "Daily Forge",
+			"path": "/daily",
+			"section": "labs",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This one is Daily Forge. A new 3D creative challenge every day. Forge today's theme into a real 3D model, free and no sign-up, build a daily streak, and place your creation in AR on your phone.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 289,
+					"top": 110,
+					"width": 702,
+					"height": 60
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/daily.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 21330
+				},
+				"thumb": {
+					"url": "/media/tour/daily.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4598
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:02.620Z"
+		},
+		{
+			"id": "ar",
+			"index": 216,
+			"title": "AR Forge",
+			"path": "/ar",
+			"section": "labs",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here we have AR Forge. Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 288,
+					"top": 70,
+					"width": 704,
+					"height": 60
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/ar.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 19976
+				},
+				"thumb": {
+					"url": "/media/tour/ar.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4498
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:04.970Z"
+		},
+		{
 			"id": "viewer",
 			"index": 218,
 			"title": "glTF / GLB Viewer",
@@ -8360,6 +11167,617 @@
 				}
 			},
 			"capturedAt": "2026-08-02T05:01:22.546Z"
+		},
+		{
+			"id": "galaxy",
+			"index": 225,
+			"title": "Agent Galaxy",
+			"path": "/galaxy",
+			"section": "labs",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "And this,  Agent Galaxy. Every public agent embedded by IBM Granite on watsonx.ai into a navigable 3D constellation with natural-language semantic search.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 26,
+					"top": 66,
+					"width": 406.171875,
+					"height": 56.796875
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 503 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/galaxy.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 15682
+				},
+				"thumb": {
+					"url": "/media/tour/galaxy.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 3190
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:06.586Z"
+		},
+		{
+			"id": "ledger",
+			"index": 229,
+			"title": "Reasoning Ledger",
+			"path": "/ledger",
+			"section": "agent-tools",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Next up, Reasoning Ledger. An agent's every consequential decision (what it decided, why, what it predicted, and what actually happened) in a tamper-evident, on-chain-anchored, independently verifiable ledger. Open any agent's at /ledger/<agentId>. Being wrong is visible; honesty is the trust signal.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 112,
+					"top": 136.5,
+					"width": 1056,
+					"height": 58
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/ledger.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 24286
+				},
+				"thumb": {
+					"url": "/media/tour/ledger.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4822
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:10.518Z"
+		},
+		{
+			"id": "walkthroughs-build-your-first-agent",
+			"index": 233,
+			"title": "Walkthrough · Build your first agent",
+			"path": "/walkthroughs/build-your-first-agent",
+			"section": "learn",
+			"tracks": [
+				"full",
+				"quick"
+			],
+			"highlight": true,
+			"narration": "Let's visit Walkthrough · Build your first agent. Five steps to a named agent with a body, a personality, and a shareable URL, built before you ever sign in.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 424,
+					"top": 162.640625,
+					"width": 432,
+					"height": 122
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 404 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/walkthroughs-build-your-first-agent.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 20758
+				},
+				"thumb": {
+					"url": "/media/tour/walkthroughs-build-your-first-agent.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4804
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:10.519Z"
+		},
+		{
+			"id": "walkthroughs-embed-a-3d-avatar",
+			"index": 234,
+			"title": "Walkthrough · Embed a 3D avatar on your site",
+			"path": "/walkthroughs/embed-a-3d-avatar",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Over here is Walkthrough · Embed a 3D avatar on your site. Configure the avatar by clicking, watch the code rewrite itself, then copy one script tag onto any page you control.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 424,
+					"top": 162.640625,
+					"width": 432,
+					"height": 122
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 404 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/walkthroughs-embed-a-3d-avatar.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 22050
+				},
+				"thumb": {
+					"url": "/media/tour/walkthroughs-embed-a-3d-avatar.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5134
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:16.471Z"
+		},
+		{
+			"id": "walkthroughs-find-an-agent-worth-using",
+			"index": 235,
+			"title": "Walkthrough · Find an agent worth using",
+			"path": "/walkthroughs/find-an-agent-worth-using",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here's Walkthrough · Find an agent worth using. From the marketplace front door to a shortlist, using the weekly theme, the type and price filters, and the live activity strip.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 424,
+					"top": 162.640625,
+					"width": 432,
+					"height": 122
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 404 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/walkthroughs-find-an-agent-worth-using.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 20994
+				},
+				"thumb": {
+					"url": "/media/tour/walkthroughs-find-an-agent-worth-using.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4854
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:19.663Z"
+		},
+		{
+			"id": "walkthroughs-forge-your-first-3d-model",
+			"index": 236,
+			"title": "Walkthrough · Forge your first 3D model",
+			"path": "/walkthroughs/forge-your-first-3d-model",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Meet Walkthrough · Forge your first 3D model. The free text-to-3D lane end to end: what to type, which engine to pick, and where the finished GLB lands.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 424,
+					"top": 162.640625,
+					"width": 432,
+					"height": 122
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 404 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/walkthroughs-forge-your-first-3d-model.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 20950
+				},
+				"thumb": {
+					"url": "/media/tour/walkthroughs-forge-your-first-3d-model.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4888
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:19.936Z"
+		},
+		{
+			"id": "walkthroughs",
+			"index": 237,
+			"title": "Walkthroughs",
+			"path": "/walkthroughs",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "And this,  Walkthroughs. Interactive, click-through tours of the surfaces people reach for first. Every frame is captured from the live product and every step is pinned to a real element on the page it explains.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 42,
+					"top": 110.640625,
+					"width": 560,
+					"height": 203.34375
+				}
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 404 ()"
+			],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/walkthroughs.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 20734
+				},
+				"thumb": {
+					"url": "/media/tour/walkthroughs.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5452
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:25.105Z"
+		},
+		{
+			"id": "examples",
+			"index": 238,
+			"title": "Examples",
+			"path": "/examples",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Check out Examples. Runnable three.ws examples: copy-paste snippets that execute on the page against the production CDN bundle, plus every example that ships in the repository, generated by scanning it. Each one lists the files it contains and the command that runs it.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 92,
+					"top": 210,
+					"width": 1096,
+					"height": 66.390625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/examples.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 30912
+				},
+				"thumb": {
+					"url": "/media/tour/examples.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6236
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:28.223Z"
+		},
+		{
+			"id": "mcp-tools",
+			"index": 239,
+			"title": "MCP Tool Catalog",
+			"path": "/mcp-tools",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This one is MCP Tool Catalog. Every MCP tool three.ws publishes, searchable in one place: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Generated from the source of each tool, so it never drifts from what the servers serve.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 30,
+					"top": 97.640625,
+					"width": 1220,
+					"height": 62
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/mcp-tools.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 35960
+				},
+				"thumb": {
+					"url": "/media/tour/mcp-tools.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6998
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:29.204Z"
+		},
+		{
+			"id": "cookbook-parallel-asset-pack",
+			"index": 240,
+			"title": "Recipe: build a whole asset pack in parallel",
+			"path": "/cookbook/parallel-asset-pack",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Here we have Recipe: build a whole asset pack in parallel. Fan a list of prompts across the free 3D lane at a sane concurrency, download every model, render a still of each, and emit a manifest plus a browsable gallery. Partial failure degrades instead of aborting the run.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 94,
+					"top": 130.828125,
+					"width": 812,
+					"height": 61.75
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/cookbook-parallel-asset-pack.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 42072
+				},
+				"thumb": {
+					"url": "/media/tour/cookbook-parallel-asset-pack.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 8808
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:32.268Z"
+		},
+		{
+			"id": "cookbook-asset-quality-gate",
+			"index": 241,
+			"title": "Recipe: gate 3D assets in CI",
+			"path": "/cookbook/asset-quality-gate",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Next up, Recipe: gate 3D assets in CI. Generated geometry fails quietly. This gate inspects every model against an explicit triangle, size, and material budget and exits non-zero, so a bad asset fails the build instead of the launch.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 94,
+					"top": 130.828125,
+					"width": 812,
+					"height": 61.75
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/cookbook-asset-quality-gate.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 38286
+				},
+				"thumb": {
+					"url": "/media/tour/cookbook-asset-quality-gate.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7926
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:33.582Z"
+		},
+		{
+			"id": "cookbook-mcp-3d-tool",
+			"index": 242,
+			"title": "Recipe: give your AI assistant a 3D tool",
+			"path": "/cookbook/mcp-3d-tool",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "This is Recipe: give your AI assistant a 3D tool. A Model Context Protocol server that exposes text-to-3D generation and model rendering as tools, so Claude Code, Claude Desktop, or Cursor can build and then actually look at 3D models mid-conversation.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 94,
+					"top": 130.828125,
+					"width": 812,
+					"height": 61.75
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/cookbook-mcp-3d-tool.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 36894
+				},
+				"thumb": {
+					"url": "/media/tour/cookbook-mcp-3d-tool.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 7690
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:34.918Z"
+		},
+		{
+			"id": "cookbook-text-to-3d-cli",
+			"index": 243,
+			"title": "Recipe: text to 3D from the command line",
+			"path": "/cookbook/text-to-3d-cli",
+			"section": "learn",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Take a look at Recipe: text to 3D from the command line. A standard-library Python CLI that turns a sentence into a downloaded GLB. Handles the inline-versus-queued response split, honors the server poll hint so it never trips the rate limiter, and fails with a message you can act on. No API key.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 94,
+					"top": 130.828125,
+					"width": 812,
+					"height": 61.75
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/cookbook-text-to-3d-cli.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 40556
+				},
+				"thumb": {
+					"url": "/media/tour/cookbook-text-to-3d-cli.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 8610
+				}
+			},
+			"capturedAt": "2026-08-02T05:08:37.402Z"
 		},
 		{
 			"id": "guards",

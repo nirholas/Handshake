@@ -121,6 +121,11 @@ const TARGETS = {
 	'/play/arena': ['#pickBtn', '.panel-l'],
 	'/play/agent-wallet': ['#walletCard', '#payBtn'],
 	'/scene': ['#sidebar', '#viewport'],
+	'/avatar-studio': ['#as-tabs', '#as-panel', '#as-stage'],
+	'/play': ['.cc-create-btn', '.cc-lobby-head'],
+	// /watch renders a live generation; with no ?job= it shows its empty state,
+	// which is what a tour visitor arriving cold actually sees.
+	'/watch': ['#empty a.btn', '.stage'],
 };
 
 // Spoken connectors so 50+ stops don't all open the same way. Indexed

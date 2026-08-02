@@ -1,6 +1,6 @@
 {
 	"version": 2,
-	"generatedAt": "2026-08-02T05:05:36.431Z",
+	"generatedAt": "2026-08-02T05:12:02.447Z",
 	"generatedBy": "scripts/build-tour.mjs from data/pages.json",
 	"title": "The three.ws Guided Tour",
 	"tagline": "A 3D guide walks you through every feature, live, on the real site.",
@@ -800,7 +800,12 @@
 			"section": "build",
 			"title": "Avatar Studio",
 			"narration": "This is Avatar Studio. Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.",
-			"highlight": false
+			"highlight": false,
+			"targets": [
+				"#as-tabs",
+				"#as-panel",
+				"#as-stage"
+			]
 		},
 		{
 			"id": "nim-forge",
@@ -1793,7 +1798,11 @@
 			"section": "crypto",
 			"title": "Play",
 			"narration": "Here we have Play. Jump into a live coin community world and explore it with your avatar.",
-			"highlight": false
+			"highlight": false,
+			"targets": [
+				".cc-create-btn",
+				".cc-lobby-head"
+			]
 		},
 		{
 			"id": "admin-ring",
@@ -1853,7 +1862,11 @@
 			"section": "labs",
 			"title": "Generation Watch",
 			"narration": "Here's Generation Watch. Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.",
-			"highlight": false
+			"highlight": false,
+			"targets": [
+				"#empty a.btn",
+				".stage"
+			]
 		},
 		{
 			"id": "symphony",
