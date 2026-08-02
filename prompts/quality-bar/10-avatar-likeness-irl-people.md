@@ -32,42 +32,43 @@ conventions animate both arms and both legs down both production paths; the fixe
 `src/glb-canonicalize.js` with regression cover in both test files, and the evidence is
 committed at `prompts/quality-bar/_generated/10/animation-dignity-sweep.{txt,json}`.
 
-**One known open defect from that pass:** on the runtime-only lane a Rigify rig binds the
-`LeftArm`/`RightArm` clip track to `shoulder.L`/`shoulder.R` (the clavicle), because
-`shoulder.L` and `upper_arm.L` normalize onto the same canonical name and no name-only table
-separates them. The ingest canonicalizer resolves it structurally
-(`canonicalizeJointNodes` pass 1.5), so stored avatars are correct and only a third-party GLB
-loaded straight into the viewer is affected. **Remedy, part of this work order:** port pass
-1.5/1.6 into `canonicalNodeMapFromObject` in `src/animation-retarget.js` and cover it with a
-case in `tests/animation-retarget.test.js`.
+**The clavicle-pivot defect that pass left open is also fixed** (re-verified 2026-08-01): a
+Rigify rig used to bind the `LeftArm`/`RightArm` clip track to `shoulder.L`/`shoulder.R`, the
+clavicle, on the runtime-only lane. `resolveArmShoulderCollisions` now lives in
+`src/glb-canonicalize.js:475` and both lanes call it (ingest through `canonicalizeJointNodes`,
+runtime through `canonicalBoneEntries` in `src/animation-retarget.js:121`), so the sweep passes
+with no warning. If a new rig ever trips it, widen that resolver; never add a per-rig name
+special-case and never add a rig allowlist.
+
+So the rig half of this work order is done. **What is open is the likeness half:** everything
+below except the sweep.
 
 ## Tasks
 
-1. **Fix the Rigify runtime-lane defect above.** Structural resolution, not a name special-case.
-2. **Audit the avatar path end to end** with 6 real cases: four text prompts (athlete,
+1. **Audit the avatar path end to end** with 6 real cases: four text prompts (athlete,
    grandmother, stylized kid, businessperson) and two CC0 reference photos. Score each against
    the IRL bar: proportions, face fidelity, hands, feet, clothing, texture seams at the neck
    and hairline. Document per-case failures precisely, with screenshots.
-3. **Route avatars through the strongest live lane.** Confirm which mesh lane is Ready, prefer
+2. **Route avatars through the strongest live lane.** Confirm which mesh lane is Ready, prefer
    the highest-quality one with portrait realism cues, and verify the humanoid gate still hands
    its output to the rig worker cleanly with a normalized bind pose.
-4. **Face fidelity for photo input.** Feed the actual user photo (multi-view when several were
+3. **Face fidelity for photo input.** Feed the actual user photo (multi-view when several were
    given) to the image-to-3D lane rather than a regenerated lookalike, and keep the face
    region's texture resolution highest. Never generate an avatar of a named third party from
    text alone; photo input implies consent by upload, text-only real-person names keep the
    generic treatment.
-5. **Skin, eye and hair materials for avatars.** If QB-04 already shipped the material module,
+4. **Skin, eye and hair materials for avatars.** If QB-04 already shipped the material module,
    wire it. Do not duplicate it.
-6. **The `/irl` moment.** Place three finished avatars in AR through the animated USDZ bake
+5. **The `/irl` moment.** Place three finished avatars in AR through the animated USDZ bake
    path and screenshot each. The pin should read as a person standing there, not a figurine.
-7. **Publish.** Before and after gallery for all six cases through the whole chain (mesh,
+6. **Publish.** Before and after gallery for all six cases through the whole chain (mesh,
    materials, rig, animation, AR), `data/changelog.json` entry in holder language, and an
    update to the `create-3d-avatar` skill guidance if defaults changed.
 
 ## Definition of done
 
-- [ ] Rigify runtime-lane defect fixed structurally, with a regression test.
-- [ ] `node scripts/animation-dignity-sweep.mjs` still 10/10 on both lanes after your changes.
+- [ ] `node scripts/animation-dignity-sweep.mjs` still reports 10/10 on both lanes after your
+      changes (it does today; a regression here is a release blocker).
 - [ ] 6 of 6 test cases visibly improved, gallery in the report, hands specifically called out
       (count the fingers in the screenshots).
 - [ ] AR screenshots included; humanoid-gate degrade path kill-tested (force a rig failure and

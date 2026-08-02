@@ -10,6 +10,10 @@ substitutions:
   _REPO: texture-service
   _GCS_BUCKET: three-ws-avatar-reconstructions
   _WEIGHTS_BUCKET: three-ws-model-weights
+  # Dedicated prefix for this worker's HuggingFace cache tree. WEIGHTS_DIR used to
+  # point at the mount root, which is shared with every other worker's weights, so
+  # a diffusers download would have written its cache tree into that shared root.
+  _WEIGHTS_PREFIX: sdxl-texture
   _MIN_INSTANCES: "0"
   _MAX_INSTANCES: "2"
 
@@ -58,9 +62,10 @@ steps:
       - --max-instances=${_MAX_INSTANCES}
       - --timeout=600
       - --allow-unauthenticated
-      - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
-      - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights,MAX_CONCURRENT=1
+      # No Cloud Storage FUSE volume: the loader stages weights with the storage
+      # client (WEIGHTS_GCS_URI below), and a mount at /weights would only shadow
+      # the ControlNet cache baked into the image at /opt/hf-cache.
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/opt/hf-cache,MAX_CONCURRENT=1,WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/${_WEIGHTS_PREFIX},WEIGHTS_LOCAL_DIR=/tmp/${_WEIGHTS_PREFIX}
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:

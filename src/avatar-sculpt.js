@@ -278,7 +278,7 @@ export function applyMorphsToRoot(root, morphs) {
  */
 export function renderSculptPanel({ container, root, working, onDirty, onRigChanged }) {
 	const all = discoverMorphs(root);
-	const boneMap = boneNodeMap(root);
+	const boneMap = canonicalBoneNodesFromObject(root);
 	const proportionIds = availableProportionParams(root, { boneMap });
 
 	if (!all.length && !proportionIds.length) {

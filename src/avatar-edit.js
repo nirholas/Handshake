@@ -23,6 +23,8 @@ import { AccessoryManager } from './agent-accessories.js';
 import { uploadAvatarSnapshot } from './voice/avatar-snapshot.js';
 import { IdleAnimation } from './idle-animation.js';
 import { renderSculptPanel } from './avatar-sculpt.js';
+import { applyProportionsToRoot, captureProportionRest, normalizeProportions, proportionsEqual } from './avatar-proportions.js';
+import { canonicalBoneNodesFromObject } from './animation-retarget.js';
 import { renderWardrobePanel } from './avatar-wardrobe.js';
 import { GarmentCloset, renderClosetSection } from './garment-closet.js';
 import { renderRigPanel } from './avatar-rig.js';
@@ -82,6 +84,9 @@ let presets = []; // from /accessories/presets.json
 let presetsById = new Map();
 let scene = null;
 let accessoryManager = null;
+// Canonical bone → live node for the mounted rig, resolved once at boot so the
+// proportion sliders never re-walk the skeleton mid-drag.
+let boneNodes = new Map();
 let idle = null;
 let idleDispose = null;
 let walkPreview = null;
@@ -229,6 +234,20 @@ function showEquipToast(name) {
 	}, 4500);
 }
 
+/**
+ * Push the working skeleton-space build onto the live rig and re-measure the
+ * clip stack so root motion matches the new hip height (see
+ * src/avatar-proportions.js). No-op before the scene mounts.
+ */
+function applyProportions() {
+	if (!scene?.root) return;
+	applyProportionsToRoot(scene.root, workingAppearance.proportions, { boneMap: boneNodes });
+	scene.getEmoteController()?.remeasureRig?.();
+	// The walk preview owns a second AnimationManager on the same rig, so it has
+	// its own stale hip scale to fix.
+	walkPreview?.remeasureProportions();
+}
+
 async function bootScene() {
 	// IMPORTANT: load the BASE GLB, not the baked one. The customizer applies
 	// appearance on the client; loading the already-baked URL would stack
@@ -240,6 +259,14 @@ async function bootScene() {
 			glbUrl: avatar.base_model_url || avatar.model_url,
 		});
 		$('ae-loading')?.remove();
+
+		// Capture the bind-pose skeleton before anything animates it, every
+		// proportion edit is applied from this rest state, so a capture taken
+		// mid-clip would bake that frame in as "rest" and the body would drift.
+		boneNodes = canonicalBoneNodesFromObject(scene.root);
+		captureProportionRest(scene.root, { boneMap: boneNodes });
+		applyProportions();
+
 		accessoryManager = new AccessoryManager({
 			content: scene.root,
 			invalidate: () => {},
@@ -418,6 +445,13 @@ function renderActivePanel() {
 			onDirty: () => {
 				renderChips();
 				updateDirtyState();
+			},
+			// A proportion edit moves the hips, which invalidates the hip-track
+			// rescale every loaded clip was retargeted with. Re-measure or the
+			// walk preview foot-slides on the new legs.
+			onRigChanged: () => {
+				scene?.getEmoteController()?.remeasureRig?.();
+				walkPreview?.remeasureProportions();
 			},
 		});
 		return;
@@ -963,6 +997,7 @@ function bindHeader() {
 				for (const id of wasIds) accessoryManager.removePreset(id);
 			}
 			workingAppearance = clone(currentAppearance);
+			applyProportions();
 			if (accessoryManager) await accessoryManager.hydrateFromAppearance(workingAppearance);
 			if (closet) {
 				closet.clear();
@@ -1001,7 +1036,7 @@ function setStatus(kind, text) {
 // ── Helpers ────────────────────────────────────────────────────────────
 
 function normalizeAppearance(a) {
-	if (!a) return { outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [], garments: [] };
+	if (!a) return { outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [], garments: [], proportions: {} };
 	return {
 		outfit: a.outfit || null,
 		accessories: Array.isArray(a.accessories) ? [...a.accessories] : [],
@@ -1015,6 +1050,9 @@ function normalizeAppearance(a) {
 		garments: Array.isArray(a.garments)
 			? a.garments.filter((g) => g && g.slot && g.id).map((g) => ({ slot: g.slot, id: g.id }))
 			: [],
+		// Skeleton-space build (src/avatar-proportions.js). Normalized on the way
+		// in so an out-of-range or hand-edited record can never drive the rig.
+		proportions: normalizeProportions(a.proportions),
 	};
 }
 
@@ -1028,6 +1066,8 @@ function collapseAppearance(a) {
 	if (a.colors && Object.keys(a.colors).length) out.colors = { ...a.colors };
 	if (a.hidden?.length) out.hidden = [...a.hidden];
 	if (a.garments?.length) out.garments = a.garments.map((g) => ({ slot: g.slot, id: g.id }));
+	const proportions = normalizeProportions(a.proportions);
+	if (Object.keys(proportions).length) out.proportions = proportions;
 	return Object.keys(out).length ? out : null;
 }
 
@@ -1057,5 +1097,6 @@ function appearanceEquals(a, b) {
 	const gb = new Set((b?.garments || []).map((g) => `${g.slot}/${g.id}`));
 	if (ga.size !== gb.size) return false;
 	for (const v of ga) if (!gb.has(v)) return false;
+	if (!proportionsEqual(a?.proportions, b?.proportions)) return false;
 	return true;
 }

@@ -8,6 +8,7 @@ import {
 	heldSeconds,
 	returnMultiple,
 	shapeTradeCard,
+	solStr,
 	solscanToken,
 	solscanTx,
 	toneFor,
@@ -61,6 +62,18 @@ describe('trade card numbers', () => {
 		expect(returnMultiple(-100)).toBe(0);
 		expect(returnMultiple(-140)).toBe(0);
 		expect(returnMultiple(null)).toBe(null);
+	});
+
+	it('never prints a real move as a rounded-to-zero "0.000"', () => {
+		expect(solStr(-0.00049)).toBe('−<0.001 ◎');
+		expect(solStr(0.0002)).toBe('+<0.001 ◎');
+		expect(solStr(0.0002, { sign: false })).toBe('<0.001 ◎');
+		expect(solStr(0)).toBe('0.000 ◎');
+		expect(solStr(null)).toBe(null);
+		expect(solStr(1.248)).toBe('+1.25 ◎');
+		// The card that exposed this: a real 0.0005 SOL loss on a 0.02 SOL entry.
+		const c = shapeTradeCard(row({ realized_pnl_lamports: '-499000', realized_pnl_pct: -2.49 }));
+		expect(c.pnlSolStr).toBe('−<0.001 ◎');
 	});
 
 	it('reads the hold window from the two timestamps', () => {
@@ -138,6 +151,8 @@ describe('trade card links', () => {
 		const c = shapeTradeCard(row(), { origin: 'https://three.ws' });
 		expect(c.shareUrl).toBe('https://three.ws/trade/11111111-2222-3333-4444-555555555555');
 		expect(c.ogImageUrl).toBe('https://three.ws/api/trade-og?id=11111111-2222-3333-4444-555555555555');
+		// The on-page <img> stays same-origin so the card renders off production too.
+		expect(c.ogImagePath).toBe('/api/trade-og?id=11111111-2222-3333-4444-555555555555');
 		expect(c.agentUrl).toBe('https://three.ws/trader/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
 	});
 

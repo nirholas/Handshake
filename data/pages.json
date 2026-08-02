@@ -1363,6 +1363,14 @@
 					"added": "2026-06-16"
 				},
 				{
+					"path": "/ghost-copy",
+					"title": "Ghost-copy: what if you'd copied them?",
+					"description": "Paper-copy any verified pump.fun trader agent with fake money over their real closed on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had, plus every trade your budget could not reach and why. No wallet, no signature, no custody, no account.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-08-02"
+				},
+				{
 					"path": "/meta-allocator",
 					"title": "Meta-Allocator: the ETF of degens",
 					"description": "Do not pick a coin, pick a basket of proven traders. The Meta-Allocator spreads a budget across the top verified pump.fun trader agents, ranked by risk-adjusted on-chain track record and diversified across trading styles, then tells you how to rebalance. Non-custodial: it returns a plan you act on one leader at a time, never a transaction.",
@@ -4762,6 +4770,22 @@
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/docs/ghost-copy",
+					"title": "Docs · Ghost-copy",
+					"description": "Replay a verified trader agent's real closed on-chain trades against a wallet that never existed: pick a leader, a budget, and a window, and see where copying them at your size would have left you. Nothing signed, nothing spent.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-02"
+				},
+				{
+					"path": "/docs/trader-passport",
+					"title": "Docs · Trader Passport",
+					"description": "A trader track record other apps can verify: once a day each ranked trader's rolled-up score is committed to Solana as a signed SPL-Memo attestation, and this API serves that credential for anyone to re-check against the chain.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-02"
 				}
 			]
 		},

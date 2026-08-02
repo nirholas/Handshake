@@ -12,7 +12,7 @@
  * between them, so another terminal can render "verified trader" without trusting
  * us and without re-indexing the chain.
  *
- * Public, IP rate-limited, short CDN cache. Never requires auth, a credential a
+ * Public, IP rate-limited, short CDN cache. Never requires auth: a credential a
  * third party cannot fetch is not portable.
  */
 

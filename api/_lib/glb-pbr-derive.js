@@ -245,26 +245,33 @@ const PROMPT_RULES = [
 ];
 
 // forge-enhance.js's subject classes, mapped onto a material class. A person's
-// or a creature's defining surface is skin or fur no matter what they are
-// wearing, so these two OUTRANK the prompt's material words: "portrait bust of a
-// woman in a navy wool sweater" is a skin model with a fabric detail, not a
-// fabric model. Vehicle/food/object carry no such certainty and are used only as
-// a last resort, after the prompt's own material words have had their turn.
+// defining surface is skin and a creature's is fur, whatever either is wearing,
+// so those two can beat an explicit material word in the same sentence. The
+// other classes carry no such certainty and only apply once the prompt's own
+// material words have had their turn.
 const SUBJECT_DOMINANT = Object.freeze({ person: 'person', animal: 'hair' });
 const SUBJECT_FALLBACK = Object.freeze({ vehicle: 'carPaint', food: 'object', object: 'object' });
 
 /**
  * Resolve the material class for one material.
  *
- * Order: an explicit override, then the material's own name (per-material and by
- * far the strongest signal when a lane bothers to name its materials), then a
- * person/creature subject, then the earliest material word in the prompt, then
- * the remaining subject classes, then the neutral dielectric default.
+ * Order: an explicit override, then the material's own name (per-material, and
+ * by far the strongest signal when a lane bothers to name its materials), then
+ * the FIRST-MENTIONED of the prompt's subject and its material words, then the
+ * weaker subject classes, then the neutral dielectric default.
  *
- * @param {{ materialName?: string, prompt?: string, subjectClass?: string, materialClass?: string }} ctx
+ * The first-mention contest is what separates the two ways a prompt can mix a
+ * person word with a material word, which no fixed priority can:
+ *
+ *   "portrait bust of a woman ... wearing a navy wool sweater"
+ *      person at 20 beats wool at 62  ->  person (skin, with a fabric detail)
+ *   "a professional stainless steel chef knife with a walnut handle"
+ *      steel at 25 beats chef at 36   ->  metal (a knife, not a cook)
+ *
+ * @param {{ materialName?: string, prompt?: string, subjectClass?: string, subjectIndex?: number, materialClass?: string }} ctx
  * @returns {string} a key of MATERIAL_CLASSES
  */
-export function resolveMaterialClass({ materialName = '', prompt = '', subjectClass = '', materialClass = '' } = {}) {
+export function resolveMaterialClass({ materialName = '', prompt = '', subjectClass = '', subjectIndex = -1, materialClass = '' } = {}) {
 	const explicit = String(materialClass || '').trim();
 	if (explicit && MATERIAL_CLASSES[explicit]) return explicit;
 
@@ -274,17 +281,23 @@ export function resolveMaterialClass({ materialName = '', prompt = '', subjectCl
 	}
 
 	const subject = String(subjectClass || '').trim();
-	if (SUBJECT_DOMINANT[subject]) return SUBJECT_DOMINANT[subject];
+	const dominant = SUBJECT_DOMINANT[subject];
 
 	const text = String(prompt || '');
+	let material = null;
 	if (text) {
-		let best = null;
 		for (const [re, cls] of PROMPT_RULES) {
 			const m = re.exec(text);
-			if (m && (best === null || m.index < best.index)) best = { index: m.index, cls };
+			if (m && (material === null || m.index < material.index)) material = { index: m.index, cls };
 		}
-		if (best) return best.cls;
 	}
+
+	if (dominant) {
+		// A subject with no recorded position (an explicitly passed subjectClass
+		// rather than one classified from this prompt) keeps its old precedence.
+		if (!material || subjectIndex < 0 || subjectIndex < material.index) return dominant;
+	}
+	if (material) return material.cls;
 
 	if (SUBJECT_FALLBACK[subject]) return SUBJECT_FALLBACK[subject];
 	return 'object';
@@ -570,6 +583,92 @@ function applyExtensionLayer(doc, material, ext, exts) {
 	}
 }
 
+/**
+ * Area-weighted smooth vertex normals for an indexed triangle list.
+ *
+ * Every reconstruction lane measured on 2026-08-01 (nvidia NIM, HuggingFace,
+ * trellis_selfhost, Hunyuan3D) ships POSITION with either COLOR_0 or TEXCOORD_0
+ * and NO NORMAL attribute at all. glTF 2.0 3.7.2.1 then requires the client to
+ * calculate FLAT normals, and three.js' GLTFLoader complies by forcing
+ * `flatShading = true` on the material, so every forge model renders visibly
+ * faceted. On marching-cubes organic surfaces that is the wrong answer, and it
+ * also wastes the derived normal map: relief detail cannot read on a surface
+ * whose base shading already breaks at every triangle edge.
+ *
+ * Accumulating the raw cross product (whose magnitude is twice the triangle
+ * area) weights each face by its area automatically, which is what keeps a dense
+ * cluster of small triangles from outvoting the large face it sits on.
+ *
+ * @param {Float32Array|number[]} positions  flat xyz triples
+ * @param {Uint32Array|Uint16Array|number[]} indices  triangle list
+ * @returns {Float32Array} flat xyz normal triples, one per vertex
+ */
+export function smoothNormals(positions, indices) {
+	const out = new Float32Array(positions.length);
+	for (let i = 0; i + 2 < indices.length; i += 3) {
+		const a = indices[i] * 3;
+		const b = indices[i + 1] * 3;
+		const c = indices[i + 2] * 3;
+		const abx = positions[b] - positions[a];
+		const aby = positions[b + 1] - positions[a + 1];
+		const abz = positions[b + 2] - positions[a + 2];
+		const acx = positions[c] - positions[a];
+		const acy = positions[c + 1] - positions[a + 1];
+		const acz = positions[c + 2] - positions[a + 2];
+		const nx = aby * acz - abz * acy;
+		const ny = abz * acx - abx * acz;
+		const nz = abx * acy - aby * acx;
+		out[a] += nx; out[a + 1] += ny; out[a + 2] += nz;
+		out[b] += nx; out[b + 1] += ny; out[b + 2] += nz;
+		out[c] += nx; out[c + 1] += ny; out[c + 2] += nz;
+	}
+	for (let i = 0; i < out.length; i += 3) {
+		const len = Math.hypot(out[i], out[i + 1], out[i + 2]);
+		if (len > 0) {
+			out[i] /= len;
+			out[i + 1] /= len;
+			out[i + 2] /= len;
+		} else {
+			// A vertex referenced by no triangle (or by degenerate ones only) has no
+			// defined normal; +Y keeps it a unit vector so the accessor stays valid.
+			out[i + 1] = 1;
+		}
+	}
+	return out;
+}
+
+/**
+ * Fill in the NORMAL attribute on every indexed primitive that lacks one.
+ * Existing normals are never touched: a lane that does emit them knows the
+ * surface better than a recompute would.
+ *
+ * @param {import('@gltf-transform/core').Document} doc
+ * @returns {number} primitives given normals
+ */
+export function ensureVertexNormals(doc) {
+	let filled = 0;
+	let buffer = null;
+	for (const mesh of doc.getRoot().listMeshes()) {
+		for (const prim of mesh.listPrimitives()) {
+			if (prim.getAttribute('NORMAL')) continue;
+			const position = prim.getAttribute('POSITION');
+			const indices = prim.getIndices();
+			// Un-indexed geometry has no shared vertices to smooth ACROSS, so the
+			// only normals derivable from it are the flat ones the runtime already
+			// generates. Leave it alone rather than bake the same result into bytes.
+			if (!position || !indices) continue;
+			const normals = smoothNormals(position.getArray(), indices.getArray());
+			if (!buffer) buffer = doc.getRoot().listBuffers()[0] || doc.createBuffer();
+			prim.setAttribute(
+				'NORMAL',
+				doc.createAccessor(`${mesh.getName() || 'mesh'}_normal`).setType('VEC3').setArray(normals).setBuffer(buffer),
+			);
+			filled++;
+		}
+	}
+	return filled;
+}
+
 // glTF 2.0 permits exactly two image types, and both are identifiable from their
 // first bytes. A texture whose declared mimeType disagrees with its magic is a
 // spec violation that strict validators reject and that makes every downstream
@@ -659,6 +758,7 @@ export function ensureMaterials(doc, ctx = {}) {
  *   inputBytes: number,
  *   outputBytes: number,
  *   materialsCreated: number,
+ *   normalsFilled: number,
  *   mimeTypesFixed: number,
  *   materials: Array<{ name: string, materialClass: string, derived: string[] }>,
  * }>}
@@ -688,37 +788,34 @@ export async function derivePbrChannels(buf, opts = {}) {
 	// gltf-transform drops unused extensions on write.
 	doc.createExtension(exts.EXTTextureWebP).setRequired(false);
 
-	// Classify the subject once from the prompt when the caller did not: a person
-	// or a creature outranks the prompt's material words in resolveMaterialClass,
-	// and that only works if the subject is actually known.
+	// Classify the subject once from the prompt when the caller did not, keeping
+	// the match position: resolveMaterialClass weighs the subject against the
+	// prompt's material words by which one is mentioned first, and that contest
+	// needs both offsets.
 	let subjectClass = String(opts.subjectClass || '').trim();
+	let subjectIndex = -1;
 	if (!subjectClass && opts.prompt) {
 		try {
-			const { classifySubject } = await import('../forge-enhance.js');
-			subjectClass = classifySubject(opts.prompt);
+			const { classifySubjectAt } = await import('../forge-enhance.js');
+			const hit = classifySubjectAt(opts.prompt);
+			subjectClass = hit.subject;
+			subjectIndex = hit.index;
 		} catch (err) {
 			console.warn('[pbr-derive] subject classification unavailable:', err?.message);
 		}
 	}
+	const classifyCtx = { prompt: opts.prompt, subjectClass, subjectIndex, materialClass: opts.materialClass };
 
 	// Repair first: a mislabeled mime breaks the decode below, and a primitive
 	// with no material has nothing to derive onto.
 	const mimeTypesFixed = normalizeTextureMimeTypes(doc);
-	const created = ensureMaterials(doc, {
-		prompt: opts.prompt,
-		subjectClass,
-		materialClass: opts.materialClass,
-	});
-	let changed = mimeTypesFixed > 0 || created.length > 0;
+	const created = ensureMaterials(doc, classifyCtx);
+	const normalsFilled = ensureVertexNormals(doc);
+	let changed = mimeTypesFixed > 0 || created.length > 0 || normalsFilled > 0;
 
 	for (const material of root.listMaterials()) {
 		const name = material.getName() || '';
-		const clsId = resolveMaterialClass({
-			materialName: name,
-			prompt: opts.prompt,
-			subjectClass,
-			materialClass: opts.materialClass,
-		});
+		const clsId = resolveMaterialClass({ materialName: name, ...classifyCtx });
 		const cls = MATERIAL_CLASSES[clsId];
 		const derived = [];
 
@@ -804,6 +901,7 @@ export async function derivePbrChannels(buf, opts = {}) {
 			inputBytes,
 			outputBytes: inputBytes,
 			materialsCreated: 0,
+			normalsFilled: 0,
 			mimeTypesFixed: 0,
 			materials: report,
 		};
@@ -816,6 +914,7 @@ export async function derivePbrChannels(buf, opts = {}) {
 		inputBytes,
 		outputBytes: out.byteLength,
 		materialsCreated: created.length,
+		normalsFilled,
 		mimeTypesFixed,
 		materials: report,
 	};

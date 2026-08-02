@@ -23,7 +23,12 @@ import { TalkScene } from './voice/talk-scene.js';
 import { AccessoryManager } from './agent-accessories.js';
 import { IdleAnimation } from './idle-animation.js';
 import { renderSculptPanel, applyMorphsToRoot } from './avatar-sculpt.js';
-import { applyProportionsToRoot, captureProportionRest } from './avatar-proportions.js';
+import {
+	applyProportionsToRoot,
+	captureProportionRest,
+	PROPORTION_PARAMS,
+} from './avatar-proportions.js';
+import { canonicalBoneNodesFromObject } from './animation-retarget.js';
 import { saveRemoteGlbToAccount, apiFetch } from './account.js';
 import { uploadAvatarSnapshot } from './voice/avatar-snapshot.js';
 import { optimizeAndValidateGlb } from './avatar-studio-optimize.js';
@@ -70,6 +75,9 @@ let accessoryManager = null;
 let idle = null;
 let presets = [];
 let presetsById = new Map();
+// Canonical bone → live node for the mounted rig, resolved once at boot and
+// reused by every proportion apply so the skeleton is never re-walked mid-drag.
+let boneNodes = new Map();
 
 let workingAppearance = hydrateAppearance(null);
 let savedAppearance = null; // null = unsaved / the appearance at last save
@@ -409,6 +417,7 @@ async function applyHistoryState(state) {
 		applyAllColors();
 		applyAllLayers();
 		applyMorphsToRoot(scene.root, workingAppearance.morphs);
+		applyProportions();
 	}
 	renderChips();
 	renderActivePanel();
@@ -459,6 +468,17 @@ function randomizeAppearance() {
 	}
 	workingAppearance.accessories = [];
 
+	// Skeleton-space build. Randomising the whole declared range produces
+	// caricatures, so each parameter gets a gentle draw around neutral, enough
+	// that two random avatars read as different people, not different species.
+	workingAppearance.proportions = {};
+	for (const param of PROPORTION_PARAMS) {
+		const spread = (Math.min(param.max - 1, 1 - param.min)) * 0.55;
+		const ratio = 1 + (Math.random() * 2 - 1) * spread;
+		workingAppearance.proportions[param.id] = Math.round(ratio * 1000) / 1000;
+	}
+	applyProportions();
+
 	const pick = (arr) => arr.length ? arr[Math.floor(Math.random() * arr.length)] : null;
 	const hat = pick(hats);
 	const glass = pick(glasses);
@@ -478,6 +498,25 @@ function randomizeAppearance() {
 	setStatus('ok', 'Randomised! Click Save when happy.');
 }
 
+// ── Proportions (skeleton-space build) ───────────────────────────────
+
+/**
+ * Push `workingAppearance.proportions` onto the live rig and re-measure the
+ * animation stack.
+ *
+ * The re-measure is not optional bookkeeping: a clip's hip translation is
+ * authored around one hip height and rescaled onto the rig at bind time, so
+ * lengthening the legs without re-measuring leaves the root travelling the old
+ * distance while longer legs cover more ground, and the walk foot-slides.
+ * `applyProportionsToRoot` leaves the rig at rest, which is exactly the state
+ * `remeasureRig` needs to read.
+ */
+function applyProportions() {
+	if (!scene?.root) return;
+	applyProportionsToRoot(scene.root, workingAppearance.proportions, { boneMap: boneNodes });
+	scene.getEmoteController()?.remeasureRig?.();
+}
+
 // ── Boot scene ────────────────────────────────────────────────────────
 
 async function bootScene(glbUrl, editAvatar) {
@@ -488,6 +527,14 @@ async function bootScene(glbUrl, editAvatar) {
 			glbUrl,
 		});
 		$('as-loading')?.remove();
+
+		// Capture the skeleton's bind pose BEFORE anything can animate it. Every
+		// proportion edit is applied from this rest state, so a capture taken
+		// after the idle clip starts would bake a mid-stride frame in as "rest"
+		// and the body would drift with every slider drag.
+		boneNodes = canonicalBoneNodesFromObject(scene.root);
+		captureProportionRest(scene.root, { boneMap: boneNodes });
+
 		accessoryManager = new AccessoryManager({
 			content: scene.root,
 			invalidate: () => {},
@@ -497,6 +544,11 @@ async function bootScene(glbUrl, editAvatar) {
 		if (editAvatar?.appearance) {
 			await accessoryManager.hydrateFromAppearance(workingAppearance);
 		}
+
+		// Skeleton-space build (Proportions sliders). Applied before the clip
+		// library binds so the first retarget already measures the real hip
+		// height and root motion matches the legs.
+		applyProportions();
 
 		idle = new IdleAnimation({
 			getRoot: () => scene.root,
@@ -661,6 +713,9 @@ function renderActivePanel() {
 				updateDirtyState();
 				scheduleDraftSave();
 			},
+			// Debounced by the panel: rebuilding every bound action on each
+			// slider frame would stutter the drag.
+			onRigChanged: () => scene?.getEmoteController()?.remeasureRig?.(),
 		});
 		return;
 	}
@@ -1449,6 +1504,7 @@ async function resetAll() {
 		};
 		if (scene?.root) {
 			applyMorphsToRoot(scene.root, {});
+			applyProportions();
 			applyAllColors();
 			applyAllLayers();
 		}

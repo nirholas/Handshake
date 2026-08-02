@@ -510,6 +510,7 @@ const appConfig = {
 				'claim-wallet': resolve(__dirname, 'pages/claim-wallet.html'),
 				'meta-allocator': resolve(__dirname, 'pages/meta-allocator.html'),
 				'ghost-copy': resolve(__dirname, 'pages/ghost-copy.html'),
+				'ghost-copy': resolve(__dirname, 'pages/ghost-copy.html'),
 				'clip-director': resolve(__dirname, 'pages/clip-director.html'),
 				'avatar-embed': resolve(__dirname, 'pages/avatar-embed.html'),
 				'avatar-wallet-chat': resolve(__dirname, 'pages/avatar-wallet-chat.html'),
@@ -2106,6 +2107,65 @@ support: resolve(__dirname, 'pages/support.html'),
 						.pop();
 					if (EXCLUDED.has(filename)) return [];
 					return [{ tag: 'script', attrs: { type: 'module', src: '/atlas.js' }, injectTo: 'body' }];
+				},
+			},
+		},
+		{
+			// Mobile ergonomics: /mobile.css on every page, and viewport-fit=cover.
+			//
+			// /mobile.css carries the site-wide tap-target floor, canvas scroll
+			// posture and safe-area rules that `npm run audit:mobile-touch` checks.
+			// It used to be hand-linked, which meant only 65 of the 346 pages
+			// actually got it: /forge, /markets, /launches, /play and the docs shell
+			// (four of the five worst pages in that audit) were all missing it, so
+			// the fixes written there simply never applied. Injecting it here is the
+			// same "one gate for every page" pattern the tour boot below uses.
+			//
+			// Injected last in <head> so it wins on equal specificity against the
+			// page's own stylesheets, exactly as its header comment promises.
+			//
+			// viewport-fit=cover is the other half: without it every
+			// env(safe-area-inset-*) resolves to 0, so the safe-area padding in
+			// mobile.css would be dead code on an iPhone. The rewrite is additive
+			// and idempotent; pages that already opt in are left alone.
+			name: 'mobile-ergonomics',
+			transformIndexHtml: {
+				order: 'post',
+				handler(html, ctx) {
+					// Embeds render inside someone else's page and must not inherit our
+					// viewport or tap-target rules.
+					const EMBED_FILES = new Set([
+						'widget.html',
+						'embed.html',
+						'avatar-embed.html',
+						'agent-embed.html',
+						'a-embed.html',
+						'nav.html',
+						'footer.html',
+					]);
+					const filename = (ctx.filename || ctx.path || '')
+						.replace(/\\/g, '/')
+						.split('/')
+						.pop();
+					if (EMBED_FILES.has(filename)) return html;
+
+					let out = html.replace(
+						/(<meta[^>]*name=["']viewport["'][^>]*content=["'])([^"']*)(["'])/i,
+						(match, head, content, tail) =>
+							/viewport-fit\s*=/i.test(content)
+								? match
+								: `${head}${content.trim().replace(/,\s*$/, '')}, viewport-fit=cover${tail}`,
+					);
+					const tags = /["']\/mobile\.css["']/.test(out)
+						? []
+						: [
+								{
+									tag: 'link',
+									attrs: { rel: 'stylesheet', href: '/mobile.css' },
+									injectTo: 'head',
+								},
+							];
+					return { html: out, tags };
 				},
 			},
 		},

@@ -36,11 +36,12 @@ page.setDefaultNavigationTimeout(60000);
 const isDevNoise = (text) => /\[vite\]|WebSocket (connection|closed)/i.test(text);
 
 const consoleErrors = [];
+let phase = 'boot';
 page.on('console', (m) => {
-	if (m.type() === 'error' && !isDevNoise(m.text())) consoleErrors.push(m.text());
+	if (m.type() === 'error' && !isDevNoise(m.text())) consoleErrors.push(`[${phase}] ${m.text()}`);
 });
 page.on('pageerror', (e) => {
-	if (!isDevNoise(String(e))) consoleErrors.push(String(e));
+	if (!isDevNoise(String(e))) consoleErrors.push(`[${phase}] ${String(e)}`);
 });
 
 let lastPicked = '';
@@ -52,6 +53,7 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 
 	// Each route is judged from a first visit: the cross-page carry-over is
 	// checked on its own at the end, where it cannot mask a broken default.
+	phase = `${route} first load`;
 	await page.goto(`${BASE}${route}`, { waitUntil: 'domcontentloaded' });
 	await page.evaluate(() => localStorage.clear());
 	await page.reload({ waitUntil: 'domcontentloaded' });
@@ -66,6 +68,7 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 	// to come back up on that GLB.
 	// The gallery module is imported on demand (it pulls in model-viewer), so
 	// the first open waits on a real network fetch, not just a render.
+	phase = `${route} gallery`;
 	await page.click(`${rigSel} button:nth-child(3)`);
 	await page.waitForSelector('.agp-overlay.agp-open', { timeout: 60000 });
 	check('the avatar gallery opened', true);
@@ -76,6 +79,7 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 	// the element is there and enabled, click it.
 	await page.click('.agp-card', { force: true });
 	await page.click('.agp-cta', { force: true });
+	phase = `${route} custom rig mounted`;
 	await page.waitForTimeout(6000);
 
 	const prefs = await page.evaluate(() => JSON.parse(localStorage.getItem('threews:sign-prefs') || '{}'));
@@ -122,6 +126,7 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 	check('resetting the view hides the control again', !(await resetVisible()));
 
 	// The choice has to survive a reload, and across the sibling page.
+	phase = `${route} reload`;
 	await page.reload({ waitUntil: 'domcontentloaded' });
 	await page.waitForSelector(`${rigSel} button`, { timeout: 60000 });
 	await page.waitForTimeout(2500);
@@ -133,13 +138,14 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 // One avatar, every signing surface: the pick made on /asl-alphabet is already
 // on stage when the visitor walks back to /sign-language.
 console.log('\nCarry-over between the signing pages');
+phase = 'carry-over';
 await page.goto(`${BASE}/sign-language`, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('#sl-rig button', { timeout: 60000 });
 await page.waitForTimeout(2500);
 const carried = await page.$eval('#sl-rig', (el) => el.querySelector('button[aria-pressed="true"]')?.textContent || '');
 check('the avatar chosen on the alphabet page is signing here too', carried === lastPicked, `${carried} vs ${lastPicked}`);
 
-check('no console errors', consoleErrors.length === 0, consoleErrors.slice(0, 4).join(' :: '));
+check("no console errors", consoleErrors.length === 0, consoleErrors.slice(0, 6).join(" :: "));
 
 await browser.close();
 console.log(failures ? `\n${failures} check(s) failed\n` : '\nall checks passed\n');

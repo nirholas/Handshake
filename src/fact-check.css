@@ -76,6 +76,17 @@
 .fc-stat .fc-stat-value { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
 .fc-stat .fc-stat-value.fc-good { color: var(--fc-green); }
 .fc-stat .fc-stat-value.fc-warn { color: var(--fc-amber); }
+/* The raw counts under each headline number. A published accuracy figure means
+   little without its denominator, so every tile carries one. */
+.fc-stat .fc-stat-sub { margin-top: 4px; font: 400 11px/1.3 var(--fc-mono); color: var(--fc-dim); }
+
+.fc-stats-heading {
+	font: 600 11px/1 var(--fc-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--fc-dim);
+	margin: 2px 0 8px;
+}
 
 .fc-empty {
 	border: 1px dashed var(--fc-line);

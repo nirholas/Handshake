@@ -93,10 +93,13 @@ export function resetAgentUsdcCache() {
  *
  * @param {any} conn Solana connection
  * @param {string} address buyer wallet, base58
+ * @param {{ mint?: string }} [opts] mint override; defaults to the configured
+ *   X402_ASSET_MINT_SOLANA. Unset (local/CI) reads as unknown, so the check is
+ *   inert off-production rather than refusing every purchase.
  * @returns {Promise<number|null>}
  */
-export async function readAgentUsdcAtomic(conn, address) {
-	if (!conn || !address || !USDC_MINT) return null;
+export async function readAgentUsdcAtomic(conn, address, { mint = USDC_MINT } = {}) {
+	if (!conn || !address || !mint) return null;
 	const hit = _usdcCache.get(address);
 	const now = Date.now();
 	if (hit && now - hit.at < USDC_BALANCE_CACHE_MS) return hit.atomic;
@@ -104,7 +107,7 @@ export async function readAgentUsdcAtomic(conn, address) {
 	let atomic;
 	try {
 		const ata = getAssociatedTokenAddressSync(
-			new PublicKey(USDC_MINT), new PublicKey(address),
+			new PublicKey(mint), new PublicKey(address),
 			false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 		);
 		const bal = await conn.getTokenAccountBalance(ata, 'confirmed');
@@ -151,11 +154,16 @@ export async function readAgentUsdcAtomic(conn, address) {
  * @param {string} p.persona       persona id (attribution / logs)
  * @param {number} [p.remainingCap] atomic cap remaining this tick
  * @param {typeof payX402} [p.payImpl] injectable payment client (tests); defaults to payX402
+ * @param {typeof readAgentUsdcAtomic} [p.usdcReader] injectable buyer-balance
+ *   reader (tests); defaults to the live ATA read
  * @returns {Promise<{ status:'paid'|'free'|'refused'|'error'|'skipped', persona:string, agentId:string,
  *   slug:string, kind:string, amountAtomic:number, txSig:string|null, payTo:string|null,
  *   reason:string|null, durationMs:number, responseLiveness:object }>}
  */
-export async function executePurchase({ agent, purchase, solana, allowed, persona, remainingCap = Infinity, payImpl = payX402 }) {
+export async function executePurchase({
+	agent, purchase, solana, allowed, persona, remainingCap = Infinity,
+	payImpl = payX402, usdcReader = readAgentUsdcAtomic,
+}) {
 	const t0 = Date.now();
 	const base = {
 		persona,
@@ -208,7 +216,7 @@ export async function executePurchase({ agent, purchase, solana, allowed, person
 	// Fails OPEN: an unreadable balance admits, and the simulation downstream is
 	// still the authoritative check.
 	const buyingPower = assessAgentBuyingPower({
-		usdcAtomic: await readAgentUsdcAtomic(solana.conn, agent.address),
+		usdcAtomic: await usdcReader(solana.conn, agent.address),
 		priceAtomic: purchase.priceAtomic || 0,
 	});
 	if (!buyingPower.ok) {

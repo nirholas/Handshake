@@ -314,7 +314,10 @@ export class PoseStage {
 		cam.far = height * 6;
 		cam.updateProjectionMatrix();
 		// Scale the light rig to the model so the key angle holds on any size.
-		key.position.set(height * 1.1, height * 1.6, height * 1.3);
+		// The elevation is deliberately steep: a low key throws a long shadow
+		// that runs off the bottom of a full-body frame and reads as a detached
+		// blob instead of contact. Steep keeps the shadow tucked at the feet.
+		key.position.set(height * 0.85, height * 2.3, height * 1.05);
 		key.target.position.set(center.x, height * 0.5, center.z);
 		key.target.updateMatrixWorld();
 	}

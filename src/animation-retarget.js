@@ -155,19 +155,8 @@ export function canonicalNodeMapFromObject(root) {
  */
 export function canonicalBoneNodesFromObject(root) {
 	const map = new Map();
-	const consider = (node) => {
-		if (!node?.name) return;
-		const canonical = canonicalizeBoneName(node.name);
-		if (canonical && !map.has(canonical)) map.set(canonical, node);
-	};
-	const skinned = [];
-	root?.traverse?.((node) => {
-		if (node.isSkinnedMesh) skinned.push(node);
-		if (node.isBone) consider(node);
-	});
-	for (const sm of skinned) {
-		for (const bone of sm.skeleton?.bones || []) consider(bone);
-	}
+	if (!root?.traverse) return map;
+	for (const { canonical, node } of canonicalBoneEntries(root)) map.set(canonical, node);
 	return map;
 }
 

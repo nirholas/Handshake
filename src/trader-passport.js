@@ -7,7 +7,7 @@
  * was signed, and a Verify button that re-reads the attestation transaction from
  * Solana rather than from our database.
  *
- * Loaded lazily the first time the Proof tab is opened, the passport costs an
+ * Loaded lazily the first time the Proof tab is opened. The passport costs an
  * extra request, and most visitors never leave the track-record tab.
  */
 
@@ -60,7 +60,7 @@ function unattested(d) {
 			</div>
 			<p class="tp-pp-note">${escapeHtml(d.unattested_reason || 'No on-chain attestation for this wallet yet.')}</p>
 			<p class="tp-pp-note tp-pp-dim">
-				Every trade above is already verifiable on its own, follow any row to its Solscan transaction. The passport
+				Every trade above is already verifiable on its own: follow any row to its Solscan transaction. The passport
 				adds a second layer: one signed statement that pins the whole score at a point in time.
 			</p>
 		</div>`;
@@ -86,7 +86,7 @@ function driftTable(drift) {
 		<table class="tp-pp-table">
 			<caption class="tp-pp-caption">
 				${drift.moved
-					? 'The live record has moved since this credential was signed. Both numbers are shown, the credential is a snapshot, not a live feed.'
+					? 'The live record has moved since this credential was signed. Both numbers are shown; the credential is a snapshot, not a live feed.'
 					: 'The live record still matches what was committed on-chain.'}
 			</caption>
 			<thead><tr><th scope="col">Metric</th><th scope="col">Committed</th><th scope="col">Live</th><th scope="col">Change</th></tr></thead>

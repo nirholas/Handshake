@@ -24,6 +24,7 @@ import { scoreGlbQuality } from './glb-quality.js';
 import { compressGlb } from './glb-compress.js';
 import { classifyModelCategory } from './forge-classify.js';
 import { cleanupGlb } from './glb-cleanup.js';
+import { derivePbrChannels } from './glb-pbr-derive.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not

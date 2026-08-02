@@ -216,6 +216,20 @@ end-to-end 2026-07-08: constructor executes, `COORD_MIN`/`COORD_MAX` read back
 correctly, 566,068 gas estimated for the deploy tx at 0.1 gwei ≈ 0.0000566068
 BNB — the RPC, script, and bytecode are all deploy-ready.
 
+**Re-verified 2026-08-02.** The dry run above still simulates green against the
+same live testnet RPC (chainId 97, block 122,607,654 at read time) at exactly
+566,068 gas, and `forge test` is still 19/19. The funding blocker is unchanged
+and was re-checked from scratch, not carried over: shell env, `.env`,
+`.env.local`, the `three-ws-api` Cloud Run service env, and Secret Manager all
+hold no funded chain-97 key, and three programmatic faucet endpoints
+(bnbchain's API, Stakely, Triangle) refuse or are retired. A throwaway deployer
+now exists at `0xC4e63FdF188D94059C877b957866726A888e1240`, written to the
+gitignored `contracts/.env`; it holds 0 tBNB and needs one human faucet run.
+[`scripts/bnb-testnet-deploy-prove.mjs`](../scripts/bnb-testnet-deploy-prove.mjs)
+is the single command for the rest: a signature-free preflight by default, and
+with `--broadcast` it deploys both contracts and then proves the live sender,
+reader, and ghost paths against what it just deployed.
+
 **Real broadcast proof — anvil fork of LIVE BSC testnet state** (per
 00-CONTEXT's decision-default table: "if every faucet fails, finish ALL code +
 tests against a local `anvil --chain-id 97` fork" — the same workaround
@@ -393,11 +407,26 @@ read, only key presence). Same funding blocker as campaign items 13 and 18 —
 owner-only to unblock (fund a deployer EOA via the tBNB faucet, then run the
 broadcast command below).
 
-Deploy (once funded):
+**Re-verified 2026-08-02.** The dry run still simulates green against the live
+testnet RPC at 1,695,618 total gas (1,226,903 of it the constructor) at 0.1
+gwei = 0.0001695618 BNB, and `forge test` is still 34/34. The ~1.16M/~0.000170
+BNB figures above were the constructor-only measurement; the number that
+matters for funding is the total. The funding blocker is unchanged; see the
+re-verification note in the WorldMoves section for the full re-check and for
+the throwaway deployer address now waiting on the faucet.
+
+Deploy (once funded), preferred, because it also proves the live paths in the
+same run:
+```
+node scripts/bnb-testnet-deploy-prove.mjs            # preflight, signs nothing
+node scripts/bnb-testnet-deploy-prove.mjs --broadcast # deploy both + live proof
+```
+
+The underlying forge command it runs, if you want it by hand:
 ```
 forge script script/DeployGreenfieldVault.s.sol:DeployGreenfieldVault \
   --rpc-url https://data-seed-prebsc-1-s1.bnbchain.org:8545 \
-  --private-key $DEPLOYER_PK \
+  --private-key $BNB_TESTNET_DEPLOYER_KEY \
   --broadcast
 ```
 

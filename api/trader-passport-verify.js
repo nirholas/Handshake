@@ -7,7 +7,7 @@
  * Reads the attestation transaction straight from a Solana RPC node, re-parses the
  * SPL-Memo payload, and re-checks the signer, the subject, and the schema. It
  * touches no three.ws database, so the answer holds even if you distrust the rest
- * of this API: and the same check is reproducible against any RPC you choose.
+ * of this API, and the same check is reproducible against any RPC you choose.
  *
  * `valid: false` always comes with `reasons[]` naming every failed check.
  *

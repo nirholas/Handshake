@@ -471,9 +471,15 @@ export function isEndpointCooling(url) {
 // Re-discovering a quota block costs a request against a plan that is already
 // over its cap, which is what keeps a daily cap pinned — that asymmetry is the
 // whole reason the quota verdict is shared and this one is not.
-const _methodDemotion = new Map(); // `${url} ${method}` → expiry ms
+const _methodDemotion = new Map(); // `${url}${METHOD_KEY_SEP}${method}` → expiry ms
 
-const methodKey = (url, method) => `${url} ${method}`;
+// NUL, because neither a URL nor a JSON-RPC method name can contain one. Every
+// read of this map goes through methodKey or splits on this one constant, so the
+// write side and the prefix scan can never disagree about a key shape. They did
+// once, and the silently-zero breadth count that produced disabled the whole
+// escalation below without failing anything loudly.
+const METHOD_KEY_SEP = '\u0000';
+const methodKey = (url, method) => `${url}${METHOD_KEY_SEP}${method}`;
 
 /**
  * The JSON-RPC method names carried by a request body, deduped. Handles the
@@ -515,7 +521,7 @@ export function isAnyMethodDemoted(url, methods) {
 /** How many distinct methods `url` is currently demoted for. */
 export function methodDemotionBreadth(url, now = Date.now()) {
 	let n = 0;
-	const prefix = `${url} `;
+	const prefix = `${url}${METHOD_KEY_SEP}`;
 	for (const [key, until] of _methodDemotion) {
 		if (until > now && key.startsWith(prefix)) n++;
 	}
@@ -563,7 +569,7 @@ export function rpcMethodDemotions(now = Date.now()) {
 			_methodDemotion.delete(key);
 			continue;
 		}
-		const [url, method] = key.split(' ');
+		const [url, method] = key.split(METHOD_KEY_SEP);
 		out.push({ url, method, remainingMs: until - now });
 	}
 	return out;

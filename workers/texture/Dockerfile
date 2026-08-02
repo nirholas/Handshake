@@ -21,14 +21,18 @@ RUN pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.py
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
-# Pre-cache model weights during build to avoid cold-start latency.
-# GCS volume mount at /weights will shadow this at runtime on Cloud Run.
+# Pre-cache the ControlNet weights during build to cut cold-start latency.
+# This deliberately does NOT live under /weights: Cloud Run mounts the weights
+# bucket there, and the mount shadows whatever the image baked at that path, so
+# a cache written to /weights would be invisible at runtime. /opt/hf-cache is
+# always reachable and is the loader's last-resort fallback when GCS staging
+# (WEIGHTS_GCS_URI) is unset or the staging prefix is empty.
 ARG SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
 ARG CONTROLNET_MODEL=diffusers/controlnet-depth-sdxl-1.0
 RUN python3 -c " \
 from diffusers import ControlNetModel, StableDiffusionXLControlNetPipeline; \
 import torch; \
-ControlNetModel.from_pretrained('${CONTROLNET_MODEL}', torch_dtype=torch.float16, cache_dir='/weights'); \
+ControlNetModel.from_pretrained('${CONTROLNET_MODEL}', torch_dtype=torch.float16, cache_dir='/opt/hf-cache'); \
 print('ControlNet cached') \
 "
 

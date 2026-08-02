@@ -1,0 +1,67 @@
+{
+	"startedAt": "2026-08-02T01:53:09.476Z",
+	"finishedAt": null,
+	"baseUrl": "https://three.ws",
+	"cases": {
+		"a": {
+			"id": "a",
+			"label": "Athlete",
+			"prompt": "A synthetic persona, not a real person: a professional sprinter in her late twenties, lean muscular build, short natural curls, wearing a fitted team tracksuit and running shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {},
+			"directed": "Full-body 3D model of a single humanoid female, late twenties, lean muscular build, standing in a neutral A-pose with arms slightly away from the body, hands open, fingers separated, and legs slightly apart. Head features",
+			"directedVia": "vertex gemini-2.5-flash (chat chain returned nothing)",
+			"directorError": null
+		},
+		"b": {
+			"id": "b",
+			"label": "Grandmother",
+			"prompt": "A synthetic persona, not a real person: a grandmother in her seventies, soft build, silver hair pinned in a bun, reading glasses, wearing a knitted cardigan over a floral blouse and a long skirt with flat shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {}
+				}
+			},
+			"directed": "A full-body 3D reconstruction of a seventy-year-old grandmother with a soft build, standing in a neutral A-pose with arms slightly away from the body and legs slightly apart, hands open with fingers separated",
+			"directedVia": "vertex gemini-2.5-flash (chat chain returned nothing)",
+			"directorError": null
+		},
+		"c": {
+			"id": "c",
+			"label": "Stylized kid (child-safe)",
+			"prompt": "A clearly stylized cartoon toy character of a child: chunky vinyl-figure proportions, oversized round head, simple mitten-like hands, matte toy-plastic finish with visible seam lines, painted-on facial features, wearing dungarees and a striped shirt, standing upright with arms slightly away from the body. Deliberately non-photoreal: a collectible vinyl figure, never a photographic human child.",
+			"subjectClass": "person",
+			"stylized": true,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {}
+				}
+			},
+			"directed": "A single full-body stylized cartoon child toy, standing in a neutral A-pose with arms slightly away from the body and legs slightly apart. The character has chunky vinyl-figure proportions, an oversized round head with painted-on facial features, and simple mitten-like hands. It wears blue matte toy-plastic dungarees and a red and white striped matte toy-plastic shirt. The entire character has a matte toy-plastic finish with visible seam lines, characteristic of a collectible vinyl figure, deliberately non-photoreal. Full body in frame head-to-toe, centered, isolated on a plain neutral background, no props gripped or crossing the silhouette, one camera angle facing the character, even studio lighting, no cropping, no motion blur, no text or watermark, no collage or multi-view grid, no second character.",
+			"directedVia": "vertex gemini-2.5-flash (chat chain returned nothing)",
+			"directorError": null
+		}
+	},
+	"variants": [
+		{
+			"id": "before",
+			"tier": "standard"
+		},
+		{
+			"id": "after",
+			"tier": "high"
+		}
+	],
+	"judge": {
+		"model": "google/gemini-2.5-pro",
+		"maxTokens": 4096,
+		"callsPerView": 2
+	}
+}

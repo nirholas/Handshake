@@ -12,11 +12,13 @@
 // environment that holds custodial secrets; until it is set the code falls back
 // to JWT_SECRET (with a one-time warning) so deploys don't break.
 //
-// Decryption is intentionally tolerant: a v2 record is tried against the
-// dedicated key first, then against JWT_SECRET. That keeps v2 records written
-// under the JWT_SECRET fallback (before a dedicated key existed) readable after a
-// dedicated key is introduced. Encryption is NOT tolerant — it always uses the
-// dedicated key (fail-closed in prod) so new secrets never depend on JWT_SECRET.
+// Decryption is intentionally tolerant: a record is tried against the dedicated
+// key, then every retired key in WALLET_ENCRYPTION_KEY_PREVIOUS, then JWT_SECRET.
+// That keeps two classes of record readable that would otherwise be lost forever:
+// v2 records written under the JWT_SECRET fallback before a dedicated key existed,
+// and records written under a key that has since been rotated out. Encryption is
+// NOT tolerant: it always uses the current dedicated key (fail-closed in prod), so
+// rotation upgrades records as they are rewritten and never depends on JWT_SECRET.
 
 import { webcrypto } from 'node:crypto';
 import { env } from './env.js';

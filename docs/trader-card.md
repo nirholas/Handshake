@@ -46,6 +46,7 @@ Returns the identity summary, KPI aggregates, and the per-coin ledger — `known
 
 ## Related
 
+- [Trader Passport](trader-passport.md): the on-chain credential a claimed record earns, and how another app verifies it
 - [Oracle](oracle.md) — the WHO pillar runs on this same wallet-reputation ledger
 - [Trading arenas](trading-arenas.md) — where a verified track record unlocks tournaments, vaults, and mirrors
 - [Trading surfaces](trading-surfaces.md) — the solo trading stack

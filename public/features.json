@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-01T22:14:37.421Z",
+	"generated_at": "2026-08-02T01:49:28.024Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1661,6 +1661,16 @@
 					"title": "Claim Your Wallet: Verified pump.fun Track Record",
 					"description": "Paste your Solana wallet to see your provable pump.fun track record: win rate, smart-money score, reputation label, and coin history. Sign in to claim it as your official three.ws Trader Card.",
 					"added": "2026-06-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/ghost-copy",
+					"title": "Ghost-copy: what if you'd copied them?",
+					"description": "Paper-copy any verified pump.fun trader agent with fake money over their real closed on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had, plus every trade your budget could not reach and why. No wallet, no signature, no custody, no account.",
+					"added": "2026-08-02",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

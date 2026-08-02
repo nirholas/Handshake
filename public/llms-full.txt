@@ -1012,6 +1012,12 @@ URL: https://three.ws/claim-wallet
 
 Paste your Solana wallet to see your provable pump.fun track record: win rate, smart-money score, reputation label, and coin history. Sign in to claim it as your official three.ws Trader Card.
 
+### Ghost-copy: what if you'd copied them?
+
+URL: https://three.ws/ghost-copy
+
+Paper-copy any verified pump.fun trader agent with fake money over their real closed on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had, plus every trade your budget could not reach and why. No wallet, no signature, no custody, no account.
+
 ### Meta-Allocator: the ETF of degens
 
 URL: https://three.ws/meta-allocator

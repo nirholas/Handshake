@@ -2261,6 +2261,58 @@ curl -s 'https://three.ws/api/v1/pump/whales?mint=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfz
 
 ---
 
+## Trader Passport API
+
+A trader's daily on-chain score attestation (`threews.tradescore.v1`), served as a
+portable credential and a database-free verifier. Full guide:
+[docs/trader-passport.md](trader-passport.md).
+
+### Read a passport
+
+```
+GET /api/trader-passport?wallet=<base58>&network=mainnet&window=all
+GET /api/trader-passport?agent_id=<uuid>&network=mainnet&window=all
+```
+
+Public, CORS-open, no auth. 60s cache. Pass `wallet` **or** `agent_id`; `network`
+is `mainnet` (default) or `devnet`; `window` is `24h` / `7d` / `30d` / `all`
+(default `all`); `live=0` skips re-deriving the current numbers.
+
+Returns `subject`, `issuer` (the attester key to pin), `status`
+(`attested` / `unattested`), the signed `credential` with its committed
+`snapshot`, `credential_age_days`, the daily `history`, the re-derived `live`
+metrics, and `drift` (committed vs live, per field). An unattested wallet returns
+the same shape with `credential: null` and an `unattested_reason`.
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `400` | `missing_subject` | Neither `wallet` nor `agent_id` was passed |
+| `400` | `invalid_wallet` / `invalid_agent_id` | Malformed subject |
+| `404` | `agent_not_found` | No three.ws agent with that id |
+| `404` | `no_trading_wallet` | That agent has never traded from a wallet |
+| `429` | `rate_limited` | Over the public per-IP limit |
+
+### Verify a credential
+
+```
+GET /api/trader-passport/verify?signature=<sig>&network=mainnet[&wallet=<base58>][&attester=<base58>]
+```
+
+Reads the attestation transaction from a Solana RPC node and re-checks the memo,
+the signer, and the subject. Touches no three.ws database, so the verdict holds
+without trusting the rest of this API. Returns `{ valid, found, attester,
+subject, slot, block_time, payload, reasons[] }`; every failed check is named in
+`reasons`. Cached 1h for a found transaction, uncached when not found.
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `400` | `invalid_signature` | Not a base-58 transaction signature |
+| `400` | `unsupported_network` | Network is not `mainnet` or `devnet` |
+| `502` | `rpc_failed` | The RPC node could not be read (not a negative verdict) |
+| `504` | `rpc_timeout` | The RPC node did not answer in time |
+
+---
+
 ## Authentication API
 
 Authentication is covered in detail in the [Authentication documentation](authentication.md). Quick reference:

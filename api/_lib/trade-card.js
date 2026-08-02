@@ -116,6 +116,23 @@ export function headlineFor(pnlPct) {
 	return { primary, secondary };
 }
 
+/**
+ * SOL for display, with a floor that never lies. fmtSol prints three decimals,
+ * so a real but sub-milli-SOL move rounds to "0.000" and reads as a broken
+ * number on a card. Below the printable floor we say "<0.001" and keep the sign,
+ * which is both true and legible.
+ */
+export function solStr(v, { sign = true } = {}) {
+	const n = num(v);
+	if (n == null) return null;
+	const floor = 0.0005;
+	if (n !== 0 && Math.abs(n) < floor) {
+		const mark = n > 0 ? '+' : '−';
+		return `${sign ? mark : ''}<0.001 ◎`;
+	}
+	return fmtSol(n, { sign });
+}
+
 export function toneFor(pnlPct) {
 	const p = num(pnlPct);
 	if (p == null || Math.abs(p) < 0.05) return 'flat';
@@ -195,11 +212,14 @@ export function shapeTradeCard(row, { origin = 'https://three.ws' } = {}) {
 		mintUrl: solscanToken(row.mint, network),
 		agentUrl: `${origin}/trader/${encodeURIComponent(row.agent_id)}`,
 		shareUrl: `${origin}/trade/${encodeURIComponent(row.id)}`,
+		// Absolute for the crawlers (og:image must be absolute), relative for the
+		// on-page <img> so the card still renders on a preview host or localhost.
 		ogImageUrl: `${origin}/api/trade-og?id=${encodeURIComponent(row.id)}`,
+		ogImagePath: `/api/trade-og?id=${encodeURIComponent(row.id)}`,
 
 		pnlSolStr,
-		entrySolStr: entrySol != null ? fmtSol(entrySol, { sign: false }) : null,
-		exitSolStr: exitSol != null ? fmtSol(exitSol, { sign: false }) : null,
+		entrySolStr: solStr(entrySol, { sign: false }),
+		exitSolStr: solStr(exitSol, { sign: false }),
 	};
 
 	model.title = buildTitle(model);

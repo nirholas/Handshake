@@ -1027,6 +1027,10 @@
 			"dest": "/meta-allocator.html"
 		},
 		{
+			"src": "/ghost-copy/?",
+			"dest": "/ghost-copy.html"
+		},
+		{
 			"src": "/clip-director/?",
 			"dest": "/clip-director.html"
 		},
@@ -3019,6 +3023,10 @@
 		{
 			"src": "/api/pump/coin-intel",
 			"dest": "/api/pump/coin-intel.js"
+		},
+		{
+			"src": "/api/pump/ghost-copy",
+			"dest": "/api/pump/ghost-copy.js"
 		},
 		{
 			"src": "/api/pump/smart-money",

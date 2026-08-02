@@ -65,12 +65,51 @@ re-provisioned under the current `WALLET_ENCRYPTION_KEY`, the dead address prese
 `meta.stale_solana_address` on each row, and wallets that already decrypted correctly were
 left untouched.
 
+## The mechanism that makes the next rotation survivable (2026-08-01)
+
+The takeaway below ("carry the old key forward") had no mechanism behind it, so it was a
+rule a human had to remember at exactly the moment they were busy migrating hosts. It is
+now enforced by the code.
+
+`WALLET_ENCRYPTION_KEY_PREVIOUS` holds retired keys, newest first, comma or whitespace
+separated. `secret-box.js` tries the current dedicated key, then every retired key, then
+`JWT_SECRET`, for both v2 and legacy v1 ciphertexts. **Encryption is unchanged**: new
+writes always use the current key, so a rotation upgrades records as they are rewritten and
+a retired key can be dropped once an audit shows nothing opens with it.
+
+Rotating safely is now three steps:
+
+```sh
+# 1. Keep the outgoing key readable BEFORE the new one takes over.
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 \
+  --update-env-vars WALLET_ENCRYPTION_KEY_PREVIOUS=<the outgoing key>
+
+# 2. Rotate.
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 \
+  --update-env-vars WALLET_ENCRYPTION_KEY=<the new key>
+
+# 3. Confirm nothing is stranded, then (later) drop the retired key.
+node scripts/audit-custodial-key-health.mjs
+```
+
+Never `--set-env-vars` here: it replaces the entire environment set. Covered by
+`tests/secret-box.test.js` (retired-key read, stacked rotations, and a case proving new
+writes never use a retired key).
+
+**What this does not do:** it cannot recover the keys already lost. A re-measure on
+2026-08-01 (`scripts/audit-custodial-key-health.mjs`) found 8 of 565 custodial wallets
+still unopenable, holding **0.49 SOL, of which 0.35 SOL is customer money** in two
+user-owned agents. Those users cannot withdraw. Re-keying a customer wallet would abandon
+their balance, so that decision is the owner's, not an agent's.
+
 ## Takeaways
 
-- **A key rotation must carry the old key forward, or accompany a sweep.** If
-  `WALLET_ENCRYPTION_KEY` (or any at-rest secret key) is ever rotated again, either export
-  and archive the retiring key somewhere durable first, or run a sweep of every custodial
-  wallet under it *before* rotating — not after.
+- **A key rotation must carry the old key forward, or accompany a sweep.** This is now
+  mechanized: set `WALLET_ENCRYPTION_KEY_PREVIOUS` before rotating (see the section above).
+  Archiving the retiring key durably is still worth doing, but forgetting it no longer
+  destroys custody on its own.
 - **Fail closed beats fail silent.** The guard added here refuses to re-key a wallet it
   can't prove is empty. That property should hold for any future self-heal that touches
   custodial secrets.
@@ -83,3 +122,6 @@ left untouched.
   pool feeds.
 - `api/_lib/agent-pumpfun.js` — the self-heal + fund-safety guard.
 - `scripts/rekey-stale-launch-wallets.mjs` — the batch re-key tool.
+- `scripts/audit-custodial-key-health.mjs`: read-only sweep of every custodial wallet,
+  how many still decrypt, how much SOL sits behind the ones that do not, and which
+  addresses they are.

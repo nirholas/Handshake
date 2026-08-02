@@ -219,3 +219,93 @@ Left, both stop-and-ask gate 1, numbers rendered for the owner:
    sponsor here (same address, same balance).
 3. **Deploy.** Production runs `6cc0370dc`; every item above ships with the next
    deploy, which is owner-gated. Until then the alert is dormant.
+
+---
+
+## 2026-08-02: 07 bnb-testnet-deploys (everything but the broadcast; funding owner-gated)
+
+Measured, all re-read today against the current tree, nothing carried over from
+the retired campaign log:
+
+- Foundry was not installed in this workspace at all. Installed forge/cast/anvil
+  1.7.1 (`foundryup`), then `forge build` clean.
+- Both dry runs green against the LIVE public BSC testnet RPC
+  (`https://data-seed-prebsc-1-s1.bnbchain.org:8545`, chainId 97, block
+  122,607,654 at read time):
+  `DeployGreenfieldVault` 1,695,618 gas @ 0.1 gwei = 0.0001695618 BNB,
+  `DeployWorldMoves` 566,068 gas @ 0.1 gwei = 0.0000566068 BNB. Both resolve the
+  correct testnet Greenfield hubs (permission `0x25E1eeDb...`, crossChain
+  `0xa5B2c9194...`, objectHub `0x1b059D848...`) and read `COORD_MIN/MAX` back
+  correctly.
+- Unit suites still green: `forge test` 34/34 GreenfieldVault, 19/19 WorldMoves.
+- `curl -s "https://three.ws/api/bnb/world-config?network=testnet"` returns
+  `"address": null, "deployed": false`. Honest empty state, unchanged.
+- Two of the four public RPCs in `BNB_CHAINS.bscTestnet.rpcs` are dead right now:
+  `bsc-testnet-rpc.publicnode.com` answers 503 `no available nodes found`, and
+  `bsc-testnet.public.blastapi.io` / blockpi / omniatech (not in our list) 403 or
+  521. `data-seed-prebsc-1`, `data-seed-prebsc-2`, and `bsc-testnet.drpc.org` all
+  serve. The viem `fallback()` is deterministic-order with data-seed first, so
+  nothing is broken today, but the list is 1 lane thinner than it reads.
+
+Deployer key hunt, so nobody repeats it: no funded key exists anywhere on this
+machine or in the project. Checked shell env, `.env`, `.env.local` (every 32-byte
+hex value derived to an address, only `A2A_PAYER_PRIVATE_KEY` is a real EVM key),
+the Cloud Run service env, and Secret Manager (`okx-throwaway-wallet-key`,
+`x402-xlayer-relayer-key`, `x402-xlayer-payto-key`, the ERC-8004 platform
+validator `0x93Bc7EfB...`). Every candidate reads 0 tBNB on chain 97. Three
+programmatic faucet endpoints were tried and all refuse: the bnbchain faucet API
+403s at the CDN, Stakely 404s, Triangle is suspended. The reCAPTCHA gate in the
+work order is real; there is no agent path around it.
+
+Did:
+
+- Generated a throwaway BNB testnet deployer, `0xC4e63FdF188D94059C877b957866726A888e1240`,
+  into `contracts/.env` (gitignored via `contracts/.gitignore:5`, mode 600).
+  Testnet only. It has never held and must never hold mainnet value.
+- Wrote `scripts/bnb-testnet-deploy-prove.mjs`, one command for the rest of this
+  work order. Default run is a preflight that signs nothing: it picks the first
+  BSC testnet RPC that actually answers with chainId 97, reads the deployer's live
+  balance, simulates BOTH deploy scripts, and prints the spend-confirmation table
+  gate 1 requires, exiting 3 when unfunded. `--broadcast` deploys both with the
+  real unmodified `script/Deploy*.s.sol`, parses addresses and receipts out of
+  forge's broadcast artifact, then proves the three live paths. `--prove-only
+  --address 0x...` proves against an existing deployment.
+- The proof drives the real production modules, not reimplementations:
+  `sendJoin`/`sendMove`/`sendLeave` from `api/_lib/bnb/world-moves.js` (sender),
+  `watchWorldPresence` from `src/bnb/world-presence-reader.js` (reader), and
+  `createGhostTracker` from `src/bnb/onchain-ghosts.js` (ghost). The reader starts
+  before the sender fires so events are observed live rather than backfilled, and
+  reader and sender are both pinned to the one RPC that answered the preflight so
+  a proof can never silently split across endpoints.
+
+Harness validated end to end on a LOCAL `anvil --chain-id 97` (not a fork; the
+codespace OOM-killed two fork attempts under concurrent-agent memory pressure,
+and neither contract needs forked state: `GreenfieldVault`'s constructor only
+rejects the zero address). This is NOT the public-testnet proof the work order
+asks for, it is proof that the funded run will not be the first time this code
+executes. Deployed GreenfieldVault `0x8fba342a...` and WorldMoves `0x38f801c5...`
+locally, then: 1 `join`, 3 `move`, 1 `leave` all mined; the reader decoded 1
+Joined / 3 Moved / 1 Left with exact args; the ghost tracker held 1 ghost
+interpolating `{x:1110, z:-445}` toward its `{x:1500, z:-250}` target and dropped
+to 0 on `Left`. Zero reader errors. All sends took the self-pay branch, which is
+correct: a local contract is in no MegaFuel sponsorship policy, and the self-pay
+fallback is the mandatory path.
+
+Left, all of it downstream of one human action:
+
+1. **Owner: fund `0xC4e63FdF188D94059C877b957866726A888e1240` with tBNB** at
+   https://www.bnbchain.org/en/testnet-faucet. Both deploys together need
+   0.000226 BNB; the faucet's usual 0.1 to 0.5 tBNB is ~400x more than enough and
+   leaves plenty for the proof transactions.
+2. **Owner: say yes to the broadcast** (gate 1, testnet spend from that key).
+   Then `node scripts/bnb-testnet-deploy-prove.mjs --broadcast --out <file>` does
+   the deploy and the live sender/reader/ghost proof in one run.
+3. Set `WORLD_MOVES_ADDRESS_TESTNET` on the service (`--update-env-vars`, config
+   only, pre-approved) and re-read `/api/bnb/world-config?network=testnet` for
+   `deployed: true`.
+4. Record the live addresses, blocks, tx hashes, and BscScan links in
+   `contracts/DEPLOYMENTS.md`, replacing its anvil-fork-only WorldMoves section.
+
+Commit gate: this work order's diff names a chain other than Solana, so nothing
+here is staged. Solana position is unchanged by all of it; this is an additive
+testnet surface and no Solana infrastructure was touched.

@@ -398,6 +398,16 @@ export const env = {
 		return opt('WALLET_ENCRYPTION_KEY');
 	},
 
+	// Retired wallet-encryption keys, newest first, comma or whitespace separated.
+	// Decrypt-only (api/_lib/secret-box.js): a rotation that drops the old key here
+	// permanently strands every ciphertext written under it, which is destroyed
+	// custody rather than a degraded mode. The 2026-07 rotation did exactly that to
+	// 8 custodial wallets holding 0.49 SOL, 0.35 of it customer money. Keep a
+	// retired key listed until an audit shows nothing opens with it.
+	get WALLET_ENCRYPTION_KEY_PREVIOUS() {
+		return opt('WALLET_ENCRYPTION_KEY_PREVIOUS');
+	},
+
 	// HMAC key that makes scoped session-key (capability) grants tamper-evident
 	// (api/_lib/wallet-capabilities.js). Each capability stores an HMAC over its
 	// immutable scope keyed by this secret; the spend path re-verifies on every

@@ -18,8 +18,6 @@
  *      moved since, rather than presenting the anchored score as current truth.
  */
 
-import { PublicKey } from '@solana/web3.js';
-
 import { sql } from './db.js';
 import { solanaConnection } from './solana/connection.js';
 import { RPC, extractMemoPayload, attesterFromTx } from './solana-attestations.js';

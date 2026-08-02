@@ -440,3 +440,271 @@
 		height: 18px;
 	}
 }
+
+/* ── Tap-target floor, round 2 (touch only) ────────────────────────────
+ * Every selector below was measured under 44x44 CSS px on a real Pixel 5
+ * by `npm run audit:mobile-touch` (scripts/mobile-touch-audit.mjs); the
+ * sizes in the comments are that run's measured boxes. Grouped by the
+ * surface they came from so the next audit run can be traced back here.
+ *
+ * The technique is deliberately uniform: raise the box to a 44px floor and
+ * centre the existing content inside it with inline-flex, so nothing moves
+ * visually except the hit area growing. Gated on pointer type rather than
+ * viewport width because a large tablet is still finger-driven, and a
+ * desktop mouse must keep the designed compact sizing.
+ */
+@media (hover: none) and (pointer: coarse) {
+	/* Skip links. Injected by /nav.js on every page and hand-written on a
+	   few; they are the first focusable element, so a keyboard-plus-touch
+	   user lands on them first. Measured 157x36, 152x40, 127x41, 393x26. */
+	.nav-skip,
+	.skip-link {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* Shared footer. Present on most pages. Measured: the NVIDIA badge at
+	   24x44 (too narrow, not too short) and the community button at 145x41. */
+	.h-footer-nvidia {
+		min-width: 44px;
+		justify-content: center;
+	}
+	.h-footer-community-btn {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* Docs shell. The sidebar is the single densest control list on the
+	   site: 271 links measured at 267x30, stacked, with no gap between hit
+	   areas. Raising the floor also separates neighbours. */
+	.sidebar-link {
+		min-height: 44px;
+		display: flex;
+		align-items: center;
+	}
+	.docs-pagetools-btn,
+	.docs-pagetools-caret,
+	.docs-logo,
+	.docs-world-link {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.docs-pagetools-caret {
+		min-width: 44px;
+		justify-content: center;
+	}
+
+	/* /launches. Each launch row carries a strip of 29px actions plus a
+	   37x10 tip button, which is the smallest control measured anywhere. */
+	.lx-action,
+	.lx-agent-row,
+	.twc-make,
+	.mp-tick {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.lx-agent-row,
+	.mp-tick {
+		display: flex;
+	}
+	.lx-action-watch {
+		min-width: 44px;
+		justify-content: center;
+	}
+	/* The ticker span carries a click handler, so it is a real target. */
+	span.twc {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* Home page. Avatar picker tiles (32x32), animation/emote chips (50x24),
+	   the advent topic links (152x33) and the section CTAs (111x41). */
+	.pg-avatar-item {
+		min-width: 44px;
+		min-height: 44px;
+	}
+	.pg-anim,
+	.pg-chip,
+	.hp-btn,
+	.adv-topic,
+	.har-cta-link,
+	.wyg-card-link {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* /forge. Showcase card actions and the generation-mode tabs. */
+	.showcase-vote,
+	.showcase-remix,
+	.showcase-cat-badge,
+	.fq-connect-btn {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	#tab-text,
+	#tab-image,
+	#tab-sketch {
+		min-height: 44px;
+	}
+
+	/* /play. The community picker, its name field, and the intro reopener. */
+	.cc-card-holders,
+	.cc-nav-brand,
+	.cc-adventure,
+	.cc-gallery-btn,
+	.pi-reopen {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.cc-nav-toggle {
+		min-width: 44px;
+		min-height: 44px;
+	}
+	.cc-name-input {
+		min-height: 44px;
+	}
+
+	/* /marketplace. Card title links (289x32) and the disclosure banner. */
+	.card-profile-link,
+	.tws-disc-cta {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.tws-disc-x {
+		min-width: 44px;
+		min-height: 44px;
+	}
+
+	/* /markets. Watchlist stars are the smallest tap target on the page. */
+	.nw-star {
+		min-width: 44px;
+		min-height: 44px;
+	}
+	.mkt-more {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* /changelog filter pills. */
+	.cl-filter {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* /walk. Share/copy row plus the standard button kit at mobile size. */
+	.wl-copy-btn {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.btn {
+		min-height: 44px;
+	}
+
+	/* /irl. Consent, calibration and bottom-sheet controls all sat at 32-43px. */
+	.irl-consent-btn,
+	.irl-sheet-btn,
+	.irl-sheet-report,
+	.irl-ob-learn,
+	.tws-es-btn {
+		min-height: 44px;
+	}
+	.irl-cal-step {
+		min-width: 44px;
+		min-height: 44px;
+	}
+	#irl-cal-save,
+	#irl-cal-cancel {
+		min-height: 44px;
+	}
+	/* Checkbox inputs default to 13-16px; the label row carries the hit area
+	   and the box itself grows to a thumb-sized 22px. */
+	#irl-consent-dontshow {
+		width: 22px;
+		height: 22px;
+	}
+
+	/* Auth / dashboard form. Fields measured 42px, the submit 41px. */
+	#email,
+	#password,
+	#privy-email-input,
+	#submit,
+	.brand,
+	.panel-brand,
+	.forgot {
+		min-height: 44px;
+	}
+	#email,
+	#password,
+	#privy-email-input,
+	#submit {
+		display: block;
+	}
+	.brand,
+	.panel-brand,
+	.forgot {
+		display: inline-flex;
+		align-items: center;
+	}
+}
+
+/* ── Canvas scroll posture ─────────────────────────────────────────────
+ * A canvas with `touch-action: auto` that also calls preventDefault in a
+ * pointer handler makes orbit gestures fight page scroll; one with
+ * `touch-action: none` inside a scrolling page swallows the swipe outright.
+ * Every canvas below is a decorative or preview surface embedded in a page
+ * the user still has to scroll, so vertical panning belongs to the page and
+ * horizontal drag belongs to the canvas.
+ *
+ * Full-screen application canvases (#kx-canvas on /play, #irl-canvas on
+ * /irl) are deliberately absent: they own the whole viewport, there is
+ * nothing to scroll behind them, and `touch-action: none` is correct there.
+ */
+#footer-bot-canvas,
+.walk-companion-canvas,
+.walk-preview-canvas,
+#drop-canvas,
+#lx-field,
+#avatar-canvas,
+#walk-minimap,
+.mocap-waveform {
+	touch-action: pan-y;
+}
+
+/* ── Safe-area insets for the bars the audit found unprotected ─────────
+ * Each of these is fixed or sticky, hugs the bottom edge, and had no rule
+ * mentioning safe-area-inset applying to it, so on an iPhone its last row
+ * of controls sits under the home indicator.
+ *
+ * Each rule keeps the bar's own designed bottom padding as the floor (the
+ * value the audit measured) and only grows past it on a device that
+ * actually reports an inset, so nothing shifts on a phone without one.
+ */
+@supports (padding: env(safe-area-inset-bottom)) {
+	.lx-toolbar {
+		padding-bottom: max(6px, env(safe-area-inset-bottom));
+	}
+	.irl-bottom {
+		padding-bottom: max(14px, env(safe-area-inset-bottom));
+	}
+	#irl-caption-panel,
+	#irl-error-sheet,
+	#irl-mypins-sheet,
+	#irl-agents-sheet {
+		padding-bottom: max(36px, env(safe-area-inset-bottom));
+	}
+	#irl-calibrate-panel {
+		padding-bottom: max(18px, env(safe-area-inset-bottom));
+	}
+}

@@ -72,7 +72,11 @@ Environment variables:
                          (default: diffusers/controlnet-depth-sdxl-1.0)
   SDXL_INPAINT_MODEL   — SDXL inpainting checkpoint for the magic brush
                          (default: diffusers/stable-diffusion-xl-1.0-inpainting-0.1)
-  WEIGHTS_DIR          — local cache dir for model weights (default: /weights)
+  WEIGHTS_DIR: cache dir used when GCS staging is off (default: /weights)
+  WEIGHTS_GCS_URI: gs:// prefix holding the HuggingFace cache tree. When set,
+                         weights are copied to local disk at load time instead of
+                         being read through the FUSE mount (see _stage_weights_local).
+  WEIGHTS_LOCAL_DIR: where that staged copy lands (default: /tmp/sdxl-texture)
   MAX_CONCURRENT       — default 1 (GPU-bound)
 """
 
@@ -122,6 +126,78 @@ SDXL_INPAINT_MODEL = os.environ.get(
     "SDXL_INPAINT_MODEL", "diffusers/stable-diffusion-xl-1.0-inpainting-0.1"
 )
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
+
+# Weight staging: copy the HuggingFace cache tree from GCS to local disk with the
+# storage client before loading, instead of letting diffusers read ~15 GiB of
+# SDXL weights through the Cloud Storage FUSE mount. FUSE stalls on the large
+# sequential reads a safetensors load issues, which is what left the first
+# request to burn the whole 600 s request timeout; a plain sequential GET per
+# object does not stall. Same pattern as workers/model-hunyuan3d and
+# workers/model-trellis. Unset WEIGHTS_GCS_URI, or any staging failure, falls
+# back to loading from WEIGHTS_DIR unchanged.
+WEIGHTS_GCS_URI = os.environ.get("WEIGHTS_GCS_URI", "")  # e.g. gs://bucket/sdxl-texture
+WEIGHTS_LOCAL_DIR = os.environ.get("WEIGHTS_LOCAL_DIR", "/tmp/sdxl-texture")
+# Resolved once by _resolve_cache_dir(); every from_pretrained cache_dir reads it
+# so the text pipeline and the lazily-loaded inpaint pipeline share one staged copy.
+_cache_dir: Optional[str] = None
+_cache_dir_lock = threading.Lock()
+
+
+def _stage_weights_local() -> Optional[str]:
+    """Download the HuggingFace cache tree from GCS to local disk, bypassing the
+    FUSE mount. Returns the local dir on success, or None to signal "load from
+    WEIGHTS_DIR as before". Never raises: a staging failure must degrade to the
+    FUSE-mount load, not crash the loader."""
+    if not WEIGHTS_GCS_URI.startswith("gs://"):
+        return None
+    try:
+        from concurrent.futures import ThreadPoolExecutor
+
+        bucket_name, _, prefix = WEIGHTS_GCS_URI[len("gs://"):].partition("/")
+        prefix = prefix.rstrip("/") + "/"
+        client = storage.Client()
+        blobs = [
+            blob
+            for blob in client.list_blobs(bucket_name, prefix=prefix)
+            if blob.name[len(prefix):] and not blob.name.endswith("/")
+        ]
+        if not blobs:
+            log.warning("weights staging: no objects under %s; using FUSE mount", WEIGHTS_GCS_URI)
+            return None
+
+        def _download(blob) -> int:
+            rel = blob.name[len(prefix):]
+            dest = os.path.join(WEIGHTS_LOCAL_DIR, rel)
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            # Reuse an already-staged object (same-instance warm restart) when its
+            # size matches, so reloading the inpaint pipeline re-pulls nothing.
+            if os.path.exists(dest) and blob.size is not None and os.path.getsize(dest) == blob.size:
+                return blob.size or 0
+            blob.download_to_filename(dest)
+            return blob.size or os.path.getsize(dest)
+
+        os.makedirs(WEIGHTS_LOCAL_DIR, exist_ok=True)
+        t0 = time.time()
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            total = sum(pool.map(_download, blobs))
+        log.info(
+            "weights staged to %s in %.1fs (%d objects, %.2f GiB)",
+            WEIGHTS_LOCAL_DIR, time.time() - t0, len(blobs), total / (1024 ** 3),
+        )
+        return WEIGHTS_LOCAL_DIR
+    except Exception as exc:  # noqa: BLE001, degrade to the FUSE mount, never crash
+        log.warning("weights staging failed (%s); falling back to FUSE mount %s", exc, WEIGHTS_DIR)
+        return None
+
+
+def _resolve_cache_dir() -> str:
+    """The directory every from_pretrained call reads. Stages from GCS on first
+    use, then memoizes so the second pipeline reuses the staged copy."""
+    global _cache_dir
+    with _cache_dir_lock:
+        if _cache_dir is None:
+            _cache_dir = _stage_weights_local() or WEIGHTS_DIR
+        return _cache_dir
 
 # Hard caps for the region-retexture mask payload — a UV mask is a small 1-channel
 # PNG; anything larger is malformed or hostile.
@@ -177,19 +253,20 @@ def _load_pipeline() -> None:
     global _pipe
     from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel, AutoencoderKL
 
+    cache_dir = _resolve_cache_dir()
     log.info("Loading ControlNet model: %s", CONTROLNET_MODEL)
     controlnet = ControlNetModel.from_pretrained(
         CONTROLNET_MODEL,
         torch_dtype=torch.float16,
         use_safetensors=True,
-        cache_dir=WEIGHTS_DIR,
+        cache_dir=cache_dir,
     )
 
     log.info("Loading SDXL model: %s", SDXL_MODEL)
     vae = AutoencoderKL.from_pretrained(
         "madebyollin/sdxl-vae-fp16-fix",
         torch_dtype=torch.float16,
-        cache_dir=WEIGHTS_DIR,
+        cache_dir=cache_dir,
     )
     _pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
         SDXL_MODEL,
@@ -197,7 +274,7 @@ def _load_pipeline() -> None:
         vae=vae,
         torch_dtype=torch.float16,
         use_safetensors=True,
-        cache_dir=WEIGHTS_DIR,
+        cache_dir=cache_dir,
     )
     _pipe.to("cuda")
     _pipe.enable_model_cpu_offload()
@@ -221,18 +298,19 @@ def _load_inpaint_pipeline() -> None:
             return
         from diffusers import StableDiffusionXLInpaintPipeline, AutoencoderKL
 
+        cache_dir = _resolve_cache_dir()
         log.info("Loading SDXL inpaint model: %s", SDXL_INPAINT_MODEL)
         vae = AutoencoderKL.from_pretrained(
             "madebyollin/sdxl-vae-fp16-fix",
             torch_dtype=torch.float16,
-            cache_dir=WEIGHTS_DIR,
+            cache_dir=cache_dir,
         )
         pipe = StableDiffusionXLInpaintPipeline.from_pretrained(
             SDXL_INPAINT_MODEL,
             vae=vae,
             torch_dtype=torch.float16,
             use_safetensors=True,
-            cache_dir=WEIGHTS_DIR,
+            cache_dir=cache_dir,
         )
         pipe.to("cuda")
         pipe.enable_model_cpu_offload()

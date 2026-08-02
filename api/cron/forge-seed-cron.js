@@ -667,7 +667,18 @@ async function startNextJob(origin, claimed = new Set()) {
 		// of the torso, neutral stance, plain background) the auto-rigger needs. The
 		// library string is what gets STORED, so the "recently used" de-duplication
 		// and the batch runner's checkpoint keys stay keyed on the bare prompt.
-		body: JSON.stringify({ prompt: composeSeedPrompt(chosen), tier: 'draft', path: 'image' }),
+		//
+		// A fresh seed per submit is load-bearing, not a nicety: /api/forge caches a
+		// finished result under (path, tier, backend, prompt, seed), so once the
+		// library wraps around, a repeated prompt with no seed would serve the cached
+		// mesh and mint a SECOND catalog avatar pointing at the very same GLB. The
+		// seed makes every wrap-around generation a genuinely new asset.
+		body: JSON.stringify({
+			prompt: composeSeedPrompt(chosen),
+			tier: 'draft',
+			path: 'image',
+			seed: freshSeed(),
+		}),
 	});
 
 	if (submit.timedOut) {
@@ -775,6 +786,12 @@ function toSlug(prompt) {
 		.replace(/^-+|-+$/g, '')
 		.slice(0, 48);
 	return `${base}-${randomUUID().slice(0, 6)}`;
+}
+
+// A uniformly random uint32, the range every provider RNG accepts
+// (api/_lib/forge-options.js SEED_MAX).
+function freshSeed() {
+	return Math.floor(Math.random() * 4_294_967_296);
 }
 
 function toTitle(prompt) {

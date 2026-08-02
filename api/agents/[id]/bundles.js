@@ -23,12 +23,22 @@ import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { isUuid } from '../../_lib/validate.js';
 import { MARKET_PAID_KINDS } from '../../_lib/marketplace-kinds.js';
-import { simulatePrice, suggestPrice } from '../../_lib/bundle-pricing.js';
+import { simulatePrice, suggestPrice, toAtomic } from '../../_lib/bundle-pricing.js';
+
+// An atomic price is a bigint in the database (skill_bundles.price_amount) and
+// can exceed Number.MAX_SAFE_INTEGER on a 9-decimal mint, so a decimal string is
+// accepted alongside the number a JSON client naturally sends. Both normalize to
+// a digit string, which the driver binds to the bigint column without ever
+// passing through a float.
+const atomicPrice = z
+	.union([z.number().int().min(1), z.string().trim().regex(/^\d+$/)])
+	.transform((v) => String(v))
+	.refine((v) => BigInt(v) >= 1n, { message: 'price_amount must be at least 1 atomic unit' });
 
 const createSchema = z.object({
 	name:          z.string().trim().min(2).max(80),
 	description:   z.string().trim().max(500).optional().default(''),
-	price_amount:  z.number().int().min(1),
+	price_amount:  atomicPrice,
 	currency_mint: z.string().trim().min(1).max(100),
 	chain:         z.string().trim().min(1).max(20).default('solana'),
 	skills:        z.array(z.string().trim().min(1).max(100)).min(2).max(50),
@@ -37,7 +47,7 @@ const createSchema = z.object({
 const patchSchema = z.object({
 	name:          z.string().trim().min(2).max(80).optional(),
 	description:   z.string().trim().max(500).optional(),
-	price_amount:  z.number().int().min(1).optional(),
+	price_amount:  atomicPrice.optional(),
 	skills:        z.array(z.string().trim().min(1).max(100)).min(2).max(50).optional(),
 	is_active:     z.boolean().optional(),
 });
@@ -127,9 +137,14 @@ async function handlePricing(req, res, agentId, url) {
 	if (skills.length > MAX_SIMULATED_SKILLS)
 		return error(res, 400, 'validation_error', `at most ${MAX_SIMULATED_SKILLS} skills can be simulated at once`);
 
+	// Parsed as text, not Number: an atomic price on a 9-decimal mint can exceed
+	// Number.MAX_SAFE_INTEGER, and Number() would round it before validation ever
+	// saw the real value.
 	const rawPrice = url.searchParams.get('price');
-	const askedPrice = rawPrice == null || rawPrice === '' ? null : Number(rawPrice);
-	if (askedPrice !== null && (!Number.isInteger(askedPrice) || askedPrice < 1))
+	const askedPrice = rawPrice == null || rawPrice.trim() === '' ? null : rawPrice.trim();
+	if (askedPrice !== null && !/^\d+$/.test(askedPrice))
+		return error(res, 400, 'validation_error', 'price must be a positive integer in atomic units');
+	if (askedPrice !== null && BigInt(askedPrice) < 1n)
 		return error(res, 400, 'validation_error', 'price must be a positive integer in atomic units');
 
 	// Per-skill list price and real sales. Money and buyer counts filter to paid
@@ -167,7 +182,7 @@ async function handlePricing(req, res, agentId, url) {
 	if (mints.length > 1)
 		return error(res, 409, 'mixed_currency', `these skills are priced in ${mints.length} different currencies and cannot be bundled together`);
 
-	const sumOfParts = parts.reduce((sum, p) => sum + Number(p.list_amount), 0);
+	const sumOfParts = parts.reduce((sum, p) => sum + toAtomic(p.list_amount), 0n);
 
 	// The historical basket: buyers who took 2+ of these skills, and what each
 	// actually paid across them. This is the population a bundle would have
@@ -184,9 +199,9 @@ async function handlePricing(req, res, agentId, url) {
 		HAVING COUNT(DISTINCT sp.skill) >= 2
 	`;
 
-	const basketTotals = baskets.map((b) => Number(b.paid_atomic));
+	const basketTotals = baskets.map((b) => toAtomic(b.paid_atomic));
 	const multiBuyers = basketTotals.length;
-	const historicalRevenue = basketTotals.reduce((sum, n) => sum + n, 0);
+	const historicalRevenue = basketTotals.reduce((sum, n) => sum + n, 0n);
 
 	// The arithmetic lives in api/_lib/bundle-pricing.js so it can be tested
 	// without a database. That matters here: the marketplace has no multi-skill
@@ -212,7 +227,7 @@ async function handlePricing(req, res, agentId, url) {
 				buyers: p.buyers,
 			})),
 			unpriced_skills: unpricedSkills,
-			sum_of_parts_atomic: String(sumOfParts),
+			sum_of_parts_atomic: sumOfParts.toString(),
 			history: {
 				multi_skill_buyers: multiBuyers,
 				revenue_atomic: String(historicalRevenue),

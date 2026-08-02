@@ -18,6 +18,11 @@ function pct(n) {
 	return typeof n === 'number' ? `${n.toFixed(1)}%` : '—';
 }
 
+// Presentation order for the two breakdown tables. Mirrors the verdict classes
+// and difficulties in api/_lib/fact-check-benchmark.js.
+const VERDICT_ORDER = ['supported', 'contradicted', 'mixed', 'insufficient'];
+const DIFFICULTY_ORDER = ['easy', 'medium', 'hard'];
+
 function renderStats(bench) {
 	if (!bench) {
 		return `<div class="fc-empty">Benchmark data is unavailable right now — try reloading.</div>`;
@@ -34,19 +39,22 @@ function renderStats(bench) {
 	}
 	const r = bench.report;
 	const cls = r.accuracy_pct >= 80 ? 'fc-good' : r.accuracy_pct >= 60 ? 'fc-warn' : '';
-	// Only render a breakdown cell for a bucket that actually had claims: a 0-claim
-	// bucket scores null, and showing it as a dash next to real numbers reads like
-	// a failure rather than an absence.
-	const cells = (table) =>
-		Object.entries(table || {})
+	// Render in a fixed order, not object order: a report that round-tripped
+	// through Postgres jsonb comes back with its keys reordered, which showed
+	// difficulty as easy/hard/medium. Also skip a bucket with no claims, since a
+	// null score rendered as a dash beside real numbers reads as a failure rather
+	// than an absence.
+	const cells = (table, order) =>
+		order
+			.map((k) => [k, table?.[k]])
 			.filter(([, v]) => v && v.total > 0)
 			.map(
 				([k, v]) =>
 					`<div class="fc-stat"><div class="fc-stat-label">${esc(k)}</div><div class="fc-stat-value">${pct(v.accuracy_pct)}</div><div class="fc-stat-sub">${v.correct}/${v.total}</div></div>`,
 			)
 			.join('');
-	const byClass = cells(r.by_class);
-	const byDifficulty = cells(r.by_difficulty);
+	const byClass = cells(r.by_class, VERDICT_ORDER);
+	const byDifficulty = cells(r.by_difficulty, DIFFICULTY_ORDER);
 	const ran = r.generated_at ? new Date(r.generated_at) : null;
 	return `
 		<div class="fc-stats-grid">

@@ -40,6 +40,60 @@ describe('secret-box encrypt/decrypt', () => {
 		expect(await decryptSecret(legacyV2)).toBe('funds-behind-this-key');
 	});
 
+	// Rotation survivability. Before WALLET_ENCRYPTION_KEY_PREVIOUS existed, changing
+	// the key was a one-way door: the 2026-07 Vercel to Cloud Run rotation left 8
+	// custodial wallets holding 0.49 SOL (0.35 of it customer money) permanently
+	// unopenable, which is destroyed custody rather than a degraded mode.
+	it('decrypts a record written under a retired key listed in WALLET_ENCRYPTION_KEY_PREVIOUS', async () => {
+		const { encryptSecret, decryptSecret } = await load();
+		const RETIRED = 'retired-wallet-key-from-the-old-host-11111'; // >=32, distinct
+		process.env.WALLET_ENCRYPTION_KEY = RETIRED;
+		const written = await encryptSecret('the-wallet-that-would-have-been-lost');
+
+		// The rotation happens: a new key takes over and the old one is listed.
+		process.env.WALLET_ENCRYPTION_KEY = DEDICATED;
+		process.env.WALLET_ENCRYPTION_KEY_PREVIOUS = RETIRED;
+		expect(await decryptSecret(written)).toBe('the-wallet-that-would-have-been-lost');
+
+		// Drop the retired key and the same record is unopenable again, which is the
+		// state this feature exists to prevent.
+		delete process.env.WALLET_ENCRYPTION_KEY_PREVIOUS;
+		await expect(decryptSecret(written)).rejects.toBeTruthy();
+	});
+
+	it('accepts several stacked rotations, newest first', async () => {
+		const { encryptSecret, decryptSecret, secretBoxKeyCandidates } = await load();
+		const OLD = 'oldest-wallet-key-two-rotations-ago-222222'; // >=32
+		const MID = 'middle-wallet-key-one-rotation-ago-3333333'; // >=32
+		process.env.WALLET_ENCRYPTION_KEY = OLD;
+		const oldest = await encryptSecret('two-rotations-old');
+		process.env.WALLET_ENCRYPTION_KEY = MID;
+		const middle = await encryptSecret('one-rotation-old');
+
+		process.env.WALLET_ENCRYPTION_KEY = DEDICATED;
+		process.env.WALLET_ENCRYPTION_KEY_PREVIOUS = `${MID}, ${OLD}`;
+		expect(await decryptSecret(middle)).toBe('one-rotation-old');
+		expect(await decryptSecret(oldest)).toBe('two-rotations-old');
+		expect(secretBoxKeyCandidates().slice(0, 3)).toEqual([DEDICATED, MID, OLD]);
+		delete process.env.WALLET_ENCRYPTION_KEY_PREVIOUS;
+	});
+
+	it('never writes under a retired key: encryption always uses the current one', async () => {
+		const { encryptSecret, decryptSecret } = await load();
+		const RETIRED = 'retired-key-that-must-not-be-written-4444'; // >=32
+		process.env.WALLET_ENCRYPTION_KEY = DEDICATED;
+		process.env.WALLET_ENCRYPTION_KEY_PREVIOUS = RETIRED;
+		const fresh = await encryptSecret('written-after-the-rotation');
+
+		// Retiring the current key must not open a record written under it, which is
+		// only true if the write used DEDICATED rather than any listed retired key.
+		process.env.WALLET_ENCRYPTION_KEY = RETIRED;
+		delete process.env.WALLET_ENCRYPTION_KEY_PREVIOUS;
+		process.env.JWT_SECRET = 'a-jwt-that-does-not-match-either-55555555';
+		await expect(decryptSecret(fresh)).rejects.toBeTruthy();
+		process.env.JWT_SECRET = JWT;
+	});
+
 	it('throws (never returns garbage) when no candidate key matches', async () => {
 		const { encryptSecret, decryptSecret } = await load();
 		// Encrypt under an unrelated key, then present neither that key nor JWT_SECRET.

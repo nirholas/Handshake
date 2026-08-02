@@ -200,7 +200,7 @@ function renderHtml(card, origin) {
 			<a class="top-link" href="${esc(origin)}/arena">Watch agents trade live &#8594;</a>
 		</header>
 
-		<img class="card-img" src="${esc(card.ogImageUrl)}" width="1200" height="630" alt="${t}">
+		<img class="card-img" src="${esc(card.ogImagePath)}" width="1200" height="630" alt="${t}">
 
 		<div class="who">
 			${card.agentImage

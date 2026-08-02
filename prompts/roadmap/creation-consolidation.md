@@ -29,21 +29,32 @@ needs a `has`-gated rewrite for the param form plus a 301 for the bare form.
 
 ## Task 1: Avatar Studio edit-mode parity, then retire `/avatar-edit` for real
 
-The redirect is currently unsafe because Avatar Studio's edit mode **loses data**, not merely
-features. `collapseAppearance` / `hydrateAppearance` in `src/avatar-studio-utils.js` know only
-`accessories`, `morphs`, `colors` and `hidden`, so opening a garment-wearing avatar at
-`/create/studio?edit=ID` and saving drops `appearance.garments` and `appearance.outfit`. Its
-save is a client-side `GLTFExporter` re-export of `base_model_url` that overwrites the canonical
-GLB, where `src/avatar-edit.js` PATCHes appearance only and lets the server bake rebuild the
-dressed model.
+The redirect was unsafe because Avatar Studio's edit mode **lost data**, not merely features.
+**Steps 1 and 2 shipped 2026-08-02; steps 3 and 4 remain, and the redirect stays unshipped
+until they land.**
 
 Ship, in this order:
 
-1. Appearance round-trip fidelity: `collapseAppearance` / `hydrateAppearance` preserve garments
-   and outfit losslessly. Prove it with a unit test that round-trips a real dressed avatar's
-   appearance object and asserts deep equality.
-2. Non-destructive save: Avatar Studio PATCHes appearance and lets the server bake rebuild,
-   exactly like `avatar-edit`. Never overwrite the canonical GLB from the client.
+1. **DONE (2026-08-02).** Appearance round-trip fidelity. `collapseAppearance` /
+   `hydrateAppearance` / `cloneAppearance` in `src/avatar-studio-utils.js` now carry `outfit`
+   and `garments` verbatim (garment entries deep-copied), so the wardrobe survives a Studio
+   save. `resetAll()` clears only what Studio controls and leaves the wardrobe alone; the
+   history stack round-trips both because it clones. Covered in
+   `tests/avatar-studio-save.test.js`: a dressed appearance round-trips to deep equality, a
+   dressed avatar equals its own clone (so loading one does not read as dirty), and losing the
+   garments registers as a real difference.
+2. **DONE (2026-08-02).** Non-destructive save. Edit mode no longer exports the live scene:
+   `saveAvatar()` branches to `patchEditedAvatar()`, which PATCHes `{ name, appearance }` and
+   lets the server bake rebuild the dressed GLB from the pristine base, exactly like
+   `avatar-edit`. This also removed a double-application bug that predated the garment issue:
+   the old path uploaded an already-dressed scene export over the base and the appearance PATCH
+   that followed baked the same appearance onto it a second time (doubled colour multiplies,
+   duplicated accessories). `uploadEditedAvatar()` is deleted. The base body cannot be switched
+   in edit mode (`bindBaseSwitch` hides the control), so there was never new geometry to upload.
+   Two adjacent fixes fell out: a name-only edit now saves (the old dirty check compared
+   appearance only, and `handleGlbPatch` dropped the `name` field it was sent), and the
+   thumbnail snapshot is skipped when the avatar wears layers Studio does not draw, so a save
+   cannot replace a dressed thumbnail with an undressed one.
 3. Port the missing panels: the wardrobe and closet (8 garment slots with occlusion masking,
    resolved on arbitrary GLBs by `src/avatar-wardrobe.js`, not hardcoded material names), the
    auto-rig tab, the walk preview and the "Play as this" handoff, and `?equip-*` support.

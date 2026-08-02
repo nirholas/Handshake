@@ -29,6 +29,15 @@ onchainos wallet login --phase poll --session-id <authSessionId>
 onchainos wallet status   # loggedIn: true once done
 ```
 
+> **Trap, learned the hard way 2026-08-01: a login URL goes stale, so never hand one to a
+> human "for later".** A second `--phase init` (for example the one `npm run okx:bot` issues
+> as part of its own run) invalidates the earlier session, and an idle session expires on its
+> own. Polling a dead one answers
+> `{"ok":false,"error":"no login in progress for this session, run `onchainos wallet login --phase init` first"}`,
+> which reads like a CLI bug but just means the URL is expired. **Issue `--phase init` only
+> when the human is at the keyboard ready to click it**, and if `okx:bot` also printed a URL,
+> the newest one issued is the only live one.
+
 `onchainos agent get-agents` / `service-list` / `search` need this session even though they
 are reads. Re-confirmed 2026-08-01: logged out, all three return
 `{"ok":false,"error":"session expired, please login again: onchainos wallet login"}`, so
@@ -83,6 +92,10 @@ One command. Run it, read three fields.
 ```bash
 onchainos agent get-agents --agent-ids 2632
 ```
+
+**Last successfully read: 2026-07-10.** Every attempt since (2026-07-23, 2026-07-26,
+2026-08-01) hit the logged-out wall above, so the state below is the newest real reading,
+not a current one. Re-read it the moment a login lands.
 
 Verified output (2026-07-10):
 
@@ -165,13 +178,15 @@ this session's `payment pay` command signs from, so a "self-payment" test is no 
 self-payment (buyer `0x75d0…cf69` → seller `0x4022de2D…f402`), which is arguably a more
 realistic E2E test, not a problem, but the funding target below is what actually needs money.
 
-**Wallet balances checked live 2026-07-23 (X Layer RPC `rpc.xlayer.tech`, direct `eth_call`):**
+**Wallet balances re-checked live 2026-08-01, block 66852405 (X Layer RPC `rpc.xlayer.tech`,
+direct `eth_call` on `balanceOf` + `eth_getBalance`). Unchanged since 2026-07-23, and the
+live 402's `payTo` was re-probed the same day and had NOT drifted again:**
 
-| Wallet | Role | Token | Balance |
+| Wallet | Role | USD₮0 | OKB (gas) |
 | --- | --- | --- | --- |
-| `0x75d00a2713565171f33216e5aa2a375e076ecf69` | Buyer (onchainos TEE wallet) + agent identity owner | USD₮0 | **0** |
-| `0x4022de2D36C334E73C7a108805Cea11C0564f402` | Seller / payTo (current) | USD₮0 | 2.427731 (irrelevant to the buyer-side test, it's the recipient not the payer) |
-| `0xe81DE501Dd5D9299E2bA8964498858d3fAD0415B` | Relayer (`X402_XLAYER_RELAYER_KEY`, Secret Manager `x402-xlayer-relayer-key` v3, rotated 2026-07-12; superseded the `0x1F4a…bb74` address `PROGRESS.md` names from 2026-07-08) | OKB (gas) | 0.02 |
+| `0x75d00a2713565171f33216e5aa2a375e076ecf69` | Buyer (onchainos TEE wallet) + agent identity owner | **0** | **0** |
+| `0x4022de2D36C334E73C7a108805Cea11C0564f402` | Seller / payTo (current) | 2.427731 (irrelevant to the buyer-side test, it's the recipient not the payer) | 0.839596 |
+| `0xe81DE501Dd5D9299E2bA8964498858d3fAD0415B` | Relayer (`X402_XLAYER_RELAYER_KEY`, Secret Manager `x402-xlayer-relayer-key` v3, rotated 2026-07-12; superseded the `0x1F4a…bb74` address `PROGRESS.md` names from 2026-07-08) | 0 | 0.02 |
 
 **To unblock, the owner funds the BUYER wallet** (the seller already has funds; gas at the
 relayer is thin but present):
@@ -182,6 +197,9 @@ relayer is thin but present):
 | Chain | X Layer, chainId **196** (`eip155:196`) |
 | Token | `0x779ded0c9e1022225f8e0630b35a9b54be713736` (USD₮0) |
 | Amount | ≥$3 to cover one paid call of every catalog service once each; ~$5 for buffer |
+
+The buyer needs **no OKB**: it signs an EIP-3009 authorization off-chain and the relayer
+broadcasts and pays gas, which is why the buyer's 0 OKB above is not a second blocker.
 
 Re-verify the relayer's OKB balance is still enough for ≥3 settlement tx before relying on
 0.02 OKB, top up a few cents' worth if a dry run shows `broadcast_failed`/out-of-gas.

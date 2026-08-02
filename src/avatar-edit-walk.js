@@ -129,6 +129,18 @@ export class AvatarWalkPreview {
 		this.anim = anim;
 	}
 
+	/**
+	 * Re-measure the walk after a skeleton-space proportion edit. The walk clip's
+	 * root translation is scaled to the rig's hip height at retarget time, so
+	 * lengthening the legs without this leaves the avatar sliding: the feet cover
+	 * more ground per stride than the root travels. No-op before the clips load.
+	 * Caller must have the rig at rest (applyProportionsToRoot leaves it there).
+	 * @returns {boolean}
+	 */
+	remeasureProportions() {
+		return this.anim?.remeasureRigProportions?.() ?? false;
+	}
+
 	async enter() {
 		if (this.active) return;
 		this.active = true;

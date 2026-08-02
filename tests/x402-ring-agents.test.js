@@ -147,6 +147,12 @@ describe('float top-up — band arithmetic', () => {
 
 const TREASURY = 'TREASURYwa11etRing1111111111111111111111111';
 const OUTSIDER = '0utsiderwa11et9999999999999999999999999999';
+// The buyer wallet, unlike TREASURY/OUTSIDER, is DECODED as a Solana public key
+// (readAgentUsdcAtomic derives its associated token account from it), so a
+// readable-but-invalid placeholder makes every balance read throw and fail open
+// to `unknown`, silently disabling the very check these tests assert. This is a
+// synthetic 32-byte key that round-trips through PublicKey, not a real wallet.
+const AGENT_WALLET = 'AGENTwa11etg1m4dUbPQ7HmPSxb8sUojGrPaAn2PnfWb';
 const solanaStub = { conn: {}, blockhash: 'hash', mintInfo: { decimals: 6 } };
 
 // A fake payer that HONORS the onAccept gate exactly like payX402 does, so the
@@ -172,8 +178,8 @@ function permissiveAgent() {
 	return {
 		id: '00000000-0000-0000-0000-000000000001',
 		userId: 42,
-		address: 'AGENTwa11et1111111111111111111111111111111',
-		keypair: { publicKey: { toBase58: () => 'AGENTwa11et1111111111111111111111111111111' } },
+		address: AGENT_WALLET,
+		keypair: { publicKey: { toBase58: () => AGENT_WALLET } },
 		meta: { spend_limits: { per_tx_usd: 1, daily_usd: null }, anomaly: { enabled: false } },
 	};
 }
@@ -306,32 +312,42 @@ describe('assessAgentBuyingPower: a dry wallet is back-pressure, not a rail faul
 });
 
 describe('readAgentUsdcAtomic: knowable zero vs unknown', () => {
-	const BUYER = 'AGENTwa11et1111111111111111111111111111111';
+	const BUYER = AGENT_WALLET;
+	// The mint is injected: X402_ASSET_MINT_SOLANA is a production env var, and an
+	// unset one must read as UNKNOWN, so the check goes inert off-production
+	// instead of refusing every purchase.
+	const MINT = { mint: 'MiNTwa11et11111111111111111111111111111111' };
 	const connWith = (impl) => ({ getTokenAccountBalance: impl });
 
 	it('reads the atomic amount and caches it within the tick', async () => {
 		resetAgentUsdcCache();
 		let calls = 0;
 		const conn = connWith(async () => { calls += 1; return { value: { amount: '250000' } }; });
-		expect(await readAgentUsdcAtomic(conn, BUYER)).toBe(250_000);
-		expect(await readAgentUsdcAtomic(conn, BUYER)).toBe(250_000);
+		expect(await readAgentUsdcAtomic(conn, BUYER, MINT)).toBe(250_000);
+		expect(await readAgentUsdcAtomic(conn, BUYER, MINT)).toBe(250_000);
 		expect(calls).toBe(1); // one read per wallet per tick, not per purchase
 	});
 
 	it('a missing ATA is 0 (knowably broke), an RPC fault is null (unknown)', async () => {
 		resetAgentUsdcCache();
 		const missing = connWith(async () => { throw new Error('could not find account'); });
-		expect(await readAgentUsdcAtomic(missing, BUYER)).toBe(0);
+		expect(await readAgentUsdcAtomic(missing, BUYER, MINT)).toBe(0);
 
 		resetAgentUsdcCache();
 		const laneDown = connWith(async () => { throw new Error('429 Too Many Requests'); });
-		expect(await readAgentUsdcAtomic(laneDown, BUYER)).toBeNull();
+		expect(await readAgentUsdcAtomic(laneDown, BUYER, MINT)).toBeNull();
+	});
+
+	it('an unconfigured mint reads as unknown, never as broke', async () => {
+		resetAgentUsdcCache();
+		const conn = connWith(async () => ({ value: { amount: '0' } }));
+		expect(await readAgentUsdcAtomic(conn, BUYER, { mint: '' })).toBeNull();
 	});
 
 	it('never throws on a missing connection or address', async () => {
 		resetAgentUsdcCache();
-		expect(await readAgentUsdcAtomic(null, BUYER)).toBeNull();
-		expect(await readAgentUsdcAtomic(connWith(async () => ({})), '')).toBeNull();
+		expect(await readAgentUsdcAtomic(null, BUYER, MINT)).toBeNull();
+		expect(await readAgentUsdcAtomic(connWith(async () => ({})), '', MINT)).toBeNull();
 	});
 });
 
@@ -348,9 +364,10 @@ describe('executePurchase: the dry buyer never reaches the payment path', () => 
 		const out = await executePurchase({
 			agent: permissiveAgent(),
 			purchase,
-			solana: { conn: { getTokenAccountBalance: async () => ({ value: { amount: '0' } }) }, blockhash: 'hash', mintInfo: { decimals: 6 } },
+			solana: solanaStub,
 			allowed: TREASURY_SET,
 			persona: 'endpoint-shopper',
+			usdcReader: async () => 0,
 			payImpl: async () => { paid += 1; return { success: true, paid: true, amountAtomic: 10_000, txSig: 'nope' }; },
 		});
 		expect(out.status).toBe('refused');
@@ -364,9 +381,10 @@ describe('executePurchase: the dry buyer never reaches the payment path', () => 
 		const out = await executePurchase({
 			agent: permissiveAgent(),
 			purchase,
-			solana: { conn: { getTokenAccountBalance: async () => ({ value: { amount: '2000000' } }) }, blockhash: 'hash', mintInfo: { decimals: 6 } },
+			solana: solanaStub,
 			allowed: TREASURY_SET,
 			persona: 'endpoint-shopper',
+			usdcReader: async () => 2_000_000,
 			payImpl: fakePay(TREASURY, 10_000),
 		});
 		expect(out.status).toBe('paid');

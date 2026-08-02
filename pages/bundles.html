@@ -597,7 +597,10 @@
 					body: JSON.stringify({
 						name: $('bd-name').value.trim(),
 						description: $('bd-desc').value.trim(),
-						price_amount: Number(toAtomic($('bd-price').value)),
+						// Sent as the digit string toAtomic already produced. Number() here
+						// would round the price back down on a 9-decimal mint, which is the
+						// one thing the atomic representation exists to prevent.
+						price_amount: toAtomic($('bd-price').value),
 						currency_mint: pricing.currency_mint,
 						chain: pricing.chain,
 						skills: [...selected],
