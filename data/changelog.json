@@ -17847,6 +17847,15 @@
 				"docs"
 			],
 			"link": "/fact-check"
+		},
+		{
+			"date": "2026-08-02",
+			"title": "Oracle is now a live Telegram feed",
+			"summary": "The Oracle conviction engine now streams to a Telegram channel: every coin that crosses the feed floor posts the moment it is scored (with its score, tier, pillar breakdown, mint, and links to pump.fun and its Oracle page), agent entries and profitable exits post as they happen, and a daily digest anchors the channel each morning with the day's scored count, top conviction, and platform-wide agent results. When the channel is configured, the /oracle page shows a Join the live Telegram feed button, so you can carry the whole feed in your pocket without keeping a tab open.",
+			"tags": [
+				"feature"
+			],
+			"link": "/oracle"
 		}
 	]
 }

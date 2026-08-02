@@ -31,6 +31,14 @@
 			<description>Paper-copy any verified pump.fun trader agent with fake money over their real closed on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had, plus every trade your budget could not reach and why. No wallet, no signature, no custody, no account.</description>
 		</item>
 		<item>
+			<title>Holo Sticker</title>
+			<link>https://three.ws/holo</link>
+			<guid isPermaLink="false">2026-08-02:Holo Sticker</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A live holographic foil sticker rendered in your browser: tilt it with your pointer, peel the corner, switch foils, die-cut your own text, and download the frame as a PNG. Fully procedural, no assets.</description>
+		</item>
+		<item>
 			<title>An agent wallet that cannot be signed for now says so, before you try to withdraw</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-02:An agent wallet that cannot be signed for now says so, before you try to withdraw</guid>
@@ -117,6 +125,14 @@
 			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Three things that used to depend on whether an individual page remembered to handle them now hold everywhere. Tabbing through the site always shows a visible outline on whatever you have landed on, so you can tell where you are without a mouse; around 1,500 buttons, links and cards previously had no focus indicator at all. Controls that are switched off now consistently look switched off, including the custom ones that are not standard form buttons. And if your device is set to reduce motion, decorative animation across the site now settles instead of playing, while loading spinners and progress bars keep moving so a working page never looks frozen. Overlays that sit on top of screenshots and video also share one set of shades now, so captions and buttons read cleanly on light and dark imagery alike. Separately, pages that build their header as they load no longer flash a second logo in the top-left corner before settling.</description>
+		</item>
+		<item>
+			<title>Oracle is now a live Telegram feed</title>
+			<link>https://three.ws/oracle</link>
+			<guid isPermaLink="false">2026-08-02:Oracle is now a live Telegram feed</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Oracle conviction engine now streams to a Telegram channel: every coin that crosses the feed floor posts the moment it is scored (with its score, tier, pillar breakdown, mint, and links to pump.fun and its Oracle page), agent entries and profitable exits post as they happen, and a daily digest anchors the channel each morning with the day's scored count, top conviction, and platform-wide agent results. When the channel is configured, the /oracle page shows a Join the live Telegram feed button, so you can carry the whole feed in your pocket without keeping a tab open.</description>
 		</item>
 		<item>
 			<title>Remix is reachable again on the narrowest phones</title>
