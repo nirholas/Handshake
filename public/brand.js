@@ -43,6 +43,13 @@
 	var CORNER_OCCUPANTS =
 		'a[href="/"],a[href="/home"],button,summary,[class*="burger" i],[class*="hamburger" i],[class*="menu-toggle" i],[aria-label*="menu" i],[aria-label*="back" i],[aria-label*="home" i]';
 
+	// How long to let the page mount its own chrome before falling back to the
+	// chip, and how often to re-check inside that window. 600ms clears every
+	// JS-injected header measured on this site while staying below the ~1s mark
+	// where a missing logo would start to read as a broken page.
+	var SETTLE_MS = 600;
+	var SETTLE_STEP_MS = 100;
+
 	function inOwnChip(el) {
 		return !!(el.closest && el.closest('.brand-mark-chip'));
 	}
@@ -129,10 +136,34 @@
 	function run() {
 		ensureStyles();
 		if (hasExistingBrand()) return;
-		injectChip();
-		// Some pages render their chrome asynchronously (JS-mounted dashboard
-		// rails, hydrated headers). Re-check briefly and retract the chip if a
-		// real brand appears, so the page never shows two logos.
+
+		// Wait for the page's own chrome before deciding. Many surfaces inject
+		// their header from JS (the shared nav, dashboard rails, hydrated
+		// shells), so at DOMContentLoaded the corner looks empty on a page that
+		// is about to fill it. Injecting first and retracting later produced a
+		// visible logo flash and, because the chip sits at z-index 60 under the
+		// nav's 100, a fully-covered element that the overlay audit flagged on
+		// /create at mobile. Deciding after the settle window removes both: the
+		// chip is a fallback, so appearing a beat later costs nothing, and it
+		// still fades in rather than popping.
+		var waited = 0;
+		var settle = setInterval(function () {
+			waited += SETTLE_STEP_MS;
+			if (hasExistingBrand()) {
+				clearInterval(settle);
+				return;
+			}
+			if (waited >= SETTLE_MS) {
+				clearInterval(settle);
+				injectChip();
+				watchForLateBrand();
+			}
+		}, SETTLE_STEP_MS);
+	}
+
+	// Safety net for chrome that mounts after the settle window (slow network,
+	// lazily imported shells). Retracts the chip so the page never shows two logos.
+	function watchForLateBrand() {
 		var checks = 0;
 		var timer = setInterval(function () {
 			checks++;
