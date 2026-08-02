@@ -10,6 +10,7 @@
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, del, esc, relTime } from '../api.js';
 import { errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
+import { gmgnAddressUrl } from '../../shared/trading-terminals.js';
 
 const SKIP_LABEL = {
 	below_mcap_floor: 'Below your market-cap floor',
@@ -543,7 +544,7 @@ function explorerUrl(w) {
 		? `https://bscscan.com/address/${w.address}`
 		: `https://solscan.io/account/${w.address}`;
 }
-function gmgnUrl(w) { return `https://gmgn.ai/${w.chain === 'bsc' ? 'bsc' : 'sol'}/address/${w.address}`; }
+function gmgnUrl(w) { return gmgnAddressUrl(w.address, w.chain); }
 function initial(w) {
 	const ch = (w.name || w.address || '').replace(/[^a-zA-Z0-9]/g, '')[0];
 	return (ch || '?').toUpperCase();

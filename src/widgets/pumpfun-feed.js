@@ -15,6 +15,7 @@
 
 import { applyReaction, createReactionDispatcher, mountReactionToast } from './pumpfun-reactions.js';
 import { WORD_BLACKLIST } from '../profanity.js';
+import { terminalLinks, referralOffers } from '../shared/trading-terminals.js';
 
 const FEED_PATH = '/api/agents/pumpfun-feed';
 const TIER_BADGE = { mega: '🔥🔥', influencer: '🔥', notable: '⭐' };
@@ -348,15 +349,17 @@ function renderFirstGithubClaim(ev) {
 	if (links.length) sections.push(`<div style="margin-top:8px;display:flex;flex-direction:column;gap:2px">${links.join('')}</div>`);
 
 	if (mint) {
-		const trade = [
-			`<a href="https://axiom.trade/t/${encodeURIComponent(mint)}" target="_blank" rel="noopener" style="color:#6ce0c8">Axiom</a>`,
-			`<a href="https://gmgn.ai/sol/token/${encodeURIComponent(mint)}" target="_blank" rel="noopener" style="color:#6ce0c8">GMGN</a>`,
-			`<a href="https://padre.gg/sol/${encodeURIComponent(mint)}" target="_blank" rel="noopener" style="color:#6ce0c8">Padre</a>`,
-		].join(' | ');
+		const trade = terminalLinks(mint)
+			.map((t) => `<a href="${attrEsc(t.url)}" target="_blank" rel="noopener" style="color:#6ce0c8">${t.label}</a>`)
+			.join(' | ');
+		const offers = referralOffers()
+			.map((o) => `<a href="${attrEsc(o.url)}" target="_blank" rel="noopener" style="color:#7a7a8c">${o.label}</a>`)
+			.join(' ⋅ ');
 		sections.push(`
 			<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:10px;padding-top:8px">
 				<div style="font-weight:600">💹 Trade</div>
 				<div style="margin-top:2px">${trade}</div>
+				<div style="margin-top:4px;font-size:10px;color:#6a6a82">New account? Sign up with a fee discount: ${offers}</div>
 			</div>
 		`);
 	}
@@ -464,9 +467,7 @@ function renderGraduation(ev) {
 		: '';
 	const toolAbbr = mint
 		? [
-			['AXI', `https://axiom.trade/meme/${mint}`],
-			['GMG', `https://gmgn.ai/sol/token/${mint}`],
-			['PDR', `https://trade.padre.gg/trade/solana/${mint}`],
+			...terminalLinks(mint).map((t) => [t.short, t.url]),
 			['PHO', `https://photon-sol.tinyastro.io/en/lp/${mint}`],
 			['BLX', `https://bullx.io/terminal?chainId=1399811149&address=${mint}`],
 		].map(([l, u]) => `<a href="${attrEsc(u)}" target="_blank" rel="noopener" style="color:#888888">${l}</a>`).join('⋅')

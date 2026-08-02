@@ -33,6 +33,7 @@
 import { scorePressure } from './x402/pump-trending-score.js';
 import { summarizeWindowUsd, median } from './x402/pump-volume-anomaly.js';
 import { dexScreenerTrending, gmgnSmartMoneyRank } from './gmgn-feed.js';
+import { gmgnTokenUrl } from '../../src/shared/trading-terminals.js';
 
 const PUMP_FRONTEND_BASE = process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
 const PUMP_SWAP_BASE = process.env.PUMP_SWAP_BASE || 'https://swap-api.pump.fun';
@@ -296,7 +297,7 @@ export function mapGmgnRow(row, window) {
 		volumeUsd: num(row.volume ?? row.volume_24h),
 		buyPressure: flow > 0 ? (smartBuy ?? 0) / flow : null,
 		changePct,
-		url: `https://gmgn.ai/sol/token/${row.address}`,
+		url: gmgnTokenUrl(row.address),
 		_source: 'gmgn',
 	};
 }
