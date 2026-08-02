@@ -1751,3 +1751,135 @@ free rows serve live data at 200 with no payment demanded. Evidence:
 - `docs/okx-marketplace.md` deliberately still carries no "verified behavior" section: the
   RUNBOOK's standing rule is that it must not claim observed on-chain settlement until a tx
   hash exists. Writing that section from intention is exactly what this work order forbids.
+
+---
+
+## 2026-08-01, Work Order 07: final audit closed; 6 defects found and FIXED; stream is docs-complete and blocked only on 2 owner actions
+
+Third session on this date. Two other agents were running WO-04 and WO-05 in this same
+worktree while this ran (their entries are directly above; `e2e-evidence/10-402-*.json` and
+the 21:33 `00-CONTEXT.md` / `README.md` edits are theirs). Their 402/catalog/test findings
+and mine were produced by independent probes and agree, which is worth more than one pass.
+This entry deliberately records only what is NOT already in theirs: the WO-07 audit findings
+and the fixes applied.
+
+### Part 1, adversarial audit (re-verified today, nothing trusted from this file)
+
+- **All 11 catalog services probed programmatically off the module**, not off a hand-written
+  list, so a row that exists only in the module still gets checked. 9 paid: HTTP **402**,
+  `PAYMENT-REQUIRED` header decodes as x402 v2, `accepts[0]` = `eip155:196`, amount equals
+  `amountAtomics` exactly. 2 free: **200**. **0 failures.**
+- **`catalogIndex()` is byte-identical to the live `/api/okx/3d/catalog` response**
+  (`JSON.stringify` equality, not a spot check). `validateCatalog()` clean.
+- **Replay / tamper:** garbage `X-PAYMENT` and garbage `PAYMENT-SIGNATURE` both -> **400
+  `invalid_payment`**. A structurally valid but **forged EIP-3009 payload** (well-formed
+  authorization + junk signature) -> **402** `"EIP-3009 signature does not verify for
+  authorization.from"`, identical on a second identical attempt, no tool execution either
+  time. The verify-before-dispatch gate holds against a forged proof, which is the part that
+  can be proven without funding.
+- **Wallets re-probed live** (X Layer RPC, block 66852405): unchanged since 2026-07-23, and
+  **`payTo` had NOT drifted again** (still `0x4022de2D…f402`). Newly recorded: the buyer also
+  holds 0 OKB, which is NOT a second blocker (it signs EIP-3009 off-chain, the relayer pays
+  gas). RUNBOOK §3 now says so, so nobody funds gas that is not needed.
+- **Tests:** `npm test` = 6 failures / 17223 passed, **none in this stream**
+  (`x402-sponsor-runway`, `x402-ring-wallet-monitor`, `solana-rpc-priority-and-breaker`;
+  another agent has `api/cron/treasury-topup.js` open in this worktree right now, so that
+  code is mid-edit and not mine to touch). OKX scope isolated: 57 passed. The 7 MCP suites
+  covering the file changed below: 131 passed. `npm run build:pages` green.
+  `npm run audit:docs` clean (1236 files).
+
+### Defects found and FIXED (this work order fixes, it does not file)
+
+1. **A banned em-dash was being served to OKX buyers at runtime.** The free
+   `getting_started` tool on the flagship endpoint returned
+   a heading of the form "three.ws Agent Identity Studio <banned dash> Getting Started", and
+   its own tool description opened "FREE <banned dash> start here". Source:
+   `api/_lib/mcp-getting-started.js`, which every
+   hosted three.ws MCP server shares, so this was platform-wide, not OKX-only. Fixed all
+   three string sites plus the file's comments. **Needs a deploy to reach buyers.**
+2. **`api/_mcp/payments.js` served an em-dash in a buyer-visible error**
+   ("x402 processing failed <banned dash> quote ref ..."). Fixed. Also needs the deploy.
+3. **`specs/okx-agent-payments.md` stated the WRONG payTo in its header block**, the first
+   thing a reader sees, with the 2026-07-23 correction buried ten lines below. A zero-context
+   outsider would have funded or invoiced the wrong address. Header now states the live
+   `0x4022de2D…f402` and points at the correction note.
+4. **The same spec claimed the X Layer rail was dead at runtime.** Its 2026-07-07
+   reconciliation note still read "those env vars are not set in Vercel production, so
+   `POST /api/okx/3d/*` still returns a Solana-only challenge … the 2026-07-04 rejection
+   cause persists at runtime". That is false today and false since the Cloud Run migration.
+   Rewritten to state the gate is CLOSED, with today's re-verification. This is exactly the
+   "doc promising what the code does not do" class the work order calls a release blocker,
+   inverted: a doc denying what the code does do.
+5. **`docs/okx-marketplace.md` named the wrong engine for the $0.01 lane** ("NVIDIA NIM
+   TRELLIS"). `FREE_DEFAULT_FOR_TIERS` in `api/_lib/forge-tiers.js` resolves draft to
+   `trellis_selfhost`; NVIDIA NIM is the LAST resort in the fallback chain. Corrected to
+   describe the real chain.
+6. **`/docs/okx-marketplace` was live (200) but unregistered in `data/pages.json`**, while
+   the changelog and `docs/start-here.md` both link to it. Registered.
+
+Also swept: every banned dash across the stream's files (`prompts/okx-ai/*`, the spec, both
+docs, `api/_okx3d/*`, `api/_lib/okx-catalog.js`, `api/_lib/x402-spec.js`,
+`scripts/okx-listing-payload.mjs`). All clean. Note `tests/fixtures/mcp-golden-tools.json`
+still carries 21 em-dashes, but they belong to OTHER MCP servers' tool copy (agent, agora,
+diorama), not to any OKX 3D row; left for whoever owns those surfaces rather than sprawling
+a platform-wide rewrite across a worktree two other agents are writing to.
+
+### Part 2, docs closure, each item verified rather than assumed
+
+- `specs/okx-agent-payments.md`: live `eip155:196` accept re-probed and byte-compared to
+  §1.1. Matches (`scheme`, `network`, `payTo`, `maxTimeoutSeconds:86400`, asset,
+  `extra{symbol,name,version,transferMethod,decimals}`). Two corrections above applied.
+- `docs/okx-marketplace.md`: **all 9 documented curl examples run verbatim against
+  production**, every one returns the documented 402; the 9 static URLs it cites all return
+  200; the price table matches the module on all 9 paid rows. Its honest "Not yet
+  demonstrated end to end" note is still accurate and stays until a tx hash exists.
+- `docs/agent-identities.md`: every deliverable key it documents (`pfp.url`,
+  `pfp.preview_128_url`, `full_body[]`, `rigged_glb_url`, `mesh_glb_url`, `viewer_url`,
+  `pose_studio_url`, `brief_truncated`) exists in `api/_okx3d/identity.js`. **All 36 asset
+  URLs in `data/agent-identities.json` return 200**, so the showcase is real, not stale.
+- `STRUCTURE.md`: OKX row present, accurate, points at the right files.
+- `data/pages.json`: `/agent-identities` and `/docs/agent-identities` present;
+  `/docs/okx-marketplace` added this session.
+- `data/changelog.json`: entries present for 07-06, 07-07, 07-10, 07-27; all validate under
+  `build:pages`. No new entry added: nothing user-visible shipped here (doc corrections and
+  a dash fix are not holder news, and the launch entry belongs to the approval branch).
+- READMEs: `packages` 65/65, `workers` 33/33, `services` 4/4, plus `api/_okx3d/README.md`.
+
+### Part 3, approval watch: status is UNREADABLE, and that is the finding
+
+`onchainos agent get-agents --agent-ids 2632`, `service-list`, and `search` all return
+`{"ok":false,"error":"session expired, please login again"}`. **No branch could be executed
+because the branch cannot be determined.** Last real reading remains 2026-07-10.
+
+I tried to route around it rather than accept it, and there is no way around:
+chain **196 is absent from `REGISTRY_DEPLOYMENTS`** in `src/erc8004/abi.js`, and OKX's agent
+registry on X Layer is their contract, not one we deployed, so there is no login-free
+on-chain read of #2632's approval state. Inventing a registry address to call would be
+fabrication. RUNBOOK §1 now records the last-real-read date so nobody mistakes the carried
+value for a fresh one.
+
+**New trap, cost real time here, now in RUNBOOK §0: a login URL goes stale.** `npm run
+okx:bot` issues its OWN `--phase init` as part of its run, which invalidates any URL handed
+over earlier; an idle session also expires by itself. Polling a dead one answers "no login in
+progress for this session", which reads like a CLI bug and is not. Issue `--phase init` only
+with the human at the keyboard. Three sessions were burned this way today across the
+concurrent runs.
+
+Chat bot: `npm run okx:bot` run green to the login wall. Daemon running, runtime ready,
+briefing regenerated from the live catalog module, 12 skills linked, bypass on. Only the
+session is missing.
+
+### State of the whole stream at close
+
+Code and docs: **done**. Production: **verified**. Two owner actions remain, both single
+steps, neither performable by an agent:
+
+1. **Complete the OKX browser login** as `claude@three.ws` (issue a fresh URL at that
+   moment). Unblocks: reading approval status, the listing update + re-activate, and the
+   chat bot going online for OKX's retest.
+2. **Fund the buyer** `0x75d00a2713565171f33216e5aa2a375e076ecf69` with >=$3 USD₮0
+   (`0x779ded0c9e1022225f8e0630b35a9b54be713736`) on X Layer / 196. No gas needed there.
+   Unblocks WO-04's real settlement, which unblocks WO-05's GO.
+
+A deploy is also pending but not blocking: fixes 1, 2 and 5 above are in the tree and reach
+buyers on the next `npm run deploy:gcp:full`.
