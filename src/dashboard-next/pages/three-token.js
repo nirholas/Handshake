@@ -14,6 +14,7 @@ import { mountShell } from '../shell.js';
 import { requireUser, esc, relTime, ApiError } from '../api.js';
 import { fetchTokenConfig, fetchTokenPrice } from '../../token-pay.js';
 import { fetchAllowanceStatus, grantAllowance, revokeAllowance } from '../../three-allowance.js';
+import { terminalLinks } from '../../shared/trading-terminals.js';
 import { createThreeTokenData } from '../../pump/three-token-data.js';
 import { errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
 import { toast } from '../../shared/toast.js';
@@ -1171,6 +1172,16 @@ function renderTokenInfo() {
 			<button class="dn-btn ghost" data-action="copy-ca" style="font-size:12.5px">
 				Copy Contract Address
 			</button>
+		</div>
+		<div style="margin-top:12px">
+			<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--dn-dim,#8a8a9c);margin-bottom:6px">Trade $THREE on</div>
+			<div style="display:flex;gap:8px;flex-wrap:wrap">
+				${terminalLinks(THREE_MINT).map((t) => `
+					<a class="dn-btn" href="${esc(t.url)}" target="_blank" rel="noopener" style="font-size:12.5px">
+						${esc(t.label)} &#8599;
+					</a>
+				`).join('')}
+			</div>
 		</div>
 	`;
 

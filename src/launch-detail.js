@@ -38,6 +38,7 @@ import {
 import { walletChipEl } from './shared/agent-wallet-chip.js';
 import { agentAvatarGlb, hasCustomAvatar, seeInWorldHref } from './shared/agent-3d.js';
 import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
+import { terminalLinks } from './shared/trading-terminals.js';
 import { flashValue, rippleOnce, liveDot, setLiveDot } from './ui-juice.js';
 
 const GRADUATION_CAP_USD = 69_000; // pump.fun bonding-curve graduation threshold
@@ -1136,9 +1137,30 @@ function dexLink() {
 	});
 }
 
+// DexScreener is a chart, not a place to fill an order. Every coin page also
+// offers the trading terminals people actually execute on, straight to this
+// mint. Sourced from src/shared/trading-terminals.js so the links (and the GMGN
+// referral baked into its deep link) stay identical across the product.
+function terminalLinksEl() {
+	return el(
+		'div',
+		{ class: 'ld-chart-terminals' },
+		terminalLinks(state.mint).map((t) =>
+			el('a', {
+				class: 'ld-chart-terminal',
+				href: t.url,
+				target: '_blank',
+				rel: 'noopener',
+				title: `Trade this coin on ${t.label}`,
+				text: t.label,
+			}),
+		),
+	);
+}
+
 function renderDexChart(target) {
 	clearTimeout(state.dexFrameTimer);
-	const controls = el('div', { class: 'ld-chart-controls' }, [chartViewBar(), dexLink()]);
+	const controls = el('div', { class: 'ld-chart-controls' }, [chartViewBar(), terminalLinksEl(), dexLink()]);
 	const wrap = el('div', { class: 'ld-dex-wrap' });
 	const iframe = el('iframe', {
 		class: 'ld-dex-frame',

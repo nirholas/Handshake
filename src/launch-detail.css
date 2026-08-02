@@ -395,6 +395,27 @@ body {
 	transition: color var(--duration-fast);
 }
 .ld-chart-open:hover { color: var(--ink-bright); }
+
+/* Trading terminals for this mint, beside the chart's DexScreener link. */
+.ld-chart-terminals { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ld-chart-terminal {
+	font-size: 11px;
+	line-height: 1;
+	padding: 4px 8px;
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+	border-radius: 999px;
+	color: var(--ink-dim, #8a8a9c);
+	text-decoration: none;
+	white-space: nowrap;
+	transition: color .15s ease, border-color .15s ease, background-color .15s ease;
+}
+.ld-chart-terminal:hover,
+.ld-chart-terminal:focus-visible {
+	color: var(--ink-bright, #fff);
+	border-color: var(--accent, #6ce0c8);
+	background: rgba(108, 224, 200, 0.08);
+}
+.ld-chart-terminal:focus-visible { outline: 2px solid var(--accent, #6ce0c8); outline-offset: 2px; }
 .ld-dex-wrap {
 	position: relative;
 	min-height: 460px;

@@ -19,6 +19,7 @@
  */
 
 import { env } from './env.js';
+import { gmgnTokenUrl, axiomTokenUrl, padreTokenUrl, fomoTokenUrl } from '../../src/shared/trading-terminals.js';
 
 // ── Canonical brand ──────────────────────────────────────────────────────────
 
@@ -56,6 +57,13 @@ export function threeTokenLinks(mint = threeTokenMint()) {
 		phantom: `https://phantom.com/tokens/solana/${mint}`,
 		dexscreener: `https://dexscreener.com/solana/${mint}`,
 		coingecko: 'https://www.coingecko.com/en/coins/three-ws',
+		// Trading terminals. GMGN's carries our referral inline; the other three
+		// have no documented deep-link referral form, so they stay clean deep
+		// links. See src/shared/trading-terminals.js.
+		gmgn: gmgnTokenUrl(mint),
+		axiom: axiomTokenUrl(mint),
+		padre: padreTokenUrl(mint),
+		fomo: fomoTokenUrl(mint),
 	};
 }
 

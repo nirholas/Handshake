@@ -53,10 +53,25 @@ describe('GMGN deep links carry the referral inline', () => {
 		expect(gmgnAddressUrl(WALLET)).toBe(`https://gmgn.ai/sol/address/nichxbt_${WALLET}`);
 	});
 
-	it('maps chains to GMGN slugs, defaulting to sol', () => {
-		expect(gmgnAddressUrl('0xabc', 'bsc')).toContain('/bsc/address/');
+	it('passes through every chain slug GMGN serves', () => {
+		// Collapsing these to `sol` would point an Ethereum or Base token at a
+		// Solana URL that cannot resolve.
+		for (const slug of ['sol', 'eth', 'base', 'bsc', 'tron', 'blast']) {
+			expect(gmgnTokenUrl(MINT, slug)).toContain(`/${slug}/token/`);
+			expect(gmgnAddressUrl('0xabc', slug)).toContain(`/${slug}/address/`);
+		}
+	});
+
+	it('normalizes case and whitespace on the chain slug', () => {
+		expect(gmgnTokenUrl(MINT, ' BSC ')).toContain('/bsc/token/');
+		expect(gmgnTokenUrl(MINT, 'Base')).toContain('/base/token/');
+	});
+
+	it('falls back to sol for an unknown or missing chain', () => {
 		expect(gmgnAddressUrl('0xabc', 'ethereum')).toContain('/sol/address/');
-		expect(gmgnTokenUrl(MINT, 'bsc')).toContain('/bsc/token/');
+		expect(gmgnAddressUrl('0xabc', '')).toContain('/sol/address/');
+		expect(gmgnAddressUrl('0xabc', null)).toContain('/sol/address/');
+		expect(gmgnAddressUrl('0xabc', undefined)).toContain('/sol/address/');
 	});
 
 	it('keeps the underscore separator unescaped so GMGN can split it', () => {
