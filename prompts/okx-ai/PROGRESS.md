@@ -1607,3 +1607,99 @@ onchainos agent get-agents --agent-ids 2632       # capture approval status AFTE
 Item 1 alone allows a resubmission of the fixed listing (which is what the 2026-07-26
 rejection asked for). Item 2 is what turns WO-04's NO-GO into a GO and makes the claim
 "payments settle" observed rather than unit-tested.
+
+---
+
+## 2026-08-01, Work Order 04: pre-funding sweep green, gauntlet tooling built, blocked on 2 owner actions
+
+Ran every leg of the WO-04 gauntlet that does not move money, built the tooling that runs
+the paid legs, and stopped at the two CLAUDE.md stop-and-ask gates (a real spend, and an
+email OTP only a human can read). Nothing was simulated in place of a real payment.
+
+### Step 0 preconditions, all verified live against production
+
+| Check | Result |
+| --- | --- |
+| `onchainos --version` | 4.4.0 |
+| `onchainos wallet status` | `loggedIn: false`, `accountCount: 0` (gate 2) |
+| `GET /api/okx/3d/health` | 200, 5 subsystems with real latencies, `payment-rail settleable: true`, block 66850672 |
+| `GET /api/okx/3d/catalog` | 200, 11 rows |
+| Unpaid `POST /api/okx/3d/text-to-3d` | 402, `accepts[0].network = eip155:196` |
+| `npx vitest run tests/api/okx-3d-services.test.js` | 27 passed |
+| Three-copy rule | PASS, module == live == submission |
+
+**402 sweep across all 11 catalog rows (new, was never done row-by-row).** Every one of the
+9 paid services answers 402 with the X Layer accept FIRST, at an `amount` byte-equal to that
+row's `amountAtomics`, `payTo` `0x4022de2D…f402`, asset `0x779ded…3736`, x402Version 2. Both
+free rows serve live data at 200 with no payment demanded. Evidence:
+`e2e-evidence/10-402-<service>.json`, one file per row.
+
+### New tooling, all three committed and exercised
+
+- **`scripts/okx-three-copy-check.mjs`** (`npm run okx:three-copy`). Enforces the three-copy
+  rule mechanically: `catalogIndex()` is compared byte-for-byte against the live endpoint
+  body (it is the exact function the route serializes, so this is an equality check, not an
+  approximation), and the submission payload is compared row by row. It earned its keep the
+  same day it was written: a concurrent agent edited `scripts/okx-listing-payload.mjs` (38
+  lines) mid-session and the re-run proved copy 3 still matched.
+- **`scripts/okx-verify-glb.mjs`**. Artifact truth for cases 2 and 3. Parses the delivered
+  bytes with `@gltf-transform/core` and checks container validity, geometry, and (with
+  `--rigged`) a skin with joints plus non-degenerate skin weights, counting vertices that
+  carry non-zero influence so an all-zero weight set cannot pass. Validated against four
+  controls: michelle.glb rigged (exit 0), mannequin.glb with `--rigged` (exit 1, it has 0
+  skins), an error JSON renamed `.glb` (exit 1), a 404 (exit 2).
+- **`scripts/okx-e2e-gauntlet.mjs`** (`npm run okx:gauntlet`). The full 10-case runner. Signs
+  through `onchainos payment pay` (the real OKX buyer path, no hand-rolled signatures),
+  replays, verifies the artifact, then reads the settlement transaction back off X Layer and
+  confirms a USD₮0 `Transfer` log to the advertised `payTo` for the exact advertised amount.
+  Refuses to run without `--yes`.
+
+### Cases green now, with no funding
+
+- **Case 1 (free lane): PASS.** Health 200 with 5 subsystems reporting real latencies,
+  catalog 200 with 11 rows. No payment demanded on either.
+- **Case 5d (garbage payment header): PASS**, four shapes, none ran a tool:
+  `not-base64` → 400 `invalid_payment`; valid-base64-wrong-shape → 402 naming the missing
+  EIP-3009 fields; whitespace-only → 402 with a full fresh challenge; truncated JSON → 400.
+  The whitespace case was investigated as a possible defect (402 with an empty `error`
+  string) and is correct behavior: HTTP trims the header to `''`, which is indistinguishable
+  from no header, and the right answer is the standard challenge.
+- **Case 7 (legacy rails): PASS** at challenge level. Solana and Base accepts are still
+  offered alongside X Layer in every challenge, all at the same `amount`. Adding the X Layer
+  rail did not displace the pre-OKX rails.
+
+### Settlement route facts, measured not assumed
+
+- `okxFacilitatorConfigured()` is **false** in production (health reports
+  `facilitator_configured: false`), so settlement runs the direct-redemption path: the
+  relayer broadcasts `transferWithAuthorization` and waits for the receipt.
+- **Gas is a non-issue and the old 0.3 OKB ask is retired.** X Layer gas price measured at
+  0.02 gwei; one redemption at ~100k gas costs 0.000002 OKB, so the relayer's existing
+  0.02 OKB covers roughly 10,000 settlements.
+- Code path confirmed by reading `api/okx/3d/[service].js`: engine runs AFTER verify and
+  BEFORE settle, so an engine failure returns before any redemption. `verifyOkxXLayerPayment`
+  reads `authorizationState(from, nonce)` on-chain before the engine runs, which is what
+  makes case 6 mechanically checkable: the assertion is that the nonce is still unredeemed
+  after a failed job, not that an error message was polite.
+
+### Blocked on exactly two owner actions, both in `e2e-evidence/FUNDING-REQUEST.md`
+
+1. **3.0 USD₮0 to `0x75d00a2713565171f33216e5aa2a375e076ecf69`** on X Layer (chainId 196),
+   token `0x779Ded0c9e1022225f8E0630b35a9b54bE713736`. Buyer wallet reads **0.000000** today.
+   The old file's "self-transfer, net-zero" math is void: `payTo` moved to `0x4022de2D…f402`
+   while the buyer stayed `0x75d0…cf69`, so payments now genuinely leave the buyer. Sizing:
+   one clean run settles $0.52, but the balance floor (verify refuses any authorization whose
+   value exceeds `balanceOf(buyer)`, including the ones meant to be rejected) makes the real
+   requirement $0.62, plus $2.08 for four fix-loop iterations.
+2. **The OKX login OTP.** `wallet login --phase init` session `7a064ccb-…` is minted and the
+   browser URL is in the funding file.
+
+### GO/NO-GO
+
+- **Work Order 05: NO-GO.** Unchanged from the previous session's finding, and for the same
+  reason: no real settlement has ever landed. Cases 2, 3, 4, 5a, 5b, 5c and 6 are written,
+  wired and dry-run-exercised, but they are unproven until they spend.
+- Agent #2632 untouched. No on-chain write attempted.
+- `docs/okx-marketplace.md` deliberately still carries no "verified behavior" section: the
+  RUNBOOK's standing rule is that it must not claim observed on-chain settlement until a tx
+  hash exists. Writing that section from intention is exactly what this work order forbids.
