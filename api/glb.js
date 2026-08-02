@@ -57,6 +57,12 @@ export default wrap(async function handler(req, res) {
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'model/gltf-binary');
+	// The bytes come from an arbitrary remote URL but leave on the three.ws
+	// origin. Pin them as data: an opaque-origin sandbox, plus the declared model
+	// type and the nosniff set by the wrapper, so nothing here can ever be
+	// interpreted as a document with three.ws's cookies.
+	res.setHeader('content-security-policy', "default-src 'none'; sandbox");
+	res.setHeader('cross-origin-resource-policy', 'cross-origin');
 	res.setHeader('content-length', String(bytes.length));
 	// Generated GLBs are content-addressed by their unique object key, so a
 	// given src never changes bytes: cache hard at every layer.

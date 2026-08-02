@@ -9,7 +9,13 @@
 // `s-maxage`, so each object is fetched from R2 roughly once per region per day.
 //
 // Exposure parity: the bucket is already fully readable through the public
-// r2.dev domain, so serving the same namespace here grants nothing new.
+// r2.dev domain, so serving the same namespace here grants read access to
+// nothing new. What it DOES change is the origin the bytes arrive on: r2.dev is
+// a foreign origin, three.ws is where the session cookie and the wallet live.
+// So every response here is pinned to "data, never a document": the type comes
+// from the server-chosen extension rather than the stored header, anything not
+// safe to render inline is sent as an attachment, and `sandbox` puts whatever
+// does render into an opaque origin. See `isInlineSafe` below.
 
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { cors, error, wrap } from './_lib/http.js';
@@ -39,12 +45,43 @@ const CONTENT_TYPES = {
 	webm: 'video/webm',
 };
 
-function contentTypeFor(key, stored) {
-	// R2 objects uploaded without an explicit type default to octet-stream —
-	// prefer the extension in that case so browsers render instead of download.
-	if (stored && stored !== 'application/octet-stream') return stored;
+// Types a browser may render inline from the app origin. SVG is deliberately
+// absent: an SVG document executes script, and one served inline from three.ws
+// would run with three.ws's cookies. It still renders through <img>/<image>,
+// which ignore content-disposition and never run script.
+const INLINE_SAFE = new Set([
+	'image/png',
+	'image/jpeg',
+	'image/webp',
+	'image/gif',
+	'image/avif',
+	'model/gltf-binary',
+	'model/gltf+json',
+	'model/vnd.usdz+zip',
+	'audio/mpeg',
+	'audio/wav',
+	'audio/ogg',
+	'video/mp4',
+	'video/webm',
+	'application/json',
+	'application/octet-stream',
+]);
+
+export function isInlineSafe(type) {
+	return INLINE_SAFE.has(String(type).split(';')[0].trim().toLowerCase());
+}
+
+export function contentTypeFor(key, stored) {
 	const ext = key.split('.').pop()?.toLowerCase();
-	return CONTENT_TYPES[ext] || stored || 'application/octet-stream';
+	const byExt = CONTENT_TYPES[ext];
+	// The extension wins over the stored header. Every write path picks the
+	// extension server-side from an allowlisted type, whereas a stored
+	// Content-Type can be copied verbatim from an upstream provider's response
+	// (copyToBucket in _lib/forge-store.js). Preferring the header, as this used
+	// to, let a remote `text/html` decide what three.ws serves.
+	if (byExt) return byExt;
+	if (stored && isInlineSafe(stored)) return stored;
+	return 'application/octet-stream';
 }
 
 function cacheControlFor(key) {
@@ -82,8 +119,16 @@ export default wrap(async (req, res) => {
 			}),
 		);
 
+		const type = contentTypeFor(key, obj.ContentType);
 		res.statusCode = range && obj.ContentRange ? 206 : 200;
-		res.setHeader('content-type', contentTypeFor(key, obj.ContentType));
+		res.setHeader('content-type', type);
+		// A bucket object is data. `sandbox` drops anything that does reach a
+		// top-level navigation into an opaque origin, so it can neither script
+		// against three.ws nor read its storage; CORP stays permissive because the
+		// CORS policy above is `*` and embeds depend on it.
+		res.setHeader('content-security-policy', "default-src 'none'; sandbox");
+		res.setHeader('cross-origin-resource-policy', 'cross-origin');
+		if (!isInlineSafe(type)) res.setHeader('content-disposition', 'attachment');
 		res.setHeader('cache-control', cacheControlFor(key));
 		res.setHeader('accept-ranges', 'bytes');
 		if (obj.ETag) res.setHeader('etag', obj.ETag);

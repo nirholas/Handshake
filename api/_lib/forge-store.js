@@ -251,6 +251,17 @@ async function scoreAndCompress(buf, { computeQuality, compress, cleanup = false
 	return { buf: outBuf, quality, compression, cleaned };
 }
 
+// An upstream Content-Type ends up as the object's stored type, which the CDN
+// then serves from the three.ws origin. Only ever store a media type: a
+// provider (or a redirect chain that ends somewhere unexpected) answering with
+// `text/html` or `image/svg+xml` must not get to decide that.
+const STORABLE_TYPE_RE = /^(?:image\/(?:png|jpeg|webp|gif|avif)|model\/[\w.+-]+|video\/(?:mp4|webm)|audio\/[\w.+-]+|application\/(?:json|octet-stream))$/;
+
+function mediaTypeOr(header, fallback) {
+	const type = String(header || '').split(';')[0].trim().toLowerCase();
+	return STORABLE_TYPE_RE.test(type) ? type : fallback;
+}
+
 async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null, cleanup = false, forceContentType = null }) {
 	let lastErr;
 	for (let attempt = 1; attempt <= COPY_MAX_ATTEMPTS; attempt++) {
@@ -275,7 +286,7 @@ async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, com
 				// won't render a cross-origin <img> whose declared type isn't an image
 				// type. Callers that know the asset kind (e.g. the preview image, whose
 				// extension is already decided by imageExtFor) should force it.
-				const contentType = forceContentType || resp.headers.get('content-type') || fallbackContentType;
+				const contentType = forceContentType || mediaTypeOr(resp.headers.get('content-type'), fallbackContentType);
 				let quality = null;
 				let compression = null;
 				let cleaned = null;
