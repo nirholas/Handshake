@@ -33,24 +33,48 @@ products" page shows "No products to display").
 This codespace has no AWS credentials, so these must be run on a machine with
 admin creds on account 155407237916.
 
-### 1. Provision SNS topic + IAM user
+### 1. Provision the IAM user (the SNS half of the script is dead weight)
 
 ```bash
 ./scripts/aws-marketplace-provision.sh
 ```
 
-Outputs `AWS_MP_SNS_TOPIC_ARN`, `AWS_MP_ACCESS_KEY_ID`, `AWS_MP_SECRET_ACCESS_KEY`,
-`AWS_MP_REGION`. Set all four on the Cloud Run service (production env lives there,
-not Vercel):
+**The SNS topic this script creates is NOT the topic AMMP wants, and there is no
+field in the SaaS wizard to paste it into.** AWS Marketplace creates and owns the
+notification topics and hands you the ARN *during product creation*, in the form
+`arn:aws:sns:us-east-1:<aws-owned-account>:aws-mp-subscription-notification-<PRODUCTCODE>`.
+You subscribe to that topic afterwards; you never supply your own. Ignore the
+script's `AWS_MP_SNS_TOPIC_ARN` output. See
+[Amazon SNS notifications for SaaS products](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-notification.html).
+
+What the script is genuinely needed for is the IAM user: `resolveCustomer()` in
+`api/_lib/aws-marketplace.js` calls `aws-marketplace:ResolveCustomer`, and without
+those keys every subscribe redirect dies at `/aws-marketplace/error?reason=token_expired`.
+
+Take `AWS_MP_ACCESS_KEY_ID`, `AWS_MP_SECRET_ACCESS_KEY`, and `AWS_MP_REGION` and set
+them on the Cloud Run service (production env lives there, not Vercel):
 
 ```bash
 gcloud run services update three-ws-api --region us-central1 \
-  --update-env-vars AWS_MP_SNS_TOPIC_ARN=…,AWS_MP_ACCESS_KEY_ID=…,AWS_MP_SECRET_ACCESS_KEY=…,AWS_MP_REGION=…
+  --update-env-vars AWS_MP_ACCESS_KEY_ID=…,AWS_MP_SECRET_ACCESS_KEY=…,AWS_MP_REGION=…
 ```
+
+(`--update-env-vars` merges. Never use `--set-env-vars` here: it replaces the entire
+env set and would wipe every other production variable.)
 
 `AWS_MP_PRODUCT_CODE` is assigned by AMMP after the product is created — add it last.
 
-### 2. Publish the EULA to public S3 (currently returns 403 — must be fixed)
+### 2. EULA: pick Standard Contract and skip this entirely (recommended)
+
+The AMMP wizard accepts either the **Standard Contract for AWS Marketplace (SCMP)**
+or a custom EULA at a publicly readable S3 URL. Choosing SCMP removes the only
+remaining hard blocker on this listing and needs zero setup. For a free listing
+there is nothing a custom EULA buys you that is worth delaying the listing for, and
+the EULA can be swapped later via **Request changes → Update public offer → Update EULA**.
+
+Only do the S3 work below if you specifically want the custom EULA on day one.
+
+#### (Optional) Publish the EULA to public S3 (currently returns 404)
 
 ```bash
 ./scripts/aws-eula-publish.sh
@@ -164,8 +188,8 @@ The free AWS subscription only grants the x402 access key.
 | AMMP field | Value |
 |---|---|
 | Fulfillment / SaaS URL (Registration URL) | `https://three.ws/api/aws-marketplace/register` |
-| SNS notification topic ARN | output of `aws-marketplace-provision.sh` (`arn:aws:sns:us-east-1:155407237916:three-ws-marketplace-subscription`) |
-| Custom EULA URL | `https://three-ws-legal-155407237916.s3.amazonaws.com/aws-marketplace-eula.html` (must return 200 — see prereq #2) — or pick Standard Contract |
+| SNS notification topic ARN | Not a field you fill in. AWS hands you `aws-mp-subscription-notification-<PRODUCTCODE>` after the product is created; subscribe to it then. |
+| EULA | **Standard Contract (SCMP)**: recommended, zero setup. Custom EULA only if the S3 copy returns 200 (see prereq #2). |
 | Post-subscribe redirect | `https://three.ws/aws-marketplace/welcome` (handled by register.js) |
 
 Lifecycle events land on `POST /api/aws-marketplace/subscription` (SNS webhook —
@@ -176,18 +200,30 @@ entitlement-updated, and the SubscriptionConfirmation handshake).
 
 ## Step sequence in AMMP
 
-1. Run prereqs #1 and #2 above; set the five `AWS_MP_*` env vars on the Cloud Run service (`gcloud run services update three-ws-api --region us-central1 …`).
+Nothing in steps 2-7 depends on the IAM keys, so if creds are slow to arrive, start
+the wizard anyway and backfill the env vars before the round-trip test in step 9.
+
+1. Run prereq #1; set `AWS_MP_ACCESS_KEY_ID`, `AWS_MP_SECRET_ACCESS_KEY`, and
+   `AWS_MP_REGION` on the Cloud Run service.
 2. AMMP → **AI agents & tools products** → **Create AI agents & tools product**.
 3. Delivery method: **API-based** (SaaS). (Until you finish the wizard the draft may
    appear under **SaaS products**, per AMMP's own note — that's expected.)
 4. Fill product detail fields from the "Listing fields" section above; upload the logo.
 5. Pricing: choose **Free**.
-6. Fulfillment: paste the Registration URL and SNS Topic ARN from the table.
-7. EULA: paste the S3 Custom EULA URL (confirm 200 first) or select Standard Contract.
-8. Save → AMMP assigns a **Product Code**. Set `AWS_MP_PRODUCT_CODE` on the Cloud Run service and redeploy (`npm run build` then `npm run deploy:gcp`).
-9. Submit as a **limited (private) offer** first and run one end-to-end subscribe →
-   redirect → welcome → issue-key test before requesting public visibility.
-10. Once the private round-trip works, request **public** visibility.
+6. Fulfillment: paste the Registration URL from the table. There is no SNS field here.
+7. EULA: select **Standard Contract**.
+8. Save → AMMP assigns a **Product Code** and gives you the two `aws-mp-*` SNS topic
+   ARNs. Set `AWS_MP_PRODUCT_CODE` on the Cloud Run service. No rebuild is needed:
+   `gcloud run services update three-ws-api --region us-central1 --update-env-vars
+   AWS_MP_PRODUCT_CODE=…` cuts a new revision on its own.
+9. Subscribe `https://three.ws/api/aws-marketplace/subscription` to the
+   `aws-mp-subscription-notification-<PRODUCTCODE>` topic (HTTPS subscription; the
+   handler already answers the `SubscriptionConfirmation` handshake). This must be
+   done from the seller account 155407237916. Then run one end-to-end
+   subscribe → redirect → welcome → issue-key test while the product is **limited**.
+10. Once the private round-trip works, **Request changes → Update visibility →
+    Public**. This one needs AWS Marketplace Seller Operations approval, so it is the
+    step with real calendar time on it. Everything before it is same-day.
 
 ---
 
