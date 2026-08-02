@@ -14,7 +14,7 @@
 //   TELEGRAM_BOT_TOKEN            — same bot used across the platform
 //   TELEGRAM_ORACLE_CHAT_ID       — signals channel (@handle or -100… numeric)
 //   ORACLE_FEED_MIN_SCORE: score floor for channel posts (default 56;
-//                                   set 101 to disable the score path)
+//                           set 101 to disable the score path)
 //
 // Dedup: an in-memory Set of alerted mints per process restart, plus a DB flag
 // (oracle_conviction.alerted_at) that persists across restarts so we never fire
