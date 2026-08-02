@@ -39,6 +39,14 @@
 			<description>A small number of older agent wallets were created under an encryption key the platform no longer holds. Their balance is real and still on chain, but nothing can be signed for that address. Until now the Withdraw screen looked completely normal: you picked an asset, typed an amount, confirmed, and only then got a server error that read like a temporary glitch worth retrying. The wallet hub now checks whether the wallet can be signed for before showing the form, and replaces it with a plain explanation of what happened, what it means for the balance, and a direct line to support. The withdrawal endpoint answers the same way instead of a generic failure, so nothing suggests retrying will help when it cannot.</description>
 		</item>
 		<item>
+			<title>Assets served from the site can no longer pretend to be a web page</title>
+			<link>https://three.ws/docs/media-api</link>
+			<guid isPermaLink="false">2026-08-02:Assets served from the site can no longer pretend to be a web page</guid>
+			<pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Every avatar, thumbnail and generated model can be loaded either from the media bucket or from three.ws/cdn/&lt;key&gt;, which streams the same file through the site so galleries do not get rate-limited. The second path put that content on the same origin as the app, and it decided how to serve a file by trusting the content type recorded on the object. That type is sometimes copied from whatever a third-party generation provider sent back, so a provider answering with a web-page content type could have had its bytes served as a page on three.ws rather than as an asset. The rule is now the other way around: the file extension, which the site always chooses itself, decides the type; anything that is not safe to display inline downloads instead of rendering, and every response is sandboxed so it cannot touch the site around it. Images, models, audio and video embed exactly as before.</description>
+		</item>
+		<item>
 			<title>Avatar Studio: sculpt your build, not just your face</title>
 			<link>https://three.ws/create/studio</link>
 			<guid isPermaLink="false">2026-08-02:Avatar Studio: sculpt your build, not just your face</guid>

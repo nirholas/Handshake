@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-02",
+			"title": "Assets served from the site can no longer pretend to be a web page",
+			"summary": "Every avatar, thumbnail and generated model can be loaded either from the media bucket or from three.ws/cdn/<key>, which streams the same file through the site so galleries do not get rate-limited. The second path put that content on the same origin as the app, and it decided how to serve a file by trusting the content type recorded on the object. That type is sometimes copied from whatever a third-party generation provider sent back, so a provider answering with a web-page content type could have had its bytes served as a page on three.ws rather than as an asset. The rule is now the other way around: the file extension, which the site always chooses itself, decides the type; anything that is not safe to display inline downloads instead of rendering, and every response is sandboxed so it cannot touch the site around it. Images, models, audio and video embed exactly as before.",
+			"tags": [
+				"security",
+				"improvement"
+			],
+			"link": "/docs/media-api"
+		},
+		{
+			"date": "2026-08-02",
 			"title": "The guided tour now points at things instead of dimming the screen",
 			"summary": "The site tour walks an avatar across three.ws and spotlights the feature it is talking about. On fourteen stops it was spotlighting nothing: pages like the trading arena, the agent wallet demo, Mission Control, the scene editor and the Avatar Studio are app shells with no page heading, so the tour's automatic anchor-finder came up empty and dimmed the whole page instead. Every one of those stops now points at the thing the narration is actually about, picked by reading what each page really renders: the Choose your avatar button in the arena, the wallet card on the agent-wallet demo, the live token feed in Mission Control. Separately, seventy-four stops had never been checked at all, because pages kept getting added to the tour faster than anyone re-ran the check. All of them have now been visited and verified, so 263 of the tour's 264 stops are confirmed to point at a real, visible element, and the narration on every stop matches what the tour actually says.",
 			"tags": [
