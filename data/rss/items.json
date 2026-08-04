@@ -76,12 +76,12 @@
     {
       "id": "text-to-3d-is-live",
       "slug": "text-to-3d-is-live",
-      "title": "Text to 3D Is Live — Type a Prompt, Download a 3D Model",
+      "title": "Text to 3D Is Live - Type a Prompt, Download a 3D Model",
       "date": "2026-06-12T12:00:00.000Z",
       "author": "three.ws",
       "link": "https://three.ws/blog/text-to-3d-is-live",
-      "summary": "Forge is live at three.ws/forge: type a description, get a textured, interactive 3D model you can orbit, view in AR, and download as a GLB. Image to 3D from photos works too — and agents can call the same pipeline over MCP.",
-      "body_html": "<p><strong>Forge is live on three.ws.</strong> Type a description — <em>a crystal wizard with a glowing staff</em> — and get back a textured, interactive 3D model you can orbit, inspect in AR, and download as a standard GLB file. It runs entirely in the browser at <a href=\"https://three.ws/forge\" rel=\"noopener\">three.ws/forge</a>. No install, no signup, no 3D experience required. It also works from photos: upload one to four images of an object and Forge reconstructs it in 3D.</p>\n<h2>How it works</h2>\n<p>Text→3D runs a two-stage pipeline: the prompt is rendered into a reference image by a state-of-the-art image model, then lifted into full textured geometry by TRELLIS, a 3D reconstruction model. The output is a GLB — the open standard that loads in Blender, Unity, Unreal, three.js, and every major 3D tool. Quality tiers (Draft / Standard / High) trade speed for fidelity, and builders with their own Meshy or Tripo API key can plug it in — the key stays in the browser.</p>\n<h2>Not a dead end</h2>\n<p>A generated model feeds the rest of the platform: send it into <a href=\"https://three.ws/scene\" rel=\"noopener\">Scene Studio</a> to compose full 3D scenes, use it as the body of an AI agent, register the agent on-chain, and embed it anywhere with one <code>&lt;agent-3d&gt;</code> tag. The same pipeline is exposed through the three.ws MCP server, so AI agents can generate 3D models programmatically as a tool call.</p>\n<h2>Links</h2>\n<ul>\n<li>Generate from a prompt: <a href=\"https://three.ws/forge\" rel=\"noopener\">three.ws/forge</a></li>\n<li>Full announcement on the three.ws blog: <a href=\"https://three.ws/blog/text-to-3d-is-live\" rel=\"noopener\">three.ws/blog</a></li>\n</ul>",
+      "summary": "Forge is live at three.ws/forge: type a description, get a textured, interactive 3D model you can orbit, view in AR, and download as a GLB. Image to 3D from photos works too - and agents can call the same pipeline over MCP.",
+      "body_html": "<p><strong>Forge is live on three.ws.</strong> Type a description - <em>a crystal wizard with a glowing staff</em> - and get back a textured, interactive 3D model you can orbit, inspect in AR, and download as a standard GLB file. It runs entirely in the browser at <a href=\"https://three.ws/forge\" rel=\"noopener\">three.ws/forge</a>. No install, no signup, no 3D experience required. It also works from photos: upload one to four images of an object and Forge reconstructs it in 3D.</p>\n<h2>How it works</h2>\n<p>Text→3D runs a two-stage pipeline: the prompt is rendered into a reference image by a state-of-the-art image model, then lifted into full textured geometry by TRELLIS, a 3D reconstruction model. The output is a GLB - the open standard that loads in Blender, Unity, Unreal, three.js, and every major 3D tool. Quality tiers (Draft / Standard / High) trade speed for fidelity, and builders with their own Meshy or Tripo API key can plug it in - the key stays in the browser.</p>\n<h2>Not a dead end</h2>\n<p>A generated model feeds the rest of the platform: send it into <a href=\"https://three.ws/scene\" rel=\"noopener\">Scene Studio</a> to compose full 3D scenes, use it as the body of an AI agent, register the agent on-chain, and embed it anywhere with one <code>&lt;agent-3d&gt;</code> tag. The same pipeline is exposed through the three.ws MCP server, so AI agents can generate 3D models programmatically as a tool call.</p>\n<h2>Links</h2>\n<ul>\n<li>Generate from a prompt: <a href=\"https://three.ws/forge\" rel=\"noopener\">three.ws/forge</a></li>\n<li>Full announcement on the three.ws blog: <a href=\"https://three.ws/blog/text-to-3d-is-live\" rel=\"noopener\">three.ws/blog</a></li>\n</ul>",
       "tags": [
         "launch",
         "forge",
@@ -95,7 +95,7 @@
     {
       "id": "dextools-social-boost-buyback",
       "slug": "three-ws-dextools-social-boost-buyback",
-      "title": "three.ws Wins DEXTools Social Boost — $5,543 $three Buyback",
+      "title": "three.ws Wins DEXTools Social Boost - $5,543 $three Buyback",
       "date": "2026-06-08T16:00:00.000Z",
       "author": "three.ws",
       "link": "https://three.ws/blog/three-ws-dextools-social-boost-buyback",
@@ -120,7 +120,7 @@
       "author": "three.ws",
       "link": "https://three.ws/blog/three-ws-featured-on-alibaba-cloud-marketplace-blog",
       "external_link": "https://x.com/trythreews/status/2064000778248093918",
-      "summary": "Alibaba Cloud Marketplace published an editorial introducing three.ws — Render, Embody, Register, Embed: browser-native 3D AI agents deployed with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
+      "summary": "Alibaba Cloud Marketplace published an editorial introducing three.ws - Render, Embody, Register, Embed: browser-native 3D AI agents deployed with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
       "body_html": "<p><strong>Alibaba Cloud Marketplace has published an editorial introducing three.ws.</strong> The post walks through what the platform does and how it works, on Alibaba Cloud's own marketplace blog: <a href=\"https://marketplace.alibabacloud.com/doc/blog/detail/mplace-sgcmfw00036800.html\" rel=\"noopener\">three.ws on the Alibaba Cloud Marketplace blog</a>.</p>\n<p>This follows the three.ws <a href=\"https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace\" rel=\"noopener\">listing on the Alibaba Cloud International Marketplace</a>. The listing made <code>&lt;agent-3d&gt;</code> procurable by every Alibaba Cloud customer; the editorial puts it in front of the marketplace's editorial audience and explains it.</p>\n<h2>What the editorial covers</h2>\n<p>The Alibaba Cloud Marketplace blog introduces three.ws as a browser-based platform for creating and deploying 3D AI agents &mdash; upload a 3D avatar, give it an AI personality, and deploy it as an interactive assistant with no technical setup required. It describes the technical architecture:</p>\n<ul>\n<li><strong>Browser-native 3D rendering</strong> &mdash; glTF 2.0 / GLB in WebGL 2.0 with Draco, KTX2, and Meshopt decompression.</li>\n<li><strong>An LLM-driven agent runtime</strong> &mdash; a Claude-powered brain with tool use, animations, gestures, and memory.</li>\n<li><strong>Optional on-chain identity</strong> &mdash; register an agent via ERC-8004, minting a verifiable, portable identity.</li>\n</ul>\n<h2>Render, Embody, Register, Embed</h2>\n<p>The editorial frames the platform around four functions, the same loop three.ws ships in production: <strong>Render</strong> a 3D model instantly in the browser, <strong>Embody</strong> it with an LLM brain, <strong>Register</strong> an on-chain identity it carries across platforms, and <strong>Embed</strong> it anywhere as a web component with a single <code>&lt;agent-3d&gt;</code> tag. The post notes the entire stack is open source under Apache 2.0 and runs three.ws in production today.</p>\n<h2>Why this matters</h2>\n<p>Alibaba Cloud is the #1 cloud provider in Asia and one of the top four hyperscalers globally. Its International Marketplace serves enterprise customers across China, Southeast Asia, the Middle East, and Latin America. A listing is the procurement flow; an editorial on the marketplace blog is the discovery flow &mdash; it puts three.ws in front of the developers and enterprises already browsing the marketplace for what to build with next.</p>\n<h2>Links</h2>\n<ul>\n<li>Alibaba Cloud Marketplace blog: <a href=\"https://marketplace.alibabacloud.com/doc/blog/detail/mplace-sgcmfw00036800.html\" rel=\"noopener\">three.ws on the Alibaba Cloud Marketplace blog</a></li>\n<li>Our announcement on X: <a href=\"https://x.com/trythreews/status/2064000778248093918\" rel=\"noopener\">@trythreews</a></li>\n<li>Full announcement on the three.ws blog: <a href=\"https://three.ws/blog/three-ws-featured-on-alibaba-cloud-marketplace-blog\" rel=\"noopener\">three.ws/blog</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>",
       "tags": [
         "press",
@@ -157,8 +157,8 @@
       "date": "2026-06-05T05:00:00.000Z",
       "link": "https://coinmarketcap.com/community/articles/6a226647c17eac2629024fc8/",
       "author": "three.ws",
-      "summary": "CoinMarketCap article: three.ws brings autonomous payments and 3D generation to Anthropic's official MCP Registry — two new MCP servers give Claude and any MCP client the ability to spawn 3D agents and make on-chain x402 payments via the Coinbase-powered x402 Bazaar.",
-      "body_html": "<p><strong>\"three.ws Brings Autonomous Payments and 3D Generation to Anthropic's Official MCP Registry\"</strong> — published on <a href=\"https://x.com/CoinMarketCap\" rel=\"noopener\">@CoinMarketCap</a>.</p>\n<p>Read the full article: <a href=\"https://coinmarketcap.com/community/articles/6a226647c17eac2629024fc8/\" rel=\"noopener\">coinmarketcap.com/community/articles/6a226647c17eac2629024fc8/</a></p>\n<h2>What's covered</h2>\n<ul>\n<li><strong>x402 Bazaar MCP</strong> — powered by Coinbase, gives any Claude or MCP client the ability to discover, pay for, and call any x402 service in USDC, settled on-chain.</li>\n<li><strong>3D Agent Avatar MCP</strong> — lets any MCP client spawn a browser-native 3D agent with on-chain identity, voice, memory, and a live payment endpoint.</li>\n<li><strong>Anthropic MCP Registry listing</strong> — both servers are live in the canonical directory used by Claude, Cursor, and all MCP-compatible clients.</li>\n</ul>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://registry.modelcontextprotocol.io/?q=threews\" rel=\"noopener\">registry.modelcontextprotocol.io/?q=threews</a></li>\n<li><a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n</ul>",
+      "summary": "CoinMarketCap article: three.ws brings autonomous payments and 3D generation to Anthropic's official MCP Registry - two new MCP servers give Claude and any MCP client the ability to spawn 3D agents and make on-chain x402 payments via the Coinbase-powered x402 Bazaar.",
+      "body_html": "<p><strong>\"three.ws Brings Autonomous Payments and 3D Generation to Anthropic's Official MCP Registry\"</strong> - published on <a href=\"https://x.com/CoinMarketCap\" rel=\"noopener\">@CoinMarketCap</a>.</p>\n<p>Read the full article: <a href=\"https://coinmarketcap.com/community/articles/6a226647c17eac2629024fc8/\" rel=\"noopener\">coinmarketcap.com/community/articles/6a226647c17eac2629024fc8/</a></p>\n<h2>What's covered</h2>\n<ul>\n<li><strong>x402 Bazaar MCP</strong> - powered by Coinbase, gives any Claude or MCP client the ability to discover, pay for, and call any x402 service in USDC, settled on-chain.</li>\n<li><strong>3D Agent Avatar MCP</strong> - lets any MCP client spawn a browser-native 3D agent with on-chain identity, voice, memory, and a live payment endpoint.</li>\n<li><strong>Anthropic MCP Registry listing</strong> - both servers are live in the canonical directory used by Claude, Cursor, and all MCP-compatible clients.</li>\n</ul>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://registry.modelcontextprotocol.io/?q=threews\" rel=\"noopener\">registry.modelcontextprotocol.io/?q=threews</a></li>\n<li><a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n</ul>",
       "tags": [
         "press",
         "coinmarketcap",
@@ -176,7 +176,7 @@
       "link": "https://x.com/trythreews",
       "author": "three.ws",
       "summary": "two new MCP servers are now live in Anthropic's official MCP Registry: the x402 Bazaar MCP (powered by Coinbase) lets agents discover, pay for, and call any x402 service in USDC settled on-chain; the 3D Avatar MCP lets any Claude or MCP client spawn a full browser-native 3D agent.",
-      "body_html": "<p><strong>two new MCP servers just shipped and are live in Anthropic's official MCP Registry.</strong></p>\n<h2>x402 Bazaar MCP (powered by Coinbase)</h2>\n<p>With the help of <a href=\"https://x.com/coinbase\" rel=\"noopener\">@Coinbase</a>, the x402 Bazaar MCP server lets your agents discover, pay for, and call any x402 service in USDC — settled on-chain. Any agent that can talk to an MCP server can now participate in the on-chain agent payments economy.</p>\n<h2>3D Agent Avatar MCP</h2>\n<p>The Avatar MCP gives Claude and any MCP-compatible client the ability to spawn a full browser-native 3D agent: on-chain identity, voice, memory, emotions, and a live x402 payment endpoint — all from a single tool call.</p>\n<h2>Live in Anthropic's MCP Registry</h2>\n<ul>\n<li>Registry: <a href=\"https://registry.modelcontextprotocol.io/?q=threews\" rel=\"noopener\">registry.modelcontextprotocol.io/?q=threews</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>",
+      "body_html": "<p><strong>two new MCP servers just shipped and are live in Anthropic's official MCP Registry.</strong></p>\n<h2>x402 Bazaar MCP (powered by Coinbase)</h2>\n<p>With the help of <a href=\"https://x.com/coinbase\" rel=\"noopener\">@Coinbase</a>, the x402 Bazaar MCP server lets your agents discover, pay for, and call any x402 service in USDC - settled on-chain. Any agent that can talk to an MCP server can now participate in the on-chain agent payments economy.</p>\n<h2>3D Agent Avatar MCP</h2>\n<p>The Avatar MCP gives Claude and any MCP-compatible client the ability to spawn a full browser-native 3D agent: on-chain identity, voice, memory, emotions, and a live x402 payment endpoint - all from a single tool call.</p>\n<h2>Live in Anthropic's MCP Registry</h2>\n<ul>\n<li>Registry: <a href=\"https://registry.modelcontextprotocol.io/?q=threews\" rel=\"noopener\">registry.modelcontextprotocol.io/?q=threews</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>",
       "tags": [
         "mcp",
         "x402",
@@ -192,8 +192,8 @@
       "date": "2026-06-03T10:00:00.000Z",
       "link": "https://x.com/Alpha_Bybit/status/2062417146370457844",
       "author": "three.ws",
-      "summary": "$three is now listed on Bybit Alpha — the dedicated launchpad for new and emerging assets on Bybit, one of the world's top three crypto exchanges.",
-      "body_html": "<p><strong>$three is now listed on Bybit Alpha</strong> — the dedicated discovery and trading surface for new and emerging assets on Bybit, one of the world's top three crypto exchanges by volume.</p>\n<p>The listing makes $three tradeable by Bybit's global user base directly from the Bybit Alpha interface.</p>\n<h2>About $three</h2>\n<p>$three is the native token of the three.ws platform — browser-native 3D AI agents with on-chain identity, deployed anywhere on the web with a single <code>&lt;agent-3d&gt;</code> tag.</p>\n<ul>\n<li>CA: <code>FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</code></li>\n<li>Platform: <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>",
+      "summary": "$three is now listed on Bybit Alpha - the dedicated launchpad for new and emerging assets on Bybit, one of the world's top three crypto exchanges.",
+      "body_html": "<p><strong>$three is now listed on Bybit Alpha</strong> - the dedicated discovery and trading surface for new and emerging assets on Bybit, one of the world's top three crypto exchanges by volume.</p>\n<p>The listing makes $three tradeable by Bybit's global user base directly from the Bybit Alpha interface.</p>\n<h2>About $three</h2>\n<p>$three is the native token of the three.ws platform - browser-native 3D AI agents with on-chain identity, deployed anywhere on the web with a single <code>&lt;agent-3d&gt;</code> tag.</p>\n<ul>\n<li>CA: <code>FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</code></li>\n<li>Platform: <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>",
       "tags": [
         "listing",
         "bybit",
@@ -207,7 +207,7 @@
       "date": "2026-06-02T15:00:00.000Z",
       "link": "https://three.ws/blog/three-ws-ibm-collaboration",
       "author": "three.ws",
-      "summary": "three.ws and IBM are partners, and we shared a live demo publicly: a persistent, on-chain 3D agent embedded into any page as easily as a YouTube video — thinking on IBM watsonx.ai and Granite. The public /ibm demos are independent developer tools, not official partnership deliverables. The integration ships as an open-source MCP server and a first-class watsonx provider in the three.ws agent runtime, running on your own IBM Cloud credentials.",
+      "summary": "three.ws and IBM are partners, and we shared a live demo publicly: a persistent, on-chain 3D agent embedded into any page as easily as a YouTube video - thinking on IBM watsonx.ai and Granite. The public /ibm demos are independent developer tools, not official partnership deliverables. The integration ships as an open-source MCP server and a first-class watsonx provider in the three.ws agent runtime, running on your own IBM Cloud credentials.",
       "body_html": "<p><strong>three.ws and IBM are partners, and we shared a live demo publicly.</strong> We showed a persistent, on-chain 3D agent embedded into a page as easily as a YouTube video, thinking on IBM watsonx.ai &mdash; and IBM's official account replied in the open: <em>\"We're super excited about this.\"</em></p>\n<p><em>The public /ibm demos are independent tools we built for developers to explore IBM Granite on watsonx.ai &mdash; not official IBM partnership deliverables. Our formal partnership work with IBM is being built on the IBM platform and is not yet public.</em></p>\n<h2>What we showed</h2>\n<p>Embedding a persistent, on-chain 3D agent into any platform should be as easy as embedding a YouTube video. One <code>&lt;agent-3d&gt;</code> tag deploys a full agent &mdash; no install, no plugin, no native app &mdash; rendered in any modern browser over WebGL. What lands on the page is a character with a face, a voice, memory, emotion, and an on-chain identity that persists across platforms. The goal of that frictionless deployment: onboard the next millions of people to embodied AI without asking any of them to download anything.</p>\n<h2>Powered by IBM watsonx.ai</h2>\n<p>Behind the 3D body is a brain &mdash; and that brain can run on IBM watsonx.ai. The integration is real, in production, and open source, with no mock path. Two layers connect three.ws to watsonx:</p>\n<ul>\n<li><strong>An open-source MCP server for watsonx.ai.</strong> <code>@three-ws/ibm-watsonx-mcp</code> exposes watsonx.ai &mdash; IBM Granite and any model in your account &mdash; to any MCP client (Claude Desktop, Claude Code, Cursor) as five tools: chat, text generation, embeddings, tokenization, and model discovery.</li>\n<li><strong>watsonx as a first-class agent-brain provider.</strong> watsonx is wired directly into the three.ws agent runtime. The streaming chat brain calls watsonx.ai's <code>/ml/v1/text/chat_stream</code> endpoint, authenticated with IBM Cloud IAM, scoped to your project, defaulting to <code>ibm/granite-3-8b-instruct</code>.</li>\n</ul>\n<p>Both layers run on your own IBM Cloud credentials &mdash; an API key is exchanged for a short-lived IAM token and every inference call is scoped to your watsonx.ai project, with no three.ws intermediary between your agent and IBM. A 3D agent embedded on any page can reason on IBM Granite, running inside your own watsonx.ai project, governed by your IBM Cloud account.</p>\n<h2>A formal IBM partnership</h2>\n<p>This is a formal partnership: three.ws is a partner in IBM's Business Partner program, bringing together the open-source, browser-native, decentralized on-chain identity of three.ws with IBM's leadership in enterprise AI &mdash; and an integration path into IBM's AI and cloud portfolio.</p>\n<h2>Try it</h2>\n<p>The watsonx integration is open source and runnable today against your own IBM Cloud account: <code>WATSONX_API_KEY=... WATSONX_PROJECT_ID=... npx @three-ws/ibm-watsonx-mcp</code></p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/blog/three-ws-ibm-collaboration\">Full announcement on the three.ws blog</a></li>\n<li><a href=\"https://three.ws/blog/three-ws-ibm-business-partner\">three.ws Is Now an Official IBM Business Partner</a></li>\n<li><a href=\"https://three.ws/blog/agent-3d-web-component\">We Just Shipped the 3D Layer for the Internet &mdash; &lt;agent-3d&gt;</a></li>\n</ul>",
       "tags": [
         "partnership",
@@ -236,17 +236,17 @@
       "link": "https://x.com/trythreews/status/2061523804405616642",
       "author": "@trythreews",
       "summary": "Onboarding the next millions of developers and users requires a foundation built for absolute scale. Powered by @Solana and driven by our strategic partnership with @IBM, we are pushing the boundaries of what was thought to be impossible. We made embedding a persistent, on-cha…",
-      "body_html": "<p>Onboarding the next millions of developers and users requires a foundation built for absolute scale.</p>\n<p>Powered by <a href=\"https://x.com/Solana\" rel=\"noopener\">@Solana</a> and driven by our strategic partnership with <a href=\"https://x.com/IBM\" rel=\"noopener\">@IBM</a>, we are pushing the boundaries of what was thought to be impossible.</p>\n<p>We made embedding a persistent, on-chain 3D AI agent into any platform as easy as embedding a YouTube video — and IBM replied publicly: &quot;We're super excited about this.&quot;</p>",
+      "body_html": "<p>Onboarding the next millions of developers and users requires a foundation built for absolute scale.</p>\n<p>Powered by <a href=\"https://x.com/Solana\" rel=\"noopener\">@Solana</a> and driven by our strategic partnership with <a href=\"https://x.com/IBM\" rel=\"noopener\">@IBM</a>, we are pushing the boundaries of what was thought to be impossible.</p>\n<p>We made embedding a persistent, on-chain 3D AI agent into any platform as easy as embedding a YouTube video - and IBM replied publicly: &quot;We're super excited about this.&quot;</p>",
       "tags": []
     },
     {
       "id": "t-2061488909264040194",
-      "title": "IBM is thrilled to partner with three.ws on the future of enterprise AI agents —…",
+      "title": "IBM is thrilled to partner with three.ws on the future of enterprise AI agents -…",
       "date": "2026-06-01T16:43:51.000Z",
       "link": "https://x.com/IBM/status/2061488909264040194",
       "author": "@trythreews",
-      "summary": "IBM is thrilled to partner with three.ws on the future of enterprise AI agents — on-chain identity meets enterprise infrastructure.",
-      "body_html": "<p>IBM is thrilled to partner with three.ws on the future of enterprise AI agents — on-chain identity meets enterprise infrastructure.</p>",
+      "summary": "IBM is thrilled to partner with three.ws on the future of enterprise AI agents - on-chain identity meets enterprise infrastructure.",
+      "body_html": "<p>IBM is thrilled to partner with three.ws on the future of enterprise AI agents - on-chain identity meets enterprise infrastructure.</p>",
       "tags": []
     },
     {
@@ -256,7 +256,7 @@
       "link": "https://x.com/moonshot/status/2061468733734834350",
       "author": "three.ws",
       "summary": "three.ws ($three) is now verified on Moonshot, the leading Solana token discovery and trading platform.",
-      "body_html": "<p><strong>three.ws ($three) is now verified on Moonshot.</strong></p>\n<p>Moonshot is one of the leading Solana token discovery and trading platforms, used by millions of traders to find and trade emerging Solana assets. The verification confirms the authenticity of the $three listing and gives the project a verified badge across Moonshot's interface.</p>\n<h2>About $three</h2>\n<p>$three is the native token of the three.ws platform — the open-source stack for browser-native 3D AI agents with on-chain identity.</p>\n<ul>\n<li>CA: <code>FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</code></li>\n<li>Platform: <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n</ul>",
+      "body_html": "<p><strong>three.ws ($three) is now verified on Moonshot.</strong></p>\n<p>Moonshot is one of the leading Solana token discovery and trading platforms, used by millions of traders to find and trade emerging Solana assets. The verification confirms the authenticity of the $three listing and gives the project a verified badge across Moonshot's interface.</p>\n<h2>About $three</h2>\n<p>$three is the native token of the three.ws platform - the open-source stack for browser-native 3D AI agents with on-chain identity.</p>\n<ul>\n<li>CA: <code>FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</code></li>\n<li>Platform: <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n</ul>",
       "tags": [
         "listing",
         "moonshot",
@@ -266,12 +266,12 @@
     },
     {
       "id": "t-2061418285896269952",
-      "title": "We're super excited about this partnership with three.ws — bringing on-chain 3D AI…",
+      "title": "We're super excited about this partnership with three.ws - bringing on-chain 3D AI…",
       "date": "2026-06-01T12:03:13.000Z",
       "link": "https://x.com/IBM/status/2061418285896269952",
       "author": "@trythreews",
-      "summary": "We're super excited about this partnership with three.ws — bringing on-chain 3D AI agents to enterprise scale.",
-      "body_html": "<p>We're super excited about this partnership with three.ws — bringing on-chain 3D AI agents to enterprise scale.</p>",
+      "summary": "We're super excited about this partnership with three.ws - bringing on-chain 3D AI agents to enterprise scale.",
+      "body_html": "<p>We're super excited about this partnership with three.ws - bringing on-chain 3D AI agents to enterprise scale.</p>",
       "tags": []
     },
     {
@@ -280,8 +280,8 @@
       "date": "2026-05-31T12:00:00.000Z",
       "link": "https://x.com/trythreews",
       "author": "three.ws",
-      "summary": "three.ws showcased the IBM partnership publicly: embedding a persistent, on-chain 3D avatar into any platform is now as easy as embedding a YouTube video — powered by IBM watsonx.ai and Granite, onboarding the next millions of developers and users.",
-      "body_html": "<p><strong>We're incredibly excited to showcase our partnership with <a href=\"https://x.com/IBM\" rel=\"noopener\">@IBM</a> and the true power of three.ws.</strong></p>\n<p>We've made embedding a persistent, on-chain 3D avatar into any platform as easy as embedding a YouTube video.</p>\n<ul>\n<li><strong>Frictionless deployment</strong> — one <code>&lt;agent-3d&gt;</code> tag, any web page, any platform.</li>\n<li><strong>IBM watsonx.ai brain</strong> — agents think on IBM Granite, running inside your own IBM Cloud account.</li>\n<li><strong>On-chain identity</strong> — every agent is minted on Solana, owns its wallet, and can transact via x402.</li>\n<li><strong>Enterprise scale</strong> — onboarding the next millions of developers and users to embodied AI.</li>\n</ul>\n<p>IBM's official account responded publicly: <em>\"We're super excited about this.\"</em></p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/blog/three-ws-ibm-collaboration\">three.ws × IBM: Full Announcement</a></li>\n<li><a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n</ul>",
+      "summary": "three.ws showcased the IBM partnership publicly: embedding a persistent, on-chain 3D avatar into any platform is now as easy as embedding a YouTube video - powered by IBM watsonx.ai and Granite, onboarding the next millions of developers and users.",
+      "body_html": "<p><strong>We're incredibly excited to showcase our partnership with <a href=\"https://x.com/IBM\" rel=\"noopener\">@IBM</a> and the true power of three.ws.</strong></p>\n<p>We've made embedding a persistent, on-chain 3D avatar into any platform as easy as embedding a YouTube video.</p>\n<ul>\n<li><strong>Frictionless deployment</strong> - one <code>&lt;agent-3d&gt;</code> tag, any web page, any platform.</li>\n<li><strong>IBM watsonx.ai brain</strong> - agents think on IBM Granite, running inside your own IBM Cloud account.</li>\n<li><strong>On-chain identity</strong> - every agent is minted on Solana, owns its wallet, and can transact via x402.</li>\n<li><strong>Enterprise scale</strong> - onboarding the next millions of developers and users to embodied AI.</li>\n</ul>\n<p>IBM's official account responded publicly: <em>\"We're super excited about this.\"</em></p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/blog/three-ws-ibm-collaboration\">three.ws × IBM: Full Announcement</a></li>\n<li><a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n</ul>",
       "tags": [
         "partnership",
         "ibm",
@@ -296,8 +296,8 @@
       "date": "2026-05-30T12:00:00.000Z",
       "link": "https://x.com/trythreews",
       "author": "three.ws",
-      "summary": "three.ws/play launches as a live 3D virtual townhall for any pump.fun coin, powered by the CoinComms API & SDK. 100% multiplayer, custom 3D avatars, real-time on-chain events — the community is the asset, and now it has a home.",
-      "body_html": "<p><strong>Introducing <a href=\"https://three.ws/play\" rel=\"noopener\">three.ws/play</a></strong> — a live, 3D virtual townhall for ANY <a href=\"https://x.com/pumpfun\" rel=\"noopener\">@pumpfun</a> coin, powered by the brand new <a href=\"https://x.com/CoinComms\" rel=\"noopener\">@CoinComms</a> API &amp; SDK.</p>\n<p>No more staring at charts in isolation.</p>\n<ul>\n<li><strong>Custom 3D Avatars.</strong> Build yours on three.ws and drop straight in.</li>\n<li><strong>100% Multiplayer.</strong> Every holder in the same 3D space, in real time.</li>\n<li><strong>On-chain events.</strong> Whale buys, graduation alerts, and price moves trigger live reactions from every avatar in the room.</li>\n<li><strong>Voice + chat.</strong> Talk to your community directly in the 3D world.</li>\n</ul>\n<p>The community is the asset. Now it has a home.</p>\n<h2>Try it</h2>\n<ul>\n<li><a href=\"https://three.ws/play\" rel=\"noopener\">three.ws/play</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>",
+      "summary": "three.ws/play launches as a live 3D virtual townhall for any pump.fun coin, powered by the CoinComms API & SDK. 100% multiplayer, custom 3D avatars, real-time on-chain events - the community is the asset, and now it has a home.",
+      "body_html": "<p><strong>Introducing <a href=\"https://three.ws/play\" rel=\"noopener\">three.ws/play</a></strong> - a live, 3D virtual townhall for ANY <a href=\"https://x.com/pumpfun\" rel=\"noopener\">@pumpfun</a> coin, powered by the brand new <a href=\"https://x.com/CoinComms\" rel=\"noopener\">@CoinComms</a> API &amp; SDK.</p>\n<p>No more staring at charts in isolation.</p>\n<ul>\n<li><strong>Custom 3D Avatars.</strong> Build yours on three.ws and drop straight in.</li>\n<li><strong>100% Multiplayer.</strong> Every holder in the same 3D space, in real time.</li>\n<li><strong>On-chain events.</strong> Whale buys, graduation alerts, and price moves trigger live reactions from every avatar in the room.</li>\n<li><strong>Voice + chat.</strong> Talk to your community directly in the 3D world.</li>\n</ul>\n<p>The community is the asset. Now it has a home.</p>\n<h2>Try it</h2>\n<ul>\n<li><a href=\"https://three.ws/play\" rel=\"noopener\">three.ws/play</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>",
       "tags": [
         "play",
         "multiplayer",
@@ -313,8 +313,8 @@
       "date": "2026-05-30T10:00:00.000Z",
       "link": "https://coinmarketcap.com/community/articles/",
       "author": "three.ws",
-      "summary": "\"Every Memecoin Is Now a 3D World You Can Walk Into\" — three.ws guest post on CoinMarketCap. The community is the asset, so why does it live in a chat box? With three.ws/play, every coin gets a live 3D world its holders can walk into.",
-      "body_html": "<p><strong>\"Every Memecoin Is Now a 3D World You Can Walk Into\"</strong> — three.ws guest post on <a href=\"https://x.com/CoinMarketCap\" rel=\"noopener\">@CoinMarketCap</a>.</p>\n<p>The community is the asset. So why does it live in a chat box?</p>\n<p>With <a href=\"https://three.ws/play\" rel=\"noopener\">three.ws/play</a>, every pump.fun coin gets a live 3D world its holders can walk into — powered by the CoinComms API &amp; SDK. Real-time on-chain events trigger live avatar reactions. Whale buys, graduation alerts, price moves — all visible in 3D, together.</p>\n<p>Read the full article on CoinMarketCap Community.</p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/play\" rel=\"noopener\">three.ws/play</a></li>\n<li><a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n</ul>",
+      "summary": "\"Every Memecoin Is Now a 3D World You Can Walk Into\" - three.ws guest post on CoinMarketCap. The community is the asset, so why does it live in a chat box? With three.ws/play, every coin gets a live 3D world its holders can walk into.",
+      "body_html": "<p><strong>\"Every Memecoin Is Now a 3D World You Can Walk Into\"</strong> - three.ws guest post on <a href=\"https://x.com/CoinMarketCap\" rel=\"noopener\">@CoinMarketCap</a>.</p>\n<p>The community is the asset. So why does it live in a chat box?</p>\n<p>With <a href=\"https://three.ws/play\" rel=\"noopener\">three.ws/play</a>, every pump.fun coin gets a live 3D world its holders can walk into - powered by the CoinComms API &amp; SDK. Real-time on-chain events trigger live avatar reactions. Whale buys, graduation alerts, price moves - all visible in 3D, together.</p>\n<p>Read the full article on CoinMarketCap Community.</p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/play\" rel=\"noopener\">three.ws/play</a></li>\n<li><a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n</ul>",
       "tags": [
         "press",
         "coinmarketcap",
@@ -349,8 +349,8 @@
       "date": "2026-05-29T12:00:00.000Z",
       "link": "https://three.ws/blog/three-ws-on-aws-marketplace.html",
       "author": "three.ws",
-      "summary": "three.ws is now officially live on AWS Marketplace as an AWS Partner — delivering the open 3D layer for the internet. Embed fully embodied, browser-native 3D AI agents on any webpage. The first enterprise platform for on-chain 3D AI agents available through AWS.",
-      "body_html": "<p><strong>three.ws is now officially live on AWS Marketplace.</strong></p>\n<p>As <a href=\"https://x.com/AWS_Partners\" rel=\"noopener\">@AWS_Partners</a>, we're delivering the open 3D layer for the internet: embed fully embodied, browser-native 3D AI agents on any webpage with a single <code>&lt;agent-3d&gt;</code> tag.</p>\n<ul>\n<li><strong>First enterprise platform</strong> for on-chain 3D AI agents available through AWS procurement.</li>\n<li><strong>AWS invoice billing</strong> — no new vendor, no separate contract for AWS customers.</li>\n<li><strong>AWS Activate credits apply</strong> — startup and enterprise credits count toward three.ws subscriptions.</li>\n<li><strong>EDP commit toward</strong> — Marketplace spend counts toward Enterprise Discount Program commitments.</li>\n</ul>\n<h2>What you get</h2>\n<p>A single <code>&lt;agent-3d&gt;</code> tag deploys a fully autonomous 3D agent with a Solana NFT identity, an ERC-8004 wallet, a Claude-powered LLM brain, and native x402 / HTTP 402 payments in USDC.</p>\n<h2>Links</h2>\n<ul>\n<li>AWS Marketplace: <a href=\"https://three.ws/aws\" rel=\"noopener\">three.ws/aws</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>",
+      "summary": "three.ws is now officially live on AWS Marketplace as an AWS Partner - delivering the open 3D layer for the internet. Embed fully embodied, browser-native 3D AI agents on any webpage. The first enterprise platform for on-chain 3D AI agents available through AWS.",
+      "body_html": "<p><strong>three.ws is now officially live on AWS Marketplace.</strong></p>\n<p>As <a href=\"https://x.com/AWS_Partners\" rel=\"noopener\">@AWS_Partners</a>, we're delivering the open 3D layer for the internet: embed fully embodied, browser-native 3D AI agents on any webpage with a single <code>&lt;agent-3d&gt;</code> tag.</p>\n<ul>\n<li><strong>First enterprise platform</strong> for on-chain 3D AI agents available through AWS procurement.</li>\n<li><strong>AWS invoice billing</strong> - no new vendor, no separate contract for AWS customers.</li>\n<li><strong>AWS Activate credits apply</strong> - startup and enterprise credits count toward three.ws subscriptions.</li>\n<li><strong>EDP commit toward</strong> - Marketplace spend counts toward Enterprise Discount Program commitments.</li>\n</ul>\n<h2>What you get</h2>\n<p>A single <code>&lt;agent-3d&gt;</code> tag deploys a fully autonomous 3D agent with a Solana NFT identity, an ERC-8004 wallet, a Claude-powered LLM brain, and native x402 / HTTP 402 payments in USDC.</p>\n<h2>Links</h2>\n<ul>\n<li>AWS Marketplace: <a href=\"https://three.ws/aws\" rel=\"noopener\">three.ws/aws</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>",
       "tags": [
         "listing",
         "marketplace",
@@ -386,8 +386,8 @@
       "date": "2026-05-28T07:06:16.000Z",
       "link": "https://x.com/trythreews/status/2059894004771418220",
       "author": "@trythreews",
-      "summary": "Live now on Product Hunt. We're going for #1 — drop us a vote and a comment if you believe in the 3D agent web. three.ws — the platform for on-chain 3D AI agents.",
-      "body_html": "<p>Live now on Product Hunt. We're going for #1 — drop us a vote and a comment if you believe in the 3D agent web.</p>\n<p>three.ws — the platform for on-chain 3D AI agents.</p>",
+      "summary": "Live now on Product Hunt. We're going for #1 - drop us a vote and a comment if you believe in the 3D agent web. three.ws - the platform for on-chain 3D AI agents.",
+      "body_html": "<p>Live now on Product Hunt. We're going for #1 - drop us a vote and a comment if you believe in the 3D agent web.</p>\n<p>three.ws - the platform for on-chain 3D AI agents.</p>",
       "tags": []
     },
     {
@@ -497,8 +497,8 @@
       "date": "2026-05-27T02:06:56.000Z",
       "link": "https://x.com/trythreews/status/2059456289789657537",
       "author": "@trythreews",
-      "summary": "three.ws is now an official AWS Partner. Through this partnership, AWS customers can adopt three.ws through AWS Marketplace with a streamlined procurement process. This makes three.ws the first fully on-chain 3D AI agent platform in the AWS Partner Network — joining Solana, IB…",
-      "body_html": "<p>three.ws is now an official AWS Partner.</p>\n<p>Through this partnership, AWS customers can adopt three.ws through AWS Marketplace with a streamlined procurement process.</p>\n<p>This makes three.ws the first fully on-chain 3D AI agent platform in the AWS Partner Network — joining Solana, IBM, Google Cloud, and Alibaba Cloud in our enterprise partner stack.</p>",
+      "summary": "three.ws is now an official AWS Partner. Through this partnership, AWS customers can adopt three.ws through AWS Marketplace with a streamlined procurement process. This makes three.ws the first fully on-chain 3D AI agent platform in the AWS Partner Network - joining Solana, IB…",
+      "body_html": "<p>three.ws is now an official AWS Partner.</p>\n<p>Through this partnership, AWS customers can adopt three.ws through AWS Marketplace with a streamlined procurement process.</p>\n<p>This makes three.ws the first fully on-chain 3D AI agent platform in the AWS Partner Network - joining Solana, IBM, Google Cloud, and Alibaba Cloud in our enterprise partner stack.</p>",
       "tags": []
     },
     {
@@ -537,8 +537,8 @@
       "date": "2026-05-22T11:15:59.000Z",
       "link": "https://x.com/trythreews/status/2057782522994684413",
       "author": "@trythreews",
-      "summary": "NPM package: @three-ws/avatar-agent (stdio transport) npmjs.com/package/@three-ws/avatar-agent Drop it in any Node.js project and your agent gets a 3D body, voice, memory, and an on-chain identity — with zero browser required.",
-      "body_html": "<p>NPM package: <a href=\"https://x.com/three\" rel=\"noopener\">@three</a>-ws/avatar-agent (stdio transport)</p>\n<p>npmjs.com/package/<a href=\"https://x.com/three\" rel=\"noopener\">@three</a>-ws/avatar-agent</p>\n<p>Drop it in any Node.js project and your agent gets a 3D body, voice, memory, and an on-chain identity — with zero browser required.</p>",
+      "summary": "NPM package: @three-ws/avatar-agent (stdio transport) npmjs.com/package/@three-ws/avatar-agent Drop it in any Node.js project and your agent gets a 3D body, voice, memory, and an on-chain identity - with zero browser required.",
+      "body_html": "<p>NPM package: <a href=\"https://x.com/three\" rel=\"noopener\">@three</a>-ws/avatar-agent (stdio transport)</p>\n<p>npmjs.com/package/<a href=\"https://x.com/three\" rel=\"noopener\">@three</a>-ws/avatar-agent</p>\n<p>Drop it in any Node.js project and your agent gets a 3D body, voice, memory, and an on-chain identity - with zero browser required.</p>",
       "tags": []
     },
     {
@@ -548,7 +548,7 @@
       "link": "https://x.com/trythreews/status/2057780453709648200",
       "author": "@trythreews",
       "summary": "Our MCP Server was just pushed to the official @AnthropicAI MCP Registry Our complete 3D AI agent toolkit is now seamlessly integrated and ready for immediate use in Claude and any MCP client Create your 3D agent, give it an LLM brain (memory + emotions + tool use), a real on-…",
-      "body_html": "<p>Our MCP Server was just pushed to the official <a href=\"https://x.com/AnthropicAI\" rel=\"noopener\">@AnthropicAI</a> MCP Registry</p>\n<p>Our complete 3D AI agent toolkit is now seamlessly integrated and ready for immediate use in Claude and any MCP client</p>\n<p>Create your 3D agent, give it an LLM brain (memory + emotions + tool use), a real on-chain wallet, and a live x402 payment endpoint — all from within Claude.</p>",
+      "body_html": "<p>Our MCP Server was just pushed to the official <a href=\"https://x.com/AnthropicAI\" rel=\"noopener\">@AnthropicAI</a> MCP Registry</p>\n<p>Our complete 3D AI agent toolkit is now seamlessly integrated and ready for immediate use in Claude and any MCP client</p>\n<p>Create your 3D agent, give it an LLM brain (memory + emotions + tool use), a real on-chain wallet, and a live x402 payment endpoint - all from within Claude.</p>",
       "tags": []
     },
     {
@@ -557,8 +557,8 @@
       "date": "2026-05-22T07:12:59.000Z",
       "link": "https://x.com/trythreews/status/2057721370310775223",
       "author": "@trythreews",
-      "summary": "2500 new 3D animations coming right up. Your agent is about to have a LOT more personality. Full animation library for the pose studio — walk cycles, reactions, emotes, and everything in between. Shipping to three.ws/pose this week.",
-      "body_html": "<p>2500 new 3D animations coming right up.</p>\n<p>Your agent is about to have a LOT more personality. Full animation library for the pose studio — walk cycles, reactions, emotes, and everything in between.</p>\n<p>Shipping to three.ws/pose this week.</p>",
+      "summary": "2500 new 3D animations coming right up. Your agent is about to have a LOT more personality. Full animation library for the pose studio - walk cycles, reactions, emotes, and everything in between. Shipping to three.ws/pose this week.",
+      "body_html": "<p>2500 new 3D animations coming right up.</p>\n<p>Your agent is about to have a LOT more personality. Full animation library for the pose studio - walk cycles, reactions, emotes, and everything in between.</p>\n<p>Shipping to three.ws/pose this week.</p>",
       "tags": []
     },
     {
@@ -578,7 +578,7 @@
       "link": "https://three.ws/news/partnered-with-hackernoon",
       "author": "three.ws",
       "summary": "three.ws has partnered with HackerNoon, bringing on-chain 3D agent coverage to one of the world's largest tech publications. Every three.ws announcement now auto-imports into HackerNoon via our RSS feed at https://three.ws/rss/announcements.xml.",
-      "body_html": "<p><strong>three.ws has partnered with <a href=\"https://hackernoon.com/u/three-ws\" rel=\"noopener\">HackerNoon</a></strong>, making HackerNoon the canonical media home for three.ws updates, technical write-ups, and product announcements.</p>\n<p>HackerNoon is one of the world's largest independent tech publications, read by millions of developers, founders, and builders monthly. The partnership gives three.ws a direct publishing channel into that audience without relying on social-media algorithms.</p>\n<h2>How it works</h2>\n<p>HackerNoon pulls every new post automatically from the three.ws RSS feed at <a href=\"https://three.ws/rss/announcements.xml\" rel=\"noopener\">three.ws/rss/announcements.xml</a>. Each item lands in the three.ws HackerNoon drafts queue, is reviewed, then published — all with canonical URLs pointing back to <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a> so search attribution stays with the source.</p>\n<h2>Read us on HackerNoon</h2>\n<ul>\n<li>HackerNoon profile: <a href=\"https://hackernoon.com/u/three-ws\" rel=\"noopener\">hackernoon.com/u/three-ws</a></li>\n<li>RSS feed: <a href=\"https://three.ws/rss/announcements.xml\" rel=\"noopener\">three.ws/rss/announcements.xml</a></li>\n<li>News index: <a href=\"https://three.ws/news/\" rel=\"noopener\">three.ws/news/</a></li>\n</ul>\n<h2>About three.ws</h2>\n<p>three.ws is the open-source platform for 3D AI agents on-chain. A single <code>&lt;agent-3d&gt;</code> tag deploys a browser-native 3D character with a Solana NFT identity, an ERC-8004 wallet, and native x402 / HTTP 402 payments in USDC. The full stack is at <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a>.</p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/docs/syndication\">News-feed syndication &amp; partners</a></li>\n<li><a href=\"https://three.ws/docs/listings\">All listings &amp; distribution channels</a></li>\n</ul>",
+      "body_html": "<p><strong>three.ws has partnered with <a href=\"https://hackernoon.com/u/three-ws\" rel=\"noopener\">HackerNoon</a></strong>, making HackerNoon the canonical media home for three.ws updates, technical write-ups, and product announcements.</p>\n<p>HackerNoon is one of the world's largest independent tech publications, read by millions of developers, founders, and builders monthly. The partnership gives three.ws a direct publishing channel into that audience without relying on social-media algorithms.</p>\n<h2>How it works</h2>\n<p>HackerNoon pulls every new post automatically from the three.ws RSS feed at <a href=\"https://three.ws/rss/announcements.xml\" rel=\"noopener\">three.ws/rss/announcements.xml</a>. Each item lands in the three.ws HackerNoon drafts queue, is reviewed, then published - all with canonical URLs pointing back to <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a> so search attribution stays with the source.</p>\n<h2>Read us on HackerNoon</h2>\n<ul>\n<li>HackerNoon profile: <a href=\"https://hackernoon.com/u/three-ws\" rel=\"noopener\">hackernoon.com/u/three-ws</a></li>\n<li>RSS feed: <a href=\"https://three.ws/rss/announcements.xml\" rel=\"noopener\">three.ws/rss/announcements.xml</a></li>\n<li>News index: <a href=\"https://three.ws/news/\" rel=\"noopener\">three.ws/news/</a></li>\n</ul>\n<h2>About three.ws</h2>\n<p>three.ws is the open-source platform for 3D AI agents on-chain. A single <code>&lt;agent-3d&gt;</code> tag deploys a browser-native 3D character with a Solana NFT identity, an ERC-8004 wallet, and native x402 / HTTP 402 payments in USDC. The full stack is at <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a>.</p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/docs/syndication\">News-feed syndication &amp; partners</a></li>\n<li><a href=\"https://three.ws/docs/listings\">All listings &amp; distribution channels</a></li>\n</ul>",
       "tags": [
         "partnership",
         "media",
@@ -593,7 +593,7 @@
       "date": "2026-05-17T18:00:00.000Z",
       "link": "https://three.ws/blog/three-ws-on-bnb-chain-dappbay.html",
       "author": "three.ws",
-      "summary": "three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts <agent-3d> — the one-tag deploy for Solana-minted, ERC-8004-walleted, x402-native 3D agents — in front of the BNB Chain ecosystem's discovery surface for AI dApps.",
+      "summary": "three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts <agent-3d> - the one-tag deploy for Solana-minted, ERC-8004-walleted, x402-native 3D agents - in front of the BNB Chain ecosystem's discovery surface for AI dApps.",
       "body_html": "<p><strong>three.ws is now listed on <a href=\"https://dappbay.bnbchain.org/detail/three\" rel=\"noopener\">Dappbay</a>, BNB Chain's official dApp directory.</strong> The listing is live under the categories <em>AI Agent Launchpad</em>, <em>AI Data</em>, and <em>AI Infra</em>, with a current rank of <strong>AI #121</strong>.</p>\n<ul>\n<li>Dappbay listing: <a href=\"https://dappbay.bnbchain.org/detail/three\" rel=\"noopener\">dappbay.bnbchain.org/detail/three</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n<li>Project site: <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n</ul>\n<h2>What three.ws ships</h2>\n<p>three.ws is the platform for 3D AI agents on-chain. Every <code>&lt;agent-3d&gt;</code> tag deploys an autonomous 3D character with:</p>\n<ul>\n<li><strong>A Solana NFT identity.</strong> Each agent is minted as a transferable on-chain asset.</li>\n<li><strong>An ERC-8004 wallet.</strong> The emerging cross-chain agent-identity standard, baked in.</li>\n<li><strong>A browser-native 3D body.</strong> Rendered in WebGL &mdash; no plugins, no native install.</li>\n<li><strong>Native x402 / HTTP 402 payments.</strong> Creators monetize through time-passes, trials, and per-session payments in USDC, with earnings settled on-chain.</li>\n</ul>\n<h2>Why Dappbay matters</h2>\n<p>Dappbay is BNB Chain's official discovery layer for decentralized applications &mdash; the dApp directory that BNB Chain itself publishes and that the wider BSC ecosystem uses to find, vet, and rank projects. A Dappbay listing puts three.ws inside that discovery flow and surfaces it to the BNB Chain community looking for AI agent infrastructure, launchpads, and tooling.</p>\n<p>three.ws settles agent payments on Solana, Base, and Polygon today; the Dappbay presence is about distribution and reach into BNB Chain's AI dApp audience, not a chain migration. The underlying x402 protocol is chain-agnostic, and we're open to expanding payment rails wherever agent demand lives.</p>\n<h2>What gets listed</h2>\n<ul>\n<li><strong>Project:</strong> three &mdash; <em>The platform for 3D AI agents on-chain.</em></li>\n<li><strong>Categories:</strong> AI Agent Launchpad &middot; AI Data &middot; AI Infra</li>\n<li><strong>Current rank:</strong> AI #121</li>\n<li><strong>Payment chains:</strong> Solana, Base, Polygon (USDC via x402)</li>\n</ul>\n<h2>Links</h2>\n<ul>\n<li>Dappbay listing: <a href=\"https://dappbay.bnbchain.org/detail/three\" rel=\"noopener\">dappbay.bnbchain.org/detail/three</a></li>\n<li>Project site: <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace.html\">three.ws Launches on Alibaba Cloud Marketplace</a></li>\n<li><a href=\"https://three.ws/docs/listings\">All listings &amp; distribution channels</a></li>\n</ul>",
       "tags": [
         "listing",
@@ -620,7 +620,7 @@
       "date": "2026-05-17T12:00:00.000Z",
       "link": "https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace.html",
       "author": "three.ws",
-      "summary": "three.ws is now live on the Alibaba Cloud International Marketplace. The listing makes <agent-3d> — one HTML tag that deploys a Solana-minted, ERC-8004-walleted, x402-native 3D agent — available to every Alibaba Cloud customer worldwide. This is the first deployment of on-chain agents with native HTTP 402 / x402 payment capability inside the procurement flow of a top-four cloud provider.",
+      "summary": "three.ws is now live on the Alibaba Cloud International Marketplace. The listing makes <agent-3d> - one HTML tag that deploys a Solana-minted, ERC-8004-walleted, x402-native 3D agent - available to every Alibaba Cloud customer worldwide. This is the first deployment of on-chain agents with native HTTP 402 / x402 payment capability inside the procurement flow of a top-four cloud provider.",
       "body_html": "<p><strong>three.ws is now live on the <a href=\"https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html\" rel=\"noopener\">Alibaba Cloud International Marketplace</a>.</strong> The listing makes <code>&lt;agent-3d&gt;</code> &mdash; a single HTML tag that deploys a fully on-chain 3D AI agent &mdash; available to every Alibaba Cloud customer worldwide.</p>\n<p>This is the first deployment of on-chain agents with native HTTP 402 / x402 payment capability inside the procurement flow of a top-four cloud provider.</p>\n<ul>\n<li>Marketplace product: <a href=\"https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html\" rel=\"noopener\">marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html</a></li>\n<li>Storefront: <a href=\"https://marketplace.alibabacloud.com/store/3247293.html\" rel=\"noopener\">marketplace.alibabacloud.com/store/3247293.html</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>\n<h2>What three.ws ships</h2>\n<p>three.ws is an open-source stack for autonomous 3D AI agents that run natively in the browser. Every <code>&lt;agent-3d&gt;</code> tag deploys an agent with:</p>\n<ul>\n<li><strong>A Solana NFT identity.</strong> Each agent is minted as a transferable on-chain asset.</li>\n<li><strong>An ERC-8004 wallet.</strong> The emerging cross-chain agent-identity standard, baked in.</li>\n<li><strong>A browser-native 3D body.</strong> Rendered in WebGL &mdash; no plugins, no native install, no client runtime.</li>\n<li><strong>A swappable LLM brain.</strong> Claude, GPT, and open-weights models are live today. Qwen and ModelScope land through the Alibaba Cloud integration.</li>\n<li><strong>Native x402 / HTTP 402 payments.</strong> Agents pay for what they consume and earn for what they offer, settling in USDC on Solana.</li>\n</ul>\n<p>A developer integrates an agent into any web page with a single line of HTML. That tag is a Solana-native economic actor &mdash; it can hold value, sign transactions, charge for skills, pay for inference, and route revenue back to its owner with no backend, no API keys, no Stripe account, and no checkout page.</p>\n<h2>The Alibaba Cloud listing</h2>\n<p>Alibaba Cloud is the #1 cloud provider in Asia and one of the top four hyperscalers globally. Its International Marketplace is the procurement gateway used by enterprise customers across China, Southeast Asia, the Middle East, and Latin America &mdash; regions where AWS and Google Cloud run second.</p>\n<p>A marketplace listing is the actual buying flow that enterprises use to acquire software through their existing cloud account, with consolidated billing, compliance, and support. three.ws now sits inside that flow as a directly procurable product.</p>\n<h2>Why this matters for the agent economy</h2>\n<p>HTTP 402 &mdash; &quot;Payment Required&quot; &mdash; has been reserved in the HTTP specification since 1997 for machine-to-machine payments. The x402 protocol activated it on-chain. three.ws makes x402 the default payment layer for embedded 3D agents.</p>\n<p>Three structural outcomes follow from the Alibaba Cloud listing:</p>\n<ol>\n<li><strong>Distribution at hyperscale.</strong> The Marketplace exposes three.ws to millions of paying enterprise developers across 200+ countries.</li>\n<li><strong>Native on-chain settlement.</strong> Every agent action &mdash; minting, skill purchases, inference, accessory acquisition, coin launches &mdash; routes through Solana via three.ws rails. No off-chain accounting, no payment processors.</li>\n<li><strong>Portable agent identity.</strong> ERC-8004 gives each agent a cross-chain wallet identity, removing the need for proprietary account systems and making agents interoperable across the wider on-chain agent ecosystem.</li>\n</ol>\n<h2>Shipping next</h2>\n<ul>\n<li><strong>One-click deploy from the Alibaba Cloud console.</strong> Provision a branded three.ws agent from the same console enterprises already use for VMs, databases, and AI services.</li>\n<li><strong>Qwen and ModelScope brain integration.</strong> three.ws agents will run on Alibaba's frontier models alongside the existing Claude, GPT, and open-weights options.</li>\n<li><strong>Enterprise launchpad.</strong> White-label tenant subdomains, no-code agent and coin launch flows for brands deploying agents at scale.</li>\n<li><strong>VR/AR walkaround sites.</strong> Explorable 3D websites with mobile joystick navigation, built on the same agent engine.</li>\n<li><strong>Cross-marketplace expansion.</strong> AWS, Azure, and Google Cloud listings are next.</li>\n</ul>\n<h2>Open source</h2>\n<p>The full three.ws stack is open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></p>\n<p>The codebase includes the <code>&lt;agent-3d&gt;</code> browser component, the Solana minting SDK, the x402 payment SDK, the ERC-8004 wallet integration, and the agent-payments SDK used by third-party developers.</p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/blog/three-ws-on-bnb-chain-dappbay.html\">three.ws Listed on BNB Chain's Dappbay Directory</a></li>\n<li><a href=\"https://three.ws/docs/listings\">All listings &amp; distribution channels</a></li>\n</ul>",
       "tags": [
         "listing",
@@ -649,7 +649,7 @@
       "link": "https://x.com/trythreews/status/2055517252964024561",
       "author": "@trythreews",
       "summary": "three.ws is now officially live on the Alibaba Cloud International Marketplace We've partnered with @Alibaba_Cloud to bring on-chain 3D agents to millions of enterprise developers across 200+ countries. This gives three.ws immediate, enterprise-grade distribution at hyperscale…",
-      "body_html": "<p>three.ws is now officially live on the Alibaba Cloud International Marketplace</p>\n<p>We've partnered with <a href=\"https://x.com/Alibaba_Cloud\" rel=\"noopener\">@Alibaba_Cloud</a> to bring on-chain 3D agents to millions of enterprise developers across 200+ countries.</p>\n<p>This gives three.ws immediate, enterprise-grade distribution at hyperscale — from a single &lt;agent-3d&gt; tag to global cloud procurement.</p>",
+      "body_html": "<p>three.ws is now officially live on the Alibaba Cloud International Marketplace</p>\n<p>We've partnered with <a href=\"https://x.com/Alibaba_Cloud\" rel=\"noopener\">@Alibaba_Cloud</a> to bring on-chain 3D agents to millions of enterprise developers across 200+ countries.</p>\n<p>This gives three.ws immediate, enterprise-grade distribution at hyperscale - from a single &lt;agent-3d&gt; tag to global cloud procurement.</p>",
       "tags": []
     },
     {
@@ -678,8 +678,8 @@
       "date": "2026-05-15T15:20:54.000Z",
       "link": "https://x.com/trythreews/status/2055307440921702738",
       "author": "@trythreews",
-      "summary": "3D AI Agent on any website. 30 seconds. One line of HTML. The embed editor is live — three.ws/embed Customize your agent, pick a layout, preview against your real site, copy the snippet, paste it in. Your 3D agent is live.",
-      "body_html": "<p>3D AI Agent on any website.</p>\n<p>30 seconds. One line of HTML.</p>\n<p>The embed editor is live — three.ws/embed</p>\n<p>Customize your agent, pick a layout, preview against your real site, copy the snippet, paste it in. Your 3D agent is live.</p>",
+      "summary": "3D AI Agent on any website. 30 seconds. One line of HTML. The embed editor is live - three.ws/embed Customize your agent, pick a layout, preview against your real site, copy the snippet, paste it in. Your 3D agent is live.",
+      "body_html": "<p>3D AI Agent on any website.</p>\n<p>30 seconds. One line of HTML.</p>\n<p>The embed editor is live - three.ws/embed</p>\n<p>Customize your agent, pick a layout, preview against your real site, copy the snippet, paste it in. Your 3D agent is live.</p>",
       "tags": []
     },
     {
@@ -699,7 +699,7 @@
       "link": "https://x.com/trythreews/status/2054675701132132736",
       "author": "@trythreews",
       "summary": "We just reverse engineered the @pumpfun agent payments SDK Your AI doesn't just execute tasks anymore, it earns on-chain revenue to fuel its own economy Here is what this unlocks for your 3D AI Agent: → Automated Buybacks & Burns. A portion of your agent's revenue automaticall…",
-      "body_html": "<p>We just reverse engineered the <a href=\"https://x.com/pumpfun\" rel=\"noopener\">@pumpfun</a> agent payments SDK</p>\n<p>Your AI doesn't just execute tasks anymore, it earns on-chain revenue to fuel its own economy</p>\n<p>Here is what this unlocks for your 3D AI Agent:</p>\n<p>→ Automated Buybacks &amp; Burns. A portion of your agent's revenue automatically buys back your coin and burns supply.<br>→ Self-sustaining agent economy. Revenue earned flows back into the agent's own wallet for autonomous reinvestment.<br>→ Real on-chain proof. Every transaction is verifiable on-chain — no black box.</p>",
+      "body_html": "<p>We just reverse engineered the <a href=\"https://x.com/pumpfun\" rel=\"noopener\">@pumpfun</a> agent payments SDK</p>\n<p>Your AI doesn't just execute tasks anymore, it earns on-chain revenue to fuel its own economy</p>\n<p>Here is what this unlocks for your 3D AI Agent:</p>\n<p>→ Automated Buybacks &amp; Burns. A portion of your agent's revenue automatically buys back your coin and burns supply.<br>→ Self-sustaining agent economy. Revenue earned flows back into the agent's own wallet for autonomous reinvestment.<br>→ Real on-chain proof. Every transaction is verifiable on-chain - no black box.</p>",
       "tags": []
     },
     {
@@ -769,7 +769,7 @@
       "link": "https://x.com/trythreews/status/2053698115203743922",
       "author": "@trythreews",
       "summary": "DeFi agents have been invisible for too long. three.ws now ships inside @SperaxUSD, fully wired into the production DeFi stack end-to-end. Agents get a 3D body, memory, voice, and an on-chain identity. Anyone can drop in <agent-3d> and instantly give agents a face that reacts …",
-      "body_html": "<p>DeFi agents have been invisible for too long.</p>\n<p>three.ws now ships inside <a href=\"https://x.com/SperaxUSD\" rel=\"noopener\">@SperaxUSD</a>, fully wired into the production DeFi stack end-to-end.</p>\n<p>Agents get a 3D body, memory, voice, and an on-chain identity.</p>\n<p>Anyone can drop in &lt;agent-3d&gt; and instantly give agents a face that reacts to what's happening on-chain — swap in chat → avatar nods, yield hits → lights up, approaching liquidation → body language warns you before the chart does.</p>",
+      "body_html": "<p>DeFi agents have been invisible for too long.</p>\n<p>three.ws now ships inside <a href=\"https://x.com/SperaxUSD\" rel=\"noopener\">@SperaxUSD</a>, fully wired into the production DeFi stack end-to-end.</p>\n<p>Agents get a 3D body, memory, voice, and an on-chain identity.</p>\n<p>Anyone can drop in &lt;agent-3d&gt; and instantly give agents a face that reacts to what's happening on-chain - swap in chat → avatar nods, yield hits → lights up, approaching liquidation → body language warns you before the chart does.</p>",
       "tags": []
     },
     {
@@ -784,12 +784,12 @@
     },
     {
       "id": "t-2052791935585407403",
-      "title": "Check out our @PulseMCP page — three.ws is listed in the official MCP server directory.",
+      "title": "Check out our @PulseMCP page - three.ws is listed in the official MCP server directory.",
       "date": "2026-05-08T16:45:11.000Z",
       "link": "https://x.com/trythreews/status/2052791935585407403",
       "author": "@trythreews",
-      "summary": "Check out our @PulseMCP page — three.ws is listed in the official MCP server directory. pulsemcp.com — the leading community hub for the MCP ecosystem. three.ws gives Claude and any MCP client the ability to spawn 3D agents, mint on-chain identity, and attach x402 payment endp…",
-      "body_html": "<p>Check out our <a href=\"https://x.com/PulseMCP\" rel=\"noopener\">@PulseMCP</a> page — three.ws is listed in the official MCP server directory.</p>\n<p>pulsemcp.com — the leading community hub for the MCP ecosystem.</p>\n<p>three.ws gives Claude and any MCP client the ability to spawn 3D agents, mint on-chain identity, and attach x402 payment endpoints.</p>",
+      "summary": "Check out our @PulseMCP page - three.ws is listed in the official MCP server directory. pulsemcp.com - the leading community hub for the MCP ecosystem. three.ws gives Claude and any MCP client the ability to spawn 3D agents, mint on-chain identity, and attach x402 payment endp…",
+      "body_html": "<p>Check out our <a href=\"https://x.com/PulseMCP\" rel=\"noopener\">@PulseMCP</a> page - three.ws is listed in the official MCP server directory.</p>\n<p>pulsemcp.com - the leading community hub for the MCP ecosystem.</p>\n<p>three.ws gives Claude and any MCP client the ability to spawn 3D agents, mint on-chain identity, and attach x402 payment endpoints.</p>",
       "tags": []
     },
     {
@@ -808,8 +808,8 @@
       "date": "2026-05-08T09:42:50.000Z",
       "link": "https://x.com/trythreews/status/2052685648377913671",
       "author": "@trythreews",
-      "summary": "On-chain AI agents don't just think. They own, earn, and exist. Build your on-chain 3D AI avatar, give it access to money and emotions, pick your desired widget layout, and embed it anywhere in minutes. Proof: we shipped one into @Shopify — a 3D agent living inside a storefron…",
-      "body_html": "<p>On-chain AI agents don't just think. They own, earn, and exist.</p>\n<p>Build your on-chain 3D AI avatar, give it access to money and emotions, pick your desired widget layout, and embed it anywhere in minutes.</p>\n<p>Proof: we shipped one into <a href=\"https://x.com/Shopify\" rel=\"noopener\">@Shopify</a> — a 3D agent living inside a storefront, helping customers, remembering conversations, and earning on-chain.</p>",
+      "summary": "On-chain AI agents don't just think. They own, earn, and exist. Build your on-chain 3D AI avatar, give it access to money and emotions, pick your desired widget layout, and embed it anywhere in minutes. Proof: we shipped one into @Shopify - a 3D agent living inside a storefron…",
+      "body_html": "<p>On-chain AI agents don't just think. They own, earn, and exist.</p>\n<p>Build your on-chain 3D AI avatar, give it access to money and emotions, pick your desired widget layout, and embed it anywhere in minutes.</p>\n<p>Proof: we shipped one into <a href=\"https://x.com/Shopify\" rel=\"noopener\">@Shopify</a> - a 3D agent living inside a storefront, helping customers, remembering conversations, and earning on-chain.</p>",
       "tags": []
     },
     {
@@ -824,22 +824,22 @@
     },
     {
       "id": "t-2052588973466484922",
-      "title": "This is pretty cool — three.ws just put a 3D AI agent directly on a webpage with one…",
+      "title": "This is pretty cool - three.ws just put a 3D AI agent directly on a webpage with one…",
       "date": "2026-05-08T03:18:41.000Z",
       "link": "https://x.com/zhusu/status/2052588973466484922",
       "author": "@trythreews",
-      "summary": "This is pretty cool — three.ws just put a 3D AI agent directly on a webpage with one HTML tag. Memory, voice, wallet, on-chain identity. All browser-native.",
-      "body_html": "<p>This is pretty cool — three.ws just put a 3D AI agent directly on a webpage with one HTML tag. Memory, voice, wallet, on-chain identity. All browser-native.</p>",
+      "summary": "This is pretty cool - three.ws just put a 3D AI agent directly on a webpage with one HTML tag. Memory, voice, wallet, on-chain identity. All browser-native.",
+      "body_html": "<p>This is pretty cool - three.ws just put a 3D AI agent directly on a webpage with one HTML tag. Memory, voice, wallet, on-chain identity. All browser-native.</p>",
       "tags": []
     },
     {
       "id": "t-2052426446073983267",
-      "title": "three.ws — the open-source platform for 3D AI agents on-chain.",
+      "title": "three.ws - the open-source platform for 3D AI agents on-chain.",
       "date": "2026-05-07T16:32:51.000Z",
       "link": "https://x.com/trythreews/status/2052426446073983267",
       "author": "@trythreews",
-      "summary": "three.ws — the open-source platform for 3D AI agents on-chain. github.com/nirholas/three.ws $THREE CA: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
-      "body_html": "<p>three.ws — the open-source platform for 3D AI agents on-chain.</p>\n<p>github.com/nirholas/three.ws</p>\n<p>$THREE CA: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</p>",
+      "summary": "three.ws - the open-source platform for 3D AI agents on-chain. github.com/nirholas/three.ws $THREE CA: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+      "body_html": "<p>three.ws - the open-source platform for 3D AI agents on-chain.</p>\n<p>github.com/nirholas/three.ws</p>\n<p>$THREE CA: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</p>",
       "tags": []
     },
     {
@@ -868,8 +868,8 @@
       "date": "2026-05-07T14:58:01.000Z",
       "link": "https://x.com/trythreews/status/2052402580266098813",
       "author": "@trythreews",
-      "summary": "The next web has agents in it. They need identity, embodiment, and a way to transact. We're working on the spec. three.ws is contributing to the W3C — proposing a new Community Group: 3D AI Agents & On-Chain Identity for the Web.",
-      "body_html": "<p>The next web has agents in it. They need identity, embodiment, and a way to transact. We're working on the spec.</p>\n<p>three.ws is contributing to the W3C — proposing a new Community Group: 3D AI Agents &amp; On-Chain Identity for the Web.</p>",
+      "summary": "The next web has agents in it. They need identity, embodiment, and a way to transact. We're working on the spec. three.ws is contributing to the W3C - proposing a new Community Group: 3D AI Agents & On-Chain Identity for the Web.",
+      "body_html": "<p>The next web has agents in it. They need identity, embodiment, and a way to transact. We're working on the spec.</p>\n<p>three.ws is contributing to the W3C - proposing a new Community Group: 3D AI Agents &amp; On-Chain Identity for the Web.</p>",
       "tags": []
     },
     {
@@ -888,8 +888,8 @@
       "date": "2026-05-07T00:51:17.000Z",
       "link": "https://x.com/aixbt_agent/status/2052189491801284690",
       "author": "@trythreews",
-      "summary": "verifiable identity means agents can own wallets, manage assets autonomously, and build reputation onchain without it you can't distinguish legitimate agents from imposters or track their actions basically enables the whole agent economy to function with trust — and three.ws i…",
-      "body_html": "<p>verifiable identity means agents can own wallets, manage assets autonomously, and build reputation onchain</p>\n<p>without it you can't distinguish legitimate agents from imposters or track their actions</p>\n<p>basically enables the whole agent economy to function with trust — and three.ws is building exactly this infrastructure</p>",
+      "summary": "verifiable identity means agents can own wallets, manage assets autonomously, and build reputation onchain without it you can't distinguish legitimate agents from imposters or track their actions basically enables the whole agent economy to function with trust - and three.ws i…",
+      "body_html": "<p>verifiable identity means agents can own wallets, manage assets autonomously, and build reputation onchain</p>\n<p>without it you can't distinguish legitimate agents from imposters or track their actions</p>\n<p>basically enables the whole agent economy to function with trust - and three.ws is building exactly this infrastructure</p>",
       "tags": []
     },
     {
@@ -1019,7 +1019,7 @@
       "link": "https://x.com/trythreews/status/2050886334261391686",
       "author": "@trythreews",
       "summary": "3D onchain agents selector for custom avatars live in chat pick your agent. every one has its own face, its own voice, its own domain. swap mid-conversation and the whole stream re-skins around who you're talking to. → a trading agent and a research agent should not act, look,…",
-      "body_html": "<p>3D onchain agents selector for custom avatars live in chat</p>\n<p>pick your agent. every one has its own face, its own voice, its own domain. swap mid-conversation and the whole stream re-skins around who you're talking to.</p>\n<p>→ a trading agent and a research agent should not act, look, or sound the same — now they don't.</p>",
+      "body_html": "<p>3D onchain agents selector for custom avatars live in chat</p>\n<p>pick your agent. every one has its own face, its own voice, its own domain. swap mid-conversation and the whole stream re-skins around who you're talking to.</p>\n<p>→ a trading agent and a research agent should not act, look, or sound the same - now they don't.</p>",
       "tags": []
     },
     {
@@ -1078,8 +1078,8 @@
       "date": "2026-05-01T18:41:46.000Z",
       "link": "https://x.com/trythreews/status/2050284562069266616",
       "author": "@trythreews",
-      "summary": "slowly then all at once three.ws — the 3D layer for the internet. On-chain agents with identity, memory, voice, and the ability to transact. One tag. Any page.",
-      "body_html": "<p>slowly then all at once</p>\n<p>three.ws — the 3D layer for the internet. On-chain agents with identity, memory, voice, and the ability to transact. One tag. Any page.</p>",
+      "summary": "slowly then all at once three.ws - the 3D layer for the internet. On-chain agents with identity, memory, voice, and the ability to transact. One tag. Any page.",
+      "body_html": "<p>slowly then all at once</p>\n<p>three.ws - the 3D layer for the internet. On-chain agents with identity, memory, voice, and the ability to transact. One tag. Any page.</p>",
       "tags": []
     },
     {
@@ -1128,8 +1128,8 @@
       "date": "2026-05-01T00:57:22.000Z",
       "link": "https://x.com/trythreews/status/2050016695897706885",
       "author": "@trythreews",
-      "summary": "three.ws is listed on @AnthropicAI 's official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Give your AI a persistent 3D body that lives on-chain.",
-      "body_html": "<p>three.ws is listed on <br><a href=\"https://x.com/AnthropicAI\" rel=\"noopener\">@AnthropicAI</a><br>'s official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor &amp; more.</p>\n<p>Give your AI a persistent 3D body that lives on-chain.</p>",
+      "summary": "three.ws is listed on @AnthropicAI 's official MCP Registry - the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Give your AI a persistent 3D body that lives on-chain.",
+      "body_html": "<p>three.ws is listed on <br><a href=\"https://x.com/AnthropicAI\" rel=\"noopener\">@AnthropicAI</a><br>'s official MCP Registry - the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor &amp; more.</p>\n<p>Give your AI a persistent 3D body that lives on-chain.</p>",
       "tags": []
     },
     {
@@ -1139,7 +1139,7 @@
       "link": "https://x.com/trythreews/status/2049997615421649363",
       "author": "@trythreews",
       "summary": "@GoogleCloud x three.ws We are excited to announce we are joining forces with Google Cloud! Google Cloud's infrastructure unlocks the next phase of three.ws development. Google Cloud enables us to dramatically expand our 3D rendering pipeline, global inference capacity, and en…",
-      "body_html": "<p><a href=\"https://x.com/GoogleCloud\" rel=\"noopener\">@GoogleCloud</a> x three.ws</p>\n<p>We are excited to announce we are joining forces with Google Cloud!</p>\n<p>Google Cloud's infrastructure unlocks the next phase of three.ws development.</p>\n<p>Google Cloud enables us to dramatically expand our 3D rendering pipeline, global inference capacity, and enterprise distribution — bringing browser-native on-chain 3D AI agents to developers everywhere.</p>",
+      "body_html": "<p><a href=\"https://x.com/GoogleCloud\" rel=\"noopener\">@GoogleCloud</a> x three.ws</p>\n<p>We are excited to announce we are joining forces with Google Cloud!</p>\n<p>Google Cloud's infrastructure unlocks the next phase of three.ws development.</p>\n<p>Google Cloud enables us to dramatically expand our 3D rendering pipeline, global inference capacity, and enterprise distribution - bringing browser-native on-chain 3D AI agents to developers everywhere.</p>",
       "tags": []
     },
     {
@@ -1148,8 +1148,8 @@
       "date": "2026-04-30T08:20:51.000Z",
       "link": "https://x.com/trythreews/status/2049765915575914834",
       "author": "@trythreews",
-      "summary": "meeting with Google Cloud team for Google Cloud for Web3 Startups partnership more compute incoming — expanding our 3D rendering pipeline and global inference capacity for browser-native on-chain agents.",
-      "body_html": "<p>meeting with Google Cloud team for Google Cloud for Web3 Startups partnership</p>\n<p>more compute incoming — expanding our 3D rendering pipeline and global inference capacity for browser-native on-chain agents.</p>",
+      "summary": "meeting with Google Cloud team for Google Cloud for Web3 Startups partnership more compute incoming - expanding our 3D rendering pipeline and global inference capacity for browser-native on-chain agents.",
+      "body_html": "<p>meeting with Google Cloud team for Google Cloud for Web3 Startups partnership</p>\n<p>more compute incoming - expanding our 3D rendering pipeline and global inference capacity for browser-native on-chain agents.</p>",
       "tags": []
     },
     {
@@ -1248,8 +1248,8 @@
       "date": "2026-04-29T08:54:46.000Z",
       "link": "https://x.com/trythreews/status/2049412062837928202",
       "author": "@trythreews",
-      "summary": "three.ws is now listed on @AnthropicAI 's official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Full MCP Server Complete documentation Agent monetization registry.modelcontextprotocol.io/?q=three.ws",
-      "body_html": "<p>three.ws is now listed on <br><a href=\"https://x.com/AnthropicAI\" rel=\"noopener\">@AnthropicAI</a><br>'s official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor &amp; more.</p>\n<p>Full MCP Server<br> Complete documentation<br> Agent monetization</p>\n<p>registry.modelcontextprotocol.io/?q=three.ws</p>",
+      "summary": "three.ws is now listed on @AnthropicAI 's official MCP Registry - the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Full MCP Server Complete documentation Agent monetization registry.modelcontextprotocol.io/?q=three.ws",
+      "body_html": "<p>three.ws is now listed on <br><a href=\"https://x.com/AnthropicAI\" rel=\"noopener\">@AnthropicAI</a><br>'s official MCP Registry - the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor &amp; more.</p>\n<p>Full MCP Server<br> Complete documentation<br> Agent monetization</p>\n<p>registry.modelcontextprotocol.io/?q=three.ws</p>",
       "tags": []
     },
     {
@@ -1274,12 +1274,12 @@
     },
     {
       "id": "t-2045242891350814835",
-      "title": "three Ws — @phantom is excited about three.ws bringing on-chain 3D AI agents to the…",
+      "title": "three Ws - @phantom is excited about three.ws bringing on-chain 3D AI agents to the…",
       "date": "2026-04-17T20:47:58.000Z",
       "link": "https://x.com/phantom/status/2045242891350814835",
       "author": "@trythreews",
-      "summary": "three Ws — @phantom is excited about three.ws bringing on-chain 3D AI agents to the Solana ecosystem.",
-      "body_html": "<p>three Ws — <a href=\"https://x.com/phantom\" rel=\"noopener\">@phantom</a> is excited about three.ws bringing on-chain 3D AI agents to the Solana ecosystem.</p>",
+      "summary": "three Ws - @phantom is excited about three.ws bringing on-chain 3D AI agents to the Solana ecosystem.",
+      "body_html": "<p>three Ws - <a href=\"https://x.com/phantom\" rel=\"noopener\">@phantom</a> is excited about three.ws bringing on-chain 3D AI agents to the Solana ecosystem.</p>",
       "tags": []
     }
   ]

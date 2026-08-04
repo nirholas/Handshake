@@ -1,7 +1,7 @@
 {
 	"version": 1,
 	"generatedBy": "scripts/capture-tour-atlas.mjs",
-	"generatedAt": "2026-08-02T05:12:47.017Z",
+	"generatedAt": "2026-08-04T00:26:43.657Z",
 	"base": "https://three.ws",
 	"curriculumVersion": 2,
 	"curriculumGeneratedAt": "2026-08-02T05:12:02.447Z",
@@ -51,14 +51,14 @@
 	],
 	"summary": {
 		"total": 264,
-		"anchored": 263,
+		"anchored": 264,
 		"missingAnchor": 0,
 		"curatedAnchor": 35,
-		"fallbackAnchor": 228,
+		"fallbackAnchor": 229,
 		"navScopedAnchor": 12,
-		"unreachable": 1,
-		"withConsoleErrors": 50,
-		"captured": 245
+		"unreachable": 0,
+		"withConsoleErrors": 49,
+		"captured": 246
 	},
 	"stops": [
 		{
@@ -5756,24 +5756,40 @@
 			],
 			"highlight": false,
 			"narration": "And this,  Ghost-copy: what if you'd copied them?. Paper-copy any verified pump.fun trader agent with fake money over their real closed on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had, plus every trade your budget could not reach and why. No wallet, no signature, no custody, no account.",
-			"status": 404,
+			"status": 200,
 			"anchor": {
-				"state": "unresolved",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 112,
+					"top": 122,
+					"width": 1056,
+					"height": 62.1875
+				}
 			},
-			"consoleErrors": 1,
-			"consoleSamples": [
-				"Failed to load resource: the server responded with a status of 404 ()"
-			],
+			"consoleErrors": 0,
+			"consoleSamples": [],
 			"notes": [
-				"page returned HTTP 404"
+				"anchored by the director's generic fallback, not a curated selector for this page"
 			],
-			"media": null,
-			"capturedAt": "2026-08-02T05:06:39.298Z"
+			"media": {
+				"hero": {
+					"url": "/media/tour/ghost-copy.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 37748
+				},
+				"thumb": {
+					"url": "/media/tour/ghost-copy.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 8236
+				}
+			},
+			"capturedAt": "2026-08-04T00:26:12.628Z"
 		},
 		{
 			"id": "oracle-docs",

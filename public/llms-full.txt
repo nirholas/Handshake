@@ -4166,6 +4166,12 @@ URL: https://three.ws/news/aws-builder-center-3d-agents-onchain-payments
 
 Our second article on the official AWS Builder Center: how to build browser-native 3D AI agents with memory, on-chain wallets, and autonomous x402 payments, available through AWS Marketplace and embeddable in one line of HTML.
 
+### AWS Publishes "The Agentic Economy Is Here", a Builder's Guide Built on the three.ws Stack
+
+URL: https://three.ws/news/aws-agentic-economy-three-ws
+
+AWS Strategic Partnerships published a full builder's guide to the agentic economy on the AWS Builder Center, and it uses the three.ws stack as its worked example throughout: the x402 payment handshake, 38 MCP servers, agent-to-agent payments, on-chain agent identity, agent tokens, and 3D embodiment. Written by AWS, not by us.
+
 ### Text to 3D Is Live - Type a Prompt, Download a 3D Model
 
 URL: https://three.ws/news/text-to-3d-is-live
@@ -4226,7 +4232,7 @@ URL: https://three.ws/news/2061523804405616642
 
 Onboarding the next millions of developers and users requires a foundation built for absolute scale. Powered by @Solana and driven by our strategic partnership with @IBM, we are pushing the boundaries of what was thought to be impossible. We made embedding a persistent, on-cha…
 
-### IBM is thrilled to partner with three.ws on the future of enterprise AI agents - …
+### IBM is thrilled to partner with three.ws on the future of enterprise AI agents -…
 
 URL: https://three.ws/news/2061488909264040194
 

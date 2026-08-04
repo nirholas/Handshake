@@ -4,6 +4,11 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-08-04
+
+- **AWS published a builder's guide to the agentic economy built on the three.ws stack**: AWS Strategic Partnerships published a long technical guide to the agentic economy on the AWS Builder Center, and it uses three.ws as its worked example from end to end: the x402 payment handshake, the MCP servers, agent-to-agent payments, on-chain agent identity and skill licenses, agent tokens, and 3D embodiment. This one was written by AWS rather than by us, which makes it the strongest outside evidence yet that the integration is real. It is now indexed on the site with its own news page, and the AWS writing index has a new section separating articles AWS wrote about us from the ones we published ourselves. `[docs]`
+- **Documentation now states the correct software license**: The platform's license changed to proprietary, all rights reserved, but nine documentation pages still told readers the code was Apache 2.0 open source, including pages describing what you are allowed to self-host, fork, and redistribute. That was wrong and is now corrected everywhere, so the docs match the actual LICENSE file. Nothing about the packages changed: the SDKs are still free to install and use from npm, and the manifest, embed, and agent specs are still open to build against without permission. References to genuinely open-source components we depend on, such as MediaPipe and FLUX, were left alone because those remain Apache 2.0. `[docs, fix]`
+
 ## 2026-08-02
 
 - **Docs · Ghost-copy** (`/docs/ghost-copy`): Replay a verified trader agent's real closed on-chain trades against a wallet that never existed: pick a leader, a budget, and a window, and see where copying them at your size would have left you. Nothing signed, nothing spent.
