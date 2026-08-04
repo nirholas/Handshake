@@ -311,6 +311,7 @@
 		"okx:three-copy": "node scripts/okx-three-copy-check.mjs",
 		"okx:gauntlet": "node scripts/okx-e2e-gauntlet.mjs",
 		"check:conflicts": "node scripts/check-merge-conflicts.mjs",
+		"clean:worktrees": "node scripts/clean-deploy-worktrees.mjs",
 		"check:browser-graph": "node scripts/check-browser-graph.mjs",
 		"prove:guards": "node scripts/prove-guards.mjs",
 		"capture:docs-world": "node scripts/capture-docs-media.mjs",

@@ -153,12 +153,23 @@ npm run smoke:prod
 > build (2026-07-26: two consecutive dead builds, one exit 144, one exit 1):
 >
 > ```bash
+> npm run clean:worktrees -- --apply   # reclaim old deploy trees before staging a new one
 > git worktree add --detach /workspaces/.deploy-wt HEAD
 > cp -al /workspaces/three.ws/node_modules                /workspaces/.deploy-wt/node_modules
 > cp -al /workspaces/three.ws/chat/node_modules           /workspaces/.deploy-wt/chat/node_modules
 > cp -al /workspaces/three.ws/character-studio/build      /workspaces/.deploy-wt/character-studio/build
 > cp    /workspaces/three.ws/.env                         /workspaces/.deploy-wt/.env
 > ```
+>
+> **Remove the worktree once the deploy lands** (`git worktree remove --force
+> /workspaces/.deploy-wt`). Nobody did for three days in early August 2026 and
+> ten trees filled the 126 GB disk to 100%. The failure does not name its cause:
+> the next `git worktree add` dies mid-checkout with `No space left on device`
+> and leaves a half-written tree, and the build after that fails somewhere
+> unrelated. `npm run clean:worktrees` (plan only; `--apply` acts) reclaims any
+> linked worktree that is detached, clean, and idle past `--min-age-hours`
+> (default 2, so a concurrent agent's running build is never deleted). A tree
+> holding uncommitted work is always reported and kept.
 >
 > - `character-studio/build` — `ensure:avatar-studio` only skips the heavy
 >   avatar-studio vite build when `character-studio/build/index.html` exists.
