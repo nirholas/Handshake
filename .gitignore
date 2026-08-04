@@ -436,3 +436,4 @@ new_changelog.json
 # and rewritten by every docs edit, so committing it would grow the repo by a
 # fresh copy per docs change while adding nothing a build cannot reproduce.
 public/docs-search-index.json
+.namecheap-backups/
