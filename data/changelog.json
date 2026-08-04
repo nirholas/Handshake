@@ -2,6 +2,23 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-04",
+			"title": "AWS published a builder's guide to the agentic economy built on the three.ws stack",
+			"summary": "AWS Strategic Partnerships published a long technical guide to the agentic economy on the AWS Builder Center, and it uses three.ws as its worked example from end to end: the x402 payment handshake, the MCP servers, agent-to-agent payments, on-chain agent identity and skill licenses, agent tokens, and 3D embodiment. This one was written by AWS rather than by us, which makes it the strongest outside evidence yet that the integration is real. It is now indexed on the site with its own news page, and the AWS writing index has a new section separating articles AWS wrote about us from the ones we published ourselves.",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-04",
+			"title": "Documentation now states the correct software license",
+			"summary": "The platform's license changed to proprietary, all rights reserved, but nine documentation pages still told readers the code was Apache 2.0 open source, including pages describing what you are allowed to self-host, fork, and redistribute. That was wrong and is now corrected everywhere, so the docs match the actual LICENSE file. Nothing about the packages changed: the SDKs are still free to install and use from npm, and the manifest, embed, and agent specs are still open to build against without permission. References to genuinely open-source components we depend on, such as MediaPipe and FLUX, were left alone because those remain Apache 2.0.",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
 			"date": "2026-08-02",
 			"title": "Whale alerts price in real dollars again, and two skill-license endpoints are back",
 			"summary": "A registry-wide audit of the three.ws npm packages turned up two production defects, now fixed. The pump.fun whale watcher priced SOL through a price feed that had been retired, so every whale trade was valued at a stale hardcoded price roughly double the real one; it now uses the same multi-source live price the rest of the platform uses, so a $5,000 whale threshold means $5,000 again. And the two skill-license endpoints (reading an on-chain license, minting one) had been unreachable because a generic route swallowed their addresses; both answer again. The reputation SDK package also called two retired endpoint spellings and has been fixed and queued for release alongside pending updates to the walk, avatar, page-agent and pump.fun MCP packages.",

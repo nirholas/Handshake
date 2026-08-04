@@ -32,6 +32,21 @@ The platform-level piece: browser-native 3D AI agents with memory, on-chain wall
 
 - **Surfaces it covers:** [the `<agent-3d>` web component](./web-component.md), [agent wallets](./agent-wallets.md), [the agent system](./agent-system.md), [AWS Marketplace procurement](./aws-marketplace.md)
 
+## Published by AWS about three.ws
+
+Articles written by AWS staff, not by us. These are not our byline and we do not control their content; they are recorded here because they are the strongest third-party evidence of the integration.
+
+### The Agentic Economy Is Here: x402, MCP, AI Agents, Crypto, and 3D Worlds Converging | AWS Strategic Partnerships
+
+Published 26 June 2026 by Kelly Wu (AWS). Part of the AWS-run series "AWS Partners with three.ws | AWS Strategic Partnerships". Tags: `aws-partners`, `aws-service-catalog`, `agentic-economy`, `x402`, `model-context-protocol`.
+
+> [Read it on the AWS Builder Center](https://builder.aws.com/content/3FgvJFVKstRLVicHsldLM7ba4qB/the-agentic-economy-is-here-x-mcp-ai-agents-crypto-and-d-worlds-converging-aws-strategic-partnerships)
+
+A builder's guide to the agentic economy that uses the three.ws stack as its worked example throughout: the x402 handshake and its three layers, MCP as the distribution layer for agent capabilities, agent-to-agent payments, on-chain agent identity (ERC-8004 and the SPL skill licenses), agent tokens on the bonding curve, and 3D embodiment. It walks the hosted MCP servers, the `@three-ws/*` payment SDKs, and the FSI use cases for per-call data access, and closes on the open problems: payment streaming, automatic cross-chain routing, agent reputation as a credit primitive, and org-scale spend governance.
+
+- **Surfaces it covers:** [the MCP servers](./mcp.md), [x402](./autonomous-x402.md), [agent wallets](./agent-wallets.md), [the `<agent-3d>` web component](./web-component.md)
+- **Canonical URL note:** the Builder Center strips digits from slugs, so `x402` becomes `x` and `3d` becomes `d` in the path. The URL above is the one AWS publishes in its own [sitemap](https://builder.aws.com/sitemaps/articles/2026-6.xml); a slug containing the digits also resolves, because the content ID is what routes.
+
 ## In draft
 
 Written and reviewed in this repo, not yet submitted:
@@ -55,4 +70,4 @@ The Builder Center editor accepts Markdown, so a draft in `docs/` is the article
 
 ## Why we publish here
 
-The Builder Center is where AWS customers evaluating a partner product go looking for evidence that the engineering is real. A marketing page claims an integration exists; a walkthrough of the exact SDK calls, the signature-verification pitfalls, and the failure modes proves it. Every article we publish there points at Apache 2.0 source in [this repository](https://github.com/nirholas/three.ws), so a reader can check the claim in the same sitting.
+The Builder Center is where AWS customers evaluating a partner product go looking for evidence that the engineering is real. A marketing page claims an integration exists; a walkthrough of the exact SDK calls, the signature-verification pitfalls, and the failure modes proves it. Every article we publish there points at readable source in [this repository](https://github.com/nirholas/three.ws), so a reader can check the claim in the same sitting.

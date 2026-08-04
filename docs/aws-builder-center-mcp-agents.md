@@ -11,7 +11,7 @@ suggested_canonical: https://three.ws/docs/mcp.md
 
 Most AI tooling assumes a human is standing by with a credit card and an API key. You sign up, you paste a key into a config, you get a monthly bill. That model breaks the moment the *agent* is the one that needs a tool mid-reasoning. It cannot sign up for anything. It cannot paste a key. It just stops.
 
-I wanted agents to call paid tools the way they call free ones: discover, call, get a result, with the payment handled inline and autonomously. The Model Context Protocol gave me the tool interface, and HTTP 402 gave me the payment rail. This is a walk through what I built, all of it open source under Apache 2.0.
+I wanted agents to call paid tools the way they call free ones: discover, call, get a result, with the payment handled inline and autonomously. The Model Context Protocol gave me the tool interface, and HTTP 402 gave me the payment rail. This is a walk through what I built, all of it readable source you can check line by line.
 
 ## Why MCP
 
@@ -99,7 +99,7 @@ The MCP server itself is intentionally cloud-agnostic: it is an npm bridge to an
 
 - MCP docs and the full tool reference: [three.ws/docs/mcp.md](https://three.ws/docs/mcp.md)
 - Paid tools: `npx -y @three-ws/mcp-server`
-- Source (Apache 2.0): [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws)
+- Source: [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws)
 
 If you wire it into something, or you want to list a paid tool of your own, the repo issues are open. I would like to see what people point this at.
 

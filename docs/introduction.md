@@ -8,7 +8,7 @@ The result is an agent that doesn't just respond in a chat box. It occupies a th
 
 **Key facts:**
 
-- **License:** Apache-2.0 — use it, fork it, self-host it
+- **License:** proprietary, all rights reserved (see [LICENSE](https://github.com/nirholas/three.ws/blob/main/LICENSE))
 - **Hosted platform:** [https://three.ws](https://three.ws)
 - **CDN bundle:** `https://three.ws/agent-3d/latest/agent-3d.js` (also pinnable to a version, e.g. `/agent-3d/1.5.2/agent-3d.js`)
 - **npm packages:** [`@three-ws/sdk`](https://www.npmjs.com/package/@three-ws/sdk), [`@three-ws/agent-ui`](https://www.npmjs.com/package/@three-ws/agent-ui), [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar), [`@three-ws/solana-agent`](https://www.npmjs.com/package/@three-ws/solana-agent), [`@three-ws/mcp-server`](https://www.npmjs.com/package/@three-ws/mcp-server)
@@ -47,7 +47,7 @@ For developers who don't need any of this, on-chain identity is entirely optiona
 
 ### Open
 
-The platform is Apache-2.0 licensed. You can self-host the full application, publish the library to your own CDN, or fork and modify any layer. The manifest format, embed protocol, and agent spec are all documented in the `/specs` directory of the repository.
+The source is readable and the formats are open, but the code is proprietary: see [LICENSE](https://github.com/nirholas/three.ws/blob/main/LICENSE) for what is permitted, and ask before self-hosting or redistributing. The manifest format, embed protocol, and agent spec are all documented in the `/specs` directory of the repository, and building against those specs needs no permission.
 
 ---
 

@@ -53,6 +53,27 @@
       ]
     },
     {
+      "id": "aws-agentic-economy-three-ws",
+      "title": "AWS Publishes \"The Agentic Economy Is Here\", a Builder's Guide Built on the three.ws Stack",
+      "date": "2026-06-26T21:57:07.533Z",
+      "author": "three.ws",
+      "link": "https://builder.aws.com/content/3FgvJFVKstRLVicHsldLM7ba4qB/the-agentic-economy-is-here-x-mcp-ai-agents-crypto-and-d-worlds-converging-aws-strategic-partnerships",
+      "external_link": "https://builder.aws.com/content/3FgvJFVKstRLVicHsldLM7ba4qB/the-agentic-economy-is-here-x-mcp-ai-agents-crypto-and-d-worlds-converging-aws-strategic-partnerships",
+      "external_source": "the AWS Builder Center",
+      "summary": "AWS Strategic Partnerships published a full builder's guide to the agentic economy on the AWS Builder Center, and it uses the three.ws stack as its worked example throughout: the x402 payment handshake, 38 MCP servers, agent-to-agent payments, on-chain agent identity, agent tokens, and 3D embodiment. Written by AWS, not by us.",
+      "body_html": "<p><strong>AWS published a builder's guide to the agentic economy, and the worked example throughout is the three.ws stack.</strong> This one is not our byline: it was written by Kelly Wu at AWS and published on the <a href=\"https://builder.aws.com\" rel=\"noopener\">AWS Builder Center</a> as part of the AWS-run series \"AWS Partners with three.ws | AWS Strategic Partnerships\".</p>\n<h2>The article</h2>\n<p><a href=\"https://builder.aws.com/content/3FgvJFVKstRLVicHsldLM7ba4qB/the-agentic-economy-is-here-x-mcp-ai-agents-crypto-and-d-worlds-converging-aws-strategic-partnerships\" rel=\"noopener\"><strong>The Agentic Economy Is Here: x402, MCP, AI Agents, Crypto, and 3D Worlds Converging</strong></a></p>\n<p>It argues that AI agents stopped being tools in 2026 and became economic actors: they discover services, pay for them autonomously, earn from their own capabilities, hold assets, and operate inside persistent 3D worlds. Then it walks the infrastructure that makes each of those claims real.</p>\n<h2>What it covers</h2>\n<ul>\n<li><strong>The x402 handshake, in three layers.</strong> The protocol layer that turns HTTP 402 into a machine-readable payment spec, the settlement layer on Solana and EVM, and the intelligence layer where an agent reads a price, checks it against policy, pays, and continues.</li>\n<li><strong>MCP as the distribution layer.</strong> Why an MCP server exposing x402 tools makes payment available to every MCP-compatible agent, not just the ones programmed for it, and a walk through the hosted and <code>npx</code> servers.</li>\n<li><strong>Agent-to-agent payments.</strong> An orchestrator paying specialist agents per call, each with its own wallet and its own price, settled on-chain with no billing relationship between them.</li>\n<li><strong>On-chain agent identity.</strong> ERC-8004 identity records, SPL skill licenses as trustless access control, on-chain invocation events as the raw material for agent reputation, and pay-by-name through <code>.sol</code> subdomains.</li>\n<li><strong>3D embodiment.</strong> The <code>&lt;agent-3d&gt;</code> component, universal rig retargeting, audio-driven lipsync, and speaking a diorama into being through the scene MCP server.</li>\n<li><strong>Agentic finance.</strong> Per-call market data, sanctions screening that scales with volume instead of contracted capacity, credit decisioning across commodity endpoints, and the on-chain audit trail that arrives for free.</li>\n</ul>\n<h2>Where it says the edges are</h2>\n<p>The closing section is the honest part, and it names four unsolved problems: payment streaming for long-running agents where per-call pricing is too coarse, automatic cross-chain routing when an agent's funds and the endpoint are on different chains, agent reputation as a lending primitive, and spending governance at organizational scale. All four are open.</p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/ca2x402\" rel=\"noopener\">three.ws/ca2x402</a>, turn any Solana contract address into a live x402 endpoint</li>\n<li><a href=\"https://registry.modelcontextprotocol.io/?q=io.github.nirholas\" rel=\"noopener\">The three.ws MCP servers in the official registry</a></li>\n<li><a href=\"https://three.ws/aws\" rel=\"noopener\">three.ws on AWS</a></li>\n</ul>",
+      "tags": [
+        "aws",
+        "x402",
+        "mcp",
+        "agent-payments",
+        "agents",
+        "3d",
+        "solana",
+        "blog"
+      ]
+    },
+    {
       "id": "text-to-3d-is-live",
       "slug": "text-to-3d-is-live",
       "title": "Text to 3D Is Live — Type a Prompt, Download a 3D Model",

@@ -22,7 +22,7 @@ This is a walk through the pattern we shipped instead, in production, at [three.
 
 > The agent does not hold a wallet. It proposes spend. Governance enforces policy.
 
-Everything below is real code from our Apache 2.0 repository, including the concurrency bug we had to design around and the failure mode that has no clean answer.
+Everything below is real code from our source-available repository, including the concurrency bug we had to design around and the failure mode that has no clean answer.
 
 ## The three bad options, and what each one actually costs
 
@@ -435,7 +435,7 @@ An autonomous agent with a private key is a liability you cannot bound. An auton
 
 ## Resources
 
-- **Source (Apache 2.0):** [`api/pay/execute.js`](https://github.com/nirholas/three.ws/blob/main/api/pay/execute.js) is the request path, [`api/_lib/pay/spend-governor.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/spend-governor.js) is the governor, [`api/_lib/pay/payment-session.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/payment-session.js) is the lifecycle
+- **Source:** [`api/pay/execute.js`](https://github.com/nirholas/three.ws/blob/main/api/pay/execute.js) is the request path, [`api/_lib/pay/spend-governor.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/spend-governor.js) is the governor, [`api/_lib/pay/payment-session.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/payment-session.js) is the lifecycle
 - **MCP server:** [`@three-ws/agentcore-payments-mcp`](https://github.com/nirholas/three.ws/tree/main/packages/agentcore-payments-mcp)
 - **x402:** [x402.org](https://www.x402.org), the HTTP-native pay-per-call standard the payments settle over
 - **Model Context Protocol:** [modelcontextprotocol.io](https://modelcontextprotocol.io)
