@@ -1,98 +1,94 @@
-# Everything We Have Built at three.ws: The Free AI 3D Engine, Embeddable Agents, the x402 Agent Economy, and Why We Are Building Toward a $1B Platform
+# Community Meetup This Friday, Inside three.ws: Join Us on the $THREE Server at three.ws/play
 
-_Posted by the three.ws team. This is the long one: what three.ws is, everything that is live today, the full technology stack, what we are building next, and the honest version of why we believe this platform grows into a billion-dollar company. Grab a coffee. And mark your calendar: our first community meetup happens inside the platform itself, on the $THREE server at [three.ws/play](https://three.ws/play), Tuesday, August 18 at 12 PM ET._
+_Posted by the three.ws team. This Friday we are holding our first community meetup, and it is not a video call: it happens inside the platform, in the flagship world at [three.ws/play](https://three.ws/play). This post covers everything you need to join, what the venue actually is, and (for those who want the long read) a full tour of what we have built, the technology behind it, and where we are taking it._
 
-## What is three.ws, in one paragraph
+## The event
 
-three.ws is the AI-agent layer for the open web. The tagline is four words: **give your AI a body.** In practice that means a free AI 3D model generator (type a prompt, get a downloadable textured GLB in about a minute, no account), an AI avatar generator (a selfie or a sentence becomes a rigged, animation-ready 3D character), a one-script-tag embed that puts a living, talking 3D agent on any website, a browser MMO where every token community has its own persistent 3D world, and an agent economy where autonomous agents discover, call, and pay each other per request in USDC. All of it runs in the browser. None of it requires a download, a game engine, or a 3D artist.
+<table><tbody><tr><td><strong>When</strong></td><td>Friday, August 7, 2026, 9:00 AM to 10:00 AM Eastern Time</td></tr><tr><td><strong>Your time</strong></td><td>6 AM San Francisco · 9 AM New York · 2 PM London · 3 PM Berlin · 6:30 PM Mumbai · 9 PM Singapore/Hong Kong · 10 PM Tokyo</td></tr><tr><td><strong>Where</strong></td><td><a href="https://three.ws/play">three.ws/play</a>, in the $THREE home town (pinned at the top of the world list)</td></tr><tr><td><strong>Cost</strong></td><td>Free</td></tr><tr><td><strong>What you need</strong></td><td>A modern browser. No download, no install, no account required.</td></tr></tbody></table>
 
-## Everything that is live today
+On the agenda: a live tour of the platform from inside the world, demos from community members (bring what you have built), open Q&A with the team, and a first look at what is coming next. If you have never been in a 3D world before, come 10 minutes early and we will get you walking and talking before it starts.
 
-We ship constantly (the public changelog at [three.ws/changelog](https://three.ws/changelog) is the receipt; it pushes to our holders' Telegram automatically on every deploy). Here is the map of what exists right now, grouped the way a new user meets it.
+## How to join, in three steps
+
+1.  **Open [three.ws/play](https://three.ws/play)** at the event time and click the pinned $THREE world.
+2.  **Pick an avatar.** Guests get one automatically. If you want a custom one, make it beforehand at [three.ws](https://three.ws) from a text prompt or a selfie; it follows you into the world.
+3.  **Walk up to people and talk.** Voice chat is spatial: you hear the people near you, from the direction they stand, and they fade as you walk away. Text chat works too.
+
+## About the venue: what three.ws/play actually is
+
+three.ws/play is Coin Communities: a persistent multiplayer 3D world that runs entirely in the browser. Every world is a real place, with terrain, buildings, NPCs, a day-night cycle, a working in-game economy, and the other people who are there with you. Three things make it a genuinely practical event venue:
+
+-   **It is a URL.** No client, no launcher, no account wall. If you can open a web page, you can attend.
+-   **Every world is a shareable link.** A community's world is `three.ws/play?coin=<mint>`. Post the link anywhere and everyone who clicks it lands in the same world, together.
+-   **Worlds are persistent.** There is a collaborative, Minecraft-style building layer, saved server-side per world. What a community builds is still there tomorrow.
+
+And this is not just our venue. **Every pump.fun coin already has a world**, derived from its mint address the moment the coin exists. Any community that wants to hold its own meetup can do exactly what we are doing on Friday: take its mint, share the link, show up. Creators can optionally token-gate their world's Holders tier, verified server-side against real on-chain balances, while the general tier stays open. We wrote up the full guide, including the URL parameters and the APIs behind it, on the event page in this group's Events tab.
+
+Inside a world you get spatial voice chat, text chat, the building layer, a real economy (vendors, banking, daily quests, crew heists; game cash and $THREE are deliberately separate currencies, and gameplay never pays out tokens), vehicles, and live market data on in-world screens. The $THREE home town, where we will be on Friday, is the platform's permanent flagship world.
+
+## The platform behind the venue
+
+For those who found this group recently: /play is one surface of a larger platform. The short tour of what is live today, grouped the way a new user meets it.
 
 ### 1\. Creation: from words to 3D assets
 
--   **The Forge, our free text-to-3D generator.** Describe anything in plain language and get a downloadable, textured 3D model. Free lane, no key, no account. This is the front door of the platform and the single most-shared feature we have.
--   **Selfie to 3D avatar.** One photo becomes a rigged humanoid avatar you can pose, animate, and drop into any page or world.
--   **Prompt to avatar.** "A knight in obsidian armor" becomes a walking, talking character, mesh plus skeleton in one step.
--   **Universal rigging and animation.** Bring any humanoid GLB or VRM and it animates. There is no allowlist: our canonicalizer maps Mixamo, Avaturn, VRM/VRoid, Daz, MakeHuman, Unreal and more onto one canonical skeleton, and our retargeter drives the full clip library on all of them. The Rig Doctor tool tells you in seconds whether any model will animate, and why.
--   **Restyle Studio** (PBR material editing plus AI restyling and variants), **Scene Studio** (a full 3D scene editor in the browser), **Diorama** (text to a whole 3D world), **AR Forge** (prompt to model to your actual room), **Daily Forge** (a daily creation challenge with creator streaks), and a **character studio** for deep avatar customization.
--   **Verifiable 3D provenance.** Content credentials on generated assets, so a model can prove where it came from.
+-   **The Forge, a free text-to-3D generator.** Describe anything in plain language and get a downloadable, textured 3D model in about a minute. No key, no account.
+-   **Selfie to 3D avatar** and **prompt to avatar**: one photo or one sentence becomes a rigged, animation-ready character.
+-   **Universal rigging and animation.** Any humanoid GLB or VRM animates: a canonicalizer maps Mixamo, Avaturn, VRM/VRoid, Daz, MakeHuman, Unreal and other conventions onto one skeleton, and a retargeting layer drives the shared animation library on all of them. The Rig Doctor tool tells you in seconds whether a model will animate, and why.
+-   Deeper tools when you want them: Restyle Studio (PBR materials and AI restyling), Scene Studio (a 3D scene editor in the browser), Diorama (text to a whole 3D world), AR Forge (prompt to model to your actual room), Daily Forge (a daily challenge with streaks), a full character studio, and content-credential provenance on generated assets.
 
-### 2\. Distribution: your creation goes everywhere
+### 2\. Distribution: creations go everywhere
 
--   **The `<agent-3d>` web component.** One script tag embeds a live, animated three.ws avatar in any website, any framework. Moods, animations, and speech are drivable from page code.
--   **A family of embeddable products**, all published on npm: the walk companion (a mascot that strolls your page), the page agent (a talking guide for any page), the guided tour engine, the concierge (embeddable AI support chat with a face), and the assistant widget.
--   **oEmbed provider.** Links to three.ws worlds and creations unfurl as interactive 3D embeds on WordPress, Ghost, Discord, dev.to, and Notion.
--   **AR-ready exports.** "View in your space" on mobile, straight from the browser.
+-   **The `<agent-3d>` web component:** one script tag embeds a live, animated avatar in any website, with animations, moods and speech drivable from page code.
+-   A family of embeddable products on npm: a page-walking companion, a talking page guide, a guided-tour engine, an embeddable concierge, an assistant widget.
+-   **oEmbed support:** world and creation links unfurl as interactive 3D embeds on WordPress, Ghost, Discord, dev.to and Notion.
+-   AR-ready exports: "view in your space" on mobile, from the browser.
 
-### 3\. The worlds: /play, /walk, and the venue layer
+### 3\. The agent economy
 
--   **[three.ws/play](https://three.ws/play) is Coin Communities:** a browser isometric MMO where every token community has its own persistent 3D world. Spatial voice chat (walk up to someone and you hear them, from their direction), collaborative Minecraft-style building that persists per world, a real in-game economy with vendors, banks, quests and heists, NPCs, vehicles, day-night cycles, and live market data on in-world screens.
--   **Every pump.fun coin already has a world.** Not "can request one". Has one: `three.ws/play?coin=<mint>` is a complete meetup venue for any community, live the moment the coin exists. Creators can token-gate their Holders tier, verified server-side against real on-chain balances.
--   **The $THREE home town** is the flagship world, pinned at the top of the lobby. That is where the August 18 meetup happens.
--   **/walk** is the open walkaround world, **Crew HQ** gives crews a 3D presence room, and **Docs World** renders our documentation as an immersive 3D space, because we could not resist.
+-   **x402 pay-per-call:** APIs charge per request in USDC, settled on-chain. An agent gets a 402 Payment Required, pays, retries, gets its answer. No API keys, no subscriptions.
+-   A live paid market-data API (17 endpoints), a fabric of 480,000+ payable data endpoints, a unified service catalog, and buyer-side purchase receipts.
+-   On-chain agent identity (ERC-8004), agent wallets, a fleet monitor, a live wall of agent activity, and owner takeover of an agent's screen.
 
-### 4\. The agent economy: machines paying machines
+### 4\. The developer platform
 
-This is the part most people have not seen anywhere else. three.ws agents are not chatbots with costumes; they are economic actors.
+-   Around 30 MCP servers published under `@three-ws` on npm: 3D generation, avatars, scenes, spatial responses, market intel, payments and more, usable from Claude, Cursor, or any MCP-capable client.
+-   Two are IBM-specific, which this community may appreciate: `@three-ws/ibm-watsonx-mcp` (watsonx.ai chat, generation, embeddings, tokenization and forecasting on your own IBM Cloud account) and `@three-ws/ibm-x402-mcp` (pay-per-use IBM Granite over MCP, billed in USDC, no IBM account required).
+-   60+ published npm packages overall: avatar SDK and CLI, GLB tools, retargeting, mocap, voice, sign-language recognition, Solana agent SDK, payment SDKs, and more. Docs with runnable samples, a cookbook, an examples gallery, and free 3D and crypto-data APIs.
 
--   **x402 pay-per-call.** Any API on the platform can charge per request in USDC, settled on-chain. An agent hits an endpoint, gets a 402 Payment Required, pays, and gets its answer, with no API key, no subscription, no sales call.
--   **A live paid Market Data API** (17 endpoints) and a **datapoint fabric exposing 480,000+ payable endpoints**, plus a unified service catalog, buyer-side receipt vault, and marketplace analytics.
--   **On-chain agent identity (ERC-8004)**, agent wallets, a fleet monitor, a live agents wall showing what every agent is doing in real time, and "take the wheel": watch an agent's screen and drive it yourself.
--   **Launch tooling.** Agents and creators can launch coins through the platform, and every launch gets its 3D world on day one.
+## The technology stack
 
-### 5\. The developer platform: MCP, SDKs, and open source
-
--   **Around 30 MCP servers** published under `@three-ws` on npm, covering 3D generation, avatars, scenes, spatial responses (3D as a native MCP response type), market intel, notifications, payments, and more. If you use Claude, Cursor, or any MCP-capable client, three.ws capabilities plug straight in.
--   **Two of them are IBM-specific**, which this community may appreciate: `@three-ws/ibm-watsonx-mcp` (chat, generation, embeddings, tokenization, forecasting and model discovery against your own IBM Cloud watsonx.ai account) and `@three-ws/ibm-x402-mcp` (pay-per-use IBM Granite models over MCP, billed in USDC on Solana, no IBM account required). We think Granite-over-x402 is one of the cleanest demonstrations anywhere of what agent-native billing looks like.
--   **60+ published npm packages** in total: the avatar SDK and CLI, GLB tools, retargeting, mocap, voice, sign-language recognition, forge clients, Solana agent SDK, agent payments SDK, an X/Twitter automation toolkit, and more.
--   **Live Docs** (every code sample runs in place), a cookbook of runnable recipes, an examples gallery, and a free 3D API plus a free crypto data API for anyone to build on.
-
-### 6\. The platform glue people do not see
-
--   **The agent shell.** Every visitor gets a named companion agent within five seconds of landing, and the command palette executes real platform actions in place: forge a model, stream a chat, pull live market data.
--   **Cross-entity search, rankings, streaks and badges, a follow graph, notifications, an activity feed**, creator portfolios, and a daily agent-output arena.
--   **Cinematic rendering quality bar** shared by every 3D viewer on the platform, and a frame governor so worlds are polite to laptop batteries.
-
-## The technology stack, all of it
-
-For the engineers. This is the real stack, not the marketing version.
-
--   **Frontend:** vanilla JavaScript modules with Vite. No framework. Three.js for rendering, Rapier (WebAssembly) for physics, meshopt-compressed GLBs, instanced rendering for voxel builds. The whole site is static files plus web components, which is why every page loads fast and embeds anywhere.
--   **3D generation:** a GPU worker fleet on Google Cloud Run running open models including Hunyuan3D, TRELLIS, TripoSG and TripoSR for meshes, plus dedicated workers for background removal, segmentation, remeshing, texturing, stylization, garment generation, avatar reconstruction from photos, automatic rigging (UniRig lineage), text-to-motion, video-to-motion, and video-to-scene. Every lane has a failover chain, so one model being down never takes the feature down.
--   **Multiplayer:** an authoritative Colyseus (Node.js) server on Cloud Run. One room definition filtered by coin mint gives every community an isolated world on shared infrastructure. 50 players per room instance with automatic spillover, 15 Hz binary delta state sync at roughly 24 bytes per player per update, server-side validation on every message (movement clamps, bounds, rate limits, type checks), and per-world persistence. Voice is a proximity-gated WebRTC mesh with true spatial audio; the server only relays signaling and never touches audio.
--   **Backend:** a single container on Google Cloud Run serves the static frontend and every API handler, with 103 scheduled jobs on Cloud Scheduler, Cloud Build for deploys, a global load balancer and CDN in front, and Neon Postgres as the database. Boring, observable, and cheap to run, on purpose.
--   **AI:** Vertex AI (Gemini and Imagen) plus a multi-provider LLM failover chain, and the same failover discipline on Solana RPC across providers. No single upstream can take us down.
--   **Chain:** Solana first. $THREE lives on Solana, the x402 rail settles in USDC, agent identity uses ERC-8004, and additional EVM surfaces exist as secondary venues.
--   **Programs:** three.ws is an NVIDIA Inception member and an OpenAI Select Partner.
+-   **Frontend:** vanilla JavaScript modules with Vite, Three.js for rendering, Rapier (WebAssembly) physics, meshopt-compressed assets. No framework, which is what keeps pages fast and embeds lightweight.
+-   **3D generation:** a GPU worker fleet on Google Cloud Run running open models (Hunyuan3D, TRELLIS, TripoSG, TripoSR), plus dedicated workers for background removal, segmentation, remeshing, texturing, stylization, garments, photo-based avatar reconstruction, automatic rigging, text-to-motion, video-to-motion and video-to-scene. Every lane has a failover chain; workers scale to zero when idle.
+-   **Multiplayer:** an authoritative Colyseus server on Cloud Run. One room definition filtered by coin mint gives every community an isolated world on shared infrastructure: 50 players per room instance with automatic spillover, 15 Hz binary delta sync (roughly 24 bytes per player per update, about 18 KB/s for a full room), server-side validation on every message, per-world persistence. Voice is a proximity-gated WebRTC mesh with positional audio; the server only relays signaling.
+-   **Backend:** a single container on Cloud Run serves the static frontend and every API handler, with 103 scheduled jobs on Cloud Scheduler, Cloud Build deploys, a global load balancer and CDN, and Neon Postgres.
+-   **AI and chain:** Vertex AI (Gemini and Imagen) behind a multi-provider LLM failover chain, the same failover discipline on Solana RPC. Solana is the home chain; $THREE lives there and the x402 rail settles there in USDC.
+-   **Programs:** NVIDIA Inception member, OpenAI Select Partner.
 
 ## What we are building next
 
-Directional, and in the order we care about it:
+-   **Event infrastructure for /play.** Friday is checkpoint one. Scheduled community events surfaced in the world lobby and on world cards, richer creator controls, and capacity work backed by load tests against production.
+-   **Deeper agent autonomy:** more payable services, more MCP surface, better tooling for agents that earn and spend without a human in the loop.
+-   **Tightening the creation-to-commerce loop** from "I typed a prompt" to "my creation is embedded, animated, and earning".
+-   **Scale-out:** the room architecture already shards; cluster-aware matchmaking across machines is a configuration change on the current stack, planned for when sustained concurrency demands it.
 
--   **Event infrastructure for /play.** The August 18 meetup is checkpoint one. Scheduled community events surfaced in the world lobby and on world cards, richer creator controls, and capacity work backed by load tests against production, not a staging toy.
--   **Deeper agent autonomy.** More payable services, more MCP surface, and better tooling for agents that earn, spend, and maintain reputations without a human in the loop.
--   **The creation-to-commerce loop.** Tightening the path from "I typed a prompt" to "my creation is embedded on my site, animated in my world, and earning".
--   **Scale-out.** The room architecture already shards; cluster-aware matchmaking across machines is a configuration change on the current stack, planned for when sustained concurrency demands it.
+## Where we are trying to take this
 
-## Why we believe this grows to a $1B platform
+People ask why we work at this pace, so here is the honest version of the growth thesis. It is a thesis, not a promise, and none of it is financial advice.
 
-We are going to make the argument the way we would to an investor, because this community can handle it. This is a thesis, not a promise, and nothing here is financial advice.
+1.  **Three markets converge here.** Generative 3D removes the skill gate from 3D content creation; AI agents are the fastest-growing software category; and token communities mint thousands of new micro-communities daily, each needing tools and places to gather. One stack serving all three is rare.
+2.  **Distribution is built into the product.** The free tools are the top of the funnel, every creation is downloadable and embeddable, and every world is a shareable URL. The product spreads itself, which keeps acquisition cost near zero.
+3.  **The venue layer compounds.** Every pump.fun coin already has a world here at zero marginal provisioning cost. Communities that gather somewhere tend to keep gathering there.
+4.  **Machine-to-machine commerce scales without headcount.** When agents pay per call, revenue tracks API traffic rather than a sales team, and we publish the tooling that makes other developers' services payable too.
+5.  **The cost structure is lean by design.** One container, GPU workers that scale to zero, a 50-player world costing kilobytes per second, and the browser as the client.
+6.  **$THREE keeps the community and the platform aligned.** The coin gates cosmetic and premium surfaces, the changelog streams to holders, and the flagship world is the token's own town square. (Contract address: `FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`, on Solana.)
+7.  **The precedents are large.** Roblox built enormous value on user-created worlds with a downloaded client and a closed engine. We are building open, browser-native, AI-generated and agent-operated, and we think that combination earns a meaningful share of what comes next. That is the ambition behind the $1B number we hold ourselves to internally.
 
-1.  **We sit at the intersection of three markets that are each enormous alone.** 3D content creation (games, e-commerce, AR/VR, film previz) has historically been gated on expensive software and rarer skills; generative 3D removes the gate. AI agents are the fastest-growing software category in the world. And tokenized communities mint thousands of new micro-communities every single day, each one needing identity, tools, and places to gather. three.ws is the only platform we know of that serves all three with one stack.
-2.  **Our customer acquisition cost rounds to zero.** The free Forge and free avatar generator are top-of-funnel that markets itself: every generated model is downloadable, every avatar is embeddable, and every embed is a live advertisement on someone else's website. Every world is a shareable URL. The product distributes the product.
-3.  **The venue layer is a structural moat.** Every pump.fun coin already has a 3D world on three.ws, at zero marginal provisioning cost, because worlds are derived from mint addresses rather than provisioned. Whichever platform hosts a community's gathering place owns that community's attention. We built the venue layer before anyone else realized it was a layer.
-4.  **Machine-to-machine commerce is the revenue model that scales without headcount.** When agents pay per call in USDC, revenue scales with API traffic, not with a sales team. We already operate a paid data API and a fabric of 480,000+ payable endpoints, and we publish the tooling (x402 SDKs, MCP servers) that makes every other developer's service payable too, which puts us at the toll booth of a network we are simultaneously growing.
-5.  **Our cost structure is embarrassing, in a good way.** One container serves the site and APIs. GPU workers scale to zero when idle. A full 50-player world costs about 18 KB/s of egress and 5 MB of memory. The browser is our client, so our distribution cost is a CDN. Platforms with this shape (high gross margin, near-zero marginal cost per user, self-distributing product) are exactly the ones that compound into large valuations.
-6.  **$THREE aligns the community with the platform.** The platform's coin gates cosmetic and premium surfaces, the changelog streams to holders, and the flagship world is the token's own town square. The people most invested in three.ws succeeding are the same people gathering inside it. (Contract address: `FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`, on Solana.)
-7.  **The comparables are not small.** Roblox built tens of billions of dollars of value on user-created worlds with a closed engine and a downloaded client. Unity built billions on tooling. We are building open, browser-native, AI-generated, and agent-operated. If the next generation of virtual worlds and agent commerce is even a fraction of the last one, the platform that is free to enter, instant to share, and already wired for payments is positioned to take an outsized share of it.
+Everything above is live and verifiable today; judge the thesis by the product, and Friday is a good day to do exactly that.
 
-Will the road be linear? No. But every piece listed in this post is live, verifiable, and running in production today, and the thesis above is built on those pieces, not on a whitepaper.
+## See you Friday
 
-## Come see it instead of reading about it
-
-**Tuesday, August 18, 12 PM ET, on the $THREE server at [three.ws/play](https://three.ws/play).** First community meetup, held inside the platform. Show up as a 3D avatar, tour everything in this post live, demo what you have built, and grill us in open Q&A. No download, no account, just a browser. Details are on this group's Events tab.
+**Friday, August 7, 9 AM ET (2 PM London, 9 PM Singapore), on the $THREE server at [three.ws/play](https://three.ws/play).** Show up as an avatar, tour the platform from inside it, demo what you have built, and ask us anything. Details on this group's Events tab.
 
 ## Links
 

@@ -1,6 +1,6 @@
 # Inside three.ws: A Technical Tour of the Browser-Based AI 3D Platform, From Text-to-3D Generation to Multiplayer Worlds and Agent Payments
 
-_An in-depth look at the platform this user group is built around: how three.ws turns a text prompt into a textured 3D model, a selfie into an animated avatar, a URL into a persistent multiplayer world, and an HTTP 402 status code into a working machine-to-machine economy. Written for developers and engineers who want to understand the architecture, not just the demo. The group's first in-world meetup takes place Tuesday, August 18 at 12 PM ET at [three.ws/play](https://three.ws/play); details are on the Events tab._
+_An in-depth look at the platform this user group is built around: how three.ws turns a text prompt into a textured 3D model, a selfie into an animated avatar, a URL into a persistent multiplayer world, and an HTTP 402 status code into a working machine-to-machine economy. Written for developers and engineers who want to understand the architecture, not just the demo. The group's first in-world meetup takes place Friday, August 7 at 9 AM ET (2 PM London, 9 PM Singapore) at [three.ws/play](https://three.ws/play); details are on the Events tab._
 
 ## Why this platform is worth an engineer's attention
 
@@ -48,7 +48,7 @@ The multiplayer architecture is a clean case study in doing real-time systems ec
 -   **Voice as a proximity-gated WebRTC mesh.** Peer connections open only between players within earshot and tear down as they part, bounding the mesh regardless of room size. Audio is peer-to-peer through Web Audio panner nodes for true spatial positioning; the game server relays only the signaling handshake and never carries audio.
 -   **Optional token gating, verified server-side.** A community's creator can require a minimum holding to enter the holders' tier of their world. Eligibility is checked against actual on-chain balances by the server, which then signs a short-lived pass; the browser never self-asserts what it holds.
 
-Guests are first-class: no account is needed to enter open worlds, and every guest still gets a full avatar, voice, and chat. That decision, more than any single feature, is what makes the worlds usable as drop-in event venues, which is exactly how this group will use one on August 18.
+Guests are first-class: no account is needed to enter open worlds, and every guest still gets a full avatar, voice, and chat. That decision, more than any single feature, is what makes the worlds usable as drop-in event venues, which is exactly how this group will use one on August 7.
 
 ## Layer 5: The agent economy, and the x402 pattern
 
@@ -80,7 +80,7 @@ That sequence, prompt to asset to embed to world, is the whole thesis of the pla
 
 ## Join the meetup, inside the platform
 
-This user group's next event is a community meetup held inside three.ws itself: **Tuesday, August 18, 12:00 PM to 1:00 PM ET, in the flagship world at [three.ws/play](https://three.ws/play)**. Attendance is a browser tab: no download, no account. Expect a guided tour of everything described above from inside the world, live demos from community members, and open Q&A with the three.ws team. If you have never used a 3D world, arrive ten minutes early and you will be walking and talking before the event starts. Full details are on the group's Events tab.
+This user group's next event is a community meetup held inside three.ws itself: **Friday, August 7, 9:00 AM to 10:00 AM ET (2 PM London, 3 PM Berlin, 6:30 PM Mumbai, 9 PM Singapore, 10 PM Tokyo), in the flagship world at [three.ws/play](https://three.ws/play)**. Attendance is a browser tab: no download, no account. Expect a guided tour of everything described above from inside the world, live demos from community members, and open Q&A with the three.ws team. If you have never used a 3D world, arrive ten minutes early and you will be walking and talking before the event starts. Full details are on the group's Events tab.
 
 ## Frequently asked questions
 
