@@ -44,7 +44,7 @@ Agents stopping mid-task to ask a question is a failure mode the owner explicitl
 | Where a feature lives | `STRUCTURE.md` maps every surface to its directory. |
 | How to deploy | Follow the "Deploy runbook" section below, exactly and in order. |
 
-**Standing resource approvals (so you never ask):** the owner has approved spending the Google Cloud credits (~$100k, project `aerial-vehicle-466722-p5`) freely for quality, reliability, and UX: GPU workers, Vertex AI (Gemini/Imagen), Cloud Run scale, Cloud Build, storage. Prefer GCP over any paid third-party API, and never downgrade quality to save credits. Do NOT onboard new external paid APIs without approval; GCP surfaces are pre-approved.
+**Standing resource approvals (so you never ask):** the owner has approved spending the Google Cloud credits (Google for Startups Web3 grant, up to $200k over 2 years with metered monthly issuance; terms and burn rules in `docs/ops/gcp-credits-plan.md`, project `aerial-vehicle-466722-p5`) freely for quality, reliability, and UX: GPU workers, Vertex AI (Gemini/Imagen), Cloud Run scale, Cloud Build, storage. Prefer GCP over any paid third-party API, and never downgrade quality to save credits. Do NOT onboard new external paid APIs without approval; GCP surfaces are pre-approved.
 
 If a task cannot be 100% finished inside this session (an external review must land, a third party must respond), that is not "blocked": finish every part that can be finished, wire it so the remaining step is trivial, and say exactly what remains and who owns it in your final report.
 

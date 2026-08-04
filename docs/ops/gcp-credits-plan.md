@@ -1,6 +1,23 @@
-# GCP credits: where the $100k goes
+# GCP credits: where the grant goes
 
 Owner directive (2026-07-16): spend the Google Cloud credits freely on quality, reliability, and UX. Do not onboard new external APIs. This doc is the standing map of where credits buy real product improvement, what has been done, and what any agent should do next without asking. Project: `aerial-vehicle-466722-p5`, region `us-central1`, billing runs on the credit grant.
+
+## The grant: Google for Startups Cloud Program, Web3 tier (confirmed 2026-08-04)
+
+The welcome email from Google for Startups (received 2026-08-04) supersedes the earlier "~$100k" working number. Actual terms:
+
+- **Up to $200,000 USD total over 2 years.**
+- **Year 1: Google Cloud and Firebase usage covered up to $100,000.**
+- **Year 2: 20% of usage costs covered, up to an additional $100,000.**
+- **Issuance is metered, not lump-sum: an initial $10,000 landed up front, and each month Google issues additional credits based on the PRIOR month's usage.**
+- Credits apply to Firebase and GCP services (BigQuery, Cloud Run, etc.) plus select offerings like Looker. Balance and usage are visible in the Cloud console billing page.
+
+Two operational consequences every agent must respect:
+
+1. **Burn can outrun issuance.** Because monthly credit grants trail usage by a month, a sudden scale-up (new warm GPU fleet, a big Vertex batch) can exceed the credit balance on the billing account before the matching credits arrive, and the overage bills to the real payment method. Ramp large new spend gradually across month boundaries rather than in one spike, and check the console credit balance before any change that adds more than roughly $1k/mo of steady burn.
+2. **Year 2 is 20% coverage, not 100%.** The "never economize" directive stands for year 1. When year 1 of the program ends, steady-state burn costs real money at 5x the credit-covered rate, so the fleet's warm-instance footprint should be re-reviewed against revenue then. Do not pre-optimize for this now.
+
+On-machine `gcloud billing` verification was blocked by the recurring Workspace reauth policy at the time of writing; the terms above come from the program email itself. The console (billing > credits) is the source of truth for the live balance.
 
 ## Audit and expand capacity with one command: `npm run gpu`
 
@@ -115,7 +132,7 @@ work on the quota.
 - Warm L4 GPU instance: roughly $500-700/mo each. Six warm engines plus burst: ~$4-6k/mo.
 - three-ws-api 2 warm + pipeline 4 warm CPU services: ~$300-500/mo.
 - Vertex AI (Gemini LLM chain anchor, gemini-2.5-flash-image reference views for multi-view 3D): usage-based, currently small.
-- Total steady state after quota grant: **~$5-7k/mo, i.e. more than a year of runway on $100k.** Do not economize; the owner explicitly prefers quality over credit conservation (see also memory: never downgrade model/effort to save credits).
+- Total steady state after quota grant: **~$5-7k/mo, comfortably inside the year-1 $100k coverage cap (see the grant section above).** Do not economize; the owner explicitly prefers quality over credit conservation (see also memory: never downgrade model/effort to save credits). One caveat from the metered issuance model: when adding a large NEW chunk of steady burn, ramp it across a month boundary so the prior-month-usage-based credit issuance keeps pace.
 
 ## Remaining credit-funded opportunities, ranked
 
