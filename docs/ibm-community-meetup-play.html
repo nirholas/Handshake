@@ -1,0 +1,193 @@
+<div class="twx-event-doc">
+
+<h1>Community Meetup on the $THREE Server: Everything You Need to Know About three.ws/play</h1>
+
+<p><strong>The short version:</strong> we are holding the first three.ws community meetup inside three.ws itself. Not a video call, not a webinar. You will open <a href="https://three.ws/play">three.ws/play</a> in your browser, appear as a 3D avatar in the $THREE home town, and walk around a live world with everyone else who showed up. You can talk to people by walking up to them (spatial voice chat), text chat, tour what the platform can do, watch live demos, and ask the team anything.</p>
+
+<table>
+  <tbody>
+    <tr><td><strong>When</strong></td><td>Tuesday, August 18, 2026, 12:00 PM to 1:00 PM Eastern Time</td></tr>
+    <tr><td><strong>Where</strong></td><td><a href="https://three.ws/play">three.ws/play</a> (the $THREE server, pinned at the top of the world list)</td></tr>
+    <tr><td><strong>Cost</strong></td><td>Free</td></tr>
+    <tr><td><strong>What you need</strong></td><td>A modern browser. No download, no install, no account required.</td></tr>
+    <tr><td><strong>New to 3D worlds?</strong></td><td>Come 10 minutes early and we will walk you through the controls.</td></tr>
+  </tbody>
+</table>
+
+<h2>How to join, in three steps</h2>
+
+<ol>
+  <li><strong>Open <a href="https://three.ws/play">three.ws/play</a></strong> at the event time. The $THREE world (the official three.ws home town) is pinned at the top of the lobby. Click it and you are in.</li>
+  <li><strong>Pick an avatar.</strong> You get one automatically as a guest. If you want a custom one, make it beforehand at <a href="https://three.ws">three.ws</a>: type a text prompt or upload a selfie and you get a rigged, animation-ready 3D avatar in about a minute. It follows you into the world.</li>
+  <li><strong>Walk up to people and talk.</strong> Voice chat is spatial: you hear the people near you, from the direction they are standing, and they fade out as you walk away. Exactly like a real room. Text chat works too if you prefer to stay muted.</li>
+</ol>
+
+<p>That is genuinely all of it. The rest of this page explains what three.ws/play actually is, why any community (not just ours) can hold its meetups there, and how the whole thing works under the hood, all the way down to the APIs.</p>
+
+<hr />
+
+<h2>What is three.ws/play?</h2>
+
+<p>three.ws/play is <strong>Coin Communities</strong>: a persistent, multiplayer 3D world that runs entirely in the browser. Think of it as an isometric MMO where the "servers" are token communities. Every world is a real place: it has terrain, buildings, NPCs, a day-night cycle, an economy, and most importantly, the other people who are there with you right now.</p>
+
+<p>Three properties make it different from every "metaverse meeting" product you have seen:</p>
+
+<ul>
+  <li><strong>Zero friction.</strong> It is a URL. There is no client to download, no launcher, no account wall, no GPU requirement beyond a normal laptop. If you can open a web page, you can attend.</li>
+  <li><strong>Every world is a shareable link.</strong> A community's world is <code>three.ws/play?coin=&lt;mint&gt;</code>. Post that link anywhere (X, Telegram, Discord, a blog) and anyone who clicks it lands directly in that community's world, standing next to whoever else clicked it.</li>
+  <li><strong>The worlds are persistent and owned by their communities.</strong> What a community builds in its world (literally, block by block, see the building section below) is saved server-side and is still there tomorrow, next week, and for the next person who drops in.</li>
+</ul>
+
+<h2>Every community can host meetups here. Yes, every one.</h2>
+
+<p>This is the part most people miss on the first pass, so it gets its own section.</p>
+
+<p><strong>Every coin on pump.fun already has a world on three.ws/play.</strong> Not "can request one". Not "can apply". Has one, right now, on demand. The world is derived from the coin's mint address, so the moment a community wants to gather in 3D, its venue already exists:</p>
+
+<pre>https://three.ws/play?coin=&lt;your coin's mint address&gt;</pre>
+
+<p>That single URL is a complete, working meetup venue for any pump.fun community, of any size, at any stage. A coin that launched five minutes ago has one. Here is what hosting a meetup for <em>your</em> community looks like, start to finish:</p>
+
+<ol>
+  <li><strong>Get your link.</strong> Take your coin's mint address and put it in the URL above. Optionally add <code>&amp;name=</code>, <code>&amp;symbol=</code> and <code>&amp;image=</code> so the entry card renders your branding even before the feed catches up.</li>
+  <li><strong>Post it.</strong> Drop the link in your Telegram, your X community, your Discord. On platforms that resolve oEmbed (WordPress, Ghost, Discord, dev.to, Notion), the link unfurls as an interactive preview of the world, because three.ws ships an oEmbed provider for world links.</li>
+  <li><strong>Show up.</strong> Everyone who clicks lands in the same world, in the same room, as avatars. Proximity voice, text chat, and everything else described below works immediately.</li>
+  <li><strong>Optionally, gate it.</strong> If you are the coin's creator, you can token-gate your world's Holders tier: require attendees to hold at least X of your coin to enter. The threshold is yours to set, verification happens server-side against real on-chain balances, and the general tier stays open for everyone else. Meetups for holders, town square for the curious.</li>
+</ol>
+
+<p>No booking, no whitelist, no contact form, no fee. The venue layer of the internet's token communities is already deployed, and it is a URL scheme.</p>
+
+<p>Active worlds surface automatically: the /play lobby lists the most active communities first, refreshed live from real market and community data, with the $THREE home town pinned at the top as the platform's flagship world. That pinned world is where this meetup happens.</p>
+
+<h2>What is actually in a world?</h2>
+
+<p>These are not empty rooms with floating nametags. Every world ships with the full feature set:</p>
+
+<h3>Avatars that are actually yours</h3>
+<p>Your three.ws avatar follows you in. Generate one from a text prompt ("a knight in obsidian armor"), from a selfie, or bring your own model: the platform rigs humanoid GLBs automatically and supports VRM avatars, with bone-name mapping for Mixamo, Avaturn, VRM/VRoid, Daz, MakeHuman and more, so any humanoid rig walks, runs and emotes with the full animation library. Guests who create nothing still get a real avatar, instantly.</p>
+
+<h3>Spatial voice chat</h3>
+<p>Walk up to someone and you hear them. Their voice comes from the direction they are standing and fades with distance, so groups form naturally, exactly like a hallway at a conference: three conversations can happen twenty meters apart without talking over each other. Voice is peer-to-peer WebRTC; the game server only relays the handshake and never carries audio.</p>
+
+<h3>Collaborative building</h3>
+<p>Every world has a Minecraft-style voxel layer. Players place and break blocks on a shared grid, the server validates and persists every edit per coin, and the result is there for everyone, forever. Communities decorate their own towns. For a meetup, that means your community can literally build the stage before the event.</p>
+
+<h3>A real in-game economy</h3>
+<p>The world runs a working economy with two deliberately separated currencies: <strong>Cash</strong>, a server-side game resource earned by gathering, fishing, combat and selling to vendor NPCs (and never cashable out), and <strong>$THREE</strong>, the platform's coin on Solana, which buys premium cosmetics and never comes from gameplay. You cannot farm the game for money and you cannot buy your way past the gameplay. There are general stores, a bank, a jobs board with daily-rotating quests, crew heists, mounts and vehicles, cosmetics with a wardrobe system, and a spin wheel. The full economy reference, rendered live from the running server's own tables, is at <a href="https://three.ws/play/economy">three.ws/play/economy</a>.</p>
+
+<h3>Live market data, inside the world</h3>
+<p>Coin worlds are dressed with their coin's live data: in-world chart screens, an intel kiosk, and ambient systems that react to market activity. The world is not a themed skin; it is connected to the thing the community actually cares about.</p>
+
+<h3>The details that make it feel alive</h3>
+<p>Day-night cycles, distinct biomes per world (the $THREE home town has a fixed signature look: Dust Gulch, an old-west frontier town), NPCs, physics, water, friends lists, and an ambient crowd so a quiet world never feels dead.</p>
+
+<h2>How it works: the technology</h2>
+
+<p>For the engineers in the room (this is an engineering community, after all), here is the actual architecture. None of this is hand-waving; all of it is running in production today.</p>
+
+<h3>Client</h3>
+<ul>
+  <li><strong>Three.js + WebGL</strong>, vanilla JavaScript modules, built with Vite. No framework tax, no multi-megabyte runtime.</li>
+  <li><strong>Rapier physics</strong> compiled to WebAssembly for movement and collisions.</li>
+  <li><strong>Instanced rendering</strong> for the voxel layer: one instanced mesh per block type, so a community build of thousands of blocks stays a handful of draw calls.</li>
+  <li><strong>Meshopt-compressed GLB avatars</strong> with automatic skeleton canonicalization and animation retargeting, so any humanoid rig animates correctly.</li>
+</ul>
+
+<h3>Multiplayer server</h3>
+<ul>
+  <li>An <strong>authoritative Colyseus server</strong> (Node.js) running on Google Cloud Run. The browser client connects over a WebSocket.</li>
+  <li><strong>One room definition, filtered by coin.</strong> Every player passes their world's mint address on join, and the matchmaker only groups players who entered the same coin's community. That is how every coin gets its own isolated world on the same infrastructure with zero provisioning.</li>
+  <li><strong>50 players per room instance.</strong> When a room fills, the matchmaker spins up another instance of the same world automatically. Room memory cost is roughly 5 MB per full room, so a single node holds many worlds.</li>
+  <li><strong>State sync at 15 Hz with binary delta encoding.</strong> Each player is a small schema (8 fields); only fields that changed since the last patch go over the wire, roughly 24 bytes per player per update. A fully busy 50-player room costs about 18 KB/s outbound. This is why it runs fine on a phone connection.</li>
+  <li><strong>Server-side validation on every message.</strong> Movement is clamped to a physical max step (teleport hacks are rejected), positions are bounded to the world, message rates are limited per client, and every field is type-checked against an allow-list. The client is never trusted.</li>
+  <li><strong>Per-coin persistence.</strong> World edits (the voxel builds) and player profiles are persisted server-side, keyed by mint, so worlds survive restarts and redeploys.</li>
+</ul>
+
+<h3>Voice</h3>
+<ul>
+  <li><strong>Proximity-gated WebRTC mesh.</strong> A peer connection opens only when another player comes within earshot and tears down (with hysteresis) when they leave, so the mesh stays small no matter how full the room is.</li>
+  <li><strong>True spatial audio.</strong> Each remote voice runs through a Web Audio PannerNode positioned at that player's world coordinates, with the listener pinned to your avatar and oriented by your camera. Distance attenuation is linear to silence.</li>
+  <li>The Colyseus room relays only the SDP/ICE signaling. Audio never touches the game server.</li>
+</ul>
+
+<h3>Identity and gating</h3>
+<ul>
+  <li><strong>Guests are first-class.</strong> A persistent guest identity is minted locally, so you can attend with zero sign-up.</li>
+  <li><strong>Wallet sign-in</strong> uses a signed nonce challenge; the verified wallet becomes your account across every world.</li>
+  <li><strong>Holder passes are minted server-side.</strong> To enter a gated Holders world, the server reads your linked wallet's actual on-chain balance of that exact mint, prices it, and signs a short-lived pass the game server verifies on join. The browser never asserts what you hold, so passes cannot be forged for someone else's address.</li>
+  <li><strong>Creator-controlled gates.</strong> A coin's on-chain creator (verified server-side against the launch record, never self-asserted) can set the holding threshold for their world's Holders tier, or clear it back to the platform default.</li>
+</ul>
+
+<h2>The API surface</h2>
+
+<p>Everything the /play client uses is a real, public HTTP API you can build on. The interesting ones for community builders:</p>
+
+<table>
+  <thead>
+    <tr><th>Endpoint</th><th>What it does</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET /api/community/worlds</code></td><td>The live world lobby as JSON: the most active coin communities, each with token, symbol, name, art and activity stats. This is the same feed the /play lobby renders.</td></tr>
+    <tr><td><code>GET /api/community/world-gate?token=&lt;mint&gt;</code></td><td>Read a world's entry gate: whether the Holders tier is token-gated and at what threshold. POST (creator only, verified server-side) sets it.</td></tr>
+    <tr><td><code>POST /api/community/holder-pass?token=&lt;mint&gt;</code></td><td>Mints a signed holder pass for the authenticated user after checking real on-chain balances. This is how gated entry works.</td></tr>
+    <tr><td><code>GET /api/play-oembed?url=&lt;world url&gt;</code></td><td>oEmbed provider: makes a world link unfurl as an interactive embed on WordPress, Ghost, Discord, dev.to, Notion and any embed.ly/iframely-backed editor.</td></tr>
+    <tr><td><code>GET /api/coin/trending</code>, <code>/api/coin/&lt;mint&gt;/...</code>, <code>/api/coin/ohlc</code> and friends</td><td>The live market data layer the worlds are dressed with: trending, detail, OHLC candles, markets, news, fear/greed and more.</td></tr>
+    <tr><td><code>GET /play/economy</code></td><td>Not an API, but the live, self-documenting economy reference: every price, vendor table and gate, rendered from the running server's own data.</td></tr>
+  </tbody>
+</table>
+
+<p>And the URL parameters that make worlds composable:</p>
+
+<table>
+  <thead>
+    <tr><th>Parameter</th><th>Effect</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>?coin=&lt;mint&gt;</code></td><td>Deep-link straight into that coin's world, skipping the lobby.</td></tr>
+    <tr><td><code>&amp;name= &amp;symbol= &amp;image=</code></td><td>Pre-seed the world card's branding for coins the feed has not indexed yet.</td></tr>
+    <tr><td><code>&amp;tier=holders</code></td><td>Enter the token-gated Holders world instead of the open general tier.</td></tr>
+    <tr><td><code>&amp;avatar=&lt;glb-url-or-id&gt;</code></td><td>Arrive wearing a specific avatar for this session (used by "See in 3D" links across the platform).</td></tr>
+    <tr><td><code>&amp;bg=transparent</code></td><td>Composite the world onto the host page instead of a black box, for embedding /play inside another site.</td></tr>
+  </tbody>
+</table>
+
+<p>Beyond the world itself, the platform's wider surface applies to everything you meet inside it: avatars generated at three.ws are downloadable GLBs you can use anywhere, and the <code>&lt;agent-3d&gt;</code> web component embeds any three.ws avatar, live and animated, in any website with one script tag. Your community's meetup avatar can be your website's mascot the same afternoon.</p>
+
+<h2>Where this is going</h2>
+
+<p>Directional, not dated. This is the shape of the work, and the meetup is checkpoint one:</p>
+
+<ul>
+  <li><strong>Now, ahead of the meetup:</strong> capacity work on the $THREE server (we load-test sustained concurrent load against the real production world, not a staging toy), onboarding polish so a first-time visitor is walking and talking in under a minute, and event dressing in the home town.</li>
+  <li><strong>Next:</strong> event tooling. Scheduled community events surfaced in the lobby and on world cards, so "there is a meetup here at 7 PM" is visible to every passerby, plus richer creator controls over world dressing and gates.</li>
+  <li><strong>Then:</strong> scale-out. The room architecture already shards horizontally; cluster-aware matchmaking across machines is a config-level change on the current stack, planned for when sustained concurrency demands it. The goal is boring: any community, any size, any time, one URL.</li>
+</ul>
+
+<p>If you want to influence this list, that is what the meetup's open Q&amp;A is for. Come tell us what your community needs to run its events here.</p>
+
+<h2>FAQ</h2>
+
+<p><strong>Do I need a crypto wallet to attend?</strong><br />No. The $THREE home town's general tier is open, and guests get a full avatar and full voice/chat. A wallet only matters for holder-gated tiers and for buying cosmetics.</p>
+
+<p><strong>Do I need to install anything?</strong><br />No. It is a web page. Chrome, Edge, Firefox and Safari on a normal laptop all work. Voice asks for microphone permission like any web call.</p>
+
+<p><strong>I have never used a 3D world. Will I be lost?</strong><br />You will be walking within 30 seconds: click to move or use WASD, walk up to people to hear them. Join 10 minutes early and we will help you personally.</p>
+
+<p><strong>Can my community really use this for our own events, today?</strong><br />Yes. Your world already exists at <code>three.ws/play?coin=&lt;your mint&gt;</code>. Post the link and you have a venue. Nothing to request, nothing to pay.</p>
+
+<p><strong>Is this financial advice / do I need to buy anything?</strong><br />No and no. The event is free and the platform is free to use. $THREE is the platform's coin and gates some cosmetic extras; attendance requires holding nothing.</p>
+
+<h2>Links</h2>
+
+<ul>
+  <li>The venue: <a href="https://three.ws/play">three.ws/play</a></li>
+  <li>Make an avatar first: <a href="https://three.ws">three.ws</a></li>
+  <li>Live economy reference: <a href="https://three.ws/play/economy">three.ws/play/economy</a></li>
+  <li>Documentation: <a href="https://three.ws/docs">three.ws/docs</a></li>
+  <li>GitHub: <a href="https://github.com/nirholas/three.ws">github.com/nirholas/three.ws</a></li>
+  <li>three.ws on X: <a href="https://x.com/trythreews">@trythreews</a></li>
+</ul>
+
+<p><em>See you in the town square. Look for the water tower.</em></p>
+
+</div>
