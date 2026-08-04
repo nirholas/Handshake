@@ -1,6 +1,6 @@
 {
   "name": "hood-tokenlist",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "The canonical Uniswap-standard token list for Robinhood Chain (chain ID 4663): every Stock Token, USDG, WETH, and rules-vetted launchpad memecoins, all verified on-chain.",
   "type": "module",
   "main": "./src/index.mjs",
