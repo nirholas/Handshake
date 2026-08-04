@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · IBM Community post catalog</title>
+			<link>https://three.ws/docs/ibm-community</link>
+			<guid isPermaLink="false">2026-08-04:Docs · IBM Community post catalog</guid>
+			<pubDate>Tue, 04 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.</description>
+		</item>
+		<item>
 			<title>AWS published a builder's guide to the agentic economy built on the three.ws stack</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-04:AWS published a builder's guide to the agentic economy built on the three.ws stack</guid>
@@ -29,6 +37,14 @@
 			<pubDate>Tue, 04 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>The platform's license changed to proprietary, all rights reserved, but nine documentation pages still told readers the code was Apache 2.0 open source, including pages describing what you are allowed to self-host, fork, and redistribute. That was wrong and is now corrected everywhere, so the docs match the actual LICENSE file. Nothing about the packages changed: the SDKs are still free to install and use from npm, and the manifest, embed, and agent specs are still open to build against without permission. References to genuinely open-source components we depend on, such as MediaPipe and FLUX, were left alone because those remain Apache 2.0.</description>
+		</item>
+		<item>
+			<title>The IBM Community user group now has a full post catalog in the docs</title>
+			<link>https://three.ws/docs/ibm-community</link>
+			<guid isPermaLink="false">2026-08-04:The IBM Community user group now has a full post catalog in the docs</guid>
+			<pubDate>Tue, 04 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>three.ws runs a public user group on IBM Community for developers building AI agents with 3D capabilities, and until now there was no single place to see what has been published there. The docs now carry a complete catalog of every discussion thread and blog post in the group: who wrote each one, when, what it covers in plain language, and the activity it has drawn, alongside a snapshot of the group's membership and content counts. If you want to follow or join the conversations happening on IBM's platform, the catalog is the map.</description>
 		</item>
 		<item>
 			<title>Docs · Ghost-copy</title>

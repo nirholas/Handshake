@@ -904,6 +904,10 @@
 					"path": "ibm-x402-mcp"
 				},
 				{
+					"label": "IBM Community catalog",
+					"path": "ibm-community"
+				},
+				{
 					"label": "BNB payments",
 					"path": "bnb-payments"
 				},

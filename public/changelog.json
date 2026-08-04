@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-04T01:29:07.195Z",
+	"generated_at": "2026-08-04T23:30:41.868Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-04",
+			"type": "launch",
+			"title": "Docs · IBM Community post catalog",
+			"summary": "The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.",
+			"link": "/docs/ibm-community",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-08-04",
 			"type": "update",
@@ -36,6 +46,16 @@
 			"tags": [
 				"docs",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-04",
+			"type": "update",
+			"title": "The IBM Community user group now has a full post catalog in the docs",
+			"summary": "three.ws runs a public user group on IBM Community for developers building AI agents with 3D capabilities, and until now there was no single place to see what has been published there. The docs now carry a complete catalog of every discussion thread and blog post in the group: who wrote each one, when, what it covers in plain language, and the activity it has drawn, alongside a snapshot of the group's membership and content counts. If you want to follow or join the conversations happening on IBM's platform, the catalog is the map.",
+			"link": "/docs/ibm-community",
+			"tags": [
+				"docs"
 			]
 		},
 		{

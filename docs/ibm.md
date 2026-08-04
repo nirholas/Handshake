@@ -47,16 +47,7 @@ three.ws runs a public user group on IBM Community for developers and engineers 
 | Library | [Files and assets](https://community.ibm.com/community/user/groups/community-home/librarydocuments?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016&LibraryFolderKey=&DefaultView=) |
 | Members | [Member list](https://community.ibm.com/community/user/groups/community-home/community-members?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016&Execute=1) |
 
-Published in the group so far:
-
-| Post | What it covers |
-| ---- | -------------- |
-| [Welcome to the Three.ws User Group: Building AI Agents With 3D Capabilities](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/07/14/welcome-to-the-threews-user-group-building-ai-agen) | The group charter: who it is for and what gets discussed |
-| [three.ws: The Free AI 3D Model Generator's 10 Best Features](https://community.ibm.com/community/user/blogs/nich8/2026/07/16/threews-the-free-ai-3d-model-generators-10-best) | Feature tour of the free text-to-3D forge lane |
-| [Welcome to the three.ws IBM community: a full tour of the platform (start here)](https://community.ibm.com/community/user/discussion/welcome-to-the-threews-ibm-community-a-full-tour-of-the-platform-start-here) | Orientation thread: what the platform does, surface by surface |
-| [From a text prompt to an embeddable 3D agent, step by step](https://community.ibm.com/community/user/discussion/from-a-text-prompt-to-an-embeddable-3d-agent-step-by-step) | Prompt to generated agent to `<agent-3d>` embed, end to end |
-| [Type a Sentence, Get a 3D Model: A Hands-On Walkthrough of the three.ws Forge](https://community.ibm.com/community/user/discussion/type-a-sentence-get-a-3d-model-a-hands-on-walkthrough-of-the-threews-forge-user-perspective) | A user's first run through the forge, with the output |
-| [Why does my GLB model load white or untextured? (Three.js, Blender exports, web viewers)](https://community.ibm.com/community/user/discussion/why-does-my-glb-model-load-white-or-untextured-threejs-blender-exports-web-viewers) | Troubleshooting glTF/GLB texture and material loading |
+Every thread and blog published in the group is cataloged, with authors, dates, activity, and a faithful per-post summary, in the [IBM Community post catalog](./ibm-community.md). Update the catalog whenever a new post lands.
 
 What belongs there, and what does not, is set by the [SEO keyword plan](./ops/seo-keyword-plan.md): one post per week maximum, tutorials that stand on their own for an IBM developer who never clicks through, and no crypto-cluster content (that goes on [three.ws/blog](https://three.ws/blog) instead). The user group is also linked from the site's [Community page](https://three.ws/community) and the global footer.
 

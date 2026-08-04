@@ -1,0 +1,99 @@
+# IBM Community: Three.ws User Group post catalog
+
+This is the running catalog of everything published in the [Three.ws User Group](https://community.ibm.com/community/user/groups/community-home?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) on IBM Community: every discussion thread, every blog post, who wrote it, when, what it says, and what activity it got. It exists so the team can track the group's content without re-crawling the site. For what the group is, the framing rules that govern what gets posted there, and the wider IBM relationship, read [IBM watsonx & Granite](./ibm.md) first.
+
+Dates marked "approx." are derived from the site's relative timestamps ("17 days ago") on the snapshot date; blog dates come from their URLs and are exact.
+
+## Group snapshot (2026-08-04)
+
+| Metric | Value |
+| ------ | ----- |
+| Members | 15 |
+| Discussion threads | 6 listed in the [digest viewer](https://community.ibm.com/community/user/groups/community-home/digestviewer?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) (the group header counts 7; the extra one is the reply on the welcome thread) |
+| Blog posts | 2 |
+| Library entries | 2 (the attachments on the BOWYER and SperaxOS threads) |
+| Upcoming events | 0 |
+
+## Blog posts
+
+### 1. Welcome to the Three.ws User Group: Building AI Agents With 3D Capabilities
+
+- **Author:** Jessica Swanson
+- **Published:** 2026-07-14
+- **Activity:** 0 comments, 6 views at snapshot
+- **URL:** [community.ibm.com/.../welcome-to-the-threews-user-group-building-ai-agen](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/07/14/welcome-to-the-threews-user-group-building-ai-agen)
+
+The group charter. Introduces the community as a space for people exploring AI avatars, embeddable AI agents, spatial reasoning, and AR experiences driven by language models. Names the four focus areas: generative 3D (text and images to production-ready meshes), spatial reasoning (how LLMs understand 3D environments), agentic pipelines (multi-step workflows where AI generates and refines assets on its own), and real-time interactive AI (animated characters and responsive AR in the browser). Target audience: ML engineers, web and game developers, 3D artists, agent-framework builders, and product developers. Points members at three.ws docs, the free no-key text-to-3D generator, the GitHub repo, npm packages, and X. Promises discussion threads, technical blogs, live build sessions, and a resource library.
+
+### 2. three.ws: The Free AI 3D Model Generator's 10 Best Features
+
+- **Author:** nich (nich8)
+- **Published:** 2026-07-16
+- **Activity:** 0 comments, 9 views at snapshot
+- **URL:** [community.ibm.com/.../threews-the-free-ai-3d-model-generators-10-best](https://community.ibm.com/community/user/blogs/nich8/2026/07/16/threews-the-free-ai-3d-model-generators-10-best)
+
+A feature tour structured as "ten features, in the order I would demo them": (1) the Forge, text/photo/sketch to downloadable GLB with multiple engines and automatic failover; (2) rigged avatars with auto-rigging, plus support for external humanoid models; (3) embeddable 3D agents via the web component, with tool integration, emotion blending, and lip-sync across 52 blendshapes; (4) the Agent Shell command palette; (5) the x402 protocol for machine-to-machine USDC payments; (6) MCP integration, listed on the official MCP Registry; (7) refinement and Restyle Studio; (8) Scene Studio and Diorama; (9) the /play multiplayer world; (10) AR exports and IRL location pinning. Links the GitHub repo.
+
+## Discussion threads
+
+Newest first, matching the digest viewer's order.
+
+### 1. Suggestion for the three.ws team: BOWYER is already using three.ws. Turn it into a real partnership.
+
+- **Author:** Anonymous User
+- **Posted:** approx. 2026-07-19
+- **Activity:** 0 replies
+- **Attachment:** "Bowyer using three.ws [Simple Video Example]" (library entry)
+- **URL:** [community.ibm.com/.../suggestion-for-the-threews-team-bowyer-is-already-using-threews-turn-it-into-a-real-partnership](https://community.ibm.com/community/user/discussion/suggestion-for-the-threews-team-bowyer-is-already-using-threews-turn-it-into-a-real-partnership)
+
+A community member reports that BOWYER, a paid marketplace for autonomous AI agents, already uses three.ws in production: every agent listed there gets a rigged 3D avatar from three.ws instead of a static image (their "Whale Hunter" crypto-monitoring agent, $49/month, is the live example). Both platforms are MCP-native: BOWYER exposes agents as MCP servers, three.ws provides `create-3d-avatar`, `generate-3d-model`, and `rig-a-model`. The poster suggests four actions: direct outreach, a "three.ws Inside" co-marketing angle, agent-type avatar templates (trading, research, security presets), and an end-to-end walkthrough. Memorable line: "an agent that earns money and has a face is a product, and an agent that only does one is a demo." Links bowyer.app and a GitHub repo.
+
+### 2. Welcome to the three.ws IBM community: a full tour of the platform (start here)
+
+- **Author:** Jessica Swanson
+- **Posted:** approx. 2026-07-14
+- **Activity:** 1 reply (Anonymous User, approx. 2026-07-18: "Thanks for the wonderful Intro, Jessica!", signed three.ws)
+- **URL:** [community.ibm.com/.../welcome-to-the-threews-ibm-community-a-full-tour-of-the-platform-start-here](https://community.ibm.com/community/user/discussion/welcome-to-the-threews-ibm-community-a-full-tour-of-the-platform-start-here)
+
+The orientation thread, posted the same day as the charter blog. Walks the platform surface by surface: free no-account text-to-3D at three.ws/forge, auto-rigging and animation for humanoid models, iterative refinement through dialogue and material editing, scene composition at three.ws/diorama, web-component embedding, AR at three.ws/ar, MCP integration with Claude and ChatGPT, and the multiplayer worlds at three.ws/play and three.ws/agora. Closes with the developer resources (docs, free 3D and crypto-data APIs, MCP servers, npm packages, optional on-chain capabilities) and an invitation to share projects and ask questions.
+
+### 3. From a text prompt to an embeddable 3D agent, step by step
+
+- **Author:** Anonymous User
+- **Posted:** approx. 2026-07-18
+- **Activity:** 0 replies
+- **URL:** [community.ibm.com/.../from-a-text-prompt-to-an-embeddable-3d-agent-step-by-step](https://community.ibm.com/community/user/discussion/from-a-text-prompt-to-an-embeddable-3d-agent-step-by-step)
+
+An end-to-end tutorial in four steps: (1) POST a text prompt to `https://three.ws/api/3d/generate` and get back a GLB plus a shareable viewer link (free tier: draft fidelity, single-subject prompts); (2) open any generated model in AR via `https://three.ws/api/ar?src=<url>`, with automatic USDZ conversion for iOS and ARCore for Android; (3) auto-rig humanoid models and assemble an agent in the three.ws/start wizard (personality, voice, optional skills, no code); (4) embed with the two-line `<agent-3d>` element, which supports keyboard navigation and a JavaScript API. Notes the same capabilities are exposed over MCP to Claude, ChatGPT, and other frameworks, and stresses "no account, no API key, and no cost for the generation step." Points readers to three.ws/forge and three.ws/docs.
+
+### 4. SperaxOS × three.ws: Give Your AI Agents a Real 3D Body Inside Sperax Chat
+
+- **Author:** Anonymous User
+- **Posted:** approx. 2026-07-18
+- **Activity:** 0 replies
+- **Attachment:** 1 image (library entry)
+- **URL:** [community.ibm.com/.../speraxos-threews-give-your-ai-agents-a-real-3d-body-inside-sperax-chat](https://community.ibm.com/community/user/discussion/speraxos-threews-give-your-ai-agents-a-real-3d-body-inside-sperax-chat)
+
+Announces the SperaxOS integration: three.ws agents get fully rigged, animated 3D avatars living directly inside SperaxOS chat, speaking, gesturing, emoting, and reacting to on-chain events in real time (waving, nodding, celebrating a yield target, showing concern near liquidation). Four LLM-callable tools power it: `render_agent`, `speak`, `gesture`, and `emote`. Quick start: add the custom plugin from `https://three.ws/.well-known/sperax-plugin.json` on chat.sperax.io, paste a three.ws Agent ID, and the avatar instantiates with free launch AI credits applied. Framed as making agents more usable inside DeFi workflows; ends with a call to share creations.
+
+### 5. Why does my GLB model load white or untextured? (Three.js, Blender exports, web viewers)
+
+- **Author:** Nora Norris
+- **Posted:** approx. 2026-07-17
+- **Activity:** 0 replies
+- **URL:** [community.ibm.com/.../why-does-my-glb-model-load-white-or-untextured-threejs-blender-exports-web-viewers](https://community.ibm.com/community/user/discussion/why-does-my-glb-model-load-white-or-untextured-threejs-blender-exports-web-viewers)
+
+The group's first pure troubleshooting thread, and the most SEO-shaped one. Covers the five causes of a GLB rendering as a flat white or black shape: (1) no lighting or environment map (PBR materials need `scene.environment`, set up via Three.js `PMREMGenerator` or an HDRI); (2) textures not embedded (a `.gltf` with external texture references breaks when moved; export "glTF Binary (.glb)" from Blender); (3) compressed assets without their decoders (`KTX2Loader` for KTX2/Basis, `DRACOLoader` for Draco); (4) CORS blocking cross-origin texture requests; (5) material extensions the viewer does not support, like `KHR_materials_unlit` in older viewers. Ends with an offer to debug files or screenshots posted in the thread.
+
+### 6. Type a Sentence, Get a 3D Model: A Hands-On Walkthrough of the three.ws Forge | User Perspective
+
+- **Author:** nichxbt (three.ws)
+- **Posted:** approx. 2026-07-17
+- **Activity:** 0 replies
+- **URL:** [community.ibm.com/.../type-a-sentence-get-a-3d-model-a-hands-on-walkthrough-of-the-threews-forge-user-perspective](https://community.ibm.com/community/user/discussion/type-a-sentence-get-a-3d-model-a-hands-on-walkthrough-of-the-threews-forge-user-perspective)
+
+A first-run walkthrough of the Forge from a user's perspective, no account, wallet, or API key required. The flow: open three.ws/forge, describe a single object with explicit materials ("a glazed ceramic teapot"), pick a quality tier (Draft, about 15 seconds and 12k triangles; Standard, about 1 minute and 30k; High, about 2 minutes and 200k), generate, preview in the live viewer, then download the GLB for Blender, Unity, Unreal, or three.js, or open it in AR on a phone. Prompt advice: one object per prompt, name the materials, skip scenes and backgrounds. The developer section covers the keyless HTTP API and the MCP server, and links the text-to-3D tutorial, prompt recipes, the image-to-3D guide, and the HTTP API docs. Invites readers to share results and prompts.
+
+## Keeping this catalog current
+
+When a new post lands in the group, add it here in digest order with the same fields (author, date, activity, URL, faithful summary) and refresh the snapshot table's date and counts. The sources of truth are the [digest viewer](https://community.ibm.com/community/user/groups/community-home/digestviewer?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) for threads and the [recent blogs page](https://community.ibm.com/community/user/groups/community-home/recent-community-blogs?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) for blogs. The posting cadence and topic rules for the group itself live in the [SEO keyword plan](./ops/seo-keyword-plan.md) and in [ibm.md](./ibm.md).

@@ -1745,6 +1745,12 @@ URL: https://three.ws/docs
 
 Full documentation: SDKs, API reference, embedding, agent system, smart contracts.
 
+### Docs · IBM Community post catalog
+
+URL: https://three.ws/docs/ibm-community
+
+The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.
+
 ### Docs · Trading swarms
 
 URL: https://three.ws/docs/swarms

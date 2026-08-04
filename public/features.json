@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-04T00:23:20.466Z",
+	"generated_at": "2026-08-04T23:30:41.859Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2852,6 +2852,16 @@
 					"title": "Docs",
 					"description": "Full documentation: SDKs, API reference, embedding, agent system, smart contracts.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/ibm-community",
+					"title": "Docs · IBM Community post catalog",
+					"description": "The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.",
+					"added": "2026-08-04",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

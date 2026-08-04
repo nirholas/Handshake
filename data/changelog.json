@@ -17899,6 +17899,15 @@
 				"infra",
 				"fix"
 			]
+		},
+		{
+			"date": "2026-08-04",
+			"title": "The IBM Community user group now has a full post catalog in the docs",
+			"summary": "three.ws runs a public user group on IBM Community for developers building AI agents with 3D capabilities, and until now there was no single place to see what has been published there. The docs now carry a complete catalog of every discussion thread and blog post in the group: who wrote each one, when, what it covers in plain language, and the activity it has drawn, alongside a snapshot of the group's membership and content counts. If you want to follow or join the conversations happening on IBM's platform, the catalog is the map.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/ibm-community"
 		}
 	]
 }

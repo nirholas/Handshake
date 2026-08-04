@@ -2333,6 +2333,14 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/ibm-community",
+					"title": "Docs · IBM Community post catalog",
+					"description": "The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.",
+					"priority": 0.5,
+					"changefreq": "weekly",
+					"added": "2026-08-04"
+				},
+				{
 					"path": "/docs/swarms",
 					"title": "Docs · Trading swarms",
 					"description": "How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.",
