@@ -135,6 +135,16 @@ function maintainersOf(name) {
 	}
 }
 
+// Do NOT replace the maintainer check below with a "try to republish an
+// existing version and see which error comes back" probe. It looks like a
+// direct test of write access and is not one: npm rejects a duplicate version
+// BEFORE it checks publish rights, so an account with no access to the scope
+// still gets `EPUBLISHCONFLICT` and the probe reads as success. That mistake
+// turned a correct block into a green light, and every publish in the run then
+// failed with `404 ... PUT` (npm answers an unauthorized write with 404 so it
+// does not leak which packages exist). The maintainers list is the honest
+// signal available without a write.
+
 // Preflight. Read-only, so it runs on dry runs too: the whole point is that a
 // dry run tells you whether the real run could ever have worked.
 function preflight() {
@@ -160,7 +170,7 @@ function preflight() {
 	}
 	console.error(`BLOCKED: npm account "${account}" does not maintain these packages.`);
 	console.error(`  ${sample} is maintained by: ${owners.join(', ')}`);
-	console.error('  Publishing would fail with a bare E404 on every package in the queue.');
+	console.error('  Publishing would fail with a bare 404 on the PUT for every package in the queue.');
 	console.error('  Fix, either one:');
 	console.error(`    1. Use a token for the "${owners[0]}" account.`);
 	console.error(`    2. From "${owners[0]}", grant this account write access:`);
