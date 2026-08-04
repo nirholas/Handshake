@@ -249,6 +249,7 @@
 		"test:e2e": "playwright test",
 		"audit:a11y": "playwright test tests/e2e/a11y-top-pages.spec.js",
 		"perf:mobile": "node scripts/mobile-perf.mjs",
+		"load:viewers": "node scripts/viewer-load-test.mjs",
 		"audit:mobile-touch": "node scripts/mobile-touch-audit.mjs",
 		"audit:overlays": "node scripts/audit-overlays.mjs",
 		"test:pages": "node scripts/test-pages.mjs",
