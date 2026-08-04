@@ -35,7 +35,7 @@
 		"README.md"
 	],
 	"scripts": {
-		"test": "node --test tests/*.test.js"
+		"test": "vitest run --root ../.. packages/spatial-mcp/tests"
 	},
 	"engines": {
 		"node": ">=18"
