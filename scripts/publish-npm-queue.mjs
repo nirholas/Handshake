@@ -13,8 +13,14 @@
 //   node scripts/publish-npm-queue.mjs           # dry run: report what would publish
 //   node scripts/publish-npm-queue.mjs --publish # actually publish (needs npm login)
 //
-// Auth: `npm whoami` must resolve to an account with publish rights on the
-// three-ws scope (npm login, or an automation token in ~/.npmrc).
+// Auth: `npm whoami` must resolve to an account that MAINTAINS these packages,
+// which is a stricter bar than "is logged in". Every package here is owned by
+// the `three-ws` account (support@three.ws); a token for any other account
+// authenticates fine, reads fine, and then fails the publish PUT with a bare
+// E404, because npm reports "not a maintainer" as "not found" rather than 403.
+// A 2026-08-04 run burned a full pass discovering that one package at a time,
+// so the preflight below resolves the maintainer set from the registry and
+// refuses to start unless the logged-in account is actually in it.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
@@ -91,6 +97,12 @@ const QUEUE = [
 	"packages/skill-license", // @three-ws/skill-license 0.1.1 (34 dl/mo)
 	"packages/avatar-schema", // @three-ws/avatar-schema 0.2.1 (25 dl/mo)
 	"packages/avatar-cli", // @three-ws/avatar-cli 0.2.1 (23 dl/mo)
+	// First releases. No download history to sort by, so they sort last; each
+	// ships a README, a LICENSE and a test script, which is the bar for a
+	// package the registry has never seen.
+	"packages/sign-language", // @three-ws/sign-language 0.1.0 (first release)
+	"packages/spatial-mcp", // @three-ws/spatial-mcp 0.1.0 (first release)
+	"packages/vscode-x402", // @three-ws/vscode-x402 0.2.0 (first release)
 ];
 
 const publish = process.argv.includes('--publish');
@@ -103,6 +115,60 @@ function registryVersion(name) {
 		return null; // unpublished
 	}
 }
+
+function whoami() {
+	try {
+		return execFileSync('npm', ['whoami'], { encoding: 'utf8' }).trim();
+	} catch {
+		return null;
+	}
+}
+
+function maintainersOf(name) {
+	try {
+		const raw = execFileSync('npm', ['view', name, 'maintainers', '--json'], { encoding: 'utf8' });
+		const parsed = JSON.parse(raw);
+		// npm renders maintainers either as objects or as "name <email>" strings.
+		return parsed.map((m) => (typeof m === 'string' ? m.split('<')[0].trim() : m.name));
+	} catch {
+		return [];
+	}
+}
+
+// Preflight. Read-only, so it runs on dry runs too: the whole point is that a
+// dry run tells you whether the real run could ever have worked.
+function preflight() {
+	const account = whoami();
+	if (!account) {
+		console.error('BLOCKED: not logged in to npm.');
+		console.error('  Fix: npm login   (or put an automation token in ~/.npmrc)');
+		return false;
+	}
+	// Sample a published package from the queue to learn who actually owns these.
+	const sample = QUEUE.map((dir) => resolve(ROOT, dir, 'package.json'))
+		.filter((p) => existsSync(p))
+		.map((p) => JSON.parse(readFileSync(p, 'utf8')).name)
+		.find((name) => maintainersOf(name).length > 0);
+	if (!sample) {
+		console.log(`npm account: ${account} (no published package to check ownership against)`);
+		return true;
+	}
+	const owners = maintainersOf(sample);
+	if (owners.includes(account)) {
+		console.log(`npm account: ${account} (maintainer of ${sample}) OK\n`);
+		return true;
+	}
+	console.error(`BLOCKED: npm account "${account}" does not maintain these packages.`);
+	console.error(`  ${sample} is maintained by: ${owners.join(', ')}`);
+	console.error('  Publishing would fail with a bare E404 on every package in the queue.');
+	console.error('  Fix, either one:');
+	console.error(`    1. Use a token for the "${owners[0]}" account.`);
+	console.error(`    2. From "${owners[0]}", grant this account write access:`);
+	console.error(`         npm owner add ${account} <each package>`);
+	return false;
+}
+
+if (!preflight()) process.exit(2);
 
 let failures = 0;
 for (const dir of QUEUE) {
