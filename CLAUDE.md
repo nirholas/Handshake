@@ -322,6 +322,7 @@ The whole build + submit + purge in one command: `npm run deploy:gcp:full`.
 - **Keep the repo root clean.** Only config files (`.env`, `vite.config.js`, `package.json`, etc.) and top-level index/entry points belong there.
 - **No throwaway scripts in the root.** Debug scripts, one-off inspection tools, and Playwright/Puppeteer snippets go in `scripts/`, or are deleted when no longer needed. Never commit them to the root.
 - **No scratch files, logs, or screenshots committed.** If a tool produces output files, add them to `.gitignore` or delete them before committing.
+- **Deliverables live in the repo, never in the session scratchpad or `/tmp` (owner directive 2026-08-04).** Anything the owner asked for and will open, copy, or reuse (event copy, articles, posts, HTML drafts, reports) is written to a real repo path (drafts and marketing/community documents go in `docs/`) and committed, so it is clickable in the editor, reviewable in git, and survives the session. The scratchpad is only for intermediate junk nobody will ever open.
 
 ## Tone
 
