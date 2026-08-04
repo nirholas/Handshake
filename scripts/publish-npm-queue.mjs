@@ -12,6 +12,8 @@
 // Usage:
 //   node scripts/publish-npm-queue.mjs           # dry run: report what would publish
 //   node scripts/publish-npm-queue.mjs --publish # actually publish (needs npm login)
+//   NPM_TOKEN=npm_xxx node scripts/publish-npm-queue.mjs --publish  # publish with a
+//                                                 # `three-ws` token, leaving ~/.npmrc alone
 //
 // Auth: `npm whoami` must resolve to an account that MAINTAINS these packages,
 // which is a stricter bar than "is logged in". Every package here is owned by
@@ -23,10 +25,34 @@
 // refuses to start unless the logged-in account is actually in it.
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
+
+/**
+ * Run npm as the `three-ws` account without touching the machine's ~/.npmrc.
+ *
+ * The queue can only be published by that account, and this workspace is
+ * normally logged in as a different one, so requiring `npm login` here means
+ * clobbering whatever session the rest of the machine is using. Setting
+ * NPM_TOKEN instead points npm at a throwaway config for this run only:
+ *
+ *   NPM_TOKEN=npm_xxx node scripts/publish-npm-queue.mjs --publish
+ *
+ * Unset, npm uses the ambient login exactly as before.
+ */
+const tokenDir = process.env.NPM_TOKEN ? mkdtempSync(join(tmpdir(), 'npm-queue-')) : null;
+if (tokenDir) {
+	writeFileSync(join(tokenDir, '.npmrc'), `//registry.npmjs.org/:_authToken=${process.env.NPM_TOKEN}\n`, { mode: 0o600 });
+	process.on('exit', () => rmSync(tokenDir, { recursive: true, force: true }));
+}
+
+/** npm argv with the throwaway config prepended, when NPM_TOKEN is in play. */
+function npmArgs(args) {
+	return tokenDir ? ['--userconfig', join(tokenDir, '.npmrc'), ...args] : args;
+}
 
 const QUEUE = [
 	"walk-sdk", // @three-ws/walk 0.3.0 (920 dl/mo)
@@ -109,7 +135,7 @@ const publish = process.argv.includes('--publish');
 
 function registryVersion(name) {
 	try {
-		const res = execFileSync('npm', ['view', name, 'version'], { encoding: 'utf8' });
+		const res = execFileSync('npm', npmArgs(['view', name, 'version']), { encoding: 'utf8' });
 		return res.trim();
 	} catch {
 		return null; // unpublished
@@ -118,7 +144,7 @@ function registryVersion(name) {
 
 function whoami() {
 	try {
-		return execFileSync('npm', ['whoami'], { encoding: 'utf8' }).trim();
+		return execFileSync('npm', npmArgs(['whoami']), { encoding: 'utf8' }).trim();
 	} catch {
 		return null;
 	}
@@ -126,7 +152,7 @@ function whoami() {
 
 function maintainersOf(name) {
 	try {
-		const raw = execFileSync('npm', ['view', name, 'maintainers', '--json'], { encoding: 'utf8' });
+		const raw = execFileSync('npm', npmArgs(['view', name, 'maintainers', '--json']), { encoding: 'utf8' });
 		const parsed = JSON.parse(raw);
 		// npm renders maintainers either as objects or as "name <email>" strings.
 		return parsed.map((m) => (typeof m === 'string' ? m.split('<')[0].trim() : m.name));
@@ -197,7 +223,7 @@ for (const dir of QUEUE) {
 	console.log(`${publish ? 'PUB ' : 'PLAN'} ${pkg.name}: ${current ?? 'unpublished'} -> ${pkg.version}`);
 	if (!publish) continue;
 	try {
-		execFileSync('npm', ['publish', '--access', 'public'], {
+		execFileSync('npm', npmArgs(['publish', '--access', 'public']), {
 			cwd: resolve(ROOT, dir),
 			stdio: 'inherit',
 		});
