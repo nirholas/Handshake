@@ -181,6 +181,17 @@
 	.lockup .mark-three { display: block; height: 300px; width: auto; }
 	.lockup .rule { width: 1px; height: 176px; background: #d7d7de; }
 	.lockup .mark-oai { display: block; height: 232px; width: 232px; color: #000000; }
+
+	/* ── Card 3b: the same lockup, dark ──────────────────────
+	   Flat black, same geometry as the light card, no ambient layers: the
+	   chrome cube carries its own colour, so the field stays empty. The
+	   logomark SVG fills with currentColor, which resolves to black inside
+	   an <img>; invert(1) flips exactly that black to pure white, which is
+	   OpenAI's own on-dark treatment of the mark. */
+	.card.dark { background: #000000; padding: 0; align-items: center; justify-content: center; }
+	.card.dark::before, .card.dark::after { content: none; }
+	.card.dark .rule { background: #2b2b31; }
+	.card.dark .mark-oai { filter: invert(1); }
 </style>
 </head>
 <body>
@@ -341,6 +352,19 @@
      not a redraw. Nothing here is recoloured, outlined, or merged into a single
      glyph: two marks, a hairline between them, white space around both. -->
 <section class="card light" id="card-logos">
+	<div class="lockup">
+		<img class="mark-three" src="/marketing/openai-select-partner/cards/three-ws-mark.png" alt="three.ws" />
+		<span class="rule" aria-hidden="true"></span>
+		<img class="mark-oai" src="/partners/openai/openai-logomark.svg" alt="OpenAI" />
+	</div>
+</section>
+
+<!-- ═══ Card 3b: the two marks, dark ═════════════════════════
+     Identical layout to Card 3 on flat black, for dark timelines, slides,
+     and pages. Same assets, no redraw: the cube ships as-is (its chrome
+     gradient was made for dark UI), the OpenAI mark renders white via the
+     inversion documented in the styles above. -->
+<section class="card dark" id="card-logos-dark">
 	<div class="lockup">
 		<img class="mark-three" src="/marketing/openai-select-partner/cards/three-ws-mark.png" alt="three.ws" />
 		<span class="rule" aria-hidden="true"></span>

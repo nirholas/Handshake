@@ -42,6 +42,7 @@ const CARDS = [
 	{ id: 'card-announce-short', file: 'social-card-openai-partner.png' },
 	{ id: 'card-studio', file: 'social-card-studio.png' },
 	{ id: 'card-logos', file: 'three-ws-openai-lockup.png', palette: false },
+	{ id: 'card-logos-dark', file: 'three-ws-openai-lockup-dark.png', palette: false },
 ];
 
 const MIME = {
