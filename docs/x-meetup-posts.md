@@ -7,13 +7,12 @@ Post copy for the meetup push on X. The @trythreews posts go out first; personal
 Attach: media/meetup-banner-x.png
 
 ```
-Our first community meetup is this Friday, and it is not a video call: it happens inside three.ws.
+IBM created a dedicated Three.ws User Group on IBM Community, built specifically for the people building 3D AI agents.
 
-Hosted through the three.ws User Group on IBM Community.
+This Friday it holds its first meetup, and not on a video call: inside three.ws itself.
 
 Fri Aug 7, 8 AM PT / 11 AM ET
 The $THREE home town at three.ws/play
-Free. Browser only. No download, no account.
 ```
 
 ## Reply 1 (how to join)
