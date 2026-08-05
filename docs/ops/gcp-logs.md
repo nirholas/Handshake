@@ -47,8 +47,10 @@ npm run triage:gcp -- --json        # machine-readable, what agents consume
 
 One run merges three signals:
 
-1. **`/api/healthz`** subsystem roll-up (database, cache, Helius, x402 ring,
-   world, sniper): the platform self-reports most degradations.
+1. **`/api/healthz`** subsystem roll-up (database, cache, rate limiter,
+   Helius, the Solana RPC lane tier, x402 ring, x402 settle rate, forge
+   generation, world, sniper, the OKX chat bot, x402 config): the platform
+   self-reports most degradations.
 2. **WARNING+ app logs across every service**, fingerprinted (ids, numbers,
    addresses, and URLs collapsed) so repeats group into one finding.
 3. **Request logs**: 5xx grouped per route, 429 noted.
