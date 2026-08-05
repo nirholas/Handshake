@@ -101,7 +101,13 @@ The platform repository is public at [github.com/nirholas/three.ws](https://gith
 
 ## Further reading
 
--   Documentation: [three.ws/docs](https://three.ws/docs)
+-   Platform: [three.ws](https://three.ws)
+-   Free text-to-3D: [three.ws/create](https://three.ws/create)
+-   The worlds: [three.ws/play](https://three.ws/play)
 -   The in-game economy reference, rendered live from the running server: [three.ws/play/economy](https://three.ws/play/economy)
+-   Documentation: [three.ws/docs](https://three.ws/docs)
+-   Blog: [three.ws/blog](https://three.ws/blog)
 -   Public changelog: [three.ws/changelog](https://three.ws/changelog)
+-   GitHub: [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws)
+-   X: [@trythreews](https://x.com/trythreews)
 -   This group's welcome thread and platform tour, pinned on the group home page.
