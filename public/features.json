@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-05T20:50:25.609Z",
+	"generated_at": "2026-08-05T23:54:56.609Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4302,6 +4302,16 @@
 					"title": "Docs · Every NVIDIA model three.ws runs for free",
 					"description": "The full free NVIDIA inference layer behind three.ws, model by model: TRELLIS for text-to-3D, FLUX.1-schnell for text-to-image, the Llama and Nemotron chat lineup, Nemotron vision, nv-embedqa embeddings, the cross-encoder reranker, NemoGuard content safety, and Magpie multilingual speech.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/free-llm-providers",
+					"title": "Docs · The free LLM failover chain",
+					"description": "The dozen-plus free AI providers behind every text completion on three.ws, tried in order before any paid key: Groq, Cerebras, OpenRouter, NVIDIA NIM, SambaNova, Mistral, Z.AI, Cloudflare Workers AI, OVH, Gemini, Pollinations, LLM7, and SiliconFlow, with each free tier's limits and the recipe for adding the next rung.",
+					"added": "2026-08-05",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

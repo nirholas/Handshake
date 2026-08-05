@@ -919,13 +919,6 @@ URL: https://three.ws/viability
 
 The honest signal behind three.ws: real marketplace and trading viability. Live $THREE skill GMV, take-rate, repeat buyers and trading pairs, plus real guarded coin-trade flow, cost and realized P&L on closed positions. Real on-chain data only.
 
-### Ring Dashboard (admin)
-
-URL: https://three.ws/admin/ring
-Indexable: no (excluded from sitemap)
-
-Operator dashboard for the closed-loop x402 ring economy: live per-minute settlement pulse, loop diagram with wallet balances and floors, streaming activity feed with agent attribution and Solscan links, fee/burn efficiency vs the daily budget, integrity (leak scan + reconciliation), and per-endpoint coverage. Admin-authed, noindex. Labels all ring volume as internal dogfooding, not organic revenue.
-
 ### On-chain Deployments
 
 URL: https://three.ws/deployments
@@ -2620,6 +2613,12 @@ The canonical reference for moving a 3D character or motion from a source file t
 URL: https://three.ws/docs/nvidia-models
 
 The full free NVIDIA inference layer behind three.ws, model by model: TRELLIS for text-to-3D, FLUX.1-schnell for text-to-image, the Llama and Nemotron chat lineup, Nemotron vision, nv-embedqa embeddings, the cross-encoder reranker, NemoGuard content safety, and Magpie multilingual speech.
+
+### Docs · The free LLM failover chain
+
+URL: https://three.ws/docs/free-llm-providers
+
+The dozen-plus free AI providers behind every text completion on three.ws, tried in order before any paid key: Groq, Cerebras, OpenRouter, NVIDIA NIM, SambaNova, Mistral, Z.AI, Cloudflare Workers AI, OVH, Gemini, Pollinations, LLM7, and SiliconFlow, with each free tier's limits and the recipe for adding the next rung.
 
 ### Docs · NVIDIA Inception membership overview
 

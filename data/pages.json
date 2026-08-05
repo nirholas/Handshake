@@ -3385,6 +3385,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/free-llm-providers",
+					"title": "Docs · The free LLM failover chain",
+					"description": "The dozen-plus free AI providers behind every text completion on three.ws, tried in order before any paid key: Groq, Cerebras, OpenRouter, NVIDIA NIM, SambaNova, Mistral, Z.AI, Cloudflare Workers AI, OVH, Gemini, Pollinations, LLM7, and SiliconFlow, with each free tier's limits and the recipe for adding the next rung.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-05"
+				},
+				{
 					"path": "/docs/nvidia-inception/index.html",
 					"title": "Docs · NVIDIA Inception membership overview",
 					"description": "The three.ws membership overview deck: what the platform is, the production numbers behind it, the team, the NVIDIA surfaces already in use, and what the Inception program is being used for.",

@@ -315,8 +315,7 @@
 			"description": "American Sign Language for 3D avatars.",
 			"path": "packages/sign-language/example",
 			"files": [
-				"compile-utterance.mjs",
-				"utterance.clip.json"
+				"compile-utterance.mjs"
 			],
 			"run": "node packages/sign-language/example/compile-utterance.mjs",
 			"runKind": "command",

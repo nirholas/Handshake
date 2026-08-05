@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-05T20:50:25.626Z",
+	"generated_at": "2026-08-05T23:54:56.624Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-05",
+			"type": "launch",
+			"title": "Docs · The free LLM failover chain",
+			"summary": "The dozen-plus free AI providers behind every text completion on three.ws, tried in order before any paid key: Groq, Cerebras, OpenRouter, NVIDIA NIM, SambaNova, Mistral, Z.AI, Cloudflare Workers AI, OVH, Gemini, Pollinations, LLM7, and SiliconFlow, with each free tier's limits and the recipe for adding the next rung.",
+			"link": "/docs/free-llm-providers",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-08-05",
 			"type": "update",
@@ -40,6 +50,17 @@
 		{
 			"date": "2026-08-05",
 			"type": "update",
+			"title": "Six more free AI providers keep your agents answering",
+			"summary": "The AI engine behind chat, agent brains, and copilots now fails over across six additional free providers: SambaNova, Mistral, Z.AI, Cloudflare Workers AI, SiliconFlow, and the keyless LLM7 lane, on top of the existing Groq, Cerebras, OpenRouter, NVIDIA, OVH, Gemini, and Pollinations tiers. Each one is an independent free quota pool on independent infrastructure, so a busy day on one provider no longer slows anyone down; requests just glide to the next lane in under a second. SambaNova, Mistral, and Z.AI are also selectable directly in chat.",
+			"link": "/docs/free-llm-providers",
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-05",
+			"type": "update",
 			"title": "The admin panel is gone",
 			"summary": "Internal operator dashboards and their private APIs have been removed from the public site entirely. Nothing user-facing changes: your dashboard, launcher, wallets, and every public API keep working exactly as before. This is part of ongoing security hardening: internal tooling no longer ships in the web app at all.",
 			"link": null,
@@ -56,6 +77,16 @@
 			"link": "/docs/freshness",
 			"tags": [
 				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-05",
+			"type": "update",
+			"title": "The guided tour map is now a real directory, and you can move it",
+			"summary": "The tour's map panel grew up: every stop now lists like a package registry entry, with the feature name, a one-line summary of what the guide says there, and the page it lives on, under chapter headers with counts and a live total. Search now digs through the narration and page paths too, not just titles. And on desktop you can grab the panel by its header and drag it anywhere on screen; it floats where you drop it, remembers the spot, stays open while you jump between stops, and docks back to the side with one click.",
+			"link": "/tour",
+			"tags": [
 				"improvement"
 			]
 		},

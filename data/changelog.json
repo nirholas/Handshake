@@ -17962,6 +17962,25 @@
 			"tags": [
 				"security"
 			]
+		},
+		{
+			"date": "2026-08-05",
+			"title": "Six more free AI providers keep your agents answering",
+			"summary": "The AI engine behind chat, agent brains, and copilots now fails over across six additional free providers: SambaNova, Mistral, Z.AI, Cloudflare Workers AI, SiliconFlow, and the keyless LLM7 lane, on top of the existing Groq, Cerebras, OpenRouter, NVIDIA, OVH, Gemini, and Pollinations tiers. Each one is an independent free quota pool on independent infrastructure, so a busy day on one provider no longer slows anyone down; requests just glide to the next lane in under a second. SambaNova, Mistral, and Z.AI are also selectable directly in chat.",
+			"tags": [
+				"infra",
+				"improvement"
+			],
+			"link": "/docs/free-llm-providers"
+		},
+		{
+			"date": "2026-08-05",
+			"title": "The guided tour map is now a real directory, and you can move it",
+			"summary": "The tour's map panel grew up: every stop now lists like a package registry entry, with the feature name, a one-line summary of what the guide says there, and the page it lives on, under chapter headers with counts and a live total. Search now digs through the narration and page paths too, not just titles. And on desktop you can grab the panel by its header and drag it anywhere on screen; it floats where you drop it, remembers the spot, stays open while you jump between stops, and docks back to the side with one click.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/tour"
 		}
 	]
 }

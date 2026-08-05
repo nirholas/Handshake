@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · The free LLM failover chain</title>
+			<link>https://three.ws/docs/free-llm-providers</link>
+			<guid isPermaLink="false">2026-08-05:Docs · The free LLM failover chain</guid>
+			<pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The dozen-plus free AI providers behind every text completion on three.ws, tried in order before any paid key: Groq, Cerebras, OpenRouter, NVIDIA NIM, SambaNova, Mistral, Z.AI, Cloudflare Workers AI, OVH, Gemini, Pollinations, LLM7, and SiliconFlow, with each free tier's limits and the recipe for adding the next rung.</description>
+		</item>
+		<item>
 			<title>Docs pages read cleanly at every screen size</title>
 			<link>https://three.ws/docs</link>
 			<guid isPermaLink="false">2026-08-05:Docs pages read cleanly at every screen size</guid>
@@ -31,6 +39,14 @@
 			<description>The internal operator console (the admin pages and their APIs) has been removed from three.ws entirely. These were operations tools for running the platform, not user features; taking them off the public surface shrinks what an attacker can even see or probe. Nothing you use day to day changes: every user-facing dashboard, launcher, and payment surface works exactly as before.</description>
 		</item>
 		<item>
+			<title>Six more free AI providers keep your agents answering</title>
+			<link>https://three.ws/docs/free-llm-providers</link>
+			<guid isPermaLink="false">2026-08-05:Six more free AI providers keep your agents answering</guid>
+			<pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The AI engine behind chat, agent brains, and copilots now fails over across six additional free providers: SambaNova, Mistral, Z.AI, Cloudflare Workers AI, SiliconFlow, and the keyless LLM7 lane, on top of the existing Groq, Cerebras, OpenRouter, NVIDIA, OVH, Gemini, and Pollinations tiers. Each one is an independent free quota pool on independent infrastructure, so a busy day on one provider no longer slows anyone down; requests just glide to the next lane in under a second. SambaNova, Mistral, and Z.AI are also selectable directly in chat.</description>
+		</item>
+		<item>
 			<title>The admin panel is gone</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-05:The admin panel is gone</guid>
@@ -45,6 +61,14 @@
 			<pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>A full freshness sweep re-checked every documentation page that the freshness tracker flagged as describing code that had since changed: 55 pages in all, covering the trading and coin-launch walkthroughs, the Forge and avatar pipelines, the money and wallet references, the x402 guides, and the top-level README and repository map. 47 pages were corrected against the current code (retired engines renamed, real endpoint lists and prices restored, new features like the native launch lane, the wallet deposit sheet, and the model detail page documented), and the remaining 8 were verified accurate as written. The freshness budget that gates future drift was tightened from 50 stale pages to 15, so the docs cannot quietly fall this far behind again.</description>
+		</item>
+		<item>
+			<title>The guided tour map is now a real directory, and you can move it</title>
+			<link>https://three.ws/tour</link>
+			<guid isPermaLink="false">2026-08-05:The guided tour map is now a real directory, and you can move it</guid>
+			<pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The tour's map panel grew up: every stop now lists like a package registry entry, with the feature name, a one-line summary of what the guide says there, and the page it lives on, under chapter headers with counts and a live total. Search now digs through the narration and page paths too, not just titles. And on desktop you can grab the panel by its header and drag it anywhere on screen; it floats where you drop it, remembers the spot, stays open while you jump between stops, and docks back to the side with one click.</description>
 		</item>
 		<item>
 			<title>The press kit gains a full-length bio</title>
