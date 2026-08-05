@@ -1,9 +1,8 @@
-// GET /api/irl/analytics — site-wide /irl usage rollup for the admin dashboard
-// (/admin/irl-analytics). Auth mirrors /api/ops/health and
-// /api/admin/ops-alerts exactly: authorizeOps (signed-in platform admin OR
-// `x-ops-secret` / Bearer OPS_SECRET). This surface exposes aggregate usage
+// GET /api/irl/analytics: site-wide /irl usage rollup for operators.
+// Auth mirrors /api/ops/health exactly: authorizeOps (signed-in platform admin
+// OR `x-ops-secret` / Bearer OPS_SECRET). This surface exposes aggregate usage
 // volume, not any individual's location or identity, but it's still internal
-// operating data — same gate as the rest of /admin.
+// operating data, so it wears the same gate as the rest of the ops APIs.
 //
 // Every number is a real query over irl_events (api/_lib/irl-analytics.js),
 // irl_interactions, and irl_drop_claims — no cached/sampled/fake figures.

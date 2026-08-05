@@ -2460,11 +2460,11 @@ Beyond the documented `/vanity-wallet` grinder: `/vanity/verify` (proof-of-grind
 
 ### News & Announcements Archive
 
-`public/news/`, routes `/news` and `/news/:slug`; RSS at `/rss/announcements.xml` and `/rss.xml` → `/api/rss/announcements`. **106 pre-rendered article pages** (tweet/thread renders + slugged announcements), managed at `public/admin/news.html`.
+`public/news/`, routes `/news` and `/news/:slug`; RSS at `/rss/announcements.xml` and `/rss.xml` → `/api/rss/announcements`. **106 pre-rendered article pages** (tweet/thread renders + slugged announcements); the in-repo news CMS was removed with the admin console.
 
 ### Legal, Policy & Admin
 
-**Legal/policy** (`public/legal/*` + `pages/`): EULA, Terms (`/legal/tos`), Privacy (`/legal/privacy`), Content Policy (`/content-policy`), AWS Marketplace EULA, Walk Extension Privacy/Terms (`/extension/privacy`, `/extension/terms`), IRL location privacy (`/irl-privacy`). **Admin console** (`public/admin/*`): home, News admin (`/admin/news`), Solana Developer Platform admin (`/admin/sdp`), Bulk launch (`/admin/bulk-launch`).
+**Legal/policy** (`public/legal/*` + `pages/`): EULA, Terms (`/legal/tos`), Privacy (`/legal/privacy`), Content Policy (`/content-policy`), AWS Marketplace EULA, Walk Extension Privacy/Terms (`/extension/privacy`, `/extension/terms`), IRL location privacy (`/irl-privacy`). The admin console (`public/admin/*`) was removed 2026-08-05.
 
 ### App/Viewer Variants & Marketing Pages
 
@@ -2884,7 +2884,7 @@ CREATE2-deterministic, so `IdentityRegistry` + `ReputationRegistry` share one ad
 
 ## Scheduled Jobs (Cron Reference)
 
-**`vercel.json` declares ~80 cron schedules** (the platform is heavily clock-driven), executed in production by **Google Cloud Scheduler** (jobs provisioned from the `vercel.json` cron list by `scripts/create-gcp-scheduler.mjs`). All hit `GET /api/cron/*` (or `/api/llm/health`) with `Authorization: Bearer $CRON_SECRET`. Write-heavy crons opt into a **storage-pressure preflight** (`wrapCron(handler, { requireWriteCapacity: true })` in `api/_lib/http.js` → `isStoragePressured()` in `db.js`): at the Neon size cap they skip the tick with `200 {skipped:'db_at_storage_cap'}` and still write a healthy heartbeat, rather than flooding logs with 53100 write errors. Every `wrapCron` also writes `cron:heartbeat:<name>` (7-day TTL) surfaced by `/api/ops/health` + `/api/admin/all-systems`. Full schedule:
+**`vercel.json` declares ~80 cron schedules** (the platform is heavily clock-driven), executed in production by **Google Cloud Scheduler** (jobs provisioned from the `vercel.json` cron list by `scripts/create-gcp-scheduler.mjs`). All hit `GET /api/cron/*` (or `/api/llm/health`) with `Authorization: Bearer $CRON_SECRET`. Write-heavy crons opt into a **storage-pressure preflight** (`wrapCron(handler, { requireWriteCapacity: true })` in `api/_lib/http.js` → `isStoragePressured()` in `db.js`): at the Neon size cap they skip the tick with `200 {skipped:'db_at_storage_cap'}` and still write a healthy heartbeat, rather than flooding logs with 53100 write errors. Every `wrapCron` also writes `cron:heartbeat:<name>` (7-day TTL) surfaced by `/api/ops/health`. Full schedule:
 
 | Domain | Crons (path → schedule) |
 |--------|--------------------------|
@@ -3071,7 +3071,7 @@ Two layers resolve paths: **`vercel.json`** (`routes` array, 932 entries — pro
 
 **Creation / Studio / Avatars:** `/start`, `/create` (+`/create/{selfie,prompt,character,video,next,studio}`, `/create-review`, `/creating`), `/genesis`, `/scan`, `/segment`, `/scene`, `/dad`, `/forge` (+`/forge/embed`,`/forge-studio`,`/forge-nim`,`/nim-forge`,`/forge-spark`), `/import/rpm`, `/avatar-studio` (dev serves `character-studio/build/`), `/avatar-studio-demo`, `/avatars/:id` (+`/edit`,`/ar`), `/avatar-sdk`, `/avatar-artifact`, `/avatar-wallet-chat`, `/embed/avatar` (`/:handle`), `/characters`, `/character/:id`, `/gallery`, `/gallery-picker`, `/pose` (+`/pose-mini`), `/animations`, `/mocap-studio`, `/overlay-control`, `/voice`, `/xr`, `/ar`, `/hydrate`, `/first-meet`, `/store/:slug`, `/internal/avaturn-forge.html`.
 
-**Launch / Token / $THREE:** `/launch`, `/launchpad`, `/launches` (+`/launches/:mint`), `/launch-week`, `/three`, `/three-live`, `/three-token`, `/threews/claim`, `/claim-wallet`, `/mint-success`, `/bulk-launch` (`/admin/bulk-launch`), `/p/:slug`, `/demo/coin` (`/:mint`), `/bounties` (+`/bounty/:id`), `/go`.
+**Launch / Token / $THREE:** `/launch`, `/launchpad`, `/launches` (+`/launches/:mint`), `/launch-week`, `/three`, `/three-live`, `/three-token`, `/threews/claim`, `/claim-wallet`, `/mint-success`, `/p/:slug`, `/demo/coin` (`/:mint`), `/bounties` (+`/bounty/:id`), `/go`.
 
 **x402 / Payments:** `/x402` → `public/x402-stripe.html`; `/x402/studio`; `/ca2x402`; `/pay` (+`/pay/calls/:txSig`, `/pay/c/:slug`); `/bazaar`; `/paywall`; `/crypto-demo.html`, `/wallet-connect-demo.html`, `/studio-deposit-harness.html`; `.well-known/x402[.json]`→`/api/wk`; `.well-known/did.json`→`/api/x402/did`.
 
@@ -3095,7 +3095,7 @@ Two layers resolve paths: **`vercel.json`** (`routes` array, 932 entries — pro
 
 **System / Static / `.well-known`:** `/404` (catch-all `/(.*)`), `/500`, `/robots.txt`, `/llms.txt`, `/llms-full.txt`, `/sitemap.xml`→`/api/sitemap`, `/sitemap/{core,agents,avatars,widgets,profiles}.xml`→`/api/sitemap/[type]`, `/changelog.{json,xml}` (static, build-generated), `/rss.xml`, `/rss/announcements.xml`→`/api/rss/announcements`, `/openapi.json`→`/api/openapi-json`, `/agent-3d/versions.json` + `/agent-3d/:ver/agent-3d.js` (CDN lib), `.well-known/{solana/actions.json, chat-plugin.json, sperax-plugin.json, x402.json, agent-attestation-schemas, three-vanity.json, oauth-authorization-server, oauth-protected-resource}`→`/api/wk`, `.well-known/did.json`→`/api/x402/did`, `.well-known/jwks.json`→`/api/auth/persona`, `/footer.html`, `/nav.html` (shared partials); stable unhashed bundles `/footer-bot.js`, `/walk-companion.js`, `/walk-playground.js`, `/feature-tour.js`, `/notifications.js`, `/nav-tier-badge.js`, `/agent-bus.js`, `/i18n.js`, `/error-reporter.js`.
 
-**New routes (2026-06-27 → 07-02):** `/launch-studio` (50 mint recipes), `/launcher` (Memetic Launcher), `/agent-screen` + `/agents-live` (live agent casting), `/capture` (Scene Capture), `/diorama` (text→3D world), `/x402-revenue`, `/payments` (payment sessions), `/billing/keys`, `/agent-economy-volume`, `/deployments` (ERC-8004 feed), `/integrations`, `/partners`, `/viability`, `/pipeline`, `/oracle/docs`, `/ui-juice` (game-feel showcase), `/labs`, `/dashboard/{capabilities,systems,watch}`, and admin `/admin/{launcher,ops,seeder}`.
+**New routes (2026-06-27 → 07-02):** `/launch-studio` (50 mint recipes), `/launcher` (Memetic Launcher), `/agent-screen` + `/agents-live` (live agent casting), `/capture` (Scene Capture), `/diorama` (text→3D world), `/x402-revenue`, `/payments` (payment sessions), `/billing/keys`, `/agent-economy-volume`, `/deployments` (ERC-8004 feed), `/integrations`, `/partners`, `/viability`, `/pipeline`, `/oracle/docs`, `/ui-juice` (game-feel showcase), `/labs`, and `/dashboard/{capabilities,watch}`.
 
 **Counts:** `vercel.json` = ~970 route entries (~440 HTML/dir-index, ~65 redirects, rest API rewrites + asset/header routes); `pages/` ≈ 230 HTML, `public/` ≈ 230 HTML (incl. ~95 `news/`, demos, dashboard-classic, docs/walk). `vite.config.js` deliberately mirrors prod so dev matches.
 
@@ -3413,7 +3413,7 @@ Hard, load-bearing specifics from `specs/` and `docs/`. (The $THREE hold-to-acce
 
 **Pump platform fee** (`docs/pump-platform-fee.md`) — `PUMP_PLATFORM_FEE_BPS` default 0 (off), hard-capped 500 (5%); recipient `PUMP_PLATFORM_FEE_WALLET` → treasury fallback; buy fee added on top, sell fee from proceeds.
 
-**Distribution / syndication** — Listings (live): AWS Marketplace, Alibaba Cloud Intl, BNB Chain Dappbay (`dappbay.bnbchain.org/detail/three`). News syndication: WebSub hub, Dev.to (`DEV_TO_API_KEY`), Medium (`MEDIUM_INTEGRATION_TOKEN`, create-only), HackerNoon (RSS auto-import), CoinMarketCap (manual); `POST /api/admin/news/resyndicate`; store `data/rss/items.json`. **X Spaces agent** (`xspace-agent`): Puppeteer+CDP headless Chromium → WebRTC audio → STT→LLM→TTS; presets agent-zero/comedian/crypto-degen/educator/interviewer/tech-analyst; Docker `ghcr.io/nirholas/xspace-agent`.
+**Distribution / syndication**: Listings (live): AWS Marketplace, Alibaba Cloud Intl, BNB Chain Dappbay (`dappbay.bnbchain.org/detail/three`). News syndication: WebSub hub, Dev.to (`DEV_TO_API_KEY`), Medium (`MEDIUM_INTEGRATION_TOKEN`, create-only), HackerNoon (RSS auto-import), CoinMarketCap (manual); store `data/rss/items.json`. **X Spaces agent** (`xspace-agent`): Puppeteer+CDP headless Chromium → WebRTC audio → STT→LLM→TTS; presets agent-zero/comedian/crypto-degen/educator/interviewer/tech-analyst; Docker `ghcr.io/nirholas/xspace-agent`.
 
 **Agora / AgenC** (`docs/agora.md`) — AgenC agent PDA `["agent",agentId]`: `reputation` u16 (start 5000), `stake` u64 (≥0.001 SOL), `capabilities` bitmask. Professions (bits 0–7): Fetcher, Sculptor, Scribe, Cartographer, Crier, Appraiser, Verifier, Namekeeper — each WORK module emits `proofHash=sha256(deliverable)`. Task types Exclusive/Competitive/Collaborative; loop IDLE→SEEK→CLAIM→BUSY/WORK→PROVE→SPEND. On-chain currency = $THREE on mainnet (devnet uses SOL/synthetic). Identity bridge `sha256` namespaces `AgenC/three.ws/{erc8004|mpl-core|handle|composite}/v1`.
 

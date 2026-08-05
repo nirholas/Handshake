@@ -2,8 +2,8 @@
 /**
  * Deploy three.ws agents on-chain as Metaplex Core assets — CLI runner.
  * ---------------------------------------------------------------------------
- * Shares the exact mint logic with the live dashboard (api/admin/bulk-launch.js)
- * via api/_lib/onchain-deploy.js, so both produce identical on-chain assets.
+ * The mint logic lives in api/_lib/onchain-deploy.js, so every caller of it
+ * produces identical on-chain assets.
  *
  * Start small (a 2-3 agent canary), verify on Solscan, then scale up.
  *

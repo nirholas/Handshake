@@ -287,8 +287,8 @@ Set `ECONOMY_FUEL_ENABLED=0` to turn it off entirely (the fleet then falls back 
 the "fund the master" ops alert). The decision/sizing math is a pure function
 (`planRefuel`) covered by [`tests/economy-fuel.test.js`](../tests/economy-fuel.test.js).
 Live fuel state (today's spend against the cap, recent swaps, quarantined agents)
-is exposed on [`/api/admin/circulation-health`](../api/admin/circulation-health.js)
-alongside the circulation rails. The table is defined by migration
+lives in the `economy_fuel_swaps` table; read it there or via the ops surfaces
+(`/api/ops/money-health`). The table is defined by migration
 `20260717230000_economy_fuel_swaps.sql` (and created lazily as a safety net).
 
 **Step 3: top the USDC engines up directly.** Steps 1 and 2 keep **SOL** flowing,

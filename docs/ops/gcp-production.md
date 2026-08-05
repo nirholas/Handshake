@@ -385,7 +385,7 @@ only on Vercel, was never carried to Cloud Run, and nothing alerted. Restored
 
 | What | Vars | Impact | Recovery |
 |---|---|---|---|
-| Ops-alert Telegram push | `TELEGRAM_ALERTS_CHAT_ID` | `api/_lib/alerts.js` degrades to dashboard-only (`/admin/ops`): no push notification for treasury-low, balance-floor, or breach alerts. This is why the 10-day Money Pulse flatline never pinged anyone. `TELEGRAM_BOT_TOKEN` survived; only the private ops chat id was lost in the migration. | Owner supplies the private ops chat/DM id (never the public holders' channel) and applies `--update-env-vars TELEGRAM_ALERTS_CHAT_ID=<id>`. |
+| Ops-alert Telegram push | `TELEGRAM_ALERTS_CHAT_ID` | `api/_lib/alerts.js` degrades to table-only (`ops_alerts`): no push notification for treasury-low, balance-floor, or breach alerts. This is why the 10-day Money Pulse flatline never pinged anyone. `TELEGRAM_BOT_TOKEN` survived; only the private ops chat id was lost in the migration. | Owner supplies the private ops chat/DM id (never the public holders' channel) and applies `--update-env-vars TELEGRAM_ALERTS_CHAT_ID=<id>`. |
 | Collection authority | `SOLANA_AGENT_COLLECTION_AUTHORITY_KEY` | Agent NFT collection ops can't sign | Intentionally excluded from `scripts/wire-master-wallet.mjs` (on-chain update authority must stay its original wallet). Owner holds the key. |
 | R2/S3 storage creds | `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PUBLIC_DOMAIN` | `/api/marketplace`, `/api/explore`, `/api/avatars/:id` — every route that resolves an asset URL — 503 `not_configured` | Real values already sit in the repo's `.env.local` (never committed). Apply with `scripts/gcp/apply-s3-env.sh` (needs a human-authed `gcloud auth login` first — the 89-var apply is still blocked on reauth per above). |
 | CoinCommunities API key | `CC_API_KEY` | `/api/clash/state` 503s `cc_unconfigured` (`api/_lib/coin-communities.js`); Town chat renders its designed locked state. `/api/community/worlds` no longer dies: it fails over to the live pump.fun trending feed (`api/_lib/pump-trending.js`) and tags the response `source: "pump-trending"`, so the world picker stays alive. | Keys are provisioned manually by the CoinCommunities team (their docs say "contact support": no self-serve signup, and the SDK's `business/register` endpoints are not deployed on `api.coin-communities.xyz`). Owner outreach to @CoinComms required; set `CC_API_KEY` (+ optional `CC_SERVER_KEY`/`CC_SERVER_SECRET`) on the Cloud Run service when granted. |
@@ -437,11 +437,10 @@ unnoticed.
 Now every `sendOpsAlert()` **always** persists to the `ops_alerts` table
 (`api/_lib/alerts.js`, migration `20260712000000_ops_alerts.sql`), keyed by the
 alert's stable signature so a recurring condition is one row with a growing
-`count`, not a flood. The admin surface at **`/admin/ops`** ("Platform Health")
-renders the active feed — severity-sorted, with acknowledge / reopen — from
-`GET/POST /api/admin/ops-alerts`. Auth is the same `x-ops-secret`
-(`OPS_SECRET`, falling back to `CRON_SECRET`) the ops page already uses. This is
-the primary sink and needs no third-party service.
+`count`, not a flood. Read the active feed from the `ops_alerts` table or the
+`x-ops-secret`-gated ops APIs (`/api/ops/health` and friends, `OPS_SECRET`
+falling back to `CRON_SECRET`). This is the primary sink and needs no
+third-party service.
 
 Telegram is now an **optional extra push**, off by default. When both
 `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALERTS_CHAT_ID` are set, alerts also push to

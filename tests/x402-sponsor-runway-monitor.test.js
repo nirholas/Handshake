@@ -1,7 +1,7 @@
 // The WIRING, not the arithmetic (that is tests/x402-sponsor-runway.test.js).
 //
-// The runway number was already computed and already rendered on /admin/ops
-// before this change. Nothing acted on it, so a wallet with half a day left
+// The runway number was already computed and already rendered on the old ops
+// dashboard before this change. Nothing acted on it, so a wallet with half a day left
 // looked exactly like a wallet with a month left to anyone not staring at the
 // dashboard. These tests pin the part that closes that gap: checkRingWallets()
 // measures the burn, computes the verdict, and SENDS an alert when the runway

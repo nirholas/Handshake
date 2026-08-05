@@ -69,7 +69,6 @@ const IGNORE = new Set([
 const IGNORE_PREFIXES = [
 	'/dashboard/', // authenticated sub-pages
 	'/dashboard-classic/', // legacy authenticated dashboard, superseded by /dashboard
-	'/admin/', // internal admin console — auth-gated, never a public discovery page
 	'/aws-marketplace/', // AWS Marketplace post-subscribe transactional pages
 	'/demo/', // demos
 	'/lobehub/', // partner embed iframes

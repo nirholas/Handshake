@@ -170,14 +170,6 @@ results.push(
 		expectMonitored: false,
 	}),
 );
-results.push(
-	await runCase({
-		name: 'admin GET /api/x402/admin/skus (must be ignored)',
-		req: { url: '/api/x402/admin/skus', method: 'GET' },
-		statusCode: 200,
-		expectMonitored: false,
-	}),
-);
 // Unrelated traffic must NOT be reported.
 results.push(
 	await runCase({

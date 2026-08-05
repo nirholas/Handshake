@@ -9,12 +9,9 @@
 // hard-402'd) with no warning — a surprise service interruption that reads as our
 // fault. This pipeline closes that gap:
 //
-//   1. Enumerates every subscription by calling the real admin endpoint
-//      GET /api/x402/admin/subscriptions?includeInactive=1 over HTTP, authenticated
-//      as an internal service with INTERNAL_API_KEY (the GET-only read bypass added
-//      to that endpoint). If the HTTP path is unavailable (key unset, network
-//      blip), it falls back to the canonical listSubscriptions() lib read so the
-//      health check still runs — never a mock, always the real subscription book.
+//   1. Enumerates every subscription with the canonical listSubscriptions() lib
+//      read (api-keys.js), the same book the payment gate consults. Never a
+//      mock, always the real subscription table.
 //   2. Classifies each one: active | expiring_soon (≤ EXPIRY_WARN_DAYS) | expired |
 //      revoked, and computes days-to-expiry.
 //   3. Emails the subscriber EXPIRY_WARN_DAYS (7) days before expiry — once per
@@ -25,12 +22,11 @@
 //   4. Upserts each verdict into x402_subscription_health (the value sink) and
 //      records ONE x402_autonomous_log row with a value_extracted summary.
 //
-// Free + read-only: the admin endpoint owes no payment, so this pipeline never
-// moves funds (amountAtomic always 0) and runs even when the spend wallet is
-// absent — mirroring the revenue-reconciliation precedent.
+// Free + read-only: this pipeline never moves funds (amountAtomic always 0) and
+// runs even when the spend wallet is absent, mirroring the
+// revenue-reconciliation precedent.
 //
-// Downstream consumer: the admin subscription-management surface reads
-// x402_subscription_health to badge expiring/expired keys, and ops alerting watches
+// Downstream consumer: ops alerting watches x402_subscription_health
 // WHERE status IN ('expired','expiring_soon') to catch a lapse before a partner's
 // integration breaks.
 
@@ -39,13 +35,14 @@ import { randomUUID } from 'node:crypto';
 import { sql } from '../../db.js';
 import { env } from '../../env.js';
 import { logger } from '../../usage.js';
-import { fetchWithTimeout } from '../pay.js';
 import { listSubscriptions } from '../api-keys.js';
 import { sendEmail } from '../../email.js';
 
 const log = logger('x402-subscription-health');
 
-const ENDPOINT_PATH = '/api/x402/admin/subscriptions';
+// Stable identifier recorded as endpoint_url in x402_autonomous_log rows:
+// it names the lib read that serves the data, not an HTTP route.
+const ENDPOINT_ID = 'lib:x402/api-keys.listSubscriptions';
 // Warn this many days before expiry. A 7-day window with a daily cadence means a
 // subscriber gets at least one warning email before the key lapses.
 const EXPIRY_WARN_DAYS = Number(process.env.X402_SUBSCRIPTION_WARN_DAYS || 7);
@@ -112,33 +109,10 @@ function classify(sub, now) {
 	return { status: 'active', daysToExpiry: days };
 }
 
-// Enumerate subscriptions over the real admin HTTP endpoint as an internal
-// service; fall back to the canonical lib read if HTTP is unavailable. Returns
-// { rows, source } so the summary can record which path served the data.
-async function enumerateSubscriptions(origin) {
-	const internalKey = process.env.INTERNAL_API_KEY;
-	if (internalKey) {
-		try {
-			const url = `${origin}${ENDPOINT_PATH}?includeInactive=1`;
-			const res = await fetchWithTimeout(url, {
-				method: 'GET',
-				headers: {
-					'content-type': 'application/json',
-					'x-api-key': internalKey,
-					'user-agent': 'threews-x402-autonomous/1.0',
-				},
-			});
-			if (res.ok && Array.isArray(res.body?.data)) {
-				return { rows: res.body.data, source: 'http' };
-			}
-			log.warn('subscription_http_enumerate_degraded', {
-				status: res.status,
-			});
-		} catch (err) {
-			log.warn('subscription_http_enumerate_failed', { message: err?.message });
-		}
-	}
-	// Resilient fallback: read the same book the endpoint reads.
+// Enumerate subscriptions with the canonical lib read, the same book the
+// payment gate consults. Returns { rows, source } so the summary records which
+// path served the data.
+async function enumerateSubscriptions() {
 	const rows = await listSubscriptions({ includeInactive: true });
 	return { rows, source: 'lib' };
 }
@@ -263,8 +237,7 @@ async function recordLogRow(runId, { endpointUrl, durationMs, success, errorMsg,
  */
 export async function run(ctx = {}) {
 	const runId = ctx.runId || randomUUID();
-	const origin = ctx.origin || env.APP_ORIGIN || 'https://three.ws';
-	const endpointUrl = `${origin}${ENDPOINT_PATH}`;
+	const endpointUrl = ENDPOINT_ID;
 	const t0 = Date.now();
 
 	try {
@@ -280,7 +253,7 @@ export async function run(ctx = {}) {
 	let rows = [];
 	let source = 'lib';
 	try {
-		({ rows, source } = await enumerateSubscriptions(origin));
+		({ rows, source } = await enumerateSubscriptions());
 	} catch (err) {
 		const durationMs = Date.now() - t0;
 		const errorMsg = err?.message || 'enumerate_failed';

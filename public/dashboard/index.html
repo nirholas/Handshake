@@ -1424,7 +1424,6 @@
 				<a href="/strategy-lab" data-i18n="dashboard_index.strategy_lab">Strategy lab</a>
 				<a href="/reputation" data-i18n="dashboard_index.reputation">Reputation</a>
 				<a href="/settings" data-i18n="dashboard_index.settings">Settings</a>
-				<a href="/admin" id="admin-link" style="display:none" data-i18n="dashboard_index.admin">Admin</a>
 				<a href="/my-agents" title="ERC-8004 agents controlled by your linked wallets"
 					 data-i18n="dashboard_index.on_chain_erc_8004" data-i18n-attr="title:dashboard_index.erc_8004_agents_controlled_b_title_2">On-chain (ERC-8004) ↗</a
 				>
@@ -1533,7 +1532,6 @@
 				}
 				state.user = me.user;
 				renderHeaderUser(document.getElementById('header-user-slot'), me.user, { activePath: '/dashboard' });
-				if (me.user.is_admin) document.getElementById('admin-link').style.display = '';
 				installRouting();
 				navigate();
 

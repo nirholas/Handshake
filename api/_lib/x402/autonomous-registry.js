@@ -3290,27 +3290,23 @@ const SELF_ENDPOINTS = [
 
 	// ── Subscription Status Health Check (Commerce) ───────────────────────────
 	// Daily integrity sweep over every paying x402 subscriber. run() enumerates all
-	// subscriptions via the real admin endpoint GET /api/x402/admin/subscriptions
-	// (authenticated as an internal service with INTERNAL_API_KEY — the GET-only
-	// read bypass added to that route), falling back to the canonical
-	// listSubscriptions() lib read if the HTTP path is unavailable. It classifies
-	// each key (active | expiring_soon | expired | revoked), emails the subscriber
-	// 7 days before expiry (once per expiry window), and upserts every verdict into
-	// x402_subscription_health. Free + read-only: the admin endpoint owes no payment,
-	// so this never moves funds (amountAtomic 0) and runs even without a spend
-	// wallet. run() writes its own canonical x402_autonomous_log row (recorded:true)
-	// with the per-run summary in value_extracted. Cooldown 86400 s (daily) → the
-	// 7-day warning window is re-evaluated across ~7 runs so no expiry is missed.
-	// Downstream consumer: the admin subscription-management surface badges
-	// expiring/expired keys off x402_subscription_health, and ops alerting watches
-	// status IN ('expired','expiring_soon') to catch a lapse before a partner's
-	// integration breaks.
+	// subscriptions with the canonical listSubscriptions() lib read (the same book
+	// the payment gate consults). It classifies each key (active | expiring_soon |
+	// expired | revoked), emails the subscriber 7 days before expiry (once per
+	// expiry window), and upserts every verdict into x402_subscription_health.
+	// Free + read-only: never moves funds (amountAtomic 0) and runs even without a
+	// spend wallet. run() writes its own canonical x402_autonomous_log row
+	// (recorded:true) with the per-run summary in value_extracted. Cooldown
+	// 86400 s (daily) → the 7-day warning window is re-evaluated across ~7 runs so
+	// no expiry is missed. Downstream consumer: ops alerting watches
+	// x402_subscription_health status IN ('expired','expiring_soon') to catch a
+	// lapse before a partner's integration breaks.
 	{
 		id: 'subscription-status-health-check',
 		name: 'Subscription Status Health Check',
-		// path/endpoint informational — run() owns the internal-service HTTP call.
-		path: '/api/x402/admin/subscriptions',
-		endpoint: '/api/x402/admin/subscriptions',
+		// path/endpoint informational; run() reads the subscription book via lib.
+		path: 'lib:x402/api-keys.listSubscriptions',
+		endpoint: 'lib:x402/api-keys.listSubscriptions',
 		method: 'GET',
 		body: null,
 		price_atomic: 0, // free internal endpoint — no payment owed

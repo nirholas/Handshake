@@ -16,8 +16,8 @@
 //                  including the threshold the scheduled monitor alerts on.
 //
 // Auth: authorizeOps (admin session, or x-ops-secret / OPS_SECRET): the same
-// gate as /api/ops/health, so the /admin/ops dashboard reuses its stored
-// secret. Read-only; moves no funds; reads balances via RPC only.
+// gate as /api/ops/health, so ops tooling reuses one stored secret.
+// Read-only; moves no funds; reads balances via RPC only.
 
 import { cors, json, method, wrap, error } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
