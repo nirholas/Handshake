@@ -5,7 +5,9 @@ three.ws has always had deep coverage of pump.fun launches (`/launches`,
 crypto market: a CoinGecko-style index of the top assets, and a rich,
 shareable detail page for every coin. The design is adopted from the
 [cryptocurrency.cv](https://github.com/nirholas/cryptocurrency.cv) coin pages —
-editorial serif headings, hairline borders, mono numerals, light/dark themes.
+editorial headings, hairline borders, mono numerals, light/dark themes (the
+port's Source Serif 4 headings were retired 2026-07 for the sitewide Space
+Grotesk display face).
 
 ## The pages
 
@@ -72,7 +74,8 @@ editorial serif headings, hairline borders, mono numerals, light/dark themes.
   live trade page on that venue), price, spread, +2% / −2% order-book depth,
   24h volume, and a color-coded trust rating. Stale/anomalous rows are dimmed.
 - **Related news** — live articles mentioning the coin, from the native
-  three.ws aggregator (192 publisher feeds, `api/_lib/news.js`).
+  three.ws aggregator (`api/_lib/news.js`; 191 publisher feeds in the
+  `api/_lib/news-sources.js` registry).
 - **About + links** — plain-text description, official site / social /
   explorer pills, plus whitepaper, forum, chat, announcement, and extra-repo
   links, and per-chain contract addresses with one-click copy.
@@ -429,8 +432,9 @@ with serve-stale-on-error, so one dead feed never blanks the page.
 
 Opens any story with server-side extraction (`/api/news/article`): full
 paragraphs, publisher metadata, an AI summary + key points via the platform
-LLM chain (Groq → OpenRouter) with an extractive fallback when no provider key
-is present, bullish/bearish/neutral sentiment, detected tickers, and a
+LLM chain (`api/_lib/llm.js`, free providers first, paid keys only as a tail
+backstop) with an extractive fallback when no provider is reachable,
+bullish/bearish/neutral sentiment, detected tickers, and a
 related-coverage rail. Publishers that block server fetches degrade through an
 honest ladder: page extraction → the publisher's own feed body
 (`content:encoded`) → a labelled preview with a read-at-source CTA. Never a
@@ -481,6 +485,7 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 | `/api/coin/detail`      | CoinGecko `/coins/{id}` or `/coins/solana/contract/{mint}` (with community + developer blocks) | 60 s |
 | `/api/coin/tickers`     | CoinGecko `/coins/{id}/tickers` (exchange listings, ±2% depth) | 120 s     |
 | `/api/coin/ohlc`        | CoinGecko `/coins/{id}/market_chart`                       | 120 s        |
+| `/api/coin/pool`        | GeckoTerminal top-pool lookup by token address (feeds the GeckoTerminal chart embed) | 60 s + 300 s CDN |
 | `/api/coin/markets`     | CoinGecko `/coins/markets` (optional `category=`), `/search` | 60 s / 300 s |
 | `/api/coin/categories`  | CoinGecko `/coins/categories`                              | 300 s        |
 | `/api/coin/category`    | CoinGecko `/coins/categories` (one category + rank + neighbours) | 600 s   |
@@ -502,9 +507,9 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 | `/api/coin/global`      | CoinGecko `/global` + alternative.me Fear & Greed          | 120 s        |
 | `/api/coin/fear-greed`  | alternative.me `/fng` (current + history)                  | 300 s        |
 | `/api/coin/gas`         | public Ethereum RPC `eth_feeHistory` + CoinGecko ETH price | 15 s         |
-| `/api/coin/news`        | native aggregator (`api/_lib/news.js`, 192 publisher feeds) | 300 s        |
-| `/api/news/feed`        | native aggregator — 38 publisher RSS/Atom feeds, per-source cache + serve-stale | 120 s |
-| `/api/news/article`     | publisher page fetch (SSRF-guarded) → publisher feed body → preview; LLM analysis via Groq/OpenRouter with extractive fallback | 1800 s |
+| `/api/coin/news`        | native aggregator (`api/_lib/news.js`, 191 publisher feeds) | 300 s        |
+| `/api/news/feed`        | native aggregator: 191 publisher RSS/Atom feeds (`api/_lib/news-sources.js`), per-source cache + serve-stale | 120 s |
+| `/api/news/article`     | publisher page fetch (SSRF-guarded) → publisher feed body → preview; LLM analysis via the platform chain (`api/_lib/llm.js`) with extractive fallback | 1800 s |
 | `/api/news/archive`     | `gs://three-ws-news-archive` (662k-article JSONL corpus + indexes on GCS) | 300 s / 3600 s |
 | `/api/coin/liquidations`| `services/liquidation-collector` (Binance/Bybit/OKX public liquidation WebSocket streams) | 15 s, `503` no-fallback offline |
 
@@ -542,13 +547,14 @@ text before they reach the client.
 | Trending                    | [`pages/markets-trending.html`](../pages/markets-trending.html) + `src/markets-trending.js`, API [`api/coin/trending.js`](../api/coin/trending.js) |
 | Markets hub                 | [`pages/markets.html`](../pages/markets.html) + [`src/markets-page.js`](../src/markets-page.js)                                          |
 | Crypto news                 | [`pages/markets-news.html`](../pages/markets-news.html) + [`src/markets-news.js`](../src/markets-news.js)                                |
+| News digest                 | [`pages/news-digest.html`](../pages/news-digest.html) + [`src/news-digest.js`](../src/news-digest.js), API [`api/news/digest.js`](../api/news/digest.js) |
 | Article reader              | [`pages/news-article.html`](../pages/news-article.html) + [`src/news-article.js`](../src/news-article.js)                                |
 | News archive                | [`pages/news-archive.html`](../pages/news-archive.html) + [`src/news-archive.js`](../src/news-archive.js)                                |
 | News engine + sources       | [`api/_lib/news.js`](../api/_lib/news.js) + [`api/_lib/news-sources.js`](../api/_lib/news-sources.js), endpoints in [`api/news/`](../api/news) |
 | Shared news renderers       | [`src/shared/news-render.js`](../src/shared/news-render.js); table primitives in [`src/shared/market-table.js`](../src/shared/market-table.js) |
-| Shared design system        | [`src/coin-pages.css`](../src/coin-pages.css) (Source Serif 4 self-hosted in `public/fonts/`)                                            |
+| Shared design system        | [`src/coin-pages.css`](../src/coin-pages.css) (Inter, Space Grotesk, JetBrains Mono self-hosted in `public/fonts/`)                      |
 | Shared formatters           | [`src/shared/coin-format.js`](../src/shared/coin-format.js) — unit-tested in [`tests/coin-format.test.js`](../tests/coin-format.test.js) |
-| API proxies                 | [`api/coin/`](../api/coin) — `detail.js`, `ohlc.js`, `markets.js`, `global.js`, `fear-greed.js`, `gas.js`, `news.js`, `liquidations.js`  |
+| API proxies                 | [`api/coin/`](../api/coin): one file per `/api/coin/*` endpoint in the table above (`detail.js`, `ohlc.js`, `pool.js`, `markets.js`, `tickers.js`, `categories.js`, `category.js`, `exchanges.js`, `exchange.js`, `derivatives.js`, `rates.js`, `trending.js`, `global.js`, `fear-greed.js`, `gas.js`, `news.js`, `liquidations.js`) |
 | Liquidations collector      | [`services/liquidation-collector/`](../services/liquidation-collector) — standalone always-on Node service (not a Vercel function)      |
 
 Routing: `vercel.json` rewrites `/coins`, `/coin/<id>`, `/heatmap`,
