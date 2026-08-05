@@ -10,7 +10,7 @@ Dates marked "approx." are derived from the site's relative timestamps ("17 days
 | ------ | ----- |
 | Members | 15 |
 | Discussion threads | 7 listed in the [digest viewer](https://community.ibm.com/community/user/groups/community-home/digestviewer?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) (the group header count runs one higher; the extra is the reply on the welcome thread) |
-| Blog posts | 2 |
+| Blog posts | 3 |
 | Library entries | 2 (the attachments on the BOWYER and SperaxOS threads) |
 | Upcoming events | 0 |
 
@@ -33,6 +33,16 @@ The group charter. Introduces the community as a space for people exploring AI a
 - **URL:** [community.ibm.com/.../threews-the-free-ai-3d-model-generators-10-best](https://community.ibm.com/community/user/blogs/nich8/2026/07/16/threews-the-free-ai-3d-model-generators-10-best)
 
 A feature tour structured as "ten features, in the order I would demo them": (1) the Forge, text/photo/sketch to downloadable GLB with multiple engines and automatic failover; (2) rigged avatars with auto-rigging, plus support for external humanoid models; (3) embeddable 3D agents via the web component, with tool integration, emotion blending, and lip-sync across 52 blendshapes; (4) the Agent Shell command palette; (5) the x402 protocol for machine-to-machine USDC payments; (6) MCP integration, listed on the official MCP Registry; (7) refinement and Restyle Studio; (8) Scene Studio and Diorama; (9) the /play multiplayer world; (10) AR exports and IRL location pinning. Links the GitHub repo.
+
+### 3. Join the Three.ws User Group's First In-World Meetup
+
+- **Author:** Jessica Swanson
+- **Published:** 2026-08-04 (per the URL; went live 2026-08-05)
+- **Activity:** 0 comments, 3 views at posting
+- **Featured image:** the IBM x three.ws lockup ([media/ibm-x-threews-lockup.png](./media/ibm-x-threews-lockup.png))
+- **URL:** [community.ibm.com/.../join-the-threews-user-groups-first-in-world-meetup](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/08/04/join-the-threews-user-groups-first-in-world-meetup)
+
+Jessica's companion piece to the meetup thread, written in her own voice as a member telling the group not to mistake the event for another webinar link. Carries the event table (Friday, August 7, 8 to 9 AM Pacific, 11 AM Eastern, free, browser only), the three-step join flow (open three.ws/play, bring a custom avatar made at three.ws/create beforehand, talk via spatial voice), and the agenda: live in-world platform tour, community demos, open Q&A ("the skeptical questions are the most useful ones"), and a first look at what is next. Her framing argument: the venue is the demo, so the hour doubles as hands-on evaluation of the technology the group exists to discuss, and since every world is a shareable URL, attending teaches you how to run your own events there. Points readers at the pinned meetup thread for the deep technical background and closes with the full platform link list. The draft lives in [ibm-community-blog-meetup-jessica.md](./ibm-community-blog-meetup-jessica.md).
 
 ## Discussion threads
 
