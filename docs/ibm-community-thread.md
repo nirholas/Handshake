@@ -102,6 +102,7 @@ Everything above is live and verifiable today; judge the thesis by the product, 
 -   Free text-to-3D: [three.ws/create](https://three.ws/create)
 -   The worlds: [three.ws/play](https://three.ws/play)
 -   Docs: [three.ws/docs](https://three.ws/docs)
+-   Blog: [three.ws/blog](https://three.ws/blog)
 -   Changelog: [three.ws/changelog](https://three.ws/changelog)
 -   GitHub: [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws)
 -   X: [@trythreews](https://x.com/trythreews)
