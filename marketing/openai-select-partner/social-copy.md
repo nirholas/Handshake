@@ -148,25 +148,26 @@ screen-recorded demo video attached; @trythreews then retweets the quote tweet.
 The quoted post already carries the partner status and the card, so the personal
 post makes the product claim only and never restates the tier (see Notes below).
 
-**Quote tweet** (attach the demo video; 228 chars with the t.co link):
+**Quote tweet** (attach the demo video; 215 chars with the t.co link). The copy
+narrates only what the recording shows, so the AR claim lives in the reply, not
+here; the video does not include the AR step:
 
 > 3D inside ChatGPT, start to finish.
 >
-> One sentence becomes a textured, interactive model rendered inline. Then it's
-> rigged, animated, and standing on my desk in AR.
+> One sentence becomes a textured, interactive model rendered inline, then it's
+> rigged and animated, all in the conversation.
 >
 > No key. No account. Free.
 >
 > Try the GPT: https://chatgpt.com/g/g-6a563a3b49a88191abf346245491a444-three-ws-3d-studio
 
-**Reply to it** (the receipts: the exact conversation from the video, plus the
-keyless connector for people not using the GPT):
+**Reply to it** (the receipts, plus the capabilities the video doesn't show):
 
 > This is the exact conversation from the video, tool calls and all:
 > https://chatgpt.com/share/6a72db63-ba08-83e8-bc96-c8e191b248b3
 >
-> And any MCP client can wire in the same nine tools with no auth:
-> https://three.ws/api/mcp-studio
+> Every model also carries a one-tap AR link, and any MCP client can wire in the
+> same nine tools with no auth: https://three.ws/api/mcp-studio
 
 Sequence: post the QT from @nichxbt, post the reply from @nichxbt, then retweet
 the QT from @trythreews. Plain retweet, not a second quote: the brand account
