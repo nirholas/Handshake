@@ -4,12 +4,12 @@ This is the running catalog of everything published in the [Three.ws User Group]
 
 Dates marked "approx." are derived from the site's relative timestamps ("17 days ago") on the snapshot date; blog dates come from their URLs and are exact.
 
-## Group snapshot (2026-08-04)
+## Group snapshot (2026-08-05)
 
 | Metric | Value |
 | ------ | ----- |
 | Members | 15 |
-| Discussion threads | 6 listed in the [digest viewer](https://community.ibm.com/community/user/groups/community-home/digestviewer?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) (the group header counts 7; the extra one is the reply on the welcome thread) |
+| Discussion threads | 7 listed in the [digest viewer](https://community.ibm.com/community/user/groups/community-home/digestviewer?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) (the group header count runs one higher; the extra is the reply on the welcome thread) |
 | Blog posts | 2 |
 | Library entries | 2 (the attachments on the BOWYER and SperaxOS threads) |
 | Upcoming events | 0 |
@@ -38,7 +38,16 @@ A feature tour structured as "ten features, in the order I would demo them": (1)
 
 Newest first, matching the digest viewer's order.
 
-### 1. Suggestion for the three.ws team: BOWYER is already using three.ws. Turn it into a real partnership.
+### 1. Community Meetup Inside three.ws: Join Us on the $THREE Server at three.ws/play
+
+- **Author:** nich (nich8)
+- **Posted:** 2026-08-05
+- **Activity:** 0 replies at posting
+- **URL:** [community.ibm.com/.../community-meetup-inside-threews-join-us-on-the-three-server-at-threewsplay](https://community.ibm.com/community/user/discussion/community-meetup-inside-threews-join-us-on-the-three-server-at-threewsplay)
+
+The announcement for the group's first community meetup: Friday, August 7, 2026, 8 to 9 AM Pacific (11 AM Eastern), held inside the platform itself in the $THREE home town at three.ws/play rather than on a video call. Free, browser-only, no download or account. Agenda: a live tour from inside the world, community demos, open Q&A, and a first look at what is next. Explains the three-step join flow (open /play, pick or bring an avatar, walk up and talk via spatial voice chat), then makes the venue case: every world is a URL, every pump.fun coin already has a world derived from its mint, and worlds persist, so any community can run its own meetup the same way. The back half is the long read: a surface-by-surface platform tour (creation, distribution, agent economy, developer platform including the two IBM-specific MCP servers), the technology stack (Three.js/Rapier frontend, GPU worker fleet on Cloud Run, authoritative Colyseus multiplayer at 15 Hz, Solana as home chain), the roadmap led by event infrastructure for /play, and a seven-point growth thesis explicitly framed as a thesis, not a promise. The draft lives in [ibm-community-thread.md](./ibm-community-thread.md).
+
+### 2. Suggestion for the three.ws team: BOWYER is already using three.ws. Turn it into a real partnership.
 
 - **Author:** Anonymous User
 - **Posted:** approx. 2026-07-19
@@ -48,7 +57,7 @@ Newest first, matching the digest viewer's order.
 
 A community member reports that BOWYER, a paid marketplace for autonomous AI agents, already uses three.ws in production: every agent listed there gets a rigged 3D avatar from three.ws instead of a static image (their "Whale Hunter" crypto-monitoring agent, $49/month, is the live example). Both platforms are MCP-native: BOWYER exposes agents as MCP servers, three.ws provides `create-3d-avatar`, `generate-3d-model`, and `rig-a-model`. The poster suggests four actions: direct outreach, a "three.ws Inside" co-marketing angle, agent-type avatar templates (trading, research, security presets), and an end-to-end walkthrough. Memorable line: "an agent that earns money and has a face is a product, and an agent that only does one is a demo." Links bowyer.app and a GitHub repo.
 
-### 2. Welcome to the three.ws IBM community: a full tour of the platform (start here)
+### 3. Welcome to the three.ws IBM community: a full tour of the platform (start here)
 
 - **Author:** Jessica Swanson
 - **Posted:** approx. 2026-07-14
@@ -57,7 +66,7 @@ A community member reports that BOWYER, a paid marketplace for autonomous AI age
 
 The orientation thread, posted the same day as the charter blog. Walks the platform surface by surface: free no-account text-to-3D at three.ws/forge, auto-rigging and animation for humanoid models, iterative refinement through dialogue and material editing, scene composition at three.ws/diorama, web-component embedding, AR at three.ws/ar, MCP integration with Claude and ChatGPT, and the multiplayer worlds at three.ws/play and three.ws/agora. Closes with the developer resources (docs, free 3D and crypto-data APIs, MCP servers, npm packages, optional on-chain capabilities) and an invitation to share projects and ask questions.
 
-### 3. From a text prompt to an embeddable 3D agent, step by step
+### 4. From a text prompt to an embeddable 3D agent, step by step
 
 - **Author:** Anonymous User
 - **Posted:** approx. 2026-07-18
@@ -66,7 +75,7 @@ The orientation thread, posted the same day as the charter blog. Walks the platf
 
 An end-to-end tutorial in four steps: (1) POST a text prompt to `https://three.ws/api/3d/generate` and get back a GLB plus a shareable viewer link (free tier: draft fidelity, single-subject prompts); (2) open any generated model in AR via `https://three.ws/api/ar?src=<url>`, with automatic USDZ conversion for iOS and ARCore for Android; (3) auto-rig humanoid models and assemble an agent in the three.ws/start wizard (personality, voice, optional skills, no code); (4) embed with the two-line `<agent-3d>` element, which supports keyboard navigation and a JavaScript API. Notes the same capabilities are exposed over MCP to Claude, ChatGPT, and other frameworks, and stresses "no account, no API key, and no cost for the generation step." Points readers to three.ws/forge and three.ws/docs.
 
-### 4. SperaxOS × three.ws: Give Your AI Agents a Real 3D Body Inside Sperax Chat
+### 5. SperaxOS × three.ws: Give Your AI Agents a Real 3D Body Inside Sperax Chat
 
 - **Author:** Anonymous User
 - **Posted:** approx. 2026-07-18
@@ -76,7 +85,7 @@ An end-to-end tutorial in four steps: (1) POST a text prompt to `https://three.w
 
 Announces the SperaxOS integration: three.ws agents get fully rigged, animated 3D avatars living directly inside SperaxOS chat, speaking, gesturing, emoting, and reacting to on-chain events in real time (waving, nodding, celebrating a yield target, showing concern near liquidation). Four LLM-callable tools power it: `render_agent`, `speak`, `gesture`, and `emote`. Quick start: add the custom plugin from `https://three.ws/.well-known/sperax-plugin.json` on chat.sperax.io, paste a three.ws Agent ID, and the avatar instantiates with free launch AI credits applied. Framed as making agents more usable inside DeFi workflows; ends with a call to share creations.
 
-### 5. Why does my GLB model load white or untextured? (Three.js, Blender exports, web viewers)
+### 6. Why does my GLB model load white or untextured? (Three.js, Blender exports, web viewers)
 
 - **Author:** Nora Norris
 - **Posted:** approx. 2026-07-17
@@ -85,7 +94,7 @@ Announces the SperaxOS integration: three.ws agents get fully rigged, animated 3
 
 The group's first pure troubleshooting thread, and the most SEO-shaped one. Covers the five causes of a GLB rendering as a flat white or black shape: (1) no lighting or environment map (PBR materials need `scene.environment`, set up via Three.js `PMREMGenerator` or an HDRI); (2) textures not embedded (a `.gltf` with external texture references breaks when moved; export "glTF Binary (.glb)" from Blender); (3) compressed assets without their decoders (`KTX2Loader` for KTX2/Basis, `DRACOLoader` for Draco); (4) CORS blocking cross-origin texture requests; (5) material extensions the viewer does not support, like `KHR_materials_unlit` in older viewers. Ends with an offer to debug files or screenshots posted in the thread.
 
-### 6. Type a Sentence, Get a 3D Model: A Hands-On Walkthrough of the three.ws Forge | User Perspective
+### 7. Type a Sentence, Get a 3D Model: A Hands-On Walkthrough of the three.ws Forge | User Perspective
 
 - **Author:** nichxbt (three.ws)
 - **Posted:** approx. 2026-07-17
