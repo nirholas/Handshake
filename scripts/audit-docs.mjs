@@ -273,6 +273,10 @@ const UNPUBLISHED_DOCS = new Map([
 	['economy-heartbeat', 'internal: scheduled-job operations'],
 	['economy-master', 'internal: funding-root wallet operations'],
 	['financial-controls', 'internal: audit-grade money-flow register'],
+	['google-x-accounts', 'internal: outreach directory of external X accounts'],
+	['ibm-community-article', 'internal: source draft of an IBM Community post'],
+	['ibm-community-blog-meetup-jessica', 'internal: source draft of an IBM Community post'],
+	['ibm-community-thread', 'internal: source draft of an IBM Community post'],
 	['launch-usecases', 'owner-gated: names a crypto project other than $THREE'],
 	['memetic-launcher', 'owner-gated: names a crypto project other than $THREE'],
 	['meta-allocator', 'owner-gated: names a crypto project other than $THREE'],
@@ -289,6 +293,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['syndication', 'internal: admin publishing configuration'],
 	['trading-experiment', 'owner-gated: names a crypto project other than $THREE'],
 	['trading-hub', 'in-flight: landed mid-session, register with its /trading page'],
+	['x-meetup-posts', 'internal: ready-to-paste X post drafts; posting is owner-gated'],
 ]);
 const GENERATED_DOCS = new Set(['ALL', 'EVERYTHING', 'README']);
 
