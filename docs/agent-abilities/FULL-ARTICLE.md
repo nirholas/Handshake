@@ -16,7 +16,7 @@ three.ws runs a complete prompt-to-world 3D pipeline in production: text or imag
 
 Type a prompt at /forge (or call the forge_free MCP tool) and get a downloadable textured 3D model (GLB) plus a browser viewer link. The default lane is completely free — no account, no key, no wallet — with paid quality tiers (draft $0.05 / standard $0.15 / high $0.50 USDC) when more geometric budget is needed.
 
-**How it works:** Free lane is Microsoft TRELLIS hosted on NVIDIA NIM/NVCF (async submit + poll; sampling steps scale by tier, 15 at draft up to 50 at high; prompts clamped to 77 chars with an auto 'studio lighting' suffix; output bytes persisted to R2 for a durable first-party URL). The backend registry (api/_lib/forge-tiers.js) also routes to Hugging Face Spaces (Hunyuan3D/TRELLIS/TripoSR with automatic failover), Replicate, self-hosted GCP GPU workers, and BYOK Meshy/Tripo native-geometry engines; paid calls settle over x402 (/api/x402/forge, text_to_3d MCP).
+**How it works:** Free lane is Microsoft TRELLIS hosted on NVIDIA NIM/NVCF (async submit + poll; the hosted preview is pinned to a proven 15-step sampling budget for draft and standard, since higher budgets overrun its gateway window, while high-tier jobs route to the higher-fidelity lanes; prompts clamped to 77 chars with an auto 'studio lighting' suffix; output bytes persisted to R2 for a durable first-party URL). The backend registry (api/_lib/forge-tiers.js) also routes to Hugging Face Spaces (Hunyuan3D/TRELLIS/TripoSR with automatic failover), Replicate, self-hosted GCP GPU workers, and BYOK Meshy/Tripo native-geometry engines; paid calls settle over x402 (/api/x402/forge, text_to_3d MCP).
 
 **Why it matters:** Zero-cost text→3D that any human or AI agent can use instantly, with a transparent pay-per-call ladder — identical pricing across REST and MCP — when quality matters.
 
@@ -36,17 +36,17 @@ Turn 1–4 reference photos or concept-art views into a textured GLB (image_to_3
 
 **Why it matters:** A product photo, sketch, or generated concept image becomes real 3D geometry — with the reference-image quality problem solved for you.
 
-## Auto-rigging (rig_mesh / UniRig / pipeline-rig)
+## Auto-rigging (rig_mesh / Make-It-Animatable / pipeline-rig)
 
 Adds a humanoid skeleton with per-vertex skin weights to any static GLB, turning a rig-less mesh into an animation-ready model that can walk, wave, and emote.
 
-**How it works:** Runs the VAST-AI UniRig lane on GCP Cloud Run GPU workers (workers/unirig, avatar-pipeline controller /rig). Sold three ways: auto_rig_model on the 3D Studio MCP server ($0.05 USDC), POST /api/x402/pipeline-rig ($0.05 USDC), and the rig_mesh tool on the paid agent MCP server ($0.20 USDC). Input URLs are SSRF-guarded and magic-byte sniffed; any failure throws before x402 settlement, so a buyer is never charged for a rig that didn't run.
+**How it works:** Runs the Make-It-Animatable rig lane on GCP Cloud Run GPU workers (workers/rig, which replaced the retired UniRig worker on the same /rig API contract): it writes a Mixamo-named 52-bone skeleton, per-vertex skin weights, and the 52 ARKit expression blendshapes straight into the original GLB bytes, materials untouched. Sold three ways: auto_rig_model on the 3D Studio MCP server ($0.05 USDC), POST /api/x402/pipeline-rig ($0.05 USDC), and the rig_mesh tool on the paid agent MCP server ($0.20 USDC). Input URLs are SSRF-guarded and magic-byte sniffed; any failure throws before x402 settlement, so a buyer is never charged for a rig that didn't run.
 
 **Why it matters:** Every generated or uploaded mesh becomes animatable in one paid call of a few cents — nobody else in the x402 ecosystem sells rigging as a per-call stage.
 
 ## Universal retargeting — any humanoid rig animates (src/glb-canonicalize.js + src/animation-retarget.js)
 
-Any humanoid avatar from any tool plays the entire animation library — legs included — with zero manual bone mapping. Mixamo, VRM/VRoid, VRM 1.0, Unreal mannequin, Daz/Genesis, MakeHuman, Blender .L/.R, Rigify, HumanIK/Maya namespaces, CH_-prefixed rigs, snake_case/kebab-case, and simple shoulderL-style rigs are all handled out of the box.
+Any humanoid avatar from any tool plays the entire animation library, legs included, with zero manual bone mapping. Mixamo, VRM/VRoid, VRM 1.0, Unreal mannequin, Daz/Genesis, MakeHuman, Blender .L/.R, Rigify, HumanIK/Maya namespaces, CH_-prefixed rigs, Reallusion CC3/CC4, SMPL/SMPL-X, Roblox R15/R6, Second Life/OpenSim, anatomical scan rigs, snake_case/kebab-case, and simple shoulderL-style rigs are all handled out of the box.
 
 **How it works:** glb-canonicalize.js rewrites the GLB's joint names onto a canonical 52-bone humanoid set (O(1) lookup plus alias maps), folds Mixamo's +90°X armature rotation into children with a world-matrix safety check, and repacks a valid GLB in place. animation-retarget.js then renames each clip track to the rig's actual bones, applies per-bone bind-pose correction (C = targetRest · sourceRest⁻¹, handling A-pose vs T-pose rests), and rescales hip translation by height ratio. Gates: ≥8 canonical bones to be playable, ≥50% track coverage per clip, and a 45° hips-tilt sanity check; a genuinely non-riggable prop falls back to the default rig via AnimationManager.supportsCanonicalClips() — never a bind-pose T-pose.
 
@@ -86,7 +86,7 @@ Scene Studio is a full in-browser 3D editor: import models (GLB, FBX, OBJ, Colla
 
 ## Pose Studio / Animation Studio (/pose)
 
-Pose any three.ws avatar (or the built-in mannequin) with FK gizmos, sliders, and drag-IK; keyframe a timeline; generate brand-new motion from a text prompt; and export an animated GLB, a reusable clip JSON, or a PNG. Saved animations play back across the platform and can be sold for USDC.
+Pose any three.ws avatar (or the built-in mannequin) with FK gizmos, sliders, and drag-IK; keyframe a timeline; generate brand-new motion from a text prompt; fingerspell any word or number in ASL on the avatar's right hand (shareable as a ?spell= deep link); and export an animated GLB, a reusable clip JSON, or a PNG. Saved animations play back across the platform and can be sold for USDC.
 
 **How it works:** A Three.js workspace (src/pose-studio.js, src/animation-library.js) with the full preset-clip gallery live-previewing on the loaded rig; text→motion generation calls /api/forge-motion; export bakes the retargeted clip onto the current rig via GLTFExporter. Agents get the same surface programmatically: pose_model ($0.01) maps a pose description to a deterministic seed plus a full Euler joint-rotation map.
 
@@ -120,7 +120,7 @@ On three.ws, an agent isn't a chat window — it's a body. Every agent gets a ri
 
 Every avatar has instant access to a huge catalog of professional motion clips — idle loops, walks, runs, dances, combat moves, sports, acrobatics, gestures, reactions, deaths and falls, fitness, farming chores, and more, organized into 16 browsable categories. A public gallery lets you search, filter, and hover any card to see the clip play live on a 3D preview avatar, with deep links so any filtered view or single clip is shareable. Community-published clips appear alongside the built-in library.
 
-**How it works:** A curated 111-clip manifest ships with the site; the full Mixamo-sourced catalog (2,800+ clips, ~3 GB of AnimationClip JSON) lives on an R2 CDN behind an edge-cached API and paginated fetches. Previews run through one shared singleton WebGL engine (Three.js) that migrates a single canvas between cards — no per-card GL contexts. Categories are derived by an ordered rule-based classifier over clip labels.
+**How it works:** A curated 112-clip manifest ships with the site; the full Mixamo-sourced catalog (2,800+ clips, ~3 GB of AnimationClip JSON) lives on an R2 CDN behind an edge-cached API and paginated fetches. Previews run through one shared singleton WebGL engine (Three.js) that migrates a single canvas between cards, so there are no per-card GL contexts. Categories are derived by an ordered rule-based classifier over clip labels.
 
 **Why it matters:** Your agent never stands still — thousands of ready-to-play performances are one click away.
 
@@ -464,7 +464,7 @@ Snap one photo and transfer your facial identity — face width, jaw, lip thickn
 
 Any un-rigged 3D mesh — something you generated, bought, or modeled — can be turned into an animation-ready avatar in one click. The platform builds a skeleton into it so it can walk, dance, and emote with the full animation library. The original is never touched: rigging produces a new sibling avatar.
 
-**How it works:** Routes the mesh through the auto-rig backend (self-hosted UniRig on GPU infrastructure with a Replicate fallback), polls the job, canonicalizes the resulting bone names to the universal skeleton, and registers the rigged result as a new owned avatar.
+**How it works:** Routes the mesh through the auto-rig backend (the self-hosted Make-It-Animatable rig worker on GPU infrastructure with a Replicate fallback), polls the job, canonicalizes the resulting bone names to the universal skeleton, and registers the rigged result as a new owned avatar.
 
 **Why it matters:** No model is a dead end — every statue you own can become a living character.
 
@@ -1648,7 +1648,7 @@ A public dashboard of total agent-to-agent volume: real USDC settled between age
 
 The Money Pulse is a platform-wide live feed of real agent wallet activity — tips landing, coins launching, agents trading and paying each other — every row explorer-verifiable, with private movements (withdrawals, policy changes, recovery) strictly excluded and per-agent opt-out honored. Its mirror image, the Endpoint Revenue page, streams the USDC flowing into the platform's own paid endpoints, and the Viability page publishes the honest commerce metrics: GMV, take-rate, repeat buyers.
 
-**How it works:** /api/pulse reads agent_custody_events and pump_agent_mints with keyset pagination and delta polling; /api/x402-revenue reads the x402 audit log exposing only on-chain-verifiable fields.
+**How it works:** /api/pulse reads agent_custody_events, pump_agent_mints, and skill_purchases with keyset pagination and delta polling; /api/x402-revenue reads the x402 audit log exposing only on-chain-verifiable fields.
 
 **Why it matters:** Radical transparency: you can audit the whole economy — including the platform's own take — in real time.
 
@@ -2059,7 +2059,7 @@ The Self-defense tab is the owner's control room for a wallet that protects itse
 
 The data layer agents and their owners trade on: live markets, news, scoring oracles, liquidations, and sentiment.
 
-three.ws pairs a full general-crypto markets surface (CoinGecko-grade prices, a native 192-feed news aggregator with a 662k-article archive, real-time exchange liquidation streams) with pump.fun-native intelligence: the Oracle conviction engine that scores every launch 0-100 within seconds, a coin-intelligence radar, the platform's own /launches directory, and live PumpPortal feeds that even drive 3D avatar reactions. Everything runs on real, mostly keyless data sources — CoinGecko, alternative.me, public Ethereum RPCs, Binance/Bybit/OKX futures WebSockets, publisher RSS feeds, the pump.fun firehose — with a hard no-fabricated-data policy (surfaces degrade to designed offline states rather than fake numbers).
+three.ws pairs a full general-crypto markets surface (CoinGecko-grade prices, a native 191-feed news aggregator with a 662k-article archive, real-time exchange liquidation streams) with pump.fun-native intelligence: the Oracle conviction engine that scores every launch 0-100 within seconds, a coin-intelligence radar, the platform's own /launches directory, and live PumpPortal feeds that even drive 3D avatar reactions. Everything runs on real, mostly keyless data sources (CoinGecko, alternative.me, public Ethereum RPCs, Binance/Bybit/OKX futures WebSockets, publisher RSS feeds, the pump.fun firehose) with a hard no-fabricated-data policy (surfaces degrade to designed offline states rather than fake numbers).
 
 ## /markets hub
 
@@ -2071,15 +2071,15 @@ The front door for all market surfaces: live global stats (total market cap, dom
 
 ## Crypto news wing (feed, reader, archive)
 
-Live news aggregated natively from 192 real publisher RSS/Atom feeds across 27 categories (CoinDesk, The Block, Decrypt, Cointelegraph, Blockworks, Bitcoin Magazine, and more, including 33 international feeds in 17 languages) with category tabs, search, per-article sentiment, and ticker chips; a rich article reader with server-side extraction, AI summary and key points (extractive fallback), and related coverage; plus the largest open crypto-news archive — 662,047 enriched articles from Sept 2017 to today, English + Chinese.
+Live news aggregated natively from 191 real publisher RSS/Atom feeds across 27 categories (CoinDesk, The Block, Decrypt, Cointelegraph, Blockworks, Bitcoin Magazine, and more, including 33 international feeds in 17 languages) with category tabs, search, per-article sentiment, and ticker chips; a rich article reader with server-side extraction, AI summary and key points (extractive fallback), and related coverage; plus the largest open crypto-news archive: 662,047 enriched articles from Sept 2017 to today, English + Chinese.
 
 **How it works:** /markets/news, /markets/news/article, /markets/archive backed by api/news/{feed,article,archive,rss}.js over api/_lib/news.js + api/_lib/news-sources.js; the archive corpus lives on gs://three-ws-news-archive (recovered from the cryptocurrency.cv aggregator, which three.ws now runs natively).
 
-**Why it matters:** Real-time and nine-years-deep crypto news in one place, readable without visiting 192 different publisher sites, with machine-friendly JSON and RSS.
+**Why it matters:** Real-time and nine-years-deep crypto news in one place, readable without visiting 191 different publisher sites, with machine-friendly JSON and RSS.
 
 ## Global markets index + coin detail pages
 
-A CoinGecko-style /coins index (global stats bar, sortable top-coins table with 7d sparklines, debounced full-catalog search, load-more paging) and a shareable /coin/:id detail page per coin: interactive 24H-1Y chart with crosshair, market stats, related news, official links, and per-chain contract addresses. Also a live perpetual-futures view (price, funding rate, open interest per contract).
+A CoinGecko-style /coins index (global stats bar, sortable top-coins table with 7d sparklines, debounced full-catalog search, load-more paging) and a shareable /coin/:id detail page per coin: interactive 24H-1Y chart with crosshair (switchable between the native CoinGecko chart and TradingView, DexScreener, and GeckoTerminal views where the coin qualifies), market stats, related news, official links, and per-chain contract addresses. Also a live perpetual-futures view (price, funding rate, open interest per contract).
 
 **How it works:** pages/coins.html + src/coins-index.js and pages/coin.html + src/coin-page.js over api/coin/* (detail, ohlc, markets, news, global, derivatives) proxying CoinGecko via api/_lib/coingecko.js. :id accepts a CoinGecko slug OR a Solana mint; mint-shaped ids cross-link into Alpha Copilot, the live trade feed, /launches, and Coin Intelligence.
 
@@ -2903,7 +2903,7 @@ The autonomous-trading and launch-intelligence stack. Surfaces: /agi (The AGI, n
 
 ## Markets Data & News
 
-A full CoinGecko-class market data and news wing, all free and keyless. Surfaces: /markets (the hub — live global stats, top-100 table, breaking news, hero links to every tool); /coins (global market index with market cap, dominance, Fear & Greed, sparklines, plus a real-time liquidations pulse strip streaming long/short pain from Binance, Bybit, and OKX) and /coin/:id (rich per-coin detail: interactive chart, stats grid, related news, links); /heatmap (market-cap-sized treemap colored by 24h/7d moves); /fear-greed (the index on a gauge with full history); /gas (live Ethereum gas tiers with USD cost estimates, straight from the chain); /compare (up to four coins head-to-head with normalized performance overlay, shareable by URL); /screener (top-250 screener with live filters and sortable columns); /categories (every crypto sector ranked by market cap); /exchanges (top exchanges by trust score and volume); /derivatives (live perp markets — funding, open interest, volume); /converter (crypto⇄crypto⇄fiat at live rates); /defi (TVL and top protocols from DeFiLlama); /chains (blockchain TVL leaderboard); /stablecoins (market cap, peg health, backing mechanism); /markets/news (live news aggregated natively from 192 publisher feeds with category tabs, search, and sentiment); /markets/news/article (rich reader with server-side extraction, AI summary, key points, detected tickers, related coverage); /markets/archive (the largest open crypto-news archive — 662,000+ enriched articles from September 2017 to today, English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language).
+A full CoinGecko-class market data and news wing, all free and keyless. Surfaces: /markets (the hub: live global stats, top-100 table, breaking news, hero links to every tool); /coins (global market index with market cap, dominance, Fear & Greed, sparklines, plus a real-time liquidations pulse strip streaming long/short pain from Binance, Bybit, and OKX) and /coin/:id (rich per-coin detail: interactive chart, stats grid, related news, links); /heatmap (market-cap-sized treemap colored by 24h/7d moves); /fear-greed (the index on a gauge with full history); /gas (live Ethereum gas tiers with USD cost estimates, straight from the chain); /compare (up to four coins head-to-head with normalized performance overlay, shareable by URL); /screener (top-250 screener with live filters and sortable columns); /categories (every crypto sector ranked by market cap); /exchanges (top exchanges by trust score and volume); /derivatives (live perp markets: funding, open interest, volume); /converter (crypto⇄crypto⇄fiat at live rates); /defi (TVL and top protocols from DeFiLlama); /chains (blockchain TVL leaderboard); /stablecoins (market cap, peg health, backing mechanism); /markets/news (live news aggregated natively from 191 publisher feeds with category tabs, search, and sentiment); /markets/news/article (rich reader with server-side extraction, AI summary, key points, detected tickers, related coverage); /markets/archive (the largest open crypto-news archive: 662,000+ enriched articles from September 2017 to today, English and Chinese, searchable by keyword, ticker, source, sentiment, date, and language).
 
 **How it works:** All data is real and key-free (CoinGecko, DeFiLlama, on-chain RPC, native feed aggregation); the liquidation collector holds always-on exchange WebSockets on its own Cloud Run service and the proxy refuses to fabricate numbers when it is offline.
 

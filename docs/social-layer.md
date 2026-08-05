@@ -9,8 +9,8 @@ APIs, and how the pieces feed each other.
 
 There is no separate "social events" database to drift out of sync. The feed,
 portfolios, rankings, and search all read from the same records the rest of
-the platform already writes (`forge_creations`, `dioramas`, `pump_agent_mints`,
-`user_follows`, `walk_metrics`).
+the platform already writes (`forge_creations`, `dioramas`, `material_restyles`,
+`pump_agent_mints`, `user_follows`, `walk_metrics`).
 
 | Piece | Page | API |
 |---|---|---|
@@ -53,15 +53,19 @@ GET /api/users/me/feed?scope=following|all&limit=30&before=<iso>
   last item's `created_at` back for infinite scroll).
 
 Every item is
-`{ kind, id, created_at, actor, title, subtitle?, href, image?, external?, isRemix? }`
+`{ kind, id, created_at, actor, title, subtitle?, href, image?, external?, isRemix?, isVariant? }`
 where `actor` is `{ username, display_name, avatar_url }`. Items of
-`kind: "follow"` additionally carry a `target` shaped like `actor`.
+`kind: "follow"` additionally carry a `target` shaped like `actor`; `isRemix`
+marks a model forged from another creation, `isVariant` a restyle that is a
+seeded colorway fan-out rather than an instructed restyle.
 `actor.username` is `null` for creations made while signed out; the client
 renders those without a profile link rather than inventing one.
 
-Item kinds: avatar, agent, coin, model, and world creations, plus `follow`
-events. They are merged live from `forge_creations`, `dioramas`, and
-`user_follows` at read time.
+Item kinds: avatar, agent, coin, model, world, and restyle creations, plus
+`follow` events. They are merged live from `forge_creations`, `dioramas`,
+`material_restyles`, and `user_follows` at read time (the restyle and follow
+queries are fail-soft, so a deployment without those migrations still serves
+a feed).
 
 > Source: [api/users/me/feed.js](../api/users/me/feed.js). Not to be confused
 > with `GET /api/feed`, the public Money Pulse ticker backed by Redis; see
@@ -125,10 +129,11 @@ PUT   /api/notifications/preferences   → update it
 
 Preferences are a category × channel matrix
 ([api/_lib/notify-prefs.js](../api/_lib/notify-prefs.js)): categories are
-sales, purchases, social, IRL, market, and account; channels are `in_app`,
-`push`, `email`, and `telegram`. The in-app channel is always on (the bell
-never goes silent); the other channels are per-category opt-outs, edited from
-the Notifications panel in `/dashboard/settings`
+sales, purchases, social, IRL, market alerts, creations, and account &
+security; channels are `in_app`, `push`, `email`, and `telegram`. Every
+channel is a per-category toggle (`in_app` defaults on everywhere, and is
+locked on for account & security so the bell record of security events never
+goes silent), edited from the Notifications panel in `/dashboard/settings`
 ([src/dashboard-next/pages/settings.js](../src/dashboard-next/pages/settings.js)).
 Bell client: [src/notifications.js](../src/notifications.js).
 
@@ -198,10 +203,13 @@ other types deliberately do not get a fake Remix button.
 ## Onboarding tour: `/start`
 
 A self-referential guided tour that chains the platform's own surfaces:
-selfie-to-avatar → build a world → markets → create an agent (skippable) →
-your profile. The curriculum lives in
-[public/tour/curriculum.json](../public/tour/curriculum.json) (built by
-[scripts/build-tour.mjs](../scripts/build-tour.mjs)); the engine is
+welcome at `/start` → selfie-to-avatar → build a world → markets → launch a
+coin (optional, at `/create-agent`) → your profile. It is the hand-authored
+6-stop `onboarding` track of the site-wide Feature Tour: a 3D guide avatar
+walks the real pages and narrates each stop. The full curriculum in
+[public/tour/curriculum.json](../public/tour/curriculum.json) (three tracks:
+full, quick, onboarding) is generated from `data/pages.json` by
+[scripts/build-tour.mjs](../scripts/build-tour.mjs); the engine is
 [src/feature-tour/](../src/feature-tour/).
 
 First-visit targeting: `GET /api/me` returns `show_onboarding_tour`, backed by

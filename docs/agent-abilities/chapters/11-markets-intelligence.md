@@ -2,7 +2,7 @@
 
 The data layer agents and their owners trade on: live markets, news, scoring oracles, liquidations, and sentiment.
 
-three.ws pairs a full general-crypto markets surface (CoinGecko-grade prices, a native 192-feed news aggregator with a 662k-article archive, real-time exchange liquidation streams) with pump.fun-native intelligence: the Oracle conviction engine that scores every launch 0-100 within seconds, a coin-intelligence radar, the platform's own /launches directory, and live PumpPortal feeds that even drive 3D avatar reactions. Everything runs on real, mostly keyless data sources — CoinGecko, alternative.me, public Ethereum RPCs, Binance/Bybit/OKX futures WebSockets, publisher RSS feeds, the pump.fun firehose — with a hard no-fabricated-data policy (surfaces degrade to designed offline states rather than fake numbers).
+three.ws pairs a full general-crypto markets surface (CoinGecko-grade prices, a native 191-feed news aggregator with a 662k-article archive, real-time exchange liquidation streams) with pump.fun-native intelligence: the Oracle conviction engine that scores every launch 0-100 within seconds, a coin-intelligence radar, the platform's own /launches directory, and live PumpPortal feeds that even drive 3D avatar reactions. Everything runs on real, mostly keyless data sources (CoinGecko, alternative.me, public Ethereum RPCs, Binance/Bybit/OKX futures WebSockets, publisher RSS feeds, the pump.fun firehose) with a hard no-fabricated-data policy (surfaces degrade to designed offline states rather than fake numbers).
 
 ## /markets hub
 
@@ -14,15 +14,15 @@ The front door for all market surfaces: live global stats (total market cap, dom
 
 ## Crypto news wing (feed, reader, archive)
 
-Live news aggregated natively from 192 real publisher RSS/Atom feeds across 27 categories (CoinDesk, The Block, Decrypt, Cointelegraph, Blockworks, Bitcoin Magazine, and more, including 33 international feeds in 17 languages) with category tabs, search, per-article sentiment, and ticker chips; a rich article reader with server-side extraction, AI summary and key points (extractive fallback), and related coverage; plus the largest open crypto-news archive — 662,047 enriched articles from Sept 2017 to today, English + Chinese.
+Live news aggregated natively from 191 real publisher RSS/Atom feeds across 27 categories (CoinDesk, The Block, Decrypt, Cointelegraph, Blockworks, Bitcoin Magazine, and more, including 33 international feeds in 17 languages) with category tabs, search, per-article sentiment, and ticker chips; a rich article reader with server-side extraction, AI summary and key points (extractive fallback), and related coverage; plus the largest open crypto-news archive: 662,047 enriched articles from Sept 2017 to today, English + Chinese.
 
 **How it works:** /markets/news, /markets/news/article, /markets/archive backed by api/news/{feed,article,archive,rss}.js over api/_lib/news.js + api/_lib/news-sources.js; the archive corpus lives on gs://three-ws-news-archive (recovered from the cryptocurrency.cv aggregator, which three.ws now runs natively).
 
-**Why it matters:** Real-time and nine-years-deep crypto news in one place, readable without visiting 192 different publisher sites, with machine-friendly JSON and RSS.
+**Why it matters:** Real-time and nine-years-deep crypto news in one place, readable without visiting 191 different publisher sites, with machine-friendly JSON and RSS.
 
 ## Global markets index + coin detail pages
 
-A CoinGecko-style /coins index (global stats bar, sortable top-coins table with 7d sparklines, debounced full-catalog search, load-more paging) and a shareable /coin/:id detail page per coin: interactive 24H-1Y chart with crosshair, market stats, related news, official links, and per-chain contract addresses. Also a live perpetual-futures view (price, funding rate, open interest per contract).
+A CoinGecko-style /coins index (global stats bar, sortable top-coins table with 7d sparklines, debounced full-catalog search, load-more paging) and a shareable /coin/:id detail page per coin: interactive 24H-1Y chart with crosshair (switchable between the native CoinGecko chart and TradingView, DexScreener, and GeckoTerminal views where the coin qualifies), market stats, related news, official links, and per-chain contract addresses. Also a live perpetual-futures view (price, funding rate, open interest per contract).
 
 **How it works:** pages/coins.html + src/coins-index.js and pages/coin.html + src/coin-page.js over api/coin/* (detail, ohlc, markets, news, global, derivatives) proxying CoinGecko via api/_lib/coingecko.js. :id accepts a CoinGecko slug OR a Solana mint; mint-shaped ids cross-link into Alpha Copilot, the live trade feed, /launches, and Coin Intelligence.
 
