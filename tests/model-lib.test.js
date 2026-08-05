@@ -90,13 +90,13 @@ describe('timeAgo', () => {
 
 describe('embedSnippet', () => {
 	it('builds a /viewer iframe with the glb url encoded', () => {
-		const html = embedSnippet('https://cdn.three.ws/x.glb', 'Barrel');
-		expect(html).toContain('https://three.ws/viewer?src=https%3A%2F%2Fcdn.three.ws%2Fx.glb');
+		const html = embedSnippet('https://three.ws/cdn/x.glb', 'Barrel');
+		expect(html).toContain('https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fx.glb');
 		expect(html).toContain('title="Barrel"');
 		expect(html).toContain('xr-spatial-tracking');
 	});
 	it('escapes hostile titles out of the attribute', () => {
-		const html = embedSnippet('https://cdn.three.ws/x.glb', '"><script>alert(1)</script>');
+		const html = embedSnippet('https://three.ws/cdn/x.glb', '"><script>alert(1)</script>');
 		expect(html).not.toContain('"><script>');
 	});
 });

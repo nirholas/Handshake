@@ -145,7 +145,7 @@ Routing recap (from `vercel.json`):
 - **Entry point:** `/avatar-studio` or `/create/studio` (create from `default.glb`); `?edit=<id>` reloads a saved avatar.
 - **Prerequisites / gates:** Anyone can build/preview from the base template. **Saving requires sign-in** (so it persists to the account). No $THREE gate. This is the *upstream* builder — the avatar it produces becomes selectable in Widget Studio and embeddable via the SharePanel/embed modals.
 - **Steps (7):**
-  1. Page boots → loads `BASE_GLB_URL` (`/avatars/default.glb`) into a `TalkScene` viewport with idle breathing/blinking; accessory presets load. In create mode a **Base switcher** offers Stylized (the default RPM-style body) or Parametric (`/avatars/parametric-base.glb`, a CC0 MakeHuman-derived base with ~120 identity morph sliders); Color/Layers panels adapt to the loaded base (dead slots hide).
+  1. Page boots → loads `BASE_GLB_URL` (`/avatars/default.glb`) into a `TalkScene` viewport with idle breathing/blinking; accessory presets load. In create mode a **Base switcher** offers Stylized (the default stylized humanoid body) or Parametric (`/avatars/parametric-base.glb`, a CC0 MakeHuman-derived base with ~120 identity morph sliders); Color/Layers panels adapt to the loaded base (dead slots hide).
   2. `(optional)` In **edit mode** (`?edit=<id>`) the saved appearance (colors/morphs/accessories/hidden layers) is hydrated onto the model.
   3. **Customize**: switch tabs — Color (skin/hair/outfit swatches + hex), Hats, Glasses, Earrings (accessory presets), Face (sculpt morphs). Each change applies live to the scene graph; `(optional)` undo/redo (history up to 50).
   4. `(optional)` Show/hide garment layers; `(optional)` search accessories.
