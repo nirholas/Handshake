@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-08-05
+
+- **The press kit gains a full-length bio**: The press page at three.ws/press now carries a fourth approved description: a full bio of about 330 words that opens with the tagline 'The 3D agent layer of the internet.' It walks through what the platform does end to end, from prompt-to-character generation through the agent runtime, on-chain identity on Solana, x402 payments, and the embeddable web component, and it has its own copy button like the shorter boilerplate. Anyone writing a profile, a conference programme, or a directory listing can now quote a long description without stitching one together from the shorter blurbs. (`/press`) `[docs, improvement]`
+
 ## 2026-08-04
 
 - **Docs · IBM Community post catalog** (`/docs/ibm-community`): The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.

@@ -1,6 +1,6 @@
 # Press kit
 
-Everything a journalist, analyst, conference organiser, or partner needs to write about three.ws: the marks, the announcement graphics, approved boilerplate at three lengths, the fast facts, and the rules that govern all of it.
+Everything a journalist, analyst, conference organiser, or partner needs to write about three.ws: the marks, the announcement graphics, approved boilerplate at four lengths, the fast facts, and the rules that govern all of it.
 
 The live kit is at `three.ws/press`. Every asset there is downloadable without asking anyone, and **editorial use needs no permission**: coverage, reviews, conference programmes, and partner materials are all covered. Anything beyond editorial use goes to **partnerships@three.ws**.
 
@@ -81,7 +81,7 @@ These are the five rules as `/press` states them.
 
 ## Boilerplate
 
-Approved descriptions at three lengths. Copy them verbatim; they are written to be quoted. The page has a copy button for each.
+Approved descriptions at four lengths. Copy them verbatim; they are written to be quoted. The page has a copy button for each.
 
 **One line**
 
@@ -94,6 +94,20 @@ Approved descriptions at three lengths. Copy them verbatim; they are written to 
 **Long, about 100 words**
 
 > three.ws is an open-source platform for 3D AI agents. It turns a text prompt into a rigged, animation-ready 3D character, gives that character an on-chain identity and a payment rail, and embeds it into any website or assistant with a single tag. The free 3D generation lane requires no account, no API key, and no payment. Assistants reach the same tools over MCP: three.ws is an OpenAI Select Partner, and its 3D Studio connector gives ChatGPT nine keyless tools that generate, rig, animate, and place models in AR, rendered inline in the conversation. The viewer, the runtime, and the embeddable web component are open source.
+
+**Full bio, about 330 words**
+
+> **The 3D agent layer of the internet.**
+>
+> three.ws is an open-source platform that gives AI a body. It turns a text prompt, a few photos, or a sketch into a textured, rigged, animation-ready 3D character; gives that character a mind, a voice, an on-chain identity, and a payment rail; and embeds the result into any website, app, or AI assistant with a single tag. The free 3D generation lane requires no account, no API key, and no payment.
+>
+> Every avatar is a full agent, not a static model. The runtime wraps the character around an LLM brain that listens, speaks with real-time lip-sync, gestures, remembers, and expresses emotion through the model's face and posture, live in the browser with nothing to install. Any humanoid rig works: the animation system retargets a shared motion library onto whatever skeleton a model arrives with.
+>
+> Agents on three.ws are economic actors. Each one can hold an on-chain identity on Solana, the platform's home chain, carry a wallet and a human-readable name, and pay or get paid by other agents per API call over x402, the HTTP 402 payment standard. The platform coin, $THREE, lives on Solana.
+>
+> Distribution is the point. A finished agent ships as the `<agent-3d>` web component that drops into any page, and every generation and animation tool is reachable by AI assistants over MCP. three.ws is an OpenAI Select Partner, and its 3D Studio connector gives ChatGPT nine keyless tools that generate, rig, animate, and place 3D models in AR, rendered inline in the conversation. It is also a member of NVIDIA Inception.
+>
+> The viewer, the agent runtime, and the web component are open source at github.com/nirholas/three.ws, and every release ships to the public changelog at three.ws/changelog. The goal is simple: as the internet gains an agent-native, three-dimensional layer, three.ws is the infrastructure it runs on.
 
 ---
 

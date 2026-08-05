@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-08-04T23:30:41.868Z",
+	"generated_at": "2026-08-05T05:31:58.637Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-05",
+			"type": "update",
+			"title": "The press kit gains a full-length bio",
+			"summary": "The press page at three.ws/press now carries a fourth approved description: a full bio of about 330 words that opens with the tagline 'The 3D agent layer of the internet.' It walks through what the platform does end to end, from prompt-to-character generation through the agent runtime, on-chain identity on Solana, x402 payments, and the embeddable web component, and it has its own copy button like the shorter boilerplate. Anyone writing a profile, a conference programme, or a directory listing can now quote a long description without stitching one together from the shorter blurbs.",
+			"link": "/press",
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-08-04",
 			"type": "launch",

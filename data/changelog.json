@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-05",
+			"title": "The press kit gains a full-length bio",
+			"summary": "The press page at three.ws/press now carries a fourth approved description: a full bio of about 330 words that opens with the tagline 'The 3D agent layer of the internet.' It walks through what the platform does end to end, from prompt-to-character generation through the agent runtime, on-chain identity on Solana, x402 payments, and the embeddable web component, and it has its own copy button like the shorter boilerplate. Anyone writing a profile, a conference programme, or a directory listing can now quote a long description without stitching one together from the shorter blurbs.",
+			"tags": [
+				"docs",
+				"improvement"
+			],
+			"link": "/press"
+		},
+		{
 			"date": "2026-08-04",
 			"title": "AWS published a builder's guide to the agentic economy built on the three.ws stack",
 			"summary": "AWS Strategic Partnerships published a long technical guide to the agentic economy on the AWS Builder Center, and it uses three.ws as its worked example from end to end: the x402 payment handshake, the MCP servers, agent-to-agent payments, on-chain agent identity and skill licenses, agent tokens, and 3D embodiment. This one was written by AWS rather than by us, which makes it the strongest outside evidence yet that the integration is real. It is now indexed on the site with its own news page, and the AWS writing index has a new section separating articles AWS wrote about us from the ones we published ourselves.",
