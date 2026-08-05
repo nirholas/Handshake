@@ -7,22 +7,22 @@
 	{
 		"pattern": "source: 'avaturn'",
 		"file": "*",
-		"reason": "Internal postMessage source value — required to match photo-pipeline iframe protocol, never shown to end users."
+		"reason": "Internal postMessage source value \u2014 required to match photo-pipeline iframe protocol, never shown to end users."
 	},
 	{
 		"pattern": "source: 'characterstudio'",
 		"file": "*",
-		"reason": "Internal postMessage source value — required to match avatar builder iframe protocol, never shown to end users."
+		"reason": "Internal postMessage source value \u2014 required to match avatar builder iframe protocol, never shown to end users."
 	},
 	{
 		"pattern": "source !== 'avaturn'",
 		"file": "*",
-		"reason": "Internal postMessage source guard — same protocol concern as above."
+		"reason": "Internal postMessage source guard \u2014 same protocol concern as above."
 	},
 	{
 		"pattern": "from '@avaturn/sdk'",
 		"file": "*",
-		"reason": "Vendor npm package import — three.ws renames the public symbol but the dependency identifier is fixed by npm."
+		"reason": "Vendor npm package import \u2014 three.ws renames the public symbol but the dependency identifier is fixed by npm."
 	},
 	{
 		"pattern": "'@avaturn/sdk'",
@@ -32,77 +32,77 @@
 	{
 		"pattern": "'/avaturn-",
 		"file": "*",
-		"reason": "Internal API route path (e.g. /avaturn-session) — server-side only, not surfaced in UI copy."
+		"reason": "Internal API route path (e.g. /avaturn-session) \u2014 server-side only, not surfaced in UI copy."
 	},
 	{
 		"pattern": "/avaturn-session",
 		"file": "*",
-		"reason": "Internal API route path — server-side only."
+		"reason": "Internal API route path \u2014 server-side only."
 	},
 	{
 		"pattern": "AVATURN_API_KEY",
 		"file": "*",
-		"reason": "Environment variable identifier — technical name, not user-facing copy."
+		"reason": "Environment variable identifier \u2014 technical name, not user-facing copy."
 	},
 	{
 		"pattern": "AVATURN_API_URL",
 		"file": "*",
-		"reason": "Environment variable identifier — technical name, not user-facing copy."
+		"reason": "Environment variable identifier \u2014 technical name, not user-facing copy."
 	},
 	{
 		"pattern": "VITE_AVATURN_EDITOR_URL",
 		"file": "*",
-		"reason": "Environment variable identifier — technical name, not user-facing copy."
+		"reason": "Environment variable identifier \u2014 technical name, not user-facing copy."
 	},
 	{
 		"pattern": "VITE_AVATURN_DEVELOPER_ID",
 		"file": "*",
-		"reason": "Environment variable identifier — technical name, not user-facing copy."
+		"reason": "Environment variable identifier \u2014 technical name, not user-facing copy."
 	},
 	{
 		"pattern": "VITE_CHARACTER_STUDIO_URL",
 		"file": "*",
-		"reason": "Environment variable identifier — technical name, not user-facing copy."
+		"reason": "Environment variable identifier \u2014 technical name, not user-facing copy."
 	},
 	{
 		"pattern": "m3-org/CharacterStudio",
 		"file": "*",
-		"reason": "Upstream open-source project attribution — GitHub repo reference required for MIT attribution."
+		"reason": "Upstream open-source project attribution \u2014 GitHub repo reference required for MIT attribution."
 	},
 	{
 		"pattern": "M3-org/CharacterStudio",
 		"file": "*",
-		"reason": "Upstream open-source project attribution — GitHub repo reference required for MIT attribution."
+		"reason": "Upstream open-source project attribution \u2014 GitHub repo reference required for MIT attribution."
 	},
 	{
 		"pattern": "avaturn-client.js",
 		"file": "*",
-		"reason": "Internal source file name reference — technical identifier."
+		"reason": "Internal source file name reference \u2014 technical identifier."
 	},
 	{
 		"pattern": "avaturn-session",
 		"file": "*",
-		"reason": "Internal API route segment — server-side only."
+		"reason": "Internal API route segment \u2014 server-side only."
 	},
 	{
 		"pattern": "api.avaturn.me",
 		"file": "*",
-		"reason": "Runtime API endpoint URL — required for photo pipeline integration, not user-facing brand copy."
+		"reason": "Runtime API endpoint URL \u2014 required for photo pipeline integration, not user-facing brand copy."
 	},
 	{
 		"pattern": "editor.avaturn.me",
 		"file": "*",
-		"reason": "Runtime editor endpoint URL — required for photo pipeline integration, not user-facing brand copy."
+		"reason": "Runtime editor endpoint URL \u2014 required for photo pipeline integration, not user-facing brand copy."
 	},
 	{
 		"pattern": "developer.avaturn.me",
 		"file": "*",
-		"reason": "Developer portal URL — required for SDK key signup instructions."
+		"reason": "Developer portal URL \u2014 required for SDK key signup instructions."
 	},
 	{
 		"pattern": "@avaturn/sdk",
 		"file": "*",
-		"reason": "npm package identifier — cannot be renamed, fixed by the upstream package."
+		"reason": "npm package identifier \u2014 cannot be renamed, fixed by the upstream package."
 	},
 	{
 		"pattern": "avaturn.me/developer",
@@ -112,12 +112,12 @@
 	{
 		"pattern": "Avaturn",
 		"file": "docs/avatar-creation.md",
-		"reason": "Integration documentation describing the photo-to-avatar pipeline — vendor name required to identify the integration the doc explains."
+		"reason": "Integration documentation describing the photo-to-avatar pipeline \u2014 vendor name required to identify the integration the doc explains."
 	},
 	{
 		"pattern": "Avaturn",
 		"file": "public/docs/avatar-creation.md",
-		"reason": "Public mirror of the integration documentation — same scope as docs/avatar-creation.md."
+		"reason": "Public mirror of the integration documentation \u2014 same scope as docs/avatar-creation.md."
 	},
 	{
 		"pattern": "Avaturn",
@@ -137,7 +137,7 @@
 	{
 		"pattern": "Avaturn",
 		"file": "docs/club/PLAN.md",
-		"reason": "Internal planning doc — references the upstream skeleton the animation system standardised on."
+		"reason": "Internal planning doc \u2014 references the upstream skeleton the animation system standardised on."
 	},
 	{
 		"pattern": "Avaturn",
@@ -147,17 +147,17 @@
 	{
 		"pattern": "Avaturn",
 		"file": "docs/internal/api-inventory.md",
-		"reason": "Internal API inventory — describes which routes delegate to the upstream photo pipeline."
+		"reason": "Internal API inventory \u2014 describes which routes delegate to the upstream photo pipeline."
 	},
 	{
 		"pattern": "Avaturn",
 		"file": "docs/agent-fixes/fix-avaturn-api-key.md",
-		"reason": "Internal remediation guide for restoring the AVATURN_API_KEY env var — the vendor name identifies the integration being fixed."
+		"reason": "Internal remediation guide for restoring the AVATURN_API_KEY env var \u2014 the vendor name identifies the integration being fixed."
 	},
 	{
 		"pattern": "avaturn",
 		"file": "docs/agent-fixes/fix-avaturn-api-key.md",
-		"reason": "Same remediation guide — lowercase appears in inline code samples and the avaturn-session route name."
+		"reason": "Same remediation guide \u2014 lowercase appears in inline code samples and the avaturn-session route name."
 	},
 	{
 		"pattern": "Avaturn",
@@ -172,12 +172,12 @@
 	{
 		"pattern": "Avaturn",
 		"file": "public/docs/tutorials/getting-started.md",
-		"reason": "Tutorial link to the photo-pipeline integration page — the vendor name identifies the route."
+		"reason": "Tutorial link to the photo-pipeline integration page \u2014 the vendor name identifies the route."
 	},
 	{
 		"pattern": "Avaturn",
 		"file": "src/avaturn-client.js",
-		"reason": "JSDoc on the dedicated photo-pipeline client module — the brand identifies the upstream protocol being wrapped."
+		"reason": "JSDoc on the dedicated photo-pipeline client module \u2014 the brand identifies the upstream protocol being wrapped."
 	},
 	{
 		"pattern": "Avaturn",
@@ -187,17 +187,17 @@
 	{
 		"pattern": "Avaturn",
 		"file": "avatar-sdk/README.md",
-		"reason": "SDK README — describes which upstream pipelines the bundled creator wraps."
+		"reason": "SDK README \u2014 describes which upstream pipelines the bundled creator wraps."
 	},
 	{
 		"pattern": "Avaturn",
 		"file": "avatar-sdk/types/creator.d.ts",
-		"reason": "Public type — the session URL field name maps to the upstream photo-pipeline protocol."
+		"reason": "Public type \u2014 the session URL field name maps to the upstream photo-pipeline protocol."
 	},
 	{
 		"pattern": "avaturnSessionUrl",
 		"file": "avatar-sdk/types/creator.d.ts",
-		"reason": "Public type field name — fixed by the upstream protocol the SDK wraps."
+		"reason": "Public type field name \u2014 fixed by the upstream protocol the SDK wraps."
 	},
 	{
 		"pattern": "Character Studio",
@@ -247,7 +247,7 @@
 	{
 		"pattern": "Character Studio",
 		"file": "docs/character-studio.md",
-		"reason": "Dedicated documentation for the bundled in-browser avatar builder — the proper name is the page title."
+		"reason": "Dedicated documentation for the bundled in-browser avatar builder \u2014 the proper name is the page title."
 	},
 	{
 		"pattern": "Character Studio",
@@ -292,7 +292,7 @@
 	{
 		"pattern": "Character Studio",
 		"file": "avatar-sdk/README.md",
-		"reason": "SDK README — describes which builder is bundled."
+		"reason": "SDK README \u2014 describes which builder is bundled."
 	},
 	{
 		"pattern": "Character Studio",
@@ -302,7 +302,7 @@
 	{
 		"pattern": "CharacterStudio",
 		"file": "public/demo/avatar-os/index.html",
-		"reason": "Internal research demo embedding the open-source @m3-org/characterstudio package — package identifier is technical."
+		"reason": "Internal research demo embedding the open-source @m3-org/characterstudio package \u2014 package identifier is technical."
 	},
 	{
 		"pattern": "CharacterStudio",
@@ -312,12 +312,12 @@
 	{
 		"pattern": "characterstudio",
 		"file": "*",
-		"reason": "Lowercase identifier appears in npm package names (@m3-org/characterstudio), iframe postMessage source values, and config env vars — all internal protocol surfaces."
+		"reason": "Lowercase identifier appears in npm package names (@m3-org/characterstudio), iframe postMessage source values, and config env vars \u2014 all internal protocol surfaces."
 	},
 	{
 		"pattern": "Ready Player Me",
 		"file": "avatar-sdk/README.md",
-		"reason": "SDK README explains the project is a drop-in replacement for the now-acquired upstream SDK — historical comparison is the reader's reason for reading."
+		"reason": "SDK README explains the project is a drop-in replacement for the now-acquired upstream SDK \u2014 historical comparison is the reader's reason for reading."
 	},
 	{
 		"pattern": "Ready Player Me",
@@ -332,62 +332,62 @@
 	{
 		"pattern": "RPM",
 		"file": "avatar-sdk/README.md",
-		"reason": "SDK README — same context as the Ready Player Me reference above; abbreviation appears alongside the full name."
+		"reason": "SDK README \u2014 same context as the Ready Player Me reference above; abbreviation appears alongside the full name."
 	},
 	{
 		"pattern": "Ready Player Me",
 		"file": "pages/import-rpm.html",
-		"reason": "Migration page for users coming from Ready Player Me — the brand name is required to identify the importer's purpose. RPM shut down Jan 2026; this page captures their stranded users."
+		"reason": "Migration page for users coming from Ready Player Me \u2014 the brand name is required to identify the importer's purpose. RPM shut down Jan 2026; this page captures their stranded users."
 	},
 	{
 		"pattern": "readyplayer.me",
 		"file": "pages/import-rpm.html",
-		"reason": "Same migration page — references the now-offline upstream domain so users recognise their old avatar URLs."
+		"reason": "Same migration page \u2014 references the now-offline upstream domain so users recognise their old avatar URLs."
 	},
 	{
 		"pattern": "RPM",
 		"file": "pages/import-rpm.html",
-		"reason": "Same migration page — abbreviation appears in form labels, placeholders, and instructions so users know they're in the right importer."
+		"reason": "Same migration page \u2014 abbreviation appears in form labels, placeholders, and instructions so users know they're in the right importer."
 	},
 	{
 		"pattern": "Ready Player Me",
 		"file": "pages/create.html",
-		"reason": "Single line linking ex-RPM users to the importer at /import/rpm — required for discoverability of the migration page."
+		"reason": "Single line linking ex-RPM users to the importer at /import/rpm \u2014 required for discoverability of the migration page."
 	},
 	{
 		"pattern": "RPM",
 		"file": "pages/create.html",
-		"reason": "Same single-line RPM importer entry point on /create — the abbreviation appears in the link text."
+		"reason": "Same single-line RPM importer entry point on /create \u2014 the abbreviation appears in the link text."
 	},
 	{
 		"pattern": "Avaturn",
 		"file": "docs/internal/ISSUES-ARCHIVE-2026-05.md",
-		"reason": "Closed-issue archive — historical record of a rejected Avaturn integration (status: NOT USING / CLOSED); not surfaced in any live product UI."
+		"reason": "Closed-issue archive \u2014 historical record of a rejected Avaturn integration (status: NOT USING / CLOSED); not surfaced in any live product UI."
 	},
 	{
 		"pattern": "avaturn-api-key",
 		"file": "docs/internal/ISSUES-ARCHIVE-2026-05.md",
-		"reason": "Closed-issue archive — references the internal remediation-guide filename (fix-avaturn-api-key.md); not user-facing copy."
+		"reason": "Closed-issue archive \u2014 references the internal remediation-guide filename (fix-avaturn-api-key.md); not user-facing copy."
 	},
 	{
 		"pattern": "character-studio/eslint.config.mjs",
 		"file": "docs/internal/ISSUES-ARCHIVE-2026-05.md",
-		"reason": "Closed-issue archive — technical context note about the character-studio eslint migration; not user-facing copy."
+		"reason": "Closed-issue archive \u2014 technical context note about the character-studio eslint migration; not user-facing copy."
 	},
 	{
 		"pattern": "readyplayerme.glb",
 		"file": "public/demos-embed/selfie.html",
-		"reason": "Hosted GLB asset filename for a 3D avatar in the embed demo — the asset name is a legacy identifier, not visible UI copy."
+		"reason": "Hosted GLB asset filename for a 3D avatar in the embed demo \u2014 the asset name is a legacy identifier, not visible UI copy."
 	},
 	{
 		"pattern": "M3-org/CharacterStudio",
 		"file": "docs/character-studio.md",
-		"reason": "Required MIT upstream attribution — the Avatar Studio builder is a fork of github.com/M3-org/CharacterStudio; the GitHub repo reference must be preserved."
+		"reason": "Required MIT upstream attribution \u2014 the Avatar Studio builder is a fork of github.com/M3-org/CharacterStudio; the GitHub repo reference must be preserved."
 	},
 	{
 		"pattern": "characterstudio-docs",
 		"file": "docs/character-studio.md",
-		"reason": "Required MIT upstream attribution — link to the upstream CharacterStudio asset-authoring docs (m3-org.github.io/characterstudio-docs); preserved so contributors can find the original vertex/UV conventions."
+		"reason": "Required MIT upstream attribution \u2014 link to the upstream CharacterStudio asset-authoring docs (m3-org.github.io/characterstudio-docs); preserved so contributors can find the original vertex/UV conventions."
 	},
 	{
 		"pattern": "CharacterStudio",
@@ -397,12 +397,12 @@
 	{
 		"pattern": "Mixamo, Avaturn, Unreal",
 		"file": "docs/avatar-pipeline.md",
-		"reason": "Factual list of third-party rig-name conventions glb-canonicalize.js recognizes (Mixamo, Avaturn, Unreal, VRM, Daz, MakeHuman, ...) — interoperability documentation, not brand promotion."
+		"reason": "Factual list of third-party rig-name conventions glb-canonicalize.js recognizes (Mixamo, Avaturn, Unreal, VRM, Daz, MakeHuman, ...) \u2014 interoperability documentation, not brand promotion."
 	},
 	{
 		"pattern": "avaturn_seed",
 		"file": "docs/ops/runtime-flags.md",
-		"reason": "Literal runtime flag key `avaturn_seed` (with its `AVATURN_SEED_ENABLED` env fallback and avaturn-seed-cron.js path) in ops code samples and the flags table — technical identifiers, not user-facing brand copy."
+		"reason": "Literal runtime flag key `avaturn_seed` (with its `AVATURN_SEED_ENABLED` env fallback and avaturn-seed-cron.js path) in ops code samples and the flags table \u2014 technical identifiers, not user-facing brand copy."
 	},
 	{
 		"pattern": "Avaturn",
@@ -498,5 +498,20 @@
 		"pattern": "| Ready Player Me | `Wolf3D_*` mesh nodes over a Mixamo skeleton | `rpm` |",
 		"file": "docs/rig-doctor.md",
 		"reason": "Fingerprint table row documenting the detector's literal `rpm` output value."
+	},
+	{
+		"pattern": "MakeHuman, Avaturn, custom Blender rigs",
+		"file": "docs/ibm-community-article.md",
+		"reason": "Verbatim record of a blog post already published on IBM Community; the sentence lists third-party rig ecosystems the canonicalizer supports, which is factual interop reference, not product copy. Editing the archive would make it diverge from the live post."
+	},
+	{
+		"pattern": "Mixamo, Avaturn, VRM/VRoid, Daz",
+		"file": "docs/ibm-community-thread.md",
+		"reason": "Verbatim record of a discussion thread already published on IBM Community; same factual rig-ecosystem listing as the article entry above."
+	},
+	{
+		"pattern": "a full character studio",
+		"file": "docs/ibm-community-thread.md",
+		"reason": "Verbatim record of a published IBM Community thread; 'character studio' is used generically (lowercase feature description), and the archive must match the live post."
 	}
 ]
