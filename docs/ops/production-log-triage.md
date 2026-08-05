@@ -26,6 +26,11 @@ var or add quota · 🟢 self-healing, no action needed.
 > plan; agents run the loop via the `/gcp-triage` skill. When you document a
 > new signature here, also add it to `KNOWN_SIGNATURES` in
 > [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs).
+> For the whole-surface answer to "what's wrong with three.ws?", run
+> `npm run triage:gcp:deep`: on top of the log sweep it probes the deployed
+> version, TLS expiry, fleet revision readiness, every advertised page on the
+> live site, cron drift and liveness, pending DB migrations, service-wallet
+> floors, and custodial-key health, all read-only and concurrent.
 
 > **You no longer need a log export to see most of this.** The platform now
 > self-reports internal-dependency health: **[/status](https://three.ws/status)**

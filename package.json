@@ -190,6 +190,7 @@
 		"gpu": "node scripts/gpu-capacity.mjs",
 		"logs:errors": "node scripts/gcp-logs.mjs --all --errors --since 6h",
 		"triage:gcp": "node scripts/gcp-triage.mjs",
+		"triage:gcp:deep": "node scripts/gcp-triage.mjs --deep --since 6h",
 		"snapshot": "node scripts/page-snapshot.mjs",
 		"build:news": "node scripts/build-news.mjs",
 		"prebuild": "node scripts/copy-three-decoders.mjs && (node scripts/build-news.mjs & node scripts/build-skill-metadata.mjs & node scripts/build-local-skill-packs.mjs & node scripts/build-discovery-cards.mjs & node scripts/build-guards.mjs & node scripts/build-atlas-index.mjs & node scripts/build-mcp-catalog.mjs & npm run build:examples & npm run build:docs-search & npm run build:club-assets & npm run build:walk-environments & wait) && node scripts/inject-blog-seo.mjs --write && node scripts/inject-hidden-guard.mjs --write && (node scripts/build-page-index.mjs && node scripts/audit-page-index.mjs --strict && node scripts/audit-empty-handlers.mjs && node scripts/audit-hidden-guard.mjs) && node scripts/i18n-annotate.mjs --apply --pages=\"public/news/*.html\" && node scripts/inject-seo-meta.mjs --write && node scripts/inject-theme-boot.mjs --write",

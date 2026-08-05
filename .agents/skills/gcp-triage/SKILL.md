@@ -1,6 +1,6 @@
 ---
 name: gcp-triage
-description: Monitor three.ws production on Google Cloud Run and fix what the sweep finds. Use when the user asks to check production, diagnose an outage or error, "what's wrong with three.ws", read production logs, or run the monitoring loop. Runs the triage monitor (healthz + all-service log sweep + known-signature classification), then applies the fixes each class allows.
+description: Monitor three.ws production on Google Cloud Run and fix what the sweep finds. Use when the user asks to check production, diagnose an outage or error, "what's wrong with three.ws", read production logs, or run the monitoring loop. Broad questions get the deep sweep (healthz + all-service logs + version, TLS, fleet readiness, live pages, crons, DB migrations, wallets), then the fixes each class allows.
 when_to_use: Production health checks, log diagnosis, error triage, and the recurring monitor-and-fix loop. For a raw log view only, `npm run logs` is enough without this skill.
 license: MIT
 metadata:
@@ -18,11 +18,21 @@ gcloud is already authenticated in this workspace.
 
 ## Step 1: run the monitor
 
+When the user asks "what's wrong with three.ws?" (or anything equally broad),
+run the DEEP sweep; it checks everything, not just what happened to log:
+
 ```sh
-npm run triage:gcp -- --json --since 1h   # agents: always --json
+npm run triage:gcp -- --json --deep --since 6h   # agents: always --json
 ```
 
-It merges three signals and classifies every distinct problem signature:
+For a quick pulse check mid-incident, the fast form is still fine:
+
+```sh
+npm run triage:gcp -- --json --since 1h
+```
+
+The base monitor merges three signals and classifies every distinct problem
+signature:
 
 1. `https://three.ws/api/healthz`: the platform's own subsystem roll-up
    (database, cache, Helius, x402 ring, world, sniper).
@@ -30,9 +40,35 @@ It merges three signals and classifies every distinct problem signature:
    repeats group into one finding.
 3. HTTP request logs: 5xx groups per route, 429s.
 
+`--deep` adds nine concurrent read-only probes, each wrapping an existing
+standalone audit, normalized into the same findings stream:
+
+| probe | what it proves | wraps |
+|---|---|---|
+| `version` | `/api/version` answers; deployed commit is in local history; deploy lag counted | built-in |
+| `tls` | certs on three.ws + world.three.ws have >21 days left | built-in |
+| `fleet` | every Cloud Run service's latest revision is Ready | `gcloud run services list` |
+| `pages` | every page advertised in `data/pages.json` serves on the live site | `scripts/check-pages.mjs --base` |
+| `cron-drift` | vercel.json crons match live Cloud Scheduler jobs | `scripts/check-cron-drift.mjs` |
+| `cron-liveness` | every cron routes, resolves a handler, and loads | `scripts/audit-cron-liveness.mjs --static` |
+| `db-migrations` | no migration is pending against the database | `scripts/apply-migrations.mjs --check` |
+| `service-wallets` | signer wallets above SOL floors; advertised x402 keys match secrets | `scripts/audit-service-wallets.mjs` |
+| `custodial-keys` | no funded custodial wallet sits behind an undecryptable key | `scripts/audit-custodial-key-health.mjs` |
+
+A probe that cannot run becomes an `investigate` finding (a blind spot is not
+"healthy"); one skipped for missing local secrets is reported as skipped.
+`--skip pages,custodial-keys` drops probes when you must (e.g. re-running in a
+tight loop). The deep sweep takes a few minutes; that is the point.
+
 Exit 0 = healthy or self-healing noise only. Exit 1 = `findings[]` contains
 actionable items. Each finding carries `class`, `count`, `services`,
-`sample`, and a concrete `action`.
+`sample`, and a concrete `action`. Deep findings carry
+`signature: "deep-<probe>"`.
+
+Surfaces even the deep sweep does not cover, worth running when the complaint
+points at them: `npm run smoke:mcp` (remote MCP endpoints),
+`npm run smoke:x402-facilitator` (facilitator settles), `npm run audit:web`
+or `audit:web:login` (real-browser page audit with the QA account).
 
 ## Step 2: act per class, in this order
 

@@ -11,14 +11,43 @@
  *   npm run triage:gcp                 # human report, last hour
  *   npm run triage:gcp -- --since 6h   # wider window
  *   npm run triage:gcp -- --json       # machine-readable, for agents
+ *   npm run triage:gcp:deep            # EVERYTHING: logs + version, TLS,
+ *                                      # fleet, pages, crons, DB, wallets
+ *
+ * --deep layers nine read-only probes on top of the log sweep, each wrapping
+ * an existing standalone audit, so one command answers "what's wrong with
+ * three.ws?" across the whole surface instead of only what happened to log.
+ * --skip <id,id> drops individual probes (ids in DEEP_PROBE_IDS below).
  *
  * Exit codes: 0 = healthy or self-healing noise only; 1 = findings that need
  * action; 2 = usage error. Agents: run with --json, then follow the fix
  * playbook in .agents/skills/gcp-triage/SKILL.md.
  */
 
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import tls from 'node:tls';
 import { auditCapacity, recommend as recommendCapacity } from './gpu-capacity.mjs';
+
+// gcloud is required, but non-interactive shells in this workspace do not
+// always carry the SDK on PATH (.bashrc only appends it for interactive
+// shells). Resolve a known install and prepend it, so this script AND every
+// child audit the deep sweep spawns inherit a working gcloud.
+(function ensureGcloudOnPath() {
+	const dirs = (process.env.PATH || '').split(':');
+	if (dirs.some((d) => d && existsSync(`${d}/gcloud`))) return;
+	for (const dir of [
+		`${process.env.HOME}/google-cloud-sdk/bin`,
+		'/usr/lib/google-cloud-sdk/bin',
+		'/usr/local/google-cloud-sdk/bin',
+		'/opt/google-cloud-sdk/bin',
+	]) {
+		if (existsSync(`${dir}/gcloud`)) {
+			process.env.PATH = `${dir}:${process.env.PATH}`;
+			return;
+		}
+	}
+})();
 
 const PROJECT = process.env.GCP_PROJECT || 'aerial-vehicle-466722-p5';
 const HEALTHZ_URL = process.env.TRIAGE_HEALTHZ_URL || 'https://three.ws/api/healthz';
@@ -212,18 +241,26 @@ const KNOWN_HTTP_SIGNATURES = [
 	},
 ];
 
+const DEEP_PROBE_IDS = [
+	'version', 'tls', 'fleet', 'pages', 'cron-drift', 'cron-liveness',
+	'db-migrations', 'service-wallets', 'custodial-keys',
+];
+
 function parseArgs(argv) {
-	const opts = { since: '1h', json: false, limit: 1000, project: PROJECT };
+	const opts = { since: '1h', json: false, limit: 1000, project: PROJECT, deep: false, skip: [] };
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
 		const next = () => argv[++i];
 		switch (a) {
 			case '--since': opts.since = next(); break;
 			case '--json': opts.json = true; break;
+			case '--deep': opts.deep = true; break;
+			case '--skip': opts.skip = String(next() || '').split(',').map((s) => s.trim()).filter(Boolean); break;
 			case '-n': case '--limit': opts.limit = Number(next()); break;
 			case '--project': opts.project = next(); break;
 			case '-h': case '--help':
-				console.log('Usage: node scripts/gcp-triage.mjs [--since 1h] [--json] [--limit 1000] [--project <id>]');
+				console.log('Usage: node scripts/gcp-triage.mjs [--since 1h] [--json] [--deep] [--skip id,id] [--limit 1000] [--project <id>]');
+				console.log(`Deep probe ids: ${DEEP_PROBE_IDS.join(', ')}`);
 				process.exit(0);
 				break;
 			default:
@@ -233,6 +270,11 @@ function parseArgs(argv) {
 	}
 	if (!/^\d+[smhdw]$/.test(opts.since)) {
 		console.error(`--since must look like 30m, 2h, 1d (got "${opts.since}")`);
+		process.exit(2);
+	}
+	const badSkips = opts.skip.filter((s) => !DEEP_PROBE_IDS.includes(s));
+	if (badSkips.length) {
+		console.error(`Unknown --skip probe id(s): ${badSkips.join(', ')} (valid: ${DEEP_PROBE_IDS.join(', ')})`);
 		process.exit(2);
 	}
 	return opts;
@@ -270,7 +312,10 @@ function readLogs(opts) {
 		'--format=json',
 	], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
 	if (res.status !== 0) {
-		console.error((res.stderr || '').trim() || 'gcloud logging read failed');
+		const why = res.error?.message || (res.stderr || '').trim() || 'unknown error';
+		console.error(`gcloud logging read failed: ${why}`);
+		if (/ENOENT/.test(why)) console.error('gcloud is not installed at any known path; see ensureGcloudOnPath() in this script.');
+		if (/reauth|invalid_grant|credential/i.test(why)) console.error('gcloud auth has lapsed; only the owner can re-run `gcloud auth login` here.');
 		process.exit(1);
 	}
 	return JSON.parse(res.stdout || '[]');
@@ -411,10 +456,11 @@ export function buildFindings(entries) {
 		});
 	}
 
-	findings.sort((a, b) =>
-		(CLASS_ORDER[a.class] - CLASS_ORDER[b.class]) || (b.count - a.count));
-	return findings;
+	return sortFindings(findings);
 }
+
+const sortFindings = (arr) => arr.sort((a, b) =>
+	(CLASS_ORDER[a.class] - CLASS_ORDER[b.class]) || (b.count - a.count));
 
 const CLASS_BADGE = {
 	owner: '🔴 owner',
@@ -423,9 +469,11 @@ const CLASS_BADGE = {
 	'self-healing': '🟢 self-healing',
 };
 
-function renderReport({ opts, healthz, findings, scanned }) {
+const PROBE_BADGE = { ok: '✅', findings: '❗', skipped: '⏭️', error: '💥' };
+
+function renderReport({ opts, healthz, findings, scanned, deep }) {
 	const lines = [];
-	lines.push(`# gcp-triage: last ${opts.since}, project ${opts.project}`);
+	lines.push(`# gcp-triage: last ${opts.since}, project ${opts.project}${opts.deep ? ' (deep sweep)' : ''}`);
 	lines.push('');
 	if (!healthz.reachable) {
 		lines.push(`## Healthz: UNREACHABLE (${healthz.error}); treat as an outage: check the LB and three-ws-api first`);
@@ -436,6 +484,13 @@ function renderReport({ opts, healthz, findings, scanned }) {
 		}
 	}
 	lines.push('');
+	if (deep) {
+		lines.push(`## Deep sweep: ${deep.length} probes`);
+		for (const p of deep) {
+			lines.push(`  ${PROBE_BADGE[p.status] || '?'} ${p.id} [${Math.round(p.ms / 1000)}s] ${p.status}${p.note ? `: ${p.note}` : ''}`);
+		}
+		lines.push('');
+	}
 	const actionable = findings.filter((f) => f.class !== 'self-healing');
 	lines.push(`## Log sweep: ${scanned} WARNING+ entries → ${findings.length} distinct signatures (${actionable.length} actionable)`);
 	lines.push('');
@@ -443,6 +498,9 @@ function renderReport({ opts, healthz, findings, scanned }) {
 	for (const f of findings) {
 		lines.push(`### ${CLASS_BADGE[f.class]} ×${f.count} [${f.services.join(', ')}] ${f.title}`);
 		lines.push(`    last seen ${f.lastSeen}`);
+		if (f.kind === 'deep' && f.sample) {
+			for (const s of f.sample.split('\n').slice(0, 8)) lines.push(`    | ${s}`);
+		}
 		lines.push(`    → ${f.action}`);
 		lines.push('');
 	}
@@ -483,14 +541,264 @@ function gpuCapacityFindings(findings) {
 	}];
 }
 
+// ---------------------------------------------------------------------------
+// Deep sweep (--deep). Nine read-only probes, each wrapping an audit that
+// already exists standalone in scripts/, normalized into the same findings
+// stream as the log sweep. All probes run concurrently. A probe that cannot
+// run is itself a finding (a blind spot is not "healthy"); a probe skipped
+// for missing local secrets is reported as skipped, not silently dropped.
+// ---------------------------------------------------------------------------
+
+const nowIso = () => new Date().toISOString();
+const tail = (s, n = 12) => String(s || '').trim().split('\n').slice(-n).join('\n').slice(0, 1400);
+
+function runCommand(argv, { timeoutMs = 180000 } = {}) {
+	return new Promise((resolve) => {
+		const child = spawn(argv[0], argv.slice(1), { cwd: process.cwd() });
+		let stdout = '';
+		let stderr = '';
+		let timedOut = false;
+		const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, timeoutMs);
+		child.stdout.on('data', (d) => { stdout += d; });
+		child.stderr.on('data', (d) => { stderr += d; });
+		child.on('error', (err) => { clearTimeout(timer); resolve({ code: -1, stdout, stderr: stderr || err.message, timedOut }); });
+		child.on('close', (code) => { clearTimeout(timer); resolve({ code, stdout, stderr, timedOut }); });
+	});
+}
+
+function deepFinding(probe, cls, title, { count = 1, services = [], sample = '', action }) {
+	return {
+		kind: 'deep', class: cls, signature: `deep-${probe}`, title,
+		severity: cls === 'self-healing' ? 'WARNING' : 'ERROR',
+		count, services, firstSeen: nowIso(), lastSeen: nowIso(),
+		sample: String(sample).slice(0, 1400), action,
+	};
+}
+
+async function probeVersion() {
+	let body;
+	try {
+		const res = await fetch('https://three.ws/api/version', { signal: AbortSignal.timeout(15000) });
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		body = await res.json();
+	} catch (err) {
+		return { status: 'findings', findings: [deepFinding('version', 'investigate', '/api/version unreachable on the live site', {
+			services: ['three-ws-api'], sample: err?.message || String(err),
+			action: 'The version endpoint should always answer; treat as outage-adjacent. Check three-ws-api revisions (gcloud run revisions list --service three-ws-api --region us-central1) and the LB per docs/ops/gcp-production.md.',
+		})] };
+	}
+	const commit = body.commit || '';
+	let ahead = null;
+	if (commit) {
+		const r = spawnSync('git', ['rev-list', '--count', `${commit}..HEAD`], { encoding: 'utf8' });
+		if (r.status === 0) ahead = Number(r.stdout.trim());
+	}
+	const note = `prod ${body.commitShort || commit.slice(0, 9) || '?'} rev ${body.runtime?.revision || '?'}${ahead == null ? '' : `, local HEAD ${ahead} commit(s) ahead`}`;
+	if (commit && ahead == null) {
+		return { status: 'findings', note, findings: [deepFinding('version', 'investigate', 'deployed commit is unknown to this clone', {
+			services: ['three-ws-api'], sample: `deployed commit ${commit}`,
+			action: 'Production runs a commit not in local history. git fetch threews and re-check; if still unknown, the deploy came from outside this repo lineage and needs the owner to confirm what shipped.',
+		})] };
+	}
+	return { status: 'ok', note };
+}
+
+function certDaysLeft(host) {
+	return new Promise((resolve, reject) => {
+		const sock = tls.connect({ host, port: 443, servername: host, timeout: 10000 }, () => {
+			const cert = sock.getPeerCertificate();
+			sock.end();
+			if (!cert || !cert.valid_to) return reject(new Error('no certificate presented'));
+			resolve((new Date(cert.valid_to).getTime() - Date.now()) / 86400000);
+		});
+		sock.on('error', (err) => reject(err));
+		sock.on('timeout', () => { sock.destroy(); reject(new Error('TLS handshake timeout')); });
+	});
+}
+
+async function probeTls() {
+	const findings = [];
+	const notes = [];
+	for (const host of ['three.ws', 'world.three.ws']) {
+		try {
+			const days = Math.floor(await certDaysLeft(host));
+			notes.push(`${host} ${days}d`);
+			if (days < 21) {
+				findings.push(deepFinding('tls', 'env-action', `TLS certificate for ${host} expires in ${days} days`, {
+					sample: `${host}: ${days} days of validity left`,
+					action: 'Google-managed LB certs renew on their own roughly 30 days out; under 21 days means renewal is stuck (domain authorization or DNS). gcloud compute ssl-certificates list, then docs/ops/gcp-production.md.',
+				}));
+			}
+		} catch (err) {
+			findings.push(deepFinding('tls', 'investigate', `TLS handshake to ${host} failed`, {
+				sample: err?.message || String(err),
+				action: `If curl -sI https://${host} also fails this is an LB/DNS problem for that hostname; follow docs/ops/gcp-production.md. If only the probe fails, re-run it standalone before acting.`,
+			}));
+		}
+	}
+	return { status: findings.length ? 'findings' : 'ok', note: notes.join(', '), findings };
+}
+
+async function probeFleet(opts) {
+	const r = await runCommand(['gcloud', 'run', 'services', 'list', `--project=${opts.project}`, '--region=us-central1', '--format=json'], { timeoutMs: 90000 });
+	if (r.code !== 0) return { status: 'error', note: tail(r.stderr, 3) };
+	const services = JSON.parse(r.stdout || '[]');
+	const notReady = [];
+	for (const s of services) {
+		const name = s.metadata?.name || '?';
+		const ready = (s.status?.conditions || []).find((c) => c.type === 'Ready');
+		if (ready && ready.status !== 'True') notReady.push(`${name}: ${(ready.message || ready.reason || 'not ready').slice(0, 160)}`);
+	}
+	if (!notReady.length) return { status: 'ok', note: `${services.length} services, all Ready` };
+	return { status: 'findings', note: `${notReady.length}/${services.length} not Ready`, findings: [deepFinding('fleet', 'investigate', `${notReady.length} Cloud Run service(s) not Ready`, {
+		count: notReady.length, services: notReady.map((l) => l.split(':')[0]), sample: notReady.join('\n'),
+		action: 'The latest revision is failing while an older one may still serve. gcloud run revisions list --service <name> --region us-central1, then npm run logs -- -s <name> --errors --since 6h for the crash reason. Rollback: docs/ops/gcp-production.md.',
+	})] };
+}
+
+async function probePages() {
+	const r = await runCommand(['node', 'scripts/check-pages.mjs', '--base', 'https://three.ws'], { timeoutMs: 420000 });
+	if (r.timedOut) return { status: 'error', note: 'live page sweep timed out after 7 minutes' };
+	const out = `${r.stdout}\n${r.stderr}`;
+	if (r.code === 0) {
+		const m = out.match(/all (\d+) declared pages reachable/);
+		return { status: 'ok', note: m ? `all ${m[1]} advertised pages reachable` : 'all advertised pages reachable' };
+	}
+	const lines = out.split('\n').filter((l) => l.includes('[check-pages]') && !l.includes(' OK ')).slice(0, 14);
+	const countMatch = out.match(/(\d+) declared page/);
+	return { status: 'findings', note: `${countMatch ? countMatch[1] : 'some'} page(s) failing`, findings: [deepFinding('pages', 'investigate', 'advertised pages failing on the live site', {
+		count: countMatch ? Number(countMatch[1]) : 1, services: ['three-ws-api'], sample: lines.join('\n'),
+		action: 'Each failing path is advertised in the sitemap and llms.txt. The sweep output states whether it is a routing bug or deploy lag (route landed after the running image). Routing bug: add the vercel.json rewrite and vite input, commit. Deploy lag: note it for the next owner-approved deploy.',
+	})] };
+}
+
+async function probeCronDrift() {
+	const r = await runCommand(['node', 'scripts/check-cron-drift.mjs', '--json'], { timeoutMs: 120000 });
+	let report;
+	try { report = JSON.parse(r.stdout); } catch { return { status: 'error', note: tail(r.stderr || r.stdout, 3) }; }
+	if (report.liveError) return { status: 'error', note: `Cloud Scheduler unreadable: ${report.liveError}` };
+	const cats = [
+		['invalid expression', report.invalid], ['duplicate job id', report.duplicates],
+		['missing in Cloud Scheduler', report.missing], ['schedule mismatch', report.mismatched],
+		['not enabled', report.paused],
+	].filter(([, rows]) => rows?.length);
+	if (!cats.length) return { status: 'ok', note: `${report.declared} declared crons in sync with Cloud Scheduler` };
+	const sample = cats.map(([label, rows]) => `${label} (${rows.length}): ${rows.slice(0, 5).map((x) => x.path || x.id).join(', ')}`).join('\n');
+	return { status: 'findings', note: cats.map(([l, rows]) => `${rows.length} ${l}`).join(', '), findings: [deepFinding('cron-drift', 'env-action', 'cron declarations drifted from Cloud Scheduler', {
+		count: cats.reduce((n, [, rows]) => n + rows.length, 0), sample,
+		action: 'Re-sync Cloud Scheduler from vercel.json with node scripts/create-gcp-scheduler.mjs (config-only). A NOT ENABLED job can be a deliberate incident hold; confirm before resuming it. Invalid or duplicate declarations are code fixes in vercel.json.',
+	})] };
+}
+
+async function probeCronLiveness() {
+	const r = await runCommand(['node', 'scripts/audit-cron-liveness.mjs', '--static', '--json'], { timeoutMs: 300000 });
+	let report;
+	try { report = JSON.parse(r.stdout); } catch { return { status: 'error', note: tail(r.stderr || r.stdout, 3) }; }
+	const bad = (report.crons || []).filter((c) => c.verdict === 'DEAD' || c.verdict === 'BROKEN' || c.verdict === 'UNGATED');
+	if (!bad.length) return { status: 'ok', note: `${report.declared} crons route, resolve, and load` };
+	const sample = bad.slice(0, 10).map((c) => `${c.verdict} ${c.path} (${c.notes?.[0] || c.handler || 'no detail'})`).join('\n');
+	return { status: 'findings', note: `${bad.length} cron(s) dead/broken/ungated`, findings: [deepFinding('cron-liveness', 'investigate', `${bad.length} declared cron(s) cannot actually run`, {
+		count: bad.length, sample,
+		action: 'DEAD = no route or handler resolves; BROKEN = the handler throws at load; UNGATED = it runs for anonymous callers (security fix: gate on CRON_SECRET). Reproduce with npm run audit:cron-liveness, fix in code, commit. These fail silently in production: Cloud Scheduler keeps reporting success.',
+	})] };
+}
+
+async function probeDbMigrations() {
+	const r = await runCommand(['node', 'scripts/apply-migrations.mjs', '--check'], { timeoutMs: 90000 });
+	if (r.code === 0) return { status: 'ok', note: 'no pending DB migrations' };
+	if (r.code === 4) {
+		return { status: 'findings', note: 'pending migrations', findings: [deepFinding('db-migrations', 'investigate', 'DB migrations pending against the database', {
+			sample: tail(r.stdout, 10),
+			action: 'npm run db:status lists them. db:migrate applies EVERY pending migration immediately with no dry run, so apply only in coordination with the deploy that needs the schema. The deploy gate (npm run db:check) fails until this is resolved.',
+		})] };
+	}
+	if (/DATABASE_URL/i.test(r.stderr + r.stdout)) return { status: 'skipped', note: 'no DATABASE_URL in this environment' };
+	return { status: 'error', note: tail(r.stderr || r.stdout, 3) };
+}
+
+async function probeServiceWallets() {
+	if (!existsSync('.env')) return { status: 'skipped', note: 'no .env with signer secrets here' };
+	const r = await runCommand(['node', '--env-file=.env', 'scripts/audit-service-wallets.mjs'], { timeoutMs: 300000 });
+	if (r.timedOut) return { status: 'error', note: 'wallet audit timed out' };
+	const issues = r.stdout.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('✗'));
+	if (r.code === 0 && !issues.length) return { status: 'ok', note: 'service wallets above floors, advertised keys consistent' };
+	if (issues.length) {
+		return { status: 'findings', note: `${issues.length} wallet issue(s)`, findings: [deepFinding('service-wallets', 'owner', 'service wallet balances or advertised keys failing audit', {
+			count: issues.length, sample: issues.join('\n'),
+			action: `Money surface; diagnose before concluding the owner must fund. Below-floor balances: run the self-heal first (POST /api/cron/treasury-topup reclaim leg, then /api/cron/economy-rebalance) per ${RUNBOOK} §x402-wallets-dry, or the x402-economy-triage agent. A fee-payer/payTo mismatch is env config on the Cloud Run service, not funding.`,
+		})] };
+	}
+	return { status: 'error', note: tail(r.stderr || r.stdout, 3) };
+}
+
+async function probeCustodialKeys() {
+	if (!existsSync('.env')) return { status: 'skipped', note: 'no .env with DB/encryption secrets here' };
+	const r = await runCommand(['node', 'scripts/audit-custodial-key-health.mjs', '--json'], { timeoutMs: 300000 });
+	if (r.code !== 0 || r.timedOut) {
+		if (/DATABASE_URL|WALLET_ENCRYPTION_KEY/i.test(r.stderr + r.stdout)) return { status: 'skipped', note: 'custodial audit secrets not present' };
+		return { status: 'error', note: tail(r.stderr || r.stdout, 3) };
+	}
+	let report;
+	try { report = JSON.parse(r.stdout); } catch { return { status: 'error', note: 'unparseable custodial audit output' }; }
+	const strandedFunded = report.counts?.stranded_funded || 0;
+	const note = `${report.wallets} wallets, ${report.undecryptable} undecryptable, ${report.sol?.stranded ?? 0} SOL stranded`;
+	if (!strandedFunded) return { status: 'ok', note };
+	const sample = (report.top_stranded || []).slice(0, 6).map((w) => `${w.sol} SOL ${w.address} ${w.platform ? 'platform' : 'CUSTOMER'} (${w.reason})`).join('\n');
+	return { status: 'findings', note, findings: [deepFinding('custodial-keys', 'owner', `${strandedFunded} funded custodial wallet(s) behind undecryptable keys`, {
+		count: strandedFunded, sample,
+		action: 'These balances are invisible to treasury self-heal and, for customer wallets, block withdrawals (support obligation; escalate those first). Usual cause is a WALLET_ENCRYPTION_KEY rotation; scripts/rekey-stale-launch-wallets.mjs documents the recovery path.',
+	})] };
+}
+
+const DEEP_PROBES = {
+	version: probeVersion,
+	tls: probeTls,
+	fleet: probeFleet,
+	pages: probePages,
+	'cron-drift': probeCronDrift,
+	'cron-liveness': probeCronLiveness,
+	'db-migrations': probeDbMigrations,
+	'service-wallets': probeServiceWallets,
+	'custodial-keys': probeCustodialKeys,
+};
+
+async function runDeepSweep(opts) {
+	const ids = DEEP_PROBE_IDS.filter((id) => !opts.skip.includes(id));
+	return Promise.all(ids.map(async (id) => {
+		const started = Date.now();
+		let result;
+		try {
+			result = await DEEP_PROBES[id](opts);
+		} catch (err) {
+			result = { status: 'error', note: (err?.message || String(err)).slice(0, 300) };
+		}
+		const probe = { id, ms: Date.now() - started, status: result.status, note: result.note || '', findings: result.findings || [] };
+		if (probe.status === 'error' && !probe.findings.length) {
+			probe.findings = [deepFinding(id, 'investigate', `deep probe "${id}" could not run`, {
+				sample: probe.note,
+				action: `The sweep is blind on this surface until the probe runs. Re-run it standalone (see DEEP_PROBES in scripts/gcp-triage.mjs for the underlying command) and fix whatever stops it.`,
+			})];
+		}
+		return probe;
+	}));
+}
+
 async function main() {
 	const opts = parseArgs(process.argv.slice(2));
+	// Kick the deep probes off first: they are child processes and keep running
+	// while the synchronous gcloud log read blocks the parent.
+	const deepPromise = opts.deep ? runDeepSweep(opts) : Promise.resolve(null);
 	const [healthz, entries] = await Promise.all([
 		fetchHealthz(),
 		Promise.resolve().then(() => readLogs(opts)),
 	]);
 	const findings = buildFindings(entries);
 	findings.push(...gpuCapacityFindings(findings));
+	const deep = await deepPromise;
+	if (deep) {
+		for (const p of deep) findings.push(...p.findings);
+		sortFindings(findings);
+	}
 	const actionable = findings.filter((f) => f.class !== 'self-healing');
 	const unhealthy = !healthz.reachable
 		|| (healthz.degraded && healthz.degraded.length > 0)
@@ -503,12 +811,13 @@ async function main() {
 			project: opts.project,
 			scannedEntries: entries.length,
 			healthz,
+			deep: deep ? deep.map(({ findings: _f, ...rest }) => rest) : null,
 			findings,
 			actionable: actionable.length,
 			healthy: !unhealthy,
 		}, null, 2) + '\n');
 	} else {
-		console.log(renderReport({ opts, healthz, findings, scanned: entries.length }));
+		console.log(renderReport({ opts, healthz, findings, scanned: entries.length, deep }));
 	}
 	process.exit(unhealthy ? 1 : 0);
 }
