@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-05",
+			"title": "Docs pages read cleanly at every screen size",
+			"summary": "On documentation pages, the freshness banner (the note saying whether a page has been checked against the code lately) no longer runs underneath the Copy page button, so its See what changed link is always visible and clickable. Wide reference tables now scroll inside their own box on phones instead of stretching the whole page sideways, and on very wide monitors the article column sits centered in the reading area rather than pressed against the sidebar.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/docs"
+		},
+		{
+			"date": "2026-08-05",
 			"title": "The press kit gains a full-length bio",
 			"summary": "The press page at three.ws/press now carries a fourth approved description: a full bio of about 330 words that opens with the tagline 'The 3D agent layer of the internet.' It walks through what the platform does end to end, from prompt-to-character generation through the agent runtime, on-chain identity on Solana, x402 payments, and the embeddable web component, and it has its own copy button like the shorter boilerplate. Anyone writing a profile, a conference programme, or a directory listing can now quote a long description without stitching one together from the shorter blurbs.",
 			"tags": [
@@ -17918,6 +17928,15 @@
 				"docs"
 			],
 			"link": "/docs/ibm-community"
+		},
+		{
+			"date": "2026-08-05",
+			"title": "Every forged 3D model now has its own page",
+			"summary": "Every finished model from the Forge now lives at its own shareable page: a big interactive viewer with one-tap AR, real triangle and vertex counts read live from the file, the full prompt, the creator's profile with a follow button, likes, view counts, and a brand-new comment section. A suggested-models rail keeps you exploring, remixable models can be remixed right from the page, and the embed button hands you a copy-paste snippet for any website. Reach it from the Details button on any creation card in the gallery or the Forge showcase.",
+			"tags": [
+				"feature"
+			],
+			"link": "/creations"
 		}
 	]
 }

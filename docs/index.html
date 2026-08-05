@@ -413,11 +413,16 @@
 			/* ── Main ────────────────────────────────────── */
 			.docs-main {
 				flex: 1;
+				/* A flex item's min-width is auto, so a wide table or code block
+				   inside would stretch the column past the viewport and put a
+				   horizontal scrollbar on the whole page. */
+				min-width: 0;
 				margin-left: var(--sidebar-w);
 				padding: var(--space-2xl) clamp(var(--space-lg), 5vw, var(--space-2xl)) 100px;
 			}
 			.docs-content {
 				max-width: 728px;
+				margin-inline: auto;
 			}
 
 			/* Jumping to a section must not park it under the fixed header. */
@@ -538,6 +543,10 @@
 				border-collapse: collapse;
 				margin: 0 0 var(--space-md);
 				font-size: 13.5px;
+				/* Reference tables are wider than a phone. Scroll the table inside
+				   its own box rather than the whole page sideways. */
+				display: block;
+				overflow-x: auto;
 			}
 			.docs-content th {
 				text-align: left;
@@ -714,8 +723,18 @@
 				right: 0;
 				z-index: 20;
 			}
-			.docs-pagetools + h1 {
+			/* The freshness banner host sits between the pagetools and the H1.
+			   When the banner renders, it takes the clearance and pushes the
+			   title below the buttons; when the host stays empty (doc not in
+			   the freshness report), the title is effectively adjacent and
+			   needs the clearance itself, or it runs under the Copy-page
+			   control. */
+			.docs-pagetools + h1,
+			.docs-pagetools + div:empty + h1 {
 				padding-right: 184px;
+			}
+			.docs-pagetools ~ div .doc-freshness {
+				margin-right: 184px;
 			}
 			.docs-pagetools-group {
 				display: inline-flex;
@@ -846,8 +865,12 @@
 					position: static;
 					margin-bottom: var(--space-md);
 				}
-				.docs-pagetools + h1 {
+				.docs-pagetools + h1,
+				.docs-pagetools + div:empty + h1 {
 					padding-right: 0;
+				}
+				.docs-pagetools ~ div .doc-freshness {
+					margin-right: 0;
 				}
 				.docs-pagetools-menu {
 					left: 0;
