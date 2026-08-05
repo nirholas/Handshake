@@ -6,8 +6,8 @@ _Posted by the three.ws team. This Friday we are holding our first community mee
 
 |  |  |
 | --- | --- |
-| **When** | Friday, August 7, 2026, 9:00 AM to 10:00 AM Eastern Time |
-| **Your time** | 6 AM San Francisco · 9 AM New York · 2 PM London · 3 PM Berlin · 6:30 PM Mumbai · 9 PM Singapore/Hong Kong · 10 PM Tokyo |
+| **When** | Friday, August 7, 2026, 8:00 AM to 9:00 AM Pacific Time (11:00 AM to 12:00 PM Eastern) |
+| **Your time** | 8 AM San Francisco · 11 AM New York · 4 PM London · 5 PM Berlin · 8:30 PM Mumbai · 11 PM Singapore/Hong Kong · midnight Tokyo |
 | **Where** | [three.ws/play](https://three.ws/play), in the $THREE home town (pinned at the top of the world list) |
 | **Cost** | Free |
 | **What you need** | A modern browser. No download, no install, no account required. |
@@ -94,7 +94,7 @@ Everything above is live and verifiable today; judge the thesis by the product, 
 
 ## See you Friday
 
-**Friday, August 7, 9 AM ET (2 PM London, 9 PM Singapore), on the $THREE server at [three.ws/play](https://three.ws/play).** Show up as an avatar, tour the platform from inside it, demo what you have built, and ask us anything. Details on this group's Events tab.
+**Friday, August 7, 8 AM PT / 11 AM ET (4 PM London, 11 PM Singapore), on the $THREE server at [three.ws/play](https://three.ws/play).** Show up as an avatar, tour the platform from inside it, demo what you have built, and ask us anything. Details on this group's Events tab.
 
 ## Links
 
