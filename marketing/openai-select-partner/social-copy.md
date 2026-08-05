@@ -152,14 +152,24 @@ post makes the product claim only and never restates the tier (see Notes below).
 narrates only what the recording shows, so the AR claim lives in the reply, not
 here; the video does not include the AR step:
 
-> 3D inside ChatGPT, start to finish.
+> 3D inside @ChatGPT, start to finish.
 >
 > One sentence becomes a textured, interactive model rendered inline, then it's
 > rigged and animated, all in the conversation.
 >
-> No key. No account. Free.
+> Powered by three.ws, an OpenAI Partner. Free, keyless, no account.
 >
 > Try the GPT: https://chatgpt.com/g/g-6a563a3b49a88191abf346245491a444-three-ws-3d-studio
+
+Warmer alternative for the third line, owner's preference:
+
+> Only from three.ws, proudly part of the OpenAI Partner Network.
+
+Do not phrase the credit as "only possible thanks to our partnership with
+OpenAI": the connector is three.ws technology and the partner designation did
+not enable it, so that wording both overclaims causation and drifts toward the
+implied-endorsement line the Notes below prohibit. Credit the status, not a
+joint build.
 
 **Reply to it** (the receipts, plus the capabilities the video doesn't show):
 
