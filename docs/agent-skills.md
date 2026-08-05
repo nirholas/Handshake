@@ -97,7 +97,7 @@ The platform's signature set, safe to reuse anywhere:
   (generate + auto-rig in one call, humanoid gate). Returns rigged `glbUrl` +
   pose-studio link.
 - **`rig-a-model`** — existing GLB → animation-ready GLB via `rig_mesh` /
-  `POST /api/forge?action=rig` (VAST-AI UniRig). Returns `riggedGlbUrl` +
+  `POST /api/forge?action=rig` (Make-It-Animatable). Returns `riggedGlbUrl` +
   pose-studio link.
 
 All three run free against the hosted studio endpoint

@@ -160,7 +160,7 @@ Snap one photo and transfer your facial identity — face width, jaw, lip thickn
 
 Any un-rigged 3D mesh — something you generated, bought, or modeled — can be turned into an animation-ready avatar in one click. The platform builds a skeleton into it so it can walk, dance, and emote with the full animation library. The original is never touched: rigging produces a new sibling avatar.
 
-**How it works:** Routes the mesh through the auto-rig backend (self-hosted UniRig on GPU infrastructure with a Replicate fallback), polls the job, canonicalizes the resulting bone names to the universal skeleton, and registers the rigged result as a new owned avatar.
+**How it works:** Routes the mesh through the auto-rig backend (the self-hosted Make-It-Animatable rig worker on GPU infrastructure, with a Replicate fallback when a rerig model is configured), polls the job, canonicalizes the resulting Mixamo-named bones to the universal skeleton, and registers the rigged result as a new owned avatar.
 
 **Why it matters:** No model is a dead end — every statue you own can become a living character.
 

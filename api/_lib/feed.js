@@ -79,6 +79,7 @@ export const USER_EVENT_TYPES = new Set([
 	'reply',             // new reply to an agent interaction
 	'follow',            // someone followed you; { actor, follower_username, link }
 	'agent_review',      // someone reviewed your agent; { actor, agent_id, agent_name, rating, link }
+	'comment',           // someone commented on your model; { actor, creation_id, preview, link }
 	'dm_received',       // a friend sent you a DM while you were away; { actor, link }
 	'pump_launch_filled',// a launch you own graduated its bonding curve; { name, mint, link }
 	'quest_complete',    // a /play mission or co-op heist you finished; { mission, gold, coop, link }

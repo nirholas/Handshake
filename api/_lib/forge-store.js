@@ -555,14 +555,22 @@ export async function setForgeCategory({ id, clientKey, modelCategory }) {
 // share flow: a recipient who didn't forge the model still gets to view it.
 // Only returns finished, durably-stored rows — an in-flight or failed creation
 // has no public artifact to show. Returns null when missing or store-disabled.
-export async function getPublicCreation({ id }) {
+export async function getPublicCreation({ id, voterKey = null }) {
 	if (!forgeStoreEnabled() || !id) return null;
 	try {
 		const rows = await sql`
 			select fc.id, fc.prompt, fc.aspect, fc.glb_url, fc.preview_image_url, fc.outcome,
 				fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path, fc.model_category, fc.created_at,
 				fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
-				u.username as creator_username
+				fc.vote_count, fc.size_bytes, fc.remixable, fc.remix_royalty_bps,
+				fc.parent_creation_id, fc.refine_instruction,
+				coalesce(fc.view_count, 0) as view_count,
+				(select count(*)::int from forge_creations c where c.parent_creation_id = fc.id) as remix_count,
+				exists(select 1 from forge_votes v
+					where v.creation_id = fc.id and v.voter_key = ${voterKey ?? ''}) as voted,
+				u.username as creator_username,
+				u.display_name as creator_display_name,
+				u.avatar_url as creator_avatar_url
 			from forge_creations fc
 			left join users u on u.id = fc.user_id and u.deleted_at is null
 			where fc.id = ${id} and fc.status = 'done' and fc.glb_url is not null
@@ -584,14 +592,75 @@ export async function getPublicCreation({ id }) {
 			path: r.path ?? null,
 			model_category: r.model_category ?? 'other',
 			created_at: r.created_at,
+			vote_count: r.vote_count ?? 0,
+			voted: r.voted === true,
+			view_count: r.view_count ?? 0,
+			remix_count: r.remix_count ?? 0,
+			size_bytes: r.size_bytes ?? null,
+			remixable: r.remixable === true,
+			remix_royalty_bps: r.remix_royalty_bps ?? null,
+			parent_creation_id: r.parent_creation_id ?? null,
+			refine_instruction: r.refine_instruction ?? null,
 			// Real, opt-in attribution only — set when the model was forged while
 			// signed in. Never invented for anonymous generations.
 			creatorUsername: r.creator_username || null,
+			creatorDisplayName: r.creator_display_name || r.creator_username || null,
+			creatorAvatarUrl: r.creator_avatar_url || null,
 			...x402Provenance(r),
 		};
 	} catch (err) {
 		console.error('[forge-store] getPublicCreation failed:', err?.message);
 		return null;
+	}
+}
+
+// Count a model-page impression. Fail-soft and fire-and-forget: the page read
+// never blocks (or breaks) on the counter, and a miss is just an uncounted
+// view. Distinct from views_requested/views_used (multiview camera counts).
+export async function recordCreationView({ id }) {
+	if (!forgeStoreEnabled() || !id) return;
+	try {
+		await sql`
+			update forge_creations set view_count = coalesce(view_count, 0) + 1
+			where id = ${id} and status = 'done'
+		`;
+	} catch (err) {
+		console.error('[forge-store] recordCreationView failed:', err?.message);
+	}
+}
+
+// Suggested models for the detail page's sidebar: newest finished community
+// models in the same category first, backfilled with fresh models from any
+// category when the category is thin, never including the model itself.
+// Card-shaped like listShowcase items (minus vote state, which is per-browser).
+export async function listRelated({ id, category, limit = 6 }) {
+	if (!forgeStoreEnabled() || !id) return [];
+	const capped = Math.min(Math.max(Number(limit) || 6, 1), 12);
+	const cat = validModelCategory(category);
+	try {
+		const rows = await sql`
+			select id, prompt, glb_url, preview_image_url, model_category, backend,
+				vote_count, coalesce(view_count, 0) as view_count, created_at,
+				(model_category = ${cat ?? ''}) as same_category
+			from forge_creations
+			where status = 'done' and glb_url is not null and id != ${id}
+			order by (model_category = ${cat ?? ''}) desc, created_at desc
+			limit ${capped}
+		`;
+		return rows.map((r) => ({
+			id: r.id,
+			prompt: r.prompt,
+			glb_url: r.glb_url,
+			preview_image_url: r.preview_image_url,
+			model_category: r.model_category ?? 'other',
+			backend: r.backend ?? null,
+			vote_count: r.vote_count ?? 0,
+			view_count: r.view_count ?? 0,
+			created_at: r.created_at,
+		}));
+	} catch (err) {
+		console.error('[forge-store] listRelated failed:', err?.message);
+		return [];
 	}
 }
 

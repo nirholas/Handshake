@@ -141,6 +141,50 @@ above Select.
 
 ---
 
+## X / @nichxbt quote tweet of the announcement (video demo)
+
+Owner's personal account quote-tweets the @trythreews announcement post with the
+screen-recorded demo video attached; @trythreews then retweets the quote tweet.
+The quoted post already carries the partner status and the card, so the personal
+post makes the product claim only and never restates the tier (see Notes below).
+
+**Quote tweet** (attach the demo video; 215 chars with the t.co link). The copy
+narrates only what the recording shows, so the AR claim lives in the reply, not
+here; the video does not include the AR step:
+
+> 3D inside @ChatGPT, start to finish.
+>
+> One sentence becomes a textured, interactive model rendered inline, then it's
+> rigged and animated, all in the conversation.
+>
+> Powered by three.ws, an OpenAI Partner. Free, keyless, no account.
+>
+> Try the GPT: https://chatgpt.com/g/g-6a563a3b49a88191abf346245491a444-three-ws-3d-studio
+
+Warmer alternative for the third line, owner's preference:
+
+> Only from three.ws, proudly part of the OpenAI Partner Network.
+
+Do not phrase the credit as "only possible thanks to our partnership with
+OpenAI": the connector is three.ws technology and the partner designation did
+not enable it, so that wording both overclaims causation and drifts toward the
+implied-endorsement line the Notes below prohibit. Credit the status, not a
+joint build.
+
+**Reply to it** (the receipts, plus the capabilities the video doesn't show):
+
+> This is the exact conversation from the video, tool calls and all:
+> https://chatgpt.com/share/6a72db63-ba08-83e8-bc96-c8e191b248b3
+>
+> Every model also carries a one-tap AR link, and any MCP client can wire in the
+> same nine tools with no auth: https://three.ws/api/mcp-studio
+
+Sequence: post the QT from @nichxbt, post the reply from @nichxbt, then retweet
+the QT from @trythreews. Plain retweet, not a second quote: the brand account
+already made the announcement claim once, and a QT-of-a-QT buries the video.
+
+---
+
 ## Notes
 
 - Use the exact phrase **"OpenAI Select Partner"** when referring to the status.

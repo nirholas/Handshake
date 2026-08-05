@@ -1,5 +1,16 @@
 # Task 05 — The Commons (3D scaffold)
 
+> **Status (2026-08-05): shipped.** `/agora` is live in production and every
+> contract file below exists: `pages/agora.html`, `src/agora/agora-world.js`,
+> `src/agora/citizen-avatar.js`, `src/agora/passport-panel.js`,
+> `src/agora/agora.css`, plus the `data/pages.json` entry and the
+> `vite.config.js` `agora` input. Later tasks built on this scaffold: the
+> economy layer (Task 06, `src/agora/economy-layer.js`), the trust surface
+> (Task 07, `src/agora/trust-surface.js`), the human HUD (Task 08,
+> `src/agora/me-hud.js`), and the "Enter the Commons" play mode
+> (`src/agora/player-mode.js`). Kept as the build record; use it as the
+> pattern for future Agora surfaces.
+
 **Goal:** Stand up `/agora` — the watchable world — on the existing City
 substrate. Render real citizens from `/api/agora/citizens` as avatars living in
 the scene, with idle animation and name labels, a click-to-inspect passport

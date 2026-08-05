@@ -490,6 +490,7 @@ const appConfig = {
 				'admin-irl-analytics': resolve(__dirname, 'pages/admin/irl-analytics.html'),
 				launcher: resolve(__dirname, 'pages/launcher.html'),
 				'launch-detail': resolve(__dirname, 'pages/launch-detail.html'),
+				model: resolve(__dirname, 'pages/model.html'),
 				watchlist: resolve(__dirname, 'pages/watchlist.html'),
 				leaderboard: resolve(__dirname, 'pages/leaderboard.html'),
 				'labor-market': resolve(__dirname, 'pages/labor-market.html'),
@@ -1783,6 +1784,12 @@ support: resolve(__dirname, 'pages/support.html'),
 						/^\/coin\/[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}\/?$/.test(path)
 					)
 						filePath = resolve(root, 'pages/coin.html');
+					// /m/:id  → model detail page (forge_creations uuid)
+					else if (
+						!filePath &&
+						/^\/m\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/?$/.test(path)
+					)
+						filePath = resolve(root, 'pages/model.html');
 					// /markets/robinhood/stock/:symbol  → Robinhood Chain Stock Token detail
 					else if (!filePath && /^\/markets\/robinhood\/stock\/[A-Za-z0-9.-]{1,10}\/?$/.test(path))
 						filePath = resolve(root, 'pages/robinhood-stock.html');

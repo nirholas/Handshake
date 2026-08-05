@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>3D Model · three.ws</title>
+		<meta
+			name="description"
+			content="A forged 3D model on three.ws: interactive viewer, real geometry stats, creator profile, likes, comments, remixing, and AR."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/creations" />
+		<meta property="og:title" content="3D Model · three.ws" />
+		<meta
+			property="og:description"
+			content="A forged 3D model on three.ws: interactive viewer, real geometry stats, creator profile, likes, comments, remixing, and AR."
+		/>
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="3D Model · three.ws" />
+		<meta
+			name="twitter:description"
+			content="A forged 3D model on three.ws: interactive viewer, real geometry stats, creator profile, likes, comments, remixing, and AR."
+		/>
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/model.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<script src="/model-viewer-meshopt.js"></script>
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"></script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main id="mp-shell" class="mp-shell" aria-busy="true">
+			<a class="mp-back" href="/creations">← All creations</a>
+
+			<!-- Viewer hero. Hydrated by src/model-page.js. -->
+			<section id="mp-viewer" class="mp-viewer" aria-label="3D model viewer">
+				<div class="mp-viewer-skeleton">Loading model…</div>
+			</section>
+
+			<div class="mp-columns">
+				<div class="mp-main">
+					<!-- Title, creator, actions, stats, description. -->
+					<section id="mp-info" aria-label="Model information"></section>
+
+					<!-- Comment thread. -->
+					<section id="mp-comments" class="mp-comments" aria-label="Comments"></section>
+				</div>
+
+				<aside class="mp-side" aria-label="Suggested models">
+					<h2>Suggested models</h2>
+					<div id="mp-suggested" class="mp-suggested"></div>
+					<a class="mp-side-more" href="/creations">Browse all creations →</a>
+				</aside>
+			</div>
+		</main>
+
+		<div id="mp-toast" class="mp-toast" role="status" aria-live="polite"></div>
+
+		<script type="module" src="/src/model-page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

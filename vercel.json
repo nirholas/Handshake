@@ -1203,6 +1203,10 @@
 			"dest": "/coin.html"
 		},
 		{
+			"src": "/m/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/?",
+			"dest": "/model.html"
+		},
+		{
 			"src": "/drop/([0-9a-f]{24})/?",
 			"dest": "/drop.html"
 		},

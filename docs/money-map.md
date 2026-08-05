@@ -16,7 +16,7 @@ signer/funder wallets and how to fund them).
 
 Money-routing is deliberately **config-driven** — no receiver is hardcoded, so an
 unset receiver fails closed rather than silently routing real USDC to a baked-in
-address ([env.js:786](../api/_lib/env.js#L786)).
+address ([env.js:808](../api/_lib/env.js#L808)).
 
 ### Receivers (inbound USDC)
 | Env var | Role | Value |
@@ -109,9 +109,10 @@ unit economics.
   [x402 endpoints](x402-endpoints.md).
 - **Paid MCP tools** —
   - Main MCP ([api/mcp.js](../api/mcp.js), pricing `api/_lib/pump-pricing.js`):
-    `retexture_model` $0.10, `optimize_model` $0.05, `segment_model` $0.04,
-    `retexture_region` $0.03, `inspect_model`/`validate_model` $0.01,
-    `render_avatar` $0.005, `search_public_avatars`/`solana_agent_reputation` $0.001.
+    `mint_3d_asset` $0.25, `retexture_model` $0.10, `optimize_model` $0.05,
+    `segment_model` $0.04, `retexture_region` $0.03, `apply_animation` $0.02,
+    `inspect_model`/`validate_model` $0.01, `render_avatar` $0.005,
+    `search_public_avatars`/`solana_agent_reputation` $0.001.
   - 3D Studio MCP ([api/mcp-3d.js](../api/mcp-3d.js), pricing `api/_mcp3d/pricing.js`):
     15 priced tools: `text_to_3d`/`image_to_3d` tiered (draft/standard/high),
     `auto_rig_model`/`capture_scene`/`retexture_model`/`retexture_region`/`anchor_provenance` $0.05,

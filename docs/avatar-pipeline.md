@@ -23,7 +23,7 @@ prompt / image
 
 | Lane | Tool / endpoint | Cost | Notes |
 |---|---|---|---|
-| Free | `forge_free` (MCP) | **Free** | NVIDIA NIM (Microsoft TRELLIS); text → textured GLB + viewer link. |
+| Free | `forge_free` (MCP) | **Free** | Unpinned free-lane chain (self-host TRELLIS first, NVIDIA NIM last resort); text → textured GLB + viewer link. |
 | Paid | `text_to_3d` / `image_to_3d` (MCP), `POST /api/x402/forge` | tiered | Quality by tier — see below. |
 | Paid | `mesh_forge` (MCP) | per call | Text/image → mesh via a Granite-directed model chain. |
 | Avatar | `text_to_avatar`, `forge_avatar` (MCP) | per call | Avatar-shaped output; `forge_avatar` chains generation + rigging in one call. |

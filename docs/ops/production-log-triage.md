@@ -30,8 +30,10 @@ var or add quota · 🟢 self-healing, no action needed.
 > **You no longer need a log export to see most of this.** The platform now
 > self-reports internal-dependency health: **[/status](https://three.ws/status)**
 > renders it with a plain-language fix for each degradation, and
-> **`/api/healthz`** carries a machine-readable `subsystems` block (cache, database,
-> Helius RPC, x402 ring, **x402 settlement success**, **Forge 3D generation**, world, x402 config). The uptime cron
+> **`/api/healthz`** carries a machine-readable `subsystems` block (database, cache,
+> rate limiter, Helius RPC, the whole Solana RPC lane tier (`rpc_lanes`), x402 ring,
+> **x402 settlement success**, **Forge 3D generation**, world, sniper, the OKX chat
+> bot, x402 config). The uptime cron
 > ([api/cron/uptime-check.js](../../api/cron/uptime-check.js)) parks a snapshot
 > each tick and re-pages a degradation that persists. Source of the roll-up:
 > [api/_lib/ops/subsystem-health.js](../../api/_lib/ops/subsystem-health.js). This
@@ -110,16 +112,18 @@ HTTP 502 POST /api/x402/<any endpoint>   ua: threews-x402-autonomous/1.0   (~334
   "Transaction simulation failed" with empty logs.
 - **Triage tip:** settle_failed with empty simulation logs plus interleaved
   on-chain successes means duplicate signature, not RPC or blockhash trouble.
-- **Fixed in code:** commit `93430b4fb` adds an auto-nonce to `payX402` so
-  every payment is byte-unique, and reports a precise
+- **Fixed and deployed (2026-07-17):** commit `93430b4fb` adds an auto-nonce to
+  `payX402` so every payment is byte-unique, and reports a precise
   `broadcast_failed:already_processed` reason via a `getSignatureStatuses`
-  probe. The monitor (`npm run triage:gcp`) classifies this wave as `owner`
-  while the fix awaits deploy (signature `ring-duplicate-signature-502` in
-  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs)).
-- **Resolve (owner, deploy):** ship the committed fix:
-  `npm run build:gcp && npm run deploy:gcp`. If the wave persists on the
-  revision carrying `93430b4fb`, remove the monitor signature and
-  re-investigate; do not let the classification mask a new failure.
+  probe. The wave stopped on the revision carrying the fix, so the dedicated
+  monitor signature (`ring-duplicate-signature-502`) has been retired from
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs); ring self-pay 5xx
+  now classifies under `x402-wallets-dry-5xx` (next section), which is a
+  funding shape, not this bug.
+- **If this exact shape recurs** (settle_failed, empty simulation logs,
+  interleaved on-chain successes) on a revision carrying `93430b4fb`, treat it
+  as a regression and re-investigate the payment builder; do not fund wallets
+  for it, and do not let the wallets-dry classification mask it.
 - **Now watched continuously:** this wave went undetected for eight days
   because every sensor read "ring armed / discovery up" while a third of
   settles silently failed. The **x402 settlement success** subsystem
@@ -183,8 +187,10 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
   Only `eip155:8453` back, no `solana:mainnet`, means the accept is withdrawn.
   Fix is the same free self-heal as cause 1 above (`treasury-topup`). Since
   2026-07-30 healthz reports this itself: `x402_settle.metrics.cause` is
-  `sponsor_floor` (vs `rail`) and `detail` names the withdrawal, so the sensor
-  no longer points at the facilitator for a funding problem.
+  `sponsor_floor` (vs `fee_governor` when the wallet fee governor is pacing the
+  window, or `rail` for real payment-rail faults) and `detail` names the
+  withdrawal, so the sensor no longer points at the facilitator for a funding
+  problem.
 - **Not a code bug.** The economy-rebalance keypair crash (assigned
   `loadSignerKeypair`'s wrapper to `keypair`, read `.publicKey` of undefined)
   is fixed and live in commit `bb02839f9`. When
@@ -538,9 +544,14 @@ ws error: Unexpected server response: 301
   its own routine traffic and every Solana call cascaded down the chain onto the
   exhausted paid lanes. Measured 2026-07-30, this was the last remaining
   `solana-rpc` line in production after the primary was repointed.
-- **Resolve:** 🟢 nothing required for the blocked-call-shape case. It now
-  cools for 30 s (a fail-over for that request only) instead of benching the
-  lane, so the node keeps serving every other method. 🔴 for the credential
+- **Resolve:** 🟢 nothing required for the blocked-call-shape case. Since
+  commit `955146961` the rotating fetch recognises the refusal and demotes
+  just that (lane, method) pair (`markMethodDemotion`) with no lane cooldown
+  at all, so the node keeps serving every other call shape; the exported
+  `markEndpointCooldown` path still sizes a shape refusal at 30 s instead of
+  the 30 min auth bench. The monitor classifies the short-cooldown line as
+  `solana-rpc-policy-block` (self-healing) in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs). 🔴 for the credential
   case, rotate the key on that provider.
 - **Tell them apart:**
   ```sh

@@ -16,7 +16,7 @@ This document is the *why and how* underneath all of those.
 
 | Format | What it is | Carries | Role in three.ws | Where it lives |
 |---|---|---|---|---|
-| **FBX** | Autodesk's interchange format (binary or ASCII) | Mesh, skeleton, skin weights, animation, materials/textures | **Source only.** What you download from Mixamo or export from a DCC tool. Never loaded in the browser. | `animation-sources/`, some legacy in `public/animations/*.fbx` |
+| **FBX** | Autodesk's interchange format (binary or ASCII) | Mesh, skeleton, skin weights, animation, materials/textures | **Source only.** What you download from Mixamo or export from a DCC tool. Never loaded in the browser. | `animation-sources/` (gitignored build-time input; `public/animations/` ships no FBX) |
 | **GLB** | Binary glTF 2.0 — a single self-contained file | Geometry + skeleton + skin + textures + (optional) animation | **The runtime model format.** Every avatar the site renders is a GLB. | `public/avatars/*.glb` |
 | **clip JSON** | A serialized `THREE.AnimationClip` (`AnimationClip.toJSON()`) | **Motion only** — keyframe tracks, no geometry | **The runtime motion format.** Reusable clips that play on *any* rig via retargeting. | `public/animations/clips/*.json` |
 
@@ -97,7 +97,9 @@ This is how a motion enters the **shared animation library** that every agent an
 # 3. Build:
 npm run build:animations
 #   → retargets to cz.glb, writes public/animations/clips/<name>.json,
-#     and rewrites public/animations/manifest.json
+#     rewrites public/animations/manifest.json, then re-syncs
+#     public/animations/registry.json (sync-animation-registry.mjs) and
+#     rebuilds public/animations/signatures.json (build-motion-signatures.mjs)
 ```
 
 Source: [scripts/build-animations.mjs](../scripts/build-animations.mjs). The config entry shape:
@@ -157,7 +159,7 @@ Track names are **canonical bone names** (`Hips`, `Spine`, `LeftArm`, …) so th
 
 ## How the runtime uses all three
 
-The build pipeline produces GLB + JSON; the browser stitches them back together. The full machine-readable inventory of every animation asset and which pipeline owns it is [public/animations/registry.json](../public/animations/registry.json) — read it before touching anything animation-related.
+The build pipeline produces GLB + JSON; the browser stitches them back together. The full machine-readable inventory of every animation asset and which pipeline owns it is [public/animations/registry.json](../public/animations/registry.json): read it before touching anything animation-related. Its measured companion is [public/animations/signatures.json](../public/animations/signatures.json), a motion-signature index (energy, speed, per-region movement, loop cleanliness) computed from every baked clip by `npm run build:motion-signatures`; `npm run audit:motion` fails when it is stale.
 
 | Stage | Module | What it does |
 |---|---|---|
@@ -234,13 +236,13 @@ The same FBX/GLB/JSON plumbing is the foundation for the platform's generative 3
 
 | Capability | Entry point | Output |
 |---|---|---|
-| Text → 3D (free) | `forge_free` MCP tool · [Forge](https://three.ws/forge) | Textured GLB on the free NVIDIA NIM (TRELLIS) lane |
+| Text → 3D (free) | `forge_free` MCP tool · [Forge](https://three.ws/forge) | Textured GLB on the free-lane chain (self-host TRELLIS first, then Hunyuan3D / HuggingFace, NVIDIA NIM as the last-resort fallthrough) |
 | Text/image → 3D | `mesh_forge` MCP tool | Textured GLB via a Granite-directed FLUX + reconstruction chain |
 | Text → avatar | `text_to_avatar` MCP tool | A humanoid avatar GLB |
 
 **Make it move:**
 
-- **Auto-rig a static mesh** — `rig_mesh` MCP tool (UniRig) turns a rig-less GLB into an animation-ready one with a humanoid skeleton and skin weights.
+- **Auto-rig a static mesh**: the `rig_mesh` MCP tool (the Make-It-Animatable engine in [workers/rig](../workers/rig/README.md)) turns a rig-less GLB into an animation-ready one with a 52-bone Mixamo-convention skeleton and skin weights.
 - **Retarget any humanoid rig** — drop in a Mixamo, Blender, Rigify, Unreal, or other standard humanoid GLB and the canonicalizer + retargeter let it play every library clip. No manual bone mapping.
 - **Text → motion** — the pose studio generates brand-new clips from a text prompt (`/api/forge-motion`), not just presets.
 - **Author by hand** — pose with FK/IK gizmos on the `/pose` timeline and export a JSON clip or an animated GLB.
@@ -283,8 +285,8 @@ text/image ──► mesh_forge ──► static GLB ──► rig_mesh ──�
 
 - **Don't ship raw converted GLBs.** A Mixamo character converts to 50+ MB; always run `optimize:glb`. The site streams these to every visitor.
 - **`trimesh` (the Python script) silently drops rigs.** It is for static geometry only. For anything animated, use `convert:fbx`.
-- **No Draco/meshopt by default.** The site's `GLTFLoader` is not wired with a Draco decoder, so a Draco-compressed GLB fails to load. `optimize:glb` deliberately stays within plain glTF 2.0; WebP textures do the heavy lifting.
-- **FBX is build-time only.** Keep source FBX in `animation-sources/` so it never ships in the deploy bundle. Six legacy `.fbx` files sit unbuilt in `public/animations/` — see the orphaned-FBX note in [docs/animations.md](animations.md).
+- **No Draco/meshopt in optimized output.** The main viewer and the studios wire Draco/KTX2/meshopt decoders (`getDecoders` in `src/viewer/internal.js`), but many lighter surfaces load GLBs with a bare `GLTFLoader` and no decoder. `optimize:glb` deliberately stays within plain glTF 2.0 so its output loads everywhere; WebP textures do the heavy lifting.
+- **FBX is build-time only.** Keep source FBX in `animation-sources/` (gitignored) so it never ships in the deploy bundle. `public/animations/` holds no FBX anymore; the six formerly-orphaned clips are built into the manifest (see `resolved_issues` in [public/animations/registry.json](../public/animations/registry.json)).
 - **Bone names matter.** A non-humanoid or oddly-named rig may fall below the 8-bone / 50%-coverage thresholds and refuse to animate. The canonicalizer handles the common conventions; truly custom skeletons need their bones renamed to the canonical set first.
 - **`.bak` files.** `optimize:glb` writes a `<name>.glb.bak` alongside its output — delete it before committing.
 
@@ -297,6 +299,8 @@ text/image ──► mesh_forge ──► static GLB ──► rig_mesh ──�
 | [scripts/fbx-to-glb.mjs](../scripts/fbx-to-glb.mjs) | FBX → GLB (FBX2glTF) — `npm run convert:fbx` |
 | [scripts/build-animations.mjs](../scripts/build-animations.mjs) | FBX/GLB → retargeted clip JSON + manifest — `npm run build:animations` |
 | [scripts/extract-glb-animations.mjs](../scripts/extract-glb-animations.mjs) | Extract baked animation out of a GLB — `npm run extract:animations` |
+| [scripts/sync-animation-registry.mjs](../scripts/sync-animation-registry.mjs) | Regenerate registry.json's `clips` from the built truth: `npm run sync:animation-registry` (chained into `build:animations`) |
+| [scripts/build-motion-signatures.mjs](../scripts/build-motion-signatures.mjs) | Measure every baked clip into signatures.json: `npm run build:motion-signatures` (check with `npm run audit:motion`) |
 | [scripts/optimize-glb.mjs](../scripts/optimize-glb.mjs) | Geometry + WebP optimization — `npm run optimize:glb` |
 | [scripts/convert-fbx-to-glb.py](../scripts/convert-fbx-to-glb.py) | FBX → GLB for **static props only** (trimesh) |
 | [scripts/animations.config.json](../scripts/animations.config.json) | The FBX/GLB source list the build reads |
@@ -304,6 +308,7 @@ text/image ──► mesh_forge ──► static GLB ──► rig_mesh ──�
 | `public/animations/clips/*.json` | Pre-baked, retargeted animation clips |
 | `public/animations/manifest.json` | Clip → UI mapping (name, url, label, icon, loop) |
 | [public/animations/registry.json](../public/animations/registry.json) | Machine-readable inventory of every animation asset |
+| [public/animations/signatures.json](../public/animations/signatures.json) | Measured motion-signature index for every baked clip |
 | [src/glb-canonicalize.js](../src/glb-canonicalize.js) | Runtime bone-name normalization + GLB repack |
 | [src/animation-retarget.js](../src/animation-retarget.js) | Runtime clip retargeting |
 | [src/animation-manager.js](../src/animation-manager.js) | `AnimationMixer` driver |

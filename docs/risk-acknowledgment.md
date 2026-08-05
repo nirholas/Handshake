@@ -25,9 +25,10 @@ simply doesn't run; everything else on the platform keeps working.
   `POST /api/legal/risk-ack` ([`api/legal/risk-ack.js`](../api/legal/risk-ack.js)),
   which writes a `risk-ack-accept` row into `audit_log` — user id when signed
   in (null otherwise), disclosure version, the feature context, path, IP, and
-  user agent. `audit_log` is not retention-pruned, so acceptance records
-  persist. The write is fire-and-forget: a failed network call never blocks the
-  user's accepted state.
+  user agent. The `audit-log-cleanup` cron prunes `audit_log` at 365 days but
+  exempts `risk-ack-accept` (and `tos-accept`) rows, so acceptance records
+  persist indefinitely. The write is fire-and-forget: a failed network call
+  never blocks the user's accepted state.
 - **Devnet stays friction-free.** Surfaces that know their network only gate
   when it isn't `devnet`. Simulation modes (e.g. Oracle arm's simulate mode)
   are never gated.
@@ -97,6 +98,12 @@ is a thin wrapper for bundled code. Pure logic (`parseAckRecord`,
 
 If you add a surface, add its row here and its gate call in the code — both in
 the same change.
+
+Known gap: the master-wallet page ([/wallet](https://three.ws/wallet),
+`src/master-wallet.js`) moves real funds through its send and fund-agent flows
+but does not call `ensureRiskAck()` yet; it relies on its own simulate-then-
+confirm step instead. Wiring it through the gate is an open task, per the rule
+above.
 
 ## Related
 

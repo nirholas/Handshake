@@ -8724,20 +8724,20 @@ A map of every user-facing route. [`STRUCTURE.md`](STRUCTURE.md) maps each produ
 | **Profile**          | `/profile`, `/u/[username]`, `/avatars/[id]`                                                    | User and avatar public pages — SNS badge + pay-by-name modal when `[username].threews.sol` is claimed           |
 | **SNS Subdomain**    | `/threews/claim`                                                                                | Mint `[label].threews.sol`, set the URL record to your showcase, transfer ownership — single tx, platform pays  |
 | **Dashboard**        | `/dashboard`, `/dashboard/actions`, `/dashboard/wallets`, `/dashboard/usage`, `/dashboard/x402` | Account management, settings, and x402 receipts/payouts                                                         |
-| **Studio / Tools**   | `/studio`, `/embed`, `/pose`, `/voice`, `/mocap-studio`, `/hydrate`, `/validation`, `/strategy-lab` | Widget Studio, WYSIWYG embed editor, pose authoring, Voice Lab, Mocap Studio, on-chain import, glTF validator, DCA |
+| **Studio / Tools**   | `/studio`, `/embed`, `/pose`, `/gestures`, `/choreograph`, `/voice`, `/mocap-studio`, `/hydrate`, `/validation`, `/strategy-lab` | Widget Studio, WYSIWYG embed editor, pose authoring, gesture vocabulary + override builder, routine choreographer, Voice Lab, Mocap Studio, on-chain import, glTF validator, DCA |
 | **Widgets**          | `/widgets`, `/w/[id]`                                                                           | Widget gallery and public widget pages (OG + oEmbed)                                                            |
 | **Launchpad**        | `/launchpad`, `/p/[slug]`                                                                       | Launchpad Studio + hosted launch pages (token, agent, drop campaigns)                                           |
 | **Club**             | `/club`                                                                                         | Multiplayer 3D venue — tips, leaderboard, audio tracks, perf-aware renderer                                     |
 | **Walk**             | `/walk`                                                                                         | Authoritative multiplayer walk scene (Colyseus on Fly.io)                                                       |
-| **Coin Communities** | `/communities`, `/communities/[mint]`, `/worlds`, `/play`                                       | Live 3D world per Solana token — lobby, coin profile, and the shared coin-keyed world                           |
+| **Coin Communities** | `/communities`, `/communities/[mint]`, `/worlds`, `/play`, `/crews`                             | Live 3D world per Solana token: lobby, coin profile, the shared coin-keyed world, and crew HQ                   |
 | **City**             | `/city`                                                                                         | Free-roam walkable 3D city scene                                                                                |
 | **Bazaar (x402)**    | `/x402`, `/x402/studio`, `/x402-revenue`                                                        | Paid-API marketplace, listing studio, revenue dashboard                                                         |
 | **Artifacts**        | `/artifact`, `/artifact/snippet`, `/artifact-example`                                           | Claude Artifact viewer                                                                                          |
 | **Solana / DeFi**    | `/pumpfun`, `/pump-visualizer`, `/vanity-wallet`                                                | pump.fun launcher, live token visualizer, WASM vanity grinder                                                   |
 | **Mobile (Seeker)**  | Solana Mobile dApp Store                                                                        | MWA wallet wired into the web app + Seeker release pipeline                                                     |
 | **News / Blog**      | `/news`, `/admin/news`                                                                          | News feed + local-only CMS, syndicated via WebSub / Dev.to / Medium / HackerNoon                                |
-| **Admin / Rep**      | `/admin`, `/reputation`                                                                         | Staff admin, reputation registry                                                                                |
-| **Experiments**      | `/rider`                                                                                        | A-Frame WebVR music visualization                                                                               |
+| **Admin / Rep**      | `/admin`, `/reputation`, `/monitor`                                                             | Staff admin, reputation registry, fleet ops-room dashboard                                                      |
+| **Experiments**      | `/rider`, `/holo`                                                                               | A-Frame WebVR music visualization, procedural holographic sticker                                               |
 | **Integrations**     | `/cz`, `/lobehub/iframe`                                                                        | CZ demo, LobeHub plugin                                                                                         |
 | **IBM / Granite**    | `/galaxy`, `/ibm/x402-demo`, `/ibm/hello`                                                       | Granite on watsonx.ai: semantic agent galaxy, pay-per-call Granite demo, hello-world embed                      |
 | **Docs**             | `/docs`, `/docs/widgets`                                                                        | Developer documentation                                                                                         |
@@ -9972,14 +9972,14 @@ The full OpenAPI 3.1 spec is available at `/openapi.json`. The key API surface i
 
 Cron schedules are declared in `vercel.json` (still the live cron/route config the server reads) and executed in production by **Google Cloud Scheduler**, which calls each endpoint on its schedule. All cron endpoints are fail-closed — a missing auth token aborts with an error rather than silently skipping (see [Security Hardening](#security-hardening)).
 
-The 101 crons in `vercel.json` are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs); the schedules below match `vercel.json` verbatim.
+The 103 crons in `vercel.json` are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs); the schedules below match `vercel.json` verbatim.
 
 | Schedule             | Endpoint                                | Purpose                                                                                                                      |
 | -------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | Every minute         | `/api/cron/run-x-scheduled-posts`       | Publish queued X (Twitter) posts                                                                                             |
 | Every 3 min          | `/api/cron/pumpfun-monitor`             | Watch for new pump.fun token creates                                                                                         |
 | Every 5 min          | `/api/cron/expire-pending-purchases`    | Clear stale x402 pending purchases                                                                                           |
-| Every 5 min          | `/api/cron/solana-attestations-crawl`   | Index new Solana feedback / validation memos                                                                                 |
+| Every 10 min         | `/api/cron/solana-attestations-crawl`   | Index new Solana feedback / validation memos                                                                                 |
 | Every 5 min          | `/api/cron/index-delegations`           | Index EIP-7710 delegations                                                                                                   |
 | Every 5 min          | `/api/cron/run-x-triggers`              | Trigger-based X posts (mentions, milestones)                                                                                 |
 | Every 5 min          | `/api/cron/run-coin-cycle`              | Unified coin-launch tick: holder snapshots, vault claims, lottery draws, reflections                                         |
@@ -9993,7 +9993,7 @@ The 101 crons in `vercel.json` are routed through a single dynamic handler at [`
 | Hourly               | `/api/cron/process-withdrawals`         | Sweep creator withdrawals (pump.fun, club tips)                                                                              |
 | Hourly               | `/api/cron/run-dca`                     | Execute DCA strategy orders                                                                                                  |
 | Hourly               | `/api/cron/run-subscriptions`           | Execute recurring x402 subscriptions                                                                                         |
-| Hourly               | `/api/cron/siwx-gc`                     | Prune SIWX nonces (10-min replay window) and expired payment grants                                                          |
+| Daily 03:00 UTC      | `/api/cron/siwx-gc`                     | Prune SIWX nonces (10-min replay window) and expired payment grants                                                          |
 | Every 6h             | `/api/cron/fetch-x-metrics`             | Pull X engagement metrics for owned accounts                                                                                 |
 | Every 6h             | `/api/cron/process-subscriptions`       | Charge creator subscriptions whose period is about to end                                                                    |
 | Daily 03:00 UTC      | `/api/cron/settle-royalties`            | Settle creator and skill royalties owed                                                                                      |
@@ -10053,7 +10053,7 @@ Access tokens are short-lived JWTs (1 hour). Refresh tokens are opaque strings s
 
 ## MCP Server
 
-[`api/mcp.js`](api/mcp.js) is a thin HTTP entrypoint (POST / GET-SSE / DELETE) that implements the [Model Context Protocol](https://modelcontextprotocol.io) 2025-06-18 specification over JSON-RPC 2.0. The protocol logic is split across [`api/_mcp/`](api/_mcp/) — `auth.js` (Bearer/OAuth + x402 paywall), `dispatch.js` (JSON-RPC routing), `catalog.js` (dynamic tool catalog), `payments.js` (x402 paid-tool settlement), `render.js`, and `embed-policy.js`. Tools are registered per category under [`api/_mcp/tools/`](api/_mcp/tools/) (`avatars.js`, `models.js`, `solana.js`, `pumpfun.js`). External AI systems (including Claude Desktop, other agents, or custom integrations) can drive avatars programmatically through this surface.
+[`api/mcp.js`](api/mcp.js) is a thin HTTP entrypoint (POST / GET-SSE / DELETE) that implements the [Model Context Protocol](https://modelcontextprotocol.io) 2025-06-18 specification over JSON-RPC 2.0. The protocol logic is split across [`api/_mcp/`](api/_mcp/): `auth.js` (Bearer/OAuth + x402 paywall), `dispatch.js` (JSON-RPC routing), `catalog.js` (dynamic tool catalog), `payments.js` (x402 paid-tool settlement), `render.js`, and `embed-policy.js`. Tools are registered per category under [`api/_mcp/tools/`](api/_mcp/tools/) (14 category modules: `avatars.js`, `models.js`, `solana.js`, `pumpfun.js`, `animations.js`, `agents.js`, `garments.js`, `memory.js`, `oracle.js`, `trader.js`, `embed.js`, `sign.js`, `crypto-data.js`, `tokenize.js`). External AI systems (including Claude Desktop, other agents, or custom integrations) can drive avatars programmatically through this surface.
 
 **Endpoint:** `POST /api/mcp` (tools), `GET /api/mcp` (SSE), `DELETE /api/mcp` (session terminate)
 **Auth:** OAuth 2.1 Bearer token with `mcp` scope; some tools additionally require x402 USDC payment
@@ -10072,6 +10072,7 @@ _Avatars_ ([`api/_mcp/tools/avatars.js`](api/_mcp/tools/avatars.js))
 | `get_avatar`            | Fetch a single avatar by id or owner+slug; returns metadata plus a public `model_url` or short-lived signed URL for private avatars.       |
 | `search_public_avatars` | Free-text + tag search across the public avatar gallery; useful for finding characters to render without prior knowledge of an id.         |
 | `render_avatar`         | Produce an HTML `<model-viewer>` snippet that renders the given avatar, with configurable background, camera orbit, poster, and AR button. |
+| `render_avatar_image`   | Render a stored avatar to a real PNG/JPEG/WebP image (headless three.js) with camera framing, pose preset, and ARKit-52 expression; cached. |
 | `delete_avatar`         | Soft-delete an avatar you own. Requires the `avatars:delete` scope.                                                                        |
 
 _Models_ ([`api/_mcp/tools/models.js`](api/_mcp/tools/models.js))
@@ -10098,6 +10099,8 @@ _Pump.fun_ ([`api/_mcp/tools/pumpfun.js`](api/_mcp/tools/pumpfun.js))
 | `pumpfun_recent_graduations` | Tokens that recently graduated from the bonding curve to PumpAMM, with creator and holder analysis.                                                                                              |
 | `pumpfun_token_intel`        | Full intel on a pump.fun token: graduation status, bonding-curve progress, creator profile, top holders, volume, bundle detection, and trust signals.                                            |
 | `pumpfun_creator_intel`      | Reputation profile for a pump.fun creator wallet: prior launches, graduation rate, claim activity, and behavioural trust signals.                                                                |
+
+Ten further category modules register the rest of the catalog: _Animations_ (`list_animations`, `animation_signature`, `find_similar_animations`, `apply_animation`, `text_to_animation`), _Agents_ (`call_agent`, `register_agent`, `attach_avatar_to_agent`, `identity_check`), _Garments_ (`generate_garment`, `garment_status`, `list_garment_catalog`), _Memory_ (`remember`, `recall`, `forget`), _Oracle_ (`oracle_top_plays`, `oracle_coin`, `oracle_arm_watch`, `oracle_watch_status`), _Trader_ (`trader_leaderboard`, `trader_profile`, `copy_subscribe`, `copy_status`), _Embed_ (`get_embed_code`, `create_gated_embed`), _Sign_ (`list_sign_vocabulary`, `sign_text`), _Crypto data_ (`crypto_data`, `token_snapshot`), and _Tokenize_ (`mint_3d_asset`, `get_3d_asset_onchain`).
 
 **MCP discovery:** configured in `.mcp.json` at the repo root for Claude Desktop integration.
 
@@ -10333,14 +10336,14 @@ Every CDP-settled endpoint ships a Permit2 sibling that accepts an EIP-2612 perm
 import { paidEndpoint } from './_lib/x402-paid-endpoint.js';
 
 export default paidEndpoint({
-	price: '0.10', // USDC
-	chain: 'base', // base | bsc | solana
-	network: 'mainnet',
-	resource: 'https://three.ws/api/your-endpoint',
+	route: '/api/your-endpoint',
+	method: 'POST',
+	priceAtomics: '100000', // USDC atomic units (6 decimals): $0.10
+	networks: ['solana', 'base'], // solana | base | bsc; Solana listed first by default
 	description: 'What the buyer is paying for',
-	handler: async (req, res, { payer }) => {
-		// payer is verified — settle the request
-		res.json({ ok: true, payer });
+	handler: async ({ req, payer }) => {
+		// payer is verified. RETURN the good; the wrapper settles, then flushes it
+		return { ok: true, payer };
 	},
 });
 ```
@@ -11010,7 +11013,7 @@ npm run build       # frontend build to dist/ (only when frontend changed)
 npm run deploy:gcp  # check:dist + db:check, gcloud builds submit, purge CDN
 ```
 
-`npm run deploy:gcp` runs `gcloud builds submit --config server/cloudbuild.yaml`. Routing, cache headers, and cron schedules are defined in `vercel.json`, which the server reads at runtime. The scheduled jobs (101 at time of writing, one per entry in the `crons` array of `vercel.json`) run on **Cloud Scheduler** (provisioned by [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs)); the GPU inference workers run as their own Cloud Run services. Full ops runbook (load balancer, DNS/TLS, env, rollback, recovery): **[docs/ops/gcp-production.md](docs/ops/gcp-production.md)**.
+`npm run deploy:gcp` runs `gcloud builds submit --config server/cloudbuild.yaml`. Routing, cache headers, and cron schedules are defined in `vercel.json`, which the server reads at runtime. The scheduled jobs (103 at time of writing, one per entry in the `crons` array of `vercel.json`) run on **Cloud Scheduler** (provisioned by [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs)); the GPU inference workers run as their own Cloud Run services. Full ops runbook (load balancer, DNS/TLS, env, rollback, recovery): **[docs/ops/gcp-production.md](docs/ops/gcp-production.md)**.
 
 **Environment variables** live on the Cloud Run service, not in `.env` files — inspect or update them with `gcloud run services describe/update three-ws-api --region us-central1`. See [Environment Variables](#environment-variables) for the full list.
 

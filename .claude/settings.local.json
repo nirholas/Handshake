@@ -1,0 +1,7 @@
+{
+  "disabledMcpjsonServers": [
+    "meshy",
+    "3d-agent-local",
+    "atelier"
+  ]
+}

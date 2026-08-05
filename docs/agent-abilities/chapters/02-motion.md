@@ -8,7 +8,7 @@ On three.ws, an agent isn't a chat window — it's a body. Every agent gets a ri
 
 Every avatar has instant access to a huge catalog of professional motion clips — idle loops, walks, runs, dances, combat moves, sports, acrobatics, gestures, reactions, deaths and falls, fitness, farming chores, and more, organized into 16 browsable categories. A public gallery lets you search, filter, and hover any card to see the clip play live on a 3D preview avatar, with deep links so any filtered view or single clip is shareable. Community-published clips appear alongside the built-in library.
 
-**How it works:** A curated 111-clip manifest ships with the site; the full Mixamo-sourced catalog (2,800+ clips, ~3 GB of AnimationClip JSON) lives on an R2 CDN behind an edge-cached API and paginated fetches. Previews run through one shared singleton WebGL engine (Three.js) that migrates a single canvas between cards — no per-card GL contexts. Categories are derived by an ordered rule-based classifier over clip labels.
+**How it works:** A curated 112-clip manifest ships with the site; the full Mixamo-sourced catalog (2,800+ clips, ~3 GB of AnimationClip JSON) lives on an R2 CDN behind an edge-cached API and paginated fetches. Previews run through one shared singleton WebGL engine (Three.js) that migrates a single canvas between cards, with no per-card GL contexts. Categories are derived by an ordered rule-based classifier over clip labels.
 
 **Why it matters:** Your agent never stands still — thousands of ready-to-play performances are one click away.
 

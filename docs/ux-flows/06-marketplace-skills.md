@@ -1,17 +1,18 @@
 # Marketplace & Skills
 
-UX Flow Atlas — cluster 6. Traced against real source in `/workspaces/three.ws`. The marketplace is a path + query-param SPA served by one HTML shell (`marketplace.html`) driven by `src/marketplace.js` (8.4k lines). `/skills` is a redirect into that SPA. `/collection` and `/marketplace/analytics` are standalone pages. The critical path (browse → buy → unlock → collection) spans two purchase endpoints (`/api/marketplace/purchase` for individual skills, `/api/marketplace/buy-asset` for whole avatars/agents/plugins), both Solana-Pay-by-reference with optional gasless sponsorship and an EVM/USDC fallback.
+UX Flow Atlas, cluster 6. Traced against real source in `/workspaces/three.ws`. The marketplace is a path + query-param SPA served by one HTML shell (`marketplace.html`) driven by `src/marketplace.js` (8.9k lines). `/skills` is a redirect into that SPA. `/collection` and `/marketplace/analytics` are standalone pages. The critical path (browse → buy → unlock → collection) spans two purchase endpoints (`/api/marketplace/purchase` for individual skills, `/api/marketplace/buy-asset` for whole avatars/agents/plugins), both Solana-Pay-by-reference with optional gasless sponsorship and an EVM/USDC fallback.
 
-Routing facts confirmed in `vercel.json`:
-- `/marketplace`, `/marketplace/` → `/marketplace.html` (lines 1603-1610)
-- `/marketplace/(tools|skills|animations|onchain)/:id` → `/marketplace.html` (SPA handles detail; line 1611)
-- `/marketplace/agents/:id` → **301 redirect to `/agents/:id`** (canonical agent page; line 1615)
-- `/marketplace/avatars/:id` → **301 redirect to `/avatars/:id`** (line 1622)
-- `/marketplace/analytics` → `/pages/marketplace-analytics.html` (line 1595)
-- `/collection` → `/pages/collection.html` (line 1587)
-- `/skills` → `/skills.html` (line 1571), which client-redirects to `/marketplace?tab=skills`
-- `/api/marketplace/purchase/:ref/confirm` → `purchase.js?reference&op=confirm` (line 1555)
-- `/api/marketplace/buy-asset/:ref/confirm` → `buy-asset.js?reference&op=confirm` (line 1563)
+Routing facts confirmed in `vercel.json` (line numbers shift too often to pin; grep the route `src` instead):
+- `/marketplace`, `/marketplace/` → `/marketplace.html`
+- `/marketplace/(tools|skills|animations|onchain)/:id` → `/marketplace.html` (SPA handles detail)
+- `/marketplace/agents/:id` → **301 redirect to `/agents/:id`** (canonical agent page)
+- `/marketplace/avatars/:id` → **301 redirect to `/avatars/:id`**
+- `/marketplace/analytics` → `/pages/marketplace-analytics.html`
+- `/collection` → `/pages/collection.html`
+- `/skills` → `/skills.html`, which client-redirects to `/marketplace?tab=skills`
+- `/api/marketplace/purchase/:ref/confirm` → `purchase.js?reference&op=confirm`
+- `/api/marketplace/buy-asset/:ref/confirm` → `buy-asset.js?reference&op=confirm`
+- `/api/marketplace/purchase-bundle/:id/confirm` → `purchase-bundle.js?purchase_id&op=confirm`
 
 ---
 
@@ -78,7 +79,7 @@ Routing facts confirmed in `vercel.json`:
   11. **Branch — verification outcomes:** `confirmed` → success; `409 transfer_mismatch` (status `tipped` when a smaller-but-real transfer landed); `410 purchase_expired` for a stale pending row.
   12. On confirmed, modal renders a signed receipt (`buildReceiptHTML`) with a Solscan link, then resolves true.
   13. Client refreshes ownership: `fetchUserPurchases()` and reloads the detail (`loadDetail`) so the skill now shows "Installed ✓"; the purchase appears under the "My Purchases" tab and in `/collection`.
-- **Decision points / branches:** gasless (wallet connected, sponsored) vs buyer-pays vs mobile QR (Solana Pay); already-owned short-circuit; insufficient funds → Add funds; gift purchase (`recipient`) resolved server-side via `resolveRecipient`; verification mismatch (tipped) vs expired.
+- **Decision points / branches:** gasless (wallet connected, sponsored) vs buyer-pays vs mobile QR (Solana Pay); already-owned short-circuit; insufficient funds → Add funds; gift purchase (`recipient`) resolved server-side via `resolveRecipient`; verification mismatch (tipped) vs expired. A separate agent rail exists: `POST /api/marketplace/purchase-as-agent` `{ buyer_agent_id, seller_agent_id, skill }` buys the skill FOR an owned agent from its custodial wallet (owner-authenticated, CSRF-gated, 10 autonomous purchases/hour/agent, same daily spend cap as asset purchases).
 - **External calls / dependencies:** `POST /api/marketplace/purchase`, `POST /api/marketplace/purchase/:ref/confirm`, `GET /api/marketplace/purchase/:ref` (status), `GET /api/marketplace/check-skill-access`, Solana RPC via `/api/solana-rpc`, `@solana/web3.js` + `@solana/spl-token` (lazy-loaded), `@solana/pay` (server `findReference`/`validateTransfer`), gasless tx builder, `/api/users/me/purchased-skills` (post-purchase refresh), `/api/billing/receipts` (receipt download in My Purchases).
 - **Success state:** Receipt with tx link; skill flips to owned; appears in My Purchases tab and `/collection`; `check-skill-access` returns `has_access: true`.
 - **Empty / error states:** cancelled connect/tx ("try again"), insufficient funds (Add funds button), `verification_failed` (paid but unverified — contact support), network error, expired pending row — all with the confirm button re-enabled for retry. Re-verify (no new tx) supported when a txid exists.
@@ -92,15 +93,15 @@ Routing facts confirmed in `vercel.json`:
 - **Prerequisites / gates:** Auth + CSRF + rate limit; asset must have an active `asset_prices` row; seller must have a configured payout wallet for the chain (else `412 creator_wallet_missing`); buyer must not be the owner (else `400 self_purchase`); connected wallet with sufficient balance.
 - **Steps (N):**
   1. User clicks "Buy now" → `openAssetPurchaseFlow({ item_type, item_id, label, price })` opens the payment modal in `mode='asset'`.
-  2. (optional) Connect wallet if not connected.
-  3. User confirms → POST `/api/marketplace/buy-asset` `{ item_type, item_id, [buyer_public_key] }`.
+  2. (optional) Connect wallet if not connected. For signed-in users the modal also prepends a "Pay from an agent's own wallet, no popup" block (up to 4 owned agents with live USDC balances, from `/api/x402-pay?agents=1`; underfunded agents are disabled).
+  3. User confirms → POST `/api/marketplace/buy-asset` `{ item_type, item_id, [buyer_public_key] }`. **Agent-wallet branch:** picking an agent instead POSTs `{ item_type, item_id, agent_id }`; the server verifies ownership, enforces the agent's daily purchase cap (`agent_identities.meta.auto_purchase_daily_limit_usdc`, summed across skill AND asset purchases by `api/_lib/agent-purchase.js`; exceeding it returns `402 spend_cap_exceeded`), signs from the agent's custodial wallet, validates the transfer on-chain, and grants in one round trip (no prepare → sign → confirm dance).
   4. Server validates price/seller/payout; **already-owned** confirmed purchase short-circuits with `already_owned: true`; otherwise reuses or inserts a pending `asset_purchases` row (30-min expiry) and returns `{ reference, recipient, amount, currency_mint, chain, mint_decimals }` (+ gasless block when applicable).
   5. **Branch — already owned:** modal jumps to the success screen, skips payment.
   6. Client builds + signs the full-amount SPL transfer (single leg, no platform fee) with the reference key; user approves in wallet.
   7. Client confirms on-chain, then polls `/api/marketplace/buy-asset/:reference/confirm` (2.5s, 60s).
   8. Server (Solana) `findReference` → `validateTransfer`; on success marks `confirmed`, writes a signed `asset_purchase_receipts` row, and notifies both seller (`asset_purchased`) and buyer (`asset_purchase_confirmed`).
   9. Modal renders the success card; primary CTA goes to `/dashboard/avatars`, `/dashboard/agents`, or `/dashboard` per asset type; `fetchUserPurchases()` refreshes ownership.
-- **Decision points / branches:** chain = Solana vs EVM (EVM confirm requires a submitted `tx_hash`, verified via `verifyEvmUsdcPayment` on Base; short transfer = `tipped` 409); gasless vs buyer-pays; already-owned; mismatch (tipped) vs expired (410).
+- **Decision points / branches:** chain = Solana vs EVM (EVM confirm requires a submitted `tx_hash`, verified via `verifyEvmUsdcPayment` on Base; short transfer = `tipped` 409); browser wallet (gasless vs buyer-pays) vs agent custodial wallet (server-signed, capped); already-owned; mismatch (tipped) vs expired (410).
 - **External calls / dependencies:** `POST /api/marketplace/buy-asset` (+ `/:ref` status, `/:ref/confirm`), Solana RPC w/ fallback, `@solana/pay`, EVM USDC verifier, `insertNotification`, receipt HMAC signing.
 - **Success state:** Asset confirmed and owned; receipt stored; both parties notified; CTA into the relevant dashboard; surfaced in `/collection`.
 - **Empty / error states:** `404 not for sale`, `412 creator_wallet_missing`, `400 self_purchase`, `409 transfer_mismatch` (tipped), `410 purchase_expired`; client retry/re-verify identical to the skill flow.
@@ -111,14 +112,14 @@ Routing facts confirmed in `vercel.json`:
 ### Free trial unlock — `/api/marketplace/start-trial`
 - **Source:** `src/marketplace.js` (`openTrialFlow()` ~L6794), backend `api/marketplace/start-trial.js`
 - **Entry point:** "Try free (N left)" button on a trial-eligible paid skill (detail view or grid card).
-- **Prerequisites / gates:** Auth (button redirects to login on 401). No wallet/payment.
+- **Prerequisites / gates:** Auth (button redirects to login on 401): a browser session cookie (CSRF enforced) or an API-key bearer token (CSRF skipped for bearer callers). No wallet/payment.
 - **Steps (N):**
   1. User clicks "Try free" → `openTrialFlow(agentId, skill, btn)`.
   2. Client POSTs `/api/marketplace/start-trial` `{ agent_id, skill }`.
   3. **Branch:** if already owned or trial already used, an alert explains and stops.
   4. On success, `fetchUserPurchases()` + `loadDetail()` refresh; the skill now shows in My Purchases with a "Trial (N left)" badge and works until uses are exhausted.
 - **Decision points / branches:** trial available vs already-owned vs trial-used.
-- **External calls / dependencies:** `POST /api/marketplace/start-trial`, `/api/users/me/purchased-skills`.
+- **External calls / dependencies:** `POST /api/marketplace/start-trial`, `/api/users/me/purchased-skills`. Trial visibility: `GET /api/marketplace/trial-status?role=buyer|seller` reports each of the caller's trials (runs left, price to keep, state: fresh/active/running-low/exhausted) or, for sellers, per-skill trial counts (counts only, never buyer identities).
 - **Success state:** Trial grant visible in My Purchases / `/collection` with a remaining-uses badge.
 - **Empty / error states:** alert on already-owned / trial-used; auth redirect on 401.
 - **Step count:** 3 required (+1 optional)
@@ -171,15 +172,16 @@ Routing facts confirmed in `vercel.json`:
 - **Prerequisites / gates:** None — public aggregate stats.
 - **Steps (N):**
   1. Page loads → `load()` fetches `/api/marketplace/analytics`.
-  2. Stat cards render: total skill sales, total volume, unique buyers, creators with sales, NFT receipts minted.
-  3. A 30-day volume bar chart draws on a Canvas (no charting dependency; theme-aware colors, missing days zero-filled).
-  4. Top Skills ranked list renders (skill, agent, sales count, revenue).
-  5. Top Agents ranked list renders (agent, skill-sale count, net revenue).
-- **Decision points / branches:** has-data vs empty ("No sales yet." / "No agents yet."); dark vs light theme chart palette.
+  2. Stat cards render: Paid skill sales, Total volume, Free trials taken, Paying buyers, Creators listing skills. Sales/volume/buyers count `status = 'confirmed'` rows only; free trials are counted on their own card so they can never read as revenue.
+  3. A **trial funnel** section renders (Trials granted → used → exhausted → converted), with a diagnosis note when the funnel is broken (e.g. many exhausted trials with zero conversions) linking to `/tutorials/sell-a-skill-with-a-trial`.
+  4. A 30-day volume bar chart draws on a Canvas (no charting dependency; theme-aware colors, missing days zero-filled). With no paid sales it renders an honest empty state ("No paid sales in the last 30 days") instead of a void.
+  5. Top Skills ranked list renders (skill, agent, sales count or "N trials, no sales yet", revenue).
+  6. Top Agents ranked list renders (agent, skill-sale count, net revenue).
+- **Decision points / branches:** has-data vs empty ("No skills listed yet." / "No agents yet."); paid vs trial split everywhere; dark vs light theme chart palette.
 - **External calls / dependencies:** `GET /api/marketplace/analytics` only.
-- **Success state:** Stats grid, volume chart, and both ranked lists populated.
+- **Success state:** Stats grid, trial funnel, volume chart, and both ranked lists populated.
 - **Empty / error states:** Fetch/parse failure → `#an-error` "Failed to load analytics. Please refresh." and all sections cleared; per-list empty placeholders.
-- **Step count:** 5 required (+0 optional)
+- **Step count:** 6 required (+0 optional)
 
 ---
 
@@ -201,7 +203,7 @@ Routing facts confirmed in `vercel.json`:
 
 ## Notes
 - `/marketplace/agents/:id` and `/marketplace/avatars/:id` are **301 redirects** to the canonical `/agents/:id` and `/avatars/:id` pages (vercel.json). Within the SPA, the same paths render inline via `loadDetail()`/`loadAvatarDetail()` before a hard navigation would redirect; `marketplace-detail.js` powers both the SPA detail and the canonical pages.
-- Two distinct purchase rails: **individual skills** (`/api/marketplace/purchase`, splits creator + platform fee, records `agent_revenue_events`) vs **whole assets** (`/api/marketplace/buy-asset`, single full-amount leg, no fee, EVM/USDC fallback). The embed widget (`payment-modal.js`) only drives the skill rail.
+- Two distinct purchase rails: **individual skills** (`/api/marketplace/purchase`, splits creator + platform fee, records `agent_revenue_events`) vs **whole assets** (`/api/marketplace/buy-asset`, single full-amount leg, no fee, EVM/USDC fallback). The embed widget (`payment-modal.js`) only drives the skill rail. Both rails also have an **agent-payer** variant (`/api/marketplace/purchase-as-agent`, and `buy-asset` with `agent_id`) where the server signs from an owned agent's custodial wallet under one shared daily spend cap (`api/_lib/agent-purchase.js`).
 - "Skills marketplace" (`/skills`, `/api/skills/*`) sells community tool packs — **install is free, payment is per-call via x402** — which is a different mechanism from the skill *unlock* purchase on an agent's detail page (`/api/marketplace/purchase`). Both can show under a user's owned items.
 - `src/marketplace-lobby.js` is not URL-routed; it's a Three.js scene mounted into the hero canvas with an `onSelect` callback back to `marketplace.js`.
-- Source coverage: all referenced files were located and read. No missing sources. Line numbers for `marketplace.js` are approximate anchors from a structural read of the 8.4k-line file, not exact-verified per line.
+- Source coverage: all referenced files were located and read. No missing sources. Line numbers for `marketplace.js` are approximate anchors from a structural read of the 8.9k-line file, not exact-verified per line.

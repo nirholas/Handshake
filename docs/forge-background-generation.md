@@ -37,11 +37,18 @@ Three cooperating pieces:
    every minute via Cloud Scheduler): sweeps `forge_creations` rows still at
    `status='generating'` after a 2-minute grace period. Rows whose job id is a
    GCP worker envelope (the async self-host lanes: TRELLIS, Hunyuan3D,
-   TripoSG sketch) are polled directly on the worker: finished jobs are
-   materialized into durable storage with the exact same writer the browser
-   poll uses (`materializeCreation`), failed jobs are marked failed. Anything
-   non-terminal after 45 minutes is marked failed as timed out, so no row can
-   be orphaned at `generating` again.
+   TripoSG sketch) are polled directly on the worker, and NVIDIA NIM rows are
+   polled too (the x402 lane stores the signed job token; browser free-lane
+   rows store the bare NVCF request id). Finished jobs are materialized into
+   durable storage with the exact same writer the browser poll uses
+   (`materializeCreation`). Failures do not dead-end: a failed self-host job
+   past the attended polling window (13 minutes, so a live browser's own
+   failover is never raced) is redispatched unattended to the next healthy
+   lane under the same hop cap as the attended path, and an expired NVCF
+   request is resubmitted from the inputs stored on the row. Only a job with
+   nothing left to try is marked failed. Anything non-terminal after 45
+   minutes is marked failed as timed out, so no row can be orphaned at
+   `generating` again.
 
 3. **Notifications** ([api/_lib/forge-notify.js](../api/_lib/forge-notify.js)):
    the finalizer, and only the finalizer, notifies. `forge_complete` and
@@ -97,9 +104,9 @@ in-window. This is the forge twin of the x402 settlement-success sensor.
   no worker key it still reaps timed-out rows.
 - Batch size is 25 per tick (`FORGE_FINALIZE_BATCH` overrides). Ticks are
   idempotent and safe to overlap.
-- The response body reports `{ swept, done, failed, timed_out, still_running,
-  unpollable }` per tick, so a quick manual hit shows queue health at a
-  glance.
+- The response body reports `{ swept, done, failed, failed_over, resubmitted,
+  timed_out, still_running, unpollable }` per tick, so a quick manual hit
+  shows queue health at a glance.
 
 Related: [3d-pipeline.md](3d-pipeline.md) for the generation lanes themselves,
 and the notification preference model in

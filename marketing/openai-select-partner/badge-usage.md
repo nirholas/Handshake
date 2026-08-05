@@ -27,13 +27,15 @@ Built from the badge, not a redraw of it. Source and renderer:
 | Announcement, short phrasing (carries the badge) | "three.ws is an OpenAI Partner." | `public/partners/openai/social-card-openai-partner.png` | `https://three.ws/partners/openai/social-card-openai-partner.png` |
 | 3D Studio connector (no badge) | "3D, natively, inside ChatGPT." | `public/partners/openai/social-card-studio.png` | `https://three.ws/partners/openai/social-card-studio.png` |
 | Two-mark lockup on white (no badge, no copy) | none | `public/partners/openai/three-ws-openai-lockup.png` | `https://three.ws/partners/openai/three-ws-openai-lockup.png` |
+| Two-mark lockup on black (no badge, no copy) | none | `public/partners/openai/three-ws-openai-lockup-dark.png` | `https://three.ws/partners/openai/three-ws-openai-lockup-dark.png` |
 
 ## The two-mark lockup uses OpenAI's logomark, not the badge
 
 `three-ws-openai-lockup.png` is the three.ws mark and the OpenAI mark side by side
 on white, with a hairline between them and nothing else. It is the asset to reach
 for when a post or slide needs to read "these two companies work together" at a
-glance and there is no room for copy.
+glance and there is no room for copy. `three-ws-openai-lockup-dark.png` is the
+same lockup on flat black, with the OpenAI mark in white, for dark surfaces.
 
 Two things to know before using it:
 
@@ -45,8 +47,9 @@ Two things to know before using it:
    the goal is a compliant announcement graphic, use `social-card-announcement.png`.
 2. **The OpenAI mark in it is not a redraw.** `openai-logomark.svg` is the
    logomark path lifted verbatim from the badge artwork OpenAI supplied, given a
-   tight viewBox and `currentColor`. The curves are theirs. Do not recolour it
-   away from black on light, do not add effects, and do not merge it with the
+   tight viewBox and `currentColor`. The curves are theirs. It renders solid
+   black on light and solid white on dark, which are OpenAI's own treatments;
+   never any other colour. Do not add effects, and do not merge it with the
    three.ws cube into a single glyph.
 
 The three.ws side is `marketing/openai-select-partner/cards/three-ws-mark.png`,

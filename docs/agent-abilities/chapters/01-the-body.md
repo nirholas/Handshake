@@ -8,7 +8,7 @@ three.ws runs a complete prompt-to-world 3D pipeline in production: text or imag
 
 Type a prompt at /forge (or call the forge_free MCP tool) and get a downloadable textured 3D model (GLB) plus a browser viewer link. The default lane is completely free — no account, no key, no wallet — with paid quality tiers (draft $0.05 / standard $0.15 / high $0.50 USDC) when more geometric budget is needed.
 
-**How it works:** Free lane is Microsoft TRELLIS hosted on NVIDIA NIM/NVCF (async submit + poll; sampling steps scale by tier, 15 at draft up to 50 at high; prompts clamped to 77 chars with an auto 'studio lighting' suffix; output bytes persisted to R2 for a durable first-party URL). The backend registry (api/_lib/forge-tiers.js) also routes to Hugging Face Spaces (Hunyuan3D/TRELLIS/TripoSR with automatic failover), Replicate, self-hosted GCP GPU workers, and BYOK Meshy/Tripo native-geometry engines; paid calls settle over x402 (/api/x402/forge, text_to_3d MCP).
+**How it works:** Free lane is Microsoft TRELLIS hosted on NVIDIA NIM/NVCF (async submit + poll; the hosted preview is pinned to a proven 15-step sampling budget for draft and standard, since higher budgets overrun its gateway window, while high-tier jobs route to the higher-fidelity lanes; prompts clamped to 77 chars with an auto 'studio lighting' suffix; output bytes persisted to R2 for a durable first-party URL). The backend registry (api/_lib/forge-tiers.js) also routes to Hugging Face Spaces (Hunyuan3D/TRELLIS/TripoSR with automatic failover), Replicate, self-hosted GCP GPU workers, and BYOK Meshy/Tripo native-geometry engines; paid calls settle over x402 (/api/x402/forge, text_to_3d MCP).
 
 **Why it matters:** Zero-cost text→3D that any human or AI agent can use instantly, with a transparent pay-per-call ladder — identical pricing across REST and MCP — when quality matters.
 
@@ -28,17 +28,17 @@ Turn 1–4 reference photos or concept-art views into a textured GLB (image_to_3
 
 **Why it matters:** A product photo, sketch, or generated concept image becomes real 3D geometry — with the reference-image quality problem solved for you.
 
-## Auto-rigging (rig_mesh / UniRig / pipeline-rig)
+## Auto-rigging (rig_mesh / Make-It-Animatable / pipeline-rig)
 
 Adds a humanoid skeleton with per-vertex skin weights to any static GLB, turning a rig-less mesh into an animation-ready model that can walk, wave, and emote.
 
-**How it works:** Runs the VAST-AI UniRig lane on GCP Cloud Run GPU workers (workers/unirig, avatar-pipeline controller /rig). Sold three ways: auto_rig_model on the 3D Studio MCP server ($0.05 USDC), POST /api/x402/pipeline-rig ($0.05 USDC), and the rig_mesh tool on the paid agent MCP server ($0.20 USDC). Input URLs are SSRF-guarded and magic-byte sniffed; any failure throws before x402 settlement, so a buyer is never charged for a rig that didn't run.
+**How it works:** Runs the Make-It-Animatable rig lane on GCP Cloud Run GPU workers (workers/rig, which replaced the retired UniRig worker on the same /rig API contract): it writes a Mixamo-named 52-bone skeleton, per-vertex skin weights, and the 52 ARKit expression blendshapes straight into the original GLB bytes, materials untouched. Sold three ways: auto_rig_model on the 3D Studio MCP server ($0.05 USDC), POST /api/x402/pipeline-rig ($0.05 USDC), and the rig_mesh tool on the paid agent MCP server ($0.20 USDC). Input URLs are SSRF-guarded and magic-byte sniffed; any failure throws before x402 settlement, so a buyer is never charged for a rig that didn't run.
 
 **Why it matters:** Every generated or uploaded mesh becomes animatable in one paid call of a few cents — nobody else in the x402 ecosystem sells rigging as a per-call stage.
 
 ## Universal retargeting — any humanoid rig animates (src/glb-canonicalize.js + src/animation-retarget.js)
 
-Any humanoid avatar from any tool plays the entire animation library — legs included — with zero manual bone mapping. Mixamo, VRM/VRoid, VRM 1.0, Unreal mannequin, Daz/Genesis, MakeHuman, Blender .L/.R, Rigify, HumanIK/Maya namespaces, CH_-prefixed rigs, snake_case/kebab-case, and simple shoulderL-style rigs are all handled out of the box.
+Any humanoid avatar from any tool plays the entire animation library, legs included, with zero manual bone mapping. Mixamo, VRM/VRoid, VRM 1.0, Unreal mannequin, Daz/Genesis, MakeHuman, Blender .L/.R, Rigify, HumanIK/Maya namespaces, CH_-prefixed rigs, Reallusion CC3/CC4, SMPL/SMPL-X, Roblox R15/R6, Second Life/OpenSim, anatomical scan rigs, snake_case/kebab-case, and simple shoulderL-style rigs are all handled out of the box.
 
 **How it works:** glb-canonicalize.js rewrites the GLB's joint names onto a canonical 52-bone humanoid set (O(1) lookup plus alias maps), folds Mixamo's +90°X armature rotation into children with a world-matrix safety check, and repacks a valid GLB in place. animation-retarget.js then renames each clip track to the rig's actual bones, applies per-bone bind-pose correction (C = targetRest · sourceRest⁻¹, handling A-pose vs T-pose rests), and rescales hip translation by height ratio. Gates: ≥8 canonical bones to be playable, ≥50% track coverage per clip, and a 45° hips-tilt sanity check; a genuinely non-riggable prop falls back to the default rig via AnimationManager.supportsCanonicalClips() — never a bind-pose T-pose.
 
@@ -78,7 +78,7 @@ Scene Studio is a full in-browser 3D editor: import models (GLB, FBX, OBJ, Colla
 
 ## Pose Studio / Animation Studio (/pose)
 
-Pose any three.ws avatar (or the built-in mannequin) with FK gizmos, sliders, and drag-IK; keyframe a timeline; generate brand-new motion from a text prompt; and export an animated GLB, a reusable clip JSON, or a PNG. Saved animations play back across the platform and can be sold for USDC.
+Pose any three.ws avatar (or the built-in mannequin) with FK gizmos, sliders, and drag-IK; keyframe a timeline; generate brand-new motion from a text prompt; fingerspell any word or number in ASL on the avatar's right hand (shareable as a ?spell= deep link); and export an animated GLB, a reusable clip JSON, or a PNG. Saved animations play back across the platform and can be sold for USDC.
 
 **How it works:** A Three.js workspace (src/pose-studio.js, src/animation-library.js) with the full preset-clip gallery live-previewing on the loaded rig; text→motion generation calls /api/forge-motion; export bakes the retargeted clip onto the current rig via GLTFExporter. Agents get the same surface programmatically: pose_model ($0.01) maps a pose description to a deterministic seed plus a full Euler joint-rotation map.
 

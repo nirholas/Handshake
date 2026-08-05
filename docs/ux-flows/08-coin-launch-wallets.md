@@ -24,9 +24,10 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
   1. Page boots: `fetchMe()` then `fetchAvatars()` (`GET /api/avatars?limit=100`). Picker shows 3 shimmer skeletons while loading.
   2. Picker renders agent cards; `?avatar=<id|slug>` deep link is honored, else the first agent is auto-selected. Panel pre-fills name/symbol/description from the avatar.
   3. Panel auto-checks for an existing mint for the selected agent (`GET /api/pump/by-agent?agent_id=|avatar_id=`). If one exists, it shows the "Token already launched" card with stats + Fees & rewards panel (skip to step 16) unless the user clicks "Launch a new token."
-  4. (optional) User edits the **token image** — click/drag-drop a file (≤4 MB), or "📸 Use 3D view" to snapshot the preview canvas (only when a preview viewer is present, i.e. studio mount).
+  4. (optional) User edits the **token image**: click/drag-drop an image file, or "📸 Use 3D view" to snapshot the preview canvas (only when a preview viewer is present, i.e. studio mount). Files over ~3 MB are downscaled in the browser (1024px max, PNG then JPEG fallback) instead of rejected; only an unshrinkable image errors ("Could not shrink that image under 4 MB").
   5. User edits **name** (≤32 chars), **symbol** (≤10 codepoints, any chars incl. emoji; auto-derived from name until edited), **description** (≤500).
-  6. User picks a **coin type**: Regular / Mayhem / Agent (default, buyback-bound) / USDC / Reward.
+  5b. User picks a **launch lane**: pump.fun (default, the reach lane) or the **three.ws native bonding curve** (the economics lane). The native toggle only renders when `GET /api/native-launch/config` returns a pinned curve config for the network; its fee split and graduation target are rendered from that server config. The native lane is SOL-quoted, takes the base fields only (no coin variants, no buyback binding), and forces the connected-wallet signer (no custodial path yet).
+  6. User picks a **coin type** (pump.fun lane): Regular / Mayhem / Agent (default, buyback-bound) / USDC / Reward.
   7. (optional, Agent/USDC only) User sets the **buyback share** slider (0–50%, `buybackBps` 0–5000).
   8. (optional) User sets an **initial buy** (SOL, max 50; or USDC, max 1,000,000). Live cost line in the wallet bar updates as they type.
   9. User picks **wallet source** via the tab toggle: "Connected wallet" or "Agent wallet (custodial · server-signed)."
@@ -35,18 +36,19 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
   10c. **Agent-wallet path:** `POST /api/pump/agent-wallet` provisions/resolves the custodial wallet, returns address + lamports/sol. (optional) "Fund" opens a deposit modal (QR + address); balance polls every 30s.
   11. User clicks **Launch $SYMBOL**. The button's `data-action` routes: sign-in / focus-first-missing-field / connect / link / agent-fund / agent-retry / launch.
   12. **Build metadata** (both paths): phase `building` — if image present, `fileToDataUrl`, then `POST /api/pump/build-metadata` → `metadata_url` (cached by name|symbol|desc|hasImage key).
-  13a. **Connected-wallet launch:** phase `stamping` — client grinds the `3ws` mint keypair via `grindVanity(THREE_WS_VANITY)` with live k/s + ETA progress. Then phase `signing` → `POST /api/pump/launch-prep` (sends `wallet_address`, `mint_address` = ground pubkey, coin_type, buyback_bps, buy-in, network=mainnet) → returns `tx_base64` + `prep_id`. Deserialize `VersionedTransaction`, `wallet.signTransaction`, then co-sign with the ground mint keypair.
-  13b. Phase `confirming` — `conn.sendRawTransaction(skipPreflight:false)` over `/api/solana-rpc`, then `pollConfirmation` (75s, 2s interval). On confirm → `finalizeConfirm`: `POST /api/pump/launch-confirm` with `prep_id` + `tx_signature` → echoes `pump_agent_mint.mint`.
+  13a. **Connected-wallet launch:** phase `stamping`: client grinds the `3ws` mint keypair via `grindVanity(THREE_WS_VANITY)` with live k/s + ETA progress. Then phase `signing` → `POST /api/pump/launch-prep` (pump.fun lane; sends `wallet_address`, `mint_address` = ground pubkey, coin_type, buyback_bps, buy-in, network=mainnet) or `POST /api/native-launch/launch-prep` (native lane; base fields + `sol_buy_in` only) → returns `tx_base64` + `prep_id`. Deserialize `VersionedTransaction`, `wallet.signTransaction`, then co-sign with the ground mint keypair.
+  13b. Phase `confirming`: `conn.sendRawTransaction(skipPreflight:false)` over `/api/solana-rpc`, then `pollConfirmation` (75s, 2s interval). On confirm → `finalizeConfirm`: `POST /api/pump/launch-confirm` (or `/api/native-launch/launch-confirm` on the native lane) with `prep_id` + `tx_signature` → echoes `pump_agent_mint.mint`.
   14a. **Agent-wallet launch:** phase `stamping` (server stamps `3ws`), then phase `confirming` → `POST /api/pump/launch-agent` (server signs + submits with the custodial key, ~10s) → returns `mint`. Agent balance refreshes.
   15. Phase `success` — success card shows the stamped mint (with the `3ws` mark visually emphasized), "✓ three.ws coin" badge, links to pump.fun / Solscan / the agent page, "Copy launch announcement," and "Launch another token."
   16. (existing-token branch) Fees & rewards panel mounts against the mint for claim/delegation management.
 - **Decision points / branches:**
   - Existing mint found → existing-token card vs. "force new."
+  - Launch lane: pump.fun (default; coin types + custodial path available) vs. three.ws native curve (only offered when a curve config is deployed for the network; connected-wallet signer only; base fields only).
   - Coin type: Regular / Mayhem (high-volatility, no buyback) / Agent (SOL buyback+burn) / USDC (stablecoin-paired agent) / Reward (delegated creator fees; launches as a plain coin, fees split post-graduation). USDC & Reward both remap server-side (`coin_type: 'agent'` / `'regular'`).
   - Wallet source: connected (client-grinds mark, client-signs) vs. agent (server-grinds, server-signs).
   - Connected path may require a one-time SIWS link, and a link may hit a takeover branch.
   - Confirmation timeout → escape-hatch screen ("Finalize once confirmed" re-checks signature status, "Start over").
-- **External calls / dependencies:** `/api/auth/me`, `/api/avatars`, `/api/pump/by-agent`, `/api/auth/wallets`, `/api/auth/wallets/nonce-solana`, `/api/auth/wallets/link-solana`, `/api/pump/agent-wallet`, `/api/pump/build-metadata`, `/api/pump/launch-prep`, `/api/pump/launch-confirm`, `/api/pump/launch-agent`, `/api/solana-rpc` (Connection RPC). External: `esm.sh/@solana/web3.js@1.98.4`, `esm.sh/qrcode@1.5.3`, pump.fun (mint target), Solscan (links).
+- **External calls / dependencies:** `/api/auth/me`, `/api/avatars`, `/api/pump/by-agent`, `/api/auth/wallets`, `/api/auth/wallets/nonce-solana`, `/api/auth/wallets/link-solana`, `/api/pump/agent-wallet`, `/api/pump/build-metadata`, `/api/pump/launch-prep`, `/api/pump/launch-confirm`, `/api/pump/launch-agent`, `/api/native-launch/config`, `/api/native-launch/launch-prep`, `/api/native-launch/launch-confirm`, `/api/solana-rpc` (Connection RPC). External: `esm.sh/@solana/web3.js@1.98.4`, `esm.sh/qrcode@1.5.3`, pump.fun (mint target), Solscan (links).
 - **Success state:** `lp-ok` card — stamped mint, verified badge, pump.fun/Solscan/agent-page links, share-announcement copy, relaunch button. The coin appears in `/launches` within 60s via live refresh.
 - **Empty / error states:** signed-out / no-avatar guided onboarding (4-step explainer + coin-type legend + cost note); "Checking for existing token…"; per-phase `lp-phase` status line; `friendlyError()` maps rejections/insufficient SOL/no-wallet/rate-limit to plain copy; confirmation-timeout escape hatch; agent-wallet error/retry/provision states; insufficient-balance "Fund" CTA.
 - **Step count:** 15 required (+5 optional)
@@ -96,8 +98,8 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
 ---
 
 ### Solana Vanity Wallet — `/vanity-wallet`
-- **Source:** `public/vanity-wallet.html` (self-contained inline module). Grinder: `src/solana/vanity/grinder.js` (`grindVanity`); validation: `src/solana/vanity/validation.js`.
-- **Entry point:** Prefix / suffix inputs, case-insensitive toggle, CPU-core slider, Generate button.
+- **Source:** `public/vanity-wallet.html` (self-contained inline module). Grinder: `src/solana/vanity/grinder.js` (`grindVanity`); validation: `src/solana/vanity/validation.js`. Sealed gifts: `src/pages/sealed-drops.js` (+ `src/solana/vanity/sealed-envelope.js`, `drop-protocol.js`; backend `api/vanity/drops.js`).
+- **Entry point:** Prefix / suffix inputs, case-insensitive toggle, CPU-core slider, Generate button; a "🎁 Send a sealed gift" section sits below the grinder.
 - **Prerequisites / gates:** None to grind (runs entirely in-browser; keys never leave the device). Assigning the result to an agent requires sign-in.
 - **Steps (N):**
   1. User types a **prefix** ("Starts with", ≤6) and/or **suffix** ("Ends with", ≤6); live base-58 validation, difficulty meter, and per-core ETA update.
@@ -107,8 +109,9 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
   5. On hit → result card: highlighted address, attempts/duration/rate stats, **Download keypair (Solana CLI JSON)**, **Copy public key**, and a "save before leaving" warning.
   6. (optional) **Assign to an agent**: `GET /api/agents`. If 401 → sign-in prompt; if none → create-agent prompt; else select an agent + check the custody-ack box.
   7. (optional, assign) If the agent already has a wallet, the flow switches to "Replace" — `DELETE /api/agents/:id/solana` first, then `POST /api/agents/:id/solana` with `secret_key` (array) + `vanity_prefix`/`vanity_suffix`. 409 handled. Success confirms "encrypted server-side" custody transfer.
-- **Decision points / branches:** prefix vs suffix vs both; case-sensitive vs insensitive; assign vs keep self-custody; replace-existing-wallet branch.
-- **External calls / dependencies:** None for grinding (client-side WASM ed25519 workers). Assign: `/api/agents`, `/api/agents/:id/solana` (POST + DELETE).
+  8. (optional) **Send a sealed gift** (`sealed-drops.js`): compose a funded wallet drop (asset/amount, optional vanity pattern reusing the page's grind fields, seal mode "Bearer link" vs direct X25519 key, message/theme, expiry, optional reclaim address) → pays the x402 create fee → shareable `/drop/:id` link + QR + OG card. The recipient's claim page opens the ECIES sealed envelope entirely client-side (claim key rides the URL fragment in bearer mode), then offers import / download / sweep; three.ws never sees the plaintext key. "Gifts you've sent from this browser" lists sent drops with reclaim for expired ones.
+- **Decision points / branches:** prefix vs suffix vs both; case-sensitive vs insensitive; assign vs keep self-custody; replace-existing-wallet branch; gift seal mode bearer vs direct-key; gift claimed vs expired (reclaim).
+- **External calls / dependencies:** None for grinding (client-side WASM ed25519 workers). Assign: `/api/agents`, `/api/agents/:id/solana` (POST + DELETE). Gifts: `/api/vanity/drops` (+ x402 create fee, on-chain funding/reclaim server-side).
 - **Success state:** vanity address found + downloadable keypair; optionally "Assigned to <agent>" with an open-agent link.
 - **Empty / error states:** invalid-Base58 preview; combined-length-over-max warning; grind-failed error; assign 401/empty/409/network errors each handled inline.
 - **Step count:** 3 required (+4 optional)
@@ -192,7 +195,7 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
 ---
 
 ### threews.sol Name Claim (SNS subdomain) — `/threews/claim`
-- **Source:** route `/threews/claim` → `pages/threews-claim.html` (self-contained inline module). Pay-by-name plumbing: `src/sns/pay-by-name.js`. Surfaced from `/three`'s rare-name studio.
+- **Source:** route `/threews/claim` → `pages/threews-claim.html` (self-contained inline module). Pay-by-name plumbing: `src/sns/pay-by-name.js`. Surfaced from the profile page's "Claim <username>.threews.sol" wallet pill (`pages/profile.html`).
 - **Entry point:** `#tw-label` label input + `#tw-mint` Mint button; `#tw-status` availability line; `#tw-result`.
 - **Prerequisites / gates:** Sign-in required to mint (CSRF token from `/api/csrf-token`; "not signed in" if absent). Minting an on-chain SNS subdomain under `*.threews.sol`.
 - **Steps (N):**
@@ -200,7 +203,7 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
   2. `GET /api/threews/subdomain?label=` → shows "<full> is available" (enables Mint) or "claimed by @user / owned by <addr>".
   3. User clicks **Mint** → `getCsrf()` (`GET /api/csrf-token`) → `POST /api/threews/subdomain` with `{ label }` + `x-csrf-token`.
   4. On success → "<full> minted" with the showcase URL and a Solscan tx link for the on-chain mint signature.
-- **Decision points / branches:** available vs taken; pricing tier (common = free; short/dictionary/reserved are priced in $THREE, surfaced via `/three` name-quote before landing here); signed-in vs not.
+- **Decision points / branches:** available vs taken; label must equal the account's username (the server 409s `username_mismatch` otherwise, and requires a username to be set); signed-in vs not; optional `owner_wallet` must be a Solana wallet already linked to the account.
 - **External calls / dependencies:** `/api/threews/subdomain` (GET check + POST mint), `/api/csrf-token`; Solscan (tx link). On-chain SNS mint.
 - **Success state:** Minted name card with showcase URL + tx signature link.
 - **Empty / error states:** "Type a label to check"; availability "bad" state for taken names; mint-failed (re-enables button); not-signed-in CSRF failure.
@@ -208,19 +211,19 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
 
 ---
 
-### $THREE Economy — `/three`
-- **Source:** `pages/three.html` → `src/three-economy.js`. Wallet/tier via `src/three-access.js` (`getAccess`) + `src/wallet.js` (`initWalletButton`).
-- **Entry point:** "The Flow" canvas viz, live stats, treasury/rewards wallets, holder-tier ladder, pricing explorer, rare-name studio.
-- **Prerequisites / gates:** All read-only. Connecting a wallet resolves the holder tier from on-chain $THREE; no purchase happens on this page (CTAs link out to `/three-token` to buy and `/threews/claim` to mint names).
+### $THREE Holder Tiers - `/three`
+- **Source:** `pages/three.html` → `src/three-tier-page.js`. Wallet via `src/wallet.js` (`getConnectedWalletAddress` / `connectWallet`); swap via `src/swap-jupiter.js` (`openSwapModal`); mint from `src/pump/three-token-data.js`.
+- **Entry point:** `#tier-root` renders the canonical hold-to-access ladder. Every locked state across the platform (nav tier chip, in-place lock panels) routes here as the single upgrade path.
+- **Prerequisites / gates:** All read-only. Connecting a wallet (or being signed in) resolves the holder tier from on-chain $THREE; buying happens in the in-page Jupiter swap modal, price detail links to `/three-token`.
 - **Steps (N):**
-  1. Boot fetches `/api/three/{catalog,stats,tier,access}` + `/api/token/price`; renders the flow viz, animated stats, and on-chain-verifiable treasury/rewards wallet addresses.
-  2. (optional) User clicks **Connect wallet to see your tier** (hidden `#connect-wallet-btn` wired by `initWalletButton`); a `wallet:changed` event re-reads the tier and applies the discount live in the pricing explorer.
-  3. (optional) **Rare-name studio:** user types a `*.threews.sol` name → `GET /api/three/name-quote?name=` → "Free to mint" (common) or a $THREE rarity price; links to `/threews/claim` to mint.
-  4. (optional) Explore the holder-tier ladder (Live vs Planned feature matrix from `/api/three/access`) and the pricing explorer (tier discount applied).
-- **Decision points / branches:** wallet connected (real tier) vs synthesized-from-wallet vs no-wallet; name common (free) vs rare (priced).
-- **External calls / dependencies:** `/api/three/catalog`, `/api/three/stats`, `/api/three/tier`, `/api/three/access`, `/api/three/name-quote`, `/api/token/price`. Wallet connect via the global `initWalletButton`.
-- **Success state:** fully populated economy dashboard reflecting live treasury/rewards/holder data; tier + discount applied for a connected wallet.
-- **Empty / error states:** connect-wallet prompts where no tier is resolved; designed loading/empty states throughout; name-quote validation feedback.
+  1. Boot fetches `GET /api/three/tier` + `GET /api/three/access` (both accept `?wallet=` for an account-less visitor with a connected Phantom); renders every tier with its perks, the live fee discount, and the free-quota multiplier. Truth comes from the server; both endpoints degrade to the Member floor on any hiccup so a price/RPC outage still shows the ladder.
+  2. (optional) User connects a wallet / signs in → their current tier is highlighted with the exact $-to-next-tier delta.
+  3. (optional) **Hold more $THREE** → opens the Jupiter swap modal (SOL → $THREE) in place.
+  4. (optional) Per-feature access matrix from `/api/three/access` shows what each tier unlocks (`enforced` / `eligible` / `required`).
+- **Decision points / branches:** wallet connected or signed in (tier highlighted) vs neither (connect/sign-in prompt); ladder loaded vs outage (retry); holdings overflow handled gracefully at $10M+.
+- **External calls / dependencies:** `/api/three/tier`, `/api/three/access` (both `?wallet=`-aware), Jupiter swap modal, `/three-token` (price page link).
+- **Success state:** populated tier ladder with the visitor's real tier, delta to the next tier, and a working in-page path to hold more.
+- **Empty / error states:** all five states designed: skeleton ladder while loading, connect/sign-in prompt with the public ladder, actionable error with retry, populated ladder, $10M+ overflow formatting.
 - **Step count:** 1 required (+3 optional)
 
 ---

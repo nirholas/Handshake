@@ -25,12 +25,20 @@ result_* }` — and authenticate with one shared bearer secret.
 | `hunyuan3d`         | `workers/model-hunyuan3d`| `model-hunyuan3d`| `image`  | High-poly image-conditioned reconstruction (Tencent Hunyuan3D). Poly-budget aware. |
 | `triposg`           | `workers/model-triposg`  | `model-triposg`  | `sketch` | Sketch→3D (TripoSG-scribble): a drawing + a prompt naming it → untextured geometry. |
 
-All three are `provider: 'gcp'`, `free: true`. `model-trellis` and
-`model-hunyuan3d` pin one always-warm instance (`_MIN_INSTANCES: "1"`): a cold
-FUSE-mounted weight load can stall for many minutes, and the GCP credit budget
-covers the standing GPU-hour; `model-triposg` scales to zero. A **cold start**
-on a scale-to-zero worker pays a one-time model-load before the job runs. We
-surface that honestly (see *Cold start*), never as a fake timer.
+All three are `provider: 'gcp'`, `free: true`. `model-trellis` pins one
+always-warm instance and bursts to three under load (`_MIN_INSTANCES: "1"`,
+`_MAX_INSTANCES: "3"`): a cold FUSE-mounted weight load can stall for many
+minutes, and the GCP credit budget covers the standing GPU-hour.
+`model-hunyuan3d`'s cloudbuild default is also min 1, but the live service was
+set to `--min-instances=0` on 2026-07-26 to free the shared us-central1 L4 pool
+(3 granted; see the `gpu-quota-starved` signature in
+`docs/ops/production-log-triage.md`); `model-triposg` scales to zero. A
+**cold start** on a scale-to-zero worker pays a one-time model-load before the
+job runs. We surface that honestly (see *Cold start*), never as a fake timer,
+and the `gpu-keepwarm` cron (`api/cron/gpu-keepwarm.js`, every 10 min during
+peak hours via Cloud Scheduler) holds allowlisted scale-to-zero lanes resident
+where warming them does not contend for that L4 pool (`FORGE_KEEPWARM_LANES`
+overrides the set without a deploy).
 
 Wire shapes: `model-trellis` and `model-hunyuan3d` both speak the standard task
 shape (`POST /infer` → `{ task_id }`, `GET /tasks/:id` → `result_gcs_url`);
@@ -160,9 +168,10 @@ Everything below runs on GCP credits; no third-party API is involved.
    stop being hallucinated. Single view uses the plain `run()` path.
 5. **Per-tier sampler/export budgets.** `SELFHOST_TRELLIS_QUALITY`
    (`api/_lib/forge-tiers.js`) scales diffusion steps, kept geometry and baked
-   texture size per tier (draft 12 steps/1K, standard 25/2K, high 45/2K); the
-   worker clamps every knob server-side (`_clamped_quality`, defaults 25 steps
-   / 2K texture / 0.90 simplify). The Hunyuan3D worker maps `tier` +
+   texture size per tier (draft 12 steps/1K, standard 35/2K, high 50/4K;
+   texture sizes must be powers of two or the nvdiffrast bake hard-fails); the
+   worker clamps every knob server-side (`_clamped_quality`, defaults 40 steps
+   / 4K texture / 0.75 simplify). The Hunyuan3D worker maps `tier` +
    `target_polycount` to its own generation budgets.
 
 ---

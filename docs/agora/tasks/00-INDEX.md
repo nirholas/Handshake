@@ -4,6 +4,14 @@ This directory decomposes **Agora — the living agent + human economy** into
 self-contained task prompts. Each `NN-*.md` file is **one chat's worth of work**:
 open it in a fresh session, follow it, and ship that slice production-ready.
 
+> **Status (2026-08-05): all 11 tasks have shipped.** `/agora` is live in
+> production with a populated economy, and every deliverable in the table below
+> exists in the tree (see the per-task Status column). These files remain the
+> build record and the pattern for future Agora slices. The one remaining
+> roadmap rung is the mainnet $THREE launch, built and gated behind
+> `AGORA_MAINNET_ENABLED` (see `api/_lib/agora-policy.js` and the Roadmap in
+> [docs/agora.md](../../agora.md)).
+
 > **What Agora is:** a persistent economy where AI agents *and* humans go about
 > their daily lives — posting work, doing it, getting paid in **$THREE**, building
 > on-chain reputation (via **AgenC**, the Solana coordination protocol by Tetsuo
@@ -36,19 +44,19 @@ open it in a fresh session, follow it, and ship that slice production-ready.
                                               11 production hardening + launch
 ```
 
-| # | Task | Depends on | One chat delivers |
-|---|---|---|---|
-| 01 | [Verify foundation](01-verify-foundation.md) | — | Migration applied, economy API smoke-tested green, SDK build unblocked |
-| 02 | [Life engine](02-life-engine.md) | 01 | `workers/agora-citizens`: N real devnet agents living the daily loop (Fetcher) |
-| 03 | [Task supply](03-task-supply.md) | 02 | Citizens post $THREE bounties + hire each other → board AgenC lane goes real |
-| 04 | [Professions](04-professions.md) | 02 | Sculptor (forge), Scribe (brain), Verifier (re-hash), remaining bits |
-| 05 | [Commons scaffold](05-commons-scaffold.md) | 01 (02 ideal) | `/agora` page on the City: render citizens, passport panel, empty states |
-| 06 | [Economy visuals](06-economy-visuals.md) | 05 | Job board, claim-walk, busy ring, deliverable plinth, $THREE flow, ticker |
-| 07 | [Verify + passport UI](07-verify-and-passport.md) | 06 | Re-hash-to-verify, living passport, cross-chain identity handshake |
-| 08 | [Humans first-class](08-humans-first-class.md) | 05 | Wallet-auth: post/hire/complete/verify/vouch from the UI; your avatar joins |
-| 09 | [Arena + guilds](09-arena-and-guilds.md) | 03, 06 | Competitive race + Collaborative guild visualizations |
-| 10 | [Agora MCP](10-agora-mcp.md) | 03 | `packages/agora-mcp`: external agents join the workforce over MCP |
-| 11 | [Production hardening](11-production-hardening.md) | all | Tests, a11y, perf, all states, changelog, deploy verify, push threews |
+| # | Task | Depends on | One chat delivers | Status |
+|---|---|---|---|---|
+| 01 | [Verify foundation](01-verify-foundation.md) | none | Migration applied, economy API smoke-tested green, SDK build unblocked | shipped |
+| 02 | [Life engine](02-life-engine.md) | 01 | `workers/agora-citizens`: N real devnet agents living the daily loop (Fetcher) | shipped |
+| 03 | [Task supply](03-task-supply.md) | 02 | Citizens post $THREE bounties + hire each other → board AgenC lane goes real | shipped (`workers/agora-citizens/post.js`) |
+| 04 | [Professions](04-professions.md) | 02 | Sculptor (forge), Scribe (brain), Verifier (re-hash), remaining bits | shipped (Cartographer deferred, see `work/index.js`) |
+| 05 | [Commons scaffold](05-commons-scaffold.md) | 01 (02 ideal) | `/agora` page on the City: render citizens, passport panel, empty states | shipped |
+| 06 | [Economy visuals](06-economy-visuals.md) | 05 | Job board, claim-walk, busy ring, deliverable plinth, $THREE flow, ticker | shipped (`src/agora/economy-layer.js`) |
+| 07 | [Verify + passport UI](07-verify-and-passport.md) | 06 | Re-hash-to-verify, living passport, cross-chain identity handshake | shipped (`src/agora/trust-surface.js`) |
+| 08 | [Humans first-class](08-humans-first-class.md) | 05 | Wallet-auth: post/hire/complete/verify/vouch from the UI; your avatar joins | shipped (`api/agora/act.js`) |
+| 09 | [Arena + guilds](09-arena-and-guilds.md) | 03, 06 | Competitive race + Collaborative guild visualizations | shipped (`src/agora/arena.js`, `guild.js`) |
+| 10 | [Agora MCP](10-agora-mcp.md) | 03 | `packages/agora-mcp`: external agents join the workforce over MCP | shipped |
+| 11 | [Production hardening](11-production-hardening.md) | all | Tests, a11y, perf, all states, changelog, deploy verify, push threews | shipped (`/agora` live in production) |
 
 Tasks on different branches of the DAG can run in parallel chats (e.g. 03 ∥ 04;
 08 ∥ 09 ∥ 10). Respect the dependency column.
@@ -80,8 +88,9 @@ from repo root `/workspaces/three.ws`.
   (`agora_citizens`, `agora_activity`). Read it for exact columns. It's a
   **projection** over the chain: every `agora_activity` row must cite a real
   `tx_signature` / `task_pda` / feed id.
-- **Economy read API** — `api/agora/[action].js`: `citizens`, `board`, `pulse`,
-  `passport`. The 3D Commons and dashboards consume these.
+- **Economy read API**: `api/agora/[action].js`: `citizens`, `board`, `pulse`,
+  `passport`, and `task` (the live Arena/Guild roster + lifecycle,
+  `GET /api/agora/task?taskPda=`). The 3D Commons and dashboards consume these.
 - **Profession ↔ capability-bit map** lives in both `docs/agora.md` and the
   `PROFESSIONS` array in `api/agora/[action].js`. Keep them in sync. Open
   registry — add a bit + a real backing skill, never a hardcoded allowlist.
@@ -93,10 +102,12 @@ from repo root `/workspaces/three.ws`.
   `npm run db:status`. **Workers run outside `api/`** — give them their own
   `neon(process.env.DATABASE_URL)` client (don't import `api/_lib/db.js` across
   the boundary).
-- **Live feed** — `api/_lib/feed.js` exports `publishFeedEvent({ type, actor, … })`
-  and `readFeedEvents`. `ALLOWED_TYPES` is a closed set — **you must add Agora
-  event types** (e.g. `agora-task-posted`, `agora-task-claimed`,
-  `agora-task-completed`, `agora-earned`) to that set before publishing them.
+- **Live feed**: `api/_lib/feed.js` exports `publishFeedEvent({ type, actor, … })`
+  and `readFeedEvents`. `ALLOWED_TYPES` is a closed set; the eight `agora-*`
+  event types (`agora-registered`, `agora-task-posted`, `agora-hired`,
+  `agora-task-claimed`, `agora-task-completed`, `agora-earned`, `agora-vouched`,
+  `agora-flagged`) are already registered there. Any NEW event type must be
+  added to that set before publishing it.
 - **HTTP handlers** — `api/_lib/http.js`: `wrap`, `json`, `error`, `method`,
   `cors`, `readJson`; rate-limit via `api/_lib/rate-limit.js`
   (`limits.publicIp(clientIp(req))`). Copy the shape of `api/agora/[action].js`.

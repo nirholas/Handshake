@@ -1,7 +1,7 @@
 # Button + Pill Migration Map (B04)
 
-**Canonical system:** `public/style.css` — `.btn` base + BEM modifiers + `.pill` base + semantic modifiers.
-**Tokens:** B01 primitives in `public/tokens.css`; component tokens (`--btn-*`, `--badge-*`, `--focus-ring-*`, `--disabled-*`) layered in `public/style.css`.
+**Canonical system:** the `.btn` base + BEM modifiers live in `public/buttons.css` (B03, a portable partial that `public/style.css` `@import`s; any surface can also `<link>` it directly). The `.pill` base + semantic modifiers live in `public/style.css` (B04).
+**Tokens:** B01 primitives in `public/tokens.css`; `--btn-*` and `--focus-ring-*` component tokens in `public/buttons.css`, `--badge-*` in `public/style.css`, `--disabled-*` in `public/tokens.css`.
 
 ---
 
@@ -55,7 +55,7 @@ Linked pills: use `<a class="pill pill--onchain">` — gets hover/focus states a
 
 ## Remaining long tail — classes → canonical equivalent
 
-These classes are defined across the codebase. Follow-up agents should replace them with canonical classes (keep old class as needed for scoped CSS overrides).
+These classes are defined across the codebase. Follow-up agents should replace them with canonical classes (keep old class as needed for scoped CSS overrides). Re-verified 2026-08-05: every class in both tables below is still in use in `pages/`, `src/`, or `public/`, so every row remains open work.
 
 ### Button class names → canonical
 
@@ -96,7 +96,7 @@ These classes are defined across the codebase. Follow-up agents should replace t
 | `erc8004-brand-badge` | `.pill.pill--onchain` |
 | `tws-ocb` (onchain-badge) | `.pill.pill--onchain` (already generalized in B04) |
 | `.price-badge` | `.pill` |
-| `nav-pill-sm` | `.pill.pill--new.pill--sm` |
+| `nav-pill-sm` | `.pill.pill--new` (the default pill size is already small; no `--sm` modifier exists) |
 
 ---
 

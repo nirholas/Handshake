@@ -378,7 +378,7 @@ Avatar creation, blockchain features, and IPFS are all optional for local develo
 
 ## `vercel.json`
 
-A **live configuration file** consumed at runtime by the Cloud Run server ([`server/index.mjs`](../server/index.mjs)) — not a Vercel leftover. The server reads its `routes` array (route table, security headers, rewrites) on boot and its `crons` list to know which scheduled jobs exist. The `routes` array maps incoming URL patterns to destination files or API handlers.
+A **live configuration file** consumed at runtime by the Cloud Run server ([`server/index.mjs`](../server/index.mjs)), not a Vercel leftover. The server reads its `routes` array (route table, security headers, rewrites) on boot; the `crons` list is read by [`scripts/create-gcp-scheduler.mjs`](../scripts/create-gcp-scheduler.mjs) to sync the Cloud Scheduler jobs (the server itself never reads it). The `routes` array maps incoming URL patterns to destination files or API handlers.
 
 **Key route patterns:**
 
@@ -417,7 +417,7 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 }
 ```
 
-**Cron jobs** are declared here as the source of truth for the schedule (currently 89 entries); in production they are driven by **Google Cloud Scheduler**, each job hitting its `/api/cron/*` handler on the Cloud Run service:
+**Cron jobs** are declared here as the source of truth for the schedule (currently 103 entries); in production they are driven by **Google Cloud Scheduler**, each job hitting its `/api/cron/*` handler on the Cloud Run service:
 
 ```json
 "crons": [
