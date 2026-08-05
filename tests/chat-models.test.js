@@ -86,11 +86,11 @@ describe('usableModels (route selector)', () => {
 
 describe('free-first ordering', () => {
 	it('every free provider ranks ahead of every paid provider', () => {
-		// Free providers (Groq → OpenRouter → NVIDIA NIM) always lead; the paid
-		// keys (Anthropic, OpenAI, Grok) are last-resort backstops only reached
-		// when all three free lanes have failed.
-		expect(DEFAULT_PROVIDER_ORDER).toEqual(['groq', 'openrouter', 'nvidia', 'anthropic', 'openai', 'grok']);
-		const free = ['groq', 'openrouter', 'nvidia'];
+		// Free providers (Groq, OpenRouter, NVIDIA NIM, SambaNova, Mistral,
+		// Z.AI) always lead; the paid keys (Anthropic, OpenAI, Grok) are
+		// last-resort backstops only reached when every free lane has failed.
+		expect(DEFAULT_PROVIDER_ORDER).toEqual(['groq', 'openrouter', 'nvidia', 'sambanova', 'mistral', 'zai', 'anthropic', 'openai', 'grok']);
+		const free = ['groq', 'openrouter', 'nvidia', 'sambanova', 'mistral', 'zai'];
 		const paid = ['anthropic', 'openai', 'grok'];
 		for (const f of free) {
 			for (const p of paid) {
@@ -122,7 +122,7 @@ describe('free-first ordering', () => {
 	});
 
 	it('anonymous callers are clamped to free tiers plus the credits-funded Vertex Gemini anchor', () => {
-		expect(ANON_PROVIDER_LIST).toEqual(['groq', 'openrouter', 'nvidia', 'vertex-gemini']);
+		expect(ANON_PROVIDER_LIST).toEqual(['groq', 'openrouter', 'nvidia', 'sambanova', 'mistral', 'zai', 'vertex-gemini']);
 		// The free third-party lanes lead; the funded Vertex anchor is the
 		// last-resort rung so an anon caller never 503s just because every free
 		// tier is rate-limited at once.

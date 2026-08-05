@@ -13,6 +13,13 @@
 //     prod are routinely invalid or out of quota, so a chain that depends on
 //     them fails.
 //
+//   • THE FREE TIER KEEPS GROWING. SambaNova, Mistral (Experiment tier),
+//     Z.AI GLM Flash, Cloudflare Workers AI, and SiliconFlow are optional
+//     keyed rungs (each skipped when its env var is unset), and LLM7.io is a
+//     second keyless anonymous rung alongside OVH and Pollinations. Every new
+//     free provider is an independent quota pool, so adding one raises the
+//     ceiling of traffic the platform serves at zero marginal cost.
+//
 //   • VERTEX GEMINI IS THE RELIABILITY ANCHOR. When GOOGLE_CLOUD_PROJECT is
 //     set (every Cloud Run deploy), Gemini Flash-Lite on Vertex — service
 //     account auth, GCP-credit billing, no third-party quota — sits between
@@ -85,6 +92,37 @@ const NVIDIA_NEMOTRON_MODEL = 'nvidia/nvidia-nemotron-nano-9b-v2';
 // model per IP quota, so it rides at the back of the 70B-class group rather
 // than leading. https://help.ovhcloud.com/csm/en-public-cloud-ai-endpoints-capabilities
 const OVH_MODEL = 'Meta-Llama-3_3-70B-Instruct';
+// SambaNova Cloud free tier (cloud.sambanova.ai): the same Llama 3.3 70B on
+// yet another independent free quota pool (about 20 req/min and 200K
+// tokens/day per model, no card required). Model id verified live against
+// GET https://api.sambanova.ai/v1/models on 2026-08-05.
+const SAMBANOVA_MODEL = 'Meta-Llama-3.3-70B-Instruct';
+// Mistral's Experiment tier (console.mistral.ai): a genuinely large free
+// quota (about 1B tokens/month at 1 req/sec) in exchange for opting the
+// account into data training, which is fine for this chain: it carries
+// platform utility traffic, not user secrets. The -latest alias tracks
+// Mistral's current small release without a code change.
+const MISTRAL_MODEL = 'mistral-small-latest';
+// Z.AI (Zhipu) Flash lane (docs.z.ai): glm-4.7-flash is one of the
+// permanently free, rate-limited Flash models on the OpenAI-compatible
+// endpoint at api.z.ai. Strong coding/chat quality for a free lane.
+const ZAI_MODEL = 'glm-4.7-flash';
+// Cloudflare Workers AI: 10,000 free neurons/day on the account-scoped
+// OpenAI-compatible endpoint. Needs BOTH CLOUDFLARE_ACCOUNT_ID and
+// CLOUDFLARE_AI_API_TOKEN (the URL embeds the account id). The fp8-fast
+// build keeps this rung in the 70B class.
+const CLOUDFLARE_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+// SiliconFlow international (siliconflow.com): free-tier Qwen3 8B. A
+// capability step-down, so it rides with the small-model group at the end
+// of the free section; enable_thinking:false (extraBody below) keeps Qwen3's
+// reasoning mode off so message.content carries the actual answer.
+const SILICONFLOW_MODEL = 'Qwen/Qwen3-8B';
+// LLM7.io keyless anonymous tier (api.llm7.io): community-run gateway, no
+// key and no signup, about 30 req/min per IP. Free catalog probed live
+// 2026-08-05; gemini-3.1-flash-lite returned real content there, while the
+// gpt-oss route spends its token budget on reasoning and can hand back an
+// empty content field, so it is deliberately not used.
+const LLM7_MODEL = 'gemini-3.1-flash-lite';
 // Pollinations' keyless anonymous tier: also no key, routes to a hosted
 // gpt-oss-20b. Smaller than the 70B rungs above it, so it sits in the
 // capability-step-down group alongside Groq's instant lane — an always-on
@@ -152,7 +190,7 @@ export async function checkUserLlmSpendCap(userId, { anthropicKey, grokKey } = {
 				-- on the platform key is real spend and counts against the cap.
 				AND NOT (provider LIKE 'openrouter%' AND (model IS NULL OR model LIKE '%:free'))
 				AND provider NOT LIKE 'vertex%'
-				AND provider NOT IN ('nvidia', 'cerebras', 'gemini', 'ovh', 'pollinations')
+				AND provider NOT IN ('nvidia', 'cerebras', 'gemini', 'ovh', 'pollinations', 'sambanova', 'mistral', 'zai', 'cloudflare', 'siliconflow', 'llm7')
 				AND created_at > NOW() - INTERVAL '24 hours'
 		`;
 		const spent = Number(row?.spent ?? 0);
@@ -485,6 +523,48 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			timeoutMs: nvidiaLaneTimeoutMs(),
 		}));
 	}
+	// SambaNova's free tier: the same Llama 3.3 70B on a fourth independent
+	// quota pool, so a day that exhausts Groq, Cerebras, and NVIDIA at once
+	// still has a 70B-class free rung with budget left.
+	if (env.SAMBANOVA_API_KEY) {
+		chain.push(openaiCompatProvider({
+			name: 'sambanova',
+			key: env.SAMBANOVA_API_KEY,
+			url: 'https://api.sambanova.ai/v1/chat/completions',
+			model: SAMBANOVA_MODEL,
+		}));
+	}
+	// Mistral's Experiment tier: the largest free quota in the chain (about 1B
+	// tokens/month). Mistral Small is not a 70B model, but its quality sits
+	// with this group rather than the step-down group below.
+	if (env.MISTRAL_API_KEY) {
+		chain.push(openaiCompatProvider({
+			name: 'mistral',
+			key: env.MISTRAL_API_KEY,
+			url: 'https://api.mistral.ai/v1/chat/completions',
+			model: MISTRAL_MODEL,
+		}));
+	}
+	// Z.AI's permanently free GLM Flash lane: another independent quota pool
+	// with quality comparable to the rungs above it.
+	if (env.ZAI_API_KEY) {
+		chain.push(openaiCompatProvider({
+			name: 'zai',
+			key: env.ZAI_API_KEY,
+			url: 'https://api.z.ai/api/paas/v4/chat/completions',
+			model: ZAI_MODEL,
+		}));
+	}
+	// Cloudflare Workers AI free tier: 70B-class Llama at the edge, gated on
+	// both halves of the credential because the URL embeds the account id.
+	if (env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_API_TOKEN) {
+		chain.push(openaiCompatProvider({
+			name: 'cloudflare',
+			key: env.CLOUDFLARE_AI_API_TOKEN,
+			url: `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/ai/v1/chat/completions`,
+			model: CLOUDFLARE_MODEL,
+		}));
+	}
 	// OVH AI Endpoints anonymous tier — no key required, always available.
 	// Last of the 70B-class free rungs because its per-model anonymous quota
 	// (2 req/min/IP) is the tightest in the chain; everything with a real key
@@ -518,6 +598,26 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 		url: 'https://text.pollinations.ai/openai',
 		model: POLLINATIONS_MODEL,
 	}));
+	// LLM7.io keyless anonymous tier: the third no-key rung. Sits with the
+	// step-down group (flash-lite class) right after Pollinations, so even a
+	// zero-env deployment has three independent keyless lanes to fall through.
+	chain.push(openaiCompatProvider({
+		name: 'llm7',
+		url: 'https://api.llm7.io/v1/chat/completions',
+		model: LLM7_MODEL,
+	}));
+	// SiliconFlow free tier: keyed 8B step-down on its own quota pool.
+	// enable_thinking:false forces Qwen3 out of reasoning mode so the answer
+	// lands in message.content instead of a reasoning field.
+	if (env.SILICONFLOW_API_KEY) {
+		chain.push(openaiCompatProvider({
+			name: 'siliconflow',
+			key: env.SILICONFLOW_API_KEY,
+			url: 'https://api.siliconflow.com/v1/chat/completions',
+			model: SILICONFLOW_MODEL,
+			extraBody: { enable_thinking: false },
+		}));
+	}
 	// Last free rung: Groq's instant lane. Smaller model (a capability
 	// step-down), but its per-model quota is separate from the 70B lane and it
 	// still beats erroring out or landing on a dead paid key.

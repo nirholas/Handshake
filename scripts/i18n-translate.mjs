@@ -155,6 +155,7 @@ const PROVIDER_DEFAULT_MODEL = {
 	groq: 'llama-3.3-70b-versatile',
 	openrouter: 'openai/gpt-oss-20b:free',
 	nvidia: 'meta/llama-3.3-70b-instruct',
+	mistral: 'mistral-small-latest',
 	openai: 'gpt-4o-mini',
 	anthropic: 'claude-haiku-4-5-20251001',
 };
@@ -176,6 +177,13 @@ const OPENAI_COMPAT = {
 	nvidia: {
 		envKey: 'NVIDIA_API_KEY',
 		url: () => 'https://integrate.api.nvidia.com/v1/chat/completions',
+	},
+	// Mistral Experiment tier (free, about 1B tokens/month): the strongest free
+	// lane for European-language output, and it honors response_format json.
+	mistral: {
+		envKey: 'MISTRAL_API_KEY',
+		url: () => 'https://api.mistral.ai/v1/chat/completions',
+		jsonMode: true,
 	},
 	openai: {
 		envKey: 'OPENAI_API_KEY',
@@ -440,7 +448,7 @@ function backend() {
 	if (cfg.provider === 'vertex') return callVertex;
 	if (OPENAI_COMPAT[cfg.provider]) return callOpenAICompat;
 	throw new Error(
-		`unknown provider: ${cfg.provider} (use gemini, groq, openrouter, nvidia, vertex, openai, or anthropic)`,
+		`unknown provider: ${cfg.provider} (use gemini, groq, openrouter, nvidia, mistral, vertex, openai, or anthropic)`,
 	);
 }
 

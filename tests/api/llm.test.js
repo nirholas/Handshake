@@ -45,6 +45,7 @@ const ANTHROPIC_HOST = 'api.anthropic.com';
 const OPENAI_HOST = 'api.openai.com';
 const OVH_HOST = 'oai.endpoints.kepler.ai.cloud.ovh.net';
 const POLLINATIONS_HOST = 'text.pollinations.ai';
+const LLM7_HOST = 'api.llm7.io';
 
 const openaiShape = (content) => okJson({
 	choices: [{ message: { content } }],
@@ -211,10 +212,10 @@ describe('llmComplete — multiple OpenRouter keys', () => {
 		});
 		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({ status: 502 });
 		// or-same is deduped to a single key (one :free rung), then or-extra's :free
-		// rung — two OpenRouter fetches (without dedup or-same would be tried again as
-		// a fallback too). The chain then falls through the two unconditional keyless
-		// lanes (OVH, Pollinations) before giving up — four fetches total.
-		expect(n).toBe(4);
+		// rung, two OpenRouter fetches (without dedup or-same would be tried again as
+		// a fallback too). The chain then falls through the three unconditional
+		// keyless lanes (OVH, Pollinations, LLM7) before giving up: five fetches total.
+		expect(n).toBe(5);
 	});
 
 	it('llmConfigured is true with only fallback keys set', () => {
@@ -545,7 +546,11 @@ describe('llmComplete — failure modes', () => {
 	// empty. What used to be "no provider configured" now degrades to the last
 	// upstream error from those keyless lanes instead.
 	it('throws the last upstream error (502), not LlmUnavailableError, when no keys are configured and the keyless lanes also fail', async () => {
-		installFetch({ [OVH_HOST]: errResp(429, 'rate limited'), [POLLINATIONS_HOST]: errResp(502, 'bad gateway') });
+		installFetch({
+			[OVH_HOST]: errResp(429, 'rate limited'),
+			[POLLINATIONS_HOST]: errResp(503, 'overloaded'),
+			[LLM7_HOST]: errResp(502, 'bad gateway'),
+		});
 		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({
 			status: 502,
 			code: 'upstream_error',
@@ -595,8 +600,8 @@ describe('llmComplete — failure modes', () => {
 			},
 			text: async () => 'not json',
 		};
-		// Every reachable lane (groq + the two keyless rungs) returns garbage.
-		installFetch({ [GROQ_HOST]: badBody, [OVH_HOST]: badBody, [POLLINATIONS_HOST]: badBody });
+		// Every reachable lane (groq + the three keyless rungs) returns garbage.
+		installFetch({ [GROQ_HOST]: badBody, [OVH_HOST]: badBody, [POLLINATIONS_HOST]: badBody, [LLM7_HOST]: badBody });
 		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({
 			status: 502,
 			code: 'upstream_bad_body',
@@ -629,6 +634,7 @@ describe('llmComplete — failure modes', () => {
 			[OPENROUTER_HOST]: openaiShape(''),
 			[OVH_HOST]: openaiShape(''),
 			[POLLINATIONS_HOST]: openaiShape(''),
+			[LLM7_HOST]: openaiShape(''),
 		});
 		const out = await llm.llmComplete({ system: 's', user: 'u' });
 		expect(out.text).toBe('');

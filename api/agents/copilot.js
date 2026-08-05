@@ -85,6 +85,18 @@ export function providerChain() {
 	if (env.NVIDIA_API_KEY) {
 		chain.push({ name: 'nvidia', url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: env.NVIDIA_API_KEY, model: 'meta/llama-3.3-70b-instruct' });
 	}
+	// Three more free lanes, same OpenAI wire format including tools + streamed
+	// tool_calls: SambaNova (Llama 3.3 70B, own quota pool), Mistral (Experiment
+	// tier, about 1B free tokens/month), and Z.AI's free GLM Flash lane.
+	if (env.SAMBANOVA_API_KEY) {
+		chain.push({ name: 'sambanova', url: 'https://api.sambanova.ai/v1/chat/completions', key: env.SAMBANOVA_API_KEY, model: 'Meta-Llama-3.3-70B-Instruct' });
+	}
+	if (env.MISTRAL_API_KEY) {
+		chain.push({ name: 'mistral', url: 'https://api.mistral.ai/v1/chat/completions', key: env.MISTRAL_API_KEY, model: 'mistral-small-latest' });
+	}
+	if (env.ZAI_API_KEY) {
+		chain.push({ name: 'zai', url: 'https://api.z.ai/api/paas/v4/chat/completions', key: env.ZAI_API_KEY, model: 'glm-4.7-flash' });
+	}
 	if (env.OPENAI_API_KEY) {
 		chain.push({ name: 'openai', url: 'https://api.openai.com/v1/chat/completions', key: env.OPENAI_API_KEY, model: 'gpt-5.4-nano' });
 	}

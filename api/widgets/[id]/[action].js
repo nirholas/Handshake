@@ -94,6 +94,27 @@ const PROVIDERS = {
 		url: 'https://integrate.api.nvidia.com/v1/chat/completions',
 		style: 'openai',
 	},
+	// SambaNova / Mistral / Z.AI free tiers (see api/_lib/llm.js for limits):
+	// independent quota pools, OpenAI wire format with tool calls, and all in
+	// DEFAULT_PROVIDER_ORDER, so pickProviderChain needs entries here.
+	sambanova: {
+		envKey: 'SAMBANOVA_API_KEY',
+		defaultModel: PROVIDER_MODEL_DEFAULTS.sambanova,
+		url: 'https://api.sambanova.ai/v1/chat/completions',
+		style: 'openai',
+	},
+	mistral: {
+		envKey: 'MISTRAL_API_KEY',
+		defaultModel: PROVIDER_MODEL_DEFAULTS.mistral,
+		url: 'https://api.mistral.ai/v1/chat/completions',
+		style: 'openai',
+	},
+	zai: {
+		envKey: 'ZAI_API_KEY',
+		defaultModel: PROVIDER_MODEL_DEFAULTS.zai,
+		url: 'https://api.z.ai/api/paas/v4/chat/completions',
+		style: 'openai',
+	},
 	openai: {
 		envKey: 'OPENAI_API_KEY',
 		defaultModel: 'gpt-5.4-nano',
@@ -121,11 +142,11 @@ const PROVIDERS = {
 
 // Brain settings that surface in widget config. `auto` picks the first
 // configured provider; `custom`/`none` keep their legacy meanings.
-const BRAIN_PROVIDERS = new Set(['auto', 'anthropic', 'openrouter', 'groq', 'nvidia', 'openai', 'grok', 'watsonx']);
+const BRAIN_PROVIDERS = new Set(['auto', 'anthropic', 'openrouter', 'groq', 'nvidia', 'sambanova', 'mistral', 'zai', 'openai', 'grok', 'watsonx']);
 
 const chatBody = z.object({
 	message: z.string().trim().min(1).max(4000),
-	provider: z.enum(['auto', 'anthropic', 'openrouter', 'groq', 'nvidia', 'openai', 'grok', 'watsonx']).optional(),
+	provider: z.enum(['auto', 'anthropic', 'openrouter', 'groq', 'nvidia', 'sambanova', 'mistral', 'zai', 'openai', 'grok', 'watsonx']).optional(),
 	model: z.string().min(1).max(160).optional(),
 	history: z
 		.array(

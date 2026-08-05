@@ -81,7 +81,20 @@ const PRICE_PER_MTOK = {
 // it draws down GCP credits. openrouter is deliberately NOT here either: the
 // platform key serves both `:free` models and paid vendor mirrors, so freeness
 // is a property of the MODEL on that lane, not of the lane (see isFreeLane).
-const FREE_PROVIDERS = new Set(['groq', 'nvidia', 'cerebras', 'gemini', 'ovh', 'pollinations']);
+const FREE_PROVIDERS = new Set([
+	'groq',
+	'nvidia',
+	'cerebras',
+	'gemini',
+	'ovh',
+	'pollinations',
+	'sambanova',
+	'mistral',
+	'zai',
+	'cloudflare',
+	'siliconflow',
+	'llm7',
+]);
 
 // Strip a rung suffix from a provider name: '#n' for multi-key rungs
 // (openrouter#2), ':variant' for same-key model variants, '#instant' for the

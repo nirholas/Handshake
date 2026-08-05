@@ -106,6 +106,15 @@ export const MODEL_CATALOG = {
 	'meta/llama-3.3-70b-instruct':               { provider: 'nvidia', tools: true },
 	'nvidia/llama-3.3-nemotron-super-49b-v1.5':  { provider: 'nvidia', tools: true },
 
+	// ── SambaNova Cloud free tier (no card): Llama 3.3 70B, own quota pool ────
+	'Meta-Llama-3.3-70B-Instruct': { provider: 'sambanova', tools: true },
+
+	// ── Mistral Experiment tier: about 1B free tokens/month ───────────────────
+	'mistral-small-latest':       { provider: 'mistral', tools: true },
+
+	// ── Z.AI (Zhipu): permanently free, rate-limited GLM Flash lane ───────────
+	'glm-4.7-flash':              { provider: 'zai', tools: true },
+
 	// ── xAI Grok (paid; host or BYOK key) — OpenAI-compatible at api.x.ai ─────
 	'grok-4.5':                   { provider: 'grok', tools: true },
 	'grok-4.3':                   { provider: 'grok', tools: true },
@@ -290,6 +299,9 @@ export const PROVIDER_MODEL_DEFAULTS = {
 	openrouter: DEFAULT_FREE_MODEL,
 	groq: 'llama-3.3-70b-versatile',
 	nvidia: 'meta/llama-3.3-70b-instruct',
+	sambanova: 'Meta-Llama-3.3-70B-Instruct',
+	mistral: 'mistral-small-latest',
+	zai: 'glm-4.7-flash',
 	openai: 'gpt-5.4-nano',
 	grok: 'grok-4.5',
 };
@@ -305,16 +317,22 @@ export const PROVIDER_MODEL_DEFAULTS = {
  *                   DEFAULT_FREE_MODEL), multi-key rotation in llm.js.
  *   3. nvidia     — NVIDIA NIM free tier; an independent third lane on a
  *                   different account/infra than the first two.
- *   4. anthropic  — paid backstop; only reached when every free lane failed
- *                   (and currently 401s in prod — see operational note).
- *   5. openai     — paid backstop; account over quota (see operational note).
- *   6. grok       — paid backstop (xAI); usually reached only via an explicit
+ *   4. sambanova  - SambaNova Cloud free tier; the same Llama 3.3 70B on a
+ *                   fourth independent quota pool.
+ *   5. mistral    - Mistral Experiment tier; the largest free quota in the
+ *                   ladder (about 1B tokens/month).
+ *   6. zai        - Z.AI's permanently free GLM Flash lane; a sixth
+ *                   independent free quota pool.
+ *   7. anthropic  - paid backstop; only reached when every free lane failed
+ *                   (and currently 401s in prod, see operational note).
+ *   8. openai     - paid backstop; account over quota (see operational note).
+ *   9. grok       - paid backstop (xAI); usually reached only via an explicit
  *                   provider/model request or a BYOK key.
  * Providers without a configured key are skipped, so the effective ladder is
  * short in the common case. A provider in a health cooldown (see
  * api/_lib/provider-health.js) is also skipped for the cooldown window.
  */
-export const DEFAULT_PROVIDER_ORDER = ['groq', 'openrouter', 'nvidia', 'anthropic', 'openai', 'grok'];
+export const DEFAULT_PROVIDER_ORDER = ['groq', 'openrouter', 'nvidia', 'sambanova', 'mistral', 'zai', 'anthropic', 'openai', 'grok'];
 
 /**
  * OpenRouter sibling models for per-model rate-limit failover. OpenRouter's
@@ -330,15 +348,15 @@ export const OPENROUTER_SIBLINGS = [
 ];
 
 /**
- * Providers an anonymous (unauthenticated) caller may use. The first three are
- * third-party free tiers; when all of them are rate-limited an anon request
+ * Providers an anonymous (unauthenticated) caller may use. All but the last
+ * are third-party free tiers; when all of them are rate-limited an anon request
  * would otherwise 503, so `vertex-gemini` (the credits-funded Vertex anchor,
  * effectively free to the user and the only rung with no third-party quota to
  * exhaust) is included as the last-resort anchor. Its rung carries its own
  * fixed model, so it is never auto-selected as an initial route — it is only
  * reached via failover once the free tiers are exhausted.
  */
-export const ANON_PROVIDER_LIST = ['groq', 'openrouter', 'nvidia', 'vertex-gemini'];
+export const ANON_PROVIDER_LIST = ['groq', 'openrouter', 'nvidia', 'sambanova', 'mistral', 'zai', 'vertex-gemini'];
 
 /**
  * Bounds on the fallback chain so a single request can't churn through every

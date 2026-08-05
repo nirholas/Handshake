@@ -24,10 +24,16 @@ const HOSTS = {
 	cerebras: 'api.cerebras.ai',
 	openrouter: 'openrouter.ai',
 	nvidia: 'integrate.api.nvidia.com',
+	sambanova: 'api.sambanova.ai',
+	mistral: 'api.mistral.ai',
+	zai: 'api.z.ai',
+	cloudflare: 'api.cloudflare.com',
 	ovh: 'oai.endpoints.kepler.ai.cloud.ovh.net',
 	gemini: 'generativelanguage.googleapis.com',
 	vertex: 'aiplatform.googleapis.com',
 	pollinations: 'text.pollinations.ai',
+	llm7: 'api.llm7.io',
+	siliconflow: 'api.siliconflow.com',
 };
 
 // The free chain in providerChain() order, with the env each rung needs. Groq
@@ -39,10 +45,16 @@ const FREE_CHAIN = [
 	{ provider: 'cerebras', host: HOSTS.cerebras, model: 'llama-3.3-70b' },
 	{ provider: 'openrouter', host: HOSTS.openrouter, model: 'openai/gpt-oss-20b:free' },
 	{ provider: 'nvidia', host: HOSTS.nvidia, model: 'meta/llama-3.3-70b-instruct' },
+	{ provider: 'sambanova', host: HOSTS.sambanova, model: 'Meta-Llama-3.3-70B-Instruct' },
+	{ provider: 'mistral', host: HOSTS.mistral, model: 'mistral-small-latest' },
+	{ provider: 'zai', host: HOSTS.zai, model: 'glm-4.7-flash' },
+	{ provider: 'cloudflare', host: HOSTS.cloudflare, model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast' },
 	{ provider: 'ovh', host: HOSTS.ovh, model: 'Meta-Llama-3_3-70B-Instruct' },
 	{ provider: 'gemini', host: HOSTS.gemini, model: 'gemini-2.5-flash-lite' },
 	{ provider: 'vertex-gemini', host: HOSTS.vertex, model: 'google/gemini-2.5-flash' },
 	{ provider: 'pollinations', host: HOSTS.pollinations, model: 'openai-fast' },
+	{ provider: 'llm7', host: HOSTS.llm7, model: 'gemini-3.1-flash-lite' },
+	{ provider: 'siliconflow', host: HOSTS.siliconflow, model: 'Qwen/Qwen3-8B' },
 	{ provider: 'groq#instant', host: HOSTS.groq, model: 'llama-3.1-8b-instant' },
 ];
 
@@ -52,6 +64,12 @@ const ENV_KEYS = [
 	'OPENROUTER_API_KEY',
 	'OPENROUTER_FALLBACK_KEYS',
 	'NVIDIA_API_KEY',
+	'SAMBANOVA_API_KEY',
+	'MISTRAL_API_KEY',
+	'ZAI_API_KEY',
+	'CLOUDFLARE_ACCOUNT_ID',
+	'CLOUDFLARE_AI_API_TOKEN',
+	'SILICONFLOW_API_KEY',
 	'GEMINI_API_KEY',
 	'GOOGLE_CLOUD_PROJECT',
 	'GOOGLE_CLOUD_LOCATION_GEMINI',
@@ -73,6 +91,12 @@ function configureFreeLanes() {
 	process.env.CEREBRAS_API_KEY = 'c';
 	process.env.OPENROUTER_API_KEY = 'or';
 	process.env.NVIDIA_API_KEY = 'nvapi-x';
+	process.env.SAMBANOVA_API_KEY = 'sn';
+	process.env.MISTRAL_API_KEY = 'mi';
+	process.env.ZAI_API_KEY = 'z';
+	process.env.CLOUDFLARE_ACCOUNT_ID = 'cf-acct';
+	process.env.CLOUDFLARE_AI_API_TOKEN = 'cf-token';
+	process.env.SILICONFLOW_API_KEY = 'sf';
 	process.env.GEMINI_API_KEY = 'gem';
 	process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 	// The NIM lane's own cap is floored at 2s; keep it there so a transport
@@ -181,5 +205,20 @@ describe('free chain: every rung is reachable through a transport-level failure'
 		const out = await llm.llmComplete({ user: 'u', timeoutMs: 20_000 });
 		expect(out.provider).toBe('pollinations');
 		expect(out.text).toBe('keyless floor');
+	}, 20_000);
+
+	// Third keyless rung: with nothing configured and BOTH OVH and Pollinations
+	// dead at the transport level, LLM7 must still answer.
+	it('serves from LLM7 when OVH and Pollinations both die and nothing is configured', async () => {
+		globalThis.fetch = vi.fn(async (url) => {
+			const u = String(url);
+			if (u.includes(HOSTS.ovh)) throw transportFailure('reset');
+			if (u.includes(HOSTS.pollinations)) throw transportFailure('abort');
+			if (u.includes(HOSTS.llm7)) return okOpenAiShape('third keyless floor', 'gemini-3.1-flash-lite');
+			throw new Error(`unexpected fetch: ${u}`);
+		});
+		const out = await llm.llmComplete({ user: 'u', timeoutMs: 20_000 });
+		expect(out.provider).toBe('llm7');
+		expect(out.text).toBe('third keyless floor');
 	}, 20_000);
 });

@@ -9,9 +9,12 @@
 //   2. GROQ_API_KEY → Groq (free platform key — default).
 //   3. OPENROUTER_API_KEY → OpenRouter free tier.
 //   4. NVIDIA_API_KEY → NVIDIA NIM free tier (third independent free lane).
-//   5. ANTHROPIC_API_KEY → Anthropic (paid backstop — BYOK or host key).
-//   6. OPENAI_API_KEY → OpenAI (paid backstop).
-//   7. WATSONX_API_KEY (+ project) → IBM Granite on watsonx.ai (server key only;
+//   5. SAMBANOVA_API_KEY -> SambaNova Cloud free tier (fourth free lane).
+//   6. MISTRAL_API_KEY -> Mistral Experiment tier (largest free quota).
+//   7. ZAI_API_KEY -> Z.AI free GLM Flash lane (sixth free lane).
+//   8. ANTHROPIC_API_KEY -> Anthropic (paid backstop, BYOK or host key).
+//   9. OPENAI_API_KEY -> OpenAI (paid backstop).
+//   10. WATSONX_API_KEY (+ project) -> IBM Granite on watsonx.ai (server key only;
 //      explicit `provider: "watsonx"` from the client, never the silent default).
 // Anthropic, the OpenAI-compatible providers (OpenRouter / Groq / OpenAI), and
 // watsonx.ai use different request shapes, auth, tool-call wire formats, and SSE
@@ -145,6 +148,30 @@ const PROVIDERS = {
 		url: 'https://integrate.api.nvidia.com/v1/chat/completions',
 		style: 'openai',
 	},
+	// SambaNova Cloud (cloud.sambanova.ai): free-tier OpenAI-compatible Llama
+	// 3.3 70B on its own quota pool. The fourth independent free lane.
+	sambanova: {
+		envKey: 'SAMBANOVA_API_KEY',
+		defaultModel: PROVIDER_MODEL_DEFAULTS.sambanova,
+		url: 'https://api.sambanova.ai/v1/chat/completions',
+		style: 'openai',
+	},
+	// Mistral Experiment tier (console.mistral.ai): OpenAI-compatible, about
+	// 1B free tokens/month. The largest free quota in the ladder.
+	mistral: {
+		envKey: 'MISTRAL_API_KEY',
+		defaultModel: PROVIDER_MODEL_DEFAULTS.mistral,
+		url: 'https://api.mistral.ai/v1/chat/completions',
+		style: 'openai',
+	},
+	// Z.AI (docs.z.ai): permanently free, rate-limited GLM Flash models on an
+	// OpenAI-compatible endpoint. A sixth independent free lane.
+	zai: {
+		envKey: 'ZAI_API_KEY',
+		defaultModel: PROVIDER_MODEL_DEFAULTS.zai,
+		url: 'https://api.z.ai/api/paas/v4/chat/completions',
+		style: 'openai',
+	},
 	openai: {
 		envKey: 'OPENAI_API_KEY',
 		defaultModel: DEFAULT_OPENAI_MODEL,
@@ -209,7 +236,7 @@ const chatBody = z.object({
 	persona_override: z.string().trim().min(1).max(16000).optional(),
 	agentId: z.string().uuid().optional(),
 	provider: z
-		.enum(['anthropic', 'openrouter', 'groq', 'nvidia', 'openai', 'grok', 'watsonx', 'orchestrate'])
+		.enum(['anthropic', 'openrouter', 'groq', 'nvidia', 'sambanova', 'mistral', 'zai', 'openai', 'grok', 'watsonx', 'orchestrate'])
 		.optional(),
 	model: z.string().min(1).max(120).optional(),
 	history: z
@@ -1211,6 +1238,11 @@ const FALLBACK_SIBLINGS = {
 	// model would re-hit the same throttle — keep a single slot and give the
 	// next fallback slot to a different provider.
 	nvidia: ['meta/llama-3.3-70b-instruct'],
+	// Same one-account rationale as Groq/NVIDIA: one slot each, then move on
+	// to a different provider.
+	sambanova: ['Meta-Llama-3.3-70B-Instruct'],
+	mistral: ['mistral-small-latest'],
+	zai: ['glm-4.7-flash'],
 	anthropic: ['claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
 	openai: ['gpt-5.4-nano'],
 	grok: ['grok-4.5', 'grok-4.1-fast'],

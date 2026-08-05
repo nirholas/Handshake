@@ -104,6 +104,15 @@ const MODELS = {
 		envKey: 'NVIDIA_API_KEY',
 	},
 
+	// SambaNova Cloud free tier: Llama 3.3 70B on an independent quota pool.
+	// Selectable and a free fallback rung (see modelFallbackChain below).
+	'Meta-Llama-3.3-70B-Instruct': { kind: 'openai', provider: 'sambanova', envKey: 'SAMBANOVA_API_KEY' },
+
+	// Mistral Experiment tier (about 1B free tokens/month) and Z.AI's free GLM
+	// Flash lane. Both OpenAI-compatible and tool-call capable.
+	'mistral-small-latest': { kind: 'openai', provider: 'mistral', envKey: 'MISTRAL_API_KEY' },
+	'glm-4.7-flash': { kind: 'openai', provider: 'zai', envKey: 'ZAI_API_KEY' },
+
 	// xAI Grok (paid, host's key). OpenAI-compatible and tool-call capable, so
 	// it shares the 'openai' branch. Selectable only; never a free fallback.
 	'grok-4.5': { kind: 'openai', provider: 'grok', envKey: 'GROK_API_KEY' },
@@ -155,6 +164,9 @@ const UPSTREAM_URL = {
 	openrouter: 'https://openrouter.ai/api/v1/chat/completions',
 	groq: 'https://api.groq.com/openai/v1/chat/completions',
 	nvidia: 'https://integrate.api.nvidia.com/v1/chat/completions',
+	sambanova: 'https://api.sambanova.ai/v1/chat/completions',
+	mistral: 'https://api.mistral.ai/v1/chat/completions',
+	zai: 'https://api.z.ai/api/paas/v4/chat/completions',
 	grok: 'https://api.x.ai/v1/chat/completions',
 };
 
@@ -187,6 +199,10 @@ export function modelFallbackChain(requestedModel) {
 		...[
 			'meta-llama/llama-3.1-8b-instruct:free',
 			'meta/llama-4-maverick-17b-128e-instruct',
+			// SambaNova free 70B: an independent quota pool between the NVIDIA
+			// free rung and the paid Anthropic backstop. Skipped at call time
+			// when SAMBANOVA_API_KEY is unset, like every keyed rung here.
+			'Meta-Llama-3.3-70B-Instruct',
 			'claude-haiku-4-5-20251001',
 		].filter((m) => m !== requestedModel),
 	];

@@ -579,6 +579,51 @@ export const env = {
 		return opt('GEMINI_API_KEY');
 	},
 
+	// SambaNova Cloud key (cloud.sambanova.ai) - free-tier OpenAI-compatible
+	// Llama 3.3 70B inference on its own quota pool (about 20 req/min and 200K
+	// tokens/day per model, no card required). Optional rung in the shared LLM
+	// chain; skipped when unset.
+	get SAMBANOVA_API_KEY() {
+		return opt('SAMBANOVA_API_KEY');
+	},
+
+	// Mistral Experiment-tier key (console.mistral.ai) - the largest free
+	// quota in the chain (about 1B tokens/month at 1 req/sec). The Experiment
+	// plan requires opting the account into data training; this chain carries
+	// platform utility prompts, not user secrets. Optional rung; skipped when
+	// unset.
+	get MISTRAL_API_KEY() {
+		return opt('MISTRAL_API_KEY');
+	},
+
+	// Z.AI (Zhipu) key (z.ai, docs.z.ai) - permanently free, rate-limited GLM
+	// Flash models on an OpenAI-compatible endpoint (api.z.ai/api/paas/v4).
+	// Optional rung in the shared LLM chain; skipped when unset.
+	get ZAI_API_KEY() {
+		return opt('ZAI_API_KEY');
+	},
+
+	// SiliconFlow key (siliconflow.com international) - free-tier Qwen3 8B on
+	// an OpenAI-compatible endpoint. A capability step-down rung near the end
+	// of the free section; skipped when unset.
+	get SILICONFLOW_API_KEY() {
+		return opt('SILICONFLOW_API_KEY');
+	},
+
+	// Cloudflare account id for Workers AI (dash.cloudflare.com). The Workers
+	// AI OpenAI-compatible URL embeds the account id, so the LLM rung needs
+	// this AND CLOUDFLARE_AI_API_TOKEN; with either half missing the rung is
+	// skipped.
+	get CLOUDFLARE_ACCOUNT_ID() {
+		return opt('CLOUDFLARE_ACCOUNT_ID');
+	},
+
+	// Cloudflare API token scoped to Workers AI (10,000 free neurons/day).
+	// Pairs with CLOUDFLARE_ACCOUNT_ID above.
+	get CLOUDFLARE_AI_API_TOKEN() {
+		return opt('CLOUDFLARE_AI_API_TOKEN');
+	},
+
 	// NVIDIA NIM API key (build.nvidia.com) — free OpenAI-compatible inference for
 	// 100+ hosted models (Nemotron, DeepSeek, Kimi, GLM, Llama 4, Qwen). Used by
 	// brain/chat as selectable native providers and by the embed we-pay proxy

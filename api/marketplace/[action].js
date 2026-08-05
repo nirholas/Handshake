@@ -901,6 +901,26 @@ const PREVIEW_PROVIDERS = {
 		defaultModel: 'meta/llama-3.3-70b-instruct',
 		style: 'openai',
 	},
+	// SambaNova / Mistral / Z.AI free tiers: independent quota pools, same
+	// OpenAI wire format (see api/_lib/llm.js for each tier's limits).
+	sambanova: {
+		envKey: 'SAMBANOVA_API_KEY',
+		url: 'https://api.sambanova.ai/v1/chat/completions',
+		defaultModel: 'Meta-Llama-3.3-70B-Instruct',
+		style: 'openai',
+	},
+	mistral: {
+		envKey: 'MISTRAL_API_KEY',
+		url: 'https://api.mistral.ai/v1/chat/completions',
+		defaultModel: 'mistral-small-latest',
+		style: 'openai',
+	},
+	zai: {
+		envKey: 'ZAI_API_KEY',
+		url: 'https://api.z.ai/api/paas/v4/chat/completions',
+		defaultModel: 'glm-4.7-flash',
+		style: 'openai',
+	},
 	openai: {
 		envKey: 'OPENAI_API_KEY',
 		url: 'https://api.openai.com/v1/chat/completions',
@@ -1077,11 +1097,14 @@ async function handlePreview(req, res, id) {
 //   1. groq       — free, fast, first-attempt reliable (per-minute caps only)
 //   2. openrouter — free Llama fallback
 //   3. nvidia     — NVIDIA NIM free tier, independent third lane
-//   4. anthropic  — paid backstop
-//   5. openai     — paid backstop (account may be over quota)
-//   6. grok       — paid backstop (xAI, budget tier)
+//   4. sambanova  - SambaNova Cloud free tier, fourth free lane
+//   5. mistral    - Mistral Experiment tier, largest free quota
+//   6. zai        - Z.AI free GLM Flash lane
+//   7. anthropic  - paid backstop
+//   8. openai     - paid backstop (account may be over quota)
+//   9. grok       - paid backstop (xAI, budget tier)
 export function buildPreviewRoutes() {
-	const order = ['groq', 'openrouter', 'nvidia', 'anthropic', 'openai', 'grok'];
+	const order = ['groq', 'openrouter', 'nvidia', 'sambanova', 'mistral', 'zai', 'anthropic', 'openai', 'grok'];
 	const routes = [];
 	for (const name of order) {
 		const cfg = PREVIEW_PROVIDERS[name];

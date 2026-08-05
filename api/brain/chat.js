@@ -526,6 +526,30 @@ export function freeFallbackChain(providerKey, spec, primary) {
 			meter: { provider: 'nvidia', model: 'meta/llama-3.3-70b-instruct' },
 		});
 	}
+	// Three more free lanes on independent quota pools (see api/_lib/llm.js for
+	// each tier's limits): SambaNova (Llama 3.3 70B), Mistral (Experiment tier),
+	// and Z.AI's free GLM Flash. All OpenAI-compatible Chat Completions.
+	if (env.SAMBANOVA_API_KEY) {
+		chain.push({
+			label: 'sambanova/Meta-Llama-3.3-70B-Instruct',
+			model: createOpenAI({ apiKey: env.SAMBANOVA_API_KEY, baseURL: 'https://api.sambanova.ai/v1' }).chat('Meta-Llama-3.3-70B-Instruct'),
+			meter: { provider: 'sambanova', model: 'Meta-Llama-3.3-70B-Instruct' },
+		});
+	}
+	if (env.MISTRAL_API_KEY) {
+		chain.push({
+			label: 'mistral/mistral-small-latest',
+			model: createOpenAI({ apiKey: env.MISTRAL_API_KEY, baseURL: 'https://api.mistral.ai/v1' }).chat('mistral-small-latest'),
+			meter: { provider: 'mistral', model: 'mistral-small-latest' },
+		});
+	}
+	if (env.ZAI_API_KEY) {
+		chain.push({
+			label: 'zai/glm-4.7-flash',
+			model: createOpenAI({ apiKey: env.ZAI_API_KEY, baseURL: 'https://api.z.ai/api/paas/v4' }).chat('glm-4.7-flash'),
+			meter: { provider: 'zai', model: 'glm-4.7-flash' },
+		});
+	}
 	// Credits-funded Vertex Gemini anchor, ALWAYS at the tail when the GCP
 	// project is set (api/chat.js semantics, see api/_lib/vertex-gemini.js). No
 	// key gates it and nothing may evict it: it is the rung that keeps /brain
