@@ -1,6 +1,6 @@
 # x402 Distribution — getting listed and ranked everywhere
 
-three.ws sells 70+ pay-per-call services over [x402](x402.md). Building them is
+three.ws sells 90+ pay-per-call services over [x402](x402.md). Building them is
 half the job; the other half is making sure every x402 directory, crawler, and
 agent marketplace can find them — and ranks us at the top. This page is the
 operating playbook for that distribution: how each surface indexes providers,
@@ -58,9 +58,15 @@ search results after 30 days without a settle**.
 - **Ops required (secondary priority — see Chain priority above):**
   `CDP_API_KEY_ID`/`CDP_API_KEY_SECRET` on the Cloud Run
   service so Base settles through the CDP facilitator, then ≥1 settled payment
-  per endpoint (point one ring rotation at the CDP rail). Note the ring payer
-  (`api/_lib/x402/pay.js`) is Solana-only today, so a Base settle leg would have
-  to be built and funded first. Do not let that block Solana work. Verify presence via
+  per endpoint. The ring payer (`api/_lib/x402/pay.js`) is still Solana-only,
+  but the Base settle leg exists as a one-shot buyer sweep:
+  [`scripts/x402-bazaar-settle-sweep.mjs`](../scripts/x402-bazaar-settle-sweep.mjs)
+  pays one real Base USDC settle against every live endpoint that advertises a
+  Base accept, cheapest-first under a spend cap (default $3), sending each
+  endpoint's own runnable `bazaar.input` example so the settle indexes a 200.
+  It needs a funded Base buyer wallet (`X402_BUYER_PRIVATE_KEY`); all Base
+  accepts pay to the owner's wallet, so the sweep is an internal transfer.
+  Do not let any of this block Solana work. Verify presence via
   `GET https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources` —
   do **not** trust the `EXTENSION-RESPONSES` header alone (known upstream bug:
   x402-foundation/x402#2112 — it is sometimes never emitted).
@@ -198,7 +204,9 @@ script. Everything else above updates itself.
   before the payment dance. Default stays `true` until the owner flips it.
 - **Bazaar indexing needs the CDP facilitator.** Solana-only settles through
   the self-hosted facilitator never reach the Bazaar catalog. The Base rail
-  must settle via CDP at least once per endpoint.
+  must settle via CDP at least once per endpoint; that is exactly what
+  `scripts/x402-bazaar-settle-sweep.mjs` does once CDP credentials and a funded
+  Base buyer wallet are in place.
 
 ## Related
 

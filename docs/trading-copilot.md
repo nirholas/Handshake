@@ -102,8 +102,11 @@ SSE events:
 | `done` | `{ reply, proposals, citations }` | final reply |
 | `error` | `{ code, message }` | turn failed |
 
-The provider chain is free-first and OpenAI-compatible (Groq → OpenRouter → NVIDIA, with
-paid OpenAI as the backstop), so the copilot works without any paid key. A 15s heartbeat
+The provider chain is free-first and OpenAI-compatible (Groq → OpenRouter, including any
+`OPENROUTER_FALLBACK_KEYS` → NVIDIA, with paid OpenAI as the backstop), so the copilot
+works without any paid key. Whenever the GCP project is configured, a keyless,
+credits-billed **Vertex Gemini** rung is appended unconditionally as the final anchor,
+so the chain always ends on a provider that cannot be evicted by a dead key. A 15s heartbeat
 keeps the stream alive across slow tool rounds; the client aborts a genuinely dead stream
 and offers Retry rather than hanging.
 
