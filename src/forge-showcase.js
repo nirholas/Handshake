@@ -473,6 +473,17 @@ function buildCard(c) {
 	// Upvote — every showcase row is a public artifact and therefore votable.
 	if (c.id) actions.appendChild(buildVoteButton(c));
 
+	// Model page: the full detail view (stats, comments, likes, suggested).
+	if (c.id) {
+		const page = document.createElement('a');
+		page.className = 'showcase-remix';
+		page.href = `/m/${encodeURIComponent(c.id)}`;
+		page.textContent = 'Details';
+		page.title = 'Open the model page: stats, comments, likes';
+		page.addEventListener('click', (e) => e.stopPropagation());
+		actions.appendChild(page);
+	}
+
 	// Remix — only meaningful when there is a prompt to start from.
 	if (c.prompt) {
 		const remix = document.createElement('button');

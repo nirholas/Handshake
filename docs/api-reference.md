@@ -980,6 +980,49 @@ x-forge-client: <stable browser id>   # optional — resolves per-card `voted`
 narrows Top to the current Forge-Off week (Monday→Monday UTC). Full feature
 docs: [docs/forge-off.md](./forge-off.md).
 
+### Model detail page read: `GET /api/forge-creation`
+
+```
+GET /api/forge-creation?id=<uuid>              → { enabled, creation }
+GET /api/forge-creation?id=<uuid>&related=6    → adds `related` (suggested models)
+GET /api/forge-creation?id=<uuid>&view=1       → counts one page impression
+x-forge-client: <stable browser id>            # optional: resolves `voted`
+```
+
+The public by-id read behind the model detail page at `/m/<id>` (and the forge
+share flow). Any finished, durably-stored creation is readable by anyone.
+`creation` carries the model's prompt, GLB and preview URLs, category, engine
+attributes, `vote_count` (plus your own `voted` when the client id header is
+sent), `view_count`, `remix_count`, remix/royalty state, and real opt-in
+creator attribution (`creatorUsername`, `creatorDisplayName`,
+`creatorAvatarUrl`; all null for anonymous forges). `related` is same-category
+first, newest, never the model itself. Geometry stats are not stored: the page
+reads triangles/vertices live from the free `GET /api/3d/inspect?url=<glb>`.
+
+### Model comments: `GET/POST/DELETE /api/forge-comments`
+
+```
+GET /api/forge-comments?creation_id=<uuid>&limit=30&before=<iso>
+→ { "comments": [ { id, body, created_at, author_username, author_name,
+                    author_avatar, is_mine } ], "total": 12, "next": "<iso>|null" }
+
+POST /api/forge-comments            # session or Bearer + x-csrf-token
+{ "creation_id": "<uuid>", "body": "<1..2000 chars>" }
+→ { "ok": true, "comment": { ... } }
+
+DELETE /api/forge-comments          # author only
+{ "comment_id": "<uuid>" }
+→ { "ok": true, "deleted": true }
+```
+
+The comment thread on every model page. Reads are anonymous and
+cursor-paginated (`next` feeds `before`). Posting requires a signed-in session
+(401 otherwise) and runs a deterministic slur pre-filter (422 `rejected`);
+posting on a missing or unfinished model is 404. A new comment notifies the
+model's creator through the in-app bell (`comment` type, social category) when
+the model has an attributed creator. Authors can delete their own comments
+only.
+
 ### Agent-forged gallery feed — `GET /api/forged`
 
 ```

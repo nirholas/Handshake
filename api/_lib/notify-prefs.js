@@ -94,6 +94,7 @@ const TYPE_CATEGORY = {
 
 	remix: 'social',
 	reply: 'social',
+	comment: 'social',
 	embed: 'social',
 	mention: 'social',
 	fork: 'social',

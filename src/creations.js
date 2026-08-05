@@ -106,6 +106,7 @@ function cardHTML(item) {
 				<p class="cr-card-prompt" title="${esc(item.prompt || '')}">${esc(promptText)}</p>
 				<div class="cr-card-meta">${categoryChip}${royaltyChip}${remixChip}</div>
 				<div class="cr-card-actions">
+					<a class="cr-card-btn" href="/m/${esc(item.id)}" title="Open the model page: stats, comments, likes">Details</a>
 					<a class="cr-card-btn" href="${esc(item.viewerUrl)}" target="_blank" rel="noopener noreferrer">View</a>
 					<button class="cr-card-btn" type="button" data-lineage="${esc(item.id)}">Lineage</button>
 					${item.prompt ? `<button class="cr-card-btn" type="button" data-copy-prompt="${esc(item.id)}" title="Copy the prompt that generated this model">Copy prompt</button>` : ''}

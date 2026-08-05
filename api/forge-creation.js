@@ -14,11 +14,17 @@
  * failed rows return { creation: null }. When persistence isn't configured the
  * endpoint returns { enabled: false, creation: null } so the page degrades
  * cleanly instead of showing a broken state.
+ *
+ * The model detail page (/m/:id) uses two additive params:
+ *   ?related=<1..12>  includes a `related` array of suggested models
+ *                     (same category first, newest, never the model itself)
+ *   ?view=1           counts one page impression (fire-and-forget increment
+ *                     of forge_creations.view_count; never blocks the read)
  */
 
 import { cors, json, method, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { getPublicCreation, forgeStoreEnabled } from './_lib/forge-store.js';
+import { getPublicCreation, listRelated, recordCreationView, hashClient, forgeStoreEnabled } from './_lib/forge-store.js';
 import { isUuid } from './_lib/validate.js';
 
 export default wrap(async (req, res) => {
@@ -40,9 +46,31 @@ export default wrap(async (req, res) => {
 		return json(res, 400, { enabled: true, creation: null, error: 'invalid id' });
 	}
 
-	const creation = await getPublicCreation({ id });
+	// Optional anonymous browser id (same forge:cid the gallery uses) resolves
+	// this browser's own voted-state on the model's like button.
+	const rawClient = req.headers['x-forge-client'];
+	const clientHeader = Array.isArray(rawClient) ? rawClient[0] : rawClient;
+	const voterKey = clientHeader ? hashClient(clientHeader) : null;
+
+	const creation = await getPublicCreation({ id, voterKey });
 	if (!creation) {
 		return json(res, 404, { enabled: true, creation: null });
+	}
+
+	if (url.searchParams.get('view') === '1') {
+		// Deliberately not awaited past the increment failing soft: an uncounted
+		// view must never break (or slow) the model read.
+		recordCreationView({ id }).catch(() => {});
+	}
+
+	const relatedParam = Number(url.searchParams.get('related'));
+	if (Number.isFinite(relatedParam) && relatedParam > 0) {
+		const related = await listRelated({
+			id,
+			category: creation.model_category,
+			limit: relatedParam,
+		});
+		return json(res, 200, { enabled: true, creation, related });
 	}
 	return json(res, 200, { enabled: true, creation });
 });
