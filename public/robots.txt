@@ -4,7 +4,6 @@ Disallow: /my-agents
 Disallow: /dashboard
 Disallow: /settings
 Disallow: /api/
-Disallow: /admin/
 Disallow: /studio-deposit-harness*
 
 # Embed routes serve raw runtime, not human content; keep them out of SERPs.
@@ -34,7 +33,6 @@ Allow: /
 Disallow: /my-agents
 Disallow: /dashboard
 Disallow: /settings
-Disallow: /admin/
 Disallow: /studio-deposit-harness*
 
 # AI index and training crawlers (GPTBot, ClaudeBot, GrokBot, PerplexityBot,

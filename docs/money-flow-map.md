@@ -222,8 +222,6 @@ covering it there. Keep the ordering discipline in `classifyRole`: a rule goes
 ## Related
 
 - [Money Pulse](money-feed.md): the event stream these edges are aggregated from.
-- [Economy health dashboard](economy-health-dashboard.md): the operator view of
-  the funding chain that feeds these wallets.
 - [Circulation engine](circulation-engine.md): what generates most of this
   activity.
 - [Agent economy volume](agent-economy-volume.md): the per-agent totals, ranked.

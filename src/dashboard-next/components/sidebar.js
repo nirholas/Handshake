@@ -10,10 +10,10 @@ import { esc } from '../api.js';
 const STORAGE_KEY = 'dn:rail:collapsed';
 
 /** Build the sidebar HTML for the current pathname. */
-export function renderSidebar(pathname, isAdmin = false) {
+export function renderSidebar(pathname) {
 	const here = currentRoute(pathname)?.path;
 	const groups = GROUPS.map((group) => {
-		const items = NAV.filter((r) => r.group === group && (!r.admin || isAdmin));
+		const items = NAV.filter((r) => r.group === group);
 		if (!items.length) return '';
 		const links = items
 			.map((r) => {
@@ -95,13 +95,13 @@ const MOBILE_NAV_ROUTES = [
 	'/dashboard/widgets',
 	'/dashboard/monetize',
 ];
-const sheetRoutes = (isAdmin) => NAV.filter((r) => !MOBILE_NAV_ROUTES.includes(r.path) && (!r.admin || isAdmin));
+const sheetRoutes = () => NAV.filter((r) => !MOBILE_NAV_ROUTES.includes(r.path));
 
 const MORE_ICON = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="4" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="10" r="1.2" fill="currentColor" stroke="none"/></svg>';
 const SETTINGS_ICON = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.2 4.2l1.4 1.4M14.4 14.4l1.4 1.4M4.2 15.8l1.4-1.4M14.4 5.6l1.4-1.4"/></svg>';
 const PALETTE_ICON = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5"/><path d="M15 15l2.5 2.5"/></svg>';
 
-export function renderMobileNav(pathname, isAdmin = false) {
+export function renderMobileNav(pathname) {
 	const here = currentRoute(pathname)?.path;
 	const slots = MOBILE_NAV_ROUTES.map((path) => {
 		const r = NAV.find((n) => n.path === path);
@@ -112,7 +112,7 @@ export function renderMobileNav(pathname, isAdmin = false) {
 			<span class="dn-rail-mobile-label">${esc(r.label)}</span>
 		</a>`;
 	}).join('');
-	const moreActive = sheetRoutes(isAdmin).some((r) => r.path === here) ? ' active' : '';
+	const moreActive = sheetRoutes().some((r) => r.path === here) ? ' active' : '';
 	const moreBtn = `<button type="button" class="dn-rail-mobile-slot${moreActive}" data-action="mobile-more" aria-haspopup="dialog" aria-expanded="false" aria-label="More navigation">
 		<span aria-hidden="true">${MORE_ICON}</span>
 		<span class="dn-rail-mobile-label">More</span>
@@ -120,19 +120,19 @@ export function renderMobileNav(pathname, isAdmin = false) {
 	return `<div class="dn-rail-scroll" role="tablist" aria-label="Main navigation">${slots}${moreBtn}</div>`;
 }
 
-export function mountMobileNavBehavior(shellEl, pathname, isAdmin = false) {
+export function mountMobileNavBehavior(shellEl, pathname) {
 	if (window.innerWidth > 880) return;
 	const rail = shellEl.querySelector('.dn-rail');
 	if (!rail) return;
 	rail.innerHTML = `
 		<div class="dn-rail-head" style="display:none"></div>
-		${renderMobileNav(pathname, isAdmin)}
+		${renderMobileNav(pathname)}
 		<div class="dn-rail-foot" style="display:none"></div>
 	`;
-	rail.querySelector('[data-action="mobile-more"]')?.addEventListener('click', (e) => openSheet(e.currentTarget, isAdmin));
+	rail.querySelector('[data-action="mobile-more"]')?.addEventListener('click', (e) => openSheet(e.currentTarget));
 }
 
-function openSheet(trigger, isAdmin = false) {
+function openSheet(trigger) {
 	const here = currentRoute(location.pathname)?.path;
 	const lastFocused = trigger || document.activeElement;
 	if (trigger) trigger.setAttribute('aria-expanded', 'true');
@@ -145,7 +145,7 @@ function openSheet(trigger, isAdmin = false) {
 	sheet.setAttribute('aria-label', 'More navigation');
 	sheet.innerHTML = `
 		<div class="dn-mobile-sheet-handle" aria-hidden="true"></div>
-		${sheetRoutes(isAdmin).map((r) => `<a href="${esc(r.path)}" class="dn-mobile-sheet-item"${r.path === here ? ' aria-current="page"' : ''}>
+		${sheetRoutes().map((r) => `<a href="${esc(r.path)}" class="dn-mobile-sheet-item"${r.path === here ? ' aria-current="page"' : ''}>
 			<span aria-hidden="true">${ICONS[r.icon] || ''}</span>
 			<span>${esc(r.label)}</span>
 		</a>`).join('')}

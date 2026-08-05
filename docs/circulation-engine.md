@@ -226,8 +226,6 @@ budget, so raise gradually and watch tick runtime and treasury balance.
 
 ## Related
 
-- [Economy Health dashboard](economy-health-dashboard.md): the operator page
-  that diagnoses this engine when the pulse goes quiet.
 - [Money feed](money-feed.md): where circulation activity surfaces.
 - [Autonomous x402 loop](autonomous-x402.md): the separate treasury-paid loop
   that buys polling intel from our own x402 endpoints.

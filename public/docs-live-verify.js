@@ -38,7 +38,6 @@ export const VERIFIABLE_HOSTS = Object.freeze(['three.ws', 'www.three.ws']);
  * some are plumbing whose response teaches a reader nothing.
  */
 export const UNVERIFIABLE_PREFIXES = Object.freeze([
-	'/api/admin',
 	'/api/auth',
 	'/api/cron',
 	'/api/credits',

@@ -51,11 +51,6 @@ let avatarCache = null;
 let avatarFetchInFlight = null;
 let avatarDebounceTimer = 0;
 let lastFocusedBeforeOpen = null;
-let isAdmin = false;
-
-// Resolved once per session — mirrors the sidebar's admin gating so
-// admin-only entries (Systems, GCP Spend) don't surface in search either.
-getMe().then((me) => { isAdmin = !!me?.is_admin; }).catch(() => {});
 
 // ── Recent history ────────────────────────────────────────────────────────────
 
@@ -279,7 +274,7 @@ function activate(idx) {
 // ── Item collation ────────────────────────────────────────────────────────────
 
 function navItems() {
-	return NAV.filter((r) => !r.admin || isAdmin).map((r) => ({
+	return NAV.map((r) => ({
 		id: `nav-${r.path}`,
 		label: r.label,
 		group: r.group,

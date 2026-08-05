@@ -125,5 +125,3 @@ board a lie.
 - [Agent Economy Volume](https://three.ws/agent-economy-volume): the long-window
   agent-to-agent hire ledger
 - [Status](https://three.ws/status): 90 days of uptime history per service
-- [Economy health dashboard](./economy-health-dashboard.md): the operator view
-  that diagnoses a quiet pulse

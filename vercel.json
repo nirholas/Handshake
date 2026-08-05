@@ -171,10 +171,6 @@
 			"includeFiles": "data/_generated/**",
 			"maxDuration": 30
 		},
-		"api/admin/news/[action].js": {
-			"includeFiles": "{data/archives/**,data/rss/**}",
-			"maxDuration": 30
-		},
 		"api/rss/announcements.js": {
 			"includeFiles": "{data/archives/**,data/rss/**}",
 			"maxDuration": 30
@@ -305,38 +301,6 @@
 		{
 			"src": "/gallery-picker/",
 			"dest": "/gallery-picker.html"
-		},
-		{
-			"src": "/admin/launcher",
-			"dest": "/admin/launcher.html"
-		},
-		{
-			"src": "/admin/launcher/",
-			"dest": "/admin/launcher.html"
-		},
-		{
-			"src": "/admin/seeder",
-			"dest": "/admin/seeder.html"
-		},
-		{
-			"src": "/admin/seeder/",
-			"dest": "/admin/seeder.html"
-		},
-		{
-			"src": "/admin/economy",
-			"dest": "/admin/economy.html"
-		},
-		{
-			"src": "/admin/economy/",
-			"dest": "/admin/economy.html"
-		},
-		{
-			"src": "/admin/ring",
-			"dest": "/admin/ring.html"
-		},
-		{
-			"src": "/admin/ring/",
-			"dest": "/admin/ring.html"
 		},
 		{
 			"src": "/aws-marketplace/welcome",
@@ -1279,24 +1243,8 @@
 			"dest": "/api/trade-share?id=$1"
 		},
 		{
-			"src": "/admin/bulk-launch/?",
-			"dest": "/bulk-launch.html"
-		},
-		{
-			"src": "/admin/ops/?",
-			"dest": "/admin/ops.html"
-		},
-		{
-			"src": "/admin/irl-analytics/?",
-			"dest": "/admin/irl-analytics.html"
-		},
-		{
 			"src": "/api/ops/health",
 			"dest": "/api/ops/health"
-		},
-		{
-			"src": "/admin/sdp/?",
-			"dest": "/admin/sdp.html"
 		},
 		{
 			"src": "/pump-dashboard/?",
@@ -2304,10 +2252,6 @@
 			"status": 301
 		},
 		{
-			"src": "/dashboard/x402-admin",
-			"dest": "/dashboard/x402-admin.html"
-		},
-		{
 			"src": "/dashboard/x402",
 			"dest": "/dashboard/x402.html"
 		},
@@ -3003,10 +2947,6 @@
 		{
 			"src": "/api/walk/control/([^/]+)",
 			"dest": "/api/walk/control/[action]?action=$1"
-		},
-		{
-			"src": "/api/admin/news/([^/]+)",
-			"dest": "/api/admin/news/[action]?action=$1"
 		},
 		{
 			"src": "/api/onboarding/avaturn-session",
@@ -5543,14 +5483,6 @@
 		{
 			"src": "/play/ufo/",
 			"dest": "/play/ufo.html"
-		},
-		{
-			"src": "/admin/news",
-			"dest": "/admin/news.html"
-		},
-		{
-			"src": "/admin/news/",
-			"dest": "/admin/news.html"
 		},
 		{
 			"src": "/api/x402/service/([^/?]+)",

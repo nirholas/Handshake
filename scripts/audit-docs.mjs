@@ -269,7 +269,6 @@ const UNPUBLISHED_DOCS = new Map([
 	['coinmarketcap-article', 'internal: draft prepared for an external publisher'],
 	['coinmarketcap-article-play', 'internal: draft prepared for an external publisher'],
 	['demo-routes', 'internal: dated route inventory'],
-	['economy-health-dashboard', 'internal: admin-gated dashboard; names CRON_SECRET and the admin diagnosis endpoints'],
 	['economy-heartbeat', 'internal: scheduled-job operations'],
 	['economy-master', 'internal: funding-root wallet operations'],
 	['financial-controls', 'internal: audit-grade money-flow register'],

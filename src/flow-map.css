@@ -1,7 +1,7 @@
 /* /flow: the agent money-flow map.
 
-   A public surface, so it uses the site's own accent rather than the violet ops
-   token language of /admin/*. The canvas draws itself; everything here is the
+   A public surface, so it uses the site's own accent. The canvas draws itself;
+   everything here is the
    chrome around it, and every colour that carries meaning (role, direction) is
    also carried by text or shape, never by hue alone. */
 

@@ -222,7 +222,7 @@ function renderTrading(d) {
 			.join('');
 		wireWalletChips(host);
 	} else {
-		host.innerHTML = `<p class="px-lb-empty">No agent trades in the last 7 days. Fund a treasury and enable circulation to start the loop. <a href="/admin/launcher">Open controls.</a></p>`;
+		host.innerHTML = `<p class="px-lb-empty">No agent trades in the last 7 days. Fund a treasury and enable circulation to start the loop.</p>`;
 	}
 }
 

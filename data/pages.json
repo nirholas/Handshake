@@ -1243,13 +1243,6 @@
 					"added": "2026-06-30"
 				},
 				{
-					"path": "/admin/ring",
-					"title": "Ring Dashboard (admin)",
-					"description": "Operator dashboard for the closed-loop x402 ring economy: live per-minute settlement pulse, loop diagram with wallet balances and floors, streaming activity feed with agent attribution and Solscan links, fee/burn efficiency vs the daily budget, integrity (leak scan + reconciliation), and per-endpoint coverage. Admin-authed, noindex. Labels all ring volume as internal dogfooding, not organic revenue.",
-					"auth": "admin",
-					"indexable": false
-				},
-				{
 					"path": "/deployments",
 					"title": "On-chain Deployments",
 					"description": "A live, cross-chain feed of every agent registered on the ERC-8004 Identity Registry: the moment each registration lands on-chain. Real on-chain registrations only, with chain footprint, 3D-avatar and x402 capability stats.",

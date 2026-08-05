@@ -68,7 +68,6 @@ describe('vercel.json routes cover every nested [action] function', () => {
 			'payments/evm',
 			'tx/solana',
 			'walk/control',
-			'admin/news',
 		];
 		const missing = mustRoute.filter((d) => !isRouted(d));
 		expect(missing, `unreachable in production: ${missing.join(', ')}`).toEqual([]);
