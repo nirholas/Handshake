@@ -23,6 +23,22 @@
 			<description>Every finished model from the Forge now lives at its own shareable page: a big interactive viewer with one-tap AR, real triangle and vertex counts read live from the file, the full prompt, the creator's profile with a follow button, likes, view counts, and a brand-new comment section. A suggested-models rail keeps you exploring, remixable models can be remixed right from the page, and the embed button hands you a copy-paste snippet for any website. Reach it from the Details button on any creation card in the gallery or the Forge showcase.</description>
 		</item>
 		<item>
+			<title>Internal operator console removed from the public site</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-05:Internal operator console removed from the public site</guid>
+			<pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The internal operator console (the admin pages and their APIs) has been removed from three.ws entirely. These were operations tools for running the platform, not user features; taking them off the public surface shrinks what an attacker can even see or probe. Nothing you use day to day changes: every user-facing dashboard, launcher, and payment surface works exactly as before.</description>
+		</item>
+		<item>
+			<title>The admin panel is gone</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-05:The admin panel is gone</guid>
+			<pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Internal operator dashboards and their private APIs have been removed from the public site entirely. Nothing user-facing changes: your dashboard, launcher, wallets, and every public API keep working exactly as before. This is part of ongoing security hardening: internal tooling no longer ships in the web app at all.</description>
+		</item>
+		<item>
 			<title>The documentation caught up with the platform</title>
 			<link>https://three.ws/docs/freshness</link>
 			<guid isPermaLink="false">2026-08-05:The documentation caught up with the platform</guid>
@@ -4376,7 +4392,7 @@
 		</item>
 		<item>
 			<title>The agent-to-agent payment economy runs far cheaper and now cycles hundreds of distinct payers</title>
-			<link>https://three.ws/admin/ring</link>
+			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-17:The agent-to-agent payment economy runs far cheaper and now cycles hundreds of distinct payers</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
@@ -9784,7 +9800,7 @@
 		</item>
 		<item>
 			<title>Autonomous coin launcher, creator fees, revenue tracking, and admin console upgrades</title>
-			<link>https://three.ws/admin/launcher</link>
+			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-06-27:Autonomous coin launcher, creator fees, revenue tracking, and admin console upgrades</guid>
 			<pubDate>Sat, 27 Jun 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>

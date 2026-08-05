@@ -1,10 +1,9 @@
-// Pure aggregation + threshold helpers for the /admin/ring operator dashboard.
+// Pure aggregation + threshold helpers for the x402 ring read models.
 //
-// Zero I/O, zero heavy imports: fixture rows in, shaped payload out. The handler
-// (api/admin/ring-dashboard.js) does the DB/RPC/auth work and calls these to
-// shape the response; the unit tests (tests/x402-ring-dashboard.test.js) exercise
-// them directly. Keeping the math here means the read model is verifiable without
-// standing up Neon, Solana RPC, or an admin session.
+// Zero I/O, zero heavy imports: fixture rows in, shaped payload out. Callers
+// (api/_lib/x402/runway-sim.js) do the DB/RPC work and call these to shape the
+// response. Keeping the math here means the read model is verifiable without
+// standing up Neon or Solana RPC.
 
 // The 1-signature self-pay base fee — the hard floor a settlement can cost.
 export const FEE_FLOOR_LAMPORTS = 5000;

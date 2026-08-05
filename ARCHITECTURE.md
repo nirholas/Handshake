@@ -313,7 +313,7 @@ three.ws is a **Multi-Page Application (MPA)** with no client-side router framew
 | Launches Feed | `/launches` | `src/launches.js` | `GET /api/pump/launches` (60s live refresh) |
 | Launch Detail | `/launches/:mint` | `src/launch-detail.js` | Price, bonding curve, holder bubblemap, oracle conviction |
 | Launch Studio | `/launch-studio` | `public/launch-studio/launch-studio.js` | 50 coin-launch recipes previewed live; rewards routable to anyone. See [Launch Studio](#launch-studio--the-autonomous-coin-launcher) |
-| Memetic Launcher | `/launcher` | `src/admin-launcher.js` (preview) | Design a personal autonomous coin launcher over live cultural narratives (preview; no SOL moves) |
+| Memetic Launcher | `/launcher` | `src/user-launcher.js` | Design a personal autonomous coin launcher over live cultural narratives (preview; no SOL moves) |
 | $THREE Token Page | `/three-token` | `src/three-token-page.js` | Live price, bonding curve chart, Jupiter swap modal |
 | Autopilot | `/autopilot` | `src/autopilot.js` | Per-coin buyback/distribute policy, agent avatar narration |
 | Pump Dashboard | `/pump-dashboard` | `src/launchpad/` | Pump.fun token creator dashboard |
@@ -763,7 +763,6 @@ Beyond the feature areas above, the `api/` tree exposes many more surfaces. Comp
 | `/api/walk/*` (6) | `pilot`, `session`, `control/[action]`, `metrics`, `analytics`, `leaderboard` | Walk Avatar browser-piloting: LLM "brain" pilots web pages from Chrome-extension DOM snapshots (`auth/extension-token.js`) |
 | `/api/irl/*` (10) | `pins`, `drops`, `interactions`, `interactions-stream` (SSE), `presence-proofs`, `world-lines`, … | Geolocated agent presence/drops/pins; tables `irl_pins`/`irl_drops`/`irl_interactions`/`irl_presence_proofs`/`irl_world_lines` |
 | `/api/users/*` (16) vs `/api/user/*` (5) | — | Two namespaces: `users/` = public profiles/follows/referrals/earnings; `user/` = account wallet/settings |
-| `/api/admin/*` (11) | `[resource]`, `bulk-launch`, `register-agents`, `revenue`, `withdrawals/[id]`, `user/[id]`, `redis-health`, `pump-cron-health`, `rider-passes`, `news/[action]` | Admin/ops console backend (admin auth gate, `api/_lib/admin.js`) |
 | `/api/rider/*`, `/api/play/*`, `/api/seed/*`, `/api/club/*` (incl. `tips-stream` SSE), `/api/tournaments/*`, `/api/clash/*` | — | Rider passes / play-pass / fixtures-seed / 3D-club tips / tournament + Coin Clash game surfaces |
 
 > Internal MCP handler implementations live in `api/_mcp`, `api/_mcp3d`, `api/_mcpagent`, `api/_mcpbazaar`, `api/_mcpibm`, `api/_mcp-studio`, `api/_studio` — see [MCP Layer](#mcp-layer).
@@ -1413,7 +1412,7 @@ Solana x402 settlement previously went through an **external facilitator** (PayA
 
 ### Circulation engine
 
-`api/_lib/circulation.js` (+ `circulation-personas.js`) drives real agent-to-agent commerce (tips, skill/asset buys in $THREE, trades, launches) via a pool of platform-owned custodial agents, ticked by `api/cron/pulse-tick.js` (`*/2`). Distinct from the ring: recently refactored to **remove real-seller demand entirely** — manufactured demand only ever reaches circulation-owned sellers, so no SOL/$THREE can leave to a real user's wallet. Gated by `CIRCULATION_ENABLED` + `CIRCULATION_TREASURY_SECRET`; health probe `api/admin/circulation-health.js`. (Removed in the refactor: `CIRCULATION_REAL_SELLER_DEMAND`, `CIRCULATION_REAL_SELLER_DAILY_CAP`.)
+`api/_lib/circulation.js` (+ `circulation-personas.js`) drives real agent-to-agent commerce (tips, skill/asset buys in $THREE, trades, launches) via a pool of platform-owned custodial agents, ticked by `api/cron/pulse-tick.js` (`*/2`). Distinct from the ring: recently refactored to **remove real-seller demand entirely** - manufactured demand only ever reaches circulation-owned sellers, so no SOL/$THREE can leave to a real user's wallet. Gated by `CIRCULATION_ENABLED` + `CIRCULATION_TREASURY_SECRET`; health probe the circulation health read model. (Removed in the refactor: `CIRCULATION_REAL_SELLER_DEMAND`, `CIRCULATION_REAL_SELLER_DAILY_CAP`.)
 
 ---
 
@@ -2343,7 +2342,7 @@ The serverless tree holds **146 feature directories + 115 top-level handler file
 | MCP servers | `_mcp/` · `_mcp3d/` · `_mcp-studio/` · `_mcpagent/` · `_mcpbazaar/` · `_mcpibm/` · `_studio/` · `_providers/` |
 | AI / voice / LLM | `chat/` · `llm/` · `tts/` · `watsonx/` · `ibm/` · `guardian/` · `inference/` · `tutor/` |
 | Naming & on-chain | `threews/` · `three/` · `nft/` · `pinning/` · `reputation/` · `sdp/` |
-| Infra, SEO & ops | `cron/` · `sitemap/` · `rss/` · `og/` · `webhooks/` · `push/` · `notifications/` · `developer/` · `platform/` · `admin/` · `jobs/` · `embed/` · `widgets/` · `dashboard/` · `demo/` · `actions/` · `v1/` · `api/` |
+| Infra, SEO & ops | `cron/` · `sitemap/` · `rss/` · `og/` · `webhooks/` · `push/` · `notifications/` · `developer/` · `platform/` · `jobs/` · `embed/` · `widgets/` · `dashboard/` · `demo/` · `actions/` · `v1/` · `api/` |
 | Partner / distribution | `aws-marketplace/` · `lobehub/` · `chat-plugin/` |
 | Social (X) | `x/` |
 | Vanity | `vanity/` |
@@ -2413,7 +2412,7 @@ The full set of `/.well-known/` manifests (static `public/.well-known/` + dynami
 
 ### Public Static Apps (`public/`)
 
-Standalone HTML apps and asset roots served directly (not Vite-controller pages): `discover/` (ERC-8004 marketplace) · `my-agents/` · `agents/` · `gallery/` · `studio/` · `scene-studio/` · `reputation/` · `hydrate/` · `validation/` · `pay/` + `pay/c/` (x402 checkout) · `x402/` · `agenc/` · `club/` · `chat/` · `lobehub/` · `dashboard/` + `dashboard-next/` · `persona/` · `admin/` · `internal/` · `tour/` · `widgets-gallery/` · `demos/` + `demos-embed/` + `demo/` · `news/` · `changelog/` · `legal/` · `docs/` · `store/` · `launch/` · plus asset roots: `animations/`, `accessories/`, `cosmetics/`, `environments/`, `textures/`, `fonts/`, `badges/`, `og/`, `locales/` (i18n catalogs), `sitemap/`, `vendor/`.
+Standalone HTML apps and asset roots served directly (not Vite-controller pages): `discover/` (ERC-8004 marketplace) · `my-agents/` · `agents/` · `gallery/` · `studio/` · `scene-studio/` · `reputation/` · `hydrate/` · `validation/` · `pay/` + `pay/c/` (x402 checkout) · `x402/` · `agenc/` · `club/` · `chat/` · `lobehub/` · `dashboard/` + `dashboard-next/` · `persona/` · `internal/` · `tour/` · `widgets-gallery/` · `demos/` + `demos-embed/` + `demo/` · `news/` · `changelog/` · `legal/` · `docs/` · `store/` · `launch/` · plus asset roots: `animations/`, `accessories/`, `cosmetics/`, `environments/`, `textures/`, `fonts/`, `badges/`, `og/`, `locales/` (i18n catalogs), `sitemap/`, `vendor/`.
 
 ---
 
@@ -2641,7 +2640,7 @@ The worker and `api/sniper/*` are separate processes that **communicate only thr
 Two coupled surfaces for minting pump.fun coins, both backed by one declarative use-case catalog.
 
 - **Launch Studio** — `pages/launch-studio.html` → `/launch-studio`, mounted by `public/launch-studio/launch-studio.js`; API `api/pump/launch-studio.js` (`GET /api/pump/launch-studio?action=list|preview`). A catalog of **exactly 50** coin-launch recipes previewed live from real data and launchable on pump.fun in one click. The catalog engine `api/_lib/launch/registry.js` merges declarative use-case families under `api/_lib/launch/usecases/` — github (12) + culture (10) + news (8) + onchain (8) + events (6) + community (6) = 50 (`USE_CASE_COUNT`), each validated at import. **"Rewards can go to anyone":** `usecase-engine.js` `resolveReward` routes creator fees to a resolved recipient that need not be the launcher — a trending GitHub repo's owner (or the GitHub creator), a narrative subject's wallet (attribution mode), split shareholders, or a buyback-and-burn structure.
-- **Memetic Launcher (autonomous)** — user surface `pages/launcher.html` → `/launcher` (`src/admin-launcher.js`-style preview, no SOL moves); admin control at `pages/admin/launcher.html` → `/admin/launcher`. Engine `api/_lib/launcher-engine.js` (one-tick driver) + `launcher-funding.js` (master→agent SOL) + `launcher-sources.js` + `launcher-trends.js` (narrative intelligence). Crons `api/cron/launcher-tick.js` (`* * * * *`, mints live coins, SOL-capped, circuit-broken, **write-capacity preflight**) and `api/cron/launcher-claimer.js` (`*/5`, auto-claims creator fees ≥ threshold → `launcher_claims`). API: `GET/POST /api/agent/launcher` (per-agent config + history), `GET/POST /api/launcher/me`, `GET /api/launcher/trends`, `GET/POST /api/admin/launcher`. Tables: `launcher_config`/`launcher_queue`/`launcher_runs`, `agent_launcher_configs`, `agent_launched_coins` (defaults flipped to **LIVE** by `20260629120000_launcher_live_default.sql`).
+- **Memetic Launcher (autonomous)**: user surface `pages/launcher.html` → `/launcher` (`src/user-launcher.js`, preview mode moves no SOL)
 
 ---
 
@@ -2666,8 +2665,6 @@ The seeder autonomously mass-produces public, rigged 3D avatars into the `avatar
 
 1. **Photo-seeded diversity lane** — `api/_lib/avaturn-seed.js` (+ `avaturn-photo.js`, cron `api/cron/avaturn-seed-cron.js`). A "diversity engine" draws a described person from a deterministic matrix (`AGE_BANDS`, 10 `ETHNICITIES` with skin-tone bands, 6 `BUILDS`), renders a passport-style face via the text→image (FLUX) lane, then reconstructs it through Avaturn into a distinct, fully-rigged avatar.
 2. **Free studio recolor lane** — `api/_lib/studio-avatar.js`. Recolors the per-part materials of a small set of base bodies (`BASE_BODIES`: `realistic-male`, `realistic-female`, `selfie-girl`, **`michelle`**, `default`) per a diversity profile via `recolorGlb()` — no external generation cost (the "free" lane; replaced the dead Avaturn export).
-
-**Admin control room** — `api/admin/seeder.js` (`GET/POST /api/admin/seeder`) + `src/admin-seeder.js`, page `pages/admin/seeder.html` → `/admin/seeder`. `GET` returns flag/armed state, throughput (60m/24h/7d, rigged count, last export), circuit-breaker state, a 60s cadence countdown, and the 18 most-recent seeded avatars with live GLB URLs for in-browser 3D preview. `POST` arms/disarms (flips the `avaturn_seed` flag with no deploy) or `{action:'run_now'}`. Auth: admin session or `Bearer $CRON_SECRET`.
 
 ---
 
@@ -3020,7 +3017,7 @@ The codebase references **~260 distinct `process.env.*` keys** across `api/`; `a
 | Trading swarms UI | Backend + `/swarms` dashboard live; 3D Sniper Arena at `/play/arena` | `api/swarms/*`, `src/play/arena.js`, swarms tables |
 | Agora economy | **Launched** (Commons live at `/agora`; Arena/Guild migration 2026-07-02) | Agent + human citizens, professions, verifiable WORK supply chain — see [Agora](#agora--living-agent--human-economy-verifiable-work-supply-chain) |
 | Self-hosted x402 facilitator | Shipped, **off by default** | `X402_SELF_FACILITATOR_ENABLED` + sponsor secret required; `api/x402-facilitator` returns 503 otherwise |
-| Autonomous coin launcher | Live (`launcher_config` defaults flipped to LIVE) | Real SOL, circuit-broken, storage-preflighted; admin arm at `/admin/launcher` |
+| Autonomous coin launcher | Live (`launcher_config` defaults flipped to LIVE) | Real SOL, circuit-broken, storage-preflighted |
 | Agent-screen pool hosting | No true 24/7 host | Only first-party host is the self-renewing GitHub Actions burst runner (`cron 0 */5`); a Docker VM/Fly/Railway is recommended for production |
 
 ### Technical Debt
@@ -3082,7 +3079,7 @@ Two layers resolve paths: **`vercel.json`** (`routes` array, 932 entries — pro
 
 **Marketplace / Widgets / Embeds:** `/marketplace` (+`/marketplace/{tools,skills,animations,onchain}` and `/:id`; `/marketplace/agents/:id`→`/agents/:id`; `/marketplace/avatars/:id`→`/avatars/:id`; `/marketplace/analytics`; `/marketplace-walk`), `/collection`, `/widgets` (`public/widgets-gallery/`), `/widget`, `/widget-demo.html`, `/embed` (+`/embed-demo`, `/embed-example.html`, `/embed/v1/preview`, `/embed/walk`), `/walk` → `pages/walk-landing.html` (+`/walk/app`,`/walk-embed`,`/walk-leaderboard`,`/walk-analytics`), `/wk/:avatar`→`/temporary`, `/temporary`, `/artifact` (+`/artifact-example.html`,`/artifact/snippet.html`), `/widget-studio`→`/studio`, `/studio` → `public/studio/index.html`, `/chat/forge-viewer.html`, `/lobehub/iframe` (`/sperax/iframe`), `/demos-embed/{agents,avatar-only,forge,gallery,selfie,walk}`.
 
-**Dashboard (dashboard-next SPA):** `/dashboard` (+`/dashboard-next`); `/dashboard/{avatars,community-avatars,agents,library,widgets,walk,developers,three-token,holders,analytics,monetize,account,referrals,copy,irl-placements,sniper,settings,tokens,portfolio,api,brain,creator,landscape,prelaunch-radar,transactions,wallet-grinder}` → `pages/dashboard-next/:slug.html`; `/dashboard/:slug` (auto); `/dashboard/edit/:id`; `/dashboard/x402` + `/dashboard/x402-admin` → `public/dashboard/*` (classic); `/dashboard/{wallets,sessions,actions,embed-policy,memory,strategy,voice,sns,delegation,agent-pumpfun,storage,usage}` 301→dashboard-next; `/dashboard-classic/*` 301→`/dashboard/*`. Classic dashboard pages still on disk (`public/dashboard/*.html`) reachable via 301.
+**Dashboard (dashboard-next SPA):** `/dashboard` (+`/dashboard-next`); `/dashboard/{avatars,community-avatars,agents,library,widgets,walk,developers,three-token,holders,analytics,monetize,account,referrals,copy,irl-placements,sniper,settings,tokens,portfolio,api,brain,creator,landscape,prelaunch-radar,transactions,wallet-grinder}` → `pages/dashboard-next/:slug.html`; `/dashboard/:slug` (auto); `/dashboard/edit/:id`; `/dashboard/x402` + `public/dashboard/*` (classic); `/dashboard/{wallets,sessions,actions,embed-policy,memory,strategy,voice,sns,delegation,agent-pumpfun,storage,usage}` 301→dashboard-next; `/dashboard-classic/*` 301→`/dashboard/*`. Classic dashboard pages still on disk (`public/dashboard/*.html`) reachable via 301.
 
 **IBM / Cloud partners:** `/ibm/{hello,hello.live,x402-demo}`, `/aws`, `/aws-marketplace/{welcome,error}`, `/dappbay` 302→`dappbay.bnbchain.org/detail/three`, `/providers`.
 
@@ -3094,7 +3091,7 @@ Two layers resolve paths: **`vercel.json`** (`routes` array, 932 entries — pro
 
 **App / Deploy:** `/app` → `pages/app-next.html`; `/app-classic` → `pages/app.html`; `/app-next` 301→`/app`; `/app-demo`; `/deploy`, `/showcase` → `pages/app.html`; `/chat` 301→`/app` (dev proxied to `:5174`).
 
-**Admin / Internal:** `/admin/{news,sdp,index.html}`, `/admin/bulk-launch`, `/dashboard/x402-admin`, `/internal/avaturn-forge.html`.
+**Internal:** `/internal/avaturn-forge.html`.
 
 **System / Static / `.well-known`:** `/404` (catch-all `/(.*)`), `/500`, `/robots.txt`, `/llms.txt`, `/llms-full.txt`, `/sitemap.xml`→`/api/sitemap`, `/sitemap/{core,agents,avatars,widgets,profiles}.xml`→`/api/sitemap/[type]`, `/changelog.{json,xml}` (static, build-generated), `/rss.xml`, `/rss/announcements.xml`→`/api/rss/announcements`, `/openapi.json`→`/api/openapi-json`, `/agent-3d/versions.json` + `/agent-3d/:ver/agent-3d.js` (CDN lib), `.well-known/{solana/actions.json, chat-plugin.json, sperax-plugin.json, x402.json, agent-attestation-schemas, three-vanity.json, oauth-authorization-server, oauth-protected-resource}`→`/api/wk`, `.well-known/did.json`→`/api/x402/did`, `.well-known/jwks.json`→`/api/auth/persona`, `/footer.html`, `/nav.html` (shared partials); stable unhashed bundles `/footer-bot.js`, `/walk-companion.js`, `/walk-playground.js`, `/feature-tour.js`, `/notifications.js`, `/nav-tier-badge.js`, `/agent-bus.js`, `/i18n.js`, `/error-reporter.js`.
 

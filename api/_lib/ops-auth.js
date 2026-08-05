@@ -1,6 +1,6 @@
 // @ts-check
-// The single authorization gate for the ops dashboard surfaces (/admin/ops and
-// its APIs: /api/ops/health, /api/admin/ops-alerts). One helper so both use
+// The single authorization gate for the ops API surfaces (/api/ops/health,
+// /api/ops/payment-outcomes). One helper so all of them use
 // identical, auditable rules — no drift, no weaker second door.
 //
 // These surfaces expose internal state: endpoint/cron topology, wallet

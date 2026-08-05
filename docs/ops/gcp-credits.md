@@ -1273,22 +1273,21 @@ gcloud pubsub topics publish gcp-budget-alerts --project=aerial-vehicle-466722-p
 Handler contract (auth 503/401, threshold gate, dedup) is locked by
 `tests/api/gcp-budget-alert.test.js`.
 
-### Internal spend dashboard — `/dashboard/spend`
+### Spend visibility
 
-Admin-gated page (dashboard-next → nav "GCP Spend", `src/dashboard-next/pages/spend.js`),
-backed by `GET /api/admin/gcp-burn` (session-admin **or** `Bearer $CRON_SECRET`).
-Two cross-referenced views:
+The in-app spend dashboard and its `GET /api/admin/gcp-burn` endpoint were
+removed with the admin panel. Burn visibility now lives in the shell and the
+scheduler:
 
-- **App-side telemetry** (always live, from `usage_events` + `forge_creations`):
-  per-lane LLM cost/tokens (14d), Vertex Claude spend estimate (30d + 24h, by
-  model), forge generations per backend (self-host flagged), and a daily LLM-cost
-  bar chart. This renders even before the billing export is wired.
-- **Billing ground truth** (best-effort, from `buildBurnReport`): credit consumed,
-  runway, projection vs expiry, credit spend by lane label. Degrades to a designed
-  "not wired" panel when the export is absent — the app-side view still shows.
-
-All states designed (loading skeleton, empty, 401/403 lock, error, populated);
-auto-refreshes every 60s.
+- `node scripts/gcp/burn-report.mjs` prints the billing ground truth from
+  `buildBurnReport` ([api/_lib/gcp-billing.js](../../api/_lib/gcp-billing.js)):
+  credit consumed, runway, projection vs expiry, credit spend by lane label.
+  It degrades to a clear "export not wired" message when the BigQuery billing
+  export is absent.
+- The daily cron [api/cron/gcp-burn-report.js](../../api/cron/gcp-burn-report.js)
+  posts the same report to the ops channel.
+- Budget threshold pings arrive via the budget alert handler (previous
+  section).
 
 ### Kill-switches (verified no-deploy env flips)
 
@@ -1371,9 +1370,10 @@ Burn rate, exhaustion projection, and full/unused-credit tracking remain **wired
 but not reporting** — they need the owner to select the pre-created `billing_export`
 dataset in the console (one click; dataset now exists) and set `GCP_CREDIT_TOTAL_USD` /
 `GCP_CREDIT_EXPIRY`. The moment the export starts flowing, `node scripts/gcp/burn-report.mjs`
-prints the live burn rate and days-of-runway, the dashboard fills in, and the daily
-cron begins posting. Until then the app-side lane telemetry on `/dashboard/spend` is
-the live view. Program budget targets for the alerts: Claude-on-Vertex $40–60k, GPU
+prints the live burn rate and days-of-runway and the daily
+cron begins posting. Until then, per-lane app-side telemetry lives in the
+`usage_events` and `forge_creations` tables (queryable directly).
+Program budget targets for the alerts: Claude-on-Vertex $40-60k, GPU
 fleet $15–25k, Imagen $3–5k, vanity/observability/misc ~$5k.
 
 **Two remaining owner actions to fully activate prompt-07 ops:**

@@ -6,7 +6,6 @@ Subdirectories group related surfaces and keep their URL structure:
 
 | Directory | Serves under | What it is |
 |---|---|---|
-| `admin/` | `/admin/*` | Internal control panels (launcher, seeder, ring, ops, irl-analytics). All carry `noindex, nofollow`. |
 | `agenc/` | `/agenc/*` | AgenC embodiment surfaces (embodied, room). |
 | `aws/`, `aws-marketplace/` | `/aws`, `/aws-marketplace/*` | AWS partner and marketplace pages. |
 | `billing/` | `/billing/*` | Billing surfaces (API keys). |
@@ -19,7 +18,7 @@ Subdirectories group related surfaces and keep their URL structure:
 
 There is no automatic file-to-URL mapping in production. Four pieces must line up:
 
-1. **Vite input** ([../vite.config.js](../vite.config.js)). Every page is an explicit entry in `build.rollupOptions.input`. `npm run build` emits it to `dist/pages/<name>.html`, then the `flatten-pages-dir` plugin moves root-level pages to `dist/<name>.html`. Nested directories (admin/, features/, ...) keep their structure inside `dist/`. Exception: `pages/dashboard-next/` is auto-discovered by `discoverDashboardNextInputs()`, so files there need no config edit.
+1. **Vite input** ([../vite.config.js](../vite.config.js)). Every page is an explicit entry in `build.rollupOptions.input`. `npm run build` emits it to `dist/pages/<name>.html`, then the `flatten-pages-dir` plugin moves root-level pages to `dist/<name>.html`. Nested directories (features/, dashboard-next/, ...) keep their structure inside `dist/`. Exception: `pages/dashboard-next/` is auto-discovered by `discoverDashboardNextInputs()`, so files there need no config edit.
 2. **Route table** ([../vercel.json](../vercel.json)). A rewrite maps the clean URL to the built file: `{"src": "/tracker", "dest": "/tracker.html"}` plus a twin for the trailing-slash form `"/tracker/"` (some routes use a single `"/tracker/?"` pattern instead). `vercel.json` is a LIVE config file. Production runs on Cloud Run, and [../server/index.mjs](../server/index.mjs) parses this route table at startup: phase-1 rewrite rules, then a filesystem phase over `dist/`, then post-filesystem 404 rules.
 3. **No `.html` fallback exists.** The server's `resolveStatic()` serves an exact file path or a directory's `index.html`, nothing else. A page built to `dist/slug.html` is a hard 404 at `/slug` until the vercel.json rewrite lands. This shipped twice (`/timeline`, `/tracker`), which is why `check:pages` now gates the build.
 4. **Page registry** ([../data/pages.json](../data/pages.json)). The single source of truth for what exists on three.ws. It feeds the sitemap, `llms.txt`, `features.json`, and the public changelog.

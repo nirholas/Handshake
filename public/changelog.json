@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-05T06:08:52.914Z",
+	"generated_at": "2026-08-05T20:50:25.626Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -25,6 +25,27 @@
 			"link": "/creations",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-05",
+			"type": "update",
+			"title": "Internal operator console removed from the public site",
+			"summary": "The internal operator console (the admin pages and their APIs) has been removed from three.ws entirely. These were operations tools for running the platform, not user features; taking them off the public surface shrinks what an attacker can even see or probe. Nothing you use day to day changes: every user-facing dashboard, launcher, and payment surface works exactly as before.",
+			"link": null,
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-05",
+			"type": "update",
+			"title": "The admin panel is gone",
+			"summary": "Internal operator dashboards and their private APIs have been removed from the public site entirely. Nothing user-facing changes: your dashboard, launcher, wallets, and every public API keep working exactly as before. This is part of ongoing security hardening: internal tooling no longer ships in the web app at all.",
+			"link": null,
+			"tags": [
+				"security",
+				"improvement"
 			]
 		},
 		{
@@ -5726,7 +5747,7 @@
 			"type": "update",
 			"title": "The agent-to-agent payment economy runs far cheaper and now cycles hundreds of distinct payers",
 			"summary": "Two improvements to the closed-loop x402 agent economy that dogfoods every paid endpoint on the platform. First, a fix: a background wallet-consolidation job was quietly closing the ring's payment account after every settlement, forcing the next one to recreate it and pay account rent each time. That single bug had pushed the real fee cost to roughly a hundred times where it should be. With it fixed and single-signature settlement turned on, each settlement is back to the network floor of a few thousandths of a cent, and the ring's working balance stays in the loop instead of leaking away. Second, a new capability: the ring can now cycle payments through a reusable pool of hundreds to a thousand distinct wallets instead of one, so the economy reads as many participants rather than a single account, with no extra cost per payment. The pool is off until funded and activated, and every wallet in it stays clearly labeled internal dogfooding, not organic demand.",
-			"link": "/admin/ring",
+			"link": null,
 			"tags": [
 				"fix",
 				"improvement",
@@ -12771,7 +12792,7 @@
 			"type": "update",
 			"title": "Autonomous coin launcher, creator fees, revenue tracking, and admin console upgrades",
 			"summary": "The memetic launcher now auto-claims pump.fun creator fees from every coin it mints, routing the configured share toward $THREE. The admin console at /admin/launcher gains a live revenue panel (total creator fees claimed, $THREE allocated), agent-name visibility in the run feed, a Force Tick button for instant testing, and a cleaner 8-column stat grid. Know Your Meme is wired as a live trend source alongside Hacker News, Reddit, and Wikipedia, so the launcher reads what the internet is actually minting.",
-			"link": "/admin/launcher",
+			"link": null,
 			"tags": [
 				"feature",
 				"improvement"

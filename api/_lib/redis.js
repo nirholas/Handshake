@@ -328,8 +328,8 @@ export function getRedis() {
 }
 
 /**
- * Current auth-breaker state, for health/diagnostics endpoints
- * (api/admin/redis-health.js). `open` true means the shared token is failing and
+ * Current auth-breaker state, for health/diagnostics tooling.
+ * `open` true means the shared token is failing and
  * commands are being short-circuited to fallbacks on this instance.
  */
 export function redisAuthBreakerState() {

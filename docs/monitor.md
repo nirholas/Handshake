@@ -36,9 +36,8 @@ The command bar across the top carries platform totals from
 the same probe data as the Systems panel, and a refresh-all button.
 
 Every endpoint above is public and unauthenticated. Nothing on this page needs a
-session, and nothing on it is admin-only. The authenticated operator views live
-elsewhere: [`/admin/economy`](https://three.ws/admin/economy) for the funding
-chain, and `/api/ops/health` behind `OPS_SECRET` for subsystem probes.
+session, and nothing on it is admin-only. The authenticated operator view lives
+elsewhere: `/api/ops/health` behind `OPS_SECRET` for subsystem probes.
 
 ---
 

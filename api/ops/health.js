@@ -109,7 +109,7 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	// Same hardened gate as /api/admin/ops-alerts: admin session or a dedicated
+	// Hardened ops gate: admin session or a dedicated
 	// OPS_SECRET, fail-closed in production, never CRON_SECRET.
 	const auth = await authorizeOps(req);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'admin session or x-ops-secret required');

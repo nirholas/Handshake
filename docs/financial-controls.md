@@ -108,10 +108,10 @@ SELECT * FROM payment_reconciliation WHERE reconciled = false ORDER BY checked_a
 
 **Alerting**: [`sendOpsAlert`](../api/_lib/alerts.js) has two sinks. The
 **DB sink is always on**: every alert is upserted into `ops_alerts` keyed by a
-stable signature (a recurring condition is one row with a growing count), read
-via `GET /api/admin/ops-alerts` and the `/admin/ops` dashboard. **Telegram is an
+stable signature (a recurring condition is one row with a growing count) and
+readable with SQL against `ops_alerts`. **Telegram is an
 optional push** (`TELEGRAM_BOT_TOKEN` + `TELEGRAM_ALERTS_CHAT_ID`; absent means
-dashboard-only), swallows delivery failures, dedups one push per signature per
+DB-only), swallows delivery failures, dedups one push per signature per
 hour, and **self-throttles at 20 pushes/hour**. There is still no
 email/Slack/PagerDuty fallback and no alert-on-alerting-down.
 

@@ -33,22 +33,20 @@ One module holds the mint logic; two surfaces drive it.
                        │   • fetchUndeployedAgents()                 │
                        │   • deployAgentOnce()  ← pin + mint + persist│
                        └───────────────┬───────────────┬────────────┘
-                                       │               │
-          ┌────────────────────────────┘               └───────────────────────────┐
-          ▼                                                                          ▼
-  api/admin/bulk-launch.js                                          scripts/deploy-agents-onchain.mjs
-  (SSE dashboard endpoint)                                          (CLI runner — canary + full run)
-          ▼                                                                          ▼
-  pages/bulk-launch.html  →  /admin/bulk-launch                     node --env-file=.env … --confirm
+                                       │
+                                       ▼
+                       scripts/deploy-agents-onchain.mjs
+                       (CLI runner: canary + full run)
+                                       │
+                                       ▼
+                       node --env-file=.env … --confirm
 ```
 
-Both surfaces call the same functions, so they mint **identical** assets. Files:
+Files:
 
 | File | Role |
 |---|---|
 | [api/_lib/onchain-deploy.js](../api/_lib/onchain-deploy.js) | Shared mint logic — collection resolution, manifest pin, Core mint, DB persist. |
-| [api/admin/bulk-launch.js](../api/admin/bulk-launch.js) | Admin SSE endpoint (`GET /api/admin/bulk-launch`) streaming live progress. |
-| [pages/bulk-launch.html](../pages/bulk-launch.html) | Live dashboard at `/admin/bulk-launch` — funder balance, stats, animated cards. |
 | [scripts/deploy-agents-onchain.mjs](../scripts/deploy-agents-onchain.mjs) | CLI runner — dry-run preview, canary, full fleet. |
 | [api/_lib/solana-collection.js](../api/_lib/solana-collection.js) | Collection authority + address helpers. |
 | [api/_lib/three-brand.js](../api/_lib/three-brand.js) | Manifest + on-chain attributes builders. |
@@ -210,28 +208,13 @@ The first run also deploys the collection. Re-runs reuse it and skip already-dep
 
 ---
 
-## Tutorial 3 — The live dashboard
+## Batch runs
 
-For the visual recording, use the admin dashboard (production has all the env vars):
-
-1. Open **`/admin/bulk-launch`** (admin-gated via `requireAdmin`).
-2. The sidebar shows the funder address (click to copy) and live SOL balance.
-3. Set **Network**, **Agents per run** (start at 3), and optionally tick **Dry run**.
-4. Click **Deploy On-Chain**. The collection deploys on the first run, then each agent's card animates in the moment its asset confirms — with avatar, owner, asset address, and a Solscan link.
-
-Under the hood it's an [SSE](https://developer.mozilla.org/docs/Web/API/Server-sent_events) stream from `GET /api/admin/bulk-launch?network=&limit=&dry_run=`:
-
-| Event | Payload |
-|---|---|
-| `init` | `{ total, network, funder, funder_balance_sol, dry_run }` |
-| `collection` | `{ address, source: env\|db\|deployed, authority, signature? }` |
-| `wallet` | `{ agent_id, name, owner }` (a custodial wallet was created) |
-| `deployed` | `{ agent_id, name, asset, owner, metadata_uri, signature, explorer_url, avatar_thumb }` |
-| `paused` | `{ funder_balance_sol, deployed, reason }` (funder low on SOL) |
-| `error` | `{ agent_id, name, error }` |
-| `done` | `{ deployed, errors, skipped }` |
-
----
+The in-app bulk-launch dashboard was removed with the admin panel; batch
+registration runs through the CLI runner only
+(`scripts/deploy-agents-onchain.mjs`, Tutorial 2 above). It calls the same
+`api/_lib/onchain-deploy.js` functions the dashboard did, so assets minted
+before and after the removal are identical.
 
 ## Tutorial 4 — The full fleet
 

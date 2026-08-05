@@ -208,7 +208,7 @@ function buildTags(page, head, sectionId) {
 		lines.push(`<meta property="og:image:type" content="image/png">`);
 	}
 	if (!has.ogImageAlt(head))
-		lines.push(`<meta property="og:image:alt" content="${htmlEscape(page.title)} — three.ws">`);
+		lines.push(`<meta property="og:image:alt" content="${htmlEscape(page.title)} - three.ws">`);
 	if (!has.twitterCard(head)) lines.push(`<meta name="twitter:card" content="summary_large_image">`);
 	if (!has.twitterSite(head)) lines.push(`<meta name="twitter:site" content="@trythreews">`);
 	if (!has.twitterTitle(head)) lines.push(`<meta name="twitter:title" content="${htmlEscape(title)}">`);

@@ -289,7 +289,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['pump-platform-fee', 'owner-gated: names a crypto project other than $THREE'],
 	['robinhood-chain-markets', 'owner-gated: names a crypto project other than $THREE'],
 	['solana-pumpfun', 'owner-gated: names a crypto project other than $THREE'],
-	['syndication', 'internal: admin publishing configuration'],
+	['syndication', 'internal: distribution mechanics for the announcements feed'],
 	['trading-experiment', 'owner-gated: names a crypto project other than $THREE'],
 	['trading-hub', 'in-flight: landed mid-session, register with its /trading page'],
 	['x-meetup-posts', 'internal: ready-to-paste X post drafts; posting is owner-gated'],

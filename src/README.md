@@ -15,7 +15,6 @@ Related surfaces share a filename prefix, so the flat listing reads as clusters.
 | `agent-*` (rest) | Agent surfaces: detail pages, editing, memory, naming, wallets, embeds, identities. |
 | `walk-companion-*`, `walk-embed-*` | The corner companion and its third-party embed build. Doc: [the agent shell](../docs/agent-shell.md). |
 | `avatar-studio-*` | Avatar Studio page modules. Doc: [avatar studio](../docs/avatar-studio.md). |
-| `admin-*` | Internal control panels served under `/admin/*`. |
 | `ui-juice-*` | The shared game-feel animation library. Doc: [ui-juice](../docs/ui-juice.md). |
 | markets (`radar`, `screener`, `signals`, `watchlist`, `yields`, `stablecoins`, ...) | The trading and market-data surfaces. Doc: [trading surfaces](../docs/trading-surfaces.md). |
 

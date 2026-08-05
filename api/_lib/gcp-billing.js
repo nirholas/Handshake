@@ -8,10 +8,9 @@
 // number that actually matters — projected credit-exhaustion date vs the credit
 // expiry date, plus the inverse failure mode (credits left unused at expiry).
 //
-// One implementation, three consumers:
+// One implementation, two consumers:
 //   • scripts/gcp/burn-report.mjs      — human-readable CLI + --json
 //   • api/cron/gcp-burn-report.js       — daily ops ping
-//   • api/admin/gcp-burn.js             — internal spend dashboard cross-ref
 //
 // Auth reuses the shared Vertex service account (api/_lib/gcp-auth.js,
 // cloud-platform scope). In serverless (no gcloud/bq CLI) the query runs over

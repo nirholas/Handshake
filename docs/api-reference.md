@@ -2853,11 +2853,11 @@ hash — never a coordinate or raw device token. Anyone can re-verify a proof at
 GET /api/irl/analytics
 ```
 
-Admin-gated (signed-in platform admin, or `x-ops-secret` — same rule as `/api/admin/ops-alerts`).
+Admin-gated (signed-in platform admin, or `x-ops-secret`).
 Returns 24h/7d/30d windows of `{ pins_placed, unique_placers, nearby_fetches, unique_browsers,
 interactions, shares_created, share_views, drops_claimed }`, a 30-day placement-method
-breakdown, and a 30-day daily series for the `/admin/irl-analytics` dashboard. Backed by
-`irl_events` — see `docs/irl.md#analytics`.
+breakdown, and a 30-day daily series. Backed by
+`irl_events`: see `docs/irl.md#analytics`.
 
 ---
 

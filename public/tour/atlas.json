@@ -1,10 +1,10 @@
 {
 	"version": 1,
 	"generatedBy": "scripts/capture-tour-atlas.mjs",
-	"generatedAt": "2026-08-04T00:26:43.657Z",
+	"generatedAt": "2026-08-05T20:40:32.673Z",
 	"base": "https://three.ws",
 	"curriculumVersion": 2,
-	"curriculumGeneratedAt": "2026-08-02T05:12:02.447Z",
+	"curriculumGeneratedAt": "2026-08-05T20:39:14.365Z",
 	"sections": [
 		{
 			"id": "main",
@@ -51,14 +51,14 @@
 	],
 	"summary": {
 		"total": 264,
-		"anchored": 264,
+		"anchored": 263,
 		"missingAnchor": 0,
 		"curatedAnchor": 35,
-		"fallbackAnchor": 229,
+		"fallbackAnchor": 228,
 		"navScopedAnchor": 12,
-		"unreachable": 0,
-		"withConsoleErrors": 49,
-		"captured": 246
+		"unreachable": 1,
+		"withConsoleErrors": 50,
+		"captured": 245
 	},
 	"stops": [
 		{
@@ -8849,52 +8849,6 @@
 			"capturedAt": "2026-07-31T19:19:33.830Z"
 		},
 		{
-			"id": "admin-ring",
-			"index": 154,
-			"title": "Ring Dashboard (admin)",
-			"path": "/admin/ring",
-			"section": "crypto",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "Next up, Ring Dashboard (admin). Operator dashboard for the closed-loop x402 ring economy: live per-minute settlement pulse, loop diagram with wallet balances and floors, streaming activity feed with agent attribution and Solscan links, fee/burn efficiency vs the daily budget, integrity (leak scan + reconciliation), and per-endpoint coverage. Admin-authed, noindex. Labels all ring volume as internal dogfooding, not organic revenue.",
-			"status": 200,
-			"anchor": {
-				"state": "resolved",
-				"selector": "main h1, .hero h1, h1",
-				"source": "fallback",
-				"scope": "main",
-				"tag": "h1",
-				"rect": {
-					"left": 422,
-					"top": 249.078125,
-					"width": 436,
-					"height": 49.46875
-				}
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"anchored by the director's generic fallback, not a curated selector for this page"
-			],
-			"media": {
-				"hero": {
-					"url": "/media/tour/admin-ring.webp",
-					"width": 1200,
-					"height": 750,
-					"bytes": 11212
-				},
-				"thumb": {
-					"url": "/media/tour/admin-ring.thumb.webp",
-					"width": 520,
-					"height": 325,
-					"bytes": 2580
-				}
-			},
-			"capturedAt": "2026-07-31T19:19:43.002Z"
-		},
-		{
 			"id": "brain",
 			"index": 155,
 			"title": "Multi-LLM Brain",
@@ -10818,6 +10772,37 @@
 				}
 			},
 			"capturedAt": "2026-08-02T05:07:31.042Z"
+		},
+		{
+			"id": "holo",
+			"index": 209,
+			"title": "Holo Sticker",
+			"path": "/holo",
+			"section": "labs",
+			"tracks": [
+				"full",
+				"quick"
+			],
+			"highlight": true,
+			"narration": "Let's visit Holo Sticker. A live holographic foil sticker rendered in your browser: tilt it with your pointer, peel the corner, switch foils, die-cut your own text, and download the frame as a PNG. Fully procedural, no assets.",
+			"status": 404,
+			"anchor": {
+				"state": "unresolved",
+				"selector": null,
+				"source": null,
+				"scope": null,
+				"tag": null,
+				"rect": null
+			},
+			"consoleErrors": 1,
+			"consoleSamples": [
+				"Failed to load resource: the server responded with a status of 404 ()"
+			],
+			"notes": [
+				"page returned HTTP 404"
+			],
+			"media": null,
+			"capturedAt": "2026-08-05T20:40:31.971Z"
 		},
 		{
 			"id": "economy-lab",

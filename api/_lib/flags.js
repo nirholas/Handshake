@@ -2,7 +2,8 @@
 // Runtime feature flags — DB-backed switches that flip without a redeploy.
 //
 // A flag lives in the `app_flags` table (key, enabled, value). Code reads it
-// with isFlagEnabled()/getFlag(); an admin flips it via POST /api/admin/flags.
+// with isFlagEnabled()/getFlag(); flip a flag with setFlag() from ops tooling
+// or SQL against `app_flags` (see docs/ops/runtime-flags.md).
 // When no row exists the flag reports its caller-supplied `fallback` (normally
 // the matching env var), so adopting a flag is back-compatible: behavior only
 // changes once someone sets a row.
@@ -23,7 +24,7 @@ const CACHE_TTL_MS = 30_000;
 /** @type {Map<string, { enabled: boolean, value: unknown, exists: boolean, expires: number }>} */
 const _cache = new Map();
 
-// Known flags: lets the admin console list switches (with their effective state)
+// Known flags: lets listFlags() enumerate switches (with their effective state)
 // even before a row exists, and documents which env var each one falls back to.
 export const KNOWN_FLAGS = {
 	avaturn_seed: {

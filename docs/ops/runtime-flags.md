@@ -5,9 +5,10 @@ to arm or disarm crons and request-path features at runtime instead of editing a
 Cloud Run env var and waiting for a new revision.
 
 - **Table:** `app_flags` (`key`, `enabled`, `value` jsonb, `updated_by`, `updated_at`) — migration `api/_lib/migrations/20260630120000_app_flags.sql`.
-- **Helper:** [api/_lib/flags.js](../../api/_lib/flags.js) — `getFlag`, `isFlagEnabled`, `setFlag`, `listFlags`.
-- **Admin API:** [api/admin/flags.js](../../api/admin/flags.js) — `GET`/`POST /api/admin/flags`.
-- **Control room:** **[/admin/seeder](../../pages/admin/seeder.html)** — a visual console to arm/disarm the Avatar Seeder, watch live throughput, preview freshly-forged rigged avatars in 3D, and flip every runtime flag with one click. No redeploy, no curl. Backend: [api/admin/seeder.js](../../api/admin/seeder.js).
+- **Helper:** [api/_lib/flags.js](../../api/_lib/flags.js): `getFlag`, `isFlagEnabled`, `setFlag`, `listFlags`.
+- **Flipping a flag:** SQL against `app_flags` (below), or `setFlag()` from a
+  script running with `DATABASE_URL`. The former admin HTTP API and control
+  room were removed with the admin panel.
 
 ## How it resolves
 
@@ -26,25 +27,7 @@ const enabled = await isFlagEnabled('avaturn_seed', { fallback: env.AVATURN_SEED
 
 ## Reading & flipping a flag
 
-Auth: an admin session **or** `Bearer $CRON_SECRET` (ops tooling).
-
-```bash
-# List every known + set flag with its effective state
-curl -s https://three.ws/api/admin/flags \
-  -H "Authorization: Bearer $CRON_SECRET" | jq
-
-# Arm a flag instantly (no deploy)
-curl -s -X POST https://three.ws/api/admin/flags \
-  -H "Authorization: Bearer $CRON_SECRET" -H 'content-type: application/json' \
-  -d '{"key":"avaturn_seed","enabled":true}'
-
-# Disarm it
-curl -s -X POST https://three.ws/api/admin/flags \
-  -H "Authorization: Bearer $CRON_SECRET" -H 'content-type: application/json' \
-  -d '{"key":"avaturn_seed","enabled":false}'
-```
-
-Or directly in SQL (e.g. from the Neon console):
+Flip directly in SQL (e.g. from the Neon console):
 
 ```sql
 insert into app_flags (key, enabled) values ('avaturn_seed', true)

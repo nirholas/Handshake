@@ -8569,7 +8569,7 @@ three.ws is production-ready and serves [three.ws](https://three.ws) live on Goo
 - Coinbase CDP facilitator on Base mainnet; direct-scheme payments on BSC
 - Permit2 gas-sponsoring siblings on every CDP-settled endpoint (buyer signs, relayer pays gas)
 - **Pay-by-name** — `/api/x402/pay-by-name` resolves `@username`, `*.sol` (incl. subdomains), or raw base58 to a recipient and builds an unsigned USDC transfer for the payer's wallet. Every 402 manifest emitted by a named agent advertises `recipient_name` next to the wallet, so payers verify a human-readable name before signing
-- SKU catalog + Stripe-style checkout at `/dashboard/x402`; receipts ledger with admin tooling
+- SKU catalog + Stripe-style checkout at `/dashboard/x402`; receipts ledger
 - Subscriptions, idempotency tokens, offer receipts, paid asset download, and a bazaar listing/search API
 - SIWX (Sign-In with X-chain) server for auth-gated paid endpoints
 - Listed on [x402scan](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) and the [MCP Registry](https://registry.modelcontextprotocol.io/?q=three.ws)
@@ -8620,7 +8620,6 @@ three.ws is production-ready and serves [three.ws](https://three.ws) live on Goo
 - Replicate-backed avatar regeneration provider for photo-to-avatar workflows
 - Native selfie reconstruction pipeline (Phase 1) + Livepeer inference network (Phase 4) wired into the agent runtime
 - DCA strategy execution and on-chain subscription scheduling via cron jobs
-- News CMS at `/admin/news` with multi-destination syndication (WebSub, Dev.to, Medium, HackerNoon, CMC handoff)
 - Solana Mobile (Seeker) MWA wallet wired into the web app + Solana Mobile dApp Store release pipeline
 - Hardened API surface: SSRF guard, CSRF gates, header-origin pinning, fail-closed crons
 - OpenAPI 3.1 spec generated at `/openapi.json`
@@ -8735,8 +8734,8 @@ A map of every user-facing route. [`STRUCTURE.md`](STRUCTURE.md) maps each produ
 | **Artifacts**        | `/artifact`, `/artifact/snippet`, `/artifact-example`                                           | Claude Artifact viewer                                                                                          |
 | **Solana / DeFi**    | `/pumpfun`, `/pump-visualizer`, `/vanity-wallet`                                                | pump.fun launcher, live token visualizer, WASM vanity grinder                                                   |
 | **Mobile (Seeker)**  | Solana Mobile dApp Store                                                                        | MWA wallet wired into the web app + Seeker release pipeline                                                     |
-| **News / Blog**      | `/news`, `/admin/news`                                                                          | News feed + local-only CMS, syndicated via WebSub / Dev.to / Medium / HackerNoon                                |
-| **Admin / Rep**      | `/admin`, `/reputation`, `/monitor`                                                             | Staff admin, reputation registry, fleet ops-room dashboard                                                      |
+| **News / Blog**      | `/news`                                                                                         | News feed, syndicated outward via RSS (HackerNoon auto-import)                                |
+| **Reputation**       | `/reputation`, `/monitor`                                                                       | Reputation registry, fleet ops-room dashboard                                                      |
 | **Experiments**      | `/rider`, `/holo`                                                                               | A-Frame WebVR music visualization, procedural holographic sticker                                               |
 | **Integrations**     | `/cz`, `/lobehub/iframe`                                                                        | CZ demo, LobeHub plugin                                                                                         |
 | **IBM / Granite**    | `/galaxy`, `/ibm/x402-demo`, `/ibm/hello`                                                       | Granite on watsonx.ai: semantic agent galaxy, pay-per-call Granite demo, hello-world embed                      |
@@ -10798,25 +10797,15 @@ The Livepeer dependency landed early so the Phase 1 selfie pipeline can switch i
 
 ---
 
-## News CMS & Syndication
+## News & Syndication
 
-A local-only news/blog CMS at `/admin/news` produces signed posts that auto-syndicate to multiple destinations.
+News posts live in the repo (`data/rss/items.json`) and ship with a deploy; the former in-app CMS was removed with the admin panel.
 
 | Surface        | Path                                                       | Purpose                                             |
 | -------------- | ---------------------------------------------------------- | --------------------------------------------------- |
-| CMS            | `/admin/news`                                              | Local-only editor — drafts, images, scheduled posts |
 | Public listing | `/news`                                                    | Cover-image grid with permalinks                    |
 | Article        | `/news/<slug>`                                             | Server-rendered article with OG card                |
-| RSS / Atom     | `/api/news/rss`                                            | Standards-compliant feed for HackerNoon auto-import |
-| WebSub hub     | `/api/news/websub`                                         | Push notifications to subscribed hubs on publish    |
-| Dev.to         | syndication adapter                                        | Cross-posts with canonical URL pointing back        |
-| Medium         | syndication adapter                                        | Same, with format-aware re-render                   |
-| CMC handoff    | syndication adapter                                        | Coinmarketcap article + announcement listing        |
-| Newsletter     | [api/newsletter-subscribe.js](api/newsletter-subscribe.js) | Resend-backed double-opt-in newsletter              |
-
-Each article is a static HTML file in `public/news/` with metadata in Postgres. The CMS supports a cover-image convention for listing thumbnails and OG previews. Articles can be published once and reach HackerNoon, Dev.to, and Medium readers without manual cross-posting.
-
----
+| RSS            | `/rss/announcements.xml`                                   | Standards-compliant feed for HackerNoon auto-import |
 
 ## Security Hardening
 

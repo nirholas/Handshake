@@ -5,11 +5,11 @@
 // happen.
 //
 // Two independent sinks, and the DB one is always on:
-//   1. The admin dashboard (PRIMARY). Every alert is upserted into `ops_alerts`
+//   1. The database (PRIMARY). Every alert is upserted into `ops_alerts`
 //      keyed by its stable signature — a recurring condition is ONE row with a
 //      growing count, not a flood. This happens regardless of any Telegram
-//      config, so the ops surface at /admin/ops always has the record. Read via
-//      GET /api/admin/ops-alerts.
+//      config, so `ops_alerts` always has the durable record (query it with
+//      SQL).
 //   2. Telegram (OPTIONAL push). Only when BOTH vars are set:
 //        TELEGRAM_BOT_TOKEN      — the platform bot
 //        TELEGRAM_ALERTS_CHAT_ID — a PRIVATE ops chat/DM. Never the public
@@ -150,7 +150,7 @@ export async function sendOpsAlert(title, detail = '', opts = {}) {
 		if (sent >= GLOBAL_LIMIT_PER_HOUR) {
 			if (sent === GLOBAL_LIMIT_PER_HOUR) {
 				await cacheSet(hourBucket, sent + 1, DEDUP_TTL_S);
-				post(cfg, `⚠️ three.ws alerts throttled — over ${GLOBAL_LIMIT_PER_HOUR}/h. Check /admin/ops.`);
+				post(cfg, `⚠️ three.ws alerts throttled: over ${GLOBAL_LIMIT_PER_HOUR}/h. Check the ops_alerts table.`);
 			}
 			return;
 		}

@@ -4,9 +4,8 @@
 economy: who paid whom, for which skill, and how much.
 
 Every other economy surface here is a ranking. [`/pulse`](https://three.ws/pulse)
-streams events, [`/agent-economy-volume`](https://three.ws/agent-economy-volume)
-totals them per agent, [`/admin/economy`](https://three.ws/admin/economy) reads
-the funding chain. None of them can show **topology**, and topology is what
+streams events and [`/agent-economy-volume`](https://three.ws/agent-economy-volume)
+totals them per agent. Neither can show **topology**, and topology is what
 diagnoses the platform's real failure mode.
 
 An agent that earns steadily and never spends again looks perfect on a top-earners

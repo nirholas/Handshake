@@ -983,65 +983,26 @@ WARN.
 5. **Re-verify** — run `node scripts/x402-ring-verify.mjs` to confirm the wallet
    set is clean, then mark the verdict reconciled.
 
-## Watching it — the operator dashboard
+## Watching it
 
-The ring has a JSON scoreboard ([/api/x402-ring](../api/x402-ring.js)) and now a
-pair of eyes: **[/admin/ring](../pages/admin/ring.html)** — a live operator
-dashboard that makes the closed-loop economy visible at a glance, so "it stopped
-working" can never again go unnoticed for days. It is admin-authed and
-`noindex`; every panel renders from real data, and a persistent header badge
-labels all ring volume as **internal dogfooding, not organic revenue** (per the
-labeling rule at the top of this doc).
-
-One aggregate endpoint —
-**[/api/admin/ring-dashboard](../api/admin/ring-dashboard.js)** — backs the whole
-page (one authed fetch per 15s poll, not seven). It *composes* the public
-`/api/x402-ring` report rather than forking it, then adds the read-only cuts the
-public feed doesn't carry. Auth is identical to
-[/api/admin/seeder](../api/admin/seeder.js): a real admin session **or**
-`Authorization: Bearer $CRON_SECRET`.
-
-What you see:
-
-- **Pulse strip** — settlements per minute over the last 60 minutes as a live
-  spark strip where a gap is instantly visible, plus `minutes_since_last_settle`
-  as a big status number with heartbeat thresholds: **≤1 min green** (the
-  per-minute tick is alive), **≤5 amber** (slowing), **>5 red** (stalled — go
-  look). Kill the tick and the number climbs amber→red within those thresholds.
-- **Loop diagram** — payer → endpoint → treasury → (sweep) → payer with live
-  on-chain balances on each node and the sponsor's SOL floor indicator (sponsor
-  node is optional in self-pay mode).
-- **Activity feed** — the last 100 paid calls: time, agent persona, endpoint
-  slug, kind (`tip` / `service` / `intel` / `commerce` / `settle`), price, and
-  the settle signature as a Solscan link. Skips (e.g. `cap_would_exceed`) render
-  amber and failures red, each with its structured reason — never a silent drop.
-- **Fees panel** — lamports per settlement vs the 5,000-lamport 1-signature
-  floor, SOL burned per $100 of gross volume, and today's burn against
-  `X402_RING_DAILY_FEE_BUDGET_LAMPORTS` as a budget bar (amber ≥80%, red over).
-- **Integrity panel** — all-green collapses to one calm row; any open leak-scan
-  finding, reconciliation verdict, or config error expands to red detail with
-  the `chain_status` breakdown.
-- **Coverage panel** — per-endpoint last-paid age from `x402_volume_metrics`;
-  older than 2h (the hourly-coverage guarantee) shows amber.
-
-Keyboard: `r` refreshes, `p` pauses polling. The page polls only while visible
-(it aborts on a hidden tab) and ships designed loading (skeletons), empty (`ring
-idle — run the activation runbook`), and error (API unreachable, with the `curl`
-to debug) states. Reach it from the admin sidebar
-([/admin](../public/admin/index.html) → **Ring Economy**) or directly at
-`/admin/ring`.
-
-Debug the read model straight from a shell:
+The ring's scoreboard is the JSON read model at
+[/api/x402-ring](../api/x402-ring.js): settlement counts and gross
+volume, live wallet balances with the sponsor's SOL floor, fee burn vs
+volume, and the most recent settles with their signatures, all composed
+from real chain and DB reads. The former in-app operator dashboard was
+removed with the admin panel; watch the ring from a shell instead:
 
 ```bash
-curl -s -H "Authorization: Bearer $CRON_SECRET" \
-  "$APP_ORIGIN/api/admin/ring-dashboard?period=24h" | jq '.pulse, .fees'
+curl -s "$APP_ORIGIN/api/x402-ring?period=24h" | jq '.settlements, .fees, .wallets'
 ```
+
+A recent settle in `.recent` is the heartbeat: if the newest entry is
+more than a few minutes old the per-minute tick has stalled and the
+activation runbook above is the fix.
 
 ## Related
 
 - [STRUCTURE.md](../STRUCTURE.md) — surface map
-- [/admin/ring](../pages/admin/ring.html) + [api/admin/ring-dashboard.js](../api/admin/ring-dashboard.js) — the operator dashboard (above)
 - [/api/x402-revenue](../api/x402-revenue.js) — the **public** organic-revenue
   feed (self-cycled ring volume is excluded from the "organic" framing here)
 - [docs/x402-revenue.md](./x402-revenue.md) — revenue surface docs

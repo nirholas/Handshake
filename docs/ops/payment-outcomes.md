@@ -4,8 +4,8 @@
 healthy right now, and if not, which stage is failing?". It exists because the
 x402 griefing classes (verify-reject floods, settle failures, sponsor-fee
 starvation) historically became visible only after they halted the economy;
-the 2026-07-11 fable audit filed the gap and this board closes it. The
-`/admin/ops` dashboard renders it as the "Payment outcomes" section.
+the 2026-07-11 fable audit filed the gap and this board closes it. It is a
+JSON read; consume it with `curl` + `jq` or wire it into ops tooling.
 
 ## Auth
 
@@ -139,8 +139,8 @@ curl -s https://three.ws/api/x402/three-intel | jq '.accepts[].network'
 
 ## Related
 
-- `api/ops/payment-outcomes.js` (the endpoint), `pages/admin/ops.html` (the
-  panel), `api/_lib/ops/x402-settle-health.js` (the sensor),
+- `api/ops/payment-outcomes.js` (the endpoint),
+  `api/_lib/ops/x402-settle-health.js` (the sensor),
   `api/_lib/x402/wallet-balance-monitor.js` (balances, floors, and the runway
   alert), `api/_lib/x402/sponsor-runway.js` (the burn measurement, the verdict,
   and the alert copy), `api/_lib/x402/audit-log.js` (the durable ledger the

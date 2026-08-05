@@ -1,6 +1,6 @@
 {
 	"version": 2,
-	"generatedAt": "2026-08-02T05:12:02.447Z",
+	"generatedAt": "2026-08-05T20:42:57.724Z",
 	"generatedBy": "scripts/build-tour.mjs from data/pages.json",
 	"title": "The three.ws Guided Tour",
 	"tagline": "A 3D guide walks you through every feature, live, on the real site.",
@@ -1093,7 +1093,7 @@
 			"path": "/creations",
 			"section": "crypto",
 			"title": "Creator Gallery",
-			"narration": "Here we have Creator Gallery. Search, filter, and live-preview the remix bazaar: remix any published 3D creation for a real on-chain USDC royalty, view parent → child lineage, and see the trending assets and top-creator leaderboard.",
+			"narration": "Here we have Creator Gallery. Search, filter, and live-preview the remix bazaar: remix any published 3D creation for a real on-chain USDC royalty, view parent → child lineage, and see the trending assets and top-creator leaderboard. Every model links to its own /m/:id detail page with an interactive viewer, live geometry stats, likes, comments, and suggested models.",
 			"highlight": false
 		},
 		{
@@ -1805,19 +1805,11 @@
 			]
 		},
 		{
-			"id": "admin-ring",
-			"path": "/admin/ring",
-			"section": "crypto",
-			"title": "Ring Dashboard (admin)",
-			"narration": "Next up, Ring Dashboard (admin). Operator dashboard for the closed-loop x402 ring economy: live per-minute settlement pulse, loop diagram with wallet balances and floors, streaming activity feed with agent attribution and Solscan links, fee/burn efficiency vs the daily budget, integrity (leak scan + reconciliation), and per-endpoint coverage. Admin-authed, noindex. Labels all ring volume as internal dogfooding, not organic revenue.",
-			"highlight": false
-		},
-		{
 			"id": "swarms",
 			"path": "/swarms",
 			"section": "crypto",
 			"title": "Trading Swarms",
-			"narration": "This is Trading Swarms. Coordinated groups of trading agents working a shared strategy, with live positions and performance.",
+			"narration": "Next up, Trading Swarms. Coordinated groups of trading agents working a shared strategy, with live positions and performance.",
 			"highlight": false
 		},
 		{
@@ -1825,7 +1817,7 @@
 			"path": "/x402",
 			"section": "crypto",
 			"title": "x402 Catalog",
-			"narration": "Take a look at x402 Catalog. A live catalog of pay-per-call APIs settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint.",
+			"narration": "This is x402 Catalog. A live catalog of pay-per-call APIs settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint.",
 			"highlight": false
 		},
 		{
@@ -1833,7 +1825,7 @@
 			"path": "/brain",
 			"section": "labs",
 			"title": "Multi-LLM Brain",
-			"narration": "Now, Multi-LLM Brain. Send one prompt to Claude, GPT, Qwen, ModelScope, and Groq simultaneously. Side-by-side streaming with latency and token stats.",
+			"narration": "Take a look at Multi-LLM Brain. Send one prompt to Claude, GPT, Qwen, ModelScope, and Groq simultaneously. Side-by-side streaming with latency and token stats.",
 			"highlight": true,
 			"sectionIntro": "These are the showcases, the experiments and living demos that show the platform off at full power. Some of my favourites are in here.",
 			"targets": [
@@ -1845,7 +1837,15 @@
 			"path": "/labs",
 			"section": "labs",
 			"title": "Labs Showcase",
-			"narration": "Let's visit Labs Showcase. A curated gallery of three.ws's most powerful: and most hidden: features. Find and try things you didn't know existed.",
+			"narration": "Now, Labs Showcase. A curated gallery of three.ws's most powerful: and most hidden: features. Find and try things you didn't know existed.",
+			"highlight": true
+		},
+		{
+			"id": "holo",
+			"path": "/holo",
+			"section": "labs",
+			"title": "Holo Sticker",
+			"narration": "Let's visit Holo Sticker. A live holographic foil sticker rendered in your browser: tilt it with your pointer, peel the corner, switch foils, die-cut your own text, and download the frame as a PNG. Fully procedural, no assets.",
 			"highlight": true
 		},
 		{
@@ -1854,7 +1854,7 @@
 			"section": "labs",
 			"title": "Runway Lab",
 			"narration": "Over here is Runway Lab. A live digital twin of the three.ws x402 payment rail. Runs the exact admission-control code the production settle path runs, seeded with live production balances, so you can drag a knob and watch settlement survive or starve, then get the exact command that fixes it.",
-			"highlight": true
+			"highlight": false
 		},
 		{
 			"id": "watch",

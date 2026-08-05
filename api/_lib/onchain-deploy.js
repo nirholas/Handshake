@@ -1,9 +1,8 @@
 // Shared server-side Metaplex Core agent deploy.
 // ---------------------------------------------------------------------------
 // Single source of truth for turning an agent into its on-chain identity — a
-// Metaplex Core asset minted into the three.ws Agent Collection. Used by both:
-//   • api/admin/bulk-launch.js  — the live SSE dashboard,
-//   • scripts/deploy-agents-onchain.mjs — the CLI batch/canary runner.
+// Metaplex Core asset minted into the three.ws Agent Collection. Used by
+// scripts/deploy-agents-onchain.mjs, the CLI batch/canary runner.
 //
 // Custody model: one funded wallet (the collection authority) is the mint fee
 // payer and — on first run — deploys the Collection account. Each agent is

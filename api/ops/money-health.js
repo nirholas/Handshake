@@ -1,6 +1,6 @@
 // GET /api/ops/money-health — ONE board for every money subsystem's health.
 //
-// Financial monitoring was fragmented across /admin/ring (ring-only), raw
+// Financial monitoring was fragmented across the old ring dashboard (ring-only), raw
 // payment_reconciliation queries, and per-wallet balance logs — so "is the whole
 // money system healthy right now?" had no single answer. This composes it: per
 // subsystem, its open CRITICAL/WARN verdicts and last-activity, plus the leak-scan
@@ -11,7 +11,7 @@ import { sql } from '../_lib/db.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
 import { env } from '../_lib/env.js';
 
-// Admin gate: CRON_SECRET bearer OR the admin token, matching api/admin/*.
+// Admin gate: CRON_SECRET bearer OR the admin token.
 function isAdmin(req) {
 	const auth = req.headers['authorization'] || '';
 	const bearer = auth.startsWith('Bearer ') ? auth.slice(7) : '';

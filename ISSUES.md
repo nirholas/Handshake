@@ -133,9 +133,8 @@ closed 2026-07-28; full history in git):
    Do not quote a remembered burn rate
    here; the previously circulated "1 to 2 SOL/day" was wrong by roughly 10x.
    ~1 SOL covers about 16 days at the current burn. The number is now live on
-   the payment-outcome board: `GET /api/ops/payment-outcomes` and the
-   "Payment outcomes" panel on `/admin/ops` show balance vs floor, measured
-   burn, and runway (see `docs/ops/payment-outcomes.md`; ships with the next
+   the payment-outcome board: `GET /api/ops/payment-outcomes` shows balance
+   vs floor, measured burn, and runway (see `docs/ops/payment-outcomes.md`; ships with the next
    deploy). **Never top up per-agent wallets**, that strands
    SOL and kills the rail. Related but already handled: the earlier
    `fee_wallet_below_floor` outage (18:00 to 02:45) was a symptom of item 2, not
