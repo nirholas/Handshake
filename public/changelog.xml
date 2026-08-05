@@ -23,6 +23,14 @@
 			<description>Every finished model from the Forge now lives at its own shareable page: a big interactive viewer with one-tap AR, real triangle and vertex counts read live from the file, the full prompt, the creator's profile with a follow button, likes, view counts, and a brand-new comment section. A suggested-models rail keeps you exploring, remixable models can be remixed right from the page, and the embed button hands you a copy-paste snippet for any website. Reach it from the Details button on any creation card in the gallery or the Forge showcase.</description>
 		</item>
 		<item>
+			<title>The documentation caught up with the platform</title>
+			<link>https://three.ws/docs/freshness</link>
+			<guid isPermaLink="false">2026-08-05:The documentation caught up with the platform</guid>
+			<pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>A full freshness sweep re-checked every documentation page that the freshness tracker flagged as describing code that had since changed: 55 pages in all, covering the trading and coin-launch walkthroughs, the Forge and avatar pipelines, the money and wallet references, the x402 guides, and the top-level README and repository map. 47 pages were corrected against the current code (retired engines renamed, real endpoint lists and prices restored, new features like the native launch lane, the wallet deposit sheet, and the model detail page documented), and the remaining 8 were verified accurate as written. The freshness budget that gates future drift was tightened from 50 stale pages to 15, so the docs cannot quietly fall this far behind again.</description>
+		</item>
+		<item>
 			<title>The press kit gains a full-length bio</title>
 			<link>https://three.ws/press</link>
 			<guid isPermaLink="false">2026-08-05:The press kit gains a full-length bio</guid>

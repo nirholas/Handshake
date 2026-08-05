@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-05T05:45:44.946Z",
+	"generated_at": "2026-08-05T06:06:13.204Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -25,6 +25,17 @@
 			"link": "/creations",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-05",
+			"type": "update",
+			"title": "The documentation caught up with the platform",
+			"summary": "A full freshness sweep re-checked every documentation page that the freshness tracker flagged as describing code that had since changed: 55 pages in all, covering the trading and coin-launch walkthroughs, the Forge and avatar pipelines, the money and wallet references, the x402 guides, and the top-level README and repository map. 47 pages were corrected against the current code (retired engines renamed, real endpoint lists and prices restored, new features like the native launch lane, the wallet deposit sheet, and the model detail page documented), and the remaining 8 were verified accurate as written. The freshness budget that gates future drift was tightened from 50 stale pages to 15, so the docs cannot quietly fall this far behind again.",
+			"link": "/docs/freshness",
+			"tags": [
+				"docs",
+				"improvement"
 			]
 		},
 		{
