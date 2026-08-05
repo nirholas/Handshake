@@ -6,27 +6,27 @@ that sit on the pump.fun + Oracle + sniper data engines. Every route traced to r
 Routing convention in this repo: `/foo` is served from `pages/foo.html` (Vite multi-page input)
 or a pre-built `public/foo.html` (static), wired by `vercel.json` rewrites. Client logic is the
 inline `<script type="module">` and/or imported `src/*.js` modules. Watchlist state is a single
-shared `localStorage` key `ld_watchlist` used by oracle, radar, trades, watchlist, smart-money,
-coin-intel, pump-visualizer and pump-live — adding a coin on any surface shows up on `/watchlist`.
+shared `localStorage` key `ld_watchlist` used by oracle, radar, watchlist, smart-money,
+coin-intel, pump-visualizer and pump-live: adding a coin on any surface shows up on `/watchlist`.
 
 ---
 
 ### Oracle — `/oracle`
-- **Source:** `pages/oracle.html`, `src/oracle.js` (1850 lines), lazy `src/oracle-graph.js` (3D force graph), `src/oracle-tape.js` (live trade tape in the coin drawer)
-- **Entry point:** nav link "Oracle"; direct URL; deep links `/oracle/coin/<mint>` open that coin's drawer; SEO/share links from `coinShareUrl()`.
+- **Source:** `pages/oracle.html`, `src/oracle.js` (~2400 lines), lazy `src/oracle-graph.js` (3D force graph), `src/oracle-tape.js` (live trade tape in the coin drawer)
+- **Entry point:** nav link "Oracle"; direct URL; SEO/share links from `coinShareUrl()`. `/oracle/coin/<mint>` is now a standalone full conviction coin page (server-rendered by `api/oracle-share.js` in the markets-hub style: score dial, pillar bars, chart, launch intelligence), reached from the drawer's "Full page ↗" action.
 - **Prerequisites / gates:** Public dashboard for all read views (feed, movers, wallets, edge, proof, agents, activity, graph). The **Agent** (arm) tab requires sign-in + an existing 3D agent with a custodial Solana wallet; Live mode spends real (capped) SOL.
 - **Steps (N):**
   1. Arrive on `/oracle` → `boot()` populates category filter, binds tab/seg listeners, reads URL filters (`tier`, `category`, `minScore`, `view`), loads the **feed** view.
   2. System: `GET /api/oracle/feed?...` renders conviction cards (0–100 score, tier pill prime/strong/lean/watch/avoid). If backend not migrated → "Oracle is warming up" honest empty state.
   3. System: opens SSE `EventSource('/api/oracle/action-stream')` — new scored coins stream in live; "Live · fused conviction" / "Reconnecting…" indicator.
-  4. (optional) Filter: click `#tierSeg` tier buttons / category select / min-score → `syncFilterUrl()` + `loadFeed()` (URL is shareable).
+  4. (optional) Filter: click `#tierSeg` tier buttons / category select / min-score / sort seg / ★-watchlist-only toggle / breadth-bar tier segments → `syncFilterUrl()` + `loadFeed()` (URL is shareable). A hero "Join the live Telegram feed" button appears when `/api/oracle/stats` reports a configured public signals channel.
   5. (optional) Switch view tab: `movers`, `wallets` (reputation leaderboard), `edge` (tier backtest win-rate), `proof` (resolved wins), `agents` (agent win-rate ledger), `activity` (live agent actions), `graph` (3D force graph, lazy-imports oracle-graph.js).
   6. (optional) Click a coin card → `openDrawer(mint)` → `GET /api/oracle/coin?mint=...` renders the 4-pillar conviction breakdown (who/how/what/move); oracle-tape.js streams that coin's live trades.
-  7. (optional) In the drawer: ☆/★ Watch (writes `ld_watchlist`), Copy mint, Copy link, Share to X.
+  7. (optional) In the drawer: Full page ↗ (`/oracle/coin/<mint>`), pump.fun ↗, GMGN ↗ (via `src/shared/trading-terminals.js`, referral-tagged), solscan ↗, Details ↗ (`/launches/<mint>`), View in 3D ↗ (`/coin3d?mint=`), ☆/★ Watch (writes `ld_watchlist`), Copy mint, Copy link, Share to X; the live Market panel adds GMGN/DexScreener/GeckoTerminal/Birdeye links when available.
   8. (optional, agents view) Follow an agent's signals: expand follow-panel → enter Telegram chat ID → `POST /api/oracle/follow`.
   9. **Arm payoff (gated):** open **Agent** tab → `loadAgentPanel()` → `GET /api/agents`. Pick agent, set Min conviction (Prime/Strong+/Lean+), Size/trade SOL, Max daily SOL, Max open, category filters, optional Telegram chat ID (Send test → server push), toggle Armed + Live/Simulate switches → **Save configuration** → `POST /api/oracle/watch` `{armed, mode, min_score, per_trade_sol, max_daily_sol, max_open, ...}`. Confirmation: "Armed in simulate/live mode. Your agent is watching the stream."
 - **Decision points / branches:** view tabs (9); feed warming vs populated vs filtered-empty; drawer coin scored vs "not scored yet"; agent has wallet vs needs creation (`/create/studio`); simulate vs live mode; signed-out → "Sign in and arm an agent".
-- **External calls / dependencies:** `/api/oracle/feed`, `/api/oracle/coin`, `/api/oracle/search`, `/api/oracle/movers`, `/api/oracle/categories`, `/api/oracle/backtest`, `/api/oracle/wins`, `/api/oracle/watch` (GET+POST), `/api/oracle/follow` (GET+POST), `/api/agents`; SSE `/api/oracle/action-stream`; oracle-tape live trade stream in drawer.
+- **External calls / dependencies:** `/api/oracle/feed`, `/api/oracle/coin`, `/api/oracle/search`, `/api/oracle/movers`, `/api/oracle/categories`, `/api/oracle/backtest`, `/api/oracle/wins`, `/api/oracle/stats` (hero statline + Telegram channel link), `/api/oracle/activity`, `/api/oracle/watch` (GET+POST), `/api/oracle/follow` (GET+POST), `/api/agents`; SSE `/api/oracle/action-stream`; oracle-tape live trade stream in drawer.
 - **Success state:** live conviction feed scoring every pump.fun launch in real time; coin drawer with pillar breakdown; armed agent acting on the stream (simulate logs / live spends capped SOL), actions graded into a win-rate ledger.
 - **Empty / error states:** "Oracle is warming up" (backend not live); "No launches clear your filters" + Reset; drawer "not scored"; "No ranked agents yet"; SSE auto-reconnects ("Reconnecting…"); `api()` returns `{ok:false}` on timeout (12s abort) and degrades gracefully.
 - **Step count:** 3 required (arrive → feed → live stream, all automatic) + ~6 optional read interactions, + a 6-field gated arm flow (steps 8–9).
@@ -70,25 +70,23 @@ coin-intel, pump-visualizer and pump-live — adding a coin on any surface shows
 
 ---
 
-### Live Trade Feed — `/trades`
-- **Source:** `pages/trades.html`, `src/trades.js` (imports `src/trader-format.js`)
-- **Entry point:** nav; footer newsletter page link.
-- **Prerequisites / gates:** None — explicitly "public, no-auth feed" of notable closed positions from all three.ws agents.
+### Trade Terminal - `/trades`
+- **Source:** `pages/trades.html`, `src/trades.js` (controller), `src/trades-detail.js` (deep-dive; imports `src/mission-control/chart.js`, `src/widgets/bonding-curve.js`, `src/trades-bubblemap.js`, `src/trades-tape.js`, `src/trader-format.js`)
+- **Entry point:** nav; footer newsletter page link; deep link `?mint=<base58>` (+ `&tab=exits`, `&network=devnet`).
+- **Prerequisites / gates:** None; public two-pane pump.fun analytics workstation. Only three.ws data (platform launches + agent exits) feeds the left rail; any mint can be pasted for a deep-dive.
 - **Steps (N):**
-  1. Arrive → `readUrl()` + `applyStateToControls()` restores window/minPnl/network from URL+localStorage (`tf_network`).
-  2. System: `GET /api/trades/feed?window=24h&minPnl=25&network=mainnet` renders closed-position rows; auto-refresh every 30s (paused when deep in pagination).
-  3. (optional) Pick time window via `#tfWinSeg` (ARIA tablist, keyboard arrows/Home/End) → reload.
-  4. (optional) Change Min PnL (`#tfMinPnl`) → reload from cursor null.
-  5. (optional) Change network (`#tfNetwork`, persisted to localStorage) → reload.
-  6. (optional) Manual Refresh (`#tfRefresh`).
-  7. (optional) Watch button per row (`.tf-watch-btn`) → toggles mint in `ld_watchlist`.
-  8. (optional) Load more (`#tfLoadMore`) → cursor pagination.
-  9. (optional) Click a trade row → trader/coin deep link.
-- **Decision points / branches:** window/minPnl/network filters; auto-refresh suspended while paginating; watch toggle state.
-- **External calls / dependencies:** `GET /api/trades/feed` (cursor-paginated).
-- **Success state:** filterable, shareable (URL-reflected) live feed of real closed trades with PnL.
-- **Empty / error states:** empty-feed state; standard boundary error handling on fetch.
-- **Step count:** 2 required (arrive → feed) + ~7 optional (filters, watch, paginate).
+  1. Arrive → `readUrl()` restores mint/tab/network (network persisted to localStorage `tf_network`); the deep-dive mounts immediately with the URL mint, or $THREE by default (never an empty void).
+  2. System: left rail loads the active tab: **Launches** (`GET /api/pump/launches?network=&limit=40`, $THREE pinned at the top) or **Exits** (`GET /api/trades/feed?network=&window=7d&min_pnl_pct=10&limit=40`); refreshes every 30s. Header pulse (`GET /api/pump/helius-stats`, 20s) shows network mint rate, graduations/hour, and SOL price ± 24h change.
+  3. System: centre deep-dive (`mountDetail`) paints header + skeleton instantly from the clicked row, then fills progressively from five live endpoints (`/api/pump/launch-detail`, `/api/pump/curve`, `/api/pump/intel`, `/api/pump/smart-money`, `/api/coin/:mint/cohorts`; cohorts only for platform-tracked coins) plus three self-fetching widgets: candlestick chart, bonding-curve ring, live trade tape.
+  4. (optional) Switch tab Launches ↔ Exits (`#ttTabs`) → reload rail; URL synced.
+  5. (optional) Change network mainnet/devnet (`#ttNetwork`, persisted) → reload rail + remount deep-dive.
+  6. (optional) Paste a mint into `#ttSearch` (base58-validated) → drives the deep-dive for that coin.
+  7. (optional) Click any rail row → `select(mint)` remounts the deep-dive (re-selecting the mounted coin is a no-op); URL reflects `?mint=` for sharing.
+- **Decision points / branches:** Launches vs Exits tab; mainnet vs devnet; platform-tracked coin (cohorts fetched) vs external mint (designed no-data state); each detail section degrades independently to an honest "unavailable" note.
+- **External calls / dependencies:** `GET /api/pump/launches`, `GET /api/trades/feed`, `GET /api/pump/helius-stats`, `GET /api/pump/launch-detail`, `GET /api/pump/curve`, `GET /api/pump/intel`, `GET /api/pump/smart-money`, `GET /api/coin/:mint/cohorts`.
+- **Success state:** live two-pane terminal: rail of platform launches/exits, deep-dive with chart, bonding curve, holders/cohorts, funder bubblemap, smart money, wallet footprint, trade tape, outcome, agent economics; shareable `?mint=` URL.
+- **Empty / error states:** per-tab empty copy ("No launches on this network yet" / "No profitable agent exits in this window yet"); per-section "unavailable" degradation in the deep-dive; pulse failures silent (decorative).
+- **Step count:** 3 required (arrive → rail + deep-dive) + ~4 optional (tab, network, search, row select).
 
 ---
 
@@ -103,7 +101,7 @@ coin-intel, pump-visualizer and pump-live — adding a coin on any surface shows
   4. (optional) Network: mainnet/devnet (`#lb-network`).
   5. (optional) Sort: score/pnl/winrate/roi (`#lb-sort` select).
   6. (optional) "Verified only" checkbox (`#lb-verified`).
-  7. (optional) Click a row → trader profile (`src/trader.js`, `/trader?wallet=...`) — full track record, equity curve, proof tab with on-chain tx, copy-trading panel, shareable PnL card.
+  7. (optional) Click a row → trader profile (`src/trader.js`, `/trader/<agent_id>`) with full track record, equity curve, proof tab with on-chain tx, copy-trading panel, shareable PnL card.
 - **Decision points / branches:** 4 windows × sort × network × verified; stale/reconnecting badge when a background refresh fails with a board already on screen.
 - **External calls / dependencies:** `GET /api/sniper/leaderboard`; row payoff `GET /api/sniper/trader` (on trader page).
 - **Success state:** shareable ranked board; every number deep-links to its on-chain transaction via the trader profile.
@@ -122,7 +120,7 @@ coin-intel, pump-visualizer and pump-live — adding a coin on any surface shows
   3. (optional) Filter by category chips (meme/ai/tech/…) → URL + reload.
   4. (optional) Min-quality slider → reload on change.
   5. (optional) Watch toggle per coin → `ld_watchlist`.
-  6. (optional) Click a coin card → detail drawer → `GET /api/pump/coin-intel?mint=<mint>&wallets=1` (single-coin wallet breakdown).
+  6. (optional) Click a coin card → detail drawer → `GET /api/pump/coin-intel?mint=<mint>&wallets=1` (single-coin wallet breakdown). Each mainnet card's "Full intel →" action and the drawer's "Open full page" link go straight to the coin's full intelligence page at `/oracle/coin/<mint>`; devnet coins have no page, so their button keeps opening the drawer.
 - **Decision points / branches:** category × quality filters; risk-flag pills (bundle_launch, dev_dumped, single_whale, low_diversity, fresh_wallet_swarm, sell_pressure, sniped) with danger/warn tones; drawer open/closed.
 - **External calls / dependencies:** `GET /api/pump/coin-intel` (list) and `?mint=&wallets=1` (detail); `/api/img` for logos.
 - **Success state:** live launch-intelligence feed; every number traces to an observed on-chain trade.
@@ -289,7 +287,7 @@ coin-intel, pump-visualizer and pump-live — adding a coin on any surface shows
   7. (optional) Hover sphere (tooltip), click → detail panel (`selectToken`), legend click → camera tween + panel.
   8. (optional) In detail panel: Watch (`ld_watchlist`), Oracle badge (`GET /api/oracle/coin?mint=`), Buy (lazy `src/game/coin-buy.js` on-chain trade modal); double-click sphere → `/coin3d?mint=`.
 - **Decision points / branches:** WebGL present vs list fallback; Feed/Migrations/Trending mode; search/sort; Oracle enrichment optional; Buy is the real interactive (on-chain) action.
-- **External calls / dependencies:** `GET /api/pump/trending`, `/api/pump/recent-graduations`, `/api/pump/helius-stats`, `/api/img`, `GET /api/oracle/coin`; optional SSE `/api/agents/pumpfun-feed`; `wss://pumpportal.fun/api/data` referenced for live mode.
+- **External calls / dependencies:** `GET /api/pump/trending`, `/api/pump/recent-graduations`, `/api/pump/helius-stats`, `/api/img`, `GET /api/oracle/coin`; optional SSE `/api/agents/pumpfun-feed` (server-side PumpPortal WS bridge) for Feed/Migrations live mode.
 - **Success state:** 50 glowing spheres in an auto-rotating galaxy, sized/colored by market cap, with detail panel, search/sort, and on-chain Buy.
 - **Empty / error states:** WebGL warning banner + DOM list fallback; "Could not load trending tokens" + Retry; image canvas fallback; Oracle badge silently empty if down.
 - **Step count:** 2 required (arrive → spheres render) + ~6 optional (orbit, search/sort, mode, inspect, Buy/Watch). Live-monitor + interaction hybrid.
@@ -304,11 +302,11 @@ coin-intel, pump-visualizer and pump-live — adding a coin on any surface shows
   1. Arrive → feed module starts immediately (does NOT wait on Three.js); skeleton cards; viewer.js + GLB load in parallel.
   2. System: `GET /api/pump/helius-stats` for SOL price (caps shown in SOL until USD lands, then rehydrated).
   3. System: connect `wss://pumpportal.fun/api/data`, send `subscribeNewToken` → "● Live"; each `create` event → render token card (image via `/api/img?meta=`, MC, links, empty Oracle slot), prepend (cap 100), update stats, dispatch `pumplive:token`.
-  4. System: every 30s batch `POST /api/oracle/batch?mints=...` (chunks ≤20, retry 2×) → conviction badges on cards; "🔮 Prime scored" counter.
+  4. System: every 30s batch `GET /api/oracle/batch?mints=...` (chunks ≤20, bounded retries with backoff) → conviction badges on cards; "🔮 Prime scored" counter.
   5. (optional) 3D agent loads `robotexpressive.glb`, plays Idle, waves on each `pumplive:token`.
   6. (optional) Pause button (queues events); conviction filter All/Strong+/Prime (hides cards); Watch toggle (`ld_watchlist`); click card → `/coin3d?mint=` or external links.
 - **Decision points / branches:** WebGL/GLB present vs feed-only; paused vs streaming; conviction filter level; Oracle up vs down (badges empty).
-- **External calls / dependencies:** `wss://pumpportal.fun/api/data`; `GET /api/pump/helius-stats`; `POST /api/oracle/batch`; `GET /api/img`; `robotexpressive.glb`.
+- **External calls / dependencies:** `wss://pumpportal.fun/api/data`; `GET /api/pump/helius-stats`; `GET /api/oracle/batch`; `GET /api/img`; `robotexpressive.glb`.
 - **Success state:** live launches stream as cards, stats tick, agent waves per launch, Oracle conviction badges enrich after ~30s, filterable.
 - **Empty / error states:** "Waiting for new launches…"; WS backoff 2s→60s, terminal error panel + Reconnect after 8 fails; SOL-price hint until USD lands; image seeded placeholder; agent load failure suppressed (feed unaffected).
 - **Step count:** 1 required (arrive → live feed) + ~4 optional (pause, filter, watch, drill-in). Pure live monitor + reactive avatar.

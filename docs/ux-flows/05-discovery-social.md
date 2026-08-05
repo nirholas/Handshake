@@ -10,7 +10,7 @@ Routing recap (from `vercel.json`):
 | `/gallery` | `public/gallery/index.html` | `public/gallery/gallery.js` |
 | `/animations` | `pages/animations.html` | `src/animations-gallery.js` |
 | `/characters` | `public/characters.html` | `src/characters.js` |
-| `/community` | `pages/community.html` | (static content) |
+| `/community` | `pages/community.html` | inline live-activity module in page |
 | `/walk` | `pages/walk.html` | `src/walk.js` (+ `src/community/coin-world-boot.js`) |
 | `/irl` | `pages/irl.html` | `src/irl.js` (+ `src/irl/*`, `src/irl-net.js`) |
 | `/irl-privacy` | `pages/irl-privacy.html` | (static content) |
@@ -27,7 +27,7 @@ Routing recap (from `vercel.json`):
 - **Entry point:** Page load auto-calls `loadPage()`. URL params hydrate filters (`?q=`, `?chain=`, `?source=`, `?only3d=`, `?sort=`). Default view (no params) is **3D-only**.
 - **Prerequisites / gates:** None to browse. Auth (`/api/auth/me`) only reveals the "View my agents" chip + nav link; no gate.
 - **Steps (8):**
-  1. User lands on `/discover`. System fetches `/api/auth/me` (best effort) to maybe show the my-agents chip, populates the chain `<select>` (22 chains), reflects any URL params in controls, renders 12 skeleton cards, and calls `loadPage()`.
+  1. User lands on `/discover`. System fetches `/api/auth/me` (best effort) to maybe show the my-agents chip, populates the chain `<select>` (23 chains), reflects any URL params in controls, renders 12 skeleton cards, and calls `loadPage()`.
   2. System fetches `GET /api/explore?only3d=1&limit=48` (params from state), clears skeletons, renders cards (onchain / avatar / solana variants). Each card thumbnail prefers static image, else lazy `<model-viewer>` auto-rotate preview, else emoji. First page also renders directory totals.
   3. (optional) User types in the search box → 250ms debounce → `syncUrl()` + `resetAndLoad()` re-queries with `q`.
   4. (optional) User clicks a source filter (All / On-chain / Avatar / Solana) or the 3D / x402 filter chip → state updates, URL synced, grid reloads. x402 + sort overlays applied client-side.
@@ -44,8 +44,8 @@ Routing recap (from `vercel.json`):
 ---
 
 ### Avatar Gallery — `/gallery`
-- **Source:** `public/gallery/index.html`, `public/gallery/gallery.js`, `public/gallery/gallery.css`, `/api/avatars/public`, `/api/forge-gallery`, `/api/avatars` (equip modal)
-- **Entry point:** Page load calls `renderCats()` then `resetAndLoad()`, then `loadForgeSection()`. Filters hydrate from URL (`?q=`, `?category=`, `?tag=`, `?sort=`).
+- **Source:** `public/gallery/index.html`, `public/gallery/gallery.js`, `public/gallery/surprise.js` (one-click instant avatar), `public/gallery/gallery.css`, `/api/avatars/public`, `/api/forge-gallery`, `/api/avatars` (equip modal), `/api/avatars/surprise`
+- **Entry point:** Page load calls `renderCats()` then `resetAndLoad()`, then `loadForgeSection()`. Filters hydrate from URL (`?q=`, `?category=`, `?tag=`, `?sort=`); `?surprise=<seed>` auto-opens the shared Surprise-me avatar.
 - **Prerequisites / gates:** None to browse. Auth (`/api/auth/me`) only reveals the "My avatars" chip. Equipping an accessory requires sign-in (gated inside the equip modal via `/api/avatars` 401).
 - **Steps (8):**
   1. User lands on `/gallery`. System fetches `/api/auth/me` (chip), renders 8 skeleton cards, calls `loadPage()`.
@@ -53,7 +53,7 @@ Routing recap (from `vercel.json`):
   3. (optional) Search box → 250ms debounce → reload with `q`.
   4. (optional) Click a category chip (Avatars / Accessories / Items / Scenes / Creatures) or a tag chip → reload filtered. Sort dropdown (newest / alpha) re-sorts.
   5. (optional) Scroll → IntersectionObserver auto-loads next cursor page, or "Load more" button.
-  6. (optional) Click "Embed" on a card → avatar embed modal (Web component / iframe / Link / Markdown tabs, copy buttons).
+  6. (optional) Click "Embed" on a card → avatar embed modal (Web component / iframe / Link / Markdown tabs, copy buttons); or click the hero's "✨ Surprise me" button (`data-surprise-avatar`) → `POST /api/avatars/surprise` composes a unique rigged GLB, revealed live in a tinted-stage modal with Reroll, a shareable `/gallery?surprise=<seed>` link, and "Make it mine" (stages the GLB into the guest flow → `/create-review`). No sign-in needed to see it.
   7. (optional) For accessory cards, click "Equip" → modal fetches `GET /api/avatars` (user's own); if 401, shows Sign-in CTA; else lists up to 12 avatars; choosing one navigates to `/avatars/:id/edit?equip-glb=…&equip-bone=Head`.
   8. **Payoff:** Click a card thumbnail → `/app#model=<glb>` (3D viewer); or "Use" → `/studio?avatar=<id>`; or "Animate" → `/pose?avatar=<id>`; or "View avatar" → `/avatars/<id>`. Below the grid, the **From the Forge** section renders community 3D models (`GET /api/forge-gallery?scope=community&limit=16`, deduped by prompt) with View/Remix actions.
 - **Decision points / branches:** accessory category → Equip flow vs Use/Animate; model_url present → model-viewer vs img; signed-in chip; forge section enabled vs hidden (additive, never blocks).
@@ -65,18 +65,18 @@ Routing recap (from `vercel.json`):
 ---
 
 ### Animation Gallery — `/animations`
-- **Source:** `pages/animations.html`, `src/animations-gallery.js`, `/api/animations/clips`, `/avatar-embed` (preview iframe), `/pose` (studio)
-- **Entry point:** Module runs `load(true)` on import. Query (`?q=`, `?filter=loop|once`) hydrates state and the search box.
-- **Prerequisites / gates:** None. Clips fetched with `credentials: 'include'` but public visibility is the query; no sign-in required to browse.
+- **Source:** `pages/animations.html`, `src/animations-gallery.js`, `src/animation-categories.js` (derived categories), `src/animations-live-preview.js` (shared WebGL preview engine), `/api/animations/clips`, `/animations/manifest.json`, `/api/animations/library`, `/pose` (studio)
+- **Entry point:** Module runs `loadAll()` on import. Query (`?q=`, `?cat=`, `?filter=loop|once`, `?sort=`) round-trips through the URL; `?clip=<id>` deep-links straight into the detail modal.
+- **Prerequisites / gates:** None. Community clips fetched with `credentials: 'include'` but public visibility is the query; no sign-in required to browse.
 - **Steps (5):**
-  1. User lands on `/animations`. System shows loading state, calls `load(true)`.
-  2. System fetches `GET /api/animations/clips?include_public=true&visibility=public&limit=24`, renders animation cards (thumbnail or 🎬 placeholder, loop/once badge, duration, optional price/tags).
-  3. (optional) User types in search → 280ms debounce → `syncUrl()` + reload; or clicks a filter chip (loop / once) mapping to `kind=loop|animation`.
-  4. (optional) User hovers/clicks/keys a card's preview zone → lazy-loads an `<iframe>` to `/avatar-embed?model=/avatars/cz.glb&anim=<id>` playing the clip on a live avatar; mouseleave hides it. Scroll sentinel infinite-loads more.
-  5. **Payoff:** User clicks "Open in Studio" (or the implicit "use on my avatar") → navigates to `/pose?anim=<id>` to apply/remix the clip on an avatar.
-- **Decision points / branches:** thumbnail present vs placeholder; loop vs once filter (kind param); IntersectionObserver vs Load-more button; search/filter active → empty-search state.
-- **External calls / dependencies:** `GET /api/animations/clips`, `/avatar-embed` iframe (sandboxed), `/pose` nav.
-- **Success state:** Grid of animation cards each previewable in-place on a live avatar; "Open in Studio" reaches the editor.
+  1. User lands on `/animations`. System shows loading state and merges three sources into one grid: community clips (`GET /api/animations/clips?include_public=true&visibility=public`, capped at 300, newest first), the built-in three.ws motion library (`/animations/manifest.json`, the same curated clips `/pose` ships with), and the full Mixamo-sourced catalog (`GET /api/animations/library`, fetched from the R2 CDN in bounded 1000-clip pages).
+  2. System normalizes every clip to one card shape (poster thumbnail, derived category, duration, loop/once badge) and paginates client-side (36 per page, infinite scroll, lazy thumbnails).
+  3. (optional) User searches (`/` hotkey focuses the box), picks a category chip, a loop/once filter, or a sort → grid re-filters client-side; the URL stays shareable.
+  4. (optional) User hovers a card's preview zone → the ONE shared WebGL engine moves its singleton canvas into that card and plays the retargeted clip on the preview avatar (no iframes, no per-card GL contexts; skipped for touch and reduced-motion users, who get the preview inside the detail modal instead).
+  5. **Payoff:** Click a card → detail modal (arrow keys step between clips, Space toggles play, Copy link copies `/animations?clip=<id>`, Copy embed copies an `/embed/avatar?anim=<id>` iframe snippet) → "Open in Studio" navigates to `/pose?anim=<id>` to apply/remix the clip on an avatar.
+- **Decision points / branches:** community vs library vs full-catalog card (community listed first); thumbnail present vs placeholder; touch/reduced-motion (modal-only preview) vs hover preview; search/filter active → empty-search state.
+- **External calls / dependencies:** `GET /api/animations/clips`, `GET /animations/manifest.json`, `GET /api/animations/library` (R2 CDN pages), shared live-preview engine, `/pose` nav.
+- **Success state:** One searchable grid across all three clip sources, each card live-previewable in place; "Open in Studio" reaches the editor.
 - **Empty / error states:** No results + no filter → empty state; with filter/query → empty-search state with the query echoed + Clear-search; fetch failure → error state with Retry.
 - **Step count:** 2 required (+3 optional)
 
@@ -100,18 +100,19 @@ Routing recap (from `vercel.json`):
 ---
 
 ### Community — `/community`
-- **Source:** `pages/community.html` (static content + footer newsletter)
-- **Entry point:** Static page load. Read-only content page.
+- **Source:** `pages/community.html` (content + inline live-activity module + footer newsletter)
+- **Entry point:** Page load; the inline module fetches the live activity feed.
 - **Prerequisites / gates:** None.
-- **Steps (3):**
+- **Steps (4):**
   1. User lands on `/community` and reads the hero ("Build with us.").
-  2. (optional) User clicks a channel card: Follow on X (`@trythreews`), GitHub (`nirholas/three.ws`), Docs (`/docs`), Tutorials (`/tutorials`).
-  3. (optional) User reads "Ways to get involved" (ship an agent at `/create`, report bugs on GitHub issues, share feedback to `support@three.ws`) or subscribes via the footer newsletter form.
-- **Decision points / branches:** which outbound channel the user follows; newsletter subscribe vs not.
-- **External calls / dependencies:** External links (x.com, github.com), mailto, `footer-newsletter.js` (subscribe). No data fetch for content.
-- **Success state:** User reaches a community channel / submits the newsletter form.
-- **Empty / error states:** None (static content). Newsletter form handles its own submit feedback.
-- **Step count:** 1 required (+2 optional) — content page (read)
+  2. System: the "Live activity" section fetches `GET /api/users/me/feed?scope=all&limit=10` (3 skeleton rows while loading) and renders the latest platform activity rows (avatar, actor + verb, title, relative time, thumbnail); "Open the full feed →" links to `/feed`.
+  3. (optional) User clicks a channel card: Follow on X (`@trythreews`), GitHub (`nirholas/three.ws`), Docs (`/docs`), Tutorials (`/tutorials`).
+  4. (optional) User reads "Ways to get involved" (ship an agent at `/create`, report bugs on GitHub issues, share feedback to `support@three.ws`) or subscribes via the footer newsletter form.
+- **Decision points / branches:** activity populated vs empty vs error; which outbound channel the user follows; newsletter subscribe vs not.
+- **External calls / dependencies:** `GET /api/users/me/feed?scope=all` (live activity), external links (x.com, github.com), mailto, footer newsletter script.
+- **Success state:** Live activity rows render; user reaches a community channel / submits the newsletter form / opens `/feed`.
+- **Empty / error states:** Activity empty → "Nothing has happened yet" with a `/create` CTA; fetch failure → "Could not load live activity right now." Newsletter form handles its own submit feedback.
+- **Step count:** 2 required (+2 optional); content page with a live feed section
 
 ---
 
@@ -135,7 +136,7 @@ Routing recap (from `vercel.json`):
 ---
 
 ### IRL — `/irl`
-- **Source:** `pages/irl.html` (WebGL-gate inline boot), `src/irl.js`, `src/irl/*` (`onboarding.js`, `floor-anchor.js`, `room-anchor.js`, `room-session.js`, `tap-pick.js`, `gps-lifecycle.js`, `discovery.js`, `privacy-center.js`, `proximity-band.js`, `proximity-cue.js`, `sensor-fusion.js`, `share-frame.js`, `map-place.js`, `camera-fov.js`, `load-queue.js`, `perf-budget.js`), `src/irl-net.js`
+- **Source:** `pages/irl.html` (WebGL-gate inline boot), `src/irl.js`, `src/irl/*` (`onboarding.js`, `floor-anchor.js`, `room-anchor.js`, `room-session.js`, `room-mode.js`, `tap-pick.js`, `gps-lifecycle.js`, `discovery.js`, `privacy-center.js`, `proximity-band.js`, `proximity-cue.js`, `sensor-fusion.js`, `share-frame.js`, `map-place.js`, `marker-mode.js` + `marker-anchor.js`/`marker-pose.js`/`qr-detect.js` (QR-marker indoor colocalization), `camera-fov.js`, `load-queue.js`, `perf-budget.js`, `pin-celebration.js`, `pin-idle.js`, and more), `src/ar/*` (`pinch-scale.js`, `quick-look.js`, `quicklook-banner.js`, `placement-capability.js`, `depth-occlusion.js`, `estimated-lighting.js`), `src/irl-net.js`
 - **Entry point:** `pages/irl.html` runs an inline WebGL-support check; if supported it `import('/src/irl.js')`, else it renders a designed "This device can't run IRL AR" state with "Browse agents"/"Open marketplace" actions. URL param `?avatar=` chooses the placed agent.
 - **Prerequisites / gates:** No auth, no wallet (anonymous `irl_device_token` in localStorage). **WebGL** required (hard gate at HTML load). Requested progressively via `onboarding.ensurePermission(...)`: **camera** (`getUserMedia`) on first "Camera AR" tap; **motion** (`DeviceOrientationEvent.requestPermission` on iOS 13+) when locking; **geolocation** (`navigator.geolocation.watchPosition`, enableHighAccuracy) when locking/discovering. None are hard blockers — each has a designed fallback.
 - **Steps (7 required + optional):**
@@ -146,9 +147,9 @@ Routing recap (from `vercel.json`):
   5. User aims at the floor spot and **taps the canvas** → optional caption → Confirm → `commitPin()` → `POST /api/irl/pins` with `{ lat, lng, heading, caption, avatarUrl, avatarName, deviceToken, agentId, anchor: { yawDeg, source: 'gyro-gps'… } }`.
   6. System polls `GET /api/irl/pins?lat=&lng=&radius=60` every 10s; nearby agents spawn (LOD: dot → impostor → full mesh), name labels + confidence rings render; crossing the ~40m ENTER band fires the proximity-arrival cue (haptic + chime + directional glow). Tapping a nearby agent opens a bottom sheet → "View" (`GET /api/irl/agent-card`), "Pay" ($THREE x402), "Message"; interactions `POST /api/irl/interactions`.
   7. **Payoff:** The user's chosen agent is anchored and visible in AR on the real floor, persisted for nearby users to discover; the user can also discover and interact with other agents pinned around them.
-  8. (optional alt placement) **Place on floor** WebXR (Android Chrome): `XRSession.requestSession('immersive-ar')` hit-test → `POST /api/irl/pins` with `anchor.quat` + shared room frame; iOS Safari → AR Quick Look (USDZ). **Place on map** (privacy-first): Leaflet picker → `commitMapPin()` `POST /api/irl/pins source:'map'`.
+  8. (optional alt placement) **Place in AR** (WebXR, Android Chrome) now fronts the dock's secondary row on AR-capable devices: `XRSession.requestSession('immersive-ar')` hit-test → `POST /api/irl/pins` with `anchor.quat` + shared room frame; a two-finger pinch resizes the agent (0.25x to 4x, `src/ar/pinch-scale.js`) and the chosen size persists (`anchor.scale` on POST, owner-gated `PATCH {id, scale}` after placement; every viewer renders the owner's size). Camera-mode AR gets the same pinch-to-resize without WebXR. iOS Safari → AR Quick Look (USDZ) with an in-AR "Pin it here for people nearby" banner whose tap lands back on `/irl` with Pin here pulsing. **Anchor to a marker** (indoor, no GPS/compass): scan or print a QR marker; once locked it becomes a shared origin, so "Place here" anchors the agent relative to the marker for anyone who scans the same one. **Place on map** (privacy-first): Leaflet picker → `commitMapPin()` `POST /api/irl/pins source:'map'`.
   9. (optional) Privacy center (`openPrivacyCenter`): geolocation precision Exact vs Nearby, "Appear nearby" ghost toggle. Share button flattens camera + canvas to PNG. "My pins" sheet → `GET /api/irl/pins/mine`, map + list, `DELETE /api/irl/pins?id=` or `?all=1`. Calibrate / refine-on-floor → `PATCH /api/irl/pins`.
-- **Decision points / branches:** WebGL supported vs fatal overlay; placement path (gyro-GPS / WebXR floor / iOS Quick Look / map); camera/motion/location granted vs denied (each → fallback); compass available (north-aligned) vs relative-only (`gyro-gps:rel`); GPS ready vs warm-up hold; agent crosses ENTER vs EXIT band; tap on mesh vs label vs background; precision Exact vs Nearby; room mode (shared frame) vs solo.
+- **Decision points / branches:** WebGL supported vs fatal overlay; placement path (gyro-GPS / WebXR floor / iOS Quick Look / QR marker / map); camera/motion/location granted vs denied (each → fallback); compass available (north-aligned) vs relative-only (`gyro-gps:rel`); GPS ready vs warm-up hold; agent crosses ENTER vs EXIT band; tap on mesh vs label vs background; precision Exact vs Nearby; room mode (shared frame) vs solo.
 - **External calls / dependencies:** `POST/PATCH/DELETE /api/irl/pins`, `GET /api/irl/pins` (+ `/mine`), `GET /api/irl/agent-card`, `POST /api/irl/interactions`, `GET /api/irl/interactions-stream` (SSE), `POST /api/irl/report`, `POST /api/irl/fix-token`. Device: `getUserMedia` (camera), `DeviceOrientationEvent.requestPermission` / `deviceorientation(absolute)` (motion), `navigator.geolocation.watchPosition`, `navigator.permissions.query`, `navigator.vibrate`, `AudioContext`, WebXR `immersive-ar`. Realtime: Colyseus WebSocket (`IrlNet`, room `irl_world`). Libs: GLTFLoader (+Draco/meshopt), Leaflet/CARTO, in-browser USDZ exporter.
 - **Success state:** Agent anchored to a real-world spot, visible in AR; nearby agents discovered by proximity (dots→impostors→meshes) with name labels, arrival cues, and an interaction sheet.
 - **Empty / error states:** WebGL unsupported → fatal designed overlay. Camera/motion/location denied → designed recovery cards with platform Settings steps + fallbacks. GPS warm-up → shimmer "Acquiring…". No nearby agents → calm "0 nearby" + "Place an agent here" CTA. Poll fail → amber "refresh failed" (15s retry). Rate-limited → calm blue chip, self-recovers. Avatar load fail → "Couldn't load this agent" + Retry. WebGL context lost → "AR paused" + Reload. Placement rejected (moderation/full/rate) → status message, lock released.
@@ -208,18 +209,18 @@ Routing recap (from `vercel.json`):
 ---
 
 ### Agents Index — `/agents`
-- **Source:** `public/agents/index.html` (inline module), `/api/agents/public`, `public/agents/boot.js`
+- **Source:** `public/agents/index.html` (inline module), `/api/explore` (`source=agents` meta-source), `public/agents/boot.js`
 - **Entry point:** Inline module runs `load(true)` on load.
 - **Prerequisites / gates:** None to browse.
 - **Steps (4):**
-  1. User lands on `/agents`. System renders 8 skeleton cards and fetches `GET /api/agents/public?limit=24&sort=popular`.
-  2. System renders agent cards: avatar thumbnail (or initial fallback), on-chain badge if registered, name + description, top skills, chat count. Count label shows total.
-  3. (optional) Search box → 320ms debounce → reload with `q`; sort select (popular / newest / name) → reload; "On-chain only" checkbox → reload with `onchain=1`; "Load more" → cursor pagination (`before`).
-  4. **Payoff:** Click a card → navigates to the agent's `home_url` (agent profile / chat). Hero CTAs link to `/create-agent` and `/marketplace`.
-- **Decision points / branches:** registered (on-chain badge) vs not; avatar thumbnail vs initial fallback; sort/onchain filters; has_more (Load more shown) vs not.
-- **External calls / dependencies:** `GET /api/agents/public`.
-- **Success state:** Grid of public 3D agents, each linking to its profile.
-- **Empty / error states:** Query-empty → "No agents found" for the term; unfiltered-empty → "No public agents yet" + create CTA; fetch error → "Couldn't load agents — Try refreshing."
+  1. User lands on `/agents` ("Agent Index"). System renders 8 skeleton cards and fetches `GET /api/explore?source=agents&limit=24`, one unified feed across every registry the platform crawls: ERC-8004 (EVM, erc8004-crawl cron), the Metaplex Agent Registry + AgenC protocol (Solana, solana-agents-crawl cron), and three.ws's own agents. The meta-source returns on-chain agents only, never avatars.
+  2. System renders agent cards: thumbnail proxied through `/api/img` (lettered-initial fallback), a source badge (chain short-name for EVM / Metaplex / AgenC / three.ws), name + description, up to 3 service/skill chips, and an `x402` chip when the agent accepts x402 payments. Count label shows loaded total.
+  3. (optional) Source chips All sources / Solana / EVM → reload; search box → 320ms debounce → reload with `q`; sort select (Newest first / Name A-Z, client-side re-sort); "Load more" → cursor pagination (`cursor`).
+  4. **Payoff:** Click a card → its natural detail surface: EVM agents → `/a/<chain>/<id>`, three.ws Solana agents → `/agent/<id>`, external Solana agents → their 3D viewer or on-chain explorer (new tab). Hero CTAs link to `/create-agent` and `/marketplace`.
+- **Decision points / branches:** source chip (all / solana / onchain); card kind → internal vs external (target="_blank") destination; thumbnail vs initial fallback; nextCursor present (Load more shown) vs not.
+- **External calls / dependencies:** `GET /api/explore?source=agents`, `/api/img` (thumbnail proxy).
+- **Success state:** Grid of on-chain agents across all crawled registries, each linking to its detail surface.
+- **Empty / error states:** Query-empty → "No agents found" for the term; unfiltered-empty → "No agents in this source yet" + create-first CTA (registries are crawled continuously); fetch error → "Couldn't load agents" with "Try refreshing the page."
 - **Step count:** 1 required (+3 optional)
 
 ---
