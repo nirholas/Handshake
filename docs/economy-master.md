@@ -1,10 +1,13 @@
 # Economy funding root (the master wallet)
 
 The economy funding root is **one master wallet that funds every other Solana
-engine on the platform** and does nothing else. It never trades, launches, tips,
-snipes, or settles a payment — its only on-chain action is a native SOL transfer
-that tops up an engine signer when that signer drops below its floor. This is the
-"masters fund engines, engines do the work" model applied platform-wide.
+engine on the platform** and does nothing else. It never launches, tips, snipes,
+or settles a payment. Its on-chain actions are all funding moves: a native SOL
+transfer that tops up an engine signer when that signer drops below its floor,
+plus the two bounded self-refill legs described under "Fuel" below (swapping its
+own idle USDC revenue into SOL, and direct USDC top-ups to the two USDC payers).
+This is the "masters fund engines, engines do the work" model applied
+platform-wide.
 
 > Source: [`api/_lib/economy-master.js`](../api/_lib/economy-master.js) (the
 > guard logic + sweep), cron entry
@@ -48,7 +51,7 @@ belongs in an engine signer the master funds — not in the master.
 
 | Guard | Env | Default | What it bounds |
 |---|---|---|---|
-| Reserve floor | `ECONOMY_MASTER_RESERVE_SOL` | `1` | Never spend the master below this — its own working reserve + rent + fees. An on-chain read, so it holds even with no database. |
+| Reserve floor | `ECONOMY_MASTER_RESERVE_SOL` | `0.02` | Never spend the master below this: its own rent-exemption plus fee headroom. An on-chain read, so it holds even with no database. When the master is also the x402 sponsor fee wallet (`X402_FEE_PAYER_SOLANA` points at it), the sweep floor rises to the sponsor settle floor (0.02 SOL) plus `ECONOMY_MASTER_SPONSOR_HEADROOM_SOL` (default `0.03`), so topping up engines can never starve settlement (`sweepFloorSol()`). |
 | Per-engine cap | `ECONOMY_MASTER_PER_TOPUP_MAX_SOL` | `0.5` | Most SOL moved to any single engine in one sweep. |
 | Per-run cap | `ECONOMY_MASTER_RUN_CAP_SOL` | `2` | Most SOL moved across all engines in one sweep. Neediest engine funded first, so a tight cap protects the most-drained flow. |
 | Dust skip | — | `0.005` | Skip a top-up smaller than this to avoid fee churn. |
@@ -108,7 +111,7 @@ the return.
 ## Agent-wallet reclaim: the other half of the fleet's SOL
 
 Sweepback and `reclaimIdleSol` both walk the **`SOLANA_SIGNERS` registry** — the
-eight engine wallets. That is not where most of the platform's SOL lives.
+fourteen engine wallets. That is not where most of the platform's SOL lives.
 `fundAgentForLaunch` ([`api/_lib/launcher-funding.js`](../api/_lib/launcher-funding.js))
 moves SOL master → **agent custody wallet** one way, and nothing ever moved it
 back: snipes recycle ~97 % of their capital, but the proceeds settle into the
@@ -371,6 +374,7 @@ congestion, clamped to a hard ceiling.
 | `ECONOMY_MASTER_SECRET_BASE58` | yes | The master keypair (base58 of 64 raw bytes). Unset ⇒ the funding root is inert. Store it as a secret on the Cloud Run service (or your host's secret store), never plaintext; keep your own offline copy since secret values are unreadable after they are written. |
 | `ECONOMY_MASTER_ADDRESS` | no | Override the expected pubkey if the master is ever rotated. Defaults to the address above. |
 | `ECONOMY_MASTER_RESERVE_SOL` / `_PER_TOPUP_MAX_SOL` / `_RUN_CAP_SOL` | no | Guard caps (see table). |
+| `ECONOMY_MASTER_SPONSOR_HEADROOM_SOL` | no | Working headroom the sweep keeps on top of the x402 sponsor settle floor when the master doubles as the sponsor fee wallet. Default 0.03. |
 | `ECONOMY_FUEL_ENABLED` | no | `0` disables the USDC→SOL auto-refuel (default on). |
 | `ECONOMY_MASTER_OPERATING_SOL` | no | Working headroom above the reserve the master keeps for sponsor co-sign fees; its shortfall below reserve + this counts toward the self-heal deficit. Default 0.15. |
 | `ECONOMY_FUEL_PER_RUN_USDC` / `_DAILY_USDC` | no | Fuel caps: max USDC per swap (default 25) and per UTC day (default 100). |
@@ -502,27 +506,27 @@ day) so it does not contribute to storage pressure. The chain head may be anchor
 on-chain (same mechanism as [`ledger-anchor.js`](../api/_lib/ledger-anchor.js)) for
 a third-party-verifiable timestamp of the books.
 
-## Known gaps & runbook (as of 2026-07-02)
+## Registry coverage & runbook (updated 2026-08-05)
 
-The master is configured and funded, but the tree it feeds is only partly wired:
+The 2026-07-02 wiring gaps this section used to track are closed. Current state
+of the tree the master feeds:
 
-- **Only two registry signers resolve in prod** — the master itself and the NFT
-  `collection-authority`. The other ten engines (launcher, buyback, treasuries,
-  club tips, a2a-payer, x402 launcher) have no secret set, so the sweep has almost
-  nothing to fund. Set each engine's secret to bring it online (see the runbook).
-- **Solana agent-to-agent settlement is down.** The `a2a-payer` signer reads
-  `A2A_PAYER_SOLANA_SECRET`; prod only has `A2A_PAYER_PRIVATE_KEY` (the EVM payer).
-  [`api/agents/a2a-call.js`](../api/agents/a2a-call.js) throws *"autonomous Solana
-  payer wallet is not configured"* on every Solana mandate. Fix: set
-  `A2A_PAYER_SOLANA_SECRET` to a base58 Solana key.
-- **The x402 spend/gas wallets are not in the registry.** `X402_FEE_PAYER_SOLANA`,
-  `X402_AGENT_SOLANA_SECRET_BASE58`, and `X402_SEED_SOLANA_SECRET_BASE58` run the
-  x402 agent-to-agent economy but are not `SOLANA_SIGNERS` entries, so the master
-  does not top them up. Whether it *should* is an operator call — x402 gas is
-  largely PayAI-sponsored (see [x402 ring economy](x402-ring-economy.md) /
-  [autonomous x402](autonomous-x402.md)), so those wallets may intentionally not
-  need funding from this master. To have the master keep them fueled, add them to
-  the registry with a floor.
+- **The registry defines the master plus fourteen engine signers** (relayers,
+  launcher master, treasuries, marketplace payer, a2a payer, ring sponsor/payer,
+  circulation treasury, NFT collection authority). An engine whose secret env is
+  unset simply never resolves and is skipped by the sweep; set each engine's
+  secret to bring it online, and override floors per signer with
+  `SIGNER_MIN_SOL_<NAME>` / `SIGNER_REFILL_TO_SOL_<NAME>`.
+- **The a2a payer accepts a fallback env.** The `a2a-payer` signer reads
+  `A2A_PAYER_SOLANA_SECRET` and falls back to `A2A_PAYER_SOLANA_PRIVATE_KEY`, so
+  either name brings Solana mandate settlement online.
+- **The x402 ring wallets are registry entries.** `x402-ring-sponsor`
+  (`X402_FEE_PAYER_SECRET_BASE58`, floor 0.03 SOL, kept a hair above the 0.02
+  sponsor settle floor) and `x402-ring-payer` (`X402_SEED_SOLANA_SECRET_BASE58`,
+  fallback `X402_AGENT_SOLANA_SECRET_BASE58`, floor 0.03 SOL, `holdsTokens` so
+  sweepback leaves its USDC float alone) are topped up by this master like every
+  other engine (see [x402 ring economy](x402-ring-economy.md) /
+  [autonomous x402](autonomous-x402.md)).
 
 ## Related
 
