@@ -8,7 +8,7 @@ MCP server, registered separately as **`io.github.nirholas/threews-3d-studio`**.
 - **Endpoint:** `https://three.ws/api/mcp-3d`
 - **Transport:** Streamable HTTP (MCP `2025-06-18`, JSON-RPC 2.0)
 - **Auth:** OAuth 2.1 (same three.ws authorization server as `/api/mcp`) or x402
-- **Backends:** Microsoft TRELLIS image→3D + FLUX text→image (Replicate, platform-keyed); Meshy / Tripo native geometry (BYOK); VAST-AI UniRig auto-rig; IBM Granite (watsonx.ai) for prompt direction + material generation
+- **Backends:** Microsoft TRELLIS image→3D + FLUX text→image (Replicate, platform-keyed); Meshy / Tripo native geometry (BYOK); Make-It-Animatable auto-rig (self-hosted GPU worker); IBM Granite (watsonx.ai) for prompt direction + material generation
 
 ## The pipeline
 
@@ -40,7 +40,7 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 
 | Tool                                                     | What it does                                                                                                                         |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `auto_rig_model(glb_url)`                                | Add a humanoid skeleton + per-vertex skin weights to a static GLB (VAST-AI UniRig). Returns a `job_id`; poll for the rigged GLB.     |
+| `auto_rig_model(glb_url)`                                | Add a Mixamo-named humanoid skeleton, per-vertex skin weights, and ARKit expression blendshapes to a static GLB (Make-It-Animatable). Returns a `job_id`; poll for the rigged GLB. |
 | `list_animations(category?)`                             | The curated, retargetable animation-clip catalogue (names, categories, loop flags).                                                  |
 | `animation_signature(clip, slot?)`                       | A clip's measured motion: energy, tempo, leading region, loop seam, travel. Pass `slot` for an ok/warn fit verdict against a runtime slot. |
 | `find_similar_animations(clip, limit?)`                  | The library ranked by measured-motion distance from a reference clip: "more like this" for animations.                              |

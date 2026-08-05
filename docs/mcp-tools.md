@@ -96,7 +96,7 @@ generation lane**; the rest are paid and quote their price in the
 | Tool | Price | What it does |
 |---|---|---|
 | `forge_free` | **Free** | Text → textured GLB on the free NVIDIA NIM (Microsoft TRELLIS) lane; returns a GLB URL + viewer link. |
-| `crypto_news` | **Free** | Live crypto headlines from 192 publisher feeds, filterable by category, source, language, or search. |
+| `crypto_news` | **Free** | Live crypto headlines from 191 publisher feeds, filterable by category, source, language, or search. |
 | `crypto_news_digest` | **Free** | Clusters the last 1-72h of coverage into distinct narratives with stance, tickers, and covering outlets. |
 | `crypto_news_archive` | free quota, then $0.001/search | Search 660,000+ archived articles back to September 2017. Stats and trending modes are always free; search is free up to a daily per-IP quota, then $0.001 USDC per search via x402. |
 | `text_to_avatar` | paid | Text → 3D avatar. |
