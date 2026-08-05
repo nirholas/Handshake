@@ -7,13 +7,13 @@ Post copy for the meetup push on X. The @trythreews posts go out first; personal
 Attach: media/meetup-banner-x.png
 
 ```
-Our first community meetup is this Friday. Not a video call: it happens inside three.ws.
+Our first community meetup is this Friday, and it is not a video call: it happens inside three.ws.
 
-Friday, Aug 7, 8 AM PT / 11 AM ET
+Hosted through the three.ws User Group on IBM Community.
+
+Fri Aug 7, 8 AM PT / 11 AM ET
 The $THREE home town at three.ws/play
 Free. Browser only. No download, no account.
-
-Come as your avatar. Spatial voice. Live demos. Open Q&A.
 ```
 
 ## Reply 1 (how to join)
@@ -34,6 +34,14 @@ New to 3D worlds? Come 10 min early and we will get you moving.
 Built something with three.ws? An avatar, an embed, an MCP server, an agent? Bring it. Demo time is set aside, and the skeptical questions are the ones we want.
 
 See you in the town square. Look for the water tower.
+```
+
+## Reply 3 (IBM Community links)
+
+```
+The event lives in the three.ws User Group on IBM Community, alongside the announcement blog and the full technical write-up:
+
+https://community.ibm.com/community/user/discussion/community-meetup-inside-threews-join-us-on-the-three-server-at-threewsplay
 ```
 
 ## Notes
