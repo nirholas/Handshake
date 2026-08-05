@@ -41,7 +41,7 @@ src/feature-tour/
 ├── spotlight.js     Spotlight: dims the page and rings the element being discussed
 ├── narrator.js      Narrator: platform TTS (/api/tts/speak) with paced-caption fallback, iOS unlock
 ├── controls.js      TourControls: playback bar (prev / play-pause / next / speed / roam / mute / exit)
-├── chapters.js      ChapterPanel: searchable chapter map, track/voice/speed/avatar settings drawer
+├── chapters.js      ChapterPanel: registry-style stop listing (title, narration summary, path) with search across all three, track/voice/speed/avatar settings; docked drawer or drag-to-float panel with a remembered position
 ├── free-roam.js     FreeRoam: paused mode where the visitor clicks/drags/keys the guide around
 └── explore.js       ExploreMode: visitor-driven checkpoint quest on the real walk-sdk playground
 ```
