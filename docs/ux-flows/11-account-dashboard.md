@@ -22,8 +22,9 @@ Resolved from `vercel.json` (`routes`) and `vite.config.js` (`vercel-rewrites` d
 
 Shared auth concepts:
 - **Session:** a `__Host-sid` cookie minted server-side by `createSession()`, identical across email/password, SIWE (EVM), SIWS (Solana), Privy, and SAML.
-- **Post-auth redirect:** `?next=` query param → `sessionStorage.login_redirect` → default (`/dashboard` for login, `/create` for register). On `/login`, an already-authenticated visitor is bounced to `next` via a `GET /api/auth/me` probe on load.
+- **Post-auth redirect:** `?next=` query param → `sessionStorage.login_redirect` → default (`/dashboard` for login, `/create` for register). On `/login`, an already-authenticated visitor is bounced to `next` via a `GET /api/auth/me` probe on load. The value is sanitized by a shared `safeNext` helper: anything that is not a single-leading-slash same-site path (protocol-relative `//host`, backslashes, control characters) is silently discarded and the default is used, so a crafted external `?next=` can no longer navigate off-site.
 - **Auth hint:** every successful auth writes `localStorage['3dagent:auth-hint']` so other surfaces render a logged-in chrome optimistically.
+- **Terms clickwrap (ToS v2):** every auth surface asserts Terms acceptance. `/register` has a required checkbox; `/login` and the Privy/wallet paths use notice-style clickwrap ("By signing in... you agree to the Terms of Service and Privacy Policy") and send `tosAccepted: true`; the Privy SIWE message statement itself carries the agreement text. The server records `users.tos_accepted_version`/`tos_accepted_at` plus an append-only `audit_log` row (`api/_lib/legal.js`, `TOS_VERSION = 2`) and re-stamps on login.
 
 ---
 
@@ -38,7 +39,7 @@ Shared auth concepts:
   4. **Email/password path:** type email-or-username into `#email`, password into `#password`. Avatar covers its eyes while a credential field is focused. (optional) toggle show/hide password; Caps-Lock warning shows live.
   5. (optional) tick "Remember me".
   6. Click **Sign in** (`#submit`). Client validates both fields are non-empty (inline field errors + avatar facepalm on empty).
-  7. `POST /api/auth/login` with `{ email, password, remember }`, credentials included. Button shows "Signing in…".
+  7. `POST /api/auth/login` with `{ email, password, remember, tosAccepted: true }` (notice-style clickwrap; the legal line sits under the form), credentials included. Button shows "Signing in…".
   8. On `!res.ok`: 429 → "Too many attempts…", else "Email or password is incorrect." — inline error on password field, avatar facepalm, button re-enabled.
   9. On success: persist `3dagent:last-email` + auth-hint; button "Signed in — redirecting…"; avatar plays a dance; after one dance cycle (700–1800ms) `location.replace(next)`.
   10. **(optional) Privy email-OTP path:** type email in `#privy-email-input` → click **Send code**. If the Privy app has CAPTCHA, a Cloudflare Turnstile challenge resolves first. `privy.auth.email.sendCode()` sends the code; UI advances to the code step.
@@ -64,17 +65,18 @@ Shared auth concepts:
   2. On load, `GET /api/auth/me`; if `{user}` → `location.replace(next)`; 401 stays; transport error shows a notice.
   3. Type a **Username** (`#username`, 3–30 chars, `[a-zA-Z0-9_-]`); inline hint validates live ("✓ Looks good" / specific error).
   4. Type a **Password** (`#password`, min 10 chars); strength meter updates (Too short → Very strong); Caps-Lock warning; (optional) show/hide toggle.
-  5. Click **Create account** (`#submit`); button shows "Creating account…".
-  6. `POST /api/auth/register` with `{ username, password }`, credentials included.
-  7. On `!res.ok`: 429 → "Too many attempts…"; 409 → "That username is taken."; 400 → field guidance; 422 → "…isn't allowed — try another."; 5xx → server-fault copy; network `TypeError` → "Couldn't reach the server…". Error banner shown, button re-enabled.
-  8. On success: server creates the account **and an immediate session** (signed in on register); persist auth-hint; `location.replace(next)` (default `/create`).
-  9. **(optional) Privy email-OTP / EVM / Solana wallet** registration — identical flows to `/login` (shared `src/privy-login.js`): Send code → Verify, or EVM SIWE, or Solana SIWS → session → redirect.
-  10. **(optional) On-chain features drawer** — same Solana/EVM native connect buttons; state persists in `sessionStorage['register:onchain']`.
-- **Decision points / branches:** username+password (`/api/auth/register`) **vs** Privy email-OTP **vs** Privy EVM SIWE **vs** Privy Solana SIWS **vs** native on-chain drawer SIWE/SIWS. (Note: the primary form here collects **username** + password, whereas `/login` accepts email-or-username; the shared `registerWithEmail()` helper supports an email+displayName variant used by other surfaces.)
+  5. Tick the required **Terms checkbox** (`#tos-accept`, "I have read and agree to the Terms of Service and Privacy Policy", linking `/legal/tos` and `/legal/privacy`); native `required` validation blocks submit until ticked.
+  6. Click **Create account** (`#submit`); button shows "Creating account…".
+  7. `POST /api/auth/register` with `{ username, password, tosAccepted }`, credentials included. The server rejects registration without acceptance (`400 tos_required`).
+  8. On `!res.ok`: 429 → "Too many attempts…"; 409 → "That username is taken."; 400 → field guidance (prefers the server's `error_description`, e.g. the `tos_required` copy); 422 → the "isn't allowed" copy with a try-another nudge; 5xx → server-fault copy; network `TypeError` → "Couldn't reach the server…". Error banner shown, button re-enabled.
+  9. On success: server creates the account **and an immediate session** (signed in on register); persist auth-hint; `location.replace(next)` (default `/create`).
+  10. **(optional) Privy email-OTP / EVM / Solana wallet** registration: identical flows to `/login` (shared `src/privy-login.js`), each asserting `tosAccepted: true`: Send code → Verify, or EVM SIWE, or Solana SIWS → session → redirect.
+  11. **(optional) On-chain features drawer**: same Solana/EVM native connect buttons; state persists in `sessionStorage['register:onchain']`.
+- **Decision points / branches:** username+password (`/api/auth/register`) **vs** Privy email-OTP **vs** Privy EVM SIWE **vs** Privy Solana SIWS **vs** native on-chain drawer SIWE/SIWS. (Note: the primary form here collects **username** + password, whereas `/login` accepts email-or-username; the shared `registerWithEmail()` helper supports an email+displayName variant used by other surfaces, and only sends `tosAccepted: true` when the calling surface passes it explicitly.)
 - **External calls / dependencies:** `GET /api/auth/me`, `POST /api/auth/register`, `POST /api/auth/privy/verify`, `GET /api/auth/siws/nonce`, `POST /api/auth/siws/verify`, `GET /api/config`; Privy SDK, Turnstile, browser wallets, model-viewer CDN.
 - **Success state:** Account created, session minted, redirect to `next` (default `/create`); user is logged in.
-- **Empty / error states:** Live username/password validation; status-mapped error banner (taken username, rate-limit, server fault, offline); Privy/wallet cancellation handling; ToS/Privacy legal copy below the button.
-- **Step count:** 8 required (+2 optional)
+- **Empty / error states:** Live username/password validation; unticked Terms checkbox blocks submit (and the server 400s with `tos_required` if bypassed); status-mapped error banner (taken username, rate-limit, server fault, offline); Privy/wallet cancellation handling; a second ToS/Privacy legal line below the button covers the Privy/wallet paths.
+- **Step count:** 9 required (+2 optional)
 
 ---
 
@@ -105,16 +107,16 @@ Shared auth concepts:
 - **Steps (N):**
   1. `home.js` boots → `mountShell()` renders sidebar + topbar + live-event drawer + command palette; the active nav item pulses "you are here".
   2. `requireUser()` resolves the session (or redirects to login).
-  3. Greeting renders ("Welcome back, &lt;name&gt;."); new-account detection (< 30 days) and dismissal flags (`twx_onboarding_dismissed`, `twx_forge_announce_dismissed`) decide which banners show.
+  3. Greeting renders ("Welcome back, &lt;name&gt;."); new-account detection (< 30 days) and dismissal flags (`twx_onboarding_dismissed`, `twx_forge_announce_dismissed`) decide which banners show. The forge announce is now a full "Text & image to 3D are live" front door: an animated visual, a rotating example-prompt typewriter, and an inline prompt composer that deep-links to `/forge?prompt=…`.
   4. Skeletons render across hero / KPI / activity slots.
   5. Parallel fetch: `GET /api/avatars?limit=50`, `GET /api/widgets`, `GET /api/agents?limit=20` (each `Promise.allSettled`, degrades independently).
   6. Hero strip shows live 3D avatar previews; KPI row (revenue, views, transcripts, avatars) with sparklines over a 7-day window; trading + world-health sections; 2×2 quick-actions grid; agent/avatar directory; recent-activity feed (stitched transcripts + revenue events).
   7. The onboarding guide (`getting-started.js`) is reconciled against authoritative server state (avatars/agents/widgets) on every visit.
   8. KPIs + activity re-poll every 30s; relative timestamps tick every 60s.
   9. (optional) Use the sidebar to navigate to sub-pages (account, analytics, settings, agents, avatars, tokens, monetize, etc.); open the command palette; open the live-event drawer (pulses on new events); dismiss onboarding/announce banners.
-  10. (optional) If the user arrived via a referral link, `claimPendingReferral()` attributes it now that a session exists (no-op otherwise).
+  10. (optional) If the user arrived via a referral link, `claimPendingReferral()` attributes it now that a session exists (no-op otherwise). It runs from the shared shell (`src/dashboard-next/shell.js`), so it fires on every dashboard page, not just the overview.
 - **Decision points / branches:** New vs returning user (onboarding banner); each data slot renders, empties, or errors independently; referral-claim runs only with a pending code.
-- **External calls / dependencies:** `GET /api/auth/me`, `GET /api/avatars`, `GET /api/widgets`, `GET /api/agents`, plus KPI/activity polling endpoints; shared `tour.js`, `crypto-optional.js`, `log.js`.
+- **External calls / dependencies:** `GET /api/auth/me`, `GET /api/avatars`, `GET /api/widgets`, `GET /api/agents`; the trading strip fetches `GET /api/sniper/strategy?limit=30`, `GET /api/copy/subscriptions`, `GET /api/oracle/stats`, `GET /api/oracle/feed?tier=prime&limit=3&network=mainnet`; KPI/activity refresh adds `GET /api/billing/revenue` and per-widget `GET /api/widgets/{id}/stats` / `.../transcripts`; shared `tour.js`, `crypto-optional.js`, `log.js`.
 - **Success state:** Authenticated overview rendered with live KPIs, hero avatars, and activity; navigation chrome fully wired.
 - **Empty / error states:** Per-slot skeletons during load; new-user onboarding panel as the "empty" guidance; failed data fetches degrade per slot (empty arrays) rather than failing the page; unauthenticated → redirect to `/login`.
 - **Step count:** 8 required (+2 optional)
@@ -127,16 +129,16 @@ Shared auth concepts:
 - **Prerequisites / gates:** Signed-in required (`requireUser()` → `/login?return=…` on 401).
 - **Steps (N):**
   1. Boot: `mountShell()` then `requireUser()`.
-  2. Page renders sections: **Profile** (display name, username, sign out), **AI Provider Keys**, **Linked Wallets**, **SNS / .sol handle domains**, **Vanity Wallets** (Solana + ETH CREATE2), **Delegation** console, **Action Log / audit trail**, and quick links to settings/storage/usage/ERC-8004.
+  2. Page renders sections in order: **Profile** (display name, username, sign out), **AI Provider Keys**, **Linked Wallets**, **Vanity Wallets** (Solana + ETH CREATE2), **SNS / .sol handle domains**, **Delegation** console, **Action Log / audit trail**, and quick links to settings/storage/usage/ERC-8004.
   3. **(optional) Update profile:** click edit on the name row → inline input (max 60) → **Save** → `PATCH /api/auth/profile` `{ display_name }` → toast "Saved", profile re-renders. Username edit → `PATCH /api/auth/profile` `{ username }` → toast "Username saved".
-  4. **(optional) Provider keys:** enter a key → **Save** → `PATCH /api/user/provider-keys` `{ [provider]: value }` → toast "Key saved"; clear → `PATCH …` `{ [provider]: null }` → toast "Key removed".
+  4. **(optional) Provider keys:** eight named providers (anthropic, openai, grok, meshy, tripo, rodin, stability, replicate; a note explains OpenRouter and Groq are provided free, no key needed). Enter a key → **Save** → `PATCH /api/user/provider-keys` `{ [provider]: value }` → toast "Key saved"; clear → `PATCH …` `{ [provider]: null }` → toast "Key removed".
   5. **(optional) Linked wallets:** list from `GET /api/auth/wallets`. "Make primary" → `POST /api/auth/wallets/primary` `{ address }` → toast "Primary wallet updated" + refresh. "Disconnect" → confirm → `DELETE /api/auth/wallets/{address}` → toast "Wallet disconnected" + row removed. "+ Link wallet" routes to the wallet-linking flow.
   6. **(optional) SNS / vanity:** "Register domain" → `/vanity-wallet`; "Manage" → external `sns.id`; vanity tools open `/vanity-wallet` and `/eth-vanity`.
   7. **(optional) Delegation:** open console → pick target agent + message (max 8000) → **Run delegation** → `POST /api/agent-delegate` `{ toAgentId, message }` → response box with model tag; status-specific errors (429/404/503).
   8. **(optional) Audit log:** "Export CSV" → `GET /api/audit-log?format=csv` → toast "CSV downloaded"; "Load older" paginates `GET /api/audit-log`.
   9. **(optional) Sign out:** `POST /api/auth/logout` → redirect to `/`.
 - **Decision points / branches:** Each section is independent; wallet/SNS sections show empty states when nothing is linked; delegation requires at least one agent.
-- **External calls / dependencies:** `GET /api/auth/me`, `PATCH /api/auth/profile`, `PATCH /api/user/provider-keys`, `GET /api/auth/wallets`, `POST /api/auth/wallets/primary`, `DELETE /api/auth/wallets/{address}`, `POST /api/agent-delegate`, `GET /api/audit-log`, `POST /api/auth/logout`.
+- **External calls / dependencies:** `GET /api/auth/me`, `PATCH /api/auth/profile`, `PATCH /api/user/provider-keys`, `GET /api/auth/wallets`, `GET /api/sns?address=…` (per Solana wallet, to resolve .sol domains), `POST /api/auth/wallets/primary`, `DELETE /api/auth/wallets/{address}`, `POST /api/agent-delegate`, `GET /api/audit-log`, `POST /api/auth/logout`.
 - **Success state:** Toasts on each mutation (Saved / Username saved / Key saved / Primary wallet updated / Wallet disconnected / CSV downloaded); sections re-render with fresh data.
 - **Empty / error states:** "No wallets linked", "No Solana wallets linked", "No primary .sol domains found", "No agents to delegate", "Audit log is empty"; load-failure toasts ("Couldn't load &lt;section&gt;"); audit 404 ("endpoint not deployed yet"), 401 ("Sign in required").
 - **Step count:** 2 required (boot + render) (+7 optional management flows)
@@ -168,17 +170,17 @@ Shared auth concepts:
 - **Prerequisites / gates:** Signed-in required (`requireUser()`; 401 → `/login?return=…`).
 - **Steps (N):**
   1. Boot: `mountShell()` → `requireUser()`; 4 skeletons while data loads.
-  2. Parallel fetch: `GET /api/auth/sessions`, `GET /api/notifications?limit=20`, `GET /api/notifications/preferences`, `GET /api/billing/summary` (storage), `GET /api/usage/summary` (LLM usage), plus dashboard prefs.
+  2. Parallel fetch: `GET /api/auth/sessions`, `GET /api/notifications?limit=20`, `GET /api/notifications/preferences`, `GET /api/billing/summary` (storage), `GET /api/usage/summary` (LLM usage), `GET /api/dashboard/prefs`.
   3. Render sections: **Appearance/theme**, **Active sessions**, **Notifications**, **Notification preferences**, **Default payment network**, **Storage usage**, **LLM usage**, **Vanity wallet tools**, **Preferences**, **Data export**, **About**.
   4. **(optional) Theme:** click Dark/Light/Auto → `localStorage['twx_theme']` (+ `window.threeTheme.set`) → toast "Theme applied" (no API).
-  5. **(optional) Sessions:** "Revoke" → `DELETE /api/auth/sessions/{id}` → toast + row removed; "Revoke all other" → `POST /api/auth/sessions/revoke-others` → toast.
+  5. **(optional) Sessions:** "Revoke" → `DELETE /api/auth/sessions/{id}` → toast + row removed; "Revoke all other" → `DELETE /api/auth/sessions` (revokes every other session **and rotates the current session cookie**) → toast.
   6. **(optional) Notifications:** "Mark all read" → `POST /api/notifications/read-all` → toast. The inbox covers the full bell vocabulary (sales, purchases, follows, remixes, DMs, coin-launch graduations, IRL, market, account).
-  6b. **(optional) Notification preferences:** the category × channel matrix (categories: sales, purchases, social, IRL, market, account; channels: in-app, push, email, Telegram) → `PATCH /api/notifications/preferences` per toggle → toast. The in-app channel is always on and rendered disabled.
+  6b. **(optional) Notification preferences:** a category × channel matrix driven by the server response (`categories` + `channels`, default channels in-app / push / email / Telegram). Toggles flip locally; a single **Save notification preferences** button sends the whole matrix via `PUT /api/notifications/preferences` `{ categories }` → toast "Notification preferences saved". Per-category `lockedChannels` render disabled (in-app is typically locked on); the Telegram column stays disabled ("Link a Telegram chat id to enable") until `telegram_chat_id` is set; a footer reports subscribed push devices.
   7. **(optional) Default network:** Base/Solana/Polygon → `localStorage['twx_default_network']` + best-effort `PATCH /api/dashboard/prefs` `{ prefs: { default_network } }` → toast.
   8. **(optional) Preferences:** toggle email notifications / show tips / compact sidebar → **Save preferences** → `PATCH /api/dashboard/prefs` `{ prefs }` → toast "Preferences saved".
   9. **(optional) Data export:** Agents / Avatars / All → fetch `GET /api/agents`, `GET /api/avatars?limit=100`, `GET /api/widgets` → build JSON blob → browser download → toast "Data exported".
 - **Decision points / branches:** Theme, default network, and privacy-style toggles are local-first (localStorage) with best-effort prefs sync; sessions/notifications/export hit live APIs. Read-only meters for storage/LLM usage.
-- **External calls / dependencies:** `GET /api/auth/me`, `GET /api/auth/sessions`, `DELETE /api/auth/sessions/{id}`, `POST /api/auth/sessions/revoke-others`, `GET /api/notifications`, `POST /api/notifications/read-all`, `GET /api/notifications/preferences`, `PATCH /api/notifications/preferences`, `GET /api/billing/summary`, `GET /api/usage/summary`, `PATCH /api/dashboard/prefs`, `GET /api/agents`, `GET /api/avatars`, `GET /api/widgets`.
+- **External calls / dependencies:** `GET /api/auth/me`, `GET /api/auth/sessions`, `DELETE /api/auth/sessions/{id}`, `DELETE /api/auth/sessions` (revoke-others + cookie rotation), `GET /api/notifications`, `POST /api/notifications/read-all`, `GET /api/notifications/preferences`, `PUT /api/notifications/preferences`, `GET /api/billing/summary`, `GET /api/usage/summary`, `GET`/`PATCH /api/dashboard/prefs`, `GET /api/agents`, `GET /api/avatars`, `GET /api/widgets`.
 - **Success state:** Toasts on each action (Theme applied / Session revoked / All notifications marked read / Default network set / Preferences saved / Data exported); sections reflect new state.
 - **Empty / error states:** "No session data", "No notifications" / "You're all caught up", "No usage data"; per-action error toasts with button re-enable for retry; skeletons during load.
 - **Step count:** 3 required (boot + fetch + render) (+6 optional setting flows)
@@ -202,6 +204,7 @@ Shared auth concepts:
 - **External calls / dependencies:** `GET /api/auth/me`, `PATCH /api/auth/profile`, `GET /api/auth/wallets`, `POST /api/auth/logout-everywhere`, `GET /api/auth/sessions`, `DELETE /api/auth/sessions/{id}`, `DELETE /api/auth/sessions`, `GET /api/auth/github/status`, `/api/auth/github/connect`, `POST /api/agents/{id}/memory-seed`, `GET`/`POST /api/agents/{id}/memory/seed/x`, `/api/auth/x/connect`, `DELETE /api/auth/me`.
 - **Success state:** "Saved!" / "Saved preference." / "All other sessions revoked." inline messages (auto-hide 4s); GitHub/X "Connected" tags; account deletion redirect to `/?deleted=1`.
 - **Empty / error states:** "No sessions found."; "Not connected" + connect buttons for GitHub/X; inline `.ok`/`.err` messages; delete-flow confirmation gate + error alert with button revert; "Checking…"/"Loading…" placeholders during async loads.
+- **Known issues (verified against source, 2026-08-05):** the Danger Zone calls `DELETE /api/auth/me`, but the server's `me` handler only accepts GET (no delete-account endpoint exists), so deletion fails with the "contact support" alert. Separately, this page's local fetch helper attaches no `x-csrf-token`, so in production the profile **Save changes** and both session-revoke calls are rejected by the CSRF gate (`403 csrf_missing`); only `logout-everywhere` was moved to the CSRF-carrying client. The `/dashboard/*` equivalents are unaffected (they go through `src/api.js`, which auto-attaches the token).
 - **Step count:** 3 required (boot + profile load + save profile) (+5 optional tab flows)
 
 ---
@@ -210,4 +213,4 @@ Shared auth concepts:
 
 - **No login/register modal:** auth is full-page (`/login`, `/register`). Other surfaces trigger it by redirect (`requireAuth()` in `src/auth/email-auth.js`, `requireUser()` in `src/dashboard-next/api.js`), preserving the origin via `?return=`/`?next=`. The dashboard chrome itself is gated, not the marketing pages.
 - **Two settings surfaces, intentionally separate:** `/settings` = identity/security/connections/danger (profile hub); `/dashboard/settings` = app/dashboard preferences (theme, sessions, notifications, network, storage/LLM meters, export). They share only the concept of "sessions" (each with its own UI and revoke calls).
-- **Heavy 301 consolidation:** `/dashboard-classic/*` and many legacy `/dashboard/*` slugs (wallets, sessions, actions, memory, strategy, voice, sns, delegation, x402, storage, usage, agent-pumpfun) redirect to the canonical `/dashboard/*` pages — mirrored in both `vercel.json` and the Vite dev middleware so dev matches prod.
+- **Heavy 301 consolidation:** `/dashboard-classic/*` and many legacy `/dashboard/*` slugs (wallets, sessions, actions, memory, strategy, voice, sns, delegation, x402, storage, usage, agent-pumpfun) redirect to the canonical `/dashboard/*` pages in `vercel.json`. The Vite dev middleware mirrors only the `/dashboard-classic/*` family; the bare legacy slugs 301 in prod but have no dev equivalent.

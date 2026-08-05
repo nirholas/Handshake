@@ -9,19 +9,20 @@ modules. Routes resolved via `vercel.json` rewrites.
 ### Conversational AI Chat (3D talking agent) — `/chat`
 - **Source:** `/workspaces/three.ws/chat/` (a standalone Svelte app, separate Vite build). Entry `/workspaces/three.ws/chat/index.html` → `/workspaces/three.ws/chat/src/main.js` → `/workspaces/three.ws/chat/src/App.svelte`. Key modules: `chat/src/providers.js` (LLM providers), `chat/src/convo.js` (streaming completion pipeline), `chat/src/TalkingHead.svelte` (3D avatar + TTS lip-sync), `chat/src/AgentPicker.svelte`, `chat/src/ModelSelector.svelte`, `chat/src/stores.js`, `chat/src/walletAuth.js` (SIWE/SIWS), `chat/src/tools.js`, `chat/src/sync.js`, `chat/src/SkillsMarketplaceModal.svelte`, `chat/src/TxApprovalModal.svelte`.
 - **Entry point:** `/chat` → `chat/index.html` (`<div id="app">` mounted by `main.js`).
-- **Prerequisites / gates:** None to start chatting — free built-in models stream through the server proxy with no key. Optional gates: user-supplied API key (Anthropic/OpenAI/Groq/Mistral/Ollama/OpenRouter) stored locally for non-built-in models; wallet sign-in (SIWE/SIWS via `/api/auth/*`) only for cross-device sync + on-chain tool calls; `TxApprovalModal` requires a connected wallet for wallet/pump tool transactions. No $THREE gate. 3D talking head and TTS are opt-in toggles (off by default).
+- **Prerequisites / gates:** None to start chatting: free built-in models stream through the server proxy with no key. Optional gates: user-supplied API key (Anthropic/OpenAI/Groq/Mistral/Ollama/OpenRouter) stored locally for non-built-in models; wallet sign-in (SIWE/SIWS via `/api/auth/*`) only for cross-device sync + on-chain tool calls; `TxApprovalModal` requires a connected wallet for wallet/pump tool transactions. No $THREE gate. Voice output is opt-in (off by default).
 - **Steps (6):**
-  1. Open `/chat`; app boots, fetches free model list from `/api/chat/models`, shows empty state with suggestion chips.
-  2. (optional) Click the model selector and pick an LLM, or open `AgentPicker` to load a persona/agent (from `/api/agents`, `/api/marketplace/agents`, or the agent library JSON).
-  3. (optional) Enable the 3D Talking Head and/or TTS toggle; a GLB avatar loads (`talkingHeadAvatarUrl`, fallback `/avatars/default.glb`).
+  1. Open `/chat`; app boots, fetches the free model list from `/api/chat/models`, shows empty state with suggestion chips. `BUILTIN_MODELS` in `providers.js` is only a first-paint seed; `resolveDefaultModel()` prefers a model the server reports as live, so if the configured default has been retired upstream a new conversation opens on a live model instead of a dead one.
+  2. (optional) Click the model selector and pick an LLM, or open `AgentPicker` to load a persona/agent (from `/api/agents`, `/api/marketplace/agents`, or the agent library JSON). Loading an agent mounts its live `<agent-3d>` avatar in the panel.
+  3. (optional) Toggle voice output in settings.
   4. Type a message in the composer and submit (or attach an image / file for multimodal).
   5. `convo.complete()` POSTs to the provider's completion URL (built-in → `/api/chat/proxy`; Anthropic → `/v1/messages`; others → `/v1/chat/completions`) and streams tokens back into the assistant bubble (markdown + KaTeX rendered live).
-  6. On reply completion: if Talking Head is enabled the avatar runs `talkingHead.speak({text, mood})` (TTS via `/api/tts/google` endpoint → viseme lip-sync); else if TTS toggle on, browser `speechSynthesis` reads it. Payoff: a 3D agent that answers in voice with synced mouth + mood animation.
-- **Decision points / branches:** model/provider choice (free built-in vs keyed provider vs OpenRouter "all models" vs local Ollama); text vs voice output (Talking Head 3D vs browser speechSynthesis vs silent); persona/agent loaded vs raw model; tool-calling on/off (curated tool packs: agent, pump, payments, wallet); regenerate / edit / branch a message; share conversation (compressed link via `share.js`).
-- **External calls / dependencies:** `/api/chat/models` (free model list, OpenRouter-proxied), `/api/chat/proxy` (built-in completions), `/api/chat/config`, `/api/chat/mcp`, `/api/tts/google` (TTS for lip-sync), `/api/agents` + `/api/marketplace/agents` (agent picker), `/api/auth/{me,logout,siwe/nonce,siwe/verify,siws/nonce,siws/verify}` (wallet auth), agent-library `index.en-US.json`. Direct provider APIs (api.anthropic.com, api.openai.com, api.groq.com, api.mistral.ai, openrouter.ai, local Ollama) when a user key is set. Three.js (importmap, r0.169) for the Talking Head.
-- **Success state:** Streamed assistant message rendered; if enabled, 3D avatar speaks with lip-sync + mood; conversation persisted to IndexedDB / optional E2E-encrypted sync.
-- **Empty / error states:** Empty state with brand tagline + suggestion chips when no messages. Provider/network errors surface as inline notices; abortable generation via `controller`. Missing API key → model marked unavailable in selector. Avatar GLB load failure falls back to default avatar; TTS failure degrades silently to text.
+  6. On reply completion with voice enabled: if an agent is loaded, its `<agent-3d>` avatar speaks the reply (`agentEl.speak(...)`) and expresses the classified emotion (`agentEl.expressEmotion(...)`); with no agent loaded, browser `speechSynthesis` reads it. Payoff: a 3D agent that answers in voice with mood animation. (A legacy `TalkingHead.svelte` component is still imported but never mounted; see the note below.)
+- **Decision points / branches:** model/provider choice (free built-in vs keyed provider vs OpenRouter "all models" vs local Ollama); text vs voice output (agent-3d speech vs browser speechSynthesis vs silent); persona/agent loaded vs raw model; tool-calling on/off (16 curated tool packs in `tools.js` `curatedToolPacks`, surfaced via `ToolPackModal`: wallet-transactions, x402-pay, tradingview, price-chart-3d, token-price, token-ticker-3d, web-search, date-time, pump-launch, tx-explain, mint-scene-nft, nft-3d-import, forge-text-to-3d, forge-avatar, wallet-balances, token-gate-scene; the built-in wallet/agent/pump/payments tool schemas back them); every generated 3D model card carries "View in AR ↗" (`/ar?src=<glb>`), "Download GLB", and "Viewer ↗" actions; regenerate / edit / branch a message; share conversation (compressed link via `share.js`).
+- **External calls / dependencies:** `/api/chat/models` (free model list, OpenRouter-proxied), `/api/chat/proxy` (built-in completions), `/api/chat/config`, `/api/mcp` + `/api/pump-fun-mcp` (skills marketplace / pump tools), `/api/agents` + `/api/marketplace/agents` (agent picker), `/api/auth/{me,logout,siwe/nonce,siwe/verify,siws/nonce,siws/verify}` (wallet auth), agent-library `index.en-US.json`. Direct provider APIs (api.anthropic.com, api.openai.com, api.groq.com, api.mistral.ai, openrouter.ai, local Ollama) when a user key is set.
+- **Success state:** Streamed assistant message rendered; if voice is enabled and an agent is loaded, the 3D avatar speaks with mood animation; conversation persisted to IndexedDB / optional E2E-encrypted sync.
+- **Empty / error states:** Empty state with brand tagline + suggestion chips when no messages. Provider/network errors surface as inline notices; abortable generation via `controller`. Missing API key → model marked unavailable in selector. Avatar GLB load failure falls back to default avatar; speech failure degrades silently to text.
 - **Step count:** 6 required (+4 optional)
+- **Known issue (verified 2026-08-05):** the standalone 3D Talking Head is dead code. `TalkingHead.svelte` is imported in `App.svelte` but never rendered, so its bind never fires; with the settings "Talking Head" toggle on, replies queue in `pendingSpeak` and are never spoken (and `speechSynthesis` is suppressed while the toggle is on). Its default TTS endpoint `/api/tts/google` also no longer exists (live TTS endpoints are `/api/tts/speak`, `/api/tts/eleven`, `/api/tts/edge`). The working voice path is the agent-3d avatar described in step 6.
 
 ---
 
@@ -32,12 +33,12 @@ modules. Routes resolved via `vercel.json` rewrites.
 - **Steps (4):**
   1. Hit `/agent` → 301 to `/agents`; directory of agents renders.
   2. Click an agent card → `/agents/:id` loads `agent-detail.js`.
-  3. Profile renders: `<model-viewer>` 3D avatar preview, identity, voice metadata (cloned provider or browser TTS pill), live $THREE/pump token chip (streamed via `/api/pump/by-agent`), skills, history.
+  3. Profile renders: a live Three.js hero avatar (`mountIdleAvatar` retargets the canonical idle clip onto the rig with a procedural idle-life loop; no static `<model-viewer>`), identity, voice metadata (cloned provider or browser TTS pill), live $THREE/pump token chip (streamed via `/api/pump/by-agent`), skills (with dynamic price/promo state from `/api/marketplace/skill-promo?agent_id=…&skill=…`), history.
   4. Click "See in world" → routes to `/play?avatar=<glb>&coin=<THREE_MINT>` (the 3D world payoff); or "Edit" / wallet chip / coin-launch actions for owners.
 - **Decision points / branches:** view vs edit (owner); "See in world" (→ /play) vs embed (`/agent/:id/embed`) vs wallet (`/agent/:id/wallet`); token chip present (launched coin) vs not.
-- **External calls / dependencies:** `/api/agents/:id`, `/api/marketplace/agents/:id`, `/api/pump/by-agent` (live market-cap stream), `/api/agent-share` (share). model-viewer (Google CDN) for the 3D preview.
+- **External calls / dependencies:** `/api/agents/:id`, `/api/marketplace/agents/:id`, `/api/pump/by-agent` (live market-cap stream), `/api/marketplace/skill-promo` (skill pricing/promo), `/api/agent-share` (share). Three.js idle-avatar mount for the 3D preview (falls back to a flat image when WebGL/GLB fails).
 - **Success state:** Agent profile with interactive 3D avatar, live token data, and working navigation to world/embed/edit.
-- **Empty / error states:** Avatar fetch failure → flat-image fallback (model-viewer hidden); enrich failure logged non-fatally; save errors surface inline in the edit flow.
+- **Empty / error states:** Avatar mount failure → flat-image fallback; enrich failure logged non-fatally; save errors surface inline in the edit flow.
 - **Step count:** 4 required (+2 optional)
 - **Note:** This route is a profile/directory surface, **not** a chat interface. The "talk to a 3D agent" experience lives at `/chat` (Talking Head). `/agents/:id` links *out* to `/play` ("See in world"), not to an inline chat.
 
@@ -45,8 +46,8 @@ modules. Routes resolved via `vercel.json` rewrites.
 
 ### Brain — Persona Builder + Multi-LLM Playground — `/brain`
 - **Source:** `/workspaces/three.ws/pages/brain.html` → `/workspaces/three.ws/src/brain.js`.
-- **Entry point:** `/brain` → `brain.html` (H1 "Build Your Persona"), two tabs: Persona + Playground.
-- **Prerequisites / gates:** None to use the playground / compare models. Saving a persona as a deployed agent requires sign-in (auth-hint check + `/api/agents` with credentials); an auth gate is shown if signed out. No $THREE gate.
+- **Entry point:** `/brain` → `brain.html` (H1 "Pick a vibe", sub-copy "One tap gives your agent a personality. No extra steps."; "Build Persona" is a sidebar button), two tabs: Persona + Playground.
+- **Prerequisites / gates:** None to open the playground, but signed-out callers are limited to the free-model set (`ANON_BRAIN_PROVIDERS` in `api/brain/chat.js`: gpt-oss-120b plus the NVIDIA NIM family); every paid first-party model returns `401 "sign in to use this model"`, and anonymous traffic is rate limited. Saving a persona as a deployed agent requires sign-in (auth-hint check + `/api/agents` with credentials); an auth gate is shown if signed out. No $THREE gate.
 - **Steps (6):**
   1. Open `/brain`; Persona tab active, archetype presets rendered.
   2. (optional) Apply an archetype preset or type freeform persona text → `/api/persona/extract` structures it into a persona object (tone, vocabulary, interests, dont_say, greeting).
@@ -55,9 +56,9 @@ modules. Routes resolved via `vercel.json` rewrites.
   5. Type a prompt and run; `streamProvider()` POSTs to `/api/brain/chat` per model and streams responses side-by-side, each prefixed with the effective persona system prompt.
   6. (optional) Save the persona as an agent → POST `/api/agents` (or PATCH `/api/agents/:id`) with the built `system_prompt`.
 - **Decision points / branches:** Compare (multi-model fan-out) vs Focus (single model); persona enabled/disabled (`personaEnabled` toggle injects/omits the system prompt); archetype preset vs freeform extraction; model availability (unavailable models disabled in selector); save-as-agent (gated by auth).
-- **External calls / dependencies:** `GET /api/brain/chat` (provider availability), `POST /api/brain/chat` (per-model streaming completions), `/api/persona/extract` (structure persona), `/api/agents` + `/api/agents/:id` (load/save agent). Models span Anthropic / OpenAI / OpenRouter / Groq / ModelScope tiers.
+- **External calls / dependencies:** `GET /api/brain/chat` (provider availability), `POST /api/brain/chat` (per-model streaming completions), `/api/persona/extract` (structure persona), `/api/agents` + `/api/agents/:id` (load/save agent). Models span Anthropic (via Google Vertex), OpenAI (via OpenRouter), xAI Grok, DeepSeek, Qwen/DashScope, IBM watsonx, NVIDIA NIM, and Google Vertex Gemini tiers.
 - **Success state:** Multiple model responses stream into the compare grid (or one in focus); persona optionally persisted locally and/or saved as a deployable agent.
-- **Empty / error states:** "Select at least one model" notice; provider-availability fetch failure is non-fatal (all models treated available); upstream stream error surfaces per-model; auth gate shown when saving while signed out; sessions/persona persisted to localStorage.
+- **Empty / error states:** "Select at least one model" notice; provider-availability fetch failure is non-fatal (all models treated available); upstream stream error surfaces per-model; signed-out use of a paid model errors with a sign-in prompt; auth gate shown when saving while signed out; sessions/persona persisted to localStorage.
 - **Step count:** 6 required (+2 optional)
 
 ---
@@ -82,7 +83,7 @@ modules. Routes resolved via `vercel.json` rewrites.
 ---
 
 ### Labs — Feature Gallery — `/labs`
-- **Source:** `/workspaces/three.ws/pages/labs.html` → `/workspaces/three.ws/src/labs.js`. Data: `/features.json` (static registry, mirror of `/api/features`).
+- **Source:** `/workspaces/three.ws/pages/labs.html` → `/workspaces/three.ws/src/labs.js`. Data: `/features.json` (generated by `scripts/build-page-index.mjs` from `data/pages.json`; `labs.js` flattens its `sections[].pages` and shows only pages flagged `showcase: true`).
 - **Entry point:** `/labs` → `labs.html`; grid of "gem" cards.
 - **Prerequisites / gates:** None. Pure discovery surface.
 - **Steps (3):**
@@ -98,17 +99,17 @@ modules. Routes resolved via `vercel.json` rewrites.
 ---
 
 ### Launchpad Studio — `/launchpad`
-- **Source:** `/workspaces/three.ws/pages/launchpad.html` → inline `<script type="module">` → `/workspaces/three.ws/src/editor/launchpad-studio.js` (`mountLaunchpadStudio`).
-- **Entry point:** `/launchpad` (optional `?template=&slug=&wallet=&website=&avatar=` query hydration) → studio mounts into `#root` (3-pane: sidebar / live-preview stage / config rail).
+- **Source:** `/workspaces/three.ws/pages/launchpad.html` → `mountLaunchpadLanding` from `/workspaces/three.ws/src/launchpad/landing.js` (a discovery front door), which lazy-imports `mountLaunchpadStudio` from `/workspaces/three.ws/src/editor/launchpad-studio.js` only when the URL deep-links the editor.
+- **Entry point:** Bare `/launchpad` renders the landing page; a URL carrying `?slug=`, `?template=`, `?wallet=`, `?avatar=`, `?build`, or `?studio` mounts the studio into `#root` (3-pane: sidebar / live-preview stage / config rail).
 - **Prerequisites / gates:** Building/previewing is open. **Publishing requires a payout wallet address** (throws "Add your payout wallet address." otherwise) and writes via `/api/launchpad/publish`; editing an existing published page (`?slug=`) hydrates owner state and requires owner sign-in. Templates include a Token Launchpad (one-click Pump.fun mint with creator-fee split — generic runtime mint, $THREE-compliant). No $THREE gate to use the editor.
 - **Steps (6):**
-  1. Open `/launchpad`; studio mounts with a default template (`token-launchpad`) and recent-projects from localStorage.
-  2. Pick a template card (e.g. Token Launchpad, Concierge, Showroom).
+  1. Open `/launchpad`; the landing renders. Enter the studio via a template/build CTA (or a deep-linked URL); the studio mounts with a default template (`token-launchpad`) and recent-projects from localStorage.
+  2. Pick a template card (`token-launchpad`, `paid-concierge`, or `gated-showroom`).
   3. Fill the config form (slug, brand color, payout wallet, website, theme, avatar, monetization/chain) — live preview updates in the center stage.
   4. (optional) Attach a 3D avatar (agent-3d element) into the avatar-stage slot.
   5. Add the payout wallet address (required for publish).
   6. Click Publish → `POST /api/launchpad/publish`; on success the page is hosted at `/p/<slug>` and an owner token is kept in localStorage for re-edits.
-- **Decision points / branches:** template choice (token-launchpad vs concierge vs showroom…); new vs edit (`?slug=` hydration via `/api/launchpad/get`); chain/payout selection; signed-in owner vs anonymous (owner-only sections hidden on 401).
+- **Decision points / branches:** landing browse vs studio deep-link; template choice (token-launchpad vs paid-concierge vs gated-showroom); new vs edit (`?slug=` hydration via `/api/launchpad/get`); chain/payout selection; signed-in owner vs anonymous (owner-only sections hidden on 401).
 - **External calls / dependencies:** `POST /api/launchpad/publish`, `GET /api/launchpad/get` (hydrate existing), `/api/agents` (my-agents avatar picker), Pump.fun launch plumbing (runtime mint, creator-fee split). agent-3d / Three.js for the avatar preview.
 - **Success state:** A live hosted page at `/p/<slug>` with the chosen template, brand, avatar, and (for token template) a one-click Pump.fun mint; editable later from the same browser.
 - **Empty / error states:** Publish blocked with actionable message if no payout wallet; publish-status line shows ok/err; owner-only sections silently hidden when signed out (401); recent-projects empty on first visit.
