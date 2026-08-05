@@ -107,5 +107,6 @@ Everything above is live and verifiable today; judge the thesis by the product, 
 -   Changelog: [three.ws/changelog](https://three.ws/changelog)
 -   GitHub: [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws)
 -   X: [@trythreews](https://x.com/trythreews)
+-   The meetup announcement on this group's blog: [Join the Three.ws User Group's First In-World Meetup This Friday](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/08/04/join-the-threews-user-groups-first-in-world-meetup)
 
 _Questions, skepticism, and feature requests all welcome below. The skeptical ones are the most useful._
