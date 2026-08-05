@@ -101,6 +101,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Route documentation | `npm run audit:pages` | Every human-facing route is documented in `data/pages.json`. |
 | Declared pages resolve | `npm run check:pages` | Every page declared in `data/pages.json` is actually reachable. |
 | Routing and 404 model | `npm run audit:routes` | Catalog pages reachable, unknown paths reach the designed 404, no shadowed routes. |
+| Route shadowing | `npm run audit:route-shadowing` | Every handler under `api/` that looks routed can actually be reached through the production router's walk of `vercel.json`. |
 | API handlers export a body | `npm run audit:handlers` | No API handler ships empty or without an export. |
 | The `[hidden]` guard | `npm run audit:hidden-guard` | Every page resolves the CSS that makes `hidden` actually hide. |
 | Site link integrity | `npm run audit:links` | Every navigable target resolves to a real route or file. |
@@ -110,10 +111,15 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Guard | Command | Protects |
 |---|---|---|
 | Documentation integrity | `npm run audit:docs` | No dead relative link, no command naming a missing script, no package without a README. |
+| Tutorial reachability | `npm run check:tutorials` | Every tutorial appears in the library manifest, has its markdown on disk, and is registered in `data/pages.json`. |
+| Runnable doc samples | `npm run check:runnable-docs` | Every sample a reader can press Run on still returns what the doc says it returns. |
+| Doc figures | `npm run check:doc-media` | Every figure a doc points at was really captured, still matches its recipe, and carries alt text. |
+| Tour atlas truth | `npm run audit:tour-atlas` | `public/tour/atlas.json` matches a fresh render: every stop resolves and every promised screenshot exists. |
 | x402 endpoint catalog | `npm run audit:x402-catalog` | Every paid endpoint is documented, so a buyer can find it. |
 | MCP manifests | `npm run audit:mcp` | Every MCP manifest satisfies the official registry's rules, offline. |
 | MCP golden contracts | `npm run audit:mcp-golden` | Tool names, descriptions, and schemas against a committed snapshot. |
 | MCP safety annotations | `npm run audit:mcp-safety` | Declared `readOnlyHint` and `destructiveHint` match what handlers do. |
+| MCP tool catalog freshness | `npm run audit:mcp-catalog` | `public/mcp-catalog.json` matches what the MCP servers actually expose. |
 | Cron schedule drift | `npm run check:cron-syntax`, `npm run check:cron-drift` | Valid expressions, and agreement with the running Cloud Scheduler jobs. |
 
 ### Build and deploy
@@ -130,12 +136,16 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Guard | Command | Protects |
 |---|---|---|
 | Console sweep | `npm run audit:console` | A clean browser console on every route, desktop and mobile. |
+| Overlapping fixed overlays | `npm run audit:overlays` | No persistent floating widget can cover another one's controls. |
 | Image loading attributes | `npm run check:images` | Every JS-rendered image sets `loading` and `decoding`. |
 | Wardrobe catalog integrity | `npm run audit:garments` | Every garment validates and its GLB hash matches its manifest. |
 | Rig coverage | `npm run audit:rig-coverage` | How well the canonicalizer maps skeletons actually stored in production. |
 | Service wallet configuration | `npm run audit:service-wallets` | Balances, floors, and whether the advertised x402 fee payer matches the real secret. |
 | Fleet wallet flows | `npm run audit:wallet-flows` | Where the platform's SOL is, where it went, and whether any is leaking. |
 | Relayer balances | `npm run check:relayer-balances` | Every configured Solana signer is above its documented minimum. |
+| LLM spend metering | `npm run audit:llm-metering` | Every LLM lane that spends money reports a real cost, never exactly $0 and never an unknown. |
+| Cron liveness | `npm run audit:cron-liveness` | Each cron in `vercel.json` resolves to a handler that exists, imports, answers a live request, and refuses an unauthenticated one. |
+| Custodial key health | `npm run audit:custodial-keys` | Every stored custodial Solana secret still decrypts under the current `WALLET_ENCRYPTION_KEY`. |
 | Delegation contract addresses | `npm run check:erc7710` | Every delegation-manager address is a deployed contract. |
 
 ---

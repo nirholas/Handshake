@@ -8,13 +8,13 @@ touching the build pipeline.
 
 | Command | What it does |
 | --- | --- |
-| `npm run build` | The app build: `prebuild` lifecycle → `vite build` (`--max-old-space-size=6144`) → `scripts/strip-sw-from-embeds.mjs` → `scripts/inject-tour-boot.mjs`. Output → `dist/`. |
-| `npm run build:gcp` | The **full pre-deploy build**, in the load-bearing order: build info snapshot → `npm run build` (the vite build wipes `dist/`, so it must run first) → UMD library build (`build:lib:full`) → `publish:lib` (mirrors the library into `dist/`) → `build:info` → `check:dist`. Run this, not bare `npm run build`, before deploying: `check:dist` fails without the published library bundle. |
-| `npm run deploy:gcp` | The **production deploy**: `check:dist` + `db:check` gates → `gcloud builds submit` (Docker image via `server/cloudbuild.yaml`) → Cloud Run (`three-ws-api`, `us-central1`) → CDN cache purge. Run `npm run build:gcp` first so `dist/` is complete (see [CI parity](#ci-parity)). |
+| `npm run build` | The app build: `prebuild` lifecycle → `vite build` (`--max-old-space-size=6144`) → `scripts/strip-sw-from-embeds.mjs` → `scripts/inject-tour-boot.mjs` → `scripts/inject-atlas.mjs`. Output → `dist/`. |
+| `npm run build:gcp` | The **full pre-deploy build**, in the load-bearing order: `check:conflicts` → `check:browser-graph` → `ensure:avatar-studio` → build info snapshot → `build:chat` → `npm run build` (the vite build wipes `dist/`, so everything that writes into `dist/` comes after it) → UMD library build (`build:lib:full`) → `publish:lib` (mirrors the library into `dist/`) → `build:info` → `check:dist` → `check:pages`. Run this, not bare `npm run build`, before deploying: `check:dist` fails without the published library bundle. |
+| `npm run deploy:gcp` | The **production deploy**: `check:dist` + `check:pages` + `db:check` gates → `gcloud builds submit` (Docker image via `server/cloudbuild.yaml`) → Cloud Run (`three-ws-api`, `us-central1`) → CDN cache purge → `smoke:prod` sweep of the live site. Run `npm run build:gcp` first so `dist/` is complete (see [CI parity](#ci-parity)). |
 | `npm run deploy:gcp:full` | `build:gcp` + `deploy:gcp` in one command. |
 | `npm run build:vercel` | Legacy full-build orchestrator (`scripts/build-vercel.mjs`) from the Vercel era — runs the gate suite, bundles the API with esbuild, and builds every sub-package. **Not on the Cloud Run deploy path**; kept for full local reproduction (see [the trap](#the-esbuild-overwrite-trap)). |
 | `npm run clean` | `rm -rf dist/* dist-lib/*`. |
-| `npm run check:dist` | Asserts the published `agent-3d` library bundle + `dist-lib` mirror exist and the version matches `package.json` (`scripts/check-dist.mjs`). |
+| `npm run check:dist` | Asserts the published `agent-3d` library bundle + `dist-lib` mirror exist, the version matches `package.json`, and a short list of critical static pages resolves in `dist/` (`scripts/check-dist.mjs`). The full page sweep against the `vercel.json` route table is `npm run check:pages` (`scripts/check-pages.mjs`). |
 | `npm run audit:deploy` | Pre-flight for the three 2026-06-11 outage classes: committed symlinks, unsatisfied peer deps, undeclared `api/` imports (`scripts/audit-deploy-artifacts.mjs`). |
 | `npm run guard:esbuild` | esbuild-trap guard — blocks committing a bundled `api/*.js` (scans the git index). `:all` sweeps the working tree. |
 
@@ -33,14 +33,15 @@ npm run deploy:gcp   # build the image + deploy to Cloud Run
 only: the vite step wipes `dist/`, so without the follow-on `publish:lib`
 mirror the `check:dist` gate fails. `build:gcp` encodes the correct order.
 
-`deploy:gcp` runs `check:dist` and `db:check`, then `gcloud builds submit
+`deploy:gcp` runs `check:dist`, `check:pages`, and `db:check`, then `gcloud builds submit
 --config server/cloudbuild.yaml`. Cloud Build builds the root `Dockerfile` on a
 32-vCPU machine with BuildKit inline caching (an unchanged `package-lock.json`
 skips `npm ci`), pushes the image, deploys it to Cloud Run in one run, and the
-`deploy:gcp:purge-cdn` step invalidates the CDN cache. The image copies the
+`deploy:gcp:purge-cdn` step invalidates the CDN cache, after which `smoke:prod`
+sweeps every registered page on the live site. The image copies the
 already-built `dist/` and runs `server/index.mjs`, which serves the static
 front-end, the `vercel.json` route table, and every `api/**` handler from source
-(no per-route bundling). The scheduled jobs (89 crons in `vercel.json` at last
+(no per-route bundling). The scheduled jobs (103 crons in `vercel.json` at last
 count) run on **Google Cloud Scheduler** driven off the `vercel.json` cron
 list; there is **no GitHub Actions CI**. Full runbook: [docs/ops/gcp-production.md](./ops/gcp-production.md).
 
@@ -137,11 +138,12 @@ head -1 api/<route>.js   # bundle if it starts with __defProp / createRequire / 
 ## Embed integrity
 
 Embed surfaces (`/widget`, `/embed`, `/agent-embed`, `/a-embed`,
-`/avatar-embed`, `/agent-token-page`) load inside third-party iframes. They must
+`/avatar-embed`, `/agent-token-page`, `/assistant-frame`) load inside third-party iframes. They must
 **not** register the service worker — an SW registered from an iframe is scoped
 to `https://three.ws/` and would intercept every other tab on the origin.
 
-`scripts/strip-sw-from-embeds.mjs` runs as the last step of `npm run build` and
+`scripts/strip-sw-from-embeds.mjs` runs straight after the vite step of
+`npm run build` (before `inject-tour-boot` and `inject-atlas`) and
 removes the VitePWA `register-sw` `<script>` from each embed HTML in `dist/`. It
 is idempotent and fails loudly if no embed HTML is found. Verify with:
 
