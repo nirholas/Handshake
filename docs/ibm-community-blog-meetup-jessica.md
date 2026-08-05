@@ -1,8 +1,10 @@
-# Our First In-World Community Meetup Is This Friday: See You Inside three.ws
+# Join the Three.ws User Group's First In-World Meetup This Friday
 
-_By Jessica Swanson. This is the blog companion to the meetup discussion thread pinned on the group home page; the event itself is on this group's Events tab._
+_By Jessica Swanson. The event listing is on this group's Events tab; the full venue guide is in the meetup discussion thread pinned on the group home page._
 
-When we opened this group, we promised discussion threads, technical blogs, live build sessions, and a place for people building AI agents with 3D capabilities to compare notes. This Friday we are adding the piece that has been missing: meeting each other. And true to form for this community, we are not doing it on a video call. Our first community meetup happens inside the platform itself, in the flagship world at [three.ws/play](https://three.ws/play).
+When this user group launched in July, the promise was more than threads and blog posts: it was live sessions with the people actually building AI agents with 3D capabilities. This Friday we get the first one, and I want to make sure nobody misses it because they assumed it was another webinar link.
+
+It is not a video call. The three.ws team is hosting the group's first community meetup inside the platform itself, in the flagship world at [three.ws/play](https://three.ws/play). You attend as an avatar, you hear the people standing near you through spatial voice chat, and the product tour happens by literally walking through the product.
 
 ## The details
 
@@ -16,24 +18,24 @@ When we opened this group, we promised discussion threads, technical blogs, live
 
 ## How to join
 
-1.  **Open [three.ws/play](https://three.ws/play)** at the event time and click the pinned $THREE world.
-2.  **Pick an avatar.** Guests get one automatically. If you would like a custom one, make it beforehand at [three.ws](https://three.ws) from a text prompt or a selfie; it follows you into the world.
+1.  **Open [three.ws/play](https://three.ws/play)** at the event time and click the pinned world at the top of the list.
+2.  **Pick an avatar.** Guests get one automatically. If you want a custom one, make it beforehand at [three.ws](https://three.ws) from a text prompt or a selfie; it follows you into the world.
 3.  **Walk up to people and talk.** Voice chat is spatial: you hear the people near you, from the direction they stand, and they fade as you walk away. Text chat works too.
 
-If you have never been in a browser-based 3D world before, come ten minutes early. Someone from the team will be at the spawn point, and you will be walking and talking before the event starts.
+If you have never been in a browser-based 3D world before, arrive ten minutes early. The three.ws team will be at the spawn point, and you will be walking and talking before the event starts.
 
-## What to expect
+## What is on the agenda
 
--   **A live tour of the platform, from inside it.** The team walks the world and shows what is new: the creation tools, the agent economy, the multiplayer layer, all demonstrated in place rather than on slides.
--   **Community demos.** If you have built something with the platform (an avatar, an embed, an MCP integration, an agent), bring it. There is time set aside to show it and talk through how you made it.
--   **Open Q&A.** Ask the team anything: architecture, roadmap, how a specific feature works. The skeptical questions are the most useful ones.
--   **A first look at what is coming next**, including the event infrastructure being built for /play itself.
+-   **A live tour of the platform, from inside it**: the creation tools, the agent economy, and the multiplayer layer, demonstrated in place rather than on slides.
+-   **Community demos.** If you have built something with the platform (an avatar, an embed, an MCP integration, an agent), bring it. There is time set aside for members to show their work.
+-   **Open Q&A with the three.ws team**: architecture, roadmap, how specific features work. They have said the skeptical questions are the most useful ones, so hold nothing back.
+-   **A first look at what is coming next** on the platform.
 
-## Why in-world instead of a video call
+## Why I think this format is worth your hour
 
-Partly because it is more fun, but mostly because it is the honest way to show you the product. The venue is the demo. three.ws/play is a persistent multiplayer 3D world that runs entirely in the browser: spatial voice, text chat, a collaborative building layer, a working in-game economy, and live market data on in-world screens. Attending the meetup means experiencing exactly what any community can spin up for itself, because every world is just a shareable URL. If your community wants to run its own event afterward, the full how-to (URL parameters, token gating, the APIs behind it) is written up on the event page in our Events tab.
+The venue is the demo. three.ws/play is a persistent multiplayer 3D world that runs entirely in the browser: spatial voice, text chat, a collaborative building layer, a working in-game economy, and live data on in-world screens. An hour spent attending the meetup doubles as an hour of hands-on evaluation of the technology this group exists to discuss, and every world there is a plain shareable URL, so what you learn on Friday applies directly to running events of your own.
 
-For the deep technical background before you arrive, read the technical tour on this group's blog: it covers the text-to-3D pipeline, the universal rigging system, the multiplayer architecture, and the x402 agent-payment rail end to end.
+If you want the deep technical background before you arrive (the text-to-3D pipeline, the universal rigging system, the multiplayer architecture, the x402 agent-payment rail), the meetup thread pinned on the group home page carries the full write-up.
 
 ## Links
 
@@ -47,4 +49,4 @@ For the deep technical background before you arrive, read the technical tour on 
 -   GitHub: [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws)
 -   X: [@trythreews](https://x.com/trythreews)
 
-See you Friday at 8 AM Pacific. Come as an avatar, leave with new collaborators.
+See you Friday at 8 AM Pacific. I will be the one asking the skeptical questions from the front row.
