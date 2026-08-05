@@ -46,7 +46,7 @@ Three properties define the design:
 
 | Surface | Route / tool | Notes |
 | --- | --- | --- |
-| Forge page | [/forge](https://three.ws/forge), `src/forge.js` | Text, photos (up to 4 views), sketch. One shared polling loop. |
+| Forge page | [/forge](https://three.ws/forge), `src/forge.js` | Text, photos (up to 6 views), sketch. One shared polling loop. `/forge-max` deep-links straight into the maximum-quality lane. |
 | Homepage mini-forge | `src/home-forge.js` | Health-aware default lane, never pins a backend. |
 | Forge Studio | [/forge-studio](https://three.ws/forge-studio), `src/forge-studio/` | Create, refine, stylize, Game-Ready export, remix. |
 | Core API | `POST /api/forge` (`api/forge.js`) | The orchestrator. Auth-free. Text, image, and sketch bodies. |
@@ -60,7 +60,7 @@ Three properties define the design:
 | Refinement | `POST /api/forge-iterate` (`api/forge-iterate.js`) | Conversational refinement with version lineage for the signed-in Studio. |
 | MCP (paid stdio) | `mesh_forge`, `forge_avatar`, `forge_free`, `text_to_avatar`, `rig_mesh`, `refine_model`, `restyle_material` (`mcp-server/src/tools/`) | Shared cores in `mcp-server/src/tools/_studio-core.js`; thin clients over `/api/forge`. |
 | ChatGPT clone | `POST /api/gpt-forge` (`api/gpt-forge.js`) | Clone of the orchestrator dedicated to the ChatGPT surfaces (the Apps SDK MCP connector `api/mcp-studio` and the custom-GPT Actions endpoint `api/3d/studio`, via `api/_mcp-studio/gpt-forge-client.js`), so the ChatGPT pipeline can evolve without touching `/api/forge`. Same lanes, tiers, job tokens, and `forge_creations` rows. First divergence: its poll responses also carry `prompt`, `preview_image_url` (the painted concept view), and `text_to_image_model`, so the ChatGPT surfaces can show the concept image while the mesh generates. |
-| MCP (hosted HTTP) | `text_to_3d`, `image_to_3d`, `auto_rig_model` (`api/mcp-3d.js`, tools in `api/_mcp3d/tools/studio.js`) | Streamable HTTP server registered as `io.github.nirholas/three-ws-3d-studio`. |
+| MCP (hosted HTTP) | `text_to_3d`, `image_to_3d`, `auto_rig_model`, plus the wider studio toolset (`generation_status`, `preview_3d`, `remove_background`, `remesh_model`, `stylize_model`, `segment_model`, `retexture_model`, `pose_model`, `save_avatar`, persona tools; `api/mcp-3d.js`, tools in `api/_mcp3d/tools/studio.js`) | Streamable HTTP server registered as `io.github.nirholas/three-ws-3d-studio`. |
 | DCC plugins | `integrations/blender/`, `integrations/comfyui/`, `integrations/_pyclient/` | First-party clients driving the same API. |
 
 The rule when adding a surface: never talk to a provider directly. Submit through `/api/forge` (or the shared MCP cores) so routing, failover, persistence, and payments stay in one place.
@@ -113,7 +113,7 @@ Routing answers one question: given `(path, tier, userImages, prompt)`, which co
 
 **Static preference order.** `freeLaneCandidates()` builds the ordered list both resolvers walk:
 
-1. The tier's named free default (`FREE_DEFAULT_FOR_TIERS`): draft/standard image requests name `nvidia`; high names `hunyuan3d` (self-host).
+1. The tier's named free default (`FREE_DEFAULT_FOR_TIERS`): draft/standard image requests name `trellis_selfhost`; high names `hunyuan3d`. Both are our own GPU workers; NVIDIA NIM is no longer a named default (its text-only, no-reference-image conditioning is the realism hole this table closes) but stays explicitly selectable and remains the final fallthrough in the per-path chain.
 2. The per-path free fallback chain (`FREE_FALLBACK_FOR_PATH`). For `image` that is `trellis_selfhost`, `hunyuan3d`, `huggingface`, `nvidia`: our own GPU workers first (zero vendor cost), then external free lanes, with the text-only NIM lane trailing as a safety net.
 3. The paid platform default (`DEFAULT_BACKEND_FOR_PATH`: image → `trellis` on Replicate, geometry → `meshy`, sketch → `triposg`) only when nothing free is configured and healthy.
 

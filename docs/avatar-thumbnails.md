@@ -52,8 +52,9 @@ bare `publicUrl(<thumbnail key>)` call sites across 32 files — agent cards, th
 marketplace, explore, user profiles, leaderboards, and the image baked into on-chain
 token metadata. All now route through `thumbnailUrl()`, and
 [`tests/thumbnail-url-guard.test.js`](../tests/thumbnail-url-guard.test.js) walks
-`api/` to fail the build if a new one appears. Two files are allow-listed there,
-each for a stated reason.
+`api/` to fail the build if a new one appears. Three files are allow-listed there,
+each for a stated reason (the helper itself, a key published right after its
+`putObject` in the same function, and a HEAD-checked vision fetch).
 
 ## Where a thumbnail comes from
 
@@ -191,6 +192,11 @@ node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --limit=50 --c
 
 # Clear a large backlog: keep refilling the budget until nothing is left to claim.
 node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --limit=2000 --concurrency=4 --loop
+
+# After deploying a renderer change: re-queue up to N posters baked by the older
+# renderer (clears only server-rendered thumb/<uuid>.png keys via queueRestyle();
+# client snapshots and adopted forge previews are never touched).
+node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --restyle=200 --limit=200
 ```
 
 Requires `DATABASE_URL` and the `S3_*` credentials, both of which live in

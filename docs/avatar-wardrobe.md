@@ -13,6 +13,12 @@ headwear, glasses, accessories). Click a piece to wear it, click again or "Take
 off" to remove it. Saving the avatar persists what it wears, and the baked GLB
 served to embeds, AR, and external engines includes the garments.
 
+The catalog also has a standalone public surface: `/wardrobe`
+([`src/wardrobe-page.js`](../src/wardrobe-page.js)) browses every published
+wearable (search, per-slot filter, inline 3D inspection, jump into the editor
+to wear it) and runs the text-prompt generator lane over the same
+`POST /api/garment-forge` proxy described below.
+
 ## Why this is not the usual wardrobe
 
 Commercial avatar platforms author every garment against one skeleton they
@@ -35,7 +41,13 @@ Concretely, `attachGarment()`:
 3. refuses any garment that binds under 60% of its skin **weight**
    (`MIN_BIND_COVERAGE`) rather than attaching a mesh that would deform into
    garbage;
-4. masks the body in the regions the garment declares it covers
+4. refuses any garment whose bounding extent on any axis exceeds 0.75x the
+   avatar's height (`MAX_GARMENT_EXTENT_RATIO`). Bind coverage proves a mesh
+   deforms correctly and says nothing about its size; the catalog is public
+   and long-lived, so a malformed piece published before the forge's own
+   proportion gate, or supplied by a third party, is refused at wear time
+   too, not just at publish time;
+5. masks the body in the regions the garment declares it covers
    (`occludes`), so skin never pokes through cloth. Declarations are clamped
    at apply time to the slot's plausible region set (`SLOT_OCCLUDABLE` in
    [`src/garment-taxonomy.js`](../src/garment-taxonomy.js)): a shirt cannot
