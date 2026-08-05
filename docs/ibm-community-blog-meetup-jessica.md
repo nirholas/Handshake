@@ -2,6 +2,8 @@
 
 _By Jessica Swanson. The event listing is on this group's Events tab; the full venue guide is in the meetup discussion thread pinned on the group home page._
 
+_Header image for the post: [media/ibm-x-threews-lockup.png](./media/ibm-x-threews-lockup.png) (2400x1200 PNG, IBM 8-bar x three.ws lockup on white). Upload it as the blog's featured image; do not paste this note into the published post._
+
 When this user group launched in July, the promise was more than threads and blog posts: it was live sessions with the people actually building AI agents with 3D capabilities. This Friday we get the first one, and I want to make sure nobody misses it because they assumed it was another webinar link.
 
 It is not a video call. The three.ws team is hosting the group's first community meetup inside the platform itself, in the flagship world at [three.ws/play](https://three.ws/play). You attend as an avatar, you hear the people standing near you through spatial voice chat, and the product tour happens by literally walking through the product.
