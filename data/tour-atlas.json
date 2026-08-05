@@ -1,10 +1,10 @@
 {
 	"version": 1,
 	"generatedBy": "scripts/capture-tour-atlas.mjs",
-	"generatedAt": "2026-08-05T20:40:32.673Z",
+	"generatedAt": "2026-08-05T22:02:42.859Z",
 	"base": "https://three.ws",
 	"curriculumVersion": 2,
-	"curriculumGeneratedAt": "2026-08-05T20:39:14.365Z",
+	"curriculumGeneratedAt": "2026-08-05T20:42:57.724Z",
 	"sections": [
 		{
 			"id": "main",
@@ -51,14 +51,14 @@
 	],
 	"summary": {
 		"total": 264,
-		"anchored": 263,
+		"anchored": 264,
 		"missingAnchor": 0,
 		"curatedAnchor": 35,
-		"fallbackAnchor": 228,
+		"fallbackAnchor": 229,
 		"navScopedAnchor": 12,
-		"unreachable": 1,
-		"withConsoleErrors": 50,
-		"captured": 245
+		"unreachable": 0,
+		"withConsoleErrors": 49,
+		"captured": 246
 	},
 	"stops": [
 		{
@@ -10785,24 +10785,40 @@
 			],
 			"highlight": true,
 			"narration": "Let's visit Holo Sticker. A live holographic foil sticker rendered in your browser: tilt it with your pointer, peel the corner, switch foils, die-cut your own text, and download the frame as a PNG. Fully procedural, no assets.",
-			"status": 404,
+			"status": 200,
 			"anchor": {
-				"state": "unresolved",
-				"selector": null,
-				"source": null,
-				"scope": null,
-				"tag": null,
-				"rect": null
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "main",
+				"tag": "h1",
+				"rect": {
+					"left": 262,
+					"top": 97.640625,
+					"width": 756,
+					"height": 62
+				}
 			},
-			"consoleErrors": 1,
-			"consoleSamples": [
-				"Failed to load resource: the server responded with a status of 404 ()"
-			],
+			"consoleErrors": 0,
+			"consoleSamples": [],
 			"notes": [
-				"page returned HTTP 404"
+				"anchored by the director's generic fallback, not a curated selector for this page"
 			],
-			"media": null,
-			"capturedAt": "2026-08-05T20:40:31.971Z"
+			"media": {
+				"hero": {
+					"url": "/media/tour/holo.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 25094
+				},
+				"thumb": {
+					"url": "/media/tour/holo.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5144
+				}
+			},
+			"capturedAt": "2026-08-05T22:02:19.487Z"
 		},
 		{
 			"id": "economy-lab",
