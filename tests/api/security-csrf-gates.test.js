@@ -173,9 +173,6 @@ vi.mock('../../api/_lib/r2.js', () => ({
 const { default: agentsRoot, handleGetOne, handleWallet } = await import('../../api/agents.js');
 const { default: keysHandler } = await import('../../api/keys/index.js');
 const { default: keyByIdHandler } = await import('../../api/keys/[id].js');
-const { default: adminUserHandler } = await import('../../api/admin/user/[id].js');
-const { default: adminWithdrawalsHandler } = await import('../../api/admin/withdrawals/[id].js');
-const { default: adminRiderPassesHandler } = await import('../../api/admin/rider-passes.js');
 const { default: agentActionsHandler } = await import('../../api/agent-actions.js');
 const { default: agentMemoryHandler } = await import('../../api/agent-memory.js');
 const { default: subscriptionsHandler } = await import('../../api/subscriptions.js');
@@ -416,99 +413,6 @@ describe('POST/DELETE /api/agents/:id/wallet — CSRF gate', () => {
 		await handleWallet(req, res, AGENT_ID);
 		expect(res.statusCode).toBe(403);
 		expect(parseRes(res).error).toBe('csrf_missing');
-	});
-});
-
-// ── /api/admin/user/:id ───────────────────────────────────────────────────
-
-describe('PATCH /api/admin/user/:id — CSRF gate', () => {
-	it('rejects PATCH without CSRF (admin auth alone is not enough)', async () => {
-		authState.session = { id: 'admin-1', is_admin: true };
-		const req = makeReq({
-			method: 'PATCH',
-			url: '/api/admin/user/abc',
-			body: { plan: 'pro' },
-		});
-		const res = makeRes();
-		await adminUserHandler(req, res);
-		expect(res.statusCode).toBe(403);
-		expect(parseRes(res).error).toBe('csrf_missing');
-	});
-
-	it('proceeds when a valid CSRF token is presented', async () => {
-		const userId = '11111111-2222-4333-8444-555555555555';
-		authState.session = { id: 'admin-1', is_admin: true };
-		const token = issueCsrfFor('admin-1');
-		sqlState.queue.push([
-			{ id: userId, email: 'a@b.com', plan: 'pro', is_admin: false, deleted_at: null },
-		]);
-		const req = makeReq({
-			method: 'PATCH',
-			url: `/api/admin/user/${userId}`,
-			headers: { 'x-csrf-token': token },
-			body: { plan: 'pro' },
-		});
-		const res = makeRes();
-		await adminUserHandler(req, res);
-		expect(res.statusCode).toBe(200);
-		expect(parseRes(res).user.id).toBe(userId);
-	});
-});
-
-// ── /api/admin/withdrawals/:id ────────────────────────────────────────────
-
-describe('PATCH /api/admin/withdrawals/:id — CSRF gate', () => {
-	it('rejects PATCH without CSRF', async () => {
-		authState.session = { id: 'admin-2', is_admin: true };
-		const req = makeReq({
-			method: 'PATCH',
-			url: '/api/admin/withdrawals/w1',
-			query: { id: 'w1' },
-			body: { status: 'processing', tx_signature: 'tx-123' },
-		});
-		const res = makeRes();
-		await adminWithdrawalsHandler(req, res);
-		expect(res.statusCode).toBe(403);
-		expect(parseRes(res).error).toBe('csrf_missing');
-	});
-});
-
-// ── /api/admin/rider-passes ───────────────────────────────────────────────
-
-describe('POST/DELETE /api/admin/rider-passes — CSRF gate', () => {
-	it('POST rejects without CSRF', async () => {
-		authState.session = { id: 'admin-3', is_admin: true };
-		const req = makeReq({
-			method: 'POST',
-			url: '/api/admin/rider-passes',
-			body: { wallet_address: '0xabc' },
-		});
-		const res = makeRes();
-		await adminRiderPassesHandler(req, res);
-		expect(res.statusCode).toBe(403);
-		expect(parseRes(res).error).toBe('csrf_missing');
-	});
-
-	it('DELETE rejects without CSRF', async () => {
-		authState.session = { id: 'admin-3', is_admin: true };
-		const req = makeReq({
-			method: 'DELETE',
-			url: '/api/admin/rider-passes',
-			body: { wallet_address: '0xabc' },
-		});
-		const res = makeRes();
-		await adminRiderPassesHandler(req, res);
-		expect(res.statusCode).toBe(403);
-		expect(parseRes(res).error).toBe('csrf_missing');
-	});
-
-	it('GET is not gated (read-only)', async () => {
-		authState.session = { id: 'admin-3', is_admin: true };
-		sqlState.queue.push([]);
-		const req = makeReq({ method: 'GET', url: '/api/admin/rider-passes' });
-		const res = makeRes();
-		await adminRiderPassesHandler(req, res);
-		expect(res.statusCode).toBe(200);
 	});
 });
 

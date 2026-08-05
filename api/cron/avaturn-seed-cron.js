@@ -259,15 +259,15 @@ export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
 
-	// DB flag is the live control (flip it from the admin console with no
-	// redeploy); the AVATURN_SEED_ENABLED env var is the fallback default used
-	// only when no app_flags row exists yet, preserving the prior behavior.
+	// DB flag is the live control (flip the app_flags row with no redeploy);
+	// the AVATURN_SEED_ENABLED env var is the fallback default used only when
+	// no app_flags row exists yet, preserving the prior behavior.
 	const enabled = await isFlagEnabled('avaturn_seed', { fallback: env.AVATURN_SEED_ENABLED });
 	if (!enabled) {
 		return json(res, 200, {
 			ok: true,
 			skipped: 'disabled',
-			hint: 'enable instantly via POST /api/admin/flags { "key":"avaturn_seed","enabled":true } (or set AVATURN_SEED_ENABLED=1)',
+			hint: 'enable by setting the avaturn_seed row in the app_flags table (or set AVATURN_SEED_ENABLED=1)',
 		});
 	}
 

@@ -250,8 +250,8 @@ async function probeX402() {
 	// Self-facilitator verify/settle outcomes (last 24h), grouped by reason
 	// class. A paying buyer whose wallet mutates the prepared transaction gets a
 	// deterministic verify 402 with everything else on this endpoint green —
-	// without this block that failure mode is invisible outside the admin
-	// dashboards. Only the reason prefix (before ':') is exposed: suffixes can
+	// without this block that failure mode is invisible outside the raw
+	// facilitator log. Only the reason prefix (before ':') is exposed: suffixes can
 	// carry wallet addresses, the prefix is a fixed validator code.
 	try {
 		const { sql } = await import('./_lib/db.js');
@@ -362,12 +362,12 @@ export default wrap(async (req, res) => {
 			},
 		},
 		// Ops alerts (api/_lib/alerts.js). Every sendOpsAlert() ALWAYS persists to
-		// the ops_alerts table and surfaces on the admin dashboard (/admin/ops), so
-		// alerts are never silently dropped. Telegram is an OPTIONAL extra push for
-		// real-time notification; its absence is expected, not a fault.
+		// the ops_alerts table, so alerts are never silently dropped; read them via
+		// the ops-secret-gated /api/ops/health surface. Telegram is an OPTIONAL
+		// extra push for real-time notification; its absence is expected, not a fault.
 		alerts: {
-			primary: 'dashboard',
-			dashboard: '/admin/ops',
+			primary: 'ops_alerts',
+			read_via: '/api/ops/health',
 			telegram_push: alertsConfigured() ? 'enabled' : 'disabled',
 			telegram_requires: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_ALERTS_CHAT_ID'],
 		},

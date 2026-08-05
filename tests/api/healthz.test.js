@@ -63,10 +63,10 @@ describe('GET /api/healthz', () => {
 		expect(body.monitor.running).toBe(true);
 	});
 
-	// Ops alerts always persist to the dashboard (ops_alerts / /admin/ops); the
-	// dashboard is the primary sink and is never a no-op. Telegram is an optional
-	// extra push. healthz reports the dashboard as primary and telegram_push as
-	// enabled/disabled — a disabled push is expected, not a fault.
+	// Ops alerts always persist to the ops_alerts table; the table is the primary
+	// sink and is never a no-op. Telegram is an optional extra push. healthz
+	// reports ops_alerts as primary and telegram_push as enabled/disabled; a
+	// disabled push is expected, not a fault.
 	describe('ops alert channel', () => {
 		const SAVED = [process.env.TELEGRAM_BOT_TOKEN, process.env.TELEGRAM_ALERTS_CHAT_ID];
 		afterEach(() => {
@@ -76,12 +76,12 @@ describe('GET /api/healthz', () => {
 			}
 		});
 
-		it('always reports the dashboard as the primary sink', async () => {
+		it('always reports the ops_alerts table as the primary sink', async () => {
 			delete process.env.TELEGRAM_BOT_TOKEN;
 			delete process.env.TELEGRAM_ALERTS_CHAT_ID;
 			const { body } = await callHealthz();
-			expect(body.alerts.primary).toBe('dashboard');
-			expect(body.alerts.dashboard).toBe('/admin/ops');
+			expect(body.alerts.primary).toBe('ops_alerts');
+			expect(body.alerts.read_via).toBe('/api/ops/health');
 			// No "silent no-op" framing — alerts persist regardless of Telegram.
 			expect(body.alerts.warning).toBeUndefined();
 		});
