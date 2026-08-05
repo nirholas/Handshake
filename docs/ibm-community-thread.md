@@ -4,7 +4,13 @@ _Posted by the three.ws team. This Friday we are holding our first community mee
 
 ## The event
 
-<table><tbody><tr><td><strong>When</strong></td><td>Friday, August 7, 2026, 9:00 AM to 10:00 AM Eastern Time</td></tr><tr><td><strong>Your time</strong></td><td>6 AM San Francisco · 9 AM New York · 2 PM London · 3 PM Berlin · 6:30 PM Mumbai · 9 PM Singapore/Hong Kong · 10 PM Tokyo</td></tr><tr><td><strong>Where</strong></td><td><a href="https://three.ws/play">three.ws/play</a>, in the $THREE home town (pinned at the top of the world list)</td></tr><tr><td><strong>Cost</strong></td><td>Free</td></tr><tr><td><strong>What you need</strong></td><td>A modern browser. No download, no install, no account required.</td></tr></tbody></table>
+|  |  |
+| --- | --- |
+| **When** | Friday, August 7, 2026, 9:00 AM to 10:00 AM Eastern Time |
+| **Your time** | 6 AM San Francisco · 9 AM New York · 2 PM London · 3 PM Berlin · 6:30 PM Mumbai · 9 PM Singapore/Hong Kong · 10 PM Tokyo |
+| **Where** | [three.ws/play](https://three.ws/play), in the $THREE home town (pinned at the top of the world list) |
+| **Cost** | Free |
+| **What you need** | A modern browser. No download, no install, no account required. |
 
 On the agenda: a live tour of the platform from inside the world, demos from community members (bring what you have built), open Q&A with the team, and a first look at what is coming next. If you have never been in a 3D world before, come 10 minutes early and we will get you walking and talking before it starts.
 
