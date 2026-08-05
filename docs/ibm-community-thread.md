@@ -17,7 +17,7 @@ On the agenda: a live tour of the platform from inside the world, demos from com
 ## How to join, in three steps
 
 1.  **Open [three.ws/play](https://three.ws/play)** at the event time and click the pinned $THREE world.
-2.  **Pick an avatar.** Guests get one automatically. If you want a custom one, make it beforehand at [three.ws](https://three.ws) from a text prompt or a selfie; it follows you into the world.
+2.  **Pick an avatar.** Guests get one automatically, but the better move is to build your own custom 3D AI agent beforehand at [three.ws/create](https://three.ws/create) from a text prompt or a selfie; it follows you into the world.
 3.  **Walk up to people and talk.** Voice chat is spatial: you hear the people near you, from the direction they stand, and they fade as you walk away. Text chat works too.
 
 ## About the venue: what three.ws/play actually is
