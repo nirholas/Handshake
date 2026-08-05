@@ -23,10 +23,10 @@ Routing recap (from `vercel.json`):
 ### Widget Studio — `/studio`
 - **Source:** `public/studio/index.html`, `public/studio/studio.js`, `public/studio/studio.css`, `public/studio/launch-panel.js`, `public/studio/knowledge-panel.js`. Preview iframe loads `/widget` (slim `src/app.js` shell). APIs: `/api/auth/me`, `/api/avatars`, `/api/avatars/public`, `/api/avatars/:id`, `/api/widgets`.
 - **Entry point:** Direct nav to `/studio`; "Create yours" / "Open the Studio" CTAs on `/widgets`; "Open Studio →" on `/features/studio`; "Open in Studio" links from gallery cards (`/studio?template=<id>`); deep links `?edit=<id>`, `?type=<type>`, `?model=<url>`, `?avatar=<id>`.
-- **Prerequisites / gates:** None to try — a built-in **demo avatar (CZ, `/avatars/cz.glb`)** is preloaded so an anonymous visitor can configure and preview. **Saving a draft / embedding a non-demo avatar requires sign-in** (`/login?next=/studio`) and an owned/public avatar. The demo avatar can generate an embed (pointing at a baked demo fixture, e.g. `wdgt_demo_talking`) but cannot save. No $THREE gate. ⚡ Launch tab can optionally launch the agent's coin via `launch-panel.js`.
+- **Prerequisites / gates:** None to try: a built-in **demo avatar (CZ, `/avatars/cz.glb`)** is preloaded so an anonymous visitor can configure and preview. **Saving a draft / embedding a non-demo avatar requires sign-in** (`/login?next=/studio`) and an owned/public avatar. The demo avatar can generate an embed (pointing at a baked demo fixture, e.g. `wdgt_demo_talking`) but cannot save. No $THREE gate. ⚡ Launch tab can optionally launch the agent's coin via `launch-panel.js` (lane toggle: pump.fun or the three.ws curve; oversized token images are downscaled in-browser instead of rejected).
 - **Steps (10):**
   1. Page boots → `fetchMe()` (`/api/auth/me`) resolves user; user menu renders (signed-out shows "Sign in"); 3-column layout unhides.
-  2. System renders the **widget-type grid** (9 ready types: turntable, animation-gallery, talking-agent, passport, hotspot-tour, pumpfun-feed, kol-trades, live-trades-canvas, bonding-curve) and **avatar list** (`loadAvatars()` → demo avatar + `/api/avatars?limit=100` for signed-in users, with skeleton cards while loading).
+  2. System renders the **widget-type grid** (10 ready types: turntable, animation-gallery, talking-agent, passport, hotspot-tour, pumpfun-feed, kol-trades, live-trades-canvas, bonding-curve, walking-avatar) and **avatar list** (`loadAvatars()` → demo avatar + `/api/avatars?limit=100` for signed-in users, with skeleton cards while loading).
   3. **Pick avatar** (step-1 panel): click an avatar card → `selectAvatar()`; or `(optional)` search public avatars (`/api/avatars/public?q=`) and pick one; demo avatar is selected automatically if none chosen.
   4. **Pick widget type** (step-2 panel): click a type card → `selectType()` rebuilds the type-specific config fields, preserving brand settings.
   5. System loads the **live preview** in the `/widget` iframe (`updatePreview()` builds `#model=…&kiosk=true&type=…`), posts the config via `postMessage({type:'widget:config'})`; status flips to "Live preview".
@@ -43,7 +43,7 @@ Routing recap (from `vercel.json`):
   - Right column tabs: **Brand** ↔ **⚡ Launch** (launch panel hides save/generate row).
 - **External calls / dependencies:** `/api/auth/me`, `/api/auth/logout`, `/api/avatars`, `/api/avatars/public`, `/api/avatars/:id` (POST to register), `/api/widgets` (GET/POST/PATCH/DELETE), preview iframe `/widget#…`, embed loader `/embed.js`, share/live `/w/<id>`, `/api/widgets/:id/og` (poster). Importmap loads `@solana/web3.js` + `@solana/spl-token` from esm.sh for the Launch tab.
 - **Success state:** Embed modal open with a copyable iframe + script snippet and a live shareable `/w/<id>` URL; "View live" opens it in a new tab. Toast "Saved" on draft save.
-- **Empty / error states:** No avatars → empty card with "Scan yourself to 3D →" / "AI selfie →". Avatar load failure → inline error card with **Retry**. Public search failure → status line shows reason. Save failure → `#form-error` text. Preview without a model → "Avatar has no public URL — make it public/unlisted to preview". Pre-selected avatar missing → toast + falls back to demo. Pending-status types show a "ships in a later prompt" banner (currently none — all 9 are `ready`).
+- **Empty / error states:** No avatars → empty card with "Make one from a selfie →" / "browse every way to build one →". Avatar load failure → inline error card with **Retry**. Public search failure → status line shows reason. Save failure → `#form-error` text. Preview without a model → a note that the avatar has no public URL (make it public/unlisted to preview). Pre-selected avatar missing → toast + falls back to demo. Pending-status types show a "ships in a later prompt" banner (currently none: all 10 are `ready`).
 - **Step count:** 10 required (+5 optional)
 
 ---
@@ -56,7 +56,7 @@ Routing recap (from `vercel.json`):
   1. Page loads → 3 skeleton cards render (`showSkeleton`).
   2. `fetch('/widgets-gallery/showcase.json')` → builds **filter chips** (one per widget type + "All"), updates hero count, renders one **showcase card** per widget; cards fade in on scroll (IntersectionObserver).
   3. Each card auto-loads its preview iframe when 50% visible (or via the ▶ play button); `(optional)` toggle **Preview ↔ Code** tab to see the snippet in the frame area.
-  4. **Customize** `(optional)`: open the Customize `<details>` and adjust Size (S/M/L), Accent color, and per-type knobs (mint for kol-trades/live-trades-canvas, kind for pumpfun-feed). Snippet + iframe update live (debounced 350 ms reload); "Reset" restores defaults.
+  4. **Customize** `(optional)`: open the Customize `<details>` and adjust Size (S/M/L), Accent color, and per-type knobs (mint for kol-trades/live-trades-canvas/bonding-curve, kind for pumpfun-feed). Snippet + iframe update live (debounced 350 ms reload); "Reset" restores defaults.
   5. **Copy embed**: split-button copies the current snippet; `(optional)` use the format dropdown to switch **HTML iframe / JSX (React) / Share URL** before copying. Button flips to "Copied!".
   6. Paste the snippet on any site → renders the live widget. Done. (Or click **"Open in Studio"** → `/studio?template=<id>` to clone & customize fully — branches into the Widget Studio flow.)
 - **Decision points / branches:**
@@ -66,7 +66,7 @@ Routing recap (from `vercel.json`):
   - Preview iframe uses `reveal=interaction` + a `/api/widgets/<id>/og` poster to keep WebGL slots free on a dense page.
 - **External calls / dependencies:** `/widgets-gallery/showcase.json`, preview iframes at `/widget#widget=<id>…`, `/api/widgets/<id>/og` (poster), model-viewer 4.0.0 (footer avatar, from googleapis CDN with SRI). Mints used in defaults are SOL wrapped-mint and the `$THREE` CA.
 - **Success state:** Snippet copied to clipboard ("Copied!"); live preview rendered in card.
-- **Empty / error states:** Showcase fetch failure → error card "Could not load showcase config." with detail. Per-card iframe failure leaves the placeholder/play button. Hero count defaults to 8 in static HTML, overwritten by real count.
+- **Empty / error states:** Showcase fetch failure → error card "Could not load showcase config." with detail. Per-card iframe failure leaves the placeholder/play button. Hero count defaults to 15 in static HTML, overwritten by real count.
 - **Step count:** 6 required (+3 optional)
 
 ---
@@ -109,7 +109,7 @@ Routing recap (from `vercel.json`):
 ---
 
 ### Agent embed snippet (SharePanel / `<agent-3d>`) — share/embed panel flow
-- **Source:** `src/share-panel.js` (`SharePanel` class) + `src/share-panel-builders.js` (`buildEmbedUrl`, `buildIframeSnippet`, `buildWebComponentSnippet`) + `src/share-panel.css`. Mounted on the agent home page via `src/agent-home-orphans.js`; also referenced from `src/agent-detail.js` and `src/forge.js`. Embed targets: `/agent/<id>/embed` (CSP `frame-ancestors *`), web component `/dist-lib/agent-3d.js`. Preview iframe = same `/agent/<id>/embed?preview=1`.
+- **Source:** `src/share-panel.js` (`SharePanel` class) + `src/share-panel-builders.js` (`buildEmbedUrl`, `buildIframeSnippet`, `buildWebComponentSnippet`) + `src/share-panel.css`. Mounted on the agent home page via `src/agent-home-orphans.js`. (`src/agent-detail.js` and `src/forge.js` use the lighter `showSharePanel` from `src/shared/share.js`, a different share sheet.) Embed targets: `/agent/<id>/embed` (CSP `frame-ancestors *`), web component `/dist-lib/agent-3d.js`. Preview iframe = same `/agent/<id>/embed?preview=1`.
 - **Entry point:** **Share** button on an agent profile/home page (`agent-home-orphans.js` injects it next to the title) → `new SharePanel({ agent }).open()`.
 - **Prerequisites / gates:** Must be on an **existing agent** (an `agent.id`/`slug`). No sign-in required to copy snippets — embedding is free ("no wallet or on-chain deployment required"). No $THREE gate.
 - **Steps (6):**
@@ -145,7 +145,7 @@ Routing recap (from `vercel.json`):
 - **Entry point:** `/avatar-studio` or `/create/studio` (create from `default.glb`); `?edit=<id>` reloads a saved avatar.
 - **Prerequisites / gates:** Anyone can build/preview from the base template. **Saving requires sign-in** (so it persists to the account). No $THREE gate. This is the *upstream* builder — the avatar it produces becomes selectable in Widget Studio and embeddable via the SharePanel/embed modals.
 - **Steps (7):**
-  1. Page boots → loads `BASE_GLB_URL` (`/avatars/default.glb`) into a `TalkScene` viewport with idle breathing/blinking; accessory presets load.
+  1. Page boots → loads `BASE_GLB_URL` (`/avatars/default.glb`) into a `TalkScene` viewport with idle breathing/blinking; accessory presets load. In create mode a **Base switcher** offers Stylized (the default RPM-style body) or Parametric (`/avatars/parametric-base.glb`, a CC0 MakeHuman-derived base with ~120 identity morph sliders); Color/Layers panels adapt to the loaded base (dead slots hide).
   2. `(optional)` In **edit mode** (`?edit=<id>`) the saved appearance (colors/morphs/accessories/hidden layers) is hydrated onto the model.
   3. **Customize**: switch tabs — Color (skin/hair/outfit swatches + hex), Hats, Glasses, Earrings (accessory presets), Face (sculpt morphs). Each change applies live to the scene graph; `(optional)` undo/redo (history up to 50).
   4. `(optional)` Show/hide garment layers; `(optional)` search accessories.
