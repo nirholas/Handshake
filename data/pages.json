@@ -82,6 +82,23 @@
 					"showcase": true
 				},
 				{
+					"path": "/asl-alphabet",
+					"title": "ASL Alphabet",
+					"description": "The American manual alphabet on a live 3D avatar: every letter and number, what to look for, the look-alikes it is confused with, spell any word, and a drill for reading fingerspelling.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/sign-mirror",
+					"title": "Sign Mirror",
+					"description": "Learn the ASL alphabet by making it: the avatar forms the letter, your camera watches your hand, and the page grades the handshape live, naming the finger that is off. Fully on-device; no video ever uploaded.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-08-06",
+					"showcase": true
+				},
+				{
 					"path": "/objects",
 					"title": "Object Library",
 					"description": "Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live, place it in your room with AR, or download the GLB.",

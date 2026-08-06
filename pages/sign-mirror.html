@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<script>/* three.ws theme boot - no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Sign Mirror: make the letter, get graded live · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta
+			name="description"
+			content="Learn the ASL manual alphabet by making it, not just watching it. The avatar forms the letter, your camera watches your hand, and the page grades your handshape live and names the finger that is off. Everything stays on your device."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/sign-mirror" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Sign Mirror: make the letter, get graded live · three.ws" />
+		<meta property="og:description" content="The avatar forms the ASL letter, your camera watches your hand, and the page grades your handshape live. No video ever leaves your device." />
+		<meta property="og:url" content="https://three.ws/sign-mirror" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Sign+Mirror&amp;d=Learn+the+ASL+alphabet+by+making+it%3A+the+avatar+forms+the+letter%2C+your+camera+watches+your+hand%2C+and+the+page+grades+the+handshape+live%2C+naming+the+finger+that&amp;p=%2Fsign-mirror" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Sign Mirror: make the letter, get graded live · three.ws" />
+		<meta name="twitter:description" content="The avatar forms the ASL letter, your camera watches your hand, and the page grades your handshape live. No video ever leaves your device." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Sign+Mirror&amp;d=Learn+the+ASL+alphabet+by+making+it%3A+the+avatar+forms+the+letter%2C+your+camera+watches+your+hand%2C+and+the+page+grades+the+handshape+live%2C+naming+the+finger+that&amp;p=%2Fsign-mirror" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Sign Mirror: ASL handshape practice with live camera grading","description":"An interactive mirror for the ASL manual alphabet: a 3D avatar forms the target letter, the learner copies it, and the browser grades the handshape live, finger by finger, entirely on the device.","learningResourceType":"Interactive practice","educationalLevel":"Beginner","teaches":"American Sign Language fingerspelling","url":"https://three.ws/sign-mirror","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+
+		<style>
+			.sm-main, .sm-main *, .sm-main *::before, .sm-main *::after { box-sizing: border-box; }
+			.sm-main { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 96px; }
+
+			/* Hero */
+			.sm-hero { padding: clamp(24px, 4vw, 52px) 0 clamp(14px, 2vw, 26px); max-width: 78ch; }
+			.sm-chip {
+				display: inline-flex; align-items: center; gap: 8px;
+				padding: 5px 12px; border: 1px solid var(--stroke); border-radius: 999px;
+				background: var(--surface-1); font-size: 12px; letter-spacing: .04em;
+				text-transform: uppercase; color: var(--ink-dim); font-family: var(--font-mono);
+			}
+			.sm-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,.18); }
+			.sm-hero h1 { font-size: clamp(30px, 4.6vw, 52px); line-height: 1.04; margin: 16px 0 12px; letter-spacing: -.02em; }
+			.sm-lede { color: var(--ink-dim); font-size: clamp(15px, 1.35vw, 17px); line-height: 1.6; margin: 0; }
+
+			/* Progress */
+			.sm-progress-wrap { display: flex; align-items: center; gap: 14px; margin-top: 20px; flex-wrap: wrap; }
+			#sm-progress { font-family: var(--font-mono); font-size: 13px; color: var(--ink-dim); }
+			.sm-bar {
+				position: relative; flex: 1 1 220px; height: 8px; border-radius: 999px;
+				background: var(--surface-2); border: 1px solid var(--stroke); overflow: hidden; min-width: 180px;
+			}
+			.sm-bar::before {
+				content: ''; position: absolute; inset: 0; width: var(--sm-fill, 0%);
+				background: linear-gradient(90deg, rgba(56,189,248,.7), #38bdf8);
+				border-radius: inherit; transition: width .3s ease;
+			}
+			.sm-reset-btn {
+				appearance: none; border: 1px solid var(--stroke); background: transparent; color: var(--ink-dim);
+				font: inherit; font-size: 12px; padding: 5px 12px; border-radius: 999px; cursor: pointer;
+				transition: color .14s ease, border-color .14s ease;
+			}
+			.sm-reset-btn:hover { color: var(--ink); border-color: rgba(56,189,248,.6); }
+			.sm-reset-btn:focus-visible { outline: 2px solid rgba(56,189,248,.9); outline-offset: 1px; }
+
+			/* The mirror: avatar half and camera half */
+			.sm-mirror { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: clamp(20px, 3vw, 32px); }
+			.sm-panel { min-width: 0; border: 1px solid var(--stroke); border-radius: 18px; background: var(--surface-1); overflow: hidden; display: flex; flex-direction: column; }
+			.sm-panel-head {
+				display: flex; align-items: center; justify-content: space-between; gap: 12px;
+				padding: 14px 18px; border-bottom: 1px solid var(--stroke);
+			}
+			.sm-panel-head h2 { font-size: 15px; margin: 0; letter-spacing: -.01em; }
+			.sm-panel-head .sm-panel-sub { font-size: 12px; color: var(--ink-dim); font-family: var(--font-mono); }
+
+			.sm-stage-wrap {
+				position: relative; flex: 1 1 auto; min-height: 380px;
+				background: radial-gradient(120% 120% at 50% 0%, rgba(56,189,248,.10), transparent 60%), var(--surface-1);
+			}
+			#sm-stage { position: absolute; inset: 0; width: 100%; height: 100%; }
+			.sm-status {
+				position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px;
+				font-family: var(--font-mono); font-size: 13px; color: #fff;
+				background: linear-gradient(to top, rgba(0,0,0,.6), transparent); pointer-events: none; min-height: 20px;
+			}
+			.sm-status[data-tone='good'] { color: #6ee7b7; }
+			.sm-status[data-tone='warn'] { color: #fcd34d; }
+
+			.sm-target-card {
+				position: absolute; top: 12px; right: 12px; width: clamp(96px, 22%, 140px);
+				border: 1px solid var(--stroke); border-radius: 14px; background: var(--surface-2);
+				padding: 8px; backdrop-filter: blur(6px);
+			}
+			.sm-target-card figcaption { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-dim); text-align: center; margin-top: 4px; font-family: var(--font-mono); }
+			#sm-target { display: block; width: 100%; height: auto; }
+
+			.sm-skel line { stroke: var(--ink-dim); stroke-width: 2; stroke-linecap: round; }
+			.sm-skel circle { fill: var(--ink); }
+			.sm-skel-target line { stroke: rgba(56,189,248,.75); }
+			.sm-skel-target circle { fill: #38bdf8; }
+			.sm-skel-live line { stroke: rgba(110,231,183,.85); }
+			.sm-skel-live circle { fill: #6ee7b7; }
+
+			/* Letter card under the avatar */
+			.sm-letter-card { padding: 16px 18px; border-top: 1px solid var(--stroke); }
+			.sm-letter-top { display: flex; align-items: flex-start; gap: 16px; }
+			#sm-big {
+				font-size: 44px; line-height: 1; font-weight: 600; letter-spacing: -.03em;
+				width: 62px; height: 62px; display: grid; place-items: center; flex: 0 0 auto;
+				border-radius: 14px; background: rgba(56,189,248,.14); border: 1px solid rgba(56,189,248,.35);
+			}
+			.sm-letter-body { min-width: 0; }
+			.sm-letter-body p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink); }
+			#sm-look { margin-top: 6px; color: var(--ink-dim); font-size: 13px; }
+			.sm-callout {
+				margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 13px; line-height: 1.5;
+				border: 1px solid rgba(56,189,248,.4); background: rgba(56,189,248,.08); color: var(--ink);
+			}
+			.sm-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+			.sm-btn {
+				appearance: none; border: 1px solid rgba(56,189,248,.5); background: rgba(56,189,248,.16);
+				color: var(--ink); font: inherit; font-weight: 600; font-size: 14px;
+				padding: 9px 16px; border-radius: 12px; cursor: pointer;
+				transition: background .12s ease, border-color .12s ease, transform .12s ease;
+			}
+			.sm-btn:hover:not(:disabled) { background: rgba(56,189,248,.3); border-color: rgba(56,189,248,.8); }
+			.sm-btn:active:not(:disabled) { transform: scale(.98); }
+			.sm-btn:focus-visible { outline: 2px solid rgba(56,189,248,.9); outline-offset: 1px; }
+			.sm-btn:disabled { opacity: .6; cursor: wait; }
+			.sm-btn-quiet { background: transparent; border-color: var(--stroke); color: var(--ink-dim); font-weight: 500; }
+			.sm-btn-quiet:hover:not(:disabled) { color: var(--ink); border-color: rgba(56,189,248,.6); background: transparent; }
+			.sm-opts { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid var(--stroke); border-radius: 999px; background: var(--surface-2); }
+			.sm-opt {
+				appearance: none; border: 0; background: transparent; color: var(--ink-dim);
+				font: inherit; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px;
+				cursor: pointer; transition: color .14s ease, background .14s ease;
+			}
+			.sm-opt:hover { color: var(--ink); }
+			.sm-opt:focus-visible { outline: 2px solid rgba(56,189,248,.9); outline-offset: 1px; }
+			.sm-opt[aria-pressed='true'] { color: var(--ink); background: rgba(56,189,248,.2); }
+			.sm-opt-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
+
+			/* Camera half */
+			.sm-video-wrap { position: relative; aspect-ratio: 4 / 3; background: var(--surface-2); }
+			#sm-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+			#sm-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+			.sm-video-empty {
+				position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+				padding: 24px; color: var(--ink-dim); font-size: 14px; line-height: 1.6;
+			}
+			.sm-video-empty .sm-video-empty-inner { max-width: 40ch; }
+			.sm-video-empty strong { color: var(--ink); display: block; margin-bottom: 6px; font-size: 15px; }
+			body[data-sm-camera='on'] .sm-video-empty { display: none; }
+
+			.sm-grade { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+			.sm-score-row { display: flex; align-items: center; gap: 14px; }
+			#sm-score { font-size: 34px; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 2ch; letter-spacing: -.02em; }
+			.sm-score-unit { font-size: 12px; color: var(--ink-dim); font-family: var(--font-mono); margin-left: -8px; align-self: flex-end; padding-bottom: 7px; }
+			#sm-score-bar {
+				position: relative; flex: 1 1 auto; height: 12px; border-radius: 999px;
+				background: var(--surface-2); border: 1px solid var(--stroke); overflow: hidden;
+			}
+			#sm-score-bar::before {
+				content: ''; position: absolute; inset: 0; width: var(--sm-fill, 0%);
+				background: #f87171; border-radius: inherit; transition: width .12s linear, background .2s ease;
+			}
+			#sm-score-bar[data-state='close']::before { background: #fbbf24; }
+			#sm-score-bar[data-state='good']::before { background: #34d399; }
+			#sm-score-bar::after {
+				content: ''; position: absolute; inset: 0; width: var(--sm-hold, 0%);
+				background: rgba(255,255,255,.35); border-radius: inherit; transition: width .1s linear;
+			}
+			#sm-hint { min-height: 42px; border: 1px dashed var(--stroke); border-radius: 12px; padding: 10px 13px; font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
+			#sm-fingers { display: flex; flex-direction: column; gap: 6px; }
+			.sm-finger { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 10px; }
+			.sm-finger-name { font-size: 12px; color: var(--ink-dim); font-family: var(--font-mono); text-transform: capitalize; }
+			.sm-finger-bar { position: relative; height: 7px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--stroke); overflow: hidden; }
+			.sm-finger-bar::before {
+				content: ''; position: absolute; inset: 0; width: var(--sm-fill, 0%);
+				background: #f87171; border-radius: inherit; transition: width .15s linear, background .2s ease;
+			}
+			.sm-finger[data-state='close'] .sm-finger-bar::before { background: #fbbf24; }
+			.sm-finger[data-state='good'] .sm-finger-bar::before { background: #34d399; }
+
+			.sm-camera-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+			#sm-camera-note { font-size: 12px; color: var(--ink-dim); line-height: 1.5; margin: 0; }
+
+			/* Course rail */
+			.sm-course { margin-top: clamp(36px, 5vw, 60px); }
+			.sm-course > h2 { font-size: clamp(20px, 2.2vw, 27px); letter-spacing: -.02em; margin: 0 0 8px; }
+			.sm-course > p { color: var(--ink-dim); font-size: 15px; line-height: 1.6; max-width: 68ch; margin: 0 0 18px; }
+			#sm-rail { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+			.sm-group { border: 1px solid var(--stroke); border-radius: 16px; background: var(--surface-1); padding: 16px 18px; }
+			.sm-group h3 { margin: 0 0 4px; font-size: 15px; letter-spacing: -.01em; }
+			.sm-group p { margin: 0 0 12px; font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
+			.sm-letters { display: flex; flex-wrap: wrap; gap: 8px; }
+			.sm-letter {
+				appearance: none; cursor: pointer; font: inherit; font-weight: 600; font-size: 16px;
+				width: 44px; height: 44px; border-radius: 12px; color: var(--ink-dim);
+				border: 1px solid var(--stroke); background: var(--surface-2);
+				transition: color .14s ease, border-color .14s ease, background .14s ease, transform .14s ease;
+			}
+			.sm-letter:hover { color: var(--ink); border-color: rgba(56,189,248,.6); transform: translateY(-2px); }
+			.sm-letter:active { transform: translateY(0) scale(.96); }
+			.sm-letter:focus-visible { outline: 2px solid rgba(56,189,248,.9); outline-offset: 2px; }
+			.sm-letter[aria-pressed='true'] { color: var(--ink); background: rgba(56,189,248,.16); border-color: rgba(56,189,248,.7); }
+			.sm-letter[data-passed='true'] { color: #04121c; background: #34d399; border-color: #34d399; }
+			.sm-letter[data-passed='true'][aria-pressed='true'] { box-shadow: 0 0 0 4px rgba(52,211,153,.25); }
+
+			.sm-note { margin-top: clamp(32px, 4vw, 52px); border-left: 2px solid rgba(56,189,248,.5); padding: 4px 0 4px 18px; color: var(--ink-dim); font-size: 14px; line-height: 1.65; max-width: 74ch; }
+			.sm-note a { color: var(--ink); }
+
+			@media (prefers-reduced-motion: reduce) {
+				.sm-letter:hover, .sm-letter:active, .sm-btn:active:not(:disabled) { transform: none; }
+			}
+			@media (max-width: 900px) {
+				.sm-mirror { grid-template-columns: 1fr; }
+				.sm-stage-wrap { min-height: 340px; }
+			}
+			@media (max-width: 620px) {
+				.sm-letter { width: 40px; height: 40px; font-size: 15px; }
+				#sm-big { width: 54px; height: 54px; font-size: 38px; }
+			}
+		</style>
+	
+	<meta property="og:image:alt" content="Sign Mirror - three.ws">
+</head>
+	<body>
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main class="sm-main">
+			<section class="sm-hero">
+				<span class="sm-chip"><span class="sm-chip-dot"></span> Handshape practice · graded on your device</span>
+				<h1>The mirror that knows the alphabet.</h1>
+				<p class="sm-lede">
+					Watching a letter is the easy half. Here you make it: the avatar forms the target,
+					your camera watches your hand, and the page scores the handshape live, finger by
+					finger. Hold it right and the letter passes. Hold it wrong and it names the finger.
+					Nothing your camera sees ever leaves this tab.
+				</p>
+				<div class="sm-progress-wrap">
+					<span id="sm-progress">0 of 26 letters held correctly</span>
+					<div class="sm-bar" id="sm-progress-bar" role="progressbar" aria-label="Alphabet progress" aria-valuemin="0" aria-valuemax="26" aria-valuenow="0"></div>
+					<button class="sm-reset-btn" id="sm-reset" type="button">Reset progress</button>
+				</div>
+			</section>
+
+			<div class="sm-mirror">
+				<section class="sm-panel" aria-label="The avatar forming the target letter">
+					<div class="sm-panel-head">
+						<h2>The target</h2>
+						<span class="sm-panel-sub">watch, then copy</span>
+					</div>
+					<div class="sm-stage-wrap">
+						<div id="sm-stage"></div>
+						<figure class="sm-target-card">
+							<svg id="sm-target" viewBox="0 0 320 320" role="img" aria-label="Target handshape diagram"></svg>
+							<figcaption>Target shape</figcaption>
+						</figure>
+						<div class="sm-status" id="sm-status" aria-live="polite"></div>
+					</div>
+					<div class="sm-letter-card">
+						<div class="sm-letter-top">
+							<div id="sm-big" aria-hidden="true">A</div>
+							<div class="sm-letter-body">
+								<p id="sm-note">Closed fist, thumb resting straight along the side of the index finger.</p>
+								<p id="sm-look" hidden></p>
+							</div>
+						</div>
+						<p class="sm-callout" id="sm-shared" hidden></p>
+						<p class="sm-callout" id="sm-moving" hidden></p>
+						<div class="sm-controls">
+							<button class="sm-btn sm-btn-quiet" id="sm-replay" type="button">Show it again</button>
+							<span class="sm-opt-label" id="sm-hand-label">Your hand</span>
+							<div class="sm-opts" role="group" aria-labelledby="sm-hand-label">
+								<button class="sm-opt" type="button" data-hand="Right" aria-pressed="true">Right</button>
+								<button class="sm-opt" type="button" data-hand="Left" aria-pressed="false">Left</button>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<section class="sm-panel" aria-label="Your camera, graded live">
+					<div class="sm-panel-head">
+						<h2>Your hand</h2>
+						<span class="sm-panel-sub">graded in this tab only</span>
+					</div>
+					<div class="sm-video-wrap">
+						<video id="sm-video" playsinline muted aria-label="Your camera, mirrored"></video>
+						<svg id="sm-overlay" viewBox="0 0 640 480" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+						<div class="sm-video-empty">
+							<div class="sm-video-empty-inner">
+								<strong>The camera is off.</strong>
+								Turn it on to be graded live. The video, the hand landmarks, and every score
+								stay in this tab: there is no network call in the practice loop. Or skip the
+								camera and copy the target diagram by eye.
+							</div>
+						</div>
+					</div>
+					<div class="sm-grade">
+						<div class="sm-score-row">
+							<span id="sm-score" aria-hidden="true">0</span>
+							<span class="sm-score-unit">/100</span>
+							<div id="sm-score-bar" role="progressbar" aria-label="Handshape score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+						</div>
+						<div id="sm-hint">Turn the camera on to be graded, or just copy the diagram.</div>
+						<div id="sm-fingers" aria-label="Per-finger score"></div>
+						<div class="sm-camera-row">
+							<button class="sm-btn" id="sm-camera" type="button" aria-pressed="false">Turn the camera on</button>
+							<p id="sm-camera-note" hidden>Hand tracking runs locally via MediaPipe. Close the tab and it is gone.</p>
+						</div>
+					</div>
+				</section>
+			</div>
+
+			<section class="sm-course" aria-label="The course">
+				<h2>The alphabet, in the order it is easiest to learn</h2>
+				<p>
+					Closed fists first, open hands next, then the pairs every beginner confuses. A letter
+					turns green once you have held it correctly; your progress is kept on this device.
+					You can also press any letter key to jump straight to it.
+				</p>
+				<div id="sm-rail"></div>
+			</section>
+
+			<p class="sm-note">
+				This is the practice half of the signing loop. The reference for every letter and number
+				lives at <a href="/asl-alphabet">/asl-alphabet</a>, whole words and signed chat replies at
+				<a href="/sign-language">/sign-language</a>, and the engine behind all three pages is
+				documented in <a href="/docs/sign-language">the sign language docs</a> and published as
+				<a href="https://www.npmjs.com/package/@three-ws/sign-language">@three-ws/sign-language</a>.
+				The avatar, the target diagram, and the grader all read the same handshape spec, so what
+				is taught and what is graded can never drift apart.
+			</p>
+		</main>
+
+		<script src="/footer.js" defer></script>
+		<script type="module" src="/src/sign-mirror-page.js"></script>
+	</body>
+</html>

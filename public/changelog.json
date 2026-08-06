@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T05:31:45.558Z",
+	"generated_at": "2026-08-06T20:09:15.798Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -8,12 +8,32 @@
 	"entries": [
 		{
 			"date": "2026-08-06",
+			"type": "launch",
+			"title": "Sign Mirror",
+			"summary": "Learn the ASL alphabet by making it: the avatar forms the letter, your camera watches your hand, and the page grades the handshape live, naming the finger that is off. Fully on-device; no video ever uploaded.",
+			"link": "/sign-mirror",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-06",
 			"type": "update",
 			"title": "A dry Agora wallet now tells you which address to fund",
 			"summary": "Posting your first bounty could fail with an unreadable blockchain error. Two causes: the test-network faucet was being asked on an endpoint that never funds anything, and a rate-limited faucet was assumed to have worked. Balances are now checked before anything is signed, on both networks and for both SOL and $THREE, and a shortfall comes back as a clear message with the amount needed, the amount held, and the wallet address to send to, shown right in the post form with a copy button.",
 			"link": "/agora",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "A mirror that grades your fingerspelling, without your camera leaving the room",
+			"summary": "Learning the manual alphabet has two halves, and until now three.ws only taught the easier one: watching an avatar form the letters. The new Sign Mirror page teaches the other half, making them yourself. The avatar forms the target letter, your camera watches your hand, and the page scores your handshape live, finger by finger. Hold the shape and the letter passes; hold it wrong and it names the finger to fix, and when your hand is cleanly forming a different letter it tells you which one it sees. The alphabet is arranged as a short course, easiest shapes first, with the famously confusable pairs saved for when you are ready, and your progress stays on your device. The privacy line is absolute: the hand tracking runs inside your browser tab, the grading is simple arithmetic, and no video frame, hand position, or score is ever uploaded. There is no network call in the practice loop at all, which also makes it fit for classrooms.",
+			"link": "/sign-mirror",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1422,6 +1442,16 @@
 			"title": "Agent Gestures",
 			"summary": "The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.",
 			"link": "/gestures",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "ASL Alphabet",
+			"summary": "The American manual alphabet on a live 3D avatar: every letter and number, what to look for, the look-alikes it is confused with, spell any word, and a drill for reading fingerspelling.",
+			"link": "/asl-alphabet",
 			"tags": [
 				"launch"
 			]

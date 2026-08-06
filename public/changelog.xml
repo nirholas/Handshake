@@ -7,12 +7,28 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Sign Mirror</title>
+			<link>https://three.ws/sign-mirror</link>
+			<guid isPermaLink="false">2026-08-06:Sign Mirror</guid>
+			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Learn the ASL alphabet by making it: the avatar forms the letter, your camera watches your hand, and the page grades the handshape live, naming the finger that is off. Fully on-device; no video ever uploaded.</description>
+		</item>
+		<item>
 			<title>A dry Agora wallet now tells you which address to fund</title>
 			<link>https://three.ws/agora</link>
 			<guid isPermaLink="false">2026-08-06:A dry Agora wallet now tells you which address to fund</guid>
 			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Posting your first bounty could fail with an unreadable blockchain error. Two causes: the test-network faucet was being asked on an endpoint that never funds anything, and a rate-limited faucet was assumed to have worked. Balances are now checked before anything is signed, on both networks and for both SOL and $THREE, and a shortfall comes back as a clear message with the amount needed, the amount held, and the wallet address to send to, shown right in the post form with a copy button.</description>
+		</item>
+		<item>
+			<title>A mirror that grades your fingerspelling, without your camera leaving the room</title>
+			<link>https://three.ws/sign-mirror</link>
+			<guid isPermaLink="false">2026-08-06:A mirror that grades your fingerspelling, without your camera leaving the room</guid>
+			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Learning the manual alphabet has two halves, and until now three.ws only taught the easier one: watching an avatar form the letters. The new Sign Mirror page teaches the other half, making them yourself. The avatar forms the target letter, your camera watches your hand, and the page scores your handshape live, finger by finger. Hold the shape and the letter passes; hold it wrong and it names the finger to fix, and when your hand is cleanly forming a different letter it tells you which one it sees. The alphabet is arranged as a short course, easiest shapes first, with the famously confusable pairs saved for when you are ready, and your progress stays on your device. The privacy line is absolute: the hand tracking runs inside your browser tab, the grading is simple arithmetic, and no video frame, hand position, or score is ever uploaded. There is no network call in the practice loop at all, which also makes it fit for classrooms.</description>
 		</item>
 		<item>
 			<title>A paced payment rail now says &quot;retry shortly&quot; instead of reporting itself broken</title>
@@ -1093,6 +1109,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.</description>
+		</item>
+		<item>
+			<title>ASL Alphabet</title>
+			<link>https://three.ws/asl-alphabet</link>
+			<guid isPermaLink="false">2026-07-30:ASL Alphabet</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The American manual alphabet on a live 3D avatar: every letter and number, what to look for, the look-alikes it is confused with, spell any word, and a drill for reading fingerspelling.</description>
 		</item>
 		<item>
 			<title>Autonomous Trading</title>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T05:31:45.548Z",
+	"generated_at": "2026-08-06T20:09:15.789Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -90,6 +90,26 @@
 					"title": "Sign Language Avatars",
 					"description": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back with your webcam. The whole loop, live in 3D.",
 					"added": "2026-07-20",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
+					"path": "/asl-alphabet",
+					"title": "ASL Alphabet",
+					"description": "The American manual alphabet on a live 3D avatar: every letter and number, what to look for, the look-alikes it is confused with, spell any word, and a drill for reading fingerspelling.",
+					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/sign-mirror",
+					"title": "Sign Mirror",
+					"description": "Learn the ASL alphabet by making it: the avatar forms the letter, your camera watches your hand, and the page grades the handshape live, naming the finger that is off. Fully on-device; no video ever uploaded.",
+					"added": "2026-08-06",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

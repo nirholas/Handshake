@@ -12,6 +12,7 @@ New here? The step-by-step walkthrough is [Tutorial: make your avatar sign](http
 | Send someone a signed phrase | `https://three.ws/sign-language?say=happy+to+meet+you` | The page signs it on arrival. The **🔗 Share this phrase** chip copies this link for whatever was just signed |
 | See the whole vocabulary | [/sign-language](https://three.ws/sign-language#sl-vocab) | Every word with a real sign, as a chip you can click to watch |
 | Learn the manual alphabet | [/asl-alphabet](https://three.ws/asl-alphabet) | Every letter and number on a live hand, with what to look for, the look-alikes, and a drill for reading it |
+| Practice making the letters myself | [/sign-mirror](https://three.ws/sign-mirror) | Your camera watches your hand and grades the handshape live, finger by finger, entirely on-device |
 | Spell a word and download it | [/pose](https://three.ws/pose) | The Spell box builds an animation clip you can scrub, slow down, and export as an animated GLB |
 | Share a spelled word | `https://three.ws/pose?spell=HELLO` | The Studio spells it on arrival, on whatever avatar is loaded |
 | Get signed answers from an AI agent | [/app](https://three.ws/app) | The **🤟** button in the chat header signs every assistant reply |
@@ -108,6 +109,18 @@ Another 41 everyday spellings route to those same signs, so ordinary sentences w
 - Deep links: `?letter=W` opens a letter, `?spell=HELLO` spells a word.
 
 Speed, signing hand, and avatar are the same settings as /sign-language, stored under the same key, so a left-handed signer sets that once for both pages. That includes [your own avatar](#sign-with-your-own-avatar): pick it on either page and it forms the letters on both.
+
+## Practice making the letters on /sign-mirror
+
+[/sign-mirror](https://three.ws/sign-mirror) is the other direction: instead of reading the avatar's hand, you form the letter with your own. The avatar shows the target, a skeleton diagram of the ideal hand sits beside it, and your camera feed is graded live against the same handshape spec the avatar is wearing (`src/sign-handshapes.js` via [`src/sign-grader.js`](../src/sign-grader.js)), so what is taught and what is graded cannot drift apart.
+
+- **Hold the shape to pass.** The score has to sit above the pass line for a moment, not just spike through it, which is what holding a letter actually feels like.
+- **Wrong is named, not just scored.** Each finger gets its own bar, and the hint says what to change ("straighten your ring finger"). When your hand is a long way off but cleanly forms a different letter, the page says which letter it sees.
+- **Letters that share a handshape are flagged, not failed.** G and Q, K and P differ only by which way the hand points, which a handshape score cannot see; the page explains the difference instead of marking you wrong.
+- **A course, not a list.** The alphabet is ordered easiest-first: closed fists, open hands, pointing fingers, then the confusable pairs. Passed letters turn green and progress is kept on the device.
+- **Entirely on-device.** MediaPipe's hand landmarker runs in the tab, the grading is arithmetic, and there is no network call in the practice loop: no frame, landmark, or score is ever uploaded. No camera? The target diagram and the avatar still work.
+
+Deep link: `?letter=W` opens a letter. The signing hand and avatar are the same stored preferences as /sign-language and /asl-alphabet.
 
 ## Fingerspell and export in the Animation Studio
 
@@ -485,6 +498,7 @@ None of this replaces a human interpreter. It makes an avatar legible to signers
 
 - [Tutorial: make your avatar sign](https://three.ws/tutorials/sign-with-your-avatar), the guided walkthrough of everything on this page
 - [/asl-alphabet](https://three.ws/asl-alphabet), the manual alphabet on a live hand, with a practice drill
+- [/sign-mirror](https://three.ws/sign-mirror), camera-graded handshape practice, entirely on-device
 - [`@three-ws/sign-language`](../packages/sign-language/README.md), the engine as an npm package
 - [examples/sign-language.html](../examples/sign-language.html), a runnable page with both integration paths
 - [Animation Studio](./animation-studio.md), the Spell box, exports, and share links

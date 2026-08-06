@@ -61,6 +61,18 @@ URL: https://three.ws/sign-language
 
 three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back with your webcam. The whole loop, live in 3D.
 
+### ASL Alphabet
+
+URL: https://three.ws/asl-alphabet
+
+The American manual alphabet on a live 3D avatar: every letter and number, what to look for, the look-alikes it is confused with, spell any word, and a drill for reading fingerspelling.
+
+### Sign Mirror
+
+URL: https://three.ws/sign-mirror
+
+Learn the ASL alphabet by making it: the avatar forms the letter, your camera watches your hand, and the page grades the handshape live, naming the finger that is off. Fully on-device; no video ever uploaded.
+
 ### Object Library
 
 URL: https://three.ws/objects

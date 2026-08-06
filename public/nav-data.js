@@ -134,6 +134,13 @@ export const NAV_GROUPS = [
 						badgeTone: 'live',
 						desc: 'Every letter and number on a live 3D hand, with the look-alikes named and a drill for reading it',
 					},
+					{
+						title: 'Sign Mirror',
+						href: '/sign-mirror',
+						badge: 'New',
+						badgeTone: 'live',
+						desc: 'Make the letter yourself: your camera grades the handshape live, on-device, finger by finger',
+					},
 				],
 			},
 			{

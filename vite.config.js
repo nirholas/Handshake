@@ -648,6 +648,7 @@ const appConfig = {
 				'character-library': resolve(__dirname, 'pages/character-library.html'),
 				'sign-language': resolve(__dirname, 'pages/sign-language.html'),
 				'asl-alphabet': resolve(__dirname, 'pages/asl-alphabet.html'),
+				'sign-mirror': resolve(__dirname, 'pages/sign-mirror.html'),
 				objects: resolve(__dirname, 'pages/objects.html'),
 				forged: resolve(__dirname, 'pages/forged.html'),
 				wardrobe: resolve(__dirname, 'pages/wardrobe.html'),

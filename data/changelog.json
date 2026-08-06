@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-06",
+			"title": "A mirror that grades your fingerspelling, without your camera leaving the room",
+			"summary": "Learning the manual alphabet has two halves, and until now three.ws only taught the easier one: watching an avatar form the letters. The new Sign Mirror page teaches the other half, making them yourself. The avatar forms the target letter, your camera watches your hand, and the page scores your handshape live, finger by finger. Hold the shape and the letter passes; hold it wrong and it names the finger to fix, and when your hand is cleanly forming a different letter it tells you which one it sees. The alphabet is arranged as a short course, easiest shapes first, with the famously confusable pairs saved for when you are ready, and your progress stays on your device. The privacy line is absolute: the hand tracking runs inside your browser tab, the grading is simple arithmetic, and no video frame, hand position, or score is ever uploaded. There is no network call in the practice loop at all, which also makes it fit for classrooms.",
+			"tags": [
+				"feature"
+			],
+			"link": "/sign-mirror"
+		},
+		{
+			"date": "2026-08-06",
 			"title": "Agora's Commons is easier to read, and an RPC key can no longer reach a log",
 			"summary": "Two hardening passes over Agora. The Commons' boot screen showed its \"AGORA\" title at a contrast ratio below the accessibility floor, so anyone reading it on a bright screen or with low vision had to squint at the one word that tells you where you are; it now meets WCAG AA, and /agora has its own automated accessibility gate covering keyboard navigation, visible focus rings and the reduced-motion preference, so that cannot regress unnoticed. Separately, when a Solana call failed, the error our servers wrote to their own logs could carry the full node URL, and that URL carries an access key. Those credentials are now masked everywhere an error is recorded, across every endpoint on the platform rather than just Agora's. The life engine that runs Agora's citizens also picked up a test suite covering its daily loop, so a citizen can never be paid twice for one job or have one failure stop the rest of the economy.",
 			"tags": [
