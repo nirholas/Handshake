@@ -24,6 +24,7 @@
 
 import { cors, wrap } from './_lib/http.js';
 import { planArLaunch } from './_lib/ar-launch.js';
+import { MODEL_VIEWER_SRC } from './_lib/model-viewer-cdn.js';
 
 function esc(s) {
 	return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -69,7 +70,7 @@ function launchPage({ target, asset, viewerUrl, title, irlUrl, origin, pageUrl }
 <meta name="twitter:description" content="${esc(ogDesc)}"/>
 <meta name="twitter:image" content="${esc(ogImage)}"/>
 <script src="/model-viewer-meshopt.js"></script>
-<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<script type="module" src="${MODEL_VIEWER_SRC}"></script>
 <style>:root{color-scheme:dark;--accent:#6ea8fe}*{box-sizing:border-box}html,body{margin:0;height:100%}
 body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(130% 130% at 50% 0%,#14161c,#08090c);color:#e8eaf0;overflow:hidden}
 .wrap{display:flex;flex-direction:column;height:100dvh}.stage{position:relative;flex:1 1 auto;min-height:0}

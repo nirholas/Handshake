@@ -45,7 +45,7 @@
 // returns 'pending' + a poll handle before the Action deadline instead of dying
 // on the socket.
 
-import { cors, wrap, method, json, error, readJson, rateLimited } from '../_lib/http.js';
+import { cors, wrap, method, json, readJson, setRateLimitHeaders } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { startForge, originFromReq, viewerUrl, arLaunchUrl } from '../_mcp-studio/gpt-forge-client.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
@@ -155,6 +155,17 @@ export function shapePoll(data, base, jobId, title) {
 	};
 }
 
+// Every error body on this route is an ErrorResponse from the published Actions
+// schema: { error, message, retry_after? }. The generic http.js helpers emit
+// `error_description` instead of `message`, which the custom GPT has no field
+// for, so the two limiter paths shape their own body while still setting the
+// RateLimit-* / Retry-After headers a polling client backs off on.
+function limitReached(res, result, message) {
+	const retryAfter = Math.max(1, setRateLimitHeaders(res, result));
+	res.setHeader('retry-after', String(retryAfter));
+	return json(res, 429, { error: 'rate_limited', message, retry_after: retryAfter });
+}
+
 // Map a startForge lane failure to an honest boundary response. A well-formed
 // prompt must NEVER 500: every code has a designed status + actionable message.
 function failFromLane(res, err) {
@@ -236,7 +247,7 @@ async function generate(req, res) {
 	// /api/gpt-forge draw from, so this surface adds no new unmetered capacity.
 	const rl = await limits.mcp3dGenerateFree(ip);
 	if (!rl.success) {
-		return rateLimited(res, rl, 'Free 3D generation limit reached — try again in a little while.');
+		return limitReached(res, rl, 'Free 3D generation limit reached. Try again in a little while.');
 	}
 
 	const base = originFromReq(req);
@@ -277,7 +288,7 @@ async function poll(req, res, jobId, title) {
 	// Cheap, high-frequency poll — reuse the forge status limiter (per-instance,
 	// flood-guard only) so a polling loop can't be turned into a hammer.
 	const rl = await limits.mcp3dStatus(clientIp(req));
-	if (!rl.success) return rateLimited(res, rl, 'Polling too fast — slow down and retry.');
+	if (!rl.success) return limitReached(res, rl, 'Polling too fast. Slow down and retry.');
 
 	const base = originFromReq(req);
 	let upstream;
@@ -318,7 +329,10 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://localhost');
 	const jobId = (url.searchParams.get('job') || '').trim();
 	if (!jobId) {
-		return error(res, 400, 'missing_job', 'Pass ?job=<id> to poll a generation, or POST { prompt } to start one.');
+		return json(res, 400, {
+			error: 'missing_job',
+			message: 'Pass ?job=<id> to poll a generation, or POST { prompt } to start one.',
+		});
 	}
 	const title = (url.searchParams.get('title') || '').trim().slice(0, 120);
 	return poll(req, res, jobId, title);

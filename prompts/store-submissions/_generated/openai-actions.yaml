@@ -25,7 +25,9 @@ info:
     it to the user while the model is still generating. arUrl is the
     augmented-reality launch link: opened on a phone it places the model in
     the user's real room (Quick Look on iPhone, Scene Viewer on Android);
-    always offer it alongside the viewer link.
+    always offer it alongside the viewer link. GET /api/ar is the endpoint
+    behind that link and is described below, so the whole free surface of
+    the studio is documented here.
   contact:
     name: three.ws
     url: https://three.ws
@@ -192,6 +194,76 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/ar:
+    get:
+      operationId: openModelInAR
+      x-openai-isConsequential: false
+      summary: Augmented-reality launch for a finished model
+      description: >-
+        The endpoint every arUrl points at. Given a public https .glb, it
+        serves a device-aware way to place that model in the user's real room:
+        an Android phone is redirected into Google Scene Viewer, an iPhone gets
+        a launch page whose "View in AR" button enters Apple Quick Look, and a
+        desktop browser falls back to the interactive viewer. The response is a
+        web page meant for a person to open, so the way to use this in a
+        conversation is to hand the user the arUrl from generate3DModel or
+        checkModelJob. Free and keyless like the rest of this API.
+      parameters:
+        - name: src
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uri
+            maxLength: 2048
+          description: >-
+            Public https URL of the model to place, ending in .glb or .gltf.
+            This is the glbUrl of a finished generation.
+        - name: title
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 120
+          description: >-
+            Short label for the model (usually the prompt). It names the AR
+            launch page and its share card.
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [avatar]
+          description: >-
+            Set to "avatar" when the model is a rigged humanoid. It keeps
+            Android on the launch page and adds the handoff that brings the
+            character to life in the room instead of placing it as a static
+            object.
+      responses:
+        "200":
+          description: >-
+            The AR launch page (iPhone and desktop, and any rigged avatar).
+          content:
+            text/html:
+              schema:
+                type: string
+        "302":
+          description: >-
+            Redirect straight into Google Scene Viewer, for a static model on
+            Android. The Location header carries the AR launch URL.
+          headers:
+            Location:
+              description: The Scene Viewer launch URL.
+              schema:
+                type: string
+        "400":
+          description: >-
+            The src value is missing, is not https, or does not point at a .glb
+            or .gltf file. A designed error page explains what to fix.
+          content:
+            text/html:
+              schema:
+                type: string
 components:
   schemas:
     GenerationState:

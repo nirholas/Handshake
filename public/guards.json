@@ -79,6 +79,30 @@
 			}
 		},
 		{
+			"id": "sync-studio-openapi",
+			"script": "scripts/sync-studio-openapi.mjs",
+			"npm": "check:studio-openapi",
+			"npmAliases": [
+				"sync:studio-openapi"
+			],
+			"title": "3D Studio OpenAPI sync",
+			"protects": "The custom-GPT Actions file in the OpenAI submission kit is byte-identical to the OpenAPI schema three.ws actually serves.",
+			"why": "The served schema at public/.well-known/3d-studio-openapi.yaml is what https://three.ws/.well-known/3d-studio-openapi.yaml returns and what the GPT builder imports by URL, while prompts/store-submissions/_generated/openai-actions.yaml is the copy an OpenAI reviewer reads. Two hand-maintained copies of one contract drift, and the drift shows up as a reviewer reading a document the runtime does not serve. The served file is the source of truth and the copy is regenerated from it.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "The submission kit shipping an Actions contract that no longer matches the schema the site serves.",
+				"violation": {
+					"append": {
+						"public/.well-known/3d-studio-openapi.yaml": "\n# drift fixture: served schema edited without regenerating the submission copy\n"
+					}
+				},
+				"expect": "drift"
+			}
+		},
+		{
 			"id": "check-rules",
 			"script": "scripts/check-rules.mjs",
 			"npm": "check:rules",

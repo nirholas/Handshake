@@ -39,13 +39,34 @@ describe('3d-studio-openapi served schema', () => {
 		expect(doc.components?.securitySchemes ?? {}).toEqual({});
 	});
 
-	it('exposes only the free generation action (POST generate + GET poll)', () => {
-		expect(Object.keys(doc.paths)).toEqual(['/api/3d/studio']);
+	it('exposes only the free studio surface (generate + poll + AR launch)', () => {
+		expect(Object.keys(doc.paths)).toEqual(['/api/3d/studio', '/api/ar']);
 		expect(doc.paths['/api/3d/studio'].post?.operationId).toBe('generate3DModel');
 		expect(doc.paths['/api/3d/studio'].get?.operationId).toBe('checkModelJob');
+		expect(doc.paths['/api/ar'].get?.operationId).toBe('openModelInAR');
+		// Nothing but GET is exposed on the AR launch endpoint.
+		expect(Object.keys(doc.paths['/api/ar'])).toEqual(['get']);
 		// No action may be flagged consequential (nothing charges or mutates state).
 		expect(doc.paths['/api/3d/studio'].post['x-openai-isConsequential']).toBe(false);
 		expect(doc.paths['/api/3d/studio'].get['x-openai-isConsequential']).toBe(false);
+		expect(doc.paths['/api/ar'].get['x-openai-isConsequential']).toBe(false);
+	});
+
+	it('documents the AR launch parameters api/ar.js actually reads', () => {
+		// Bind the schema to the handler's real query contract, so renaming a
+		// parameter on one side without the other fails here instead of in AR.
+		const handler = readFileSync(resolve(ROOT, 'api/ar.js'), 'utf8');
+		const readParams = [...handler.matchAll(/searchParams\.get\(['"]([^'"]+)['"]\)/g)].map((m) => m[1]);
+		const params = doc.paths['/api/ar'].get.parameters;
+		const byName = Object.fromEntries(params.map((p) => [p.name, p]));
+		expect([...new Set(readParams)].sort()).toEqual(Object.keys(byName).sort());
+		expect(Object.keys(byName).sort()).toEqual(['kind', 'src', 'title']);
+		expect(byName.src.required).toBe(true);
+		expect(byName.src.in).toBe('query');
+		expect(byName.title.required).toBe(false);
+		expect(byName.kind.schema.enum).toEqual(['avatar']);
+		// The AR page is a human surface: it answers in HTML, never JSON.
+		expect(Object.keys(doc.paths['/api/ar'].get.responses['200'].content)).toEqual(['text/html']);
 	});
 
 	it('uses the canonical no-.html legal URLs', () => {
