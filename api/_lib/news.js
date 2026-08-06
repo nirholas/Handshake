@@ -314,12 +314,87 @@ export function parseFeed(xml, sourceKey) {
 
 // ── Non-RSS sources ──────────────────────────────────────────────────────────
 // A source with `kind: 'json'` is shaped by an adapter here instead of by
-// parseFeed. The bar for adding one is high: free, keyless, and reachable from
-// a datacenter IP (which is what Cloud Run is). Three of cryptocurrency.cv's
-// four JSON sources no longer clear it and are deliberately absent —
-// CryptoCompare now answers 401, DeFiLlama's /raises answers 402, and Reddit
-// answers 403 to cloud egress. Shipping them would mean four sources that fail
-// forever.
+// parseFeed. The bar for adding one is high: free, keyless, and serviceable
+// from a datacenter IP (which is what Cloud Run is). Two of cryptocurrency.cv's
+// four JSON sources no longer clear it and are deliberately absent:
+// CryptoCompare now answers 401 and DeFiLlama's /raises answers 402. Reddit's
+// keyless JSON listings also answer a constant 403 to datacenter egress, which
+// is why they were excluded for a long time; they ship now because Reddit
+// serves the SAME hot listing as an Atom feed (hot.rss) to a polite bot UA
+// (verified with paced probes, 2026-08-05/06), and the reddit_* sources declare
+// that mirror as `fallback_url`. fetchSource retries the mirror whenever the
+// JSON rung fails, so the source degrades to Atom instead of failing forever.
+
+// Reddit listing shaping (r/<sub>/hot.json, keyless, no OAuth). Community
+// feeds are noisy, so the adapter drops what the JSON payload lets it see:
+// pinned/stickied posts, NSFW posts, recurring megathreads, and anything under
+// a small score floor.
+const REDDIT_MIN_SCORE = 5;
+const REDDIT_NOISE_TITLE = /\b(?:daily (?:discussion|general|thread)|weekly (?:discussion|thread|roundup)|megathread|open discussion)\b/i;
+// Reddit's Atom mirror wraps every entry body in "submitted by /u/x [link]
+// [comments]" boilerplate; none of it is post text.
+const REDDIT_ATOM_BOILERPLATE = /submitted by\s+\/?u\/\S+.*$/i;
+
+function redditListing(data, key) {
+	const src = NEWS_SOURCES[key];
+	const children = data?.data?.children;
+	if (!Array.isArray(children)) throw new Error(`${key} unexpected payload`);
+	return children
+		.map((c) => {
+			const d = c?.data;
+			if (!d || d.stickied || d.over_18) return null;
+			if ((Number(d.score) || 0) < REDDIT_MIN_SCORE) return null;
+			const title = stripHtml(str(d.title) || '');
+			if (!title || !str(d.permalink)) return null;
+			if (REDDIT_NOISE_TITLE.test(title)) return null;
+			// The permalink (the discussion thread) is the canonical link: d.url on
+			// a link post can be a bare image or video, and the thread is where the
+			// score and the community context live.
+			const link = `https://www.reddit.com${d.permalink}`;
+			const iso = clampFuturePubDate(
+				Number.isFinite(d.created_utc) ? new Date(d.created_utc * 1000).toISOString() : null,
+			);
+			const selftext = stripHtml(str(d.selftext) || '');
+			const description = truncateWords(selftext, 320);
+			// raw_json=1 in the source URL keeps preview URLs unescaped; thumbnail
+			// placeholders ('self', 'default', 'nsfw') are not https and fall out in
+			// cleanImageUrl.
+			const image =
+				[str(d.preview?.images?.[0]?.source?.url), str(d.thumbnail)].map(cleanImageUrl).find(Boolean) || null;
+			return {
+				id: articleId(link),
+				title,
+				link,
+				description,
+				image,
+				author: str(d.author) ? `u/${d.author}` : null,
+				source: src.name,
+				source_key: key,
+				category: src.category,
+				pub_date: iso,
+				score: Number(d.score) || 0,
+				tickers: extractTickers(`${title} ${selftext}`),
+				sentiment: lexiconSentiment(`${title} ${selftext}`),
+				content_text: selftext.length > (description || '').length + 80 ? selftext.slice(0, 8000) : null,
+			};
+		})
+		.filter(Boolean);
+}
+
+// The Atom mirror carries no score/stickied metadata, so the noise gates are
+// re-applied from the only signal it has (the title), and the "submitted by"
+// wrapper is stripped from body text. Non-reddit fallbacks pass through as-is.
+function shapeFallbackArticles(key, articles) {
+	if (!key.startsWith('reddit_')) return articles;
+	const clean = (s) => stripHtml(String(s || '').replace(REDDIT_ATOM_BOILERPLATE, ''));
+	return articles
+		.filter((a) => !REDDIT_NOISE_TITLE.test(a.title))
+		.map((a) => ({
+			...a,
+			description: truncateWords(clean(a.description), 320),
+			content_text: a.content_text ? clean(a.content_text) || null : null,
+		}));
+}
 
 const JSON_ADAPTERS = {
 	// Exchange listing/delisting notices. Market-moving, and published to no RSS
@@ -353,6 +428,16 @@ const JSON_ADAPTERS = {
 			})
 			.filter(Boolean);
 	},
+
+	// Reddit community listings, one adapter per subreddit source (the registry
+	// guard in tests/news-sources.test.js requires a named adapter per key);
+	// the shaping lives in redditListing above.
+	reddit_solana(data, key) { return redditListing(data, key); },
+	reddit_cryptocurrency(data, key) { return redditListing(data, key); },
+	reddit_cryptomarkets(data, key) { return redditListing(data, key); },
+	reddit_defi(data, key) { return redditListing(data, key); },
+	reddit_bitcoin(data, key) { return redditListing(data, key); },
+	reddit_ethereum(data, key) { return redditListing(data, key); },
 };
 
 // ── Concurrency control ──────────────────────────────────────────────────────
@@ -394,12 +479,40 @@ function semaphore(limit) {
 const globalGate = semaphore(GLOBAL_CONCURRENCY);
 const domainGates = new Map();
 
+// Hosts stricter than the default per-domain cap. reddit.com rate-limits
+// keyless clients aggressively (a burst of six requests spaced 1s apart earned
+// a blanket 429, probed 2026-08-05), so its six listings fetch strictly one at
+// a time; the 5-minute source TTL keeps the steady state at about one request
+// per subreddit per 5 minutes.
+const DOMAIN_CONCURRENCY_OVERRIDES = { 'www.reddit.com': 1 };
+
 function domainGate(domain) {
-	if (!domainGates.has(domain)) domainGates.set(domain, semaphore(DOMAIN_CONCURRENCY));
+	if (!domainGates.has(domain)) {
+		domainGates.set(domain, semaphore(DOMAIN_CONCURRENCY_OVERRIDES[domain] || DOMAIN_CONCURRENCY));
+	}
 	return domainGates.get(domain);
 }
 
 // ── Per-source fetch ─────────────────────────────────────────────────────────
+
+function requestFeed(url, json) {
+	return fetch(url, {
+		headers: {
+			accept: json
+				? 'application/json'
+				: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
+			// A polite, identifying bot UA gets through more publisher WAFs than a
+			// spoofed browser UA does: a fake Chrome string without the matching
+			// TLS/header fingerprint reads as a scraper and earns a 403. Reddit in
+			// particular rejects default library UAs outright; this descriptive one
+			// is what its keyless endpoints expect.
+			'user-agent': 'Mozilla/5.0 (compatible; three.ws-news/1.0; +https://three.ws)',
+			'accept-language': 'en-US,en;q=0.9',
+		},
+		signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
+		redirect: 'follow',
+	});
+}
 
 async function fetchSource(key) {
 	const src = NEWS_SOURCES[key];
@@ -410,27 +523,35 @@ async function fetchSource(key) {
 	await globalGate.acquire();
 	try {
 		const json = src.kind === 'json';
-		const resp = await fetch(src.url, {
-			headers: {
-				accept: json
-					? 'application/json'
-					: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
-				// A polite, identifying bot UA gets through more publisher WAFs than a
-				// spoofed browser UA does — a fake Chrome string without the matching
-				// TLS/header fingerprint reads as a scraper and earns a 403.
-				'user-agent': 'Mozilla/5.0 (compatible; three.ws-news/1.0; +https://three.ws)',
-				'accept-language': 'en-US,en;q=0.9',
-			},
-			signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
-			redirect: 'follow',
-		});
-		if (!resp.ok) {
-			const err = new Error(`${key} ${resp.status}`);
-			err.status = resp.status;
-			throw err;
+		const resp = await requestFeed(src.url, json);
+		if (resp.ok) {
+			if (json) return JSON_ADAPTERS[key](await resp.json(), key);
+			return parseFeed(await resp.text(), key);
 		}
-		if (json) return JSON_ADAPTERS[key](await resp.json(), key);
-		return parseFeed(await resp.text(), key);
+		const err = new Error(`${key} ${resp.status}`);
+		err.status = resp.status;
+		// Failover rung: a source may declare an alternate feed representation of
+		// the same listing (reddit's Atom mirror of its datacenter-blocked JSON
+		// API). Fetched sequentially under the same domain + global slots, so the
+		// per-domain pacing still holds.
+		if (src.fallback_url) {
+			let fb = null;
+			try {
+				fb = await requestFeed(src.fallback_url, false);
+			} catch {
+				// transport failure on the fallback: the primary error stands
+			}
+			if (fb?.ok) return shapeFallbackArticles(key, parseFeed(await fb.text(), key));
+			if (fb) {
+				// The fallback's verdict drives the backoff: reddit's JSON answers a
+				// constant 403 while its Atom mirror 429s transiently, and letting the
+				// 403 pick the 6h hard ceiling would mute a source whose fallback
+				// recovers within minutes.
+				err.status = fb.status;
+				err.message = `${key} ${resp.status} (fallback ${fb.status})`;
+			}
+		}
+		throw err;
 	} finally {
 		globalGate.release();
 		gate.release();

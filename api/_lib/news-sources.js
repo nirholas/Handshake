@@ -21,9 +21,12 @@
 // re-probed slowly before any verdict. Regenerate and re-validate with
 // scripts/news-sources-probe.mjs, which exits non-zero when a source has died.
 //
-// Fields: name, url, category. Optional: kind ('json' — shaped by an adapter in
-// news.js rather than parsed as a feed), tier + credibility (upstream editorial
-// tiering, drives refresh priority), language + region (international feeds).
+// Fields: name, url, category. Optional: kind ('json', shaped by an adapter in
+// news.js rather than parsed as a feed), fallback_url (an alternate feed
+// representation of the same listing, retried by the aggregator when the
+// primary URL fails; see the reddit_* sources), tier + credibility (upstream
+// editorial tiering, drives refresh priority), language + region
+// (international feeds).
 
 export const NEWS_SOURCES = {
 	// ── General newsrooms (66) ───────────────────────────────────────────────
@@ -278,6 +281,27 @@ export const NEWS_SOURCES = {
 	bitpinas: { name: 'BitPinas', url: 'https://bitpinas.com/feed/', category: 'asia' },
 	blockhead_tech: { name: 'Blockhead', url: 'https://www.blockhead.co/latest/rss/', category: 'asia' },
 	forkast: { name: 'Forkast News', url: 'https://forkast.news/feed/', category: 'asia' },
+
+	// ── Reddit community listings (6) ────────────────────────────────────────
+	// Keyless JSON listings (r/<sub>/hot.json), no OAuth. Two facts shape these
+	// entries, both verified with paced curl probes on 2026-08-05/06: Reddit's
+	// JSON API answers a constant 403 to datacenter egress (every UA, every
+	// host variant), while the SAME hot listing served as an Atom feed
+	// (hot.rss) answers 200 to a polite, identifying bot UA. So each source
+	// declares the Atom mirror as fallback_url: the aggregator (fetchSource in
+	// news.js) retries it whenever the JSON rung fails, and the JSON adapters
+	// (redditListing in news.js) do the score/stickied noise filtering the
+	// richer payload allows. Requests are paced to one in-flight fetch for the
+	// whole www.reddit.com domain (DOMAIN_CONCURRENCY_OVERRIDES in news.js),
+	// because a burst of six paced-1s requests already earns a 429.
+	// reddit_solana is listed first on purpose: refresh order follows registry
+	// order within a priority band, and Solana leads on this platform.
+	reddit_solana: { name: 'r/solana', url: 'https://www.reddit.com/r/solana/hot.json?limit=40&raw_json=1', fallback_url: 'https://www.reddit.com/r/solana/hot.rss?limit=40', category: 'solana', kind: 'json' },
+	reddit_cryptocurrency: { name: 'r/CryptoCurrency', url: 'https://www.reddit.com/r/CryptoCurrency/hot.json?limit=40&raw_json=1', fallback_url: 'https://www.reddit.com/r/CryptoCurrency/hot.rss?limit=40', category: 'general', kind: 'json' },
+	reddit_cryptomarkets: { name: 'r/CryptoMarkets', url: 'https://www.reddit.com/r/CryptoMarkets/hot.json?limit=40&raw_json=1', fallback_url: 'https://www.reddit.com/r/CryptoMarkets/hot.rss?limit=40', category: 'trading', kind: 'json' },
+	reddit_defi: { name: 'r/defi', url: 'https://www.reddit.com/r/defi/hot.json?limit=40&raw_json=1', fallback_url: 'https://www.reddit.com/r/defi/hot.rss?limit=40', category: 'defi', kind: 'json' },
+	reddit_bitcoin: { name: 'r/Bitcoin', url: 'https://www.reddit.com/r/Bitcoin/hot.json?limit=40&raw_json=1', fallback_url: 'https://www.reddit.com/r/Bitcoin/hot.rss?limit=40', category: 'bitcoin', kind: 'json' },
+	reddit_ethereum: { name: 'r/ethereum', url: 'https://www.reddit.com/r/ethereum/hot.json?limit=40&raw_json=1', fallback_url: 'https://www.reddit.com/r/ethereum/hot.rss?limit=40', category: 'ethereum', kind: 'json' },
 };
 
 // Canonical category order for filter UIs. 'all' is implicit.
