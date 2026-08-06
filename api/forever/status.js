@@ -2,15 +2,24 @@
 //
 // Returns the live status of an OrdinalsBot inscription order. Once paid +
 // inscribed, the response includes the inscription ID, the reveal txid, and
-// public viewer URLs (mempool.space, ordinals.com).
+// public viewer URLs (mempool.space, ordinals.com). When a reveal txid is
+// known, the response also carries real Bitcoin chain confirmation for it,
+// read keyless from Blockstream Esplora (api/_lib/esplora.js) so the user
+// sees actual finality depth, not just OrdinalsBot's order state. That
+// lookup fails soft: an Esplora outage degrades `inscription.onchain` to
+// null and never breaks the status response.
 //
 // Response 200:
 //   { orderId, state, paid, inscribed, charge?, inscription?, links }
+//
+//   inscription.onchain (when the reveal tx is known and reachable):
+//     { confirmed, confirmations, blockHeight, blockTime, source: "esplora" }
 //
 //   state ∈ "waiting-payment" | "payment-received" | "inscribing" |
 //           "inscribed" | "failed"
 
 import { cors, error, json } from '../_lib/http.js';
+import { getTransactionStatus, getTipHeight, isPlausibleTxid } from '../_lib/esplora.js';
 
 const ORDINALSBOT_BASE_URL =
 	process.env.ORDINALSBOT_BASE_URL || 'https://api.ordinalsbot.com';
@@ -76,6 +85,35 @@ function buildLinks({ inscriptionId, revealTxid, commitTxid, chargeAddress }) {
 	return links;
 }
 
+/**
+ * Real chain confirmation for the reveal tx via Blockstream Esplora. Fails
+ * soft on purpose: a 404 just means the tx has not been broadcast or indexed
+ * yet (the OrdinalsBot state already covers that phase), and any other
+ * upstream fault must never take the whole status endpoint down.
+ */
+async function fetchOnchainStatus(txid) {
+	if (!isPlausibleTxid(txid)) return null;
+	try {
+		const [status, tip] = await Promise.all([getTransactionStatus(txid), getTipHeight()]);
+		const confirmations =
+			status.confirmed && Number.isFinite(status.blockHeight) && Number.isFinite(tip)
+				? Math.max(1, tip - status.blockHeight + 1)
+				: 0;
+		return {
+			confirmed: status.confirmed,
+			confirmations,
+			blockHeight: status.blockHeight,
+			blockTime: status.blockTime,
+			source: 'esplora',
+		};
+	} catch (e) {
+		if (e?.status !== 404) {
+			console.warn(`[forever/status] esplora lookup for ${txid} failed: ${e?.message || e}`);
+		}
+		return null;
+	}
+}
+
 async function fetchOrdinalsBotOrder(orderId) {
 	const headers = {};
 	if (process.env.ORDINALSBOT_API_KEY) {
@@ -121,6 +159,8 @@ export default async function handler(req, res) {
 	const commitTxid = pickCommitTxid(order);
 	const charge = order.charge || {};
 	const chargeAddress = charge.address || order.payAddress || null;
+	// Only worth a lookup when the inscription block below will render it.
+	const onchain = inscriptionId && revealTxid ? await fetchOnchainStatus(revealTxid) : null;
 
 	return json(res, 200, {
 		orderId,
@@ -140,6 +180,7 @@ export default async function handler(req, res) {
 					id: inscriptionId,
 					revealTxid,
 					commitTxid,
+					onchain,
 				}
 			: null,
 		links: buildLinks({ inscriptionId, revealTxid, commitTxid, chargeAddress }),

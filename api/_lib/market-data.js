@@ -17,6 +17,7 @@
 
 import { createCache } from './mem-cache.js';
 import { withRetry } from './resilience.js';
+import { getAssetFundamentals, FUNDAMENTALS_ASSETS } from './coinmetrics.js';
 
 /**
  * @typedef {Object} Protocol
@@ -98,6 +99,7 @@ export const CACHE_TTL = {
 	yields: 900_000, // 15 min
 	fearGreed: 1_800_000, // 30 min
 	dexVolumes: 600_000, // 10 min
+	fundamentals: 1_800_000, // 30 min (daily-frequency Coin Metrics data)
 };
 
 // True LRU with per-entry TTL. The previous Map evicted the oldest INSERTED
@@ -393,5 +395,41 @@ export async function getFearGreed() {
 	};
 
 	setCache(cacheKey, result, CACHE_TTL.fearGreed);
+	return result;
+}
+
+// ---------------------------------------------------------------------------
+// On-chain fundamentals: Coin Metrics Community API (keyless), via
+// api/_lib/coinmetrics.js. Daily network metrics for the majors: active
+// addresses, tx/transfer counts, fees, hash rate, supply, market cap, MVRV.
+// FAILS SOFT by design: fundamentals enrich a market snapshot, they never
+// gate one, so a Coin Metrics outage degrades to an empty array here instead
+// of rejecting the caller the way the DeFiLlama getters above do.
+// ---------------------------------------------------------------------------
+
+/**
+ * Latest on-chain fundamentals per asset (default BTC, ETH, SOL). Each entry
+ * is an AssetFundamentals shape (see api/_lib/coinmetrics.js): camelCase
+ * metric values coalesced to the newest completed data day, with nulls for
+ * metrics the community tier does not serve for that asset (SOL only has
+ * market metrics keyless).
+ *
+ * @param {string[]} [assets]
+ * @returns {Promise<import('./coinmetrics.js').AssetFundamentals[]>}
+ */
+export async function getFundamentals(assets = FUNDAMENTALS_ASSETS) {
+	const cacheKey = `cm:market-data:fundamentals:${assets.join(',')}`;
+	const cached = getCached(cacheKey);
+	if (cached) return cached;
+
+	let result;
+	try {
+		result = await getAssetFundamentals(assets);
+	} catch (err) {
+		console.warn(`[market-data] fundamentals unavailable: ${err?.message || err}`);
+		return [];
+	}
+
+	setCache(cacheKey, result, CACHE_TTL.fundamentals);
 	return result;
 }
