@@ -654,7 +654,7 @@ function renderByokState() {
 	$('byokSave').textContent = key ? 'Update key' : 'Save key';
 	$('byokStatus').textContent = key
 		? `Using your ElevenLabs account (${maskElevenKey(key)}). Clones and speech are billed to it.`
-		: 'Using the three.ws account with the free quota.';
+		: 'Using the three.ws account: clones and speech are metered to your credit balance.';
 }
 
 $('byokSave').addEventListener('click', () => {

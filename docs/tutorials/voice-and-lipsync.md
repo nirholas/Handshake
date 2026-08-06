@@ -135,7 +135,7 @@ If you want your agent to speak in *your* voice instead of a built-in one, use t
 4. Give the voice a **name** (1–64 characters) and click **Clone**. The page uploads the sample to `POST /api/tts/eleven-clone` ([`api/tts/eleven-clone.js`](../../api/tts/eleven-clone.js)) as `multipart/form-data`.
 5. On success you get a `voice_id`, and the voice is saved to your library (stored in `localStorage`, up to 20 voices).
 
-**Test it in the playground.** Pick the cloned voice, type a sample line, and click Speak. The playground calls `POST /api/tts/eleven` ([`api/tts/eleven.js`](../../api/tts/eleven.js)) with `{ voiceId, text }`, which proxies ElevenLabs and caches the clip for 30 days (the hint shows `cached` vs `generated`). Default model is `eleven_flash_v2_5`; requests are capped at 500 characters and rate-limited to 1000 characters per hour per user.
+**Test it in the playground.** Pick the cloned voice, type a sample line, and click Speak. The playground calls `POST /api/tts/eleven` ([`api/tts/eleven.js`](../../api/tts/eleven.js)) with `{ voiceId, text }`, which proxies ElevenLabs and caches the clip for 30 days (the hint shows `cached` vs `generated`). Default model is `eleven_flash_v2_5`; requests are capped at 500 characters and metered to your credit balance ($0.30 per 1,000 characters on the platform key, or free of platform charges with your own ElevenLabs key in the `x-eleven-key` header; see the [Voice Lab billing section](../voice-lab.md)).
 
 > Instant Voice Cloning is a **paid-tier ElevenLabs feature** (Starter and up). If the server's account is on the free tier, the clone call returns the upstream error verbatim in the status line (e.g. a `can_not_use_instant_voice_cloning` message). Built-in voices in Step 1 have no such requirement.
 
@@ -194,7 +194,7 @@ This is opt-in: a flat embed plays voice normally without it.
 ## Troubleshooting
 
 - **No sound, `503 not_configured` from `/api/tts/speak`** — no TTS provider is set on the server (neither `NVIDIA_API_KEY` nor `OPENAI_API_KEY`). Built-in voices need at least one lane configured.
-- **`429` / "TTS rate limit exceeded"** — `/api/tts/speak` budgets per user (or per IP when anonymous), and `/api/tts/eleven` caps at 1000 characters/hour per user. Sign in for the higher limit, or wait for the hourly bucket to reset.
+- **`429` / "TTS rate limit exceeded"**: `/api/tts/speak` budgets per user (or per IP when anonymous), and `/api/tts/eleven` caps request volume per user. A `402 insufficient_credits` from `/api/tts/eleven` means your credit balance is empty: top up with $THREE at [/credits](https://three.ws/credits), or bring your own ElevenLabs key.
 - **Clone fails with a quota / verification message** — Instant Voice Cloning is an ElevenLabs paid-tier feature. The endpoint passes the upstream body through so you see the exact reason (e.g. `can_not_use_instant_voice_cloning`). Use a built-in voice instead, or upgrade the ElevenLabs plan.
 - **Clone rejected as too short** — the recorder requires at least 3 seconds; aim for the recommended 20–30 seconds for a usable clone.
 - **Mic lab does nothing / "Microphone blocked"** — mic capture needs a secure (https) context and granted permission. The lab maps each failure to a designed state: blocked (allow access in the address bar), no device found, or mic busy (another app is using it). Fix and click **Try again**.

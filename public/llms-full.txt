@@ -943,6 +943,12 @@ URL: https://three.ws/portfolio
 
 A live portfolio view for any Solana or Ethereum wallet: total value, 24h move with honest coverage, stablecoin/major/token breakdown, top-asset allocation, and every holding priced in real time. Free, keyless, deep-linkable, no account.
 
+### Airdrop Checker
+
+URL: https://three.ws/airdrops
+
+Check any Solana or Ethereum wallet against tracked airdrop criteria: a real on-chain activity scan, a 0-100 eligibility score per program, exactly what is missing with next steps, and the manual protocol actions a scan cannot see. Free, keyless, deep-linkable.
+
 ### Memetic Launcher
 
 URL: https://three.ws/launcher
@@ -3795,6 +3801,12 @@ A trader track record other apps can verify: once a day each ranked trader's rol
 URL: https://three.ws/docs/portfolio
 
 How the live wallet portfolio works: the keyless Solana-first data sources behind /api/crypto/portfolio, the stable/major/token classification, the honest 24h coverage contract, and the full response shape for agents and scripts.
+
+### Docs · Airdrop Checker
+
+URL: https://three.ws/docs/airdrops
+
+How the airdrop eligibility checker works: the keyless Solana activity scan and Etherscan V2 EVM scan, the check DSL and scoring thresholds, the honesty contract around unmeasurable and manual criteria, and the full response shape.
 
 ## Blog
 

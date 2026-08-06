@@ -635,10 +635,11 @@ POST /api/tts/eleven
 
 Text-to-speech via ElevenLabs with R2 caching. Requires auth.
 
-**Limits**
+**Limits and billing**
 
 - Max 500 characters per request
-- 1,000 characters per hour per user (tracked via Redis)
+- Platform-key requests are metered to your prepaid credit balance (top up with $THREE or SOL at `/credits`) at $0.30 per 1,000 characters, charged before synthesis and refunded on failure; an empty balance returns `402 insufficient_credits`
+- Send your own ElevenLabs key in the `x-eleven-key` header to run on your account instead (no platform charge); cache hits are never charged
 
 **Request body**
 

@@ -18396,8 +18396,8 @@
 		},
 		{
 			"date": "2026-08-06",
-			"title": "Voice Lab: bring your own ElevenLabs key, or pay for extra speech with $THREE credits",
-			"summary": "Voice cloning and speech now have three clear lanes. Everyone keeps a free lane on the platform account: 3 voice clones a day and 1,000 spoken characters an hour, with cached clips always free. When the free hour is spent, speech keeps working and is metered to your prepaid credit balance (top up with $THREE or SOL at /credits) at $0.30 per 1,000 characters, refunded automatically if a clip fails. And anyone with their own ElevenLabs account can paste their API key into the new card on the Voice Lab page to run cloning and speech entirely on their account, with no platform limits; the key stays in your browser and is never stored on our servers.",
+			"title": "Voice Lab: bring your own ElevenLabs key, or pay per use with $THREE credits",
+			"summary": "Voice cloning and speech now have two clear lanes. On the platform account, usage is pay-per-use from your prepaid credit balance (top up with $THREE or SOL at /credits): $0.50 per voice clone and $0.30 per 1,000 spoken characters, with $THREE holder-tier discounts on clones, automatic refunds when a clip or clone fails, and repeated clips served from cache at no charge. Or paste your own ElevenLabs API key into the new card on the Voice Lab page to run cloning and speech entirely on your ElevenLabs account with no platform charges; the key stays in your browser and is never stored on our servers.",
 			"tags": [
 				"feature",
 				"improvement"

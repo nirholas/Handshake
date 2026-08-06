@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-08-06T20:41:27.416Z",
+	"generated_at": "2026-08-06T22:49:14.106Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-06",
+			"type": "launch",
+			"title": "Airdrop Checker",
+			"summary": "Check any Solana or Ethereum wallet against tracked airdrop criteria: a real on-chain activity scan, a 0-100 eligibility score per program, exactly what is missing with next steps, and the manual protocol actions a scan cannot see. Free, keyless, deep-linkable.",
+			"link": "/airdrops",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "launch",
+			"title": "Docs · Airdrop Checker",
+			"summary": "How the airdrop eligibility checker works: the keyless Solana activity scan and Etherscan V2 EVM scan, the check DSL and scoring thresholds, the honesty contract around unmeasurable and manual criteria, and the full response shape.",
+			"link": "/docs/airdrops",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-08-06",
 			"type": "launch",
@@ -514,8 +534,8 @@
 		{
 			"date": "2026-08-06",
 			"type": "update",
-			"title": "Voice Lab: bring your own ElevenLabs key, or pay for extra speech with $THREE credits",
-			"summary": "Voice cloning and speech now have three clear lanes. Everyone keeps a free lane on the platform account: 3 voice clones a day and 1,000 spoken characters an hour, with cached clips always free. When the free hour is spent, speech keeps working and is metered to your prepaid credit balance (top up with $THREE or SOL at /credits) at $0.30 per 1,000 characters, refunded automatically if a clip fails. And anyone with their own ElevenLabs account can paste their API key into the new card on the Voice Lab page to run cloning and speech entirely on their account, with no platform limits; the key stays in your browser and is never stored on our servers.",
+			"title": "Voice Lab: bring your own ElevenLabs key, or pay per use with $THREE credits",
+			"summary": "Voice cloning and speech now have two clear lanes. On the platform account, usage is pay-per-use from your prepaid credit balance (top up with $THREE or SOL at /credits): $0.50 per voice clone and $0.30 per 1,000 spoken characters, with $THREE holder-tier discounts on clones, automatic refunds when a clip or clone fails, and repeated clips served from cache at no charge. Or paste your own ElevenLabs API key into the new card on the Voice Lab page to run cloning and speech entirely on your ElevenLabs account with no platform charges; the key stays in your browser and is never stored on our servers.",
 			"link": "/voice",
 			"tags": [
 				"feature",

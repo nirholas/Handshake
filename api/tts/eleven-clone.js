@@ -7,7 +7,12 @@
  *   - description: string (optional, ≤500 chars).
  *
  * Forwards to the ElevenLabs SDK (`client.voices.ivc.create(…)`) using the
- * server-side ELEVENLABS_API_KEY. Returns `{ voice_id, name, status }`.
+ * server-side ELEVENLABS_API_KEY, or the caller's own key when the request
+ * carries `x-eleven-key` (BYOK). Returns `{ voice_id, name, status }`.
+ *
+ * Billing: platform-key clones are charged to the user's prepaid credit
+ * wallet (the `voice.clone` catalog action, refunded on upstream failure);
+ * BYOK clones bill the user's own ElevenLabs account. No free lane.
  *
  * Auth: same shape as /api/tts/eleven — a browser session OR a bearer token.
  *
@@ -17,9 +22,11 @@
  * with the upstream body included so the demo log surfaces it verbatim.
  */
 
+import { randomUUID } from 'node:crypto';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, method, wrap, error, json, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
+import { chargeCreditsForAction, refundCredits } from '../_lib/credits.js';
 import { createClonedVoice, resolveElevenKey } from '../_lib/elevenlabs.js';
 
 export const config = {
@@ -50,8 +57,10 @@ export default wrap(async (req, res) => {
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
 	const userId = session?.id ?? bearer.userId;
 
-	// Platform-key clones consume paid IVC slots on the shared account: hold
-	// them to the same 3/day cap the agent-voice clone path already enforces.
+	// Platform-key clones consume limited IVC slots on the shared account, so
+	// even paid clones hold to the same 3/day abuse cap the agent-voice clone
+	// path enforces. (The per-clone credit charge happens further down, after
+	// the upload is validated.)
 	if (!byok) {
 		const rl = await limits.voiceClone(userId);
 		if (!rl.success) return rateLimited(res, rl);
@@ -118,6 +127,52 @@ export default wrap(async (req, res) => {
 	const fileType = audio.contentType || guessAudioMime(filename);
 	const audioFile = new File([audio.data], filename, { type: fileType });
 
+	// Platform-key clones consume a paid IVC slot, so the caller pays for it:
+	// charge the catalog's voice.clone action (holder-tier discount applies)
+	// BEFORE the upstream call, refunded below if cloning fails. There is no
+	// free lane; the platform never eats an ElevenLabs bill (owner policy
+	// 2026-08-06). BYOK clones bill the user's own ElevenLabs account instead.
+	let creditCharge = null;
+	if (!byok) {
+		const idempotencyKey = `tts:eleven-clone:${randomUUID()}`;
+		try {
+			const charged = await chargeCreditsForAction({
+				user: session || { id: userId },
+				action: 'voice.clone',
+				refType: 'voice',
+				idempotencyKey,
+				meta: { name },
+			});
+			creditCharge = { idempotencyKey, chargedUsd: charged.chargedUsd };
+		} catch (err) {
+			if (err?.code === 'insufficient_credits') {
+				return json(res, 402, {
+					error: 'insufficient_credits',
+					feature: 'voice.clone',
+					available_usd: err.available_usd,
+					required_usd: err.required_usd,
+					top_up_url: '/credits',
+					message:
+						'Voice cloning is metered to your credit balance. ' +
+						'Top up with $THREE at /credits, or bring your own ElevenLabs key.',
+				});
+			}
+			throw err;
+		}
+	}
+
+	const refundClone = async (reason) => {
+		if (!creditCharge?.chargedUsd) return;
+		await refundCredits({
+			userId,
+			amountUsd: creditCharge.chargedUsd,
+			action: 'voice.clone',
+			refType: 'voice',
+			idempotencyKey: `${creditCharge.idempotencyKey}:refund`,
+			meta: { reason },
+		}).catch((e) => console.warn('[tts/eleven-clone] credit refund failed:', e?.message || e));
+	};
+
 	let result;
 	try {
 		result = await createClonedVoice({
@@ -127,6 +182,7 @@ export default wrap(async (req, res) => {
 			apiKey: byok ? apiKey : null,
 		});
 	} catch (err) {
+		await refundClone('clone_failed');
 		const status = err.status || 502;
 		console.error(
 			'[tts/eleven-clone] createClonedVoice failed',

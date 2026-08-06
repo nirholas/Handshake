@@ -27,8 +27,21 @@ const state = {
 	cloneThrows: false,
 	cloneThrowErr: null,
 	rateLimitOk: true,
+	creditsShort: false,
 	sqlQueue: [],
 };
+
+// ── Credits mock ──────────────────────────────────────────────────────────────
+// The clone route charges the voice.clone action before the upstream call and
+// refunds it on failure. Tests run with a funded wallet unless creditsShort.
+const { chargeCreditsMock, refundCreditsMock } = vi.hoisted(() => ({
+	chargeCreditsMock: vi.fn(),
+	refundCreditsMock: vi.fn(async () => ({})),
+}));
+vi.mock('../../api/_lib/credits.js', () => ({
+	chargeCreditsForAction: chargeCreditsMock,
+	refundCredits: refundCreditsMock,
+}));
 
 // ── Auth mock ─────────────────────────────────────────────────────────────────
 vi.mock('../../api/_lib/auth.js', () => ({
@@ -183,7 +196,19 @@ beforeEach(() => {
 	state.cloneThrows = false;
 	state.cloneThrowErr = null;
 	state.rateLimitOk = true;
+	state.creditsShort = false;
 	state.sqlQueue = [];
+	chargeCreditsMock.mockReset().mockImplementation(async () => {
+		if (state.creditsShort)
+			throw Object.assign(new Error('not enough credits'), {
+				status: 402,
+				code: 'insufficient_credits',
+				available_usd: 0,
+				required_usd: 0.5,
+			});
+		return { chargedUsd: 0.5, ledgerId: 'led-1', replay: false };
+	});
+	refundCreditsMock.mockClear();
 });
 
 // ── GET ───────────────────────────────────────────────────────────────────────
@@ -379,14 +404,30 @@ describe('POST /api/agents/:id/voice/clone', () => {
 		expect(body.error).toBe('audio_too_short');
 	});
 
-	it('clones successfully and returns the new voice id', async () => {
+	it('clones successfully, charges voice.clone, and returns the new voice id', async () => {
 		state.sqlQueue = [[{ id: 'agent-1', user_id: 'user-1', name: 'Test Agent' }], []];
 		const { status, body } = await invoke('POST', VALID_AUDIO, { action: 'clone' });
 		expect(status).toBe(201);
 		expect(body.voice_id).toBe('cloned-1');
+		expect(chargeCreditsMock).toHaveBeenCalledWith(
+			expect.objectContaining({ action: 'voice.clone', user: { id: 'user-1' } }),
+		);
+		expect(refundCreditsMock).not.toHaveBeenCalled();
 	});
 
-	it('rolls back the clone and returns 500 when DB persist fails', async () => {
+	it('returns 402 with a top-up pointer when the credit balance is short', async () => {
+		const { createClonedVoice } = await import('../../api/_lib/elevenlabs.js');
+		vi.mocked(createClonedVoice).mockClear();
+		state.creditsShort = true;
+		state.sqlQueue = [[{ id: 'agent-1', user_id: 'user-1', name: 'Test Agent' }]];
+		const { status, body } = await invoke('POST', VALID_AUDIO, { action: 'clone' });
+		expect(status).toBe(402);
+		expect(body.error).toBe('insufficient_credits');
+		expect(body.top_up_url).toBe('/credits');
+		expect(vi.mocked(createClonedVoice)).not.toHaveBeenCalled();
+	});
+
+	it('rolls back the clone, refunds the charge, and returns 500 when DB persist fails', async () => {
 		const { deleteVoice } = await import('../../api/_lib/elevenlabs.js');
 		vi.mocked(deleteVoice).mockClear();
 		state.sqlQueue = [
@@ -396,6 +437,9 @@ describe('POST /api/agents/:id/voice/clone', () => {
 		const { status } = await invoke('POST', VALID_AUDIO, { action: 'clone' });
 		expect(status).toBe(500);
 		expect(vi.mocked(deleteVoice)).toHaveBeenCalledWith('cloned-1');
+		expect(refundCreditsMock).toHaveBeenCalledWith(
+			expect.objectContaining({ action: 'voice.clone', amountUsd: 0.5 }),
+		);
 	});
 
 	it('maps a 422 upstream error to audio_too_short', async () => {

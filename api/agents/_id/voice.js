@@ -9,8 +9,10 @@
 import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../../_lib/http.js';
+import { randomUUID } from 'node:crypto';
 import { limits } from '../../_lib/rate-limit.js';
 import { requireCsrf } from '../../_lib/csrf.js';
+import { chargeCreditsForAction, refundCredits } from '../../_lib/credits.js';
 import {
 	isConfigured,
 	listVoices,
@@ -291,6 +293,51 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 
 		const audioFile = new File([audioBuf], ext, { type: ct });
 
+		// Agent clones always run on the platform key, so the caller pays for
+		// the paid IVC slot: charge the voice.clone catalog action (holder-tier
+		// discount applies) before the upstream call, refunded on any failure.
+		// No free lane (owner policy 2026-08-06).
+		let creditCharge = null;
+		{
+			const idempotencyKey = `agent-voice-clone:${randomUUID()}`;
+			try {
+				const charged = await chargeCreditsForAction({
+					user: { id: auth.userId },
+					action: 'voice.clone',
+					refType: 'agent',
+					refId: id,
+					idempotencyKey,
+					meta: { agent: id, name: voiceName },
+				});
+				creditCharge = { idempotencyKey, chargedUsd: charged.chargedUsd };
+			} catch (err) {
+				if (err?.code === 'insufficient_credits') {
+					return json(res, 402, {
+						error: 'insufficient_credits',
+						feature: 'voice.clone',
+						available_usd: err.available_usd,
+						required_usd: err.required_usd,
+						top_up_url: '/credits',
+						message:
+							'Voice cloning is metered to your credit balance. Top up with $THREE at /credits.',
+					});
+				}
+				throw err;
+			}
+		}
+		const refundClone = async (reason) => {
+			if (!creditCharge?.chargedUsd) return;
+			await refundCredits({
+				userId: auth.userId,
+				amountUsd: creditCharge.chargedUsd,
+				action: 'voice.clone',
+				refType: 'agent',
+				refId: id,
+				idempotencyKey: `${creditCharge.idempotencyKey}:refund`,
+				meta: { reason },
+			}).catch((e) => console.warn('[voice/clone] credit refund failed:', e?.message || e));
+		};
+
 		let voiceId;
 		try {
 			({ voiceId } = await createClonedVoice({
@@ -299,6 +346,7 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 				files: [audioFile],
 			}));
 		} catch (err) {
+			await refundClone('clone_failed');
 			console.error(
 				'[voice/clone] createClonedVoice failed',
 				err.status,
@@ -332,6 +380,7 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 					err?.message || err,
 				),
 			);
+			await refundClone('persist_failed');
 			return error(res, 500, 'internal_error', 'failed to save cloned voice');
 		}
 

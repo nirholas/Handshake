@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T20:41:27.407Z",
+	"generated_at": "2026-08-06T22:49:14.092Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1550,6 +1550,16 @@
 					"path": "/portfolio",
 					"title": "Wallet Portfolio",
 					"description": "A live portfolio view for any Solana or Ethereum wallet: total value, 24h move with honest coverage, stablecoin/major/token breakdown, top-asset allocation, and every holding priced in real time. Free, keyless, deep-linkable, no account.",
+					"added": "2026-08-06",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/airdrops",
+					"title": "Airdrop Checker",
+					"description": "Check any Solana or Ethereum wallet against tracked airdrop criteria: a real on-chain activity scan, a 0-100 eligibility score per program, exactly what is missing with next steps, and the manual protocol actions a scan cannot see. Free, keyless, deep-linkable.",
 					"added": "2026-08-06",
 					"auth": null,
 					"indexable": true,
@@ -6271,6 +6281,16 @@
 					"path": "/docs/portfolio",
 					"title": "Docs · Wallet Portfolio",
 					"description": "How the live wallet portfolio works: the keyless Solana-first data sources behind /api/crypto/portfolio, the stable/major/token classification, the honest 24h coverage contract, and the full response shape for agents and scripts.",
+					"added": "2026-08-06",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/airdrops",
+					"title": "Docs · Airdrop Checker",
+					"description": "How the airdrop eligibility checker works: the keyless Solana activity scan and Etherscan V2 EVM scan, the check DSL and scoring thresholds, the honesty contract around unmeasurable and manual criteria, and the full response shape.",
 					"added": "2026-08-06",
 					"auth": null,
 					"indexable": true,

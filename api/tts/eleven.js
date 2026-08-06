@@ -5,15 +5,15 @@
  * streamed straight to the client (low TTFB) and, on a clean finish, cached in
  * R2 for 30 days keyed by sha256(voiceId + text + modelId + voice_settings).
  *
- * Billing ladder (header `x-tts-billing` reports which rung served the call):
+ * Billing (header `x-tts-billing` reports which rung served the call). There
+ * is no free platform lane: every clip the platform pays ElevenLabs for is
+ * paid for by the caller (owner policy 2026-08-06).
  *   byok    - request carried an `x-eleven-key` header: the user's own
- *             ElevenLabs account pays, so no platform budget or credits apply.
- *   free    - within the free hourly character budget (1000 chars / hour,
- *             tracked via Redis INCRBY on the platform key).
- *   credits - budget spent: the request is metered against the user's prepaid
+ *             ElevenLabs account pays, so credits never apply.
+ *   credits - platform key: the request is metered against the user's prepaid
  *             credit wallet (top up with $THREE or SOL at /credits) at
  *             TTS_ELEVEN_USD_PER_1K, with a 402 + top_up_url when short.
- *   Cache hits are always free and never touch the budget.
+ *   cached  - R2 cache hit: no upstream call, nothing charged.
  *
  * Body: {
  *   voiceId: string,
@@ -28,7 +28,6 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { getRedis as _getSharedRedis } from '../_lib/redis.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, method, wrap, error, json, readJson, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -43,8 +42,6 @@ import {
 	normalizeVoiceSettings,
 } from '../_lib/elevenlabs.js';
 
-const CHARS_PER_HOUR = 1000;
-
 // Fire-and-forget R2 cache write — a miss on failure is acceptable.
 function cacheAudio(key, buffer) {
 	if (!buffer.length) return;
@@ -55,8 +52,6 @@ function cacheAudio(key, buffer) {
 		metadata: { 'created-at': new Date().toISOString() },
 	}).catch((e) => console.warn('[tts/eleven] R2 cache write failed:', e.message));
 }
-
-const redis = _getSharedRedis();
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -112,7 +107,7 @@ export default wrap(async (req, res) => {
 			res.setHeader('content-type', 'audio/mpeg');
 			res.setHeader('content-length', String(buf.length));
 			res.setHeader('x-tts-cache', 'hit');
-			res.setHeader('x-tts-billing', 'free');
+			res.setHeader('x-tts-billing', 'cached');
 			res.setHeader('cache-control', 'private, max-age=86400');
 			return res.end(buf);
 		} catch {
@@ -120,86 +115,48 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	// ── Metering ladder: byok → free hourly budget → prepaid credits ──────────
-	// BYOK requests run on the user's own ElevenLabs account, so the platform
-	// budget and credit wallet never apply. Platform-key requests consume the
-	// free hourly character budget first; once it is spent, the request is
-	// charged to the user's credit wallet (topped up with $THREE or SOL).
-	let billing = byok ? 'byok' : 'free';
-	// rKey / creditCharge are lifted to function scope so a failed synthesis can
-	// refund whichever lane the request was metered on.
-	let rKey = null;
+	// ── Metering: no free platform lane ───────────────────────────────────────
+	// BYOK requests run on the user's own ElevenLabs account, so credits never
+	// apply. Every platform-key synthesis is charged to the user's credit wallet
+	// (topped up with $THREE or SOL) BEFORE the upstream call, and refunded if
+	// the clip is never delivered.
+	const billing = byok ? 'byok' : 'credits';
 	let creditCharge = null;
 
-	const chargeOverage = async () => {
+	if (!byok) {
 		const idempotencyKey = `tts:eleven:${randomUUID()}`;
 		const usd = Math.max(0.0001, (text.length / 1000) * TTS_ELEVEN_USD_PER_1K);
-		const charged = await chargeCreditsForAction({
-			user: session || { id: userId },
-			action: 'tts.eleven',
-			usd,
-			refType: 'tts',
-			refId: cacheHash,
-			idempotencyKey,
-			meta: { chars: text.length, voiceId, modelId },
-		});
-		creditCharge = { idempotencyKey, chargedUsd: charged.chargedUsd };
-		billing = 'credits';
-	};
-
-	if (!byok && redis) {
-		let overBudget = false;
-		const hourBucket = Math.floor(Date.now() / 3_600_000);
-		const key = `tts:chars:${userId}:${hourBucket}`;
 		try {
-			const used = Number((await redis.get(key)) || 0);
-			if (used + text.length > CHARS_PER_HOUR) {
-				overBudget = true;
-			} else {
-				// Increment before synthesis to prevent parallel races from blowing past limit.
-				const newTotal = await redis.incrby(key, text.length);
-				await redis.expire(key, 7200);
-				// Only arm the refund path once the reservation actually landed.
-				rKey = key;
-				if (newTotal > CHARS_PER_HOUR) {
-					await redis.decrby(key, text.length).catch(() => {});
-					rKey = null;
-					overBudget = true;
-				}
-			}
+			const charged = await chargeCreditsForAction({
+				user: session || { id: userId },
+				action: 'tts.eleven',
+				usd,
+				refType: 'tts',
+				refId: cacheHash,
+				idempotencyKey,
+				meta: { chars: text.length, voiceId, modelId },
+			});
+			creditCharge = { idempotencyKey, chargedUsd: charged.chargedUsd };
 		} catch (err) {
-			// Redis outage / over-quota: fail open rather than 500 the synth, matching
-			// the shared limiter's non-critical behavior. ElevenLabs' own account quota
-			// stays the hard ceiling, so an unmetered call here can't run away on cost.
-			console.warn('[tts/eleven] char-limit redis degraded, allowing:', err?.message || err);
-			rKey = null;
-		}
-
-		if (overBudget) {
-			try {
-				await chargeOverage();
-			} catch (err) {
-				if (err?.code === 'insufficient_credits') {
-					return json(res, 402, {
-						error: 'insufficient_credits',
-						feature: 'tts.eleven',
-						available_usd: err.available_usd,
-						required_usd: err.required_usd,
-						top_up_url: '/credits',
-						message:
-							`Free TTS quota (${CHARS_PER_HOUR} chars/hr) is spent and your credit balance is short. ` +
-							'Top up with $THREE at /credits, wait for the hourly reset, or bring your own ElevenLabs key.',
-					});
-				}
-				throw err;
+			if (err?.code === 'insufficient_credits') {
+				return json(res, 402, {
+					error: 'insufficient_credits',
+					feature: 'tts.eleven',
+					available_usd: err.available_usd,
+					required_usd: err.required_usd,
+					top_up_url: '/credits',
+					message:
+						'Speech synthesis is metered to your credit balance. ' +
+						'Top up with $THREE at /credits, or bring your own ElevenLabs key.',
+				});
 			}
+			throw err;
 		}
 	}
 
-	// Refund whichever metering lane was used when synthesis ultimately fails,
-	// so a user is never billed for a clip they never received.
+	// Refund the charge when synthesis ultimately fails, so a user is never
+	// billed for a clip they never received.
 	const refundMetering = async () => {
-		if (rKey) await redis.decrby(rKey, text.length).catch(() => {});
 		if (creditCharge?.chargedUsd > 0) {
 			await refundCredits({
 				userId,

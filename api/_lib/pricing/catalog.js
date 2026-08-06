@@ -39,10 +39,11 @@ const FORGE_HIGH_USD = Number(priceUsdcForTier(TIERS.high)); // 0.50
 // any model into an engine-ready asset — a deliverable, billed per export.
 const FORGE_GAMEREADY_USD = Number(priceUsdcForOutput('gameready')); // 0.10
 
-// Premium TTS (ElevenLabs) overage: retail USD per 1,000 synthesized characters
-// once a user's free hourly quota is spent. Upstream Flash v2.5 cost is roughly
-// $0.11/1k chars at the Creator tier; $0.30 retail keeps margin for the settle
-// rail. The free quota and the BYOK bypass live in api/tts/eleven.js.
+// Premium TTS (ElevenLabs): retail USD per 1,000 synthesized characters on the
+// platform key. Every platform-key synthesis is charged (no free lane; owner
+// policy 2026-08-06). Upstream Flash v2.5 cost is roughly $0.11/1k chars at the
+// Creator tier; $0.30 retail keeps margin for the settle rail. Cache hits and
+// BYOK requests bypass the charge entirely (api/tts/eleven.js).
 export const TTS_ELEVEN_USD_PER_1K = 0.3;
 
 // ── The catalog ─────────────────────────────────────────────────────────────────
@@ -104,7 +105,7 @@ export const CATALOG = Object.freeze({
 		usd: 0.5,
 	},
 	'tts.eleven': {
-		label: 'Voice: premium TTS beyond the free hourly quota',
+		label: 'Voice: premium TTS synthesis (per 1k characters)',
 		category: 'generation',
 		policy: POLICY.CONSUMPTION,
 		usd: null, // per-call: characters * TTS_ELEVEN_USD_PER_1K / 1000
