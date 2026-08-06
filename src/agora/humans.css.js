@@ -119,6 +119,16 @@ const HUMANS_CSS = `
 .agora-h-status.is-ok { color: var(--h-ok); }
 .agora-h-link { color: var(--h-accent); }
 .agora-h-muted { color: var(--h-dim); }
+/* Recoverable-failure state: the address to fund, right where the error lands. */
+.agora-h-fund {
+	display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+	margin-top: 8px; color: var(--h-text);
+}
+.agora-h-addr {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px;
+	background: rgba(255,255,255,0.04); border: 1px solid var(--h-border); border-radius: 6px;
+	padding: 3px 6px; overflow-wrap: anywhere; user-select: all;
+}
 
 /* ── Toasts ──────────────────────────────────────────────────────────────── */
 #agora-humans-toasts {

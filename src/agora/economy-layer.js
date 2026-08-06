@@ -184,6 +184,15 @@ export function mountEconomyLayer(ctx) {
 			jobBoard.update(dt);
 			economyFx.update(dt);
 		},
+		// The OS-level reduced-motion toggle can flip mid-session; the scaffold
+		// (agora-world.js) pushes the new value to the crowd and to here so the
+		// board's bob, the coin flight, the plinth spin and the ticker's enter
+		// animation all stop without a reload.
+		setReducedMotion(on) {
+			jobBoard.setReducedMotion(on);
+			economyFx.setReducedMotion(on);
+			ticker.setReducedMotion(on);
+		},
 		dispose() {
 			for (const off of offs) off?.();
 			feed.stop();

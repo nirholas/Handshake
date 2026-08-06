@@ -104,7 +104,7 @@ export function buildPostForm({ onSubmit, cluster = 'devnet', hireTarget = null,
 			form.reset();
 			if (hireTarget?.profession) profSelect.value = hireTarget.profession;
 		} catch (err) {
-			fail(status, err?.message || 'The bounty was not posted.');
+			fail(status, err?.message || 'The bounty was not posted.', err);
 		} finally {
 			setBusy(false);
 		}
@@ -117,9 +117,27 @@ function field(label, control) {
 	return h('label', { class: 'agora-h-field' }, [h('span', { class: 'agora-h-field-label' }, [label]), control]);
 }
 
-function fail(status, msg) {
+// An error is a designed state, not a red string. A dry wallet in particular is
+// recoverable, so it renders the exact address to fund next to the message.
+function fail(status, msg, err) {
 	status.className = 'agora-h-status is-error';
-	status.textContent = msg;
+	clear(status);
+	status.appendChild(h('span', {}, [msg]));
+	const addr = err?.code === 'insufficient_funds' ? err?.detail?.walletAddress : null;
+	if (addr) {
+		status.appendChild(h('div', { class: 'agora-h-fund' }, [
+			h('span', { class: 'agora-h-muted' }, ['Fund this address: ']),
+			h('code', { class: 'agora-h-addr', title: addr }, [addr]),
+			h('button', {
+				class: 'agora-btn agora-h-btn-sm', type: 'button',
+				onclick: (e) => {
+					navigator.clipboard?.writeText(addr)
+						.then(() => { e.target.textContent = 'Copied'; })
+						.catch(() => { e.target.textContent = 'Copy failed'; });
+				},
+			}, ['Copy']),
+		]));
+	}
 }
 
 function ok(status, res) {

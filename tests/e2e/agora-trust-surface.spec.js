@@ -158,6 +158,85 @@ test.describe('Agora trust surface (Task 07)', () => {
 		expect(verdict).not.toContain('is-match');
 	});
 
+	// The DoD's "verify a REAL deliverable" leg. The test above proves the digest
+	// math against bytes we control; this one proves the whole path against an
+	// artifact the platform actually produced: a real forge GLB, resolved live from
+	// /api/forge-gallery, fetched over the real CDN with real CORS, hashed
+	// independently in Node, then re-hashed by the browser's own Web Crypto. It also
+	// covers the one claim no synthetic fixture can: a verified GLB renders inline
+	// from the exact bytes that matched.
+	test('real forge deliverable: ✓ against an independently-computed hash, and the verified GLB renders inline', async ({ page, request }) => {
+		// Resolve a real, recent forge GLB. Prefer a small one so the browser-side
+		// fetch + hash + parse stays quick; the cap is honest, not a shortcut.
+		const gallery = await request.get('/api/forge-gallery?limit=24');
+		expect(gallery.ok(), 'the forge gallery API should answer').toBeTruthy();
+		const creations = (await gallery.json())?.creations || [];
+		const candidates = creations.map((c) => c.glb_url).filter((u) => typeof u === 'string' && u.endsWith('.glb'));
+
+		let picked = null;
+		for (const url of candidates.slice(0, 12)) {
+			const head = await request.head(url).catch(() => null);
+			if (!head || !head.ok()) continue;
+			const size = Number(head.headers()['content-length'] || 0);
+			if (size > 0 && size <= 4 * 1024 * 1024 && (!picked || size < picked.size)) picked = { url, size };
+		}
+		// No real deliverable reachable → say so and skip. Never assert a ✓ we
+		// couldn't compute from real bytes.
+		test.skip(!picked, 'no reachable forge GLB in the live gallery to verify against');
+
+		// Independent digest: computed here in Node, never by the code under test.
+		const dl = await request.get(picked.url);
+		expect(dl.ok(), `deliverable should download: ${picked.url}`).toBeTruthy();
+		const bytes = await dl.body();
+		const { createHash } = await import('node:crypto');
+		const expectedHash = createHash('sha256').update(bytes).digest('hex');
+		expect(bytes.subarray(0, 4).toString('latin1'), 'deliverable should be a real GLB').toBe('glTF');
+
+		await page.goto('/agora', { waitUntil: 'domcontentloaded' });
+		await page.waitForFunction(() => document.querySelector('#agora-canvas') !== null, { timeout: 60_000 });
+
+		const out = await page.evaluate(async ({ url, proof }) => {
+			const { mountVerifier } = await import('/src/agora/verify.js');
+			const settle = (el, sel, ms) => new Promise((r) => {
+				const iv = setInterval(() => { if (el.querySelector(sel)) { clearInterval(iv); r(true); } }, 80);
+				setTimeout(() => { clearInterval(iv); r(false); }, ms);
+			});
+			const res = {};
+
+			// ✓ against the real on-chain-shaped proofHash.
+			const ok = document.createElement('div');
+			ok.style.cssText = 'width:360px;height:260px';
+			document.body.appendChild(ok);
+			mountVerifier(ok, { deliverableUrl: url, proofHash: proof });
+			ok.querySelector('.agora-btn-primary').click();
+			await settle(ok, '.agora-verdict', 60_000);
+			res.verdict = ok.querySelector('.agora-verdict')?.className || '';
+			res.computed = ok.querySelector('.agora-hash.is-ok')?.textContent || '';
+			// The inline viewer is lazy-loaded (three + addons) and renders to a canvas.
+			res.rendered = await settle(ok, '.agora-glb-viewer canvas', 60_000);
+			res.renderFail = ok.querySelector('.agora-glb-fail')?.textContent || '';
+
+			// ✗ when the on-chain proofHash doesn't describe these bytes.
+			const bad = document.createElement('div');
+			document.body.appendChild(bad);
+			mountVerifier(bad, { deliverableUrl: url, proofHash: proof.slice(0, -1) + (proof.slice(-1) === '0' ? '1' : '0') });
+			bad.querySelector('.agora-btn-primary').click();
+			await settle(bad, '.agora-verdict', 60_000);
+			res.badVerdict = bad.querySelector('.agora-verdict')?.className || '';
+			res.badRendered = !!bad.querySelector('.agora-glb-viewer');
+			return res;
+		}, { url: picked.url, proof: expectedHash });
+
+		// The browser arrived at the same digest on its own, from the real bytes.
+		expect(out.computed).toBe(expectedHash);
+		expect(out.verdict).toContain('is-match');
+		// A verified GLB renders inline from those exact bytes.
+		expect(out.rendered, `verified GLB should render inline (${out.renderFail || 'no canvas'})`).toBe(true);
+		// A mismatch is honest: ✗, and no model is shown for bytes that didn't match.
+		expect(out.badVerdict).toContain('is-mismatch');
+		expect(out.badRendered, 'a mismatched deliverable must not render a model').toBe(false);
+	});
+
 	test('handshake: browser-derived canonical id EQUALS the deployed bridge (/api/agenc/link)', async ({ page }) => {
 		await page.goto('/agora', { waitUntil: 'domcontentloaded' });
 		await page.waitForFunction(() => document.querySelector('#agora-canvas') !== null, { timeout: 60_000 });

@@ -134,7 +134,15 @@ function buildJob({ opts, task, lifecycle, state, cluster }, ctx) {
 	// The worker who produced the deliverable (for the Verify → vouch bridge):
 	// the actor on the completion event, falling back to the claim actor.
 	const worker = completerFromLifecycle(lifecycle, opts, cluster);
-	const verifySection = buildVerifySection(opts, state, worker);
+	// The caller (board / passport row) usually hands us the deliverable; a deep
+	// link (/agora?task=<pda>) carries only the PDA, so fall back to the proof the
+	// lifecycle itself reports. Without this, arriving by URL shows "no proofHash
+	// recorded" for work that is in fact verifiable.
+	const proof = {
+		deliverableUrl: opts.deliverableUrl || lifecycle?.deliverableUrl || null,
+		proofHash: opts.proofHash || lifecycle?.proofHash || null,
+	};
+	const verifySection = buildVerifySection({ ...opts, ...proof }, state, worker);
 
 	return [meta, facts, timeline, verifySection];
 }

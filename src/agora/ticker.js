@@ -165,6 +165,12 @@ export class Ticker {
 		}
 	}
 
+	// Live prefers-reduced-motion change: newly prepended lines stop sliding in.
+	// Anything mid-transition is left to finish rather than snapped.
+	setReducedMotion(on) {
+		this.reducedMotion = !!on;
+	}
+
 	dispose() {
 		this._panel?.remove();
 		this._shown.clear();
