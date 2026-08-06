@@ -424,14 +424,13 @@ forge script script/Deploy.s.sol:Deploy \
 
 After deploy, copy the three contract addresses printed in the console output into `src/erc8004/abi.js` under the `REGISTRY_DEPLOYMENTS[84532]` entry.
 
-To allow-list a validator address on your ValidationRegistry:
-
-```bash
-cast send $VALIDATION_REGISTRY \
-  "addValidator(address)" $VALIDATOR_ADDR \
-  --rpc-url $BASE_SEPOLIA_RPC_URL \
-  --private-key $DEPLOYER_PK
-```
+Those are this repo's own contracts. Note that the platform's live validation path
+does not use them: it reads and writes the ERC-8004 reference
+`ValidationRegistryUpgradeable`, which has no validator allow-list. A validator is
+authorized per agent by the agent's owner opening a request that names it (or by
+the owner approving it as an operator). See
+[erc8004/validation-attestation.md](erc8004/validation-attestation.md), and verify
+any configured registry address with `npm run verify:erc8004-validation`.
 
 ---
 

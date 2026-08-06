@@ -3,13 +3,15 @@
  * Provision the platform ValidationRegistry validator key.
  *
  * Generates a fresh EVM keypair used to sign glTF/schema validation
- * attestations (recordValidation). The PRIVATE KEY is printed to STDERR only and
- * is NEVER written to the repo — capture it from the terminal and store it as
- * the `VALIDATOR_PRIVATE_KEY` secret in Vercel (and .env.local for local runs).
+ * attestations (validationResponse). The PRIVATE KEY is printed to STDERR only and
+ * is NEVER written to the repo: capture it from the terminal and store it as the
+ * `VALIDATOR_PRIVATE_KEY` secret on the three-ws-api Cloud Run service (and
+ * .env.local for local runs).
  *
- * The ADDRESS is printed to STDOUT — that's the value you allow-list on each
- * ValidationRegistry chain via addValidator(<addr>) as the registry owner
- * (task 01 step 6), and the value you record in DEPLOYMENTS.md.
+ * The ADDRESS is printed to STDOUT. The deployed registry has no allowlist, so
+ * there is nothing to add it to: fund it with gas on each chain it attests on,
+ * record it in DEPLOYMENTS.md, and have agent owners either request it or approve
+ * it as an operator (see docs/erc8004/validation-attestation.md).
  *
  * Usage:
  *   node scripts/erc8004/provision-validator-key.mjs            # generate fresh

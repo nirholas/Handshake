@@ -4,12 +4,13 @@
  * on-chain agent is drawn (profile, marketplace, directory).
  *
  * Backed by a real on-chain ValidationRegistry record read walletlessly through
- * GET /api/erc8004/validation. Four designed states:
+ * GET /api/erc8004/validation. Five designed states:
  *
- *   pending        — fetching / a re-validation is in flight (spinner)
- *   validated      — a passing attestation exists (green ✓, links to proof + validator)
- *   failed         — an attestation exists but the model has errors (red, shows the reason)
- *   not-validated  — registry deployed, no attestation yet (owner sees a "Validate" action)
+ *   pending:        fetching, or a re-validation is in flight (spinner)
+ *   validated:      a passing attestation exists (green, links to proof + validator)
+ *   failed:         an attestation exists but the model has errors (red, shows the reason)
+ *   requested:      a validation request is open on-chain, no verdict yet
+ *   not-validated:  registry deployed, nothing requested (owner sees a "Validate" action)
  *
  * When the ValidationRegistry isn't deployed on the agent's chain the badge
  * renders nothing — there's nothing to attest against, so we don't add noise.
@@ -41,13 +42,28 @@ export async function fetchValidationState(chainId, agentId) {
 	}
 }
 
-/** Trigger (or re-trigger) an attestation for the agent. Returns the parsed response. */
-export async function requestValidation(chainId, agentId, glbUrl) {
+/**
+ * Trigger (or re-trigger) an attestation for the agent. Returns the parsed
+ * response, including `request` when the owner still has to open the on-chain
+ * validation request (`error: 'validation_request_required'`).
+ *
+ * @param {number} chainId
+ * @param {string|number} agentId
+ * @param {string} [glbUrl]
+ * @param {string} [requestHash]  Answer this request: set on the retry, after the
+ *                                owner's wallet has opened it.
+ */
+export async function requestValidation(chainId, agentId, glbUrl, requestHash) {
 	const r = await fetch('/api/erc8004/validate', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		credentials: 'include',
-		body: JSON.stringify({ chainId, agentId: String(agentId), ...(glbUrl ? { glbUrl } : {}) }),
+		body: JSON.stringify({
+			chainId,
+			agentId: String(agentId),
+			...(glbUrl ? { glbUrl } : {}),
+			...(requestHash ? { requestHash } : {}),
+		}),
 	});
 	const data = await r.json().catch(() => ({}));
 	return { ok: r.ok, status: r.status, ...data };
@@ -130,7 +146,15 @@ export function validationBadgeEl(state, opts = {}) {
 	const { isOwner = false, onRevalidate, failureText } = opts;
 
 	let node;
-	if (!state.exists) {
+	if (!state.exists && state.openRequests > 0) {
+		node = badgeNode({
+			variant: 'none',
+			label: 'Validation pending',
+			sub: state.openRequests > 1 ? `${state.openRequests} requests` : undefined,
+			title: 'A validation request is open on-chain, awaiting the validator verdict',
+			icon: DASH_SVG,
+		});
+	} else if (!state.exists) {
 		node = badgeNode({
 			variant: 'none',
 			label: 'Not validated',
@@ -230,20 +254,41 @@ export async function mountValidationBadge({ container, chainId, agentId, isOwne
 		}
 	}
 
+	const deferred = (sub, title) =>
+		render(
+			badgeNode({
+				variant: 'none',
+				label: 'Validation deferred',
+				sub,
+				title: title || 'validation could not be recorded',
+				icon: DASH_SVG,
+			}),
+		);
+
 	const onRevalidate = async () => {
 		render(pendingBadgeEl(state.exists ? 'Re-validating…' : 'Validating…'));
 		try {
-			const result = await requestValidation(chainId, agentId, glbUrl);
+			let result = await requestValidation(chainId, agentId, glbUrl);
+
+			// The registry only lets the agent's owner open a validation request, so
+			// when the platform validator holds no operator authority the server hands
+			// back the exact call to sign. Prompt for it, then answer the request.
+			if (result.error === 'validation_request_required' && result.request) {
+				render(pendingBadgeEl('Confirm in wallet…'));
+				const { openValidationRequest } = await import('../erc8004/validation-request.js');
+				try {
+					await openValidationRequest(result.request);
+				} catch (err) {
+					deferred('request not sent', err?.shortMessage || err?.message || 'the wallet declined the request');
+					return;
+				}
+				render(pendingBadgeEl('Validating…'));
+				result = await requestValidation(chainId, agentId, glbUrl, result.request.requestHash);
+			}
+
 			if (!result.ok) {
 				// Surface the ops state inline rather than silently reverting.
-				const failNode = badgeNode({
-					variant: 'none',
-					label: 'Validation deferred',
-					sub: result.code || `${result.status}`,
-					title: result.error || result.code || 'validation could not be recorded',
-					icon: DASH_SVG,
-				});
-				render(failNode);
+				deferred(result.error || `${result.status}`, result.error_description || result.error);
 				return;
 			}
 		} catch {

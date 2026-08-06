@@ -152,7 +152,9 @@ Validation results can be attested on-chain through two complementary mechanisms
 
 ### ValidationRegistry (ERC-8004)
 
-For registered agents, a validation record can be written to the `ValidationRegistry` smart contract. The registry is currently deployed on the testnets only (e.g. Base Sepolia, chain ID 84532); mainnet deployment is pending, so use a testnet chain ID:
+For registered agents, a validation record can be written to the `ValidationRegistry` smart contract. The registry is currently deployed on the testnets only (e.g. Base Sepolia, chain ID 84532); mainnet deployment is pending, so use a testnet chain ID.
+
+The registry is request/response based: the agent's owner (or an approved operator) opens a request naming a validator, and only that validator may answer it. `recordValidation()` drives both legs from the connected wallet, so that wallet has to own the agent (or be its operator):
 
 ```js
 import { recordValidation, hashReport, reportPassed } from './src/erc8004/validation-recorder.js';
@@ -161,23 +163,25 @@ import { recordValidation, hashReport, reportPassed } from './src/erc8004/valida
 const passed = reportPassed(validationReport); // true if numErrors === 0
 
 // Optionally pin the full report to IPFS first
-const { txHash, proofHash, proofURI } = await recordValidation({
+const { txHash, requestTxHash, requestHash, proofHash, proofURI } = await recordValidation({
   agentId: 42,
   report: validationReport,
-  signer: connectedWallet,   // must be an allow-listed validator address
+  signer: connectedWallet,   // the agent's owner, or an approved operator
   chainId: 84532,            // Base Sepolia (ValidationRegistry is testnet-only for now)
   apiToken: IPFS_API_TOKEN,  // for pinning
   pin: true,
 });
 ```
 
+`requestTxHash` is null when a request for this report already existed and only the verdict had to be sent.
+
 The hash stored on-chain is `keccak256(JSON.stringify(report))`. Anyone can recompute it:
 
 1. Re-run the validator on the same GLB file.
-2. `hashReport(report)` → produces the same hash if the input is identical.
-3. Query `ValidationRegistry.getLatestByKind(agentId, 'glb-schema')` → compare hashes.
+2. `hashReport(report)` produces the same hash if the input is identical.
+3. Query `ValidationRegistry.getValidationStatus(requestHash)` (or `getAgentValidations(agentId)` for every request id on the agent) and compare its `responseHash`. `src/erc8004/validation-recorder.js` wraps this as `getLatestValidation({ agentId, runner, chainId })`.
 
-Only **allow-listed validator addresses** may call `recordValidation`. The allow-list is maintained in [`public/.well-known/validators.json`](../public/.well-known/validators.json) and mirrored on-chain. See [`specs/VALIDATORS.md`](../specs/VALIDATORS.md) for how to apply to become a validator.
+The registry has no on-chain validator allow-list: any address the owner requests can answer. Which verdicts three.ws presents as "Validated" is off-chain policy, maintained in [`public/.well-known/validators.json`](../public/.well-known/validators.json). See [`specs/VALIDATORS.md`](../specs/VALIDATORS.md) for how to be recognized, and [`docs/erc8004/validation-attestation.md`](erc8004/validation-attestation.md) for the platform's own automatic attestation flow.
 
 The minimum check suite for a `pass` verdict includes:
 

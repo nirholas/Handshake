@@ -83,4 +83,4 @@ Security issues: see [public/.well-known/security.txt](../public/.well-known/sec
 ## Governance roadmap
 
 - Identity / Reputation / Validation registry **owner** is currently the deployer EOA. Migrate to a 3-of-5 Safe on Base before opening public registration.
-- Validator allow-list changes go through a PR + on-chain `addValidator`/`removeValidator` call from the owner. Post-Safe migration, allow-list changes require multisig approval.
+- The deployed ValidationRegistry has no on-chain allow-list, so the recognized-validator set is off-chain (`public/.well-known/validators.json`) and changes go through a PR. Repo write access is therefore the governance boundary for that set; see [VALIDATORS.md](VALIDATORS.md).

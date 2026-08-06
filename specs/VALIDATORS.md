@@ -1,14 +1,22 @@
-# Validator Allow-list Policy
+# Recognized Validator Policy
 
-The [ValidationRegistry](../contracts/src/ValidationRegistry.sol) only accepts attestations from allow-listed validator addresses. This document describes who is on the list, how attestations are formed, and how the list is changed.
+The deployed ERC-8004 ValidationRegistry has **no on-chain allow-list**. Any address can answer a validation request, but only the request the agent's own owner opened, and only if that request names it. Authority comes from the request, not from a list.
 
-## Why an allow-list
+That leaves one question open that the chain does not answer: which validators' verdicts should a consumer believe? This document is that answer for three.ws. It defines the recognized set, how attestations are formed, and how the set changes.
 
-A validation report says "I checked agent #N's model and it is sound." For that statement to carry weight, consumers need to know _who_ signed it. Open writes would let any address claim "verified" status, collapsing the trust signal to zero. Allow-listing keeps the set small, named, and accountable.
+## Why a recognized set
+
+A validation report says "I checked agent #N's model and it is sound." For that statement to carry weight, consumers need to know _who_ signed it. Because the registry accepts any requested validator, the trust signal lives entirely in the reader: three.ws surfaces a verdict as "Validated" when the responder is in the recognized set below, and shows an unrecognized responder's verdict as an unverified third-party attestation.
 
 ## What a validator attests to
 
-A validator runs a deterministic suite over an agent's GLB and metadata, produces an [agent validation report](../public/validation/REPORT_FORMAT.md), pins it to IPFS, and calls `recordValidation(uint256 agentId, bool passed, bytes32 proofHash, string proofURI, string kind)` from an allow-listed address — `proofHash` is the sha256 of the report JSON, `proofURI` points at the pinned report (e.g. `ipfs://…`), and `kind` tags the suite (e.g. `"glb-schema"`).
+A validator runs a deterministic suite over an agent's GLB and metadata, produces an [agent validation report](../public/validation/REPORT_FORMAT.md), pins it to IPFS, and answers the agent's open request with `validationResponse(bytes32 requestHash, uint8 response, string responseURI, bytes32 responseHash, string tag)`.
+
+- `requestHash` is the id the owner opened with `validationRequest(validator, agentId, requestURI, requestHash)`. three.ws derives it as `keccak256(abi.encode(chainId, agentId, kind, subjectHash))` so the same subject always maps to the same request.
+- `response` is a 0..100 score. A binary suite writes 100 for a pass and 0 for a fail; readers treat 50 and above as a pass.
+- `responseHash` is the keccak of the report JSON, `responseURI` points at the pinned report (e.g. `ipfs://...`), and `tag` names the suite (e.g. `"glb-schema"`).
+
+Note that `responseURI` is emitted in the `ValidationResponse` event but not stored, so a consumer recovers the report URL from the event (or a publisher's index) and verifies it against `responseHash`.
 
 The minimum suite for "verified" status:
 
@@ -22,9 +30,9 @@ The minimum suite for "verified" status:
 
 A `pass` verdict requires zero `fail` suites. `warn` is allowed.
 
-## Current allow-list
+## Current recognized set
 
-Maintained on-chain at the registry's `isValidator` mapping. The canonical mirror lives at:
+Maintained off-chain, because the registry keeps no list. The canonical file is:
 
 - **Base mainnet (8453):** [public/.well-known/validators.json](../public/.well-known/validators.json)
 - **Base Sepolia (84532):** same file, `testnet` array.
@@ -38,7 +46,7 @@ Each entry is `{ address, name, contact, addedAt, scope }`. `scope` is one of `g
     - The Ethereum address you will sign from. **Use a dedicated key**, not a personal wallet.
     - A link to your runner's source (so suite determinism is auditable).
 2. Run the canonical suite over three reference agents (provided in the PR template) and post the resulting report CIDs in the PR. Maintainers reproduce the runs.
-3. On approval, the registry owner calls `addValidator(address)` and the PR is merged.
+3. On approval the PR is merged, which is what makes three.ws recognize your verdicts. No on-chain step is involved: agent owners can already request you, and consumers reading the registry directly decide for themselves.
 
 ## Removal
 
@@ -49,8 +57,8 @@ A validator is removed for any of:
 - Unreachable contact for >30 days while a dispute is open.
 - Voluntary withdrawal.
 
-Removal is `removeValidator(address)`. Past attestations remain on-chain but consumers SHOULD treat reports from a removed validator as expired from the removal block onward.
+Removal is deleting the entry from validators.json (recorded in the commit that removes it). Past attestations remain on-chain, because nothing on-chain can revoke them, but consumers SHOULD treat reports from a removed validator as expired from the removal date onward.
 
 ## Governance
 
-Until a multisig is in place, the registry owner is the project deployer wallet. Migration to a 3-of-5 Safe on Base is tracked in [SECURITY.md](SECURITY.md).
+The recognized set is changed by commit to this repo, so the governance boundary is repo write access. Migration of platform-owned keys to a 3-of-5 Safe on Base is tracked in [SECURITY.md](SECURITY.md). The platform's own validator key and how it is operated are documented in [docs/erc8004/validation-attestation.md](../docs/erc8004/validation-attestation.md).

@@ -74,37 +74,42 @@ async function handleHydrate(req, res) {
 
 	const walletAddresses = wallets.map((w) => w.address.toLowerCase());
 
-	// Query erc8004_agents_index for agents owned by these wallets.
+	// Query erc8004_agents_index for agents owned by these wallets, capped so a
+	// whale wallet can't turn one page load into an unbounded scan. A non-numeric
+	// crawled agent_id is skipped rather than 500ing the whole hydrate.
 	const indexRows = await sql`
 		SELECT chain_id, agent_id, owner, name, description, image, glb_url
 		FROM erc8004_agents_index
 		WHERE lower(owner) = ANY(${walletAddresses})
 		AND active = true
 		ORDER BY registered_at DESC NULLS LAST
+		LIMIT 500
 	`;
+	const numericRows = indexRows.filter((r) => /^\d+$/.test(String(r.agent_id)));
 
-	// For each index row, check if already imported by this user.
-	const agents = [];
-	for (const row of indexRows) {
-		const [imported] = await sql`
-			SELECT id FROM agent_identities
+	// One round-trip resolves every already-imported (chain_id, agent_id) pair.
+	const importedSet = new Set();
+	if (numericRows.length > 0) {
+		const importedRows = await sql`
+			SELECT chain_id, erc8004_agent_id
+			FROM agent_identities
 			WHERE user_id = ${session.id}
-			  AND erc8004_agent_id = ${BigInt(row.agent_id)}
-			  AND chain_id = ${row.chain_id}
 			  AND deleted_at IS NULL
+			  AND erc8004_agent_id = ANY(${numericRows.map((r) => BigInt(r.agent_id))})
 		`;
-
-		agents.push({
-			chainId: row.chain_id,
-			agentId: row.agent_id,
-			name: row.name || `Agent #${row.agent_id}`,
-			description: row.description || '',
-			image: row.image || null,
-			glbUrl: row.glb_url || null,
-			owner: row.owner,
-			alreadyImported: !!imported,
-		});
+		for (const r of importedRows) importedSet.add(`${r.chain_id}:${r.erc8004_agent_id}`);
 	}
+
+	const agents = numericRows.map((row) => ({
+		chainId: row.chain_id,
+		agentId: row.agent_id,
+		name: row.name || `Agent #${row.agent_id}`,
+		description: row.description || '',
+		image: row.image || null,
+		glbUrl: row.glb_url || null,
+		owner: row.owner,
+		alreadyImported: importedSet.has(`${row.chain_id}:${BigInt(row.agent_id)}`),
+	}));
 
 	return json(res, 200, { agents });
 }

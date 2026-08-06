@@ -11,7 +11,7 @@ Three registries implementing [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004
 
 - **IdentityRegistry** — ERC-721 agents with `tokenURI`, delegated wallet (EIP-712), and key/value metadata.
 - **ReputationRegistry** — one signed score per reviewer per agent, aggregated on-chain.
-- **ValidationRegistry** — allow-listed validators attest to off-chain proofs (e.g. glTF-Validator reports).
+- **ValidationRegistry** (not deployed; the platform uses the ERC-8004 reference registry instead): requested validators attest to off-chain proofs (e.g. glTF-Validator reports).
 
 The browser code in `../src/erc8004/` already targets these ABIs — only the deployed addresses are missing.
 
@@ -81,18 +81,30 @@ Then update [`../public/.well-known/agent-registration.json`](../public/.well-kn
 ]
 ```
 
-## Allow-list a validator (for on-chain validation records)
+## Authorize a validator (for on-chain validation records)
 
-After deploy, the deployer owns the ValidationRegistry. Add the three.ws's own wallet (or a dedicated validator key) with:
+The registry the platform actually reads and writes is the ERC-8004 reference
+`ValidationRegistryUpgradeable`, which has no allowlist. A validator earns the
+right to attest per agent, from the agent's owner:
 
 ```bash
+# The agent's owner opens a request naming the validator, on the Identity
+# Registry's terms (owner, per-token approval, or approval for all).
 cast send $VALIDATION_REGISTRY \
-    "addValidator(address)" $VALIDATOR_ADDR \
+    "validationRequest(address,uint256,string,bytes32)" \
+    $VALIDATOR_ADDR $AGENT_ID "$REPORT_URI" $REQUEST_HASH \
     --rpc-url $BASE_SEPOLIA_RPC_URL \
-    --private-key $DEPLOYER_PK
+    --private-key $OWNER_PK
 ```
 
-That wallet can then call `recordValidation(agentId, passed, proofHash, proofURI, kind)` via the `recordValidation()` helper in `../src/erc8004/validation-recorder.js`.
+To let a validator (for example the platform's) open requests itself, the owner
+approves it as an operator instead: `approve(validator, agentId)` or
+`setApprovalForAll(validator, true)` on the Identity Registry.
+
+The validator then answers with
+`validationResponse(requestHash, response, responseURI, responseHash, tag)`, which
+the `recordValidation()` helper in `../src/erc8004/validation-recorder.js` wraps
+(including the request leg when the same wallet owns the agent).
 
 ## Layout
 

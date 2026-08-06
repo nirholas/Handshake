@@ -1178,7 +1178,7 @@ Deployed deterministically via CREATE2 at vanity-prefixed addresses.
 | `ReputationRegistry.sol` | `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63` | `0x8004B663056A597Dffe9eCcC1965A193B7388713` | 15 configured / 12 live |
 | `ValidationRegistry.sol` | (not deployed on mainnet) | `0x8004Cb1BF31DAf7788923b405b754f57acEB4272` | testnet only |
 
-**Chain count:** `src/erc8004/abi.js` `REGISTRY_DEPLOYMENTS` configures **15 mainnet** chain IDs (1, 10, 56, 100, 137, 250, 324, 1284, 5000, 8453, 42161, 42220, 43114, 59144, 534352) + **7 testnet** (97, 11155111, 84532, 421614, 11155420, 80002, 43113). As of the 2026-06-19 bytecode check, **12** mainnet are live — Fantom (250), zkSync Era (324), and Moonbeam (1284) are configured but **not yet deployed** (`eth_getCode` = `0x`, per `contracts/DEPLOYMENTS.md`). The platform validator key (`0x93Bc7EfB0059B784465619FC73C2db8D01b1CD04`, env `VALIDATOR_PRIVATE_KEY`) signs `recordValidation`. ERC-8004 registries compile with Foundry solc **0.8.24** (`foundry.toml`); the deployed ThreeWSFactory/ThreeWSPayments used solc **0.8.35** (`DEPLOYMENTS.md`).
+**Chain count:** `src/erc8004/abi.js` `REGISTRY_DEPLOYMENTS` configures **15 mainnet** chain IDs (1, 10, 56, 100, 137, 250, 324, 1284, 5000, 8453, 42161, 42220, 43114, 59144, 534352) + **7 testnet** (97, 11155111, 84532, 421614, 11155420, 80002, 43113). As of the 2026-06-19 bytecode check, **12** mainnet are live. Fantom (250), zkSync Era (324), and Moonbeam (1284) are configured but **not yet deployed** (`eth_getCode` = `0x`, per `contracts/DEPLOYMENTS.md`). The platform validator key (`0x93Bc7EfB0059B784465619FC73C2db8D01b1CD04`, env `VALIDATOR_PRIVATE_KEY`) signs `validationResponse` on the ERC-8004 reference ValidationRegistry (request/response, no allowlist); verify any configured address with `npm run verify:erc8004-validation`. ERC-8004 registries compile with Foundry solc **0.8.24** (`foundry.toml`); the deployed ThreeWSFactory/ThreeWSPayments used solc **0.8.35** (`DEPLOYMENTS.md`).
 
 **IdentityRegistry:** ERC-721 agent identity NFTs. EIP-712 wallet delegation, per-agent ETH deposit/spend/withdraw, key-value metadata, spend allowance for delegated server keys.
 
@@ -3018,7 +3018,7 @@ The codebase references **~260 distinct `process.env.*` keys** across `api/`; `a
 |---------|--------|-------|
 | ERC-7710 delegation redemption | Opt-in, disabled by default | `PERMISSIONS_RELAYER_ENABLED` flag; `POST /api/permissions/redeem` is the incomplete path |
 | `AgentPayments.sol` EVM deployment | Written, not deployed | All `agentPayments` addresses in `addresses.ts` are zero-address placeholders |
-| ValidationRegistry mainnet | Testnet only | Platform validator key `0x93Bc7EfB…` provisioned but not funded or allow-listed |
+| ValidationRegistry mainnet | Testnet only | No mainnet reference deployment; platform validator key `0x93Bc7EfB…` provisioned but not configured or funded |
 | Trading swarms UI | Backend + `/swarms` dashboard live; 3D Sniper Arena at `/play/arena` | `api/swarms/*`, `src/play/arena.js`, swarms tables |
 | Agora economy | **Launched** (Commons live at `/agora`; Arena/Guild migration 2026-07-02) | Agent + human citizens, professions, verifiable WORK supply chain — see [Agora](#agora--living-agent--human-economy-verifiable-work-supply-chain) |
 | Self-hosted x402 facilitator | Shipped, **off by default** | `X402_SELF_FACILITATOR_ENABLED` + sponsor secret required; `api/x402-facilitator` returns 503 otherwise |

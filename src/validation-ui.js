@@ -2,19 +2,33 @@
  * ValidationDashboard — UI controller for browsing and submitting validation records on-chain.
  *
  * Uses:
- * - getLatestValidation() to fetch past validation records
- * - recordValidation() to submit new reports
+ * - GET /api/erc8004/validation (walletless) to fetch the latest verdict
+ * - recordValidation() to submit new reports (request + response, two txs)
  * - hashReport() to compute client-side hash
  * - pinFile() for IPFS storage
  * - ethers for wallet connection
  */
 
 import { ensureWallet } from './erc8004/agent-registry.js';
-import {
-	getLatestValidation,
-	recordValidation,
-	hashReport,
-} from './erc8004/validation-recorder.js';
+import { recordValidation, hashReport } from './erc8004/validation-recorder.js';
+import { fetchValidationState } from './shared/validation-badge.js';
+
+/**
+ * Latest on-chain verdict for an agent, shaped for renderRecord(). Returns null
+ * when the chain has no registry, or has no answered validation for this agent.
+ */
+async function fetchLatestValidation(chainId, agentId) {
+	const state = await fetchValidationState(chainId, agentId);
+	if (!state || !state.exists) return null;
+	return {
+		kind: state.kind,
+		passed: state.passed,
+		validator: state.validator,
+		timestamp: state.timestamp,
+		proofHash: state.proofHash,
+		proofURI: state.proofUrlResolved || state.proofURI || '',
+	};
+}
 
 export class ValidationDashboard {
 	constructor(root, els) {
@@ -60,6 +74,16 @@ export class ValidationDashboard {
 		this.els.submitBtn.addEventListener('click', () => this.openModal());
 		this.els.reportFile.addEventListener('change', (e) => this.handleFileSelect(e));
 		this.els.submitReportBtn.addEventListener('click', () => this.submitReport());
+
+		// Record rows are rendered from strings, so their copy affordances declare
+		// what they carry and this delegated listener does the work. Inline onclick
+		// attributes cannot run under the site CSP.
+		document.addEventListener('click', (e) => {
+			const addr = e.target.closest('[data-copy-addr]');
+			if (addr) return this._copyAddr(addr.dataset.copyAddr);
+			const hash = e.target.closest('[data-copy-hash]');
+			if (hash) this._copyHash(hash.dataset.copyHash);
+		});
 
 		document.addEventListener('dragover', (e) => {
 			if (this.els.submitModal.classList.contains('open')) {
@@ -124,11 +148,10 @@ export class ValidationDashboard {
 			this.els.loadBtn.disabled = true;
 			this.showInfo('Loading validation records...');
 
-			const result = await getLatestValidation({
-				agentId: this.currentAgentId,
-				runner: null,
-				chainId: this.currentChainId,
-			});
+			// Read through the walletless server route: it fans out over the RPC
+			// failover chain and needs no wallet, so records load for a visitor who
+			// never connected one.
+			const result = await fetchLatestValidation(this.currentChainId, this.currentAgentId);
 
 			this.hideInfo();
 			this.renderRecords(result);
@@ -192,7 +215,7 @@ export class ValidationDashboard {
 				<div class="record-meta">
 					<div class="record-meta-item">
 						<div class="record-meta-label">Validator</div>
-						<div class="record-meta-value" title="${this.escapeHtml(validator)}" style="cursor:pointer" onclick="valDash._copyAddr('${this.escapeHtml(validator)}')">${this.escapeHtml(validatorShort)}</div>
+						<div class="record-meta-value" title="${this.escapeHtml(validator)}" style="cursor:pointer" data-copy-addr="${this.escapeHtml(validator)}">${this.escapeHtml(validatorShort)}</div>
 					</div>
 					<div class="record-meta-item" style="flex:1">
 						<div class="record-meta-label">Report Hash</div>
@@ -202,7 +225,7 @@ export class ValidationDashboard {
 				${notes ? `<div class="record-notes">${this.escapeHtml(notes)}</div>` : ''}
 				<div class="record-actions">
 					${reportUri ? `<a href="${this.resolveIPFS(this.escapeHtml(reportUri))}" target="_blank" rel="noopener noreferrer">View Report ↗</a>` : ''}
-					${reportHash ? `<button onclick="valDash._copyHash('${this.escapeHtml(reportHash)}')">Copy Hash</button>` : ''}
+					${reportHash ? `<button type="button" data-copy-hash="${this.escapeHtml(reportHash)}">Copy Hash</button>` : ''}
 				</div>
 			</div>
 		`;
@@ -284,7 +307,9 @@ export class ValidationDashboard {
 			const wallet = await ensureWallet();
 			const signer = wallet.signer;
 
-			this.showToast('Submitting validation record on-chain...');
+			// Two txs on a fresh report: the registry needs an open request before a
+			// validator may answer it. An existing request is answered directly.
+			this.showToast('Opening the validation request, then recording the verdict...');
 
 			const result = await recordValidation({
 				agentId: this.currentAgentId,
@@ -295,14 +320,9 @@ export class ValidationDashboard {
 				pin: true,
 			});
 
-			this.showToast(
-				`✓ Validation submitted! TX: ${result.txHash.substring(0, 10)}...`,
-				false,
-			);
+			this.showToast(`✓ Validation recorded! TX: ${result.txHash.substring(0, 10)}...`, false);
 
 			this.closeModal();
-
-			await new Promise((r) => setTimeout(r, 2000));
 			await this.loadRecords();
 		} catch (err) {
 			this.showToast(`Error: ${err.message}`, true);

@@ -217,7 +217,7 @@ The flow:
 3. **Registration.** The user calls `IdentityRegistry.registerAgent(cid, metadata)` on the target chain. Base is the default; `src/erc8004/chains.js` ships registry deployments on 15 mainnets (Ethereum, Base, Optimism, Arbitrum One, Polygon, BNB Chain, Avalanche, Linea, Scroll, Gnosis, Celo, zkSync Era, Moonbeam, Mantle, Fantom) plus the common testnets. The registry mints a token whose `tokenURI` returns the manifest CID.
 4. **Resolution.** Anyone with the chain id and agent id (or an ENS like `3dagent.eth`) can resolve the manifest: `manifest.js` reads `tokenURI(agentId)` from the registry, fetches the JSON over IPFS gateways, and normalizes it.
 5. **Reputation.** Users can call `ReputationRegistry.submitFeedback(agentId, score, comment)` to attach reviews. The element exposes a small UI for this.
-6. **Validation attestations.** When the glTF validator runs, the report can be hashed and posted to `ValidationRegistry.recordValidation(agentId, hash)` so anyone can verify the body has been spec-checked.
+6. **Validation attestations.** When the glTF validator runs, the report can be hashed and answered onto the agent's open request via `ValidationRegistry.validationResponse(requestHash, score, uri, hash, tag)` so anyone can verify the body has been spec-checked.
 
 Per-chain registry addresses, ABIs, and helpers live in `src/erc8004/`. RPC endpoints fall back to public defaults but can be overridden with `?rpcURL=...`.
 

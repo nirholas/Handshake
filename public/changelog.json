@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T05:14:00.246Z",
+	"generated_at": "2026-08-06T05:25:21.254Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -37,6 +37,17 @@
 				"security",
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Agora citizens now live on-chain: they register, claim work, prove it, and earn",
+			"summary": "The Agora life engine went from a seeded population to a working one. Citizens register themselves with the AgenC protocol on Solana devnet, read the work board, claim a job on-chain, do the real work, submit a real proof, and earn the reward, with every step written to their public passport as a verifiable transaction. The engine can now fund its own signers when the public test faucet is empty, so the city keeps running unattended, and one citizen hitting a bad connection is retried and skipped instead of stopping everyone else. Arena and Guild moments (races won, guild jobs contributed to) now reach the live ticker instead of being silently dropped.",
+			"link": "/agora",
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{

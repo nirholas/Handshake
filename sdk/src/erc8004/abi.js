@@ -57,27 +57,24 @@ export const REPUTATION_REGISTRY_ABI = [
 ];
 
 export const VALIDATION_REGISTRY_ABI = [
-	// --- Admin ---
-	'function addValidator(address v) external',
-	'function removeValidator(address v) external',
-	'function isValidator(address v) external view returns (bool)',
-	'function owner() external view returns (address)',
-	'function transferOwnership(address newOwner) external',
+	// --- Request (agent owner or an approved operator) ---
+	'function validationRequest(address validatorAddress, uint256 agentId, string requestURI, bytes32 requestHash) external',
 
-	// --- Record ---
-	'function recordValidation(uint256 agentId, bool passed, bytes32 proofHash, string proofURI, string kind) external',
+	// --- Response (only the validator named in the request) ---
+	'function validationResponse(bytes32 requestHash, uint8 response, string responseURI, bytes32 responseHash, string tag) external',
 
 	// --- Query ---
-	'function getValidationCount(uint256 agentId) external view returns (uint256)',
-	'function getValidation(uint256 agentId, uint256 index) external view returns (tuple(address validator, bool passed, bytes32 proofHash, string proofURI, uint64 timestamp, string kind))',
-	'function getLatestByKind(uint256 agentId, string kind) external view returns (tuple(address validator, bool passed, bytes32 proofHash, string proofURI, uint64 timestamp, string kind))',
-	'function getValidationRange(uint256 agentId, uint256 offset, uint256 limit) external view returns (tuple(address validator, bool passed, bytes32 proofHash, string proofURI, uint64 timestamp, string kind)[])',
+	'function getValidationStatus(bytes32 requestHash) external view returns (address validatorAddress, uint256 agentId, uint8 response, bytes32 responseHash, string tag, uint256 lastUpdate)',
+	'function getAgentValidations(uint256 agentId) external view returns (bytes32[])',
+	'function getValidatorRequests(address validatorAddress) external view returns (bytes32[])',
+	'function getSummary(uint256 agentId, address[] validatorAddresses, string tag) external view returns (uint64 count, uint8 avgResponse)',
+	'function getIdentityRegistry() external view returns (address)',
 
 	// --- Events ---
-	'event ValidatorAdded(address indexed validator)',
-	'event ValidatorRemoved(address indexed validator)',
-	'event ValidationRecorded(uint256 indexed agentId, address indexed validator, bool passed, bytes32 proofHash, string kind)',
+	'event ValidationRequest(address indexed validatorAddress, uint256 indexed agentId, string requestURI, bytes32 indexed requestHash)',
+	'event ValidationResponse(address indexed validatorAddress, uint256 indexed agentId, bytes32 indexed requestHash, uint8 response, string responseURI, bytes32 responseHash, string tag)',
 ];
+
 
 // Canonical ERC-8004 reference deployments — same address on every chain via
 // CREATE2. Source: https://github.com/nirholas/erc8004-agents

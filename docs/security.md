@@ -326,7 +326,7 @@ Admin and write endpoints accept only same-site requests, enforced by checking t
 
 - The ERC-8004 registries are immutable once deployed — audit the contracts before deploying to mainnet
 - The deployer address becomes the registry owner; use a multisig wallet (e.g., a 3-of-5 Safe) for production deployments
-- The owner EOA controls `addValidator` / `removeValidator` — key compromise at this level is a critical incident
+- The platform validator EOA (`VALIDATOR_PRIVATE_KEY`) can answer any validation request addressed to it, so its compromise means forged verdicts on agents that requested it: a critical incident
 
 ### Bundle hosting
 

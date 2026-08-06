@@ -72,7 +72,7 @@ const SCHEMAS = {
 			'Validator attestation. Two forms: a task validation (task_hash) or a ' +
 			'glTF/GLB schema validation of the agent model (subkind "glb-schema", ' +
 			'carrying proof_hash + proof_uri) — the Solana analog of the EVM ' +
-			'ValidationRegistry recordValidation.',
+			'ValidationRegistry validationResponse.',
 		required: ['v', 'kind', 'agent', 'passed'],
 		properties: {
 			...COMMON,

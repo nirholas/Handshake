@@ -54,20 +54,22 @@ Polygon Amoy (80002), Avalanche Fuji (43113).
 | -------------------- | -------------------------------------------- | ----------------------- |
 | IdentityRegistry     | [`0x8004A818BFB912233c491871b3d84c89A494BD9e`](https://sepolia.basescan.org/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) | bytecode ✓ (2026-06-19) on 7 testnets; tx unrecoverable |
 | ReputationRegistry   | [`0x8004B663056A597Dffe9eCcC1965A193B7388713`](https://sepolia.basescan.org/address/0x8004B663056A597Dffe9eCcC1965A193B7388713) | bytecode ✓ (2026-06-19) on 7 testnets; tx unrecoverable |
-| ValidationRegistry   | [`0x8004Cb1BF31DAf7788923b405b754f57acEB4272`](https://sepolia.basescan.org/address/0x8004Cb1BF31DAf7788923b405b754f57acEB4272) | bytecode ✓ (2026-06-19) on 7 testnets; tx unrecoverable |
+| ValidationRegistry   | [`0x8004Cb1BF31DAf7788923b405b754f57acEB4272`](https://sepolia.basescan.org/address/0x8004Cb1BF31DAf7788923b405b754f57acEB4272) | reference `ValidationRegistryUpgradeable` (ERC-1967 proxy), interface ✓ 2026-08-06 via `npm run verify:erc8004-validation`; NOT this repo's ValidationRegistry.sol |
 
 ## Platform validator (ValidationRegistry attestor)
 
 The platform validator is the EVM key that signs glTF/schema validation
-attestations (`recordValidation`) when an agent is registered. It must be
-allow-listed via `addValidator(<addr>)` by the registry owner on every chain it
-attests on, funded with gas, and stored as the `VALIDATOR_PRIVATE_KEY` env var on the
-`three-ws-api` Cloud Run service (never committed). Provision/rotate with
+attestations (`validationResponse`) when an agent is registered. The deployed
+registry has no allowlist, so there is nothing to add it to: it can answer any
+request addressed to it. It needs gas on every chain it attests on, and it must be
+stored as the `VALIDATOR_PRIVATE_KEY` env var on the `three-ws-api` Cloud Run
+service (never committed). Provision/rotate with
 [`scripts/erc8004/provision-validator-key.mjs`](../scripts/erc8004/provision-validator-key.mjs).
+Flow and operating notes: [`docs/erc8004/validation-attestation.md`](../docs/erc8004/validation-attestation.md).
 
-| Address | Allow-listed chains | Notes |
-| ------- | ------------------- | ----- |
-| `0x93Bc7EfB0059B784465619FC73C2db8D01b1CD04` | TODO: run `addValidator` per chain | Provisioned 2026-06-15. Pending funding + allow-list (testnet first: Base Sepolia 84532). |
+| Address | State | Notes |
+| ------- | ----- | ----- |
+| `0x93Bc7EfB0059B784465619FC73C2db8D01b1CD04` | not configured, unfunded | Provisioned 2026-06-15. As of 2026-08-06 the key is absent from `.env`, `.env.local`, Secret Manager and the Cloud Run service, and the address holds 0 gas on Base Sepolia, so `/api/erc8004/validate` returns `validator_key_not_configured`. Configure + fund it (testnet first: Base Sepolia 84532) to activate platform attestations. |
 
 ## CREATE2 Factory (ThreeWSFactory)
 

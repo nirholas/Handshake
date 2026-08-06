@@ -394,132 +394,131 @@ await tx.wait();
 
 ## ValidationRegistry
 
-`ValidationRegistry` records immutable attestations of off-chain validation results against registered agents. Typical use cases are glTF schema checks, behavioral test results, or any third-party quality signal.
+`ValidationRegistry` records attestations of off-chain validation results against registered agents. Typical use cases are glTF schema checks, behavioral test results, or any third-party quality signal.
 
-Unlike the other two registries, `ValidationRegistry` is **permissioned**: only addresses added to the validator allowlist by the contract owner can call `recordValidation`. If you are building a third-party validator service, you need to be added to the allowlist or deploy your own instance.
+The deployed registry (`REGISTRY_DEPLOYMENTS[chainId].validationRegistry`, testnet only for now) is the ERC-8004 reference `ValidationRegistryUpgradeable`. It is **not** the `contracts/src/ValidationRegistry.sol` in this repo, which is an alternative design that is deployed nowhere; if you read that source expecting the deployed behavior you will write calls that revert. Verify any address before trusting it:
 
-The `ValidationRegistry` is deployed on testnets only; mainnet deployment is pending.
-
-### Structs and Storage
-
-```solidity
-struct Validation {
-    address validator;  // who ran the validation
-    bool passed;        // true = zero errors
-    bytes32 proofHash;  // keccak256 of the off-chain report JSON
-    string proofURI;    // optional ipfs:// or https:// pointer to the full report
-    uint64 timestamp;
-    string kind;        // free-form tag, e.g. "glb-schema", "a2a-card"
-}
+```
+npm run verify:erc8004-validation
 ```
 
-The `kind` field lets multiple independent validator types coexist for the same agent. The registry tracks the latest record per `(agentId, kind)` for O(1) lookup via `getLatestByKind`.
+### The two-legged model
 
-### Recording a Validation
+There is no validator allowlist. Authority comes from the request instead:
+
+| Call | Who may send it |
+| ---- | --------------- |
+| `validationRequest(address validator, uint256 agentId, string requestURI, bytes32 requestHash)` | the agent's ERC-721 owner, its per-token approved operator, or an operator approved for all |
+| `validationResponse(bytes32 requestHash, uint8 response, string responseURI, bytes32 responseHash, string tag)` | only the validator named in that request |
+
+`requestHash` is an id the requester picks. three.ws derives it so the flow is idempotent: `keccak256(abi.encode(chainId, agentId, kind, subjectHash))`, which means re-validating the same subject answers the same request instead of piling up duplicates.
+
+`response` is a 0..100 score, not a boolean. A binary suite writes 100 for a pass and 0 for a fail, and readers treat 50 and above as a pass (`responsePassed()` in `src/erc8004/validation-report.js`). `tag` carries the validation kind, e.g. `"glb-schema"`.
+
+`validationRequest` reverts with `Not authorized` when the caller has no authority over the agent, and `exists` when that `requestHash` was already used. `validationResponse` reverts with `unknown` for an id the registry has never seen, `not validator` when the sender is not the named validator, and `resp>100` for an out-of-range score.
+
+### Reading validations
 
 ```solidity
-// Caller must be in the isValidator allowlist
-function recordValidation(
-    uint256 agentId,
-    bool passed,
-    bytes32 proofHash,
-    string calldata proofURI,
-    string calldata kind
-) external
+// Every request id ever opened for an agent, oldest first
+function getAgentValidations(uint256 agentId) external view returns (bytes32[] memory)
+
+// Every request id addressed to a validator
+function getValidatorRequests(address validator) external view returns (bytes32[] memory)
+
+// One request's state; reverts ("unknown") if the id was never opened.
+// An unanswered request returns response 0 with an EMPTY tag: that is pending,
+// not a failing verdict.
+function getValidationStatus(bytes32 requestHash)
+    external view
+    returns (
+        address validatorAddress,
+        uint256 agentId,
+        uint8 response,
+        bytes32 responseHash,
+        string memory tag,
+        uint256 lastUpdate
+    )
+
+// Aggregate over chosen validators for one tag
+function getSummary(uint256 agentId, address[] calldata validators, string calldata tag)
+    external view
+    returns (uint64 count, uint8 avgResponse)
 ```
 
-Reverts with:
-- `NotValidator` — caller is not in the allowlist
-- `UnknownAgent` — agentId is not registered
+Note what is missing: `responseURI` is emitted in the `ValidationResponse` event but never stored. To link a verdict to its pinned report, read the event or keep your own index, and verify whatever URL you recover against the stored `responseHash`.
 
-Emits:
+Events:
 
 ```solidity
-event ValidationRecorded(
+event ValidationRequest(
+    address indexed validatorAddress,
     uint256 indexed agentId,
-    address indexed validator,
-    bool passed,
-    bytes32 proofHash,
-    string kind
+    string requestURI,
+    bytes32 indexed requestHash
 );
-```
 
-### Reading Validations
-
-```solidity
-// Total number of validation records for an agent
-function getValidationCount(uint256 agentId) external view returns (uint256)
-
-// Fetch a single record by index
-function getValidation(uint256 agentId, uint256 index)
-    external view
-    returns (Validation memory)
-
-// Fetch the most recent record for a given kind (reverts if none exists)
-function getLatestByKind(uint256 agentId, string calldata kind)
-    external view
-    returns (Validation memory)
-
-// Fetch a slice of records (pagination)
-function getValidationRange(uint256 agentId, uint256 offset, uint256 limit)
-    external view
-    returns (Validation[] memory)
-```
-
-### Allowlist Management (owner only)
-
-```solidity
-function addValidator(address v) external        // emits ValidatorAdded
-function removeValidator(address v) external     // emits ValidatorRemoved
-function transferOwnership(address newOwner) external
-
-mapping(address => bool) public isValidator;
-address public owner;
+event ValidationResponse(
+    address indexed validatorAddress,
+    uint256 indexed agentId,
+    bytes32 indexed requestHash,
+    uint8 response,
+    string responseURI,
+    bytes32 responseHash,
+    string tag
+);
 ```
 
 ### Recording from ethers.js
 
 ```js
-import { ethers } from 'ethers';
+import { ethers, keccak256, toUtf8Bytes } from 'ethers';
 import { VALIDATION_REGISTRY_ABI, REGISTRY_DEPLOYMENTS } from './src/erc8004/abi.js';
-import { keccak256, toUtf8Bytes } from 'ethers';
+import { validationRequestHash, responseForPassed } from './src/erc8004/validation-report.js';
 
+const chainId = 84532; // Base Sepolia
 const valRegistry = new ethers.Contract(
-  REGISTRY_DEPLOYMENTS[84532].validationRegistry,  // testnet: Base Sepolia
+  REGISTRY_DEPLOYMENTS[chainId].validationRegistry,
   VALIDATION_REGISTRY_ABI,
-  signer  // must be allow-listed
+  signer, // the agent's owner or operator for leg 1; the named validator for leg 2
 );
 
-// Hash the report JSON deterministically
-const reportJson = JSON.stringify(validationReport);
-const proofHash = keccak256(toUtf8Bytes(reportJson));
+const proofHash = keccak256(toUtf8Bytes(JSON.stringify(validationReport)));
 const passed = validationReport.issues.numErrors === 0;
+const proofURI = 'ipfs://QmYourPinnedReport'; // or '' to omit
+const requestHash = validationRequestHash({ chainId, agentId: 42, seed: proofHash });
 
-// Optionally pin the full report to IPFS first, so verifiers can fetch details
-const proofURI = 'ipfs://QmYourPinnedReport';  // or '' to omit
+// Leg 1: the owner opens the request (skip when it already exists).
+await (await valRegistry.validationRequest(validatorAddress, 42, proofURI, requestHash)).wait();
 
-const tx = await valRegistry.recordValidation(
-  agentId,
-  passed,
-  proofHash,
+// Leg 2: the named validator answers it.
+await (await valRegistry.validationResponse(
+  requestHash,
+  responseForPassed(passed), // 100 or 0
   proofURI,
-  'glb-schema'  // kind
-);
-await tx.wait();
+  proofHash,
+  'glb-schema',
+)).wait();
 ```
+
+`recordValidation()` in `src/erc8004/validation-recorder.js` wraps both legs for the common case where one wallet owns the agent and validates it.
 
 ### Verifying a Validation
 
 ```js
-// Fetch the latest glb-schema attestation for agent 42
-const record = await valRegistry.getLatestByKind(42, 'glb-schema');
+import { responsePassed } from './src/erc8004/validation-report.js';
+
+// The latest answered glb-schema attestation for agent 42
+const hashes = await valRegistry.getAgentValidations(42);
+const statuses = await Promise.all(hashes.map((h) => valRegistry.getValidationStatus(h)));
+const answered = statuses.filter((s) => s[4] === 'glb-schema');
+const record = answered.sort((a, b) => Number(b[5]) - Number(a[5]))[0];
 
 // Re-run the validator on the current GLB, then re-hash the output
 const freshReport = await runGlbValidator(glbUrl);
 const recomputedHash = keccak256(toUtf8Bytes(JSON.stringify(freshReport)));
 
-const attestationMatches = recomputedHash === record.proofHash;
-console.log('Passes:', record.passed, '| Attestation still valid:', attestationMatches);
+console.log('Passes:', responsePassed(record[2]), '| Attestation still valid:', recomputedHash === record[3]);
 ```
 
 ---
@@ -584,7 +583,8 @@ These are approximate costs at optimizer 200 runs. Actual cost depends on chain 
 | `setMetadata` | ~35k | Per key/value entry |
 | `setAgentWallet` | ~50k | EIP-712 sig verification + storage |
 | `submitFeedback` | ~55k | New review; first review costs slightly more |
-| `recordValidation` | ~60k | Includes `getLatestByKind` index write |
+| `validationRequest` | ~120k | Writes the request plus two index arrays |
+| `validationResponse` | ~60k | Updates the request in place |
 | All `view` functions | 0 | Free off-chain reads |
 
 On Base at typical gas prices (~0.001 gwei base fee), an agent registration runs to roughly $0.10–$0.25. The same transaction costs 20–50x more on Ethereum mainnet — use Base or another L2 for cost-sensitive flows.

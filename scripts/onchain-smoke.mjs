@@ -31,7 +31,7 @@
  *   node --env-file=.env scripts/onchain-smoke.mjs  # load credentials from .env (Node 20+)
  *
  * Credentials (all optional — absence ⇒ the dependent step SKIPs):
- *   SMOKE_EVM_PRIVATE_KEY        funded Base-Sepolia signer (steps 2,3,4 — must be an allow-listed validator for step 3)
+ *   SMOKE_EVM_PRIVATE_KEY        funded Base-Sepolia signer (steps 2,3,4; step 3 needs it to own the agent)
  *   SMOKE_EVM_PRIVATE_KEY_2      second funded signer for the reputation feedback (step 4)
  *   SMOKE_EVM_CHAIN_ID           EVM testnet chainId (default 84532 / Base Sepolia)
  *   SMOKE_AGENT_ID               reuse an existing agentId for steps 3/4 without re-registering
@@ -68,6 +68,11 @@ import { REGISTRY_DEPLOYMENTS as SRC_DEPLOYMENTS } from '../src/erc8004/abi.js';
 import { CHAIN_BY_ID } from '../api/_lib/erc8004-chains.js';
 import { evmFallbackProvider } from '../api/_lib/evm/rpc.js';
 import { buildRegistrationJSON } from '../src/erc8004/registration-json.js';
+import {
+	responseForPassed,
+	responsePassed,
+	validationRequestHash,
+} from '../src/erc8004/validation-report.js';
 import { normalizeGatewayURL } from '../src/ipfs.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -484,9 +489,7 @@ async function stepEvmValidation(cfg, ctx) {
 		return skip('no agentId — run step 2 in the same invocation or set SMOKE_AGENT_ID');
 	}
 	if (!cfg.evmKey) {
-		return skip(
-			'no funded validator signer — set SMOKE_EVM_PRIVATE_KEY (must be allow-listed on the registry)',
-		);
+		return skip('no funded signer: set SMOKE_EVM_PRIVATE_KEY (it must own the agent to open a request)');
 	}
 
 	const provider = ctx.evm?.provider ?? (await evmFallbackProvider(chainId));
@@ -497,48 +500,70 @@ async function stepEvmValidation(cfg, ctx) {
 	const report = buildValidationReport(glbSha);
 	const { keccak256, toUtf8Bytes } = await import('ethers');
 	const proofHash = keccak256(toUtf8Bytes(JSON.stringify(report)));
-	const passed = true;
+	const score = responseForPassed(true);
+	const requestHash = validationRequestHash({ chainId, agentId, seed: proofHash, kind: VALIDATION_KIND });
 
-	// Guard: recordValidation reverts for non-allow-listed senders (NotValidator).
-	let countBefore;
+	// The registry is request/response based: the agent's owner opens a request
+	// naming a validator, and only that validator may answer it. This signer
+	// registered the agent in step 2, so it plays both roles.
+	let existing = null;
 	try {
-		countBefore = await registry.getValidationCount(agentId);
-	} catch (err) {
-		return fail(`getValidationCount read failed: ${err.shortMessage || err.message}`);
+		existing = await registry.getValidationStatus(requestHash);
+	} catch {
+		existing = null;
+	}
+
+	let requestTx = null;
+	if (!existing) {
+		try {
+			requestTx = await registry.validationRequest(signer.address, agentId, '', requestHash);
+			await requestTx.wait();
+		} catch (err) {
+			const reason = err.shortMessage || err.reason || err.message || 'revert';
+			if (/not authorized/i.test(reason)) {
+				return skip(`signer ${signer.address} does not own agent ${agentId} (${reason})`);
+			}
+			return fail(`validationRequest failed: ${reason}`);
+		}
+	} else if (existing[0].toLowerCase() !== signer.address.toLowerCase()) {
+		return skip(`request ${requestHash} is addressed to validator ${existing[0]}, not ${signer.address}`);
 	}
 
 	let tx;
 	try {
-		tx = await registry.recordValidation(agentId, passed, proofHash, '', VALIDATION_KIND);
+		tx = await registry.validationResponse(requestHash, score, '', proofHash, VALIDATION_KIND);
 		await tx.wait();
 	} catch (err) {
-		const reason = err.shortMessage || err.reason || err.message || 'revert';
-		if (/NotValidator|not a validator|0x[0-9a-f]*/i.test(reason)) {
-			return skip(`signer ${signer.address} is not an allow-listed validator (${reason})`);
-		}
-		return fail(`recordValidation failed: ${reason}`);
+		return fail(`validationResponse failed: ${err.shortMessage || err.reason || err.message || 'revert'}`);
 	}
 
-	// Read it back via getLatestByKind (the canonical query), with a count-delta
-	// fallback if an older deployment lacks that view.
-	let readback;
+	// Read the verdict back the way the badge does.
 	try {
-		const latest = await registry.getLatestByKind(agentId, VALIDATION_KIND);
-		if (latest.proofHash !== proofHash) {
-			return fail(`getLatestByKind proofHash ${latest.proofHash} != recorded ${proofHash}`);
+		const status = await registry.getValidationStatus(requestHash);
+		if (status[3] !== proofHash) {
+			return fail(`getValidationStatus responseHash ${status[3]} != recorded ${proofHash}`);
 		}
-		if (latest.passed !== passed) return fail('getLatestByKind passed flag mismatch');
-		readback = 'getLatestByKind';
-	} catch {
-		const countAfter = await registry.getValidationCount(agentId);
-		if (countAfter <= countBefore) {
-			return fail(`validation count did not increment (${countBefore} -> ${countAfter})`);
+		if (status[4] !== VALIDATION_KIND) {
+			return fail(`getValidationStatus tag "${status[4]}" != "${VALIDATION_KIND}"`);
 		}
-		readback = 'getValidationCount';
+		if (!responsePassed(status[2])) {
+			return fail(`getValidationStatus response ${status[2]} reads as a failure`);
+		}
+	} catch (err) {
+		return fail(`getValidationStatus read failed: ${err.shortMessage || err.message}`);
 	}
 
-	return pass(`attestation recorded for agentId=${agentId} · read back via ${readback}`, {
+	const summary = await registry
+		.getSummary(agentId, [signer.address], VALIDATION_KIND)
+		.catch(() => null);
+	if (summary && Number(summary[0]) < 1) {
+		return fail(`getSummary count is ${summary[0]} after recording a validation`);
+	}
+
+	return pass(`attestation recorded for agentId=${agentId} on request ${requestHash.slice(0, 10)}`, {
+		validationRequestTx: requestTx?.hash ?? null,
 		validationTx: tx.hash,
+		requestHash,
 		proofHash,
 	});
 }

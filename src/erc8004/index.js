@@ -21,6 +21,7 @@ export { RegisterUI } from './register-ui.js';
 export { submitReputation, submitFeedback, getReputation, getRecentReviews } from './reputation.js';
 export {
 	recordValidation,
+	getValidations,
 	getLatestValidation,
 	reportPassed,
 	hashReport,

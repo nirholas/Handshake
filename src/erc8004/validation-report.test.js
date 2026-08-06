@@ -6,6 +6,11 @@ import {
 	hashReport,
 	buildGlbReport,
 	failureReason,
+	responsePassed,
+	responseForPassed,
+	validationRequestHash,
+	VALIDATION_RESPONSE_PASS,
+	VALIDATION_RESPONSE_FAIL,
 } from './validation-report.js';
 
 const VALIDATED_AT = '2026-06-15T00:00:00.000Z';
@@ -97,5 +102,54 @@ describe('failureReason', () => {
 	it('returns the single error message', () => {
 		const report = buildGlbReport({ url: 'x', error: 'not a GLB', validatedAt: VALIDATED_AT });
 		expect(failureReason(report)).toBe('not a GLB');
+	});
+});
+
+describe('response score mapping', () => {
+	it('writes the extremes of the registry 0..100 range', () => {
+		expect(responseForPassed(true)).toBe(VALIDATION_RESPONSE_PASS);
+		expect(responseForPassed(false)).toBe(VALIDATION_RESPONSE_FAIL);
+	});
+
+	it('reads a score back through the pass threshold', () => {
+		expect(responsePassed(100)).toBe(true);
+		expect(responsePassed(50)).toBe(true);
+		expect(responsePassed(49)).toBe(false);
+		expect(responsePassed(0)).toBe(false);
+	});
+
+	it('round-trips both verdicts', () => {
+		expect(responsePassed(responseForPassed(true))).toBe(true);
+		expect(responsePassed(responseForPassed(false))).toBe(false);
+	});
+
+	it('accepts the bigint a chain read returns', () => {
+		expect(responsePassed(100n)).toBe(true);
+		expect(responsePassed(0n)).toBe(false);
+	});
+});
+
+describe('validationRequestHash', () => {
+	const seed = `0x${'ab'.repeat(32)}`;
+	const base = { chainId: 84532, agentId: 7, seed };
+
+	it('is a bytes32', () => {
+		expect(validationRequestHash(base)).toMatch(/^0x[0-9a-f]{64}$/);
+	});
+
+	it('is stable, so re-validating the same subject answers the same request', () => {
+		expect(validationRequestHash(base)).toBe(validationRequestHash({ ...base, agentId: '7' }));
+	});
+
+	it('separates chain, agent, kind and subject', () => {
+		const h = validationRequestHash(base);
+		expect(validationRequestHash({ ...base, chainId: 11155111 })).not.toBe(h);
+		expect(validationRequestHash({ ...base, agentId: 8 })).not.toBe(h);
+		expect(validationRequestHash({ ...base, kind: 'manifest-integrity' })).not.toBe(h);
+		expect(validationRequestHash({ ...base, seed: `0x${'cd'.repeat(32)}` })).not.toBe(h);
+	});
+
+	it('defaults to the glb-schema kind', () => {
+		expect(validationRequestHash(base)).toBe(validationRequestHash({ ...base, kind: KIND_GLB_SCHEMA }));
 	});
 });

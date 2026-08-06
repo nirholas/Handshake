@@ -1,7 +1,7 @@
 {
 	"$schema": "https://three.ws/specs/validators-v1",
-	"description": "Allow-listed ERC-8004 ValidationRegistry validators for three.ws Card v1 attestations. See specs/VALIDATORS.md.",
-	"updatedAt": "2026-04-27",
+	"description": "Validators three.ws recognizes for ERC-8004 ValidationRegistry attestations on three.ws Card v1 agents. The registry itself has no allow-list: this is an off-chain trust signal used when rendering verdicts. See specs/VALIDATORS.md.",
+	"updatedAt": "2026-08-06",
 	"mainnet": [],
 	"testnet": []
 }

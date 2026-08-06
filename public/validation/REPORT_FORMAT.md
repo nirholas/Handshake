@@ -2,7 +2,7 @@
 
 ## Overview
 
-An **agent validation report** is a JSON document that captures the results of testing an agent's GLB model and metadata against a suite of validation rules. Validators (auditors, testing services) generate these reports, sign them on-chain via `recordValidation()`, and end-users browse them to verify trust.
+An **agent validation report** is a JSON document that captures the results of testing an agent's GLB model and metadata against a suite of validation rules. Validators (auditors, testing services) generate these reports, answer the agent owner's on-chain request via `validationResponse()`, and end-users browse them to verify trust.
 
 ## Schema
 
