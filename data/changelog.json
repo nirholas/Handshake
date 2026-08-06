@@ -17992,6 +17992,16 @@
 				"infra"
 			],
 			"link": "/changelog"
+		},
+		{
+			"date": "2026-08-06",
+			"title": "Play worlds now load in seconds and connect on the first try",
+			"summary": "Big pre-event tune-up for the 3D coin worlds at /play. Dropping into a world used to wait on the entire animation library downloading before you even appeared, which is why the game could sit on 'connecting' with a frozen character; now it loads just what it needs, joins the world at the same time, and lets you walk the moment your avatar lands. Your gold, inventory, and builds are now durably saved on the server across restarts. Holder-gated worlds work again, one town now holds up to 100 people before splitting, chat and names filter hate speech, and the online counter shows real players only. If the page ever fails to load, you get a proper error card with a retry button instead of an endless spinner.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/play"
 		}
 	]
 }

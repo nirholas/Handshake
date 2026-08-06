@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Market data that refuses to go down: 20+ free data sources joined the platform</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-06:Market data that refuses to go down: 20+ free data sources joined the platform</guid>
+			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Prices, charts, gas, news, and safety checks now stand on far more legs. Public market data from seven major exchanges backs up every price and chart if a primary source stumbles, and two more oracle networks back SOL pricing. Token safety reads now combine two independent rug checkers on Solana and simulate an actual sell on Ethereum-side tokens to catch honeypots. New free endpoints let anyone fetch normalized gas prices for 12 chains and read-only swap quotes on 6 chains, no key needed. Derivatives pages gained real options data, the news feed now listens to six crypto subreddits, and on-chain fundamentals like active addresses and fees flow in for BTC, ETH, and SOL. All of it runs on free public APIs with automatic failover.</description>
+		</item>
+		<item>
+			<title>Play worlds now load in seconds and connect on the first try</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-06:Play worlds now load in seconds and connect on the first try</guid>
+			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Big pre-event tune-up for the 3D coin worlds at /play. Dropping into a world used to wait on the entire animation library downloading before you even appeared, which is why the game could sit on 'connecting' with a frozen character; now it loads just what it needs, joins the world at the same time, and lets you walk the moment your avatar lands. Your gold, inventory, and builds are now durably saved on the server across restarts. Holder-gated worlds work again, one town now holds up to 100 people before splitting, chat and names filter hate speech, and the online counter shows real players only. If the page ever fails to load, you get a proper error card with a retry button instead of an endless spinner.</description>
+		</item>
+		<item>
 			<title>Docs · The free LLM failover chain</title>
 			<link>https://three.ws/docs/free-llm-providers</link>
 			<guid isPermaLink="false">2026-08-05:Docs · The free LLM failover chain</guid>
