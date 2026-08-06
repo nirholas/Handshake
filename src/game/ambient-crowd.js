@@ -188,7 +188,11 @@ class AmbientCrowd {
 		this.active = false;
 		this._names = [...NAMES];
 		this._avatarBag = []; // shuffled gallery URLs, drained for distinct assignment
-		this._onChat = (n, t) => { try { this.cc.ui?.addChat?.({ name: n, text: t, mine: false }); } catch { /* ui not ready */ } };
+		// Wanderers speak only through their overhead bubbles. They used to also
+		// append lines into the real chat log as if they were players, which reads
+		// as fabricated activity the moment anyone answers "gm" and gets silence.
+		// The chat log carries real messages only.
+		this._onChat = null;
 	}
 	_takeName() {
 		if (!this._names.length) this._names = [...NAMES];
@@ -207,8 +211,10 @@ class AmbientCrowd {
 		const want = Math.max(0, AMBIENT_TARGET - (realCount | 0));
 		while (this.list.length < want) this.list.push(new Wanderer(this.cc.scene, this._takeName(), this._takeAvatar()));
 		while (this.list.length > want) this.list.pop().dispose();
-		// Reflect the livelier population in the HUD's online count.
-		try { this.cc.ui?.setOnline?.((realCount | 0) + this.list.length + 1); } catch { /* ignore */ }
+		// The HUD's online count reports REAL players only (self + live peers).
+		// Padding it with the decorative crowd was a lie a livestream can catch in
+		// one screenshot; the wanderers are scenery, not population.
+		try { this.cc.ui?.setOnline?.((realCount | 0) + 1); } catch { /* ignore */ }
 	}
 	update(dt) {
 		const cam = this.cc.camera;
@@ -232,9 +238,14 @@ class AmbientCrowd {
 }
 
 // ---- bootstrap: wait for the scene, then run an independent update loop ----
-async function attach() {
+async function attach(attempt = 0) {
 	const cc = window.__CC__;
-	if (!cc || !cc.scene || !cc.camera) { setTimeout(attach, 300); return; }
+	if (!cc || !cc.scene || !cc.camera) {
+		// The scene never appearing means boot failed (e.g. no WebGL, error card
+		// up). Give up after ~90s instead of polling a dead page forever.
+		if (attempt < 300) setTimeout(() => attach(attempt + 1), 300);
+		return;
+	}
 	await Promise.all([loadManifest(), loadAvatarPool()]);
 	const crowd = new AmbientCrowd(cc);
 	let last = performance.now();

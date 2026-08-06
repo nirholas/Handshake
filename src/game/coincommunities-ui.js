@@ -222,7 +222,12 @@ export class CommunityUI {
 						]),
 					]),
 					el('div', { class: 'cc-search' }, [el('span', { text: '🔎' }), this.searchInput]),
-					el('a', { class: 'cc-adventure', href: '/play', title: 'Isometric MMO — gather, fight, level up' }, [
+					// A button into the home-town world, not a link: an <a href="/play">
+					// here was a full page reload back to this same lobby.
+					el('button', {
+						type: 'button', class: 'cc-adventure', title: 'Drop into the home town: gather, fight, level up',
+						onclick: () => this.h.onDropIn?.(),
+					}, [
 						el('span', { class: 'cc-adventure-ico', text: '⚔️' }),
 						el('span', { html: 'Adventure mode<small>Gather · fight · level up</small>' }),
 					]),
@@ -809,12 +814,17 @@ export class CommunityUI {
 		if (!this.h.onSearch) return;
 		const seq = ++this._searchSeq;
 		this.searching = true;
+		this.searchError = false;
 		this._renderGrid();
 		let results = [];
 		try {
 			results = (await this.h.onSearch(query)) || [];
 		} catch (err) {
+			// A search outage is not "no matches": keep the states distinct so a
+			// pump.fun blip renders as a retryable error, never as an empty result
+			// that gaslights the player about the coin they just typed.
 			log.warn('[coincommunities] search failed:', err?.message);
+			if (seq === this._searchSeq) this.searchError = true;
 		}
 		if (seq !== this._searchSeq) return; // a newer query superseded this one
 		this.searchResults = results;
@@ -840,6 +850,17 @@ export class CommunityUI {
 		this.grid.textContent = '';
 		if (!featured && !list.length) {
 			if (this.searching) { this._renderSearching(); return; }
+			if (this.searchError && q) {
+				this.grid.appendChild(el('div', { class: 'cc-state' }, [
+					el('span', { class: 'cc-state-ico', text: '📡' }),
+					el('div', { text: 'Search is unavailable right now. Your coin may still exist; retry in a moment.' }),
+					el('button', {
+						text: 'Retry search',
+						onclick: () => { this.searchError = false; this._remoteSearch(q); },
+					}),
+				]));
+				return;
+			}
 			this.grid.appendChild(el('div', { class: 'cc-state' }, [
 				el('span', { class: 'cc-state-ico', text: '🪙' }),
 				el('div', { text: q ? 'No coins match — try a different name, symbol, or mint.' : 'No communities yet — be the first in!' }),
@@ -874,9 +895,18 @@ export class CommunityUI {
 			'aria-label': `Enter the ${sym} holders-only world`,
 			onclick: (e) => { e.stopPropagation(); this.h.onEnter(c, 'holders'); },
 		}, [el('span', { class: 'cc-card-holders-ico', 'aria-hidden': 'true', text: '🔒' }), document.createTextNode('Holders')]);
+		// A real interactive element for keyboard and assistive tech: the grid is
+		// the lobby's primary action, and a bare div with onclick left it
+		// unreachable by Tab and invisible to screen readers.
+		const cardName = c.name || (c.symbol ? '$' + c.symbol : 'this coin');
 		return el('div', {
 			class: 'cc-card' + (featured ? ' cc-card-featured' : ''),
+			role: 'button', tabindex: '0',
+			'aria-label': `Enter the ${cardName} community world`,
 			onclick: () => this.h.onEnter(c, ''),
+			onkeydown: (e) => {
+				if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.h.onEnter(c, ''); }
+			},
 		}, [
 			el('div', { class: 'cc-card-img', style: c.image ? `background-image:url("${c.image}")` : '' }, [liveBadge, holdersBadge]),
 			el('div', { class: 'cc-card-body' }, [
@@ -2384,10 +2414,15 @@ export class CommunityUI {
 		this._renderGrid();
 	}
 
-	setStatus(state) {
-		const labels = { connecting: 'connecting…', online: 'connected', offline: 'reconnecting…', unavailable: 'multiplayer unavailable', failed: 'offline — retry', idle: 'idle' };
+	setStatus(state, error = null) {
+		const labels = { connecting: 'connecting…', online: 'connected', offline: 'reconnecting…', unavailable: 'multiplayer unavailable', failed: 'offline, tap to retry', denied: 'sign-in required', idle: 'idle' };
+		// 'offline' is two different truths: a transient drop mid-reconnect (no
+		// error) vs the client having exhausted its retries (community-net attaches
+		// an error string). Telling a player "reconnecting…" forever after the
+		// client gave up is a lie; show the retryable offline label instead.
+		const gaveUp = state === 'offline' && !!error;
 		this.statusPill.setAttribute('data-state', state);
-		this.statusText.textContent = labels[state] || state;
+		this.statusText.textContent = gaveUp ? labels.failed : (labels[state] || state);
 		// The latency readout is only meaningful while the link is live.
 		if (state !== 'online') this.pingText.hidden = true;
 		// Only expose the pill to the keyboard / label it as actionable while a
@@ -2396,7 +2431,7 @@ export class CommunityUI {
 		if (retryable) {
 			this.statusPill.setAttribute('tabindex', '0');
 			this.statusPill.setAttribute('role', 'button');
-			this.statusPill.setAttribute('aria-label', `Connection ${labels[state]} — activate to reconnect`);
+			this.statusPill.setAttribute('aria-label', `Connection ${this.statusText.textContent}. Activate to reconnect.`);
 			this.statusPill.title = 'Reconnect';
 		} else {
 			this.statusPill.removeAttribute('tabindex');

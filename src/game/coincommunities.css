@@ -632,6 +632,7 @@ html[data-bg="transparent"] #cc-lobby {
 	display: flex; flex-direction: column;
 }
 .cc-card:hover { transform: translateY(-3px); border-color: var(--cc-edge-hi); box-shadow: var(--cc-shadow); }
+.cc-card:focus-visible { outline: none; transform: translateY(-3px); border-color: #fff; box-shadow: 0 0 0 1px #fff, var(--cc-shadow); }
 .cc-card-img { aspect-ratio: 16/10; background: var(--cc-bg2) center/cover no-repeat; position: relative; filter: saturate(0.96) contrast(1.03); transition: filter 0.25s ease; }
 .cc-card:hover .cc-card-img { filter: saturate(1.12) contrast(1.05); }
 .cc-card-img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(6, 6, 7, 0.92)); }
@@ -1076,6 +1077,8 @@ html[data-bg="transparent"] #cc-lobby {
 	background: var(--cc-panel); border: 1px solid var(--cc-edge);
 	transition: background 0.15s, border-color 0.15s, transform 0.08s;
 	white-space: nowrap;
+	/* Rendered as a <button> now: neutralize the UA button font/cursor. */
+	font: inherit; cursor: pointer; text-align: left;
 }
 .cc-adventure:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--cc-edge-hi); transform: translateY(-1px); }
 .cc-adventure:active { transform: translateY(1px); }
