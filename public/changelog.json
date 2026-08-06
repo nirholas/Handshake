@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T05:07:01.648Z",
+	"generated_at": "2026-08-06T05:14:00.246Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -23,6 +23,18 @@
 			"summary": "When the wallet that pays Solana network fees for platform payments has spent its daily fee budget, settlement pauses on purpose until the budget refills at the UTC reset or the wallet is topped up. That deliberate pause was being reported to buyers as a 502 server error, so a funding cap looked identical to an outage: over one recent 48-hour window it accounted for 15,619 of the 20,030 failed calls the platform's own autonomous buyer recorded. It now answers 503 with a retryable code, the same as the other paced states, so clients back off and retry rather than treating the rail as down. Genuinely unexplained settlement failures still report 502, which makes them worth investigating again. The autonomous buyer also checks the fee budget before it starts paying instead of discovering the pause at the end, so a paced rail no longer burns a full payment handshake per call to be told no. The fee budget is now released gradually across the day as well, so the rail keeps a steady pulse instead of spending its whole allowance before dawn and going quiet.",
 			"link": "/economy-lab",
 			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "A tip only counts once the chain says it happened, and the spend caps stopped leaking",
+			"summary": "Closing the last eight findings from the June security review. Tipping a live stage host, and paying an agent you met in the real world, both recorded the payment from the receipt your browser handed us after only checking that it looked like a real transaction id. It never looked the transaction up. Anyone who knew a stage id could therefore post a well-formed but unrelated id with a huge number attached and buy the top of that show's tip leaderboard, and the host's shout-out, for nothing. Every tip and every pay is now checked against the chain before it counts: the transaction has to exist, have succeeded, and have actually paid the host at least what was claimed, or it is refused and nothing is recorded. If the network simply has not caught up yet, your tip is held rather than thrown away, and it joins the leaderboard the moment the transfer shows up. Four spend ceilings that could be raced were tightened the same way: an agent wallet's daily limit, a standing rule's own daily and lifetime budgets, a vault's rolling 24-hour trade budget, and a Commons citizen's daily posting cap all now reserve the room for a payment in the same breath as recording it, counting money already in flight, so two actions fired at the same instant can no longer both spend headroom only one of them had. Also: a paid signal feed no longer shows its open positions to people who have not subscribed (closed trades stay public, since that track record is what the feed sells itself on), swarm actions that move real SOL now carry the same anti-forgery token and per-user limit as every other money action, walk analytics stopped accepting anyone's claim about which creator's avatar they were using, and the scheduled-job password check that guards every automated money mover is now one piece of shared code instead of seventy-eight copies.",
+			"link": "/stage",
+			"tags": [
+				"security",
 				"fix",
 				"improvement"
 			]
@@ -371,6 +383,18 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The on-chain \"Validated\" proof was being written to a contract that does not exist",
+			"summary": "Agents on three.ws can carry an on-chain proof that their 3D model passed the platform's glTF validator, read back by anyone from the ERC-8004 Validation Registry. That proof had never once been recorded. The address we point at on every test network does hold a live registry, but it is the ERC-8004 reference contract, which expects a different way of writing: the agent's owner opens a validation request naming a validator, and only that validator can answer it. Our code was instead calling functions from a contract of our own that is deployed nowhere, so every attempt failed, and because a failed read looks exactly like \"nothing recorded yet\", every agent's badge quietly read \"not validated\" instead of reporting a problem. The whole path now speaks the deployed contract's language, verified live against five test networks. Owners get a real flow: press Validate, sign the request from the wallet that owns the agent, and the platform answers it with a signed verdict and a link to the pinned report, whose hash you can recompute yourself. Re-validating the same model updates the same record instead of stacking duplicates, an outstanding request now shows as \"validation pending\" rather than looking unvalidated, and a new command checks that every registry address we trust really implements what we call before anything ships.",
+			"link": "/validation",
+			"tags": [
+				"fix",
+				"improvement",
+				"docs"
 			]
 		},
 		{

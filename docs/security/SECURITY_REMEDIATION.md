@@ -47,3 +47,15 @@ Statuses are kept in sync as each item lands.
   The production tree went from 3 critical / 41 high to 0 critical / 18 high.
   `bigint-buffer`, `adm-zip`, `lodash.set`, `undici@5` under `hardhat`, and
   `@libp2p/kad-dht` have no non-breaking upstream fix and stay tracked.
+
+## Follow-on review (2026-06-24), closed 2026-08-06
+
+The separate review of the net-new surface,
+[review-2026-06-24.md](review-2026-06-24.md), had eight findings left open as
+`documented` after its surgical pass: two Medium (M4 unverified settlement
+signatures, M5 wallet-intent daily-cap TOCTOU) and six Low (L3 swarm CSRF and
+rate limit, L4 unowned walk `avatarId`, L5 vault budget TOCTOU, L6 Agora post-cap
+race, L7 paid-feed disclosure, L8 the copy-pasted cron gate). All eight are fixed;
+that document carries the per-item remediation and the residuals worth knowing
+about. Nothing from either review is open now except the dependency work in C1's
+tracked set.
