@@ -768,7 +768,7 @@
 					},
 					"maxPrice": {
 						"type": "string",
-						"description": "Maximum price to include, expressed in `asset` units (e.g. \"0.01\")."
+						"description": "Maximum price to include, in ATOMIC units of `asset` (USDC has 6 decimals, so \"10000\" = 0.01 USDC). Decimals are rejected."
 					},
 					"asset": {
 						"type": "string",
@@ -1107,7 +1107,7 @@
 					},
 					"maxPrice": {
 						"type": "string",
-						"description": "Maximum x402 service price to include, expressed in `asset` units (e.g. \"0.01\")."
+						"description": "Maximum x402 service price to include, in ATOMIC units of `asset` (USDC has 6 decimals, so \"10000\" = 0.01 USDC). Decimals are rejected."
 					},
 					"asset": {
 						"type": "string",
