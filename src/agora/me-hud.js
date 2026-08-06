@@ -235,6 +235,18 @@ function buildComposeForm(hireTarget) {
 
 function renderJobSection() {
 	const job = state.job;
+
+	// Your own bounty is a designed state, not a failed click: AgenC refuses a
+	// self-claim, so show what the job is actually waiting for instead of a Claim
+	// button that can only ever come back rejected.
+	if ((state.me?.openPosted || []).some((t) => t.taskPda === job.taskPda)) {
+		return section('Your bounty', h('div', {}, [
+			h('p', { class: 'agora-h-hint' }, [
+				`You posted ${job.title || shortAddr(job.taskPda)}. It stays on the board until a citizen claims it, then you'll see the work land here live.`,
+			]),
+		]));
+	}
+
 	const proof = h('textarea', { class: 'agora-h-input agora-h-textarea', placeholder: 'Paste your deliverable (text or a URL). It is sha256-hashed into the on-chain proof.' });
 	const status = h('div', { class: 'agora-h-status', role: 'status', 'aria-live': 'polite' });
 

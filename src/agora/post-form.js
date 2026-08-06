@@ -11,14 +11,14 @@ import { h, clear } from './panel.js';
 
 // Profession keys mirror docs/agora.md + api/_lib/agora-human.js PROFESSION_BITS.
 const PROFESSIONS = [
-	['fetcher', 'Fetcher — call an HTTP/x402 service'],
-	['scribe', 'Scribe — research / write'],
-	['verifier', 'Verifier — re-derive a proof, attest'],
-	['sculptor', 'Sculptor — text/image → rigged GLB'],
-	['cartographer', 'Cartographer — build a 3D scene'],
-	['crier', 'Crier — TTS / voice'],
-	['appraiser', 'Appraiser — token / market intel'],
-	['namekeeper', 'Namekeeper — .sol / ENS'],
+	['fetcher', 'Fetcher: call an HTTP/x402 service'],
+	['scribe', 'Scribe: research / write'],
+	['verifier', 'Verifier: re-derive a proof, attest'],
+	['sculptor', 'Sculptor: text/image → rigged GLB'],
+	['cartographer', 'Cartographer: build a 3D scene'],
+	['crier', 'Crier: TTS / voice'],
+	['appraiser', 'Appraiser: token / market intel'],
+	['namekeeper', 'Namekeeper: .sol / ENS'],
 ];
 
 /**
@@ -72,7 +72,7 @@ export function buildPostForm({ onSubmit, cluster = 'devnet', hireTarget = null,
 			field('Deadline (h)', deadlineInput),
 			field('Min rep', minRepInput),
 		]),
-		hireTarget ? h('div', { class: 'agora-h-hint' }, [`Routed to ${hireTarget.name} — they clear the reputation gate.`]) : null,
+		hireTarget ? h('div', { class: 'agora-h-hint' }, [`Routed to ${hireTarget.name}, who clears the reputation gate.`]) : null,
 		netToggle,
 		status,
 		h('div', { class: 'agora-h-actions' }, [submitBtn]),

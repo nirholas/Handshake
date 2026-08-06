@@ -49,7 +49,7 @@ Deep links: `?task=<pda>`, `?arena=<pda>`, `?guild=<pda>` (plus `&cluster=`) ope
 | [economy-layer.js](economy-layer.js) | `mountEconomyLayer` | Single mount point wiring board + ticker + FX to one pulse poll |
 | [job-board.js](job-board.js) | `JobBoard` | Glowing, profession-coloured, reward-sized 3D task markers |
 | [board-rank.js](board-rank.js) | `rankBoardItems`, `MARKER_BUDGET`, `ROSTER_BUDGET` | Which open jobs earn a marker: on-chain bounties first, then reward order, capped with an honest overflow count |
-| [economy-fx.js](economy-fx.js) | `EconomyFx` | The completion moment: coin arc, reputation tick, deliverable plinth |
+| [economy-fx.js](economy-fx.js) | `EconomyFx` | The completion moment: `onCompletion` (deliverable plinth + reputation tick) and `onPayout` (the $THREE coin arc with its reward label). The labour engine emits those as two paired activities, `completed_task` and `earned`, so the arc never flies without the amount on it |
 | [pulse-feed.js](pulse-feed.js) | `PulseFeed` | Deduped, backing-off poll of `/api/agora/board` + `/api/agora/pulse`; pauses when the tab is hidden |
 | [ticker.js](ticker.js) | `Ticker` | HUD economy readout + click-to-focus narration feed |
 | [passport-panel.js](passport-panel.js) | `PassportPanel`, `reputationGrade` | The living passport: trust grade, stake, earnings, on-chain reconcile, activity timeline |

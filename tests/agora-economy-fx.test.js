@@ -150,6 +150,41 @@ describe('EconomyFx deliverable plinth', () => {
 });
 
 describe('EconomyFx completion moment', () => {
+	it('waits for the payout instead of flying an unlabelled arc', () => {
+		// The labour engine's `completed_task` carries the deliverable and the rep
+		// move but no amount; the paired `earned` carries the label. A completion
+		// on its own must not throw coins with nothing written on them.
+		const { fx, scene, root } = makeFx();
+		const before = scene.children.length;
+		fx.onCompletion({
+			workerPos: new THREE.Vector3(3, 0, 2),
+			rewardLabel: null,
+			narrative: 'Sol wrote a 1,600-char brief and proved it; reputation 5400 → 5500.',
+		});
+
+		expect(scene.children.length).toBe(before);
+		const labels = [...root.querySelectorAll('.agora-econ-float')].map((el) => el.textContent);
+		expect(labels.some((t) => t.includes('rep 5400 → 5500'))).toBe(true);
+		expect(labels.some((t) => t.startsWith('+'))).toBe(false);
+	});
+
+	it('flows coins with the amount when the payout lands', () => {
+		const { fx, scene, root } = makeFx();
+		const before = scene.children.length;
+		fx.onPayout({ workerPos: new THREE.Vector3(3, 0, 2), rewardLabel: '0.001 SOL · devnet' });
+
+		expect(scene.children.length).toBeGreaterThan(before);
+		const labels = [...root.querySelectorAll('.agora-econ-float')].map((el) => el.textContent);
+		expect(labels).toContain('+0.001 SOL · devnet');
+	});
+
+	it('lands a payout on the plinth when the earner is not in the crowd', () => {
+		const { fx, scene } = makeFx();
+		const before = scene.children.length;
+		fx.onPayout({ workerPos: null, rewardLabel: '5 $THREE' });
+		expect(scene.children.length).toBeGreaterThan(before);
+	});
+
 	it('flows coins to the worker and floats the real reward label', () => {
 		const { fx, scene, root } = makeFx();
 		const before = scene.children.length;
@@ -180,7 +215,7 @@ describe('EconomyFx completion moment', () => {
 	it('swaps the coin flight for a calm paid pulse under reduced motion', () => {
 		const { fx, scene, root } = makeFx({ reducedMotion: true });
 		const before = scene.children.length;
-		fx.onCompletion({ workerPos: new THREE.Vector3(2, 0, 2), rewardLabel: '9 $THREE', narrative: '' });
+		fx.onPayout({ workerPos: new THREE.Vector3(2, 0, 2), rewardLabel: '9 $THREE' });
 
 		expect(scene.children.length).toBe(before); // no coin meshes added
 		const labels = [...root.querySelectorAll('.agora-econ-float')].map((el) => el.textContent);
@@ -190,7 +225,7 @@ describe('EconomyFx completion moment', () => {
 	it('retires coins and labels so a long session does not accumulate them', () => {
 		const { fx, scene, root } = makeFx();
 		const before = scene.children.length;
-		fx.onCompletion({ workerPos: new THREE.Vector3(1, 0, 1), rewardLabel: '1 $THREE', narrative: '' });
+		fx.onPayout({ workerPos: new THREE.Vector3(1, 0, 1), rewardLabel: '1 $THREE' });
 		// Run past the coin flight and the label TTL.
 		for (let i = 0; i < 200; i++) fx.update(1 / 60);
 

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { dracoLoader, meshoptReady } from '../game/avatar-rig.js';
+import { resolveDevR2Url } from '../shared/dev-r2-proxy.js';
 
 // Economy FX — the completion moment, the part people screenshot.
 //
@@ -118,7 +119,11 @@ export class EconomyFx {
 		const generation = ++this._deliverableGen;
 		try {
 			await _meshoptWired;
-			const gltf = await _gltf.loadAsync(url);
+			// The deliverable bucket only sends CORS headers for the production
+			// origins, so on localhost / Codespaces the raw r2.dev fetch is blocked
+			// and the plinth silently stays empty. The shared helper routes it via
+			// the dev /r2-proxy route and is a no-op in production.
+			const gltf = await _gltf.loadAsync(resolveDevR2Url(url));
 			const model = gltf.scene;
 			if (generation !== this._deliverableGen || this._disposed) {
 				disposeObject(model);
@@ -167,12 +172,14 @@ export class EconomyFx {
 	// workerPos: feet position of the earner (or null → coins settle at the
 	// plinth). rewardLabel/narrative are real strings from the pulse.
 	onCompletion({ workerPos, rewardLabel, narrative, deliverableUrl }) {
-		const target = workerPos
-			? new THREE.Vector3(workerPos.x, 1.7, workerPos.z)
-			: this._plinthSpot.clone().setY(1.4);
+		const target = this._targetFor(workerPos);
 
-		this._coinFlow(target);
-		if (rewardLabel) this._floatLabel(target.clone().setY(target.y + 0.5), `+${rewardLabel}`, 'reward');
+		// The labour engine splits the moment in two: `completed_task` carries the
+		// deliverable and the reputation move, and a paired `earned` activity
+		// carries the payout label. So only flow coins here when THIS activity
+		// actually names a reward (an Arena purse does); otherwise the arc waits
+		// for the payout and never flies unlabelled. See onPayout.
+		if (rewardLabel) this.onPayout({ workerPos, rewardLabel });
 
 		const rep = parseRepDelta(narrative);
 		if (rep) {
@@ -181,6 +188,23 @@ export class EconomyFx {
 		}
 
 		if (isGlb(deliverableUrl)) this.showDeliverable(deliverableUrl);
+	}
+
+	// A payout landing on a worker: the $THREE arc plus the reward label it is
+	// actually worth. Driven by the `earned` activity, which is where the labour
+	// engine puts the amount.
+	onPayout({ workerPos, rewardLabel }) {
+		const target = this._targetFor(workerPos);
+		this._coinFlow(target);
+		if (rewardLabel) this._floatLabel(target.clone().setY(target.y + 0.5), `+${rewardLabel}`, 'reward');
+	}
+
+	// Where the coins land: the earner if we resolved them in the crowd, else the
+	// plinth so the value still reads as arriving somewhere real.
+	_targetFor(workerPos) {
+		return workerPos
+			? new THREE.Vector3(workerPos.x, 1.7, workerPos.z)
+			: this._plinthSpot.clone().setY(1.4);
 	}
 
 	_coinFlow(target) {

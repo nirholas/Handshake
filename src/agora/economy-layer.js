@@ -117,19 +117,48 @@ export function mountEconomyLayer(ctx) {
 			workSpot.z += 4 + Math.random() * 3;
 			crowd.walkTo?.(hit.id, boardSpot, () => crowd.walkTo?.(hit.id, workSpot));
 		} else if (a.kind === 'completed_task') {
-			const workerPos = hit?.position || (a.citizenId && crowd.getPosition ? crowd.getPosition(a.citizenId) : null);
+			const workerPos = positionFor(a, hit);
 			economyFx.onCompletion({
-				workerPos: workerPos || null,
+				workerPos,
 				rewardLabel: a.rewardLabel,
 				narrative: a.narrative,
 				deliverableUrl: a.deliverableUrl,
 			});
+			if (a.rewardLabel && a.taskPda) markPaid(a.taskPda);
 			if (hit) {
 				crowd.celebrate?.(hit.id);
 				crowd.setStatus?.(hit.id, 'Active');
 			}
+		} else if (a.kind === 'earned') {
+			// The payout is its own activity, and it is the one carrying the amount.
+			// A completion that already named its reward (an Arena purse) has flowed
+			// the coins itself, so skip the paired event rather than paying twice.
+			if (a.taskPda && alreadyPaid(a.taskPda)) return;
+			if (a.taskPda) markPaid(a.taskPda);
+			economyFx.onPayout({ workerPos: positionFor(a, hit), rewardLabel: a.rewardLabel });
 		}
 	}
+
+	// Where the earner is standing right now, by id when the pulse gives one and
+	// by display name otherwise. Null means "not in the crowd" and the FX layer
+	// lands the value on the plinth instead.
+	function positionFor(a, hit) {
+		if (hit?.position) return hit.position;
+		if (a.citizenId && crowd.getPosition) return crowd.getPosition(a.citizenId) || null;
+		return null;
+	}
+
+	// A small, bounded memory of task payouts already animated, so the
+	// completion/earned pair can't double-flow the same reward.
+	const paidTasks = new Set();
+	const paidOrder = [];
+	function markPaid(taskPda) {
+		if (paidTasks.has(taskPda)) return;
+		paidTasks.add(taskPda);
+		paidOrder.push(taskPda);
+		if (paidOrder.length > 200) paidTasks.delete(paidOrder.shift());
+	}
+	function alreadyPaid(taskPda) { return paidTasks.has(taskPda); }
 
 	// ── connection state pip ───────────────────────────────────────────────────
 	let errorStreak = 0;
