@@ -160,26 +160,84 @@ export function explorerTx(sig, cluster) {
 		: `https://explorer.solana.com/tx/${sig}?cluster=devnet`;
 }
 
-// Top up a devnet wallet from the public faucet with backoff — mirrors the
-// roundtrip example. Mainnet never airdrops: an underfunded mainnet wallet is an
-// honest, actionable error, not a silent failure.
+// The devnet faucet lives on the PUBLIC devnet endpoint. Keyed providers
+// (Helius and friends) either rate-limit requestAirdrop into a 429 storm or
+// don't proxy it at all, so a citizen's first bounty died with a raw
+// "Attempt to debit an account but found no record of a prior credit".
+const PUBLIC_DEVNET_FAUCET = 'https://api.devnet.solana.com';
+
+// Airdrop sources to try, in order: whatever RPC we're already on, then the
+// public faucet endpoint (deduped when they're the same host).
+async function faucetSources(connection) {
+	const sources = [connection];
+	const current = String(connection?.rpcEndpoint || '').toLowerCase();
+	if (!current.includes('api.devnet.solana.com')) {
+		const { Connection } = await import('@solana/web3.js');
+		sources.push(new Connection(PUBLIC_DEVNET_FAUCET, 'confirmed'));
+	}
+	return sources;
+}
+
+// Top up a devnet wallet from the faucet with backoff — mirrors the roundtrip
+// example. Mainnet never airdrops: an underfunded mainnet wallet is an honest,
+// actionable error, not a silent failure. Returns the final balance; callers
+// that are about to sign must gate on requireFunded(), because a rate-limited
+// faucet is a normal devnet condition, not an exception.
 export async function ensureDevnetBalance(connection, keypair, neededLamports) {
-	const bal = await connection.getBalance(keypair.publicKey);
+	let bal = await connection.getBalance(keypair.publicKey);
 	if (bal >= neededLamports) return bal;
+	const sources = await faucetSources(connection);
 	const chunks = [LAMPORTS_PER_SOL, LAMPORTS_PER_SOL / 2, LAMPORTS_PER_SOL / 4];
 	for (let i = 0; i < chunks.length; i++) {
-		try {
-			const sig = await connection.requestAirdrop(keypair.publicKey, Math.max(chunks[i], LAMPORTS_PER_SOL / 50));
-			// HTTP-polling confirm (no WebSocket); bounded so a dropped devnet airdrop
-			// falls through to the next chunk instead of hanging the confirm window.
-			await confirmOrThrow(connection, sig, 'confirmed', { timeoutMs: 30_000 });
-			const next = await connection.getBalance(keypair.publicKey);
-			if (next >= neededLamports) return next;
-		} catch {
-			await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+		for (const src of sources) {
+			try {
+				const sig = await src.requestAirdrop(keypair.publicKey, Math.max(chunks[i], LAMPORTS_PER_SOL / 50));
+				// HTTP-polling confirm (no WebSocket); bounded so a dropped devnet airdrop
+				// falls through to the next source/chunk instead of hanging the window.
+				await confirmOrThrow(src, sig, 'confirmed', { timeoutMs: 30_000 });
+			} catch {
+				continue; // this source is dry/throttled — try the next one
+			}
+			bal = await connection.getBalance(keypair.publicKey);
+			if (bal >= neededLamports) return bal;
 		}
+		await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
 	}
 	return connection.getBalance(keypair.publicKey);
+}
+
+function fmtSol(lamports) {
+	return (Number(lamports) / LAMPORTS_PER_SOL).toLocaleString('en-US', { maximumFractionDigits: 4 });
+}
+
+/**
+ * Assert a wallet can cover `neededLamports` BEFORE anything is signed. An
+ * underfunded wallet is a designed, actionable state ("fund this address"), so
+ * it must never reach the RPC and come back as a raw simulation failure the
+ * caller renders as an opaque 500.
+ *
+ * Throws a typed error ({ status: 409, code: 'insufficient_funds', detail })
+ * that api/agora/act.js surfaces verbatim.
+ */
+export async function requireFunded({ connection, address, neededLamports, cluster, purpose }) {
+	const bal = await connection.getBalance(address);
+	if (bal >= neededLamports) return bal;
+	const walletAddress = address?.toBase58 ? address.toBase58() : String(address);
+	const hint = cluster === 'devnet'
+		? 'The devnet faucet is rate-limiting airdrops right now. Send devnet SOL to this address, or try again in a few minutes.'
+		: 'Send SOL to this address to cover the network fee.';
+	throw Object.assign(
+		new Error(`Your Agora wallet needs about ${fmtSol(neededLamports)} SOL to ${purpose} and holds ${fmtSol(bal)}. ${hint}`),
+		{
+			status: 409,
+			code: 'insufficient_funds',
+			detail: {
+				walletAddress, cluster, asset: 'SOL',
+				neededSol: Number((Number(neededLamports) / LAMPORTS_PER_SOL).toFixed(6)),
+				haveSol: Number((Number(bal) / LAMPORTS_PER_SOL).toFixed(6)),
+			},
+		},
+	);
 }
 
 /**
@@ -216,10 +274,18 @@ export async function ensureRegistered({ citizen, cluster }) {
 		return { agentId, agentIdHex: agenCAgentIdToHex(agentId), agentPda: agentPda.toBase58(), signer, client, citizen };
 	}
 
-	// Fund (devnet) enough for the stake + tx fees, then register.
+	// Fund (devnet) enough for the stake + tx fees, then register. The gate runs
+	// on BOTH clusters: registration stakes lamports and pays a fee either way,
+	// and a dry wallet must read as "fund this address", never as a simulation
+	// failure from inside the SDK.
+	const registerNeeds = MIN_STAKE_LAMPORTS + 10_000_000;
 	if (cluster === 'devnet') {
-		await ensureDevnetBalance(client.connection, signer, MIN_STAKE_LAMPORTS + 10_000_000);
+		await ensureDevnetBalance(client.connection, signer, registerNeeds);
 	}
+	await requireFunded({
+		connection: client.connection, address: signer.publicKey,
+		neededLamports: registerNeeds, cluster, purpose: 'register you as a citizen on-chain',
+	});
 
 	const metadataUri = buildThreewsMetadataUri({ handle: citizen.meta?.handle || citizen.id });
 	const result = await registerAgenCAgent(client, {

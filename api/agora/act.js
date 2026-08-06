@@ -25,12 +25,13 @@ import { sql } from '../_lib/db.js';
 import { authWrite } from '../_lib/labor-auth.js';
 import { TOKEN_MINT } from '../_lib/token/config.js';
 import {
-	ensureHumanCitizen, ensureRegistered, ensureDevnetBalance,
+	ensureHumanCitizen, ensureRegistered, ensureDevnetBalance, requireFunded,
 	projectActivity, bumpCitizenStats, citizenBalances, professionToCapabilityBits,
 	PROFESSION_BITS, THREE_ATOMICS_PER_TOKEN, rewardLabel, proofHashFor,
 	sendOnchainAttestation, explorerTx,
 } from '../_lib/agora-human.js';
 import { resolveCluster, checkPostSpend } from '../_lib/agora-policy.js';
+import { redactUrlSecrets as redactSecrets } from '../_lib/scrub-secrets.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000n;
 const MAX_TITLE = 140;
@@ -194,9 +195,27 @@ async function postTaskCore({ user, body, requestedCluster, hire }) {
 		const { getAssociatedTokenAddressSync } = await import('@solana/spl-token');
 		createArgs.rewardMint = new PublicKey(TOKEN_MINT);
 		createArgs.creatorTokenAccount = getAssociatedTokenAddressSync(new PublicKey(TOKEN_MINT), reg.signer.publicKey, false);
+		// Real money: check the $THREE the escrow will actually debit before we
+		// sign, so "you don't hold enough $THREE" is a designed state and not an
+		// SPL transfer failure surfaced as a 502.
+		const held = await citizenBalances(citizen, cluster).catch(() => ({ three: null }));
+		const needThree = Number(amountAtomic) / Number(THREE_ATOMICS_PER_TOKEN);
+		if (held.three != null && held.three < needThree) {
+			return {
+				err: [409, 'insufficient_funds',
+					`This bounty escrows ${rewardLabel(amountAtomic, cluster)} and your Agora wallet holds ${held.three.toLocaleString('en-US')} $THREE. Send $THREE to your wallet address, then post again.`,
+					{ walletAddress: held.address, asset: '$THREE', cluster, needed: needThree, have: held.three }],
+			};
+		}
 	} else {
-		// Devnet native-SOL escrow: ensure the creator can cover reward + fees.
-		await ensureDevnetBalance(reg.client.connection, reg.signer, Number(amountAtomic) + 10_000_000);
+		// Devnet native-SOL escrow: top up, then gate on the real balance so a
+		// throttled faucet reads as "fund this address", not a 500.
+		const needLamports = Number(amountAtomic) + 10_000_000;
+		await ensureDevnetBalance(reg.client.connection, reg.signer, needLamports);
+		await requireFunded({
+			connection: reg.client.connection, address: reg.signer.publicKey,
+			neededLamports: needLamports, cluster, purpose: 'escrow this bounty',
+		});
 	}
 
 	const { createAgenCTask } = await import('@three-ws/solana-agent');
@@ -507,7 +526,17 @@ export default wrap(async (req, res) => {
 		return json(res, 200, result.body);
 	} catch (err) {
 		await idemRelease(userId, action, idemKey);
-		console.error('[agora/act] error', action, err?.message);
+		// A typed 4xx thrown from the service layer is a DESIGNED state the user can
+		// act on (no custodial wallet yet, a dry devnet wallet the faucet wouldn't
+		// top up). Surface it verbatim; only genuinely unexpected failures collapse
+		// into an opaque 500 with a support ref.
+		const status = Number(err?.status);
+		if (Number.isInteger(status) && status >= 400 && status < 500) {
+			return error(res, status, err.code || 'agora_act_error', err.message, err.detail || {});
+		}
+		// Redact before logging: an unexpected failure here is usually an on-chain
+		// RPC error whose message carries the keyed endpoint URL.
+		console.error('[agora/act] error', action, redactSecrets(err?.message));
 		return serverError(res, 500, 'agora_act_error', err);
 	}
 });
