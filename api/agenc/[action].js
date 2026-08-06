@@ -245,7 +245,7 @@ const LIFECYCLE_EVENT_KINDS = [
 	{ match: /^(task)?(complete|prove|submit)/i, kinds: ['completed_task', 'settled'] },
 ];
 
-async function enrichLifecycleFromProjection(lifecycle, taskPda) {
+export async function enrichLifecycleFromProjection(lifecycle, taskPda) {
 	if (!lifecycle?.timeline?.length) return;
 	let rows;
 	try {
