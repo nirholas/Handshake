@@ -2,6 +2,14 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-06",
+			"title": "The creation walkthrough covers the last three screens it was missing",
+			"summary": "The UX Flow Atlas chapter on onboarding and agent creation now documents three screens it had been routing readers into without ever describing: the guest review screen where an avatar you built signed out gets named, explored, and claimed to your account; the what-next screen that follows a successful save; and the talking-avatar video generator. Each is traced from the shipped code, including the sign-in round trip that resumes an interrupted save, the on-chain and embed follow-ups offered after a save, and the free-video limit on the video generator.",
+			"tags": [
+				"docs"
+			]
+		},
+		{
 			"date": "2026-08-05",
 			"title": "The admin panel is gone",
 			"summary": "Internal operator dashboards and their private APIs have been removed from the public site entirely. Nothing user-facing changes: your dashboard, launcher, wallets, and every public API keep working exactly as before. This is part of ongoing security hardening: internal tooling no longer ships in the web app at all.",

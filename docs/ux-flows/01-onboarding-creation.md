@@ -48,6 +48,47 @@
 
 ---
 
+### Guest Avatar Review: `/create-review`
+- **Source:** `pages/create-review.html` (inline auth boot) + `src/create-review.js` (imports `src/account.js`, `src/api.js`, `src/attach-avatar-to-agent.js`, `src/guest-avatar.js`, `src/voice/talk-scene.js`, `src/idle-animation.js`, `src/usdz-pipeline.js`, `src/create-review-features.js`, `src/shared/log.js`)
+- **Entry point:** The terminal step of every anonymous creation path in this cluster. `/create` sends users here after a GLB upload, after the in-page `AvatarCreator` (base editor or template) produces a blob, and as the 401/403 fallback of `?fork=<id>`. The gallery's "Surprise me" reveal ("Make it mine") also stages into it (cluster 05). Re-entered by the `/login?next=/create-review` round trip.
+- **Prerequisites / gates:** **A staged guest record in IndexedDB.** `boot()` calls `loadGuest()`; with nothing staged it `location.replace('/create')` before any UI renders. The page itself loads anonymously: an inline `fetch('/api/auth/me')` resolves `window.__authed` and dispatches `three-ws:auth-resolved`, and `applyAuthState` only relabels the save button. Auth is required to save, nothing else. No wallet/$THREE gate.
+- **Steps (N):**
+  1. Land. The staged blob mounts in a `TalkScene` parsed straight from the Blob (not the object URL, which sidesteps a "Failed to fetch" race when the page reloads mid-mount), `IdleAnimation` layers breathing, blink, micro-saccades and weight shift, and a baked `av-idle-breath` emote (falling back to `idle`) pulls the model out of T-pose. `#tag-source` and `#tag-size` label the provenance and file size.
+  2. Name it. `#f-name` live-updates the heading plus a `three.ws/@<slug>` handle preview with its own copy button. An auto-generated `Avatar #abc123` name is deliberately not prefilled, so the placeholder hint stays visible.
+  3. Pick a creation type: **Agent** (`#type-btn-avatar`, the default for every source) or **Item** (`#type-btn-object`). Agents show the capability grid; items swap in `#item-nudge` explaining that items have no brain, with a one-click "make it an agent" promote back to the agent path.
+  4. (optional) Try any of the 15 capability tiles before saving: Body (toggles a live emote strip on the mounted scene), Voice preview, Voice Library, Video, Mocap, On-Chain Identity, Token Launch, Paid Skills, Analytics, Embed Anywhere, Widgets, Developer API, Knowledge, Reputation, Download. All but Body open modals from `create-review-features.js`.
+  5. Click save. Signed out the button reads "Sign in to save": it arms a `3dagent:guest-avatar-resume` sentinel in `sessionStorage` and redirects to `/login?next=/create-review`; on return `applyAuthState` sees the sentinel and fires the save automatically. The sentinel is also armed before the network call so a session that expired since the cached auth hint still resumes.
+  6. `saveRemoteGlbToAccount` runs behind a full-screen overlay with a real percent bar and a cancel button (backed by an `AbortController`, disabled once the upload crosses into commit).
+  7. **Item path:** clear the staged record, best-effort thumbnail capture, redirect to `/create/next?avatarId=…&name=…&from=object`.
+  8. **Agent path:** `attachAvatarToAgent` (`GET /api/agents/me`, `POST /api/agents` if the user has none yet, then `PUT /api/agents/:id`), then a thumbnail capture off the live canvas and an in-browser GLB to USDZ conversion uploaded for iOS Quick Look, both best-effort under an 8 s cap, then redirect to `/create/next?agentId=…&avatarId=…&name=…&from=agent`. If the tab is hidden, a system notification fires (only when permission was already granted elsewhere).
+- **Decision points / branches:** nothing staged (silent bounce to `/create`) vs staged; Agent vs Item (governs the save endpoint chain, the button label, and grid vs nudge); signed-in save vs login round trip with auto-resume; cancel mid-upload (returns to the editing UI with no error surface); `plan_limit_count` vs generic failure; `upload_blocked` arms a one-shot auto-retry on the next `online` event, disarming after 30 s; "Start over" (confirm, clear the staged record, back to `/create`).
+- **External calls / dependencies:** `GET /api/auth/me`; `saveRemoteGlbToAccount` (presign + R2 PUT + commit); `GET /api/agents/me`; `POST /api/agents`; `PUT /api/agents/:id`; `POST /api/avatars/thumbnail`; `POST /api/avatars/presign-usdz` + R2 PUT + `PATCH /api/avatars/:id` (USDZ). Also `window.__twsGuide.complete('create')` for the getting-started layer.
+- **Success state:** The guest blob is promoted to a real owned avatar (and on the agent path attached to a real agent), the staged IndexedDB record is cleared, the "create your first avatar" guide step is marked done, and the user lands on `/create/next`.
+- **Empty / error states:** No staged record redirects to `/create` before render. A viewer mount failure swaps `#viewer-loading` for "Couldn't render this model." and leaves the save path intact. The save overlay doubles as the error surface, with per-stage titles (presign / commit / fetch / `upload_blocked` / `upload_failed` / `upload_aborted`) and Retry + Cancel; retry re-runs the whole pipeline from the blob still in memory. Plan-limit shows a toast instead of the overlay.
+- **Step count:** 3 required (land → name → save) + ~4 optional (creation type, capability tiles, handle copy, start over).
+
+---
+
+### Post-Creation Next Steps: `/create/next`
+- **Source:** `pages/create-next.html` (inline `<script type="module">`; there is no `src/` module for this page)
+- **Entry point:** The single navigation target of a successful `/create-review` save, carrying `?agentId=` / `?avatarId=` / `?name=` / `?from=`. Not linked from nav; it exists to catch the moment right after a creation lands.
+- **Prerequisites / gates:** None enforced. Everything renders from the query params; the two enrichment fetches are credentialed and fail soft, so the screen still works signed out or offline. No wallet/$THREE gate.
+- **Steps (N):**
+  1. Land. The script branches the whole screen on agent vs avatar: headline, step-1 target/label/description, step-2 and step-3 targets, the back link, the "3D AI Agent" vs "3D Avatar" tag, and the "I'll do this later" destination.
+  2. `mountStage()` embeds `/walk-embed` as a non-interactive portrait (`controls=none&click=false`, transparent background, studio env) so the new figure idles instead of standing in a T-pose. Orbit stays on except under `prefers-reduced-motion`. An initial-letter placeholder covers the first frame and stays permanently if the model cannot be resolved.
+  3. `loadAgent()` fetches `GET /api/agents/:id` (or `GET /api/avatars/:id`) to resolve the real name for the label, the initial, the document title, and the share text, falling back to the `?name=` param. On the agent path it also marks step 1 done when the agent already has a system or persona prompt, and step 3 "Live" when it is registered on-chain.
+  4. A single confetti burst fires about 450 ms in, once, and is skipped entirely under `prefers-reduced-motion`.
+  5. Pick a next step: **1. Chat with your agent** (`/app?agent=<id>`) or **Give it a brain** (`/create-agent?avatar=<id>`) for the avatar-only case; **2. Embed it anywhere** (`/embed.html?avatar=|?agent=`); **3. Deploy on-chain** (`/deploy?agent=<id>`, or `/create-agent?avatar=<id>&then=deploy`), optional; **4. Put it in a world** (`/diorama`), optional; **5. See your profile** (`/profile`).
+  6. (optional, agents only) Copy the inline iframe embed snippet from `#cnEmbed` without leaving the page, copy the public `/agents/<id>` link, or share to X with a prefilled intent URL.
+  7. (optional) "I'll do this later" exits to `/dashboard/agents` (agent) or `/dashboard/avatars` (avatar).
+- **Decision points / branches:** agent (`?agentId`) vs avatar-only (`?avatarId`) vs neither (placeholder portrait, generic step targets); already-has-a-prompt and already-on-chain mark their steps done instead of inviting a repeat; reduced-motion disables both the confetti and the orbit; agent-only surfaces (embed snippet, copy link, share on X) stay hidden for avatar saves.
+- **External calls / dependencies:** `GET /api/agents/:id`; `GET /api/avatars/:id`; the `/walk-embed` renderer in an iframe. Both fetches are wrapped so a failure degrades to the `?name=` param.
+- **Success state:** The user sees their live, idling creation and a ranked set of real next steps, each deep-linked to the specific agent or avatar just created.
+- **Empty / error states:** No id params keeps the initial-letter placeholder and generic step targets. A failed name lookup falls back to `?name=`, then to "Your agent" / "Your avatar". Clipboard failures relabel the button to "Press ⌘C" and toast a manual-copy hint.
+- **Step count:** 1 required (land → pick a next step) + ~3 optional (copy snippet, copy link/share, defer to dashboard).
+
+---
+
 ### Agent Creation Wizard — `/create-agent`
 - **Source:** `pages/create-agent.html` + `src/create-agent.js` (imports `src/api.js`, `src/account.js`, `src/agents/guest-agent.js`, `src/create-agent-draft.js`, `src/shared/log.js`, `src/shared/glb-magic.js`)
 - **Entry point:** Nav/landing CTA, marketplace "create your own" links, the `/create` intent hub, and the `/agent/new` 301 (see routing notes). Avatar surfaces hand off with `?avatar_id=&avatar_glb=&avatar_name=` (`applyAvatarHandoff` pre-seeds the model step).
@@ -107,6 +148,27 @@
 - **Success state:** A private, rigged 3D avatar (reconstructed from the selfie), previewed in-page with save/list/edit paths.
 - **Empty / error states:** `selfie:needs-byok` → key-entry form ("No API key found"); local face-check failure highlights the offending slot with guidance; `selfie:build-error` recolors the building step, shows tips, and a "Try again" → capture; rate-limit cooldown with a live countdown; viewer load failure marks the preview `.failed`; 8-min timeout message.
 - **Step count:** 4 required (capture frontal → build → poll → done) + ~4 optional (BYOK key step, side angles, upload-vs-camera, save/list/edit/make-another).
+
+---
+
+### Talking Avatar Video: `/create/video`
+- **Source:** `pages/create/video.html` + `src/create-video.js` (imports `src/account.js` for `apiFetch`; the page also loads `src/wallet-auth.js` inline for the sign-in button)
+- **Entry point:** The "Talking avatar video" card on `/create` (`card-video-avatar`), which is both feature-flagged and auth-gated there. Also reachable from the Video capability tile on `/create-review` and directly by URL.
+- **Prerequisites / gates:** **Auth required.** `boot()` fetches `/api/auth/me` first and `location.replace('/login?next=/create/video')` on a non-OK response or a missing user, before anything renders. **Feature-flagged upstream:** `/create` greys the card out when `/api/config` reports `videoAvatar` off. **Quota:** the generate endpoint returns `402 free_trial_used` after the one free video. No wallet/$THREE gate.
+- **Steps (N):**
+  1. Land; `loadAvatars()` fetches `GET /api/avatars` and fills the avatar strip, auto-selecting the first one. With no owned avatars it falls back to a single "Default" thumbnail backed by `/avatars/default.glb`, so the page is never empty.
+  2. Pick an avatar from the strip (click, or Enter/Space; each thumb is a real `role="button"` with an aria-label). Private avatars come back from the list endpoint with no CDN URL, so `selectAvatar` lazily resolves a short-lived signed URL from `GET /api/avatars/:id` and guards against the user switching avatars mid-await. The pick renders in the `model-viewer` stage.
+  3. Add audio: drag-drop onto `#audio-drop` or pick a file. A non-audio drop is rejected with a toast. The chosen filename shows with a clear button. "Generate" stays disabled until both an avatar and an audio file are present.
+  4. (optional) Type a direction prompt in `#prompt-input` to steer the render.
+  5. Click "Generate". `uploadAudio` requests `POST /api/avatar/presign-audio` and PUTs the file to R2; if presign fails it falls back to inlining the clip as a data URI, which the worker also accepts.
+  6. `POST /api/avatar/video-generate` `{ image_url, audio_url, avatar_id, prompt }` returns `{ job_id }`.
+  7. `pollJob` polls `GET /api/avatar/video-status?job_id=…` every 5 s with a 20-minute deadline, surfacing the worker's percentage in the progress label. Transient non-2xx and network errors are swallowed and retried until the deadline.
+  8. On `status: 'done'`: the returned `video_url` loads into the result `<video>` with a Download link and a "Make another" button that resets to idle.
+- **Decision points / branches:** signed-in vs redirect to login; owned avatars vs the default-avatar fallback; public (CDN URL) vs private (signed-URL resolve) avatar; presigned R2 upload vs data-URI fallback; prompt vs no prompt; done vs failed vs 20-minute timeout; `402 free_trial_used` retargets the retry button to "Upgrade plan" pointing at `/dashboard`.
+- **External calls / dependencies:** `GET /api/auth/me`; `GET /api/avatars`; `GET /api/avatars/:id` (signed GLB URL); `POST /api/avatar/presign-audio` + R2 PUT; `POST /api/avatar/video-generate`; `GET /api/avatar/video-status`. Rendering runs on the talking-head worker, not in the browser.
+- **Success state:** A downloadable lip-synced talking-head clip of the user's own avatar, playable in-page, with a one-click path to generate another.
+- **Empty / error states:** No avatars falls back to the default thumbnail rather than an empty strip. An avatar whose model cannot be resolved toasts "Could not load this avatar's 3D model. Pick another one." and leaves Generate disabled. Audio upload failure, job-start failure, worker failure, and the 20-minute timeout each render in `#error-area` with a retry that returns to idle. Free-trial exhaustion swaps retry for an upgrade link.
+- **Step count:** 4 required (pick avatar → add audio → generate → poll to done) + ~2 optional (direction prompt, download / make another).
 
 ---
 
@@ -195,6 +257,7 @@
 ## Notes on routing resolution
 - `/start`, `/create`, `/create-agent`, `/import/rpm`, `/features/scan`, `/voice` all resolve via explicit `vercel.json` `routes[]` rewrites to their `*.html` files.
 - `/create/prompt` → `create-prompt.html`, `/create/selfie` → `create-selfie.html`.
+- `/create-review` → `create-review.html`, `/create/next` → `create-next.html`, `/create/video` → `create/video.html`, `/create/studio` → `avatar-studio.html` (the studio surface itself is documented in cluster 04).
 - `/agent/new` → **301 to `/create-agent`** (or a rewrite to `create-agent.html` when the URL carries `?avatar_id=`/`?avatar_glb=`); the existing-agent editor lives at `/agent/<uuid>/edit` → `agent-edit.html`.
 - `/scan` is a **route-level 301** to `/create/selfie` (`pages/scan.html` no longer exists; the 301 drops query params).
 - `/features/scan` is a **static landing page** with no flow logic; its CTAs link straight to `/create/selfie`.
