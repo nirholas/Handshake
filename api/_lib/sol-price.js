@@ -7,14 +7,16 @@
 // one shared implementation — see api/_lib/pump-alert-runner.js / pump-launch-feed.js
 // for the older inline copies this consolidates.
 //
-// Seven independent free sources, tried in order (failover-fetch cools a failing
+// Nine independent free sources, tried in order (failover-fetch cools a failing
 // source for 60s so a CoinGecko rate-limit doesn't tax every valuation with a
 // timeout). They all quote the same asset; any disagreement is sub-1% noise.
 // Exchange tickers (Kraken/Coinbase/Bitfinex), aggregators (CoinGecko/Jupiter/
-// DefiLlama) and an on-chain oracle (DIA) fail independently, so it takes a
-// near-total outage to exhaust the chain.
+// DefiLlama) and oracle networks (DIA, RedStone, Switchboard) fail
+// independently, so it takes a near-total outage to exhaust the chain.
 
 import { fetchFirst } from '../../src/shared/failover-fetch.js';
+import { redstoneProvider } from './redstone.js';
+import { SWITCHBOARD_SOL_USD_FEED, switchboardProvider } from './switchboard.js';
 
 const TTL_MS = 60_000;
 // A 24h delta moves slowly; refreshing it every 60s alongside the spot price
@@ -44,7 +46,9 @@ const setChange = (v, now = Date.now()) => {
 	return n;
 };
 
-const PROVIDERS = [
+// Exported so tests can verify the chain's ordering and each rung's parser
+// against captured payloads without any live network.
+export const PROVIDERS = [
 	{
 		name: 'coingecko',
 		url: 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true',
@@ -89,6 +93,15 @@ const PROVIDERS = [
 		url: 'https://api.diadata.org/v1/assetQuotation/Solana/0x0000000000000000000000000000000000000000',
 		parse: async (r) => asPrice((await r.json())?.Price),
 	},
+	// RedStone oracle (api/_lib/redstone.js): keyless signed price stream that
+	// aggregates ~20 exchanges, with a freshness gate so a stuck print is a
+	// miss, never a valuation. Grouped with DIA in the oracle band of the
+	// chain: after the primary aggregators and tickers, before the last rung.
+	redstoneProvider('SOL'),
+	// Switchboard On-Demand via Crossbar (api/_lib/switchboard.js): the oracle
+	// network computes the feed live on request, so this survives outages of
+	// every REST price API above it.
+	switchboardProvider(SWITCHBOARD_SOL_USD_FEED),
 	{
 		// Bitfinex public ticker. Bitfinex (unlike Binance) does NOT geo-block US
 		// datacenter IPs, so it works from Cloud Run us-central1. Ticker array:
