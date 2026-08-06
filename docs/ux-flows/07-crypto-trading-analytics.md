@@ -333,8 +333,51 @@ coin-intel, pump-visualizer and pump-live: adding a coin on any surface shows up
 
 ---
 
+### Sniper Experiments: `/sniper/experiments`
+- **Source:** `pages/sniper-experiments.html` (shell only), `src/sniper-experiments.js` (imports `src/shared/coin-format.js`), `src/sniper-experiments.css`; backend `api/sniper/experiments.js`
+- **Entry point:** `/play/arena` (the page's own breadcrumb points back to "Sniper Arena"); the trading hub rail (`src/trading-hub.js`); sitemap; direct URL.
+- **Prerequisites / gates:** None. Public read-only scoreboard, mainnet only, real on-chain fills only (no simulated rows in the main record).
+- **Steps (N):**
+  1. Arrive → `renderControls()` paints the window switch (24h / 7 days / 30 days / All time, default `7d`), then `refresh()` runs immediately and every 30s. The timer is cleared on `visibilitychange` when the tab hides and restarted on return.
+  2. System: `GET /api/sniper/experiments?network=mainnet&window=<key>` fills three regions: summary tiles (`#xp-summary`), the strategy comparison table (`#xp-board`), and the LLM judgment ledger (`#xp-judgment`).
+  3. System: summary tiles read armed vs paused count, closed trades + open now, fleet realized P&L for the window, fleet SOL on hand across wallets, best arm, moon bags riding (count + SOL at last quote, deliberately excluded from realized P&L), earned-autonomy split (earned / probation / standard), and the master funding wallet with its balance.
+  4. System: one board row per armed strategy: label + autonomy-tier badge, agent link (`/a/<agent_id>`), decision-mode badge (`rules`, or `LLM · <model>`), wallet chip linking to Solscan with a low-balance warning under 0.02 SOL, reasoning-ledger link, entry conditions with per-trade SOL and the exit shape (stop loss, trailing stop, max hold, ladder multiple + moon-bag percentage or "no ladder"), record (`W · L`, open count, moon bags, and a separate paper line for simulate-mode fills), win rate, realized SOL, ROI, average trade, average hold, last trade.
+  5. System: a stalled arm gets a loud explanation instead of a bare zero: `stallLine()` renders "not trading" for a blocking condition and "idle" for an arm that simply has not qualified yet, with every other blocking reason listed beneath the headline so fixing the first does not just reveal the second later.
+  6. System: the judgment ledger scores each LLM judge on its own verdicts (buy rate, average confidence, buy precision against what the coin did an hour later, missed winners among its skips, average latency).
+  7. (optional) Click a window button → re-render controls + refetch that window.
+  8. (optional) Click an agent, its wallet, or its ledger link to leave for the agent profile, Solscan, or the decision-by-decision reasoning ledger.
+- **Decision points / branches:** 4 windows; rules arm vs LLM-judged arm; enabled vs paused (row dimmed); blocking stall vs idle vs healthy; autonomy tier standard (badge hidden) vs probation / trusted / autonomous; arm with a wallet vs "no wallet"; paper record present vs live only; judgment ledger present vs hidden entirely when no LLM verdicts exist.
+- **External calls / dependencies:** `GET /api/sniper/experiments?network=&window=` (single endpoint; no browser RPC or WebSocket).
+- **Success state:** a live A/B board answering which entry conditions actually make money, every fill signed by the agent's own wallet and traceable to Solscan and to its reasoning ledger.
+- **Empty / error states:** "No strategies armed on this network yet" pointing at `/arm`; "no fills" / "waiting on fills" per arm; "awaiting outcomes" for an unscored LLM judge; "Couldn't load the scoreboard" with the failing message and automatic retry on the next 30s tick.
+- **Step count:** 2 required (arrive → board) + ~2 optional (window switch, drill into agent/wallet/ledger).
+
+---
+
+### Alpha Co-pilot: `/alpha-copilot`
+- **Source:** `pages/alpha-copilot.html`, `src/alpha-copilot.js` (~680 lines; imports `src/shared/agent-3d.js`, `src/agent-solana-wallet.js`, `src/ui-juice.js`)
+- **Entry point:** `/genesis`; sitemap; direct URL. Deep links: `?agent=<uuid or profile URL>` picks the agent, `?mint=<mint>` also fires the read on arrival.
+- **Prerequisites / gates:** Reading is public: `resolveInitialAgent()` falls back through `?agent=` → last agent in `localStorage` (`ac_last_agent`) → `GET /api/agents/me` → `GET /api/agents/featured`, so the page always opens live. The **Act** payoff is owner-only and server-gated: the read response carries `gate.can_act`, and a non-owner sees the reason instead of the button. Voice needs TTS (server) or the browser Web Speech API.
+- **Steps (N):**
+  1. Arrive → `init()` caches DOM, wires the act drawer (Escape and backdrop close it), and starts the agent gallery and the initial-agent resolution in parallel.
+  2. System: `loadAgent(id)` → `GET /api/agents/:id` names the co-pilot and labels it "Your alpha co-pilot" for the owner or "Alpha co-pilot · public read" for everyone else; the `<agent-3d>` avatar mounts from `agentAvatarGlb()`.
+  3. System: `loadCandidates()` → `GET /api/agents/:id/alpha/candidates?network=mainnet` renders the live pump.fun launch rail behind 4 skeleton cards, counts up the launch total, and marks one "top pick" ranked by real smart-money + quality signals with a penalty for a sybil-dominated funder graph.
+  4. **Read payoff:** click a launch (or arrive with `?mint=`) → `POST /api/agents/:id/alpha/read {mint, network}` → thinking state, then a verdict (Snipe / Watch / Pass), a conviction bar that fills from 0, the spoken line, "What could go wrong" risks, and the eight grounded signal rows (liquidity, market cap, age, buy impact at 0.1 SOL, curve filled, quality, smart money + wallet count, organic), with the rows the agent actually cited highlighted.
+  5. System: the avatar speaks the verdict: `POST /api/tts/eleven` when the agent has a voice, else `POST /api/tts/speak`, else the browser `speechSynthesis` fallback. If the server's hallucination guard replaced a figure, the panel says so and points at the signals as ground truth.
+  6. (optional) Owner extras in the read: the wallet line shows balance, per-trade limit, daily budget, and a paused flag.
+  7. (optional) **Act payoff (owner, gated):** click "Act, buy N SOL" → drawer opens → `previewAgentTrade()` fetches a fresh live quote (you pay / expected tokens / price impact, plus any warning) → **Confirm buy** → `executeAgentTrade()` posts through the guarded agent wallet path (spend limits and firewall re-checked at submit, written to the custody audit) → done state with the Solscan tx, the new wallet balance, and a link to the custody trail.
+  8. (optional) Replay the last spoken line; refresh the launch rail; paste a different agent ID or profile URL; pick another agent from the public gallery.
+- **Decision points / branches:** owner vs public read (act button vs gate message); `gate.can_act` true vs blocked with a reason; agent resolved from URL / storage / session / featured vs none at all (the gallery becomes the call to action, and only if the gallery is empty does the ID row open); ElevenLabs voice vs server TTS vs browser speech; hallucination guard triggered vs clean; reduced motion (bars and counters land at their final values).
+- **External calls / dependencies:** `GET /api/agents/:id`, `GET /api/agents/me`, `GET /api/agents/featured`, `GET /api/agents/public?sort=popular&limit=12`, `GET /api/agents/:id/alpha/candidates`, `POST /api/agents/:id/alpha/read`, `POST /api/tts/eleven`, `POST /api/tts/speak`; `previewAgentTrade` / `executeAgentTrade` (`POST /api/agents/:id/solana/trade`) for the act path.
+- **Success state:** a named 3D agent reads a real launch aloud in character, shows the live signals behind the call, and the owner can act on it through the same guarded, audited wallet path the conversational copilot uses. The narrator itself never moves funds.
+- **Empty / error states:** "No live launches on the feed this second" with "Check again"; "Live feed hiccup" with Retry; read failure with "Try again"; "Couldn't fetch a live quote"; trade errors rendered above the confirm button with the button re-enabled; no-agent fallback copy on the avatar placeholder.
+- **Step count:** 3 required (arrive → agent + launch rail → read) + ~5 optional, including the owner-gated buy (steps 7 to 8).
+
+---
+
 ## Notes on sourcing
-- All 16 routes located and traced to real source. No missing sources.
+- All 18 routes located and traced to real source. No missing sources.
+- The 2026-07 market-data family (`/markets` and its news, digest, archive, trending and Robinhood sub-pages, plus `/coins`, `/heatmap`, `/screener`, `/exchanges`, `/derivatives`, `/stablecoins`, `/dex-volumes`, `/chains`, `/yields`, `/fees`, `/hacks`, `/converter`, `/compare`) runs on CoinGecko, DeFiLlama and the news ingest rather than on the pump.fun + Oracle + sniper engines, so it is out of this cluster's scope and not yet covered by any cluster.
 - `/gmgn`, `/pumpfun`, `/strategy-lab` are **pre-built static** pages in `public/` (not `pages/`), wired by `vercel.json` rewrites — easy to miss in a `pages/` listing.
 - `/coin-intel` (page `api/pump/intel`) and `/radar` (`api/pump/coin-intel`) are two distinct engines despite similar names — do not conflate.
 - The leaderboard/activity payoff is the trader profile at `/trader` (`src/trader.js`), reached by drilling into a row — outside this cluster's enumerated routes but noted as the terminal step.
