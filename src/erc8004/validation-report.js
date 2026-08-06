@@ -15,9 +15,68 @@
  * `proofURI`, re-stringifies, re-hashes, and compares.
  */
 
-import { keccak256, toUtf8Bytes } from 'ethers';
+import { AbiCoder, keccak256, toUtf8Bytes } from 'ethers';
 
 export const KIND_GLB_SCHEMA = 'glb-schema';
+
+/**
+ * The deployed ERC-8004 ValidationRegistry stores a 0..100 `response` score, not
+ * a boolean. A glTF schema check is binary, so we write the two extremes and read
+ * back through a midpoint threshold. Three-way state, because the registry keeps
+ * an unanswered request on chain too:
+ *
+ *   tag === ''            → requested, no response yet (pending)
+ *   response >= threshold → passed
+ *   response <  threshold → failed
+ */
+export const VALIDATION_RESPONSE_PASS = 100;
+export const VALIDATION_RESPONSE_FAIL = 0;
+export const VALIDATION_RESPONSE_PASS_THRESHOLD = 50;
+
+/**
+ * Canonical id for a validation request on the ERC-8004 ValidationRegistry.
+ *
+ * The registry keys every validation by an opaque bytes32 the requester chooses,
+ * so deriving it instead of randomizing it makes the flow idempotent: the same
+ * (chain, agent, kind, subject) always maps to the same request, so answering
+ * again updates that record in place rather than piling up duplicates, and a
+ * different subject always gets its own request.
+ *
+ * @param {object} p
+ * @param {number} p.chainId
+ * @param {string|number|bigint} p.agentId
+ * @param {string} p.seed  0x-prefixed 32-byte hex identifying what is validated
+ *                         (the GLB's sha256 for a model check, the report hash
+ *                         when the report itself is the subject).
+ * @param {string} [p.kind]
+ * @returns {string} 0x-prefixed 32-byte hex.
+ */
+export function validationRequestHash({ chainId, agentId, seed, kind = KIND_GLB_SCHEMA }) {
+	return keccak256(
+		AbiCoder.defaultAbiCoder().encode(
+			['uint256', 'uint256', 'string', 'bytes32'],
+			[BigInt(chainId), BigInt(agentId), kind, seed],
+		),
+	);
+}
+
+/**
+ * Map an on-chain `response` score to our boolean pass/fail.
+ * @param {number|bigint} response
+ * @returns {boolean}
+ */
+export function responsePassed(response) {
+	return Number(response) >= VALIDATION_RESPONSE_PASS_THRESHOLD;
+}
+
+/**
+ * Score to write for a report's outcome.
+ * @param {boolean} passed
+ * @returns {number}
+ */
+export function responseForPassed(passed) {
+	return passed ? VALIDATION_RESPONSE_PASS : VALIDATION_RESPONSE_FAIL;
+}
 
 // glTF-Validator severity convention, reused so the report reads the same to any
 // tool that already understands Khronos reports: 0=Error 1=Warning 2=Info 3=Hint.

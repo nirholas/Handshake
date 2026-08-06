@@ -18,7 +18,7 @@ import {
 	VALIDATION_REGISTRY_ABI,
 	validationRegistryFor,
 } from './erc8004-chains.js';
-import { KIND_GLB_SCHEMA } from '../../src/erc8004/validation-report.js';
+import { KIND_GLB_SCHEMA, responsePassed } from '../../src/erc8004/validation-report.js';
 import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
 
 const IDENTITY_ABI = [
@@ -437,16 +437,29 @@ function _withTimeout(promise, ms) {
 
 const VALIDATION_CACHE_TTL_S = 60;
 
+// How many of an agent's most recent request hashes to inspect. Requests are
+// appended, so the tail is the newest; an agent with a long re-validation history
+// never turns one badge into an unbounded fan-out of RPC reads.
+const VALIDATION_SCAN_LIMIT = 12;
+
 /**
  * Read the latest on-chain validation attestation for an agent — no wallet
  * required, so any surface can render the "Validated" badge straight from the
  * server. Authoritative source is the on-chain ValidationRegistry; this layers a
  * 60s cache on top (validation is re-runnable, so the badge stays fresh).
  *
+ * The registry indexes validations by request hash, and stores the validator's
+ * `tag` only once the request has been answered, so an unanswered request is
+ * distinguishable from a verdict: we read the agent's recent request hashes, keep
+ * the ones answered with our kind, and take the most recently updated. The pinned
+ * report URL is NOT in registry storage (the contract only emits it), so callers
+ * that want the proof link merge it from the index cache and check it against
+ * `proofHash`.
+ *
  * Always resolves (never throws) so a badge fetch can't break a page:
  *   - { available: false }          registry not deployed on this chain
- *   - { available: true, exists:false }   deployed, but no attestation yet
- *   - { available: true, exists:true, passed, proofHash, proofURI, … }
+ *   - { available: true, exists:false, openRequests }  deployed, no verdict yet
+ *   - { available: true, exists:true, passed, score, proofHash, requestHash, … }
  *
  * @param {{ chainId: number, agentId: string|number, kind?: string }} p
  */
@@ -481,32 +494,69 @@ export async function resolveLatestValidation({ chainId, agentId, kind = KIND_GL
 	}
 
 	const registry = new Contract(registryAddr, VALIDATION_REGISTRY_ABI, provider);
-	let v;
+	let hashes;
 	try {
-		v = await _withTimeout(registry.getLatestByKind(BigInt(agentId), kind), 4000);
+		hashes = await _withTimeout(registry.getAgentValidations(BigInt(agentId)), 4000);
 	} catch (err) {
-		// getLatestByKind reverts with "no validation" when none exists — that's a
-		// normal empty result, not an error.
+		// An agent nobody has ever requested validation for reads as empty, and a
+		// chain whose registry predates this agent reverts — both are "no verdict",
+		// not an error worth surfacing on a badge.
 		const msg = String(err?.shortMessage || err?.reason || err?.message || '');
-		if (/no validation/i.test(msg) || err?.code === 'CALL_EXCEPTION') {
+		if (err?.code === 'CALL_EXCEPTION' || err?.code === 'BAD_DATA') {
 			await cacheSet(cacheKey, base, VALIDATION_CACHE_TTL_S);
 			return base;
 		}
 		return { ...base, error: `chain_read: ${msg}` };
 	}
 
-	const timestamp = Number(v.timestamp);
+	const recent = Array.from(hashes || []).slice(-VALIDATION_SCAN_LIMIT).reverse();
+	if (!recent.length) {
+		const empty = { ...base, openRequests: 0 };
+		await cacheSet(cacheKey, empty, VALIDATION_CACHE_TTL_S);
+		return empty;
+	}
+
+	const statuses = await Promise.all(
+		recent.map((hash) =>
+			_withTimeout(registry.getValidationStatus(hash), 4000)
+				.then((s) => ({
+					requestHash: hash,
+					validator: s[0],
+					response: Number(s[2]),
+					responseHash: s[3],
+					tag: s[4],
+					lastUpdate: Number(s[5]),
+				}))
+				.catch(() => null),
+		),
+	);
+
+	const answered = statuses.filter((s) => s && s.tag === kind);
+	if (!answered.length) {
+		// Requests exist but none is answered for this kind: an attestation is
+		// outstanding, which the badge shows as pending rather than "not validated".
+		const openRequests = statuses.filter((s) => s && !s.tag).length;
+		const empty = { ...base, openRequests };
+		await cacheSet(cacheKey, empty, VALIDATION_CACHE_TTL_S);
+		return empty;
+	}
+
+	const latest = answered.reduce((a, b) => (b.lastUpdate > a.lastUpdate ? b : a));
 	const result = {
 		...base,
 		exists: true,
-		passed: Boolean(v.passed),
-		proofHash: v.proofHash,
-		proofURI: v.proofURI || null,
-		proofUrlResolved: v.proofURI ? resolveURI(v.proofURI) : null,
-		validator: _safeAddress(v.validator),
-		validatorExplorer: explorer && v.validator ? `${explorer}/address/${v.validator}` : null,
-		timestamp,
-		validatedAt: timestamp ? new Date(timestamp * 1000).toISOString() : null,
+		passed: responsePassed(latest.response),
+		score: latest.response,
+		requestHash: latest.requestHash,
+		proofHash: latest.responseHash,
+		// The registry emits responseURI but never stores it, so the pinned report
+		// link is merged from the index cache (guarded by proofHash) by the caller.
+		proofURI: null,
+		proofUrlResolved: null,
+		validator: _safeAddress(latest.validator),
+		validatorExplorer: explorer && latest.validator ? `${explorer}/address/${latest.validator}` : null,
+		timestamp: latest.lastUpdate,
+		validatedAt: latest.lastUpdate ? new Date(latest.lastUpdate * 1000).toISOString() : null,
 	};
 	await cacheSet(cacheKey, result, VALIDATION_CACHE_TTL_S);
 	return result;

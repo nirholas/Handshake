@@ -5,9 +5,11 @@
  * shared across every EVM chain (deployed via CREATE2). Source:
  * https://github.com/nirholas/erc8004-agents
  *
- * ValidationRegistry mainnet deployment is pending. After running
- * contracts/script/deploy-validation-registry.sh, fill in the address
- * produced by computeAddress(DEPLOYER_ADDRESS) in MAINNET.validationRegistry.
+ * ValidationRegistry exists on the testnet class only; MAINNET.validationRegistry
+ * stays empty until a reference deployment lands on mainnet. Fill it in only after
+ * probing the address's bytecode for the selectors in VALIDATION_REGISTRY_ABI: a
+ * 0x8004-vanity address is not by itself proof that the contract behind it is the
+ * one this ABI describes.
  */
 
 export const IDENTITY_REGISTRY_ABI = [
@@ -79,21 +81,23 @@ export const REPUTATION_REGISTRY_ABI = [
 ];
 
 /**
- * Validation Registry ABI — mirrors contracts/src/ValidationRegistry.sol and the
- * canonical SDK ABI (sdk/src/erc8004/abi.js). The `getValidation*` read fragments
- * are required by getLatestValidation() in validation-recorder.js; without them
- * ethers cannot encode the call. Mainnet has no Validation Registry deployed yet.
+ * Validation Registry ABI — mirrors the deployed ERC-8004
+ * `ValidationRegistryUpgradeable` (and the canonical SDK ABI in
+ * sdk/src/erc8004/abi.js). Two-legged by design: the agent's owner (or an
+ * approved operator) opens a request naming a validator, and only that validator
+ * can answer it with a 0..100 score. `responseURI` is emitted, never stored, so
+ * the pinned report link has to come from the event or an index. Mainnet has no
+ * Validation Registry deployed yet.
  */
-const VALIDATION_RECORD_TUPLE =
-	'tuple(address validator, bool passed, bytes32 proofHash, string proofURI, uint64 timestamp, string kind)';
-
 export const VALIDATION_REGISTRY_ABI = [
-	'function recordValidation(uint256 agentId, bool passed, bytes32 proofHash, string proofURI, string kind) external',
-	'function getValidationCount(uint256 agentId) external view returns (uint256)',
-	`function getValidation(uint256 agentId, uint256 index) external view returns (${VALIDATION_RECORD_TUPLE})`,
-	`function getLatestByKind(uint256 agentId, string kind) external view returns (${VALIDATION_RECORD_TUPLE})`,
-	`function getValidationRange(uint256 agentId, uint256 offset, uint256 limit) external view returns (${VALIDATION_RECORD_TUPLE}[])`,
-	'event ValidationRecorded(uint256 indexed agentId, address indexed validator, bool passed, bytes32 proofHash, string kind)',
+	'function validationRequest(address validatorAddress, uint256 agentId, string requestURI, bytes32 requestHash) external',
+	'function validationResponse(bytes32 requestHash, uint8 response, string responseURI, bytes32 responseHash, string tag) external',
+	'function getValidationStatus(bytes32 requestHash) external view returns (address validatorAddress, uint256 agentId, uint8 response, bytes32 responseHash, string tag, uint256 lastUpdate)',
+	'function getAgentValidations(uint256 agentId) external view returns (bytes32[])',
+	'function getValidatorRequests(address validatorAddress) external view returns (bytes32[])',
+	'function getSummary(uint256 agentId, address[] validatorAddresses, string tag) external view returns (uint64 count, uint8 avgResponse)',
+	'event ValidationRequest(address indexed validatorAddress, uint256 indexed agentId, string requestURI, bytes32 indexed requestHash)',
+	'event ValidationResponse(address indexed validatorAddress, uint256 indexed agentId, bytes32 indexed requestHash, uint8 response, string responseURI, bytes32 responseHash, string tag)',
 ];
 
 // ---------------------------------------------------------------------------

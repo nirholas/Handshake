@@ -8,14 +8,17 @@
  *      ⇒ structurally valid; parse-failure ⇒ a hard error in the report.
  *   2. Independently sha256 the exact bytes (byte-check, surfaced separately —
  *      a passing schema validation never overrides byte identity, per spec).
- *   3. Build the canonical report, pin it to R2, keccak256-hash the pinned bytes.
- *   4. Sign + send recordValidation(agentId, passed, proofHash, proofURI, kind)
- *      from the platform validator key, which must be allow-listed on the chain.
+ *   3. Build the canonical report and pin it to R2. `hashReport()` keccaks the
+ *      report's compact JSON, so a verifier fetches the pinned file, re-stringifies
+ *      it without indentation, re-hashes, and compares against the chain.
+ *   4. Answer the agent's on-chain validation request from the platform validator
+ *      key with validationResponse(requestHash, score, proofURI, proofHash, kind),
+ *      opening the request first when the platform is allowed to.
  *
  * Best-effort by contract: callers wrap this in try/catch — a validation failure
- * (or missing key / undeployed registry / not-allow-listed validator) must never
- * block or revert the registration itself. Errors carry a machine-readable
- * `.code` so the caller can surface a clear ops state instead of a silent skip.
+ * (or missing key / undeployed registry / no open request) must never block or
+ * revert the registration itself. Errors carry a machine-readable `.code` so the
+ * caller can surface a clear ops state instead of a silent skip.
  */
 
 import { createHash } from 'node:crypto';
@@ -27,7 +30,23 @@ import { evmRpcEndpoints } from './evm/rpc.js';
 import { putObject, publicUrl } from './r2.js';
 import { assertSafePublicUrl, SsrfBlockedError } from './ssrf-guard.js';
 import { inspectModel, suggestOptimizations } from './model-inspect.js';
-import { buildGlbReport, hashReport, reportPassed, KIND_GLB_SCHEMA } from '../../src/erc8004/validation-report.js';
+import {
+	buildGlbReport,
+	hashReport,
+	reportPassed,
+	responseForPassed,
+	validationRequestHash,
+	KIND_GLB_SCHEMA,
+} from '../../src/erc8004/validation-report.js';
+
+// Just the ERC-721 authority reads the registry itself checks before accepting a
+// validationRequest — enough to tell "we can open this request" from "the owner
+// has to".
+const IDENTITY_AUTH_ABI = [
+	'function ownerOf(uint256 tokenId) external view returns (address)',
+	'function getApproved(uint256 tokenId) external view returns (address)',
+	'function isApprovedForAll(address owner, address operator) external view returns (bool)',
+];
 
 const MAX_FETCH_BYTES = 16 * 1024 * 1024;
 const FETCH_TIMEOUT_MS = 20_000;
@@ -121,21 +140,81 @@ async function pinReport(report, chainId, agentId) {
 	return publicUrl(key);
 }
 
+/** Read a request's on-chain status. Returns null when no such request exists. */
+async function readRequest(registry, requestHash) {
+	try {
+		const s = await registry.getValidationStatus(requestHash);
+		return {
+			validator: s[0],
+			agentId: s[1],
+			response: Number(s[2]),
+			responseHash: s[3],
+			tag: s[4],
+			lastUpdate: Number(s[5]),
+		};
+	} catch (err) {
+		// The registry reverts require("unknown") for a hash it has never seen.
+		if (err?.code === 'CALL_EXCEPTION' || /unknown/i.test(String(err?.shortMessage || err?.message))) {
+			return null;
+		}
+		throw new AttestError('registry_read_failed', `could not read validation status: ${err.message}`);
+	}
+}
+
 /**
- * Full attestation: validate the GLB, pin the report, sign + record on-chain.
+ * Can `validator` open a validation request for this agent? The registry allows
+ * the agent's ERC-721 owner, a per-token approved operator, or an operator
+ * approved for all of the owner's tokens.
+ */
+async function canOpenRequest({ identityAddr, provider, agentId, validator }) {
+	if (!identityAddr) return false;
+	const identity = new Contract(identityAddr, IDENTITY_AUTH_ABI, provider);
+	const id = BigInt(agentId);
+	let owner;
+	try {
+		owner = await identity.ownerOf(id);
+	} catch {
+		return false;
+	}
+	if (owner.toLowerCase() === validator.toLowerCase()) return true;
+	const [approved, forAll] = await Promise.all([
+		identity.getApproved(id).catch(() => null),
+		identity.isApprovedForAll(owner, validator).catch(() => false),
+	]);
+	return Boolean(forAll) || (approved && approved.toLowerCase() === validator.toLowerCase());
+}
+
+/**
+ * Full attestation: validate the GLB, pin the report, answer on-chain.
+ *
+ * The deployed ValidationRegistry is two-legged: the agent's owner (or an
+ * approved operator) opens a request naming a validator, and only that validator
+ * may answer it. So this runs one of three ways:
+ *
+ *   - a request for our validator already exists  → answer it (this is also the
+ *     re-validation path: answering again updates the record in place);
+ *   - no request, but the platform validator is the owner/an approved operator
+ *     → open the request itself, then answer it;
+ *   - no request and no authority → throw `validation_request_required` carrying
+ *     the exact call the owner's wallet must submit, so the UI can prompt for it.
+ *
+ * Best-effort by contract: callers wrap this in try/catch and registration is
+ * never blocked by the outcome.
  *
  * @param {object} p
  * @param {number} p.chainId
  * @param {string|number} p.agentId
  * @param {string} p.glbUrl
  * @param {string} p.validatedAt  ISO timestamp (caller-supplied; deterministic hashing).
+ * @param {string} [p.requestHash] Answer this exact request (the owner just opened it).
  * @returns {Promise<{
  *   passed: boolean, proofHash: string, proofURI: string, txHash: string,
+ *   requestHash: string, requestTxHash: string|null, score: number,
  *   sha256: string, validatedAt: string, kind: string, chainId: number,
  *   agentId: string, validator: string, report: object,
  * }>}
  */
-export async function attestValidation({ chainId, agentId, glbUrl, validatedAt }) {
+export async function attestValidation({ chainId, agentId, glbUrl, validatedAt, requestHash: pinnedHash }) {
 	const chain = CHAIN_BY_ID[chainId];
 	if (!chain) throw new AttestError('unsupported_chain', `unsupported chain ${chainId}`);
 
@@ -151,7 +230,7 @@ export async function attestValidation({ chainId, agentId, glbUrl, validatedAt }
 	if (!pk) {
 		throw new AttestError(
 			'validator_key_not_configured',
-			'VALIDATOR_PRIVATE_KEY is not set — cannot sign attestations.',
+			'VALIDATOR_PRIVATE_KEY is not set, so no attestation can be signed.',
 		);
 	}
 
@@ -167,39 +246,80 @@ export async function attestValidation({ chainId, agentId, glbUrl, validatedAt }
 	const wallet = new Wallet(pk, provider);
 	const registry = new Contract(registryAddr, VALIDATION_REGISTRY_ABI, wallet);
 
-	// 3. The platform key must be allow-listed on THIS chain — surface a clear
-	//    ops error rather than letting the tx revert with NotValidator().
-	let allowed;
-	try {
-		allowed = await registry.isValidator(wallet.address);
-	} catch (err) {
-		throw new AttestError('registry_read_failed', `could not read validator allow-list: ${err.message}`);
-	}
-	if (!allowed) {
+	// 3. Find (or open) the request this attestation answers.
+	const requestHash = pinnedHash || validationRequestHash({ chainId, agentId, seed: `0x${sha256}` });
+	const existing = await readRequest(registry, requestHash);
+
+	if (existing && existing.validator.toLowerCase() !== wallet.address.toLowerCase()) {
 		throw new AttestError(
-			'validator_not_allowlisted',
-			`Validator ${wallet.address} is not allow-listed on ${chain.name}. ` +
-				`Run addValidator(${wallet.address}) as the registry owner (task 01 step 6).`,
+			'request_not_for_validator',
+			`Request ${requestHash} names validator ${existing.validator}, not the platform validator ${wallet.address}.`,
+		);
+	}
+	if (existing && String(existing.agentId) !== String(agentId)) {
+		throw new AttestError(
+			'request_agent_mismatch',
+			`Request ${requestHash} belongs to agent ${existing.agentId}, not ${agentId}.`,
 		);
 	}
 
-	// 4. Pin the report, hash the pinned bytes, record on-chain.
+	let requestTxHash = null;
+	if (!existing) {
+		const authorized = await canOpenRequest({
+			identityAddr: chain.registry,
+			provider,
+			agentId,
+			validator: wallet.address,
+		});
+		if (!authorized) {
+			const err = new AttestError(
+				'validation_request_required',
+				`Agent ${agentId} has no open validation request for ${wallet.address}. The agent owner must call ` +
+					`validationRequest(${wallet.address}, ${agentId}, <glbUrl>, ${requestHash}) on ${registryAddr}, then retry.`,
+			);
+			err.request = {
+				chainId,
+				agentId: String(agentId),
+				registry: registryAddr,
+				validatorAddress: wallet.address,
+				requestURI: glbUrl,
+				requestHash,
+			};
+			throw err;
+		}
+		let reqTx;
+		try {
+			reqTx = await registry.validationRequest(wallet.address, BigInt(agentId), glbUrl, requestHash);
+		} catch (err) {
+			throw new AttestError('request_failed', `validationRequest reverted: ${err.shortMessage || err.message}`);
+		}
+		await reqTx.wait();
+		requestTxHash = reqTx.hash;
+	}
+
+	// 4. Pin the report, then answer the request. `responseURI` is emitted but not
+	//    stored by the registry, so the pinned URL is recovered from the event (or
+	//    our index cache); `responseHash` is the integrity check that binds them.
 	const proofURI = await pinReport(report, chainId, agentId);
 	const proofHash = hashReport(report);
+	const score = responseForPassed(passed);
 
 	let tx;
 	try {
-		tx = await registry.recordValidation(BigInt(agentId), passed, proofHash, proofURI, KIND_GLB_SCHEMA);
+		tx = await registry.validationResponse(requestHash, score, proofURI, proofHash, KIND_GLB_SCHEMA);
 	} catch (err) {
-		throw new AttestError('record_failed', `recordValidation reverted: ${err.shortMessage || err.message}`);
+		throw new AttestError('response_failed', `validationResponse reverted: ${err.shortMessage || err.message}`);
 	}
 	await tx.wait();
 
 	return {
 		passed,
+		score,
 		proofHash,
 		proofURI,
 		txHash: tx.hash,
+		requestHash,
+		requestTxHash,
 		sha256,
 		validatedAt,
 		kind: KIND_GLB_SCHEMA,

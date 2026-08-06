@@ -20,6 +20,7 @@ import {
 	resolveOnChainAgent,
 	resolveLatestValidation,
 	invalidateValidationCache,
+	resolveURI,
 	SERVER_CHAIN_META,
 } from '../_lib/onchain.js';
 import { r2, publicUrl } from '../_lib/r2.js';
@@ -236,21 +237,31 @@ const validateBodySchema = z.object({
 	agentId: agentIdSchema,
 	// Optional — when omitted we resolve the GLB from the index / on-chain manifest.
 	glbUrl: z.string().url().max(2048).optional(),
+	// Set on the retry after the owner's wallet opened the validation request
+	// returned by a previous validation_request_required response.
+	requestHash: z
+		.string()
+		.regex(/^0x[0-9a-fA-F]{64}$/)
+		.optional(),
 });
 
 // AttestError.code → HTTP status. Config/precondition problems are 503 (the
-// platform must be wired), model/transport problems are 422/502.
+// platform must be wired), model/transport problems are 422/502, and a missing
+// validation request is 409: the owner has to act before we can answer.
 const ATTEST_STATUS = {
 	validator_key_not_configured: 503,
 	validation_registry_not_deployed: 503,
-	validator_not_allowlisted: 503,
 	no_rpc: 503,
 	unsupported_chain: 400,
 	invalid_glb_url: 422,
 	glb_fetch_failed: 502,
 	glb_too_large: 413,
 	registry_read_failed: 502,
-	record_failed: 502,
+	validation_request_required: 409,
+	request_not_for_validator: 409,
+	request_agent_mismatch: 409,
+	request_failed: 502,
+	response_failed: 502,
 };
 
 async function handleValidate(req, res) {
@@ -300,6 +311,7 @@ async function handleValidate(req, res) {
 			agentId: body.agentId,
 			glbUrl,
 			validatedAt,
+			requestHash: body.requestHash,
 		});
 	} catch (err) {
 		const code = err instanceof AttestError ? err.code : 'attest_failed';
@@ -310,7 +322,10 @@ async function handleValidate(req, res) {
 			SET validation_error = ${code}, validation_at = now()
 			WHERE chain_id = ${body.chainId} AND agent_id = ${body.agentId}
 		`.catch(() => {});
-		return error(res, status, code, err.message);
+		// validation_request_required carries the exact owner-signed call that
+		// unblocks the attestation, so the client can prompt for it instead of
+		// showing a dead end.
+		return error(res, status, code, err.message, err.request ? { request: err.request } : {});
 	}
 
 	// Persist the latest attestation to the index cache (best-effort) and bust the
@@ -321,6 +336,7 @@ async function handleValidate(req, res) {
 		    validation_kind = ${result.kind},
 		    validation_proof_hash = ${result.proofHash},
 		    validation_proof_uri = ${result.proofURI},
+		    validation_request_hash = ${result.requestHash},
 		    validation_tx = ${result.txHash},
 		    validator_address = ${result.validator.toLowerCase()},
 		    validation_at = ${validatedAt},
@@ -336,9 +352,13 @@ async function handleValidate(req, res) {
 			chainId: body.chainId,
 			agentId: body.agentId,
 			passed: result.passed,
+			score: result.score,
 			kind: result.kind,
 			proofHash: result.proofHash,
 			proofURI: result.proofURI,
+			requestHash: result.requestHash,
+			requestTxHash: result.requestTxHash,
+			requestTxExplorer: result.requestTxHash ? `${chainMeta.explorer}/tx/${result.requestTxHash}` : null,
 			txHash: result.txHash,
 			txExplorer: explorerTx,
 			validator: result.validator,
@@ -370,6 +390,25 @@ async function handleValidationRead(req, res) {
 	}
 
 	const validation = await resolveLatestValidation({ chainId, agentId });
+
+	// The registry emits the pinned report URL but never stores it, so the proof
+	// link comes from the index row and is only attached when its hash matches the
+	// on-chain responseHash. A stale row (an older GLB's report) is dropped rather
+	// than linked, so the badge never points at a report the chain didn't attest.
+	if (validation.exists && validation.proofHash) {
+		const [row] = await sql`
+			SELECT validation_proof_uri, validation_proof_hash, validation_tx
+			FROM erc8004_agents_index
+			WHERE chain_id = ${chainId} AND agent_id = ${agentId}
+		`.catch(() => []);
+		if (row?.validation_proof_uri && row.validation_proof_hash?.toLowerCase() === validation.proofHash.toLowerCase()) {
+			validation.proofURI = row.validation_proof_uri;
+			validation.proofUrlResolved = resolveURI(row.validation_proof_uri);
+			validation.txHash = row.validation_tx || null;
+			validation.txExplorer = row.validation_tx ? `${SERVER_CHAIN_META[chainId]?.explorer}/tx/${row.validation_tx}` : null;
+		}
+	}
+
 	res.setHeader('cache-control', 'public, max-age=30, s-maxage=60');
 	return json(res, 200, { validation });
 }

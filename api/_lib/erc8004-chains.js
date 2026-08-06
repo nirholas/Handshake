@@ -10,26 +10,41 @@
 export const IDENTITY_REGISTRY_MAINNET = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
 export const IDENTITY_REGISTRY_TESTNET = '0x8004A818BFB912233c491871b3d84c89A494BD9e';
 
-// ValidationRegistry — CREATE2-deterministic, one address per network class.
-// Testnet is live (Base Sepolia and siblings). Mainnet is pending task 01
-// (contracts/script/DeployValidationMainnet.s.sol); leave '' until bytecode is
-// confirmed on every chain, then fill it here AND in src/erc8004/abi.js +
-// sdk/src/erc8004/abi.js (task 05 parity). Never list an address with no code.
+// ValidationRegistry: the canonical ERC-8004 reference deployment
+// (`ValidationRegistryUpgradeable` behind an ERC-1967 proxy), the same family of
+// 0x8004-vanity addresses as the Identity Registry above, one address per
+// network class. Live on the testnet class (bytecode probed 2026-08-06 on Base
+// Sepolia, Sepolia, Arbitrum Sepolia and OP Sepolia). No mainnet deployment
+// exists yet, so mainnet stays '' and the badge renders nothing there.
+//
+// This is NOT contracts/src/ValidationRegistry.sol. That contract is ours and is
+// deployed nowhere; the address below answers a different, standard interface
+// (request/response, no validator allow-list), which is what the ABI below and
+// api/_lib/validation-attest.js target. Never point these constants at an
+// address without first probing its bytecode for the selectors we call.
 export const VALIDATION_REGISTRY_MAINNET = '';
 export const VALIDATION_REGISTRY_TESTNET = '0x8004Cb1BF31DAf7788923b405b754f57acEB4272';
 
 /**
  * Minimal human-readable ValidationRegistry ABI for server reads + attestations.
- * Mirrors contracts/src/ValidationRegistry.sol. The Validation tuple order is
- * load-bearing — keep it in lockstep with the struct.
+ * Mirrors the deployed `ValidationRegistryUpgradeable`.
+ *
+ * The model is two-legged and deliberate: the agent's ERC-721 owner (or an
+ * approved operator) opens a request naming a validator, and only that validator
+ * can answer it. `response` is a 0..100 score, and `responseURI` is emitted in
+ * the event but NOT stored, so the pinned report URL cannot be read back from
+ * storage. `tag` is stored and is where our validation kind lives.
  */
 export const VALIDATION_REGISTRY_ABI = [
-	'function recordValidation(uint256 agentId, bool passed, bytes32 proofHash, string proofURI, string kind) external',
-	'function isValidator(address) external view returns (bool)',
-	'function owner() external view returns (address)',
-	'function getValidationCount(uint256 agentId) external view returns (uint256)',
-	'function getLatestByKind(uint256 agentId, string kind) external view returns (tuple(address validator, bool passed, bytes32 proofHash, string proofURI, uint64 timestamp, string kind))',
-	'event ValidationRecorded(uint256 indexed agentId, address indexed validator, bool passed, bytes32 proofHash, string kind)',
+	'function validationRequest(address validatorAddress, uint256 agentId, string requestURI, bytes32 requestHash) external',
+	'function validationResponse(bytes32 requestHash, uint8 response, string responseURI, bytes32 responseHash, string tag) external',
+	'function getValidationStatus(bytes32 requestHash) external view returns (address validatorAddress, uint256 agentId, uint8 response, bytes32 responseHash, string tag, uint256 lastUpdate)',
+	'function getAgentValidations(uint256 agentId) external view returns (bytes32[])',
+	'function getValidatorRequests(address validatorAddress) external view returns (bytes32[])',
+	'function getSummary(uint256 agentId, address[] validatorAddresses, string tag) external view returns (uint64 count, uint8 avgResponse)',
+	'function getIdentityRegistry() external view returns (address)',
+	'event ValidationRequest(address indexed validatorAddress, uint256 indexed agentId, string requestURI, bytes32 indexed requestHash)',
+	'event ValidationResponse(address indexed validatorAddress, uint256 indexed agentId, bytes32 indexed requestHash, uint8 response, string responseURI, bytes32 responseHash, string tag)',
 ];
 
 /**
@@ -305,7 +320,7 @@ export const CHAINS = [
 ];
 
 // Decorate each chain with its ValidationRegistry address (deterministic by
-// network class). Mainnet entries carry '' until task 01 confirms bytecode.
+// network class). Mainnet entries carry '' until a mainnet deployment exists.
 for (const c of CHAINS) {
 	c.validationRegistry = c.testnet ? VALIDATION_REGISTRY_TESTNET : VALIDATION_REGISTRY_MAINNET;
 }
