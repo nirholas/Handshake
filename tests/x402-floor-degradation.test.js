@@ -47,6 +47,15 @@ describe('settlePayment floor classification', () => {
 		expect(err).toMatchObject({ code: 'settlement_unavailable', status: 503 });
 	});
 
+	// The wallet fee governor refuses for the same reason class and was missed by
+	// the floor branch, so it kept answering 502 long after the floor stopped:
+	// 15,619 of the autonomous loop's 20,030 `http_502` rows in the 48h to
+	// 2026-08-06 were this one refusal wearing a server-fault status.
+	it('maps fee_runway_exhausted to 503 settlement_unavailable', async () => {
+		const err = await settleAgainst('fee_runway_exhausted:10132243+10000>10000000');
+		expect(err).toMatchObject({ code: 'settlement_unavailable', status: 503 });
+	});
+
 	it('keeps unexplained settle failures as 502 settle_failed', async () => {
 		const err = await settleAgainst('facilitator exploded');
 		expect(err).toMatchObject({ code: 'settle_failed', status: 502 });

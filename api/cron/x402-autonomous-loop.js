@@ -42,7 +42,10 @@ import {
 	fetchWithTimeout,
 	parseSolanaAccept,
 	buildPaymentTx,
+	ringFeeConfig,
+	expectedFeeLamports,
 } from '../_lib/x402/pay.js';
+import { assessFeeAdmission } from '../_lib/x402/wallet-fee-meter.js';
 import {
 	getFullRegistry,
 	MAX_PER_TICK,
@@ -564,6 +567,43 @@ export default wrapCron(async (req, res) => {
 				log.info('autonomous_insufficient_payer_usdc', { id: entry.id, amount: amountAtomic, held: payerUsdcAtomic });
 				results.push({ id: entry.id, status: 'skip', reason: 'insufficient_payer_usdc' });
 				await setCooldown(redis, entry); // back off; don't re-probe every tick
+				continue;
+			}
+
+			// Fee-budget admission — the caller-side twin of the settle path's wallet
+			// fee governor, and the guard this loop was missing while the ring's
+			// payX402() already had it (api/_lib/x402/pay.js). Once the fee wallet has
+			// spent its daily SOL budget the facilitator refuses every settle, so an
+			// ATA read, a signature, a facilitator verify (which simulates against an
+			// RPC node) and the POST itself all buy a guaranteed refusal at the end.
+			// That round trip was the whole of this loop's 502 rate: 15,619 of the
+			// 20,030 `http_502` rows in the 48h to 2026-08-06 were this exact refusal
+			// arriving after a full handshake. Skipping here removes only doomed work:
+			// assessFeeAdmission() fails open whenever it cannot price the call, and
+			// it settles nothing extra when the budget is healthy.
+			const feeConfig = ringFeeConfig(0, { selfPay: false });
+			const admission = await assessFeeAdmission({
+				feeWalletB58: accept.extra.feePayer,
+				estFeeLamports: expectedFeeLamports({
+					selfPay: false,
+					priorityMicrolamports: feeConfig.microLamports,
+					cuLimit: feeConfig.cuLimit,
+				}),
+				connection: conn,
+			});
+			if (!admission.ok) {
+				errorMsg = admission.reason || 'fee_runway_exhausted';
+				results.push({ id: entry.id, status: 'skip', reason: errorMsg });
+				await setCooldown(redis, entry); // budget refills on a top-up or the UTC reset, not mid-cooldown
+				// Recorded, not silently dropped: x402-settle-health.js reads this table
+				// and counts `fee_runway_exhausted` as governorSkips so a paced rail
+				// reports "top the fee wallet up" instead of the `unknown` verdict an
+				// empty window produces. A skip that leaves no row is indistinguishable
+				// from a rail nobody used.
+				await recordLog(runId, entry, {
+					amountAtomic: 0, txSig: null, responseData: null,
+					durationMs: Date.now() - t0, success: false, errorMsg, endpointUrl,
+				});
 				continue;
 			}
 

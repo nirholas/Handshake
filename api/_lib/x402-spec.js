@@ -1169,6 +1169,22 @@ export async function settlePayment(args) {
 				503,
 			);
 		}
+		// The wallet fee governor's refusal is the same class of answer for the same
+		// reason: nothing is broken, the platform is deliberately pacing its own SOL
+		// burn and the budget refills (at the UTC reset, or the moment the fee wallet
+		// is topped up). It was the one deliberate throttle the branch above missed,
+		// and at volume it IS the platform's error rate: 15,619 of the 20,030
+		// `http_502` rows the autonomous loop recorded in the 48h to 2026-08-06 were
+		// this refusal wearing a server-fault status code. Same treatment: 503 +
+		// retryable code, so buyers back off instead of reading a funding cap as an
+		// outage. Genuinely unexplained settle failures still stay 502.
+		if (/^fee_runway_exhausted/.test(reason)) {
+			throw new X402Error(
+				'settlement_unavailable',
+				`settlement paced: ${reason} (fee wallet spent today's SOL fee budget; retry after it refills)`,
+				503,
+			);
+		}
 		throw new X402Error('settle_failed', `settle failed: ${reason}`, 502);
 	}
 	// Defense-in-depth: a compromised facilitator could return success for
