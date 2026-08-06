@@ -88,7 +88,16 @@ async function setupDispatcher(ctx) {
 		client,
 		ident.agentIdHex,
 		{
-			capabilities: 0n, // the dispatcher posts work; it does none itself
+			// The AgenC program REJECTS a zero bitmask (register_agent.rs
+			// InvalidCapabilities: "Agent capabilities bitmask cannot be zero"), so a
+			// dispatcher registered with 0n could never boot the fleet: every fresh
+			// deployment died at setupDispatcher before a single citizen existed.
+			// Bit 0 is the platform's own default for a registering agent
+			// (api/agenc/[action].js) and is honest here: the dispatcher does call
+			// HTTP. It is an identity marker, not a work claim. The dispatcher is a
+			// separate identity that never runs the citizen loop, so it is never
+			// matched to a task by this bit.
+			capabilities: professionBits(['fetcher']),
 			endpoint: `${cfg.apiBase}/agora/dispatcher`,
 			metadataUri: ident.metadataUri,
 			stakeLamports: cfg.stakeLamports,
