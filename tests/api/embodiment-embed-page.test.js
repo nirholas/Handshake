@@ -45,6 +45,15 @@ describe('embodiment embed page — wiring contract', () => {
 		expect(html).toContain('if (showWallet && personaId)');
 	});
 
+	it('keeps the resolved persona name on every later state change', () => {
+		// The overlay label is tracked separately from the ?name param, so a
+		// loading/idle/speaking transition after the resolve cannot revert the
+		// persona's real name to the generic default.
+		expect(html).toContain('let displayName');
+		expect(html).toContain('{ ...detail, name: displayName }');
+		expect(html).toContain('displayName = resolved.name;');
+	});
+
 	it('is sandboxable: noindex + framable by any host', () => {
 		expect(html).toContain('name="robots" content="noindex"');
 	});
