@@ -58,6 +58,8 @@ export class EconomyFx {
 		this._coins = [];               // active coin sprites
 		this._labels = [];              // active floating HTML labels
 		this._t = 0;
+		this._deliverableGen = 0;       // guards overlapping GLB loads (see showDeliverable)
+		this._disposed = false;
 
 		this._buildPlinth();
 	}
@@ -107,10 +109,21 @@ export class EconomyFx {
 	async showDeliverable(url) {
 		this._retireDeliverableModel();
 		if (!isGlb(url)) return false;
+		// Completions can land back-to-back, and a GLB load is slow enough that two
+		// can be in flight at once. Without a generation guard the loser's model
+		// still gets parented to the plinth and then orphaned when `_plinthModel`
+		// is overwritten, invisible to `_retireDeliverableModel` and to dispose(),
+		// i.e. exactly the leak this file is supposed to prevent. Stamp each load
+		// and let only the newest mount; anything stale is disposed on arrival.
+		const generation = ++this._deliverableGen;
 		try {
 			await _meshoptWired;
 			const gltf = await _gltf.loadAsync(url);
 			const model = gltf.scene;
+			if (generation !== this._deliverableGen || this._disposed) {
+				disposeObject(model);
+				return false;
+			}
 
 			// Normalise to ~1.6m tall, centred on the plinth top.
 			const box = new THREE.Box3().setFromObject(model);
@@ -137,10 +150,16 @@ export class EconomyFx {
 	}
 
 	_retireDeliverableModel() {
-		if (!this._plinthModel) return;
-		this._plinthModelHolder.remove(this._plinthModel);
-		disposeObject(this._plinthModel);
+		// Invalidate any load still in flight so it can't mount behind this retire.
+		this._deliverableGen++;
+		// Dispose by walking the holder, not just the tracked handle, so nothing
+		// parented here can survive as an orphan.
+		for (const child of [...this._plinthModelHolder.children]) {
+			this._plinthModelHolder.remove(child);
+			disposeObject(child);
+		}
 		this._plinthModel = null;
+		this._plinthModelHolder.rotation.y = 0;
 		this._spotLight.intensity = 0;
 	}
 
@@ -249,13 +268,23 @@ export class EconomyFx {
 		}
 	}
 
+	// Live prefers-reduced-motion change. Coins already in flight keep their arc
+	// (yanking them mid-air is its own jolt); everything that loops (the plinth
+	// spin, label rise, future coin flows) settles from the next frame on.
+	setReducedMotion(on) {
+		this.reducedMotion = !!on;
+		if (this.reducedMotion) this._plinthModelHolder.rotation.y = 0;
+	}
+
 	dispose() {
+		this._disposed = true;
 		for (const c of this._coins) { this.scene.remove(c.mesh); c.mat.dispose(); }
 		this._coins = [];
 		for (const l of this._labels) l.el.remove();
 		this._labels = [];
 		this._retireDeliverableModel();
 		for (const d of this._plinthDisposables) d.dispose?.();
+		this._spotLight.dispose?.();
 		this.scene.remove(this._plinthGroup);
 		// _coinGeo is module-shared across the page lifetime — not disposed here.
 	}
