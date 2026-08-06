@@ -1,51 +1,240 @@
 {
 	"$generated": "npm run docs:freshness (scripts/doc-freshness.mjs)",
 	"$doc": "/docs/freshness",
-	"generatedAt": "2026-08-05T20:48:49.754Z",
-	"commit": "7c09c09a6",
+	"generatedAt": "2026-08-06T04:02:56.161Z",
+	"commit": "aa78cddbe",
 	"totals": {
-		"docs": 484,
-		"stale": 8,
-		"watch": 222,
-		"fresh": 163,
-		"unverifiable": 91,
-		"trackedFiles": 2606
+		"docs": 485,
+		"stale": 36,
+		"watch": 227,
+		"fresh": 132,
+		"unverifiable": 90,
+		"trackedFiles": 2626
 	},
 	"docs": {
+		"docs/ALL.md": {
+			"s": "stale",
+			"g": 48.521,
+			"d": "2026-08-05",
+			"f": 141,
+			"n": 2065
+		},
+		"STRUCTURE.md": {
+			"s": "stale",
+			"g": 24.129,
+			"d": "2026-08-05",
+			"f": 55,
+			"n": 858
+		},
+		"docs/ops/production-log-triage.md": {
+			"s": "stale",
+			"g": 4.35,
+			"d": "2026-08-05",
+			"f": 10,
+			"n": 38
+		},
 		"docs/security/SECURITY_AUDIT.md": {
 			"s": "stale",
-			"g": 3.797,
+			"g": 4.047,
 			"d": "2026-07-10",
-			"f": 13,
+			"f": 14,
 			"n": 28
+		},
+		"docs/ops/redis.md": {
+			"s": "stale",
+			"g": 3.51,
+			"d": "2026-07-10",
+			"f": 10,
+			"n": 20
+		},
+		"docs/ux-flows/09-x402-agent-commerce.md": {
+			"s": "stale",
+			"g": 3.257,
+			"d": "2026-08-05",
+			"f": 11,
+			"n": 72
+		},
+		"docs/ops/gcp-credits.md": {
+			"s": "stale",
+			"g": 3.058,
+			"d": "2026-08-05",
+			"f": 12,
+			"n": 59
 		},
 		"docs/i18n.md": {
 			"s": "stale",
-			"g": 2.875,
+			"g": 2.811,
 			"d": "2026-07-27",
 			"f": 8,
 			"n": 18
 		},
-		"docs/ALL.md": {
+		"docs/erc8004/validation-attestation.md": {
 			"s": "stale",
-			"g": 1.968,
-			"d": "2026-08-05",
+			"g": 2.56,
+			"d": "2026-07-10",
 			"f": 8,
-			"n": 2041
+			"n": 11
+		},
+		"docs/ux-flows/07-crypto-trading-analytics.md": {
+			"s": "stale",
+			"g": 2.254,
+			"d": "2026-08-06",
+			"f": 7,
+			"n": 98
+		},
+		"docs/ops/payment-outcomes.md": {
+			"s": "stale",
+			"g": 1.643,
+			"d": "2026-08-05",
+			"f": 3,
+			"n": 14
+		},
+		"docs/ux-flows/03-3d-editing-viewer.md": {
+			"s": "stale",
+			"g": 1.639,
+			"d": "2026-08-05",
+			"f": 5,
+			"n": 53
+		},
+		"docs/guards.md": {
+			"s": "stale",
+			"g": 1.629,
+			"d": "2026-08-05",
+			"f": 7,
+			"n": 51
+		},
+		"docs/economy-master.md": {
+			"s": "stale",
+			"g": 1.593,
+			"d": "2026-08-05",
+			"f": 5,
+			"n": 27
 		},
 		"docs/ui-juice.md": {
 			"s": "stale",
-			"g": 1.75,
+			"g": 1.583,
 			"d": "2026-06-30",
 			"f": 4,
 			"n": 7
 		},
-		"docs/agora.md": {
+		"docs/ca2x402.md": {
 			"s": "stale",
-			"g": 1.289,
-			"d": "2026-07-10",
+			"g": 1.512,
+			"d": "2026-07-30",
+			"f": 6,
+			"n": 12
+		},
+		"docs/api-reference.md": {
+			"s": "stale",
+			"g": 1.416,
+			"d": "2026-08-06",
+			"f": 9,
+			"n": 141
+		},
+		"docs/agora/tasks/00-INDEX.md": {
+			"s": "stale",
+			"g": 1.397,
+			"d": "2026-08-05",
+			"f": 10,
+			"n": 24
+		},
+		"docs/avatar-thumbnails.md": {
+			"s": "stale",
+			"g": 1.367,
+			"d": "2026-08-05",
+			"f": 4,
+			"n": 15
+		},
+		"docs/security/review-2026-06-24.md": {
+			"s": "stale",
+			"g": 1.354,
+			"d": "2026-07-11",
 			"f": 7,
-			"n": 18
+			"n": 20
+		},
+		"docs/agora/tasks/06-economy-visuals.md": {
+			"s": "stale",
+			"g": 1.333,
+			"d": "2026-07-10",
+			"f": 3,
+			"n": 5
+		},
+		"docs/openai-pr/04-openai-surface-test-coverage.md": {
+			"s": "stale",
+			"g": 1.301,
+			"d": "2026-07-18",
+			"f": 7,
+			"n": 9
+		},
+		"docs/money-map.md": {
+			"s": "stale",
+			"g": 1.283,
+			"d": "2026-08-05",
+			"f": 5,
+			"n": 16
+		},
+		"docs/ops/llm-lanes.md": {
+			"s": "stale",
+			"g": 1.273,
+			"d": "2026-08-02",
+			"f": 7,
+			"n": 11
+		},
+		"docs/forge-off.md": {
+			"s": "stale",
+			"g": 1.2,
+			"d": "2026-07-17",
+			"f": 5,
+			"n": 6
+		},
+		"docs/ux-flows/05-discovery-social.md": {
+			"s": "stale",
+			"g": 1.187,
+			"d": "2026-08-05",
+			"f": 4,
+			"n": 47
+		},
+		"docs/x402-ring-economy.md": {
+			"s": "stale",
+			"g": 1.176,
+			"d": "2026-08-05",
+			"f": 4,
+			"n": 47
+		},
+		"docs/world-lines.md": {
+			"s": "stale",
+			"g": 1.167,
+			"d": "2026-08-01",
+			"f": 3,
+			"n": 11
+		},
+		"docs/x402-distribution.md": {
+			"s": "stale",
+			"g": 1.143,
+			"d": "2026-08-05",
+			"f": 3,
+			"n": 13
+		},
+		"docs/coin-pages.md": {
+			"s": "stale",
+			"g": 1.113,
+			"d": "2026-08-05",
+			"f": 7,
+			"n": 102
+		},
+		"docs/agent-abilities/chapters/04-the-mind.md": {
+			"s": "stale",
+			"g": 1.1,
+			"d": "2026-07-18",
+			"f": 5,
+			"n": 30
+		},
+		"docs/agora/tasks/02-life-engine.md": {
+			"s": "stale",
+			"g": 1.1,
+			"d": "2026-07-10",
+			"f": 3,
+			"n": 5
 		},
 		"docs/viability.md": {
 			"s": "stale",
@@ -54,19 +243,26 @@
 			"f": 3,
 			"n": 6
 		},
-		"docs/ca2x402.md": {
+		"docs/economy-heartbeat.md": {
 			"s": "stale",
-			"g": 1.012,
-			"d": "2026-07-30",
+			"g": 1.02,
+			"d": "2026-07-10",
 			"f": 5,
-			"n": 12
+			"n": 7
 		},
-		"docs/x402-ring-economy.md": {
+		"docs/fact-check.md": {
 			"s": "stale",
-			"g": 1,
+			"g": 1.02,
 			"d": "2026-08-02",
-			"f": 2,
-			"n": 47
+			"f": 3,
+			"n": 8
+		},
+		"docs/agora/tasks/11-production-hardening.md": {
+			"s": "stale",
+			"g": 1.004,
+			"d": "2026-07-16",
+			"f": 7,
+			"n": 8
 		},
 		"docs/agent-tasks/fix-x402-caller-mismatches.md": {
 			"s": "watch",
@@ -75,12 +271,33 @@
 			"f": 5,
 			"n": 5
 		},
+		"docs/agent-abilities/ABILITIES.md": {
+			"s": "watch",
+			"g": 0.99,
+			"d": "2026-08-05",
+			"f": 8,
+			"n": 147
+		},
+		"docs/agent-abilities/FULL-ARTICLE.md": {
+			"s": "watch",
+			"g": 0.99,
+			"d": "2026-08-05",
+			"f": 8,
+			"n": 148
+		},
 		"docs/tutorials/self-host-agent-backend.md": {
 			"s": "watch",
 			"g": 0.976,
 			"d": "2026-07-11",
 			"f": 11,
 			"n": 17
+		},
+		"docs/contributing.md": {
+			"s": "watch",
+			"g": 0.967,
+			"d": "2026-07-18",
+			"f": 4,
+			"n": 9
 		},
 		"docs/pump-fun-mcp-edge.md": {
 			"s": "watch",
@@ -91,38 +308,38 @@
 		},
 		"docs/openai-pr/03-forge-free-tier-truth.md": {
 			"s": "watch",
-			"g": 0.945,
+			"g": 0.943,
 			"d": "2026-07-18",
 			"f": 4,
 			"n": 4
 		},
+		"docs/ops/db-retention.md": {
+			"s": "watch",
+			"g": 0.924,
+			"d": "2026-07-29",
+			"f": 3,
+			"n": 4
+		},
+		"docs/ops/x402-discovery-listings.md": {
+			"s": "watch",
+			"g": 0.921,
+			"d": "2026-07-16",
+			"f": 8,
+			"n": 14
+		},
 		"docs/agent-abilities/chapters/14-the-developer-platform.md": {
 			"s": "watch",
-			"g": 0.905,
+			"g": 0.9,
 			"d": "2026-07-18",
 			"f": 9,
 			"n": 16
 		},
-		"docs/security/review-2026-06-24.md": {
+		"docs/trading-experiment.md": {
 			"s": "watch",
-			"g": 0.904,
-			"d": "2026-07-11",
-			"f": 5,
-			"n": 20
-		},
-		"docs/tutorials/build-a-site-concierge.md": {
-			"s": "watch",
-			"g": 0.875,
-			"d": "2026-07-18",
-			"f": 5,
-			"n": 5
-		},
-		"docs/forge-off.md": {
-			"s": "watch",
-			"g": 0.867,
-			"d": "2026-07-17",
-			"f": 4,
-			"n": 6
+			"g": 0.9,
+			"d": "2026-07-29",
+			"f": 3,
+			"n": 11
 		},
 		"docs/native-launchpad.md": {
 			"s": "watch",
@@ -131,26 +348,47 @@
 			"f": 3,
 			"n": 7
 		},
-		"docs/openai-pr/00-START-HERE.md": {
+		"docs/tutorials/build-a-site-concierge.md": {
 			"s": "watch",
-			"g": 0.853,
+			"g": 0.857,
 			"d": "2026-07-18",
-			"f": 7,
-			"n": 9
+			"f": 5,
+			"n": 5
 		},
-		"docs/agent-abilities/chapters/04-the-mind.md": {
+		"docs/copy-trading.md": {
 			"s": "watch",
-			"g": 0.85,
-			"d": "2026-07-18",
-			"f": 4,
-			"n": 30
+			"g": 0.854,
+			"d": "2026-08-02",
+			"f": 3,
+			"n": 20
 		},
-		"docs/ops/redis.md": {
+		"docs/ux-flows/04-embed-widget-studio.md": {
+			"s": "watch",
+			"g": 0.854,
+			"d": "2026-08-05",
+			"f": 3,
+			"n": 34
+		},
+		"docs/deployment.md": {
 			"s": "watch",
 			"g": 0.844,
-			"d": "2026-07-10",
-			"f": 6,
-			"n": 20
+			"d": "2026-07-29",
+			"f": 7,
+			"n": 26
+		},
+		"docs/configuration.md": {
+			"s": "watch",
+			"g": 0.84,
+			"d": "2026-08-05",
+			"f": 7,
+			"n": 25
+		},
+		"docs/agent-abilities/chapters/06-identity-reputation.md": {
+			"s": "watch",
+			"g": 0.833,
+			"d": "2026-07-18",
+			"f": 4,
+			"n": 6
 		},
 		"docs/crypto-api.md": {
 			"s": "watch",
@@ -166,26 +404,26 @@
 			"f": 2,
 			"n": 5
 		},
-		"docs/agora/tasks/11-production-hardening.md": {
+		"docs/walk-leaderboard.md": {
 			"s": "watch",
-			"g": 0.817,
-			"d": "2026-07-16",
-			"f": 6,
-			"n": 8
+			"g": 0.833,
+			"d": "2026-07-30",
+			"f": 2,
+			"n": 6
 		},
-		"docs/erc8004/validation-attestation.md": {
+		"CLAUDE.md": {
 			"s": "watch",
-			"g": 0.81,
-			"d": "2026-07-10",
-			"f": 3,
-			"n": 11
+			"g": 0.818,
+			"d": "2026-08-04",
+			"f": 7,
+			"n": 23
 		},
-		"docs/contributing.md": {
+		"docs/agora/tasks/08-humans-first-class.md": {
 			"s": "watch",
 			"g": 0.8,
-			"d": "2026-07-18",
+			"d": "2026-07-10",
 			"f": 3,
-			"n": 9
+			"n": 6
 		},
 		"docs/notifications.md": {
 			"s": "watch",
@@ -194,18 +432,53 @@
 			"f": 3,
 			"n": 13
 		},
-		"docs/solana.md": {
+		"docs/tutorials/pay-for-x402-service.md": {
 			"s": "watch",
 			"g": 0.783,
+			"d": "2026-08-01",
+			"f": 3,
+			"n": 10
+		},
+		"docs/character-studio.md": {
+			"s": "watch",
+			"g": 0.777,
+			"d": "2026-07-29",
+			"f": 5,
+			"n": 26
+		},
+		"docs/openai-pr/02-wellknown-manifest-conflict.md": {
+			"s": "watch",
+			"g": 0.751,
+			"d": "2026-07-18",
+			"f": 4,
+			"n": 5
+		},
+		"docs/sniper-autonomy.md": {
+			"s": "watch",
+			"g": 0.75,
+			"d": "2026-07-25",
+			"f": 3,
+			"n": 6
+		},
+		"docs/solana.md": {
+			"s": "watch",
+			"g": 0.75,
 			"d": "2026-07-30",
 			"f": 3,
 			"n": 8
 		},
-		"docs/openai-pr/04-openai-surface-test-coverage.md": {
+		"docs/three-microbuy.md": {
 			"s": "watch",
-			"g": 0.76,
+			"g": 0.75,
 			"d": "2026-07-18",
-			"f": 5,
+			"f": 3,
+			"n": 7
+		},
+		"docs/autonomous-x402.md": {
+			"s": "watch",
+			"g": 0.742,
+			"d": "2026-07-25",
+			"f": 3,
 			"n": 8
 		},
 		"docs/agora/tasks/01-verify-foundation.md": {
@@ -222,12 +495,12 @@
 			"f": 4,
 			"n": 19
 		},
-		"docs/ops/x402-discovery-listings.md": {
+		"docs/social-layer.md": {
 			"s": "watch",
-			"g": 0.721,
-			"d": "2026-07-16",
-			"f": 7,
-			"n": 14
+			"g": 0.725,
+			"d": "2026-08-05",
+			"f": 3,
+			"n": 26
 		},
 		"docs/x402-dev-tools.md": {
 			"s": "watch",
@@ -243,12 +516,26 @@
 			"f": 3,
 			"n": 19
 		},
+		"docs/payment-sessions.md": {
+			"s": "watch",
+			"g": 0.7,
+			"d": "2026-07-30",
+			"f": 3,
+			"n": 7
+		},
 		"docs/ar-studio.md": {
 			"s": "watch",
 			"g": 0.694,
 			"d": "2026-07-18",
 			"f": 3,
 			"n": 7
+		},
+		"docs/deployments.md": {
+			"s": "watch",
+			"g": 0.667,
+			"d": "2026-07-30",
+			"f": 2,
+			"n": 6
 		},
 		"docs/docs-world.md": {
 			"s": "watch",
@@ -278,6 +565,13 @@
 			"f": 2,
 			"n": 2
 		},
+		"docs/smart-money.md": {
+			"s": "watch",
+			"g": 0.667,
+			"d": "2026-07-18",
+			"f": 2,
+			"n": 5
+		},
 		"docs/selfie-to-avatar.md": {
 			"s": "watch",
 			"g": 0.658,
@@ -292,26 +586,19 @@
 			"f": 3,
 			"n": 3
 		},
+		"docs/irl.md": {
+			"s": "watch",
+			"g": 0.625,
+			"d": "2026-08-05",
+			"f": 3,
+			"n": 5
+		},
 		"docs/procedural-animation.md": {
 			"s": "watch",
 			"g": 0.609,
 			"d": "2026-07-29",
 			"f": 4,
 			"n": 8
-		},
-		"docs/openai-pr/05-custom-gpt-openapi-serving.md": {
-			"s": "watch",
-			"g": 0.604,
-			"d": "2026-07-18",
-			"f": 5,
-			"n": 8
-		},
-		"docs/agora/tasks/02-life-engine.md": {
-			"s": "watch",
-			"g": 0.6,
-			"d": "2026-07-10",
-			"f": 2,
-			"n": 5
 		},
 		"docs/agent-wallet-api.md": {
 			"s": "watch",
@@ -320,40 +607,47 @@
 			"f": 2,
 			"n": 22
 		},
-		"docs/ops/db-retention.md": {
-			"s": "watch",
-			"g": 0.591,
-			"d": "2026-07-29",
-			"f": 2,
-			"n": 4
-		},
-		"docs/agent-abilities/chapters/06-identity-reputation.md": {
-			"s": "watch",
-			"g": 0.583,
-			"d": "2026-07-18",
-			"f": 3,
-			"n": 6
-		},
-		"docs/sniper-autonomy.md": {
-			"s": "watch",
-			"g": 0.583,
-			"d": "2026-07-25",
-			"f": 2,
-			"n": 6
-		},
-		"STRUCTURE.md": {
+		"docs/agent-sniper.md": {
 			"s": "watch",
 			"g": 0.583,
 			"d": "2026-08-05",
 			"f": 2,
-			"n": 858
+			"n": 16
 		},
-		"docs/ux-flows/11-account-dashboard.md": {
+		"docs/avatar-reconstruction.md": {
 			"s": "watch",
-			"g": 0.576,
+			"g": 0.583,
+			"d": "2026-07-27",
+			"f": 2,
+			"n": 6
+		},
+		"docs/forge-background-generation.md": {
+			"s": "watch",
+			"g": 0.583,
+			"d": "2026-08-05",
+			"f": 2,
+			"n": 8
+		},
+		"docs/ops/gcp-production.md": {
+			"s": "watch",
+			"g": 0.579,
+			"d": "2026-08-05",
+			"f": 5,
+			"n": 38
+		},
+		"docs/agora/tasks/05-commons-scaffold.md": {
+			"s": "watch",
+			"g": 0.573,
+			"d": "2026-08-05",
+			"f": 4,
+			"n": 16
+		},
+		"docs/circulation-engine.md": {
+			"s": "watch",
+			"g": 0.57,
 			"d": "2026-08-05",
 			"f": 3,
-			"n": 43
+			"n": 7
 		},
 		"docs/package-extraction.md": {
 			"s": "watch",
@@ -369,11 +663,11 @@
 			"f": 3,
 			"n": 5
 		},
-		"docs/autonomous-x402.md": {
+		"docs/openai-pr/05-custom-gpt-openapi-serving.md": {
 			"s": "watch",
-			"g": 0.542,
-			"d": "2026-07-25",
-			"f": 2,
+			"g": 0.549,
+			"d": "2026-07-18",
+			"f": 6,
 			"n": 8
 		},
 		"docs/ops/forge-multiview-migration-handoff.md": {
@@ -382,6 +676,13 @@
 			"d": "2026-07-10",
 			"f": 5,
 			"n": 7
+		},
+		"docs/financial-controls.md": {
+			"s": "watch",
+			"g": 0.533,
+			"d": "2026-08-05",
+			"f": 2,
+			"n": 13
 		},
 		"docs/seed-quality.md": {
 			"s": "watch",
@@ -399,17 +700,24 @@
 		},
 		"docs/skills.md": {
 			"s": "watch",
-			"g": 0.526,
+			"g": 0.524,
 			"d": "2026-07-21",
 			"f": 3,
 			"n": 11
 		},
-		"docs/fact-check.md": {
+		"docs/solana-pumpfun.md": {
 			"s": "watch",
 			"g": 0.52,
-			"d": "2026-08-02",
-			"f": 2,
-			"n": 8
+			"d": "2026-07-18",
+			"f": 3,
+			"n": 12
+		},
+		"docs/daily-match.md": {
+			"s": "watch",
+			"g": 0.515,
+			"d": "2026-07-30",
+			"f": 3,
+			"n": 6
 		},
 		"docs/changelog.md": {
 			"s": "watch",
@@ -417,6 +725,41 @@
 			"d": "2026-07-18",
 			"f": 5,
 			"n": 8
+		},
+		"docs/agent-abilities/wallet/07-signals.md": {
+			"s": "watch",
+			"g": 0.5,
+			"d": "2026-07-18",
+			"f": 1,
+			"n": 3
+		},
+		"docs/agent-abilities/wallet/14-intents.md": {
+			"s": "watch",
+			"g": 0.5,
+			"d": "2026-07-18",
+			"f": 1,
+			"n": 3
+		},
+		"docs/agent-abilities/wallet/20-proof-of-custody.md": {
+			"s": "watch",
+			"g": 0.5,
+			"d": "2026-07-18",
+			"f": 1,
+			"n": 5
+		},
+		"docs/agent-abilities/wallet/22-recovery.md": {
+			"s": "watch",
+			"g": 0.5,
+			"d": "2026-07-18",
+			"f": 1,
+			"n": 3
+		},
+		"docs/agora/tasks/07-verify-and-passport.md": {
+			"s": "watch",
+			"g": 0.5,
+			"d": "2026-07-10",
+			"f": 1,
+			"n": 4
 		},
 		"docs/aws-builder-center.md": {
 			"s": "watch",
@@ -439,17 +782,38 @@
 			"f": 1,
 			"n": 6
 		},
+		"docs/memetic-launcher.md": {
+			"s": "watch",
+			"g": 0.5,
+			"d": "2026-07-09",
+			"f": 2,
+			"n": 4
+		},
 		"docs/onchain-agents.md": {
 			"s": "watch",
 			"g": 0.5,
-			"d": "2026-07-18",
+			"d": "2026-08-05",
+			"f": 1,
+			"n": 4
+		},
+		"docs/ops/gcp-logs.md": {
+			"s": "watch",
+			"g": 0.5,
+			"d": "2026-08-05",
+			"f": 3,
+			"n": 6
+		},
+		"docs/ops/README.md": {
+			"s": "watch",
+			"g": 0.5,
+			"d": "2026-08-05",
 			"f": 1,
 			"n": 4
 		},
 		"docs/ops/runtime-flags.md": {
 			"s": "watch",
 			"g": 0.5,
-			"d": "2026-07-10",
+			"d": "2026-08-05",
 			"f": 1,
 			"n": 4
 		},
@@ -467,12 +831,19 @@
 			"f": 1,
 			"n": 2
 		},
-		"docs/talking-avatar-video.md": {
+		"docs/swarms.md": {
 			"s": "watch",
 			"g": 0.5,
-			"d": "2026-07-18",
+			"d": "2026-07-30",
 			"f": 1,
-			"n": 7
+			"n": 2
+		},
+		"docs/trader-passport.md": {
+			"s": "watch",
+			"g": 0.5,
+			"d": "2026-08-02",
+			"f": 1,
+			"n": 2
 		},
 		"docs/tutorials/build-a-scene.md": {
 			"s": "watch",
@@ -481,40 +852,12 @@
 			"f": 1,
 			"n": 1
 		},
-		"docs/walk-leaderboard.md": {
-			"s": "watch",
-			"g": 0.5,
-			"d": "2026-07-30",
-			"f": 1,
-			"n": 6
-		},
-		"docs/world-lines.md": {
-			"s": "watch",
-			"g": 0.5,
-			"d": "2026-08-01",
-			"f": 1,
-			"n": 11
-		},
-		"docs/nvidia-models.md": {
-			"s": "watch",
-			"g": 0.46,
-			"d": "2026-07-30",
-			"f": 3,
-			"n": 13
-		},
-		"docs/payment-sessions.md": {
+		"docs/tutorials/agent-spending-envelope.md": {
 			"s": "watch",
 			"g": 0.45,
 			"d": "2026-07-30",
 			"f": 2,
-			"n": 7
-		},
-		"docs/character-studio.md": {
-			"s": "watch",
-			"g": 0.444,
-			"d": "2026-07-29",
-			"f": 4,
-			"n": 26
+			"n": 8
 		},
 		"docs/image-to-3d.md": {
 			"s": "watch",
@@ -523,16 +866,9 @@
 			"f": 4,
 			"n": 5
 		},
-		"docs/mcp-studio.md": {
-			"s": "watch",
-			"g": 0.435,
-			"d": "2026-07-27",
-			"f": 4,
-			"n": 12
-		},
 		"docs/tutorials/mcp-server-for-your-agent.md": {
 			"s": "watch",
-			"g": 0.434,
+			"g": 0.432,
 			"d": "2026-07-11",
 			"f": 4,
 			"n": 4
@@ -551,19 +887,26 @@
 			"f": 3,
 			"n": 14
 		},
+		"docs/erc8004.md": {
+			"s": "watch",
+			"g": 0.417,
+			"d": "2026-08-01",
+			"f": 2,
+			"n": 12
+		},
+		"docs/daily-forge.md": {
+			"s": "watch",
+			"g": 0.403,
+			"d": "2026-07-18",
+			"f": 3,
+			"n": 7
+		},
 		"docs/partners.md": {
 			"s": "watch",
 			"g": 0.4,
 			"d": "2026-07-30",
 			"f": 2,
 			"n": 5
-		},
-		"docs/trading-experiment.md": {
-			"s": "watch",
-			"g": 0.4,
-			"d": "2026-07-29",
-			"f": 2,
-			"n": 11
 		},
 		"docs/atlas.md": {
 			"s": "watch",
@@ -572,23 +915,23 @@
 			"f": 2,
 			"n": 8
 		},
-		"CLAUDE.md": {
+		"docs/nvidia-models.md": {
 			"s": "watch",
-			"g": 0.385,
-			"d": "2026-08-04",
-			"f": 4,
-			"n": 23
+			"g": 0.392,
+			"d": "2026-07-30",
+			"f": 3,
+			"n": 13
 		},
 		"docs/assistant-widget.md": {
 			"s": "watch",
-			"g": 0.383,
+			"g": 0.381,
 			"d": "2026-07-19",
 			"f": 2,
 			"n": 4
 		},
 		"docs/troubleshooting.md": {
 			"s": "watch",
-			"g": 0.381,
+			"g": 0.379,
 			"d": "2026-07-18",
 			"f": 7,
 			"n": 11
@@ -599,6 +942,20 @@
 			"d": "2026-07-29",
 			"f": 3,
 			"n": 7
+		},
+		"docs/agent-abilities/wallet/15-pay.md": {
+			"s": "watch",
+			"g": 0.375,
+			"d": "2026-07-18",
+			"f": 2,
+			"n": 3
+		},
+		"docs/mcp-x402-bazaar.md": {
+			"s": "watch",
+			"g": 0.373,
+			"d": "2026-06-13",
+			"f": 3,
+			"n": 4
 		},
 		"docs/tutorials/animate-your-avatar.md": {
 			"s": "watch",
@@ -628,33 +985,19 @@
 			"f": 6,
 			"n": 11
 		},
-		"docs/daily-forge.md": {
+		"docs/validation.md": {
 			"s": "watch",
 			"g": 0.361,
 			"d": "2026-07-18",
 			"f": 2,
-			"n": 7
-		},
-		"docs/economy-heartbeat.md": {
-			"s": "watch",
-			"g": 0.354,
-			"d": "2026-07-10",
-			"f": 3,
-			"n": 7
-		},
-		"docs/solana-pumpfun.md": {
-			"s": "watch",
-			"g": 0.354,
-			"d": "2026-07-18",
-			"f": 2,
-			"n": 12
-		},
-		"docs/irl/THREAT-MODEL.md": {
-			"s": "watch",
-			"g": 0.348,
-			"d": "2026-07-10",
-			"f": 3,
 			"n": 9
+		},
+		"docs/ux-flows/02-forge-text-to-3d.md": {
+			"s": "watch",
+			"g": 0.354,
+			"d": "2026-08-05",
+			"f": 2,
+			"n": 52
 		},
 		"docs/avatar-inspector.md": {
 			"s": "watch",
@@ -663,6 +1006,13 @@
 			"f": 2,
 			"n": 4
 		},
+		"docs/agent-abilities/chapters/13-agents-everywhere.md": {
+			"s": "watch",
+			"g": 0.341,
+			"d": "2026-07-18",
+			"f": 6,
+			"n": 7
+		},
 		"docs/agent-tasks/fix-x402-wallet-health.md": {
 			"s": "watch",
 			"g": 0.333,
@@ -670,19 +1020,19 @@
 			"f": 1,
 			"n": 1
 		},
+		"docs/agora/tasks/09-arena-and-guilds.md": {
+			"s": "watch",
+			"g": 0.333,
+			"d": "2026-07-10",
+			"f": 1,
+			"n": 4
+		},
 		"docs/avatar-creation.md": {
 			"s": "watch",
 			"g": 0.333,
 			"d": "2026-07-18",
 			"f": 1,
 			"n": 7
-		},
-		"docs/avatar-reconstruction.md": {
-			"s": "watch",
-			"g": 0.333,
-			"d": "2026-07-27",
-			"f": 1,
-			"n": 6
 		},
 		"docs/bnb-babt-findings.md": {
 			"s": "watch",
@@ -705,12 +1055,47 @@
 			"f": 1,
 			"n": 12
 		},
+		"docs/examples.md": {
+			"s": "watch",
+			"g": 0.333,
+			"d": "2026-08-02",
+			"f": 1,
+			"n": 16
+		},
+		"docs/forge-pipeline.md": {
+			"s": "watch",
+			"g": 0.333,
+			"d": "2026-08-05",
+			"f": 1,
+			"n": 29
+		},
+		"docs/kol-tracker.md": {
+			"s": "watch",
+			"g": 0.333,
+			"d": "2026-07-30",
+			"f": 1,
+			"n": 9
+		},
 		"docs/launch-usecases.md": {
 			"s": "watch",
 			"g": 0.333,
 			"d": "2026-07-01",
 			"f": 1,
 			"n": 3
+		},
+		"docs/ops/gcp-credits-plan.md": {
+			"s": "watch",
+			"g": 0.333,
+			"d": "2026-08-04",
+			"f": 2,
+			"n": 5
+		},
+		"docs/ops/gcp-model-workers.md": {
+			"s": "watch",
+			"g": 0.333,
+			"d": "2026-08-05",
+			"f": 1,
+			"n": 9
 		},
 		"docs/PROTOCOL-vanity.md": {
 			"s": "watch",
@@ -733,12 +1118,26 @@
 			"f": 1,
 			"n": 8
 		},
-		"docs/smart-money.md": {
+		"docs/sketchfab.md": {
+			"s": "watch",
+			"g": 0.333,
+			"d": "2026-07-15",
+			"f": 1,
+			"n": 2
+		},
+		"docs/talking-avatar-video.md": {
 			"s": "watch",
 			"g": 0.333,
 			"d": "2026-07-18",
 			"f": 1,
-			"n": 5
+			"n": 7
+		},
+		"docs/trading-copilot.md": {
+			"s": "watch",
+			"g": 0.333,
+			"d": "2026-08-05",
+			"f": 1,
+			"n": 8
 		},
 		"docs/trading-hub.md": {
 			"s": "watch",
@@ -768,12 +1167,26 @@
 			"f": 1,
 			"n": 2
 		},
-		"docs/guards.md": {
+		"docs/news-rights.md": {
 			"s": "watch",
-			"g": 0.329,
+			"g": 0.325,
+			"d": "2026-07-21",
+			"f": 2,
+			"n": 11
+		},
+		"docs/build.md": {
+			"s": "watch",
+			"g": 0.32,
 			"d": "2026-08-05",
+			"f": 4,
+			"n": 15
+		},
+		"docs/openai-pr/01-orphan-widget-resolution.md": {
+			"s": "watch",
+			"g": 0.32,
+			"d": "2026-08-06",
 			"f": 3,
-			"n": 51
+			"n": 5
 		},
 		"docs/agent-abilities/chapters/08-screens.md": {
 			"s": "watch",
@@ -788,20 +1201,6 @@
 			"d": "2026-07-29",
 			"f": 2,
 			"n": 2
-		},
-		"docs/agent-abilities/chapters/13-agents-everywhere.md": {
-			"s": "watch",
-			"g": 0.302,
-			"d": "2026-07-18",
-			"f": 5,
-			"n": 7
-		},
-		"docs/mint-mark.md": {
-			"s": "watch",
-			"g": 0.3,
-			"d": "2026-07-18",
-			"f": 2,
-			"n": 4
 		},
 		"docs/js-api.md": {
 			"s": "watch",
@@ -838,6 +1237,20 @@
 			"f": 2,
 			"n": 2
 		},
+		"docs/ux-flows/01-onboarding-creation.md": {
+			"s": "watch",
+			"g": 0.27,
+			"d": "2026-08-06",
+			"f": 2,
+			"n": 63
+		},
+		"docs/agent-abilities/chapters/11-markets-intelligence.md": {
+			"s": "watch",
+			"g": 0.268,
+			"d": "2026-08-05",
+			"f": 2,
+			"n": 25
+		},
 		"docs/restyle.md": {
 			"s": "watch",
 			"g": 0.268,
@@ -845,26 +1258,12 @@
 			"f": 2,
 			"n": 2
 		},
-		"docs/openai-pr/06-docs-accuracy-reconciliation.md": {
+		"docs/mint-mark.md": {
 			"s": "watch",
-			"g": 0.262,
+			"g": 0.267,
 			"d": "2026-07-18",
-			"f": 3,
+			"f": 2,
 			"n": 4
-		},
-		"docs/openai-pr/07-final-verification-and-submit.md": {
-			"s": "watch",
-			"g": 0.262,
-			"d": "2026-07-18",
-			"f": 3,
-			"n": 4
-		},
-		"docs/deployment.md": {
-			"s": "watch",
-			"g": 0.261,
-			"d": "2026-07-29",
-			"f": 4,
-			"n": 26
 		},
 		"docs/how-it-works.md": {
 			"s": "watch",
@@ -887,12 +1286,12 @@
 			"f": 1,
 			"n": 3
 		},
-		"docs/chatgpt-ar.md": {
+		"docs/coin-launches.md": {
 			"s": "watch",
 			"g": 0.25,
-			"d": "2026-07-29",
+			"d": "2026-07-18",
 			"f": 1,
-			"n": 13
+			"n": 3
 		},
 		"docs/live-steps.md": {
 			"s": "watch",
@@ -907,13 +1306,6 @@
 			"d": "2026-07-31",
 			"f": 1,
 			"n": 7
-		},
-		"docs/memetic-launcher.md": {
-			"s": "watch",
-			"g": 0.25,
-			"d": "2026-07-09",
-			"f": 1,
-			"n": 4
 		},
 		"docs/memory.md": {
 			"s": "watch",
@@ -936,13 +1328,6 @@
 			"f": 1,
 			"n": 1
 		},
-		"docs/syndication.md": {
-			"s": "watch",
-			"g": 0.25,
-			"d": "2026-07-10",
-			"f": 1,
-			"n": 2
-		},
 		"docs/trading-arenas.md": {
 			"s": "watch",
 			"g": 0.25,
@@ -952,38 +1337,17 @@
 		},
 		"docs/remix.md": {
 			"s": "watch",
-			"g": 0.247,
+			"g": 0.244,
 			"d": "2026-07-08",
 			"f": 3,
 			"n": 10
 		},
 		"docs/security.md": {
 			"s": "watch",
-			"g": 0.232,
+			"g": 0.229,
 			"d": "2026-07-18",
 			"f": 3,
 			"n": 7
-		},
-		"docs/ops/gcp-production.md": {
-			"s": "watch",
-			"g": 0.218,
-			"d": "2026-08-04",
-			"f": 4,
-			"n": 37
-		},
-		"docs/agora/tasks/00-INDEX.md": {
-			"s": "watch",
-			"g": 0.214,
-			"d": "2026-08-05",
-			"f": 3,
-			"n": 24
-		},
-		"docs/openai-pr/02-wellknown-manifest-conflict.md": {
-			"s": "watch",
-			"g": 0.21,
-			"d": "2026-07-18",
-			"f": 2,
-			"n": 5
 		},
 		"docs/character-library.md": {
 			"s": "watch",
@@ -1006,26 +1370,12 @@
 			"f": 1,
 			"n": 19
 		},
-		"docs/premium.md": {
-			"s": "watch",
-			"g": 0.2,
-			"d": "2026-07-15",
-			"f": 1,
-			"n": 7
-		},
 		"docs/terminal.md": {
 			"s": "watch",
 			"g": 0.2,
 			"d": "2026-07-18",
 			"f": 1,
 			"n": 13
-		},
-		"docs/tutorials/agent-spending-envelope.md": {
-			"s": "watch",
-			"g": 0.2,
-			"d": "2026-07-30",
-			"f": 1,
-			"n": 8
 		},
 		"docs/tutorials/character-library-to-embed.md": {
 			"s": "watch",
@@ -1055,26 +1405,12 @@
 			"f": 1,
 			"n": 4
 		},
-		"docs/3d-api.md": {
-			"s": "watch",
-			"g": 0.194,
-			"d": "2026-07-30",
-			"f": 2,
-			"n": 11
-		},
-		"docs/daily-match.md": {
+		"docs/irl/THREAT-MODEL.md": {
 			"s": "watch",
 			"g": 0.182,
-			"d": "2026-07-30",
+			"d": "2026-08-06",
 			"f": 2,
-			"n": 6
-		},
-		"docs/mcp-x402-bazaar.md": {
-			"s": "watch",
-			"g": 0.173,
-			"d": "2026-06-13",
-			"f": 2,
-			"n": 4
+			"n": 10
 		},
 		"docs/architecture.md": {
 			"s": "watch",
@@ -1090,12 +1426,33 @@
 			"f": 4,
 			"n": 9
 		},
-		"docs/ux-flows/07-crypto-trading-analytics.md": {
+		"docs/premium.md": {
 			"s": "watch",
-			"g": 0.163,
-			"d": "2026-08-05",
-			"f": 3,
-			"n": 84
+			"g": 0.167,
+			"d": "2026-07-15",
+			"f": 1,
+			"n": 7
+		},
+		"docs/reputation.md": {
+			"s": "watch",
+			"g": 0.167,
+			"d": "2026-07-18",
+			"f": 1,
+			"n": 6
+		},
+		"docs/smart-contracts.md": {
+			"s": "watch",
+			"g": 0.167,
+			"d": "2026-07-18",
+			"f": 1,
+			"n": 2
+		},
+		"docs/tutorials/place-agent-irl.md": {
+			"s": "watch",
+			"g": 0.167,
+			"d": "2026-07-30",
+			"f": 1,
+			"n": 2
 		},
 		"docs/mcp-agent.md": {
 			"s": "watch",
@@ -1118,19 +1475,26 @@
 			"f": 1,
 			"n": 3
 		},
-		"docs/agent-abilities/wallet/15-pay.md": {
+		"docs/x402-endpoints.md": {
+			"s": "watch",
+			"g": 0.143,
+			"d": "2026-08-01",
+			"f": 1,
+			"n": 104
+		},
+		"docs/3d-asset-pipeline.md": {
 			"s": "watch",
 			"g": 0.125,
-			"d": "2026-07-18",
-			"f": 1,
-			"n": 3
-		},
-		"docs/agora/tasks/05-commons-scaffold.md": {
-			"s": "watch",
-			"g": 0.114,
 			"d": "2026-08-05",
-			"f": 2,
-			"n": 16
+			"f": 1,
+			"n": 19
+		},
+		"docs/animations.md": {
+			"s": "watch",
+			"g": 0.125,
+			"d": "2026-08-05",
+			"f": 1,
+			"n": 29
 		},
 		"docs/tutorials/emotion-from-data.md": {
 			"s": "watch",
@@ -1139,19 +1503,19 @@
 			"f": 1,
 			"n": 3
 		},
-		"docs/validation.md": {
-			"s": "watch",
-			"g": 0.111,
-			"d": "2026-07-18",
-			"f": 1,
-			"n": 9
-		},
 		"docs/vanity.md": {
 			"s": "watch",
 			"g": 0.111,
 			"d": "2026-08-01",
 			"f": 1,
 			"n": 9
+		},
+		"docs/openai-pr/06-docs-accuracy-reconciliation.md": {
+			"s": "watch",
+			"g": 0.108,
+			"d": "2026-08-06",
+			"f": 2,
+			"n": 4
 		},
 		"docs/ops/examples-repo-export.md": {
 			"s": "watch",
@@ -1160,19 +1524,19 @@
 			"f": 2,
 			"n": 4
 		},
+		"docs/agent-shell.md": {
+			"s": "watch",
+			"g": 0.103,
+			"d": "2026-08-05",
+			"f": 2,
+			"n": 17
+		},
 		"docs/agent-abilities/wallet/10-snipe.md": {
 			"s": "watch",
 			"g": 0.1,
 			"d": "2026-07-18",
 			"f": 1,
 			"n": 3
-		},
-		"docs/agora/tasks/08-humans-first-class.md": {
-			"s": "watch",
-			"g": 0.1,
-			"d": "2026-07-10",
-			"f": 1,
-			"n": 6
 		},
 		"docs/tutorials/arm-an-agent-sniper.md": {
 			"s": "watch",
@@ -1195,47 +1559,12 @@
 			"f": 1,
 			"n": 3
 		},
-		"docs/forge-background-generation.md": {
-			"s": "watch",
-			"g": 0.083,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 8
-		},
 		"docs/mcp.md": {
 			"s": "watch",
 			"g": 0.083,
 			"d": "2026-07-31",
 			"f": 1,
 			"n": 14
-		},
-		"docs/ops/gcp-credits-plan.md": {
-			"s": "watch",
-			"g": 0.083,
-			"d": "2026-08-04",
-			"f": 1,
-			"n": 5
-		},
-		"docs/ops/gcp-logs.md": {
-			"s": "watch",
-			"g": 0.083,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 6
-		},
-		"docs/ops/payment-outcomes.md": {
-			"s": "watch",
-			"g": 0.083,
-			"d": "2026-08-01",
-			"f": 1,
-			"n": 14
-		},
-		"docs/ops/production-log-triage.md": {
-			"s": "watch",
-			"g": 0.083,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 38
 		},
 		"docs/ops/solana-rpc-lanes.md": {
 			"s": "watch",
@@ -1251,33 +1580,12 @@
 			"f": 2,
 			"n": 3
 		},
-		"docs/three-microbuy.md": {
-			"s": "watch",
-			"g": 0.083,
-			"d": "2026-07-18",
-			"f": 1,
-			"n": 7
-		},
 		"docs/tutorials/agent-reputation.md": {
 			"s": "watch",
 			"g": 0.083,
 			"d": "2026-07-18",
 			"f": 1,
 			"n": 3
-		},
-		"docs/ux-flows/10-chat-brain-labs.md": {
-			"s": "watch",
-			"g": 0.079,
-			"d": "2026-08-05",
-			"f": 2,
-			"n": 40
-		},
-		"README.md": {
-			"s": "watch",
-			"g": 0.079,
-			"d": "2026-08-05",
-			"f": 2,
-			"n": 224
 		},
 		"docs/agent-system.md": {
 			"s": "watch",
@@ -1286,13 +1594,6 @@
 			"f": 1,
 			"n": 17
 		},
-		"docs/configuration.md": {
-			"s": "watch",
-			"g": 0.076,
-			"d": "2026-08-05",
-			"f": 2,
-			"n": 25
-		},
 		"docs/demo-routes.md": {
 			"s": "watch",
 			"g": 0.076,
@@ -1300,26 +1601,19 @@
 			"f": 2,
 			"n": 58
 		},
-		"docs/ux-flows/09-x402-agent-commerce.md": {
+		"docs/ibm.md": {
 			"s": "watch",
-			"g": 0.076,
+			"g": 0.068,
+			"d": "2026-08-04",
+			"f": 2,
+			"n": 19
+		},
+		"docs/ux-flows/06-marketplace-skills.md": {
+			"s": "watch",
+			"g": 0.068,
 			"d": "2026-08-05",
 			"f": 2,
-			"n": 72
-		},
-		"docs/openai-pr/01-orphan-widget-resolution.md": {
-			"s": "watch",
-			"g": 0.07,
-			"d": "2026-07-28",
-			"f": 2,
-			"n": 5
-		},
-		"docs/tutorials/generate-3d-api.md": {
-			"s": "watch",
-			"g": 0.069,
-			"d": "2026-07-18",
-			"f": 2,
-			"n": 3
+			"n": 38
 		},
 		"docs/agent-studio.md": {
 			"s": "watch",
@@ -1335,33 +1629,19 @@
 			"f": 1,
 			"n": 1
 		},
+		"docs/generation-watch.md": {
+			"s": "watch",
+			"g": 0.067,
+			"d": "2026-07-30",
+			"f": 1,
+			"n": 2
+		},
 		"docs/labor-market.md": {
 			"s": "watch",
 			"g": 0.059,
 			"d": "2026-07-01",
 			"f": 1,
 			"n": 10
-		},
-		"docs/social-layer.md": {
-			"s": "watch",
-			"g": 0.059,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 26
-		},
-		"docs/agent-shell.md": {
-			"s": "watch",
-			"g": 0.056,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 17
-		},
-		"docs/ops/README.md": {
-			"s": "watch",
-			"g": 0.056,
-			"d": "2026-08-02",
-			"f": 1,
-			"n": 4
 		},
 		"docs/README.md": {
 			"s": "watch",
@@ -1384,24 +1664,10 @@
 			"f": 1,
 			"n": 1
 		},
-		"docs/ux-flows/03-3d-editing-viewer.md": {
-			"s": "watch",
-			"g": 0.056,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 53
-		},
 		"docs/web-component.md": {
 			"s": "watch",
 			"g": 0.056,
 			"d": "2026-07-30",
-			"f": 1,
-			"n": 1
-		},
-		"docs/tutorials/first-prompt-to-3d.md": {
-			"s": "watch",
-			"g": 0.053,
-			"d": "2026-07-15",
 			"f": 1,
 			"n": 1
 		},
@@ -1411,13 +1677,6 @@
 			"d": "2026-07-25",
 			"f": 1,
 			"n": 2
-		},
-		"docs/agora/tasks/04-professions.md": {
-			"s": "watch",
-			"g": 0.05,
-			"d": "2026-07-10",
-			"f": 1,
-			"n": 3
 		},
 		"docs/agora/tasks/10-agora-mcp.md": {
 			"s": "watch",
@@ -1447,10 +1706,10 @@
 			"f": 1,
 			"n": 9
 		},
-		"docs/tutorials/connect-ai-brain.md": {
+		"docs/tutorials/first-prompt-to-3d.md": {
 			"s": "watch",
 			"g": 0.05,
-			"d": "2026-07-16",
+			"d": "2026-07-15",
 			"f": 1,
 			"n": 1
 		},
@@ -1460,6 +1719,62 @@
 			"d": "2026-07-30",
 			"f": 1,
 			"n": 1
+		},
+		"docs/agent-abilities/chapters/03-creation-studios.md": {
+			"s": "watch",
+			"g": 0.048,
+			"d": "2026-08-05",
+			"f": 1,
+			"n": 10
+		},
+		"docs/agora/tasks/04-professions.md": {
+			"s": "watch",
+			"g": 0.048,
+			"d": "2026-07-10",
+			"f": 1,
+			"n": 3
+		},
+		"docs/tutorials/connect-ai-brain.md": {
+			"s": "watch",
+			"g": 0.048,
+			"d": "2026-07-16",
+			"f": 1,
+			"n": 1
+		},
+		"docs/agent-abilities/chapters/15-appendix.md": {
+			"s": "watch",
+			"g": 0.042,
+			"d": "2026-08-05",
+			"f": 1,
+			"n": 1
+		},
+		"docs/cookbook/text-to-3d-cli.md": {
+			"s": "watch",
+			"g": 0.042,
+			"d": "2026-08-01",
+			"f": 1,
+			"n": 2
+		},
+		"docs/ibm-community.md": {
+			"s": "watch",
+			"g": 0.042,
+			"d": "2026-08-05",
+			"f": 1,
+			"n": 2
+		},
+		"docs/tutorials/build-a-3d-asset-pipeline.md": {
+			"s": "watch",
+			"g": 0.042,
+			"d": "2026-08-01",
+			"f": 1,
+			"n": 1
+		},
+		"docs/tutorials/view-in-ar.md": {
+			"s": "watch",
+			"g": 0.042,
+			"d": "2026-07-30",
+			"f": 1,
+			"n": 2
 		},
 		"docs/3d-pipeline.md": {
 			"s": "watch",
@@ -1475,68 +1790,12 @@
 			"f": 1,
 			"n": 7
 		},
-		"docs/api/forge-x402.md": {
-			"s": "watch",
-			"g": 0.028,
-			"d": "2026-08-01",
-			"f": 1,
-			"n": 4
-		},
-		"docs/ar.md": {
-			"s": "watch",
-			"g": 0.028,
-			"d": "2026-07-30",
-			"f": 1,
-			"n": 11
-		},
 		"docs/compose.md": {
 			"s": "watch",
 			"g": 0.028,
 			"d": "2026-07-18",
 			"f": 1,
 			"n": 3
-		},
-		"docs/forge.md": {
-			"s": "watch",
-			"g": 0.028,
-			"d": "2026-08-01",
-			"f": 1,
-			"n": 11
-		},
-		"docs/build.md": {
-			"s": "watch",
-			"g": 0.02,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 15
-		},
-		"docs/coin-pages.md": {
-			"s": "watch",
-			"g": 0.02,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 102
-		},
-		"docs/copy-trading.md": {
-			"s": "watch",
-			"g": 0.02,
-			"d": "2026-08-02",
-			"f": 1,
-			"n": 20
-		},
-		"docs/ibm.md": {
-			"s": "watch",
-			"g": 0.02,
-			"d": "2026-08-04",
-			"f": 1,
-			"n": 19
-		},
-		"docs/ops/gcp-credits.md": {
-			"s": "watch",
-			"g": 0.02,
-			"d": "2026-08-02",
-			"f": 1,
-			"n": 59
 		},
 		"docs/shared-utilities.md": {
 			"s": "watch",
@@ -1566,41 +1825,6 @@
 			"f": 1,
 			"n": 1
 		},
-		"docs/ux-flows/01-onboarding-creation.md": {
-			"s": "watch",
-			"g": 0.02,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 49
-		},
-		"docs/ux-flows/02-forge-text-to-3d.md": {
-			"s": "watch",
-			"g": 0.02,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 52
-		},
-		"docs/ux-flows/04-embed-widget-studio.md": {
-			"s": "watch",
-			"g": 0.02,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 34
-		},
-		"docs/ux-flows/05-discovery-social.md": {
-			"s": "watch",
-			"g": 0.02,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 47
-		},
-		"docs/ux-flows/06-marketplace-skills.md": {
-			"s": "watch",
-			"g": 0.02,
-			"d": "2026-08-05",
-			"f": 1,
-			"n": 38
-		},
 		"docs/ux-flows/08-coin-launch-wallets.md": {
 			"s": "watch",
 			"g": 0.02,
@@ -1608,12 +1832,19 @@
 			"f": 1,
 			"n": 59
 		},
+		"docs/ux-flows/11-account-dashboard.md": {
+			"s": "watch",
+			"g": 0.02,
+			"d": "2026-08-06",
+			"f": 1,
+			"n": 43
+		},
 		"docs/ux-flows/12-home-and-content.md": {
 			"s": "watch",
 			"g": 0.02,
-			"d": "2026-08-05",
+			"d": "2026-08-06",
 			"f": 1,
-			"n": 42
+			"n": 46
 		},
 		"docs/custody.md": {
 			"s": "watch",
@@ -1622,12 +1853,12 @@
 			"f": 1,
 			"n": 3
 		},
-		"docs/3d-asset-pipeline.md": {
+		"docs/3d-api.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-05",
+			"d": "2026-08-06",
 			"f": 0,
-			"n": 19
+			"n": 11
 		},
 		"docs/agenc.md": {
 			"s": "unverifiable",
@@ -1643,13 +1874,6 @@
 			"f": 0,
 			"n": 0
 		},
-		"docs/agent-abilities/ABILITIES.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 147
-		},
 		"docs/agent-abilities/chapters/01-the-body.md": {
 			"s": "fresh",
 			"g": 0,
@@ -1664,13 +1888,6 @@
 			"f": 0,
 			"n": 0
 		},
-		"docs/agent-abilities/chapters/03-creation-studios.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 10
-		},
 		"docs/agent-abilities/chapters/10-the-agent-wallet.md": {
 			"s": "unverifiable",
 			"g": 0,
@@ -1678,33 +1895,12 @@
 			"f": 0,
 			"n": 0
 		},
-		"docs/agent-abilities/chapters/11-markets-intelligence.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 25
-		},
 		"docs/agent-abilities/chapters/12-live-worlds-social-irl.md": {
 			"s": "unverifiable",
 			"g": 0,
 			"d": "2026-07-18",
 			"f": 0,
 			"n": 0
-		},
-		"docs/agent-abilities/chapters/15-appendix.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 1
-		},
-		"docs/agent-abilities/FULL-ARTICLE.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 148
 		},
 		"docs/agent-abilities/PRODUCTION-NOTES.md": {
 			"s": "unverifiable",
@@ -1762,13 +1958,6 @@
 			"f": 0,
 			"n": 2
 		},
-		"docs/agent-abilities/wallet/07-signals.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-18",
-			"f": 0,
-			"n": 3
-		},
 		"docs/agent-abilities/wallet/08-trade.md": {
 			"s": "fresh",
 			"g": 0,
@@ -1796,13 +1985,6 @@
 			"d": "2026-07-18",
 			"f": 0,
 			"n": 1
-		},
-		"docs/agent-abilities/wallet/14-intents.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-18",
-			"f": 0,
-			"n": 3
 		},
 		"docs/agent-abilities/wallet/16-vanity.md": {
 			"s": "fresh",
@@ -1832,26 +2014,12 @@
 			"f": 0,
 			"n": 2
 		},
-		"docs/agent-abilities/wallet/20-proof-of-custody.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-18",
-			"f": 0,
-			"n": 5
-		},
 		"docs/agent-abilities/wallet/21-access.md": {
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-07-18",
 			"f": 0,
 			"n": 1
-		},
-		"docs/agent-abilities/wallet/22-recovery.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-18",
-			"f": 0,
-			"n": 3
 		},
 		"docs/agent-abilities/wallet/23-self-defense.md": {
 			"s": "fresh",
@@ -1887,13 +2055,6 @@
 			"d": "2026-08-05",
 			"f": 0,
 			"n": 3
-		},
-		"docs/agent-sniper.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 16
 		},
 		"docs/agent-symphony.md": {
 			"s": "fresh",
@@ -1937,33 +2098,19 @@
 			"f": 0,
 			"n": 1
 		},
+		"docs/agora.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-06",
+			"f": 0,
+			"n": 18
+		},
 		"docs/agora/tasks/03-task-supply.md": {
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-07-10",
 			"f": 0,
 			"n": 3
-		},
-		"docs/agora/tasks/06-economy-visuals.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-10",
-			"f": 0,
-			"n": 5
-		},
-		"docs/agora/tasks/07-verify-and-passport.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-10",
-			"f": 0,
-			"n": 4
-		},
-		"docs/agora/tasks/09-arena-and-guilds.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-10",
-			"f": 0,
-			"n": 4
 		},
 		"docs/alpha-copilot.md": {
 			"s": "fresh",
@@ -1972,24 +2119,24 @@
 			"f": 0,
 			"n": 2
 		},
-		"docs/animations.md": {
+		"docs/api/forge-x402.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-05",
+			"d": "2026-08-06",
 			"f": 0,
-			"n": 29
+			"n": 5
 		},
-		"docs/api-reference.md": {
+		"docs/ar.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-05",
+			"d": "2026-08-06",
 			"f": 0,
-			"n": 139
+			"n": 13
 		},
 		"docs/authentication.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-07-30",
+			"d": "2026-08-06",
 			"f": 0,
 			"n": 12
 		},
@@ -2027,13 +2174,6 @@
 			"d": "2026-08-02",
 			"f": 0,
 			"n": 2
-		},
-		"docs/avatar-thumbnails.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 15
 		},
 		"docs/avatar-wardrobe.md": {
 			"s": "fresh",
@@ -2115,16 +2255,16 @@
 		"docs/chatgpt-3d-studio-gpt.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-07-29",
+			"d": "2026-08-06",
 			"f": 0,
 			"n": 2
 		},
-		"docs/circulation-engine.md": {
+		"docs/chatgpt-ar.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-05",
+			"d": "2026-08-06",
 			"f": 0,
-			"n": 7
+			"n": 16
 		},
 		"docs/clash.md": {
 			"s": "fresh",
@@ -2139,13 +2279,6 @@
 			"d": "2026-07-16",
 			"f": 0,
 			"n": 1
-		},
-		"docs/coin-launches.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-18",
-			"f": 0,
-			"n": 3
 		},
 		"docs/coinmarketcap-article-play.md": {
 			"s": "unverifiable",
@@ -2213,7 +2346,7 @@
 		"docs/cookbook/asset-quality-gate.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-01",
+			"d": "2026-08-06",
 			"f": 0,
 			"n": 1
 		},
@@ -2227,16 +2360,9 @@
 		"docs/cookbook/parallel-asset-pack.md": {
 			"s": "unverifiable",
 			"g": 0,
-			"d": "2026-08-01",
+			"d": "2026-08-06",
 			"f": 0,
 			"n": 0
-		},
-		"docs/cookbook/text-to-3d-cli.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-01",
-			"f": 0,
-			"n": 2
 		},
 		"docs/cosmos.md": {
 			"s": "fresh",
@@ -2252,26 +2378,12 @@
 			"f": 0,
 			"n": 8
 		},
-		"docs/deployments.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-30",
-			"f": 0,
-			"n": 6
-		},
 		"docs/do-i-need-crypto.md": {
 			"s": "unverifiable",
 			"g": 0,
 			"d": "2026-07-18",
 			"f": 0,
 			"n": 0
-		},
-		"docs/economy-master.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 27
 		},
 		"docs/embedding.md": {
 			"s": "fresh",
@@ -2280,20 +2392,6 @@
 			"f": 0,
 			"n": 4
 		},
-		"docs/erc8004.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-01",
-			"f": 0,
-			"n": 12
-		},
-		"docs/examples.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-02",
-			"f": 0,
-			"n": 16
-		},
 		"docs/exit-lab.md": {
 			"s": "fresh",
 			"g": 0,
@@ -2301,24 +2399,31 @@
 			"f": 0,
 			"n": 6
 		},
-		"docs/financial-controls.md": {
+		"docs/forge.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-05",
+			"d": "2026-08-06",
 			"f": 0,
-			"n": 13
-		},
-		"docs/forge-pipeline.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 29
+			"n": 11
 		},
 		"docs/forged.md": {
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-07-30",
+			"f": 0,
+			"n": 6
+		},
+		"docs/free-crypto-apis.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-06",
+			"f": 0,
+			"n": 7
+		},
+		"docs/free-llm-providers.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-05",
 			"f": 0,
 			"n": 6
 		},
@@ -2328,13 +2433,6 @@
 			"d": "2026-07-30",
 			"f": 0,
 			"n": 7
-		},
-		"docs/generation-watch.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-30",
-			"f": 0,
-			"n": 2
 		},
 		"docs/genome.md": {
 			"s": "fresh",
@@ -2385,13 +2483,6 @@
 			"f": 0,
 			"n": 0
 		},
-		"docs/ibm-community.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 2
-		},
 		"docs/ibm-x402-mcp.md": {
 			"s": "fresh",
 			"g": 0,
@@ -2416,9 +2507,9 @@
 		"docs/internal/MAINNET-TEST-2026-07-03.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-05",
+			"d": "2026-08-06",
 			"f": 0,
-			"n": 9
+			"n": 10
 		},
 		"docs/introduction.md": {
 			"s": "fresh",
@@ -2426,20 +2517,6 @@
 			"d": "2026-08-04",
 			"f": 0,
 			"n": 1
-		},
-		"docs/irl.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-18",
-			"f": 0,
-			"n": 5
-		},
-		"docs/kol-tracker.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-30",
-			"f": 0,
-			"n": 9
 		},
 		"docs/listings.md": {
 			"s": "unverifiable",
@@ -2479,9 +2556,16 @@
 		"docs/mcp-3d-studio.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-05",
+			"d": "2026-08-06",
 			"f": 0,
 			"n": 9
+		},
+		"docs/mcp-studio.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-06",
+			"f": 0,
+			"n": 13
 		},
 		"docs/mcp-tools.md": {
 			"s": "fresh",
@@ -2525,13 +2609,6 @@
 			"f": 0,
 			"n": 4
 		},
-		"docs/money-map.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 16
-		},
 		"docs/monitor.md": {
 			"s": "fresh",
 			"g": 0,
@@ -2545,13 +2622,6 @@
 			"d": "2026-07-30",
 			"f": 0,
 			"n": 0
-		},
-		"docs/news-rights.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-21",
-			"f": 0,
-			"n": 11
 		},
 		"docs/nvidia-inception.md": {
 			"s": "unverifiable",
@@ -2588,19 +2658,19 @@
 			"f": 0,
 			"n": 5
 		},
-		"docs/ops/gcp-model-workers.md": {
+		"docs/openai-pr/00-START-HERE.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-05",
+			"d": "2026-08-06",
 			"f": 0,
 			"n": 9
 		},
-		"docs/ops/llm-lanes.md": {
+		"docs/openai-pr/07-final-verification-and-submit.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-02",
+			"d": "2026-08-06",
 			"f": 0,
-			"n": 11
+			"n": 4
 		},
 		"docs/ops/wallet-key-migration.md": {
 			"s": "fresh",
@@ -2833,13 +2903,6 @@
 			"f": 0,
 			"n": 1
 		},
-		"docs/reputation.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-18",
-			"f": 0,
-			"n": 6
-		},
 		"docs/risk-acknowledgment.md": {
 			"s": "fresh",
 			"g": 0,
@@ -2896,20 +2959,6 @@
 			"f": 0,
 			"n": 4
 		},
-		"docs/sketchfab.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-15",
-			"f": 0,
-			"n": 2
-		},
-		"docs/smart-contracts.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-18",
-			"f": 0,
-			"n": 2
-		},
 		"docs/solana-reputation.md": {
 			"s": "fresh",
 			"g": 0,
@@ -2923,13 +2972,6 @@
 			"d": "2026-07-30",
 			"f": 0,
 			"n": 4
-		},
-		"docs/sperax-npm-launch-x-post.md": {
-			"s": "unverifiable",
-			"g": 0,
-			"d": null,
-			"f": 0,
-			"n": 0
 		},
 		"docs/splat.md": {
 			"s": "fresh",
@@ -2948,7 +2990,7 @@
 		"docs/start-here.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-02",
+			"d": "2026-08-05",
 			"f": 0,
 			"n": 1
 		},
@@ -2959,10 +3001,10 @@
 			"f": 0,
 			"n": 6
 		},
-		"docs/swarms.md": {
+		"docs/syndication.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-07-30",
+			"d": "2026-08-05",
 			"f": 0,
 			"n": 2
 		},
@@ -2979,20 +3021,6 @@
 			"d": "2026-08-02",
 			"f": 0,
 			"n": 1
-		},
-		"docs/trader-passport.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-02",
-			"f": 0,
-			"n": 2
-		},
-		"docs/trading-copilot.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 8
 		},
 		"docs/trading-surfaces.md": {
 			"s": "fresh",
@@ -3019,13 +3047,6 @@
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-07-30",
-			"f": 0,
-			"n": 1
-		},
-		"docs/tutorials/build-a-3d-asset-pipeline.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-01",
 			"f": 0,
 			"n": 1
 		},
@@ -3092,6 +3113,13 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/tutorials/generate-3d-api.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-06",
+			"f": 0,
+			"n": 3
+		},
 		"docs/tutorials/getting-started.md": {
 			"s": "unverifiable",
 			"g": 0,
@@ -3109,7 +3137,7 @@
 		"docs/tutorials/image-to-3d.md": {
 			"s": "unverifiable",
 			"g": 0,
-			"d": "2026-07-18",
+			"d": "2026-08-06",
 			"f": 0,
 			"n": 0
 		},
@@ -3147,20 +3175,6 @@
 			"d": "2026-06-23",
 			"f": 0,
 			"n": 0
-		},
-		"docs/tutorials/pay-for-x402-service.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-01",
-			"f": 0,
-			"n": 10
-		},
-		"docs/tutorials/place-agent-irl.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-30",
-			"f": 0,
-			"n": 2
 		},
 		"docs/tutorials/prompts-for-3d.md": {
 			"s": "unverifiable",
@@ -3256,7 +3270,7 @@
 		"docs/tutorials/text-to-3d.md": {
 			"s": "unverifiable",
 			"g": 0,
-			"d": "2026-07-31",
+			"d": "2026-08-06",
 			"f": 0,
 			"n": 0
 		},
@@ -3271,13 +3285,6 @@
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-07-11",
-			"f": 0,
-			"n": 2
-		},
-		"docs/tutorials/view-in-ar.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-07-30",
 			"f": 0,
 			"n": 2
 		},
@@ -3308,6 +3315,13 @@
 			"d": "2026-08-05",
 			"f": 0,
 			"n": 11
+		},
+		"docs/ux-flows/10-chat-brain-labs.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-06",
+			"f": 0,
+			"n": 38
 		},
 		"docs/vaults.md": {
 			"s": "fresh",
@@ -3343,20 +3357,6 @@
 			"d": "2026-08-05",
 			"f": 0,
 			"n": 0
-		},
-		"docs/x402-distribution.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-05",
-			"f": 0,
-			"n": 13
-		},
-		"docs/x402-endpoints.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-01",
-			"f": 0,
-			"n": 104
 		},
 		"docs/x402-studio.md": {
 			"s": "fresh",
@@ -3399,6 +3399,13 @@
 			"d": "2026-06-10",
 			"f": 0,
 			"n": 0
+		},
+		"README.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-06",
+			"f": 0,
+			"n": 224
 		}
 	}
 }
