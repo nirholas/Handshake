@@ -47,6 +47,22 @@ async function loadUser(userId) {
 	return u || null;
 }
 
+// AgenC rejects a claim/completion for real, explainable reasons (you posted it,
+// someone already took it, your reputation is short). Every AnchorError carries
+// the program's own human-readable reason, so surface THAT instead of a
+// generic 502 the user can do nothing with. Returns null for non-Anchor failures
+// (RPC/transport), which stay a 502 + support ref.
+function onchainRejection(err) {
+	const msg = String(err?.message || '');
+	const reason = /Error Message:\s*([^\n]+)/.exec(msg);
+	if (!reason) return null;
+	const name = /Error Code:\s*(\w+)/.exec(msg);
+	const code = name
+		? name[1].replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase()
+		: 'onchain_rejected';
+	return { code, message: reason[1].trim().replace(/\.$/, '') };
+}
+
 function reqHash(action, body) {
 	return createHash('sha256').update(JSON.stringify({ action, body })).digest('hex');
 }
@@ -230,7 +246,7 @@ async function postTaskCore({ user, body, requestedCluster, hire }) {
 		try {
 			created = await createAgenCTask(reg.client, createArgs);
 		} catch (e) {
-			return { err: [502, 'escrow_failed', 'the bounty was not posted — no funds moved'], cause: e };
+			return { err: [502, 'escrow_failed', 'the bounty was not posted, no funds moved'], cause: e };
 		}
 
 		const taskPda = created.taskPda.toBase58();
@@ -239,8 +255,8 @@ async function postTaskCore({ user, body, requestedCluster, hire }) {
 		const mintLabel = cluster === 'mainnet' ? '$THREE' : null;
 
 		const narrative = hire
-			? `${citizen.display_name} hired ${target.display_name} for a ${profession} task — ${label}.`
-			: `${citizen.display_name} posted a ${profession} bounty — ${label}.`;
+			? `${citizen.display_name} hired ${target.display_name} for a ${profession} task (${label}).`
+			: `${citizen.display_name} posted a ${profession} bounty (${label}).`;
 
 		await projectActivity({
 			citizenId: citizen.id,
@@ -312,6 +328,18 @@ async function actClaim(user, body) {
 	if (!taskPda) return { err: [400, 'validation_error', 'taskPda is required'] };
 
 	const { citizen } = await ensureHumanCitizen({ user, cluster });
+
+	// AgenC forbids claiming your own bounty (SelfTaskNotAllowed). Our projection
+	// already knows who posted it, so answer from there instead of spending a
+	// round trip to be told no by the program.
+	const [ownPost] = await sql`
+		select 1 from agora_activity
+		where task_pda = ${taskPda} and citizen_id = ${citizen.id}
+		  and kind in ('posted_task', 'hired') limit 1`;
+	if (ownPost) {
+		return { err: [409, 'self_task_not_allowed', 'You posted this bounty, so you cannot claim it yourself. It stays on the board until another citizen takes it on.'] };
+	}
+
 	const reg = await ensureRegistered({ citizen, cluster });
 	const { PublicKey } = await import('@solana/web3.js');
 	const { claimAgenCTask } = await import('@three-ws/solana-agent');
@@ -320,6 +348,8 @@ async function actClaim(user, body) {
 	try {
 		claim = await claimAgenCTask(reg.client, { taskPda: new PublicKey(taskPda), workerAgentId: reg.agentId });
 	} catch (e) {
+		const rejected = onchainRejection(e);
+		if (rejected) return { err: [409, rejected.code, rejected.message] };
 		return { err: [502, 'claim_failed', 'could not claim the task'], cause: e };
 	}
 
@@ -370,6 +400,8 @@ async function actComplete(user, body) {
 			taskPda: pda, workerAgentId: reg.agentId, proofHash, resultData,
 		});
 	} catch (e) {
+		const rejected = onchainRejection(e);
+		if (rejected) return { err: [409, rejected.code, rejected.message] };
 		return { err: [502, 'complete_failed', 'could not submit the proof'], cause: e };
 	}
 
