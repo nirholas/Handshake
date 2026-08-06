@@ -34,6 +34,7 @@ import { verifyHolderPass } from '../holder-pass.js';
 import { socialHub } from '../social-hub.js';
 import { verifyPresenceTicket } from '../presence-token.js';
 import { verifyPlayPass } from '../play-pass.js';
+import { containsHateSlur } from '../display-name-safety.js';
 import { installUnknownMessageGuard, PLAY_PASS_EVICT_CODE } from '../room-compat.js';
 import {
 	restoreProfile, serializeProfile, profileSnapshot,
@@ -94,7 +95,18 @@ const PLAY_GATE_MIN = (() => {
 	return Number.isFinite(n) && n > 0 ? n : 1;
 })();
 
-const MAX_CLIENTS_PER_ROOM = 50;
+// Room ceiling. When a room fills, Colyseus's joinOrCreate silently spawns a
+// second instance with the same (coin, tier) filter: players past the cap land
+// in a parallel copy of the world with no UI signal that their friends are in
+// the other one. Until that spillover has a real client-side story, keep the
+// cap high enough that a live-event crowd fits in ONE room: at 100 clients the
+// move-sync cost is ~40KB/s down per client (99 peers × ~28B × 15Hz), well
+// inside both the container and a normal connection. Override per-deploy with
+// WALK_ROOM_MAX_CLIENTS; the env guard clamps nonsense values.
+const MAX_CLIENTS_PER_ROOM = (() => {
+	const n = Number(process.env.WALK_ROOM_MAX_CLIENTS);
+	return Number.isFinite(n) && n >= 2 && n <= 500 ? Math.floor(n) : 100;
+})();
 const PATCH_RATE_HZ = 15;
 const PATCH_RATE_MS = 1000 / PATCH_RATE_HZ;
 
@@ -285,6 +297,11 @@ const ACTION_RATES = {
 	// Wheel of Fortune (W09) — deliberate, low-frequency, currency/payment-mutating
 	// actions, throttled like the boutique's above.
 	spinInfo: 4, spinFree: 3, spinPaidPrep: 3, spinPaidSettle: 3,
+	// Identity mutations. Each write dirties a synced string field that fans out
+	// to every client in the room, so an unthrottled flood is a broadcast
+	// amplifier: 2/s covers every legitimate use (a typo fix, a mid-session
+	// avatar swap) with a wide margin.
+	rename: 2, avatar: 2, voiceState: 4,
 };
 
 // Spatial voice signaling. The room only relays SDP/ICE between two peers (the
@@ -364,8 +381,16 @@ export class WalkRoom extends Room {
 	// token the API mints after pricing the user's authenticated wallet against
 	// HOLDER_MIN_USD of this exact coin. We verify the pass here, before onJoin,
 	// and reject otherwise. Returning false makes Colyseus answer the
-	// matchmake/seat request with a 401 the client surfaces as the locked gate.
-	static onAuth(client, options) {
+	// join with an auth error the client surfaces as the locked gate.
+	//
+	// INSTANCE method, not static, and that is load-bearing: Colyseus 0.16 calls
+	// a *static* onAuth as onAuth(token, options, context), where token is the
+	// HTTP bearer token (undefined for our clients). The old static declaration
+	// here received that undefined as "client", so every path that assigned
+	// client.userData (the play gate and the whole holder tier) threw a
+	// TypeError on join. The instance form receives the real client at WS join
+	// time and its return value is stored as client.auth.
+	onAuth(client, options) {
 		// Platform token gate (orthogonal to the per-coin holder tier below). When a
 		// game token is pinned, no client reaches any world — General or Holders —
 		// without a play pass proving a signed-in wallet holds ≥ the floor. Throw
@@ -714,7 +739,11 @@ export class WalkRoom extends Room {
 	}
 
 	async onJoin(client, options) {
-		const name = clean(options?.name, 24) || `guest-${client.sessionId.slice(0, 4)}`;
+		// A hate-slur display name never reaches a nameplate: fall back to the
+		// guest handle, same narrow whole-word gate the platform uses on indexed
+		// third-party names (see display-name-safety.js).
+		let name = clean(options?.name, 24) || `guest-${client.sessionId.slice(0, 4)}`;
+		if (containsHateSlur(name)) name = `guest-${client.sessionId.slice(0, 4)}`;
 		const player = new Player();
 		player.id = client.sessionId;
 		player.name = name;
@@ -1489,8 +1518,13 @@ export class WalkRoom extends Room {
 	_handleRename(client, payload) {
 		const player = this.state.players.get(client.sessionId);
 		if (!player) return;
+		if (!this._actionOk(client.sessionId, 'rename')) return;
 		const name = clean(payload?.name, 24);
 		if (!name) return;
+		// Same narrow whole-word hate-slur gate the platform applies to indexed
+		// display names. A refused rename is a silent no-op: the previous name
+		// stands, and there is nothing to explain to someone probing the filter.
+		if (containsHateSlur(name)) return;
 		player.name = name;
 	}
 
@@ -1525,6 +1559,10 @@ export class WalkRoom extends Room {
 		if (!player) return;
 		const text = clean(payload?.text, 200);
 		if (!text) return;
+		// Narrow whole-word hate-slur gate (see display-name-safety.js): deliberately
+		// NOT a profanity filter (crypto chat is crude by nature), but a slur is
+		// never relayed to fifty screens with our nameplate UI around it.
+		if (containsHateSlur(text)) return;
 		// One message per 700ms per client — enough for conversation, not spam.
 		const now = Date.now();
 		const last = this._chatCooldowns.get(client.sessionId) || 0;
@@ -1540,6 +1578,7 @@ export class WalkRoom extends Room {
 		// without rejoining the room.
 		const player = this.state.players.get(client.sessionId);
 		if (!player) return;
+		if (!this._actionOk(client.sessionId, 'avatar')) return;
 		const url = cleanAvatarUrl(payload?.avatar);
 		if (url) player.avatar = url;
 		if (typeof payload?.agent === 'string') player.agent = clean(payload.agent, 64);
@@ -1552,6 +1591,7 @@ export class WalkRoom extends Room {
 	_handleVoiceState(client, payload) {
 		const player = this.state.players.get(client.sessionId);
 		if (!player) return;
+		if (!this._actionOk(client.sessionId, 'voiceState')) return;
 		player.voice = !!(payload && payload.on);
 	}
 

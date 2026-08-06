@@ -114,8 +114,11 @@ export function tickMobs(room, dtMs) {
 		}
 
 		if (!target) {
-			if (mob.state !== 'idle') mob.state = 'idle';
-			mob.tsServer = now;
+			// Stamp tsServer only on the transition to idle, never every tick: an
+			// unconditional write dirties a synced float64 for every alive mob at
+			// 5Hz, which kept every state patch non-empty for every client even in
+			// an empty world. An idle mob's fields are static; peers need no tick.
+			if (mob.state !== 'idle') { mob.state = 'idle'; mob.tsServer = now; }
 			continue;
 		}
 

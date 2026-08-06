@@ -59,7 +59,13 @@ export class ClashRoom extends Room {
 	// what makes a clash a battle BETWEEN communities — you can only wear a community's
 	// colours if you actually hold its coin. The faction must also be one of the two in
 	// this match. Throw on refusal so the client routes back to its gate.
-	static onAuth(client, options) {
+	//
+	// INSTANCE method, not static: Colyseus 0.16 calls a static onAuth as
+	// onAuth(token, options, context) with the HTTP bearer token (undefined for
+	// our clients) as the first argument, so the old static form crashed with a
+	// TypeError on client.userData for EVERY join. Instance onAuth receives the
+	// real client at WS join time. Mirrors the same fix in WalkRoom.
+	onAuth(client, options) {
 		if (PLAY_GATE_MINT) {
 			const pass = verifyPlayPass(options?.playPass);
 			if (!pass) throw new Error('play_pass_required');
