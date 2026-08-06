@@ -131,12 +131,23 @@ async function dailySpentAtomic(citizenId, rewardMint, windowHours = 24) {
 	}
 }
 
+// How long a pre-chain hold counts against the cap. Long enough to cover the
+// slowest escrow round trip (register + fund + createTask on a congested
+// cluster), short enough that a process killed mid-post frees the citizen's
+// headroom on its own. Nothing sweeps these: the cap sum simply ignores older
+// held rows, so expiry needs no cron to be correct.
+const HOLD_TTL_MINUTES = 10;
+
 /**
  * Check whether a citizen may escrow `amountAtomic` for a new bounty/hire under
  * their per-user policy on `cluster`. Returns { ok: true, caps, spentAtomic } or
- * { ok: false, status, code, message, detail } — the caller maps the failure
+ * { ok: false, status, code, message, detail }: the caller maps the failure
  * straight to an HTTP error. Never throws for a policy decision; only a DB error
  * propagates.
+ *
+ * This is the READ-ONLY check, used for previews and for the fast rejection path.
+ * A post that is about to touch the chain must use reservePostSpend() instead,
+ * which takes a hold in the same statement that sums the window.
  */
 export async function checkPostSpend({ citizenId, cluster, amountAtomic, requestedCluster }) {
 	// Mainnet must be explicitly enabled. If the caller asked for mainnet but the
@@ -182,4 +193,106 @@ export async function checkPostSpend({ citizenId, cluster, amountAtomic, request
 	}
 
 	return { ok: true, caps, spentAtomic: spent.toString() };
+}
+
+/**
+ * Reserve daily-cap headroom for a post/hire BEFORE the on-chain escrow, and
+ * return the hold. Same policy decisions as checkPostSpend (mainnet gate,
+ * per-task cap, rolling daily cap), but the daily check and the hold are ONE
+ * statement under a per-citizen advisory lock, which is what closes the race
+ * checkPostSpend alone left open (security review L6): the projection it meters
+ * against is written after the chain call, so two concurrent posts could both
+ * read a pre-spend total neither of them was any longer entitled to.
+ *
+ * The caller MUST resolve the hold: settlePostSpend() once the activity row is
+ * projected (the projection then counts it), or releasePostSpend() if the escrow
+ * never happened. An unresolved hold expires on its own after HOLD_TTL_MINUTES.
+ *
+ * @returns {Promise<{ ok: true, caps, spentAtomic: string, reservationId: string }
+ *                  | { ok: false, status, code, message, detail? }>}
+ */
+export async function reservePostSpend({ citizenId, cluster, amountAtomic, requestedCluster }) {
+	const pre = await checkPostSpend({ citizenId, cluster, amountAtomic, requestedCluster });
+	if (!pre.ok) return pre;
+
+	const caps = pre.caps;
+	const amount = BigInt(amountAtomic).toString();
+	const daily = caps.dailyAtomic.toString();
+	const mint = caps.rewardMint;
+	const rows = await sql`
+		with locked as (
+			select pg_advisory_xact_lock(hashtextextended(${String(citizenId)}, 0))
+		),
+		spent as (
+			select coalesce(sum(amount_atomic), 0) as s
+			from agora_activity
+			where citizen_id = ${citizenId}
+			  and kind in ('posted_task', 'hired')
+			  and reward_mint is not distinct from ${mint}
+			  and created_at > now() - interval '24 hours'
+		),
+		held as (
+			select coalesce(sum(amount_atomic), 0) as s
+			from agora_spend_reservations
+			where citizen_id = ${citizenId}
+			  and reward_mint is not distinct from ${mint}
+			  and state = 'held'
+			  and created_at > now() - (${HOLD_TTL_MINUTES} * interval '1 minute')
+		)
+		insert into agora_spend_reservations (citizen_id, amount_atomic, reward_mint)
+		select ${citizenId}, ${amount}::numeric, ${mint}
+		from spent, held, locked
+		where spent.s + held.s + ${amount}::numeric <= ${daily}::numeric
+		returning id, ((select s from spent) + (select s from held))::text as committed_before
+	`;
+
+	if (!rows.length) {
+		return {
+			ok: false,
+			status: 403,
+			code: 'daily_cap',
+			message: `This would exceed your rolling 24h Agora spend cap of ${caps.daily} ${caps.asset}.`,
+			detail: { daily: caps.daily, asset: caps.asset, cluster },
+		};
+	}
+	return {
+		ok: true,
+		caps,
+		spentAtomic: rows[0].committed_before ?? '0',
+		reservationId: rows[0].id,
+	};
+}
+
+/**
+ * Mark a hold as settled once its activity row exists. Call it AFTER
+ * projectActivity, never before: while both rows exist the spend is counted
+ * twice, which is the conservative direction, whereas settling first opens a gap
+ * where a concurrent post sees neither.
+ */
+export async function settlePostSpend(reservationId, { taskPda = null, txSignature = null } = {}) {
+	if (!reservationId) return;
+	await sql`
+		update agora_spend_reservations
+		set state = 'settled', resolved_at = now(),
+		    task_pda = coalesce(${taskPda}, task_pda),
+		    tx_signature = coalesce(${txSignature}, tx_signature)
+		where id = ${reservationId} and state = 'held'
+	`.catch((err) => {
+		// The hold expires on its own, so a failed settle costs the citizen a few
+		// minutes of headroom, never correctness. Log it rather than failing a post
+		// whose escrow already landed on-chain.
+		console.warn('[agora-policy] settle hold failed', { reservationId, reason: err?.message || String(err) });
+	});
+}
+
+/** Release a hold whose escrow never happened, freeing the headroom immediately. */
+export async function releasePostSpend(reservationId) {
+	if (!reservationId) return;
+	await sql`
+		update agora_spend_reservations
+		set state = 'released', resolved_at = now()
+		where id = ${reservationId} and state = 'held'
+	`.catch((err) => {
+		console.warn('[agora-policy] release hold failed', { reservationId, reason: err?.message || String(err) });
+	});
 }

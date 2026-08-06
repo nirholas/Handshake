@@ -30,7 +30,7 @@ import {
 	PROFESSION_BITS, THREE_ATOMICS_PER_TOKEN, rewardLabel, proofHashFor,
 	sendOnchainAttestation, explorerTx,
 } from '../_lib/agora-human.js';
-import { resolveCluster, checkPostSpend } from '../_lib/agora-policy.js';
+import { resolveCluster, reservePostSpend, settlePostSpend, releasePostSpend } from '../_lib/agora-policy.js';
 import { redactUrlSecrets as redactSecrets } from '../_lib/scrub-secrets.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000n;
@@ -173,100 +173,118 @@ async function postTaskCore({ user, body, requestedCluster, hire }) {
 
 	// Per-user spend policy + mainnet gate (server-side, ledger-backed).
 	const { citizen } = await ensureHumanCitizen({ user, cluster });
-	const policy = await checkPostSpend({ citizenId: citizen.id, cluster, amountAtomic, requestedCluster });
+	// Reserve the daily-cap headroom BEFORE the chain call. The projection this
+	// cap meters against is only written after the escrow lands, so a plain check
+	// left a window in which two concurrent posts could both spend the same
+	// headroom (security review L6). The hold counts until the projection takes
+	// over, and the finally below frees it on every path that never escrows.
+	const policy = await reservePostSpend({ citizenId: citizen.id, cluster, amountAtomic, requestedCluster });
 	if (!policy.ok) return { err: [policy.status, policy.code, policy.message, policy.detail] };
-
-	// Register on-chain (lazy) + fund the reward escrow on devnet.
-	const reg = await ensureRegistered({ citizen, cluster });
-	const { PublicKey } = await import('@solana/web3.js');
-
-	const createArgs = {
-		creatorAgentId: reg.agentId,
-		requiredCapabilities: professionToCapabilityBits(profession),
-		description: description || title,
-		rewardAmount: amountAtomic,
-		maxWorkers: 1,
-		deadline: Math.floor(Date.now() / 1000) + Math.max(1, Math.min(720, Number(body.deadlineHours) || 24)) * 3600,
-		taskType: 'Exclusive',
-		minReputation,
-	};
-
-	if (cluster === 'mainnet') {
-		const { getAssociatedTokenAddressSync } = await import('@solana/spl-token');
-		createArgs.rewardMint = new PublicKey(TOKEN_MINT);
-		createArgs.creatorTokenAccount = getAssociatedTokenAddressSync(new PublicKey(TOKEN_MINT), reg.signer.publicKey, false);
-		// Real money: check the $THREE the escrow will actually debit before we
-		// sign, so "you don't hold enough $THREE" is a designed state and not an
-		// SPL transfer failure surfaced as a 502.
-		const held = await citizenBalances(citizen, cluster).catch(() => ({ three: null }));
-		const needThree = Number(amountAtomic) / Number(THREE_ATOMICS_PER_TOKEN);
-		if (held.three != null && held.three < needThree) {
-			return {
-				err: [409, 'insufficient_funds',
-					`This bounty escrows ${rewardLabel(amountAtomic, cluster)} and your Agora wallet holds ${held.three.toLocaleString('en-US')} $THREE. Send $THREE to your wallet address, then post again.`,
-					{ walletAddress: held.address, asset: '$THREE', cluster, needed: needThree, have: held.three }],
-			};
-		}
-	} else {
-		// Devnet native-SOL escrow: top up, then gate on the real balance so a
-		// throttled faucet reads as "fund this address", not a 500.
-		const needLamports = Number(amountAtomic) + 10_000_000;
-		await ensureDevnetBalance(reg.client.connection, reg.signer, needLamports);
-		await requireFunded({
-			connection: reg.client.connection, address: reg.signer.publicKey,
-			neededLamports: needLamports, cluster, purpose: 'escrow this bounty',
-		});
-	}
-
-	const { createAgenCTask } = await import('@three-ws/solana-agent');
-	let created;
+	const hold = policy.reservationId;
+	let settled = false;
 	try {
-		created = await createAgenCTask(reg.client, createArgs);
-	} catch (e) {
-		return { err: [502, 'escrow_failed', 'the bounty was not posted — no funds moved'], cause: e };
-	}
+		// Register on-chain (lazy) + fund the reward escrow on devnet.
+		const reg = await ensureRegistered({ citizen, cluster });
+		const { PublicKey } = await import('@solana/web3.js');
 
-	const taskPda = created.taskPda.toBase58();
-	const taskIdHex = Buffer.from(created.taskId).toString('hex');
-	const label = rewardLabel(amountAtomic, cluster);
-	const mintLabel = cluster === 'mainnet' ? '$THREE' : null;
+		const createArgs = {
+			creatorAgentId: reg.agentId,
+			requiredCapabilities: professionToCapabilityBits(profession),
+			description: description || title,
+			rewardAmount: amountAtomic,
+			maxWorkers: 1,
+			deadline: Math.floor(Date.now() / 1000) + Math.max(1, Math.min(720, Number(body.deadlineHours) || 24)) * 3600,
+			taskType: 'Exclusive',
+			minReputation,
+		};
 
-	const narrative = hire
-		? `${citizen.display_name} hired ${target.display_name} for a ${profession} task — ${label}.`
-		: `${citizen.display_name} posted a ${profession} bounty — ${label}.`;
+		if (cluster === 'mainnet') {
+			const { getAssociatedTokenAddressSync } = await import('@solana/spl-token');
+			createArgs.rewardMint = new PublicKey(TOKEN_MINT);
+			createArgs.creatorTokenAccount = getAssociatedTokenAddressSync(new PublicKey(TOKEN_MINT), reg.signer.publicKey, false);
+			// Real money: check the $THREE the escrow will actually debit before we
+			// sign, so "you don't hold enough $THREE" is a designed state and not an
+			// SPL transfer failure surfaced as a 502.
+			const held = await citizenBalances(citizen, cluster).catch(() => ({ three: null }));
+			const needThree = Number(amountAtomic) / Number(THREE_ATOMICS_PER_TOKEN);
+			if (held.three != null && held.three < needThree) {
+				return {
+					err: [409, 'insufficient_funds',
+						`This bounty escrows ${rewardLabel(amountAtomic, cluster)} and your Agora wallet holds ${held.three.toLocaleString('en-US')} $THREE. Send $THREE to your wallet address, then post again.`,
+						{ walletAddress: held.address, asset: '$THREE', cluster, needed: needThree, have: held.three }],
+				};
+			}
+		} else {
+			// Devnet native-SOL escrow: top up, then gate on the real balance so a
+			// throttled faucet reads as "fund this address", not a 500.
+			const needLamports = Number(amountAtomic) + 10_000_000;
+			await ensureDevnetBalance(reg.client.connection, reg.signer, needLamports);
+			await requireFunded({
+				connection: reg.client.connection, address: reg.signer.publicKey,
+				neededLamports: needLamports, cluster, purpose: 'escrow this bounty',
+			});
+		}
 
-	await projectActivity({
-		citizenId: citizen.id,
-		kind: hire ? 'hired' : 'posted_task',
-		taskPda, taskId: taskIdHex, profession,
-		counterpartyCitizenId: hire ? target.id : null,
-		amountAtomic: amountAtomic.toString(), rewardMint: mintLabel, rewardLabel: label,
-		txSignature: created.txSignature, narrative,
-		worldX: citizen.home_x, worldZ: citizen.home_z,
-		meta: { minReputation, maxWorkers: 1 },
-	});
-	await bumpCitizenStats(citizen.id, { incPosted: 1, status: 'idle' });
+		const { createAgenCTask } = await import('@three-ws/solana-agent');
+		let created;
+		try {
+			created = await createAgenCTask(reg.client, createArgs);
+		} catch (e) {
+			return { err: [502, 'escrow_failed', 'the bounty was not posted — no funds moved'], cause: e };
+		}
 
-	const { publishFeedEvent } = await import('../_lib/feed.js');
-	publishFeedEvent({
-		type: hire ? 'agora-hired' : 'agora-task-posted',
-		actor: citizen.display_name.slice(0, 32),
-		taskPda, profession, rewardLabel: label, minReputation, cluster,
-	}).catch(() => {});
+		const taskPda = created.taskPda.toBase58();
+		const taskIdHex = Buffer.from(created.taskId).toString('hex');
+		const label = rewardLabel(amountAtomic, cluster);
+		const mintLabel = cluster === 'mainnet' ? '$THREE' : null;
 
-	return {
-		ok: true,
-		body: {
+		const narrative = hire
+			? `${citizen.display_name} hired ${target.display_name} for a ${profession} task — ${label}.`
+			: `${citizen.display_name} posted a ${profession} bounty — ${label}.`;
+
+		await projectActivity({
+			citizenId: citizen.id,
+			kind: hire ? 'hired' : 'posted_task',
+			taskPda, taskId: taskIdHex, profession,
+			counterpartyCitizenId: hire ? target.id : null,
+			amountAtomic: amountAtomic.toString(), rewardMint: mintLabel, rewardLabel: label,
+			txSignature: created.txSignature, narrative,
+			worldX: citizen.home_x, worldZ: citizen.home_z,
+			meta: { minReputation, maxWorkers: 1 },
+		});
+		// The projection now carries this spend, so the hold can stop counting.
+		// Settled AFTER the write, never before: overlapping for a moment
+		// overcounts, which is the safe direction, while settling first would
+		// leave a gap a racing post could slip through.
+		await settlePostSpend(hold, { taskPda, txSignature: created.txSignature });
+		settled = true;
+		await bumpCitizenStats(citizen.id, { incPosted: 1, status: 'idle' });
+
+		const { publishFeedEvent } = await import('../_lib/feed.js');
+		publishFeedEvent({
+			type: hire ? 'agora-hired' : 'agora-task-posted',
+			actor: citizen.display_name.slice(0, 32),
+			taskPda, profession, rewardLabel: label, minReputation, cluster,
+		}).catch(() => {});
+
+		return {
 			ok: true,
-			taskPda, taskId: taskIdHex,
-			txSignature: created.txSignature,
-			explorerUrl: explorerTx(created.txSignature, cluster),
-			reward: { amountAtomic: amountAtomic.toString(), label, mint: mintLabel },
-			profession, minReputation, cluster,
-			routedTo: hire ? { citizenId: target.id, name: target.display_name } : null,
-			taskUrl: `/api/agenc/get-task?taskPda=${taskPda}&cluster=${cluster}&lifecycle=1`,
-		},
-	};
+			body: {
+				ok: true,
+				taskPda, taskId: taskIdHex,
+				txSignature: created.txSignature,
+				explorerUrl: explorerTx(created.txSignature, cluster),
+				reward: { amountAtomic: amountAtomic.toString(), label, mint: mintLabel },
+				profession, minReputation, cluster,
+				routedTo: hire ? { citizenId: target.id, name: target.display_name } : null,
+				taskUrl: `/api/agenc/get-task?taskPda=${taskPda}&cluster=${cluster}&lifecycle=1`,
+			},
+		};
+	} finally {
+		// Anything that returned or threw without escrowing gives the headroom back
+		// immediately rather than waiting for the hold to age out.
+		if (!settled) await releasePostSpend(hold);
+	}
 }
 
 // ── action handlers ───────────────────────────────────────────────────────────

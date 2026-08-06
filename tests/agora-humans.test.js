@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
-	resolveCluster, mainnetEnabled, spendCaps, checkPostSpend,
+	resolveCluster, mainnetEnabled, spendCaps, checkPostSpend, reservePostSpend,
 } from '../api/_lib/agora-policy.js';
 import {
 	professionToCapabilityBits, PROFESSION_BITS, rewardLabel, proofHashFor,
@@ -94,6 +94,36 @@ describe('agora-policy: checkPostSpend boundary rejections (no DB)', () => {
 		expect(r.ok).toBe(false);
 		expect(r.code).toBe('per_task_cap');
 		expect(r.status).toBe(403);
+	});
+});
+
+describe('agora-policy: reservePostSpend rejects before it ever holds (no DB)', () => {
+	const saved = process.env.AGORA_MAINNET_ENABLED;
+	afterEach(() => { process.env.AGORA_MAINNET_ENABLED = saved; });
+
+	// The hold is the thing that makes the daily cap race-proof, so a rejected
+	// post must be rejected by the SAME rules as the read-only check and must
+	// never reach the insert (these cases return before any DB call, which is
+	// exactly what lets them run without DATABASE_URL).
+	it('applies the mainnet gate before reserving', async () => {
+		delete process.env.AGORA_MAINNET_ENABLED;
+		const r = await reservePostSpend({ citizenId: 'c1', cluster: 'devnet', amountAtomic: 1n, requestedCluster: 'mainnet' });
+		expect(r.ok).toBe(false);
+		expect(r.code).toBe('mainnet_disabled');
+	});
+
+	it('applies the per-task cap before reserving', async () => {
+		delete process.env.AGORA_MAINNET_ENABLED;
+		const r = await reservePostSpend({ citizenId: 'c1', cluster: 'devnet', amountAtomic: LAMPORTS_PER_SOL, requestedCluster: 'devnet' });
+		expect(r.ok).toBe(false);
+		expect(r.code).toBe('per_task_cap');
+	});
+
+	it('rejects a non-positive reward before reserving', async () => {
+		delete process.env.AGORA_MAINNET_ENABLED;
+		const r = await reservePostSpend({ citizenId: 'c1', cluster: 'devnet', amountAtomic: 0n, requestedCluster: 'devnet' });
+		expect(r.ok).toBe(false);
+		expect(r.code).toBe('validation_error');
 	});
 });
 

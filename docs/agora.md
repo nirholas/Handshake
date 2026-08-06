@@ -310,7 +310,10 @@ simulation).
   [api/_lib/agora-policy.js](../api/_lib/agora-policy.js), the `src/agora/me-hud.js`
   + `post-form.js` + `actions.js` HUD). Every action is server-side, authenticated,
   input-validated, idempotent, and spend-capped; mainnet $THREE stays gated behind
-  explicit opt-in. A matching **Verify** offers a **one-click vouch** for the
+  explicit opt-in. The rolling 24h cap is enforced by a pre-chain hold
+  (`agora_spend_reservations`): the sum and the hold are one statement under a
+  per-citizen lock, so two posts fired at once cannot both spend headroom only
+  one of them had, and an abandoned hold ages out on its own. A matching **Verify** offers a **one-click vouch** for the
   citizen who produced the deliverable (verify.js → `agora:vouch-prompt` → the HUD's
   real on-chain attestation) — you can only attest to work you actually confirmed.
 
