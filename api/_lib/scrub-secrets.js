@@ -49,3 +49,25 @@ export function scrubSecrets(value, seen = new WeakSet()) {
 	}
 	return out;
 }
+
+// Credentials carried in a URL QUERY STRING, which scrubSecrets cannot reach:
+// it redacts by KEY name on an object, and a message like
+// `FetchError: request to https://rpc.example/?api-key=SECRET failed` is a plain
+// string with no key to match. Solana web3.js embeds the full RPC URL in its
+// network errors, so any path that logs a raw `err.message` from an on-chain
+// call would otherwise spill HELIUS_API_KEY into the log sink.
+const URL_CREDENTIAL_RE = /([?&](?:api[-_]?key|access[-_]?token|token|secret|key|auth)=)[^&\s"'`]+/gi;
+
+/**
+ * Mask credential VALUES embedded in a URL inside a free-form string (typically
+ * an error message) while keeping the rest of the text intact for debugging.
+ * Only the value after a known credential parameter is replaced.
+ *
+ * Use this on any string bound for a log sink; use `scrubSecrets` for objects.
+ *
+ * @param {*} text
+ * @returns {string}
+ */
+export function redactUrlSecrets(text) {
+	return String(text ?? '').replace(URL_CREDENTIAL_RE, '$1REDACTED');
+}

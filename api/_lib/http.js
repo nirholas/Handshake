@@ -7,6 +7,7 @@ import { captureException } from './sentry.js';
 import { sendOpsAlert } from './alerts.js';
 import { instrument as zauthInstrument, drain as zauthDrain } from './zauth.js';
 import { isDbUnavailableError, isDbCapacityError, isStoragePressured } from './db.js';
+import { redactUrlSecrets } from './scrub-secrets.js';
 
 // Secure-by-default caching: emit `no-store` UNLESS the handler already set a
 // Cache-Control header (e.g. `res.setHeader('cache-control', 'public, s-maxage=…')`
@@ -192,7 +193,12 @@ function logDbUnavailableOnce(scope, msg) {
 // (callers redact URLs via redactUrl() before passing them here).
 export function reportServerError(err, { code = 'internal_error', status = 500, context = {} } = {}) {
 	const ref = correlationId();
-	const detail = err?.message || String(err ?? 'unknown error');
+	// Mask URL-embedded credentials before the message reaches ANY sink (console,
+	// Sentry, ops alert). Solana web3.js and fetch put the full request URL in
+	// their network errors, so an on-chain failure would otherwise print the keyed
+	// RPC endpoint (HELIUS_API_KEY) into logs. Applied here, at the single shared
+	// sink, so every handler is covered rather than each remembering to redact.
+	const detail = redactUrlSecrets(err?.message || String(err ?? 'unknown error'));
 	// A DB outage is infrastructure, not a code fault: throttle the log, skip the
 	// Sentry capture, and collapse to the single shared `db:unavailable` alert so a
 	// missing DATABASE_URL degrades quietly instead of flooding error tracking.
@@ -208,7 +214,19 @@ export function reportServerError(err, { code = 'internal_error', status = 500, 
 	}
 	console.error(`[server-error ${ref}] ${code} (${status}): ${detail}`);
 	try {
-		captureException(err instanceof Error ? err : new Error(detail), { ref, code, status, ...context });
+		// Capture the original Error (preserving its stack + class) only when its
+		// message carried no credential; otherwise send a redacted stand-in that
+		// keeps the stack but not the key.
+		let captured;
+		if (err instanceof Error && err.message === detail) {
+			captured = err; // nothing was redacted — send the original untouched
+		} else {
+			captured = new Error(detail);
+			// A stack's first line repeats the message, so redact it too rather than
+			// closing the front door and leaving the stack open.
+			if (err instanceof Error && err.stack) captured.stack = redactUrlSecrets(err.stack);
+		}
+		captureException(captured, { ref, code, status, ...context });
 		// Fire-and-forget like captureException; deduped per error class+message
 		// (ref excluded from the signature so each occurrence doesn't re-alert).
 		sendOpsAlert(`${status} ${code}`, `${detail}\nref ${ref}`, {
