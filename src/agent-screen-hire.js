@@ -203,7 +203,7 @@ export function createHireVisualizer(bodyEl, opts = {}) {
 		const ok = meta.phase === 'recorded';
 		const cls = meta.phase === 'over_cap' ? 'amber' : meta.phase === 'failed' ? 'red' : 'ok';
 		const link = meta.paymentExplorer
-			? `<a href="${esc(meta.paymentExplorer)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">tx ↗</a>`
+			? `<a href="${esc(meta.paymentExplorer)}" target="_blank" rel="noopener" data-stop-propagation>tx ↗</a>`
 			: '';
 		const row = document.createElement('div');
 		row.className = `asc-hire-hrow ${cls}`;

@@ -291,6 +291,22 @@
 			}
 		},
 		{
+			"id": "audit-csp",
+			"script": "scripts/audit-csp.mjs",
+			"npm": "audit:csp",
+			"title": "Live CSP sweep",
+			"protects": "No page violates the Content-Security-Policy the server sends with it.",
+			"why": "server/csp-hashes.mjs derives script-src from the bytes of each response, which is a strong guarantee on paper and a total outage when it is wrong: one missed inline script ships that page blank. Only a browser applies a policy the way a browser applies a policy, so this loads the real pages against a running server and fails on any securitypolicyviolation event. Add --all to sweep every route in data/pages.json.",
+			"stages": [
+				"manual"
+			],
+			"needs": "browser",
+			"proof": {
+				"kind": "live",
+				"reason": "Needs Playwright plus a server serving dist/, because the thing under test is the browser's own policy evaluation against a real response. A static fixture cannot produce a securitypolicyviolation event."
+			}
+		},
+		{
 			"id": "audit-docs",
 			"script": "scripts/audit-docs.mjs",
 			"npm": "audit:docs",

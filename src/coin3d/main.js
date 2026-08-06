@@ -1073,7 +1073,7 @@ function launchCard(l) {
 	const initials = escapeHtml(sym.slice(0, 2));
 	const avatar = l.agent?.avatar_thumbnail_url || null;
 	const imgHtml = avatar
-		? `<img class="c3d-recent-img" src="${escapeHtml(avatar)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'c3d-recent-img ph',textContent:'${initials}'}))" />`
+		? `<img class="c3d-recent-img" src="${escapeHtml(avatar)}" alt="" loading="lazy" data-fallback="element" data-fallback-class="c3d-recent-img ph" data-fallback-text="${escapeHtml(initials)}" />`
 		: `<div class="c3d-recent-img ph">${initials}</div>`;
 	const label = escapeHtml(l.symbol ? `$${l.symbol.toUpperCase()}` : sym);
 	return `<a class="c3d-recent-card" href="?mint=${encodeURIComponent(l.mint)}" aria-label="View ${label} in 3D">

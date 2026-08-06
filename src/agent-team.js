@@ -240,7 +240,7 @@ function nodeFoot(node) {
 	const url = node.url || node.explorerUrl;
 	const sig = node.sig || node.signature;
 	if (url && sig) {
-		bits.push(`<a class="tt-receipt" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">⛓ ${esc(truncate(sig, 6))}</a>`);
+		bits.push(`<a class="tt-receipt" href="${esc(url)}" target="_blank" rel="noopener" data-stop-propagation>⛓ ${esc(truncate(sig, 6))}</a>`);
 	}
 	if (!bits.length && node.status === 'running') return `<span class="tt-err" style="color:#7f8aa0">working…</span>`;
 	return bits.join('');

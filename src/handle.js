@@ -197,7 +197,7 @@ function renderClaimLanding() {
 				background: #fff; color: #0a0c10; font-weight: 600; font-size: 15px;
 				padding: 12px 28px; border-radius: 8px; text-decoration: none;
 				transition: opacity 0.15s;
-			" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+			" class="hd-cta-link">
 				Get started →
 			</a>
 			<p style="margin: 24px 0 0; font-size: 13px; color: rgba(232,236,242,0.4);">

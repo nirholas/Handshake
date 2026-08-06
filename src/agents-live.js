@@ -223,7 +223,7 @@ function buildCard(agent) {
 </div>
 <div class="al-card-info">
   ${avatar
-		? `<img loading="lazy" decoding="async" class="al-card-avatar" src="${esc(avatar)}" alt="${esc(name)}" onerror="this.style.display='none'">`
+		? `<img loading="lazy" decoding="async" class="al-card-avatar" src="${esc(avatar)}" alt="${esc(name)}" data-fallback="hide">`
 		: `<div class="al-card-avatar" style="background:rgba(255,255,255,0.06)"></div>`}
   <div class="al-card-meta">
     <div class="al-card-name">${esc(name)}</div>
@@ -233,7 +233,7 @@ function buildCard(agent) {
       <span class="al-card-pnl" data-pnl hidden></span>
     </div>
   </div>
-  <a class="al-card-watch-btn" href="${esc(watchHref)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Watch</a>
+  <a class="al-card-watch-btn" href="${esc(watchHref)}" target="_blank" rel="noopener" data-stop-propagation>Watch</a>
 </div>`;
 	return el;
 }

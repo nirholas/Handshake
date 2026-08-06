@@ -109,7 +109,7 @@ async function call(url, { method = 'GET', body = null } = {}) {
 let busy = false;
 
 function avatarHTML(item) {
-	if (item.avatar_url) return `<img class="gd-ava" src="${esc(item.avatar_url)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=\\'gd-ava\\'>${esc((item.agent_name || '?').slice(0, 1).toUpperCase())}</span>'" />`;
+	if (item.avatar_url) return `<img class="gd-ava" src="${esc(item.avatar_url)}" alt="" loading="lazy" data-fallback="element" data-fallback-tag="span" data-fallback-class="gd-ava" data-fallback-text="${esc((item.agent_name || '?').slice(0, 1).toUpperCase())}" />`;
 	return `<span class="gd-ava" aria-hidden="true">${esc((item.agent_name || '?').slice(0, 1).toUpperCase())}</span>`;
 }
 

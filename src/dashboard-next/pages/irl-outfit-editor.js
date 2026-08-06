@@ -204,7 +204,7 @@ export async function openOutfitEditor({ pin, onSaved }) {
 		grid.innerHTML = items.map((p) => {
 			const on = active.has(p.id);
 			return `<button class="oe-acc-item${on ? ' on' : ''}" type="button" data-acc-id="${esc(p.id)}" aria-pressed="${on}" title="${esc(p.name)}">
-				${p.thumbnail ? `<img src="${esc(p.thumbnail)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />` : '<span class="oe-acc-ph" aria-hidden="true">✦</span>'}
+				${p.thumbnail ? `<img src="${esc(p.thumbnail)}" alt="" loading="lazy" data-fallback="invisible" />` : '<span class="oe-acc-ph" aria-hidden="true">✦</span>'}
 				<span class="oe-acc-name">${esc(p.name)}</span>
 			</button>`;
 		}).join('');

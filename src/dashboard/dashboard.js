@@ -3003,7 +3003,7 @@ function renderAgentRows(list, onchainAgents, dbAgents) {
 			'gap:12px; padding:10px; border:1px solid #2a2a34; border-radius:10px; align-items:flex-start';
 		el.innerHTML = `
 			<div style="flex:0 0 64px; width:64px; height:64px; border-radius:8px; background:#0f0f17; overflow:hidden; display:flex; align-items:center; justify-content:center">
-				${img ? `<img loading="lazy" decoding="async" src="${attr(img)}" alt="" style="max-width:100%;max-height:100%;object-fit:cover" onerror="this.remove()">` : '<span class="muted" style="font-size:10px">no image</span>'}
+				${img ? `<img loading="lazy" decoding="async" src="${attr(img)}" alt="" style="max-width:100%;max-height:100%;object-fit:cover" data-fallback="remove">` : '<span class="muted" style="font-size:10px">no image</span>'}
 			</div>
 			<div style="flex:1 1 auto; min-width:0">
 				<div class="row" style="justify-content:space-between; gap:8px; flex-wrap:wrap">

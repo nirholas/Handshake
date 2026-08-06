@@ -464,7 +464,7 @@ async function doPurchase() {
 			`${escHtml(headline)}` +
 			`</div>` +
 			`<div style="font-size:12.5px;color:var(--muted);">${body} ` +
-			`<a href="/pay" style="color:var(--usdc-lt);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Learn about x402 →</a>` +
+			`<a href="/pay" class="ax-x402-link">Learn about x402 →</a>` +
 			`</div>` +
 			`</div>`;
 		els.receipt.classList.add('show');

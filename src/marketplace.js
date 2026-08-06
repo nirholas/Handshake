@@ -4561,7 +4561,7 @@ function renderAvatarCard(a, spotlight = false) {
 	// reveal="auto" (default) means model-viewer un-veils the model on load;
 	// no explicit dismissPoster() call needed.
 	const preview = a.image
-		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'card-img-fallback'}))" />`
+		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" data-fallback="element" data-fallback-class="card-img-fallback" />`
 		: a.glbUrl
 			? `${placeholderHtml(a.name)}<model-viewer
 					data-src="${escapeHtml(a.glbUrl)}"
@@ -4595,7 +4595,7 @@ function renderAvatarCard(a, spotlight = false) {
 			${tagPills}
 			<div class="footer">
 				${modelCategoryBadge(a.modelCategory)}
-				${a.glbUrl ? `<a class="compose-cta" href="/compose?glb=${encodeURIComponent(a.glbUrl)}" title="Open in Scene Composer" tabindex="-1" onclick="event.stopPropagation()">⚡ Compose</a>` : ''}
+				${a.glbUrl ? `<a class="compose-cta" href="/compose?glb=${encodeURIComponent(a.glbUrl)}" title="Open in Scene Composer" tabindex="-1" data-stop-propagation>⚡ Compose</a>` : ''}
 				<span class="open-cta">Open →</span>
 			</div>
 		</div>
@@ -4631,7 +4631,7 @@ function pedigreeBadgeHTML(a) {
 	if (tier === 'common') return '';
 	const glyph = g.emergent > 0 ? '⚡' : '◈';
 	const title = `Generation ${g.generation} · ${tier} pedigree${g.emergent > 0 ? ` · ${g.emergent} emergent skill${g.emergent > 1 ? 's' : ''}` : ''}`;
-	return `<a class="stat-pill pedigree-badge" data-tier="${escapeHtml(tier)}" href="/genome?a=${escapeHtml(a.id)}" title="${escapeHtml(title)}" onclick="event.stopPropagation()">${glyph} gen ${g.generation}</a>`;
+	return `<a class="stat-pill pedigree-badge" data-tier="${escapeHtml(tier)}" href="/genome?a=${escapeHtml(a.id)}" title="${escapeHtml(title)}" data-stop-propagation>${glyph} gen ${g.generation}</a>`;
 }
 
 function renderCard(a) {
@@ -4729,7 +4729,7 @@ function renderOnchainCard(a) {
 	const href = a.viewerUrl || a.tokenExplorerUrl || '#';
 	const priceBadge = priceBadgeHtml(a.price);
 	const preview = a.image
-		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'card-img-fallback'}))" />`
+		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" data-fallback="element" data-fallback-class="card-img-fallback" />`
 		: a.glbUrl
 			? `${placeholderHtml(a.name)}<model-viewer
 					data-src="${escapeHtml(a.glbUrl)}"
@@ -8840,7 +8840,7 @@ async function loadTopPerformers() {
 				? (a.realized_pnl_sol >= 0 ? 'pos' : 'neg')
 				: '';
 			const avatarHtml = a.image_url
-				? `<img src="${escapeHtml(a.image_url)}" alt="" class="mkt-top-avatar" loading="lazy" onerror="this.style.display='none'">`
+				? `<img src="${escapeHtml(a.image_url)}" alt="" class="mkt-top-avatar" loading="lazy" data-fallback="hide">`
 				: `<span class="mkt-top-avatar-fallback">${escapeHtml((a.name || '?')[0].toUpperCase())}</span>`;
 
 			return `<a class="mkt-top-card" href="/agents/${encodeURIComponent(a.agent_id)}"

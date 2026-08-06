@@ -92,6 +92,13 @@ async function handleClaimClick(state) {
 		<p>Initializing claim flow…</p>
 	`;
 
+	// Result panels are rendered from strings; their OK/Dismiss buttons declare
+	// data-close-claim-modal and this delegated listener closes the modal. Inline
+	// onclick attributes cannot run under the site CSP.
+	document.addEventListener('click', (event) => {
+		if (event.target.closest('[data-close-claim-modal]')) modal.style.display = 'none';
+	});
+
 	closeBtn.addEventListener('click', () => {
 		modal.style.display = 'none';
 	});
@@ -113,26 +120,26 @@ async function handleClaimClick(state) {
 			content.innerHTML = `
 				<h3 style="margin:0 0 1rem">Coming Soon</h3>
 				<p>CZ is not yet registered on-chain. Claiming opens once the registration is complete.</p>
-				<button class="modal-close-btn" onclick="document.getElementById('cz-claim-modal').style.display='none'">OK</button>
+				<button class="modal-close-btn" data-close-claim-modal>OK</button>
 			`;
 		} else if (result.message === 'already_owned') {
 			content.innerHTML = `
 				<h3 style="margin:0 0 1rem">Already Claimed</h3>
 				<p>This agent is already owned by <code>${truncate(state.ownerAddress, 20)}</code>.</p>
-				<button class="modal-close-btn" onclick="document.getElementById('cz-claim-modal').style.display='none'">OK</button>
+				<button class="modal-close-btn" data-close-claim-modal>OK</button>
 			`;
 		} else {
 			content.innerHTML = `
 				<h3 style="margin:0 0 1rem">Claim Successful</h3>
 				<p>Transaction: <code>${result.txHash}</code></p>
-				<button class="modal-close-btn" onclick="document.getElementById('cz-claim-modal').style.display='none'">OK</button>
+				<button class="modal-close-btn" data-close-claim-modal>OK</button>
 			`;
 		}
 	} else {
 		content.innerHTML = `
 			<h3 style="margin:0 0 1rem">Error</h3>
 			<p>${result.error}</p>
-			<button class="modal-close-btn" onclick="document.getElementById('cz-claim-modal').style.display='none'">Dismiss</button>
+			<button class="modal-close-btn" data-close-claim-modal>Dismiss</button>
 		`;
 	}
 }

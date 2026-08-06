@@ -6,7 +6,7 @@
  * viewer links specific to 3D-Agent.
  *
  * Tabs:
- *   - Create Agent  (4-step wizard: Identity → Services → Configuration → Deploy)
+ *   - Create Agent  (4-step wizard: Identity → Services → Avatar → Deploy)
  *   - My Agents     (owned-by-wallet, current chain)
  *   - Search        (by Agent ID)
  *   - Templates     (pre-fills Create Agent)
@@ -363,6 +363,11 @@ export class RegisterUI {
 	constructor(containerEl, onRegistered, opts = {}) {
 		this.container = containerEl;
 		this.onRegistered = onRegistered || (() => {});
+		// Close-lifecycle callback, distinct from onRegistered: fired exactly once
+		// when the UI is torn down, with { registered } so callers refresh state
+		// only when a deploy actually happened (and never mid-success-screen).
+		this.onClose = opts.onClose || null;
+		this._didRegister = false;
 		this.mode = opts.mode === 'page' ? 'page' : 'modal';
 		this._viewer = opts.viewer || null;
 		this._avatarId = opts.avatarId || null;
@@ -504,7 +509,7 @@ export class RegisterUI {
 						<div class="erc8004-controls">
 							<select class="erc8004-chain-select" title="Target chain"></select>
 							<button class="erc8004-btn erc8004-btn--wallet btn btn--secondary" type="button">
-								Connect MetaMask
+								Connect wallet
 							</button>
 							<button class="erc8004-btn erc8004-btn--close btn btn--ghost btn--icon" type="button" title="Close">✕</button>
 						</div>
@@ -568,6 +573,20 @@ export class RegisterUI {
 			.addEventListener('click', () => this._connectWallet());
 		const closeBtn = this.el.querySelector('.erc8004-btn--close');
 		if (closeBtn) closeBtn.addEventListener('click', () => this.destroy());
+		if (this.mode === 'modal') {
+			const card = this.el.querySelector('.erc8004-card');
+			if (card) {
+				card.setAttribute('role', 'dialog');
+				card.setAttribute('aria-modal', 'true');
+				card.setAttribute('aria-label', 'Deploy agent on-chain');
+				card.tabIndex = -1;
+				card.focus();
+			}
+			this._onKeydown = (e) => {
+				if (e.key === 'Escape') this.destroy();
+			};
+			document.addEventListener('keydown', this._onKeydown);
+		}
 
 		this.el.querySelector('.erc8004-chain-select').addEventListener('change', async (e) => {
 			const raw = e.target.value;
@@ -601,7 +620,11 @@ export class RegisterUI {
 
 	destroy() {
 		if (this._unsubscribeWallet) this._unsubscribeWallet();
+		if (this._onKeydown) document.removeEventListener('keydown', this._onKeydown);
 		this.el.remove();
+		const cb = this.onClose;
+		this.onClose = null;
+		cb?.({ registered: this._didRegister });
 	}
 
 	// -----------------------------------------------------------------------
@@ -1025,7 +1048,7 @@ export class RegisterUI {
 
 	_previewThumbHtml(thumb) {
 		if (thumb.kind === 'img') {
-			return `<img loading="lazy" decoding="async" src="${esc(thumb.src)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+			return `<img loading="lazy" decoding="async" src="${esc(thumb.src)}" alt="" data-fallback="sibling" />
 				<div class="deploy-preview-ph" style="display:none">Image failed to load</div>`;
 		}
 		if (thumb.kind === 'glb') {
@@ -1239,6 +1262,12 @@ export class RegisterUI {
 	 */
 	async _applyQuickStart(mode) {
 		if (mode === 'update') {
+			// Page mode renders only the Create wizard (no tab strip), so route to
+			// the real management surface instead of a tab that cannot appear here.
+			if (this._isPageMode()) {
+				window.location.href = '/dashboard-next/agents';
+				return;
+			}
 			this._setTab('my');
 			this._toast('Pick an agent and click "Edit on-chain ✏️".');
 			return;
@@ -1553,7 +1582,7 @@ export class RegisterUI {
 
 		body.innerHTML = `
 			<h3 class="erc8004-h3">3D Avatar</h3>
-			<p class="erc8004-p">Attach a GLB so any 3D-aware client can render your agent's body, or deploy as metadata-only. ERC-8004 doesn't require a 3D avatar — a 2D <code>image</code> works too.</p>
+			<p class="erc8004-p">Attach a GLB so any 3D-aware client can render your agent's body, or deploy as metadata-only. ${_isSolana(this.selectedChainId) ? 'A Metaplex Core mint' : 'ERC-8004'} doesn't require a 3D avatar; a 2D <code>image</code> works too.</p>
 
 			<div class="erc8004-avatar-sources" data-role="sources">
 				${hasCurrent ? radio('current', 'Use current avatar', `From your active session — <code>${esc(this.form.glbUrl)}</code>`) : ''}
@@ -1561,15 +1590,16 @@ export class RegisterUI {
 				${DEFAULT_AVATARS.length ? radio('default', 'Use a default avatar', 'Pick a pre-pinned starter avatar — no upload needed.') : ''}
 				${radio('upload', 'Upload a new GLB', 'Drop or browse a .glb / .gltf file from your machine.')}
 				${radio('url', 'Paste a GLB URL', 'Use a GLB already hosted on IPFS, Arweave, or HTTPS.')}
-				${radio('skip', 'Skip — no 3D body', 'Deploy as a metadata-only agent. You can attach an avatar later via setAgentURI.')}
+				${radio('skip', 'Skip: no 3D body', _isSolana(this.selectedChainId) ? 'Deploy as a metadata-only agent. You can attach an avatar later from your agent page.' : 'Deploy as a metadata-only agent. You can attach an avatar later via setAgentURI.')}
 			</div>
 
 			<div class="erc8004-avatar-panel" data-role="panel"></div>
 
+			${_isSolana(this.selectedChainId) ? '' : `
 			<label class="erc8004-label">IPFS Pinning Token (optional)
 				<input class="erc8004-input" type="password" name="apiToken" autocomplete="off" placeholder="Pinata JWT (leave blank to use built-in R2 storage)" value="${esc(this.form.apiToken)}" />
 			</label>
-			<p class="erc8004-hint">Without a token, uploads go through our backend (R2). Paste a Pinata JWT to pin directly to IPFS.</p>
+			<p class="erc8004-hint">Without a token, uploads go through our backend (R2). Paste a Pinata JWT to pin directly to IPFS.</p>`}
 
 			<div class="erc8004-wizard-nav">
 				<button class="erc8004-btn btn btn--secondary" data-role="back">← Back</button>
@@ -1688,7 +1718,7 @@ export class RegisterUI {
 						<span class="erc8004-avatar-summary-badge erc8004-avatar-summary-badge--muted">∅</span>
 						<div>
 							<div>Deploying as a metadata-only agent.</div>
-							<div class="erc8004-hint">Your registration JSON will include <code>image</code> (from Step 1) and services but no GLB. You can attach an avatar later from My Agents → Edit.</div>
+							<div class="erc8004-hint">Your registration JSON will include <code>image</code> (from Step 1) and services but no GLB. ${_isSolana(this.selectedChainId) ? 'You can attach an avatar later from your agent page.' : 'You can attach an avatar later from My Agents → Edit.'}</div>
 						</div>
 					</div>
 				`;
@@ -1704,7 +1734,7 @@ export class RegisterUI {
 			});
 		});
 
-		body.querySelector('[name="apiToken"]').addEventListener(
+		body.querySelector('[name="apiToken"]')?.addEventListener(
 			'input',
 			(e) => (this.form.apiToken = e.target.value),
 		);
@@ -2009,6 +2039,14 @@ export class RegisterUI {
 				<dt>Standard</dt>    <dd>Metaplex Core (mpl-core)</dd>
 			</dl>
 
+			<div class="deploy-vanity-row">
+				<button type="button" class="erc8004-link deploy-vanity-link" data-role="vanity">
+					${this._vanityPrefix
+						? `✨ Vanity address: <code>${esc(this._vanityPrefix)}</code> · change`
+						: '✨ Customize mint address (optional)'}
+				</button>
+			</div>
+
 			${
 				!hasSolanaWallet
 					? `<div class="erc8004-alert">No Solana wallet detected. Install <a class="erc8004-link" href="https://phantom.app" target="_blank" rel="noopener">Phantom</a> (or Backpack / Solflare), then reload this page and click Mint.</div>`
@@ -2016,7 +2054,7 @@ export class RegisterUI {
 			}
 			<div class="erc8004-alert erc8004-alert--note">
 				<b>Note:</b> your Solana wallet must already be linked to this account
-				(via Sign-In-with-Solana). If you haven't, <a class="erc8004-link" href="/login.html">link it first</a>.
+				(via Sign-In-with-Solana). If you haven't, <a class="erc8004-link" href="/login">link it first</a>.
 			</div>
 
 			<div class="deploy-phase-track" data-role="phase-track" hidden aria-live="polite">
@@ -2041,6 +2079,11 @@ export class RegisterUI {
 						<span class="deploy-phase-hint">Waiting for the Solana transaction to finalize</span>
 					</div>
 				</div>
+			</div>
+
+			<div class="erc8004-row deploy-grind" data-role="grind" hidden>
+				<span class="erc8004-muted erc8004-small" data-role="grind-status" aria-live="polite"></span>
+				<button type="button" class="erc8004-btn btn btn--ghost" data-role="grind-stop">Stop grinding</button>
 			</div>
 
 			<div class="erc8004-log" data-role="log" role="log" aria-live="polite" aria-label="Deploy log"></div>
@@ -2081,6 +2124,24 @@ export class RegisterUI {
 		body.querySelector('[data-role="deploy"]').addEventListener('click', () =>
 			this._doSolanaDeploy(body),
 		);
+		body.querySelector('[data-role="vanity"]')?.addEventListener('click', async () => {
+			const { openVanityModal } = await import('./vanity-modal.js');
+			const chosen = await openVanityModal({
+				agentName: this.form.name || '',
+				initial: this._vanityPrefix || '',
+			});
+			if (chosen === null) return;
+			// The modal returns a string (prefix to grind in-browser) or
+			// { prefix, secretKey } for a CLI-ground keypair pasted by the user.
+			if (chosen && typeof chosen === 'object') {
+				this._vanityPrefix = chosen.prefix || '';
+				this._preGroundSecretKey = chosen.secretKey || null;
+			} else {
+				this._vanityPrefix = chosen;
+				this._preGroundSecretKey = null;
+			}
+			this._renderStepDeploySolana(body);
+		});
 	}
 
 	// -----------------------------------------------------------------------
@@ -2283,6 +2344,17 @@ export class RegisterUI {
 			return;
 		}
 
+		// First-time deployers get the plain-language wallet/fees explainer before
+		// any wallet prompt; returning users pass straight through.
+		try {
+			const { ensureOnchainPrimer } = await import('../shared/onchain-primer.js');
+			if (!(await ensureOnchainPrimer({ action: 'deploy' }))) {
+				deployBtn.disabled = false;
+				deployBtn.textContent = idleLabel;
+				return;
+			}
+		} catch { /* primer unavailable: proceed */ }
+
 		const setPhase = this._makePhaseTracker(body);
 		setPhase('prepare');
 
@@ -2300,7 +2372,7 @@ export class RegisterUI {
 			if (this.form.avatarSource !== 'skip') {
 				avatar = await this._ensurePersistedAvatar(say);
 				if (!avatar?.avatarId) {
-					throw new Error('Could not prepare your avatar — fix the Avatar step and retry, or choose “Skip — no 3D body”.');
+					throw new Error('Could not prepare your avatar: fix the Avatar step and retry, or choose "Skip: no 3D body".');
 				}
 				if (avatar.imageUrl) {
 					this.form.imageUrl = avatar.imageUrl;
@@ -2315,13 +2387,46 @@ export class RegisterUI {
 				avatarId: avatar?.avatarId || undefined,
 			};
 
-			say(avatar ? 'Avatar saved — connecting Solana wallet…' : 'Connecting Solana wallet…');
+			const vanityPrefix = (this._vanityPrefix || '').trim();
+			const preGround = this._preGroundSecretKey || null;
+			const willGrind = !!vanityPrefix && !preGround;
+			const grindRow = body.querySelector('[data-role="grind"]');
+			const grindStatus = body.querySelector('[data-role="grind-status"]');
+			const grindAbort = new AbortController();
+			const stopBtn = body.querySelector('[data-role="grind-stop"]');
+			if (stopBtn) stopBtn.onclick = () => grindAbort.abort();
+			if (willGrind && grindRow) {
+				grindRow.hidden = false;
+				if (grindStatus) grindStatus.textContent = `Searching for an address starting with "${vanityPrefix}"…`;
+			}
+
+			say(avatar ? 'Avatar saved. Connecting Solana wallet…' : 'Connecting Solana wallet…');
 			setPhase('sign');
-			const result = await runSolanaDeploy({ agent: synthAgent, network });
+			const result = await runSolanaDeploy({
+				agent: synthAgent,
+				network,
+				vanity: (vanityPrefix || preGround)
+					? {
+							prefix: vanityPrefix || undefined,
+							preGroundSecretKey: preGround || undefined,
+							signal: grindAbort.signal,
+							onProgress: willGrind
+								? ({ attempts, rate, eta }) => {
+										if (grindStatus) {
+											grindStatus.textContent = `"${vanityPrefix}…" ${attempts.toLocaleString()} tries · ${Math.round(rate).toLocaleString()}/s · eta ${eta}`;
+										}
+									}
+								: undefined,
+						}
+					: undefined,
+			});
+			if (grindRow) grindRow.hidden = true;
 			setPhase('confirm');
 			say(`Minted asset ${result.assetPubkey}`);
 			say(`Tx ${result.txSignature}`);
 			setPhase('done');
+			this._vanityPrefix = '';
+			this._preGroundSecretKey = null;
 			deployBtn.textContent = 'Minted ✓';
 
 			body.querySelector('[data-role="res-id"]').textContent = result.assetPubkey;
@@ -2360,12 +2465,20 @@ export class RegisterUI {
 				);
 			}
 
+			this._didRegister = true;
 			this.onRegistered({
 				agentId: result.agent?.id || result.assetPubkey,
 				txHash: result.txSignature,
 				chainId: this.selectedChainId,
 			});
 		} catch (err) {
+			if (err?.name === 'AbortError') {
+				const grindRow = body.querySelector('[data-role="grind"]');
+				if (grindRow) grindRow.hidden = true;
+				deployBtn.disabled = false;
+				deployBtn.textContent = idleLabel;
+				return;
+			}
 			let friendly;
 			if (err?.code === 'forbidden') {
 				friendly =
@@ -2425,7 +2538,7 @@ export class RegisterUI {
 		const url = (this.form.imageUrl || '').trim();
 		if (!url) return '';
 		const thumb = `<img loading="lazy" decoding="async" src="${esc(url)}" alt="Agent image" class="erc8004-img-thumb"
-			onerror="this.style.display='none'" />`;
+			data-fallback="hide" />`;
 		if (url.startsWith('data:')) {
 			const kb = Math.round((url.length * 0.75) / 1024);
 			return `<span class="erc8004-img-summary">${thumb}<span class="erc8004-muted">Captured from 3D view · inline image (~${kb} KB)</span></span>`;
@@ -2641,6 +2754,17 @@ export class RegisterUI {
 			return;
 		}
 
+		// First-time deployers get the plain-language wallet/fees explainer before
+		// any wallet prompt; returning users pass straight through.
+		try {
+			const { ensureOnchainPrimer } = await import('../shared/onchain-primer.js');
+			if (!(await ensureOnchainPrimer({ action: 'deploy' }))) {
+				deployBtn.disabled = false;
+				deployBtn.textContent = idleLabel;
+				return;
+			}
+		} catch { /* primer unavailable: proceed */ }
+
 		const setPhase = this._makePhaseTracker(body);
 		const phaseSay = this._phaseAwareSay(say, setPhase);
 		setPhase('prepare');
@@ -2691,6 +2815,7 @@ export class RegisterUI {
 				);
 			}
 
+			this._didRegister = true;
 			this.onRegistered({ ...result, chainId: this.selectedChainId });
 			await this._linkAgentToAccount({
 				agentId: result.agentId,
@@ -2823,18 +2948,73 @@ export class RegisterUI {
 	// Tab: My Agents
 	// -----------------------------------------------------------------------
 
+	// Solana explorer address URL (solana-deploy.js only exports the tx variant).
+	_solAddrUrl(network, addr) {
+		return network === 'devnet'
+			? `https://explorer.solana.com/address/${addr}?cluster=devnet`
+			: `https://solscan.io/account/${addr}`;
+	}
+
+	// The user's on-chain Solana agents, read from the platform record
+	// (agent_identities.meta.onchain). Solana mints all flow through our
+	// pipeline, so the DB is the authoritative per-account index; no wallet
+	// scan is needed and signed-out users get a real sign-in path.
+	_renderMySolanaAgents(body) {
+		const network = _solanaNetwork(this.selectedChainId);
+		body.innerHTML = `
+			<h3 class="erc8004-h3">Your Registered Agents</h3>
+			<p class="erc8004-p">On-chain agents on <b>${esc(SOLANA_LABELS[this.selectedChainId])}</b> owned by this account.</p>
+			<div data-role="list"><div class="erc8004-muted">Loading…</div></div>
+		`;
+		const list = body.querySelector('[data-role="list"]');
+		fetch('/api/agents?onchain=true', { credentials: 'include', headers: { accept: 'application/json' } })
+			.then(async (res) => {
+				if (res.status === 401) {
+					list.innerHTML = `<div class="erc8004-muted">Sign in to see your on-chain agents. <a class="erc8004-link" href="/login">Sign in →</a></div>`;
+					return;
+				}
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const data = await res.json();
+				const wantDevnet = network === 'devnet';
+				const agents = (data.agents || []).filter((a) => {
+					const oc = a.onchain || a.meta?.onchain;
+					return oc?.family === 'solana' && (oc?.cluster === 'devnet') === wantDevnet;
+				});
+				if (!agents.length) {
+					list.innerHTML = `<div class="erc8004-muted">No agents minted on ${esc(network)} yet. <a class="erc8004-link" data-role="goto-create" href="#">Create one →</a> or <a class="erc8004-link" href="/discover" target="_blank" rel="noopener">browse the on-chain directory ↗</a>.</div>`;
+					list.querySelector('[data-role="goto-create"]').addEventListener('click', (e) => {
+						e.preventDefault();
+						this._setTab('create');
+					});
+					return;
+				}
+				list.innerHTML = '';
+				for (const a of agents) {
+					const oc = a.onchain || a.meta?.onchain || {};
+					const mint = oc.contract_or_mint || a.meta?.sol_mint_address || '';
+					const tx = oc.tx_hash || '';
+					const card = document.createElement('div');
+					card.className = 'erc8004-agent-card';
+					card.innerHTML = `
+						<div><b>${esc(a.name || 'Agent')}</b> <span class="erc8004-muted erc8004-small">${esc(network)}</span></div>
+						${a.description ? `<p class="erc8004-p erc8004-small">${esc(a.description)}</p>` : ''}
+						<div class="erc8004-row">
+							<a class="erc8004-link" href="/agent/${encodeURIComponent(a.id)}">Agent page →</a>
+							${mint ? `<a class="erc8004-link" href="${esc(this._solAddrUrl(network, mint))}" target="_blank" rel="noopener">Asset ↗</a>` : ''}
+							${tx ? `<a class="erc8004-link" href="${esc(solanaTxExplorerUrl(network, tx))}" target="_blank" rel="noopener">Mint tx ↗</a>` : ''}
+						</div>
+					`;
+					list.appendChild(card);
+				}
+			})
+			.catch((err) => {
+				list.innerHTML = `<div class="erc8004-log-error">Could not load your agents: ${esc(err.message)}</div>`;
+			});
+	}
+
 	_renderMyAgents(body) {
 		if (_isSolana(this.selectedChainId)) {
-			body.innerHTML = `
-				<h3 class="erc8004-h3">Your Registered Agents</h3>
-				<p class="erc8004-p">Listing on-chain Solana agents from this tab isn't wired up yet —
-				use <a class="erc8004-link" data-role="goto-create" href="#">Create Agent →</a> to mint
-				a new agent on <b>${esc(SOLANA_LABELS[this.selectedChainId])}</b>.</p>
-			`;
-			body.querySelector('[data-role="goto-create"]').addEventListener('click', (e) => {
-				e.preventDefault();
-				this._setTab('create');
-			});
+			this._renderMySolanaAgents(body);
 			return;
 		}
 		body.innerHTML = `
@@ -3557,7 +3737,9 @@ export class RegisterUI {
 		if (_isSolana(this.selectedChainId)) {
 			body.innerHTML = `
 				<h3 class="erc8004-h3">Agent Search</h3>
-				<p class="erc8004-p erc8004-muted">On-chain search isn't supported for Solana from this tab yet.</p>
+				<p class="erc8004-p">Cross-chain agent search (Solana included) lives in the on-chain
+				directory: <a class="erc8004-link" href="/discover" target="_blank" rel="noopener">open /discover ↗</a>.
+				For EVM-native lookups by ID, wallet, ENS, or tx hash, pick an EVM chain above.</p>
 			`;
 			return;
 		}
@@ -3750,12 +3932,43 @@ export class RegisterUI {
 
 	_renderHistory(body) {
 		if (_isSolana(this.selectedChainId)) {
+			const network = _solanaNetwork(this.selectedChainId);
 			body.innerHTML = `
 				<h3 class="erc8004-h3">Transaction History</h3>
-				<p class="erc8004-p erc8004-muted">Solana history isn't surfaced here yet — check
-				<a class="erc8004-link" href="https://solscan.io" target="_blank" rel="noopener">solscan.io</a>
-				for your wallet's mints.</p>
+				<p class="erc8004-p">Your agent mints on <b>${esc(SOLANA_LABELS[this.selectedChainId])}</b>.</p>
+				<div data-role="list"><div class="erc8004-muted">Loading…</div></div>
 			`;
+			const list = body.querySelector('[data-role="list"]');
+			fetch('/api/agents?onchain=true', { credentials: 'include', headers: { accept: 'application/json' } })
+				.then(async (res) => {
+					if (res.status === 401) {
+						list.innerHTML = `<div class="erc8004-muted">Sign in to see your mint history. <a class="erc8004-link" href="/login">Sign in →</a></div>`;
+						return;
+					}
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const data = await res.json();
+					const wantDevnet = network === 'devnet';
+					const mints = (data.agents || [])
+						.map((a) => ({ a, oc: a.onchain || a.meta?.onchain }))
+						.filter(({ oc }) => oc?.family === 'solana' && (oc?.cluster === 'devnet') === wantDevnet && oc?.tx_hash);
+					if (!mints.length) {
+						list.innerHTML = `<div class="erc8004-muted">No mints on ${esc(network)} yet.</div>`;
+						return;
+					}
+					list.innerHTML = mints
+						.map(({ a, oc }) => {
+							const when = oc.confirmed_at ? new Date(oc.confirmed_at).toLocaleString() : '';
+							return `<div class="erc8004-agent-card">
+								<b>${esc(a.name || 'Agent')}</b>
+								${when ? `<span class="erc8004-muted erc8004-small"> · ${esc(when)}</span>` : ''}
+								<a class="erc8004-link" style="margin-left:8px" href="${esc(solanaTxExplorerUrl(network, oc.tx_hash))}" target="_blank" rel="noopener">Tx ↗</a>
+							</div>`;
+						})
+						.join('');
+				})
+				.catch((err) => {
+					list.innerHTML = `<div class="erc8004-log-error">Could not load history: ${esc(err.message)}</div>`;
+				});
 			return;
 		}
 		body.innerHTML = `

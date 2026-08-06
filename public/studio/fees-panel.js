@@ -745,7 +745,7 @@ export function mountFeesPanel(container, opts = {}) {
 			<div class="fp-share-row" data-i="${i}">
 				<div class="fp-sh-meta">
 					<input class="fp-share-addr" data-i="${i}" placeholder="Recipient Solana wallet" value="${esc(r.address)}" spellcheck="false" />
-					${r.gh ? `<span class="fp-share-gh"><img src="${esc(r.gh.avatar)}" alt="" onerror="this.style.display='none'" />${r.gh.platform === 'x' ? '𝕏 ' : ''}@${esc(r.gh.login)}${
+					${r.gh ? `<span class="fp-share-gh"><img src="${esc(r.gh.avatar)}" alt="" data-fallback="hide" />${r.gh.platform === 'x' ? '𝕏 ' : ''}@${esc(r.gh.login)}${
 						r.gh.resolving ? ` · <span style="color:rgba(255,255,255,.4)">resolving…</span>`
 						: r.gh.linked ? ` · <span style="color:#a4f0bc">linked ✓</span>`
 						: r.gh.unlinked ? ` · <span style="color:rgba(246,200,114,.9)" title="No three.ws-linked Solana wallet — paste theirs, or ask them to link a wallet on three.ws">add wallet</span>`

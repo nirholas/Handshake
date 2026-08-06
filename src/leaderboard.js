@@ -109,7 +109,7 @@ function rowMarkup(r) {
 		<a class="lb-row" href="${href}" data-key="${escapeHtml(String(r.agent_id))}" data-top="${r.rank <= 3 ? r.rank : ''}" aria-label="${escapeHtml(rowLabel)}">
 			<span class="lb-rank">${r.rank}</span>
 			<span class="lb-trader">
-				<img class="lb-avatar" src="${escapeHtml(img)}" alt="" loading="lazy" onerror="this.src='${identicon(r.agent_id || r.wallet || '?')}'" />
+				<img class="lb-avatar" src="${escapeHtml(img)}" alt="" loading="lazy" data-fallback-src="${identicon(r.agent_id || r.wallet || '?')}" />
 				<span class="lb-trader-meta">
 					<span class="lb-trader-name"><span class="lb-trader-nm">${escapeHtml(r.agent_name || 'Unnamed agent')}</span>${verifiedBadge(r.verified)}</span>
 					<span class="lb-trader-sub">${r.wallet ? walletChipHTML(r, { isOwner: false, showPending: false, link: false }) : escapeHtml(shortAddr(r.wallet))} · ${r.unique_coins} coins${r.top_coin ? ` · ${signatureCoin(r.top_coin, { compact: true })}` : ''}${r.copiers ? ` · <span class="lb-copiers">${r.copiers} copying</span>` : ''}</span>
@@ -295,7 +295,7 @@ function renderSpotlight(data) {
 		<a class="lb-spot-card" href="${href}" aria-label="${escapeHtml(label)}">
 			<div class="lb-spot-tag"><span class="lb-spot-crown" aria-hidden="true">♛</span> Most profitable trader · ${escapeHtml(WINDOW_LABEL[state.window] || state.window)}</div>
 			<div class="lb-spot-body">
-				<img class="lb-spot-av" src="${escapeHtml(img)}" alt="" loading="lazy" onerror="this.src='${identicon(top.agent_id || '?')}'" />
+				<img class="lb-spot-av" src="${escapeHtml(img)}" alt="" loading="lazy" data-fallback-src="${identicon(top.agent_id || '?')}" />
 				<div class="lb-spot-main">
 					<div class="lb-spot-name">${name}${verifiedBadge(top.verified)}</div>
 					${coin}
@@ -553,7 +553,7 @@ async function loadOracleLeaderboard() {
 	for (const a of agents) {
 		// identicon() returns a data-URI for an <img loading="lazy" decoding="async" src> — it must never be dropped
 		// into element text (that renders the raw "data:image/svg+xml…" string).
-		const img = `<img class="lb-avatar" src="${escapeHtml(a.image_url || identicon(a.agent_id))}" alt="" loading="lazy" onerror="this.src='${identicon(a.agent_id)}'" />`;
+		const img = `<img class="lb-avatar" src="${escapeHtml(a.image_url || identicon(a.agent_id))}" alt="" loading="lazy" data-fallback-src="${identicon(a.agent_id)}" />`;
 		const name = escapeHtml(a.name || a.agent_id.slice(0, 8) + '…');
 		const wr = a.win_rate != null
 			? `<span class="${a.win_rate >= 60 ? 'lb-pos' : a.win_rate >= 40 ? '' : 'lb-neg'}">${a.win_rate}%</span>`

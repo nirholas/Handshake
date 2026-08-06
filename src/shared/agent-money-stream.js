@@ -1133,7 +1133,7 @@ export function openStreamPanel(agent, opts = {}) {
 	shell.className = 'tms';
 	shell.innerHTML = `
 		<div class="tms-hd">
-			${avatar ? `<img loading="lazy" decoding="async" class="tms-av" src="${esc(avatar)}" alt="" onerror="this.remove()"/>` : '<div class="tms-av"></div>'}
+			${avatar ? `<img loading="lazy" decoding="async" class="tms-av" src="${esc(avatar)}" alt="" data-fallback="remove"/>` : '<div class="tms-av"></div>'}
 			<div class="tms-hd-txt">
 				<div class="tms-hd-k">${mode === 'earnings' ? '◎ Stream earnings' : '◎ Money Stream'}</div>
 				<div class="tms-hd-n" title="${esc(name)}">${esc(name)}</div>

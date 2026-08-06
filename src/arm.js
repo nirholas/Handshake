@@ -343,7 +343,7 @@ function renderQualifying() {
 function qualRow(it, r) {
 	const sym = esc(it.symbol || (it.mint || '').slice(0, 6));
 	const img = it.image_uri
-		? `<img class="coinimg" src="${esc(it.image_uri)}" alt="" loading="lazy" onerror="this.remove()">`
+		? `<img class="coinimg" src="${esc(it.image_uri)}" alt="" loading="lazy" data-fallback="remove">`
 		: '';
 	const smart = (it.smart_wallet_count || 0) >= 1
 		? `<span class="q-smart">${it.smart_wallet_count} smart in</span>`

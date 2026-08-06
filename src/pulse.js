@@ -194,7 +194,7 @@ function renderLaunches(list) {
 		.map((c) => {
 			const a = c.agent || {};
 			const av = a.avatar_thumbnail_url
-				? `<img class="px-lb-av" src="${esc(a.avatar_thumbnail_url)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
+				? `<img class="px-lb-av" src="${esc(a.avatar_thumbnail_url)}" alt="" loading="lazy" data-fallback="invisible" />`
 				: `<span class="px-lb-av px-lb-av--mono" aria-hidden="true">${esc((c.symbol || c.coin_name || '?').charAt(0).toUpperCase())}</span>`;
 			const title = c.symbol ? `$${esc(c.symbol)}` : esc(c.coin_name || 'Coin');
 			return (

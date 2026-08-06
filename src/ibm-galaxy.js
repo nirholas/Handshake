@@ -701,7 +701,7 @@ function clearSearch() {
 
 // ── Markup helpers ────────────────────────────────────────────────────────────
 function avatarMarkup(a, cls) {
-	if (a.image) return `<img class="${cls}" src="${escapeAttr(a.image)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'${cls} placeholder',textContent:'${escapeAttr((a.name[0] || '?').toUpperCase())}'}))" />`;
+	if (a.image) return `<img class="${cls}" src="${escapeAttr(a.image)}" alt="" loading="lazy" data-fallback="element" data-fallback-class="${cls} placeholder" data-fallback-text="${escapeAttr((a.name[0] || '?').toUpperCase())}" />`;
 	return `<div class="${cls} placeholder">${escapeHtml((a.name[0] || '?').toUpperCase())}</div>`;
 }
 function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }

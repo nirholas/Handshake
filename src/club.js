@@ -1905,7 +1905,7 @@ async function loadGalleryAvatars() {
 function avatarThumbHTML(entry, name, { cls = 'club-pick-mono' } = {}) {
 	const initials = escapeText((name || '?').slice(0, 2).toUpperCase());
 	if (entry?.thumb) {
-		return `<img src="${escapeText(entry.thumb)}" alt="" loading="lazy" onerror="this.remove()"/>`;
+		return `<img src="${escapeText(entry.thumb)}" alt="" loading="lazy" data-fallback="remove"/>`;
 	}
 	return `<span class="${cls}">${initials}</span>`;
 }

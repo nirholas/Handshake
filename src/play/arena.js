@@ -368,7 +368,7 @@ function createLabel(agent) {
 	el.type = 'button';
 	el.innerHTML = `
 		<span class="lbl-rank">#${agent.label.rank ?? '?'}</span>
-		${agent.label.thumbnail ? `<img loading="lazy" decoding="async" class="lbl-av" src="${esc(agent.label.thumbnail)}" alt="" onerror="this.remove()"/>` : ''}
+		${agent.label.thumbnail ? `<img loading="lazy" decoding="async" class="lbl-av" src="${esc(agent.label.thumbnail)}" alt="" data-fallback="remove"/>` : ''}
 		<span class="lbl-meta">
 			<span class="lbl-name">${esc(agent.label.name)}</span>
 			<span class="lbl-pnl ${agent.label.pnlUp ? 'up' : 'down'}">${esc(agent.label.pnlText)}</span>
@@ -687,7 +687,7 @@ function renderAgentDrawer(data, id) {
 
 	$('drawerBody').innerHTML = `
 		<div class="dw-head">
-			${a.image ? `<img loading="lazy" decoding="async" src="${esc(a.image)}" alt="" onerror="this.remove()"/>` : '<span class="dw-av-fallback"></span>'}
+			${a.image ? `<img loading="lazy" decoding="async" src="${esc(a.image)}" alt="" data-fallback="remove"/>` : '<span class="dw-av-fallback"></span>'}
 			<div>
 				<div class="dw-name">${esc(a.name || 'Agent')}</div>
 				<div class="dw-sub">${verified}</div>
@@ -753,14 +753,14 @@ function renderBoard(rows) {
 		const initial = esc((name.trim()[0] || '?').toUpperCase());
 		// On a broken avatar, swap the <img> for a mono-initial tile that fills the
 		// same 26px column — no orphaned gap in the grid.
-		const onerr = `this.outerHTML='<span class=&quot;r-av r-av-fb&quot;>${initial}</span>'`;
+		const avatarFallback = `data-fallback="element" data-fallback-tag="span" data-fallback-class="r-av r-av-fb" data-fallback-text="${initial}"`;
 		const sub = r.kind === 'live'
 			? `${r.trades != null ? Number(r.trades).toLocaleString('en-US') + ' trades' : 'live'}${r.win_pct != null ? ' · ' + Math.round(r.win_pct) + '% win' : ''}`
 			: `${r.open} open · ${r.closed ? Math.round(r.win_pct) + '% win' : 'new'}`;
 		// Live wallets have no avatar — use the mono-initial tile directly.
 		const av = r.kind === 'live'
 			? `<span class="r-av r-av-fb">${initial}</span>`
-			: `<img loading="lazy" decoding="async" class="r-av" src="${esc(r.image || '/avatars/thumbs/default.png')}" alt="" onerror="${onerr}"/>`;
+			: `<img loading="lazy" decoding="async" class="r-av" src="${esc(r.image || '/avatars/thumbs/default.png')}" alt="" ${avatarFallback}/>`;
 		return `<button class="row no-orbit" data-id="${esc(r.id)}">
 			<span class="r-rank">${r.rank}</span>
 			${av}
@@ -993,7 +993,7 @@ async function renderPicker() {
 function tile(saved) {
 	return (a) => `
 		<button class="pick-tile no-orbit ${a.url === saved ? 'selected' : ''}" data-url="${esc(a.url)}" title="${esc(a.name)}">
-			<span class="pick-thumb">${a.thumb ? `<img src="${esc(a.thumb)}" alt="" loading="lazy" onerror="this.remove()"/>` : `<span class="pick-mono">${esc((a.name || '?').slice(0, 2).toUpperCase())}</span>`}</span>
+			<span class="pick-thumb">${a.thumb ? `<img src="${esc(a.thumb)}" alt="" loading="lazy" data-fallback="remove"/>` : `<span class="pick-mono">${esc((a.name || '?').slice(0, 2).toUpperCase())}</span>`}</span>
 			<span class="pick-name">${esc(a.name)}</span>
 			${a.starter ? '<span class="pick-badge">starter</span>' : ''}
 		</button>`;

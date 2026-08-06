@@ -366,7 +366,7 @@ function renderAlphaHunt(strategies, agentMap) {
 						return `<tr>
 							<td>
 								<div class="cp-agent-chip">
-									<img class="cp-av" src="${esc(ag?.image || '/favicon.ico')}" alt="" onerror="this.style.visibility='hidden'" loading="lazy" />
+									<img class="cp-av" src="${esc(ag?.image || '/favicon.ico')}" alt="" data-fallback="invisible" loading="lazy" />
 									<span>${esc(ag?.name || s.agent_id.slice(0, 8))}</span>
 								</div>
 							</td>

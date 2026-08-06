@@ -563,7 +563,7 @@ function ledgerRows(coins, sol) {
 	return rows.map((c) => {
 		const sym = esc((c.symbol || c.mint?.slice(0, 6) || '?').toUpperCase());
 		const img = c.image_uri
-			? `<img loading="lazy" decoding="async" class="cw-tok-img" src="${esc(c.image_uri)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cw-tok-img',textContent:'${sym.slice(0, 2)}'}))" />`
+			? `<img loading="lazy" decoding="async" class="cw-tok-img" src="${esc(c.image_uri)}" alt="" data-fallback="element" data-fallback-class="cw-tok-img" data-fallback-text="${esc(sym.slice(0, 2))}" />`
 			: `<div class="cw-tok-img">${esc(sym.slice(0, 2))}</div>`;
 		const badges = [
 			c.is_creator ? '<span class="cw-badge creator">DEV</span>' : '',

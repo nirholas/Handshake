@@ -263,7 +263,7 @@ export class ReputationDashboard {
 			<div class="rep-error">
 				<h3>Unable to load reputation</h3>
 				<p>${this._escapeHtml(errorMsg)}</p>
-				<button onclick="location.reload()">Retry</button>
+				<button data-action="reload">Retry</button>
 			</div>
 		`;
 	}

@@ -412,7 +412,7 @@ export class LaunchTokenModal {
 		const d = this._d;
 		const initials = (d.symbol || d.name || 'A').slice(0, 3).toUpperCase();
 		const img = d.image
-			? `<img loading="lazy" decoding="async" class="ltm-pc-img" src="${_esc(d.image)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+			? `<img loading="lazy" decoding="async" class="ltm-pc-img" src="${_esc(d.image)}" alt="" data-fallback="sibling">
 				<div class="ltm-pc-fallback" style="display:none">${_esc(initials)}</div>`
 			: `<div class="ltm-pc-fallback">${_esc(initials)}</div>`;
 		return `
@@ -442,7 +442,7 @@ export class LaunchTokenModal {
 			if (media) {
 				const initials = (symbol || name || 'A').slice(0, 3).toUpperCase();
 				media.innerHTML = image
-					? `<img loading="lazy" decoding="async" class="ltm-pc-img" src="${_esc(image)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+					? `<img loading="lazy" decoding="async" class="ltm-pc-img" src="${_esc(image)}" alt="" data-fallback="sibling">
 						<div class="ltm-pc-fallback" style="display:none">${_esc(initials)}</div>`
 					: `<div class="ltm-pc-fallback">${_esc(initials)}</div>`;
 			}

@@ -592,7 +592,7 @@ function renderError() {
 		<div class="mp-error">
 			<h1>Something broke</h1>
 			<p>The model could not be loaded right now.</p>
-			<p><button type="button" onclick="location.reload()">Retry</button> · <a href="/creations">Back to creations</a></p>
+			<p><button type="button" data-action="reload">Retry</button> · <a href="/creations">Back to creations</a></p>
 		</div>`;
 }
 

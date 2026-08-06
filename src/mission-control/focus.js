@@ -197,7 +197,7 @@ export function createFocusPane({ store, bus, enrich, mount }) {
 		].filter(Boolean);
 
 		head.innerHTML = `
-			${img ? `<img class="mc-focus-img" src="${escapeHtml(img)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />` : '<div class="mc-focus-img" aria-hidden="true"></div>'}
+			${img ? `<img class="mc-focus-img" src="${escapeHtml(img)}" alt="" loading="lazy" data-fallback="invisible" />` : '<div class="mc-focus-img" aria-hidden="true"></div>'}
 			<div class="mc-focus-id">
 				<h2>${sym} <span class="mc-focus-name">${name}</span></h2>
 				<div class="mc-focus-addr">

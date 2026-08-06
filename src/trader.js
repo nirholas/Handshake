@@ -190,7 +190,7 @@ function oracleBlock(oracle) {
 				<span class="tp-oracle-label">Oracle conviction</span>
 				<div class="tp-oracle-actions">
 					<a class="tp-oracle-link" href="/oracle" target="_blank" rel="noopener">View live ↗</a>
-					<a class="lb-btn lb-btn-primary tp-oracle-cta" href="#tp-copy-panel" onclick="document.getElementById('tp-copy-panel')?.scrollIntoView({behavior:'smooth',block:'start'});return false">Copy trades →</a>
+					<a class="lb-btn lb-btn-primary tp-oracle-cta" href="#tp-copy-panel">Copy trades →</a>
 				</div>
 			</div>
 			<div class="tp-oracle-kpis">
@@ -325,7 +325,7 @@ function render(data) {
 	content.innerHTML = `
 		<section class="tp-hero">
 			<div class="tp-avatar-wrap">
-				<img loading="lazy" decoding="async" class="tp-avatar" src="${escapeHtml(img)}" alt="" onerror="this.src='${identicon(a.id || '?')}'" />
+				<img loading="lazy" decoding="async" class="tp-avatar" src="${escapeHtml(img)}" alt="" data-fallback-src="${identicon(a.id || '?')}" />
 			</div>
 			<div class="tp-id">
 				<div class="tp-name">${escapeHtml(a.name || 'Unnamed agent')}${verifiedBadge(m.verified)}</div>

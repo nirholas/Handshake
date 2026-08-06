@@ -37,7 +37,7 @@ let me = null;
 		return;
 	}
 	const main = document.querySelector('.dn-main-inner') || document.body;
-	main.innerHTML = `<h1 class="dn-h1">Analytics</h1><div class="dn-panel"><div class="dn-panel-title" style="color:var(--nxt-danger)">Failed to load</div><div class="dn-panel-sub">${esc(err?.message || 'unknown')}</div><button class="dn-btn" onclick="location.reload()">Reload</button></div>`;
+	main.innerHTML = `<h1 class="dn-h1">Analytics</h1><div class="dn-panel"><div class="dn-panel-title" style="color:var(--nxt-danger)">Failed to load</div><div class="dn-panel-sub">${esc(err?.message || 'unknown')}</div><button class="dn-btn" data-action="reload">Reload</button></div>`;
 });
 
 function renderSkeletons(root) {

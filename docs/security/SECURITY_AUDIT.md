@@ -226,6 +226,34 @@ disagree. Hashes cannot cover an inline event handler or a `javascript:` URL, so
 those were removed site-wide and `scripts/audit-inline-handlers.mjs` (registered
 in `data/guards.json`, wired into `npm run gate`) fails the build if one returns.
 
+Two checks prove it rather than assert it. `tests/csp-hashes.test.js` pins the
+parser edge cases a naive regex gets wrong, because a single missed inline
+script ships that page blank. `npm run audit:csp` (`scripts/audit-csp.mjs`) then
+loads real pages in a real browser against a running server and fails on any
+`securitypolicyviolation` event, which is the only way to confirm a policy the
+way a browser applies it. Add `--all` to sweep every route in `data/pages.json`.
+
+Both of those earned their keep immediately, and the two things they caught are
+the reason neither is optional:
+
+- The first pass at removing inline handlers scanned only `.html` files and
+  found 55. Almost all of this site's markup is built from template literals, so
+  another 113 lived inside `.js` strings where no HTML scan could see them:
+  72 `onerror` image fallbacks, 15 `onclick="event.stopPropagation()"`, six
+  reload buttons, eight hover effects and a tail of named-function calls, across
+  70 modules. The browser sweep found the first of them on `/communities`.
+  `public/inline-behaviors.js` now carries all of it declaratively
+  (`data-fallback*`, `data-action`, `data-stop-propagation`) and is injected on
+  every built page by `scripts/inject-inline-behaviors.mjs`, matching the
+  belt-and-suspenders pattern `inject-atlas.mjs` uses. The hover cases became
+  CSS. `audit-inline-handlers.mjs` now scans `src/` too.
+- The hash scanner treated a `<script>` written inside a `<style>` block as a
+  real element. A CSS comment on `/oracle` that mentioned one started a phantom
+  script that ran to the next real `</script>`, swallowing the analytics
+  snippet's opening tag so its hash never reached the header, and the browser
+  blocked it. The scanner now skips comments and raw-text elements (`style`,
+  `textarea`, `title`), with a test per case.
+
 `'unsafe-eval'` remains, and is the weakest link now that inline injection is
 closed. It cannot simply be dropped: the shipped bundles carry three distinct
 `new Function` users. Two degrade gracefully when eval is blocked (the msgpack
@@ -234,8 +262,8 @@ a failed feature test; pdf.js gates on `isEvalSupported`), but the `cwise`
 codegen inside the main `index` bundle and the `new Function` in
 `public/scene-studio/{app/app.js,libs/acorn/acorn.js}` do not. Scoping it needs
 `'wasm-unsafe-eval'` globally, `'unsafe-eval'` kept on `/scene-studio`, and a
-`cwise`-free path for the main bundle, verified by a real browser sweep
-(`npm run audit:web`) rather than by reading headers. **Status: `'unsafe-inline'`
+`cwise`-free path for the main bundle, verified with `npm run audit:csp`
+rather than by reading headers. **Status: `'unsafe-inline'`
 fixed (per-response hashes); CDN trim + dedupe done; `'unsafe-eval'` scoping
 tracked with the plan above.**
 

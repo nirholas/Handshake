@@ -5108,7 +5108,7 @@ if (import.meta.env?.DEV) {
 		].join(';');
 
 		const imgHtml = COIN_PARAMS.image
-			? `<img loading="lazy" decoding="async" src="${escAttr(COIN_PARAMS.image)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${escAttr(initials(COIN_PARAMS.symbol, COIN_PARAMS.name))}',className:'coin-fallback'}))" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid ${accent.css};flex:0 0 34px;background:#0e0e16" />`
+			? `<img loading="lazy" decoding="async" src="${escAttr(COIN_PARAMS.image)}" alt="" referrerpolicy="no-referrer" data-fallback="element" data-fallback-tag="span" data-fallback-class="coin-fallback" data-fallback-text="${escAttr(initials(COIN_PARAMS.symbol, COIN_PARAMS.name))}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid ${accent.css};flex:0 0 34px;background:#0e0e16" />`
 			: `<span class="coin-fallback">${esc(initials(COIN_PARAMS.symbol, COIN_PARAMS.name))}</span>`;
 
 		const title = COIN_PARAMS.symbol ? `$${esc(COIN_PARAMS.symbol)}` : 'Coin';

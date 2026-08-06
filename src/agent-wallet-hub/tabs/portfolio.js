@@ -348,7 +348,7 @@ registerWalletTab({
 				const sym = escapeHtml(h.symbol || '?');
 				const sub = h.isNative ? 'Native' : (h.is_three ? '$THREE' : (h.stable ? 'Stable' : escapeHtml(h.name || '')));
 				const img = h.logo
-					? `<img src="${escapeHtml(h.logo)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'ph',textContent:'${sym.slice(0, 2)}'}))">`
+					? `<img src="${escapeHtml(h.logo)}" alt="" loading="lazy" data-fallback="element" data-fallback-tag="span" data-fallback-class="ph" data-fallback-text="${sym.slice(0, 2)}">`
 					: `<span class="ph">${sym.slice(0, 2)}</span>`;
 				const value = h.usd_value != null ? (formatUsd(h.usd_value) || '—') : '<span class="awh-muted">unpriced</span>';
 				const amt = h.amount != null ? formatNum(h.amount) : '—';

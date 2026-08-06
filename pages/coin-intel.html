@@ -1035,7 +1035,6 @@
 		document.addEventListener('visibilitychange', () => { if (!document.hidden && state.tab === 'radar') loadRadar(); });
 	</script>
 	<script src="/brand.js" defer></script>
-	<script src="/img-fallback.js" defer></script>
 	<script>
 		fetch('/api/oracle/stats').then(r=>r.ok?r.json():null).then(d=>{
 		  if(!d) return;

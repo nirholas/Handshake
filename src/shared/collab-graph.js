@@ -238,7 +238,7 @@ export function createCollabGraph(host, opts = {}) {
 				: '';
 		const receipt =
 			url && sig
-				? `<a class="cg-receipt" href="${esc(url)}" target="_blank" rel="noopener" title="On-chain invocation receipt" onclick="event.stopPropagation()">⛓ ${esc(String(sig).slice(0, 6))}…</a>`
+				? `<a class="cg-receipt" href="${esc(url)}" target="_blank" rel="noopener" title="On-chain invocation receipt" data-stop-propagation>⛓ ${esc(String(sig).slice(0, 6))}…</a>`
 				: '';
 		const errBadge =
 			node.status === 'failed' && node.error

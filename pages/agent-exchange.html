@@ -23,6 +23,10 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 	<style>
+		/* Hover lives here, not in an onmouseover attribute: the site CSP allows
+		   inline script blocks by hash and never inline handlers. */
+		.ax-x402-link { color: var(--usdc-lt); text-decoration: none; }
+		.ax-x402-link:hover { text-decoration: underline; }
 		:root {
 			color-scheme: dark;
 			--bg:       #080808;

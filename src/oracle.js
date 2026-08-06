@@ -55,15 +55,15 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 //
 // Returns the `src` + fallback attributes for an <img>. `seed` should be a stable
 // per-token identifier (mint, symbol) so a given coin's placeholder art is unique
-// and identical across loads. On error we drop to the seed-only placeholder (no
-// upstream URL), clearing onerror first so a placeholder that itself fails cannot
-// spin an error loop.
+// and identical across loads. On error the shared handler in
+// public/inline-behaviors.js swaps to the seed-only placeholder (no upstream
+// URL) exactly once, so a placeholder that itself fails cannot spin an error
+// loop, and `data-fallback="keep"` leaves the element in place after that
+// rather than pulling it out of the grid.
 //
-// The placeholder URL is carried in `data-ph` and read back via `this.dataset.ph`
-// rather than interpolated into the onerror script. Seeds are attacker-controlled
-// (a pump.fun launcher picks the token symbol), so splicing one into a quoted JS
-// string literal would be an injection vector. Here the onerror body is a constant
-// and both URLs only ever land in esc()'d attribute values.
+// Seeds are attacker-controlled (a pump.fun launcher picks the token symbol), so
+// both URLs only ever land in esc()'d attribute values and never inside a script
+// body, which is what an inline onerror would have made them.
 function proxyImgAttrs(rawUrl, seed) {
 	const s = String(seed || 'coin');
 	const placeholder = `/api/img?${new URLSearchParams({ seed: s })}`;
@@ -72,7 +72,7 @@ function proxyImgAttrs(rawUrl, seed) {
 	const src = rawUrl && /^(https?|ipfs|ar):\/\//i.test(String(rawUrl))
 		? proxiedImageURL(String(rawUrl), s)
 		: placeholder;
-	return `src="${esc(src)}" data-ph="${esc(placeholder)}" onerror="this.onerror=null;this.src=this.dataset.ph"`;
+	return `src="${esc(src)}" data-fallback-src="${esc(placeholder)}" data-fallback="keep"`;
 }
 const shortAddr = (a) => (a && a.length > 10 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 const fmtSol = (n) => (n == null ? '—' : `${Number(n) < 0.01 && Number(n) > 0 ? Number(n).toFixed(4) : Number(n).toFixed(2)}◎`);
@@ -1608,9 +1608,9 @@ function winCardHtml(w, idx) {
 				<span class="win-when">${esc(when)}</span>
 			</div>
 			<div class="win-links">
-				<a class="win-link" href="${esc(w.pump_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">pump.fun ↗</a>
-				<a class="win-link" href="${esc(w.oracle_url)}" onclick="event.stopPropagation()">Oracle ↗</a>
-				<a class="win-link" style="margin-left:auto;color:var(--muted)" href="${esc(winTweet(w))}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Share on X">Share ↗</a>
+				<a class="win-link" href="${esc(w.pump_url)}" target="_blank" rel="noopener" data-stop-propagation>pump.fun ↗</a>
+				<a class="win-link" href="${esc(w.oracle_url)}" data-stop-propagation>Oracle ↗</a>
+				<a class="win-link" style="margin-left:auto;color:var(--muted)" href="${esc(winTweet(w))}" target="_blank" rel="noopener" data-stop-propagation title="Share on X">Share ↗</a>
 			</div>
 		</div>
 	</a>`;
@@ -1903,8 +1903,7 @@ async function loadRelatedCoins(mint, category) {
 					? `<img ${proxyImgAttrs(r.image_uri, r.mint)} alt="" style="width:28px;height:28px;border-radius:7px;object-fit:cover;flex:none;border:1px solid var(--line)" loading="lazy">`
 					: `<div style="width:28px;height:28px;border-radius:7px;background:var(--line);display:grid;place-items:center;font:700 11px/1 var(--mono);color:var(--faint);flex:none">${esc((r.symbol||'?')[0])}</div>`;
 				return `<button type="button" class="dr-related" data-related-mint="${esc(r.mint)}"
-					style="display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;width:100%;transition:background .12s"
-					onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='var(--panel)'">
+					style="display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;width:100%">
 					${imgEl}
 					<span style="flex:1;min-width:0">
 						<span style="font-weight:700;font-size:13px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.symbol || r.mint.slice(0,8))}</span>

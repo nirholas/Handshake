@@ -456,7 +456,7 @@ export function mountDetail(host, opts = {}) {
 			</div>` : '';
 		body.innerHTML = `
 			${agent ? `<div class="dd-agent-row">
-				<img src="${escapeHtml(av)}" alt="" class="dd-agent-av" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'" />
+				<img src="${escapeHtml(av)}" alt="" class="dd-agent-av" loading="lazy" decoding="async" data-fallback="invisible" />
 				<div class="dd-agent-id">
 					<a href="${escapeHtml(agent.url || `/agents/${agent.id}`)}" class="dd-agent-name">${escapeHtml(agent.name || 'three.ws agent')}</a>
 					${agent.description ? `<p class="dd-agent-desc">${escapeHtml(agent.description)}</p>` : ''}
@@ -503,7 +503,7 @@ function shell({ mint, network, sym, name, img, isThree }) {
 	<div class="dd-scroll">
 		<header class="dd-hero">
 			<div class="dd-hero-img">
-				${img ? `<img src="${escapeHtml(img)}" alt="" loading="lazy" decoding="async" onerror="this.parentNode.classList.add('dd-noimg');this.remove()" />` : ''}
+				${img ? `<img src="${escapeHtml(img)}" alt="" loading="lazy" decoding="async" data-fallback="remove" data-fallback-parent-class="dd-noimg" />` : ''}
 				<span class="dd-hero-ini">${escapeHtml(initials)}</span>
 			</div>
 			<div class="dd-hero-main">

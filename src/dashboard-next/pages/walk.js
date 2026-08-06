@@ -231,7 +231,7 @@ function avatarCard(a) {
 			style="position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 10px 12px;border-radius:12px;cursor:pointer;text-align:center;
 			background:rgba(255,255,255,0.02);border:1px solid ${selected ? 'var(--nxt-accent)' : 'var(--nxt-stroke)'};transition:border-color .15s,transform .15s,background .15s">
 			<div style="width:54px;height:54px;border-radius:12px;display:grid;place-items:center;overflow:hidden;font-size:30px;background:${a.accent ? hexSoft(a.accent) : 'rgba(255,255,255,0.04)'}">
-				${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.replaceWith(document.createTextNode('${esc(a.emoji || '🚶')}'))" />` : esc(a.emoji || '🚶')}
+				${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" data-fallback="text" data-fallback-text="${esc(a.emoji || '🚶')}" />` : esc(a.emoji || '🚶')}
 			</div>
 			<div style="font-size:13px;font-weight:600;color:var(--nxt-ink);line-height:1.1">${esc(a.name)}</div>
 			<div style="font-size:11px;color:var(--nxt-ink-fade)">${esc(a.category || '')}</div>

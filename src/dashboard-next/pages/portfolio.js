@@ -653,7 +653,7 @@ async function enrichHoldingsOracle(tbody) {
 		const badge = row.querySelector('.pf-oracle-badge');
 		if (!badge || badge.hasChildNodes()) continue;
 		const color = PF_TIER_COLOR[d.tier] || '#94a3b8';
-		badge.innerHTML = `<a class="pf-ob" href="/oracle/coin/${encodeURIComponent(mint)}" title="Oracle conviction: ${d.score} · ${d.tier}" onclick="event.stopPropagation()" style="color:${color}">◎ ${d.score}</a>`;
+		badge.innerHTML = `<a class="pf-ob" href="/oracle/coin/${encodeURIComponent(mint)}" title="Oracle conviction: ${d.score} · ${d.tier}" data-stop-propagation style="color:${color}">◎ ${d.score}</a>`;
 	}
 }
 
@@ -915,10 +915,12 @@ async function openAssetDrawer(token) {
 			<div class="pf-drawer-error">
 				<p>Failed to load asset data</p>
 				<p style="font-size:12px;color:var(--nxt-ink-fade)">${esc(err.message)}</p>
-				<button class="dn-btn" onclick="this.closest('.pf-drawer-backdrop')?.classList.remove('is-open')">Close</button>
+				<button class="dn-btn" data-action="close">Close</button>
 			</div>
 		`;
-		content.querySelector('[data-action="close"]').addEventListener('click', closeDrawer);
+		// The error state renders two close affordances (the header × and the
+		// button), so bind both rather than only the first match.
+		content.querySelectorAll('[data-action="close"]').forEach((el) => el.addEventListener('click', closeDrawer));
 	}
 }
 

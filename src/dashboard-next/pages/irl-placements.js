@@ -483,7 +483,7 @@ function unreadForPin(pinId, list = inbox.interactions) {
 function cardHtml(pin, ixList) {
 	const caption = pin.caption || '';
 	const img = pin.avatar_url
-		? `<img class="irl-av" src="${esc(pin.avatar_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="irl-av-fallback" style="display:none">📍</div>`
+		? `<img class="irl-av" src="${esc(pin.avatar_url)}" alt="" loading="lazy" data-fallback="sibling" /><div class="irl-av-fallback" style="display:none">📍</div>`
 		: `<div class="irl-av-fallback">📍</div>`;
 
 	const visitors = Number(pin.view_count) || 0;
@@ -1193,7 +1193,7 @@ function openLocationMap({ pins, focusId, onSaved, onRemoved }) {
 	// ── Markers ────────────────────────────────────────────────────────────
 	function makeIcon(p, focused) {
 		const av = p.avatar_url
-			? `<img loading="lazy" decoding="async" src="${esc(p.avatar_url)}" alt="" onerror="this.remove()" />`
+			? `<img loading="lazy" decoding="async" src="${esc(p.avatar_url)}" alt="" data-fallback="remove" />`
 			: '📍';
 		return L.divIcon({
 			className: 'irlmap-pin',

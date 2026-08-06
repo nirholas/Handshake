@@ -288,7 +288,7 @@ function bindResize() {
 })().catch(err => {
 	if (err?.message === 'redirecting') return;
 	const main = document.querySelector('.dn-main-inner') || document.body;
-	main.innerHTML = `<h1 class="dn-h1">Competitive Landscape</h1><div class="dn-panel" style="padding:32px;text-align:center"><p style="color:var(--nxt-danger);margin-bottom:12px">Failed to load</p><p style="color:var(--nxt-ink-dim);font-size:13px">${esc(err?.message || 'Unknown error')}</p><button class="dn-btn" onclick="location.reload()" style="margin-top:16px">Reload</button></div>`;
+	main.innerHTML = `<h1 class="dn-h1">Competitive Landscape</h1><div class="dn-panel" style="padding:32px;text-align:center"><p style="color:var(--nxt-danger);margin-bottom:12px">Failed to load</p><p style="color:var(--nxt-ink-dim);font-size:13px">${esc(err?.message || 'Unknown error')}</p><button class="dn-btn" data-action="reload" style="margin-top:16px">Reload</button></div>`;
 });
 
 function renderAll(root) {

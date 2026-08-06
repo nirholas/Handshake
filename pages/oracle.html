@@ -20,6 +20,10 @@
 	<link rel="stylesheet" href="/nav.css" />
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Oracle","applicationCategory":"FinanceApplication","description":"Fused pump.fun conviction scoring — who's buying, how, what, and how it's moving, in one live score, with an agent action loop.","url":"https://three.ws/oracle","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 	<style>
+		/* Hover lives here, not in an onmouseover attribute: the site CSP allows
+		   inline script blocks by hash and never inline handlers. */
+		.dr-related { background: var(--panel); transition: background 0.12s; }
+		.dr-related:hover { background: rgba(255, 255, 255, 0.05); }
 		:root {
 			--bg: #05060c; --panel: rgba(13,15,23,0.72); --panel-solid: #0c0e16; --line: rgba(255,255,255,0.09);
 			--ink: #eaeefa; --muted: #8a92a8; --faint: rgba(255,255,255,0.45);

@@ -399,7 +399,9 @@ async function openDeployOnchainModal(host, agent, avatars, allAgents) {
 		skills: Array.isArray(agent.skills) && agent.skills.length ? agent.skills : undefined,
 		onchain: agent.onchain || null,
 	};
-	const deployBtn = new OnchainDeployButton({ agent: deployAgentObj, container: deployHost });
+	// reveal:false keeps the user in the management flow (the modal + toast +
+	// re-render below is the feedback here, not the /mint-success page).
+	const deployBtn = new OnchainDeployButton({ agent: deployAgentObj, container: deployHost, reveal: false });
 	deployBtn.mount();
 
 	let deployed = false;
@@ -1220,11 +1222,7 @@ async function openCasterModal(agent) {
 						Generate credentials once, deploy anywhere Docker runs.
 					</p>
 				</div>
-				<button data-action="close" aria-label="Close" style="
-					flex-shrink:0;background:none;border:none;cursor:pointer;
-					color:var(--nxt-ink-fade);padding:4px;border-radius:6px;
-					transition:color 120ms ease;
-				" onmouseenter="this.style.color='var(--nxt-ink)'" onmouseleave="this.style.color='var(--nxt-ink-fade)'">
+				<button data-action="close" aria-label="Close" class="nxt-icon-btn">
 					<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
 				</button>
 			</div>

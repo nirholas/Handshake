@@ -216,7 +216,7 @@ registerWalletTab({
 		}
 
 		function avatarHTML(g) {
-			if (g.avatar_url) return `<img src="${escapeHtml(g.avatar_url)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=\\'awh-rec-ava\\'>${escapeHtml((g.label || '?').slice(0, 1).toUpperCase())}</span>'" />`;
+			if (g.avatar_url) return `<img src="${escapeHtml(g.avatar_url)}" alt="" loading="lazy" data-fallback="element" data-fallback-tag="span" data-fallback-class="awh-rec-ava" data-fallback-text="${escapeHtml((g.label || '?').slice(0, 1).toUpperCase())}" />`;
 			return `<span class="awh-rec-ava" aria-hidden="true">${escapeHtml((g.label || '?').slice(0, 1).toUpperCase())}</span>`;
 		}
 

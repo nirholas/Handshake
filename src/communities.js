@@ -50,7 +50,7 @@ function avatarChip({ kind, value, label, thumb, id }) {
 	chip.title = label;
 	chip.innerHTML = `
 		<span class="avatar-thumb">${thumb
-			? `<img loading="lazy" decoding="async" src="${escAttr(thumb)}" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'" />`
+			? `<img loading="lazy" decoding="async" src="${escAttr(thumb)}" alt="" referrerpolicy="no-referrer" data-fallback="hide" />`
 			: `<span class="avatar-glyph">🧍</span>`}</span>
 		<span class="avatar-name">${esc(label)}</span>`;
 	chip.addEventListener('click', () => {
@@ -169,7 +169,7 @@ function coinCard(coin) {
 	card.className = 'coin-card';
 	card.innerHTML = `
 		<span class="coin-thumb">${image
-			? `<img src="${escAttr(image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('no-img')" />`
+			? `<img src="${escAttr(image)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback="keep" data-fallback-parent-class="no-img" />`
 			: ''}<span class="coin-thumb-fallback">${esc((symbol || name).slice(0, 3).toUpperCase())}</span></span>
 		<span class="coin-info">
 			<span class="coin-symbol">$${esc(symbol || '—')}</span>

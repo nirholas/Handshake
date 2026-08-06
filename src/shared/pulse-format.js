@@ -70,7 +70,7 @@ export function timeAgo(iso) {
 // optional wallet chip, and a caller-supplied metric on the right.
 export function agentCardHTML(a, metricHTML) {
 	const av = a.avatar_thumbnail_url
-		? `<img class="px-lb-av" src="${esc(a.avatar_thumbnail_url)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
+		? `<img class="px-lb-av" src="${esc(a.avatar_thumbnail_url)}" alt="" loading="lazy" data-fallback="invisible" />`
 		: `<span class="px-lb-av px-lb-av--mono" aria-hidden="true">${esc((a.name || '?').charAt(0).toUpperCase())}</span>`;
 	const chip = a.solana_address
 		? walletChipHTML({ name: a.name, meta: { solana_address: a.solana_address } }, { link: false, tip: false, showPending: false, balance: false, popover: false })

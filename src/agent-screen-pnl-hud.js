@@ -229,7 +229,7 @@ export function createPnlHud({ bodyEl, agentId, network = 'mainnet', onNetWorth 
 			);
 		}
 		const logo = h.logo
-			? `<img class="asc-hud-row-logo" src="${esc(h.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+			? `<img class="asc-hud-row-logo" src="${esc(h.logo)}" alt="" loading="lazy" data-fallback="hide">`
 			: `<span class="asc-hud-row-logo asc-hud-row-logo--ph"></span>`;
 		return (
 			`<div class="asc-hud-row" title="${esc(sym)}${pct ? ` · ${pct} of net worth` : ''}">` +

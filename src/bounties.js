@@ -337,7 +337,7 @@ function scanningState() {
 	return `<div class="empty"><div class="ico">🔍</div><h3>Searching the board…</h3><p>Scanning every open bounty for “${esc(query)}”.</p></div>`;
 }
 function errorState(msg) {
-	return `<div class="errbox"><div class="ico">⚠️</div><h3>Couldn't load bounties</h3><p>${esc(msg)}</p><button class="btn btn-ghost btn-sm" onclick="location.reload()">Try again</button></div>`;
+	return `<div class="errbox"><div class="ico">⚠️</div><h3>Couldn't load bounties</h3><p>${esc(msg)}</p><button class="btn btn-ghost btn-sm" data-action="reload">Try again</button></div>`;
 }
 function setLoadMore(text, disabled) {
 	const b = document.getElementById('load-more');

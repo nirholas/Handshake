@@ -129,7 +129,7 @@ function coinCard(c) {
 	const on = p.enabled;
 	const initials = (c.symbol || c.name || 'A').slice(0, 2).toUpperCase();
 	const img = c.image
-		? `<img loading="lazy" decoding="async" src="${esc(c.image)}" alt="" onerror="this.remove()">`
+		? `<img loading="lazy" decoding="async" src="${esc(c.image)}" alt="" data-fallback="remove">`
 		: '';
 	const gradPill = c.stats.graduated
 		? `<span class="pill grad"><span class="dot"></span>Graduated</span>`

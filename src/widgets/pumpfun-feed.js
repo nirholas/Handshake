@@ -481,7 +481,7 @@ function renderGraduation(ev) {
 		? `<span style="position:absolute;top:8px;right:10px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#6a6a82;padding:1px 6px;border:1px solid #2a2a3c;border-radius:999px;background:#0e0e16">replay</span>`
 		: '';
 	const thumb = ev.image_uri
-		? `<img src="${attrEsc(ev.image_uri)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid #2a2a3c;background:#0e0e16;flex:0 0 40px" />`
+		? `<img src="${attrEsc(ev.image_uri)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback="hide" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid #2a2a3c;background:#0e0e16;flex:0 0 40px" />`
 		: '';
 
 	el.innerHTML = `

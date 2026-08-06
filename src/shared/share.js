@@ -49,7 +49,7 @@ export function showSharePanel(entity, triggerEl = null) {
 	const previewHtml = previewImage
 		? `<div class="tws-sp-preview">
 				<img src="${esc(previewImage)}" alt="${esc(title)} card preview" loading="lazy" decoding="async"
-					onerror="this.closest('.tws-sp-preview')?.remove()" />
+					data-fallback="closest" data-fallback-closest=".tws-sp-preview" />
 			</div>`
 		: '';
 

@@ -239,7 +239,7 @@ function rowHtml(r, { pinned = false } = {}) {
 	const seed = escapeHtml(JSON.stringify({ symbol: r.symbol, name: r.name, image_uri: r.image_uri }));
 	const initials = escapeHtml(r.symbol.slice(0, 2));
 	const imgHtml = r.image_uri
-		? `<img src="${escapeHtml(r.image_uri)}" alt="" class="tt-row-img" loading="lazy" onerror="this.outerHTML='<span class=tt-row-ini>${initials}</span>'" />`
+		? `<img src="${escapeHtml(r.image_uri)}" alt="" class="tt-row-img" loading="lazy" data-fallback="element" data-fallback-tag="span" data-fallback-class="tt-row-ini" data-fallback-text="${initials}" />`
 		: `<span class="tt-row-ini">${initials}</span>`;
 	const tier = r.oracle_tier && r.oracle_tier !== 'avoid'
 		? `<span class="tt-tier ${TIER_CLASS[r.oracle_tier] || ''}">${escapeHtml(r.oracle_tier)}</span>` : '';

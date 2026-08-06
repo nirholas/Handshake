@@ -52,10 +52,10 @@ function coinRow(c, i) {
 	const flame = i === 0 ? '<span class="trd-flame" aria-hidden="true">🔥</span>' : '';
 	const href = `/coin/${encodeURIComponent(c.id)}`;
 	const spark = c.sparkline_url
-		? `<img class="trd-spark" src="${esc(c.sparkline_url)}" loading="lazy" alt="" width="120" height="40" onerror="this.remove()" />`
+		? `<img class="trd-spark" src="${esc(c.sparkline_url)}" loading="lazy" alt="" width="120" height="40" data-fallback="remove" />`
 		: '<span class="trd-spark trd-spark-empty" aria-hidden="true"></span>';
 	const img = c.image
-		? `<img class="trd-coin-img" src="${esc(c.image)}" loading="lazy" alt="" width="28" height="28" onerror="this.style.visibility='hidden'" />`
+		? `<img class="trd-coin-img" src="${esc(c.image)}" loading="lazy" alt="" width="28" height="28" data-fallback="invisible" />`
 		: '<span class="trd-coin-img" aria-hidden="true"></span>';
 	return `
 		<a class="trd-coin" href="${esc(href)}">
@@ -117,7 +117,7 @@ function renderCategories(cats) {
 
 function nftCard(n) {
 	const thumb = n.thumb
-		? `<img class="trd-nft-img" src="${esc(n.thumb)}" loading="lazy" alt="" width="40" height="40" onerror="this.style.visibility='hidden'" />`
+		? `<img class="trd-nft-img" src="${esc(n.thumb)}" loading="lazy" alt="" width="40" height="40" data-fallback="invisible" />`
 		: '<span class="trd-nft-img" aria-hidden="true"></span>';
 	return `
 		<div class="trd-card trd-nft">

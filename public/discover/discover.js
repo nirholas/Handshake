@@ -441,7 +441,7 @@ function renderCard(item) {
  */
 function renderThumb({ image, glbUrl, has3d, alt }) {
 	if (image) {
-		return `<img src="${escapeAttr(image)}" alt="${escapeAttr(alt || '')}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'explore-card-ph',textContent:'${has3d ? '🎭' : '🤖'}'}))" />`;
+		return `<img src="${escapeAttr(image)}" alt="${escapeAttr(alt || '')}" loading="lazy" data-fallback="element" data-fallback-class="explore-card-ph" data-fallback-text="${has3d ? '🎭' : '🤖'}" />`;
 	}
 	if (glbUrl) {
 		return `<model-viewer

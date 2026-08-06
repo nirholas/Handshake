@@ -404,7 +404,7 @@ export function mountLaunchStudio(root) {
 		const maxScore = Math.max(1, ...(s.preview.items.map((x) => Number(x.score) || 0)));
 		const pct = Math.max(6, Math.round(((Number(it.score) || 0) / maxScore) * 100));
 		const img = it.identity.image
-			? `<img class="ls-coin-img" src="${esc(it.identity.image)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'ls-coin-ph\\'>${esc((it.identity.symbol || '?')[0])}</div>'" />`
+			? `<img class="ls-coin-img" src="${esc(it.identity.image)}" alt="" loading="lazy" data-fallback="element" data-fallback-class="ls-coin-ph" data-fallback-text="${esc((it.identity.symbol || '?')[0])}" />`
 			: `<div class="ls-coin-ph">${esc((it.identity.symbol || '?')[0])}</div>`;
 		const signal = it.signal && it.signal.detail ? `<span class="ls-tag">${esc(it.signal.detail)}</span>` : '';
 		return `<div class="ls-coin" style="animation-delay:${i * 40}ms">

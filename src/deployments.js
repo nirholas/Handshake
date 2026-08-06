@@ -10,7 +10,7 @@
  */
 
 import { createLogger } from './shared/log.js';
-import { updateValue, enterRow, liveDot, setLiveDot } from './ui-juice.js';
+import { updateValue, enterRow, enterStagger, liveDot, setLiveDot } from './ui-juice.js';
 import { proxiedImageURL } from './ipfs.js';
 
 const log = createLogger('deployments');
@@ -135,18 +135,72 @@ function renderTopChains(chains) {
 		return;
 	}
 	const peak = Math.max(1, ...chains.map((c) => c.count || 0));
+	const total = chains.reduce((sum, c) => sum + (c.count || 0), 0) || 1;
 	host.innerHTML = chains
 		.map((c) => {
 			const pct = Math.max(3, Math.round(((c.count || 0) / peak) * 100));
+			const share = Math.round(((c.count || 0) / total) * 100);
+			const name = c.explorer
+				? `<a class="dp-chain-name" href="${esc(c.explorer)}" target="_blank" rel="noopener" title="Open ${esc(c.chain)} explorer">${esc(c.chain)}</a>`
+				: `<span class="dp-chain-name">${esc(c.chain)}</span>`;
 			return (
-				`<div class="dp-chain-row">` +
-				`<span class="dp-chain-name">${esc(c.chain)}</span>` +
+				`<div class="dp-chain-row" title="${esc(c.chain)}: ${fmtNum(c.count)} agents · ${share}% of this network">` +
+				name +
 				`<span class="dp-chain-bar"><span style="width:${pct}%"></span></span>` +
-				`<span class="dp-chain-n">${fmtNum(c.count)}</span>` +
+				`<span class="dp-chain-n">${fmtNum(c.count)}<small class="dp-chain-share">${share}%</small></span>` +
 				`</div>`
 			);
 		})
 		.join('');
+}
+
+// ── spotlight ─────────────────────────────────────────────────────────────────
+// The newest deployment of the current view gets a hero card above the
+// counters: the emotional beat of the page. Re-rendered (with an entrance)
+// only when a different agent takes the top slot.
+let spotlightId = null;
+
+function renderSpotlight(r) {
+	const host = $('dp-spotlight');
+	if (!host) return;
+	if (!r) {
+		host.hidden = true;
+		spotlightId = null;
+		return;
+	}
+	const dpId = `${r.chain_id}:${r.agent_id}`;
+	if (dpId === spotlightId) return;
+	spotlightId = dpId;
+
+	const remote = r.image && /^(https?|ipfs|ar):\/\//i.test(String(r.image));
+	const av = remote
+		? `<img class="dp-spot-av" src="${esc(proxiedImageURL(String(r.image), dpId))}" alt="" loading="lazy" onerror="this.onerror=null;this.style.visibility='hidden'" />`
+		: `<span class="dp-spot-av dp-spot-av--mono" aria-hidden="true">${esc((r.name || '#').charAt(0).toUpperCase())}</span>`;
+	const title = r.name || `Agent #${esc(r.agent_id)}`;
+	const nameEl = r.agent_explorer
+		? `<a class="dp-spot-name" href="${esc(r.agent_explorer)}" target="_blank" rel="noopener">${esc(title)}</a>`
+		: `<span class="dp-spot-name">${esc(title)}</span>`;
+	const tags =
+		(r.has_3d ? `<span class="dp-tag dp-tag--3d" title="Ships a 3D avatar">3D</span>` : '') +
+		(r.x402_support ? `<span class="dp-tag dp-tag--x402" title="Accepts x402 payments">x402</span>` : '');
+	const desc = r.description ? `<p class="dp-spot-desc">${esc(truncate(r.description, 160))}</p>` : '';
+	const owner = r.owner
+		? `<a class="dp-owner" href="${esc(r.owner_explorer)}" target="_blank" rel="noopener" title="Owner address">${esc(shortAddr(r.owner))}</a>`
+		: '';
+	const tx = r.tx_explorer
+		? `<a class="dp-tx" href="${esc(r.tx_explorer)}" target="_blank" rel="noopener">registration tx ↗</a>`
+		: '';
+	host.innerHTML =
+		`<span class="dp-spot-avwrap"><span class="dp-spot-ring" aria-hidden="true"></span>${av}</span>` +
+		`<span class="dp-spot-body">` +
+		`<span class="dp-spot-kicker">Latest to land</span>` +
+		`<span class="dp-spot-title">${nameEl}${tags}</span>` +
+		desc +
+		`<span class="dp-spot-meta"><span class="dp-chip">${esc(r.chain)}</span>${owner}` +
+		`<span class="dp-time" data-ts="${esc(r.registered_at)}" title="${esc(absDate(r.registered_at))}">${esc(timeAgo(r.registered_at))}</span>${tx}</span>` +
+		`</span>`;
+	host.hidden = false;
+	enterRow(host);
 }
 
 // ── feed ───────────────────────────────────────────────────────────────────────
@@ -202,7 +256,7 @@ function rowHTML(r) {
 	const mono = `<span class="dp-av dp-av--mono" aria-hidden="true">${esc((r.name || '#').charAt(0).toUpperCase())}</span>`;
 	const remote = r.image && /^(https?|ipfs|ar):\/\//i.test(String(r.image));
 	const av = remote
-		? `<img class="dp-av" src="${esc(proxiedImageURL(String(r.image), dpId))}" alt="" loading="lazy" onerror="this.onerror=null;this.style.visibility='hidden'" />`
+		? `<img class="dp-av" src="${esc(proxiedImageURL(String(r.image), dpId))}" alt="" loading="lazy" data-fallback="invisible" />`
 		: mono;
 	const title = r.name || `Agent #${esc(r.agent_id)}`;
 	const nameEl = r.agent_explorer
@@ -226,7 +280,7 @@ function rowHTML(r) {
 		desc +
 		`<span class="dp-row-meta"><span class="dp-chip">${esc(r.chain)}</span>${owner}</span>` +
 		`</span>` +
-		`<span class="dp-row-side"><span class="dp-time" title="${esc(timeTitle)}">${esc(timeLabel)}</span>${tx}</span>` +
+		`<span class="dp-row-side"><span class="dp-time" data-ts="${esc(r.registered_at)}" title="${esc(timeTitle)}">${esc(timeLabel)}</span>${tx}</span>` +
 		`</div>`
 	);
 }
@@ -235,6 +289,7 @@ function renderFeed() {
 	const host = $('dp-feed');
 	if (!host) return;
 	if (!state.items.length) {
+		renderSpotlight(null);
 		const what = state.kind === '3d' ? 'agents with a 3D avatar' : state.kind === 'x402' ? 'x402-enabled agents' : 'on-chain agents';
 		host.innerHTML =
 			`<div class="dp-empty"><div class="dp-empty-title">No ${esc(what)} yet</div>` +
@@ -260,9 +315,12 @@ function renderFeed() {
 			enterRow(row); // shared slide-in so the live refresh reads as a stream
 		});
 	} else if (!renderedIds.size) {
-		// Initial render or after full reset
+		// Initial render or after full reset: staggered entrance so the feed
+		// reads as a stream arriving, not a wall appearing.
 		host.innerHTML = state.items.map(rowHTML).join('');
+		enterStagger([...host.children], { step: 40 });
 	}
+	renderSpotlight(state.items[0] || null);
 }
 
 // ── controls ────────────────────────────────────────────────────────────────────
@@ -325,6 +383,13 @@ function setFeedLive(stateName) {
 	setLiveDot(document.querySelector('.dp-feed-head'), stateName);
 }
 
+function tickTimes() {
+	for (const el of document.querySelectorAll('[data-ts]')) {
+		const label = timeAgo(el.dataset.ts);
+		if (label && el.textContent !== label) el.textContent = label;
+	}
+}
+
 function init() {
 	const feedHead = document.querySelector('.dp-feed-head .dp-section-h');
 	if (feedHead) feedHead.insertAdjacentHTML('afterend', liveDot('connecting'));
@@ -340,6 +405,9 @@ function init() {
 		loadStats();
 		if (!state.paged) loadFeed(true);
 	}, 45_000);
+	setInterval(() => {
+		if (!document.hidden) tickTimes();
+	}, 30_000);
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

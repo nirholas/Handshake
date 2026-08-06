@@ -373,7 +373,7 @@ function rosterRow(s) {
 	return `<tr class="fc-row ${_sel.has(s.agent_id) ? 'sel' : ''}" data-agent="${esc(s.agent_id)}">
 		<td class="c"><input type="checkbox" class="fc-check" data-check="${esc(s.agent_id)}" ${_sel.has(s.agent_id) ? 'checked' : ''} aria-label="Select ${esc(s.agent_name || s.agent_id)}" /></td>
 		<td><div class="fc-ag">
-			<img class="fc-av" loading="lazy" decoding="async" src="${esc(s.image || '/favicon.ico')}" alt="" onerror="this.style.visibility='hidden'" />
+			<img class="fc-av" loading="lazy" decoding="async" src="${esc(s.image || '/favicon.ico')}" alt="" data-fallback="invisible" />
 			<div style="min-width:0"><div class="fc-agname">${esc(s.agent_name || s.agent_id)}</div><div class="fc-agsub fc-mono">${esc(String(s.agent_id).slice(0, 8))}</div></div>
 		</div></td>
 		<td>${pill}</td>

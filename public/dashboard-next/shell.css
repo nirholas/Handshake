@@ -750,3 +750,21 @@ body.dn-body [contenteditable]:focus-visible {
 	outline: 2px solid var(--nxt-ink);
 	outline-offset: 2px;
 }
+
+/* Icon-only affordance (dialog close, inline dismiss). The hover colour lives
+   here rather than in an onmouseenter attribute: the site CSP allows inline
+   <script> by hash and never inline handlers. */
+.nxt-icon-btn {
+	flex-shrink: 0;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--nxt-ink-fade);
+	padding: 4px;
+	border-radius: 6px;
+	transition: color 120ms ease;
+}
+.nxt-icon-btn:hover,
+.nxt-icon-btn:focus-visible {
+	color: var(--nxt-ink);
+}

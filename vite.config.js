@@ -2101,6 +2101,28 @@ support: resolve(__dirname, 'pages/support.html'),
 			},
 		},
 		{
+			// public/inline-behaviors.js turns data-fallback*, data-action and
+			// data-stop-propagation attributes into behaviour, replacing the inline
+			// handler attributes the CSP blocks. It has to be everywhere: a page
+			// that renders a card grid from a template literal carries no hint that
+			// it needs it, and the failure only shows in front of a visitor.
+			// scripts/inject-inline-behaviors.mjs re-walks dist/ after the build and
+			// asserts coverage, for the same plugin-ordering reason documented above.
+			name: 'three-ws-inline-behaviors',
+			transformIndexHtml: {
+				order: 'pre',
+				handler(_html, ctx) {
+					const FRAGMENTS = new Set(['nav.html', 'footer.html']);
+					const filename = (ctx.filename || ctx.path || '')
+						.replace(/\\/g, '/')
+						.split('/')
+						.pop();
+					if (FRAGMENTS.has(filename)) return [];
+					return [{ tag: 'script', attrs: { src: '/inline-behaviors.js', defer: true }, injectTo: 'head' }];
+				},
+			},
+		},
+		{
 			// Mobile ergonomics: /mobile.css on every page, and viewport-fit=cover.
 			//
 			// /mobile.css carries the site-wide tap-target floor, canvas scroll

@@ -11,10 +11,11 @@
 // cached document and its cached header always agree.
 //
 // The scanner below mirrors the HTML parser's own rules for finding script
-// elements (quoted attribute values may contain `>`, the element ends at the
-// first `</script` regardless of what the source text looks like), because a
-// missed script means a blocked script means a broken page. Over-matching is
-// harmless: an extra hash allows a script that does not exist.
+// elements, because a missed script means a blocked script means a broken page:
+// quoted attribute values may contain `>`, the element ends at the first
+// `</script` regardless of what the source text looks like, and a `<script`
+// inside a comment or a raw-text element is characters rather than markup.
+// Over-matching is harmless: an extra hash allows a script that does not exist.
 //
 // Scripts with a `src` attribute are not hashed. Those are covered by the
 // host allowlist in the directive; hashing an external script would require an
@@ -28,12 +29,17 @@
 
 import { createHash } from 'node:crypto';
 
-const SCRIPT_OPEN = /<script/gi;
+// Elements whose content the HTML parser treats as raw text: a `<script>`
+// written inside one is characters on the page, not a tag. Missing this is not
+// a theoretical edge case. A CSS comment on /oracle that mentioned `<script>`
+// made the scanner start a phantom script element there and run it to the next
+// real `</script>`, which swallowed the PostHog snippet's opening tag. Its hash
+// never reached the header and the browser blocked it.
+const RAW_TEXT_ELEMENTS = ['style', 'textarea', 'title'];
 
 // Walk the attribute list of an already-located `<script` tag, honouring
-// quoted values, and return the index just past the tag's closing `>` plus
-// whether the tag carried a `src` attribute. Returns null for a tag that never
-// closes (truncated document).
+// quoted values, and return the index just past the tag's closing `>` plus the
+// attribute text. Returns null for a tag that never closes (truncated document).
 function readOpenTag(html, from) {
 	let i = from;
 	let quote = null;
@@ -56,54 +62,81 @@ function readOpenTag(html, from) {
 	return null;
 }
 
-// The HTML parser ends a script element at the first `</script` followed by a
-// tag terminator, whatever the script text contains. `lower` is a lowercased
-// copy of the whole document so a page with many scripts does not re-lowercase
-// it once per script.
-function findScriptCloseIn(lower, from) {
+// Index of the first `</name` that actually terminates an element, i.e. one
+// followed by a tag terminator. `lower` is a lowercased copy of the whole
+// document so a page with many elements does not re-lowercase it each time.
+function findClose(lower, name, from) {
+	const needle = `</${name}`;
 	let i = from;
 	for (;;) {
-		const idx = lower.indexOf('</script', i);
+		const idx = lower.indexOf(needle, i);
 		if (idx === -1) return null;
-		const after = lower[idx + 8];
+		const after = lower[idx + needle.length];
 		if (after === undefined || after === '>' || after === '/' || /\s/.test(after)) return idx;
-		i = idx + 8;
+		i = idx + needle.length;
 	}
+}
+
+// True when `<` at `index` opens element `name` rather than one whose name
+// merely starts with it (`<scripty`, `<styles`).
+function opensElement(lower, index, name) {
+	if (!lower.startsWith(`<${name}`, index)) return false;
+	const next = lower[index + name.length + 1];
+	return next === undefined || next === '>' || next === '/' || /\s/.test(next);
 }
 
 /**
  * Every inline script body in `html`, in document order, exactly as the CSP
  * hash algorithm sees it (the raw text between the tags).
+ *
+ * The scan walks the document once and steps over the three constructs where a
+ * `<script` is text rather than markup: HTML comments, and the raw-text
+ * elements above. Over-matching a script is harmless (an extra hash allows
+ * something that does not exist); under-matching ships the page blank.
+ *
  * @param {string} html
  * @returns {string[]}
  */
 export function inlineScriptBodies(html) {
 	const bodies = [];
-	// One lowercase copy for the close-tag scan instead of one per script.
 	const lower = html.toLowerCase();
-	let cursor = 0;
-	for (;;) {
-		SCRIPT_OPEN.lastIndex = cursor;
-		const open = SCRIPT_OPEN.exec(html);
-		if (!open) break;
-		const nameEnd = open.index + 7; // past "<script"
-		const next = html[nameEnd];
-		// `<scriptfoo` is not a script element.
-		if (next !== undefined && !/[\s/>]/.test(next)) {
-			cursor = nameEnd;
+	let i = 0;
+	while (i < html.length) {
+		const lt = html.indexOf('<', i);
+		if (lt === -1) break;
+
+		if (lower.startsWith('<!--', lt)) {
+			const end = html.indexOf('-->', lt + 4);
+			i = end === -1 ? html.length : end + 3;
 			continue;
 		}
-		const tag = readOpenTag(html, nameEnd);
+
+		const raw = RAW_TEXT_ELEMENTS.find((name) => opensElement(lower, lt, name));
+		if (raw) {
+			const tag = readOpenTag(html, lt + raw.length + 1);
+			if (!tag) break;
+			const close = findClose(lower, raw, tag.end);
+			i = close === null ? html.length : close + raw.length + 2;
+			continue;
+		}
+
+		if (!opensElement(lower, lt, 'script')) {
+			i = lt + 1;
+			continue;
+		}
+
+		const tag = readOpenTag(html, lt + 7);
 		if (!tag) break;
-		const close = findScriptCloseIn(lower, tag.end);
+		const isExternal = /\ssrc\s*=/i.test(tag.attrs);
+		const close = findClose(lower, 'script', tag.end);
 		if (close === null) {
 			// Unterminated script: the parser treats the rest of the document as
 			// its body, and so do we.
-			if (!/\ssrc\s*=/i.test(tag.attrs)) bodies.push(html.slice(tag.end));
+			if (!isExternal) bodies.push(html.slice(tag.end));
 			break;
 		}
-		if (!/\ssrc\s*=/i.test(tag.attrs)) bodies.push(html.slice(tag.end, close));
-		cursor = close + 8;
+		if (!isExternal) bodies.push(html.slice(tag.end, close));
+		i = close + 8;
 	}
 	return bodies;
 }

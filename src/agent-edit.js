@@ -1324,8 +1324,8 @@ function renderPlansList(plans) {
     const isActive = p.active !== false;
     const planJson = JSON.stringify(p).replace(/"/g, '&quot;');
     const action = isActive
-      ? `<button class="btn-ghost danger" style="font-size:0.7rem; padding:0.25rem 0.6rem;" onclick="deletePlan('${p.id}')">Deactivate</button>`
-      : `<button class="btn-ghost" style="font-size:0.7rem; padding:0.25rem 0.6rem; color:#86efac; border-color:rgba(134,239,172,0.4);" onclick="reactivatePlan('${p.id}')">Reactivate</button>`;
+      ? `<button class="btn-ghost danger" style="font-size:0.7rem; padding:0.25rem 0.6rem;" data-plan-action="deactivate" data-plan-id="${p.id}">Deactivate</button>`
+      : `<button class="btn-ghost" style="font-size:0.7rem; padding:0.25rem 0.6rem; color:#86efac; border-color:rgba(134,239,172,0.4);" data-plan-action="reactivate" data-plan-id="${p.id}">Reactivate</button>`;
     return `
     <div class="plan-row" style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.75rem; border:1px solid rgba(255,255,255,${isActive ? '0.08' : '0.05'}); border-radius:6px; background:rgba(255,255,255,0.02); opacity:${isActive ? '1' : '0.6'};">
       <div>
@@ -1336,11 +1336,22 @@ function renderPlansList(plans) {
         ${p.included_skills?.length ? `<div style="font-size:0.7rem; color:rgba(164,240,188,0.65); margin-top:0.15rem;">Includes ${p.included_skills.length} skill${p.included_skills.length === 1 ? '' : 's'}: ${escHtml(p.included_skills.join(' · '))}</div>` : ''}
       </div>
       <div style="display:flex; gap:0.4rem;">
-        <button class="btn-ghost" style="font-size:0.7rem; padding:0.25rem 0.6rem;" onclick="openPlanEditor(${planJson})">Edit</button>
+        <button class="btn-ghost" style="font-size:0.7rem; padding:0.25rem 0.6rem;" data-plan-action="edit" data-plan="${planJson}">Edit</button>
         ${action}
       </div>
     </div>`;
   }).join('');
+
+  // Rows are rendered from strings, so each action declares itself and one
+  // delegated listener runs it. Inline onclick attributes do not survive the
+  // site CSP, which allows inline <script> by hash and nothing else.
+  list.onclick = (event) => {
+    const btn = event.target.closest('[data-plan-action]');
+    if (!btn) return;
+    if (btn.dataset.planAction === 'edit') return openPlanEditor(JSON.parse(btn.dataset.plan));
+    if (btn.dataset.planAction === 'deactivate') return deletePlan(btn.dataset.planId);
+    if (btn.dataset.planAction === 'reactivate') reactivatePlan(btn.dataset.planId);
+  };
 }
 
 // Skill names available on this agent (skills may be strings or {name} objects).
@@ -1368,7 +1379,7 @@ function renderPlanSkillsChecklist(selected = []) {
     </label>`).join('');
 }
 
-window.openPlanEditor = function openPlanEditor(plan) {
+function openPlanEditor(plan) {
   const editor = $('plan-editor');
   if (!editor) return;
   $('plan-editor-id').value = plan?.id ?? '';
@@ -1384,7 +1395,7 @@ window.openPlanEditor = function openPlanEditor(plan) {
   $('plan-name-input').focus();
 };
 
-window.deletePlan = async function deletePlan(planId) {
+async function deletePlan(planId) {
   if (!confirm('Deactivate this plan? It will be hidden from new subscribers; existing subscribers keep access until their period ends. You can reactivate it later.')) return;
   try {
     const r = await apiFetch(`${API_BASE}/subscriptions/plans/${planId}`, { method: 'DELETE', credentials: 'include' });
@@ -1395,7 +1406,7 @@ window.deletePlan = async function deletePlan(planId) {
   }
 };
 
-window.reactivatePlan = async function reactivatePlan(planId) {
+async function reactivatePlan(planId) {
   try {
     const r = await apiFetch(`${API_BASE}/subscriptions/plans/${planId}`, {
       method: 'PATCH',

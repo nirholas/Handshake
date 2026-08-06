@@ -359,7 +359,7 @@ function stratCard(s) {
 	const label = s.agent_name || s.agent_id;
 	return `<div class="sn-card ${armed ? 'armed' : ''}" data-agent="${esc(s.agent_id)}">
 		<div class="sn-card-head" data-toggle="card" role="button" tabindex="0" aria-expanded="false" aria-label="Expand ${esc(label)} strategy details">
-			<img loading="lazy" decoding="async" class="sn-av" src="${esc(img)}" alt="" onerror="this.style.visibility='hidden'" />
+			<img loading="lazy" decoding="async" class="sn-av" src="${esc(img)}" alt="" data-fallback="invisible" />
 			<div class="sn-info">
 				<div class="sn-name">${esc(s.agent_name || s.agent_id)}</div>
 				<div class="sn-meta">

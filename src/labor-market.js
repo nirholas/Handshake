@@ -225,7 +225,7 @@ function bountyCard(b) {
 		<p class="lm-card-spec">${esc((b.spec || '').slice(0, 150))}${(b.spec || '').length > 150 ? '…' : ''}</p>
 		<div class="lm-card-foot">
 			${chip(b.required_skill)}
-			<span class="lm-card-meta">by <a href="/agent/${esc(b.poster_agent_id)}" onclick="event.stopPropagation()">${esc(b.poster_name)}</a></span>
+			<span class="lm-card-meta">by <a href="/agent/${esc(b.poster_agent_id)}" data-stop-propagation>${esc(b.poster_name)}</a></span>
 			${mine ? '<span class="lm-tag-mine">yours</span>' : ''}
 			<span class="lm-card-bids ${hot ? 'is-hot' : ''}">${b.bid_count} bid${b.bid_count === 1 ? '' : 's'}</span>
 			${b.escrow_explorer ? `<span class="lm-card-escrow" title="Reward escrowed on-chain">◆ escrowed</span>` : ''}
@@ -244,7 +244,7 @@ function jobCard(j) {
 		<h3 class="lm-card-title">${esc(j.title || 'Job')}</h3>
 		<div class="lm-card-foot">
 			${chip(j.required_skill)}
-			<span class="lm-card-meta"><a href="/agent/${esc(j.poster_agent_id)}" onclick="event.stopPropagation()">${esc(j.poster_name)}</a> → <a href="/agent/${esc(j.worker_agent_id)}" onclick="event.stopPropagation()">${esc(j.worker_name)}</a></span>
+			<span class="lm-card-meta"><a href="/agent/${esc(j.poster_agent_id)}" data-stop-propagation>${esc(j.poster_name)}</a> → <a href="/agent/${esc(j.worker_agent_id)}" data-stop-propagation>${esc(j.worker_name)}</a></span>
 			${mine ? '<span class="lm-tag-mine">yours</span>' : ''}
 			<span class="lm-card-bids">${ago(j.created_at)}</span>
 		</div>
@@ -262,7 +262,7 @@ function settledCard(s) {
 		<h3 class="lm-card-title">${esc(s.title || 'Bounty')}</h3>
 		<div class="lm-card-foot">
 			${chip(s.required_skill)}
-			<span class="lm-card-meta"><a href="/agent/${esc(s.poster_agent_id)}" onclick="event.stopPropagation()">${esc(s.poster_name)}</a> → <a href="/agent/${esc(s.worker_agent_id)}" onclick="event.stopPropagation()">${esc(s.worker_name)}</a></span>
+			<span class="lm-card-meta"><a href="/agent/${esc(s.poster_agent_id)}" data-stop-propagation>${esc(s.poster_name)}</a> → <a href="/agent/${esc(s.worker_agent_id)}" data-stop-propagation>${esc(s.worker_name)}</a></span>
 			${mine ? '<span class="lm-tag-mine">yours</span>' : ''}
 			${Number(s.royalty_three) > 0 ? `<span class="lm-card-bids">+${fmtThree(s.royalty_three)} royalty</span>` : ''}
 		</div>

@@ -27,6 +27,10 @@
 		<meta name="twitter:image" content="https://three.ws/og-image.png" id="tw-image" />
 
 		<style>
+			/* Hover lives here, not in an onmouseover attribute: the site CSP allows
+			   inline script blocks by hash and never inline handlers. */
+			.hd-cta-link { transition: opacity 0.15s; }
+			.hd-cta-link:hover { opacity: 0.88; }
 			body {
 				margin: 0;
 				background: #0c0c0c;

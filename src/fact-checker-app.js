@@ -96,7 +96,7 @@ function renderSources(sources) {
 			return `
 				<div class="source-card">
 					<div class="source-header">
-						${favicon ? `<img class="source-favicon" src="${favicon}" alt="" loading="lazy" onerror="this.style.display='none'" />` : ''}
+						${favicon ? `<img class="source-favicon" src="${favicon}" alt="" loading="lazy" data-fallback="hide" />` : ''}
 						<div class="source-title">
 							<a href="${escHtml(sanitizeUrl(s.url))}" target="_blank" rel="noopener noreferrer">${escHtml(s.title || shortUrl)}</a>
 						</div>

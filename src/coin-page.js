@@ -1017,7 +1017,7 @@ function renderError() {
 		<h1 class="cv-h1">Market data unavailable</h1>
 		<div class="cv-empty" style="text-align:left">
 			<p style="margin:0">The market data source is temporarily unreachable. This usually clears in
-			under a minute — <a href="javascript:location.reload()">reload the page</a> or head back to the
+			under a minute — <a href="#" data-action="reload">reload the page</a> or head back to the
 			<a href="/coins">markets index</a>.</p>
 		</div>`;
 	$('cv-chart').innerHTML = '';

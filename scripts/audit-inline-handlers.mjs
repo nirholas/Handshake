@@ -11,7 +11,16 @@
 //
 // The fix is always the same shape: bind the behaviour with addEventListener
 // (or a delegated listener keyed off a data-* attribute) instead of an
-// attribute, and use a <button> or a real href instead of `javascript:`.
+// attribute, and use a <button> or a real href instead of `javascript:`. For
+// broken images specifically, public/inline-behaviors.js reads declarative
+// `data-fallback*` attributes and is on every page, along with `data-action`
+// and `data-stop-propagation` for the click cases.
+//
+// JavaScript is scanned too, and that half matters more: most of this site's
+// markup is built from template literals, so an `onerror=` written inside a JS
+// string never appears in any .html file. Those were invisible to an HTML-only
+// scan and are exactly the ones that break silently in production, because a
+// dev server without the header runs them fine.
 //
 // Usage:
 //   node scripts/audit-inline-handlers.mjs            # repo sources
@@ -27,10 +36,26 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // `chat` build through their own toolchains into dist/ and are covered by
 // --dist; scanning their sources would flag framework templates that never
 // reach a served document in this form.
-const SOURCE_ROOTS = ['pages', 'public'];
+const SOURCE_ROOTS = ['pages', 'public', 'src'];
 const DIST_ROOTS = ['dist'];
 
 const SKIP_DIRS = new Set(['node_modules', '.git', 'assets', 'locales']);
+
+// Third-party code we vendor rather than author. Rewriting an upstream editor's
+// own markup would be re-forking it; those surfaces carry their own policy.
+// Written without a leading root so each entry matches both the source tree and
+// its copy under dist/.
+const VENDOR_PATHS = [
+	'scene-studio/vendor/',
+	'scene-studio/libs/',
+	'chat/assets/',
+	'ibm/vendor/',
+	'vendor/',
+];
+
+const isVendor = (rel) => VENDOR_PATHS.some((p) => rel.includes(`/${p}`) || rel.startsWith(p));
+
+const SCANNED_EXTENSIONS = ['.html', '.js', '.jsx', '.mjs'];
 
 // Attribute-position `on*` handlers. Anchored on a preceding `<`-tag context by
 // requiring whitespace before the name and `=` after it, which keeps prose like
@@ -68,10 +93,13 @@ function* walk(dir) {
 	}
 	for (const entry of entries) {
 		const full = path.join(dir, entry.name);
+		const rel = path.relative(ROOT, full).split(path.sep).join('/');
 		if (entry.isDirectory()) {
 			if (SKIP_DIRS.has(entry.name)) continue;
+			if (isVendor(`${rel}/`)) continue;
 			yield* walk(full);
-		} else if (entry.name.endsWith('.html')) {
+		} else if (SCANNED_EXTENSIONS.some((ext) => entry.name.endsWith(ext))) {
+			if (isVendor(rel)) continue;
 			yield full;
 		}
 	}
@@ -115,11 +143,11 @@ for (const root of roots) {
 }
 
 if (findings.length === 0) {
-	console.log(`inline-handler audit: clean (${scanned} HTML files, roots: ${roots.join(', ')})`);
+	console.log(`inline-handler audit: clean (${scanned} files, roots: ${roots.join(', ')})`);
 	process.exit(0);
 }
 
-console.error(`inline-handler audit: ${findings.length} CSP-blocked construct(s) in ${scanned} HTML files\n`);
+console.error(`inline-handler audit: ${findings.length} CSP-blocked construct(s) in ${scanned} files\n`);
 for (const f of findings) {
 	console.error(`  ${f.file}:${f.line}  ${f.kind}`);
 	console.error(`    ${f.snippet}`);

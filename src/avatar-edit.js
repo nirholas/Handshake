@@ -669,7 +669,7 @@ function tilePreviewMarkup(preset) {
 		<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">${emoji}</span>
 		<img src="${esc(preset.thumbnail)}" alt="" loading="lazy"
 		     style="position:absolute;inset:0;"
-		     onerror="this.remove()" />
+		     data-fallback="remove" />
 	`;
 }
 

@@ -255,7 +255,7 @@ registerWalletTab({
 				panel.innerHTML = `
 					<div class="awh-card">
 						<div class="awh-dep-who">
-							${avatar ? `<img class="awh-dep-who-av" src="${escapeHtml(avatar)}" alt="" loading="lazy" onerror="this.remove()" />` : ''}
+							${avatar ? `<img class="awh-dep-who-av" src="${escapeHtml(avatar)}" alt="" loading="lazy" data-fallback="remove" />` : ''}
 							<div class="awh-dep-who-txt">You're funding <strong>${escapeHtml(agentName)}</strong></div>
 						</div>
 						<div class="awh-empty">This agent's Solana wallet is still being prepared. It's created automatically — refresh in a moment and the deposit address will appear here.</div>
@@ -275,7 +275,7 @@ registerWalletTab({
 			panel.innerHTML = `
 				<div class="awh-card">
 					<div class="awh-dep-who">
-						${avatar ? `<img class="awh-dep-who-av" src="${escapeHtml(avatar)}" alt="" loading="lazy" onerror="this.remove()" />` : ''}
+						${avatar ? `<img class="awh-dep-who-av" src="${escapeHtml(avatar)}" alt="" loading="lazy" data-fallback="remove" />` : ''}
 						<div class="awh-dep-who-txt">You're funding <strong>${escapeHtml(agentName)}</strong> — send SOL to the wallet below.</div>
 					</div>
 

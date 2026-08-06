@@ -197,7 +197,7 @@ export function mountAgentWalletHub({ mount, agent, initialTab, onNetworkChange 
 			<div class="awh-header">
 				${
 					agent.avatar_thumbnail_url || agent.avatar_model_url
-						? `<img class="awh-avatar" src="${escapeHtml(agent.avatar_thumbnail_url || '')}" alt="" loading="lazy" onerror="this.remove()" />`
+						? `<img class="awh-avatar" src="${escapeHtml(agent.avatar_thumbnail_url || '')}" alt="" loading="lazy" data-fallback="remove" />`
 						: '<div class="awh-avatar" aria-hidden="true"></div>'
 				}
 				<div class="awh-id">

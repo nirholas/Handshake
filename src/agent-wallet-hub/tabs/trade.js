@@ -504,7 +504,7 @@ registerWalletTab({
 			const name = c.name ? esc(c.name) : 'Unknown coin';
 			const badge = c.graduated === true ? 'Graduated · AMM' : c.graduated === false ? 'Bonding curve' : '';
 			return `<div class="awh-tr-coin">
-				${c.image ? `<img src="${esc(c.image)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'awh-tr-coin-ph'}))" />` : '<div class="awh-tr-coin-ph" aria-hidden="true"></div>'}
+				${c.image ? `<img src="${esc(c.image)}" alt="" loading="lazy" data-fallback="element" data-fallback-class="awh-tr-coin-ph" />` : '<div class="awh-tr-coin-ph" aria-hidden="true"></div>'}
 				<div>
 					<div class="awh-tr-coin-name">${name}</div>
 					<div class="awh-tr-coin-sym">${sym} · <span class="awh-mono">${short(c.mint, 4, 4)}</span></div>

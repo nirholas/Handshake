@@ -236,7 +236,7 @@ function riskPanel(r) {
 function tokenCard(t) {
 	const chain = t.chain ? `<span class="cx-chain">${esc(t.chain)}</span>` : '';
 	const avatar = t.image
-		? `<img class="cx-av" src="${esc(t.image)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cx-av cx-av-ph',textContent:'${esc((t.symbol || '?').slice(0, 2))}'}))" />`
+		? `<img class="cx-av" src="${esc(t.image)}" alt="" loading="lazy" data-fallback="element" data-fallback-class="cx-av cx-av-ph" data-fallback-text="${esc((t.symbol || '?').slice(0, 2))}" />`
 		: `<div class="cx-av cx-av-ph">${esc((t.symbol || '?').slice(0, 2))}</div>`;
 	const stats = [
 		['Price', fmtUsd(t.price_usd)],

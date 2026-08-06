@@ -537,7 +537,7 @@ main().catch((err) => {
 				<h2>The Commons failed to load</h2>
 				<p>Something went wrong building the world. Reload to try again.</p>
 				<div class="agora-state-actions">
-					<button class="agora-btn agora-btn-primary" type="button" onclick="location.reload()">Reload</button>
+					<button class="agora-btn agora-btn-primary" type="button" data-action="reload">Reload</button>
 				</div>
 			</div>`;
 	}
