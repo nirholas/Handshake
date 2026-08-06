@@ -3,9 +3,9 @@
 This atlas covers the landing page (`/`) in full and every content / read-only
 page on three.ws. The home page is highly interactive (live 3D agents, embedded
 Forge / pose / token widgets); the content pages are mostly read-only but several
-carry real interactive bits (docs search, glossary filter, status polling,
-copy-to-clipboard, countdown, newsletter signup, embedded 3D viewers) — all
-confirmed against source.
+carry real interactive bits (docs search, glossary filter, changelog tag filter,
+status polling, copy-to-clipboard, countdown, newsletter signup, embedded 3D
+viewers), all confirmed against source.
 
 ---
 
@@ -112,11 +112,22 @@ confirmed against source.
 - **Steps (5):** 1) The countdown block reflects event phase (event was 2026-06-23 18:00 MT, 60 min, online; rAF tick → days/hrs/min/sec pre-event; "LIVE NOW" during; since EVENT_END passed it now renders the post-event headline "Thanks for joining" with the sub-label "replay coming soon"; no replay link exists yet). 2) Add to calendar (`#add-cal`/`#add-cal-2` build a Google Calendar render URL from EVENT_START/END, now a past date). 3) RSVP email signup (`#rsvp-form`, `data-newsletter-form` → `POST /api/newsletter/subscribe`, aria-live result). 4) Interact with the lazy-loaded hero `<agent-3d>` (deferred via `requestIdleCallback` → `/embed.js`). 5) Scroll-reveal sections.
 - **Notes:** Schema.org Event. Countdown is local (no API); only newsletter POSTs.
 
-### Legal — Privacy & Terms — `/legal/privacy`, `/legal/tos`
-- **Source:** `public/legal/privacy.html`, `public/legal/tos.html` (pure static).
-- **Entry point:** `vercel.json` `/legal/privacy → /legal/privacy.html`, `/legal/tos → /legal/tos.html`.
-- **Steps (1):** Read the document; follow cross-links (each links to the other, plus `mailto:` addresses; one IBM cloud external ref).
-- **Notes:** v2 of both documents shipped 2026-07-16. No TOC/anchors, no API; the pages do run the standard chrome (theme boot, `/nav.js`, `/footer.js`, `/brand.js`, `/i18n.js` runtime translation) but the legal body is hand-authored static HTML. Privacy = 16 h2 sections (through MCP Connectors / AI Processing, Free 3D Actions, Changes, Contact); Terms = 20 numbered sections (through Dispute Resolution with arbitration + class-action waiver, Governing Law, Termination, Changes, Miscellaneous, Contact).
+### Legal hub and policy documents - `/legal`, `/legal/privacy`, `/legal/tos`, `/legal/eula`, `/legal/content-policy`, `/legal/risk`
+- **Source:** `public/legal/index.html` (hub) plus one hand-authored static file per document: `privacy.html`, `tos.html`, `eula.html`, `content-policy.html`, `risk.html`, and `aws-marketplace-eula.html`.
+- **Entry point:** `vercel.json` maps each with an optional trailing slash: `/legal/? → /legal/index.html`, `/legal/privacy/?`, `/legal/tos/?`, `/legal/eula/?`, `/legal/content-policy/?`, `/legal/risk/?`. `aws-marketplace-eula` has **no extensionless route**; the hub links it as `/legal/aws-marketplace-eula.html`, which resolves through the filesystem phase.
+- **Steps (2):** 1) Land on the hub (h1 "Legal", three groups: Policies, Reporting something, Publishers) and pick a document. 2) Read it; follow cross-links (the documents reference each other, the hub links `/docs/news-rights`, and every page ends in `mailto:` contacts: legal@, privacy@, abuse@, dmca@, support@three.ws).
+- **The six documents:**
+
+  | Path | Effective | Shape |
+  |---|---|---|
+  | `/legal/privacy` | 2026-07-16, v2 | 16 h2 sections (through MCP Connectors / AI Processing, Free 3D Actions, Changes, Contact) |
+  | `/legal/tos` | 2026-07-16, v2 | 20 numbered sections (through Dispute Resolution with arbitration + class-action waiver, Governing Law, Termination, Changes, Miscellaneous, Contact) |
+  | `/legal/eula` | 2026-05-30, v1 | 16 numbered sections (License Grant, Restrictions, IP, Camera & Device Permissions, Customer Content, Blockchain & On-Chain Transactions, Third-Party Services, Confidentiality, warranties, liability, indemnification, term, export, governing law, entire agreement, contact) |
+  | `/legal/content-policy` | 2026-06-21 | 10 numbered sections (Scope, ownership warranty, Prohibited content, Agents/personas/AI output, Tokens & financial content, Marketplace & monetisation, Embedded agents, Reporting & enforcement, Changes, Contact) |
+  | `/legal/risk` | 2026-07-03 | 10 numbered sections covering every real-funds surface (agent wallets, trading, sniping, autopilot, launches, swaps, withdrawals, x402, fiat onramps) |
+  | `/legal/aws-marketplace-eula.html` | static | AWS Marketplace standard EULA; reachable only from the hub |
+
+- **Notes:** No TOC, no anchors, no API. The pages run the standard chrome (theme boot, `/nav.js`, `/footer.js`, `/i18n.js` runtime translation; most also load `/brand.js`) but every legal body is hand-authored static HTML. **`/legal/risk` is the one document wired into product flow:** section 9 documents that acceptance is versioned and recorded once per browser before a user's first real-funds action, that a material revision bumps the version and re-prompts, and that declining leaves the account usable for everything except real-funds actions. Treat that page as the human-readable spec for the acknowledgment gate, not as inert copy.
 
 ### Tutorials index — `/tutorials`
 - **Source:** `pages/tutorials.html` (client-rendered from `public/tutorials-manifest.js` → `window.TUTORIALS`, 69 entries, 3 tiers).
@@ -164,6 +175,36 @@ confirmed against source.
 - **Steps (1):** Read the article; follow the "← Blog" back link, inline links, and the occasional primary CTA (e.g. text-to-3d post → "Try Forge — type a prompt →" → `/forge`).
 - **Notes:** Repeated "read article" pattern. No embedded 3D demos / share / TOC / newsletter inside the post body in the sampled pages; copy-button CSS exists in the template but the sampled posts have no code blocks. No API.
 - **Source not exposed:** Several `.md` files under `blog/` (drafts and source material such as `decision-optimization-3d-ai-crypto.md`, `internets-second-species.md`, `we-are-the-provider.md`, the autonomous-trading X drafts, plus `README.md`) are NOT routed (no rule maps `.md` blog slugs) and are not in the index; source material only, not live pages.
+
+### Changelog - `/changelog`, `/changelog/<slug>`
+- **Source:** `public/changelog/index.html` (list) and `public/changelog/entry/index.html` (detail). Both are client-rendered from the generated feed; `data/changelog.json` is the authored source and `npm run build:pages` regenerates `public/changelog.json`, `public/changelog.xml`, and `CHANGELOG.md` from it.
+- **Entry point:** `vercel.json` `/changelog → /changelog/index.html`, `/changelog/([^.]+) → /changelog/entry/index.html` (one shell serves every entry; the slug is read from the URL), plus `/changelog.json` and `/changelog.xml` for the feeds.
+- **Prerequisites / gates:** None. Public, no auth.
+- **Steps (4):** 1) Land: `GET /changelog.json`, entries grouped by date newest-first, each day headed by its formatted date and badged **new** when it is inside the 14-day `RECENT_DAYS` window. 2) Filter with the chip row (`all`, `launch`, `feature`, `improvement`, `fix`, `sdk`, `security`, `infra`, `docs`; `aria-pressed` tracks the active chip, and a `launch` entry also renders the page path it shipped). 3) Click an entry card → `/changelog/<date>-<slugified-title>`. 4) On the detail page the same feed is re-fetched and the entry matched by re-deriving that slug, then rendered with a Share row (X intent link + a copy-link button).
+- **External calls:** `GET /changelog.json` (both pages).
+- **Success state:** Filtered, dated list of shipped work; an entry page a holder can link to directly.
+- **Empty / error states:** A filter matching nothing renders a "nothing here for this filter yet, try another one" line rather than a blank column; a failed feed fetch renders an error that links the raw `/changelog.json`; an unmatched slug renders "Entry not found." with a back link to `/changelog`.
+- **Step count:** 1 required (read) (+3 optional: filter, open an entry, share).
+- **Notes:** The header carries the subscribe row (`/changelog.xml` RSS, `/changelog.json`, `/llms.txt`, `/sitemap`). Delivery to the holders' Telegram channel is handled by the `changelog-push` cron off the same feed, not by this page.
+
+### News index and articles - `/news`, `/news/<slug>`
+- **Source:** `public/news/index.html` plus 110 static article files `public/news/<slug>.html`.
+- **Entry point:** `vercel.json` `/news → /news/index.html`, `/news/([a-z0-9_-]+)/? → /news/$1.html`. The home page's press strip links straight into individual `/news/*` slugs, so most arrivals skip the index.
+- **Steps (2):** 1) Scan the index: 110 hardcoded `post-link` cards, newest first, each with a `<time>` date, headline, summary paragraph, and a display-only tag list. 2) Click through to an article and read it; a "News" breadcrumb returns to the index, and inline links point at product routes.
+- **External calls:** None. Fully static: no fetch, no pagination, no search, and the tags are not filterable.
+- **Success state:** User reads the announcement and follows its product link.
+- **Empty / error states:** N/A (static).
+- **Step count:** 1 required (read) (+1 optional: back to the index).
+- **Notes:** Slug shapes are mixed: readable slugs (`text-to-3d-is-live`, `quicknode-startup-program`) alongside numeric X-article ids (`2061713039624405062`). Enumerate with `ls public/news/*.html` rather than trusting a list here. Distinct from `/blog` (essays) and from `/markets/news` (the live market-news reader, covered in the trading walkthrough).
+
+### Press kit - `/press`
+- **Source:** `pages/press/index.html` (static; `vercel.json` `/press → /press/index.html`).
+- **Entry point:** `/press`. Written for journalists: every asset is downloadable without asking permission.
+- **Steps (5):** 1) Download the whole kit (`/brand/three-ws-press-kit.zip`). 2) Grab individual marks from **The marks** (`#prs-marks`): mark PNG, lockup on dark, lockup on light, stacked on dark, stacked on light, and the PWA icon SVG, each an anchor with `download`. 3) **OpenAI Partner Network** (`#prs-openai`): two announcement social cards plus a link to `/openai`. 4) **Boilerplate** (`#prs-boiler`): four copy buttons, one delegated click listener, label flips "Copy" to "Copied" for 1600 ms. 5) **Fast facts** (`#prs-facts-h`) table and **Contact** (`#prs-contact-h`), linking `/partners`, `/changelog`, GitHub, and X.
+- **External calls:** None. Static assets served from `/brand/*` and `/partners/openai/*`.
+- **Success state:** A writer leaves with correct marks, current boilerplate, and a contact address.
+- **Empty / error states:** N/A (static). **Known gap:** the copy handler returns early when `navigator.clipboard` is unavailable, so on a blocked-clipboard browser the button silently does nothing; `/support` handles the same case with a `execCommand('copy')` fallback and a toast.
+- **Step count:** 1 required (download or copy something) (+4 optional).
 
 ---
 
