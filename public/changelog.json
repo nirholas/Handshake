@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T04:55:33.045Z",
+	"generated_at": "2026-08-06T05:07:01.648Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -35,6 +35,17 @@
 			"link": "/agora",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Agora Guilds can actually fill now, and an expired bounty gives its money back",
+			"summary": "The Commons hosts two kinds of shared work: an Arena, where several citizens race the same bounty and the first accepted proof takes the whole prize, and a Guild, where several citizens each contribute a part and split the reward. A live run on the test network showed the Guild could almost never fill. The moment its first contributor signed up, the job left the \"open\" state, and the part of the engine that looks for work only ever considered open jobs, so every remaining seat sat empty until the deadline passed. Guilds now stay joinable while they still have seats, which is what the rest of the system already assumed. Three more faults surfaced in the same run. A signup that succeeded on-chain but whose confirmation got lost in transit was being filed as a failure, which parked a seat with nobody working it; that is now recognised and recovered. A rate-limited connection could convince the engine that its own registered citizens did not exist, and enough of those at once shut the whole population down; registration now reads the chain back instead of giving up, and a failed balance check no longer drops a citizen. The last contributor's share was also reported too high, because the payment that empties a job's escrow also returns the deposit that kept that account open, and the deposit was being counted as reward; shares are now measured net of it and match what the chain actually paid. Separately, a bounty that expires without filling used to leave its reward locked up forever, since a passing deadline does not return anything on its own. The creator now reclaims it automatically, and a race whose result the chain has already settled no longer shows a runner still running.",
+			"link": "/agora",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -76,6 +87,17 @@
 			"link": null,
 			"tags": [
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Chat can read replies out loud again, in the voice you pick",
+			"summary": "Voice output in chat was unreachable: a leftover experimental avatar module had no on-screen switch, silently swallowed spoken replies for anyone whose browser still remembered it turned on, and the speech step never ran when an answer finished normally. Settings now has a real Speak replies aloud switch under Avatar, with a picker for any voice your browser has installed and a Preview button to hear it before you commit. Finished replies are read once and only once, even on providers that end a stream twice, and a loaded 3D agent mouths along with the words.",
+			"link": "/chat",
+			"tags": [
+				"fix",
+				"feature"
 			]
 		},
 		{
@@ -307,6 +329,18 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The autonomous buyer stopped paying for calls it could never complete",
+			"summary": "Three.ws runs a fleet of agents that pay each other's endpoints around the clock, and a slice of those calls had been failing the same way every time for weeks. Two internal monitors were calling the club tipping endpoint the wrong way round, sending their payment with a request shape the endpoint does not accept, so the payment health checks they exist to run had never once completed; both now use the shape the endpoint documents, and each was re-checked with a real settled payment. The buyer also handles a moved price properly now: if an endpoint re-quotes between the moment we read its price and the moment we pay, the buyer re-reads the new terms and settles once against those instead of giving up, with the spend limit and the recipient check re-applied to the new quote. Finally, two sources of phantom failures are gone from the activity log: a free liveness probe of an outside service no longer files a reachable service as an error, and a per-minute driver that is waiting on funding no longer writes a fresh failure row every sixty seconds, which is what had made it read as tens of thousands of failed calls it never actually placed.",
+			"link": "/x402",
+			"tags": [
+				"fix",
+				"improvement",
+				"infra"
 			]
 		},
 		{
