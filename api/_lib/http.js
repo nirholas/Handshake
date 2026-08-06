@@ -379,30 +379,36 @@ export function readBody(req, limit) {
 		}
 		return Promise.resolve(buf);
 	}
-	// Neither req.rawBody nor req.body was populated by a prior middleware. If
-	// the request stream has *already* ended (Node sets `req.complete = true`
-	// once all body bytes have been received, independent of who — if anyone —
-	// read them), attaching 'data'/'end' listeners now is too late: those events
-	// already fired once and Node's Readable never re-emits 'end' for a
-	// listener added after the stream closed. That is exactly the "already-
-	// drained stream" hazard the req.rawBody fast-path above exists to avoid;
-	// this is the same failure mode reached a different way (a body-parser ran,
-	// drained the stream, but — unlike the Cloud Run server's parsers — didn't
-	// capture rawBody/body for us, e.g. a proxy/middleware upstream of this
-	// handler in some deployment). Resolving empty here (rather than hanging
-	// forever on events that can never fire) turns a silent request timeout
-	// into a normal "empty/invalid body" response the caller can see and retry.
-	if (req.complete) return Promise.resolve(Buffer.alloc(0));
+	// Neither req.rawBody nor req.body was populated by a prior middleware. If the
+	// stream was already *consumed* by someone who then threw the bytes away (a
+	// body-parser that drained it without capturing rawBody/body, a proxy layer in
+	// some deployment), attaching 'data'/'end' listeners now is too late: those
+	// events already fired and Node's Readable never re-emits 'end' for a listener
+	// added after the stream closed. Resolving empty here (rather than hanging
+	// forever on events that can never fire) turns a silent request timeout into a
+	// normal "empty/invalid body" response the caller can see and retry.
+	//
+	// The signal for that is `readableEnded`, NOT `req.complete`. They mean
+	// different things and conflating them broke every raw-body upload in
+	// production: `req.complete` goes true once Node has *received* the whole
+	// message off the socket, whether or not anyone read it, and Cloud Run's
+	// frontend buffers the entire request before invoking the container. So a
+	// perfectly readable, fully-buffered body arrived with complete === true and
+	// was discarded unread, which is why POST /api/3d/inspect answered `empty_body`
+	// to a real GLB upload. `readableEnded` only goes true after 'end' has actually
+	// been emitted to a consumer, which is precisely the drained-stream case.
+	// A destroyed stream can never emit 'end' either, so it short-circuits too.
+	if (req.readableEnded || req.destroyed) return Promise.resolve(Buffer.alloc(0));
 	return new Promise((resolve, reject) => {
 		const chunks = [];
 		let total = 0;
 		let settled = false;
-		// Defense in depth for the same hazard when `req.complete` isn't set yet
-		// at the time we start listening but the stream never delivers 'data'/
-		// 'end' for some other reason (a stalled proxy, a client that never
-		// sends the promised body). Without this, such a request pins a Cloud
-		// Run concurrency slot for the full request timeout instead of failing
-		// fast with a diagnosable error.
+		// Defense in depth for the same hazard when the stream looks readable at
+		// the time we start listening but never delivers 'data'/'end' for some
+		// other reason (a stalled proxy, a client that never sends the promised
+		// body). Without this, such a request pins a Cloud Run concurrency slot
+		// for the full request timeout instead of failing fast with a diagnosable
+		// error.
 		const timeoutMs = Number(process.env.READ_BODY_TIMEOUT_MS) || 15_000;
 		const timer = setTimeout(() => {
 			if (settled) return;
@@ -419,8 +425,15 @@ export function readBody(req, limit) {
 		req.on('data', (c) => {
 			total += c.length;
 			if (total > limit) {
+				// Stop consuming, but leave the socket alive: destroying it here
+				// resets the connection before the handler can write its 413, so
+				// the caller sees an opaque "connection closed" instead of the
+				// error that tells them their upload was too big. Unpipe + pause
+				// is what raw-body does for the same reason; Node tears the
+				// connection down after the response, once there is one to send.
+				req.unpipe?.();
+				req.pause?.();
 				finish(reject, Object.assign(new Error('payload too large'), { status: 413 }));
-				req.destroy();
 				return;
 			}
 			chunks.push(c);
