@@ -65,17 +65,46 @@ const MASTER_REVSHARE_BPS = (() => {
 })();
 // Don't bother with a dust-sized master leg (default $0.10).
 const MIN_REVSHARE_ATOMIC = 100_000n;
+// The payer USDC level the revshare treats as working capital rather than
+// revenue. Same knob the wallet monitor alerts on, so the two agree on "the
+// payer is starved".
+const PAYER_USDC_FLOOR_ATOMIC = BigInt(process.env.X402_RING_PAYER_USDC_FLOOR_ATOMIC || 5_000_000);
 
 /**
  * Pure split of a sweep amount into { payerCut, masterCut } per the revshare
  * bps, with the dust floor applied to the master leg.
+ *
+ * The cut is taken from the SURPLUS above the payer's float need, never from the
+ * float itself. The distinction is the whole ballgame in a closed loop: the same
+ * principal laps payer -> treasury -> payer many times a day, so a cut applied to
+ * every sweep is not a share of revenue, it is a share of the working capital
+ * taken again on every lap, and it compounds the float to nothing. Measured on
+ * mainnet: $54 of payer float entering 2026-07-25 was skimmed 35% per lap
+ * (x402_ring_ledger booked $268 of `revshare` over eight days against a float that
+ * never exceeded $54) until sweeps shrank under the dust floor and the leg went
+ * quiet on its own at $0.77 of float left. Netting the payer's deficit out first
+ * means the master is paid only once the loop it funds can actually run.
+ *
  * @param {bigint} sweep total atomic USDC being swept
  * @param {number} [bps] override for tests; defaults to the env-derived cut
+ * @param {bigint} [payerDeficitAtomic] USDC the payer is short of its float floor
  */
-export function splitSweep(sweep, bps = MASTER_REVSHARE_BPS) {
-	let masterCut = (sweep * BigInt(bps)) / 10_000n;
+export function splitSweep(sweep, bps = MASTER_REVSHARE_BPS, payerDeficitAtomic = 0n) {
+	const deficit = payerDeficitAtomic > 0n ? payerDeficitAtomic : 0n;
+	const surplus = sweep > deficit ? sweep - deficit : 0n;
+	let masterCut = (surplus * BigInt(bps)) / 10_000n;
 	if (masterCut < MIN_REVSHARE_ATOMIC) masterCut = 0n;
 	return { payerCut: sweep - masterCut, masterCut };
+}
+
+/**
+ * How far the payer is below the float floor the revshare must not eat into.
+ * PURE. Never negative.
+ * @param {bigint} payerUsdcAtomic live payer USDC balance
+ * @param {bigint} [floorAtomic]
+ */
+export function payerFloatDeficit(payerUsdcAtomic, floorAtomic = PAYER_USDC_FLOOR_ATOMIC) {
+	return payerUsdcAtomic >= floorAtomic ? 0n : floorAtomic - payerUsdcAtomic;
 }
 
 async function confirmSignature(conn, signature, timeoutMs = 30_000) {
@@ -155,14 +184,27 @@ export async function run(ctx = {}) {
 		}
 	}
 
-	// Split the sweep: a bounded revenue share funds the economy master (the SOL
-	// fuel source for every engine floor), the rest recycles to the payer float.
-	const split = splitSweep(sweep);
-	let masterCut = split.masterCut;
-	const payerCut = split.payerCut;
-
 	const payerAta = getAssociatedTokenAddressSync(mint, payerPub, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
 	const payerAtaInfo = await conn.getAccountInfo(payerAta).catch(() => null);
+
+	// Split the sweep: a bounded revenue share funds the economy master (the SOL
+	// fuel source for every engine floor), the rest recycles to the payer float.
+	// The share comes out of the surplus ABOVE the payer's float floor only, so a
+	// starved payer is made whole before the master is paid. An unreadable payer
+	// balance is treated as fully starved: skipping one revshare leg costs the
+	// master a few cents, while skimming a payer that turns out to be empty stalls
+	// the entire ring.
+	let payerUsdc = 0n;
+	if (payerAtaInfo) {
+		try {
+			payerUsdc = (await getAccount(conn, payerAta)).amount;
+		} catch {
+			payerUsdc = 0n;
+		}
+	}
+	const split = splitSweep(sweep, MASTER_REVSHARE_BPS, payerFloatDeficit(payerUsdc));
+	let masterCut = split.masterCut;
+	const payerCut = split.payerCut;
 	const mintInfo = await getMint(conn, mint);
 	const { blockhash } = await conn.getLatestBlockhash('confirmed');
 

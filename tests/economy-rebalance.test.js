@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import bs58 from 'bs58';
 import { Keypair } from '@solana/web3.js';
-import { planRebalance } from '../api/_lib/economy-rebalance.js';
+import { planRebalance, resolveSelfPayFloors } from '../api/_lib/economy-rebalance.js';
 import { loadSignerKeypair, SOLANA_SIGNERS } from '../api/_lib/solana-signers.js';
 
 // Fixed bounds so the test doesn't depend on env: $3/swap, $6/run, keep 0.03 SOL
@@ -151,6 +151,69 @@ describe('planRebalance', () => {
 		});
 		expect(plan).toHaveLength(0);
 		expect(skipped[0].reason).toBe('no_sol_price');
+	});
+});
+
+// The 2026-08-06 deadlock: the ring payer held 0.140 SOL and $0.23 USDC against a
+// 0.18 SOL fee target and a $12 USDC floor. planRebalance holds back the fee
+// target on the sol->usdc leg, and the usdc->sol leg can only sell USDC above the
+// $2 reserve, so BOTH legs skipped on every run. Production logged zero rebalance
+// swaps for eight days while insufficient_payer_usdc climbed to ~2,900 a day.
+// resolveSelfPayFloors is the escape: when a wallet cannot afford both floors,
+// both legs aim at the bare fee reserve instead, so they converge on one
+// equilibrium rather than reversing each other.
+describe('resolveSelfPayFloors', () => {
+	const P = 150; // $/SOL
+	const base = { solPriceUsd: P, targetSol: 0.18, usdcFloorUsd: 12, solReserve: 0.05 };
+
+	it('leaves the fee target alone while the wallet can afford both floors', () => {
+		// 0.30 SOL ($45) + $12 = $57 against a $39 combined need.
+		const r = resolveSelfPayFloors({ ...base, sol: 0.3, usdc: 12 });
+		expect(r.constrained).toBe(false);
+		expect(r.solFloor).toBe(0.18);
+	});
+
+	it('drops both legs to the bare fee reserve when the wallet cannot afford both', () => {
+		const r = resolveSelfPayFloors({ ...base, sol: 0.140089663, usdc: 0.23205 });
+		expect(r.constrained).toBe(true);
+		expect(r.solFloor).toBe(0.05);
+	});
+
+	it('unblocks the deadlocked payer with a single converging swap', () => {
+		const bounds2 = { solReserve: 0.05, usdcReserve: 2, perSwapUsd: 50, runCapUsd: 100, dustUsd: 0.5 };
+		const rows = (sol, usdc) => {
+			const f = resolveSelfPayFloors({ ...base, sol, usdc });
+			const out = [{ name: 'ring', pubkey: 'R', sol, usdc, wants: 'usdc', floorUsd: 12, solFloor: f.solFloor }];
+			if (f.rescueArmed) out.push({ name: 'ring', pubkey: 'R', sol, usdc, wants: 'sol', floorUsd: f.solFloor * P });
+			return out;
+		};
+		const run1 = planRebalance({ solPriceUsd: P, bounds: bounds2, wallets: rows(0.140089663, 0.23205) });
+		expect(run1.plan).toHaveLength(1);
+		expect(run1.plan[0].dir).toBe('sol->usdc');
+		// Run 2 against the post-swap balances: at the USDC floor, nothing reverses.
+		const sol2 = 0.140089663 - run1.plan[0].inUsd / P;
+		const usdc2 = 0.23205 + run1.plan[0].inUsd;
+		const run2 = planRebalance({ solPriceUsd: P, bounds: bounds2, wallets: rows(sol2, usdc2) });
+		expect(run2.plan).toHaveLength(0);
+		expect(run2.skipped[0].reason).toBe('above_floor');
+	});
+
+	it('arms the usdc->sol rescue only under the bare fee reserve, not the topup floor', () => {
+		// 0.14 SOL is under the registry minSol (0.15) that used to arm this leg, and
+		// that is what made the payer sell working capital for gas it did not need.
+		expect(resolveSelfPayFloors({ ...base, sol: 0.14, usdc: 0.23 }).rescueArmed).toBe(false);
+		expect(resolveSelfPayFloors({ ...base, sol: 0.01, usdc: 12 }).rescueArmed).toBe(true);
+	});
+
+	it('never raises the floor above the fee target', () => {
+		const r = resolveSelfPayFloors({ ...base, targetSol: 0.02, sol: 0.001, usdc: 0 });
+		expect(r.solFloor).toBe(0.02);
+	});
+
+	it('keeps the unconstrained target when the SOL price is unavailable', () => {
+		const r = resolveSelfPayFloors({ ...base, solPriceUsd: 0, sol: 0.14, usdc: 0.23 });
+		expect(r.constrained).toBe(false);
+		expect(r.solFloor).toBe(0.18);
 	});
 });
 

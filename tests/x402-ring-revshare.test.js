@@ -1,7 +1,7 @@
 // The treasury sweep's master revenue share: split math and the registry's
 // reserved maintenance slots (the two halves of the July 2026 starvation fix).
 import { describe, it, expect } from 'vitest';
-import { splitSweep } from '../api/_lib/x402/pipelines/ring-rebalance.js';
+import { splitSweep, payerFloatDeficit } from '../api/_lib/x402/pipelines/ring-rebalance.js';
 import { getFullRegistry } from '../api/_lib/x402/autonomous-registry.js';
 
 describe('splitSweep', () => {
@@ -33,6 +33,64 @@ describe('splitSweep', () => {
 	it('never loses atomics to rounding', () => {
 		const { payerCut, masterCut } = splitSweep(1_234_567n, 3_333);
 		expect(payerCut + masterCut).toBe(1_234_567n);
+	});
+});
+
+// The float drain the revshare caused in a CLOSED loop: the same principal laps
+// payer -> treasury -> payer many times a day, so a cut on every sweep is a cut on
+// the working capital taken again on every lap. Mainnet 2026-07-25 to 2026-08-06:
+// $54 of payer float, $268 of `revshare` booked in x402_ring_ledger, $0.77 of
+// float left. The cut now comes out of the surplus above the payer's float floor.
+describe('splitSweep payer-float protection', () => {
+	it('pays the master nothing while the payer is short of its float floor', () => {
+		// $1.00 sweep, payer $5.00 short: the whole sweep goes back to the float.
+		const { payerCut, masterCut } = splitSweep(1_000_000n, 3_500, 5_000_000n);
+		expect(masterCut).toBe(0n);
+		expect(payerCut).toBe(1_000_000n);
+	});
+
+	it('shares only the surplus once the sweep covers the deficit', () => {
+		// $10 sweep, payer $4 short: $6 is surplus, 35% of that is $2.10.
+		const { payerCut, masterCut } = splitSweep(10_000_000n, 3_500, 4_000_000n);
+		expect(masterCut).toBe(2_100_000n);
+		expect(payerCut).toBe(7_900_000n);
+		expect(payerCut + masterCut).toBe(10_000_000n);
+	});
+
+	it('behaves exactly as before once the payer is whole', () => {
+		const gated = splitSweep(100_000_000n, 2_000, 0n);
+		const legacy = splitSweep(100_000_000n, 2_000);
+		expect(gated).toEqual(legacy);
+		expect(gated.masterCut).toBe(20_000_000n);
+	});
+
+	it('cannot be driven negative by a nonsense deficit', () => {
+		const { payerCut, masterCut } = splitSweep(1_000_000n, 3_500, -5n);
+		expect(masterCut).toBe(350_000n);
+		expect(payerCut).toBe(650_000n);
+	});
+
+	it('survives the compounding case the drain came from', () => {
+		// Repeated $1 laps against a payer stuck at $0.20 of a $6 floor never skim.
+		let float = 200_000n;
+		for (let i = 0; i < 20; i += 1) {
+			const { payerCut, masterCut } = splitSweep(1_000_000n, 3_500, payerFloatDeficit(float, 6_000_000n));
+			expect(masterCut).toBe(0n);
+			float += payerCut - 1_000_000n; // pays it straight back out next lap
+		}
+		expect(float).toBe(200_000n);
+	});
+});
+
+describe('payerFloatDeficit', () => {
+	it('is zero at or above the floor', () => {
+		expect(payerFloatDeficit(6_000_000n, 6_000_000n)).toBe(0n);
+		expect(payerFloatDeficit(9_000_000n, 6_000_000n)).toBe(0n);
+	});
+
+	it('measures the shortfall below the floor', () => {
+		expect(payerFloatDeficit(232_050n, 6_000_000n)).toBe(5_767_950n);
+		expect(payerFloatDeficit(0n, 6_000_000n)).toBe(6_000_000n);
 	});
 });
 

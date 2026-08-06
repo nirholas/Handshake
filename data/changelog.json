@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-06",
+			"title": "The agent payment ring can refill its own spending float again after eight days stuck",
+			"summary": "The platform's closed payment loop keeps one pool of USDC circulating between wallets it controls, and a wallet that pays its own network fees needs both USDC to spend and a little SOL to pay with. Two rules meant to stop those two needs fighting each other combined into a trap: once the payer's total balance could cover neither, it was barred from converting spare SOL into USDC and had nothing to convert the other way, so it did nothing at all. It sat that way from 29 July, holding fee money it had no way to spend, while roughly 2,900 payment attempts a day failed for want of a few cents of float. The wallet now settles on a single sensible target when it cannot afford both, keeping just enough for fees and holding the rest as spendable balance, so it recovers on its own. The revenue share the loop pays out is also taken only from genuine surplus now: because the same money laps the circuit many times a day, a cut on every lap was quietly compounding the working float away rather than sharing earnings. Wallet records for the loop were reconciled at the same time, so every role wallet is registered and there are no stale entries left.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/economy-lab"
+		},
+		{
+			"date": "2026-08-06",
 			"title": "A paced payment rail now says \"retry shortly\" instead of reporting itself broken",
 			"summary": "When the wallet that pays Solana network fees for platform payments has spent its daily fee budget, settlement pauses on purpose until the budget refills at the UTC reset or the wallet is topped up. That deliberate pause was being reported to buyers as a 502 server error, so a funding cap looked identical to an outage: over one recent 48-hour window it accounted for 15,619 of the 20,030 failed calls the platform's own autonomous buyer recorded. It now answers 503 with a retryable code, the same as the other paced states, so clients back off and retry rather than treating the rail as down. Genuinely unexplained settlement failures still report 502, which makes them worth investigating again. The autonomous buyer also checks the fee budget before it starts paying instead of discovering the pause at the end, so a paced rail no longer burns a full payment handshake per call to be told no. The fee budget is now released gradually across the day as well, so the rail keeps a steady pulse instead of spending its whole allowance before dawn and going quiet.",
 			"tags": [

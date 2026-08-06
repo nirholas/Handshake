@@ -81,6 +81,58 @@ export const REBALANCE = {
 };
 
 /**
+ * Resolve the fee-SOL level a self-pay wallet's BOTH legs aim at, and whether the
+ * usdc->sol rescue leg is armed. PURE, so the policy is unit-testable.
+ *
+ * A self-pay wallet has two competing needs: fee SOL (target `targetSol`, the
+ * level treasury-topup refills it to) and USDC working capital (floor
+ * `usdcFloorUsd`). While its total value covers both, nothing here changes: the
+ * legs use `targetSol` exactly as before.
+ *
+ * When its total value covers NEITHER, the old resolution deadlocked the wallet.
+ * planRebalance holds back `targetSol` on the sol->usdc leg, so a wallet under
+ * that target can never buy USDC; and the usdc->sol leg can only sell USDC above
+ * the USDC reserve, which a starved wallet does not have. Both legs skip
+ * (`insufficient_sol_surplus` + `insufficient_usdc_surplus`) on every run,
+ * forever. Production, 2026-07-29 to 2026-08-06: the x402 ring payer sat at 0.140
+ * SOL and $0.23 USDC against a 0.18 SOL target and a $12 USDC floor, the
+ * rebalancer logged ZERO swaps for eight days, and `insufficient_payer_usdc` rose
+ * from 4 to ~2,900 a day while the payer held fee SOL it had no way to spend.
+ *
+ * The escape is to pick ONE equilibrium and hold it on every run, because two
+ * legs chasing two different targets is exactly the ping-pong the 2026-07-28 fix
+ * eliminated. This wallet exists to SPEND USDC; fee SOL is instrumental. So the
+ * constrained equilibrium is "keep the bare fee reserve, hold the rest as USDC",
+ * and BOTH legs aim at that same reserve, so they converge instead of reversing.
+ *
+ * The rescue leg arms off that same reserve rather than off the registry's
+ * `minSol`. `minSol` is the treasury-topup floor (how much SOL the master tries to
+ * keep here), not "sell working capital to buy gas": arming on it makes any wallet
+ * the master is behind on sell its USDC float for SOL it does not need, which is
+ * how the ring's float turned into SOL in the first place (2026-07-28: 66
+ * usdc->sol swaps, $438 churned).
+ *
+ * @param {object} a
+ * @param {number} a.sol           live SOL balance
+ * @param {number} a.usdc          live USDC balance (whole tokens)
+ * @param {number} a.solPriceUsd   live SOL/USD price
+ * @param {number} a.targetSol     the wallet's fee-SOL refill target
+ * @param {number} a.usdcFloorUsd  the wallet's USDC floor
+ * @param {number} [a.solReserve]  bare fee/rent headroom (defaults to REBALANCE)
+ * @returns {{ solFloor: number, constrained: boolean, rescueArmed: boolean }}
+ */
+export function resolveSelfPayFloors({ sol, usdc, solPriceUsd, targetSol, usdcFloorUsd, solReserve }) {
+	const reserve = Number.isFinite(solReserve) ? solReserve : REBALANCE.solReserve;
+	const totalUsd = sol * solPriceUsd + usdc;
+	const bothFloorsUsd = targetSol * solPriceUsd + usdcFloorUsd;
+	// No price means no comparable totals; leave the unconstrained target in place
+	// and let planRebalance abort the run honestly on `no_sol_price`.
+	const constrained = solPriceUsd > 0 && totalUsd < bothFloorsUsd;
+	const solFloor = constrained ? Math.min(reserve, targetSol) : targetSol;
+	return { solFloor, constrained, rescueArmed: sol < reserve };
+}
+
+/**
  * Compute the swaps that would bring each wallet's spend-asset back to its floor,
  * honoring reserves, per-swap and per-run caps, and the dust floor. PURE.
  *

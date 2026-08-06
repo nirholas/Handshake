@@ -659,7 +659,8 @@ without raising real cost — cost is only the SOL fees above.
 ### The master revenue share: how the ring fuels the rest of the economy
 
 Every treasury sweep routes a bounded cut (`X402_RING_MASTER_REVSHARE_BPS`,
-default 20%) to the **economy master wallet** instead of the payer. That cut is
+default 20%) of its **surplus** to the **economy master wallet** instead of the
+payer. That cut is
 the funding root's only USDC inflow: `economy-fuel.js` converts it to SOL (a
 self-swap, per-run and per-day capped) and `treasury-topup` distributes that SOL
 to every engine below its floor: the circulation treasury that drives the
@@ -670,6 +671,21 @@ flat-lines (July 2026 incident). Both legs of a split sweep land in
 `x402_ring_ledger` (`kind='sweep'` payer leg, `kind='revshare'` master leg,
 same `tx_sig`) and the reconciler verifies the treasury's on-chain delta
 against the *sum* of the legs, each recipient against its own row.
+
+**The cut comes out of the surplus, never out of the float.** In a closed loop
+the same principal laps payer to treasury to payer many times a day, so a share
+taken on *every sweep* is not a share of revenue: it is a share of the working
+capital, taken again on every lap, and it compounds the float to nothing.
+Measured on mainnet with the cut raised to 35%: the payer's $54 float entering
+2026-07-25 produced $268 of `revshare` rows over eight days and ended at $0.77,
+at which point sweeps fell under the `MIN_REVSHARE_ATOMIC` dust floor and the leg
+went quiet on its own. `splitSweep()` now nets the payer's shortfall against its
+USDC floor (`X402_RING_PAYER_USDC_FLOOR_ATOMIC`, the same knob the wallet monitor
+alerts on) out of the sweep first and shares only what is left, so the master is
+paid out of genuine surplus and only once the loop it funds can actually run. A
+payer already at its floor splits exactly as before. An unreadable payer balance
+is treated as fully starved: skipping one revshare leg costs the master cents,
+while skimming a payer that turns out to be empty stalls the whole ring.
 
 Two scheduling guarantees keep the recirculation alive regardless of what else
 the autonomous loop is doing:

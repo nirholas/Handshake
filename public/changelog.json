@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T04:24:35.226Z",
+	"generated_at": "2026-08-06T04:33:48.203Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -264,6 +264,17 @@
 			"tags": [
 				"docs",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The agent payment ring can refill its own spending float again after eight days stuck",
+			"summary": "The platform's closed payment loop keeps one pool of USDC circulating between wallets it controls, and a wallet that pays its own network fees needs both USDC to spend and a little SOL to pay with. Two rules meant to stop those two needs fighting each other combined into a trap: once the payer's total balance could cover neither, it was barred from converting spare SOL into USDC and had nothing to convert the other way, so it did nothing at all. It sat that way from 29 July, holding fee money it had no way to spend, while roughly 2,900 payment attempts a day failed for want of a few cents of float. The wallet now settles on a single sensible target when it cannot afford both, keeping just enough for fees and holding the rest as spendable balance, so it recovers on its own. The revenue share the loop pays out is also taken only from genuine surplus now: because the same money laps the circuit many times a day, a cut on every lap was quietly compounding the working float away rather than sharing earnings. Wallet records for the loop were reconciled at the same time, so every role wallet is registered and there are no stale entries left.",
+			"link": "/economy-lab",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

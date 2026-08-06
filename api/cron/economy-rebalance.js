@@ -18,7 +18,7 @@ import { env } from '../_lib/env.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey, loadSignerKeypair } from '../_lib/solana-signers.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
-import { planRebalance, executeSwap, REBALANCE, USDC_WALLETS } from '../_lib/economy-rebalance.js';
+import { planRebalance, executeSwap, resolveSelfPayFloors, REBALANCE, USDC_WALLETS } from '../_lib/economy-rebalance.js';
 import { USDC_MINT_BY_NETWORK } from '../_lib/vault-jupiter.js';
 import { logAudit } from '../_lib/audit.js';
 import { requireCron } from '../_lib/cron-auth.js';
@@ -65,15 +65,25 @@ export default wrapCron(async (req, res) => {
 		// reserve on its sol->usdc leg (see planRebalance), so the USDC floor can
 		// never be fed by clawing back the fee runway the SOL leg just bought.
 		const targetSol = cfg.selfPayFee ? (spec.refillTo ?? (spec.minSol ?? 0) * 3) : 0;
-		wallets.push({ name: cfg.role, pubkey, sol, usdc, wants: 'usdc', floorUsd, solFloor: targetSol });
+		// Both legs of a self-pay wallet must aim at the SAME fee-SOL level or they
+		// reverse each other. resolveSelfPayFloors keeps that level at targetSol
+		// while the wallet can afford both floors, and drops it to the bare fee
+		// reserve when it cannot, the state that deadlocked the ring payer for eight
+		// days. It also decides when the usdc->sol rescue leg is armed.
+		const floors = cfg.selfPayFee
+			? resolveSelfPayFloors({ sol, usdc, solPriceUsd, targetSol, usdcFloorUsd: floorUsd })
+			: { solFloor: 0, constrained: false, rescueArmed: false };
+		wallets.push({ name: cfg.role, pubkey, sol, usdc, wants: 'usdc', floorUsd, solFloor: floors.solFloor });
 
 		// Self-pay fee wallets get a second row for their SOL need. Same name on
 		// purpose: the executor resolves the signing key by name, and both legs
-		// are self-swaps on the same wallet. Armed only below the registry minSol
-		// so routine drift never triggers it, and targeting refillTo (not minSol)
-		// so the swap buys real runway instead of landing exactly on the floor.
-		if (cfg.selfPayFee && sol < (spec.minSol ?? 0)) {
-			wallets.push({ name: cfg.role, pubkey, sol, usdc, wants: 'sol', floorUsd: targetSol * solPriceUsd });
+		// are self-swaps on the same wallet. Armed only once the wallet is under the
+		// bare fee reserve -- the point where it genuinely cannot pay its own way --
+		// and targeting the same resolved floor the sol->usdc leg holds back, so a
+		// rescue can never overshoot into a level the other leg will claw straight
+		// back.
+		if (floors.rescueArmed) {
+			wallets.push({ name: cfg.role, pubkey, sol, usdc, wants: 'sol', floorUsd: floors.solFloor * solPriceUsd });
 		}
 	}
 
@@ -87,7 +97,9 @@ export default wrapCron(async (req, res) => {
 			armed: false,
 			mode: 'dry_run',
 			solPriceUsd,
-			wallets: wallets.map((w) => ({ name: w.name, sol: w.sol, usdc: w.usdc, floorUsd: w.floorUsd })),
+			wallets: wallets.map((w) => ({
+				name: w.name, sol: w.sol, usdc: w.usdc, wants: w.wants, floorUsd: w.floorUsd, solFloor: w.solFloor,
+			})),
 			plan,
 			skipped,
 			note: 'ECONOMY_REBALANCE_ENABLED is not set — no swaps executed',

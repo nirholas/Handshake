@@ -344,7 +344,7 @@ USDC, the next sells that SOL back for USDC, forever. That ran 134 reversing
 swaps and churned ~$900 of notional in 2.5 hours on 2026-07-28, paying two swap
 fees and double slippage per round trip to end where it started.
 
-Two invariants close it permanently, both in `planRebalance`:
+Three invariants close it permanently, the first two in `planRebalance`:
 
 1. **No opposing legs in one run** — the neediest leg wins; the other defers to
    the next run against fresh balances.
@@ -355,9 +355,36 @@ Two invariants close it permanently, both in `planRebalance`:
    deliberate: `usdc->sol` may still draw USDC down to its reserve, because fee
    SOL is what keeps settles alive at all.
 
-Step 3 is what makes those invariants affordable: a payer that is genuinely short
+3. **One equilibrium when the wallet cannot afford both floors.** Invariants 1
+   and 2 stop the churn, but on their own they stop *everything*: a wallet under
+   its fee target can never buy USDC (invariant 2 holds the target back), and a
+   wallet under the USDC reserve has nothing to sell, so both legs skip with
+   `insufficient_sol_surplus` + `insufficient_usdc_surplus` on every run,
+   forever. Mainnet 2026-07-29 to 2026-08-06: the x402 ring payer sat at 0.140
+   SOL and $0.23 USDC against a 0.18 SOL target and a $12 USDC floor, the
+   rebalancer executed **zero** swaps for eight days, and `insufficient_payer_usdc`
+   climbed from 4 to ~2,900 a day while the payer held fee SOL it had no way to
+   spend. `resolveSelfPayFloors()`
+   ([`api/_lib/economy-rebalance.js`](../api/_lib/economy-rebalance.js)) breaks it:
+   when a wallet's total value cannot cover its fee target **and** its USDC floor,
+   BOTH legs aim at the bare `ECONOMY_REBALANCE_SOL_RESERVE` instead, so they
+   converge on one equilibrium ("keep the fee reserve, hold the rest as USDC")
+   rather than reversing each other. Above that total nothing changes: the legs
+   use the fee target exactly as before.
+
+   The same function also arms the `usdc->sol` rescue leg off that reserve rather
+   than off the registry's `minSol`. `minSol` is the *treasury-topup* floor (how
+   much SOL the master tries to keep on the wallet), not "sell working capital to
+   buy gas": arming on it makes any wallet the master is behind on sell its USDC
+   float for SOL it does not need, and with `SIGNER_MIN_SOL_X402_RING_PAYER` raised
+   to 0.15 that leg was armed permanently. It is how the ring's float turned into
+   SOL in the first place (2026-07-28: 66 `usdc->sol` swaps, $438 churned).
+
+Step 4 is what makes those invariants affordable: a payer that is genuinely short
 of both assets is now refilled from the root instead of being asked to
-manufacture one asset out of the other.
+manufacture one asset out of the other. **Check `ECONOMY_USDC_TOPUP_ENABLED` is
+not `0` before relying on it** as the escape hatch: with the topup off and the
+rebalancer deadlocked there is no path back into USDC at all.
 
 ## Lowest fees
 
@@ -387,7 +414,7 @@ congestion, clamped to a hard ceiling.
 | `ECONOMY_USDC_TOPUP_MASTER_KEEP` | no | USDC the topup never spends the master below, so the SOL refuel keeps its own fuel. Default 10. |
 | `ECONOMY_USDC_TOPUP_REFILL_MULTIPLE` | no | Lift a below-floor payer to `floor ×` this (default 1.5), so a refill buys runway instead of landing on the floor. |
 | `ECONOMY_USDC_TOPUP_COOLDOWN_S` | no | Minimum seconds between money-moving topup runs (default 90). |
-| `ECONOMY_REBALANCE_SOL_RESERVE` | no | SOL the rebalancer never swaps away from any wallet (default 0.03). Raise above a self-pay wallet's fee target as a live mitigation if the two legs ever churn. |
+| `ECONOMY_REBALANCE_SOL_RESERVE` | no | SOL the rebalancer never swaps away from any wallet (default 0.03). Doubles as the constrained equilibrium and the `usdc->sol` rescue arming threshold for a self-pay wallet (see invariant 3), so it is the one knob that decides how much fee runway a starved payer keeps. |
 | `CRON_SECRET` | yes | Bearer auth for the `treasury-topup` cron (shared with every other cron; Cloud Scheduler sends it). |
 | `SOLANA_RPC_URL` | no | Mainnet RPC (defaults to `api.mainnet-beta`). |
 
