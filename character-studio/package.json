@@ -35,7 +35,7 @@
     "@web3-react/core": "^8.2.3",
     "@web3-react/metamask": "^8.2.3",
     "agent0-sdk": "^1.7.1",
-    "axios": "^1.17.0",
+    "axios": "^1.18.1",
     "bs58": "^6.0.0",
     "buffer": "^6.0.3",
     "colyseus": "^0.17.10",
@@ -85,10 +85,7 @@
     "webpack-dev-server": "^5.2.1",
     "flatted": "^3.4.0",
     "bn.js": "^5.2.3",
-    "ajv": "^8.18.0",
-    "aptos": {
-      "axios": "^0.30.3"
-    }
+    "ajv": "^8.18.0"
   },
   "devDependencies": {
     "@react-spring/three": "^10.1.1",

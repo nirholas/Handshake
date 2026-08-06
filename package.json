@@ -18,6 +18,7 @@
 		"serialize-javascript": ">=7.0.5",
 		"@esbuild-plugins/node-globals-polyfill": "^0.2.0",
 		"axios": "^1.18.1",
+		"ws": "^8.21.0",
 		"@ethersproject/providers": {
 			"ws": "^8.21.0"
 		},
@@ -493,12 +494,14 @@
 		"@axe-core/playwright": "^4.12.1",
 		"@playwright/test": "^1.60.0",
 		"@x402/fetch": "^2.14.0",
+		"dotenv": "^17.4.2",
 		"es-module-lexer": "^2.0.0",
 		"fbx2gltf": "^0.9.7-p1",
 		"glob": "^11.1.0",
 		"jsdom": "27.3.0",
 		"json5": "^2.2.3",
 		"playwright": "^1.45.1",
+		"puppeteer": "^24.42.0",
 		"prettier": "^3.8.4",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.2",
