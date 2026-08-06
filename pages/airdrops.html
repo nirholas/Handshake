@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Airdrop Checker · three.ws</title>
+		<meta
+			name="description"
+			content="Check any Solana or Ethereum wallet against live airdrop criteria: a real on-chain activity scan, a 0-100 eligibility score per program, exactly what you're missing, and the manual steps a scan can't see. Free, keyless, no account."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/airdrops" />
+		<meta property="og:title" content="Airdrop Checker · three.ws" />
+		<meta
+			property="og:description"
+			content="Scan any wallet's real on-chain activity and see which airdrops it qualifies for, what's missing, and what to do next."
+		/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Airdrop+Checker&amp;d=Scan+any+Solana+or+Ethereum+wallet%27s+real+on-chain+activity+and+see+which+airdrops+it+qualifies+for%2C+what%27s+missing%2C+and+what+to+do+next.&amp;p=%2Fairdrops" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Airdrop Checker · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Scan any wallet's real on-chain activity and see which airdrops it qualifies for, what's missing, and what to do next."
+		/>
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Airdrop+Checker&amp;d=Scan+any+Solana+or+Ethereum+wallet%27s+real+on-chain+activity+and+see+which+airdrops+it+qualifies+for%2C+what%27s+missing%2C+and+what+to+do+next.&amp;p=%2Fairdrops" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/airdrops.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/airdrops" />
+		<script type="application/ld+json">
+			{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Airdrop Checker","applicationCategory":"FinanceApplication","operatingSystem":"Any","description":"Scan any Solana or Ethereum wallet's real on-chain activity and see which airdrops it qualifies for, what's missing, and what to do next.","url":"https://three.ws/airdrops","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Airdrop Checker","item":"https://three.ws/airdrops"}]}]}
+		</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Airdrop Checker · three.ws" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="ad-shell cv-container">
+			<section class="ad-hero">
+				<p class="ad-kicker"><span class="ad-live-dot" aria-hidden="true"></span> Real on-chain activity · scored live</p>
+				<h1 class="ad-title">Airdrop <em>Checker</em></h1>
+				<p class="ad-sub">
+					Paste any <strong>Solana</strong> or <strong>Ethereum</strong> wallet and see which airdrops it
+					qualifies for. The score comes from a real scan of the wallet's on-chain history; the checklist
+					tells you exactly what is missing and what a scan cannot see.
+				</p>
+				<form class="ad-form" id="ad-form" role="search" aria-label="Check a wallet">
+					<label class="ad-visually-hidden" for="ad-address">Wallet address</label>
+					<input
+						id="ad-address"
+						class="ad-input"
+						type="text"
+						inputmode="text"
+						autocomplete="off"
+						spellcheck="false"
+						placeholder="Wallet address (Solana or 0x…)"
+						aria-describedby="ad-form-hint"
+					/>
+					<button type="submit" class="ad-go" id="ad-go">Check eligibility</button>
+				</form>
+				<p class="ad-form-hint" id="ad-form-hint">Press <kbd>/</kbd> to focus. The chain is detected from the address. Also see the <a href="/portfolio">wallet portfolio</a>.</p>
+				<div class="ad-recent" id="ad-recent" hidden>
+					<span class="ad-recent-label">Recent:</span>
+					<span id="ad-recent-list"></span>
+				</div>
+			</section>
+
+			<section class="ad-directory" id="ad-directory" hidden aria-label="Tracked airdrops">
+				<div class="ad-dir-head">
+					<h2 class="ad-section-h">Tracked programs</h2>
+					<span class="ad-dir-sub" id="ad-dir-sub"></span>
+				</div>
+				<div class="ad-grid" id="ad-dir-grid"></div>
+				<p class="ad-fineprint">
+					Statuses reflect public reporting as of the date above and change often; nothing here is an
+					endorsement or financial advice. Estimated ranges are public speculation, not promises.
+					Check a wallet to see scores against these criteria.
+				</p>
+			</section>
+
+			<section class="ad-report" id="ad-report" hidden aria-live="polite">
+				<div class="ad-overview">
+					<div class="ad-ring-wrap">
+						<svg id="ad-ring" viewBox="0 0 120 120" width="150" height="150" role="img" aria-label="Share of tracked airdrops this wallet qualifies for"></svg>
+						<div class="ad-ring-center" id="ad-ring-center" aria-hidden="true"></div>
+					</div>
+					<div class="ad-overview-main">
+						<div class="ad-addr-row">
+							<span class="ad-addr" id="ad-addr" title=""></span>
+							<span class="ad-chain-tag" id="ad-chain-tag"></span>
+							<button type="button" class="ad-chip-btn" id="ad-copy-addr" aria-label="Copy address">Copy</button>
+							<a class="ad-chip-btn" id="ad-portfolio-link" href="/portfolio">Portfolio</a>
+							<button type="button" class="ad-chip-btn" id="ad-share" aria-label="Copy link to this report">Share</button>
+						</div>
+						<p class="ad-est-label" id="ad-est-label">Estimated if all qualified drops pay out</p>
+						<p class="ad-est" id="ad-est"></p>
+						<dl class="ad-counts">
+							<div class="ad-count" data-kind="qualified"><dt>Qualified</dt><dd id="ad-c-qualified">0</dd></div>
+							<div class="ad-count" data-kind="progress"><dt>In progress</dt><dd id="ad-c-progress">0</dd></div>
+							<div class="ad-count" data-kind="not"><dt>Not eligible</dt><dd id="ad-c-not">0</dd></div>
+							<div class="ad-count" data-kind="tracked"><dt>Tracked</dt><dd id="ad-c-tracked">0</dd></div>
+						</dl>
+					</div>
+				</div>
+
+				<section class="ad-activity" aria-label="Measured wallet activity">
+					<div class="ad-act-head">
+						<h2 class="ad-section-h">What the scan measured</h2>
+						<span class="ad-act-note" id="ad-act-note"></span>
+					</div>
+					<div class="ad-stats" id="ad-stats"></div>
+				</section>
+
+				<div class="ad-feed-head">
+					<h2 class="ad-section-h">Programs</h2>
+					<div class="ad-filters" role="tablist" aria-label="Filter by eligibility">
+						<button type="button" class="ad-filter active" data-filter="all" aria-pressed="true">All</button>
+						<button type="button" class="ad-filter" data-filter="qualified" aria-pressed="false">Qualified</button>
+						<button type="button" class="ad-filter" data-filter="in_progress" aria-pressed="false">In progress</button>
+						<button type="button" class="ad-filter" data-filter="not_eligible" aria-pressed="false">Not eligible</button>
+					</div>
+				</div>
+				<div class="ad-grid" id="ad-grid"></div>
+
+				<section class="ad-other" id="ad-other" hidden aria-label="Airdrops on the other chain family">
+					<h2 class="ad-section-h" id="ad-other-title">Also tracked</h2>
+					<p class="ad-other-sub" id="ad-other-sub"></p>
+					<div class="ad-grid" id="ad-other-grid"></div>
+				</section>
+
+				<p class="ad-fineprint" id="ad-report-fineprint"></p>
+			</section>
+
+			<section class="ad-state" id="ad-loading" hidden aria-label="Scanning wallet">
+				<div class="ad-skel"><span class="a"></span><span class="b"></span><span class="c"></span><span class="c"></span><span class="c"></span></div>
+				<p class="ad-loading-note">Scanning on-chain history. A busy wallet takes a few seconds.</p>
+			</section>
+
+			<section class="ad-state ad-error" id="ad-error" hidden>
+				<h2 id="ad-error-title">Could not scan this wallet</h2>
+				<p id="ad-error-body"></p>
+				<button type="button" class="ad-go" id="ad-retry">Retry</button>
+			</section>
+		</main>
+
+		<script type="module" src="/src/airdrops.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

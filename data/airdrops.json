@@ -1,0 +1,163 @@
+{
+	"$comment": "Airdrop registry for /airdrops. Solana entries first (chain priority). Each entry: id, name, chain, family (solana|evm), status (confirmed|speculation|upcoming), criteria (with `check` = scored against the wallet-activity scan via the DSL in api/_lib/airdrop-eligibility.js; without `check` = manual protocol step surfaced as a to-do, never scored), estimatedValue (free-text range, parsed for the hero sum), optional deadline (ISO date), source (external research link), optional note. Statuses reflect public reporting as of 2026-08-06; this file is expected to be edited as programs confirm or close. Nothing here is a promotion or an endorsement; entries exist so a user can check their own wallet against publicly discussed criteria.",
+	"updated": "2026-08-06",
+	"airdrops": [
+		{
+			"id": "jupiter-jupuary",
+			"name": "Jupiter",
+			"chain": "solana",
+			"family": "solana",
+			"status": "confirmed",
+			"criteria": [
+				{ "check": "tx_count >= 50", "description": "50+ transactions on Solana" },
+				{ "check": "days_active >= 30", "description": "Active on 30+ distinct days" },
+				{ "check": "account_age_days >= 180", "description": "Wallet older than 6 months" },
+				{ "check": "unique_tokens >= 5", "description": "Hold or trade 5+ tokens" },
+				{ "description": "Swap through the aggregator and try limit orders" },
+				{ "description": "Stake JUP and vote in governance rounds" }
+			],
+			"estimatedValue": "$100 - $2,000",
+			"source": "https://jup.ag",
+			"note": "Multi-year distribution confirmed through 2027; governance participation is weighted."
+		},
+		{
+			"id": "meteora-s2",
+			"name": "Meteora",
+			"chain": "solana",
+			"family": "solana",
+			"status": "confirmed",
+			"criteria": [
+				{ "check": "tx_count >= 25", "description": "25+ transactions on Solana" },
+				{ "check": "days_active >= 14", "description": "Active on 14+ distinct days" },
+				{ "check": "unique_tokens >= 3", "description": "Hold or trade 3+ tokens" },
+				{ "description": "Provide liquidity in DLMM or dynamic pools" }
+			],
+			"estimatedValue": "$50 - $1,500",
+			"source": "https://meteora.ag",
+			"note": "MET launched October 2025; season 2 points accrue to active LPs."
+		},
+		{
+			"id": "kamino-next-season",
+			"name": "Kamino",
+			"chain": "solana",
+			"family": "solana",
+			"status": "confirmed",
+			"criteria": [
+				{ "check": "tx_count >= 25", "description": "25+ transactions on Solana" },
+				{ "check": "account_age_days >= 90", "description": "Wallet older than 3 months" },
+				{ "description": "Lend, borrow, or run a vault position on Kamino" }
+			],
+			"estimatedValue": "$50 - $1,000",
+			"source": "https://kamino.finance",
+			"note": "Prior seasons paid points to lenders and vault users; the pattern has repeated."
+		},
+		{
+			"id": "pumpfun-rumored",
+			"name": "pump.fun",
+			"chain": "solana",
+			"family": "solana",
+			"status": "speculation",
+			"criteria": [
+				{ "check": "tx_count >= 100", "description": "100+ transactions on Solana" },
+				{ "check": "days_active >= 30", "description": "Active on 30+ distinct days" },
+				{ "check": "unique_tokens >= 10", "description": "Trade 10+ distinct tokens" },
+				{ "description": "Trade or launch coins on pump.fun with this wallet" }
+			],
+			"estimatedValue": "$100 - $3,000",
+			"source": "https://pump.fun",
+			"note": "Widely reported first-time distribution speculation; nothing is confirmed by the team."
+		},
+		{
+			"id": "backpack-exchange",
+			"name": "Backpack",
+			"chain": "solana",
+			"family": "solana",
+			"status": "speculation",
+			"criteria": [
+				{ "check": "tx_count >= 25", "description": "25+ transactions on Solana" },
+				{ "check": "account_age_days >= 90", "description": "Wallet older than 3 months" },
+				{ "description": "Use the Backpack wallet or exchange with this address" }
+			],
+			"estimatedValue": "$50 - $500",
+			"source": "https://backpack.exchange",
+			"note": "First-time distribution speculation tied to wallet and exchange usage."
+		},
+		{
+			"id": "solayer-restaking",
+			"name": "Solayer",
+			"chain": "solana",
+			"family": "solana",
+			"status": "speculation",
+			"criteria": [
+				{ "check": "tx_count >= 10", "description": "10+ transactions on Solana" },
+				{ "check": "unique_tokens >= 3", "description": "Hold 3+ tokens (staked SOL counts)" },
+				{ "description": "Restake SOL or hold sSOL through Solayer" }
+			],
+			"estimatedValue": "$50 - $800",
+			"source": "https://solayer.org",
+			"note": "Restaking points program with a first-time distribution discussed publicly."
+		},
+		{
+			"id": "monad-mainnet",
+			"name": "Monad",
+			"chain": "monad",
+			"family": "evm",
+			"status": "upcoming",
+			"criteria": [
+				{ "check": "tx_count >= 50", "description": "50+ transactions across EVM chains" },
+				{ "check": "days_active >= 30", "description": "Active on 30+ distinct days" },
+				{ "check": "account_age_days >= 180", "description": "Wallet older than 6 months" },
+				{ "description": "Use the Monad testnet with this address before the snapshot" }
+			],
+			"estimatedValue": "$200 - $2,000",
+			"source": "https://monad.xyz",
+			"note": "Highest-valued L1 without a token; testnet activity is the widely discussed qualifier, which an on-chain mainnet scan cannot see."
+		},
+		{
+			"id": "megaeth-mega",
+			"name": "MegaETH",
+			"chain": "megaeth",
+			"family": "evm",
+			"status": "upcoming",
+			"criteria": [
+				{ "check": "tx_count >= 25", "description": "25+ transactions across EVM chains" },
+				{ "check": "volume_usd >= 1000", "description": "$1k+ total native volume moved" },
+				{ "description": "Bridge to and use MegaETH mainnet with this address" }
+			],
+			"estimatedValue": "$100 - $1,500",
+			"source": "https://megaeth.com",
+			"note": "Mainnet live since February 2026; MEGA distribution timing unannounced."
+		},
+		{
+			"id": "eigenlayer-seasons",
+			"name": "EigenLayer",
+			"chain": "ethereum",
+			"family": "evm",
+			"status": "confirmed",
+			"criteria": [
+				{ "check": "tx_count >= 10", "description": "10+ transactions on Ethereum" },
+				{ "check": "days_active >= 90", "description": "Active on 90+ distinct days" },
+				{ "check": "volume_usd >= 10000", "description": "$10k+ total native volume moved" },
+				{ "description": "Restake ETH or an LST through EigenLayer" }
+			],
+			"estimatedValue": "$200 - $5,000",
+			"source": "https://eigenlayer.xyz",
+			"note": "Season-based distributions to restakers have recurred."
+		},
+		{
+			"id": "abstract-chain",
+			"name": "Abstract",
+			"chain": "abstract",
+			"family": "evm",
+			"status": "speculation",
+			"criteria": [
+				{ "check": "tx_count >= 25", "description": "25+ transactions across EVM chains" },
+				{ "check": "unique_tokens >= 5", "description": "Trade 5+ distinct tokens" },
+				{ "description": "Use Abstract apps with this address" }
+			],
+			"estimatedValue": "$50 - $1,000",
+			"source": "https://abs.xyz",
+			"note": "First-time distribution speculation around consumer-app usage."
+		}
+	]
+}

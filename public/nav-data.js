@@ -343,6 +343,13 @@ export const NAV_GROUPS = [
 						desc: 'Live portfolio for any Solana or Ethereum wallet: total value, 24h move, allocation & every holding priced',
 					},
 					{
+						title: 'Airdrop Checker',
+						href: '/airdrops',
+						badge: 'New',
+						badgeTone: 'new',
+						desc: 'Scan any wallet’s real on-chain activity and see which airdrops it qualifies for, and what’s missing',
+					},
+					{
 						title: 'Minted 3D Assets',
 						href: '/minted',
 						desc: 'Every generated avatar minted as a Solana NFT — live viewer, baked provenance, and enforced creator royalties',

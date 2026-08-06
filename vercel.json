@@ -923,6 +923,10 @@
 			"dest": "/portfolio.html"
 		},
 		{
+			"src": "/airdrops/?",
+			"dest": "/airdrops.html"
+		},
+		{
 			"src": "/launcher/?",
 			"dest": "/launcher.html"
 		},

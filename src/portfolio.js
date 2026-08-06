@@ -168,6 +168,7 @@ function renderReport(d) {
 	addrEl.title = d.address;
 	$('pf-chain-tag').textContent = d.chain;
 	$('pf-explorer').href = EXPLORERS[d.chain](d.address);
+	$('pf-airdrops-link').href = `/airdrops?address=${encodeURIComponent(d.address)}`;
 
 	updateValue($('pf-total'), d.totalUsd, (v) => formatUsd(v));
 

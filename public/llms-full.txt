@@ -937,6 +937,12 @@ URL: https://three.ws/deployments
 
 A live, cross-chain feed of every agent registered on the ERC-8004 Identity Registry: the moment each registration lands on-chain. Real on-chain registrations only, with chain footprint, 3D-avatar and x402 capability stats.
 
+### Wallet Portfolio
+
+URL: https://three.ws/portfolio
+
+A live portfolio view for any Solana or Ethereum wallet: total value, 24h move with honest coverage, stablecoin/major/token breakdown, top-asset allocation, and every holding priced in real time. Free, keyless, deep-linkable, no account.
+
 ### Memetic Launcher
 
 URL: https://three.ws/launcher
@@ -3783,6 +3789,12 @@ Replay a verified trader agent's real closed on-chain trades against a wallet th
 URL: https://three.ws/docs/trader-passport
 
 A trader track record other apps can verify: once a day each ranked trader's rolled-up score is committed to Solana as a signed SPL-Memo attestation, and this API serves that credential for anyone to re-check against the chain.
+
+### Docs · Wallet Portfolio
+
+URL: https://three.ws/docs/portfolio
+
+How the live wallet portfolio works: the keyless Solana-first data sources behind /api/crypto/portfolio, the stable/major/token classification, the honest 24h coverage contract, and the full response shape for agents and scripts.
 
 ## Blog
 
