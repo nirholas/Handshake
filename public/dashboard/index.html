@@ -1327,7 +1327,9 @@
 			<a href="/forge" class="dash-announce-cta" data-i18n="dashboard_index.try_forge">Try Forge &rarr;</a>
 			<button
 				class="dash-announce-dismiss"
-				onclick="document.getElementById('forge-announce').remove();localStorage.setItem('forge-announce-dismissed','1')"
+				type="button"
+				data-dismiss-banner="forge-announce"
+				data-dismiss-key="forge-announce-dismissed"
 				aria-label="Dismiss announcement"
 			 data-i18n-attr="aria-label:dashboard_index.dismiss_announcement_arialabel">
 				&times;
@@ -1338,6 +1340,20 @@
 				var __fab = document.getElementById('forge-announce');
 				if (__fab) __fab.remove();
 			}
+			// Dismiss buttons declare the banner they close and the localStorage
+			// key that remembers it. Bound here rather than with onclick
+			// attributes, which the site CSP does not allow.
+			document.addEventListener('click', function (event) {
+				var button = event.target.closest('[data-dismiss-banner]');
+				if (!button) return;
+				var banner = document.getElementById(button.dataset.dismissBanner);
+				if (banner) banner.remove();
+				try {
+					localStorage.setItem(button.dataset.dismissKey, '1');
+				} catch (err) {
+					/* private browsing: the banner still closes for this visit */
+				}
+			});
 		</script>
 		<div id="dn-next-banner" style="
   display: flex;
@@ -1356,7 +1372,7 @@
       switch to new version
     </button>
   </span>
-  <button onclick="document.getElementById('dn-next-banner').remove();localStorage.setItem('dn-next-dismissed','1')"
+  <button type="button" data-dismiss-banner="dn-next-banner" data-dismiss-key="dn-next-dismissed"
     style="background:none;border:none;color:#888;font-size:18px;cursor:pointer;line-height:1;padding:0 2px"
     aria-label="Dismiss" data-i18n-attr="aria-label:dashboard_index.dismiss_arialabel">&times;</button>
 </div>

@@ -243,7 +243,7 @@
 				if (!res.ok) throw new Error('HTTP ' + res.status);
 				data = await res.json();
 			} catch (err) {
-				listEl.innerHTML = `<div class="state"><h3>Couldn't load inventory</h3><p>${esc(err.message)}. The store may be warming up — try again.</p><a class="cta" href="#" onclick="location.reload();return false">Retry</a></div>`;
+				listEl.innerHTML = `<div class="state"><h3>Couldn't load inventory</h3><p>${esc(err.message)}. The store may be warming up — try again.</p><button class="cta" type="button" data-action="reload">Retry</button></div>`;
 				return;
 			}
 			if (data.custodyNotice) document.getElementById('custody-copy').innerHTML = '<b>Custody:</b> ' + esc(data.custodyNotice);
@@ -265,6 +265,12 @@
 			listEl.innerHTML = '';
 			listEl.appendChild(grid);
 		}
+
+		// The error state renders its retry button from a string, so it is
+		// delegated rather than bound with an inline onclick the CSP would block.
+		document.addEventListener('click', (event) => {
+			if (event.target.closest('[data-action="reload"]')) location.reload();
+		});
 
 		qEl.addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(load, 280); });
 		tierEl.addEventListener('change', load);

@@ -2342,10 +2342,10 @@
 										<td>${(() => {
 											const fallback = tokenLogoFallback(t.mint || t.symbol, t.symbol);
 											const src = t.logo || fallback;
-											// onerror swaps a broken remote logo to the local
-											// data-URI fallback exactly once (guarded so a failing
-											// fallback can't loop).
-											return `<img class="pd-token-logo" src="${escapeHtml(src)}" alt="" loading="lazy" data-fallback="${escapeHtml(fallback)}" onerror="if(this.dataset.fallback&amp;&amp;this.src!==this.dataset.fallback){this.src=this.dataset.fallback}else{this.remove()}" />`;
+											// /img-fallback.js swaps a broken remote logo to the
+											// local data-URI fallback exactly once, then drops the
+											// image if that fails too.
+											return `<img class="pd-token-logo" src="${escapeHtml(src)}" alt="" loading="lazy" data-fallback-src="${escapeHtml(fallback)}" data-fallback="remove" />`;
 										})()}<span class="pd-mono">${escapeHtml(t.symbol || shortAddr(t.mint || ''))}</span></td>
 										<td style="text-align:right" class="pd-mono">${t.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })}</td>
 										<td style="text-align:right" class="pd-mono">${t.usd > 0 ? '$' + t.usd.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</td>
@@ -5294,6 +5294,7 @@
 
 		<script src="/footer.js" defer></script>
 		<script src="/brand.js" defer></script>
+		<script src="/img-fallback.js" defer></script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

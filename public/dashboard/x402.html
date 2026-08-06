@@ -448,7 +448,7 @@
 				<div class="empty">
 					<h3>No SKUs yet</h3>
 					<p>Create your first checkout link — point it at any 402-enabled endpoint.</p>
-					<p style="margin-top:18px"><button class="btn" onclick="document.getElementById('newBtn').click()">+ Create SKU</button></p>
+					<p style="margin-top:18px"><button class="btn" type="button" data-open-new-sku>+ Create SKU</button></p>
 				</div>`;
 			$('stats').style.display = 'none';
 			return;
@@ -513,6 +513,10 @@
 	skuForm.target_method.addEventListener('change', toggleBody);
 
 	$('newBtn').addEventListener('click', () => openModal(null));
+	// The empty state renders its own CTA from a string, so it is delegated.
+	document.addEventListener('click', (event) => {
+		if (event.target.closest('[data-open-new-sku]')) openModal(null);
+	});
 	$('modalClose').addEventListener('click', closeModal);
 	$('cancelBtn').addEventListener('click', closeModal);
 	modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });

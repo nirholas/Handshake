@@ -154,6 +154,16 @@
 
 			function showGate(html) { gate.innerHTML = html; gate.hidden = false; dash.hidden = true; }
 
+			// Error states are rendered from strings, so their buttons declare what
+			// they do with data-action and this one delegated listener runs it. The
+			// site CSP allows inline <script> by hash only, so an onclick attribute
+			// on generated markup would never fire.
+			document.addEventListener('click', (event) => {
+				const action = event.target.closest('[data-action]')?.dataset.action;
+				if (action === 'reload') location.reload();
+				else if (action === 'retry') loadAnalytics();
+			});
+
 			function fmtDistance(m) { return m >= 1000 ? (m / 1000).toFixed(2) + ' km' : Math.round(m) + ' m'; }
 			function fmtDuration(s) {
 				s = Math.round(s);
@@ -172,7 +182,7 @@
 					if (!res.ok) throw new Error('HTTP ' + res.status);
 					mine = await res.json();
 				} catch (err) {
-					return showGate(`<div class="wa-state"><p class="wa-state-title">Couldn't load your avatars</p><p class="wa-state-msg">${esc(err.message || 'Something went wrong.')}</p><button class="wa-cta" type="button" onclick="location.reload()">Retry</button></div>`);
+					return showGate(`<div class="wa-state"><p class="wa-state-title">Couldn't load your avatars</p><p class="wa-state-msg">${esc(err.message || 'Something went wrong.')}</p><button class="wa-cta" type="button" data-action="reload">Retry</button></div>`);
 				}
 
 				const avatars = (mine && mine.avatars) || [];
@@ -223,8 +233,7 @@
 					if (!res.ok) throw new Error('HTTP ' + res.status);
 					data = await res.json();
 				} catch (err) {
-					document.getElementById('wa-chart-wrap').innerHTML = `<div class="wa-empty">Couldn't load analytics — ${esc(err.message || 'error')}. <button class="wa-cta ghost" type="button" style="margin-left:8px" onclick="this.dispatchEvent(new CustomEvent('retry',{bubbles:true}))">Retry</button></div>`;
-					document.getElementById('wa-chart-wrap').addEventListener('retry', loadAnalytics, { once: true });
+					document.getElementById('wa-chart-wrap').innerHTML = `<div class="wa-empty">Couldn't load analytics — ${esc(err.message || 'error')}. <button class="wa-cta ghost" type="button" style="margin-left:8px" data-action="retry">Retry</button></div>`;
 					return;
 				}
 

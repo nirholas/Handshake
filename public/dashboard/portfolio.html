@@ -994,7 +994,7 @@
 					const alloc = totalUsd > 0 ? (r.usd / totalUsd) * 100 : 0;
 					const changeColor = r.change24h == null ? 'var(--muted)' : (r.change24h >= 0 ? 'var(--ok)' : 'var(--err)');
 					const logoInner = r.logo
-						? `<img src="${escapeHtml(r.logo)}" alt="" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${escapeHtml((r.symbol || '?').slice(0,3))}'" />`
+						? `<img src="${escapeHtml(r.logo)}" alt="" loading="lazy" data-fallback="parent-text" data-fallback-text="${escapeHtml((r.symbol || '?').slice(0,3))}" />`
 						: escapeHtml((r.symbol || '?').slice(0, 3));
 					const chainCls = r.chain === 'solana' ? 'sol' : 'evm';
 					const chainText = r.chain === 'solana' ? 'SOL' : 'EVM';
@@ -1394,6 +1394,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+		<script src="/img-fallback.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

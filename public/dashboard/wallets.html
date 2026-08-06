@@ -282,7 +282,7 @@
 								<span>${w.address.slice(0, 6)}…${w.address.slice(-4)}</span>
 								<button
 									class="copy-btn"
-									onclick="copyToClipboard('${w.address}')"
+									data-copy-address="${w.address}"
 									title="Copy full address"
 								>
 									📋
@@ -297,7 +297,7 @@
 						<td style="text-align: right">
 							<button
 								class="btn sec btn-sm"
-								onclick="unlinkWallet('${w.address}')"
+								data-unlink-address="${w.address}"
 								style="padding: 6px 10px; font-size: 12px"
 							>
 								Unlink
@@ -537,8 +537,15 @@
 				el.style.display = 'block';
 			}
 
-			window.copyToClipboard = copyToClipboard;
-			window.unlinkWallet = unlinkWallet;
+			// Wallet rows are rendered from strings; their buttons name the address
+			// they act on and this delegated listener runs it. Inline onclick
+			// attributes do not survive the site CSP.
+			document.addEventListener('click', (event) => {
+				const copy = event.target.closest('[data-copy-address]');
+				if (copy) return copyToClipboard(copy.dataset.copyAddress);
+				const unlink = event.target.closest('[data-unlink-address]');
+				if (unlink) unlinkWallet(unlink.dataset.unlinkAddress);
+			});
 
 			// Initialize
 			(async () => {

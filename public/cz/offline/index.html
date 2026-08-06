@@ -282,7 +282,7 @@
 					<h2>Claim Successful!</h2>
 					<p>Your agent is now registered on Base Sepolia.</p>
 					<p>Transaction: <span class="code">0xabc123…</span></p>
-					<button class="button" onclick="document.getElementById('modal').classList.remove('active')">Close</button>
+					<button class="button" type="button" data-close-modal>Close</button>
 				`);
 				}, 3200);
 			}
@@ -417,7 +417,7 @@
 				ui.style.transform = 'translateX(-50%)';
 				ui.style.zIndex = '50';
 				ui.innerHTML = `
-				<button class="button" style="font-size: 16px; padding: 16px 32px;" onclick="window.handleClaimClick()">
+				<button class="button" type="button" style="font-size: 16px; padding: 16px 32px;" data-claim-agent>
 					Claim Agent
 				</button>
 			`;
@@ -425,7 +425,16 @@
 			}
 
 			// Export for global access
-			window.handleClaimClick = handleClaimClick;
+			// The demo builds its overlays from strings, so their buttons declare
+			// what they do and this delegated listener runs it. The site CSP allows
+			// inline <script> by hash only, never inline handlers.
+			document.addEventListener('click', (event) => {
+				if (event.target.closest('[data-close-modal]')) {
+					document.getElementById('modal').classList.remove('active');
+					return;
+				}
+				if (event.target.closest('[data-claim-agent]')) handleClaimClick();
+			});
 
 			// Initialize when page loads
 			document.addEventListener('DOMContentLoaded', () => {

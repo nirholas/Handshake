@@ -37,6 +37,7 @@ import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
 import { hasSeoRoute, renderSeoHead } from './seo-head.mjs';
+import { hardenHeaderBag } from './csp-hashes.mjs';
 // Route resolution lives in its own module so the audit scripts
 // (scripts/audit-cron-liveness.mjs) exercise the SAME resolver production runs,
 // instead of a copy that can silently drift from it.
@@ -246,7 +247,29 @@ function resolveStatic(pathname) {
 	}
 }
 
+// Static HTML gets its CSP tightened to the inline scripts it actually
+// contains (see server/csp-hashes.mjs). dist/ is immutable for the lifetime of
+// a deploy, so each file is read and hashed at most once per process; the
+// response itself still streams from res.sendFile.
+const staticCspCache = new Map();
+
+function cspForStaticHtml(file) {
+	if (staticCspCache.has(file)) return staticCspCache.get(file);
+	let html = null;
+	try {
+		html = readFileSync(file, 'utf8');
+	} catch (err) {
+		console.error(`[csp] could not read ${file} for hashing:`, err.message);
+	}
+	staticCspCache.set(file, html);
+	return html;
+}
+
 function serveFile(req, res, file, headers, status) {
+	if (file.endsWith('.html')) {
+		const html = cspForStaticHtml(file);
+		if (html !== null) hardenHeaderBag(headers, html);
+	}
 	res.set(headers);
 	if (status) res.status(status);
 	// RFC 8615 discovery files (agent-card.json, ai-plugin.json, security.txt)
@@ -400,7 +423,9 @@ app.use(async (req, res) => {
 					const shell = readFileSync(file, 'utf8');
 					const html = await renderSsrPage(currentPath, shell, `http://127.0.0.1:${PORT}`);
 					if (html) {
-						res.set(collected);
+						// Hash the body we are actually sending, not the shell on disk:
+						// the injected block carries its own JSON-LD.
+						res.set(hardenHeaderBag(collected, html));
 						if (fileStatus) res.status(fileStatus);
 						res.set('content-type', 'text/html; charset=utf-8');
 						// Same freshness the static shell gets from the CDN, but the
@@ -421,7 +446,9 @@ app.use(async (req, res) => {
 			if (req.method === 'GET' && file.endsWith('.html') && hasSeoRoute(url.pathname)) {
 				const html = renderSeoHead(url.pathname, file);
 				if (html) {
-					res.set(collected);
+					// The rewritten head swaps in this route's own JSON-LD block, so
+					// the policy has to describe the rewritten bytes.
+					res.set(hardenHeaderBag(collected, html));
 					if (fileStatus) res.status(fileStatus);
 					res.set('content-type', 'text/html; charset=utf-8');
 					res.set('cache-control', 'public, max-age=60, s-maxage=300');

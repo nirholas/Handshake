@@ -249,7 +249,7 @@
 				hiccup or a browser without WebGL.
 			</p>
 			<div class="foot-links">
-				<a href="javascript:location.reload()" data-i18n="avatar_artifact.retry">Retry</a>
+				<a href="#" id="artifact-retry" data-i18n="avatar_artifact.retry">Retry</a>
 				<a href="/" data-i18n="avatar_artifact.back_to_three_ws">Back to three.ws</a>
 			</div>
 		</div>
@@ -261,12 +261,15 @@
 				document.getElementById('loading')?.setAttribute('hidden', '');
 				document.getElementById('error')?.removeAttribute('hidden');
 			};
+			document.getElementById('artifact-retry')?.addEventListener('click', (event) => {
+				event.preventDefault();
+				location.reload();
+			});
 		</script>
 		<script
 			src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
 			integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu"
 			crossorigin="anonymous"
-			onerror="window.__avatarArtifactFailed()"
 		></script>
 		<script>
 			// WebGL / runtime guard: if Three.js didn't load or WebGL is

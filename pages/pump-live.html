@@ -423,7 +423,7 @@
         <span class="stat-label" data-i18n="pump_live.last_launch">Last launch</span>
         <span class="stat-value" id="stat-age" aria-live="polite">—</span>
       </div>
-      <div class="stat" style="cursor:pointer" title="Filter to prime coins" onclick="document.querySelector('[data-ftier=prime]')?.click()">
+      <div class="stat" id="stat-prime-filter" style="cursor:pointer" title="Filter to prime coins">
         <span class="stat-label" data-i18n="pump_live.prime_scored">🔮 Prime scored</span>
         <span class="stat-value" id="stat-prime" aria-live="polite" style="color:#c084fc">0</span>
       </div>
@@ -600,6 +600,11 @@
       pauseQueue.forEach((token) => renderToken(token));
       pauseQueue = [];
     }
+  });
+
+  // The "Prime scored" stat doubles as a shortcut into the prime filter.
+  document.getElementById('stat-prime-filter').addEventListener('click', () => {
+    document.querySelector('#filter-bar [data-ftier="prime"]')?.click();
   });
 
   // Wire conviction filter buttons

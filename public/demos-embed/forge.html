@@ -169,7 +169,7 @@
           placeholder="e.g. e.g. a futuristic robot with glowing blue eyes…"
           value=""
         >
-        <button class="prompt-btn" onclick="openForge()" data-i18n="demos_embed_forge.generate">Generate →</button>
+        <button class="prompt-btn" id="forge-generate" type="button" data-i18n="demos_embed_forge.generate">Generate →</button>
       </div>
       <p class="prompt-note" data-i18n-html="demos_embed_forge.generation_happens_on_three_ws_forge_real">
         Generation happens on <a href="https://three.ws/forge" target="_blank" rel="noopener">three.ws/forge</a> — real Meshy API, real GLB output.
@@ -188,6 +188,7 @@
     document.getElementById('prompt-input').addEventListener('keydown', function(e) {
       if (e.key === 'Enter') openForge();
     });
+    document.getElementById('forge-generate').addEventListener('click', openForge);
   </script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>

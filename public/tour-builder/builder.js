@@ -303,6 +303,13 @@ function pickTarget(el) {
 	return nice || el;
 }
 
+// The demo storefront's links are scenery, not navigation: they exist so the
+// stage looks like a real shop you can point at. `href="#"` keeps them
+// focusable and hoverable like real links; this swallows the navigation.
+stage.addEventListener('click', (e) => {
+	if (e.target.closest('[data-demo-link]')) e.preventDefault();
+});
+
 stage.addEventListener('click', (e) => {
 	if (!pickingId) return;
 	e.preventDefault(); e.stopPropagation();

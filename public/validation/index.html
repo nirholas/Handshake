@@ -1031,7 +1031,7 @@
 				</div>
 
 				<div class="modal-actions">
-					<button class="btn sec" onclick="closeSubmitModal()" data-i18n="validation_index.cancel">Cancel</button>
+					<button class="btn sec" id="cancel-report-btn" type="button" data-i18n="validation_index.cancel">Cancel</button>
 					<button class="btn" id="submit-report-btn" disabled data-i18n="validation_index.submit_on_chain">Submit on-chain</button>
 				</div>
 			</div>
@@ -1080,7 +1080,7 @@
 
 			window.valDash = dashboard;
 			window.valPage = page;
-			window.closeSubmitModal = () => dashboard.closeModal();
+			document.getElementById('cancel-report-btn').addEventListener('click', () => dashboard.closeModal());
 
 			document
 				.getElementById('empty-submit-btn')

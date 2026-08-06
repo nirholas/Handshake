@@ -426,8 +426,10 @@ async function scheduledPoll() {
 }
 
 export function init() {
-	// Expose public methods for onclick handlers.
-	window.__unstoppable = { donate };
+	// Bound here rather than with an onclick attribute: the site CSP allows
+	// inline <script> by hash and never inline handlers, so an attribute would
+	// silently stop firing.
+	document.getElementById('donateBtn')?.addEventListener('click', donate);
 
 	// Show cached data immediately while we fetch.
 	const cached = loadFromCache();

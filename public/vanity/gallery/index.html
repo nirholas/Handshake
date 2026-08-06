@@ -294,7 +294,15 @@
 			const x = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(pageUrl)}`;
 			window.open(x, '_blank', 'noopener');
 		}
-		window.__shareCard = shareCard;
+		// Cards are rendered from strings, so their buttons declare the address
+		// they share and one delegated listener does the work. Inline onclick
+		// attributes cannot run under the site CSP.
+		document.addEventListener('click', (event) => {
+			const target = event.target.closest('[data-share-card], [data-action="reload"]');
+			if (!target) return;
+			if (target.dataset.action === 'reload') location.reload();
+			else shareCard(target.dataset.shareCard);
+		});
 
 		// ── Stats strip ────────────────────────────────────────────────────────
 		async function loadStats() {
@@ -340,7 +348,7 @@
 				<div class="acts">
 					<a href="${esc(e.explorerUrl)}" target="_blank" rel="noopener">Explorer ↗</a>
 					<a href="/vanity/verify" >Verify</a>
-					<button type="button" onclick="window.__shareCard('${esc(e.address)}')">Share</button>
+					<button type="button" data-share-card="${esc(e.address)}">Share</button>
 				</div>
 			</article>`;
 		}
@@ -399,7 +407,7 @@
 				galleryState.hasMore = data.hasMore;
 				$('loadmore-row').style.display = data.hasMore ? 'block' : 'none';
 			} catch {
-				if (galleryState.offset === 0) grid.innerHTML = `<div class="empty"><div class="glyph">⚠</div><h3>Couldn't load the gallery</h3><p>Check your connection and try again.</p><a class="cta" href="javascript:void 0" onclick="location.reload()">Retry</a></div>`;
+				if (galleryState.offset === 0) grid.innerHTML = `<div class="empty"><div class="glyph">⚠</div><h3>Couldn't load the gallery</h3><p>Check your connection and try again.</p><button class="cta" type="button" data-action="reload">Retry</button></div>`;
 			} finally {
 				galleryState.loading = false;
 				$('loadmore-btn').disabled = false;
@@ -468,7 +476,7 @@
 					<div class="s"><div class="k">Grind cost (≈20M/s)</div><div class="v">${esc(a.grindHuman)}</div></div>
 				</div>
 				${a.bonuses.length ? `<div class="bonuses" style="margin-top:1rem">${a.bonuses.map((b) => `<span class="bonus">${esc(b.label)} +${b.bits} bits</span>`).join('')}</div>` : ''}
-				<div class="acts" style="margin-top:1.1rem"><button type="button" class="ghost" onclick="window.__shareCard('${esc(addr)}')">Share this card</button>
+				<div class="acts" style="margin-top:1.1rem"><button type="button" class="ghost" data-share-card="${esc(addr)}">Share this card</button>
 				<a class="ghost" style="text-decoration:none" href="/api/vanity/og?address=${encodeURIComponent(addr)}" target="_blank" rel="noopener">View OG card ↗</a></div>`;
 			resEl.classList.add('show');
 		}
@@ -487,7 +495,7 @@
 				const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ receipt, label: $('publish-label').value.trim() }) });
 				const data = await r.json();
 				if (!r.ok) throw new Error(data.error_description || data.error || 'publish failed');
-				okEl.innerHTML = `Published! Your <strong>${esc(data.entry.tierLabel)}</strong> wallet is on the board. <a href="#${encodeURIComponent(data.entry.address)}" style="color:#4ade80;text-decoration:underline">View it</a> · <a href="javascript:void 0" id="post-share" style="color:#4ade80;text-decoration:underline">Share card</a>`;
+				okEl.innerHTML = `Published! Your <strong>${esc(data.entry.tierLabel)}</strong> wallet is on the board. <a href="#${encodeURIComponent(data.entry.address)}" style="color:#4ade80;text-decoration:underline">View it</a> · <button type="button" id="post-share" style="background:none;border:0;padding:0;font:inherit;cursor:pointer;color:#4ade80;text-decoration:underline">Share card</button>`;
 				okEl.classList.add('show');
 				const ps = document.getElementById('post-share'); if (ps) ps.onclick = () => shareCard(data.entry.address);
 				$('publish-receipt').value = ''; $('publish-label').value = '';

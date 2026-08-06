@@ -218,7 +218,7 @@
 		document.title = `${sku.merchant_name} · ${sku.action_name} — x402 checkout`;
 		$('merchantName').textContent = sku.merchant_name;
 		$('actionName').textContent = sku.action_name;
-		if (sku.logo_url) $('logo').innerHTML = `<img src="${escapeHtml(sku.logo_url)}" alt="" onerror="this.replaceWith(document.createTextNode('${escapeHtml(sku.merchant_name[0] || '·')}'))">`;
+		if (sku.logo_url) $('logo').innerHTML = `<img src="${escapeHtml(sku.logo_url)}" alt="" data-fallback="text" data-fallback-text="${escapeHtml(sku.merchant_name[0] || '·')}">`;
 		else $('logo').textContent = sku.merchant_name[0] || '·';
 		if (sku.accent_color) {
 			document.documentElement.style.setProperty('--accent', sku.accent_color);
@@ -394,6 +394,7 @@
 </script>
 
 	<script src="/brand.js" defer></script>
+	<script src="/img-fallback.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

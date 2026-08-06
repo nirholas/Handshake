@@ -957,7 +957,7 @@ function renderAgentCards(agents) {
     el.className = 'agent-card' + (selectedAgent?.id === agent.id ? ' selected' : '');
     el.dataset.agentId = agent.id;
     const avatarHtml = agent.avatar_id
-      ? `<img src="https://three.ws/avatars/${agent.avatar_id}/thumbnail.png" onerror="this.style.display='none';this.nextSibling.style.display='flex'" alt="" /><span style="display:none">${escape(agent.name[0]||'?')}</span>`
+      ? `<img src="https://three.ws/avatars/${agent.avatar_id}/thumbnail.png" data-fallback="sibling" alt="" /><span style="display:none">${escape(agent.name[0]||'?')}</span>`
       : `<span>${escape(agent.name[0]||'?')}</span>`;
     const walletHtml = agent.solana_address
       ? `<span class="bal">${agent.usdc != null ? agent.usdc.toFixed(3)+' USDC' : ''}</span>`
@@ -2278,6 +2278,7 @@ if (bscParams.get('chain') === 'bsc') activateChain('bsc');
 </script>
 
 	<script src="/brand.js" defer></script>
+	<script src="/img-fallback.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

@@ -283,7 +283,7 @@
 						<p data-i18n="payments.fund_spend_envelopes_from_your_credits_agent">Fund spend envelopes from your credits. Agents call paid x402 endpoints using a session token — the platform wallet signs. Budget, URL allowlists, and per-tx limits are enforced atomically.</p>
 					</div>
 					<div class="pw-hero-actions">
-						<button class="btn-ghost" id="btnDocs" onclick="window.open('https://three.ws/docs/payments','_blank')">
+						<button class="btn-ghost" id="btnDocs" type="button">
 							<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="2" width="14" height="16" rx="2"/><path d="M7 6h6M7 10h6M7 14h4"/></svg>
 							Docs
 						</button>
@@ -923,6 +923,7 @@
 			}
 
 			$('btnNew').addEventListener('click', openCreate);
+			$('btnDocs').addEventListener('click', () => window.open('https://three.ws/docs/payments', '_blank', 'noopener'));
 			$('mClose').addEventListener('click', closeCreate);
 			$('createModal').addEventListener('click', e => { if (e.target === $('createModal')) closeCreate(); });
 

@@ -296,6 +296,7 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Smart Money Radar — follow the wallets that win on pump.fun — three.ws">
 	<meta name="twitter:site" content="@trythreews">
+<script src="/img-fallback.js" defer></script>
 </head>
 <body>
 	<div id="nav-container"></div>
@@ -496,7 +497,7 @@
 			const imgSeed = c.symbol || c.name || c.mint || 'coin';
 			const imgFallback = `/api/img?seed=${encodeURIComponent(imgSeed)}`;
 			const img = c.image_uri && /^https?:\/\//i.test(c.image_uri)
-				? `<img class="coin-img" src="${esc(`/api/img?url=${encodeURIComponent(c.image_uri)}&seed=${encodeURIComponent(imgSeed)}`)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${esc(imgFallback)}'">`
+				? `<img class="coin-img" src="${esc(`/api/img?url=${encodeURIComponent(c.image_uri)}&seed=${encodeURIComponent(imgSeed)}`)}" alt="" loading="lazy" data-fallback-src="${esc(imgFallback)}">`
 				: `<div class="coin-img">${esc((c.symbol || '?').slice(0, 2))}</div>`;
 			const notable = (c.notable || []).slice(0, 4).map((n) =>
 				`<span class="nlabel lb-${n.label || 'neutral'}">${short(n.wallet)}</span>`).join('');
@@ -902,7 +903,7 @@
 				const coins = (recent_coins || []).slice(0, 18).map((c) => `<div class="nwallet" data-mint="${esc(c.mint)}" role="button" tabindex="0">
 					<div class="lw-top"><span class="lw-addr">${esc(c.symbol || c.mint.slice(0, 8))}</span>${c.graduated ? '<span class="nlabel lb-smart_money">graduated</span>' : ''}</div>
 					<div class="lstat">${fmtSol(c.buy_sol)}◎</div>
-					<a class="solscan" href="https://pump.fun/${esc(c.mint)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">pump ↗</a>
+					<a class="solscan" href="https://pump.fun/${esc(c.mint)}" target="_blank" rel="noopener">pump ↗</a>
 				</div>`).join('') || '<p style="color:var(--muted)">No recent coins on record.</p>';
 				const last = ago(w.last_active_at);
 				$('drBody').innerHTML = `
@@ -925,7 +926,9 @@
 				wireCopy($('drBody'));
 				$('drBody').querySelectorAll('.nwallet[data-mint]').forEach((el) => {
 					const go = () => openCoin(el.dataset.mint);
-					el.addEventListener('click', go);
+					// The card links out to pump.fun; a click on that anchor must not
+					// also open the coin drawer behind it.
+					el.addEventListener('click', (e) => { if (!e.target.closest('a')) go(); });
 					el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
 				});
 			} catch (e) {

@@ -195,6 +195,10 @@ const $ = (sel, root = document) => root.querySelector(sel);
 
 const layoutEl = $('#studio-layout');
 const formEl = $('#config-form');
+// The config form is a layout container, not a submission target: every control
+// applies live. Enter in a text field would otherwise reload the page. Bound
+// here rather than with an onsubmit attribute, which the site CSP blocks.
+formEl.addEventListener('submit', (event) => event.preventDefault());
 const errEl = $('#form-error');
 const previewIfr = $('#preview-iframe');
 const previewSt = $('#preview-status');

@@ -566,7 +566,7 @@
 			article.innerHTML = `
 				<span class="verdict-edge bg-${v.tone}"></span>
 				<div class="head">
-					<img class="avatar" loading="lazy" referrerpolicy="no-referrer" src="${esc(imgProxy(coin.image_uri, coin.mint))}" onerror="this.onerror=null;this.src='${esc(fallbackImg(coin.mint))}'" alt="" />
+					<img class="avatar" loading="lazy" referrerpolicy="no-referrer" src="${esc(imgProxy(coin.image_uri, coin.mint))}" data-fallback-src="${esc(fallbackImg(coin.mint))}" alt="" />
 					<div class="id">
 						<div class="name">${esc(coin.name || 'Unknown')}</div>
 						<div class="sub"><span class="sym">$${esc((coin.symbol||'').toUpperCase())}</span><span class="age">${ago(coin.first_seen_at_ms)}</span></div>
@@ -890,7 +890,7 @@
 
 			return `
 				<div class="d-head">
-					<img class="avatar" referrerpolicy="no-referrer" src="${esc(imgProxy(c.image_uri, c.mint))}" onerror="this.onerror=null;this.src='${esc(fallbackImg(c.mint))}'" alt="" />
+					<img class="avatar" referrerpolicy="no-referrer" src="${esc(imgProxy(c.image_uri, c.mint))}" data-fallback-src="${esc(fallbackImg(c.mint))}" alt="" />
 					<div><div class="name">${esc(c.name||'Unknown')}</div><div class="sym">$${esc((c.symbol||'').toUpperCase())} · ${esc(short(c.mint))}</div>
 					<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">${catBadge(c.category)}${verdictPill(v)}${c.is_news_meme?'<span class="flag soft" style="text-transform:none">news meme</span>':''}</div></div>
 				</div>
@@ -1035,6 +1035,7 @@
 		document.addEventListener('visibilitychange', () => { if (!document.hidden && state.tab === 'radar') loadRadar(); });
 	</script>
 	<script src="/brand.js" defer></script>
+	<script src="/img-fallback.js" defer></script>
 	<script>
 		fetch('/api/oracle/stats').then(r=>r.ok?r.json():null).then(d=>{
 		  if(!d) return;

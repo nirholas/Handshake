@@ -424,6 +424,7 @@
 	</main>
 
 	<script src="/brand.js" defer></script>
+	<script src="/img-fallback.js" defer></script>
 	<script type="module">
 		import { proxiedImageURL } from '/src/ipfs.js';
 
@@ -436,7 +437,7 @@
 		const sol  = (n) => n == null ? '—' : (Math.abs(Number(n)) >= 1 ? Number(n).toFixed(2) : Number(n).toFixed(3)) + ' ◎';
 		const sign = (n) => n > 0 ? '+' : '';
 		const esc  = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-		const imgErr = `this.onerror=null;this.style.visibility='hidden'`;
+		const imgFallbackAttr = `data-fallback="invisible"`;
 		// Agent and token art URLs come from third-party data (pump.fun IPFS
 		// metadata, per-agent hosts) and routinely fail ORB/CORS when loaded
 		// directly as <img> sources: some are metadata JSON documents, some are
@@ -522,7 +523,7 @@
 
 			return `<div class="ac-row oc-${outcome}" data-id="${esc(item.id)}" data-agent="${esc(item.agent_id)}" role="article" aria-label="${esc(rowLabel)}">
 				<span class="outcome-edge" aria-hidden="true"></span>
-				<img class="ac-av" src="${esc(av)}" alt="" onerror="${imgErr}" loading="lazy" />
+				<img class="ac-av" src="${esc(av)}" alt="" ${imgFallbackAttr} loading="lazy" />
 				<div class="ac-body">
 					<div class="ac-headline">
 						<span class="ac-tier ${tier}">${TIER_EMOJI[tier] || ''} ${tier}</span>
@@ -973,7 +974,7 @@
 					const av = imgSrc(a.image_url, a.agent_id);
 					return `<a class="ac-li" href="/trader/${encodeURIComponent(a.agent_id)}">
 						<span class="ac-li-rank ${a.rank <= 3 ? 'top' : ''}">${a.rank}</span>
-						<img class="ac-li-av round" src="${esc(av)}" alt="" onerror="${imgErr}" loading="lazy" />
+						<img class="ac-li-av round" src="${esc(av)}" alt="" ${imgFallbackAttr} loading="lazy" />
 						<span class="ac-li-main"><span class="ac-li-name">${esc(a.name || 'Agent')}</span><span class="ac-li-sub">${a.wins}W · ${a.losses}L · ${a.total} calls</span></span>
 						<span class="ac-li-r"><span class="big up">${wr}</span><span class="small ${roiCls}">${roi}</span></span>
 					</a>`;
@@ -1001,7 +1002,7 @@
 					const av = imgSrc(m.image_uri, m.mint);
 					const up = (m.delta || 0) >= 0;
 					return `<a class="ac-li" href="/oracle/coin/${encodeURIComponent(m.mint)}">
-						<img class="ac-li-av" src="${esc(av)}" alt="" onerror="${imgErr}" loading="lazy" />
+						<img class="ac-li-av" src="${esc(av)}" alt="" ${imgFallbackAttr} loading="lazy" />
 						<span class="ac-li-main"><span class="ac-li-name">$${esc(sym)}${m.tier_changed ? ' <span style="color:var(--ac-up);font-size:9px">▲ tier</span>' : ''}</span><span class="ac-li-sub">${esc(m.tier || '')} · score ${m.score ?? '—'}</span></span>
 						<span class="ac-li-r"><span class="ac-delta ${up ? 'up' : 'dn'}">${up ? '+' : ''}${m.delta}</span><span class="small">${m.first_score}→${m.score}</span></span>
 					</a>`;
@@ -1029,7 +1030,7 @@
 					const av = imgSrc(w.image_uri, w.mint);
 					const ath = w.ath_multiple != null ? w.ath_multiple.toFixed(1) + '×' : '—';
 					return `<a class="ac-li" href="${esc(w.pump_url)}" target="_blank" rel="noopener">
-						<img class="ac-li-av" src="${esc(av)}" alt="" onerror="${imgErr}" loading="lazy" />
+						<img class="ac-li-av" src="${esc(av)}" alt="" ${imgFallbackAttr} loading="lazy" />
 						<span class="ac-li-main"><span class="ac-li-name">$${esc(sym)}${w.graduated ? ' 🎓' : ''}</span><span class="ac-li-sub">${esc(w.tier || '')}${w.last_mc_usd ? ' · ' + usdc(w.last_mc_usd) : ''}</span></span>
 						<span class="ac-li-r"><span class="big up">${ath}</span><span class="small">ATH</span></span>
 					</a>`;

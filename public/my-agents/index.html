@@ -195,8 +195,8 @@
 				return !!(a.onchain || m.sol_mint_address || m.erc8004_agent_id);
 			};
 			const thumb = (a) => {
-				if (a.avatar_thumbnail_url) return `<img class="ag-avatar" src="${esc(a.avatar_thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />`;
-				if (a.avatar_model_url) return `<img class="ag-avatar" src="${esc(a.avatar_model_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />`;
+				if (a.avatar_thumbnail_url) return `<img class="ag-avatar" src="${esc(a.avatar_thumbnail_url)}" alt="" loading="lazy" data-fallback="sibling" />`;
+				if (a.avatar_model_url) return `<img class="ag-avatar" src="${esc(a.avatar_model_url)}" alt="" loading="lazy" data-fallback="sibling" />`;
 				return '';
 			};
 
@@ -229,6 +229,7 @@
 		load();
 		</script>
 		<script src="/brand.js" defer></script>
+		<script src="/img-fallback.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->

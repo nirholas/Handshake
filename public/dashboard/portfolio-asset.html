@@ -364,7 +364,7 @@
 				const change = m.change_24h_pct;
 				const changeCls = change == null ? 'flat' : change >= 0 ? 'up' : 'down';
 				const logoInner = asset.logo
-					? `<img src="${escapeHtml(asset.logo)}" alt="" onerror="this.style.display='none';this.parentElement.textContent='${escapeHtml((asset.symbol || '?').slice(0,3))}'" />`
+					? `<img src="${escapeHtml(asset.logo)}" alt="" data-fallback="parent-text" data-fallback-text="${escapeHtml((asset.symbol || '?').slice(0,3))}" />`
 					: escapeHtml((asset.symbol || '?').slice(0, 3));
 				const name = m.name || asset.symbol || asset.id;
 				const isAddr = !asset.is_native;
@@ -788,6 +788,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+		<script src="/img-fallback.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>
