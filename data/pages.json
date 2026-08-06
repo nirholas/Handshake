@@ -1268,6 +1268,14 @@
 					"added": "2026-06-27"
 				},
 				{
+					"path": "/portfolio",
+					"title": "Wallet Portfolio",
+					"description": "A live portfolio view for any Solana or Ethereum wallet: total value, 24h move with honest coverage, stablecoin/major/token breakdown, top-asset allocation, and every holding priced in real time. Free, keyless, deep-linkable, no account.",
+					"priority": 0.8,
+					"changefreq": "always",
+					"added": "2026-08-06"
+				},
+				{
 					"path": "/launcher",
 					"title": "Memetic Launcher",
 					"description": "Your personal autonomous coin launcher: set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.",
@@ -4821,6 +4829,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-02"
+				},
+				{
+					"path": "/docs/portfolio",
+					"title": "Docs · Wallet Portfolio",
+					"description": "How the live wallet portfolio works: the keyless Solana-first data sources behind /api/crypto/portfolio, the stable/major/token classification, the honest 24h coverage contract, and the full response shape for agents and scripts.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-06"
 				}
 			]
 		},

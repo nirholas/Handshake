@@ -919,6 +919,10 @@
 			"dest": "/deployments.html"
 		},
 		{
+			"src": "/portfolio/?",
+			"dest": "/portfolio.html"
+		},
+		{
 			"src": "/launcher/?",
 			"dest": "/launcher.html"
 		},

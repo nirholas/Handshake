@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Wallet Portfolio · three.ws</title>
+		<meta
+			name="description"
+			content="A live portfolio view for any Solana or Ethereum wallet: total value, 24h move, stable/major/token breakdown, allocation, and every holding priced in real time. Free, keyless, no account."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/portfolio" />
+		<meta property="og:title" content="Wallet Portfolio · three.ws" />
+		<meta
+			property="og:description"
+			content="Paste any Solana or Ethereum address and get a live portfolio: total value, 24h move, allocation, and every holding priced in real time."
+		/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Wallet+Portfolio&amp;d=A+live+portfolio+view+for+any+Solana+or+Ethereum+wallet%3A+total+value%2C+24h+move+with+honest+coverage%2C+stablecoin%2Fmajor%2Ftoken+breakdown%2C+top-asset+allocation&amp;p=%2Fportfolio" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Wallet Portfolio · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Paste any Solana or Ethereum address and get a live portfolio: total value, 24h move, allocation, and every holding priced in real time."
+		/>
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Wallet+Portfolio&amp;d=A+live+portfolio+view+for+any+Solana+or+Ethereum+wallet%3A+total+value%2C+24h+move+with+honest+coverage%2C+stablecoin%2Fmajor%2Ftoken+breakdown%2C+top-asset+allocation&amp;p=%2Fportfolio" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/portfolio.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/portfolio" />
+		<script type="application/ld+json">
+			{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Wallet Portfolio","applicationCategory":"FinanceApplication","operatingSystem":"Any","description":"A live portfolio view for any Solana or Ethereum wallet: total value, 24h move, allocation, and every holding priced in real time.","url":"https://three.ws/portfolio","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Wallet Portfolio","item":"https://three.ws/portfolio"}]}]}
+		</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Wallet Portfolio · three.ws" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="pf-shell cv-container">
+			<section class="pf-hero">
+				<p class="pf-kicker"><span class="pf-live-dot" aria-hidden="true"></span> Live prices · any wallet</p>
+				<h1 class="pf-title">Wallet <em>Portfolio</em></h1>
+				<p class="pf-sub">
+					Paste any <strong>Solana</strong> or <strong>Ethereum</strong> address and get a live portfolio:
+					total value, 24h move, allocation, and every holding priced in real time. Free, keyless, no account.
+				</p>
+				<form class="pf-form" id="pf-form" role="search" aria-label="Look up a wallet">
+					<label class="pf-visually-hidden" for="pf-address">Wallet address</label>
+					<input
+						id="pf-address"
+						class="pf-input"
+						type="text"
+						inputmode="text"
+						autocomplete="off"
+						spellcheck="false"
+						placeholder="Wallet address (Solana or 0x…)"
+						aria-describedby="pf-form-hint"
+					/>
+					<label class="pf-visually-hidden" for="pf-chain">Chain</label>
+					<select id="pf-chain" class="pf-select" aria-label="Chain">
+						<option value="solana" selected>Solana</option>
+						<option value="ethereum">Ethereum</option>
+					</select>
+					<button type="submit" class="pf-go" id="pf-go">View portfolio</button>
+				</form>
+				<p class="pf-form-hint" id="pf-form-hint">Press <kbd>/</kbd> to focus. The chain is detected from the address automatically.</p>
+				<div class="pf-recent" id="pf-recent" hidden>
+					<span class="pf-recent-label">Recent:</span>
+					<span id="pf-recent-list"></span>
+				</div>
+			</section>
+
+			<section class="pf-intro" id="pf-intro">
+				<div class="pf-intro-grid">
+					<div class="pf-intro-card">
+						<h2>Every holding, priced</h2>
+						<p>Native balance and every token in the wallet, valued live. Tokens with no route to a price are listed honestly as unpriced, never guessed.</p>
+					</div>
+					<div class="pf-intro-card">
+						<h2>Reserve vs. risk</h2>
+						<p>Holdings are split into stablecoins, majors (SOL, ETH, BTC and their liquid stakes), and everything else, so you can see dry powder next to open risk.</p>
+					</div>
+					<div class="pf-intro-card">
+						<h2>Deep-linkable</h2>
+						<p>Every portfolio has a URL. Share the link and anyone sees the same live view, straight from the chain.</p>
+					</div>
+				</div>
+			</section>
+
+			<section class="pf-report" id="pf-report" hidden aria-live="polite">
+				<div class="pf-stale" id="pf-stale" hidden>
+					Live sources are unreachable right now. Showing this wallet's last confirmed snapshot.
+				</div>
+
+				<div class="pf-value-card">
+					<div class="pf-value-main">
+						<div class="pf-addr-row">
+							<span class="pf-addr" id="pf-addr" title=""></span>
+							<span class="pf-chain-tag" id="pf-chain-tag"></span>
+							<button type="button" class="pf-chip-btn" id="pf-copy-addr" aria-label="Copy address">Copy</button>
+							<a class="pf-chip-btn" id="pf-explorer" href="#" target="_blank" rel="noopener noreferrer">Explorer</a>
+							<button type="button" class="pf-chip-btn" id="pf-share" aria-label="Copy link to this portfolio">Share</button>
+						</div>
+						<p class="pf-total-label">Total value</p>
+						<p class="pf-total" id="pf-total">$0.00</p>
+						<div class="pf-change-row">
+							<span class="pf-change-pill" id="pf-change" hidden></span>
+							<span class="pf-change-note" id="pf-change-note" hidden></span>
+						</div>
+					</div>
+					<div class="pf-value-side">
+						<dl class="pf-summary" id="pf-summary">
+							<div class="pf-sum-card" data-class="stable">
+								<dt>Stablecoins</dt>
+								<dd id="pf-sum-stable">$0</dd>
+								<span class="pf-sum-sub" id="pf-sum-stable-sub"></span>
+							</div>
+							<div class="pf-sum-card" data-class="major">
+								<dt>Majors</dt>
+								<dd id="pf-sum-major">$0</dd>
+								<span class="pf-sum-sub" id="pf-sum-major-sub"></span>
+							</div>
+							<div class="pf-sum-card" data-class="other">
+								<dt>Tokens</dt>
+								<dd id="pf-sum-other">$0</dd>
+								<span class="pf-sum-sub" id="pf-sum-other-sub"></span>
+							</div>
+						</dl>
+					</div>
+				</div>
+
+				<div class="pf-columns">
+					<section class="pf-card pf-alloc-card" aria-label="Allocation">
+						<div class="pf-card-h">Allocation <small id="pf-alloc-sub"></small></div>
+						<div class="pf-alloc-body">
+							<div class="pf-donut-wrap">
+								<svg id="pf-donut" viewBox="0 0 120 120" role="img" aria-label="Portfolio allocation donut chart" width="180" height="180"></svg>
+								<div class="pf-donut-center" id="pf-donut-center" aria-hidden="true"></div>
+							</div>
+							<ul class="pf-legend" id="pf-legend"></ul>
+						</div>
+					</section>
+					<section class="pf-card pf-meta-card" aria-label="About this data">
+						<div class="pf-card-h">Data</div>
+						<dl class="pf-meta" id="pf-meta"></dl>
+						<p class="pf-fineprint">
+							Balances and prices are read live per request and cached for about a minute.
+							The 24h move covers the share of value with known price history; the coverage is stated, never assumed.
+							Unpriced tokens keep their amounts and are excluded from totals.
+						</p>
+					</section>
+				</div>
+
+				<section class="pf-card pf-holdings-card" aria-label="Holdings">
+					<div class="pf-card-h">
+						Holdings <small id="pf-holdings-count"></small>
+						<label class="pf-toggle"><input type="checkbox" id="pf-show-small" /> Show balances under 1%</label>
+					</div>
+					<div class="pf-table-wrap">
+						<table class="pf-table" id="pf-table">
+							<thead>
+								<tr>
+									<th scope="col">Asset</th>
+									<th scope="col">Share</th>
+									<th scope="col">Amount</th>
+									<th scope="col">Price</th>
+									<th scope="col">24h</th>
+									<th scope="col">Value</th>
+								</tr>
+							</thead>
+							<tbody id="pf-rows"></tbody>
+						</table>
+					</div>
+					<button type="button" class="pf-small-banner" id="pf-small-banner" hidden></button>
+				</section>
+			</section>
+
+			<section class="pf-state" id="pf-loading" hidden aria-label="Loading portfolio">
+				<div class="pf-skel pf-skel-value"><span class="a"></span><span class="b"></span><span class="c"></span></div>
+				<div class="pf-skel pf-skel-table"><span class="c"></span><span class="c"></span><span class="c"></span><span class="c"></span><span class="c"></span></div>
+			</section>
+
+			<section class="pf-state pf-error" id="pf-error" hidden>
+				<h2 id="pf-error-title">Could not load this wallet</h2>
+				<p id="pf-error-body"></p>
+				<button type="button" class="pf-go" id="pf-retry">Retry</button>
+			</section>
+
+			<section class="pf-state pf-empty" id="pf-empty" hidden>
+				<h2>This wallet is empty</h2>
+				<p>No native balance and no tokens found at this address on <span id="pf-empty-chain"></span>. If you expected holdings here, check the address and chain, or try the other chain.</p>
+			</section>
+		</main>
+
+		<script type="module" src="/src/portfolio.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>
