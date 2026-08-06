@@ -11,6 +11,7 @@ import {
 	filterByMaxPrice,
 	filterByNetwork,
 	filterByTag,
+	parseAtomicAmount,
 } from '../_lib/x402/bazaar-client.js';
 
 async function handler(req, res) {
@@ -25,6 +26,10 @@ async function handler(req, res) {
 	}
 	const network = url.searchParams.get('network') || null;
 	const maxPrice = url.searchParams.get('maxPrice');
+	// Atomic units, not decimals (see /api/bazaar/list): a malformed cap is a 400.
+	if (maxPrice != null && parseAtomicAmount(maxPrice) === null) {
+		return error(res, 400, 'bad_request', 'maxPrice must be an atomic integer amount (e.g. 10000 = 0.01 USDC)');
+	}
 	const asset = url.searchParams.get('asset');
 	const extension = url.searchParams.get('extension');
 	const tag = url.searchParams.get('tag');

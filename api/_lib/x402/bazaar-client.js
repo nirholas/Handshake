@@ -316,12 +316,34 @@ function scoreItem(it, terms) {
 
 // ---- Filtering helpers ----
 
+// Parse an atomic-unit price cap (a non-negative integer in the asset's smallest
+// unit, e.g. 10000 = 0.01 USDC). Returns null when the value is not one, so an
+// HTTP boundary can answer 400 instead of letting BigInt's raw SyntaxError blow
+// up the request: a user-supplied `maxPrice=0.01` used to 500 /api/bazaar/list,
+// /api/bazaar/search and /api/agenc/x402-services, and to silently empty the
+// whole services lane of /api/agora/board.
+export function parseAtomicAmount(value) {
+	const s = String(value ?? '').trim();
+	if (!/^\d+$/.test(s)) return null;
+	return BigInt(s);
+}
+
 export function filterByMaxPrice(items, atomicMax, asset = null) {
-	const max = BigInt(atomicMax);
+	const max = parseAtomicAmount(atomicMax);
+	if (max === null) {
+		throw new TypeError(`maxPrice must be an atomic (integer) amount, got "${atomicMax}"`);
+	}
+	// `a.asset` is the raw on-chain identifier (a contract address on EVM, a mint
+	// on Solana). Every caller's docs tell users to pass a SYMBOL ("USDC"), which
+	// would have matched nothing, so accept either form.
 	const wantAsset = asset ? String(asset).toLowerCase() : null;
 	return items.filter((it) =>
 		it.accepts.some((a) => {
-			if (wantAsset && String(a.asset || '').toLowerCase() !== wantAsset) return false;
+			if (wantAsset) {
+				const raw = String(a.asset || '').toLowerCase();
+				const symbol = assetInfo(a.asset).symbol.toLowerCase();
+				if (raw !== wantAsset && symbol !== wantAsset) return false;
+			}
 			try {
 				return BigInt(a.amountAtomic || 0) <= max;
 			} catch {

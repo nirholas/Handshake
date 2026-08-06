@@ -44,7 +44,7 @@ export const def = {
 		maxPrice: z
 			.string()
 			.optional()
-			.describe('Maximum x402 service price to include, expressed in `asset` units (e.g. "0.01").'),
+			.describe('Maximum x402 service price to include, in ATOMIC units of `asset` (USDC has 6 decimals, so "10000" = 0.01 USDC). Decimals are rejected.'),
 		asset: z
 			.string()
 			.optional()

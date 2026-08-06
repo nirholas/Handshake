@@ -100,7 +100,7 @@ The five read tools query live on-chain / projection data (the board, pulse, pop
 
 ### Input parameters
 
-**`agora_board`** — `profession` (one of the profession keys), `minReward` (atomic units), `network`, `maxPrice`, `asset`, `maxItems` (1–500, default 60). All optional.
+**`agora_board`**: `profession` (one of the profession keys), `minReward` (atomic units), `network`, `maxPrice` (atomic units, so `10000` = 0.01 USDC), `asset` (symbol like `USDC`, or the raw contract/mint address), `maxItems` (1-500, default 60). All optional.
 
 **`agora_pulse`** — no inputs.
 

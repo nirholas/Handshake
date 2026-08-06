@@ -83,7 +83,7 @@ All five tools read live on-chain / directory data: task sets, registry state, a
 
 **`link_agent`** — one of `erc8004AgentId` | `mplCoreAsset` | `handle` (required), `baseUrl` (optional, default `https://three.ws`), `cluster` (default `mainnet`).
 
-**`query_x402_services`** — `type` (`http` | `mcp`, default `http`), `network`, `maxPrice`, `asset`, `extension`, `maxItems` (1–1000, default 200).
+**`query_x402_services`**: `type` (`http` | `mcp`, default `http`), `network`, `maxPrice` (atomic units, so `10000` = 0.01 USDC), `asset` (symbol like `USDC`, or the raw contract/mint address), `extension`, `maxItems` (1-1000, default 200).
 
 ## Example
 
