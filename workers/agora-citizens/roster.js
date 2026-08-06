@@ -160,17 +160,27 @@ export function buildRoster(seededAgents, cfg) {
 	// This is also the deterministic fleet for a local devnet run or a CI smoke.
 	const seeds = cfg.standaloneOnly ? [] : seededAgents || [];
 
-	for (let i = 0; i < seeds.length && specs.length < cfg.maxCitizens; i++) {
-		const spec = shapeSeeded(seeds[i], specs.length);
+	// Standalone specialists are seated FIRST, and the reason is the whole point of
+	// the profession roster: every shapeSeeded() platform agent primaries `fetcher`
+	// (its real skills are not yet mapped to capability bits), while the crafts
+	// (Sculptor, Scribe, Crier, Appraiser, Namekeeper) exist ONLY here. Filling from
+	// the platform-agent pool first, as this did, silently rebuilt the Fetcher-only
+	// workforce: maxCitizens defaults to 4 and any populated DB returns far more
+	// than 4 agents, so the specialists were always cut and no citizen ever sculpted
+	// or wrote anything. Seating the crafts first guarantees the labour market
+	// actually has labour in it at every cap; platform agents take every remaining
+	// slot, which is most of them once the cap is raised past the seven specialists.
+	for (let i = 0; specs.length < cfg.maxCitizens && i < STANDALONE.length; i++) {
+		const spec = shapeStandalone(STANDALONE[i], specs.length);
 		if (seen.has(spec.key)) continue;
 		seen.add(spec.key);
 		specs.push(spec);
 	}
 
-	// Fill to the floor (and up to the cap) with standalone citizens so the world
-	// is never empty even on a fresh DB with no agents.
-	for (let i = 0; specs.length < cfg.maxCitizens && i < STANDALONE.length; i++) {
-		const spec = shapeStandalone(STANDALONE[i], specs.length);
+	// Real platform agents fill the rest of the fleet, so the world is populated by
+	// the platform's own agents rather than only the founding workforce.
+	for (let i = 0; i < seeds.length && specs.length < cfg.maxCitizens; i++) {
+		const spec = shapeSeeded(seeds[i], specs.length);
 		if (seen.has(spec.key)) continue;
 		seen.add(spec.key);
 		specs.push(spec);
@@ -203,14 +213,17 @@ function hashStr(str) {
 // signal-less agent is spread across so the Commons reads as a varied labour
 // market. Every craft is backed by a real platform skill (work/*.js), so the
 // assignment is a JOB, never a fabricated capability.
-const CRAFTS = ['sculptor', 'scribe', 'cartographer', 'crier', 'appraiser', 'namekeeper', 'verifier'];
+const CRAFTS = ['sculptor', 'scribe', 'crier', 'appraiser', 'namekeeper', 'verifier'];
 
 // Real-signal to profession, checked before the deterministic spread so an agent
 // that actually carries a signal works the matching craft.
 const SIGNAL_PROFESSION = [
 	[/voice|audio|music|speech|sing|podcast|narrat|entertain/i, 'crier'],
 	[/design|3d|model|sculpt|render|\bart\b|avatar|blender|mesh/i, 'sculptor'],
-	[/scene|\bmap\b|world|diorama|architect|spatial|environment/i, 'cartographer'],
+	// Scene/world signals route to Sculptor, the nearest craft that actually
+	// ships. Cartographer (bit 3) is deferred and has no runner, so labelling a
+	// citizen with it would seat a worker that fails every job it is handed.
+	[/scene|\bmap\b|world|diorama|architect|spatial|environment/i, 'sculptor'],
 	[/market|token|trad|finance|invest|intel|analy|\bdao\b|governance|defi|price/i, 'appraiser'],
 	[/name|\bens\b|domain|registr|resolver/i, 'namekeeper'],
 	[/verif|audit|proof|security|moderat|fact.?check/i, 'verifier'],
@@ -230,9 +243,13 @@ export function professionForAgent(agent) {
 		.filter(Boolean)
 		.join(' ');
 	for (const [re, prof] of SIGNAL_PROFESSION) if (re.test(hay)) return prof;
-	// Signal-less: even deterministic spread across ALL professions (including the
-	// universal Fetcher) so the Commons reads as a balanced labour market.
-	const all = PROFESSIONS.map((p) => p.key);
+	// Signal-less: even deterministic spread across the ACTIVE professions (the
+	// shipped crafts plus the universal Fetcher) so the Commons reads as a balanced
+	// labour market. Spreading across the full PROFESSIONS bitmap instead would
+	// hand some agents a deferred craft with no runner: a citizen that can only
+	// ever fail. Deferred bits stay documented in PROFESSIONS; they are just never
+	// assigned as somebody's job.
+	const all = [...CRAFTS, 'fetcher'];
 	return all[hashStr(agent.id) % all.length];
 }
 

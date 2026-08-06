@@ -23,7 +23,7 @@ import {
 } from '../workers/agora-citizens/work/_skills.js';
 import { runVerifier } from '../workers/agora-citizens/work/verifier.js';
 import { ACTIVE_PROFESSIONS, hasRunner, runProfession } from '../workers/agora-citizens/work/index.js';
-import { buildRoster, primaryProfession } from '../workers/agora-citizens/roster.js';
+import { buildRoster, primaryProfession, professionForAgent } from '../workers/agora-citizens/roster.js';
 
 const sha = (s) => createHash('sha256').update(s).digest('hex');
 const dataUrl = (bytes, mime = 'application/octet-stream') =>
@@ -141,6 +141,44 @@ describe('active roster — ships only professions with a reachable runner', () 
 		expect(fleet.length).toBeGreaterThan(0);
 		for (const c of fleet) {
 			expect(hasRunner(c.profession), `${c.displayName} primaries "${c.profession}"`).toBe(true);
+		}
+	});
+
+	it('the crafts survive a fleet crowded with platform agents', () => {
+		// Every shapeSeeded() platform agent primaries `fetcher`; the crafts exist
+		// only among the standalone specialists. When the platform-agent pool was
+		// seated first, a populated DB plus the default cap of 4 cut every craft and
+		// silently rebuilt the Fetcher-only workforce this task exists to replace.
+		const seeds = Array.from({ length: 40 }, (_, i) => ({ id: `1111111${i}-0000-4000-8000-00000000000${i % 10}`, name: `Platform Agent ${i}` }));
+		const fleet = buildRoster(seeds, { maxCitizens: 4 });
+
+		expect(fleet).toHaveLength(4);
+		const primaries = fleet.map((c) => c.profession);
+		expect(primaries).not.toEqual(['fetcher', 'fetcher', 'fetcher', 'fetcher']);
+		expect(primaries).toContain('sculptor');
+		for (const c of fleet) expect(hasRunner(c.profession)).toBe(true);
+	});
+
+	it('platform agents still fill the fleet once the crafts are seated', () => {
+		const seeds = Array.from({ length: 40 }, (_, i) => ({ id: `2222222${i}-0000-4000-8000-00000000000${i % 10}`, name: `Platform Agent ${i}` }));
+		const fleet = buildRoster(seeds, { maxCitizens: 20 });
+
+		expect(fleet).toHaveLength(20);
+		// The seven standalone specialists, then real platform agents for the rest.
+		expect(fleet.filter((c) => c.agentDbId != null).length).toBe(13);
+		expect(new Set(fleet.map((c) => c.profession))).toContain('scribe');
+	});
+
+	it('professionForAgent never assigns a craft with no runner', () => {
+		// Both paths: a real signal (category/tags/name) and the signal-less spread.
+		const signalled = ['3d scene', 'world map', 'diorama builder', 'spatial architect', 'voice narrator', 'defi analytics', 'ens resolver', 'fact-check audit', 'research writing'];
+		for (const category of signalled) {
+			const prof = professionForAgent({ id: `sig-${category}`, category, tags: [], name: category });
+			expect(hasRunner(prof), `"${category}" mapped to "${prof}"`).toBe(true);
+		}
+		for (let i = 0; i < 200; i++) {
+			const prof = professionForAgent({ id: `signal-less-${i}`, category: null, tags: [], name: `Agent ${i}` });
+			expect(hasRunner(prof), `signal-less agent ${i} mapped to "${prof}"`).toBe(true);
 		}
 	});
 
