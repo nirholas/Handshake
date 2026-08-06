@@ -219,7 +219,7 @@ export function reportServerError(err, { code = 'internal_error', status = 500, 
 		// keeps the stack but not the key.
 		let captured;
 		if (err instanceof Error && err.message === detail) {
-			captured = err; // nothing was redacted — send the original untouched
+			captured = err; // nothing was redacted, so send the original untouched
 		} else {
 			captured = new Error(detail);
 			// A stack's first line repeats the message, so redact it too rather than
