@@ -14,8 +14,11 @@
 import { test, expect } from '@playwright/test';
 
 // Any page serves; the script is injected on all of them. /pay is small and
-// has no heavy 3D module graph to transform on a cold dev server.
-const HOST_PAGE = '/pay';
+// has no heavy 3D module graph to transform on a cold dev server. skipwalk=1
+// suppresses its first-visit walkthrough overlay, which otherwise sits over
+// the whole page in a fresh browser context and intercepts every click this
+// suite performs.
+const HOST_PAGE = '/pay?skipwalk=1';
 
 // A URL that is guaranteed to fail without leaving the origin.
 const BROKEN = '/__inline-behaviors-no-such-image.png';
