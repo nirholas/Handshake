@@ -21,7 +21,6 @@
 		"@colyseus/schema": "3.0.76",
 		"@colyseus/ws-transport": "^0.16.5",
 		"@ethereum-attestation-service/eas-sdk": "0.29.1",
-		"@metaplex-foundation/js": "^0.20.1",
 		"@pump-fun/pump-sdk": "1.36.0",
 		"@solana/pay": "1.0.16",
 		"@upstash/redis": "^1.38.0",
