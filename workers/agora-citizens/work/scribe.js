@@ -1,7 +1,7 @@
 // Scribe (capability bit 2) — research / summarize / write via the LLM router.
 // Produces a real text deliverable and proves it with sha256(text). Backed by
-// @three-ws/brain over /api/brain/chat; the free open-weight tier (gpt-oss-120b)
-// needs no key. Same `run<Profession>` contract as work/fetcher.js.
+// @three-ws/brain over /api/brain/chat, on a free lane that needs no key. Same
+// `run<Profession>` contract as work/fetcher.js.
 
 import { buildWorkResult, storeDeliverable, brainChat, jobPrompt } from './_skills.js';
 
@@ -30,7 +30,13 @@ export async function runScribe({ cfg, citizen, job } = {}) {
 	const apiBase = cfg?.apiBase || 'https://three.ws';
 	const log = cfg?.log || (() => {});
 	const prompt = briefFor(citizen, job);
-	const provider = job?.provider || 'gpt-oss-120b';
+	// A citizen calls /api/brain/chat anonymously, so the lane must be one of the
+	// key-free ANON_BRAIN_PROVIDERS. Not the `gpt-oss-120b` platform default: its
+	// only route is an OpenRouter free endpoint that measured ~22s to first token
+	// against the router's 25s per-attempt budget, so it returns a truncated brief
+	// or nothing at all. Nemotron Nano's primary serves directly (~10s, complete
+	// artifact), which is what a deliverable needs. Overridable per job.
+	const provider = job?.provider || 'nvidia-nemotron-nano';
 
 	log?.(`scribe: writing via ${provider} for "${prompt.slice(0, 80)}"`);
 	const { text, meta } = await brainChat(apiBase, {

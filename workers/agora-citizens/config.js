@@ -89,6 +89,11 @@ export function loadConfig() {
 		// Floor on the fleet when seeding can't find enough real agents — fill with
 		// standalone roster citizens so the world is never empty.
 		minCitizens: Math.max(1, num('AGORA_MIN_CITIZENS', 3)),
+		// Run the standalone founding workforce ONLY, never the platform-agent seed.
+		// Two engines against one DB otherwise pick the same first-N platform agents
+		// and drive one set of keypairs concurrently. Use for an isolated devnet
+		// fleet, a local run, or a CI smoke that must not touch real agent identities.
+		standaloneOnly: bool('AGORA_STANDALONE_ONLY', false),
 
 		// Per-citizen loop cadence. Each citizen ticks every base ± jitter so the
 		// fleet doesn't stampede the RPC / faucet in lockstep.

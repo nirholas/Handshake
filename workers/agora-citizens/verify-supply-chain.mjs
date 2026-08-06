@@ -15,8 +15,25 @@
 // durable URL, still re-downloadable).
 
 import { createHash } from 'node:crypto';
-import { runProfession, hasRunner, ACTIVE_PROFESSIONS } from './work/index.js';
-import { runVerifier } from './work/verifier.js';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+// Load the repo .env when running from a checkout, BEFORE work/ (and through it
+// api/_lib/r2.js) reads credentials at import time. Without this the harness
+// silently degrades every deliverable to inline / provider-hosted and reads as
+// "R2 is broken" when the keys were simply never loaded. Best effort: in the
+// container there is no .env and the real environment already carries the vars.
+const dotenv = fileURLToPath(new URL('../../.env', import.meta.url));
+if (existsSync(dotenv)) {
+	try {
+		process.loadEnvFile(dotenv);
+	} catch {
+		// malformed or unreadable .env — fall through to the ambient environment
+	}
+}
+
+const { runProfession, hasRunner, ACTIVE_PROFESSIONS } = await import('./work/index.js');
+const { runVerifier } = await import('./work/verifier.js');
 
 function parseArgs(argv) {
 	const args = { profession: 'sculptor', verify: true };

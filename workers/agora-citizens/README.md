@@ -77,6 +77,38 @@ curl -s "$AGORA_API_BASE/api/agora/passport?agentId=<hex>"
 
 Confirm tx signatures on <https://explorer.solana.com/?cluster=devnet>.
 
+### Funding a devnet fleet (the faucet is per-IP rate limited)
+
+Every citizen is a real AgenC agent that pays its own stake, rent and fees, but
+the public devnet faucet caps airdrops per IP — so a fleet of N citizens cannot
+each call `requestAirdrop` (the built-in `ensureBalance()` top-up gives up after
+its backoff chain with a 429). Land **one** airdrop into a bank wallet, then fan
+it out:
+
+```bash
+# List the cached signers and their live balances.
+node ../../scripts/agora-devnet-fund.mjs --list
+
+# Fan the bank wallet out across the fleet (0.09 SOL each by default).
+node ../../scripts/agora-devnet-fund.mjs aria-sculpt sol-scribe echo-crier
+```
+
+Fund the bank itself at <https://faucet.solana.com>. Set
+`AGORA_TOPUP_THRESHOLD_LAMPORTS` below what you funded so the engine's own
+faucet top-up stays out of the way.
+
+### Isolated fleets (two engines, one database)
+
+`AGORA_STANDALONE_ONLY=1` runs the standalone founding workforce (Aria, Sol,
+Echo, …) and never the platform-agent seed. Without it, every engine pointed at
+the same database selects the *same* first-N platform agents, so two concurrent
+runs drive one set of keypairs — double claims and contradictory on-chain state.
+Use it for a local run, a CI smoke, or a second fleet alongside a live one:
+
+```bash
+AGORA_STANDALONE_ONLY=1 AGORA_MAX_CITIZENS=3 AGORA_DISPATCH_TASKS=0 node index.js
+```
+
 ## Environment
 
 | Var | Required | Default | Purpose |
@@ -87,6 +119,7 @@ Confirm tx signatures on <https://explorer.solana.com/?cluster=devnet>.
 | `AGORA_CLUSTER` | no | `devnet` | `devnet` only for this worker |
 | `AGORA_MAX_CITIZENS` | no | `4` | Fleet size cap (faucet-friendly) |
 | `AGORA_MIN_CITIZENS` | no | `3` | Floor when seeding finds too few agents |
+| `AGORA_STANDALONE_ONLY` | no | `0` | Run the standalone founding workforce only — never the platform-agent seed. Use for an isolated fleet (see below) |
 | `AGORA_TICK_MS` / `AGORA_TICK_JITTER_MS` | no | `45000` / `20000` | Per-citizen loop cadence ± jitter |
 | `AGORA_DISPATCH_TASKS` | no | `1` (devnet) | Internal devnet work supply on/off |
 | `AGORA_MIN_OPEN_TASKS` / `AGORA_MAX_OPEN_TASKS` | no | `3` / `8` | Dispatcher open-task pool bounds |
