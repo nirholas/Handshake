@@ -1,6 +1,11 @@
 // three.ws 3D Studio (free) — tool catalog + handlers.
 //
-// Seven tools (five generators + refine_model + check_job), all FREE (no x402, no
+// This module holds seven of the connector's ten tools: five generators +
+// refine_model + check_job. The other three (create_agent_persona,
+// get_agent_persona, persona_say) live in ./persona-tools.js, and dispatch.js
+// merges both catalogs into the single tools/list the endpoint serves.
+//
+// All seven are FREE (no x402, no
 // wallet, no API key): the platform's server-side keys cover provider cost via
 // /api/forge (the public, auth-free twin of the paid pipeline). refine_model adds
 // conversational iteration — describe a change and it re-generates a new version
@@ -264,12 +269,18 @@ async function handleForgeFree(args, _auth, req) {
 	if (prompt.length < 3) return toolError('Provide a text prompt of at least 3 characters.');
 	const safety = checkPromptSafety(prompt);
 	if (!safety.allowed) return toolError(safety.message);
-	// Fast free lane by default. The deployed high-tier free engine (Hunyuan3D
-	// via HF Spaces) blocks the submit for 50-280s with no poll handle, which no
-	// ChatGPT tool call survives — an explicit tier:'high' request still tries it
-	// (internal token clears the gate) and startForge degrades to standard on
-	// 402/timeout. True high-by-default lands when the async self-host Hunyuan3D
-	// worker deploys (GCP_HUNYUAN3D_URL).
+	// Standard by default, and every doc describing this tool says exactly that.
+	// The high tier is a real, working option, not a stub: it runs on our own
+	// async Hunyuan3D worker (GCP_HUNYUAN3D_URL) behind a genuine poll handle,
+	// and a live production probe on 2026-08-06 returned a 2.69 MB high-tier GLB
+	// from backend `hunyuan3d` end to end. It stays opt-in rather than default
+	// for two reasons a caller cannot see: that worker is scale-to-zero, so a
+	// cold container adds a spin-up on top of the generation, and the high-tier
+	// access gate is cleared only by the platform seed token, so any deployment
+	// without CRON_SECRET would quietly serve standard while a "high by default"
+	// promise stayed on the page. startForge degrades an explicit high request to
+	// standard on a 402 or submit timeout, and a job that outlives
+	// STUDIO_FORGE_TIMEOUT_MS comes back as a pollable handle, never an error.
 	const tier = VALID_TIER.has(args.tier) ? args.tier : 'standard';
 	// Known brand marks resolve deterministically; everything else runs the
 	// subject-classified Granite director (fail-soft: original prompt on any

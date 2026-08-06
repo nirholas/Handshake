@@ -86,9 +86,10 @@ function internalHeaders() {
 // `internal: true` attaches the platform seed token so gated tiers (high) run
 // operator-funded. A high-tier submit degrades to the ungated standard tier
 // rather than dead-ending when the gate refuses (402: secret missing or stale)
-// OR when the high lane can't hand back a job in time (the free Hunyuan3D lane
-// blocks the whole request instead of returning a poll handle, which no ChatGPT
-// surface can wait out).
+// OR when the high lane can't hand back a job inside the submit window. The
+// self-hosted Hunyuan3D worker that serves high does return a poll handle, so
+// the usual cause of the second case is its scale-to-zero cold start rather
+// than a blocking lane; either way, standard is better than a dead end.
 // `submitTimeoutMs` sets how long the caller is willing to hold the submit open
 // before giving up (default 90s). The blocking free lanes (HF Spaces) can take
 // well past 90s under a queue while still finishing fine server-side; a caller

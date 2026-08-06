@@ -90,9 +90,10 @@ function internalHeaders() {
 // `internal: true` attaches the platform seed token so gated tiers (high) run
 // operator-funded. A high-tier submit degrades to the ungated standard tier
 // rather than dead-ending when the gate refuses (402: secret missing or stale)
-// OR when the high lane can't hand back a job in time (the free Hunyuan3D lane
-// blocks the whole request instead of returning a poll handle, which no ChatGPT
-// surface can wait out).
+// OR when the high lane can't hand back a job inside the submit window. The
+// self-hosted Hunyuan3D worker that serves high does return a poll handle, so
+// the usual cause of the second case is its scale-to-zero cold start rather
+// than a blocking lane; either way, standard is better than a dead end.
 export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal }) {
 	const attempt = async (tierId, withInternal) => {
 		const payload = {
@@ -128,8 +129,8 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 		if (err?.code !== 'timeout') throw err;
 		// One more shot at the accept path before giving up: the async lanes 202
 		// in milliseconds, so a submit that blocked to the deadline almost always
-		// hit a blocking-lane (HF Space) or cold-start hiccup. High tier degrades
-		// to the async standard router; other tiers retry as submitted.
+		// hit a cold start or a blocking fallback lane. High tier degrades to the
+		// async standard router; other tiers retry as submitted.
 		if (tier === 'high') ({ res, data } = await attempt('standard', false));
 		else ({ res, data } = await attempt(tier, !!internal));
 	}
