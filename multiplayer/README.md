@@ -61,7 +61,7 @@ After deploy, point the client at the new host by adding a meta tag to `walk.htm
 ## Scaling notes
 
 - A single Node process holds many rooms (each room = one WalkRoom instance).
-- Each room caps at 50 clients (`MAX_CLIENTS_PER_ROOM` in [WalkRoom.js](src/rooms/WalkRoom.js)). Colyseus's matchmaker creates a new room when the current one fills.
+- Each room caps at 100 clients by default (`MAX_CLIENTS_PER_ROOM` in [WalkRoom.js](src/rooms/WalkRoom.js), tunable via the `WALK_ROOM_MAX_CLIENTS` env var). Colyseus's matchmaker creates a new room when the current one fills.
 - Across machines: add [`@colyseus/redis-presence`](https://docs.colyseus.io/scalability/redis-presence/) + a Redis instance so matchmaking is cluster-aware. This is a config-only change to [`src/index.js`](src/index.js); add it when you cross ~200 concurrent players.
 - Memory budget: ~5 MB per 50-player room on Node 22. The default Fly VM (256 MB) holds plenty of rooms.
 
