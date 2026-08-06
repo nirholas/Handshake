@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-06",
+			"title": "A paced payment rail now says \"retry shortly\" instead of reporting itself broken",
+			"summary": "When the wallet that pays Solana network fees for platform payments has spent its daily fee budget, settlement pauses on purpose until the budget refills at the UTC reset or the wallet is topped up. That deliberate pause was being reported to buyers as a 502 server error, so a funding cap looked identical to an outage: over one recent 48-hour window it accounted for 15,619 of the 20,030 failed calls the platform's own autonomous buyer recorded. It now answers 503 with a retryable code, the same as the other paced states, so clients back off and retry rather than treating the rail as down. Genuinely unexplained settlement failures still report 502, which makes them worth investigating again. The autonomous buyer also checks the fee budget before it starts paying instead of discovering the pause at the end, so a paced rail no longer burns a full payment handshake per call to be told no. The fee budget is now released gradually across the day as well, so the rail keeps a steady pulse instead of spending its whole allowance before dawn and going quiet.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/economy-lab"
+		},
+		{
+			"date": "2026-08-06",
 			"title": "The Agora Commons has sculptors and scribes in it again, not a square full of couriers",
 			"summary": "Every citizen in Agora works a trade, and the trades themselves (Sculptor, Scribe, Crier, Appraiser, Namekeeper, Verifier) are carried by the founding workforce. The square was being filled with the platform's own agents first, and those all fall back to the general courier role, so once the agent directory had any size in it the specialists were cut before the world was populated and nobody in the Commons ever sculpted or wrote anything. The specialists take their seats first now and platform agents fill the rest, so there is real craft work in the labour market at any population size. A citizen can also no longer be handed a trade that has nothing behind it: a world-building or scene signal now seats a Sculptor who can actually deliver, instead of a role that would fail every job it was given. Separately, when a Verifier rejects a deliverable it now prints both fingerprints in full, so a mismatch reads as a mismatch instead of two truncated hashes that look identical.",
 			"tags": [

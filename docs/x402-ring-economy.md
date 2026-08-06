@@ -99,6 +99,21 @@ decision logic in
   with `fee_runway_exhausted:<spent>+<next>><budget>` *before* co-sign or
   broadcast, whatever pipeline initiated it. Funding is the throttle for the
   whole wallet: top it up and every tenant speeds up together.
+- **The refusal is a 503, not a 502.** `settlePayment()` maps it to
+  `settlement_unavailable` (503), the same retryable answer the sponsor SOL
+  floor gets, because both are the platform pausing on purpose rather than
+  breaking. It was classified `502 settle_failed` until 2026-08-06, which made
+  every buyer and trust monitor read a funded-runway cap as an outage: 15,619 of
+  the autonomous loop's 20,030 `http_502` rows in the 48h to that date were this
+  single reason.
+- **Callers check admission before they pay.** `assessFeeAdmission()` answers the
+  same question with the same math *before* the handshake starts, so an exhausted
+  budget costs one skipped call instead of an ATA read, a signature, a facilitator
+  verify (which simulates against an RPC node) and a POST that was always going to
+  be refused at the end. Both `payX402()` (the ring) and
+  `api/cron/x402-autonomous-loop.js` (the autonomous buyer) gate on it; the loop
+  records each skip to `x402_autonomous_log` so a paced rail reads as paced rather
+  than as a rail nobody used.
 - **Platform wallets only.** The meter governs only wallets in
   `ringAllowedAddresses()`. An external organic buyer self-paying through this
   facilitator spends its own SOL and is always admitted.
@@ -110,7 +125,8 @@ decision logic in
 - **Kill switch:** `X402_WALLET_FEE_GOVERNOR_ENABLED=false`. Cache freshness:
   `X402_WALLET_FEE_SPENT_CACHE_MS` (default 20s; bounds multi-instance
   undercount to one window per instance).
-- **Intraday pacing (opt-in):** `X402_WALLET_FEE_PACE_DAY=true` releases the
+- **Intraday pacing (ON in production since 2026-08-06):**
+  `X402_WALLET_FEE_PACE_DAY=true` releases the
   daily budget gradually across the UTC day instead of making all of it
   spendable at 00:00. Without it, a wallet whose budget is the heartbeat floor
   can burn the whole allowance in a morning burst and then refuse every settle
@@ -121,14 +137,17 @@ decision logic in
   `X402_WALLET_FEE_PACE_MIN_SLICE_LAMPORTS` (default 200,000) keeps a wallet
   alive in the first minutes after the reset.
 
-  It is **off by default on purpose.** Pacing changes which gate refuses a
+  It ships **off by default on purpose**, and production turned it on after the
+  unpaced shape reproduced exactly: on 2026-08-06 the sponsor wallet had burned
+  its whole 10,000,000 lamport heartbeat budget by 03:30 UTC and refused every
+  settle for the remaining twenty hours. Pacing changes which gate refuses a
   starved wallet first: the governor starts refusing early instead of the hard
   SOL floor refusing later. That floor-vs-governor distinction is exactly what
   `/economy-lab` exists to make visible, and it is how you tell "out of SOL"
-  apart from "throttled". Turn pacing on when you want the smoother shape and
-  are willing to read the limiter from the lab rather than from the reject
-  reason. `simulateRunway({ paceDay: true })` models both shapes before you
-  commit to either.
+  apart from "throttled", so read the limiter from the lab (or
+  `GET /api/x402/runway-lab`) rather than from the reject reason while pacing is
+  on. `simulateRunway({ paceDay: true })` models both shapes before you commit to
+  either.
 
 ## Burning the least SOL — two levers
 

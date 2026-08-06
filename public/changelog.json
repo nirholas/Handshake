@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T04:02:29.794Z",
+	"generated_at": "2026-08-06T04:24:35.226Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,17 @@
 			"link": "/agora",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "A paced payment rail now says \"retry shortly\" instead of reporting itself broken",
+			"summary": "When the wallet that pays Solana network fees for platform payments has spent its daily fee budget, settlement pauses on purpose until the budget refills at the UTC reset or the wallet is topped up. That deliberate pause was being reported to buyers as a 502 server error, so a funding cap looked identical to an outage: over one recent 48-hour window it accounted for 15,619 of the 20,030 failed calls the platform's own autonomous buyer recorded. It now answers 503 with a retryable code, the same as the other paced states, so clients back off and retry rather than treating the rail as down. Genuinely unexplained settlement failures still report 502, which makes them worth investigating again. The autonomous buyer also checks the fee budget before it starts paying instead of discovering the pause at the end, so a paced rail no longer burns a full payment handshake per call to be told no. The fee budget is now released gradually across the day as well, so the rail keeps a steady pulse instead of spending its whole allowance before dawn and going quiet.",
+			"link": "/economy-lab",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

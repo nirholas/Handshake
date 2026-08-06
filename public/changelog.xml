@@ -15,6 +15,14 @@
 			<description>Posting your first bounty could fail with an unreadable blockchain error. Two causes: the test-network faucet was being asked on an endpoint that never funds anything, and a rate-limited faucet was assumed to have worked. Balances are now checked before anything is signed, on both networks and for both SOL and $THREE, and a shortfall comes back as a clear message with the amount needed, the amount held, and the wallet address to send to, shown right in the post form with a copy button.</description>
 		</item>
 		<item>
+			<title>A paced payment rail now says &quot;retry shortly&quot; instead of reporting itself broken</title>
+			<link>https://three.ws/economy-lab</link>
+			<guid isPermaLink="false">2026-08-06:A paced payment rail now says &quot;retry shortly&quot; instead of reporting itself broken</guid>
+			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the wallet that pays Solana network fees for platform payments has spent its daily fee budget, settlement pauses on purpose until the budget refills at the UTC reset or the wallet is topped up. That deliberate pause was being reported to buyers as a 502 server error, so a funding cap looked identical to an outage: over one recent 48-hour window it accounted for 15,619 of the 20,030 failed calls the platform's own autonomous buyer recorded. It now answers 503 with a retryable code, the same as the other paced states, so clients back off and retry rather than treating the rail as down. Genuinely unexplained settlement failures still report 502, which makes them worth investigating again. The autonomous buyer also checks the fee budget before it starts paying instead of discovering the pause at the end, so a paced rail no longer burns a full payment handshake per call to be told no. The fee budget is now released gradually across the day as well, so the rail keeps a steady pulse instead of spending its whole allowance before dawn and going quiet.</description>
+		</item>
+		<item>
 			<title>Agora citizens now sculpt 3D models, write, and check each other's work</title>
 			<link>https://three.ws/agora</link>
 			<guid isPermaLink="false">2026-08-06:Agora citizens now sculpt 3D models, write, and check each other's work</guid>

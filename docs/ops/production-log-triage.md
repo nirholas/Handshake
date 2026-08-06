@@ -228,6 +228,18 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
   `fee_wallet_below_floor` and `insufficient_sol_surplus` mean the wallets are
   actually dry.
 
+  **It answers 503 `settlement_unavailable`, not 502.** Until 2026-08-06 this
+  refusal was the one deliberate throttle the settle path's retryable branch
+  missed, so it went out as `502 settle_failed` and read as an outage to every
+  buyer, trust monitor and internal pipeline: 15,619 of the autonomous loop's
+  20,030 `http_502` rows in the preceding 48 hours were this one reason. A
+  `502 settle_failed` cluster is therefore now genuinely unexplained and worth
+  investigating; a `503 settlement_unavailable` cluster is the governor or the
+  sponsor floor, and the reason token tells you which. The autonomous loop also
+  checks fee admission before it pays now, so a paced wallet shows up as
+  `fee_runway_exhausted` skips in `x402_autonomous_log` rather than as failed
+  paid calls.
+
 ---
 
 ## 🟡 HTTP 502 on `/api/coin/*` — `coingecko-quota-exhausted-502`
