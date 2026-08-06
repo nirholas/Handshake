@@ -45,6 +45,8 @@ import { sendOpsAlert } from '../_lib/alerts.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { readDeviceToken } from '../_lib/irl-auth.js';
 import { isUuid } from '../_lib/validate.js';
+import { verifySettlement } from '../_lib/settlement-verify.js';
+import { agentPayoutWallets } from '../_lib/agent-payout-wallets.js';
 
 // view | tap — passive/active sighting of the agent. message — a note left for
 // the owner. pay — an x402 settlement against the agent (see PAY note below).
@@ -60,16 +62,21 @@ const VIEW_DEDUPE_MS = 5 * 60 * 1000; // collapse repeat views from one device
 const MAX_MESSAGE_LEN = 280;
 
 // A `pay` is the one caller-asserted type that names money, so it is NOT trusted
-// blindly (the original guard against forged "someone paid your agent" rows). A
-// pay is only recorded when it carries a settlement proof we can sanity-check:
+// blindly. A pay is recorded only when it carries a settlement we can PROVE:
 //   1. a well-formed on-chain signature (0x… EVM tx hash, or base58 Solana sig),
-//   2. a currency mint that is $THREE or USDC — the only coins this platform
-//      references; anything else is rejected outright, and
-//   3. global de-dupe by signature so one settlement can be logged exactly once.
-// Pays surface ONLY in the owner's private inbox (never publicly), and the write
-// is rate-limited + deduped, so the residual abuse surface is a forger spamming
-// their own inbox. Full on-chain attribution (recipient/amount match) is layered
-// on by the B3 settlement path, which owns the seller payout + price context.
+//   2. a currency mint that is $THREE or USDC, the only coins this platform
+//      references; anything else is rejected outright,
+//   3. global de-dupe by signature so one settlement is logged exactly once, and
+//   4. on-chain verification (security review M4): the transaction must exist,
+//      have succeeded, and have moved at least the amount claimed. When the pin's
+//      agent has payout wallets on record (its paid-service payout addresses, its
+//      custodial wallets) the transfer must have credited one of them. When it has
+//      none, the destination genuinely is not knowable server-side, since an x402
+//      service can pay out anywhere, so the check degrades to "this transaction is
+//      real and moved this much of this asset" rather than to no check at all.
+// A pay whose settlement is not yet visible to our RPC is recorded with
+// verified_at null: it counts for nothing and notifies nobody until the sweep in
+// api/cron/settlement-verify.js proves or discards it.
 const EVM_TX_RE   = /^0x[0-9a-fA-F]{64}$/;
 const SOL_SIG_RE  = /^[1-9A-HJ-NP-Za-km-z]{43,88}$/;
 const THREE_MINT  = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -181,6 +188,10 @@ async function runMigrations() {
 	await sql`ALTER TABLE irl_interactions ADD COLUMN IF NOT EXISTS device_type   TEXT DEFAULT 'phone'`;
 	// One settlement → one pay row. Indexed for the de-dupe lookup on insert.
 	await sql`CREATE INDEX IF NOT EXISTS irl_interactions_paysig ON irl_interactions ((payload->>'signature')) WHERE type = 'pay'`;
+	// On-chain proof for a pay (M4). Null on a pay means "not proved yet": the row
+	// is inert until the settlement sweep promotes it. Never backfilled here; the
+	// migration owns grandfathering the rows that predate verification.
+	await sql`ALTER TABLE irl_interactions ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ`;
 }
 
 export default wrap(async (req, res) => {
@@ -263,6 +274,7 @@ export default wrap(async (req, res) => {
 			payload.from = 'owner';
 			if (replyToRaw) payload.replyTo = replyToRaw;
 		}
+		let payVerifiedAt = null;
 		if (type === 'pay') {
 			const sig  = payload.signature ?? body.signature ?? null;
 			const mint = body.currencyMint ?? payload.currencyMint ?? null;
@@ -274,6 +286,9 @@ export default wrap(async (req, res) => {
 			}
 			const amt = Number(body.amount);
 			amount = Number.isFinite(amt) && amt > 0 ? amt : null;
+			if (amount == null) {
+				return json(res, 400, { error: 'pay requires the amount actually settled, in atomic units' });
+			}
 			currencyMint = mint;
 			payload = { ...payload, signature: sig };
 			if (body.network) payload.network = String(body.network).slice(0, 32);
@@ -284,6 +299,24 @@ export default wrap(async (req, res) => {
 				LIMIT 1
 			`;
 			if (dupe) return json(res, 200, { ok: true, deduped: true, id: dupe.id });
+
+			// Prove the settlement before it becomes an earnings row.
+			const recipients = await agentPayoutWallets(pin.agent_id);
+			const proof = await verifySettlement({
+				signature: sig,
+				mint,
+				amountAtomic: Math.round(amount),
+				recipients,
+				network: payload.network,
+				allowAnyRecipient: recipients.length === 0,
+			});
+			if (proof.status === 'mismatch') {
+				return json(res, 402, {
+					error: 'settlement_unverified',
+					message: proof.reason || 'that settlement could not be verified on-chain',
+				});
+			}
+			if (proof.status === 'match') payVerifiedAt = new Date().toISOString();
 		}
 
 		// An owner reply is authored by the owner, so it lands already-seen — it must
@@ -298,7 +331,7 @@ export default wrap(async (req, res) => {
 		const [row] = await sql`
 			INSERT INTO irl_interactions
 				(pin_id, agent_id, type, message, viewer_user_id, viewer_device, lat, lng,
-				 amount, currency_mint, payload, seen_at, device_type)
+				 amount, currency_mint, payload, seen_at, device_type, verified_at)
 			VALUES (
 				${pinId},
 				${pin.agent_id ?? null},
@@ -312,7 +345,8 @@ export default wrap(async (req, res) => {
 				${currencyMint},
 				${payloadJson}::jsonb,
 				${seenAt},
-				${deviceType}
+				${deviceType},
+				${payVerifiedAt}
 			)
 			RETURNING id, type, created_at
 		`;
@@ -353,6 +387,16 @@ export default wrap(async (req, res) => {
 					notified = true;
 				}
 			}
+		} else if (type === 'pay' && !payVerifiedAt) {
+			// Real money may be in flight; our RPC just has not seen it. The row is
+			// kept and stays inert (no notification, no ops alert) until the sweep
+			// proves it, so a lagging read never turns into a false "you got paid".
+			return json(res, 202, {
+				ok: true,
+				pending: true,
+				interaction: row,
+				message: 'settlement not visible on-chain yet, this pay counts as soon as it is',
+			});
 		} else if ((type === 'pay' || type === 'message') && pin.user_id) {
 			// High-signal visitor events notify the owner: in-app always (the dashboard
 			// inbox + the global nav bell), plus an optional Telegram ping for a pay.
@@ -410,7 +454,7 @@ export default wrap(async (req, res) => {
 				SELECT
 					ix.id, ix.pin_id, ix.agent_id, ix.type, ix.message,
 					ix.lat, ix.lng, ix.seen_at, ix.created_at,
-					ix.amount, ix.currency_mint, ix.payload, ix.device_type,
+					ix.amount, ix.currency_mint, ix.payload, ix.device_type, ix.verified_at,
 					p.avatar_name, p.caption
 				FROM irl_interactions ix
 				JOIN irl_pins p ON p.id = ix.pin_id
@@ -423,7 +467,7 @@ export default wrap(async (req, res) => {
 				SELECT
 					ix.id, ix.pin_id, ix.agent_id, ix.type, ix.message,
 					ix.lat, ix.lng, ix.seen_at, ix.created_at,
-					ix.amount, ix.currency_mint, ix.payload, ix.device_type,
+					ix.amount, ix.currency_mint, ix.payload, ix.device_type, ix.verified_at,
 					p.avatar_name, p.caption
 				FROM irl_interactions ix
 				JOIN irl_pins p ON p.id = ix.pin_id

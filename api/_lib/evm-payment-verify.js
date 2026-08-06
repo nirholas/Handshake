@@ -62,7 +62,11 @@ const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
  * @param {object} opts
  * @param {string} opts.txHash          0x-prefixed 32-byte tx hash from the buyer
  * @param {string} opts.chain           stored chain string (e.g. 'base')
- * @param {string} opts.recipient       seller payout address (0x…)
+ * @param {string|null} opts.recipient   seller payout address (0x…). Pass null to
+ *   accept a transfer to ANY address: used only where the destination genuinely
+ *   is not knowable server-side (an x402 service whose payout address we do not
+ *   hold), so the check degrades to "this transaction is real, succeeded, and
+ *   moved at least this much USDC" instead of degrading to no check at all.
  * @param {string|bigint} opts.expectedAmount  USDC atomics (6 decimals) required
  * @returns {Promise<{ status:'pending'|'match'|'mismatch', txHash?:string,
  *                     actualAmount?:string, from?:string, message?:string }>}
@@ -76,11 +80,13 @@ export async function verifyEvmUsdcPayment({ txHash, chain, recipient, expectedA
 	const usdc = EVM_USDC[chainId];
 	if (!usdc) return { status: 'mismatch', message: `no USDC contract known for chain ${chainId}` };
 
-	let to;
-	try {
-		to = getAddress(recipient);
-	} catch {
-		return { status: 'mismatch', message: 'seller payout address is not a valid EVM address' };
+	let to = null;
+	if (recipient != null) {
+		try {
+			to = getAddress(recipient);
+		} catch {
+			return { status: 'mismatch', message: 'seller payout address is not a valid EVM address' };
+		}
 	}
 
 	const client = clientFor(chainId);
@@ -120,13 +126,19 @@ export async function verifyEvmUsdcPayment({ txHash, chain, recipient, expectedA
 			continue; // not a Transfer event
 		}
 		if (decoded.eventName !== 'Transfer') continue;
-		if (getAddress(decoded.args.to) !== to) continue;
+		if (to !== null && getAddress(decoded.args.to) !== to) continue;
 		total += decoded.args.value;
 		from = from || decoded.args.from;
 	}
 
 	if (total === 0n) {
-		return { status: 'mismatch', txHash, message: 'no USDC transfer to the seller wallet found in this transaction' };
+		return {
+			status: 'mismatch',
+			txHash,
+			message: to === null
+				? 'no USDC transfer found in this transaction'
+				: 'no USDC transfer to the seller wallet found in this transaction',
+		};
 	}
 	const expected = BigInt(expectedAmount);
 	if (total < expected) {

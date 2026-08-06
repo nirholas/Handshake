@@ -5,7 +5,12 @@
  * already allows it) directly to the host agent's wallet on-chain, then POSTs the
  * settlement signature here. This endpoint:
  *   1. validates the settlement signature + the $THREE/USDC mint + the atomic
- *      amount (mirrors api/irl/interactions.js' pay discipline),
+ *      amount, then VERIFIES the transfer on-chain: the referenced transaction
+ *      must really have credited the host's wallet with at least the amount
+ *      claimed. Shape validation alone (what this did before the 2026-08-06
+ *      security review, M4) let anyone POST a well-formed but unrelated signature
+ *      with a huge amount and buy the top of the leaderboard plus a host
+ *      shout-out for free,
  *   2. is IDEMPOTENT per signature — one settlement records exactly one tip row
  *      (a unique index + ON CONFLICT DO NOTHING is the guarantee, so a client
  *      retry returns the existing row, never a double-credit),
@@ -33,6 +38,8 @@ import { insertNotification } from '../_lib/notify.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { validateTipPayload, splitTip, tipExplorerUrl } from '../_lib/stage-split.js';
 import { notifyStageRoom } from '../_lib/stage-bridge.js';
+import { verifySettlement } from '../_lib/settlement-verify.js';
+import { hostPayoutWallets } from '../_lib/stage-wallets.js';
 
 const MAX_MESSAGE = 140;
 // A tip is "loud" when it clears 10k $THREE (6 decimals) — worth a Telegram ping.
@@ -91,37 +98,80 @@ export default wrap(async (req, res) => {
 	const network = valid.network;
 	const message = cleanMessage(body.message);
 
+	// Prove it. The host's own payout wallets are the only acceptable destination
+	// (they are what the tip UI is handed as the transfer target), and the
+	// transaction must have credited at least the amount claimed.
+	const recipients = await hostPayoutWallets(stage.agent_id);
+	const proof = await verifySettlement({
+		signature: valid.signature,
+		mint: valid.mint,
+		amountAtomic: valid.amount,
+		recipients,
+		network,
+	});
+	if (proof.status === 'mismatch') {
+		return json(res, 402, {
+			error: 'settlement_unverified',
+			message: proof.reason || 'that settlement does not pay this host',
+		});
+	}
+	const verified = proof.status === 'match';
+
 	// Idempotent insert: the unique index on settlement_sig makes a retry a no-op.
 	// A returned row means this is the FIRST time we've seen this settlement.
+	// An unverified row is quarantined: it counts for nothing until the chain
+	// catches up (see promoteTip / api/cron/settlement-verify.js).
 	const [row] = await sql`
 		INSERT INTO show_tips
 			(show_id, stage_id, tipper_user_id, tipper_label, amount_atomic, currency_mint,
-			 host_credit_atomic, venue_cut_atomic, settlement_sig, network, message)
+			 host_credit_atomic, venue_cut_atomic, settlement_sig, network, message, verified_at)
 		VALUES (
 			${show.id}, ${stageId}, ${session?.id ?? null}, ${label},
 			${valid.amount}, ${valid.mint}, ${hostCredit}, ${venueCut},
-			${valid.signature}, ${network}, ${message}
+			${valid.signature}, ${network}, ${message}, ${verified ? new Date().toISOString() : null}
 		)
 		ON CONFLICT (settlement_sig) DO NOTHING
 		RETURNING id, amount_atomic, host_credit_atomic, venue_cut_atomic, created_at
 	`;
 	if (!row) {
-		// Already recorded — hand back the original so the client is idempotent too.
+		// Already recorded. If that row is still quarantined and the chain has now
+		// shown us the transfer, promote it here: a re-POST is the client's own
+		// retry path and must not need the sweep to run first.
 		const [existing] = await sql`
-			SELECT id, amount_atomic, host_credit_atomic, venue_cut_atomic
+			SELECT id, amount_atomic, host_credit_atomic, venue_cut_atomic, verified_at
 			FROM show_tips WHERE settlement_sig = ${valid.signature} LIMIT 1
 		`;
-		return json(res, 200, { ok: true, deduped: true, tip: shapeTip(existing) });
+		if (existing && !existing.verified_at && verified) {
+			await promoteTip({ tipId: existing.id, showId: show.id, amount: valid.amount });
+		}
+		return json(res, 200, {
+			ok: true,
+			deduped: true,
+			pending: !!existing && !existing.verified_at && !verified,
+			tip: shapeTip(existing),
+		});
+	}
+
+	const explorer = tipExplorerUrl(valid.signature, network);
+
+	if (!verified) {
+		// Real money may well be in flight; the RPC just has not caught up. Keep the
+		// row, count nothing, and tell the client so it can retry or poll.
+		return json(res, 202, {
+			ok: true,
+			pending: true,
+			message: 'settlement not visible on-chain yet, this tip counts as soon as it is',
+			tip: shapeTip(row),
+			explorer,
+		});
 	}
 
 	// Roll the show total (the row is already written, so a failed bump is logged,
-	// never fatal — the per-tip rows remain the source of truth for the leaderboard).
+	// never fatal: the per-tip rows remain the source of truth for the leaderboard).
 	sql`
 		UPDATE shows SET total_tips_atomic = total_tips_atomic + ${valid.amount}, tip_count = tip_count + 1
 		WHERE id = ${show.id}
 	`.catch((err) => console.warn('[stage/tip] show total bump failed', { showId: show.id, reason: err?.message }));
-
-	const explorer = tipExplorerUrl(valid.signature, network);
 
 	// Notify the owner (in-app bell always; Telegram for a loud one).
 	if (stage.owner_user_id) {
@@ -177,10 +227,11 @@ async function handleGet(req, res) {
 		ORDER BY (ended_at IS NULL) DESC, started_at DESC LIMIT 1
 	`;
 	if (!show) return json(res, 200, { leaderboard: [], totalTipsAtomic: 0, tipCount: 0 });
+	// Verified tips only: a quarantined row must never reach a public total.
 	const rows = await sql`
 		SELECT COALESCE(tipper_label, 'someone') AS label,
 			SUM(amount_atomic)::numeric AS total, COUNT(*)::int AS count, MIN(created_at) AS first_at
-		FROM show_tips WHERE show_id = ${show.id}
+		FROM show_tips WHERE show_id = ${show.id} AND verified_at IS NOT NULL
 		GROUP BY COALESCE(tipper_label, 'someone')
 		ORDER BY total DESC, first_at ASC LIMIT 10
 	`;
@@ -189,6 +240,23 @@ async function handleGet(req, res) {
 		totalTipsAtomic: Number(show.total_tips_atomic || 0),
 		tipCount: show.tip_count ?? 0,
 	}, { 'cache-control': 'no-store' });
+}
+
+// Mark a quarantined tip verified and roll it into the show total, exactly once.
+// The conditional UPDATE is the guard: whoever flips verified_at from null owns
+// the total bump, so the client retry and the sweep can both call this safely.
+export async function promoteTip({ tipId, showId, amount }) {
+	const [claimed] = await sql`
+		UPDATE show_tips SET verified_at = now(), verify_error = NULL
+		WHERE id = ${tipId} AND verified_at IS NULL
+		RETURNING id
+	`;
+	if (!claimed) return false;
+	await sql`
+		UPDATE shows SET total_tips_atomic = total_tips_atomic + ${amount}, tip_count = tip_count + 1
+		WHERE id = ${showId}
+	`.catch((err) => console.warn('[stage/tip] show total bump failed', { showId, reason: err?.message }));
+	return true;
 }
 
 function tipperLabel(session, tipperName) {

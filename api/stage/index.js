@@ -85,9 +85,18 @@ async function ensureTables() {
 			settlement_sig     TEXT NOT NULL,
 			network            TEXT,
 			message            TEXT,
+			verified_at        TIMESTAMPTZ,
+			verify_error       TEXT,
 			created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		)
 	`;
+	// Live databases predate the verification columns (migration
+	// 20260806130000_settlement_verification.sql adds them there, with the
+	// grandfathering backfill). These ALTERs only cover a database that has never
+	// run migrations; they must never backfill, or a genuinely pending tip would be
+	// promoted without proof.
+	await sql`ALTER TABLE show_tips ADD COLUMN IF NOT EXISTS verified_at  TIMESTAMPTZ`;
+	await sql`ALTER TABLE show_tips ADD COLUMN IF NOT EXISTS verify_error TEXT`;
 	// One settlement → one tip row. The unique index is the idempotency guarantee
 	// the tip endpoint leans on (ON CONFLICT DO NOTHING).
 	await sql`CREATE UNIQUE INDEX IF NOT EXISTS show_tips_sig ON show_tips (settlement_sig)`;
@@ -107,6 +116,8 @@ async function readHostWallet(agentId) {
 // Aggregate the per-tipper leaderboard for a show, highest total first.
 async function showLeaderboard(showId, limit = 10) {
 	if (!showId) return [];
+	// Verified tips only: a tip whose settlement has not been proved on-chain is
+	// quarantined and must never reach a public leaderboard.
 	const rows = await sql`
 		SELECT
 			COALESCE(tipper_label, 'someone') AS label,
@@ -114,7 +125,7 @@ async function showLeaderboard(showId, limit = 10) {
 			COUNT(*)::int AS count,
 			MIN(created_at) AS first_at
 		FROM show_tips
-		WHERE show_id = ${showId}
+		WHERE show_id = ${showId} AND verified_at IS NOT NULL
 		GROUP BY COALESCE(tipper_label, 'someone')
 		ORDER BY total DESC, first_at ASC
 		LIMIT ${limit}

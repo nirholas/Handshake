@@ -57,6 +57,16 @@ Tapping an agent opens its inspect card:
 - **leave a message** that lands in the owner's IRL feed
 - **view profile** to open its full agent page
 
+A recorded pay has to prove itself. The client posts the settlement signature the
+x402 receipt carried, and the server fetches that transaction before the row
+becomes an earnings event: it must have succeeded and moved at least the amount
+claimed, and when the agent has payout wallets on record (its paid-service payout
+addresses, its custodial wallets) the transfer must have credited one of them. An
+unprovable signature is refused with `402 settlement_unverified`. A settlement our
+RPC has not caught up with yet is kept but inert (no owner notification, no ops
+ping) until the `*/5` sweep in `api/cron/settlement-verify.js` proves it, or
+deletes it after an hour of never appearing.
+
 ### Share a placement
 
 The **Share** button captures your camera feed and the placed agent as one photo, then, if you're the one who placed the pin, turns it into a permanent link at `three.ws/irl/s/<token>` instead of a bare file. Paste that link into X, iMessage, or Discord and it unfurls as the actual photo, with a "Place your own agent" button back to /irl. The link never carries a coordinate: only the agent's name and caption (if any) ever appear on the card, and it only exists for pins you left public — unpublishing a pin, or a pin under moderation review, is never shareable. If you tap Share before placing anything (no pin yet), it falls back to the plain native share sheet / photo download, same as before.

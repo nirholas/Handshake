@@ -370,22 +370,42 @@ class VenueController {
 				onStage: (s) => this.tipStatus(tipStageLabel(s), 'warn'),
 			});
 			this.tipStatus('Recording your tip…', 'warn');
-			const res = await apiFetch('/api/stage/tip', {
-				method: 'POST',
-				allowAnonymous: true,
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({
-					stageId: this.stageId,
-					signature: settle.signature,
-					currencyMint: THREE_MINT,
-					amount: Math.round(amount * 10 ** THREE_DECIMALS),
-					message: msg,
-					network: 'solana',
-					tipperSession: this.net?.sessionId || null,
-				}),
+			const body = JSON.stringify({
+				stageId: this.stageId,
+				signature: settle.signature,
+				currencyMint: THREE_MINT,
+				amount: Math.round(amount * 10 ** THREE_DECIMALS),
+				message: msg,
+				network: 'solana',
+				tipperSession: this.net?.sessionId || null,
 			});
-			const out = await res.json().catch(() => ({}));
-			if (!res.ok) throw new Error(out.error || 'could not record tip');
+			const post = async () => {
+				const res = await apiFetch('/api/stage/tip', {
+					method: 'POST',
+					allowAnonymous: true,
+					headers: { 'content-type': 'application/json' },
+					body,
+				});
+				const out = await res.json().catch(() => ({}));
+				if (!res.ok) throw new Error(out.message || out.error || 'could not record tip');
+				return out;
+			};
+			// The server verifies the transfer on-chain before the tip counts. Our
+			// own RPC can lag the one that confirmed the transfer by a few seconds,
+			// in which case it holds the tip and answers `pending`. The POST is
+			// idempotent, so re-posting is the retry: the tip lands the moment the
+			// chain shows it.
+			let out = await post();
+			for (let attempt = 0; out.pending && attempt < 4; attempt++) {
+				this.tipStatus('Confirming on-chain…', 'warn');
+				await new Promise((r) => setTimeout(r, 3000));
+				out = await post();
+			}
+			if (out.pending) {
+				this.tipStatus('Sent. It will appear on the leaderboard once the network confirms it.', 'warn');
+				this.els.tipMsg.value = '';
+				return;
+			}
 			this.tipStatus(`Tipped ${amount.toLocaleString()} $THREE 🎉`, 'ok');
 			this.els.tipMsg.value = '';
 		} catch (err) {

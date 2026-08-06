@@ -5655,6 +5655,10 @@
 			"schedule": "17 * * * *"
 		},
 		{
+			"path": "/api/cron/settlement-verify",
+			"schedule": "*/5 * * * *"
+		},
+		{
 			"path": "/api/cron/expire-pending-purchases",
 			"schedule": "*/5 * * * *"
 		},
