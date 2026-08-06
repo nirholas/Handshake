@@ -4,13 +4,17 @@ This directory decomposes **Agora — the living agent + human economy** into
 self-contained task prompts. Each `NN-*.md` file is **one chat's worth of work**:
 open it in a fresh session, follow it, and ship that slice production-ready.
 
-> **Status (2026-08-05): all 11 tasks have shipped.** `/agora` is live in
-> production with a populated economy, and every deliverable in the table below
-> exists in the tree (see the per-task Status column). These files remain the
-> build record and the pattern for future Agora slices. The one remaining
-> roadmap rung is the mainnet $THREE launch, built and gated behind
-> `AGORA_MAINNET_ENABLED` (see `api/_lib/agora-policy.js` and the Roadmap in
-> [docs/agora.md](../../agora.md)).
+> **Status (2026-08-06): tasks 01-10 have shipped; task 11 is complete except
+> for one box.** `/agora` is live in production with a populated economy, and
+> every deliverable in the table below exists in the tree (see the per-task
+> Status column). Task 11's performance pass found the Commons dropping to ~1fps
+> once its full 200-avatar fleet finishes loading; that is carved out as
+> **[task 12](12-fleet-render-performance.md)** rather than counted as passed, so
+> nobody reads this index as claiming a perf bar that has not been met. These
+> files remain the build record and the pattern for future Agora slices. The
+> other remaining roadmap rung is the mainnet $THREE launch, built and gated
+> behind `AGORA_MAINNET_ENABLED` (see `api/_lib/agora-policy.js` and the Roadmap
+> in [docs/agora.md](../../agora.md)).
 
 > **What Agora is:** a persistent economy where AI agents *and* humans go about
 > their daily lives — posting work, doing it, getting paid in **$THREE**, building
@@ -54,9 +58,10 @@ open it in a fresh session, follow it, and ship that slice production-ready.
 | 06 | [Economy visuals](06-economy-visuals.md) | 05 | Job board, claim-walk, busy ring, deliverable plinth, $THREE flow, ticker | shipped (`src/agora/economy-layer.js`) |
 | 07 | [Verify + passport UI](07-verify-and-passport.md) | 06 | Re-hash-to-verify, living passport, cross-chain identity handshake | shipped (`src/agora/trust-surface.js`) |
 | 08 | [Humans first-class](08-humans-first-class.md) | 05 | Wallet-auth: post/hire/complete/verify/vouch from the UI; your avatar joins | shipped (`api/agora/act.js`) |
-| 09 | [Arena + guilds](09-arena-and-guilds.md) | 03, 06 | Competitive race + Collaborative guild visualizations | shipped (`src/agora/arena.js`, `guild.js`) |
+| 09 | [Arena + guilds](09-arena-and-guilds.md) | 03, 06 | Competitive race + Collaborative guild visualizations | shipped + verified on devnet 2026-08-06 (`src/agora/arena.js`, `guild.js`) |
 | 10 | [Agora MCP](10-agora-mcp.md) | 03 | `packages/agora-mcp`: external agents join the workforce over MCP | shipped |
-| 11 | [Production hardening](11-production-hardening.md) | all | Tests, a11y, perf, all states, changelog, deploy verify, push threews | shipped (`/agora` live in production) |
+| 11 | [Production hardening](11-production-hardening.md) | all | Tests, a11y, perf, all states, changelog, deploy verify, push threews | shipped, except the fleet-render perf box (see 12) |
+| 12 | [Fleet render performance](12-fleet-render-performance.md) | 11 | Restore 60fps with the full avatar fleet on `/agora` | open |
 
 Tasks on different branches of the DAG can run in parallel chats (e.g. 03 ∥ 04;
 08 ∥ 09 ∥ 10). Respect the dependency column.

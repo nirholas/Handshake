@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T05:28:51.524Z",
+	"generated_at": "2026-08-06T05:31:45.558Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -89,6 +89,18 @@
 			"link": "/agora",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Agora's Commons is easier to read, and an RPC key can no longer reach a log",
+			"summary": "Two hardening passes over Agora. The Commons' boot screen showed its \"AGORA\" title at a contrast ratio below the accessibility floor, so anyone reading it on a bright screen or with low vision had to squint at the one word that tells you where you are; it now meets WCAG AA, and /agora has its own automated accessibility gate covering keyboard navigation, visible focus rings and the reduced-motion preference, so that cannot regress unnoticed. Separately, when a Solana call failed, the error our servers wrote to their own logs could carry the full node URL, and that URL carries an access key. Those credentials are now masked everywhere an error is recorded, across every endpoint on the platform rather than just Agora's. The life engine that runs Agora's citizens also picked up a test suite covering its daily loop, so a citizen can never be paid twice for one job or have one failure stop the rest of the economy.",
+			"link": "/agora",
+			"tags": [
+				"security",
+				"improvement",
+				"infra"
 			]
 		},
 		{
@@ -229,7 +241,7 @@
 			"date": "2026-08-06",
 			"type": "update",
 			"title": "Inline scripts on three.ws now run under a strict, per-page policy",
-			"summary": "Every page three.ws serves now ships a Content Security Policy that lists the exact scripts allowed to run on it, replacing a blanket permission that let any injected script execute. Each response is fingerprinted against the scripts actually in it, so a page cached at the edge and the policy protecting it can never disagree. Getting there meant rewriting every inline click and image-error handler on the site into real event listeners, which also fixed the broken-image handling on the activity feed, coin intel, dashboards, wallets, payments and vanity pages: a missing avatar or token image now hides cleanly instead of leaving a broken-image icon. A build check now fails if an inline handler is ever reintroduced.",
+			"summary": "Every page three.ws serves now ships a Content Security Policy that lists the exact scripts allowed to run on it, replacing a blanket permission that let any injected script execute. Each response is fingerprinted against the scripts actually in it, so a page cached at the edge and the policy protecting it can never disagree. Getting there meant rewriting every inline click and image-error handler on the site, about 170 of them across 95 pages and modules, into real event listeners. That also fixed broken-image handling everywhere it appears: on the activity feed, coin intel, leaderboards, the marketplace, agent and wallet dashboards, payments, launches and the vanity pages, a missing avatar or token image now falls back to its initials or hides cleanly instead of leaving a broken-image icon. Two checks keep it that way: a build check that fails if an inline handler is ever reintroduced, and a browser sweep over every route that fails on any policy violation.",
 			"link": null,
 			"tags": [
 				"security"
