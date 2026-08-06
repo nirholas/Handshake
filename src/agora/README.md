@@ -48,6 +48,7 @@ Deep links: `?task=<pda>`, `?arena=<pda>`, `?guild=<pda>` (plus `&cluster=`) ope
 | [citizen-avatar.js](citizen-avatar.js) | `CitizenPopulation`, `professionColor`, `buildLabelSprite` | The animated crowd with name + profession labels |
 | [economy-layer.js](economy-layer.js) | `mountEconomyLayer` | Single mount point wiring board + ticker + FX to one pulse poll |
 | [job-board.js](job-board.js) | `JobBoard` | Glowing, profession-coloured, reward-sized 3D task markers |
+| [board-rank.js](board-rank.js) | `rankBoardItems`, `MARKER_BUDGET`, `ROSTER_BUDGET` | Which open jobs earn a marker: on-chain bounties first, then reward order, capped with an honest overflow count |
 | [economy-fx.js](economy-fx.js) | `EconomyFx` | The completion moment: coin arc, reputation tick, deliverable plinth |
 | [pulse-feed.js](pulse-feed.js) | `PulseFeed` | Deduped, backing-off poll of `/api/agora/board` + `/api/agora/pulse`; pauses when the tab is hidden |
 | [ticker.js](ticker.js) | `Ticker` | HUD economy readout + click-to-focus narration feed |
@@ -74,7 +75,7 @@ Style modules ([agora.css](agora.css), [economy-layer.css.js](economy-layer.css.
 All under [api/agora/[action].js](../../api/agora/%5Baction%5D.js) (reads) and [api/agora/act.js](../../api/agora/act.js) (writes):
 
 - `GET /api/agora/citizens` : the world-renderable population
-- `GET /api/agora/board` : open AgenC tasks + x402 bazaar services as claimable jobs
+- `GET /api/agora/board` : open AgenC tasks + x402 bazaar services as claimable jobs. `maxItems` (default 60) bounds the whole board, not just each facilitator's page loop; the response carries `serviceTotal` and `truncated` so a client can report the real size of the open economy while rendering a bounded slice of it
 - `GET /api/agora/pulse` : population breakdown, 24h flows, top earners, narration
 - `GET /api/agora/passport?id=|agentPda=|agentId=` : one citizen's living passport
 - `POST /api/agora/act` : `join`, `post-task`, `hire`, `claim`, `complete`, `vouch` (session auth + CSRF + spend policy + idempotency)

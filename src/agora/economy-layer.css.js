@@ -63,6 +63,12 @@ export const ECON_LAYER_CSS = `
 	-webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
 .agora-econ-board-item-meta { font-size: 11.5px; color: var(--econ-dim); }
+/* Overflow line: the board renders a bounded set of markers, so the roster says
+   out loud how much open work it isn't showing. Never a silent cap. */
+.agora-econ-board-more {
+	font-size: 11.5px; color: var(--econ-dim); text-align: center;
+	padding: 7px 10px 3px; font-variant-numeric: tabular-nums;
+}
 /* Arena / Guild type badge (Task 09) — a small inline tag on a multi-worker task. */
 .agora-econ-board-badge {
 	display: inline-flex; align-items: center; gap: 3px;

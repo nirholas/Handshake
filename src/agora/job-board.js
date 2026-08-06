@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { professionThreeColor, professionColor, professionLabelFor, rewardMagnitude, rewardMarkerScale, rewardChip } from './professions.js';
 import { isArena, isGuild, isMultiWorker, taskTypeBadge, ARENA_COLOR, GUILD_COLOR } from './task-types.js';
+import { rankBoardItems } from './board-rank.js';
 
 // The board marker + roster tint an Arena red-hot and a Guild collaborative-green
 // (Task 09), overriding the profession accent, so a multi-worker task reads as a
@@ -197,8 +198,21 @@ export class JobBoard {
 			...(Array.isArray(board?.services) ? board.services : []),
 		];
 		this._tasks = tasks;
-		this._reconcileMarkers(tasks);
-		this._renderRoster(tasks);
+
+		// The x402 lane is a live catalog of hundreds of services; a marker each
+		// would tower over the kiosk and burn frames on geometry nobody can read.
+		// Rank by lane then reward, spend the marker budget on the headline work,
+		// and carry the overflow count so the roster can say so out loud.
+		const ranked = rankBoardItems(tasks, { magnitudeOf: rewardMagnitude });
+
+		// `serviceTotal` is the count BEFORE the API's own maxItems slice, so a
+		// truncated payload still reports the true size of the open economy.
+		const serverTotal = (board?.openTaskCount ?? (board?.tasks?.length || 0))
+			+ (board?.serviceTotal ?? (board?.services?.length || 0));
+		this._hiddenCount = Math.max(0, serverTotal - ranked.roster.length);
+
+		this._reconcileMarkers(ranked.markers);
+		this._renderRoster(ranked.roster);
 	}
 
 	_reconcileMarkers(tasks) {
@@ -289,6 +303,14 @@ export class JobBoard {
 	}
 
 	_disposeMarker(marker) {
+		// A hovered task can be claimed out from under the pointer between polls.
+		// Drop the hover first, or update() keeps a tooltip glued to a marker that
+		// no longer exists.
+		const key = this._meshIndex.get(marker.core.uuid);
+		if (key != null && this._hoverKey === key) {
+			this._hoverKey = null;
+			this._tip.hidden = true;
+		}
 		this._meshIndex.delete(marker.core.uuid);
 		this.group.remove(marker.group);
 		marker.coreGeo.dispose();
@@ -299,10 +321,11 @@ export class JobBoard {
 	}
 
 	_renderRoster(tasks) {
-		this._count.textContent = tasks.length ? ` · ${tasks.length}` : '';
+		const total = tasks.length + (this._hiddenCount || 0);
+		this._count.textContent = total ? ` · ${total}` : '';
 		this._list.innerHTML = '';
-		this._empty.hidden = tasks.length > 0;
-		this._list.hidden = tasks.length === 0;
+		this._empty.hidden = total > 0;
+		this._list.hidden = total === 0;
 
 		for (const task of tasks) {
 			const key = taskKey(task);
@@ -335,6 +358,14 @@ export class JobBoard {
 			btn.addEventListener('blur', () => this._setHover(null));
 			li.appendChild(btn);
 			this._list.appendChild(li);
+		}
+
+		// Never let a capped board read as the whole economy.
+		if (this._hiddenCount > 0) {
+			const more = document.createElement('li');
+			more.className = 'agora-econ-board-more';
+			more.textContent = `+${this._hiddenCount} more open ${this._hiddenCount === 1 ? 'job' : 'jobs'} in the bazaar`;
+			this._list.appendChild(more);
 		}
 	}
 
@@ -397,7 +428,10 @@ export class JobBoard {
 		// Keep the tooltip glued to its marker.
 		if (this._hoverKey) {
 			const marker = this._markers.get(this._hoverKey);
-			if (marker) {
+			if (!marker) {
+				this._hoverKey = null;
+				this._tip.hidden = true;
+			} else {
 				const s = this.ctx.worldToScreen(marker.anchor);
 				if (s.visible) {
 					this._tip.style.transform = `translate(-50%, -100%) translate(${s.x}px, ${s.y - 14}px)`;
@@ -407,6 +441,21 @@ export class JobBoard {
 				}
 			}
 		}
+	}
+
+	// Live prefers-reduced-motion change (the OS toggle, no reload). Settle every
+	// animated value on its calm resting state so the board stops mid-bob instead
+	// of freezing wherever the last animated frame left it.
+	setReducedMotion(on) {
+		this.reducedMotion = !!on;
+		if (!this.reducedMotion) return;
+		for (const marker of this._markers.values()) {
+			marker.core.position.y = 0;
+			marker.glow.position.y = 0;
+			marker.glowMat.opacity = 0.85;
+			marker.coreMat.emissiveIntensity = 1.4;
+		}
+		if (this._strip) this._strip.material.opacity = 0.85;
 	}
 
 	dispose() {

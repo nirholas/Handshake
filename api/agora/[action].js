@@ -11,7 +11,9 @@
 // Routes (all GET):
 //   /api/agora/citizens?profession=&status=&kind=&limit=
 //       The population — world-renderable citizens (projection).
-//   /api/agora/board?maxItems=&network=&maxPrice=
+//   /api/agora/board?maxItems=&network=&maxPrice=&asset=
+//       (maxPrice is ATOMIC units: 10000 = 0.01 USDC. asset takes a symbol or
+//        the raw contract/mint address.)
 //       The live job board — open AgenC tasks (projected, still-open) + every
 //       x402 bazaar service as a claimable Fetcher job (real, populated now).
 //   /api/agora/pulse
@@ -29,25 +31,19 @@ import { cors, json, method, error, wrap, serverError } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
-import { Bazaar, filterByMaxPrice, filterByNetwork } from '../_lib/x402/bazaar-client.js';
+// Mask URL-embedded credentials (Helius/RPC `?api-key=`, bearer tokens) before an
+// error message reaches a log sink: a Solana web3.js network error carries the
+// keyed RPC URL, so logging its raw `.message` on a best-effort catch would spill
+// HELIUS_API_KEY. Shared with act.js and the 5xx sink in http.js so every Agora
+// path masks identically.
+import { redactUrlSecrets as redactSecrets } from '../_lib/scrub-secrets.js';
+import { Bazaar, filterByMaxPrice, filterByNetwork, parseAtomicAmount } from '../_lib/x402/bazaar-client.js';
 import { assembleTaskLive } from '../_lib/agora-task-live.js';
 // Terminal-kind sets + type helpers are the labour engine's single source of
 // truth (workers/agora-citizens/policy.js) — the board's open lane and the
 // reconcile sweep MUST agree on what "still open" means per task type, so we
 // import the very same constants rather than re-declaring them here.
 import { EXCLUSIVE_TERMINAL_KINDS, MULTI_TERMINAL_KINDS, isArenaType, isGuildType } from '../../workers/agora-citizens/policy.js';
-
-// Redact URL credentials (Helius/RPC `?api-key=`, bearer tokens, secrets) from an
-// error message before it reaches a log sink. A Solana web3.js network error
-// embeds the keyed RPC URL, so logging its raw `.message` on a best-effort catch
-// would spill the RPC key (HELIUS_API_KEY) into Vercel logs. Keeps the rest of the
-// message for debugging; only the credential value is masked.
-function redactSecrets(text) {
-	return String(text ?? '').replace(
-		/([?&](?:api[-_]?key|access[-_]?token|token|secret|key|auth)=)[^&\s"'`]+/gi,
-		'$1REDACTED',
-	);
-}
 
 // The only coin Agora denominates in. Devnet plumbing may use SOL or a synthetic
 // placeholder; this is the mainnet $THREE mint, surfaced for clients that render
@@ -189,6 +185,12 @@ async function handleCitizens(req, res) {
 async function handleBoard(req, res) {
 	const q = req.query || {};
 	const maxItems = clampInt(q.maxItems, 60, 1, 500);
+	// `maxPrice` is an atomic cap. Reject a malformed one here: inside the bazaar
+	// lane's own try it would be swallowed as an outage and report an empty board
+	// (`empty:true`) while 500+ real services exist, a dishonest empty state.
+	if (q.maxPrice != null && parseAtomicAmount(q.maxPrice) === null) {
+		return error(res, 400, 'validation_error', 'maxPrice must be an atomic integer amount (e.g. 10000 = 0.01 USDC)');
+	}
 
 	// Lane 1 — open AgenC tasks (projected from real on-chain postings + hires).
 	// The "still open" predicate is PER TYPE: an Exclusive posting closes on its
@@ -314,11 +316,25 @@ async function handleBoard(req, res) {
 		errors.push({ source: 'x402', error: redactSecrets(err?.message) || 'bazaar_unavailable' });
 	}
 
+	// `maxItems` bounds the BOARD, not just each facilitator's page loop. Bazaar
+	// pages per facilitator, so a union across several of them overshoots the cap
+	// (573 services for maxItems=60 before this slice) and every consumer (the
+	// 3D marker pool most of all) pays for a payload it never asked for. AgenC
+	// tasks are the scarce lane and always keep their slots; the x402 lane fills
+	// what's left, and the honest totals ship alongside so a client can say
+	// "showing 60 of 573" rather than silently pretending it has everything.
+	const serviceTotal = services.length;
+	const serviceBudget = Math.max(0, maxItems - tasks.length);
+	if (serviceTotal > serviceBudget) services = services.slice(0, serviceBudget);
+
 	res.setHeader('cache-control', 'public, max-age=15, stale-while-revalidate=60');
 	return json(res, 200, {
 		ok: true,
 		openTaskCount: tasks.length,
 		serviceCount: services.length,
+		serviceTotal,
+		maxItems,
+		truncated: serviceTotal > services.length,
 		tasks,
 		services,
 		errors,
