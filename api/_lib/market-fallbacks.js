@@ -22,6 +22,7 @@
 import { fetchFirst } from '../../src/shared/failover-fetch.js';
 import { COINGECKO_BASE, geckoHeaders } from './coingecko.js';
 import { PAPRIKA_BASE, paprikaGet } from './coinpaprika.js';
+import { CEX_BASE_BY_ID, cexPriceProviders, cexCandleProviders } from './cex-public.js';
 import { downsample } from '../../src/shared/coin-format.js';
 import { cacheGet, cacheSet } from './cache.js';
 
@@ -40,12 +41,16 @@ const asPrice = (v) => {
 };
 
 // ── Exchange tickers for the headline assets ─────────────────────────────────
-// US-datacenter-safe exchange APIs only: Binance, Bybit and OKX geo-block US
-// datacenter IPs (Cloud Run us-central1 gets a "restricted location" error
-// body, see the note in api/_lib/sol-price.js), which would make them
-// permanently dead rungs. Kraken, Coinbase Exchange and Bitfinex all serve
-// datacenter traffic. Only the CoinGecko ids the platform actually prices by
-// id are mapped; an unmapped id just skips the exchange rungs.
+// Two tiers. The US-datacenter-safe exchanges lead: Kraken, Coinbase Exchange
+// and Bitfinex all serve datacenter traffic and quote real USD. Behind them
+// sit the seven keyless CEX rungs from api/_lib/cex-public.js (Binance, OKX,
+// Bybit, KuCoin, Gate.io, MEXC, Bitget), USDT-quoted, deepest liquidity first.
+// Binance and Bybit geo-block US datacenter IPs (and OKX can from some clouds,
+// see the note in api/_lib/sol-price.js), but a block is an instant non-2xx:
+// the failover primitive pays one fast attempt, benches the rung for its
+// cooldown, and moves on to a venue that answers, so they are no longer
+// excluded as "permanently dead". Only the CoinGecko ids the platform actually
+// prices by id are mapped; an unmapped id just skips the exchange rungs.
 
 export const EXCHANGE_PAIRS = {
 	bitcoin: { kraken: 'XBTUSD', coinbase: 'BTC-USD', bitfinex: 'tBTCUSD' },
@@ -74,6 +79,7 @@ export function parseBitfinexTicker(raw) {
 function exchangePriceProviders(id) {
 	const pairs = EXCHANGE_PAIRS[id];
 	if (!pairs) return [];
+	const base = CEX_BASE_BY_ID[id];
 	return [
 		{
 			name: 'kraken',
@@ -90,6 +96,8 @@ function exchangePriceProviders(id) {
 			url: `https://api-pub.bitfinex.com/v2/ticker/${pairs.bitfinex}`,
 			parse: async (r) => parseBitfinexTicker(await r.json()),
 		},
+		// Keyless CEX tail: Binance → OKX → Bybit → KuCoin → Gate → MEXC → Bitget.
+		...(base ? cexPriceProviders(base) : []),
 	];
 }
 
@@ -369,10 +377,11 @@ export async function fetchMarketsTable({ page, perPage, category }) {
 // ── Price-series (chart) failover ────────────────────────────────────────────
 // Backs up CoinGecko /market_chart for the /coin/:id line chart, which renders
 // close prices as [[timestamp_ms, price], ...]. Exchange candle endpoints
-// (Kraken OHLC, Coinbase Exchange candles) cover the EXCHANGE_PAIRS majors:
-// when CoinGecko is rate-limited, the BTC/ETH/SOL charts stay live instead of
-// blanking. Long-tail coins have no exchange mapping and keep CoinGecko as
-// their only source, exactly as before.
+// (Kraken OHLC, Coinbase Exchange candles, then the keyless CEX kline rungs
+// from api/_lib/cex-public.js) cover the EXCHANGE_PAIRS majors: when CoinGecko
+// is rate-limited, the BTC/ETH/SOL charts stay live instead of blanking.
+// Long-tail coins have no exchange mapping and keep CoinGecko as their only
+// source, exactly as before.
 
 // Kraken OHLC interval (minutes) per chart window. Kraken returns up to 720
 // candles per interval, so every window fits in one request: 5m covers 2.5d,
@@ -440,6 +449,10 @@ export async function fetchExchangeChart(id, days) {
 			parse: async (r) => normalizeCoinbaseChart(await r.json(), days),
 		});
 	}
+	// Keyless CEX kline tail (Binance → OKX → Bybit → KuCoin → Gate → MEXC →
+	// Bitget): venues that cannot cover this window in one request self-omit.
+	const base = CEX_BASE_BY_ID[id];
+	if (base) providers.push(...cexCandleProviders(base, days));
 	try {
 		const { value } = await fetchFirst(providers, { timeoutMs: 8000, label: `chart:${id}` });
 		return value;
