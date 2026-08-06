@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T03:43:29.124Z",
+	"generated_at": "2026-08-06T03:55:44.921Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -56,6 +56,16 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Location reads on /irl get their own privacy budget again",
+			"summary": "The three reads that reveal where someone placed an agent in the real world (nearby pins, nearby drops, nearby World Lines) are capped per IP so nobody can drive around the map collecting coordinates. That cap used to be shared with the general-purpose limit every public page read uses, and when the shared limit was raised for unrelated page-loading reasons, the location cap quietly rose with it: a bulk sweep became four times cheaper than the published security write-up said it was. Location reads now draw on a dedicated budget that only they use, pinned at the documented rate and covered by a test that fails if it ever drifts again. Ordinary use is unaffected: viewing the world around you polls roughly six times a minute against a ceiling of sixty. The nearby-drops read also now refuses rather than waves requests through if its limiter is unavailable, matching how the pin read has always behaved.",
+			"link": null,
+			"tags": [
+				"security"
 			]
 		},
 		{

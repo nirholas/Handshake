@@ -47,6 +47,14 @@
 			<description>Uploading a file directly to the API silently arrived empty. Sending a .glb to the 3D inspector, a .wav to speech-to-text, an image to vision, audio to the face animator, a GLB to Material Studio, or a voice sample to voice cloning all answered as though you had sent nothing at all. The cause was the server treating &quot;the whole request has arrived&quot; as &quot;somebody already read it&quot;, so it discarded bodies that were sitting there ready to read. Every one of those endpoints now receives the bytes you send. Uploads over the size limit also return a readable 413 instead of dropping the connection.</description>
 		</item>
 		<item>
+			<title>Location reads on /irl get their own privacy budget again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-06:Location reads on /irl get their own privacy budget again</guid>
+			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The three reads that reveal where someone placed an agent in the real world (nearby pins, nearby drops, nearby World Lines) are capped per IP so nobody can drive around the map collecting coordinates. That cap used to be shared with the general-purpose limit every public page read uses, and when the shared limit was raised for unrelated page-loading reasons, the location cap quietly rose with it: a bulk sweep became four times cheaper than the published security write-up said it was. Location reads now draw on a dedicated budget that only they use, pinned at the documented rate and covered by a test that fails if it ever drifts again. Ordinary use is unaffected: viewing the world around you polls roughly six times a minute against a ceiling of sixty. The nearby-drops read also now refuses rather than waves requests through if its limiter is unavailable, matching how the pin read has always behaved.</description>
+		</item>
+		<item>
 			<title>Market data that refuses to go down: 20+ free data sources joined the platform</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-06:Market data that refuses to go down: 20+ free data sources joined the platform</guid>

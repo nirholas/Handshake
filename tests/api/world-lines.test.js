@@ -130,6 +130,12 @@ vi.mock('../../api/_lib/notify.js', () => ({ insertNotification: vi.fn() }));
 vi.mock('../../api/_lib/csrf.js', () => ({ requireCsrf: vi.fn(async () => true) }));
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: new Proxy({}, { get: () => async () => ({ success: true }) }),
+	// The coordinate reads call their limiter through the fail-closed wrapper; its
+	// own behaviour is covered by tests/api/irl-nearby-limit.test.js.
+	limitFailClosedRead: async (_name, fn, ...args) => {
+		try { return await fn(...args); }
+		catch { return { success: false, reason: 'rate_limiter_unavailable', reset: Date.now() + 60_000 }; }
+	},
 	clientIp: () => '1.2.3.4',
 }));
 vi.mock('../../api/_lib/agent-wallet.js', () => ({
