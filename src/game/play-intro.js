@@ -256,7 +256,18 @@ export function showPlayIntro({ onDropIn, force = false } = {}) {
 
 	requestAnimationFrame(() => {
 		overlay.classList.add('pi-show');
-		card.querySelector('.pi-btn-primary')?.focus();
+		// Focus the primary action only once the boot loader is gone: the intro
+		// mounts underneath the still-opaque #kx-loading, and a focused button
+		// there turns a stray Enter during loading into an invisible "Drop in".
+		const focusPrimary = () => card.querySelector('.pi-btn-primary')?.focus();
+		const loader = document.getElementById('kx-loading');
+		if (!loader || loader.classList.contains('kx-hidden')) { focusPrimary(); return; }
+		const watch = new MutationObserver(() => {
+			const gone = !document.getElementById('kx-loading')
+				|| document.getElementById('kx-loading').classList.contains('kx-hidden');
+			if (gone) { watch.disconnect(); focusPrimary(); }
+		});
+		watch.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 	});
 
 	return { close };
