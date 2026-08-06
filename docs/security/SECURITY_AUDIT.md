@@ -81,10 +81,12 @@ and `puppeteer` (`scripts/verify-ibm-pages.mjs`).
 
 **Still tracked upstream, no non-breaking fix published:** `bigint-buffer` (and
 therefore the `@solana/buffer-layout-utils` → `@solana/spl-token` cluster),
-`adm-zip` and `undici@5` under `hardhat` (a build tool pulled in as a runtime
-dependency by `@ethereum-attestation-service/eas-contracts`, never executed on a
-request path), `lodash.set` under the greenfield SDK, and `@libp2p/kad-dht`
-under `helia`. **Status: fixed (0 critical); residue tracked.**
+`adm-zip@0.4.16` under `hardhat` (a build tool that
+`@ethereum-attestation-service/eas-contracts` declares as a runtime dependency,
+never executed on a request path; every published `adm-zip` is in the advisory
+range, so there is nothing to bump to), `lodash.set` under the greenfield SDK,
+and `@libp2p/kad-dht` under `helia`, where the only offered fix is a downgrade
+of `agent0-sdk`. **Status: fixed (0 critical); residue tracked.**
 
 ---
 
