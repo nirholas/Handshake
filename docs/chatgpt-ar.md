@@ -18,7 +18,7 @@ https://three.ws/api/ar?src=<glbUrl>&title=<name>&kind=avatar   (rigged avatar)
 ```
 
 - `src` (required): a public `https` `.glb`/`.gltf` URL, URL-encoded.
-- `title` (optional): a human label, trimmed to 80 characters. The generation pipeline puts the user's prompt here so the AR page arrives labeled.
+- `title` (optional): a human label. The launcher accepts up to 120 characters ([api/ar.js](../api/ar.js)); the generation pipeline puts the user's prompt here, trimmed to 80, so the AR page arrives labeled ([api/_mcp-studio/gpt-forge-client.js](../api/_mcp-studio/gpt-forge-client.js)).
 - `kind=avatar` (optional): marks the model as a rigged agent body and unlocks the living-agent lane (below).
 
 Every free generation endpoint returns this link as the `arUrl` field, built by one shared constructor (`buildArLaunchUrl` in [api/_lib/ar-launch.js](../api/_lib/ar-launch.js), mirrored by `arLaunchUrl` in [api/_mcp-studio/gpt-forge-client.js](../api/_mcp-studio/gpt-forge-client.js), the ChatGPT surfaces' client over `/api/gpt-forge`, the ChatGPT-dedicated clone of the forge pipeline). ChatGPT's only job is to print it. Everything hard (device detection, format conversion, the AR session itself) happens on the three.ws side after the tap, which is why one URL works identically in ChatGPT, Claude, an email, or a text message.
@@ -31,7 +31,7 @@ The same free lane ships into ChatGPT twice, because ChatGPT has two integration
 
 ### 1. The ChatGPT app (Apps SDK / MCP connector)
 
-The MCP connector at `https://three.ws/api/mcp-studio` (no authentication) exposes six free generation tools: `forge_free`, `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`, and `refine_model`. Full server documentation: [3D Studio MCP](./mcp-studio.md).
+The MCP connector at `https://three.ws/api/mcp-studio` (no authentication) exposes ten free tools: six generation tools (`forge_free`, `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`, `refine_model`), the `check_job` collector that picks up a generation which outran the tool call, and three persona/embodiment tools (`create_agent_persona`, `get_agent_persona`, `persona_say`). Full server documentation: [3D Studio MCP](./mcp-studio.md).
 
 Every successful tool result carries `arUrl` in its `structuredContent`, and the inline 3D widget renders it as a **View in your space** button next to the rotatable model. When the result is a rigged avatar the response additionally carries `irlUrl` and the button becomes **Bring it to life**. Refined versions (`refine_model`) each carry their own `arUrl`, so any point in the version lineage can be placed in the room.
 
@@ -69,7 +69,7 @@ Design decisions on this endpoint, all deliberate:
 - **Timeout honesty.** Actions calls time out around 45 seconds; generation takes 20 to 60. The endpoint holds the request as long as it safely can and falls back to `pending` + poll rather than dying mid-request.
 - **Safety before GPU.** Every prompt passes an age-13+ appropriateness gate ([api/_mcp-studio/safety.js](../api/_mcp-studio/safety.js)) before any provider work; refusals return `400 prompt_rejected` with a clear message.
 
-The GPT's instructions tell it to present three links on every finished model, in this order: **See it in your space** (`arUrl`), **Preview in your browser** (`viewerUrl`), **Download** (`glbUrl`), and to never fabricate a URL an action did not return. The checked-in OpenAPI schema and the full GPT build sheet live at [prompts/store-submissions/_generated/](../prompts/store-submissions/_generated/) (`openai-actions.yaml`, `openai-gpt-config.md`).
+The GPT's instructions tell it to present three links on every finished model, in this order: **See it in your space** (`arUrl`), **Preview in your browser** (`viewerUrl`), **Download** (`glbUrl`), and to never fabricate a URL an action did not return. The OpenAPI schema the GPT imports is served at [`https://three.ws/.well-known/3d-studio-openapi.yaml`](../public/.well-known/3d-studio-openapi.yaml) and describes `/api/ar` alongside the generation action, so the AR launch is part of the app's published contract rather than an undocumented link. The full GPT build sheet lives at [prompts/store-submissions/_generated/](../prompts/store-submissions/_generated/) (`openai-gpt-config.md`, plus `openai-actions.yaml`, which is regenerated from the served schema by `npm run sync:studio-openapi`).
 
 ---
 
@@ -116,7 +116,7 @@ A place-in-your-room link is built to be forwarded. When it is pasted into a cha
 Everything above is public plumbing:
 
 - **Plain HTTP, free:** `POST /api/3d/generate` is the keyless agent-facing twin of the studio endpoint, same lane, same `arUrl`. Contract, states, and per-IP limits: [the free 3D API](./3d-api.md).
-- **Any MCP client:** the connector at `/api/mcp-studio` works in Claude and every other MCP host, not just ChatGPT. The free, read-only `export_ar` tool also turns any existing public GLB into the full link set (`arLaunchUrl`, `sceneViewerUrl`, `viewerUrl`, and `irlUrl` for avatars) plus a [Spatial MCP](./spatial-mcp.md) artifact.
+- **Any MCP client:** the connector at `/api/mcp-studio` works in Claude and every other MCP host, not just ChatGPT. Every generation it returns already carries `arUrl` (and `irlUrl` for rigged avatars) plus a [Spatial MCP](./spatial-mcp.md) artifact, so no extra tool call is needed to get the AR link. To build that link set for a GLB the connector did **not** generate, use the read-only `export_ar` tool on the separate [`/api/mcp-3d` server](./mcp-3d-studio.md), which returns `arLaunchUrl`, `sceneViewerUrl`, `viewerUrl`, and `irlUrl`. That server is account- or payment-gated and is not part of the free connector.
 - **By hand:** the `arUrl` format is stable. If you have a public GLB, you can construct `https://three.ws/api/ar?src=<encoded GLB>&title=<name>` yourself and it will route correctly on every device.
 
 The generation lane is operator-funded (NVIDIA NIM running Microsoft TRELLIS for text-to-3D), so the end user pays nothing and needs no account; real per-IP rate limits apply and are documented per endpoint.
@@ -134,7 +134,8 @@ The generation lane is operator-funded (NVIDIA NIM running Microsoft TRELLIS for
 | MCP studio tools + response envelope | [api/_mcp-studio/tools.js](../api/_mcp-studio/tools.js) |
 | Inline widget (View in your space / Bring it to life) | [api/_mcp-studio/component.js](../api/_mcp-studio/component.js) |
 | GLB-to-PNG renderer (og:image) | [api/render/glb.js](../api/render/glb.js) |
-| GPT OpenAPI schema + build sheet | [prompts/store-submissions/_generated/](../prompts/store-submissions/_generated/) |
+| GPT OpenAPI schema (served, source of truth) | [public/.well-known/3d-studio-openapi.yaml](../public/.well-known/3d-studio-openapi.yaml) |
+| GPT build sheet + submission kit | [prompts/store-submissions/_generated/](../prompts/store-submissions/_generated/) |
 | Tests | [tests/api/3d-studio.test.js](../tests/api/3d-studio.test.js), [tests/ar-export.test.js](../tests/ar-export.test.js) |
 
 ## See also

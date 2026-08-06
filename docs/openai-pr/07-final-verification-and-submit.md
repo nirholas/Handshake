@@ -17,10 +17,13 @@ go/no-go report. Do not submit; prepare so the human's final submit is one actio
 ### A. The MCP connector is live, keyless, and crypto-free
 - [ ] `POST https://three.ws/api/mcp-studio` with an `initialize` request returns the
       server info (`three-ws-3d-studio-free`, protocol `2025-06-18`) with no auth.
-- [ ] `tools/list` returns exactly the expected 9 tools (matches Task 06's reconciled
-      count) with correct `openai/*` annotations and `outputTemplate` linkage.
-- [ ] `resources/list` returns the widget skybridge resources with their
-      `openai/widgetCSP`, `widgetDescription`, `widgetDomain` metadata.
+- [ ] `tools/list` returns exactly the expected 10 tools (Task 06's reconciled count:
+      `forge_free`, `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`,
+      `refine_model`, `check_job`, `create_agent_persona`, `get_agent_persona`,
+      `persona_say`) with correct `openai/*` annotations and `outputTemplate` linkage.
+- [ ] `resources/list` returns both widget skybridge resources
+      (`ui://widget/three-studio-model.html`, `ui://widget/three-studio-persona.html`)
+      with their `openai/widgetCSP`, `widgetDescription`, `widgetDomain` metadata.
 - [ ] A real `forge_free` call returns a real GLB with `glbUrl`, `viewerUrl`, `arUrl`,
       and NO internal ids (`job_id`, `creation_id`, `backend`) and NO crypto/payment
       fields. Save the response as fresh evidence (overwrite the stale

@@ -1,0 +1,57 @@
+{
+  "what": "Live production evidence that api/_mcp-studio forge_free defaults to the standard tier and that an explicit tier:'high' request really runs the high lane.",
+  "endpoint": "https://three.ws/api/mcp-studio",
+  "captured_at": "2026-08-06T03:22:45Z",
+  "method": "POST tools/call forge_free, then the forge_creations row for the returned creation id (authoritative tier/backend, not inferred from the response text).",
+  "runs": [
+    {
+      "label": "default (no tier argument)",
+      "arguments": {
+        "prompt": "a small ceramic teapot with a bamboo handle, glossy celadon glaze"
+      },
+      "wall_clock_seconds": 164,
+      "http_status": 200,
+      "forge_creations": {
+        "id": "db209fcd-971b-4ff8-9ef4-c40975aae149",
+        "tier": "standard",
+        "backend": "trellis_selfhost",
+        "status": "done",
+        "size_bytes": 5072212,
+        "created_at": "2026-08-06T03:20:47.322Z",
+        "updated_at": "2026-08-06T03:22:45.554Z"
+      },
+      "glb_url": "https://three.ws/cdn/forge/anon/db209fcd-971b-4ff8-9ef4-c40975aae149.glb",
+      "verdict": "Default is the standard tier. Matches the tool schema, the submission answer sheet, and docs/mcp-studio.md."
+    },
+    {
+      "label": "explicit tier:'high'",
+      "arguments": {
+        "prompt": "a friendly round robot mascot, glossy white plastic",
+        "tier": "high"
+      },
+      "wall_clock_seconds": 144,
+      "http_status": 200,
+      "forge_creations": {
+        "id": "ead4643a-5e13-411e-8ba0-f907da23555e",
+        "tier": "high",
+        "backend": "hunyuan3d",
+        "status": "done",
+        "size_bytes": 2690072,
+        "created_at": "2026-08-06T03:16:47.792Z",
+        "updated_at": "2026-08-06T03:18:30.305Z"
+      },
+      "glb_url": "https://three.ws/cdn/forge/anon/ead4643a-5e13-411e-8ba0-f907da23555e.glb",
+      "verdict": "High is a real, working option served by the self-hosted async Hunyuan3D Cloud Run GPU worker (GCP_HUNYUAN3D_URL). It did not degrade to standard."
+    }
+  ],
+  "why_standard_stays_the_default": [
+    "Neither lane finishes inside a ChatGPT tool-call window (164s standard, 144s high in this capture), so latency is not what separates them; forge_free hands back a pollable job handle when a generation outlives STUDIO_FORGE_TIMEOUT_MS.",
+    "The hunyuan3d worker is scale-to-zero, so a cold container adds a spin-up on top of the generation and the tail is materially worse than this warm sample.",
+    "The high-tier access gate is cleared only by the platform seed token (CRON_SECRET). A deployment without it would silently serve standard while any 'high by default' claim stayed on the page, which is the exact misstatement this evidence exists to prevent."
+  ],
+  "backend_health_at_capture": {
+    "hunyuan3d": "ok (the Hunyuan3D worker is reachable, 50ms)",
+    "trellis_selfhost": "ok",
+    "source": "GET https://three.ws/api/forge?health"
+  }
+}

@@ -113,8 +113,8 @@ above Select.
 > it on your desk.
 
 **3/** (attach `social-card-studio.png`)
-> Our 3D Studio connector gives ChatGPT nine tools: text to 3D, avatars from a
-> prompt or a photo, auto-rigging, one-call rigged avatars, conversational
+> Our 3D Studio connector gives ChatGPT a full 3D toolkit: text to 3D, avatars
+> from a prompt or a photo, auto-rigging, one-call rigged avatars, conversational
 > refinement, and a living body that lip-syncs replies.
 >
 > Free. Keyless. No account.
@@ -177,7 +177,7 @@ joint build.
 > https://chatgpt.com/share/6a72db63-ba08-83e8-bc96-c8e191b248b3
 >
 > Every model also carries a one-tap AR link, and any MCP client can wire in the
-> same nine tools with no auth: https://three.ws/api/mcp-studio
+> same tools with no auth: https://three.ws/api/mcp-studio
 
 Sequence: post the QT from @nichxbt, post the reply from @nichxbt, then retweet
 the QT from @trythreews. Plain retweet, not a second quote: the brand account

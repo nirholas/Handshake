@@ -28,14 +28,28 @@ package through the partner portal. Schema note for the smoke test: `forge_free`
 `{"prompt": "...", "tier"?: "draft"|"standard"|"high"}`; other extra properties are rejected with
 `-32602`.
 
-**Quality note (2026-07-14):** the studio generation tools default to the standard tier (up from
-draft). A first attempt at defaulting to the high tier was rolled back the same day: the only
-deployed free high-quality engine (Hunyuan3D via HF Spaces) blocks the submit for 50-280s with no
-poll handle, which no ChatGPT surface survives — a live E2E probe confirmed `lane_timeout`. The
-plumbing is in place (internal server-to-server token clears the premium gate; explicit
-`tier:"high"` requests degrade to standard on 402/timeout), and high-by-default lands once the
-async self-host Hunyuan3D worker (`workers/model-hunyuan3d`, forge lane behind `GCP_HUNYUAN3D_URL`)
-is deployed. Compliance surface unchanged: keyless, free, zero payment strings on the wire.
+**Quality note (re-verified live 2026-08-06):** the studio generation tools **default to the
+standard tier**, and every surface a reviewer can read says so: the `forge_free` tool schema
+(`"standard (default)"`), §1's tool table, and [`docs/mcp-studio.md`](../../../docs/mcp-studio.md).
+The **high tier is a real option the caller can ask for**, not a stub, but it is never the default.
+Both claims were proven end to end against production, with the tier read back from the durable
+`forge_creations` record rather than inferred from the response text
+([`forge-free-tier-evidence.json`](forge-free-tier-evidence.json)):
+
+| Call | Wall clock | Recorded tier | Engine | GLB |
+|---|---|---|---|---|
+| `forge_free {prompt}` (no tier) | 164 s | `standard` | `trellis_selfhost` | 5.07 MB |
+| `forge_free {prompt, tier:"high"}` | 144 s | `high` | `hunyuan3d` (self-hosted GPU worker) | 2.69 MB |
+
+Standard stays the default deliberately. Latency is not the discriminator (both lanes exceed a
+ChatGPT tool-call window, which is why `forge_free` returns a pollable job handle instead of an
+error when a generation outlives `STUDIO_FORGE_TIMEOUT_MS`). The reasons are that the Hunyuan3D
+worker is scale-to-zero, so a cold container adds a spin-up on top of the generation, and that the
+high-tier access gate is cleared only by the platform's internal server-to-server token: a
+deployment missing it would quietly serve standard while a "high by default" promise stayed on the
+page. An explicit `tier:"high"` request degrades to standard on a 402 or submit timeout rather than
+failing the conversation. Compliance surface unchanged: keyless, free, zero payment strings on the
+wire (the high tier is platform-funded; the ChatGPT user is never asked for anything).
 
 The two sections below are kept as the historical record of the defects and their fixes.
 
@@ -108,7 +122,7 @@ a separate surface, `api/_mcp-studio/component.js`; `/viewer` is the "open in a 
 | **App name** | **three.ws 3D Studio** |
 | **Tagline** | Turn a text prompt into a downloadable, animation-ready 3D model — free, inside ChatGPT. |
 | **Short description** | three.ws 3D Studio generates textured 3D models, avatars, and rigged characters from a text prompt (or a reference image) and renders each result inline in an interactive 3D viewer you can rotate, inspect, and download as a GLB. It can also auto-rig a static model into an animation-ready one. Free to use — no account, no key, no payment. |
-| **Long description** | Describe anything — "a friendly round robot mascot," "a low-poly treasure chest," "a knight character I can animate" — and three.ws 3D Studio builds a real, textured 3D model and shows it in an interactive viewer right in the conversation. Nine tools cover the full path from idea to asset: generate a model from text, generate an avatar, generate an art-directed mesh, auto-rig a static model into an animation-ready one, generate-then-rig a character in a single step, refine an existing model by describing a change, and save a rigged model as a persistent persona that can speak with lip-sync and emotion. Every result is a standard **GLB** you can download and drop into Blender, Unity, Unreal, three.js, or any glTF pipeline. Generation runs on three.ws's own free 3D lane, so there is nothing to sign up for and nothing to pay. Not natively possible in ChatGPT: turning language into a manipulable, downloadable 3D asset with an inline viewer. |
+| **Long description** | Describe anything ("a friendly round robot mascot," "a low-poly treasure chest," "a knight character I can animate") and three.ws 3D Studio builds a real, textured 3D model and shows it in an interactive viewer right in the conversation. Ten tools cover the full path from idea to asset: generate a model from text, generate an avatar, generate an art-directed mesh, auto-rig a static model into an animation-ready one, generate-then-rig a character in a single step, refine an existing model by describing a change, collect a detailed model that took longer than one turn, and save a rigged model as a persistent persona that can speak with lip-sync and emotion. Every result is a standard **GLB** you can download and drop into Blender, Unity, Unreal, three.js, or any glTF pipeline. Generation runs on three.ws's own free 3D lane, so there is nothing to sign up for and nothing to pay. Not natively possible in ChatGPT: turning language into a manipulable, downloadable 3D asset with an inline viewer. |
 | **Category** | Creativity & Design (secondary: Productivity) |
 | **Country availability** | All countries / Global (no geo-restriction; anonymous + free). |
 | **Age suitability** | Suitable for ages 13–17 (content-safety gate on every generation lane — §2.6). |
@@ -124,7 +138,7 @@ a separate surface, `api/_mcp-studio/component.js`; `/viewer` is the "open in a 
 4. `Make a rigged, animation-ready knight character I can pose.`
 5. `Model a small ceramic teapot with a bamboo handle and a celadon glaze.`
 
-### Tool list (titles as shown to users; matches live `tools/list`, re-pulled 2026-07-14)
+### Tool list (titles as shown to users; matches live `tools/list`, re-pulled 2026-08-06)
 | Tool | Title | What it does |
 |------|-------|--------------|
 | `forge_free` | Generate a 3D model from text | Text → textured GLB, platform-funded. Defaults to the standard tier (fast, reliable, textured); the caller may request `draft` (fastest) or `high` (best, slower; falls back to standard under load). |
@@ -133,9 +147,10 @@ a separate surface, `api/_mcp-studio/component.js`; `/viewer` is the "open in a 
 | `rig_mesh` | Rig a 3D model for animation | Static GLB URL → humanoid-rigged, animation-ready GLB. |
 | `forge_avatar` | Generate a rigged, animation-ready avatar | Text/image → generate + auto-rig in one step. |
 | `refine_model` | Refine a 3D model by describing a change | Existing GLB + instruction → regenerated model with version lineage. |
+| `check_job` | Check a pending 3D generation | Job id → the finished model, or a fresh pending state with a live ETA. Read-only; collects a generation that outran its original tool call. |
 | `create_agent_persona` | Save a rigged model as a living, persistent agent body | Rigged GLB + name → persona id (continuity across sessions). |
-| `get_agent_persona` | Reload a persona by id | Persona id → saved persona (read-only). |
-| `persona_say` | Speak a reply through a persona | Persona id + text → lip-sync, emotion, and gesture playback in the viewer. |
+| `get_agent_persona` | Reload a persona by id (continuity across sessions) | Persona id → saved persona (read-only). |
+| `persona_say` | Speak a reply through a persona: lip-sync + emotion + gesture | Persona id + text → lip-sync, emotion, and gesture playback in the viewer. |
 
 ---
 
@@ -177,17 +192,29 @@ three.ws separately serves a **general-platform** discovery manifest at `/.well-
 third-party agents and crawlers). That manifest describes the broader three.ws platform, not this app,
 and is **not** part of the Apps SDK review flow. To keep the app's own discovery story unambiguous, the
 3D Studio app additionally ships a dedicated, served OpenAPI at
-`https://three.ws/.well-known/3d-studio-openapi.yaml`, scoped to the free generation action
-(`/api/3d/studio`, POST to generate + GET to poll) with `security: []` (no auth) and no payment fields.
-The returned `arUrl` is a public place-in-your-room link, not a paid call. The schema is verified
-crypto/payment-free and kept byte-identical to the custom-GPT Action file by
-`tests/api/3d-studio-openapi.test.js`.
+`https://three.ws/.well-known/3d-studio-openapi.yaml`, scoped to the app's entire free surface and
+nothing else: `/api/3d/studio` (POST to generate + GET to poll) and `/api/ar` (GET, the
+place-in-your-room launch behind every returned `arUrl`), with `security: []` (no auth) and no payment
+fields. Every operation is `x-openai-isConsequential: false`; none of them charges anything. The schema
+is verified crypto/payment-free by `tests/api/3d-studio-openapi.test.js`, which also binds it to the
+real handler output, and the served copy is the source of truth: the custom-GPT Action file in this kit
+is regenerated from it by `npm run sync:studio-openapi` and a drift between them fails
+`npm run check:studio-openapi` (wired into `npm run gate`).
 
-> Owner note: the general `ai-plugin.json` and `openapi.yaml` under `/.well-known/` describe the paid
-> platform and are out of scope for this app's review. Two optional quality improvements to that
-> platform manifest (branded `logo_url` instead of the favicon; an explicit free-vs-paid split in the
-> descriptions) are staged as a recommendation only — they touch platform-positioning copy and are left
-> for owner sign-off, not changed as part of this submission.
+The general platform manifest was also cleaned up so it cannot be misread by anyone who does fetch it.
+`ai-plugin.json` now leads with the free, keyless lane (`/api/3d/studio`, `/api/mcp-studio`, the viewer,
+`/api/ar`, and the read-only market data endpoints, all under a "FREE and keyless, with no account, no
+API key and nothing to pay" heading) and presents the pay-per-call catalog second, as separate and
+optional. Its `logo_url` is the 512x512 owned-IP brand mark (`https://three.ws/pwa-512x512.png`, the
+same asset as the app icon) instead of the favicon, and `legal_info_url` is the canonical
+`https://three.ws/legal/tos` instead of the site root. The copy lives in
+`scripts/lib/discovery-copy.mjs` (the manifest is regenerated on every prebuild, so a hand-edit would
+not survive a deploy) and `tests/wellknown-manifests.test.js` pins the free-before-paid ordering, the
+branded logo, the legal URL, and the generator/manifest agreement.
+
+> Owner note: `ai-plugin.json` and the platform `openapi.yaml` under `/.well-known/` still describe the
+> paid platform, which is a real product surface and stays. Nothing was removed from it: the change is
+> ordering, framing, branding, and the legal URL.
 
 ### 2.2 No payments / no embedded checkout — **PASS**
 `api/mcp-studio.js` header: *"There is no OAuth, no x402, no wallet, no token, and no PaymentRequired
@@ -195,8 +222,8 @@ anywhere in this server — generation runs operator-funded."* No tool returns a
 checkout; the app charges the user nothing. (If monetization is ever added, OpenAI allows only physical
 goods via external checkout — out of scope here.)
 
-### 2.3 Tool annotations correct on all nine tools — **PASS**
-Pulled from the live `tools/list` (re-pulled 2026-07-14):
+### 2.3 Tool annotations correct on all ten tools: **PASS**
+Pulled from the live `tools/list` (re-pulled 2026-08-06):
 
 | Tool | readOnlyHint | destructiveHint | idempotentHint | openWorldHint |
 |------|:---:|:---:|:---:|:---:|
@@ -206,7 +233,8 @@ Pulled from the live `tools/list` (re-pulled 2026-07-14):
 | rig_mesh | false | false | false | **true** |
 | forge_avatar | false | false | false | **true** |
 | refine_model | false | false | false | **true** |
-| create_agent_persona | false | false | false | false |
+| check_job | **true** | false | **true** | **true** |
+| create_agent_persona | false | false | false | **true** |
 | get_agent_persona | **true** | false | **true** | false |
 | persona_say | false | false | false | false |
 
@@ -214,10 +242,14 @@ Rationale (matches OpenAI guidance): each generation tool **creates a new hosted
 read-only; it **never modifies or deletes** existing data → `destructiveHint: false` (generation is
 non-destructive; `refine_model` creates a new version, the parent is preserved in the lineage); same
 prompt yields a fresh mesh → not idempotent; generation runs against **external model APIs** →
-`openWorldHint: true`. The persona tools operate only on three.ws's own store → `openWorldHint:
-false`; `get_agent_persona` is a pure read → `readOnlyHint: true`, `idempotentHint: true`. Every tool
-also carries the widget `_meta` (`openai/outputTemplate`, `openai/widgetAccessible: true`) and
-human-readable `invoking`/`invoked` labels.
+`openWorldHint: true`. `check_job` only reads the state of a job already submitted → `readOnlyHint:
+true`, `idempotentHint: true`, and it still polls the external provider → `openWorldHint: true`.
+`get_agent_persona` and `persona_say` operate only on three.ws's own store → `openWorldHint: false`;
+`create_agent_persona` fetches the caller-supplied GLB from wherever it is hosted before taking a
+durable copy, so it keeps `openWorldHint: true`. `get_agent_persona` is a pure read →
+`readOnlyHint: true`, `idempotentHint: true`. Every tool also carries the widget `_meta`
+(`openai/outputTemplate`, `openai/widgetAccessible: true`) and human-readable `invoking`/`invoked`
+labels.
 
 ### 2.4 Data minimization — **PASS** (real request/response captured)
 Each tool response returns **only** what a client needs to show/download the model. The studio
@@ -329,7 +361,9 @@ viewport.]`
 **No credentials needed** (anonymous, free). Full flow re-verified green against production 2026-07-14.
 
 1. **Discover**: `initialize` → `tools/list` → `resources/list` against
-   `https://three.ws/api/mcp-studio`. Expect 9 tools + the `ui://widget/three-studio-model.html` resource.
+   `https://three.ws/api/mcp-studio`. Expect 10 tools + two resources,
+   `ui://widget/three-studio-model.html` (the inline 3D viewer) and
+   `ui://widget/three-studio-persona.html` (the living agent body).
 2. **Generate** a model that reliably succeeds — say to ChatGPT: *"Make a 3D model of a friendly round
    robot mascot, glossy white plastic."* Expect, in ~15–60s, an inline interactive 3D viewer with the
    model plus **Download / Spin / Recenter / Open in three.ws**.

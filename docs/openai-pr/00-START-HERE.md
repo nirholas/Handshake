@@ -24,7 +24,7 @@ the specific gaps that would fail review or embarrass us in front of OpenAI.
 
 | Surface | Where it lives | Notes |
 | --- | --- | --- |
-| Free MCP connector (submission target) | `api/mcp-studio.js`, `api/_mcp-studio/*` | Keyless. 9 tools. Real forge lane. |
+| Free MCP connector (submission target) | `api/mcp-studio.js`, `api/_mcp-studio/*` | Keyless. 10 tools (6 generation + `check_job` + 3 persona). Real forge lane. |
 | Inline ChatGPT widget (the real one) | `api/_mcp-studio/component.js` | `<model-viewer>` skybridge resource `ui://widget/three-studio-model.html` |
 | ~~Orphaned three.js widget~~ | Deleted | Was `apps-sdk/studio-viewer/*` + `scripts/build-apps-sdk-viewer.mjs` + `public/apps-sdk/*`, wired to nothing. Removed 2026-07-18 (task 01, Option A). Do not recreate it. |
 | Embodiment embed | `apps-sdk/embodiment/*`, `pages/embodiment/embed.html` | Persona widget iframes this. |

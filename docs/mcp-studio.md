@@ -31,12 +31,6 @@ declare an `openai/widgetCSP` whose allowlist includes the GLB storage origin,
 so models load inside real ChatGPT (which enforces the CSP), not just in
 permissive test harnesses.
 
-Reliability on the ChatGPT lanes: generations are pinned to the fast standard
-tier so a result always lands inside ChatGPT's patience window. When a call
-explicitly requests the high tier, the submit degrades gracefully back to
-standard on a 402 (the operator-funded high lane is out of credit) or on a
-submit timeout, rather than failing the conversation.
-
 ### Any MCP client
 
 ```bash
@@ -50,9 +44,12 @@ curl -s https://three.ws/api/mcp-studio \
 The same free lane also ships as a REST Actions surface for the **"three.ws 3D
 Studio"** custom GPT: `POST /api/3d/studio` submits a prompt and
 `GET /api/3d/studio?job=<id>` polls it, with an age-13+ safety gate and
-store-clean responses (model URLs and job state only). Full contract in the
-[API reference](./api-reference.md). Use the MCP connector above when you want
-inline 3D widgets; the custom GPT covers plans without connector support.
+store-clean responses (model URLs and job state only). The machine-readable
+contract is the OpenAPI schema the platform serves at
+[`https://three.ws/.well-known/3d-studio-openapi.yaml`](../public/.well-known/3d-studio-openapi.yaml),
+which is what the custom GPT imports; the same endpoint is written up in prose in
+the [API reference](./api-reference.md). Use the MCP connector above when you
+want inline 3D widgets; the custom GPT covers plans without connector support.
 
 How AR rides both ChatGPT surfaces (the `arUrl` contract, the device-aware
 launcher, living avatars, link unfurls) is documented end to end in
@@ -60,13 +57,18 @@ launcher, living avatars, link unfurls) is documented end to end in
 
 ## Tools
 
-The server exposes **ten** tools: the six generation tools documented here, the
-`check_job` collector, plus three persona/embodiment tools
-(`create_agent_persona`, `get_agent_persona`, `persona_say`) documented in the
-**Embodiment** section below. All ten are free and keyless.
+`tools/list` returns exactly **ten** tools, and they split three ways:
 
-All six generation tools are free and run operator-funded on the platform's own
-generation pipeline. Annotations: `readOnlyHint:false`, `destructiveHint:false`,
+- **Six generation tools** (`forge_free`, `text_to_avatar`, `mesh_forge`,
+  `rig_mesh`, `forge_avatar`, `refine_model`), in the table below.
+- **One collector**, `check_job`, also in the table below.
+- **Three persona/embodiment tools** (`create_agent_persona`,
+  `get_agent_persona`, `persona_say`), in the **Embodiment** section further down.
+
+All ten are free and keyless.
+
+The six generation tools run operator-funded on the platform's own generation
+pipeline. Annotations: `readOnlyHint:false`, `destructiveHint:false`,
 `idempotentHint:false`, `openWorldHint:true` (work runs against external model
 APIs; nothing is ever modified or deleted). `check_job` is the exception: it is a
 pure status probe (`readOnlyHint:true`, `idempotentHint:true`) and never counts
@@ -81,6 +83,33 @@ against the generation quota.
 | `forge_avatar` | Generate a rigged, animation-ready avatar | `prompt?` / `image_url?`, `allow_non_humanoid?` | rigged GLB avatar |
 | `refine_model` | Refine a 3D model by describing a change | `glb_url`, `instruction`, `parent_prompt?`, `parent_lineage?`, `parent_index?` | refined GLB + version lineage |
 | `check_job` | Check a pending 3D generation and collect it | `job_id` | GLB model, or an updated pending state |
+
+### Quality tiers
+
+`forge_free` takes an optional `tier` of `draft`, `standard`, or `high`.
+**`standard` is the default**, and it is what you get when you omit the
+argument. It is the balanced free lane: reliably textured, and served by
+whichever free engine the router picks for the prompt (typically the
+self-hosted TRELLIS worker).
+
+`high` is a real option, not a placeholder. Ask for it by name and the
+generation runs on our own self-hosted Hunyuan3D GPU worker for denser geometry.
+It stays opt-in rather than becoming the default for two reasons. That worker is
+scale-to-zero, so a cold container pays a spin-up on top of the generation. And
+the high lane is platform-funded behind an internal access gate: if the gate
+refuses (402) or the submit times out, the call degrades to standard rather than
+failing the conversation, so a default of `high` would sometimes mean serving
+standard while the docs promised more.
+
+Nothing here is ever billed to you. The high tier is platform-funded, so the
+caller stays anonymous and keyless at every tier. A generation can outlive one
+tool call at any tier; see [Pending generations](#pending-generations-check_job)
+for how it is collected rather than lost.
+
+One naming collision worth knowing: the npm package `@three-ws/mcp-server`
+([docs](./mcp.md)) also ships a tool called `forge_free`. That is a different
+server with its own default (`draft`, stated in its own tool schema). The
+default described here is the one for `https://three.ws/api/mcp-studio`.
 
 ### Response shape
 
@@ -195,10 +224,14 @@ or payments.
 |---|---|---|---|
 | `create_agent_persona` | Save a rigged model as a living, persistent agent body | `glb_url`, `name`, `voice?`, `source_prompt?` | `persona_id` + inline living body (idle) |
 | `get_agent_persona` | Reload a persona by id (continuity across sessions) | `persona_id` | the same body + turn count |
-| `persona_say` | Speak a reply — lip-sync + emotion + gesture | `persona_id`, `text`, `emotion?` | the body performing the reply |
+| `persona_say` | Speak a reply through a persona: lip-sync + emotion + gesture | `persona_id`, `text`, `emotion?` | the body performing the reply |
 
 Annotations: `create_agent_persona` and `persona_say` are writes
-(`readOnlyHint:false`); `get_agent_persona` is a pure read (`readOnlyHint:true`).
+(`readOnlyHint:false`); `get_agent_persona` is a pure read (`readOnlyHint:true`,
+`idempotentHint:true`). `create_agent_persona` carries `openWorldHint:true`
+because it fetches the GLB you hand it from wherever it lives before taking a
+durable copy; `get_agent_persona` and `persona_say` touch only three.ws's own
+store, so both are `openWorldHint:false`.
 
 **How it renders.** In ChatGPT (Apps SDK), each persona tool points its tool-level
 `_meta["openai/outputTemplate"]` at the registered
@@ -248,22 +281,39 @@ embodiment behaves identically on both tracks; both drive the one hosted embed.
 ## Funding & limits
 
 Generation is **operator-funded**: the platform's server-side keys cover provider
-cost, so the ChatGPT user pays nothing. Every tool routes through a **free lane**
-(NVIDIA NIM text→3D, Hugging Face Spaces image→3D) — the studio never selects the
-paid Replicate backend — so the platform's marginal cost per generation is zero.
+cost, so the ChatGPT user pays nothing, at any tier. Routing is **free-first**: no
+backend is pinned, and the health-aware router in `api/gpt-forge.js` prefers the
+free lanes (self-hosted TRELLIS, NVIDIA NIM text→3D, Hugging Face Spaces
+image→3D), so in the normal case the platform's marginal cost per generation is
+zero. The platform-keyed Replicate lane stays in the chain as a failover rung
+rather than being excluded, so a free-lane outage degrades to a slower or
+costlier engine instead of failing the user's request. Either way the cost lands
+on the platform and never on the caller: no key, no account, no payment surface.
+
 The endpoint still enforces real per-IP abuse protection (`api/_lib/rate-limit.js`):
 
 - **Burst:** 4 generations / minute / IP
 - **Hourly:** 30 generations / hour / IP
+- **Persona writes:** 20 / minute / IP (`create_agent_persona`, `persona_say`;
+  `get_agent_persona` is a read and rides the transport cap)
 - **Transport:** 300 requests / minute / IP (discovery, never throttled by the
   generation quota)
+- **Platform-wide breaker:** a global cap across every free-studio caller,
+  backstopping the shared GPU budget when many distinct IPs, each individually
+  under the hourly cap, would collectively drain it
 
-Because the lanes are zero-cost, these caps **fail open** if the rate-limiter
-backend has an outage — a Redis blip must never dead-end a free feature (the same
-posture as the paid server's own free lane). They enforce normally whenever the
-backend is healthy, and any accidental paid-lane spend is still fail-closed one
-layer down in `/api/gpt-forge` (the ChatGPT-dedicated clone of `/api/forge`;
-see the note under Environment).
+The generation quota is charged only when a request actually calls a generation
+tool, so `initialize`, `tools/list`, `resources/list`, and `check_job` are never
+throttled by it.
+
+Because the lanes are zero-cost, the **per-IP** caps **fail open** if the
+rate-limiter backend has an outage: a Redis blip must never dead-end a free
+feature (the same posture as the paid server's own free lane). The platform-wide
+breaker is the deliberate exception and **fails closed** in production, since a
+limiter outage is exactly when an unbounded global spend would do real damage.
+Any accidental paid-lane spend is still fail-closed one layer further down in
+`/api/gpt-forge` (the ChatGPT-dedicated clone of `/api/forge`; see the note under
+Environment).
 
 ## Safety
 
@@ -279,15 +329,23 @@ All optional — sensible production defaults:
 | Var | Default | Purpose |
 |---|---|---|
 | `STUDIO_API_BASE` | request origin → `PUBLIC_APP_ORIGIN` → `https://three.ws` | Origin to call `/api/gpt-forge` on |
+| `STUDIO_FORGE_TIMEOUT_MS` | `180000` | Generation poll budget |
+| `STUDIO_RIG_TIMEOUT_MS` | `180000` | Rig poll budget |
+| `STUDIO_REFINE_TIMEOUT_MS` | `180000` | `refine_model` poll budget |
+| `STUDIO_POLL_MS` | `3000` | Starting poll interval |
+| `STUDIO_POLL_MAX_MS` | `10000` | Ceiling the poll interval backs off to |
 
 Generation runs on `/api/gpt-forge` (`api/gpt-forge.js`), the ChatGPT-dedicated
 exact clone of `/api/forge`: same lanes, tiers, job tokens, and `forge_creations`
 rows, cloned so the ChatGPT pipeline can be tuned without touching the forge or
 any surface that rides it. The agent-facing REST endpoints (`/api/3d/generate`,
 `/api/v1/ai/text-to-3d`) stay on `/api/forge`.
-| `STUDIO_FORGE_TIMEOUT_MS` | `180000` | Generation poll budget |
-| `STUDIO_RIG_TIMEOUT_MS` | `180000` | Rig poll budget |
-| `STUDIO_POLL_MS` | `3000` | Poll interval |
+
+The inline widget and the `/api/ar` launch page both load Google's
+`<model-viewer>` from one pinned URL in
+[`api/_lib/model-viewer-cdn.js`](../api/_lib/model-viewer-cdn.js), which is also
+the origin the widget's `openai/widgetCSP` allowlists, so the script tag and its
+CSP entry cannot drift apart.
 
 ## Related
 

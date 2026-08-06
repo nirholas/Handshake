@@ -433,7 +433,7 @@ page also converts: it carries "Create your own" (into [/ar](/ar)) and "Open
 in 3D viewer" calls to action. See `GET|POST /api/render/glb` in the
 [API reference](./api-reference.md) for the renderer's parameters and limits.
 
-**For agents (MCP):** the free, read-only `export_ar` tool on the [3D Studio server](/docs/mcp) turns a GLB into the AR launch link plus a conformant [Spatial MCP](/docs/spatial-mcp) artifact (with the `ar` handoff populated):
+**For agents (MCP):** on the free, keyless connector at `/api/mcp-studio` every generation already returns `arUrl` in its result, so there is nothing extra to call. To build the link set for a GLB that connector did not generate, the read-only `export_ar` tool on the separate [`/api/mcp-3d` server](/docs/mcp-3d-studio) (account- or payment-gated) turns any public GLB into the AR launch link plus a conformant [Spatial MCP](/docs/spatial-mcp) artifact (with the `ar` handoff populated):
 
 ```jsonc
 // tools/call → export_ar { "glb_url": "https://three.ws/avatars/xbot.glb", "title": "Robot" }

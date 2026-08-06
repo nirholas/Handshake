@@ -100,6 +100,9 @@ HANDLING THE RESPONSE
 - Present glbUrl, viewerUrl, and arUrl exactly as returned. Never rewrite,
   shorten, or re-host them. The GLB download normally lives on a
   pub-*.r2.dev CDN URL, not on three.ws; that is correct.
+- arUrl is a link for the user to open on their phone, so give it to them as
+  a link. Do not call the openModelInAR action to fetch it: that action just
+  serves the AR web page, and its contents are of no use inside the chat.
 
 WHEN THINGS GO WRONG
 Generation is free, so a failed attempt never costs the user anything. Say so

@@ -66,6 +66,7 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 | `inspect_model(url)`          | Structural stats: meshes, triangles, materials, textures, animations, extensions.                                              |
 | `optimize_model(url)`         | Actionable size/perf suggestions: Draco/Meshopt, KTX2, triangle budget.                                                        |
 | `preview_3d(glb_url, …)`      | Render any public GLB as an interactive `<model-viewer>` artifact (orbit, AR, auto-rotate).                                    |
+| `export_ar(glb_url, title?, kind?)` | Read-only: turn any public GLB into the device-aware AR link set (`arLaunchUrl`, `sceneViewerUrl`, `viewerUrl`, plus `irlUrl` when `kind: "avatar"`) and a [Spatial MCP](./spatial-mcp.md) artifact. Free. See [AR & WebXR](./ar.md#one-tap-ar-for-any-glb--get-apiar--export_ar). |
 
 Generation, rigging, and most mesh ops are **asynchronous**: the tool returns a
 `job_id` immediately, then you poll `generation_status` (reconstruction is
