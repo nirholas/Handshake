@@ -511,6 +511,8 @@ A tip-back to whoever just tipped needs no destination: with `on_tip_received` p
 
 Owner caps live in `limits`: `per_action_usd`, `daily_usd`, `total_usd`. They are additive to the wallet policy, never a replacement, and a breach downgrades the fire to `skipped` or `paused` with an explanation rather than throwing.
 
+Every rolling ceiling a fire answers to (the rule's `daily_usd` and `total_usd`, and the wallet policy's own `daily_usd`) is reserved in the same statement that claims the execution row, under a per-agent lock, counting in-flight spends as spent. Two intents firing in the same sweep, or two overlapping sweeps, therefore cannot both spend headroom only one of them had.
+
 Validation failures are `422` with a precise code: `bad_trigger`, `bad_action`, `needs_threshold`, `needs_filter`, `needs_amount`, `needs_pct`, `needs_mint`, or `needs_destination`.
 
 ### GET /intents

@@ -672,10 +672,56 @@ export async function compileIntentFromText(text, ctx = {}) {
 // intent_id, run the real transfer/swap, finalize the row. doSpend(lamports)
 // returns { signature }.
 
+// Why did the atomic claim above write no row? Exactly one of: this event already
+// fired, or one of the three rolling ceilings is full. Re-read them (outside the
+// lock, which is fine for a message) so the owner sees the real reason instead of
+// a generic skip.
+async function claimRejection({ agentId, intentId, idemKey, usd, network, dailyUsd, intentDailyUsd, intentTotalUsd, sinceIso }) {
+	const [dupe] = await sql`
+		SELECT id FROM agent_custody_events
+		WHERE agent_id = ${agentId} AND idempotency_key = ${idemKey} LIMIT 1
+	`;
+	if (dupe) return { status: 'skipped', note: 'already fired for this event' };
+
+	if (intentTotalUsd != null) {
+		const spent = await intentSpentUsd(agentId, intentId, null);
+		if (spent + usd > intentTotalUsd + 1e-9) {
+			return { status: 'paused', note: `would exceed this rule's lifetime cap ($${intentTotalUsd})`, usd };
+		}
+	}
+	if (intentDailyUsd != null) {
+		const spent = await intentSpentUsd(agentId, intentId, sinceIso);
+		if (spent + usd > intentDailyUsd + 1e-9) {
+			return { status: 'paused', note: `would exceed this rule's daily budget ($${intentDailyUsd}; $${spent.toFixed(2)} used today)`, usd };
+		}
+	}
+	if (dailyUsd != null) {
+		const [row] = await sql`
+			SELECT COALESCE(SUM(usd), 0)::float8 AS s
+			FROM agent_custody_events
+			WHERE agent_id = ${agentId} AND network = ${network} AND event_type = 'spend'
+			  AND status IN ('ok', 'pending', 'confirmed') AND usd IS NOT NULL
+			  AND created_at > now() - interval '24 hours'
+		`;
+		const spent = Number(row?.s || 0);
+		return {
+			status: 'paused',
+			note: `would bring today's wallet spend to $${(spent + usd).toFixed(2)}, over the $${dailyUsd} daily limit`,
+			usd,
+		};
+	}
+	// No ceiling explains it and no duplicate exists: another writer claimed the
+	// same key between the insert and this read. Treat it as already fired.
+	return { status: 'skipped', note: 'already fired for this event' };
+}
+
 async function gatedSpend({ ctx, intent, discriminator, category, usd, lamports, rowMeta, doSpend }) {
 	const { agentId, ownerId, userId, network, dryRun, now } = ctx;
 
-	// 1) intent-level caps (per-action / daily / total) — owner's own ceilings.
+	// 1) intent-level caps (per-action / daily / total): the owner's own ceilings.
+	// The per-action cap is exact here (one value against a constant); the daily and
+	// lifetime budgets are re-checked atomically inside the claim in step 3, so this
+	// pass exists to reject early with a precise message, not to be the gate.
 	const lim = intent.limits || {};
 	if (lim.per_action_usd != null && usd > lim.per_action_usd + 1e-9) {
 		return { status: 'skipped', note: `over this rule's per-action cap ($${lim.per_action_usd})`, usd };
@@ -694,7 +740,11 @@ async function gatedSpend({ ctx, intent, discriminator, category, usd, lamports,
 		}
 	}
 
-	// 2) the agent spend policy — the SAME hard ceiling every outbound path obeys.
+	// 2) the agent spend policy: the SAME hard ceiling every outbound path obeys.
+	// This runs every non-daily guard (freeze, allowlist, NL policy rules, per-tx
+	// ceiling, anomaly, capability) and gives a fast, specific pause message. Its
+	// daily-cap read is advisory only; the binding daily check is the atomic claim
+	// below, which reserves headroom in the same statement that writes the row.
 	try {
 		await enforceSpendLimit({ agentId, meta: ctx.meta, category: 'intent', usdValue: usd, network });
 	} catch (e) {
@@ -704,18 +754,60 @@ async function gatedSpend({ ctx, intent, discriminator, category, usd, lamports,
 
 	if (dryRun) return { status: 'would_run', note: `would move ~$${usd.toFixed(2)}`, usd };
 
-	// 3) idempotent claim — one execution per (intent, discriminator).
+	// 3) Atomic claim: one execution per (intent, discriminator) AND a reservation
+	// against every rolling ceiling this spend answers to, in ONE statement under a
+	// per-agent advisory lock.
+	//
+	// The idempotency key alone only stops the SAME intent firing twice (security
+	// review M5). Racing distinct intents, or two overlapping sweeps, each read the
+	// same pre-spend totals under the old read-then-write shape and each passed,
+	// overshooting the wallet's daily USD cap and the rule's own budgets by up to
+	// one spend apiece. Counting 'pending' rows inside the lock is what makes the
+	// second caller see the first one's in-flight claim.
 	const idemKey = `intent:${intent.id}:${discriminator}`;
+	const dailyUsd = getSpendLimits(ctx.meta)?.daily_usd ?? null;
+	const intentDailyUsd = lim.daily_usd ?? null;
+	const intentTotalUsd = lim.total_usd ?? null;
+	const sinceIso = new Date(now.getTime() - 24 * 3600 * 1000).toISOString();
 	const claim = await sql`
+		WITH locked AS (
+			SELECT pg_advisory_xact_lock(hashtextextended(${String(agentId)}, 0))
+		),
+		wallet_day AS (
+			SELECT COALESCE(SUM(usd), 0)::float8 AS s
+			FROM agent_custody_events
+			WHERE agent_id = ${agentId} AND network = ${network} AND event_type = 'spend'
+			  AND status IN ('ok', 'pending', 'confirmed') AND usd IS NOT NULL
+			  AND created_at > now() - interval '24 hours'
+		),
+		rule_day AS (
+			SELECT COALESCE(SUM(usd), 0)::float8 AS s
+			FROM agent_custody_events
+			WHERE agent_id = ${agentId} AND usd IS NOT NULL
+			  AND status IN ('ok', 'pending', 'confirmed')
+			  AND meta->>'intent_id' = ${intent.id}
+			  AND created_at > ${sinceIso}::timestamptz
+		),
+		rule_life AS (
+			SELECT COALESCE(SUM(usd), 0)::float8 AS s
+			FROM agent_custody_events
+			WHERE agent_id = ${agentId} AND usd IS NOT NULL
+			  AND status IN ('ok', 'pending', 'confirmed')
+			  AND meta->>'intent_id' = ${intent.id}
+		)
 		INSERT INTO agent_custody_events
 			(agent_id, user_id, event_type, category, network, asset, amount_lamports, usd, status, idempotency_key, meta)
 		SELECT ${agentId}, ${userId ?? ownerId ?? null}, 'spend', ${category}, ${network}, 'SOL',
 		       ${lamports != null ? String(lamports) : null}, ${usd ?? null}, 'pending', ${idemKey},
 		       ${JSON.stringify({ ...rowMeta, intent_id: intent.id, intent_title: intent.title, trigger: intent.trigger?.type, action: intent.action?.type })}::jsonb
+		FROM wallet_day, rule_day, rule_life, locked
 		WHERE NOT EXISTS (SELECT 1 FROM agent_custody_events WHERE agent_id = ${agentId} AND idempotency_key = ${idemKey})
+		  AND (${dailyUsd}::float8 IS NULL OR wallet_day.s + ${usd}::float8 <= ${dailyUsd}::float8 + 1e-9)
+		  AND (${intentDailyUsd}::float8 IS NULL OR rule_day.s + ${usd}::float8 <= ${intentDailyUsd}::float8 + 1e-9)
+		  AND (${intentTotalUsd}::float8 IS NULL OR rule_life.s + ${usd}::float8 <= ${intentTotalUsd}::float8 + 1e-9)
 		RETURNING id
 	`;
-	if (!claim.length) return { status: 'skipped', note: 'already fired for this event' };
+	if (!claim.length) return await claimRejection({ agentId, intentId: intent.id, idemKey, usd, network, dailyUsd, intentDailyUsd, intentTotalUsd, sinceIso });
 	const eventId = claim[0].id;
 
 	try {
