@@ -17981,6 +17981,17 @@
 				"improvement"
 			],
 			"link": "/tour"
+		},
+		{
+			"date": "2026-08-06",
+			"title": "Market data that refuses to go down: 20+ free data sources joined the platform",
+			"summary": "Prices, charts, gas, news, and safety checks now stand on far more legs. Public market data from seven major exchanges backs up every price and chart if a primary source stumbles, and two more oracle networks back SOL pricing. Token safety reads now combine two independent rug checkers on Solana and simulate an actual sell on Ethereum-side tokens to catch honeypots. New free endpoints let anyone fetch normalized gas prices for 12 chains and read-only swap quotes on 6 chains, no key needed. Derivatives pages gained real options data, the news feed now listens to six crypto subreddits, and on-chain fundamentals like active addresses and fees flow in for BTC, ETH, and SOL. All of it runs on free public APIs with automatic failover.",
+			"tags": [
+				"feature",
+				"improvement",
+				"infra"
+			],
+			"link": "/changelog"
 		}
 	]
 }

@@ -1974,6 +1974,133 @@ curl -s 'https://three.ws/api/v1/resolve?address=0xd8dA6BF26964aF9D7eEd9e03E5341
 
 ---
 
+## Gas API
+
+Keyless EVM gas prices for 12 chains, normalized to EIP-1559 tiers. Backed by
+a failover chain of three free providers (Blocknative, then Owlracle, then the
+Etherscan gas oracle for Ethereum mainnet), each failing soft on its own 3.5s
+timeout. No key is required anywhere; `BLOCKNATIVE_API_KEY` and
+`OWLRACLE_API_KEY` are optional quota raisers.
+
+### Get gas estimate
+
+```
+GET /api/v1/gas?chain=<name|alias|chainId>
+GET /api/v1/gas?chains=1
+```
+
+Public, no auth. Server-side cached 10s per chain, so upstream keyless quotas
+see at most ~6 calls/min per chain regardless of client traffic. `chain`
+defaults to `ethereum`; `?chains=1` lists the supported chain/source table.
+
+| Query param | Type   | Description                                                                          |
+| ----------- | ------ | ------------------------------------------------------------------------------------ |
+| `chain`     | string | Chain name, alias, or numeric chainId: ethereum, base, bsc, polygon, arbitrum, optimism, avalanche, linea, fantom, cronos, moonriver, harmony. Default `ethereum`. |
+| `chains`    | string | Pass `1` to list supported chains and their source rungs instead of an estimate.     |
+
+**Response**
+
+```json
+{
+	"data": {
+		"chain": "ethereum",
+		"chainId": 1,
+		"unit": "gwei",
+		"baseFee": 0.42,
+		"tiers": {
+			"safe": { "maxFeePerGas": 0.52, "maxPriorityFeePerGas": 0.05 },
+			"standard": { "maxFeePerGas": 0.62, "maxPriorityFeePerGas": 0.1 },
+			"fast": { "maxFeePerGas": 0.84, "maxPriorityFeePerGas": 0.3 }
+		},
+		"source": "blocknative",
+		"ts": 1754438400000
+	}
+}
+```
+
+**Examples**
+
+```bash
+curl -s 'https://three.ws/api/v1/gas'
+curl -s 'https://three.ws/api/v1/gas?chain=base'
+curl -s 'https://three.ws/api/v1/gas?chains=1'
+```
+
+**Errors**
+
+| Status | Code                  | Meaning                                                          |
+| ------ | --------------------- | ---------------------------------------------------------------- |
+| `400`  | `unsupported_chain`   | Unknown chain; the error body names every supported chain        |
+| `429`  | `rate_limited`        | Over the per-IP limit; back off per `retry_after`                |
+| `503`  | `sources_unavailable` | Every rung for this chain failed; transient, retry shortly       |
+
+---
+
+## EVM Swap Quote API
+
+Read-only swap quotes over a keyless failover chain: ParaSwap, then KyberSwap,
+then LI.FI, first success wins, each rung on its own 7s soft-fail timeout.
+Quotes only: the endpoint never returns calldata and never builds, signs, or
+sends a transaction.
+
+### Get a swap quote
+
+```
+GET /api/v1/evm/swap-quote?chain=<chain>&sellToken=<0x…>&buyToken=<0x…>&amount=<raw units>
+```
+
+Public, no auth, no key. Rate limited to **30 requests/min per IP**; successful
+quotes carry a 10s public cache header.
+
+| Query param | Type   | Description                                                                                     |
+| ----------- | ------ | ----------------------------------------------------------------------------------------------- |
+| `chain`     | string | Chain name, alias, or numeric id: ethereum, base, polygon, arbitrum, optimism, bsc. Required.   |
+| `sellToken` | string | `0x…` token address to sell; `0xeeee…eeee` for the native coin. Required.                       |
+| `buyToken`  | string | `0x…` token address to buy. Required.                                                           |
+| `amount`    | string | Sell amount in raw base units (integer string, e.g. `1000000000000000000` for 1e18). Required.  |
+
+**Response**
+
+```json
+{
+	"data": {
+		"provider": "paraswap",
+		"quote": {
+			"provider": "paraswap",
+			"chain": "base",
+			"chainId": 8453,
+			"sellToken": "0x4200000000000000000000000000000000000006",
+			"buyToken": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+			"sellAmount": "1000000000000000000",
+			"buyAmount": "1914110000",
+			"price": 1914.11,
+			"estimatedGas": 185000,
+			"gasUsd": 0.01,
+			"sellAmountUsd": 1913.9,
+			"buyAmountUsd": 1914.11,
+			"venue": "UniswapV3"
+		},
+		"attempts": [{ "provider": "paraswap", "ok": true }]
+	}
+}
+```
+
+**Examples**
+
+```bash
+curl -s 'https://three.ws/api/v1/evm/swap-quote?chain=base&sellToken=0x4200000000000000000000000000000000000006&buyToken=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913&amount=1000000000000000000'
+```
+
+**Errors**
+
+| Status | Code                | Meaning                                                                 |
+| ------ | ------------------- | ----------------------------------------------------------------------- |
+| `400`  | `validation_error`  | Missing/invalid chain, token address, or amount, or sellToken equals buyToken |
+| `429`  | `rate_limited`      | Over 30 requests/min from this IP; back off per `retry_after`           |
+| `502`  | `quote_unavailable` | All three providers failed; the body names each rung's failure          |
+
+---
+
 ## Pump.fun Market Data API
 
 Free, keyless, versioned pump.fun market data under the cataloged `/api/v1`

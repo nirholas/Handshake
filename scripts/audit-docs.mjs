@@ -272,6 +272,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['economy-heartbeat', 'internal: scheduled-job operations'],
 	['economy-master', 'internal: funding-root wallet operations'],
 	['financial-controls', 'internal: audit-grade money-flow register'],
+	['free-crypto-apis', 'internal: engineering research catalog of external free APIs'],
 	['google-x-accounts', 'internal: outreach directory of external X accounts'],
 	['ibm-community-article', 'internal: source draft of an IBM Community post'],
 	['ibm-community-blog-meetup-jessica', 'internal: source draft of an IBM Community post'],
