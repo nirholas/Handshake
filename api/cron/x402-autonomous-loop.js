@@ -570,7 +570,7 @@ export default wrapCron(async (req, res) => {
 				continue;
 			}
 
-			// Fee-budget admission — the caller-side twin of the settle path's wallet
+			// Fee-budget admission: the caller-side twin of the settle path's wallet
 			// fee governor, and the guard this loop was missing while the ring's
 			// payX402() already had it (api/_lib/x402/pay.js). Once the fee wallet has
 			// spent its daily SOL budget the facilitator refuses every settle, so an
