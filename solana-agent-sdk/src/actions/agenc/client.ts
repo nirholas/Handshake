@@ -23,16 +23,24 @@ import bs58 from "bs58";
 export type AgenCCluster = "mainnet" | "devnet";
 
 /**
- * Devnet AgenC program ID validated by the protocol team on 2026-03-22.
- * Source: https://docs.agenc.tech/docs/runtime/api/.
+ * Devnet AgenC program ID as published by the protocol team on 2026-03-22
+ * (source: https://docs.agenc.tech/docs/runtime/api/).
+ *
+ * HISTORICAL, and no longer the client default. The bundled
+ * `AGENC_COORDINATION_IDL` now declares a different address, and the IDL is what
+ * Anchor executes every instruction against, so `createAgenCClient` derives its
+ * `programId` from the program itself. Kept as a named export for callers that
+ * pin this specific deployment via `opts.programId`; do not reintroduce it as a
+ * default, or reads and writes drift onto two different programs.
  */
 export const AGENC_DEVNET_PROGRAM_ID = new PublicKey(
   "6UcJzbTEemBz3aY5wK5qKHGMD7bdRsmR4smND29gB2ab",
 );
 
 /**
- * Mainnet AgenC program ID. `PROGRAM_ID` exported from `@tetsuo-ai/sdk`
- * points at mainnet; we re-export here for clarity at call sites.
+ * Mainnet AgenC program ID re-exported from `@tetsuo-ai/sdk`. Same caveat as
+ * AGENC_DEVNET_PROGRAM_ID: historical, not the client default. The IDL address
+ * wins.
  */
 export const AGENC_MAINNET_PROGRAM_ID = PROGRAM_ID;
 
@@ -145,14 +153,21 @@ export function createAgenCClient(opts: AgenCClientOptions = {}): AgenCClient {
     preflightCommitment: "confirmed",
   });
 
-  const programId =
-    opts.programId ??
-    (cluster === "devnet"
-      ? AGENC_DEVNET_PROGRAM_ID
-      : AGENC_MAINNET_PROGRAM_ID);
-
   const idl = AGENC_COORDINATION_IDL as unknown as Idl;
   const program = new Program(idl, provider);
+
+  // PDA derivation MUST use the same program the instructions execute against.
+  // Anchor builds `program` from the IDL's declared address, so that address is
+  // authoritative for both reads and writes; the AGENC_*_PROGRAM_ID constants
+  // below have drifted from it. Defaulting `programId` to the constants split
+  // the client in two: writes landed under the IDL's program while
+  // deriveAgenCAgentPda/deriveTaskPda derived addresses under the stale one, so
+  // every read resolved to an account that does not exist. The visible symptom
+  // was a registration that could never be idempotent: getAgenCAgent returned
+  // null for an agent that was plainly on-chain, the caller re-registered, and
+  // the program failed with "Allocate: account already in use". Reading the
+  // address off the program keeps the two in step through any redeploy.
+  const programId = opts.programId ?? program.programId;
 
   return { connection, program, programId, cluster, signer };
 }
