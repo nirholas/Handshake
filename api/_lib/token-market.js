@@ -8,8 +8,15 @@
 //
 // The $THREE-specific oracle (/api/x402/three-intel) keeps its own THREE-branded
 // copy on purpose — it is pinned to one mint and unit-tested as such.
+//
+// EVM addresses additionally get a keyless Honeypot.is sell-simulation
+// (api/_lib/honeypot.js) attached as `honeypot`, fetched in parallel with the
+// market read and failing soft to null; buildTokenRisk folds it into the risk
+// score. Solana mints keep their security read in the Oracle aggregator
+// (GoPlus + RugCheck, api/_lib/oracle/market.js) and /api/v1/token/security.
 
 import { isValidSolanaAddress, isValidEvmAddress } from './validate.js';
+import { fetchHoneypot, honeypotChainId } from './honeypot.js';
 
 const DEXSCREENER_TOKENS = 'https://api.dexscreener.com/latest/dex/tokens/';
 
@@ -45,19 +52,31 @@ function num(v) {
  * the buyer is never charged for missing data).
  *
  * @param {string} ca contract address (Solana mint or EVM 0x)
- * @param {{ signal?: AbortSignal, chain?: string|null }} [opts] `chain` restricts
- *   the pair search to one DexScreener chainId (e.g. 'solana', 'base') — an EVM
- *   contract deployed on several chains otherwise resolves to whichever chain
- *   holds the deepest pool.
+ * @param {{ signal?: AbortSignal, chain?: string|null, security?: boolean }} [opts]
+ *   `chain` restricts the pair search to one DexScreener chainId (e.g.
+ *   'solana', 'base'); an EVM contract deployed on several chains otherwise
+ *   resolves to whichever chain holds the deepest pool. `security: false`
+ *   skips the Honeypot.is simulation for callers that only want price shape.
  * @returns {Promise<null | {
  *   mint: string, symbol: string|null, name: string|null, image: string|null,
  *   chain: string|null, dex: string|null, pair_url: string|null,
  *   price_usd: number|null, change_24h: number|null, market_cap_usd: number|null,
  *   fdv_usd: number|null,
  *   liquidity_usd: number|null, volume_24h_usd: number|null, pair_created_at: number|null,
+ *   honeypot: object|null,
  * }>}
  */
 export async function fetchTokenMarket(ca, opts = {}) {
+	// EVM addresses also get Honeypot.is's keyless buy/sell simulation, kicked
+	// off in parallel with the market read and failing soft to null. When the
+	// caller pinned a chain Honeypot.is cannot simulate, skip it entirely
+	// rather than let auto-detection describe a sibling deployment elsewhere.
+	const pinnedHpChain = opts.chain ? honeypotChainId(opts.chain) : undefined;
+	const wantHoneypot = chainOf(ca) === 'evm' && opts.security !== false && pinnedHpChain !== null;
+	const honeypotPromise = wantHoneypot
+		? fetchHoneypot(ca, { chainId: pinnedHpChain ?? undefined }).catch(() => null)
+		: Promise.resolve(null);
+
 	const r = await fetch(`${DEXSCREENER_TOKENS}${encodeURIComponent(ca)}`, {
 		headers: { Accept: 'application/json' },
 		signal: opts.signal ?? AbortSignal.timeout(6000),
@@ -87,6 +106,23 @@ export async function fetchTokenMarket(ca, opts = {}) {
 	const pairLabel =
 		base.symbol && quote.symbol ? `${base.symbol}/${quote.symbol}` : null;
 
+	// Attribute the honeypot simulation to the SAME deployment DexScreener
+	// resolved. If the deepest pool lives on a chain Honeypot.is cannot
+	// simulate, drop the report (it would describe a sibling deployment). If
+	// the chain is simulatable but the unpinned answer missed or landed on a
+	// different chain (auto-detection misses Base-native tokens), re-run once,
+	// pinned to the resolved chain.
+	let honeypot = await honeypotPromise;
+	if (wantHoneypot) {
+		const want = honeypotChainId(p.chainId);
+		const got = honeypot?.chain?.id != null ? String(honeypot.chain.id) : null;
+		if (want == null) {
+			honeypot = null;
+		} else if (got !== String(want) && (honeypot != null || pinnedHpChain == null)) {
+			honeypot = await fetchHoneypot(ca, { chainId: want }).catch(() => null);
+		}
+	}
+
 	return {
 		mint: tok.address || ca,
 		symbol: tok.symbol || null,
@@ -115,6 +151,9 @@ export async function fetchTokenMarket(ca, opts = {}) {
 		// Buy/sell transaction counts over 24 h — real order flow, the difference
 		// between accumulation and distribution behind the same price move.
 		txns_24h: { buys: num(txns.h24?.buys), sells: num(txns.h24?.sells) },
+		// Honeypot.is buy/sell simulation for EVM deployments; null for Solana
+		// mints, unsupported chains, or when the simulator is unavailable.
+		honeypot,
 	};
 }
 
@@ -137,7 +176,8 @@ function fmtAge(ms) {
 /**
  * Score the safety of any token from its live market shape — the due-diligence
  * layer behind the CA → x402 oracle. Higher score = MORE risk (0 safe … 100
- * critical). Every input is real DexScreener data; nothing is fabricated, and a
+ * critical). Every input is real DexScreener data (plus the real Honeypot.is
+ * simulation on `m.honeypot` for EVM tokens); nothing is fabricated, and a
  * missing field degrades to an honest "unknown" factor rather than a fake pass.
  *
  * `now` is injectable so the result is deterministic under test.
@@ -200,7 +240,38 @@ export function buildTokenRisk(m, now = Date.now()) {
 		}
 	}
 
-	// 4) Order flow — are the trades net buys or net sells over 24 h?
+	// 4) Honeypot simulation (EVM tokens): Honeypot.is actually buys and sells
+	// the token on a fork of its chain. A failed sell is the one scam the
+	// market shape above cannot see; heavy taxes and an unverified contract
+	// are its milder cousins. Absent for Solana mints and when the simulator
+	// is unavailable, so the factor list degrades honestly, never fabricates.
+	const hp = m.honeypot;
+	if (hp) {
+		if (hp.is_honeypot === true) {
+			factors.push({ label: 'Honeypot', status: 'critical', detail: `Sell simulation FAILED${hp.honeypot_reason ? ` (${hp.honeypot_reason})` : ''}: holders cannot exit.` });
+			risk += 55;
+		} else if (hp.simulation_success === false) {
+			factors.push({ label: 'Honeypot', status: 'high', detail: 'Buy/sell simulation could not complete; sellability is unproven.' });
+			risk += 18;
+		} else {
+			const tax = Math.max(hp.buy_tax ?? 0, hp.sell_tax ?? 0, hp.transfer_tax ?? 0);
+			if (tax >= 20) {
+				factors.push({ label: 'Honeypot', status: 'high', detail: `Sell simulation passes but taxes run ${Math.round(tax)}%; exits are heavily skimmed.` });
+				risk += 22;
+			} else if (tax >= 10) {
+				factors.push({ label: 'Honeypot', status: 'medium', detail: `Simulated round-trip tax is ${Math.round(tax)}%.` });
+				risk += 10;
+			} else {
+				factors.push({ label: 'Honeypot', status: 'low', detail: 'Sell simulation passes with negligible taxes.' });
+			}
+		}
+		if (hp.open_source === false) {
+			factors.push({ label: 'Contract', status: 'medium', detail: 'Contract source is not verified; behavior cannot be audited.' });
+			risk += 8;
+		}
+	}
+
+	// 5) Order flow: are the trades net buys or net sells over 24 h?
 	const buys = m.txns_24h?.buys;
 	const sells = m.txns_24h?.sells;
 	if (buys != null && sells != null && buys + sells > 0) {

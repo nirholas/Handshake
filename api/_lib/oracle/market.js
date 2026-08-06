@@ -17,15 +17,18 @@
 //   · GeckoTerminal(keyless) — total supply, FDV, graduation %, CoinGecko id
 //   · GoPlus       (keyless) — mint/freeze authority, mutable metadata, transfer
 //                              fee, holder count + top-10 concentration
+//   · RugCheck     (keyless) - overall 0-100 risk score, named risk findings,
+//                              LP-lock % (second security opinion next to GoPlus)
 //   · Birdeye      (keyed)   — holders + circulating supply + price (redundancy)
 //   · CoinGecko    (keyed)   — ATH/ATL, market-cap rank, categories (listed coins)
 //
 // Merge precedence favors the richest/most-specific source per field; every
 // number traces to a live upstream. Cached L1 (per-instance) + L2 (Upstash) so a
-// coin page poll almost never fans out to six upstreams.
+// coin page poll almost never fans out to seven upstreams.
 
 import { cacheGet, cacheSet } from '../cache.js';
 import { createCache } from '../mem-cache.js';
+import { fetchRugcheckSummary } from '../rugcheck.js';
 import { bondingProgressPct } from '../pump-bonding.js';
 import { gmgnTokenUrl } from '../../../src/shared/trading-terminals.js';
 
@@ -229,6 +232,26 @@ async function fromGoPlus(mint) {
 	};
 }
 
+// RugCheck is the second security opinion next to GoPlus: GoPlus states the
+// on-chain facts (authorities, fees, concentration); RugCheck grades the mint
+// with its own risk engine (normalized 0-100 score where higher is riskier,
+// named findings, LP-lock coverage). The two blend in mergeMarketSources with
+// either one failing soft, so a GoPlus outage no longer blanks `security`.
+async function fromRugCheck(mint) {
+	const s = await fetchRugcheckSummary(mint);
+	if (!s) return null;
+	return {
+		sources: ['rugcheck'],
+		security: {
+			rugcheck_score: s.score_normalised,
+			rugcheck_level: s.level,
+			rugcheck_risks: s.risks,
+			lp_locked_pct: s.lp_locked_pct,
+			source: 'rugcheck',
+		},
+	};
+}
+
 async function fromBirdeye(mint) {
 	const key = process.env.BIRDEYE_API_KEY;
 	if (!key) return null;
@@ -308,11 +331,11 @@ function pick(partials, path) {
  *
  * @param {string} mint
  * @param {string} network
- * @param {{dex?:object,pump?:object,gecko?:object,goplus?:object,birdeye?:object,coingecko?:object}} p
+ * @param {{dex?:object,pump?:object,gecko?:object,goplus?:object,rugcheck?:object,birdeye?:object,coingecko?:object}} p
  * @param {string} fetchedAt ISO timestamp (injected so the merge stays pure)
  */
 export function mergeMarketSources(mint, network, p, fetchedAt) {
-	const { dex, pump, gecko, goplus, birdeye, coingecko } = p;
+	const { dex, pump, gecko, goplus, rugcheck, birdeye, coingecko } = p;
 	// Precedence chains per field family (richest/most-specific first).
 	const idOrder = [pump, dex, gecko, birdeye];
 	const priceOrder = [dex, birdeye, gecko];
@@ -320,7 +343,19 @@ export function mergeMarketSources(mint, network, p, fetchedAt) {
 	const liqOrder = [dex, gecko, birdeye];
 	const supplyOrder = [gecko, birdeye, pump, goplus];
 
-	const sources = [...new Set([dex, pump, gecko, goplus, birdeye, coingecko].filter(Boolean).flatMap((s) => s.sources || []))];
+	const sources = [...new Set([dex, pump, gecko, goplus, rugcheck, birdeye, coingecko].filter(Boolean).flatMap((s) => s.sources || []))];
+
+	// Security blends the two independent opinions: GoPlus's on-chain facts keep
+	// their fields, RugCheck contributes its score/findings/LP-lock alongside
+	// (`rugcheck_*` keys, no collisions). Either opinion alone still yields a
+	// security block; `source` names exactly who answered.
+	const security = goplus?.security || rugcheck?.security
+		? {
+			...(rugcheck?.security || {}),
+			...(goplus?.security || {}),
+			source: [goplus?.security ? 'goplus' : null, rugcheck?.security ? 'rugcheck' : null].filter(Boolean).join('+'),
+		}
+		: null;
 
 	// pump.fun graduation truth: prefer the explicit flag, fall back to Gecko's %.
 	const pf = pump?.pumpfun || {};
@@ -390,7 +425,7 @@ export function mergeMarketSources(mint, network, p, fetchedAt) {
 			decimals: num(pick([gecko, birdeye], 'identity.decimals')) ?? 6,
 		},
 		pumpfun,
-		security: goplus?.security || null,
+		security,
 		top_holders: goplus?.top_holders || [],
 		listing: coingecko?.listing || (gecko?.coingecko_id ? { coingecko_id: gecko.coingecko_id } : null),
 		pairs: dex?.pairs || [],
@@ -439,23 +474,24 @@ export async function fetchCoinMarket(mint, network = 'mainnet', { fresh = false
 	}
 
 	// Stage 1: every keyless/keyed source that resolves from the mint alone.
-	const [dex, pump, gecko, goplus, birdeye] = await Promise.all([
+	const [dex, pump, gecko, goplus, rugcheck, birdeye] = await Promise.all([
 		fromDexScreener(mint).catch(() => null),
 		network === 'mainnet' ? fromPumpFun(mint).catch(() => null) : Promise.resolve(null),
 		fromGeckoTerminal(mint).catch(() => null),
 		network === 'mainnet' ? fromGoPlus(mint).catch(() => null) : Promise.resolve(null),
+		network === 'mainnet' ? fromRugCheck(mint).catch(() => null) : Promise.resolve(null),
 		fromBirdeye(mint).catch(() => null),
 	]);
 
 	// Every upstream missed and we have no price — a true "no market" answer.
-	if (!dex && !pump && !gecko && !goplus && !birdeye) return null;
+	if (!dex && !pump && !gecko && !goplus && !rugcheck && !birdeye) return null;
 
 	// Stage 2: CoinGecko, but only for coins Gecko proved are listed (has an id).
 	const coingecko = gecko?.coingecko_id
 		? await fromCoinGecko(gecko.coingecko_id).catch(() => null)
 		: null;
 
-	const merged = mergeMarketSources(mint, network, { dex, pump, gecko, goplus, birdeye, coingecko }, new Date().toISOString());
+	const merged = mergeMarketSources(mint, network, { dex, pump, gecko, goplus, rugcheck, birdeye, coingecko }, new Date().toISOString());
 
 	// Only cache a read that actually established a live price — never memoize a
 	// hollow all-null result that a transient outage produced.
