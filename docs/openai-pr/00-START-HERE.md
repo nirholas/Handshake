@@ -26,7 +26,7 @@ the specific gaps that would fail review or embarrass us in front of OpenAI.
 | --- | --- | --- |
 | Free MCP connector (submission target) | `api/mcp-studio.js`, `api/_mcp-studio/*` | Keyless. 9 tools. Real forge lane. |
 | Inline ChatGPT widget (the real one) | `api/_mcp-studio/component.js` | `<model-viewer>` skybridge resource `ui://widget/three-studio-model.html` |
-| Orphaned three.js widget | `apps-sdk/studio-viewer/*`, `scripts/build-apps-sdk-viewer.mjs`, `public/apps-sdk/*` | NOT wired to anything. See task 01. |
+| ~~Orphaned three.js widget~~ | Deleted | Was `apps-sdk/studio-viewer/*` + `scripts/build-apps-sdk-viewer.mjs` + `public/apps-sdk/*`, wired to nothing. Removed 2026-07-18 (task 01, Option A). Do not recreate it. |
 | Embodiment embed | `apps-sdk/embodiment/*`, `pages/embodiment/embed.html` | Persona widget iframes this. |
 | AR-in-ChatGPT | `api/ar.js`, `api/_lib/ar-launch.js` | Every generation carries `arUrl`. |
 | Custom GPT Actions (REST) | `api/3d/studio.js`, `prompts/store-submissions/_generated/openai-actions.yaml` | GPT Store listing is live. |
@@ -37,7 +37,7 @@ the specific gaps that would fail review or embarrass us in front of OpenAI.
 
 | # | Brief | Priority | Blocks submit? |
 | --- | --- | --- | --- |
-| 01 | [Resolve the orphaned studio-viewer widget](01-orphan-widget-resolution.md) | P0 | Yes (dead code + false docs) |
+| 01 | [Resolve the orphaned studio-viewer widget](01-orphan-widget-resolution.md) | P0 | Done 2026-07-18 (Option A: deleted) |
 | 02 | [Reconcile the served `.well-known` manifests with the zero-payment claim](02-wellknown-manifest-conflict.md) | P0 | Yes (reviewer-discoverable crypto surface) |
 | 03 | [Make the `forge_free` tier story true everywhere](03-forge-free-tier-truth.md) | P1 | Yes (submission doc contradicts code) |
 | 04 | [Close the test gaps on the ChatGPT-facing surface](04-openai-surface-test-coverage.md) | P1 | No, but required for "done" |
@@ -45,7 +45,7 @@ the specific gaps that would fail review or embarrass us in front of OpenAI.
 | 06 | [Fix doc accuracy and reconcile the tool-count story](06-docs-accuracy-reconciliation.md) | P1 | No |
 | 07 | [Final live verification and submit checklist](07-final-verification-and-submit.md) | P2 (runs last) | Yes (the actual go/no-go) |
 
-Run 01, 02, 03 first (they change code and docs the later tasks depend on). 04, 05,
+Run 02 and 03 first of what remains (01 is already done; they change code and docs the later tasks depend on). 04, 05,
 06 can run in parallel after. 07 runs last, after everything else is merged.
 
 ## Rules every task must follow (from `CLAUDE.md`)

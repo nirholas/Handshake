@@ -1,6 +1,6 @@
 # Task 01 — Resolve the orphaned studio-viewer widget (P0)
 
-> **Resolved 2026-07-18** in commit `0b50834d7` ("Refactor apps-sdk studio viewer"): the orphaned viewer source and its build script were removed, exactly as this task specifies. Kept as the record of the finding; the file links below point at the now-deleted paths and are left as plain code references.
+> **Resolved 2026-07-18 via Option A** in commit `19c379125` ("Refactor apps-sdk studio viewer and update OpenAI store submission"): `apps-sdk/studio-viewer/src.js`, `scripts/build-apps-sdk-viewer.mjs`, the `build:apps-sdk-viewer` entry in `package.json`, and both generated artifacts under `public/apps-sdk/` were deleted, and `apps-sdk/README.md` plus `ARCHITECTURE.md` were rewritten to point at the real widget (`api/_mcp-studio/component.js`, resource `ui://widget/three-studio-model.html`). `STRUCTURE.md` never referenced the orphan, so it needed no change. Kept as the record of the finding; the file links below point at the now-deleted paths and are left as plain code references.
 
 Read [`00-START-HERE.md`](00-START-HERE.md) first for the shared rules and the map.
 

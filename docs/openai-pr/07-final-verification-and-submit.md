@@ -55,9 +55,10 @@ go/no-go report. Do not submit; prepare so the human's final submit is one actio
 - [ ] Screenshots in `prompts/store-submissions/_generated/openai-screenshots/` show
       the CURRENT shipped widget and resolve the `[HUMAN verify]` dimension flag
       (confirm they meet OpenAI's required screenshot dimensions; re-shoot against the
-      live widget if stale). If Task 01 chose to delete the orphaned three.js viewer,
-      make sure no screenshot or evidence file still points at
-      `https://three.ws/apps-sdk/studio-viewer.html` as "the widget."
+      live widget if stale). Task 01 deleted the orphaned three.js viewer, so confirm
+      no screenshot or evidence file still points at the retired
+      `https://three.ws/apps-sdk/` viewer URL as "the widget" (verified clean on
+      2026-08-06; re-check after any evidence regeneration).
 - [ ] `TRACKER.md` `[HUMAN: ...]` items: resolve every one you technically can (e.g.
       the duplicate-draft-GPT deletion if you have access); leave only items that
       genuinely require the human's partner-portal login, and list them explicitly.

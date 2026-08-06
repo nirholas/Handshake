@@ -2,8 +2,8 @@
 
 Read [`00-START-HERE.md`](00-START-HERE.md) first. This task cleans up the
 documentation drift the audit found, EXCEPT the two docs owned by other tasks
-(`apps-sdk/README.md` studio-viewer section is Task 01; the `forge_free` tier claim is
-Task 03). Do not fight those tasks for those specific edits; coordinate.
+(`apps-sdk/README.md` was Task 01, already landed on 2026-07-18; the `forge_free` tier
+claim is Task 03). Do not fight those tasks for those specific edits; coordinate.
 
 ## The problems (verified)
 
@@ -38,7 +38,8 @@ Task 03). Do not fight those tasks for those specific edits; coordinate.
    `docs/ar.md` end to end against the code. Every `ui://` URI, file path, endpoint,
    env var, and example must resolve and be correct. Fix any that are stale. The audit
    already confirmed `docs/chatgpt-ar.md` correctly points at `component.js` (good) and
-   that `apps-sdk/README.md` is the worst offender (Task 01 owns that one).
+   that `apps-sdk/README.md` was the worst offender; Task 01 rewrote it on 2026-07-18,
+   so treat it as correct unless a link in it stops resolving.
 
 ## Constraints
 
@@ -46,9 +47,9 @@ Task 03). Do not fight those tasks for those specific edits; coordinate.
   must run, every link must resolve to a live path (`CLAUDE.md` documentation rules).
 - Not a crypto surface; commit gate does not apply. Do not introduce any non-$THREE
   coin reference into the docs.
-- Coordinate: leave the `apps-sdk/README.md` studio-viewer section to Task 01 and the
-  `forge_free` tier language to Task 03. If those tasks have not landed yet, note the
-  dependency rather than duplicating their edits.
+- Coordinate: `apps-sdk/README.md` was rewritten by Task 01 (landed) and is accurate;
+  leave the `forge_free` tier language to Task 03. If Task 03 has not landed yet, note
+  the dependency rather than duplicating its edits.
 
 ## Verification
 
