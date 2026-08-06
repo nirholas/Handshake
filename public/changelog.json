@@ -1,11 +1,63 @@
 {
-	"generated_at": "2026-08-06T03:15:39.910Z",
+	"generated_at": "2026-08-06T03:43:29.124Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Agora citizens now sculpt 3D models, write, and check each other's work",
+			"summary": "Until now every citizen in the Agora did the same one job: fetch a web service. They now work seven real trades. A Sculptor turns a written brief into an actual textured 3D model you can download and open in any glTF viewer. A Scribe researches and writes. A Crier records a voice clip, an Appraiser reads market sentiment, a Namekeeper resolves .sol names, and a Fetcher still calls paid services. Every finished job stores its deliverable at a permanent address and records a sha256 fingerprint of the exact bytes on-chain, so anyone can re-download the file, hash it themselves, and confirm it is the same work that was paid for. The seventh trade closes the loop: a Verifier citizen runs exactly that check on another citizen's delivery and leaves a vouch when the hashes match, or flags it when they do not.",
+			"link": "/agora",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Agora's job board now shows the work that matters instead of every service at once",
+			"summary": "The Commons board pulls from two places: the bounties agents post on-chain, and the open x402 bazaar, which on a normal day carries hundreds of live services. It was rendering a glowing marker for every single one, stacking them into a tower far above the square and making the board harder to read the busier the economy got. Markers now go to the highest-value work first, on-chain bounties ahead of bazaar services, and the roster says how many more are open rather than quietly dropping them. Turning on reduced-motion mid-session now calms the board, the coin flow and the ticker straight away instead of needing a reload, and a 3D deliverable that gets replaced while it is still loading is properly released, so a long watch session stays light.",
+			"link": "/agora",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "AI replies no longer come back blank when a model stalls",
+			"summary": "The chat router picks a model, and if that model fails it quietly moves to the next healthy one. That handoff missed one case: a model that answered with nothing at all, and reported no error, was treated as a success. The reply ended empty, and none of the working models behind it were ever tried. A model that produces no text now counts as a failed attempt, so the next one takes over and you get a real answer. If every route genuinely comes up empty, you see a clear error instead of silence.",
+			"link": "/chat",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Code links in the docs no longer dead-end",
+			"summary": "Documentation on three.ws cites the source constantly, and every one of those citations pointed nowhere: a link to a file like api/_lib/x402-spec.js was read as a page on the site, which does not exist, so it 404ed. Roughly 1,900 of them across the docs now open the real file on GitHub in a new tab instead. Cross-document links that also point at a heading work too: they take you to the right document and scroll to the right section, where before they did not move at all.",
+			"link": "/docs",
+			"tags": [
+				"fix",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "File uploads work again across speech, vision, and 3D endpoints",
+			"summary": "Uploading a file directly to the API silently arrived empty. Sending a .glb to the 3D inspector, a .wav to speech-to-text, an image to vision, audio to the face animator, a GLB to Material Studio, or a voice sample to voice cloning all answered as though you had sent nothing at all. The cause was the server treating \"the whole request has arrived\" as \"somebody already read it\", so it discarded bodies that were sitting there ready to read. Every one of those endpoints now receives the bytes you send. Uploads over the size limit also return a readable 413 instead of dropping the connection.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-08-06",
 			"type": "update",
@@ -32,10 +84,75 @@
 		{
 			"date": "2026-08-06",
 			"type": "update",
+			"title": "Settings saves that actually save, and account deletion that actually deletes",
+			"summary": "Two things on the settings page looked like they worked and did not. Saving your display name or username showed \"Saved!\" while the server was quietly rejecting the request, and revoking a session removed the row from the list without revoking anything. Both now carry the security token the server asks for, and a rejected write says so instead of pretending. The Danger Zone is real too: deleting your account was calling an endpoint that did not exist, so it always ended in \"please contact support\". Deleting now retires your avatars, agents, and embeds so nothing of yours keeps serving, frees your /u/ handle for someone else, signs you out everywhere, and blocks every future sign-in, including with a linked wallet. It still takes typing the confirmation phrase, and that phrase is checked on the server as well as in the browser.",
+			"link": "/settings",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The 3D Studio API description now covers the place-it-in-your-room link too",
+			"summary": "The published description of the free 3D Studio API at /.well-known/3d-studio-openapi.yaml now documents the augmented-reality launch endpoint behind every arUrl, not just the generation call. Anyone building on the free lane can see the full contract in one place: how to turn a prompt into a model, how to poll for it, and how the resulting link places that model in a real room on a phone. The description stays keyless and free of any payment surface, and the copy in the ChatGPT submission kit is now regenerated from the served file so the two can never drift apart.",
+			"link": null,
+			"tags": [
+				"docs",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The 3D Studio connector's docs now match the connector",
+			"summary": "The free 3D Studio connector for ChatGPT has grown to ten tools, but several places still described the older nine-tool version, and the /openai page left the newest one off its list entirely. Every count, tool table, and annotation table has been re-checked against what the live server actually returns and corrected, including the tenth tool: check_job, which collects a model that took longer than a single turn to render. Two outright wrong claims were fixed as well. The AR docs credited the free connector with an export_ar tool that only exists on the separate paid server, and the funding note claimed generations never touch the paid engine when it is in fact kept as a fallback if the free lanes are down (either way the platform pays, never you). The rate-limit and environment-variable tables were completed, and a table that had been broken in half by a stray paragraph now renders.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The 3D Studio now says exactly which quality tier you get",
+			"summary": "Ask the free 3D Studio for a model in ChatGPT and you get the standard tier, the balanced free lane that is fast enough to stay conversational and reliably textured. Every place that describes the studio now says that plainly, including the tool description ChatGPT itself reads, so the assistant never promises you a higher tier than it delivers. The high tier is still there whenever you want it: ask for it by name and the generation runs on our own self-hosted GPU worker for denser geometry, funded by the platform, with a graceful drop back to standard if that lane is busy. Both paths were re-checked against the live site with real models before this went out.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
 			"title": "The creation walkthrough covers the last three screens it was missing",
 			"summary": "The UX Flow Atlas chapter on onboarding and agent creation now documents three screens it had been routing readers into without ever describing: the guest review screen where an avatar you built signed out gets named, explored, and claimed to your account; the what-next screen that follows a successful save; and the talking-avatar video generator. Each is traced from the shipped code, including the sign-in round trip that resumes an interrupted save, the on-chain and embed follow-ups offered after a save, and the free-video limit on the video generator.",
 			"link": null,
 			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The paid 3D generation API is documented as it actually behaves",
+			"summary": "The reference for the pay-per-call Forge API had drifted from the endpoint it describes. It now states that payment settles in USDC on Solana mainnet (not Base), documents the reply that hands back a finished model immediately instead of a job to poll, which the old example code would have crashed on, names the three generation engines a paid call can land on, and adds the full error table, the replay and idempotency rules, and the note that paid generations are published to the community gallery with their payment provenance. Separately, photo-to-3D takes up to six reference views, not four, and every doc that said four has been corrected.",
+			"link": "/docs/3d-api",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The public discovery manifest now says plainly which three.ws capabilities are free",
+			"summary": "AI assistants and crawlers read the manifest at /.well-known/ai-plugin.json to learn what three.ws does, and it used to describe everything, 3D generation included, as a pay-per-call service. It now leads with the free, keyless lane (text-to-3D model and avatar generation, the browser viewer, the augmented-reality launcher, and the read-only market data endpoints, none of which need an account or an API key) and presents the optional pay-per-call catalog separately after it. The manifest also carries the real 512x512 three.ws brand mark instead of the favicon, and links the terms of service directly instead of the site root.",
+			"link": null,
+			"tags": [
+				"improvement",
 				"docs"
 			]
 		},
