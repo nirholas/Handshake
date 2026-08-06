@@ -34,7 +34,8 @@ import { getTask, getTaskLifecycleSummary, getTasksByCreator, getAgent, deriveTa
 
 import { cors, json, method, readJson, wrap, error, rateLimited, serverError } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { Bazaar, filterByExtension, filterByMaxPrice, filterByNetwork } from '../_lib/x402/bazaar-client.js';
+import { sql } from '../_lib/db.js';
+import { Bazaar, filterByExtension, filterByMaxPrice, filterByNetwork, parseAtomicAmount } from '../_lib/x402/bazaar-client.js';
 
 // @three-ws/solana-agent (the symlinked `file:solana-agent-sdk` SDK) is loaded
 // LAZILY at the point of use — every other importer (api/agora/act.js,
@@ -194,6 +195,7 @@ async function handleGetTask(req, res) {
 					actor: e.actor ? e.actor.toBase58() : null,
 				})),
 			};
+			await enrichLifecycleFromProjection(lifecycle, pda.toBase58());
 		}
 	}
 
@@ -219,6 +221,74 @@ async function handleGetTask(req, res) {
 		lifecycle,
 		fetchedAt: new Date().toISOString(),
 	}));
+}
+
+// A task account records WHAT happened but not the signature of the transaction
+// that did it — Solana account state can't recover the signatures that wrote it,
+// so every on-chain timeline event arrives with `txSignature: null` and a client
+// can only render "no tx recorded". three.ws does know them: each write through
+// the Agora rail is journalled into `agora_activity` with its real signature (and,
+// for a completion, the deliverable URL + proofHash that the completion bound).
+//
+// So we fill the chain's blanks from our own journal, keyed by task PDA. Rules:
+//   • The chain stays authoritative — an event that already carries a signature is
+//     never overwritten, and no event is invented that the chain didn't report.
+//   • Enrichment is best-effort: if the DB is unreachable the timeline is returned
+//     exactly as the chain gave it. A missing signature renders as an honest "no tx
+//     recorded", never a broken Explorer link.
+//   • Surfacing `proofHash` + `deliverableUrl` on the completion event is what lets
+//     a deep-linked task (/agora?task=<pda>) verify itself: without it a visitor
+//     arriving by URL has bytes to fetch but nothing to check them against.
+const LIFECYCLE_EVENT_KINDS = [
+	{ match: /^(task)?created/i, kinds: ['posted_task', 'hired'] },
+	{ match: /^(task)?claim/i, kinds: ['claimed_task'] },
+	{ match: /^(task)?(complete|prove|submit)/i, kinds: ['completed_task', 'settled'] },
+];
+
+async function enrichLifecycleFromProjection(lifecycle, taskPda) {
+	if (!lifecycle?.timeline?.length) return;
+	let rows;
+	try {
+		rows = await sql`
+			select kind, tx_signature, proof_hash, deliverable_url, created_at
+			from agora_activity
+			where task_pda = ${taskPda} and tx_signature is not null
+			order by created_at asc
+			limit 200
+		`;
+	} catch (err) {
+		// No DB (or it's down): the chain's own timeline is still correct and honest.
+		console.warn('[agenc] lifecycle tx enrichment unavailable:', err?.message);
+		return;
+	}
+	if (!rows?.length) return;
+
+	// Consume each journal row at most once so a multi-worker task's second claim
+	// can't inherit the first claim's signature.
+	const used = new Set();
+	for (const ev of lifecycle.timeline) {
+		const spec = LIFECYCLE_EVENT_KINDS.find((s) => s.match.test(ev.eventName || ''));
+		if (!spec) continue;
+		let row = null;
+		for (let i = 0; i < rows.length; i++) {
+			if (used.has(i) || !spec.kinds.includes(rows[i].kind)) continue;
+			used.add(i);
+			row = rows[i];
+			break;
+		}
+		if (!row) continue;
+		if (!ev.txSignature) ev.txSignature = row.tx_signature;
+		if (row.proof_hash && !ev.proofHash) ev.proofHash = row.proof_hash;
+		if (row.deliverable_url && !ev.deliverableUrl) ev.deliverableUrl = row.deliverable_url;
+	}
+
+	// Hoist the deliverable proof to the top level too, so a client that only has a
+	// PDA (a deep link) can run the verifier without walking the timeline.
+	const done = lifecycle.timeline.find((e) => e.proofHash || e.deliverableUrl);
+	if (done) {
+		lifecycle.proofHash = done.proofHash || null;
+		lifecycle.deliverableUrl = done.deliverableUrl || null;
+	}
 }
 
 async function handleGetAgent(req, res) {
@@ -343,6 +413,10 @@ async function handleX402Services(req, res) {
 	}
 	const network = q.network ? String(q.network) : null;
 	const maxPrice = q.maxPrice ? String(q.maxPrice) : null;
+	// Atomic units, not decimals (see /api/bazaar/list): a malformed cap is a 400.
+	if (maxPrice != null && parseAtomicAmount(maxPrice) === null) {
+		return error(res, 400, 'validation_error', 'maxPrice must be an atomic integer amount (e.g. 10000 = 0.01 USDC)');
+	}
 	const asset = q.asset ? String(q.asset) : null;
 	const extension = q.extension ? String(q.extension) : null;
 	const maxItems = Math.max(1, Math.min(parseInt(q.maxItems, 10) || 200, 1000));
