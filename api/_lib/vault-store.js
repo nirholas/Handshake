@@ -199,7 +199,7 @@ export async function listVaultEvents(vaultId, { limit = 50, beforeId = null, ty
 }
 
 /**
- * Rolling 24h buy spend (USDC atomics) — the daily-budget denominator.
+ * Rolling 24h buy spend (USDC atomics): the daily-budget denominator.
  *
  * Counts settled AND in-flight buys. A buy that has been claimed but not yet
  * confirmed on-chain has already committed the vault's capital, so leaving it out
