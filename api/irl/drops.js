@@ -25,7 +25,7 @@ import {
 } from '@solana/spl-token';
 
 import { cors, json, wrap, error, rateLimited, readJson } from '../_lib/http.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
+import { limits, clientIp, limitFailClosedRead } from '../_lib/rate-limit.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { readDeviceToken } from '../_lib/irl-auth.js';
 import { verifyFixToken, fixEnforced } from '../_lib/irl-presence.js';
@@ -81,7 +81,12 @@ export default wrap(async (req, res) => {
 
 	// ── reads ───────────────────────────────────────────────────────────────
 	if (req.method === 'GET') {
-		const rl = await limits.publicIp(clientIp(req)).catch(() => ({ success: true }));
+		// Every drops read either returns a coordinate or is the caller's own data, so
+		// the limiter FAILS CLOSED here (H7): a blind limiter on a location read has
+		// nothing bounding it downstream, and the backing buckets are in-memory
+		// `local` limiters that never touch Redis, so failing closed costs no real
+		// availability. See docs/irl/THREAT-MODEL.md.
+		const rl = await limitFailClosedRead('publicIp', limits.publicIp, clientIp(req));
 		if (!rl.success) return rateLimited(res, rl);
 
 		if (id) {
@@ -119,6 +124,12 @@ export default wrap(async (req, res) => {
 		if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
 			return error(res, 400, 'bad_request', 'lat and lng are required');
 		}
+		// Same dedicated coordinate-read budget as the pins nearby feed: this is a
+		// discovery read over other people's placements, so it draws on the /irl
+		// location bucket (60/min/IP) rather than only the generic public ceiling.
+		const nearbyRl = await limitFailClosedRead('irlNearbyIp', limits.irlNearbyIp, clientIp(req));
+		if (!nearbyRl.success) return rateLimited(res, nearbyRl);
+
 		// Same presence gate as the pins nearby read: you only see drops where you
 		// stand. Enforced only when proof-of-presence is configured (prod).
 		if (fixEnforced()) {

@@ -1134,6 +1134,18 @@ export const limits = {
 	// still stops a scripted flood. Page-load-critical clusters additionally get
 	// their own dedicated buckets below so one surface can never starve another.
 	publicIp: (ip) => getLimiter('public:ip', { limit: 240, window: '1 m', local: true }).limit(ip),
+	// /irl coordinate reads (pins nearby, drops nearby, world-lines nearby). These
+	// are the only public reads that reveal WHERE another user placed something, so
+	// their ceiling is a privacy budget, not a flood guard, and it must not drift
+	// with the generic read bucket: when publicIp was raised 60 -> 240 for unrelated
+	// page-load fan-out, the /irl grid-sweep cost quietly dropped 4x (the H7 threat
+	// model still documented 60). A dedicated bucket pins the number to the surface
+	// it protects. 60/min against a legit viewer's ~6/min (a 10s nearby poll) leaves
+	// 10x headroom, and no page fans out to more than one of these at a time.
+	// local: an in-memory bucket never throws on a Redis outage, which is what lets
+	// the callers fail CLOSED on it without inventing an availability risk.
+	// See docs/irl/THREAT-MODEL.md.
+	irlNearbyIp: (ip) => getLimiter('irl:nearby:ip', { limit: 60, window: '1 m', local: true }).limit(ip),
 	// Agent profile reads (networth, patronage, achievements, reputation, tiers).
 	// One profile view fans out to 7-8 of these; isolate them so opening a few
 	// profiles can't drain the budget shared with markets/home/oracle surfaces.
@@ -1584,6 +1596,34 @@ export const limits = {
 	// whole point is a caller with no wallet history to key on.
 	bnbRegisterIp: (ip) => getLimiter('bnb:register:ip', { limit: 10, window: '10 m', critical: true }).limit(ip),
 };
+
+// ── Fail-closed limiter call for privacy-boundary reads (H7) ─────────────────
+// Most call sites fail OPEN when a limiter throws: the request is bounded by
+// something else downstream (a DB cap, an ownership check), so a limiter outage
+// should not deny legitimate traffic. A read that returns someone else's LOCATION
+// has no such downstream bound, so its degradation path is the opposite: if the
+// limiter cannot decide, deny with a retryable `rate_limiter_unavailable` verdict
+// rather than open an unmetered scrape window. Shared by the three /irl coordinate
+// reads (pins, drops, world-lines nearby) so the guarantee is one implementation
+// instead of three drifting copies. See docs/irl/THREAT-MODEL.md.
+//
+// `name` ties the warning to a bucket; the cooldown keeps an outage that hits every
+// request from flooding the logs with the same line.
+const _failClosedWarnedAt = new Map();
+const FAIL_CLOSED_WARN_COOLDOWN_MS = 60_000;
+export async function limitFailClosedRead(name, fn, ...args) {
+	try {
+		return await fn(...args);
+	} catch (err) {
+		const last = _failClosedWarnedAt.get(name) || 0;
+		const now = Date.now();
+		if (now - last >= FAIL_CLOSED_WARN_COOLDOWN_MS) {
+			_failClosedWarnedAt.set(name, now);
+			console.warn(`[rate-limit] read limiter "${name}" failed, failing CLOSED (deny):`, err?.message || err);
+		}
+		return { success: false, reason: 'rate_limiter_unavailable', reset: Date.now() + 60_000 };
+	}
+}
 
 // Trust only proxy headers that Vercel itself sets and signs. Naively reading
 // X-Forwarded-For (or X-Real-IP, which clients can also supply directly) lets

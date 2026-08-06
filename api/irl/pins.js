@@ -18,7 +18,7 @@
 import { cors, json, wrap, rateLimited } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
+import { limits, clientIp, limitFailClosedRead } from '../_lib/rate-limit.js';
 import { WORD_BLACKLIST } from '../../src/profanity.js';
 import { guardianConfig, assess, decide } from '../_lib/granite-guardian.js';
 import { encodeGeohash } from '../_lib/geohash.js';
@@ -268,31 +268,6 @@ async function limitOrFailOpen(name, fn, ...args) {
 		}
 		// Allow: a synthetic success verdict so the caller proceeds unthrottled.
 		return { success: true, reason: 'rate_limiter_degraded' };
-	}
-}
-
-// The PUBLIC nearby read fails CLOSED (H7). This read is the only surface that ever
-// reveals another agent's location, so its degradation path is a privacy boundary,
-// not a convenience one: if the limiter that bounds it can't make a decision, we
-// must NOT open an unmetered scrape window. Unlike the write paths above (which the
-// DB density/owner caps still bound when the limiter is blind), an unmetered read is
-// exactly the bulk-harvest hole the rate limit exists to close. So on a limiter
-// throw we return a retryable `rate_limiter_unavailable` verdict — surfaced to the
-// client as a 429 "temporarily unavailable, retrying" — rather than allowing the
-// read. The backing bucket (limits.publicIp) is an in-memory `local` limiter that
-// never touches Redis, so in practice it never throws; this guard makes the
-// fail-closed guarantee explicit and asserted rather than incidental.
-async function limitFailClosedRead(name, fn, ...args) {
-	try {
-		return await fn(...args);
-	} catch (err) {
-		const last = _rlWarnedAt.get(name) || 0;
-		const now = Date.now();
-		if (now - last >= RL_WARN_COOLDOWN_MS) {
-			_rlWarnedAt.set(name, now);
-			console.warn(`[irl/pins] read limiter "${name}" failed — failing CLOSED (deny):`, err?.message || err);
-		}
-		return { success: false, reason: 'rate_limiter_unavailable', reset: Date.now() + 60_000 };
 	}
 }
 
@@ -890,11 +865,13 @@ export default wrap(async (req, res) => {
 
 	// Every public GET read (the nearby feed + my-pins) is IP rate-limited so the
 	// tight proximity feed can't be systematically gridded into a bulk location
-	// scrape. A legit viewer polls nearby every ~10 s (≈6/min) — well under the
-	// 60/min public ceiling — while a scripted sweep trips it fast. This read FAILS
-	// CLOSED (H7): if the limiter can't decide, we deny with a retryable
-	// `rate_limiter_unavailable` rather than open an unmetered scrape window — an
-	// unbounded location read is the exact hole the limit exists to close.
+	// scrape. This read FAILS CLOSED (H7): if the limiter can't decide, we deny with
+	// a retryable `rate_limiter_unavailable` rather than open an unmetered scrape
+	// window: an unbounded location read is the exact hole the limit exists to
+	// close. The generic 240/min read ceiling applies to every GET here; the
+	// coordinate-returning nearby branch below adds the tighter, dedicated
+	// `irlNearbyIp` bucket (60/min) that the H7 sweep-cost numbers are computed
+	// against. See docs/irl/THREAT-MODEL.md.
 	if (req.method === 'GET') {
 		const rl = await limitFailClosedRead('publicIp', limits.publicIp, clientIp(req));
 		if (!rl.success) return rateLimited(res, rl);
@@ -1075,6 +1052,14 @@ export default wrap(async (req, res) => {
 		if (!isFinite(lat) || !isFinite(lng)) {
 			return json(res, 400, { error: 'lat and lng are required' });
 		}
+
+		// Dedicated coordinate-read budget (H7), on top of the generic GET ceiling
+		// above. This is the number the threat model's grid-sweep cost is computed
+		// from, so it lives in its own bucket rather than riding the shared public
+		// read limit, which is tuned for page-load fan-out and has been raised for
+		// reasons that have nothing to do with location privacy. Fails CLOSED.
+		const nearbyRl = await limitFailClosedRead('irlNearbyIp', limits.irlNearbyIp, clientIp(req));
+		if (!nearbyRl.success) return rateLimited(res, nearbyRl);
 
 		// Proof-of-presence (H3): bind the read to a genuine fix. The caller mints a
 		// short-lived, HMAC-signed token from their real GPS via POST /fix-token; this

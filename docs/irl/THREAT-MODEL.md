@@ -11,6 +11,12 @@ radius: `GET /api/irl/pins?lat&lng&radius` (≤60 m, the per-viewer proximity fe
 (≤600 m). The pins feed is the one the controls below are written against; drops and
 World Lines shipped later and inherit the same fix gate.
 
+One further read returns a coordinate without a presence gate: `GET /api/irl/drops/:id`
+answers for a drop the caller already knows the id of, and coarsens the point to 3
+decimals (~110 m) for anyone but the owner. It is id-addressed, not discoverable, so
+it cannot be swept into a grid; it is listed here because "all location reads are
+presence-gated" would otherwise be one endpoint short of true.
+
 (`/api/irl/pins/mine`, `agent-card`, `agent-summary`, `interactions*`, `report`,
 `share-frame` do not return others' coordinates. That was established by a
 location-leak audit of the pins feed, which predates drops and World Lines and so
@@ -22,7 +28,7 @@ does not cover them.)
 |---|---|---|
 | **Remote browsing** ("show me agents in Tokyo from my couch") | The caller must send their **own** `lat`/`lng`; results are filtered to `distance_m <= radius`. There is no bbox/window/roster feed and no realtime pin broadcast. | `api/irl/pins.js` nearby branch; `multiplayer/src/rooms/IrlRoom.js` (syncs no pins) |
 | **Wide-radius scrape** | `radius` is clamped to `[10, 60]` m server-side; a present-but-non-finite radius is rejected (no NaN box). | `api/irl/pins.js` `Math.min(60, Math.max(10, …))` |
-| **Bulk grid harvest** | Per-IP rate limit on every read; **fail-closed** if the limiter can't decide (deny, never an unmetered window). Distinct-cell **sweep detection** fires a deduped, coordinate-free ops alert when one caller reads many geocells in a short window. | `limitFailClosedRead`, `recordCellRead` in `api/irl/pins.js`; `limits.publicIp` in `api/_lib/rate-limit.js` |
+| **Bulk grid harvest** | All three coordinate reads share a **dedicated** 60/min/IP budget (`limits.irlNearbyIp`), separate from the generic public read ceiling, and **fail closed** if the limiter can't decide (deny, never an unmetered window). Distinct-cell **sweep detection** fires a deduped, coordinate-free ops alert when one caller reads many geocells in a short window. | `limits.irlNearbyIp`, `limitFailClosedRead` in `api/_lib/rate-limit.js`; `recordCellRead` in `api/irl/pins.js` |
 | **De-anonymization** (who placed this agent?) | The public projection is an explicit allow-list: `user_id` / `device_token` are never returned; only an `is_mine` boolean computed server-side. | `api/irl/pins.js` nearby projection |
 | **Coordinate fingerprinting** | Returned coordinates are coarsened to 5 decimals (~1.1 m, finer than GPS error but stripped of the false-precision tail). The room origin is coarsened too; exact intra-room layout rides relative offsets, not absolute coords. | `roundCoord`, `PUBLIC_COORD_DP` in `api/irl/pins.js` |
 | **Credential / position leak via logs** | `req.url` (which carries `lat`/`lng`/`deviceToken`) is redacted before any log/Sentry/Telegram sink. The sweep alert carries only a SHA-256 IP hash + a count — never a coordinate, IP, or geocell. | `redactUrl` in `api/_lib/http.js`; `recordCellRead` alert payload |
@@ -32,10 +38,12 @@ does not cover them.)
 
 - **Limiter degraded / throws on the read** → **fail closed**: the read returns a
   retryable `rate_limiter_unavailable` (HTTP 429), surfaced to the client as
-  "temporarily unavailable, retrying." It never serves an unmetered read. The
-  backing bucket (`limits.publicIp`) is an in-memory `local` limiter that never
-  touches Redis, so it does not throw in practice; `limitFailClosedRead` makes the
-  guarantee explicit and asserted (`tests/api/irl-pins-hardening.test.js`).
+  "temporarily unavailable, retrying." It never serves an unmetered read. This
+  holds on all three coordinate reads (the drops read used to fail *open* here).
+  The backing buckets are in-memory `local` limiters that never touch Redis, so they
+  do not throw in practice; `limitFailClosedRead` makes the guarantee explicit and
+  asserted (`tests/api/irl-nearby-limit.test.js` against the real limiter,
+  `tests/api/irl-pins-hardening.test.js` through the handler).
 - **Write limiter degraded** (place/edit/delete) → **fail open**: the DB density,
   per-owner, and report-dedup caps still bound writes, so an infra hiccup never
   blocks a legitimate placement. This asymmetry is deliberate: a blind limiter on a
@@ -83,6 +91,17 @@ Manhattan's ~59 km² takes ~5 200 reads ≈ 90 minutes. World Lines is the cheap
 surface by far — its 600 m radius covers ~1.13 km² per read, so the same area falls
 in under a minute. Rotating IPs collapses all of these numbers. Presence enforcement
 is a speed bump with a real slope; it is not a wall.
+
+> **Why the read ceiling is its own bucket.** Those minutes are a direct function of
+> 60/min, so that number is a privacy budget and has to be pinned to the surface it
+> protects. It was not: the coordinate reads rode the generic public read bucket,
+> which was raised 60 → 240 on 2026-07-10 for unrelated page-load fan-out (~166
+> endpoints share it and a single page can fire 7-8). Nothing about /irl was
+> considered in that change, and nothing failed: the sweep cost quietly dropped 4x
+> while this file still said 90 minutes. The reads now draw on `limits.irlNearbyIp`,
+> a dedicated 60/min/IP bucket, and `tests/api/irl-nearby-limit.test.js` asserts the
+> number against the real limiter so the next tuning pass of an unrelated ceiling
+> cannot silently re-open it.
 
 > **Per-IP means per-IP only if the IP is real.** From the Vercel→Cloud Run migration
 > until 2026-07-09, `clientIp()` fell back to `req.socket.remoteAddress` — the load

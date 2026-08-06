@@ -30,7 +30,7 @@ import { cors, json, wrap, rateLimited, readJson } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
+import { limits, clientIp, limitFailClosedRead } from '../_lib/rate-limit.js';
 import { readDeviceToken } from '../_lib/irl-auth.js';
 import { verifyFixToken, fixEnforced } from '../_lib/irl-presence.js';
 import { insertNotification } from '../_lib/notify.js';
@@ -189,7 +189,10 @@ export default wrap(async (req, res) => {
 	if (req.method === 'GET') {
 		// Public reads share the generic per-IP read ceiling; the fix-gated reads add
 		// the proof-of-presence binding on top so a quest's spot can't be browsed remotely.
-		const rl = await limits.publicIp(clientIp(req));
+		// Fail-closed: `nearby` and `detail` hand back quest coordinates, so a limiter
+		// that cannot decide must deny with a retryable 429 rather than 500 the read
+		// (or, worse, wave it through unmetered).
+		const rl = await limitFailClosedRead('publicIp', limits.publicIp, clientIp(req));
 		if (!rl.success) return rateLimited(res, rl);
 		if (action === 'nearby') return handleNearby(req, res);
 		if (action === 'browse') return handleBrowse(req, res);
@@ -411,6 +414,14 @@ async function handleNearby(req, res) {
 	const parsed = rawRadius == null || rawRadius === '' ? NEARBY_DEFAULT_RADIUS_M : parseFloat(rawRadius);
 	if (!Number.isFinite(parsed)) return json(res, 400, { error: 'invalid radius' });
 	const radius = Math.min(NEARBY_MAX_RADIUS_M, Math.max(30, parsed));
+
+	// Dedicated coordinate-read budget (H7), fail-closed. This is by far the widest
+	// location read on the platform (600 m vs 60 m for pins), so one call covers
+	// ~100x the area of a pin read and it is the cheapest surface to sweep. It draws
+	// on the same 60/min/IP /irl location bucket as the tighter reads rather than
+	// the generic public ceiling. See docs/irl/THREAT-MODEL.md.
+	const nearbyRl = await limitFailClosedRead('irlNearbyIp', limits.irlNearbyIp, clientIp(req));
+	if (!nearbyRl.success) return rateLimited(res, nearbyRl);
 
 	// Same fix-gate as the pin proximity read: a quest's location is only revealed to a
 	// caller proven to be standing near it.

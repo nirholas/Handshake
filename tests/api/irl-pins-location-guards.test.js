@@ -65,7 +65,17 @@ vi.mock('../../api/_lib/auth.js', () => ({ getSessionUser: vi.fn(async () => nul
 
 let publicVerdict = { success: true, reset: Date.now() + 60_000 };
 vi.mock('../../api/_lib/rate-limit.js', () => ({
-	limits: { publicIp: vi.fn(async () => publicVerdict) },
+	limits: {
+		publicIp: vi.fn(async () => publicVerdict),
+		irlNearbyIp: vi.fn(async () => publicVerdict),
+	},
+	// limitFailClosedRead + irlNearbyIp: the nearby branch draws on a dedicated
+	// coordinate-read bucket and denies when the limiter cannot decide. Behaviour is
+	// owned by tests/api/irl-nearby-limit.test.js; here they just have to exist.
+	limitFailClosedRead: async (_name, fn, ...args) => {
+		try { return await fn(...args); }
+		catch { return { success: false, reason: 'rate_limiter_unavailable', reset: Date.now() + 60_000 }; }
+	},
 	clientIp: () => '127.0.0.1',
 }));
 

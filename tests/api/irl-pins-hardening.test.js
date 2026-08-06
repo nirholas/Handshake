@@ -75,12 +75,23 @@ function verdict() {
 	if (limiterThrows) throw new Error('redis: max requests limit exceeded');
 	return { success: true, reset: Date.now() + 60_000 };
 }
+// `irlNearbyIp` is the dedicated coordinate-read bucket the H7 sweep-cost numbers are
+// computed against; `nearbyDenied` flips it to a plain (non-throwing) denial so we can
+// prove the nearby branch actually consults it. limitFailClosedRead mirrors the real
+// helper's contract; the real implementation is asserted against directly in
+// tests/api/irl-nearby-limit.test.js.
+let nearbyDenied = false;
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		publicIp:     vi.fn(async () => verdict()),
+		irlNearbyIp:  vi.fn(async () => (nearbyDenied ? { success: false, reset: Date.now() + 60_000 } : verdict())),
 		irlPinIp:     vi.fn(async () => verdict()),
 		irlPinBurst:  vi.fn(async () => verdict()),
 		irlPinHourly: vi.fn(async () => verdict()),
+	},
+	limitFailClosedRead: async (_name, fn, ...args) => {
+		try { return await fn(...args); }
+		catch { return { success: false, reason: 'rate_limiter_unavailable', reset: Date.now() + 60_000 }; }
 	},
 	clientIp: () => '127.0.0.1',
 }));
@@ -129,6 +140,7 @@ beforeEach(() => {
 	bakeSpy.mockResolvedValue({ url: 'https://three.ws/cdn/irl/pins/x/abc.glb' });
 	deleteResult = [{ id: 'del-1', lat: 1, lng: 2 }];
 	limiterThrows = false;
+	nearbyDenied = false;
 	sessionUser = null;
 	resetGuardianDegraded();
 	pinRow = {
@@ -367,6 +379,18 @@ describe('rate limiter degradation', () => {
 		expect(res.statusCode).toBe(429);
 		expect(body.reason).toBe('rate_limiter_unavailable');
 		// Denied before any location data left the DB — the pin SELECT never ran.
+		const ranSelect = sqlMock.mock.calls.some(([s]) =>
+			/lat BETWEEN/i.test(Array.isArray(s) ? s.join(' ') : String(s)));
+		expect(ranSelect).toBe(false);
+	});
+	it('the nearby read is bounded by the DEDICATED coordinate bucket, not just the shared public one (H7)', async () => {
+		// The generic public read ceiling is tuned for page-load fan-out and has been
+		// raised for reasons unrelated to location privacy. The grid-sweep cost in the
+		// threat model is computed from `irlNearbyIp`, so the branch must actually
+		// consult it and deny on it.
+		nearbyDenied = true;
+		const { res } = await get({ query: { lat: '40.7128', lng: '-74.006', radius: '40' } });
+		expect(res.statusCode).toBe(429);
 		const ranSelect = sqlMock.mock.calls.some(([s]) =>
 			/lat BETWEEN/i.test(Array.isArray(s) ? s.join(' ') : String(s)));
 		expect(ranSelect).toBe(false);
