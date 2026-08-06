@@ -178,6 +178,22 @@ export const CATALOG = [
 		},
 	},
 	{
+		id: 'v1.evm.swap-quote',
+		method: 'GET',
+		path: '/api/v1/evm/swap-quote',
+		auth: 'public',
+		summary:
+			'Read-only EVM swap quote with keyless failover across ParaSwap, KyberSwap, and LI.FI: ' +
+			'best-effort output amount, price, and gas estimate on ethereum/base/polygon/arbitrum/' +
+			'optimism/bsc. No calldata, no execution, no key; 30/min per IP.',
+		params: {
+			chain: 'string: chain name, alias, or numeric id (ethereum | base | polygon | arbitrum | optimism | bsc), required',
+			sellToken: 'string: 0x… token address to sell; 0xeeee…eeee for the native coin (required)',
+			buyToken: 'string: 0x… token address to buy (required)',
+			amount: 'string: sell amount in raw base units, integer string (required)',
+		},
+	},
+	{
 		id: 'v1.robinhood.chain',
 		method: 'GET',
 		path: '/api/v1/robinhood/chain',
