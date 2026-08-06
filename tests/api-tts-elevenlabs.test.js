@@ -22,6 +22,7 @@ import {
 	normalizeVoiceSettings,
 	elevenApiKey,
 	isConfigured,
+	resolveElevenKey,
 	listVoices,
 	invalidateVoiceCache,
 	createClonedVoice,
@@ -56,6 +57,63 @@ describe('config gate', () => {
 
 	it('defaults to the low-latency flash model', () => {
 		expect(DEFAULT_TTS_MODEL).toBe('eleven_flash_v2_5');
+	});
+});
+
+describe('resolveElevenKey (BYOK)', () => {
+	const reqWith = (key) => ({ headers: key === undefined ? {} : { 'x-eleven-key': key } });
+
+	it('prefers a valid x-eleven-key header over the platform key', () => {
+		expect(resolveElevenKey(reqWith('sk_user_own_key'))).toEqual({
+			apiKey: 'sk_user_own_key',
+			byok: true,
+		});
+	});
+
+	it('falls back to the platform key when no header is sent', () => {
+		expect(resolveElevenKey(reqWith(undefined))).toEqual({
+			apiKey: 'sk_test_key',
+			byok: false,
+		});
+	});
+
+	it('rejects malformed user keys (whitespace inside, control chars, oversized)', () => {
+		for (const bad of ['has space', 'ctrl\x01char', 'x'.repeat(300), '', '   ']) {
+			expect(resolveElevenKey(reqWith(bad))).toEqual({ apiKey: 'sk_test_key', byok: false });
+		}
+	});
+
+	it('returns a null key when neither a user key nor the platform key exists', () => {
+		delete process.env.ELEVENLABS_API_KEY;
+		expect(resolveElevenKey(reqWith(undefined))).toEqual({ apiKey: null, byok: false });
+	});
+
+	it('trims surrounding whitespace on the user key', () => {
+		expect(resolveElevenKey(reqWith('  sk_padded  '))).toEqual({
+			apiKey: 'sk_padded',
+			byok: true,
+		});
+	});
+});
+
+describe('listVoices with a BYOK key', () => {
+	it('bypasses the shared cache in both directions', async () => {
+		global.fetch.mockResolvedValue(voicesResponse([{ voice_id: 'plat', name: 'Platform' }]));
+		await listVoices();
+		expect(global.fetch).toHaveBeenCalledTimes(1);
+
+		// A user key must not be served the platform's cached catalog...
+		global.fetch.mockResolvedValue(voicesResponse([{ voice_id: 'mine', name: 'Mine' }]));
+		const user = await listVoices({ apiKey: 'sk_user_own_key' });
+		expect(user.cached).toBe(false);
+		expect(user.voices[0].voice_id).toBe('mine');
+		expect(global.fetch).toHaveBeenCalledTimes(2);
+		expect(global.fetch.mock.calls[1][1].headers['xi-api-key']).toBe('sk_user_own_key');
+
+		// ...and must not have poisoned the platform cache on the way through.
+		const plat = await listVoices();
+		expect(plat.cached).toBe(true);
+		expect(plat.voices[0].voice_id).toBe('plat');
 	});
 });
 

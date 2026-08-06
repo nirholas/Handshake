@@ -97,7 +97,7 @@ export async function renderVoice(host) {
 		banner.style.cssText = 'margin-bottom:14px;padding:14px 16px;text-align:left';
 		banner.innerHTML = `
 			<h3 style="margin:0 0 4px;font-size:14px">ElevenLabs is not configured</h3>
-			<p style="margin:0;font-size:12px">Voice picking and previews are disabled until <code>ELEVENLABS_API_KEY</code> is set on the server. Agents will fall back to browser TTS.</p>
+			<p style="margin:0;font-size:12px">Voice picking and previews are disabled until <code>ELEVENLABS_API_KEY</code> is set on the server. Agents will fall back to browser TTS. You can still clone and play voices with your own ElevenLabs key in the <a href="/voice">Voice Lab</a>.</p>
 		`;
 		list.appendChild(banner);
 	}

@@ -62,6 +62,30 @@ export function isConfigured() {
 	return !!env.ELEVENLABS_API_KEY;
 }
 
+// ── BYOK (bring your own key) ────────────────────────────────────────────────
+// Users can supply their own ElevenLabs API key per request via the
+// `x-eleven-key` header. A user key routes the call to THEIR ElevenLabs
+// account (their voices, their quota, their bill), so the platform's char
+// budget and credit metering do not apply. The key is used for the one request
+// and never stored server-side.
+
+const USER_KEY_MAX_LEN = 256;
+
+/**
+ * Resolve the API key for a request: a valid `x-eleven-key` header wins,
+ * otherwise the platform key. Returns { apiKey, byok } where apiKey may be
+ * null when neither is available.
+ * @param {import('http').IncomingMessage} req
+ */
+export function resolveElevenKey(req) {
+	const raw = req?.headers?.['x-eleven-key'];
+	const userKey = typeof raw === 'string' ? raw.trim() : '';
+	if (userKey && userKey.length <= USER_KEY_MAX_LEN && /^[\x21-\x7e]+$/.test(userKey)) {
+		return { apiKey: userKey, byok: true };
+	}
+	return { apiKey: elevenApiKey(), byok: false };
+}
+
 /** Build an Error tagged with an HTTP status (and optional upstream detail). */
 function upstreamError(message, status, extra = {}) {
 	return Object.assign(new Error(message), { status, ...extra });
@@ -81,14 +105,17 @@ export function invalidateVoiceCache() {
 
 /**
  * Fetch the account's voices, filtered to safe public fields.
+ * A user-supplied `apiKey` (BYOK) reads that user's own account and bypasses
+ * the shared per-instance cache, so one user's catalog never leaks to another.
  * @returns {Promise<{ voices: Array, cached: boolean }>}
  * @throws  {Error & { status:number }} 503 when unconfigured, 502 on upstream failure.
  */
-export async function listVoices({ force = false } = {}) {
-	const apiKey = elevenApiKey();
+export async function listVoices({ force = false, apiKey: keyOverride = null } = {}) {
+	const apiKey = keyOverride || elevenApiKey();
 	if (!apiKey) throw upstreamError('ElevenLabs is not configured', 503);
+	const shareCache = !keyOverride || keyOverride === elevenApiKey();
 
-	if (!force && voiceCache && Date.now() - voiceCache.at < VOICE_TTL_MS) {
+	if (shareCache && !force && voiceCache && Date.now() - voiceCache.at < VOICE_TTL_MS) {
 		return { voices: voiceCache.voices, cached: true };
 	}
 
@@ -112,22 +139,23 @@ export async function listVoices({ force = false } = {}) {
 		preview_url: v.preview_url || null,
 	}));
 
-	voiceCache = { at: Date.now(), voices };
+	if (shareCache) voiceCache = { at: Date.now(), voices };
 	return { voices, cached: false };
 }
 
 // ── Cloning ──────────────────────────────────────────────────────────────────
 
 /**
- * Instant Voice Cloning via the official SDK.
- * @param {{ name:string, description?:string, files:File[] }} input
+ * Instant Voice Cloning via the official SDK. A user-supplied `apiKey` (BYOK)
+ * clones onto that user's own ElevenLabs account.
+ * @param {{ name:string, description?:string, files:File[], apiKey?:string|null }} input
  * @returns {Promise<{ voiceId:string, requiresVerification:boolean }>}
  * @throws  {Error & { status:number, upstreamBody?:string }} on failure. IVC is
  *          a paid-tier feature; the free tier surfaces `can_not_use_instant_
  *          voice_cloning` here, which callers can pass through verbatim.
  */
-export async function createClonedVoice({ name, description, files }) {
-	const apiKey = elevenApiKey();
+export async function createClonedVoice({ name, description, files, apiKey: keyOverride = null }) {
+	const apiKey = keyOverride || elevenApiKey();
 	if (!apiKey) throw upstreamError('ElevenLabs is not configured', 503);
 
 	// Dynamic import: the official SDK's module graph takes ~5s to evaluate,

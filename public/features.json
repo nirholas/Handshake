@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T20:09:15.789Z",
+	"generated_at": "2026-08-06T20:41:27.407Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1541,6 +1541,16 @@
 					"title": "On-chain Deployments",
 					"description": "A live, cross-chain feed of every agent registered on the ERC-8004 Identity Registry: the moment each registration lands on-chain. Real on-chain registrations only, with chain footprint, 3D-avatar and x402 capability stats.",
 					"added": "2026-06-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/portfolio",
+					"title": "Wallet Portfolio",
+					"description": "A live portfolio view for any Solana or Ethereum wallet: total value, 24h move with honest coverage, stablecoin/major/token breakdown, top-asset allocation, and every holding priced in real time. Free, keyless, deep-linkable, no account.",
+					"added": "2026-08-06",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6252,6 +6262,16 @@
 					"title": "Docs · Trader Passport",
 					"description": "A trader track record other apps can verify: once a day each ranked trader's rolled-up score is committed to Solana as a signed SPL-Memo attestation, and this API serves that credential for anyone to re-check against the chain.",
 					"added": "2026-08-02",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/portfolio",
+					"title": "Docs · Wallet Portfolio",
+					"description": "How the live wallet portfolio works: the keyless Solana-first data sources behind /api/crypto/portfolio, the stable/major/token classification, the honest 24h coverage contract, and the full response shape for agents and scripts.",
+					"added": "2026-08-06",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

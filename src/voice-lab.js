@@ -1,3 +1,5 @@
+import { getElevenKey, setElevenKey, clearElevenKey, withElevenKey, maskElevenKey } from './voice/eleven-key.js';
+
 const $ = (id) => document.getElementById(id);
 
 // ── Reading scripts ──────────────────────────────────────────────────────────
@@ -375,6 +377,7 @@ async function cloneVoice() {
 		res = await fetch('/api/tts/eleven-clone', {
 			method: 'POST',
 			credentials: 'include',
+			headers: withElevenKey(),
 			body: fd,
 		});
 	} catch (err) {
@@ -517,16 +520,25 @@ async function speakPlayground() {
 		const r = await fetch('/api/tts/eleven', {
 			method: 'POST',
 			credentials: 'include',
-			headers: { 'content-type': 'application/json' },
+			headers: withElevenKey({ 'content-type': 'application/json' }),
 			body: JSON.stringify({ voiceId, text }),
 		});
 
 		if (!r.ok) {
 			const errText = await r.text().catch(() => '');
-			throw new Error(`HTTP ${r.status}: ${errText.slice(0, 200)}`);
+			let msg = '';
+			try {
+				const body = JSON.parse(errText);
+				msg = body.message || body.error_description || body.error || '';
+			} catch {
+				msg = errText.slice(0, 200);
+			}
+			throw new Error(msg || `HTTP ${r.status}`);
 		}
 
 		const cacheHit = r.headers.get('x-tts-cache') === 'hit';
+		const billing = r.headers.get('x-tts-billing');
+		const chargedUsd = Number(r.headers.get('x-tts-charged-usd') || 0);
 		const buf = await r.arrayBuffer();
 		const blob = new Blob([buf], { type: 'audio/mpeg' });
 		const url = URL.createObjectURL(blob);
@@ -537,7 +549,11 @@ async function speakPlayground() {
 		$('pgOutput').classList.add('visible');
 		audio.play().catch(() => {});
 
-		$('pgHint').textContent = `${(buf.byteLength / 1024).toFixed(0)} KB · ${cacheHit ? 'cached' : 'generated'}`;
+		const billingNote =
+			billing === 'byok' ? ' · your key'
+			: chargedUsd > 0 ? ` · $${chargedUsd.toFixed(4)} credits`
+			: '';
+		$('pgHint').textContent = `${(buf.byteLength / 1024).toFixed(0)} KB · ${cacheHit ? 'cached' : 'generated'}${billingNote}`;
 	} catch (err) {
 		$('pgHint').textContent = `Error: ${err.message}`;
 	} finally {
@@ -556,7 +572,7 @@ async function playVoiceSample(voiceId) {
 		const r = await fetch('/api/tts/eleven', {
 			method: 'POST',
 			credentials: 'include',
-			headers: { 'content-type': 'application/json' },
+			headers: withElevenKey({ 'content-type': 'application/json' }),
 			body: JSON.stringify({
 				voiceId,
 				text: "Hello, I'm your cloned voice. How does this sound?",
@@ -629,10 +645,48 @@ document.addEventListener('keydown', (e) => {
 	}
 });
 
+// ── BYOK: your own ElevenLabs key ────────────────────────────────────────────
+
+function renderByokState() {
+	const key = getElevenKey();
+	$('byokClear').hidden = !key;
+	$('byokKey').placeholder = key ? maskElevenKey(key) : 'sk_...';
+	$('byokSave').textContent = key ? 'Update key' : 'Save key';
+	$('byokStatus').textContent = key
+		? `Using your ElevenLabs account (${maskElevenKey(key)}). Clones and speech are billed to it.`
+		: 'Using the three.ws account with the free quota.';
+}
+
+$('byokSave').addEventListener('click', () => {
+	const value = $('byokKey').value.trim();
+	if (!value) {
+		$('byokStatus').textContent = 'Paste your ElevenLabs API key first.';
+		$('byokKey').focus();
+		return;
+	}
+	setElevenKey(value);
+	$('byokKey').value = '';
+	renderByokState();
+});
+
+$('byokKey').addEventListener('keydown', (e) => {
+	if (e.key === 'Enter') {
+		e.preventDefault();
+		$('byokSave').click();
+	}
+});
+
+$('byokClear').addEventListener('click', () => {
+	clearElevenKey();
+	$('byokKey').value = '';
+	renderByokState();
+});
+
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 renderLibrary();
 renderPlaygroundVoices();
+renderByokState();
 
 // Auto-populate voice name with a sensible default
 const now = new Date();

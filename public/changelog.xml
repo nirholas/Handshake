@@ -7,12 +7,28 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Wallet Portfolio</title>
+			<link>https://three.ws/docs/portfolio</link>
+			<guid isPermaLink="false">2026-08-06:Docs · Wallet Portfolio</guid>
+			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the live wallet portfolio works: the keyless Solana-first data sources behind /api/crypto/portfolio, the stable/major/token classification, the honest 24h coverage contract, and the full response shape for agents and scripts.</description>
+		</item>
+		<item>
 			<title>Sign Mirror</title>
 			<link>https://three.ws/sign-mirror</link>
 			<guid isPermaLink="false">2026-08-06:Sign Mirror</guid>
 			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Learn the ASL alphabet by making it: the avatar forms the letter, your camera watches your hand, and the page grades the handshape live, naming the finger that is off. Fully on-device; no video ever uploaded.</description>
+		</item>
+		<item>
+			<title>Wallet Portfolio</title>
+			<link>https://three.ws/portfolio</link>
+			<guid isPermaLink="false">2026-08-06:Wallet Portfolio</guid>
+			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A live portfolio view for any Solana or Ethereum wallet: total value, 24h move with honest coverage, stablecoin/major/token breakdown, top-asset allocation, and every holding priced in real time. Free, keyless, deep-linkable, no account.</description>
 		</item>
 		<item>
 			<title>A dry Agora wallet now tells you which address to fund</title>
@@ -373,6 +389,14 @@
 			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>Contributing to or exiting a trading swarm moves real SOL out of a custodial wallet, and pausing or killing one changes a live treasury's mandate, but those actions were missing two guards the rest of the platform's money actions have had. They now require the same anti-forgery token, so another website cannot make a request on your behalf while you are signed in, and they are capped at the same rate an agent trade is, in their own budget so an active trader can never rate-limit their own swarm.</description>
+		</item>
+		<item>
+			<title>Voice Lab: bring your own ElevenLabs key, or pay for extra speech with $THREE credits</title>
+			<link>https://three.ws/voice</link>
+			<guid isPermaLink="false">2026-08-06:Voice Lab: bring your own ElevenLabs key, or pay for extra speech with $THREE credits</guid>
+			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Voice cloning and speech now have three clear lanes. Everyone keeps a free lane on the platform account: 3 voice clones a day and 1,000 spoken characters an hour, with cached clips always free. When the free hour is spent, speech keeps working and is metered to your prepaid credit balance (top up with $THREE or SOL at /credits) at $0.30 per 1,000 characters, refunded automatically if a clip fails. And anyone with their own ElevenLabs account can paste their API key into the new card on the Voice Lab page to run cloning and speech entirely on their account, with no platform limits; the key stays in your browser and is never stored on our servers.</description>
 		</item>
 		<item>
 			<title>Docs · The free LLM failover chain</title>

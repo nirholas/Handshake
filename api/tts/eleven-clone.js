@@ -18,8 +18,9 @@
  */
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
-import { cors, method, wrap, error, json } from '../_lib/http.js';
-import { createClonedVoice, isConfigured } from '../_lib/elevenlabs.js';
+import { cors, method, wrap, error, json, rateLimited } from '../_lib/http.js';
+import { limits } from '../_lib/rate-limit.js';
+import { createClonedVoice, resolveElevenKey } from '../_lib/elevenlabs.js';
 
 export const config = {
 	api: { bodyParser: false },
@@ -33,12 +34,28 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	if (!isConfigured())
-		return error(res, 503, 'not_configured', 'ElevenLabs is not configured on this server');
+	// A user-supplied x-eleven-key (BYOK) clones onto THAT user's ElevenLabs
+	// account: their quota, their bill, so the platform's daily cap is skipped.
+	const { apiKey, byok } = resolveElevenKey(req);
+	if (!apiKey)
+		return error(
+			res,
+			503,
+			'not_configured',
+			'ElevenLabs is not configured on this server. Send your own key in the x-eleven-key header to use your account.',
+		);
 
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
+	const userId = session?.id ?? bearer.userId;
+
+	// Platform-key clones consume paid IVC slots on the shared account: hold
+	// them to the same 3/day cap the agent-voice clone path already enforces.
+	if (!byok) {
+		const rl = await limits.voiceClone(userId);
+		if (!rl.success) return rateLimited(res, rl);
+	}
 
 	const ct = req.headers['content-type'] || '';
 	if (!ct.toLowerCase().startsWith('multipart/form-data'))
@@ -103,7 +120,12 @@ export default wrap(async (req, res) => {
 
 	let result;
 	try {
-		result = await createClonedVoice({ name, description, files: [audioFile] });
+		result = await createClonedVoice({
+			name,
+			description,
+			files: [audioFile],
+			apiKey: byok ? apiKey : null,
+		});
 	} catch (err) {
 		const status = err.status || 502;
 		console.error(
@@ -121,7 +143,6 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const userId = session?.id ?? bearer.userId;
 	if (process.env.TTS_DEBUG === '1') {
 		console.log(
 			`[tts/eleven-clone] user=${userId} cloned voice "${name}" -> ${result.voiceId} (audio=${audio.data.length}B)`,

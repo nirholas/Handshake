@@ -4,7 +4,16 @@
  * Server proxy for ElevenLabs TTS. Keeps the API key server-side. The clip is
  * streamed straight to the client (low TTFB) and, on a clean finish, cached in
  * R2 for 30 days keyed by sha256(voiceId + text + modelId + voice_settings).
- * Rate-limits per user: 1000 chars / hour tracked via Redis INCRBY.
+ *
+ * Billing ladder (header `x-tts-billing` reports which rung served the call):
+ *   byok    - request carried an `x-eleven-key` header: the user's own
+ *             ElevenLabs account pays, so no platform budget or credits apply.
+ *   free    - within the free hourly character budget (1000 chars / hour,
+ *             tracked via Redis INCRBY on the platform key).
+ *   credits - budget spent: the request is metered against the user's prepaid
+ *             credit wallet (top up with $THREE or SOL at /credits) at
+ *             TTS_ELEVEN_USD_PER_1K, with a 402 + top_up_url when short.
+ *   Cache hits are always free and never touch the budget.
  *
  * Body: {
  *   voiceId: string,
@@ -18,17 +27,19 @@
  * Response: audio/mpeg (chunked)
  */
 
-import { env } from '../_lib/env.js';
+import { randomUUID } from 'node:crypto';
 import { getRedis as _getSharedRedis } from '../_lib/redis.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
-import { cors, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
+import { cors, method, wrap, error, json, readJson, rateLimited } from '../_lib/http.js';
+import { limits } from '../_lib/rate-limit.js';
 import { sha256 } from '../_lib/crypto.js';
 import { headObject, getObjectBuffer, putObject } from '../_lib/r2.js';
+import { chargeCreditsForAction, refundCredits } from '../_lib/credits.js';
+import { TTS_ELEVEN_USD_PER_1K } from '../_lib/pricing/catalog.js';
 import {
 	ELEVEN_BASE,
 	DEFAULT_TTS_MODEL,
-	elevenApiKey,
+	resolveElevenKey,
 	normalizeVoiceSettings,
 } from '../_lib/elevenlabs.js';
 
@@ -51,9 +62,14 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const apiKey = elevenApiKey();
+	const { apiKey, byok } = resolveElevenKey(req);
 	if (!apiKey)
-		return error(res, 503, 'not_configured', 'ElevenLabs is not configured on this server');
+		return error(
+			res,
+			503,
+			'not_configured',
+			'ElevenLabs is not configured on this server. Send your own key in the x-eleven-key header to use your account.',
+		);
 
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
@@ -81,54 +97,9 @@ export default wrap(async (req, res) => {
 		body.voice_settings && typeof body.voice_settings === 'object' ? body.voice_settings : {},
 	);
 
-	// ── Char-based rate limit ─────────────────────────────────────────────────
-	// rKey is lifted to function scope so a failed synthesis can refund the
-	// characters it optimistically reserves below.
-	let rKey = null;
-	if (redis) {
-		const hourBucket = Math.floor(Date.now() / 3_600_000);
-		const key = `tts:chars:${userId}:${hourBucket}`;
-		try {
-			const used = Number((await redis.get(key)) || 0);
-			if (used + text.length > CHARS_PER_HOUR) {
-				return error(
-					res,
-					429,
-					'rate_limited',
-					`TTS character limit (${CHARS_PER_HOUR}/hr) reached. Try again next hour.`,
-				);
-			}
-			// Increment before synthesis to prevent parallel races from blowing past limit.
-			const newTotal = await redis.incrby(key, text.length);
-			await redis.expire(key, 7200);
-			// Only arm the refund path once the reservation actually landed.
-			rKey = key;
-			if (newTotal > CHARS_PER_HOUR) {
-				await redis.decrby(key, text.length).catch(() => {});
-				rKey = null;
-				return error(
-					res,
-					429,
-					'rate_limited',
-					`TTS character limit (${CHARS_PER_HOUR}/hr) reached. Try again next hour.`,
-				);
-			}
-		} catch (err) {
-			// Redis outage / over-quota: fail open rather than 500 the synth, matching
-			// the shared limiter's non-critical behavior. ElevenLabs' own account quota
-			// stays the hard ceiling, so an unmetered call here can't run away on cost.
-			console.warn('[tts/eleven] char-limit redis degraded, allowing:', err?.message || err);
-			rKey = null;
-		}
-	}
-
-	// Refund reserved characters when synthesis ultimately fails, so a user is
-	// not billed against the hourly budget for a clip they never received.
-	const refundChars = async () => {
-		if (rKey) await redis.decrby(rKey, text.length).catch(() => {});
-	};
-
 	// ── R2 cache lookup ───────────────────────────────────────────────────────
+	// Checked BEFORE any metering: a cached clip costs nothing upstream, so it
+	// never consumes the free budget and never charges credits.
 	const cacheHash = await sha256(
 		`${voiceId}\x00${text}\x00${modelId}\x00${settings.stability}\x00${settings.similarity_boost}\x00${settings.style}\x00${settings.use_speaker_boost}`,
 	);
@@ -141,12 +112,106 @@ export default wrap(async (req, res) => {
 			res.setHeader('content-type', 'audio/mpeg');
 			res.setHeader('content-length', String(buf.length));
 			res.setHeader('x-tts-cache', 'hit');
+			res.setHeader('x-tts-billing', 'free');
 			res.setHeader('cache-control', 'private, max-age=86400');
 			return res.end(buf);
 		} catch {
-			// Cache read failed — fall through to synthesize fresh.
+			// Cache read failed: fall through to synthesize fresh.
 		}
 	}
+
+	// ── Metering ladder: byok → free hourly budget → prepaid credits ──────────
+	// BYOK requests run on the user's own ElevenLabs account, so the platform
+	// budget and credit wallet never apply. Platform-key requests consume the
+	// free hourly character budget first; once it is spent, the request is
+	// charged to the user's credit wallet (topped up with $THREE or SOL).
+	let billing = byok ? 'byok' : 'free';
+	// rKey / creditCharge are lifted to function scope so a failed synthesis can
+	// refund whichever lane the request was metered on.
+	let rKey = null;
+	let creditCharge = null;
+
+	const chargeOverage = async () => {
+		const idempotencyKey = `tts:eleven:${randomUUID()}`;
+		const usd = Math.max(0.0001, (text.length / 1000) * TTS_ELEVEN_USD_PER_1K);
+		const charged = await chargeCreditsForAction({
+			user: session || { id: userId },
+			action: 'tts.eleven',
+			usd,
+			refType: 'tts',
+			refId: cacheHash,
+			idempotencyKey,
+			meta: { chars: text.length, voiceId, modelId },
+		});
+		creditCharge = { idempotencyKey, chargedUsd: charged.chargedUsd };
+		billing = 'credits';
+	};
+
+	if (!byok && redis) {
+		let overBudget = false;
+		const hourBucket = Math.floor(Date.now() / 3_600_000);
+		const key = `tts:chars:${userId}:${hourBucket}`;
+		try {
+			const used = Number((await redis.get(key)) || 0);
+			if (used + text.length > CHARS_PER_HOUR) {
+				overBudget = true;
+			} else {
+				// Increment before synthesis to prevent parallel races from blowing past limit.
+				const newTotal = await redis.incrby(key, text.length);
+				await redis.expire(key, 7200);
+				// Only arm the refund path once the reservation actually landed.
+				rKey = key;
+				if (newTotal > CHARS_PER_HOUR) {
+					await redis.decrby(key, text.length).catch(() => {});
+					rKey = null;
+					overBudget = true;
+				}
+			}
+		} catch (err) {
+			// Redis outage / over-quota: fail open rather than 500 the synth, matching
+			// the shared limiter's non-critical behavior. ElevenLabs' own account quota
+			// stays the hard ceiling, so an unmetered call here can't run away on cost.
+			console.warn('[tts/eleven] char-limit redis degraded, allowing:', err?.message || err);
+			rKey = null;
+		}
+
+		if (overBudget) {
+			try {
+				await chargeOverage();
+			} catch (err) {
+				if (err?.code === 'insufficient_credits') {
+					return json(res, 402, {
+						error: 'insufficient_credits',
+						feature: 'tts.eleven',
+						available_usd: err.available_usd,
+						required_usd: err.required_usd,
+						top_up_url: '/credits',
+						message:
+							`Free TTS quota (${CHARS_PER_HOUR} chars/hr) is spent and your credit balance is short. ` +
+							'Top up with $THREE at /credits, wait for the hourly reset, or bring your own ElevenLabs key.',
+					});
+				}
+				throw err;
+			}
+		}
+	}
+
+	// Refund whichever metering lane was used when synthesis ultimately fails,
+	// so a user is never billed for a clip they never received.
+	const refundMetering = async () => {
+		if (rKey) await redis.decrby(rKey, text.length).catch(() => {});
+		if (creditCharge?.chargedUsd > 0) {
+			await refundCredits({
+				userId,
+				amountUsd: creditCharge.chargedUsd,
+				action: 'tts.eleven',
+				refType: 'tts',
+				refId: cacheHash,
+				idempotencyKey: `${creditCharge.idempotencyKey}:refund`,
+				meta: { reason: 'synthesis_failed' },
+			}).catch((e) => console.warn('[tts/eleven] credit refund failed:', e?.message || e));
+		}
+	};
 
 	// ── Synthesize via ElevenLabs ─────────────────────────────────────────────
 	let elResp;
@@ -174,14 +239,14 @@ export default wrap(async (req, res) => {
 		);
 	} catch (fetchErr) {
 		console.error('[tts/eleven] ElevenLabs fetch failed', fetchErr);
-		await refundChars();
+		await refundMetering();
 		return error(res, 502, 'upstream_error', 'Could not reach ElevenLabs');
 	}
 
 	if (!elResp.ok) {
 		const msg = await elResp.text().catch(() => '');
 		console.error('[tts/eleven] ElevenLabs error', elResp.status, msg);
-		await refundChars();
+		await refundMetering();
 		return error(res, 502, 'upstream_error', `ElevenLabs returned ${elResp.status}`);
 	}
 
@@ -189,6 +254,9 @@ export default wrap(async (req, res) => {
 	// buffer, so the complete audio can be cached once it has fully arrived.
 	res.setHeader('content-type', 'audio/mpeg');
 	res.setHeader('x-tts-cache', 'miss');
+	res.setHeader('x-tts-billing', billing);
+	if (creditCharge?.chargedUsd > 0)
+		res.setHeader('x-tts-charged-usd', creditCharge.chargedUsd.toFixed(6));
 	res.setHeader('cache-control', 'private, max-age=86400');
 
 	if (!elResp.body) {

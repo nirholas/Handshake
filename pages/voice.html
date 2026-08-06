@@ -640,6 +640,37 @@
 				align-items: center;
 			}
 
+			/* ── BYOK: your own ElevenLabs key ───────────── */
+			.vl-byok-copy {
+				margin: 0 0 14px;
+				font-size: 13px;
+				line-height: 1.6;
+				color: #999999;
+			}
+			.vl-byok-copy a { color: #e8e8e8; text-decoration: underline; text-underline-offset: 2px; }
+			.vl-byok-copy a:hover { color: #ffffff; }
+			.vl-byok-row {
+				display: flex;
+				gap: 10px;
+				flex-wrap: wrap;
+				align-items: center;
+				margin-bottom: 8px;
+			}
+			.vl-byok-row input {
+				flex: 1;
+				min-width: 220px;
+				padding: 10px 12px;
+				background: #070707;
+				border: 1px solid #212121;
+				border-radius: 9px;
+				color: #e8e8e8;
+				font: inherit;
+				font-size: 14px;
+				outline: none;
+				transition: border-color 0.15s;
+			}
+			.vl-byok-row input:focus { border-color: #ffffff; }
+
 			/* ── Responsive ─────────────────────────────── */
 			@media (max-width: 640px) {
 				.vl-root { padding: 20px 16px 60px; }
@@ -787,6 +818,32 @@
 						<div class="vl-pg-output" id="pgOutput">
 							<audio id="pgAudio" controls></audio>
 						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- ── BYOK: your own ElevenLabs key ─────────── -->
+			<div class="vl-section" id="byokSection">
+				<div class="vl-section-head">
+					<h2 class="vl-section-title">Use Your Own ElevenLabs Key</h2>
+				</div>
+				<div class="vl-card">
+					<div class="vl-card-body">
+						<p class="vl-byok-copy">
+							By default, cloning and speech run on the three.ws account: 3 free clones a day
+							and 1,000 free speech characters an hour, after which synthesis is metered to your
+							<a href="/credits">credit balance</a> (top up with $THREE or SOL).
+							Paste your own <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener">ElevenLabs API key</a>
+							to run everything on your ElevenLabs account instead: your voices, your quota, no
+							platform limits. The key is stored only in this browser and sent only with your
+							own voice requests; the server never keeps it.
+						</p>
+						<div class="vl-byok-row">
+							<input type="password" id="byokKey" placeholder="sk_..." autocomplete="off" spellcheck="false" aria-label="ElevenLabs API key" />
+							<button class="vl-btn vl-btn-primary" id="byokSave" type="button">Save key</button>
+							<button class="vl-btn" id="byokClear" type="button" hidden>Remove</button>
+						</div>
+						<span class="vl-pg-hint" id="byokStatus" role="status" style="font-size:12px;color:#666666;"></span>
 					</div>
 				</div>
 			</div>
