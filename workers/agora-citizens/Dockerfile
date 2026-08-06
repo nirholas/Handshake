@@ -24,7 +24,19 @@ RUN npm ci --ignore-scripts || npm install --ignore-scripts
 COPY solana-agent-sdk ./solana-agent-sdk
 RUN cd solana-agent-sdk && (npm ci --ignore-scripts || npm install --ignore-scripts) && npm run build
 
-# Worker source (imports only its own files + @three-ws/solana-agent + node deps).
+# Repo code the worker imports from OUTSIDE its own directory. It runs outside
+# api/, but still reaches across that boundary:
+#   config.js      -> api/_lib/env.js       (resolveDatabaseUrl)
+#   store.js       -> api/_lib/feed.js      (the feed's ALLOWED_TYPES)
+#   work/_skills.js-> api/_lib/r2.js        (deliverable upload, dynamic import)
+#   work/sculptor.js -> packages/forge      (text/image -> GLB)
+# Omitting any of these makes the image BUILD fine and then crash on boot with
+# "Cannot find module", so tests/agora-worker-image.test.js pins this list
+# against the real imports.
+COPY api/_lib ./api/_lib
+COPY packages/forge ./packages/forge
+
+# Worker source.
 COPY workers/agora-citizens ./workers/agora-citizens
 
 RUN npm prune --omit=dev --ignore-scripts || true
