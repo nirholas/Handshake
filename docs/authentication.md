@@ -372,6 +372,35 @@ await fetch('/api/auth/logout-everywhere', {
 });
 ```
 
+### Deleting the account
+
+`DELETE /api/auth/me` closes an account for good. It is the endpoint behind the
+Danger Zone on [/settings](https://three.ws/settings), and it has three gates:
+a live session, a single-use CSRF token, and the literal confirmation phrase in
+the body (case-insensitive). Miss the phrase and it answers
+`400 confirmation_required` without writing anything.
+
+```js
+import { apiFetch } from '/src/api.js'; // attaches the x-csrf-token for you
+
+const res = await apiFetch('/api/auth/me', {
+  method: 'DELETE',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ confirm: 'delete my account' }),
+});
+const { deleted } = await res.json(); // { avatars, agents, widgets } counts
+```
+
+What it does, in order: retires the account's avatars, agent identities, and
+embed widgets (so nothing of theirs keeps serving publicly), marks the user
+row deleted, releases the `/u/<username>` handle back to the pool, revokes
+every session and OAuth refresh token, and clears the session cookie. The row
+itself is kept, which is what lets every sign-in path answer honestly
+afterwards: password login fails as if the account never existed, and the
+wallet/SAML paths return `account_deleted` rather than minting a fresh account
+for the same wallet. The deletion is recorded in the audit log with the
+released username, so support can restore a handle on an appeal.
+
 ### Coin-community sessions (Town, `/play` worlds)
 
 The coin-community surfaces (Town posting, holder passes, world gates) ride a

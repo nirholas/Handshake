@@ -219,8 +219,9 @@ async function handleRegister(req, res) {
 // cookie was presented but didn't resolve to a live session — the client
 // should clear local state and treat it as a forced logout.
 async function handleMe(req, res) {
-	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
-	if (!method(req, res, ['GET'])) return;
+	if (cors(req, res, { methods: 'GET,DELETE,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'DELETE'])) return;
+	if (req.method === 'DELETE') return handleDeleteAccount(req, res);
 	if (!hasSessionCookie(req)) return json(res, 200, { user: null });
 	const user = await getSessionUser(req);
 	if (!user) {
@@ -228,6 +229,65 @@ async function handleMe(req, res) {
 		return error(res, 401, 'invalid_session', 'session expired or revoked');
 	}
 	return json(res, 200, { user });
+}
+
+// ── delete account (DELETE /api/auth/me) ──────────────────────────────────────
+
+// Soft delete, matching the model the rest of auth already assumes: every login
+// path (password, SIWE, SIWS, SAML, Privy) filters on `deleted_at is null` and
+// the wallet paths answer `account_deleted` rather than minting a fresh account
+// for a wallet whose owner left. Rows stay for support/forensics; what changes
+// is that nothing can sign in as this user and none of their content is public.
+//
+// Three explicit gates before anything is written: a live session, a single-use
+// CSRF token, and a typed confirmation phrase in the body. CSRF alone would let
+// a stray DELETE from an authenticated tab wipe an account.
+const DELETE_ACCOUNT_CONFIRM = 'delete my account';
+
+async function handleDeleteAccount(req, res) {
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthenticated', 'not signed in');
+	if (!(await requireCsrf(req, res, user.id))) return;
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const body = await readJson(req).catch(() => null);
+	const confirm = String(body?.confirm ?? '').trim().toLowerCase();
+	if (confirm !== DELETE_ACCOUNT_CONFIRM) {
+		return error(res, 400, 'confirmation_required', `send {"confirm":"${DELETE_ACCOUNT_CONFIRM}"} to delete this account`);
+	}
+
+	const [current] = await sql`select username from users where id = ${user.id} and deleted_at is null limit 1`;
+	if (!current) return error(res, 401, 'unauthenticated', 'not signed in');
+
+	// Content first, identity second: if the request dies midway the account is
+	// still signable-in and can be retried, rather than orphaned with its avatars
+	// and embeds left serving publicly under a dead owner.
+	const avatars = await sql`update avatars set deleted_at = now() where owner_id = ${user.id} and deleted_at is null`;
+	const agents = await sql`update agent_identities set deleted_at = now() where user_id = ${user.id} and deleted_at is null`;
+	const widgets = await sql`update widgets set deleted_at = now() where user_id = ${user.id} and deleted_at is null`;
+
+	// The handle is released (its unique index ignores deleted_at, so keeping it
+	// would hold /u/<name> hostage forever); the previous value goes to the audit
+	// row so support can restore it on an appeal. Email is deliberately kept: the
+	// wallet/SAML paths key their `account_deleted` answer off finding this row.
+	await sql`update users set deleted_at = now(), username = null, updated_at = now() where id = ${user.id} and deleted_at is null`;
+	await sql`update sessions set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
+	await sql`update oauth_refresh_tokens set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
+
+	res.setHeader('set-cookie', sessionCookie('', { clear: true }));
+	const deleted = {
+		avatars: avatars.count ?? 0,
+		agents: agents.count ?? 0,
+		widgets: widgets.count ?? 0,
+	};
+	logAudit({
+		userId: user.id,
+		action: 'delete_account',
+		meta: { released_username: current.username || null, ...deleted },
+		req,
+	});
+	return json(res, 200, { ok: true, deleted });
 }
 
 // ── profile ───────────────────────────────────────────────────────────────────

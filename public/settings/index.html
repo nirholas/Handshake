@@ -553,23 +553,28 @@
 
 		<script type="module">
 			import { renderHeaderUser } from '/src/header-user.js';
-			const API = '';
+			import { apiFetch as sharedFetch } from '/src/api.js';
 
+			// Every call routes through the shared client so mutations carry a
+			// single-use x-csrf-token. A local raw fetch() used to send none, and
+			// the server's CSRF gate answered 403 csrf_missing to profile saves and
+			// session revokes while this page still reported them as successful.
 			async function apiFetch(path, opts = {}) {
-				const res = await fetch(path, { credentials: 'include', ...opts });
-				if (res.status === 401) {
-					location.href = '/login?next=' + encodeURIComponent(location.pathname + location.hash);
-					throw new Error('unauthenticated');
-				}
+				const res = await sharedFetch(path, opts);
+				if (!res.ok) throw await apiError(res);
 				return res;
+			}
+
+			async function apiError(res) {
+				const ct = res.headers.get('content-type') || '';
+				const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+				return Object.assign(new Error(data?.error_description || res.statusText), { status: res.status, data });
 			}
 
 			async function apiJson(path, opts = {}) {
 				const res = await apiFetch(path, opts);
 				const ct = res.headers.get('content-type') || '';
-				const data = ct.includes('application/json') ? await res.json() : null;
-				if (!res.ok) throw Object.assign(new Error(data?.error_description || res.statusText), { status: res.status, data });
-				return data;
+				return ct.includes('application/json') ? await res.json() : null;
 			}
 
 			function showMsg(el, type, text) {
@@ -691,8 +696,9 @@
 							try {
 								await apiFetch(`/api/auth/sessions/${btn.dataset.revoke}`, { method: 'DELETE' });
 								btn.closest('.session-row').remove();
-							} catch {
+							} catch (e) {
 								btn.disabled = false;
+								showMsg(document.getElementById('sessions-msg'), 'err', e.data?.error_description || 'Failed to revoke that session.');
 							}
 						});
 					});
@@ -719,16 +725,12 @@
 			document.getElementById('sign-out-everywhere-btn').addEventListener('click', async () => {
 				const btn = document.getElementById('sign-out-everywhere-btn');
 				btn.disabled = true;
-				// Cookie-session mutation: attach the single-use double-submit CSRF
-				// token (this page's local apiFetch helper does not carry one).
-				const csrf = await fetch('/api/csrf-token', { credentials: 'include' })
-					.then((r) => (r.ok ? r.json() : null))
-					.then((j) => j?.data?.token || '')
-					.catch(() => '');
-				await fetch('/api/auth/logout-everywhere', { method: 'POST', credentials: 'include', headers: { 'x-csrf-token': csrf } }).finally(() => {
-					try { localStorage.removeItem('3dagent:auth-hint'); } catch {}
-					location.href = '/login';
-				});
+				await apiFetch('/api/auth/logout-everywhere', { method: 'POST' })
+					.catch(() => {})
+					.finally(() => {
+						try { localStorage.removeItem('3dagent:auth-hint'); } catch {}
+						location.href = '/login';
+					});
 			});
 
 			// ── Delete account ────────────────────────────────────────────
@@ -750,11 +752,19 @@
 				btn.disabled = true;
 				btn.textContent = 'Deleting…';
 				try {
-					await apiFetch('/api/auth/me', { method: 'DELETE' });
+					// The typed phrase is echoed to the server, which refuses the
+					// delete without it. CSRF alone shouldn't be able to wipe an
+					// account from a stray request in an authenticated tab.
+					await apiFetch('/api/auth/me', {
+						method: 'DELETE',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ confirm: 'delete my account' }),
+					});
 					try { localStorage.removeItem('3dagent:auth-hint'); } catch {}
 					location.href = '/?deleted=1';
 				} catch (e) {
 					btn.textContent = 'Permanently delete';
+					btn.disabled = false;
 					alert(e.data?.error_description || 'Failed to delete account. Please contact support.');
 				}
 			});
