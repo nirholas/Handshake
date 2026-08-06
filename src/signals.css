@@ -176,6 +176,10 @@
 .sd-emit-out .pct.win { color: var(--sm-win); } .sd-emit-out .pct.loss { color: var(--sm-loss); } .sd-emit-out .pct.flat { color: var(--sm-flat); }
 .sd-emit-out .badge { display: inline-block; margin-top: 3px; font: 600 9.5px/1 var(--mono, monospace); text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-dim, #889); }
 .sd-emit-out .badge.open { color: var(--sm-accent); }
+/* A paid feed's open position, withheld until you subscribe. Dashed edge so it
+   reads as deliberately held back rather than as a row that failed to load. */
+.sd-emit.is-locked { background: var(--surface-1, rgba(255,255,255,0.02)); border: 1px dashed var(--surface-3, rgba(255,255,255,0.14)); }
+.sd-emit.is-locked .sd-emit-coin .sym { color: var(--ink-dim, #889); }
 
 /* Subscribe panel */
 .sd-price-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }

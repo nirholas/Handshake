@@ -92,6 +92,20 @@ function outcomeCell(e) {
 }
 
 function emitRow(e) {
+	// A paid feed's open positions come back redacted for anyone who has not
+	// subscribed. Render that as the deliberate state it is (locked, with the
+	// conviction and side still shown so the row still says something) rather
+	// than as a row with missing data.
+	if (e.locked) {
+		const conv = e.conviction != null ? `conv ${Math.round(e.conviction * 100)}%` : '';
+		const meta = [conv, 'subscribe to see the coin'].filter(Boolean).join('<span aria-hidden="true">·</span>');
+		return `
+		<div class="sd-emit is-locked">
+			<span class="sd-emit-side ${e.side}">${e.side}</span>
+			<div class="sd-emit-coin"><div class="sym" aria-label="Locked signal">🔒 Live signal</div><div class="meta">${meta}</div></div>
+			<div class="sd-emit-out">${outcomeCell(e)}</div>
+		</div>`;
+	}
 	const sym = e.symbol ? `$${escapeHtml(e.symbol)}` : `${escapeHtml((e.mint || '').slice(0, 6))}…`;
 	const conv = e.conviction != null ? `conv ${Math.round(e.conviction * 100)}%` : '';
 	const size = e.size_multiple != null ? `${e.size_multiple.toFixed(2)}× size` : '';
@@ -108,9 +122,14 @@ function emitRow(e) {
 
 function logHtml(f) {
 	const rows = (f.emissions || []).map(emitRow).join('');
+	const lockedCount = (f.emissions || []).filter((e) => e.locked).length;
+	const note = lockedCount
+		? `<p class="sd-note">${lockedCount} live ${lockedCount === 1 ? 'position is' : 'positions are'} open right now. Closed signals below are shown in full with their on-chain proof; subscribe to see the open ones as they are called.</p>`
+		: '';
 	return `
 		<div class="sd-panel">
 			<h2>Signal log <span class="sd-count">${f.emissions?.length || 0} recent · realized outcomes</span></h2>
+			${note}
 			<div class="sd-log">${rows || '<p class="sd-note">No signals emitted yet. The moment this trader opens or closes a real position, it appears here.</p>'}</div>
 		</div>`;
 }

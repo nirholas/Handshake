@@ -525,8 +525,48 @@ export async function getMarketplace({ network = 'mainnet', limit = 60, sort = '
 	return { network: net, sort: FEED_SORTS.has(sort) ? sort : 'edge', feeds: ranked, t: Date.now() };
 }
 
-/** A single feed's detail: full stats + recent emissions (with realized outcomes). */
-export async function getFeedDetail({ slug, network = 'mainnet', emissionLimit = 40 }) {
+// Is this viewer entitled to a paid feed's live alpha? The publisher-owner and
+// any active, non-killed subscriber are; everyone else sees the track record with
+// the still-actionable parts withheld. Same rule the SSE stream enforces, so the
+// two surfaces can never disagree about who has paid.
+async function viewerEntitled(feed, viewerUserId) {
+	if (!viewerUserId) return false;
+	if (feed.owner_user_id === viewerUserId) return true;
+	const [sub] = await sql`
+		select 1 from signal_subscriptions
+		where feed_id = ${feed.id} and owner_user_id = ${viewerUserId}
+		  and status = 'active' and killed = false
+		limit 1
+	`.catch(() => []);
+	return !!sub;
+}
+
+// An open position is the product a subscriber pays for: naming its mint (and
+// linking the entry tx, which names it too) IS the signal. A closed one is track
+// record whose alpha is spent, so it stays fully visible and on-chain verifiable:
+// that is the sales surface, and hiding it would make the feed's own claims
+// unauditable. Free feeds redact nothing.
+function redactOpenEmission(e) {
+	return {
+		...e,
+		mint: null,
+		symbol: null,
+		name: null,
+		entry_sol: null,
+		buy_url: null,
+		sell_url: null,
+		locked: true,
+	};
+}
+
+/**
+ * A single feed's detail: full stats + recent emissions (with realized outcomes).
+ *
+ * `viewerUserId` decides how much of a PAID feed's OPEN positions come back
+ * (security review L7). Omit it and the caller is treated as anonymous, which is
+ * the safe default for a public page.
+ */
+export async function getFeedDetail({ slug, network = 'mainnet', emissionLimit = 40, viewerUserId = null }) {
 	const net = network === 'devnet' ? 'devnet' : 'mainnet';
 	const [feed] = await sql`
 		select f.*, a.name as publisher_name, a.avatar_url as publisher_avatar, a.profile_image_url as publisher_image, a.is_public
@@ -549,9 +589,14 @@ export async function getFeedDetail({ slug, network = 'mainnet', emissionLimit =
 
 	const shaped = shapeFeed(feed, rollups.get(Number(feed.id)), subCounts.get(Number(feed.id)) || 0, deliveryRollups.get(Number(feed.id)), metrics);
 	const solscan = (sig) => (sig && sig !== 'SIMULATED' ? (net === 'devnet' ? `https://solscan.io/tx/${sig}?cluster=devnet` : `https://solscan.io/tx/${sig}`) : null);
+	// A paid feed's open positions are withheld from anyone who has not paid.
+	const paid = shaped.pricing.per_signal_usdc > 0 || shaped.pricing.per_epoch_usdc > 0;
+	const entitled = paid ? await viewerEntitled(feed, viewerUserId) : true;
+	const gate = (row, raw) => (entitled || raw.status !== 'open' ? row : redactOpenEmission(row));
 	return {
 		...shaped,
-		emissions: emissions.map((e) => ({
+		viewer: { entitled, paywalled: paid && !entitled },
+		emissions: emissions.map((e) => gate({
 			id: Number(e.id),
 			side: e.side,
 			mint: e.mint,
@@ -568,6 +613,7 @@ export async function getFeedDetail({ slug, network = 'mainnet', emissionLimit =
 			sell_url: solscan(e.source_sell_sig),
 			emitted_at: e.emitted_at,
 			closed_at: e.closed_at,
-		})),
+			locked: false,
+		}, e)),
 	};
 }
