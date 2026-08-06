@@ -677,7 +677,7 @@ const registerConfirmSchema = z.object({
 	wallet_address: z.string().min(32).max(44),
 	network:        z.enum(['mainnet', 'devnet']).default('mainnet'),
 	name:           z.string().trim().min(1).max(60).optional(),
-	description:    z.string().trim().max(280).optional(),
+	description:    z.string().trim().max(500).optional(),
 	avatar_id:      z.string().uuid().optional(),
 });
 
@@ -711,6 +711,36 @@ export const handleRegisterConfirm = wrap(async (req, res) => {
 	const accountKeys = tx.transaction.message.accountKeys.map((k) => k.pubkey?.toString());
 	if (!accountKeys.includes(asset_pubkey)) return error(res, 422, 'asset_not_in_tx', 'The asset pubkey was not found in the transaction accounts');
 
+	// A tx that merely mentions the asset proves nothing. Require that the
+	// linked wallet signed this tx, and that the asset exists on-chain as a
+	// Metaplex Core asset owned by that wallet, before writing a public
+	// deployments-feed row for it.
+	const signerKeys = tx.transaction.message.accountKeys
+		.filter((k) => k.signer)
+		.map((k) => k.pubkey?.toString());
+	if (!signerKeys.includes(wallet_address)) {
+		return error(res, 422, 'not_signer', 'the linked wallet did not sign this transaction');
+	}
+	const MPL_CORE_PROGRAM_ID = 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d';
+	let assetInfo;
+	try {
+		assetInfo = await connection.getAccountInfo(new PublicKey(asset_pubkey));
+	} catch {
+		return error(res, 422, 'asset_not_found', 'could not load the asset account; try again shortly');
+	}
+	if (!assetInfo) return error(res, 422, 'asset_not_found', 'asset account does not exist on-chain');
+	if (assetInfo.owner?.toBase58() !== MPL_CORE_PROGRAM_ID) {
+		return error(res, 422, 'not_core_asset', 'account is not a Metaplex Core asset');
+	}
+	// AssetV1 layout: key discriminator (1 = AssetV1), then the owner pubkey.
+	if (assetInfo.data?.[0] !== 1 || assetInfo.data.length < 33) {
+		return error(res, 422, 'not_core_asset', 'account is not a Metaplex Core AssetV1');
+	}
+	const assetOwner = new PublicKey(assetInfo.data.subarray(1, 33)).toBase58();
+	if (assetOwner !== wallet_address) {
+		return error(res, 422, 'not_asset_owner', 'the asset is not owned by the linked wallet');
+	}
+
 	const [existing] = await sql`select id from agent_identities where (meta->>'sol_mint_address') = ${asset_pubkey} and deleted_at is null limit 1`;
 	if (existing) return error(res, 409, 'conflict', 'agent already registered for this mint');
 
@@ -720,7 +750,20 @@ export const handleRegisterConfirm = wrap(async (req, res) => {
 	const description = body.description || payload.description || '';
 	const avatar_id = body.avatar_id || payload.avatar_id || null;
 
-	const [agent] = await sql`insert into agent_identities (user_id, name, description, avatar_id, wallet_address, meta) values (${user.id}, ${name}, ${description}, ${avatar_id}, ${wallet_address}, ${JSON.stringify({ chain_type: 'solana', network, sol_mint_address: asset_pubkey, tx_signature, ...(payload.vanity_prefix ? { vanity_prefix: payload.vanity_prefix } : {}), ...(payload.collection ? { collection: payload.collection, update_authority: 'threews' } : {}) })}::jsonb) returning id, name, description, wallet_address, meta, created_at`;
+	const onchainBlock = {
+		chain: network === 'devnet'
+			? 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1'
+			: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+		family: 'solana',
+		cluster: network,
+		tx_hash: tx_signature,
+		onchain_id: null,
+		contract_or_mint: asset_pubkey,
+		wallet: wallet_address,
+		metadata_uri: payload.metadata_uri || null,
+		confirmed_at: new Date().toISOString(),
+	};
+	const [agent] = await sql`insert into agent_identities (user_id, name, description, avatar_id, wallet_address, meta) values (${user.id}, ${name}, ${description}, ${avatar_id}, ${wallet_address}, ${JSON.stringify({ chain_type: 'solana', network, sol_mint_address: asset_pubkey, tx_signature, onchain: onchainBlock, ...(payload.vanity_prefix ? { vanity_prefix: payload.vanity_prefix } : {}), ...(payload.collection ? { collection: payload.collection, update_authority: 'threews' } : {}) })}::jsonb) returning id, name, description, wallet_address, meta, created_at`;
 
 	await sql`delete from agent_registrations_pending where user_id=${user.id} and payload->>'asset_pubkey'=${asset_pubkey}`;
 

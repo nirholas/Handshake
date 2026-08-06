@@ -171,31 +171,35 @@ function solanaOwnSource(network) {
 	if (network === 'testnet') {
 		return sql`
 			SELECT 'solana'::text AS family, ${SOLANA_DEVNET_CHAIN_ID}::int AS chain_id,
-			       ai.meta->'devnet'->>'sol_mint_address' AS agent_id,
-			       ai.meta->'devnet'->'onchain'->>'owner' AS owner,
+			       COALESCE(ai.meta->'devnet'->>'sol_mint_address', ai.meta->>'sol_mint_address') AS agent_id,
+			       COALESCE(ai.meta->'devnet'->'onchain'->>'owner', ai.meta->'onchain'->>'wallet',
+			                ai.meta->'onchain'->>'owner', ai.wallet_address) AS owner,
 			       ai.name, ai.description, ai.profile_image_url AS image,
 			       av.thumbnail_key AS image_key,
 			       (ai.avatar_id IS NOT NULL) AS has_3d,
 			       ((ai.meta->'payments'->>'configured') = 'true') AS x402_support,
-			       COALESCE((ai.meta->'devnet'->'onchain'->>'confirmed_at')::timestamptz, ai.created_at) AS registered_at,
-			       ai.meta->'devnet'->'onchain'->>'tx_hash' AS registered_tx,
-			       ai.meta->'devnet'->>'sol_mint_address' AS asset
+			       COALESCE((ai.meta->'devnet'->'onchain'->>'confirmed_at')::timestamptz,
+			                (ai.meta->'onchain'->>'confirmed_at')::timestamptz, ai.created_at) AS registered_at,
+			       COALESCE(ai.meta->'devnet'->'onchain'->>'tx_hash', ai.meta->'onchain'->>'tx_hash',
+			                ai.meta->>'tx_signature') AS registered_tx,
+			       COALESCE(ai.meta->'devnet'->>'sol_mint_address', ai.meta->>'sol_mint_address') AS asset
 			FROM agent_identities ai
 			LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
 			WHERE ai.deleted_at IS NULL
-			  AND ai.meta->'devnet'->>'sol_mint_address' IS NOT NULL
+			  AND (ai.meta->'devnet'->>'sol_mint_address' IS NOT NULL
+			       OR (ai.meta->>'network' = 'devnet' AND ai.meta->>'sol_mint_address' IS NOT NULL))
 		`;
 	}
 	return sql`
 		SELECT 'solana'::text AS family, ${SOLANA_MAINNET_CHAIN_ID}::int AS chain_id,
 		       ai.meta->>'sol_mint_address' AS agent_id,
-		       ai.meta->'onchain'->>'owner' AS owner,
+		       COALESCE(ai.meta->'onchain'->>'wallet', ai.meta->'onchain'->>'owner', ai.wallet_address) AS owner,
 		       ai.name, ai.description, ai.profile_image_url AS image,
 		       av.thumbnail_key AS image_key,
 		       (ai.avatar_id IS NOT NULL) AS has_3d,
 		       ((ai.meta->'payments'->>'configured') = 'true') AS x402_support,
 		       COALESCE((ai.meta->'onchain'->>'confirmed_at')::timestamptz, ai.created_at) AS registered_at,
-		       ai.meta->'onchain'->>'tx_hash' AS registered_tx,
+		       COALESCE(ai.meta->'onchain'->>'tx_hash', ai.meta->>'tx_signature') AS registered_tx,
 		       ai.meta->>'sol_mint_address' AS asset
 		FROM agent_identities ai
 		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
@@ -224,7 +228,8 @@ function solanaExternalSource(network) {
 		  AND NOT EXISTS (
 		    SELECT 1 FROM agent_identities o
 		    WHERE o.deleted_at IS NULL
-		      AND o.meta->>'sol_mint_address' = s.asset
+		      AND (o.meta->>'sol_mint_address' = s.asset
+		           OR o.meta->'devnet'->>'sol_mint_address' = s.asset)
 		  )
 	`;
 }
@@ -385,6 +390,9 @@ export default async function handler(req, res) {
 	const kindRaw = url.searchParams.get('kind');
 	const kind = kindRaw === '3d' || kindRaw === 'x402' ? kindRaw : 'all';
 	const cursor = url.searchParams.get('cursor');
+	if (cursor && !decodeCursor(cursor)) {
+		return error(res, 400, 'bad_request', 'invalid cursor');
+	}
 
 	try {
 		if (view === 'stats') {
@@ -413,6 +421,7 @@ export default async function handler(req, res) {
 		}
 
 		const body = await handleFeed({ network, chain, kind, cursor });
+		res.setHeader('cache-control', 'public, max-age=12');
 		return json(res, 200, { data: body });
 	} catch (e) {
 		if (isDbUnavailableError(e)) {

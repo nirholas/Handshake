@@ -131,3 +131,35 @@ a.dp-row-name:hover { text-decoration: underline; }
 @media (max-width: 520px) {
 	.dp-counters { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── Latest-deployment spotlight ────────────────────────────────────────────
+   The newest agent to land on-chain gets a hero card above the counters.
+   Re-rendered only when a new agent takes the top slot (dp-land entrance). */
+.dp-spotlight { display: flex; align-items: center; gap: var(--space-lg, 22px); background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke-strong, rgba(255,255,255,.14)); border-radius: var(--radius-lg, 16px); padding: var(--space-lg, 22px); margin: var(--space-xl, 40px) 0 0; position: relative; overflow: hidden; }
+.dp-spotlight::before { content: ''; position: absolute; inset: 0; background: radial-gradient(600px 140px at 0% 0%, var(--surface-3, rgba(255,255,255,.06)), transparent 70%); pointer-events: none; }
+.dp-spot-avwrap { position: relative; flex: 0 0 auto; width: 72px; height: 72px; }
+.dp-spot-av { width: 72px; height: 72px; border-radius: 18px; object-fit: cover; background: var(--surface-3, rgba(255,255,255,.08)); border: 1px solid var(--stroke-strong, rgba(255,255,255,.14)); display: block; }
+.dp-spot-av--mono { display: grid; place-items: center; font-family: var(--font-display, sans-serif); font-size: 1.6rem; font-weight: 700; color: var(--ink-dim, #888); }
+.dp-spot-ring { position: absolute; inset: -5px; border-radius: 22px; border: 1px solid var(--stroke-strong, rgba(255,255,255,.2)); animation: dp-spot-ping 2.4s ease infinite; pointer-events: none; }
+@keyframes dp-spot-ping { 0% { opacity: .9; transform: scale(1); } 70% { opacity: 0; transform: scale(1.12); } 100% { opacity: 0; transform: scale(1.12); } }
+.dp-spot-body { min-width: 0; display: flex; flex-direction: column; gap: 4px; position: relative; }
+.dp-spot-kicker { font-size: var(--text-2xs, .66rem); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint, #666); }
+.dp-spot-title { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
+.dp-spot-name { font-family: var(--font-display, sans-serif); font-size: clamp(1.1rem, 2.6vw, 1.45rem); font-weight: 700; color: var(--ink-bright, #fff); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+a.dp-spot-name:hover { text-decoration: underline; }
+a.dp-spot-name:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; border-radius: 4px; }
+.dp-spot-desc { margin: 0; font-size: var(--text-sm, .82rem); color: var(--ink-dim, #999); line-height: 1.45; max-width: 70ch; }
+.dp-spot-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 2px; font-size: var(--text-2xs, .68rem); color: var(--ink-faint, #666); }
+@media (prefers-reduced-motion: reduce) { .dp-spot-ring { animation: none; opacity: .5; } }
+
+/* Top-chain rows: explorer links + share-of-network sublabel */
+.dp-chain-share { display: block; font-size: .85em; color: var(--ink-faint, #666); font-weight: 400; }
+a.dp-chain-name { color: var(--ink, #e8e8e8); text-decoration: none; }
+a.dp-chain-name:hover { color: var(--ink-bright, #fff); text-decoration: underline; }
+a.dp-chain-name:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; border-radius: 4px; }
+
+/* Feed-row microinteractions */
+.dp-row { transition: background .14s ease, border-color .14s ease, transform .14s ease; }
+.dp-row:hover { transform: translateY(-1px); }
+@media (prefers-reduced-motion: reduce) { .dp-row:hover { transform: none; } }
+.dp-row-name:focus-visible, .dp-tx:focus-visible, .dp-owner:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; border-radius: 4px; }
