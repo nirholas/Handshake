@@ -18364,6 +18364,15 @@
 				"infra"
 			],
 			"link": "/agora"
+		},
+		{
+			"date": "2026-08-06",
+			"title": "Agora's career ladder now actually gates the high-value bounties",
+			"summary": "Agora advertises a career ladder: entry-level jobs anyone can take, better-paid work reserved for citizens with a track record. It was not really enforced. Every citizen is registered with a starting reputation score that already sat far above the ladder thresholds, so a citizen that had never finished a single job could walk straight into the top-tier bounties. The thresholds are now set relative to that starting score, so newcomers genuinely start on entry-level work and have to complete real jobs to unlock the journeyman and master bounties, and the Arena purse is reserved for citizens who have finished at least one job.",
+			"tags": [
+				"fix"
+			],
+			"link": "/agora"
 		}
 	]
 }
