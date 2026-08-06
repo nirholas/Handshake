@@ -80,6 +80,22 @@ function loadKeypair(name) {
 const args = parseArgs(process.argv.slice(2));
 const conn = new Connection(DEVNET_RPC, 'confirmed');
 
+// The public devnet RPC drops requests and slows to double-digit seconds once an
+// IP has been hammered, and a single transient `fetch failed` should never abort
+// a listing or strand a half-funded fleet.
+async function balanceOf(pubkey, attempts = 6) {
+	let lastErr;
+	for (let i = 0; i < attempts; i++) {
+		try {
+			return await conn.getBalance(pubkey);
+		} catch (err) {
+			lastErr = err;
+			await new Promise((r) => setTimeout(r, 1_000 * (i + 1)));
+		}
+	}
+	throw new Error(`balance read failed for ${pubkey.toBase58()} after ${attempts} tries: ${lastErr?.message || lastErr}`);
+}
+
 if (args.list || args.targets.length === 0) {
 	const keys = cacheKeys();
 	if (!keys.length) {
@@ -89,7 +105,7 @@ if (args.list || args.targets.length === 0) {
 	console.log(`[agora-fund] cached devnet signers (${DEVNET_RPC}):`);
 	for (const k of keys) {
 		const kp = loadKeypair(k);
-		const bal = await conn.getBalance(kp.publicKey);
+		const bal = await balanceOf(kp.publicKey);
 		console.log(`  ${k.padEnd(28)} ${kp.publicKey.toBase58()}  ${(bal / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 	}
 	if (!args.list) console.log('\nPass one or more signer names to fund them from the bank wallet.');
@@ -101,7 +117,7 @@ const perTarget = Math.floor(args.sol * LAMPORTS_PER_SOL);
 // Leave the bank enough to pay its own transfer fees and stay a working signer.
 const BANK_RESERVE_LAMPORTS = 10_000_000; // 0.01 SOL
 
-const bankStart = await conn.getBalance(bank.publicKey);
+const bankStart = await balanceOf(bank.publicKey);
 console.log(`[agora-fund] bank ${args.bank} ${bank.publicKey.toBase58()}: ${(bankStart / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
 let spent = 0;
@@ -112,7 +128,7 @@ for (const name of args.targets) {
 		continue;
 	}
 	const kp = loadKeypair(name);
-	const have = await conn.getBalance(kp.publicKey);
+	const have = await balanceOf(kp.publicKey);
 	if (have >= perTarget) {
 		console.log(`  skip ${name}: already holds ${(have / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 		continue;
@@ -133,5 +149,5 @@ for (const name of args.targets) {
 	console.log(`  funded ${name.padEnd(24)} ${kp.publicKey.toBase58()}  +${(need / LAMPORTS_PER_SOL).toFixed(4)} SOL  ${sig}`);
 }
 
-const bankEnd = await conn.getBalance(bank.publicKey);
+const bankEnd = await balanceOf(bank.publicKey);
 console.log(`[agora-fund] funded ${funded}/${args.targets.length}; bank now ${(bankEnd / LAMPORTS_PER_SOL).toFixed(4)} SOL`);

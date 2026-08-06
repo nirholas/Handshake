@@ -21,6 +21,7 @@ import {
 	decidePatronPost,
 	EXCLUSIVE_TERMINAL_KINDS,
 	MULTI_TERMINAL_KINDS,
+	REPUTATION_BASELINE,
 } from '../workers/agora-citizens/policy.js';
 import { defaultPatronTiers } from '../workers/agora-citizens/demand.js';
 import {
@@ -105,7 +106,10 @@ describe('patron demand schedule (Task 09)', () => {
 		expect(arena).toBeTruthy();
 		expect(arena.maxWorkers).toBe(3);
 		expect(arena.rewardAtomic).toBe(6_000_000n);
-		expect(arena.minReputation).toBe(3);
+		// The Arena gate is a delta above AgenC's registration baseline, so a purse
+		// gated at "3" really means "3 above a fresh agent", not the absolute 3 that
+		// every registered agent already clears.
+		expect(arena.minReputation).toBe(REPUTATION_BASELINE + 3);
 		expect(guild).toBeTruthy();
 		expect(guild.maxWorkers).toBe(4);
 		expect(guild.rewardAtomic).toBe(5_000_000n);

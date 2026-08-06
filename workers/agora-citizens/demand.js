@@ -11,7 +11,7 @@
 // faucet refills it), the allowance bounds devnet posting so it's visibly finite.
 
 import { PublicKey } from '@solana/web3.js';
-import { decidePatronPost, decideHire } from './policy.js';
+import { decidePatronPost, decideHire, REPUTATION_BASELINE } from './policy.js';
 import { postBounty } from './post.js';
 import { log } from './log.js';
 
@@ -64,10 +64,14 @@ export function subtaskReward(cfg) {
  */
 export function defaultPatronTiers(cfg) {
 	const base = BigInt(cfg.taskRewardLamports); // devnet: 0.001 SOL default
+	// minReputation is omitted on purpose: decidePatronPost fills it from
+	// REPUTATION_LADDER, so the ladder in policy.js stays the single source of
+	// truth for what each tier gates on. Restating the numbers here is how they
+	// drifted into being absolutes that gate nothing.
 	const tiers = [
-		{ tier: 'apprentice', profession: 'fetcher', rewardAtomic: base, minReputation: 0 },
-		{ tier: 'apprentice', profession: 'fetcher', rewardAtomic: base, minReputation: 0 },
-		{ tier: 'journeyman', profession: 'fetcher', rewardAtomic: base * 2n, minReputation: 5 },
+		{ tier: 'apprentice', profession: 'fetcher', rewardAtomic: base },
+		{ tier: 'apprentice', profession: 'fetcher', rewardAtomic: base },
+		{ tier: 'journeyman', profession: 'fetcher', rewardAtomic: base * 2n },
 	];
 	// Arena — a Competitive purse several citizens race for; the first valid proof
 	// takes the WHOLE escrow. Gated on reputation so a juicy purse belongs to
@@ -78,12 +82,13 @@ export function defaultPatronTiers(cfg) {
 			tier: 'arena',
 			profession: 'fetcher',
 			rewardAtomic: base * BigInt(cfg.arenaRewardMultiplier ?? 6),
-			minReputation: cfg.arenaMinReputation ?? 0,
+			// A delta above the registration baseline, like every ladder gate.
+			minReputation: REPUTATION_BASELINE + (cfg.arenaMinReputation ?? 0),
 			taskType: 'Competitive',
 			maxWorkers: cfg.arenaMaxWorkers ?? 3,
 		});
 	}
-	tiers.push({ tier: 'master', profession: 'fetcher', rewardAtomic: base * 4n, minReputation: 20 });
+	tiers.push({ tier: 'master', profession: 'fetcher', rewardAtomic: base * 4n });
 	// Guild — a Collaborative pool that SPLITS across contributors. Open entry work
 	// (minReputation 0) so newcomers can contribute a real part and climb.
 	if (cfg.enableGuild) {

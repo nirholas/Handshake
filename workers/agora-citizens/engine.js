@@ -18,7 +18,7 @@
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { log } from './log.js';
 import { buildRoster, professionBits, capabilitiesSatisfy, PROFESSIONS } from './roster.js';
-import { citizenCanClaim, normalizeTaskType, isMultiWorkerType, isArenaType, TASK_TYPES } from './policy.js';
+import { citizenCanClaim, ineligibilityReason, normalizeTaskType, isMultiWorkerType, isArenaType, TASK_TYPES } from './policy.js';
 import { markPatrons, maybePatronPost, maybePatronVerify, maybeHire, hiringEnabled, subtaskReward } from './demand.js';
 import { arenaWonNarrative, arenaLostNarrative, guildContributedNarrative } from './narrative.js';
 import { loadOrCreateKeypair, ensureBalance } from './keypair.js';
@@ -428,16 +428,22 @@ async function pickBoardBounty(ctx, citizen) {
 		if (isSelfDealing(t, citizen.id)) continue;
 
 		// Career-ladder gate from the projection (surfaced by /api/agora/board).
-		const eligible = citizenCanClaim(citizen, {
+		const gate = {
 			requiredCapabilities: t.requiredCapabilities ?? 0,
 			minReputation: t.minReputation ?? 0,
-		});
-		if (!eligible) {
-			log.loop('skipping bounty — not qualified', {
+		};
+		if (!citizenCanClaim(citizen, gate)) {
+			// Report WHICH gate rejected it. Logging the reputation pair alone read as
+			// a rep failure even when the citizen simply lacked the capability bit,
+			// which is the common case and a completely different diagnosis.
+			const reason = ineligibilityReason(citizen, gate);
+			log.loop('skipping bounty: not qualified', {
 				name: citizen.spec.displayName,
 				taskPda: t.taskPda,
-				needRep: t.minReputation ?? 0,
-				haveRep: citizen.reputation,
+				reason,
+				...(reason === 'below_min_reputation'
+					? { needRep: gate.minReputation, haveRep: citizen.reputation }
+					: { needCaps: String(gate.requiredCapabilities), haveCaps: String(citizen.capabilityBits) }),
 				tier: t.tier || null,
 			});
 			continue;

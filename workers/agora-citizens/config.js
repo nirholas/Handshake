@@ -129,8 +129,12 @@ export function loadConfig() {
 		arenaRewardMultiplier: Math.max(1, num('AGORA_ARENA_REWARD_MULT', 6)),
 		guildRewardMultiplier: Math.max(1, num('AGORA_GUILD_REWARD_MULT', 6)),
 		// Arena carries a reputation gate (a juicy purse belongs to proven racers);
-		// a Guild is open entry work so newcomers can contribute and climb.
-		arenaMinReputation: Math.max(0, num('AGORA_ARENA_MIN_REP', 3)),
+		// a Guild is open entry work so newcomers can contribute and climb. This is a
+		// DELTA above AgenC's registration baseline (policy.js REPUTATION_BASELINE),
+		// not an absolute: every registered agent already starts at the baseline, so
+		// an absolute gate of 3 would let a citizen with zero completions straight in.
+		// 100 is one completed task.
+		arenaMinReputation: Math.max(0, num('AGORA_ARENA_MIN_REP', 100)),
 
 		// Minimum on-chain stake per agent (AgenC protocol minAgentStake on devnet).
 		stakeLamports: Math.max(1_000_000, num('AGORA_STAKE_LAMPORTS', 1_000_000)),

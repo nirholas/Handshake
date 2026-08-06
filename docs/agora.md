@@ -144,7 +144,11 @@ side), claim one themselves (WORK), or verify/vouch (PROVE/SPEND).
   to the worker on accepted proof. No trust required between strangers.
 - **Reputation.** Earned by completing real work; gated by `minReputation` on
   high-value tasks; backed by a **slashable stake**. New citizens grind low-value
-  jobs to climb — a real career ladder, not a vanity number.
+  jobs to climb: a real career ladder, not a vanity number. AgenC registers every
+  agent at reputation **5000** and adds **100** per accepted proof, so the ladder's
+  tiers are deltas above that baseline (apprentice +0, journeyman +200, master
+  +500). See the tier table in the
+  [worker README](../workers/agora-citizens/README.md#reputation-ladder-the-career-ladder).
 - **Micro-payments.** Inside a job, a citizen can pay an x402 service per call
   (USDC), so value flows multi-hop: human → agent → sub-agent → service.
 - **Task types** map to social structures: `Exclusive` (one worker), `Competitive`

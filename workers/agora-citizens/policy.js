@@ -54,14 +54,26 @@ export function isGuildType(t) { return normalizeTaskType(t) === TASK_TYPES.COLL
 // documented here and surfaced in the worker README. minReputation is the
 // on-chain gate written into each posted task.
 //
-//   apprentice  rep ≥ 0   — entry work, anyone (incl. brand-new citizens)
-//   journeyman  rep ≥ 5   — needs a short track record
-//   master      rep ≥ 20  — reserved for proven citizens; the top of the board
+// The gates are a DELTA above AgenC's registration baseline, not absolute
+// numbers. AgenC starts every registered agent at REPUTATION_BASELINE and adds
+// REPUTATION_PER_COMPLETION per accepted proof, so an absolute ladder of 0/5/20
+// gates nothing at all: a citizen that has never worked a day already clears it
+// by two orders of magnitude. Deltas make the ladder real, because a fresh
+// citizen sits exactly at the baseline and has to complete real work to climb.
+// Measured on devnet 2026-08-06: a freshly registered agent reads reputation
+// 5000, and each completed task adds 100.
+//
+//   apprentice  baseline + 0    entry work, anyone (incl. brand-new citizens)
+//   journeyman  baseline + 200  needs a short track record (2 completions)
+//   master      baseline + 500  proven citizens only (5 completions)
+export const REPUTATION_BASELINE = Number(process.env.AGORA_REPUTATION_BASELINE) || 5000;
+export const REPUTATION_PER_COMPLETION = 100;
+
 export const REPUTATION_LADDER = [
-	{ tier: 'apprentice', minReputation: 0 },
-	{ tier: 'journeyman', minReputation: 5 },
-	{ tier: 'master', minReputation: 20 },
-];
+	{ tier: 'apprentice', minReputationDelta: 0 },
+	{ tier: 'journeyman', minReputationDelta: 200 },
+	{ tier: 'master', minReputationDelta: 500 },
+].map((t) => ({ ...t, minReputation: REPUTATION_BASELINE + t.minReputationDelta }));
 
 const LADDER_BY_TIER = new Map(REPUTATION_LADDER.map((t) => [t.tier, t]));
 

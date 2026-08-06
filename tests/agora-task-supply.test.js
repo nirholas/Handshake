@@ -19,6 +19,8 @@ import {
 	citizenCanClaim,
 	ineligibilityReason,
 	minReputationForTier,
+	REPUTATION_BASELINE,
+	REPUTATION_PER_COMPLETION,
 	pickTier,
 	decidePatronPost,
 	decideHire,
@@ -70,10 +72,26 @@ describe('career-ladder claim gate', () => {
 	});
 
 	it('ladder tiers are documented and gate as published', () => {
-		expect(minReputationForTier('apprentice')).toBe(0);
-		expect(minReputationForTier('journeyman')).toBe(5);
-		expect(minReputationForTier('master')).toBe(20);
+		expect(minReputationForTier('apprentice')).toBe(REPUTATION_BASELINE);
+		expect(minReputationForTier('journeyman')).toBe(REPUTATION_BASELINE + 200);
+		expect(minReputationForTier('master')).toBe(REPUTATION_BASELINE + 500);
 		expect(REPUTATION_LADDER.map((t) => t.tier)).toEqual(['apprentice', 'journeyman', 'master']);
+	});
+
+	// The bug this pins: AgenC registers every agent at REPUTATION_BASELINE, so a
+	// ladder written in absolute numbers (0/5/20) gated nothing at all. A citizen
+	// that has never completed a task must be shut out of the upper tiers.
+	it('gates a freshly registered citizen out of the upper tiers', () => {
+		const fresh = fetcher(REPUTATION_BASELINE);
+		const proven = fetcher(REPUTATION_BASELINE + 5 * REPUTATION_PER_COMPLETION);
+
+		const apprentice = { requiredCapabilities: 1n, minReputation: minReputationForTier('apprentice') };
+		const master = { requiredCapabilities: 1n, minReputation: minReputationForTier('master') };
+
+		expect(citizenCanClaim(fresh, apprentice)).toBe(true);
+		expect(citizenCanClaim(fresh, master)).toBe(false);
+		expect(ineligibilityReason(fresh, master)).toBe('below_min_reputation');
+		expect(citizenCanClaim(proven, master)).toBe(true);
 	});
 });
 
