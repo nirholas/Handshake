@@ -11285,3 +11285,48 @@ a.pill--devnet:hover {
 	opacity: 1;
 	transform: translateX(-50%) translateY(0);
 }
+
+/* ── Deploy wizard modal overlay (agent pages / avatar page) ────────────────
+   RegisterUI in modal mode mounts into this fixed overlay; the card inside
+   carries role="dialog". Backdrop click and Escape both close it. */
+.agent-register-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding: 48px 16px 64px;
+	overflow-y: auto;
+	background: rgba(0, 0, 0, 0.72);
+	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
+	animation: register-overlay-in 0.18s ease-out both;
+}
+@keyframes register-overlay-in {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+.agent-register-overlay .erc8004-card {
+	width: min(880px, 100%);
+	outline: none;
+}
+@media (prefers-reduced-motion: reduce) {
+	.agent-register-overlay { animation: none; }
+}
+
+/* Vanity address + grind progress on the Solana review step */
+.deploy-vanity-row { margin: 10px 0 0; }
+.deploy-vanity-link {
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	font-size: var(--text-sm);
+	color: rgba(255, 255, 255, 0.65);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.deploy-vanity-link:hover { color: #fff; }
+.deploy-vanity-link code { font-weight: 600; }
+.deploy-grind { align-items: center; gap: 10px; margin-top: 10px; }

@@ -1163,7 +1163,15 @@ async function openDeployOnchain() {
 		const wrap = document.createElement('div');
 		wrap.className = 'agent-register-overlay';
 		document.body.appendChild(wrap);
-		new RegisterUI(wrap, () => { wrap.remove(); }, { initial });
+		const ui = new RegisterUI(wrap, () => {}, {
+			initial,
+			// Keep the success screen (tx link, agent page CTA) up until the user
+			// closes it; only then tear down the overlay.
+			onClose: () => wrap.remove(),
+		});
+		wrap.addEventListener('click', (e) => {
+			if (e.target === wrap) ui.destroy();
+		});
 	} catch (err) {
 		log.error('[avatar] deploy on-chain failed', err);
 	} finally {

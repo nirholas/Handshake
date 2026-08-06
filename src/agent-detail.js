@@ -2665,10 +2665,11 @@ function mountOwnerBar(agent) {
 	dashLink.textContent = 'Manage Agents';
 	bar.appendChild(dashLink);
 
-	// Deploy on-chain (only if not yet deployed)
-	const alreadyDeployed = !!(
-		(agent.rawMetadata?.onchain || agent.onchain)?.txHash
-	);
+	// Deploy on-chain (only if not yet deployed). The persisted wire shape is
+	// snake_case (tx_hash); legacy client code wrote txHash. Accept both so a
+	// deployed agent never re-offers a second paid mint.
+	const adOnchain = agent.rawMetadata?.onchain || agent.onchain;
+	const alreadyDeployed = !!(adOnchain?.tx_hash || adOnchain?.txHash);
 	if (!alreadyDeployed) {
 		const deployBtn = el('button', {
 			class: 'ad-btn ad-btn-deploy',
@@ -2710,7 +2711,8 @@ async function mountDeploySlot(agent) {
 		// When deploy succeeds, hide the "Deploy on-chain" button in the owner bar
 		// (the success chip in the slot replaces the call-to-action).
 		const observer = new MutationObserver(() => {
-			if (deployAgentObj.onchain?.txHash && slot.querySelector('.deploy-chip--success')) {
+			const oc = deployAgentObj.onchain;
+			if ((oc?.tx_hash || oc?.txHash) && slot.querySelector('.deploy-chip--success')) {
 				observer.disconnect();
 				const heroDeployBtn = document.querySelector('#ad-owner-bar .ad-btn-deploy');
 				if (heroDeployBtn) heroDeployBtn.remove();
@@ -2781,7 +2783,8 @@ async function openDeployModalFromDetail(agent) {
 
 		let deployed = false;
 		const observer = new MutationObserver(() => {
-			if (deployAgentObj.onchain?.txHash && deployHost.querySelector('.deploy-chip--success')) {
+			const oc = deployAgentObj.onchain;
+			if ((oc?.tx_hash || oc?.txHash) && deployHost.querySelector('.deploy-chip--success')) {
 				deployed = true;
 			}
 		});

@@ -1,7 +1,8 @@
 # src/onchain
 
-Unified, family-agnostic on-chain deploy stack. Parallel to (and intended to
-eventually supersede) `src/erc8004/deploy-button.js` + `src/erc8004/solana-deploy.js`.
+Unified, family-agnostic on-chain deploy stack. This superseded the legacy
+`src/erc8004/deploy-button.js` (deleted 2026-08-06); `src/erc8004/solana-deploy.js`
+remains as the RegisterUI wizard's Solana driver (vanity grinding included).
 
 ## Why this exists
 

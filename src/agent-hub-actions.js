@@ -64,14 +64,22 @@ export function renderHubActions(panel, identity, rawAgent) {
 				const wrap = document.createElement('div');
 				wrap.className = 'agent-register-overlay';
 				document.body.appendChild(wrap);
-				new RegisterUI(
+				const ui = new RegisterUI(
 					wrap,
-					() => {
-						wrap.remove();
-						location.reload();
+					() => {},
+					{
+						initialTab: 'my',
+						// onRegistered must NOT tear down the UI: the success screen with
+						// the tx link stays up until the user closes it themselves.
+						onClose: ({ registered }) => {
+							wrap.remove();
+							if (registered) location.reload();
+						},
 					},
-					{ initialTab: 'my' },
 				);
+				wrap.addEventListener('click', (e) => {
+					if (e.target === wrap) ui.destroy();
+				});
 			} catch (err) {
 				log.error('[hub] register-ui load failed', err);
 			} finally {
@@ -88,14 +96,20 @@ export function renderHubActions(panel, identity, rawAgent) {
 				const wrap = document.createElement('div');
 				wrap.className = 'agent-register-overlay';
 				document.body.appendChild(wrap);
-				new RegisterUI(
+				const ui = new RegisterUI(
 					wrap,
-					() => {
-						wrap.remove();
-						location.reload();
+					() => {},
+					{
+						initial,
+						onClose: ({ registered }) => {
+							wrap.remove();
+							if (registered) location.reload();
+						},
 					},
-					{ initial },
 				);
+				wrap.addEventListener('click', (e) => {
+					if (e.target === wrap) ui.destroy();
+				});
 			} catch (err) {
 				log.error('[hub] register-ui load failed', err);
 				deployBtn.disabled = false;
