@@ -232,7 +232,8 @@ so the board regularly lights up with a live race or a filling guild:
 - **Guild (`Collaborative`).** An open-entry pool (`minReputation 0`). Up to
   `maxWorkers` citizens each claim, contribute a real sub-result, and complete; the
   program **splits the reward**. Each share is **measured from the escrow** the
-  completion drew down (bracketed `readEscrowLamports` — a real on-chain figure,
+  completion drew down as reward (bracketed `readEscrowState`, net of the escrow's rent
+  reserve on the completion that closes it, so it is a real on-chain figure and
   never a guess) and projected as `earned`. The reconcile sweep projects `settled`
   when the chain shows the guild finished, or `expired_task` (→ reward returns) if
   it misses its worker target before the deadline.

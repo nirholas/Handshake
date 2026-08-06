@@ -35,7 +35,8 @@ import {
 	generateTaskId,
 	deriveTaskPda,
 	getTask,
-	readEscrowLamports,
+	readEscrowState,
+	measuredShareAtomic,
 	withRetry,
 	TASK_STATE,
 } from './agenc.js';
@@ -223,7 +224,15 @@ export async function bootFleet(cfg, store) {
 		lastSupplyAt: 0,
 	};
 
-	ctx.dispatcher = await setupDispatcher(ctx);
+	// The dispatcher is the devnet work supply, not the fleet. If it can't be
+	// funded or registered, citizens still boot and work whatever the board
+	// already carries: one component's failure never grounds the city.
+	try {
+		ctx.dispatcher = await setupDispatcher(ctx);
+	} catch (err) {
+		log.error('dispatcher setup failed, running on externally-supplied work only', { err: err?.message });
+		ctx.dispatcher = null;
+	}
 
 	const seedAgents = await store.listSeedAgents(cfg.maxCitizens);
 	const specs = buildRoster(seedAgents, cfg);
@@ -370,6 +379,41 @@ async function pickClaimableTask(ctx, citizen) {
 }
 
 /**
+ * Would this citizen be working both sides of the bounty? Two ways, both barred:
+ *
+ *  1. It posted the bounty. Claiming your own posting pays your escrow back to
+ *     yourself and fakes demand.
+ *  2. It produced the deliverable the bounty asks someone to VERIFY. The
+ *     poster-side query already excludes the patron's own deliverables, but the
+ *     bounty is then open to the whole board, so the citizen that made the
+ *     artifact could claim the job of checking it. A self-vouch attests nothing:
+ *     re-deriving your own hash from your own bytes always passes, and it is
+ *     precisely the attestation an attacker would want to mint. Independence is
+ *     the entire product of the trust loop.
+ */
+export function isSelfDealing(task, citizenId) {
+	if (!citizenId) return false;
+	if (task?.creator?.id && task.creator.id === citizenId) return true;
+	if (task?.target?.citizenId && task.target.citizenId === citizenId) return true;
+	return false;
+}
+
+/**
+ * Can a citizen still engage this task on-chain? An Exclusive task is claimable only
+ * while it is Open. A multi-worker task (Arena / Guild) leaves Open the moment its
+ * FIRST worker claims, but it is still filling: the race wants every racer and the
+ * guild wants every contributor, and the free-slot check below is what actually bounds
+ * it. Gating these on Open alone let one claim lock everyone else out and strand the
+ * remaining slots until the deadline expired. Reconcile already treats a mid-fill
+ * multi-worker task as live; this is the same rule on the engage side.
+ */
+export function isJoinableState(state, taskType) {
+	if (state === TASK_STATE.Open) return true;
+	if (!isMultiWorkerType(taskType)) return false;
+	return state === TASK_STATE.InProgress || state === TASK_STATE.PendingValidation;
+}
+
+/**
  * SEEK the board's AgenC lane for a real bounty a patron (or human, in Task 08)
  * posted. Honors the career ladder: a citizen only takes a job it's qualified for
  * (capability subset + on-chain reputation ≥ the task's minReputation). A low-rep
@@ -381,7 +425,7 @@ async function pickBoardBounty(ctx, citizen) {
 	for (const t of tasks) {
 		if (t.source !== 'agenc' || !t.taskPda) continue;
 		if (citizen.claimed.has(t.taskPda)) continue;
-		if (t.creator?.id && t.creator.id === citizen.id) continue; // never claim your own posting
+		if (isSelfDealing(t, citizen.id)) continue;
 
 		// Career-ladder gate from the projection (surfaced by /api/agora/board).
 		const eligible = citizenCanClaim(citizen, {
@@ -406,7 +450,7 @@ async function pickBoardBounty(ctx, citizen) {
 		} catch {
 			continue;
 		}
-		if (!onchain || onchain.state !== TASK_STATE.Open) continue;
+		if (!onchain || !isJoinableState(onchain.state, normalizeTaskType(t.taskType))) continue;
 		if (onchain.currentWorkers >= onchain.maxWorkers) continue;
 		if (Number(onchain.deadline) <= Date.now() / 1000) continue;
 
@@ -588,7 +632,7 @@ async function settleArena(ctx, citizen, { job, work, profession, name }) {
 async function settleGuild(ctx, citizen, { job, work, profession, name }) {
 	const cfg = ctx.cfg;
 	const repBefore = citizen.reputation;
-	const escrowBefore = await readEscrowLamports(citizen.client, job.taskPda);
+	const escrowBefore = await readEscrowState(citizen.client, job.taskPda);
 	let completion;
 	try {
 		completion = await completeTask(
@@ -606,11 +650,9 @@ async function settleGuild(ctx, citizen, { job, work, profession, name }) {
 	await reconcile(ctx, citizen);
 	const repAfter = citizen.reputation > repBefore ? citizen.reputation : repBefore + 1;
 	citizen.reputation = repAfter;
-	const escrowAfter = await readEscrowLamports(citizen.client, job.taskPda);
-	let shareAtomic = null;
-	if (escrowBefore != null && escrowAfter != null && escrowBefore > escrowAfter) {
-		shareAtomic = Number(escrowBefore - escrowAfter); // what my completion drew from escrow
-	}
+	const escrowAfter = await readEscrowState(citizen.client, job.taskPda);
+	const drawn = measuredShareAtomic(escrowBefore, escrowAfter); // what my completion drew as reward
+	const shareAtomic = drawn != null ? Number(drawn) : null;
 	const share = shareAtomic != null ? rewardShape(cfg, shareAtomic) : null;
 	await ctx.store.appendActivity({
 		citizenId: citizen.id,
@@ -628,8 +670,8 @@ async function settleGuild(ctx, citizen, { job, work, profession, name }) {
 			guild: true,
 			outcome: 'contributed',
 			shareAtomic: shareAtomic != null ? String(shareAtomic) : null,
-			escrowBefore: escrowBefore != null ? String(escrowBefore) : null,
-			escrowAfter: escrowAfter != null ? String(escrowAfter) : null,
+			escrowBefore: escrowBefore != null ? String(escrowBefore.lamports) : null,
+			escrowAfter: escrowAfter != null ? String(escrowAfter.lamports) : null,
 		},
 	});
 	if (share) {

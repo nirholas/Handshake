@@ -100,8 +100,18 @@ export function buildWorkResult({ profession, citizen, deliverableUrl, deliverab
 
 // Best creative brief from a job. On-chain tasks carry only a 64-byte
 // description; the dispatcher/board attaches the real prompt as `job.prompt`.
+//
+// `job.resource` is deliberately NOT a source. It is the Fetcher's x402 target
+// URL, which the engine attaches to EVERY job, and work/fetcher.js reads it
+// directly. Accepting it here meant a generative profession never reached its
+// own default brief: a Sculptor handed a board job sculpted a mesh of the
+// literal string "https://api.example.com/v0/inboxes/:inbox_id/…", producing a
+// real GLB of nothing anybody asked for. A bare URL is filtered for the same
+// reason, whichever field carries it: it is an address, never a brief.
 export function jobPrompt(job) {
-	return String(job?.prompt || job?.title || job?.description || job?.resource || '').trim();
+	const raw = String(job?.prompt || job?.title || job?.description || '').trim();
+	if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) && !/\s/.test(raw)) return '';
+	return raw;
 }
 
 // ── Deliverable storage (R2) ──────────────────────────────────────────────────

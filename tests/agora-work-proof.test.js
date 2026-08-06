@@ -21,9 +21,11 @@ import {
 	proofBytesFromHex,
 	buildWorkResult,
 } from '../workers/agora-citizens/work/_skills.js';
+import { jobPrompt } from '../workers/agora-citizens/work/_skills.js';
 import { runVerifier } from '../workers/agora-citizens/work/verifier.js';
 import { ACTIVE_PROFESSIONS, hasRunner, runProfession } from '../workers/agora-citizens/work/index.js';
 import { buildRoster, primaryProfession, professionForAgent } from '../workers/agora-citizens/roster.js';
+import { isSelfDealing } from '../workers/agora-citizens/engine.js';
 
 const sha = (s) => createHash('sha256').update(s).digest('hex');
 const dataUrl = (bytes, mime = 'application/octet-stream') =>
@@ -119,6 +121,31 @@ describe('runVerifier — re-derives a producer proof (the trust loop)', () => {
 	});
 });
 
+describe('jobPrompt: a creative brief, never an address', () => {
+	it('takes the real brief fields', () => {
+		expect(jobPrompt({ prompt: 'a weathered brass key' })).toBe('a weathered brass key');
+		expect(jobPrompt({ description: 'a low-poly desert fox' })).toBe('a low-poly desert fox');
+		expect(jobPrompt({})).toBe('');
+	});
+
+	it('ignores the Fetcher resource URL the engine attaches to every job', () => {
+		// The engine passes `resource` (the x402 target) on EVERY job and
+		// work/fetcher.js reads it directly. When jobPrompt also accepted it, a
+		// Sculptor never reached its own default brief and sculpted the URL string.
+		expect(jobPrompt({ resource: 'https://api.example.com/v0/inboxes/:inbox_id' })).toBe('');
+	});
+
+	it('ignores a bare URL in any brief field', () => {
+		expect(jobPrompt({ description: 'https://api.example.com/v0/threads/:thread_id' })).toBe('');
+		expect(jobPrompt({ title: 'ipfs://bafyfoo' })).toBe('');
+	});
+
+	it('keeps prose that merely contains a URL', () => {
+		const brief = 'a fox statue modelled on https://example.com/ref.png';
+		expect(jobPrompt({ prompt: brief })).toBe(brief);
+	});
+});
+
 describe('active roster — ships only professions with a reachable runner', () => {
 	// The set that actually ships. Cartographer (bit 3) is deferred — its
 	// /api/diorama compose route exceeds the serverless function budget — so it is
@@ -190,5 +217,33 @@ describe('active roster — ships only professions with a reachable runner', () 
 			expect(primaryProfession(c.professionBits)).not.toBe('verifier');
 			expect(c.profession).not.toBe('verifier');
 		}
+	});
+});
+
+describe('isSelfDealing: a vouch is only worth what its independence is worth', () => {
+	const me = 'citizen-a';
+	const peer = 'citizen-b';
+
+	it('bars claiming a bounty you posted', () => {
+		expect(isSelfDealing({ creator: { id: me } }, me)).toBe(true);
+	});
+
+	it('bars verifying a deliverable you produced', () => {
+		// Observed live on devnet 2026-08-06: the poster-side query correctly
+		// excludes the patron's own deliverables, but the bounty is then open to
+		// the whole board, so a peer's bounty targeting Aria's GLB was claimed by
+		// Aria, which vouched for its own work. Re-deriving your own hash from
+		// your own bytes always passes, so that attestation carried no signal.
+		expect(isSelfDealing({ creator: { id: peer }, target: { citizenId: me } }, me)).toBe(true);
+	});
+
+	it('allows a genuine third-party verification', () => {
+		expect(isSelfDealing({ creator: { id: peer }, target: { citizenId: peer } }, me)).toBe(false);
+	});
+
+	it('allows an ordinary peer bounty and tolerates missing fields', () => {
+		expect(isSelfDealing({ creator: { id: peer } }, me)).toBe(false);
+		expect(isSelfDealing({}, me)).toBe(false);
+		expect(isSelfDealing({ creator: { id: me } }, null)).toBe(false);
 	});
 });
