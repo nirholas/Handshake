@@ -100,4 +100,29 @@ The apex was fully down (`DEPLOYMENT_NOT_FOUND`) during the deploy window becaus
 
 ## Findings
 
-(Authenticated tiers pending — blocked on the auth fix above.)
+The authenticated tiers were never run: this session ended at the auth blocker, and by the
+time the blocker cleared the platform had already moved off Vercel. This report is closed as
+a historical record, not an open test plan. Nothing below is pending work.
+
+### Where each thread ended up (verified 2026-08-06)
+
+- **Auth blocker: resolved.** `GET /api/auth/siws/nonce` and `/api/auth/siwe/nonce` both
+  return 200 against production. `JWT_SECRET` and `WALLET_ENCRYPTION_KEY` are both set on the
+  Cloud Run service (`three-ws-api`, `us-central1`), each backed by a Secret Manager secret.
+- **The 458 locked custodial wallets: resolved, with a known residual.**
+  `node scripts/audit-custodial-key-health.mjs` (read-only) measured 578 custodial wallets on
+  2026-08-06, 570 of them decryptable (98.6%). The residual 8 wallets, holding 0.49 SOL
+  (0.35 SOL of it customer money), are the separately-documented key-rotation loss, not this
+  incident: see [docs/ops/wallet-key-migration.md](../ops/wallet-key-migration.md). Those keys
+  are gone from every system the platform controls, and re-keying a funded customer wallet
+  abandons their balance, so that call is the owner's.
+- **The rotation foot-gun itself: mechanized.** `WALLET_ENCRYPTION_KEY_PREVIOUS` now keeps
+  retired keys readable through a rotation ([api/_lib/secret-box.js](../../api/_lib/secret-box.js)),
+  so the failure mode that produced this report cannot recur silently.
+- **Slow-build / no-green-deployment observation: obsolete.** It described Vercel build
+  behavior. Production has run on Cloud Run since 2026-07-07, where a failed build leaves the
+  previous revision serving; rollback is a revision switch
+  ([docs/ops/gcp-production.md](../ops/gcp-production.md)).
+
+Re-running the money-touching tiers end to end would spend real SOL, so it stays an
+owner-initiated exercise rather than a task queued off this document.

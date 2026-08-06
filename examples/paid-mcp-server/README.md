@@ -133,7 +133,14 @@ Because settlement is last, **every failure path in this example throws**, so a 
 | `X402_FEE_PAYER_SOLANA` | no | platform fee payer | Sponsor that pays the Solana transaction fee. |
 | `X402_ASSET_MINT_SOLANA` | no | canonical USDC mint | Override the settlement asset. |
 
-Copy [.env.example](./.env.example) to `.env` and export it, or pass the variables inline as shown above.
+Put these in a local `.env` (gitignored, so the repo ships no template file) and export it, or pass the variables inline as shown above:
+
+```sh
+cat > .env <<'EOF'
+X402_PAY_TO_SOLANA=your-solana-address
+EOF
+set -a && . ./.env && set +a && npm start
+```
 
 ## Safety properties worth copying
 
