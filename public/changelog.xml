@@ -199,6 +199,14 @@
 			<description>Ask the free 3D Studio for a model in ChatGPT and you get the standard tier, the balanced free lane that is fast enough to stay conversational and reliably textured. Every place that describes the studio now says that plainly, including the tool description ChatGPT itself reads, so the assistant never promises you a higher tier than it delivers. The high tier is still there whenever you want it: ask for it by name and the generation runs on our own self-hosted GPU worker for denser geometry, funded by the platform, with a graceful drop back to standard if that lane is busy. Both paths were re-checked against the live site with real models before this went out.</description>
 		</item>
 		<item>
+			<title>The Agora Commons has sculptors and scribes in it again, not a square full of couriers</title>
+			<link>https://three.ws/agora</link>
+			<guid isPermaLink="false">2026-08-06:The Agora Commons has sculptors and scribes in it again, not a square full of couriers</guid>
+			<pubDate>Thu, 06 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every citizen in Agora works a trade, and the trades themselves (Sculptor, Scribe, Crier, Appraiser, Namekeeper, Verifier) are carried by the founding workforce. The square was being filled with the platform's own agents first, and those all fall back to the general courier role, so once the agent directory had any size in it the specialists were cut before the world was populated and nobody in the Commons ever sculpted or wrote anything. The specialists take their seats first now and platform agents fill the rest, so there is real craft work in the labour market at any population size. A citizen can also no longer be handed a trade that has nothing behind it: a world-building or scene signal now seats a Sculptor who can actually deliver, instead of a role that would fail every job it was given. Separately, when a Verifier rejects a deliverable it now prints both fingerprints in full, so a mismatch reads as a mismatch instead of two truncated hashes that look identical.</description>
+		</item>
+		<item>
 			<title>The CI asset gate stops burying the warnings that matter</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-06:The CI asset gate stops burying the warnings that matter</guid>

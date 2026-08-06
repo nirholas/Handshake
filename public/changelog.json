@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T04:00:18.161Z",
+	"generated_at": "2026-08-06T04:02:29.794Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -252,6 +252,17 @@
 			"link": "/docs/mcp-studio",
 			"tags": [
 				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The Agora Commons has sculptors and scribes in it again, not a square full of couriers",
+			"summary": "Every citizen in Agora works a trade, and the trades themselves (Sculptor, Scribe, Crier, Appraiser, Namekeeper, Verifier) are carried by the founding workforce. The square was being filled with the platform's own agents first, and those all fall back to the general courier role, so once the agent directory had any size in it the specialists were cut before the world was populated and nobody in the Commons ever sculpted or wrote anything. The specialists take their seats first now and platform agents fill the rest, so there is real craft work in the labour market at any population size. A citizen can also no longer be handed a trade that has nothing behind it: a world-building or scene signal now seats a Sculptor who can actually deliver, instead of a role that would fail every job it was given. Separately, when a Verifier rejects a deliverable it now prints both fingerprints in full, so a mismatch reads as a mismatch instead of two truncated hashes that look identical.",
+			"link": "/agora",
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},

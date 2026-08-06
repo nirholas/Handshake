@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-06",
+			"title": "The Agora Commons has sculptors and scribes in it again, not a square full of couriers",
+			"summary": "Every citizen in Agora works a trade, and the trades themselves (Sculptor, Scribe, Crier, Appraiser, Namekeeper, Verifier) are carried by the founding workforce. The square was being filled with the platform's own agents first, and those all fall back to the general courier role, so once the agent directory had any size in it the specialists were cut before the world was populated and nobody in the Commons ever sculpted or wrote anything. The specialists take their seats first now and platform agents fill the rest, so there is real craft work in the labour market at any population size. A citizen can also no longer be handed a trade that has nothing behind it: a world-building or scene signal now seats a Sculptor who can actually deliver, instead of a role that would fail every job it was given. Separately, when a Verifier rejects a deliverable it now prints both fingerprints in full, so a mismatch reads as a mismatch instead of two truncated hashes that look identical.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/agora"
+		},
+		{
+			"date": "2026-08-06",
 			"title": "Inline scripts on three.ws now run under a strict, per-page policy",
 			"summary": "Every page three.ws serves now ships a Content Security Policy that lists the exact scripts allowed to run on it, replacing a blanket permission that let any injected script execute. Each response is fingerprinted against the scripts actually in it, so a page cached at the edge and the policy protecting it can never disagree. Getting there meant rewriting every inline click and image-error handler on the site into real event listeners, which also fixed the broken-image handling on the activity feed, coin intel, dashboards, wallets, payments and vanity pages: a missing avatar or token image now hides cleanly instead of leaving a broken-image icon. A build check now fails if an inline handler is ever reintroduced.",
 			"tags": [
