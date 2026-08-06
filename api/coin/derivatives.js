@@ -7,6 +7,12 @@
 // become null so the client renders an em dash instead of NaN. Cached 60s
 // in-memory + CDN.
 //
+// Alongside `tickers`, the response carries a `deribit` block (second
+// derivatives source, options-capable): index prices, perp tickers with
+// funding, and per-asset options aggregates from Deribit's keyless public
+// API. It fails soft: when Deribit is unreachable the block is null and the
+// perp table ships without it, mirroring the CoinGecko/Hyperliquid handling.
+//
 // `?view=exchanges` returns the derivatives venues instead — CoinGecko
 // `/derivatives/exchanges` ranked by open interest — feeding the Derivatives
 // Exchanges section of the page; rows deep-link to /exchange/:id, where the
@@ -16,6 +22,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch } from '../_lib/coingecko.js';
 import { fetchHyperliquidPerps } from '../_lib/hyperliquid.js';
+import { fetchDeribitSummary } from '../_lib/deribit.js';
 
 let _cache = null; // { value, expiresAt }
 let _exCache = null; // { value, expiresAt }
@@ -38,6 +45,11 @@ const num = (v) => {
 export async function buildDerivativeTickers() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache.value;
+
+	// Deribit rides alongside as a second source, fetched in parallel with the
+	// primary table and soft-failed to null: options data is a bonus, never a
+	// reason to 502 the perp table.
+	const deribitPromise = fetchDeribitSummary().catch(() => null);
 
 	let tickers = [];
 	let source = 'coingecko';
@@ -67,7 +79,9 @@ export async function buildDerivativeTickers() {
 		source = 'hyperliquid';
 	}
 
-	const value = { tickers, source, updated_at: now };
+	const deribit = await deribitPromise;
+
+	const value = { tickers, source, deribit, updated_at: now };
 	_cache = { value, expiresAt: now + TTL_MS };
 	return value;
 }
