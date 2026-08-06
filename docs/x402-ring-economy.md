@@ -731,6 +731,16 @@ even cover tip headroom hard-skips (`insufficient_payer_usdc`). Decision logic:
 `planBackpressure()` in
 [api/_lib/x402/ring-tick-plan.js](../api/_lib/x402/ring-tick-plan.js).
 
+A **repeated, unchanged** skip reason is coalesced into one log row per
+`X402_RING_TICK_SKIP_LOG_COALESCE_S` window (default 900s) instead of one per
+minute. A reason that DIFFERS from the last one always writes immediately, and
+the row that reopens a window carries `suppressed_ticks`, so the trail stays
+complete and exact. Before this, an underfunded payer wrote 1,440 identical
+`success=false, amount=0` rows a day: by 2026-08-06 the `Ring Tick` service held
+22,865 of them, which read in the loop's own stats as "22,865 calls, zero
+successes" when the tick had in fact never placed a call. Set the window to `0`
+to restore a row per skipped tick.
+
 **Never raise the settle price ahead of funding.** The defaults ($1.00 settle,
 $1.10 tick cap, $50/day) are sized to the ring's real balances. Scaling to higher
 daily volume is an env change (`X402_PRICE_RING_SETTLE`,

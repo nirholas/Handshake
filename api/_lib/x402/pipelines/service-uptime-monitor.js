@@ -113,6 +113,14 @@ export function classifyProbe(status, errMsg) {
 	return { alive: false, classification: 'unreachable', error_msg: errMsg || 'unreachable' };
 }
 
+// The error_msg an x402_autonomous_log row gets for a probe verdict. Only a
+// FAILING verdict carries one: see recordCall for why an alive-but-4xx third
+// party must not stamp a payment-shaped error code onto a success row.
+export function logErrorMsgFor(verdict) {
+	if (!verdict) return null;
+	return verdict.alive ? null : (verdict.error_msg || null);
+}
+
 function hostOf(u) {
 	try { return new URL(u).host.toLowerCase(); } catch { return null; }
 }
@@ -287,6 +295,17 @@ async function upsertUptime(sql, runId, target, v) {
 // One x402_autonomous_log row per probe (endpoint_type 'self' — this pipeline is
 // a self-pipeline; value_extracted carries the verdict). The loop also records a
 // single aggregate summary row for the run() entry.
+//
+// error_msg is written ONLY when the probe verdict is a failure. A
+// `reachable_unexpected` verdict (any non-5xx 4xx) means the service is UP and
+// the row is recorded success=true, so stamping `http_400`/`http_405` there put
+// thousands of third-party observations into the column the loop's own failure
+// stats read: on 2026-08-06 every single http_400 and http_405 in the last 48h
+// came from this monitor observing templated or verb-picky third-party routes
+// (readx.sh /api/:name/followers, earth.x402.press /earth/ask), none of them a
+// payment failure. The full detail (last_status, error_msg, classification)
+// still lands in x402_service_uptime and in this row's value_extracted, which is
+// where the reliability surface reads it.
 async function recordCall(sql, runId, target, v) {
 	const host = hostOf(target.resource) || target.resource;
 	try {
@@ -306,7 +325,7 @@ async function recordCall(sql, runId, target, v) {
 					method: v.method,
 					latency_ms: v.latency_ms ?? null,
 				})},
-				 ${v.latency_ms ?? 0}, ${v.alive}, ${v.error_msg}, ${'reliability'})
+				 ${v.latency_ms ?? 0}, ${v.alive}, ${logErrorMsgFor(v)}, ${'reliability'})
 		`;
 	} catch (err) {
 		log.warn('uptime_log_insert_failed', { resource: target.resource, message: err?.message });

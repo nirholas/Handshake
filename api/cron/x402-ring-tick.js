@@ -125,10 +125,42 @@ async function ringDailySpent() {
 	return Number(rows[0]?.spent || 0);
 }
 
-// One structured, queryable row for a skipped/failed tick. Every non-paying tick
-// outcome leaves a trail (task 04 constraint). Wrapped — a DB fault never crashes
-// the cron.
-async function recordSkip(runId, origin, reason, extra = {}) {
+// How long an UNCHANGED skip reason stays coalesced into one log row (seconds).
+// A per-minute cron whose payer is underfunded writes 1,440 identical rows a day;
+// by 2026-08-06 'Ring Tick' held 22,865 rows, every one of them success=false
+// with amount 0, which is what made the service read as "10,000 calls, zero
+// successes" in the loop's own stats when it had in fact never placed a call.
+// The trail still exists (task 04 constraint) and every suppressed tick is
+// counted into the next row's value_extracted, so nothing is lost: what changes
+// is that a steady-state skip stops impersonating thousands of failed payments.
+const SKIP_LOG_COALESCE_SECONDS = Number(process.env.X402_RING_TICK_SKIP_LOG_COALESCE_S || 900);
+
+// One structured, queryable row for a skipped/failed tick. A reason that differs
+// from the last one ALWAYS writes immediately, so a state change is never
+// delayed; a repeat of the same reason inside the coalesce window increments a
+// counter instead. Wrapped: a DB fault never crashes the cron, and a Redis fault
+// falls through to the unconditional write (losing rows is worse than noise).
+async function recordSkip(runId, origin, reason, extra = {}, redis = null) {
+	let suppressed = 0;
+	if (redis && SKIP_LOG_COALESCE_SECONDS > 0) {
+		let quiet = false;
+		try {
+			const windowKey = `x402:ring-tick:skip-log:${reason}`;
+			const suppressedKey = `x402:ring-tick:skip-suppressed:${reason}`;
+			const n = Number(await redis.incr(windowKey));
+			if (n === 1) {
+				await redis.expire(windowKey, SKIP_LOG_COALESCE_SECONDS);
+				// Ticks the previous window swallowed are reported on the row that
+				// reopens it, so the count of skipped ticks stays exact.
+				suppressed = Number(await redis.getset(suppressedKey, 0)) || 0;
+			} else {
+				// Same reason, still inside the window: count it and stay quiet.
+				await redis.incr(suppressedKey);
+				quiet = true;
+			}
+		} catch { /* Redis down: fall through and write the row */ }
+		if (quiet) return;
+	}
 	try {
 		await sql`
 			INSERT INTO x402_autonomous_log
@@ -137,7 +169,7 @@ async function recordSkip(runId, origin, reason, extra = {}) {
 			VALUES
 				(${runId}, ${'self'}, ${'Ring Tick'}, ${`${origin}/api/cron/x402-ring-tick`},
 				 ${'solana:mainnet'}, ${0}, ${ASSET}, ${false}, ${reason}, ${'ring-tick'},
-				 ${JSON.stringify({ skipped: true, reason, ...extra })})
+				 ${JSON.stringify({ skipped: true, reason, ...extra, ...(suppressed ? { suppressed_ticks: suppressed } : {}) })})
 		`;
 	} catch (err) {
 		log.warn('ring_tick_skip_log_failed', { reason, message: err?.message });
@@ -227,7 +259,7 @@ export default wrapCron(async (req, res) => {
 			getMint(conn, new PublicKey(USDC_MINT)),
 		]);
 	} catch (err) {
-		await recordSkip(runId, origin, 'rpc_preflight_failed', { message: err?.message });
+		await recordSkip(runId, origin, 'rpc_preflight_failed', { message: err?.message }, redis);
 		await sendOpsAlert('x402 ring tick paused: RPC preflight failed', String(err?.message || err), { signature: 'ring-tick:rpc' });
 		return json(res, 200, { ok: false, skipped: true, reason: `rpc_preflight_failed: ${err?.message}`, run_id: runId });
 	}
@@ -262,7 +294,7 @@ export default wrapCron(async (req, res) => {
 		await recordSkip(runId, origin, bp.reason, {
 			detail: bp.detail, sol_lamports: Number.isFinite(solLamports) ? solLamports : null,
 			usdc_atomic: Number.isFinite(usdcAtomic) ? usdcAtomic : null, min_usdc_atomic: pbp.minUsdcAtomic,
-		});
+		}, redis);
 		await sendOpsAlert(
 			`x402 ring tick paused: ${bp.reason}`,
 			`sol=${solLamports} usdc=${usdcAtomic} floor=${cfg.solFloorLamports} min_usdc=${pbp.minUsdcAtomic}`,
@@ -302,7 +334,7 @@ export default wrapCron(async (req, res) => {
 			sol_lamports: Number.isFinite(solLamports) ? solLamports : null,
 			floor_lamports: cfg.solFloorLamports,
 			calls_per_day_budget: gov.callsPerDayBudget,
-		});
+		}, redis);
 		await sendOpsAlert(
 			'x402 ring tick paused: runway_exhausted',
 			`payer spendable SOL cannot sustain 1 call/min for ${cfg.runwayDays}d (sol=${solLamports}, floor=${cfg.solFloorLamports}); fund the payer to resume`,
@@ -345,7 +377,7 @@ export default wrapCron(async (req, res) => {
 				sponsor: sponsorAddress,
 				sponsor_lamports: sponsorLamports,
 				floor_lamports: cfg.solFloorLamports,
-			});
+			}, redis);
 			await sendOpsAlert(
 				'x402 ring tick paused: sponsor_fee_wallet_floor',
 				`sponsor fee wallet ${sponsorAddress} holds ${sponsorLamports} lamports, below the ${cfg.solFloorLamports} settle floor; every sponsored settle would be refused. treasury-topup reclaim should refill it; if this persists past one cycle, fund the economy master.`,
@@ -396,7 +428,7 @@ export default wrapCron(async (req, res) => {
 	if (remaining <= 0) {
 		await recordSkip(runId, origin, 'ring_daily_cap_reached', {
 			daily_spent_atomic: dailySpent, daily_cap_atomic: cfg.dailyCapAtomic,
-		});
+		}, redis);
 		log.info('ring_tick_daily_cap_reached', { spent: dailySpent, cap: cfg.dailyCapAtomic });
 		return json(res, 200, {
 			ok: true, skipped: true, reason: 'ring_daily_cap_reached',
