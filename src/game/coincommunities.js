@@ -244,7 +244,11 @@ class RemotePlayer {
 		// lands on a cleared/removed rig (orphaned mesh, or two models at once).
 		const token = (this._avatarToken = (this._avatarToken || 0) + 1);
 		const anim = this.anim;
-		resolveAvatarUrl(url).then((u) => buildAvatar(this.rig, u, anim).then(({ height }) => {
+		// Locomotion clips only: a room of peers must not each download the whole
+		// emote library at join. Emotes still lazy-load on first use (playEmoteClip
+		// fetches a missing clip on demand), and the parsed-clip cache makes the
+		// idle/walk pair free after the first rig.
+		resolveAvatarUrl(url).then((u) => buildAvatar(this.rig, u, anim, { clips: 'locomotion' }).then(({ height }) => {
 			if (this._disposed || token !== this._avatarToken) return;
 			this.height = height;
 			anim.crossfadeTo(this.motion === 'walk' || this.motion === 'run' ? CLIP_WALK : CLIP_IDLE, 0);
@@ -980,10 +984,16 @@ export class CoinCommunities {
 	// ---------------------------------------------------------------- enter/leave
 	async enter(coin, opts = {}) {
 		if (this.phase !== 'lobby') return;
+		// Claim the phase before the first await: a double-click on a coin card
+		// used to start two concurrent enter() flows (both reads of 'lobby' passed
+		// while the gate await was in flight), and the losing flow leaked its
+		// meshes and chart poller into the scene. The gate/holder paths below
+		// restore 'lobby' on cancel so the lobby stays usable.
+		this.phase = 'loading';
 		// Clear the platform sign-in gate before anything else. Resolves instantly
 		// when /play is open (no token pinned) or when we already hold a fresh pass.
 		if (this._playReady) { try { await this._playReady; } catch { /* gate self-heals */ } }
-		if (this.phase !== 'lobby') return; // backed out / re-entered while the gate was up
+		if (this.phase !== 'loading') return; // torn down while the gate was up
 		const tier = opts.tier === 'holders' ? 'holders' : 'general';
 		// Entry does several awaits (gate, manifest, avatar GLB, room connect) and
 		// the Leave button goes live the moment the HUD shows — well before connect
@@ -1001,13 +1011,13 @@ export class CoinCommunities {
 		let holderMinTokens = 0;
 		if (tier === 'holders') {
 			const pass = await this._passHolderGate(coin);
-			if (!pass) return;
+			if (!pass) { if (this.phase === 'loading') this.phase = 'lobby'; return; }
 			holderPass = pass.holderPass;
 			holderMinUsd = pass.minUsd;
 			holderMinTokens = pass.minTokens || 0;
+			if (this.phase !== 'loading') return; // torn down while the gate was up
 		}
 
-		this.phase = 'loading';
 		// A bare deep link (/play?coin=<home mint>) carries no name/art; backfill the
 		// flagship town's identity so its totem, jumbotron, and HUD are never blank.
 		if (isHomeTown(coin.mint)) {
@@ -1131,22 +1141,12 @@ export class CoinCommunities {
 		// otherwise use whatever they selected in the lobby (preset / paste / upload).
 		const avatarInput = this._urlAvatar || this.ui.getAvatar();
 		const url = await resolveAvatarUrl(avatarInput);
-		const { height: localHeight, fallback: avatarFallback } = await buildAvatar(this.localRig, url, this.localAnim);
-		// Backed out while the avatar GLB was loading — stop before we open a room.
+		// Kick off the local avatar build (GLB + locomotion clips only; emotes
+		// lazy-load on first use via playEmoteClip) WITHOUT awaiting it here. The
+		// room join below runs concurrently, so a slow avatar download no longer
+		// serializes ahead of the socket and delays the player's entry for everyone.
 		if (epoch !== this._enterEpoch) return;
-		this.localHeight = localHeight;
-		// Dress the local avatar in the loadout the player last equipped (carried
-		// across sessions and worlds via the cc-cosmetics mirror). The server echoes
-		// the authoritative, ownership-validated loadout right after join — which
-		// re-applies here through _onCosmeticsProfile — but applying the cached wire
-		// now means the player sees their fit immediately, not a flash of bare avatar.
-		this._localCosWire = null;
-		this._applyLocalCosmetics(getPlayCosmetics());
-		// Don't silently swap a broken model for the stand-in — tell the player so
-		// they know to pick another avatar.
-		if (avatarFallback && avatarInput !== GUEST_SENTINEL) {
-			this.ui.toast('Couldn’t load that avatar — using a stand-in. Try another in the lobby.', 'warn');
-		}
+		const avatarBuild = buildAvatar(this.localRig, url, this.localAnim, { clips: 'locomotion' });
 
 		// Connect to this coin's room. A locally-staged guest avatar (just created,
 		// not yet uploaded) can't be loaded by peers, so we join without one and
@@ -1209,8 +1209,8 @@ export class CoinCommunities {
 		this.net.on('synced', () => this._onRoomSynced());
 
 		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
-		this.net.on('status', ({ status }) => {
-			this.ui.setStatus(status);
+		this.net.on('status', ({ status, error }) => {
+			this.ui.setStatus(status, error);
 			this._updateOnline();
 			// Reconnect exhausted: the player is now alone in a local-only world.
 			// The small status pill alone is easy to miss, so explain the drop once —
@@ -1353,11 +1353,33 @@ export class CoinCommunities {
 		});
 
 		this.buildHud.root.hidden = false;
-		await this.net.connect();
-		// Player backed out mid-connect: leave() already tore everything down and
+		// Join the room and finish the local avatar in parallel. These used to run
+		// serialized (avatar, then connect), which held the whole world entry on
+		// "connecting" for the length of the avatar download; neither depends on
+		// the other, so they overlap now and entry is gated on the slower of the
+		// two, not the sum.
+		const connectP = this.net.connect();
+		const { height: localHeight, fallback: avatarFallback } = await avatarBuild;
+		// Player backed out mid-load: leave() already tore everything down and
 		// nulled this.net. Bail rather than dereference it / re-enter 'world'.
 		if (epoch !== this._enterEpoch || !this.net) return;
-		this._initVoice();
+		this.localHeight = localHeight;
+		// Dress the local avatar in the loadout the player last equipped (carried
+		// across sessions and worlds via the cc-cosmetics mirror). The server echoes
+		// the authoritative, ownership-validated loadout right after join, which
+		// re-applies through _onCosmeticsProfile; applying the cached wire now means
+		// the player sees their fit immediately, not a flash of bare avatar.
+		this._localCosWire = null;
+		this._applyLocalCosmetics(getPlayCosmetics());
+		// Don't silently swap a broken model for the stand-in: tell the player so
+		// they know to pick another avatar.
+		if (avatarFallback && avatarInput !== GUEST_SENTINEL) {
+			this.ui.toast('Couldn’t load that avatar, so a stand-in is filling in. Try another in the lobby.', 'warn');
+		}
+		// The world is playable the moment the avatar stands. Don't freeze movement
+		// behind the join handshake (up to 15s on a cold multiplayer instance):
+		// everything below that touches the net only *subscribes*, so it works
+		// while the join is still in flight, and the status pill narrates it.
 		this.phase = 'world';
 		this._initJoystick();
 		this._restoreZen();
@@ -1369,9 +1391,9 @@ export class CoinCommunities {
 		// away instead of waiting on it itself. Torn down in leave().
 		this.vehicles = new VehicleManager({ host: this });
 		// W07: roaming PvE mobs, lootable tombstones, the danger-zone ground, and
-		// the GTA-style vitals HUD (health/armor/wanted). Built after the connect
-		// above so its net.on(...) subscriptions catch the join-time 'profile'
-		// re-send below. Torn down in leave().
+		// the GTA-style vitals HUD (health/armor/wanted). Subscribed before the
+		// join settles, so it catches the join-time 'profile' send directly; the
+		// re-request after the join below stays as a backstop. Torn down in leave().
 		// Defensive boundary: W07 is still under active concurrent development in
 		// this shared worktree (CLAUDE.md "known traps") — a bug in it must never
 		// take down the rest of world entry (NPCs, vehicles, economy) for every
@@ -1389,9 +1411,6 @@ export class CoinCommunities {
 			log.error('[coincommunities] CombatSystem failed to init — continuing without it:', e?.message);
 			this.combat = null;
 		}
-		// playSystems already cached a 'profile' snapshot before combat subscribed;
-		// re-request so the vitals HUD isn't blank until the next server-side change.
-		this.net.requestProfile();
 		// The legacy gold purse HUD folds into WorldHud's unified money readout.
 		this.playSystems?.setGoldVisible(false);
 		// Every town hosts the live Agent Exchange: two NPC agents who pay each
@@ -1470,6 +1489,16 @@ export class CoinCommunities {
 			},
 			radius: WORLD_RADIUS - 4,
 		});
+		// Everything visual is up; now settle the join. Voice needs the live
+		// sessionId, and the profile re-request needs an open socket (it is a
+		// silent no-op otherwise), so both wait for the connect started above.
+		await connectP;
+		if (epoch !== this._enterEpoch || !this.net) return;
+		this._initVoice();
+		// playSystems and combat cached a 'profile' snapshot at join; re-request so
+		// the vitals HUD is current even if that send raced their subscriptions.
+		this.net.requestProfile();
+
 		// Start the silent pass-refresh cycle. The play pass has a 10-min server
 		// TTL; the server sweeps expired passes every minute. We refresh 2 min early
 		// so a player in a long session is never evicted mid-build. The refresh

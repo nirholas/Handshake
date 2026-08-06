@@ -43,7 +43,10 @@ function ensureRenderer() {
 		_renderer.setPixelRatio(1); // fixed thumbnail resolution, independent of quality tier
 		_renderer.setSize(SIZE, SIZE, false);
 		_scene = new Scene();
-		loadEnvironment(_renderer, _scene, 'studio');
+		// Procedural room environment, same call boot-avatar makes and for the
+		// same reason: a 160px thumbnail cannot justify a 1.5MB studio HDRI
+		// download racing the lobby's avatar GLBs for bandwidth.
+		loadEnvironment(_renderer, _scene, null);
 		_scene.add(new HemisphereLight(0xffffff, 0x404a5a, 1.15));
 		const key = new DirectionalLight(0xffffff, 1.7);
 		key.position.set(1.6, 2.4, 2.0);
@@ -58,12 +61,24 @@ function ensureRenderer() {
 	}
 }
 
+// Snapshots share ONE offscreen scene (_scene), so they must run one at a
+// time: the lobby fires 7 preset chips concurrently, and overlapping renders
+// used to composite each other's avatars into the same PNG. A promise chain
+// serializes them; each caller still gets its own result promise.
+let _queue = Promise.resolve();
+function enqueueSnapshot(url) {
+	const run = _queue.then(() => _snapshot(url));
+	// The queue itself must never reject or every later thumbnail dies with it.
+	_queue = run.catch(() => {});
+	return run;
+}
+
 // Render `url` to a PNG portrait data URL. Cached per URL (including the null
 // failure case) so repeated picker renders never re-load or re-render a model.
 export function renderAvatarThumb(url) {
 	if (!url) return Promise.resolve(null);
 	if (_cache.has(url)) return _cache.get(url);
-	const p = _snapshot(url).catch((err) => {
+	const p = enqueueSnapshot(url).catch((err) => {
 		log.warn('[avatar-thumb] preview failed:', url, err?.message);
 		return null;
 	});

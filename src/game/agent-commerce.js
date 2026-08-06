@@ -124,8 +124,10 @@ class Agent {
 		this.bubble = null;
 		this._bubbleTimer = null;
 
+		// Locomotion clips only: _gesture() loads any named clip on demand from the
+		// manifest, so the agents don't need the full library up front.
 		resolveAvatarUrl(avatar)
-			.then((u) => buildAvatar(this.rig, u, this.anim))
+			.then((u) => buildAvatar(this.rig, u, this.anim, { clips: 'locomotion' }))
 			.then(({ height }) => { if (!this._disposed) this.height = height; })
 			.catch(() => {});
 	}

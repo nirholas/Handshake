@@ -245,6 +245,14 @@ export function createChartScreen(scene, coin, opts = {}) {
 	function poll() {
 		if (destroyed) return;
 		clearTimeout(pollTimer);
+		// A hidden tab keeps its world alive but doesn't need a live tape: skip
+		// the fetch and check back at the normal cadence. At event scale this is
+		// the difference between N tabs and N*background-tabs of /api/pump/trades
+		// traffic hitting the proxy.
+		if (typeof document !== 'undefined' && document.hidden) {
+			pollTimer = setTimeout(poll, POLL_MS);
+			return;
+		}
 		fetchTrades().finally(() => {
 			if (destroyed) return;
 			pollTimer = setTimeout(poll, POLL_MS);

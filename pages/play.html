@@ -68,6 +68,87 @@
 
 		<canvas id="kx-canvas"></canvas>
 
+		<script>
+		/* Boot watchdog: inline on purpose so it works even when the app bundle
+		   itself is what failed (the classic stale-chunk 404 right after a deploy).
+		   While the #kx-loading card is still up, a failed script/stylesheet load,
+		   an uncaught boot error, or 45s of silence replaces the spinner with a
+		   real error card (mirroring renderBootError's markup) instead of leaving
+		   the loader sweeping forever with no recovery path. Once boot completes
+		   (the app adds .kx-hidden or removes the node) the watchdog disarms. */
+		(function () {
+			var fired = false;
+			function bootPending() {
+				var l = document.getElementById('kx-loading');
+				return l && !l.classList.contains('kx-hidden') && !l.querySelector('.kx-boot-error');
+			}
+			function fail(title, body) {
+				if (fired || !bootPending()) return;
+				fired = true;
+				var l = document.getElementById('kx-loading');
+				var card = document.createElement('div');
+				card.className = 'kx-loading-card kx-boot-error';
+				card.setAttribute('role', 'alert');
+				/* Inline fallback styling: if the stylesheet is what 404ed, the card
+				   must still be readable. */
+				card.style.cssText = 'max-width:420px;padding:28px;text-align:center;color:#eee;font-family:system-ui,sans-serif;';
+				var mark = document.createElement('div');
+				mark.className = 'kx-loading-mark';
+				mark.textContent = title;
+				mark.style.cssText = 'font-weight:700;letter-spacing:.08em;margin-bottom:10px;';
+				var msg = document.createElement('p');
+				msg.className = 'kx-boot-error-msg';
+				msg.textContent = body;
+				msg.style.cssText = 'opacity:.8;font-size:14px;line-height:1.5;margin:0 0 18px;';
+				var actions = document.createElement('div');
+				actions.className = 'kx-boot-error-actions';
+				var retry = document.createElement('button');
+				retry.type = 'button';
+				retry.className = 'kx-boot-error-btn';
+				retry.textContent = 'Try again';
+				retry.style.cssText = 'padding:10px 22px;border-radius:8px;border:1px solid #555;background:#191a1c;color:#fff;cursor:pointer;font-size:14px;';
+				retry.addEventListener('click', function () {
+					/* Hard reload: a stale cached HTML referencing dead chunks needs a
+					   revalidated document, not a memory-cache replay. */
+					location.reload();
+				});
+				var home = document.createElement('a');
+				home.className = 'kx-boot-error-link';
+				home.href = '/';
+				home.textContent = 'Back to three.ws';
+				home.style.cssText = 'display:inline-block;margin-left:14px;color:#9ab;font-size:14px;';
+				actions.appendChild(retry);
+				actions.appendChild(home);
+				card.appendChild(mark);
+				card.appendChild(msg);
+				card.appendChild(actions);
+				l.replaceChildren(card);
+				retry.focus();
+			}
+			/* A failed script/stylesheet is unambiguously boot-fatal: fail now.
+			   Runtime errors and unhandled rejections can also come from benign
+			   background work racing the boot, so they only arm a short grace
+			   timer; if boot completes first, bootPending() disarms the card. */
+			function failSoon(title, body) {
+				setTimeout(function () { fail(title, body); }, 8000);
+			}
+			window.addEventListener('error', function (e) {
+				var t = e && e.target;
+				if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) {
+					fail('Couldn’t load the world', 'A file failed to load. This usually fixes itself on a reload; the site may have just been updated.');
+				} else if (e && (e.error || e.message)) {
+					failSoon('Couldn’t load the world', 'Something went wrong while starting Coin Communities. Reload to try again.');
+				}
+			}, true);
+			window.addEventListener('unhandledrejection', function () {
+				failSoon('Couldn’t load the world', 'Something went wrong while starting Coin Communities. Reload to try again.');
+			});
+			setTimeout(function () {
+				fail('Taking too long to load', 'The world hasn’t finished loading. Check your connection and try again.');
+			}, 45000);
+		})();
+		</script>
+
 		<script type="module" src="/src/game/boot-avatar.js"></script>
 		<script type="module" src="/src/game/coincommunities.js"></script>
 		<script type="module" src="/src/game/ambient-crowd.js"></script>

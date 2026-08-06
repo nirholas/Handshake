@@ -60,8 +60,10 @@ export class Npc {
 		this.bubble = null;
 		this._bubbleTimer = null;
 
+		// Locomotion clips only: ~21 NPCs per world must not each pull the whole
+		// emote library. emote() below lazy-loads any clip on demand.
 		resolveAvatarUrl(def.avatar)
-			.then((u) => buildAvatar(this.rig, u, this.anim))
+			.then((u) => buildAvatar(this.rig, u, this.anim, { clips: 'locomotion' }))
 			.then(({ height }) => { if (!this._disposed) this.height = height; })
 			.catch(() => {});
 	}

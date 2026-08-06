@@ -189,6 +189,11 @@ export function createX402Jumbotron(scene, opts = {}) {
 	function poll() {
 		if (destroyed) return;
 		clearTimeout(pollTimer);
+		// Hidden tab: skip the fetch, keep the cadence (see chart-screen.js).
+		if (typeof document !== 'undefined' && document.hidden) {
+			pollTimer = setTimeout(poll, POLL_MS);
+			return;
+		}
 		fetchFeed().finally(() => {
 			if (destroyed) return;
 			pollTimer = setTimeout(poll, POLL_MS);

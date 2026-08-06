@@ -15,10 +15,18 @@
 // pass's lifetime doesn't re-prompt the wallet. All on-chain truth is computed
 // server-side; this module only orchestrates the wallet interaction.
 
-// Side-effect import: on a Solana Mobile (Seeker/Saga) device running inside our
-// TWA, this installs an MWA-backed wallet at window.solana that signs through the
-// Seed Vault. A no-op on every other platform.
-import '../../solana-mobile/src/index.js';
+// On a Solana Mobile (Seeker/Saga) device running inside our TWA, install an
+// MWA-backed wallet at window.solana that signs through the Seed Vault. The
+// detector is a tiny dependency-free check; the actual boot module (which
+// statically pulls @solana/web3.js, ~716KB pre-gzip) loads ONLY on that
+// platform. A static side-effect import here used to put the whole Solana
+// stack on /play's critical-path preloads for every desktop visitor.
+import { isSolanaMobileTwa } from '../../solana-mobile/src/seeker-detect.js';
+if (typeof window !== 'undefined' && isSolanaMobileTwa()) {
+	import('../../solana-mobile/src/index.js').catch((err) => {
+		console.error('[play-auth] Solana Mobile wallet boot failed:', err);
+	});
+}
 
 const NONCE_URL = '/api/play/nonce';
 const VERIFY_URL = '/api/play/verify';

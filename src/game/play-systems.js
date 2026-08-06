@@ -32,7 +32,6 @@ import { itemDisplay } from './items.js';
 import {
 	COSMETICS, SLOTS, SLOT_LABELS, getCosmetic, DEFAULT_LOADOUT,
 } from '../../multiplayer/src/cosmetics-catalog.js';
-import { buyBoutiqueItem } from './boutique-purchase.js';
 import './play-systems.css';
 
 // Rarity → display label + accent, shared by the inventory cards. Keeps the
@@ -634,6 +633,11 @@ export class PlaySystems {
 			settling: 'Confirming your unlock…',
 		};
 		try {
+			// Lazy import: boutique-purchase drags in the whole Solana wallet stack
+			// (~716KB pre-gzip via erc8004/solana-deploy), which no player needs
+			// until the moment they actually buy. Keeping it off the static graph
+			// keeps it out of /play's critical-path preloads.
+			const { buyBoutiqueItem } = await import('./boutique-purchase.js');
 			const res = await buyBoutiqueItem({
 				net: this.net,
 				item,

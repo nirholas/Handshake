@@ -117,6 +117,16 @@ const LOWER_BODY_CANONICAL = Object.freeze([
 
 const DEFAULT_CROSSFADE = 0.35; // seconds
 
+// Module-level cache of parsed base clips, keyed by URL. A world scene builds
+// dozens of AnimationManagers (local player, remote players, NPCs, pedestrians)
+// and every one of them used to re-fetch and re-parse the same clip JSON:
+// megabytes of JSON and thousands of AnimationClip.parse calls per world entry.
+// The base clip is never mutated (_retarget reads it and emits a new bound
+// clip), so one parsed instance can back every rig. The cache stores the
+// in-flight promise so concurrent loaders coalesce into a single fetch; a
+// failed load is evicted so a retry can succeed.
+const _clipCache = new Map();
+
 export class AnimationManager {
 	constructor() {
 		/** @type {THREE.Object3D|null} */
@@ -501,6 +511,20 @@ export class AnimationManager {
 	async loadAnimation(name, url, opts = {}) {
 		if (this.clips.has(name)) return this.clips.get(name);
 
+		let pending = _clipCache.get(url);
+		if (!pending) {
+			pending = AnimationManager._fetchClip(name, url);
+			_clipCache.set(url, pending);
+			// Evict on failure so a transient network error doesn't poison the URL
+			// for every future rig in the session.
+			pending.catch(() => { if (_clipCache.get(url) === pending) _clipCache.delete(url); });
+		}
+		const clip = await pending;
+		return this._registerParsedClip(name, clip, opts);
+	}
+
+	/** @private Fetch + parse one clip JSON into a shared base AnimationClip. */
+	static async _fetchClip(name, url) {
 		const isApiClip = url.includes('/api/animations/');
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 15_000);
@@ -509,8 +533,8 @@ export class AnimationManager {
 			res = await fetch(url, {
 				signal: controller.signal,
 				// API clips need auth; static clips are same-origin assets. Use
-				// 'same-origin' (not 'omit') so a credential-gated host proxy — e.g.
-				// a private-forwarded Codespaces port — still receives the auth cookie
+				// 'same-origin' (not 'omit') so a credential-gated host proxy (e.g.
+				// a private-forwarded Codespaces port) still receives the auth cookie
 				// and serves the asset instead of 302-ing it to a login tunnel.
 				credentials: isApiClip ? 'include' : 'same-origin',
 				redirect: 'error',
@@ -525,8 +549,7 @@ export class AnimationManager {
 		if (!clipJson) throw new Error(`clip payload missing from ${url}`);
 		const clip = AnimationClip.parse(clipJson);
 		clip.name = name;
-
-		return this._registerParsedClip(name, clip, opts);
+		return clip;
 	}
 
 	/**

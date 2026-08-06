@@ -61,7 +61,9 @@ class Pedestrian {
 		this.bubble = null;
 		this._bubbleTimer = null;
 
-		buildAvatar(this.rig, avatarUrl || DEFAULT_AVATAR, this.anim)
+		// Locomotion clips only: pedestrians never emote, and each one with its own
+		// AnimationManager would otherwise fetch the entire clip library.
+		buildAvatar(this.rig, avatarUrl || DEFAULT_AVATAR, this.anim, { clips: 'locomotion' })
 			.then(({ height }) => {
 				if (this._disposed) return;
 				this.height = height;
