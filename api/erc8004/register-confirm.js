@@ -6,7 +6,7 @@ import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/
 import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { CHAIN_BY_ID } from '../_lib/erc8004-chains.js';
-import { fetchSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
+import { fetchSafePublicUrlPinned, SsrfBlockedError, MaxBytesExceededError } from '../_lib/ssrf-guard.js';
 
 const REGISTERED_TOPIC = keccakId('Registered(uint256,string,address)');
 const TIMEOUT_MS = 10_000;
@@ -166,12 +166,17 @@ function resolveGateway(uri) {
 async function enrichMetadata(chainId, agentId, uri) {
 	const url = resolveGateway(uri);
 	if (!url) return;
-	// uri is the client-supplied metadataUri; guard against SSRF into internal hosts.
+	// uri is the client-supplied metadataUri; the pinned variant closes the
+	// DNS-rebinding TOCTOU window, and maxBytes bounds a hostile host's stream.
 	let r;
 	try {
-		r = await fetchSafePublicUrl(url, { signal: AbortSignal.timeout(TIMEOUT_MS) }, { allowHttp: true });
+		r = await fetchSafePublicUrlPinned(
+			url,
+			{ signal: AbortSignal.timeout(TIMEOUT_MS) },
+			{ allowHttp: true, maxBytes: 2 * 1024 * 1024 },
+		);
 	} catch (err) {
-		if (err instanceof SsrfBlockedError) return;
+		if (err instanceof SsrfBlockedError || err instanceof MaxBytesExceededError) return;
 		throw err;
 	}
 	if (!r.ok) return;
