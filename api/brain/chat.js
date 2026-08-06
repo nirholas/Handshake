@@ -965,7 +965,16 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 		// Failure before any token streamed → hand to the retry/fallback logic.
 		// A failure *after* partial output isn't retryable, so we finish cleanly
 		// with whatever was produced.
-		if (streamErr && firstTokenMs === null) throw streamErr;
+		//
+		// A route can also end a stream having emitted NOTHING and reported no
+		// error: the per-attempt abort fires before the first token on a slow free
+		// route, or the upstream returns an empty completion. Silently writing
+		// `done` there ends the response 200-with-no-text and skips the entire
+		// fallback chain, so the caller gets a blank answer while healthy routes
+		// sit unused. Zero visible output is a failed attempt — throw so the next
+		// route runs, and if every route comes up empty the outer catch surfaces a
+		// real `error` event instead of a fake success.
+		if (firstTokenMs === null) throw streamErr || new Error('provider streamed no output');
 
 		const usage = await result.usage.catch(() => null);
 		const elapsedMs = Date.now() - t0;
