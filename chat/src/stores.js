@@ -69,11 +69,15 @@ export const toolSchema = persisted('toolSchemaGroups', []);
 export const knowledgeSkills = persisted('knowledgeSkills', []);
 
 export const ttsEnabled = persisted('ttsEnabled', false);
+// voiceURI of the browser SpeechSynthesisVoice to read replies with. Empty
+// means "whatever the browser picks for the page language".
+export const ttsVoiceURI = persisted('ttsVoiceURI', '');
 export const localAgentId = persisted('localAgentId', '');
 export const activeAgent = persisted('activeAgentDetail', null);
 export const agentLibraryUrl = persisted('agentLibraryUrl', 'https://agents-ai-library.vercel.app');
 export const pluginLibraryUrl = persisted('pluginLibraryUrl', 'https://ai-agent-plugins.vercel.app');
-export const talkingHeadEnabled = persisted('talkingHeadEnabled', false);
+// The avatar GLB the chat shows for the assistant: the <agent-3d> viewer in a
+// reply, the sidebar logo, and the Settings avatar picker all read this one.
 export const talkingHeadAvatarUrl = persisted('talkingHeadAvatarUrl', '');
 
 // True while the assistant is generating a response — drives the chat avatar

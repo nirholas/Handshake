@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher, tick } from 'svelte';
+	import { createEventDispatcher, onDestroy, tick } from 'svelte';
 	import { v4 as uuidv4 } from 'uuid';
 	import {
 		anthropicAPIKey,
@@ -14,6 +14,8 @@
 		syncServer,
 		toolSchema,
 		talkingHeadAvatarUrl,
+		ttsEnabled,
+		ttsVoiceURI,
 		locale,
 		localProvidersEnabled,
 		currentUser,
@@ -142,6 +144,30 @@
 
 	function clearAvatar() {
 		talkingHeadAvatarUrl.set('');
+	}
+
+	// Browser speech synthesis. Chrome populates getVoices() asynchronously, so
+	// the list starts empty and fills in on the voiceschanged event.
+	const speech = typeof window !== 'undefined' ? window.speechSynthesis : null;
+	let voices = [];
+
+	function loadVoices() {
+		voices = speech ? speech.getVoices() : [];
+	}
+
+	if (speech) {
+		loadVoices();
+		speech.addEventListener('voiceschanged', loadVoices);
+		onDestroy(() => speech.removeEventListener('voiceschanged', loadVoices));
+	}
+
+	function previewVoice() {
+		if (!speech) return;
+		speech.cancel();
+		const utt = new SpeechSynthesisUtterance('This is how replies will sound.');
+		const picked = voices.find((v) => v.voiceURI === $ttsVoiceURI);
+		if (picked) utt.voice = picked;
+		speech.speak(utt);
 	}
 
 	let addClientToolOpen = false;
@@ -687,6 +713,50 @@
 				</div>
 			{:else if activeTab === 'avatar'}
 				<div class="flex flex-col gap-4">
+					<div class="flex flex-col gap-2 rounded-lg border border-slate-200 p-3">
+						<label class="flex items-start gap-2 text-[13px] text-slate-700">
+							<input type="checkbox" bind:checked={$ttsEnabled} class="mt-0.5" disabled={!speech} />
+							<span class="flex flex-col">
+								<span>Speak replies aloud</span>
+								<span class="text-[11px] text-slate-500">
+									{#if speech}
+										Your browser reads each finished reply out loud. The avatar mouths along
+										with it.
+									{:else}
+										This browser has no speech synthesis, so replies stay text-only.
+									{/if}
+								</span>
+							</span>
+						</label>
+
+						{#if speech && $ttsEnabled}
+							<div class="flex items-end gap-2 pl-6">
+								<label class="flex flex-1 flex-col text-[11px] text-slate-500">
+									<span class="mb-1">Voice</span>
+									<select
+										bind:value={$ttsVoiceURI}
+										class="rounded-md border border-slate-200 px-2 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400"
+									>
+										<option value="">Browser default</option>
+										{#each voices as v (v.voiceURI)}
+											<option value={v.voiceURI}>{v.name} ({v.lang})</option>
+										{/each}
+									</select>
+								</label>
+								<button
+									type="button"
+									on:click={previewVoice}
+									class="rounded-md border border-slate-200 px-3 py-1.5 text-[12px] font-medium text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+								>Preview</button>
+							</div>
+							{#if voices.length === 0}
+								<p class="pl-6 text-[11px] text-slate-400">
+									No installed voices reported yet. The browser default still speaks.
+								</p>
+							{/if}
+						{/if}
+					</div>
+
 					{#if avatarsLoading}
 						<p class="text-xs text-slate-400">Loading avatars…</p>
 					{/if}
@@ -747,7 +817,7 @@
 
 					<div class="flex flex-col gap-1">
 						<div class="flex items-center justify-between">
-							<label class="text-sm font-medium text-slate-700">Custom 3D Avatar URL (.glb)</label>
+							<label for="avatar-url" class="text-sm font-medium text-slate-700">Custom 3D Avatar URL (.glb)</label>
 							{#if $talkingHeadAvatarUrl}
 								<button
 									type="button"
@@ -757,6 +827,7 @@
 							{/if}
 						</div>
 						<input
+							id="avatar-url"
 							type="url"
 							placeholder="https://three.ws/api/avatars/<id> or any .glb URL"
 							bind:value={$talkingHeadAvatarUrl}

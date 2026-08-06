@@ -23,7 +23,7 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, localAgentId, activeAgent, talkingHeadEnabled, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, currentUser, notify, localProvidersEnabled, generating as generatingStore } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, ttsVoiceURI, localAgentId, activeAgent, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, currentUser, notify, localProvidersEnabled, generating as generatingStore } from './stores.js';
 	import { t } from './i18n.js';
 	import Notifications from './Notifications.svelte';
 	import TxApprovalModal from './TxApprovalModal.svelte';
@@ -76,7 +76,6 @@
 	import { deleteSingleItem, initEncryption, sendSingleItem, syncPull, syncPush } from './sync.js';
 	import AgentPicker from './AgentPicker.svelte';
 	import AgentSettingsModal from './AgentSettingsModal.svelte';
-	import TalkingHead from './TalkingHead.svelte';
 	import EmptyState from './three-ui/EmptyState.svelte';
 	import SuggestionChips from './three-ui/SuggestionChips.svelte';
 	import TopNav from './three-ui/TopNav.svelte';
@@ -510,7 +509,6 @@
 			convo.messages[i].thinking = false;
 			stopThinkingTimer(i);
 		}
-		talkingHead?.think(false);
 	}
 
 	// Built-in scene/avatar tools. These are declared server-side in api/chat.js
@@ -925,6 +923,10 @@
 					submitCompletion();
 				} else {
 					generateTitle();
+					// The turn is finished: animate the avatar and read the reply
+					// aloud. A tool-call turn keeps streaming, so it speaks on the
+					// follow-up completion that actually ends the turn.
+					speakLastMessage();
 				}
 
 				return;
@@ -1823,9 +1825,6 @@
 
 	// Floating 3D agent
 	let agentEl;
-	let talkingHead;
-	let talkingHeadReady = false;
-	let pendingSpeak = null;
 	let agentReady = false;
 	let agentPendingSpeak = null;
 	let agentVisible = true;
@@ -2120,9 +2119,16 @@
 
 	$: if ($mode !== 'website') websiteCategory.set(null);
 
+	// Providers differ on how a stream ends: some send a single chunk carrying
+	// finish_reason, others repeat it on a trailing usage chunk. Speaking is
+	// keyed to the message so a repeated end-of-stream can't read a reply twice.
+	let lastSpokenMessageId = null;
+
 	function speakLastMessage() {
 		const last = [...convo.messages].reverse().find((m) => m.role === 'assistant' && m.content);
 		if (!last?.content) return;
+		if (last.id === lastSpokenMessageId) return;
+		lastSpokenMessageId = last.id;
 
 		if (agentEl && effectiveAgentId) {
 			if (agentReady) {
@@ -2132,33 +2138,18 @@
 			} else {
 				agentPendingSpeak = last.content;
 			}
-		} else if ($talkingHeadEnabled && agentVisible) {
-			if (talkingHeadReady) {
-				const mood = detectEmotion(last.content);
-				if (mood) talkingHead.setMood(mood);
-				talkingHead.speak({ text: last.content, mood: mood || 'neutral' });
-			} else {
-				pendingSpeak = last.content;
-			}
 		}
 
-		if ($ttsEnabled && window.speechSynthesis && !$talkingHeadEnabled) {
+		// agentEl.speak() only drives the mouth/gesture animation, it carries no
+		// audio, so the browser voice is the single speaker for every reply.
+		if ($ttsEnabled && window.speechSynthesis) {
 			window.speechSynthesis.cancel();
 			const utt = new SpeechSynthesisUtterance(last.content);
+			const picked = $ttsVoiceURI
+				? window.speechSynthesis.getVoices().find((v) => v.voiceURI === $ttsVoiceURI)
+				: null;
+			if (picked) utt.voice = picked;
 			window.speechSynthesis.speak(utt);
-		}
-	}
-
-	$: if ($talkingHeadAvatarUrl) {
-		talkingHeadReady = false;
-		pendingSpeak = null;
-	}
-
-	function onTalkingHeadReady() {
-		talkingHeadReady = true;
-		if (pendingSpeak) {
-			talkingHead.speak({ text: pendingSpeak });
-			pendingSpeak = null;
 		}
 	}
 
@@ -2742,7 +2733,7 @@
 						</div>
 
 						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-[98] bg-gradient-to-t from-paper to-transparent" />
-						{#if $toolSchema.length > 0 || (effectiveAgentId || $talkingHeadEnabled)}
+						{#if $toolSchema.length > 0 || effectiveAgentId}
 							<div class="flex flex-wrap gap-1.5 px-4 pt-2 pb-0">
 								{#each $toolSchema as group}
 									<span class="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-medium text-indigo-700">
@@ -2762,7 +2753,7 @@
 								>
 									+ Add skill
 								</button>
-								{#if effectiveAgentId || $talkingHeadEnabled}
+								{#if effectiveAgentId}
 									<button
 										class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
 										on:click={agentVisible ? killAvatar : reviveAvatar}
