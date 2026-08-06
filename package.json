@@ -16,7 +16,36 @@
 	},
 	"overrides": {
 		"serialize-javascript": ">=7.0.5",
-		"@esbuild-plugins/node-globals-polyfill": "^0.2.0"
+		"@esbuild-plugins/node-globals-polyfill": "^0.2.0",
+		"axios": "^1.18.1",
+		"@ethersproject/providers": {
+			"ws": "^8.21.0"
+		},
+		"hardhat": {
+			"undici": "^6.28.0"
+		},
+		"@ethereum-attestation-service/eas-sdk": {
+			"undici": "^6.28.0"
+		},
+		"miniflare": {
+			"undici": "^7.29.0"
+		},
+		"solc": {
+			"tmp": "^0.2.7"
+		},
+		"ethjs-unit": {
+			"bn.js": "^4.12.4"
+		},
+		"number-to-bn": {
+			"bn.js": "^4.12.4"
+		},
+		"@sentry/node": {
+			"cookie": "^0.7.2"
+		},
+		"protobufjs": "^7.6.5",
+		"@vercel/og": {
+			"sharp": "^0.35.3"
+		}
 	},
 	"engines": {
 		"node": "24.x"
@@ -445,7 +474,7 @@
 		"qwen-ai-provider": "^0.1.1",
 		"resend": "^6.12.4",
 		"sas-lib": "^1.0.10",
-		"sharp": "^0.34.5",
+		"sharp": "^0.35.3",
 		"simple-dropzone": "^0.8.3",
 		"three": "^0.184.0",
 		"three-gpu-pathtracer": "0.0.23",
