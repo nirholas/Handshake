@@ -167,8 +167,13 @@ def evaluate(asset: str, payload: dict, budget: dict) -> Report:
     warnings = int(validation.get("numWarnings") or 0)
     if warnings:
         report.advisories.append(f"glTF validator reported {warnings} warning(s)")
+    # The inspect API grades its own optimization suggestions info | warn |
+    # critical. Surface the two that describe a real delivery problem and skip
+    # `info`, which fires on healthy models ("looks well-optimized for web").
+    # `error` is not a severity this API emits, but costs nothing to accept in
+    # case a future one does.
     for rec in payload.get("recommendations") or []:
-        if rec.get("severity") in ("warn", "warning", "error"):
+        if rec.get("severity") in ("critical", "warn", "warning", "error"):
             report.advisories.append(rec.get("issue", ""))
 
     report.passed = not report.failures

@@ -37,7 +37,7 @@ asset fails the build instead of the launch.
 | File size | 8 MB | `--max-size-mb` |
 | Material count | 16 | `--max-materials` |
 | Has materials | advisory | `--require-materials` |
-| Has textures | advisory | `--require-textures` |
+| Has textures | not checked | `--require-textures` |
 
 The floor matters more than it looks. When generation partially collapses you
 get a valid GLB containing almost nothing, which passes every other check on the
@@ -86,8 +86,11 @@ PASS  a-woven-wicker-basket.glb   147,617 tris   2.8 MB   0 mat   0 tex
       note: no materials: likely vertex-colored geometry ...
 ```
 
-Validator warnings and the inspect API's own optimization recommendations land
-in the same bucket. They are worth reading and they are not worth blocking on.
+Validator warnings land in the same bucket, as do the inspect API's own
+optimization recommendations at `warn` or `critical` severity. `info`-severity
+recommendations are dropped: they fire on healthy models too, so printing them
+would bury the ones that mean something. They are worth reading and they are not
+worth blocking on.
 
 ## In a CI job
 
@@ -147,8 +150,8 @@ recommendations with a concrete fix:
 }
 ```
 
-Those are advisories here, but they are a good backlog for whatever ships the
-assets.
+The gate turns the `warn` and `critical` ones into advisories and never fails a
+build on any of them. They are a good backlog for whatever ships the assets.
 
 ## Where to go next
 

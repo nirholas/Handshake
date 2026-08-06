@@ -146,7 +146,7 @@ See [Gate 3D assets in CI](/cookbook/asset-quality-gate).
 
 ## Run it without installing anything
 
-The [Pipeline Studio](/cookbook/pipeline) is this recipe plus the gate below,
+The [Pipeline Studio](/cookbook/pipeline) is this recipe plus the gate above,
 running in a browser tab against the same free API. It fans prompts out at the
 same concurrency, renders every result, grades each one, and then prints the
 `asset_pack.py` and `asset_gate.py` commands that reproduce the run on your
