@@ -2,8 +2,8 @@
 	"schema_version": "v1",
 	"name_for_human": "three.ws",
 	"name_for_model": "3d_agent",
-	"description_for_human": "three.ws — 3D avatar/world generation and live crypto intelligence APIs, pay-per-call via x402.",
-	"description_for_model": "three.ws exposes a 3D model viewer plus a paid pay-per-call API catalog settled via the x402 protocol (HTTP 402, USDC on Solana and Base): text→3D generation, avatar rigging, token and DeFi market intelligence, news sentiment, gas oracles, vanity address mining, and agent reputation. The machine-readable catalog with prices and schemas is at https://three.ws/.well-known/x402.json; free endpoints are indexed at /api/crypto and /api/3d.",
+	"description_for_human": "Free, keyless 3D avatar and world generation, plus an optional paid API catalog for agents.",
+	"description_for_model": "three.ws has two clearly separate surfaces, and every 3D request belongs on the free one. FREE and keyless, with no account, no API key and nothing to pay: text-to-3D model and avatar generation at POST https://three.ws/api/3d/studio (OpenAPI https://three.ws/.well-known/3d-studio-openapi.yaml), the same generation lane over MCP at https://three.ws/api/mcp-studio, the browser model viewer, the augmented-reality launcher at /api/ar, and the read-only market data endpoints indexed at /api/crypto. PAID and entirely optional: a separate catalog of 75 pay-per-call services under /api/x402/*, settled with the x402 protocol (HTTP 402, USDC on Solana and Base), covering market data, DeFi, news sentiment, agent infrastructure, and production 3D asset pipelines that go beyond the free lane. Prices and schemas: https://three.ws/.well-known/x402.json. Nothing in the free lane requires or accepts payment.",
 	"auth": {
 		"type": "none"
 	},
@@ -11,7 +11,7 @@
 		"type": "openapi",
 		"url": "https://three.ws/.well-known/openapi.yaml"
 	},
-	"logo_url": "https://three.ws/favicon.ico",
+	"logo_url": "https://three.ws/pwa-512x512.png",
 	"contact_email": "support@three.ws",
-	"legal_info_url": "https://three.ws/"
+	"legal_info_url": "https://three.ws/legal/tos"
 }

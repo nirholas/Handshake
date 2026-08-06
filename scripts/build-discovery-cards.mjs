@@ -15,8 +15,9 @@
 //   • public/.well-known/agent-card.json — description + one generated
 //     `x402-service-catalog` skill summarizing the paid catalog by category
 //     with live counts and the discovery-doc URL. Hand-written skills stay.
-//   • public/.well-known/ai-plugin.json — descriptions updated to the current
-//     platform framing (viewer + paid x402 data/3D APIs).
+//   • public/.well-known/ai-plugin.json: descriptions, brand logo, and legal
+//     URL from scripts/lib/discovery-copy.mjs (free 3D lane first, optional
+//     paid catalog second, with the live paid count).
 //   • public/crypto-agent-manifest.json — repoints the dead cdn.three.ws host (no DNS; the first-party CDN is /cdn/<r2-key>)
 //     sample body at the live default avatar and pins a current model id.
 //
@@ -25,6 +26,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+
+import { pluginDescriptions, PLUGIN_LOGO_URL, PLUGIN_LEGAL_URL } from './lib/discovery-copy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { getCatalog } = await import(path.join(root, 'api/_lib/service-catalog/index.js'));
@@ -98,16 +101,16 @@ if (paid.length < 40) {
 }
 
 // ── ai-plugin.json ───────────────────────────────────────────────────────────
+// Copy (and the brand/legal URLs) live in scripts/lib/discovery-copy.mjs so the
+// committed manifest and this generator can be pinned to each other by
+// tests/wellknown-manifests.test.js. The descriptions state the free, keyless
+// 3D lane first and the optional paid catalog second: readers used to come away
+// believing every three.ws capability, generation included, was pay-per-call.
 {
 	const plugin = readJson('public/.well-known/ai-plugin.json');
-	plugin.description_for_human =
-		'three.ws — 3D avatar/world generation and live crypto intelligence APIs, pay-per-call via x402.';
-	plugin.description_for_model =
-		'three.ws exposes a 3D model viewer plus a paid pay-per-call API catalog settled via the x402 ' +
-		'protocol (HTTP 402, USDC on Solana and Base): text→3D generation, avatar rigging, token and ' +
-		'DeFi market intelligence, news sentiment, gas oracles, vanity address mining, and agent ' +
-		'reputation. The machine-readable catalog with prices and schemas is at ' +
-		'https://three.ws/.well-known/x402.json; free endpoints are indexed at /api/crypto and /api/3d.';
+	Object.assign(plugin, pluginDescriptions(paid.length));
+	plugin.logo_url = PLUGIN_LOGO_URL;
+	plugin.legal_info_url = PLUGIN_LEGAL_URL;
 	writeJson('public/.well-known/ai-plugin.json', plugin);
 }
 
