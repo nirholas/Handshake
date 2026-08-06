@@ -165,7 +165,7 @@ Guards run **before the key is ever decrypted**, in this order:
 1. Vault status must be `open` (`vault_not_open`; a paused vault must be resumed first).
 2. The mint must be a real, readable mint on this network, and not USDC itself (`invalid_mint`).
 3. Buy size must not exceed the per-trade ceiling (`per_trade_cap`).
-4. Buy size plus the rolling 24h spend must not exceed the daily budget (`daily_budget`).
+4. Buy size plus the rolling 24h spend must not exceed the daily budget (`daily_budget`). The 24h total counts settled AND in-flight buys, and a buy reserves its headroom in the same statement that writes its ledger row, under a per-vault lock, so two trades fired at once can never both fit into headroom only one of them had.
 5. The vault must actually hold that much USDC on-chain (`insufficient_usdc`).
 6. The vault must hold enough SOL for fees and account rent (`insufficient_sol_for_fees`).
 7. A route must exist and be priceable (`no_route`, `quote_failed`).

@@ -19,7 +19,7 @@ import { confirmOrThrow } from './solana/confirm.js';
 import { logAudit } from './audit.js';
 import { explorerTxUrl } from './avatar-wallet.js';
 import {
-	getVaultWithSecret, getOpenPositions, getDailyTradeSpend,
+	getVaultWithSecret, getOpenPositions, getDailyTradeSpend, claimVaultBuyBudget,
 	recordVaultEvent, updateVaultEvent, applyVaultShareDelta, setVaultStatus,
 	upsertPosition, reducePosition,
 } from './vault-store.js';
@@ -148,6 +148,8 @@ export async function vaultTrade({ vaultId, userId, side, mint, usdcInAtomics, a
 		if (tradeExceedsPerTrade(amount, vault.max_per_trade_atomics)) {
 			return blocked('per_trade_cap', 'exceeds the vault per-trade ceiling', { max_per_trade_atomics: String(vault.max_per_trade_atomics) });
 		}
+		// Pre-flight only, for a fast and specific rejection. The binding check is
+		// the atomic claim below, which reserves the headroom under a per-vault lock.
 		const spent = await getDailyTradeSpend(vault.id);
 		if (tradeExceedsDailyBudget(spent, amount, vault.daily_budget_atomics)) {
 			return blocked('daily_budget', 'exceeds the vault rolling 24h budget', { spent_atomics: String(spent), daily_budget_atomics: String(vault.daily_budget_atomics) });
@@ -184,14 +186,36 @@ export async function vaultTrade({ vaultId, userId, side, mint, usdcInAtomics, a
 		price_impact_pct: q.priceImpactPct,
 		...(side === 'buy' ? { usdc_in: String(toBig(usdcInAtomics)), expected_out_raw: String(q.expectedOutRaw) } : { sell_raw: String(sellRaw), expected_usdc_out: String(q.expectedOutAtomics) }),
 	};
-	const claimId = await recordVaultEvent({
-		vaultId: vault.id, type: 'trade', userId,
-		atomicsDelta: side === 'buy' ? String(-toBig(usdcInAtomics)) : null,
-		signature: null, status: 'pending', reason: `trade_${side}`,
-		idempotencyKey, meta: claimMeta,
-	});
-	if (claimId == null) {
-		return { status: 'failed', code: 'in_flight', message: 'a trade with this id is already recorded — check the ledger before retrying' };
+	let claimId;
+	if (side === 'buy') {
+		// A buy claims daily-budget headroom and its ledger row in ONE statement,
+		// so two concurrent buys can never both pass on the same stale 24h total.
+		const claim = await claimVaultBuyBudget({
+			vaultId: vault.id, userId, idempotencyKey,
+			usdcInAtomics: toBig(usdcInAtomics),
+			dailyBudgetAtomics: vault.daily_budget_atomics,
+			reason: `trade_${side}`, meta: claimMeta,
+		});
+		if (!claim.ok) {
+			if (claim.reason === 'in_flight') {
+				return { status: 'failed', code: 'in_flight', message: 'a trade with this id is already recorded, check the ledger before retrying' };
+			}
+			return blocked('daily_budget', 'exceeds the vault rolling 24h budget', {
+				spent_atomics: String(claim.spentBefore ?? '0'),
+				daily_budget_atomics: String(vault.daily_budget_atomics),
+			});
+		}
+		claimId = claim.claimId;
+	} else {
+		claimId = await recordVaultEvent({
+			vaultId: vault.id, type: 'trade', userId,
+			atomicsDelta: null,
+			signature: null, status: 'pending', reason: `trade_${side}`,
+			idempotencyKey, meta: claimMeta,
+		});
+		if (claimId == null) {
+			return { status: 'failed', code: 'in_flight', message: 'a trade with this id is already recorded, check the ledger before retrying' };
+		}
 	}
 
 	// ── Sign + submit the real swap ─────────────────────────────────────────────

@@ -198,16 +198,81 @@ export async function listVaultEvents(vaultId, { limit = 50, beforeId = null, ty
 	`;
 }
 
-/** Rolling 24h confirmed buy spend (USDC atomics) — the daily-budget denominator. */
+/**
+ * Rolling 24h buy spend (USDC atomics) — the daily-budget denominator.
+ *
+ * Counts settled AND in-flight buys. A buy that has been claimed but not yet
+ * confirmed on-chain has already committed the vault's capital, so leaving it out
+ * (as this did until the 2026-08-06 review, L5) let two concurrent buys read the
+ * same pre-spend total and both pass a budget only one of them fit in. The
+ * authoritative gate is claimVaultBuyBudget below, which reserves under a lock;
+ * this read is for display and for the pre-flight message.
+ */
 export async function getDailyTradeSpend(vaultId) {
 	const [r] = await sql`
 		SELECT COALESCE(SUM((meta->>'usdc_in')::numeric), 0) AS spent
 		FROM vault_events
-		WHERE vault_id = ${vaultId} AND type = 'trade' AND status = 'ok'
+		WHERE vault_id = ${vaultId} AND type = 'trade' AND status IN ('ok', 'pending')
 		  AND (meta->>'side') = 'buy'
 		  AND created_at > now() - interval '24 hours'
 	`;
 	return r?.spent ?? '0';
+}
+
+/**
+ * Atomically claim rolling-24h budget headroom for a buy AND reserve its pending
+ * ledger row, under a per-vault advisory lock.
+ *
+ * Check-then-insert was two statements, so two owner buys racing on one vault
+ * could both read the same pre-spend total, both clear the budget, and both
+ * settle: a $X/day ceiling became $X + one trade. Here the sum and the insert are
+ * one statement behind `pg_advisory_xact_lock`, mirroring reserveSpendUsd in
+ * agent-trade-guards.js, so the second buy sees the first one's pending row.
+ *
+ * @returns {Promise<{ ok: true, claimId: number, spentBefore: string }
+ *                  | { ok: false, reason: 'daily_budget'|'in_flight', spentBefore?: string }>}
+ */
+export async function claimVaultBuyBudget({
+	vaultId, userId, idempotencyKey, usdcInAtomics, dailyBudgetAtomics, reason, meta,
+}) {
+	const amount = String(usdcInAtomics);
+	// A non-positive budget means "no ceiling configured" (same reading as
+	// tradeExceedsDailyBudget), so the claim only has to clear idempotency.
+	const budget = String(dailyBudgetAtomics ?? 0);
+	const rows = await sql`
+		WITH locked AS (
+			SELECT pg_advisory_xact_lock(hashtextextended(${String(vaultId)}, 0))
+		),
+		spent AS (
+			SELECT COALESCE(SUM((meta->>'usdc_in')::numeric), 0) AS s
+			FROM vault_events
+			WHERE vault_id = ${vaultId} AND type = 'trade' AND status IN ('ok', 'pending')
+			  AND (meta->>'side') = 'buy'
+			  AND created_at > now() - interval '24 hours'
+		)
+		INSERT INTO vault_events
+			(vault_id, type, user_id, atomics_delta, status, reason, idempotency_key, meta)
+		SELECT ${vaultId}, 'trade', ${userId ?? null}, ${`-${amount}`}, 'pending', ${reason ?? null},
+		       ${idempotencyKey ?? null}, ${JSON.stringify(meta ?? {})}::jsonb
+		FROM spent, locked
+		WHERE ${budget}::numeric <= 0
+		   OR spent.s + ${amount}::numeric <= ${budget}::numeric
+		ON CONFLICT (vault_id, idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
+		RETURNING id, (SELECT s FROM spent)::text AS spent_before
+	`;
+	if (rows.length) {
+		return { ok: true, claimId: Number(rows[0].id), spentBefore: rows[0].spent_before ?? '0' };
+	}
+	// No row: either the budget rejected it or this idempotency key already claimed
+	// one. Distinguish the two so the caller reports the real reason.
+	if (idempotencyKey) {
+		const [dupe] = await sql`
+			SELECT id FROM vault_events
+			WHERE vault_id = ${vaultId} AND idempotency_key = ${idempotencyKey} LIMIT 1
+		`;
+		if (dupe) return { ok: false, reason: 'in_flight' };
+	}
+	return { ok: false, reason: 'daily_budget', spentBefore: await getDailyTradeSpend(vaultId) };
 }
 
 /** Upsert a backer's position after a deposit (mint shares) or redemption (burn). */
