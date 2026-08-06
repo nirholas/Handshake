@@ -16,8 +16,39 @@ function isGLB(bytes) {
 	return view.getUint32(0, true) === GLB_MAGIC;
 }
 
-async function readDocument(bytes) {
+// EXT_meshopt_compression is registered by ALL_EXTENSIONS but cannot DECODE
+// without its wasm decoder wired in as a glTF-Transform dependency. Every
+// three.ws avatar optimized by the GLB pipeline ships meshopt-compressed, so
+// without this the inspector threw
+//   [EXT_meshopt_compression] Please install extension dependency, "meshopt.decoder"
+// on the majority of real models (the paid /api/x402/model-check route turned
+// that into a 422 on michelle/xbot/cz/realistic-male/dancing-twerk).
+// Loaded lazily so the browser /validation bundle only pays for the decoder
+// when a compressed model actually arrives, and memoized per process.
+let _meshoptDecoderPromise = null;
+function loadMeshoptDecoder() {
+	if (!_meshoptDecoderPromise) {
+		_meshoptDecoderPromise = import('meshoptimizer')
+			.then(async (mod) => {
+				const decoder = mod.MeshoptDecoder;
+				if (!decoder) return null;
+				if (decoder.ready) await decoder.ready;
+				return decoder;
+			})
+			.catch(() => null);
+	}
+	return _meshoptDecoderPromise;
+}
+
+async function createIO() {
 	const io = new WebIO().registerExtensions(ALL_EXTENSIONS);
+	const decoder = await loadMeshoptDecoder();
+	if (decoder) io.registerDependencies({ 'meshopt.decoder': decoder });
+	return io;
+}
+
+async function readDocument(bytes) {
+	const io = await createIO();
 	if (isGLB(bytes)) return io.readBinary(bytes);
 	// Fall back to JSON glTF (rare, usually requires external buffers we don't have).
 	const text = new TextDecoder().decode(bytes);
