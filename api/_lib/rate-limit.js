@@ -1494,6 +1494,14 @@ export const limits = {
 	// Redis outage fails closed rather than uncapping custodial spends.
 	tradePerUser: (userId) =>
 		getLimiter('agent-trade:user', { limit: 30, window: '1 m', critical: true }).limit(userId),
+	// Trading-swarm mutations (POST /api/swarms): contribute/exit move real SOL out
+	// of a custodial wallet and kill/pause change a live treasury's mandate. Same
+	// class as an agent trade, so it gets the same 30/min per-user write budget in
+	// its own bucket (an owner actively trading must not 429 their swarm actions,
+	// and vice versa). Critical: a Redis outage fails closed rather than uncapping
+	// custodial spends.
+	swarmMutate: (userId) =>
+		getLimiter('swarm:mutate:user', { limit: 30, window: '1 m', critical: true }).limit(userId),
 	// Per-user audit-log reads — the page polls on mount + "load older". 120/min
 	// per user is generous for browse but discourages scraping the full year.
 	// local: per-user browse/poll of one's own audit log — no side effects, no

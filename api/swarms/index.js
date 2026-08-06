@@ -7,10 +7,20 @@
 // Every mutation that moves SOL (contribute, exit) executes a real on-chain
 // transfer inside the lib, spend-guarded and audited. The treasury balance always
 // ties to chain — there are no virtual balances here.
+//
+// Because those mutations move real funds from a custodial wallet, every POST
+// carries the same two guards the rest of the platform's money writes do
+// (security review L3): a CSRF token when the caller is a cookie session, so a
+// third-party page can never spend on a signed-in visitor's behalf, and a
+// per-user write budget so a hijacked session or runaway client can't fire an
+// unbounded stream of contributes. Bearer/API-key callers are CSRF-exempt by
+// construction (the token is the intent) and still metered.
 
-import { cors, method, json, error, wrap, readJson } from '../_lib/http.js';
+import { cors, method, json, error, wrap, readJson, rateLimited } from '../_lib/http.js';
 import { parseLimit, parseOffset } from '../_lib/http-params.js';
 import { resolveAccount } from '../_lib/account-auth.js';
+import { requireCsrf } from '../_lib/csrf.js';
+import { limits } from '../_lib/rate-limit.js';
 import {
 	createSwarm, joinSwarm, contributeToSwarm, exitSwarm, killSwarm,
 	setSwarmPaused, listSwarms, listSwarmsForUser, SwarmError,
@@ -48,9 +58,12 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { data });
 	}
 
-	// POST — all mutations require auth.
+	// POST — all mutations require auth, CSRF (session callers), and a budget.
 	const auth = await resolveAccount(req, res);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+	if (!(await requireCsrf(req, res, auth.userId))) return;
+	const rl = await limits.swarmMutate(auth.userId);
+	if (!rl.success) return rateLimited(res, rl, 'too many swarm actions — slow down');
 	const body = await readJson(req).catch(() => ({}));
 	const action = String(body.action || '');
 
