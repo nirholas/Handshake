@@ -29,10 +29,17 @@ Each tick:
    those whose Redis cooldown has elapsed — sorted by priority descending.
 2. For each entry, probes the endpoint for a `402` challenge, builds a Solana
    USDC payment, and fires the request with an `X-PAYMENT` header.
-3. Records every call (success **and** failure) to `x402_autonomous_log`.
-4. For `oracle` / `sniper` pipeline entries, extracts signal data and upserts it
+3. If the paid replay itself answers `402`, re-fetches the challenge once and
+   settles against the **fresh** requirements before giving up. A 402 on the
+   replay means the endpoint refused the proof (a re-quote between probe and
+   replay, or re-issued requirements), and the signed transfer is never
+   broadcast in that case, so no money moved and one retry is safe. The retry is
+   bounded at one attempt, re-applies the spend cap and the recipient allowlist
+   to the new quote, and is reported as `retriedAfter402` by the buyer client.
+4. Records every call (success **and** failure) to `x402_autonomous_log`.
+5. For `oracle` / `sniper` pipeline entries, extracts signal data and upserts it
    into `oracle_intel_signals` for the sniper oracle gate to consume.
-5. Enforces a **daily USDC spend cap** across all calls in the loop.
+6. Enforces a **daily USDC spend cap** across all calls in the loop.
 
 Payments are real on chain — no mocks, no simulations.
 
@@ -197,7 +204,7 @@ corroborate — the ops financial-integrity surface alerts on those. Detail:
 
 | Sink | Written by |
 |---|---|
-| `x402_autonomous_log` | Every call (success or failure), with `signal_data` / `value_extracted`. |
+| `x402_autonomous_log` | Every call (success or failure), with `signal_data` / `value_extracted`. `error_msg` is reserved for calls that actually failed: the external uptime monitor probes third-party services for free and records an alive-but-unexpected status (a templated path answering 400, a verb-picky route answering 405) in `value_extracted.status` only, so a liveness observation never lands in the loop's failure stats. |
 | `oracle_intel_signals` | `oracle` / `sniper` entries, keyed by source + topic; consumed by the sniper oracle gate. Each row carries `tx_signature`, the settle signature of the paid call that bought it, so a gate decision can cite its receipt (surfaced as `signal_receipts` on gate results). |
 | `forge_creations` | Every settled `POST /api/x402/forge` generation (any buyer, not just this loop). The row lands in the public community gallery with `x402_payer` / `x402_tx_sig` / `x402_price_atomic` provenance; the gallery renders a Solscan-linked "x402 · $price" badge. Inline-done lanes materialize immediately; async lanes store the full job token and `api/cron/forge-finalize` completes them server-side. |
 | `agent_custody_events` | The USDC spend, with `category: 'x402'` (see [Money feed](money-feed.md)). |

@@ -344,110 +344,148 @@ export async function payX402({
 		};
 	}
 
-	const accept = parseSolanaAccept(probe.body);
+	let accept = parseSolanaAccept(probe.body);
 	if (!accept) {
 		return { success: false, paid: false, free: false, skipped: true, amountAtomic: 0, txSig: null, status: 402, responseBody: probe.body, errorMsg: 'no_solana_accept' };
 	}
-	if (!USDC_MINT || accept.asset !== USDC_MINT) {
-		return { success: false, paid: false, free: false, skipped: true, amountAtomic: 0, txSig: null, status: 402, responseBody: probe.body, errorMsg: `unexpected_asset:${accept.asset}` };
-	}
-	if (!selfPay && !accept.extra?.feePayer) {
-		return { success: false, paid: false, free: false, skipped: true, amountAtomic: 0, txSig: null, status: 402, responseBody: probe.body, errorMsg: 'missing_fee_payer' };
-	}
 
-	// Pre-broadcast recipient gate. A thrown hook is a fail-closed refusal, never
-	// a crash — the whole point is to stop money moving to an unexpected payTo.
-	if (typeof onAccept === 'function') {
-		let hook;
-		try {
-			hook = await onAccept(accept);
-		} catch (err) {
-			hook = { abort: true, reason: `onaccept_error:${String(err?.message || err).slice(0, 80)}` };
+	// One attempt = validate THIS accept, build + sign a transaction for it, and
+	// replay the request carrying the payment. Returns either a terminal `skip`
+	// (a guard refused before money could move) or the paid response.
+	async function attemptSettle(currentAccept, attemptNonce) {
+		if (!USDC_MINT || currentAccept.asset !== USDC_MINT) {
+			return { skip: { success: false, paid: false, free: false, skipped: true, amountAtomic: 0, txSig: null, status: 402, responseBody: probe.body, errorMsg: `unexpected_asset:${currentAccept.asset}` } };
 		}
-		if (hook?.abort) {
-			return {
-				success: false, paid: false, free: false, skipped: true, refusedByHook: true,
-				amountAtomic: Number(accept.amount || 0), txSig: null, status: 402,
-				responseBody: probe.body, errorMsg: hook.reason || 'onaccept_abort',
-			};
+		if (!selfPay && !currentAccept.extra?.feePayer) {
+			return { skip: { success: false, paid: false, free: false, skipped: true, amountAtomic: 0, txSig: null, status: 402, responseBody: probe.body, errorMsg: 'missing_fee_payer' } };
 		}
-	}
 
-	const amountAtomic = Number(accept.amount || 0);
-	if (amountAtomic > remainingCap) {
-		warnCapExceeded(url, amountAtomic, Number.isFinite(remainingCap) ? remainingCap : 0);
-		return { success: false, paid: false, free: false, skipped: true, amountAtomic, txSig: null, status: 402, responseBody: probe.body, errorMsg: 'cap_would_exceed' };
-	}
+		// Pre-broadcast recipient gate. A thrown hook is a fail-closed refusal, never
+		// a crash. The whole point is to stop money moving to an unexpected payTo.
+		// Re-run per attempt: a re-fetched challenge may name a different payTo, and
+		// the ring's allowlist must judge the accept we are actually paying.
+		if (typeof onAccept === 'function') {
+			let hook;
+			try {
+				hook = await onAccept(currentAccept);
+			} catch (err) {
+				hook = { abort: true, reason: `onaccept_error:${String(err?.message || err).slice(0, 80)}` };
+			}
+			if (hook?.abort) {
+				return { skip: {
+					success: false, paid: false, free: false, skipped: true, refusedByHook: true,
+					amountAtomic: Number(currentAccept.amount || 0), txSig: null, status: 402,
+					responseBody: probe.body, errorMsg: hook.reason || 'onaccept_abort',
+				} };
+			}
+		}
 
-	// Fee ceiling — refuse to send a payment whose fee config could exceed
-	// X402_RING_MAX_FEE_PER_TX_LAMPORTS. A structured skip, not a throw: the
-	// caller records it like any other guard rejection. This is the runtime
-	// twin of the fee-floor regression tests over expectedFeeLamports().
-	const feeConfig = ringFeeConfig(nonce, { selfPay });
-	const worstCaseFeeLamports = expectedFeeLamports({
-		selfPay,
-		priorityMicrolamports: feeConfig.microLamports,
-		cuLimit: feeConfig.cuLimit,
-	});
-	const maxFeeLamports = ringMaxFeePerTxLamports();
-	if (worstCaseFeeLamports > maxFeeLamports) {
-		return {
-			success: false, paid: false, free: false, skipped: true,
-			amountAtomic, txSig: null, status: 402, responseBody: probe.body,
-			errorMsg: `fee_ceiling_exceeded:${worstCaseFeeLamports}>${maxFeeLamports}`,
-		};
-	}
+		const attemptAmount = Number(currentAccept.amount || 0);
+		if (attemptAmount > remainingCap) {
+			warnCapExceeded(url, attemptAmount, Number.isFinite(remainingCap) ? remainingCap : 0);
+			return { skip: { success: false, paid: false, free: false, skipped: true, amountAtomic: attemptAmount, txSig: null, status: 402, responseBody: probe.body, errorMsg: 'cap_would_exceed' } };
+		}
 
-	// Fee-budget admission: the caller-side twin of the settle path's wallet fee
-	// governor. Everything past this point (an ATA read, a signature, a facilitator
-	// verify that simulates against an RPC node) is wasted when the fee wallet's
-	// daily budget is already spent, because settleRingPayment() refuses at the end
-	// regardless. Checking here collapses a full handshake into one skipped call.
-	// Fails open: assessFeeAdmission() admits whenever it cannot price the call, 
-	// so this can only ever remove doomed work, never block a fundable payment.
-	const feeWalletB58 = selfPay ? buyer?.publicKey?.toBase58() : accept.extra?.feePayer;
-	if (feeWalletB58) {
-		const admission = await assessFeeAdmission({
-			feeWalletB58,
-			estFeeLamports: worstCaseFeeLamports,
-			connection: conn,
+		// Fee ceiling: refuse to send a payment whose fee config could exceed
+		// X402_RING_MAX_FEE_PER_TX_LAMPORTS. A structured skip, not a throw: the
+		// caller records it like any other guard rejection. This is the runtime
+		// twin of the fee-floor regression tests over expectedFeeLamports().
+		const feeConfig = ringFeeConfig(attemptNonce, { selfPay });
+		const worstCaseFeeLamports = expectedFeeLamports({
+			selfPay,
+			priorityMicrolamports: feeConfig.microLamports,
+			cuLimit: feeConfig.cuLimit,
 		});
-		if (!admission.ok) {
-			return {
+		const maxFeeLamports = ringMaxFeePerTxLamports();
+		if (worstCaseFeeLamports > maxFeeLamports) {
+			return { skip: {
 				success: false, paid: false, free: false, skipped: true,
-				amountAtomic, txSig: null, status: 402, responseBody: probe.body,
-				errorMsg: admission.reason || 'fee_runway_exhausted',
-			};
+				amountAtomic: attemptAmount, txSig: null, status: 402, responseBody: probe.body,
+				errorMsg: `fee_ceiling_exceeded:${worstCaseFeeLamports}>${maxFeeLamports}`,
+			} };
 		}
+
+		// Fee-budget admission: the caller-side twin of the settle path's wallet fee
+		// governor. Everything past this point (an ATA read, a signature, a facilitator
+		// verify that simulates against an RPC node) is wasted when the fee wallet's
+		// daily budget is already spent, because settleRingPayment() refuses at the end
+		// regardless. Checking here collapses a full handshake into one skipped call.
+		// Fails open: assessFeeAdmission() admits whenever it cannot price the call,
+		// so this can only ever remove doomed work, never block a fundable payment.
+		const feeWalletB58 = selfPay ? buyer?.publicKey?.toBase58() : currentAccept.extra?.feePayer;
+		if (feeWalletB58) {
+			const admission = await assessFeeAdmission({
+				feeWalletB58,
+				estFeeLamports: worstCaseFeeLamports,
+				connection: conn,
+			});
+			if (!admission.ok) {
+				return { skip: {
+					success: false, paid: false, free: false, skipped: true,
+					amountAtomic: attemptAmount, txSig: null, status: 402, responseBody: probe.body,
+					errorMsg: admission.reason || 'fee_runway_exhausted',
+				} };
+			}
+		}
+
+		// Step 2: does the receiver ATA already exist? (saves an idempotent create ix)
+		const receiverAta = getAssociatedTokenAddressSync(
+			new PublicKey(currentAccept.asset), new PublicKey(currentAccept.payTo),
+			false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+		);
+		const receiverAtaInfo = await conn.getAccountInfo(receiverAta).catch(() => null);
+
+		// Step 3: build the signed transaction + X-PAYMENT envelope.
+		const txBase64 = buildPaymentTx({
+			accept: currentAccept, buyer, blockhash, mintInfo,
+			receiverAtaExists: receiverAtaInfo !== null,
+			nonce: attemptNonce, selfPay,
+		});
+		const xPayment = Buffer.from(JSON.stringify({
+			x402Version: 2,
+			scheme: 'exact',
+			network: currentAccept.network,
+			resource: { url, mimeType: 'application/json' },
+			payload: { transaction: txBase64 },
+			accepted: currentAccept,
+		})).toString('base64');
+
+		// Step 4: replay the request carrying the payment.
+		const paidRes = await fetchWithTimeout(url, {
+			...reqInit,
+			headers: { ...reqInit.headers, 'x-payment': xPayment },
+		});
+		return { paidRes, amountAtomic: attemptAmount };
 	}
 
-	// Step 2 — does the receiver ATA already exist? (saves an idempotent create ix)
-	const receiverAta = getAssociatedTokenAddressSync(
-		new PublicKey(accept.asset), new PublicKey(accept.payTo),
-		false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
-	);
-	const receiverAtaInfo = await conn.getAccountInfo(receiverAta).catch(() => null);
-
-	// Step 3 — build the signed transaction + X-PAYMENT envelope.
-	const txBase64 = buildPaymentTx({
-		accept, buyer, blockhash, mintInfo,
-		receiverAtaExists: receiverAtaInfo !== null,
-		nonce, selfPay,
-	});
-	const xPayment = Buffer.from(JSON.stringify({
-		x402Version: 2,
-		scheme: 'exact',
-		network: accept.network,
-		resource: { url, mimeType: 'application/json' },
-		payload: { transaction: txBase64 },
-		accepted: accept,
-	})).toString('base64');
-
-	// Step 4 — replay the request carrying the payment.
-	const paidRes = await fetchWithTimeout(url, {
-		...reqInit,
-		headers: { ...reqInit.headers, 'x-payment': xPayment },
-	});
+	// A 402 on the PAID replay means the endpoint refused the payment we just
+	// built: the quote moved between probe and replay, the requirements were
+	// re-issued, or the proof did not match what the route now advertises. The
+	// signed transfer is never broadcast in that case (the facilitator settles only
+	// after verify passes), so no money moved and exactly one retry against a
+	// FRESHLY fetched challenge is safe. Bounded at one: a route that 402s twice
+	// is reported as before. Every other status (200, 4xx, 5xx) is returned on the
+	// first attempt, so nothing changes for a call that already works.
+	let currentAccept = accept;
+	let attemptNonce = nonce;
+	let retriedAfter402 = false;
+	let paidRes;
+	let amountAtomic = 0;
+	for (;;) {
+		const outcome = await attemptSettle(currentAccept, attemptNonce);
+		if (outcome.skip) return { ...outcome.skip, retriedAfter402 };
+		paidRes = outcome.paidRes;
+		amountAtomic = outcome.amountAtomic;
+		if (paidRes.status !== 402 || retriedAfter402) break;
+		const reprobe = await fetchWithTimeout(url, reqInit).catch(() => null);
+		const fresh = reprobe?.status === 402 ? parseSolanaAccept(reprobe.body) : null;
+		if (!fresh) break;
+		retriedAfter402 = true;
+		currentAccept = fresh;
+		// A fresh nonce keeps the retry transaction byte-distinct from the refused
+		// one, so a re-quote at the SAME amount cannot compile to the same signature.
+		attemptNonce = nextAutoNonce();
+	}
 
 	let txSig = null;
 	if (paidRes.ok) {
@@ -465,5 +503,6 @@ export async function payX402({
 		amountAtomic, txSig, status: paidRes.status,
 		responseBody: paidRes.body,
 		errorMsg: paidRes.ok ? null : `http_${paidRes.status}`,
+		retriedAfter402,
 	};
 }
