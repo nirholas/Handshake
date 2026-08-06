@@ -284,7 +284,7 @@ Tests: [tests/api/forge-director.test.js](../tests/api/forge-director.test.js),
 ## Forge Pro — paid quality tiers (`/api/x402/forge`)
 
 **`POST /api/x402/forge`** — the pay-per-call twin of the free draft lane. Same
-inputs (a text prompt, or up to four reference photos of one object), but you pick
+inputs (a text prompt, or up to six reference photos of one object), but you pick
 a **quality tier**, and you pay per generation in USDC over
 [x402](https://x402.org) — no API key, no account, no signup. This is the only
 real text→3D / image→3D generation on any agent marketplace, so it's built for
@@ -335,7 +335,7 @@ tier at deploy time without touching settlement.
      -H 'content-type: application/json' \
      -d '{"prompt":"a brass steampunk owl, full body","tier":"standard"}'
 
-   # image → 3D — up to four public https views of ONE object (omit prompt)
+   # image → 3D: up to six public https views of ONE object (omit prompt)
    curl -s -X POST https://three.ws/api/x402/forge \
      -H 'content-type: application/json' \
      -d '{"image_urls":["https://example.com/owl-front.png","https://example.com/owl-side.png"],"tier":"high"}'

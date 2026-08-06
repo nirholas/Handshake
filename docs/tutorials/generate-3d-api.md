@@ -145,7 +145,7 @@ async function uploadImage(buffer, contentType = 'image/jpeg') {
 
 // Then:
 const url = await uploadImage(await readFile('front.jpg'));
-// 1–4 views of the same object; more views = better reconstruction
+// 1 to 6 views of the same object; more views = better reconstruction
 const submit = await fetch(`${BASE}/api/forge`, {
   method: 'POST',
   headers: { 'content-type': 'application/json' },

@@ -8517,7 +8517,7 @@ three.ws is a full-stack system for creating, deploying, and embedding 3D AI age
 
 At its core, it does five things:
 
-1. **Generate** — turns a text prompt, 1–4 photos, or a sketch into a textured, downloadable GLB via [Forge](https://three.ws/forge). Free draft tier, no account required; auto-rigging, restyling, and retexturing in the same flow.
+1. **Generate**: turns a text prompt, up to 6 photos, or a sketch into a textured, downloadable GLB via [Forge](https://three.ws/forge). Free draft tier, no account required; auto-rigging, restyling, and retexturing in the same flow.
 
 2. **Render** — loads and validates glTF 2.0 / GLB models in WebGL 2.0 with zero server-side processing. Drag a file onto the browser and it renders instantly with full Draco, KTX2, and Meshopt decompression.
 
@@ -8538,7 +8538,7 @@ three.ws is production-ready and serves [three.ws](https://three.ws) live on Goo
 **Text → 3D Generation (Forge)**
 
 - Prompt-to-3D at [three.ws/forge](https://three.ws/forge) — describe an object in a sentence and download a textured GLB
-- Image→3D (one to four photos) and sketch→3D in the same composer
+- Image→3D (one to six photos) and sketch→3D in the same composer
 - Multiple generation engines with live health checks: self-hosted lanes plus bring-your-own-key Meshy and Tripo (keys stay in the browser)
 - Prompt-to-avatar at [three.ws/create/prompt](https://three.ws/create/prompt) — a description becomes a rigged, animatable 3D avatar
 - Generated models carry straight into Scene Studio, embeds, worlds, and on-chain deployment
@@ -8656,12 +8656,12 @@ More captures appear inline in the sections below: [Widget Studio](#widget-syste
 
 ## Forge — Text & Image to 3D
 
-Type a sentence, get a 3D model. [**Forge**](https://three.ws/forge) turns a text prompt, one to four photos, or a rough sketch into a textured, downloadable GLB — in the browser, with a free draft tier and no account required.
+Type a sentence, get a 3D model. [**Forge**](https://three.ws/forge) turns a text prompt, one to six photos, or a rough sketch into a textured, downloadable GLB, in the browser, with a free draft tier and no account required.
 
 | Input | How it works | Typical time |
 | --- | --- | --- |
 | **Text** | Describe the object — *"a brass steampunk owl, full body"* | ~30–90 s |
-| **Image** | Upload 1–4 reference views (front/back/left/right); multi-view removes back-of-object hallucination | ~30–90 s |
+| **Image** | Upload 1 to 6 reference views (front/back/left/right/top/three-quarter); multi-view removes back-of-object hallucination | ~30 to 90 s |
 | **Sketch** | Draw it and name it — TripoSG-scribble reconstructs the geometry | ~30–90 s |
 
 Three quality tiers — `draft` (~12k polygons), `standard` (~30k, default), `high` (~200k + PBR textures) — and two generation paths: the platform-keyed image pipeline (FLUX → TRELLIS) that works with no key at all, and bring-your-own-key native geometry via **Meshy** or **Tripo** for the cleanest quad topology (your key stays in your browser).
@@ -8684,7 +8684,7 @@ curl 'https://three.ws/api/forge?job=<job_id>'
 # → { "status": "done", "glb_url": "https://…/model.glb", … }
 ```
 
-Image→3D is the same endpoint with `image_urls: ["https://…/front.png", …]` (1–4 views) instead of a prompt. `GET /api/forge?catalog` returns the live tier/backend/cost matrix.
+Image→3D is the same endpoint with `image_urls: ["https://…/front.png", …]` (1 to 6 views) instead of a prompt. `GET /api/forge?catalog` returns the live tier/backend/cost matrix.
 
 ### From Claude, Cursor, or any MCP client
 
@@ -8692,12 +8692,12 @@ The **3D Studio MCP server** at `https://three.ws/api/mcp-3d` exposes the full p
 
 ### Pay-per-call for autonomous agents (x402)
 
-`POST /api/x402/forge` is the monetized twin: agents pay per generation in USDC on Base or Solana — no API key, no account. Draft $0.05, standard $0.15, high $0.50; polling is free; retried payments are idempotent and never double-charge. See [docs/api/forge-x402.md](docs/api/forge-x402.md).
+`POST /api/x402/forge` is the monetized twin: agents pay per generation in USDC on Solana mainnet, with no API key and no account. Draft $0.05, standard $0.15, high $0.50; polling is free; retried payments are idempotent and never double-charge. See [docs/api/forge-x402.md](docs/api/forge-x402.md).
 
 ### Learn more
 
 - [Tutorial: Turn a Text Prompt into a 3D Model](docs/tutorials/text-to-3d.md) — first model in about a minute
-- [Tutorial: Turn Photos into a 3D Model](docs/tutorials/image-to-3d.md) — reconstruct a real object from 1–4 photos
+- [Tutorial: Turn Photos into a 3D Model](docs/tutorials/image-to-3d.md): reconstruct a real object from up to 6 photos
 - [3D Studio MCP server](docs/mcp-3d-studio.md) — generate from inside Claude or Cursor
 - [Paid generation API (x402)](docs/api/forge-x402.md) — autonomous agent-to-agent generation
 
@@ -9024,7 +9024,7 @@ The loader ([public/artifact.js](public/artifact.js)) mounts a rotatable 3D view
 | Tutorial                                                       | What you'll build                                                    | Time    | Live |
 | -------------------------------------------------------------- | -------------------------------------------------------------------- | ------- | ---- |
 | [Turn a Text Prompt into a 3D Model](docs/tutorials/text-to-3d.md) | A real, textured, downloadable 3D model from a one-line description | ~5 min  | [open](https://three.ws/tutorials/text-to-3d) |
-| [Turn Photos into a 3D Model](docs/tutorials/image-to-3d.md)   | A GLB reconstructed from 1-4 photos of a real object                 | ~10 min | [open](https://three.ws/tutorials/image-to-3d) |
+| [Turn Photos into a 3D Model](docs/tutorials/image-to-3d.md)   | A GLB reconstructed from up to 6 photos of a real object             | ~10 min | [open](https://three.ws/tutorials/image-to-3d) |
 | [Build Your First Agent](docs/tutorials/first-agent.md)        | A talking 3D character on a shareable page, from zero                | ~20 min | [open](https://three.ws/tutorials/first-agent) |
 | [Embed on Your Website](docs/tutorials/embed-on-website.md)    | Add an agent to any page: plain HTML, React, Webflow, WordPress      | ~15 min | [open](https://three.ws/tutorials/embed-on-website) |
 | [Write a Custom Skill](docs/tutorials/custom-skill.md)         | A new tool the agent can call (e.g., fetch live weather data)        | ~30 min | [open](https://three.ws/tutorials/custom-skill) |

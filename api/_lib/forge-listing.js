@@ -44,7 +44,7 @@ const HIGH_USD = priceUsdcForTier('high'); // "0.50"
 // order they need it. First sentence is the card headline; the rest is detail.
 export const FORGE_ROUTE_DESCRIPTION =
 	'three.ws Forge — pay-per-call text→3D and image→3D generation for autonomous ' +
-	'agents. Turn a text prompt (or up to four reference photos of one object) into ' +
+	`agents. Turn a text prompt (or up to ${FORGE_MAX_VIEWS} reference photos of one object) into ` +
 	'a production-ready GLB mesh for game assets, NFT collections, 3D scenes, and ' +
 	'product visualization — the only real 3D generation on any agent marketplace. ' +
 	`Three quality tiers in USDC: draft $${DRAFT_USD} (fast low-poly blockout), ` +
@@ -87,7 +87,7 @@ export const FORGE_INPUT_SCHEMA = Object.freeze({
 			minItems: 1,
 			maxItems: FORGE_MAX_VIEWS,
 			description:
-				'Up to four public https reference views of one object for image→3D. ' +
+				`Up to ${FORGE_MAX_VIEWS} public https reference views of one object for image→3D. ` +
 				'Omit when supplying a prompt.',
 		},
 		tier: {

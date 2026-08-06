@@ -2,7 +2,7 @@
 
 Have a real object you want in 3D? Photograph it from a few angles, drop the photos into the Forge, and get back a textured 3D model. This works for products, toys, sculptures, furniture, sneakers — anything you can put on a table and walk around.
 
-**What you'll make:** a downloadable GLB model reconstructed from 1–4 photos of a real object.
+**What you'll make:** a downloadable GLB model reconstructed from 1 to 6 photos of a real object.
 
 **Prerequisites:** none. A phone camera is plenty.
 
@@ -15,10 +15,10 @@ This step decides 90% of your result quality. Five rules:
 1. **One object, plain background.** Put the object on a table against a wall, or hold it against the sky. Busy backgrounds get reconstructed as part of the object.
 2. **Even lighting, no harsh shadows.** Indirect daylight is ideal. Avoid a phone flash — it creates hotspots that become weird texture patches.
 3. **Fill the frame.** The object should take up most of the photo, in focus.
-4. **Same object, different angles.** The ideal set of four: **front, back, left, right**. Keep the object the same way up in every shot.
+4. **Same object, different angles.** The core set is **front, back, left, right**; two more slots take a **top** shot and a **three-quarter** shot. Keep the object the same way up in every shot.
 5. **Don't move the object between shots** — walk around it instead, so the lighting stays consistent.
 
-One photo works. Four photos work noticeably better — every angle you provide is geometry the model doesn't have to guess.
+One photo works. Four to six work noticeably better: every angle you provide is geometry the model doesn't have to guess.
 
 **Formats:** PNG, JPG, or WebP, up to 8 MB each.
 
@@ -28,7 +28,7 @@ One photo works. Four photos work noticeably better — every angle you provide 
 
 Go to [three.ws/forge](/forge) and switch to the **From photos** tab.
 
-You'll see a grid of four upload slots. Drag your photos in, or click a slot to browse. After uploading you can **drag the thumbnails to reorder** them — put your best, clearest shot first.
+You'll see a grid of six upload slots (front, back, left, right, top, and three-quarter). Drag your photos in, or click a slot to browse. After uploading you can **drag the thumbnails to reorder** them: put your best, clearest shot first.
 
 **No object on hand? Draw it.** The Forge also takes drawings, two ways. On this page, the **From a sketch** tab (it appears when the sketch engine is live) takes one drawing plus a short required description of what it depicts: dark strokes on a light background work best, and the result is untextured geometry you can then **Stylize** or **Retexture**. In the [Forge Studio](/forge-studio), click **Or draw it instead** below the photo grid to open an in-browser drawing canvas: draw with your mouse, finger, or stylus, then **Use sketch** to drop the PNG straight into the next open slot, where it rides the same reconstruction pipeline as an uploaded photo. Nothing is uploaded while you draw, only when you click **Use sketch**; cancelling discards it with zero network activity.
 
@@ -81,7 +81,7 @@ Everything you generate is kept in **Your creations** at the bottom of the page,
 |---------|-------------|-----|
 | Background melted into the model | Busy backdrop in the photos | Reshoot against a plain wall, or note "no background" in the guidance field |
 | Texture has bright patches | Flash or hard directional light | Reshoot in even, indirect light |
-| Back of the model is wrong | Only front photos provided | Add back and side views — up to 4 |
+| Back of the model is wrong | Only front photos provided | Add back, side, and three-quarter views, up to 6 |
 | Object came out warped | Photos show the object in different positions/orientations | Keep the object still; you move, not it |
 | Upload rejected | File too large or wrong type | PNG/JPG/WebP, max 8 MB each |
 | "Generation limit reached" | Per-visitor rate limit | Wait a minute, try again |

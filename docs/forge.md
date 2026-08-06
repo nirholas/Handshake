@@ -1,6 +1,6 @@
 # Forge: text and image to 3D, on a free-first engine grid
 
-Forge is three.ws's text-and-image-to-3D generator. Type a prompt, drop in one to four photos of an object, or sketch a shape and name it, and Forge returns a downloadable, textured GLB you can orbit, view in AR, and take anywhere. It runs on a grid of real generation engines with live health status, and it is free-first by design: text prompts default to a zero-cost NVIDIA lane, photos default to a zero-cost reconstruction lane, and the paid engines stay explicitly selectable for when you want a specific vendor.
+Forge is three.ws's text-and-image-to-3D generator. Type a prompt, drop in one to six photos of an object, or sketch a shape and name it, and Forge returns a downloadable, textured GLB you can orbit, view in AR, and take anywhere. It runs on a grid of real generation engines with live health status, and it is free-first by design: text prompts default to a zero-cost NVIDIA lane, photos default to a zero-cost reconstruction lane, and the paid engines stay explicitly selectable for when you want a specific vendor.
 
 Page: [/forge](https://three.ws/forge) and the feature landing [/features/forge](https://three.ws/features/forge) · API: `/api/forge`
 
@@ -187,7 +187,7 @@ console.log(job.glb_url); // downloadable, textured GLB
 - **Every result** reports the path, tier, and backend that produced it, so you always know which engine ran.
 - **The High tier is $THREE hold-or-pay gated** in the handler regardless of which free engine serves it: we charge for quality, not to recover vendor cost. A verified $THREE tier pass also lifts the free-lane quota.
 - **BYOK engines** (Meshy, Tripo, Rodin, Stability, Replicate) require your own key; they are never billed to a platform account.
-- **Photo input** accepts up to four views of one object; text-only engines are filtered out of the photo modes automatically.
+- **Photo input** accepts up to six views of one object (front, back, left, right, top, three-quarter); text-only engines are filtered out of the photo modes automatically.
 - Rate limits are per client IP on the shared 3D generation buckets.
 
 ## Measuring realism

@@ -116,6 +116,6 @@ This is normal — prompt, generate, adjust, repeat is the workflow, not a failu
 ## What's next
 
 - **Better prompts** → [Prompt Recipes for 3D Generation](/tutorials/prompts-for-3d) — copy-paste recipes by category, with the reasoning behind them.
-- **Have photos of a real object?** → [Turn Photos into a 3D Model](/tutorials/image-to-3d) — reconstruct it from 1–4 pictures.
+- **Have photos of a real object?** → [Turn Photos into a 3D Model](/tutorials/image-to-3d): reconstruct it from up to 6 pictures.
 - **Want to generate from code?** → [Generate 3D Models from Code](/tutorials/generate-3d-api) — the same engine, as a simple HTTP API.
 - **Use it as an agent body** → [Build your first agent](/tutorials/first-agent) — your generated GLB can be a talking 3D character.
