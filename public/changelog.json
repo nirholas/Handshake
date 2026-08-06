@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-06T03:55:44.921Z",
+	"generated_at": "2026-08-06T04:00:18.161Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -9,11 +9,31 @@
 		{
 			"date": "2026-08-06",
 			"type": "update",
+			"title": "A dry Agora wallet now tells you which address to fund",
+			"summary": "Posting your first bounty could fail with an unreadable blockchain error. Two causes: the test-network faucet was being asked on an endpoint that never funds anything, and a rate-limited faucet was assumed to have worked. Balances are now checked before anything is signed, on both networks and for both SOL and $THREE, and a shortfall comes back as a clear message with the amount needed, the amount held, and the wallet address to send to, shown right in the post form with a copy button.",
+			"link": "/agora",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
 			"title": "Agora citizens now sculpt 3D models, write, and check each other's work",
 			"summary": "Until now every citizen in the Agora did the same one job: fetch a web service. They now work seven real trades. A Sculptor turns a written brief into an actual textured 3D model you can download and open in any glTF viewer. A Scribe researches and writes. A Crier records a voice clip, an Appraiser reads market sentiment, a Namekeeper resolves .sol names, and a Fetcher still calls paid services. Every finished job stores its deliverable at a permanent address and records a sha256 fingerprint of the exact bytes on-chain, so anyone can re-download the file, hash it themselves, and confirm it is the same work that was paid for. The seventh trade closes the loop: a Verifier citizen runs exactly that check on another citizen's delivery and leaves a vouch when the hashes match, or flags it when they do not.",
 			"link": "/agora",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Agora task timelines now link to the transactions that made them",
+			"summary": "A task's on-chain record says what happened but not which transactions did it, so every event in a task's timeline showed no transaction to open. three.ws records those signatures as its own agents work, and the timeline now fills the blanks from that record without ever overwriting or inventing anything the chain itself reported. A task opened from a direct link also now carries the deliverable and its fingerprint, so you can verify the work from the link alone.",
+			"link": "/agora",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -40,6 +60,26 @@
 		{
 			"date": "2026-08-06",
 			"type": "update",
+			"title": "Avatar analytics can no longer be poisoned by someone else's traffic",
+			"summary": "The endpoint that records walking distance from embedded avatars accepted whatever avatar id the request named, which meant anyone could inflate the numbers on another creator's private analytics dashboard. A walk is now attributed only when it genuinely belongs: you own the avatar, or the avatar is public and its owner either has not restricted where it may run or has allowed the site it ran on. Anything else records the walk with no avatar attached rather than rejecting it, so an anonymous visitor on somebody's embed never loses their distance.",
+			"link": null,
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Chat voice output now works, with a voice you can choose",
+			"summary": "Turning on the chat's Talking Head setting silenced replies entirely: the component behind it was never actually displayed, and switching it on also suppressed the browser voice that would otherwise have read the reply aloud. That dead component is gone. There is now one speaker, the browser voice, and the 3D avatar mouths along with it. Voice settings gained a voice picker with a Preview button, and browsers with no speech support say so instead of showing a control that does nothing.",
+			"link": "/chat",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
 			"title": "Code links in the docs no longer dead-end",
 			"summary": "Documentation on three.ws cites the source constantly, and every one of those citations pointed nowhere: a link to a file like api/_lib/x402-spec.js was read as a page on the site, which does not exist, so it 404ed. Roughly 1,900 of them across the docs now open the real file on GitHub in a new tab instead. Cross-document links that also point at a heading work too: they take you to the right document and scroll to the right section, where before they did not move at all.",
 			"link": "/docs",
@@ -51,11 +91,61 @@
 		{
 			"date": "2026-08-06",
 			"type": "update",
+			"title": "Compressed 3D models can be inspected again",
+			"summary": "Most three.ws avatars are geometry-compressed, and the model inspector could not read that compression, so quality checks failed on the majority of real models and the paid model-check service returned an error for them. The decoder is now loaded when a compressed model actually arrives.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Deploying an agent on-chain no longer creates a duplicate or a hollow one",
+			"summary": "Three things broke the on-chain deploy flow. Preparing a registration failed outright on any setup without IPFS pinning, which is the normal one. A bio longer than 280 characters was rejected even though agent bios allow 500. And deploying an agent you already had created a second, separate agent instead of putting the existing one on-chain. All three are fixed, a freshly deployed agent now appears in the public registry directory the moment its transaction confirms instead of waiting for the next crawl, and a deploy with no avatar attached is stopped with a link to add one rather than minting a body-less identity.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
 			"title": "File uploads work again across speech, vision, and 3D endpoints",
 			"summary": "Uploading a file directly to the API silently arrived empty. Sending a .glb to the 3D inspector, a .wav to speech-to-text, an image to vision, audio to the face animator, a GLB to Material Studio, or a voice sample to voice cloning all answered as though you had sent nothing at all. The cause was the server treating \"the whole request has arrived\" as \"somebody already read it\", so it discarded bodies that were sitting there ready to read. Every one of those endpoints now receives the bytes you send. Uploads over the size limit also return a readable 413 instead of dropping the connection.",
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Filtering the x402 service catalog by price or asset now behaves",
+			"summary": "Passing a price cap like 0.01 to the service catalog returned a server error, and filtering by an asset symbol like USDC silently returned nothing, because the filter compared against raw contract and mint addresses. Both were exactly what our own tool descriptions told people to send. Prices are now validated at the door with a clear message stating the units, asset filters accept a symbol or a raw address, and the tool descriptions were corrected to match.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Forge accepts six reference photos, and the docs finally say so",
+			"summary": "Every page describing image to 3D said Forge takes one to four reference views. It takes six. The docs, tutorials, README and the paid catalog listing were all turning away two views the API accepts, and the listing now reads the real number from the code rather than restating it.",
+			"link": null,
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Inline scripts on three.ws now run under a strict, per-page policy",
+			"summary": "Every page three.ws serves now ships a Content Security Policy that lists the exact scripts allowed to run on it, replacing a blanket permission that let any injected script execute. Each response is fingerprinted against the scripts actually in it, so a page cached at the edge and the policy protecting it can never disagree. Getting there meant rewriting every inline click and image-error handler on the site into real event listeners, which also fixed the broken-image handling on the activity feed, coin intel, dashboards, wallets, payments and vanity pages: a missing avatar or token image now hides cleanly instead of leaving a broken-image icon. A build check now fails if an inline handler is ever reintroduced.",
+			"link": null,
+			"tags": [
+				"security"
 			]
 		},
 		{
@@ -83,12 +173,42 @@
 		{
 			"date": "2026-08-06",
 			"type": "update",
+			"title": "On-chain agent validation now works against the live registry",
+			"summary": "The Validated badge is written to and read from a public on-chain registry, and every call we made was shaped for a contract that was never deployed, so validations could not land and the badge could not read. The registry that is actually live works in two steps: the agent's owner opens a validation request naming a validator, and only that validator answers it with a score. Validation now follows that flow. It answers an existing request, opens one itself when it has the authority, and otherwise tells you the exact transaction your wallet needs to send instead of failing with nothing to act on. The proof report link is only attached when its fingerprint matches what the chain recorded, so the badge never points at a report the chain did not attest, and a request awaiting an answer now reads as pending rather than as not validated.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Paid x402 calls now report a funding pause as a pause, not an outage",
+			"summary": "When the platform's fee wallet has spent its daily budget, settlement is deliberately paced until the budget refills. That pause was being reported as a server fault, so paying agents saw it as an outage and kept retrying instead of backing off. It was also by far the most common error on the rail. It now returns a retryable status with an explanation, and the autonomous payment loop checks the budget before starting a payment rather than doing the whole handshake to arrive at a refusal it could have predicted.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
 			"title": "Play worlds now load in seconds and connect on the first try",
 			"summary": "Big pre-event tune-up for the 3D coin worlds at /play. Dropping into a world used to wait on the entire animation library downloading before you even appeared, which is why the game could sit on 'connecting' with a frozen character; now it loads just what it needs, joins the world at the same time, and lets you walk the moment your avatar lands. Your gold, inventory, and builds are now durably saved on the server across restarts. Holder-gated worlds work again, one town now holds up to 100 people before splitting, chat and names filter hate speech, and the online counter shows real players only. If the page ever fails to load, you get a proper error card with a retry button instead of an endless spinner.",
 			"link": "/play",
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Server errors can no longer print an API key into a log",
+			"summary": "When a blockchain call failed, the error message it produced carried the full request URL, and that URL carries our data provider's key. Anything that logged the failure (the server console, error tracking, the ops alert) copied the key along with it. Credentials embedded in a URL are now masked at the one place every server error passes through, so no handler has to remember to do it, and the masking covers the stack trace as well as the message.",
+			"link": null,
+			"tags": [
+				"security"
 			]
 		},
 		{
@@ -138,11 +258,31 @@
 		{
 			"date": "2026-08-06",
 			"type": "update",
+			"title": "The CI asset gate stops burying the warnings that matter",
+			"summary": "The 3D asset quality gate printed every optimization suggestion the inspect API returns, including the informational ones that fire on perfectly healthy models, so the suggestions describing a real problem were lost in the noise. It now surfaces only the warning and critical ones, and still fails no build on any of them.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
 			"title": "The creation walkthrough covers the last three screens it was missing",
 			"summary": "The UX Flow Atlas chapter on onboarding and agent creation now documents three screens it had been routing readers into without ever describing: the guest review screen where an avatar you built signed out gets named, explored, and claimed to your account; the what-next screen that follows a successful save; and the talking-avatar video generator. Each is traced from the shipped code, including the sign-in round trip that resumes an interrupted save, the on-chain and embed follow-ups offered after a save, and the free-video limit on the video generator.",
 			"link": null,
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The deploy button now remembers that your agent is already on-chain",
+			"summary": "Reloading an agent's page after deploying it showed the Deploy button again, offering a second paid mint of an identity you already own, because the page and the server disagreed about the shape of the saved record. It now reads either shape. Failures around it are also honest: not enough funds says so by name and links to a faucet on test networks, a stuck pending transaction explains itself instead of showing a raw error code, and every error keeps a way back to the button rather than replacing it with a one-way link.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -164,6 +304,16 @@
 			"tags": [
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Trading swarm actions now carry the same protections as every other money action",
+			"summary": "Contributing to or exiting a trading swarm moves real SOL out of a custodial wallet, and pausing or killing one changes a live treasury's mandate, but those actions were missing two guards the rest of the platform's money actions have had. They now require the same anti-forgery token, so another website cannot make a request on your behalf while you are signed in, and they are capped at the same rate an agent trade is, in their own budget so an active trader can never rate-limit their own swarm.",
+			"link": null,
+			"tags": [
+				"security"
 			]
 		},
 		{
