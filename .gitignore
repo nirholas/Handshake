@@ -437,3 +437,7 @@ new_changelog.json
 # fresh copy per docs change while adding nothing a build cannot reproduce.
 public/docs-search-index.json
 .namecheap-backups/
+
+# Author-local scratch runners (the `.local.` infix marks them as never-commit).
+# They carry absolute machine paths and drive real devnet writes.
+*.local.mjs
