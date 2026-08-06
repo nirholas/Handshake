@@ -26,12 +26,11 @@
 // They are a rounding error in practice (1 of the last ~100 reconstruct jobs).
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { getRegenProviderForMode } from '../_lib/regen-provider.js';
 import { finalizeReconstructStage, pollRiggingStage } from '../_lib/reconstruct-finalize.js';
 import { isAllowedProviderResultUrl } from '../_lib/provider-result-url.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // The browser polls every few seconds while the tab is open, so a row that has
 // been untouched for 3 minutes is either abandoned or wedged — never a job
@@ -57,21 +56,6 @@ const MISMATCH_MAX_AGE = '24 hours';
 // steady-state inflow is a handful of abandoned tabs per day. Oldest-quiet
 // first so the backlog drains FIFO and nothing is perpetually overtaken.
 const BATCH = 50;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 function hostOf(raw) {
 	try { return new URL(raw).hostname; } catch { return 'unparseable'; }

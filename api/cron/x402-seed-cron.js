@@ -33,12 +33,12 @@ import {
 
 import { json, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { getRedis, isRedisAuthError } from '../_lib/redis.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { logger } from '../_lib/usage.js';
 import { SPONSOR_SOL_FLOOR_LAMPORTS } from '../_lib/x402/self-facilitator.js';
 import { readPayerUsdcAtomic } from './x402-autonomous-loop.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const log = logger('x402-seed-cron');
 
@@ -56,21 +56,6 @@ const STYLES = [
 	'hiphop', 'rumba', 'silly', 'thriller', 'capoeira',
 	'twerk', 'spin', 'climb', 'combo',
 ];
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		res.status(503).json({ error: 'not_configured', message: 'CRON_SECRET unset' });
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		res.status(401).json({ error: 'unauthorized' });
-		return false;
-	}
-	return true;
-}
 
 function loadSeedKeypair() {
 	// Dedicated seeder key — allows a separate wallet funded only for seeding

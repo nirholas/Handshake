@@ -33,7 +33,6 @@ import {
 
 import { json, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { getRedis } from '../_lib/redis.js';
 import { sql } from '../_lib/db.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
@@ -52,6 +51,7 @@ import {
 import { assertRingSpendInvariants } from '../_lib/x402/ring-allowlist.js';
 import { SPONSOR_SOL_FLOOR_LAMPORTS } from '../_lib/x402/self-facilitator.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const log = logger('x402-autonomous-loop');
 
@@ -99,15 +99,6 @@ const SOLANA_RPC = env.SOLANA_RPC_URL;
 const COOLDOWN_PREFIX = 'x402:auto:last:';
 // Redis key for daily spend accumulator (resets each UTC calendar day).
 const DAILY_SPEND_KEY = () => `x402:auto:daily:${new Date().toISOString().slice(0, 10)}`;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { json(res, 503, { error: 'CRON_SECRET unset' }); return false; }
-	const auth = req.headers['authorization'] || '';
-	const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(token, secret)) { json(res, 401, { error: 'unauthorized' }); return false; }
-	return true;
-}
 
 async function recordLog(runId, entry, { amountAtomic, txSig, responseData, durationMs, success, errorMsg, signalData, valueExtracted, endpointUrl }) {
 	try {

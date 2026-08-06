@@ -19,24 +19,14 @@
 // activity emit, and each subscription delivers at most N emissions per run.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { syncFeedEmissions, deliverSubscription } from '../_lib/signal-engine.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const NETWORKS = ['mainnet', 'devnet'];
 const MAX_FEEDS_PER_RUN = 120;
 const MAX_SUBS_PER_RUN = 200;
 const MAX_EVENTS_PER_SUB = 12;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { error(res, 503, 'not_configured', 'CRON_SECRET unset'); return false; }
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) { error(res, 401, 'unauthorized', 'invalid cron secret'); return false; }
-	return true;
-}
 
 // PASS 1 — generate emissions from publishers' real positions.
 async function emitPass(network, stats) {

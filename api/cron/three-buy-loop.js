@@ -36,7 +36,6 @@ import { getMint } from '@solana/spl-token';
 
 import { json, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { getRedis } from '../_lib/redis.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
@@ -54,6 +53,7 @@ import {
 	SPENT_STATUSES,
 } from '../_lib/token/microbuy.js';
 import { usdToUsdcAtomics } from '../_lib/token/buyback-math.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const log = logger('three-buy-loop');
 const ORIGIN = () => (env.APP_ORIGIN || 'https://three.ws').replace(/\/+$/, '');
@@ -89,15 +89,6 @@ const sweepEveryN = () => {
 	const n = Number(process.env.THREE_MICROBUY_SWEEP_EVERY_N_TICKS);
 	return Number.isFinite(n) && n > 0 ? Math.floor(n) : 30; // ~ every 30 min
 };
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { json(res, 503, { error: 'CRON_SECRET unset' }); return false; }
-	const auth = req.headers['authorization'] || '';
-	const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(token, secret)) { json(res, 401, { error: 'unauthorized' }); return false; }
-	return true;
-}
 
 // A monotonic tick counter so the periodic sweep fires on a stable cadence across
 // warm instances (Redis INCR, in-memory fallback — mirrors the ring tick).

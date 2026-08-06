@@ -19,12 +19,11 @@
 // submit path chose. No per-job BYOK key juggling.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { getRegenProviderForMode } from '../_lib/regen-provider.js';
 import { finalizeAutoRigStage } from '../_lib/auto-rig.js';
 import { isAllowedProviderResultUrl } from '../_lib/provider-result-url.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // Leave the webhook a clear runway before we touch a job: most rigs finish in
 // 60–90s, so a 3-minute quiet window means we only ever sweep genuinely stalled
@@ -41,21 +40,6 @@ const MAX_AGE = "6 hours";
 // two. Candidates are ordered updated_at asc (oldest-quiet-first) so the backlog
 // drains FIFO and the oldest job can never be perpetually overtaken.
 const BATCH = 100;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 // Best-effort hostname for a log line — never throws on a malformed URL.
 function hostOf(raw) {

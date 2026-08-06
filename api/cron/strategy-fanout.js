@@ -12,20 +12,10 @@
 // exits still mark-to-market while killed but never initiate a trade.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sweepStrategies } from '../_lib/agent-strategy-runtime.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const NETWORKS = ['mainnet', 'devnet'];
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { error(res, 503, 'not_configured', 'CRON_SECRET unset'); return false; }
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) { error(res, 401, 'unauthorized', 'invalid cron secret'); return false; }
-	return true;
-}
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;

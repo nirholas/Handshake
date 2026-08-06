@@ -21,28 +21,12 @@
 // docs/x402-distribution.md. One-off/local batches: scripts/x402-register-directories.mjs.
 
 import { json, wrapCron, method, error } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { getCatalog } from '../_lib/service-catalog/index.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const FOUR02INDEX_REGISTER = 'https://402index.io/api/v1/register';
 const WINDOW = 8;
 const HOUR_MS = 3_600_000;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 async function serves402(entry) {
 	try {

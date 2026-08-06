@@ -17,12 +17,11 @@
 // (pump_coin_wallets / pumpfun_graduations are mainnet). Idempotent + bounded so
 // a 5-minute cron can never run away.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { attributeCoin, computeReputation } from '../../src/pump/wallet-reputation.js';
 import { computeCoinSmartMoney } from '../../src/pump/smart-money-score.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const NETWORK = 'mainnet';
 const JUDGE_AFTER_HOURS = 6; // a coin must be this old before "never graduated" = dud
@@ -31,21 +30,6 @@ const COINS_PER_RUN = 80; // judge+fold at most this many coins per run
 const TOP_WALLETS = 60; // per coin, cap wallets folded/scored
 const LIVE_WINDOW_HOURS = 3; // score coins launched within this window
 const LIVE_COINS = 150;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;

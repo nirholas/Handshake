@@ -24,7 +24,7 @@
 // set without a deploy, which is the one-flag change to make when quota lands.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // Every self-host GPU lane that scales to zero. `safeByDefault` records whether
 // warming it contends for a pool that a busier lane needs first (see above).
@@ -51,22 +51,6 @@ const PING_TIMEOUT_MS = 8_000;
 // A worker that answers this fast was already resident; slower means this ping
 // is what booted it, which is exactly the cold start a user would have paid.
 const WARM_LATENCY_MS = 1_200;
-
-// Matches the local cron guard every other handler in this directory uses.
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 function selectedLaneIds() {
 	const raw = String(process.env.FORGE_KEEPWARM_LANES || '').trim();

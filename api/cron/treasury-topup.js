@@ -29,7 +29,6 @@
 import { randomUUID } from 'node:crypto';
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
 import { sweepTopUps, RESERVE_SOL, RUN_CAP_SOL, PER_TOPUP_MAX_SOL, ECONOMY_MASTER_ADDRESS } from '../_lib/economy-master.js';
@@ -37,27 +36,13 @@ import { recordSweep, recordAgentReclaim } from '../_lib/economy-ledger.js';
 import { refuelMasterFromUsdc } from '../_lib/economy-fuel.js';
 import { topUpUsdcEngines } from '../_lib/economy-usdc-topup.js';
 import { reclaimIdleSol, reclaimIdleAgentSol } from '../_lib/economy-sweepback.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 // How high to lift an engine when it falls below its floor, unless the spec
 // pins its own refillTo. minSol×3 gives comfortable headroom without overfunding
 // a hot wallet we deliberately keep thin.
 const DEFAULT_REFILL_MULTIPLE = 3;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;

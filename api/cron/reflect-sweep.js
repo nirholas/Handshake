@@ -16,8 +16,8 @@
 import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
 import { cors, error, json, method, wrapCron } from '../_lib/http.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { runReflection } from '../_lib/reflection.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 export const maxDuration = 120;
 
@@ -25,21 +25,6 @@ export const maxDuration = 120;
 // every 30 min, so a backlog drains over a few ticks rather than in one long run.
 const BATCH_LIMIT = Number(process.env.REFLECT_SWEEP_BATCH) || 12;
 const TIME_BUDGET_MS = 100_000;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 export default wrapCron(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;

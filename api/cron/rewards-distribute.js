@@ -18,27 +18,12 @@
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { TOKEN_MINT, ATOMICS_PER_TOKEN, treasuryWalletOrNull, rewardsWalletOrNull } from '../_lib/token/config.js';
 import { fetchHolderBalances } from '../_lib/coin/holders.js';
 import { getBalances } from '../_lib/balances.js';
 import { computeRewardsDistribution } from '../_lib/token/rewards.js';
 import { recordRewardsDistribution } from '../_lib/token/payments.js';
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
+import { requireCron } from '../_lib/cron-auth.js';
 
 // Read the rewards pool's current $THREE balance (atomics). Returns 0n on any
 // failure so the cron degrades to "nothing to distribute" rather than erroring.

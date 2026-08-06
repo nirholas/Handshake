@@ -17,8 +17,8 @@
 import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { cacheSet } from '../_lib/cache.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // Where this cron parks its last outcome so the platform health gatherer
 // (api/_lib/ops/subsystem-health.js → /healthz + /status) can read it without
@@ -34,23 +34,6 @@ const WORLD_STATUS_URL = process.env.WORLD_URL
 const FETCH_TIMEOUT_MS = 10_000;
 const ASSET_TIMEOUT_MS = 8_000;
 const ASSET_CONCURRENCY = 10;
-
-// Vercel cron invokes with `Authorization: Bearer <CRON_SECRET>`; manual probes
-// may use `X-Cron-Secret: <CRON_SECRET>`. Accept either, constant-time. 503 if
-// the secret is unset (misconfiguration), 403 if presented and wrong/absent.
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		json(res, 503, { error: 'not_configured', error_description: 'CRON_SECRET unset' });
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const bearer = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	const header = req.headers['x-cron-secret'] || '';
-	if (constantTimeEquals(bearer, secret) || constantTimeEquals(header, secret)) return true;
-	json(res, 403, { error: 'forbidden', error_description: 'invalid cron secret' });
-	return false;
-}
 
 // A 404/410 is the world's own answer: the asset is genuinely gone. Every other
 // failure (timeout, socket error, 5xx, 429) describes the network or the CDN at

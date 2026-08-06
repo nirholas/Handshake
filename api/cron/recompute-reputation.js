@@ -15,30 +15,13 @@
 // Standalone (not [name].js) so the import graph stays minimal.
 
 import { json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { listStaleAgents, recomputeAgents } from '../_lib/trust/reputation-store.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // How many agents to recompute per tick. Each is a handful of indexed DB reads
 // plus (for full mode) one cached price + light RPC; 40 fits comfortably in the
 // cron budget and, at a 10-minute cadence, rolls a few thousand agents per hour.
 const BATCH = 40;
-
-// Vercel cron invokes with `Authorization: Bearer <CRON_SECRET>`; manual probes
-// may use `X-Cron-Secret: <CRON_SECRET>`. Accept either, constant-time.
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		json(res, 503, { ok: false, reason: 'CRON_SECRET unset' });
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const bearer = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	const header = req.headers['x-cron-secret'] || '';
-	if (constantTimeEquals(bearer, secret) || constantTimeEquals(header, secret)) return true;
-	json(res, 401, { ok: false, error: 'invalid cron secret' });
-	return false;
-}
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;

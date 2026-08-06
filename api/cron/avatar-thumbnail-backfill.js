@@ -38,7 +38,6 @@
 
 import { json, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { logger } from '../_lib/usage.js';
 import {
 	ensureBackfillSchema,
@@ -46,6 +45,7 @@ import {
 	renderBatch,
 	coverage,
 } from '../_lib/avatar-thumbs.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 export const maxDuration = 120;
 
@@ -54,21 +54,6 @@ const log = logger('avatar-thumbnail-backfill');
 const RENDER_BATCH = Math.max(0, Number(process.env.THUMBNAIL_BACKFILL_RENDER_BATCH || 8));
 const ADOPT_BATCH = Math.max(0, Number(process.env.THUMBNAIL_BACKFILL_ADOPT_BATCH || 200));
 const CONCURRENCY = Math.max(1, Number(process.env.THUMBNAIL_BACKFILL_CONCURRENCY || 2));
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		json(res, 503, { error: 'CRON_SECRET unset' });
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(token, secret)) {
-		json(res, 401, { error: 'unauthorized' });
-		return false;
-	}
-	return true;
-}
 
 export default wrapCron(async (req, res) => {
 	if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });

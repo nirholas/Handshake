@@ -34,11 +34,11 @@ import { randomUUID } from 'node:crypto';
 
 import { json, wrapCron, method, error } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { withDbRetry } from '../_lib/db-retry.js';
 import { sql } from '../_lib/db.js';
 import { ringAllowedAddresses, ringRoleWallets } from '../_lib/x402/ring-allowlist.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // ── Tuning ────────────────────────────────────────────────────────────────────
 const SIG_SCAN_LIMIT = 100;              // hard per-wallet-per-run cap (task constraint)
@@ -49,15 +49,6 @@ const SOL_RESIDUAL_FLOOR_LAMPORTS = 5_000;
 // Fee-book divergence: on-chain observed fees vs task 05's audit rollup.
 const FEE_DIVERGENCE_THRESHOLD = 0.20;
 const CANONICAL_USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { error(res, 503, 'not_configured', 'CRON_SECRET unset'); return false; }
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) { error(res, 401, 'unauthorized', 'invalid cron secret'); return false; }
-	return true;
-}
 
 // ── Pure classification (exported for tests) ──────────────────────────────────
 

@@ -29,7 +29,6 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { publishFeedEvent } from '../_lib/feed.js';
 import {
 	authoritySecret,
@@ -45,6 +44,7 @@ import {
 	EST_MINT_LAMPORTS,
 	EST_REGISTER_LAMPORTS,
 } from '../_lib/onchain-deploy.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // Per-tick caps. Each mint is ~0.004 SOL + one tx; at a 10-min cadence this lands
 // hundreds of agents/day without any run going long or draining the authority
@@ -57,20 +57,6 @@ const BUDGET_MS = 110_000;
 
 // ~2 ops/sec — stay well within RPC rate limits, matching the admin runners.
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		json(res, 503, { ok: false, reason: 'CRON_SECRET unset' });
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const bearer = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	const header = req.headers['x-cron-secret'] || '';
-	if (constantTimeEquals(bearer, secret) || constantTimeEquals(header, secret)) return true;
-	json(res, 401, { ok: false, error: 'invalid cron secret' });
-	return false;
-}
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;

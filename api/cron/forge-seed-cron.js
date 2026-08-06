@@ -55,13 +55,13 @@
 import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { SEED_PROMPTS, OG_USERNAMES, composeSeedPrompt } from '../_lib/seed-prompts.js';
 import { evaluateSeedAsset, inProcessTransport, quarantineReject } from '../_lib/seed-quality.js';
 import { getObjectBuffer, publicUrl } from '../_lib/r2.js';
 import { isFreeBackend } from '../_lib/forge-tiers.js';
 import { circuitState, circuitRecordFailure, circuitRecordSuccess } from '../_lib/forge-scale.js';
 import { randomUUID } from 'node:crypto';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const ORIGIN = () => env.APP_ORIGIN || 'https://three.ws';
 // Must be comfortably shorter than the function's maxDuration (70 s in vercel.json)
@@ -121,21 +121,6 @@ const CIRCUIT_THRESHOLD = 3;
 const CIRCUIT_BASE_MS = 10 * 60_000; // 10 min × consecutive failures
 const noteCircuitFailure = () =>
 	circuitRecordFailure(CIRCUIT_NAME, { threshold: CIRCUIT_THRESHOLD, baseMs: CIRCUIT_BASE_MS });
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		res.status(503).json({ error: 'not_configured', message: 'CRON_SECRET unset' });
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		res.status(401).json({ error: 'unauthorized' });
-		return false;
-	}
-	return true;
-}
 
 async function fetchJson(url, options = {}) {
 	let res;

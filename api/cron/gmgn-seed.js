@@ -20,10 +20,9 @@
 // This runs once/day at off-peak hours — wallet rankings don't change minute-to-minute.
 // The per-run cap and respectful delays make it a good citizen even without auth.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const NETWORK = 'mainnet';
 const CHAIN = 'sol';
@@ -32,18 +31,6 @@ const MAX_WALLETS_PER_RUN = 500;
 const FETCH_TIMEOUT_MS = 8000;
 // Be respectful: 300ms between gmgn requests so we don't hammer them.
 const INTER_REQUEST_DELAY_MS = 300;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { error(res, 503, 'not_configured', 'CRON_SECRET unset'); return false; }
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 // gmgn tab → our label. smart_degen/pump_smart = proven smart money buyers.
 // launchpad_smart = launch specialists. renowned = KOL (community influence).

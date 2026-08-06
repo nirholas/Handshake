@@ -44,7 +44,6 @@ import {
 
 import { json, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { getRedis } from '../_lib/redis.js';
 import { sql } from '../_lib/db.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
@@ -72,6 +71,7 @@ import {
 	gateOnRingConfig,
 } from '../_lib/x402/ring-tick-plan.js';
 import { runTickPicks } from '../_lib/x402/ring-tick-exec.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const log = logger('x402-ring-tick');
 
@@ -88,15 +88,6 @@ const TICK_SEQ_KEY = 'x402:ring:tick:seq';
 const CHEAP_CURSOR_KEY = 'x402:ring:tick:cheap';
 let _memTickSeq = 0;
 let _memCheapCursor = 0;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { json(res, 503, { error: 'CRON_SECRET unset' }); return false; }
-	const auth = req.headers['authorization'] || '';
-	const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(token, secret)) { json(res, 401, { error: 'unauthorized' }); return false; }
-	return true;
-}
 
 // Advance the durable per-minute counter (Redis INCR, in-memory fallback).
 async function nextTickSeq(redis) {

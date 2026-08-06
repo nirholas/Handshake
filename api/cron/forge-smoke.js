@@ -31,9 +31,9 @@ import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { llmComplete } from '../_lib/llm.js';
 import { fetchRedisDailyCommands, evaluateRedisBurn, redisBurnAlert } from '../_lib/redis-usage.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const SMOKE_PROMPT = 'a small wooden toy boat with a striped sail';
 const SUBMIT_TIMEOUT_MS = 90_000;
@@ -41,21 +41,6 @@ const POLL_INTERVAL_MS = 5_000;
 const POLL_DEADLINE_MS = 180_000;
 const LAST_STATUS_KEY = 'forge-smoke:last';
 const LAST_STATUS_TTL_S = 7 * 24 * 60 * 60;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 // Never throws: a timeout or network failure comes back as status 0 so every
 // caller's non-200 branch reports it as a failed check instead of the

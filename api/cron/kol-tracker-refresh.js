@@ -9,24 +9,8 @@
 // Idempotent and cheap: getKolTracker's own cache checks make a warm run mostly
 // no-ops.
 
-import { error, json, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
+import { json, wrapCron } from '../_lib/http.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const WINDOWS = ['24h', '7d', '30d'];
 

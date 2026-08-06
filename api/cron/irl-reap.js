@@ -40,10 +40,9 @@
 // Runs hourly. Idempotent: re-running deletes nothing new once the table is clean.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // A single hourly run that deletes more than this many rows is anomalous: a steady
 // state reaps a handful of expired anon pins + their trail, so a four-figure sweep
@@ -59,21 +58,6 @@ export function reapTotal(counts) {
 }
 export function isReapSpike(counts, threshold = REAP_SPIKE_THRESHOLD) {
 	return reapTotal(counts) >= threshold;
-}
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
 }
 
 export default wrapCron(async (req, res) => {

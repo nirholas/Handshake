@@ -20,27 +20,12 @@
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { getRedis } from '../_lib/redis.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const QUOTA_WARN_PCT = 70;
 const QUOTA_CRITICAL_PCT = 90;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 async function checkUpstashQuota() {
 	const apiKey = process.env.UPSTASH_MANAGEMENT_API_KEY;

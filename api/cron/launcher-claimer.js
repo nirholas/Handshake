@@ -19,9 +19,9 @@
 
 import { json, error, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { createSession } from '../_lib/auth.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const CLAIM_THRESHOLD_SOL = 0.01;
 const ORIGIN = env.APP_ORIGIN || 'https://three.ws';
@@ -51,15 +51,6 @@ async function ensureSchema() {
 	await sql`create index if not exists launcher_claims_run_idx on launcher_claims (run_id, created_at desc)`;
 	await sql`create index if not exists launcher_claims_created_idx on launcher_claims (created_at desc)`;
 	_schemaDone = true;
-}
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { error(res, 503, 'not_configured', 'CRON_SECRET unset'); return false; }
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) { error(res, 401, 'unauthorized', 'invalid cron secret'); return false; }
-	return true;
 }
 
 // Create a session as an agent's owner, then make a fetch call to an internal API

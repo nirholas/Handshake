@@ -27,25 +27,10 @@
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { inventoryStats, sweepExpiredSecrets, isDbUnavailableError } from '../_lib/vanity-inventory-store.js';
 import { getGcpAccessToken, gcpAuthConfigured } from '../_lib/gcp-auth.js';
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
+import { requireCron } from '../_lib/cron-auth.js';
 
 // Below this many available items platform-wide, fire a replenishment run.
 // Overridable so ops can tune the shelf depth without a redeploy.

@@ -63,9 +63,9 @@
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql, isDbCapacityError } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // Mint-keyed satellites of pump_coin_intel, deleted before the master so no run
 // orphans a satellite row. Every name here is a fixed constant (never user input),
@@ -154,21 +154,6 @@ function clampInt(raw, min, max, dflt) {
 	const n = Number.parseInt(String(raw ?? ''), 10);
 	if (!Number.isFinite(n)) return dflt;
 	return Math.min(max, Math.max(min, n));
-}
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
 }
 
 async function dbSizeMb() {

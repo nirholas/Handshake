@@ -13,28 +13,18 @@
 // GET /api/ledger/verify/:agentId. Anomalies (a sudden hit-rate collapse) raise an
 // ops alert.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { recordOutcome, computeReputation, getReputationRecords } from '../_lib/reasoning-ledger.js';
 import { anchorLedgerHead, latestAnchoredAnchor } from '../_lib/ledger-anchor.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const LAMPORTS_PER_SOL = 1e9;
 const MAX_RECONCILE = 1000;   // decisions resolved per run
 const MAX_ANCHOR_AGENTS = 25; // agents whose head is committed on-chain per run
 const ANOMALY_MIN_SAMPLE = 10;
 const ANOMALY_HIT_RATE = 0.25;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { error(res, 503, 'not_configured', 'CRON_SECRET unset'); return false; }
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) { error(res, 401, 'unauthorized', 'invalid cron secret'); return false; }
-	return true;
-}
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;

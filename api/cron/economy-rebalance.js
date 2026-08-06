@@ -15,28 +15,13 @@
 // and the ECONOMY_REBALANCE_* tuning knobs.
 import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey, loadSignerKeypair } from '../_lib/solana-signers.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
 import { planRebalance, executeSwap, REBALANCE, USDC_WALLETS } from '../_lib/economy-rebalance.js';
 import { USDC_MINT_BY_NETWORK } from '../_lib/vault-jupiter.js';
 import { logAudit } from '../_lib/audit.js';
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		json(res, 503, { error: 'not_configured', message: 'CRON_SECRET unset' });
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		json(res, 401, { error: 'unauthorized' });
-		return false;
-	}
-	return true;
-}
+import { requireCron } from '../_lib/cron-auth.js';
 
 const NETWORK = 'mainnet';
 const USDC_MINT = USDC_MINT_BY_NETWORK[NETWORK];

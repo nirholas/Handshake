@@ -25,9 +25,9 @@
 
 import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { logger } from '../_lib/usage.js';
 import { cacheSet } from '../_lib/cache.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const log = logger('economy-tick');
 
@@ -105,15 +105,6 @@ const TARGETS = [
 ];
 
 const CALL_TIMEOUT_MS = 60_000;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { json(res, 503, { error: 'not_configured', message: 'CRON_SECRET unset' }); return false; }
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) { json(res, 401, { error: 'unauthorized' }); return false; }
-	return true;
-}
 
 // Fire one engine over HTTP with the cron bearer. A non-2xx, a 404 (the deployed
 // build may lag a newly-added engine), or a timeout is reported per-target and

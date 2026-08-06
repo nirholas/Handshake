@@ -18,11 +18,11 @@
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { refreshThreeHolderSnapshot } from '../_lib/coin/three-holders.js';
 import { isRpcRateLimited } from '../_lib/coin/holders.js';
 import { isDbUnavailableError } from '../_lib/db.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // After a rate-limited scan, hold off further refresh attempts for this long.
 // The per-page retries inside fetchHolderBalances already burn ~90s against a
@@ -31,22 +31,6 @@ import { cacheGet, cacheSet } from '../_lib/cache.js';
 // meantime, so a pause costs nothing but ends the 429 storm.
 const RATE_LIMIT_COOLDOWN_KEY = 'three-holders:rate-limit-cooldown';
 const RATE_LIMIT_COOLDOWN_S = 600;
-
-// Vercel cron invokes with `Authorization: Bearer <CRON_SECRET>`; manual probes
-// may use `X-Cron-Secret: <CRON_SECRET>`. Accept either, constant-time.
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const bearer = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	const header = req.headers['x-cron-secret'] || '';
-	if (constantTimeEquals(bearer, secret) || constantTimeEquals(header, secret)) return true;
-	error(res, 401, 'unauthorized', 'invalid cron secret');
-	return false;
-}
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;

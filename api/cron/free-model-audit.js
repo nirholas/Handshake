@@ -16,27 +16,11 @@
 // died: mirror isLiveFreeModel()'s semantics, report status 'unknown', and flag
 // nothing dead. Never call a model dead on our own outage.
 
-import { json, error, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { MODEL_CATALOG, DEFAULT_FREE_MODEL, OPENROUTER_SIBLINGS } from '../_lib/chat-models.js';
 import { listFreeModels } from '../_lib/openrouter-free.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
+import { requireCron } from '../_lib/cron-auth.js';
 
 /**
  * Every OpenRouter `:free` id hardcoded in the codebase, with the constants

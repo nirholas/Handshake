@@ -28,11 +28,12 @@
 // rows, markFailed is guarded by status != 'done', and the batch is bounded so
 // overlapping ticks just split the work.
 //
-// Auth: CRON_SECRET header, same pattern as every other cron in /api/cron/.
+// Auth: the shared, fail-closed cron gate (api/_lib/cron-auth.js), same as every
+// other cron in /api/cron/.
 
 import { sql } from '../_lib/db.js';
 import { cors, json, wrapCron } from '../_lib/http.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
+import { requireCron } from '../_lib/cron-auth.js';
 import { materializeCreation, markFailed, forgeStoreEnabled, createCreation } from '../_lib/forge-store.js';
 import { notifyForgeComplete, notifyForgeFailed } from '../_lib/forge-notify.js';
 import { createRegenProvider as createGcpProvider } from '../_providers/gcp.js';
@@ -70,25 +71,6 @@ const CRON_HOP_TTL_S = 2 * 3600;
 // Mirrors the poll path's NVCF alias/resub keys (api/forge.js pollNvidiaStatus)
 // so attended and unattended recovery share one once-per-job budget.
 const NVCF_ALIAS_TTL_S = 3600;
-
-export function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET;
-	if (!secret) {
-		// Fail closed, same as the rest of /api/cron: an unset CRON_SECRET must
-		// never silently open the endpoint — a misconfigured deploy would
-		// otherwise let anyone trigger the finalize sweep on demand.
-		res.writeHead(503, { 'content-type': 'application/json' });
-		res.end(JSON.stringify({ error: 'not_configured', error_description: 'CRON_SECRET unset' }));
-		return true; // handled
-	}
-	const provided = req.headers['x-cron-secret'] || req.headers['authorization']?.replace(/^Bearer\s+/i, '');
-	if (!provided || !constantTimeEquals(provided, secret)) {
-		res.writeHead(401, { 'content-type': 'application/json' });
-		res.end(JSON.stringify({ error: 'unauthorized' }));
-		return true; // handled
-	}
-	return false;
-}
 
 // The async GCP worker lanes wrap their upstream task in a base64url JSON
 // envelope ({ mode, taskId, baseUrl, resultKey }): see api/_providers/gcp.js.
@@ -225,7 +207,7 @@ async function tryCronRedispatch(row, ageMinutes) {
 export default wrapCron(async (req, res) => {
 	cors(req, res, { methods: 'GET,POST,OPTIONS' });
 	if (req.method?.toUpperCase() === 'OPTIONS') return;
-	if (requireCron(req, res)) return;
+	if (!requireCron(req, res)) return;
 	if (!forgeStoreEnabled()) {
 		return json(res, 200, { enabled: false, swept: 0 });
 	}

@@ -21,8 +21,7 @@
 // `npm run audit:garments`, run on demand after seeding or placement changes.
 
 import { error, json, method, reportServerError, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const CATALOG_URL = 'https://storage.googleapis.com/three-ws-garments/garments/catalog.json';
 const SPEC_URI = 'https://three.ws/specs/garment-manifest-v1';
@@ -40,21 +39,6 @@ const SHA256_RE = /^[0-9a-f]{64}$/;
 // Full-hash this many entries per run, rotating by day-of-year so the whole
 // catalog is re-verified every few days without ever fetching every GLB.
 const HASH_SAMPLE = 5;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 function structuralErrors(m) {
 	const errs = [];

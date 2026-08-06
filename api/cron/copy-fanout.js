@@ -19,11 +19,11 @@
 //   (subscription_id, leader_position_id,      direction) when leader_position_id      is not null
 //   (subscription_id, leader_oracle_action_id, direction) when leader_oracle_action_id is not null
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { planCopyOrder } from '../_lib/copy-engine.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const NETWORKS = ['mainnet', 'devnet'];
 const lamToSol = (l) => (l == null ? 0 : Number(BigInt(l)) / 1e9);
@@ -70,15 +70,6 @@ async function agentName(agentId) {
 		_agentNameCache.set(agentId, n);
 		return n;
 	} catch { return null; }
-}
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { error(res, 503, 'not_configured', 'CRON_SECRET unset'); return false; }
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) { error(res, 401, 'unauthorized', 'invalid cron secret'); return false; }
-	return true;
 }
 
 // Best-effort coin context for the safety gate. pump.fun's public coin endpoint

@@ -65,33 +65,9 @@ import { chargeSubscription, failPayment } from '../_lib/subscription-billing.js
 import { sendEmail } from '../_lib/email.js';
 import { fetchSafePublicUrl } from '../_lib/ssrf-guard.js';
 import { runPumpAlertRules } from '../_lib/pump-alert-runner.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { publishUserEvent } from '../_lib/feed.js';
 import { confirmSkillPurchase } from '../_lib/purchase-confirm.js';
-
-// ─── Cron auth ───────────────────────────────────────────────────────────────
-//
-// Every cron handler is privileged (some move funds). Vercel's scheduler always
-// sends `Authorization: Bearer $CRON_SECRET` on its invocations, so we require a
-// valid secret UNCONDITIONALLY and compare it constant-time. The presence of the
-// `x-vercel-cron` header is NOT trusted as authorization on its own — an inbound
-// request header is spoofable if it ever reaches the function unstripped, and
-// must never be allowed to skip the secret. Returns true on success; on failure
-// it writes the response and returns false (caller must `return`).
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
-	if (!constantTimeEquals(token, secret)) {
-		error(res, 401, 'unauthorized', 'cron secret required');
-		return false;
-	}
-	return true;
-}
+import { requireCron } from '../_lib/cron-auth.js';
 
 // ─── Dispatcher ──────────────────────────────────────────────────────────────
 

@@ -11,43 +11,23 @@
 //   • All rows updated atomically per-session; a crash mid-batch leaves the
 //     remaining sessions to be picked up on the next tick.
 //
-// Auth: requires CRON_SECRET header matching the CRON_SECRET env var. Same pattern
-// as every other cron in /api/cron/.
+// Auth: the shared, fail-closed cron gate (api/_lib/cron-auth.js), same as every
+// other cron in /api/cron/.
 
 import { sql } from '../_lib/db.js';
 import { creditAccount } from '../_lib/credits.js';
 import { atomicsToUsd } from '../_lib/pay/spend-governor.js';
 import { cors, json, wrapCron } from '../_lib/http.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 export const maxDuration = 30;
 
 const BATCH_LIMIT = Number(process.env.PAYMENT_SESSION_SWEEP_BATCH) || 100;
 
-export function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET;
-	if (!secret) {
-		// Fail closed, same as the rest of /api/cron: an unset CRON_SECRET must
-		// never silently open the endpoint. This sweep moves money (it refunds
-		// session budgets into credit balances), so a misconfigured deploy
-		// would otherwise expose unauthenticated money-moving on demand.
-		res.writeHead(503, { 'content-type': 'application/json' });
-		res.end(JSON.stringify({ error: 'not_configured', error_description: 'CRON_SECRET unset' }));
-		return true; // handled
-	}
-	const provided = req.headers['x-cron-secret'] || req.headers['authorization']?.replace(/^Bearer\s+/i, '');
-	if (!provided || !constantTimeEquals(provided, secret)) {
-		res.writeHead(401, { 'content-type': 'application/json' });
-		res.end(JSON.stringify({ error: 'unauthorized' }));
-		return true; // handled
-	}
-	return false;
-}
-
 export default wrapCron(async (req, res) => {
 	cors(req, res, { methods: 'GET,POST,OPTIONS' });
 	if (req.method?.toUpperCase() === 'OPTIONS') return;
-	if (requireCron(req, res)) return;
+	if (!requireCron(req, res)) return;
 
 	const t0 = Date.now();
 

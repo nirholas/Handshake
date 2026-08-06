@@ -5,27 +5,11 @@
 //   • delivered/verifying jobs (settle now)
 // Authenticated with the Vercel cron Bearer secret. No-op (503) if unset.
 
-import { error, json, method, wrap } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
+import { json, method, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { ensureLaborTables, getBounty, getJob } from '../_lib/agent-labor.js';
 import { runAutopilot, runSettlement } from '../_lib/labor-settle.js';
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
+import { requireCron } from '../_lib/cron-auth.js';
 
 export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST', 'GET'])) return;

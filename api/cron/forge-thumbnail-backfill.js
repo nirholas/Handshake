@@ -29,10 +29,10 @@
 
 import { json, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { logger } from '../_lib/usage.js';
 import { forgeStoreEnabled } from '../_lib/forge-store.js';
 import { renderBatch, coverage } from '../_lib/forge-thumbs.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 export const maxDuration = 120;
 
@@ -40,21 +40,6 @@ const log = logger('forge-thumbnail-backfill');
 
 const RENDER_BATCH = Math.max(0, Number(process.env.FORGE_THUMBNAIL_RENDER_BATCH || 8));
 const CONCURRENCY = Math.max(1, Number(process.env.FORGE_THUMBNAIL_CONCURRENCY || 2));
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		res.status(503).json({ error: 'not_configured', message: 'CRON_SECRET unset' });
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		res.status(401).json({ error: 'unauthorized' });
-		return false;
-	}
-	return true;
-}
 
 export default wrapCron(async (req, res) => {
 	if (!requireCron(req, res)) return;

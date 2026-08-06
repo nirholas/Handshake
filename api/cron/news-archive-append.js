@@ -17,31 +17,15 @@
 // ?dry_run=1 computes and reports without writing.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { getGcpAccessToken } from '../_lib/gcp-auth.js';
 import { getNews } from '../_lib/news.js';
 import { geckoFetch } from '../_lib/coingecko.js';
 import { excerptText } from '../_lib/news-rights.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const BUCKET = 'three-ws-news-archive';
 const API = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
 const UPLOAD = `https://storage.googleapis.com/upload/storage/v1/b/${BUCKET}/o`;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 // ── GCS helpers (JSON API, no client-library dependency) ────────────────────
 

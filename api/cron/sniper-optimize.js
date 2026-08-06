@@ -30,11 +30,11 @@
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { recordDecision } from '../_lib/reasoning-ledger.js';
 import { proposeAdjustments } from '../_lib/sniper-optimizer.js';
 import { classifyAutonomy, describeTier } from '../_lib/sniper-autonomy.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 const WINDOWS = { '24h': '24 hours', '7d': '7 days', '30d': '30 days' };
 
@@ -76,15 +76,6 @@ async function applyProposal(strategyId, field, value) {
 		default:
 			throw new Error(`optimizer refused to write unknown field '${field}'`);
 	}
-}
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { error(res, 503, 'not_configured', 'CRON_SECRET unset'); return false; }
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) { error(res, 401, 'unauthorized', 'invalid cron secret'); return false; }
-	return true;
 }
 
 // Per-arm real trading record over the window, including the exit-reason

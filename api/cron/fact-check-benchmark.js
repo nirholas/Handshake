@@ -22,7 +22,6 @@
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import {
 	acquireLock,
 	buildReport,
@@ -35,6 +34,7 @@ import {
 	savePublishedRun,
 	scoreResults,
 } from '../_lib/fact-check-benchmark.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // Cloud Scheduler gives every job a 320s attempt deadline. Stop issuing claims
 // at 240s so the scoring, the publish, and the response all land inside it.
@@ -44,21 +44,6 @@ const RUN_DEADLINE_MS = Number(process.env.FACT_CHECK_BENCHMARK_DEADLINE_MS) || 
 // tripping upstream search and LLM rate limits, which shows up as errored claims
 // and trips the refusal for no gain.
 const CONCURRENCY = Number(process.env.FACT_CHECK_BENCHMARK_CONCURRENCY) || 6;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;

@@ -23,7 +23,6 @@
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { withDbRetry } from '../_lib/db-retry.js';
 import { sql } from '../_lib/db.js';
@@ -31,6 +30,7 @@ import { ECONOMY_MASTER_ADDRESS, RESERVE_SOL } from '../_lib/economy-master.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
 import { verifyChain } from '../_lib/economy-ledger.js';
 import { getSolBalance } from '../_lib/avatar-wallet.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 // How many recent on-chain signatures to scan per run, and how far back to
 // re-verify our own recorded transfers. A low-activity funder makes both cheap.
@@ -40,21 +40,6 @@ const LEDGER_VERIFY_WINDOW_HOURS = 72;
 // drain — a real unauthorized transfer moves far more than a signature fee.
 const OUTBOUND_FEE_FLOOR_SOL = 0.0005;
 const LAMPORTS_PER_SOL = 1_000_000_000;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 async function upsertVerdict({ source, sourceRef, txSig, network, amountAtomic, dbStatus, chainStatus, reconciled, discrepancy, detail, runId }) {
 	try {

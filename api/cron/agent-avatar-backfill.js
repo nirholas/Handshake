@@ -19,30 +19,15 @@
 
 import { json, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { logger } from '../_lib/usage.js';
 import { backfillAgentAvatars, agentAvatarCoverage } from '../_lib/agent-avatars.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 export const maxDuration = 120;
 
 const log = logger('agent-avatar-backfill');
 
 const BATCH = Math.max(0, Number(process.env.AGENT_AVATAR_BACKFILL_BATCH || 100));
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		json(res, 503, { error: 'CRON_SECRET unset' });
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(token, secret)) {
-		json(res, 401, { error: 'unauthorized' });
-		return false;
-	}
-	return true;
-}
 
 export default wrapCron(async (req, res) => {
 	if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });

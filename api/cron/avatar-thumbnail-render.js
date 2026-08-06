@@ -23,7 +23,6 @@
 
 import { json, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { logger } from '../_lib/usage.js';
 import { presignGet, putObject, publicUrl } from '../_lib/r2.js';
 import { renderGlbToPng } from '../_lib/render-glb.js';
@@ -35,6 +34,7 @@ import {
 	failRegenJob,
 	thumbnailKeyFor,
 } from '../_lib/x402/thumbnail-regen.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 export const maxDuration = 120;
 
@@ -44,15 +44,6 @@ const BATCH = Math.max(1, Number(process.env.THUMBNAIL_RENDER_BATCH || 3));
 const BACKGROUND = (process.env.THUMBNAIL_RENDER_BG || '#0a0a0a').trim();
 // Source GLB presign lifetime — long enough for chromium to fetch the bytes.
 const SOURCE_TTL_SECONDS = 120;
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) { json(res, 503, { error: 'CRON_SECRET unset' }); return false; }
-	const auth = req.headers['authorization'] || '';
-	const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(token, secret)) { json(res, 401, { error: 'unauthorized' }); return false; }
-	return true;
-}
 
 async function renderOne(job) {
 	const t0 = Date.now();

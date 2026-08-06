@@ -25,25 +25,9 @@
 // Runs Monday 00:07 UTC (just after the week rolls over). Auth: CRON_SECRET.
 
 import { json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { forgeOffWeekStart, forgeStoreEnabled } from '../_lib/forge-store.js';
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
-	if (!secret) {
-		res.status(503).json({ error: 'not_configured', message: 'CRON_SECRET unset' });
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		res.status(401).json({ error: 'unauthorized' });
-		return false;
-	}
-	return true;
-}
+import { requireCron } from '../_lib/cron-auth.js';
 
 // The Monday that starts the week we are crowning. Default: the week that just
 // completed (the previous Monday relative to now). `weekParam` (YYYY-MM-DD)

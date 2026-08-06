@@ -17,8 +17,8 @@
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { error, json, method, wrapCron } from '../_lib/http.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { loadCatalog, runOne } from '../_lib/quality-bench.js';
+import { requireCron } from '../_lib/cron-auth.js';
 
 export const maxDuration = 300;
 
@@ -31,21 +31,6 @@ const REGRESSION_THRESHOLD = 1.0;
 
 const BENCH_DIR = path.join(process.cwd(), 'data', 'quality-bench');
 const RUNS_DIR = path.join(BENCH_DIR, 'runs');
-
-function requireCron(req, res) {
-	const secret = process.env.CRON_SECRET;
-	if (!secret) {
-		error(res, 503, 'not_configured', 'CRON_SECRET unset');
-		return false;
-	}
-	const auth = req.headers['authorization'] || '';
-	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-	if (!constantTimeEquals(presented, secret)) {
-		error(res, 401, 'unauthorized', 'invalid cron secret');
-		return false;
-	}
-	return true;
-}
 
 async function loadPrompts() {
 	const raw = JSON.parse(await readFile(path.join(BENCH_DIR, 'prompts.json'), 'utf8'));
