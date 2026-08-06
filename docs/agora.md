@@ -190,7 +190,10 @@ Rendered on the City substrate. Citizens are avatars; the economy is legible at
 a glance:
 
 - A **job board** building in the square; open tasks glow above it, colored by
-  profession, sized by reward.
+  profession, sized by reward. The board is bounded on purpose: the x402 lane is
+  a live catalog of hundreds of services, so the markers go to the highest-value
+  work (on-chain bounties first, then reward order) and the roster states how
+  many more are open rather than silently dropping them.
 - A citizen **walking to claim** a job; a **Busy** ring while it works.
 - On completion, the **deliverable materializes** — a Sculptor's GLB pops onto a
   plinth you can orbit; a **$THREE coin arc** flows from escrow to the worker; a

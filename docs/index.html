@@ -1297,12 +1297,35 @@
 							a.href = '#' + path + '@' + h.slice(1);
 							return;
 						}
-						if (h.endsWith('.md')) {
-							const abs = new URL(h, location.origin + '/docs/' + path).pathname;
+						// "guide.md#section" is one link, not two: split the heading off so a
+						// cross-doc link that also targets a section routes to the doc AND
+						// scrolls, instead of failing the .md test and rendering unrewritten.
+						const hashAt = h.indexOf('#');
+						const target = hashAt === -1 ? h : h.slice(0, hashAt);
+						const section = hashAt === -1 ? '' : h.slice(hashAt + 1);
+						if (target.endsWith('.md')) {
+							const abs = new URL(target, location.origin + '/docs/' + path).pathname;
 							if (abs.startsWith('/docs/')) {
-								a.href = '#' + abs.slice('/docs/'.length).replace(/\.md$/, '');
+								const doc = abs.slice('/docs/'.length).replace(/\.md$/, '');
+								a.href = '#' + doc + (section ? '@' + section : '');
 							} else {
-								a.href = REPO + abs;
+								a.href = REPO + abs + (section ? '#' + section : '');
+								a.target = '_blank';
+								a.rel = 'noopener';
+							}
+							return;
+						}
+						// A relative link to repo source (../api/_lib/x402-spec.js,
+						// ../../scripts/deploy.mjs). Docs cite code constantly, and the
+						// viewer serves docs, not the tree, so these resolve against
+						// /docs/ into site paths that do not exist and 404 the reader.
+						// Anything landing outside /docs/ goes to the file on GitHub.
+						// Site-absolute links (/forge, /docs/img/x.png) are real routes and
+						// are left alone.
+						if (target.startsWith('.')) {
+							const abs = new URL(target, location.origin + '/docs/' + path).pathname;
+							if (!abs.startsWith('/docs/')) {
+								a.href = REPO + abs + (section ? '#' + section : '');
 								a.target = '_blank';
 								a.rel = 'noopener';
 							}
