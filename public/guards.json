@@ -1,5 +1,5 @@
 {
-	"updated": "2026-07-30",
+	"updated": "2026-08-06",
 	"summary": "Every mechanical guard that protects this repository, and the stage each one runs in. This file is the single source of truth: scripts/audit-guards.mjs proves every entry is real and every stage claim is true, docs/guards.md explains them, and /guards renders them.",
 	"stages": [
 		{
@@ -267,6 +267,27 @@
 					}
 				},
 				"expect": "guard-proof-unguarded.html"
+			}
+		},
+		{
+			"id": "audit-inline-handlers",
+			"script": "scripts/audit-inline-handlers.mjs",
+			"npm": "audit:inline-handlers",
+			"title": "CSP-safe inline markup",
+			"protects": "No served HTML carries an inline event handler attribute or a javascript: URL.",
+			"why": "server/csp-hashes.mjs replaced script-src 'unsafe-inline' with the SHA-256 hashes of the inline <script> blocks in each response. A hash covers a script element and nothing else, so an onclick= attribute or a javascript: href needs 'unsafe-hashes' to run, which hands the mitigation straight back. Reintroducing one does not fail any build or test on its own: it simply stops working in production while passing locally, because a dev server without the header runs it fine.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A page wiring a click through an onclick attribute, which no script hash can cover.",
+				"violation": {
+					"write": {
+						"pages/guard-proof-inline-handler.html": "<!doctype html>\n<html lang=\"en\">\n<head><meta charset=\"utf-8\"><title>Proof</title></head>\n<body><button onclick=\"alert(1)\">Proof</button></body>\n</html>\n"
+					}
+				},
+				"expect": "guard-proof-inline-handler"
 			}
 		},
 		{

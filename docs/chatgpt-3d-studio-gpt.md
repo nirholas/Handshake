@@ -30,7 +30,7 @@ Three root causes, all in builder configuration:
 | Recommended Model | None |
 | Action | Import from URL: `https://three.ws/.well-known/3d-studio-openapi.yaml` (re-import after any spec change; never hand-edit the schema inline) |
 | Action auth | None |
-| Action privacy policy | `https://three.ws/legal/privacy.html` |
+| Action privacy policy | `https://three.ws/legal/privacy` |
 | Conversation starters | Make me a low-poly fox for my game / Sculpt a detailed dragon miniature for my tabletop campaign / Make a cute robot buddy I can put on my desk in AR / Surprise me with something cool in 3D |
 
 Starter design rule: every starter must name ONE concrete subject so the GPT can generate immediately without clarifying questions ("Create a 3D mascot for my community" was dropped for stalling on questions), and at least one starter should surface the AR placement link. Alternates to rotate in: "Turn my initials into a chrome 3D logo", "Make a ceramic mug shaped like a sleepy cat", "Create a treasure chest prop for my indie game", "Make a crystal jellyfish I can spin in my browser".
