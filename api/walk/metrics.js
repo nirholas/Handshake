@@ -20,6 +20,16 @@
 // Origin / Referer header (the embedding page's host), so a creator's analytics
 // reflect where the avatar actually ran, not what a caller claims.
 //
+// avatarId is likewise not taken on trust (security review L4). The batch writes
+// into another creator's private analytics dashboard, so a fabricated avatarId
+// would let anyone poison someone else's numbers. It is accepted only when it
+// resolves through resolveAttributableAvatar() below: a live avatar the caller
+// owns, or a publicly-reachable one whose owner has not declared where it may
+// run (or has, and this origin is on that list). Anything else records with no
+// avatar attribution rather than being rejected — an anonymous walker on a
+// third-party embed is the normal case and must never lose their leaderboard
+// distance over an attribution decision.
+//
 // eventName (+ optional value) records a creator-defined conversion event fired
 // from the embed SDK — window.ThreeWalkAvatar.track('subscribe', { value: 9 }) —
 // into walk_events for the analytics funnel. Achievement unlocks (1 km, 10 sites,
@@ -32,6 +42,11 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser, extractBearer, authenticateBearer } from '../_lib/auth.js';
 import { recordDailyActivity } from '../_lib/streaks.js';
+import { readEmbedPolicyByAvatarId, originAllowed } from '../_lib/embed-policy.js';
+
+// The app's own host, so a /walk session on three.ws is never mistaken for a
+// third-party embed when the embed policy is consulted.
+const APP_ORIGIN_HOST = 'three.ws';
 
 export const maxDuration = 10;
 
@@ -85,6 +100,42 @@ function deriveEmbedOrigin(req) {
 	return host;
 }
 
+// Decide whether this batch may be attributed to `avatarId`, returning the id to
+// write or null to record the walk without an avatar.
+//
+// Three ways to earn attribution, cheapest first:
+//   1. the caller owns the avatar (their own dashboard — nothing to poison),
+//   2. the avatar is publicly reachable and its owner has declared no embed
+//      origin allowlist, so it can legitimately run anywhere, or
+//   3. the avatar is publicly reachable and THIS origin is on that allowlist.
+//
+// A private, deleted, or unknown avatar never earns attribution, and neither
+// does a walk claimed from an origin the owner's own policy excludes. What this
+// deliberately cannot do is distinguish two anonymous visitors on the same
+// allowed origin — that would need a signed per-session ticket the deployed
+// embeds do not carry yet. The residual is bounded to "a public avatar's counts
+// can be inflated from an origin it is actually allowed to run on".
+async function resolveAttributableAvatar({ avatarId, userId, embedOrigin }) {
+	if (!avatarId) return null;
+	const [avatar] = await sql`
+		select id, owner_id, visibility
+		from avatars
+		where id = ${avatarId} and deleted_at is null
+		limit 1
+	`;
+	if (!avatar) return null;
+	if (userId && avatar.owner_id === userId) return avatar.id;
+	if (avatar.visibility === 'private') return null;
+	if (!embedOrigin) return avatar.id; // same-origin /walk on three.ws itself
+
+	const policy = await readEmbedPolicyByAvatarId(avatarId).catch(() => null);
+	const hosts = policy?.origins?.hosts ?? [];
+	// An unconfigured allowlist is the default for every avatar that has never
+	// opened the embed settings — it means "unspecified", not "nowhere".
+	if (!hosts.length) return avatar.id;
+	return originAllowed(`https://${embedOrigin}`, policy, APP_ORIGIN_HOST) ? avatar.id : null;
+}
+
 async function resolveUserId(req) {
 	try {
 		const bearer = extractBearer(req);
@@ -118,8 +169,12 @@ export default wrap(async (req, res) => {
 	const embedOrigin = deriveEmbedOrigin(req);
 	const day = new Date().toISOString().slice(0, 10); // UTC date
 	const envId = body.envId || null;
-	const avatarId = body.avatarId || null;
 	const siteHostname = body.siteHostname || null;
+	const avatarId = await resolveAttributableAvatar({
+		avatarId: body.avatarId || null,
+		userId,
+		embedOrigin,
+	});
 
 	const hasMetrics = body.distanceMeters > 0 || body.durationSec > 0 || body.sessions > 0;
 
