@@ -178,7 +178,7 @@ async function faucetSources(connection) {
 	return sources;
 }
 
-// Top up a devnet wallet from the faucet with backoff — mirrors the roundtrip
+// Top up a devnet wallet from the faucet with backoff: mirrors the roundtrip
 // example. Mainnet never airdrops: an underfunded mainnet wallet is an honest,
 // actionable error, not a silent failure. Returns the final balance; callers
 // that are about to sign must gate on requireFunded(), because a rate-limited
@@ -196,7 +196,7 @@ export async function ensureDevnetBalance(connection, keypair, neededLamports) {
 				// falls through to the next source/chunk instead of hanging the window.
 				await confirmOrThrow(src, sig, 'confirmed', { timeoutMs: 30_000 });
 			} catch {
-				continue; // this source is dry/throttled — try the next one
+				continue; // this source is dry/throttled: try the next one
 			}
 			bal = await connection.getBalance(keypair.publicKey);
 			if (bal >= neededLamports) return bal;

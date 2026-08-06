@@ -28,7 +28,7 @@ if (existsSync(dotenv)) {
 	try {
 		process.loadEnvFile(dotenv);
 	} catch {
-		// malformed or unreadable .env — fall through to the ambient environment
+		// malformed or unreadable .env: fall through to the ambient environment
 	}
 }
 

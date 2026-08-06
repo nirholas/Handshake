@@ -21,12 +21,12 @@ import { z } from 'zod';
 
 const prepSchema = z.object({
 	name: z.string().trim().min(1).max(60),
-	// agent_identities bios run up to 500 chars (api/agents.js) — accept the
+	// agent_identities bios run up to 500 chars (api/agents.js): accept the
 	// same cap here so a long bio doesn't 400 the deploy.
 	description: z.string().trim().max(500),
 	avatarId: z.string().uuid(),
 	// When deploying an EXISTING three.ws agent (the profile-page DeployButton),
-	// its row id — confirm binds the on-chain identity onto that row instead of
+	// its row id: confirm binds the on-chain identity onto that row instead of
 	// inserting a duplicate.
 	agentDbId: z.string().uuid().optional(),
 	brain: z.object({ provider: z.string().optional(), model: z.string().optional(), instructions: z.string().optional() }).optional(),
@@ -130,7 +130,7 @@ async function handlePrep(req, res) {
 	const { cid, metadataURI } = await pinRegistrationJson(registrationJson);
 	const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 	// payload stores the pinned manifest plus a _local block confirm needs to
-	// bind the identity row (never pinned — added after the pin above).
+	// bind the identity row (never pinned: added after the pin above).
 	const payload = { ...registrationJson, _local: { avatarId: body.avatarId, ...(body.agentDbId ? { agentDbId: body.agentDbId } : {}) } };
 	const [prep] = await sql`insert into agent_registrations_pending (user_id, cid, metadata_uri, payload, expires_at) values (${session.id}, ${cid}, ${metadataURI}, ${JSON.stringify(payload)}::jsonb, ${expiresAt}) returning id`;
 	return json(res, 200, { ok: true, cid, metadataURI, prepId: prep.id });
@@ -142,7 +142,7 @@ const confirmSchema = z.object({
 	prepId: z.string().uuid(),
 	chainId: z.number().int().positive(),
 	// The client's best-effort parse of the Registered event. '0'/absent means
-	// "couldn't parse" — the server-decoded event id is authoritative either way.
+	// "couldn't parse": the server-decoded event id is authoritative either way.
 	agentId: z.union([z.string(), z.number()]).optional(),
 	txHash: z.string().regex(/^0x[a-f0-9]{64}$/i),
 });
@@ -181,7 +181,7 @@ async function fetchTransactionReceipt(chainId, primaryUrl, txHash) {
 /**
  * Decode the Registered(uint256 indexed agentId, string agentURI, address
  * indexed owner) event emitted by the Identity Registry. Returns the full
- * on-chain truth — id and owner from the indexed topics, URI from the data —
+ * on-chain truth: id and owner from the indexed topics, URI from the data
  * so nothing security-relevant comes from the client.
  */
 function parseRegisteredEvent(logs, registryAddress) {
@@ -241,7 +241,7 @@ async function handleConfirm(req, res) {
 
 	let identityId;
 	if (local.agentDbId) {
-		// Bind onto the existing agent row the DeployButton was pressed on —
+		// Bind onto the existing agent row the DeployButton was pressed on
 		// merge meta.onchain, never clobber the agent's own name/description.
 		const [existing] = await sql`select id, meta from agent_identities where id = ${local.agentDbId} and user_id = ${session.id} and deleted_at is null limit 1`;
 		if (existing) {

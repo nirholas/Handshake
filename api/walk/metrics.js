@@ -26,7 +26,7 @@
 // resolves through resolveAttributableAvatar() below: a live avatar the caller
 // owns, or a publicly-reachable one whose owner has not declared where it may
 // run (or has, and this origin is on that list). Anything else records with no
-// avatar attribution rather than being rejected — an anonymous walker on a
+// avatar attribution rather than being rejected: an anonymous walker on a
 // third-party embed is the normal case and must never lose their leaderboard
 // distance over an attribution decision.
 //
@@ -104,7 +104,7 @@ function deriveEmbedOrigin(req) {
 // write or null to record the walk without an avatar.
 //
 // Three ways to earn attribution, cheapest first:
-//   1. the caller owns the avatar (their own dashboard — nothing to poison),
+//   1. the caller owns the avatar (their own dashboard: nothing to poison),
 //   2. the avatar is publicly reachable and its owner has declared no embed
 //      origin allowlist, so it can legitimately run anywhere, or
 //   3. the avatar is publicly reachable and THIS origin is on that allowlist.
@@ -112,7 +112,7 @@ function deriveEmbedOrigin(req) {
 // A private, deleted, or unknown avatar never earns attribution, and neither
 // does a walk claimed from an origin the owner's own policy excludes. What this
 // deliberately cannot do is distinguish two anonymous visitors on the same
-// allowed origin — that would need a signed per-session ticket the deployed
+// allowed origin: that would need a signed per-session ticket the deployed
 // embeds do not carry yet. The residual is bounded to "a public avatar's counts
 // can be inflated from an origin it is actually allowed to run on".
 async function resolveAttributableAvatar({ avatarId, userId, embedOrigin }) {
@@ -131,7 +131,7 @@ async function resolveAttributableAvatar({ avatarId, userId, embedOrigin }) {
 	const policy = await readEmbedPolicyByAvatarId(avatarId).catch(() => null);
 	const hosts = policy?.origins?.hosts ?? [];
 	// An unconfigured allowlist is the default for every avatar that has never
-	// opened the embed settings — it means "unspecified", not "nowhere".
+	// opened the embed settings: it means "unspecified", not "nowhere".
 	if (!hosts.length) return avatar.id;
 	return originAllowed(`https://${embedOrigin}`, policy, APP_ORIGIN_HOST) ? avatar.id : null;
 }

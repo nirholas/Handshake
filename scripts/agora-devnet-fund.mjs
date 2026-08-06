@@ -83,7 +83,7 @@ const conn = new Connection(DEVNET_RPC, 'confirmed');
 if (args.list || args.targets.length === 0) {
 	const keys = cacheKeys();
 	if (!keys.length) {
-		console.log('[agora-fund] no cached signers yet — run the engine once to mint them.');
+		console.log('[agora-fund] no cached signers yet: run the engine once to mint them.');
 		process.exit(0);
 	}
 	console.log(`[agora-fund] cached devnet signers (${DEVNET_RPC}):`);
@@ -102,7 +102,7 @@ const perTarget = Math.floor(args.sol * LAMPORTS_PER_SOL);
 const BANK_RESERVE_LAMPORTS = 10_000_000; // 0.01 SOL
 
 const bankStart = await conn.getBalance(bank.publicKey);
-console.log(`[agora-fund] bank ${args.bank} ${bank.publicKey.toBase58()} — ${(bankStart / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+console.log(`[agora-fund] bank ${args.bank} ${bank.publicKey.toBase58()}: ${(bankStart / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
 let spent = 0;
 let funded = 0;
@@ -114,13 +114,13 @@ for (const name of args.targets) {
 	const kp = loadKeypair(name);
 	const have = await conn.getBalance(kp.publicKey);
 	if (have >= perTarget) {
-		console.log(`  skip ${name} — already holds ${(have / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+		console.log(`  skip ${name}: already holds ${(have / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 		continue;
 	}
 	const need = perTarget - have;
 	if (bankStart - spent - need < BANK_RESERVE_LAMPORTS) {
 		console.error(
-			`  STOP ${name} — bank would drop below its ${(BANK_RESERVE_LAMPORTS / LAMPORTS_PER_SOL).toFixed(3)} SOL reserve. Top the bank up at https://faucet.solana.com`,
+			`  STOP ${name}: bank would drop below its ${(BANK_RESERVE_LAMPORTS / LAMPORTS_PER_SOL).toFixed(3)} SOL reserve. Top the bank up at https://faucet.solana.com`,
 		);
 		break;
 	}

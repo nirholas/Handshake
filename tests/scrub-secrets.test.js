@@ -58,7 +58,7 @@ describe('scrubSecrets', () => {
 
 describe('redactUrlSecrets', () => {
 	it('masks a keyed RPC URL inside a network error message', () => {
-		// The exact shape Solana web3.js produces when the RPC call fails — the leak
+		// The exact shape Solana web3.js produces when the RPC call fails: the leak
 		// this exists to stop (HELIUS_API_KEY into console / Sentry / ops alerts).
 		const out = redactUrlSecrets('FetchError: request to https://mainnet.helius-rpc.com/?api-key=abc123secret failed');
 		expect(out).not.toContain('abc123secret');

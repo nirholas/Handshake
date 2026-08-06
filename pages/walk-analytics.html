@@ -233,7 +233,7 @@
 					if (!res.ok) throw new Error('HTTP ' + res.status);
 					data = await res.json();
 				} catch (err) {
-					document.getElementById('wa-chart-wrap').innerHTML = `<div class="wa-empty">Couldn't load analytics — ${esc(err.message || 'error')}. <button class="wa-cta ghost" type="button" style="margin-left:8px" data-action="retry">Retry</button></div>`;
+					document.getElementById('wa-chart-wrap').innerHTML = `<div class="wa-empty">Couldn't load analytics: ${esc(err.message || 'error')}. <button class="wa-cta ghost" type="button" style="margin-left:8px" data-action="retry">Retry</button></div>`;
 					return;
 				}
 

@@ -156,7 +156,7 @@ export function buildRoster(seededAgents, cfg) {
 	// An isolated fleet (cfg.standaloneOnly) skips the platform-agent seed entirely
 	// and runs only the standalone founding workforce. Two engines pointed at the
 	// same DB otherwise select the SAME first-N platform agents and would drive one
-	// set of keypairs concurrently — double claims and contradictory on-chain state.
+	// set of keypairs concurrently: double claims and contradictory on-chain state.
 	// This is also the deterministic fleet for a local devnet run or a CI smoke.
 	const seeds = cfg.standaloneOnly ? [] : seededAgents || [];
 

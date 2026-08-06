@@ -8,7 +8,7 @@
 //
 // 2026-08-06 (security review L8): the gate was copy-pasted into 78 files in
 // eleven spellings, two of them with inverted return semantics. It now lives in
-// exactly one module, so this suite tests that module — and asserts no handler
+// exactly one module, so this suite tests that module: and asserts no handler
 // has grown its own copy again, which is the failure mode that made a fail-open
 // paste plausible in the first place.
 

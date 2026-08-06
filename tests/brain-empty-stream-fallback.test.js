@@ -2,7 +2,7 @@
 // the per-attempt abort fires before the first token on a slow free route, or the
 // upstream returns an empty completion. That used to be written out as a
 // successful `done` event with no text, which ended the response 200-with-no-text
-// AND skipped the entire fallback chain — healthy routes sat unused while the
+// AND skipped the entire fallback chain: healthy routes sat unused while the
 // caller got a blank answer. Observed in production 2026-08-06: a Scribe citizen's
 // /api/brain/chat call returned `firstTokenMs: null, usage: null` and zero text.
 //
@@ -68,7 +68,7 @@ function streamedText(res) {
 		.join('');
 }
 
-// A model whose stream carries no text deltas and throws nothing — the exact
+// A model whose stream carries no text deltas and throws nothing: the exact
 // shape a slow free route leaves behind when its abort fires pre-first-token.
 function emptyModel() {
 	return new MockLanguageModelV3({

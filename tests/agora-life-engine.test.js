@@ -1,5 +1,5 @@
 /**
- * Agora life engine — the daily loop itself (Task 11 hardening).
+ * Agora life engine: the daily loop itself (Task 11 hardening).
  *
  * Every other Agora suite covers a pure module the loop calls; nothing covered
  * `tickCitizen`, the state machine that actually drives the economy:
@@ -9,18 +9,18 @@
  * Three properties matter enough to pin, because breaking any of them corrupts
  * the world silently rather than loudly:
  *
- *   1. TRANSITIONS — each node returns its honest outcome, and a citizen that
+ *   1. TRANSITIONS: each node returns its honest outcome, and a citizen that
  *      finds no work idles instead of inventing an action to project.
- *   2. IDEMPOTENCY — a re-run never double-projects an on-chain action. Every
+ *   2. IDEMPOTENCY: a re-run never double-projects an on-chain action. Every
  *      economic row carries the tx signature the DB's unique index dedups on
  *      (citizen_id, kind, tx_signature), and a task already worked in-process is
  *      never claimed twice.
- *   3. FAILURE ISOLATION — a throw anywhere in one citizen's tick is contained:
+ *   3. FAILURE ISOLATION: a throw anywhere in one citizen's tick is contained:
  *      it returns 'failed', releases the busy latch, and never propagates to the
  *      fleet loop.
  *
  * The chain (agenc.js), the work runners (work/index.js) and the demand policy
- * (demand.js) are mocked at the MODULE boundary — the same discipline
+ * (demand.js) are mocked at the MODULE boundary: the same discipline
  * tests/agora-mcp-tools.test.js uses. The engine under test is the real one.
  */
 
@@ -79,7 +79,7 @@ import { maybePatronPost, maybePatronVerify } from '../workers/agora-citizens/de
  * A recording stand-in for the projection sink (store.js). Records every write
  * so a test can assert WHAT was projected, not just that something was, and
  * applies the same (citizen_id, kind, tx_signature) uniqueness the real table's
- * partial index enforces — so "no double-projection" is tested against the real
+ * partial index enforces: so "no double-projection" is tested against the real
  * dedup rule rather than a weaker in-memory one.
  */
 function makeRecordingStore() {
@@ -157,7 +157,7 @@ function makeCtx(store, boardTasks = []) {
 		},
 		store,
 		readClient: {},
-		dispatcher: null, // no devnet dispatcher — the board is the only supply
+		dispatcher: null, // no devnet dispatcher: the board is the only supply
 		citizens: [],
 		// `at: Date.now()` keeps refreshBoard inside its TTL so the tick never
 		// reaches out over HTTP; the board content is supplied directly.
@@ -227,7 +227,7 @@ describe('agenc mock fidelity', () => {
 
 // ── 1. Loop transitions ──────────────────────────────────────────────────────
 
-describe('tickCitizen — loop transitions', () => {
+describe('tickCitizen: loop transitions', () => {
 	it('idles honestly when there is no claimable work, and projects NO activity', async () => {
 		const store = makeRecordingStore();
 		const node = await tickCitizen(makeCtx(store), makeCitizen());
@@ -270,7 +270,7 @@ describe('tickCitizen — loop transitions', () => {
 		const task = openBoardTask({ target: { taskPda: 'other-task', deliverableUrl: 'https://three.ws/x.json' } });
 		await tickCitizen(makeCtx(store, [task]), makeCitizen({ spec: { displayName: 'Wren', profession: 'sculptor' } }));
 
-		// A Sculptor holding a verification bounty runs runVerifier — the trust loop
+		// A Sculptor holding a verification bounty runs runVerifier: the trust loop
 		// depends on the target, not on the claimant's headline profession.
 		expect(vi.mocked(runProfession).mock.calls[0][0]).toBe('verifier');
 	});
@@ -343,9 +343,9 @@ describe('tickCitizen — loop transitions', () => {
 	});
 });
 
-// ── 2. Idempotency — no double-projection ────────────────────────────────────
+// ── 2. Idempotency: no double-projection ────────────────────────────────────
 
-describe('tickCitizen — idempotency', () => {
+describe('tickCitizen: idempotency', () => {
 	it('does not re-claim a task it already worked this process', async () => {
 		const store = makeRecordingStore();
 		const ctx = makeCtx(store, [openBoardTask()]);
@@ -450,7 +450,7 @@ describe('tickCitizen — idempotency', () => {
 
 // ── 3. Failure isolation ─────────────────────────────────────────────────────
 
-describe('tickCitizen — failure isolation', () => {
+describe('tickCitizen: failure isolation', () => {
 	it('contains a WORK failure and releases the busy latch', async () => {
 		vi.mocked(runProfession).mockRejectedValue(new Error('forge lane down'));
 		const store = makeRecordingStore();
@@ -487,7 +487,7 @@ describe('tickCitizen — failure isolation', () => {
 		expect(citizen.busy).toBe(false);
 	});
 
-	it('survives a total projection outage — even the recovery write failing', async () => {
+	it('survives a total projection outage: even the recovery write failing', async () => {
 		const store = makeRecordingStore();
 		store.appendActivity = vi.fn().mockRejectedValue(new Error('neon unreachable'));
 		store.setStatus = vi.fn().mockRejectedValue(new Error('neon unreachable'));

@@ -40,7 +40,7 @@ import {
 } from '../../src/erc8004/validation-report.js';
 
 // Just the ERC-721 authority reads the registry itself checks before accepting a
-// validationRequest — enough to tell "we can open this request" from "the owner
+// validationRequest: enough to tell "we can open this request" from "the owner
 // has to".
 const IDENTITY_AUTH_ABI = [
 	'function ownerOf(uint256 tokenId) external view returns (address)',

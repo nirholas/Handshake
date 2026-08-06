@@ -81,7 +81,7 @@ export const REPUTATION_REGISTRY_ABI = [
 ];
 
 /**
- * Validation Registry ABI — mirrors the deployed ERC-8004
+ * Validation Registry ABI: mirrors the deployed ERC-8004
  * `ValidationRegistryUpgradeable` (and the canonical SDK ABI in
  * sdk/src/erc8004/abi.js). Two-legged by design: the agent's owner (or an
  * approved operator) opens a request naming a validator, and only that validator

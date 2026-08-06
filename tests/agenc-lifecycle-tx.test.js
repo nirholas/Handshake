@@ -1,11 +1,11 @@
 /**
- * /api/agenc/get-task?lifecycle=1 — the tx-signature + deliverable enrichment.
+ * /api/agenc/get-task?lifecycle=1: the tx-signature + deliverable enrichment.
  *
  * A Solana task account records WHAT happened but not the signature of the
  * transaction that wrote it, so `getTaskLifecycleSummary` hands back a timeline
  * with `txSignature: null` on every event. The Agora job-detail panel renders
  * those as an honest "no tx recorded", which means the trust surface's Explorer
- * links were dead for real work — even though three.ws journals the real
+ * links were dead for real work: even though three.ws journals the real
  * signature (and the completion's proofHash + deliverableUrl) into
  * `agora_activity` on every write through the Agora rail.
  *
@@ -16,7 +16,7 @@
  *     lifecycle so a deep link (/agora?task=<pda>) can run the verifier;
  *   • one journal row is consumed at most once, so a multi-worker task's second
  *     claim can't inherit the first claim's signature;
- *   • a DB outage degrades to the chain's own timeline — never a fabricated link.
+ *   • a DB outage degrades to the chain's own timeline: never a fabricated link.
  *
  * We drive the REAL wrapped handler and mock only the I/O boundary (DB, rate
  * limiter, on-chain SDK), so the handler's own shaping runs unchanged.

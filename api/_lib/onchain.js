@@ -499,7 +499,7 @@ export async function resolveLatestValidation({ chainId, agentId, kind = KIND_GL
 		hashes = await _withTimeout(registry.getAgentValidations(BigInt(agentId)), 4000);
 	} catch (err) {
 		// An agent nobody has ever requested validation for reads as empty, and a
-		// chain whose registry predates this agent reverts — both are "no verdict",
+		// chain whose registry predates this agent reverts: both are "no verdict",
 		// not an error worth surfacing on a badge.
 		const msg = String(err?.shortMessage || err?.reason || err?.message || '');
 		if (err?.code === 'CALL_EXCEPTION' || err?.code === 'BAD_DATA') {

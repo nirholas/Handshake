@@ -1,12 +1,12 @@
 /**
- * OnchainDeployButton — the one-click "Deploy on-chain" chip.
+ * OnchainDeployButton: the one-click "Deploy on-chain" chip.
  *
  * Drives the unified prep → sign → confirm pipeline (src/onchain/deploy.js →
  * /api/agents/onchain/*) against any chain in the chain-ref registry (CAIP-2
- * keyed — Solana, EVM, and any future family share one dropdown).
+ * keyed: Solana, EVM, and any future family share one dropdown).
  *
  * The persisted wire shape for `agent.onchain` is snake_case (`tx_hash`,
- * `onchain_id`, `contract_or_mint` — see api/agents/onchain/[action].js and
+ * `onchain_id`, `contract_or_mint`: see api/agents/onchain/[action].js and
  * src/onchain/README.md). Every read in this file goes through
  * `normalizeOnchain()` so a page reload always rehydrates the success chip
  * instead of offering a second (paid) mint.
@@ -204,7 +204,7 @@ export class OnchainDeployButton {
 	}
 
 	_renderError(msg, action) {
-		// Every error state keeps a way back to the deploy button — an external
+		// Every error state keeps a way back to the deploy button: an external
 		// action (install a wallet, open a faucet) never becomes a one-way door.
 		const actionHtml = action
 			? `<button class="deploy-action-btn">${_esc(action.label)}</button>` +
@@ -272,8 +272,8 @@ export class OnchainDeployButton {
 				ref,
 				onProgress: (step) => this._renderProgress(step),
 			});
-			// Persist the canonical snake_case wire shape locally — the same block
-			// the server just wrote — so badges, guards, and rehydration all agree.
+			// Persist the canonical snake_case wire shape locally: the same block
+			// the server just wrote: so badges, guards, and rehydration all agree.
 			this._agent.onchain = normalizeOnchain(result.agent?.onchain) ?? {
 				chain: toCaip2(result.ref),
 				family: ref.family,

@@ -224,14 +224,14 @@ async function handleGetTask(req, res) {
 }
 
 // A task account records WHAT happened but not the signature of the transaction
-// that did it — Solana account state can't recover the signatures that wrote it,
+// that did it: Solana account state can't recover the signatures that wrote it,
 // so every on-chain timeline event arrives with `txSignature: null` and a client
 // can only render "no tx recorded". three.ws does know them: each write through
 // the Agora rail is journalled into `agora_activity` with its real signature (and,
 // for a completion, the deliverable URL + proofHash that the completion bound).
 //
 // So we fill the chain's blanks from our own journal, keyed by task PDA. Rules:
-//   • The chain stays authoritative — an event that already carries a signature is
+//   • The chain stays authoritative: an event that already carries a signature is
 //     never overwritten, and no event is invented that the chain didn't report.
 //   • Enrichment is best-effort: if the DB is unreachable the timeline is returned
 //     exactly as the chain gave it. A missing signature renders as an honest "no tx

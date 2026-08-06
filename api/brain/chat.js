@@ -971,7 +971,7 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 		// route, or the upstream returns an empty completion. Silently writing
 		// `done` there ends the response 200-with-no-text and skips the entire
 		// fallback chain, so the caller gets a blank answer while healthy routes
-		// sit unused. Zero visible output is a failed attempt — throw so the next
+		// sit unused. Zero visible output is a failed attempt: throw so the next
 		// route runs, and if every route comes up empty the outer catch surfaces a
 		// real `error` event instead of a fake success.
 		if (firstTokenMs === null) throw streamErr || new Error('provider streamed no output');

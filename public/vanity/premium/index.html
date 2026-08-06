@@ -243,7 +243,7 @@
 				if (!res.ok) throw new Error('HTTP ' + res.status);
 				data = await res.json();
 			} catch (err) {
-				listEl.innerHTML = `<div class="state"><h3>Couldn't load inventory</h3><p>${esc(err.message)}. The store may be warming up — try again.</p><button class="cta" type="button" data-action="reload">Retry</button></div>`;
+				listEl.innerHTML = `<div class="state"><h3>Couldn't load inventory</h3><p>${esc(err.message)}. The store may be warming up: try again.</p><button class="cta" type="button" data-action="reload">Retry</button></div>`;
 				return;
 			}
 			if (data.custodyNotice) document.getElementById('custody-copy').innerHTML = '<b>Custody:</b> ' + esc(data.custodyNotice);

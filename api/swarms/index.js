@@ -58,12 +58,12 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { data });
 	}
 
-	// POST — all mutations require auth, CSRF (session callers), and a budget.
+	// POST: all mutations require auth, CSRF (session callers), and a budget.
 	const auth = await resolveAccount(req, res);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 	if (!(await requireCsrf(req, res, auth.userId))) return;
 	const rl = await limits.swarmMutate(auth.userId);
-	if (!rl.success) return rateLimited(res, rl, 'too many swarm actions — slow down');
+	if (!rl.success) return rateLimited(res, rl, 'too many swarm actions: slow down');
 	const body = await readJson(req).catch(() => ({}));
 	const action = String(body.action || '');
 
