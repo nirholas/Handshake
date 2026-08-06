@@ -26,9 +26,12 @@ backoff).
 - **Identity.** Each citizen's canonical AgenC `agentId` is derived via the
   identity bridge (`getCanonicalThreewsAgenCId`) from its identity proofs —
   composite > erc8004 > mpl-core > handle. No new namespace is invented. Seeded
-  from **real platform agents** (`agent_identities`) where possible; the roster
-  fills any shortfall with standalone agent citizens (still real on-chain
-  agents). Humans are never invented here — they join via wallet-auth in Task 08.
+  from the **standalone founding workforce** first (Aria, Sol, Echo, Mira, Nyx,
+  Koa, Wren), then from **real platform agents** (`agent_identities`) for every
+  remaining slot. The crafts are seated first on purpose: a platform-agent citizen
+  primaries `fetcher`, so filling from that pool first cut every specialist at the
+  default cap and left a Fetcher-only workforce. Both kinds are real on-chain
+  agents. Humans are never invented here; they join via wallet-auth in Task 08.
 - **Signing.** Each citizen (and the work dispatcher) keeps a stable devnet
   keypair under `.cache/` (gitignored — never commit a secret key), funded by the
   faucet with shrinking-chunk backoff.
