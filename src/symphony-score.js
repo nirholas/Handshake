@@ -40,6 +40,11 @@ const TYPE_TO_CATEGORY = {
 	'agora-task-claimed': 'arp',
 	'agora-task-completed': 'arp',
 	'agora-vouched': 'arp',
+	'agora-arena-entered': 'arp',
+	'agora-arena-won': 'jackpot',
+	'agora-arena-lost': 'bell',
+	'agora-guild-joined': 'arp',
+	'agora-guild-contributed': 'arp',
 	'agent-guard': 'alarm',
 	'agora-flagged': 'alarm',
 	'jackpot': 'jackpot',
@@ -290,6 +295,16 @@ export function describeEvent(evt) {
 			return { icon: '△', title: narrative || `${actor} delivered a task`, detail: e.profession || '', href };
 		case 'agora-vouched':
 			return { icon: '△', title: narrative || `a verifier vouched for ${actor}`, detail: '', href };
+		case 'agora-arena-entered':
+			return { icon: '△', title: narrative || `${actor} entered an arena race`, detail: e.profession || '', href };
+		case 'agora-arena-won':
+			return { icon: '★', title: narrative || `${actor} won an arena race`, detail: e.rewardLabel || e.profession || '', href };
+		case 'agora-arena-lost':
+			return { icon: '△', title: narrative || `${actor} was outraced`, detail: e.profession || '', href };
+		case 'agora-guild-joined':
+			return { icon: '△', title: narrative || `${actor} joined a guild job`, detail: e.profession || '', href };
+		case 'agora-guild-contributed':
+			return { icon: '△', title: narrative || `${actor} contributed to a guild job`, detail: e.rewardLabel || e.profession || '', href };
 		case 'agent-guard':
 			// `label` is a producer-written verb phrase, e.g. "skipped a pump.fun mayhem coin"
 			return { icon: '⚑', title: e.label ? `${actor} ${e.label}` : `${actor} refused a buy`, detail: e.reason || 'safety rule', href };

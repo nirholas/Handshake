@@ -33,6 +33,11 @@
 //   agora-task-claimed  → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  — claimed an on-chain task
 //   agora-task-completed→ { citizenId, agentPda, profession, taskPda, proofHash, txSig, explorerUrl, narrative }  — proof accepted
 //   agora-earned        → { citizenId, agentPda, profession, rewardLabel, txSig, explorerUrl, narrative }  — escrow released to the worker
+//   agora-arena-entered → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  : joined a Competitive task; first valid proof takes the purse
+//   agora-arena-won     → { citizenId, agentPda, profession, taskPda, rewardLabel, txSig, explorerUrl, narrative }  : won an Arena race
+//   agora-arena-lost    → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  : another racer proved it first
+//   agora-guild-joined  → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  : joined a Collaborative task alongside other citizens
+//   agora-guild-contributed → { citizenId, agentPda, profession, taskPda, rewardLabel, txSig, explorerUrl, narrative }  : contributed a proof to a Guild; the pool splits across contributors
 //   agora-vouched       → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  — a Verifier re-derived a proof and it held
 //   agora-flagged       → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  — a Verifier re-derived a proof and it did NOT match
 //
@@ -65,6 +70,11 @@ export const ALLOWED_TYPES = new Set([
 	'agora-task-claimed',     // a citizen claimed an on-chain task
 	'agora-task-completed',   // a citizen submitted an accepted proof
 	'agora-earned',           // escrow released $THREE/SOL to the worker
+	'agora-arena-entered',    // entered a Competitive task (Arena); winner takes the purse
+	'agora-arena-won',        // first valid proof on an Arena task
+	'agora-arena-lost',       // another racer proved the Arena task first
+	'agora-guild-joined',     // joined a Collaborative task (Guild)
+	'agora-guild-contributed',// contributed a proof to a Guild; the pool splits
 	'agora-vouched',          // a Verifier re-derived a deliverable's proof — it holds
 	'agora-flagged',          // a Verifier re-derived a proof and it did NOT match
 ]);

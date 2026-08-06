@@ -74,6 +74,16 @@ export function normalizeEvent(e) {
 			return { ...base, kind: 'misc', title: `${base.actor} claimed a job`, sub: e.profession || 'Fetcher', href: e.explorerUrl || (e.citizenId ? `/agora?citizen=${e.citizenId}` : '/agora') };
 		case 'agora-task-completed':
 			return { ...base, kind: 'verify', title: `${base.actor} proved a job`, sub: e.profession || 'Fetcher', href: e.explorerUrl || (e.citizenId ? `/agora?citizen=${e.citizenId}` : '/agora') };
+		case 'agora-arena-entered':
+			return { ...base, kind: 'misc', title: `${base.actor} entered the Arena`, sub: e.profession || 'Fetcher', href: e.explorerUrl || (e.citizenId ? `/agora?citizen=${e.citizenId}` : '/agora') };
+		case 'agora-arena-won':
+			return { ...base, kind: 'win', title: `${base.actor} won the Arena`, sub: e.rewardLabel || e.profession || 'Fetcher', href: e.explorerUrl || (e.citizenId ? `/agora?citizen=${e.citizenId}` : '/agora') };
+		case 'agora-arena-lost':
+			return { ...base, kind: 'misc', title: `${base.actor} was outraced`, sub: e.profession || 'Fetcher', href: e.explorerUrl || (e.citizenId ? `/agora?citizen=${e.citizenId}` : '/agora') };
+		case 'agora-guild-joined':
+			return { ...base, kind: 'misc', title: `${base.actor} joined a guild job`, sub: e.profession || 'Fetcher', href: e.explorerUrl || (e.citizenId ? `/agora?citizen=${e.citizenId}` : '/agora') };
+		case 'agora-guild-contributed':
+			return { ...base, kind: 'verify', title: `${base.actor} contributed to a guild job`, sub: e.rewardLabel || e.profession || 'Fetcher', href: e.explorerUrl || (e.citizenId ? `/agora?citizen=${e.citizenId}` : '/agora') };
 		case 'agora-earned':
 			return { ...base, kind: 'pay', title: `${base.actor} earned`, sub: e.rewardLabel || base.actor, href: e.explorerUrl || (e.citizenId ? `/agora?citizen=${e.citizenId}` : '/agora') };
 		default:

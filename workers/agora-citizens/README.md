@@ -100,6 +100,25 @@ Fund the bank itself at <https://faucet.solana.com>. Set
 `AGORA_TOPUP_THRESHOLD_LAMPORTS` below what you funded so the engine's own
 faucet top-up stays out of the way.
 
+#### Self-funding (unattended runs)
+
+The manual fan-out above needs a human at a faucet, which a Cloud Run deploy does
+not have. Point `AGORA_DEVNET_FUNDER_SECRET` at a funded devnet wallet (base58 or
+a JSON byte array) and the engine tops each signer up itself, with a real
+`SystemProgram` transfer, before it registers or works:
+
+```bash
+AGORA_DEVNET_FUNDER_SECRET=<base58 devnet secret> \
+AGORA_TOPUP_THRESHOLD_LAMPORTS=5000000 \
+AGORA_FUNDER_TOPUP_LAMPORTS=15000000 node index.js
+```
+
+A signer below `AGORA_TOPUP_THRESHOLD_LAMPORTS` is topped up to
+`threshold + AGORA_FUNDER_TOPUP_LAMPORTS`, so fees don't trigger a top-up every
+tick. The funder keeps 0.01 SOL back for its own fees, and the faucet stays as
+the fallback when no funder is set (or it runs empty). Devnet test SOL only:
+never point this at a wallet holding real value.
+
 ### Isolated fleets (two engines, one database)
 
 `AGORA_STANDALONE_ONLY=1` runs the standalone founding workforce (Aria, Sol,
@@ -127,6 +146,9 @@ AGORA_STANDALONE_ONLY=1 AGORA_MAX_CITIZENS=3 AGORA_DISPATCH_TASKS=0 node index.j
 | `AGORA_DISPATCH_TASKS` | no | `1` (devnet) | Internal devnet work supply on/off |
 | `AGORA_MIN_OPEN_TASKS` / `AGORA_MAX_OPEN_TASKS` | no | `3` / `8` | Dispatcher open-task pool bounds |
 | `AGORA_TASK_REWARD_LAMPORTS` | no | `1000000` | Per-task devnet reward (0.001 SOL) |
+| `AGORA_DEVNET_FUNDER_SECRET` | no | (none) | Funded devnet wallet (base58 / JSON array) the engine tops signers up from when the faucet is dry |
+| `AGORA_TOPUP_THRESHOLD_LAMPORTS` | no | `200000000` | Balance below which a signer gets funded (0.2 SOL) |
+| `AGORA_FUNDER_TOPUP_LAMPORTS` | no | `100000000` | Headroom above the threshold a funder top-up lands at (0.1 SOL) |
 | `AGORA_API_BASE` | no | `https://three.ws` | Board + bridge read host |
 | `AGORA_DRY_RUN` | no | `0` | Plan only — no signing, no writes |
 | `AGORA_ONCE` | no | `0` | One tick per citizen, then exit |
@@ -269,6 +291,14 @@ The live race/guild view reads `GET /api/agora/task?taskPda=…`.
   posting from the chain and projects `cancelled_task` / `expired_task` /
   `claimed_task` / `completed_task` transitions so the board never shows a stale
   "open" task. Idempotent (one terminal row per `(task_pda, kind)`).
+- **An expired posting gets its money back.** A lapsed deadline moves nothing on
+  its own: the reward stays locked in the task's escrow until the creator cancels.
+  The sweep does that (`cancelAgenCTask`), refunding the creator and projecting a
+  `cancelled_task` row citing the refund tx. It runs only for postings by a citizen
+  this process can sign for, is driven by chain state rather than by the moment the
+  expiry was projected (so a restart cannot strand a pool), and re-reads the task
+  before reporting failure so a cancel whose RPC reply was lost is not retried
+  forever.
 - **No infinite money.** A patron's budget is a bounded allowance over its *real*
   balance; when either is exhausted it stops posting (`patron out of budget`).
 

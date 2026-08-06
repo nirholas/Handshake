@@ -9,6 +9,8 @@
 //                       or write the DB. Inspect the loop safely.
 //   AGORA_ONCE=1      — run a single tick per citizen, then exit (CI / manual).
 //   AGORA_MAX_CITIZENS=N — cap the fleet (faucet-friendly local runs).
+//   AGORA_DEVNET_FUNDER_SECRET : funded devnet wallet used to top signers up
+//                       when the public faucet is dry (it usually is).
 //
 // Guardrails: devnet rewards are native SOL (synthetic plumbing — never another
 // real token). $THREE is the only coin Agora promotes; on mainnet the reward
@@ -143,6 +145,16 @@ export function loadConfig() {
 		// (which pays fees + locks reward) never fails for lack of SOL.
 		topupThresholdLamports: Math.max(0, num('AGORA_TOPUP_THRESHOLD_LAMPORTS', 200_000_000)), // 0.2 SOL
 		airdropLamports: Math.max(0, num('AGORA_AIRDROP_LAMPORTS', 1_000_000_000)), // 1 SOL
+		// Devnet funder wallet (base58 or JSON-array secret key). The public faucet
+		// answers 429 for long stretches from every IP we reach it from, which would
+		// otherwise leave the fleet unfundable; when this is set the worker tops each
+		// signer up from it with a real transfer instead, and only falls back to the
+		// faucet if the funder is empty. Devnet test SOL only, never a mainnet key
+		// the worker is expected to spend.
+		funderSecret: opt('AGORA_DEVNET_FUNDER_SECRET') || '',
+		// How far ABOVE the threshold a funder top-up lands, so a signer isn't
+		// re-topped on every tick as fees nibble at it.
+		funderTopupLamports: Math.max(0, num('AGORA_FUNDER_TOPUP_LAMPORTS', 100_000_000)), // 0.1 SOL
 
 		// Where the citizen reads the world from. The board endpoint surfaces the
 		// x402 bazaar (real Fetcher work) and any open AgenC tasks. The bridge is

@@ -14,6 +14,7 @@
 import { neon } from '@neondatabase/serverless';
 import { Redis } from '@upstash/redis';
 import { log } from './log.js';
+import { ALLOWED_TYPES } from '../../api/_lib/feed.js';
 
 const FEED_KEY = 'feed:events';
 const FEED_MAX = 200; // matches api/_lib/feed.js MAX_EVENTS
@@ -379,6 +380,13 @@ export function makeStore(cfg) {
 		 */
 		async publishFeed(event) {
 			if (!redis || !event || !event.type) return null;
+			// One vocabulary, one source of truth: GET /api/feed drops any type the
+			// API's ALLOWED_TYPES doesn't carry, so emitting one here would be a
+			// silent dead end. Fail loudly in the log instead of on the ticker.
+			if (!ALLOWED_TYPES.has(event.type)) {
+				log.warn('feed type not in api/_lib/feed.js ALLOWED_TYPES, dropped', { type: event.type });
+				return null;
+			}
 			const ts = Number.isFinite(event.ts) ? event.ts : Date.now();
 			const record = { ...event, ts, id: event.id || feedEventId(ts) };
 			try {
