@@ -15,9 +15,9 @@
 // No identifiers, no payment, no crypto — only what is needed to show the model.
 
 import { env } from '../_lib/env.js';
+import { MODEL_VIEWER_SRC, MODEL_VIEWER_CDN_ORIGIN } from '../_lib/model-viewer-cdn.js';
 
-const MODEL_VIEWER_CDN =
-	'https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js';
+const MODEL_VIEWER_CDN = MODEL_VIEWER_SRC;
 
 export const COMPONENT_HTML = `<!doctype html>
 <html lang="en">
@@ -346,7 +346,7 @@ export function componentCsp() {
 	const domains = [
 		'https://three.ws',
 		'https://*.three.ws',
-		'https://cdn.jsdelivr.net',
+		MODEL_VIEWER_CDN_ORIGIN,
 		'https://replicate.delivery',
 		'https://*.replicate.delivery',
 	];
