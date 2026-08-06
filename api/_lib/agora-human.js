@@ -206,6 +206,60 @@ export async function ensureDevnetBalance(connection, keypair, neededLamports) {
 	return connection.getBalance(keypair.publicKey);
 }
 
+/**
+ * Recover a result from a confirm timeout.
+ *
+ * web3.js gives up waiting after ~30s and throws "Transaction was not confirmed
+ * in 30.00 seconds. It is unknown if it succeeded or failed. Check signature X".
+ * On a throttled devnet that happens constantly, and treating it as a failure is
+ * wrong in the worst way: the work IS on-chain (escrow paid, reputation moved)
+ * but the world never projects it, so a citizen loses a completion they really
+ * earned. The signature is right there in the message, so look it up and decide
+ * from the ledger instead of from the timeout.
+ *
+ * @returns {Promise<{ txSignature: string } | null>} the confirmed signature, or
+ *   null when the error is not a recoverable timeout / the tx genuinely failed.
+ */
+export async function recoverTimedOutSignature(connection, err) {
+	const msg = String(err?.message || '');
+	if (!/not confirmed in|unknown if it succeeded/i.test(msg)) return null;
+	const found = /signature\s+([1-9A-HJ-NP-Za-km-z]{80,90})/.exec(msg);
+	if (!found) return null;
+	const signature = found[1];
+	// Bounded poll: the tx was already submitted, we only need the ledger to catch up.
+	for (let i = 0; i < 5; i++) {
+		let status = null;
+		try {
+			const res = await connection.getSignatureStatuses([signature], { searchTransactionHistory: true });
+			status = res?.value?.[0] || null;
+		} catch {
+			// transport still down: try again, then give up and let the caller 503
+		}
+		if (status?.err) return null;          // it landed and FAILED: a real failure
+		if (status?.confirmationStatus) return { txSignature: signature };
+		await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
+	}
+	return null;
+}
+
+/**
+ * Find the signature that completed a task, for a completion we know landed but
+ * never captured (a confirm that timed out, then a retry that correctly bounced
+ * off the already-consumed claim account).
+ *
+ * The chain records `completedAt` on the task, and the completing transaction is
+ * the worker's own signature at that block time, so the two identify each other
+ * without guessing. Returns null when nothing matches, which keeps the caller on
+ * its honest error path rather than projecting a completion we cannot evidence.
+ */
+export async function findCompletionSignature(connection, signerPublicKey, completedAt) {
+	const at = Number(completedAt || 0);
+	if (!at) return null;
+	const sigs = await connection.getSignaturesForAddress(signerPublicKey, { limit: 30 }).catch(() => []);
+	const hit = sigs.find((s) => !s.err && Number(s.blockTime) === at);
+	return hit ? hit.signature : null;
+}
+
 function fmtSol(lamports) {
 	return (Number(lamports) / LAMPORTS_PER_SOL).toLocaleString('en-US', { maximumFractionDigits: 4 });
 }
@@ -261,9 +315,7 @@ export async function ensureRegistered({ citizen, cluster }) {
 	const agentId = toAgenCAgentId(label);
 	const agentPda = deriveAgenCAgentPda(client, agentId);
 
-	// Already registered on-chain (and our projection matches the cluster) → reuse.
-	const existingOnChain = await getAgenCAgent(client, agentPda).catch(() => null);
-	if (existingOnChain) {
+	const registered = async () => {
 		if (citizen.agenc_agent_pda !== agentPda.toBase58() || citizen.agenc_cluster !== cluster) {
 			await sql`
 				update agora_citizens
@@ -272,7 +324,40 @@ export async function ensureRegistered({ citizen, cluster }) {
 				where id = ${citizen.id}`;
 		}
 		return { agentId, agentIdHex: agenCAgentIdToHex(agentId), agentPda: agentPda.toBase58(), signer, client, citizen };
+	};
+
+	// RegisterAgent is NOT idempotent: a second call against a live PDA aborts the
+	// whole action with "account already in use", which is how a human's very first
+	// claim died moments after their first bounty registered them. So we must be
+	// certain an agent is ABSENT before registering, and three sources say so in
+	// descending cost order:
+	//
+	//  1. Our own projection. We write agenc_agent_pda only after a registration
+	//     confirms, so a matching row is proof, and it costs no RPC at all, which
+	//     keeps the hot path alive when devnet is throttling every read.
+	if (citizen.agenc_agent_pda === agentPda.toBase58() && citizen.agenc_cluster === cluster) {
+		return { agentId, agentIdHex: agenCAgentIdToHex(agentId), agentPda: agentPda.toBase58(), signer, client, citizen };
 	}
+
+	//  2. A decoded on-chain agent.
+	const existingOnChain = await getAgenCAgent(client, agentPda).catch(() => null);
+	if (existingOnChain) return registered();
+
+	//  3. A raw account at the PDA owned by the AgenC program. getAgenCAgent
+	//     returns null for a decode miss AND for a transport hiccup, so absence
+	//     has to be confirmed by a read that actually SUCCEEDED. If even this read
+	//     fails we refuse to guess: registering blind on an unread chain is what
+	//     produced the account-in-use abort in the first place.
+	let raw;
+	try {
+		raw = await client.connection.getAccountInfo(agentPda);
+	} catch (err) {
+		throw Object.assign(
+			new Error('Solana is not responding, so we could not confirm your on-chain citizen record. Nothing was signed. Try again in a moment.'),
+			{ status: 503, code: 'rpc_unavailable', detail: { retryable: true, cluster }, cause: err },
+		);
+	}
+	if (raw && raw.owner.equals(client.programId)) return registered();
 
 	// Fund (devnet) enough for the stake + tx fees, then register. The gate runs
 	// on BOTH clusters: registration stakes lamports and pays a fee either way,

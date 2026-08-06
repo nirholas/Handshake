@@ -110,6 +110,18 @@ export async function getAgent(client, pda) {
 }
 
 /**
+ * Does this registration failure mean the agent account already exists? The AgenC
+ * program allocates the agent PDA, so a repeat registration fails in the System
+ * program with "already in use" (custom program error 0x0) rather than a protocol
+ * error. Matched on the allocate message, not the bare error code, which is far too
+ * generic to key off.
+ */
+export function isAlreadyRegisteredError(err) {
+	const message = [err?.message, ...(Array.isArray(err?.logs) ? err.logs : [])].filter(Boolean).join('\n');
+	return /already in use/i.test(message);
+}
+
+/**
  * Ensure a wallet is registered as an AgenC agent (idempotent). If the PDA
  * already exists on-chain we reconcile from it rather than re-registering.
  * Returns { agentPda, txSignature|null, existed, agent }.
@@ -121,18 +133,32 @@ export async function ensureRegistered(client, agentIdHex, params, cfg) {
 	if (existing) {
 		return { agentPda: pda, txSignature: null, existed: true, agent: existing };
 	}
-	const result = await withRetry(
-		() =>
-			s.registerAgenCAgent(client, {
-				agentId: agentIdHex,
-				capabilities: params.capabilities,
-				endpoint: params.endpoint,
-				metadataUri: params.metadataUri ?? null,
-				stakeAmount: params.stakeLamports,
-			}),
-		cfg,
-		'registerAgent',
-	);
+	let result;
+	try {
+		result = await withRetry(
+			() =>
+				s.registerAgenCAgent(client, {
+					agentId: agentIdHex,
+					capabilities: params.capabilities,
+					endpoint: params.endpoint,
+					metadataUri: params.metadataUri ?? null,
+					stakeAmount: params.stakeLamports,
+				}),
+			cfg,
+			'registerAgent',
+		);
+	} catch (err) {
+		// A registration that fails because the account is ALREADY IN USE is proof
+		// the agent is registered: the pre-flight read above just missed it (a
+		// rate-limited or lagging RPC returns "account does not exist" for an account
+		// that is really there). Re-read and reconcile instead of dropping the
+		// citizen: losing every citizen this way takes the whole fleet down.
+		if (!isAlreadyRegisteredError(err)) throw err;
+		const recovered = await withRetry(() => s.getAgenCAgent(client, pda), cfg, 'getAgent:afterInUse');
+		if (!recovered) throw err;
+		log.warn('agent already registered on-chain, reconciled after a stale read', { pda: pda.toBase58() });
+		return { agentPda: pda, txSignature: null, existed: true, agent: recovered };
+	}
 	const agent = await withRetry(() => s.getAgenCAgent(client, result.agentPda), cfg, 'getAgent:postRegister');
 	return { agentPda: result.agentPda, txSignature: result.txSignature, existed: false, agent };
 }
@@ -155,14 +181,52 @@ export async function createTask(client, args, cfg) {
 	return withRetry(() => s.createAgenCTask(client, args), cfg, 'createTask');
 }
 
+/**
+ * Does this claim failure mean THIS worker already holds the claim? AgenC rejects a
+ * second claim from the same worker with `AlreadyClaimed`, which is what a retry sees
+ * when the first attempt landed on-chain but its RPC response was lost. Distinct from
+ * losing a slot to someone else (`TaskFull` / a state change), which is a real failure.
+ */
+export function isAlreadyClaimedError(err) {
+	const message = [err?.message, ...(Array.isArray(err?.logs) ? err.logs : [])].filter(Boolean).join('\n');
+	return /AlreadyClaimed|already claimed this task/i.test(message);
+}
+
+/**
+ * Claim a task for a worker. Idempotent under a lost RPC response: a retry that comes
+ * back `AlreadyClaimed` means the earlier attempt succeeded on-chain, so we report the
+ * claim as held rather than as a failure. Getting this wrong is expensive on a
+ * multi-worker task: the worker really does hold a slot, and treating it as failed
+ * strands the slot with nobody working it until the deadline expires. The signature is
+ * null because the winning attempt's response never came back; the projection records
+ * an honest "no signature captured" rather than a fabricated one.
+ */
 export async function claimTask(client, args, cfg) {
 	const s = await sdk();
-	return withRetry(() => s.claimAgenCTask(client, args), cfg, 'claimTask');
+	try {
+		return await withRetry(() => s.claimAgenCTask(client, args), cfg, 'claimTask');
+	} catch (err) {
+		if (!isAlreadyClaimedError(err)) throw err;
+		log.warn('claim already held on-chain, recovered after a lost response', { taskPda: String(args?.taskPda) });
+		return { txSignature: null, alreadyClaimed: true };
+	}
 }
 
 export async function completeTask(client, args, cfg) {
 	const s = await sdk();
 	return withRetry(() => s.completeAgenCTask(client, args), cfg, 'completeTask');
+}
+
+/**
+ * Cancel a task and refund its escrowed reward to the creator. Only the creator can
+ * do this, and it is the ONLY way an expired bounty gives its money back: the reward
+ * sits locked in escrow until someone cancels. Used by the reconcile sweep when a
+ * posting passes its deadline unfilled (an Arena nobody raced, a Guild that missed
+ * its worker target), so the pool returns instead of being stranded on-chain.
+ */
+export async function cancelTask(client, args, cfg) {
+	const s = await sdk();
+	return withRetry(() => s.cancelAgenCTask(client, args), cfg, 'cancelTask');
 }
 
 /** Fetch a task's lifecycle summary (timeline + fill + settlement) for reconcile / arena reads. */
@@ -172,21 +236,41 @@ export async function getTaskLifecycle(client, taskPda) {
 }
 
 /**
- * Read the task's escrow PDA lamport balance (native-SOL devnet plumbing). The
- * escrow holds the locked reward until completion releases it; bracketing a
- * completeTask with two reads measures exactly what a Guild contribution paid out
- * — a REAL on-chain figure, never a fabricated split. Returns null when the
- * escrow can't be read (RPC hiccup) so the caller degrades to "share settling".
+ * Read the task's escrow PDA state (native-SOL devnet plumbing): its lamport balance
+ * and the rent reserve keeping the account alive. The escrow holds the locked reward
+ * until completion releases it; bracketing a completeTask with two reads measures what
+ * a Guild contribution actually paid out, a REAL on-chain figure and never a fabricated
+ * split. Returns null when the escrow can't be read (RPC hiccup) so the caller degrades
+ * to "share settling" rather than guessing.
  */
-export async function readEscrowLamports(client, taskPda) {
+export async function readEscrowState(client, taskPda) {
 	try {
 		const t = await tetsuo();
 		const pda = taskPda instanceof PublicKey ? taskPda : new PublicKey(taskPda);
 		const escrowPda = t.deriveEscrowPda(pda, client.programId);
-		return BigInt(await client.connection.getBalance(escrowPda));
+		const info = await client.connection.getAccountInfo(escrowPda);
+		if (!info) return { lamports: 0n, rentReserve: 0n };
+		const rentReserve = BigInt(await client.connection.getMinimumBalanceForRentExemption(info.data.length));
+		return { lamports: BigInt(info.lamports), rentReserve };
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * What a single completion actually drew out of escrow as REWARD, in atomic units.
+ *
+ * The naive `before - after` overstates the last contributor's share: the completion
+ * that empties the escrow closes the account, so it also sweeps the rent reserve, which
+ * was never reward money (on devnet that read a 0.002 SOL share as 0.003). Subtract the
+ * reserve exactly when the account closed. Returns null when either read is missing, so
+ * the caller shows "settling" instead of a wrong number.
+ */
+export function measuredShareAtomic(before, after) {
+	if (!before || !after) return null;
+	const closed = after.lamports === 0n;
+	const drawn = before.lamports - after.lamports - (closed ? before.rentReserve : 0n);
+	return drawn > 0n ? drawn : null;
 }
 
 export async function formatTaskState(state) {

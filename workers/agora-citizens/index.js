@@ -46,6 +46,13 @@ function jitter(cfg) {
 	return cfg.tickBaseMs + Math.floor(Math.random() * (cfg.tickJitterMs + 1));
 }
 
+// citizenId → that citizen's signer-bound AgenC client, so the reconcile sweep can
+// refund an expired posting's escrow to the citizen that created it. Only citizens
+// this process is running can be signed for; anyone else's posting is left alone.
+function signerLookup(ctx) {
+	return (citizenId) => ctx.citizens.find((c) => c.id === citizenId)?.client || null;
+}
+
 async function runOnce(ctx) {
 	await replenishWork(ctx, true);
 	const outcomes = {};
@@ -55,7 +62,7 @@ async function runOnce(ctx) {
 	}
 	// Reconcile so a one-shot run also closes any posting the chain has moved on.
 	try {
-		await reconcileOnce({ cfg: ctx.cfg, store: ctx.store, readClient: ctx.readClient });
+		await reconcileOnce({ cfg: ctx.cfg, store: ctx.store, readClient: ctx.readClient, signerFor: signerLookup(ctx) });
 	} catch (err) {
 		log.warn('reconcile (once) failed', { err: err?.message });
 	}
@@ -93,7 +100,7 @@ async function runForever(ctx) {
 	// out postings that are claimed/cancelled/expired and link agent-to-agent hires.
 	const reconcileTimer = setInterval(() => {
 		if (!draining) {
-			reconcileOnce({ cfg, store: ctx.store, readClient: ctx.readClient }).catch((err) =>
+			reconcileOnce({ cfg, store: ctx.store, readClient: ctx.readClient, signerFor: signerLookup(ctx) }).catch((err) =>
 				log.warn('reconcile error', { err: err?.message }),
 			);
 		}

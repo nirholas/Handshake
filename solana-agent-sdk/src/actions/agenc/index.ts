@@ -44,6 +44,7 @@ export {
   listAgenCTasksByCreator,
   claimAgenCTask,
   completeAgenCTask,
+  cancelAgenCTask,
   generateAgenCTaskId,
   toAgenCTaskId,
   encodeAgenCDescription,
@@ -57,6 +58,8 @@ export {
   type AgenCClaimTaskResult,
   type AgenCCompleteTaskArgs,
   type AgenCCompleteTaskResult,
+  type AgenCCancelTaskArgs,
+  type AgenCCancelTaskResult,
 } from "./tasks.js";
 
 export {

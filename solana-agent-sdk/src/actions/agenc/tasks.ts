@@ -8,6 +8,7 @@ import {
   claimTask,
   completeTask,
   createTask,
+  cancelTask,
   deriveTaskPda,
   formatTaskState,
   getTask,
@@ -255,6 +256,44 @@ export async function completeAgenCTask(
     args.taskPda,
     normalizeProofHash(args.proofHash),
     args.resultData ?? null,
+  );
+  return { txSignature: result.txSignature };
+}
+
+export interface AgenCCancelTaskArgs {
+  /** The task to cancel. Must have been created by this client's signer. */
+  taskPda: PublicKey;
+  /**
+   * Claim/worker PDA pairs to clean up, for a task that had already been claimed.
+   * An unclaimed task needs none.
+   */
+  workerPairs?: Array<{ claimPda: PublicKey; workerAgentPda: PublicKey }>;
+}
+
+export interface AgenCCancelTaskResult {
+  txSignature: string;
+}
+
+/**
+ * Cancel a task and refund its escrowed reward to the creator.
+ *
+ * This is how an expired bounty gives its money back: a task nobody claimed (or a
+ * multi-worker task that never met its worker target) sits with the reward locked in
+ * escrow until the creator cancels it. Without this call the escrow is stranded on-chain
+ * for good, so anything that posts bounties should reclaim what its deadlines let go.
+ * Only the creator can cancel.
+ */
+export async function cancelAgenCTask(
+  client: AgenCClient,
+  args: AgenCCancelTaskArgs,
+): Promise<AgenCCancelTaskResult> {
+  const signer = requireAgenCSigner(client);
+  const result = await cancelTask(
+    client.connection,
+    client.program,
+    signer,
+    args.taskPda,
+    args.workerPairs,
   );
   return { txSignature: result.txSignature };
 }

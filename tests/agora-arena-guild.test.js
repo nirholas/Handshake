@@ -10,6 +10,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { isAlreadyRegisteredError, isAlreadyClaimedError, measuredShareAtomic, TASK_STATE } from '../workers/agora-citizens/agenc.js';
+import { isJoinableState } from '../workers/agora-citizens/engine.js';
 import {
 	TASK_TYPES,
 	normalizeTaskType,
@@ -286,5 +288,151 @@ describe('task-types (badges)', () => {
 		expect(isMultiWorker('Exclusive')).toBe(false);
 		expect(taskTypeLabel('Competitive')).toBe('Arena');
 		expect(taskTypeLabel('Collaborative')).toBe('Guild');
+	});
+});
+
+describe('registration recovery (multi-citizen fleets survive a stale RPC read)', () => {
+	it('recognises an "already in use" allocate failure as proof the agent is registered', () => {
+		// The AgenC program allocates the agent PDA, so a repeat registration fails in
+		// the System program. Seen on devnet when a rate-limited RPC answers the
+		// pre-flight read with "account does not exist" for an account that is there.
+		const err = {
+			message: 'Transaction simulation failed: Error processing Instruction 0: custom program error: 0x0',
+			logs: [
+				'Program log: Instruction: RegisterAgent',
+				'Allocate: account Address { address: 9JNFoAGk8r2SRbxEa23Ny6PTRMj83AGUkithYCTLtoL6, base: None } already in use',
+			],
+		};
+		expect(isAlreadyRegisteredError(err)).toBe(true);
+	});
+
+	it('leaves every other failure to propagate', () => {
+		expect(isAlreadyRegisteredError({ message: 'Blockhash not found' })).toBe(false);
+		expect(isAlreadyRegisteredError({ message: 'insufficient lamports', logs: ['Transfer: insufficient lamports'] })).toBe(false);
+		expect(isAlreadyRegisteredError(null)).toBe(false);
+	});
+});
+
+describe('arena roster reflects chain settlement, not just projected rows', () => {
+	const rows = [
+		{ kind: 'claimed_task', citizen_id: 'w1', display_name: 'Aria', profession: 'sculptor', tx_signature: 'claim1', created_at: '2026-08-06T04:22:00Z' },
+		{ kind: 'completed_task', citizen_id: 'w1', display_name: 'Aria', profession: 'sculptor', tx_signature: 'win1', created_at: '2026-08-06T04:23:00Z', meta: { outcome: 'won' } },
+		// A racer whose engine died between claiming and submitting its proof: it has a
+		// claim row and nothing else.
+		{ kind: 'claimed_task', citizen_id: 'w2', display_name: 'Sol', profession: 'scribe', tx_signature: 'claim2', created_at: '2026-08-06T04:22:10Z' },
+	];
+
+	it('shows an unfinished racer as still racing while the task is live', () => {
+		const view = assembleTaskLive({
+			taskPda: 'PDA', cluster: 'devnet',
+			posting: { taskType: 'Competitive', maxWorkers: 3 },
+			activityRows: rows.slice(0, 1).concat(rows.slice(2)),
+			chain: { currentState: 'Open', currentWorkers: 2, maxWorkers: 3 },
+		});
+		expect(view.roster.find((r) => r.citizenId === 'w2').state).toBe('working');
+	});
+
+	it('stands an unfinished racer down once the chain settled the escrow', () => {
+		// No further proof can be accepted, so "still racing" is a state the chain has
+		// ruled out, so it must read as stood down even with no projected stood_down row.
+		const view = assembleTaskLive({
+			taskPda: 'PDA', cluster: 'devnet',
+			posting: { taskType: 'Competitive', maxWorkers: 3 },
+			activityRows: rows,
+			chain: { currentState: 'Completed', currentWorkers: 0, maxWorkers: 3 },
+		});
+		expect(view.roster.find((r) => r.citizenId === 'w1').state).toBe('won');
+		expect(view.roster.find((r) => r.citizenId === 'w2').state).toBe('lost');
+		expect(view.settlement.stoodDownCount).toBe(1);
+	});
+
+	it('leaves a Guild contributor alone (a Collaborative task pays every part that lands)', () => {
+		const view = assembleTaskLive({
+			taskPda: 'PDA', cluster: 'devnet',
+			posting: { taskType: 'Collaborative', maxWorkers: 3 },
+			activityRows: rows.slice(2),
+			chain: { currentState: 'Completed', currentWorkers: 1, maxWorkers: 3 },
+		});
+		expect(view.roster[0].state).toBe('working');
+	});
+});
+
+describe('claim recovery (a multi-worker slot is never stranded by a lost response)', () => {
+	it('recognises AlreadyClaimed as this worker already holding the slot', () => {
+		// Seen on devnet: the claim landed, the RPC response was lost, the retry came
+		// back AlreadyClaimed, and the engine filed its own successful claim as a
+		// failure. The slot then sat occupied with nobody working it.
+		expect(isAlreadyClaimedError({ message: 'AnchorError occurred. Error Code: AlreadyClaimed. Error Number: 6052. Error Message: Worker has already claimed this task.' })).toBe(true);
+		expect(isAlreadyClaimedError({ message: 'boom', logs: ['Program log: AnchorError ... AlreadyClaimed'] })).toBe(true);
+	});
+
+	it('does not swallow a genuinely lost slot or an unrelated failure', () => {
+		expect(isAlreadyClaimedError({ message: 'Error Code: TaskFull. Error Number: 6051.' })).toBe(false);
+		expect(isAlreadyClaimedError({ message: 'Error Code: NotClaimed. Error Number: 6053.' })).toBe(false);
+		expect(isAlreadyClaimedError({ message: 'Blockhash not found' })).toBe(false);
+		expect(isAlreadyClaimedError(undefined)).toBe(false);
+	});
+});
+
+describe('multi-worker tasks stay joinable while they fill', () => {
+	it('lets a second racer / contributor engage after the first claim leaves Open', () => {
+		// The first claim flips a multi-worker task out of Open, but an Arena with 1 of
+		// 3 racers is still a race and a Guild with 1 of 3 parts is still filling.
+		for (const type of ['Competitive', 'Collaborative']) {
+			expect(isJoinableState(TASK_STATE.Open, type)).toBe(true);
+			expect(isJoinableState(TASK_STATE.InProgress, type)).toBe(true);
+			expect(isJoinableState(TASK_STATE.PendingValidation, type)).toBe(true);
+			expect(isJoinableState(TASK_STATE.Completed, type)).toBe(false);
+			expect(isJoinableState(TASK_STATE.Cancelled, type)).toBe(false);
+			expect(isJoinableState(TASK_STATE.Disputed, type)).toBe(false);
+		}
+	});
+
+	it('keeps an Exclusive task claimable only while it is Open', () => {
+		expect(isJoinableState(TASK_STATE.Open, 'Exclusive')).toBe(true);
+		expect(isJoinableState(TASK_STATE.InProgress, 'Exclusive')).toBe(false);
+		expect(isJoinableState(TASK_STATE.Completed, 'Exclusive')).toBe(false);
+	});
+});
+
+describe('guild share is measured as reward drawn, not raw escrow drain', () => {
+	// Devnet run 2026-08-06: a 0.006 SOL pool over 3 slots paid 0.002 SOL per part, and
+	// the escrow carried a 0.001295 SOL rent reserve on top of the locked reward.
+	const RESERVE = 1_295_000n;
+
+	it('measures a mid-guild contribution as the plain escrow delta', () => {
+		const before = { lamports: 6_000_000n + RESERVE, rentReserve: RESERVE };
+		const after = { lamports: 4_000_000n + RESERVE, rentReserve: RESERVE };
+		expect(measuredShareAtomic(before, after)).toBe(2_000_000n);
+	});
+
+	it('excludes the rent reserve from the contribution that closes the escrow', () => {
+		// This completion empties and closes the account, sweeping the reserve back to
+		// the creator. Counting it as reward overstated the last share (0.003 vs 0.002).
+		const before = { lamports: 2_000_000n + RESERVE, rentReserve: RESERVE };
+		const after = { lamports: 0n, rentReserve: 0n };
+		expect(measuredShareAtomic(before, after)).toBe(2_000_000n);
+	});
+
+	it('reports null rather than a guess when a read is missing or nothing was drawn', () => {
+		expect(measuredShareAtomic(null, { lamports: 0n, rentReserve: 0n })).toBe(null);
+		expect(measuredShareAtomic({ lamports: 5n, rentReserve: 0n }, null)).toBe(null);
+		const same = { lamports: 6_000_000n, rentReserve: RESERVE };
+		expect(measuredShareAtomic(same, same)).toBe(null);
+	});
+});
+
+describe('AgenC task-state labels match the on-chain enum', () => {
+	// Regression: the public get-task endpoint's label map was shifted one past Open,
+	// so a Completed task reported "Cancelled" and a Cancelled one "Disputed". Devnet
+	// 2026-08-06: a cancelled, refunded bounty was reported as Disputed.
+	it('labels every state the way the program does', async () => {
+		const mod = await import('../api/agenc/[action].js');
+		const label = mod.taskStateLabel;
+		expect(typeof label).toBe('function');
+		expect(label(0)).toBe('Open');
+		expect(label(3)).toBe('Completed');
+		expect(label(4)).toBe('Cancelled');
+		expect(label(5)).toBe('Disputed');
 	});
 });

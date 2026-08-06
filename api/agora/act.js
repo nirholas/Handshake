@@ -28,7 +28,7 @@ import {
 	ensureHumanCitizen, ensureRegistered, ensureDevnetBalance, requireFunded,
 	projectActivity, bumpCitizenStats, citizenBalances, professionToCapabilityBits,
 	PROFESSION_BITS, THREE_ATOMICS_PER_TOKEN, rewardLabel, proofHashFor,
-	sendOnchainAttestation, explorerTx,
+	sendOnchainAttestation, explorerTx, recoverTimedOutSignature, findCompletionSignature,
 } from '../_lib/agora-human.js';
 import { resolveCluster, reservePostSpend, settlePostSpend, releasePostSpend } from '../_lib/agora-policy.js';
 import { redactUrlSecrets as redactSecrets } from '../_lib/scrub-secrets.js';
@@ -62,6 +62,20 @@ function onchainRejection(err) {
 		: 'onchain_rejected';
 	return { code, message: reason[1].trim().replace(/\.$/, '') };
 }
+
+// Solana RPC going dark (devnet throttling, a dropped socket, a confirm that
+// timed out) is an outage, not a malformed request. It gets its own retryable
+// 503 with an honest instruction, never an opaque 500 + a support ref the user
+// can do nothing with. We deliberately do NOT claim the attempt left no trace:
+// a transport failure after submit is ambiguous, so we tell them to check.
+const RPC_OUTAGE = /fetch failed|econnreset|etimedout|enotfound|socket hang up|too many requests|429|rate limit|timed out|timeout/i;
+
+function rpcUnavailable(err) {
+	return RPC_OUTAGE.test(`${err?.message || ''} ${err?.cause?.message || ''}`);
+}
+
+const RPC_OUTAGE_MESSAGE =
+	'Solana is not responding right now, so this action could not be completed. Check your activity before retrying, in case it landed.';
 
 function reqHash(action, body) {
 	return createHash('sha256').update(JSON.stringify({ action, body })).digest('hex');
@@ -246,6 +260,21 @@ async function postTaskCore({ user, body, requestedCluster, hire }) {
 		try {
 			created = await createAgenCTask(reg.client, createArgs);
 		} catch (e) {
+			// Two very different failures hide behind one throw, and telling them apart
+			// matters because the reward is real money. A rejected transaction moved
+			// nothing and is safe to retry. A CONFIRM TIMEOUT means we simply stopped
+			// waiting: the escrow may well have funded, and a blind retry would escrow
+			// the reward a second time. The task id is generated inside the SDK, so a
+			// bare signature is not enough to rebuild the bounty here; say so plainly
+			// and point them at their own bounty list rather than guessing.
+			const landed = await recoverTimedOutSignature(reg.client.connection, e).catch(() => null);
+			if (landed) {
+				return {
+					err: [409, 'escrow_pending',
+						'Your bounty was submitted but confirmation timed out, so it may already be live. Check your open bounties before posting it again.',
+						{ txSignature: landed.txSignature, explorerUrl: explorerTx(landed.txSignature, cluster), cluster }],
+				};
+			}
 			return { err: [502, 'escrow_failed', 'the bounty was not posted, no funds moved'], cause: e };
 		}
 
@@ -348,9 +377,12 @@ async function actClaim(user, body) {
 	try {
 		claim = await claimAgenCTask(reg.client, { taskPda: new PublicKey(taskPda), workerAgentId: reg.agentId });
 	} catch (e) {
-		const rejected = onchainRejection(e);
-		if (rejected) return { err: [409, rejected.code, rejected.message] };
-		return { err: [502, 'claim_failed', 'could not claim the task'], cause: e };
+		claim = await recoverTimedOutSignature(reg.client.connection, e).catch(() => null);
+		if (!claim) {
+			const rejected = onchainRejection(e);
+			if (rejected) return { err: [409, rejected.code, rejected.message] };
+			return { err: [502, 'claim_failed', 'could not claim the task'], cause: e };
+		}
 	}
 
 	await projectActivity({
@@ -400,9 +432,30 @@ async function actComplete(user, body) {
 			taskPda: pda, workerAgentId: reg.agentId, proofHash, resultData,
 		});
 	} catch (e) {
-		const rejected = onchainRejection(e);
-		if (rejected) return { err: [409, rejected.code, rejected.message] };
-		return { err: [502, 'complete_failed', 'could not submit the proof'], cause: e };
+		// The proof may well be on-chain: a 30s confirm timeout on a throttled devnet
+		// is routine, and reporting failure would strand a completion the citizen
+		// genuinely earned (escrow paid, reputation moved) outside the world.
+		completion = await recoverTimedOutSignature(reg.client.connection, e).catch(() => null);
+		if (!completion) {
+			const rejected = onchainRejection(e);
+			// The claim account being gone usually means this proof ALREADY landed and
+			// only the projection is missing, so read the task before calling it a
+			// failure. The chain stamps completedAt, and the completing transaction is
+			// the worker's own signature at that block time, which is evidence enough
+			// to project the completion the citizen genuinely earned.
+			if (rejected?.code === 'account_not_initialized') {
+				const settled = await getAgenCTask(reg.client, pda).catch(() => null);
+				const sig = settled?.completedAt
+					? await findCompletionSignature(reg.client.connection, reg.signer.publicKey, settled.completedAt).catch(() => null)
+					: null;
+				if (sig) completion = { txSignature: sig, recovered: true };
+			}
+		}
+		if (!completion) {
+			const rejected = onchainRejection(e);
+			if (rejected) return { err: [409, rejected.code, rejected.message] };
+			return { err: [502, 'complete_failed', 'could not submit the proof'], cause: e };
+		}
 	}
 
 	// Re-read the chain for the real reward + reputation — never invent them.
@@ -567,6 +620,9 @@ export default wrap(async (req, res) => {
 			// A ≥500 carries an upstream on-chain cause: log + capture it server-side
 			// under a correlation id and return only that ref — never the raw RPC
 			// error string, which can embed the keyed RPC URL (HELIUS_API_KEY).
+			if (result.cause && status >= 500 && rpcUnavailable(result.cause)) {
+				return error(res, 503, 'rpc_unavailable', RPC_OUTAGE_MESSAGE, { retryable: true });
+			}
 			if (result.cause && status >= 500) {
 				extra.ref = reportServerError(result.cause, { code, status, context: { action } });
 			}
@@ -583,6 +639,9 @@ export default wrap(async (req, res) => {
 		const status = Number(err?.status);
 		if (Number.isInteger(status) && status >= 400 && status < 500) {
 			return error(res, status, err.code || 'agora_act_error', err.message, err.detail || {});
+		}
+		if (rpcUnavailable(err)) {
+			return error(res, 503, 'rpc_unavailable', RPC_OUTAGE_MESSAGE, { retryable: true });
 		}
 		// Redact before logging: an unexpected failure here is usually an on-chain
 		// RPC error whose message carries the keyed endpoint URL.

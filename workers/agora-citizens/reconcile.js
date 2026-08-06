@@ -14,7 +14,7 @@
 // Neon client (it runs outside api/), exactly like store.js.
 
 import { neon } from '@neondatabase/serverless';
-import { getTask, withRetry } from './agenc.js';
+import { getTask, withRetry, cancelTask, TASK_STATE } from './agenc.js';
 import { reconcileTransition, EXCLUSIVE_TERMINAL_KINDS, MULTI_TERMINAL_KINDS, isMultiWorkerType, isArenaType } from './policy.js';
 import { reconcileNarrative, settledNarrative } from './narrative.js';
 import { log } from './log.js';
@@ -62,6 +62,34 @@ async function listOpenPostings(sql, cluster) {
 	`;
 }
 
+// Expired postings whose escrow may still be locked: a posting we already projected
+// as `expired_task` with no `cancelled_task` row citing the refund. A lapsed deadline
+// does not move any money on its own, so without this the pool sits in escrow forever.
+// Kept separate from listOpenPostings because that query deliberately excludes anything
+// already closed, and this is precisely the closed-but-unpaid case.
+async function listExpiredUnreclaimed(sql, cluster) {
+	return sql`
+		select a.id, a.citizen_id, a.task_pda, a.profession, a.meta,
+		       a.reward_label, a.created_at, c.display_name as poster
+		from agora_activity a
+		join agora_citizens c on c.id = a.citizen_id
+		where a.kind = 'posted_task'
+		  and a.task_pda is not null
+		  and coalesce(c.agenc_cluster, 'devnet') = ${cluster}
+		  and a.created_at > now() - interval '14 days'
+		  and exists (
+		      select 1 from agora_activity e
+		      where e.task_pda = a.task_pda and e.kind = 'expired_task'
+		  )
+		  and not exists (
+		      select 1 from agora_activity x
+		      where x.task_pda = a.task_pda and x.kind = 'cancelled_task'
+		  )
+		order by a.created_at asc
+		limit 100
+	`;
+}
+
 // Pull the terminal event's real tx signature (and actor) from the lifecycle so
 // the projected transition cites the on-chain action that closed the task.
 async function terminalTx(readClient, taskPda) {
@@ -78,14 +106,61 @@ async function terminalTx(readClient, taskPda) {
 }
 
 /**
+ * Reclaim an expired posting's escrow for its creator. A deadline passing does NOT
+ * return the money on its own: the reward stays locked in the task's escrow until the
+ * creator cancels, so an Arena nobody raced or a Guild that missed its worker target
+ * would strand its pool on-chain forever. Needs the creator's own signer, so it only
+ * runs for postings by a citizen this process is running. Returns the refund tx, or
+ * null when we cannot sign for the creator or the cancel did not land (the projection
+ * still records the expiry honestly, without claiming a refund that never happened).
+ */
+async function reclaimExpiredEscrow({ cfg, signerFor, readClient, row }) {
+	if (typeof signerFor !== 'function') return null;
+	const client = signerFor(row.citizen_id);
+	if (!client) return null;
+	try {
+		const { PublicKey } = await import('@solana/web3.js');
+		const result = await cancelTask(client, { taskPda: new PublicKey(row.task_pda) }, cfg);
+		log.info('expired escrow reclaimed', { taskPda: row.task_pda, tx: result?.txSignature || null });
+		return result?.txSignature || null;
+	} catch (err) {
+		// Same lost-response trap as a claim: the cancel can land while its RPC reply
+		// goes missing. Re-read before calling it a failure, or the refund happens and
+		// nothing records it (and the next sweep tries to cancel an already-cancelled
+		// task forever). No signature to cite when the reply was lost, so say so.
+		const settled = await isCancelledOnChain(cfg, readClient, row.task_pda);
+		if (settled) {
+			log.warn('expired escrow reclaimed, response lost', { taskPda: row.task_pda });
+			return 'reclaimed-signature-unavailable';
+		}
+		log.warn('expired escrow reclaim failed', { taskPda: row.task_pda, err: err?.message });
+		return null;
+	}
+}
+
+/** Did this task end up cancelled (or closed) on-chain? Used to confirm a lost cancel. */
+async function isCancelledOnChain(cfg, readClient, taskPda) {
+	if (!readClient) return false;
+	try {
+		const task = await withRetry(() => getTask(readClient, taskPda), cfg, 'reclaim:confirm');
+		if (task === null) return true; // account closed
+		return task.state === TASK_STATE.Cancelled;
+	} catch {
+		return false;
+	}
+}
+
+/**
  * Run one reconcile pass. Returns counts for the heartbeat/log.
  *
  * @param {object} args
  * @param {object} args.cfg         loaded config (cluster, databaseUrl, retry)
  * @param {object} args.store       projection sink (appendActivity, publishFeed)
  * @param {object} args.readClient  a read-only AgenC client (makeReadClient)
+ * @param {function} [args.signerFor] citizenId → that citizen's signer-bound client,
+ *                                    used to refund an expired posting's escrow.
  */
-export async function reconcileOnce({ cfg, store, readClient }) {
+export async function reconcileOnce({ cfg, store, readClient, signerFor }) {
 	if (!cfg.databaseUrl) {
 		log.warn('reconcile skipped — no DATABASE_URL');
 		return { checked: 0, closed: 0, linked: 0 };
@@ -119,7 +194,11 @@ export async function reconcileOnce({ cfg, store, readClient }) {
 			`;
 			if (exists.length) continue;
 
-			const txSignature = await terminalTx(readClient, row.task_pda);
+			// An expired posting still holds its reward in escrow. Cancel it so the pool
+			// goes back to the creator, and cite THAT refund as the transition's tx.
+			const refundTx =
+				transition.kind === 'expired_task' ? await reclaimExpiredEscrow({ cfg, signerFor, readClient, row }) : null;
+			const txSignature = refundTx || (await terminalTx(readClient, row.task_pda));
 			// A `settled` terminal narrates the whole Arena/Guild resolving; everything
 			// else keeps the plain "poster's bounty <verb>" line.
 			let narrative;
@@ -147,10 +226,58 @@ export async function reconcileOnce({ cfg, store, readClient }) {
 		}
 	}
 
+	// Second pass: return the money on anything already marked expired whose escrow was
+	// never released. The first pass only reaches a posting at the moment it closes, so a
+	// restart (or another projector winning the race to write `expired_task`) would leave
+	// the pool locked for good. Driven by chain state and idempotent: once the cancel
+	// lands the task is gone from chain and the `cancelled_task` row keeps us off it.
+	const refunded = await refundStrandedEscrows({ cfg, sql, store, readClient, signerFor });
+
 	const linked = await linkHires(sql);
 
-	if (closed || linked) log.info('reconcile sweep', { checked: open.length, closed, linked });
-	return { checked: open.length, closed, linked };
+	if (closed || linked || refunded) log.info('reconcile sweep', { checked: open.length, closed, refunded, linked });
+	return { checked: open.length, closed, refunded, linked };
+}
+
+/**
+ * Cancel every expired posting that still holds escrow, refunding its creator, and
+ * project the on-chain cancel. Only postings by a citizen this process can sign for are
+ * touched. Returns how many refunds landed.
+ */
+async function refundStrandedEscrows({ cfg, sql, store, readClient, signerFor }) {
+	if (typeof signerFor !== 'function') return 0;
+	let rows;
+	try {
+		rows = await listExpiredUnreclaimed(sql, cfg.cluster);
+	} catch (err) {
+		log.warn('expired-escrow list failed', { err: err?.message });
+		return 0;
+	}
+	let refunded = 0;
+	for (const row of rows) {
+		if (!signerFor(row.citizen_id)) continue; // someone else's posting: not ours to cancel
+		// Still on-chain and not already settled? Then the reward is genuinely stranded.
+		let task;
+		try {
+			task = await withRetry(() => getTask(readClient, row.task_pda), cfg, 'refund:getTask');
+		} catch {
+			continue;
+		}
+		if (!task) continue; // account already closed: nothing left to reclaim
+		const txSignature = await reclaimExpiredEscrow({ cfg, signerFor, readClient, row });
+		if (!txSignature) continue;
+		await store.appendActivity({
+			citizenId: row.citizen_id,
+			kind: 'cancelled_task',
+			taskPda: row.task_pda,
+			profession: row.profession,
+			txSignature,
+			narrative: `${row.poster}'s expired bounty returned its ${row.reward_label || 'reward'} to the treasury.`,
+			meta: { reconciled: true, escrowRefund: true, taskType: row.meta?.taskType || 'Exclusive' },
+		});
+		refunded++;
+	}
+	return refunded;
 }
 
 // Decide the transition for one task by reading its on-chain state. A missing

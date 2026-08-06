@@ -74,7 +74,7 @@ function shapeRow(row) {
  * state and the real txs behind it. Sorted by progress (winners/contributors →
  * workers → losers) then by claim time so the leaderboard reads top-down.
  */
-export function buildRoster(activityRows) {
+export function buildRoster(activityRows, { settledArena = false } = {}) {
 	const byCitizen = new Map();
 	for (const raw of activityRows || []) {
 		const row = shapeRow(raw);
@@ -93,7 +93,13 @@ export function buildRoster(activityRows) {
 		// poster and passers-by never appear here.
 		if (!claim && !completion && !stoodDown) continue;
 		const any = claim || completion || stoodDown;
-		const state = deriveWorkerState(rows);
+		let state = deriveWorkerState(rows);
+		// Chain truth beats a missing projection. Once a Competitive task has settled
+		// on-chain, the escrow is gone to the winner and no further proof can be
+		// accepted, so a racer still marked `working` has objectively lost, whether or
+		// not its engine survived long enough to project the `stood_down` row. Reading
+		// it as still racing would show a state the chain has already ruled out.
+		if (settledArena && state === 'working') state = 'lost';
 		const shareAtomic = completion?.meta?.shareAtomic ?? earned?.amountAtomic ?? null;
 		roster.push({
 			citizenId,
@@ -174,8 +180,10 @@ export function buildSettlement({ taskType, roster, chain, posting, hasSettledRo
  * (already state-labelled by the caller); `posting` is the shaped posted_task row.
  */
 export function assembleTaskLive({ taskPda, cluster, posting, activityRows, chain }) {
-	const roster = buildRoster(activityRows);
 	const taskType = posting?.taskType || chain?.taskType || 'Exclusive';
+	const chainState = chain?.currentState || chain?.state || null;
+	const settledArena = taskType === 'Competitive' && (chainState === 'Completed' || chainState === 'Cancelled');
+	const roster = buildRoster(activityRows, { settledArena });
 	const hasSettledRow = (activityRows || []).some((r) => r.kind === 'settled');
 	const settlement = buildSettlement({ taskType, roster, chain, posting, hasSettledRow });
 	// Fill from the chain when available (authoritative), else count real claims.
