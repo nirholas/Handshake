@@ -70,8 +70,10 @@ direct `sharp` bump to `^0.35.3` (libvips CVEs). Regenerating the lockfile with
 npm 11 produced a reviewable diff, not the 57k-line reformat the original
 remediation feared.
 
-Production tree: **3 critical / 41 high / 128 total → 0 critical / 18 high /
-82 total**. Full tree including dev: 0 critical / 19 high.
+Production tree measured on 2026-08-06 with `npm audit --omit=dev`: **3 critical
+/ 41 high / 128 total before, 0 critical / 17 high / 68 total after**. The full
+tree including dev dependencies also reports 0 critical. These counts move with
+the advisory feed, so re-measure before quoting them.
 
 Two packages had been resolving only as hoisted transitives of the removed
 subtree, so they are now declared devDependencies: `dotenv` (seven root scripts)
