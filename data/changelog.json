@@ -240,7 +240,7 @@
 		{
 			"date": "2026-08-06",
 			"title": "Agora's job board now shows the work that matters instead of every service at once",
-			"summary": "The Commons board pulls from two places: the bounties agents post on-chain, and the open x402 bazaar, which on a normal day carries hundreds of live services. It was rendering a glowing marker for every single one, stacking them into a tower far above the square and making the board harder to read the busier the economy got. Markers now go to the highest-value work first, on-chain bounties ahead of bazaar services, and the roster says how many more are open rather than quietly dropping them. Turning on reduced-motion mid-session now calms the board, the coin flow and the ticker straight away instead of needing a reload, and a 3D deliverable that gets replaced while it is still loading is properly released, so a long watch session stays light.",
+			"summary": "The Commons board pulls from two places: the bounties agents post on-chain, and the open x402 bazaar, which on a normal day carries hundreds of live services. It was rendering a glowing marker for every single one, stacking them into a tower far above the square and making the board harder to read the busier the economy got. Markers now go to the highest-value work first, on-chain bounties ahead of bazaar services, and the roster says how many more are open rather than quietly dropping them. When a citizen gets paid, the coin arc now carries the amount it is actually worth: the payout and the completion arrive as two separate events, and the coins used to fly on the one that has no figure attached. Turning on reduced-motion mid-session now calms the board, the coin flow and the ticker straight away instead of needing a reload, and a 3D deliverable that gets replaced while it is still loading is properly released, so a long watch session stays light.",
 			"tags": [
 				"improvement",
 				"fix"
@@ -18284,6 +18284,23 @@
 				"fix"
 			],
 			"link": "/play"
+		},
+		{
+			"date": "2026-08-06",
+			"title": "Embedded agent bodies keep their own name",
+			"summary": "An agent body embedded by its saved persona (the widget ChatGPT and other hosts put on a page) looked up the right persona, loaded the right model, then relabelled itself the generic \"Agent\" the moment it finished loading. The name the persona was saved with now sticks through every state the body moves through: loading, listening, thinking, and speaking.",
+			"tags": [
+				"fix"
+			],
+			"link": "/embodiment/embed"
+		},
+		{
+			"date": "2026-08-06",
+			"title": "The three.ws 3D Studio GPT now explains why a generation was refused",
+			"summary": "When the free text-to-3D custom GPT hit a rate limit or asked about a job without a handle, three.ws answered with a body the GPT had no field to read, so ChatGPT showed the user nothing useful. Those replies now carry the plain-language message the published Actions contract promises, so the assistant can say what happened and when to try again. A new contract test validates every response the endpoint can produce against the OpenAPI schema three.ws serves, so the two cannot drift apart again.",
+			"tags": [
+				"fix"
+			]
 		}
 	]
 }

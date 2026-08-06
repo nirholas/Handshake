@@ -35,6 +35,11 @@
 			const personaId  = q.get('persona')   || null;
 			const glbUrl     = q.get('glb')        || null;
 			const name       = q.get('name')       || 'Agent';
+			// The label the overlay shows: the ?name param (or the generic default)
+			// until a ?persona=<id> resolve returns the persona's real name. Every
+			// later state change reads this, so a resolved name is never reverted to
+			// the placeholder by the next idle/speaking/thinking transition.
+			let displayName  = name;
 			const initState  = q.get('state')      || 'idle';
 			const speakText  = q.get('text')       || '';
 			const emotion    = q.get('emotion')    || null;
@@ -65,7 +70,7 @@
 
 			const stage = new EmbodimentStage(root, {
 				background: q.get('bg') === 'transparent' ? null : undefined,
-				onState: (state, detail) => overlay.setState(state, { ...detail, name }),
+				onState: (state, detail) => overlay.setState(state, { ...detail, name: displayName }),
 			});
 
 			// ── load ─────────────────────────────────────────────────────────────
@@ -91,7 +96,8 @@
 					return;
 				}
 
-				overlay.setName(resolved.name);
+				displayName = resolved.name;
+				overlay.setName(displayName);
 				const ok = await stage.loadPersona({
 					glbUrl: resolved.glbUrl,
 					name: resolved.name,
