@@ -60,9 +60,14 @@ export async function runVerifier({ cfg, citizen, job } = {}) {
 		citizen,
 		deliverableUrl: deliverable.url,
 		deliverableBytes: attBytes,
+		// A mismatch prints both hashes IN FULL. Truncated, the two read as
+		// identical whenever they diverge past the prefix (a single flipped digit
+		// renders as "ca515557e6a2… ≠ ca515557e6a2…"), which makes the one message
+		// that has to be unambiguous look like a match. The match case keeps the
+		// short form: there is only one value and it is stated in the proof field.
 		summary: match
 			? `Verified ${target.profession || 'deliverable'}: sha256 matches the on-chain proof (${recomputed.slice(0, 12)}…)`
-			: `MISMATCH: recomputed ${recomputed.slice(0, 12)}… ≠ on-chain ${claimed.slice(0, 12)}…`,
+			: `MISMATCH: recomputed ${recomputed} != on-chain ${claimed}`,
 		meta: { stored: deliverable.stored },
 	});
 
