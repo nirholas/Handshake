@@ -52,15 +52,37 @@ dependency hardening**.
 - No-fix transitive cluster: `undici`, `bigint-buffer`, `@solana/spl-token`,
   `@solana/buffer-layout-utils` — track upstream.
 
-**Remediation:** `npm audit fix --omit=dev` clears ~16 advisories (175 → 159) via
-semver-compatible bumps, but in this monorepo it also reformats ~57k lines of
-`package-lock.json` (npm version skew) — an unreviewable diff that conflicts with
-concurrent work. So dependency bumps are deliberately **isolated to their own PR**:
-run `npm audit fix --omit=dev` on a clean branch, review, and land separately.
-The `@metaplex-foundation/js@0.19.5` breaking bump (clears axios/form-data/aptos)
-and the no-fix Solana cluster (`undici`, `bigint-buffer`, `@solana/spl-token`)
-are tracked upstream. **Status: tracked (isolated dependency PR) — command
-verified to reduce counts; not bundled into this security changeset.**
+**Remediation (landed 2026-08-06):** the breaking `@metaplex-foundation/js`
+bump turned out to be unnecessary. That package was declared by four workspaces
+(`agent-payments-sdk`, `character-studio`, `mcp-server`, `multiplayer`) and
+imported by none: the codebase mints through `umi` + `mpl-core`, and the only
+reference left was a commented-out import. Dropping it removes the whole
+`aptos` → `axios@0.27` / `form-data@4.0.0` / `@irys/sdk` subtree, which is where
+two of the three criticals lived. The third (`protobufjs`) came from two
+`6.11.6` copies under `@confio/ics23` and `@bnb-chain/greenfield-cosmos-types`,
+collapsed by a global `protobufjs: ^7.6.5` override. `wrangler` (unused, in the
+vendored studio fork) went with them, taking `miniflare` and its `undici`.
+
+Semver-compatible pins for the rest live in root `overrides`: `axios ^1.18.1`,
+`ws ^8.21.0`, `tmp` under `solc`, `bn.js` under `ethjs-unit` / `number-to-bn`,
+`cookie` under `@sentry/node`, `undici` under `hardhat` / `eas-sdk`, plus a
+direct `sharp` bump to `^0.35.3` (libvips CVEs). Regenerating the lockfile with
+npm 11 produced a reviewable diff, not the 57k-line reformat the original
+remediation feared.
+
+Production tree: **3 critical / 41 high / 128 total → 0 critical / 18 high /
+82 total**. Full tree including dev: 0 critical / 19 high.
+
+Two packages had been resolving only as hoisted transitives of the removed
+subtree, so they are now declared devDependencies: `dotenv` (seven root scripts)
+and `puppeteer` (`scripts/verify-ibm-pages.mjs`).
+
+**Still tracked upstream, no non-breaking fix published:** `bigint-buffer` (and
+therefore the `@solana/buffer-layout-utils` → `@solana/spl-token` cluster),
+`adm-zip` and `undici@5` under `hardhat` (a build tool pulled in as a runtime
+dependency by `@ethereum-attestation-service/eas-contracts`, never executed on a
+request path), `lodash.set` under the greenfield SDK, and `@libp2p/kad-dht`
+under `helia`. **Status: fixed (0 critical); residue tracked.**
 
 ---
 
@@ -190,8 +212,28 @@ allowlist multiplies supply-chain exposure.
 
 **Remediation:** move toward nonce/hash inline allowance; scope `'unsafe-eval'`
 to the routes that genuinely need WASM/shader compilation; trim the CDN
-allowlist; remove the duplicate `https://three.ws`. **Status: partially fixed
-(CDN trim + dedupe + scope); nonce migration tracked.**
+allowlist; remove the duplicate `https://three.ws`.
+
+`'unsafe-inline'` is gone as of 2026-08-06. `server/csp-hashes.mjs` rewrites the
+`script-src` of every HTML response to list the SHA-256 hashes of the inline
+scripts in the bytes actually being sent. Hashes rather than a nonce because
+HTML is cached at the CDN edge, where a per-request nonce and a cached document
+disagree. Hashes cannot cover an inline event handler or a `javascript:` URL, so
+those were removed site-wide and `scripts/audit-inline-handlers.mjs` (registered
+in `data/guards.json`, wired into `npm run gate`) fails the build if one returns.
+
+`'unsafe-eval'` remains, and is the weakest link now that inline injection is
+closed. It cannot simply be dropped: the shipped bundles carry three distinct
+`new Function` users. Two degrade gracefully when eval is blocked (the msgpack
+and protobuf JIT in `colyseus-connect` sets its codegen threshold to Infinity on
+a failed feature test; pdf.js gates on `isEvalSupported`), but the `cwise`
+codegen inside the main `index` bundle and the `new Function` in
+`public/scene-studio/{app/app.js,libs/acorn/acorn.js}` do not. Scoping it needs
+`'wasm-unsafe-eval'` globally, `'unsafe-eval'` kept on `/scene-studio`, and a
+`cwise`-free path for the main bundle, verified by a real browser sweep
+(`npm run audit:web`) rather than by reading headers. **Status: `'unsafe-inline'`
+fixed (per-response hashes); CDN trim + dedupe done; `'unsafe-eval'` scoping
+tracked with the plan above.**
 
 ### H13 — Wildcard CORS on ~25 authenticated handlers
 Hand-rolled `Access-Control-Allow-Origin: *` on session-authenticated handlers.
