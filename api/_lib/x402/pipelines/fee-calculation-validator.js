@@ -71,8 +71,14 @@ const BOUNDARY_ATOMICS = [1, 999, 1000, 1001, 999999];
 // The live boundary we actually settle on-chain. dance-tip quotes exactly $0.001
 // (1000 atomics) via priceFor — one of the boundaries above — so a real payment
 // closes the loop on the deployed quote vs. the local fee math.
-const LIVE_ROUTE = '/api/x402/dance-tip';
-const LIVE_BODY = { dancer: '1', dance: 'hiphop' };
+// dance-tip is declared GET (paidEndpoint({ method: 'GET' }) in api/x402/dance-tip.js)
+// and reads its selection from QUERY params. A credential-less request on any
+// method still gets the 402 challenge, so the free quote probe worked either way,
+// but the PAID replay on the wrong method is answered with a strict 405: the
+// validator's live settle leg had never once landed. Both legs ride GET now.
+const LIVE_QUERY = 'dancer=1&dance=hiphop';
+const LIVE_ROUTE = `/api/x402/dance-tip?${LIVE_QUERY}`;
+const LIVE_METHOD = 'GET';
 const LIVE_EXPECTED_ATOMIC = Number(priceFor('dance-tip', '1000'));
 
 const MINT = () => USDC_MINT || env.X402_ASSET_MINT_SOLANA || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -195,9 +201,8 @@ async function probeLiveQuote(origin) {
 	const url = `${origin}${LIVE_ROUTE}`;
 	try {
 		const res = await fetchWithTimeout(url, {
-			method: 'POST',
+			method: LIVE_METHOD,
 			headers: { 'content-type': 'application/json', 'user-agent': 'threews-x402-autonomous/1.0' },
-			body: JSON.stringify(LIVE_BODY),
 		});
 		if (res.status !== 402) {
 			return { quotedAtomic: null, error: `unexpected_status_${res.status}` };
@@ -228,6 +233,12 @@ async function probeLiveQuote(origin) {
  * @param {object} [ctx.mintInfo]           USDC mint info (fetched if absent)
  * @param {number} [ctx.remainingCap]       spend ceiling for this run (atomics)
  */
+// The live boundary leg's HTTP shape, exported so the registry shape guard can
+// assert it against ring-catalog.js (the source of truth for every paid route's
+// method + query form). A pipeline that drifts off its endpoint's method pays for
+// a 405 instead of a settlement.
+export const FEE_VALIDATOR_PROBE = Object.freeze({ path: LIVE_ROUTE, method: LIVE_METHOD });
+
 export async function run(ctx = {}) {
 	const t0 = Date.now();
 	const runId = ctx.runId || randomUUID();
@@ -290,8 +301,8 @@ export async function run(ctx = {}) {
 			}
 			const r = await payX402({
 				url: `${origin}${LIVE_ROUTE}`,
-				method: 'POST',
-				body: LIVE_BODY,
+				method: LIVE_METHOD,
+				body: null,
 				buyer, conn, blockhash, mintInfo,
 				remainingCap,
 				userAgent: 'threews-x402-fee-validator/1.0',

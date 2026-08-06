@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 
 import { getSelfRegistry } from '../api/_lib/x402/autonomous-registry.js';
+import { RING_CATALOG } from '../api/_lib/x402/ring-catalog.js';
+import { CIRCUIT_BREAKER_PROBE } from '../api/_lib/x402/pipelines/circuit-breaker.js';
+import { FEE_VALIDATOR_PROBE } from '../api/_lib/x402/pipelines/fee-calculation-validator.js';
 
 // Regression guard for the July 2026 405 wave: the three "Dance Tip Volume"
 // entries POSTed a JSON body at /api/x402/dance-tip, a GET-only endpoint that
@@ -18,6 +21,25 @@ describe('autonomous registry HTTP shape', () => {
 			expect(e.method).toBe('GET');
 			expect(e.body ?? null).toBeNull();
 			expect(e.path).toMatch(/^\/api\/x402\/dance-tip\?dancer=\d&dance=\w+$/);
+		}
+	});
+
+	// run()-style pipelines own their whole call sequence, so the registry shape
+	// guard above cannot see them. Both of these settle against dance-tip and both
+	// POSTed at it, which the paid endpoint answers with a strict 405 once a
+	// payment is attached: the circuit breaker reported "solana FAILED" every hour
+	// and the fee validator's live settle leg had never once landed.
+	it('run()-style dance-tip probes match the catalog HTTP shape', () => {
+		const catalogEntry = RING_CATALOG.find((e) => e.slug === 'dance-tip');
+		expect(catalogEntry).toBeDefined();
+		for (const probe of [CIRCUIT_BREAKER_PROBE, FEE_VALIDATOR_PROBE]) {
+			const [path, query] = probe.path.split('?');
+			expect(path).toBe(catalogEntry.path);
+			expect(probe.method).toBe(catalogEntry.method);
+			// A GET endpoint takes its selection as query params, never a body.
+			expect(probe).not.toHaveProperty('body');
+			expect(new URLSearchParams(query).get('dancer')).toMatch(/^\d+$/);
+			expect(new URLSearchParams(query).get('dance')).toBeTruthy();
 		}
 	});
 

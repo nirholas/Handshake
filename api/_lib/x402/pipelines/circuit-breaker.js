@@ -50,8 +50,17 @@ const NET_BSC = 'eip155:56';
 // side effect the volume entries already produce, so an hourly breaker tip is
 // consistent with existing traffic. A 402 challenge alone (the probe) books
 // nothing; the ticket is created only after payment settles.
-const PROBE_PATH = '/api/x402/dance-tip';
-const PROBE_BODY = { dancer: '4', dance: 'hiphop' };
+//
+// dance-tip is a GET route (paidEndpoint({ method: 'GET' }) in api/x402/dance-tip.js)
+// and takes its dancer/dance selection as QUERY params. The paid endpoint answers a
+// credential-less request on the wrong method with the 402 challenge (so discovery
+// still works), but a request that CARRIES a payment on the wrong method gets a
+// strict 405, which is exactly what the breaker's settle leg was collecting every
+// hour ("solana FAILED" with a hidden http_405 in signal_data). Probe and settle
+// both ride the documented GET now.
+const PROBE_QUERY = 'dancer=4&dance=hiphop';
+const PROBE_PATH = `/api/x402/dance-tip?${PROBE_QUERY}`;
+const PROBE_METHOD = 'GET';
 
 // Networks the breaker expects the platform to advertise. `settle` flags the one
 // network we actually pay on (Solana) vs. those we only route-verify (Base/BSC).
@@ -198,12 +207,11 @@ export async function runCircuitBreaker(ctx) {
 	let challenge;
 	try {
 		const probe = await fetchWithTimeout(endpointUrl, {
-			method: 'POST',
+			method: PROBE_METHOD,
 			headers: {
 				'content-type': 'application/json',
 				'user-agent': 'threews-x402-circuit-breaker/1.0',
 			},
-			body: JSON.stringify(PROBE_BODY),
 		});
 		if (probe.status !== 402) {
 			// A $0.001 paid endpoint that does NOT challenge is itself a stack fault.
@@ -262,8 +270,8 @@ export async function runCircuitBreaker(ctx) {
 		try {
 			const r = await payX402({
 				url: endpointUrl,
-				method: 'POST',
-				body: PROBE_BODY,
+				method: PROBE_METHOD,
+				body: null,
 				buyer, conn, blockhash, mintInfo,
 				remainingCap: remainingCap ?? Infinity,
 				userAgent: 'threews-x402-circuit-breaker/1.0',
@@ -319,4 +327,4 @@ export async function runCircuitBreaker(ctx) {
 	};
 }
 
-export const CIRCUIT_BREAKER_PROBE = Object.freeze({ path: PROBE_PATH, body: PROBE_BODY });
+export const CIRCUIT_BREAKER_PROBE = Object.freeze({ path: PROBE_PATH, method: PROBE_METHOD });
