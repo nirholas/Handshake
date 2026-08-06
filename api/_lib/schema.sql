@@ -1048,7 +1048,7 @@ create index if not exists usage_events_metered_user_time on usage_events(user_i
 create table if not exists agent_registrations_pending (
 	id              uuid primary key default gen_random_uuid(),
 	user_id         uuid not null references users(id) on delete cascade,
-	cid             text not null,                         -- IPFS CID
+	cid             text,                                  -- IPFS CID (null when stored via the R2 fallback)
 	metadata_uri    text not null,                         -- ipfs://CID
 	payload         jsonb not null,                        -- registration JSON
 	created_at      timestamptz not null default now(),
