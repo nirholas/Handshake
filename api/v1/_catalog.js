@@ -178,6 +178,19 @@ export const CATALOG = [
 		},
 	},
 	{
+		id: 'v1.gas',
+		method: 'GET',
+		path: '/api/v1/gas',
+		auth: 'public',
+		summary:
+			'Keyless EVM gas prices for 12 chains: normalized safe/standard/fast maxFee/maxPriorityFee ' +
+			'tiers plus baseFee (gwei), from a Blocknative -> Owlracle -> Etherscan failover chain, ' +
+			'cached 10s per chain.',
+		params: {
+			chain: 'string: chain name, alias, or numeric chainId (default ethereum); ?chains=1 lists supported chains',
+		},
+	},
+	{
 		id: 'v1.evm.swap-quote',
 		method: 'GET',
 		path: '/api/v1/evm/swap-quote',
