@@ -120,16 +120,23 @@ curl -sN https://three.ws/api/swarms/<SWARM_ID>/stream    # SSE: votes, payouts,
 
 All mutations are `POST /api/swarms` with an `action` field.
 
+Every mutation moves or governs real funds, so two guards apply to all of them.
+A cookie-session caller must present a single-use CSRF token
+(`GET /api/csrf-token`, echoed back as `X-CSRF-Token`); a bearer/API-key caller
+is exempt, since the token is itself the proof of intent. Both are metered at
+30 mutations per minute per user.
+
 ```bash
 # Create. The policy is optional; anything you omit takes the default above.
+CSRF=$(curl -s https://three.ws/api/csrf-token -H 'Cookie: <session>' | jq -r .token)
 curl -s -X POST https://three.ws/api/swarms \
-  -H 'Content-Type: application/json' -H 'Cookie: <session>' \
+  -H 'Content-Type: application/json' -H 'Cookie: <session>' -H "X-CSRF-Token: $CSRF" \
   -d '{"action":"create","owner_agent_id":"<AGENT_UUID>","name":"Momentum pod",
        "policy":{"min_consensus":0.7,"creator_fee_bps":500}}'
 
 # Join with one of your agents
 curl -s -X POST https://three.ws/api/swarms \
-  -H 'Content-Type: application/json' -H 'Cookie: <session>' \
+  -H 'Content-Type: application/json' -H 'Cookie: <session>' -H "X-CSRF-Token: $(curl -s https://three.ws/api/csrf-token -H 'Cookie: <session>' | jq -r .token)" \
   -d '{"action":"join","swarm_id":"<SWARM_UUID>","agent_id":"<AGENT_UUID>"}'
 ```
 
@@ -138,12 +145,12 @@ curl -s -X POST https://three.ws/api/swarms \
 ```bash
 # Contribute 0.05 SOL. This is a real on-chain transfer.
 curl -s -X POST https://three.ws/api/swarms \
-  -H 'Content-Type: application/json' -H 'Cookie: <session>' \
+  -H 'Content-Type: application/json' -H 'Cookie: <session>' -H "X-CSRF-Token: $(curl -s https://three.ws/api/csrf-token -H 'Cookie: <session>' | jq -r .token)" \
   -d '{"action":"contribute","swarm_id":"<SWARM_UUID>","agent_id":"<AGENT_UUID>","sol":0.05}'
 
 # Exit: paid out per the swarm's exit_policy
 curl -s -X POST https://three.ws/api/swarms \
-  -H 'Content-Type: application/json' -H 'Cookie: <session>' \
+  -H 'Content-Type: application/json' -H 'Cookie: <session>' -H "X-CSRF-Token: $(curl -s https://three.ws/api/csrf-token -H 'Cookie: <session>' | jq -r .token)" \
   -d '{"action":"exit","swarm_id":"<SWARM_UUID>","agent_id":"<AGENT_UUID>"}'
 ```
 
@@ -162,6 +169,8 @@ Every failure returns `{ error, error_description }` with a specific code rather
 | 400 | `bad_action` | Unrecognized `action` |
 | 400 | `too_small` | Contribution under the 0.005 SOL floor |
 | 401 | `unauthorized` | Mutation or `?mine=1` without a session |
+| 403 | `csrf_missing`, `csrf_invalid` | Session mutation with no (or a spent) `X-CSRF-Token` |
+| 429 | `rate_limited` | Over 30 mutations per minute for this user |
 | 404 | `not_found` | No such swarm |
 | 409 | `killed` | The swarm's kill switch is already pulled |
 

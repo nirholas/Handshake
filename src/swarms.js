@@ -16,11 +16,32 @@ const short = (a) => (a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '');
 
 const state = { network: 'mainnet', agents: null, authed: false };
 
+// Single-use CSRF token for a state-changing call. Never cached: the server
+// consumes the token in the same statement that validates it, so a reused one is
+// a guaranteed 403 on the next write.
+async function csrfToken() {
+	try {
+		const r = await fetch('/api/csrf-token', { credentials: 'include' });
+		if (!r.ok) return null;
+		const j = await r.json().catch(() => null);
+		return j?.token || j?.data?.token || null;
+	} catch {
+		return null;
+	}
+}
+
 async function api(path, opts = {}) {
 	const ctrl = new AbortController();
 	const to = setTimeout(() => ctrl.abort(), opts.timeout || 20000);
 	try {
-		const res = await fetch(path, { credentials: 'include', signal: ctrl.signal, ...opts });
+		const headers = { ...(opts.headers || {}) };
+		// Every swarm mutation moves or governs real funds, so the server requires a
+		// CSRF token on cookie-session writes.
+		if (opts.method && opts.method.toUpperCase() !== 'GET') {
+			const token = await csrfToken();
+			if (token) headers['x-csrf-token'] = token;
+		}
+		const res = await fetch(path, { credentials: 'include', signal: ctrl.signal, ...opts, headers });
 		const data = await res.json().catch(() => null);
 		return { ok: res.ok, status: res.status, data: data?.data ?? data, error: res.ok ? null : data?.message || data?.error || `HTTP ${res.status}` };
 	} catch (e) {
