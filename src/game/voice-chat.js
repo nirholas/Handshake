@@ -30,6 +30,12 @@ import { log } from '../shared/log.js';
 const CONNECT_RANGE = 27;
 const DISCONNECT_RANGE = 33;
 
+// Ceiling on simultaneous WebRTC peer connections, holding the NEAREST ones.
+// Each connection costs an Opus encode + decode + PannerNode per side; 8 is
+// comfortably inside what a mid-range phone sustains, and 8 spatially-mixed
+// voices is already a crowd to the ear.
+const MAX_VOICE_PEERS = 8;
+
 // Panner distance model: full volume within REF_DISTANCE, linearly down to
 // silence at MAX_DISTANCE. Linear (not inverse) so walking past the edge is a
 // clean fade to nothing rather than a never-quite-zero tail.
@@ -148,17 +154,33 @@ export class VoiceChat {
 		if (!this.joined || !this.ctx) return;
 		this._setListener(selfPos, forward);
 
-		for (const p of peers) {
+		// Rank in-range voice peers by distance and hold connections only to the
+		// MAX_VOICE_PEERS nearest. The mesh is bounded by crowd density, not room
+		// size: at a live event everyone stands at the stage, and an uncapped mesh
+		// asks each browser for N-1 RTCPeerConnections plus N-1 Opus encoders,
+		// which flattens laptops and kills phones outright. Past the cap only the
+		// farthest connections are dropped, so the audible neighbourhood stays.
+		const inVoice = peers
+			.map((p) => ({ p, d: Math.hypot(p.x - selfPos.x, (p.y || 0) - (selfPos.y || 0), p.z - selfPos.z) }))
+			.filter(({ p }) => p.voice)
+			.sort((a, b) => a.d - b.d);
+		const keep = new Set(inVoice.slice(0, MAX_VOICE_PEERS).map(({ p }) => p.id));
+
+		for (const { p, d } of inVoice) {
 			const peer = this.peers.get(p.id);
-			const d = Math.hypot(p.x - selfPos.x, (p.y || 0) - (selfPos.y || 0), p.z - selfPos.z);
 			if (peer) {
 				this._setPanner(peer, p);
-				if (!p.voice || d > DISCONNECT_RANGE) this._closePeer(p.id);
-			} else if (p.voice && d < CONNECT_RANGE && this.selfId < p.id) {
+				if (d > DISCONNECT_RANGE || !keep.has(p.id)) this._closePeer(p.id);
+			} else if (keep.has(p.id) && d < CONNECT_RANGE && this.selfId < p.id) {
 				// Deterministic initiator: the lower sessionId dials, so two peers
 				// entering range simultaneously never both offer.
 				this._call(p.id);
 			}
+		}
+		// Peers that muted (voice=false) keep a stale connection open unless
+		// closed here, same as before the cap.
+		for (const p of peers) {
+			if (!p.voice && this.peers.has(p.id)) this._closePeer(p.id);
 		}
 		this._meter();
 	}
