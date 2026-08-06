@@ -91,8 +91,14 @@ function serialize(value) {
 	return value;
 }
 
-function taskStateLabel(state) {
-	const map = { 0: 'Open', 1: 'Claimed', 2: 'Completed', 3: 'Cancelled', 4: 'Disputed', 5: 'Expired' };
+// AgenC's on-chain TaskState enum, verbatim (@tetsuo-ai/sdk `TaskState` /
+// `formatTaskState`). This map was previously shifted by one past `Open`, which
+// reported a Completed task as "Cancelled" and a Cancelled one as "Disputed": the
+// worst kind of wrong, because it reads as a definite (and alarming) status rather
+// than an error. There is no 'Expired' state on-chain; a lapsed deadline leaves the
+// task Open until its creator cancels it.
+export function taskStateLabel(state) {
+	const map = { 0: 'Open', 1: 'In Progress', 2: 'Pending Validation', 3: 'Completed', 4: 'Cancelled', 5: 'Disputed' };
 	if (typeof state === 'number') return map[state] ?? `Unknown(${state})`;
 	if (state && typeof state === 'object') {
 		const key = Object.keys(state)[0];
