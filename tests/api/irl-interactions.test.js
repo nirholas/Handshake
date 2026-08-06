@@ -67,6 +67,15 @@ vi.mock('../../api/_lib/alerts.js', () => ({
 	sendOpsAlert: (...a) => alertMock(...a),
 }));
 
+// A pay only counts once the handler has seen the settlement on-chain, so the
+// proof is the thing under test here, not the RPC that fetches it. Left
+// unstubbed these specs hit a real network read, come back `pending`, and every
+// assertion about a *verified* pay silently tests the pending path instead.
+let settlementProof = { status: 'match' };
+vi.mock('../../api/_lib/settlement-verify.js', () => ({
+	verifySettlement: vi.fn(async () => settlementProof),
+}));
+
 const { default: handler } = await import('../../api/irl/interactions.js');
 
 // A real Solana settlement signature (base58, 43–88 chars) and the $THREE mint —
@@ -185,6 +194,20 @@ describe('POST — pay is only recorded with a verified settlement', () => {
 		expect(insertedPayload().signature).toBe(SOL_SIG);
 		expect(notifyMock).toHaveBeenCalledWith('owner-uuid', 'irl_interaction', expect.objectContaining({ kind: 'pay' }));
 		expect(alertMock).toHaveBeenCalled();
+	});
+
+	it('holds a pay at 202 while the settlement is not yet visible on-chain', async () => {
+		settlementProof = { status: 'pending' };
+		const { res, body } = await post({
+			pinId: 'pin-1', type: 'pay', amount: 50000, currencyMint: THREE_MINT, signature: SOL_SIG,
+		});
+		expect(res.statusCode).toBe(202);
+		expect(body.pending).toBe(true);
+		// The row is kept so the sweep can prove it later, but nothing downstream
+		// treats it as money yet.
+		expect(lastInsert).not.toBeNull();
+		expect(notifyMock).not.toHaveBeenCalled();
+		expect(alertMock).not.toHaveBeenCalled();
 	});
 
 	it('de-dupes a pay by signature (one settlement → one row)', async () => {

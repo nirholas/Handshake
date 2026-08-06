@@ -51,6 +51,12 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 }));
 vi.mock('../../api/_lib/notify.js', () => ({ insertNotification: vi.fn() }));
 vi.mock('../../api/_lib/alerts.js', () => ({ sendOpsAlert: vi.fn() }));
+// This spec is about what a pay stores, not about proving it: stub the on-chain
+// check to a match so an unstubbed RPC read cannot turn every accepted pay into
+// a 202 pending and hide the assertions behind it.
+vi.mock('../../api/_lib/settlement-verify.js', () => ({
+	verifySettlement: vi.fn(async () => ({ status: 'match' })),
+}));
 
 const { default: handler } = await import('../../api/irl/interactions.js');
 
