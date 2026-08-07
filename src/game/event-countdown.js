@@ -1,8 +1,10 @@
 // Event countdown for /play: lobby banner + in-world pill.
 //
 // Self-attaching, like ambient-crowd.js: ZERO edits to coincommunities.js or
-// coincommunities-ui.js. It reads /event.json (public/event.json in the repo),
-// and while an event is upcoming or live it mounts two views:
+// coincommunities-ui.js. The event window comes from src/shared/event-config.js,
+// which reads /event.json (public/event.json in the repo) and is the same reader
+// the home-page strip uses, so the two surfaces cannot drift apart. While an
+// event is upcoming or live this mounts two views:
 //
 //   1. A lobby banner at the top of the lobby scroll, with the event name,
 //      a ticking countdown, the start time in the player's own timezone, and
@@ -15,7 +17,9 @@
 // unmounts and the interval stops). A missing or malformed event.json mounts
 // nothing; the page owes the player zero pixels when there is no event.
 
-const CONFIG_URL = '/event.json';
+import {
+	loadEventConfig, eventState, segments, pad, clockString, formatStart, alreadyAtEvent,
+} from '../shared/event-config.js';
 
 function el(tag, attrs = {}, children = []) {
 	const n = document.createElement(tag);
@@ -98,53 +102,6 @@ body.is-zen .cc-event-pill { opacity: 0; pointer-events: none; }
 }
 `;
 
-function parseConfig(raw) {
-	if (!raw || typeof raw !== 'object') return null;
-	const startsAt = Date.parse(raw.startsAt);
-	if (!Number.isFinite(startsAt)) return null;
-	const endsAt = Date.parse(raw.endsAt);
-	return {
-		name: String(raw.name || 'Live event'),
-		tagline: raw.tagline ? String(raw.tagline) : '',
-		startsAt,
-		// An event with no (or bad) end time stays "live" for 6 hours.
-		endsAt: Number.isFinite(endsAt) ? endsAt : startsAt + 6 * 3600 * 1000,
-		link: raw.link ? String(raw.link) : null,
-		linkLabel: raw.linkLabel ? String(raw.linkLabel) : 'Join the event',
-	};
-}
-
-// The pill's CTA is pointless when the player is already standing in the event
-// world: compare the event link's coin param against the current URL's.
-function alreadyAtEvent(cfg) {
-	if (!cfg.link) return false;
-	try {
-		const target = new URL(cfg.link, location.origin);
-		const targetCoin = target.searchParams.get('coin');
-		const hereCoin = new URLSearchParams(location.search).get('coin');
-		return !!targetCoin && targetCoin === hereCoin;
-	} catch { return false; }
-}
-
-function fmtStart(ts) {
-	return new Intl.DateTimeFormat(undefined, {
-		weekday: 'short', month: 'short', day: 'numeric',
-		hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
-	}).format(new Date(ts));
-}
-
-function pad(n) { return String(n).padStart(2, '0'); }
-
-function segments(ms) {
-	const s = Math.max(0, Math.floor(ms / 1000));
-	return {
-		d: Math.floor(s / 86400),
-		h: Math.floor((s % 86400) / 3600),
-		m: Math.floor((s % 3600) / 60),
-		s: s % 60,
-	};
-}
-
 class EventCountdown {
 	constructor(cfg) {
 		this.cfg = cfg;
@@ -172,7 +129,7 @@ class EventCountdown {
 				this.bannerKicker,
 				el('div', { class: 'cc-event-name', text: this.cfg.name }),
 				this.cfg.tagline ? el('div', { class: 'cc-event-tagline', text: this.cfg.tagline }) : null,
-				el('div', { class: 'cc-event-when', text: `Starts ${fmtStart(this.cfg.startsAt)}` }),
+				el('div', { class: 'cc-event-when', text: `Starts ${formatStart(this.cfg.startsAt)}` }),
 			]),
 			this.bannerClock,
 			this.cfg.link ? el('a', { class: 'cc-event-cta', href: this.cfg.link, text: this.cfg.linkLabel }) : null,
@@ -205,9 +162,9 @@ class EventCountdown {
 
 	_tick() {
 		const now = Date.now();
-		if (now >= this.cfg.endsAt) return this.destroy();
-		const live = now >= this.cfg.startsAt;
-		const state = live ? 'live' : 'upcoming';
+		const state = eventState(this.cfg, now);
+		if (state === 'over') return this.destroy();
+		const live = state === 'live';
 
 		if (this.banner) {
 			this.banner.setAttribute('data-state', state);
@@ -234,9 +191,7 @@ class EventCountdown {
 			if (live) {
 				this.pillText.textContent = `${this.cfg.name} · LIVE`;
 			} else {
-				const t = segments(this.cfg.startsAt - now);
-				const clock = (t.d > 0 ? `${t.d}d ` : '') + `${pad(t.h)}:${pad(t.m)}:${pad(t.s)}`;
-				this.pillText.textContent = `${this.cfg.name} · ${clock}`;
+				this.pillText.textContent = `${this.cfg.name} · ${clockString(this.cfg.startsAt - now)}`;
 			}
 		}
 	}
@@ -250,13 +205,8 @@ class EventCountdown {
 }
 
 async function boot() {
-	let cfg = null;
-	try {
-		const res = await fetch(CONFIG_URL, { cache: 'no-cache' });
-		if (!res.ok) return;
-		cfg = parseConfig(await res.json());
-	} catch { return; }
-	if (!cfg || Date.now() >= cfg.endsAt) return;
+	const cfg = await loadEventConfig();
+	if (!cfg) return;
 
 	// The lobby is built by coincommunities.js at boot; wait for it to exist so
 	// the banner has somewhere to mount. If it never shows up (boot failure),

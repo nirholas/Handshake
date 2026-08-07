@@ -6,44 +6,41 @@ import {
 
 const START = Date.parse('2026-08-07T17:00:00Z');
 
+// The flat /event.json shape shared with src/game/event-countdown.js.
 const DOC = {
-	events: [{
-		id: 'three-first-meetup',
-		title: '$THREE First Holders Meetup',
-		subtitle: 'The first live gathering in the world',
-		startsAt: '2026-08-07T17:00:00Z',
-		durationMin: 90,
-		agenda: [
-			{ atMin: 0, title: 'Welcome to the plaza', icon: '👋' },
-			{ atMin: 15, title: 'King of the Totem showdown', icon: '👑', x: 10, z: -5 },
-			{ atMin: 40, title: 'Wheel hour', icon: '🎡' },
-			{ atMin: 75, title: 'Fireworks finale', icon: '🎆' },
-		],
-	}],
+	id: 'three-first-meetup',
+	name: '$THREE First Holders Meetup',
+	tagline: 'The first live gathering in the world',
+	startsAt: '2026-08-07T17:00:00Z',
+	endsAt: '2026-08-07T19:00:00Z',
+	agenda: [
+		{ atMin: 0, title: 'Doors open', icon: '👋' },
+		{ atMin: 20, title: 'King of the Totem showdown', icon: '👑' },
+		{ atMin: 45, title: 'Wheel hour', icon: '🎡' },
+		{ atMin: 105, title: 'Fireworks finale', icon: '🎆' },
+	],
 };
 
 describe('parseEvent', () => {
-	it('parses a valid event with sorted agenda and computed end', () => {
+	it('parses the flat event.json shape', () => {
 		const ev = parseEvent(DOC);
 		expect(ev.id).toBe('three-first-meetup');
+		expect(ev.title).toBe('$THREE First Holders Meetup');
+		expect(ev.subtitle).toContain('first live gathering');
 		expect(ev.startsAt).toBe(START);
-		expect(ev.endsAt).toBe(START + 90 * 60000);
+		expect(ev.endsAt).toBe(START + 120 * 60000);
 		expect(ev.agenda).toHaveLength(4);
-		expect(ev.agenda[1].x).toBe(10);
-		expect(ev.agenda[0].x).toBeNull();
 	});
 
 	it('sorts an out-of-order agenda and drops invalid segments', () => {
 		const ev = parseEvent({
-			events: [{
-				startsAt: '2026-08-07T17:00:00Z',
-				agenda: [
-					{ atMin: 30, title: 'B' },
-					{ atMin: 0, title: 'A' },
-					{ atMin: 'nope', title: 'bad' },
-					{ atMin: 5, title: '' },
-				],
-			}],
+			startsAt: '2026-08-07T17:00:00Z',
+			agenda: [
+				{ atMin: 30, title: 'B' },
+				{ atMin: 0, title: 'A' },
+				{ atMin: 'nope', title: 'bad' },
+				{ atMin: 5, title: '' },
+			],
 		});
 		expect(ev.agenda.map((s) => s.title)).toEqual(['A', 'B']);
 	});
@@ -51,13 +48,14 @@ describe('parseEvent', () => {
 	it('returns null for empty, malformed, or dateless docs', () => {
 		expect(parseEvent(null)).toBeNull();
 		expect(parseEvent({})).toBeNull();
-		expect(parseEvent({ events: [] })).toBeNull();
-		expect(parseEvent({ events: [{ startsAt: 'not a date' }] })).toBeNull();
+		expect(parseEvent({ startsAt: 'not a date' })).toBeNull();
 	});
 
-	it('defaults duration to 60 minutes when missing or invalid', () => {
-		const ev = parseEvent({ events: [{ startsAt: '2026-08-07T17:00:00Z', durationMin: -3 }] });
-		expect(ev.endsAt - ev.startsAt).toBe(60 * 60000);
+	it('defaults a missing or inverted end to 6 hours after start', () => {
+		const noEnd = parseEvent({ startsAt: '2026-08-07T17:00:00Z' });
+		expect(noEnd.endsAt - noEnd.startsAt).toBe(6 * 3600 * 1000);
+		const inverted = parseEvent({ startsAt: '2026-08-07T17:00:00Z', endsAt: '2026-08-07T16:00:00Z' });
+		expect(inverted.endsAt - inverted.startsAt).toBe(6 * 3600 * 1000);
 	});
 });
 
@@ -81,24 +79,24 @@ describe('eventState phases', () => {
 	it('counts down to start', () => {
 		const s = eventState(ev, START - 90_000);
 		expect(s.msToStart).toBe(90_000);
-		expect(s.next.title).toBe('Welcome to the plaza');
+		expect(s.next.title).toBe('Doors open');
 	});
 
 	it('tracks the active and next segments while live', () => {
-		const s = eventState(ev, START + 16 * 60000);
+		const s = eventState(ev, START + 21 * 60000);
 		expect(s.active.title).toBe('King of the Totem showdown');
 		expect(s.next.title).toBe('Wheel hour');
-		expect(s.msToNext).toBe((40 - 16) * 60000);
+		expect(s.msToNext).toBe((45 - 21) * 60000);
 	});
 
 	it('has no next segment after the last one', () => {
-		const s = eventState(ev, START + 80 * 60000);
+		const s = eventState(ev, START + 110 * 60000);
 		expect(s.active.title).toBe('Fireworks finale');
 		expect(s.next).toBeNull();
 	});
 
 	it('reports live progress', () => {
-		const s = eventState(ev, START + 45 * 60000);
+		const s = eventState(ev, START + 60 * 60000);
 		expect(s.progress).toBeCloseTo(0.5, 5);
 	});
 });

@@ -143,6 +143,15 @@
 }
 #cc-meetup-flash.cc-meetup-flash--on { opacity: 0.85; transition: none; }
 
+/* One countdown at a time: while this layer's chip is mounted, the generic
+   event-countdown pill (same schedule, same event.json) stands down. */
+body.cc-meetup-ui .cc-event-pill { display: none; }
+
+/* Zen mode strips every overlay; the meetup UI complies like the rest. */
+body.is-zen #cc-meetup-chip,
+body.is-zen #cc-meetup-panel,
+body.is-zen #cc-meetup-banner { display: none; }
+
 @media (max-width: 640px) {
 	.cc-meetup-title { max-width: 38vw; }
 	#cc-meetup-banner { padding: 14px 26px; }

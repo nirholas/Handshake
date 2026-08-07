@@ -24,34 +24,32 @@ export const SOON_MS = 24 * 60 * 60 * 1000;   // chip appears a day out
 export const PRESHOW_MS = 30 * 60 * 1000;     // stage powers up 30 min early
 export const AFTERGLOW_MS = 20 * 60 * 1000;   // linger 20 min after the end
 
-// Parse one event out of a play-events.json document. Returns null when there
-// is nothing valid to run, so callers can treat "no events" and "bad config"
-// identically (the world simply stays normal).
+// Parse the event out of /event.json (the same file src/game/event-countdown.js
+// reads, so the pill and the in-world experience can never disagree). Returns
+// null when there is nothing valid to run, so callers can treat "no event" and
+// "bad config" identically (the world simply stays normal).
 export function parseEvent(doc) {
-	const raw = Array.isArray(doc?.events) ? doc.events.find((e) => e && e.startsAt) : null;
-	if (!raw) return null;
-	const startsAt = Date.parse(raw.startsAt);
+	if (!doc || typeof doc !== 'object') return null;
+	const startsAt = Date.parse(doc.startsAt);
 	if (!Number.isFinite(startsAt)) return null;
-	const durationMin = Number(raw.durationMin);
-	const durationMs = (Number.isFinite(durationMin) && durationMin > 0 ? durationMin : 60) * 60 * 1000;
-	const agenda = (Array.isArray(raw.agenda) ? raw.agenda : [])
+	const rawEnd = Date.parse(doc.endsAt);
+	// Same default event-countdown.js uses: a missing end keeps it live 6 hours.
+	const endsAt = Number.isFinite(rawEnd) && rawEnd > startsAt ? rawEnd : startsAt + 6 * 3600 * 1000;
+	const agenda = (Array.isArray(doc.agenda) ? doc.agenda : [])
 		.map((seg) => ({
 			atMin: Number(seg?.atMin),
 			title: String(seg?.title || '').slice(0, 80),
 			detail: String(seg?.detail || '').slice(0, 200),
 			icon: String(seg?.icon || '').slice(0, 8),
-			// Optional world-space anchor a client can drop a waypoint on.
-			x: Number.isFinite(Number(seg?.x)) ? Number(seg.x) : null,
-			z: Number.isFinite(Number(seg?.z)) ? Number(seg.z) : null,
 		}))
 		.filter((seg) => Number.isFinite(seg.atMin) && seg.atMin >= 0 && seg.title)
 		.sort((a, b) => a.atMin - b.atMin);
 	return {
-		id: String(raw.id || 'meetup').slice(0, 64),
-		title: String(raw.title || 'Community meetup').slice(0, 120),
-		subtitle: String(raw.subtitle || '').slice(0, 160),
+		id: String(doc.id || 'event').slice(0, 64),
+		title: String(doc.name || 'Community meetup').slice(0, 120),
+		subtitle: String(doc.tagline || '').slice(0, 160),
 		startsAt,
-		endsAt: startsAt + durationMs,
+		endsAt,
 		agenda,
 	};
 }
