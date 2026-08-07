@@ -113,6 +113,48 @@ request-level `approvalMode`, `allowList`, `confirmedHistory`, `userTier`, `user
 `userSwapVolume`, `balanceUsd`, `agentId`, `userId`, `spend` (a SpendGuard envelope), and
 `x402HourlyBudgetUsd`.
 
+## The server-side agent loop: `POST /api/agent/run`
+
+The same runtime also powers a full server-side agent: pick **"three.ws Agent · server
+tools"** in the /chat model picker and your message is answered by a tool-using loop running
+on the platform instead of a single model call. Per message it can:
+
+- look up **live token prices, 24h change, and market cap** (CoinGecko),
+- list **trending tokens**,
+- **search the web**,
+- read **SOL balances** for any wallet,
+- run the **trade-firewall safety verdict** on a mint (rug/honeypot checks with a simulated
+  buy+sell round trip),
+- check **smart-money activity** on a mint,
+- resolve **.sol names**.
+
+Every tool is read-only and every planned call is preflighted through the GuardChain in
+headless mode before it executes; a blacklisted call is fed back to the model as a blocked
+error, never run. The loop cannot move funds: no tool in the server registry transfers,
+swaps, or signs, and the wallet tools stay client-side behind the approval modal.
+
+For developers the endpoint speaks the **OpenAI chat-completions wire format** in both
+directions, so any OpenAI-compatible client can point at it:
+
+```bash
+curl -N https://three.ws/api/agent/run \
+  -H 'content-type: application/json' \
+  -d '{"messages":[{"role":"user","content":"Is SOL up today, and is <mint> safe to buy?"}],"stream":true}'
+```
+
+Streaming responses are standard `chat.completion.chunk` SSE frames; tool activity is
+surfaced as SSE comment lines (`: tool token_price`), which OpenAI parsers ignore by spec.
+Set `"stream": false` for a plain `chat.completion` JSON. The loop runs up to four tool
+rounds per request, is anonymous, and is rate-limited per IP. Under the hood it is
+`AgentRuntime` from the package above driving the shared free-first LLM chain
+([api/_lib/llm-tool-chain.js](../api/_lib/llm-tool-chain.js), the same lanes as the trading
+copilot) over the registry in [api/_lib/agent-tools.js](../api/_lib/agent-tools.js).
+
+One behavior worth knowing when using it from /chat: in agent mode the client-side tools
+(3D forge, wallet actions) are not offered to the model; it plans with its own server
+registry. Switch back to a plain model for wallet actions, which always go through the
+approval modal and the `/api/agent/guard` preflight.
+
 ## Related surfaces
 
 - [Agent Sniper](./agent-sniper.md) - the autonomous trading pipeline with its own trade
