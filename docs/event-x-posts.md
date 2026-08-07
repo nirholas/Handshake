@@ -146,6 +146,73 @@ Pick one. Do not post all three.
 
 ---
 
+## 5b. Sharing Jessica's IBM Community blog
+
+Jessica's post on the user group ("Join the Three.ws User Group's First In-World Meetup This
+Friday") is the single best asset in this campaign, because it is IBM's own voice saying the thing
+we have been saying all week. Our posts are marketing; hers is a user group organizer telling her
+own members not to skip this. Lead with who wrote it, let the quote carry the argument, and keep
+our own commentary to one line.
+
+Two accounts, two jobs. `@trythreews` posts the institutional version: IBM wrote this, here it is.
+`@nichxbt` posts the human version: working with her has been great. Do not put the warm personal
+note on the brand account, and do not post both within a few minutes of each other.
+
+### From @trythreews (recommended, tight quote)
+
+> The official blog for today's meetup is up on IBM Community, written by Jessica, a core member of
+> the @IBM Community team behind the Three.ws User Group.
+>
+> "It is not a video call. The three.ws team is hosting the group's first community meetup inside
+> the platform itself, in the flagship world at three.ws/play. You attend as an avatar, you hear
+> the people standing near you through spatial voice chat, and the product tour happens by
+> literally walking through the product."
+>
+> [blog link]
+
+That cut is deliberate. The second paragraph of her post is the whole argument in four sentences
+and it ends on the best line she wrote ("the product tour happens by literally walking through the
+product"). Ending a quote on the strongest sentence is worth more than including every sentence.
+
+### From @trythreews (full quote, if you want her framing of why the group exists)
+
+> The official blog for today's meetup is up on IBM Community, written by Jessica, a core member of
+> the @IBM Community team behind the Three.ws User Group.
+>
+> "When this user group launched in July, the promise was more than threads and blog posts: it was
+> live sessions with the people actually building AI agents with 3D capabilities. This Friday we
+> get the first one, and I want to make sure nobody misses it because they assumed it was another
+> webinar link.
+>
+> It is not a video call. You attend as an avatar, you hear the people standing near you through
+> spatial voice chat, and the product tour happens by literally walking through the product."
+>
+> [blog link]
+
+### From @nichxbt (the human one, quote-tweeting the @trythreews post above)
+
+> Jessica has been helping us with this from the start, and honestly it has been a pleasure working
+> with her. IBM Community got a real organizer on this group.
+>
+> Read her post, then come meet her in-world. She built her own 3D agent from a selfie for today.
+
+**Media for the @trythreews post:** Jessica's custom 3D agent, in-world, is the single best image
+you can attach. It closes the loop: the person who wrote the IBM blog is standing in the product,
+as an avatar she generated from a selfie. Second choice is a clean screenshot of the blog header on
+community.ibm.com so the IBM domain is visible in the frame.
+
+**Rules for this one:**
+
+- Name her and her role in the first line. "Jessica from IBM wrote this" is the headline, not the
+  blog title.
+- Quote verbatim inside quotation marks. Do not paraphrase her into our voice. The credibility of
+  the post comes entirely from it being her words, not ours.
+- One link, hers, at the end. Do not stack the event listing and the user group link on this post;
+  every other post in the campaign already carries those.
+- Do not add our own "and here is why that matters" paragraph. Her post already argues it.
+
+---
+
 ## 6. Recycling the existing `/play` footage
 
 Map what you already have to the beats above, so each post carries a clip that matches its copy:
