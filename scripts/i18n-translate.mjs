@@ -33,6 +33,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { config as dotenv } from 'dotenv';
 import JSON5 from 'json5';
+import './lib/gcloud-path.mjs';
 import {
 	ROOT,
 	loadConfig,

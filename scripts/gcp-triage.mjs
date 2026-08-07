@@ -29,25 +29,7 @@ import { existsSync } from 'node:fs';
 import tls from 'node:tls';
 import { auditCapacity, recommend as recommendCapacity } from './gpu-capacity.mjs';
 
-// gcloud is required, but non-interactive shells in this workspace do not
-// always carry the SDK on PATH (.bashrc only appends it for interactive
-// shells). Resolve a known install and prepend it, so this script AND every
-// child audit the deep sweep spawns inherit a working gcloud.
-(function ensureGcloudOnPath() {
-	const dirs = (process.env.PATH || '').split(':');
-	if (dirs.some((d) => d && existsSync(`${d}/gcloud`))) return;
-	for (const dir of [
-		`${process.env.HOME}/google-cloud-sdk/bin`,
-		'/usr/lib/google-cloud-sdk/bin',
-		'/usr/local/google-cloud-sdk/bin',
-		'/opt/google-cloud-sdk/bin',
-	]) {
-		if (existsSync(`${dir}/gcloud`)) {
-			process.env.PATH = `${dir}:${process.env.PATH}`;
-			return;
-		}
-	}
-})();
+import './lib/gcloud-path.mjs';
 
 const PROJECT = process.env.GCP_PROJECT || 'aerial-vehicle-466722-p5';
 const HEALTHZ_URL = process.env.TRIAGE_HEALTHZ_URL || 'https://three.ws/api/healthz';
@@ -314,7 +296,7 @@ function readLogs(opts) {
 	if (res.status !== 0) {
 		const why = res.error?.message || (res.stderr || '').trim() || 'unknown error';
 		console.error(`gcloud logging read failed: ${why}`);
-		if (/ENOENT/.test(why)) console.error('gcloud is not installed at any known path; see ensureGcloudOnPath() in this script.');
+		if (/ENOENT/.test(why)) console.error('gcloud is not installed at any known path; see scripts/lib/gcloud-path.mjs.');
 		if (/reauth|invalid_grant|credential/i.test(why)) console.error('gcloud auth has lapsed; only the owner can re-run `gcloud auth login` here.');
 		process.exit(1);
 	}

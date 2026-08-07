@@ -29,6 +29,7 @@
 
 import { readFile, mkdir } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
+import './lib/gcloud-path.mjs';
 import { promisify } from 'node:util';
 import path from 'node:path';
 

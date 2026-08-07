@@ -24,6 +24,7 @@
 // service decrypts with, or the worker will load a wallet it cannot open.
 
 import { execSync } from 'node:child_process';
+import './lib/gcloud-path.mjs';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);

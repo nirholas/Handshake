@@ -21,6 +21,7 @@
 // flats to make sure we're not just describing "low activity".
 
 import { execSync } from 'node:child_process';
+import './lib/gcloud-path.mjs';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { Pool } = require('@neondatabase/serverless');

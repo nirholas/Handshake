@@ -19,6 +19,7 @@
 
 import { readFileSync } from 'node:fs';
 import { execFile } from 'node:child_process';
+import './lib/gcloud-path.mjs';
 import { promisify } from 'node:util';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

@@ -32,6 +32,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import './lib/gcloud-path.mjs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';

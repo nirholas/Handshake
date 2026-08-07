@@ -40,6 +40,7 @@
 // autonomous history is auditable and one UPDATE can roll any change back.
 
 import { execSync } from 'node:child_process';
+import './lib/gcloud-path.mjs';
 import { createRequire } from 'node:module';
 import { budgetWeightFor, classifyAutonomy } from '../api/_lib/sniper-autonomy.js';
 const require = createRequire(import.meta.url);

@@ -20,6 +20,7 @@
  */
 
 import { spawnSync, spawn } from 'node:child_process';
+import './lib/gcloud-path.mjs';
 
 const DEFAULT_PROJECT = process.env.GCP_PROJECT || 'aerial-vehicle-466722-p5';
 const DEFAULT_REGION = process.env.GCP_REGION || 'us-central1';
