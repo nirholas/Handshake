@@ -67,9 +67,53 @@ if (!gate.ok) return; // 402 three_hold_required already sent
 // ...gate.access, gate.level, gate.wallet are available here
 ```
 
-Resolution is **pass-first**: a signed tier pass (header `x-three-tier-pass` or
-`body.tier_pass`), then the session user's on-chain tier, then anonymous Member. Every
-failure degrades to Member — a clean 402, never a 500.
+Resolution is **comp-first, then pass-first**: a comped account (below), then a signed
+tier pass (header `x-three-tier-pass` or `body.tier_pass`), then the session user's
+on-chain tier, then anonymous Member. Every failure degrades to Member: a clean 402,
+never a 500.
+
+### Comped accounts
+
+Some accounts are exempt from the ladder entirely: the owner's own accounts, and
+creators/partners granted lifetime access. They clear **every** gated feature with no
+wallet, no holding, and no payment.
+
+The allowlist is [`api/_lib/comp-access.js`](../api/_lib/comp-access.js), and it is the
+only place the exemption lives, because `requireFeatureAccess` is the single keystone
+every enforced gate resolves through, one entry covers `forge.high`, `forge.gameready`,
+and any gate added later. `GET /api/three/access` applies it too, so the UI renders those
+features unlocked rather than showing a lock the API would let straight through; that
+response carries `tier.comped: true` to explain why a $0 holder reads as entitled.
+
+```js
+import { isCompedUser, resolveCompAccess } from './_lib/comp-access.js';
+
+const { comped } = await resolveCompAccess(req);  // from a request (session-aware)
+if (isCompedUser(user)) { /* from an already-resolved user */ }
+```
+
+Grant access by adding a handle to `COMPED_ACCOUNTS` in that module, or by setting
+`THREE_COMP_ACCOUNTS` to a comma-separated list of handles / emails / user ids. Env
+entries are **merged** with the built-ins, never replace them, so an env typo cannot
+silently revoke a comp granted in code.
+
+Three properties keep it safe and cheap:
+
+- **Only unique identifiers count.** `username`, `email`, and `id` are uniquely indexed
+  on `users`, as is the handle in a platform-issued `<handle>@users.three.ws.local`
+  address (minted by `handleRegister` for username registrations, which leave the
+  `username` column null). `display_name` is deliberately **not** matched, because it is
+  user-settable and not unique, so honoring it would let anyone comp themselves by
+  renaming.
+- **Anonymous requests pay nothing.** The lookup is guarded by `hasSessionCookie()`, so a
+  request with no session never issues a query and the zero-latency anonymous free lane
+  is untouched.
+- **It fails closed on the perk.** An auth or DB hiccup resolves to "not comped", which
+  simply means the normal hold-or-pay gate applies. It never fails the request.
+
+A comp also lifts the free-lane rate multiplier to the top tier (`api/forge.js`,
+`api/gpt-forge.js`). It does **not** bypass BYOK (a caller's own vendor key is still
+their own key), nor the platform-wide spend ceilings that protect real vendor budget.
 
 ### The hold-or-pay 402
 
@@ -198,6 +242,7 @@ worlds unaffected.
 | Env var | Required | Purpose |
 |---------|----------|---------|
 | `HOLDER_PASS_SECRET` | prod | HMAC key for signing/verifying tier passes |
+| `THREE_COMP_ACCOUNTS` | no | extra comped handles / emails / user ids, comma-separated (merged with the built-in allowlist) |
 | `THREE_TOKEN_MINT` | — | $THREE mint (defaults to the canonical CA) |
 | `THREE_TOKEN_DECIMALS` | — | token decimals (default 6) |
 | `SOLANA_RPC_URL` (+ provider keys) | — | RPC for on-chain balance reads (see `solana/connection.js`) |

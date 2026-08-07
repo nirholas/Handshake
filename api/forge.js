@@ -104,6 +104,7 @@ import {
 import { env as _env } from './_lib/env.js';
 import { verifyTierPass, TIERS } from './_lib/three-tier.js';
 import { requireFeatureAccess } from './_lib/require-three.js';
+import { resolveCompAccess, COMP_TIER } from './_lib/comp-access.js';
 import { priceForAction } from './_lib/pricing/catalog.js';
 import {
 	assertForgePayment,
@@ -188,13 +189,22 @@ export function nimCooldownSeconds(err) {
 // generation ceiling by that tier's multiplier. The pass is pure-HMAC verifiable
 // (no RPC/price feed), so this adds zero latency to the anonymous free lane. An
 // absent or invalid pass simply leaves the multiplier at 1 (the base 60/h).
-function freeLaneMultiplier(req, body) {
+// A comped account (api/_lib/comp-access.js) gets the top multiplier without a
+// pass. Its lookup is cookie-guarded, so the anonymous path stays query-free.
+async function freeLaneMultiplier(req, body) {
 	const token = req.headers?.['x-three-tier-pass'] || body?.tier_pass || null;
-	if (!token) return 1;
-	const payload = verifyTierPass(token);
-	if (!payload) return 1;
-	const tier = TIERS.find((t) => t.level === payload.level);
-	return tier?.rateMultiplier || 1;
+	let fromPass = 1;
+	if (token) {
+		const payload = verifyTierPass(token);
+		const tier = payload ? TIERS.find((t) => t.level === payload.level) : null;
+		fromPass = tier?.rateMultiplier || 1;
+	}
+	// A pass that actually lifts the ceiling short-circuits: the holder perk is
+	// already proven and no lookup is worth doing. A Member-level (or absent) pass
+	// lifts nothing, so fall through and let a comp answer instead.
+	if (fromPass > 1) return fromPass;
+	const { comped } = await resolveCompAccess(req);
+	return comped ? COMP_TIER.rateMultiplier || 1 : fromPass;
 }
 
 // Returns true when the request carries the internal cron seed token, meaning
@@ -1263,7 +1273,7 @@ async function startJob(req, res) {
 	const isFreeLane = backendMeta?.free === true;
 	if (!isInternalSeedRequest(req)) {
 		const rl = isFreeLane
-			? await limits.mcp3dGenerateFreeTiered(ip, freeLaneMultiplier(req, body))
+			? await limits.mcp3dGenerateFreeTiered(ip, await freeLaneMultiplier(req, body))
 			: await limits.mcp3dGenerate(ip);
 		if (!rl.success) {
 			return rateLimited(res, rl, 'Generation limit reached. Try again shortly.');

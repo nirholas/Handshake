@@ -13,7 +13,13 @@ const getTokenPriceUsd = vi.fn();
 const getSessionUser = vi.fn();
 vi.mock('../api/_lib/balances.js', () => ({ getBalances: (...a) => getBalances(...a) }));
 vi.mock('../api/_lib/token/price.js', () => ({ getTokenPriceUsd: (...a) => getTokenPriceUsd(...a) }));
-vi.mock('../api/_lib/auth.js', () => ({ getSessionUser: (...a) => getSessionUser(...a) }));
+// hasSessionCookie gates the comped-access lookup (api/_lib/comp-access.js): it
+// reads the real cookie header, so an anonymous mockReq() skips the lookup and a
+// case that sets a cookie exercises it against the mocked getSessionUser.
+vi.mock('../api/_lib/auth.js', () => ({
+	getSessionUser: (...a) => getSessionUser(...a),
+	hasSessionCookie: (req) => Boolean(req?.headers?.cookie),
+}));
 
 import { requireFeatureAccess } from '../api/_lib/require-three.js';
 import { signTierPass } from '../api/_lib/three-tier.js';

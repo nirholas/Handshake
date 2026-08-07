@@ -34,6 +34,7 @@ import {
 	TIERS,
 } from '../_lib/three-tier.js';
 import { accessFromTierLevel, listGatedFeatures } from '../_lib/three-access.js';
+import { isCompedUser, COMP_TIER } from '../_lib/comp-access.js';
 import { verifySiwsSignature } from '../_lib/siws.js';
 import { creatorEarnings, economyStats, listRewardsDistributions } from '../_lib/token/index.js';
 import { priceName, isValidLabel, RARITY_TIERS } from '../_lib/pricing/name-rarity.js';
@@ -420,6 +421,14 @@ async function handleAccess(req, res) {
 	const walletMode = Boolean(walletParam);
 	const hasWallet = walletMode || Boolean(user?.wallet_address);
 
+	// A comped account (api/_lib/comp-access.js) is entitled to every gated feature
+	// with no wallet, no holding, and no payment. Read here as well as in the
+	// enforcement path (require-three.js) so the UI renders those features unlocked
+	// instead of showing a lock the server would not actually enforce. It is keyed on
+	// the SESSION, so it holds in wallet mode too: a comped user who happens to have
+	// a wallet connected must not see a lock the API would let straight through.
+	const comped = isCompedUser(user);
+
 	// One tier resolution for the whole request; every feature check below is then a
 	// pure level comparison (no extra on-chain reads). Degrades to Member on failure.
 	let tier = TIERS[0];
@@ -435,6 +444,10 @@ async function handleAccess(req, res) {
 		}
 	}
 	const heldUsd = Math.round((Number(usd) || 0) * 100) / 100;
+	// The level entitlement is checked against. A comp lifts it to the top of the
+	// ladder without touching the tier/held figures above, so the badge keeps
+	// reporting what the wallet really holds while the features read as unlocked.
+	const accessLevel = comped ? Math.max(tier.level, COMP_TIER.level) : tier.level;
 
 	// Attach the catalog price to a pay-per-use action (null for variable-price ones).
 	const payInfo = (actionId) => {
@@ -466,13 +479,15 @@ async function handleAccess(req, res) {
 		pay_per_use: payInfo(a.pay_per_use),
 	});
 
-	const tierSummary = { level: tier.level, id: tier.id, label: tier.label, held_usd: heldUsd };
+	// `comped` tells the UI the entitlement came from the allowlist, not a holding,
+	// so it can show "Included" instead of a held-USD figure that would read as wrong.
+	const tierSummary = { level: tier.level, id: tier.id, label: tier.label, held_usd: heldUsd, comped };
 	const feature = url.searchParams.get('feature');
 
 	if (feature) {
 		let access;
 		try {
-			access = accessFromTierLevel(tier.level, feature);
+			access = accessFromTierLevel(accessLevel, feature);
 		} catch (e) {
 			if (e.code === 'unknown_feature') {
 				return error(res, 404, 'unknown_feature', `unknown gated feature: ${feature}`);
@@ -487,7 +502,7 @@ async function handleAccess(req, res) {
 		});
 	}
 
-	const features = listGatedFeatures().map((id) => decorate(accessFromTierLevel(tier.level, id)));
+	const features = listGatedFeatures().map((id) => decorate(accessFromTierLevel(accessLevel, id)));
 	return json(res, 200, {
 		signed_in: Boolean(user),
 		wallet_linked: hasWallet,

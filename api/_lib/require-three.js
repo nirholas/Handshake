@@ -21,6 +21,7 @@ import { verifyTierPass, resolveUserTier } from './three-tier.js';
 import { accessFromTierLevel, gatedFeature, requiredTierFor } from './three-access.js';
 import { catalogEntry } from './pricing/catalog.js';
 import { getSessionUser } from './auth.js';
+import { resolveCompAccess, COMP_TIER_LEVEL } from './comp-access.js';
 import { TOKEN_MINT, publicConfig } from './token/config.js';
 
 // The "how to acquire $THREE" block the 402 surfaces so a non-holder can act
@@ -41,10 +42,27 @@ function acquireBlock() {
 	};
 }
 
-// Resolve the caller's verified holder level for gating. Pass-first (pure HMAC,
-// never depends on a live RPC), then the session user's on-chain tier, then
+// Resolve the caller's verified holder level for gating. Comp-first (an allowlisted
+// account is entitled regardless of what it holds), then a signed tier pass (pure
+// HMAC, never depends on a live RPC), then the session user's on-chain tier, then
 // anonymous Member (level 0). Never throws.
 async function resolveCaller(req, res, body) {
+	// 0. Comped account (api/_lib/comp-access.js): full access with no wallet, no
+	//    hold, no payment. Checked FIRST so a stale low-tier pass in the client's
+	//    storage can't under-resolve a comped caller, and it costs an anonymous
+	//    request nothing (the lookup short-circuits without a session cookie).
+	const comp = await resolveCompAccess(req, res);
+	if (comp.comped) {
+		return {
+			level: COMP_TIER_LEVEL,
+			wallet: comp.user?.wallet_address || null,
+			usd: null,
+			source: 'comp',
+			hasUser: true,
+			hasWallet: Boolean(comp.user?.wallet_address),
+		};
+	}
+
 	// 1. Signed tier pass — header or parsed body. Pure HMAC, no RPC.
 	const token = req.headers?.['x-three-tier-pass'] || body?.tier_pass || null;
 	if (token) {

@@ -14,6 +14,7 @@
 
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { Readable } from 'node:stream';
+import { COMPED_ACCOUNTS } from '../../api/_lib/comp-access.js';
 
 const getBalances = vi.fn();
 const getTokenPriceUsd = vi.fn();
@@ -28,6 +29,9 @@ vi.mock('../../api/_lib/auth.js', async (orig) => ({
 let handler, TOKEN_MINT, FEATURE_IDS;
 
 const WALLET = 'So11111111111111111111111111111111111111112';
+// The first built-in comped handle (api/_lib/comp-access.js): full platform
+// access with no wallet and no holding.
+const COMPED = COMPED_ACCOUNTS[0];
 
 function mockRes() {
 	return {
@@ -205,5 +209,52 @@ describe('GET /api/three/access — signed-in reasons', () => {
 		expect(res.json.tier.id).toBe('bronze');
 		expect(res.json.access.eligible).toBe(true);
 		expect(res.json.access.reason).toBe('eligible');
+	});
+});
+
+describe('GET /api/three/access, comped accounts', () => {
+	it('reports every gated feature as eligible with no wallet and no chain read', async () => {
+		// The production shape of a username-registered account: username null,
+		// handle carried in the platform-issued address.
+		getSessionUser.mockResolvedValue({
+			id: 'u-comp',
+			username: null,
+			email: `${COMPED}@users.three.ws.local`,
+			wallet_address: null,
+		});
+		const res = await get('/api/three/access');
+		expect(res.statusCode).toBe(200);
+		expect(res.json.signed_in).toBe(true);
+		expect(res.json.wallet_linked).toBe(false);
+		expect(res.json.tier.comped).toBe(true);
+		for (const f of res.json.features) {
+			expect(f.eligible, `${f.feature} should read as unlocked`).toBe(true);
+			expect(f.reason).toBe('eligible');
+		}
+		expect(getBalances).not.toHaveBeenCalled();
+	});
+
+	it('stays unlocked in wallet mode, so a connected wallet never shows a false lock', async () => {
+		getSessionUser.mockResolvedValue({
+			id: 'u-comp',
+			username: COMPED,
+			email: `${COMPED}@users.three.ws.local`,
+			wallet_address: WALLET,
+		});
+		mockHeldUsd(0); // holds nothing; the comp is the entitlement
+		const res = await get(`/api/three/access?feature=forge.high&wallet=${WALLET}`);
+		expect(res.json.access.eligible).toBe(true);
+		expect(res.json.access.reason).toBe('eligible');
+		// The badge still reports what the wallet actually holds.
+		expect(res.json.tier.held_usd).toBe(0);
+		expect(res.json.tier.comped).toBe(true);
+	});
+
+	it('leaves a non-comped signed-in user gated exactly as before', async () => {
+		getSessionUser.mockResolvedValue({ id: 'u-plain', username: 'someone-else' });
+		const res = await get('/api/three/access?feature=forge.high');
+		expect(res.json.tier.comped).toBe(false);
+		expect(res.json.access.eligible).toBe(false);
+		expect(res.json.access.reason).toBe('link_wallet');
 	});
 });
