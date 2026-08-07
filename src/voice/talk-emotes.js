@@ -67,6 +67,17 @@ export class TalkEmotes {
 	}
 
 	/**
+	 * Stop every running clip so the mixer stops writing to the bones.
+	 *
+	 * Pausing is not enough: a paused action keeps re-applying its last evaluated
+	 * pose on each tick, which would overwrite a caller that deliberately posed the
+	 * rig (see src/glb-bind-pose.js, used to export a neutral GLB).
+	 */
+	stopAll() {
+		this._manager.stopAll();
+	}
+
+	/**
 	 * Load the manifest. Idempotent — subsequent calls return the cached promise.
 	 * Returns true once defs are populated, false on failure (e.g. 404).
 	 *

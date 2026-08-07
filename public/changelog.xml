@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Avatars now save in a clean, neutral stance instead of a frozen animation frame</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-07:Avatars now save in a clean, neutral stance instead of a frozen animation frame</guid>
+			<pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Saving an avatar in the Studio used to capture whatever the idle animation happened to be doing at that exact instant, and freeze it into the model permanently. Because the saved file carries no animation of its own, that one arbitrary frame became the avatar's pose everywhere it appeared: arms tucked in at odd angles, one side sitting differently from the other, and a different result each time you saved the same avatar. Avatars are now saved in their proper neutral pose, which is symmetric and identical on every save, so downloads, animation retargeting and clothing all start from the stance the body was actually built around. Your gallery thumbnail still shows the relaxed idle pose it always did.</description>
+		</item>
+		<item>
 			<title>The chat no longer refuses questions it was never asked to refuse</title>
 			<link>https://three.ws/chat</link>
 			<guid isPermaLink="false">2026-08-07:The chat no longer refuses questions it was never asked to refuse</guid>

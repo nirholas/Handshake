@@ -32,6 +32,7 @@ import { canonicalBoneNodesFromObject } from './animation-retarget.js';
 import { saveRemoteGlbToAccount, apiFetch } from './account.js';
 import { uploadAvatarSnapshot } from './voice/avatar-snapshot.js';
 import { optimizeAndValidateGlb } from './avatar-studio-optimize.js';
+import { poseSkeletonsToBind, captureBoneTransforms, restoreBoneTransforms } from './glb-bind-pose.js';
 import { openColorPopover, closeActivePopover } from './avatar-studio-colorpicker.js';
 import {
 	collapseAppearance,
@@ -619,15 +620,6 @@ async function playEmote(name) {
 		log.warn(`[avatar-studio] emote "${name}" failed:`, err?.message);
 	}
 	if (activeTab === 'animate') markActiveEmote();
-}
-
-/** Await N animation frames — used to let a crossfade land before exporting. */
-function nextFrames(n) {
-	return new Promise((resolve) => {
-		let left = Math.max(1, n | 0);
-		const step = () => (--left <= 0 ? resolve() : requestAnimationFrame(step));
-		requestAnimationFrame(step);
-	});
 }
 
 // ── Fetch presets ────────────────────────────────────────────────────
@@ -1538,19 +1530,47 @@ async function exportSceneGlb() {
 	if (!scene?.root) throw new Error('Scene not ready — cannot export.');
 	const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
 	const exporter = new GLTFExporter();
-	const buf = await new Promise((resolve, reject) => {
-		exporter.parse(
-			scene.root,
-			resolve,
-			reject,
-			{
-				binary: true,
-				embedImages: true,
-				animations: scene._clips || [],
-			},
-		);
-	});
-	return new Blob([buf], { type: 'model/gltf-binary' });
+
+	// GLTFExporter writes each bone's *current* local transform as the exported
+	// file's rest pose, and a Studio export carries no clips, so whatever the idle
+	// happened to be doing at this instant would be frozen into the saved avatar
+	// forever. Export from the bind pose instead: symmetric, identical across
+	// repeated saves, and the neutral every downstream consumer (retargeting,
+	// garment binding, other engines) assumes.
+	//
+	// The mixer has to be stopped first, not just paused: processNodeAsync awaits
+	// per node, so a render tick landing mid-traversal would re-animate bones the
+	// exporter had not read yet and tear the pose across the skeleton.
+	const emotes = scene.getEmoteController?.();
+	emotes?.stopAll();
+	const savedBones = captureBoneTransforms(scene.root);
+	poseSkeletonsToBind(scene.root);
+
+	try {
+		const buf = await new Promise((resolve, reject) => {
+			exporter.parse(
+				scene.root,
+				resolve,
+				reject,
+				{
+					binary: true,
+					embedImages: true,
+					animations: scene._clips || [],
+				},
+			);
+		});
+		return new Blob([buf], { type: 'model/gltf-binary' });
+	} finally {
+		// Put the live scene back exactly as the user left it. The thumbnail is
+		// captured from this scene later in finishSave(), so it keeps the relaxed
+		// idle stance that the frozen-frame export was originally reaching for.
+		restoreBoneTransforms(savedBones, scene.root);
+		if (emotesReady) {
+			scene.playEmote(activeIdleClip).catch((err) => {
+				log.warn('[avatar-studio] idle resume after export failed:', err?.message);
+			});
+		}
+	}
 }
 
 function showSaveOverlay(label, sublabel) {
@@ -1631,18 +1651,6 @@ async function saveAvatar() {
 		// This captures all colours, morphs, and accessories already applied
 		// to the Three.js scene — no server-side bake needed.
 		updateSaveOverlay('Exporting model...', 'Capturing colours and accessories');
-		// GLTFExporter bakes each bone's *current* transform into the saved rest
-		// pose. Settle the rig into its chosen looping idle (not a frozen mid-emote
-		// frame) and let the crossfade land before capturing, so the saved avatar's
-		// first-frame / thumbnail pose is a clean relaxed stance.
-		if (emotesReady) {
-			try {
-				await scene.playEmote(activeIdleClip);
-				await nextFrames(18);
-			} catch (err) {
-				log.warn('[avatar-studio] idle settle before export failed:', err?.message);
-			}
-		}
 		const rawGlbBlob = await exportSceneGlb();
 		updateProgress(15);
 
