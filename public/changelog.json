@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-07T09:24:19.259Z",
+	"generated_at": "2026-08-07T09:31:50.187Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · The agent runtime and transaction guard",
 			"summary": "The seven-layer policy engine that preflights every fund-moving tool call in chat before the wallet prompts: security blacklist, approval policy, dollar caps with live SOL pricing, spend envelope with a token and destination firewall, MEV slippage clamp, and x402 budgets. Ships as @three-ws/agent-runtime.",
 			"link": "/docs/agent-runtime",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-07",
+			"type": "launch",
+			"title": "Live event",
+			"summary": "The live three.ws community meetup: when it starts, what is on the agenda, who is in the world right now, and the event leaderboard.",
+			"link": "/event",
 			"tags": [
 				"launch"
 			]
@@ -80,6 +90,26 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-07",
+			"type": "update",
+			"title": "Holders-world door now tells the truth when the check itself is down",
+			"summary": "Trying to enter a coin's holders-only world while our holder-verification service is unavailable used to dump a cryptic internal error (\"CoinCommunities is not configured\") with a retry button that could never succeed. The gate now says plainly that the holder check is offline on our side, that your tokens are unaffected, and offers a one-click way into the coin's open world instead. That open-world button, in the too-few-tokens screen as well, now actually takes you into the open world rather than kicking you back to the lobby to start over.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-07",
+			"type": "update",
+			"title": "Meet real people in Play: profiles, follows, and DMs in-world",
+			"summary": "Players in Play (and Walk) worlds now carry their real three.ws identity. Signed-in players get a verified @handle on their nameplate, and clicking anyone opens their actual profile card right in the world: bio, followers, their latest 3D creations, and a link to their full profile page. You can follow them, send a friend request, or, if you are already friends, jump straight into a private message thread without leaving the world. The handle is verified server-side, so nobody can pretend to be someone they are not. Signing in also makes the world lobby greet you as your account, with your display name prefilled.",
+			"link": "/play",
+			"tags": [
+				"feature"
 			]
 		},
 		{

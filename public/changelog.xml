@@ -15,6 +15,14 @@
 			<description>The seven-layer policy engine that preflights every fund-moving tool call in chat before the wallet prompts: security blacklist, approval policy, dollar caps with live SOL pricing, spend envelope with a token and destination firewall, MEV slippage clamp, and x402 budgets. Ships as @three-ws/agent-runtime.</description>
 		</item>
 		<item>
+			<title>Live event</title>
+			<link>https://three.ws/event</link>
+			<guid isPermaLink="false">2026-08-07:Live event</guid>
+			<pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The live three.ws community meetup: when it starts, what is on the agenda, who is in the world right now, and the event leaderboard.</description>
+		</item>
+		<item>
 			<title>A transaction guard now stands between the chat agent and your wallet</title>
 			<link>https://three.ws/docs/agent-runtime</link>
 			<guid isPermaLink="false">2026-08-07:A transaction guard now stands between the chat agent and your wallet</guid>
@@ -61,6 +69,22 @@
 			<pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Exporting a model for Unity or Unreal is free if you hold $THREE, but the export panel only recognised holders who had signed in with a wallet linked to their account. If you had simply connected your wallet to the site, the way most people browse the Forge, the panel could not see what you hold and asked you to pay the per-export fee your holding already covered. It now proves your holding from whichever identity you actually have: a linked account signs silently, and a connected wallet proves ownership with one free signature that never moves funds. That signature is only ever requested when your wallet genuinely clears the tier, so a non-holder is never prompted for something that could not unlock anything. The panel also now tells you your real price before you export: holders read 'free for you', everyone else reads the exact per-export price.</description>
+		</item>
+		<item>
+			<title>Holders-world door now tells the truth when the check itself is down</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-07:Holders-world door now tells the truth when the check itself is down</guid>
+			<pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Trying to enter a coin's holders-only world while our holder-verification service is unavailable used to dump a cryptic internal error (&quot;CoinCommunities is not configured&quot;) with a retry button that could never succeed. The gate now says plainly that the holder check is offline on our side, that your tokens are unaffected, and offers a one-click way into the coin's open world instead. That open-world button, in the too-few-tokens screen as well, now actually takes you into the open world rather than kicking you back to the lobby to start over.</description>
+		</item>
+		<item>
+			<title>Meet real people in Play: profiles, follows, and DMs in-world</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-07:Meet real people in Play: profiles, follows, and DMs in-world</guid>
+			<pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Players in Play (and Walk) worlds now carry their real three.ws identity. Signed-in players get a verified @handle on their nameplate, and clicking anyone opens their actual profile card right in the world: bio, followers, their latest 3D creations, and a link to their full profile page. You can follow them, send a friend request, or, if you are already friends, jump straight into a private message thread without leaving the world. The handle is verified server-side, so nobody can pretend to be someone they are not. Signing in also makes the world lobby greet you as your account, with your display name prefilled.</description>
 		</item>
 		<item>
 			<title>Play now counts down to the next community event</title>

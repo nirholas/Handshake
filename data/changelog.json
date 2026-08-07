@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-07",
+			"title": "Meet real people in Play: profiles, follows, and DMs in-world",
+			"summary": "Players in Play (and Walk) worlds now carry their real three.ws identity. Signed-in players get a verified @handle on their nameplate, and clicking anyone opens their actual profile card right in the world: bio, followers, their latest 3D creations, and a link to their full profile page. You can follow them, send a friend request, or, if you are already friends, jump straight into a private message thread without leaving the world. The handle is verified server-side, so nobody can pretend to be someone they are not. Signing in also makes the world lobby greet you as your account, with your display name prefilled.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-07",
 			"title": "Change your avatar without leaving the world in Play",
 			"summary": "You no longer have to exit a world (and lose your spot) to switch avatars in Play. A new Avatar button in the world HUD, or the V key, opens a panel with the avatars saved to your three.ws account, community quick picks, the full gallery browser, a paste-a-link field, a .glb/.vrm upload, and the avatar creator. Your new look appears on you instantly and everyone else in the world sees it live. If a model fails to load, you keep the avatar you were wearing.",
 			"tags": [
@@ -18511,6 +18520,15 @@
 				"improvement"
 			],
 			"link": "/docs/agent-runtime"
+		},
+		{
+			"date": "2026-08-07",
+			"title": "Holders-world door now tells the truth when the check itself is down",
+			"summary": "Trying to enter a coin's holders-only world while our holder-verification service is unavailable used to dump a cryptic internal error (\"CoinCommunities is not configured\") with a retry button that could never succeed. The gate now says plainly that the holder check is offline on our side, that your tokens are unaffected, and offers a one-click way into the coin's open world instead. That open-world button, in the too-few-tokens screen as well, now actually takes you into the open world rather than kicking you back to the lobby to start over.",
+			"tags": [
+				"fix"
+			],
+			"link": "/play"
 		}
 	]
 }
