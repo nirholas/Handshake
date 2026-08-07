@@ -27,6 +27,8 @@ What lives elsewhere: the *creation* path for a Solana identity is documented in
 
 ## What the page shows
 
+**A "Latest to Land" spotlight** above the counters: the newest deployment of the current view gets a hero card with its avatar, name, capability tags, chain, owner, live-updating relative time, and registration-tx link. It re-renders (with an entrance animation) only when a different agent takes the top slot, and it follows the active network and kind filter.
+
 **Six headline counters**, from `GET /api/deployments?view=stats`:
 
 | Counter | Field | Meaning |
@@ -52,7 +54,9 @@ Feed images are third-party data: whatever URL the agent's owner published on-ch
 - **Kind filter**: `All`, `3D avatar`, `x402`.
 - **Load older**: keyset pagination, also triggered automatically when the button scrolls into view.
 
-**Live behavior:** the page polls every 45 seconds. It refreshes stats always, and re-fetches the top of the feed *only while you are still on the first page*, so loading older rows never yanks you back to the top. Polling pauses entirely while the tab is hidden. Genuinely new rows are prepended with a slide-in so the refresh reads as a stream. A live-state dot on the feed header reflects the real poll lifecycle (connecting, live, idle, error).
+**Top chains** rail: one bar per chain, scaled to the busiest chain, each showing the agent count and that chain's share of the network class; chain names link to the chain's explorer.
+
+**Live behavior:** the page polls every 45 seconds. Relative timestamps (spotlight and feed rows) re-render every 30 seconds so a row never claims "just now" ten minutes later. It refreshes stats always, and re-fetches the top of the feed *only while you are still on the first page*, so loading older rows never yanks you back to the top. Polling pauses entirely while the tab is hidden. Genuinely new rows are prepended with a slide-in so the refresh reads as a stream. A live-state dot on the feed header reflects the real poll lifecycle (connecting, live, idle, error).
 
 Empty and error states are specific: an empty `x402` filter says no x402-enabled agents are registered on that network for that filter and links to the deploy flow, and a failed fetch offers a retry rather than a blank pane.
 
@@ -83,8 +87,8 @@ The Identity Registry is deployed deterministically via CREATE2, so it has one a
 
 Read directly from `agent_identities`, no crawler needed, because these are minted by the platform (`api/_lib/onchain-deploy.js`):
 
-- **Mainnet:** rows with `meta.chain_type = 'solana'`, `meta.network = 'mainnet'`, and a `meta.sol_mint_address`. The Core asset pubkey is the `agent_id`, `meta.onchain.owner` is the owner, `meta.onchain.confirmed_at` (falling back to the row's creation time) is `registered_at`, and `meta.onchain.tx_hash` is the registration transaction.
-- **Testnet:** the same fields isolated under `meta.devnet`.
+- **Mainnet:** rows with `meta.chain_type = 'solana'`, `meta.network = 'mainnet'`, and a `meta.sol_mint_address`. The Core asset pubkey is the `agent_id`; the owner is `meta.onchain.wallet` (falling back to legacy `meta.onchain.owner`, then the row's `wallet_address`); `meta.onchain.confirmed_at` (falling back to the row's creation time) is `registered_at`; and the registration transaction is `meta.onchain.tx_hash` (falling back to legacy `meta.tx_signature`).
+- **Testnet:** two shapes are read, because two confirm paths write them: the server-signed path isolates the same fields under `meta.devnet`, while the wallet-signed path writes the top-level shape with `meta.network = 'devnet'`. The nested block wins when both exist, and external-registry dedupe checks both.
 
 For these rows, `has_3d` is true when the agent has a linked avatar record, and `x402_support` is true when `meta.payments.configured` is set.
 

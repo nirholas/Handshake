@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-07T07:36:12.108Z",
+	"generated_at": "2026-08-07T07:41:53.355Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -370,6 +370,18 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "On-chain deploys: hardened end to end, and /deployments gets a spotlight",
+			"summary": "Deploying an agent on-chain is now sturdier everywhere you can do it. The deploy chip remembers a finished deploy after a page reload, so it never offers a second paid mint; a first-time deployer gets the plain-language wallet-and-fees explainer before any wallet prompt; running out of gas now links straight to the right faucet on testnets; and the success screen with your transaction link stays up until you close it instead of vanishing the moment the mint lands. Vanity mint addresses are back in the deploy wizard: pick a prefix, watch the live grind counter, and stop it any time. The wizard's My Agents, Search, and History tabs now do real work on Solana instead of dead-ending, and every successful deploy flows into the cinematic mint-reveal page. The /deployments feed gained a Latest to Land spotlight for the newest agent on-chain, top-chain bars that link to each chain's explorer with share-of-network percentages, timestamps that keep themselves current, and rows that previously showed no owner or transaction link now show both.",
+			"link": "/deployments",
+			"tags": [
+				"improvement",
+				"fix",
+				"security"
 			]
 		},
 		{
