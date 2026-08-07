@@ -174,7 +174,7 @@ function renderSpotlight(r) {
 
 	const remote = r.image && /^(https?|ipfs|ar):\/\//i.test(String(r.image));
 	const av = remote
-		? `<img class="dp-spot-av" src="${esc(proxiedImageURL(String(r.image), dpId))}" alt="" loading="lazy" onerror="this.onerror=null;this.style.visibility='hidden'" />`
+		? `<img class="dp-spot-av" src="${esc(proxiedImageURL(String(r.image), dpId))}" alt="" loading="lazy" data-fallback="invisible" />`
 		: `<span class="dp-spot-av dp-spot-av--mono" aria-hidden="true">${esc((r.name || '#').charAt(0).toUpperCase())}</span>`;
 	const title = r.name || `Agent #${esc(r.agent_id)}`;
 	const nameEl = r.agent_explorer

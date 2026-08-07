@@ -80,6 +80,40 @@ export function resolveURI(uri, gatewayIndex = 0) {
 	return normalizeGatewayURL(uri, gatewayIndex);
 }
 
+// Schemes an <img src> or a Three.js TextureLoader can actually render. Every
+// image URL this module hands out is attacker-reachable: it arrives from a
+// `?image=` deep link, a third-party token feed, or a peer's join options. A
+// scheme outside this set is never art. It is either an attempt at a script
+// sink (javascript:, vbscript:), a local-resource probe (file:, about:), or an
+// HTML document dressed as an image (data:text/html), so the only correct
+// answer is to drop it, not to pass it through to whoever asked.
+const SAFE_IMAGE_SCHEMES = new Set(['http', 'https', 'ipfs', 'ar', 'blob']);
+// Longest source URL worth proxying. Real IPFS/Arweave/CDN art sits well under
+// 300 characters; a multi-kilobyte value is either junk or an attempt to make
+// us issue an oversized upstream request, and the proxy would reject it anyway.
+const MAX_SOURCE_URL = 2048;
+
+/**
+ * True when a URL is safe to hand to an <img>/TextureLoader as an image source.
+ * Relative and site-absolute paths (no scheme) always qualify; `data:` only when
+ * it declares an image media type.
+ *
+ * @param {string} url
+ * @returns {boolean}
+ */
+export function isSafeImageURL(url) {
+	if (typeof url !== 'string') return false;
+	const s = url.trim();
+	if (!s) return false;
+	// Control characters exist here only to smuggle a scheme past a parser
+	// ("java\tscript:alert(1)" is a live URL in some engines). Refuse outright.
+	if (/[\u0000-\u001f\u007f]/.test(s)) return false;
+	const scheme = s.match(/^([a-z][a-z0-9+.\-]*):/i)?.[1]?.toLowerCase();
+	if (!scheme) return true; // relative or site-absolute path, no scheme to abuse
+	if (scheme === 'data') return /^data:image\/[a-z0-9.+\-]+[,;]/i.test(s);
+	return SAFE_IMAGE_SCHEMES.has(scheme);
+}
+
 /**
  * Route an external image URL through the same-origin /api/img proxy.
  *
@@ -88,17 +122,28 @@ export function resolveURI(uri, gatewayIndex = 0) {
  * blocking, retired hosts, and TLS interception on filtered networks. The
  * proxy fetches server-side with multi-gateway IPFS retry and always answers
  * with a valid image (deterministic placeholder on total failure), so the
- * loader never errors. Same-origin, relative, data: and blob: URLs pass
- * through untouched — the proxy only earns its keep cross-origin.
+ * loader never errors. Same-origin, relative, data:image and blob: URLs pass
+ * through untouched; the proxy only earns its keep cross-origin.
+ *
+ * Anything that is not a renderable image source (javascript:, data:text/html,
+ * file:, an over-long URL) resolves to '' so callers fall through to their own
+ * "no art" branch instead of pushing a hostile value into an image sink.
  *
  * @param {string} url          Image URL (https://, ipfs:// or ar:// accepted).
  * @param {string} [seed]       Stable placeholder seed (e.g. the token mint).
  * @returns {string}
  */
 export function proxiedImageURL(url, seed = '') {
-	if (!url || !/^(https?|ipfs|ar):/i.test(url)) return url;
-	if (typeof location !== 'undefined' && url.startsWith(location.origin + '/')) return url;
-	const q = new URLSearchParams({ url: resolveURI(url) });
+	if (typeof url !== 'string' || !url) return '';
+	// Protocol-relative art still deserves the proxy's CORS and gateway retry,
+	// so give it the scheme the page is already on before anything else looks
+	// at it. Site-absolute ('/x.png') is untouched; only '//host/x.png' matches.
+	const raw = /^\/\/[^/]/.test(url.trim()) ? 'https:' + url.trim() : url.trim();
+	if (!isSafeImageURL(raw)) return '';
+	if (!/^(https?|ipfs|ar):/i.test(raw)) return raw;
+	if (typeof location !== 'undefined' && raw.startsWith(location.origin + '/')) return raw;
+	if (raw.length > MAX_SOURCE_URL) return '';
+	const q = new URLSearchParams({ url: resolveURI(raw) });
 	if (seed) q.set('seed', seed);
 	return `/api/img?${q.toString()}`;
 }
