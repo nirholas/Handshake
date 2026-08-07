@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-07T09:06:58.732Z",
+	"generated_at": "2026-08-07T09:24:19.259Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -53,6 +53,16 @@
 		{
 			"date": "2026-08-07",
 			"type": "update",
+			"title": "Change your avatar without leaving the world in Play",
+			"summary": "You no longer have to exit a world (and lose your spot) to switch avatars in Play. A new Avatar button in the world HUD, or the V key, opens a panel with the avatars saved to your three.ws account, community quick picks, the full gallery browser, a paste-a-link field, a .glb/.vrm upload, and the avatar creator. Your new look appears on you instantly and everyone else in the world sees it live. If a model fails to load, you keep the avatar you were wearing.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-07",
+			"type": "update",
 			"title": "Chat gets an agent that does its own research: pick a model that uses real tools",
 			"summary": "There is a new option in the chat model picker: three.ws Agent (server tools). Ask it a question and instead of answering from memory, it works the problem with live platform tools on the server: real token prices and market caps, trending coins, web search, SOL balances for any wallet, the trade-firewall rug and honeypot verdict on any mint, smart-money activity, and .sol name resolution. It loops through the tools it needs, then streams back one grounded answer. Every tool it can touch is read-only and every call passes the platform guard first; it cannot transfer, swap, or sign anything. Developers get the same loop as an OpenAI-compatible endpoint at /api/agent/run, so any existing OpenAI client can point at it unchanged.",
 			"link": "/docs/agent-runtime",
@@ -70,6 +80,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-07",
+			"type": "update",
+			"title": "Play now counts down to the next community event",
+			"summary": "The Play lobby shows a live banner for the upcoming $THREE Community Day: the event name, when it starts in your own timezone, and a ticking countdown. Once you are inside a world, a small dismissible reminder pill keeps the countdown in view, and when the event goes live both switch to a LIVE marker with a one-click jump into the $THREE world. After the event ends everything quietly disappears on its own.",
+			"link": "/play",
+			"tags": [
+				"feature"
 			]
 		},
 		{
