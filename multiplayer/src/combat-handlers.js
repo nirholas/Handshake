@@ -242,7 +242,7 @@ export function killPlayer(room, sessionId, killerLabel) {
 	spillTombstone(room, player.x, player.z, player.name, drop);
 	player.dead = true;
 	const client = room.clients.find((c) => c.sessionId === sessionId);
-	client?.send('notice', { kind: 'death', text: killerLabel ? `You were killed by ${killerLabel}.` : 'You died.' });
+	client?.send('notice', { kind: 'death', ok: false, text: killerLabel ? `You were killed by ${killerLabel}.` : 'You died.' });
 	room.clock.setTimeout(() => {
 		if (!room.state.players.has(sessionId)) return;
 		reviveProfile(profile);
@@ -250,7 +250,7 @@ export function killPlayer(room, sessionId, killerLabel) {
 		player.x = SPAWN_POINT.x; player.y = 0; player.z = SPAWN_POINT.z;
 		player.tsServer = Date.now();
 		const c2 = room.clients.find((c) => c.sessionId === sessionId);
-		c2?.send('notice', { kind: 'respawn', text: 'You respawned in town.' });
+		c2?.send('notice', { kind: 'respawn', ok: true, text: 'You respawned in town.' });
 		c2?.send('profile', {
 			gold: profile.gold, bank: profile.bank, hp: profile.hp, maxHp: profile.maxHp,
 			armor: profile.armor, maxArmor: profile.maxArmor, heat: profile.heat,
@@ -273,11 +273,11 @@ export function handleAttack(room, client) {
 	const active = profile.hotbar[profile.activeSlot];
 	const weapon = weaponDef(active?.item);
 	if (!weapon) {
-		client.send('notice', { kind: 'tool', text: 'Equip a weapon to attack.' });
+		client.send('notice', { kind: 'tool', ok: false, text: 'Equip a weapon to attack.' });
 		return;
 	}
 	if (!isDangerZone(player.x, player.z)) {
-		client.send('notice', { kind: 'attack', text: 'The wilds are past the edge of town — fights only break out there.' });
+		client.send('notice', { kind: 'attack', ok: false, text: 'The wilds are past the edge of town — fights only break out there.' });
 		return;
 	}
 	const now = Date.now();
@@ -285,7 +285,7 @@ export function handleAttack(room, client) {
 
 	if (weapon.kind === 'ranged') {
 		if (countItem(profile, weapon.ammo) <= 0) {
-			client.send('notice', { kind: 'attack', text: `Out of ${itemLabel(weapon.ammo).toLowerCase()}.` });
+			client.send('notice', { kind: 'attack', ok: false, text: `Out of ${itemLabel(weapon.ammo).toLowerCase()}.` });
 			return;
 		}
 	}
@@ -308,7 +308,7 @@ export function handleAttack(room, client) {
 	const hit = selectTarget(attackerPose, weapon, candidates);
 	if (weapon.kind === 'ranged') room._sendInv(client, profile); // reflect the spent ammo
 	if (!hit) {
-		client.send('notice', { kind: 'attack', text: 'No target in range.' });
+		client.send('notice', { kind: 'attack', ok: false, text: 'No target in range.' });
 		return;
 	}
 
@@ -378,12 +378,12 @@ export function handleLoot(room, client, payload) {
 	const ts = room.state.tombstones.get(id);
 	const drop = room._tombLoot.get(id);
 	if (!ts || !drop) {
-		client.send('notice', { kind: 'loot', text: 'That marker is gone.' });
+		client.send('notice', { kind: 'loot', ok: false, text: 'That marker is gone.' });
 		return;
 	}
 	const dist = Math.hypot(player.x - ts.x, player.z - ts.z);
 	if (dist > LOOT_REACH_M) {
-		client.send('notice', { kind: 'loot', text: 'Move closer to loot it.' });
+		client.send('notice', { kind: 'loot', ok: false, text: 'Move closer to loot it.' });
 		return;
 	}
 
@@ -405,7 +405,7 @@ export function handleLoot(room, client, payload) {
 	const parts = [];
 	if (drop.gold > 0) parts.push(`$${drop.gold}`);
 	if (gained.length) parts.push(gained.join(' + '));
-	client.send('notice', { kind: 'loot', text: parts.length ? `Looted ${parts.join(' and ')}.` : 'The marker was already picked clean.' });
+	client.send('notice', { kind: 'loot', ok: parts.length > 0, text: parts.length ? `Looted ${parts.join(' and ')}.` : 'The marker was already picked clean.' });
 	room._persistEcon(client.sessionId);
 }
 

@@ -472,7 +472,17 @@ export class CombatSystem {
 			const parts = [];
 			if (nearest.t.gold > 0) parts.push(`$${nearest.t.gold}`);
 			if (nearest.t.count > 0) parts.push(`${nearest.t.count} item${nearest.t.count === 1 ? '' : 's'}`);
-			this.prompt.innerHTML = `<span class="combat-key">E</span> Loot ${nearest.t.owner}${parts.length ? ' — ' + parts.join(', ') : ''}`;
+			// The tombstone owner is a remote player's chosen display name — untrusted
+			// text. Build the prompt with textContent, never innerHTML, so a name like
+			// `<img onerror=…>` renders as literal text instead of executing for every
+			// player who walks near the tombstone.
+			const key = document.createElement('span');
+			key.className = 'combat-key';
+			key.textContent = 'E';
+			this.prompt.replaceChildren(
+				key,
+				document.createTextNode(` Loot ${nearest.t.owner}${parts.length ? ' (' + parts.join(', ') + ')' : ''}`),
+			);
 			this.prompt.classList.add('combat-show');
 			this._placeAt(this.prompt, nearest.t.x, 1.1, nearest.t.z);
 		} else {
