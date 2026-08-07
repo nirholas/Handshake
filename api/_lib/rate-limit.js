@@ -502,6 +502,12 @@ export const limits = {
 	// plenty of headroom while capping how much CPU one caller can burn.
 	signCompileIp: (ip) =>
 		getLimiter('sign:compile:ip', { limit: 120, window: '5 m', local: true }).limit(ip),
+	// GuardChain preflight (/api/agent/guard). Pure in-process policy evaluation,
+	// sub-millisecond, no I/O; the cap only stops a script from using the box as
+	// a free CPU treadmill. An agent preflighting every tool call in an active
+	// chat session stays far under 300 evaluations per 5 minutes.
+	agentGuardIp: (ip) =>
+		getLimiter('agent:guard:ip', { limit: 300, window: '5 m', local: true }).limit(ip),
 	// Auth buckets gate credential guessing / account-creation spam. They are
 	// sensitive (critical) but use degradeToMemory: on a Redis outage they fall
 	// back to the per-instance memory limiter rather than failing closed. Failing
