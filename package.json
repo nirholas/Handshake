@@ -116,7 +116,8 @@
 		"tour-sdk",
 		"packages/alibaba-cloud-mcp",
 		"packages/tool-sdk",
-		"packages/spatial-mcp"
+		"packages/spatial-mcp",
+		"packages/agent-runtime"
 	],
 	"main": "src/app.js",
 	"browserslist": [

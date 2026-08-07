@@ -1,0 +1,63 @@
+{
+  "name": "@three-ws/agent-runtime",
+  "version": "0.1.0",
+  "description": "The three.ws agent engine: a plan/execute decision loop with human-approval gates, a seven-layer GuardChain (security blacklist, intervention, capability, permission, trade guard, spend envelope, x402 budget), a tamper-evident hash-chained action ledger, and a multi-step transaction pipeline with rollback.",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./core": {
+      "types": "./src/core/index.d.ts",
+      "import": "./src/core/index.js",
+      "default": "./src/core/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "vitest run tests"
+  },
+  "keywords": [
+    "agent",
+    "agent-runtime",
+    "decision-loop",
+    "guardrails",
+    "spend-limit",
+    "human-in-the-loop",
+    "tool-calling",
+    "action-ledger",
+    "x402",
+    "solana",
+    "three.ws"
+  ],
+  "author": "nirholas <support@three.ws>",
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://three.ws",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/agent-runtime"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "tokenx": "^1.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
