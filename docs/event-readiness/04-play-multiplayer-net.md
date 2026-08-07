@@ -20,6 +20,7 @@ The event means many strangers in one world at once. Connection handling has to 
 5. **Chat hygiene.** Long messages wrap, links do not inject HTML (verify escaping), spam has some throttle, and the log does not grow unbounded in memory.
 6. **Voice.** If `voice-chat.js` is surfaced in the UI, test the full path: permission prompt, mute state visible to others, teardown on leave. If it is broken and unfixable today, hide the entry point rather than shipping a dead button.
 7. **Scale behavior.** Simulate a crowded room (multiple headless Playwright contexts, or whatever the net layer allows). Watch for O(n^2) update patterns and per-player DOM label churn.
+8. **Mobile memory.** A phone that runs out of memory does not throw a JS error: the browser kills the tab, the socket dies mid-session, and the page reloads. In the server log that reads as a join followed by a leave a few seconds later, over and over, which looks like a networking bug and is not one. Watch the bytes, not the console. `scripts/play-mobile-repro.mjs` drives a phone-emulated /play session and prints every download attributed to the code that asked for it (`ENGINE=chromium node scripts/play-mobile-repro.mjs https://three.ws/play 120000`). Anything that loads community-uploaded models must work to a budget: the gallery is uncapped and single avatars there reach 24 MB. `src/game/ambient-crowd.js` holds the reference implementation (per-model cap, per-visit download cap, load-once-and-clone, release on leave).
 
 ## Verify
 
