@@ -39,6 +39,30 @@
 			<description>Saving an avatar in the Studio used to capture whatever the idle animation happened to be doing at that exact instant, and freeze it into the model permanently. Because the saved file carries no animation of its own, that one arbitrary frame became the avatar's pose everywhere it appeared: arms tucked in at odd angles, one side sitting differently from the other, and a different result each time you saved the same avatar. Avatars are now saved in their proper neutral pose, which is symmetric and identical on every save, so downloads, animation retargeting and clothing all start from the stance the body was actually built around. Your gallery thumbnail still shows the relaxed idle pose it always did.</description>
 		</item>
 		<item>
+			<title>Chat gets an agent that does its own research: pick a model that uses real tools</title>
+			<link>https://three.ws/docs/agent-runtime</link>
+			<guid isPermaLink="false">2026-08-07:Chat gets an agent that does its own research: pick a model that uses real tools</guid>
+			<pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>There is a new option in the chat model picker: three.ws Agent (server tools). Ask it a question and instead of answering from memory, it works the problem with live platform tools on the server: real token prices and market caps, trending coins, web search, SOL balances for any wallet, the trade-firewall rug and honeypot verdict on any mint, smart-money activity, and .sol name resolution. It loops through the tools it needs, then streams back one grounded answer. Every tool it can touch is read-only and every call passes the platform guard first; it cannot transfer, swap, or sign anything. Developers get the same loop as an OpenAI-compatible endpoint at /api/agent/run, so any existing OpenAI client can point at it unchanged.</description>
+		</item>
+		<item>
+			<title>Game-Ready export stops charging $THREE holders who connected a wallet</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-07:Game-Ready export stops charging $THREE holders who connected a wallet</guid>
+			<pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Exporting a model for Unity or Unreal is free if you hold $THREE, but the export panel only recognised holders who had signed in with a wallet linked to their account. If you had simply connected your wallet to the site, the way most people browse the Forge, the panel could not see what you hold and asked you to pay the per-export fee your holding already covered. It now proves your holding from whichever identity you actually have: a linked account signs silently, and a connected wallet proves ownership with one free signature that never moves funds. That signature is only ever requested when your wallet genuinely clears the tier, so a non-holder is never prompted for something that could not unlock anything. The panel also now tells you your real price before you export: holders read 'free for you', everyone else reads the exact per-export price.</description>
+		</item>
+		<item>
+			<title>Play: phones stop getting dropped out of the world seconds after joining</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-07:Play: phones stop getting dropped out of the world seconds after joining</guid>
+			<pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Players on phones were being thrown out of /play within seconds of entering a world, seemingly at random. The cause was memory: the decorative crowd drew random models from the public avatar gallery with no size limit, no reuse and no cleanup, and community models there run as large as 24 MB. A phone that happened to draw a few heavy ones pulled tens of megabytes of 3D geometry within seconds of entering, and the browser killed the tab. The crowd now works to a memory budget sized for the device, downloads each model once and reuses it, and releases everything when you leave a world. The lobby's avatar picker also stops downloading full models on phones when it already has a real picture of them. And if a phone does reclaim graphics memory mid-session, the world now pauses rendering and recovers instead of freezing on a dead frame.</description>
+		</item>
+		<item>
 			<title>The chat no longer refuses questions it was never asked to refuse</title>
 			<link>https://three.ws/chat</link>
 			<guid isPermaLink="false">2026-08-07:The chat no longer refuses questions it was never asked to refuse</guid>

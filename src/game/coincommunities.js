@@ -475,6 +475,8 @@ export class CoinCommunities {
 		// and the normal seeded look is used, so default play is unaffected.
 		this._biomePin = new URLSearchParams(location.search).get('biome') || null;
 
+		// True between webglcontextlost and webglcontextrestored (see _bindContextLoss).
+		this._contextLost = false;
 		this._initRenderer();
 		this._initScene();
 
@@ -709,6 +711,34 @@ export class CoinCommunities {
 		this._applyPerfTier();
 		window.addEventListener('resize', () => this._onResize());
 		this._watchDevicePixelRatio();
+		this._bindContextLoss();
+	}
+
+	// A browser may take the WebGL context away at any time. On phones it is the
+	// usual response to memory pressure, and it arrives with no warning and no JS
+	// error. Unhandled, the default action cancels restoration for good: the canvas
+	// freezes on its last frame, three.js logs a flood of GL warnings, and the
+	// player is left in a world that renders nothing while the socket, chat and
+	// economy carry on underneath. Calling preventDefault() is what asks the
+	// browser to give the context back; until it does, we stop drawing and say so.
+	_bindContextLoss() {
+		this.canvas.addEventListener('webglcontextlost', (e) => {
+			e.preventDefault();
+			this._contextLost = true;
+			log.warn('[coincommunities] WebGL context lost, pausing rendering until it is restored');
+			this.ui?.toast('Graphics paused: your device reclaimed 3D memory. Restoring…', 'warn');
+		});
+		this.canvas.addEventListener('webglcontextrestored', () => {
+			this._contextLost = false;
+			// The GPU-side objects three.js held are gone; it rebuilds them lazily
+			// from the scene graph on the next render. Re-apply the tier so pixel
+			// ratio and shadow state land on the fresh context, and resize so the
+			// new drawing buffer matches the viewport.
+			this._applyPerfTier();
+			this._onResize();
+			log.info('[coincommunities] WebGL context restored');
+			this.ui?.toast('Graphics restored.', 'info');
+		});
 	}
 
 	// devicePixelRatio changes when the window moves to a display with a
@@ -994,7 +1024,7 @@ export class CoinCommunities {
 		// when /play is open (no token pinned) or when we already hold a fresh pass.
 		if (this._playReady) { try { await this._playReady; } catch { /* gate self-heals */ } }
 		if (this.phase !== 'loading') return; // torn down while the gate was up
-		const tier = opts.tier === 'holders' ? 'holders' : 'general';
+		let tier = opts.tier === 'holders' ? 'holders' : 'general';
 		// Entry does several awaits (gate, manifest, avatar GLB, room connect) and
 		// the Leave button goes live the moment the HUD shows — well before connect
 		// resolves. Stamp this attempt so a continuation that resumes after the
@@ -1012,10 +1042,18 @@ export class CoinCommunities {
 		if (tier === 'holders') {
 			const pass = await this._passHolderGate(coin);
 			if (!pass) { if (this.phase === 'loading') this.phase = 'lobby'; return; }
-			holderPass = pass.holderPass;
-			holderMinUsd = pass.minUsd;
-			holderMinTokens = pass.minTokens || 0;
 			if (this.phase !== 'loading') return; // torn down while the gate was up
+			if (pass === 'general') {
+				// The player picked the open world from inside the gate (short
+				// balance, or holder verification unavailable): keep this same
+				// entry going as a General-world entry instead of bouncing them
+				// back to the lobby to click again.
+				tier = 'general';
+			} else {
+				holderPass = pass.holderPass;
+				holderMinUsd = pass.minUsd;
+				holderMinTokens = pass.minTokens || 0;
+			}
 		}
 
 		// A bare deep link (/play?coin=<home mint>) carries no name/art; backfill the
@@ -1629,6 +1667,14 @@ export class CoinCommunities {
 					} catch (err) {
 						if (err?.code === 'auth_required') { state = 'auth'; data = { symbol, error: carryError }; }
 						else if (err?.code === 'wallet_required') { state = 'wallet'; data = { symbol, error: carryError }; }
+						else if (err?.code === 'cc_unconfigured') {
+							// Holder verification depends on the CoinCommunities API
+							// key, which this deployment does not have yet. Nothing the
+							// player does (retry, switch wallet) can succeed, so route
+							// to the designed "verification offline" state that leads
+							// them into the open world instead.
+							state = 'unavailable'; data = { symbol };
+						}
 						else { state = 'error'; data = { symbol, error: err?.message || 'Could not verify your holdings.' }; }
 						carryError = '';
 					}
@@ -1637,6 +1683,13 @@ export class CoinCommunities {
 
 				const action = await this._holderGateWait(state, data);
 				if (action === 'cancel') return null;
+				if (action === 'general') {
+					// Continue this entry as the open General world. The caller
+					// (enter()) downgrades the tier; close the gate ourselves since
+					// the finally below only cleans up on a return to the lobby.
+					this.ui.closeHolderGate();
+					return 'general';
+				}
 				if (action === 'signin') {
 					this.ui.setHolderGate('working', { symbol, msg: 'Opening X sign-in…' });
 					try { await signInWithX(); } catch (e) { carryError = e?.message || 'Sign-in was cancelled.'; }
@@ -3853,7 +3906,10 @@ export class CoinCommunities {
 		}
 		this._tickEnv(dt);
 		this._updateCamera(dt);
-		this.renderer.render(this.scene, this.camera);
+		// Drawing into a lost context throws GL errors on every call and can keep
+		// the browser from handing it back. Simulation above keeps running, so the
+		// world is live and correct the instant the context returns.
+		if (!this._contextLost) this.renderer.render(this.scene, this.camera);
 	}
 
 	// Kick the avatar into the air. Ignored while already airborne so a held key

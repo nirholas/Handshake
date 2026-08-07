@@ -13,9 +13,11 @@
 
 import { Group, Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
 import { Box3, Mesh, CapsuleGeometry, SphereGeometry, MeshStandardMaterial } from 'three';
 import { AnimationManager } from '../animation-manager.js';
+import { detectProfile } from '../club-perf.js';
 
 const AVATAR_DEFAULT = '/avatars/default.glb';
 const MANIFEST_URL = '/animations/manifest.json';
@@ -24,7 +26,45 @@ const CLIP_IDLE = 'idle';
 const CLIP_WALK = 'av-walk-feminine';
 const WORLD_RADIUS = 54;       // a touch inside the plaza edge
 const AMBIENT_SPEED = 1.7;     // gentle stroll, slower than the player
-const AMBIENT_TARGET = 5;      // strollers to keep around when you're alone
+
+const MB = 1024 * 1024;
+
+// Memory budget for the decorative crowd, per render tier.
+//
+// The public gallery is user-uploaded and uncapped: live models in it run from
+// ~700 KB to 24 MB. The crowd used to draw a fresh random model per wanderer,
+// per re-sync, with no size filter, no reuse and no disposal, so a phone that
+// happened to draw a few heavy avatars pulled tens of megabytes of GLB into
+// memory within seconds of world entry, and iOS Safari killed the tab. That is
+// what made /play "randomly" kick mobile players: the draw is random, so the
+// crash was too.
+//
+// Three limits keep it bounded. `maxModelBytes` filters the pool down to models
+// the device can afford at all, `sessionBytes` caps what one visit may download
+// in total (past it, the crowd re-clones models already resident rather than
+// fetching more), and `count` sizes the crowd itself. Shadow casting is dropped
+// on the low tier, where five shadow-casting skinned meshes cost more than the
+// crowd is worth.
+const CROWD_BUDGET = {
+	high:   { count: 5, maxModelBytes: 12 * MB, sessionBytes: 80 * MB, shadows: true },
+	medium: { count: 4, maxModelBytes: 6 * MB,  sessionBytes: 32 * MB, shadows: true },
+	low:    { count: 2, maxModelBytes: 3 * MB,  sessionBytes: 10 * MB, shadows: false },
+};
+// A phone lands in the shared 'medium' tier because Safari reports neither
+// deviceMemory nor hardwareConcurrency, so the detector defaults both to
+// "plenty". That is the right call for the renderer (a modern iPhone draws the
+// world fine) and the wrong one for a download budget: the phone still has a
+// fraction of a laptop's memory headroom and is the device that actually gets
+// killed. Step the crowd budget down one tier when the primary pointer is
+// coarse, without touching the shared render profile.
+function crowdBudget() {
+	const tiers = ['high', 'medium', 'low'];
+	let i = Math.max(0, tiers.indexOf(detectProfile()));
+	const touchPrimary = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+	if (touchPrimary) i = Math.min(tiers.length - 1, i + 1);
+	return CROWD_BUDGET[tiers[i]];
+}
+const BUDGET = crowdBudget();
 
 const NAMES = ['satoshi', 'anon', 'gm_ser', 'degenape', 'moonboy', 'pepe', 'wagmi', 'hodlqueen', 'vibes', 'chad', 'frfr', 'fomo', 'ngmi', 'based_dev', 'gigachad', '0xshill', 'florp'];
 const LINES = ['gm ☀️', 'wen moon', 'lfg 🚀', 'wagmi', 'probably nothing', 'few understand', 'based', 'diamond hands 💎', 'ser…', 'this is the way', 'bullish af', 'vibes immaculate', 'we so back', 'iykyk', 'up only 📈'];
@@ -34,7 +74,16 @@ const _gltf = new GLTFLoader();
 const _meshoptReady = getMeshoptDecoder().then((d) => _gltf.setMeshoptDecoder(d));
 let _defs = null;     // [idle, walk] animation defs
 let _emotes = null;   // a handful of emote defs
-let _avatars = null;  // pool of public-gallery GLB URLs ([] once the fetch settles)
+let _avatars = null;  // pool of affordable gallery picks ([] once the fetch settles)
+
+// One download per distinct model, shared by every wanderer that wears it.
+// SkeletonUtils.clone() deep-copies a skinned hierarchy (bones included) while
+// sharing geometry and materials with the template, so the second wanderer in a
+// given model costs no network and almost no memory. Cloned meshes share the
+// template's buffers, so a template must outlive every clone of it. Disposal
+// happens in AmbientCrowd.clear(), once the whole crowd is gone.
+const _templates = new Map(); // url → Promise<Group>
+let _spentBytes = 0;          // gallery bytes downloaded this visit
 
 async function loadManifest() {
 	if (_defs) return;
@@ -49,29 +98,53 @@ async function loadManifest() {
 }
 
 // Pull a varied set of real avatars from the public gallery so the crowd reads as
-// a living mix of community models rather than one repeated default. Settles to an
-// empty array on failure — each wanderer then falls back to AVATAR_DEFAULT.
+// a living mix of community models rather than one repeated default. Only models
+// whose published size fits this device's per-model budget make the pool; an
+// entry with no size is skipped rather than gambled on, since one 24 MB draw is
+// enough to end a mobile session. Settles to an empty array on failure; each
+// wanderer then falls back to AVATAR_DEFAULT.
 async function loadAvatarPool() {
 	if (_avatars) return;
-	let urls = [];
+	let picks = [];
 	try {
 		const r = await fetch(GALLERY_URL, { headers: { accept: 'application/json' } });
 		if (r.ok) {
 			const { avatars } = await r.json();
-			urls = (avatars || []).map((a) => a.model_url || a.base_model_url).filter(Boolean);
+			picks = (avatars || [])
+				.map((a) => ({ url: a.model_url || a.base_model_url, bytes: Number(a.size_bytes) || 0 }))
+				.filter((p) => p.url && p.bytes > 0 && p.bytes <= BUDGET.maxModelBytes);
 		}
 	} catch { /* default-avatar fallback below */ }
-	_avatars = urls;
+	_avatars = picks;
+}
+
+// Fetch a model once and hand every later wanderer a clone of it. `bytes` is the
+// published size charged against this visit's download budget; a cache hit costs
+// nothing and is never charged twice.
+function loadTemplate(url, bytes) {
+	let pending = _templates.get(url);
+	if (!pending) {
+		_spentBytes += bytes;
+		pending = _meshoptReady.then(() => _gltf.loadAsync(url)).then((gltf) => gltf.scene);
+		_templates.set(url, pending);
+		// Evict a failed load so one bad model doesn't poison the URL for the rest
+		// of the visit, and refund its budget: nothing was actually held.
+		pending.catch(() => {
+			if (_templates.get(url) === pending) _templates.delete(url);
+			_spentBytes = Math.max(0, _spentBytes - bytes);
+		});
+	}
+	return pending;
 }
 
 // Load a gallery avatar (or the default) into a rig + animation manager. Falls
 // back to a simple stand-in so a wanderer is never invisible.
-async function buildAvatar(rig, anim, url) {
+async function buildAvatar(rig, anim, pick) {
+	const url = pick?.url || AVATAR_DEFAULT;
 	try {
-		await _meshoptReady;
-		const gltf = await _gltf.loadAsync(url || AVATAR_DEFAULT);
-		const model = gltf.scene;
-		model.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = false; } });
+		const template = await loadTemplate(url, pick?.bytes || 0);
+		const model = cloneSkinnedScene(template);
+		model.traverse((n) => { if (n.isMesh) { n.castShadow = BUDGET.shadows; n.receiveShadow = false; } });
 		const box = new Box3().setFromObject(model);
 		model.position.y -= box.min.y;
 		rig.add(model);
@@ -81,14 +154,35 @@ async function buildAvatar(rig, anim, url) {
 	} catch {
 		// A gallery model that fails to load shouldn't strand the wanderer on a
 		// capsule — fall back to the bundled default once before the stand-in.
-		if (url && url !== AVATAR_DEFAULT) return buildAvatar(rig, anim, AVATAR_DEFAULT);
+		if (url !== AVATAR_DEFAULT) return buildAvatar(rig, anim, null);
 		const body = new Mesh(new CapsuleGeometry(0.32, 0.7, 4, 10), new MeshStandardMaterial({ color: 0x9aa3ad }));
-		body.position.y = 0.85; body.castShadow = true;
+		body.position.y = 0.85; body.castShadow = BUDGET.shadows;
 		const head = new Mesh(new SphereGeometry(0.28, 14, 10), new MeshStandardMaterial({ color: 0xc9cdd2 }));
-		head.position.y = 1.55; head.castShadow = true;
+		head.position.y = 1.55; head.castShadow = BUDGET.shadows;
 		rig.add(body, head);
 		return 1.7;
 	}
+}
+
+// Release every model this visit downloaded. Safe only once no wanderer is left
+// standing: clones share their template's geometry and materials, so freeing a
+// template while a clone still renders would corrupt it.
+function disposeTemplates() {
+	for (const pending of _templates.values()) {
+		pending.then((scene) => {
+			scene.traverse((n) => {
+				if (!n.isMesh) return;
+				n.geometry?.dispose?.();
+				for (const mat of Array.isArray(n.material) ? n.material : [n.material]) {
+					if (!mat) continue;
+					for (const value of Object.values(mat)) value?.isTexture && value.dispose();
+					mat.dispose?.();
+				}
+			});
+		}).catch(() => { /* never loaded, nothing to free */ });
+	}
+	_templates.clear();
+	_spentBytes = 0;
 }
 
 async function playEmote(anim, motion) {
@@ -102,7 +196,7 @@ async function playEmote(anim, motion) {
 }
 
 class Wanderer {
-	constructor(scene, name, avatarUrl) {
+	constructor(scene, name, avatarPick) {
 		this.name = name;
 		this.rig = new Group();
 		this.anim = new AnimationManager();
@@ -125,7 +219,7 @@ class Wanderer {
 		this._sayIn = 5 + Math.random() * 16;
 		this._emoteIn = 9 + Math.random() * 22;
 
-		buildAvatar(this.rig, this.anim, avatarUrl).then((h) => { this.height = h; });
+		buildAvatar(this.rig, this.anim, avatarPick).then((h) => { this.height = h; });
 	}
 	_setMotion(m) {
 		if (m === this.motion) return;
@@ -175,6 +269,10 @@ class Wanderer {
 	}
 	dispose() {
 		this.scene.remove(this.rig);
+		this.rig.clear();
+		// Drop the mixer + its bound clip actions. The clips themselves are shared
+		// module-wide and stay cached; only this rig's bindings go.
+		this.anim.dispose();
 		this.label.remove();
 		this.bubble?.remove();
 		clearTimeout(this._bubbleTimer);
@@ -200,15 +298,23 @@ class AmbientCrowd {
 		return this._names.splice(i, 1)[0];
 	}
 	// Hand out a distinct gallery avatar each time; refill (and reshuffle) only once
-	// the bag empties, so we exhaust the pool before any model repeats.
+	// the bag empties, so we exhaust the pool before any model repeats. Once this
+	// visit's download budget is spent, keep the variety we already paid for: draw
+	// from the models still resident in memory instead of fetching another one.
+	// Wanderers churn every time a real player joins or leaves, so without this an
+	// hour in a busy world would download the whole gallery.
 	_takeAvatar() {
-		if (!_avatars?.length) return AVATAR_DEFAULT;
+		if (!_avatars?.length) return null;
+		if (_spentBytes >= BUDGET.sessionBytes) {
+			const resident = [..._templates.keys()];
+			return resident.length ? { url: resident[(Math.random() * resident.length) | 0], bytes: 0 } : null;
+		}
 		if (!this._avatarBag.length) this._avatarBag = [..._avatars];
 		const i = (Math.random() * this._avatarBag.length) | 0;
 		return this._avatarBag.splice(i, 1)[0];
 	}
 	sync(realCount) {
-		const want = Math.max(0, AMBIENT_TARGET - (realCount | 0));
+		const want = Math.max(0, BUDGET.count - (realCount | 0));
 		while (this.list.length < want) this.list.push(new Wanderer(this.cc.scene, this._takeName(), this._takeAvatar()));
 		while (this.list.length > want) this.list.pop().dispose();
 		// The HUD's online count reports REAL players only (self + live peers).
@@ -234,6 +340,11 @@ class AmbientCrowd {
 	clear() {
 		for (const w of this.list) w.dispose();
 		this.list = [];
+		this._avatarBag = [];
+		// Every clone is gone, so the shared templates can go too. Leaving a world
+		// used to keep every model the crowd had ever worn resident for the rest of
+		// the page's life; on a phone that alone could outlive the tab.
+		disposeTemplates();
 	}
 }
 

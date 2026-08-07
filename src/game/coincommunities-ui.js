@@ -691,9 +691,11 @@ export class CommunityUI {
 				? el('img', {
 						src: a.thumbnail_url, alt: a.name || 'Avatar', loading: 'lazy',
 						// A stale thumbnail (e.g. a legacy OG key that 404s before the
-						// avatar self-heals) shouldn't leave a broken-image icon — drop
-						// it; _renderChipPreview paints the live model over this anyway.
-						onerror: (e) => e.target.remove(),
+						// avatar self-heals) shouldn't leave a broken-image icon: drop it
+						// and let _renderChipPreview's live model render stand in. Removing
+						// the node is also what makes the mobile skip-the-render path fall
+						// back to a real render when the thumbnail turns out to be dead.
+						onerror: (e) => { e.target.remove(); this._renderChipPreview(chip, { url: a.model_url || value, label: a.name || 'Your avatar' }); },
 					})
 				: el('span', { class: 'cc-avatar-glyph', text: '🧑' }),
 		]);
@@ -701,7 +703,7 @@ export class CommunityUI {
 		chip._avatarId = a.id || '';
 		this._galleryChip = chip;
 		this.presetRow.insertBefore(chip, this.presetRow.firstChild);
-		this._renderChipPreview(chip, { url: a.model_url || value, label: a.name || 'Your avatar' });
+		this._renderChipPreview(chip, { url: a.model_url || value, label: a.name || 'Your avatar', thumb: a.thumbnail_url });
 		this._setAvatar(value, false);
 	}
 
@@ -726,7 +728,10 @@ export class CommunityUI {
 			const fallback = p.thumb
 				? el('img', {
 						src: p.thumb, alt: p.label, loading: 'lazy',
-						onerror: (e) => e.target.remove(), // broken thumb → let the model preview stand in
+						// Broken thumb: drop it and render the real model instead, so the
+						// chip is never left empty (on mobile a live thumbnail is what lets
+						// us skip that render in the first place).
+						onerror: (e) => { e.target.remove(); this._renderChipPreview(chip, { ...p, thumb: null }); },
 					})
 				: el('span', { class: 'cc-avatar-glyph', text: p.icon || '🙂' });
 			const chip = el('button', {
@@ -745,6 +750,16 @@ export class CommunityUI {
 	// replacing the placeholder. Leaves the fallback in place if rendering fails
 	// (no WebGL, model load error) so the chip stays meaningful.
 	async _renderChipPreview(chip, p) {
+		// Rendering a chip means downloading the whole model: community avatars run
+		// to 24 MB, and the row holds seven of them. On a phone that is up to a few
+		// hundred megabytes of geometry bought for seven 160px portraits, on the
+		// lobby screen, before the world has even loaded. When the API already gave
+		// us a real portrait of the same avatar, the chip is already correct, so
+		// keep it and skip the download. Desktop still gets the live render.
+		if (p.thumb && this._touchPrimary()) {
+			chip.classList.remove('cc-avatar-loading');
+			return;
+		}
 		let dataUrl = null;
 		try {
 			dataUrl = await renderAvatarThumb(await resolveAvatarUrl(p.url));
@@ -754,6 +769,12 @@ export class CommunityUI {
 		if (!dataUrl) return;
 		chip.textContent = '';
 		chip.appendChild(el('img', { class: 'cc-avatar-render', src: dataUrl, alt: p.label }));
+	}
+
+	// True on phones and tablets: a coarse pointer is the primary input. Used to
+	// spend the memory and bandwidth budget differently, never to hide a feature.
+	_touchPrimary() {
+		return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 	}
 
 	_setAvatar(url, fromCustom) {
@@ -932,7 +953,8 @@ export class CommunityUI {
 	// (default $8) of the coin. This overlay is a thin view over the scene's gate
 	// state machine (coincommunities.js _passHolderGate) — the scene drives us
 	// through setHolderGate(state, data) and we report the player's choice back via
-	// onHolderAction(action): 'signin' | 'wallet' | 'switch' | 'buy' | 'recheck' | 'cancel'.
+	// onHolderAction(action): 'signin' | 'wallet' | 'switch' | 'buy' | 'recheck' |
+	// 'general' (continue this entry into the open world) | 'cancel'.
 	openHolderGate(coin) {
 		if (this._gate) return; // already open — the scene re-uses it across states
 		this._gateBody = el('div', { class: 'cc-gate-body' });
@@ -1146,7 +1168,22 @@ export class CommunityUI {
 						btn(`Buy ${sym}`, 'buy', 'cc-gate-primary'),
 						btn('I bought — re-check', 'recheck'),
 						btn('Use a different wallet', 'switch'),
-						btn('Enter the open world instead', 'cancel', 'cc-gate-ghost'),
+						btn('Enter the open world instead', 'general', 'cc-gate-ghost'),
+					),
+				];
+				break;
+			case 'unavailable':
+				// Holder verification is down deployment-wide (cc_unconfigured).
+				// Retrying or switching wallets cannot succeed, so lead with the
+				// open world; keep one retry for when the service comes back.
+				nodes = [
+					el('div', { class: 'cc-gate-lock', text: '🛠' }),
+					title('Holder check is offline'),
+					msg(`We can’t verify ${sym} holdings right now. That’s on our side, not yours, and your tokens are unaffected. The open world is live for everyone.`),
+					actions(
+						btn('Enter the open world', 'general', 'cc-gate-primary'),
+						btn('Try again', 'recheck'),
+						btn('Back to the lobby', 'cancel', 'cc-gate-ghost'),
 					),
 				];
 				break;
