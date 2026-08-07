@@ -1,127 +1,163 @@
-# X posts: $THREE First Holders Meetup
+# X posts: Three.ws User Group first in-world meetup (IBM Community)
 
-Copy for the launch-day X push, built off the live event config in `public/event.json`
-(name, tagline, agenda, souvenir) and the public countdown page at [three.ws/event](https://three.ws/event).
+Copy for the launch-day X push. **The IBM angle is the point of this event**, so IBM leads every
+post: this is the first in-world meetup of the [Three.ws User Group on IBM
+Community](https://community.ibm.com/community/user/usergroup?CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016),
+an official IBM Community user group, held inside three.ws itself rather than on a call.
 
-**Rule for every post here: never state hours-until.** The countdown on `/event` renders in the
-reader's own timezone and stays correct after the post is reposted, quoted, or found late. Say
-"today", link the page, let the page do the math.
+**Event:** three.ws Community Meetup: Live on the $THREE Server
+**When:** Friday, August 7, 2026, 8:00 AM Pacific / 11:00 AM Eastern / 4 PM London / 5 PM Berlin
+**Where:** [three.ws/play](https://three.ws/play), the $THREE world pinned at the top of the lobby
+**Cost:** free, no download, no install, no account, no wallet
+
+**IBM event listing (the link every post points at):**
+`https://community.ibm.com/community/user/events/event-description?CalendarEventKey=25d71799-16b5-4342-b2e5-019fcf9622ca&CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016`
+
+Two rules for every post here:
+
+1. **Never state hours-until.** Say "today" and give the absolute clock time. A post that says
+   "in 4 hours" is wrong the moment it is reposted, quoted, or found late.
+2. **IBM in the first line.** The user group is the reason this event exists. Do not bury it under
+   the game features.
 
 ---
 
 ## 1. Main teaser (post this first, with video)
 
-> Today: the first $THREE holders meetup, live inside the three.ws world.
+> Today: the first in-world meetup of the Three.ws User Group on IBM Community.
 >
-> One shared 3D town. King of the Totem for the crown, a free spin on Fortune's Folly, a plaza
-> dance-off, fireworks to close it out.
+> Not a webinar. Open three.ws/play in a browser, become a 3D avatar, and walk around the $THREE
+> world with the team. Spatial voice, live demos, open Q&A.
 >
-> Everyone who shows up keeps the commemorative laurel.
+> 8 AM PT / 11 AM ET. Free, no install, no account.
 >
-> Countdown and run of show: three.ws/event
+> [IBM event link]
 
-**Media:** the strongest 20 to 40 seconds you have of `/play`. Lead with movement (crowd in the
+**Media:** the strongest 20 to 40 seconds you have of `/play`. Lead with movement (a crowd in the
 plaza, avatars walking) rather than a static wide shot. First frame matters more than the last.
 
 ---
 
-## 2. Alternates for the same slot
+## 2. The IBM technical post (this is the one that earns the user group its members)
+
+Post this second, roughly an hour after the teaser. It is the reason an IBM developer should care.
+
+> Why an IBM Community user group is meeting inside a 3D world:
+>
+> three.ws is an IBM Business Partner. Our agents think on IBM Granite served through watsonx.ai,
+> and two of our MCP servers are IBM-native:
+>
+> @three-ws/ibm-watsonx-mcp, watsonx.ai on your own IBM Cloud account
+> @three-ws/ibm-x402-mcp, pay-per-use Granite billed in USDC, no IBM account needed
+>
+> Come ask us about any of it, in person: [IBM event link]
+
+---
+
+## 3. Alternates for the main slot
 
 Pick one. Do not post all three.
 
 **Short and blunt**
 
-> The first $THREE holders meetup is today.
+> The Three.ws User Group on IBM Community meets today, inside three.ws.
 >
-> A live 3D world, a crown to fight over, a wheel to spin, fireworks at the end, and a free
-> commemorative laurel for everyone who walks in.
+> A browser tab, a 3D avatar, spatial voice, live demos, and the team answering anything.
 >
-> three.ws/event
+> 8 AM PT / 11 AM ET. Free: [IBM event link]
 
-**Curiosity-led**
+**Contrast-led**
 
-> We built a town out of a coin, and today we are all standing in it.
+> Most user groups meet on a video call.
 >
-> First $THREE holders meetup. Bring a photo, get an avatar, walk in.
+> Ours meets in a 3D world you open in a browser tab. You walk up to someone and you hear them,
+> from the direction they are standing.
 >
-> three.ws/event
+> First Three.ws User Group meetup on IBM Community is today, 8 AM PT: [IBM event link]
 
-**Low-friction / no-wallet angle**
+**Builder-led**
 
-> No wallet connect. No download. No install.
+> If you build AI agents that need a body, spatial reasoning, or generative 3D, the Three.ws User
+> Group on IBM Community is your room. It meets today, and it meets inside the product.
 >
-> Open a link, get an avatar, and you are standing in the $THREE world with everyone else.
->
-> First holders meetup is today: three.ws/event
+> 8 AM PT / 11 AM ET, free, browser only: [IBM event link]
 
 ---
 
-## 3. Thread version (if you want the reach)
+## 4. Thread version (if you want the reach)
 
 **1/**
-> Today: the first $THREE holders meetup, live inside the three.ws world.
+> Today: the first in-world meetup of the Three.ws User Group on IBM Community.
 >
-> Not a Space. Not a call. An actual 3D town you walk into from a link.
+> Not a Space, not a webinar. An actual 3D world you walk into from a link, with the team standing
+> in it.
 >
-> three.ws/event
+> 8 AM PT / 11 AM ET: [IBM event link]
 
 **2/** (attach the best plaza / crowd clip)
-> The plaza is where it starts. Doors open, chat opens, show off your fit, grab a commemorative
-> photo with whoever is standing next to you.
+> How you join, in full: open three.ws/play, click the $THREE world pinned at the top, you are in.
+> Guests get an avatar automatically. No download, no account, no wallet.
 
-**3/** (attach totem or combat footage)
-> Then King of the Totem. Hold the gold ring long enough and you get crowned. Everyone else is
-> actively trying to take it from you.
+**3/** (attach voice or group-conversation footage)
+> Voice is spatial. You hear the people near you, from the direction they are standing, fading as
+> you walk away. Three conversations can happen twenty meters apart without talking over each
+> other, exactly like a conference hallway.
 
-**4/** (attach wheel or cosmetics footage)
-> Fortune's Folly wheel hour: free spin, a prize on every wedge. Cosmetics you keep.
+**4/** (attach `/create` footage, or an avatar generation clip)
+> Want to show up as yourself? Build a custom 3D agent first at three.ws/create from a text prompt
+> or a selfie. Rigged and animation-ready in about a minute, and it follows you into the world.
 
-**5/** (attach the fireworks clip, or the best-looking night shot)
-> Fireworks close it out. Look up, take the photo.
+**5/** (attach the strongest world / demo footage)
+> Why IBM Community: three.ws is an IBM Business Partner, our agents run on IBM Granite through
+> watsonx.ai, and we ship @three-ws/ibm-watsonx-mcp and @three-ws/ibm-x402-mcp for anyone building
+> on watsonx.
 >
-> Everyone who is in the world during the meetup keeps the commemorative laurel. It is only
-> granted while the event is live.
+> Live demos and open Q&A on all of it today: [IBM event link]
+
+**6/**
+> Every community can do this, not just ours. Every pump.fun coin already has a world at
+> three.ws/play?coin=<mint>. No booking, no whitelist, no fee. The venue layer is a URL scheme.
 >
-> Doors: three.ws/event
+> Come see it working: [IBM event link]
 
 ---
 
-## 4. Follow-ups for the rest of the day
+## 5. Follow-ups for the rest of the day
 
 **Shortly before doors** (quote your own main post)
-> Doors are about to open. If you have never been in, it takes one tap: three.ws/event
+> Doors open shortly. New to 3D worlds? Come 10 minutes early and we will walk you through the
+> controls personally. three.ws/play
 
 **The moment it goes live**
-> We are live. The plaza is open, the totem is unclaimed, and the laurel is only being handed out
-> while the world is full.
+> We are live. The Three.ws User Group on IBM Community is meeting inside three.ws right now.
 >
-> three.ws/event
+> Open three.ws/play, click the pinned $THREE world, walk over and say hi.
 
 **Mid-event, with a screenshot of the actual crowd**
-> This is happening right now inside the $THREE world. Still time to walk in.
->
-> three.ws/event
+> This is an IBM Community user group meeting, happening right now. Still time to walk in:
+> three.ws/play
 
 **After it ends** (this is the one that recruits for the next event)
-> That was the first one.
+> That was the first Three.ws User Group meetup on IBM Community.
 >
-> [attach the fireworks clip or the group photo]
+> [attach the group shot or the best clip from the day]
 >
-> The world stays open: three.ws/play
+> The group is open and the world stays open. Join the group: [IBM user group link]
 
 ---
 
-## 5. Recycling the existing `/play` footage
+## 6. Recycling the existing `/play` footage
 
 Map what you already have to the beats above, so each post carries a clip that matches its copy:
 
 | Post | Best clip to use |
 | --- | --- |
 | Main teaser | Crowd or plaza movement. Motion in frame one, no menus, no cursor. |
-| Thread 2 | Avatars standing together, chat bubbles, cosmetics on display. |
-| Thread 3 | Any totem hold or combat exchange. Conflict reads instantly on a muted timeline. |
-| Thread 4 | Wheel spin landing on a prize, or a wardrobe swap. |
-| Thread 5 and the post-event | Night sky, fireworks, or the widest good-looking shot you own. |
+| IBM technical post | Screen-recording of an agent responding, or the world at its best. Text carries this one. |
+| Thread 2 | The lobby, then landing in the world. Shows the zero-friction claim rather than asserting it. |
+| Thread 3 | Avatars standing in a group, chat bubbles, people walking up to each other. |
+| Thread 4 | An avatar generation on `/create`, then that avatar in-world. |
+| Thread 5 and 6 | Widest good-looking shot you own, or any world other than $THREE. |
 
 Practical notes for reused footage:
 
@@ -129,5 +165,5 @@ Practical notes for reused footage:
 - Assume muted autoplay. If a clip only works with sound, it does not work.
 - Native upload, never a link to a video elsewhere. X suppresses off-platform video reach.
 - Square or 4:5 outperforms 16:9 in the timeline. Crop toward the avatars.
-- One link per post, at the end. `three.ws/event` for everything before and during, `three.ws/play`
+- One link per post, at the end. The IBM event listing before and during; the IBM user group page
   after it ends.
