@@ -72,6 +72,12 @@
 <!-- Seasonal decorations (date-gated no-op outside its window) -->
 <script src="/seasonal.js" defer></script>
 
+<!-- Live-event strip, inserted between the nav and the hero at runtime. Reads
+     the ONE event window in the repo (public/event.json) through
+     src/shared/event-config.js, the same reader the /play countdown uses, and
+     mounts nothing when there is no event or the event has ended. -->
+<script type="module" src="/src/home-event-banner.js"></script>
+
 <!-- ── HERO ─────────────────────────────────────────────────────── -->
 <main id="main-content" tabindex="-1">
 <section class="hero">
