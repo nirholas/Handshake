@@ -1,14 +1,18 @@
 #!/usr/bin/env node
 // Procedural accessory GLB generator.
 //
-// Builds the seven small GLB files referenced in public/accessories/presets.json:
+// Builds the small GLB files worn on an avatar's Head bone. Seven are the
+// character-studio presets in public/accessories/presets.json:
 //   hat-baseball.glb, hat-beanie.glb, hat-cowboy.glb,
 //   glasses-round.glb, glasses-shades.glb,
 //   earrings-hoops.glb, earrings-studs.glb
+// One more is the /play wardrobe's event souvenir (multiplayer/src/
+// cosmetics-catalog.js, tier 'event'), which is granted, never sold:
+//   laurel-meetup.glb
 //
 // Each is a real glTF 2.0 binary with positions, normals, UVs, indices, and a
-// PBR material — small enough (< 8 KB) to commit to the repo, large enough to
-// be visibly correct when attached to a humanoid avatar's Head bone.
+// PBR material — small enough to commit to the repo, large enough to be visibly
+// correct when attached to a humanoid avatar's Head bone.
 //
 // Coordinates are in meters, oriented for a head bone whose +Y is up and +Z is
 // forward (the standard glTF convention). The Head bone sits at the top of the
@@ -16,6 +20,8 @@
 // beside it.
 //
 // Run with: node scripts/generate-accessory-glbs.mjs
+// One file only (leaves every other committed GLB byte-for-byte untouched):
+//   node scripts/generate-accessory-glbs.mjs laurel-meetup.glb
 
 import { Document, NodeIO } from '@gltf-transform/core';
 import { writeFile } from 'node:fs/promises';
@@ -213,6 +219,85 @@ function sphere({ r = 1, segments = 16, rings = 10 } = {}) {
 		}
 	}
 	return { positions, normals, uvs, indices };
+}
+
+// ── Geometry composition (bake transforms, merge parts) ────────────────────
+//
+// A part list turns into one mesh + one material per entry. That is right for a
+// hat with three distinct pieces and wrong for a wreath with sixteen identical
+// leaves, which would ship sixteen materials for one look. These helpers bake a
+// transform into a geometry's vertices and concatenate geometries, so a repeated
+// element is authored as a loop and emitted as a single primitive.
+
+// Hamilton product — `a` applied AFTER `b` (q = a ⊗ b), both [x,y,z,w].
+function quatMul(a, b) {
+	const [ax, ay, az, aw] = a;
+	const [bx, by, bz, bw] = b;
+	return [
+		aw * bx + ax * bw + ay * bz - az * by,
+		aw * by - ax * bz + ay * bw + az * bx,
+		aw * bz + ax * by - ay * bx + az * bw,
+		aw * bw - ax * bx - ay * by - az * bz,
+	];
+}
+
+// Quaternion for a rotation of `angle` radians about a cardinal axis.
+function quatAxis(axis, angle) {
+	const s = Math.sin(angle / 2);
+	const c = Math.cos(angle / 2);
+	return axis === 'x' ? [s, 0, 0, c] : axis === 'y' ? [0, s, 0, c] : [0, 0, s, c];
+}
+
+// Rotate the vector v by the unit quaternion q.
+function quatRotate(q, v) {
+	const [qx, qy, qz, qw] = q;
+	const [vx, vy, vz] = v;
+	// t = 2 * (q_vec × v); v' = v + qw * t + q_vec × t
+	const tx = 2 * (qy * vz - qz * vy);
+	const ty = 2 * (qz * vx - qx * vz);
+	const tz = 2 * (qx * vy - qy * vx);
+	return [
+		vx + qw * tx + (qy * tz - qz * ty),
+		vy + qw * ty + (qz * tx - qx * tz),
+		vz + qw * tz + (qx * ty - qy * tx),
+	];
+}
+
+// Bake scale → rotation → translation into a geometry's vertices, returning a
+// new geometry. Normals get the rotation and the inverse-scale (so a squashed
+// leaf still lights correctly), then are renormalised.
+function transformGeom(geom, { scale = [1, 1, 1], rotation = [0, 0, 0, 1], translate = [0, 0, 0] } = {}) {
+	const positions = [];
+	const normals = [];
+	for (let i = 0; i < geom.positions.length; i += 3) {
+		const p = quatRotate(rotation, [
+			geom.positions[i] * scale[0],
+			geom.positions[i + 1] * scale[1],
+			geom.positions[i + 2] * scale[2],
+		]);
+		positions.push(p[0] + translate[0], p[1] + translate[1], p[2] + translate[2]);
+		const n = quatRotate(rotation, [
+			geom.normals[i] / scale[0],
+			geom.normals[i + 1] / scale[1],
+			geom.normals[i + 2] / scale[2],
+		]);
+		const len = Math.hypot(n[0], n[1], n[2]) || 1;
+		normals.push(n[0] / len, n[1] / len, n[2] / len);
+	}
+	return { positions, normals, uvs: [...geom.uvs], indices: [...geom.indices] };
+}
+
+// Concatenate geometries into one, offsetting each one's indices.
+function mergeGeoms(geoms) {
+	const out = { positions: [], normals: [], uvs: [], indices: [] };
+	for (const g of geoms) {
+		const base = out.positions.length / 3;
+		out.positions.push(...g.positions);
+		out.normals.push(...g.normals);
+		out.uvs.push(...g.uvs);
+		for (const idx of g.indices) out.indices.push(idx + base);
+	}
+	return out;
 }
 
 // ── GLB writer ─────────────────────────────────────────────────────────────
@@ -435,13 +520,88 @@ const ACCESSORIES = {
 			},
 		],
 	},
+
+	// The event souvenir: a gold laurel circlet, open at the front where three
+	// pearl berries sit (the nod to $THREE). Granted to everyone who was in the
+	// world during the live meetup window and never sold — see
+	// multiplayer/src/cosmetics-catalog.js (tier 'event') and the join-time grant
+	// in multiplayer/src/rooms/WalkRoom.js. Authored as a loop and merged into
+	// three primitives so eighteen identical leaves cost one material, not
+	// eighteen.
+	'laurel-meetup.glb': {
+		rootName: 'LaurelMeetup',
+		parts: laurelParts(),
+	},
 };
+
+// Build the laurel's three primitives: the circlet band, the merged leaf ring,
+// and the three front berries.
+function laurelParts() {
+	const BAND_R = 0.104;   // sits just outside a ~0.11 m head radius
+	const BAND_Y = 0.085;   // crown height above the head bone
+	const GAP = 0.24;       // radians of bare band left open at the front (+Z)
+	const LEAF_COUNT = 18;
+	const LEAF = [0.012, 0.027, 0.0045]; // half-extents: narrow, long, near-flat
+	const GOLD = [0.86, 0.71, 0.28];
+
+	// Circlet: a torus is authored in the XY plane, so tip it into XZ to ride the
+	// crown, then lift it to the band height.
+	const band = transformGeom(
+		torus({ r1: BAND_R, r2: 0.0042, segments: 40, tubeSegments: 8 }),
+		{ rotation: quatAxis('x', -Math.PI / 2), translate: [0, BAND_Y, 0] },
+	);
+
+	// Leaves: one squashed sphere each, tipped outward from vertical and swept
+	// around the band. Alternating tilt keeps the ring from reading as a machined
+	// part. Each leaf is pushed along its own axis so its base meets the band
+	// instead of its centre.
+	const leafBase = sphere({ r: 1, segments: 8, rings: 5 });
+	const leaves = [];
+	for (let i = 0; i < LEAF_COUNT; i++) {
+		const theta = GAP + (i / (LEAF_COUNT - 1)) * (Math.PI * 2 - GAP * 2);
+		const tilt = i % 2 === 0 ? 0.46 : 0.64;
+		const rotation = quatMul(quatAxis('y', theta), quatAxis('x', tilt));
+		const stem = quatRotate(rotation, [0, LEAF[1] * 0.92, 0]);
+		leaves.push(transformGeom(leafBase, {
+			scale: LEAF,
+			rotation,
+			translate: [
+				BAND_R * Math.sin(theta) + stem[0],
+				BAND_Y + stem[1],
+				BAND_R * Math.cos(theta) + stem[2],
+			],
+		}));
+	}
+
+	// Berries: three pearls clustered in the front gap.
+	const berryBase = sphere({ r: 0.0055, segments: 10, rings: 6 });
+	const berries = [
+		[-0.011, BAND_Y + 0.002, BAND_R],
+		[0.011, BAND_Y + 0.002, BAND_R],
+		[0, BAND_Y + 0.017, BAND_R + 0.002],
+	].map((translate) => transformGeom(berryBase, { translate }));
+
+	return [
+		{ name: 'circlet', geom: band, color: GOLD, metallic: 0.85, roughness: 0.28 },
+		{ name: 'leaves', geom: mergeGeoms(leaves), color: GOLD, metallic: 0.8, roughness: 0.34 },
+		{ name: 'berries', geom: mergeGeoms(berries), color: [0.95, 0.95, 0.97], metallic: 0.2, roughness: 0.14 },
+	];
+}
 
 // ── Main ───────────────────────────────────────────────────────────────────
 
 async function main() {
+	// Optional filename arguments narrow the run to those files. Regenerating an
+	// accessory that hasn't changed would rewrite a committed binary for nothing,
+	// so adding one asset should touch exactly one file.
+	const only = process.argv.slice(2).filter((a) => !a.startsWith('-'));
+	const unknown = only.filter((f) => !ACCESSORIES[f]);
+	if (unknown.length) {
+		throw new Error(`Unknown accessory ${unknown.join(', ')} — known: ${Object.keys(ACCESSORIES).join(', ')}`);
+	}
 	const results = [];
 	for (const [filename, spec] of Object.entries(ACCESSORIES)) {
+		if (only.length && !only.includes(filename)) continue;
 		const out = path.join(OUT_DIR, filename);
 		const bytes = await writeGLB(out, spec.parts, { rootName: spec.rootName });
 		results.push({ filename, bytes });
