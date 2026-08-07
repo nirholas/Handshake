@@ -25,7 +25,7 @@ import {
 } from './economy.js';
 import { weaponDef, mobStats, rollLoot, itemLabel } from './items.js';
 import {
-	DANGER_ZONES, SPAWN_POINT, isDangerZone, randomPointInZone,
+	DANGER_ZONES, SPAWN_POINT, isDangerZone, dangerZoneAt, randomPointInZone,
 } from './world-features.js';
 import {
 	selectTarget, rollDamage, applyDamage, addHeat, decayHeat, heatStars,
@@ -243,9 +243,34 @@ export function killPlayer(room, sessionId, killerLabel) {
 	player.dead = true;
 	const client = room.clients.find((c) => c.sessionId === sessionId);
 	client?.send('notice', { kind: 'death', ok: false, text: killerLabel ? `You were killed by ${killerLabel}.` : 'You died.' });
+	// The purse and pack emptied into the tombstone THIS instant, so push the
+	// emptied snapshot now rather than at respawn: the HUD spent the whole death
+	// screen showing cash the player no longer had, which reads as the drop having
+	// failed. The banked balance rides along, because it is exactly what survived.
+	if (client) {
+		room._sendInv?.(client, profile);
+		const lostItems = drop.items.reduce((n, e) => n + e.qty, 0);
+		const lostParts = [];
+		if (drop.gold > 0) lostParts.push(`${drop.gold} cash`);
+		if (lostItems > 0) lostParts.push(`${lostItems} item${lostItems === 1 ? '' : 's'}`);
+		client.send('notice', {
+			kind: 'death', ok: false,
+			text: lostParts.length
+				? `You dropped ${lostParts.join(' and ')} where you fell. ${profile.bank} cash stayed safe in the bank.`
+				: `You were carrying nothing to drop. ${profile.bank} cash is safe in the bank.`,
+		});
+	}
 	room.clock.setTimeout(() => {
-		if (!room.state.players.has(sessionId)) return;
+		// The profile is revived UNCONDITIONALLY: a player who disconnects inside
+		// the respawn window used to skip this whole block, persist hp 0, and come
+		// back permanently bricked at zero health (WalkRoom.onJoin also self-heals
+		// this on restore, as the second belt). Only the schema/teleport half needs
+		// the session to still be present.
 		reviveProfile(profile);
+		if (!room.state.players.has(sessionId)) {
+			room._persistEcon(sessionId);
+			return;
+		}
 		player.dead = false;
 		player.x = SPAWN_POINT.x; player.y = 0; player.z = SPAWN_POINT.z;
 		player.tsServer = Date.now();
@@ -333,6 +358,15 @@ export function handleAttack(room, client) {
 			spillTombstone(room, mob.x, mob.z, itemLabel(mob.kind), { gold: 0, items: loot });
 			room._sendInv(client, profile);
 			room.clock.setTimeout(() => respawnMob(room, hit.id), MOB_RESPAWN_MS);
+			// Quest progress: a real kill advances any active "defeat N foes" objective.
+			// The danger zone comes from the MOB's authoritative position at the moment
+			// it died, so a zone-pinned bounty can only be filled where it was posted.
+			room._questEvent(client, profile, {
+				type: 'defeat',
+				target: 'mob',
+				kind: mob.kind,
+				zone: dangerZoneAt(mob.x, mob.z)?.id || null,
+			});
 		}
 		room._persistEcon(client.sessionId);
 		return;
@@ -387,25 +421,46 @@ export function handleLoot(room, client, payload) {
 		return;
 	}
 
-	room.state.tombstones.delete(id);
-	room._tombLoot.delete(id);
-
-	if (drop.gold > 0) profile.gold += drop.gold;
+	// Absorb what fits FIRST, and only remove the tombstone once it is fully
+	// drained. Deleting up front destroyed every item that didn't fit a nearly
+	// full pack, with no warning: a player looting their own death drop with one
+	// free slot lost the rest of their run for good. Whatever doesn't fit stays
+	// in the marker for another trip (or another looter).
+	const goldGained = drop.gold > 0 ? drop.gold : 0;
+	if (goldGained > 0) {
+		profile.gold = Math.min(0xffffffff, profile.gold + goldGained);
+		drop.gold = 0;
+	}
 	const gained = [];
+	const remaining = [];
 	for (const { item, qty } of drop.items) {
-		if (!hasRoomFor(profile, item)) continue;
-		const leftover = addItem(profile, item, qty);
+		const leftover = hasRoomFor(profile, item) ? addItem(profile, item, qty) : qty;
 		const got = qty - leftover;
 		if (got > 0) {
 			gained.push(`${got > 1 ? got + ' ' : ''}${itemLabel(item).toLowerCase()}`);
 			room._questEvent(client, profile, { type: 'collect', item, qty: got });
 		}
+		if (leftover > 0) remaining.push({ item, qty: leftover });
+	}
+	drop.items = remaining;
+	const drained = remaining.length === 0;
+	if (drained) {
+		room.state.tombstones.delete(id);
+		room._tombLoot.delete(id);
+	} else {
+		// Keep the schema marker's count honest so peers see what's left.
+		ts.count = remaining.reduce((n, e) => n + e.qty, 0);
 	}
 	room._sendInv(client, profile);
 	const parts = [];
-	if (drop.gold > 0) parts.push(`$${drop.gold}`);
+	if (goldGained > 0) parts.push(`$${goldGained}`);
 	if (gained.length) parts.push(gained.join(' + '));
-	client.send('notice', { kind: 'loot', ok: parts.length > 0, text: parts.length ? `Looted ${parts.join(' and ')}.` : 'The marker was already picked clean.' });
+	const leftBehind = drained ? '' : ' Your pack is full; the rest is still in the marker.';
+	client.send('notice', {
+		kind: 'loot',
+		ok: parts.length > 0,
+		text: parts.length ? `Looted ${parts.join(' and ')}.${leftBehind}` : drained ? 'The marker was already picked clean.' : 'Your pack is full. Make room, the marker will wait.',
+	});
 	room._persistEcon(client.sessionId);
 }
 

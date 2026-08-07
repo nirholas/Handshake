@@ -151,8 +151,12 @@ export class CommunityNet {
 			spinPrep: new Set(),    // ({tx, tokenAmount, symbol, costUsd, quote}) — unsigned paid-spin tx to sign
 			spinResult: new Set(),  // ({mode, index, label, got, lost, refunded, nextFreeSpinAt?}) — the server's roll
 			spinDenied: new Set(),  // ({reason, ...}) — a spin request refused
-			quests: new Set(),      // ({offers, active, day}) — jobs board + active runs (W05)
-			questComplete: new Set(), // ({id, title, reward, kind, coop}) — a mission/heist finished
+			quests: new Set(),      // ({offers, active, day, eventLive}) — jobs board + active runs (W05)
+			questComplete: new Set(), // ({id, title, reward, kind, coop, event}) — a mission/heist finished
+			// Live event (public/event.json window): the ranked standing for the event
+			// quest line, and this player's own running totals after each event job.
+			eventBoard: new Set(),  // ({ok, event?, top?, you?, players?, totalRuns?, prizes?, reason?})
+			eventScore: new Set(),  // ({runs, cash, eventId}) — your totals after an event job
 			combat: new Set(),      // ({role:'attacker'|'victim', target:'mob'|'player', kind?, mobHp?, mobMaxHp?, playerHp, playerMaxHp, dealt, dead, attacker?}) — a swing/shot's result
 			// W07 combat world entities: roaming PvE mobs + lootable death tombstones.
 			// add/change/remove mirror the vehicle callbacks below.
@@ -369,6 +373,9 @@ export class CommunityNet {
 			// Quests, jobs & heists (W05): the board + active runs and completion events.
 			this.room.onMessage('quests', (msg) => this._emit('quests', msg || {}));
 			this.room.onMessage('questComplete', (msg) => this._emit('questComplete', msg || {}));
+			// Live event: the ranked leaderboard reply, and your own totals after a run.
+			this.room.onMessage('eventBoard', (msg) => this._emit('eventBoard', msg || {}));
+			this.room.onMessage('eventScore', (msg) => this._emit('eventScore', msg || {}));
 			this.room.onMessage('combat', (msg) => this._emit('combat', msg || {}));
 			// Vehicles: the server's targeted reply to our enter/exit request (grant,
 			// drop point, or denial). World transforms arrive via the state callbacks.
@@ -685,6 +692,11 @@ export class CommunityNet {
 	questAccept(id) { this._send('questAccept', { id }); }
 	questAbandon(id) { this._send('questAbandon', { id }); }
 	questInteract() { this._send('questInteract'); }
+	// The live event's leaderboard. The room proxies the same public read the web
+	// uses (api/play/event-leaderboard) and pins this player's own row from their
+	// verified account key, so the client never has to know or send an identity.
+	// The reply arrives on the 'eventBoard' event.
+	requestEventBoard() { this._send('eventBoardReq'); }
 	// Vehicles. enter/exit take + release the wheel (server-gated by proximity +
 	// occupancy, answered on the 'vehicle' event); vsync streams the driver's
 	// authoritative Rapier transform, which the server validates and relays. vsync

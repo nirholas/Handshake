@@ -57,7 +57,7 @@ export class WorldLife {
 			// "Talk 1-on-1" that starts a live in-character conversation.
 			onInspectPed: (ped) => this._inspectPed(ped),
 		});
-		this.mobs = new MobSystem({ scene, nav: this.nav });
+		this.mobs = new MobSystem({ scene });
 		// Waypoints for the jobs board's active objectives (W08 hooking W05) —
 		// pure client render of the same quest-zones.js the server already
 		// validates goto/interact against; it drives itself off the 'quests'
@@ -144,7 +144,6 @@ export class WorldLife {
 		s.id = 'npc-styles';
 		s.textContent = `
 		.npc-name { color: var(--npc-tint, #fff); text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
-		.npc-bubble { /* inherits .cc-bubble; ambient chatter + NPC dialogue */ }
 		.npc-prompt {
 			position: fixed; left: 0; top: 0; z-index: 16; pointer-events: none;
 			transform: translate(-50%, -100%); white-space: nowrap;
@@ -353,9 +352,26 @@ export class WorldLife {
 		this.ambient?.dispose();
 		this.mobs?.dispose();
 		this.questMarkers?.dispose();
-		for (const npc of this.npcs) { npc.dispose(); if (npc.marker) { this.scene.remove(npc.marker); npc.marker.geometry.dispose(); } }
+		for (const npc of this.npcs) {
+			npc.dispose();
+			if (npc.marker) {
+				this.scene.remove(npc.marker);
+				npc.marker.geometry.dispose();
+				npc.marker.material.dispose();
+			}
+		}
 		this.npcs = [];
-		if (this.roadGroup) { this.scene.remove(this.roadGroup); this.roadGroup = null; }
+		if (this.roadGroup) {
+			this.scene.remove(this.roadGroup);
+			// Road band + kerb are one-off RingGeometries with their own materials —
+			// free them, this group is rebuilt for every world enter.
+			for (const child of this.roadGroup.children) {
+				child.geometry.dispose();
+				child.material.dispose();
+			}
+			this.roadGroup = null;
+		}
 		this.prompt?.remove();
+		document.getElementById('npc-styles')?.remove();
 	}
 }

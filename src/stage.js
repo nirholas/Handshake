@@ -21,7 +21,7 @@ import {
 	AmbientLight, DirectionalLight, SpotLight, PointLight,
 	Mesh, CylinderGeometry, CircleGeometry, PlaneGeometry,
 	MeshStandardMaterial, MeshBasicMaterial, Group,
-	AudioListener, PositionalAudio, AudioAnalyser, SRGBColorSpace, ACESFilmicToneMapping,
+	AudioListener, PositionalAudio, SRGBColorSpace, ACESFilmicToneMapping,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
@@ -237,7 +237,7 @@ class VenueController {
 		this.showCaption(u.text, true);
 		this.renderPhase('live');
 		if (this.three) this.three.setCue(u.cue, true);
-		await this.speak(u.text, u.voice, u.durationMs);
+		await this.speak(u.text, u.voice);
 	}
 
 	onAudience(a) {
@@ -594,10 +594,9 @@ class StageScene {
 	_mountHost(model) {
 		if (this.placeholder) { this.hostGroup.remove(this.placeholder); this.placeholder = null; }
 		// Normalize to ~1.7m tall, feet on the disc.
-		const box = new (model.constructor === Group ? Group : Group)();
 		model.updateMatrixWorld(true);
-		const bounds = boundingSize(model);
-		const scale = bounds.height > 0 ? 1.7 / bounds.height : 1;
+		const height = modelHeight(model);
+		const scale = height > 0 ? 1.7 / height : 1;
 		model.scale.setScalar(scale);
 		model.position.y = 0.4;
 		this.hostGroup.add(model);
@@ -611,22 +610,6 @@ class StageScene {
 		this.positionalAudio.setDistanceModel('inverse');
 		const head = findHead(model) || model;
 		head.add(this.positionalAudio);
-	}
-
-	// Wire an <audio> element through the host's PositionalAudio and return an
-	// AnalyserNode for lip-sync. Returns null when 3D audio isn't ready.
-	attachVoice(audioEl) {
-		if (!this.positionalAudio) return null;
-		this.resumeAudio();
-		try {
-			// A MediaElementSource can be created once per element; this element is
-			// fresh per utterance, so this is safe.
-			this.positionalAudio.setMediaElementSource(audioEl);
-		} catch {
-			return null;
-		}
-		const analyser = new AudioAnalyser(this.positionalAudio, 256);
-		return analyser.analyser;
 	}
 
 	resumeAudio() {
@@ -734,41 +717,6 @@ class StageScene {
 	}
 }
 
-// Maps lip-sync {open,wide,round} onto whatever the GLB rig supports: morph
-// targets (visemes / mouthOpen / jawOpen) when present, else a jaw bone, else a
-// subtle head scale — so lip-sync is real where the rig allows and degrades
-// gracefully where it doesn't (no T-pose, never a hard failure).
-class MouthTarget {
-	constructor(model) {
-		this.influences = [];
-		this.jaw = null;
-		this.head = findHead(model);
-		const openNames = /(mouthopen|jawopen|viseme_aa|viseme_o|vrc\.v_aa|mouth_open|aa)/i;
-		model.traverse((o) => {
-			if (o.isMesh && o.morphTargetDictionary) {
-				for (const [name, idx] of Object.entries(o.morphTargetDictionary)) {
-					if (openNames.test(name)) this.influences.push({ mesh: o, idx });
-				}
-			}
-			if (o.isBone && /jaw/i.test(o.name) && !this.jaw) this.jaw = o;
-		});
-	}
-	setMouthShape({ open }) {
-		const v = Math.max(0, Math.min(1, open));
-		if (this.influences.length) {
-			for (const { mesh, idx } of this.influences) mesh.morphTargetInfluences[idx] = v;
-		} else if (this.jaw) {
-			this.jaw.rotation.x = v * 0.35;
-		} else if (this.head) {
-			this.head.scale.y = 1 + v * 0.03;
-		}
-	}
-	dispose() {
-		for (const { mesh, idx } of this.influences) if (mesh.morphTargetInfluences) mesh.morphTargetInfluences[idx] = 0;
-		if (this.jaw) this.jaw.rotation.x = 0;
-	}
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -857,24 +805,6 @@ function nextShowLabel(ms) {
 	const d = new Date(ms);
 	if (d.getTime() < Date.now()) return '';
 	return `Next show ${d.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`;
-}
-
-function boundingSize(model) {
-	let minY = Infinity, maxY = -Infinity;
-	model.traverse((o) => {
-		if (o.isMesh && o.geometry) {
-			o.geometry.computeBoundingBox?.();
-			const b = o.geometry.boundingBox;
-			if (b) { minY = Math.min(minY, b.min.y); maxY = Math.max(maxY, b.max.y); }
-		}
-	});
-	return { height: Number.isFinite(maxY - minY) ? maxY - minY : 0 };
-}
-
-function findHead(model) {
-	let head = null;
-	model.traverse((o) => { if (!head && o.isBone && /head/i.test(o.name)) head = o; });
-	return head;
 }
 
 function disposeMesh(mesh) {

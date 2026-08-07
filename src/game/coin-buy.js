@@ -976,13 +976,27 @@ class TradeModal {
 	}
 
 	async _confirmOnChain(conn, sig) {
-		const latest = await conn.getLatestBlockhash('confirmed');
+		let res = null;
 		try {
-			await conn.confirmTransaction({ signature: sig, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight }, 'confirmed');
-		} catch { /* landed but slow to confirm — the explorer link is the source of truth */ }
+			const latest = await conn.getLatestBlockhash('confirmed');
+			res = await conn.confirmTransaction({ signature: sig, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight }, 'confirmed');
+		} catch { /* landed but slow to confirm; the explorer link is the source of truth */ }
+		// A reverted swap must never render as "Bought ✓": surface the on-chain
+		// failure so the caller shows the truth (with the Solscan receipt).
+		if (res?.value?.err) throw Object.assign(new Error('Transaction failed on-chain.'), { onChainFailure: true, sig });
 	}
 
 	_handleTradeError(err, mode, retry) {
+		// The transaction reached the chain and reverted: no tokens moved, but the
+		// signature exists, so link the receipt instead of a bare failure string.
+		if (err?.onChainFailure && err.sig) {
+			const url = solanaTxExplorerUrl(NETWORK, err.sig);
+			this._setStatusNode(el('span', {}, [
+				`The ${mode} failed on-chain (reverted); no tokens moved. `,
+				el('a', { href: url, target: '_blank', rel: 'noopener', text: 'View on Solscan ↗' }),
+			]), 'err');
+			return;
+		}
 		if (err?.status === 401) {
 			this._setStatusNode(el('span', {}, [
 				'Sign in to three.ws to trade. ',

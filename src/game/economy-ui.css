@@ -76,8 +76,10 @@
 }
 .ec-row-glyph { font-size: 18px; width: 24px; text-align: center; flex: none; }
 .ec-row-main { flex: 1; min-width: 0; }
-.ec-row-name { font-size: 13px; font-weight: 600; }
-.ec-row-sub { font-size: 11px; color: var(--cc-dim); margin-top: 2px; }
+/* Item labels come from the server's vocabulary, so a long or unbroken name has
+   to fold inside the row instead of pushing the price and the button off it. */
+.ec-row-name { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.ec-row-sub { font-size: 11px; color: var(--cc-dim); margin-top: 2px; overflow-wrap: anywhere; }
 .ec-row-btn {
 	flex: none; padding: 7px 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
 	background: #fff; color: var(--cc-ink); border: none; border-radius: var(--cc-radius-sm); cursor: pointer;

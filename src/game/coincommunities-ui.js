@@ -18,6 +18,8 @@ import { PROP_CATALOG, GALLERY_PROP_PREFIX, registerGalleryProp } from './world-
 import { makeIntroReopener } from './play-intro.js';
 import { getPowerSaver, setPowerSaver, onPowerSaverChange } from '../shared/frame-governor.js';
 import { getMe } from '../account.js';
+import { threeMarkSvg } from '../shared/brand-mark.js';
+import { proxiedImageURL } from '../ipfs.js';
 import { log } from '../shared/log.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
@@ -258,7 +260,7 @@ export class CommunityUI {
 			el('div', { class: 'cc-lobby-inner' }, [
 				el('div', { class: 'cc-lobby-head' }, [
 					el('div', { class: 'cc-brand' }, [
-						el('a', { class: 'cc-brand-logo', href: '/', 'aria-label': 'three.ws home', title: 'three.ws', html: '<svg viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M11.013 1.011a16 16 0 0 0-3.96 1.39C2.79 4.531.213 8.757.012 13.564c-.16 3.933 1.31 7.62 4.117 10.357l.736.715-.16.46c-.084.249-.13.504-.138.761 0 1.358 1.448 2.218 2.638 1.567.535-.292.879-.748 1.043-1.384.084-.331.092-.462.07-.882-.02-.43-.04-.535-.18-.83-.246-.52-.567-.86-1.087-1.153l-.297-.167.106-.32c.18-.543.79-1.717 1.181-2.276 1.91-2.729 5.066-4.395 8.4-4.434l.43-.005.012-1.19c.006-.654.024-1.19.04-1.19s.252.197.526.438c.71.624 2.296 1.95 2.785 2.328.23.178.41.34.4.36-.01.02-.214.156-.453.303-.926.57-2.265 1.65-3.13 2.524l-.27.273.012 1.064.013 1.064.32.027c1.327.114 2.598.685 3.578 1.607.21.198.39.343.4.323.04-.073.276-1.327.346-1.84.296-2.169-.094-4.317-1.129-6.16l-.19-.34.246-.45c.811-1.485 1.291-3.063 1.456-4.776.04-.42.046-.488.111-.488.111 0 1.327.715 1.94 1.143 2.953 2.057 4.96 5.241 5.579 8.856.21 1.22.234 1.585.234 3.063 0 1.485-.024 1.844-.234 3.064-.811 4.736-4.06 8.732-8.51 10.474-1.04.407-2.504.78-3.578.91l-.32.04v2.395l.41-.046c2.014-.226 4.222-.93 5.98-1.91 4.84-2.688 8.058-7.464 8.696-12.897.105-.892.105-3.063 0-3.956-.638-5.433-3.856-10.21-8.697-12.898C24.083.99 21.875.285 19.86.06 19.322 0 19.27 0 15.752.006c-3.346.006-4.234.02-4.74.105Z"/></svg>' }),
+						el('a', { class: 'cc-brand-logo', href: '/', 'aria-label': 'three.ws home', title: 'three.ws', html: threeMarkSvg() }),
 						el('div', {}, [
 							el('div', { class: 'cc-brand-title', text: 'Coin Communities' }),
 							el('div', { class: 'cc-brand-sub', text: 'Every coin is a 3D world. Drop in and hang out.' }),
@@ -309,7 +311,7 @@ export class CommunityUI {
 	// (Build / Discover / Embed / Learn / Labs) so links and ordering stay
 	// consistent across the site; styled with the lobby's own dark tokens.
 	_buildSiteNav() {
-		const THREE_MARK = '<svg viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M11.013 1.011a16 16 0 0 0-3.96 1.39C2.79 4.531.213 8.757.012 13.564c-.16 3.933 1.31 7.62 4.117 10.357l.736.715-.16.46c-.084.249-.13.504-.138.761 0 1.358 1.448 2.218 2.638 1.567.535-.292.879-.748 1.043-1.384.084-.331.092-.462.07-.882-.02-.43-.04-.535-.18-.83-.246-.52-.567-.86-1.087-1.153l-.297-.167.106-.32c.18-.543.79-1.717 1.181-2.276 1.91-2.729 5.066-4.395 8.4-4.434l.43-.005.012-1.19c.006-.654.024-1.19.04-1.19s.252.197.526.438c.71.624 2.296 1.95 2.785 2.328.23.178.41.34.4.36-.01.02-.214.156-.453.303-.926.57-2.265 1.65-3.13 2.524l-.27.273.012 1.064.013 1.064.32.027c1.327.114 2.598.685 3.578 1.607.21.198.39.343.4.323.04-.073.276-1.327.346-1.84.296-2.169-.094-4.317-1.129-6.16l-.19-.34.246-.45c.811-1.485 1.291-3.063 1.456-4.776.04-.42.046-.488.111-.488.111 0 1.327.715 1.94 1.143 2.953 2.057 4.96 5.241 5.579 8.856.21 1.22.234 1.585.234 3.063 0 1.485-.024 1.844-.234 3.064-.811 4.736-4.06 8.732-8.51 10.474-1.04.407-2.504.78-3.578.91l-.32.04v2.395l.41-.046c2.014-.226 4.222-.93 5.98-1.91 4.84-2.688 8.058-7.464 8.696-12.897.105-.892.105-3.063 0-3.956-.638-5.433-3.856-10.21-8.697-12.898C24.083.99 21.875.285 19.86.06 19.322 0 19.27 0 15.752.006c-3.346.006-4.234.02-4.74.105Z"/></svg>';
+		const THREE_MARK = threeMarkSvg();
 
 		// [href, title, description, badge?] per menu item.
 		const GROUPS = [
@@ -732,7 +734,7 @@ export class CommunityUI {
 		}, [
 			a.thumbnail_url
 				? el('img', {
-						src: a.thumbnail_url, alt: a.name || 'Avatar', loading: 'lazy',
+						src: proxiedImageURL(a.thumbnail_url, a.id || ''), alt: a.name || 'Avatar', loading: 'lazy',
 						// A stale thumbnail (e.g. a legacy OG key that 404s before the
 						// avatar self-heals) shouldn't leave a broken-image icon: drop it
 						// and let _renderChipPreview's live model render stand in. Removing
@@ -768,9 +770,14 @@ export class CommunityUI {
 			// Start with the best instantly-available fallback (API thumbnail, else
 			// emoji) so the chip is never empty, then render the real model and swap
 			// it in. The chip carries a loading shimmer until a preview resolves.
+			// Avatar art lives on third-party and R2 buckets that answer browser
+			// requests with no CORS header, so Chrome's Opaque Response Blocking kills
+			// the tile and logs ERR_BLOCKED_BY_ORB. Same-origin through /api/img, which
+			// always answers with a valid image, the art actually shows and the console
+			// stays clean. Same reason every other art surface on the platform proxies.
 			const fallback = p.thumb
 				? el('img', {
-						src: p.thumb, alt: p.label, loading: 'lazy',
+						src: proxiedImageURL(p.thumb, p.url || ''), alt: p.label, loading: 'lazy',
 						// Broken thumb: drop it and render the real model instead, so the
 						// chip is never left empty (on mobile a live thumbnail is what lets
 						// us skip that render in the first place).
@@ -1458,6 +1465,23 @@ export class CommunityUI {
 		]);
 		onPowerSaverChange((on) => this.powerBtn.setAttribute('aria-pressed', on ? 'true' : 'false'));
 
+		// Photo mode — capture the world (never the chrome) onto a share card.
+		// Survives zen mode by design (see the zen block in coincommunities.css):
+		// a clean world is exactly when someone wants the shot. The host loads
+		// src/game/photo-mode.js on the first press, so nothing here costs a
+		// player who never uses it.
+		this.photoBtn = el('button', {
+			id: 'cc-photo-btn', class: 'cc-photo-hud-btn', type: 'button', 'aria-pressed': 'false',
+			'aria-label': 'Take a photo', title: 'Photo mode: capture this world as a share card (P)',
+			onclick: () => this.h.onPhoto?.(),
+		}, [
+			el('span', { class: 'cc-photo-hud-ico', 'aria-hidden': 'true', html:
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+				+ '<path d="M3 8.2h3.4L8.1 5.4h7.8l1.7 2.8H21v10.4H3z"/><circle cx="12" cy="13.2" r="3.4"/>'
+				+ '</svg>' }),
+			el('span', { class: 'cc-photo-hud-label', text: 'Photo' }),
+		]);
+
 		// Zen mode: hide every overlay so the world renders clean. Same
 		// body.is-zen contract as /walk; Z is the hotkey (wired by the host) and
 		// the floating exit pill below is the only control left on screen.
@@ -1494,13 +1518,13 @@ export class CommunityUI {
 		]);
 
 		const hint = el('div', { id: 'cc-hint', html:
-			'<kbd>W A S D</kbd> / drag-joystick to move · <kbd>drag</kbd> to look · scroll zoom · <kbd>Enter</kbd> chat · <kbd>Q</kbd> emotes · <kbd>I</kbd> inspect · <kbd>Z</kbd> zen' });
+			'<kbd>W A S D</kbd> / drag-joystick to move · <kbd>drag</kbd> to look · scroll zoom · <kbd>Enter</kbd> chat · <kbd>Q</kbd> emotes · <kbd>I</kbd> inspect · <kbd>P</kbd> photo · <kbd>Z</kbd> zen' });
 
 		this.joystick = el('div', { id: 'cc-joystick' });
 
 		this._buildTagHud();
 		this._buildKingHud();
-		this.hud = el('div', { id: 'cc-hud', hidden: true }, [banner, leave, this.statusPill, this.voiceBtn, this.powerBtn, this.zenBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
+		this.hud = el('div', { id: 'cc-hud', hidden: true }, [banner, leave, this.statusPill, this.voiceBtn, this.powerBtn, this.zenBtn, this.photoBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
 		document.body.appendChild(this.hud);
 	}
 
@@ -1940,7 +1964,7 @@ export class CommunityUI {
 	// show a real thumbnail (falling back to the glyph when a model has no render yet).
 	_propButton(p) {
 		const ico = p.thumbnail
-			? el('img', { class: 'cc-prop-thumb', src: p.thumbnail, alt: '', loading: 'lazy', decoding: 'async' })
+			? el('img', { class: 'cc-prop-thumb', src: proxiedImageURL(p.thumbnail, p.id || ''), alt: '', loading: 'lazy', decoding: 'async' })
 			: el('span', { class: 'cc-prop-ico', 'aria-hidden': 'true', text: p.icon || '◆' });
 		const btn = el('button', {
 			class: 'cc-prop', type: 'button',
@@ -2263,7 +2287,7 @@ export class CommunityUI {
 			.filter(Boolean).join(' · ');
 		return el('a', { class: 'cc-fb-item', href, title: 'Enter this world' }, [
 			el('div', { class: 'cc-fb-thumb' }, [
-				b.thumb ? el('img', { src: b.thumb, alt: b.title || 'Featured build', loading: 'lazy' })
+				b.thumb ? el('img', { src: proxiedImageURL(b.thumb, b.id || b.coinMint || ''), alt: b.title || 'Featured build', loading: 'lazy' })
 					: el('div', { class: 'cc-fb-thumb-empty', 'aria-hidden': 'true', text: '🧱' }),
 			]),
 			el('div', { class: 'cc-fb-meta' }, [
@@ -2308,6 +2332,12 @@ export class CommunityUI {
 	// Mirror the zen state on both toggles (the HUD button and the exit pill).
 	setZen(on) {
 		this.zenBtn?.setAttribute('aria-pressed', on ? 'true' : 'false');
+	}
+
+	// Light the camera button while the photo preview is up, so the HUD says
+	// where that card came from and pressing P again reads as a retake.
+	setPhotoActive(on) {
+		this.photoBtn?.setAttribute('aria-pressed', on ? 'true' : 'false');
 	}
 
 	// Toggle the button's armed state (lit = will dance on next beat).

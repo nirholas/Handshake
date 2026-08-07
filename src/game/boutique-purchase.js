@@ -39,8 +39,10 @@ function friendlyBoutiqueError(err) {
 	const raw = (err && (err.message || String(err))) || '';
 	const m = raw.toLowerCase();
 	if (/reject|denied|cancell?ed|user declined/.test(m)) return 'Cancelled in wallet.';
+	// End the message on somewhere to go: a player who is short on $THREE can act
+	// on this, and /three-token is the platform's own one-click buy for it.
 	if (/insufficient (lamports|funds)|debit an account|custom program error: 0x1\b/.test(m))
-		return 'Not enough $THREE (or SOL for network fees) to cover this purchase.';
+		return 'Not enough $THREE (or SOL for network fees) for this purchase. Get $THREE at three.ws/three-token, then try again.';
 	if (/blockhash not found|block height exceeded|expired|too old/.test(m))
 		return 'The quote expired — try again.';
 	if (/failed to fetch|networkerror|timed out|timeout|fetch failed/.test(m))
@@ -48,22 +50,45 @@ function friendlyBoutiqueError(err) {
 	return raw.replace(/\s+/g, ' ').trim().slice(0, 140) || 'Purchase failed. Try again.';
 }
 
-// Wait for the server's reply to a specific boutiqueQuote request. Times out
-// so a dropped connection can't hang the buy action forever.
+// Did a 'boutique' notice report success? Modern servers stamp every notice
+// with an explicit `ok` boolean; older deployed servers omit it, so fall back
+// to the only success texts those servers ever send ("Unlocked …" and
+// "Payment verified" grants). "Payment verified, but that item couldn't be
+// unlocked" is the one failure sharing that prefix, so it's excluded.
+function boutiqueNoticeOk(n) {
+	if (n?.ok === true) return true;
+	if (n?.ok === false) return false;
+	const text = String(n?.text || '');
+	if (/couldn.t be unlocked/i.test(text)) return false;
+	return text.startsWith('Unlocked') || text.startsWith('Payment verified');
+}
+
+// Wait for the server's reply to a specific boutiqueQuote request. A quote-time
+// rejection ("not in the boutique", "already own that", "boutique offline")
+// arrives as a 'boutique' notice, never a boutiqueQuote reply, so it's raced
+// here to surface the real reason instead of stalling into the timeout. Times
+// out so a dropped connection can't hang the buy action forever.
 function waitForQuote(net, id, timeoutMs = 15000) {
 	return new Promise((resolve, reject) => {
-		const timer = setTimeout(() => { unsub(); reject(new Error('Timed out waiting for a price. Try again.')); }, timeoutMs);
-		const unsub = net.on('boutiqueQuote', (msg) => {
+		const cleanup = () => { clearTimeout(timer); offQuote(); offNotice(); };
+		const timer = setTimeout(() => { cleanup(); reject(new Error('Timed out waiting for a price. Try again.')); }, timeoutMs);
+		const offQuote = net.on('boutiqueQuote', (msg) => {
 			if (msg?.id !== id) return;
-			clearTimeout(timer);
-			unsub();
+			cleanup();
 			resolve(msg);
+		});
+		const offNotice = net.on('notice', (n) => {
+			if (n?.kind !== 'boutique' || boutiqueNoticeOk(n)) return;
+			cleanup();
+			reject(new Error(n.text || 'Could not price that purchase. Try again.'));
 		});
 	});
 }
 
-// Wait for the settle-outcome notice (success or a specific server-side
-// rejection) so the caller reports exactly what happened rather than guessing.
+// Wait for the settle-outcome notice. A success resolves; a server-side
+// rejection ("Payment didn't verify", "already settled", …) rejects with the
+// server's own reason so the caller reports the failure honestly instead of
+// painting a rejection green.
 function waitForSettleNotice(net, timeoutMs = 20000) {
 	return new Promise((resolve, reject) => {
 		const timer = setTimeout(() => { unsub(); reject(new Error('Timed out confirming the purchase. Check your wardrobe in a moment.')); }, timeoutMs);
@@ -71,7 +96,8 @@ function waitForSettleNotice(net, timeoutMs = 20000) {
 			if (n?.kind !== 'boutique') return;
 			clearTimeout(timer);
 			unsub();
-			resolve(n);
+			if (boutiqueNoticeOk(n)) resolve(n);
+			else reject(new Error(n.text || 'The purchase did not settle.'));
 		});
 	});
 }
@@ -122,10 +148,14 @@ export async function buyBoutiqueItem({ net, item, onStage = () => {} }) {
 	} catch (err) {
 		throw new Error(friendlyBoutiqueError(err));
 	}
+	let confirmation = null;
 	try {
 		const latest = await conn.getLatestBlockhash('confirmed');
-		await conn.confirmTransaction({ signature: sig, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight }, 'confirmed');
-	} catch { /* landed but slow to confirm — settle re-checks the confirmed tx on RPC itself */ }
+		confirmation = await conn.confirmTransaction({ signature: sig, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight }, 'confirmed');
+	} catch { /* landed but slow to confirm; settle re-checks the confirmed tx on RPC itself */ }
+	// A confirmed-but-reverted transaction can never settle; fail fast with the
+	// truth instead of sending the server a signature it will only reject.
+	if (confirmation?.value?.err) throw new Error('Transaction failed on-chain.');
 
 	onStage('settling');
 	net.boutiqueSettle(quote.quoteToken, sig);

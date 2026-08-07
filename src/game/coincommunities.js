@@ -16,9 +16,10 @@ import {
 	CylinderGeometry, PlaneGeometry,
 	TextureLoader, DoubleSide,
 	PointLight,
-	Raycaster, Vector2, WebGLRenderTarget,
+	Raycaster, Vector2,
 } from 'three';
 
+import { captureSceneCanvas } from './scene-capture.js';
 import { AnimationManager } from '../animation-manager.js';
 import { CommunityNet } from './community-net.js';
 import { CommunityUI } from './coincommunities-ui.js';
@@ -52,7 +53,6 @@ import {
 	MAX_WORLD_OBJECTS, MAX_OBJECTS_PER_PLAYER, OBJ_SCALE_MIN, OBJ_SCALE_MAX,
 	buildClearRadius,
 } from '../../multiplayer/src/build-limits.js';
-import { validatePropModel, uploadPropModel } from './avatar-upload.js';
 import { proxiedImageURL } from '../ipfs.js';
 import {
 	loadManifest, getEmoteDefs, getAllEmoteDefs, resolveAvatarUrl, buildAvatar, releaseAvatar, playEmoteClip,
@@ -80,9 +80,9 @@ import { isChatPanelOpen } from './npc/npc-chat.js';
 import { isServicePanelOpen } from './npc/npc-services.js';
 import { isAixbtPanelOpen } from './npc/npc-aixbt.js';
 import { isZauthPanelOpen } from './npc/npc-zauth.js';
-import { VoiceChat, voiceSupported } from './voice-chat.js';
 import { requestHolderPass, signInWithX, ensureSolanaWallet, relinkSolanaWallet, getSession, getWorldGate, setWorldGate } from '../community/town-auth.js';
 import { ensurePlayAccess } from './play-gate.js';
+import { hasOpenOverlay, announce } from './a11y.js';
 import { clearStoredPass, refreshPlayPass, loadStoredPass, storePass } from './play-auth.js';
 import { PlaySystems } from './play-systems.js';
 import { PlayActivities } from './play-activities.js';
@@ -102,6 +102,20 @@ import { CombatSystem } from './combat-system.js';
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch { /* storage disabled */ } }
 
+// Normalise one deep-link query parameter for display. A /play link is shared
+// between strangers, so `coin`, `name` and `symbol` are arbitrary attacker text.
+// They are only ever written with textContent (never innerHTML), so markup in
+// them is inert; what still needs handling is shape. Line breaks and control
+// characters would rewrap the HUD around a value the sender chose, and an
+// unbounded length would push the coin banner off screen, so both are removed
+// here and the result is cut to the same limit the room server enforces.
+function clampParam(value, max) {
+	return String(value ?? '')
+		.replace(/[\u0000-\u001f\u007f\u200b-\u200f\u2028\u2029\u202a-\u202e]+/g, ' ')
+		.trim()
+		.slice(0, max);
+}
+
 // True when the keystroke belongs to an editable surface — a DM input in the
 // friends panel, a search box, a modal field. World hotkeys must never fire
 // there: `b` would toggle build mode mid-word and Space would be swallowed
@@ -112,6 +126,19 @@ function isTypingTarget(t) {
 	if (t.isContentEditable) return true;
 	const tag = t.tagName;
 	return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+}
+
+// Enter and Space are the browser's activation gesture for whatever control has
+// focus. Binding them globally to "open chat" and "jump" meant a keyboard-only
+// player could Tab to Shop, Friends, or any emote button and press Enter — and
+// the world would swallow it, so the button never fired and the HUD was
+// reachable but not operable. Every other hotkey (WASD, E, Q, Z…) still runs
+// while a control is focused, because movement has to keep working; only the
+// two activation keys defer to the focused control.
+const ACTIVATION_TARGET = 'button,a[href],select,summary,[role="button"],[role="tab"],[role="menuitem"],[role="switch"],[role="checkbox"],[role="option"]';
+function isActivationTarget(t) {
+	if (!t || t.nodeType !== 1) return false;
+	return !!t.closest?.(ACTIVATION_TARGET);
 }
 
 // Reaction bar (R04): the 6 emoji available to all players.
@@ -526,7 +553,7 @@ export class CoinCommunities {
 		this._initScene();
 
 		this.ui = new CommunityUI({
-			onEnter: (coin, tier) => this.enter(coin, { tier }),
+			onEnter: (coin, tier) => this.enter(coin, { tier }).catch((err) => this._onEnterFailed(err)),
 			// Holder gate overlay → the scene's gate state machine resolves on each
 			// action (sign in, link wallet, buy, recheck, cancel).
 			onHolderAction: (action) => { const r = this._holderGateResolve; this._holderGateResolve = null; r?.(action); },
@@ -541,7 +568,11 @@ export class CoinCommunities {
 			// actually reaches peers (the server rejects bare ids / blob: URLs).
 			onAvatarChange: (val) => {
 				if (!this.net || val === GUEST_SENTINEL) return;
-				resolveAvatarUrl(val).then((u) => this.net?.setAvatar(u));
+				resolveAvatarUrl(val)
+					.then((u) => this.net?.setAvatar(u))
+					// A pick that fails to resolve keeps the current avatar; peers never
+					// saw the swap, so there is nothing to roll back.
+					.catch((err) => log.warn('[coincommunities] avatar swap failed to resolve:', err?.message));
 			},
 			onRename: (name) => this._rename(name),
 			onBuy: () => this._openBuy(),
@@ -575,6 +606,8 @@ export class CoinCommunities {
 			onPublishBuild: (meta) => this._publishBuild(meta),
 			onDance: () => this._triggerDance(),
 			// Zen mode: strip every overlay for a clean view of the world.
+			// Photo mode: capture the world (never the chrome) onto a share card.
+			onPhoto: () => this._openPhotoMode(),
 			onZen: () => this._setZen(!this._zen),
 			onFeaturedClosed: () => { this._featuredOpen = false; },
 		});
@@ -644,11 +677,41 @@ export class CoinCommunities {
 		// rewrite drops unknown params); _restoreZen() reads it at world entry,
 		// where the zen preference actually applies.
 		this._urlUi = (p.get('ui') || '').trim();
-		const mint = p.get('coin');
+		// Everything past `coin` is decoration a stranger typed into a link they
+		// shared: it is display-only, never trusted, and clamped to the exact
+		// lengths the room server clamps to (WalkRoom.onCreate) so what this client
+		// paints is what every peer will see. Without the clamp a 10 KB `name=`
+		// tears the HUD apart locally and is silently truncated for everyone else.
+		const mint = clampParam(p.get('coin'), 64);
 		if (mint) {
 			const tier = p.get('tier') === 'holders' ? 'holders' : 'general';
-			this.enter({ mint, name: p.get('name') || '', symbol: p.get('symbol') || '', image: proxiedImageURL(p.get('image') || '', mint) }, { tier });
+			this.enter({
+				mint,
+				name: clampParam(p.get('name'), 48),
+				symbol: clampParam(p.get('symbol'), 16),
+				// proxiedImageURL drops anything that is not a renderable image
+				// source (javascript:, data:text/html, an oversized URL), so a hostile
+				// `image=` resolves to '' and the world takes its generated art path.
+				image: proxiedImageURL(p.get('image') || '', mint),
+			}, { tier })
+				.catch((err) => this._onEnterFailed(err));
 		}
+	}
+
+	// Both enter() call sites are fire-and-forget, so a throw mid-build would
+	// otherwise wedge the phase at 'loading' behind a half-built world with no
+	// feedback. Tear down whatever landed and hand back a working lobby.
+	_onEnterFailed(err) {
+		log.error('[coincommunities] enter() failed:', err);
+		try {
+			this.leave();
+		} catch (e) {
+			// leave() is defensive, but a teardown throw must not mask the lobby reset.
+			log.warn('[coincommunities] teardown after failed enter():', e?.message);
+			this.phase = 'lobby';
+			this.ui?.showLobby?.();
+		}
+		this.ui?.toast?.('Could not open that world. Try again.', 'warn');
 	}
 
 	// W01: boot the shared Rapier world once. A flat ground collider covers the
@@ -1304,16 +1367,23 @@ export class CoinCommunities {
 		addEventListener('online', this._onResume);
 		addEventListener('focus', this._onResume);
 
-		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
+		if (isGuest) {
+			uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl))
+				// Upload failed: peers keep the stand-in they already render; the local
+				// avatar is untouched, so there is nothing to recover beyond the log.
+				.catch((err) => log.warn('[coincommunities] guest avatar upload failed:', err?.message));
+		}
 		this.net.on('status', ({ status, error }) => {
 			this.ui.setStatus(status, error);
 			this._updateOnline();
-			// Reconnect exhausted: the player is now alone in a local-only world.
-			// The small status pill alone is easy to miss, so explain the drop once —
-			// other players, chat and shared building are off, and how to recover.
-			if (status === 'failed' && !this._failedNotified) {
+			// Reconnect exhausted (the net goes terminally 'offline' WITH an error;
+			// a plain room drop reports 'offline' without one and retries silently,
+			// and each 'failed' attempt is just backoff): the player is now alone in
+			// a local-only world. The small status pill alone is easy to miss, so
+			// explain the drop once, and how to recover.
+			if (status === 'offline' && error && !this._failedNotified) {
 				this._failedNotified = true;
-				this.ui.toast('Lost the connection to the world — chat and shared builds are paused. Tap the status pill to reconnect.', 'warn');
+				this.ui.toast('Lost the connection to the world: chat and shared builds are paused. Tap the status pill to reconnect.', 'warn');
 			}
 			// Retries exhausted: this is a single-player world now, so the peers
 			// frozen mid-stride are a lie. Clear them rather than leave a crowd of
@@ -1459,6 +1529,38 @@ export class CoinCommunities {
 		});
 
 		this.buildHud.root.hidden = false;
+		// W02: drivable vehicles, the parked fleet the server seeds every world
+		// with (multiplayer/src/vehicles.js VEHICLE_SPAWNS, mirrored from this
+		// district's own avenue bays in world-zones.js). Constructed after the
+		// physics boot above has resolved, so it can borrow this._physics straight
+		// away instead of waiting on it itself, and BEFORE connect() below:
+		// Colyseus replays each synced entity exactly once, from the first state
+		// patch, and on a warm room that patch can land while the avatar GLB is
+		// still downloading. A manager built after it would miss the whole fleet
+		// for the session. Torn down in leave().
+		this.vehicles = new VehicleManager({ host: this });
+		// W07: roaming PvE mobs, lootable tombstones, the danger-zone ground, and
+		// the GTA-style vitals HUD (health/armor/wanted). Constructed before the
+		// join starts for the same first-patch reason as the vehicles above; it
+		// also catches the join-time 'profile' send directly, and the re-request
+		// after the join below stays as a backstop. Torn down in leave().
+		// Defensive boundary: W07 is still under active concurrent development in
+		// this shared worktree (CLAUDE.md "known traps"), and a bug in it must
+		// never take down the rest of world entry (NPCs, vehicles, economy) for
+		// every player. Fails closed to no combat HUD/mobs, not an unusable world.
+		try {
+			this.combat = new CombatSystem({
+				scene: this.scene,
+				camera: this.camera,
+				renderer: this.renderer,
+				getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z, yaw: this.localYaw, height: this.localHeight || 1.6 }),
+				net: this.net,
+				ui: this.ui,
+			});
+		} catch (e) {
+			log.error('[coincommunities] CombatSystem failed to init; continuing without it:', e?.message);
+			this.combat = null;
+		}
 		// Join the room and finish the local avatar in parallel. These used to run
 		// serialized (avatar, then connect), which held the whole world entry on
 		// "connecting" for the length of the avatar download; neither depends on
@@ -1490,33 +1592,6 @@ export class CoinCommunities {
 		this._initJoystick();
 		this._restoreZen();
 		this._onboardBuild();
-		// W02: drivable vehicles — the parked fleet the server seeds every world
-		// with (multiplayer/src/vehicles.js VEHICLE_SPAWNS, mirrored from this
-		// district's own avenue bays in world-zones.js). Constructed after the
-		// physics boot above has resolved, so it can borrow this._physics straight
-		// away instead of waiting on it itself. Torn down in leave().
-		this.vehicles = new VehicleManager({ host: this });
-		// W07: roaming PvE mobs, lootable tombstones, the danger-zone ground, and
-		// the GTA-style vitals HUD (health/armor/wanted). Subscribed before the
-		// join settles, so it catches the join-time 'profile' send directly; the
-		// re-request after the join below stays as a backstop. Torn down in leave().
-		// Defensive boundary: W07 is still under active concurrent development in
-		// this shared worktree (CLAUDE.md "known traps") — a bug in it must never
-		// take down the rest of world entry (NPCs, vehicles, economy) for every
-		// player. Fails closed to no combat HUD/mobs rather than an unusable world.
-		try {
-			this.combat = new CombatSystem({
-				scene: this.scene,
-				camera: this.camera,
-				renderer: this.renderer,
-				getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z, yaw: this.localYaw, height: this.localHeight || 1.6 }),
-				net: this.net,
-				ui: this.ui,
-			});
-		} catch (e) {
-			log.error('[coincommunities] CombatSystem failed to init — continuing without it:', e?.message);
-			this.combat = null;
-		}
 		// The legacy gold purse HUD folds into WorldHud's unified money readout.
 		this.playSystems?.setGoldVisible(false);
 		// Every town hosts the live Agent Exchange: two NPC agents who pay each
@@ -1550,6 +1625,10 @@ export class CoinCommunities {
 		fetch(`/api/agents/public?sort=live&limit=3`)
 			.then((r) => r.ok ? r.json() : null)
 			.then((d) => {
+				// The player may have left (or hopped coins) while the fetch was in
+				// flight: desks (and their SSE monitors) added now would leak into
+				// the lobby scene with nothing left to dispose them.
+				if (epoch !== this._enterEpoch) return;
 				const agents = d?.agents || d?.data || [];
 				agents.slice(0, 3).forEach((a, i) => {
 					const offsets = [[-14, 0, -10], [14, 0, -10], [0, 0, -14]];
@@ -1784,8 +1863,12 @@ export class CoinCommunities {
 				// 'recheck' (or any other) → loop and re-run the on-chain check.
 			}
 		} finally {
-			// Guarantee the overlay never lingers if we bailed via return.
-			if (this.phase === 'lobby') this.ui.closeHolderGate();
+			// Guarantee the overlay (and its focus trap) never lingers if we bailed
+			// via return or a throw. Unconditional on purpose: enter() holds the
+			// phase at 'loading' while this gate runs, so a phase check here never
+			// fires and a cancel used to strand the modal forever. closeHolderGate()
+			// is idempotent, so the paths above that already closed it are unharmed.
+			this.ui.closeHolderGate();
 		}
 	}
 
@@ -1798,8 +1881,16 @@ export class CoinCommunities {
 
 	// Stand up spatial voice for this community. Voice starts OFF (no mic access
 	// until the player opts in); the mic button drives join/mute through here.
-	_initVoice() {
+	//
+	// The WebRTC engine is imported here rather than statically, so its peer
+	// connection / spatial-panner code is off the first-paint path; nothing in
+	// the world reads `this.voice` without optional chaining, and no peer can
+	// signal us before we have joined, so arriving a few ms later is safe.
+	async _initVoice() {
 		if (this.voice) { this.voice.dispose(); this.voice = null; }
+		const epoch = this._enterEpoch;
+		const { VoiceChat, voiceSupported } = await import('./voice-chat.js');
+		if (epoch !== this._enterEpoch || !this.net) return; // left the world mid-import
 		if (!voiceSupported()) { this.ui.setVoiceState('unsupported'); return; }
 		this.voice = new VoiceChat({
 			selfId: this.net.sessionId,
@@ -1936,15 +2027,24 @@ export class CoinCommunities {
 		this.ui.closeFeatured();
 		try { this.localCosmetics?.dispose(); } catch {}
 		this.localCosmetics = null; this._localCosWire = null;
-		// Tag mini-game (R08): remove local glow ring + label on world exit.
+		// Tag mini-game (R08): remove local glow ring + label and drop the HUD
+		// (scoreboard + "you're it" alert) on world exit.
 		this._removeLocalGlowRing();
 		this._removeLocalItLabel();
 		this._localIsIt = false;
+		this.ui.hideTagHud();
 		// King of the Totem (R07): tear down the zone + crown marker and hide the HUD.
 		this._disposeKingZone();
 		this.ui.hideKingHud();
 		if (this.localRig) { releaseAvatar(this.localRig); this.scene.remove(this.localRig); this.localRig = null; }
-		if (this._nipple) { this._nipple.destroy(); this._nipple = null; }
+		// A joystick vector held at the moment of exit must not drift the avatar
+		// in the next world; it belongs to the joystick session leave() just ended.
+		this._joy = null;
+		// The one-shot disconnect explainer re-arms per world.
+		this._failedNotified = false;
+		// The lobby has no current world: clear the coin so _worldFacts() (the
+		// avatar inspector's World row) stops naming the one we just left.
+		this.coin = null;
 		this.phase = 'lobby';
 		try { history.replaceState(null, '', location.pathname); } catch { /* non-fatal */ }
 		this.ui.showLobby();
@@ -2080,9 +2180,35 @@ export class CoinCommunities {
 	// ---------------------------------------------------------------- net events
 	_onAdd(player, id) {
 		if (id === this.net.sessionId) return; // that's us
+		// A peer we already track (or one re-announced under the same id after a
+		// resync) is live, not stale — clear any stale flag rather than doubling it.
+		const existing = this.remotes.get(id);
+		if (existing) { existing._stale = false; existing.apply?.(player); return; }
 		const rp = new RemotePlayer(this.scene, player);
 		rp.onInspect = () => this._inspectRemote(id, rp.label);
 		this.remotes.set(id, rp);
+		this._updateOnline();
+	}
+
+	// Flag every current peer as stale ahead of a reconnect. A reconnect is a fresh
+	// joinOrCreate with new session ids, and the old room's listeners were removed
+	// before it left, so `_onRemove` never fires for the peers we had — without
+	// this they linger as frozen ghosts and inflate the online count. The fresh
+	// room's `add` events clear the flag (above); whatever is still flagged when the
+	// snapshot lands (`_pruneStaleRemotes`) genuinely left while we were offline.
+	_markRemotesStale() {
+		for (const [, rp] of this.remotes) rp._stale = true;
+	}
+
+	// Retire peers still flagged stale after a (re)sync: dispose their rig, drop the
+	// label, close their voice channel, and correct the headcount.
+	_pruneStaleRemotes() {
+		for (const [id, rp] of [...this.remotes]) {
+			if (!rp._stale) continue;
+			rp.dispose();
+			this.remotes.delete(id);
+			this.voice?.removePeer(id);
+		}
 		this._updateOnline();
 	}
 	_onChange(player, id) {
@@ -2578,8 +2704,12 @@ export class CoinCommunities {
 		this._urlAvatar = '';
 		if (!isGuest) setPlayAvatar(value);
 		this.ui.reflectAvatar?.(value);
-		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
-		else this.net?.setAvatar(url);
+		if (isGuest) {
+			// Fire-and-forget like the world-entry upload: a failure keeps peers on
+			// the stand-in they already render, so log it rather than reject unhandled.
+			uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl))
+				.catch((err) => log.warn('[coincommunities] guest avatar upload failed:', err?.message));
+		} else this.net?.setAvatar(url);
 		return { ok: true, downgraded: !!built.downgraded };
 	}
 
@@ -2605,8 +2735,16 @@ export class CoinCommunities {
 	// one mission when a specific giver NPC opened the board.
 	async _toggleQuests(highlight) {
 		if (!this.net) return;
-		const { openQuestsPanel } = await import('./quests-ui.js');
-		openQuestsPanel({ ui: this.ui, net: this.net }, highlight);
+		// Both callers (the HUD's Jobs button and quest-giver NPCs) fire this
+		// without awaiting, so a failed chunk load (stale deploy, offline) must be
+		// caught here or it dies as an unhandled rejection with a dead button.
+		try {
+			const { openQuestsPanel } = await import('./quests-ui.js');
+			openQuestsPanel({ ui: this.ui, net: this.net }, highlight);
+		} catch (err) {
+			log.warn('[coincommunities] jobs board failed to load:', err?.message);
+			this.ui.toast('Could not open the jobs board. Refresh the page and try again.', 'warn');
+		}
 	}
 
 	// Equip `id` durably: send to the server (authoritative validation + persistence)
@@ -3025,10 +3163,13 @@ export class CoinCommunities {
 			// Esc closes the friends/avatar drawers before anything else claims the key.
 			if (e.key === 'Escape' && this._friendsOpen) { e.preventDefault(); this._closeFriends(); return; }
 			if (e.key === 'Escape' && this._avatarPanelOpen) { e.preventDefault(); this._closeAvatarPanel(); return; }
-			if (e.key === 'Enter' && this.phase === 'world') { e.preventDefault(); this.ui.focusChat(); return; }
+			// Enter/Space belong to a focused button or link (see isActivationTarget)
+			// — hijacking them there leaves the whole HUD un-operable by keyboard.
+			const onControl = isActivationTarget(e.target);
+			if (e.key === 'Enter' && this.phase === 'world' && !onControl) { e.preventDefault(); this.ui.focusChat(); return; }
 			// Space jumps on foot; while driving it's the handbrake instead (held,
 			// released in the keyup handler below) — never scrolls the page either way.
-			if (e.code === 'Space') {
+			if (e.code === 'Space' && !onControl) {
 				e.preventDefault();
 				if (this.vehicles?.isDriving()) { this.vehicles.setHandbrake(true); return; }
 				this._jump();
@@ -3088,6 +3229,15 @@ export class CoinCommunities {
 				if (k === 'i' && !this.buildHud.active && !e.repeat) {
 					e.preventDefault();
 					this._inspectNearest();
+					return;
+				}
+				// P photographs the world onto a share card. Deliberately live in
+				// every mode — zen, building, driving — because the shot is an
+				// offscreen render, so no panel is ever in the frame. Ctrl/Cmd+P
+				// stays the browser's print dialog.
+				if (k === 'p' && !e.repeat && !e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					this._openPhotoMode();
 					return;
 				}
 				// J toggles the friends drawer (W09). F — the /walk binding — is already
@@ -3415,6 +3565,9 @@ export class CoinCommunities {
 		this._propUploading = true;
 		this.ui.setPropUploadStatus('Checking your model…');
 		try {
+			// The validator pulls in its own GLTF/VRM parsing path; it is only
+			// reachable from this file picker, so it loads with the picker's file.
+			const { validatePropModel, uploadPropModel } = await import('./avatar-upload.js');
 			const info = await validatePropModel(file);
 			this.ui.setPropUploadStatus('Uploading… 0%');
 			const url = await uploadPropModel(file, (p) => {
@@ -4013,43 +4166,41 @@ export class CoinCommunities {
 
 	// ---------------------------------------------------------------- share builds
 	// Render the current view into an offscreen target and return a JPEG data URL +
-	// dimensions, or null if capture isn't possible. Uses a render target (not the
-	// live canvas) so it works regardless of preserveDrawingBuffer, and downscales
-	// to keep the thumbnail small enough to persist and share.
+	// dimensions, or null if capture isn't possible. The offscreen render itself
+	// lives in scene-capture.js, shared with photo mode, so the world has exactly
+	// one answer to "how do you screenshot this"; the downscale here keeps the
+	// thumbnail small enough to persist and share.
 	_captureBuildShot(maxW = 720) {
-		const r = this.renderer;
-		if (!r || !this.scene || !this.camera) return null;
-		const size = r.getSize(new Vector2());
-		if (size.x < 1 || size.y < 1) return null;
-		const scale = Math.min(1, maxW / size.x);
-		const w = Math.max(1, Math.round(size.x * scale));
-		const h = Math.max(1, Math.round(size.y * scale));
-		let rt = null;
+		const shot = captureSceneCanvas(this.renderer, this.scene, this.camera, { maxWidth: maxW });
+		if (!shot) return null;
+		return { dataUrl: shot.canvas.toDataURL('image/jpeg', 0.72), width: shot.width, height: shot.height };
+	}
+
+	// ---------------------------------------------------------------- photo mode
+	// Capture the world onto a share card the player can download or paste. The
+	// whole feature (compositing, the preview sheet, its CSS) lives in
+	// photo-mode.js and is imported on the FIRST press, so a session that never
+	// takes a photo never downloads it and never pays a frame for it.
+	async _openPhotoMode() {
+		if (this.phase !== 'world' || this._photoLoading) return;
+		this._photoLoading = true;
 		try {
-			rt = new WebGLRenderTarget(w, h, { samples: 4 });
-			rt.texture.colorSpace = SRGBColorSpace;
-			const prev = r.getRenderTarget();
-			r.setRenderTarget(rt);
-			r.render(this.scene, this.camera);
-			const buf = new Uint8Array(w * h * 4);
-			r.readRenderTargetPixels(rt, 0, 0, w, h, buf);
-			r.setRenderTarget(prev);
-			const c = document.createElement('canvas');
-			c.width = w; c.height = h;
-			const ctx = c.getContext('2d');
-			const img = ctx.createImageData(w, h);
-			// WebGL's origin is bottom-left; flip rows so the image isn't upside down.
-			for (let y = 0; y < h; y++) {
-				const src = (h - 1 - y) * w * 4;
-				img.data.set(buf.subarray(src, src + w * 4), y * w * 4);
-			}
-			ctx.putImageData(img, 0, 0);
-			return { dataUrl: c.toDataURL('image/jpeg', 0.72), width: w, height: h };
+			const { takePhoto } = await import('./photo-mode.js');
+			const shown = await takePhoto({
+				renderer: this.renderer,
+				scene: this.scene,
+				camera: this.camera,
+				coinLabel: this.coin?.symbol ? '$' + this.coin.symbol : '',
+				worldLabel: this.coin?.name || '',
+				toast: (msg, kind) => this.ui.toast(msg, kind),
+				onClose: () => this.ui.setPhotoActive(false),
+			});
+			this.ui.setPhotoActive(shown);
 		} catch (err) {
-			log.warn('[coincommunities] build capture failed:', err?.message);
-			return null;
+			log.warn('[coincommunities] photo mode failed to load:', err?.message);
+			this.ui.toast('Photo mode couldn’t load — check your connection and try again.', 'warn');
 		} finally {
-			rt?.dispose();
+			this._photoLoading = false;
 		}
 	}
 

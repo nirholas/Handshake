@@ -425,7 +425,9 @@ export class AmbientLife {
 		if (this._impostor) {
 			this.scene.remove(this._impostor.bodies, this._impostor.heads);
 			this._impostor.bodies.geometry.dispose();
+			this._impostor.bodies.material.dispose();
 			this._impostor.heads.geometry.dispose();
+			this._impostor.heads.material.dispose();
 			this._impostor = null;
 		}
 	}

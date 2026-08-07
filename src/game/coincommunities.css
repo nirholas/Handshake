@@ -26,6 +26,17 @@
 	--cc-glow: 0 0 14px rgba(255, 255, 255, 0.35);
 	--cc-radius: 4px;
 	--cc-radius-sm: 2px;
+	/* Home-indicator / notch insets. The page is viewport-fit=cover (see
+	   pages/play.html), so the canvas correctly fills the display cutout — but
+	   that also means every fixed HUD control anchored with a raw `bottom:` px
+	   lands INSIDE the home-indicator strip on a modern iPhone. There iOS both
+	   draws its indicator over the control and swallows the first touch as a
+	   system edge gesture, so the movement stick and the chat input read as
+	   half-dead. Anchor bottom-docked controls with these instead of bare px.
+	   They resolve to 0px on hardware without insets, so desktop is unchanged. */
+	--cc-safe-b: env(safe-area-inset-bottom, 0px);
+	--cc-safe-l: env(safe-area-inset-left, 0px);
+	--cc-safe-r: env(safe-area-inset-right, 0px);
 }
 * { box-sizing: border-box; }
 html, body {
@@ -672,11 +683,13 @@ html[data-bg="transparent"] #cc-lobby {
 	background: linear-gradient(115deg, rgba(255, 255, 255, 0.06), transparent 38%);
 }
 .cc-card-featured .cc-card-img { aspect-ratio: auto; flex: 0 0 38%; min-height: 168px; }
-.cc-card-featured .cc-card-img::after { background: linear-gradient(90deg, transparent 55%, rgba(6, 6, 7, 0.92)); }
+/* Ends fully opaque at the panel's composited color: a translucent last stop
+   left a hard vertical seam where the artwork stopped and the body began. */
+.cc-card-featured .cc-card-img::after { background: linear-gradient(90deg, transparent 45%, rgba(11, 11, 12, 0.72) 80%, #0b0b0c 100%); }
 .cc-card-featured .cc-card-body { flex: 1; justify-content: center; padding: 20px 22px; gap: 6px; }
 .cc-card-featured .cc-card-name { font-size: 22px; white-space: normal; }
 .cc-card-featured .cc-card-meta { font-size: 13px; }
-.cc-card-featured .cc-card-cta { opacity: 1; transform: none; align-self: flex-start; padding: 10px 22px; margin-top: 16px; }
+.cc-card-featured .cc-card-cta { background: #fff; border-color: #fff; color: var(--cc-ink); align-self: flex-start; padding: 10px 22px; margin-top: 16px; }
 .cc-card-official {
 	position: absolute; top: 9px; left: 9px; z-index: 1;
 	display: inline-flex; align-items: center; gap: 6px;
@@ -688,7 +701,7 @@ html[data-bg="transparent"] #cc-lobby {
 @media (max-width: 560px) {
 	.cc-card-featured { flex-direction: column; }
 	.cc-card-featured .cc-card-img { flex-basis: auto; aspect-ratio: 16/10; width: 100%; }
-	.cc-card-featured .cc-card-img::after { background: linear-gradient(180deg, transparent 45%, rgba(6, 6, 7, 0.92)); }
+	.cc-card-featured .cc-card-img::after { background: linear-gradient(180deg, transparent 45%, rgba(11, 11, 12, 0.72) 82%, #0b0b0c 100%); }
 	.cc-card-featured .cc-card-name { font-size: 19px; }
 }
 
@@ -824,9 +837,39 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-power-ico { line-height: 1; }
 .cc-power-label { line-height: 1; }
 
+/* photo mode — bottom of the top-right stack (voice · eco · zen · photo).
+   The preview sheet it opens is styled in src/game/photo-mode.css, which ships
+   with the lazily-imported module; only the trigger lives here. */
+.cc-photo-hud-btn {
+	position: fixed; top: 228px; right: 14px; z-index: 22;
+	display: inline-flex; align-items: center; gap: 8px;
+	background: var(--cc-panel); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	padding: 8px 13px 8px 11px; color: var(--cc-dim); cursor: pointer;
+	font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+	box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
+	transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease, opacity 0.3s ease, top 0.3s ease;
+}
+.cc-photo-hud-btn:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.05); }
+.cc-photo-hud-btn:active { background: rgba(255, 255, 255, 0.12); }
+.cc-photo-hud-btn:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
+.cc-photo-hud-btn[aria-pressed="true"] { color: var(--cc-text); border-color: var(--cc-edge-hi); }
+.cc-photo-hud-ico { display: inline-flex; }
+.cc-photo-hud-ico svg { width: 16px; height: 16px; display: block; }
+.cc-photo-hud-label { line-height: 1; }
+/* Zen keeps the camera: a world with no chrome on it is exactly the shot people
+   want, and the capture is an offscreen render, so this button is never in it.
+   It slides up under the "Show UI" pill once the rest of the stack is gone. */
+body.is-zen #cc-photo-btn { top: calc(env(safe-area-inset-top, 0px) + 58px); opacity: 0; }
+body.is-zen.zen-revealed #cc-photo-btn { opacity: 0.85; }
+body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+	.cc-photo-hud-btn { transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease; }
+}
+
 /* chat sidebar — dockable, minimizable, persistent log */
 #cc-chat {
-	position: fixed; right: 14px; bottom: 14px; width: min(340px, 82vw);
+	position: fixed; right: calc(14px + var(--cc-safe-r)); bottom: calc(14px + var(--cc-safe-b));
+	width: min(340px, 82vw);
 	max-height: min(60vh, 520px); z-index: 23;
 	display: flex; flex-direction: column; overflow: hidden;
 	background: var(--cc-panel); border: 1px solid var(--cc-edge);
@@ -896,7 +939,7 @@ html[data-bg="transparent"] #cc-lobby {
 
 /* emote tray */
 #cc-emotes {
-	position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 22;
+	position: fixed; left: 50%; bottom: calc(16px + var(--cc-safe-b)); transform: translateX(-50%); z-index: 22;
 	display: flex; gap: 6px; background: var(--cc-panel); border: 1px solid var(--cc-edge);
 	border-radius: var(--cc-radius); padding: 7px; box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
 }
@@ -911,7 +954,7 @@ html[data-bg="transparent"] #cc-lobby {
 
 /* reaction bar (R04) — sits just above the emote tray */
 #cc-reactions {
-	position: fixed; left: 50%; bottom: 82px; transform: translateX(-50%); z-index: 22;
+	position: fixed; left: 50%; bottom: calc(82px + var(--cc-safe-b)); transform: translateX(-50%); z-index: 22;
 	display: flex; gap: 4px; background: var(--cc-panel); border: 1px solid var(--cc-edge);
 	border-radius: var(--cc-radius); padding: 5px 6px; box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
 }
@@ -1018,7 +1061,8 @@ html[data-bg="transparent"] #cc-lobby {
 /* movement stick — bottom-left, always on (touch + mouse). Subtle on desktop,
    full strength on touch. Sits opposite the chat (bottom-right) so they never overlap. */
 #cc-joystick {
-	position: fixed; left: 22px; bottom: 90px; width: 120px; height: 120px; z-index: 30; touch-action: none;
+	position: fixed; left: calc(22px + var(--cc-safe-l)); bottom: calc(90px + var(--cc-safe-b));
+	width: 120px; height: 120px; z-index: 30; touch-action: none;
 	opacity: 0.5; transition: opacity 0.2s ease;
 }
 #cc-joystick:hover { opacity: 1; }
@@ -1040,7 +1084,12 @@ html[data-bg="transparent"] #cc-lobby {
 }
 #cc-joystick.cc-joy-active .cc-joy-thumb { transition: none; }
 
-@media (max-width: 640px) {
+/* Phone HUD. Keyed on width OR a short touch viewport, not width alone: a
+   phone rotated to landscape is ~844x390, which sails past a max-width:640px
+   query and silently fell back to the DESKTOP HUD mid-session — the exact
+   "rotate and the HUD doesn't reflow" failure. Matching short coarse-pointer
+   viewports keeps the three-zone touch layout in both orientations. */
+@media (max-width: 640px), (pointer: coarse) and (max-height: 520px) {
 	#cc-hint { display: none; }
 	.cc-coin-banner { max-width: 60vw; }
 
@@ -1050,17 +1099,24 @@ html[data-bg="transparent"] #cc-lobby {
 	   tray on top of the chat input — making both the stick and typing dead. */
 
 	/* Movement stick: bottom-left, on top of everything, in a clear zone. */
-	#cc-joystick { left: 16px; bottom: 20px; width: 104px; height: 104px; z-index: 30; opacity: 1; }
+	#cc-joystick {
+		left: calc(16px + var(--cc-safe-l)); bottom: calc(20px + var(--cc-safe-b));
+		width: 104px; height: 104px; z-index: 30; opacity: 1;
+	}
 
 	/* Chat: docked bottom-right, narrower so its left edge clears the joystick.
 	   Above the emote tray so the input always receives taps. */
-	#cc-chat { left: auto; right: 10px; bottom: 10px; width: min(58vw, 280px); max-height: 42vh; z-index: 24; }
+	#cc-chat {
+		left: auto; right: calc(10px + var(--cc-safe-r)); bottom: calc(10px + var(--cc-safe-b));
+		width: min(58vw, 280px); max-height: 42vh; z-index: 24;
+	}
 
 	/* Emotes: compact, horizontally scrollable, pinned bottom-right just above the
 	   collapsed chat pill and clear of the joystick. The expanded chat (higher z)
 	   covers it — collapse chat to emote, which is the natural one-or-the-other. */
 	#cc-emotes {
-		left: auto; right: 10px; bottom: 58px; transform: none; z-index: 23;
+		left: auto; right: calc(10px + var(--cc-safe-r)); bottom: calc(58px + var(--cc-safe-b));
+		transform: none; z-index: 23;
 		max-width: calc(100vw - 150px); overflow-x: auto; -webkit-overflow-scrolling: touch;
 		padding: 6px; scrollbar-width: none;
 	}
@@ -1069,7 +1125,8 @@ html[data-bg="transparent"] #cc-lobby {
 
 	/* Reactions: row above emotes on mobile, same right-dock zone */
 	#cc-reactions {
-		left: auto; right: 10px; bottom: 104px; transform: none; z-index: 22;
+		left: auto; right: calc(10px + var(--cc-safe-r)); bottom: calc(104px + var(--cc-safe-b));
+		transform: none; z-index: 22;
 		max-width: calc(100vw - 150px); overflow-x: auto; -webkit-overflow-scrolling: touch;
 		padding: 4px 5px; scrollbar-width: none;
 	}
@@ -1090,7 +1147,10 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-adventure:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--cc-edge-hi); transform: translateY(-1px); }
 .cc-adventure:active { transform: translateY(1px); }
 .cc-adventure:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.cc-adventure-ico { font-size: 18px; line-height: 1; filter: grayscale(1); }
+/* Inline SVG mark: the grayscaled ⚔️ emoji collapsed into a bare ✕ glyph on
+   most platforms, which read as a close button instead of "adventure". */
+.cc-adventure-ico { display: inline-flex; width: 18px; height: 18px; flex: none; }
+.cc-adventure-ico svg { width: 100%; height: 100%; }
 .cc-adventure span { display: flex; flex-direction: column; font-weight: 700; font-size: 13px; line-height: 1.2; letter-spacing: 0.02em; }
 .cc-adventure small { font-weight: 500; font-size: 11px; color: var(--cc-dim); }
 @media (max-width: 640px) { .cc-adventure small { display: none; } }
@@ -3167,7 +3227,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
    the driving pedal cluster), and panels the player opens on purpose (build
    palettes, shops, boards, the emote wheel) still show. Same body.is-zen
    contract as /walk and the marketplace gallery. */
-body.is-zen #cc-hud > :not(#cc-joystick),
+body.is-zen #cc-hud > :not(#cc-joystick):not(#cc-photo-btn),
 body.is-zen .cc-nav-toggle,
 body.is-zen .cc-nav-drawer,
 body.is-zen #cc-tag-hud,

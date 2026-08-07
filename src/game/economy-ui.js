@@ -9,6 +9,7 @@
 
 import './economy-ui.css';
 import { itemDisplay } from './items.js';
+import { openModal, announce } from './a11y.js';
 
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -33,21 +34,26 @@ export class EconPanel {
 		this._onClose = onClose;
 		this.body = el('div', { class: 'ec-body' });
 		this.status = el('div', { class: 'ec-status', role: 'status', 'aria-live': 'polite' });
+		this.closeBtn = el('button', { class: 'ec-x', type: 'button', 'aria-label': 'Close', text: '✕', onclick: () => this.close() });
 		this.card = el('div', { class: 'ec-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': title }, [
 			el('div', { class: 'ec-head' }, [
 				el('span', { class: 'ec-title', text: title }),
-				el('button', { class: 'ec-x', type: 'button', 'aria-label': 'Close', text: '✕', onclick: () => this.close() }),
+				this.closeBtn,
 			]),
 			this.body,
 			this.status,
 		]);
 		this.overlay = el('div', { class: 'ec-overlay', onpointerdown: (e) => { if (e.target === this.overlay) this.close(); } }, [this.card]);
-		this.card.addEventListener('keydown', (e) => {
-			if (e.key === 'Escape') this.close();
-			e.stopPropagation();
-		});
+		// Game hotkeys live on `window`; a keystroke aimed at this card must never
+		// also drive the avatar behind it.
+		this.card.addEventListener('keydown', (e) => e.stopPropagation());
 		document.body.appendChild(this.overlay);
 		requestAnimationFrame(() => this.overlay.classList.add('ec-on'));
+		// `aria-modal` is a promise to keep focus inside; openModal is what makes
+		// it true, and it also puts this panel on the shared Escape stack so the
+		// top-most panel is the one Escape closes.
+		this._releaseModal = openModal(this.card, { close: () => this.close(), initialFocus: this.closeBtn });
+		announce(title);
 	}
 
 	track(unsub) { if (typeof unsub === 'function') this._unsubs.push(unsub); }
@@ -55,6 +61,65 @@ export class EconPanel {
 	setStatus(text, kind) {
 		this.status.textContent = text || '';
 		this.status.setAttribute('data-kind', kind || '');
+	}
+
+	// --- first-snapshot loading state -----------------------------------------
+	//
+	// Every panel here opens before its data exists: the constructor fires a
+	// request and the server answers over the socket a moment later. Rendering
+	// the empty state in that gap tells the player "the shelves are bare" when
+	// the truth is "we haven't looked yet", and if the reply never lands (the
+	// socket dropped between the walk-up and the open) that lie is permanent.
+	// So panels start in `loading`, settle on the first snapshot, and fall to an
+	// honest, retryable error if nothing arrives.
+
+	/** Begin waiting for the first server snapshot. `retry` re-sends the request. */
+	awaitFirstSnapshot(retry, { timeoutMs = 9000 } = {}) {
+		this.loading = true;
+		this.loadFailed = false;
+		this._retry = retry;
+		clearTimeout(this._loadTimer);
+		this._loadTimer = setTimeout(() => {
+			if (!this.loading) return;
+			this.loading = false;
+			this.loadFailed = true;
+			this._render?.();
+		}, timeoutMs);
+	}
+
+	/** The first snapshot landed: leave the loading state for good. */
+	settleFirstSnapshot() {
+		if (!this.loading && !this.loadFailed) return;
+		clearTimeout(this._loadTimer);
+		this._loadTimer = null;
+		this.loading = false;
+		this.loadFailed = false;
+	}
+
+	/** Placeholder rows shaped like the real ones, so nothing jumps on arrival. */
+	skeleton(rows = 3) {
+		const wrap = el('div', { class: 'ec-skel' });
+		for (let i = 0; i < rows; i++) {
+			wrap.appendChild(el('div', { class: 'ec-skel-row' }, [
+				el('span', { class: 'ec-skel-glyph' }),
+				el('div', { class: 'ec-skel-main' }, [el('span', { class: 'ec-skel-line' }), el('span', { class: 'ec-skel-line ec-skel-line-sm' })]),
+				el('span', { class: 'ec-skel-btn' }),
+			]));
+		}
+		return wrap;
+	}
+
+	/** The honest dead end: what went wrong, and the one button that fixes it. */
+	loadError(what) {
+		return el('div', { class: 'ec-empty ec-error' }, [
+			el('div', { class: 'ec-error-glyph', 'aria-hidden': 'true', text: '📡' }),
+			el('div', { class: 'ec-error-title', text: `Couldn't reach ${what}` }),
+			el('div', { text: 'The world stopped answering. Nothing was lost.' }),
+			el('button', {
+				class: 'ec-row-btn ec-error-retry', type: 'button', text: 'Try again',
+				onclick: () => { this.awaitFirstSnapshot(this._retry); this._retry?.(); this._render?.(); },
+			}),
+		]);
 	}
 
 	// --- one in-flight intent per panel ---------------------------------------
@@ -102,6 +167,9 @@ export class EconPanel {
 	}
 
 	close() {
+		if (this._closed) return;
+		this._closed = true;
+		this._releaseModal?.();
 		this.overlay.classList.remove('ec-on');
 		clearTimeout(this._pendingTimer);
 		for (const u of this._unsubs) { try { u(); } catch { /* ignore */ } }
@@ -137,18 +205,23 @@ class StorePanel extends EconPanel {
 		this.catalog = { sell: [], buy: [] };
 		this.profile = { gold: 0, inv: [] };
 
-		this.tabs = el('div', { class: 'ec-tabs' }, [
-			el('button', { class: 'ec-tab ec-on', type: 'button', text: 'Buy', onclick: () => this._setTab('buy') }),
-			el('button', { class: 'ec-tab', type: 'button', text: 'Sell', onclick: () => this._setTab('sell') }),
+		this.tabs = el('div', { class: 'ec-tabs', role: 'tablist', 'aria-label': 'Store mode' }, [
+			el('button', { class: 'ec-tab ec-on', type: 'button', role: 'tab', 'data-tab': 'buy', 'aria-selected': 'true', text: 'Buy', onclick: () => this._setTab('buy') }),
+			el('button', { class: 'ec-tab', type: 'button', role: 'tab', 'data-tab': 'sell', 'aria-selected': 'false', text: 'Sell', onclick: () => this._setTab('sell') }),
 		]);
+		this.purseValue = el('b', { text: '0' });
 		this.purse = el('div', { class: 'ec-purse' }, [
 			el('span', { text: 'Cash on hand' }),
-			el('b', { text: '0' }),
+			this.purseValue,
 		]);
 		this.card.insertBefore(this.purse, this.body);
 		this.card.insertBefore(this.tabs, this.purse);
 
-		this.track(net.on('store', (msg) => { this.catalog = { sell: msg?.sell || [], buy: msg?.buy || [] }; this._render(); }));
+		this.track(net.on('store', (msg) => {
+			this.settleFirstSnapshot();
+			this.catalog = { sell: msg?.sell || [], buy: msg?.buy || [] };
+			this._render();
+		}));
 		this.track(net.on('profile', (snap) => { this.endRequest(); this._applyProfile(snap); }));
 		this.track(net.on('inv', (delta) => { this.endRequest(); this._applyProfile(delta); }));
 		// A refused trade (no cash, pack full, not for sale) answers with a notice
@@ -159,6 +232,7 @@ class StorePanel extends EconPanel {
 			this.setStatus(n.text || '', n.kind === 'full' ? 'err' : 'ok');
 		}));
 
+		this.awaitFirstSnapshot(() => { net.requestStore(); net.requestProfile(); });
 		net.requestStore();
 		net.requestProfile();
 		this._render();
@@ -166,20 +240,35 @@ class StorePanel extends EconPanel {
 
 	_applyProfile(snap) {
 		if (!snap) return;
+		const before = this.profile.gold;
 		if (Number.isFinite(snap.gold)) this.profile.gold = snap.gold;
 		if (Array.isArray(snap.inv)) this.profile.inv = snap.inv;
-		this.purse.lastChild.textContent = this.profile.gold.toLocaleString();
+		this.purseValue.textContent = this.profile.gold.toLocaleString();
+		// The purse is a plain number on screen — nothing a screen reader would
+		// revisit after a trade. Announce the delta so the outcome of a buy/sell
+		// is audible, not just visible.
+		if (Number.isFinite(snap.gold) && snap.gold !== before) {
+			const delta = snap.gold - before;
+			announce(`${delta > 0 ? 'Gained' : 'Spent'} ${Math.abs(delta).toLocaleString()}. Cash on hand ${this.profile.gold.toLocaleString()}.`);
+		}
 		this._render();
 	}
 
 	_setTab(tab) {
 		this.tab = tab;
-		for (const b of this.tabs.children) b.classList.toggle('ec-on', b.textContent.toLowerCase() === tab);
+		// Keyed on data-tab, never the visible label: the label is translated copy.
+		for (const b of this.tabs.children) {
+			const on = b.dataset.tab === tab;
+			b.classList.toggle('ec-on', on);
+			b.setAttribute('aria-selected', on ? 'true' : 'false');
+		}
 		this._render();
 	}
 
 	_render() {
 		this.body.replaceChildren();
+		if (this.loading) { this.body.appendChild(this.skeleton(4)); return; }
+		if (this.loadFailed) { this.body.appendChild(this.loadError('the store')); return; }
 		if (this.tab === 'buy') this._renderBuy(); else this._renderSell();
 	}
 
@@ -188,7 +277,7 @@ class StorePanel extends EconPanel {
 
 	_renderBuy() {
 		if (!this.catalog.buy.length) {
-			this.body.appendChild(el('div', { class: 'ec-empty', text: 'Loading the catalog…' }));
+			this.body.appendChild(el('div', { class: 'ec-empty', text: 'The shelves are bare right now. The storekeeper restocks as the world turns over, so check back after a job or two.' }));
 			return;
 		}
 		for (const entry of this.catalog.buy) {
@@ -265,13 +354,18 @@ class BankPanel extends EconPanel {
 		this.gold = 0;
 		this.bankBal = 0;
 
+		// Until the server's profile lands, both balances read as unknown rather
+		// than as a confident "0" — telling a player they are broke when we have
+		// simply not looked yet is the worst thing this panel could say.
+		this.purseValue = el('b', { class: 'ec-pending-val', text: '…' });
 		this.purse = el('div', { class: 'ec-purse' }, [
 			el('span', { text: 'Cash on hand' }),
-			el('b', { text: '0' }),
+			this.purseValue,
 		]);
+		this.bankValue = el('b', { class: 'ec-pending-val', text: '…' });
 		this.bankLine = el('div', { class: 'ec-purse' }, [
 			el('span', { text: 'Banked (protected)' }),
-			el('b', { text: '0' }),
+			this.bankValue,
 		]);
 		this.card.insertBefore(this.purse, this.body);
 		this.card.insertBefore(this.bankLine, this.body);
@@ -282,19 +376,25 @@ class BankPanel extends EconPanel {
 		this.depositBtn = el('button', { class: 'ec-row-btn', type: 'button', text: 'Deposit', onclick: () => this._deposit() });
 		this.withdrawBtn = el('button', { class: 'ec-row-btn ec-secondary', type: 'button', text: 'Withdraw', onclick: () => this._withdraw() });
 
-		this.body.appendChild(el('div', { class: 'ec-row-sub', text: 'Deposit — protects cash from a death drop.' }));
+		// "Max" fills the field from a balance we may not know yet, so both
+		// presets are held with the transfer buttons until the profile lands.
+		this.depositMaxBtn = el('button', { class: 'ec-bank-preset', type: 'button', text: 'Max', onclick: () => { this.depositInput.value = String(this.gold); } });
+		this.withdrawMaxBtn = el('button', { class: 'ec-bank-preset', type: 'button', text: 'Max', onclick: () => { this.withdrawInput.value = String(this.bankBal); } });
+
+		this.body.appendChild(el('div', { class: 'ec-row-sub', text: 'Deposit: protects cash from a death drop.' }));
 		this.body.appendChild(el('div', { class: 'ec-bank-amount' }, [this.depositInput, this.depositBtn]));
-		this.body.appendChild(el('div', { class: 'ec-bank-presets' }, [
-			el('button', { class: 'ec-bank-preset', type: 'button', text: 'Max', onclick: () => { this.depositInput.value = String(this.gold); } }),
-		]));
+		this.body.appendChild(el('div', { class: 'ec-bank-presets' }, [this.depositMaxBtn]));
 
-		this.body.appendChild(el('div', { class: 'ec-row-sub', text: 'Withdraw — moves banked cash back to your purse.' }));
+		this.body.appendChild(el('div', { class: 'ec-row-sub', text: 'Withdraw: moves banked cash back to your purse.' }));
 		this.body.appendChild(el('div', { class: 'ec-bank-amount' }, [this.withdrawInput, this.withdrawBtn]));
-		this.body.appendChild(el('div', { class: 'ec-bank-presets' }, [
-			el('button', { class: 'ec-bank-preset', type: 'button', text: 'Max', onclick: () => { this.withdrawInput.value = String(this.bankBal); } }),
-		]));
+		this.body.appendChild(el('div', { class: 'ec-bank-presets' }, [this.withdrawMaxBtn]));
 
-		this.track(net.on('profile', (snap) => { this.endRequest(); this._applyProfile(snap); }));
+		this.track(net.on('profile', (snap) => {
+			this.settleFirstSnapshot();
+			this.endRequest();
+			this._applyProfile(snap);
+			this._render();
+		}));
 		// A transfer the server clamped to zero (nothing on hand, nothing banked)
 		// answers with a notice and no snapshot, so release the slot on it too.
 		this.track(net.on('notice', (n) => {
@@ -303,29 +403,49 @@ class BankPanel extends EconPanel {
 			this.setStatus(n.text || '', 'ok');
 		}));
 
+		this.awaitFirstSnapshot(() => net.requestProfile());
 		net.requestProfile();
+		this._render();
+	}
+
+	// The bank's body is static, so "render" here means syncing the two live
+	// bits: whether the balances are known yet, and whether a transfer is open.
+	_render() {
+		if (this.loadFailed) this.setStatus('Could not read your balance. The world stopped answering. Nothing was moved.', 'err');
+		this._syncPending();
 	}
 
 	// Both transfer buttons ride the panel's single in-flight slot, so a
 	// double-tapped Deposit can never send the same amount twice.
 	_syncPending() {
-		const busy = !!this.pending;
-		this.depositBtn.disabled = busy;
-		this.withdrawBtn.disabled = busy;
+		const blocked = !!this.pending || this.loading || this.loadFailed;
+		this.depositBtn.disabled = blocked;
+		this.withdrawBtn.disabled = blocked;
+		this.depositMaxBtn.disabled = blocked;
+		this.withdrawMaxBtn.disabled = blocked;
 	}
 
 	_applyProfile(snap) {
 		if (!snap) return;
+		const before = { gold: this.gold, bank: this.bankBal };
 		if (Number.isFinite(snap.gold)) this.gold = snap.gold;
 		if (Number.isFinite(snap.bank)) this.bankBal = snap.bank;
-		this.purse.lastChild.textContent = this.gold.toLocaleString();
-		this.bankLine.lastChild.textContent = this.bankBal.toLocaleString();
+		this.purseValue.textContent = this.gold.toLocaleString();
+		this.bankValue.textContent = this.bankBal.toLocaleString();
+		this.purseValue.classList.remove('ec-pending-val');
+		this.bankValue.classList.remove('ec-pending-val');
+		// A transfer only changes two numbers on screen; say them out loud so a
+		// screen-reader player knows the deposit actually landed.
+		if (this.gold !== before.gold || this.bankBal !== before.bank) {
+			announce(`Cash on hand ${this.gold.toLocaleString()}. Banked ${this.bankBal.toLocaleString()}.`);
+		}
 	}
 
 	_deposit() {
 		const amount = Math.max(0, Math.floor(Number(this.depositInput.value) || 0));
 		if (!amount) { this.setStatus('Enter an amount to deposit.', 'err'); return; }
-		this.setStatus('Depositing…');
+		if (amount > this.gold) { this.setStatus(`You're only carrying ${this.gold.toLocaleString()}.`, 'err'); return; }
+		if (!this.beginRequest('Depositing…')) return;
 		this.net.bank(amount);
 		this.depositInput.value = '';
 	}
@@ -333,7 +453,8 @@ class BankPanel extends EconPanel {
 	_withdraw() {
 		const amount = Math.max(0, Math.floor(Number(this.withdrawInput.value) || 0));
 		if (!amount) { this.setStatus('Enter an amount to withdraw.', 'err'); return; }
-		this.setStatus('Withdrawing…');
+		if (amount > this.bankBal) { this.setStatus(`You've only got ${this.bankBal.toLocaleString()} banked.`, 'err'); return; }
+		if (!this.beginRequest('Withdrawing…')) return;
 		this.net.bank(-amount);
 		this.withdrawInput.value = '';
 	}

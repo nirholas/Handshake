@@ -58,6 +58,7 @@ import {
 	buildTokenPurchase, verifyTokenPurchase, isWalletAddress, tokenConfigured, TOKEN_DECIMALS,
 } from '../game-token.js';
 import { readOwnedCosmetics } from '../cosmetics-ownership.js';
+import { currentEventDrop, dropClaimable, warmEventDrop } from '../event-drop.js';
 import {
 	itemLabel, fishCatchChance, fishDoubleChance,
 	gatherChance, gatherDoubleChance, coalBonusChance, cookBurnChance,
@@ -181,6 +182,7 @@ const BALL_AIR_DRAG = 0.12;          // per-second speed decay while airborne
 const BALL_MAX_IMPULSE = 12;         // m/s — cap on a single client kick
 const BALL_POST_KICK_CAP = 18;       // m/s — absolute total velocity cap post-kick
 const BALL_MIN_UPY = 0.8;            // minimum upward component on any kick
+const BALL_KICK_REACH_M = 3.5;       // must stand beside the ball to kick it (mirrors LOOT_REACH_M-style gates)
 const BALL_WORLD_RADIUS = 54;        // keep inside the visible arena
 const BALL_SPAWN_X = 0;
 const BALL_SPAWN_Y = BALL_RADIUS;
@@ -324,6 +326,10 @@ const ACTION_RATES = {
 	// Wheel of Fortune (W09) — deliberate, low-frequency, currency/payment-mutating
 	// actions, throttled like the boutique's above.
 	spinInfo: 4, spinFree: 3, spinPaidPrep: 3, spinPaidSettle: 3,
+	// Read-only snapshot requests. profile is cheap but unbounded outbound;
+	// questBoard runs boardOffers over the whole mission registry per call, so an
+	// unlimited loop was a one-client DoS on the room's single thread.
+	profile: 4, questBoard: 4,
 	// Identity mutations. Each write dirties a synced string field that fans out
 	// to every client in the room, so an unthrottled flood is a broadcast
 	// amplifier: 2/s covers every legitimate use (a typo fix, a mid-session
@@ -548,6 +554,10 @@ export class WalkRoom extends Room {
 		// ignored, never close the session (Colyseus's default 4002 kill looked
 		// like "session expired" to pre-fix clients). See room-compat.js.
 		installUnknownMessageGuard(this, 'walk_world');
+		// Pull the live event config now, off the join path, so the first player
+		// through the door during a meetup gets their souvenir from a warm cache
+		// instead of waiting on an HTTP round-trip. Non-blocking and fail-open.
+		warmEventDrop();
 
 		// The first client to land in this coin's instance seeds its identity.
 		this.state.coin = cleanCoin(options?.coin);
@@ -604,11 +614,11 @@ export class WalkRoom extends Room {
 		// General store, bank/ATM, and the $THREE boutique (W04). Cash trades and
 		// banking settle purely off-schema; the boutique settles a real on-chain
 		// $THREE payment (game-token.js) before granting a premium cosmetic.
-		this.onMessage('storeReq', (client) => this._sendStore(client));
+		this.onMessage('storeReq', (client) => { if (this._actionOk(client.sessionId, 'store')) this._sendStore(client); });
 		this.onMessage('storeBuy', (client, payload) => this._handleStoreBuy(client, payload));
 		this.onMessage('storeSell', (client, payload) => this._handleStoreSell(client, payload));
 		this.onMessage('bank', (client, payload) => this._handleBank(client, payload));
-		this.onMessage('boutiqueReq', (client) => this._sendBoutique(client));
+		this.onMessage('boutiqueReq', (client) => { if (this._actionOk(client.sessionId, 'boutique')) this._sendBoutique(client); });
 		this.onMessage('boutiqueQuote', (client, payload) => this._handleBoutiqueQuote(client, payload));
 		this.onMessage('boutiqueSettle', (client, payload) => this._handleBoutiqueSettle(client, payload));
 		// Equip/unequip a cosmetic from the owned-inventory (R23). Server-authoritative:
@@ -618,11 +628,11 @@ export class WalkRoom extends Room {
 		// Full-loadout broadcast (R03): replaces the player's entire equipped state in
 		// one shot, re-validated against ownership — mirrors how `avatar` is sent.
 		this.onMessage('set-cosmetics', (client, payload) => this._handleSetCosmetics(client, payload));
-		this.onMessage('profileReq', (client) => this._sendProfile(client));
+		this.onMessage('profileReq', (client) => { if (this._actionOk(client.sessionId, 'profile')) this._sendProfile(client); });
 		// Quests, jobs & heists (W05, off-schema). The board, accepting/abandoning a
 		// mission, and acting at a quest object all flow through here; the server is the
 		// sole authority for objective progress and reward grants.
-		this.onMessage('questReq', (client) => this._sendQuests(client));
+		this.onMessage('questReq', (client) => { if (this._actionOk(client.sessionId, 'questBoard')) this._sendQuests(client); });
 		this.onMessage('questAccept', (client, payload) => this._handleQuestAccept(client, payload));
 		this.onMessage('questAbandon', (client, payload) => this._handleQuestAbandon(client, payload));
 		this.onMessage('questInteract', (client) => this._handleQuestInteract(client));
@@ -848,6 +858,11 @@ export class WalkRoom extends Room {
 		if (!this.state.players.has(client.sessionId)) return;
 		const saved = loadPlayer(playerId);
 		const profile = restoreProfile(saved?.profile, playerId);
+		// Second belt on the respawn-window disconnect bug: a profile that somehow
+		// persisted at (or drifted to) zero HP would otherwise come back walking
+		// but one hit from an instant re-death loop. Death already took its toll
+		// when the tombstone spilled; rejoining always means standing back up.
+		if (!(profile.hp > 0)) reviveProfile(profile);
 		profile.cd = { fish: 0, consume: 0, chop: 0, mine: 0, cook: 0, attack: 0, pickupRod: 0 }; // per-action cooldown clocks (runtime only)
 		// Quest log (W05): the player's accepted/completed missions + daily state,
 		// persisted alongside the pack/purse. Stale dailies roll over to today on load.
@@ -867,6 +882,12 @@ export class WalkRoom extends Room {
 			console.warn(`[walk_world] cosmetics ledger seed failed for ${playerId}:`, err?.message);
 		}
 		// A slower-arriving leave could have fired while we awaited the ledger.
+		if (!this.state.players.has(client.sessionId)) return;
+		// Event souvenir: if a community event is live in THIS world right now,
+		// everyone who walks in keeps a free commemorative wearable. Runs before
+		// the loadout is applied so a player who already owns it can arrive with
+		// it equipped from a prior session.
+		await this._grantEventSouvenir(client, profile);
 		if (!this.state.players.has(client.sessionId)) return;
 		// Cosmetics (W03): apply any loadout the player chose pre-join (in the
 		// character creator) on top of their persisted one, validating each id
@@ -1903,6 +1924,47 @@ export class WalkRoom extends Room {
 		this._persistEcon(client.sessionId);
 	}
 
+	// Event souvenir grant. When a community event is live in THIS world, every
+	// player who joins keeps a free commemorative wearable — a souvenir, not a
+	// sale: there is no purchase path for it before, during or after.
+	//
+	// Server-authoritative and idempotent by construction. The window and the
+	// world both come from the platform's single event config (event-drop.js
+	// reading /event.json), never from a client option, and the grant itself is
+	// grantCosmetic(), which is a no-op on an account that already owns the item.
+	// So a reconnect, a room hop, or ten rejoins produce exactly one unlock and
+	// exactly one announcement — the `souvenir` message only goes out on the
+	// transition from not-owned to owned.
+	//
+	// Fail-open on every axis: no config, an unreachable config, a closed window,
+	// or the wrong world all mean "grant nothing" and never delay the join.
+	async _grantEventSouvenir(client, profile) {
+		let drop;
+		try {
+			drop = await currentEventDrop();
+		} catch (err) {
+			console.warn('[walk_world] event drop config read failed:', err?.message);
+			return;
+		}
+		if (!dropClaimable(drop, this.state.coin, Date.now())) return;
+		if (!grantCosmetic(profile, drop.cosmeticId)) return; // already theirs
+
+		// No _sendProfile here: onJoin sends the authoritative snapshot a few lines
+		// later, once the loadout has been applied, and the wardrobe reads the new
+		// item from that one. A second echo would only re-render it for nothing.
+		this._persistEcon(client.sessionId);
+		client.send('souvenir', {
+			id: drop.cosmeticId,
+			name: drop.cosmeticName,
+			slot: drop.slot,
+			eventId: drop.eventId,
+			eventName: drop.eventName,
+		});
+		console.log(
+			`[walk_world ${this.roomId}] souvenir ${drop.cosmeticId} → ${profile.playerId} (${drop.eventId})`,
+		);
+	}
+
 	// Dress the player from a pre-join loadout wire (the character-creator / a
 	// world hand-off in `cosmetics` join option), merged on top of their persisted
 	// loadout and validated per id against what they own — free cosmetics always
@@ -2413,10 +2475,19 @@ export class WalkRoom extends Room {
 		const nums = [x, y, z, qx, qy, qz, qw];
 		if (nums.some((n) => typeof n !== 'number' || !Number.isFinite(n))) return false;
 
-		// Teleport clamp: reject a step larger than top speed could cover this window.
+		// Teleport clamp, derived from REAL elapsed time. The old fixed per-message
+		// window multiplied by the vsync rate limit (30/s) let a scripted sender
+		// legally cover ~10x top speed by maxing the step on every message, fast
+		// enough to farm the repeatable cross-town delivery jobs in seconds. Allow
+		// what the type's top speed covers since the last accepted update (with a
+		// floor for packet jitter and a cap so a long-parked car can't "bank" a
+		// cross-map teleport), and validate the DERIVED speed, not just the
+		// self-reported scalar.
+		const dtS = Math.max(0.05, Math.min(0.5, (Date.now() - (v.tsServer || 0)) / 1000));
 		const dx = x - v.x, dz = z - v.z;
-		if (Math.hypot(dx, dz) > vehicleMaxStepM(v.type)) return false;
-		// Speed-hack clamp on the reported forward speed.
+		const stepM = Math.hypot(dx, dz);
+		if (stepM > vehicleMaxSpeedMps(v.type) * dtS) return false;
+		// Speed-hack clamp on the reported forward speed (peers render from it).
 		const sp = typeof speed === 'number' && Number.isFinite(speed) ? speed : 0;
 		if (Math.abs(sp) > vehicleMaxSpeedMps(v.type)) return false;
 
