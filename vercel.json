@@ -1371,6 +1371,10 @@
 			"dest": "/play.html"
 		},
 		{
+			"src": "/event/?",
+			"dest": "/event.html"
+		},
+		{
 			"src": "/game(/.*)?",
 			"status": 308,
 			"headers": {

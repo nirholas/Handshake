@@ -637,6 +637,7 @@ const appConfig = {
 				'play-agent-wallet': resolve(__dirname, 'pages/play/agent-wallet.html'),
 				'play-arena': resolve(__dirname, 'pages/play/arena.html'),
 				'play-ufo': resolve(__dirname, 'pages/play/ufo.html'),
+				event: resolve(__dirname, 'pages/event.html'),
 				'play-economy': resolve(__dirname, 'pages/play/economy.html'),
 				'play-solver': resolve(__dirname, 'pages/play/solver.html'),
 				agi: resolve(__dirname, 'pages/agi.html'),

@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<script>/* three.ws theme boot - no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>The live event · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta
+			name="description"
+			content="One link for the live gathering in the three.ws world: a ticking countdown, the schedule in your own timezone, an add-to-calendar file, and the door into the shared 3D world. Bring a photo, get an avatar, drop in."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/event" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="The live event · three.ws" />
+		<meta property="og:description" content="The countdown, the schedule in your timezone, and the one door into the shared 3D world. Bring a photo, get an avatar, drop in." />
+		<meta property="og:url" content="https://three.ws/event" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=The+live+event&amp;d=The+countdown%2C+the+schedule+in+your+timezone%2C+and+the+one+door+into+the+shared+3D+world.+Bring+a+photo%2C+get+an+avatar%2C+drop+in&amp;p=%2Fevent" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="The live event · three.ws" />
+		<meta name="twitter:description" content="The countdown, the schedule in your timezone, and the one door into the shared 3D world. Bring a photo, get an avatar, drop in." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=The+live+event&amp;d=The+countdown%2C+the+schedule+in+your+timezone%2C+and+the+one+door+into+the+shared+3D+world.+Bring+a+photo%2C+get+an+avatar%2C+drop+in&amp;p=%2Fevent" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="The live event - three.ws" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+
+		<style>
+			.ev-main, .ev-main *, .ev-main *::before, .ev-main *::after { box-sizing: border-box; }
+			.ev-main { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 96px; }
+
+			/* ── Hero ───────────────────────────────────────────────────────── */
+			.ev-hero { padding: clamp(28px, 5vw, 64px) 0 clamp(18px, 3vw, 32px); max-width: 82ch; }
+			.ev-chip {
+				display: inline-flex; align-items: center; gap: 9px;
+				padding: 6px 14px; border: 1px solid var(--stroke); border-radius: 999px;
+				background: var(--surface-1); font-size: 12px; letter-spacing: .1em;
+				text-transform: uppercase; color: var(--ink-dim); font-family: var(--font-mono);
+				transition: border-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
+			}
+			.ev-dot {
+				width: 8px; height: 8px; border-radius: 50%;
+				background: var(--ink-dim);
+				transition: background var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+			}
+			[data-state='live'] .ev-chip { color: var(--ink-bright); border-color: var(--stroke-strong); background: var(--surface-2); }
+			[data-state='live'] .ev-dot { background: var(--success); box-shadow: 0 0 0 4px rgba(74, 222, 128, .18); animation: ev-pulse 1.4s ease-in-out infinite; }
+			[data-state='ended'] .ev-dot { background: var(--ink-faint); }
+			@keyframes ev-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.7); } }
+
+			.ev-hero h1 {
+				font-size: clamp(32px, 5.4vw, 60px); line-height: 1.02; letter-spacing: -.025em;
+				margin: 18px 0 12px; color: var(--ink-bright);
+			}
+			.ev-lede { color: var(--ink-dim); font-size: clamp(15px, 1.4vw, 18px); line-height: 1.6; margin: 0; max-width: 62ch; }
+			.ev-when {
+				margin: 14px 0 0; color: var(--ink-faint); font-size: 13.5px; line-height: 1.6;
+				font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+			}
+
+			/* Skeletons — the hero has real shape before /event.json resolves. */
+			.ev-skel {
+				display: inline-block; border-radius: var(--skeleton-radius, 10px);
+				background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-sheen) 37%, var(--skeleton-base) 63%);
+				background-size: 400% 100%; animation: ev-shimmer 1.4s ease infinite;
+				color: transparent; user-select: none;
+			}
+			@keyframes ev-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+			/* ── Countdown ──────────────────────────────────────────────────── */
+			.ev-clock { display: flex; flex-wrap: wrap; gap: clamp(10px, 1.6vw, 18px); margin: clamp(22px, 3vw, 32px) 0 0; }
+			.ev-seg {
+				min-width: 78px; padding: 12px 16px 10px; text-align: center;
+				border: 1px solid var(--stroke); border-radius: var(--radius-card);
+				background: var(--surface-1);
+				transition: border-color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
+			}
+			.ev-seg b {
+				display: block; font-size: clamp(26px, 3.4vw, 38px); line-height: 1.05; font-weight: 700;
+				color: var(--ink-bright); font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+			}
+			.ev-seg span {
+				display: block; margin-top: 5px; font-size: 10.5px; letter-spacing: .16em;
+				text-transform: uppercase; color: var(--ink-dim); font-family: var(--font-mono);
+			}
+			[data-state='live'] .ev-seg { border-color: var(--stroke-strong); background: var(--surface-2); }
+			.ev-seg-wide { min-width: 0; padding-inline: clamp(16px, 3vw, 28px); }
+			.ev-seg-wide b { font-size: clamp(20px, 2.6vw, 28px); }
+
+			/* ── CTA row ────────────────────────────────────────────────────── */
+			.ev-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: clamp(22px, 3vw, 30px); }
+			.ev-cta {
+				display: inline-flex; align-items: center; gap: 10px;
+				padding: 15px 28px; border-radius: 999px; text-decoration: none;
+				background: var(--btn-primary-bg); color: var(--btn-primary-fg);
+				border: 1px solid var(--btn-primary-border);
+				font-size: clamp(15px, 1.3vw, 17px); font-weight: 650; letter-spacing: -.01em;
+				transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+			}
+			.ev-cta:hover { background: var(--btn-primary-bg-hover); transform: translateY(-2px); box-shadow: var(--shadow-2); }
+			.ev-cta:active { background: var(--btn-primary-bg-active); transform: translateY(0); }
+			.ev-cta:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+			.ev-cta-arrow { font-size: 1.1em; line-height: 1; transition: transform var(--duration-fast) var(--ease-standard); }
+			.ev-cta:hover .ev-cta-arrow { transform: translateX(3px); }
+
+			.ev-ghost {
+				appearance: none; cursor: pointer; font: inherit; font-size: 14px; font-weight: 550;
+				display: inline-flex; align-items: center; gap: 8px;
+				padding: 14px 22px; border-radius: 999px;
+				border: 1px solid var(--stroke-strong); background: transparent; color: var(--ink);
+				transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+			}
+			.ev-ghost:hover { background: var(--surface-2); color: var(--ink-bright); }
+			.ev-ghost:active { background: var(--surface-3); }
+			.ev-ghost:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+			.ev-cal-note { margin: 10px 0 0; font-size: 12.5px; color: var(--ink-faint); min-height: 1.2em; }
+
+			/* ── Live panel ─────────────────────────────────────────────────── */
+			.ev-live {
+				display: flex; align-items: center; gap: clamp(14px, 2.5vw, 28px); flex-wrap: wrap;
+				margin-top: clamp(24px, 3.5vw, 36px); padding: clamp(18px, 2.5vw, 24px) clamp(20px, 3vw, 28px);
+				border: 1px solid var(--stroke-strong); border-radius: var(--radius-card);
+				background: var(--surface-glass); box-shadow: var(--shadow-1);
+			}
+			.ev-live-num {
+				font-size: clamp(34px, 5vw, 50px); font-weight: 700; line-height: 1; letter-spacing: -.03em;
+				color: var(--ink-bright); font-variant-numeric: tabular-nums;
+			}
+			.ev-live-copy { flex: 1 1 240px; min-width: 0; }
+			.ev-live-copy strong { display: block; font-size: 15px; color: var(--ink-bright); font-weight: 600; }
+			.ev-live-copy span { display: block; margin-top: 4px; font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
+
+			/* ── Sections ───────────────────────────────────────────────────── */
+			.ev-sec { margin-top: clamp(48px, 7vw, 84px); }
+			.ev-sec > h2 { font-size: clamp(21px, 2.4vw, 30px); letter-spacing: -.022em; margin: 0 0 10px; color: var(--ink-bright); }
+			.ev-sec > p.ev-sec-lede { color: var(--ink-dim); font-size: 15px; line-height: 1.65; max-width: 68ch; margin: 0 0 24px; }
+
+			.ev-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(238px, 1fr)); gap: 16px; }
+			.ev-card {
+				border: 1px solid var(--stroke); border-radius: var(--radius-card);
+				background: var(--surface-1); padding: 20px 22px;
+				transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+			}
+			.ev-card:hover { border-color: var(--stroke-strong); background: var(--surface-2); transform: translateY(-2px); }
+			.ev-card h3 { margin: 0 0 7px; font-size: 15.5px; letter-spacing: -.012em; color: var(--ink-bright); }
+			.ev-card p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); }
+			.ev-card-mark { display: block; font-size: 20px; line-height: 1; margin-bottom: 12px; }
+
+			/* ── Agenda ─────────────────────────────────────────────────────── */
+			.ev-agenda { display: grid; gap: 0; border: 1px solid var(--stroke); border-radius: var(--radius-card); overflow: hidden; background: var(--surface-1); }
+			.ev-slot {
+				display: grid; grid-template-columns: 108px 34px 1fr; align-items: start; gap: 16px;
+				padding: 16px clamp(16px, 2.4vw, 24px);
+				border-top: 1px solid var(--hairline);
+				transition: background var(--duration-fast) var(--ease-standard);
+			}
+			.ev-slot:first-child { border-top: 0; }
+			.ev-slot:hover { background: var(--surface-2); }
+			.ev-slot-time { font-family: var(--font-mono); font-size: 13px; color: var(--ink-bright); font-variant-numeric: tabular-nums; padding-top: 1px; }
+			.ev-slot-mark { font-size: 19px; line-height: 1.2; }
+			.ev-slot-title { margin: 0; font-size: 14.5px; font-weight: 600; color: var(--ink); letter-spacing: -.01em; }
+			.ev-slot-detail { margin: 4px 0 0; font-size: 13px; line-height: 1.55; color: var(--ink-dim); }
+			.ev-slot[data-past='true'] { opacity: .5; }
+			.ev-slot[data-now='true'] { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--success); }
+			.ev-slot-badge {
+				display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px;
+				font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+				background: var(--surface-3); color: var(--ink-bright); vertical-align: 2px;
+			}
+
+			/* ── Empty / error ──────────────────────────────────────────────── */
+			.ev-empty {
+				border: 1px dashed var(--stroke-strong); border-radius: var(--radius-card);
+				padding: clamp(26px, 4vw, 40px); text-align: center; background: var(--surface-1);
+			}
+			.ev-empty h2 { margin: 0 0 8px; font-size: 19px; color: var(--ink-bright); letter-spacing: -.015em; }
+			.ev-empty p { margin: 0 auto 20px; max-width: 52ch; font-size: 14px; line-height: 1.6; color: var(--ink-dim); }
+
+			.ev-foot {
+				margin-top: clamp(44px, 6vw, 72px); border-left: 2px solid var(--stroke-strong);
+				padding: 4px 0 4px 18px; color: var(--ink-dim); font-size: 14px; line-height: 1.7; max-width: 74ch;
+			}
+			.ev-foot a { color: var(--ink); text-underline-offset: 3px; }
+			.ev-foot a:hover { color: var(--ink-bright); }
+
+			@media (max-width: 720px) {
+				.ev-slot { grid-template-columns: 78px 26px 1fr; gap: 12px; padding-inline: 16px; }
+				.ev-slot-mark { font-size: 17px; }
+				.ev-seg { min-width: 66px; padding: 10px 12px 8px; }
+				.ev-actions { gap: 10px; }
+				.ev-cta, .ev-ghost { width: 100%; justify-content: center; }
+			}
+			@media (max-width: 380px) {
+				.ev-clock { gap: 8px; }
+				.ev-seg { min-width: 60px; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.ev-card:hover, .ev-cta:hover { transform: none; }
+				.ev-skel { animation: none; }
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main class="ev-main">
+			<section class="ev-hero" id="ev-hero" data-state="loading" aria-labelledby="ev-name">
+				<span class="ev-chip">
+					<span class="ev-dot" aria-hidden="true"></span>
+					<span id="ev-chip-label">Loading</span>
+				</span>
+				<h1 id="ev-name"><span class="ev-skel">Loading the event</span></h1>
+				<p class="ev-lede" id="ev-tagline"><span class="ev-skel">Reading the event schedule</span></p>
+				<div class="ev-clock" id="ev-clock" role="timer" aria-live="off"></div>
+				<div class="ev-actions">
+					<a class="ev-cta" id="ev-cta" href="/play">
+						<span id="ev-cta-label">Enter the three.ws world</span>
+						<span class="ev-cta-arrow" aria-hidden="true">→</span>
+					</a>
+					<button class="ev-ghost" id="ev-cal" type="button" hidden>
+						<span aria-hidden="true">📅</span>
+						<span>Add to calendar</span>
+					</button>
+				</div>
+				<p class="ev-cal-note" id="ev-cal-note" role="status" aria-live="polite"></p>
+				<p class="ev-when" id="ev-when"></p>
+			</section>
+
+			<section class="ev-live" id="ev-live" hidden aria-label="Live world population">
+				<span class="ev-live-num" id="ev-live-num">&mdash;</span>
+				<span class="ev-live-copy">
+					<strong id="ev-live-title">In the world right now</strong>
+					<span id="ev-live-note">Counting the avatars standing in the event world.</span>
+				</span>
+			</section>
+
+			<section class="ev-sec" aria-labelledby="ev-expect-h">
+				<h2 id="ev-expect-h">Never been here? This is the whole thing.</h2>
+				<p class="ev-sec-lede">
+					No download, no wallet, no account. It runs in the browser tab you already have open,
+					on a phone or a laptop.
+				</p>
+				<div class="ev-cards">
+					<article class="ev-card">
+						<span class="ev-card-mark" aria-hidden="true">🧍</span>
+						<h3>First, you get a body</h3>
+						<p>
+							Make an avatar from a selfie, pick one from the library, or drag in your own
+							<code>.glb</code>. It animates properly either way: idle, walk and gestures are
+							retargeted onto whatever skeleton you bring.
+						</p>
+					</article>
+					<article class="ev-card">
+						<span class="ev-card-mark" aria-hidden="true">🌍</span>
+						<h3>Then you drop into the world</h3>
+						<p>
+							A shared 3D town built from the coin itself, with a real day/night clock everyone
+							agrees on. Walk it, drive it, and see everyone else who is in there with you.
+						</p>
+					</article>
+					<article class="ev-card">
+						<span class="ev-card-mark" aria-hidden="true">💬</span>
+						<h3>You can actually do things</h3>
+						<p>
+							Town chat and voice, emotes and a dance floor, jobs from the board, the general
+							store and bank, King of the Totem at the landmark, and the wheel in the plaza.
+						</p>
+					</article>
+					<article class="ev-card">
+						<span class="ev-card-mark" aria-hidden="true">🎡</span>
+						<h3>And you can leave with something</h3>
+						<p>
+							A free spin on Fortune's Folly every 12 hours, cosmetics you own, and a
+							commemorative photo of the crowd taken from inside the world.
+						</p>
+					</article>
+				</div>
+			</section>
+
+			<section class="ev-sec" id="ev-schedule-sec" aria-labelledby="ev-schedule-h" hidden>
+				<h2 id="ev-schedule-h">The run of show</h2>
+				<p class="ev-sec-lede" id="ev-schedule-lede">Every time below is your local time, converted in your browser.</p>
+				<div class="ev-agenda" id="ev-agenda"></div>
+			</section>
+
+			<p class="ev-foot">
+				The world is at <a href="/play">/play</a> and it is open whether or not an event is running.
+				Build an avatar first at <a href="/create">/create</a>, read what the in-world economy pays
+				at <a href="/play/economy">/play/economy</a>, and see everything that shipped recently on the
+				<a href="/changelog">changelog</a>.
+			</p>
+
+			<noscript>
+				<div class="ev-empty" style="margin-top: 32px">
+					<h2>The countdown needs JavaScript</h2>
+					<p>
+						The schedule on this page is converted into your own timezone in the browser, so it
+						cannot render without JavaScript. The world itself is always open.
+					</p>
+					<a class="ev-cta" href="/play">Enter the three.ws world</a>
+				</div>
+			</noscript>
+		</main>
+
+		<script src="/footer.js" defer></script>
+		<script type="module" src="/src/event-page.js"></script>
+	</body>
+</html>

@@ -28,7 +28,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { apiFetch } from './api.js';
 import { StageNet } from './stage-net.js';
 import { tipAgent, TipError } from './shared/agent-tip.js';
-import { LipsyncDriver } from './voice/lipsync-driver.js';
+import { StageVoice, MouthTarget, findHead, modelHeight } from './shared/stage-voice.js';
 import { loadEnvironment } from './shared/cinematic-render.js';
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -168,10 +168,17 @@ class VenueController {
 		this.tipping = false;
 		this.three = null; // {renderer,scene,camera,listener,host,mouth,...}
 		this.audioCtxResumed = false;
-		this.currentAudio = null;
-		this.lipsync = null;
 		this.audPositions = new Map();
-		this.muted = false;
+		// The host's voice: TTS → the avatar's spatial audio → lip-sync. Shared with
+		// the in-world plaza stage (src/shared/stage-voice.js) so both surfaces
+		// render the same broadcast identically. Reads `this.three` lazily, so a
+		// still-streaming avatar simply plays flat until its rig lands.
+		this.voice = new StageVoice({
+			getPositionalAudio: () => this.three?.positionalAudio || null,
+			getMouthTarget: () => this.three?.mouthTarget || null,
+			onAutoplayBlocked: () => { this.els.soundBtn.hidden = false; },
+			onSpeaking: (speaking) => { if (!speaking) this.three?.setCue('idle', false); },
+		});
 	}
 
 	start() {
@@ -259,68 +266,9 @@ class VenueController {
 	}
 
 	// ── host voice: spatial + lip-sync, synced across clients ───────────────────
-	async speak(text, voice, durationMs) {
-		if (this.muted || !text) return;
-		this.stopAudio();
-		let buf;
-		try {
-			const res = await apiFetch('/api/tts/speak', {
-				method: 'POST',
-				allowAnonymous: true,
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ text, voice: voice || 'nova', format: 'mp3' }),
-			});
-			if (!res.ok) throw new Error(`tts ${res.status}`);
-			buf = await res.arrayBuffer();
-		} catch {
-			return; // captions already carry the words; audio is best-effort
-		}
-		const blob = new Blob([buf], { type: 'audio/mpeg' });
-		const url = URL.createObjectURL(blob);
-		const audio = new Audio();
-		audio.src = url;
-		audio.crossOrigin = 'anonymous';
-		this.currentAudio = audio;
-		audio.addEventListener('ended', () => { URL.revokeObjectURL(url); this.stopLipsync(); }, { once: true });
-
-		// Route through the host's PositionalAudio when 3D is up (spatial + analyser
-		// lip-sync); otherwise just play the element (no-WebGL audio still works).
-		if (this.three?.attachVoice) {
-			try {
-				const analyser = this.three.attachVoice(audio);
-				if (analyser) this.startLipsync(analyser);
-			} catch {
-				/* fall through to plain playback */
-			}
-		}
-		try {
-			await audio.play();
-		} catch {
-			// Autoplay blocked until a gesture — surface the sound button.
-			this.els.soundBtn.hidden = false;
-		}
-	}
-
-	startLipsync(analyser) {
-		this.stopLipsync();
-		if (!this.three?.mouthTarget) return;
-		try {
-			this.lipsync = new LipsyncDriver({ analyser, target: this.three.mouthTarget, gain: 1.5 });
-			this.lipsync.start();
-		} catch { /* lip-sync is enhancement, never required */ }
-	}
-
-	stopLipsync() {
-		if (this.lipsync) { try { this.lipsync.stop(); } catch {} this.lipsync = null; }
-		if (this.three) this.three.setCue('idle', false);
-	}
-
-	stopAudio() {
-		if (this.currentAudio) {
-			try { this.currentAudio.pause(); } catch {}
-			this.currentAudio = null;
-		}
-		this.stopLipsync();
+	async speak(text, voice) {
+		this.three?.resumeAudio();
+		await this.voice.speak(text, voice);
 	}
 
 	// ── tipping ─────────────────────────────────────────────────────────────────
@@ -512,7 +460,7 @@ class VenueController {
 			this.els.soundBtn.hidden = true;
 			this.audioCtxResumed = true;
 			// Replay the current line so a gesture-gated first utterance is heard.
-			if (this.currentAudio) this.currentAudio.play?.().catch(() => {});
+			this.voice.resume();
 		};
 		this.els.soundBtn.addEventListener('click', resume);
 		this.els.closer?.addEventListener('click', () => this.three?.dolly(-1));
@@ -523,7 +471,7 @@ class VenueController {
 
 	dispose() {
 		try { this.net?.destroy(); } catch {}
-		this.stopAudio();
+		this.voice.dispose();
 		try { this.three?.dispose(); } catch {}
 	}
 }
