@@ -190,7 +190,7 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
 			'cluster is a deliberate refusal (fee-governor budget or sponsor floor); ' +
 			'both are reconciled against the facilitator book above, so a 503 surplus ' +
 			'surviving into this hint means the facilitator log and the ring log ' +
-			'disagree — read x402_self_facilitator_log.reject_reason directly. ' +
+			'disagree; read x402_self_facilitator_log.reject_reason directly. ' +
 			'See docs/ops/production-log-triage.md.',
 	};
 }
@@ -205,7 +205,7 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
  * because the ring log is REASON-BLIND for refusals that arrive over HTTP: a
  * settle the wallet fee governor refused reaches `x402_autonomous_log` as a bare
  * `http_503` (pre-2026-08-06: `http_502`), matches RAIL_STATUS, and reads as a
- * rail fault — which is how 2026-08-05 production showed `cause: "rail"` for
+ * rail fault, which is how 2026-08-05 production showed `cause: "rail"` for
  * ~1,200 refusals that were the budget governor pacing on purpose. The
  * reconciliation below re-attributes status-only 5xx faults to the governor /
  * floor, clamped by min() so a window skew between the two logs can never

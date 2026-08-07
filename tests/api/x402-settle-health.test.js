@@ -306,7 +306,7 @@ describe('classifySettleBuckets: a governed throttle is not a rail fault', () =>
 // governor refused reaches x402_autonomous_log as a bare http_503 (pre
 // 2026-08-06: http_502) and used to read as a rail fault. On 2026-08-05
 // production this showed `cause: "rail"` at settle 26.1% while the facilitator
-// book held 75k+ fee_runway_exhausted rejects — the operator was sent to debug
+// book held 75k+ fee_runway_exhausted rejects: the operator was sent to debug
 // a healthy rail. `facilitatorRejects` carries that book into the classifier.
 describe('classifySettleBuckets: facilitator-book reconciliation of status-only faults', () => {
 	// The live 2026-08-05 shape, scaled: settles landing, a 502/503 wall, and the
