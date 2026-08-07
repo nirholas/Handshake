@@ -4,10 +4,22 @@
 	import Button from './Button.svelte';
 
 	export let details;   // { network, from, to, amount, token, memo?, estimatedFee? }
+	export let guard = null; // GuardChain verdict from /api/agent/guard, when preflighted
 	export let onApprove; // () => void
 	export let onReject;  // () => void
 
 	let pending = false;
+
+	// A `block` verdict never reaches this modal (the tool body is refused
+	// before the wallet prompt). The intervention layer always reads
+	// approval_required here because this modal IS the intervention, so the
+	// chip keys off every OTHER layer: "cleared" means nothing beyond the
+	// approval you are already giving was flagged.
+	$: guardFlags = (guard?.layers || []).filter(
+		(l) => l.layer !== 'intervention' && ['warn', 'approval_required', 'block', 'error'].includes(l.status),
+	);
+	$: guardTone = guard && guardFlags.length === 0 ? 'ok' : 'review';
+	$: guardCriticalSpots = (guard?.blindSpots || []).filter((s) => s.severity === 'critical');
 
 	function truncate(addr) {
 		if (!addr || addr.length <= 12) return addr;
@@ -62,6 +74,29 @@
 			{/each}
 		</tbody>
 	</table>
+
+	{#if guard}
+		<div class="mb-6 rounded-lg border border-slate-700 bg-slate-800/60 p-3 text-xs">
+			<div class="mb-1.5 flex items-center gap-2">
+				<span class="font-medium text-slate-300">Platform guard</span>
+				{#if guardTone === 'ok'}
+					<span class="rounded-full bg-emerald-900/70 px-2 py-0.5 font-medium text-emerald-300">cleared</span>
+				{:else}
+					<span class="rounded-full bg-amber-900/70 px-2 py-0.5 font-medium text-amber-300">review advised</span>
+				{/if}
+				<span class="ml-auto text-slate-500">{guard.coverageScore}% coverage</span>
+			</div>
+			{#each guardFlags as flag}
+				<p class="mb-1 text-amber-200/90">{flag.label}: {flag.reason}</p>
+			{/each}
+			{#each guard.warnings || [] as warning}
+				<p class="mb-1 text-amber-200/90">{warning}</p>
+			{/each}
+			{#each guardCriticalSpots as spot}
+				<p class="text-slate-400">Unchecked: {spot.title}</p>
+			{/each}
+		</div>
+	{/if}
 
 	<div class="flex gap-3">
 		<Button

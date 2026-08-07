@@ -69,6 +69,7 @@
 		feX,
 	} from './feather.js';
 	import { defaultToolSchema, agentToolSchema, pumpToolSchema, agentPaymentsToolSchema, pumpTradingToolSchema, walletToolSchema, curatedToolPacks } from './tools.js';
+	import { guardPreflight, isFundMovingTool, lastGuardVerdict } from './guard.js';
 	import { signMessageSolana, signMessageEVM } from './walletAuth.js';
 	import { debounce, readFileAsDataURL, parseToolCallArguments } from './util.js';
 	import { flash, focusOnMount } from './actions';
@@ -849,7 +850,27 @@
 								'choose',
 								clientTool.clientDefinition.body
 							);
-							const promise = clientFn(toolcall.arguments, choose);
+							// Fund-moving tools preflight through the platform GuardChain
+							// (/api/agent/guard) BEFORE the tool body runs, so a policy
+							// block never reaches the wallet, and MEV-protective argument
+							// adjustments (the slippage clamp) apply to the real call.
+							const promise = (async () => {
+								if (isFundMovingTool(toolcall.name)) {
+									const verdict = await guardPreflight(toolcall.name, toolcall.arguments);
+									if (verdict?.decision === 'block') {
+										convo.messages[i].toolcalls[ti].finished = true;
+										saveMessage(convo.messages[i]);
+										return {
+											error: `Blocked by the three.ws transaction guard: ${verdict.reason}`,
+											guard: { decision: verdict.decision, blockedBy: verdict.blockedBy, warnings: verdict.warnings },
+										};
+									}
+									if (verdict?.modifiedArguments) {
+										Object.assign(toolcall.arguments, verdict.modifiedArguments);
+									}
+								}
+								return clientFn(toolcall.arguments, choose);
+							})();
 							toolPromises.push(promise);
 						} else if (BUILTIN_ACTION_TOOLS.has(toolcall.name)) {
 							// Built-in scene/avatar action: run against the live <agent-3d>.
@@ -2862,8 +2883,9 @@
 {#if txApprovalDetails}
 	<TxApprovalModal
 		details={txApprovalDetails}
-		onApprove={() => { const r = txApprovalResolve; txApprovalDetails = null; txApprovalResolve = null; txApprovalReject = null; r?.(); }}
-		onReject={() => { const r = txApprovalReject; txApprovalDetails = null; txApprovalResolve = null; txApprovalReject = null; r?.(new Error('User rejected transaction')); }}
+		guard={$lastGuardVerdict}
+		onApprove={() => { const r = txApprovalResolve; txApprovalDetails = null; txApprovalResolve = null; txApprovalReject = null; lastGuardVerdict.set(null); r?.(); }}
+		onReject={() => { const r = txApprovalReject; txApprovalDetails = null; txApprovalResolve = null; txApprovalReject = null; lastGuardVerdict.set(null); r?.(new Error('User rejected transaction')); }}
 	/>
 {/if}
 
