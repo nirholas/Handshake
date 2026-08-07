@@ -55,11 +55,13 @@ import {
 import { validatePropModel, uploadPropModel } from './avatar-upload.js';
 import { proxiedImageURL } from '../ipfs.js';
 import {
-	loadManifest, getEmoteDefs, getAllEmoteDefs, resolveAvatarUrl, buildAvatar, playEmoteClip,
+	loadManifest, getEmoteDefs, getAllEmoteDefs, resolveAvatarUrl, buildAvatar, releaseAvatar, playEmoteClip,
 	CLIP_IDLE, CLIP_WALK,
 } from './avatar-rig.js';
-import { GUEST_SENTINEL, uploadPendingGuestAvatar, getPlayCosmetics, setPlayCosmetics } from './play-handoff.js';
+import { GUEST_SENTINEL, uploadPendingGuestAvatar, getPlayCosmetics, setPlayCosmetics, setPlayAvatar } from './play-handoff.js';
+import { AvatarSwitcher } from './avatar-switcher.js';
 import { getPresenceTicket, friendsClient } from '../friends.js';
+import { getMe } from '../account.js';
 import { FriendsPanel } from './friends-panel.js';
 import { showPlayIntro, makeIntroReopener } from './play-intro.js';
 import { applyLoadout } from './cosmetics-loadout.js';
@@ -145,6 +147,10 @@ const RUN_TIMESCALE = 1.7; // speed the walk cycle up so a sprint reads as a run
 const JUMP_VELOCITY = 5.5; // m/s upward kick on Space; ~1m apex under GRAVITY
 const GRAVITY = 15; // m/s^2 pulling the jumper back down
 const REMOTE_LERP = 0.18;
+// Past this ground distance a peer's nameplate is a couple of unreadable pixels,
+// so it isn't projected or written to the DOM at all. Bounds the per-frame label
+// cost by how many people are NEAR you, not by how many are in the world.
+const LABEL_RANGE_M = 60;
 const JOY_DEADZONE = 0.12; // swallow tiny stick grazes so the avatar doesn't drift
 const UNDO_LIMIT = 50; // how many build actions Ctrl/Cmd+Z can walk back
 const LONG_PRESS_MS = 420; // hold-to-break threshold for touch (no right-click there)
@@ -187,16 +193,26 @@ class RemotePlayer {
 		scene.add(this.rig);
 
 		// Public identity riding the server schema — who this peer is (name), the
-		// three.ws agent they pilot, and their verified account wallet. These feed
-		// the avatar inspector (I / click a nameplate), never invented client-side.
+		// three.ws agent they pilot, their verified account wallet, and their
+		// verified three.ws username (W10, bound server-side from the signed
+		// presence ticket). These feed the avatar inspector (I / click a
+		// nameplate), never invented client-side.
 		this.name = player.name || 'guest';
 		this.agent = player.agent || '';
 		this.account = player.account || '';
+		this.username = player.username || '';
 		this.onInspect = null; // set by CoinCommunities right after construction
 
 		this.label = document.createElement('div');
 		this.label.className = 'cc-label';
-		this.label.textContent = player.name || 'guest';
+		// Two spans instead of bare textContent: a verified player's nameplate
+		// carries their @handle beside the display name, and both voice (::before)
+		// and wanted stars (::after) already occupy the label's pseudo-elements.
+		this._nameEl = document.createElement('span');
+		this._nameEl.className = 'cc-label-name';
+		this._nameEl.textContent = player.name || 'guest';
+		this.label.appendChild(this._nameEl);
+		this._handleEl = null;
 		// The nameplate doubles as the peer's click target: labels are cheap,
 		// always visible, and don't need a skinned-mesh raycast. pointer-events is
 		// off for .cc-label globally (bubbles must never block the look-drag), so
@@ -205,6 +221,7 @@ class RemotePlayer {
 		this.label.style.cursor = 'pointer';
 		this.label.title = 'Inspect this player (I)';
 		this.label.addEventListener('click', (e) => { e.stopPropagation(); this.onInspect?.(); });
+		this._updateHandleBadge();
 		document.body.appendChild(this.label);
 
 		this.bubble = null;
@@ -237,6 +254,9 @@ class RemotePlayer {
 		try { this.cosmetics?.dispose(); } catch {}
 		this.cosmetics = null;
 		this._cosApplied = null;
+		// Deref the shared template + free per-rig materials BEFORE the sweep;
+		// rig.clear() alone leaks the old model's GPU buffers on every swap.
+		releaseAvatar(this.rig);
 		this.rig.clear();
 		this.anim = new AnimationManager();
 		// Tag this load so a slower in-flight GLB can't attach to the rig after the
@@ -319,11 +339,35 @@ class RemotePlayer {
 			this.label.classList.remove('cc-wanted');
 		}
 	}
+	// Verified three.ws identity on the nameplate (W10): the @handle beside the
+	// display name marks a signed-in platform account — the signal that clicking
+	// opens a real profile you can follow and message, not just a guest card.
+	_updateHandleBadge() {
+		if (this.username) {
+			if (!this._handleEl) {
+				this._handleEl = document.createElement('span');
+				this._handleEl.className = 'cc-label-handle';
+				this.label.appendChild(this._handleEl);
+			}
+			this._handleEl.textContent = `@${this.username}`;
+			this.label.classList.add('cc-verified');
+			this.label.title = `View @${this.username}'s profile (I)`;
+		} else {
+			this._handleEl?.remove();
+			this._handleEl = null;
+			this.label.classList.remove('cc-verified');
+			this.label.title = 'Inspect this player (I)';
+		}
+	}
 	apply(player) {
 		this.targetX = player.x; this.targetY = player.y; this.targetZ = player.z; this.targetYaw = player.yaw;
-		if (player.name) { this.name = player.name; this.label.textContent = player.name; }
+		if (player.name) { this.name = player.name; this._nameEl.textContent = player.name; }
 		if (player.agent !== undefined) this.agent = player.agent || '';
 		if (player.account !== undefined) this.account = player.account || '';
+		if (player.username !== undefined && (player.username || '') !== this.username) {
+			this.username = player.username || '';
+			this._updateHandleBadge();
+		}
 		if (player.voice !== undefined && !!player.voice !== this.voice) {
 			this.voice = !!player.voice;
 			this.label.classList.toggle('cc-invoice', this.voice);
@@ -383,6 +427,10 @@ class RemotePlayer {
 		try { this.cosmetics?.dispose(); } catch {}
 		this._removeGlowRing();
 		this._removeItLabel();
+		// Free this peer's share of the avatar model before dropping the rig; a
+		// join→leave churn cycle used to keep every departed peer's geometry and
+		// textures on the GPU for the rest of the session.
+		releaseAvatar(this.rig);
 		this.scene.remove(this.rig);
 		this.label.remove();
 		this.bubble?.remove();
@@ -502,6 +550,8 @@ export class CoinCommunities {
 			onBuy: () => this._openBuy(),
 			onShop: () => this._toggleShop(),
 			onWardrobe: () => this._toggleWardrobe(),
+			// In-world avatar switcher: change your look without leaving the world.
+			onAvatarPanel: () => this._toggleAvatarPanel(),
 			onJobs: () => this._toggleQuests(),
 			// Friends panel (W09) — presence + DMs across every coin world.
 			onFriends: () => this._toggleFriends(),
@@ -521,6 +571,8 @@ export class CoinCommunities {
 			onRotateProp: () => this._rotateProp(),
 			// P3.3: bring your own prop: validate, upload, arm it for placement.
 			onUploadProp: (file) => this._uploadProp(file),
+			// Forge-in-world: generate a brand-new prop from a prompt or photo.
+			onForgeProp: (req) => this._forgeProp(req),
 			onShareBuild: () => this._shareBuild(),
 			onOpenFeatured: () => this._openFeatured(),
 			onPublishBuild: (meta) => this._publishBuild(meta),
@@ -1245,6 +1297,15 @@ export class CoinCommunities {
 		// we did, so our local copies are duplicates. Retire them, and hand any props
 		// built while offline to the room so they become part of the shared world.
 		this.net.on('synced', () => this._onRoomSynced());
+		// Coming back from a backgrounded tab is the one drop the socket never
+		// reports: iOS Safari suspends the page, the OS reaps the connection, and
+		// no close event is ever delivered — the HUD keeps saying "connected" over
+		// a dead wire. Probe on every return to the foreground (and on the network
+		// coming back) so a two-minute tab switch resyncs like any other drop.
+		this._onResume = () => { if (!document.hidden) this.net?.resume(); };
+		document.addEventListener('visibilitychange', this._onResume);
+		addEventListener('online', this._onResume);
+		addEventListener('focus', this._onResume);
 
 		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
 		this.net.on('status', ({ status, error }) => {
@@ -1257,11 +1318,15 @@ export class CoinCommunities {
 				this._failedNotified = true;
 				this.ui.toast('Lost the connection to the world — chat and shared builds are paused. Tap the status pill to reconnect.', 'warn');
 			}
+			// Retries exhausted: this is a single-player world now, so the peers
+			// frozen mid-stride are a lie. Clear them rather than leave a crowd of
+			// statues nobody can talk to. A manual retry re-streams the real roster.
+			if (status === 'failed') { this._markRemotesStale(); this._pruneStaleRemotes(); }
 			if (status === 'online') this._failedNotified = false;
 			// Every (re)connect re-streams the server's authoritative build, so wipe
 			// the local layer first. On a manual retry out of single-player this also
 			// hands authority back: the solo build gives way to the shared world's.
-			if (status === 'connecting') { this.voxels?.clear(); this._undoStack = []; this._syncBudget(); this._resetBuildPerms(); }
+			if (status === 'connecting') { this.voxels?.clear(); this._undoStack = []; this._syncBudget(); this._resetBuildPerms(); this._markRemotesStale(); }
 			// Building is available with a live server (synced + persisted for
 			// everyone) and in solo single-player mode (local-only) once multiplayer
 			// has been given up. The connecting window is the only time it's off, so
@@ -1370,7 +1435,13 @@ export class CoinCommunities {
 		this.net.on('inv', (delta) => this.playSystems?.applyInv(delta));
 		this.net.on('xpgain', (g) => this.playSystems?.onXpGain(g));
 		this.net.on('levelup', (l) => this.playSystems?.onLevelup(l));
-		this.net.on('notice', (n) => this.playSystems?.onNotice(n));
+		this.net.on('notice', (n) => {
+			// Live-event announcements (an operator broadcast via the server's
+			// /internal/announce) get the centre-screen treatment; every other
+			// notice stays a play-systems activity toast.
+			if (n?.kind === 'event') return this._onEventAnnounce(n);
+			this.playSystems?.onNotice(n);
+		});
 		// Friends (W09): live DMs + request/accept pushed by the social hub over this
 		// world's socket. The FriendsClient owns all social state — it updates its
 		// threads/unread counts and notifies the panel, open or not, so a DM that
@@ -1775,13 +1846,21 @@ export class CoinCommunities {
 		clearTimeout(this._passRefreshTimer);
 		this._passRefreshTimer = null;
 		if (this.voice) { this.voice.dispose(); this.voice = null; }
+		if (this._onResume) {
+			document.removeEventListener('visibilitychange', this._onResume);
+			removeEventListener('online', this._onResume);
+			removeEventListener('focus', this._onResume);
+			this._onResume = null;
+		}
 		if (this.net) { this.net.destroy(); this.net = null; }
+		clearTimeout(this._announceTimer);
 		if (this.vehicles) { this.vehicles.dispose(); this.vehicles = null; }
 		if (this.combat) { this.combat.dispose(); this.combat = null; }
 		if (this.playSystems) { this.playSystems.dispose(); this.playSystems = null; }
 		if (this.playActivities) { this.playActivities.dispose(); this.playActivities = null; }
 		if (this.wheelStation) { this.wheelStation.dispose(); this.wheelStation = null; }
 		this._disposeFriends();
+		this._disposeAvatarPanel();
 		if (this.agentCommerce) { this.agentCommerce.dispose(); this.agentCommerce = null; }
 		if (this.intelKiosk) { this.intelKiosk.dispose(); this.intelKiosk = null; }
 		if (this.worldLife) { this.worldLife.dispose(); this.worldLife = null; }
@@ -1793,6 +1872,7 @@ export class CoinCommunities {
 		this._previewPresetId = null; this._previewLayers = false; this._previewItem = null;
 		for (const [, r] of this.remotes) r.dispose();
 		this.remotes.clear();
+		this._pendingStale = null;
 		closeAvatarInspector(); // whoever it showed just left the world with us
 		if (this._totem) { this.world.remove(this._totem); this._totem = null; this._coinSpin = null; }
 		if (this._screen) {
@@ -1846,7 +1926,7 @@ export class CoinCommunities {
 		// King of the Totem (R07): tear down the zone + crown marker and hide the HUD.
 		this._disposeKingZone();
 		this.ui.hideKingHud();
-		if (this.localRig) { this.scene.remove(this.localRig); this.localRig = null; }
+		if (this.localRig) { releaseAvatar(this.localRig); this.scene.remove(this.localRig); this.localRig = null; }
 		if (this._nipple) { this._nipple.destroy(); this._nipple = null; }
 		this.phase = 'lobby';
 		try { history.replaceState(null, '', location.pathname); } catch { /* non-fatal */ }
@@ -1858,6 +1938,20 @@ export class CoinCommunities {
 		this._online = n;
 		this.ui.setOnline(n);
 		this._drawScreen(); // keep the jumbotron's LIVE count in sync
+	}
+
+	// A live-event announcement from the operator webhook. Always lands as a
+	// toast; when it carries a title, the combat HUD's objective card doubles as
+	// a centre-screen banner for the announcement's duration. The card has no
+	// other writer in /play today, so a timed clear can't stomp anything.
+	_onEventAnnounce(n) {
+		if (n.text) this.ui?.toast?.(n.text, 'info');
+		const hud = this.combat?.hud;
+		if (!n.title || !hud?.setObjective) return;
+		hud.setObjective({ title: n.title, detail: n.detail || n.text || '', color: '#ffd76a' });
+		clearTimeout(this._announceTimer);
+		const holdMs = Math.min(120_000, Number(n.durationMs) > 0 ? Number(n.durationMs) : 12_000);
+		this._announceTimer = setTimeout(() => hud.clearObjective(), holdMs);
 	}
 
 	// ------------------------------------------------------------- avatar inspector
@@ -1879,12 +1973,21 @@ export class CoinCommunities {
 			world: 'play',
 			agentId: rp.agent,
 			wallet: rp.account,
+			// Verified three.ws profile (W10): bound server-side from the signed
+			// presence ticket, so the inspector can trust it enough to render the
+			// real profile with follow / message / creations.
+			username: rp.username,
 			avatarUrl: rp._avatarUrl,
 			facts: [
 				...this._worldFacts(),
 				...(rp.voice ? [{ label: 'Voice', value: 'in voice chat' }] : []),
 			],
-		}, { trigger: trigger || this.canvas });
+		}, {
+			trigger: trigger || this.canvas,
+			// "Message" on an already-friend profile jumps straight into the DM
+			// thread in the in-world friends drawer instead of a page navigation.
+			onOpenDM: (userId) => this._openDmWith(userId),
+		});
 	}
 	_inspectNpc(npc) {
 		openAvatarInspector({
@@ -1894,9 +1997,24 @@ export class CoinCommunities {
 			facts: [
 				{ label: 'Role', value: npc.role === 'vendor' ? 'Vendor — real paid service' : npc.role === 'quest' ? 'Quest giver' : 'Townsperson' },
 				...(npc.def?.prompt ? [{ label: 'Offers', value: npc.def.prompt }] : []),
-				{ label: 'Talk', value: 'walk up and press E' },
 				...this._worldFacts(),
 			],
+			// Talk works from the card at any distance: it runs the NPC's real role
+			// action (conversation, counter, board), the same as walking up for E.
+			actions: [{
+				label: npc.def?.prompt || 'Talk',
+				primary: true,
+				onClick: () => {
+					try {
+						npc.interact({
+							player: this.localPos,
+							ui: this.ui,
+							net: this.net,
+							world: this.worldLife?.world,
+						});
+					} catch { /* role action failed; the NPC stays silent rather than crash */ }
+				},
+			}],
 		}, { trigger: this.canvas });
 	}
 	_inspectSelf() {
@@ -1905,6 +2023,7 @@ export class CoinCommunities {
 			name: this.net?.name || lsGet('cc-name') || 'You',
 			world: 'play',
 			wallet: this.account || '',
+			username: this.me?.username || '',
 			avatarUrl: this.net?.avatar,
 			facts: this._worldFacts(),
 		}, { trigger: this.canvas });
@@ -2181,6 +2300,18 @@ export class CoinCommunities {
 		this._offFriends = fc.subscribe(() => this._bumpFriendsBadge());
 		fc.refresh();
 		this._bumpFriendsBadge();
+		// Own account profile (W10): who *we* are on the platform, for the self
+		// inspector card. getMe() resolves null for anonymous visitors and caches
+		// per page, so this is one cheap request per world entry.
+		getMe().then((u) => { this.me = u || null; }).catch(() => { this.me = null; });
+	}
+
+	// Open the friends drawer directly on a DM thread — the inspector's
+	// "Message" action for a player who is already a friend.
+	_openDmWith(userId) {
+		if (!userId) return;
+		this._openFriends();
+		friendsClient().openThread(userId);
 	}
 
 	_bumpFriendsBadge() {
@@ -2277,6 +2408,145 @@ export class CoinCommunities {
 		this._friendsBodyEl = null;
 		this._friendsCloseEl = null;
 		this._friendsOpen = false;
+	}
+
+	// ── In-world avatar switcher ──────────────────────────────────────────────
+	// The lobby's avatar bar disappears the moment a world opens, which used to
+	// mean changing your look required leaving (tearing the whole world down).
+	// This drawer (HUD Avatar button / V) hosts AvatarSwitcher; every pick lands
+	// in _applyAvatarSwap below, which rebuilds the local rig in place and
+	// broadcasts the new look so peers re-render it live (the server has accepted
+	// mid-session `avatar` messages all along; no client path ever used it).
+
+	_toggleAvatarPanel() {
+		if (this._avatarPanelOpen) this._closeAvatarPanel();
+		else this._openAvatarPanel();
+	}
+
+	_openAvatarPanel() {
+		if (this._avatarPanelOpen || this.phase !== 'world') return;
+		if (!this._avatarPanelEl) {
+			// Same right-docked drawer frame as the friends panel: head, scrolling
+			// body, hotkey hint. The panel content itself lives in avatar-switcher.js.
+			const close = document.createElement('button');
+			close.className = 'cc-friends-panel-close';
+			close.type = 'button';
+			close.setAttribute('aria-label', 'Close avatar panel');
+			close.textContent = '✕';
+			close.addEventListener('click', () => this._closeAvatarPanel());
+
+			const title = document.createElement('div');
+			title.className = 'cc-friends-panel-title';
+			title.textContent = 'Avatar';
+
+			const head = document.createElement('div');
+			head.className = 'cc-friends-panel-head';
+			head.append(title, close);
+
+			const body = document.createElement('div');
+			body.className = 'cc-friends-panel-body cc-avsw-body';
+
+			const hint = document.createElement('div');
+			hint.className = 'cc-friends-panel-hint';
+			hint.textContent = 'Press V to toggle · Esc to close';
+
+			const root = document.createElement('aside');
+			root.className = 'cc-friends-panel cc-avatar-panel';
+			root.setAttribute('role', 'dialog');
+			root.setAttribute('aria-modal', 'false');
+			root.setAttribute('aria-label', 'Change avatar');
+			root.append(head, body, hint);
+			document.body.appendChild(root);
+
+			this._avatarPanelEl = root;
+			this._avatarPanelCloseEl = close;
+			this._avatarSwitcher = new AvatarSwitcher(body, {
+				// A ?avatar= deep link is what the player is actually wearing this
+				// session, so it wins the active-chip highlight until they pick.
+				current: () => this._urlAvatar || this.ui.getAvatar(),
+				onPick: (value) => this._applyAvatarSwap(value),
+			});
+		}
+		this._avatarSwitcher.mount();
+		this._avatarPanelOpen = true;
+		requestAnimationFrame(() => this._avatarPanelEl?.classList.add('is-open'));
+		this.ui?.setAvatarPanelOpen?.(true);
+		// Release held WASD so the avatar doesn't keep walking while focus moves
+		// into the panel's inputs (same rule as the friends drawer).
+		this.keys.clear();
+		this._avatarPanelCloseEl?.focus();
+	}
+
+	_closeAvatarPanel() {
+		if (!this._avatarPanelOpen) return;
+		this._avatarPanelOpen = false;
+		this._avatarPanelEl?.classList.remove('is-open');
+		this._avatarSwitcher?.unmount();
+		this.ui?.setAvatarPanelOpen?.(false);
+	}
+
+	_disposeAvatarPanel() {
+		this._avatarSwitcher?.dispose();
+		this._avatarSwitcher = null;
+		this._avatarPanelEl?.remove();
+		this._avatarPanelEl = null;
+		this._avatarPanelCloseEl = null;
+		this._avatarPanelOpen = false;
+	}
+
+	// Swap the live local avatar to `input` (avatar id, GLB/VRM URL, or the guest
+	// sentinel for a just-created model) without leaving the world. Builds the
+	// replacement into a staging group first, so the current avatar keeps standing
+	// while the new one downloads and a failed load costs nothing; then tears down
+	// every bone-bound attachment (shop preview, accessory manager, durable
+	// loadout), moves the new model onto the same rig, re-dresses it, persists the
+	// pick, and broadcasts a peer-loadable URL (the server rejects ids and blob:
+	// URLs, so the guest path uploads first, exactly like world entry).
+	async _applyAvatarSwap(input) {
+		const value = (input || '').trim();
+		if (!value) return { ok: false, reason: 'empty' };
+		const rig = this.localRig;
+		if (this.phase !== 'world' || !rig) return { ok: false, reason: 'not-in-world' };
+		const epoch = this._enterEpoch;
+		const token = (this._avatarSwapToken = (this._avatarSwapToken || 0) + 1);
+		const isGuest = value === GUEST_SENTINEL;
+		const url = await resolveAvatarUrl(value);
+		const staging = new Group();
+		const anim = new AnimationManager();
+		const built = await buildAvatar(staging, url, anim, { clips: 'locomotion' });
+		// Stale: a newer swap superseded this one, or the world was left/re-entered
+		// mid-download. Abandon the staged model; the rig it was meant for is gone
+		// or already wearing something newer.
+		const stale = token !== this._avatarSwapToken || epoch !== this._enterEpoch || this.localRig !== rig;
+		if (stale || built.fallback) {
+			releaseAvatar(staging);
+			return stale ? { ok: false, reason: 'stale' } : { ok: false, reason: 'load-failed' };
+		}
+		// Old skeleton teardown. The R21 preview manager and the R23 durable
+		// loadout are both bone-bound to the outgoing model; drop them before the
+		// sweep and re-dress the new skeleton after.
+		this.unequipCosmeticPreview();
+		this._accessoryMgr = null;
+		try { this.localCosmetics?.dispose(); } catch { /* already gone */ }
+		this.localCosmetics = null; this._localCosWire = null;
+		// releaseAvatar removes only what buildAvatar added (model clone or capsule
+		// stand-in) and frees its GPU share; non-avatar rig children (tag glow
+		// ring, "it" label anchor) stay put.
+		releaseAvatar(rig);
+		while (staging.children.length) rig.add(staging.children[0]);
+		this.localAnim = anim;
+		this.localHeight = built.height;
+		this._applyLocalCosmetics(getPlayCosmetics());
+		// An explicit pick outlives a ?avatar= deep link and becomes the saved
+		// avatar every world reads next session; mirror it into the lobby bar so
+		// leaving the world shows the same selection (without re-firing the lobby's
+		// change handler, which would double-broadcast).
+		this._urlAvatar = '';
+		if (!isGuest) setPlayAvatar(value);
+		this.ui.reflectAvatar?.(value);
+		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
+		else this.net?.setAvatar(url);
+		return { ok: true, downgraded: !!built.downgraded };
 	}
 
 	// Open/close the "My Cosmetics" wardrobe panel (R23). Lazy-built on first open;
@@ -2715,8 +2985,9 @@ export class CoinCommunities {
 			// Typing anywhere else (friends DM box, search fields, modal inputs) must
 			// reach the caret untouched — no hotkeys, no Enter hijack, no Space eaten.
 			if (isTypingTarget(e.target)) return;
-			// Esc closes the friends drawer before anything else claims the key.
+			// Esc closes the friends/avatar drawers before anything else claims the key.
 			if (e.key === 'Escape' && this._friendsOpen) { e.preventDefault(); this._closeFriends(); return; }
+			if (e.key === 'Escape' && this._avatarPanelOpen) { e.preventDefault(); this._closeAvatarPanel(); return; }
 			if (e.key === 'Enter' && this.phase === 'world') { e.preventDefault(); this.ui.focusChat(); return; }
 			// Space jumps on foot; while driving it's the handbrake instead (held,
 			// released in the keyup handler below) — never scrolls the page either way.
@@ -2788,6 +3059,13 @@ export class CoinCommunities {
 				if (k === 'j' && !this.buildHud.active && !e.repeat) {
 					e.preventDefault();
 					this._toggleFriends();
+					return;
+				}
+				// V opens the avatar switcher: change your look without leaving the
+				// world. The HUD Avatar button is the touch equivalent.
+				if (k === 'v' && !this.buildHud.active && !e.repeat) {
+					e.preventDefault();
+					this._toggleAvatarPanel();
 					return;
 				}
 				// Z toggles zen mode (every overlay hidden, just the world). Plain Z
@@ -3123,6 +3401,47 @@ export class CoinCommunities {
 		}
 	}
 
+	// Forge-in-world: generate a brand-new prop from a text prompt (or a reference
+	// photo) on the free forge lane, then hand the finished GLB to the exact same
+	// pipeline uploads use: register it in the palette, arm it, and the next click
+	// places it into the shared world (obj:spawn carries the URL, so every player
+	// in the server renders it, and the room persists it like any other build).
+	// Reachable from the palette's Forge form and the chat command `/forge <prompt>`.
+	async _forgeProp({ prompt, file, fromChat } = {}) {
+		if (this._propForging) {
+			this.ui.toast('One forge at a time: yours is still cooking.', 'warn');
+			return;
+		}
+		this._propForging = true;
+		this.ui.setForgeBusy(true);
+		const status = (m) => this.ui.setPropUploadStatus(m || '');
+		try {
+			const out = await forgeWorldProp({ prompt, file, onStatus: status });
+			const def = registerUploadedProp(out.url, { name: out.name });
+			this.ui.addUploadedProp({ id: def.id, name: def.name });
+			// A chat-forged item arrives with the palette closed: open build mode so
+			// the armed ghost (and the palette entry) are actually visible.
+			if (fromChat && this.buildHud && !this.buildHud.active && !this.buildHud.root.hidden) {
+				this.buildHud.setActive(true);
+			}
+			this._pickProp(def.id);
+			this.ui.clearForgeForm();
+			status('');
+			this.ui.toast(`"${out.name}" is forged: click in the world to place it for everyone.`, 'info');
+			if (!out.durable) {
+				this.ui.toast('This model is on temporary storage, so the world may refuse it. If placing fails, forge it again.', 'warn');
+			}
+		} catch (err) {
+			if (err instanceof ForgeError && err.cancelled) return;
+			const message = err instanceof ForgeError ? err.message : 'The forge hit an error. Try again in a moment.';
+			this.ui.setPropUploadStatus(message, true);
+			this.ui.toast(message, 'warn');
+		} finally {
+			this._propForging = false;
+			this.ui.setForgeBusy(false);
+		}
+	}
+
 	// Rotate the armed prop a quarter-turn and re-preview it in place.
 	_rotateProp() {
 		if (!this.buildProp) return;
@@ -3340,6 +3659,9 @@ export class CoinCommunities {
 	// gets persisted by the authority) instead of stranding in a local doc.
 	_onRoomSynced() {
 		this._roomSynced = true;
+		// The roster in this snapshot is now the truth: retire anyone the server
+		// didn't re-announce (they left while we were disconnected).
+		this._pruneStaleRemotes();
 		this._worldStore?.setArmed(false);
 		const handoff = [...(this._offlineBuilt?.values() || [])];
 		this.worldObjects?.dropLocal();
@@ -4075,18 +4397,40 @@ export class CoinCommunities {
 
 	_updateLabels() {
 		const w = this.renderer.domElement.clientWidth, h = this.renderer.domElement.clientHeight;
+		// One scratch vector for the whole sweep, and one style write per node only
+		// when the value actually changed. This runs every frame for every peer, so
+		// at event scale (100 in one plaza) the naive version allocated ~300 Vector3
+		// per frame and re-wrote ~300 transforms whether or not anything moved — a
+		// steady GC drip plus a style recalc on a crowd standing still.
+		const v = this._labelProj || (this._labelProj = new Vector3());
+		const cam = this.camera;
 		const place = (node, pos, dy) => {
-			const v = new Vector3(pos.x, pos.y + dy, pos.z).project(this.camera);
-			if (v.z > 1 || v.z < -1) { node.style.display = 'none'; return; }
-			node.style.display = '';
-			node.style.transform = `translate(-50%, -100%) translate(${(v.x * 0.5 + 0.5) * w}px, ${(-v.y * 0.5 + 0.5) * h}px)`;
+			v.set(pos.x, pos.y + dy, pos.z).project(cam);
+			if (v.z > 1 || v.z < -1) {
+				if (node._ccHidden !== true) { node.style.display = 'none'; node._ccHidden = true; }
+				return;
+			}
+			if (node._ccHidden !== false) { node.style.display = ''; node._ccHidden = false; }
+			const t = `translate(-50%, -100%) translate(${(v.x * 0.5 + 0.5) * w}px, ${(-v.y * 0.5 + 0.5) * h}px)`;
+			if (node._ccT !== t) { node.style.transform = t; node._ccT = t; }
 		};
+		const hide = (node) => { if (node._ccHidden !== true) { node.style.display = 'none'; node._ccHidden = true; } };
 		// Anchor name + bubble to each avatar's real head height so they sit just
-		// above the head regardless of how tall/short the GLB is.
+		// above the head regardless of how tall/short the GLB is. Past LABEL_RANGE_M
+		// a nameplate is a couple of unreadable pixels, so it is hidden rather than
+		// projected: the cost of a distant crowd stops scaling with its size.
+		const cx = this.localPos.x, cz = this.localPos.z;
 		for (const [, r] of this.remotes) {
-			place(r.label, r.rig.position, r.height + 0.2);
-			if (r.bubble) place(r.bubble, r.rig.position, r.height + 0.7);
-			if (r._itLabel) place(r._itLabel, r.rig.position, r.height + 0.65);
+			const p = r.rig.position;
+			if ((p.x - cx) ** 2 + (p.z - cz) ** 2 > LABEL_RANGE_M * LABEL_RANGE_M) {
+				hide(r.label);
+				if (r.bubble) hide(r.bubble);
+				if (r._itLabel) hide(r._itLabel);
+				continue;
+			}
+			place(r.label, p, r.height + 0.2);
+			if (r.bubble) place(r.bubble, p, r.height + 0.7);
+			if (r._itLabel) place(r._itLabel, p, r.height + 0.65);
 		}
 		if (this._localBubble && this.localRig) place(this._localBubble, this.localPos, (this.localHeight || 1.7) + 0.7);
 		if (this._localItLabel && this.localRig) place(this._localItLabel, this.localPos, (this.localHeight || 1.7) + 0.65);

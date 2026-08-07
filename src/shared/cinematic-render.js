@@ -100,8 +100,10 @@ export async function loadEnvironment(renderer, scene, preset = 'studio') {
 	try {
 		let hdrTexture = _envCache.get(preset);
 		if (!hdrTexture) {
-			const { RGBELoader } = await import('three/addons/loaders/RGBELoader.js');
-			hdrTexture = await new RGBELoader().loadAsync(HDRI_PRESETS[preset]);
+			// HDRLoader is the same decoder RGBELoader wraps; RGBELoader is a
+			// deprecated alias since three r180 and logs a warning on every use.
+			const { HDRLoader } = await import('three/addons/loaders/HDRLoader.js');
+			hdrTexture = await new HDRLoader().loadAsync(HDRI_PRESETS[preset]);
 			_envCache.set(preset, hdrTexture);
 		}
 		const envMap = pmrem.fromEquirectangular(hdrTexture).texture;

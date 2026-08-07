@@ -18,6 +18,7 @@
 // Loaded as its own lazy chunk (dynamic import on first wheel interaction) so the
 // Solana signing path never weighs down the main /play bundle.
 
+import './spin-wheel.css';
 import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
 
 const NETWORK = 'mainnet';
@@ -89,6 +90,32 @@ class SpinWheel {
 		];
 		net.spinInfo();
 		this._drawWheel();
+		// The documented `error` phase was previously unreachable: if `spinInfo`
+		// never arrives (WS down, dropped packet) the modal sat on "Loading the
+		// wheel…" forever with both buttons dead. Arm a timeout that turns that
+		// dead end into a real, retryable error state.
+		this._loadTimer = setTimeout(() => {
+			if (this.phase === 'loading') this._loadFailed();
+		}, 12_000);
+	}
+
+	// Loading never resolved — show an actionable error with a retry that re-asks
+	// the server, instead of an indefinite spinner.
+	_loadFailed() {
+		this.phase = 'error';
+		this._statusNode(el('span', {}, [
+			"Couldn't reach the wheel. ",
+			el('button', { class: 'kg-spin-retry', type: 'button', onclick: () => this._retryLoad() }, 'Try again'),
+		]), 'err');
+	}
+
+	_retryLoad() {
+		if (this._closed) return;
+		this.phase = 'loading';
+		this._status('Loading the wheel…', '');
+		if (this._loadTimer) clearTimeout(this._loadTimer);
+		this._loadTimer = setTimeout(() => { if (this.phase === 'loading') this._loadFailed(); }, 12_000);
+		try { this.net.spinInfo(); } catch { this._loadFailed(); }
 	}
 
 	// ----------------------------------------------------------------- view
@@ -135,12 +162,13 @@ class SpinWheel {
 
 	// ----------------------------------------------------------- server in
 	_onInfo(m) {
+		if (this._loadTimer) { clearTimeout(this._loadTimer); this._loadTimer = null; }
 		this.info = m;
 		this._infoAt = Date.now(); // anchor the local clock to the server's `now`
 		this.segments = Array.isArray(m.segments) ? m.segments : [];
 		this._renderLegend();
 		this._drawWheel();
-		if (this.phase === 'loading') this.phase = 'ready';
+		if (this.phase === 'loading' || this.phase === 'error') { this.phase = 'ready'; this._status('', ''); }
 		this._sync();
 		this._startCountdown();
 	}
@@ -160,6 +188,9 @@ class SpinWheel {
 		// Land the wheel on the server's chosen segment, then reveal the prize.
 		if (m.mode === 'free' && Number.isFinite(m.nextFreeSpinAt) && this.info) this.info.nextFreeSpinAt = m.nextFreeSpinAt;
 		this._pendingResult = m;
+		// Headless (modal already closed mid-settle): skip the flourish and deliver
+		// the result straight to the background pill.
+		if (this._headless) { this._reveal(m); return; }
 		this._animateTo(m.index, () => this._reveal(m));
 	}
 
@@ -183,15 +214,25 @@ class SpinWheel {
 		this.phase = 'ready';
 		this._prep = null;
 		this._sig = null;
+		this._paymentLive = false;
 		this._status(this._denyText(m), 'err');
+		if (this._headless) { this._pillDone(); return; }
 		this._sync();
 	}
 
 	_denyText(m) {
-		const min = m?.minLevel ?? this.info?.minLevel ?? 5;
+		// The gate is a server constant (spin-wheel.js MIN_AVG_LEVEL) that rides in on
+		// every spinInfo/spinDenied. Never invent a number for it: a wrong minimum in
+		// this copy sends players off to grind for a level they don't need.
+		const min = m?.minLevel ?? this.info?.minLevel ?? null;
 		switch (m?.reason) {
-			case 'level': return `You need an average skill level of ${min} to spin. You're at ${m?.avgLevel ?? this.info?.avgLevel ?? 0}. Train your skills and come back.`;
+			case 'level': return min == null
+				? `Your skills are still too low to spin. You're at ${m?.avgLevel ?? this.info?.avgLevel ?? 0}. Train them and come back.`
+				: `You need an average skill level of ${min} to spin. You're at ${m?.avgLevel ?? this.info?.avgLevel ?? 0}. Train your skills and come back.`;
 			case 'not_at_wheel': return 'Step up to the wheel to spin.';
+			// The wheel can award wood, stone or coal, so it refuses to spin unless
+			// there is room for all three. Otherwise a win lands as a few cash.
+			case 'pack_full': return 'Your pack is too full for a prize. Sell or bank some of it at the general store, then spin.';
 			case 'no_wheel': return 'There is no wheel in this realm.';
 			case 'cooldown': return 'Your free spin isn’t ready yet.';
 			case 'token_unavailable': return 'Paid spins are unavailable right now.';
@@ -265,6 +306,11 @@ class SpinWheel {
 		const conn = new Connection(SOLANA_RPC[NETWORK], 'confirmed');
 		const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false, maxRetries: 3 });
 		this._sig = sig;
+		// Past this point real money has moved. If the player now closes the modal
+		// (e.g. dismissing the wallet overlay with Escape), the spin must NOT be
+		// abandoned: keep the server subscriptions alive and deliver the outcome in
+		// a background pill. See close().
+		this._paymentLive = true;
 
 		const url = solanaTxExplorerUrl(NETWORK, sig);
 		this._statusNode(el('span', {}, ['Confirming payment — ', el('a', { href: url, target: '_blank', rel: 'noopener', text: 'view ↗' }), '…']), 'ok');
@@ -307,9 +353,11 @@ class SpinWheel {
 		this._stopSpin();
 		this.phase = 'ready';
 		this._prep = null;
+		this._paymentLive = false;
 		const msg = err?.message || 'Payment failed.';
 		const friendly = /reject|denied|cancel|user/i.test(msg) ? 'Cancelled in wallet.' : msg;
 		this._status(friendly, 'err');
+		if (this._headless) { this._pillDone(); return; }
 		this._sync();
 	}
 
@@ -323,12 +371,30 @@ class SpinWheel {
 		const seg = this.segments?.[m.index];
 		const label = m.label || seg?.label || 'a prize';
 		let line = `You won ${label}!`;
-		if (m.overflow > 0) line += ` (${m.overflow} waiting in a bag at your feet — your pack was full)`;
+		// A prize that didn't fit was converted to cash server-side (grantSegment's
+		// last-resort fallback). Say so: a silent conversion reads as a lost prize.
+		if (m.lost > 0) {
+			line += m.got > 0
+				? ` Your pack only held ${m.got} of them, so the rest paid out as ${m.refunded} cash.`
+				: ` Your pack was full, so it paid out as ${m.refunded} cash instead.`;
+		}
 		this.resultLine.textContent = line;
 		this.resultLine.dataset.kind = seg ? kindOf(seg) : 'stone';
+		this._paymentLive = false;
+		// Modal was dismissed mid-settle: deliver the win (and the on-chain receipt)
+		// in the background pill, then finish teardown.
+		if (this._headless) {
+			const kids = [line + ' '];
+			if (m.mode === 'paid' && sig) {
+				kids.push(el('a', { href: solanaTxExplorerUrl(NETWORK, sig), target: '_blank', rel: 'noopener', text: 'view on Solscan ↗' }));
+			}
+			this._pill(el('span', {}, kids), 'ok');
+			this._pillDone();
+			return;
+		}
 		if (m.mode === 'paid' && sig) {
 			const url = solanaTxExplorerUrl(NETWORK, sig);
-			this._statusNode(el('span', {}, ['Paid spin settled on-chain — ', el('a', { href: url, target: '_blank', rel: 'noopener', text: 'view on Solscan ↗' })]), 'ok');
+			this._statusNode(el('span', {}, ['Paid spin settled on-chain. ', el('a', { href: url, target: '_blank', rel: 'noopener', text: 'view on Solscan ↗' })]), 'ok');
 		} else {
 			this._status(m.mode === 'paid' ? 'Paid spin settled on-chain.' : 'Free spin used.', 'ok');
 		}
@@ -439,6 +505,13 @@ class SpinWheel {
 					el('i', { class: 'kg-spin-dot', style: `background:${(SEG_COLORS[k] || SEG_COLORS.stone).fill}` }),
 					`${labels[k]} ${Math.round(odds[k])}%`,
 				])),
+			// These chips group 20 equal wedges by prize kind. The per-wedge table is
+			// published, read from the server's own paytable, so link straight to it
+			// rather than making a player take the summary on trust.
+			el('a', {
+				class: 'kg-spin-paytable', href: '/play/economy#wheel', target: '_blank', rel: 'noopener',
+				text: 'Full paytable ↗', title: 'Every wedge and its real odds, from the server’s own table',
+			}),
 		);
 	}
 
@@ -485,7 +558,9 @@ class SpinWheel {
 	// Reconcile the whole UI with the current phase + eligibility.
 	_sync() {
 		const lvlOk = this._levelOk();
-		const min = this.info?.minLevel ?? 5;
+		// The gate level is always the server's own MIN_AVG_LEVEL, carried on spinInfo.
+		// The banner only renders once info has landed, so it never has to guess.
+		const min = this.info?.minLevel;
 		// Level gate banner — the designed "not eligible" state with a how-to.
 		if (this.info && !lvlOk) {
 			this.gate.hidden = false;
@@ -513,19 +588,73 @@ class SpinWheel {
 	}
 
 	_setBusy(on, text) { if (text != null) this._status(text, ''); }
-	_status(text, kind) { this.status.textContent = text || ''; this.status.dataset.kind = kind || ''; }
-	_statusNode(node, kind) { this.status.replaceChildren(node); this.status.dataset.kind = kind || ''; }
+	_status(text, kind) {
+		if (this._headless) { this._pill(text, kind); return; }
+		this.status.textContent = text || ''; this.status.dataset.kind = kind || '';
+	}
+	_statusNode(node, kind) {
+		if (this._headless) { this._pill(node, kind); return; }
+		this.status.replaceChildren(node); this.status.dataset.kind = kind || '';
+	}
+
+	// Background settle pill: the modal is gone but a paid spin is still resolving.
+	// Delivers the same status text/result to a small fixed pill so a confirmed
+	// payment is never silently lost when the player dismisses the modal.
+	_pill(content, kind) {
+		if (this._pillDismissed) return;
+		if (!this._pillEl) {
+			this._pillEl = el('div', { class: 'kg-spin-pill', role: 'status', 'aria-live': 'polite' });
+			document.body.appendChild(this._pillEl);
+		}
+		if (typeof content === 'string') this._pillEl.textContent = content;
+		else this._pillEl.replaceChildren(content);
+		this._pillEl.dataset.kind = kind || '';
+	}
+
+	// A settle that reached a terminal state while headless: leave the pill up
+	// briefly so the outcome is read, then remove it and finish teardown.
+	_pillDone() {
+		this._pillDismissed = true;
+		const elp = this._pillEl;
+		if (elp) setTimeout(() => elp.remove(), 6000);
+		this._teardown();
+	}
 
 	// ---------------------------------------------------------------- close
 	close() {
 		if (this._closed) return;
+		// Real money is mid-flight (payment broadcast, result not yet in). Detach the
+		// modal but keep the server subscriptions alive so the spin still settles;
+		// the outcome lands in a background pill via _headless routing.
+		if (this._paymentLive && (this.phase === 'paying' || this.phase === 'spinning')) {
+			this._headless = true;
+			this._stopSpin();
+			if (this._countdownTimer) { clearInterval(this._countdownTimer); this._countdownTimer = null; }
+			window.removeEventListener('keydown', this._onKey);
+			this.overlay?.remove();
+			this.overlay = null;
+			if (_open === this) _open = null;
+			this._pill('Your paid spin is still settling…', '');
+			try { this.onClose?.(); } catch {}
+			return;
+		}
+		this._closed = true;
+		this._teardown();
+	}
+
+	// Release timers, subscriptions and DOM. Safe to call from either the normal
+	// close or the headless-settle completion.
+	_teardown() {
 		this._closed = true;
 		this._stopSpin();
-		if (this._countdownTimer) clearInterval(this._countdownTimer);
+		if (this._countdownTimer) { clearInterval(this._countdownTimer); this._countdownTimer = null; }
+		if (this._loadTimer) { clearTimeout(this._loadTimer); this._loadTimer = null; }
 		for (const off of this._offs || []) { try { off(); } catch {} }
+		this._offs = [];
 		window.removeEventListener('keydown', this._onKey);
 		this.overlay?.remove();
+		this.overlay = null;
 		if (_open === this) _open = null;
-		try { this.onClose?.(); } catch {}
+		if (!this._headless) { try { this.onClose?.(); } catch {} }
 	}
 }

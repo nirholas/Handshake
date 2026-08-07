@@ -1,0 +1,184 @@
+/* Wheel of Fortune — styles for the openSpinWheel modal in spin-wheel-ui.js.
+   Imported by that module so the modal carries its own styles wherever it is
+   opened (it ships as its own lazy chunk, so it cannot rely on
+   coincommunities.css having loaded first).
+
+   The design tokens below are scoped to the modal root so the file is fully
+   self-contained: on /play they shadow the identical :root tokens from
+   coincommunities.css (same values, no visual change). */
+
+.kg-spin-overlay {
+	--cc-bg2: #101010;
+	--cc-panel-solid: #0c0c0c;
+	--cc-edge: rgba(255, 255, 255, 0.12);
+	--cc-edge-hi: rgba(255, 255, 255, 0.55);
+	--cc-text: #f5f5f6;
+	--cc-dim: #8c8c92;
+	--cc-faint: #5a5a60;
+	--cc-accent: #ffffff;
+	--cc-ink: #060607;
+	--cc-shadow: 0 16px 50px rgba(0, 0, 0, 0.7);
+	--cc-glow: 0 0 14px rgba(255, 255, 255, 0.35);
+	--cc-radius: 4px;
+	--cc-radius-sm: 2px;
+	--kg-gold: #f5c542;
+	--kg-wood: #b98955;
+	--kg-stone: #aab3c2;
+	--kg-coal: #9aa2b0;
+}
+
+.kg-spin-overlay {
+	position: fixed; inset: 0; z-index: 80;
+	display: flex; align-items: center; justify-content: center; padding: 18px;
+	background: rgba(4, 4, 6, 0.66); backdrop-filter: blur(6px);
+	animation: kg-spin-fade 0.18s ease;
+}
+@keyframes kg-spin-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.kg-spin-card {
+	width: 100%; max-width: 440px; max-height: calc(100dvh - 36px);
+	overflow-y: auto; overscroll-behavior: contain;
+	background: var(--cc-panel-solid); border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
+	padding: 16px 18px 18px; color: var(--cc-text);
+	font: 14px/1.45 ui-sans-serif, system-ui, sans-serif;
+	animation: kg-spin-rise 0.18s ease;
+}
+@keyframes kg-spin-rise { from { transform: translateY(10px) scale(0.99); } to { transform: none; } }
+/* Attention pulse when openSpinWheel() re-focuses an already-open modal. */
+.kg-spin-card.kg-spin-flash { animation: kg-spin-pulse 0.5s ease; }
+@keyframes kg-spin-pulse {
+	0%, 100% { box-shadow: var(--cc-shadow); }
+	40% { box-shadow: var(--cc-shadow), 0 0 0 2px var(--cc-edge-hi); }
+}
+
+.kg-spin-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+.kg-spin-title { flex: 1; min-width: 0; font-weight: 800; font-size: 16px; letter-spacing: 0.02em; }
+.kg-spin-sub2 { display: block; margin-top: 2px; color: var(--cc-dim); font-weight: 600; font-size: 11.5px; letter-spacing: 0.06em; }
+.kg-spin-close {
+	flex: none; width: 32px; height: 32px; border-radius: var(--cc-radius-sm);
+	background: none; border: 1px solid var(--cc-edge); color: var(--cc-dim);
+	cursor: pointer; font-size: 13px; line-height: 1;
+	transition: border-color 0.12s ease, color 0.12s ease;
+}
+.kg-spin-close:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); }
+.kg-spin-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* ── The wheel itself ───────────────────────────────────────────────────── */
+.kg-spin-wheelwrap {
+	position: relative; width: min(320px, 100%); margin: 0 auto 12px;
+}
+.kg-spin-canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; }
+.kg-spin-pointer {
+	position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+	width: 0; height: 0;
+	border-left: 11px solid transparent; border-right: 11px solid transparent;
+	border-top: 18px solid var(--cc-accent);
+	filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+.kg-spin-hub {
+	position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+	width: 44px; height: 44px; border-radius: 50%;
+	display: flex; align-items: center; justify-content: center;
+	background: var(--cc-panel-solid); border: 2px solid var(--cc-edge-hi);
+	color: var(--kg-gold); font-size: 18px;
+	box-shadow: 0 0 18px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Result + level gate ────────────────────────────────────────────────── */
+.kg-spin-result {
+	min-height: 22px; margin-bottom: 10px; text-align: center;
+	font-weight: 800; font-size: 15px;
+}
+.kg-spin-result[data-kind='gold'] { color: var(--kg-gold); }
+.kg-spin-result[data-kind='wood'] { color: var(--kg-wood); }
+.kg-spin-result[data-kind='stone'] { color: var(--kg-stone); }
+.kg-spin-result[data-kind='coal'] { color: var(--kg-coal); }
+
+.kg-spin-gate {
+	margin-bottom: 12px; padding: 10px 12px;
+	background: var(--cc-bg2); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+}
+.kg-spin-gate[hidden] { display: none; }
+.kg-spin-gate-h { font-weight: 800; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cc-dim); margin-bottom: 4px; }
+.kg-spin-gate-b { color: var(--cc-text); font-size: 12.5px; line-height: 1.5; }
+
+/* ── Spin actions ───────────────────────────────────────────────────────── */
+.kg-spin-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.kg-spin-action { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.kg-spin-btn {
+	width: 100%; padding: 12px 8px;
+	background: var(--cc-accent); color: var(--cc-ink);
+	border: 1px solid var(--cc-accent); border-radius: var(--cc-radius);
+	font-weight: 800; font-size: 13.5px; letter-spacing: 0.03em; cursor: pointer;
+	box-shadow: var(--cc-glow);
+	transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+.kg-spin-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 22px rgba(255, 255, 255, 0.55); }
+.kg-spin-btn:active:not(:disabled) { transform: translateY(1px); }
+.kg-spin-btn:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+.kg-spin-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* The paid spin is the secondary action: quieter than the free one. */
+.kg-spin-btn.kg-spin-paid {
+	background: var(--cc-bg2); color: var(--cc-text); border-color: var(--cc-edge); box-shadow: none;
+}
+.kg-spin-btn.kg-spin-paid:hover:not(:disabled) { border-color: var(--cc-edge-hi); box-shadow: none; }
+.kg-spin-sub {
+	color: var(--cc-dim); font-size: 11px; line-height: 1.4; text-align: center;
+	font-variant-numeric: tabular-nums; min-height: 15px;
+}
+.kg-spin-sub[data-ready='1'] { color: var(--cc-text); }
+
+/* ── Status line + odds legend ──────────────────────────────────────────── */
+.kg-spin-status {
+	min-height: 18px; margin-bottom: 10px; text-align: center;
+	font-size: 12.5px; line-height: 1.45; color: var(--cc-dim); word-break: break-word;
+}
+.kg-spin-status[data-kind='ok'] { color: var(--cc-text); }
+.kg-spin-status[data-kind='err'] { color: #d88a8a; }
+.kg-spin-status a { color: inherit; text-decoration: underline; }
+.kg-spin-retry {
+	background: none; border: none; padding: 0; margin-left: 4px;
+	color: var(--cc-text); text-decoration: underline; cursor: pointer; font: inherit;
+}
+.kg-spin-retry:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.kg-spin-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; justify-content: center; }
+.kg-spin-legend-h { color: var(--cc-faint); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.kg-spin-chip { display: inline-flex; align-items: center; gap: 5px; color: var(--cc-dim); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.kg-spin-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.kg-spin-paytable {
+	color: var(--cc-dim); font-size: 11.5px; text-decoration: none;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.22); transition: color 0.15s ease, border-color 0.15s ease;
+}
+.kg-spin-paytable:hover { color: var(--cc-text); border-bottom-color: currentColor; }
+.kg-spin-paytable:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 2px; }
+
+/* ── Background-settle pill ─────────────────────────────────────────────────
+   Shown after the player closes the modal while a paid spin is still settling:
+   the flow keeps running headless and this pill delivers the outcome. */
+.kg-spin-pill {
+	position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+	transform: translateX(-50%); z-index: 81;
+	max-width: min(420px, calc(100vw - 32px));
+	padding: 10px 16px; border-radius: 999px;
+	background: var(--cc-panel-solid, #0c0c0c); border: 1px solid rgba(255, 255, 255, 0.12);
+	box-shadow: 0 16px 50px rgba(0, 0, 0, 0.7);
+	color: #f5f5f6; font: 12.5px/1.4 ui-sans-serif, system-ui, sans-serif;
+	text-align: center; animation: kg-spin-fade 0.18s ease;
+}
+.kg-spin-pill[data-kind='err'] { color: #d88a8a; }
+
+/* ── Small screens ──────────────────────────────────────────────────────── */
+@media (max-width: 420px) {
+	.kg-spin-overlay { padding: 10px; align-items: flex-end; }
+	.kg-spin-card { max-height: calc(100dvh - 20px); padding: 14px 14px 16px; }
+	.kg-spin-wheelwrap { width: min(260px, 100%); }
+	.kg-spin-actions { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.kg-spin-overlay, .kg-spin-card, .kg-spin-pill { animation: none; }
+	.kg-spin-card.kg-spin-flash { animation: none; box-shadow: var(--cc-shadow), 0 0 0 2px var(--cc-edge-hi); }
+	.kg-spin-btn, .kg-spin-close { transition: none; }
+}

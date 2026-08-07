@@ -982,6 +982,13 @@ html[data-bg="transparent"] #cc-lobby {
 	content: attr(data-wanted); margin-left: 5px; color: #ff5a4d;
 	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(255, 90, 77, 0.6);
 }
+/* Verified three.ws account (W10): the @handle beside the display name marks a
+   signed-in platform profile — click opens the real profile card. */
+.cc-label .cc-label-handle {
+	margin-left: 5px; color: #9db8ff; font-weight: 600; font-size: 0.9em;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(90, 130, 255, 0.45);
+}
+.cc-label.cc-verified:hover .cc-label-handle { color: #c6d6ff; }
 .cc-bubble {
 	background: #fff; color: var(--cc-ink); font-size: 13px; font-weight: 600; text-align: center;
 	padding: 7px 12px; border-radius: var(--cc-radius); max-width: 220px; white-space: normal;
@@ -1131,6 +1138,13 @@ html[data-bg="transparent"] #cc-lobby {
 }
 .cc-name-input::placeholder { color: var(--cc-dim); font-weight: 400; }
 .cc-name-input:focus { border-color: var(--cc-edge-hi); }
+/* Signed-in identity chip (W10): the @handle peers will see beside your name. */
+.cc-identity-chip {
+	flex: 0 0 auto; font-size: 12px; font-weight: 650; padding: 4px 10px; border-radius: 999px;
+	color: #9db8ff; text-decoration: none; border: 1px solid rgba(120, 150, 255, 0.35);
+	background: rgba(90, 130, 255, 0.1); transition: background 0.15s ease, color 0.15s ease;
+}
+.cc-identity-chip:hover, .cc-identity-chip:focus-visible { background: rgba(90, 130, 255, 0.22); color: #c6d6ff; }
 
 /* Transient toast (avatar fell back, buy panel unavailable, …). */
 #cc-toast {
@@ -1670,11 +1684,77 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-prop-gstatus.cc-err { color: #ff8a8a; cursor: pointer; }
 .cc-prop-gstatus.cc-err:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
 
+/* Forge-in-world: the toggle sits with the palette head controls; the form row
+   slides in between the head and the prop row. */
+.cc-prop-forge-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 30px; padding: 0 10px; border-radius: var(--cc-radius-sm);
+    border: 1px solid rgba(102, 255, 140, 0.45); background: var(--cc-panel); color: var(--cc-text);
+    font-size: 11.5px; font-weight: 600; white-space: nowrap; cursor: pointer;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    transition: background 0.12s, border-color 0.12s, transform 0.08s;
+}
+.cc-prop-forge-btn:hover { background: rgba(102, 255, 140, 0.12); border-color: #66ff8c; }
+.cc-prop-forge-btn:active { transform: translateY(1px); }
+.cc-prop-forge-btn:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
+.cc-prop-forge-btn.cc-on { background: rgba(102, 255, 140, 0.16); border-color: #66ff8c; }
+.cc-forge-row {
+    display: flex; align-items: center; gap: 6px; padding: 7px;
+    background: var(--cc-panel); border: 1px solid var(--cc-edge);
+    border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    animation: cc-build-in 0.16s ease;
+}
+.cc-forge-row[hidden] { display: none; }
+.cc-forge-prompt {
+    flex: 1 1 auto; min-width: 0; height: 30px; padding: 0 10px;
+    border-radius: var(--cc-radius-sm); border: 1px solid var(--cc-edge);
+    background: rgba(255, 255, 255, 0.04); color: var(--cc-text);
+    font: inherit; font-size: 12px;
+    transition: background 0.12s, border-color 0.12s;
+}
+.cc-forge-prompt::placeholder { color: var(--cc-dim); }
+.cc-forge-prompt:focus { outline: none; border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
+.cc-forge-prompt:disabled { opacity: 0.55; }
+.cc-forge-attach {
+    display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto;
+    height: 30px; padding: 0 9px; border-radius: var(--cc-radius-sm);
+    border: 1px solid var(--cc-edge); background: rgba(255, 255, 255, 0.04); color: var(--cc-dim);
+    font-size: 11px; font-weight: 600; white-space: nowrap; cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.cc-forge-attach:hover { background: rgba(255, 255, 255, 0.1); color: var(--cc-text); border-color: var(--cc-edge-hi); }
+.cc-forge-attach:focus-within { outline: 2px solid #66ff8c; outline-offset: 2px; }
+.cc-forge-attach.cc-on { color: var(--cc-text); border-color: rgba(102, 255, 140, 0.45); }
+.cc-forge-attach-text { max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+.cc-forge-attach-clear {
+    display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+    width: 24px; height: 30px; border-radius: var(--cc-radius-sm);
+    border: 1px solid var(--cc-edge); background: transparent; color: var(--cc-dim);
+    font-size: 11px; cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.cc-forge-attach-clear:hover { background: rgba(255, 138, 138, 0.12); color: #ff8a8a; border-color: #ff8a8a; }
+.cc-forge-attach-clear:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
+.cc-forge-attach-clear[hidden] { display: none; }
+.cc-forge-go {
+    flex: 0 0 auto; height: 30px; padding: 0 14px; border-radius: var(--cc-radius-sm);
+    border: 1px solid #66ff8c; background: rgba(102, 255, 140, 0.14); color: var(--cc-text);
+    font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+    transition: background 0.12s, transform 0.08s, opacity 0.12s;
+}
+.cc-forge-go:hover { background: rgba(102, 255, 140, 0.24); }
+.cc-forge-go:active { transform: translateY(1px); }
+.cc-forge-go:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
+.cc-forge-go:disabled { opacity: 0.55; cursor: progress; }
+
 @media (pointer: coarse) { #cc-props { bottom: 150px; } }
 @media (max-width: 560px) {
     #cc-props { bottom: 156px; width: 96vw; }
     .cc-prop { min-width: 48px; }
     .cc-prop-search { max-width: none; }
+    .cc-prop-forge-text { display: none; }
+    .cc-forge-attach-text { display: none; }
 }
 
 /* ---------------- share-a-build sheet (R20) ---------------- */
@@ -1977,6 +2057,25 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-wardrobe-btn-ico { font-size: 14px; line-height: 1; }
 @media (max-width: 480px) { .cc-wardrobe-btn-text { display: none; } }
 
+/* "Avatar" switcher button — mirrors the shop/wardrobe buttons; is-active marks
+   the drawer open (aria-expanded is set alongside by setAvatarPanelOpen). */
+.cc-avatarbtn {
+	flex: none; pointer-events: auto;
+	display: inline-flex; align-items: center; gap: 7px;
+	margin-left: 4px; padding: 9px 13px;
+	background: rgba(255, 255, 255, 0.04); color: var(--cc-text);
+	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
+	cursor: pointer; white-space: nowrap; appearance: none; -webkit-appearance: none; font-family: inherit;
+	transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.cc-avatarbtn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
+.cc-avatarbtn:active { transform: translateY(1px); }
+.cc-avatarbtn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-avatarbtn.is-active { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.1); }
+.cc-avatarbtn-ico { font-size: 14px; line-height: 1; }
+@media (max-width: 480px) { .cc-avatarbtn-text { display: none; } }
+
 /* "Jobs" board button (W08) — mirrors the shop/wardrobe buttons. */
 .cc-jobs-btn {
 	flex: none; pointer-events: auto;
@@ -2082,6 +2181,109 @@ html[data-bg="transparent"] #cc-lobby {
 	color: var(--cc-dim, #8b93a3); font-size: 11px; letter-spacing: 0.02em;
 	border-top: 1px solid var(--cc-edge);
 }
+
+/* In-world avatar switcher panel. Reuses the friends-panel drawer frame
+   (.cc-avatar-panel rides the same .cc-friends-panel classes); everything
+   below styles the panel's own content (avatar-switcher.js). */
+.cc-avsw-body { overflow-y: auto; }
+.cc-avsw { display: flex; flex-direction: column; gap: 16px; padding: 12px 14px 16px; }
+.cc-avsw.is-busy { cursor: progress; }
+
+.cc-avsw-status {
+	flex: none; padding: 8px 10px; border-radius: var(--cc-radius);
+	font-size: 12px; line-height: 1.4;
+	border: 1px solid var(--cc-edge); background: rgba(255, 255, 255, 0.04);
+	color: var(--cc-text);
+}
+.cc-avsw-status[data-state="working"]::before {
+	content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 7px;
+	border: 2px solid var(--cc-dim); border-top-color: transparent; border-radius: 50%;
+	animation: cc-avsw-spin 0.8s linear infinite; vertical-align: -1px;
+}
+@keyframes cc-avsw-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .cc-avsw-status[data-state="working"]::before { animation: none; } }
+.cc-avsw-status[data-state="done"] { border-color: rgba(126, 231, 135, 0.4); }
+.cc-avsw-status[data-state="error"] { border-color: rgba(255, 107, 107, 0.5); color: #ffb3b3; }
+
+.cc-avsw-section { display: flex; flex-direction: column; gap: 8px; }
+.cc-avsw-title {
+	font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+	color: var(--cc-dim);
+}
+
+.cc-avsw-grid {
+	display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.cc-avsw-chip {
+	appearance: none; -webkit-appearance: none; font-family: inherit;
+	display: flex; flex-direction: column; align-items: center; gap: 6px;
+	padding: 8px 6px; border-radius: var(--cc-radius);
+	background: rgba(255, 255, 255, 0.03); color: var(--cc-text);
+	border: 1px solid var(--cc-edge); cursor: pointer;
+	transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.cc-avsw-chip:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.07); transform: translateY(-1px); }
+.cc-avsw-chip:active { transform: translateY(1px); }
+.cc-avsw-chip:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-avsw-chip.is-active { border-color: var(--cc-accent, #7ee787); background: rgba(255, 255, 255, 0.08); }
+.cc-avsw-chip.is-busy { opacity: 0.6; cursor: progress; }
+.cc-avsw-thumb {
+	width: 100%; aspect-ratio: 1; max-width: 84px; object-fit: cover;
+	border-radius: calc(var(--cc-radius) - 3px); background: rgba(255, 255, 255, 0.05);
+}
+.cc-avsw-glyph {
+	width: 100%; aspect-ratio: 1; max-width: 84px;
+	display: grid; place-items: center; font-size: 26px;
+	border-radius: calc(var(--cc-radius) - 3px); background: rgba(255, 255, 255, 0.05);
+}
+.cc-avsw-chip-name {
+	max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+	font-size: 11px; font-weight: 600; letter-spacing: 0.01em;
+}
+.cc-avsw-skel {
+	pointer-events: none; min-height: 108px;
+	background: linear-gradient(100deg, rgba(255, 255, 255, 0.03) 40%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.03) 60%);
+	background-size: 200% 100%;
+	animation: cc-avsw-shimmer 1.2s linear infinite;
+}
+@keyframes cc-avsw-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .cc-avsw-skel { animation: none; } }
+
+.cc-avsw-note { grid-column: 1 / -1; font-size: 12px; line-height: 1.5; color: var(--cc-dim); }
+.cc-avsw-link {
+	appearance: none; -webkit-appearance: none; font-family: inherit; font-size: inherit;
+	background: none; border: none; padding: 0; cursor: pointer;
+	color: var(--cc-text); text-decoration: underline;
+}
+.cc-avsw-link:hover { color: #fff; }
+.cc-avsw-link:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.cc-avsw-row { display: flex; gap: 8px; }
+.cc-avsw-paste-input {
+	flex: 1 1 auto; min-width: 0; padding: 9px 11px;
+	background: var(--cc-bg2, rgba(255, 255, 255, 0.04)); color: var(--cc-text);
+	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	font-size: 13px; font-family: inherit;
+}
+.cc-avsw-paste-input:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+.cc-avsw-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.cc-avsw-btn {
+	appearance: none; -webkit-appearance: none; font-family: inherit;
+	flex: none; display: inline-flex; align-items: center; gap: 6px;
+	padding: 9px 12px; border-radius: var(--cc-radius);
+	background: rgba(255, 255, 255, 0.04); color: var(--cc-text);
+	border: 1px solid var(--cc-edge);
+	font-weight: 700; font-size: 12px; letter-spacing: 0.03em;
+	cursor: pointer; white-space: nowrap;
+	transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.cc-avsw-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
+.cc-avsw-btn:active { transform: translateY(1px); }
+.cc-avsw-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-avsw-btn.is-busy { opacity: 0.6; cursor: progress; }
+.cc-avsw-upload { position: relative; }
+.cc-avsw-file { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.cc-avsw-upload:focus-within { outline: 2px solid #fff; outline-offset: 2px; }
 
 /* Creator-only holders-gate button (R24) — mirrors the shop button, accented. */
 .cc-gate-cfg-btn {

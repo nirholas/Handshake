@@ -17,6 +17,7 @@ import { COMPOSITE_PIECES } from './build-voxels.js';
 import { PROP_CATALOG, GALLERY_PROP_PREFIX, registerGalleryProp } from './world-objects.js';
 import { makeIntroReopener } from './play-intro.js';
 import { getPowerSaver, setPowerSaver, onPowerSaverChange } from '../shared/frame-governor.js';
+import { getMe } from '../account.js';
 import { log } from '../shared/log.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
@@ -86,6 +87,21 @@ function _ewSectorPath(cx, cy, ir, or_, s, e) {
 }
 // ── end emote wheel helpers ──────────────────────────────────────────────────
 
+// Wrap a URL for use inside a CSS `url(...)` value without letting it break out
+// of the declaration. A coin's image is network-controlled (pump.fun metadata,
+// or the ?image= deep-link param); proxiedImageURL only encodes http/ipfs/ar
+// URLs, so any other value reaches us raw. A crafted string like
+// `x");position:fixed;inset:0;background:url(//evil)` would otherwise escape the
+// declaration and paint a full-screen overlay for everyone in the lobby. We
+// refuse dangerous schemes and percent-encode the characters that could close
+// the url() or the rule, so the worst a hostile value can do is fail to load.
+function cssBgImage(url) {
+	if (!url || typeof url !== 'string') return '';
+	if (/^\s*(javascript|vbscript|data\s*:\s*text\/html)/i.test(url)) return '';
+	const safe = url.replace(/["'()\\\s<>]/g, (c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'));
+	return `background-image:url("${safe}")`;
+}
+
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
 	for (const [k, v] of Object.entries(props)) {
@@ -146,6 +162,33 @@ export class CommunityUI {
 		this._buildHud();
 		this._buildStructures();
 		this._buildPropPalette();
+		this._hydrateAccountIdentity();
+	}
+
+	// Signed-in identity (W10): a logged-in player enters the world AS their
+	// three.ws account — default the nameplate to their display name and show
+	// the @handle peers will see (and can follow/DM) beside the name field.
+	// Anonymous visitors keep the plain guest field; getMe() resolves null.
+	async _hydrateAccountIdentity() {
+		let me = null;
+		try { me = await getMe(); } catch { return; }
+		if (!me) return;
+		this.me = me;
+		if (!this.nameInput.value.trim()) {
+			const n = String(me.display_name || me.username || '').trim().slice(0, 24);
+			if (n) { this.nameInput.value = n; lsSet('cc-name', n); }
+		}
+		if (me.username && this.nameRow && !this._identityChip) {
+			this._identityChip = el('a', {
+				class: 'cc-identity-chip',
+				href: `/u/${encodeURIComponent(me.username)}`,
+				target: '_blank',
+				rel: 'noopener',
+				title: 'Signed in — players you meet can open your profile, follow you, and message you',
+				text: `@${me.username}`,
+			});
+			this.nameRow.appendChild(this._identityChip);
+		}
 	}
 
 	// ---------------------------------------------------------------- lobby
@@ -236,7 +279,7 @@ export class CommunityUI {
 					makeIntroReopener(() => this.h.onDropIn?.()),
 				]),
 				this.avatarBar = el('div', { class: 'cc-avatar-bar' }, [
-					el('div', { class: 'cc-name-row' }, [
+					this.nameRow = el('div', { class: 'cc-name-row' }, [
 						el('label', { class: 'cc-name-label', for: 'cc-name-input', text: 'Your name' }),
 						this.nameInput,
 					]),
@@ -929,7 +972,7 @@ export class CommunityUI {
 				if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.h.onEnter(c, ''); }
 			},
 		}, [
-			el('div', { class: 'cc-card-img', style: c.image ? `background-image:url("${c.image}")` : '' }, [liveBadge, holdersBadge]),
+			el('div', { class: 'cc-card-img', style: cssBgImage(c.image) }, [liveBadge, holdersBadge]),
 			el('div', { class: 'cc-card-body' }, [
 				el('div', { class: 'cc-card-name', text: c.name || 'Unnamed coin' }),
 				el('div', { class: 'cc-card-meta' }, [
@@ -1029,6 +1072,25 @@ export class CommunityUI {
 		if (!this.friendsBtn) return;
 		this.friendsBtn.setAttribute('aria-expanded', String(!!open));
 		this.friendsBtn.classList.toggle('is-active', !!open);
+	}
+
+	// Avatar-switcher drawer state: keeps the HUD button's aria-expanded honest
+	// and lets CSS mark it active while the panel is up.
+	setAvatarPanelOpen(open) {
+		if (!this.avatarBtn) return;
+		this.avatarBtn.setAttribute('aria-expanded', String(!!open));
+		this.avatarBtn.classList.toggle('is-active', !!open);
+	}
+
+	// Mirror an avatar picked from the in-world switcher into the lobby bar's
+	// state (chip highlight + custom field) WITHOUT firing onAvatarChange: the
+	// scene already rebuilt the rig and broadcast the change, and re-firing the
+	// handler would send it twice.
+	reflectAvatar(value) {
+		this.avatar = value || DEFAULT_AVATAR;
+		lsSet('cc-avatar', this.avatar);
+		for (const chip of this.presetRow.children) chip.classList.toggle('cc-on', chip._url === this.avatar);
+		this.customInput.value = (this.avatar === DEFAULT_AVATAR || !/^https?:|^\//.test(this.avatar)) ? '' : this.avatar;
 	}
 
 	// Creator gate config (R24). A small modal where the coin's creator sets the
@@ -1179,7 +1241,7 @@ export class CommunityUI {
 				nodes = [
 					el('div', { class: 'cc-gate-lock', text: '🛠' }),
 					title('Holder check is offline'),
-					msg(`We can’t verify ${sym} holdings right now. That’s on our side, not yours, and your tokens are unaffected. The open world is live for everyone.`),
+					msg(`We can’t verify holdings of ${sym} right now. That’s on our side, not yours, and your tokens are unaffected. The open world is live for everyone.`),
 					actions(
 						btn('Enter the open world', 'general', 'cc-gate-primary'),
 						btn('Try again', 'recheck'),
@@ -1252,6 +1314,14 @@ export class CommunityUI {
 			'aria-label': 'Open cosmetics shop',
 			onclick: () => this.h.onShop?.(),
 		}, [el('span', { class: 'cc-shop-btn-ico', 'aria-hidden': 'true', text: '🛍️' }), el('span', { class: 'cc-shop-btn-text', text: 'Shop' })]);
+		// Change avatar without leaving the world: opens the in-world switcher
+		// drawer (saved avatars, quick picks, gallery, upload, creator). Touch
+		// equivalent of the V hotkey.
+		this.avatarBtn = el('button', {
+			class: 'cc-avatarbtn', type: 'button', title: 'Change your avatar (V)',
+			'aria-label': 'Change your avatar', 'aria-expanded': 'false',
+			onclick: () => this.h.onAvatarPanel?.(),
+		}, [el('span', { class: 'cc-avatarbtn-ico', 'aria-hidden': 'true', text: '🧍' }), el('span', { class: 'cc-avatarbtn-text', text: 'Avatar' })]);
 		// Open the "My Cosmetics" wardrobe — equip owned items, persists across worlds.
 		this.wardrobeBtn = el('button', {
 			class: 'cc-wardrobe-btn', type: 'button', title: 'My Cosmetics — equip your owned looks',
@@ -1292,6 +1362,7 @@ export class CommunityUI {
 			]),
 			this.friendsBtn,
 			this.jobsBtn,
+			this.avatarBtn,
 			this.wardrobeBtn,
 			this.shopBtn,
 			this.gateBtn,
@@ -1759,8 +1830,23 @@ export class CommunityUI {
 			this.propUploadFile,
 		]);
 
+		// Forge-in-world: describe an item (or attach a reference photo) and the free
+		// forge lane turns it into a real GLB prop, armed for placement like an upload.
+		// The button toggles an inline form row; generation itself is driven by the
+		// game (h.onForgeProp), which reports progress through the shared status strip.
+		this.forgeBtn = el('button', {
+			class: 'cc-prop-forge-btn', type: 'button', 'aria-expanded': 'false',
+			title: 'Forge a new prop from a text prompt or photo (free)',
+			onclick: () => this.toggleForge(),
+		}, [
+			el('span', { 'aria-hidden': 'true', text: '✨' }),
+			el('span', { class: 'cc-prop-forge-text', text: 'Forge' }),
+		]);
+		this._buildForgeRow();
+
 		const head = el('div', { class: 'cc-prop-head' }, [
 			el('span', { class: 'cc-prop-title', text: 'Props' }),
+			this.forgeBtn,
 			this.propSearch,
 			this.propUploadBtn,
 			this.propRotateBtn,
@@ -1768,8 +1854,86 @@ export class CommunityUI {
 
 		this._galleryStatus = el('div', { class: 'cc-prop-gstatus', role: 'status', 'aria-live': 'polite', hidden: true });
 
-		this.propPalette = el('div', { id: 'cc-props', hidden: true, 'aria-label': 'Build props' }, [head, this.propRow, this._galleryStatus]);
+		this.propPalette = el('div', { id: 'cc-props', hidden: true, 'aria-label': 'Build props' }, [head, this.forgeRow, this.propRow, this._galleryStatus]);
 		document.body.appendChild(this.propPalette);
+	}
+
+	// The inline forge form: prompt input, optional reference image, submit. Typing
+	// swallows keys so WASD/build hotkeys never fire mid-sentence, matching the
+	// gallery search box above it.
+	_buildForgeRow() {
+		this._forgeFile = null;
+		this.forgePrompt = el('input', {
+			type: 'text', class: 'cc-forge-prompt', maxlength: '300', autocomplete: 'off',
+			placeholder: 'Describe an item: a glowing campfire, a neon arcade cabinet…',
+			'aria-label': 'Describe the item to forge',
+			onkeydown: (e) => { e.stopPropagation(); if (e.key === 'Enter') this._submitForge(); if (e.key === 'Escape') this.forgePrompt.blur(); },
+		});
+		this.forgeAttachFile = el('input', {
+			type: 'file', accept: 'image/png,image/jpeg,image/webp', class: 'cc-upload-file',
+			onchange: (e) => { this._setForgeFile(e.target.files?.[0] || null); e.target.value = ''; },
+		});
+		this._forgeAttachText = el('span', { class: 'cc-forge-attach-text', text: 'Photo' });
+		this.forgeAttachBtn = el('label', {
+			class: 'cc-forge-attach', title: 'Attach a reference photo (optional): the forge builds the item in it',
+		}, [el('span', { 'aria-hidden': 'true', text: '📎' }), this._forgeAttachText, this.forgeAttachFile]);
+		this.forgeAttachClear = el('button', {
+			class: 'cc-forge-attach-clear', type: 'button', hidden: true,
+			title: 'Remove the attached photo', 'aria-label': 'Remove the attached photo',
+			onclick: () => this._setForgeFile(null),
+		}, [el('span', { 'aria-hidden': 'true', text: '✕' })]);
+		this.forgeGo = el('button', {
+			class: 'cc-forge-go', type: 'button', title: 'Forge it (free, about 30 seconds)',
+			onclick: () => this._submitForge(),
+		}, ['Forge']);
+		this.forgeRow = el('div', { class: 'cc-forge-row', hidden: true }, [
+			this.forgePrompt, this.forgeAttachBtn, this.forgeAttachClear, this.forgeGo,
+		]);
+	}
+
+	/** Show/hide the forge form. Pass a boolean to force a state. */
+	toggleForge(force) {
+		if (!this.forgeRow) return;
+		const on = typeof force === 'boolean' ? force : this.forgeRow.hidden;
+		this.forgeRow.hidden = !on;
+		this.forgeBtn.classList.toggle('cc-on', on);
+		this.forgeBtn.setAttribute('aria-expanded', String(on));
+		if (on) this.forgePrompt.focus();
+	}
+
+	_setForgeFile(file) {
+		this._forgeFile = file || null;
+		this._forgeAttachText.textContent = file ? (file.name || 'photo').slice(0, 14) : 'Photo';
+		this.forgeAttachBtn.classList.toggle('cc-on', !!file);
+		this.forgeAttachClear.hidden = !file;
+	}
+
+	_submitForge() {
+		if (this._forgeBusy) return;
+		const prompt = this.forgePrompt.value.trim();
+		const file = this._forgeFile;
+		if (!prompt && !file) {
+			this.setPropUploadStatus('Describe the item in a few words (or attach a photo).', true);
+			this.forgePrompt.focus();
+			return;
+		}
+		this.h.onForgeProp?.({ prompt, file });
+	}
+
+	/** Lock the forge form while a generation is in flight (one at a time). */
+	setForgeBusy(on) {
+		this._forgeBusy = !!on;
+		if (!this.forgeGo) return;
+		this.forgeGo.disabled = this._forgeBusy;
+		this.forgeGo.textContent = this._forgeBusy ? 'Forging…' : 'Forge';
+		this.forgePrompt.disabled = this._forgeBusy;
+	}
+
+	/** Reset the forge form after a successful generation. */
+	clearForgeForm() {
+		if (!this.forgeRow) return;
+		this.forgePrompt.value = '';
+		this._setForgeFile(null);
 	}
 
 	// One placeable-prop button. Built-in props show their emoji glyph; gallery models
@@ -2413,6 +2577,16 @@ export class CommunityUI {
 	_sendChat() {
 		const text = this.chatInput.value.trim();
 		if (!text) return;
+		// `/forge <prompt>` forges an item without opening the build palette: the
+		// finished prop lands armed for placement, announced by a local system line.
+		const forge = text.match(/^\/forge\s+(.+)/i);
+		if (forge) {
+			this.chatInput.value = '';
+			const prompt = forge[1].trim();
+			this.addChat({ name: 'Forge', text: `Forging "${prompt.slice(0, 80)}"… it will land in your props when ready.`, mine: true });
+			this.h.onForgeProp?.({ prompt, fromChat: true });
+			return;
+		}
 		this.h.onChat(text);
 		this.chatInput.value = '';
 	}
