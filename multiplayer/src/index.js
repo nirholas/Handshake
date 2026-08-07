@@ -15,7 +15,7 @@
 
 import http from 'node:http';
 import express from 'express';
-import { Server } from '@colyseus/core';
+import { Server, matchMaker } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { monitor } from '@colyseus/monitor';
 
@@ -30,7 +30,8 @@ import { blockStore } from './block-store.js';
 import { worldPersistence } from './persistence.js';
 import { flushAllPlayers } from './playerStore.js';
 import { socialHub } from './social-hub.js';
-import { verifyNotifySignature, verifyStageSignature } from './presence-token.js';
+import { verifyNotifySignature, verifyStageSignature, verifyAnnounceSignature } from './presence-token.js';
+import { liveWalkRooms } from './walk-registry.js';
 
 const PORT = Number(process.env.PORT || 2567);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -128,6 +129,78 @@ app.post('/internal/stage', express.json({ limit: '16kb' }), (req, res) => {
 	} catch (err) {
 		console.error('[multiplayer] /internal/stage error:', err?.message || err);
 		return res.status(500).json({ error: 'inject_failed' });
+	}
+});
+
+// Live-event announcement webhook. An operator (scripts/announce-play.mjs in
+// the main repo, holding the same shared secret) broadcasts a message to every
+// player in every live walk_world room on this instance — optionally narrowed
+// to one coin's world. Delivery rides the existing 'notice' channel, which every
+// deployed client already renders as a toast (and newer clients as a banner
+// when a title is present), so announcements need no client version to land.
+// HMAC-signed and timestamp-bound like the other internal webhooks; an unsigned
+// or stale request is rejected before it reaches a room.
+app.post('/internal/announce', express.json({ limit: '16kb' }), (req, res) => {
+	const sig = req.headers['x-announce-signature'];
+	const ts = req.headers['x-announce-timestamp'];
+	const { text, title, detail, coin, durationMs } = req.body || {};
+	if (typeof text !== 'string' || !text.trim()) {
+		return res.status(400).json({ error: 'bad_request' });
+	}
+	if (!verifyAnnounceSignature(req.body || {}, ts, sig)) {
+		return res.status(401).json({ error: 'bad_signature' });
+	}
+	const payload = {
+		kind: 'event',
+		text: text.trim().slice(0, 300),
+		...(typeof title === 'string' && title.trim() ? { title: title.trim().slice(0, 80) } : {}),
+		...(typeof detail === 'string' && detail.trim() ? { detail: detail.trim().slice(0, 200) } : {}),
+		...(Number(durationMs) > 0 ? { durationMs: Math.min(120_000, Number(durationMs)) } : {}),
+	};
+	const rooms = liveWalkRooms(typeof coin === 'string' ? coin.trim() : '');
+	let players = 0;
+	for (const room of rooms) {
+		try {
+			room.broadcast('notice', payload);
+			players += room.clients?.length || 0;
+		} catch (err) {
+			console.warn('[multiplayer] announce broadcast failed:', err?.message || err);
+		}
+	}
+	console.log(`[multiplayer] event announce → ${rooms.length} room(s), ${players} player(s): ${payload.text}`);
+	res.json({ ok: true, rooms: rooms.length, players });
+});
+
+// Public live population. The only aggregate this process publishes without a
+// signature, and deliberately so: it is a count, never an identity. No session
+// ids, no names, no wallets, no positions leave here.
+//
+// It reads the matchmaker's room listing (driver-backed), NOT the in-process
+// walk-registry, so under horizontal scaling (REDIS_URI set) the number covers
+// every instance rather than only the one that served the request. `?coin=<mint>`
+// narrows to one community's worlds, which is what the /event landing page asks
+// for; without it the total spans every live world.
+//
+// The three.ws API proxies this server-side (api/play/population.js), so no CORS
+// header is emitted: a browser never calls it directly.
+app.get('/population', async (req, res) => {
+	const coin = typeof req.query.coin === 'string' ? req.query.coin.trim().slice(0, 128) : '';
+	try {
+		const listings = await matchMaker.query({ name: 'walk_world' });
+		let rooms = 0;
+		let players = 0;
+		for (const room of listings || []) {
+			if (coin && room?.coin !== coin) continue;
+			rooms += 1;
+			players += Number(room?.clients) || 0;
+		}
+		// 5s of edge/CDN caching: the number moves on a human timescale and this
+		// runs on the same process that serves gameplay traffic.
+		res.set('cache-control', 'public, max-age=5');
+		res.json({ ok: true, coin: coin || null, rooms, players });
+	} catch (err) {
+		console.warn('[multiplayer] /population failed:', err?.message || err);
+		res.status(503).json({ ok: false, error: 'unavailable' });
 	}
 });
 
