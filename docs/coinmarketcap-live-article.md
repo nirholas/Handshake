@@ -28,12 +28,13 @@ room.
 Plenty of crypto projects claim an enterprise partnership. Very few can point to a dedicated user
 group on that enterprise's own community platform, and three.ws is, as of today, the only project
 with a standing [group of its own on IBM Community](https://community.ibm.com/community/user/usergroup?CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016).
-That group didn't happen because of a slide deck: three.ws's public X exchanges with IBM (
-[@trythreews](https://x.com/trythreews) and IBM's own accounts) went viral more than once,
-enough that people inside IBM who have nothing to do with the partnership know the project by
-name. [Link the specific viral thread(s) here once identified, rather than asserting virality
-without a citable post.] A meetup that runs 8 AM to 5 PM, held inside the product instead of on a
-call, is what that attention turned into.
+That group didn't happen because of a slide deck: three.ws's public X exchanges with IBM
+([@trythreews](https://x.com/trythreews) and [@IBM](https://x.com/IBM) itself, see
+[here](https://x.com/IBM/status/2061418285896269952) and
+[here](https://x.com/IBM/status/2061488909264040194)) went viral more than once, enough that
+people inside IBM who have nothing to do with the partnership know the project by name. A meetup
+that runs 8 AM to 5 PM, held inside the product instead of on a call, is what that attention turned
+into.
 
 The format says something about both sides. IBM is the definition of enterprise software, and
 three.ws is a browser-native 3D platform built on generative AI and a Solana token. Neither side
@@ -108,7 +109,7 @@ close.
 - **The live IBM integration pages:** [three.ws/ibm/hello](https://three.ws/ibm/hello) (partnership page), [three.ws/ibm/x402-demo](https://three.ws/ibm/x402-demo) (x402 demo).
 - **The open-source IBM connectors:** [`@three-ws/ibm-watsonx-mcp`](https://www.npmjs.com/package/@three-ws/ibm-watsonx-mcp), [`@three-ws/ibm-x402-mcp`](https://www.npmjs.com/package/@three-ws/ibm-x402-mcp) on npm.
 - **The platform and social accounts:** [three.ws](https://three.ws), [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws), [@trythreews](https://x.com/trythreews) on X.
-- **The viral IBM exchange(s):** [add the specific X thread URL(s) here once picked; this is the one claim in this article that needs a citable link before publishing, not just an assertion].
+- **The viral IBM exchange(s) on X:** [posted from @IBM](https://x.com/IBM/status/2061418285896269952), [and again](https://x.com/IBM/status/2061488909264040194).
 
 ---
 
