@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-07",
+			"title": "Agent payments: fresher signatures and a health readout that names the real cause",
+			"summary": "Two reliability fixes for the x402 agent economy on Solana. First, autonomous payments are now signed against a fresh blockhash instead of one fetched at the start of a long batch, which eliminates the class of settlement failures where a payment expired before it could reach the chain; a refused payment also retries with a brand-new blockhash. Second, the platform health readout at /api/healthz now cross-checks failed settlements against the settlement engine's own records, so a deliberate spending pause (the daily fee budget protecting the treasury) is reported as exactly that instead of masquerading as a payment-rail outage. Operators and holders watching platform status now see the true cause and the true rail health at a glance.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-07",
 			"title": "Avatars now save in a clean, neutral stance instead of a frozen animation frame",
 			"summary": "Saving an avatar in the Studio used to capture whatever the idle animation happened to be doing at that exact instant, and freeze it into the model permanently. Because the saved file carries no animation of its own, that one arbitrary frame became the avatar's pose everywhere it appeared: arms tucked in at odd angles, one side sitting differently from the other, and a different result each time you saved the same avatar. Avatars are now saved in their proper neutral pose, which is symmetric and identical on every save, so downloads, animation retargeting and clothing all start from the stance the body was actually built around. Your gallery thumbnail still shows the relaxed idle pose it always did.",
 			"tags": [

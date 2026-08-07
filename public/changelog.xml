@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agent payments: fresher signatures and a health readout that names the real cause</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-07:Agent payments: fresher signatures and a health readout that names the real cause</guid>
+			<pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two reliability fixes for the x402 agent economy on Solana. First, autonomous payments are now signed against a fresh blockhash instead of one fetched at the start of a long batch, which eliminates the class of settlement failures where a payment expired before it could reach the chain; a refused payment also retries with a brand-new blockhash. Second, the platform health readout at /api/healthz now cross-checks failed settlements against the settlement engine's own records, so a deliberate spending pause (the daily fee budget protecting the treasury) is reported as exactly that instead of masquerading as a payment-rail outage. Operators and holders watching platform status now see the true cause and the true rail health at a glance.</description>
+		</item>
+		<item>
 			<title>Avatars now save in a clean, neutral stance instead of a frozen animation frame</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-07:Avatars now save in a clean, neutral stance instead of a frozen animation frame</guid>
