@@ -1,0 +1,155 @@
+/* ── Meetup events (countdown chip, live banner, agenda, photo) ──────────────
+   Shares the coincommunities design tokens; gold (#ffce5c) is the established
+   "event moment" accent (King of the Totem) and marks the meetup the same way. */
+
+#cc-meetup-chip {
+	position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+	z-index: 40;
+	display: flex; align-items: center; gap: 9px;
+	background: var(--cc-panel);
+	border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius);
+	box-shadow: var(--cc-shadow);
+	padding: 7px 12px;
+	backdrop-filter: blur(8px);
+	cursor: pointer;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+	animation: cc-fade 0.25s ease;
+	max-width: calc(100vw - 24px);
+}
+#cc-meetup-chip:hover { border-color: rgba(255, 206, 92, 0.55); box-shadow: var(--cc-shadow), 0 0 18px rgba(255, 206, 92, 0.18); }
+#cc-meetup-chip:active { transform: translateX(-50%) scale(0.98); }
+#cc-meetup-chip:focus-visible { outline: 2px solid #ffce5c; outline-offset: 2px; }
+.cc-meetup-ico { font-size: 15px; line-height: 1; filter: drop-shadow(0 0 6px rgba(255, 206, 92, 0.5)); }
+.cc-meetup-copy { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+.cc-meetup-title {
+	font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+	color: #ffce5c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46vw;
+}
+.cc-meetup-when {
+	font-size: 13px; font-weight: 800; color: var(--cc-text);
+	font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.cc-meetup-when .cc-meetup-live-dot {
+	display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+	background: #ffce5c; margin-right: 6px; vertical-align: 1px;
+	box-shadow: 0 0 8px rgba(255, 206, 92, 0.8);
+	animation: cc-meetup-pulse 1.4s ease-in-out infinite;
+}
+@keyframes cc-meetup-pulse { 50% { opacity: 0.35; } }
+#cc-meetup-chip.cc-meetup-preshow { border-color: rgba(255, 206, 92, 0.45); }
+#cc-meetup-chip.cc-meetup-islive { border-color: rgba(255, 206, 92, 0.6); box-shadow: var(--cc-shadow), 0 0 22px rgba(255, 206, 92, 0.22); }
+
+/* Centre-screen moment flash (event start, segment changes, finale). */
+#cc-meetup-banner {
+	position: fixed; top: 24%; left: 50%; transform: translateX(-50%) scale(0.82);
+	z-index: 200; pointer-events: none; text-align: center;
+	background: linear-gradient(160deg, rgba(40, 32, 8, 0.94), rgba(18, 14, 4, 0.94));
+	border: 1px solid rgba(255, 206, 92, 0.55);
+	color: #fff; padding: 18px 40px; border-radius: 16px;
+	box-shadow: 0 0 50px rgba(255, 206, 92, 0.4);
+	opacity: 0;
+	transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.22, 1.2, 0.36, 1);
+	max-width: min(88vw, 560px);
+}
+#cc-meetup-banner.cc-meetup-banner--show { opacity: 1; transform: translateX(-50%) scale(1); }
+.cc-meetup-banner-ico { font-size: 40px; line-height: 1; filter: drop-shadow(0 0 14px rgba(255, 206, 92, 0.7)); }
+.cc-meetup-banner-title { font-size: 21px; font-weight: 900; letter-spacing: 0.01em; margin-top: 6px; }
+.cc-meetup-banner-sub { font-size: 13.5px; font-weight: 600; color: #ffce5c; margin-top: 4px; }
+
+/* Right-docked agenda drawer. */
+#cc-meetup-panel {
+	position: fixed; top: 0; right: 0; bottom: 0; z-index: 120;
+	width: min(340px, 92vw);
+	display: flex; flex-direction: column;
+	background: var(--cc-panel-solid);
+	border-left: 1px solid var(--cc-edge);
+	box-shadow: var(--cc-shadow);
+	transform: translateX(102%);
+	transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#cc-meetup-panel.cc-meetup-panel--open { transform: translateX(0); }
+.cc-meetup-panel-head {
+	display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+	padding: 16px 16px 12px; border-bottom: 1px solid var(--cc-edge);
+}
+.cc-meetup-panel-title { font-size: 14px; font-weight: 900; color: var(--cc-text); line-height: 1.3; }
+.cc-meetup-panel-sub { font-size: 11.5px; color: var(--cc-dim); margin-top: 3px; line-height: 1.45; }
+.cc-meetup-panel-when { font-size: 11px; font-weight: 700; color: #ffce5c; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.cc-meetup-close {
+	flex: none; width: 26px; height: 26px; border-radius: var(--cc-radius-sm);
+	background: transparent; border: 1px solid var(--cc-edge); color: var(--cc-dim);
+	font-size: 13px; line-height: 1; cursor: pointer;
+	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.cc-meetup-close:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.06); }
+.cc-meetup-close:focus-visible { outline: 2px solid #ffce5c; outline-offset: 1px; }
+
+.cc-meetup-agenda { flex: 1; overflow-y: auto; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.cc-meetup-seg {
+	display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: start;
+	padding: 9px 10px; border-radius: var(--cc-radius);
+	border: 1px solid transparent;
+	transition: background 0.18s ease, border-color 0.18s ease;
+}
+.cc-meetup-seg-ico { font-size: 16px; line-height: 1.2; text-align: center; }
+.cc-meetup-seg-title { font-size: 12.5px; font-weight: 700; color: var(--cc-text); line-height: 1.35; }
+.cc-meetup-seg-detail { font-size: 11px; color: var(--cc-dim); margin-top: 2px; line-height: 1.45; }
+.cc-meetup-seg-at { font-size: 10.5px; font-weight: 700; color: var(--cc-faint); font-variant-numeric: tabular-nums; padding-top: 1px; }
+.cc-meetup-seg--done { opacity: 0.45; }
+.cc-meetup-seg--active {
+	background: rgba(255, 206, 92, 0.1);
+	border-color: rgba(255, 206, 92, 0.35);
+}
+.cc-meetup-seg--active .cc-meetup-seg-at { color: #ffce5c; }
+
+.cc-meetup-panel-foot { border-top: 1px solid var(--cc-edge); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+/* $THREE pulse row: price + 24h change, real data or hidden. */
+.cc-meetup-pulse {
+	display: flex; align-items: center; justify-content: space-between; gap: 8px;
+	font-size: 11.5px; color: var(--cc-dim);
+	padding: 8px 10px; border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+}
+.cc-meetup-pulse b { color: var(--cc-text); font-weight: 800; font-variant-numeric: tabular-nums; }
+.cc-meetup-pulse .cc-meetup-up { color: #8de6a8; font-weight: 800; }
+.cc-meetup-pulse .cc-meetup-down { color: #ff6b6b; font-weight: 800; }
+
+.cc-meetup-photo-btn, .cc-meetup-buy-btn {
+	display: flex; align-items: center; justify-content: center; gap: 8px;
+	width: 100%; padding: 9px 12px; border-radius: var(--cc-radius);
+	font-size: 12px; font-weight: 800; letter-spacing: 0.04em;
+	cursor: pointer; transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.cc-meetup-photo-btn {
+	background: rgba(255, 255, 255, 0.06); color: var(--cc-text);
+	border: 1px solid var(--cc-edge);
+}
+.cc-meetup-photo-btn:hover { background: rgba(255, 255, 255, 0.11); border-color: var(--cc-edge-hi); }
+.cc-meetup-photo-btn:active { transform: scale(0.98); }
+.cc-meetup-photo-btn:focus-visible, .cc-meetup-buy-btn:focus-visible { outline: 2px solid #ffce5c; outline-offset: 2px; }
+.cc-meetup-buy-btn {
+	background: linear-gradient(160deg, #ffe9ad, #ffce5c); color: #241a02;
+	border: 1px solid rgba(255, 206, 92, 0.8);
+	box-shadow: 0 0 16px rgba(255, 206, 92, 0.25);
+}
+.cc-meetup-buy-btn:hover { box-shadow: 0 0 26px rgba(255, 206, 92, 0.45); }
+.cc-meetup-buy-btn:active { transform: scale(0.98); }
+
+/* Photo flash + confetti burst layer. */
+#cc-meetup-flash {
+	position: fixed; inset: 0; z-index: 400; pointer-events: none;
+	background: #fff; opacity: 0; transition: opacity 0.5s ease;
+}
+#cc-meetup-flash.cc-meetup-flash--on { opacity: 0.85; transition: none; }
+
+@media (max-width: 640px) {
+	.cc-meetup-title { max-width: 38vw; }
+	#cc-meetup-banner { padding: 14px 26px; }
+	.cc-meetup-banner-title { font-size: 17px; }
+	.cc-meetup-banner-ico { font-size: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.cc-meetup-when .cc-meetup-live-dot { animation: none; }
+	#cc-meetup-panel { transition: none; }
+}

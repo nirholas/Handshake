@@ -1,0 +1,19 @@
+{
+	"comment": "Scheduled live events for /play. First event with a valid startsAt is the active one. Times are ISO-8601 UTC. Edit + redeploy to reschedule; ?meetup=<ISO> overrides locally for previewing.",
+	"events": [
+		{
+			"id": "three-first-meetup-2026-08-07",
+			"title": "$THREE First Holders Meetup",
+			"subtitle": "The first live gathering in the three.ws world",
+			"startsAt": "2026-08-07T17:00:00Z",
+			"durationMin": 90,
+			"agenda": [
+				{ "atMin": 0, "title": "Doors open in the plaza", "detail": "Say hi in chat, show off your fit, grab a commemorative photo", "icon": "👋" },
+				{ "atMin": 15, "title": "King of the Totem showdown", "detail": "Hold the totem to be crowned. Winner takes the round", "icon": "👑" },
+				{ "atMin": 35, "title": "Fortune's Folly wheel hour", "detail": "Free spin at the plaza wheel, prizes on every wedge", "icon": "🎡" },
+				{ "atMin": 55, "title": "Plaza dance-off", "detail": "Q opens emotes. Best moves get screenshotted", "icon": "🕺" },
+				{ "atMin": 75, "title": "Fireworks finale", "detail": "Look up. Grab your event photo while the sky is lit", "icon": "🎆" }
+			]
+		}
+	]
+}
