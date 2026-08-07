@@ -36,6 +36,7 @@
  */
 
 import { apiFetch } from '../api.js';
+import { friendsClient } from '../friends.js';
 import { reputationPanelEl, ensureReputationStyles } from './agent-reputation.js';
 import { shortAddress, formatWalletUsd } from './wallet-format.js';
 import { log } from './log.js';
@@ -43,11 +44,13 @@ import { log } from './log.js';
 const STYLE_ID = 'tws-avatar-inspector-styles';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SOL_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const USERNAME_RE = /^[a-z0-9_-]{3,30}$/;
 
 const KIND_LABEL = {
 	self: 'You',
 	peer: 'Player',
 	npc: 'Townsperson',
+	citizen: 'Citizen',
 };
 
 const esc = (s) =>
@@ -99,10 +102,22 @@ export function closeAvatarInspector() {
  * @param {string}  [subject.agentId]   three.ws agent UUID this avatar pilots
  * @param {string}  [subject.wallet]    verified Solana address (used when no agentId)
  * @param {string}  [subject.avatarUrl] GLB url — shown as an "Avatar model" fact row
+ * @param {string}  [subject.bio]       caller-supplied bio paragraph (used when the
+ *                                      subject has no registered agent to load one from)
+ * @param {string}  [subject.username]  verified three.ws username (W10) — only pass a
+ *                                      value the server verified (e.g. off the signed
+ *                                      presence ticket via the player schema); it
+ *                                      unlocks the real profile section: follow,
+ *                                      friend/DM, and the creations shelf
  * @param {Array}   [subject.facts]     [{label, value, href?}] world-specific rows
+ * @param {Array}   [subject.actions]   [{label, onClick, primary?}] footer buttons the
+ *                                      host world wires (e.g. "Talk 1-on-1"); rendered
+ *                                      before the profile links
  * @param {object} [opts]
  * @param {Element} [opts.trigger]      element to restore focus to on close
  * @param {Function}[opts.onClose]
+ * @param {Function}[opts.onOpenDM]     (userId) → open the host world's DM surface on
+ *                                      this thread; without it "Message" links to /friends
  */
 export function openAvatarInspector(subject = {}, opts = {}) {
 	ensureStyles();
@@ -110,7 +125,10 @@ export function openAvatarInspector(subject = {}, opts = {}) {
 
 	const agentId = UUID_RE.test(String(subject.agentId || '')) ? String(subject.agentId) : '';
 	const wallet = SOL_ADDR_RE.test(String(subject.wallet || '')) ? String(subject.wallet) : '';
-	const subjectKey = `${subject.kind || ''}:${subject.name || ''}:${agentId}:${wallet}`;
+	const username = USERNAME_RE.test(String(subject.username || '').toLowerCase())
+		? String(subject.username).toLowerCase()
+		: '';
+	const subjectKey = `${subject.kind || ''}:${subject.name || ''}:${agentId}:${wallet}:${username}`;
 
 	// Same avatar again (the I key, a second click) → toggle closed.
 	if (_panel && _panel.subjectKey === subjectKey) {
@@ -139,6 +157,11 @@ export function openAvatarInspector(subject = {}, opts = {}) {
 			<button type="button" class="avi-close" aria-label="Close inspector">✕</button>
 		</header>
 		<div class="avi-body">
+			${username ? `
+			<section class="avi-section" data-avi="profile">
+				<h3 class="avi-h">three.ws profile</h3>
+				<div class="avi-section-body"></div>
+			</section>` : ''}
 			<section class="avi-section" data-avi="wallet">
 				<h3 class="avi-h">Wallet</h3>
 				<div class="avi-section-body"></div>
@@ -183,10 +206,17 @@ export function openAvatarInspector(subject = {}, opts = {}) {
 
 	root.querySelector('.avi-close').focus({ preventScroll: true });
 
+	if (username) {
+		// Verified platform identity: surface the @handle under the display name
+		// immediately — the profile section fills in the rest as it loads.
+		const nameEl = root.querySelector('.avi-name');
+		nameEl?.insertAdjacentHTML('afterend', `<div class="avi-subname">@${esc(username)}</div>`);
+		renderProfile(root, { username, kind, onOpenDM: opts.onOpenDM });
+	}
 	renderAbout(root, subject, { agentId });
 	renderWallet(root, { agentId, wallet, kind });
 	renderReputation(root, { agentId, kind });
-	renderFooter(root, { agentId, wallet });
+	renderFooter(root, { agentId, wallet, username, actions: subject.actions });
 
 	return { close: closeAvatarInspector };
 }
@@ -223,6 +253,213 @@ function errorState(message, retry) {
 	return el;
 }
 
+// three.ws profile (W10): the verified platform account behind an avatar.
+// Only rendered for a username the SERVER verified (signed presence ticket →
+// player schema), never a client-claimed handle. Reads the same endpoints the
+// /u/:username page reads, and acts through the same follow + friends APIs the
+// profile page and friends drawer use — so a follow made here is the same edge
+// everywhere on the platform.
+async function renderProfile(root, { username, kind, onOpenDM }) {
+	const body = sectionBody(root, 'profile');
+	if (!body) return;
+
+	const CREATIONS_SHOWN = 5;
+	const TYPE_ICON = { world: '⛰', restyle: '✦', model: '◎' };
+
+	const load = async () => {
+		body.innerHTML = skeleton(3);
+		let prof = null;
+		let follow = null;
+		try {
+			// The friends graph resolves in parallel with the profile so the action
+			// row can tell "Message" from "Add friend" on first paint. refresh() is
+			// a no-op for anonymous viewers and dedupes against live panel polling.
+			const fc = friendsClient();
+			const [profRes, followRes] = await Promise.all([
+				apiFetch(`/api/users/${encodeURIComponent(username)}`, { allowAnonymous: true }),
+				apiFetch(`/api/users/${encodeURIComponent(username)}/follow`, { allowAnonymous: true }),
+				fc.loaded ? Promise.resolve() : fc.refresh(),
+			]);
+			if (!profRes.ok) throw new Error(`profile ${profRes.status}`);
+			prof = await profRes.json();
+			follow = followRes.ok ? await followRes.json() : null;
+		} catch (err) {
+			if (!document.contains(body)) return;
+			log.warn('[avatar-inspector] profile failed', err?.message);
+			body.innerHTML = '';
+			body.appendChild(errorState('Could not load this player’s three.ws profile.', load));
+			return;
+		}
+		if (!document.contains(body)) return;
+		paint(prof, follow);
+	};
+
+	const paint = (prof, follow) => {
+		const user = prof?.user || {};
+		const stats = prof?.stats || {};
+		const creations = Array.isArray(prof?.creations) ? prof.creations : [];
+		const creationsTotal = Number(stats.creations) || creations.length;
+		const coinsLaunched = Number(stats.coins) || 0;
+
+		// Upgrade the monogram to the account's real profile picture.
+		if (user.avatar_url) {
+			const mono = root.querySelector('.avi-monogram');
+			if (mono && !mono.querySelector('img')) {
+				mono.innerHTML = `<img src="${esc(user.avatar_url)}" alt="" loading="lazy" />`;
+			}
+		}
+
+		const metaBits = [
+			user.location ? esc(user.location) : '',
+			user.created_at
+				? `joined ${new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })}`
+				: '',
+		].filter(Boolean);
+
+		const shown = creations.slice(0, CREATIONS_SHOWN);
+		const creationRow = (c) => {
+			const date = c.createdAt
+				? new Date(c.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+				: '';
+			return (
+				`<a class="avi-creation" href="${esc(c.viewerUrl || '#')}" target="_blank" rel="noopener noreferrer">` +
+				`<span class="avi-creation-ico" aria-hidden="true">${TYPE_ICON[c.type] || TYPE_ICON.model}</span>` +
+				`<span class="avi-creation-title">${esc((c.title || 'Untitled').slice(0, 60))}</span>` +
+				`<span class="avi-creation-date">${esc(date)}</span></a>`
+			);
+		};
+
+		body.innerHTML =
+			(user.bio ? `<p class="avi-bio">${esc(user.bio)}</p>` : '') +
+			`<div class="avi-profile-counts">
+				<span><b data-avi-followers>${esc(fmtAmount(follow?.followers_count ?? 0))}</b> followers</span>
+				<span><b>${esc(fmtAmount(follow?.following_count ?? 0))}</b> following</span>
+				<span><b>${esc(fmtAmount(creationsTotal))}</b> creation${creationsTotal === 1 ? '' : 's'}</span>
+			</div>` +
+			(metaBits.length ? `<p class="avi-note">${metaBits.join(' · ')}</p>` : '') +
+			`<div class="avi-profile-actions"></div>` +
+			(shown.length
+				? `<div class="avi-creations">${shown.map(creationRow).join('')}</div>` +
+					(creationsTotal > shown.length
+						? `<a class="avi-more" href="/u/${encodeURIComponent(username)}">All ${esc(fmtAmount(creationsTotal))} creations →</a>`
+						: '')
+				: `<p class="avi-note">No public creations yet.</p>`) +
+			(coinsLaunched
+				? `<div class="avi-fact"><span class="avi-fact-l">Coins launched</span><span class="avi-fact-v"><a href="/u/${encodeURIComponent(username)}">${esc(fmtAmount(coinsLaunched))}</a></span></div>`
+				: '');
+
+		if (kind !== 'self') {
+			renderProfileActions(body.querySelector('.avi-profile-actions'), {
+				username,
+				userId: user.id || '',
+				following: !!follow?.following,
+				followedBy: !!follow?.followed_by,
+				canFollow: follow != null,
+				onOpenDM,
+			});
+		} else {
+			body.querySelector('.avi-profile-actions')?.remove();
+		}
+	};
+
+	load();
+}
+
+// The action row on another player's profile card: follow/unfollow plus the
+// right friends verb for the current relationship (Message when already
+// friends, Accept when they asked first, Add friend otherwise). All state
+// transitions re-render this row only, never the whole card.
+function renderProfileActions(row, { username, userId, following, followedBy, canFollow, onOpenDM }) {
+	if (!row) return;
+
+	let isFollowing = following;
+	let busy = false;
+
+	const render = () => {
+		row.innerHTML = '';
+
+		// ── follow ──
+		const followBtn = document.createElement('button');
+		followBtn.type = 'button';
+		followBtn.className = isFollowing ? 'avi-act avi-act-ghost' : 'avi-act';
+		followBtn.textContent = isFollowing ? 'Following' : followedBy ? 'Follow back' : 'Follow';
+		followBtn.disabled = busy || !canFollow;
+		if (!canFollow) followBtn.title = 'Follow is unavailable right now';
+		followBtn.addEventListener('click', async () => {
+			if (busy) return;
+			busy = true;
+			render();
+			try {
+				const res = await apiFetch(`/api/users/${encodeURIComponent(username)}/follow`, {
+					method: isFollowing ? 'DELETE' : 'POST',
+					allowAnonymous: true,
+				});
+				if (res.status === 401) {
+					// Signed out: swap the row for an honest sign-in path instead of
+					// yanking the player out of the world with a hard redirect.
+					row.innerHTML = `<a class="avi-act" href="/login?next=${encodeURIComponent(`/u/${username}`)}">Sign in to follow</a>`;
+					return;
+				}
+				if (!res.ok) throw new Error(`follow ${res.status}`);
+				const data = await res.json();
+				isFollowing = !!data.following;
+				const followersEl = row.closest('.avi-section-body')?.querySelector('[data-avi-followers]');
+				if (followersEl && Number.isFinite(data.followers_count)) followersEl.textContent = fmtAmount(data.followers_count);
+			} catch (err) {
+				log.warn('[avatar-inspector] follow toggle failed', err?.message);
+			} finally {
+				busy = false;
+				if (document.contains(row)) render();
+			}
+		});
+		row.appendChild(followBtn);
+
+		// ── friends / DM ──
+		const fc = friendsClient();
+		if (fc.loadError === 'signin' || !userId) {
+			return; // anonymous viewer (or profile without an id): follow row handles the sign-in story
+		}
+		const isFriend = !!fc.friend(userId);
+		const incoming = fc.incoming.some((r) => r.id === userId);
+		const outgoing = fc.outgoing.some((r) => r.id === userId);
+
+		const friendBtn = document.createElement('button');
+		friendBtn.type = 'button';
+		if (isFriend) {
+			friendBtn.className = 'avi-act';
+			friendBtn.textContent = 'Message';
+			friendBtn.addEventListener('click', () => {
+				closeAvatarInspector();
+				if (typeof onOpenDM === 'function') onOpenDM(userId);
+				else window.location.href = '/friends';
+			});
+		} else if (outgoing) {
+			friendBtn.className = 'avi-act avi-act-ghost';
+			friendBtn.textContent = 'Request sent';
+			friendBtn.disabled = true;
+		} else if (incoming) {
+			friendBtn.className = 'avi-act';
+			friendBtn.textContent = 'Accept friend request';
+			friendBtn.addEventListener('click', async () => {
+				friendBtn.disabled = true;
+				try { await fc.accept(userId); } catch (err) { log.warn('[avatar-inspector] accept failed', err?.message); }
+				if (document.contains(row)) render();
+			});
+		} else {
+			friendBtn.className = 'avi-act avi-act-ghost';
+			friendBtn.textContent = 'Add friend';
+			friendBtn.addEventListener('click', async () => {
+				friendBtn.disabled = true;
+				try { await fc.sendRequest(userId); } catch (err) { log.warn('[avatar-inspector] friend request failed', err?.message); }
+				if (document.contains(row)) render();
+			});
+		}
+		row.appendChild(friendBtn);
+	};
+
+	render();
+}
+
 // About: agent bio + skills when piloting an agent, plus the world-supplied facts.
 async function renderAbout(root, subject, { agentId }) {
 	const body = sectionBody(root, 'about');
@@ -240,6 +477,10 @@ async function renderAbout(root, subject, { agentId }) {
 			.join('');
 
 	const baseFacts = Array.isArray(subject.facts) ? [...subject.facts] : [];
+	// Caller-supplied bio: the subject's own words when it has no agent profile
+	// to load one from (a gallery citizen's description, a world lore line).
+	// The agent path below overwrites this with the live profile once loaded.
+	const bioHtml = subject.bio ? `<p class="avi-bio">${esc(subject.bio)}</p>` : '';
 	// The GLB this avatar is wearing — a real, linkable fact of the encounter.
 	const avatarUrl = String(subject.avatarUrl || '');
 	if (/^(https?:\/\/|\/)[^\s]+\.(glb|gltf|vrm)(\?|$)/i.test(avatarUrl)) {
@@ -247,9 +488,9 @@ async function renderAbout(root, subject, { agentId }) {
 		baseFacts.push({ label: 'Avatar model', value: file, href: avatarUrl });
 	}
 	const load = async () => {
-		body.innerHTML = factRows(baseFacts) + (agentId ? skeleton(2) : '');
+		body.innerHTML = bioHtml + factRows(baseFacts) + (agentId ? skeleton(2) : '');
 		if (!agentId) {
-			if (!baseFacts.length) {
+			if (!baseFacts.length && !bioHtml) {
 				body.innerHTML = emptyState(
 					'Nothing else on file',
 					'This avatar is not piloting a registered three.ws agent, so there is no public profile to show.',
@@ -290,7 +531,7 @@ async function renderAbout(root, subject, { agentId }) {
 		} catch (err) {
 			if (!document.contains(body)) return;
 			log.warn('[avatar-inspector] agent profile failed', err?.message);
-			body.innerHTML = factRows(baseFacts);
+			body.innerHTML = bioHtml + factRows(baseFacts);
 			body.appendChild(errorState('Could not load this agent’s profile.', load));
 		}
 	};
@@ -440,17 +681,40 @@ function renderReputation(root, { agentId, kind }) {
 	);
 }
 
-function renderFooter(root, { agentId, wallet }) {
+function renderFooter(root, { agentId, wallet, username, actions }) {
 	const foot = root.querySelector('.avi-foot');
 	if (!foot) return;
+	const hasActions = Array.isArray(actions) && actions.some((a) => a && a.label && typeof a.onClick === 'function');
 	const links = [];
-	if (agentId) {
-		links.push(`<a class="avi-cta" href="/agent/${encodeURIComponent(agentId)}">Full profile</a>`);
-		links.push(`<a class="avi-cta avi-cta-ghost" href="/agent/${encodeURIComponent(agentId)}/wallet">Wallet hub</a>`);
+	if (username) {
+		// A verified platform account leads with its real profile page; the agent
+		// profile (when also present) steps back to a ghost link.
+		links.push(`<a class="avi-cta${hasActions ? ' avi-cta-ghost' : ''}" href="/u/${encodeURIComponent(username)}">View profile</a>`);
+		if (agentId) links.push(`<a class="avi-cta avi-cta-ghost" href="/agent/${encodeURIComponent(agentId)}">Agent profile</a>`);
+	} else if (agentId) {
+		// When a world action (Talk 1-on-1) leads the footer, the links step back
+		// to ghost style and the wallet hub folds into the full profile page.
+		links.push(`<a class="avi-cta${hasActions ? ' avi-cta-ghost' : ''}" href="/agent/${encodeURIComponent(agentId)}">Full profile</a>`);
+		if (!hasActions) links.push(`<a class="avi-cta avi-cta-ghost" href="/agent/${encodeURIComponent(agentId)}/wallet">Wallet hub</a>`);
 	} else if (wallet) {
 		links.push(`<a class="avi-cta avi-cta-ghost" href="${esc(explorerAddr(wallet))}" target="_blank" rel="noopener noreferrer">View on explorer</a>`);
 	}
-	foot.innerHTML = links.join('') || `<span class="avi-foot-hint">Esc closes · I inspects the nearest avatar</span>`;
+	foot.innerHTML = links.join('') || '';
+	// World-wired action buttons (e.g. "Talk 1-on-1") lead the footer. They close
+	// the panel first so the action's own surface (a chat panel) takes the stage.
+	const list = Array.isArray(actions) ? actions.filter((a) => a && a.label && typeof a.onClick === 'function') : [];
+	for (const action of list.reverse()) {
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = action.primary ? 'avi-cta' : 'avi-cta avi-cta-ghost';
+		btn.textContent = action.label;
+		btn.addEventListener('click', () => {
+			closeAvatarInspector();
+			try { action.onClick(); } catch (e) { log.warn('[avatar-inspector] action failed', e?.message); }
+		});
+		foot.prepend(btn);
+	}
+	if (!foot.childNodes.length) foot.innerHTML = `<span class="avi-foot-hint">Esc closes · I inspects the nearest avatar</span>`;
 }
 
 // ── styles ───────────────────────────────────────────────────────────────────
@@ -520,6 +784,27 @@ function ensureStyles() {
 .avi-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
 .avi-links a{font-size:12.5px;font-weight:600;color:var(--accent,#c4b5fd);text-decoration:none}
 .avi-links a:hover,.avi-links a:focus-visible{text-decoration:underline;text-underline-offset:2px}
+.avi-profile-counts{display:flex;gap:14px;flex-wrap:wrap;margin:2px 0 6px;font-size:12.5px;color:var(--ink-soft,#9a9aa3)}
+.avi-profile-counts b{color:var(--text,#e7e7ea);font-weight:700;margin-right:3px}
+.avi-profile-actions{display:flex;gap:8px;margin:8px 0 10px;flex-wrap:wrap}
+.avi-profile-actions:empty{display:none}
+.avi-act{flex:1;min-width:110px;text-align:center;font-size:12.5px;font-weight:650;padding:7px 10px;border-radius:9px;cursor:pointer;
+	border:1px solid transparent;background:var(--accent,#c4b5fd);color:#0b0b0b;text-decoration:none;transition:filter .15s ease,background .15s ease,color .15s ease}
+.avi-act:hover,.avi-act:focus-visible{filter:brightness(1.08)}
+.avi-act:focus-visible{outline:2px solid var(--text,#e7e7ea);outline-offset:1px}
+.avi-act:disabled{opacity:.55;cursor:default;filter:none}
+.avi-act-ghost{background:transparent;color:var(--text,#e7e7ea);border-color:var(--border,#26262b)}
+.avi-act-ghost:hover:not(:disabled),.avi-act-ghost:focus-visible{background:rgba(255,255,255,.07)}
+.avi-creations{margin-top:8px;border:1px solid color-mix(in srgb, var(--border,#26262b) 70%, transparent);border-radius:10px;overflow:hidden}
+.avi-creation{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12.5px;color:inherit;text-decoration:none;
+	transition:background .15s ease}
+.avi-creation:nth-child(odd){background:rgba(255,255,255,.025)}
+.avi-creation:hover,.avi-creation:focus-visible{background:rgba(255,255,255,.07)}
+.avi-creation-ico{flex:0 0 auto;color:var(--accent,#c4b5fd)}
+.avi-creation-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.avi-creation-date{flex:0 0 auto;color:var(--ink-soft,#9a9aa3);font-size:11.5px}
+.avi-more{display:inline-block;margin-top:8px;font-size:12.5px;font-weight:600;color:var(--accent,#c4b5fd);text-decoration:none}
+.avi-more:hover,.avi-more:focus-visible{text-decoration:underline;text-underline-offset:2px}
 .avi-error{margin-top:8px;padding:10px 12px;border:1px solid color-mix(in srgb, #f87171 40%, transparent);border-radius:10px}
 .avi-error p{margin:0 0 8px;font-size:12.5px;color:var(--ink-soft,#c2c2ca)}
 .avi-retry{font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;cursor:pointer;

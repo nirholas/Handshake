@@ -161,7 +161,7 @@ export function isChatPanelOpen() { return !!openPanel; }
 
 function closeChat() {
 	if (!openPanel) return;
-	const { overlay, onKey, opener, abort } = openPanel;
+	const { overlay, onKey, opener, abort, onClose } = openPanel;
 	abort?.abort();
 	document.removeEventListener('keydown', onKey, true);
 	overlay.classList.remove('is-in');
@@ -169,13 +169,16 @@ function closeChat() {
 	setTimeout(() => node.remove(), 180);
 	openPanel = null;
 	if (opener && typeof opener.focus === 'function') opener.focus();
+	try { onClose?.(); } catch { /* caller cleanup failed; the panel is gone regardless */ }
 }
 
 // Open a conversation with `npc`. Opts:
 //   serviceId  links to a SERVICES counter (vendors)
 //   persona    the character voice baked into the system prompt
 //   greeting   the line already spoken in-world (seeds the log + prompt)
-export function openChat(npc, { ui, serviceId, persona, greeting, world } = {}) {
+//   role       header sub-label override (defaults to the townsperson label)
+//   onClose    called once when the panel closes, however it closes
+export function openChat(npc, { ui, serviceId, persona, greeting, world, role, onClose } = {}) {
 	closeChat();
 	const svc = serviceId ? SERVICES[serviceId] : null;
 
@@ -193,7 +196,7 @@ export function openChat(npc, { ui, serviceId, persona, greeting, world } = {}) 
 	overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) closeChat(); });
 
 	// Header — who you're talking to + the model driving them.
-	const roleLabel = svc ? `${svc.merchant}` : 'Townsperson · three.ws';
+	const roleLabel = svc ? `${svc.merchant}` : (role || 'Townsperson · three.ws');
 	const modelSelect = el('select', { class: 'npc-chat-model', 'aria-label': 'Model' }, [
 		el('option', { value: provider }, ['Loading models…']),
 	]);
@@ -344,7 +347,7 @@ export function openChat(npc, { ui, serviceId, persona, greeting, world } = {}) 
 	};
 	document.addEventListener('keydown', onKey, true);
 	document.body.appendChild(overlay);
-	openPanel = { overlay, onKey, opener, abort };
+	openPanel = { overlay, onKey, opener, abort, onClose };
 	requestAnimationFrame(() => {
 		overlay.classList.add('is-in');
 		input.focus();

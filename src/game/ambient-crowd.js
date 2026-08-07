@@ -18,10 +18,10 @@ import { getMeshoptDecoder } from '../viewer/internal.js';
 import { Box3, Mesh, CapsuleGeometry, SphereGeometry, MeshStandardMaterial } from 'three';
 import { AnimationManager } from '../animation-manager.js';
 import { detectProfile } from '../club-perf.js';
+import { loadCitizenPool, isCitizen, openCitizenProfile } from './npc/citizens.js';
 
 const AVATAR_DEFAULT = '/avatars/default.glb';
 const MANIFEST_URL = '/animations/manifest.json';
-const GALLERY_URL = '/api/avatars/public?limit=96'; // public avatar gallery — a broad pool so each wanderer is a distinct community model
 const CLIP_IDLE = 'idle';
 const CLIP_WALK = 'av-walk-feminine';
 const WORLD_RADIUS = 54;       // a touch inside the plaza edge
@@ -98,24 +98,17 @@ async function loadManifest() {
 }
 
 // Pull a varied set of real avatars from the public gallery so the crowd reads as
-// a living mix of community models rather than one repeated default. Only models
-// whose published size fits this device's per-model budget make the pool; an
-// entry with no size is skipped rather than gambled on, since one 24 MB draw is
-// enough to end a mobile session. Settles to an empty array on failure; each
-// wanderer then falls back to AVATAR_DEFAULT.
+// a living mix of community models rather than one repeated default. The shared
+// citizen pool (citizens.js) supplies full records, so each wanderer keeps the
+// identity of the avatar it wears: its gallery name, bio, and the registered
+// agent behind it. Only models whose published size fits this device's
+// per-model budget make the pool; an entry with no size is skipped rather than
+// gambled on, since one 24 MB draw is enough to end a mobile session. Settles
+// to an empty array on failure; each wanderer then falls back to AVATAR_DEFAULT.
 async function loadAvatarPool() {
 	if (_avatars) return;
-	let picks = [];
-	try {
-		const r = await fetch(GALLERY_URL, { headers: { accept: 'application/json' } });
-		if (r.ok) {
-			const { avatars } = await r.json();
-			picks = (avatars || [])
-				.map((a) => ({ url: a.model_url || a.base_model_url, bytes: Number(a.size_bytes) || 0 }))
-				.filter((p) => p.url && p.bytes > 0 && p.bytes <= BUDGET.maxModelBytes);
-		}
-	} catch { /* default-avatar fallback below */ }
-	_avatars = picks;
+	const records = await loadCitizenPool();
+	_avatars = records.filter((p) => p.url && p.bytes > 0 && p.bytes <= BUDGET.maxModelBytes);
 }
 
 // Fetch a model once and hand every later wanderer a clone of it. `bytes` is the
@@ -196,8 +189,14 @@ async function playEmote(anim, motion) {
 }
 
 class Wanderer {
-	constructor(scene, name, avatarPick) {
-		this.name = name;
+	constructor(scene, name, avatarPick, onInspect) {
+		// A wanderer wearing a named gallery avatar IS that citizen: it carries the
+		// avatar's real name and identity, and its nameplate opens the profile.
+		// Only the nameless (default-avatar or anonymous-model) wanderers keep the
+		// decorative crowd names.
+		this.record = isCitizen(avatarPick) ? avatarPick : null;
+		this.name = this.record ? this.record.name : name;
+		this.held = false;
 		this.rig = new Group();
 		this.anim = new AnimationManager();
 		this.height = 1.7;
@@ -210,7 +209,22 @@ class Wanderer {
 
 		this.label = document.createElement('div');
 		this.label.className = 'cc-label';
-		this.label.textContent = name;
+		this.label.textContent = this.name;
+		if (this.record) {
+			this.citizen = {
+				record: this.record,
+				name: this.name,
+				say: (t) => this.say(t),
+				hold: () => { this.held = true; this._setMotion('idle'); },
+				release: () => { this.held = false; },
+			};
+			// .cc-label is pointer-events:none globally; re-enable for this one, the
+			// same way peer nameplates do, so the name itself is the tap target.
+			this.label.style.pointerEvents = 'auto';
+			this.label.style.cursor = 'pointer';
+			this.label.title = `Meet ${this.name}`;
+			this.label.addEventListener('click', (e) => { e.stopPropagation(); onInspect?.(this); });
+		}
 		document.body.appendChild(this.label);
 
 		this.bubble = null; this._bubbleTimer = null;
@@ -227,6 +241,7 @@ class Wanderer {
 		this.anim.crossfadeTo(m === 'walk' ? CLIP_WALK : CLIP_IDLE, 0.2);
 	}
 	say(text, onChat) {
+		if (this._disposed) return; // churned away mid-conversation; the chat panel outlives the body
 		if (this.bubble) this.bubble.remove();
 		this.bubble = document.createElement('div');
 		this.bubble.className = 'cc-bubble';
@@ -236,7 +251,23 @@ class Wanderer {
 		this._bubbleTimer = setTimeout(() => { this.bubble?.remove(); this.bubble = null; }, 4500);
 		onChat?.(this.name, text);
 	}
-	update(dt, onChat) {
+	update(dt, onChat, player) {
+		// Held for a conversation: stand still, face whoever stopped to talk, and
+		// keep quiet (the chat panel drives the speech bubble now).
+		if (this.held) {
+			this._dest = null;
+			this._wait = 1 + Math.random() * 2;
+			if (player) {
+				const want = Math.atan2(player.x - this.rig.position.x, player.z - this.rig.position.z);
+				let d = want - this.yaw;
+				while (d > Math.PI) d -= Math.PI * 2;
+				while (d < -Math.PI) d += Math.PI * 2;
+				this.yaw += d * Math.min(1, dt * 6);
+				this.rig.rotation.y = this.yaw;
+			}
+			this.anim.update(dt);
+			return;
+		}
 		this._sayIn -= dt;
 		if (this._sayIn <= 0) { this._sayIn = 12 + Math.random() * 26; this.say(LINES[(Math.random() * LINES.length) | 0], onChat); }
 		this._emoteIn -= dt;
@@ -268,6 +299,7 @@ class Wanderer {
 		this.anim.update(dt);
 	}
 	dispose() {
+		this._disposed = true;
 		this.scene.remove(this.rig);
 		this.rig.clear();
 		// Drop the mixer + its bound clip actions. The clips themselves are shared
@@ -307,15 +339,31 @@ class AmbientCrowd {
 		if (!_avatars?.length) return null;
 		if (_spentBytes >= BUDGET.sessionBytes) {
 			const resident = [..._templates.keys()];
-			return resident.length ? { url: resident[(Math.random() * resident.length) | 0], bytes: 0 } : null;
+			if (!resident.length) return null;
+			const url = resident[(Math.random() * resident.length) | 0];
+			// Keep the identity riding the resident model: same record, zero new
+			// bytes charged (the download already happened this visit).
+			const rec = _avatars.find((p) => p.url === url);
+			return rec ? { ...rec, bytes: 0 } : { url, bytes: 0 };
 		}
 		if (!this._avatarBag.length) this._avatarBag = [..._avatars];
 		const i = (Math.random() * this._avatarBag.length) | 0;
 		return this._avatarBag.splice(i, 1)[0];
 	}
+	// Open the citizen profile card for a wanderer: the real agent behind the
+	// gallery avatar it wears, with a "Talk 1-on-1" into the live NPC chat.
+	_inspect(w) {
+		if (!w.citizen) return;
+		const coin = this.cc.coin || {};
+		openCitizenProfile(w.citizen, {
+			world: { mint: coin.mint, name: coin.name, symbol: coin.symbol },
+			ui: this.cc.ui,
+			trigger: w.label,
+		});
+	}
 	sync(realCount) {
 		const want = Math.max(0, BUDGET.count - (realCount | 0));
-		while (this.list.length < want) this.list.push(new Wanderer(this.cc.scene, this._takeName(), this._takeAvatar()));
+		while (this.list.length < want) this.list.push(new Wanderer(this.cc.scene, this._takeName(), this._takeAvatar(), (w) => this._inspect(w)));
 		while (this.list.length > want) this.list.pop().dispose();
 		// The HUD's online count reports REAL players only (self + live peers).
 		// Padding it with the decorative crowd was a lie a livestream can catch in
@@ -332,7 +380,7 @@ class AmbientCrowd {
 			node.style.transform = `translate(-50%, -100%) translate(${(v.x * 0.5 + 0.5) * W}px, ${(-v.y * 0.5 + 0.5) * H}px)`;
 		};
 		for (const w of this.list) {
-			w.update(dt, this._onChat);
+			w.update(dt, this._onChat, this.cc.localPos);
 			place(w.label, w.rig.position, w.height + 0.2);
 			if (w.bubble) place(w.bubble, w.rig.position, w.height + 0.7);
 		}

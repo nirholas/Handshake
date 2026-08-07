@@ -13,6 +13,7 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 import { AnimationManager } from '../animation-manager.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
 import { GUEST_SENTINEL, resolveGuestAvatar } from './play-handoff.js';
@@ -101,6 +102,145 @@ export async function resolveAvatarUrl(input) {
 	return AVATAR_DEFAULT;
 }
 
+// ── shared model templates ────────────────────────────────────────────────────
+// One download + parse per distinct avatar URL, shared by every rig that wears
+// it. Before this cache, N peers in the same model cost N downloads, N parses
+// and N full GPU uploads: with community avatars running to 24 MB, a crowded
+// world OOM-killed phones. A clone (SkeletonUtils) deep-copies the bone
+// hierarchy while sharing geometry and textures with its template; materials
+// are cloned per rig (they are tiny) so per-peer effects like the downed-peer
+// fade never bleed across players wearing the same model.
+
+const MB = 1024 * 1024;
+// A coarse primary pointer is the one signal phones and tablets reliably share.
+const _touchPrimary = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+// Per-model download ceiling on touch devices. Uploads are capped at 16 MB, but
+// a 10 MB+ meshopt GLB decompresses to far more than a phone can spare per
+// peer; an oversized model renders as the default avatar there instead.
+const PHONE_MODEL_DOWNLOAD_CAP = 10 * MB;
+// Estimated resident bytes (geometry + decoded textures) the template cache may
+// hold. Templates a rig still wears are never evicted; idle ones go LRU-first
+// once the budget is crossed.
+const RESIDENT_BUDGET_BYTES = _touchPrimary ? 160 * MB : 512 * MB;
+
+const _templates = new Map();  // url → { url, promise, refs, bytes, lastUse }
+const _cloneInfo = new WeakMap(); // cloned model root → { entry, materials }
+const _sizeChecks = new Map(); // url → Promise<number|null> published byte size
+
+// Published size of a remote model, from a HEAD request. Resolves null when the
+// host hides content-length or blocks HEAD; unknown sizes are allowed through
+// (the resident budget still bounds the session).
+function publishedModelBytes(url) {
+	if (!/^https?:\/\//i.test(url) && !url.startsWith('/')) return Promise.resolve(null);
+	let pending = _sizeChecks.get(url);
+	if (!pending) {
+		pending = fetch(url, { method: 'HEAD' })
+			.then((r) => (r.ok ? Number(r.headers.get('content-length')) || null : null))
+			.catch(() => null);
+		_sizeChecks.set(url, pending);
+	}
+	return pending;
+}
+
+// Rough resident cost of a parsed scene: geometry buffers plus decoded RGBA
+// texture bytes, each counted once however many meshes share them.
+function estimateSceneBytes(scene) {
+	let bytes = 0;
+	const seen = new Set();
+	scene.traverse((n) => {
+		if (n.geometry && !seen.has(n.geometry.uuid)) {
+			seen.add(n.geometry.uuid);
+			for (const attr of Object.values(n.geometry.attributes || {})) bytes += attr?.array?.byteLength || 0;
+			bytes += n.geometry.index?.array?.byteLength || 0;
+		}
+		const mats = Array.isArray(n.material) ? n.material : n.material ? [n.material] : [];
+		for (const mat of mats) {
+			for (const value of Object.values(mat)) {
+				if (value?.isTexture && !seen.has(value.uuid)) {
+					seen.add(value.uuid);
+					const img = value.image;
+					if (img?.width && img?.height) bytes += img.width * img.height * 4;
+				}
+			}
+		}
+	});
+	return bytes;
+}
+
+function loadTemplate(url) {
+	let entry = _templates.get(url);
+	if (entry) return entry;
+	entry = { url, refs: 0, bytes: 0, lastUse: Date.now(), promise: null };
+	entry.promise = (async () => {
+		await meshoptReady;
+		installVrmPlugin(_gltf);
+		const gltf = await _gltf.loadAsync(url);
+		// VRM facing/skeleton fixes run once here; every clone inherits them.
+		prepareVrmModel(gltf);
+		const scene = gltf.scene;
+		const box = new Box3().setFromObject(scene);
+		entry.bytes = estimateSceneBytes(scene);
+		return { scene, box };
+	})();
+	// A failed load must not poison the URL for the rest of the session.
+	entry.promise.catch(() => { if (_templates.get(url) === entry) _templates.delete(url); });
+	_templates.set(url, entry);
+	return entry;
+}
+
+function disposeTemplateScene(scene) {
+	scene.traverse((n) => {
+		if (!n.isMesh) return;
+		n.geometry?.dispose?.();
+		for (const mat of Array.isArray(n.material) ? n.material : [n.material]) {
+			if (!mat) continue;
+			for (const value of Object.values(mat)) value?.isTexture && value.dispose();
+			mat.dispose?.();
+		}
+	});
+}
+
+// Drop idle templates (LRU first) until the cache fits the budget. Templates
+// with live clones are always kept: their buffers are shared and in use.
+function evictIdleTemplates() {
+	let resident = 0;
+	for (const e of _templates.values()) resident += e.bytes;
+	if (resident <= RESIDENT_BUDGET_BYTES) return;
+	const idle = [..._templates.values()].filter((e) => e.refs === 0).sort((a, b) => a.lastUse - b.lastUse);
+	for (const e of idle) {
+		if (resident <= RESIDENT_BUDGET_BYTES) break;
+		_templates.delete(e.url);
+		resident -= e.bytes;
+		e.promise.then(({ scene }) => disposeTemplateScene(scene)).catch(() => { /* never parsed */ });
+	}
+}
+
+// Release the avatar model (and any capsule stand-in) buildAvatar put on this
+// rig: per-rig materials are disposed, the shared template is derefed, and idle
+// templates past the memory budget are freed. Every scene that churns rigs
+// (peers leaving, avatar swaps, world exits) must call this instead of relying
+// on scene.remove()/rig.clear(), which drop the JS reference but leak the GPU
+// buffers. Children this module didn't create (cosmetics, glow rings) are left
+// for their owners to dispose.
+export function releaseAvatar(rig) {
+	if (!rig) return;
+	for (const child of [...rig.children]) {
+		const info = _cloneInfo.get(child);
+		if (info) {
+			rig.remove(child);
+			_cloneInfo.delete(child);
+			for (const mat of info.materials) mat.dispose();
+			info.entry.refs = Math.max(0, info.entry.refs - 1);
+			info.entry.lastUse = Date.now();
+		} else if (child.userData?.avatarStandIn) {
+			rig.remove(child);
+			child.geometry?.dispose?.();
+			child.material?.dispose?.();
+		}
+	}
+	evictIdleTemplates();
+}
+
 // Plausible human heights in metres. Name labels and chat bubbles anchor to
 // this value, so it must stay near the *visible* top of the avatar.
 const MIN_AVATAR_HEIGHT_M = 0.5;
@@ -132,20 +272,40 @@ function headAnchorHeight(box) {
 // entry behind dozens of emote-clip downloads; emotes still lazy-load on first
 // use via playEmoteClip, which fetches a missing clip on demand.
 export async function buildAvatar(rig, url, anim, opts = {}) {
+	let loadUrl = url || AVATAR_DEFAULT;
+	let downgraded = false;
+	// On phones, refuse to download a model over the per-model ceiling: one 16 MB
+	// GLB can end the whole session there. The peer still reads as a person (the
+	// default avatar), and a template already resident costs nothing to reuse.
+	if (_touchPrimary && loadUrl !== AVATAR_DEFAULT && !_templates.has(loadUrl)) {
+		const bytes = await publishedModelBytes(loadUrl);
+		if (bytes && bytes > PHONE_MODEL_DOWNLOAD_CAP) {
+			log.warn('[avatar-rig] model over the mobile size cap, wearing the default:', loadUrl, `${(bytes / MB).toFixed(1)}MB`);
+			loadUrl = AVATAR_DEFAULT;
+			downgraded = true;
+		}
+	}
 	try {
-		await meshoptReady; // ensure meshopt-compressed GLBs (incl. the default) parse
-		// P3.4: pick up the reference VRM parser if boot installed one. Free no-op
-		// otherwise, and idempotent, so it can sit on the hot path.
-		installVrmPlugin(_gltf);
-		const gltf = await _gltf.loadAsync(url);
-		const model = gltf.scene;
-		// A .vrm is a glTF binary, so it has already parsed by here; this fixes the
-		// VRM-specific facing/culling/material issues a plain glTF load leaves
-		// behind. No-op for every non-VRM avatar. See src/game/vrm-loader.js.
-		prepareVrmModel(gltf);
-		model.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = false; } });
-		const box = new Box3().setFromObject(model);
+		const entry = loadTemplate(loadUrl);
+		const { scene, box } = await entry.promise;
+		const model = cloneSkinnedScene(scene);
+		// Per-rig materials over shared geometry/textures: effects that write to a
+		// material (downed-peer fade, highlights) must never leak onto another
+		// player wearing the same model.
+		const materials = [];
+		model.traverse((n) => {
+			if (!n.isMesh) return;
+			n.castShadow = true; n.receiveShadow = false;
+			if (n.material) {
+				const mats = (Array.isArray(n.material) ? n.material : [n.material]).map((m) => m.clone());
+				n.material = Array.isArray(n.material) ? mats : mats[0];
+				materials.push(...mats);
+			}
+		});
 		model.position.y -= box.min.y;
+		entry.refs += 1;
+		entry.lastUse = Date.now();
+		_cloneInfo.set(model, { entry, materials });
 		rig.add(model);
 		anim.attach(model);
 		// Ensure the clip manifest is loaded before posing — callers often kick off
@@ -155,13 +315,19 @@ export async function buildAvatar(rig, url, anim, opts = {}) {
 		if (!_animDefs) await loadManifest();
 		const defs = opts.clips === 'locomotion' ? getLocomotionDefs() : _animDefs;
 		if (defs?.length) { anim.setAnimationDefs(defs); await anim.loadAll(); await anim.crossfadeTo(CLIP_IDLE, 0); }
-		return { height: headAnchorHeight(box), fallback: false };
+		return { height: headAnchorHeight(box), fallback: downgraded, downgraded };
 	} catch (err) {
-		log.warn('[avatar-rig] avatar load failed, using stand-in:', url, err?.message);
+		log.warn('[avatar-rig] avatar load failed, using stand-in:', loadUrl, err?.message);
+		// The requested model failed; the bundled default keeps the player human-
+		// shaped before the capsule of last resort.
+		if (loadUrl !== AVATAR_DEFAULT) {
+			const res = await buildAvatar(rig, AVATAR_DEFAULT, anim, opts);
+			return { ...res, fallback: true, downgraded: true };
+		}
 		const body = new Mesh(new CapsuleGeometry(0.32, 0.7, 4, 10), new MeshStandardMaterial({ color: 0x8aa6d8 }));
-		body.position.y = 0.85; body.castShadow = true;
+		body.position.y = 0.85; body.castShadow = true; body.userData.avatarStandIn = true;
 		const head = new Mesh(new SphereGeometry(0.28, 14, 10), new MeshStandardMaterial({ color: 0xf1c9a5 }));
-		head.position.y = 1.55; head.castShadow = true;
+		head.position.y = 1.55; head.castShadow = true; head.userData.avatarStandIn = true;
 		rig.add(body, head);
 		return { height: 1.7, fallback: true };
 	}

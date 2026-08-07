@@ -20,10 +20,10 @@ import {
 	BoxGeometry, CylinderGeometry, MeshBasicMaterial,
 } from 'three';
 import { AnimationManager } from '../../animation-manager.js';
-import { buildAvatar, CLIP_WALK } from '../avatar-rig.js';
+import { buildAvatar, CLIP_IDLE, CLIP_WALK } from '../avatar-rig.js';
 import { mulberry32 } from './nav-graph.js';
+import { loadCitizenPool, isCitizen } from './citizens.js';
 
-const GALLERY_URL = '/api/avatars/public?limit=96';
 const DEFAULT_AVATAR = '/avatars/default.glb';
 
 const PED_WALK_SPEED = 1.35;     // m/s along the loop — an unhurried stroll
@@ -43,7 +43,7 @@ const worldClock = () => Date.now() / 1000;
 // ---- detailed GLB pedestrian -------------------------------------------------
 
 class Pedestrian {
-	constructor(scene, nav, { loopIdx, phase, speedScale, avatarUrl, seed }) {
+	constructor(scene, nav, { loopIdx, phase, speedScale, record, seed, onInspect }) {
 		this.scene = scene;
 		this.nav = nav;
 		this.loopIdx = loopIdx;
@@ -54,6 +54,12 @@ class Pedestrian {
 		this._avoid = new Vector3();
 		this._rng = mulberry32(seed);
 		this._sayIn = 8 + this._rng() * 22;
+		// Hold-to-talk: while a player has this pedestrian's profile or chat open,
+		// they stop and face the player. `_lag` is how many seconds of stroll they
+		// owe the shared schedule; it grows while held and decays after release, so
+		// they briskly catch back up to where every other client says they are.
+		this._held = false;
+		this._lag = 0;
 
 		this.rig = new Group();
 		scene.add(this.rig);
@@ -61,19 +67,52 @@ class Pedestrian {
 		this.bubble = null;
 		this._bubbleTimer = null;
 
+		// Real identity from the public avatar gallery (name, bio, and usually the
+		// registered agent this avatar represents). A nameless model stays honest
+		// anonymous scenery: no nameplate, no profile, no chat.
+		this.record = record || null;
+		this.label = null;
+		if (isCitizen(record)) {
+			this.name = record.name;
+			this.citizen = {
+				record,
+				name: record.name,
+				say: (t) => this.say(t),
+				hold: () => this._setHeld(true),
+				release: () => this._setHeld(false),
+			};
+			this.label = document.createElement('div');
+			this.label.className = 'cc-label npc-name';
+			this.label.textContent = record.name;
+			// .cc-label is pointer-events:none globally (bubbles must never block the
+			// look-drag); re-enable it for this one, the same way peer nameplates do.
+			this.label.style.pointerEvents = 'auto';
+			this.label.style.cursor = 'pointer';
+			this.label.title = `Meet ${record.name}`;
+			this.label.addEventListener('click', (e) => { e.stopPropagation(); onInspect?.(this); });
+			document.body.appendChild(this.label);
+		}
+
 		// Locomotion clips only: pedestrians never emote, and each one with its own
 		// AnimationManager would otherwise fetch the entire clip library.
-		buildAvatar(this.rig, avatarUrl || DEFAULT_AVATAR, this.anim, { clips: 'locomotion' })
+		buildAvatar(this.rig, record?.url || DEFAULT_AVATAR, this.anim, { clips: 'locomotion' })
 			.then(({ height }) => {
 				if (this._disposed) return;
 				this.height = height;
 				// Loaded into idle by buildAvatar — set them strolling.
-				this.anim.crossfadeTo(CLIP_WALK, 0.2).catch(() => {});
+				if (!this._held) this.anim.crossfadeTo(CLIP_WALK, 0.2).catch(() => {});
 			})
 			.catch(() => {});
 	}
 
+	_setHeld(held) {
+		if (this._held === !!held) return;
+		this._held = !!held;
+		this.anim.crossfadeTo(this._held ? CLIP_IDLE : CLIP_WALK, 0.25).catch(() => {});
+	}
+
 	say(text) {
+		if (this._disposed) return; // churned away mid-conversation; the chat panel outlives the body
 		if (this.bubble) this.bubble.remove();
 		this.bubble = document.createElement('div');
 		this.bubble.className = 'cc-bubble npc-bubble';
@@ -85,13 +124,18 @@ class Pedestrian {
 
 	update(dt, T, player) {
 		// Base position is a pure function of the shared clock — identical on every
-		// client. Arc-length advances at a steady stroll.
-		const d = this.phase + this.speed * T;
+		// client. Arc-length advances at a steady stroll. Hold-to-talk is a local,
+		// cosmetic deviation like the sidestep below: while held the pedestrian
+		// banks lag instead of moving, and afterwards walks it off at a brisk pace
+		// until they re-converge with the shared baseline.
+		if (this._held) this._lag += dt;
+		else if (this._lag > 0) this._lag = Math.max(0, this._lag - dt * 0.6);
+		const d = this.phase + this.speed * (T - this._lag);
 		const p = this.nav.pedPoint(this.loopIdx, d);
 
 		// Local, cosmetic sidestep around the player. Re-converges to zero, so it
 		// never desyncs the shared baseline between clients.
-		if (player) {
+		if (player && !this._held) {
 			const dx = p.x - player.x, dz = p.z - player.z;
 			const dist = Math.hypot(dx, dz);
 			if (dist < PED_AVOID_RADIUS && dist > 1e-3) {
@@ -103,11 +147,20 @@ class Pedestrian {
 		this._avoid.multiplyScalar(1 - Math.min(1, dt * 2));
 
 		this.rig.position.set(p.x + this._avoid.x, 0, p.z + this._avoid.z);
-		this.rig.rotation.y = Math.atan2(p.dirX, p.dirZ);
+		// Held: turn to face whoever stopped to talk. Otherwise face travel.
+		if (this._held && player) {
+			const want = Math.atan2(player.x - this.rig.position.x, player.z - this.rig.position.z);
+			let delta = want - this.rig.rotation.y;
+			while (delta > Math.PI) delta -= Math.PI * 2;
+			while (delta < -Math.PI) delta += Math.PI * 2;
+			this.rig.rotation.y += delta * Math.min(1, dt * 6);
+		} else {
+			this.rig.rotation.y = Math.atan2(p.dirX, p.dirZ);
+		}
 		this.anim.update(dt);
 
 		this._sayIn -= dt;
-		if (this._sayIn <= 0) { this._sayIn = 14 + this._rng() * 26; this.say(PED_LINES[(this._rng() * PED_LINES.length) | 0]); }
+		if (this._sayIn <= 0 && !this._held) { this._sayIn = 14 + this._rng() * 26; this.say(PED_LINES[(this._rng() * PED_LINES.length) | 0]); }
 	}
 
 	dispose() {
@@ -115,6 +168,7 @@ class Pedestrian {
 		this.scene.remove(this.rig);
 		this.bubble?.remove();
 		clearTimeout(this._bubbleTimer);
+		this.label?.remove();
 		this.anim.dispose?.();
 	}
 }
@@ -208,10 +262,14 @@ class Vehicle {
 // ---- the ambient-life system -------------------------------------------------
 
 export class AmbientLife {
-	constructor({ scene, nav, biome }) {
+	// `onInspectPed` (optional) makes the detailed pedestrians selectable: called
+	// with the Pedestrian when a player clicks its nameplate or body. The world
+	// manager wires it to the citizen profile card (see citizens.js).
+	constructor({ scene, nav, biome, onInspectPed }) {
 		this.scene = scene;
 		this.nav = nav;
 		this.biome = biome;
+		this.onInspectPed = onInspectPed || null;
 		this.peds = [];
 		this.vehicles = [];
 		this._avatarPool = null;
@@ -268,20 +326,18 @@ export class AmbientLife {
 	}
 
 	async _loadAvatarPoolThenPeds() {
-		let urls = [];
-		try {
-			const r = await fetch(GALLERY_URL, { headers: { accept: 'application/json' } });
-			if (r.ok) { const { avatars } = await r.json(); urls = (avatars || []).map((a) => a.model_url || a.base_model_url).filter(Boolean); }
-		} catch { /* default-avatar fallback below */ }
-		this._avatarPool = urls;
+		// The shared citizen pool: full gallery records (model URL + the identity
+		// riding it) so a pedestrian is a real, inspectable community avatar, not
+		// an anonymous mesh. Settles to [] on failure; peds then wear the default.
+		this._avatarPool = await loadCitizenPool();
 		this._syncPeds();
 	}
 
 	// Deterministic avatar assignment: shuffle the pool by seed so ped #k shows the
-	// same model on every client.
+	// same model — and therefore the same identity — on every client.
 	_pedAvatar(k) {
 		const pool = this._avatarPool;
-		if (!pool || !pool.length) return DEFAULT_AVATAR;
+		if (!pool || !pool.length) return null;
 		const rand = mulberry32((this.nav.seed ^ (k * 0x27d4eb2f)) >>> 0);
 		return pool[(rand() * pool.length) | 0];
 	}
@@ -298,8 +354,9 @@ export class AmbientLife {
 				loopIdx,
 				phase: rand() * 1000,
 				speedScale: 0.85 + rand() * 0.4,
-				avatarUrl: this._pedAvatar(k),
+				record: this._pedAvatar(k),
 				seed: (this.nav.seed ^ (k * 0x9e3779b9)) >>> 0,
+				onInspect: this.onInspectPed ? (ped) => this.onInspectPed(ped) : null,
 			}));
 		}
 		while (this.peds.length > want) this.peds.pop().dispose();
@@ -322,7 +379,10 @@ export class AmbientLife {
 
 		for (const p of this.peds) {
 			p.update(dt, T, player);
-			if (p.bubble && project) project(p.bubble, p.rig.position.x, p.height + 0.6, p.rig.position.z);
+			if (project) {
+				if (p.label) project(p.label, p.rig.position.x, p.height + 0.2, p.rig.position.z);
+				if (p.bubble) project(p.bubble, p.rig.position.x, p.height + 0.6, p.rig.position.z);
+			}
 		}
 		for (const v of this.vehicles) v.update(dt, T, player);
 

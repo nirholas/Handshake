@@ -16,6 +16,7 @@ import {
 } from 'three';
 import { NavGraph } from './nav-graph.js';
 import { AmbientLife } from './ambient-life.js';
+import { openCitizenProfile } from './citizens.js';
 import { Npc } from './npc.js';
 import { npcCatalogFor } from './npc-catalog.js';
 import { economyNpcsFor } from './economy-npcs.js';
@@ -29,7 +30,10 @@ const ROLE_RING = { vendor: 0x46d49a, quest: 0xffce6e, bank: 0xe6b422, flavor: 0
 export class WorldLife {
 	// world: { mint, name, symbol, seed, biome } — biome is the resolved env
 	// biome object; name/symbol feed the world-aware NPC chat prompt.
-	constructor({ scene, camera, renderer, getPlayer, ui, net, world, radius = 54 }) {
+	// onInspectNpc (optional): called with an interactive Npc when the player
+	// selects one from outside its interaction range — the host opens its
+	// profile (coincommunities wires the shared avatar inspector).
+	constructor({ scene, camera, renderer, getPlayer, ui, net, world, radius = 54, onInspectNpc }) {
 		this.scene = scene;
 		this.camera = camera;
 		this.renderer = renderer;
@@ -37,13 +41,22 @@ export class WorldLife {
 		this.ui = ui;
 		this.net = net;
 		this.world = world || {};
+		this.onInspectNpc = onInspectNpc || null;
 
 		this._injectStyles();
 
 		this.nav = new NavGraph({ radius, seed: world?.seed >>> 0 });
 		this._paintRoad();
 
-		this.ambient = new AmbientLife({ scene, nav: this.nav, biome: world?.biome });
+		this.ambient = new AmbientLife({
+			scene,
+			nav: this.nav,
+			biome: world?.biome,
+			// Any detailed pedestrian with a gallery identity is selectable: its
+			// profile card opens with the real agent behind the avatar, and a
+			// "Talk 1-on-1" that starts a live in-character conversation.
+			onInspectPed: (ped) => this._inspectPed(ped),
+		});
 		this.mobs = new MobSystem({ scene, nav: this.nav });
 		// Waypoints for the jobs board's active objectives (W08 hooking W05) —
 		// pure client render of the same quest-zones.js the server already
@@ -59,6 +72,22 @@ export class WorldLife {
 		this.npcs = [...npcCatalogFor(), ...economyNpcsFor(), ...questNpcsFor()].map((def) => {
 			const npc = new Npc(scene, def);
 			npc.marker = this._npcMarker(def);
+			// The nameplate is a click target too, exactly like peer nameplates:
+			// always visible, no skinned-mesh raycast. In range it runs the role
+			// action; from afar it opens the NPC's profile.
+			npc.label.style.pointerEvents = 'auto';
+			npc.label.style.cursor = 'pointer';
+			npc.label.title = def.prompt || `Talk to ${def.name}`;
+			npc.label.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const player = this.getPlayer?.();
+				if (player && npc.distanceTo(player) <= npc.range) {
+					try { npc.interact({ player, ui: this.ui, net: this.net, world: this.world }); }
+					catch (err) { log.warn('[world-life] npc interact failed:', err?.message); }
+				} else if (this.onInspectNpc) {
+					this.onInspectNpc(npc);
+				}
+			});
 			return npc;
 		});
 
@@ -170,6 +199,33 @@ export class WorldLife {
 	// Tell the ambient crowd how many real players are present so it tapers.
 	setRealPeers(n) { this.ambient?.setRealPeers(n); }
 
+	// Open the citizen profile card for a detailed pedestrian (nameplate click or
+	// body tap). The card carries the real agent behind the gallery avatar and a
+	// "Talk 1-on-1" action into the live NPC chat.
+	_inspectPed(ped) {
+		if (!ped?.citizen) return;
+		openCitizenProfile(ped.citizen, { world: this.world, ui: this.ui, trigger: ped.label || undefined });
+	}
+
+	// Click-only raycast pick over every selectable character: interactive NPCs
+	// (body or marker ring) and identity-carrying ambient pedestrians. Returns
+	// the nearest hit or null. Never run per-frame; skinned-mesh raycasts are
+	// too heavy for hover (same rule as the peer picker in coincommunities).
+	_characterAt() {
+		let best = null;
+		for (const npc of this.npcs) {
+			const targets = npc.marker ? [npc.rig, npc.marker] : [npc.rig];
+			const hits = this._ray.intersectObjects(targets, true);
+			if (hits.length && (!best || hits[0].distance < best.d)) best = { d: hits[0].distance, kind: 'npc', npc };
+		}
+		for (const ped of this.ambient?.peds || []) {
+			if (!ped.citizen) continue;
+			const hits = this._ray.intersectObject(ped.rig, true);
+			if (hits.length && (!best || hits[0].distance < best.d)) best = { d: hits[0].distance, kind: 'ped', ped };
+		}
+		return best;
+	}
+
 	tick(dt) {
 		const player = this.getPlayer?.();
 		const project = (node, x, y, z) => this._place(node, x, y, z);
@@ -253,21 +309,43 @@ export class WorldLife {
 		return true;
 	}
 
-	// Tap/click an NPC (or its marker ring), or a quest-zone waypoint ring,
-	// while in range — the touch equivalent of E. Returns true if it consumed
-	// the tap.
+	// Tap/click any character in the world — the touch equivalent of E, extended
+	// to every walker. An interactive NPC tapped in range runs its role action
+	// (counter, chat, board); tapped from afar it opens its profile instead. An
+	// ambient pedestrian with a gallery identity opens its citizen profile card
+	// at any distance. Quest-zone waypoint rings keep their in-range activation.
+	// Returns true if it consumed the tap.
 	tryActivateAt(clientX, clientY) {
 		const player = this.getPlayer?.();
 		if (!player) return false;
-		const near = this._nearestInteractable(player);
-		if (!near) return false;
 		const el = this.renderer.domElement;
 		const rect = el.getBoundingClientRect();
 		this._ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
 		this._ray.setFromCamera(this._ndc, this.camera);
-		const targets = this.npcs.flatMap((n) => (n.marker ? [n.rig, n.marker] : [n.rig]));
-		if (this.questMarkers) targets.push(...this.questMarkers.rayTargets());
-		if (this._ray.intersectObjects(targets, true).length > 0) { this.interact(); return true; }
+
+		// Quest waypoint rings first: they only ever answer while in range, and a
+		// tap on one must not be shadowed by a character standing inside the ring.
+		const near = this._nearestInteractable(player);
+		if (near?.kind === 'quest' && this.questMarkers) {
+			if (this._ray.intersectObjects(this.questMarkers.rayTargets(), true).length > 0) {
+				this.net?.questInteract?.();
+				return true;
+			}
+		}
+
+		const hit = this._characterAt();
+		if (!hit) return false;
+		if (hit.kind === 'ped') {
+			this._inspectPed(hit.ped);
+			return true;
+		}
+		const npc = hit.npc;
+		if (npc.distanceTo(player) <= npc.range) {
+			try { npc.interact({ player, ui: this.ui, net: this.net, world: this.world }); }
+			catch (e) { log.warn('[world-life] npc interact failed:', e?.message); }
+			return true;
+		}
+		if (this.onInspectNpc) { this.onInspectNpc(npc); return true; }
 		return false;
 	}
 
