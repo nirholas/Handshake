@@ -27,18 +27,26 @@ room.
 
 Plenty of crypto projects claim an enterprise partnership. Very few can point to a dedicated user
 group on that enterprise's own community platform, and three.ws is, as of today, the only project
-with one on IBM Community. That group didn't happen because of a slide deck: three.ws's public X
-exchanges with IBM went viral more than once, enough that people inside IBM who have nothing to do
-with the partnership know the project by name. A meetup that runs 8 AM to 5 PM, held inside the
-product instead of on a call, is what that attention turned into.
+with a standing [group of its own on IBM Community](https://community.ibm.com/community/user/usergroup?CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016).
+That group didn't happen because of a slide deck: three.ws's public X exchanges with IBM (
+[@trythreews](https://x.com/trythreews) and IBM's own accounts) went viral more than once,
+enough that people inside IBM who have nothing to do with the partnership know the project by
+name. [Link the specific viral thread(s) here once identified, rather than asserting virality
+without a citable post.] A meetup that runs 8 AM to 5 PM, held inside the product instead of on a
+call, is what that attention turned into.
 
 The format says something about both sides. IBM is the definition of enterprise software, and
 three.ws is a browser-native 3D platform built on generative AI and a Solana token. Neither side
-treated that as a mismatch. The user group's own organizer described the format plainly in her
-announcement blog: "It is not a video call. You attend as an avatar, you hear the people standing
-near you through spatial voice chat, and the product tour happens by literally walking through the
-product." That's the whole pitch, and today is the day it's being tested in front of a real crowd
-instead of a press release.
+treated that as a mismatch, and the partnership itself is a matter of public record: three.ws is
+an [IBM Business Partner](https://three.ws/ibm/hello), covered by outside press including
+[Business Insider](https://markets.businessinsider.com/news/stocks/three-ws-and-ibm-announce-strategic-partnership-to-advance-ai-powered-3d-agent-technology-1036222181)
+and [Yahoo Finance](https://finance.yahoo.com/sectors/technology/articles/ibm-extends-ai-narrative-three-010650764.html).
+The user group's own organizer, Jessica Swanson of the IBM Community team, described the format
+plainly in her [announcement blog](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/08/04/join-the-threews-user-groups-first-in-world-meetup):
+"It is not a video call. You attend as an avatar, you hear the people standing near you through
+spatial voice chat, and the product tour happens by literally walking through the product." That's
+the whole pitch, and today is the day it's being tested in front of a real crowd instead of a press
+release.
 
 ## What the room actually looks like
 
@@ -61,9 +69,11 @@ turned out to be a real place.
 Underneath the fishing and the driving, the actual agenda is running: a live tour of the platform
 from inside the world, community demos (attendees bring what they've built on three.ws: avatars,
 embeds, MCP integrations, agents), and open Q&A with the three.ws team, including questions about the
-two IBM-native pieces of the stack, `@three-ws/ibm-watsonx-mcp` (watsonx.ai on your own IBM Cloud
-account) and `@three-ws/ibm-x402-mcp` (pay-per-use IBM Granite billed in USDC, no IBM account
-required). [Note any specific demo or Q&A moment worth naming once it happens.]
+two IBM-native pieces of the stack: [`@three-ws/ibm-watsonx-mcp`](https://www.npmjs.com/package/@three-ws/ibm-watsonx-mcp)
+(watsonx.ai on your own IBM Cloud account) and [`@three-ws/ibm-x402-mcp`](https://www.npmjs.com/package/@three-ws/ibm-x402-mcp)
+(pay-per-use IBM Granite billed in USDC, no IBM account required), both open-source and installable
+today. There's also a live browser demo of the x402 side at [three.ws/ibm/x402-demo](https://three.ws/ibm/x402-demo).
+[Note any specific demo or Q&A moment worth naming once it happens.]
 
 ## Why a meetup format is a CMC-relevant data point, not just a nice story
 
@@ -86,6 +96,19 @@ Community](https://community.ibm.com/community/user/usergroup?CommunityKey=e7151
 
 A full recap, with the final headcount and the best moments from the day, follows once the doors
 close.
+
+## The paper trail, for readers who want to verify any of this
+
+- **The user group itself:** [Three.ws User Group on IBM Community](https://community.ibm.com/community/user/usergroup?CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016), the only project-specific group of its kind on the platform.
+- **Today's event listing:** [event description on IBM Community](https://community.ibm.com/community/user/events/event-description?CalendarEventKey=25d71799-16b5-4342-b2e5-019fcf9622ca&CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016).
+- **The meetup announcement**, written by the group's IBM organizer: [Join the Three.ws User Group's First In-World Meetup This Friday](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/08/04/join-the-threews-user-groups-first-in-world-meetup).
+- **The group's welcome post**, when it launched in July: [Welcome to the Three.ws User Group](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/07/14/welcome-to-the-threews-user-group-building-ai-agen).
+- **The full technical write-up** behind the event: [Inside three.ws: a technical tour](https://community.ibm.com/community/user/discussion/community-meetup-inside-threews-join-us-on-the-three-server-at-threewsplay).
+- **The partnership, independently reported:** [Business Insider](https://markets.businessinsider.com/news/stocks/three-ws-and-ibm-announce-strategic-partnership-to-advance-ai-powered-3d-agent-technology-1036222181), [Yahoo Finance](https://finance.yahoo.com/sectors/technology/articles/ibm-extends-ai-narrative-three-010650764.html).
+- **The live IBM integration pages:** [three.ws/ibm/hello](https://three.ws/ibm/hello) (partnership page), [three.ws/ibm/x402-demo](https://three.ws/ibm/x402-demo) (x402 demo).
+- **The open-source IBM connectors:** [`@three-ws/ibm-watsonx-mcp`](https://www.npmjs.com/package/@three-ws/ibm-watsonx-mcp), [`@three-ws/ibm-x402-mcp`](https://www.npmjs.com/package/@three-ws/ibm-x402-mcp) on npm.
+- **The platform and social accounts:** [three.ws](https://three.ws), [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws), [@trythreews](https://x.com/trythreews) on X.
+- **The viral IBM exchange(s):** [add the specific X thread URL(s) here once picked; this is the one claim in this article that needs a citable link before publishing, not just an assertion].
 
 ---
 
