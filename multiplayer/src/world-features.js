@@ -124,6 +124,33 @@ export const WHEEL_REACH = 3.0;
 export function nearestWheel(x, z) { return nearestNode(x, z, WHEEL, WHEEL_REACH); }
 export function wheelInRange(x, z) { return nodeInRange(x, z, WHEEL, WHEEL_REACH); }
 
+// The Plaza Stage — the Living Stages venue standing in every coin world's plaza
+// (F17). `r` is the footprint of the built structure (platform + backdrop), which
+// is what the client renders and what WalkRoom protects from being buried or
+// walled in (its protected discs are derived from this point, so the landmark and
+// the grief guard can never drift apart).
+//
+// Sited in the north-east plaza: a short walk from the wheel at (0,22) and clear
+// of every other feature — the east pond (~22 m), the east firepit (~14 m), the
+// plaza rod pickup (~15 m) — and well outside all three danger zones, so the
+// crowd that gathers for a show is standing in safe town.
+export const PLAZA_STAGE = { id: 'plaza-stage', x: 18, z: 26, r: 5 };
+
+// How far beyond the structure a player counts as ATTENDING the show: this is the
+// radius that joins (and leaves) the stage room, and it must comfortably contain
+// the seat ring StageRoom deals out (golden-angle seats at 6.0/7.6/9.2 m from the
+// stage origin), so a seated attendee is never standing outside their own show.
+export const STAGE_ATTEND_REACH = 8; // ⇒ 13 m from the stage centre
+
+// How far away the marquee is still legible. Walking inside this ring is what
+// first wakes the stage up (one show-state read); everything heavier waits for
+// STAGE_ATTEND_REACH.
+export const STAGE_MARQUEE_REACH = 21; // ⇒ 26 m from the stage centre
+
+export function nearestStage(x, z) { return nearestNode(x, z, [PLAZA_STAGE], STAGE_ATTEND_REACH); }
+export function stageInRange(x, z) { return nodeInRange(x, z, [PLAZA_STAGE], STAGE_ATTEND_REACH); }
+export function stageMarqueeInRange(x, z) { return nodeInRange(x, z, [PLAZA_STAGE], STAGE_MARQUEE_REACH); }
+
 // Fishing-rod pickups — a spare rod waiting on the bank for anyone without one
 // (or anyone who wants a backup to store). Every player already starts with a
 // rod in the hotbar and it's never lost on death, so these exist for

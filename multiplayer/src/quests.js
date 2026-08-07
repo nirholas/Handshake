@@ -18,8 +18,15 @@
 //   collect      — gather N of an item        (emitted by the fishing handler)
 //   goto         — enter a named world zone    (emitted by movement zone-entry)
 //   interact     — act at a quest object/zone  (emitted by the questInteract handler)
+//   defeat       — kill N foes in the wilds    (emitted by the combat handler on a kill)
 // Heists compose these as a SHARED instance (see WalkRoom): the same objective shape,
 // advanced by any crew member, finishing only when the party is assembled at the finale.
+//
+// A mission flagged `event: true` only exists inside the live window of the platform
+// event (public/event.json, read server-side by event-window.js). The gate is applied
+// HERE — in the offer/accept/prune rules every caller already goes through — so no
+// surface can accidentally serve an event job out of window: outside it, the job is
+// not on the board, cannot be accepted, and any stale run is dropped unpaid.
 
 import { SKILLS } from './economy.js';
 
@@ -190,7 +197,88 @@ export const MISSIONS = {
 		// 900 gold total, split among the crew (e.g. 450 each for a duo).
 		reward: { gold: 900, xp: { skill: 'combat', amount: 200 } },
 	},
+
+	// — Event quest line —————————————————————————————————————————————————————
+	// Four jobs that only exist while the platform event is live, one per thing the
+	// world already does well: gather, drive, fight, tour. All repeatable, because
+	// the event leaderboard ranks players by how many of these they finish inside
+	// the window — a closed-ended set would decide the ranking in the first ten
+	// minutes. Payouts are richer than the everyday board (it's a two-hour window,
+	// not an all-day grind) but still ordinary in-world gold: the leaderboard's
+	// prizes are settled by the owner after the event, never paid on-chain by code.
+	'event-plaza-catch': {
+		id: 'event-plaza-catch',
+		title: 'Meetup Fish Fry',
+		giver: 'Cook Mara',
+		summary: 'The plaza pit is feeding the whole meetup — land 8 fish before the doors close.',
+		kind: 'job',
+		repeat: 'repeatable',
+		party: 1,
+		event: true,
+		objectives: [
+			{ type: 'collect', item: 'fish', count: 8, label: '🎉 Catch 8 fish for the meetup' },
+		],
+		reward: { gold: 320, xp: { skill: 'fishing', amount: 260 } },
+	},
+	'event-supply-run': {
+		id: 'event-supply-run',
+		title: 'Meetup Supply Run',
+		giver: 'Dispatcher Vance',
+		summary: 'Drive the party supplies from the North Depot across to the East Depot.',
+		kind: 'job',
+		repeat: 'repeatable',
+		party: 1,
+		event: true,
+		objectives: [
+			{ type: 'goto', zone: 'depot-north', vehicle: true, label: '🎉 🚗 Load the party supplies at the North Depot' },
+			{ type: 'goto', zone: 'depot-east', vehicle: true, label: '🎉 🚗 Run them out to the East Depot' },
+		],
+		reward: { gold: 300 },
+	},
+	'event-wilds-patrol': {
+		id: 'event-wilds-patrol',
+		title: 'Southern Wilds Patrol',
+		giver: 'Warden Okoro',
+		summary: 'Something is stirring south of town. Put down 4 foes in the Southern Wilds.',
+		kind: 'job',
+		repeat: 'repeatable',
+		party: 1,
+		event: true,
+		objectives: [
+			{
+				type: 'defeat', target: 'mob', count: 4, dangerZone: 'southern-wilds',
+				label: '🎉 ⚔️ Defeat 4 foes in the Southern Wilds',
+			},
+		],
+		reward: { gold: 340, xp: { skill: 'combat', amount: 280 } },
+	},
+	'event-landmark-tour': {
+		id: 'event-landmark-tour',
+		title: 'Meetup Grand Tour',
+		giver: 'The Host',
+		summary: 'Show your face at all three meetup landmarks: the totem, the wheel and the big screen.',
+		kind: 'job',
+		repeat: 'repeatable',
+		party: 1,
+		event: true,
+		objectives: [
+			{ type: 'goto', zone: 'event-totem', label: '🎉 Rally at the Totem' },
+			{ type: 'goto', zone: 'event-wheel', label: '🎉 Swing by Fortune’s Folly' },
+			{ type: 'goto', zone: 'event-screen', label: '🎉 Finish at the Trading Screen' },
+		],
+		reward: { gold: 220 },
+	},
 };
+
+// The event quest line, in board order — the ids the leaderboard counts and the
+// only missions the event window gates.
+export const EVENT_MISSION_IDS = Object.values(MISSIONS)
+	.filter((m) => m.event)
+	.map((m) => m.id);
+
+export function isEventMission(id) {
+	return !!MISSIONS[id]?.event;
+}
 
 // The pool of mission ids eligible for the rotating daily board. A deterministic
 // subset is offered each UTC day so the board feels fresh without authoring a
@@ -355,10 +443,14 @@ function prereqMet(state, mission) {
 }
 
 // Is `mission` acceptable by this player right now? (Not already active, prereqs
-// met, and the repeat rule satisfied: a one-shot not yet done, a daily not yet
-// done today, a repeatable always.)
-export function canAccept(state, mission, dayKey = utcDayKey()) {
+// met, the event window open if it's an event job, and the repeat rule satisfied:
+// a one-shot not yet done, a daily not yet done today, a repeatable always.)
+// `ctx.eventLive` is the SERVER's read of the event clock (event-window.js); it
+// defaults to false so any caller that forgets it gets the closed gate, never an
+// accidentally open one.
+export function canAccept(state, mission, dayKey = utcDayKey(), ctx = {}) {
 	if (!mission) return false;
+	if (mission.event && !ctx.eventLive) return false;
 	if (state.active[mission.id]) return false;
 	if (!prereqMet(state, mission)) return false;
 	if (mission.repeat === 'once') return !(state.completed[mission.id]?.count > 0);
@@ -370,16 +462,19 @@ export function canAccept(state, mission, dayKey = utcDayKey()) {
 // shaped for the client. Daily offers are the day's rotated subset; the rest are
 // the always-available repeatable/one-shot jobs. Heists are surfaced too (the
 // client shows a "needs a crew" hint).
-export function boardOffers(state, dayKey = utcDayKey()) {
+export function boardOffers(state, dayKey = utcDayKey(), ctx = {}) {
 	rolloverDaily(state, dayKey);
 	const dailyIds = new Set(dailyJobIds(dayKey));
 	const offers = [];
 	for (const mission of Object.values(MISSIONS)) {
 		if (mission.repeat === 'daily' && !dailyIds.has(mission.id)) continue; // not in today's rotation
 		if (state.active[mission.id]) continue; // already accepted
-		if (!canAccept(state, mission, dayKey)) continue;
+		if (!canAccept(state, mission, dayKey, ctx)) continue;
 		offers.push(offerView(mission, state));
 	}
+	// Event jobs lead the board while the window is open — they expire with it, the
+	// everyday work does not.
+	offers.sort((a, b) => (b.event ? 1 : 0) - (a.event ? 1 : 0));
 	return offers;
 }
 
@@ -392,22 +487,39 @@ function offerView(mission, state) {
 		kind: mission.kind,
 		repeat: mission.repeat,
 		party: mission.party || 1,
+		event: !!mission.event,
 		reward: { ...mission.reward },
 		objectives: mission.objectives.map((o) => ({ type: o.type, label: o.label, count: objCount(o) })),
 		completedCount: state.completed[mission.id]?.count | 0,
 	};
 }
 
+// Drop any active event run once the window has closed. An event job can neither
+// advance nor pay outside its window, so leaving it in the log would be a tracker
+// entry that quietly never completes. Returns the mission ids that were dropped so
+// the room can tell the player why their tracker emptied.
+export function pruneClosedEventRuns(state, ctx = {}) {
+	if (ctx.eventLive) return [];
+	const dropped = [];
+	for (const id of Object.keys(state.active || {})) {
+		if (!MISSIONS[id]?.event) continue;
+		delete state.active[id];
+		dropped.push(id);
+	}
+	return dropped;
+}
+
 // ---------------------------------------------------------------------------
 // Accept / abandon
 // ---------------------------------------------------------------------------
 
-export function acceptMission(state, id, dayKey = utcDayKey()) {
+export function acceptMission(state, id, dayKey = utcDayKey(), ctx = {}) {
 	const mission = MISSIONS[id];
 	if (!mission) return { ok: false, reason: 'unknown' };
 	rolloverDaily(state, dayKey);
 	if (state.active[id]) return { ok: false, reason: 'active' };
-	if (!canAccept(state, mission, dayKey)) {
+	if (mission.event && !ctx.eventLive) return { ok: false, reason: 'event-closed' };
+	if (!canAccept(state, mission, dayKey, ctx)) {
 		const reason = mission.repeat === 'daily' ? 'daily-done'
 			: mission.repeat === 'once' ? 'done'
 			: 'locked';
@@ -432,6 +544,7 @@ export function abandonMission(state, id) {
 //   collect:  { type:'collect', item, qty }
 //   goto:     { type:'enter-zone', zone }
 //   interact: { type:'interact', zone, action }
+//   defeat:   { type:'defeat', target:'mob'|'player', zone }   zone = DANGER_ZONES id
 // `event.qty` (collect) defaults to 1.
 export function objectiveMatches(obj, event) {
 	if (!obj || !event) return false;
@@ -453,6 +566,15 @@ export function objectiveMatches(obj, event) {
 		// A multi-zone objective (e.g. two terminals) matches any of its zones.
 		if (Array.isArray(obj.zones)) return obj.zones.includes(event.zone);
 		return !obj.zone || event.zone === obj.zone;
+	}
+	if (obj.type === 'defeat') {
+		if (event.type !== 'defeat') return false;
+		// `target` narrows to PvE mobs vs. players; `dangerZone` pins the kill to one
+		// named wilderness (world-features.DANGER_ZONES), judged from the SERVER's
+		// position for the kill, so farming a different zone never counts.
+		if (obj.target && event.target !== obj.target) return false;
+		if (obj.dangerZone && event.zone !== obj.dangerZone) return false;
+		return true;
 	}
 	return false;
 }
@@ -554,6 +676,7 @@ export function runView(run, mission) {
 		giver: mission.giver,
 		kind: mission.kind,
 		party: mission.party || 1,
+		event: !!mission.event,
 		reward: { ...mission.reward },
 		stage: run.stage,
 		objectives,
@@ -563,15 +686,16 @@ export function runView(run, mission) {
 // The full quest payload sent to a client (board offers + active runs). Heist runs
 // are layered on by the room (shared-instance progress), so this covers solo runs;
 // the room merges any live heist run before sending.
-export function questSnapshot(state, dayKey = utcDayKey()) {
+export function questSnapshot(state, dayKey = utcDayKey(), ctx = {}) {
 	const active = [];
 	for (const [id, run] of Object.entries(state.active)) {
 		const mission = MISSIONS[id];
 		if (mission) active.push(runView(run, mission));
 	}
 	return {
-		offers: boardOffers(state, dayKey),
+		offers: boardOffers(state, dayKey, ctx),
 		active,
 		day: dayKey,
+		eventLive: !!ctx.eventLive,
 	};
 }

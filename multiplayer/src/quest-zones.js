@@ -35,6 +35,16 @@ export const QUEST_ZONES = [
 	{ id: 'depot-east', kind: 'goto', x: 90, z: 6, r: 8, label: 'East Depot', glyph: '🚚' },
 	{ id: 'depot-west', kind: 'goto', x: -90, z: -6, r: 8, label: 'West Depot', glyph: '🚚' },
 
+	// Event landmarks (the Meetup Grand Tour). Deliberately sited ON the three
+	// places the event agenda already sends people — the totem the showdown is
+	// held at, the Fortune's Folly wheel (world-features.WHEEL) and the trading
+	// screen — so the tour walks the party route instead of inventing empty
+	// waypoints. Generous radii: these are crowded during the event and a marker
+	// you have to thread a crowd to hit is a bad objective.
+	{ id: 'event-totem', kind: 'goto', x: 0, z: -12, r: 6, label: 'The Totem', glyph: '🎉' },
+	{ id: 'event-wheel', kind: 'goto', x: 0, z: 22, r: 5, label: 'Fortune’s Folly', glyph: '🎡' },
+	{ id: 'event-screen', kind: 'goto', x: 0, z: -30, r: 6, label: 'The Trading Screen', glyph: '📈' },
+
 	// Vault heist district: two alarm terminals flanking the vault door.
 	{ id: 'vault-terminal-a', kind: 'interact', action: 'terminal', x: 50, z: 16, r: 2.8, label: 'Alarm Terminal A', glyph: '🖥️' },
 	{ id: 'vault-terminal-b', kind: 'interact', action: 'terminal', x: 50, z: -16, r: 2.8, label: 'Alarm Terminal B', glyph: '🖥️' },
