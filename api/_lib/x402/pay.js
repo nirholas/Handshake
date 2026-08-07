@@ -276,6 +276,36 @@ export function buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAta
 	return Buffer.from(vtx.serialize()).toString('base64');
 }
 
+// A signed transaction carrying a blockhash older than ~60-90s (151 blocks) is
+// rejected at broadcast with BlockhashNotFound. The tick-wide shared blockhash
+// below ages exactly like that across a long cron tick, and the facilitator
+// cannot re-sign on our behalf (the buyer signature covers the message,
+// blockhash included), so freshness is the payer's job. This cache keeps the
+// one-fetch-per-tick economy for fast ticks and transparently re-fetches once
+// the hash is old enough to be a broadcast risk.
+const BLOCKHASH_TTL_MS = 20_000;
+let blockhashCache = { value: null, fetchedAt: 0 };
+
+function seedBlockhash(value) {
+	if (value) blockhashCache = { value, fetchedAt: Date.now() };
+}
+
+// Resolve the blockhash to sign with: the cached one while younger than the
+// TTL, else a fresh fetch. Falls back to the caller-supplied tick blockhash
+// when the RPC fetch fails (a stale attempt beats no attempt: the facilitator
+// side still retries preflight-off for provably-unlanded blockhash misses).
+async function currentBlockhash(conn, fallback, { forceFresh = false } = {}) {
+	const age = Date.now() - blockhashCache.fetchedAt;
+	if (!forceFresh && blockhashCache.value && age < BLOCKHASH_TTL_MS) return blockhashCache.value;
+	try {
+		const { blockhash } = await conn.getLatestBlockhash('confirmed');
+		seedBlockhash(blockhash);
+		return blockhash;
+	} catch {
+		return blockhashCache.value || fallback;
+	}
+}
+
 // Build the per-tick shared Solana state once (blockhash + USDC mint info) so a
 // run() that pays several rows reuses one blockhash. Standalone callers (manual
 // tests) call this to bootstrap a full context without the cron loop.
@@ -287,6 +317,7 @@ export async function bootstrapSolanaContext({ buyer } = {}) {
 		conn.getLatestBlockhash('confirmed'),
 		getMint(conn, new PublicKey(USDC_MINT)),
 	]);
+	seedBlockhash(blockhash);
 	return { buyer: payer, conn, blockhash, mintInfo };
 }
 
@@ -352,7 +383,10 @@ export async function payX402({
 	// One attempt = validate THIS accept, build + sign a transaction for it, and
 	// replay the request carrying the payment. Returns either a terminal `skip`
 	// (a guard refused before money could move) or the paid response.
-	async function attemptSettle(currentAccept, attemptNonce) {
+	// `forceFreshBlockhash` is set on the post-402 retry: the refused attempt may
+	// have died on a stale hash, and re-signing the retry against the same one
+	// would reproduce the failure.
+	async function attemptSettle(currentAccept, attemptNonce, { forceFreshBlockhash = false } = {}) {
 		if (!USDC_MINT || currentAccept.asset !== USDC_MINT) {
 			return { skip: { success: false, paid: false, free: false, skipped: true, amountAtomic: 0, txSig: null, status: 402, responseBody: probe.body, errorMsg: `unexpected_asset:${currentAccept.asset}` } };
 		}
@@ -435,9 +469,12 @@ export async function payX402({
 		);
 		const receiverAtaInfo = await conn.getAccountInfo(receiverAta).catch(() => null);
 
-		// Step 3: build the signed transaction + X-PAYMENT envelope.
+		// Step 3: build the signed transaction + X-PAYMENT envelope. The signing
+		// blockhash reads through the freshness cache: the tick-wide hash while it
+		// is young, a re-fetched one once it has aged past broadcast safety.
+		const signBlockhash = await currentBlockhash(conn, blockhash, { forceFresh: forceFreshBlockhash });
 		const txBase64 = buildPaymentTx({
-			accept: currentAccept, buyer, blockhash, mintInfo,
+			accept: currentAccept, buyer, blockhash: signBlockhash, mintInfo,
 			receiverAtaExists: receiverAtaInfo !== null,
 			nonce: attemptNonce, selfPay,
 		});
@@ -472,7 +509,7 @@ export async function payX402({
 	let paidRes;
 	let amountAtomic = 0;
 	for (;;) {
-		const outcome = await attemptSettle(currentAccept, attemptNonce);
+		const outcome = await attemptSettle(currentAccept, attemptNonce, { forceFreshBlockhash: retriedAfter402 });
 		if (outcome.skip) return { ...outcome.skip, retriedAfter402 };
 		paidRes = outcome.paidRes;
 		amountAtomic = outcome.amountAtomic;
