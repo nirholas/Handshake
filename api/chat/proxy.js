@@ -2,6 +2,7 @@ import { env } from '../_lib/env.js';
 import { cors, error, json, method, wrap, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isFreeModelId, isLiveFreeModel, pickDefaultFreeModel } from '../_lib/openrouter-free.js';
+import { AGENT_MODEL_ID, runAgentCompletion } from '../agent/run.js';
 
 const UPGRADE_URL = `${env.APP_ORIGIN}/pricing`;
 
@@ -23,9 +24,6 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	if (!env.OPENROUTER_API_KEY && !env.OPENROUTER_FALLBACK_KEYS.length)
-		return error(res, 503, 'not_configured', 'Built-in model not available');
-
 	// Anonymous proxy — only :free models pass the gate below, but the upstream
 	// free-tier quota is shared across our OpenRouter key. Cap per-IP to prevent
 	// a single client from draining the free quota and rate-limiting everyone.
@@ -42,6 +40,18 @@ export default wrap(async (req, res) => {
 	} catch (err) {
 		return error(res, err.status ?? 400, 'bad_request', err.message);
 	}
+
+	// The virtual agent-loop model: same wire format in and out, but answered by
+	// the server-side tool loop instead of OpenRouter. The chatIp limit above
+	// already counted this request, so the loop skips its own limiter. Branches
+	// before the OpenRouter key check on purpose: the loop runs on its own
+	// provider chain (Groq / Vertex / …) and does not need an OpenRouter key.
+	if (body?.model === AGENT_MODEL_ID) {
+		return runAgentCompletion(req, res, body, { rateLimited: true });
+	}
+
+	if (!env.OPENROUTER_API_KEY && !env.OPENROUTER_FALLBACK_KEYS.length)
+		return error(res, 503, 'not_configured', 'Built-in model not available');
 
 	const model = body?.model;
 	// Only allow free-tier OpenRouter models to prevent abuse.

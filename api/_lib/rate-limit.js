@@ -508,6 +508,12 @@ export const limits = {
 	// chat session stays far under 300 evaluations per 5 minutes.
 	agentGuardIp: (ip) =>
 		getLimiter('agent:guard:ip', { limit: 300, window: '5 m', local: true }).limit(ip),
+	// The server-side agent loop (/api/agent/run). One request can fan into
+	// several LLM rounds plus tool executions against shared free-lane quotas,
+	// so it gets a tighter ceiling than the plain chat proxy: 30 runs per 5
+	// minutes per IP is an active conversation, not a drain.
+	agentRunIp: (ip) =>
+		getLimiter('agent:run:ip', { limit: 30, window: '5 m', local: true }).limit(ip),
 	// Auth buckets gate credential guessing / account-creation spam. They are
 	// sensitive (critical) but use degradeToMemory: on a Redis outage they fall
 	// back to the per-instance memory limiter rather than failing closed. Failing
