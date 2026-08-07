@@ -29,7 +29,7 @@ import './meetup-event.css';
 import { isHomeTown } from './home-town.js';
 import { getPowerSaver } from '../shared/frame-governor.js';
 import {
-	parseEvent, eventState, formatCountdown, fireworkPlan, PHASE, BUCKET_MS,
+	parseEvent, eventState, formatCountdown, fireworkPlan, applyPreviewOverride, PHASE, BUCKET_MS,
 } from './meetup-schedule.js';
 
 const CONFIG_URL = '/event.json';
@@ -502,17 +502,9 @@ async function boot() {
 	} catch { /* no event, mount nothing */ }
 
 	// Local preview: ?meetup=now starts the event 20s from load; ?meetup=<ISO>
-	// shifts the whole window to that start. Duration and agenda are preserved.
-	try {
-		const want = new URLSearchParams(location.search).get('meetup');
-		if (want && cfg) {
-			const start = want === 'now' ? Date.now() + 20_000 : Date.parse(want);
-			if (Number.isFinite(start)) {
-				const span = cfg.endsAt - cfg.startsAt;
-				cfg = { ...cfg, startsAt: start, endsAt: start + span };
-			}
-		}
-	} catch { /* bad override, keep the real schedule */ }
+	// shifts the whole window to that start (applyPreviewOverride, shared with
+	// every other surface that reads the event).
+	cfg = applyPreviewOverride(cfg, location.search);
 
 	if (!cfg) return;
 	if (eventState(cfg, Date.now()).phase === PHASE.ENDED) return;

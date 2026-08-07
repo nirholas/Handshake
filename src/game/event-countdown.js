@@ -209,16 +209,21 @@ async function boot() {
 	if (!cfg) return;
 
 	// The lobby is built by coincommunities.js at boot; wait for it to exist so
-	// the banner has somewhere to mount. If it never shows up (boot failure),
-	// give up quietly after 20s; the watchdog in play.html owns that story.
-	const started = Date.now();
-	(function waitForLobby() {
-		if (document.querySelector('#cc-lobby .cc-lobby-inner')) {
-			new EventCountdown(cfg);
-		} else if (Date.now() - started < 20000) {
-			setTimeout(waitForLobby, 250);
-		}
-	})();
+	// the banner has somewhere to mount. No deadline: a cold dev server can take
+	// minutes to serve the world bundle, and a countdown that quietly skips slow
+	// boots is a countdown that misses exactly the overloaded event-day machines.
+	// The observer is inert until the lobby lands and disconnects the moment it
+	// does; if boot dies outright, the watchdog in play.html owns that story.
+	if (document.querySelector('#cc-lobby .cc-lobby-inner')) {
+		new EventCountdown(cfg);
+		return;
+	}
+	const obs = new MutationObserver(() => {
+		if (!document.querySelector('#cc-lobby .cc-lobby-inner')) return;
+		obs.disconnect();
+		new EventCountdown(cfg);
+	});
+	obs.observe(document.body, { childList: true, subtree: true });
 }
 
 boot();

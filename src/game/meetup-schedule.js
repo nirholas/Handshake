@@ -92,6 +92,26 @@ export function eventState(event, now) {
 	};
 }
 
+// Local preview: `?meetup=now` shifts the window to start 20 seconds from the
+// given clock, `?meetup=<ISO>` shifts it to that instant. Duration and agenda
+// are preserved, so every surface that reads the event (the in-world layer, the
+// photo-mode stamp) previews the SAME shifted schedule instead of each one
+// re-implementing the shift and drifting. Pure so it is unit-testable: callers
+// pass the query string, not `location`.
+export function applyPreviewOverride(event, search, now = Date.now()) {
+	if (!event || !search) return event;
+	let want = null;
+	try {
+		want = new URLSearchParams(search).get('meetup');
+	} catch {
+		return event;
+	}
+	if (!want) return event;
+	const start = want === 'now' ? now + 20_000 : Date.parse(want);
+	if (!Number.isFinite(start)) return event;
+	return { ...event, startsAt: start, endsAt: start + (event.endsAt - event.startsAt) };
+}
+
 // "2h 14m", "14m 09s", "0:07": a countdown that reads naturally at every
 // distance instead of one fixed format that is wrong at most of them.
 export function formatCountdown(ms) {

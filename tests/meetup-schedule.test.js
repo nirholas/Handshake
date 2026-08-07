@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-	parseEvent, eventState, formatCountdown, fireworkPlan,
+	parseEvent, eventState, formatCountdown, fireworkPlan, applyPreviewOverride,
 	PHASE, SOON_MS, PRESHOW_MS, AFTERGLOW_MS, BUCKET_MS,
 } from '../src/game/meetup-schedule.js';
 
@@ -98,6 +98,30 @@ describe('eventState phases', () => {
 	it('reports live progress', () => {
 		const s = eventState(ev, START + 60 * 60000);
 		expect(s.progress).toBeCloseTo(0.5, 5);
+	});
+});
+
+describe('applyPreviewOverride', () => {
+	const ev = parseEvent(DOC);
+
+	it('shifts the window to now + 20s for ?meetup=now, preserving duration', () => {
+		const now = 1_000_000_000;
+		const shifted = applyPreviewOverride(ev, '?meetup=now', now);
+		expect(shifted.startsAt).toBe(now + 20_000);
+		expect(shifted.endsAt - shifted.startsAt).toBe(ev.endsAt - ev.startsAt);
+		expect(shifted.agenda).toBe(ev.agenda);
+	});
+
+	it('shifts to an explicit ISO instant', () => {
+		const shifted = applyPreviewOverride(ev, '?meetup=2026-08-07T12:00:00Z');
+		expect(shifted.startsAt).toBe(Date.parse('2026-08-07T12:00:00Z'));
+	});
+
+	it('leaves the event alone without an override or with a bad one', () => {
+		expect(applyPreviewOverride(ev, '')).toBe(ev);
+		expect(applyPreviewOverride(ev, '?coin=abc')).toBe(ev);
+		expect(applyPreviewOverride(ev, '?meetup=garbage')).toBe(ev);
+		expect(applyPreviewOverride(null, '?meetup=now')).toBeNull();
 	});
 });
 

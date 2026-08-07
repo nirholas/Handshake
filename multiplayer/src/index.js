@@ -239,6 +239,23 @@ const httpServer = http.createServer(app);
 
 const transport = new WebSocketTransport({
 	server: httpServer,
+	// Phone-tolerant liveness. Colyseus defaults to pingInterval 3000 /
+	// pingMaxRetries 2, which calls `client.terminate()` after roughly SIX
+	// seconds of silence. That budget is fine for a desktop tab and hostile to
+	// a phone: iOS Safari suspends the whole page the instant the user switches
+	// apps, locks the screen, or pulls down a notification, so the socket stops
+	// answering pings and the server reaps it before they have finished reading
+	// the message. Because WalkRoom.onLeave has no allowReconnection window, that
+	// reap is permanent — the client rejoins with a NEW sessionId and respawns at
+	// the world origin, which is exactly the reported "kicked out right after
+	// joining". A terminate() is also an abrupt close with no close frame, so the
+	// player gets no explanation, just a world that resets under them.
+	//
+	// 5s x 6 retries rides out ~30s of suspension (covering the ordinary
+	// app-switch / read-a-notification round trip) while still reaping genuinely
+	// dead sockets long before Cloud Run's own idle handling would.
+	pingInterval: 5000,
+	pingMaxRetries: 6,
 	verifyClient(info, next) {
 		const origin = info.req.headers.origin;
 		// Origin-less upgrades (native clients / scripted probes) must NOT be a free

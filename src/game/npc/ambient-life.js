@@ -20,7 +20,7 @@ import {
 	BoxGeometry, CylinderGeometry, MeshBasicMaterial,
 } from 'three';
 import { AnimationManager } from '../../animation-manager.js';
-import { buildAvatar, CLIP_IDLE, CLIP_WALK } from '../avatar-rig.js';
+import { buildAvatar, releaseAvatar, CLIP_IDLE, CLIP_WALK } from '../avatar-rig.js';
 import { mulberry32 } from './nav-graph.js';
 import { loadCitizenPool, isCitizen } from './citizens.js';
 
@@ -97,7 +97,10 @@ class Pedestrian {
 		// AnimationManager would otherwise fetch the entire clip library.
 		buildAvatar(this.rig, record?.url || DEFAULT_AVATAR, this.anim, { clips: 'locomotion' })
 			.then(({ height }) => {
-				if (this._disposed) return;
+				// Disposed mid-download: release the clone buildAvatar just added, else
+				// its shared-template ref leaks. Peds churn on every peer join/leave,
+				// so this path is hot in a busy world.
+				if (this._disposed) { releaseAvatar(this.rig); return; }
 				this.height = height;
 				// Loaded into idle by buildAvatar — set them strolling.
 				if (!this._held) this.anim.crossfadeTo(CLIP_WALK, 0.2).catch(() => {});
@@ -165,6 +168,10 @@ class Pedestrian {
 
 	dispose() {
 		this._disposed = true;
+		// Free the shared-template clone (geometry/textures), not just the scene
+		// reference. Pedestrians are constructed and disposed on every peer churn,
+		// so a leak here compounds within a single busy world session.
+		releaseAvatar(this.rig);
 		this.scene.remove(this.rig);
 		this.bubble?.remove();
 		clearTimeout(this._bubbleTimer);

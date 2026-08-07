@@ -62,13 +62,10 @@ import { GUEST_SENTINEL, uploadPendingGuestAvatar, getPlayCosmetics, setPlayCosm
 import { AvatarSwitcher } from './avatar-switcher.js';
 import { getPresenceTicket, friendsClient } from '../friends.js';
 import { getMe } from '../account.js';
-import { FriendsPanel } from './friends-panel.js';
 import { showPlayIntro, makeIntroReopener } from './play-intro.js';
 import { applyLoadout } from './cosmetics-loadout.js';
 import { serializeLoadout, getCosmetic } from '../../multiplayer/src/cosmetics-catalog.js';
 import { AccessoryManager } from '../agent-accessories.js';
-import { CosmeticsShop } from './cosmetics-shop.js';
-import { CosmeticsWardrobe } from './cosmetics-wardrobe.js';
 import { HOME_TOWN, isHomeTown } from './home-town.js';
 
 // A Robinhood Chain coin is an EVM address (pump.fun mints are Solana base58).
@@ -1835,6 +1832,25 @@ export class CoinCommunities {
 		}
 	}
 
+	// Deep-free an Object3D built by this module: dispose every mesh's geometry,
+	// its materials, and any textures those materials hold. Used on the totem,
+	// jumbotron and dance floor at leave(), which previously were only detached
+	// from the scene graph (`world.remove`), leaking their GPU buffers on every
+	// world switch. Never called on shared/instanced world-env or district objects
+	// — those own their own disposal.
+	_disposeObject3D(obj) {
+		if (!obj) return;
+		obj.traverse((n) => {
+			if (!n.isMesh && !n.isLine && !n.isPoints) return;
+			n.geometry?.dispose?.();
+			for (const mat of Array.isArray(n.material) ? n.material : [n.material]) {
+				if (!mat) continue;
+				for (const value of Object.values(mat)) if (value?.isTexture) value.dispose();
+				mat.dispose?.();
+			}
+		});
+	}
+
 	leave() {
 		// Invalidate any in-flight enter() so a connect/avatar continuation that
 		// resolves after this teardown bails instead of rebuilding the world.
@@ -1874,8 +1890,9 @@ export class CoinCommunities {
 		this.remotes.clear();
 		this._pendingStale = null;
 		closeAvatarInspector(); // whoever it showed just left the world with us
-		if (this._totem) { this.world.remove(this._totem); this._totem = null; this._coinSpin = null; }
+		if (this._totem) { this._disposeObject3D(this._totem); this.world.remove(this._totem); this._totem = null; this._coinSpin = null; }
 		if (this._screen) {
+			this._disposeObject3D(this._screen); // bezel/panel/pulse geometry + coin-art texture
 			this.world.remove(this._screen);
 			this._screenTex?.dispose();
 			this._screen = null; this._screenCanvas = null; this._screenTex = null;
@@ -1887,7 +1904,7 @@ export class CoinCommunities {
 			for (const desk of this._agentDesks) desk.dispose();
 			this._agentDesks = [];
 		}
-		if (this._danceFloor) { this.world.remove(this._danceFloor); this._danceFloor = null; }
+		if (this._danceFloor) { this._disposeObject3D(this._danceFloor); this.world.remove(this._danceFloor); this._danceFloor = null; }
 		this._floorLights = null; this._floorTiles = null; this._floorCenterMat = null;
 		this._danceFloorPos = null; this._onFloor = false; this._wantsDance = false;
 		this.ui.setOnFloor(false);
@@ -2251,8 +2268,16 @@ export class CoinCommunities {
 	// Open/close the cosmetics shop (R21 browse/preview + R22 buy). Lazy-built;
 	// previews route to the local rig hooks above, and a settled purchase records
 	// ownership server-side. Reverts any preview when it closes.
-	_toggleShop() {
+	//
+	// The module itself is lazy-imported too: a first-time visitor walking into
+	// the plaza should not pay for the shop's catalog rendering and checkout code
+	// before the first frame. Concurrent opens share one in-flight import so a
+	// double-click can't build two shops.
+	async _toggleShop() {
 		if (!this._shop) {
+			if (!this._shopModule) this._shopModule = import('./cosmetics-shop.js');
+			const { CosmeticsShop } = await this._shopModule;
+			if (this._shop) { this._shop.toggle(); return; }
 			this._shop = new CosmeticsShop({
 				// Key ownership + purchases on the verified wallet when we have one;
 				// the shop falls back to the persisted guest id otherwise.
@@ -2323,9 +2348,16 @@ export class CoinCommunities {
 		else this._openFriends();
 	}
 
-	_openFriends() {
+	// The drawer's view module (roster, DM threads, presence rendering) is only
+	// needed once someone opens it, so it is imported on demand; the unread badge
+	// is fed by `friendsClient` and never waits on this.
+	async _openFriends() {
 		if (this._friendsOpen) return;
+		// Shares the right edge with the avatar switcher; never stack the drawers.
+		this._closeAvatarPanel();
 		if (!this._friendsEl) {
+			if (!this._friendsModule) this._friendsModule = import('./friends-panel.js');
+			const { FriendsPanel } = await this._friendsModule;
 			// Right-docked drawer. The panel renders its own tabs/list/threads into
 			// `body`; we own only the frame, the close affordance and the hotkey hint.
 			const close = document.createElement('button');
@@ -2425,6 +2457,8 @@ export class CoinCommunities {
 
 	_openAvatarPanel() {
 		if (this._avatarPanelOpen || this.phase !== 'world') return;
+		// The two right-docked drawers share the same edge; never stack them.
+		this._closeFriends();
 		if (!this._avatarPanelEl) {
 			// Same right-docked drawer frame as the friends panel: head, scrolling
 			// body, hotkey hint. The panel content itself lives in avatar-switcher.js.
@@ -2552,8 +2586,11 @@ export class CoinCommunities {
 	// Open/close the "My Cosmetics" wardrobe panel (R23). Lazy-built on first open;
 	// each profile echo from the server keeps it fresh so the equipped state always
 	// reflects the server-authoritative result.
-	_toggleWardrobe() {
+	async _toggleWardrobe() {
 		if (!this._wardrobe) {
+			if (!this._wardrobeModule) this._wardrobeModule = import('./cosmetics-wardrobe.js');
+			const { CosmeticsWardrobe } = await this._wardrobeModule;
+			if (this._wardrobe) { this._wardrobe.toggle(); return; }
 			this._wardrobe = new CosmeticsWardrobe({
 				onEquip: (id) => { this._equipCosmeticDurable(id); },
 				onShop: () => { this._wardrobe?.close(); this._toggleShop(); },

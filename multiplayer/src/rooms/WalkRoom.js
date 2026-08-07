@@ -36,6 +36,7 @@ import { verifyPresenceTicket } from '../presence-token.js';
 import { verifyPlayPass } from '../play-pass.js';
 import { containsHateSlur } from '../display-name-safety.js';
 import { newGuestId, signGuestToken, verifyGuestToken } from '../guest-token.js';
+import { consumeSettlement } from '../settlement-guard.js';
 import { installUnknownMessageGuard, PLAY_PASS_EVICT_CODE } from '../room-compat.js';
 import { registerWalkRoom, unregisterWalkRoom } from '../walk-registry.js';
 import {
@@ -81,7 +82,10 @@ import {
 	restoreQuestState, serializeQuestState,
 	acceptMission, abandonMission, applyEvent, recordCompletion,
 	missionReward, splitPot, questSnapshot, runView, objectiveMatches,
+	pruneClosedEventRuns,
 } from '../quests.js';
+import { eventLiveNow, eventWindow, refreshEventWindow } from '../event-window.js';
+import { reportEventRun, fetchEventBoard } from '../event-score.js';
 import { hydratePlayer, loadPlayer, savePlayer, flushPlayer } from '../playerStore.js';
 import { publishFeedEvent } from '../feed.js';
 import { reportQuestComplete } from '../quest-notify.js';
@@ -307,6 +311,10 @@ const CONSUME_COOLDOWN_MS = 1100; // pace between bites, no instant heal-spam
 const ACTION_RATES = {
 	fish: 6, consume: 6, equip: 30, chop: 6, mine: 6, cook: 8, pickupRod: 4, vsync: PATCH_RATE_HZ * 2,
 	venter: 4, vexit: 4, quest: 8, questInteract: 6, clear: 2,
+	// The event leaderboard panel: a manual refresh plus its own poll while open.
+	// The room caches the upstream read (event-score.js), so this ceiling bounds the
+	// per-client chatter, not the API load.
+	eventBoard: 4,
 	// General store, bank/ATM, and the $THREE boutique (W04) — low-frequency,
 	// currency-mutating actions, throttled tighter than the gather loop.
 	store: 6, storeBuy: 6, storeSell: 6, bank: 6, boutique: 4, boutiqueQuote: 3, boutiqueSettle: 3,
@@ -486,14 +494,10 @@ export class WalkRoom extends Room {
 		// stable persistence id + per-action cooldowns). Never synced to peers.
 		this.econ = new Map();
 		this._actionCounters = new Map(); // sessionId → { [action]: { windowStart, count } }
-		// $THREE boutique (W04) replay guard: settled quote nonces, pruned past the
-		// quote TTL so a verified purchase can never re-grant a cosmetic twice, while
-		// memory stays bounded (a nonce only needs to outlive its ~90s quote window).
-		this._boutiqueNonces = new Map(); // nonce → settledAt (ms)
-		// Wheel of Fortune (W09) replay guard — same shape and same reasoning as
-		// _boutiqueNonces above: a settled paid-spin nonce can never roll a second
-		// prize, and only needs to outlive its ~90s quote TTL.
-		this._spinNonces = new Map(); // nonce → settledAt (ms)
+		// On-chain settlement replay protection lives in settlement-guard.js — one
+		// durable, process-wide (and Redis-backed, when configured) consumption
+		// ledger shared by the boutique and the paid wheel, replacing the per-room
+		// nonce Maps that let one payment re-grant across rooms and restarts.
 		// Build permissions & anti-grief (R19). Ownership and density are tracked
 		// off-schema (peers don't render them) but persisted with the build so they
 		// survive a restart. blockOwners: key → owner id. blockCounts: owner id → how
@@ -622,6 +626,9 @@ export class WalkRoom extends Room {
 		this.onMessage('questAccept', (client, payload) => this._handleQuestAccept(client, payload));
 		this.onMessage('questAbandon', (client, payload) => this._handleQuestAbandon(client, payload));
 		this.onMessage('questInteract', (client) => this._handleQuestInteract(client));
+		// The live event's leaderboard, proxied for the in-world panel so the client
+		// reads the SAME ranking the web endpoint serves (api/play/event-leaderboard).
+		this.onMessage('eventBoardReq', (client) => this._sendEventBoard(client));
 		// Vehicles. The driver streams 'vsync' (the Rapier-simulated transform); the
 		// server validates per-type speed/bounds and relays. 'venter'/'vexit' take and
 		// release the wheel, gated by proximity and single-occupancy.
@@ -682,6 +689,11 @@ export class WalkRoom extends Room {
 		} catch (err) {
 			console.warn(`[walk_world ${this.roomId}] object restore failed:`, err?.message);
 		}
+
+		// Warm the event-window cache before the first player asks for the jobs board.
+		// The gate fails closed on a cold miss, so priming it here is the difference
+		// between a live event's jobs appearing instantly and appearing a minute late.
+		refreshEventWindow().catch(() => { /* the gate stays closed until it reads */ });
 
 		// Tell builders, honestly, whether this world survives a server restart.
 		// load() above already awaited the store's readiness probe, so durability
@@ -812,6 +824,12 @@ export class WalkRoom extends Room {
 		// their id. Legacy `guest-…` pids migrate once (see _resolveIdentity).
 		const identity = await this._resolveIdentity(client, options);
 		const playerId = identity.playerId;
+		// Bind the verified persistence key to the session, then retire this same
+		// player's superseded session if they are reconnecting into a socket the
+		// transport has not reaped yet. Keyed on the identity resolved above, never
+		// on a raw client-asserted pid, so it can't be aimed at anyone else.
+		client.userData = { ...(client.userData || {}), playerKey: playerId };
+		this._evictPriorSession(client, playerId, clean(options?.prevSession, 32));
 		if (identity.wallet && !client.userData?.account) {
 			// The play pass proved this wallet even though the platform gate is off —
 			// bind it as the session account so ownership + moderation checks and the
@@ -1338,15 +1356,35 @@ export class WalkRoom extends Room {
 	// rewards through the same purse/XP idioms the activities use, and manages the
 	// co-op heist instances that live on the room (this.heists), not on a profile.
 
-	// Send the owning client its jobs board + active runs ({offers, active, day} —
-	// the shape community-net.js documents). Solo runs come straight from the
-	// engine's snapshot (which also rolls stale daily state over to today); a heist
+	// The quest engine's event context: is the platform event running right now?
+	// Read from the server's own cached copy of public/event.json (event-window.js),
+	// never from anything a client sent, so the event jobs appear, pay and vanish on
+	// the real clock. A stale or unreadable config answers "closed".
+	_questCtx() {
+		return { eventLive: eventLiveNow() };
+	}
+
+	// Send the owning client its jobs board + active runs ({offers, active, day,
+	// eventLive} — the shape community-net.js documents). Solo runs come straight from
+	// the engine's snapshot (which also rolls stale daily state over to today); a heist
 	// run is overlaid with the crew's SHARED instance so every member's tracker
 	// shows the same live progress, plus the current crew size.
 	_sendQuests(client) {
 		const profile = this.econ.get(client.sessionId);
 		if (!profile) return;
-		const snap = questSnapshot(profile.quests, utcDayKey());
+		const ctx = this._questCtx();
+		// An event job cannot advance or pay once the window shuts, so a run left over
+		// from it is dropped here rather than left in the tracker as a task that will
+		// never complete. Told once, not silently.
+		const dropped = pruneClosedEventRuns(profile.quests, ctx);
+		if (dropped.length) {
+			this._persistEcon(client.sessionId);
+			client.send('notice', {
+				kind: 'quest', ok: false,
+				text: 'The event has ended — its jobs have closed for now.',
+			});
+		}
+		const snap = questSnapshot(profile.quests, utcDayKey(), ctx);
 		for (let i = 0; i < snap.active.length; i++) {
 			const inst = this.heists.get(snap.active[i].id);
 			if (inst) {
@@ -1367,11 +1405,12 @@ export class WalkRoom extends Room {
 		const id = typeof payload?.id === 'string' ? payload.id.slice(0, 64) : '';
 		const mission = missionDef(id);
 		if (!mission) return;
-		const res = acceptMission(profile.quests, id, utcDayKey());
+		const res = acceptMission(profile.quests, id, utcDayKey(), this._questCtx());
 		if (!res.ok) {
 			const text = res.reason === 'active' ? 'You already took that job.'
 				: res.reason === 'daily-done' ? 'That job is done for today — check back tomorrow.'
 				: res.reason === 'done' ? 'You’ve already completed that job.'
+				: res.reason === 'event-closed' ? 'That job only runs during the live event.'
 				: 'That job isn’t available to you yet.';
 			client.send('notice', { kind: 'quest', ok: false, text });
 			return;
@@ -1433,10 +1472,14 @@ export class WalkRoom extends Room {
 	// assembly (the whole crew at the door, judged from server positions).
 	_questEvent(client, profile, event) {
 		const dayKey = utcDayKey();
+		const eventLive = eventLiveNow();
 		let changed = false;
 		for (const [id, run] of Object.entries(profile.quests.active)) {
 			const mission = missionDef(id);
 			if (!mission || mission.kind === 'heist') continue; // heists advance via the shared instance below
+			// An event job is frozen the moment its window shuts: no progress, no
+			// payout. The run itself is dropped on the next board read (_sendQuests).
+			if (mission.event && !eventLive) continue;
 			const res = applyEvent(run, mission, event);
 			if (!res.matched) continue;
 			changed = true;
@@ -1476,8 +1519,11 @@ export class WalkRoom extends Room {
 		if (reward.gold > 0) profile.gold += reward.gold;
 		if (reward.xp) this._grantXp(client, profile, reward.xp.skill, reward.xp.amount);
 		this._sendInv(client, profile);
-		client.send('questComplete', { id: mission.id, title: mission.title, reward, kind: mission.kind, coop: false });
+		client.send('questComplete', {
+			id: mission.id, title: mission.title, reward, kind: mission.kind, coop: false, event: !!mission.event,
+		});
 		this._publishMissionComplete(client, mission, reward.gold, false);
+		if (mission.event) this._scoreEventRun(client, profile, mission, reward.gold);
 	}
 
 	// Pay out a finished heist to the LIVE crew: the pot splits evenly (remainder to
@@ -1588,6 +1634,52 @@ export class WalkRoom extends Room {
 		if (accountUid) {
 			reportQuestComplete({ accountUid, mission: mission.title, gold, coop, coin: this.state.coin || '' });
 		}
+	}
+
+	// --- Live event: quest line + leaderboard ----------------------------------
+	// The event jobs pay ordinary in-world gold through the same path as every other
+	// mission (above); this section only RANKS them. Nothing here pays a prize: the
+	// board names the winners and the owner settles them by hand after the event.
+
+	// Score one finished event quest on the durable leaderboard. Keyed to the same
+	// verified account the profile persists under (never a client-asserted id), and
+	// fire-and-forget: the player has already been paid in-world, so a slow or down
+	// API costs a ranking update, never the reward. The player's own updated totals
+	// come back on the reply and are pushed straight to their panel.
+	_scoreEventRun(client, profile, mission, gold) {
+		const account = profile?.playerId;
+		if (!account) return;
+		const player = this.state.players.get(client.sessionId);
+		const win = eventWindow();
+		reportEventRun({
+			eventId: win?.id || '',
+			account,
+			name: player?.name || '',
+			missionId: mission.id,
+			gold,
+		}).then((result) => {
+			if (!result?.ok) return;
+			try { client.send('eventScore', { runs: result.runs, cash: result.cash, eventId: result.eventId }); } catch { /* client left */ }
+		}).catch(() => { /* reported inside the bridge */ });
+	}
+
+	// Serve the in-world leaderboard panel. Proxies the same public endpoint the web
+	// reads (cached in event-score.js so a crowded plaza is one upstream read per few
+	// seconds) and pins the caller's own row by their verified account key, which
+	// never leaves the server. An unreachable board answers { ok: false } so the panel
+	// renders its error state instead of an invented ranking.
+	async _sendEventBoard(client) {
+		if (!this._actionOk(client.sessionId, 'eventBoard')) return;
+		const profile = this.econ.get(client.sessionId);
+		if (!profile) return;
+		const board = await fetchEventBoard({ account: profile.playerId || '', limit: 10 });
+		try {
+			if (!board) {
+				client.send('eventBoard', { ok: false, reason: 'unavailable' });
+				return;
+			}
+			client.send('eventBoard', { ok: true, ...board });
+		} catch { /* client left mid-read */ }
 	}
 
 	_handleRename(client, payload) {
@@ -2077,7 +2169,10 @@ export class WalkRoom extends Room {
 				buyerWallet: wallet,
 				amountRaw,
 				purpose: 'boutique',
-				extra: { cosmeticId: id },
+				// cosmeticId rides to settle; forAccount seals the quote to THIS
+				// session's profile so a leaked settled quote can't be redeemed by
+				// another account (verifyTokenPurchase enforces it).
+				extra: { cosmeticId: id, forAccount: profile.playerId },
 			});
 		} catch (err) {
 			console.warn('[walk_world] boutique quote failed:', err?.message);
@@ -2102,7 +2197,7 @@ export class WalkRoom extends Room {
 
 		let result;
 		try {
-			result = await verifyTokenPurchase({ quoteToken, txSig, purpose: 'boutique' });
+			result = await verifyTokenPurchase({ quoteToken, txSig, purpose: 'boutique', forAccount: profile.playerId });
 		} catch (err) {
 			console.warn('[walk_world] boutique settle failed:', err?.message);
 			client.send('notice', { kind: 'boutique', ok: false, text: 'Could not verify that payment — try again.' });
@@ -2112,12 +2207,15 @@ export class WalkRoom extends Room {
 			client.send('notice', { kind: 'boutique', ok: false, text: `Payment didn’t verify (${result?.reason || 'unknown'}).` });
 			return;
 		}
-		this._pruneBoutiqueNonces();
-		if (this._boutiqueNonces.has(result.nonce)) {
+		// Durable, process-wide replay guard (settlement-guard.js). The old
+		// per-room Map let the same settled payment re-grant in every other coin
+		// world and after a restart; consumeSettlement is one atomic consumption
+		// across rooms, restarts, and instances (when Redis is configured).
+		const fresh = await consumeSettlement({ nonce: result.nonce, txSig, purpose: 'boutique' });
+		if (!fresh) {
 			client.send('notice', { kind: 'boutique', ok: false, text: 'That purchase already settled.' });
 			return;
 		}
-		this._boutiqueNonces.set(result.nonce, Date.now());
 		const cosmeticId = result.quote?.cosmeticId;
 		if (ownedCosmeticSet(profile).has(cosmeticId)) {
 			client.send('notice', { kind: 'boutique', ok: true, text: 'Payment verified — you already owned this.' });
@@ -2131,20 +2229,6 @@ export class WalkRoom extends Room {
 		this._sendProfile(client);
 		client.send('notice', { kind: 'boutique', ok: true, text: `Unlocked ${getCosmetic(cosmeticId)?.name || 'the item'} — check your wardrobe.` });
 		this._persistEcon(client.sessionId);
-	}
-
-	// Replay-guard nonces only need to outlive the quote's own TTL (~90s); prune
-	// with a generous margin so memory never grows unbounded across a long-lived
-	// room while staying well clear of any in-flight settle.
-	_pruneBoutiqueNonces() {
-		const cutoff = Date.now() - 5 * 60_000;
-		for (const [nonce, ts] of this._boutiqueNonces) if (ts < cutoff) this._boutiqueNonces.delete(nonce);
-	}
-
-	// Same reasoning as _pruneBoutiqueNonces above, for paid-spin settlement.
-	_pruneSpinNonces() {
-		const cutoff = Date.now() - 5 * 60_000;
-		for (const [nonce, ts] of this._spinNonces) if (ts < cutoff) this._spinNonces.delete(nonce);
 	}
 
 	// Resolve the stable persistence identity for a joining session. Trust order:

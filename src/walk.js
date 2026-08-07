@@ -3068,6 +3068,9 @@ function inspectRemotePlayer(rp) {
 		world: COIN_PARAMS.coin ? 'coin world' : 'walk',
 		agentId: rp.agent || '',
 		wallet: rp.account || '',
+		// Verified three.ws profile (W10) off the signed presence ticket — unlocks
+		// the real profile card: follow, friend/DM, creations.
+		username: rp.username || '',
 		avatarUrl: rp._avatarUrl,
 		facts: worldInspectFacts(),
 	}, { trigger: canvas });
@@ -3249,6 +3252,9 @@ class RemotePlayer {
 		// Verified account wallet bound at sign-in (server-authoritative; empty for
 		// guests). Feeds the avatar inspector alongside the piloted agent.
 		this.account = initial?.account || '';
+		// Verified three.ws username (W10) — bound server-side from the signed
+		// presence ticket, so the inspector can open the real profile card.
+		this.username = initial?.username || '';
 		this.name = initial?.name || sessionId.slice(0, 6);
 		this._avatarLoadToken = 0;
 		this._heldTemplateUrl = null; // remote-template URL this player currently clones
@@ -3332,6 +3338,9 @@ class RemotePlayer {
 		}
 		if (player.account !== undefined && player.account !== this.account) {
 			this.account = player.account || '';
+		}
+		if (player.username !== undefined && (player.username || '') !== this.username) {
+			this.username = player.username || '';
 		}
 		if (player.emote && player.emoteTs !== this._lastEmoteTs) {
 			this._lastEmoteTs = player.emoteTs;
@@ -3622,6 +3631,7 @@ function startNet() {
 				avatar: player.avatar,
 				agent: player.agent,
 				account: player.account,
+				username: player.username,
 				cosmetics: player.cosmetics,
 			}),
 		);

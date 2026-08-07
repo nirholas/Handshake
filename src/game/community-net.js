@@ -149,7 +149,7 @@ export class CommunityNet {
 			// Wheel of Fortune (W09) — Fortune's Folly, the Mainland casino wheel.
 			spinInfo: new Set(),    // ({segments, now, nextFreeSpinAt, avgLevel, minLevel, eligible, atWheel, paidAvailable, symbol, costUsd})
 			spinPrep: new Set(),    // ({tx, tokenAmount, symbol, costUsd, quote}) — unsigned paid-spin tx to sign
-			spinResult: new Set(),  // ({mode, index, label, got, overflow, nextFreeSpinAt?}) — the server's roll
+			spinResult: new Set(),  // ({mode, index, label, got, lost, refunded, nextFreeSpinAt?}) — the server's roll
 			spinDenied: new Set(),  // ({reason, ...}) — a spin request refused
 			quests: new Set(),      // ({offers, active, day}) — jobs board + active runs (W05)
 			questComplete: new Set(), // ({id, title, reward, kind, coop}) — a mission/heist finished
@@ -200,6 +200,13 @@ export class CommunityNet {
 		this._reconnectAttempts = 0;
 		this._destroyed = false;
 		this._connectGen = 0;
+	}
+
+	// The server-minted guest credential (HMAC-sealed guest id) persisted by the
+	// 'guestToken' message handler in connect(). Empty until the first join has
+	// sealed this device's guest id, or when storage is blocked.
+	_guestToken() {
+		try { return localStorage.getItem('tws-guest-token') || ''; } catch { return ''; }
 	}
 
 	on(event, fn) {

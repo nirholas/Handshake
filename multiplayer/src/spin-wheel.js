@@ -18,6 +18,7 @@ import { nearestWheel, wheelInRange } from './world-features.js';
 import {
 	buildSpinPayment, verifySpinPayment, isWalletAddress, tokenConfigured, TOKEN_DECIMALS, TOKEN_SYMBOL,
 } from './game-token.js';
+import { consumeSettlement } from './settlement-guard.js';
 
 export const FREE_SPIN_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 export const SPIN_COST_USD = 3;

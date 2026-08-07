@@ -2,11 +2,12 @@
 //
 // Mobs are consequential — they deal damage and drop loot — so unlike the
 // ambient crowd they are NOT client-authoritative. Their existence, health,
-// damage, and rewards belong to the combat system (W07). This module is the
-// *visual + navigation* half: given an authoritative hostile from W07, it puts a
-// body in the world and walks it toward its target along the nav graph; contact
-// is only ever *reported* to W07, which decides the outcome. Nothing here can be
-// spoofed from the client because nothing here grants an effect.
+// damage, movement, and rewards belong to the combat system (W07). This module
+// is the *visual* half: given an authoritative hostile from W07, it puts a body
+// in the world at the position W07 streams every frame and turns it to face the
+// way it is actually moving; contact is only ever *reported* to W07, which
+// decides the outcome. Nothing here can be spoofed from the client because
+// nothing here grants an effect.
 //
 // W07 isn't merged yet, so this system is fully gated: with no `window.twsCombat`
 // contract present it spawns nothing and fakes no combat — it simply sleeps until
@@ -28,19 +29,27 @@ const MOB_TINT = {
 	dummy: 0x9aa3b2, goblin: 0x5f8a3a, ogre: 0x8a6a3a, troll: 0x4a6a6a,
 };
 const CONTACT_RANGE = 1.6;       // metres — when we tell W07 the mob is in melee
-const REPATH_INTERVAL = 0.6;     // s between navmesh queries while chasing
+const YAW_EPSILON_M = 0.005;     // per-frame moves smaller than this don't steer
+const YAW_LERP = 10;             // 1/s — how fast the body turns into its heading
 
-// A single hostile body — a menacing capsule until W07 supplies a model. It walks
-// toward a target the server owns; it never decides anything.
+function shortestAngle(a, b) {
+	let d = b - a;
+	while (d > Math.PI) d -= Math.PI * 2;
+	while (d < -Math.PI) d += Math.PI * 2;
+	return d;
+}
+
+// A single hostile body — a menacing capsule until W07 supplies a model. The
+// server (via W07's per-frame setPos stream) owns where it stands; this class
+// only makes the body face the way it is actually moving and reports melee
+// contact. It never decides anything.
 class Mob {
-	constructor(scene, nav, spec) {
+	constructor(scene, spec) {
 		this.scene = scene;
-		this.nav = nav;
 		this.id = spec.id;
 		this.speed = spec.speed || 2.4;
 		this.target = new Vector3(spec.target?.x || 0, 0, spec.target?.z || 0);
-		this._path = [];
-		this._repathIn = 0;
+		this._yaw = 0;
 		this._contacted = false;
 
 		this.rig = new Group();
@@ -54,29 +63,24 @@ class Mob {
 		scene.add(this.rig);
 	}
 
-	setTarget(pos) { if (pos) { this.target.set(pos.x || 0, 0, pos.z || 0); this._repathIn = 0; } }
-	setPos(pos) { if (pos) this.rig.position.set(pos.x || 0, 0, pos.z || 0); }
+	setTarget(pos) { if (pos) this.target.set(pos.x || 0, 0, pos.z || 0); }
 
-	async _repath() {
-		this._path = await this.nav.findPath(this.rig.position, this.target);
+	// W07 hard-sets the position every frame; derive the facing from the delta of
+	// consecutive updates so the body looks where it is going instead of frozen at
+	// its spawn heading. Sub-epsilon deltas (idle jitter) leave the yaw alone.
+	setPos(pos) {
+		if (!pos) return;
+		const p = this.rig.position;
+		const nx = pos.x || 0, nz = pos.z || 0;
+		const dx = nx - p.x, dz = nz - p.z;
+		if (Math.hypot(dx, dz) > YAW_EPSILON_M) this._yaw = Math.atan2(dx, dz);
+		p.set(nx, 0, nz);
 	}
 
 	update(dt, onContact) {
-		this._repathIn -= dt;
-		if (this._repathIn <= 0) { this._repathIn = REPATH_INTERVAL; this._repath(); }
-
-		const wp = this._path[0];
-		if (wp) {
-			const p = this.rig.position;
-			const dx = wp.x - p.x, dz = wp.z - p.z;
-			const dist = Math.hypot(dx, dz);
-			if (dist < 0.4) { this._path.shift(); }
-			else {
-				const step = Math.min(dist, this.speed * dt);
-				p.x += dx / dist * step; p.z += dz / dist * step;
-				this.rig.rotation.y = Math.atan2(dx, dz);
-			}
-		}
+		// Ease the body toward its latest heading — a small lerp keeps turns smooth
+		// even though the heading itself updates in discrete per-frame steps.
+		this.rig.rotation.y += shortestAngle(this.rig.rotation.y, this._yaw) * Math.min(1, dt * YAW_LERP);
 
 		// Reached melee range of its target: report once and let W07 rule on it.
 		const tx = this.target.x - this.rig.position.x, tz = this.target.z - this.rig.position.z;
@@ -88,13 +92,23 @@ class Mob {
 		}
 	}
 
-	dispose() { this.scene.remove(this.rig); }
+	// Mobs respawn continuously all session — free the GPU resources, not just the
+	// scene-graph node, or every kill leaks a capsule + sphere + two materials.
+	dispose() {
+		this.scene.remove(this.rig);
+		this.rig.traverse((o) => {
+			if (o.isMesh) {
+				o.geometry.dispose();
+				if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose());
+				else o.material.dispose();
+			}
+		});
+	}
 }
 
 export class MobSystem {
-	constructor({ scene, nav }) {
+	constructor({ scene }) {
 		this.scene = scene;
-		this.nav = nav;
 		this.mobs = new Map();
 		this._unsub = [];
 
@@ -110,7 +124,7 @@ export class MobSystem {
 
 	_spawn(spec) {
 		if (!spec?.id || this.mobs.has(spec.id)) return;
-		this.mobs.set(spec.id, new Mob(this.scene, this.nav, spec));
+		this.mobs.set(spec.id, new Mob(this.scene, spec));
 	}
 	_state(s) {
 		const m = this.mobs.get(s?.id);
