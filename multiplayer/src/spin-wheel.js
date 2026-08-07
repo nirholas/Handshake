@@ -60,12 +60,19 @@ function avgLevel(profile) {
 	return levels.reduce((a, b) => a + b, 0) / levels.length;
 }
 
+// Every distinct item a wedge can award, derived from the paytable itself so a
+// new prize kind upstream is covered here without a second list to maintain.
+const PRIZE_ITEMS = [...new Set(WHEEL_SEGMENTS.filter((s) => s.kind === 'item').map((s) => s.item))];
+
 // Is there room for at least one of EVERY possible item-type prize this wheel
-// can award? Checked before a spin is even offered (free) or paid for (paid) —
-// never after rolling — so a completed spin can never have nowhere to put its
-// prize. Gold prizes never need this (gold is a scalar balance, not pack space).
-function hasRoomForAnyPrize(profile) {
-	return hasRoomFor(profile, 'wood') || hasRoomFor(profile, 'stone') || hasRoomFor(profile, 'coal');
+// can award? Checked before a spin is even offered (free) or paid for (paid) -
+// never after rolling - so a completed spin can never have nowhere to put its
+// prize. It has to be EVERY prize, not any: a pack whose only free space is a
+// half-full wood stack has room for wood and nowhere to put stone, and the roll
+// that follows is uniform over both. Gold prizes never need this (gold is a
+// scalar balance, not pack space).
+function hasRoomForEveryPrize(profile) {
+	return PRIZE_ITEMS.every((item) => hasRoomFor(profile, item));
 }
 
 function pickSegment() {
@@ -74,22 +81,25 @@ function pickSegment() {
 }
 
 // Grant a rolled segment's prize to the profile. Room was already guaranteed by
-// hasRoomForAnyPrize() before the roll, so addItem's leftover is expected to be
-// 0 — but a defensive fallback still refunds any leftover as its rough gold
+// hasRoomForEveryPrize() before the roll, so addItem's leftover is expected to
+// be 0 - but a defensive fallback still refunds any leftover as its rough gold
 // value rather than silently discarding a prize a player (possibly a PAYING
-// player) already won.
+// player) already won. The refund is REPORTED back in the result so the client
+// can say what happened; a prize that quietly turned into a few cash reads as a
+// broken wheel.
 const ITEM_GOLD_VALUE = { wood: 1, stone: 1, coal: 2 };
 function grantSegment(profile, seg) {
 	if (seg.kind === 'gold') {
 		profile.gold = Math.min(0xffffffff, (profile.gold || 0) + seg.gold);
-		return { got: seg.gold, overflow: 0 };
+		return { got: seg.gold, lost: 0, refunded: 0 };
 	}
 	const leftover = addItem(profile, seg.item, seg.qty);
+	let refunded = 0;
 	if (leftover > 0) {
-		const refund = leftover * (ITEM_GOLD_VALUE[seg.item] || 1);
-		profile.gold = Math.min(0xffffffff, (profile.gold || 0) + refund);
+		refunded = leftover * (ITEM_GOLD_VALUE[seg.item] || 1);
+		profile.gold = Math.min(0xffffffff, (profile.gold || 0) + refunded);
 	}
-	return { got: seg.qty - leftover, overflow: 0 };
+	return { got: seg.qty - leftover, lost: leftover, refunded };
 }
 
 function infoPayload(room, client, profile) {
@@ -131,14 +141,14 @@ export function handleSpinFree(room, client) {
 		client.send('spinDenied', { reason: 'cooldown', nextFreeSpinAt: profile.nextFreeSpinAt });
 		return;
 	}
-	if (!hasRoomForAnyPrize(profile)) { client.send('spinDenied', { reason: 'pack_full' }); return; }
+	if (!hasRoomForEveryPrize(profile)) { client.send('spinDenied', { reason: 'pack_full' }); return; }
 
 	profile.nextFreeSpinAt = now + FREE_SPIN_COOLDOWN_MS;
 	const { index, seg } = pickSegment();
-	const { got, overflow } = grantSegment(profile, seg);
+	const { got, lost, refunded } = grantSegment(profile, seg);
 	room._sendInv(client, profile);
 	client.send('spinResult', {
-		mode: 'free', index, label: seg.label, got, overflow, nextFreeSpinAt: profile.nextFreeSpinAt,
+		mode: 'free', index, label: seg.label, got, lost, refunded, nextFreeSpinAt: profile.nextFreeSpinAt,
 	});
 	room._questEvent?.(client, profile, { type: 'spin' });
 	room._persistEcon(client.sessionId);
@@ -153,7 +163,7 @@ export async function handleSpinPaidPrep(room, client, payload) {
 	if (!wheelInRange(player.x, player.z)) { client.send('spinDenied', { reason: 'not_at_wheel' }); return; }
 	const lvl = avgLevel(profile);
 	if (lvl < MIN_AVG_LEVEL) { client.send('spinDenied', { reason: 'level', avgLevel: lvl, minLevel: MIN_AVG_LEVEL }); return; }
-	if (!hasRoomForAnyPrize(profile)) { client.send('spinDenied', { reason: 'pack_full' }); return; }
+	if (!hasRoomForEveryPrize(profile)) { client.send('spinDenied', { reason: 'pack_full' }); return; }
 	if (!tokenConfigured()) { client.send('spinDenied', { reason: 'token_unavailable' }); return; }
 
 	// Same "whoever's wallet fronts it, the unlock lands on this session" model
@@ -164,7 +174,9 @@ export async function handleSpinPaidPrep(room, client, payload) {
 
 	let built;
 	try {
-		built = await buildSpinPayment({ buyerWallet: wallet, usd: SPIN_COST_USD });
+		// forAccount seals the quote to this session's profile so a leaked
+		// { quote, txSig } pair can't be redeemed onto a different account.
+		built = await buildSpinPayment({ buyerWallet: wallet, usd: SPIN_COST_USD, forAccount: profile.playerId });
 	} catch (err) {
 		console.warn('[walk_world] spin prep failed:', err?.message);
 	}
@@ -188,7 +200,7 @@ export async function handleSpinPaidSettle(room, client, payload) {
 
 	let result;
 	try {
-		result = await verifySpinPayment({ quoteToken, txSig });
+		result = await verifySpinPayment({ quoteToken, txSig, forAccount: profile.playerId });
 	} catch (err) {
 		console.warn('[walk_world] spin settle failed:', err?.message);
 		client.send('spinDenied', { reason: 'not_found' });
@@ -196,19 +208,23 @@ export async function handleSpinPaidSettle(room, client, payload) {
 	}
 	if (!result?.ok) { client.send('spinDenied', { reason: result?.reason || 'not_found' }); return; }
 
-	room._pruneSpinNonces?.();
-	if (room._spinNonces.has(result.nonce)) { client.send('spinDenied', { reason: 'already_settled' }); return; }
-	room._spinNonces.set(result.nonce, Date.now());
+	// Durable, process-wide replay guard (settlement-guard.js): one payment rolls
+	// exactly one prize, across every coin world, restart, and instance. The old
+	// per-room Map let the same settled tx re-roll in N different rooms.
+	const fresh = await consumeSettlement({ nonce: result.nonce, txSig, purpose: 'spin' });
+	if (!fresh) { client.send('spinDenied', { reason: 'already_settled' }); return; }
 
-	// Room precheck at prep time already guaranteed pack space for an item
-	// prize; re-check here too since real time passed while the player was in
-	// their wallet approving the transaction — a paid spin must never lose a
-	// won prize to a pack that filled up in the meantime (grantSegment's own
-	// gold-value fallback is the last-resort backstop if it somehow still does).
+	// The prep-time precheck guaranteed pack space for every item prize, but real
+	// time passed while the player was in their wallet approving the transfer, so
+	// the pack can have filled since. The payment has ALREADY settled by now, so a
+	// denial here would be theft: roll and grant regardless, and let grantSegment's
+	// gold-value fallback catch anything that no longer fits. `refunded` rides back
+	// on the result so the client states plainly what became of the prize instead of
+	// showing a win the pack never received.
 	const { index, seg } = pickSegment();
-	const { got, overflow } = grantSegment(profile, seg);
+	const { got, lost, refunded } = grantSegment(profile, seg);
 	room._sendInv(client, profile);
-	client.send('spinResult', { mode: 'paid', index, label: seg.label, got, overflow });
+	client.send('spinResult', { mode: 'paid', index, label: seg.label, got, lost, refunded });
 	room._questEvent?.(client, profile, { type: 'spin' });
 	room._persistEcon(client.sessionId);
 }

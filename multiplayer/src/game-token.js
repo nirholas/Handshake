@@ -40,6 +40,13 @@ export const REWARDS_SINK =
 	'';
 
 const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+// Commitment level settlement verification reads at. 'confirmed' answers in a
+// couple of seconds, which is what keeps the in-wallet spin/boutique flow
+// responsive; the residual risk (a confirmed tx dropped on a fork after the
+// grant) is bounded to single-digit dollars per settlement and further pinned
+// by the memo + durable nonce guard. Operators who prefer certainty over
+// latency can set GAME_TOKEN_VERIFY_COMMITMENT=finalized.
+const VERIFY_COMMITMENT = process.env.GAME_TOKEN_VERIFY_COMMITMENT === 'finalized' ? 'finalized' : 'confirmed';
 const BIRDEYE_BASE = 'https://public-api.birdeye.so';
 // SPL memo program — a memo carrying the quote nonce binds the on-chain tx to
 // one specific quote so an unrelated transfer of the right size can't settle it.
@@ -241,10 +248,10 @@ export async function buildSplitTransaction({ buyerWallet, sellerWallet, sellerR
 // however the wallet assembled the transfer. Returns { ok, reason }.
 export async function verifySplitPayment({ txSig, sellerWallet, sellerRaw, treasuryRaw }) {
 	if (typeof txSig !== 'string' || txSig.length < 32 || txSig.length > 128) return { ok: false, reason: 'bad_signature' };
-	const conn = new Connection(SOLANA_RPC, 'confirmed');
+	const conn = new Connection(SOLANA_RPC, VERIFY_COMMITMENT);
 	let tx;
 	try {
-		tx = await conn.getParsedTransaction(txSig, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+		tx = await conn.getParsedTransaction(txSig, { commitment: VERIFY_COMMITMENT, maxSupportedTransactionVersion: 0 });
 	} catch (err) {
 		return { ok: false, reason: 'rpc_error' };
 	}
@@ -331,7 +338,7 @@ function memoInstruction(nonce) {
  * @param {{ buyerWallet: string, usd: number }} params
  * @returns {Promise<null | { quoteToken: string, txBase64: string, quote: object }>}
  */
-export async function buildSpinPayment({ buyerWallet, usd }) {
+export async function buildSpinPayment({ buyerWallet, usd, forAccount = '' }) {
 	if (!tokenConfigured()) return null;
 	const priced = await quoteTokenForUsd(usd);
 	if (!priced || !(priced.raw > 0n)) return null;
@@ -380,6 +387,9 @@ export async function buildSpinPayment({ buyerWallet, usd }) {
 		rewardsRaw: rewardsRaw.toString(),
 		treasuryAddr,
 		treasuryRaw: treasuryRaw.toString(),
+		// Session binding: the quote can only settle onto the profile that asked
+		// for it (see verifySpinPayment). Empty when the caller has no stable id.
+		...(forAccount ? { forAccount } : {}),
 		nonce,
 	};
 	const quoteToken = signQuote(quotePayload);
@@ -394,16 +404,20 @@ export async function buildSpinPayment({ buyerWallet, usd }) {
  * @param {{ quoteToken: string, txSig: string, buyerWallet?: string }} params
  * @returns {Promise<{ ok: boolean, reason?: string, nonce?: string, quote?: object }>}
  */
-export async function verifySpinPayment({ quoteToken, txSig, buyerWallet }) {
+export async function verifySpinPayment({ quoteToken, txSig, buyerWallet, forAccount }) {
 	const q = verifyQuote(quoteToken);
 	if (!q || q.purpose !== 'spin') return { ok: false, reason: 'bad_quote' };
 	if (buyerWallet && q.buyer && q.buyer !== buyerWallet) return { ok: false, reason: 'buyer_mismatch' };
+	// The quote is sealed to the session account that requested it (forAccount),
+	// so a leaked { quoteToken, txSig } pair can't be redeemed onto a different
+	// profile. Quotes minted before this field existed verify as before.
+	if (q.forAccount && forAccount && q.forAccount !== forAccount) return { ok: false, reason: 'wrong_session' };
 	if (typeof txSig !== 'string' || txSig.length < 32 || txSig.length > 128) return { ok: false, reason: 'bad_signature' };
 
-	const conn = new Connection(SOLANA_RPC, 'confirmed');
+	const conn = new Connection(SOLANA_RPC, VERIFY_COMMITMENT);
 	let tx;
 	try {
-		tx = await conn.getParsedTransaction(txSig, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+		tx = await conn.getParsedTransaction(txSig, { commitment: VERIFY_COMMITMENT, maxSupportedTransactionVersion: 0 });
 	} catch {
 		return { ok: false, reason: 'rpc_error' };
 	}
@@ -522,7 +536,13 @@ export async function buildTokenPurchase({ buyerWallet, amountRaw, purpose, rewa
 	tx.recentBlockhash = blockhash;
 	const txBase64 = tx.serialize({ requireAllSignatures: false, verifySignatures: false }).toString('base64');
 
+	// `extra` is sealed for the caller's own settle-time context (e.g. the
+	// boutique listing id), but it must never be able to overwrite the payment
+	// terms: spread it FIRST so every sealed settlement field below wins, and a
+	// hostile extra.nonce/total/treasuryRaw can never rewrite what verification
+	// checks against.
 	const quotePayload = {
+		...extra,
 		purpose,
 		mint: TOKEN_MINT,
 		decimals: TOKEN_DECIMALS,
@@ -539,7 +559,6 @@ export async function buildTokenPurchase({ buyerWallet, amountRaw, purpose, rewa
 		// or omit it. Absent keys mean "no creator leg" (plain two-way split).
 		...(creatorActive ? { creatorAddr: creatorWallet, creatorRaw: creatorRaw.toString(), creatorBps: effectiveCreatorBps } : {}),
 		nonce,
-		...extra,
 	};
 	const quoteToken = signQuote(quotePayload);
 	return { quoteToken, txBase64, quote: { ...quotePayload, ttlSeconds: QUOTE_TTL_SECONDS } };
@@ -553,16 +572,19 @@ export async function buildTokenPurchase({ buyerWallet, amountRaw, purpose, rewa
  * @param {{ quoteToken: string, txSig: string, buyerWallet?: string, purpose?: string }} params
  * @returns {Promise<{ ok: boolean, reason?: string, nonce?: string, quote?: object }>}
  */
-export async function verifyTokenPurchase({ quoteToken, txSig, buyerWallet, purpose }) {
+export async function verifyTokenPurchase({ quoteToken, txSig, buyerWallet, purpose, forAccount }) {
 	const q = verifyQuote(quoteToken);
 	if (!q || (purpose && q.purpose !== purpose)) return { ok: false, reason: 'bad_quote' };
 	if (buyerWallet && q.buyer && q.buyer !== buyerWallet) return { ok: false, reason: 'buyer_mismatch' };
+	// Sealed session binding, mirroring verifySpinPayment: a stolen settled quote
+	// can only ever land on the profile that requested it.
+	if (q.forAccount && forAccount && q.forAccount !== forAccount) return { ok: false, reason: 'wrong_session' };
 	if (typeof txSig !== 'string' || txSig.length < 32 || txSig.length > 128) return { ok: false, reason: 'bad_signature' };
 
-	const conn = new Connection(SOLANA_RPC, 'confirmed');
+	const conn = new Connection(SOLANA_RPC, VERIFY_COMMITMENT);
 	let tx;
 	try {
-		tx = await conn.getParsedTransaction(txSig, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+		tx = await conn.getParsedTransaction(txSig, { commitment: VERIFY_COMMITMENT, maxSupportedTransactionVersion: 0 });
 	} catch {
 		return { ok: false, reason: 'rpc_error' };
 	}
