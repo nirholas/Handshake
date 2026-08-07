@@ -301,3 +301,74 @@ describe('classifySettleBuckets: a governed throttle is not a rail fault', () =>
 		expect(isRailFault('fee_runway_exhausted:10022298+10000>10000000')).toBe(false);
 	});
 });
+
+// The ring log is reason-blind for refusals that arrive over HTTP: a settle the
+// governor refused reaches x402_autonomous_log as a bare http_503 (pre
+// 2026-08-06: http_502) and used to read as a rail fault. On 2026-08-05
+// production this showed `cause: "rail"` at settle 26.1% while the facilitator
+// book held 75k+ fee_runway_exhausted rejects — the operator was sent to debug
+// a healthy rail. `facilitatorRejects` carries that book into the classifier.
+describe('classifySettleBuckets: facilitator-book reconciliation of status-only faults', () => {
+	// The live 2026-08-05 shape, scaled: settles landing, a 502/503 wall, and the
+	// facilitator book attributing nearly all of it to the governor.
+	const reasonBlindOutage = [
+		{ success: true, paid: true, reason: 'none', n: 443 },
+		{ success: false, paid: true, reason: 'http_502', n: 1172 },
+		{ success: false, paid: true, reason: 'http_503', n: 24 },
+		{ success: false, paid: true, reason: 'settle_failed', n: 29 },
+	];
+
+	it('re-attributes governor-refused 5xx rows so the rate judges the rail alone', () => {
+		const v = classifySettleBuckets(reasonBlindOutage, {
+			facilitatorRejects: { governor: 1180 },
+		});
+		// 503 drains first, then 502: 24 + 1156 attributed, 16 http_502 + 29
+		// settle_failed remain genuine rail faults.
+		expect(v.governorSkips).toBe(1180);
+		expect(v.faults).toBe(45);
+		// The rate now judges the rail alone (443/488, not 443/1668), and per the
+		// established pacing semantics a healthy residual rail reads OK with the
+		// governed volume named in the detail, instead of yesterday's down/rail.
+		expect(v.rate).toBeGreaterThan(0.9);
+		expect(v.status).toBe('ok');
+		expect(v.detail).toMatch(/1180 paced by the fee governor/);
+	});
+
+	it('clamps attribution at the observed status faults, never inventing negatives', () => {
+		// Window skew between the two logs can put more rejects in the book than
+		// 5xx rows in the ring log. min() caps the drain; faults never go below the
+		// non-status rail signatures.
+		const v = classifySettleBuckets(reasonBlindOutage, {
+			facilitatorRejects: { governor: 50_000, floor: 10_000 },
+		});
+		expect(v.faults).toBe(29);
+		expect(v.governorSkips).toBe(1196);
+		expect(v.floorSignals).toBe(0);
+		expect(v.faultClasses).toEqual([{ reason: 'settle_failed', n: 29 }]);
+	});
+
+	it('floor rejects drain what the governor left and outrank it in the verdict', () => {
+		const v = classifySettleBuckets(reasonBlindOutage, {
+			facilitatorRejects: { governor: 1000, floor: 150 },
+		});
+		// governor drains 24 http_503 + 976 http_502; floor drains 150 more 502s.
+		expect(v.governorSkips).toBe(1000);
+		expect(v.floorSignals).toBe(150);
+		expect(v.faults).toBe(75);
+		expect(v.cause).toBe('sponsor_floor');
+	});
+
+	it('a genuine rail outage with an empty facilitator book still blames the rail', () => {
+		const v = classifySettleBuckets(reasonBlindOutage, { facilitatorRejects: { governor: 0, floor: 0 } });
+		expect(v.cause).toBe('rail');
+		expect(v.faults).toBe(1225);
+		expect(v.status).toBe('down');
+	});
+
+	it('omitting facilitatorRejects behaves exactly as before', () => {
+		const withOpt = classifySettleBuckets(reasonBlindOutage, {});
+		const without = classifySettleBuckets(reasonBlindOutage);
+		expect(withOpt).toEqual(without);
+		expect(without.cause).toBe('rail');
+	});
+});

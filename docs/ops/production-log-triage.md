@@ -240,6 +240,18 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
   `fee_runway_exhausted` skips in `x402_autonomous_log` rather than as failed
   paid calls.
 
+  **The sensor reads through the status codes now.** `x402_autonomous_log` is
+  reason-blind for refusals that arrive over HTTP (the row says `http_503` or,
+  pre-2026-08-06, `http_502`; the reason lives only in
+  `x402_self_facilitator_log.reject_reason`). Since 2026-08-07 the healthz
+  `x402_settle` sensor reconciles those status-only 5xx rows against the
+  facilitator book for the same window, re-attributing them to `fee_governor` /
+  `sponsor_floor` before it computes the rate. So `metrics.cause` is trustworthy
+  even for governed refusals recorded as bare 5xx, the settle rate judges the
+  rail alone, and a `cause: "rail"` verdict now genuinely means the rail. (The
+  2026-08-05 storm read `down`/`rail` at settle 26.1% under exactly this
+  blindness; the same data now reads as governor pacing with a healthy rail.)
+
 ---
 
 ## 🟡 HTTP 502 on `/api/coin/*` — `coingecko-quota-exhausted-502`

@@ -107,7 +107,9 @@ const FEE_GOVERNOR = /^fee_runway_exhausted/i;
 // The sponsor-floor refusal, as the ring records it. x402-spec.js answers 503
 // `settlement_unavailable` for a fee wallet under its floor, so the reason token
 // arrives either as the 503 prose or as the raw floor signature.
-const SPONSOR_FLOOR = /^(settlement temporarily unavailable|fee_wallet_below_floor|sponsor_sol_floor|sol_floor)/i;
+// `insufficient_lamports_for_fee` is the same starvation reported from inside
+// the settle path (see runway-lab's bucketer, which files it under floor too).
+const SPONSOR_FLOOR = /^(settlement temporarily unavailable|fee_wallet_below_floor|sponsor_sol_floor|sol_floor|insufficient_lamports_for_fee)/i;
 
 /**
  * Why did the settle rate fall? Two failure shapes are indistinguishable in the
@@ -185,7 +187,10 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
 			'`npm run logs -- -s three-ws-api --grep "settle_failed" --since 3h`. ' +
 			'A 502 cluster with empty simulation logs is a duplicate-signature or ' +
 			'RPC-preflight fault; a 402 cluster is verify/facilitator rejection. A 503 ' +
-			'cluster is not a rail fault at all, it is the sponsor floor (checked above). ' +
+			'cluster is a deliberate refusal (fee-governor budget or sponsor floor); ' +
+			'both are reconciled against the facilitator book above, so a 503 surplus ' +
+			'surviving into this hint means the facilitator log and the ring log ' +
+			'disagree — read x402_self_facilitator_log.reject_reason directly. ' +
 			'See docs/ops/production-log-triage.md.',
 	};
 }
@@ -194,13 +199,25 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
  * Classify pre-aggregated settle buckets into a subsystem verdict. Pure — no DB,
  * no clock — so the thresholds and the rail-fault split are unit-testable
  * against the exact bucket shape the DB returns.
+ *
+ * `facilitatorRejects` is the same window's deliberate-refusal counts from the
+ * facilitator's own book (`x402_self_facilitator_log.reject_reason`). It exists
+ * because the ring log is REASON-BLIND for refusals that arrive over HTTP: a
+ * settle the wallet fee governor refused reaches `x402_autonomous_log` as a bare
+ * `http_503` (pre-2026-08-06: `http_502`), matches RAIL_STATUS, and reads as a
+ * rail fault — which is how 2026-08-05 production showed `cause: "rail"` for
+ * ~1,200 refusals that were the budget governor pacing on purpose. The
+ * reconciliation below re-attributes status-only 5xx faults to the governor /
+ * floor, clamped by min() so a window skew between the two logs can never
+ * invent faults or attribute more than actually happened.
  * @param {Array<{ success: boolean, paid: boolean, reason: string, n: number }>} buckets
- * @param {{ minAttempts?: number }} [opts]
+ * @param {{ minAttempts?: number,
+ *   facilitatorRejects?: { governor?: number, floor?: number } }} [opts]
  * @returns {{ status: 'ok'|'degraded'|'down'|'unknown', settled: number,
  *   faults: number, attempts: number, rate: number|null,
  *   faultClasses: Array<{ reason: string, n: number }>, detail: string, hint?: string }}
  */
-export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = {}) {
+export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS, facilitatorRejects } = {}) {
 	let settled = 0;
 	let faults = 0;
 	// Counted but deliberately kept OUT of the rate: these two explain a collapse
@@ -228,6 +245,29 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = 
 			faultBy[b.reason] = (faultBy[b.reason] || 0) + n;
 		}
 	}
+
+	// Re-attribute status-only 5xx faults to the deliberate refusals the
+	// facilitator book proves happened in the window. 503 drains first (the
+	// current status both refusals wear), then 502 (the pre-2026-08-06 mapping,
+	// and any path still routed through the generic settle_failed throw).
+	const drainStatusFaults = (count) => {
+		let remaining = Math.max(0, Math.floor(Number(count) || 0));
+		let drained = 0;
+		for (const key of ['http_503', 'http_502']) {
+			if (remaining <= 0) break;
+			const take = Math.min(faultBy[key] || 0, remaining);
+			if (take <= 0) continue;
+			faultBy[key] -= take;
+			if (faultBy[key] === 0) delete faultBy[key];
+			faults -= take;
+			remaining -= take;
+			drained += take;
+		}
+		return drained;
+	};
+	governorSkips += drainStatusFaults(facilitatorRejects?.governor);
+	floorSignals += drainStatusFaults(facilitatorRejects?.floor);
+
 	const attempts = settled + faults;
 	const faultClasses = Object.entries(faultBy)
 		.map(([reason, n]) => ({ reason, n }))
@@ -274,7 +314,8 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = 
 		// settles that ran, ran. Carry the skip count so a wallet quietly sliding
 		// toward its budget shows up before the rate does.
 		return {
-			status: 'ok', settled, faults, attempts, rate, faultClasses, governorSkips,
+			status: 'ok', settled, faults, attempts, rate, faultClasses,
+			noSolanaAccept, floorSignals, governorSkips,
 			detail: governorSkips > 0 ? `${base}; ${governorSkips} paced by the fee governor` : base,
 		};
 	}
@@ -324,7 +365,25 @@ export async function gatherX402SettleHealth() {
 				GROUP BY success, paid, reason
 			`
 		);
-		const v = classifySettleBuckets(buckets);
+		// The facilitator's own book for the same window: the ring log only carries
+		// `http_5xx` for a refusal that came back over HTTP, so this is the sole
+		// record of WHY those settles were refused. Fail-soft to zero: a missing
+		// table (pre-migration) must not take the whole sensor down with it.
+		const rejects = await sql`
+			SELECT split_part(COALESCE(reject_reason, ''), ':', 1) AS reason,
+			       count(*)::int AS n
+			FROM x402_self_facilitator_log
+			WHERE ts >= now() - ${WINDOW_INTERVAL}::interval
+			  AND action = 'settle' AND ok = false
+			GROUP BY 1
+		`.catch(() => []);
+		const facilitatorRejects = { governor: 0, floor: 0 };
+		for (const r of rejects) {
+			const n = Number(r?.n) || 0;
+			if (FEE_GOVERNOR.test(String(r?.reason || ''))) facilitatorRejects.governor += n;
+			else if (SPONSOR_FLOOR.test(String(r?.reason || ''))) facilitatorRejects.floor += n;
+		}
+		const v = classifySettleBuckets(buckets, { facilitatorRejects });
 		return {
 			...base,
 			status: v.status,
