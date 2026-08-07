@@ -50,18 +50,28 @@ export function scrubSecrets(value, seen = new WeakSet()) {
 	return out;
 }
 
-// Credentials carried in a URL QUERY STRING, which scrubSecrets cannot reach:
-// it redacts by KEY name on an object, and a message like
+// Credentials carried in a URL, which scrubSecrets cannot reach: it redacts by
+// KEY name on an object, and a message like
 // `FetchError: request to https://rpc.example/?api-key=SECRET failed` is a plain
 // string with no key to match. Solana web3.js embeds the full RPC URL in its
 // network errors, so any path that logs a raw `err.message` from an on-chain
 // call would otherwise spill HELIUS_API_KEY into the log sink.
-const URL_CREDENTIAL_RE = /([?&](?:api[-_]?key|access[-_]?token|token|secret|key|auth)=)[^&\s"'`]+/gi;
+//
+// Two shapes carry a secret, and both occur here:
+//   1. a query parameter  https://rpc.host/?api-key=SECRET
+//   2. userinfo           postgres://user:PASSWORD@host/db
+// The second matters just as much: a Neon/Postgres connection failure puts the
+// whole DATABASE_URL, password included, into its error message.
+const URL_QUERY_CREDENTIAL_RE = /([?&](?:api[-_]?key|access[-_]?token|token|secret|key|auth)=)[^&\s"'`]+/gi;
+// `//user:` then anything up to the `@`. The username is kept (it is useful for
+// debugging and is not the secret); only the password is masked.
+const URL_USERINFO_RE = /(\/\/[^/@\s:]+:)[^/@\s]+@/g;
 
 /**
  * Mask credential VALUES embedded in a URL inside a free-form string (typically
  * an error message) while keeping the rest of the text intact for debugging.
- * Only the value after a known credential parameter is replaced.
+ * Covers both a known credential query parameter and a `user:password@` userinfo
+ * segment; everything else is left readable.
  *
  * Use this on any string bound for a log sink; use `scrubSecrets` for objects.
  *
@@ -69,5 +79,7 @@ const URL_CREDENTIAL_RE = /([?&](?:api[-_]?key|access[-_]?token|token|secret|key
  * @returns {string}
  */
 export function redactUrlSecrets(text) {
-	return String(text ?? '').replace(URL_CREDENTIAL_RE, '$1REDACTED');
+	return String(text ?? '')
+		.replace(URL_QUERY_CREDENTIAL_RE, '$1REDACTED')
+		.replace(URL_USERINFO_RE, '$1REDACTED@');
 }

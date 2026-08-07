@@ -198,7 +198,12 @@ export function reportServerError(err, { code = 'internal_error', status = 500, 
 	// their network errors, so an on-chain failure would otherwise print the keyed
 	// RPC endpoint (HELIUS_API_KEY) into logs. Applied here, at the single shared
 	// sink, so every handler is covered rather than each remembering to redact.
-	const detail = redactUrlSecrets(err?.message || String(err ?? 'unknown error'));
+	const rawDetail = err?.message || String(err ?? 'unknown error');
+	const detail = redactUrlSecrets(rawDetail);
+	// Whether anything was actually masked. Compared against the RAW string, not
+	// against err.message, so an Error with an empty message (which falls back to
+	// String(err)) is not misread as "redacted" and needlessly replaced below.
+	const redacted = detail !== rawDetail;
 	// A DB outage is infrastructure, not a code fault: throttle the log, skip the
 	// Sentry capture, and collapse to the single shared `db:unavailable` alert so a
 	// missing DATABASE_URL degrades quietly instead of flooding error tracking.
@@ -218,8 +223,8 @@ export function reportServerError(err, { code = 'internal_error', status = 500, 
 		// message carried no credential; otherwise send a redacted stand-in that
 		// keeps the stack but not the key.
 		let captured;
-		if (err instanceof Error && err.message === detail) {
-			captured = err; // nothing was redacted, so send the original untouched
+		if (err instanceof Error && !redacted) {
+			captured = err; // nothing was masked, so send the original untouched
 		} else {
 			captured = new Error(detail);
 			// A stack's first line repeats the message, so redact it too rather than

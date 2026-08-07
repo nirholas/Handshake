@@ -88,6 +88,34 @@ describe('redactUrlSecrets', () => {
 		);
 	});
 
+	it('masks the password in a postgres/redis connection URL', () => {
+		// The shape a Neon or Upstash connection failure carries: the whole
+		// DATABASE_URL, password included, lands in err.message and then in the log.
+		const pg = redactUrlSecrets('connect ECONNREFUSED postgres://neondb_owner:npg_S3cr3tPw@ep-x.aws.neon.tech/neondb');
+		expect(pg).not.toContain('npg_S3cr3tPw');
+		expect(pg).toBe('connect ECONNREFUSED postgres://neondb_owner:REDACTED@ep-x.aws.neon.tech/neondb');
+
+		const redis = redactUrlSecrets('redis://default:AX9zSECRET@fly.upstash.io:6379 timed out');
+		expect(redis).not.toContain('AX9zSECRET');
+		expect(redis).toContain('redis://default:REDACTED@fly.upstash.io:6379');
+	});
+
+	it('keeps the username and host readable, masking only the password', () => {
+		// Redaction has to leave enough behind to debug with: which database, which
+		// host, which role. Only the secret goes.
+		const out = redactUrlSecrets('postgres://app_user:hunter2@db.internal:5432/prod');
+		expect(out).toContain('app_user');
+		expect(out).toContain('db.internal:5432/prod');
+		expect(out).not.toContain('hunter2');
+	});
+
+	it('does not mangle a URL with no password', () => {
+		expect(redactUrlSecrets('https://user@host/path')).toBe('https://user@host/path');
+		expect(redactUrlSecrets('https://example.com/a/b?x=1')).toBe('https://example.com/a/b?x=1');
+		// A bare "scheme:host" with no // userinfo must not be treated as credentials.
+		expect(redactUrlSecrets('see mailto:someone@example.com')).toBe('see mailto:someone@example.com');
+	});
+
 	it('coerces non-strings instead of throwing', () => {
 		expect(redactUrlSecrets(null)).toBe('');
 		expect(redactUrlSecrets(undefined)).toBe('');
