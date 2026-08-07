@@ -158,10 +158,10 @@ Two accounts, two jobs. `@trythreews` posts the institutional version: IBM wrote
 `@nichxbt` posts the human version: working with her has been great. Do not put the warm personal
 note on the brand account, and do not post both within a few minutes of each other.
 
-### From @trythreews (recommended, tight quote)
+### From @trythreews (recommended, tight quote). This is the posted version.
 
-> The official blog for today's meetup is up on IBM Community, written by Jessica, a core member of
-> the @IBM Community team behind the Three.ws User Group.
+> The official @IBM blog for today's meetup is up, written by Jessica, a core member of the @IBM
+> team behind the Three.ws User Group and the one who made all of this possible.
 >
 > "It is not a video call. The three.ws team is hosting the group's first community meetup inside
 > the platform itself, in the flagship world at three.ws/play. You attend as an avatar, you hear
