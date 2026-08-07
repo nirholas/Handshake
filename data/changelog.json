@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-07",
+			"title": "The chat no longer refuses questions it was never asked to refuse",
+			"summary": "Every message sent to a three.ws chat surface used to pass through a small safety classifier of ours before the actual model saw it, and when that classifier said \"unsafe\" you got a canned brush-off instead of an answer. It was wrong often enough to be a real problem: it judged one message at a time with no memory of the conversation, so an ordinary follow-up in a security, trading, or fiction discussion could read as alarming on its own and get blocked, and you were left staring at a refusal no model had actually made. That layer is gone from all of it: the main chat, the /chat app, the embeddable concierge, the widget chat on customer sites, and the agent-idea box on /create. Your question now goes to the model as written. If a model declines something, that is the model exercising its own judgment in its own words, and you can switch models or bring your own key. Nothing else changed: the same rate limits still apply, and the separate confirmation step before any wallet action is untouched. The one place a content check still runs is outbound: what our own official Sketchfab account publishes under the three.ws name.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/chat"
+		},
+		{
 			"date": "2026-08-06",
 			"title": "A mirror that grades your fingerspelling, without your camera leaving the room",
 			"summary": "Learning the manual alphabet has two halves, and until now three.ws only taught the easier one: watching an avatar form the letters. The new Sign Mirror page teaches the other half, making them yourself. The avatar forms the target letter, your camera watches your hand, and the page scores your handshape live, finger by finger. Hold the shape and the letter passes; hold it wrong and it names the finger to fix, and when your hand is cleanly forming a different letter it tells you which one it sees. The alphabet is arranged as a short course, easiest shapes first, with the famously confusable pairs saved for when you are ready, and your progress stays on your device. The privacy line is absolute: the hand tracking runs inside your browser tab, the grading is simple arithmetic, and no video frame, hand position, or score is ever uploaded. There is no network call in the practice loop at all, which also makes it fit for classrooms.",

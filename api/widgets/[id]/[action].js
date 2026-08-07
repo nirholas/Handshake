@@ -18,7 +18,6 @@ import { isDemoWidgetId, getDemoWidget } from '../_demo-fixtures.js';
 import { decorate } from '../index.js';
 import { PROVIDER_MODEL_DEFAULTS, DEFAULT_PROVIDER_ORDER, MODEL_CATALOG, PER_CALL_TIMEOUT_MS, modelRejectsSampling, modelThinksByDefault } from '../../_lib/chat-models.js';
 import { redactPii } from '../../_lib/pii.js';
-import { moderateAnonInput, refusalReply } from '../../_lib/moderation.js';
 import { embeddingsConfigured, scoreRowsBySpace } from '../../_lib/embeddings.js';
 import { rerankConfigured, rerankPassages } from '../../_lib/rerank.js';
 import { watsonxConfig, watsonxToken } from '../../_lib/watsonx.js';
@@ -260,39 +259,10 @@ async function handleChat(req, res) {
 	}
 	const allowedSkills = filterSkills(cfg.skills);
 
-	// Anonymous pre-moderation (FAIL-OPEN). Public widget visitors are
-	// unattributable, so screen their message with the free NIM safety lane;
-	// the owner's Studio preview (isOwner) is exempt. A confirmed-unsafe message
-	// gets a normal in-band refusal — never an HTTP error — and any moderation
-	// failure proceeds un-moderated. See api/_lib/moderation.js.
-	if (!isOwner) {
-		const verdict = await moderateAnonInput(body.message);
-		if (verdict.flagged) {
-			res.statusCode = 200;
-			res.setHeader('content-type', 'text/event-stream; charset=utf-8');
-			res.setHeader('cache-control', 'no-store');
-			res.setHeader('connection', 'keep-alive');
-			res.setHeader('x-accel-buffering', 'no');
-			res.flushHeaders?.();
-			const reply = refusalReply();
-			writeSse(res, 'message', { reply, actions: [] });
-			writeSse(res, 'done', {});
-			res.end();
-			persistTurn({
-				widgetId,
-				req,
-				body,
-				userMessage: body.message,
-				reply,
-				actions: [],
-				provider: 'moderation',
-				model: verdict.model || null,
-			}).catch((err) => {
-				if (process.env.DEBUG === 'true') console.warn('[widget-chat] persist', err?.message);
-			});
-			return;
-		}
-	}
+	// A widget visitor's message reaches the brain as written. The platform adds
+	// no content classifier in front of it; the serving model decides what it
+	// will answer, and the widget owner shapes the rest through the persona and
+	// skills they configured. Owner directive 2026-08-07.
 
 	// Pull grounding chunks before we open the stream so latency stays in one
 	// place rather than blocking after the visitor sees "typing…".

@@ -27,7 +27,6 @@
 import { cors, method, wrap, error, readJson, json, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { llmComplete, LlmUnavailableError } from './_lib/llm.js';
-import { moderateAnonInput } from './_lib/moderation.js';
 
 const MAX_IDEA = 400;
 const MIN_IDEA = 8;
@@ -303,18 +302,8 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'idea_too_short', 'Describe the agent in a few more words.');
 	}
 
-	// Anonymous free-text reaching a provider gets the same screening as
-	// anonymous chat. A block is a 400 with a plain reason, never a silent
-	// rewrite of what the visitor asked for.
-	const verdict = await moderateAnonInput(idea);
-	if (verdict.flagged) {
-		return error(
-			res,
-			400,
-			'idea_rejected',
-			'That description cannot be used to create an agent. Try describing what it should help people do.',
-		);
-	}
+	// The idea goes to the model as written: no platform-side screening decides
+	// which agents a visitor is allowed to describe. Owner directive 2026-08-07.
 
 	let result;
 	try {

@@ -82,7 +82,7 @@ describe('attribution', () => {
 		expect(classifyMeteringLane({ provider: null, model: null, tokens: 1000, costMicroUsd: 0 }).status).toBe('fail');
 	});
 
-	it('skips a zero-token event with no provider (a moderation refusal)', () => {
+	it('skips a zero-token event with no provider (nothing reached an upstream)', () => {
 		const v = classifyMeteringLane({ provider: null, model: null, tokens: 0, costMicroUsd: 0, unpricedCalls: 33 });
 		expect(v.status).toBe('skip');
 	});

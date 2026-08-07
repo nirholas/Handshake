@@ -920,7 +920,7 @@ Beyond turn-based talk, agents support genuinely live, full-duplex voice: you ca
 
 Drop a chat panel with a 3D avatar onto your own site. Visitors talk to it by text or voice, it answers grounded in the knowledge base you uploaded, performs its skills visibly through the avatar, reacts empathetically to visitor sentiment, and speaks replies aloud. Owners get saved transcripts and stats; visitor input is moderated and personally identifying information is redacted before storage. A variant even carries its own Solana wallet and can send SOL.
 
-**How it works:** The NichAgent conversational surface routed through a per-widget chat endpoint with embedding-based retrieval plus reranking over ingested knowledge, PII redaction, anonymous-input moderation, and the multi-provider LLM failover chain.
+**How it works:** The NichAgent conversational surface routed through a per-widget chat endpoint with embedding-based retrieval plus reranking over ingested knowledge, PII redaction, and the multi-provider LLM failover chain.
 
 **Why it matters:** A production-grade, voice-enabled AI greeter for your site in one snippet — with the safety plumbing already done.
 

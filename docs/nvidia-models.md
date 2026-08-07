@@ -37,7 +37,7 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 | **Vision / VLM** | `nvidia/nemotron-nano-12b-v2-vl`, `meta/llama-3.2-11b-vision-instruct` | `api/_lib/vision.js` | ✅ |
 | **Embeddings** | `nvidia/nv-embedqa-e5-v5`, `baai/bge-m3` | `api/_lib/embeddings.js`, `api/agents/_id/embed.js` | ✅ |
 | **Reranking** | `nvidia/rerank-qa-mistral-4b` | `api/_lib/rerank.js` | ✅ |
-| **Content safety** | `nvidia/llama-3.1-nemoguard-8b-content-safety`, `meta/llama-guard-4-12b` | `api/_lib/moderation.js` | ✅ |
+| **Content safety** | `nvidia/llama-3.1-nemoguard-8b-content-safety`, `meta/llama-guard-4-12b` | `api/_lib/publish-safety.js` | ✅ |
 | **Text-to-speech** | `magpie-tts-multilingual` (Riva) | `api/_lib/tts-nvidia.js` | ✅ |
 
 ---
@@ -152,11 +152,11 @@ Cosine-over-embeddings recall is cheap but coarse. This **cross-encoder reranker
 ## 7. Content safety — NemoGuard
 
 **Primary:** `nvidia/llama-3.1-nemoguard-8b-content-safety` · **Drop-in alt:** `meta/llama-guard-4-12b`
-**Endpoint:** `integrate.api.nvidia.com/v1/chat/completions` · **Source:** [api/_lib/moderation.js](../api/_lib/moderation.js).
+**Endpoint:** `integrate.api.nvidia.com/v1/chat/completions` · **Source:** [api/_lib/publish-safety.js](../api/_lib/publish-safety.js).
 
-A free content-safety pre-filter for anonymous chat. NemoGuard classifies the inbound user message and returns a **JSON verdict plus named risk categories** (harm, self-harm, weapons, sexual content, …); the parser also accepts Llama Guard's `unsafe\nS#` text form, which is why the two are interchangeable. Median ~340 ms on the free tier.
+A free content-safety classifier for what the platform publishes outward. Its only caller is the Sketchfab showcase cron, which uploads visitor-generated models to our own official account on a third party's platform. NemoGuard classifies the source prompt and returns a **JSON verdict plus named risk categories** (harm, self-harm, weapons, sexual content, …); the parser also accepts Llama Guard's `unsafe\nS#` text form, which is why the two are interchangeable. Median ~340 ms on the free tier.
 
-**Scope and posture:** it is a *content*-safety classifier, **not** a jailbreak / prompt-injection detector. It is **fail-open** — anything it can't parse returns "not flagged" so a moderation outage never takes chat down. Only a clean parsed "unsafe" verdict blocks a message.
+**Scope and posture:** it screens OUTBOUND publishing only. No three.ws chat surface filters what a user may ask (owner directive 2026-08-07): whatever safety judgment the serving model makes is the only one those routes apply. It is also a *content*-safety classifier, **not** a jailbreak / prompt-injection detector, and it is **fail-open**: anything it can't parse returns "not flagged", so a classifier outage never stops a publish. Only a clean parsed "unsafe" verdict blocks an upload.
 
 ---
 

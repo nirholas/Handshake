@@ -89,13 +89,15 @@ Note the comment on line two, because it is the load-bearing design decision in 
 
 Once we understood the pattern, we found the same shape everywhere in the product.
 
-**Content safety.** Anonymous visitors can talk to any agent on the platform. We refuse unsafe messages ourselves rather than inheriting a downstream provider's moderation policy, using NVIDIA's `nvidia/llama-3.1-nemoguard-8b-content-safety` from the NeMo Guardrails family. Measured median latency on the free NIM tier: **~340 ms**, with a ~680 ms tail. We give it a 2-second abort budget, which is roughly six times its median. That's generous, and still fast to fail over.
+**Publishing safety.** The showcase cron uploads community-forged models to our own official Sketchfab account, and what our brand publishes to a third party's platform is our call to make. That gate runs on NVIDIA's `nvidia/llama-3.1-nemoguard-8b-content-safety` from the NeMo Guardrails family. Measured median latency on the free NIM tier: **~340 ms**, with a ~680 ms tail. We give it a 2-second abort budget, which is roughly six times its median. That's generous, and still fast to fail over.
+
+It used to screen anonymous chat too, and we retired that in August 2026. An 8B classifier judging one message with no conversation context refused plenty of ordinary questions, and a refusal a visitor never earned is a worse product than an answer the serving model would have declined on its own. The lesson generalizes: a guardrail belongs where you own the consequence, which is what you publish, not what someone is allowed to ask.
 
 **Reasoning turns.** When a feature wants a compact, reasoning-tuned model to actually lead rather than sit at the tail of a fallback chain, it opts into `nvidia/nvidia-nemotron-nano-9b-v2`. Prompt refinement, classification, structured extraction. A 9B model does these perfectly, and reaching for a frontier model to do them is a tax you pay on every request forever.
 
 **Retrieval.** Agent memory embeds through `nvidia/nv-embedqa-e5-v5` at 1024 dimensions, with `nvidia/rerank-qa-mistral-4b` as an optional cross-encoder rerank stage.
 
-Every one of those models, one `nvapi-` key, and a bill of zero. I want to be unambiguous about what that meant for us: **we could not have built this product on paid inference.** Not at the price of a guardrail in front of every generation. The economics only close because NVIDIA hosts these models free, and so the guardrail costs nothing to run.
+Every one of those models, one `nvapi-` key, and a bill of zero. I want to be unambiguous about what that meant for us: **we could not have built this product on paid inference.** Not at the price of a second model checking the first on every generation. The economics only close because NVIDIA hosts these models free, and so the judgment layer costs nothing to run.
 
 ---
 

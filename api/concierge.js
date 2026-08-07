@@ -26,7 +26,6 @@ import { cors, method, readJson, wrap, error, rateLimited } from './_lib/http.js
 import { parse } from './_lib/validate.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { providerChain, LlmUnavailableError } from './_lib/llm.js';
-import { moderateAnonInput, refusalReply } from './_lib/moderation.js';
 import { markProviderCooldown, providersInCooldown, AUTH_COOLDOWN_SECONDS } from './_lib/provider-health.js';
 import { recordEvent } from './_lib/usage.js';
 import { captureException } from './_lib/sentry.js';
@@ -208,24 +207,9 @@ export default wrap(async (req, res) => {
 		});
 	const sendSSE = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
 
-	// Anonymous pre-moderation (FAIL-OPEN, same policy as /api/chat): a flagged
-	// message gets a normal in-band refusal, and a moderation outage never takes
-	// the concierge down.
-	const verdict = await moderateAnonInput(body.message);
-	if (verdict.flagged) {
-		sseHead();
-		sendSSE({ type: 'chunk', text: refusalReply() });
-		sendSSE({ type: 'done', moderated: true });
-		res.end();
-		recordEvent({
-			userId: null,
-			kind: 'chat',
-			tool: 'concierge',
-			latencyMs: Date.now() - started,
-			meta: { moderated: true, anonymous: true },
-		});
-		return;
-	}
+	// No platform-side content filter (same policy as /api/chat): the visitor's
+	// question goes to the model as written, and any refusal is the model's own.
+	// Owner directive 2026-08-07.
 
 	const system = buildSystemPrompt(body);
 	const messages = [

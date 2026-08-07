@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-08-07
+
+- **The chat no longer refuses questions it was never asked to refuse**: Every message sent to a three.ws chat surface used to pass through a small safety classifier of ours before the actual model saw it, and when that classifier said "unsafe" you got a canned brush-off instead of an answer. It was wrong often enough to be a real problem: it judged one message at a time with no memory of the conversation, so an ordinary follow-up in a security, trading, or fiction discussion could read as alarming on its own and get blocked, and you were left staring at a refusal no model had actually made. That layer is gone from all of it: the main chat, the /chat app, the embeddable concierge, the widget chat on customer sites, and the agent-idea box on /create. Your question now goes to the model as written. If a model declines something, that is the model exercising its own judgment in its own words, and you can switch models or bring your own key. Nothing else changed: the same rate limits still apply, and the separate confirmation step before any wallet action is untouched. The one place a content check still runs is outbound: what our own official Sketchfab account publishes under the three.ws name. (`/chat`) `[improvement, fix]`
+
 ## 2026-08-06
 
 - **Airdrop Checker** (`/airdrops`): Check any Solana or Ethereum wallet against tracked airdrop criteria: a real on-chain activity scan, a 0-100 eligibility score per program, exactly what is missing with next steps, and the manual protocol actions a scan cannot see. Free, keyless, deep-linkable.

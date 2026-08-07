@@ -37,7 +37,6 @@ import { loadUserProviderKeys } from './_lib/provider-keys.js';
 import { watsonxConfig, watsonxAuthHeaders } from './_lib/watsonx.js';
 import { orchestrateConfig } from './_lib/orchestrate.js';
 import { guardianConfig, governSend, sendCapUsd } from './_lib/granite-guardian.js';
-import { moderateAnonInput, refusalReply } from './_lib/moderation.js';
 import {
 	markProviderCooldown,
 	providersInCooldown,
@@ -466,33 +465,11 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	// Anonymous pre-moderation (FAIL-OPEN). Signed-in callers are attributable
-	// and rate-limited, so only anon traffic is screened. A confirmed-unsafe
-	// message gets a normal in-band refusal over the SSE stream — never an HTTP
-	// error — and any moderation failure proceeds un-moderated (the filter can
-	// never take chat down). See api/_lib/moderation.js.
-	if (anonymous) {
-		const verdict = await moderateAnonInput(body.message);
-		if (verdict.flagged) {
-			res.writeHead(200, {
-				'Content-Type': 'text/event-stream; charset=utf-8',
-				'Cache-Control': 'no-cache, no-transform',
-				'X-Accel-Buffering': 'no',
-			});
-			res.write(
-				`data: ${JSON.stringify({ type: 'done', reply: refusalReply(), actions: [], moderated: true })}\n\n`,
-			);
-			res.end();
-			recordEvent({
-				userId: null,
-				kind: 'chat',
-				tool: 'moderation',
-				latencyMs: verdict.latencyMs ?? 0,
-				meta: { moderated: true, categories: verdict.categories ?? [], anonymous: true },
-			});
-			return;
-		}
-	}
+	// No platform-side content filter runs here. Whatever safety judgment the
+	// serving model makes is the only one this route applies; we do not add a
+	// classifier in front of it. Abuse is handled by attribution and metering
+	// (the rate-limit buckets above), not by pre-screening what a visitor may
+	// ask. Owner directive 2026-08-07.
 
 	let userProviderKeys = {};
 	if (auth?.userId) {

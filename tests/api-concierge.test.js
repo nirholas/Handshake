@@ -1,8 +1,8 @@
 // POST /api/concierge, the embeddable widget's answer engine. Covers: CORS is
 // any-origin (the whole point of the route), method/body validation, its own
-// rate buckets, fail-open moderation with an in-band refusal, provider
-// fallover with cooldown marking on billing/auth failures, and the SSE
-// chunk→done stream a healthy rung produces.
+// rate buckets, provider fallover with cooldown marking on billing/auth
+// failures, and the SSE chunk→done stream a healthy rung produces. Nothing
+// screens the visitor question: the concierge has no platform-side filter.
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const conciergeIpMock = vi.fn(async () => ({ success: true }));
@@ -13,12 +13,6 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 		conciergeGlobal: (...a) => conciergeGlobalMock(...a),
 	},
 	clientIp: () => '203.0.113.9',
-}));
-
-const moderateMock = vi.fn(async () => ({ checked: true, flagged: false }));
-vi.mock('../api/_lib/moderation.js', () => ({
-	moderateAnonInput: (...a) => moderateMock(...a),
-	refusalReply: () => 'I can’t help with that, but I’m happy to answer questions about this site.',
 }));
 
 const providerChainMock = vi.fn(() => []);
@@ -131,7 +125,6 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	conciergeIpMock.mockResolvedValue({ success: true });
 	conciergeGlobalMock.mockResolvedValue({ success: true });
-	moderateMock.mockResolvedValue({ checked: true, flagged: false });
 });
 
 describe('/api/concierge', () => {
@@ -161,17 +154,6 @@ describe('/api/concierge', () => {
 		expect(res.statusCode).toBe(429);
 	});
 
-	it('flagged input gets an in-band SSE refusal, never an HTTP error', async () => {
-		moderateMock.mockResolvedValue({ checked: true, flagged: true });
-		const res = mkRes();
-		await handler(mkReq({ body: VALID_BODY }), res);
-		expect(res.statusCode).toBe(200);
-		const events = sseEvents(res);
-		expect(events[0].type).toBe('chunk');
-		expect(events[0].text).toMatch(/can’t help/);
-		expect(events.at(-1)).toMatchObject({ type: 'done', moderated: true });
-		expect(providerChainMock).not.toHaveBeenCalled();
-	});
 
 	it('streams chunk→done from a healthy provider, grounded system prompt included', async () => {
 		let capturedBody = null;

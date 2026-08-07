@@ -1,7 +1,6 @@
 import { env } from '../_lib/env.js';
 import { cors, error, json, method, wrap, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { moderateAnonInput, refusalReply, lastUserMessage } from '../_lib/moderation.js';
 import { isFreeModelId, isLiveFreeModel, pickDefaultFreeModel } from '../_lib/openrouter-free.js';
 
 const UPGRADE_URL = `${env.APP_ORIGIN}/pricing`;
@@ -58,39 +57,11 @@ export default wrap(async (req, res) => {
 		activeModel = (await pickDefaultFreeModel({ exclude: [model] })) ?? model;
 	}
 
-	// Anonymous pre-moderation (FAIL-OPEN). This proxy is unauthenticated, so
-	// screen the visitor's latest message with the free NIM safety lane before
-	// spending an upstream call. A confirmed-unsafe message gets an in-band
-	// refusal in the normal OpenAI reply shape (so the chat app renders it like
-	// any other answer) — never an HTTP error; any moderation failure proceeds
-	// un-moderated. See api/_lib/moderation.js.
-	const verdict = await moderateAnonInput(lastUserMessage(body?.messages));
-	if (verdict.flagged) {
-		const reply = refusalReply();
-		res.setHeader('cache-control', 'no-store');
-		if (body?.stream) {
-			res.statusCode = 200;
-			res.setHeader('content-type', 'text/event-stream; charset=utf-8');
-			const base = { id: 'chatcmpl-moderation', object: 'chat.completion.chunk', model };
-			res.write(
-				`data: ${JSON.stringify({ ...base, choices: [{ index: 0, delta: { role: 'assistant', content: reply }, finish_reason: null }] })}\n\n`,
-			);
-			res.write(
-				`data: ${JSON.stringify({ ...base, choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] })}\n\n`,
-			);
-			res.write('data: [DONE]\n\n');
-			res.end();
-			return;
-		}
-		return json(res, 200, {
-			id: 'chatcmpl-moderation',
-			object: 'chat.completion',
-			model,
-			choices: [
-				{ index: 0, message: { role: 'assistant', content: reply }, finish_reason: 'stop' },
-			],
-		});
-	}
+	// The message goes upstream as written. This proxy adds no content filter of
+	// its own: the serving model's own judgment is the only safety layer, and a
+	// refusal, if any, is the model's to make and to word. Abuse control here is
+	// the per-IP quota above plus the free-model-only gate, not pre-screening.
+	// Owner directive 2026-08-07.
 
 	// Only :free models pass the gate above, so any configured key can serve the
 	// request. Rotate to the next key on account-level failures (bad key, out of

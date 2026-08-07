@@ -1,6 +1,6 @@
 # Free LLM providers: the failover chain
 
-three.ws never depends on a single AI vendor. Every text completion on the platform (chat, agent brains, copilots, translations, moderation helpers) runs through one shared failover chain that tries free providers first, in order, and only touches a paid key as a last resort. This page is the map of that chain: which providers are in it, what each one costs (nothing), where the keys come from, and how to add the next one.
+three.ws never depends on a single AI vendor. Every text completion on the platform (chat, agent brains, copilots, translations) runs through one shared failover chain that tries free providers first, in order, and only touches a paid key as a last resort. This page is the map of that chain: which providers are in it, what each one costs (nothing), where the keys come from, and how to add the next one.
 
 The chain lives in [`api/_lib/llm.js`](../api/_lib/llm.js) (`providerChain()` + `llmComplete()`). The interactive chat ladder in [`api/chat.js`](../api/chat.js) uses the same policy with a shorter list (see `DEFAULT_PROVIDER_ORDER` in [`api/_lib/chat-models.js`](../api/_lib/chat-models.js)).
 

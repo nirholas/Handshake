@@ -19,7 +19,7 @@
 // Brand safety: the official account never publishes firearms or explicit
 // content. A local denylist filters the selection SQL itself (dry-run
 // included) and re-checks before upload; the NemoGuard classifier
-// (moderation.js) runs as a second, fail-open layer. A blocked creation is
+// (publish-safety.js) runs as a second, fail-open layer. A blocked creation is
 // parked in the ledger with status 'blocked' so it is never re-picked.
 //
 // Every upload is tagged `ai-generated`, carries the source prompt, and
@@ -48,7 +48,7 @@ import {
 	sketchfabConfigured,
 	uploadModel,
 } from '../_lib/sketchfab.js';
-import { moderateAnonInput } from '../_lib/moderation.js';
+import { classifyPublishSafety } from '../_lib/publish-safety.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 const MAX_ATTEMPTS = 3;
@@ -152,11 +152,13 @@ async function claimCreation(candidate) {
 	return row?.id || null;
 }
 
-// Local denylist + NemoGuard verdict. Returns a block reason or null.
+// Local denylist + NemoGuard verdict. Returns a block reason or null. This is a
+// publishing decision about our own official account, not a filter on anything a
+// user asks three.ws for; no chat surface screens input (see publish-safety.js).
 async function contentBlockReason(prompt) {
 	const term = promptDenyMatch(prompt);
 	if (term) return `denylist:${term}`;
-	const verdict = await moderateAnonInput(prompt).catch(() => ({ flagged: false }));
+	const verdict = await classifyPublishSafety(prompt).catch(() => ({ flagged: false }));
 	if (verdict?.flagged) {
 		return `moderation:${(verdict.categories || []).join(',') || 'unsafe'}`;
 	}

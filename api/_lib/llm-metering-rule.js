@@ -10,8 +10,8 @@
 //
 // Classification, in order:
 //   fail  tokens served with no provider recorded (unattributable traffic)
-//   skip  a zero-token event with no provider (an anon moderation refusal never
-//         reached an upstream, so there is no lane to meter)
+//   skip  a zero-token event with no provider (nothing reached an upstream, so
+//         there is no lane to meter)
 //   fail  any call in the window recorded an UNKNOWN cost (null), the model
 //         reached production with no price; the fix is one table entry
 //   fail  a spending lane served tokens and reported exactly $0

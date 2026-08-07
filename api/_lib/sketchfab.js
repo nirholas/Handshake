@@ -31,7 +31,8 @@ const SHOWCASE_UTM = 'utm_source=sketchfab&utm_medium=referral&utm_campaign=show
 // explicit content under the three.ws name. Word-boundary matched, so
 // "bullet train" style false positives are accepted as the cost of a
 // conservative gate. This local list is always on; the NemoGuard classifier
-// (api/_lib/moderation.js) runs as a second, fail-open layer in the cron.
+// (api/_lib/publish-safety.js) runs as a second, fail-open layer in the cron.
+// Both are limits on what THIS account publishes, not on what users may forge.
 const DENY_TERMS = [
 	'glock', 'gun', 'guns', 'firearm', 'firearms', 'rifle', 'pistol', 'shotgun',
 	'revolver', 'ammo', 'bullet', 'bullets', 'grenade', 'bomb', 'explosive',

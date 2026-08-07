@@ -101,7 +101,7 @@ app.post('/my/concierge', async (req, res) => {
 });
 ```
 
-Then: `<three-concierge endpoint="/my/concierge">`. The production reference, with rate limits, moderation, provider failover, and cooldowns, is [`api/concierge.js`](https://github.com/nirholas/three.ws/blob/main/api/concierge.js).
+Then: `<three-concierge endpoint="/my/concierge">`. The production reference, with rate limits, provider failover, and cooldowns, is [`api/concierge.js`](https://github.com/nirholas/three.ws/blob/main/api/concierge.js).
 
 ## Where to go next
 
