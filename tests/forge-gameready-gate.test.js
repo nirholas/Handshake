@@ -50,7 +50,7 @@ vi.mock('../src/forge-pay.js', () => ({
 	payForConsumption: vi.fn(async () => ({ ok: true, paymentId: 'pay_1', refId: 'ref_1' })),
 }));
 
-const GLB_URL = 'https://cdn.three.ws/models/knight.glb';
+const GLB_URL = 'https://three.ws/cdn/models/knight.glb';
 
 // The three elements src/forge-gameready.js mounts against on /forge.
 function mountPage() {

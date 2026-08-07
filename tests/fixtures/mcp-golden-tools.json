@@ -1137,7 +1137,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "d0493ec770a9"
+			"schemaHash": "33374b80604f"
 		}
 	],
 	"packages/agentcore-payments-mcp/src/tools/cancel-session.js": [
@@ -1224,7 +1224,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "e829b250d792"
+			"schemaHash": "c62c144e1e42"
 		}
 	],
 	"packages/agora-mcp/src/tools/citizens.js": [

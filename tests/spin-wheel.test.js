@@ -118,6 +118,39 @@ describe('handleSpinFree — gates, in priority order', () => {
 		handleSpinFree(room, client);
 		expect(sent[0]).toEqual({ type: 'spinDenied', msg: { reason: 'pack_full' } });
 	});
+	// The roll is uniform over wood, stone AND coal, so "somewhere to put ONE of
+	// them" is not enough: a pack whose only space is a half-full wood stack would
+	// convert a stone or coal win into 1-2 cash. The gate has to hold for every
+	// prize item the paytable can land on.
+	it('denies pack_full when the only free space fits one prize item but not the others', () => {
+		const profile = eligibleProfile();
+		for (const s of profile.inv) { s.item = 'rod'; s.qty = 1; }
+		// One slot holds a partial wood stack: room for wood, nowhere for stone/coal.
+		profile.inv[0].item = 'wood';
+		profile.inv[0].qty = 5;
+		const { room, client, sent } = makeRoom({ profile });
+		handleSpinFree(room, client);
+		expect(sent[0]).toEqual({ type: 'spinDenied', msg: { reason: 'pack_full' } });
+	});
+	it('a spin that fits every prize is allowed and the prize actually lands in the pack', () => {
+		const profile = eligibleProfile();
+		const { room, client, sent } = makeRoom({ profile });
+		const goldBefore = profile.gold;
+		handleSpinFree(room, client);
+		const res = sent[0].msg;
+		expect(sent[0].type).toBe('spinResult');
+		// Nothing was converted: the roll either paid cash or landed whole in the pack.
+		expect(res.lost).toBe(0);
+		expect(res.refunded).toBe(0);
+		const seg = WHEEL_SEGMENTS[res.index];
+		if (seg.kind === 'gold') {
+			expect(profile.gold).toBe(goldBefore + seg.gold);
+		} else {
+			const held = profile.inv.filter((s) => s.item === seg.item).reduce((n, s) => n + s.qty, 0);
+			expect(held).toBe(seg.qty);
+			expect(profile.gold).toBe(goldBefore);
+		}
+	});
 	it('grants a real prize, sets the 12h cooldown, and persists — the success path', () => {
 		const profile = eligibleProfile();
 		const { room, client, sent } = makeRoom({ profile });
@@ -200,7 +233,11 @@ describe('handleSpinPaidPrep', () => {
 		const wallet = '1'.repeat(32);
 		const { room, client, sent } = makeRoom();
 		await handleSpinPaidPrep(room, client, { wallet });
-		expect(gameToken.buildSpinPayment).toHaveBeenCalledWith({ buyerWallet: wallet, usd: SPIN_COST_USD });
+		// forAccount seals the quote to the requesting session's profile so a
+		// leaked settled quote can't be redeemed onto another account.
+		expect(gameToken.buildSpinPayment).toHaveBeenCalledWith({
+			buyerWallet: wallet, usd: SPIN_COST_USD, forAccount: room.econ.get('s1').playerId,
+		});
 		expect(sent[0]).toEqual({
 			type: 'spinPrep',
 			msg: { tx: 'BASE64TX', tokenAmount: '3000000', symbol: '$THREE', costUsd: SPIN_COST_USD, quote: 'QUOTE.SIG' },
@@ -225,21 +262,60 @@ describe('handleSpinPaidSettle', () => {
 		gameToken.verifySpinPayment.mockResolvedValueOnce({ ok: true, nonce: 'nonce-1' });
 		const profile = eligibleProfile();
 		const { room, client, sent } = makeRoom({ profile });
-		await handleSpinPaidSettle(room, client, { quote: 'q', txSig: 'sig'.repeat(12) });
+		await handleSpinPaidSettle(room, client, { quote: 'q', txSig: 'sigsuccess'.repeat(4) });
+		expect(gameToken.verifySpinPayment).toHaveBeenCalledWith({
+			quoteToken: 'q', txSig: 'sigsuccess'.repeat(4), forAccount: profile.playerId,
+		});
 		expect(sent[0].type).toBe('spinResult');
 		expect(sent[0].msg.mode).toBe('paid');
 		expect(room._persistEcon).toHaveBeenCalledWith('s1');
 		// A paid spin does NOT touch the free-spin cooldown.
 		expect(profile.nextFreeSpinAt).toBe(0);
 	});
+	// The payment has already settled by the time this handler runs, so a pack that
+	// filled up while the player was in their wallet must never cost them the spin.
+	// It converts to cash and REPORTS that, rather than silently paying out a few
+	// coins for a $3 spin and calling it a win.
+	it('still pays out when the pack filled during the wallet round-trip, and reports the conversion', async () => {
+		gameToken.verifySpinPayment.mockResolvedValueOnce({ ok: true, nonce: 'nonce-full' });
+		const profile = eligibleProfile();
+		for (const s of profile.inv) { s.item = 'rod'; s.qty = 1; }
+		const goldBefore = profile.gold;
+		const { room, client, sent } = makeRoom({ profile });
+		await handleSpinPaidSettle(room, client, { quote: 'q', txSig: 'sigpackfull'.repeat(4) });
+		const res = sent[0].msg;
+		expect(sent[0].type).toBe('spinResult');
+		const seg = WHEEL_SEGMENTS[res.index];
+		if (seg.kind === 'gold') {
+			expect(res.lost).toBe(0);
+			expect(profile.gold).toBe(goldBefore + seg.gold);
+		} else {
+			// Nowhere to put it: the whole prize converted, and the result says so.
+			expect(res.lost).toBe(seg.qty);
+			expect(res.got).toBe(0);
+			expect(res.refunded).toBeGreaterThan(0);
+			expect(profile.gold).toBe(goldBefore + res.refunded);
+		}
+	});
 	it('refuses to grant a second prize for an already-settled nonce (replay protection)', async () => {
 		gameToken.verifySpinPayment.mockResolvedValue({ ok: true, nonce: 'nonce-replay' });
 		const profile = eligibleProfile();
 		const { room, client, sent } = makeRoom({ profile });
-		await handleSpinPaidSettle(room, client, { quote: 'q', txSig: 'sig'.repeat(12) });
+		await handleSpinPaidSettle(room, client, { quote: 'q', txSig: 'sigreplay1'.repeat(4) });
 		expect(sent[0].type).toBe('spinResult');
-		await handleSpinPaidSettle(room, client, { quote: 'q', txSig: 'sig'.repeat(12) });
+		await handleSpinPaidSettle(room, client, { quote: 'q', txSig: 'sigreplay1'.repeat(4) });
 		expect(sent[1]).toEqual({ type: 'spinDenied', msg: { reason: 'already_settled' } });
+	});
+	it('refuses the same settled payment replayed into a DIFFERENT room (cross-world replay)', async () => {
+		// The guard is process-wide on purpose: the old per-room Map let one $3
+		// payment roll a fresh prize in every coin world it was replayed into.
+		gameToken.verifySpinPayment.mockResolvedValue({ ok: true, nonce: 'nonce-xroom' });
+		const a = makeRoom({ profile: eligibleProfile() });
+		const b = makeRoom({ profile: eligibleProfile() });
+		await handleSpinPaidSettle(a.room, a.client, { quote: 'q', txSig: 'sigxroom01'.repeat(4) });
+		expect(a.sent[0].type).toBe('spinResult');
+		await handleSpinPaidSettle(b.room, b.client, { quote: 'q', txSig: 'sigxroom01'.repeat(4) });
+		expect(b.sent[0]).toEqual({ type: 'spinDenied', msg: { reason: 'already_settled' } });
 	});
 });
 

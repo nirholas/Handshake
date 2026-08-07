@@ -21,7 +21,6 @@
 
 import { createServer } from 'node:http';
 import { readFile, writeFile, readdir, mkdir } from 'node:fs/promises';
-import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -96,7 +95,7 @@ const scene = new THREE.Scene();
 // a hemisphere fill so downward faces never go to pure black.
 const key = new THREE.DirectionalLight(0xfff4e2, 3.1); key.position.set(-2.2, 2.6, 3.2);
 const rim = new THREE.DirectionalLight(0xdce8ff, 2.0); rim.position.set(2.4, 1.2, -2.8);
-scene.add(key, rim, new THREE.HemisphereLight(0xffffff, 0x2a2a30, 1.35));
+scene.add(key, rim, new THREE.HemisphereLight(0xffffff, 0x8b8b94, 1.5));
 
 window.renderAccessory = async (url) => {
 	const gltf = await new GLTFLoader().loadAsync(url);
@@ -106,18 +105,22 @@ window.renderAccessory = async (url) => {
 	model.userData.subject = true;
 	scene.add(model);
 
-	// Frame the model: recentre on its bounding box, then pull the camera back
-	// far enough that the largest dimension fills ~78% of the frame at any scale.
+	// Frame the model: recentre on its bounding box, then pull the camera back far
+	// enough to contain the whole BOUNDING SPHERE (half the box diagonal, not half
+	// the longest edge — a ring is widest across its diagonal and would crop).
 	const box = new THREE.Box3().setFromObject(model);
 	const size = box.getSize(new THREE.Vector3());
 	const center = box.getCenter(new THREE.Vector3());
 	model.position.sub(center);
-	const radius = Math.max(size.x, size.y, size.z) * 0.5 || 0.1;
-	const camera = new THREE.PerspectiveCamera(35, 1, radius * 0.01, radius * 100);
-	const dist = (radius / Math.sin((35 * Math.PI / 180) / 2)) * 0.78;
-	// Three-quarter view from slightly above: reads volume better than a flat
-	// front-on shot and matches the existing thumbs.
-	camera.position.set(dist * 0.52, dist * 0.42, dist * 0.74);
+	const radius = size.length() * 0.5 || 0.1;
+	const FOV = 35;
+	const camera = new THREE.PerspectiveCamera(FOV, 1, radius * 0.01, radius * 100);
+	const dist = (radius / Math.sin((FOV * Math.PI / 180) / 2)) * 1.05;
+	// Three-quarter view from well above the subject, facing the accessory's front
+	// (+Z, the glTF forward convention these are authored in): reads volume better
+	// than a flat front-on shot, and keeps front detail (a cap's visor, the
+	// laurel's berries) pointed at the viewer.
+	camera.position.set(dist * 0.33, dist * 0.52, dist * 0.79);
 	camera.lookAt(0, 0, 0);
 	renderer.render(scene, camera);
 	return renderer.domElement.toDataURL('image/png');
@@ -136,18 +139,21 @@ async function main() {
 	if (!names.length) { console.log('No accessory GLBs to render.'); return; }
 
 	await mkdir(THUMB_DIR, { recursive: true });
-	const { server, port } = await serveRepo();
+	const { server, port } = await serveRepo(PAGE);
 	const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+	const errors = [];
 	try {
 		const page = await browser.newPage({ viewport: { width: SIZE, height: SIZE } });
-		page.on('pageerror', (err) => { throw err; });
-		await page.setContent(PAGE(port), { waitUntil: 'load' });
-		await page.waitForFunction('window.rendererReady === true', null, { timeout: 30_000 });
+		page.on('pageerror', (err) => errors.push(err.message));
+		page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+		await page.goto(`http://127.0.0.1:${port}${HARNESS_PATH}`, { waitUntil: 'load' });
+		await page.waitForFunction('window.rendererReady === true', null, { timeout: 30_000 })
+			.catch(() => { throw new Error(`Harness never booted:\n  ${errors.join('\n  ') || 'no page errors reported'}`); });
 
 		for (const name of names) {
 			const dataUrl = await page.evaluate(
 				([url]) => window.renderAccessory(url),
-				[`http://127.0.0.1:${port}/public/accessories/${name}.glb`],
+				[`/public/accessories/${name}.glb`],
 			);
 			const png = Buffer.from(dataUrl.split(',')[1], 'base64');
 			const out = path.join(THUMB_DIR, `${name}.png`);

@@ -17,9 +17,26 @@
 import bs58 from 'bs58';
 import { Keypair, PublicKey } from '@solana/web3.js';
 
-const RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const ORIGIN = process.env.AUDIT_ORIGIN || 'https://three.ws';
+
+// The lane chain this audit reads balances over. An operator's SOLANA_RPC_URL
+// goes first when set, then the keyless free lanes (mirroring
+// FREE_KEYLESS_MAINNET in api/_lib/solana/connection.js) so a single throttled
+// provider cannot decide what this audit believes about the money.
+//
+// Why the chain exists at all: on 2026-08-07 every wallet here reported
+// SOL=0.0000 because the configured lane was 429ing, and the audit reported
+// four "below floor" money emergencies against wallets that were actually
+// funded. A balance the audit could not read must never render as a balance of
+// zero — see readBalance() below.
+const RPC_LANES = [
+	process.env.SOLANA_RPC_URL,
+	'https://solana-rpc.publicnode.com',
+	'https://api.mainnet-beta.solana.com',
+	'https://solana.leorpc.com/?api_key=FREE',
+	'https://rpc.magicblock.app/mainnet',
+].filter(Boolean);
 
 // Mirrors api/_lib/solana-signers.js SIGNER_SPECS (name, secret env, floor). Kept
 // inline so the audit runs standalone without importing the app's module graph.
@@ -64,17 +81,50 @@ function decodeSecret(raw) {
 	return null;
 }
 
+// One JSON-RPC call against one lane. Throws on anything that is not a usable
+// result, so the caller can fail over instead of reading a throttle as data:
+// an HTTP error (429/5xx), a JSON-RPC `error` member (Tatum answers
+// paid-tier-only methods that way), or a body with no `result` at all.
+async function rpcOn(url, method, params) {
+	const r = await fetch(url, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+		signal: AbortSignal.timeout(15000),
+	});
+	if (!r.ok) throw new Error(`http_${r.status}`);
+	const body = await r.json();
+	if (body?.error) throw new Error(String(body.error.message || body.error.code || 'rpc_error'));
+	if (!('result' in body)) throw new Error('no_result');
+	return body.result;
+}
+
+// Walk the lane chain until one answers. Returns the result, or throws with the
+// last lane's reason once every lane has refused.
 async function rpc(method, params) {
-	const r = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) });
-	return (await r.json()).result;
+	let last = 'no lanes configured';
+	for (const url of RPC_LANES) {
+		try { return await rpcOn(url, method, params); } catch (e) { last = `${new URL(url).host}: ${e?.message || 'failed'}`; }
+	}
+	throw new Error(last);
 }
+
+// A read that failed is `null`, never 0. Every caller must treat null as "not
+// known" and refuse to judge it against a floor.
 async function onchain(addr) {
-	const bal = await rpc('getBalance', [addr]).catch(() => null);
-	const sol = (bal?.value || 0) / 1e9;
-	let usdc = 0;
-	try { const u = await rpc('getTokenAccountsByOwner', [addr, { mint: USDC }, { encoding: 'jsonParsed' }]); usdc = Number(u?.value?.[0]?.account?.data?.parsed?.info?.tokenAmount?.uiAmountString || 0); } catch {}
-	return { sol, usdc };
+	let sol = null;
+	let readError = null;
+	try { sol = (await rpc('getBalance', [addr]))?.value / 1e9; } catch (e) { readError = e?.message || 'balance read failed'; }
+	if (!Number.isFinite(sol)) { sol = null; readError = readError || 'balance read returned no value'; }
+	let usdc = null;
+	try {
+		const u = await rpc('getTokenAccountsByOwner', [addr, { mint: USDC }, { encoding: 'jsonParsed' }]);
+		usdc = Number(u?.value?.[0]?.account?.data?.parsed?.info?.tokenAmount?.uiAmountString || 0);
+	} catch { usdc = null; }
+	return { sol, usdc, readError };
 }
+const fmtSol = (v) => (v === null ? 'unreadable' : v.toFixed(4));
+const fmtUsdc = (v) => (v === null ? 'unreadable' : String(v));
 function pub(spec) {
 	const raw = process.env[spec.env] || (spec.fb ? process.env[spec.fb] : null);
 	if (!raw) return { configured: false };
@@ -90,7 +140,8 @@ function addrOf(spec) {
 }
 
 const flags = [];
-console.log(`\nservice-wallet audit · RPC ${RPC} · origin ${ORIGIN}\n${'='.repeat(72)}`);
+const blind = [];
+console.log(`\nservice-wallet audit · RPC lanes ${RPC_LANES.map((u) => new URL(u).host).join(' → ')} · origin ${ORIGIN}\n${'='.repeat(72)}`);
 
 console.log('\nSECRET-BACKED SIGNERS (derived pubkey ← secret env):');
 const sponsorDerived = {};
@@ -99,8 +150,15 @@ for (const s of SIGNERS) {
 	if (!p.configured) { console.log(`  ⚪ ${s.name.padEnd(22)} UNCONFIGURED (${s.env} not set)`); continue; }
 	if (p.bad) { console.log(`  ❌ ${s.name.padEnd(22)} SECRET PRESENT BUT UNDECODABLE (${s.env}) — malformed key`); flags.push(`${s.name}: secret malformed`); continue; }
 	const oc = await onchain(p.pubkey);
-	const low = oc.sol < s.minSol;
-	console.log(`  ${low ? '⚠️ ' : '✅'} ${s.name.padEnd(22)} ${p.pubkey}  SOL=${oc.sol.toFixed(4)}${low ? ` (BELOW floor ${s.minSol})` : ''}  USDC=${oc.usdc}`);
+	// An unreadable balance is a blind spot, never a funding verdict. Judging
+	// null against a floor is how a throttled RPC turns into four fake money
+	// emergencies on the owner's desk.
+	const unread = oc.sol === null;
+	const low = !unread && oc.sol < s.minSol;
+	const mark = unread ? '‼️' : low ? '⚠️ ' : '✅';
+	const note = unread ? ` (READ FAILED: ${oc.readError})` : low ? ` (BELOW floor ${s.minSol})` : '';
+	console.log(`  ${mark} ${s.name.padEnd(22)} ${p.pubkey}  SOL=${fmtSol(oc.sol)}${note}  USDC=${fmtUsdc(oc.usdc)}`);
+	if (unread) blind.push(`${s.name} (${p.pubkey}): balance unreadable — ${oc.readError}`);
 	if (low) flags.push(`${s.name}: SOL ${oc.sol.toFixed(4)} below floor ${s.minSol}`);
 	if (s.name === 'x402-ring-sponsor') sponsorDerived.pubkey = p.pubkey;
 }
@@ -112,7 +170,9 @@ for (const a of ADVERTISED) {
 	if (!addr) { console.log(`  ⚪ ${a.name.padEnd(24)} not set`); continue; }
 	advVals[a.name] = addr;
 	const oc = await onchain(addr);
-	console.log(`  ✅ ${a.name.padEnd(24)} ${addr}  SOL=${oc.sol.toFixed(4)}  USDC=${oc.usdc}`);
+	const unread = oc.sol === null;
+	console.log(`  ${unread ? '‼️' : '✅'} ${a.name.padEnd(24)} ${addr}  SOL=${fmtSol(oc.sol)}  USDC=${fmtUsdc(oc.usdc)}`);
+	if (unread) blind.push(`${a.name} (${addr}): balance unreadable — ${oc.readError}`);
 }
 
 // Live cross-check: what production actually advertises right now.
@@ -138,5 +198,14 @@ try {
 } catch (e) { console.log(`  (could not fetch ${ORIGIN}/api/x402-status: ${e.message})`); }
 
 console.log(`\n${'='.repeat(72)}`);
-if (flags.length) { console.log(`RESULT: ${flags.length} issue(s):`); flags.forEach((f) => console.log(`  ✗ ${f}`)); process.exitCode = 1; }
-else console.log('RESULT: all checked wallets configured, funded, and consistent.');
+// Two exit lanes on purpose. `✗` means the audit READ the chain and the money
+// is wrong: a funding or config action. `‼` means the audit could not read at
+// all: a monitoring blind spot to fix before anyone touches a wallet. Callers
+// (scripts/gcp-triage.mjs) route them to different severities, so never merge
+// the two lists.
+if (blind.length) { console.log(`UNVERIFIED: ${blind.length} wallet(s) could not be read:`); blind.forEach((b) => console.log(`  ‼ ${b}`)); }
+if (flags.length) { console.log(`RESULT: ${flags.length} issue(s):`); flags.forEach((f) => console.log(`  ✗ ${f}`)); }
+if (!flags.length && !blind.length) console.log('RESULT: all checked wallets configured, funded, and consistent.');
+else if (!flags.length) console.log('RESULT: no funding or config issue found among the wallets that could be read.');
+if (flags.length) process.exitCode = 1;
+else if (blind.length) process.exitCode = 2;

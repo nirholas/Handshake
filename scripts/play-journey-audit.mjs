@@ -146,39 +146,71 @@ async function touchScan(label) {
 }
 
 /**
- * Tab through the surface and record whether each stop paints a focus ring.
- * A stop with no outline and no box-shadow change is invisible to a keyboard
- * user, which is the defect this catches.
+ * Focus every tabbable control in DOM order and compare its focused computed
+ * style against its resting one. A control whose outline and box-shadow are
+ * identical either way is invisible to a keyboard user, which is the defect
+ * this catches. Runs entirely in-page: one round trip, no per-key latency, so
+ * it stays accurate on a machine whose main thread is busy rendering WebGL.
  */
-async function focusSweep(label, steps = 60) {
-	const stops = [];
+async function focusSweep(label) {
+	const res = await page.evaluate(() => {
+		const TABBABLE = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+		const ring = (cs) => `${cs.outlineStyle}|${cs.outlineWidth}|${cs.outlineColor}|${cs.boxShadow}|${cs.borderColor}|${cs.backgroundColor}`;
+		const out = { total: 0, noRing: [], notFocusable: [] };
+		const prev = document.activeElement;
+		for (const n of document.querySelectorAll(TABBABLE)) {
+			if (n.disabled || n.hidden) continue;
+			const r = n.getBoundingClientRect();
+			const cs0 = getComputedStyle(n);
+			if (r.width === 0 || r.height === 0 || cs0.visibility === 'hidden' || cs0.display === 'none') continue;
+			out.total++;
+			const resting = ring(cs0);
+			n.focus({ preventScroll: true });
+			const focused = document.activeElement === n;
+			const desc = {
+				sel: n.id ? `#${n.id}` : `${n.tagName.toLowerCase()}.${String(n.className).split(' ').slice(0, 2).join('.')}`,
+				label: (n.getAttribute('aria-label') || n.title || n.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 34),
+			};
+			if (!focused) { out.notFocusable.push(desc); continue; }
+			if (ring(getComputedStyle(n)) === resting) out.noRing.push(desc);
+			n.blur();
+		}
+		if (prev && prev.focus) prev.focus({ preventScroll: true });
+		// Collapse repeats: thirty identical grid cells are one defect.
+		const uniq = (arr) => {
+			const m = new Map();
+			for (const d of arr) if (!m.has(d.sel)) m.set(d.sel, d);
+			return [...m.values()].slice(0, 20);
+		};
+		out.noRing = uniq(out.noRing);
+		out.notFocusable = uniq(out.notFocusable);
+		return out;
+	});
+	console.log(at(), `[focus:${label}] ${res.total} tabbable, ${res.noRing.length} kinds without a focus ring, ${res.notFocusable.length} that refuse focus`);
+	for (const b of res.noRing) console.log('   no ring:', b.sel, '|', b.label);
+	for (const b of res.notFocusable) console.log('   unfocusable:', b.sel, '|', b.label);
+	if (res.noRing.length || res.notFocusable.length) findings.focus.push({ label, bad: [...res.noRing, ...res.notFocusable] });
+	return res;
+}
+
+/**
+ * A real Tab-key pass, short on purpose: it exists to catch a focus trap (Tab
+ * cycling inside a small set) that the DOM-order sweep above cannot see.
+ */
+async function tabTrapCheck(label, steps = 25) {
+	const seen = new Set();
 	await page.evaluate(() => document.body.focus());
 	for (let i = 0; i < steps; i++) {
 		await page.keyboard.press('Tab');
-		const stop = await page.evaluate(() => {
+		const sel = await page.evaluate(() => {
 			const n = document.activeElement;
 			if (!n || n === document.body) return null;
-			const cs = getComputedStyle(n);
-			const r = n.getBoundingClientRect();
-			const ring = (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0) || /rgb|inset/.test(cs.boxShadow || '');
-			return {
-				sel: n.id ? `#${n.id}` : `${n.tagName.toLowerCase()}.${String(n.className).split(' ').slice(0, 2).join('.')}`,
-				label: (n.getAttribute('aria-label') || n.textContent || '').trim().slice(0, 30),
-				ring,
-				offscreen: r.width === 0 || r.height === 0 || r.bottom < 0 || r.top > innerHeight,
-			};
+			return (n.id ? `#${n.id}` : n.tagName.toLowerCase() + '.' + String(n.className).split(' ')[0]) + '|' + (n.textContent || '').trim().slice(0, 20);
 		});
-		if (!stop) break;
-		if (stops.some((s) => s.sel === stop.sel && s.label === stop.label)) continue;
-		stops.push(stop);
+		if (sel) seen.add(sel);
 	}
-	const bad = stops.filter((s) => !s.ring && !s.offscreen);
-	console.log(at(), `[focus:${label}] ${stops.length} stops, ${bad.length} without a visible ring`);
-	if (bad.length) {
-		findings.focus.push({ label, bad });
-		for (const b of bad) console.log('   no ring:', b.sel, '|', b.label);
-	}
-	return stops;
+	console.log(at(), `[tab:${label}] ${steps} presses reached ${seen.size} distinct controls`);
+	return seen.size;
 }
 
 async function noteState(label, fn) {
@@ -214,12 +246,13 @@ await noteState('lobby-loaded', () => ({
 
 await overflowScan('lobby');
 if (MOBILE) await touchScan('lobby');
-await focusSweep('lobby', MOBILE ? 40 : 70);
+await focusSweep('lobby');
+await tabTrapCheck('lobby');
 
 // ── 2. search: a query with hits, then one with none ───────────────────────
 const search = await page.$('.cc-search input');
 if (search) {
-	await search.click();
+	await search.focus().catch(() => {});
 	await search.type('dog', { delay: 30 });
 	await page.waitForTimeout(3500);
 	await noteState('search-hits', () => ({
@@ -240,9 +273,11 @@ if (search) {
 
 // ── 3. avatar bar: gallery + create modal open/close ───────────────────────
 for (const [name, sel] of [['create', '.cc-create-btn'], ['gallery', '.cc-gallery-btn']]) {
-	const btn = await page.$(sel);
-	if (!btn) { console.log(at(), `[missing] ${name} button`); continue; }
-	await btn.click().catch(() => {});
+	// Dispatched rather than driven through the mouse: under software GL the
+	// main thread stalls long enough for Playwright's stability check to time
+	// out on a button that is perfectly clickable for a real user.
+	const found = await page.evaluate((s) => { const b = document.querySelector(s); if (!b) return false; b.click(); return true; }, sel);
+	if (!found) { console.log(at(), `[missing] ${name} button`); continue; }
 	await page.waitForTimeout(2500);
 	await noteState(`${name}-open`, () => ({
 		overlays: [...document.querySelectorAll('[class*="overlay"], [class*="modal"], dialog')]
@@ -295,6 +330,7 @@ await noteState('world-hud', () => ({
 
 await overflowScan('world');
 if (MOBILE) await touchScan('world');
+await focusSweep('world');
 
 // ── 5. every HUD panel: open, measure, close ───────────────────────────────
 const PANELS = [

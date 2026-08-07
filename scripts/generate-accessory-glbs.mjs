@@ -574,11 +574,11 @@ function laurelParts() {
 	}
 
 	// Berries: three pearls clustered in the front gap.
-	const berryBase = sphere({ r: 0.0055, segments: 10, rings: 6 });
+	const berryBase = sphere({ r: 0.0072, segments: 10, rings: 6 });
 	const berries = [
-		[-0.011, BAND_Y + 0.002, BAND_R],
-		[0.011, BAND_Y + 0.002, BAND_R],
-		[0, BAND_Y + 0.017, BAND_R + 0.002],
+		[-0.0145, BAND_Y + 0.003, BAND_R + 0.001],
+		[0.0145, BAND_Y + 0.003, BAND_R + 0.001],
+		[0, BAND_Y + 0.019, BAND_R + 0.003],
 	].map((translate) => transformGeom(berryBase, { translate }));
 
 	return [
