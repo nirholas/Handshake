@@ -66,7 +66,11 @@ function safeParse(s) {
 // session cookie or call back to verify. The crew tag (W09) rides inside the
 // signed payload too, so the game server can stamp a TRUSTWORTHY crew badge over
 // the avatar without a DB of its own and without trusting a client option.
-// Format: base64url(JSON{uid,exp,crew,crewName}).base64url(hmac).
+// The bearer's public profile handle (username + display name) rides the same
+// way: it is what lets a realm room publish a VERIFIED three.ws identity on the
+// player schema, so peers can open the real profile, follow, and DM — a client
+// option could claim anyone's handle, a signed ticket cannot.
+// Format: base64url(JSON{uid,exp,crew,crewName,u,dn}).base64url(hmac).
 export async function signPresenceTicket(userId) {
 	const exp = Math.floor(Date.now() / 1000) + TICKET_TTL_SEC;
 	// Fold in the bearer's crew tag if they're in one. Defensive: a missing crews
@@ -81,15 +85,30 @@ export async function signPresenceTicket(userId) {
 		const c = await crewTagFor(userId);
 		if (c) { crew = c.tag; crewName = c.name; }
 	} catch { /* crew is optional metadata; presence works without it */ }
-	const payload = base64url(JSON.stringify({ uid: userId, exp, crew, crewName }));
+	// Fold in the bearer's public handle, same defensive posture: an account with
+	// no username yet (or a DB hiccup) still gets a valid presence-only ticket.
+	let u = '';
+	let dn = '';
+	try {
+		const { sql } = await import('./db.js');
+		const [row] = await sql`
+			select username, display_name from users
+			where id = ${userId} and deleted_at is null
+			limit 1
+		`;
+		if (row?.username) u = row.username;
+		if (row?.display_name) dn = String(row.display_name).slice(0, 24);
+	} catch { /* profile handle is optional metadata; presence works without it */ }
+	const payload = base64url(JSON.stringify({ uid: userId, exp, crew, crewName, u, dn }));
 	const sig = await hmacSha256(env.MULTIPLAYER_SHARED_SECRET, payload);
 	return { token: `${payload}.${sig}`, expiresIn: TICKET_TTL_SEC };
 }
 
-// Verify a ticket and return { uid, crew, crewName }, or null. Mirrored
-// byte-for-byte on the multiplayer side (multiplayer/src/presence-token.js); keep
-// the two in sync. (No API caller today — the multiplayer server is the verifier;
-// this stays here as the canonical reference implementation.)
+// Verify a ticket and return { uid, crew, crewName, username, displayName }, or
+// null. Mirrored byte-for-byte on the multiplayer side
+// (multiplayer/src/presence-token.js); keep the two in sync. (No API caller
+// today — the multiplayer server is the verifier; this stays here as the
+// canonical reference implementation.)
 export async function verifyPresenceTicket(token) {
 	if (typeof token !== 'string' || !token.includes('.')) return null;
 	const [payload, sig] = token.split('.');
@@ -99,7 +118,13 @@ export async function verifyPresenceTicket(token) {
 	const data = safeParse(Buffer.from(payload, 'base64url').toString('utf8'));
 	if (!data || !data.uid || !data.exp) return null;
 	if (data.exp < Math.floor(Date.now() / 1000)) return null;
-	return { uid: data.uid, crew: data.crew || '', crewName: data.crewName || '' };
+	return {
+		uid: data.uid,
+		crew: data.crew || '',
+		crewName: data.crewName || '',
+		username: data.u || '',
+		displayName: data.dn || '',
+	};
 }
 
 function base64url(s) {

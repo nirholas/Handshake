@@ -92,6 +92,12 @@ export function verifyGuestToken(token) {
 	if (typeof payload.exp !== 'number' || payload.exp * 1000 < Date.now()) return null;
 	const now = Date.now() / 1000;
 	if (typeof payload.iat !== 'number' || payload.iat > now + 60) return null;
-	if (typeof payload.gid !== 'string' || !payload.gid.startsWith(GUEST_PREFIX)) return null;
+	// `gs_…` ids are server-minted. `guest-…` ids are the legacy client-minted
+	// localStorage ids: a bare one is never trusted, but once the room has sealed
+	// it into a signed token (the one-time migration in WalkRoom._resolveIdentity)
+	// the HMAC proves the server vouched for it, so honoring it here is what lets
+	// a pre-token guest keep their progression.
+	if (typeof payload.gid !== 'string') return null;
+	if (!payload.gid.startsWith(GUEST_PREFIX) && !payload.gid.startsWith('guest-')) return null;
 	return payload.gid;
 }

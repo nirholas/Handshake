@@ -52,6 +52,11 @@ export class Player extends Schema {
 		// type would lose precision past 2^53 but float64 covers epoch ms safely.
 		this.it = false;
 		this.itSince = 0;
+		// Verified three.ws username (W10) — set only from a signed presence
+		// ticket, never from a raw client option, so peers can trust it enough to
+		// open the real /u/<username> profile, follow, and DM this player. Empty
+		// for guests and wallet-only sessions.
+		this.username = '';
 	}
 }
 // IMPORTANT: append-only. Field indices are positional in @colyseus/schema's
@@ -83,6 +88,9 @@ defineTypes(Player, {
 	// render the glow ring + 🏃 marker without a separate broadcast channel.
 	it: 'boolean',
 	itSince: 'float64',
+	// Append-only (W10): verified three.ws username from the signed presence
+	// ticket. See the constructor note.
+	username: 'string',
 });
 
 // A single placed voxel in a coin's world. Keyed in the blocks MapSchema by its

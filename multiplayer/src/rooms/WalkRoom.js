@@ -35,7 +35,9 @@ import { socialHub } from '../social-hub.js';
 import { verifyPresenceTicket } from '../presence-token.js';
 import { verifyPlayPass } from '../play-pass.js';
 import { containsHateSlur } from '../display-name-safety.js';
+import { newGuestId, signGuestToken, verifyGuestToken } from '../guest-token.js';
 import { installUnknownMessageGuard, PLAY_PASS_EVICT_CODE } from '../room-compat.js';
+import { registerWalkRoom, unregisterWalkRoom } from '../walk-registry.js';
 import {
 	restoreProfile, serializeProfile, profileSnapshot,
 	addItem, hasRoomFor, resolveSlot, grantXp, consumeSlot,
@@ -63,6 +65,7 @@ import {
 import {
 	fishingSpotInRange, treeInRange, rockInRange, firepitInRange,
 	DANGER_ZONES, SPAWN_POINT, dangerZoneAt, isSafeZone, isDangerZone, randomPointInZone,
+	PLAZA_STAGE,
 } from '../world-features.js';
 import { registerActivityHandlers, ACTIVITY_COOLDOWN_MS } from '../activities.js';
 import { registerSpinHandlers } from '../spin-wheel.js';
@@ -196,15 +199,31 @@ const PROTECTED_RADIUS_CELLS = 3;    // keep this many cells clear around each p
 // renders at world z = -12 → grid z = round(-12 / 1.5) = -8. Protect both columns
 // at every height so neither can be buried or walled in.
 const BLOCK_SIZE_M = 1.5;             // client BLOCK: one grid cell ↔ metres
-const PROTECTED_POINTS = [{ x: 0, z: 0 }, { x: 0, z: -8 }];
+// Each disc carries its own radius (in cells) so a landmark bigger than the
+// default keeps a guard that matches its real footprint. The plaza stage's disc
+// is derived from world-features.PLAZA_STAGE, so moving the venue moves its
+// protection with it and the two can never drift.
+const PROTECTED_POINTS = [
+	{ x: 0, z: 0, r: PROTECTED_RADIUS_CELLS },
+	{ x: 0, z: -8, r: PROTECTED_RADIUS_CELLS },
+	{
+		x: Math.round(PLAZA_STAGE.x / BLOCK_SIZE_M),
+		z: Math.round(PLAZA_STAGE.z / BLOCK_SIZE_M),
+		r: Math.ceil(PLAZA_STAGE.r / BLOCK_SIZE_M),
+	},
+];
 // The prop/object build channel (obj:spawn kind:'block') works in world METRES, not
 // grid cells, so its grief guard has its own protected discs and density tile. The
 // protected world points are the spawn (origin) and the rendered totem (world z=-12);
 // the radius matches the voxel discs (PROTECTED_RADIUS_CELLS cells). PER_TILE_PROP_CAP
 // stops a builder piling props onto one spot to bury a landmark or wall an area off —
 // the per-player count (MAX_OBJECTS_PER_PLAYER) and world cap bound the rest.
-const PROTECTED_POINTS_M = [{ x: 0, z: 0 }, { x: 0, z: -12 }];
 const PROTECTED_RADIUS_M = PROTECTED_RADIUS_CELLS * BLOCK_SIZE_M;
+const PROTECTED_POINTS_M = [
+	{ x: 0, z: 0, r: PROTECTED_RADIUS_M },
+	{ x: 0, z: -12, r: PROTECTED_RADIUS_M },
+	{ x: PLAZA_STAGE.x, z: PLAZA_STAGE.z, r: PLAZA_STAGE.r },
+];
 const PROP_TILE_M = BLOCK_SIZE_M;     // density tile size for props, in metres
 const PER_TILE_PROP_CAP = 4;          // durable props allowed on one tile
 // Creator moderation: a clear-area sweep is bounded so even the creator's
@@ -519,6 +538,8 @@ export class WalkRoom extends Room {
 		this.setState(new WalkState());
 		this.setPatchRate(PATCH_RATE_MS);
 		this.autoDispose = true;
+		// Reachable by the operator /internal/announce webhook for live events.
+		registerWalkRoom(this);
 		// Version-skew tolerance: a message type this build doesn't know must be
 		// ignored, never close the session (Colyseus's default 4002 kill looked
 		// like "session expired" to pre-fix clients). See room-compat.js.
@@ -766,18 +787,44 @@ export class WalkRoom extends Room {
 		// holder gate. Register it so friends see this player as online in this
 		// coin world and can DM them live. Spoof-proof — the account id comes from
 		// the verified ticket, never a raw client option.
-		const accountUid = verifyPresenceTicket(options?.presence);
-		if (accountUid) {
-			client.userData = { ...(client.userData || {}), accountUid };
-			socialHub.register(accountUid, client, this.state.coinName || 'Mainland');
+		const presence = verifyPresenceTicket(options?.presence);
+		if (presence?.uid) {
+			client.userData = { ...(client.userData || {}), accountUid: presence.uid };
+			socialHub.register(presence.uid, client, this.state.coinName || 'Mainland');
+			// Verified three.ws profile (W10): publish the ticket's username on the
+			// schema so every peer can open this player's real profile, follow them,
+			// and DM them. Trustworthy by construction — it came out of the signed
+			// ticket, so nobody can wear a handle they don't own. A signed-in player
+			// who never picked a nameplate gets their account display name instead of
+			// an anonymous guest-xxxx handle.
+			player.username = clean(presence.username, 30);
+			if (!clean(options?.name, 24) && presence.displayName && !containsHateSlur(presence.displayName)) {
+				player.name = clean(presence.displayName, 24) || player.name;
+			}
 		}
 
-		// Economy profile (off-schema). Keyed to a stable account: the wallet verified
-		// in onAuth when the platform gate is on, else a client-persisted guest id, so
-		// a player's pack/purse/skills survive a disconnect and follow them between
-		// coin worlds. Hydrate the durable record before the synchronous load so a
-		// returning player on a fresh process isn't reset to the starter kit.
-		const playerId = clean(client.userData?.account, 80) || clean(options?.pid, 80) || client.sessionId;
+		// Economy profile (off-schema). Keyed to a VERIFIED account only: the wallet
+		// from onAuth when the platform gate is on, else a wallet proven by a signed
+		// play pass the client volunteered, else a server-minted guest id sealed in
+		// an HMAC guest token (guest-token.js). A raw `pid` join option is never an
+		// account key anymore — it let any client load, spend, and overwrite any
+		// victim's saved profile (gold, bank, items, cosmetics) just by asserting
+		// their id. Legacy `guest-…` pids migrate once (see _resolveIdentity).
+		const identity = await this._resolveIdentity(client, options);
+		const playerId = identity.playerId;
+		if (identity.wallet && !client.userData?.account) {
+			// The play pass proved this wallet even though the platform gate is off —
+			// bind it as the session account so ownership + moderation checks and the
+			// on-schema account field agree with the persistence key.
+			client.userData = { ...(client.userData || {}), account: identity.wallet };
+			player.account = clean(identity.wallet, 64);
+		}
+		if (identity.guestToken) {
+			// Hand the (re-)signed token back so the client persists it and replays
+			// it on the next join. Re-issued every join so an active guest's 90-day
+			// expiry never creeps up on them.
+			client.send('guestToken', { token: identity.guestToken });
+		}
 		try { await hydratePlayer(playerId); } catch { /* memory-only fallback */ }
 		// A slower-arriving leave could fire while we awaited; bail if so.
 		if (!this.state.players.has(client.sessionId)) return;
@@ -859,6 +906,33 @@ export class WalkRoom extends Room {
 		this._sendKingSync(client);
 	}
 
+	// Retire the reconnecting client's OWN previous session.
+	//
+	// A socket that dies uncleanly (phone slept, tab froze, wifi handover) stays
+	// half-open: the transport still reads it as OPEN and only reaps it when its
+	// ping retries expire, several seconds later. The client reconnects well inside
+	// that window, so the room briefly holds two sessions for one person — the
+	// returning player sees a frozen ghost of themselves at spawn, and so does
+	// everyone else. Liveness cannot be probed synchronously here (that is exactly
+	// what the half-open socket hides), so the reconnecting client tells us which
+	// session was its own and we retire that one.
+	//
+	// `prevSession` alone would be a kick primitive: session ids are published on
+	// the player schema, so anyone could name a stranger's. It is only honoured
+	// together with a matching persistent player key — the wallet the server itself
+	// verified in onAuth, or a guest id that is never broadcast to peers. A second
+	// tab or a second device is untouched: each carries its own prior session id.
+	_evictPriorSession(client, playerKey, prevSession) {
+		if (!playerKey || !prevSession || prevSession === client.sessionId) return;
+		for (const other of this.clients) {
+			if (other === client || other.sessionId !== prevSession) continue;
+			if (other.userData?.playerKey !== playerKey) continue;
+			console.log(`[walk_world ${this.roomId}] retiring superseded session ${other.sessionId}`);
+			try { other.leave(1000); } catch { /* already gone */ }
+			return;
+		}
+	}
+
 	onLeave(client) {
 		if (client.userData?.accountUid) socialHub.unregister(client.userData.accountUid, client);
 		// Tag mini-game (R08): capture wasIt BEFORE state.players.delete below, so
@@ -924,6 +998,7 @@ export class WalkRoom extends Room {
 	}
 
 	async onDispose() {
+		unregisterWalkRoom(this);
 		// Persist the final build so the community's creation survives the room
 		// being torn down when the last player leaves. Awaited (Colyseus waits on
 		// the returned promise) so the Redis write lands before the room is gone —
@@ -1298,7 +1373,7 @@ export class WalkRoom extends Room {
 				: res.reason === 'daily-done' ? 'That job is done for today — check back tomorrow.'
 				: res.reason === 'done' ? 'You’ve already completed that job.'
 				: 'That job isn’t available to you yet.';
-			client.send('notice', { kind: 'quest', text });
+			client.send('notice', { kind: 'quest', ok: false, text });
 			return;
 		}
 		if (isHeist(id)) {
@@ -1314,7 +1389,7 @@ export class WalkRoom extends Room {
 			this._sendQuestsToCrew(inst, client.sessionId);
 		}
 		this._persistEcon(client.sessionId);
-		client.send('notice', { kind: 'quest', text: `Accepted: ${mission.title}` });
+		client.send('notice', { kind: 'quest', ok: true, text: `Accepted: ${mission.title}` });
 		this._sendQuests(client);
 	}
 
@@ -1343,7 +1418,7 @@ export class WalkRoom extends Room {
 		if (!this._actionOk(client.sessionId, 'questInteract')) return;
 		const zone = interactZoneInRange(player.x, player.z);
 		if (!zone) {
-			client.send('notice', { kind: 'quest', text: 'There’s nothing to use here.' });
+			client.send('notice', { kind: 'quest', ok: false, text: 'There’s nothing to use here.' });
 			return;
 		}
 		const inVehicle = !!this._vehicleDrivenBy(client.sessionId);
@@ -1444,14 +1519,14 @@ export class WalkRoom extends Room {
 	_heistFinaleReady(client, inst, mission, obj) {
 		const need = Math.max(1, mission.party | 0 || 1);
 		if (inst.members.size < need) {
-			client.send('notice', { kind: 'quest', text: `This job needs a crew of ${need} — recruit before the finale.` });
+			client.send('notice', { kind: 'quest', ok: false, text: `This job needs a crew of ${need} — recruit before the finale.` });
 			return false;
 		}
 		for (const sid of inst.members) {
 			const p = this.state.players.get(sid);
 			const zone = p ? zoneAt(p.x, p.z) : null;
 			if (!zone || zone.id !== obj.zone) {
-				client.send('notice', { kind: 'quest', text: 'Your whole crew must be at the door for this.' });
+				client.send('notice', { kind: 'quest', ok: false, text: 'Your whole crew must be at the door for this.' });
 				return false;
 			}
 		}
@@ -1698,12 +1773,12 @@ export class WalkRoom extends Room {
 
 		const active = profile.hotbar[profile.activeSlot];
 		if (!active || active.item !== 'rod') {
-			client.send('notice', { kind: 'tool', text: 'Equip a fishing rod to cast.' });
+			client.send('notice', { kind: 'tool', ok: false, text: 'Equip a fishing rod to cast.' });
 			return;
 		}
 		const spot = fishingSpotInRange(player.x, player.z);
 		if (!spot) {
-			client.send('notice', { kind: 'fish', text: 'Move next to the water to cast.' });
+			client.send('notice', { kind: 'fish', ok: false, text: 'Move next to the water to cast.' });
 			return;
 		}
 		if (!hasRoomFor(profile, 'fish')) {
@@ -1726,12 +1801,12 @@ export class WalkRoom extends Room {
 			const xp = Math.round((10 + Math.floor(Math.random() * 6) + lvl * 0.3) * quality) * caught;
 			this._grantXp(client, profile, 'fishing', xp);
 			this._sendInv(client, profile);
-			client.send('notice', { kind: 'fish', caught, text: caught > 1 ? `Caught ${caught} ${itemLabel('fish').toLowerCase()}!` : `Caught a ${itemLabel('fish').toLowerCase()}.` });
+			client.send('notice', { kind: 'fish', ok: true, caught, text: caught > 1 ? `Caught ${caught} ${itemLabel('fish').toLowerCase()}!` : `Caught a ${itemLabel('fish').toLowerCase()}.` });
 			// Quest progress: a real catch advances any active "collect fish" objective.
 			this._questEvent(client, profile, { type: 'collect', item: 'fish', qty: caught });
 		} else {
 			this._grantXp(client, profile, 'fishing', 2);
-			client.send('notice', { kind: 'fish', caught: 0, text: 'The fish got away.' });
+			client.send('notice', { kind: 'fish', ok: false, caught: 0, text: 'The fish got away.' });
 		}
 		this._persistEcon(client.sessionId);
 	}
@@ -1764,7 +1839,7 @@ export class WalkRoom extends Room {
 		if (!this._actionOk(client.sessionId, 'equip')) return;
 		const id = typeof payload?.id === 'string' ? payload.id.slice(0, 64) : '';
 		if (!getCosmetic(id)) {
-			client.send('notice', { kind: 'cosmetic', text: 'That cosmetic doesn’t exist.' });
+			client.send('notice', { kind: 'cosmetic', ok: false, text: 'That cosmetic doesn’t exist.' });
 			return;
 		}
 		let equipped = equipCosmetic(profile, id);
@@ -1785,7 +1860,7 @@ export class WalkRoom extends Room {
 			}
 		}
 		if (!equipped) {
-			client.send('notice', { kind: 'cosmetic', text: 'You don’t own that cosmetic yet.' });
+			client.send('notice', { kind: 'cosmetic', ok: false, text: 'You don’t own that cosmetic yet.' });
 			return;
 		}
 		const player = this.state.players.get(client.sessionId);
@@ -1839,12 +1914,12 @@ export class WalkRoom extends Room {
 		const res = consumeSlot(profile, slot);
 		if (!res.ok) {
 			const text = res.reason === 'full' ? 'You’re already at full health.' : 'That can’t be eaten.';
-			client.send('notice', { kind: 'eat', text });
+			client.send('notice', { kind: 'eat', ok: false, text });
 			return;
 		}
 		profile.cd.consume = now + CONSUME_COOLDOWN_MS;
 		this._sendInv(client, profile);
-		client.send('notice', { kind: 'eat', text: `+${res.gained} HP.` });
+		client.send('notice', { kind: 'eat', ok: true, text: `+${res.gained} HP.` });
 		this._persistEcon(client.sessionId);
 	}
 
@@ -1870,11 +1945,11 @@ export class WalkRoom extends Room {
 		const item = typeof payload?.item === 'string' ? payload.item.slice(0, 32) : '';
 		const entry = buyEntry(item);
 		if (!entry) {
-			client.send('notice', { kind: 'store', text: 'That item isn’t for sale.' });
+			client.send('notice', { kind: 'store', ok: false, text: 'That item isn’t for sale.' });
 			return;
 		}
 		if (profile.gold < entry.price) {
-			client.send('notice', { kind: 'store', text: `Not enough cash — ${entry.price} needed.` });
+			client.send('notice', { kind: 'store', ok: false, text: `Not enough cash — ${entry.price} needed.` });
 			return;
 		}
 		if (!hasRoomFor(profile, entry.item)) {
@@ -1889,7 +1964,7 @@ export class WalkRoom extends Room {
 		}
 		profile.gold -= entry.price;
 		this._sendInv(client, profile);
-		client.send('notice', { kind: 'store', text: `Bought ${bought > 1 ? bought + ' ' : ''}${itemLabel(entry.item)} for ${entry.price} cash.` });
+		client.send('notice', { kind: 'store', ok: true, text: `Bought ${bought > 1 ? bought + ' ' : ''}${itemLabel(entry.item)} for ${entry.price} cash.` });
 		this._persistEcon(client.sessionId);
 	}
 
@@ -1902,11 +1977,11 @@ export class WalkRoom extends Room {
 		if (!this._actionOk(client.sessionId, 'storeSell')) return;
 		const slot = resolveSlot(profile, payload?.slot);
 		if (!slot || !slot.item) {
-			client.send('notice', { kind: 'store', text: 'Nothing there to sell.' });
+			client.send('notice', { kind: 'store', ok: false, text: 'Nothing there to sell.' });
 			return;
 		}
 		if (!isSellable(slot.item)) {
-			client.send('notice', { kind: 'store', text: `The store won’t buy ${itemLabel(slot.item).toLowerCase()}.` });
+			client.send('notice', { kind: 'store', ok: false, text: `The store won’t buy ${itemLabel(slot.item).toLowerCase()}.` });
 			return;
 		}
 		const want = Number.isFinite(payload?.qty) && payload.qty > 0 ? Math.min(payload.qty | 0, slot.qty) : slot.qty;
@@ -1916,7 +1991,7 @@ export class WalkRoom extends Room {
 		const total = sellPrice(item) * removed;
 		profile.gold += total;
 		this._sendInv(client, profile);
-		client.send('notice', { kind: 'store', text: `Sold ${removed} ${itemLabel(item).toLowerCase()} for ${total} cash.` });
+		client.send('notice', { kind: 'store', ok: true, text: `Sold ${removed} ${itemLabel(item).toLowerCase()} for ${total} cash.` });
 		this._persistEcon(client.sessionId);
 	}
 
@@ -1933,12 +2008,13 @@ export class WalkRoom extends Room {
 		if (!amount) return;
 		const moved = bankTransfer(profile, amount);
 		if (moved === 0) {
-			client.send('notice', { kind: 'bank', text: amount > 0 ? 'No cash on hand to deposit.' : 'Nothing banked to withdraw.' });
+			client.send('notice', { kind: 'bank', ok: false, text: amount > 0 ? 'No cash on hand to deposit.' : 'Nothing banked to withdraw.' });
 			return;
 		}
 		this._sendProfile(client);
 		client.send('notice', {
 			kind: 'bank',
+			ok: true,
 			text: moved > 0 ? `Deposited ${moved} cash — protected from drops.` : `Withdrew ${-moved} cash.`,
 		});
 		this._persistEcon(client.sessionId);
@@ -1978,20 +2054,20 @@ export class WalkRoom extends Room {
 		const id = typeof payload?.id === 'string' ? payload.id.slice(0, 64) : '';
 		const price = boutiquePrice(id);
 		if (!price) {
-			client.send('notice', { kind: 'boutique', text: 'That item isn’t in the boutique.' });
+			client.send('notice', { kind: 'boutique', ok: false, text: 'That item isn’t in the boutique.' });
 			return;
 		}
 		if (ownedCosmeticSet(profile).has(id)) {
-			client.send('notice', { kind: 'boutique', text: 'You already own that.' });
+			client.send('notice', { kind: 'boutique', ok: false, text: 'You already own that.' });
 			return;
 		}
 		const wallet = typeof payload?.wallet === 'string' ? payload.wallet.trim() : '';
 		if (!isWalletAddress(wallet)) {
-			client.send('notice', { kind: 'boutique', text: 'Connect a Solana wallet to buy with $THREE.' });
+			client.send('notice', { kind: 'boutique', ok: false, text: 'Connect a Solana wallet to buy with $THREE.' });
 			return;
 		}
 		if (!tokenConfigured()) {
-			client.send('notice', { kind: 'boutique', text: 'The $THREE boutique is offline right now.' });
+			client.send('notice', { kind: 'boutique', ok: false, text: 'The $THREE boutique is offline right now.' });
 			return;
 		}
 		let built;
@@ -2007,7 +2083,7 @@ export class WalkRoom extends Room {
 			console.warn('[walk_world] boutique quote failed:', err?.message);
 		}
 		if (!built) {
-			client.send('notice', { kind: 'boutique', text: 'Could not price that purchase — try again in a moment.' });
+			client.send('notice', { kind: 'boutique', ok: false, text: 'Could not price that purchase — try again in a moment.' });
 			return;
 		}
 		client.send('boutiqueQuote', { id, price, quoteToken: built.quoteToken, txBase64: built.txBase64 });
@@ -2029,31 +2105,31 @@ export class WalkRoom extends Room {
 			result = await verifyTokenPurchase({ quoteToken, txSig, purpose: 'boutique' });
 		} catch (err) {
 			console.warn('[walk_world] boutique settle failed:', err?.message);
-			client.send('notice', { kind: 'boutique', text: 'Could not verify that payment — try again.' });
+			client.send('notice', { kind: 'boutique', ok: false, text: 'Could not verify that payment — try again.' });
 			return;
 		}
 		if (!result?.ok) {
-			client.send('notice', { kind: 'boutique', text: `Payment didn’t verify (${result?.reason || 'unknown'}).` });
+			client.send('notice', { kind: 'boutique', ok: false, text: `Payment didn’t verify (${result?.reason || 'unknown'}).` });
 			return;
 		}
 		this._pruneBoutiqueNonces();
 		if (this._boutiqueNonces.has(result.nonce)) {
-			client.send('notice', { kind: 'boutique', text: 'That purchase already settled.' });
+			client.send('notice', { kind: 'boutique', ok: false, text: 'That purchase already settled.' });
 			return;
 		}
 		this._boutiqueNonces.set(result.nonce, Date.now());
 		const cosmeticId = result.quote?.cosmeticId;
 		if (ownedCosmeticSet(profile).has(cosmeticId)) {
-			client.send('notice', { kind: 'boutique', text: 'Payment verified — you already owned this.' });
+			client.send('notice', { kind: 'boutique', ok: true, text: 'Payment verified — you already owned this.' });
 			return;
 		}
 		const granted = cosmeticId ? grantCosmetic(profile, cosmeticId) : false;
 		if (!granted) {
-			client.send('notice', { kind: 'boutique', text: 'Payment verified, but that item couldn’t be unlocked. Contact support.' });
+			client.send('notice', { kind: 'boutique', ok: false, text: 'Payment verified, but that item couldn’t be unlocked. Contact support.' });
 			return;
 		}
 		this._sendProfile(client);
-		client.send('notice', { kind: 'boutique', text: `Unlocked ${getCosmetic(cosmeticId)?.name || 'the item'} — check your wardrobe.` });
+		client.send('notice', { kind: 'boutique', ok: true, text: `Unlocked ${getCosmetic(cosmeticId)?.name || 'the item'} — check your wardrobe.` });
 		this._persistEcon(client.sessionId);
 	}
 
@@ -2069,6 +2145,44 @@ export class WalkRoom extends Room {
 	_pruneSpinNonces() {
 		const cutoff = Date.now() - 5 * 60_000;
 		for (const [nonce, ts] of this._spinNonces) if (ts < cutoff) this._spinNonces.delete(nonce);
+	}
+
+	// Resolve the stable persistence identity for a joining session. Trust order:
+	//   1. The wallet onAuth verified (platform gate on).
+	//   2. A wallet sealed in a valid play pass the client sent voluntarily —
+	//      possession of the HMAC-signed pass proves the wallet even when the
+	//      gate is off, so signed-in players keep one profile across deploys.
+	//   3. A guest id sealed in a signed guest token (minted below on a prior
+	//      join). The token, not the id, is the credential.
+	//   4. One-time migration for legacy clients that persisted a bare `guest-…`
+	//      localStorage pid: honored ONLY if the saved record has never been
+	//      token-upgraded (so a bare claim on an upgraded id gets a fresh guest,
+	//      not the victim's profile), never for wallet-shaped ids, and sealed
+	//      into a signed token on the spot.
+	//   5. A brand-new server-minted guest id.
+	// Lanes 3-5 return a fresh token for the client to persist and replay.
+	async _resolveIdentity(client, options) {
+		const authed = clean(client.userData?.account, 80);
+		if (authed) return { playerId: authed, wallet: '', guestToken: '' };
+		const pass = verifyPlayPass(options?.playPass);
+		const wallet = clean(pass?.wallet, 80);
+		if (wallet) return { playerId: wallet, wallet, guestToken: '' };
+		const sealed = verifyGuestToken(options?.guestToken);
+		if (sealed) return { playerId: sealed, wallet: '', guestToken: signGuestToken(sealed) };
+		const legacy =
+			typeof options?.pid === 'string' && /^guest-[a-z0-9]{4,60}$/i.test(options.pid) ? options.pid : '';
+		if (legacy) {
+			try { await hydratePlayer(legacy); } catch { /* memory-only fallback */ }
+			const rec = loadPlayer(legacy);
+			if (!rec?.guestUpgraded) {
+				// Stamp the record so this bare id can never be claimed again; the
+				// device that holds it from here on holds the signed token instead.
+				savePlayer(legacy, { ...(rec || {}), guestUpgraded: true });
+				return { playerId: legacy, wallet: '', guestToken: signGuestToken(legacy) };
+			}
+		}
+		const gid = newGuestId();
+		return { playerId: gid, wallet: '', guestToken: signGuestToken(gid) };
 	}
 
 	// Write this session's economy profile through to the account-keyed store,
@@ -2714,11 +2828,12 @@ export class WalkRoom extends Room {
 		return !!player && !!player.account && player.account === this.coinCreator;
 	}
 
-	// True if (x,z) is inside a protected disc (spawn or totem) — placement there is
-	// refused at every height so neither landmark can be buried or fenced in.
+	// True if (x,z) is inside a protected disc (spawn, totem, or the plaza stage) —
+	// placement there is refused at every height so no landmark can be buried or
+	// fenced in.
 	_isProtectedColumn(x, z) {
 		for (const p of PROTECTED_POINTS) {
-			if (Math.hypot(x - p.x, z - p.z) <= PROTECTED_RADIUS_CELLS) return true;
+			if (Math.hypot(x - p.x, z - p.z) <= p.r) return true;
 		}
 		return false;
 	}
@@ -2740,7 +2855,7 @@ export class WalkRoom extends Room {
 	// off. Returns an obj:reject reason, or null when the placement is allowed.
 	_propPlacementBlock(x, z) {
 		for (const p of PROTECTED_POINTS_M) {
-			if (Math.hypot(x - p.x, z - p.z) <= PROTECTED_RADIUS_M) return 'protected';
+			if (Math.hypot(x - p.x, z - p.z) <= p.r) return 'protected';
 		}
 		const tx = Math.round(x / PROP_TILE_M);
 		const tz = Math.round(z / PROP_TILE_M);

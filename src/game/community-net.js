@@ -29,7 +29,12 @@ function persistedPid(account) {
 	} catch { return ''; }
 }
 const RECONNECT_MAX_MS = 60_000;
-const MAX_RECONNECT_ATTEMPTS = 6;
+// Attempts reset to 0 on every successful join, so this bounds ONE outage, not
+// the session. Six attempts gave up ~2.5 minutes in — shorter than a server
+// redeploy or instance replacement, which permanently stranded everyone present
+// in single-player mid-session. Fourteen rides out ~11 minutes (the tail retries
+// only once a minute) before parking on 'offline' with the manual retry().
+const MAX_RECONNECT_ATTEMPTS = 14;
 const SEND_HZ = 15;
 const SEND_INTERVAL_MS = 1000 / SEND_HZ;
 const POSITION_EPSILON = 0.01;
@@ -275,9 +280,20 @@ export class CommunityNet {
 				// Pre-join cosmetic loadout (W03). Server-validated against ownership
 				// before it dresses the player, so peers can trust the broadcast look.
 				cosmetics: this.cosmetics,
-				// Stable persistence key for the off-schema economy (used only when the
-				// server hasn't verified a wallet account of its own — i.e. un-gated/dev).
+				// Legacy persistence key. Modern servers ignore it as an account key (a
+				// bare pid could claim any profile) except for the one-time migration of
+				// an old `guest-…` id into a signed guest token; older servers still read
+				// it, so keep sending it until every deploy is on the token flow.
 				pid: this.pid,
+				// Our own previous session id, sent only when this is a reconnect. A
+				// socket that died uncleanly is still half-open server-side for several
+				// seconds, so without this the room holds a frozen ghost of us at spawn
+				// until its ping retries expire. The server retires that exact session,
+				// and only when the persistent player key above matches ours too.
+				...(this.sessionId ? { prevSession: this.sessionId } : {}),
+				// Signed guest token (server-minted, HMAC-sealed guest id). This — not
+				// the raw pid — is what proves a guest owns their saved progression.
+				...(this._guestToken() ? { guestToken: this._guestToken() } : {}),
 				// Signed presence ticket (W09). WalkRoom verifies it and registers the
 				// account with the social hub under this world's name, so friends see
 				// "Online · <coin> Town" and DMs route to this socket. Omitted entirely
@@ -305,7 +321,15 @@ export class CommunityNet {
 			this.room = room;
 			this.sessionId = this.room.sessionId;
 
-			this.room.onMessage('chat', (msg) => this._emit('chat', msg));
+			// Guest identity (see guest-token.js server-side): the room seals our guest
+			// id into a signed token and hands it back on every join. Persist it — the
+			// token is the credential that lets this device reclaim its progression.
+			this.room.onMessage('guestToken', (msg) => {
+					if (msg && typeof msg.token === 'string' && msg.token) {
+						try { localStorage.setItem('tws-guest-token', msg.token); } catch { /* storage blocked: session-only guest */ }
+					}
+				});
+				this.room.onMessage('chat', (msg) => this._emit('chat', msg));
 			this.room.onMessage('interact', (msg) => this._emit('interact', msg));
 			// Friends (W09): live DM + request/accept events pushed by the social hub
 			// to whichever realm room the account is currently registered in.
@@ -486,6 +510,17 @@ export class CommunityNet {
 			});
 			this.room.onError((code, message) => log.warn('[community-net] room.onError', code, message));
 
+			// A reconnect gives us a fresh session the server spawns at the origin,
+			// so every send-suppression heuristic from the previous connection is
+			// now wrong. Clearing _lastSent is load-bearing: without it a player who
+			// reconnects while standing still never sends a move (the position is
+			// unchanged from the pre-drop one), so the server keeps them at spawn and
+			// every peer sees them teleported to 0,0,0 until they happen to walk.
+			// The RTT sample is dropped for the same reason — its send is gone.
+			this._lastSent = null;
+			this._lastSentAt = 0;
+			this._pingSentAt = 0;
+			this.ping = null;
 			this._reconnectAttempts = 0;
 			this._setStatus('online');
 			this._emit('ready', {
@@ -716,6 +751,31 @@ export class CommunityNet {
 		if (this._reconnectTimer) { clearTimeout(this._reconnectTimer); this._reconnectTimer = null; }
 		this._reconnectAttempts = 0;
 		this.connect();
+	}
+
+	// Is the wire actually carrying traffic right now? `status === 'online'` alone
+	// is a claim about the last thing that happened, not about the socket.
+	isLive() { return this.status === 'online' && this.room?.connection?.isOpen === true; }
+
+	// Call when the page comes back to the foreground. A backgrounded tab is the
+	// one case where the client's own status can be a lie: iOS Safari suspends the
+	// whole page, the OS reaps the TCP connection, and no 'close' event is ever
+	// delivered — so the client still reads 'online' while every send silently
+	// drops into a dead socket and no peer update ever arrives again. Probing the
+	// connection on resume converts that invisible half-death into the normal
+	// reconnect path. It also short-circuits the backoff when the retries were
+	// burned (or throttled) while the tab was hidden, so returning to the tab is
+	// always the fastest way back into the world.
+	resume() {
+		if (this._destroyed || !this.url) return;
+		if (this.status === 'online' && this.room?.connection?.isOpen !== true) {
+			log.warn('[community-net] socket died while backgrounded — reconnecting');
+			this._closeRoom();
+			this._setStatus('offline');
+			this.retry();
+			return;
+		}
+		if (this.status === 'offline' || this.status === 'failed') this.retry();
 	}
 	destroy() {
 		this._destroyed = true;

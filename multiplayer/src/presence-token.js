@@ -5,9 +5,11 @@
 // another account's presence.
 //
 // Keep byte-for-byte in sync with the API signer:
-//   token   = base64url(JSON{uid,exp}) + '.' + base64url(HMAC_SHA256(secret, payload))
+//   token   = base64url(JSON{uid,exp,crew,crewName,u,dn}) + '.' + base64url(HMAC_SHA256(secret, payload))
 //   secret  = MULTIPLAYER_SHARED_SECRET (falls back to HOLDER_PASS_SECRET, then a
 //             public dev secret — the same fallback chain the API uses).
+// `u`/`dn` are the bearer's three.ws username + display name; older tickets
+// omit them and still verify (they surface as empty strings).
 
 import crypto from 'node:crypto';
 
@@ -26,8 +28,11 @@ function timingSafeEqualStr(a, b) {
 	return crypto.timingSafeEqual(ab, bb);
 }
 
-// Verify a presence ticket → the trusted account id (uid), or null if the
+// Verify a presence ticket → the trusted identity it carries, or null if the
 // signature is wrong, the payload is malformed, or the ticket has expired.
+// Returns { uid, username, displayName, crew, crewName }: uid is the account
+// id (users.id UUID); username/displayName are the bearer's public three.ws
+// handle, empty for tickets minted before the profile fields existed.
 export function verifyPresenceTicket(token) {
 	if (typeof token !== 'string' || !token.includes('.')) return null;
 	const [payload, sig] = token.split('.');
@@ -42,7 +47,13 @@ export function verifyPresenceTicket(token) {
 	}
 	if (!data || !data.uid || !data.exp) return null;
 	if (data.exp < Math.floor(Date.now() / 1000)) return null;
-	return data.uid;
+	return {
+		uid: data.uid,
+		username: typeof data.u === 'string' ? data.u : '',
+		displayName: typeof data.dn === 'string' ? data.dn : '',
+		crew: typeof data.crew === 'string' ? data.crew : '',
+		crewName: typeof data.crewName === 'string' ? data.crewName : '',
+	};
 }
 
 // Maximum age (seconds) an /internal/notify signature stays valid. The API mints
@@ -97,6 +108,32 @@ export function verifyStageSignature(payload, ts, sig) {
 	const expected = crypto
 		.createHmac('sha256', secret())
 		.update(`stage:${tsNum}:${payloadHash}`)
+		.digest('base64url');
+	return timingSafeEqualStr(sig, expected);
+}
+
+// ── Live-event announcements ─────────────────────────────────────────────────
+// /internal/announce lets an operator (via scripts/announce-play.mjs, which
+// holds the same shared secret) broadcast a message to every live walk_world
+// room during an event. Same HMAC discipline as the other internal webhooks:
+// the signature binds the exact body + a fresh timestamp, so a captured tuple
+// can't be replayed with different content or outside the freshness window.
+// Keep byte-compatible with the signer in scripts/announce-play.mjs.
+const ANNOUNCE_MAX_AGE_S = 120;
+
+export function verifyAnnounceSignature(payload, ts, sig) {
+	if (typeof sig !== 'string' || !sig) return false;
+	const tsNum = Number(ts);
+	if (!Number.isFinite(tsNum)) return false;
+	const nowS = Math.floor(Date.now() / 1000);
+	if (Math.abs(nowS - tsNum) > ANNOUNCE_MAX_AGE_S) return false;
+	const payloadHash = crypto
+		.createHash('sha256')
+		.update(JSON.stringify(payload ?? {}))
+		.digest('base64url');
+	const expected = crypto
+		.createHmac('sha256', secret())
+		.update(`announce:${tsNum}:${payloadHash}`)
 		.digest('base64url');
 	return timingSafeEqualStr(sig, expected);
 }
