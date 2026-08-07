@@ -15,7 +15,9 @@
 // Optional env:
 //   BASE_URL          — dev server origin (default http://localhost:3000)
 //   SMOKE_AGENT_ID    — a public agent/avatar id to exercise /api/llm/anthropic
-//                       (the embed proxy). Skipped when unset.
+//                       (the embed proxy). Skipped when unset. Its embed policy
+//                       must select a Claude model: the proxy clamps a
+//                       caller-requested host-billed model back to the owner's.
 //   SMOKE_BEARER      — a bearer token for an authenticated /api/chat call.
 //                       /api/chat gates the Vertex (paid-tier) lane behind auth,
 //                       so anonymous callers only get the free lanes — provide a
@@ -85,7 +87,10 @@ async function surfaceEmbedProxy() {
 	try {
 		res = await fetch(`${BASE_URL}/api/llm/anthropic?agent=${encodeURIComponent(AGENT_ID)}`, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json' },
+			// The proxy denies header-less anonymous callers (they bypass the embed
+			// origin allowlist). This is a first-party check, so it presents the
+			// first-party origin a real embed on the site would send.
+			headers: { 'content-type': 'application/json', origin: new URL(BASE_URL).origin },
 			body: JSON.stringify({
 				model: 'claude-haiku-4-5-20251001',
 				max_tokens: 64,
@@ -107,7 +112,12 @@ async function surfaceEmbedProxy() {
 	const text = await readSomeStream(res, 1500);
 	const streamed = /content_block_delta|text_delta|message_start/.test(text);
 	if (transport === 'vertex-anthropic') pass('served by Vertex (x-llm-transport=vertex-anthropic)');
-	else fail(`expected x-llm-transport=vertex-anthropic, got "${transport}"`);
+	else
+		fail(
+			`expected x-llm-transport=vertex-anthropic, got "${transport}". ` +
+				"SMOKE_AGENT_ID's embed policy must select a Claude model: the proxy clamps a " +
+				'caller-requested host-billed model back to the one the agent owner configured.',
+		);
 	if (streamed) pass('SSE tokens streamed');
 	else fail('no Anthropic SSE events observed in the stream');
 }

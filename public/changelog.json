@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-07T03:41:03.803Z",
+	"generated_at": "2026-08-07T05:45:17.435Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,17 @@
 			"link": "/chat",
 			"tags": [
 				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-07",
+			"type": "update",
+			"title": "The embedded avatar brain is now scoped to the sites it was meant for",
+			"summary": "Every agent and avatar embed can chat for free because the platform pays for the model behind it, and the agent owner decides which sites may run that embed and which model it uses. Both of those controls only really applied to browsers: a request that simply left out the header a browser always sends slipped past the site allowlist entirely, and any caller could ask for a pricier model than the owner had chosen. Both are closed. A request with no site header now has to sign in (a session or an API key) instead of riding on an agent id anyone could read off our public sitemap, and a model that bills our own provider keys runs only when the owner selected it in the dashboard. There is also a new platform-wide ceiling across all of this traffic combined, so no amount of spreading requests around can drain the shared budget. Nothing changes for a normal embed on an allowlisted site.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"security",
 				"fix"
 			]
 		},

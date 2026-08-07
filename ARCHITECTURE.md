@@ -600,7 +600,7 @@ Representative endpoints:
 |----------|-------------|
 | `POST /api/brain/chat` | Multi-provider LLM playground (20+ models, SSE streaming) |
 | `POST /api/chat` | Avatar chat endpoint: memory recall, tool dispatch, Guardian governance |
-| `POST /api/llm/anthropic` | We-pay proxy for Anthropic Claude (embed contexts, free tier) |
+| `POST /api/llm/anthropic` | We-pay proxy for Anthropic Claude (embed contexts, free tier). Scoped to the agent's allowlisted embed origins; header-less callers must authenticate, and host-billed models run only when the owner's policy selects one |
 
 **Provider failover in `/api/chat`:** Groq → OpenRouter → NVIDIA NIM → SambaNova → Mistral → Z.AI → Anthropic → OpenAI → watsonx/Orchestrate (plus the Vertex Gemini anchor appended at the tail)
 

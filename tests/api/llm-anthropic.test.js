@@ -2,7 +2,7 @@
 // Focus: monthly token budgeting (input+output), embed-policy enforcement
 // (origin, surface, brain mode), upstream error sanitization, model allowlist.
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Readable } from 'node:stream';
 
 process.env.PUBLIC_APP_ORIGIN ||= 'https://app.test';
@@ -30,14 +30,24 @@ vi.mock('../../api/_lib/avatars.js', () => ({
 const rlState = {
 	ip: { success: true },
 	agent: { success: true },
+	hostKeyGlobal: { success: true },
 };
 
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		embedLlmIp: vi.fn(async () => rlState.ip),
 		embedLlmAgent: vi.fn(async () => rlState.agent),
+		chatHostKeyGlobal: vi.fn(async () => rlState.hostKeyGlobal),
 	},
 	clientIp: () => '203.0.113.1',
+}));
+
+// Identity for the header-less (non-browser) lane. Null means anonymous, which
+// is what every browser-shaped test wants.
+const authState = { user: null };
+
+vi.mock('../../api/_lib/auth.js', () => ({
+	getRequestUser: vi.fn(async () => authState.user),
 }));
 
 const usageEvents = [];
@@ -126,13 +136,23 @@ const { default: handler } = await import('../../api/llm/anthropic.js');
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
-function makeReq({ url = '/api/llm/anthropic?agent=agent-1', headers = {}, body = null } = {}) {
+// Requests default to a first-party localhost Origin, the shape a real browser
+// embed sends, so tests that aren't about the origin gate exercise the lane a
+// browser actually takes. Pass `noOrigin: true` for the header-less machine lane.
+function makeReq({
+	url = '/api/llm/anthropic?agent=agent-1',
+	headers = {},
+	body = null,
+	noOrigin = false,
+} = {}) {
 	const base = body ? Readable.from([Buffer.from(JSON.stringify(body))]) : Readable.from([]);
+	const hasOrigin = 'origin' in headers || 'referer' in headers;
 	base.method = 'POST';
 	base.url = url;
 	base.headers = {
 		host: 'app.test',
 		'content-type': 'application/json',
+		...(hasOrigin || noOrigin ? {} : { origin: 'http://localhost:3000' }),
 		...headers,
 	};
 	return base;
@@ -222,6 +242,8 @@ beforeEach(() => {
 	avatarState.avatar = null;
 	rlState.ip = { success: true };
 	rlState.agent = { success: true };
+	rlState.hostKeyGlobal = { success: true };
+	authState.user = null;
 	usageEvents.length = 0;
 	redisStore.clear();
 	redisCalls.length = 0;
@@ -305,9 +327,37 @@ describe('/api/llm/anthropic — origin / referer policy', () => {
 		expect(body.error).toBe('embed_denied_origin');
 	});
 
-	it('allows server-to-server (no Origin header) requests', async () => {
-		const { status } = await invoke({ body: VALID_BODY });
+	// The header's absence used to mean "allowed", which made the allowlist
+	// advisory: any script could strip Origin and spend the host's provider keys
+	// against a public agent id. Anonymous header-less callers are now denied.
+	it('rejects an anonymous request that sends no Origin header', async () => {
+		authState.user = null;
+		const { status, body } = await invoke({ body: VALID_BODY, noOrigin: true });
+		expect(status).toBe(403);
+		expect(body.error).toBe('embed_denied_origin');
+		expect(body.error_description).toMatch(/authenticate/i);
+	});
+
+	it('allows a server-to-server request that authenticates', async () => {
+		authState.user = { id: 'user-1', source: 'bearer' };
+		const { status } = await invoke({
+			body: VALID_BODY,
+			noOrigin: true,
+			headers: { authorization: 'Bearer platform-key' },
+		});
 		expect(status).toBe(200);
+	});
+
+	// An authenticated caller still cannot launder a denied browser origin: the
+	// escape hatch is only for requests that carry no Origin at all.
+	it('does not let a signed-in caller override a denied Origin', async () => {
+		authState.user = { id: 'user-1', source: 'bearer' };
+		const { status, body } = await invoke({
+			body: VALID_BODY,
+			headers: { origin: 'https://attacker.test', authorization: 'Bearer platform-key' },
+		});
+		expect(status).toBe(403);
+		expect(body.error).toBe('embed_denied_origin');
 	});
 
 	it('allows first-party localhost origin without policy entry', async () => {
@@ -424,11 +474,63 @@ describe('/api/llm/anthropic — request body + model', () => {
 		expect(sentBody.model).toBe('claude-sonnet-4-6');
 	});
 
-	it('caller-supplied allowlisted model overrides policy default', async () => {
+	it('honours a paid model the owner configured on the policy', async () => {
 		policyState.policy.brain.model = 'claude-opus-4-6';
-		await invoke({ body: { ...VALID_BODY, model: 'claude-opus-4-7' } });
+		await invoke({ body: { ...VALID_BODY, model: 'claude-opus-4-6' } });
 		const sentBody = JSON.parse(fetchState.calls[0].init.body);
-		expect(sentBody.model).toBe('claude-opus-4-7');
+		expect(sentBody.model).toBe('claude-opus-4-6');
+	});
+});
+
+// ── caller-chosen model vs. the owner's policy ──────────────────────────
+//
+// Which host-billed model an embed runs is the agent owner's decision, taken in
+// the dashboard and stored on the policy. A visitor may switch between free
+// lanes; asking for a pricier host-keyed model returns the configured one.
+// The free lanes need their provider keys present, or the fallback chain
+// degrades past them and the assertion reads the wrong upstream call.
+
+describe('/api/llm/anthropic: paid-model clamp', () => {
+	beforeEach(() => {
+		process.env.OPENROUTER_API_KEY = 'sk-or-test';
+		process.env.GROQ_API_KEY = 'gsk-test';
+	});
+
+	afterEach(() => {
+		delete process.env.OPENROUTER_API_KEY;
+		delete process.env.GROQ_API_KEY;
+	});
+
+	it('caller-supplied free model overrides the policy default', async () => {
+		policyState.policy.brain.model = 'openai/gpt-oss-20b:free';
+		await invoke({ body: { ...VALID_BODY, model: 'llama-3.3-70b-versatile' } });
+		const sentBody = JSON.parse(fetchState.calls[0].init.body);
+		expect(sentBody.model).toBe('llama-3.3-70b-versatile');
+	});
+
+	it('clamps a caller-requested paid model back to the policy model', async () => {
+		policyState.policy.brain.model = 'openai/gpt-oss-20b:free';
+		await invoke({ body: { ...VALID_BODY, model: 'claude-opus-5' } });
+		const sentBody = JSON.parse(fetchState.calls[0].init.body);
+		expect(sentBody.model).toBe('openai/gpt-oss-20b:free');
+	});
+
+	it('clamps a paid model on the free default policy too', async () => {
+		delete policyState.policy.brain.model;
+		await invoke({ body: { ...VALID_BODY, model: 'grok-4.5' } });
+		const sentBody = JSON.parse(fetchState.calls[0].init.body);
+		expect(sentBody.model).toBe('openai/gpt-oss-20b:free');
+	});
+});
+
+// ── platform-wide host-key ceiling ──────────────────────────────────────
+
+describe('/api/llm/anthropic: host-key global ceiling', () => {
+	it('returns 429 when the shared host-key budget is saturated', async () => {
+		rlState.hostKeyGlobal = { success: false, reset: Date.now() + 1000 };
+		const { status, body } = await invoke({ body: VALID_BODY });
+		expect(status).toBe(429);
+		expect(body.error_description).toMatch(/capacity/i);
 	});
 });
 

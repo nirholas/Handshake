@@ -1271,7 +1271,10 @@ export const limits = {
 			window: '1 m',
 		}).limit(`${widgetId}:${ip}`),
 	// We-pay LLM proxy: 60 req/min per IP (global floor), and per-agent dynamic bucket.
-	embedLlmIp: (ip) => getLimiter('embed:llm:ip', { limit: 60, window: '1 m' }).limit(ip),
+	// Critical: this lane spends the host's own provider keys, so a Redis outage
+	// must degrade to the Postgres-backed counter rather than to no counter at all.
+	embedLlmIp: (ip) =>
+		getLimiter('embed:llm:ip', { limit: 60, window: '1 m', critical: true }).limit(ip),
 	embedLlmAgent: (agentId, perMin) =>
 		getLimiter('embed:llm:agent', {
 			limit: Math.max(1, Math.min(1000, perMin || 10)),

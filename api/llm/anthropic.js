@@ -16,6 +16,7 @@ import { getRedis as _getSharedRedis } from '../_lib/redis.js';
 import { cors, error, method, wrap, readJson, json, rateLimited } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { getRequestUser } from '../_lib/auth.js';
 import { recordEvent, logger } from '../_lib/usage.js';
 import { costMicroUsd } from '../_lib/llm-pricing.js';
 import {
@@ -230,8 +231,15 @@ function monthKey() {
 	return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
+// An embed request that carries no Origin/Referer is not a browser: every
+// browser attaches Origin to the cross-origin JSON POST this proxy serves, and
+// to same-origin POSTs as well. Treating the header's absence as "allowed"
+// made the allowlist advisory: a script that simply omitted the header spent
+// the platform's provider keys against any of the public agent/avatar ids the
+// sitemap publishes. Unknown origins are denied here; the handler re-admits a
+// header-less caller only when it authenticates as a real platform user.
 function originAllowed(originHeader, policy) {
-	if (!originHeader) return true;
+	if (!originHeader) return false;
 	let host;
 	try {
 		host = new URL(originHeader).hostname.toLowerCase();
@@ -247,6 +255,38 @@ function originAllowed(originHeader, policy) {
 		return host === lower;
 	});
 	return mode === 'allowlist' ? matches : !matches;
+}
+
+// Identity for a caller that sent no Origin. Cookie session or bearer API key
+// both count; an auth backend hiccup resolves to "anonymous", which fails the
+// gate closed rather than reopening it.
+async function machineCaller(req) {
+	try {
+		return (await getRequestUser(req)) || null;
+	} catch {
+		return null;
+	}
+}
+
+// Models billed to the host's own vendor keys. A caller may pick freely among
+// the free lanes, but escalating to one of these is the agent owner's decision
+// (policy.brain.model, set from the dashboard), never the embed visitor's.
+const PAID_HOST_KEY_MODELS = new Set(
+	Object.entries(MODELS)
+		.filter(([, route]) => route.kind === 'anthropic' || route.provider === 'grok')
+		.map(([id]) => id),
+);
+
+const FREE_DEFAULT_MODEL = 'openai/gpt-oss-20b:free';
+
+// Resolve the model to run: the caller's choice when it costs the host nothing
+// or matches what the owner configured, otherwise the policy's own model. The
+// response echoes the model actually used, so a clamped caller sees what it got.
+function resolveRequestedModel(requested, policyModel) {
+	const configured = policyModel || FREE_DEFAULT_MODEL;
+	if (!requested || requested === configured) return configured;
+	if (PAID_HOST_KEY_MODELS.has(requested)) return configured;
+	return requested;
 }
 
 function buildCorsAllowlist(policy) {
@@ -428,16 +468,34 @@ export default wrap(async (req, res) => {
 
 	const originHeader = req.headers.origin || req.headers.referer || '';
 	if (!originAllowed(originHeader, policy)) {
-		return error(
-			res,
-			403,
-			'embed_denied_origin',
-			"origin not permitted by this agent's embed policy",
-		);
+		// A header-less (non-browser) caller is not rejected outright (server-side
+		// integrations and our own smoke checks are legitimate), but it must carry a
+		// platform identity (session cookie or bearer API key) instead of riding an
+		// agent id anyone can read out of the public sitemap.
+		const caller = originHeader ? null : await machineCaller(req);
+		if (!caller) {
+			return error(
+				res,
+				403,
+				'embed_denied_origin',
+				originHeader
+					? "origin not permitted by this agent's embed policy"
+					: 'requests without an Origin must authenticate (session cookie or bearer API key)',
+			);
+		}
 	}
 
 	const ipRl = await limits.embedLlmIp(clientIp(req));
 	if (!ipRl.success) return rateLimited(res, ipRl, 'too many requests from this IP');
+
+	// Platform-wide ceiling on inference billed to the host's provider keys. The
+	// per-IP and per-agent buckets above bound one caller against one agent; this
+	// bounds the whole fleet, so rotating IPs across the thousands of public agent
+	// ids can't collectively drain the vendor budget.
+	const hostKeyRl = await limits.chatHostKeyGlobal();
+	if (!hostKeyRl.success) {
+		return rateLimited(res, hostKeyRl, 'the shared embed brain is at capacity, try again shortly');
+	}
 
 	const perMin = policy.brain?.rate_limit_per_min;
 	if (perMin && perMin > 0) {
@@ -462,8 +520,7 @@ export default wrap(async (req, res) => {
 
 	const rawBody = await readJson(req);
 	const body = parse(bodySchema, rawBody);
-	const requestedModel =
-		body.model || policy.brain?.model || 'openai/gpt-oss-20b:free';
+	const requestedModel = resolveRequestedModel(body.model, policy.brain?.model);
 
 	// Ordered fallback chain for 429 / 5xx from OpenRouter free tier:
 	//   1. Requested model (e.g. llama-3.3-70b:free)

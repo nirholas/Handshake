@@ -9965,7 +9965,7 @@ The full OpenAPI 3.1 spec is available at `/openapi.json`. The key API surface i
 | Method | Route                | Auth               | Description                      |
 | ------ | -------------------- | ------------------ | -------------------------------- |
 | POST   | `/api/chat`          | session \| api-key | Chat with agent (Claude backend) |
-| POST   | `/api/llm/anthropic` | session            | Anthropic API proxy              |
+| POST   | `/api/llm/anthropic` | allowlisted embed origin \| session \| api-key | Anthropic API proxy |
 
 ### Cron Jobs
 

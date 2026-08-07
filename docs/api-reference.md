@@ -609,6 +609,19 @@ POST /api/llm/anthropic?agent=<agent_id>
 
 Older single-provider proxy. Request/response shape matches the [Anthropic Messages API](https://docs.anthropic.com/en/api/messages) exactly. New integrations should use `/api/brain/chat` instead — it supports more providers and emits richer events.
 
+**Who may call it.** This lane is billed to the platform's own provider keys, so it is scoped to the browser embed it exists for:
+
+| Caller | Result |
+|---|---|
+| Browser on `three.ws` or an origin the agent owner allowlisted | Served |
+| Browser on any other origin | `403 embed_denied_origin` |
+| No `Origin`/`Referer` header (scripts, servers) and no credentials | `403 embed_denied_origin`. Omitting the header is not a way around the allowlist |
+| No `Origin`/`Referer` header, with a session cookie or bearer API key | Served, attributed to that account |
+
+**Model selection.** `model` in the body may switch between free lanes freely. A host-billed model (the Claude and Grok families) runs only when the agent owner selected it in the dashboard, which stores it on the embed policy; any other request for one is served with the policy's configured model instead. The response body reports the model that actually ran.
+
+**Ceilings.** Per-IP and per-agent rate limits, the agent's monthly call quota and token budget, and a platform-wide ceiling across every host-key-billed request combined. A saturated platform ceiling returns `429`.
+
 **Request normalisation.** Model generations disagree about which request fields they accept, and sending the wrong one returns a hard `400` from the upstream. Rather than surface that to an embed, the proxy adapts the body to the model it is about to call:
 
 | Field you send | What happens |
