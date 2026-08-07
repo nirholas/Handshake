@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-07",
+			"title": "The event countdown is now on the front page",
+			"summary": "You no longer have to open Play to find out when the next live community event starts. The three.ws home page now carries a slim strip above the hero with the event name, the start time in your own timezone, and a countdown ticking down to the second. The moment the event begins it switches to LIVE on its own, without a refresh, and it takes itself off the page once the event is over. One click on it drops you straight into the $THREE world. If you would rather not see it, dismiss it once and it stays gone, in Play as well as on the home page. Every countdown surface across the site reads the same event schedule, so they can never disagree about when things start.",
+			"tags": [
+				"feature"
+			],
+			"link": "/"
+		},
+		{
+			"date": "2026-08-07",
 			"title": "Meet real people in Play: profiles, follows, and DMs in-world",
 			"summary": "Players in Play (and Walk) worlds now carry their real three.ws identity. Signed-in players get a verified @handle on their nameplate, and clicking anyone opens their actual profile card right in the world: bio, followers, their latest 3D creations, and a link to their full profile page. You can follow them, send a friend request, or, if you are already friends, jump straight into a private message thread without leaving the world. The handle is verified server-side, so nobody can pretend to be someone they are not. Signing in also makes the world lobby greet you as your account, with your display name prefilled.",
 			"tags": [
@@ -22,7 +31,7 @@
 		{
 			"date": "2026-08-07",
 			"title": "Play now counts down to the next community event",
-			"summary": "The Play lobby shows a live banner for the upcoming $THREE Community Day: the event name, when it starts in your own timezone, and a ticking countdown. Once you are inside a world, a small dismissible reminder pill keeps the countdown in view, and when the event goes live both switch to a LIVE marker with a one-click jump into the $THREE world. After the event ends everything quietly disappears on its own.",
+			"summary": "The Play lobby shows a live banner for the upcoming $THREE First Holders Meetup: the event name, when it starts in your own timezone, and a ticking countdown. Once you are inside a world, a small dismissible reminder pill keeps the countdown in view, and when the event goes live both switch to a LIVE marker with a one-click jump into the $THREE world. After the event ends everything quietly disappears on its own.",
 			"tags": [
 				"feature"
 			],

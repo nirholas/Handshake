@@ -165,6 +165,11 @@ export class AgentCommerce {
 		this.sessionTotal = 0;
 		this._inRange = false;
 		this._manifest = null;
+		this._disposed = false;
+		// One controller covers every fetch this module starts (manifest + the
+		// x402-pay SSE stream) so dispose() can cut them all off at once.
+		this._abort = new AbortController();
+		this._sseReader = null;
 
 		this._injectStyles();
 
@@ -191,7 +196,7 @@ export class AgentCommerce {
 		// Pull the full clip manifest so gestures can reach any animation (the
 		// shared emote set is only the first six). Idempotent + cached.
 		loadManifest();
-		fetch(MANIFEST_URL, { cache: 'force-cache' })
+		fetch(MANIFEST_URL, { cache: 'force-cache', signal: this._abort.signal })
 			.then((r) => (r.ok ? r.json() : []))
 			.then((m) => { this._manifest = Array.isArray(m) ? m : []; })
 			.catch(() => { this._manifest = []; });
@@ -434,6 +439,7 @@ export class AgentCommerce {
 				// tool. /api/x402-pay handles the Solana USDC payment, then dispatches
 				// the call and returns ORACLE's catalog alongside the settlement.
 				body: JSON.stringify({ tool: PAID_TOOL, args: {} }),
+				signal: this._abort.signal,
 			});
 			if (!res.ok || !res.body) {
 				const text = await res.text().catch(() => '');
@@ -468,6 +474,7 @@ export class AgentCommerce {
 				// 'dispatched' carries only timing — no UI beat needed.
 			}
 
+			if (this._disposed) return;
 			if (!intel || !settled) throw new Error('incomplete response from payment service');
 
 			// The settlement is on-chain truth; payer/payee/amount live on the result's
@@ -489,6 +496,7 @@ export class AgentCommerce {
 			// Auto-dismiss the panel after the receipt has been read.
 			this._scheduleHide(9000);
 		} catch (err) {
+			if (this._disposed) return; // torn down mid-round — nothing left to render
 			// `active` already points at the stage that failed.
 			this.seller.say(LINES.seller.error);
 			this.buyer.say(LINES.buyer.error);
@@ -567,37 +575,62 @@ export class AgentCommerce {
 		this.panel.appendChild(msg);
 	}
 
-	// SSE event reader — same framing /api/x402-pay speaks.
+	// SSE event reader — same framing /api/x402-pay speaks. The reader handle is
+	// kept on the instance so dispose() can cancel a stream still in flight.
 	async *_sse(res) {
 		const reader = res.body.getReader();
+		this._sseReader = reader;
 		const dec = new TextDecoder();
 		let buf = '';
-		while (true) {
-			const { value, done } = await reader.read();
-			if (done) break;
-			buf += dec.decode(value, { stream: true });
-			const chunks = buf.split('\n\n');
-			buf = chunks.pop();
-			for (const chunk of chunks) {
-				if (!chunk.trim()) continue;
-				let event = 'message', data = {};
-				for (const line of chunk.split('\n')) {
-					if (line.startsWith('event:')) event = line.slice(6).trim();
-					if (line.startsWith('data:')) { try { data = JSON.parse(line.slice(5).trim()); } catch { /* ignore */ } }
+		try {
+			while (true) {
+				const { value, done } = await reader.read();
+				if (done) break;
+				buf += dec.decode(value, { stream: true });
+				const chunks = buf.split('\n\n');
+				buf = chunks.pop();
+				for (const chunk of chunks) {
+					if (!chunk.trim()) continue;
+					let event = 'message', data = {};
+					for (const line of chunk.split('\n')) {
+						if (line.startsWith('event:')) event = line.slice(6).trim();
+						if (line.startsWith('data:')) { try { data = JSON.parse(line.slice(5).trim()); } catch { /* ignore */ } }
+					}
+					yield { event, data };
 				}
-				yield { event, data };
 			}
+		} finally {
+			this._sseReader = null;
 		}
 	}
 
 	dispose() {
+		this._disposed = true;
 		clearTimeout(this._introTimer);
 		clearTimeout(this._hideTimer);
+		// Kill anything still on the wire: the manifest fetch and a mid-round
+		// x402-pay SSE stream both hang off the shared controller.
+		this._abort.abort();
+		this._sseReader?.cancel().catch(() => {});
+		this._sseReader = null;
 		this.seller.dispose();
 		this.buyer.dispose();
 		this.jumbotron?.dispose(); this.jumbotron = null;
-		if (this.marker) { this.scene.remove(this.marker); this.marker = null; }
+		if (this.marker) {
+			this.scene.remove(this.marker);
+			// Ground ring: its own RingGeometry + material.
+			this._ring.geometry.dispose();
+			this._ring.material.dispose();
+			this._ring = null;
+			// Sign: PlaneGeometry, a MeshBasicMaterial, and its CanvasTexture map.
+			this.sign.geometry.dispose();
+			this.sign.material.map?.dispose();
+			this.sign.material.dispose();
+			this.sign = null;
+			this.marker = null;
+		}
 		this.prompt?.remove();
 		this.panel?.remove();
+		document.getElementById('ac-styles')?.remove();
 	}
 }

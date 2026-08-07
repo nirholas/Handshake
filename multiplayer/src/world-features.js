@@ -151,6 +151,32 @@ export function nearestStage(x, z) { return nearestNode(x, z, [PLAZA_STAGE], STA
 export function stageInRange(x, z) { return nodeInRange(x, z, [PLAZA_STAGE], STAGE_ATTEND_REACH); }
 export function stageMarqueeInRange(x, z) { return nodeInRange(x, z, [PLAZA_STAGE], STAGE_MARQUEE_REACH); }
 
+// The War Portal — the Coin Wars door standing in every coin world's plaza
+// (F18). Walking up to it shows this community's league standing, the last
+// battles fought, and any war running right now; interacting with it queues the
+// community for a battle and hands the player through to the arena at /play/war.
+//
+// Sited in the north-west plaza so the three plaza landmarks form a triangle a
+// player can see across rather than a cluster: the wheel at (0,22) is ~21 m
+// away, the stage at (18,26) ~38 m, the west firepit (-22,20) ~10 m, the west
+// pond (-28,16) ~16 m. Comfortably inside the 60 m world disc and well clear of
+// the northern wilds (0,42,r10), so the crowd reading the board is in safe town.
+export const WAR_PORTAL = { id: 'war-portal', x: -20, z: 30, r: 3 };
+
+// How close a player must stand to use the portal (the "E — Enter the war"
+// prompt). Matches the other landmark reaches so every plaza interaction has the
+// same feel underfoot.
+export const WAR_PORTAL_REACH = 3.5;
+
+// How far away the board is still legible. Crossing THIS ring is what wakes the
+// portal's league poll; outside it the portal makes no network calls at all, so
+// a world nobody is standing in costs nothing to keep a war portal in.
+export const WAR_PORTAL_BOARD_REACH = 24;
+
+export function nearestWarPortal(x, z) { return nearestNode(x, z, [WAR_PORTAL], WAR_PORTAL_REACH); }
+export function warPortalInRange(x, z) { return nodeInRange(x, z, [WAR_PORTAL], WAR_PORTAL_REACH); }
+export function warPortalBoardInRange(x, z) { return nodeInRange(x, z, [WAR_PORTAL], WAR_PORTAL_BOARD_REACH); }
+
 // Fishing-rod pickups — a spare rod waiting on the bank for anyone without one
 // (or anyone who wants a backup to store). Every player already starts with a
 // rod in the hotbar and it's never lost on death, so these exist for

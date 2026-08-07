@@ -45,8 +45,8 @@ const HDRI_ORIGIN = new URL(DEFAULT_ASSET_BASE).origin;
 let _hdriPromise = null;
 function getHdriTexture() {
 	if (!_hdriPromise) {
-		_hdriPromise = import('three/addons/loaders/RGBELoader.js').then(({ RGBELoader }) =>
-			new RGBELoader().loadAsync(`${HDRI_ORIGIN}/hdri/studio.hdr`),
+		_hdriPromise = import('three/addons/loaders/HDRLoader.js').then(({ HDRLoader }) =>
+			new HDRLoader().loadAsync(`${HDRI_ORIGIN}/hdri/studio.hdr`),
 		);
 	}
 	return _hdriPromise;

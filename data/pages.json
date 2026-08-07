@@ -2104,7 +2104,7 @@
 				{
 					"path": "/event",
 					"title": "Live event",
-					"description": "The live three.ws community meetup: when it starts, what is on the agenda, who is in the world right now, and the event leaderboard.",
+					"description": "The live three.ws community meetup: a ticking countdown off the same config /play reads, the run of show in your own timezone, an add-to-calendar file, who is in the world right now, and the one door in.",
 					"added": "2026-08-07",
 					"priority": 0.6,
 					"changefreq": "weekly"

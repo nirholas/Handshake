@@ -24,6 +24,9 @@ import { verifyPlayPass } from '../play-pass.js';
 import { installUnknownMessageGuard } from '../room-compat.js';
 import { cleanAvatarUrl } from '../avatar-url.js';
 import { reportBattle } from '../war-report.js';
+import { verifyWarTicket } from '../war-ticket.js';
+import { publishWarLive, clearWarLive, HEARTBEAT_MS } from '../war-live.js';
+import { publishFeedEvent } from '../feed.js';
 
 const PLAY_GATE_MINT = (process.env.PLAY_GATE_MINT || process.env.THREE_MINT || '').trim();
 const PLAY_GATE_MIN = Number(process.env.PLAY_GATE_MIN) > 0 ? Number(process.env.PLAY_GATE_MIN) : 1;
@@ -91,13 +94,25 @@ export class ClashRoom extends Room {
 		// Unknown message types are ignored, never a session kill (room-compat.js).
 		installUnknownMessageGuard(this, 'clash');
 
-		// The two communities are fixed at creation from the matchKey's options. The
-		// engine owns the authoritative match; the schema mirrors it for clients.
-		const a = { mint: clean(options?.aMint, 64), name: clean(options?.aName, 48), symbol: clean(options?.aSymbol, 16), image: cleanAvatarUrl(options?.aImage) };
-		const b = { mint: clean(options?.bMint, 64), name: clean(options?.bName, 48), symbol: clean(options?.bSymbol, 16), image: cleanAvatarUrl(options?.bImage) };
-		this.network = clean(options?.network, 12) || 'mainnet';
-		this.matchKey = clean(options?.matchKey, 160);
+		// The two communities come from the SIGNED war ticket, never from the client.
+		// filterBy(['matchKey']) means whoever joins a key first also creates the
+		// room, so trusting client-supplied faction identities here would let one
+		// fighter declare any opponent they liked and post a league result against a
+		// community that never turned up. The API's matchmaker pairs the two
+		// communities and seals them into the ticket (api/_lib/war-ticket.js); a
+		// missing or forged one refuses room creation outright.
+		const ticket = verifyWarTicket(options?.warTicket);
+		if (!ticket) throw new Error('war_ticket_required');
+		if (ticket.matchKey !== clean(options?.matchKey, 160)) throw new Error('war_ticket_mismatch');
+		const a = { mint: ticket.a.mint, name: clean(ticket.a.name, 48), symbol: clean(ticket.a.symbol, 16), image: cleanAvatarUrl(ticket.a.image) };
+		const b = { mint: ticket.b.mint, name: clean(ticket.b.name, 48), symbol: clean(ticket.b.symbol, 16), image: cleanAvatarUrl(ticket.b.image) };
+		this.network = ticket.network || 'mainnet';
+		this.matchKey = ticket.matchKey;
 		this._reported = false;
+		// Spectator state: the rolling knockdown feed and the heartbeat throttle for
+		// the Redis snapshot the /play war portal polls (war-live.js).
+		this._killFeed = [];
+		this._lastLiveAt = 0;
 
 		this.match = new ClashMatch({ factions: [a, b], config: {} });
 		const s = this.state;
@@ -144,6 +159,9 @@ export class ClashRoom extends Room {
 
 		// Arm the countdown the moment both communities have fielded a fighter.
 		if (this.match.beginCountdown(Date.now())) this._mirror();
+		// A new fighter changes the roster the portal board shows, so refresh the
+		// spectator snapshot immediately rather than waiting out the heartbeat.
+		this._publishLive(true);
 	}
 
 	onLeave(client) {
@@ -222,12 +240,21 @@ export class ClashRoom extends Room {
 			target.dead = true;
 			target.deaths = this.match.fighters.get(hit.id)?.deaths ?? target.deaths;
 			attacker.kills = this.match.fighters.get(client.sessionId)?.kills ?? attacker.kills;
+			// Spectators watching from either world read this line, so it carries
+			// display names and factions, never session ids.
+			this._killFeed.push({
+				ts: now,
+				killer: attacker.name, killerFaction: attacker.faction,
+				victim: target.name, victimFaction: target.faction,
+			});
+			if (this._killFeed.length > 24) this._killFeed.splice(0, this._killFeed.length - 24);
 		}
 		this.broadcast('clash:swing', {
 			id: client.sessionId, hit: true, target: hit.id,
 			dealt: res.dealt, killed: res.killed,
 		});
 		this._mirror();
+		if (res.killed) this._publishLive(true);
 		this._finishIfEnded();
 	}
 
@@ -252,7 +279,48 @@ export class ClashRoom extends Room {
 		}
 		if (ev.started || ev.ended || ev.respawns.length) this._mirror();
 		else this._mirror(true); // cheap clock-only mirror
+		this._publishLive(ev.started || ev.ended);
 		this._finishIfEnded();
+	}
+
+	// --- spectating ---------------------------------------------------------
+
+	// Publish this battle to the live registry the /play war portal polls. Rate-
+	// limited to one write per HEARTBEAT_MS unless `force` (a join, a knockdown, a
+	// phase change) makes the snapshot materially newer than the clock alone.
+	_publishLive(force = false) {
+		const now = Date.now();
+		if (!force && now - this._lastLiveAt < HEARTBEAT_MS) return;
+		this._lastLiveAt = now;
+		publishWarLive(this._liveSnapshot(now));
+	}
+
+	// The spectator's view of this battle: text and numbers only, everything the
+	// portal board renders without joining the room. Deliberately small — it is
+	// written every couple of seconds for the whole length of a war.
+	_liveSnapshot(now = Date.now()) {
+		const s = this.state;
+		let aFighters = 0;
+		let bFighters = 0;
+		for (const [, f] of s.fighters) {
+			if (f.faction === s.aMint) aFighters++;
+			else if (f.faction === s.bMint) bFighters++;
+		}
+		return {
+			matchKey: this.matchKey,
+			network: this.network,
+			roomId: this.roomId,
+			phase: s.phase,
+			scoreCap: s.scoreCap,
+			startedAt: s.startedAt,
+			endsAt: s.endsAt,
+			countdownEndsAt: s.countdownEndsAt,
+			winner: s.winner || '',
+			a: { mint: s.aMint, name: s.aName, symbol: s.aSymbol, image: s.aImage, score: s.aScore, fighters: aFighters },
+			b: { mint: s.bMint, name: s.bName, symbol: s.bSymbol, image: s.bImage, score: s.bScore, fighters: bFighters },
+			kills: this._killFeed,
+			updatedAt: now,
+		};
 	}
 
 	// Mirror the authoritative engine state onto the wire schema. `clockOnly` skips
@@ -288,8 +356,32 @@ export class ClashRoom extends Room {
 		});
 		// Fire-and-forget; reportBattle never throws.
 		reportBattle({ ...result, matchKey: this.matchKey, network: this.network });
+		// One last snapshot so a spectator's poll lands on the finished scoreline
+		// (with the winner set) instead of the last live tick before the end.
+		this._publishLive(true);
+		// Echo the outcome into the site-wide activity feed, which is what carries
+		// the result back into BOTH communities' worlds — the portal board reads the
+		// ledger, the ticker reads this. Best-effort like every feed write.
+		const winnerName = result.winner === this.state.aMint ? this.state.aName
+			: result.winner === this.state.bMint ? this.state.bName : 'Draw';
+		publishFeedEvent({
+			type: 'war-result',
+			actor: winnerName,
+			winner: result.winner || 'draw',
+			reason: result.reason || 'score_cap',
+			a: { mint: this.state.aMint, name: this.state.aName, symbol: this.state.aSymbol, score: this.state.aScore },
+			b: { mint: this.state.bMint, name: this.state.bName, symbol: this.state.bSymbol, score: this.state.bScore },
+			matchKey: this.matchKey,
+			network: this.network,
+		}, this.matchKey);
 		// Lock further joins; the room auto-disposes once empty.
 		try { this.lock(); } catch { /* already locked */ }
+	}
+
+	// The arena has emptied out. Take the battle off the spectator board now
+	// rather than leaving it advertised until the snapshot TTL expires.
+	onDispose() {
+		clearWarLive(this.matchKey);
 	}
 
 	// --- helpers ------------------------------------------------------------

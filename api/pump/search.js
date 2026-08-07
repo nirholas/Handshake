@@ -10,7 +10,7 @@
 // versioned /api/v1/pump/search endpoint so neither route forks the upstream
 // logic. This handler adds the palette-specific process-local response cache.
 //
-// Response: { data: [ { mint, symbol, name, logo, price_usd, rank } ] }
+// Response: { data: [ { mint, symbol, name, logo, price_usd, usd_market_cap, rank } ] }
 
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';

@@ -58,6 +58,10 @@ export const IGNORE_CONSOLE = [
 	/THREE\.BufferGeometry\.computeBoundingSphere/i,
 	/WebGL.*swiftshader/i,
 	/Automatic fallback to software WebGL/i,
+	// Headless Chromium's software GL driver narrating its own perf on a CI box.
+	// Emitted by the driver, never by our code, and absent on real GPUs.
+	/GL Driver Message/i,
+	/GPU stall due to ReadPixels/i,
 	// Content-Security-Policy noise from third-party embeds
 	/content security policy/i,
 	/Refused to (load|connect|execute|frame)/i,

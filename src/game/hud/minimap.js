@@ -14,6 +14,8 @@ export class Minimap {
 		this.viewer = { x: 0, z: 0, yaw: 0 };
 		this.blips = [];
 		this.boundary = 58;        // world radius ring (0 = none)
+		this._drawn = null;        // last-rendered frame state (dirty check in tick)
+		this._blipsDirty = false;
 		this._build();
 	}
 
@@ -44,7 +46,7 @@ export class Minimap {
 	setBoundary(r) { this.boundary = Number(r) || 0; }
 	setViewer(v) { if (v) this.viewer = { x: v.x || 0, z: v.z || 0, yaw: v.yaw || 0 }; }
 	// Blips: [{ x, z, kind:'peer'|'poi'|'waypoint'|'party'|'prop', label?, color? }]
-	setBlips(list) { this.blips = Array.isArray(list) ? list : []; }
+	setBlips(list) { this.blips = Array.isArray(list) ? list : []; this._blipsDirty = true; }
 
 	// Inverse of _project: a point on the (rotating) map back to world space.
 	// sx/sy are CSS px relative to the map's top-left, which is what a click handler
@@ -76,6 +78,19 @@ export class Minimap {
 	}
 
 	tick() {
+		// Cheap dirty check: a full canvas repaint every frame is wasted work when
+		// the player is idle and no blip moved. Redraw only when the viewer pose
+		// moved perceptibly, a setter changed the data, or nothing was drawn yet.
+		const v = this.viewer, d = this._drawn;
+		if (
+			d && !this._blipsDirty &&
+			d.range === this.range && d.boundary === this.boundary &&
+			Math.abs(v.x - d.x) < 0.02 && Math.abs(v.z - d.z) < 0.02 &&
+			Math.abs(v.yaw - d.yaw) < 0.002
+		) return;
+		this._drawn = { x: v.x, z: v.z, yaw: v.yaw, range: this.range, boundary: this.boundary };
+		this._blipsDirty = false;
+
 		const ctx = this.ctx;
 		const S = this.size, c = S / 2;
 		const R = c - 3;                 // inner radius (clip mask handles the rim)

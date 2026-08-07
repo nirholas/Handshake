@@ -43,7 +43,7 @@ import {
 	restoreProfile, serializeProfile, profileSnapshot,
 	addItem, hasRoomFor, resolveSlot, grantXp, consumeSlot,
 	countItem, removeItem,
-	dropCarried, reviveProfile, bankTransfer, grantCosmetic,
+	dropCarried, reviveProfile, creditGold, bankTransfer, grantCosmetic,
 	equipCosmetic, ownedCosmeticSet, mergeOwnedFromLedger,
 	HOTBAR_SIZE,
 } from '../economy.js';
@@ -1537,7 +1537,7 @@ export class WalkRoom extends Room {
 	_completeMission(client, profile, mission, dayKey) {
 		recordCompletion(profile.quests, mission, dayKey);
 		const reward = missionReward(mission);
-		if (reward.gold > 0) profile.gold += reward.gold;
+		if (reward.gold > 0) creditGold(profile, reward.gold);
 		if (reward.xp) this._grantXp(client, profile, reward.xp.skill, reward.xp.amount);
 		this._sendInv(client, profile);
 		client.send('questComplete', {
@@ -1559,7 +1559,7 @@ export class WalkRoom extends Room {
 			const memberProfile = this.econ.get(sid);
 			if (!memberProfile) return;
 			recordCompletion(memberProfile.quests, mission, dayKey);
-			if (shares[i] > 0) memberProfile.gold += shares[i];
+			if (shares[i] > 0) creditGold(memberProfile, shares[i]);
 			const memberClient = this.clients.find((c) => c.sessionId === sid);
 			if (memberClient) {
 				try {
@@ -2143,7 +2143,7 @@ export class WalkRoom extends Room {
 		const removed = removeItem(profile, item, want);
 		if (removed <= 0) return;
 		const total = sellPrice(item) * removed;
-		profile.gold += total;
+		creditGold(profile, total);
 		this._sendInv(client, profile);
 		client.send('notice', { kind: 'store', ok: true, text: `Sold ${removed} ${itemLabel(item).toLowerCase()} for ${total} cash.` });
 		this._persistEcon(client.sessionId);

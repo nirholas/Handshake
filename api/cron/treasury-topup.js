@@ -50,7 +50,7 @@ export default wrapCron(async (req, res) => {
 
 	const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 	const { PublicKey } = await import('@solana/web3.js');
-	const { solanaConnection } = await import('../_lib/solana/connection.js');
+	const { solanaConnection, isTransientRpcError } = await import('../_lib/solana/connection.js');
 	const connection = solanaConnection({ url: rpcUrl, network: 'mainnet', commitment: 'confirmed' });
 
 	// Read every engine signer's balance; collect the ones under floor as refill
@@ -356,7 +356,39 @@ export default wrapCron(async (req, res) => {
 		}
 	}
 
-	const result = await sweepTopUps({ connection, targets, network: 'mainnet', dryRun });
+	// The sweep is the only leg that both reads AND moves SOL, so it is the one
+	// that dies when every RPC lane is cooling at once. Letting it throw took the
+	// whole cron down with a 500 (2026-08-07: ~1 in 15 ticks) — and this cron IS
+	// the self-heal for a starved engine, so the outage disabled its own remedy
+	// exactly when the ring needed it. An exhausted lane chain is upstream
+	// weather, not a bug: report it as a skipped sweep the same way wrapCron
+	// reports an unavailable database, and let the next tick (30 min) retry with
+	// the reclaim, fuel, and USDC legs above already applied. A non-RPC failure
+	// is still a real defect and still throws.
+	let result;
+	try {
+		result = await sweepTopUps({ connection, targets, network: 'mainnet', dryRun });
+	} catch (e) {
+		if (!isTransientRpcError(e)) throw e;
+		const reason = e?.message || 'rpc_unavailable';
+		console.warn(`[cron] treasury-topup sweep skipped — solana rpc unavailable: ${reason}`);
+		return json(res, 200, {
+			ok: false,
+			reason: 'rpc_unavailable',
+			detail: reason,
+			dry_run: dryRun,
+			rpc: rpcUrl,
+			targets: targets.length,
+			swept: false,
+			reclaim,
+			agent_reclaim: agentReclaim,
+			fuel,
+			usdc_topup: usdcTopup,
+			master_aliased: masterAliased,
+			read_errors: errors,
+			run_id: runId,
+		});
+	}
 	if (dryRun) {
 		return json(res, 200, {
 			ok: true,

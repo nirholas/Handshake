@@ -29,3 +29,54 @@
 	100% { box-shadow: 0 0 0 8px rgba(255, 206, 110, 0); border-color: var(--cc-edge-soft); }
 }
 .qb-flash { animation: qb-flash-pulse 1.4s ease-out 1; }
+
+/* Live event: the quest line's jobs and the standings they feed. The event tint
+ * is the one warm accent on an otherwise monochrome panel, used only where
+ * "this expires when the event does" is the point. */
+.qb-event-tab { border-color: rgba(255, 206, 110, 0.45); }
+.qb-event-tab:hover { border-color: rgba(255, 206, 110, 0.8); }
+
+.qb-event-row { border-color: rgba(255, 206, 110, 0.35); background: rgba(255, 206, 110, 0.05); }
+.qb-event-badge {
+	display: inline-block; margin-left: 7px; padding: 1px 6px; vertical-align: 1px;
+	font-size: 9px; font-weight: 800; letter-spacing: 0.09em;
+	color: #ffce6e; border: 1px solid rgba(255, 206, 110, 0.55); border-radius: 999px;
+}
+
+.qb-lb-head { padding: 2px 2px 10px; border-bottom: 1px solid var(--cc-edge-soft); margin-bottom: 8px; }
+.qb-lb-title { font-size: 14px; font-weight: 800; color: var(--cc-text); }
+.qb-lb-note { font-size: 11px; color: var(--cc-dim); line-height: 1.5; margin-top: 4px; }
+
+.qb-lb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.qb-lb-row {
+	display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+	background: rgba(255, 255, 255, 0.03); border: 1px solid var(--cc-edge-soft);
+	border-radius: var(--cc-radius-sm); transition: border-color 0.14s ease, background 0.14s ease;
+}
+.qb-lb-row.is-you { border-color: rgba(255, 206, 110, 0.55); background: rgba(255, 206, 110, 0.07); }
+.qb-lb-rank {
+	flex: none; min-width: 34px; font-size: 12px; font-weight: 800;
+	color: var(--cc-dim); font-variant-numeric: tabular-nums;
+}
+.qb-lb-row.is-you .qb-lb-rank { color: #ffce6e; }
+.qb-lb-name { flex: 1; min-width: 0; font-size: 13px; color: var(--cc-text); overflow-wrap: anywhere; }
+.qb-lb-score { flex: none; font-size: 11px; color: var(--cc-dim); font-variant-numeric: tabular-nums; }
+
+.qb-lb-you-wrap { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--cc-edge-soft); }
+.qb-lb-prize { margin-top: 12px; font-size: 10px; color: var(--cc-dim); line-height: 1.5; opacity: 0.85; }
+
+/* Skeleton rows while the first read is in flight — the shape of the answer,
+ * so the panel doesn't jump when the real rows land. */
+@keyframes qb-lb-shimmer {
+	0%, 100% { opacity: 0.35; }
+	50% { opacity: 0.7; }
+}
+.qb-lb-ghost { height: 35px; animation: qb-lb-shimmer 1.3s ease-in-out infinite; }
+.qb-lb-skeleton .qb-lb-ghost:nth-child(2) { animation-delay: 0.1s; }
+.qb-lb-skeleton .qb-lb-ghost:nth-child(3) { animation-delay: 0.2s; }
+.qb-lb-skeleton .qb-lb-ghost:nth-child(4) { animation-delay: 0.3s; }
+.qb-lb-skeleton .qb-lb-ghost:nth-child(5) { animation-delay: 0.4s; }
+@media (prefers-reduced-motion: reduce) {
+	.qb-lb-ghost { animation: none; opacity: 0.45; }
+	.qb-flash { animation: none; }
+}

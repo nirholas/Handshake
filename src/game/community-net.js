@@ -358,6 +358,11 @@ export class CommunityNet {
 			// here (peers never see it). Drives the HUD, inventory, hotbar and toasts.
 			this.room.onMessage('profile', (msg) => this._emit('profile', msg || {}));
 			this.room.onMessage('inv', (msg) => this._emit('inv', msg || {}));
+			// Event souvenir: sent once, at the moment the server grants a live
+			// event's commemorative wearable to this account. Never repeated on a
+			// rejoin (the grant is idempotent), so the client can treat it as a
+			// one-time "you just earned this" moment rather than a state sync.
+			this.room.onMessage('souvenir', (msg) => this._emit('souvenir', msg || {}));
 			this.room.onMessage('xpgain', (msg) => this._emit('xpgain', msg || {}));
 			this.room.onMessage('levelup', (msg) => this._emit('levelup', msg || {}));
 			this.room.onMessage('notice', (msg) => this._emit('notice', msg || {}));

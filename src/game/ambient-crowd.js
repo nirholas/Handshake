@@ -12,18 +12,19 @@
 // rest of the scene is under active development.
 
 import { Group, Vector3 } from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
-import { getMeshoptDecoder } from '../viewer/internal.js';
-import { Box3, Mesh, CapsuleGeometry, SphereGeometry, MeshStandardMaterial } from 'three';
 import { AnimationManager } from '../animation-manager.js';
 import { detectProfile } from '../club-perf.js';
+// The crowd wears the same models the players do, so it loads them through the
+// same shared template cache instead of keeping a second loader and a second
+// copy of every model. That also buys it the Draco + VRM decoders and the
+// refcounted eviction that only lived on the player path before.
+import {
+	buildAvatar as buildRigAvatar, releaseAvatar, hasModelTemplate,
+	loadManifest as loadRigManifest, getAllEmoteDefs,
+	AVATAR_DEFAULT, CLIP_IDLE, CLIP_WALK,
+} from './avatar-rig.js';
 import { loadCitizenPool, isCitizen, openCitizenProfile } from './npc/citizens.js';
 
-const AVATAR_DEFAULT = '/avatars/default.glb';
-const MANIFEST_URL = '/animations/manifest.json';
-const CLIP_IDLE = 'idle';
-const CLIP_WALK = 'av-walk-feminine';
 const WORLD_RADIUS = 54;       // a touch inside the plaza edge
 const AMBIENT_SPEED = 1.7;     // gentle stroll, slower than the player
 
@@ -69,32 +70,21 @@ const BUDGET = crowdBudget();
 const NAMES = ['satoshi', 'anon', 'gm_ser', 'degenape', 'moonboy', 'pepe', 'wagmi', 'hodlqueen', 'vibes', 'chad', 'frfr', 'fomo', 'ngmi', 'based_dev', 'gigachad', '0xshill', 'florp'];
 const LINES = ['gm ☀️', 'wen moon', 'lfg 🚀', 'wagmi', 'probably nothing', 'few understand', 'based', 'diamond hands 💎', 'ser…', 'this is the way', 'bullish af', 'vibes immaculate', 'we so back', 'iykyk', 'up only 📈'];
 
-const _gltf = new GLTFLoader();
-// three.ws GLBs may carry EXT_meshopt_compression — decoder required before load
-const _meshoptReady = getMeshoptDecoder().then((d) => _gltf.setMeshoptDecoder(d));
-let _defs = null;     // [idle, walk] animation defs
 let _emotes = null;   // a handful of emote defs
 let _avatars = null;  // pool of affordable gallery picks ([] once the fetch settles)
 
-// One download per distinct model, shared by every wanderer that wears it.
-// SkeletonUtils.clone() deep-copies a skinned hierarchy (bones included) while
-// sharing geometry and materials with the template, so the second wanderer in a
-// given model costs no network and almost no memory. Cloned meshes share the
-// template's buffers, so a template must outlive every clone of it. Disposal
-// happens in AmbientCrowd.clear(), once the whole crowd is gone.
-const _templates = new Map(); // url → Promise<Group>
-let _spentBytes = 0;          // gallery bytes downloaded this visit
+// Models the crowd has actually worn this visit, and the bytes it charged for
+// them. The models themselves live in avatar-rig's shared template cache (one
+// download per URL across players AND wanderers); this set only exists so the
+// crowd can keep drawing from what it already paid for once its own download
+// budget is spent.
+const _worn = new Set();
+let _spentBytes = 0;
 
 async function loadManifest() {
-	if (_defs) return;
-	let manifest = [];
-	try {
-		const r = await fetch(MANIFEST_URL, { cache: 'force-cache' });
-		if (r.ok) manifest = await r.json();
-	} catch { /* locomotion-only fallback below */ }
-	const by = (n) => manifest.find((d) => d.name === n);
-	_defs = [by(CLIP_IDLE), by(CLIP_WALK)].filter(Boolean);
-	_emotes = manifest.filter((d) => d.name !== CLIP_IDLE && d.name !== CLIP_WALK).slice(0, 6);
+	if (_emotes) return;
+	await loadRigManifest();
+	_emotes = getAllEmoteDefs().slice(0, 6);
 }
 
 // Pull a varied set of real avatars from the public gallery so the crowd reads as
@@ -111,72 +101,25 @@ async function loadAvatarPool() {
 	_avatars = records.filter((p) => p.url && p.bytes > 0 && p.bytes <= BUDGET.maxModelBytes);
 }
 
-// Fetch a model once and hand every later wanderer a clone of it. `bytes` is the
-// published size charged against this visit's download budget; a cache hit costs
-// nothing and is never charged twice.
-function loadTemplate(url, bytes) {
-	let pending = _templates.get(url);
-	if (!pending) {
-		_spentBytes += bytes;
-		pending = _meshoptReady.then(() => _gltf.loadAsync(url)).then((gltf) => gltf.scene);
-		_templates.set(url, pending);
-		// Evict a failed load so one bad model doesn't poison the URL for the rest
-		// of the visit, and refund its budget: nothing was actually held.
-		pending.catch(() => {
-			if (_templates.get(url) === pending) _templates.delete(url);
-			_spentBytes = Math.max(0, _spentBytes - bytes);
-		});
-	}
-	return pending;
-}
-
-// Load a gallery avatar (or the default) into a rig + animation manager. Falls
-// back to a simple stand-in so a wanderer is never invisible.
+// Dress a wanderer through the shared avatar pipeline: one download and one
+// parse per distinct model across the whole scene, Draco/meshopt/VRM decoders
+// wired, a capsule stand-in of last resort, and refcounted templates that free
+// themselves once nothing wears them. Only locomotion clips are loaded here; a
+// wanderer's occasional emote fetches its clip on demand.
+//
+// `bytes` is the model's published size, charged against this visit's download
+// budget the first time the crowd asks for a model nothing else already holds.
 async function buildAvatar(rig, anim, pick) {
 	const url = pick?.url || AVATAR_DEFAULT;
-	try {
-		const template = await loadTemplate(url, pick?.bytes || 0);
-		const model = cloneSkinnedScene(template);
-		model.traverse((n) => { if (n.isMesh) { n.castShadow = BUDGET.shadows; n.receiveShadow = false; } });
-		const box = new Box3().setFromObject(model);
-		model.position.y -= box.min.y;
-		rig.add(model);
-		anim.attach(model);
-		if (_defs?.length) { anim.setAnimationDefs(_defs); await anim.loadAll(); await anim.crossfadeTo(CLIP_IDLE, 0); }
-		return Math.max(0.5, box.max.y - box.min.y);
-	} catch {
-		// A gallery model that fails to load shouldn't strand the wanderer on a
-		// capsule — fall back to the bundled default once before the stand-in.
-		if (url !== AVATAR_DEFAULT) return buildAvatar(rig, anim, null);
-		const body = new Mesh(new CapsuleGeometry(0.32, 0.7, 4, 10), new MeshStandardMaterial({ color: 0x9aa3ad }));
-		body.position.y = 0.85; body.castShadow = BUDGET.shadows;
-		const head = new Mesh(new SphereGeometry(0.28, 14, 10), new MeshStandardMaterial({ color: 0xc9cdd2 }));
-		head.position.y = 1.55; head.castShadow = BUDGET.shadows;
-		rig.add(body, head);
-		return 1.7;
-	}
+	if (!hasModelTemplate(url)) _spentBytes += pick?.bytes || 0;
+	const { height } = await buildRigAvatar(rig, url, anim, { clips: 'locomotion' });
+	_worn.add(url);
+	// Shadow casting is the crowd's own budget line: on the low tier five
+	// shadow-casting skinned meshes cost more than a decorative crowd is worth.
+	if (!BUDGET.shadows) rig.traverse((n) => { if (n.isMesh) n.castShadow = false; });
+	return height;
 }
 
-// Release every model this visit downloaded. Safe only once no wanderer is left
-// standing: clones share their template's geometry and materials, so freeing a
-// template while a clone still renders would corrupt it.
-function disposeTemplates() {
-	for (const pending of _templates.values()) {
-		pending.then((scene) => {
-			scene.traverse((n) => {
-				if (!n.isMesh) return;
-				n.geometry?.dispose?.();
-				for (const mat of Array.isArray(n.material) ? n.material : [n.material]) {
-					if (!mat) continue;
-					for (const value of Object.values(mat)) value?.isTexture && value.dispose();
-					mat.dispose?.();
-				}
-			});
-		}).catch(() => { /* never loaded, nothing to free */ });
-	}
-	_templates.clear();
-	_spentBytes = 0;
-}
 
 async function playEmote(anim, motion) {
 	if (!_emotes?.length) return;
@@ -301,6 +244,10 @@ class Wanderer {
 	dispose() {
 		this._disposed = true;
 		this.scene.remove(this.rig);
+		// Dereference the shared model template and free this clone's own
+		// materials (and any capsule stand-in) before dropping the rig; a bare
+		// rig.clear() drops the JS reference and leaks the GPU buffers.
+		releaseAvatar(this.rig);
 		this.rig.clear();
 		// Drop the mixer + its bound clip actions. The clips themselves are shared
 		// module-wide and stay cached; only this rig's bindings go.
@@ -338,7 +285,7 @@ class AmbientCrowd {
 	_takeAvatar() {
 		if (!_avatars?.length) return null;
 		if (_spentBytes >= BUDGET.sessionBytes) {
-			const resident = [..._templates.keys()];
+			const resident = [..._worn];
 			if (!resident.length) return null;
 			const url = resident[(Math.random() * resident.length) | 0];
 			// Keep the identity riding the resident model: same record, zero new
@@ -389,10 +336,13 @@ class AmbientCrowd {
 		for (const w of this.list) w.dispose();
 		this.list = [];
 		this._avatarBag = [];
-		// Every clone is gone, so the shared templates can go too. Leaving a world
-		// used to keep every model the crowd had ever worn resident for the rest of
-		// the page's life; on a phone that alone could outlive the tab.
-		disposeTemplates();
+		// Each dispose() above released its template reference; anything no player
+		// still wears is now free to be evicted by the shared cache's memory
+		// budget. Leaving a world used to keep every model the crowd had ever worn
+		// resident for the rest of the page's life; on a phone that alone could
+		// outlive the tab.
+		_worn.clear();
+		_spentBytes = 0;
 	}
 }
 

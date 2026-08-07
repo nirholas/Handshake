@@ -104,7 +104,10 @@
 	flex: 1; padding: 6px 0; font-size: 11px; font-weight: 700; background: transparent; color: var(--cc-dim);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm); cursor: pointer; transition: color 0.14s ease, border-color 0.14s ease;
 }
-.ec-bank-preset:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); }
+.ec-bank-preset:hover:not(:disabled) { color: var(--cc-text); border-color: var(--cc-edge-hi); }
+.ec-bank-preset:active:not(:disabled) { transform: scale(0.97); }
+.ec-bank-preset:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
+.ec-bank-preset:disabled { opacity: 0.35; cursor: not-allowed; }
 .ec-bank-actions { display: flex; gap: 8px; }
 .ec-bank-actions .ec-row-btn { flex: 1; }
 .ec-bank-actions .ec-row-btn.ec-secondary { background: transparent; color: var(--cc-text); border: 1px solid var(--cc-edge); }
@@ -113,6 +116,50 @@
 .ec-status[data-kind="err"] { color: #ff8a8a; }
 .ec-status[data-kind="ok"] { color: #9effa6; }
 
+/* Waiting for the first server snapshot. The placeholder rows are laid out like
+   real ones so the panel does not resize or jump when the catalog arrives. */
+.ec-skel { display: flex; flex-direction: column; gap: 8px; }
+.ec-skel-row {
+	display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+	background: rgba(255, 255, 255, 0.03); border: 1px solid var(--cc-edge-soft); border-radius: var(--cc-radius-sm);
+}
+.ec-skel-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.ec-skel-glyph, .ec-skel-line, .ec-skel-btn {
+	background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.12) 37%, rgba(255, 255, 255, 0.05) 63%);
+	background-size: 400% 100%;
+	animation: ec-shimmer 1.4s ease infinite;
+	border-radius: 3px;
+}
+.ec-skel-glyph { width: 24px; height: 18px; flex: none; }
+.ec-skel-line { height: 9px; width: 62%; }
+.ec-skel-line-sm { height: 8px; width: 34%; }
+.ec-skel-btn { width: 52px; height: 26px; flex: none; border-radius: var(--cc-radius-sm); }
+
+@keyframes ec-shimmer {
+	0% { background-position: 100% 50%; }
+	100% { background-position: 0 50%; }
+}
+
+/* A balance we have not read yet reads as unknown, never as a confident zero. */
+.ec-pending-val { color: var(--cc-dim); opacity: 0.7; letter-spacing: 0.08em; }
+
+/* The world stopped answering: say so, and give the one button that retries. */
+.ec-error { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ec-error-glyph { font-size: 26px; line-height: 1; opacity: 0.75; }
+.ec-error-title { font-size: 13px; font-weight: 700; color: var(--cc-text); }
+.ec-error-retry { margin-top: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+	.ec-overlay, .ec-card { transition: none; }
+	.ec-skel-glyph, .ec-skel-line, .ec-skel-btn { animation: none; }
+}
+
 @media (max-width: 480px) {
 	.ec-card { width: 100%; }
+	/* Thumb-sized targets on a phone: the WCAG 2.5.5 bar is 44px, and these are
+	   the controls a player taps mid-session with one hand. */
+	.ec-x { width: 40px; height: 40px; }
+	.ec-tab { padding: 12px 0; }
+	.ec-row-btn { padding: 11px 14px; }
+	.ec-bank-preset { padding: 11px 0; }
 }

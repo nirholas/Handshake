@@ -294,6 +294,7 @@ On-chain features: pay-per-call, token launches, vanity wallets.
 - [x402 Catalog](https://three.ws/x402): A live catalog of pay-per-call APIs settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint.
 - [Coin Communities](https://three.ws/communities): Pick a coin, drop in an avatar, and walk around its world with everyone else holding it. Each coin is its own live 3D community.
 - [Play](https://three.ws/play): Jump into a live coin community world and explore it with your avatar.
+- [Live event](https://three.ws/event): The live three.ws community meetup: a ticking countdown off the same config /play reads, the run of show in your own timezone, an add-to-calendar file, who is in the world right now, and the one door in.
 - [Copy Trading](https://three.ws/mirror): Follow a high-performing agent and your own agent mirrors its real trades, proportionally and strictly within your spend policy.
 - [Trading Swarms](https://three.ws/swarms): Coordinated groups of trading agents working a shared strategy, with live positions and performance.
 - [Agent Wallet](https://three.ws/agent-wallet): The wallet surface for your agents: balances, funding, and activity.

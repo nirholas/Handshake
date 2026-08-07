@@ -81,7 +81,6 @@ class MeetupEvent {
 		this.chip = null;
 		this.panel = null;
 		this.banner = null;
-		this.flashEl = null;
 		this.fireworks = null;
 		this.mounted = false;
 		this._prevPhase = null;
@@ -163,7 +162,6 @@ class MeetupEvent {
 		this.banner?.remove(); this.banner = null;
 		this._closePanel(true);
 		this.panel?.remove(); this.panel = null;
-		this.flashEl?.remove(); this.flashEl = null;
 		this.fireworks?.dispose(); this.fireworks = null;
 		this._queue = [];
 		clearInterval(this._signalTimer);
@@ -417,77 +415,15 @@ class MeetupEvent {
 	}
 
 	// ------------------------------------------------------------------ photo
-	async _capturePhoto() {
-		const cc = this.cc;
-		if (!this.flashEl) {
-			this.flashEl = el('div', { id: 'cc-meetup-flash', 'aria-hidden': 'true' });
-			document.body.appendChild(this.flashEl);
-		}
-		this.flashEl.classList.add('cc-meetup-flash--on');
-		requestAnimationFrame(() => requestAnimationFrame(() => this.flashEl?.classList.remove('cc-meetup-flash--on')));
-
-		let dataUrl = null;
-		try {
-			const shot = cc._captureBuildShot?.(1600);
-			if (shot?.dataUrl) dataUrl = shot.dataUrl;
-		} catch { /* fall through to the direct read */ }
-		if (!dataUrl) {
-			try {
-				cc.renderer.render(cc.scene, cc.camera);
-				dataUrl = cc.renderer.domElement.toDataURL('image/png');
-			} catch {
-				cc.ui?.toast?.('Couldn’t capture the scene. Try again in a moment.', 'warn');
-				return;
-			}
-		}
-
-		const img = new Image();
-		await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = dataUrl; })
-			.catch(() => null);
-		if (!img.naturalWidth) { cc.ui?.toast?.('Couldn’t capture the scene. Try again in a moment.', 'warn'); return; }
-
-		const c = document.createElement('canvas');
-		c.width = img.naturalWidth; c.height = img.naturalHeight;
-		const ctx = c.getContext('2d');
-		ctx.drawImage(img, 0, 0);
-
-		// The frame: a quiet bottom gradient with the event title, date and the
-		// site, gold-accented. Something a holder wants to post, not a watermark.
-		const W = c.width, H = c.height;
-		const barH = Math.round(H * 0.20);
-		const grad = ctx.createLinearGradient(0, H - barH, 0, H);
-		grad.addColorStop(0, 'rgba(4,4,6,0)');
-		grad.addColorStop(0.45, 'rgba(4,4,6,0.62)');
-		grad.addColorStop(1, 'rgba(4,4,6,0.9)');
-		ctx.fillStyle = grad;
-		ctx.fillRect(0, H - barH, W, barH);
-		const mx = Math.round(W * 0.045);
-		ctx.fillStyle = '#ffce5c';
-		ctx.fillRect(mx, H - Math.round(barH * 0.52), Math.round(W * 0.055), Math.max(3, Math.round(H * 0.004)));
-		ctx.textBaseline = 'alphabetic';
-		ctx.fillStyle = '#ffffff';
-		ctx.font = `800 ${Math.round(H * 0.038)}px system-ui, -apple-system, sans-serif`;
-		ctx.fillText(this.ev.title.toUpperCase(), mx, H - Math.round(barH * 0.28));
-		ctx.fillStyle = '#ffce5c';
-		ctx.font = `600 ${Math.round(H * 0.024)}px system-ui, -apple-system, sans-serif`;
-		const dateLine = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(this.ev.startsAt));
-		ctx.fillText(`${dateLine} · three.ws/play`, mx, H - Math.round(barH * 0.10));
-
-		const blob = await new Promise((resolve) => c.toBlob(resolve, 'image/jpeg', 0.92));
-		if (!blob) { cc.ui?.toast?.('Couldn’t save the photo.', 'warn'); return; }
-		const stamp = new Date(this.ev.startsAt).toISOString().slice(0, 10);
-		const file = new File([blob], `three-meetup-${stamp}.jpg`, { type: 'image/jpeg' });
-		if (navigator.canShare?.({ files: [file] })) {
-			try {
-				await navigator.share({ files: [file], title: this.ev.title, text: `${this.ev.title} · three.ws/play` });
-				return;
-			} catch { /* user cancelled or share failed: fall through to download */ }
-		}
-		const a = el('a', { href: URL.createObjectURL(blob), download: file.name });
-		document.body.appendChild(a);
-		a.click();
-		setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-		cc.ui?.toast?.('Photo saved. Post it and tag $THREE.', 'success');
+	// The commemorative photo IS /play's photo mode (src/game/photo-mode.js): the
+	// same offscreen capture, the same monochrome share card, the same download
+	// and clipboard actions. It stamps itself with this event's name on its own,
+	// because it reads the same /event.json this layer does, so there is nothing
+	// event-specific to pass and nothing to keep in sync. Closing the agenda first
+	// keeps the drawer out from behind the preview.
+	_capturePhoto() {
+		this._closePanel();
+		this.cc._openPhotoMode?.();
 	}
 }
 

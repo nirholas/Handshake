@@ -32,6 +32,14 @@ export const SLOT_LABELS = {
 // (W04's shop grants it into the account's owned list). `price` is the $THREE
 // cost the shop will charge — surfaced here so the wardrobe can show it, but W03
 // never sells (it only exposes the unlock hook).
+//
+// A third tier, 'event', is a souvenir: it is GRANTED, never sold. The server
+// hands it to everyone present in the event world during the live window (see
+// multiplayer/src/event-drop.js and the join-time grant in WalkRoom), and after
+// the window closes it is simply never granted again. It carries price 0 and so
+// never appears in the boutique (shop.js filters on tier 'premium' AND price>0),
+// which is what keeps "you had to be there" honest: there is no purchase path,
+// before, during, or after. Like premium, it must be owned to be worn.
 export const COSMETICS = [
 	// ── Body color (dye) ──────────────────────────────────────────────────────
 	{ id: 'dye-none', name: 'Natural', slot: 'dye', rarity: 'common', tier: 'free', price: 0, visual: null, swatch: '#d8d8e0' },
@@ -46,6 +54,7 @@ export const COSMETICS = [
 	{ id: 'hat-beanie', name: 'Beanie', slot: 'headwear', rarity: 'common', tier: 'free', price: 0, visual: { prop: '/accessories/hat-beanie.glb', anchor: 'head' }, thumb: '/accessories/thumbs/hat-beanie.png' },
 	{ id: 'hat-baseball', name: 'Ball cap', slot: 'headwear', rarity: 'common', tier: 'free', price: 0, visual: { prop: '/accessories/hat-baseball.glb', anchor: 'head' }, thumb: '/accessories/thumbs/hat-baseball.png' },
 	{ id: 'hat-cowboy', name: 'Stetson', slot: 'headwear', rarity: 'rare', tier: 'premium', price: 400, visual: { prop: '/accessories/hat-cowboy.glb', anchor: 'head' }, thumb: '/accessories/thumbs/hat-cowboy.png' },
+	{ id: 'laurel-meetup', name: 'Meetup Laurel', slot: 'headwear', rarity: 'legendary', tier: 'event', price: 0, visual: { prop: '/accessories/laurel-meetup.glb', anchor: 'head' }, thumb: '/accessories/thumbs/laurel-meetup.png' },
 
 	// ── Eyewear (prop, anchored at the eye line) ──────────────────────────────
 	{ id: 'eye-none', name: 'None', slot: 'eyewear', rarity: 'common', tier: 'free', price: 0, visual: null },
@@ -85,6 +94,23 @@ export const DEFAULT_LOADOUT = Object.freeze({
 export function isFreeCosmetic(id) {
 	const c = getCosmetic(id);
 	return !!c && c.tier === 'free';
+}
+
+// Is this id an event souvenir — granted for being somewhere at some time, never
+// purchasable? The grant path (event-drop.js → WalkRoom) checks this so a
+// misconfigured event can never hand out a boutique item for nothing, and the
+// wardrobe checks it so a locked souvenir offers no "buy it" shortcut.
+export function isEventCosmetic(id) {
+	const c = getCosmetic(id);
+	return !!c && c.tier === 'event';
+}
+
+// Is this id one an account has to explicitly own to wear (premium or event)?
+// The inverse of isFreeCosmetic for known ids — used by the persistence layer,
+// which must keep every unlocked id regardless of how it was unlocked.
+export function isUnlockableCosmetic(id) {
+	const c = getCosmetic(id);
+	return !!c && c.tier !== 'free';
 }
 
 // Can `account` (an owned-id set, or array) wear `id`? Free cosmetics are always

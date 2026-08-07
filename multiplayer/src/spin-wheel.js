@@ -125,6 +125,7 @@ function infoPayload(room, client, profile) {
 export function handleSpinInfo(room, client) {
 	const profile = room.econ.get(client.sessionId);
 	if (!profile) return;
+	if (!room._actionOk(client.sessionId, 'spinInfo')) return;
 	client.send('spinInfo', infoPayload(room, client, profile));
 }
 

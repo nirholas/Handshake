@@ -108,10 +108,22 @@ export class PlaySystems {
 		this._t = 0;                   // animation clock
 		this._invOpen = false;
 		this._skillsOpen = false;
+		// The wheel's average-level gate, learned from the server's own spinInfo
+		// (see _renderNextUnlock). Undefined until it answers.
+		this._wheelMinLevel = undefined;
 
 		this._pondGroup = null;
 		this._buildScene();
 		this._buildHud();
+
+		// spinInfo is the only message carrying the wheel's level gate, and the
+		// skills panel is where a player looks to find out what they're working
+		// toward. Listen for it here rather than duplicating the constant.
+		this._offSpinInfo = this.net?.on?.('spinInfo', (m) => {
+			if (!Number.isFinite(m?.minLevel)) return;
+			this._wheelMinLevel = m.minLevel;
+			if (this._skillsOpen) this._renderNextUnlock();
+		}) || null;
 	}
 
 	// ---------------------------------------------------------------- scene
@@ -222,14 +234,18 @@ export class PlaySystems {
 			el('div', { class: 'ps-inv-hint', text: 'Click a tool to equip it. Click food to eat.' }),
 		]);
 
-		// Skills panel.
+		// Skills panel. The footer line names what the current skills are working
+		// toward; it stays empty until the server tells us the real gate (see
+		// _renderNextUnlock), so this UI never invents a level requirement.
 		this.skillsList = el('div', { class: 'ps-skills-list' });
+		this.nextUnlock = el('div', { class: 'ps-skills-next' });
 		this.skillsPanel = el('div', { class: 'ps-panel ps-skills', hidden: true, role: 'dialog', 'aria-label': 'Skills' }, [
 			el('div', { class: 'ps-panel-head' }, [
 				el('span', { class: 'ps-panel-title', text: 'Skills' }),
 				el('button', { class: 'ps-x', 'aria-label': 'Close', text: '✕', onclick: () => this.toggleSkills(false) }),
 			]),
 			this.skillsList,
+			this.nextUnlock,
 		]);
 
 		// My Cosmetics panel (R23): the owned wardrobe. Body is rebuilt per open from
@@ -410,7 +426,16 @@ export class PlaySystems {
 			const span = s.nextXp != null ? Math.max(1, s.nextXp - s.levelXp) : 1;
 			const into = s.nextXp != null ? Math.max(0, Math.min(span, s.xp - s.levelXp)) : span;
 			const pct = Math.round((into / span) * 100);
-			const row = el('div', { class: 'ps-skill' }, [
+			// A bare bar tells a player they are progressing but never how much is
+			// left. The server already sends the exact boundaries with every gain, so
+			// spend them: the remaining XP to the next level, on the row.
+			const remaining = s.nextXp == null ? 0 : Math.max(0, s.nextXp - s.xp);
+			const row = el('div', {
+				class: 'ps-skill',
+				title: s.nextXp == null
+					? `${meta.label} is maxed at level ${s.level}.`
+					: `${remaining.toLocaleString()} XP to ${meta.label} level ${s.level + 1}.`,
+			}, [
 				el('span', { class: 'ps-skill-glyph', text: meta.glyph }),
 				el('div', { class: 'ps-skill-body' }, [
 					el('div', { class: 'ps-skill-top' }, [
@@ -418,10 +443,37 @@ export class PlaySystems {
 						el('span', { class: 'ps-skill-lvl', text: s.nextXp == null ? `Lv ${s.level} · max` : `Lv ${s.level}` }),
 					]),
 					el('div', { class: 'ps-skill-bar' }, [el('span', { class: 'ps-skill-fill', style: `width:${pct}%` })]),
+					el('div', {
+						class: 'ps-skill-next',
+						text: s.nextXp == null ? 'Maxed' : `${remaining.toLocaleString()} XP to Lv ${s.level + 1}`,
+					}),
 				]),
 			]);
 			this.skillsList.appendChild(row);
 		}
+		this._renderNextUnlock();
+	}
+
+	// The one gated thing a player's skills open up: Fortune's Folly refuses to
+	// spin below an average skill level. That floor is a SERVER constant
+	// (spin-wheel.js MIN_AVG_LEVEL) which rides in on `spinInfo`, so the line
+	// stays blank until the server has stated it rather than hardcoding a number
+	// that could drift. Showing the distance turns five separate bars into a goal,
+	// and it's the only place a player learns the wheel exists before finding it.
+	_renderNextUnlock() {
+		if (!this.nextUnlock) return;
+		const min = this._wheelMinLevel;
+		if (!Number.isFinite(min)) { this.nextUnlock.textContent = ''; this.nextUnlock.removeAttribute('data-state'); return; }
+		const levels = SKILL_ORDER.map((k) => this.skills[k]?.level || 1);
+		const avg = levels.reduce((a, b) => a + b, 0) / (levels.length || 1);
+		if (avg >= min) {
+			this.nextUnlock.textContent = 'Unlocked: the Wheel of Fortune. Spin it at Fortune’s Folly in the plaza.';
+			this.nextUnlock.dataset.state = 'open';
+			return;
+		}
+		const short = Math.round((min - avg) * 10) / 10;
+		this.nextUnlock.textContent = `Next unlock: the Wheel of Fortune at average level ${min} (${short} to go).`;
+		this.nextUnlock.dataset.state = 'locked';
 	}
 
 	// ---------------------------------------------------------------- actions
@@ -482,7 +534,13 @@ export class PlaySystems {
 		this._skillsOpen = force == null ? !this._skillsOpen : !!force;
 		this.skillsPanel.hidden = !this._skillsOpen;
 		this.skillsBtn.classList.toggle('is-on', this._skillsOpen);
-		if (this._skillsOpen) this._renderSkills();
+		if (this._skillsOpen) {
+			// Ask for the wheel's gate the first time the panel opens, so the
+			// next-unlock line is populated for a player who has never walked up to
+			// the wheel. Once answered it's cached for the session.
+			if (this._wheelMinLevel === undefined) { try { this.net?.spinInfo?.(); } catch { /* offline */ } }
+			this._renderSkills();
+		}
 	}
 
 	// ---------------------------------------------------------------- cosmetics
@@ -549,9 +607,13 @@ export class PlaySystems {
 		}
 
 		// Footer: an honest pointer. Everyone owns the free pack; premium pieces are
-		// earned in the shop. Surface that path so the wardrobe links onward.
+		// bought here with $THREE, so name the currency and where to get it. A card
+		// that quotes a price the player has no way to fund is a dead end.
 		if (!ownsAnyPremium) {
-			body.appendChild(el('p', { class: 'ps-cos-hint', text: 'Unlock premium dyes, hats and auras in the shop — they appear here once you own them.' }));
+			body.appendChild(el('p', { class: 'ps-cos-hint' }, [
+				'Premium dyes, hats and auras are priced in $THREE and unlock the moment the purchase settles on-chain. ',
+				el('a', { href: '/three-token', target: '_blank', rel: 'noopener', text: 'Get $THREE ↗' }),
+			]));
 		}
 	}
 
@@ -835,6 +897,8 @@ export class PlaySystems {
 
 	// ---------------------------------------------------------------- teardown
 	dispose() {
+		try { this._offSpinInfo?.(); } catch { /* already torn down */ }
+		this._offSpinInfo = null;
 		this._clearCast();
 		if (this._pondGroup) {
 			this.scene.remove(this._pondGroup);

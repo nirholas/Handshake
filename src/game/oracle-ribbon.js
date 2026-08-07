@@ -19,6 +19,7 @@ import {
 	TubeGeometry,
 	Vector3,
 } from 'three';
+import { log } from '../shared/log.js';
 
 const IBM = {
 	blueLight: 0x78a9ff,
@@ -148,14 +149,27 @@ export function mountOracleRibbon(scene, opts = {}) {
 	let t = 0;
 	const baseY = pivot.position.y;
 
-	(async () => {
+	// Guarded fetch: dispose() aborts an in-flight request so a late response
+	// never builds TubeGeometry into a group already removed from the scene.
+	let disposed = false;
+	let retryTimer = null;
+	const abort = new AbortController();
+	const load = async (isRetry) => {
 		try {
-			const data = await fetch(`/api/ibm/oracle?token=${THREE_MINT}`).then((r) => r.json());
+			const r = await fetch(`/api/ibm/oracle?token=${THREE_MINT}`, { signal: abort.signal });
+			if (!r.ok) throw new Error(`oracle responded ${r.status}`);
+			const data = await r.json();
+			if (disposed) return;
 			if (data && data.history) buildSeries(series, data);
-		} catch {
-			/* offline / rate-limited — the world simply renders without the line */
+		} catch (err) {
+			if (disposed || abort.signal.aborted) return;
+			log.warn('[oracle-ribbon] forecast fetch failed:', err?.message);
+			// One retry ~30s later covers a transient blip / rate limit; beyond that
+			// the world simply renders without the line (decorative, not load-bearing).
+			if (!isRetry) retryTimer = setTimeout(() => load(true), 30_000);
 		}
-	})();
+	};
+	load(false);
 
 	return {
 		group: pivot,
@@ -165,6 +179,9 @@ export function mountOracleRibbon(scene, opts = {}) {
 			pivot.position.y = baseY + Math.sin(t * 0.8) * 0.12;
 		},
 		dispose() {
+			disposed = true;
+			clearTimeout(retryTimer);
+			abort.abort();
 			series.traverse((o) => {
 				if (o.geometry) o.geometry.dispose();
 				if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose());

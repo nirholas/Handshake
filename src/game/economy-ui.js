@@ -229,7 +229,11 @@ class StorePanel extends EconPanel {
 		this.track(net.on('notice', (n) => {
 			if (n?.kind !== 'store' && n?.kind !== 'full') return;
 			this.endRequest();
-			this.setStatus(n.text || '', n.kind === 'full' ? 'err' : 'ok');
+			// The server stamps every notice with `ok`, so a refusal ("Not enough
+			// cash", "That item isn't for sale") styles as the failure it is. Older
+			// servers omit the flag; fall back to the old kind-based styling.
+			const style = n.ok === true ? 'ok' : n.ok === false ? 'err' : (n.kind === 'full' ? 'err' : 'ok');
+			this.setStatus(n.text || '', style);
 		}));
 
 		this.awaitFirstSnapshot(() => { net.requestStore(); net.requestProfile(); });
@@ -400,7 +404,9 @@ class BankPanel extends EconPanel {
 		this.track(net.on('notice', (n) => {
 			if (n?.kind !== 'bank') return;
 			this.endRequest();
-			this.setStatus(n.text || '', 'ok');
+			// "No cash on hand to deposit" is a refusal; style it as one. Undefined
+			// `ok` (older server) keeps the previous success styling.
+			this.setStatus(n.text || '', n.ok === false ? 'err' : 'ok');
 		}));
 
 		this.awaitFirstSnapshot(() => net.requestProfile());

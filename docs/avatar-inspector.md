@@ -11,7 +11,7 @@ to the full profile.
 
 | World | Open it with | Who you can inspect |
 | --- | --- | --- |
-| `/play` (coin communities) | <kbd>I</kbd> nearest avatar · click a player's nameplate or body | Other players, townsperson NPCs, yourself |
+| `/play` (coin communities) | <kbd>I</kbd> nearest avatar · click a player's nameplate or body | Other players, townsperson NPCs, ambient citizens, yourself |
 | `/temporary` coin worlds + `/marketplace-walk` | <kbd>I</kbd> nearest player · click a nameplate | Other players, yourself |
 | `/city` | <kbd>I</kbd> · click your avatar | Yourself (single-player) — add `?agent=<agent-id>` and the inspector shows that agent's reputation and wallet alongside your session |
 | `/agora` | <kbd>I</kbd> hovered/nearest citizen · click a citizen | Citizens — opens their existing [passport](/agora) with trust grade, stake, and earnings |
@@ -44,6 +44,27 @@ other surface reads, so a number never disagrees across the platform:
 A guest with no wallet renders as exactly that — a designed empty state that
 says what's missing and how to get it. A real $0 balance shows $0. Nothing is
 ever fabricated.
+
+## Citizens: every walker in /play is someone
+
+The ambient crowd strolling a `/play` plaza wears real community avatars from
+the public gallery (`GET /api/avatars/public`), and most of those avatars
+represent a registered three.ws agent. The world keeps that identity: any
+walker wearing a named gallery avatar shows a nameplate, and clicking the
+nameplate or the body opens this same inspector as a **Citizen** card — the
+real agent's bio, trust score, and wallet, plus a **Talk 1-on-1** action that
+starts a live, streamed, in-character conversation (the same multi-model chat
+the townsperson NPCs use, grounded in the agent's actual public profile).
+While you talk, the citizen stops and faces you, then walks briskly back to
+the shared crowd schedule when you leave.
+
+Interactive townsfolk (the vendors, quest-givers, and clerks) are selectable
+from any distance too: tapped in range they run their role action as always;
+tapped from afar their profile card opens with a Talk action instead of
+nothing. Walkers wearing the bundled default avatar carry no identity and stay
+honest, anonymous scenery — no nameplate, no profile.
+
+The identity layer lives in [`src/game/npc/citizens.js`](../src/game/npc/citizens.js).
 
 ## For builders
 

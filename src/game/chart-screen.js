@@ -312,7 +312,10 @@ export function createChartScreen(scene, coin, opts = {}) {
 		ctx.fillText(nm.length > 22 ? nm.slice(0, 21) + '…' : nm, hx, headY - 4);
 		ctx.fillStyle = COL.dim;
 		ctx.font = '600 20px Inter, system-ui, sans-serif';
-		const sym = coin.symbol ? '$' + coin.symbol.toUpperCase() : '';
+		// Symbols are arbitrary pump.fun strings; cap it like the name above so a
+		// 60-char symbol can't run through the LIVE badge and the pump.fun affordance.
+		const rawSym = coin.symbol ? String(coin.symbol).toUpperCase() : '';
+		const sym = rawSym ? '$' + (rawSym.length > 14 ? rawSym.slice(0, 13) + '…' : rawSym) : '';
 		ctx.fillText(`${sym}${sym ? '  ·  ' : ''}pump.fun`, hx, headY + 24);
 
 		// live badge (top-right), pulsing

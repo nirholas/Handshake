@@ -188,6 +188,15 @@ function loadTemplate(url) {
 	return entry;
 }
 
+/**
+ * True when a model is already downloaded (or downloading) into the shared
+ * template cache, so wearing it again costs no network. The ambient crowd reads
+ * this to decide whether picking a gallery model spends its download budget.
+ */
+export function hasModelTemplate(url) {
+	return _templates.has(url);
+}
+
 function disposeTemplateScene(scene) {
 	scene.traverse((n) => {
 		if (!n.isMesh) return;

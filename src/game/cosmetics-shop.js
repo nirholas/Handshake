@@ -17,6 +17,7 @@
 
 import { log } from '../shared/log.js';
 import { purchaseCosmetic, resolveShopAccount } from './cosmetics-purchase.js';
+import { openModal } from './a11y.js';
 
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -95,7 +96,7 @@ export class CosmeticsShop {
 		this.body = el('div', { class: 'cc-shop-body' }, [this.statusEl, this.grid]);
 
 		this.panel = el('div', {
-			class: 'cc-shop-panel', role: 'dialog', 'aria-modal': 'false',
+			class: 'cc-shop-panel', role: 'dialog', 'aria-modal': 'true',
 			'aria-label': 'Cosmetics shop',
 		}, [
 			el('div', { class: 'cc-shop-head' }, [
@@ -119,7 +120,9 @@ export class CosmeticsShop {
 		this.root = el('div', { class: 'cc-shop', id: 'cc-shop', hidden: true }, [this.panel]);
 		// Backdrop tap closes; panel taps don't bubble out.
 		this.root.addEventListener('click', (e) => { if (e.target === this.root) this.close(); });
-		this._onKey = (e) => { if (e.key === 'Escape' && !this.root.hidden) { e.stopPropagation(); this.close(); } };
+		// World hotkeys live on `window`; keystrokes aimed at the shop must not
+		// also drive the avatar behind it.
+		this.panel.addEventListener('keydown', (e) => e.stopPropagation());
 
 		document.body.appendChild(this.root);
 		this._buildFilters();
@@ -153,8 +156,9 @@ export class CosmeticsShop {
 		if (this.isOpen()) return;
 		this.root.hidden = false;
 		requestAnimationFrame(() => this.root.classList.add('cc-shop-in'));
-		document.addEventListener('keydown', this._onKey, true);
-		this.closeBtn.focus();
+		// Escape stack + Tab containment + focus restore, shared with every other
+		// /play panel (src/game/a11y.js).
+		this._releaseModal = openModal(this.panel, { close: () => this.close(), initialFocus: this.closeBtn });
 		// Re-resolve the account in case the player signed in since last open, so a
 		// fresh wallet sees its owned items rather than the guest's.
 		const acct = resolveShopAccount(this.h.account);
@@ -169,7 +173,8 @@ export class CosmeticsShop {
 	close() {
 		if (!this.isOpen()) return;
 		this.root.classList.remove('cc-shop-in');
-		document.removeEventListener('keydown', this._onKey, true);
+		this._releaseModal?.();
+		this._releaseModal = null;
 		// Reverting any live preview is the whole point — don't leave a tried-on
 		// item stuck on the avatar after the shop closes.
 		this._clearPreview();
@@ -178,7 +183,8 @@ export class CosmeticsShop {
 	}
 
 	dispose() {
-		document.removeEventListener('keydown', this._onKey, true);
+		this._releaseModal?.();
+		this._releaseModal = null;
 		this.root.remove();
 	}
 

@@ -33,7 +33,7 @@ import {
 	Vector3, DoubleSide,
 } from 'three';
 
-import { DANGER_ZONES } from '../../multiplayer/src/world-features.js';
+import { DANGER_ZONES, WORLD_RADIUS } from '../../multiplayer/src/world-features.js';
 import { MOB_STATS, WEAPONS } from '../../multiplayer/src/items.js';
 import { itemDisplay } from './items.js';
 import { WorldHud } from './hud/world-hud.js';
@@ -169,24 +169,34 @@ export class CombatSystem {
 	 * @param {() => ({x,y,z,yaw})} opts.getPlayer  local avatar pose
 	 * @param {object} opts.net   CommunityNet instance
 	 * @param {object} opts.ui    CommunityUI instance (toast)
+	 * @param {() => Array<{x:number,z:number,kind?:string,color?:string}>} [opts.blipSource]
+	 *   optional extra radar blips sampled each radar refresh (e.g. remote
+	 *   players, which this module has no access to), merged with the
+	 *   mob/tombstone blips it owns itself.
 	 */
-	constructor({ scene, camera, renderer, getPlayer, net, ui }) {
+	constructor({ scene, camera, renderer, getPlayer, net, ui, blipSource = null }) {
 		this.scene = scene;
 		this.camera = camera;
 		this.renderer = renderer;
 		this.getPlayer = getPlayer;
 		this.net = net;
 		this.ui = ui;
+		this.blipSource = typeof blipSource === 'function' ? blipSource : null;
 
 		this.mobs = new Map();
 		this.tombstones = new Map();
 		this._nearestTombId = null;
 		this._weapon = null;   // equipped weapon item id, or null
 		this._dead = false;
+		this._blipsAt = 0;     // last radar sample time (10 Hz throttle)
+		this._blipsKey = '';   // change signature of the last pushed blip set
 
 		this.hud = new WorldHud();
 		this.hud.show();
 		this.hud.setContext('onfoot');
+		// The world is a free-roam disc; draw its real edge as the radar boundary
+		// ring instead of the Minimap default.
+		this.hud.minimap.setBoundary(WORLD_RADIUS);
 
 		// Must install before WorldLife constructs its MobSystem (see the module
 		// doc comment) — coincommunities.js instantiates CombatSystem first.
@@ -324,6 +334,11 @@ export class CombatSystem {
 
 	_applyVitals(v) {
 		if (!v) return;
+		// A 'death' notice hides only on a matching 'respawn' notice, but a reconnect
+		// re-sends the authoritative profile without either notice. If the server says
+		// we're alive, clear any death overlay left pinned from before the drop — else
+		// a player rejoins into a live world stuck behind a full-screen "You died".
+		if (Number.isFinite(v.hp) && v.hp > 0 && this.deathOverlay && !this.deathOverlay.hidden) this._hideDeath();
 		if (Number.isFinite(v.hp) && Number.isFinite(v.maxHp)) this.hud.setHealth(v.hp, v.maxHp);
 		if (Number.isFinite(v.armor) && Number.isFinite(v.maxArmor)) this.hud.setArmor(v.armor, v.maxArmor);
 		if (Number.isFinite(v.heat)) this.hud.setWanted(v.heat);
@@ -499,7 +514,41 @@ export class CombatSystem {
 		}
 
 		this.hud.minimap.setViewer({ x: p.x, z: p.z, yaw: p.yaw || 0 });
+		this._feedRadar();
 		this.hud.tick(dt);
+	}
+
+	// ----------------------------------------------------------------- radar
+	// Feed the minimap real blips: live mobs (hostiles read red, passives grey),
+	// lootable tombstones (same warm yellow as their ground ring), and whatever
+	// the host's optional blipSource adds (remote players). Sampled at ~10 Hz
+	// (radar-scale motion is invisible at 60 fps) and pushed only when the
+	// picture actually changed, so an idle world costs no canvas repaints.
+	_feedRadar() {
+		const now = performance.now();
+		if (now - this._blipsAt < 100) return;
+		this._blipsAt = now;
+		const blips = [];
+		for (const view of this.mobs.values()) {
+			if (view._dead) continue;
+			const hostile = !!MOB_STATS[view.kind]?.hostile;
+			blips.push({ x: view.x, z: view.z, kind: 'peer', color: hostile ? '#ff6b6b' : 'rgba(255,255,255,0.45)' });
+		}
+		for (const t of this.tombstones.values()) blips.push({ x: t.x, z: t.z, kind: 'poi', color: '#ffcf5c' });
+		if (this.blipSource) {
+			// Host boundary: a throwing callback must never take the combat tick down.
+			try {
+				for (const b of this.blipSource() || []) {
+					if (b && Number.isFinite(b.x) && Number.isFinite(b.z)) blips.push(b);
+				}
+			} catch { /* host callback */ }
+		}
+		// Change signature at decimetre resolution, all a 184px radar can show.
+		let key = '';
+		for (const b of blips) key += `${b.kind || ''}${b.color || ''}${b.x.toFixed(1)},${b.z.toFixed(1)};`;
+		if (key === this._blipsKey) return;
+		this._blipsKey = key;
+		this.hud.minimap.setBlips(blips);
 	}
 
 	dispose() {

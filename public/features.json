@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-07T09:31:49.914Z",
+	"generated_at": "2026-08-07T09:59:03.483Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2579,7 +2579,7 @@
 				{
 					"path": "/event",
 					"title": "Live event",
-					"description": "The live three.ws community meetup: when it starts, what is on the agenda, who is in the world right now, and the event leaderboard.",
+					"description": "The live three.ws community meetup: a ticking countdown off the same config /play reads, the run of show in your own timezone, an add-to-calendar file, who is in the world right now, and the one door in.",
 					"added": "2026-08-07",
 					"auth": null,
 					"indexable": true,

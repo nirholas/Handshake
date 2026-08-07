@@ -35,7 +35,20 @@ describe('WalkRoom build permissions (R19)', () => {
 		expect(room._isProtectedColumn(0, 0)).toBe(true);   // spawn
 		expect(room._isProtectedColumn(0, -8)).toBe(true);  // totem (world z=-12 → grid -8)
 		expect(room._isProtectedColumn(2, -1)).toBe(true);  // within the spawn disc
-		expect(room._isProtectedColumn(15, 15)).toBe(false); // open plaza
+		expect(room._isProtectedColumn(40, 40)).toBe(false); // open plaza, clear of every disc
+	});
+
+	// The Living Stage is where a show (and the meetup agenda) actually happens, so
+	// its guard disc is derived from world-features.PLAZA_STAGE rather than written
+	// out twice. Pinning the derivation here is what stops a builder walling the
+	// venue off, and stops the two definitions drifting if the venue ever moves.
+	it('protects the plaza stage disc, derived from the venue itself', () => {
+		const cx = Math.round(PLAZA_STAGE.x / BLOCK_SIZE_M);
+		const cz = Math.round(PLAZA_STAGE.z / BLOCK_SIZE_M);
+		const cells = Math.ceil(PLAZA_STAGE.r / BLOCK_SIZE_M);
+		expect(room._isProtectedColumn(cx, cz)).toBe(true);
+		expect(room._isProtectedColumn(cx + cells, cz)).toBe(true);      // the disc edge
+		expect(room._isProtectedColumn(cx + cells + 1, cz)).toBe(false); // just outside it
 	});
 
 	it('refuses placement in a protected column', () => {

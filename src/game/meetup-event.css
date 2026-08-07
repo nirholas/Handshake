@@ -136,13 +136,6 @@
 .cc-meetup-buy-btn:hover { box-shadow: 0 0 26px rgba(255, 206, 92, 0.45); }
 .cc-meetup-buy-btn:active { transform: scale(0.98); }
 
-/* Photo flash + confetti burst layer. */
-#cc-meetup-flash {
-	position: fixed; inset: 0; z-index: 400; pointer-events: none;
-	background: #fff; opacity: 0; transition: opacity 0.5s ease;
-}
-#cc-meetup-flash.cc-meetup-flash--on { opacity: 0.85; transition: none; }
-
 /* One countdown at a time: while this layer's chip is mounted, the generic
    event-countdown pill (same schedule, same event.json) stands down. */
 body.cc-meetup-ui .cc-event-pill { display: none; }

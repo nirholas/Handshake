@@ -11,8 +11,11 @@
 //   • An agent avatar seated behind the desk (idle-animated, driven by the
 //     same retargeting pipeline as every other avatar in the world).
 //   • Proximity detection: when the local player walks within NEAR_DIST units
-//     the monitor "wakes up" (brighter emissive) and a HUD prompt appears
-//     offering to open the full 2D watch view.
+//     the monitor wakes up (the screen face brightens to full white) and the
+//     desk pings watch-intent so the caster pool upgrades it to live frames.
+//     Clicking/tapping the monitor opens the full 2D watch view via openWatch()
+//     (coincommunities wires the pointer pick; the cursor turns to a pointer
+//     over the screen).
 //
 // Follows chart-screen.js in every structural detail — CanvasTexture updated
 // per-frame, update(dt) called from the scene loop, dispose() for cleanup.
@@ -186,7 +189,7 @@ function paintDesk(ctx, tex, actions, status, agentName, t) {
 	ctx.fillText(`three.ws · ${actions.length || 0} actions`, cX, sbY + 12);
 	ctx.textAlign = 'right';
 	ctx.fillStyle = faint;
-	ctx.fillText('walk up · press E to watch', winX + winW - 10, sbY + 12);
+	ctx.fillText('walk up · click the screen to watch', winX + winW - 10, sbY + 12);
 	ctx.textAlign = 'left';
 
 	tex.needsUpdate = true;
@@ -275,6 +278,11 @@ export function createAgentDesk(scene, agent, opts = {}) {
 	const tex = makeScreenTexture(canvas);
 
 	const screenMat = screenMaterial(tex);
+	// Idle screens sit slightly dimmed; walking near lifts them to full white.
+	// MeshBasicMaterial.color multiplies the map, so this is a real brightness
+	// change (the material is opaque — opacity would be a no-op without
+	// transparent: true).
+	screenMat.color.setHex(0xbbbbbb);
 	const screen = new Mesh(new PlaneGeometry(MON_W, MON_H), screenMat);
 	screen.position.set(0, monCY, -0.35 + 0.07);
 	screen.userData.agentDesk = true;
@@ -373,8 +381,8 @@ export function createAgentDesk(scene, agent, opts = {}) {
 				const wasNear = near;
 				near = dist < NEAR_DIST;
 				if (near !== wasNear) {
-					// Screen emissive boost.
-					screenMat.opacity = near ? 1.0 : 0.92;
+					// Wake the screen: full-white map when near, dimmed when far.
+					screenMat.color.setHex(near ? 0xffffff : 0xbbbbbb);
 				}
 				if (near) pingWatchIntent();
 			}
@@ -392,7 +400,7 @@ export function createAgentDesk(scene, agent, opts = {}) {
 
 		openWatch() {
 			const url = `/dashboard-next/watch?agentId=${encodeURIComponent(agent.agentId)}`;
-			window.open(url, '_blank');
+			window.open(url, '_blank', 'noopener,noreferrer');
 		},
 
 		dispose() {

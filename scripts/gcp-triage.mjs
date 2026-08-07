@@ -702,13 +702,29 @@ async function probeServiceWallets() {
 	if (!existsSync('.env')) return { status: 'skipped', note: 'no .env with signer secrets here' };
 	const r = await runCommand(['node', '--env-file=.env', 'scripts/audit-service-wallets.mjs'], { timeoutMs: 300000 });
 	if (r.timedOut) return { status: 'error', note: 'wallet audit timed out' };
-	const issues = r.stdout.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('✗'));
-	if (r.code === 0 && !issues.length) return { status: 'ok', note: 'service wallets above floors, advertised keys consistent' };
+	const lines = r.stdout.split('\n').map((l) => l.trim());
+	// `✗` = the chain was read and the money is wrong (owner). `‼` = the balance
+	// could not be read at all (investigate). Reporting an unreadable wallet as a
+	// funding emergency is the 2026-08-07 false alarm this split exists to stop.
+	const issues = lines.filter((l) => l.startsWith('✗'));
+	const unread = lines.filter((l) => l.startsWith('‼'));
+	if (r.code === 0 && !issues.length && !unread.length) return { status: 'ok', note: 'service wallets above floors, advertised keys consistent' };
+	const findings = [];
 	if (issues.length) {
-		return { status: 'findings', note: `${issues.length} wallet issue(s)`, findings: [deepFinding('service-wallets', 'owner', 'service wallet balances or advertised keys failing audit', {
+		findings.push(deepFinding('service-wallets', 'owner', 'service wallet balances or advertised keys failing audit', {
 			count: issues.length, sample: issues.join('\n'),
 			action: `Money surface; diagnose before concluding the owner must fund. Below-floor balances: run the self-heal first (POST /api/cron/treasury-topup reclaim leg, then /api/cron/economy-rebalance) per ${RUNBOOK} §x402-wallets-dry, or the x402-economy-triage agent. A fee-payer/payTo mismatch is env config on the Cloud Run service, not funding.`,
-		})] };
+		}));
+	}
+	if (unread.length) {
+		findings.push(deepFinding('service-wallets-unreadable', 'investigate', 'wallet balances could not be read, so funding state is unverified', {
+			count: unread.length, sample: unread.join('\n'),
+			action: 'NOT a funding verdict: the audit could not reach a working Solana RPC lane for these wallets. Check healthz rpc_lanes for how many lanes are cooling, then re-run the audit once a lane recovers. Do not fund or rebalance anything off an unreadable balance.',
+		}));
+	}
+	if (findings.length) {
+		const parts = [issues.length ? `${issues.length} wallet issue(s)` : '', unread.length ? `${unread.length} unreadable` : ''].filter(Boolean);
+		return { status: 'findings', note: parts.join(', '), findings };
 	}
 	return { status: 'error', note: tail(r.stderr || r.stdout, 3) };
 }

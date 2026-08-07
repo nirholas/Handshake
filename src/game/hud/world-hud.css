@@ -3,6 +3,13 @@
 
 .wh-hud {
 	--wh-pad: 14px;
+	/* Per-side pads: base padding plus the device safe area (notches, home
+	   indicator, curved corners). /play ships viewport-fit=cover, so fixed
+	   chrome must budget for env(safe-area-inset-*) itself. */
+	--wh-pad-top: calc(var(--wh-pad) + env(safe-area-inset-top, 0px));
+	--wh-pad-right: calc(var(--wh-pad) + env(safe-area-inset-right, 0px));
+	--wh-pad-bottom: calc(var(--wh-pad) + env(safe-area-inset-bottom, 0px));
+	--wh-pad-left: calc(var(--wh-pad) + env(safe-area-inset-left, 0px));
 	position: fixed;
 	inset: 0;
 	z-index: 30;
@@ -15,8 +22,10 @@
 /* ---------------------------------------------------------------- money ---- */
 .wh-money {
 	position: absolute;
-	top: calc(var(--wh-pad) + 92px);   /* clears the cc status pill / voice button */
-	right: var(--wh-pad);
+	/* Clears the whole cc right rail: leave (14), status (58), voice (96),
+	   power saver (140), and the Zen button (184, ~34px tall). */
+	top: calc(var(--wh-pad-top) + 220px);
+	right: var(--wh-pad-right);
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
@@ -84,7 +93,7 @@
 /* ------------------------------------------------------------ objective ---- */
 .wh-objective {
 	position: absolute;
-	left: var(--wh-pad);
+	left: var(--wh-pad-left);
 	top: 50%;
 	transform: translateY(-50%);
 	display: flex;
@@ -107,8 +116,8 @@
 /* ----------------------------------------------------- vitals + minimap ---- */
 .wh-corner-bl {
 	position: absolute;
-	left: var(--wh-pad);
-	bottom: var(--wh-pad);
+	left: var(--wh-pad-left);
+	bottom: var(--wh-pad-bottom);
 	display: flex;
 	flex-direction: column;
 	gap: 7px;
@@ -143,7 +152,10 @@
 	height: 184px;
 	border-radius: 50%;
 	overflow: visible;
-	pointer-events: auto;
+	/* Purely informational on /play (no tap-to-waypoint handler): let touches
+	   fall through to the world so the radar never eats a look-drag or, on
+	   phones, the movement joystick's touches. */
+	pointer-events: none;
 	border: 1.5px solid var(--cc-edge, rgba(255, 255, 255, 0.14));
 	box-shadow: var(--cc-shadow, 0 16px 50px rgba(0, 0, 0, 0.7)), inset 0 0 0 4px rgba(0, 0, 0, 0.35);
 	background: rgba(6, 6, 8, 0.5);
@@ -162,8 +174,8 @@
 /* --------------------------------------------------------------- speedo ---- */
 .wh-speedo {
 	position: absolute;
-	right: var(--wh-pad);
-	bottom: var(--wh-pad);
+	right: var(--wh-pad-right);
+	bottom: var(--wh-pad-bottom);
 	width: 124px;
 	height: 124px;
 	pointer-events: none;
@@ -205,7 +217,7 @@
 /* On-screen interaction-menu button (touch entry + desktop discoverability). */
 .wh-menu-btn {
 	position: absolute;
-	right: var(--wh-pad);
+	right: var(--wh-pad-right);
 	top: 50%;
 	transform: translateY(-50%);
 	width: 44px;
@@ -232,7 +244,11 @@
 /* ----------------------------------------------------------- responsive ---- */
 @media (max-width: 640px) {
 	.wh-hud { --wh-pad: 10px; }
-	.wh-money { top: calc(var(--wh-pad) + 96px); }
+	/* The movement joystick owns the bottom-left corner on phones (#cc-joystick:
+	   left 16px, bottom 20px, 104px tall → up to ~124px from the bottom). Lift
+	   the vitals + minimap column clear of it so the radar never sits on top of
+	   the stick. */
+	.wh-corner-bl { bottom: calc(var(--wh-pad-bottom) + 140px); }
 	.wh-vitals { width: 132px; }
 	.wh-minimap, .wh-minimap-canvas { width: 132px; height: 132px; }
 	.wh-objective { max-width: 60vw; }

@@ -1,4 +1,4 @@
-// /event — the one link the community shares before and during a live event.
+// /event: the one link the community shares before and during a live event.
 //
 // Everything on this page is derived from ONE file: public/event.json, served at
 // /event.json. That is the same config the /play lobby banner and in-world pill
@@ -9,9 +9,9 @@
 // surface moves together.
 //
 // Three states, all designed, all reachable:
-//   upcoming — ticking days/hours/minutes/seconds to the doors opening
-//   live     — a LIVE marker plus the real population of the event world
-//   ended    — says the event happened and still routes people into the world,
+//   upcoming: ticking days/hours/minutes/seconds to the doors opening
+//   live:     a LIVE marker plus the real population of the event world
+//   ended:    says the event happened and still routes people into the world,
 //              because /play is open whether or not an event is running
 // A missing or malformed config is a fourth, honest state: "no event scheduled",
 // with the same door into the world. The page never invents an event.
@@ -167,7 +167,7 @@ function icsFold(line) {
 }
 
 function buildIcs(cfg, absoluteLink) {
-	const agendaLines = cfg.agenda.map((a) => `${fmtTimeOnly(cfg.startsAt + a.atMin * 60_000)} — ${a.title}`);
+	const agendaLines = cfg.agenda.map((a) => `${fmtTimeOnly(cfg.startsAt + a.atMin * 60_000)} - ${a.title}`);
 	const description = [cfg.tagline, ...agendaLines, `Join: ${absoluteLink}`].filter(Boolean).join('\n');
 	const lines = [
 		'BEGIN:VCALENDAR',

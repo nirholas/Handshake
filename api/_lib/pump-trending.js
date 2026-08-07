@@ -1,8 +1,8 @@
-// Shared "trending tokens" fetch + cache — the thin
-// { mint, symbol, name, logo, price_usd, rank } projection used by every free
-// trending consumer: GET /api/pump/trending (home card, communities,
-// constellation, dashboard chart picker) and the free GET /api/v1/pump/trending.
-// One fetch+cache+fallback path, two doors.
+// Shared "trending tokens" fetch + cache: the thin
+// { mint, symbol, name, logo, price_usd, usd_market_cap, rank } projection used
+// by every free trending consumer: GET /api/pump/trending (home card,
+// communities, constellation, dashboard chart picker) and the free
+// GET /api/v1/pump/trending. One fetch+cache+fallback path, two doors.
 //
 // Primary source is Birdeye (BIRDEYE_API_KEY, kept server-side). When Birdeye is
 // unconfigured, rate-limited, or down, falls back to pump.fun's public frontend
@@ -88,6 +88,7 @@ async function fetchBirdeye(limit) {
 			name: t.name || t.symbol || '',
 			logo: t.logoURI || null,
 			price_usd: typeof t.price === 'number' ? t.price : null,
+			usd_market_cap: typeof t.marketcap === 'number' ? t.marketcap : null,
 			rank: typeof t.rank === 'number' ? t.rank : null,
 		}))
 		.filter((t) => typeof t.mint === 'string' && t.mint.length >= 32);
@@ -121,6 +122,7 @@ async function fetchPumpFun(limit) {
 			name: c.name || c.symbol || '',
 			logo: normalizeGatewayURL(c.image_uri || c.image || '') || null,
 			price_usd: null,
+			usd_market_cap: typeof c.usd_market_cap === 'number' ? c.usd_market_cap : null,
 			rank: i + 1,
 		}))
 		.filter((t) => typeof t.mint === 'string' && t.mint.length >= 32);
@@ -131,8 +133,8 @@ async function fetchPumpFun(limit) {
 // pump.fun launch continuously (thousands of rows per hour), so when both
 // external feeds are down or egress-blocked, the platform's own database still
 // knows what is moving. Most-bought coins observed in the last 6 hours, mapped
-// to the same slim shape. price_usd stays null (the recorder stores lamport
-// flows, not USD quotes) — same contract as the pump.fun rung.
+// to the same slim shape. price_usd and usd_market_cap stay null (the recorder
+// stores lamport flows, not USD quotes), the same contract as the pump.fun rung.
 async function fetchDbTrending(limit) {
 	try {
 		const rows = await sql`
@@ -149,6 +151,7 @@ async function fetchDbTrending(limit) {
 				name: r.name || r.symbol || '',
 				logo: normalizeGatewayURL(r.image_uri || '') || null,
 				price_usd: null,
+				usd_market_cap: null,
 				rank: i + 1,
 			}))
 			.filter((t) => typeof t.mint === 'string' && t.mint.length >= 32);

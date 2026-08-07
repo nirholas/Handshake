@@ -960,6 +960,23 @@ export function shouldRotate(status) {
 	);
 }
 
+// True when an error is the RPC *infrastructure* failing rather than the caller
+// asking for something impossible: a provider rate-limit/quota (429, -32429
+// "max usage reached"), a gateway 5xx, a network blip, or the whole lane chain
+// running out (`all solana rpc endpoints failed`, thrown by makeRotatingFetch
+// above once every endpoint has refused one request).
+//
+// Callers use this to tell "the chain says no" from "we could not ask". The
+// distinction is load-bearing on money surfaces: on 2026-08-07 every Solana
+// lane was cooling at once, and the treasury top-up cron turned that into a
+// hard 500 while the wallet audit turned it into four fake below-floor
+// emergencies. Neither was a code fault, and neither was a funding fact.
+export function isTransientRpcError(err) {
+	return /\b(429|500|502|503|504)\b|-32429|max usage reached|rate.?limit|quota|exhausted|timed?\s*out|fetch failed|socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|EAI_AGAIN|all solana rpc endpoints failed|all rpc endpoints exhausted/i.test(
+		String(err && err.message ? err.message : err),
+	);
+}
+
 // Rotating fetch backing a Connection. It NEVER surfaces a rotate-worthy status
 // (401/403/429/5xx) to @solana/web3.js — it either returns a healthy response or
 // throws — so web3.js's internal 429 backoff loop ("Server responded with 429 …

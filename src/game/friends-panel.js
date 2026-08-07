@@ -11,10 +11,9 @@
 import { friendsClient } from '../friends.js';
 import panelCss from '../friends-panel.css?inline';
 
-const HOTKEY_NOTE = 'Press F to toggle this panel.';
-
-// Inject the standalone friends-panel CSS once per document. In /walk the --kg-*
-// vars are absent so .wf-friends provides them; duplicate selectors are idempotent.
+// Inject the standalone friends-panel CSS once per document. The .wf-friends
+// class on the panel root defines the --kg-* token layer (resolving to the
+// host's --cc-* vars on /play, hardcoded fallbacks on /walk).
 let _cssInjected = false;
 function ensureCss() {
 	if (_cssInjected || typeof document === 'undefined') return;
@@ -75,9 +74,11 @@ function presenceText(f) {
 }
 
 export class FriendsPanel {
-	constructor(container, { walkMode = false } = {}) {
+	// Accepts (and ignores) a legacy options bag: /walk still passes
+	// { walkMode: true }, which no longer changes behavior; the token scope is
+	// applied unconditionally in render().
+	constructor(container) {
 		this.root = container;
-		this.walkMode = walkMode;
 		this.client = friendsClient();
 		ensureCss();
 		this.tab = 'friends'; // 'friends' | 'requests' | 'add'
@@ -103,6 +104,7 @@ export class FriendsPanel {
 		this._mounted = false;
 		if (this._unsub) this._unsub();
 		this._unsub = null;
+		clearTimeout(this._searchDebounce);
 		this.client.closeThread();
 		this.client.deactivate();
 	}
@@ -131,8 +133,9 @@ export class FriendsPanel {
 		if (!this._mounted) return;
 		this.root.innerHTML = '';
 		this.root.classList.add('kg-fr');
-		// Add token-fallback scope when running outside /play.
-		if (this.walkMode) this.root.classList.add('wf-friends');
+		// The token scope every kg-fr-* rule resolves against, required on every
+		// host (on /play the tokens map to the --cc-* vars, on /walk to fallbacks).
+		this.root.classList.add('wf-friends');
 
 		const c = this.client;
 		if (!c.loaded) {
@@ -514,5 +517,3 @@ function relDay(ts) {
 	if (d.toDateString() === yest.toDateString()) return 'Yesterday';
 	return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
-
-export { HOTKEY_NOTE };

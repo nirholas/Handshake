@@ -20,6 +20,7 @@
 
 import './spin-wheel.css';
 import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
+import { openModal } from './a11y.js';
 
 const NETWORK = 'mainnet';
 const SPIN_DECIMALS = 6; // $THREE uses 6 decimals (same as pump.fun mints)
@@ -154,8 +155,11 @@ class SpinWheel {
 		this.overlay.appendChild(this.card);
 		document.body.appendChild(this.overlay);
 		this._setBusy(true, 'Loading the wheel…');
-		this._onKey = (e) => { if (e.key === 'Escape') this.close(); };
-		window.addEventListener('keydown', this._onKey);
+		// The wheel is a modal: keep Tab inside it, hand Escape to the shared
+		// overlay stack (so a wheel opened over another panel closes only itself),
+		// and stop world hotkeys from driving the avatar behind the card.
+		this.card.addEventListener('keydown', (e) => e.stopPropagation());
+		this._releaseModal = openModal(this.card, { close: () => this.close(), initialFocus: close });
 	}
 
 	focus() { this.card?.classList.remove('kg-spin-flash'); requestAnimationFrame(() => this.card?.classList.add('kg-spin-flash')); }
@@ -168,7 +172,7 @@ class SpinWheel {
 		this.segments = Array.isArray(m.segments) ? m.segments : [];
 		this._renderLegend();
 		this._drawWheel();
-		if (this.phase === 'loading' || this.phase === 'error') { this.phase = 'ready'; this._status('', ''); }
+		if (this.phase === 'loading' || this.phase === 'error') { this.phase = 'ready'; this.busy = false; this._status('', ''); }
 		this._sync();
 		this._startCountdown();
 	}
@@ -187,7 +191,6 @@ class SpinWheel {
 	_onResult(m) {
 		// Land the wheel on the server's chosen segment, then reveal the prize.
 		if (m.mode === 'free' && Number.isFinite(m.nextFreeSpinAt) && this.info) this.info.nextFreeSpinAt = m.nextFreeSpinAt;
-		this._pendingResult = m;
 		// Headless (modal already closed mid-settle): skip the flourish and deliver
 		// the result straight to the background pill.
 		if (this._headless) { this._reveal(m); return; }
@@ -212,12 +215,57 @@ class SpinWheel {
 		this.busy = false;
 		this._stopSpin();
 		this.phase = 'ready';
+		// A paid denial AFTER the payment broadcast must never read as "pay again":
+		// real $THREE already moved on-chain. Keep the signature and its Solscan
+		// receipt on screen and say plainly that no spin was consumed. The server
+		// re-accepts the exact same txSig+quote for the life of the quote
+		// (handleSpinPaidSettle reserves the nonce only on a successful roll), so
+		// for a not_found that outlived the automatic retries the honest recovery
+		// is re-settling the SAME payment, never signing a new one.
+		const paidSig = m?.mode === 'paid' && m?.reason !== 'already_settled' ? this._sig : null;
+		if (paidSig) {
+			// Headless pills are terminal (the modal is gone), so the retry button is
+			// only offered while the modal is up with a live quote.
+			const canResettle = !this._headless && !!this._prep && m.reason === 'not_found';
+			const receipt = el('a', { href: solanaTxExplorerUrl(NETWORK, paidSig), target: '_blank', rel: 'noopener', text: 'view on Solscan ↗' });
+			this._statusNode(canResettle
+				? el('span', {}, [
+					'The server can’t see your confirmed payment yet. It went through on-chain (',
+					receipt,
+					') and no spin was consumed. ',
+					el('button', { class: 'kg-spin-retry', type: 'button', onclick: () => this._resettle() }, 'Retry settle'),
+					' re-checks that same payment; it never charges you again.',
+				])
+				: el('span', {}, [
+					`${this._denyText(m)} Your payment went through on-chain (`,
+					receipt,
+					') but no spin was consumed. Do not pay again; keep that transaction as your receipt.',
+				]), 'err');
+			if (this._headless) { this._pillDone(); return; }
+			if (!canResettle) { this._prep = null; this._sig = null; this._paymentLive = false; }
+			this._sync();
+			return;
+		}
 		this._prep = null;
 		this._sig = null;
 		this._paymentLive = false;
 		this._status(this._denyText(m), 'err');
 		if (this._headless) { this._pillDone(); return; }
 		this._sync();
+	}
+
+	// Re-submit the SAME txSig+quote after the automatic not_found retries ran
+	// out: no wallet prompt, no new payment. The server accepts the pair until
+	// the quote expires and consumes the nonce only when a roll is granted.
+	_resettle() {
+		if (this._closed || this.busy || !this._prep || !this._sig) return;
+		this._settleAttempts = 0;
+		this.busy = true;
+		this.phase = 'spinning';
+		this._startSpin();
+		this._status('Verifying payment & rolling…', '');
+		this._sync();
+		this._settle();
 	}
 
 	_denyText(m) {
@@ -550,7 +598,7 @@ class SpinWheel {
 			return;
 		}
 		this.freeBtn.disabled = !ready || this.busy;
-		this.freeBtn.textContent = ready ? 'Free spin' : 'Free spin';
+		this.freeBtn.textContent = ready ? 'Free spin' : `Free spin in ${this._fmtCountdown(next - now)}`;
 		this.freeSub.textContent = ready ? 'Ready now · 1 per 12h' : `Next free spin in ${this._fmtCountdown(next - now)}`;
 		this.freeSub.dataset.ready = ready ? '1' : '0';
 	}
@@ -587,7 +635,13 @@ class SpinWheel {
 		this._syncFree();
 	}
 
-	_setBusy(on, text) { if (text != null) this._status(text, ''); }
+	// Track the busy flag for real and reflect it on both spin buttons, which
+	// disable through _sync. Optional text goes to the status line.
+	_setBusy(on, text) {
+		this.busy = !!on;
+		if (text != null) this._status(text, '');
+		this._sync();
+	}
 	_status(text, kind) {
 		if (this._headless) { this._pill(text, kind); return; }
 		this.status.textContent = text || ''; this.status.dataset.kind = kind || '';
@@ -630,7 +684,7 @@ class SpinWheel {
 			this._headless = true;
 			this._stopSpin();
 			if (this._countdownTimer) { clearInterval(this._countdownTimer); this._countdownTimer = null; }
-			window.removeEventListener('keydown', this._onKey);
+			this._releaseModal?.();
 			this.overlay?.remove();
 			this.overlay = null;
 			if (_open === this) _open = null;
@@ -651,7 +705,7 @@ class SpinWheel {
 		if (this._loadTimer) { clearTimeout(this._loadTimer); this._loadTimer = null; }
 		for (const off of this._offs || []) { try { off(); } catch {} }
 		this._offs = [];
-		window.removeEventListener('keydown', this._onKey);
+		this._releaseModal?.();
 		this.overlay?.remove();
 		this.overlay = null;
 		if (_open === this) _open = null;

@@ -20,6 +20,7 @@
 import {
 	COSMETICS, SLOTS, SLOT_LABELS, DEFAULT_LOADOUT,
 } from '../../multiplayer/src/cosmetics-catalog.js';
+import { openModal } from './a11y.js';
 
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -75,7 +76,7 @@ export class CosmeticsWardrobe {
 		this.body = el('div', { class: 'cw-body' });
 
 		this.panel = el('div', {
-			class: 'cw-panel', role: 'dialog', 'aria-modal': 'false',
+			class: 'cw-panel', role: 'dialog', 'aria-modal': 'true',
 			'aria-label': 'My Cosmetics wardrobe',
 		}, [
 			el('div', { class: 'cw-head' }, [
@@ -90,7 +91,9 @@ export class CosmeticsWardrobe {
 
 		this.root = el('div', { class: 'cw-root', id: 'cc-wardrobe', hidden: true }, [this.panel]);
 		this.root.addEventListener('click', (e) => { if (e.target === this.root) this.close(); });
-		this._onKey = (e) => { if (e.key === 'Escape' && !this.root.hidden) { e.stopPropagation(); this.close(); } };
+		// World hotkeys live on `window`; keystrokes aimed at the wardrobe must not
+		// also drive the avatar behind it.
+		this.panel.addEventListener('keydown', (e) => e.stopPropagation());
 		document.body.appendChild(this.root);
 	}
 
@@ -103,8 +106,9 @@ export class CosmeticsWardrobe {
 		if (this.isOpen()) return;
 		this.root.hidden = false;
 		requestAnimationFrame(() => this.root.classList.add('cw-in'));
-		document.addEventListener('keydown', this._onKey, true);
-		this.closeBtn.focus();
+		// Escape stack + Tab containment + focus restore, shared with every other
+		// /play panel (src/game/a11y.js).
+		this._releaseModal = openModal(this.panel, { close: () => this.close(), initialFocus: this.closeBtn });
 		// If no profile yet show loading skeleton; it fills in when setProfile arrives.
 		if (!this._cosmetics) this._renderLoading();
 	}
@@ -112,12 +116,14 @@ export class CosmeticsWardrobe {
 	close() {
 		if (!this.isOpen()) return;
 		this.root.classList.remove('cw-in');
-		document.removeEventListener('keydown', this._onKey, true);
+		this._releaseModal?.();
+		this._releaseModal = null;
 		setTimeout(() => { this.root.hidden = true; }, 180);
 	}
 
 	dispose() {
-		document.removeEventListener('keydown', this._onKey, true);
+		this._releaseModal?.();
+		this._releaseModal = null;
 		this.root.remove();
 	}
 

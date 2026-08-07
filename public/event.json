@@ -1,12 +1,16 @@
 {
-	"$comment": "The live /play event. Single source of truth for BOTH the countdown pill/banner (src/game/event-countdown.js) and the in-world meetup experience layer (src/game/meetup-event.js: agenda drawer, go-live moments, synchronized fireworks, commemorative photo). Times are ISO-8601 UTC. agenda[].atMin is minutes after startsAt. Preview locally with ?meetup=now or ?meetup=<ISO> on /play.",
+	"$comment": "The live /play event. Single source of truth for the countdown pill/banner (src/game/event-countdown.js), the in-world meetup experience layer (src/game/meetup-event.js: agenda drawer, go-live moments, synchronized fireworks, commemorative photo), AND the server-side souvenir grant (multiplayer/src/event-drop.js, which fetches this same file). Times are ISO-8601 UTC. agenda[].atMin is minutes after startsAt. Preview locally with ?meetup=now or ?meetup=<ISO> on /play.",
 	"id": "three-first-meetup",
 	"name": "$THREE First Holders Meetup",
 	"tagline": "The first live gathering in the three.ws world. Drop in, hang out, win prizes.",
-	"startsAt": "2026-08-07T17:00:00Z",
-	"endsAt": "2026-08-07T19:00:00Z",
+	"startsAt": "2026-08-07T09:36:18Z",
+	"endsAt": "2026-08-07T11:37:18Z",
 	"link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three",
 	"linkLabel": "Join the $THREE world",
+	"souvenir": {
+		"cosmeticId": "laurel-meetup",
+		"$comment": "Free commemorative wearable granted once to every player in the world named by `link` between startsAt and endsAt. Must be an id in multiplayer/src/cosmetics-catalog.js with tier 'event' — the server refuses to grant anything else, so this field can never hand out a boutique item. Drop the field to run an event with no souvenir."
+	},
 	"agenda": [
 		{ "atMin": 0, "title": "Doors open in the plaza", "detail": "Say hi in chat, show off your fit, grab a commemorative photo", "icon": "👋" },
 		{ "atMin": 20, "title": "King of the Totem showdown", "detail": "Hold the gold ring at the totem to be crowned. Winner takes the round", "icon": "👑" },

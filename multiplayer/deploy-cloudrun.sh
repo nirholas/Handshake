@@ -26,9 +26,17 @@ PROJECT="$(gcloud config get-value project 2>/dev/null)"
 # CONCURRENCY is the # of simultaneous connections Cloud Run routes to ONE
 # instance. The platform default is 80 — for a WebSocket server that is a hard
 # ~80-player ceiling, so we raise it well above the per-instance comfort limit.
+#
+# CPU/MEMORY are the defaults a redeploy applies, so they are not merely a first
+# -deploy convenience: `gcloud run deploy` REPLACES the resource limits every
+# time. Raising them by hand on the live service (as event pre-scaling did on
+# 2026-08-07) survives exactly until the next deploy from this script, and a
+# mid-event hotfix that silently halves the world server's CPU is the worst
+# possible time to discover that. The defaults below are the event-day floor;
+# lower them here, not on the service.
 CONCURRENCY="${CONCURRENCY:-1000}"
-CPU="${CPU:-2}"
-MEMORY="${MEMORY:-2Gi}"
+CPU="${CPU:-4}"
+MEMORY="${MEMORY:-8Gi}"
 MIN_INSTANCES="${MIN_INSTANCES:-1}"
 
 # Horizontal scaling: a Colyseus fleet only works when the room registry +

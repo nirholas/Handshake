@@ -8,7 +8,7 @@
 // feed — same response shape — so the market surfaces degrade to live pump.fun
 // data instead of a hard error. Only errors when both sources are unavailable.
 //
-// Response: { data: [ { mint, symbol, name, logo, price_usd, rank } ] }
+// Response: { data: [ { mint, symbol, name, logo, price_usd, usd_market_cap, rank } ] }
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';

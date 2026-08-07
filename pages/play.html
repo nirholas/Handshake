@@ -44,8 +44,17 @@
 	<meta name="twitter:description" content="Play in your coin's 3D community world. Walk, chat, and hang out with fellow holders."  data-i18n-attr="content:play.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Play&amp;d=Jump+into+a+live+coin+community+world+and+explore+it+with+your+avatar.&amp;p=%2Fplay" />
 
+		<!--
+			Brand typography. coincommunities.css asks for Inter everywhere, but this
+			page never loaded a face for it, so the whole surface (including the boot
+			wordmark) silently rendered in the OS default. Preload the latin subset so
+			the loader's first paint is already on-brand, no FOUT.
+			See docs/DESIGN-TOKENS.md — standalone pages must load /fonts/fonts.css.
+		-->
+		<link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/src/game/coincommunities.css" />
-	
+
 	<link rel="canonical" href="https://three.ws/play">
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
@@ -57,6 +66,19 @@
 			<div class="kx-loading-card">
 				<img class="kx-loading-logo" src="/three.svg" alt="three.ws" width="38" height="38" />
 				<div class="kx-loading-mark">COIN COMMUNITIES</div>
+				<!--
+					Deep-link identity. A shared /play?coin=…&name=…&symbol=…&image=… link
+					already carries everything needed to say WHICH world is opening, so the
+					inline script below fills this in before the app bundle has even parsed.
+					Stays hidden on a plain /play visit.
+				-->
+				<div class="kx-boot-coin" hidden>
+					<span class="kx-boot-coin-art"><img alt="" width="44" height="44" /><span class="kx-boot-coin-mono" aria-hidden="true"></span></span>
+					<span class="kx-boot-coin-text">
+						<span class="kx-boot-coin-name"></span>
+						<span class="kx-boot-coin-sym"></span>
+					</span>
+				</div>
 				<div class="kx-boot-stage">
 					<canvas id="kx-boot-avatar" aria-hidden="true"></canvas>
 					<div class="kx-boot-fallback" aria-hidden="true"></div>
@@ -66,7 +88,19 @@
 			</div>
 		</div>
 
-		<canvas id="kx-canvas"></canvas>
+		<!--
+			The world itself is a keyboard stop, not a decorative image: Tab lands
+			here, the label says what it is and how to drive it, and role=application
+			tells a screen reader to pass keystrokes through instead of intercepting
+			them for its own browse-mode shortcuts.
+		-->
+		<canvas
+			id="kx-canvas"
+			tabindex="0"
+			role="application"
+			aria-label="The 3D coin community world. Walk with W A S D or the arrow keys, hold Shift to run, Space to jump, drag or use the mouse to look around. Press Enter to open chat, Q for emotes, E to talk to whoever is nearby, and Z to hide the panels."
+			data-i18n-attr="aria-label:play.canvas_label"
+		></canvas>
 
 		<script>
 		/* Boot watchdog: inline on purpose so it works even when the app bundle
@@ -125,22 +159,50 @@
 				l.replaceChildren(card);
 				retry.focus();
 			}
-			/* A failed script/stylesheet is unambiguously boot-fatal: fail now.
-			   Runtime errors and unhandled rejections can also come from benign
-			   background work racing the boot, so they only arm a short grace
-			   timer; if boot completes first, bootPending() disarms the card. */
+			/* Which failures are actually boot-fatal.
+
+			   This watchdog exists for one thing: a stale cached HTML pointing at
+			   chunks a deploy already removed, where nothing will ever finish and
+			   only a reload helps. Everything else that reaches these listeners is
+			   noise, and covering a world that is loading fine with a full-screen
+			   "Couldn't load the world" is a worse failure than the one being
+			   guarded against. Two visitors we expect at an event proved the old
+			   rules too eager:
+
+			   1. An ad blocker or privacy extension blocks one of the optional
+			      extras (/brand.js, /i18n.js) or any third-party script. That is a
+			      resource error on a SCRIPT tag, which used to fail instantly even
+			      though the game modules were downloading normally. Only a
+			      same-origin, non-optional script or stylesheet counts now.
+			   2. Flaky wifi makes a background request reject. Every fetch boundary
+			      in the app handles its own failure, so a rejected request is not a
+			      boot failure. Network-shaped rejections are ignored outright, and
+			      anything else gets a grace long enough for a slow but healthy boot
+			      to finish and disarm it (bootPending). */
+			var OPTIONAL_SCRIPTS = /\/(brand|i18n|theme-switcher)\.js(\?|$)/;
+			function isNetworkNoise(v) {
+				var s = (v && (v.message || v.name)) || String(v || '');
+				return /Failed to fetch|NetworkError|Load failed|ERR_BLOCKED|ERR_FAILED|AbortError|network error/i.test(s);
+			}
 			function failSoon(title, body) {
-				setTimeout(function () { fail(title, body); }, 8000);
+				setTimeout(function () { fail(title, body); }, 20000);
 			}
 			window.addEventListener('error', function (e) {
 				var t = e && e.target;
 				if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) {
+					var url = t.src || t.href || '';
+					/* Cross-origin scripts and the optional extras are blockable by
+					   design; the world does not depend on any of them. */
+					if (url && url.indexOf(location.origin) !== 0) return;
+					if (OPTIONAL_SCRIPTS.test(url)) return;
 					fail('Couldn’t load the world', 'A file failed to load. This usually fixes itself on a reload; the site may have just been updated.');
 				} else if (e && (e.error || e.message)) {
+					if (isNetworkNoise(e.error || e.message)) return;
 					failSoon('Couldn’t load the world', 'Something went wrong while starting Coin Communities. Reload to try again.');
 				}
 			}, true);
-			window.addEventListener('unhandledrejection', function () {
+			window.addEventListener('unhandledrejection', function (e) {
+				if (isNetworkNoise(e && e.reason)) return;
 				failSoon('Couldn’t load the world', 'Something went wrong while starting Coin Communities. Reload to try again.');
 			});
 			setTimeout(function () {

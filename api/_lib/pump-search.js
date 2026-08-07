@@ -12,7 +12,7 @@
 // (returns null) on either source's failure; the caller decides what an
 // all-null result means.
 //
-// Response item shape: { mint, symbol, name, logo, price_usd, rank }
+// Response item shape: { mint, symbol, name, logo, price_usd, usd_market_cap, rank }
 
 import { normalizeGatewayURL } from '../../src/ipfs.js';
 
@@ -48,6 +48,7 @@ export async function searchBirdeye(q, limit) {
 			name: t.name || t.symbol || '',
 			logo: t.logo_uri || t.logoURI || null,
 			price_usd: typeof t.price === 'number' ? t.price : null,
+			usd_market_cap: typeof t.marketcap === 'number' ? t.marketcap : (typeof t.market_cap === 'number' ? t.market_cap : null),
 			rank: null,
 		}))
 		.filter((t) => typeof t.mint === 'string' && t.mint.length >= 32);
@@ -84,6 +85,7 @@ export async function searchPumpFun(q, limit) {
 			name: c.name || c.symbol || '',
 			logo: normalizeGatewayURL(c.image_uri || c.image || '') || null,
 			price_usd: null,
+			usd_market_cap: typeof c.usd_market_cap === 'number' ? c.usd_market_cap : null,
 			rank: i + 1,
 		}))
 		.filter((t) => typeof t.mint === 'string' && t.mint.length >= 32);

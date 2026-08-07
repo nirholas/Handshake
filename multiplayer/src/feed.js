@@ -16,7 +16,7 @@ const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || '';
 
 const FEED_KEY = 'feed:events';
 const MAX_EVENTS = 200;
-const ALLOWED_TYPES = new Set(['coin-buy', 'agent-deploy', 'level-up', 'world-join', 'jackpot', 'mission-complete']);
+const ALLOWED_TYPES = new Set(['coin-buy', 'agent-deploy', 'level-up', 'world-join', 'jackpot', 'mission-complete', 'war-result']);
 
 // Per-event-kind cooldown so a busy world can't flood the global ticker with a
 // hundred near-identical lines. Keyed by `${type}:${dedupeKey}`.

@@ -75,8 +75,8 @@ function getDracoLoader() {
 let _hdriPromise = null;
 function getHdriTexture() {
 	if (!_hdriPromise) {
-		_hdriPromise = import('three/addons/loaders/RGBELoader.js').then(({ RGBELoader }) =>
-			new RGBELoader().loadAsync(`${AR_LAUNCH_ORIGIN}/hdri/studio.hdr`),
+		_hdriPromise = import('three/addons/loaders/HDRLoader.js').then(({ HDRLoader }) =>
+			new HDRLoader().loadAsync(`${AR_LAUNCH_ORIGIN}/hdri/studio.hdr`),
 		);
 	}
 	return _hdriPromise;

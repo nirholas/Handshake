@@ -266,6 +266,17 @@
 .ps-skill-lvl { font-size: 11px; color: var(--cc-dim); font-variant-numeric: tabular-nums; }
 .ps-skill-bar { height: 5px; background: rgba(255, 255, 255, 0.08); border-radius: 99px; overflow: hidden; }
 .ps-skill-fill { display: block; height: 100%; background: #fff; border-radius: 99px; transition: width 0.4s ease; }
+.ps-skill-next { margin-top: 3px; font-size: 10.5px; color: var(--cc-faint); font-variant-numeric: tabular-nums; }
+
+/* What the five bars are working toward. Blank until the server states the gate,
+   so this line is never a guess. */
+.ps-skills-next {
+	margin: 0 12px 12px; padding: 9px 10px; border-radius: var(--cc-radius-sm);
+	font-size: 11px; line-height: 1.45; color: var(--cc-dim);
+	background: rgba(255, 255, 255, 0.04); border: 1px solid var(--cc-edge-soft);
+}
+.ps-skills-next:empty { display: none; }
+.ps-skills-next[data-state="open"] { color: var(--cc-text); border-color: var(--cc-edge); }
 
 /* ---- My Cosmetics (R23) ---- */
 .ps-cos { width: 320px; }
@@ -377,6 +388,9 @@
 	line-height: 1.5;
 	color: var(--cc-faint);
 }
+.ps-cos-hint a { color: var(--cc-text); text-decoration: none; border-bottom: 1px solid var(--cc-edge); white-space: nowrap; }
+.ps-cos-hint a:hover { border-bottom-color: currentColor; }
+.ps-cos-hint a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 2px; }
 .ps-cos-state {
 	display: flex;
 	flex-direction: column;

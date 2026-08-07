@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-07T09:31:50.187Z",
+	"generated_at": "2026-08-07T09:59:03.491Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -20,7 +20,7 @@
 			"date": "2026-08-07",
 			"type": "launch",
 			"title": "Live event",
-			"summary": "The live three.ws community meetup: when it starts, what is on the agenda, who is in the world right now, and the event leaderboard.",
+			"summary": "The live three.ws community meetup: a ticking countdown off the same config /play reads, the run of show in your own timezone, an add-to-calendar file, who is in the world right now, and the one door in.",
 			"link": "/event",
 			"tags": [
 				"launch"
@@ -116,7 +116,7 @@
 			"date": "2026-08-07",
 			"type": "update",
 			"title": "Play now counts down to the next community event",
-			"summary": "The Play lobby shows a live banner for the upcoming $THREE Community Day: the event name, when it starts in your own timezone, and a ticking countdown. Once you are inside a world, a small dismissible reminder pill keeps the countdown in view, and when the event goes live both switch to a LIVE marker with a one-click jump into the $THREE world. After the event ends everything quietly disappears on its own.",
+			"summary": "The Play lobby shows a live banner for the upcoming $THREE First Holders Meetup: the event name, when it starts in your own timezone, and a ticking countdown. Once you are inside a world, a small dismissible reminder pill keeps the countdown in view, and when the event goes live both switch to a LIVE marker with a one-click jump into the $THREE world. After the event ends everything quietly disappears on its own.",
 			"link": "/play",
 			"tags": [
 				"feature"
@@ -153,6 +153,16 @@
 			"tags": [
 				"security",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-07",
+			"type": "update",
+			"title": "The event countdown is now on the front page",
+			"summary": "You no longer have to open Play to find out when the next live community event starts. The three.ws home page now carries a slim strip above the hero with the event name, the start time in your own timezone, and a countdown ticking down to the second. The moment the event begins it switches to LIVE on its own, without a refresh, and it takes itself off the page once the event is over. One click on it drops you straight into the $THREE world. If you would rather not see it, dismiss it once and it stays gone, in Play as well as on the home page. Every countdown surface across the site reads the same event schedule, so they can never disagree about when things start.",
+			"link": "/",
+			"tags": [
+				"feature"
 			]
 		},
 		{

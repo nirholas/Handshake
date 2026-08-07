@@ -21,7 +21,7 @@
 // channels. Nothing here trusts a client-sent position, target or damage number.
 
 import {
-	addItem, hasRoomFor, removeItem, countItem, dropCarried, reviveProfile,
+	addItem, hasRoomFor, removeItem, countItem, dropCarried, reviveProfile, creditGold,
 } from './economy.js';
 import { weaponDef, mobStats, rollLoot, itemLabel } from './items.js';
 import {
@@ -353,7 +353,7 @@ export function handleAttack(room, client) {
 			mob.state = 'dead';
 			const stats = mobStats(mob.kind);
 			room._grantXp(client, profile, 'combat', 8 + (stats?.xp || 0));
-			if (stats?.gold) profile.gold += stats.gold;
+			if (stats?.gold) creditGold(profile, stats.gold);
 			const loot = rollLoot(mob.kind, Math.random);
 			spillTombstone(room, mob.x, mob.z, itemLabel(mob.kind), { gold: 0, items: loot });
 			room._sendInv(client, profile);
@@ -428,7 +428,7 @@ export function handleLoot(room, client, payload) {
 	// in the marker for another trip (or another looter).
 	const goldGained = drop.gold > 0 ? drop.gold : 0;
 	if (goldGained > 0) {
-		profile.gold = Math.min(0xffffffff, profile.gold + goldGained);
+		creditGold(profile, goldGained);
 		drop.gold = 0;
 	}
 	const gained = [];

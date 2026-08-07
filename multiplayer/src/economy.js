@@ -19,6 +19,7 @@ import {
 } from './items.js';
 import {
 	DEFAULT_LOADOUT, SLOTS, getCosmetic, canWear, sanitizeLoadout, freeCosmeticIds,
+	isUnlockableCosmetic,
 } from './cosmetics-catalog.js';
 
 export const INV_SIZE = 24;
@@ -102,12 +103,15 @@ export function ownedCosmeticSet(profile) {
 	return owned;
 }
 
-// Grant a premium cosmetic into an account's owned list (the W04 unlock hook:
-// the shop calls this after a $THREE payment settles). Idempotent; ignores free
-// or unknown ids. Returns true when it newly unlocked something.
+// Grant an unlockable cosmetic into an account's owned list. Two callers: the
+// W04 boutique after a $THREE payment settles (premium tier), and the event-drop
+// grant when a player is in the world during a live meetup (event tier).
+// Idempotent; ignores free or unknown ids — a free cosmetic is implicitly owned
+// and storing it would bloat every save with nothing. Returns true when it newly
+// unlocked something, so the caller can skip a persist that would change nothing.
 export function grantCosmetic(profile, id) {
 	const c = getCosmetic(id);
-	if (!c || c.tier !== 'premium') return false;
+	if (!c || !isUnlockableCosmetic(id)) return false;
 	if (!profile.cosmetics) profile.cosmetics = { owned: [], equipped: { ...DEFAULT_LOADOUT } };
 	if (!Array.isArray(profile.cosmetics.owned)) profile.cosmetics.owned = [];
 	if (profile.cosmetics.owned.includes(id)) return false;
@@ -122,10 +126,18 @@ export function grantCosmetic(profile, id) {
 // rig can't render — those are ignored, never errored). Idempotent via
 // grantCosmetic. Returns the count newly unlocked, so a caller can skip a persist
 // when nothing changed.
+//
+// Deliberately PREMIUM-ONLY: this ledger records purchases, and an event
+// souvenir has no purchase path. Filtering here rather than relying on the
+// ledger's contents means a stray write on the x402 side can never mint a
+// "you had to be there" item for someone who wasn't.
 export function mergeOwnedFromLedger(profile, ledgerIds) {
 	if (!Array.isArray(ledgerIds) || !ledgerIds.length) return 0;
 	let granted = 0;
-	for (const id of ledgerIds) if (grantCosmetic(profile, id)) granted++;
+	for (const id of ledgerIds) {
+		if (getCosmetic(id)?.tier !== 'premium') continue;
+		if (grantCosmetic(profile, id)) granted++;
+	}
 	return granted;
 }
 
@@ -157,8 +169,11 @@ export function restoreProfile(saved, playerId = '') {
 	if (Array.isArray(saved.inv)) fill(base.inv, saved.inv);
 	if (Array.isArray(saved.hotbar)) fill(base.hotbar, saved.hotbar);
 	if (Number.isFinite(saved.activeSlot)) base.activeSlot = Math.max(-1, Math.min(HOTBAR_SIZE - 1, saved.activeSlot | 0));
-	if (Number.isFinite(saved.gold)) base.gold = Math.max(0, Math.min(0xffffffff, saved.gold | 0));
-	if (Number.isFinite(saved.bank)) base.bank = Math.max(0, Math.min(0xffffffff, saved.bank | 0));
+	// Clamp BEFORE truncating: `| 0` is ToInt32, so applying it first wrapped any
+	// balance past 2^31 negative and then "clamped" it to zero, silently wiping
+	// the richest saves. Floor-then-clamp saturates at the ceiling instead.
+	if (Number.isFinite(saved.gold)) base.gold = Math.max(0, Math.min(0xffffffff, Math.floor(saved.gold)));
+	if (Number.isFinite(saved.bank)) base.bank = Math.max(0, Math.min(0xffffffff, Math.floor(saved.bank)));
 	if (Number.isFinite(saved.maxHp) && saved.maxHp > 0) base.maxHp = saved.maxHp | 0;
 	if (Number.isFinite(saved.hp)) base.hp = Math.max(0, Math.min(base.maxHp, saved.hp | 0));
 	if (Number.isFinite(saved.maxArmor) && saved.maxArmor > 0) base.maxArmor = saved.maxArmor | 0;
@@ -176,8 +191,11 @@ export function restoreProfile(saved, playerId = '') {
 	// then sanitize the equipped loadout against what this account may actually
 	// wear (drops anything unowned/renamed to the slot default).
 	if (saved.cosmetics && typeof saved.cosmetics === 'object') {
+		// Keep every unlockable tier, not just premium: an event souvenir has no
+		// re-grant path once its window closes, so dropping it here would silently
+		// destroy an item the owner can never get back.
 		const owned = Array.isArray(saved.cosmetics.owned)
-			? saved.cosmetics.owned.filter((id) => { const c = getCosmetic(id); return c && c.tier === 'premium'; })
+			? saved.cosmetics.owned.filter((id) => isUnlockableCosmetic(id))
 			: [];
 		base.cosmetics.owned = [...new Set(owned)];
 		base.cosmetics.equipped = sanitizeLoadout(saved.cosmetics.equipped, ownedCosmeticSet(base));
@@ -385,6 +403,15 @@ export function dropCarried(profile) {
 		s.item = ''; s.qty = 0;
 	}
 	return { gold, items };
+}
+
+// Saturating gold credit: every reward path adds through here so a balance can
+// approach the 32-bit ceiling but never exceed it (restoreProfile clamps to the
+// same ceiling, so nothing is ever lost to wraparound on reload).
+export function creditGold(profile, amount) {
+	const add = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
+	profile.gold = Math.min(0xffffffff, (profile.gold || 0) + add);
+	return profile.gold;
 }
 
 // Restore a player to fighting shape after respawn: full HP and a cleared armor bar

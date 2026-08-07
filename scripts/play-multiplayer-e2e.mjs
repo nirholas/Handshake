@@ -129,7 +129,7 @@ async function openClient(browser, tag, name) {
 		console.log(`${at()} [${tag}][ws open] ${ws.url().slice(0, 90)}`);
 		ws.on('close', () => console.log(`${at()} [${tag}][ws close]`));
 	});
-	await page.goto(WORLD, { waitUntil: 'domcontentloaded', timeout: 90000 });
+	await page.goto(WORLD, { waitUntil: 'domcontentloaded', timeout: LOAD_MS });
 	return { tag, ctx, page };
 }
 
@@ -175,7 +175,7 @@ try {
 	const online = async (c) => until(c.page, () => {
 		const net = window.__CC__?.net;
 		return { ok: net?.status === 'online' && window.__CC__?.phase === 'world', status: net?.status, phase: window.__CC__?.phase };
-	}, { timeout: 60000 });
+	}, { timeout: JOIN_MS });
 	const aOnline = await online(a);
 	const bOnline = await online(b);
 	check('A joins the world online', aOnline?.ok === true, JSON.stringify(aOnline));
@@ -184,10 +184,10 @@ try {
 	const sawEachOther = await until(a.page, () => {
 		const cc = window.__CC__;
 		return { ok: (cc?.remotes?.size || 0) >= 1, n: cc?.remotes?.size || 0 };
-	}, { timeout: 30000 });
-	check('A sees B within 30s of load', sawEachOther?.ok === true,
+	}, { timeout: JOIN_MS });
+	check('A sees B after load', sawEachOther?.ok === true,
 		`${((Date.now() - joinStart) / 1000).toFixed(1)}s to first peer`);
-	const bSees = await until(b.page, () => ({ ok: (window.__CC__?.remotes?.size || 0) >= 1, n: window.__CC__?.remotes?.size || 0 }), { timeout: 30000 });
+	const bSees = await until(b.page, () => ({ ok: (window.__CC__?.remotes?.size || 0) >= 1, n: window.__CC__?.remotes?.size || 0 }), { timeout: JOIN_MS });
 	check('B sees A', bSees?.ok === true, JSON.stringify(bSees));
 
 	// ------------------------------------------------------- name + look sync

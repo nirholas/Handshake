@@ -1,4 +1,4 @@
-// GET /api/play/population — how many people are standing in the /play worlds
+// GET /api/play/population: how many people are standing in the /play worlds
 // right now.
 //
 //   ?coin=<mint>   narrow to one community's worlds (the /event landing page

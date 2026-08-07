@@ -6,6 +6,7 @@
 // without try/catch boilerplate.
 
 import { PublicKey } from '@solana/web3.js';
+import { isTransientRpcError } from './connection.js';
 
 let _sdkPromise = null;
 async function loadSdk() {
@@ -41,11 +42,9 @@ function isMissingAccount(err) {
 // Jupiter price. Re-warning on every swallowed 429 here is what turned one
 // quota-exhausted provider into thousands of duplicate "[sdk-bridge] … 429"
 // lines. Stay quiet for these; genuine parse/programming errors still warn.
-function isTransientRpc(err) {
-	return /\b(429|500|502|503|504)\b|-32429|max usage reached|rate.?limit|quota|exhausted|timed?\s*out|fetch failed|socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|EAI_AGAIN|all solana rpc endpoints failed|all rpc endpoints exhausted/i.test(
-		String(err && err.message ? err.message : err),
-	);
-}
+// The test itself lives with the lane manager, so every caller that has to tell
+// "the chain says no" from "we could not ask" shares one definition.
+const isTransientRpc = isTransientRpcError;
 
 async function fetchState(connection, mint) {
 	const { OnlinePumpSdk } = await loadSdk();
