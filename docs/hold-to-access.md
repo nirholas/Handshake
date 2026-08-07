@@ -169,6 +169,50 @@ feature **Live** vs **Planned**, so the platform never promises an unwired perk.
 
 ---
 
+## Proving a holding from the browser
+
+The server only ever sees what the page sends it, so a gated surface that mints its proof
+from the wrong identity charges holders. **[`src/three-access.js`](../src/three-access.js)
+is the one client module a gated surface may use.** It resolves both identities a holder
+can arrive with:
+
+| Identity | How the pass is minted | Prompt? |
+|----------|------------------------|---------|
+| Signed in, wallet linked to the account | `POST /api/three/tier-pass` with the session cookie | silent |
+| Wallet connected, no account (Phantom, Seeker) | signs a domain-bound message, `POST { wallet, message, signature }` | one free signature |
+
+Wire a gated request in three steps:
+
+```js
+import { getAccess, getTierPass, attachTierPass } from './three-access.js';
+
+const { access } = (await getAccess('forge.gameready', { fresh: true })) || {};
+// Interactive only when the read says this identity is eligible, so a non-holder is
+// never asked to sign for something that could not unlock anything.
+await getTierPass({ interactive: Boolean(access?.eligible) });
+const res = await fetch('/api/forge-gameready', {
+  method: 'POST',
+  headers: attachTierPass({ 'content-type': 'application/json' }),
+  body: JSON.stringify(payload),
+});
+```
+
+Rules that keep the two identities from drifting apart:
+
+- **Mint before the request, not on page load.** A pass lives 10 minutes; minting at the
+  moment of the gated call is what guarantees the header is fresh.
+- **Read access with `{ fresh: true }`, and re-read on `wallet:changed`.** Connecting or
+  switching a wallet changes who is asking; the cached matrix is then the wrong identity's.
+- **Never gate the UI on the client's answer.** The server is the only authority; the
+  client read exists so the surface can state the viewer's real price up front instead of
+  a generic pitch.
+
+`src/three-tier-pass.js` is the earlier, session-only helper. It backs `<three-gate>`'s
+access read and mints nothing for a connected wallet, so a surface that uses it to build
+headers silently bills every account-less holder. Do not use it for a new gated request.
+
+---
+
 ## Activation roadmap
 
 Goal: **drive $THREE demand** by activating registered-but-dormant perks. A perk is only

@@ -20,7 +20,7 @@
 // price is whatever the server gate quotes — never hardcoded here.
 
 import { payForConsumption } from './forge-pay.js';
-import { threeHeaders } from '../three-tier-pass.js';
+import { attachTierPass, getAccess, getTierPass } from '../three-access.js';
 
 const resultPanel = document.getElementById('state-result');
 const viewer = document.getElementById('viewer');
@@ -207,6 +207,7 @@ if (resultPanel && viewer && triggerBtn) {
 	const statusEl = panel.querySelector('.gr-status');
 	const deltaEl = panel.querySelector('.gr-delta');
 	const downloadsEl = panel.querySelector('.gr-downloads');
+	const payNote = panel.querySelector('.gr-pay-note');
 
 	const state = {
 		glbUrl: null,
@@ -216,6 +217,7 @@ if (resultPanel && viewer && triggerBtn) {
 		running: false,
 		pollAbort: false,
 		previewUrl: null, // retopologized GLB used by the wireframe preview
+		access: null, // last resolved forge.gameready access payload
 	};
 
 	// ── Helpers ────────────────────────────────────────────────────────────────
@@ -381,6 +383,41 @@ if (resultPanel && viewer && triggerBtn) {
 		deltaEl.classList.add('is-shown');
 	}
 
+	// ── Entitlement ──────────────────────────────────────────────────────────
+	// Two identities can hold $THREE here, and both must clear the gate: a signed-in
+	// account with a linked wallet (mints its pass silently from the session), and a
+	// visitor who has only connected a wallet (proves ownership by signing a free,
+	// domain-bound message). The signature dialog is raised ONLY for a wallet the
+	// access read already calls eligible, so a non-holder is never asked to sign for
+	// something that could not unlock anyway.
+	async function resolveAccess() {
+		const data = await getAccess('forge.gameready', { fresh: true });
+		state.access = data?.access || null;
+		renderPayNote();
+		return state.access;
+	}
+
+	// Mint (or reuse) the tier proof this very request will carry. Never throws:
+	// both reads degrade to null, which just means the request goes out unproven and
+	// the server answers with the normal hold-or-pay 402.
+	async function primeTierProof() {
+		const access = await resolveAccess();
+		await getTierPass({ interactive: Boolean(access?.eligible) });
+	}
+
+	// The panel's footnote, told from what the viewer actually holds instead of the
+	// generic pitch. Unresolved access keeps the neutral default already in the DOM.
+	function renderPayNote() {
+		if (!payNote || !state.access) return;
+		if (state.access.eligible) {
+			payNote.innerHTML = 'Your $THREE holding covers this. Game-Ready exports are free for you.';
+			return;
+		}
+		const usd = Number(state.access.pay_per_use?.usd) || 0;
+		const price = usd > 0 ? `$${usd.toFixed(2)} per export` : 'a one-time fee';
+		payNote.innerHTML = `$THREE holders export free. Without a holding it is ${price}. <a href="/three-token">Hold $THREE →</a>`;
+	}
+
 	// ── Network ──────────────────────────────────────────────────────────────
 	function sleep(ms) {
 		return new Promise((r) => setTimeout(r, ms));
@@ -390,10 +427,9 @@ if (resultPanel && viewer && triggerBtn) {
 		// Carry the holder's $THREE tier pass so an eligible holder clears the gate
 		// (no payment); harmless / empty for everyone else. A non-holder attaches the
 		// settled pay-per-export proof instead.
-		const threeHdrs = await threeHeaders();
 		const res = await fetch('/api/forge-gameready', {
 			method: 'POST',
-			headers: { 'content-type': 'application/json', ...CLIENT_HEADERS, ...threeHdrs },
+			headers: attachTierPass({ 'content-type': 'application/json', ...CLIENT_HEADERS }),
 			body: JSON.stringify({
 				mesh_url: state.glbUrl,
 				topology: state.topology,
@@ -446,6 +482,9 @@ if (resultPanel && viewer && triggerBtn) {
 	// user dismissed the payment. The price comes from the server gate — never
 	// hardcoded — so it stays correct if the catalog price changes.
 	async function startWithGate(formats) {
+		// Prove the holding BEFORE the first attempt, so an eligible holder is never
+		// shown a pay modal for an export their $THREE already covers.
+		await primeTierProof();
 		try {
 			return await startExport(formats);
 		} catch (err) {
@@ -670,9 +709,19 @@ if (resultPanel && viewer && triggerBtn) {
 	function openPanel(open) {
 		panel.dataset.open = String(open);
 		triggerBtn.setAttribute('aria-expanded', String(open));
-		if (open) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-		else hideWireframe();
+		if (open) {
+			panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+			// Read the viewer's entitlement while they pick settings, so the footnote
+			// states their real price before they commit to the export.
+			resolveAccess();
+		} else hideWireframe();
 	}
+
+	// Connecting, switching, or disconnecting a wallet changes who is asking, so the
+	// resolved entitlement is stale. Re-read it while the panel is on screen.
+	window.addEventListener('wallet:changed', () => {
+		if (panel.dataset.open === 'true') resolveAccess();
+	});
 
 	triggerBtn.addEventListener('click', () => {
 		openPanel(panel.dataset.open !== 'true');
