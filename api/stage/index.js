@@ -10,8 +10,12 @@
  *   GET  /api/stage                  → directory: live shows first, then upcoming
  *   GET  /api/stage?id=<id>          → one stage: host, current show, leaderboard,
  *                                      host wallet (tip target), between-show state
+ *   GET  /api/stage?coin=<mint>      → the stage standing in that /play coin
+ *                                      world's plaza (F17), or { stage: null }
  *   POST /api/stage  { action:'create', agentId, title, format, voice, venue,
  *                      tipSplitBps, nextShowAt }     → owner provisions a stage
+ *   POST /api/stage  { action:'plaza', agentId, coinMint, … }
+ *                                                    → claim a coin world's plaza
  *   POST /api/stage  { action:'golive', stageId }    → open a show + notify holders
  *   POST /api/stage  { action:'endshow', stageId }   → close the current show
  *
@@ -28,8 +32,10 @@ import { ensureAgentWallet } from '../_lib/agent-wallet.js';
 import { insertNotification } from '../_lib/notify.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { normalizeSplitBps } from '../_lib/stage-split.js';
+import { plazaStageId } from '../../multiplayer/src/plaza-stage.js';
 
 const VENUES = new Set(['club', 'theater', 'plaza', 'arena']);
+const MAX_MINT = 64;
 const MAX_TITLE = 120;
 const MAX_FORMAT = 60;
 
@@ -55,6 +61,10 @@ async function ensureTables() {
 	await sql`CREATE INDEX IF NOT EXISTS stages_status ON stages (status, next_show_at)`;
 	await sql`CREATE INDEX IF NOT EXISTS stages_agent  ON stages (agent_id)`;
 	await sql`CREATE UNIQUE INDEX IF NOT EXISTS stages_agent_uniq ON stages (agent_id)`;
+	// Plaza binding (F17). Migration 20260807120000_stage_coin_mint.sql owns this on
+	// a migrated database; the ALTER covers one that has never run migrations.
+	await sql`ALTER TABLE stages ADD COLUMN IF NOT EXISTS coin_mint TEXT`;
+	await sql`CREATE INDEX IF NOT EXISTS stages_coin_mint ON stages (coin_mint) WHERE coin_mint IS NOT NULL`;
 	await sql`
 		CREATE TABLE IF NOT EXISTS shows (
 			id                UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -133,6 +143,48 @@ async function showLeaderboard(showId, limit = 10) {
 	return rows.map((r) => ({ label: r.label, total: Number(r.total), count: r.count }));
 }
 
+// One stage's full public read: host + venue config, whether a show is open, the
+// leaderboard for the show that matters (the open one, else the last one), and the
+// host wallet a tip is sent to. Null when the stage does not exist. Shared by the
+// ?id= and ?coin= reads so the /stage page and the in-world plaza can never see
+// two different shapes of the same show.
+async function stageDetail(stageId) {
+	if (!isUuid(stageId)) return null;
+	const [stage] = await sql`
+		SELECT s.*, a.name AS agent_name, a.avatar_url, a.profile_image_url, a.is_public
+		FROM stages s
+		JOIN agent_identities a ON a.id = s.agent_id AND a.deleted_at IS NULL
+		WHERE s.id = ${stageId}
+		LIMIT 1
+	`;
+	if (!stage) return null;
+
+	const [openShow] = await sql`
+		SELECT id, started_at, peak_audience, total_tips_atomic, tip_count
+		FROM shows WHERE stage_id = ${stageId} AND ended_at IS NULL
+		ORDER BY started_at DESC LIMIT 1
+	`;
+	const [lastShow] = openShow
+		? [null]
+		: await sql`
+			SELECT id, started_at, ended_at, peak_audience, total_tips_atomic, tip_count
+			FROM shows WHERE stage_id = ${stageId} AND ended_at IS NOT NULL
+			ORDER BY ended_at DESC LIMIT 1
+		`;
+	const leaderboardShow = openShow || lastShow;
+	const leaderboard = await showLeaderboard(leaderboardShow?.id);
+	const hostWallet = await readHostWallet(stage.agent_id);
+
+	return {
+		stage: shapeStage(stage),
+		live: !!openShow,
+		currentShow: openShow ? shapeShow(openShow) : null,
+		lastShow: lastShow ? shapeShow(lastShow) : null,
+		leaderboard,
+		hostWallet,
+	};
+}
+
 export default wrap(async (req, res) => {
 	cors(req, res, { methods: ['GET', 'POST', 'OPTIONS'] });
 	if (req.method === 'OPTIONS') return res.end();
@@ -162,42 +214,25 @@ async function handleGet(req, res) {
 		return json(res, 200, { stage: { ...shapeStage(stage), live: !!stage.is_live } }, { 'cache-control': 'no-store' });
 	}
 
+	// ── the stage standing in a coin world's plaza (F17) ──────────────────────
+	// The /play client derives this id itself (multiplayer/src/plaza-stage.js) and
+	// only needs the show state, so an UNCLAIMED plaza is a 200 with stage:null —
+	// the quiet-landmark case is normal, not an error.
+	if (req.query.coin) {
+		const mint = cleanStr(req.query.coin, MAX_MINT);
+		if (!mint) return json(res, 400, { error: 'invalid coin mint' });
+		const stageId = plazaStageId(mint);
+		const detail = await stageDetail(stageId);
+		if (!detail) return json(res, 200, { stage: null, stageId, coinMint: mint }, { 'cache-control': 'no-store' });
+		return json(res, 200, { ...detail, stageId, coinMint: mint }, { 'cache-control': 'no-store' });
+	}
+
 	// ── single stage ──────────────────────────────────────────────────────────
 	if (id) {
 		if (!isUuid(id)) return json(res, 400, { error: 'invalid stage id' });
-		const [stage] = await sql`
-			SELECT s.*, a.name AS agent_name, a.avatar_url, a.profile_image_url, a.is_public
-			FROM stages s
-			JOIN agent_identities a ON a.id = s.agent_id AND a.deleted_at IS NULL
-			WHERE s.id = ${id}
-			LIMIT 1
-		`;
-		if (!stage) return json(res, 404, { error: 'stage not found' });
-
-		const [openShow] = await sql`
-			SELECT id, started_at, peak_audience, total_tips_atomic, tip_count
-			FROM shows WHERE stage_id = ${id} AND ended_at IS NULL
-			ORDER BY started_at DESC LIMIT 1
-		`;
-		const [lastShow] = openShow
-			? [null]
-			: await sql`
-				SELECT id, started_at, ended_at, peak_audience, total_tips_atomic, tip_count
-				FROM shows WHERE stage_id = ${id} AND ended_at IS NOT NULL
-				ORDER BY ended_at DESC LIMIT 1
-			`;
-		const leaderboardShow = openShow || lastShow;
-		const leaderboard = await showLeaderboard(leaderboardShow?.id);
-		const hostWallet = await readHostWallet(stage.agent_id);
-
-		return json(res, 200, {
-			stage: shapeStage(stage),
-			live: !!openShow,
-			currentShow: openShow ? shapeShow(openShow) : null,
-			lastShow: lastShow ? shapeShow(lastShow) : null,
-			leaderboard,
-			hostWallet,
-		}, { 'cache-control': 'no-store' });
+		const detail = await stageDetail(id);
+		if (!detail) return json(res, 404, { error: 'stage not found' });
+		return json(res, 200, detail, { 'cache-control': 'no-store' });
 	}
 
 	// ── directory: live first, then upcoming, then recently-ended ──────────────
@@ -234,6 +269,7 @@ async function handlePost(req, res) {
 	const action = String(body.action || '').toLowerCase();
 
 	if (action === 'create') return createStage(req, res, session, body);
+	if (action === 'plaza') return claimPlaza(req, res, session, body);
 	if (action === 'golive') return goLive(req, res, session, body);
 	if (action === 'endshow') return endShow(req, res, session, body);
 	return json(res, 400, { error: 'unknown action' });
@@ -274,12 +310,81 @@ async function createStage(req, res, session, body) {
 		INSERT INTO stages (agent_id, owner_user_id, venue, title, format, voice, tip_split_bps, status, next_show_at)
 		VALUES (${agent.id}, ${session.id}, ${venue}, ${title}, ${format}, ${voice}, ${splitBps}, 'scheduled', ${nextShowAt})
 		ON CONFLICT (agent_id) DO UPDATE SET
-			venue = EXCLUDED.venue, title = EXCLUDED.title, format = EXCLUDED.format,
+			-- A stage bound to a coin world's plaza stays a plaza: editing its copy
+			-- through the generic create path must not silently move the venue out
+			-- from under the world that renders it.
+			venue = CASE WHEN stages.coin_mint IS NOT NULL THEN 'plaza' ELSE EXCLUDED.venue END,
+			title = EXCLUDED.title, format = EXCLUDED.format,
 			voice = EXCLUDED.voice, tip_split_bps = EXCLUDED.tip_split_bps,
 			next_show_at = EXCLUDED.next_show_at, status = 'scheduled', updated_at = NOW()
 		RETURNING *
 	`;
 	return json(res, 201, { ok: true, stage: shapeStage(row), hostWallet });
+}
+
+// Claim a /play coin world's plaza for an agent you own (F17). The row is written
+// AT the derived plaza id, which is what makes the world able to find the show
+// without a lookup: the client computes the same uuidv5 from the mint it is
+// standing in and joins that stage_world room. Idempotent for the same agent, so
+// re-claiming just updates the venue copy.
+async function claimPlaza(req, res, session, body) {
+	const agent = await ownedAgent(body.agentId, session.id);
+	if (!agent) return json(res, 403, { error: 'you do not own this agent' });
+
+	const mint = cleanStr(body.coinMint, MAX_MINT);
+	if (!mint) return json(res, 400, { error: 'coinMint is required' });
+	const stageId = plazaStageId(mint);
+
+	// The plaza is one venue: whoever holds it holds it until they release it.
+	const [held] = await sql`SELECT id, agent_id FROM stages WHERE id = ${stageId} LIMIT 1`;
+	if (held && held.agent_id !== agent.id) {
+		return json(res, 409, {
+			error: 'plaza_taken',
+			message: 'another agent already hosts this world\'s plaza stage',
+			stageId,
+		});
+	}
+	// One stage per agent (stages_agent_uniq). An agent that already has a stage
+	// elsewhere cannot also take a plaza — say so with the id they already own
+	// rather than failing on a constraint the caller can't see.
+	const [existing] = await sql`SELECT id FROM stages WHERE agent_id = ${agent.id} LIMIT 1`;
+	if (existing && existing.id !== stageId) {
+		return json(res, 409, {
+			error: 'agent_has_stage',
+			message: 'this agent already hosts another stage — use a different agent for the plaza',
+			stageId: existing.id,
+		});
+	}
+
+	const title = cleanStr(body.title, MAX_TITLE) || `${agent.name} Live`;
+	const format = cleanStr(body.format, MAX_FORMAT) || 'open mic';
+	const voice = cleanStr(body.voice, 40) || 'nova';
+	const splitBps = normalizeSplitBps(body.tipSplitBps);
+	const nextShowAt = parseFutureDate(body.nextShowAt);
+
+	let hostWallet = null;
+	try {
+		const w = await ensureAgentWallet(agent.id, session.id, { reason: 'stage_plaza' });
+		hostWallet = w?.address || null;
+	} catch (err) {
+		return json(res, 502, { error: 'could not provision host wallet', detail: err?.message });
+	}
+
+	const [row] = await sql`
+		INSERT INTO stages (id, agent_id, owner_user_id, venue, title, format, voice, tip_split_bps, status, next_show_at, coin_mint)
+		VALUES (${stageId}, ${agent.id}, ${session.id}, 'plaza', ${title}, ${format}, ${voice}, ${splitBps}, 'scheduled', ${nextShowAt}, ${mint})
+		ON CONFLICT (id) DO UPDATE SET
+			title = EXCLUDED.title, format = EXCLUDED.format, voice = EXCLUDED.voice,
+			tip_split_bps = EXCLUDED.tip_split_bps, next_show_at = EXCLUDED.next_show_at,
+			coin_mint = EXCLUDED.coin_mint, status = 'scheduled', updated_at = NOW()
+		RETURNING *
+	`;
+	return json(res, 201, {
+		ok: true,
+		stage: shapeStage(row),
+		hostWallet,
+		link: `/play?coin=${encodeURIComponent(mint)}`,
+	});
 }
 
 async function goLive(req, res, session, body) {
@@ -346,6 +451,9 @@ function shapeStage(s) {
 		next_show_at: s.next_show_at ? Date.parse(s.next_show_at) : null,
 		host_name: s.agent_name,
 		host_avatar: s.avatar_url || s.profile_image_url || null,
+		// The /play world this stage stands in, when it is a plaza stage — lets the
+		// directory card offer "attend in-world" alongside the /stage venue link.
+		coin_mint: s.coin_mint || null,
 	};
 }
 
