@@ -14,7 +14,7 @@
 
 import { Group, Vector3 } from 'three';
 import { AnimationManager } from '../../animation-manager.js';
-import { resolveAvatarUrl, buildAvatar, CLIP_IDLE, CLIP_WALK } from '../avatar-rig.js';
+import { resolveAvatarUrl, buildAvatar, releaseAvatar, CLIP_IDLE, CLIP_WALK } from '../avatar-rig.js';
 import { playEmoteClip } from '../avatar-rig.js';
 
 const BUBBLE_MS = 4600;
@@ -64,7 +64,13 @@ export class Npc {
 		// emote library. emote() below lazy-loads any clip on demand.
 		resolveAvatarUrl(def.avatar)
 			.then((u) => buildAvatar(this.rig, u, this.anim, { clips: 'locomotion' }))
-			.then(({ height }) => { if (!this._disposed) this.height = height; })
+			.then(({ height }) => {
+				// Disposed while the GLB was still downloading: buildAvatar has now
+				// added a template clone to a detached rig, so release it here or its
+				// shared-template ref never drops and the model stays resident.
+				if (this._disposed) { releaseAvatar(this.rig); return; }
+				this.height = height;
+			})
 			.catch(() => {});
 	}
 
@@ -129,6 +135,10 @@ export class Npc {
 
 	dispose() {
 		this._disposed = true;
+		// Free the shared-template clone's GPU buffers, not just the scene-graph
+		// reference. 21 NPCs per world across five world hops is 105 orphaned
+		// skinned avatars otherwise — the mobile-OOM profile.
+		releaseAvatar(this.rig);
 		this.scene.remove(this.rig);
 		this.label.remove();
 		this.bubble?.remove();

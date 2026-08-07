@@ -23,6 +23,8 @@ import {
 	BoxGeometry, TorusGeometry,
 	GridHelper, CanvasTexture,
 } from 'three';
+import { createStaticBatcher, disposeInstanced } from './static-batch.js';
+import { log } from '../shared/log.js';
 
 // FNV-1a hash → a stable 32-bit seed from a coin mint (or any string). Identical
 // input always yields the identical world; no Math.random in the layout path.
@@ -437,11 +439,15 @@ function makeProp(kind, geo, mats, rand) {
 	return g;
 }
 
-// Build the whole frontier town into `root`: a ring of storefronts facing the
-// square, a water tower, scattered props, and a couple of tumbleweeds that the
-// caller animates. Everything sits OUTSIDE playRadius so it frames the plaza
-// without ever blocking a player.
-function buildFrontierTown(root, rand, playRadius) {
+// Build the whole frontier town: a ring of storefronts facing the square, a
+// water tower, scattered props, and a couple of tumbleweeds that the caller
+// animates. Everything sits OUTSIDE playRadius so it frames the plaza without
+// ever blocking a player.
+//
+// The static dressing goes into `batch` (one InstancedMesh per shared
+// geometry+material instead of ~330 individual boxes and posts); only the
+// tumbleweeds, which move every frame, are added to `root` directly.
+function buildFrontierTown(root, rand, playRadius, batch) {
 	const between = (a, b) => a + (b - a) * rand();
 	const mats = {
 		wood: [
@@ -492,14 +498,14 @@ function buildFrontierTown(root, rand, playRadius) {
 		const shop = makeStorefront(geo, mats, rand, names[i % names.length]);
 		shop.position.set(Math.cos(a) * R, 0, Math.sin(a) * R);
 		shop.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a)); // facade faces the square
-		root.add(shop);
+		batch.add(shop);
 	}
 
 	// Water tower off one corner of the square.
 	const ta = 0.9;
 	const tower = makeWaterTower(geo, mats);
 	tower.position.set(Math.cos(ta) * (playRadius + 14), 0, Math.sin(ta) * (playRadius + 14));
-	root.add(tower);
+	batch.add(tower);
 
 	// Clutter scattered through the band between the boundary and the storefronts.
 	const KINDS = ['barrel', 'crate', 'wheel', 'hitch', 'trough', 'barrel', 'crate'];
@@ -509,7 +515,7 @@ function buildFrontierTown(root, rand, playRadius) {
 		const prop = makeProp(KINDS[Math.floor(rand() * KINDS.length)], geo, mats, rand);
 		prop.position.set(Math.cos(a) * R, 0, Math.sin(a) * R);
 		prop.rotation.y = rand() * Math.PI * 2;
-		root.add(prop);
+		batch.add(prop);
 	}
 
 	// A couple of tumbleweeds drifting the mesa band beyond the town — pure life.
@@ -614,6 +620,13 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 	// --- Distant hills -----------------------------------------------------
 	// A ring of broad, low mounds beyond the flora gives the horizon depth,
 	// hazing into the biome's sky seam.
+	//
+	// Hills, flora and town dressing are all static, all built from a handful of
+	// shared geometry+material pairs, and all go through the batcher below: the
+	// scene ends up with one InstancedMesh per pair instead of several hundred
+	// individually-submitted meshes (each of which also cost a second submission
+	// in the sun's shadow pass).
+	const batch = createStaticBatcher();
 	const hillGeo = new IcosahedronGeometry(1, 1);
 	const hillMat = new MeshStandardMaterial({ color: cHill, roughness: 1, metalness: 0, flatShading: true });
 	for (let i = 0; i < 14; i++) {
@@ -623,7 +636,7 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 		const w = between(45, 80), tall = between(14, 30);
 		h.scale.set(w, tall, w);
 		h.position.set(Math.cos(ang) * dist, tall * 0.18 - tall, Math.sin(ang) * dist);
-		root.add(h);
+		batch.add(h);
 	}
 
 	// --- Flora -------------------------------------------------------------
@@ -655,7 +668,6 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 		sagebrush: makeSagebrush,
 	}[biome.flora] || makeConifer;
 
-	const crystals = [];
 	for (let i = 0; i < biome.density; i++) {
 		const ang = rand() * Math.PI * 2;
 		const dist = between(playRadius + 6, playRadius + 60);
@@ -664,11 +676,12 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 		plant.position.set(Math.cos(ang) * dist, 0, Math.sin(ang) * dist);
 		plant.scale.multiplyScalar(s);
 		plant.rotation.y = rand() * Math.PI * 2;
-		root.add(plant);
-		if (neon) crystals.push(plant);
+		batch.add(plant);
 	}
 	// Alien crystals breathe with a faint emissive shimmer — biome-specific life.
-	if (crystals.length) {
+	// The pulse is written on the shared leaf materials, so every batched shard
+	// picks it up without the animator touching a single mesh.
+	if (neon && biome.density > 0) {
 		animators.push((t) => {
 			const k = 0.45 + Math.sin(t * 0.8) * 0.25;
 			mats.leafA.emissiveIntensity = 0.4 + k * 0.4;
@@ -681,7 +694,7 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 	// frontier town's tumbleweeds roll on the shared animator clock, looping a
 	// long chord through the mesa band and spinning as they go.
 	if (biome.town === 'frontier') {
-		const tumbles = buildFrontierTown(root, rand, playRadius);
+		const tumbles = buildFrontierTown(root, rand, playRadius, batch);
 		const SPAN = 90; // length of the roll before it loops back
 		animators.push((t, dt) => {
 			for (const tw of tumbles) {
@@ -692,6 +705,14 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 			}
 		});
 	}
+
+	// Everything static has been collected by now: emit the instanced batches.
+	// The counts are worth a line in the console because they are the single
+	// number that predicts frame cost in a crowded plaza.
+	const batchStats = batch.flush(root);
+	log.info(
+		`[world-env] ${biome.id} dressing: ${batchStats.meshes} meshes batched into ${batchStats.batches} draws`,
+	);
 
 	// --- Live-market reactivity --------------------------------------------
 	// The boundary ring is the world's heartbeat: a slow breathing pulse is the
@@ -757,6 +778,16 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 			scene.background?.dispose?.();
 			scene.background = null;
 			scene.fog = null;
+			// Instanced batches hold a per-instance attribute of their own on top
+			// of the shared geometry, so they need dispose() as well as the
+			// geometry/material sweep below.
+			disposeInstanced(root);
+			// The sun is a DirectionalLight, not a Mesh, so the traverse below skips
+			// it — and its 2048x2048 shadow depth target is one of the largest GPU
+			// allocations in the world. Free it explicitly, or every coin-world switch
+			// strands another full-size shadow map in VRAM.
+			sunLight.shadow?.map?.dispose?.();
+			sunLight.dispose?.();
 			root.traverse((n) => {
 				if (n.isMesh || n.isLine) {
 					n.geometry?.dispose?.();

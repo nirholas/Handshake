@@ -215,7 +215,6 @@ export class VehicleManager {
 			const push = (1 - d / reach) * Math.min(Math.abs(s.speed), 14) * dt;
 			p.x += (dx / d) * push;
 			p.z += (dz / d) * push;
-			this._damageHook?.({ id: entry.id, speed: s.speed, victim: 'self' });
 		}
 	}
 
@@ -373,7 +372,12 @@ export class VehicleManager {
 		this._pendingEnter = id;
 		this.net?.sendVEnter(id);
 		clearTimeout(this._pendingTimer);
-		this._pendingTimer = setTimeout(() => this._clearPending(), ENTER_TIMEOUT_MS);
+		// If the grant never arrives, tell the player instead of failing silently;
+		// clearing the pending flag lets _updatePrompt re-show the F prompt next tick.
+		this._pendingTimer = setTimeout(() => {
+			this._clearPending();
+			this.ui?.toast?.('Could not reach that vehicle. Try again.', 'warn');
+		}, ENTER_TIMEOUT_MS);
 		this.prompt.classList.remove('veh-show');
 	}
 
@@ -382,16 +386,30 @@ export class VehicleManager {
 		clearTimeout(this._pendingTimer);
 	}
 
+	// The server granted us a seat we cannot actually take (physics missing, the
+	// vehicle vanished locally, a newer state seated someone else). Hand the seat
+	// straight back so the car isn't left occupied for the whole room; the server
+	// no-ops the exit if we never actually held the seat.
+	_releaseSeat(id, s) {
+		this.net?.sendVExit(s
+			? { id, x: s.x, y: s.y, z: s.z, qx: s.qx, qy: s.qy, qz: s.qz, qw: s.qw, speed: 0 }
+			: { id, speed: 0 });
+	}
+
 	_beginDriving(id) {
 		this._clearPending();
 		const entry = this.vehicles.get(id);
-		if (!entry) return;
+		if (!entry) { this._releaseSeat(id, null); return; }
 		if (!this.phys) {
+			this._releaseSeat(id, entry.state);
 			this.ui?.toast?.('Vehicles need real-time physics, which failed to load this session.', 'warn');
 			return;
 		}
 		// Another change may have arrived; re-confirm the server seated us.
-		if (entry.state.driver && entry.state.driver !== this.net?.sessionId) return;
+		if (entry.state.driver && entry.state.driver !== this.net?.sessionId) {
+			this._releaseSeat(id, entry.state);
+			return;
+		}
 
 		const s = entry.state;
 		const yaw = yawFromQuat(s.qx, s.qy, s.qz, s.qw);
@@ -457,7 +475,7 @@ export class VehicleManager {
 		// flag CoinCommunities sets on a fresh coin spawn) so the next _stepLocal
 		// re-seeds it there instead of resolving a stale move from the old spot.
 		this.host._physicsActivePrev = false;
-		if (serverForced && t === null) this.ui?.toast?.('You were removed from the vehicle.', 'warn');
+		if (serverForced) this.ui?.toast?.('You were removed from the vehicle.', 'warn');
 	}
 
 	// ---------------------------------------------------------------- input glue
@@ -605,7 +623,8 @@ export class VehicleManager {
 	}
 
 	dispose() {
-		if (this._drivingId) this._endDriving(this.vehicle ? this.vehicle.transform() : null, true);
+		// Not serverForced: this is our own teardown, not an eviction — no toast.
+		if (this._drivingId) this._endDriving(this.vehicle ? this.vehicle.transform() : null, false);
 		clearTimeout(this._pendingTimer);
 		for (const [, entry] of this.vehicles) {
 			entry.collider?.remove();
@@ -615,6 +634,7 @@ export class VehicleManager {
 		this.vehicles.clear();
 		this.prompt?.remove();
 		this._hud?.remove();
+		document.getElementById('veh-styles')?.remove();
 		// `phys` is CoinCommunities' own shared world — owned and disposed by the
 		// host, not us. Just drop our reference.
 		this.phys = null;

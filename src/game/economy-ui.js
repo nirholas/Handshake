@@ -57,8 +57,53 @@ export class EconPanel {
 		this.status.setAttribute('data-kind', kind || '');
 	}
 
+	// --- one in-flight intent per panel ---------------------------------------
+	//
+	// Every trade is priced and applied by the server, which answers each intent
+	// with a fresh snapshot. So the honest way to stop a double-click from buying
+	// twice is to hold exactly one intent open at a time and wait for that answer:
+	// no optimistic balance maths on the client, and no second charge in flight
+	// while the first is still unresolved. Subclasses implement `_syncPending()`
+	// to re-render their buttons against `this.pending`.
+
+	// Claim the panel's single in-flight slot. Returns false when one is already
+	// open (the click is swallowed) or the world is offline (the player is told).
+	beginRequest(label, { timeoutMs = 9000, onTimeout } = {}) {
+		if (this.pending) return false;
+		if (this.net?.status && this.net.status !== 'online') {
+			this.setStatus('Reconnecting to the world. Nothing was charged, try again in a moment.', 'err');
+			return false;
+		}
+		this.pending = label;
+		this.setStatus(label);
+		this._syncPending?.();
+		clearTimeout(this._pendingTimer);
+		// A dropped reply must not strand the UI mid-trade with a stale balance:
+		// clear the guard, say plainly that nothing was charged, and re-read the
+		// authoritative profile rather than trusting anything local.
+		this._pendingTimer = setTimeout(() => {
+			this.pending = null;
+			this._syncPending?.();
+			this.setStatus('No answer from the world. Nothing was charged. Re-checking your purse…', 'err');
+			try { this.net?.requestProfile?.(); } catch { /* offline; the reconnect will resync */ }
+			onTimeout?.();
+		}, timeoutMs);
+		return true;
+	}
+
+	// Release the slot once the server has answered (an inv/profile echo, or a
+	// notice explaining the refusal). Idempotent.
+	endRequest() {
+		if (!this.pending) return;
+		clearTimeout(this._pendingTimer);
+		this._pendingTimer = null;
+		this.pending = null;
+		this._syncPending?.();
+	}
+
 	close() {
 		this.overlay.classList.remove('ec-on');
+		clearTimeout(this._pendingTimer);
 		for (const u of this._unsubs) { try { u(); } catch { /* ignore */ } }
 		this._unsubs = [];
 		setTimeout(() => this.overlay.remove(), 180);
@@ -104,10 +149,14 @@ class StorePanel extends EconPanel {
 		this.card.insertBefore(this.tabs, this.purse);
 
 		this.track(net.on('store', (msg) => { this.catalog = { sell: msg?.sell || [], buy: msg?.buy || [] }; this._render(); }));
-		this.track(net.on('profile', (snap) => { this._applyProfile(snap); }));
-		this.track(net.on('inv', (delta) => { this._applyProfile(delta); }));
+		this.track(net.on('profile', (snap) => { this.endRequest(); this._applyProfile(snap); }));
+		this.track(net.on('inv', (delta) => { this.endRequest(); this._applyProfile(delta); }));
+		// A refused trade (no cash, pack full, not for sale) answers with a notice
+		// and no snapshot, so it has to release the in-flight slot too.
 		this.track(net.on('notice', (n) => {
-			if (n?.kind === 'store' || n?.kind === 'full') this.setStatus(n.text || '', n.kind === 'full' ? 'err' : 'ok');
+			if (n?.kind !== 'store' && n?.kind !== 'full') return;
+			this.endRequest();
+			this.setStatus(n.text || '', n.kind === 'full' ? 'err' : 'ok');
 		}));
 
 		net.requestStore();
@@ -134,6 +183,9 @@ class StorePanel extends EconPanel {
 		if (this.tab === 'buy') this._renderBuy(); else this._renderSell();
 	}
 
+	// Re-render is enough: every button derives its disabled state from `pending`.
+	_syncPending() { this._render(); }
+
 	_renderBuy() {
 		if (!this.catalog.buy.length) {
 			this.body.appendChild(el('div', { class: 'ec-empty', text: 'Loading the catalog…' }));
@@ -149,9 +201,12 @@ class StorePanel extends EconPanel {
 					el('div', { class: 'ec-row-sub', text: `${entry.price} cash` }),
 				]),
 				el('button', {
-					class: 'ec-row-btn', type: 'button', text: 'Buy', disabled: !afford,
+					class: 'ec-row-btn', type: 'button', text: 'Buy', disabled: !afford || !!this.pending,
 					'aria-label': `Buy ${entry.label || entry.item} for ${entry.price} cash`,
-					onclick: () => { this.setStatus('Buying…'); this.net.storeBuy(entry.item); },
+					onclick: () => {
+						if (!this.beginRequest('Buying…')) return;
+						this.net.storeBuy(entry.item);
+					},
 				}),
 			]));
 		}
@@ -177,9 +232,12 @@ class StorePanel extends EconPanel {
 					el('div', { class: 'ec-row-sub', text: `${price} cash each · ${price * slot.qty} total` }),
 				]),
 				el('button', {
-					class: 'ec-row-btn', type: 'button', text: 'Sell all',
+					class: 'ec-row-btn', type: 'button', text: 'Sell all', disabled: !!this.pending,
 					'aria-label': `Sell all ${disp?.name || slot.item} for ${price * slot.qty} cash`,
-					onclick: () => { this.setStatus('Selling…'); this.net.storeSell({ zone: 'inv', i }); },
+					onclick: () => {
+						if (!this.beginRequest('Selling…')) return;
+						this.net.storeSell({ zone: 'inv', i });
+					},
 				}),
 			]));
 		}
@@ -221,30 +279,39 @@ class BankPanel extends EconPanel {
 		this.depositInput = el('input', { type: 'number', min: '0', step: '1', class: 'ec-bank-input', 'aria-label': 'Amount to deposit', placeholder: '0' });
 		this.withdrawInput = el('input', { type: 'number', min: '0', step: '1', class: 'ec-bank-input', 'aria-label': 'Amount to withdraw', placeholder: '0' });
 
+		this.depositBtn = el('button', { class: 'ec-row-btn', type: 'button', text: 'Deposit', onclick: () => this._deposit() });
+		this.withdrawBtn = el('button', { class: 'ec-row-btn ec-secondary', type: 'button', text: 'Withdraw', onclick: () => this._withdraw() });
+
 		this.body.appendChild(el('div', { class: 'ec-row-sub', text: 'Deposit — protects cash from a death drop.' }));
-		this.body.appendChild(el('div', { class: 'ec-bank-amount' }, [
-			this.depositInput,
-			el('button', { class: 'ec-row-btn', type: 'button', text: 'Deposit', onclick: () => this._deposit() }),
-		]));
+		this.body.appendChild(el('div', { class: 'ec-bank-amount' }, [this.depositInput, this.depositBtn]));
 		this.body.appendChild(el('div', { class: 'ec-bank-presets' }, [
 			el('button', { class: 'ec-bank-preset', type: 'button', text: 'Max', onclick: () => { this.depositInput.value = String(this.gold); } }),
 		]));
 
 		this.body.appendChild(el('div', { class: 'ec-row-sub', text: 'Withdraw — moves banked cash back to your purse.' }));
-		this.body.appendChild(el('div', { class: 'ec-bank-amount' }, [
-			this.withdrawInput,
-			el('button', { class: 'ec-row-btn ec-secondary', type: 'button', text: 'Withdraw', onclick: () => this._withdraw() }),
-		]));
+		this.body.appendChild(el('div', { class: 'ec-bank-amount' }, [this.withdrawInput, this.withdrawBtn]));
 		this.body.appendChild(el('div', { class: 'ec-bank-presets' }, [
 			el('button', { class: 'ec-bank-preset', type: 'button', text: 'Max', onclick: () => { this.withdrawInput.value = String(this.bankBal); } }),
 		]));
 
-		this.track(net.on('profile', (snap) => this._applyProfile(snap)));
+		this.track(net.on('profile', (snap) => { this.endRequest(); this._applyProfile(snap); }));
+		// A transfer the server clamped to zero (nothing on hand, nothing banked)
+		// answers with a notice and no snapshot, so release the slot on it too.
 		this.track(net.on('notice', (n) => {
-			if (n?.kind === 'bank') this.setStatus(n.text || '', 'ok');
+			if (n?.kind !== 'bank') return;
+			this.endRequest();
+			this.setStatus(n.text || '', 'ok');
 		}));
 
 		net.requestProfile();
+	}
+
+	// Both transfer buttons ride the panel's single in-flight slot, so a
+	// double-tapped Deposit can never send the same amount twice.
+	_syncPending() {
+		const busy = !!this.pending;
+		this.depositBtn.disabled = busy;
+		this.withdrawBtn.disabled = busy;
 	}
 
 	_applyProfile(snap) {

@@ -1,0 +1,121 @@
+/* Photo mode (/play) — shutter flash + the preview card.
+   Loaded with src/game/photo-mode.js, which is imported lazily on the first
+   press, so none of this reaches a player who never takes a photo.
+   Tokens come from coincommunities.css; the fallbacks keep the sheet readable
+   if it ever mounts on a surface that has not loaded them. */
+
+/* ── shutter ──────────────────────────────────────────────────────────────
+   A single white frame over the whole viewport. Never mounted at all under
+   prefers-reduced-motion (photo-mode.js skips it), so there is no animation
+   to disable here. */
+.cc-photo-flash {
+	position: fixed; inset: 0; z-index: 200; pointer-events: none;
+	background: #fff; opacity: 0;
+	animation: cc-photo-shutter 260ms ease-out forwards;
+}
+@keyframes cc-photo-shutter {
+	0% { opacity: 0; }
+	12% { opacity: 0.82; }
+	100% { opacity: 0; }
+}
+
+/* ── preview sheet ────────────────────────────────────────────────────────
+   A light scrim, not a blackout: the world keeps rendering behind the card and
+   the player can still see where they were standing. */
+#cc-photo {
+	position: fixed; inset: 0; z-index: 130;
+	display: grid; place-items: center; padding: 20px;
+	background: rgba(4, 4, 5, 0.42);
+	-webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+	opacity: 0; transition: opacity 0.2s ease;
+}
+#cc-photo.cc-on { opacity: 1; }
+
+.cc-photo-card {
+	position: relative; width: min(460px, 94vw); max-height: 88vh; overflow: auto;
+	background: var(--cc-panel-solid, #0c0c0c);
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
+	border-radius: var(--cc-radius, 4px);
+	box-shadow: var(--cc-shadow, 0 16px 50px rgba(0, 0, 0, 0.7));
+	padding: 20px; color: var(--cc-text, #f5f5f6);
+	transform: translateY(24px); transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+#cc-photo.cc-on .cc-photo-card { transform: none; }
+
+.cc-photo-close {
+	position: absolute; top: 12px; right: 12px; width: 30px; height: 30px;
+	display: grid; place-items: center; border-radius: var(--cc-radius-sm, 2px);
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
+	background: rgba(255, 255, 255, 0.04);
+	color: var(--cc-dim, #8c8c92); cursor: pointer; font-size: 14px; line-height: 1;
+	transition: color 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+.cc-photo-close:hover { color: var(--cc-text, #f5f5f6); border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); background: rgba(255, 255, 255, 0.1); }
+.cc-photo-close:active { background: rgba(255, 255, 255, 0.16); }
+.cc-photo-close:focus-visible { outline: none; border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); box-shadow: 0 0 0 1px var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); }
+
+.cc-photo-kicker {
+	display: block; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+	color: var(--cc-dim, #8c8c92);
+}
+.cc-photo-h { margin: 3px 0 0; font-size: 17px; font-weight: 700; letter-spacing: 0.01em; }
+.cc-photo-sub {
+	margin: 3px 0 0; font-size: 12.5px; color: var(--cc-dim, #8c8c92);
+	font-variant-numeric: tabular-nums;
+}
+
+.cc-photo-shot {
+	display: block; width: 100%; height: auto; max-height: 46vh; object-fit: contain;
+	margin: 14px 0 0; border-radius: var(--cc-radius-sm, 2px);
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
+	background: #08080a;
+}
+
+.cc-photo-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.cc-photo-btn {
+	flex: 1 1 140px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+	padding: 11px 14px; border-radius: var(--cc-radius, 4px); cursor: pointer;
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
+	background: rgba(255, 255, 255, 0.04); color: var(--cc-text, #f5f5f6);
+	font: inherit; font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap;
+	transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease;
+}
+.cc-photo-btn:hover { border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); background: rgba(255, 255, 255, 0.09); }
+.cc-photo-btn:active { transform: translateY(1px); }
+.cc-photo-btn:focus-visible { outline: none; border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); box-shadow: 0 0 0 1px var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); }
+.cc-photo-primary {
+	background: var(--cc-accent, #fff); color: var(--cc-ink, #060607); border-color: var(--cc-accent, #fff);
+}
+.cc-photo-primary:hover { background: #fff; box-shadow: var(--cc-glow, 0 0 14px rgba(255, 255, 255, 0.35)); }
+/* Clipboard-less browsers keep the button (so the option is never a mystery)
+   but read as unavailable; the click explains itself in the status line. */
+.cc-photo-btn[aria-disabled="true"] { color: var(--cc-faint, #5a5a60); cursor: default; }
+.cc-photo-btn[aria-disabled="true"]:hover { border-color: var(--cc-edge, rgba(255, 255, 255, 0.12)); background: rgba(255, 255, 255, 0.04); }
+.cc-photo-btn[aria-disabled="true"]:active { transform: none; }
+
+.cc-photo-status {
+	margin: 10px 0 0; min-height: 16px; font-size: 12px; line-height: 1.45;
+	color: var(--cc-dim, #8c8c92);
+}
+.cc-photo-status[data-kind="ok"] { color: #b8ffce; }
+.cc-photo-status[data-kind="warn"] { color: #ffd28a; }
+
+.cc-photo-hint {
+	margin: 10px 0 0; font-size: 11.5px; color: var(--cc-faint, #5a5a60);
+}
+.cc-photo-hint kbd {
+	font: inherit; font-size: 10.5px; padding: 1px 5px; border-radius: 3px;
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12)); background: rgba(255, 255, 255, 0.05);
+}
+
+/* Phone: a bottom sheet, so the thumb reaches the actions and more world shows. */
+@media (max-width: 560px) {
+	#cc-photo { place-items: end center; padding: 12px; }
+	.cc-photo-card { width: 100%; padding: 16px; max-height: 82vh; }
+	.cc-photo-shot { max-height: 38vh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#cc-photo, .cc-photo-card, .cc-photo-btn { transition: none; }
+	.cc-photo-card { transform: none; }
+}
