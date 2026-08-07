@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-07T07:41:53.347Z",
+	"generated_at": "2026-08-07T08:35:30.128Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4342,6 +4342,16 @@
 					"title": "Docs · Every NVIDIA model three.ws runs for free",
 					"description": "The full free NVIDIA inference layer behind three.ws, model by model: TRELLIS for text-to-3D, FLUX.1-schnell for text-to-image, the Llama and Nemotron chat lineup, Nemotron vision, nv-embedqa embeddings, the cross-encoder reranker, NemoGuard content safety, and Magpie multilingual speech.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-runtime",
+					"title": "Docs · The agent runtime and transaction guard",
+					"description": "The seven-layer policy engine that preflights every fund-moving tool call in chat before the wallet prompts: security blacklist, approval policy, dollar caps with live SOL pricing, spend envelope with a token and destination firewall, MEV slippage clamp, and x402 budgets. Ships as @three-ws/agent-runtime.",
+					"added": "2026-08-07",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

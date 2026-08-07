@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · The agent runtime and transaction guard</title>
+			<link>https://three.ws/docs/agent-runtime</link>
+			<guid isPermaLink="false">2026-08-07:Docs · The agent runtime and transaction guard</guid>
+			<pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The seven-layer policy engine that preflights every fund-moving tool call in chat before the wallet prompts: security blacklist, approval policy, dollar caps with live SOL pricing, spend envelope with a token and destination firewall, MEV slippage clamp, and x402 budgets. Ships as @three-ws/agent-runtime.</description>
+		</item>
+		<item>
+			<title>A transaction guard now stands between the chat agent and your wallet</title>
+			<link>https://three.ws/docs/agent-runtime</link>
+			<guid isPermaLink="false">2026-08-07:A transaction guard now stands between the chat agent and your wallet</guid>
+			<pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every fund-moving tool the chat agent can call (SOL and token transfers, Jupiter and 1inch swaps, pump.fun buys and sells, token launches) is now preflighted through a seven-layer policy engine before the tool even runs: a security blacklist, approval policy, dollar caps with live SOL pricing, a spend envelope with a token and destination firewall, an MEV slippage clamp that automatically tightens risky swap parameters, and an hourly budget for paid agent calls. A blocked call never reaches your wallet, and the approval popup now shows the verdict: what was checked, what was flagged, and what could not be verified. The engine ships as an open building block, @three-ws/agent-runtime, with an agent decision loop and a tamper-evident action ledger, plus a public preflight endpoint at /api/agent/guard for your own agents.</description>
+		</item>
+		<item>
 			<title>Agent payments: fresher signatures and a health readout that names the real cause</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-07:Agent payments: fresher signatures and a health readout that names the real cause</guid>

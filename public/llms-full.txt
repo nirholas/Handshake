@@ -2638,6 +2638,12 @@ URL: https://three.ws/docs/nvidia-models
 
 The full free NVIDIA inference layer behind three.ws, model by model: TRELLIS for text-to-3D, FLUX.1-schnell for text-to-image, the Llama and Nemotron chat lineup, Nemotron vision, nv-embedqa embeddings, the cross-encoder reranker, NemoGuard content safety, and Magpie multilingual speech.
 
+### Docs · The agent runtime and transaction guard
+
+URL: https://three.ws/docs/agent-runtime
+
+The seven-layer policy engine that preflights every fund-moving tool call in chat before the wallet prompts: security blacklist, approval policy, dollar caps with live SOL pricing, spend envelope with a token and destination firewall, MEV slippage clamp, and x402 budgets. Ships as @three-ws/agent-runtime.
+
 ### Docs · The free LLM failover chain
 
 URL: https://three.ws/docs/free-llm-providers

@@ -330,6 +330,7 @@ npm).
 | `@three-ws/guardian` | [packages/guardian/](packages/guardian) | `api/guardian/`, Granite Guardian | Content safety / moderation for agents |
 | `@three-ws/glb-tools` | [packages/glb-tools/](packages/glb-tools) | `_lib/glb-inspect.js`, `glb-themer.js`, `bake.js` | Inspect, re-theme, and bake GLBs from CLI/CI |
 | `@three-ws/agent-guards` | [packages/agent-guards/](packages/agent-guards) | `_lib/agent-spend-policy.js`, `agent-trade-guards.js` | Spend + trade guardrails for autonomous agents |
+| `@three-ws/agent-runtime` | [packages/agent-runtime/](packages/agent-runtime) | `api/agent/guard.js`, `chat/src/guard.js` | Agent decision loop + seven-layer GuardChain (blacklist, intervention, capability, permission, trade, spend, x402), hash-chained action ledger, tx pipeline |
 | `@three-ws/skill-license` | [packages/skill-license/](packages/skill-license) | `contracts/skill-license/`, `api/skills/` | On-chain skill licenses (SPL NFT + PDA) mint/verify |
 | `@three-ws/mocap` | [packages/mocap/](packages/mocap) | `api/mocap/` | Motion-capture clips → avatar animation |
 | `@three-ws/strategies` | [packages/strategies/](packages/strategies) | `api/strategies.js`, `dca-strategies.js`, copy/mirror engines | Automated trading strategies (DCA, copy, mirror) |

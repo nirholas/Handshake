@@ -3418,6 +3418,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/agent-runtime",
+					"title": "Docs · The agent runtime and transaction guard",
+					"description": "The seven-layer policy engine that preflights every fund-moving tool call in chat before the wallet prompts: security blacklist, approval policy, dollar caps with live SOL pricing, spend envelope with a token and destination firewall, MEV slippage clamp, and x402 budgets. Ships as @three-ws/agent-runtime.",
+					"added": "2026-08-07",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/free-llm-providers",
 					"title": "Docs · The free LLM failover chain",
 					"description": "The dozen-plus free AI providers behind every text completion on three.ws, tried in order before any paid key: Groq, Cerebras, OpenRouter, NVIDIA NIM, SambaNova, Mistral, Z.AI, Cloudflare Workers AI, OVH, Gemini, Pollinations, LLM7, and SiliconFlow, with each free tier's limits and the recipe for adding the next rung.",

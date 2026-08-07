@@ -1,11 +1,33 @@
 {
-	"generated_at": "2026-08-07T08:14:06.034Z",
+	"generated_at": "2026-08-07T08:35:30.152Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-07",
+			"type": "launch",
+			"title": "Docs · The agent runtime and transaction guard",
+			"summary": "The seven-layer policy engine that preflights every fund-moving tool call in chat before the wallet prompts: security blacklist, approval policy, dollar caps with live SOL pricing, spend envelope with a token and destination firewall, MEV slippage clamp, and x402 budgets. Ships as @three-ws/agent-runtime.",
+			"link": "/docs/agent-runtime",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-07",
+			"type": "update",
+			"title": "A transaction guard now stands between the chat agent and your wallet",
+			"summary": "Every fund-moving tool the chat agent can call (SOL and token transfers, Jupiter and 1inch swaps, pump.fun buys and sells, token launches) is now preflighted through a seven-layer policy engine before the tool even runs: a security blacklist, approval policy, dollar caps with live SOL pricing, a spend envelope with a token and destination firewall, an MEV slippage clamp that automatically tightens risky swap parameters, and an hourly budget for paid agent calls. A blocked call never reaches your wallet, and the approval popup now shows the verdict: what was checked, what was flagged, and what could not be verified. The engine ships as an open building block, @three-ws/agent-runtime, with an agent decision loop and a tamper-evident action ledger, plus a public preflight endpoint at /api/agent/guard for your own agents.",
+			"link": "/docs/agent-runtime",
+			"tags": [
+				"feature",
+				"security",
+				"sdk"
+			]
+		},
 		{
 			"date": "2026-08-07",
 			"type": "update",

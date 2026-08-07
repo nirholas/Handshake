@@ -18452,6 +18452,17 @@
 				"security"
 			],
 			"link": "/deployments"
+		},
+		{
+			"date": "2026-08-07",
+			"title": "A transaction guard now stands between the chat agent and your wallet",
+			"summary": "Every fund-moving tool the chat agent can call (SOL and token transfers, Jupiter and 1inch swaps, pump.fun buys and sells, token launches) is now preflighted through a seven-layer policy engine before the tool even runs: a security blacklist, approval policy, dollar caps with live SOL pricing, a spend envelope with a token and destination firewall, an MEV slippage clamp that automatically tightens risky swap parameters, and an hourly budget for paid agent calls. A blocked call never reaches your wallet, and the approval popup now shows the verdict: what was checked, what was flagged, and what could not be verified. The engine ships as an open building block, @three-ws/agent-runtime, with an agent decision loop and a tamper-evident action ledger, plus a public preflight endpoint at /api/agent/guard for your own agents.",
+			"tags": [
+				"feature",
+				"security",
+				"sdk"
+			],
+			"link": "/docs/agent-runtime"
 		}
 	]
 }
