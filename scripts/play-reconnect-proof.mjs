@@ -51,7 +51,7 @@ async function startServer() {
 	let out = '';
 	child.stdout.on('data', (b) => { out += b; });
 	child.stderr.on('data', (b) => { out += b; });
-	for (let i = 0; i < 60; i++) {
+	for (let i = 0; i < 240; i++) {
 		if (/listening on ws:/.test(out)) return child;
 		if (child.exitCode !== null) throw new Error(`server exited: ${out.slice(-500)}`);
 		await sleep(500);

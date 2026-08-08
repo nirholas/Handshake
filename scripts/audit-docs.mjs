@@ -267,6 +267,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['coin-launches', 'owner-gated: names a crypto project other than $THREE'],
 	['coin-pages', 'owner-gated: names a crypto project other than $THREE'],
 	['coinmarketcap-article', 'internal: draft prepared for an external publisher'],
+	['coinmarketcap-live-article', 'internal: draft prepared for an external publisher'],
 	['coinmarketcap-article-play', 'internal: draft prepared for an external publisher'],
 	['demo-routes', 'internal: dated route inventory'],
 	['education-pilot-bucharest', 'internal: partnership draft (reply copy + pilot brief), not a reader-facing product doc'],
@@ -276,6 +277,8 @@ const UNPUBLISHED_DOCS = new Map([
 	['free-crypto-apis', 'internal: engineering research catalog of external free APIs'],
 	['google-x-accounts', 'internal: outreach directory of external X accounts'],
 	['ibm-community-article', 'internal: source draft of an IBM Community post'],
+	['ibm-community-live-reaction-jessica', 'internal: source draft of an IBM Community post'],
+	['ibm-community-recap-jessica', 'internal: source draft of an IBM Community post'],
 	['ibm-community-blog-meetup-jessica', 'internal: source draft of an IBM Community post'],
 	['ibm-community-thread', 'internal: source draft of an IBM Community post'],
 	['launch-usecases', 'owner-gated: names a crypto project other than $THREE'],
@@ -285,6 +288,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['native-launchpad', 'owner-gated: names a crypto project other than $THREE'],
 	['okx-marketplace', 'owner-gated: names a crypto project other than $THREE'],
 	['pay-skills-listing', 'internal: listing metadata, not prose'],
+	['play-boot-performance', 'internal: performance runbook for the /play boot path'],
 	['popular-3d-github-repos', 'internal: one-off ecosystem research sweep'],
 	['pump-fun-mcp-edge', 'owner-gated: names a crypto project other than $THREE'],
 	['pump-launch-repos', 'owner-gated: names a crypto project other than $THREE'],
@@ -294,7 +298,9 @@ const UNPUBLISHED_DOCS = new Map([
 	['syndication', 'internal: distribution mechanics for the announcements feed'],
 	['trading-experiment', 'owner-gated: names a crypto project other than $THREE'],
 	['trading-hub', 'in-flight: landed mid-session, register with its /trading page'],
+	['event-x-posts', 'internal: ready-to-paste X post drafts; posting is owner-gated'],
 	['x-meetup-posts', 'internal: ready-to-paste X post drafts; posting is owner-gated'],
+	['x402-solana-july-roundup-response', 'internal: ready-to-paste X reply draft; posting is owner-gated'],
 ]);
 const GENERATED_DOCS = new Set(['ALL', 'EVERYTHING', 'README']);
 

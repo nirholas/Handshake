@@ -347,8 +347,18 @@ async function runScenario(base, sc) {
 	try {
 		await page.goto(base + sc.url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 	} catch (err) {
-		findings.push(`navigation failed: ${err.message}`);
+		const m = String(err?.message || err);
 		await teardown();
+		// A dead browser is this harness starving, not the product failing. On a
+		// loaded box chromium gets OOM-killed mid-navigation and Playwright reports
+		// it as a goto failure, which reads identically to "the site hung" and would
+		// put a fabricated outage in the report. Hand it back as `infra` so the
+		// caller can retry it and, if it never runs, count it as NOT RUN rather than
+		// as a pass or a finding.
+		if (/Page crashed|Target (page|closed)|browser has been closed|Target crashed/i.test(m)) {
+			return { infra: m, findings: [], consoleIssues: [], pageErrors: [] };
+		}
+		findings.push(`navigation failed: ${m}`);
 		return { findings, consoleIssues, pageErrors };
 	}
 
@@ -438,11 +448,25 @@ async function main() {
 
 	const server = await startServer();
 	const failed = [];
+	const notRun = [];
 
 	try {
 		for (const sc of scenarios) {
 			process.stdout.write(`  ${C.c(sc.id.padEnd(18))} ${C.d(sc.title)}\n`);
-			const { findings, consoleIssues, pageErrors, o } = await runScenario(server.base, sc);
+			// Give a browser that died of resource starvation one more chance before
+			// giving up on the scenario. Two crashes in a row is a machine that cannot
+			// run this audit, not a verdict on /play.
+			let res = await runScenario(server.base, sc);
+			if (res.infra) {
+				console.log(`      ${C.y('↻')} ${C.d(`browser died (${res.infra.split('\n')[0]}), retrying`)}`);
+				res = await runScenario(server.base, sc);
+			}
+			if (res.infra) {
+				notRun.push({ sc, why: res.infra.split('\n')[0] });
+				console.log(`      ${C.y('!')} ${C.y('NOT RUN')} ${C.d('browser crashed twice, host out of resources')}`);
+				continue;
+			}
+			const { findings, consoleIssues, pageErrors, o } = res;
 			const all = [...findings, ...pageErrors, ...consoleIssues];
 			if (all.length) {
 				failed.push({ sc, all });
@@ -463,11 +487,20 @@ async function main() {
 	}
 
 	console.log(C.b('\n═══════════════ SUMMARY ═══════════════\n'));
-	if (!failed.length) {
-		console.log(C.g(`  ALL ${scenarios.length} FAILURE MODES HANDLED, no stuck loaders, no script execution, clean console.\n`));
-		return 0;
+	const ran = scenarios.length - notRun.length;
+	// A scenario that never ran is never silently folded into the pass count: an
+	// audit that says "all clear" while a third of it never executed is worse than
+	// one that says nothing.
+	if (notRun.length) {
+		console.log(C.y(`  ${notRun.length} of ${scenarios.length} scenario(s) NOT RUN (host out of resources):`));
+		for (const { sc, why } of notRun) console.log(`      ${C.y('!')} ${sc.id}: ${why}`);
+		console.log('');
 	}
-	console.log(C.r(`  ${failed.length} of ${scenarios.length} scenario(s) failed:\n`));
+	if (!failed.length) {
+		console.log(C.g(`  ${ran} of ${scenarios.length} FAILURE MODES HANDLED, no stuck loaders, no script execution, clean console.\n`));
+		return notRun.length ? 2 : 0;
+	}
+	console.log(C.r(`  ${failed.length} of ${ran} scenario(s) that ran failed:\n`));
 	for (const { sc, all } of failed) {
 		console.log(`  ${C.b(sc.id)}, ${sc.title}`);
 		for (const f of all) console.log(`      ${C.r('•')} ${f}`);

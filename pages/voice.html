@@ -483,6 +483,16 @@
 			.vl-section {
 				margin-bottom: 28px;
 			}
+			/* The site nav is position:fixed and 70px tall, so anything scrolled
+			   into view (a section jump, a focused control, a browser card the
+			   grid pages to) lands underneath it without this. */
+			.vl-section,
+			.vb-pills,
+			.vb-card,
+			.vl-pg-field,
+			.vb-filters {
+				scroll-margin-top: 90px;
+			}
 			.vl-section-head {
 				display: flex;
 				align-items: center;
