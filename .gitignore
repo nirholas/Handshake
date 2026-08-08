@@ -441,3 +441,11 @@ public/docs-search-index.json
 # Author-local scratch runners (the `.local.` infix marks them as never-commit).
 # They carry absolute machine paths and drive real devnet writes.
 *.local.mjs
+
+# Session scratch that has landed in the repo root before. .gauth/ holds the
+# gcloud reauth fifo and its log (which quotes verification URLs and codes);
+# the others are audit/load-test output. None of it belongs in history, and a
+# concurrent `git add -A` sweep would otherwise commit it.
+.gauth/
+.capacity-*.json
+.play-profile-check.mjs
