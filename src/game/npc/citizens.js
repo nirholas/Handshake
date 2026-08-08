@@ -109,6 +109,13 @@ function looksAnonymous(name) {
 	return false;
 }
 
+// The stock descriptions the onboarding and generation lanes write for a profile
+// nobody has edited yet. They address the owner ("Edit the personality…"), not a
+// visitor, so they describe no character and never reach a citizen's voice.
+function isBoilerplateBio(text) {
+	return /^(a friendly starter agent|operated by a three\.ws agent|edit the personality)/i.test(String(text).trim());
+}
+
 // A record is a citizen (someone you can meet) when it carries a name that
 // actually identifies somebody. Nameless and placeholder-named gallery models
 // stay honest anonymous scenery: they still walk the plaza, but with no
@@ -191,7 +198,17 @@ export async function talkToCitizen(citizen, { world, ui } = {}) {
 	const parts = [];
 	if (agent) {
 		parts.push(`You are a registered three.ws agent, out for a stroll through the town plaza. You genuinely live on this platform: you have a public profile, an on-chain wallet, and a reputation you have earned.`);
-		if (agent.description) parts.push(`Your public profile describes you like this: "${agent.description}". Speak as that person.`);
+		// An agent still wearing its onboarding defaults carries setup copy, not a
+		// character ("A friendly starter agent. Edit the personality…"). Feeding
+		// that in makes the citizen introduce itself as an unfinished form. Its
+		// wallet, skills and creator are still real, so only the boilerplate
+		// description is dropped; the avatar's own gallery identity carries the voice.
+		const configured = agent.name && !looksAnonymous(agent.name);
+		if (configured && agent.description && !isBoilerplateBio(agent.description)) {
+			parts.push(`Your public profile describes you like this: "${agent.description}". Speak as that person.`);
+		} else if (rec.description && !isBoilerplateBio(rec.description)) {
+			parts.push(`Your look, as the gallery describes it: "${rec.description}". Let that shape your personality.`);
+		}
 		const skills = (Array.isArray(agent.skills) ? agent.skills : [])
 			.map((s) => (typeof s === 'string' ? s : s?.name))
 			.filter(Boolean)

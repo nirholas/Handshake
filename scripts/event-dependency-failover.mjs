@@ -213,22 +213,32 @@ async function checkLlm(base) {
 	// The platform already ships a real probe of its own routing chain; asking the
 	// live deployment is more truthful than re-deriving the chain here, because it
 	// answers with the keys production actually holds, not the ones in this shell.
+	// The endpoint is cron-secret gated on purpose: its error strings name which
+	// provider key is bad and can carry quota detail. Present the same secret an
+	// operator or external monitor would.
+	const secret = process.env.CRON_SECRET || '';
 	const r = await timed(async () => {
-		const res = await fetch(`${base}/api/llm/health`, { signal: AbortSignal.timeout(45_000) });
-		if (!res.ok) throw new Error(`http ${res.status}`);
+		const res = await fetch(`${base}/api/llm/health`, {
+			headers: secret ? { 'x-cron-secret': secret } : {},
+			signal: AbortSignal.timeout(60_000),
+		});
+		if (!res.ok) throw new Error(`http ${res.status}${res.status === 403 ? ' (set CRON_SECRET to probe this)' : ''}`);
 		return await res.json();
 	});
 	if (!r.ok) {
 		record('llm', { what: 'NPC citizens, concierge, in-world chat', rungsTotal: 0, rungsLive: 0, rungs: [], failoverProven: false, failoverDetail: r.error, pass: false });
 		return;
 	}
-	const providers = r.value?.providers || r.value?.results || [];
-	const rungs = (Array.isArray(providers) ? providers : Object.entries(providers).map(([k, v]) => ({ name: k, ...v }))).map((p) => ({
-		rung: p.name || p.provider || 'unknown',
-		ok: p.ok === true || p.status === 'ok' || p.status === 'healthy',
-		ms: p.ms ?? null,
-		error: p.error || (p.status && p.status !== 'ok' ? p.status : null),
-	}));
+	// The payload is keyed by provider with a sibling `overall` verdict, so read
+	// every entry that carries a status rather than assuming a `providers` array.
+	const rungs = Object.entries(r.value || {})
+		.filter(([key, v]) => key !== 'overall' && v && typeof v === 'object' && 'status' in v)
+		.map(([key, v]) => ({
+			rung: key,
+			ok: v.status === 'ok' || v.status === 'healthy',
+			ms: v.ms ?? null,
+			error: v.error || (v.status !== 'ok' ? v.status : null),
+		}));
 	const live = rungs.filter((x) => x.ok);
 	record('llm', {
 		what: 'NPC citizens, concierge, in-world chat',
