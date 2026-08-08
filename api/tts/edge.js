@@ -1,9 +1,9 @@
 /**
  * POST /api/tts/edge
  *
- * Microsoft Edge TTS proxy using the same unofficial WebSocket protocol as
- * the edge-tts Python package (pypi.org/project/edge-tts).
- * No API key required — uses the public TrustedClientToken.
+ * Microsoft Edge TTS proxy. No API key required — the protocol and the voice
+ * catalog live in api/_lib/tts-edge.js, shared with the unified router
+ * (/api/tts/synthesize) so the handshake quirks are implemented once.
  * Caches synthesized clips in R2 by sha256(voice + text + rate + pitch) for 30 days.
  *
  * Body: { voice: string, text: string, rate?: string, pitch?: string }
@@ -13,151 +13,18 @@
  * Response: audio/mpeg
  */
 
-import { createHash } from 'node:crypto';
-import WebSocket from 'ws';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { sha256 } from '../_lib/crypto.js';
 import { headObject, getObjectBuffer, putObject } from '../_lib/r2.js';
-
-const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
-// speech.platform.bing.com is the host the readaloud protocol actually lives
-// on. speech.microsoft.com (used previously) serves the Speech Studio web app,
-// which answers every path with a 200 HTML page — hence the constant
-// "Unexpected server response: 200" handshake failures.
-const WSS_BASE = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_CLIENT_TOKEN}`;
-const AUDIO_FORMAT = 'audio-24khz-48kbitrate-mono-mp3';
-// Must track the Edg/ version in WS_HEADERS' User-Agent below. The endpoint
-// 403s GEC versions it considers stale, so bump this alongside edge-tts
-// releases (their constants.py carries the current known-good value).
-const CHROMIUM_FULL_VERSION = '143.0.3650.75';
-
-// Sec-MS-GEC DRM token, required by the readaloud endpoint since late 2024.
-// SHA-256 of the current Windows file time (100ns ticks since 1601-01-01,
-// rounded DOWN to the nearest 5 minutes) concatenated with the client token —
-// same scheme the edge-tts reference implementation ships. Handshakes without
-// it are intermittently rejected with a non-101 response ("Unexpected server
-// response: 200").
-function secMsGecToken() {
-	const WIN_EPOCH_SECONDS = 11_644_473_600; // 1601-01-01 → 1970-01-01
-	let seconds = Math.floor(Date.now() / 1000) + WIN_EPOCH_SECONDS;
-	seconds -= seconds % 300;
-	// seconds → 100ns ticks would overflow Number; appending seven zeros is the
-	// same multiplication by 10^7 done in string space.
-	return createHash('sha256')
-		.update(`${seconds}0000000${TRUSTED_CLIENT_TOKEN}`)
-		.digest('hex')
-		.toUpperCase();
-}
-
-const WS_HEADERS = {
-	Pragma: 'no-cache',
-	'Cache-Control': 'no-cache',
-	Origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
-	'Accept-Encoding': 'gzip, deflate, br, zstd',
-	'Accept-Language': 'en-US,en;q=0.9',
-	'User-Agent':
-		'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0',
-};
-
-// e.g. "en-US-AriaNeural", "zh-CN-XiaoxiaoNeural"
-const VOICE_RE = /^[a-zA-Z]{2,8}-[a-zA-Z]{2,8}-[a-zA-Z]{5,50}$/;
-const RATE_RE = /^[+-]\d+%$/;
-const PITCH_RE = /^[+-]\d+Hz$/;
-
-function isoTimestamp() {
-	return new Date().toISOString().replace(/\.\d+/, '.000');
-}
-
-function mkId() {
-	return crypto.randomUUID().replace(/-/g, '');
-}
-
-function buildSsml(voice, text, rate, pitch) {
-	const esc = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-	return (
-		`<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>` +
-		`<voice name='${voice}'>` +
-		`<prosody pitch='${pitch}' rate='${rate}' volume='+0%'>${esc}</prosody>` +
-		`</voice></speak>`
-	);
-}
-
-function synthesize(voice, text, rate, pitch) {
-	return new Promise((resolve, reject) => {
-		const connId = mkId();
-		const url =
-			`${WSS_BASE}&Sec-MS-GEC=${secMsGecToken()}` +
-			`&Sec-MS-GEC-Version=1-${CHROMIUM_FULL_VERSION}&ConnectionId=${connId}`;
-		const ws = new WebSocket(url, { headers: WS_HEADERS });
-
-		const chunks = [];
-		let finished = false;
-
-		const timeout = setTimeout(() => {
-			if (!finished) {
-				ws.terminate();
-				reject(new Error('edge-tts synthesis timed out'));
-			}
-		}, 30_000);
-
-		ws.on('open', () => {
-			const configMsg =
-				`X-Timestamp:${isoTimestamp()}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n` +
-				JSON.stringify({
-					context: {
-						synthesis: {
-							audio: {
-								metadataoptions: {
-									sentenceBoundaryEnabled: 'false',
-									wordBoundaryEnabled: 'false',
-								},
-								outputFormat: AUDIO_FORMAT,
-							},
-						},
-					},
-				});
-			ws.send(configMsg);
-
-			const requestId = mkId();
-			const ssmlMsg =
-				`X-RequestId:${requestId}\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${isoTimestamp()}\r\nPath:ssml\r\n\r\n` +
-				buildSsml(voice, text, rate, pitch);
-			ws.send(ssmlMsg);
-		});
-
-		ws.on('message', (data, isBinary) => {
-			if (!isBinary) {
-				const msg = data.toString();
-				if (msg.includes('Path:turn.end')) {
-					finished = true;
-					clearTimeout(timeout);
-					ws.close();
-					resolve(Buffer.concat(chunks));
-				}
-				return;
-			}
-			// Binary frame: first 2 bytes = big-endian header length, then header, then audio.
-			const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
-			const headerLen = buf.readUInt16BE(0);
-			const header = buf.subarray(2, 2 + headerLen).toString();
-			if (header.includes('Path:audio')) {
-				chunks.push(buf.subarray(2 + headerLen));
-			}
-		});
-
-		ws.on('error', (err) => {
-			clearTimeout(timeout);
-			reject(err);
-		});
-
-		ws.on('close', (code) => {
-			clearTimeout(timeout);
-			if (!finished) reject(new Error(`edge-tts WebSocket closed unexpectedly (${code})`));
-		});
-	});
-}
+import {
+	synthesizeEdge,
+	EDGE_VOICE_RE,
+	EDGE_RATE_RE,
+	EDGE_PITCH_RE,
+	EDGE_DEFAULT_VOICE,
+} from '../_lib/tts-edge.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -176,19 +43,19 @@ export default wrap(async (req, res) => {
 	}
 
 	const body = await readJson(req);
-	const voice = String(body.voice || 'en-US-AriaNeural').trim();
+	const voice = String(body.voice || EDGE_DEFAULT_VOICE).trim();
 	const text = String(body.text || '').trim();
 	const rate = String(body.rate || '+0%').trim();
 	const pitch = String(body.pitch || '+0Hz').trim();
 
-	if (!VOICE_RE.test(voice))
+	if (!EDGE_VOICE_RE.test(voice))
 		return error(res, 400, 'validation_error', 'invalid voice name');
 	if (!text) return error(res, 400, 'validation_error', 'text is required');
 	if (text.length > 500)
 		return error(res, 400, 'validation_error', 'text exceeds 500 chars per request');
-	if (!RATE_RE.test(rate))
+	if (!EDGE_RATE_RE.test(rate))
 		return error(res, 400, 'validation_error', 'rate must be like +0% or -10%');
-	if (!PITCH_RE.test(pitch))
+	if (!EDGE_PITCH_RE.test(pitch))
 		return error(res, 400, 'validation_error', 'pitch must be like +0Hz or -5Hz');
 
 	// ── R2 cache lookup ───────────────────────────────────────────────────────
@@ -210,24 +77,11 @@ export default wrap(async (req, res) => {
 	}
 
 	// ── Synthesize via Microsoft Edge TTS ────────────────────────────────────
-	// Microsoft's unofficial Edge-TTS endpoint intermittently rejects the
-	// WebSocket upgrade with an HTTP 200 instead of a 101 ("Unexpected server
-	// response: 200") — a transient handshake failure that almost always clears
-	// on an immediate second attempt. Retry once before surfacing an error.
 	let audioBuffer;
-	let synthErr;
-	for (let attempt = 0; attempt < 2; attempt++) {
-		try {
-			audioBuffer = await synthesize(voice, text, rate, pitch);
-			synthErr = null;
-			break;
-		} catch (err) {
-			synthErr = err;
-			if (attempt === 0) await new Promise((r) => setTimeout(r, 250));
-		}
-	}
-	if (synthErr) {
-		console.error('[tts/edge] synthesis failed after retry', synthErr);
+	try {
+		audioBuffer = await synthesizeEdge(voice, text, rate, pitch);
+	} catch (err) {
+		console.error('[tts/edge] synthesis failed after retry', err);
 		return error(res, 502, 'upstream_error', 'Edge TTS synthesis failed');
 	}
 

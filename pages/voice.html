@@ -671,8 +671,192 @@
 			}
 			.vl-byok-row input:focus { border-color: #ffffff; }
 
+			/* ── Voice browser ──────────────────────────── */
+			.vb-filters {
+				display: flex;
+				gap: 10px;
+				flex-wrap: wrap;
+				margin-bottom: 12px;
+			}
+			.vb-filters input[type="search"] {
+				flex: 1;
+				min-width: 200px;
+				padding: 10px 12px;
+				background: #070707;
+				border: 1px solid #212121;
+				border-radius: 9px;
+				color: #e8e8e8;
+				font: inherit;
+				font-size: 14px;
+				outline: none;
+				transition: border-color 0.15s;
+			}
+			.vb-filters input[type="search"]:focus { border-color: #ffffff; }
+			.vb-filters select {
+				padding: 10px 12px;
+				background: #070707;
+				border: 1px solid #212121;
+				border-radius: 9px;
+				color: #e8e8e8;
+				font: inherit;
+				font-size: 14px;
+				cursor: pointer;
+				outline: none;
+			}
+			.vb-filters select:focus { border-color: #ffffff; }
+			.vb-pills {
+				display: flex;
+				gap: 6px;
+				flex-wrap: wrap;
+				margin-bottom: 16px;
+			}
+			.vb-pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				background: rgba(255,255,255,0.04);
+				border: 1px solid #1a1a1a;
+				color: #999999;
+				padding: 7px 12px;
+				border-radius: 999px;
+				font: 500 12.5px system-ui, sans-serif;
+				cursor: pointer;
+				transition: background 0.12s, color 0.12s, border-color 0.12s;
+			}
+			.vb-pill:hover:not(.disabled) {
+				background: rgba(255,255,255,0.08);
+				border-color: rgba(255,255,255,0.3);
+				color: #ffffff;
+			}
+			.vb-pill:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
+			.vb-pill.active {
+				background: #ffffff;
+				border-color: #ffffff;
+				color: #000000;
+			}
+			.vb-pill.disabled { opacity: 0.4; cursor: not-allowed; }
+			.vb-pill-billing {
+				font-size: 10px;
+				font-weight: 600;
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+				padding: 2px 6px;
+				border-radius: 4px;
+				background: rgba(61,193,255,0.14);
+				color: #3dc1ff;
+			}
+			.vb-pill-billing[data-billing="credits"] {
+				background: rgba(255,193,61,0.14);
+				color: #ffc13d;
+			}
+			.vb-pill.active .vb-pill-billing { background: rgba(0,0,0,0.1); color: #000000; }
+			.vb-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+				gap: 10px;
+			}
+			.vb-card {
+				background: #070707;
+				border: 1px solid #1a1a1a;
+				border-radius: 12px;
+				padding: 14px;
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				cursor: pointer;
+				transition: border-color 0.15s, transform 0.15s, background 0.15s;
+			}
+			.vb-card:hover { border-color: #303030; background: #0b0b0b; transform: translateY(-1px); }
+			.vb-card.selected { border-color: #ffffff; background: #0d0d0d; }
+			.vb-card-top {
+				display: flex;
+				align-items: flex-start;
+				justify-content: space-between;
+				gap: 8px;
+			}
+			.vb-card-name {
+				margin: 0;
+				font-size: 14px;
+				font-weight: 600;
+				color: #e8e8e8;
+				line-height: 1.3;
+				word-break: break-word;
+			}
+			.vb-badge {
+				flex: none;
+				font-size: 10px;
+				font-weight: 600;
+				letter-spacing: 0.03em;
+				text-transform: uppercase;
+				color: #888888;
+				border: 1px solid #222222;
+				border-radius: 5px;
+				padding: 2px 6px;
+				white-space: nowrap;
+			}
+			.vb-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+			.vb-tag {
+				font-size: 11px;
+				color: #777777;
+				background: rgba(255,255,255,0.05);
+				border-radius: 4px;
+				padding: 2px 7px;
+			}
+			.vb-card-desc {
+				margin: 0;
+				font-size: 12px;
+				line-height: 1.5;
+				color: #777777;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+			}
+			.vb-card-actions { display: flex; gap: 6px; margin-top: auto; padding-top: 4px; }
+			.vb-skeleton {
+				height: 132px;
+				cursor: default;
+				background: linear-gradient(90deg, #0a0a0a 25%, #111111 50%, #0a0a0a 75%);
+				background-size: 200% 100%;
+				animation: vb-shimmer 1.4s ease-in-out infinite;
+			}
+			@keyframes vb-shimmer {
+				0% { background-position: 200% 0; }
+				100% { background-position: -200% 0; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.vb-skeleton { animation: none; }
+				.vb-card:hover { transform: none; }
+			}
+			.vb-more { margin-top: 14px; width: 100%; justify-content: center; }
+			#vbStatus[data-tone="err"] { color: var(--err, #ff6b6b); }
+			#vbStatus[data-tone="ok"] { color: var(--ok, #4ade80); }
+			#vbStatus[data-tone="warn"] { color: var(--warn, #ffc13d); }
+
+			/* Playground extras: direction + speed */
+			.vl-pg-field input[type="text"] {
+				width: 100%;
+				padding: 10px 12px;
+				background: #070707;
+				border: 1px solid #212121;
+				border-radius: 9px;
+				color: #e8e8e8;
+				font: inherit;
+				font-size: 14px;
+				outline: none;
+				transition: border-color 0.15s;
+			}
+			.vl-pg-field input[type="text"]:focus { border-color: #ffffff; }
+			.vl-pg-field input[type="range"] { width: 100%; accent-color: #ffffff; }
+			.vl-pg-billing {
+				font-size: 12px;
+				color: #777777;
+				margin-top: 10px;
+			}
+
 			/* ── Responsive ─────────────────────────────── */
 			@media (max-width: 640px) {
+				.vb-grid { grid-template-columns: 1fr; }
 				.vl-root { padding: 20px 16px 60px; }
 				.vl-header h1 { font-size: 26px; }
 				.vl-wave-wrap { height: 160px; }
@@ -777,6 +961,28 @@
 			</div>
 
 			<!-- ── Voice Library ─────────────────────────── -->
+			<div class="vl-section" id="browserSection">
+				<div class="vl-section-head">
+					<h2 class="vl-section-title" data-i18n="voice.browse_voices">Browse voices</h2>
+					<span class="vl-pg-hint" id="vbStatus" role="status" aria-live="polite" style="font-size:12px;color:#777777;"></span>
+				</div>
+				<div class="vl-card">
+					<div class="vl-card-body">
+						<div class="vb-filters">
+							<label class="sr-only" for="vbSearch">Search voices</label>
+							<input type="search" id="vbSearch" placeholder="Search by name, accent, or use case..." autocomplete="off" spellcheck="false" />
+							<label class="sr-only" for="vbLanguage">Language</label>
+							<select id="vbLanguage">
+								<option value="">All languages</option>
+							</select>
+						</div>
+						<div class="vb-pills" id="vbProviders" role="group" aria-label="Voice providers"></div>
+						<div class="vb-grid" id="vbGrid"></div>
+						<button class="vl-btn vl-btn-ghost vl-btn-sm vb-more" id="vbMore" type="button" hidden>Show more</button>
+					</div>
+				</div>
+			</div>
+
 			<div class="vl-section" id="librarySection">
 				<div class="vl-section-head">
 					<h2 class="vl-section-title" data-i18n="voice.my_voices">My Voices</h2>
@@ -800,8 +1006,24 @@
 							<div class="vl-pg-field">
 								<label for="pgVoice" data-i18n="voice.voice">Voice</label>
 								<select id="pgVoice">
-									<option value="" disabled selected data-i18n="voice.clone_a_voice_first">Clone a voice first</option>
+									<option value="" disabled selected data-i18n="voice.pick_a_voice_first">Pick a voice above</option>
 								</select>
+							</div>
+							<div class="vl-pg-field" id="pgModelField" hidden>
+								<label for="pgModel" data-i18n="voice.model">Model</label>
+								<select id="pgModel"></select>
+							</div>
+						</div>
+						<div class="vl-pg-row" id="pgDirectionRow" hidden>
+							<div class="vl-pg-field">
+								<label for="pgDirection" data-i18n="voice.direction">Direction &mdash; how it should be said</label>
+								<input type="text" id="pgDirection" maxlength="200" placeholder="Warm and unhurried, like you're telling a friend a secret" />
+							</div>
+						</div>
+						<div class="vl-pg-row">
+							<div class="vl-pg-field">
+								<label for="pgSpeed">Speed <span id="pgSpeedVal">1.00&times;</span></label>
+								<input type="range" id="pgSpeed" min="0.5" max="2" step="0.05" value="1" aria-describedby="pgSpeedVal" />
 							</div>
 						</div>
 						<textarea class="vl-pg-textarea" id="pgText" placeholder="Type something to hear it spoken..." maxlength="500">Hello, I'm a three.ws agent. Nice to meet you.</textarea>
