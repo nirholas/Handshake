@@ -240,15 +240,16 @@
 			      resource error on a SCRIPT tag, which used to fail instantly even
 			      though the game modules were downloading normally. Only a
 			      same-origin, non-optional script or stylesheet counts now.
-			   2. Flaky wifi makes a background request reject. Every fetch boundary
-			      in the app handles its own failure, so a rejected request is not a
-			      boot failure. Network-shaped rejections are ignored outright, and
-			      anything else gets a grace long enough for a slow but healthy boot
-			      to finish and disarm it (bootPending). */
+			   2. Flaky wifi makes a background request reject, or the multiplayer
+			      socket fails to open. Every fetch boundary in the app handles its
+			      own failure and community-net reconnects with backoff, so neither
+			      is a boot failure. Network-shaped rejections are ignored outright,
+			      and anything else gets a grace long enough for a slow but healthy
+			      boot to finish and disarm it (bootPending). */
 			var OPTIONAL_SCRIPTS = /\/(brand|i18n|theme-switcher)\.js(\?|$)/;
 			function isNetworkNoise(v) {
 				var s = (v && (v.message || v.name)) || String(v || '');
-				return /Failed to fetch|NetworkError|Load failed|ERR_BLOCKED|ERR_FAILED|AbortError|network error/i.test(s);
+				return /Failed to fetch|NetworkError|Load failed|ERR_BLOCKED|ERR_FAILED|AbortError|network error|WebSocket/i.test(s);
 			}
 			function failSoon(title, body) {
 				setTimeout(function () { fail(title, body); }, 20000);
