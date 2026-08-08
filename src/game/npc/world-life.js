@@ -1,4 +1,4 @@
-// World life — the W08 manager that makes a coin world feel inhabited.
+// World life, the W08 manager that makes a coin world feel inhabited.
 //
 // It owns one deterministic nav graph and hangs everything off it: the ambient
 // crowd and traffic (ambient-life.js), the interactive NPCs from the catalog
@@ -6,7 +6,7 @@
 // waypoints the jobs board drives (quest-markers.js), the W07-gated mobs
 // (mobs.js), and the bit of road geometry that makes the traffic legible.
 // coincommunities.js builds one of these per world on enter, ticks it in the
-// render loop, routes E / tap to it, and disposes it on leave — the same
+// render loop, routes E / tap to it, and disposes it on leave, the same
 // lifecycle the Agent Exchange already uses. The Agent Exchange stays its own
 // special module; this manages everyone else.
 
@@ -28,10 +28,10 @@ import { log } from '../../shared/log.js';
 const ROLE_RING = { vendor: 0x46d49a, quest: 0xffce6e, bank: 0xe6b422, flavor: 0xffffff };
 
 export class WorldLife {
-	// world: { mint, name, symbol, seed, biome } — biome is the resolved env
+	// world: { mint, name, symbol, seed, biome }, biome is the resolved env
 	// biome object; name/symbol feed the world-aware NPC chat prompt.
 	// onInspectNpc (optional): called with an interactive Npc when the player
-	// selects one from outside its interaction range — the host opens its
+	// selects one from outside its interaction range, the host opens its
 	// profile (coincommunities wires the shared avatar inspector).
 	constructor({ scene, camera, renderer, getPlayer, ui, net, world, radius = 54, onInspectNpc }) {
 		this.scene = scene;
@@ -58,7 +58,7 @@ export class WorldLife {
 			onInspectPed: (ped) => this._inspectPed(ped),
 		});
 		this.mobs = new MobSystem({ scene });
-		// Waypoints for the jobs board's active objectives (W08 hooking W05) —
+		// Waypoints for the jobs board's active objectives (W08 hooking W05),
 		// pure client render of the same quest-zones.js the server already
 		// validates goto/interact against; it drives itself off the 'quests'
 		// snapshot, so it needs only the network handle, not the NPC list.
@@ -67,7 +67,7 @@ export class WorldLife {
 		// Interactive NPCs from the data-driven catalog: the Agent Exchange
 		// roster (real x402 micro-services), the general-store clerks + bank
 		// teller (W04's off-schema cash economy), and the quest-givers (W08
-		// hooking W05's jobs board — see quest-npcs.js) — fronted by the
+		// hooking W05's jobs board, see quest-npcs.js), fronted by the
 		// room's own message channel, no on-chain settlement for either.
 		this.npcs = [...npcCatalogFor(), ...economyNpcsFor(), ...questNpcsFor()].map((def) => {
 			const npc = new Npc(scene, def);
@@ -91,7 +91,7 @@ export class WorldLife {
 			return npc;
 		});
 
-		// One shared "press E" prompt for whichever NPC — or quest zone —
+		// One shared "press E" prompt for whichever NPC, or quest zone,
 		// you're nearest.
 		this.prompt = document.createElement('div');
 		this.prompt.className = 'npc-prompt';
@@ -182,7 +182,7 @@ export class WorldLife {
 
 	// The single thing the shared "press E" prompt/interact acts on: whichever
 	// of (nearest NPC, nearest in-range quest zone) is actually closer. Quest
-	// zones only ever contend for "interact" kind — a goto waypoint has nothing
+	// zones only ever contend for "interact" kind, a goto waypoint has nothing
 	// to press E on, so it never enters this contest.
 	_nearestInteractable(p) {
 		if (!p) return null;
@@ -244,8 +244,8 @@ export class WorldLife {
 		const pulse = 0.22 + 0.1 * (0.5 + 0.5 * Math.sin(this._ringT * 2));
 		for (const npc of this.npcs) if (npc.marker) npc.marker.material.opacity = pulse;
 
-		// Single proximity prompt for whichever interactable — NPC or quest
-		// zone — is nearest right now. Keyed by a stable id so we don't churn
+		// Single proximity prompt for whichever interactable, NPC or quest
+		// zone, is nearest right now. Keyed by a stable id so we don't churn
 		// the DOM/innerHTML every frame for the same target.
 		const nearest = player ? this._nearestInteractable(player) : null;
 		const key = nearest ? (nearest.kind === 'npc' ? `npc:${nearest.npc.id}` : `quest:${nearest.zone.id}`) : null;
@@ -271,7 +271,7 @@ export class WorldLife {
 		// Walk-up trigger: an NPC with `onApproach` fires it once when the player
 		// enters its range, and re-arms only after the player walks away (1 m of
 		// hysteresis so boundary jitter can't re-fire it). Driven off the nearest
-		// NPC specifically (not the combined prompt target) — a quest zone
+		// NPC specifically (not the combined prompt target), a quest zone
 		// winning the shared prompt shouldn't suppress an NPC's own approach line.
 		const nearNpc = player ? this._nearestNpc(player) : null;
 		if (player) {
@@ -290,7 +290,7 @@ export class WorldLife {
 
 	// Player pressed E: talk to / open the nearest NPC, or act at the nearest
 	// in-range quest zone (courier pickup/dropoff, a heist terminal, the vault
-	// door) — whichever is actually closer. The quest path only ever SENDS the
+	// door), whichever is actually closer. The quest path only ever SENDS the
 	// intent; the server re-derives the zone from its own authoritative
 	// position and rules on it, same as every other off-schema action. Returns
 	// true if one consumed the press, so the caller can stop here.
@@ -308,7 +308,7 @@ export class WorldLife {
 		return true;
 	}
 
-	// Tap/click any character in the world — the touch equivalent of E, extended
+	// Tap/click any character in the world, the touch equivalent of E, extended
 	// to every walker. An interactive NPC tapped in range runs its role action
 	// (counter, chat, board); tapped from afar it opens its profile instead. An
 	// ambient pedestrian with a gallery identity opens its citizen profile card
@@ -363,7 +363,7 @@ export class WorldLife {
 		this.npcs = [];
 		if (this.roadGroup) {
 			this.scene.remove(this.roadGroup);
-			// Road band + kerb are one-off RingGeometries with their own materials —
+			// Road band + kerb are one-off RingGeometries with their own materials,
 			// free them, this group is rebuilt for every world enter.
 			for (const child of this.roadGroup.children) {
 				child.geometry.dispose();

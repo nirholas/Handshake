@@ -44,7 +44,7 @@ function loadedProfile() {
 	return p;
 }
 
-describe('killPlayer — the drop', () => {
+describe('killPlayer, the drop', () => {
 	it('drops carried cash and the pack, keeps banked cash and hotbar tools', () => {
 		const profile = loadedProfile();
 		const { room } = makeRoom(profile);
@@ -75,7 +75,7 @@ describe('killPlayer — the drop', () => {
 	});
 });
 
-describe('killPlayer — what the dying player is told', () => {
+describe('killPlayer, what the dying player is told', () => {
 	it('pushes the emptied purse immediately, not at respawn', () => {
 		const profile = loadedProfile();
 		const { room, client } = makeRoom(profile);
@@ -117,7 +117,7 @@ describe('killPlayer — what the dying player is told', () => {
 	});
 });
 
-describe('killPlayer — respawn', () => {
+describe('killPlayer, respawn', () => {
 	it('revives at full health at the safe spawn and persists the emptied profile', () => {
 		const profile = loadedProfile();
 		const { room, timers, sent } = makeRoom(profile);

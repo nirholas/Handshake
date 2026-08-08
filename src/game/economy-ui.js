@@ -1,9 +1,9 @@
-// Economy UI (W04) — the general store and bank/ATM modals opened by walking
+// Economy UI (W04), the general store and bank/ATM modals opened by walking
 // up to their NPC and pressing E (npc/economy-npcs.js). Both are thin, honest
 // clients of the server-authoritative cash economy: every button sends an
 // intent over CommunityNet, the server prices/validates/mutates the profile,
 // and the result streams back through the existing 'store'/'profile'/'inv'/
-// 'notice' events — this module never assumes a trade landed until the server
+// 'notice' events, this module never assumes a trade landed until the server
 // confirms it. The $THREE boutique is a separate, on-chain flow that lives in
 // the wardrobe panel (play-systems.js), not here.
 
@@ -26,7 +26,7 @@ function el(tag, props = {}, kids = []) {
 }
 
 // Base modal shell shared by the store, the bank, and (src/game/quests-ui.js)
-// the Jobs Board — overlay, card, header with a title + close button, and
+// the Jobs Board, overlay, card, header with a title + close button, and
 // open/close lifecycle (fade + teardown). Exported so sibling panels reuse the
 // exact same shell instead of forking it.
 export class EconPanel {
@@ -191,7 +191,7 @@ let _openBank = null;
 
 /**
  * Open the general store: buy tools/consumables with cash, or sell gathered
- * goods for cash. Idempotent — a second call while one is open just refocuses
+ * goods for cash. Idempotent, a second call while one is open just refocuses
  * it (mirrors coin-buy.js's TradeModal singleton).
  * @param {{ ui: object, net: object }} deps
  */
@@ -253,7 +253,7 @@ class StorePanel extends EconPanel {
 		if (Number.isFinite(snap.gold)) this.profile.gold = snap.gold;
 		if (Array.isArray(snap.inv)) this.profile.inv = snap.inv;
 		this.purseValue.textContent = this.profile.gold.toLocaleString();
-		// The purse is a plain number on screen — nothing a screen reader would
+		// The purse is a plain number on screen, nothing a screen reader would
 		// revisit after a trade. Announce the delta so the outcome of a buy/sell
 		// is audible, not just visible.
 		if (Number.isFinite(snap.gold) && snap.gold !== before) {
@@ -317,7 +317,7 @@ class StorePanel extends EconPanel {
 			.map((slot, i) => ({ slot, i }))
 			.filter(({ slot }) => slot?.item && slot.qty > 0 && sellable.has(slot.item));
 		if (!rows.length) {
-			this.body.appendChild(el('div', { class: 'ec-empty', text: 'Nothing to sell yet — gather wood, stone, coal, fish or hides out in the world and bring them back.' }));
+			this.body.appendChild(el('div', { class: 'ec-empty', text: 'Nothing to sell yet, gather wood, stone, coal, fish or hides out in the world and bring them back.' }));
 			return;
 		}
 		for (const { slot, i } of rows) {
@@ -364,7 +364,7 @@ class BankPanel extends EconPanel {
 		this.bankBal = 0;
 
 		// Until the server's profile lands, both balances read as unknown rather
-		// than as a confident "0" — telling a player they are broke when we have
+		// than as a confident "0", telling a player they are broke when we have
 		// simply not looked yet is the worst thing this panel could say.
 		this.purseValue = el('b', { class: 'ec-pending-val', text: '…' });
 		this.purse = el('div', { class: 'ec-purse' }, [

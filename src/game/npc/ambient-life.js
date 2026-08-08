@@ -1,9 +1,9 @@
-// Ambient world life — pedestrians and vehicle traffic that make the plaza
+// Ambient world life, pedestrians and vehicle traffic that make the plaza
 // breathe (W08).
 //
 // Everything here is a *pure function of a shared world clock* (wall time) and
 // the world seed, so two players standing in the same town see the same crowd
-// walking the same routes and the same cars on the same stretch of road —
+// walking the same routes and the same cars on the same stretch of road,
 // without a single ambient NPC crossing the wire. That's the brief's deal:
 // ambient life is client-side and deterministic; only consequential NPCs
 // (vendors, quests, mobs) are server-authoritative.
@@ -26,7 +26,7 @@ import { loadCitizenPool, isCitizen } from './citizens.js';
 
 const DEFAULT_AVATAR = '/avatars/default.glb';
 
-const PED_WALK_SPEED = 1.35;     // m/s along the loop — an unhurried stroll
+const PED_WALK_SPEED = 1.35;     // m/s along the loop, an unhurried stroll
 const DETAILED_PEDS = 6;         // GLB-bodied pedestrians near the centre
 const IMPOSTOR_PEDS = 14;        // cheap instanced crowd in the distance
 const VEHICLES = 5;              // cars/wagons on the ring road
@@ -102,7 +102,7 @@ class Pedestrian {
 				// so this path is hot in a busy world.
 				if (this._disposed) { releaseAvatar(this.rig); return; }
 				this.height = height;
-				// Loaded into idle by buildAvatar — set them strolling.
+				// Loaded into idle by buildAvatar, set them strolling.
 				if (!this._held) this.anim.crossfadeTo(CLIP_WALK, 0.2).catch(() => {});
 			})
 			.catch(() => {});
@@ -126,7 +126,7 @@ class Pedestrian {
 	}
 
 	update(dt, T, player) {
-		// Base position is a pure function of the shared clock — identical on every
+		// Base position is a pure function of the shared clock, identical on every
 		// client. Arc-length advances at a steady stroll. Hold-to-talk is a local,
 		// cosmetic deviation like the sidestep below: while held the pedestrian
 		// banks lag instead of moving, and afterwards walks it off at a brisk pace
@@ -236,7 +236,7 @@ class Vehicle {
 	}
 
 	update(dt, T, player) {
-		// Target arc-length from the shared clock — the consistent baseline.
+		// Target arc-length from the shared clock, the consistent baseline.
 		const targetL = this.phase + this.dir * VEHICLE_SPEED * T;
 
 		// Yield to the local player: if they're standing on the road just ahead,
@@ -290,7 +290,7 @@ export class AmbientLife {
 	}
 
 	// A single InstancedMesh pair (bodies + heads) carries the whole background
-	// crowd on the outermost loop — one draw call each, no per-ped objects.
+	// crowd on the outermost loop, one draw call each, no per-ped objects.
 	_buildImpostors() {
 		const rand = mulberry32((this.nav.seed ^ 0x9e3779b9) >>> 0);
 		const bodyGeo = new CapsuleGeometry(0.28, 0.7, 4, 8);
@@ -305,7 +305,7 @@ export class AmbientLife {
 		for (let i = 0; i < IMPOSTOR_PEDS; i++) {
 			bodies.setColorAt(i, new Color(palette[i % palette.length]));
 			this._impostorSpec.push({
-				loopIdx: 0, // outermost loop only — keeps impostors in the distance
+				loopIdx: 0, // outermost loop only, keeps impostors in the distance
 				phase: rand() * 1000,
 				speed: PED_WALK_SPEED * (0.85 + rand() * 0.4),
 				bob: rand() * Math.PI * 2,
@@ -341,7 +341,7 @@ export class AmbientLife {
 	}
 
 	// Deterministic avatar assignment: shuffle the pool by seed so ped #k shows the
-	// same model — and therefore the same identity — on every client.
+	// same model, and therefore the same identity, on every client.
 	_pedAvatar(k) {
 		const pool = this._avatarPool;
 		if (!pool || !pool.length) return null;
@@ -393,7 +393,7 @@ export class AmbientLife {
 		}
 		for (const v of this.vehicles) v.update(dt, T, player);
 
-		// Impostor crowd — one matrix write per instance, distance only.
+		// Impostor crowd, one matrix write per instance, distance only.
 		if (this._impostor) {
 			const { bodies, heads } = this._impostor;
 			for (let i = 0; i < this._impostorSpec.length; i++) {

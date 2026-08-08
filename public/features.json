@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-08T15:44:09.457Z",
+	"generated_at": "2026-08-08T16:18:10.331Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2912,6 +2912,16 @@
 					"title": "Docs · IBM Community post catalog",
 					"description": "The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.",
 					"added": "2026-08-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/play-live-events",
+					"title": "Docs · Live events in the /play world",
+					"description": "How a scheduled event runs inside the $THREE world: one config file drives the countdown chip, the agenda drawer, the go-live moment, and a fireworks show every player sees identically without a single packet. Includes how to schedule, preview, and verify one.",
+					"added": "2026-08-08",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

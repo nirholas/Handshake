@@ -1,4 +1,4 @@
-// A generalized interactive NPC — the reusable engine behind the Agent Exchange.
+// A generalized interactive NPC, the reusable engine behind the Agent Exchange.
 //
 // agent-commerce.js proved the pattern: a GLB-bodied character standing in the
 // world, a proximity prompt, a dialogue beat, and a real role action on E/tap.
@@ -113,7 +113,7 @@ export class Npc {
 	interact(ctx) {
 		this.faceTowards(ctx.player);
 		if (typeof this.def.onInteract === 'function') {
-			try { this.def.onInteract({ npc: this, ...ctx }); } catch { /* role action failed — stay silent rather than crash the loop */ }
+			try { this.def.onInteract({ npc: this, ...ctx }); } catch { /* role action failed, stay silent rather than crash the loop */ }
 			return;
 		}
 		const lines = this.def.dialogue || [];
@@ -137,7 +137,7 @@ export class Npc {
 		this._disposed = true;
 		// Free the shared-template clone's GPU buffers, not just the scene-graph
 		// reference. 21 NPCs per world across five world hops is 105 orphaned
-		// skinned avatars otherwise — the mobile-OOM profile.
+		// skinned avatars otherwise, the mobile-OOM profile.
 		releaseAvatar(this.rig);
 		this.scene.remove(this.rig);
 		this.label.remove();

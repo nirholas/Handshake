@@ -1,4 +1,4 @@
-// Event quest line (order 04) — the gate is the whole feature. An event job must
+// Event quest line (order 04), the gate is the whole feature. An event job must
 // be invisible, unacceptable and unpayable outside the event window, and fully
 // playable inside it, judged from the SERVER's read of public/event.json. These
 // cases pin both halves plus the new `defeat` objective the combat job runs on.

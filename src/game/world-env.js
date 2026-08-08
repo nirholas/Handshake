@@ -1,14 +1,14 @@
-// World environment — a distinct, living biome for every coin community.
+// World environment, a distinct, living biome for every coin community.
 //
 // The lobby/landing stays monochrome by design, but the moment a player drops
 // into a world it should feel alive AND feel like *this* community's place.
 // Two coins should never share a skin. We hash the coin's mint into a stable
 // seed, pick one of several biome archetypes from it (meadow, desert, tundra,
 // volcanic, alien, tropical), then jitter that biome's palette and scatter its
-// vegetation from the same seed — so a given coin always renders the same world,
+// vegetation from the same seed, so a given coin always renders the same world,
 // and a thousand coins render a thousand recognisably different ones.
 //
-// Colour does the heavy lifting here — the monochrome restraint is the lobby's
+// Colour does the heavy lifting here, the monochrome restraint is the lobby's
 // job, not the world's. Everything decorative sits OUTSIDE the playRadius circle
 // so it frames the space without ever blocking a player. Geometry is low-poly
 // and shared/cloned, so the whole environment is cheap enough to run alongside
@@ -106,7 +106,7 @@ const BIOMES = [
 		flora: 'palm', density: 30,
 	},
 	{
-		// Old-west frontier town — a dusty main square ringed by false-front
+		// Old-west frontier town, a dusty main square ringed by false-front
 		// storefronts under a low golden-hour sun that throws the long shadows of
 		// every porch post and water tower across the packed-dirt plaza. `town`
 		// flags the storefront/prop builder below; sagebrush + the odd saguaro
@@ -121,7 +121,7 @@ const BIOMES = [
 	},
 ];
 
-// Curated biomes reachable ONLY by explicit id (biomeById) — never by the seed
+// Curated biomes reachable ONLY by explicit id (biomeById), never by the seed
 // modulo, so adding one here can't shift which biome an existing coin's mint maps
 // to. `noir` is a neutral, near-monochrome dark world tuned to match an embedding
 // host's dark UI: its sky and ground sit on the same #1c2530→#0c1116 ramp the
@@ -138,7 +138,7 @@ const CURATED_BIOMES = [
 		flora: 'conifer', density: 12,
 	},
 	{
-		// Robinhood Chain worlds. A trading-floor-at-night mood — deep emerald
+		// Robinhood Chain worlds. A trading-floor-at-night mood, deep emerald
 		// dark fading to near-black, gold ticker-tape accents on the ring and
 		// glass "crystal" flora standing in for a financial district skyline. No
 		// wordmark, logo, or literal brand hex; the palette nods at "stocks +
@@ -169,7 +169,7 @@ export function biomeById(id) {
 }
 
 // A vertical gradient backdrop, rendered as the scene background so it's immune
-// to fog and never rotates with the orbit camera — a clean graded sky per biome.
+// to fog and never rotates with the orbit camera, a clean graded sky per biome.
 function gradientSky(top, mid, horizon) {
 	const c = document.createElement('canvas');
 	c.width = 4; c.height = 256;
@@ -379,7 +379,7 @@ function makeStorefront(geo, mats, rand, label) {
 	return g;
 }
 
-// A timber water tower: a banded tank on four braced legs under a conic cap —
+// A timber water tower: a banded tank on four braced legs under a conic cap,
 // the tallest thing on the skyline and the town's signature silhouette.
 function makeWaterTower(geo, mats) {
 	const g = new Group();
@@ -401,7 +401,7 @@ function makeWaterTower(geo, mats) {
 	return g;
 }
 
-// Scatter props: barrels, crates, wagon wheels, hitching rails, water troughs —
+// Scatter props: barrels, crates, wagon wheels, hitching rails, water troughs,
 // the small clutter that turns an empty lot into a lived-in town.
 function makeProp(kind, geo, mats, rand) {
 	const g = new Group();
@@ -518,7 +518,7 @@ function buildFrontierTown(root, rand, playRadius, batch) {
 		batch.add(prop);
 	}
 
-	// A couple of tumbleweeds drifting the mesa band beyond the town — pure life.
+	// A couple of tumbleweeds drifting the mesa band beyond the town, pure life.
 	// Returned to the caller so they roll on the same animator clock as the world.
 	const tumbleMat = new MeshStandardMaterial({ color: 0x8a6e44, roughness: 1, metalness: 0, flatShading: true, wireframe: true });
 	const tumbleGeo = new IcosahedronGeometry(0.9, 1);
@@ -602,7 +602,7 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 	plaza.rotation.x = -Math.PI / 2; plaza.position.y = 0.01; plaza.receiveShadow = true;
 	root.add(plaza);
 
-	// Faint paving grid over the plaza — a sense of scale that the haze fades.
+	// Faint paving grid over the plaza, a sense of scale that the haze fades.
 	const grid = new GridHelper(playRadius * 2, 30, biome.grid, biome.grid);
 	grid.position.y = 0.02;
 	grid.material.transparent = true;
@@ -610,7 +610,7 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 	grid.material.depthWrite = false;
 	root.add(grid);
 
-	// Glowing boundary hairline — the bright accent ring around the plaza, the
+	// Glowing boundary hairline, the bright accent ring around the plaza, the
 	// most per-coin-distinct colour in the scene.
 	const ring = new Mesh(new RingGeometry(playRadius - 0.12, playRadius + 0.12, 128),
 		new MeshBasicMaterial({ color: cRing, transparent: true, opacity: 0.55, side: DoubleSide }));
@@ -678,7 +678,7 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 		plant.rotation.y = rand() * Math.PI * 2;
 		batch.add(plant);
 	}
-	// Alien crystals breathe with a faint emissive shimmer — biome-specific life.
+	// Alien crystals breathe with a faint emissive shimmer, biome-specific life.
 	// The pulse is written on the shared leaf materials, so every batched shard
 	// picks it up without the animator touching a single mesh.
 	if (neon && biome.density > 0) {
@@ -717,7 +717,7 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 	// --- Live-market reactivity --------------------------------------------
 	// The boundary ring is the world's heartbeat: a slow breathing pulse is the
 	// baseline, but a trade can kick it to a colour (green on a buy, red on a
-	// sell) that decays back to the per-coin accent — so the arena visibly
+	// sell) that decays back to the per-coin accent, so the arena visibly
 	// flinches with the on-chain tape. The market-reactor drives flashRing().
 	const baseRing = cRing.clone();
 	const flashColor = new Color();
@@ -734,7 +734,7 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 	// strobe. Baselines are captured so every community settles back to its own.
 	// Daytime baselines the market mood multiplies. The day/night cycle drives
 	// these through setBaseSun/setBaseFog so the time of day sets the base and the
-	// trade tape's mood still flexes it on top — the two compose instead of fighting.
+	// trade tape's mood still flexes it on top, the two compose instead of fighting.
 	const base = { sun: biome.sun.intensity, fogNear: biome.fogNear, fogFar: biome.fogFar };
 	let mood = 0, moodTarget = 0; // -1 storm … +1 euphoric
 	animators.push((t, dt) => {
@@ -783,7 +783,7 @@ export function createWorldEnvironment(scene, renderer, playRadius = 58, opts = 
 			// geometry/material sweep below.
 			disposeInstanced(root);
 			// The sun is a DirectionalLight, not a Mesh, so the traverse below skips
-			// it — and its 2048x2048 shadow depth target is one of the largest GPU
+			// it, and its 2048x2048 shadow depth target is one of the largest GPU
 			// allocations in the world. Free it explicitly, or every coin-world switch
 			// strands another full-size shadow map in VRAM.
 			sunLight.shadow?.map?.dispose?.();

@@ -18,7 +18,7 @@
 //   batch.flush(root);                           // one InstancedMesh per bucket
 //
 // Anything that has to animate individually (the tumbleweeds, the market ring)
-// must NOT go through here — add it to the scene the ordinary way.
+// must NOT go through here, add it to the scene the ordinary way.
 
 import { InstancedMesh, Matrix4, StaticDrawUsage } from 'three';
 

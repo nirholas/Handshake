@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * /play failure-mode audit — deliberate failure injection in a real browser.
+ * /play failure-mode audit, deliberate failure injection in a real browser.
  *
  * `npm run audit:console` proves /play is clean when everything works. This one
  * proves it stays usable when things break, which is what an event crowd will
@@ -11,7 +11,7 @@
  * Each scenario drives a fresh browser context against /play with specific
  * network routes aborted or rewritten, then asserts:
  *
- *   • the boot loader always resolves — either the world opens, or a designed
+ *   • the boot loader always resolves, either the world opens, or a designed
  *     error card with a recovery action replaces it. Never a stuck spinner.
  *   • no uncaught exception, and no console error/warning from our code
  *     (judged against the shared filter in lib/console-noise.mjs)
@@ -107,7 +107,7 @@ const SCENARIOS = [
 	},
 	{
 		id: 'no-params',
-		title: 'Bare /play — no query string at all',
+		title: 'Bare /play, no query string at all',
 		url: '/play',
 	},
 	{
@@ -298,7 +298,16 @@ async function warmup(base) {
 
 // ── One scenario ─────────────────────────────────────────────────────────────
 
-async function runScenario(browser, base, sc) {
+// One browser PROCESS per scenario, not one context on a shared browser.
+// /play stands up two WebGL contexts (the boot avatar and the main scene) plus a
+// rAF loop and a game socket, and chromium does not reclaim those promptly when
+// only the owning context closes. On a shared browser the first scenario passed
+// and every later one timed out on `domcontentloaded`, which reads exactly like
+// a site outage while actually being exhausted GPU-context slots in the harness.
+// A fresh process costs about a second and makes each scenario's result mean
+// what it says.
+async function runScenario(base, sc) {
+	const browser = await chromium.launch({ headless: !process.env.HEADFUL });
 	const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const consoleIssues = [];
 	const pageErrors = [];
@@ -335,6 +344,8 @@ async function runScenario(browser, base, sc) {
 	} catch (err) {
 		findings.push(`navigation failed: ${err.message}`);
 		await context.close();
+	await browser.close();
+		await browser.close();
 		return { findings, consoleIssues, pageErrors };
 	}
 
@@ -390,14 +401,14 @@ async function runScenario(browser, base, sc) {
 	if (o.styleBreakout.length) {
 		findings.push(`CSS breakout from a query parameter into a style attribute: ${JSON.stringify(o.styleBreakout[0].slice(0, 160))}`);
 	}
-	if (!o.loaderResolved) findings.push('boot loader never resolved — stuck spinner, no error card');
+	if (!o.loaderResolved) findings.push('boot loader never resolved, stuck spinner, no error card');
 	if (o.errorCard && !o.errorCardHasAction) findings.push('error card has no recovery action');
 	if (o.errorCard && !o.errorCardText.trim()) findings.push('error card has no message');
 	for (const r of o.rejections) if (!isIgnorableConsole(r)) findings.push(`unhandledrejection: ${r}`);
 
 	// A world that opened must show a real avatar, never an empty rig.
 	if (o.phase === 'world' && o.hasLocalRig && o.rigMeshes === 0) {
-		findings.push('local avatar rig has no meshes — invisible player');
+		findings.push('local avatar rig has no meshes, invisible player');
 	}
 
 	if (sc.expect) { const extra = sc.expect(o); if (extra) findings.push(extra); }
@@ -423,13 +434,12 @@ async function main() {
 	console.log(C.b('╚═════════════════════════════════════════════════════════════╝\n'));
 
 	const server = await startServer();
-	const browser = await chromium.launch({ headless: !process.env.HEADFUL });
 	const failed = [];
 
 	try {
 		for (const sc of scenarios) {
 			process.stdout.write(`  ${C.c(sc.id.padEnd(18))} ${C.d(sc.title)}\n`);
-			const { findings, consoleIssues, pageErrors, o } = await runScenario(browser, server.base, sc);
+			const { findings, consoleIssues, pageErrors, o } = await runScenario(server.base, sc);
 			const all = [...findings, ...pageErrors, ...consoleIssues];
 			if (all.length) {
 				failed.push({ sc, all });
@@ -446,18 +456,17 @@ async function main() {
 			}
 		}
 	} finally {
-		await browser.close();
 		await server.stop();
 	}
 
 	console.log(C.b('\n═══════════════ SUMMARY ═══════════════\n'));
 	if (!failed.length) {
-		console.log(C.g(`  ALL ${scenarios.length} FAILURE MODES HANDLED — no stuck loaders, no script execution, clean console.\n`));
+		console.log(C.g(`  ALL ${scenarios.length} FAILURE MODES HANDLED, no stuck loaders, no script execution, clean console.\n`));
 		return 0;
 	}
 	console.log(C.r(`  ${failed.length} of ${scenarios.length} scenario(s) failed:\n`));
 	for (const { sc, all } of failed) {
-		console.log(`  ${C.b(sc.id)} — ${sc.title}`);
+		console.log(`  ${C.b(sc.id)}, ${sc.title}`);
 		for (const f of all) console.log(`      ${C.r('•')} ${f}`);
 	}
 	console.log('');

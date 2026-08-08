@@ -1,9 +1,9 @@
-// Agent Exchange — two NPC AI agents who pay each other on-chain, living inside
+// Agent Exchange, two NPC AI agents who pay each other on-chain, living inside
 // every coin town in /play.
 //
 // This ports the /agent-exchange demo into the walkaround world: instead of two
 // iframed avatars on a flat page, two GLB-bodied agents stand in the plaza. Walk
-// up to them and trigger a round — they negotiate in speech bubbles while the
+// up to them and trigger a round, they negotiate in speech bubbles while the
 // buyer (NOVA) pays the seller (ORACLE) in USDC to inspect a real 3D model
 // through the server-side x402 payer (/api/x402-pay: challenge → sign → verify →
 // dispatch → settle, streamed as SSE). The paid call is the platform's own
@@ -11,7 +11,7 @@
 // (vertices, triangles, materials). Every settlement is real USDC on Solana
 // mainnet, with a Solscan link in the receipt.
 //
-// Built per-world by coincommunities.js — every coin town hosts the exchange;
+// Built per-world by coincommunities.js, every coin town hosts the exchange;
 // the paid call and the settlement rail are coin-agnostic, so the same two
 // agents work every plaza. The payment round only fires on an explicit player
 // interaction (E / tap), so the agent wallet is never drained on a timer.
@@ -25,7 +25,7 @@ import { resolveAvatarUrl, buildAvatar, loadManifest, MANIFEST_URL, CLIP_IDLE } 
 import { createX402Jumbotron } from './x402-jumbotron.js';
 import { log } from '../shared/log.js';
 
-// Where the two agents stand — off to the right of the totem so a player
+// Where the two agents stand, off to the right of the totem so a player
 // entering the town sees them but doesn't spawn on top of them.
 const EXCHANGE_CENTER = new Vector3(8, 0, -6);
 const AGENT_GAP = 3.2;          // metres between the two agents
@@ -33,7 +33,7 @@ const INTERACT_RANGE = 6.5;     // how close the player must be to trigger a rou
 const ROUND_COOLDOWN_MS = 9000; // min time between paid rounds (one real payment each)
 const BUBBLE_MS = 5200;
 
-// What NOVA buys from ORACLE: the platform's own `tools/list` MCP call — the
+// What NOVA buys from ORACLE: the platform's own `tools/list` MCP call, the
 // simplest, fastest paid tool (no args, no file fetch), so a round settles in a
 // beat. The "intel" is ORACLE's live service catalog (its priced skills).
 const PAID_TOOL = 'tools/list';
@@ -51,13 +51,13 @@ const STAGES = [
 // Scripted dialogue, matched to each stage. SELLER hosts the catalog; BUYER pays.
 const LINES = {
 	seller: {
-		idle:      'My service catalog — priced skills, paid per call in USDC, on-chain.',
+		idle:      'My service catalog, priced skills, paid per call in USDC, on-chain.',
 		challenge: 'Payment challenge issued. Awaiting your signed transfer…',
 		built:     'Transfer received. Forwarding to the facilitator…',
 		verified:  'Payment verified. Pulling the catalog…',
 		settled:   'Funds confirmed on-chain. Sending the list.',
 		done:      (summary) => `Catalog: ${summary}`,
-		error:     'Payment failed — no charge made.',
+		error:     'Payment failed, no charge made.',
 	},
 	buyer: {
 		idle:      'I need alpha. Paying now.',
@@ -65,7 +65,7 @@ const LINES = {
 		built:     'Signed. Sending to the facilitator for verification.',
 		verified:  'Verified on-chain. Waiting on settlement…',
 		settled:   'Settled. Collecting the catalog.',
-		done:      (count) => `Got it — ${count}. Indexing your services.`,
+		done:      (count) => `Got it, ${count}. Indexing your services.`,
 		error:     'Transaction rolled back. Wallet unchanged.',
 	},
 };
@@ -183,7 +183,7 @@ export class AgentCommerce {
 		this._buildPromptAndPanel();
 
 		// A big jumbotron behind the agents, facing the plaza, so anyone in the
-		// town can watch the payments land on a screen — not just the player who
+		// town can watch the payments land on a screen, not just the player who
 		// walked up and triggered the round. It pulls the real platform-wide x402
 		// feed on its own, then the live local round is pushed into it stage by
 		// stage from _runRound below.
@@ -204,7 +204,7 @@ export class AgentCommerce {
 		// Gentle nudge so players discover the agents exist.
 		clearTimeout(this._introTimer);
 		this._introTimer = setTimeout(() => {
-			this.ui?.toast?.('Two AI agents are trading on-chain by the plaza — walk over and press E to watch.', 'info');
+			this.ui?.toast?.('Two AI agents are trading on-chain by the plaza, walk over and press E to watch.', 'info');
 		}, 5200);
 	}
 
@@ -391,7 +391,7 @@ export class AgentCommerce {
 		if (!this._playerNear()) return;
 		const now = (typeof performance !== 'undefined' ? performance.now() : 0);
 		if (now - this.lastRoundAt < ROUND_COOLDOWN_MS) {
-			this.ui?.toast?.('Give the agents a moment — settling the last payment.', 'info');
+			this.ui?.toast?.('Give the agents a moment, settling the last payment.', 'info');
 			return;
 		}
 		this._runRound().catch((err) => log.warn('[agent-commerce] round failed:', err?.message));
@@ -408,7 +408,7 @@ export class AgentCommerce {
 			await agent.anim.crossfadeTo(name, 0.16);
 			clearTimeout(agent._gestureTimer);
 			agent._gestureTimer = setTimeout(() => { if (!agent._disposed) agent.anim.crossfadeTo(CLIP_IDLE, 0.25); }, 2600);
-		} catch { /* clip missing — ignore */ }
+		} catch { /* clip missing, ignore */ }
 	}
 
 	async _runRound() {
@@ -435,7 +435,7 @@ export class AgentCommerce {
 			const res = await fetch('/api/x402-pay', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
-				// Pay for the platform's own tools/list MCP call — the simplest paid
+				// Pay for the platform's own tools/list MCP call, the simplest paid
 				// tool. /api/x402-pay handles the Solana USDC payment, then dispatches
 				// the call and returns ORACLE's catalog alongside the settlement.
 				body: JSON.stringify({ tool: PAID_TOOL, args: {} }),
@@ -471,7 +471,7 @@ export class AgentCommerce {
 				} else if (event === 'error') {
 					throw new Error(data.error || 'payment failed');
 				}
-				// 'dispatched' carries only timing — no UI beat needed.
+				// 'dispatched' carries only timing, no UI beat needed.
 			}
 
 			if (this._disposed) return;
@@ -496,7 +496,7 @@ export class AgentCommerce {
 			// Auto-dismiss the panel after the receipt has been read.
 			this._scheduleHide(9000);
 		} catch (err) {
-			if (this._disposed) return; // torn down mid-round — nothing left to render
+			if (this._disposed) return; // torn down mid-round, nothing left to render
 			// `active` already points at the stage that failed.
 			this.seller.say(LINES.seller.error);
 			this.buyer.say(LINES.buyer.error);
@@ -526,7 +526,7 @@ export class AgentCommerce {
 		// stepper animates in lockstep with this HUD panel.
 		this.jumbotron?.setStage({ topic, stage, amount: this._amount });
 		const activeIdx = STAGES.findIndex((s) => s.id === stage);
-		const amt = this._amount ? fmtUsdcAmount(this._amount) : '— USDC';
+		const amt = this._amount ? fmtUsdcAmount(this._amount) : ', USDC';
 		const steps = STAGES.map((s, i) => {
 			const cls = i < activeIdx ? 'ac-done' : i === activeIdx ? 'ac-active' : '';
 			return `<div class="ac-step ${cls}"><span class="ac-dot"></span>${s.label}</div>`;
@@ -544,8 +544,8 @@ export class AgentCommerce {
 		this.panel.querySelectorAll('.ac-step').forEach((el) => { el.classList.remove('ac-active'); el.classList.add('ac-done'); });
 		this.panel.querySelector('.ac-total')?.classList.add('ac-flash');
 
-		const amount = payment.amount ? fmtUsdcAmount(payment.amount) : '— USDC';
-		const short = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—');
+		const amount = payment.amount ? fmtUsdcAmount(payment.amount) : ', USDC';
+		const short = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : ', ');
 		const tx = payment.tx;
 		const stat = intel.stat ? `<span class="ac-sig">${escHtml(intel.stat)}</span>` : '';
 
@@ -557,7 +557,7 @@ export class AgentCommerce {
 			(tx
 				? `<div class="ac-rrow"><span>Transaction</span><span class="ac-v"><a href="https://solscan.io/tx/${escHtml(tx)}" target="_blank" rel="noopener">${tx.slice(0, 8)}…${tx.slice(-6)} ↗</a></span></div>`
 				: '') +
-			`<div class="ac-headline">${stat}<b>${escHtml(intel.topic)}</b> — ${escHtml(intel.headline)}</div>`;
+			`<div class="ac-headline">${stat}<b>${escHtml(intel.topic)}</b>, ${escHtml(intel.headline)}</div>`;
 		this.panel.appendChild(receipt);
 
 		setTimeout(() => this.panel.querySelector('.ac-total')?.classList.remove('ac-flash'), 600);
@@ -575,7 +575,7 @@ export class AgentCommerce {
 		this.panel.appendChild(msg);
 	}
 
-	// SSE event reader — same framing /api/x402-pay speaks. The reader handle is
+	// SSE event reader, same framing /api/x402-pay speaks. The reader handle is
 	// kept on the instance so dispose() can cancel a stream still in flight.
 	async *_sse(res) {
 		const reader = res.body.getReader();

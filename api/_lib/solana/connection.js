@@ -11,15 +11,17 @@
 //
 // Priority (per network): the caller's explicit url (if any) → Helius → Alchemy
 // → dRPC (authenticated) → Ankr (authenticated only) → operator-supplied
-// SOLANA_RPC_FALLBACK_URLS → PublicNode → Leo RPC (keyless FREE tier) → Tatum → the
-// official mainnet-beta endpoint, always last. We never depend on the
-// public endpoint alone — it is the most aggressively rate-limited (the source of
-// the `getBalance 429` log noise) — and we never include a keyless Ankr URL, which
-// Ankr now answers with a hard 403. The keyless tail (PublicNode + Leo RPC + Tatum
-// + MagicBlock + mainnet-beta) is what keeps checkout serving when a paid plan lapses:
-// all were verified serving live getLatestBlockhash/getAccountInfo on Solana
-// mainnet, so even with every API key dead the chain still resolves a working node
-// instead of erroring out.
+// SOLANA_RPC_FALLBACK_URLS → the keyless free tail. We never depend on the
+// public endpoint alone, it is the most aggressively rate-limited (the source of
+// the `getBalance 429` log noise), and we never include a keyless Ankr URL, which
+// Ankr now answers with a hard 403.
+//
+// The keyless tail is what keeps checkout serving when a paid plan lapses. Its
+// membership and ORDER are set by measured per-method capability, not latency:
+// see FREE_KEYLESS_MAINNET below and the table in docs/ops/solana-rpc-lanes.md.
+// Re-probe it when lanes start cooling persistently, because which methods a free
+// provider still serves changes without notice (MagicBlock was the recommended
+// primary until it began 403ing our egress on every method, 2026-08-07).
 //
 // To survive a single provider's quota running dry (e.g. a paid Helius plan
 // exhausting its monthly requests), register free-tier keys at several providers
@@ -984,8 +986,20 @@ export function shouldRotate(status) {
 // lane was cooling at once, and the treasury top-up cron turned that into a
 // hard 500 while the wallet audit turned it into four fake below-floor
 // emergencies. Neither was a code fault, and neither was a funding fact.
+//
+// `solana rpc provider error` is in the set because rotation does not always
+// get to report its own exhaustion. When the chain runs out, the LAST lane's
+// raw JSON-RPC error is what reaches the caller, not the tidy "all solana rpc
+// endpoints failed" summary: observed in production 2026-08-08, "failed to get
+// balance of account Wwwu...: Error: solana rpc provider error -16401 @
+// solana-mainnet.gateway.tatum.io", which took treasury-topup down with a 500
+// every few ticks. A named provider answering with its own error code is a lane
+// fault by construction (isProviderTierError already treats this very code as a
+// failover signal), so it is upstream weather, never a caller defect. Matching
+// the wrapper rather than any single vendor code keeps this true for the next
+// provider that invents one.
 export function isTransientRpcError(err) {
-	return /\b(429|500|502|503|504)\b|-32429|max usage reached|rate.?limit|quota|exhausted|timed?\s*out|fetch failed|socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|EAI_AGAIN|all solana rpc endpoints failed|all rpc endpoints exhausted/i.test(
+	return /\b(429|500|502|503|504)\b|-32429|max usage reached|rate.?limit|quota|exhausted|timed?\s*out|fetch failed|socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|EAI_AGAIN|all solana rpc endpoints failed|all rpc endpoints exhausted|solana rpc provider error/i.test(
 		String(err && err.message ? err.message : err),
 	);
 }

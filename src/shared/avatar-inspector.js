@@ -1,17 +1,17 @@
 /**
- * Avatar Inspector — one panel, every world.
+ * Avatar Inspector, one panel, every world.
  *
- * Press I (or select an avatar) in any three.ws world — /play, /city, a coin
- * world, the walk playground — and this side panel opens on whoever you're
+ * Press I (or select an avatar) in any three.ws world, /play, /city, a coin
+ * world, the walk playground, and this side panel opens on whoever you're
  * looking at: who they are, the reputation they've earned, the wallet they
  * carry, and every public fact the platform knows about them. It is the
  * world-side twin of the Agora passport: non-modal, keyboard-first, honest.
  *
- * Everything shown is real, server-authoritative data — the same public
+ * Everything shown is real, server-authoritative data, the same public
  * endpoints every other surface reads, so a number never disagrees across
  * the platform:
  *   - GET  /api/agents/:id                 → identity (name, bio, skills, links)
- *   - GET  /api/agents/:id/reputation      → 0–100 trust score + pillars
+ *   - GET  /api/agents/:id/reputation      → 0, 100 trust score + pillars
  *     (rendered by the shared reputationPanelEl, the exact breakdown the
  *     wallet hub shows)
  *   - GET  /api/agents/:id/solana/networth → wallet address, USD/SOL/$THREE
@@ -19,10 +19,10 @@
  *   - POST /api/wallet/balances            → balances for a bare verified
  *     wallet when the avatar isn't piloting a registered agent
  *
- * A guest with no wallet renders as exactly that — a designed empty state
- * that says what's missing and how to get it — never a fabricated number.
+ * A guest with no wallet renders as exactly that, a designed empty state
+ * that says what's missing and how to get it, never a fabricated number.
  *
- * Usage (each world supplies its own picking — raycast, nameplate click, or
+ * Usage (each world supplies its own picking, raycast, nameplate click, or
  * the I key on the nearest avatar):
  *   import { openAvatarInspector } from '../shared/avatar-inspector.js';
  *   openAvatarInspector({
@@ -101,10 +101,10 @@ export function closeAvatarInspector() {
  * @param {string}  [subject.world]     world chip ('play', 'city', …)
  * @param {string}  [subject.agentId]   three.ws agent UUID this avatar pilots
  * @param {string}  [subject.wallet]    verified Solana address (used when no agentId)
- * @param {string}  [subject.avatarUrl] GLB url — shown as an "Avatar model" fact row
+ * @param {string}  [subject.avatarUrl] GLB url, shown as an "Avatar model" fact row
  * @param {string}  [subject.bio]       caller-supplied bio paragraph (used when the
  *                                      subject has no registered agent to load one from)
- * @param {string}  [subject.username]  verified three.ws username (W10) — only pass a
+ * @param {string}  [subject.username]  verified three.ws username (W10), only pass a
  *                                      value the server verified (e.g. off the signed
  *                                      presence ticket via the player schema); it
  *                                      unlocks the real profile section: follow,
@@ -143,7 +143,7 @@ export function openAvatarInspector(subject = {}, opts = {}) {
 	const root = document.createElement('aside');
 	root.className = 'avi-root';
 	root.setAttribute('role', 'dialog');
-	root.setAttribute('aria-label', `Avatar inspector — ${name}`);
+	root.setAttribute('aria-label', `Avatar inspector, ${name}`);
 	root.innerHTML = `
 		<header class="avi-head">
 			<div class="avi-monogram" aria-hidden="true">${esc(name.replace(/^@/, '').slice(0, 2).toUpperCase())}</div>
@@ -208,7 +208,7 @@ export function openAvatarInspector(subject = {}, opts = {}) {
 
 	if (username) {
 		// Verified platform identity: surface the @handle under the display name
-		// immediately — the profile section fills in the rest as it loads.
+		// immediately, the profile section fills in the rest as it loads.
 		const nameEl = root.querySelector('.avi-name');
 		nameEl?.insertAdjacentHTML('afterend', `<div class="avi-subname">@${esc(username)}</div>`);
 		renderProfile(root, { username, kind, onOpenDM: opts.onOpenDM });
@@ -257,7 +257,7 @@ function errorState(message, retry) {
 // Only rendered for a username the SERVER verified (signed presence ticket →
 // player schema), never a client-claimed handle. Reads the same endpoints the
 // /u/:username page reads, and acts through the same follow + friends APIs the
-// profile page and friends drawer use — so a follow made here is the same edge
+// profile page and friends drawer use, so a follow made here is the same edge
 // everywhere on the platform.
 async function renderProfile(root, { username, kind, onOpenDM }) {
 	const body = sectionBody(root, 'profile');
@@ -481,7 +481,7 @@ async function renderAbout(root, subject, { agentId }) {
 	// to load one from (a gallery citizen's description, a world lore line).
 	// The agent path below overwrites this with the live profile once loaded.
 	const bioHtml = subject.bio ? `<p class="avi-bio">${esc(subject.bio)}</p>` : '';
-	// The GLB this avatar is wearing — a real, linkable fact of the encounter.
+	// The GLB this avatar is wearing, a real, linkable fact of the encounter.
 	const avatarUrl = String(subject.avatarUrl || '');
 	if (/^(https?:\/\/|\/)[^\s]+\.(glb|gltf|vrm)(\?|$)/i.test(avatarUrl)) {
 		const file = avatarUrl.split('?')[0].split('/').pop();
@@ -601,7 +601,7 @@ async function renderWallet(root, { agentId, wallet, kind }) {
 										`<div class="avi-holding"><span>${esc(t.symbol || shortAddress(t.mint))}</span><span>${esc(fmtAmount(t.amount))}${t.usd ? ` · ${esc(formatWalletUsd(t.usd))}` : ''}</span></div>`,
 								)
 								.join('')}</div>`
-						: `<p class="avi-note">No token holdings yet — a real $0 wallet shows $0.</p>`) +
+						: `<p class="avi-note">No token holdings yet, a real $0 wallet shows $0.</p>`) +
 					(data.reputation?.tips?.count
 						? `<div class="avi-fact"><span class="avi-fact-l">Tips received</span><span class="avi-fact-v">${esc(data.reputation.tips.count)} (${esc(formatWalletUsd(data.reputation.tips.usd))})</span></div>`
 						: '');
@@ -638,7 +638,7 @@ async function renderWallet(root, { agentId, wallet, kind }) {
 								.map((t) => `<div class="avi-holding"><span>${esc(t.symbol || '?')}</span><span>${esc(fmtAmount(t.amount))}${t.usd ? ` · ${esc(formatWalletUsd(t.usd))}` : ''}</span></div>`)
 								.join('')}</div>`
 						: '') +
-					`<p class="avi-note">Verified account wallet — this player signed in with it, but isn’t piloting a registered agent.</p>`;
+					`<p class="avi-note">Verified account wallet, this player signed in with it, but isn’t piloting a registered agent.</p>`;
 				wireCopy();
 			} catch (err) {
 				if (!document.contains(body)) return;
@@ -655,8 +655,8 @@ async function renderWallet(root, { agentId, wallet, kind }) {
 			kind === 'npc'
 				? 'Townspeople sell real paid services at their counters, but don’t carry a public wallet of their own.'
 				: kind === 'self'
-					? 'Sign in with your wallet — or pilot one of your agents — and your balances and reputation appear here.'
-					: 'This player is exploring as a guest — no verified wallet, no agent.',
+					? 'Sign in with your wallet, or pilot one of your agents, and your balances and reputation appear here.'
+					: 'This player is exploring as a guest, no verified wallet, no agent.',
 			kind === 'self' ? [{ label: 'Get an agent wallet', href: '/agent-wallet' }] : [],
 		);
 	};
@@ -675,7 +675,7 @@ function renderReputation(root, { agentId, kind }) {
 	body.innerHTML = emptyState(
 		'No trust score',
 		kind === 'npc'
-			? 'Townspeople are part of the world itself — reputation applies to player-owned agents.'
+			? 'Townspeople are part of the world itself, reputation applies to player-owned agents.'
 			: 'Reputation is earned by registered agents through real settled activity. This avatar isn’t piloting one.',
 		kind === 'npc' ? [] : [{ label: 'How trust is earned', href: '/reputation' }],
 	);

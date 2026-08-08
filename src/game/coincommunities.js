@@ -1,4 +1,4 @@
-// Coin Communities — 3D metaverse client (the /play scene).
+// Coin Communities, 3D metaverse client (the /play scene).
 //
 // Each pump.fun coin is its own multiplayer 3D world. You pick an avatar (or
 // bring your own / your 3D agent), choose a coin in the lobby, and drop into
@@ -96,7 +96,7 @@ import { VehicleManager } from './vehicles.js';
 import { CombatSystem } from './combat-system.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
-// storage is blocked — exactly the `?bg=transparent` embed case (e.g. the IBM
+// storage is blocked, exactly the `?bg=transparent` embed case (e.g. the IBM
 // x402 showcase). Guard every access so a blocked store degrades to defaults
 // instead of throwing mid-boot. Same contract as the lsGet/lsSet helpers in
 // play-onboard.js / play-intro.js / play-handoff.js.
@@ -130,7 +130,7 @@ function isPlausibleMint(mint) {
 	return SOLANA_MINT_RE.test(v) || EVM_ADDRESS_RE.test(v);
 }
 
-// True when the keystroke belongs to an editable surface — a DM input in the
+// True when the keystroke belongs to an editable surface, a DM input in the
 // friends panel, a search box, a modal field. World hotkeys must never fire
 // there: `b` would toggle build mode mid-word and Space would be swallowed
 // before it reached the caret. `chatFocused` covers only the in-world chat bar,
@@ -144,7 +144,7 @@ function isTypingTarget(t) {
 
 // Enter and Space are the browser's activation gesture for whatever control has
 // focus. Binding them globally to "open chat" and "jump" meant a keyboard-only
-// player could Tab to Shop, Friends, or any emote button and press Enter — and
+// player could Tab to Shop, Friends, or any emote button and press Enter, and
 // the world would swallow it, so the button never fired and the HUD was
 // reachable but not operable. Every other hotkey (WASD, E, Q, Z…) still runs
 // while a control is focused, because movement has to keep working; only the
@@ -173,7 +173,7 @@ const CONFETTI_COLORS = ['#ffffff', '#e8e8e8', '#fff8e1', '#e3f2fd', '#f3e5f5', 
 // also sends these bounds in every game:king message; this is the render default.
 const KING_ZONE = { x: 0, z: -12, r: 3.5 };
 
-// The Downtown plaza radius (matches world-zones.js DISTRICT.plazaRadius) — the
+// The Downtown plaza radius (matches world-zones.js DISTRICT.plazaRadius), the
 // dressed circle world-env.js/district.js build around. W01: movement itself is
 // no longer clamped to this disc; it's bounded by the much larger square
 // DISTRICT/WORLD_BOUND (world-zones.js), which mirrors the server's own clamp so
@@ -201,7 +201,7 @@ const TRENDING_URL = '/api/pump/trending?limit=30';
 const SEARCH_URL = '/api/pump/search';
 const COIN_URL = '/api/pump/coin';
 
-// Normalize a raw pump.fun coin (trending feed or search results — both share
+// Normalize a raw pump.fun coin (trending feed or search results, both share
 // the same upstream shape) into the compact record the lobby/world consume.
 function mapCoins(raw) {
 	const list = Array.isArray(raw) ? raw : raw.data || raw.coins || raw.items || [];
@@ -235,7 +235,7 @@ class RemotePlayer {
 		this.rig.position.set(player.x, player.y, player.z);
 		scene.add(this.rig);
 
-		// Public identity riding the server schema — who this peer is (name), the
+		// Public identity riding the server schema, who this peer is (name), the
 		// three.ws agent they pilot, their verified account wallet, and their
 		// verified three.ws username (W10, bound server-side from the signed
 		// presence ticket). These feed the avatar inspector (I / click a
@@ -281,7 +281,7 @@ class RemotePlayer {
 		// Tag mini-game (R08): red glow ring + 🏃 label for the "it" player.
 		this.isIt = !!player.it;
 		if (this.isIt) { this._addGlowRing(); this._addItLabel(); }
-		// Combat (W07): downed peers lie flat (a lightweight ragdoll — no physics
+		// Combat (W07): downed peers lie flat (a lightweight ragdoll, no physics
 		// sim, just an honest "you're out" pose) and stop being nameplate-clickable
 		// targets; a wanted peer's nameplate carries their star count.
 		this.isDead = !!player.dead;
@@ -292,7 +292,7 @@ class RemotePlayer {
 	setAvatar(url) {
 		if (url === this._avatarUrl) return;
 		this._avatarUrl = url;
-		// rebuild model — clearing the rig takes any worn cosmetics with it, so drop
+		// rebuild model, clearing the rig takes any worn cosmetics with it, so drop
 		// the old handle and re-apply once the new GLB has measured.
 		try { this.cosmetics?.dispose(); } catch {}
 		this.cosmetics = null;
@@ -303,7 +303,7 @@ class RemotePlayer {
 		this.rig.clear();
 		this.anim = new AnimationManager();
 		// Tag this load so a slower in-flight GLB can't attach to the rig after the
-		// peer disposed or swapped avatars again — otherwise the resolved model
+		// peer disposed or swapped avatars again, otherwise the resolved model
 		// lands on a cleared/removed rig (orphaned mesh, or two models at once).
 		const token = (this._avatarToken = (this._avatarToken || 0) + 1);
 		const anim = this.anim;
@@ -318,7 +318,7 @@ class RemotePlayer {
 			this.applyCosmetics();
 		})).catch(() => {});
 	}
-	// Dress this peer in their equipped loadout. Idempotent — re-applies only when
+	// Dress this peer in their equipped loadout. Idempotent, re-applies only when
 	// the wire actually changed, and waits for the avatar to measure (setAvatar
 	// calls it post-load). Reuses the same applyLoadout the local player and the
 	// creator use, so one wardrobe renders identically everywhere.
@@ -366,7 +366,7 @@ class RemotePlayer {
 		else { this._removeGlowRing(); this._removeItLabel(); }
 	}
 	// Downed pose (W07): tilt the rig onto its side rather than faking a physics
-	// ragdoll no other part of the client has — an honest, cheap "you're out"
+	// ragdoll no other part of the client has, an honest, cheap "you're out"
 	// read that's unmistakable at a glance and costs nothing to reverse.
 	_applyDowned(down) {
 		this.rig.rotation.x = down ? -Math.PI / 2 : 0;
@@ -383,7 +383,7 @@ class RemotePlayer {
 		}
 	}
 	// Verified three.ws identity on the nameplate (W10): the @handle beside the
-	// display name marks a signed-in platform account — the signal that clicking
+	// display name marks a signed-in platform account, the signal that clicking
 	// opens a real profile you can follow and message, not just a guest card.
 	_updateHandleBadge() {
 		if (this.username) {
@@ -505,7 +505,7 @@ export class CoinCommunities {
 
 		// Heat control (same system as /club): rAF fires at the display refresh
 		// rate, so an uncapped loop on a 120/144Hz panel renders 2-2.4x the
-		// frames of a 60Hz one for no visible gain — that alone makes laptops
+		// frames of a 60Hz one for no visible gain, that alone makes laptops
 		// run hot. The governor caps real frame work at 60fps in-world, 30 when
 		// the window loses focus, 30 under the shared power-saver preference,
 		// and a near-idle trickle while the opaque lobby fully covers the
@@ -514,10 +514,10 @@ export class CoinCommunities {
 		this._focus = trackWindowFocus();
 		this._powerSaver = getPowerSaver();
 		// Boot-time quality tier from real capability signals (deviceMemory,
-		// cores, coarse pointer — same detector /club uses), then a watchdog
+		// cores, coarse pointer, same detector /club uses), then a watchdog
 		// that steps the tier down on sustained slow frames and climbs it
 		// back (capped at the booted tier) once frames recover, so a single
-		// load-time hitch doesn't pin the pixel ratio low — and the 3D soft —
+		// load-time hitch doesn't pin the pixel ratio low, and the 3D soft,
 		// for the whole session. Applied to the renderer in _applyPerfTier.
 		this._perfTier = detectProfile();
 		this._watchdog = createFrameWatchdog({
@@ -561,7 +561,7 @@ export class CoinCommunities {
 
 		// Embed mode: `?biome=<id>` pins every world this session renders to one
 		// curated look (e.g. `noir` for a dark host surface) instead of the per-coin
-		// seeded biome — so a /play embed on a partner page stays visually consistent
+		// seeded biome, so a /play embed on a partner page stays visually consistent
 		// with that page. Validated against the biome table; an unknown id is ignored
 		// and the normal seeded look is used, so default play is unaffected.
 		this._biomePin = new URLSearchParams(location.search).get('biome') || null;
@@ -606,9 +606,9 @@ export class CoinCommunities {
 			// In-world avatar switcher: change your look without leaving the world.
 			onAvatarPanel: () => this._toggleAvatarPanel(),
 			onJobs: () => this._toggleQuests(),
-			// Friends panel (W09) — presence + DMs across every coin world.
+			// Friends panel (W09), presence + DMs across every coin world.
 			onFriends: () => this._toggleFriends(),
-			// Cold-open intro's zero-friction path — drop straight into the $THREE
+			// Cold-open intro's zero-friction path, drop straight into the $THREE
 			// home town with whatever avatar/name is already defaulted, no picking
 			// required. See play-intro.js and _dropIn() below.
 			onDropIn: () => this._dropIn(),
@@ -638,10 +638,10 @@ export class CoinCommunities {
 		});
 
 		// Collaborative building HUD (hotbar + place/break toggle). Hidden until the
-		// player is in a world and connected — there's nowhere to build otherwise.
+		// player is in a world and connected, there's nowhere to build otherwise.
 		this.buildType = 0;
 		// R20 structures: which composite piece is armed (null = single block) and the
-		// quarter-turn rotation (0–3) applied to it. Both drive the ghost preview.
+		// quarter-turn rotation (0, 3) applied to it. Both drive the ghost preview.
 		this.buildPiece = null;
 		this.buildRot = 0;
 		// R18 props: which placeable prop is armed (null = voxel layer active), its
@@ -656,7 +656,7 @@ export class CoinCommunities {
 			onModeChange: () => this._refreshGhost(),
 			onClearArea: (scope) => this._onClearArea(scope),
 		});
-		// Build permissions (R19) — refreshed from the server's build-perms snapshot:
+		// Build permissions (R19), refreshed from the server's build-perms snapshot:
 		// the player's per-world block cap + usage, and whether they're the coin creator
 		// (which unlocks the clear-area moderation tool). Solo builds carry no cap.
 		this._buildPerms = this._defaultBuildPerms();
@@ -671,7 +671,7 @@ export class CoinCommunities {
 		// First-ten-seconds cold open (see play-intro.js header for the audit finding
 		// this fixes): a first-time visitor otherwise lands on a bare coin grid with
 		// no context and bounces. Shown once per browser; the reopener in the lobby
-		// header brings it back any time. NOT shown on a `?coin=<mint>` deep link —
+		// header brings it back any time. NOT shown on a `?coin=<mint>` deep link,
 		// that visitor already made their choice (a shared world link) and "Drop in
 		// now" would silently redirect them to the $THREE home town instead of the
 		// world they clicked into, on top of it already loading behind the modal.
@@ -683,11 +683,11 @@ export class CoinCommunities {
 		requestAnimationFrame(this._loop);
 
 		// Wallet-first entry: when the platform has pinned a game token, the sign-in
-		// gate stands in front of everything — connect a wallet, sign a nonce, and
+		// gate stands in front of everything, connect a wallet, sign a nonce, and
 		// hold ≥ the floor before any world opens. The verified wallet becomes the
 		// account id we carry into every room. When no token is pinned the gate
 		// resolves instantly (open /play) and nothing below changes. enter() awaits
-		// this, so a deep link still drops in — just after the gate clears.
+		// this, so a deep link still drops in, just after the gate clears.
 		this.playPass = '';
 		this.account = '';
 		this._playReady = this._ensurePlayAccess();
@@ -695,7 +695,7 @@ export class CoinCommunities {
 		// Deep link: /play?coin=<mint>&name=&symbol=&image= drops straight into a
 		// coin's community, so a community is a shareable URL. An optional
 		// `?avatar=<glb|id>` rides along (used by "See in 3D" links) and is shown
-		// for this session only — never persisted over the player's saved avatar.
+		// for this session only, never persisted over the player's saved avatar.
 		const p = new URLSearchParams(location.search);
 		this._urlAvatar = (p.get('avatar') || '').trim();
 		// Capture ?ui= before enter() canonicalises the URL (the share-link
@@ -752,7 +752,7 @@ export class CoinCommunities {
 
 	// W01: boot the shared Rapier world once. A flat ground collider covers the
 	// whole district (buildings are added per-coin in enter(), once the district
-	// grid is built). Never throws — a WASM failure (unsupported browser, blocked
+	// grid is built). Never throws, a WASM failure (unsupported browser, blocked
 	// worker) degrades to the legacy direct-mutation movement path instead of
 	// wedging boot.
 	async _initPhysics() {
@@ -761,7 +761,7 @@ export class CoinCommunities {
 			this._physics.addGround(0, DISTRICT.half + 40);
 			this._physicsOk = true;
 		} catch (err) {
-			log.warn('[coincommunities] physics init failed — falling back to legacy movement:', err?.message);
+			log.warn('[coincommunities] physics init failed, falling back to legacy movement:', err?.message);
 			this._physicsOk = false;
 		}
 	}
@@ -804,7 +804,7 @@ export class CoinCommunities {
 	}
 
 	// The flagship $THREE town is always pinned to the top of the lobby, even when
-	// it isn't trending — it's the platform's front door. Show the static identity
+	// it isn't trending, it's the platform's front door. Show the static identity
 	// instantly so the card never flashes empty, then refresh name/art/market-cap
 	// live from pump.fun so the pin is real, not a hardcoded snapshot.
 	async _loadHomeTown() {
@@ -840,7 +840,7 @@ export class CoinCommunities {
 			// WebGL context creation fails on blocklisted GPUs, machines with
 			// hardware acceleration disabled, and some in-app/embedded browsers.
 			// Tag the failure so the boot guard can show a recovery message instead
-			// of leaving the player on a dead loader — boot-avatar.js already
+			// of leaving the player on a dead loader, boot-avatar.js already
 			// degrades gracefully, and the main scene must too.
 			const e = new Error('WebGL unavailable: ' + (err?.message || err));
 			e.code = 'NO_WEBGL';
@@ -928,7 +928,7 @@ export class CoinCommunities {
 	// devicePixelRatio changes when the window moves to a display with a
 	// different density (retina laptop ↔ external 1x monitor) or the OS/browser
 	// zoom changes. That does NOT reliably fire a 'resize' event, so without
-	// this the canvas keeps rendering at the old ratio — sharp becomes blurry,
+	// this the canvas keeps rendering at the old ratio, sharp becomes blurry,
 	// or a needlessly high ratio tanks the framerate. A resolution media query
 	// fires once when the current ratio stops matching; we re-sync and re-arm.
 	_watchDevicePixelRatio() {
@@ -944,7 +944,7 @@ export class CoinCommunities {
 	}
 
 	// Apply the current quality tier (or the power-saver floor) to the renderer.
-	// Tier caps pixel ratio — the single biggest GPU cost on high-DPI screens —
+	// Tier caps pixel ratio, the single biggest GPU cost on high-DPI screens,
 	// and gates shadow maps. Power saver overrides everything with the cheapest
 	// state; turning it off restores the tier the watchdog last settled on.
 	_applyPerfTier() {
@@ -991,7 +991,7 @@ export class CoinCommunities {
 	// and the slowly turning coin totem.
 	_tickEnv(dt) {
 		this.env?.update(dt);
-		// W01: real time of day, deterministic from wall-clock time (worldClock) —
+		// W01: real time of day, deterministic from wall-clock time (worldClock),
 		// every client in every world computes the identical sun/sky/lamp state
 		// with zero network sync, exactly like the /agent-screen ambient stage.
 		this._dayNight?.setTime(worldClock(Date.now()));
@@ -1075,14 +1075,14 @@ export class CoinCommunities {
 		return promise;
 	}
 
-	// Central coin totem — the community's banner in 3D.
+	// Central coin totem, the community's banner in 3D.
 	_buildTotem(coin) {
 		const g = new Group();
 		const pillar = new Mesh(new CylinderGeometry(1.1, 1.4, 6, 24),
 			new MeshStandardMaterial({ color: 0x3a4a72, roughness: 0.6, metalness: 0.2 }));
 		pillar.position.y = 3; pillar.castShadow = true; pillar.receiveShadow = true;
 		g.add(pillar);
-		// Floating coin disc with the token image — a warm gold coin that catches the
+		// Floating coin disc with the token image, a warm gold coin that catches the
 		// sun key, slowly turning. The token art rides on its faces.
 		const spin = new Group(); spin.position.y = 7.5;
 		const disc = new Mesh(new CylinderGeometry(2.2, 2.2, 0.3, 40),
@@ -1126,7 +1126,7 @@ export class CoinCommunities {
 		return m;
 	}
 
-	// Stadium-style jumbotron — the coin's giant LED screen, towering over the
+	// Stadium-style jumbotron, the coin's giant LED screen, towering over the
 	// plaza so it's the first thing players see on entry. It shows the coin art,
 	// name, market cap, and a LIVE readout of how many are in the community right
 	// now (redrawn from _updateOnline as people join and leave). Built as a dark
@@ -1164,7 +1164,7 @@ export class CoinCommunities {
 			});
 		}
 
-		// A LIVE bar that pulses along the panel's base (animated in _tickEnv) — the
+		// A LIVE bar that pulses along the panel's base (animated in _tickEnv), the
 		// cheap, always-moving signal that the room is live without redrawing canvas.
 		const pulse = new Mesh(new PlaneGeometry(W - 1.2, 0.16),
 			new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 }));
@@ -1189,7 +1189,7 @@ export class CoinCommunities {
 	}
 
 	// Render the jumbotron's text layer: coin name, symbol, market cap, and the
-	// live community count. Cheap and event-driven — only called on build and when
+	// live community count. Cheap and event-driven, only called on build and when
 	// the online count changes, never per-frame.
 	_drawScreen() {
 		const canvas = this._screenCanvas;
@@ -1219,7 +1219,7 @@ export class CoinCommunities {
 		const colX = 770; // right text column
 		x.textAlign = 'left'; x.textBaseline = 'alphabetic';
 
-		// Coin name — shrink the font until it fits the column width.
+		// Coin name, shrink the font until it fits the column width.
 		const name = (coin.name || 'Community').toUpperCase();
 		let nameSize = 116;
 		x.fillStyle = '#f5f5f6';
@@ -1249,7 +1249,7 @@ export class CoinCommunities {
 			x.fillText(mcap, colX, 588);
 		}
 
-		// LIVE — N in this community.
+		// LIVE, N in this community.
 		const n = this._online || 1;
 		const baseY = 740;
 		x.fillStyle = '#ffffff';
@@ -1279,7 +1279,7 @@ export class CoinCommunities {
 		if (this.phase !== 'loading') return; // torn down while the gate was up
 		let tier = opts.tier === 'holders' ? 'holders' : 'general';
 		// Entry does several awaits (gate, manifest, avatar GLB, room connect) and
-		// the Leave button goes live the moment the HUD shows — well before connect
+		// the Leave button goes live the moment the HUD shows, well before connect
 		// resolves. Stamp this attempt so a continuation that resumes after the
 		// player has backed out (leave() bumps the epoch) bails instead of
 		// resurrecting a torn-down world on a null `this.net`.
@@ -1288,7 +1288,7 @@ export class CoinCommunities {
 		// Holder worlds are gated: prove the player holds ≥ the floor of this coin
 		// before we build anything. The gate runs entirely in the lobby so a refusal
 		// leaves them exactly where they were, free to enter the General world
-		// instead. A null result means they cancelled — stay put.
+		// instead. A null result means they cancelled, stay put.
 		let holderPass = '';
 		let holderMinUsd = 0;
 		let holderMinTokens = 0;
@@ -1356,9 +1356,9 @@ export class CoinCommunities {
 			|| (isHomeTown(coin.mint) ? (coin.biome || HOME_TOWN.biome) : undefined)
 			|| (isRobinhoodCoin(coin.mint) ? 'hoodchain' : undefined);
 		this.env = createWorldEnvironment(this.scene, this.renderer, WORLD_RADIUS, { mint: coin.mint, biome: biomeOverride });
-		this.ui.toast(`${coin.symbol ? '$' + coin.symbol : coin.name || 'Community'} — ${this.env.biome.label}`, 'info');
+		this.ui.toast(`${coin.symbol ? '$' + coin.symbol : coin.name || 'Community'}, ${this.env.biome.label}`, 'info');
 
-		// W01: the drivable street grid ringing Downtown — same seed as the biome
+		// W01: the drivable street grid ringing Downtown, same seed as the biome
 		// so it's identical for every client, themed from the same palette. The
 		// day/night cycle drives its window/streetlamp glow via setNight().
 		this._district = createDistrict(this.scene, {
@@ -1370,13 +1370,13 @@ export class CoinCommunities {
 		// resolved by the time a player clears the lobby + avatar load), then swap
 		// in this coin's building colliders and (re)place the kinematic character
 		// at the fresh spawn point. The character controller persists across coin
-		// switches — only its colliders and position change.
+		// switches, only its colliders and position change.
 		await this._physicsReady;
 		if (this._physicsOk && this._physics) {
 			this._physics.clearObstacles();
 			for (const c of this._district.colliders) this._physics.addStaticBox(c);
 			// W02: the coin totem (built below by _buildTotem, always at (0,0,-12))
-			// isn't part of the district grid, so give it its own collider — keeps
+			// isn't part of the district grid, so give it its own collider, keeps
 			// both pedestrians and driven vehicles from passing through the landmark.
 			this._physics.addStaticCylinder({ position: { x: 0, y: 3, z: -12 }, radius: 1.6, halfHeight: 3.2 });
 			const spawn = { x: this.localPos.x, y: 0, z: this.localPos.z };
@@ -1409,14 +1409,14 @@ export class CoinCommunities {
 		});
 		// Live trading terminal facing the spawn from past the totem: the coin's
 		// price chart, % change, volume, buy/sell flow, and a ticker of real
-		// on-chain trades — a second screen players can walk up to and tap to open
+		// on-chain trades, a second screen players can walk up to and tap to open
 		// the coin on pump.fun. Identity jumbotron behind, market chart ahead. Its
 		// freshly-landed trades feed the reactor so the world reacts to the tape.
 		this._chartScreen = createChartScreen(this.scene, coin, {
 			position: [0, 0, -30], width: 18,
 			onTrades: (trades, metrics) => this._reactor?.ingestTrades(trades, metrics),
 		});
-		// The /ibm/oracle 3D forecast line — the live $THREE price history + IBM
+		// The /ibm/oracle 3D forecast line, the live $THREE price history + IBM
 		// Granite TimeSeries forecast, rendered as a glowing ribbon standing in the
 		// world (no backdrop, just the line) that players can walk around.
 		this._oracleRibbon = mountOracleRibbon(this.scene, { x: 17, y: 4.2, z: -20, scale: 0.7 });
@@ -1427,7 +1427,7 @@ export class CoinCommunities {
 		this.localRig = new Group();
 		this.localRig.position.copy(this.localPos);
 		this.scene.add(this.localRig);
-		// Cosmetics preview rig (R21) re-binds to whatever avatar is current —
+		// Cosmetics preview rig (R21) re-binds to whatever avatar is current,
 		// drop any prior session's manager so it attaches to this fresh skeleton.
 		this._accessoryMgr = null;
 		this._previewItem = null;
@@ -1446,7 +1446,7 @@ export class CoinCommunities {
 
 		// Connect to this coin's room. A locally-staged guest avatar (just created,
 		// not yet uploaded) can't be loaded by peers, so we join without one and
-		// upload in the background — then broadcast the public URL so everyone sees
+		// upload in the background, then broadcast the public URL so everyone sees
 		// it. Otherwise broadcast a loadable URL/path directly.
 		const isGuest = avatarInput === GUEST_SENTINEL;
 		const netAvatar = isGuest
@@ -1486,8 +1486,8 @@ export class CoinCommunities {
 			getPresence: getPresenceTicket,
 		});
 		// Generic networked-object layer for this coin (R02): mirrors the server's
-		// authoritative `objects` map into the scene — build props (R18), and any
-		// future ball/pickup — interpolated like the avatars. Delete-own keys on the
+		// authoritative `objects` map into the scene, build props (R18), and any
+		// future ball/pickup, interpolated like the avatars. Delete-own keys on the
 		// net's ownership check. Built per world; disposed alongside voxels on leave.
 		this.worldObjects = new WorldObjects(this.scene, this.net, {
 			isMine: (obj) => !!this.net?.ownsObject(obj),
@@ -1505,7 +1505,7 @@ export class CoinCommunities {
 		this.net.on('synced', () => this._onRoomSynced());
 		// Coming back from a backgrounded tab is the one drop the socket never
 		// reports: iOS Safari suspends the page, the OS reaps the connection, and
-		// no close event is ever delivered — the HUD keeps saying "connected" over
+		// no close event is ever delivered, the HUD keeps saying "connected" over
 		// a dead wire. Probe on every return to the foreground (and on the network
 		// coming back) so a two-minute tab switch resyncs like any other drop.
 		this._onResume = () => { if (!document.hidden) this.net?.resume(); };
@@ -1550,7 +1550,7 @@ export class CoinCommunities {
 			if (status !== 'online' && status !== 'connecting') this._armLocalWorldWriter();
 			// Durability badge: online reflects the server's persistent flag. Offline,
 			// props ARE durable now (they go straight to the world store), so the badge
-			// reflects whether this client may actually write it — never a false promise.
+			// reflects whether this client may actually write it, never a false promise.
 			this.buildHud.setPersistent(
 				status === 'online'
 					? this.net?.persistent
@@ -1559,7 +1559,7 @@ export class CoinCommunities {
 						: null),
 			);
 			this._syncBudget();
-			// A reconnect reissues every sessionId, stranding the voice mesh — refresh
+			// A reconnect reissues every sessionId, stranding the voice mesh, refresh
 			// our id, drop the stale peers, and re-announce so it re-forms.
 			if (status === 'online' && this.voice?.joined && this.net.sessionId !== this.voice.selfId) {
 				this.voice.setSelfId(this.net.sessionId);
@@ -1572,18 +1572,18 @@ export class CoinCommunities {
 		// the lobby with a clear reason rather than looping on a dead pass.
 		this.net.on('denied', (reason) => {
 			// The platform token gate evicted us (pass expired, or the wallet dropped
-			// below the floor): force a fresh sign-in before they can play again — the
+			// below the floor): force a fresh sign-in before they can play again, the
 			// cached pass is now void, so clear it so the gate re-checks the chain.
 			if (/play_pass/i.test(reason || '')) {
 				clearStoredPass();
 				this.playPass = '';
 				this.account = '';
-				this.ui.toast('Your session expired — sign in again to keep playing.', 'warn');
+				this.ui.toast('Your session expired, sign in again to keep playing.', 'warn');
 				this.leave();
 				this._playReady = this._ensurePlayAccess();
 				return;
 			}
-			this.ui.toast('Your holder pass expired — re-enter to verify your holdings.', 'warn');
+			this.ui.toast('Your holder pass expired, re-enter to verify your holdings.', 'warn');
 			this.leave();
 		});
 		this.net.on('add', (p, id) => this._onAdd(p, id));
@@ -1612,7 +1612,7 @@ export class CoinCommunities {
 		this.net.on('buildCleared', ({ count, all }) => {
 			this.ui.toast(all ? `Cleared the whole world (${count|0} blocks).` : `Cleared ${count|0} block${(count|0) === 1 ? '' : 's'} nearby.`, 'info');
 		});
-		// Durability flag for this world's build — drives the HUD "Saved" badge.
+		// Durability flag for this world's build, drives the HUD "Saved" badge.
 		this.net.on('persistent', (durable) => { if (this.net?.status === 'online') this.buildHud.setPersistent(durable); });
 		this.net.on('floorBeat', (msg) => this._onFloorBeat(msg));
 
@@ -1628,7 +1628,7 @@ export class CoinCommunities {
 			env: this.env,
 		});
 		// W06: gather/craft stations (trees, rocks, roast pits) and the fishing-rod
-		// pickups scattered around the world. Sibling of PlaySystems — see
+		// pickups scattered around the world. Sibling of PlaySystems, see
 		// play-activities.js's header for why they stay decoupled.
 		this.playActivities = new PlayActivities({
 			scene: this.scene,
@@ -1636,7 +1636,7 @@ export class CoinCommunities {
 			net: this.net,
 			ui: this.ui,
 		});
-		// W09: Fortune's Folly, the Mainland Wheel of Fortune. Another sibling —
+		// W09: Fortune's Folly, the Mainland Wheel of Fortune. Another sibling,
 		// its own landmark, its own prompt, lazy-loads the actual spin UI (and the
 		// @solana/web3.js it drags in for the paid path) only on first interact.
 		this.wheelStation = new WheelStation({
@@ -1682,7 +1682,7 @@ export class CoinCommunities {
 		// to reconcile.
 		this.net.on('souvenir', (m) => this._onSouvenir(m));
 		// Friends (W09): live DMs + request/accept pushed by the social hub over this
-		// world's socket. The FriendsClient owns all social state — it updates its
+		// world's socket. The FriendsClient owns all social state, it updates its
 		// threads/unread counts and notifies the panel, open or not, so a DM that
 		// arrives while the panel is closed still lights the badge.
 		this.net.on('social', (m) => {
@@ -1691,13 +1691,13 @@ export class CoinCommunities {
 		});
 		this._initFriends();
 		// Job completion has no generic 'notice' twin (WalkRoom sends only
-		// 'questComplete') — toast it globally so a payout lands even when the
+		// 'questComplete'), toast it globally so a payout lands even when the
 		// Jobs Board panel isn't open, the same way every other reward does.
 		this.net.on('questComplete', (c) => {
 			if (!c) return;
 			const gold = c.reward?.gold ?? 0;
 			const crew = c.coop && c.crew > 1 ? ` (crew of ${c.crew})` : '';
-			this.ui?.toast?.(`${c.title} complete${crew} — +${gold} cash`, 'success');
+			this.ui?.toast?.(`${c.title} complete${crew}, +${gold} cash`, 'success');
 		});
 
 		this.buildHud.root.hidden = false;
@@ -1784,7 +1784,7 @@ export class CoinCommunities {
 			ui: this.ui,
 		});
 		// …and the Intel Kiosk: the player pays a real x402 endpoint ($0.01 USDC)
-		// from their own wallet for live market intel on the town's own coin —
+		// from their own wallet for live market intel on the town's own coin,
 		// the flagship $THREE oracle at home, the generic token oracle elsewhere.
 		this.intelKiosk = new IntelKiosk({
 			scene: this.scene,
@@ -1794,7 +1794,7 @@ export class CoinCommunities {
 			ui: this.ui,
 			coin,
 		});
-		// Agent desks — visible in every world. Seats the platform's most recently
+		// Agent desks, visible in every world. Seats the platform's most recently
 		// ACTIVE public agents (the same ranking as the /agents-live wall) at
 		// working desks with live CanvasTexture monitors streaming their real
 		// activity. Players can walk up and press E (or tap) to open the full 2D
@@ -1823,10 +1823,10 @@ export class CoinCommunities {
 					this._agentDesks.push(desk);
 				});
 			})
-			.catch(() => { /* non-critical — world works without desks */ });
+			.catch(() => { /* non-critical, world works without desks */ });
 
 		// Living world (W08): ambient pedestrians + traffic, interactive vendor /
-		// quest / flavor NPCs, and (gated behind W07) hostile mobs — all on a
+		// quest / flavor NPCs, and (gated behind W07) hostile mobs, all on a
 		// deterministic nav graph so every client sees the same crowd without
 		// syncing it. Built for every world, same as the Agent Exchange and the
 		// Intel Kiosk above. Torn down in leave(). name/symbol ride along so the
@@ -1845,7 +1845,7 @@ export class CoinCommunities {
 				seed: seedFromString(coin.mint) >>> 0,
 				biome: this.env?.biome,
 				// Boutique NPCs (W03) call these to open the real cosmetics shop /
-				// wardrobe panels — same panels the HUD buttons drive.
+				// wardrobe panels, same panels the HUD buttons drive.
 				openShop: () => this._toggleShop(),
 				openWardrobe: () => this._toggleWardrobe(),
 				// Quest-giver NPCs (W08 hooking W05) call this to open the real Jobs
@@ -1881,7 +1881,7 @@ export class CoinCommunities {
 		this._onboard = new PlayOnboard({ coin });
 	}
 
-	// First-run nudge so players discover building exists — the HUD's ⛏ toggle is
+	// First-run nudge so players discover building exists, the HUD's ⛏ toggle is
 	// easy to miss. Shown once ever, a few seconds after the world settles so it
 	// doesn't collide with the entry toast.
 	_onboardBuild() {
@@ -1896,7 +1896,7 @@ export class CoinCommunities {
 	}
 
 	// Silent mid-session pass refresh. Runs once the player is in a world; wakes
-	// up 2 min before the pass expires and renews it off the still-valid pass — no
+	// up 2 min before the pass expires and renews it off the still-valid pass, no
 	// wallet prompt, since possession of an unexpired pass already proves the wallet.
 	// Updates this.playPass so the next reconnect uses the fresh token, and re-checks
 	// the chain, so a wallet that offloaded its tokens gets evicted here rather than
@@ -1915,7 +1915,7 @@ export class CoinCommunities {
 		if (this.phase !== 'world' || !this.account || !this.playPass) return;
 		try {
 			// Silent renewal: the current pass is still valid (we fire 2 min early), so
-			// the server re-issues off it after re-reading the chain — no wallet prompt.
+			// the server re-issues off it after re-reading the chain, no wallet prompt.
 			const res = await refreshPlayPass(this.playPass);
 			if (res.ok && res.playPass) {
 				this.playPass = res.playPass;
@@ -1926,7 +1926,7 @@ export class CoinCommunities {
 				// Below the floor mid-session: clear state and surface the gate.
 				clearStoredPass();
 				this.playPass = '';
-				this.ui.toast('Your token balance dropped — sign in again to keep playing.', 'warn');
+				this.ui.toast('Your token balance dropped, sign in again to keep playing.', 'warn');
 				this.leave();
 				this._playReady = this._ensurePlayAccess();
 			}
@@ -1937,12 +1937,12 @@ export class CoinCommunities {
 			if (err?.code === 'pass_invalid') {
 				clearStoredPass();
 				this.playPass = '';
-				this.ui.toast('Your session expired — sign in again to keep playing.', 'warn');
+				this.ui.toast('Your session expired, sign in again to keep playing.', 'warn');
 				this.leave();
 				this._playReady = this._ensurePlayAccess();
 				return;
 			}
-			// Network hiccup — try again in 30 s rather than breaking the session.
+			// Network hiccup, try again in 30 s rather than breaking the session.
 			clearTimeout(this._passRefreshTimer);
 			this._passRefreshTimer = setTimeout(() => this._doPassRefresh(), 30_000);
 		}
@@ -1952,7 +1952,7 @@ export class CoinCommunities {
 	// verify token balance) when the server requires it, and caches the verified
 	// wallet + signed pass we attach to every room join. Self-healing: any failure
 	// resolves to "open" rather than bricking /play, since the server is the real
-	// authority — an unsigned join is refused there regardless.
+	// authority, an unsigned join is refused there regardless.
 	async _ensurePlayAccess() {
 		try {
 			const access = await ensurePlayAccess();
@@ -2034,7 +2034,7 @@ export class CoinCommunities {
 					continue;
 				}
 				if (action === 'switch') {
-					// Drop the linked wallet and connect a different one, then re-check —
+					// Drop the linked wallet and connect a different one, then re-check,
 					// the way out of a short balance when the coin lives in another wallet.
 					this.ui.setHolderGate('working', { symbol, msg: 'Switching wallet…' });
 					try {
@@ -2111,7 +2111,7 @@ export class CoinCommunities {
 	// jumbotron and dance floor at leave(), which previously were only detached
 	// from the scene graph (`world.remove`), leaking their GPU buffers on every
 	// world switch. Never called on shared/instanced world-env or district objects
-	// — those own their own disposal.
+	//, those own their own disposal.
 	_disposeObject3D(obj) {
 		if (!obj) return;
 		obj.traverse((n) => {
@@ -2165,7 +2165,7 @@ export class CoinCommunities {
 		if (this.intelKiosk) { this.intelKiosk.dispose(); this.intelKiosk = null; }
 		if (this.worldLife) { this.worldLife.dispose(); this.worldLife = null; }
 		if (this._onboard) { this._onboard.dispose(); this._onboard = null; }
-		// Close the shop + wardrobe and drop the rig binding — the next world rebuilds both.
+		// Close the shop + wardrobe and drop the rig binding, the next world rebuilds both.
 		if (this._shop?.isOpen()) this._shop.close();
 		if (this._wardrobe?.isOpen()) this._wardrobe.close();
 		// A souvenir card is bound to the world that granted it; leaving mid-linger
@@ -2217,7 +2217,7 @@ export class CoinCommunities {
 		this._resetBuildPerms();
 		this.buildHud.root.hidden = true;
 		// Reset the structures toolbar back to single-block and close any open
-		// share / featured surfaces — they're scoped to the world we're leaving.
+		// share / featured surfaces, they're scoped to the world we're leaving.
 		this.buildPiece = null; this.buildRot = 0;
 		this.buildProp = null; this.buildPropRot = 0; this.buildPropScale = 1;
 		this.ui.setBuildPiece(null);
@@ -2278,7 +2278,7 @@ export class CoinCommunities {
 
 	// ------------------------------------------------------------- avatar inspector
 	// I (or clicking a nameplate / avatar) opens the shared inspector on whoever
-	// you're looking at: identity, reputation, wallet — the same server truth every
+	// you're looking at: identity, reputation, wallet, the same server truth every
 	// other surface reads. See src/shared/avatar-inspector.js.
 	_worldFacts() {
 		const coin = this.coin || {};
@@ -2317,7 +2317,7 @@ export class CoinCommunities {
 			name: npc.name,
 			world: 'play',
 			facts: [
-				{ label: 'Role', value: npc.role === 'vendor' ? 'Vendor — real paid service' : npc.role === 'quest' ? 'Quest giver' : 'Townsperson' },
+				{ label: 'Role', value: npc.role === 'vendor' ? 'Vendor, real paid service' : npc.role === 'quest' ? 'Quest giver' : 'Townsperson' },
 				...(npc.def?.prompt ? [{ label: 'Offers', value: npc.def.prompt }] : []),
 				...this._worldFacts(),
 			],
@@ -2350,7 +2350,7 @@ export class CoinCommunities {
 			facts: this._worldFacts(),
 		}, { trigger: this.canvas });
 	}
-	// Nearest inspectable within reach: real players first beat scenery — an NPC
+	// Nearest inspectable within reach: real players first beat scenery, an NPC
 	// only wins when it is strictly closer. Falls back to yourself so the key
 	// always answers.
 	_inspectNearest() {
@@ -2369,7 +2369,7 @@ export class CoinCommunities {
 		else this._inspectSelf();
 	}
 	// Raycast pick for taps directly on a peer's 3D body (labels are the fast
-	// path; this catches clicks on the avatar itself). Click-only — never run
+	// path; this catches clicks on the avatar itself). Click-only, never run
 	// per-frame, skinned-mesh raycasts are too heavy for hover.
 	_remoteAt(clientX, clientY) {
 		if (!this.remotes.size) return null;
@@ -2386,7 +2386,7 @@ export class CoinCommunities {
 	_onAdd(player, id) {
 		if (id === this.net.sessionId) return; // that's us
 		// A peer we already track (or one re-announced under the same id after a
-		// resync) is live, not stale — clear any stale flag rather than doubling it.
+		// resync) is live, not stale, clear any stale flag rather than doubling it.
 		const existing = this.remotes.get(id);
 		if (existing) { existing._stale = false; existing.apply?.(player); return; }
 		const rp = new RemotePlayer(this.scene, player);
@@ -2397,7 +2397,7 @@ export class CoinCommunities {
 
 	// Flag every current peer as stale ahead of a reconnect. A reconnect is a fresh
 	// joinOrCreate with new session ids, and the old room's listeners were removed
-	// before it left, so `_onRemove` never fires for the peers we had — without
+	// before it left, so `_onRemove` never fires for the peers we had, without
 	// this they linger as frozen ghosts and inflate the online count. The fresh
 	// room's `add` events clear the flag (above); whatever is still flagged when the
 	// snapshot lands (`_pruneStaleRemotes`) genuinely left while we were offline.
@@ -2551,7 +2551,7 @@ export class CoinCommunities {
 	// ── Cosmetics live preview (R21) ──────────────────────────────────────────
 	// The shop previews a catalog item on YOUR OWN avatar before any purchase.
 	// This is the local R03 rig hook: bone-attach GLBs, drive outfit morphs,
-	// recolour garment layers, or play premium emote clips — never broadcast,
+	// recolour garment layers, or play premium emote clips, never broadcast,
 	// never persisted (a purchase is R22/R23). Selecting reverts the previous
 	// preview first, so only one item previews at a time.
 
@@ -2618,7 +2618,7 @@ export class CoinCommunities {
 				coinMint: this.coin?.mint || '',
 				onPreview: (item) => this.equipCosmeticPreview(item),
 				onEndPreview: () => this.unequipCosmeticPreview(),
-				// A premium item was just bought (R22) — permanently equip it so the
+				// A premium item was just bought (R22), permanently equip it so the
 				// buyer immediately sees their new look AND it persists across worlds
 				// (R23 durable equip: server validates, writes to account, echoes a
 				// fresh profile which re-renders the wardrobe and local avatar).
@@ -2626,7 +2626,7 @@ export class CoinCommunities {
 			});
 		}
 		// The shop is built once and reused across worlds, so refresh the coin tie
-		// each open — a sale always credits the world the player is currently in.
+		// each open, a sale always credits the world the player is currently in.
 		this._shop.h.coinMint = this.coin?.mint || '';
 		this._shop.toggle();
 	}
@@ -2642,7 +2642,7 @@ export class CoinCommunities {
 	// The account-level social graph inside the world: who's online, which coin
 	// world they're standing in, and DM threads. `FriendsPanel` is a pure view over
 	// the shared `friendsClient`, so the same graph backs /play, /walk and the
-	// standalone /friends page — a DM read here is read everywhere.
+	// standalone /friends page, a DM read here is read everywhere.
 	//
 	// Presence is published by the room, not this panel: CommunityNet now carries a
 	// signed presence ticket into the join, so a player is visible to friends the
@@ -2650,7 +2650,7 @@ export class CoinCommunities {
 
 	// Seed the graph once per world entry so the unread badge is honest before the
 	// panel is ever opened, and keep it live from the client's change signal. Silent
-	// no-op when signed out — `refresh()` short-circuits without a request.
+	// no-op when signed out, `refresh()` short-circuits without a request.
 	_initFriends() {
 		const fc = friendsClient();
 		this._offFriends = fc.subscribe(() => this._bumpFriendsBadge());
@@ -2662,7 +2662,7 @@ export class CoinCommunities {
 		getMe().then((u) => { this.me = u || null; }).catch(() => { this.me = null; });
 	}
 
-	// Open the friends drawer directly on a DM thread — the inspector's
+	// Open the friends drawer directly on a DM thread, the inspector's
 	// "Message" action for a player who is already a friend.
 	_openDmWith(userId) {
 		if (!userId) return;
@@ -2759,7 +2759,7 @@ export class CoinCommunities {
 		this._bumpFriendsBadge();
 	}
 
-	// Full teardown — the panel and its client subscription must not outlive the
+	// Full teardown, the panel and its client subscription must not outlive the
 	// world (a coin switch rebuilds both, and a stale subscription would repaint a
 	// disposed HUD).
 	_disposeFriends() {
@@ -2988,7 +2988,7 @@ export class CoinCommunities {
 	// Equip `id` durably: send to the server (authoritative validation + persistence)
 	// so the fit survives logout, world switches, and is visible to peers immediately.
 	// The server echoes a fresh profile which updates the wardrobe and local avatar.
-	// Only forward ids the rig can actually wear — a purchase of an item outside the
+	// Only forward ids the rig can actually wear, a purchase of an item outside the
 	// worn-cosmetics catalog (its ownership still records server-side) must not fire
 	// a spurious "that cosmetic doesn't exist" notice from the equip authority.
 	_equipCosmeticDurable(id) {
@@ -3007,7 +3007,7 @@ export class CoinCommunities {
 
 	// ── Owned-cosmetics: persisted equip on the LOCAL avatar (R23) ─────────────
 	// Dress the local avatar in `wire` (an equipped loadout, slot→id map or wire
-	// string). Idempotent — re-applies only when it actually changed — and reuses
+	// string). Idempotent, re-applies only when it actually changed, and reuses
 	// the shared applyLoadout so the local body, peers and the creator preview all
 	// render the same wardrobe. Separate from the R21 shop's ephemeral preview
 	// above (AccessoryManager): this is the durable, equipped look.
@@ -3089,13 +3089,13 @@ export class CoinCommunities {
 		const g = new Group();
 		g.position.set(CX, 0, CZ);
 
-		// Rim disc — slightly larger, defines the pad boundary with a subtle glow.
+		// Rim disc, slightly larger, defines the pad boundary with a subtle glow.
 		const rimMat = new MeshStandardMaterial({ color: 0x0a0a14, emissive: 0x180840, emissiveIntensity: 0.55, roughness: 0.3, metalness: 0.7 });
 		const rim = new Mesh(new CircleGeometry(R + 0.18, 48), rimMat);
 		rim.rotation.x = -Math.PI / 2;
 		g.add(rim);
 
-		// Base pad — dark polished surface.
+		// Base pad, dark polished surface.
 		const baseMat = new MeshStandardMaterial({ color: 0x0d0d1c, emissive: 0x100828, emissiveIntensity: 0.28, roughness: 0.2, metalness: 0.85 });
 		const base = new Mesh(new CircleGeometry(R, 48), baseMat);
 		base.rotation.x = -Math.PI / 2;
@@ -3116,7 +3116,7 @@ export class CoinCommunities {
 			this._floorTiles.push({ mat, idx: i });
 		}
 
-		// Centre disc — pure white / violet, most dramatic on beat.
+		// Centre disc, pure white / violet, most dramatic on beat.
 		const centerMat = new MeshStandardMaterial({ color: 0xffffff, emissive: 0xaa55ff, emissiveIntensity: 0.65, roughness: 0.06, metalness: 0.96 });
 		const center = new Mesh(new CircleGeometry(0.55, 32), centerMat);
 		center.rotation.x = -Math.PI / 2;
@@ -3124,7 +3124,7 @@ export class CoinCommunities {
 		g.add(center);
 		this._floorCenterMat = centerMat;
 
-		// 4 coloured point lights above the pad corners — pink / cyan / yellow / mint.
+		// 4 coloured point lights above the pad corners, pink / cyan / yellow / mint.
 		const LIGHT_COLS = [0xff44cc, 0x44aaff, 0xffdd22, 0x44ffcc];
 		this._floorLights = [];
 		for (let i = 0; i < 4; i++) {
@@ -3187,7 +3187,7 @@ export class CoinCommunities {
 		this._danceClip = clip;
 		// Local avatar: start the clip now, aligned to the server beat.
 		playEmoteClip(this.localAnim, clip, this.motion);
-		// Broadcast so peers see us dancing — 2-second emote cooldown in WalkRoom
+		// Broadcast so peers see us dancing, 2-second emote cooldown in WalkRoom
 		// is well under the 4-second beat interval, so this always lands.
 		this.net?.sendEmote(clip);
 	}
@@ -3219,7 +3219,7 @@ export class CoinCommunities {
 		const g = new Group();
 		g.position.set(x, 0, z);
 
-		// Boundary ring on the ground — a warm gold annulus that reads as the coin's
+		// Boundary ring on the ground, a warm gold annulus that reads as the coin's
 		// own colour (matches the totem disc), so the zone clearly belongs to the totem.
 		const ringMat = new MeshBasicMaterial({ color: 0xffce5c, transparent: true, opacity: 0.42, depthWrite: false, side: DoubleSide });
 		const ring = new Mesh(new RingGeometry(r - 0.2, r, 72), ringMat);
@@ -3416,7 +3416,7 @@ export class CoinCommunities {
 		window.addEventListener('keydown', (e) => {
 			if (this.ui.chatFocused) return;
 			// Typing anywhere else (friends DM box, search fields, modal inputs) must
-			// reach the caret untouched — no hotkeys, no Enter hijack, no Space eaten.
+			// reach the caret untouched, no hotkeys, no Enter hijack, no Space eaten.
 			if (isTypingTarget(e.target)) return;
 			// Esc closes the friends/avatar drawers before anything else claims the key.
 			if (e.key === 'Escape' && this._friendsOpen) { e.preventDefault(); this._closeFriends(); return; }
@@ -3429,7 +3429,7 @@ export class CoinCommunities {
 			if (hasOpenOverlay()) return;
 			if (e.key === 'Enter' && this.phase === 'world' && !onControl) { e.preventDefault(); this.ui.focusChat(); return; }
 			// Space jumps on foot; while driving it's the handbrake instead (held,
-			// released in the keyup handler below) — never scrolls the page either way.
+			// released in the keyup handler below), never scrolls the page either way.
 			if (e.code === 'Space' && !onControl) {
 				e.preventDefault();
 				if (this.vehicles?.isDriving()) { this.vehicles.setHandbrake(true); return; }
@@ -3438,7 +3438,7 @@ export class CoinCommunities {
 			}
 			const k = e.key.toLowerCase();
 			if (this.phase === 'world') {
-				// B toggles build mode; while it's on, 1–0 pick the active block.
+				// B toggles build mode; while it's on, 1, 0 pick the active block.
 				if (k === 'b') {
 					e.preventDefault();
 					if (this._buildableConnection() || this.buildHud.active) this.buildHud.setActive(!this.buildHud.active);
@@ -3461,12 +3461,12 @@ export class CoinCommunities {
 					if (this.buildProp) this._rotateProp(); else this._rotateBuild();
 					return;
 				}
-				// E interacts with whatever the player stands near — a townsperson,
+				// E interacts with whatever the player stands near, a townsperson,
 				// the Intel Kiosk, or the Agent Exchange (all built in every world).
 				// Not while building.
 				if (k === 'e' && !this.buildHud.active) {
 					e.preventDefault();
-					// A conversation or counter is already open — let it own the moment
+					// A conversation or counter is already open, let it own the moment
 					// instead of reopening on top of itself.
 					if (isChatPanelOpen() || isServicePanelOpen() || isAixbtPanelOpen() || isZauthPanelOpen()) return;
 					// Talk to the nearest townsperson (vendor/quest/flavor); if none is
@@ -3477,7 +3477,7 @@ export class CoinCommunities {
 					return;
 				}
 				// F is contextual: enter/exit a nearby vehicle takes priority (the
-				// on-screen prompt already says "F — Drive" / "F — Exit"); then a
+				// on-screen prompt already says "F, Drive" / "F, Exit"); then a
 				// gather/craft/pickup station (chop, mine, cook, grab a rod); otherwise
 				// it casts a line when standing by a pond (no-op elsewhere). Not while
 				// building, where keys drive the block palette.
@@ -3486,7 +3486,7 @@ export class CoinCommunities {
 					if (!this.vehicles?.interact() && !this.playActivities?.doAction()) this.playSystems?.castFish();
 					return;
 				}
-				// I inspects the nearest avatar — player, townsperson, or yourself:
+				// I inspects the nearest avatar, player, townsperson, or yourself:
 				// identity, reputation, wallet. Press again to close.
 				if (k === 'i' && !this.buildHud.active && !e.repeat) {
 					e.preventDefault();
@@ -3494,7 +3494,7 @@ export class CoinCommunities {
 					return;
 				}
 				// P photographs the world onto a share card. Deliberately live in
-				// every mode — zen, building, driving — because the shot is an
+				// every mode, zen, building, driving, because the shot is an
 				// offscreen render, so no panel is ever in the frame. Ctrl/Cmd+P
 				// stays the browser's print dialog.
 				if (k === 'p' && !e.repeat && !e.ctrlKey && !e.metaKey) {
@@ -3502,7 +3502,7 @@ export class CoinCommunities {
 					this._openPhotoMode();
 					return;
 				}
-				// J toggles the friends drawer (W09). F — the /walk binding — is already
+				// J toggles the friends drawer (W09). F, the /walk binding, is already
 				// this world's contextual action key (drive / gather / cast), so /play
 				// takes the next free slot; the HUD button carries the same hint.
 				if (k === 'j' && !this.buildHud.active && !e.repeat) {
@@ -3538,7 +3538,7 @@ export class CoinCommunities {
 					this.combat?.attack();
 					return;
 				}
-				// Q — hold to open the emote wheel, release to play the selected clip.
+				// Q, hold to open the emote wheel, release to play the selected clip.
 				// Ignore auto-repeat (held key fires many keydowns) and build mode.
 				if (k === 'q' && !this.buildHud.active && !e.repeat) {
 					e.preventDefault();
@@ -3550,7 +3550,7 @@ export class CoinCommunities {
 					}, 340);
 					return;
 				}
-				// 1–6 select a hotbar slot when not building.
+				// 1, 6 select a hotbar slot when not building.
 				if (!this.buildHud.active && k.length === 1 && k >= '1' && k <= '6') {
 					e.preventDefault();
 					this.playSystems?.equipSlot(Number(k) - 1);
@@ -3592,18 +3592,18 @@ export class CoinCommunities {
 			if (!this._downPtr) return;
 			const moved = Math.hypot(e.clientX - this._downPtr.x, e.clientY - this._downPtr.y);
 			this._downPtr = null;
-			if (consumed) return; // a hold already broke a block — don't also place
+			if (consumed) return; // a hold already broke a block, don't also place
 			if (moved >= 6 || e.button === 2) return; // a look-drag, or a right-click (handled by contextmenu)
 			if (this.phase === 'world' && this.buildHud.active) { this._buildAt(e.clientX, e.clientY, false); return; }
-			// Tap a nearby parked vehicle to take the wheel — the touch-native
+			// Tap a nearby parked vehicle to take the wheel, the touch-native
 			// equivalent of pressing F. Checked first: it only ever fires when a
 			// vehicle is both in range and under the tap, so it can't shadow the
 			// other tap targets below.
 			if (this.vehicles?.tryActivateAt(this._pointerRay(e.clientX, e.clientY))) return;
-			// Tap the agents (or their exchange ring) to watch a live payment — the
+			// Tap the agents (or their exchange ring) to watch a live payment, the
 			// touch-native equivalent of pressing E. Checked before the chart screen.
 			if (this.worldLife?.tryActivateAt(e.clientX, e.clientY)) return;
-			// Tap a nearby tombstone to loot it — the touch-native equivalent of
+			// Tap a nearby tombstone to loot it, the touch-native equivalent of
 			// pressing E on a death-drop (W07).
 			if (this.combat?.tryActivateAt(this._pointerRay(e.clientX, e.clientY))) return;
 			if (this.agentCommerce?.tryActivateAt(this._pointerRay(e.clientX, e.clientY))) return;
@@ -3652,7 +3652,7 @@ export class CoinCommunities {
 			}
 			const dx = e.clientX - this._lastPtr.x, dy = e.clientY - this._lastPtr.y;
 			this._lastPtr = { x: e.clientX, y: e.clientY };
-			// A real drag is a look, not a hold — cancel the pending break so panning
+			// A real drag is a look, not a hold, cancel the pending break so panning
 			// the camera in build mode never destroys a block.
 			if (this._downPtr && Math.hypot(e.clientX - this._downPtr.x, e.clientY - this._downPtr.y) >= 8) this._cancelLongPress();
 			this.camYaw -= dx * 0.005;
@@ -3679,7 +3679,7 @@ export class CoinCommunities {
 	}
 
 	// Cast a ray from a screen-space point into the world and report whether it
-	// hits the live chart screen's face — powers tap-to-open and the hover cursor.
+	// hits the live chart screen's face, powers tap-to-open and the hover cursor.
 	_raycastScreen(clientX, clientY) {
 		if (!this._chartScreen?.mesh) return false;
 		return this._pointerRay(clientX, clientY).intersectObject(this._chartScreen.mesh, false).length > 0;
@@ -3692,7 +3692,7 @@ export class CoinCommunities {
 	_buildableConnection() {
 		const s = this.net?.status;
 		// 'unavailable' (no server configured for this env) is a solo session just
-		// like 'offline' — let the player build their own local copy.
+		// like 'offline', let the player build their own local copy.
 		return s === 'online' || s === 'offline' || s === 'unavailable';
 	}
 
@@ -3700,7 +3700,7 @@ export class CoinCommunities {
 	// only send the intent, and the block appears/disappears when the server echoes
 	// its blocks state back (see the blockAdd/blockRemove wiring in enter()). In
 	// single-player (no server) we apply the edit straight to the local voxel layer
-	// — same result on screen, just not synced or persisted.
+	//, same result on screen, just not synced or persisted.
 	_buildAt(clientX, clientY, forceRemove) {
 		if (this.phase !== 'world' || !this._buildableConnection()) return;
 		// Prop layer (R18): a click places a free-standing object; right-click / hold
@@ -3710,7 +3710,7 @@ export class CoinCommunities {
 		const target = this.voxels.raycast(this._pointerRay(clientX, clientY));
 		if (!target) return;
 		const removing = forceRemove || this.buildHud.mode === 'remove';
-		// A composite piece stamps several cells at once — but only when placing.
+		// A composite piece stamps several cells at once, but only when placing.
 		// Break mode always falls back to the single-cell path below.
 		if (!removing && this.buildPiece && target.placeCell) {
 			this._placeComposite(target.placeCell);
@@ -3736,7 +3736,7 @@ export class CoinCommunities {
 				this._pushUndo({ kind: 'remove', cell: target.placeCell.slice() });
 			}
 		} else if (target.placeCell) {
-			// Aimed somewhere illegal (out of bounds / occupied) — flash the cursor.
+			// Aimed somewhere illegal (out of bounds / occupied), flash the cursor.
 			this.voxels.showGhost(target.placeCell, 'blocked');
 			return;
 		}
@@ -3745,7 +3745,7 @@ export class CoinCommunities {
 
 	// Stamp a composite piece (wall / floor / stairs / doorway) anchored at `cell`,
 	// rotated by the current quarter-turn. Validated as a whole: every cell must be
-	// in bounds, empty, and fit the budget, or nothing lands — so a piece never
+	// in bounds, empty, and fit the budget, or nothing lands, so a piece never
 	// half-appears. Online it goes through the place-batch channel (server echoes
 	// each block back); solo it's applied to the local layer directly. Undo records
 	// just the cells this stamp actually created.
@@ -3757,8 +3757,8 @@ export class CoinCommunities {
 			// Name the most likely reason so a blocked stamp isn't a silent no-op.
 			const overBudget = this.voxels.count + cells.length > MAX_BLOCKS;
 			this.ui.toast(overBudget
-				? `Not enough room — that piece needs ${cells.length} blocks.`
-				: 'That piece doesn’t fit here — rotate it or move back.', 'warn');
+				? `Not enough room, that piece needs ${cells.length} blocks.`
+				: 'That piece doesn’t fit here, rotate it or move back.', 'warn');
 			return;
 		}
 		// The cells this stamp newly creates (a piece may overlap existing blocks);
@@ -3779,7 +3779,7 @@ export class CoinCommunities {
 	_pickPiece(id) {
 		this.buildPiece = COMPOSITE_PIECES.some((p) => p.id === id) ? id : null;
 		this.buildRot = 0;
-		// Arming a voxel tool disarms the prop layer — the two placement modes are
+		// Arming a voxel tool disarms the prop layer, the two placement modes are
 		// mutually exclusive so a build click is never ambiguous.
 		if (this.buildProp) { this.buildProp = null; this.ui.setPropSelected(null); this.propGhost?.hide(); }
 		this.ui.setBuildPiece(this.buildPiece);
@@ -3913,7 +3913,7 @@ export class CoinCommunities {
 	// validity flag (inside the build radius), or null when aiming at the sky.
 	_propTarget(clientX, clientY) {
 		const ray = this._pointerRay(clientX, clientY).ray;
-		if (ray.direction.y >= -1e-4) return null; // looking up / parallel — no floor
+		if (ray.direction.y >= -1e-4) return null; // looking up / parallel, no floor
 		const t = -ray.origin.y / ray.direction.y;
 		if (t <= 0) return null;
 		const px = ray.origin.x + ray.direction.x * t;
@@ -3928,7 +3928,7 @@ export class CoinCommunities {
 	// Place or delete a prop under the pointer. Placing sends obj:spawn kind:'block'
 	// (durable, server-persisted via R17); the prop appears for everyone when the
 	// server echoes its objects state back. Right-click / hold deletes a prop YOU own
-	// (server enforces ownership; we only offer it on your own pieces — R19 hardens it).
+	// (server enforces ownership; we only offer it on your own pieces, R19 hardens it).
 	_buildPropAt(clientX, clientY, forceRemove) {
 		const removing = forceRemove || this.buildHud.mode === 'remove';
 		if (removing) { this._deleteOwnPropAt(clientX, clientY); return; }
@@ -3956,7 +3956,7 @@ export class CoinCommunities {
 	// enforces are enforced here before anything is written.
 	_placeLocalProp(target, yaw, url) {
 		const store = this._worldStore;
-		if (!store) { this.ui.toast('This world’s build store is still loading — try again in a moment.', 'warn'); return false; }
+		if (!store) { this.ui.toast('This world’s build store is still loading, try again in a moment.', 'warn'); return false; }
 		if (!store.writable) {
 			this.ui.toast('Your build here can’t be saved yet, so props are off. Sign in and rejoin to build offline.', 'warn');
 			return false;
@@ -4045,8 +4045,8 @@ export class CoinCommunities {
 		if (now - (this._objRejectAt[reason] || 0) < 4000) return;
 		this._objRejectAt[reason] = now;
 		const msg = {
-			world_full: 'This world is full of props — remove some to place more.',
-			player_full: 'You’ve hit your prop limit for this world — remove some to place more.',
+			world_full: 'This world is full of props, remove some to place more.',
+			player_full: 'You’ve hit your prop limit for this world, remove some to place more.',
 			asset_url: 'That model isn’t hosted where this world can load it. Re-upload it and try again.',
 		}[reason] || 'That prop couldn’t be placed.';
 		this.ui.toast(msg, 'warn');
@@ -4166,7 +4166,7 @@ export class CoinCommunities {
 	_onWorldSaveDenied({ reason }) {
 		this.buildHud.setPersistent(false);
 		this.ui.toast(reason === 'signin'
-			? 'Sign in to save what you build here — until then it only exists in this tab.'
+			? 'Sign in to save what you build here, until then it only exists in this tab.'
 			: 'This world belongs to someone else, so your offline build can’t be saved to it.', 'warn');
 	}
 
@@ -4200,7 +4200,7 @@ export class CoinCommunities {
 
 	// Arm a hold-to-break timer for the current press. If the player keeps the
 	// pointer down and still (no drag) past LONG_PRESS_MS, break the targeted block
-	// — the touch-native equivalent of a right-click. Cancelled by movement or release.
+	//, the touch-native equivalent of a right-click. Cancelled by movement or release.
 	_armLongPressBreak(clientX, clientY) {
 		this._cancelLongPress();
 		if (this.phase !== 'world' || !this.buildHud.active || !this._buildableConnection()) return;
@@ -4262,23 +4262,23 @@ export class CoinCommunities {
 	}
 
 	// Explain a server-refused edit so a block that never appeared isn't a mystery.
-	// Throttled to one toast per reason per window — a flood reply can't spam.
+	// Throttled to one toast per reason per window, a flood reply can't spam.
 	_onEditReject(reason) {
 		const now = performance.now();
 		this._rejectToastAt ||= {};
 		if (now - (this._rejectToastAt[reason] || 0) < 4000) return;
 		this._rejectToastAt[reason] = now;
 		const msg = {
-			budget: `Build limit reached (${MAX_BLOCKS} blocks) — break something to make room.`,
-			rate: 'Building too fast — slow down a moment.',
-			bounds: 'Can’t build there — outside the build area.',
+			budget: `Build limit reached (${MAX_BLOCKS} blocks), break something to make room.`,
+			rate: 'Building too fast, slow down a moment.',
+			bounds: 'Can’t build there, outside the build area.',
 			type: 'That block type isn’t available.',
-			owned: 'That block belongs to another builder — you can’t change it.',
-			column: 'That stack is too tall here — try building wider, not higher.',
-			protected: 'That spot is protected — keep the spawn and totem clear.',
-			player: 'You’ve hit your block limit for this world — break some to build more.',
-			playercap: 'You’ve hit your block limit for this world — break some to build more.',
-			dense: 'That stack is too tall here — try building wider, not higher.',
+			owned: 'That block belongs to another builder, you can’t change it.',
+			column: 'That stack is too tall here, try building wider, not higher.',
+			protected: 'That spot is protected, keep the spawn and totem clear.',
+			player: 'You’ve hit your block limit for this world, break some to build more.',
+			playercap: 'You’ve hit your block limit for this world, break some to build more.',
+			dense: 'That stack is too tall here, try building wider, not higher.',
 			notcreator: 'Only the coin’s creator can clear builds here.',
 		}[reason] || 'That edit couldn’t be applied.';
 		this.ui.toast(msg, 'warn');
@@ -4312,7 +4312,7 @@ export class CoinCommunities {
 	}
 
 	// Adopt the server's build-permission snapshot: drive the per-player allowance
-	// meter and reveal the creator-only moderation control. Authoritative — the HUD
+	// meter and reveal the creator-only moderation control. Authoritative, the HUD
 	// only surfaces what the server already enforces.
 	_onBuildPerms(p) {
 		if (!p || typeof p !== 'object') return;
@@ -4346,7 +4346,7 @@ export class CoinCommunities {
 		};
 	}
 
-	// Clear the per-player meter + creator tool — on leave and on every (re)connect,
+	// Clear the per-player meter + creator tool, on leave and on every (re)connect,
 	// before fresh perms arrive, so a solo build or a different world never inherits
 	// the last one's allowance or moderation control.
 	_resetBuildPerms() {
@@ -4360,7 +4360,7 @@ export class CoinCommunities {
 	// a wallet must hold to enter this coin's Holders world. Reads the current value
 	// first so the input is pre-filled, then writes through the creator-only
 	// endpoint (which re-verifies ownership server-side). Only the coin's verified
-	// creator ever reaches this — the button is hidden otherwise.
+	// creator ever reaches this, the button is hidden otherwise.
 	async _configureGate() {
 		const coin = this.coin;
 		if (!coin?.mint) return;
@@ -4370,7 +4370,7 @@ export class CoinCommunities {
 			const cfg = await getWorldGate(coin.mint);
 			current = cfg?.minTokens || 0;
 		} catch {
-			// Couldn't read the current gate — open in an "unknown" state so the creator
+			// Couldn't read the current gate, open in an "unknown" state so the creator
 			// can still overwrite or remove it, rather than a blank form that wrongly
 			// implies the world is ungated. The save validates server-side regardless.
 			unknown = true;
@@ -4426,8 +4426,8 @@ export class CoinCommunities {
 		const solo = this.net?.status !== 'online';
 		const how = touch
 			? 'tap to place, hold to break, pick a block, ⌘/Ctrl+Z to undo'
-			: 'click to place, right-click to break, 1–0 pick a block, R rotates pieces, ⌘/Ctrl+Z to undo';
-		this.ui.toast(`Build mode${solo ? ' (offline — reconnect to share)' : ''} — ${how}`, 'info');
+			: 'click to place, right-click to break, 1, 0 pick a block, R rotates pieces, ⌘/Ctrl+Z to undo';
+		this.ui.toast(`Build mode${solo ? ' (offline, reconnect to share)' : ''}, ${how}`, 'info');
 		this._syncBudget();
 		if (this._lastHover) this._updateGhost(this._lastHover.x, this._lastHover.y);
 	}
@@ -4466,7 +4466,7 @@ export class CoinCommunities {
 			this.ui.setPhotoActive(shown);
 		} catch (err) {
 			log.warn('[coincommunities] photo mode failed to load:', err?.message);
-			this.ui.toast('Photo mode couldn’t load — check your connection and try again.', 'warn');
+			this.ui.toast('Photo mode couldn’t load, check your connection and try again.', 'warn');
 		} finally {
 			this._photoLoading = false;
 		}
@@ -4477,7 +4477,7 @@ export class CoinCommunities {
 	_shareBuild() {
 		if (this.phase !== 'world' || !this.coin) return;
 		const shot = this._captureBuildShot();
-		if (!shot) { this.ui.toast('Couldn’t capture the view — try again.', 'warn'); return; }
+		if (!shot) { this.ui.toast('Couldn’t capture the view, try again.', 'warn'); return; }
 		const link = this._coinShareLink();
 		const blocks = this.voxels?.count ?? 0;
 		this.ui.openShareSheet({
@@ -4516,17 +4516,17 @@ export class CoinCommunities {
 				}),
 			});
 			if (!res.ok) {
-				const reason = res.status === 429 ? 'Sharing too fast — give it a minute.'
+				const reason = res.status === 429 ? 'Sharing too fast, give it a minute.'
 					: res.status === 413 ? 'That screenshot was too large to share.'
 					: `Couldn’t publish (error ${res.status}).`;
 				return { ok: false, error: reason };
 			}
-			// A fresh publish belongs at the top of the featured list — refresh if open.
+			// A fresh publish belongs at the top of the featured list, refresh if open.
 			if (this._featuredOpen) this._loadFeatured();
 			return { ok: true };
 		} catch (err) {
 			log.warn('[coincommunities] publish build failed:', err?.message);
-			return { ok: false, error: 'Network error — check your connection and retry.' };
+			return { ok: false, error: 'Network error, check your connection and retry.' };
 		}
 	}
 
@@ -4557,7 +4557,7 @@ export class CoinCommunities {
 		const zone = document.getElementById('cc-joystick');
 		if (!zone || this._joyInit) return;
 		this._joyInit = true;
-		// Self-contained pointer-events joystick — no external lib, so the input
+		// Self-contained pointer-events joystick, no external lib, so the input
 		// contract can never drift. Responds to BOTH touch and mouse-drag, so the
 		// world is playable without a keyboard and verifiable on desktop. Desktop
 		// also keeps WASD; the two intents simply sum in _stepLocal.
@@ -4617,7 +4617,7 @@ export class CoinCommunities {
 		const now = frameNow ?? performance.now();
 		// Frame cap (see constructor): 60 in-world, 30 blurred or power-saving,
 		// and a 4fps trickle while the opaque lobby hides the canvas entirely
-		// (the transparent embed keeps 30 — its arena stays visible behind the
+		// (the transparent embed keeps 30, its arena stays visible behind the
 		// grid). Skipped frames are cheap: everything below is dt-based.
 		const lobbyHidden = this.phase === 'lobby' && !this._transparentBg;
 		let fpsCap = !this._focus.focused ? FPS_IDLE
@@ -4628,7 +4628,7 @@ export class CoinCommunities {
 		if (!this._governor.shouldRun(now, fpsCap)) return;
 		const dt = Math.min(0.05, (now - this._last) / 1000);
 		this._last = now;
-		// Only judge frame health at the full-rate cap — a deliberately
+		// Only judge frame health at the full-rate cap, a deliberately
 		// throttled frame (blur, lobby, saver) is slow by design, not a
 		// struggling GPU.
 		// Frame health is judged at the full-rate cap only, and never during the
@@ -4644,7 +4644,7 @@ export class CoinCommunities {
 		}
 
 		if (this.phase === 'world') {
-			// W02: while driving, the vehicle IS the local player's movement — skip
+			// W02: while driving, the vehicle IS the local player's movement, skip
 			// the on-foot character step (it would fight the car for localPos every
 			// frame) and let VehicleManager feed this frame's throttle/steer/brake
 			// into the Rapier vehicle controller instead.
@@ -4675,7 +4675,7 @@ export class CoinCommunities {
 			if (this.worldLife) { this.worldLife.setRealPeers(this.remotes.size); this.worldLife.tick(dt); }
 			this.combat?.tick(dt);
 			// Ordinary move sync is redundant (and would just get rejected by the
-			// server's walking-speed step clamp) while driving — VehicleManager
+			// server's walking-speed step clamp) while driving, VehicleManager
 			// streams the authoritative transform itself via sendVSync.
 			if (this.net && !driving) this.net.sendMove({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z, yaw: this.localYaw, motion: this.motion });
 			// Gamepad: north button (Y/△, 3) opens the emote wheel; once open, the left
@@ -4730,7 +4730,7 @@ export class CoinCommunities {
 			// Map intent into world space using the camera's own basis so the
 			// keys read screen-relative: forward (W/up) goes straight away from
 			// the camera, D/right tracks screen-right. Camera forward is
-			// (sinYaw, cosYaw) and camera-right is (cosYaw, -sinYaw) — see
+			// (sinYaw, cosYaw) and camera-right is (cosYaw, -sinYaw), see
 			// _updateCamera. world = ix*right + (-iz)*forward.
 			const sin = Math.sin(this.camYaw), cos = Math.cos(this.camYaw);
 			wx = nx * cos - nz * sin;
@@ -4767,7 +4767,7 @@ export class CoinCommunities {
 			});
 			this.grounded = res.grounded;
 			if (this.grounded && this.vy < 0) this.vy = 0;
-			// Boundary safety — mirrors the server's square WORLD_BOUND clamp
+			// Boundary safety, mirrors the server's square WORLD_BOUND clamp
 			// (world-zones.js DISTRICT.half) so client and server never disagree
 			// on the world's edge. Snap the body too so the next query starts clean.
 			const clamped = clampToBounds(res.position.x, res.position.z);
@@ -4777,7 +4777,7 @@ export class CoinCommunities {
 			this.localPos.set(clamped.x, res.position.y, clamped.z);
 		} else {
 			this._physicsActivePrev = false;
-			// Legacy direct-mutation fallback — only live for the brief window
+			// Legacy direct-mutation fallback, only live for the brief window
 			// before Rapier's WASM finishes loading (or if it fails to load at all).
 			if (!this.grounded) {
 				this.vy -= GRAVITY * dt;
@@ -4836,19 +4836,19 @@ export class CoinCommunities {
 		for (const [id, r] of this.remotes) {
 			peers.push({ id, x: r.rig.position.x, y: r.rig.position.y, z: r.rig.position.z, voice: r.voice });
 		}
-		// Camera forward on the ground plane is (sin camYaw, cos camYaw) — see
+		// Camera forward on the ground plane is (sin camYaw, cos camYaw), see
 		// _updateCamera, where the camera sits opposite this vector from the target.
 		const forward = { x: Math.sin(this.camYaw), z: Math.cos(this.camYaw) };
 		this.voice.update({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z }, peers, forward);
 	}
 
 	// W01: four-mode chase camera (follow/cinematic/firstperson/topdown) via the
-	// shared camera-modes.js controller — see the constructor and the 'c' key in
+	// shared camera-modes.js controller, see the constructor and the 'c' key in
 	// _bindInput. 'follow' reproduces the original fixed orbit exactly, so the
 	// default view is unchanged; the other three are new.
 	_updateCamera(dt) {
 		this._camTarget = this._camTarget || new Vector3();
-		// Track the avatar on the ground plane only in follow/cinematic/topdown —
+		// Track the avatar on the ground plane only in follow/cinematic/topdown,
 		// ignore jump height so those cameras stay planted while the character
 		// hops. First person tracks the real (jump-inclusive) height for the eye.
 		const inWorld = this.phase === 'world' && this.localRig;
@@ -4871,7 +4871,7 @@ export class CoinCommunities {
 		// One scratch vector for the whole sweep, and one style write per node only
 		// when the value actually changed. This runs every frame for every peer, so
 		// at event scale (100 in one plaza) the naive version allocated ~300 Vector3
-		// per frame and re-wrote ~300 transforms whether or not anything moved — a
+		// per frame and re-wrote ~300 transforms whether or not anything moved, a
 		// steady GC drip plus a style recalc on a crowd standing still.
 		const v = this._labelProj || (this._labelProj = new Vector3());
 		const cam = this.camera;
@@ -4940,7 +4940,7 @@ function renderBootError(err) {
 	overlay.classList.remove('kx-hidden');
 	overlay.replaceChildren();
 
-	// The boot avatar's render loop targets a canvas we're about to remove — stop
+	// The boot avatar's render loop targets a canvas we're about to remove, stop
 	// it so it doesn't tick against a detached element.
 	try { window.__ccBootAvatar?.dispose?.(); } catch { /* best-effort teardown */ }
 
@@ -4956,8 +4956,8 @@ function renderBootError(err) {
 	const msg = document.createElement('p');
 	msg.className = 'kx-boot-error-msg';
 	msg.textContent = noWebGL
-		? 'Your browser couldn’t start 3D graphics. Turn on hardware acceleration (or WebGL) and reload — on most browsers it’s under Settings › System.'
-		: 'Something went wrong starting Coin Communities. Reload to try again — if it keeps happening, your browser may be out of date.';
+		? 'Your browser couldn’t start 3D graphics. Turn on hardware acceleration (or WebGL) and reload, on most browsers it’s under Settings › System.'
+		: 'Something went wrong starting Coin Communities. Reload to try again, if it keeps happening, your browser may be out of date.';
 	card.appendChild(msg);
 
 	const actions = document.createElement('div');

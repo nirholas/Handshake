@@ -1,4 +1,4 @@
-// Event leaderboard ranking (order 04) — the pure math both the in-world panel and
+// Event leaderboard ranking (order 04), the pure math both the in-world panel and
 // api/play/event-leaderboard.js fold their rows through. Ranking is the thing a
 // player will argue about, so every rule is pinned: runs first, cash as the
 // tiebreak, the earlier finisher ahead on a dead heat, and your own row findable

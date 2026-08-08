@@ -1,4 +1,4 @@
-/* Jobs Board UI (W08) — shares the .ec-* shell tokens from economy-ui.css
+/* Jobs Board UI (W08), shares the .ec-* shell tokens from economy-ui.css
  * (same overlay/card/tabs/row/status chrome as the general store and bank),
  * this file only adds the quest-specific bits: objective checklists, reward
  * chips, and the highlight flash when a giver NPC opens straight to their job. */
@@ -72,7 +72,7 @@
 }
 .qb-lb-prize { margin-top: 12px; font-size: 10px; color: var(--cc-dim); line-height: 1.5; opacity: 0.85; }
 
-/* Skeleton rows while the first read is in flight — the shape of the answer,
+/* Skeleton rows while the first read is in flight, the shape of the answer,
  * so the panel doesn't jump when the real rows land. */
 @keyframes qb-lb-shimmer {
 	0%, 100% { opacity: 0.35; }

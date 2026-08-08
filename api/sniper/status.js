@@ -134,7 +134,7 @@ export default wrap(async (req, res) => {
 
 	// Money before mechanics: a worker that cannot fund an entry is not 'live', no
 	// matter how healthy its feed is. Absent (older worker build, first tick not
-	// yet run) degrades to 'unknown', which never overrides the feed verdict (an
+	// yet run) degrades to 'unknown', which never overrides the feed verdict: an
 	// unmeasured fleet must not read as a broke one.
 	const solvency = meta.solvency && typeof meta.solvency === 'object' ? meta.solvency : null;
 	const state = deriveSniperState({

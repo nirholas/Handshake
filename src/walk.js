@@ -1,4 +1,4 @@
-// /walk — a third-person walkaround for three.ws
+// /walk, a third-person walkaround for three.ws
 //
 // Loads the default avatar, attaches the project's AnimationManager so the
 // skinned mesh can crossfade between idle / walking / running clips, and
@@ -97,8 +97,8 @@ const GALLERY_MODE = new URLSearchParams(location.search).get('gallery') === 'ma
 const AVATAR_URL_DEFAULT = '/avatars/default.glb';
 
 // The GLB URL the local avatar actually loaded from. Captured by resolveAvatarUrl
-// so we can (a) broadcast it to the room — other clients render us as our real
-// avatar — and (b) short-circuit remote avatar loads that match ours.
+// so we can (a) broadcast it to the room, other clients render us as our real
+// avatar, and (b) short-circuit remote avatar loads that match ours.
 let resolvedAvatarUrl = AVATAR_URL_DEFAULT;
 
 // The resolved avatar record (id, name, description, agent_id) from
@@ -110,14 +110,14 @@ let avatarMeta = null;
 // (?avatar=<draftId>&preview=true), the unsaved appearance to apply on top of
 // the base GLB once it loads. Stashed by resolveAvatarUrl, consumed in loadAvatar.
 let pendingDraftAppearance = null;
-// True for a draft preview — run solo (no multiplayer broadcast of a throwaway
+// True for a draft preview, run solo (no multiplayer broadcast of a throwaway
 // presigned URL) and skip the player's own equipped cosmetics so the creator
 // sees exactly the look they're editing.
 let isDraftPreview = false;
 
 async function resolveAvatarUrl() {
 	const params = new URLSearchParams(location.search);
-	// A direct GLB/VRM URL wins — this is what the /communities lobby passes when
+	// A direct GLB/VRM URL wins, this is what the /communities lobby passes when
 	// a guest drops in with a pasted model or a Ready Player Me link.
 	const direct = params.get('avatarUrl');
 	if (direct) {
@@ -129,7 +129,7 @@ async function resolveAvatarUrl() {
 		resolvedAvatarUrl = AVATAR_URL_DEFAULT;
 		return AVATAR_URL_DEFAULT;
 	}
-	// Editor draft preview: resolve the unsaved look through the draft endpoint —
+	// Editor draft preview: resolve the unsaved look through the draft endpoint,
 	// the base (unbaked) GLB plus an appearance overlay we apply client-side.
 	if (params.get('preview') === 'true' || params.get('preview') === '1') {
 		isDraftPreview = true;
@@ -175,18 +175,18 @@ const CLIP_IDLE = 'idle';
 const CLIP_WALK = 'av-walk-feminine';
 const CLIP_RUN = 'av-walk-feminine'; // no separate run clip; timeScale handles pace difference
 
-const WALK_SPEED = 1.6; // m/s — target ground speed in walk mode
-const RUN_SPEED = 4.0; // m/s — target ground speed in run mode
+const WALK_SPEED = 1.6; // m/s, target ground speed in walk mode
+const RUN_SPEED = 4.0; // m/s, target ground speed in run mode
 // Natural ground speed of the Mixamo clips at timeScale=1, in m/s. Measured
 // from the clip cadence (root-bone delta per cycle ÷ cycle duration on the
 // canonical Avaturn rig). We rescale the mixer's timeScale by
-// actualSpeed / NATURAL_* so foot-plants line up with translation — kills
+// actualSpeed / NATURAL_* so foot-plants line up with translation, kills
 // the "skating" artifact that shows when clip cadence != translation speed.
 const NATURAL_WALK_SPEED = 1.5;
 const NATURAL_RUN_SPEED = 3.4;
-const TURN_LERP = 0.18; // 0..1 — how snappy avatar facing follows movement
-const CAM_LERP = 0.12; // 0..1 — how snappy follow-camera trails the avatar
-// Procedural body lean — pitch the avatar slightly forward when moving so
+const TURN_LERP = 0.18; // 0..1, how snappy avatar facing follows movement
+const CAM_LERP = 0.12; // 0..1, how snappy follow-camera trails the avatar
+// Procedural body lean, pitch the avatar slightly forward when moving so
 // the silhouette communicates weight transfer instead of looking like the
 // torso is being slid along on rails. Radians, ramped by speed fraction.
 const LEAN_WALK_RAD = 0.05;
@@ -195,7 +195,7 @@ const LEAN_LERP = 0.12;
 const CAM_OFFSET = new Vector3(0, 1.85, 3.6); // behind-and-above, relative to avatar yaw
 const CAM_LOOK_OFFSET = new Vector3(0, 1.1, 0);
 const GROUND_RADIUS = 12;
-// Right-hand "look" stick — radians/sec the camera rotates at full deflection.
+// Right-hand "look" stick, radians/sec the camera rotates at full deflection.
 // Signs mirror the canvas drag-orbit handler so push-right turns right and
 // push-up tilts the view up.
 const LOOK_YAW_SPEED = 2.6;
@@ -341,7 +341,7 @@ if (screenshotBtn) screenshotBtn.addEventListener('click', () => walkCapture.scr
 if (minimapBtn) minimapBtn.addEventListener('click', () => toggleMinimap());
 
 // ── On-screen touch action cluster (mobile) ──────────────────────────────
-// jump / camera flip / gestures for thumbs — keyboardless devices can't reach
+// jump / camera flip / gestures for thumbs, keyboardless devices can't reach
 // Space, C, or G. The gesture button is wired by WalkGestures.attachTouchButton
 // (tap = open the wheel, long-press = aim-and-release) once gestures are ready.
 document.getElementById('walk-touch-jump')?.addEventListener('click', () => triggerJump());
@@ -412,7 +412,7 @@ if (friendsOverlay) {
 	});
 }
 
-// Keep HUD unread badge live — start a background load immediately so the
+// Keep HUD unread badge live, start a background load immediately so the
 // badge appears before the user opens the panel for the first time.
 const _fc = friendsClient();
 _fc.subscribe(() => {
@@ -458,7 +458,7 @@ function esc(s) {
 
 // ── Renderer / scene ──────────────────────────────────────────────────────
 // preserveDrawingBuffer is required so the canvas pixels remain readable for
-// the "Record" feature — without it, drawImage(renderer.domElement, …) into
+// the "Record" feature, without it, drawImage(renderer.domElement, …) into
 // the offscreen compositor canvas returns blank pixels after the next paint.
 const renderer = new WebGLRenderer({
 	canvas,
@@ -472,7 +472,7 @@ renderer.shadowMap.enabled = true;
 // PCFSoftShadowMap is deprecated in three.js and silently downgrades to hard
 // PCFShadowMap at runtime; VSMShadowMap is the supported soft-shadow type.
 renderer.shadowMap.type = VSMShadowMap;
-// Filmic response to match the IRL/avatar-sdk render stack — the IBL below
+// Filmic response to match the IRL/avatar-sdk render stack, the IBL below
 // already supplies real ambient light; ACES keeps its highlights from clipping.
 renderer.toneMapping = ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
@@ -481,10 +481,10 @@ const scene = new Scene();
 
 const pmrem = new PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-// The neutral room IBL — restored for environments that ship no HDR (the void).
+// The neutral room IBL, restored for environments that ship no HDR (the void).
 const defaultEnvTexture = scene.environment;
 
-// Lights — ambient + hemi for soft fill, directional for shadow cast.
+// Lights, ambient + hemi for soft fill, directional for shadow cast.
 const ambientLight = new AmbientLight(0xffffff, 0.55);
 scene.add(ambientLight);
 const hemi = new HemisphereLight(0xbcd6ff, 0x202830, 0.6);
@@ -517,7 +517,7 @@ const frameGovernor = createFrameGovernor();
 const focusState = trackWindowFocus();
 let powerSaver = getPowerSaver();
 
-// Ground — opaque disc in non-AR mode, swapped to a shadow-only catcher in AR.
+// Ground, opaque disc in non-AR mode, swapped to a shadow-only catcher in AR.
 const groundOpaque = new Mesh(
 	new CircleGeometry(GROUND_RADIUS, 64),
 	new MeshStandardMaterial({ color: 0x202833, roughness: 0.95, metalness: 0.0 }),
@@ -529,7 +529,7 @@ scene.add(groundOpaque);
 // terrain below supersedes it as the visible, walkable ground in non-AR mode.
 groundOpaque.visible = false;
 
-// Procedural heightfield terrain — the single source of truth for ground shape.
+// Procedural heightfield terrain, the single source of truth for ground shape.
 // Its column-major height buffer feeds both this mesh and the Rapier heightfield
 // collider (see initWalkPhysics), so the surface you see is the surface you walk.
 // `let`, not `const`: each environment regenerates the heightfield with its own
@@ -549,7 +549,7 @@ const trailSetting = createTrailSetting(TRAIL_KEY, 'footprints');
 let trails = null;
 
 // ── NPC companions (Task 19) ───────────────────────────────────────────────
-// A small cast of autonomous companions — a greeter, a wanderer, and a guide —
+// A small cast of autonomous companions, a greeter, a wanderer, and a guide,
 // that make each environment feel inhabited. Built once the avatar + animation
 // clips load (so NPCs share the resolved clip library), spawned/despawned per
 // environment with its own dialogue table, and ticked in the render loop. The
@@ -587,7 +587,7 @@ groundShadowCatcher.receiveShadow = true;
 groundShadowCatcher.visible = false;
 scene.add(groundShadowCatcher);
 
-// Blob contact shadow — radial gradient decal that moves with the avatar.
+// Blob contact shadow, radial gradient decal that moves with the avatar.
 // Ensures there is always a convincing foot-contact cue even on low-end
 // devices where PCF shadow maps may be coarse or disabled.
 const _blobCanvas = document.createElement('canvas');
@@ -613,7 +613,7 @@ blobShadow.rotation.x = -Math.PI / 2;
 blobShadow.position.y = 0.004;
 scene.add(blobShadow);
 
-// Camera + follow-rig — avatar lives at scene origin (translated by a group)
+// Camera + follow-rig, avatar lives at scene origin (translated by a group)
 // so the camera offset math stays in local space.
 const camera = new PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.05, 200);
 const avatarRig = new Group();
@@ -627,7 +627,7 @@ const camLookCurrent = new Vector3();
 let cameraYaw = 0; // user-controlled orbit yaw around avatar (radians)
 let cameraPitch = 0.05; // small downward tilt by default
 // In AR mode the camera is frozen in world space instead of following the
-// avatar — the joystick then walks the avatar around physically and natural
+// avatar, the joystick then walks the avatar around physically and natural
 // perspective makes it grow/shrink as it approaches/recedes. Captured when
 // AR is enabled, cleared when AR is disabled.
 let arFrozenCamPos = null;
@@ -665,7 +665,7 @@ const FP_EYE_HEIGHT_MULT = 0.9; // fraction of avatar height for eye position
 const TOPDOWN_HEIGHT = 18;
 const TOPDOWN_LOOK_DOWN = new Vector3(0, -1, 0.001); // slight offset so lookAt works
 
-// Hot-path scratch — computeCameraForMode runs every frame; reuse these instead
+// Hot-path scratch, computeCameraForMode runs every frame; reuse these instead
 // of allocating fresh Vector3s per call. _RIGHT is the world +X (pitch) axis;
 // upY (the world +Y / yaw axis, defined below) is reused for the yaw rotation.
 const _RIGHT = new Vector3(1, 0, 0);
@@ -745,7 +745,7 @@ function updateCameraModeIndicator() {
 }
 
 // Compute desired camera position/look for each mode
-// Returns a shared scratch { pos, look } — the caller must read/copy the values
+// Returns a shared scratch { pos, look }, the caller must read/copy the values
 // in the same frame and must not retain the reference across frames.
 function computeCameraForMode(mode, avatarPos, avatarHeight) {
 	const pos = _camPos;
@@ -794,7 +794,7 @@ function applyCameraImmediate() {
 // Recompute the follow offset so the full avatar plus headroom fits the
 // current viewport. Distance is derived from the camera's vertical FOV, and
 // portrait/narrow viewports (phones) get pulled back further so the head
-// isn't cropped. Safe to call before an avatar loads — uses the cached height.
+// isn't cropped. Safe to call before an avatar loads, uses the cached height.
 // On a resize we update the offset only and let the follow loop lerp to it;
 // on first load we snap so frame 0 is already framed.
 function frameAvatarCamera({ snap = true } = {}) {
@@ -812,7 +812,7 @@ function frameAvatarCamera({ snap = true } = {}) {
 }
 applyCameraImmediate();
 
-// ── Canvas camera control — one-finger drag orbits, two-finger pinch zooms ──
+// ── Canvas camera control, one-finger drag orbits, two-finger pinch zooms ──
 // Multi-touch aware via a live pointer map: the joystick(s) and the camera can
 // be driven at the same time because pointers that land inside a stick zone are
 // never tracked here. A single tracked pointer orbits; a second promotes the
@@ -833,7 +833,7 @@ applyCameraImmediate();
 	};
 
 	canvas.addEventListener('pointerdown', (e) => {
-		// Pointers belonging to a stick zone are owned by nipplejs — capturing
+		// Pointers belonging to a stick zone are owned by nipplejs, capturing
 		// them here would redirect its move stream and break movement.
 		if (
 			inRect(joystickEl, e.clientX, e.clientY) ||
@@ -895,7 +895,7 @@ applyCameraImmediate();
 	canvas.addEventListener('pointercancel', onUp);
 }
 
-// ── Input state — combined keyboard + joystick → unit move vector ────────
+// ── Input state, combined keyboard + joystick → unit move vector ────────
 const input = {
 	keys: { forward: 0, back: 0, left: 0, right: 0, run: false },
 	joy: { x: 0, y: 0, active: false },
@@ -944,12 +944,12 @@ const GROUND_Y = 0;
 
 // ── Physics ────────────────────────────────────────────────────────────────
 // A real Rapier solver drives roaming when available (non-AR). Until the WASM
-// runtime finishes loading — and in AR, where the avatar floats in the room —
+// runtime finishes loading, and in AR, where the avatar floats in the room,
 // movement falls back to the legacy direct-mutation path below.
 let physics = null;
 let physicsReady = false;
 let character = null;
-let verticalVel = 0; // m/s — integrated vertical velocity for the physics path
+let verticalVel = 0; // m/s, integrated vertical velocity for the physics path
 let characterGrounded = true;
 let physicsActivePrev = false; // rising-edge guard to resync after AR/legacy
 
@@ -1006,7 +1006,7 @@ const helpOverlay = (() => {
 	el.setAttribute('aria-hidden', 'true');
 	// The overlay is pointer-events:none at ALL times, including while shown.
 	// It's a read-only info panel with no interactive controls, and on tall /
-	// portrait viewports its card overlaps the bottom joysticks — a capturing
+	// portrait viewports its card overlaps the bottom joysticks, a capturing
 	// overlay (even at opacity:0) silently eats every joystick / canvas touch
 	// and makes the controls feel dead. Dismissal is handled entirely by the
 	// window-level pointerdown listener below plus H / Esc, so the panel never
@@ -1014,7 +1014,7 @@ const helpOverlay = (() => {
 	// Its own switches are the exception: they opt back into pointer events, but
 	// only while the panel is open (`.is-open`), so a hidden overlay still can't
 	// swallow a joystick touch. Without this the haptics / trail / NPC / power
-	// switches rendered but could never be clicked — the canvas got every event.
+	// switches rendered but could never be clicked, the canvas got every event.
 	{
 		const s = document.createElement('style');
 		s.id = 'walk-help-overlay-style';
@@ -1102,7 +1102,7 @@ const helpOverlay = (() => {
 	return el;
 })();
 
-// Haptics on/off switch lives in the controls overlay — keep its tap from
+// Haptics on/off switch lives in the controls overlay, keep its tap from
 // bubbling up to the dismiss-on-any-pointer handler below.
 const hapticsToggle = helpOverlay.querySelector('#walk-haptics-toggle');
 if (hapticsToggle) {
@@ -1117,9 +1117,9 @@ if (hapticsToggle) {
 	});
 }
 
-// Path-trail style switch — cycles off → footprints → glow → line. Persisted via
+// Path-trail style switch, cycles off → footprints → glow → line. Persisted via
 // trailSetting; applied live to the trail system (which may not exist yet if the
-// avatar is still loading — the new style is still persisted and read on build).
+// avatar is still loading, the new style is still persisted and read on build).
 const trailToggle = helpOverlay.querySelector('#walk-trail-toggle');
 if (trailToggle) {
 	trailToggle.addEventListener('click', () => {
@@ -1161,7 +1161,7 @@ if (powerSaverToggle) {
 	});
 }
 
-// NPC companions on/off. Persisted; applied live — turning them on respawns the
+// NPC companions on/off. Persisted; applied live, turning them on respawns the
 // current environment's cast, turning them off despawns and releases every NPC.
 const npcToggle = helpOverlay.querySelector('#walk-npc-toggle');
 if (npcToggle) {
@@ -1196,7 +1196,7 @@ function toggleHelp() {
 }
 // Any pointer interaction dismisses the overlay. Capture phase + a
 // non-blocking backdrop means the SAME tap that closes the panel also reaches
-// the joystick underneath — so the first-visit help never costs the user a
+// the joystick underneath, so the first-visit help never costs the user a
 // stalled touch. Controls tagged data-help-keep (the haptics switch) are
 // exempt so toggling a setting doesn't slam the panel shut.
 window.addEventListener(
@@ -1238,7 +1238,7 @@ window.addEventListener('keydown', (e) => {
 		case 'KeyQ':
 			cameraYaw += SNAP_TURN_RAD;
 			break;
-		// 'E' kept for snap turn — environment cycles via 'V'
+		// 'E' kept for snap turn, environment cycles via 'V'
 		case 'KeyE':
 			cameraYaw -= SNAP_TURN_RAD;
 			break;
@@ -1252,7 +1252,7 @@ window.addEventListener('keydown', (e) => {
 			break;
 		case 'KeyT':
 			// Push-to-talk: hold T to speak to the avatar. Ignore the auto-repeat
-			// the OS fires while held — recording starts on the first press and
+			// the OS fires while held, recording starts on the first press and
 			// ends on keyup. (Enter still opens the text chat box.)
 			e.preventDefault();
 			if (!e.repeat) voiceChat?.startListening();
@@ -1408,7 +1408,7 @@ const wantsTouchControls = (() => {
 	return matchMedia('(hover: none)').matches || matchMedia('(max-width: 640px)').matches;
 })();
 
-// Radial dead zone — nipplejs reports a vector the instant a thumb grazes the
+// Radial dead zone, nipplejs reports a vector the instant a thumb grazes the
 // ring, which reads as drift. We swallow the inner `dead` fraction and remap
 // the remainder to the full [0, 1] range so the stick still reaches max speed
 // at the rim while staying dead-still for tiny touches.
@@ -1423,7 +1423,7 @@ function applyDeadzone(x, y, dead = JOY_DEADZONE) {
 
 const joystick = nipplejs.create({
 	zone: joystickEl,
-	// Floating on touch — the stick materializes wherever the left thumb lands
+	// Floating on touch, the stick materializes wherever the left thumb lands
 	// inside the zone (which spans the lower-left of the screen) and follows it,
 	// so the user never has to look for a fixed pad. Static elsewhere.
 	mode: wantsTouchControls ? 'dynamic' : 'static',
@@ -1434,12 +1434,12 @@ const joystick = nipplejs.create({
 });
 joystick.on('move', (evt) => {
 	// nipplejs v1 calls handlers with a single { type, target, data } event
-	// object — the move payload lives on evt.data, not a second argument.
+	// object, the move payload lives on evt.data, not a second argument.
 	const data = evt?.data;
 	if (data?.vector) {
 		// data.vector is the proportional stick displacement within the radius,
 		// already in [-1, 1] per axis (magnitude ≤ 1). y is positive when the
-		// stick is pushed UP — our forward direction.
+		// stick is pushed UP, our forward direction.
 		const d = applyDeadzone(data.vector.x, data.vector.y);
 		input.joy.x = d.x;
 		input.joy.y = d.y;
@@ -1452,7 +1452,7 @@ joystick.on('end', () => {
 	input.joy.active = false;
 });
 
-// Right-hand "look" stick — drives the follow-camera yaw/pitch so touch users
+// Right-hand "look" stick, drives the follow-camera yaw/pitch so touch users
 // can turn the view with a thumb instead of fighting the avatar for the
 // canvas. Only mounted where the desktop mouse-look affordances are hidden
 // (touch / narrow viewports); on a wide pointer-fine screen the WASD + mouse
@@ -1500,10 +1500,10 @@ function rebuildFootPlant() {
 }
 let avatarYaw = 0; // current facing (radians); we lerp this toward movement angle
 let avatarLean = 0; // current torso pitch (radians); lerps toward target lean
-let currentMotion = 'idle'; // 'idle' | 'walk' | 'run' — drives clip crossfades
+let currentMotion = 'idle'; // 'idle' | 'walk' | 'run', drives clip crossfades
 let avatarHeight = 1.8; // cached avatar height, updated on load/switch
 
-// Cached gltf scene + animation manifest defs, populated by loadAvatar — the
+// Cached gltf scene + animation manifest defs, populated by loadAvatar, the
 // multiplayer layer reuses both to spawn remote-player avatars without
 // re-fetching the .glb or the clip manifest. SkeletonUtils.clone() makes a
 // proper deep copy of skinned hierarchies; vanilla object3D.clone() would
@@ -1529,7 +1529,7 @@ function applyLocalCosmetics(wire) {
 }
 
 // three.ws avatars ship with EXT_meshopt_compression, so every GLTFLoader that
-// loads one must have the meshopt decoder wired first — otherwise GLTFLoader
+// loads one must have the meshopt decoder wired first, otherwise GLTFLoader
 // throws "setMeshoptDecoder must be called before loading compressed files".
 // Build the loader once and share it across the initial load, live avatar swaps,
 // and remote-player templates (mirrors walk-embed.js's getAvatarLoader).
@@ -1631,9 +1631,9 @@ async function loadAvatar() {
 	currentMotion = 'idle';
 
 	dismissLoading();
-	// Clear the sticky "loading avatar…" pill that #walk-status ships with —
+	// Clear the sticky "loading avatar…" pill that #walk-status ships with,
 	// setStatus auto-hides this confirmation after a couple of seconds.
-	setStatus('Ready — drag to look around');
+	setStatus('Ready, drag to look around');
 	setupGestures();
 
 	// Stand up the NPC companion system now that the clip library is resolved.
@@ -1649,14 +1649,14 @@ async function loadAvatar() {
 	});
 	walkNpcs.setEnabled(npcsEnabled);
 
-	// Stand up the agent desk system — desks show live agent screens in-world.
+	// Stand up the agent desk system, desks show live agent screens in-world.
 	// Fetches active agents from Redis and spawns one desk per active stream.
 	walkAgentDesks = createAgentDeskManager({ scene, camera, renderer });
 	fetchLiveAgentDesks().then((deskConfigs) => {
 		if (deskConfigs.length) walkAgentDesks.spawn(deskConfigs);
 	}).catch(() => {});
 
-	// Auto-hide help hints after 5 seconds — fade first, then remove from layout
+	// Auto-hide help hints after 5 seconds, fade first, then remove from layout
 	// so the transition in temporary.html's #walk-help { transition: opacity } plays.
 	if (helpEl) {
 		helpAutoHideTimer = setTimeout(() => {
@@ -1718,7 +1718,7 @@ function setupGestures() {
 		animationManager,
 		getMotionClip: () => motionToClipName(currentMotion),
 		// Replicate the gesture's clip to other players over the existing emote
-		// channel — remote avatars render it full-body via _playRemoteEmote.
+		// channel, remote avatars render it full-body via _playRemoteEmote.
 		broadcast: (clip) => {
 			if (net) net.sendEmote(clip);
 		},
@@ -1741,7 +1741,7 @@ function setupGestures() {
 
 	// Track the user's recent gestures for session persistence. Wrapping play()
 	// here (rather than editing walk-gestures.js) records every user-initiated
-	// gesture — wheel, tray, quick keys, programmatic — without touching the
+	// gesture, wheel, tray, quick keys, programmatic, without touching the
 	// gesture module. Remote echoes pass { silent: true } and are not recorded.
 	const _origPlay = gestures.play.bind(gestures);
 	gestures.play = (name, opts = {}) => {
@@ -1775,7 +1775,7 @@ function setupGestures() {
 
 // Two-way voice chat (push-to-talk). Wires the WalkVoiceChat controller to the
 // page's avatar, persona, speech bubble, chat log, talking overlay, and the
-// multiplayer chat channel — then exposes walk.say(text, { voice, gesture }) so
+// multiplayer chat channel, then exposes walk.say(text, { voice, gesture }) so
 // the narrator / scripts can make the avatar speak with real TTS + lipsync.
 function setupVoiceChat() {
 	if (voiceChat) return;
@@ -1860,7 +1860,7 @@ function estimateLighting() {
 		);
 		hemi.color.lerp(_leColor, 0.12);
 	} catch {
-		/* cross-origin or tainted canvas — skip */
+		/* cross-origin or tainted canvas, skip */
 	}
 }
 
@@ -1928,7 +1928,7 @@ async function enableAR() {
 	arFrozenCamPos = camera.position.clone();
 	arFrozenCamLook = camLookCurrent.clone();
 
-	setStatus('AR on — joystick walks your agent');
+	setStatus('AR on, joystick walks your agent');
 }
 
 function disableAR() {
@@ -1981,7 +1981,7 @@ arBtn.addEventListener('click', () => {
 });
 
 // ── Mobile AR CTA ────────────────────────────────────────────────────────
-// three.ws is "3D agents in real life," not a metaverse — the AR camera
+// three.ws is "3D agents in real life," not a metaverse, the AR camera
 // feature is the point. On touch devices the small "AR" pill in the corner
 // is easy to miss, so we surface a prominent CTA after the avatar loads
 // inviting the user to put their agent on their real floor. Dismissible.
@@ -2003,7 +2003,7 @@ const AR_CTA_DISMISS_KEY = 'walk:ar-cta-dismissed';
 // enableAR() with a clear error message.
 (function initArButtonState() {
 	if (!arBtn) return;
-	if (CAMERA_SUPPORTED) return; // all good — leave the button as-is
+	if (CAMERA_SUPPORTED) return; // all good, leave the button as-is
 
 	// Camera API unavailable: mark the button as disabled and explain why.
 	arBtn.disabled = true;
@@ -2054,7 +2054,7 @@ if (arCta) {
 // ── Recording (6s composite clip → Web Share API or download) ────────────
 // Composites the live camera feed (when AR is active) plus the WebGL canvas
 // into a single offscreen canvas, runs MediaRecorder on its captureStream,
-// and hands the resulting blob to navigator.share — the IRL viral loop.
+// and hands the resulting blob to navigator.share, the IRL viral loop.
 const RECORD_SECONDS = 6;
 let recording = false;
 
@@ -2167,12 +2167,12 @@ async function startRecording() {
 				await navigator.share({
 					files: [file],
 					title: 'My 3D agent on three.ws',
-					text: 'Walking around on three.ws — your AI, in the real world.',
+					text: 'Walking around on three.ws, your AI, in the real world.',
 				});
 				setStatus('shared');
 				return;
 			} catch (err) {
-				// User cancelled or share failed — fall through to download.
+				// User cancelled or share failed, fall through to download.
 				if (err?.name !== 'AbortError') {
 					log.warn('[walk] share failed, falling back to download:', err);
 				} else {
@@ -2208,7 +2208,7 @@ async function startRecording() {
 
 if (recordBtn) {
 	recordBtn.addEventListener('click', () => {
-		if (recording) return; // single shot — must finish first
+		if (recording) return; // single shot, must finish first
 		startRecording();
 		hideArCta(); // recording is a user gesture; if they hit record, dismiss the CTA
 	});
@@ -2241,7 +2241,7 @@ const _camToAvatarTmp = new Vector3();
 function readMoveInput() {
 	let ix, iy;
 	if (input.joy.active) {
-		// Joystick vector — y up is forward.
+		// Joystick vector, y up is forward.
 		ix = input.joy.x;
 		iy = input.joy.y;
 		// User input cancels waypoint
@@ -2252,7 +2252,7 @@ function readMoveInput() {
 		// User input cancels waypoint
 		if (waypointTarget) waypointTarget = null;
 	} else if (waypointTarget) {
-		// Auto-walk toward waypoint — compute direction in world space,
+		// Auto-walk toward waypoint, compute direction in world space,
 		// then project to camera-relative input so the existing movement
 		// pipeline handles facing and animation correctly.
 		const dx = waypointTarget.x - avatarRig.position.x;
@@ -2305,7 +2305,7 @@ function tick(frameNow) {
 	clock.update();
 	const dt = Math.min(clock.getDelta(), 0.05); // clamp huge frames after a tab switch
 
-	// Right-stick look — rotate the follow-camera while the stick is held.
+	// Right-stick look, rotate the follow-camera while the stick is held.
 	// Signs match the drag-orbit handler: push right turns right, push up
 	// tilts the view upward, clamped to the same pitch limits.
 	if (input.look.active) {
@@ -2323,7 +2323,7 @@ function tick(frameNow) {
 	// can re-anchor the avatar each frame without fighting the physics character.
 	const usePhysics = physicsReady && !!character && !arActive && !GALLERY_MODE;
 
-	// Legacy jump — simple parabola in Y, lands back at GROUND_Y. The physics
+	// Legacy jump, simple parabola in Y, lands back at GROUND_Y. The physics
 	// path integrates verticalVel against real ground contact instead.
 	if (!usePhysics && jumpActive && avatar) {
 		jumpVelocity += GRAVITY * dt;
@@ -2396,7 +2396,7 @@ function tick(frameNow) {
 
 		// Animation crossfade based on actual speed (the AnimationManager
 		// no-ops if the requested name is already current). A full-body gesture
-		// (sit/dance) owns the base layer — skip the locomotion crossfade until it
+		// (sit/dance) owns the base layer, skip the locomotion crossfade until it
 		// clears; an upper-body gesture (wave/point) rides additively over it.
 		const want = wantRun ? 'run' : 'walk';
 		if (currentMotion !== want) {
@@ -2412,7 +2412,7 @@ function tick(frameNow) {
 		}
 	}
 
-	// Physics movement — feed the frame's horizontal displacement plus an
+	// Physics movement, feed the frame's horizontal displacement plus an
 	// integrated vertical velocity to the kinematic character controller. It
 	// resolves wall slides, step-ups, ground contact, and shoves dynamic props,
 	// then hands back where the feet actually ended up. We step the world right
@@ -2433,7 +2433,7 @@ function tick(frameNow) {
 		characterGrounded = res.grounded;
 		if (characterGrounded && verticalVel < 0) verticalVel = 0;
 
-		// Boundary safety — keep roaming inside the ground disc. Snap the body
+		// Boundary safety, keep roaming inside the ground disc. Snap the body
 		// too so the controller's next query starts from the corrected spot.
 		let px = res.position.x;
 		let pz = res.position.z;
@@ -2466,7 +2466,7 @@ function tick(frameNow) {
 		animationManager.mixer.timeScale = ts;
 	}
 
-	// Procedural forward lean — sells weight transfer. Target lean ramps
+	// Procedural forward lean, sells weight transfer. Target lean ramps
 	// with how much of the input is engaged; we lerp to it so direction
 	// changes don't snap.
 	const targetLean =
@@ -2482,7 +2482,7 @@ function tick(frameNow) {
 	//      the camera reads its position, so the treadmill stays seamless.
 	if (marketplaceGallery) marketplaceGallery.update(dt);
 
-	// 2. Update camera — frozen in AR mode, camera-mode system otherwise.
+	// 2. Update camera, frozen in AR mode, camera-mode system otherwise.
 	if (arFrozenCamPos && arFrozenCamLook) {
 		// Clamp the avatar so it can't walk through (or past) the frozen camera.
 		_camFwdTmp.subVectors(arFrozenCamLook, arFrozenCamPos);
@@ -2619,8 +2619,8 @@ function lerpAngle(a, b, t) {
 // ── Walk metrics (leaderboard + per-creator analytics) ─────────────────────
 //
 // Accumulates the two signals the leaderboard (task 39) and embed analytics
-// (task 40) rank/aggregate on — horizontal distance travelled and time spent
-// actually walking — straight from the controller's resolved per-frame
+// (task 40) rank/aggregate on, horizontal distance travelled and time spent
+// actually walking, straight from the controller's resolved per-frame
 // displacement, and flushes a compact batch to POST /api/walk/metrics every
 // ~60s plus once on pagehide (sendBeacon, so it survives the unload). The same
 // batch carries any achievement thresholds crossed this session so the server
@@ -2636,7 +2636,7 @@ const WALK_ANON_KEY = 'twx_walk_anon';
 const WALK_ACHIEVED_KEY = 'twx_walk_achieved';
 const WALK_FLUSH_INTERVAL_MS = 60_000;
 
-// Stable anonymous walker id — generated once and persisted, so an unauthenticated
+// Stable anonymous walker id, generated once and persisted, so an unauthenticated
 // walker accrues a continuous track record across sessions/visits.
 function getWalkAnonId() {
 	try {
@@ -2650,7 +2650,7 @@ function getWalkAnonId() {
 		}
 		return id;
 	} catch {
-		// Private mode / storage disabled — fall back to a per-page id so the batch
+		// Private mode / storage disabled, fall back to a per-page id so the batch
 		// is still attributable (just not continuous across reloads).
 		if (!getWalkAnonId._mem) {
 			getWalkAnonId._mem = `anon_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
@@ -2661,7 +2661,7 @@ function getWalkAnonId() {
 
 // The avatar whose walks we attribute. Seeded from ?avatar and kept in sync when
 // the in-page picker swaps avatars (see the picker block, which calls
-// setWalkMetricsAvatarId). Only forwarded when it is a real UUID — the default
+// setWalkMetricsAvatarId). Only forwarded when it is a real UUID, the default
 // avatar has no id.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 let walkMetricsAvatarId = (() => {
@@ -2719,7 +2719,7 @@ function captureWalkState() {
 		heading: round3(avatarYaw),
 		trailStyle: trailSetting.get(),
 		recentGestures: [...recentGestures],
-		// Multiplayer room — the coin mint doubles as the matchmaking key. Recorded
+		// Multiplayer room, the coin mint doubles as the matchmaking key. Recorded
 		// so the snapshot is complete; rejoining is URL-driven so it is informational.
 		roomCode: COIN_PARAMS.coin || null,
 	};
@@ -2735,7 +2735,7 @@ function round3(n) {
 async function restoreWalkState(state) {
 	if (!state || typeof state !== 'object') return;
 
-	// Environment — only if it differs from what initEnvironments already staged.
+	// Environment, only if it differs from what initEnvironments already staged.
 	if (state.envId && walkManifest && state.envId !== currentEnvName) {
 		const meta = getEnvironment(walkManifest, state.envId);
 		if (meta) await applyEnvironment(meta.name, { initial: true });
@@ -2783,7 +2783,7 @@ async function restoreWalkState(state) {
 		}
 	}
 
-	// Recent gestures — seed the most-recent-first ring for quick re-use.
+	// Recent gestures, seed the most-recent-first ring for quick re-use.
 	if (Array.isArray(state.recentGestures)) {
 		recentGestures.length = 0;
 		for (const g of state.recentGestures.slice(0, 5)) {
@@ -2791,7 +2791,7 @@ async function restoreWalkState(state) {
 		}
 	}
 
-	// Avatar — swap last so it lands on the restored ground position. Only when it
+	// Avatar, swap last so it lands on the restored ground position. Only when it
 	// differs from the booted avatar and resolves to a loadable URL.
 	const wantUrl = state.avatarUrl || null;
 	if (wantUrl && wantUrl !== resolvedAvatarUrl && isLoadableAvatarUrl(wantUrl)) {
@@ -2835,7 +2835,7 @@ function persistAchievedSet(set) {
 	try {
 		localStorage.setItem(WALK_ACHIEVED_KEY, JSON.stringify([...set]));
 	} catch {
-		/* storage disabled — toasts still fire from the in-memory set */
+		/* storage disabled, toasts still fire from the in-memory set */
 	}
 }
 const walkAchieved = loadAchievedSet();
@@ -2899,7 +2899,7 @@ function showAchievementToast(label) {
 			el.addEventListener('transitionend', () => el.remove(), { once: true });
 		}, 4200);
 	} catch {
-		/* DOM unavailable — non-fatal; the unlock is still flushed to the server */
+		/* DOM unavailable, non-fatal; the unlock is still flushed to the server */
 	}
 }
 
@@ -3019,7 +3019,7 @@ function trackWalkEvent(eventName, opts = {}) {
 }
 
 function startWalkMetrics() {
-	// Expose the embed SDK tracking API. Idempotent — merges onto any existing
+	// Expose the embed SDK tracking API. Idempotent, merges onto any existing
 	// global so a host page that defined a stub before load keeps working.
 	window.ThreeWalkAvatar = Object.assign(window.ThreeWalkAvatar || {}, {
 		track: trackWalkEvent,
@@ -3037,7 +3037,7 @@ function startWalkMetrics() {
 // ── Multiplayer ───────────────────────────────────────────────────────────
 //
 // The server is best-effort. /walk works fully as a single-player page if
-// the Colyseus server is unreachable — the WalkNet client emits status
+// the Colyseus server is unreachable, the WalkNet client emits status
 // transitions but never blocks the render loop or the local controller.
 
 const REMOTE_LERP = 0.22; // per-frame lerp factor toward the latest server state
@@ -3048,7 +3048,7 @@ const remotePlayers = new Map();
 
 // ── Avatar inspector ──────────────────────────────────────────────────────
 // I (or clicking a nameplate) opens the shared inspector on a player: who they
-// are, the agent they pilot, their reputation and wallet — the same server
+// are, the agent they pilot, their reputation and wallet, the same server
 // truth every other surface reads. See src/shared/avatar-inspector.js.
 function worldInspectFacts() {
 	if (COIN_PARAMS.coin) {
@@ -3068,7 +3068,7 @@ function inspectRemotePlayer(rp) {
 		world: COIN_PARAMS.coin ? 'coin world' : 'walk',
 		agentId: rp.agent || '',
 		wallet: rp.account || '',
-		// Verified three.ws profile (W10) off the signed presence ticket — unlocks
+		// Verified three.ws profile (W10) off the signed presence ticket, unlocks
 		// the real profile card: follow, friend/DM, creations.
 		username: rp.username || '',
 		avatarUrl: rp._avatarUrl,
@@ -3085,7 +3085,7 @@ function inspectSelfPlayer() {
 		facts: worldInspectFacts(),
 	}, { trigger: canvas });
 }
-// Nearest player within reach of your avatar; yourself when alone — the I key
+// Nearest player within reach of your avatar; yourself when alone, the I key
 // always answers.
 function inspectNearestPlayer() {
 	if (isAvatarInspectorOpen()) { closeAvatarInspector(); return; }
@@ -3101,13 +3101,13 @@ function inspectNearestPlayer() {
 
 // In-world wallet reveal: walk up to a player piloting an agent and its wallet
 // (vanity address, live value, tip) rises beside the nameplate. Frugal by design
-// — one card, throttled proximity scan, cached embed reads. See walk-wallet.js.
+//, one card, throttled proximity scan, cached embed reads. See walk-wallet.js.
 const walletProximity = createWalkWalletProximity({
 	getLocalPosition: () => avatarRig.position,
 	remotePlayers,
 });
 
-// Walk-Browse marketplace hall — only on /marketplace-walk; a no-op otherwise.
+// Walk-Browse marketplace hall, only on /marketplace-walk; a no-op otherwise.
 // Builds a recycling belt of listing plinths and treadmills it past the avatar.
 const marketplaceGallery = GALLERY_MODE
 	? createMarketplaceGallery({ scene, getLocalPosition: () => avatarRig.position })
@@ -3116,7 +3116,7 @@ const marketplaceGallery = GALLERY_MODE
 let net = null;
 let netConnected = false;
 let coinTotem = null; // CoinTotem instance when in a coin community world
-let contentBillboard = null; // ContentBillboard instance — a static content panel in-world
+let contentBillboard = null; // ContentBillboard instance, a static content panel in-world
 
 // Remote-avatar template cache. Each distinct GLB URL is fetched once and
 // reused (via SkeletonUtils.clone) for every player wearing it, so a room full
@@ -3153,7 +3153,7 @@ function loadRemoteAvatarTemplate(url) {
 			return gltf.scene;
 		})
 		.catch((err) => {
-			// A failed load must not poison the cache forever — drop the entry so a
+			// A failed load must not poison the cache forever, drop the entry so a
 			// later player can retry, and re-throw for the caller's own handling.
 			if (_remoteAvatarTemplates.get(url) === entry) _remoteAvatarTemplates.delete(url);
 			throw err;
@@ -3247,12 +3247,12 @@ class RemotePlayer {
 		this._lastEmoteTs = 0;
 		this._emoting = false;
 		this._avatarUrl = initial?.avatar || '';
-		// The agent this peer is piloting (UUID) — drives the in-world wallet reveal.
+		// The agent this peer is piloting (UUID), drives the in-world wallet reveal.
 		this.agent = initial?.agent || null;
 		// Verified account wallet bound at sign-in (server-authoritative; empty for
 		// guests). Feeds the avatar inspector alongside the piloted agent.
 		this.account = initial?.account || '';
-		// Verified three.ws username (W10) — bound server-side from the signed
+		// Verified three.ws username (W10), bound server-side from the signed
 		// presence ticket, so the inspector can open the real profile card.
 		this.username = initial?.username || '';
 		this.name = initial?.name || sessionId.slice(0, 6);
@@ -3275,7 +3275,7 @@ class RemotePlayer {
 		this.anim = new AnimationManager();
 		this.anim.attach(root);
 		this.anim.setAnimationDefs(animationDefs);
-		// Reuse the already-fetched clips on the local manager — load asynchronously
+		// Reuse the already-fetched clips on the local manager, load asynchronously
 		// so the remote doesn't block on a second manifest fetch.
 		this.anim.loadAll().then(() => {
 			this.anim.crossfadeTo(motionToClipName(this.motion), 0.0);
@@ -3288,7 +3288,7 @@ class RemotePlayer {
 			this._swapAvatar(this._avatarUrl);
 		}
 
-		// Floating name tag — rendered as a CSS-styled DOM sprite that we
+		// Floating name tag, rendered as a CSS-styled DOM sprite that we
 		// project onto the avatar's head each frame.
 		this.label = document.createElement('div');
 		this.label.className = 'walk-remote-label';
@@ -3304,13 +3304,13 @@ class RemotePlayer {
 
 		// Living-avatar legibility: enrich the nameplate with the piloted agent's
 		// wealth tier (a coloured dot) + a vanity mark, so a crowded plaza reads at a
-		// glance — who's funded, who's vanity — without walking up to each. One cached,
+		// glance, who's funded, who's vanity, without walking up to each. One cached,
 		// deduped public wallet-embed read per agent; the tier dot rides CSS so the
 		// per-frame textContent name update never clobbers it. Released on dispose.
 		this._wealthLabel = null;
 		this._applyWealthLabel();
 
-		// Visual state — target (latest server) vs current (interpolated).
+		// Visual state, target (latest server) vs current (interpolated).
 		this.targetX = initial?.x ?? 0;
 		this.targetY = initial?.y ?? 0;
 		this.targetZ = initial?.z ?? 0;
@@ -3346,12 +3346,12 @@ class RemotePlayer {
 			this._lastEmoteTs = player.emoteTs;
 			this._playRemoteEmote(player.emote);
 		}
-		// Live avatar swap — a player picked a new avatar without rejoining.
+		// Live avatar swap, a player picked a new avatar without rejoining.
 		if (player.avatar !== this._avatarUrl && isLoadableAvatarUrl(player.avatar)) {
 			this._avatarUrl = player.avatar;
 			this._swapAvatar(player.avatar);
 		}
-		// Live cosmetic change — they equipped/unequipped something.
+		// Live cosmetic change, they equipped/unequipped something.
 		if (player.cosmetics !== undefined && player.cosmetics !== this._cosWire) {
 			this._applyCosmetics(player.cosmetics);
 		}
@@ -3363,7 +3363,7 @@ class RemotePlayer {
 	}
 
 	// (Re)bind the nameplate's wealth-tier + vanity enrichment to the currently
-	// piloted agent. Idempotent — tears down a stale binding before rebinding, and
+	// piloted agent. Idempotent, tears down a stale binding before rebinding, and
 	// no-ops (clean label) when the peer isn't piloting a real agent.
 	_applyWealthLabel() {
 		try { this._wealthLabel?.destroy?.(); } catch { /* already gone */ }
@@ -3372,8 +3372,8 @@ class RemotePlayer {
 		if (id && this.label) this._wealthLabel = applyWorldNameplate(this.label, id, { network: 'mainnet' });
 	}
 
-	// (Re)dress this peer in their equipped loadout. Idempotent — re-applies only
-	// when the wire changed — and shares applyLoadout with the local avatar so one
+	// (Re)dress this peer in their equipped loadout. Idempotent, re-applies only
+	// when the wire changed, and shares applyLoadout with the local avatar so one
 	// wardrobe renders the same in every world.
 	_applyCosmetics(wire) {
 		const next = typeof wire === 'string' ? wire : this._cosWire || '';
@@ -3557,7 +3557,7 @@ function setupOnlinePill() {
 
 function renderOnlineCount() {
 	if (!onlineCountEl) return;
-	// +1 for the local player — they're not in remotePlayers.
+	// +1 for the local player, they're not in remotePlayers.
 	onlineCountEl.textContent = String(remotePlayers.size + (netConnected ? 1 : 0));
 }
 
@@ -3572,7 +3572,7 @@ function setOnlineStatus(status) {
 				: status === 'connecting'
 					? 'connecting…'
 					: status === 'failed'
-						? 'offline — tap to retry'
+						? 'offline, tap to retry'
 						: status === 'offline'
 							? 'reconnecting…'
 							: status === 'unavailable'
@@ -3582,7 +3582,7 @@ function setOnlineStatus(status) {
 }
 
 function startNet() {
-	// Draft previews run solo — never broadcast a throwaway, soon-to-expire
+	// Draft previews run solo, never broadcast a throwaway, soon-to-expire
 	// presigned GLB into a live room where peers would fail to load it.
 	if (isDraftPreview) return;
 	if (!avatarTemplate || !animationDefs) return;
@@ -3654,7 +3654,7 @@ function startNet() {
 		}
 	});
 	net.on('chat', (msg) => {
-		// Our own messages are rendered optimistically on send — skip the echo.
+		// Our own messages are rendered optimistically on send, skip the echo.
 		if (!msg || msg.id === net.mySessionId) return;
 		const rp = remotePlayers.get(msg.id);
 		const color = rp?._color;
@@ -3669,7 +3669,7 @@ function startNet() {
 }
 
 // ── Gestures: see setupGestures() and src/walk-gestures.js. The radial
-// gesture wheel (hold G / long-press), the 1–8 quick keys, and the side
+// gesture wheel (hold G / long-press), the 1, 8 quick keys, and the side
 // tray are all owned by the WalkGestures controller built in setupGestures().
 
 // ── Speech bubbles (3D→2D projected CSS overlays) ────────────────────────
@@ -3798,7 +3798,7 @@ function updateSpeechBubbles() {
 }
 
 // ── Environment selector ─────────────────────────────────────────────────
-// Six worlds the avatar can roam — park, cyberpunk street, beach, gallery,
+// Six worlds the avatar can roam, park, cyberpunk street, beach, gallery,
 // abstract void, and the three.ws office. Each is a real glTF scene (or the
 // procedural void) with its own terrain tint, sky gradient, light rig, and HDR
 // image-based lighting, defined in public/environments/index.json and loaded
@@ -3810,8 +3810,8 @@ let currentEnvName = 'park';
 let envApplyToken = 0; // bumped per swap so a stale async load can't clobber a newer one
 const envPropsGroup = new Group(); // holds the kickable dynamic props (balls/crates)
 scene.add(envPropsGroup);
-let envScenery = null; // { group, dispose } — the current GLB/void scenery in the scene
-let envHdr = null; // { texture, dispose } — the current pre-filtered IBL
+let envScenery = null; // { group, dispose }, the current GLB/void scenery in the scene
+let envHdr = null; // { texture, dispose }, the current pre-filtered IBL
 
 // Collider descriptors for the current environment. `worldObstacles` are static
 // (trees/buildings/walls); `worldDynamicProps` are the kickable bodies whose
@@ -3865,11 +3865,11 @@ function buildCollidersFromMeta(meta) {
 		}
 	}
 	// The content billboard is a persistent prop, not part of any environment's
-	// manifest — re-add its post colliders on every swap (this array is reset above).
+	// manifest, re-add its post colliders on every swap (this array is reset above).
 	if (contentBillboard) worldObstacles.push(...contentBillboard.colliders());
 }
 
-// Kickable physics props — beach balls and crates that fall, roll, and get
+// Kickable physics props, beach balls and crates that fall, roll, and get
 // shoved when the avatar walks into them. Counts come from the manifest. Each
 // mesh is added to envPropsGroup (torn down on swap) with a descriptor in
 // worldDynamicProps that rebuildPhysicsWorld() binds a rigid body to.
@@ -4081,7 +4081,7 @@ function fadeWorld(color, opacity) {
 	});
 }
 
-// Environment indicator — a transient pill naming the active scene.
+// Environment indicator, a transient pill naming the active scene.
 const envIndicator = (() => {
 	const el = document.createElement('div');
 	el.id = 'walk-env-indicator';
@@ -4312,7 +4312,7 @@ function startGifRecording() {
 	gifRecording = true;
 	gifFrames = [];
 	gifIndicator.style.display = 'inline-flex';
-	setStatus('Recording started — press R to stop');
+	setStatus('Recording started, press R to stop');
 
 	gifInterval = setInterval(() => {
 		if (!gifRecording) return;
@@ -4353,7 +4353,7 @@ function stopGifRecording() {
 async function exportFramesAsVideo(frames) {
 	// Re-render frames onto a canvas and use MediaRecorder for a real video file
 	if (frames.length < 2) {
-		// Single frame — just download as PNG
+		// Single frame, just download as PNG
 		const a = document.createElement('a');
 		a.href = frames[0];
 		a.download = `three-ws-walk-${Date.now()}.png`;
@@ -4466,7 +4466,7 @@ const minimapContainer = (() => {
 		'z-index:6',
 		// Bottom-left, the corner /play's world HUD parks its radar in, lifted
 		// clear of the movement stick (140px pad at bottom 28). The bottom-RIGHT
-		// corner is the walk companion mascot's (200x280, right/bottom 16) — the
+		// corner is the walk companion mascot's (200x280, right/bottom 16), the
 		// old minimap sat under it and only got away with it by defaulting to
 		// hidden. This radar is on by default, so it needs a corner of its own.
 		'left:16px',
@@ -4569,7 +4569,7 @@ const HELP_FIRST_VISIT_KEY = 'walk:help-shown';
 function showHelpOnFirstVisit() {
 	// The overlay is a keyboard cheat-sheet (WASD/Shift/Space) and its card is
 	// tall enough to cover the joystick on a phone. Both are wrong on touch, so
-	// skip the auto-popup there — the on-screen sticks are self-explanatory and
+	// skip the auto-popup there, the on-screen sticks are self-explanatory and
 	// the help button still opens it on demand.
 	if (IS_TOUCH) return;
 	try {
@@ -4621,7 +4621,7 @@ async function initWalkPhysics() {
 		// Catch up to whatever environment is already showing.
 		rebuildPhysicsWorld();
 	} catch (err) {
-		// Solver failed to load — the legacy movement path keeps the scene fully
+		// Solver failed to load, the legacy movement path keeps the scene fully
 		// playable, so degrade quietly rather than blocking the experience.
 		log.warn('[walk] physics unavailable, using legacy movement:', err);
 		physics = null;
@@ -4696,7 +4696,7 @@ loadAvatar()
 		// the scene (default ground/lighting) is visible behind the message.
 		dismissLoading();
 		const hasParam = new URLSearchParams(location.search).has('avatar');
-		const suffix = hasParam ? ' — <a href="/temporary">try the default avatar</a>' : '';
+		const suffix = hasParam ? ', <a href="/temporary">try the default avatar</a>' : '';
 		if (statusEl) {
 			statusEl.innerHTML = `failed to load avatar: ${err?.message ?? err}${suffix}`;
 			statusEl.classList.add('is-error');
@@ -4878,7 +4878,7 @@ if (import.meta.env?.DEV) {
 			addChatMessage(name, text);
 			// Show speech bubble above local avatar
 			showSpeechBubbleFor('local', text);
-			// Read the avatar as speaking for the life of the bubble — the talking
+			// Read the avatar as speaking for the life of the bubble, the talking
 			// overlay animates the upper body while the message is on screen.
 			triggerTalking(text);
 			net?.sendChat(text);
@@ -4903,8 +4903,8 @@ if (import.meta.env?.DEV) {
 // ── Coin community theming (HUD + 3D totem) ──────────────────────────────
 // When /walk is entered as a coin community (?coin=<mint>&…), we theme the
 // world: a top-center HUD carrying the coin's identity + live trade flow, and
-// a 3D totem at world center — a billboarded medallion of the coin over a
-// glowing ground ring — so each coin's space looks unmistakably its own.
+// a 3D totem at world center, a billboarded medallion of the coin over a
+// glowing ground ring, so each coin's space looks unmistakably its own.
 {
 	const COIN_FRONTEND = 'https://pump.fun/coin/';
 	const TRADE_POLL_MS = 7000;
@@ -5028,7 +5028,7 @@ if (import.meta.env?.DEV) {
 			const accent = coinAccent(COIN_PARAMS.coin);
 			this.group = new Group();
 
-			// Ground ring — flat, additive, slowly spinning.
+			// Ground ring, flat, additive, slowly spinning.
 			this.ringMesh = new Mesh(
 				new CircleGeometry(2.6, 64),
 				new MeshBasicMaterial({
@@ -5153,7 +5153,7 @@ if (import.meta.env?.DEV) {
 			</span>`;
 		document.body.appendChild(hud);
 
-		// Live trade flow — last on-chain trade for this mint, refreshed on an
+		// Live trade flow, last on-chain trade for this mint, refreshed on an
 		// interval. Real data only: on any failure we leave the chip hidden.
 		const tradeEl = hud.querySelector('[data-trade]');
 		const url = `/api/pump/coin-trades?mint=${encodeURIComponent(COIN_PARAMS.coin)}&limit=1`;
@@ -5174,7 +5174,7 @@ if (import.meta.env?.DEV) {
 					}
 				}
 			} catch {
-				/* offline / rate-limited — keep last value */
+				/* offline / rate-limited, keep last value */
 			}
 			if (!stopped) setTimeout(pollTrade, TRADE_POLL_MS);
 		}
@@ -5193,7 +5193,7 @@ if (import.meta.env?.DEV) {
 }
 
 // ── Content billboard ────────────────────────────────────────────────────────
-// A cheap, static billboard you can drop content onto — a framed panel on two
+// A cheap, static billboard you can drop content onto, a framed panel on two
 // posts standing as a backdrop behind spawn. It is decoration, not an ad unit:
 // no targeting, no tracking, no network of its own. It just shows one image (or
 // a short caption) so a space has something on its walls.
@@ -5216,7 +5216,7 @@ if (import.meta.env?.DEV) {
 				const u = new URL(boardParam, location.origin);
 				if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
 			} catch {
-				/* not a URL — treated as no image, caption-only is still valid */
+				/* not a URL, treated as no image, caption-only is still valid */
 			}
 		}
 		if (COIN_PARAMS.image) return COIN_PARAMS.image;
@@ -5286,7 +5286,7 @@ if (import.meta.env?.DEV) {
 					tex.needsUpdate = true;
 				}
 			};
-			// On error we keep the fallback that's already painted — no handler needed.
+			// On error we keep the fallback that's already painted, no handler needed.
 			img.src = imageSrc;
 		}
 		return tex;
@@ -5320,7 +5320,7 @@ if (import.meta.env?.DEV) {
 				this.group.add(post);
 			}
 
-			// Backing frame — a thin dark slab a touch larger than the screen so the
+			// Backing frame, a thin dark slab a touch larger than the screen so the
 			// panel reads as a solid board from any angle and the back isn't see-through.
 			const frame = new Mesh(
 				new BoxGeometry(PANEL_W + 0.4, PANEL_H + 0.4, 0.16),
@@ -5330,7 +5330,7 @@ if (import.meta.env?.DEV) {
 			frame.castShadow = true;
 			this.group.add(frame);
 
-			// Content screen — unlit so the artwork is always legible and cheap to
+			// Content screen, unlit so the artwork is always legible and cheap to
 			// draw, sitting just proud of the frame's front face. Starts on the world
 			// default; a paid placement (if any) swaps in via setContent() once the
 			// /api/billboard fetch resolves.
@@ -5360,7 +5360,7 @@ if (import.meta.env?.DEV) {
 			prev?.dispose();
 		}
 
-		// Sit the structure on the live terrain — re-called on every environment
+		// Sit the structure on the live terrain, re-called on every environment
 		// swap so the billboard tracks the new ground instead of floating or sinking.
 		placeOnTerrain() {
 			const y = terrain ? terrain.heightAt(FOOT.x, FOOT.z) : 0;
@@ -5400,7 +5400,7 @@ if (import.meta.env?.DEV) {
 					}
 				})
 				.catch(() => {
-					/* offline / not configured — the world default stays on the panel */
+					/* offline / not configured, the world default stays on the panel */
 				});
 
 			buildBillboardPublisher();
@@ -5492,7 +5492,7 @@ if (import.meta.env?.DEV) {
 				<div style="font:700 16px/1.2 system-ui;margin-bottom:4px">Feature your content</div>
 				<div style="font:400 13px/1.45 system-ui;color:rgba(255,255,255,0.6);margin-bottom:16px">
 					Hold this world’s billboard for everyone who walks in. ${SLOT_LABEL}. It’s a content
-					slot, not an ad — nothing is tracked.
+					slot, not an ad, nothing is tracked.
 				</div>
 				<label style="display:block;font:600 12px/1 system-ui;color:rgba(255,255,255,0.7);margin-bottom:6px">Image URL</label>
 				<input id="bb-image" type="url" inputmode="url" placeholder="https://…/art.png"
@@ -5503,7 +5503,7 @@ if (import.meta.env?.DEV) {
 				<div id="bb-msg" role="status" style="min-height:18px;font:500 12px/1.4 system-ui;color:#ffb4b4;margin-bottom:10px"></div>
 				<div style="display:flex;gap:8px;justify-content:flex-end">
 					<button id="bb-cancel" type="button" style="padding:9px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:transparent;color:rgba(255,255,255,0.8);font:600 13px system-ui;cursor:pointer">Cancel</button>
-					<button id="bb-pay" type="button" style="padding:9px 16px;border-radius:10px;border:0;background:#5a8dee;color:#fff;font:700 13px system-ui;cursor:pointer">Feature — pay</button>
+					<button id="bb-pay" type="button" style="padding:9px 16px;border-radius:10px;border:0;background:#5a8dee;color:#fff;font:700 13px system-ui;cursor:pointer">Feature, pay</button>
 				</div>`;
 			overlay.appendChild(card);
 			document.body.appendChild(overlay);
@@ -5531,7 +5531,7 @@ if (import.meta.env?.DEV) {
 					return;
 				}
 				if (!window.X402?.pay) {
-					setMsg('Wallet widget still loading — try again in a second.');
+					setMsg('Wallet widget still loading, try again in a second.');
 					return;
 				}
 				setMsg('');
@@ -5555,12 +5555,12 @@ if (import.meta.env?.DEV) {
 				} catch (err) {
 					if (err?.code === 'cancelled') {
 						payBtn.disabled = false;
-						payBtn.textContent = 'Feature — pay';
+						payBtn.textContent = 'Feature, pay';
 						return;
 					}
-					setMsg(err?.message || 'Payment failed — please try again.');
+					setMsg(err?.message || 'Payment failed, please try again.');
 					payBtn.disabled = false;
-					payBtn.textContent = 'Feature — pay';
+					payBtn.textContent = 'Feature, pay';
 				}
 			});
 
@@ -5599,15 +5599,15 @@ if (import.meta.env?.DEV) {
 //   move    → set the existing waypointTarget; the locomotion pipeline walks
 //             (and faces, and animates) the avatar there, exactly as a minimap
 //             click does.
-//   gesture → gestures.play(name) — the same call the wheel / quick keys use.
+//   gesture → gestures.play(name), the same call the wheel / quick keys use.
 //   say     → a speech bubble above the avatar + the talking overlay, with
 //             optional browser TTS when the command requested voice.
-//   env     → applyEnvironment(name) — a live, faded environment swap.
+//   env     → applyEnvironment(name), a live, faded environment swap.
 //
 // Commands are delivered exactly once by the server, so we simply apply what each
 // poll returns. The poll cadence backs off on transient failures so a blip never
 // turns into a request storm, and stops cleanly if the session 401s (expired or
-// revoked) — there is nothing left to drive.
+// revoked), there is nothing left to drive.
 (() => {
 	const params = new URLSearchParams(location.search);
 	const sessionId = (params.get('control') || '').trim();
@@ -5632,7 +5632,7 @@ if (import.meta.env?.DEV) {
 				window.speechSynthesis.cancel();
 				window.speechSynthesis.speak(u);
 			} catch {
-				/* synthesis unavailable — the bubble already conveyed the line */
+				/* synthesis unavailable, the bubble already conveyed the line */
 			}
 		}
 	}
@@ -5696,7 +5696,7 @@ if (import.meta.env?.DEV) {
 				cache: 'no-store',
 			});
 			if (res.status === 401 || res.status === 403) {
-				// Session expired or revoked — nothing left to drive.
+				// Session expired or revoked, nothing left to drive.
 				stopped = true;
 				setStatus('Remote-control session ended', { sticky: false });
 				return;
@@ -5709,7 +5709,7 @@ if (import.meta.env?.DEV) {
 				backoff = Math.min(MAX_BACKOFF_MS, backoff * 2);
 			}
 		} catch {
-			// Offline / transient — back off and retry.
+			// Offline / transient, back off and retry.
 			backoff = Math.min(MAX_BACKOFF_MS, backoff * 2);
 		} finally {
 			inFlight = false;
@@ -5721,7 +5721,7 @@ if (import.meta.env?.DEV) {
 		stopped = true;
 	});
 
-	setStatus('Remote control active — awaiting commands', { sticky: false });
+	setStatus('Remote control active, awaiting commands', { sticky: false });
 	// First poll after a short delay so the avatar/scene have a frame to settle.
 	setTimeout(pollOnce, 600);
 })();

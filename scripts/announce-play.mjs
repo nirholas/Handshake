@@ -24,7 +24,7 @@ function loadDotEnv(path = '.env') {
 			const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
 			if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
 		}
-	} catch { /* no .env — rely on the environment */ }
+	} catch { /* no .env, rely on the environment */ }
 }
 loadDotEnv();
 

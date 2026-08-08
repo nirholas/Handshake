@@ -4,7 +4,7 @@
 // so they are two different players) and asserts the things a crowded event
 // depends on: both clients see each other, movement and chat cross in under a
 // human-perceptible delay, chat text cannot inject HTML, and a forced network
-// drop on one client heals back into a state that MATCHES the server — no ghost
+// drop on one client heals back into a state that MATCHES the server, no ghost
 // avatars left standing, no duplicated self, chat flowing again afterwards.
 //
 //   node scripts/play-multiplayer-e2e.mjs                       # local dev, $THREE world
@@ -39,7 +39,7 @@ const consoleErrors = [];
 
 function check(name, ok, detail = '') {
 	results.push({ name, ok, detail });
-	console.log(`${at()} ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`);
+	console.log(`${at()} ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `, ${detail}` : ''}`);
 	return ok;
 }
 
@@ -98,7 +98,7 @@ const snapshot = () => {
 			name: n.querySelector('b')?.textContent || '',
 			text: n.querySelector('.cc-chat-text')?.textContent || '',
 			// Any element inside the text span means the message was parsed as
-			// markup instead of being written as text — an XSS hole.
+			// markup instead of being written as text, an XSS hole.
 			injected: n.querySelector('.cc-chat-text')?.children.length || 0,
 		})),
 		statusPill: document.querySelector('#cc-hud .cc-status .cc-status-text')?.textContent
@@ -109,7 +109,7 @@ const snapshot = () => {
 async function openClient(browser, tag, name) {
 	const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, permissions: [] });
 	// A stable display name per client makes the cross-client assertions readable.
-	// GAME_SERVER overrides the world server the page would otherwise resolve —
+	// GAME_SERVER overrides the world server the page would otherwise resolve,
 	// needed to point a run at an isolated Colyseus instance instead of whatever
 	// the page's <meta game-server> or the localhost default picks.
 	await ctx.addInitScript(({ n, server }) => {
@@ -300,7 +300,7 @@ try {
 		[...document.querySelectorAll('.cc-chat-msg .cc-chat-text')].filter((n) => n.textContent.startsWith(`spam-${tag}-`)).length, burst);
 	check('chat burst is throttled server-side', delivered < 8, `${delivered}/8 relayed`);
 
-	// The log must not grow without bound — the UI caps it.
+	// The log must not grow without bound, the UI caps it.
 	const capped = await evalWithTimeout(b.page, () => document.querySelectorAll('.cc-chat-msg').length <= 200);
 	check('chat log is capped in the DOM', capped === true);
 
@@ -374,5 +374,5 @@ try {
 
 const failed = results.filter((r) => !r.ok);
 console.log(`\n=== ${results.length - failed.length}/${results.length} checks passed ===`);
-for (const f of failed) console.log(`  FAIL ${f.name}${f.detail ? ` — ${f.detail}` : ''}`);
+for (const f of failed) console.log(`  FAIL ${f.name}${f.detail ? `, ${f.detail}` : ''}`);
 process.exit(failed.length ? 1 : 0);

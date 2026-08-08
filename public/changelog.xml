@@ -39,12 +39,28 @@
 			<description>The invariants that keep the Play world safe: untrusted names never become markup, a coin image cannot escape its CSS, a broken world link says so, a reconnect retires the peers who left, and everything the world loads gets freed. Each rule names the failure it prevents.</description>
 		</item>
 		<item>
+			<title>Docs · Live events in the /play world</title>
+			<link>https://three.ws/docs/play-live-events</link>
+			<guid isPermaLink="false">2026-08-08:Docs · Live events in the /play world</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a scheduled event runs inside the $THREE world: one config file drives the countdown chip, the agenda drawer, the go-live moment, and a fireworks show every player sees identically without a single packet. Includes how to schedule, preview, and verify one.</description>
+		</item>
+		<item>
 			<title>/play tells you the truth when something fails, instead of showing green</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-08-08:/play tells you the truth when something fails, instead of showing green</guid>
 			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A handful of places in the coin worlds reported success no matter what the server actually said. A $THREE boutique purchase that failed verification showed the same green Unlocked toast as one that worked, and a token swap that reverted on-chain still said Bought. Both now check the real outcome and show the failure with a link to the transaction. Every server message the world sends back now carries an explicit success or failure flag, so store, bank, job and wardrobe panels style errors as errors rather than guessing from the wording. A refused wardrobe change clears its spinner and says why instead of spinning forever, the jobs board says Loading jobs rather than flashing There are no jobs before the first reply arrives, and the in-world price screen switches from a pulsing LIVE badge to STALE with the age of the data when its feed stops responding.</description>
+		</item>
+		<item>
+			<title>A shared world link now says which world you are opening, from the first frame</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-08:A shared world link now says which world you are opening, from the first frame</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Open a link to a coin's world and the wait used to be anonymous: a generic COIN COMMUNITIES card and &quot;Joining the community&quot;, with nothing to say whose town was loading, even though the link itself carried the name, the ticker and the artwork all along. The loading screen now reads them straight out of the link and shows them immediately, before any of the game code has arrived: the coin's artwork, its name and its ticker, and &quot;Entering &lt;name&gt;&quot;. If the artwork cannot be fetched, a letter mark takes its place instead of a broken image, in the loading screen and in the world's own corner banner. The browser tab is named after the world too, so a link parked in a background tab is findable, and it goes back to normal when you return to the community list. Two other fixes to the same first minute: /play was asking for the site's typeface without ever loading it, so every word on the page was rendering in whatever the device had lying around, and the loading card could push its own progress bar off the bottom of a short laptop screen. Both are fixed. On phones, the Controls reference is reachable again after the welcome card is dismissed, and the arrow keys now walk your character instead of paging that card.</description>
 		</item>
 		<item>
 			<title>Coin Wars is now a door in your world, not a hidden game</title>
@@ -77,6 +93,14 @@
 			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>In any coin's world you can now describe an item and have it built for real, right there. Open build mode, click Forge in the props palette, and type something like a mossy stone lantern with a copper roof, or attach a reference photo and let it work from that. About half a minute later the finished 3D model is added to your props and armed, so the next click drops it into the world. There is a chat shortcut too: type /forge a brass telescope and the item lands ready to place without opening the palette at all. Anything you place appears for everyone else connected to that server and stays there, exactly like a block you built by hand. It is free, needs no account or wallet, and every failure explains itself and can be retried.</description>
+		</item>
+		<item>
+			<title>Forge items straight into a /play world, from a prompt or a photo</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-08:Forge items straight into a /play world, from a prompt or a photo</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>You can now create a brand-new 3D item without leaving a world. Open the build palette, click Forge, and describe what you want (&quot;a mossy stone lantern with a copper roof&quot;), or attach a reference photo and let it build the thing in the picture. About half a minute later the finished model is armed in your props, and one click drops it into the world for everyone connected to that server: it renders for every other player, and it is saved with the rest of the build, so it is still standing when people come back. There is also a chat shortcut, /forge a brass telescope, for when you do not want to open the palette at all. It is free, it needs no account or wallet, and every failure along the way (a busy queue, a prompt the lane refuses, a dropped connection) tells you what happened and how to retry.</description>
 		</item>
 		<item>
 			<title>One link to share for the live event, with a real headcount</title>
@@ -125,6 +149,22 @@
 			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>For the length of the live event, the /play jobs board carries four jobs you can only take while the doors are open: land a haul of fish for the plaza pit, drive the party supplies across town, clear four foes out of the Southern Wilds, and tour the three meetup landmarks. They pay better than the everyday board and they are all repeatable, because the point is the race. A new Event tab on the jobs board shows the standing: the top ten by jobs finished, tiebroken by the cash those jobs paid, with your own rank pinned at the bottom whether or not you made the cut. It updates as people finish runs, and it is the same ranking the event page reads, so the plaza and the web never disagree. When the window closes the jobs vanish from the board and the final standings stay readable. Winners are announced from that board and settled by us afterwards: nothing is paid out automatically.</description>
+		</item>
+		<item>
+			<title>The store, the bank and the phone layout in Play got a polish pass</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-08:The store, the bank and the phone layout in Play got a polish pass</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Walking up to the general store or the bank used to show you the finished screen before the world had answered: an empty shelf that actually meant &quot;still loading&quot;, and a cash balance of zero that actually meant &quot;we haven't checked yet&quot;. Both now show placeholder rows while they wait, read your balances as unknown until the world reports them, and, if the world never answers, say so plainly with a Try again button instead of leaving a wrong screen up for good. Deposits and withdrawals hold a single request open at a time, so a double-tapped Deposit can no longer send the same transfer twice, and the amount is checked against what you are actually carrying before anything is sent. On a phone, the avatar row no longer pushes the Upload model button off the right edge of the screen where it could not be reached, the lobby search box responds to a tap anywhere in the bar rather than only on the one line of text inside it, and the footer links and the boot recovery screen now have thumb-sized targets and a visible keyboard focus ring.</description>
+		</item>
+		<item>
+			<title>The trading engine now tells you when it is out of money</title>
+			<link>https://three.ws/trading</link>
+			<guid isPermaLink="false">2026-08-08:The trading engine now tells you when it is out of money</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The autonomous sniper could fail in a way nothing caught: the process healthy, the launch feed connected, every strategy armed, and every wallet too poor to actually pay for a trade. In that state it kept trying and failing to buy, closed nothing, and still reported itself as live, because everything being watched was about the software and nothing was about the money. Solvency is now part of how the engine reports itself. Every armed wallet balance is checked every five minutes against the exact rule the trader uses to decide whether it can afford an entry, so the status can never call a wallet ready when the trader would skip it. If no wallet can fund a trade, the engine now reports itself as out of SOL on the status page, in the health check and on the homepage, instead of showing green. It also says how much SOL would fix it and whether the funding wallet can cover that by itself, and it pages operators, with a separate alert for the case where the funding wallet is itself empty and a person has to step in.</description>
 		</item>
 		<item>
 			<title>The world economy pays what it says, and the bank makes you walk there</title>

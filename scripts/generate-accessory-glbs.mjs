@@ -11,7 +11,7 @@
 //   laurel-meetup.glb
 //
 // Each is a real glTF 2.0 binary with positions, normals, UVs, indices, and a
-// PBR material — small enough to commit to the repo, large enough to be visibly
+// PBR material, small enough to commit to the repo, large enough to be visibly
 // correct when attached to a humanoid avatar's Head bone.
 //
 // Coordinates are in meters, oriented for a head bone whose +Y is up and +Z is
@@ -94,7 +94,7 @@ function cylinder({ r = 1, y0 = 0, y1 = 1, segments = 24 } = {}) {
 		indices.push(a, a + 1, b + 1, a, b + 1, b);
 	}
 
-	// Caps — fan triangulated from centers.
+	// Caps, fan triangulated from centers.
 	const ringStart = positions.length / 3;
 	// Top center
 	positions.push(0, y1, 0);
@@ -229,7 +229,7 @@ function sphere({ r = 1, segments = 16, rings = 10 } = {}) {
 // transform into a geometry's vertices and concatenate geometries, so a repeated
 // element is authored as a loop and emitted as a single primitive.
 
-// Hamilton product — `a` applied AFTER `b` (q = a ⊗ b), both [x,y,z,w].
+// Hamilton product, `a` applied AFTER `b` (q = a ⊗ b), both [x,y,z,w].
 function quatMul(a, b) {
 	const [ax, ay, az, aw] = a;
 	const [bx, by, bz, bw] = b;
@@ -366,7 +366,7 @@ async function writeGLB(filePath, parts, { rootName }) {
 //
 // All meshes are authored relative to the Head bone origin, which on a Mixamo
 // rig sits at the top of the neck. +Y is up, +Z is forward, scale is meters.
-// Head radius is roughly 0.10–0.12 m, so a hat needs r ≈ 0.11 to fit snugly.
+// Head radius is roughly 0.10, 0.12 m, so a hat needs r ≈ 0.11 to fit snugly.
 
 const ACCESSORIES = {
 	'hat-baseball.glb': {
@@ -398,7 +398,7 @@ const ACCESSORIES = {
 				color: [0.55, 0.12, 0.22], // wine red
 				roughness: 0.95, // wool
 			},
-			// Cuff (folded brim) — short cylinder around the base.
+			// Cuff (folded brim), short cylinder around the base.
 			{
 				name: 'cuff',
 				geom: cylinder({ r: 0.125, y0: 0.07, y1: 0.10, segments: 24 }),
@@ -411,14 +411,14 @@ const ACCESSORIES = {
 	'hat-cowboy.glb': {
 		rootName: 'HatCowboy',
 		parts: [
-			// Crown — tall halfsphere
+			// Crown, tall halfsphere
 			{
 				name: 'crown',
 				geom: halfSphere({ r: 0.11, segments: 20, rings: 10, yOffset: 0.11 }),
 				color: [0.32, 0.18, 0.07], // saddle brown
 				scale: [1, 1.4, 1],
 			},
-			// Brim — wide flat ring with subtle upcurl approximated via scale.
+			// Brim, wide flat ring with subtle upcurl approximated via scale.
 			{
 				name: 'brim',
 				geom: annulus({ y: 0.11, innerR: 0.10, outerR: 0.24, segments: 32 }),
@@ -523,7 +523,7 @@ const ACCESSORIES = {
 
 	// The event souvenir: a gold laurel circlet, open at the front where three
 	// pearl berries sit (the nod to $THREE). Granted to everyone who was in the
-	// world during the live meetup window and never sold — see
+	// world during the live meetup window and never sold, see
 	// multiplayer/src/cosmetics-catalog.js (tier 'event') and the join-time grant
 	// in multiplayer/src/rooms/WalkRoom.js. Authored as a loop and merged into
 	// three primitives so eighteen identical leaves cost one material, not
@@ -597,7 +597,7 @@ async function main() {
 	const only = process.argv.slice(2).filter((a) => !a.startsWith('-'));
 	const unknown = only.filter((f) => !ACCESSORIES[f]);
 	if (unknown.length) {
-		throw new Error(`Unknown accessory ${unknown.join(', ')} — known: ${Object.keys(ACCESSORIES).join(', ')}`);
+		throw new Error(`Unknown accessory ${unknown.join(', ')}, known: ${Object.keys(ACCESSORIES).join(', ')}`);
 	}
 	const results = [];
 	for (const [filename, spec] of Object.entries(ACCESSORIES)) {

@@ -1,4 +1,4 @@
-// The Plaza Stage — a Living Stage standing in every /play coin world (F17).
+// The Plaza Stage, a Living Stage standing in every /play coin world (F17).
 //
 // The platform already runs real hosted shows: an embodied AI host performs live
 // beats with spatial voice, lip-sync, synced captions, an audience question
@@ -11,7 +11,7 @@
 //
 // Two halves, split for cost:
 //   • THIS file is always mounted with the world. It is geometry, a canvas
-//     marquee, and one distance check per frame — no sockets, no fetches, no
+//     marquee, and one distance check per frame, no sockets, no fetches, no
 //     audio. A player who never walks over there costs exactly that.
 //   • src/game/plaza-stage-show.js is the show client (the stage_world room, the
 //     host avatar, TTS + lip-sync, tips, questions). It is dynamically imported
@@ -55,7 +55,7 @@ export class PlazaStage {
 	 * @param {import('three').Camera} opts.camera  the follow camera (spatial audio listener)
 	 * @param {() => ({x:number,y:number,z:number})} opts.getPlayer  local avatar pose
 	 * @param {object} opts.coin   the world's coin ({ mint, name, symbol })
-	 * @param {object} opts.ui     CommunityUI — toasts + the chat bar
+	 * @param {object} opts.ui     CommunityUI, toasts + the chat bar
 	 */
 	constructor({ scene, camera, getPlayer, coin, ui }) {
 		this.scene = scene;
@@ -110,7 +110,7 @@ export class PlazaStage {
 		deck.receiveShadow = true;
 		g.add(deck);
 
-		// A lit lip around the deck — the edge that reads as "a stage" from across
+		// A lit lip around the deck, the edge that reads as "a stage" from across
 		// the plaza, and the thing that pulses while the host is speaking.
 		const lip = new Mesh(
 			new TorusGeometry(3.45, 0.075, 8, 48),
@@ -320,7 +320,7 @@ export class PlazaStage {
 			: (this.state.nextShowAt > Date.now() ? 'scheduled' : 'dark');
 		if (this._show) this._show.setStageDetail(data);
 		// The player may have reached the venue before this read landed (or before a
-		// stage existed at all) — now that there is a real show to join, join it.
+		// stage existed at all), now that there is a real show to join, join it.
 		else if (this._attending) this._mountShow();
 	}
 
@@ -432,7 +432,7 @@ export class PlazaStage {
 			ctx.fillText(`NEXT SHOW IN ${countdown(s.nextShowAt)}`, 40, 66);
 		} else {
 			ctx.fillStyle = COL.dim;
-			ctx.fillText('DARK — BETWEEN SHOWS', 40, 66);
+			ctx.fillText('DARK, BETWEEN SHOWS', 40, 66);
 		}
 
 		// Title + host.
@@ -443,7 +443,7 @@ export class PlazaStage {
 		ctx.font = '400 28px system-ui, -apple-system, Segoe UI, sans-serif';
 		fitText(ctx, `${s.host}${s.format ? ` · ${s.format}` : ''}`, 40, 174, CW - 380);
 
-		// The last line the host said — the marquee doubles as a caption board for
+		// The last line the host said, the marquee doubles as a caption board for
 		// anyone standing too far back to hear the spatial audio.
 		if (s.lastLine) {
 			ctx.fillStyle = 'rgba(255,255,255,0.05)';
@@ -454,7 +454,7 @@ export class PlazaStage {
 			wrapText(ctx, `“${s.lastLine}”`, 50, 244, CW - 100, 34, 2);
 		}
 
-		// Tip leaderboard — the same verified, on-chain board /stage shows.
+		// Tip leaderboard, the same verified, on-chain board /stage shows.
 		const boardY = s.lastLine ? 330 : 240;
 		ctx.fillStyle = COL.faint;
 		ctx.font = '700 22px system-ui, -apple-system, Segoe UI, sans-serif';
@@ -463,7 +463,7 @@ export class PlazaStage {
 		if (!rows.length) {
 			ctx.fillStyle = COL.dim;
 			ctx.font = '400 26px system-ui, -apple-system, Segoe UI, sans-serif';
-			ctx.fillText(live ? 'No tips yet — take the top spot' : 'No tips on the last show', 40, boardY + 40);
+			ctx.fillText(live ? 'No tips yet, take the top spot' : 'No tips on the last show', 40, boardY + 40);
 		} else {
 			rows.forEach((r, i) => {
 				const y = boardY + 40 + i * 36;
@@ -495,7 +495,7 @@ export class PlazaStage {
 		ctx.fillText(`$THREE · ${s.tipCount || 0} tips`, CW - 40, 314);
 		ctx.textAlign = 'left';
 
-		// Footer hint — what the player can actually do from here.
+		// Footer hint, what the player can actually do from here.
 		ctx.fillStyle = COL.faint;
 		ctx.font = '400 24px system-ui, -apple-system, Segoe UI, sans-serif';
 		ctx.fillText(live ? 'Walk up to take a seat · E opens the show panel' : 'Walk up to check the schedule', 40, CH - 34);
@@ -541,7 +541,7 @@ export class PlazaStage {
 
 // ── canvas helpers ───────────────────────────────────────────────────────────
 
-// Draw text, shrinking the font until it fits `maxWidth` — a long agent name must
+// Draw text, shrinking the font until it fits `maxWidth`, a long agent name must
 // never run off the marquee.
 function fitText(ctx, text, x, y, maxWidth) {
 	const original = ctx.font;

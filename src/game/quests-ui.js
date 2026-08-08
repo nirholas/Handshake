@@ -1,12 +1,12 @@
-// Jobs Board UI (W08 hooking W05) — the client the quest engine never had.
+// Jobs Board UI (W08 hooking W05), the client the quest engine never had.
 // multiplayer/src/quests.js + quest-zones.js + WalkRoom's questReq/questAccept/
 // questAbandon/questInteract handlers were fully built and fully wired
 // server-side, but nothing on the client ever called requestQuests() or
-// rendered what came back — "designed and completely unreachable", the same
+// rendered what came back, "designed and completely unreachable", the same
 // gap W04's economy pass found and closed for the cash economy. This is that
 // same fix for jobs: walk up to any quest-giver NPC (npc/quest-npcs.js) or
-// open it directly, and the real board — real daily rotation, real
-// prereqs/repeat rules, real per-objective progress, real heist crew size —
+// open it directly, and the real board, real daily rotation, real
+// prereqs/repeat rules, real per-objective progress, real heist crew size,
 // renders straight from the server's own snapshot. Every button only sends an
 // intent; the server's reply re-renders, exactly like the store/bank panel
 // this one is styled to match.
@@ -41,7 +41,7 @@ function rewardText(reward) {
 	return parts.join(' · ');
 }
 
-// "3 runs · 960 cash" — the two numbers the ranking is actually sorted on, in the
+// "3 runs · 960 cash", the two numbers the ranking is actually sorted on, in the
 // order it sorts them.
 function scoreText(row) {
 	const runs = row?.runs | 0;
@@ -52,7 +52,7 @@ let _openQuests = null;
 
 /**
  * Open the Jobs Board: browse offers, accept/abandon, and track active
- * objectives — all server-authoritative. Idempotent — a second open while one
+ * objectives, all server-authoritative. Idempotent, a second open while one
  * is already up just refocuses it (and re-targets `highlight` if given).
  * @param {{ ui: object, net: object }} deps
  * @param {string} [highlight] a mission id to jump straight to (from the
@@ -77,7 +77,7 @@ class QuestsPanel extends EconPanel {
 		// The abandon just sent, confirmed by the next snapshot no longer listing it.
 		this._abandoning = null; // { id, title }
 		this._highlight = highlight || null;
-		// One-shot flag: which id to flash/scroll-to on the NEXT render only —
+		// One-shot flag: which id to flash/scroll-to on the NEXT render only,
 		// kept separate from _pickForTab's persistent `_highlight` so a later
 		// snapshot re-render (progress ticking in) doesn't keep re-pulsing it.
 		this._flashId = highlight || null;
@@ -125,7 +125,7 @@ class QuestsPanel extends EconPanel {
 			this.eventBoard = b && typeof b === 'object' ? b : { ok: false, reason: 'unavailable' };
 			this._render();
 		}));
-		// Finishing an event job moves the standings — pull the fresh ranking rather
+		// Finishing an event job moves the standings, pull the fresh ranking rather
 		// than waiting out the poll, so the panel reacts to the player's own run.
 		this.track(net.on('eventScore', () => this.net.requestEventBoard()));
 
@@ -140,7 +140,7 @@ class QuestsPanel extends EconPanel {
 		super.close();
 	}
 
-	// Called again if a giver NPC/menu opens the board while it's already up —
+	// Called again if a giver NPC/menu opens the board while it's already up,
 	// jump to whichever tab actually has that mission and flash it once.
 	focusMission(id) {
 		if (!id) return;
@@ -175,8 +175,8 @@ class QuestsPanel extends EconPanel {
 	_onComplete(c) {
 		if (!c) return;
 		const crew = c.coop && c.crew > 1 ? ` (crew of ${c.crew})` : '';
-		const tag = c.event ? `${EVENT_GLYPH} Event job — ` : '';
-		this.setStatus(`${tag}${c.title} complete${crew} — ${rewardText(c.reward)}`, 'ok');
+		const tag = c.event ? `${EVENT_GLYPH} Event job, ` : '';
+		this.setStatus(`${tag}${c.title} complete${crew}, ${rewardText(c.reward)}`, 'ok');
 	}
 
 	// Is there an event worth surfacing a tab for? Live right now, or finished with a
@@ -214,7 +214,7 @@ class QuestsPanel extends EconPanel {
 			return;
 		}
 		if (!this.board.offers.length) {
-			this.body.appendChild(el('div', { class: 'ec-empty', text: 'No jobs on the board right now — dailies rotate at UTC midnight, and repeatable work is always open somewhere in town.' }));
+			this.body.appendChild(el('div', { class: 'ec-empty', text: 'No jobs on the board right now, dailies rotate at UTC midnight, and repeatable work is always open somewhere in town.' }));
 			return;
 		}
 		for (const offer of this.board.offers) {
@@ -246,7 +246,7 @@ class QuestsPanel extends EconPanel {
 			return;
 		}
 		if (!this.board.active.length) {
-			this.body.appendChild(el('div', { class: 'ec-empty', text: 'No active jobs — accept one from the Board tab or talk to a quest-giver out in the world.' }));
+			this.body.appendChild(el('div', { class: 'ec-empty', text: 'No active jobs, accept one from the Board tab or talk to a quest-giver out in the world.' }));
 			return;
 		}
 		for (const run of this.board.active) {
@@ -304,13 +304,13 @@ class QuestsPanel extends EconPanel {
 				class: 'qb-lb-note',
 				text: ev.live
 					? `Live now · ${b.players} ${b.players === 1 ? 'runner' : 'runners'} · ${b.totalRuns} event ${b.totalRuns === 1 ? 'job' : 'jobs'} finished`
-					: 'Final standings — the event has ended',
+					: 'Final standings, the event has ended',
 			}),
 		]));
 
 		if (!b.top?.length) {
 			this.body.appendChild(el('div', { class: 'ec-empty' }, [
-				el('div', { text: 'No event runs yet — be the first.' }),
+				el('div', { text: 'No event runs yet, be the first.' }),
 				el('div', {
 					class: 'qb-lb-note',
 					text: 'Take an EVENT job from the Board tab and finish it. Every completed event job is one run.',
@@ -335,7 +335,7 @@ class QuestsPanel extends EconPanel {
 			]));
 		} else {
 			this.body.appendChild(el('div', { class: 'qb-lb-you-wrap' }, [
-				el('div', { class: 'qb-lb-note', text: 'You have not finished an event job yet — one run puts you on this board.' }),
+				el('div', { class: 'qb-lb-note', text: 'You have not finished an event job yet, one run puts you on this board.' }),
 			]));
 		}
 		this._renderPrizeNote();
@@ -362,7 +362,7 @@ class QuestsPanel extends EconPanel {
 			el('div', {
 				class: 'qb-lb-note',
 				text: reason === 'unavailable'
-					? 'Your own progress is safe — every finished job was already paid and recorded. Only this view is offline.'
+					? 'Your own progress is safe, every finished job was already paid and recorded. Only this view is offline.'
 					: 'Try again in a moment.',
 			}),
 			el('button', {

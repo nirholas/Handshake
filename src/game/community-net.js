@@ -1,11 +1,11 @@
-// CommunityNet — multiplayer client for Coin Communities.
+// CommunityNet, multiplayer client for Coin Communities.
 //
 // Each coin is its own world: we join the shared `walk_world` room definition
 // but pass `token = <mint>` so Colyseus's filterBy matches us only with players
 // who entered the same coin's community. The server (WalkRoom) is authoritative
 // for position, emotes, avatars, and chat relay.
 //
-// This is a focused sibling of walk-net.js — it adds coin identity, avatar URL,
+// This is a focused sibling of walk-net.js, it adds coin identity, avatar URL,
 // and chat on top of the same room, and leaves the /walk page's client
 // untouched.
 
@@ -31,7 +31,7 @@ function persistedPid(account) {
 }
 const RECONNECT_MAX_MS = 60_000;
 // Attempts reset to 0 on every successful join, so this bounds ONE outage, not
-// the session. Six attempts gave up ~2.5 minutes in — shorter than a server
+// the session. Six attempts gave up ~2.5 minutes in, shorter than a server
 // redeploy or instance replacement, which permanently stranded everyone present
 // in single-player mid-session. Fourteen rides out ~11 minutes (the tail retries
 // only once a minute) before parking on 'offline' with the manual retry().
@@ -49,7 +49,7 @@ export class CommunityNet {
 	 * @param {string} [opts.name]   display name
 	 * @param {string} [opts.avatar] GLB/VRM URL for this player's avatar
 	 * @param {string} [opts.agent]  optional three.ws agent id
-	 * @param {object} [opts.coin]   { mint, name, symbol, image } — '' mint = lobby
+	 * @param {object} [opts.coin]   { mint, name, symbol, image }, '' mint = lobby
 	 * @param {string} [opts.tier]   '' (open General world) | 'holders' (gated)
 	 * @param {string} [opts.holderPass] signed pass required to join a holder world
 	 * @param {number} [opts.holderMinUsd] USD floor the holder world gated on (HUD)
@@ -72,7 +72,7 @@ export class CommunityNet {
 		this.account = opts.account || '';
 		// Pre-join cosmetic loadout (W03): the compact wire string the creator built.
 		// The server re-validates ownership before applying it, so an unowned premium
-		// id here is simply dropped — never trusted.
+		// id here is simply dropped, never trusted.
 		this.cosmetics = opts.cosmetics || '';
 		// Stable economy persistence key (wallet when signed in, else a guest id).
 		this.pid = persistedPid(this.account);
@@ -93,77 +93,77 @@ export class CommunityNet {
 			change: new Set(), // (player, id)
 			remove: new Set(), // (id)
 			chat: new Set(),   // ({id, name, text, ts})
-			interact: new Set(), // ({from, fromName, action, ts}) — a peer interacted with us
-			denied: new Set(),  // (reason) — server refused the join (e.g. holder gate); no retry
-			voiceSignal: new Set(), // ({from, data}) — relayed WebRTC SDP/ICE from a peer
-			ping: new Set(),   // (ms) — smoothed round-trip latency to the server
-			blockAdd: new Set(),    // (key, type) — a voxel appeared (placed or restored)
-			blockChange: new Set(), // (key, type) — a voxel was repainted
-			blockRemove: new Set(), // (key) — a voxel was broken
-			editReject: new Set(),  // ({reason}) — the server refused one of our edits
-			buildPerms: new Set(),  // ({creator, cap, used, clearMaxRadius}) — build-permission snapshot (R19)
-			buildCleared: new Set(), // ({count, all}) — creator clear-area result (R19)
-			persistent: new Set(),  // (bool) — whether this world's build is durably saved
-			worldtime: new Set(),   // (frac) — authoritative day fraction [0,1) for day/night
+			interact: new Set(), // ({from, fromName, action, ts}), a peer interacted with us
+			denied: new Set(),  // (reason), server refused the join (e.g. holder gate); no retry
+			voiceSignal: new Set(), // ({from, data}), relayed WebRTC SDP/ICE from a peer
+			ping: new Set(),   // (ms), smoothed round-trip latency to the server
+			blockAdd: new Set(),    // (key, type), a voxel appeared (placed or restored)
+			blockChange: new Set(), // (key, type), a voxel was repainted
+			blockRemove: new Set(), // (key), a voxel was broken
+			editReject: new Set(),  // ({reason}), the server refused one of our edits
+			buildPerms: new Set(),  // ({creator, cap, used, clearMaxRadius}), build-permission snapshot (R19)
+			buildCleared: new Set(), // ({count, all}), creator clear-area result (R19)
+			persistent: new Set(),  // (bool), whether this world's build is durably saved
+			worldtime: new Set(),   // (frac), authoritative day fraction [0,1) for day/night
 			// Off-schema economy (private to this player; delivered as targeted messages).
-			profile: new Set(),     // (snapshot) — full purse/pack/skills on join + on demand
-			inv: new Set(),         // ({inv, hotbar, activeSlot, gold, hp, maxHp}) — economy delta
+			profile: new Set(),     // (snapshot), full purse/pack/skills on join + on demand
+			inv: new Set(),         // ({inv, hotbar, activeSlot, gold, hp, maxHp}), economy delta
 			xpgain: new Set(),      // ({skill, amount, xp, level, levelXp, nextXp})
 			levelup: new Set(),     // ({skill, level})
-			notice: new Set(),      // ({kind, text, ...}) — activity result toast (fish/eat/tool/full/quest)
+			notice: new Set(),      // ({kind, text, ...}), activity result toast (fish/eat/tool/full/quest)
 			souvenir: new Set(),    // ({id, name, slot, eventId, eventName}): a live event just granted this account its free commemorative wearable (once, ever)
 			// General store, bank/ATM & the $THREE boutique (W04).
 			store: new Set(),          // ({sell:[{item,label,price}], buy:[{item,qty,price,label}]})
-			boutique: new Set(),       // ({listings, owned, configured}) — premium cosmetics priced in $THREE
-			boutiqueQuote: new Set(),  // ({id, price, quoteToken, txBase64}) — unsigned $THREE purchase to sign
-			// Wheel of Fortune (W09) — Fortune's Folly, the Mainland casino wheel.
+			boutique: new Set(),       // ({listings, owned, configured}), premium cosmetics priced in $THREE
+			boutiqueQuote: new Set(),  // ({id, price, quoteToken, txBase64}), unsigned $THREE purchase to sign
+			// Wheel of Fortune (W09), Fortune's Folly, the Mainland casino wheel.
 			spinInfo: new Set(),    // ({segments, now, nextFreeSpinAt, avgLevel, minLevel, eligible, atWheel, paidAvailable, symbol, costUsd})
-			spinPrep: new Set(),    // ({tx, tokenAmount, symbol, costUsd, quote}) — unsigned paid-spin tx to sign
-			spinResult: new Set(),  // ({mode, index, label, got, lost, refunded, nextFreeSpinAt?}) — the server's roll
-			spinDenied: new Set(),  // ({reason, ...}) — a spin request refused
-			quests: new Set(),      // ({offers, active, day, eventLive}) — jobs board + active runs (W05)
-			questComplete: new Set(), // ({id, title, reward, kind, coop, event}) — a mission/heist finished
+			spinPrep: new Set(),    // ({tx, tokenAmount, symbol, costUsd, quote}), unsigned paid-spin tx to sign
+			spinResult: new Set(),  // ({mode, index, label, got, lost, refunded, nextFreeSpinAt?}), the server's roll
+			spinDenied: new Set(),  // ({reason, ...}), a spin request refused
+			quests: new Set(),      // ({offers, active, day, eventLive}), jobs board + active runs (W05)
+			questComplete: new Set(), // ({id, title, reward, kind, coop, event}), a mission/heist finished
 			// Live event (public/event.json window): the ranked standing for the event
 			// quest line, and this player's own running totals after each event job.
 			eventBoard: new Set(),  // ({ok, event?, top?, you?, players?, totalRuns?, prizes?, reason?})
-			eventScore: new Set(),  // ({runs, cash, eventId}) — your totals after an event job
-			combat: new Set(),      // ({role:'attacker'|'victim', target:'mob'|'player', kind?, mobHp?, mobMaxHp?, playerHp, playerMaxHp, dealt, dead, attacker?}) — a swing/shot's result
+			eventScore: new Set(),  // ({runs, cash, eventId}), your totals after an event job
+			combat: new Set(),      // ({role:'attacker'|'victim', target:'mob'|'player', kind?, mobHp?, mobMaxHp?, playerHp, playerMaxHp, dealt, dead, attacker?}), a swing/shot's result
 			// W07 combat world entities: roaming PvE mobs + lootable death tombstones.
 			// add/change/remove mirror the vehicle callbacks below.
-			mobAdd: new Set(),        // (mob, id) — a mob entered our view (spawn/restore)
-			mobChange: new Set(),     // (mob, id) — its position/hp/state changed
-			mobRemove: new Set(),     // (id) — a mob left the world (respawn cycle)
-			tombstoneAdd: new Set(),    // (tombstone, id) — a death dropped a lootable marker
-			tombstoneRemove: new Set(), // (id) — looted or expired
+			mobAdd: new Set(),        // (mob, id), a mob entered our view (spawn/restore)
+			mobChange: new Set(),     // (mob, id), its position/hp/state changed
+			mobRemove: new Set(),     // (id), a mob left the world (respawn cycle)
+			tombstoneAdd: new Set(),    // (tombstone, id), a death dropped a lootable marker
+			tombstoneRemove: new Set(), // (id), looted or expired
 			// Vehicles (synced world entities). add/change/remove mirror the player
 			// callbacks; `vehicle` carries the server's targeted enter/exit/deny ack.
-			vehicleAdd: new Set(),    // (vehicle, id) — a vehicle entered our view (spawn/restore)
-			vehicleChange: new Set(), // (vehicle, id) — its transform/driver changed
-			vehicleRemove: new Set(), // (id) — a vehicle left the world
-			vehicle: new Set(),       // ({event, id, ...}) — enter/exit/deny ack for our request
-			// Generic world objects (R01/R02): the shared `objects` channel — balls,
+			vehicleAdd: new Set(),    // (vehicle, id), a vehicle entered our view (spawn/restore)
+			vehicleChange: new Set(), // (vehicle, id), its transform/driver changed
+			vehicleRemove: new Set(), // (id), a vehicle left the world
+			vehicle: new Set(),       // ({event, id, ...}), enter/exit/deny ack for our request
+			// Generic world objects (R01/R02): the shared `objects` channel, balls,
 			// build props, pickups. add/change/remove mirror the player callbacks; the
 			// live schema object is passed through so the manager reads current fields.
-			objectAdd: new Set(),    // (obj, id) — an object appeared (spawned or restored)
-			objectChange: new Set(), // (obj, id) — its transform/owner changed
-			objectRemove: new Set(), // (id) — an object left the world
-			objectReject: new Set(), // ({reason}) — server refused a spawn (world/player full)
+			objectAdd: new Set(),    // (obj, id), an object appeared (spawned or restored)
+			objectChange: new Set(), // (obj, id), its transform/owner changed
+			objectRemove: new Set(), // (id), an object left the world
+			objectReject: new Set(), // ({reason}), server refused a spawn (world/player full)
 			// Fired once per connection, the moment the FIRST authoritative state
-			// snapshot has been decoded — i.e. every objectAdd/blockAdd the room had at
+			// snapshot has been decoded, i.e. every objectAdd/blockAdd the room had at
 			// join has already been emitted. `/play` uses it to retire the build it
 			// restored locally from the durable world store (P3.1), because from this
 			// point the room's own copies are in the scene and ours are duplicates.
 			synced: new Set(),      // () : first full state patch applied
-			reaction: new Set(),    // ({id, emoji}) — a player sent a floating reaction
-			tag: new Set(),         // ({event, itId, leaderboard}) — tag mini-game state (R08)
-			floorBeat: new Set(),   // ({clip}) — disco-pad beat tick (R06): pulses the floor + aligns standing dancers
-			king: new Set(),        // ({event, phase, endsAt, scores, kingId, winner, zone}) — King of the Totem state (R07)
-			social: new Set(),      // ({type, ...}) — friends events: live DM, request/accept (W09)
+			reaction: new Set(),    // ({id, emoji}), a player sent a floating reaction
+			tag: new Set(),         // ({event, itId, leaderboard}), tag mini-game state (R08)
+			floorBeat: new Set(),   // ({clip}), disco-pad beat tick (R06): pulses the floor + aligns standing dancers
+			king: new Set(),        // ({event, phase, endsAt, scores, kingId, winner, zone}), King of the Totem state (R07)
+			social: new Set(),      // ({type, ...}), friends events: live DM, request/accept (W09)
 		};
 		// Optional async presence-ticket supplier (W09). When provided, its resolved
 		// token rides the join so this coin world publishes the player's account
 		// presence to their friends and can deliver DMs here live. Without it the
-		// player is connected but invisible to the social graph — the /walk surface
+		// player is connected but invisible to the social graph, the /walk surface
 		// has always passed one; /play now does too.
 		this.getPresence = typeof opts.getPresence === 'function' ? opts.getPresence : null;
 		this.ping = null;        // smoothed RTT in ms, null until the first echo
@@ -202,7 +202,7 @@ export class CommunityNet {
 	// Detach and close the current room without triggering a reconnect. Every
 	// (re)connect replaces this.room; if the previous room were left live its
 	// socket would keep firing onMessage('chat') alongside the new one, so a
-	// single broadcast got appended once per leftover connection — the duplicate
+	// single broadcast got appended once per leftover connection, the duplicate
 	// chat bug. State-based events (move/avatar/blocks) hid it by being
 	// idempotent; chat appends a row on every delivery, so it showed.
 	_closeRoom() {
@@ -219,19 +219,19 @@ export class CommunityNet {
 		if (this._destroyed) return;
 		this._closeRoom();
 		// No multiplayer server resolved for this environment (production with no
-		// game-server meta/env). Surface a distinct, honest 'unavailable' state —
-		// solo play still works — rather than throwing in `new Client('')`,
+		// game-server meta/env). Surface a distinct, honest 'unavailable' state,
+		// solo play still works, rather than throwing in `new Client('')`,
 		// looping on reconnects, or showing a "reconnecting…" pill that can never
 		// reconnect. (The exhausted-reconnect path below stays 'offline' because
 		// there a real server exists and a manual retry can still succeed.)
 		if (!this.url) {
-			this._setStatus('unavailable', 'multiplayer unavailable — single-player only');
+			this._setStatus('unavailable', 'multiplayer unavailable, single-player only');
 			return;
 		}
 		// Bump a generation token so a slower in-flight connect (e.g. a manual
 		// retry racing the auto-reconnect timer) can detect it's been superseded
 		// after its await resolves and discard the room it joined, rather than
-		// orphaning a second live socket — the same duplicate-chat leak.
+		// orphaning a second live socket, the same duplicate-chat leak.
 		const gen = ++this._connectGen;
 		this._setStatus('connecting');
 		try {
@@ -239,7 +239,7 @@ export class CommunityNet {
 			const mint = this.coin.mint || '';
 			// Resolve the presence ticket before the join so it can ride the options.
 			// Anonymous players resolve to null (nothing to publish) and a failed mint
-			// must never block play — hence the catch: the world still joins, the
+			// must never block play, hence the catch: the world still joins, the
 			// player is simply offline to their friends until the next reconnect.
 			const presence = this.getPresence ? await this.getPresence().catch(() => null) : null;
 			const options = {
@@ -272,13 +272,13 @@ export class CommunityNet {
 				// until its ping retries expire. The server retires that exact session,
 				// and only when the persistent player key above matches ours too.
 				...(this.sessionId ? { prevSession: this.sessionId } : {}),
-				// Signed guest token (server-minted, HMAC-sealed guest id). This — not
-				// the raw pid — is what proves a guest owns their saved progression.
+				// Signed guest token (server-minted, HMAC-sealed guest id). This, not
+				// the raw pid, is what proves a guest owns their saved progression.
 				...(this._guestToken() ? { guestToken: this._guestToken() } : {}),
 				// Signed presence ticket (W09). WalkRoom verifies it and registers the
 				// account with the social hub under this world's name, so friends see
 				// "Online · <coin> Town" and DMs route to this socket. Omitted entirely
-				// when anonymous — the server treats its absence as "don't publish".
+				// when anonymous, the server treats its absence as "don't publish".
 				...(presence ? { presence } : {}),
 			};
 			// Holder worlds require a signed pass the server verifies in onAuth; carry
@@ -289,7 +289,7 @@ export class CommunityNet {
 			}
 			// Hard timeout on the join: a hung handshake (Cloud Run cold start, wedged
 			// room, proxy holding the upgrade) would otherwise strand us in 'connecting'
-			// forever — joinOrCreate has no timeout of its own. On timeout this throws
+			// forever, joinOrCreate has no timeout of its own. On timeout this throws
 			// 'connect_timeout', falling through to the catch → reconnect with backoff.
 			// No root-schema class passed on purpose: decode from the server's reflected
 			// schema (handshake) so the client never desyncs when a deployed server adds an
@@ -303,7 +303,7 @@ export class CommunityNet {
 			this.sessionId = this.room.sessionId;
 
 			// Guest identity (see guest-token.js server-side): the room seals our guest
-			// id into a signed token and hands it back on every join. Persist it — the
+			// id into a signed token and hands it back on every join. Persist it, the
 			// token is the credential that lets this device reclaim its progression.
 			this.room.onMessage('guestToken', (msg) => {
 					if (msg && typeof msg.token === 'string' && msg.token) {
@@ -369,7 +369,7 @@ export class CommunityNet {
 			this.room.onMessage('floor:beat', (msg) => this._emit('floorBeat', msg || {}));
 			// King of the Totem (R07): the room broadcasts round start/tick/end (and a
 			// targeted sync on join) for the hold-the-totem mini-game. Server-authoritative
-			// — the client only renders the HUD + zone. Colon-namespaced like floor:beat;
+			//, the client only renders the HUD + zone. Colon-namespaced like floor:beat;
 			// normalized to a camelCase `king` event.
 			this.room.onMessage('game:king', (msg) => this._emit('king', msg || {}));
 
@@ -378,7 +378,7 @@ export class CommunityNet {
 
 			// Guard each collection: if the server is running an older schema that
 			// doesn't include a field yet, the proxy returns undefined for that key
-			// and calling .onAdd() on undefined throws — breaking the connect loop.
+			// and calling .onAdd() on undefined throws, breaking the connect loop.
 			const $players = $state?.players;
 			if ($players) {
 				$players.onAdd((player, id) => {
@@ -401,7 +401,7 @@ export class CommunityNet {
 			}
 
 			// Voxel builds: the server is authoritative for every block, so the
-			// world's geometry is driven entirely by these state callbacks — local
+			// world's geometry is driven entirely by these state callbacks, local
 			// place/break clicks only *send*; the block appears when the server
 			// echoes it back, keeping every client's build identical. onAdd fires
 			// for the full persisted build at join time and for each new placement.
@@ -417,7 +417,7 @@ export class CommunityNet {
 
 			// Vehicles: synced world entities. The full parked fleet arrives via onAdd
 			// at join; onChange streams each driver's transform; onRemove drops one.
-			// Optional field (servers pre-dating vehicles omit it) — guarded like blocks.
+			// Optional field (servers pre-dating vehicles omit it), guarded like blocks.
 			const $vehicles = $state?.vehicles;
 			if ($vehicles) {
 				$vehicles.onAdd((vehicle, id) => {
@@ -429,8 +429,8 @@ export class CommunityNet {
 
 			// Combat world entities (W07): roaming PvE mobs + lootable death tombstones.
 			// Both are server-owned synced state (everyone must see them, like
-			// vehicles) — mirrors the vehicles wiring above exactly. Optional fields
-			// (servers pre-dating combat omit them) — guarded like blocks/vehicles.
+			// vehicles), mirrors the vehicles wiring above exactly. Optional fields
+			// (servers pre-dating combat omit them), guarded like blocks/vehicles.
 			const $mobs = $state?.mobs;
 			if ($mobs) {
 				$mobs.onAdd((mob, id) => {
@@ -446,10 +446,10 @@ export class CommunityNet {
 			}
 
 			// Generic world objects (R01): the server is authoritative for every object,
-			// so the scene is driven entirely by these state callbacks — local spawn/
+			// so the scene is driven entirely by these state callbacks, local spawn/
 			// move/remove only *send*; the object appears when the server echoes it back.
 			// onAdd fires for the full persisted set (durable props, R17) at join and for
-			// each new spawn. Optional field (older servers omit it) — guarded like blocks.
+			// each new spawn. Optional field (older servers omit it), guarded like blocks.
 			const $objects = $state?.objects;
 			if ($objects) {
 				$objects.onAdd((obj, id) => {
@@ -484,13 +484,13 @@ export class CommunityNet {
 			this.room.onLeave((code, reason) => {
 				this._setStatus('offline');
 				// A play-pass eviction (the server dropped us because our pass expired
-				// without a refresh — the wallet may have fallen below the token floor) is
+				// without a refresh, the wallet may have fallen below the token floor) is
 				// terminal: reconnecting would just fail onAuth again, so surface it as a
 				// denial and route the player back to the sign-in gate. Detect it by the
 				// server's close REASON, never by the bare close code: the legacy eviction
 				// code 4002 is also Colyseus's own WS_CLOSE_WITH_ERROR, which the server
 				// sends for any internal error (e.g. a message type this room build doesn't
-				// know) — treating those as "session expired" kicked healthy players to a
+				// know), treating those as "session expired" kicked healthy players to a
 				// sign-in gate that wasn't even enabled. Anything else non-consented is a
 				// connection fault: reconnect with backoff.
 				if (/play_pass/i.test(reason || '')) { this._setStatus('denied', 'play_pass_required'); this._emit('denied', 'play_pass_required'); return; }
@@ -505,7 +505,7 @@ export class CommunityNet {
 			// reconnects while standing still never sends a move (the position is
 			// unchanged from the pre-drop one), so the server keeps them at spawn and
 			// every peer sees them teleported to 0,0,0 until they happen to walk.
-			// The RTT sample is dropped for the same reason — its send is gone.
+			// The RTT sample is dropped for the same reason, its send is gone.
 			this._lastSent = null;
 			this._lastSentAt = 0;
 			this._pingSentAt = 0;
@@ -520,7 +520,7 @@ export class CommunityNet {
 			});
 		} catch (err) {
 			const msg = err?.message ?? String(err);
-			// A holder-gate refusal (onAuth threw) is terminal, not a flaky link —
+			// A holder-gate refusal (onAuth threw) is terminal, not a flaky link,
 			// retrying with the same expired/invalid pass just loops. Surface it so
 			// the scene can route the player back to the gate, and stop here.
 			if (/holder_pass|play_pass/i.test(msg)) {
@@ -537,13 +537,13 @@ export class CommunityNet {
 
 	// Exponential backoff with a hard ceiling. When the game server isn't
 	// reachable at all (e.g. not deployed), every attempt costs an 8s+ XHR
-	// timeout — retrying forever at a fixed 3s floods the console and the
+	// timeout, retrying forever at a fixed 3s floods the console and the
 	// network tab. After MAX_RECONNECT_ATTEMPTS we stop and stay 'offline';
 	// the UI can offer manual reconnect via retry().
 	_scheduleReconnect() {
 		if (this._reconnectTimer || this._destroyed) return;
 		if (this._reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-			this._setStatus('offline', 'multiplayer unreachable — single-player only');
+			this._setStatus('offline', 'multiplayer unreachable, single-player only');
 			return;
 		}
 		const attempt = this._reconnectAttempts++;
@@ -560,7 +560,7 @@ export class CommunityNet {
 	// reference is still live, and ws.send() on that socket logs a console
 	// warning per message ("WebSocket is already in CLOSING or CLOSED state").
 	// Returns true when the message reached an open socket; dropped messages are
-	// fine — every send here is a live-state signal the reconnect resyncs anyway.
+	// fine, every send here is a live-state signal the reconnect resyncs anyway.
 	_send(type, payload) {
 		const room = this.room;
 		if (!room || room.connection?.isOpen !== true) return false;
@@ -613,7 +613,7 @@ export class CommunityNet {
 	// ownership, updates the player's schema `cosmetics` field (so peers re-render)
 	// and replies with a fresh profile. An unowned id is rejected with a 'notice'.
 	equipCosmetic(id) { this._send('equip-cosmetic', { id }); }
-	// Broadcast a full loadout wire in one shot — mirrors how the avatar is sent.
+	// Broadcast a full loadout wire in one shot, mirrors how the avatar is sent.
 	// Server validates every id against the catalog and the account's owned set,
 	// drops anything invalid or unowned, and publishes the sanitized wire on the
 	// schema so all peers re-render the correct look.
@@ -688,7 +688,7 @@ export class CommunityNet {
 	// Generic world objects (R01/R02). These only *request* the change; the object
 	// appears/moves/disappears when the server echoes its authoritative `objects`
 	// state back (see the objectAdd/Change/Remove wiring above). The server assigns
-	// ownership, mints/clamps ids, and bounds-clamps the transform — the client
+	// ownership, mints/clamps ids, and bounds-clamps the transform, the client
 	// never trusts its own optimistic copy. x/y/z must be finite or the server drops
 	// the spawn, so we guard here too and skip a malformed send.
 	spawnObject(kind, opts = {}) {
@@ -723,7 +723,7 @@ export class CommunityNet {
 	}
 	// Does an object's server-assigned ownerId belong to THIS client? The server keys
 	// ownership on the verified account when signed in, else the persisted economy id,
-	// else the session id (WalkRoom._ownerKey) — match all three so delete-own works
+	// else the session id (WalkRoom._ownerKey), match all three so delete-own works
 	// in gated, un-gated, and guest sessions alike.
 	ownsObject(obj) {
 		const owner = obj?.ownerId;
@@ -733,7 +733,7 @@ export class CommunityNet {
 
 	// Adopt a refreshed play pass. Store it so the next reconnect (after a drop)
 	// uses the fresh credential, AND push it to the live session so the server can
-	// extend this connection's bound expiry — otherwise the server's per-minute
+	// extend this connection's bound expiry, otherwise the server's per-minute
 	// sweep evicts a still-qualifying player at the original 10-min TTL (which
 	// stranded anyone in a long building session). The server re-verifies the pass
 	// against the gate before extending; a forged or below-floor pass is ignored.
@@ -754,7 +754,7 @@ export class CommunityNet {
 	// Call when the page comes back to the foreground. A backgrounded tab is the
 	// one case where the client's own status can be a lie: iOS Safari suspends the
 	// whole page, the OS reaps the TCP connection, and no 'close' event is ever
-	// delivered — so the client still reads 'online' while every send silently
+	// delivered, so the client still reads 'online' while every send silently
 	// drops into a dead socket and no peer update ever arrives again. Probing the
 	// connection on resume converts that invisible half-death into the normal
 	// reconnect path. It also short-circuits the backoff when the retries were
@@ -763,7 +763,7 @@ export class CommunityNet {
 	resume() {
 		if (this._destroyed || !this.url) return;
 		if (this.status === 'online' && this.room?.connection?.isOpen !== true) {
-			log.warn('[community-net] socket died while backgrounded — reconnecting');
+			log.warn('[community-net] socket died while backgrounded, reconnecting');
 			this._closeRoom();
 			this._setStatus('offline');
 			this.retry();

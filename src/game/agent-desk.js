@@ -1,10 +1,10 @@
-// agent-desk — a live "working agent" desk object for the 3D world.
+// agent-desk, a live "working agent" desk object for the 3D world.
 //
 // Places a desk in the scene with:
 //   • A flat-screen monitor whose face is a live CanvasTexture. When the agent
 //     has a Playwright process pushing frames the monitor shows those verbatim.
 //     When no frames arrive it paints a real-time activity canvas from the
-//     public /api/agent-screen-stream SSE feed's `log` events — the same
+//     public /api/agent-screen-stream SSE feed's `log` events, the same
 //     stream the 2D watch panel and the live wall use, which backfills from
 //     the agent's real agent_actions rows server-side.
 //   • A keyboard + mouse prop on the desk surface.
@@ -17,7 +17,7 @@
 //     (coincommunities wires the pointer pick; the cursor turns to a pointer
 //     over the screen).
 //
-// Follows chart-screen.js in every structural detail — CanvasTexture updated
+// Follows chart-screen.js in every structural detail, CanvasTexture updated
 // per-frame, update(dt) called from the scene loop, dispose() for cleanup.
 //
 // Usage:
@@ -41,9 +41,9 @@ import {
 import { createAgentScreenClient } from '../shared/agent-screen-client.js';
 import { makeScreenTexture, screenMaterial } from './screen-texture.js';
 
-const NEAR_DIST   = 8;    // units — player proximity to activate
+const NEAR_DIST   = 8;    // units, player proximity to activate
 const REDRAW_MS   = 100;  // ~10fps canvas repaint
-// Canvas resolution — 16:9 to match the 2D panel.
+// Canvas resolution, 16:9 to match the 2D panel.
 const CW = 1280, CH = 720;
 
 // Monitor physical dimensions (world units).
@@ -133,7 +133,7 @@ function paintDesk(ctx, tex, actions, status, agentName, t) {
 	ctx.fillStyle = faint;
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'middle';
-	ctx.fillText(`${name} — live activity`, winX + winW / 2, winY + tbH / 2);
+	ctx.fillText(`${name}, live activity`, winX + winW / 2, winY + tbH / 2);
 	ctx.textAlign = 'left';
 
 	// Lines
@@ -280,7 +280,7 @@ export function createAgentDesk(scene, agent, opts = {}) {
 	const screenMat = screenMaterial(tex);
 	// Idle screens sit slightly dimmed; walking near lifts them to full white.
 	// MeshBasicMaterial.color multiplies the map, so this is a real brightness
-	// change (the material is opaque — opacity would be a no-op without
+	// change (the material is opaque, opacity would be a no-op without
 	// transparent: true).
 	screenMat.color.setHex(0xbbbbbb);
 	const screen = new Mesh(new PlaneGeometry(MON_W, MON_H), screenMat);
@@ -359,7 +359,7 @@ export function createAgentDesk(scene, agent, opts = {}) {
 	// backfill from the caster's Redis log or the agent's real DB actions (the
 	// server re-polls dark agents every ~8s), and it is public. The old direct
 	// /api/agent-actions REST poll here 401'd forever for anonymous players
-	// (that route is owner-only) — pure wasted requests, so it's gone.
+	// (that route is owner-only), pure wasted requests, so it's gone.
 	screenClient.connect();
 
 	// ── public API ────────────────────────────────────────────────────────────
@@ -373,7 +373,7 @@ export function createAgentDesk(scene, agent, opts = {}) {
 			t   += dt;
 			acc += dt;
 
-			// Proximity check — brighten screen when player is near.
+			// Proximity check, brighten screen when player is near.
 			if (playerPos) {
 				const deskWorldPos = new Vector3();
 				group.getWorldPosition(deskWorldPos);

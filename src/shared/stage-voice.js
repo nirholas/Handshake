@@ -1,8 +1,8 @@
-// Living Stages — the host's voice, shared by every surface that renders a show.
+// Living Stages, the host's voice, shared by every surface that renders a show.
 //
 // A StageRoom beat arrives as a timed `utterance` broadcast: { id, text, voice,
 // cue, durationMs }. Turning that into a performance is the same job everywhere
-// it happens — fetch /api/tts/speak for the words, route the audio through the
+// it happens, fetch /api/tts/speak for the words, route the audio through the
 // host avatar's PositionalAudio (so it gets louder as you walk toward the stage),
 // tap an AnalyserNode off it to drive lip-sync on whatever the rig supports, and
 // stop cleanly when the next beat pre-empts this one.
@@ -159,7 +159,7 @@ export class StageVoice {
 /**
  * Maps lip-sync {open,wide,round} onto whatever the GLB rig supports: morph
  * targets (visemes / mouthOpen / jawOpen) when present, else a jaw bone, else a
- * subtle head scale — so lip-sync is real where the rig allows and degrades
+ * subtle head scale, so lip-sync is real where the rig allows and degrades
  * gracefully where it doesn't (no T-pose, never a hard failure).
  */
 export class MouthTarget {

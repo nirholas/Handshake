@@ -7,7 +7,7 @@
 // stands for: whoever regenerates the GLB regenerates the poster from it.
 //
 // It draws with the repo's own Three.js (node_modules/three) inside headless
-// Chromium via Playwright — no CDN, no external service, no network. The page is
+// Chromium via Playwright, no CDN, no external service, no network. The page is
 // served from a throwaway local HTTP server rooted at the repo so the module
 // graph and the GLB are same-origin.
 //
@@ -107,7 +107,7 @@ window.renderAccessory = async (url) => {
 
 	// Frame the model: recentre on its bounding box, then pull the camera back far
 	// enough to contain the whole BOUNDING SPHERE (half the box diagonal, not half
-	// the longest edge — a ring is widest across its diagonal and would crop).
+	// the longest edge, a ring is widest across its diagonal and would crop).
 	const box = new THREE.Box3().setFromObject(model);
 	const size = box.getSize(new THREE.Vector3());
 	const center = box.getCenter(new THREE.Vector3());

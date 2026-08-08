@@ -1,4 +1,4 @@
-// VehicleManager — drivable, networked vehicles for /play.
+// VehicleManager, drivable, networked vehicles for /play.
 //
 // Networking follows the same authoritative-relay pattern the movement netcode
 // already uses (and the model Notblox uses for its Rapier cars): the DRIVER
@@ -7,13 +7,13 @@
 // and relays it, staying the gate on who may drive what. Everyone else is a pure
 // spectator of the replicated transform, interpolated smoothly.
 //
-// Only the vehicle the local player is driving is ever simulated here — it shares
+// Only the vehicle the local player is driving is ever simulated here, it shares
 // the SAME Rapier world CoinCommunities already boots for the character
 // controller (W01's `this._physics`: ground + district building colliders), so a
 // driven car collides with the town exactly like a walking avatar does, and
 // (as kinematic ghosts) the other players' cars so the local car can bump them.
 // The world is stepped exactly once per frame, centrally, in CoinCommunities'
-// _loop — this module never calls physics.step() itself; tick() feeds driver
+// _loop, this module never calls physics.step() itself; tick() feeds driver
 // input BEFORE that step, postStep() reads the resulting transform AFTER it.
 // Parked and remote-driven vehicles are interpolated meshes, cheap and
 // ghost-light.
@@ -21,7 +21,7 @@
 // This subsystem is intentionally tightly coupled to the scene (camera handoff,
 // avatar seating, shared input, the shared physics world), so it takes the
 // CoinCommunities `host` and reads its live fields (localPos, localYaw, localRig,
-// keys, camera, _physics) — exactly the coupling PlaySystems and AgentCommerce
+// keys, camera, _physics), exactly the coupling PlaySystems and AgentCommerce
 // already have.
 
 import { Vector3, Quaternion, Raycaster, Vector2 } from 'three';
@@ -72,14 +72,14 @@ export class VehicleManager {
 		this._prevCamDist = host.camDist;
 
 		// Reuse CoinCommunities' own Rapier world (ground + district colliders +
-		// character controller) instead of standing up a second one — the driven
+		// character controller) instead of standing up a second one, the driven
 		// car then collides with the same town the avatar does. host.enter() only
 		// constructs VehicleManager after its physics boot has already resolved, so
 		// this is synchronous; a WASM failure (no WebGL/WASM) leaves `phys` null,
 		// which disables driving gracefully (toast on interact) without breaking
 		// the rest of the scene.
 		this.phys = host._physicsOk ? host._physics : null;
-		if (!this.phys) log.warn('[vehicles] no shared physics world — driving disabled this session.');
+		if (!this.phys) log.warn('[vehicles] no shared physics world, driving disabled this session.');
 
 		this._injectStyles();
 		this._buildPrompt();
@@ -104,7 +104,7 @@ export class VehicleManager {
 	changeVehicle(state, id) {
 		const entry = this.vehicles.get(id);
 		if (!entry) { this.addVehicle(state, id); return; }
-		entry.state = state; // live schema proxy — read latest each frame
+		entry.state = state; // live schema proxy, read latest each frame
 		// The server kicked us out of the seat (disconnect sweep, eviction): bail out
 		// of the driving state cleanly so we don't keep streaming a car we don't own.
 		if (entry.id === this._drivingId && state.driver !== this.net?.sessionId) {
@@ -149,8 +149,8 @@ export class VehicleManager {
 
 	// Called BEFORE CoinCommunities steps the shared physics world this frame:
 	// interpolates every vehicle we're not actively simulating (and re-queues
-	// their kinematic ghost transforms, which — like the character controller's
-	// queued move — must be set before world.step() consumes them), and, while
+	// their kinematic ghost transforms, which, like the character controller's
+	// queued move, must be set before world.step() consumes them), and, while
 	// driving, feeds this frame's input into the Rapier vehicle controller so its
 	// forces are ready for that same step. Reading the result back happens in
 	// postStep(), after the world has actually advanced.
@@ -221,7 +221,7 @@ export class VehicleManager {
 	// ---------------------------------------------------------------- driving sim
 
 	// Pre-step: feed this frame's driver intent to the Rapier vehicle controller.
-	// Nothing here reads back a transform — the shared world hasn't advanced yet.
+	// Nothing here reads back a transform, the shared world hasn't advanced yet.
 	_driveInput(dt) {
 		if (!this.vehicle || !this.phys) return;
 		const keys = this.host.keys;
@@ -239,7 +239,7 @@ export class VehicleManager {
 	}
 
 	// Post-step: the shared world just advanced (CoinCommunities._loop calls this
-	// right after physics.step()) — read the now-authoritative transform and apply
+	// right after physics.step()), read the now-authoritative transform and apply
 	// everything downstream of it: mesh, camera, seat, HUD, netcode.
 	_driveApply(dt) {
 		const entry = this.vehicles.get(this._drivingId);
@@ -247,7 +247,7 @@ export class VehicleManager {
 		const braking = this._lastBraking;
 		let t = this.vehicle.transform();
 
-		// World bounds — clamp the car inside the square district (the server clamps
+		// World bounds, clamp the car inside the square district (the server clamps
 		// per-axis too). Only correct when actually past an edge, to avoid jitter.
 		if (Math.abs(t.x) > VEHICLE_WORLD_BOUND_M || Math.abs(t.z) > VEHICLE_WORLD_BOUND_M) {
 			const cx = Math.max(-VEHICLE_WORLD_BOUND_M, Math.min(VEHICLE_WORLD_BOUND_M, t.x));
@@ -326,7 +326,7 @@ export class VehicleManager {
 			{ qx: 0, qy: Math.sin(half), qz: 0, qw: Math.cos(half) },
 		);
 		this._flipSince = 0;
-		this.ui?.toast?.('Vehicle flipped — set you back upright.', 'info');
+		this.ui?.toast?.('Vehicle flipped, set you back upright.', 'info');
 	}
 
 	// ---------------------------------------------------------------- enter/exit
@@ -419,7 +419,7 @@ export class VehicleManager {
 			spec: entry.spec,
 		});
 		this.vehicle.teleport({ x: s.x, y: s.y + 0.1, z: s.z }, { qx: s.qx, qy: s.qy, qz: s.qz, qw: s.qw });
-		// The driven car is the dynamic body now — drop its kinematic ghost so the two
+		// The driven car is the dynamic body now, drop its kinematic ghost so the two
 		// don't fight.
 		entry.collider?.remove();
 		entry.collider = null;
@@ -429,7 +429,7 @@ export class VehicleManager {
 		this._prevCamDist = this.host.camDist;
 		this.host.camDist = Math.max(this.host.camDist, 11);
 		this._showControls(true);
-		this.ui?.toast?.(`Driving the ${entry.spec.label} — ${this._isTouch() ? 'use the on-screen pedals' : 'WASD to drive, Space to handbrake'}, ${this._isTouch() ? 'tap Exit' : 'F'} to get out.`, 'info');
+		this.ui?.toast?.(`Driving the ${entry.spec.label}, ${this._isTouch() ? 'use the on-screen pedals' : 'WASD to drive, Space to handbrake'}, ${this._isTouch() ? 'tap Exit' : 'F'} to get out.`, 'info');
 	}
 
 	requestExit() {
@@ -471,7 +471,7 @@ export class VehicleManager {
 			this.host.localRig.rotation.set(0, this.host.localYaw, 0);
 		}
 		// The shared character controller's kinematic body was left wherever the
-		// player stood before entering — resync it to the drop point (the same
+		// player stood before entering, resync it to the drop point (the same
 		// flag CoinCommunities sets on a fresh coin spawn) so the next _stepLocal
 		// re-seeds it there instead of resolving a stale move from the old spot.
 		this.host._physicsActivePrev = false;
@@ -515,7 +515,7 @@ export class VehicleManager {
 
 	// Driving HUD: a speedometer plus an exit button always, and an on-screen pedal
 	// + steering cluster on touch devices. Pointer events (not click) so holding a
-	// pedal accelerates and releasing lets off — works for touch and mouse alike.
+	// pedal accelerates and releasing lets off, works for touch and mouse alike.
 	_buildControls() {
 		const wrap = document.createElement('div');
 		wrap.className = 'veh-hud';
@@ -560,7 +560,7 @@ export class VehicleManager {
 		this._hud?.classList.toggle('veh-touch', on && this._isTouch());
 		if (!on) this._touch = { throttle: 0, brake: 0, steer: 0, handbrake: false };
 		// The on-foot movement joystick (#cc-joystick) sits in the same bottom-left
-		// corner as the steering pad and renders above it (z-index 30 vs our 22) —
+		// corner as the steering pad and renders above it (z-index 30 vs our 22),
 		// hide it while driving so it doesn't block the wheel.
 		document.getElementById('cc-joystick')?.classList.toggle('veh-hide-joy', on);
 	}
@@ -623,7 +623,7 @@ export class VehicleManager {
 	}
 
 	dispose() {
-		// Not serverForced: this is our own teardown, not an eviction — no toast.
+		// Not serverForced: this is our own teardown, not an eviction, no toast.
 		if (this._drivingId) this._endDriving(this.vehicle ? this.vehicle.transform() : null, false);
 		clearTimeout(this._pendingTimer);
 		for (const [, entry] of this.vehicles) {
@@ -635,7 +635,7 @@ export class VehicleManager {
 		this.prompt?.remove();
 		this._hud?.remove();
 		document.getElementById('veh-styles')?.remove();
-		// `phys` is CoinCommunities' own shared world — owned and disposed by the
+		// `phys` is CoinCommunities' own shared world, owned and disposed by the
 		// host, not us. Just drop our reference.
 		this.phys = null;
 	}

@@ -6,13 +6,13 @@
 // end: the presence ticket carries the username + display name (signed, so a
 // client can never wear a handle it doesn't own), WalkRoom publishes the
 // verified username on the Player schema, and the shared avatar inspector
-// renders the real profile card — follow, friend/DM, creations — for any peer
+// renders the real profile card, follow, friend/DM, creations, for any peer
 // whose ticket verified. These tests pin the three seams that make that
 // trustworthy:
 //   1. the multiplayer ticket verifier: profile fields round-trip, legacy
 //      tickets (no u/dn) still verify, tampering and expiry still fail;
 //   2. the Player schema: `username` exists, defaults empty, and stays the
-//      LAST field (append-only binary protocol — reordering breaks live
+//      LAST field (append-only binary protocol, reordering breaks live
 //      clients against older servers);
 //   3. the inspector profile card: renders real profile data, wires follow
 //      and message actions, and stays completely absent for guests.
@@ -92,7 +92,7 @@ describe('Player schema username field (W10)', () => {
 		const defBlock = src.slice(src.indexOf('defineTypes(Player'), src.indexOf('export class Block'));
 		const usernameAt = defBlock.indexOf("username: 'string'");
 		expect(usernameAt).toBeGreaterThan(-1);
-		// Every other Player field must be declared before it — inserting a field
+		// Every other Player field must be declared before it, inserting a field
 		// mid-schema shifts the positional indices and desyncs live clients.
 		for (const field of ['id:', 'name:', 'account:', 'cosmetics:', 'it:', 'itSince:']) {
 			const at = defBlock.indexOf(field);
@@ -156,7 +156,7 @@ function routeApi({ following = false, followPost } = {}) {
 			if (followPost) return followPost(method);
 			return { ok: true, status: 200, json: async () => ({ following: method === 'POST', followed_by: false, followers_count: method === 'POST' ? 4 : 3, following_count: 2 }) };
 		}
-		// Anything else (agents, balances) — a clean 404 keeps those sections quiet.
+		// Anything else (agents, balances), a clean 404 keeps those sections quiet.
 		return { ok: false, status: 404, json: async () => ({}) };
 	});
 }
@@ -252,7 +252,7 @@ describe('avatar inspector profile card (W10)', () => {
 	it('leaves no verified profile section behind when switching to a guest', async () => {
 		// Switching subjects overlaps two panels for the exit transition (220ms).
 		// Once it finishes, exactly one panel may remain, and a guest's panel must
-		// carry no profile section — otherwise the previous player's identity is
+		// carry no profile section, otherwise the previous player's identity is
 		// still on screen over an anonymous avatar.
 		routeApi();
 		openAvatarInspector({ kind: 'peer', name: 'Nick', username: 'nirholas' });

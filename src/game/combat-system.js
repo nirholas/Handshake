@@ -1,8 +1,8 @@
-// PlayCombat — the client half of W07: renders what the server's combat.js /
+// PlayCombat, the client half of W07: renders what the server's combat.js /
 // combat-handlers.js already decide, and sends nothing but intents.
 //
 // The server is the sole authority (see multiplayer/src/combat-handlers.js):
-// this module never picks a target, rolls damage, or moves a mob — it renders
+// this module never picks a target, rolls damage, or moves a mob, it renders
 // the roaming PvE mobs and lootable tombstones the room replicates on
 // state.mobs/state.tombstones, paints the danger-zone ground the same way
 // play-systems.js paints ponds/trees/rocks (from the SAME world-features.js
@@ -11,13 +11,13 @@
 // combat/notice messages into the GTA-style vitals HUD (WorldHud) plus hit
 // feedback (damage numbers, a screen flash, a death/respawn overlay).
 //
-// Mob BODIES are rendered by W08's `src/game/npc/mobs.js` `MobSystem` — it was
+// Mob BODIES are rendered by W08's `src/game/npc/mobs.js` `MobSystem`, it was
 // already built and correctly self-gated behind a `window.twsCombat` contract
 // ("when W07 ships, mobs light up with zero changes here"). Rather than stand
 // up a second, competing mob-rendering system, this module IS that contract:
 // it installs `window.twsCombat` before `WorldLife` constructs its `MobSystem`
 // (see coincommunities.js instantiation order) and feeds it this module's own
-// smoothed, per-frame interpolation of the server's authoritative positions —
+// smoothed, per-frame interpolation of the server's authoritative positions,
 // so MobSystem's body + (future navmesh) pathing render OUR real combat data,
 // with zero duplicate geometry. This module keeps only what MobSystem doesn't
 // have: HP bars, death/respawn transitions, and combat feedback.
@@ -57,7 +57,7 @@ function el(tag, props = {}, kids = []) {
 }
 
 // A lightweight tracker for one live mob: no 3D object of its own (MobSystem
-// owns the body via the twsCombat bridge below) — just the smoothed position
+// owns the body via the twsCombat bridge below), just the smoothed position
 // used to place the HP bar, plus death/respawn edge detection so the bridge
 // knows when to despawn/respawn MobSystem's body.
 class MobView {
@@ -95,7 +95,7 @@ class MobView {
 		const becameDead = !wasDead && this._dead;
 		const respawned = wasDead && !this._dead;
 		if (becameDead || respawned) {
-			// A death or a respawn teleport should never glide — snap instantly.
+			// A death or a respawn teleport should never glide, snap instantly.
 			this.x = this.targetX; this.y = this.targetY; this.z = this.targetZ;
 		}
 		return { becameDead, respawned };
@@ -199,7 +199,7 @@ export class CombatSystem {
 		this.hud.minimap.setBoundary(WORLD_RADIUS);
 
 		// Must install before WorldLife constructs its MobSystem (see the module
-		// doc comment) — coincommunities.js instantiates CombatSystem first.
+		// doc comment), coincommunities.js instantiates CombatSystem first.
 		this._installTwsCombatBridge();
 
 		this._unsub = [];
@@ -213,13 +213,13 @@ export class CombatSystem {
 
 	// -------------------------------------------------------- twsCombat bridge
 	// The W08 mob visual/nav system (src/game/npc/mobs.js MobSystem) already
-	// implements a body + (future navmesh) walk from exactly this contract —
+	// implements a body + (future navmesh) walk from exactly this contract,
 	// see that file's header. We are the real implementation it was waiting on:
 	// every mob add/change/remove we hear from the server schema re-fires here
 	// verbatim, so MobSystem renders live combat data with zero duplicate
 	// geometry. `reportContact` is intentionally a no-op: our server already
 	// decides every mob's attack unilaterally from its own authoritative
-	// positions each tick (see combat-handlers.js tickMobs) — trusting a
+	// positions each tick (see combat-handlers.js tickMobs), trusting a
 	// client-reported "I'm in melee range" would be exactly the kind of
 	// client-sent hit CLAUDE.md's anti-cheat baseline forbids.
 	_installTwsCombatBridge() {
@@ -268,7 +268,7 @@ export class CombatSystem {
 		document.body.appendChild(this.prompt);
 	}
 
-	// Touch-friendly Attack action, shown only while a weapon is equipped — the
+	// Touch-friendly Attack action, shown only while a weapon is equipped, the
 	// keyboard equivalent is the 'x' key wired by the host (coincommunities.js).
 	_buildAttackButton() {
 		this.attackBtn = el('button', { class: 'combat-attack-btn', hidden: true, onclick: () => this.attack() }, [
@@ -325,7 +325,7 @@ export class CombatSystem {
 		const stats = MOB_STATS[mob.kind] || {};
 		const pos = { x: mob.x, z: mob.z };
 		// target === pos: MobSystem's own client-side nav-walk (a straight line
-		// with no navmesh registered — see nav-graph.js findPath) then has zero
+		// with no navmesh registered, see nav-graph.js findPath) then has zero
 		// distance to cover, so the body sits exactly where our own per-frame
 		// twsState updates place it. It's ready to do real pathing the moment
 		// W01 registers a navmesh; nothing here has to change when that lands.
@@ -487,7 +487,7 @@ export class CombatSystem {
 			const parts = [];
 			if (nearest.t.gold > 0) parts.push(`$${nearest.t.gold}`);
 			if (nearest.t.count > 0) parts.push(`${nearest.t.count} item${nearest.t.count === 1 ? '' : 's'}`);
-			// The tombstone owner is a remote player's chosen display name — untrusted
+			// The tombstone owner is a remote player's chosen display name, untrusted
 			// text. Build the prompt with textContent, never innerHTML, so a name like
 			// `<img onerror=…>` renders as literal text instead of executing for every
 			// player who walks near the tombstone.

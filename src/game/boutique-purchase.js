@@ -1,7 +1,7 @@
-// $THREE boutique purchase (W04) — the client half of the in-game premium
+// $THREE boutique purchase (W04), the client half of the in-game premium
 // cosmetics rail. Real on-chain settlement: the buyer's own connected Solana
 // wallet signs ONE $THREE transfer (server-built, server-priced, split
-// between the holder-rewards pool and the treasury — see
+// between the holder-rewards pool and the treasury, see
 // multiplayer/src/game-token.js), we broadcast it, and only once the server
 // re-reads the CONFIRMED transaction from RPC does it grant the cosmetic.
 // Mirrors coin-buy.js's connect → sign → broadcast → confirm flow.
@@ -16,7 +16,7 @@ function boutiqueNetwork() {
 }
 
 // A fully custom RPC endpoint (e.g. a local `solana-test-validator`), for
-// verification runs only — production never sets this and always resolves
+// verification runs only, production never sets this and always resolves
 // through the same-origin proxy in SOLANA_RPC.
 function boutiqueRpcUrl() {
 	if (typeof window !== 'undefined' && window.GAME_TOKEN_RPC_URL) return window.GAME_TOKEN_RPC_URL;
@@ -44,7 +44,7 @@ function friendlyBoutiqueError(err) {
 	if (/insufficient (lamports|funds)|debit an account|custom program error: 0x1\b/.test(m))
 		return 'Not enough $THREE (or SOL for network fees) for this purchase. Get $THREE at three.ws/three-token, then try again.';
 	if (/blockhash not found|block height exceeded|expired|too old/.test(m))
-		return 'The quote expired — try again.';
+		return 'The quote expired, try again.';
 	if (/failed to fetch|networkerror|timed out|timeout|fetch failed/.test(m))
 		return "Couldn't reach the network. Check your connection and try again.";
 	return raw.replace(/\s+/g, ' ').trim().slice(0, 140) || 'Purchase failed. Try again.';
@@ -106,7 +106,7 @@ function waitForSettleNotice(net, timeoutMs = 20000) {
  * Buy one premium cosmetic with $THREE, end to end: connect wallet → server
  * quote (server-priced) → wallet signs → broadcast → server re-verifies the
  * confirmed transaction on-chain → grant. Never trusts the client's own
- * "it worked" — the unlock only happens after `_handleBoutiqueSettle` on the
+ * "it worked", the unlock only happens after `_handleBoutiqueSettle` on the
  * server confirms the transfer actually landed.
  * @param {{ net: object, item: { id: string, name: string, price?: number }, onStage?: (stage: string) => void }} opts
  * @returns {Promise<{ ok: true, sig: string, explorerUrl: string, text: string }>}
@@ -130,7 +130,7 @@ export async function buyBoutiqueItem({ net, item, onStage = () => {} }) {
 	onStage('pricing');
 	net.boutiqueQuote(item.id, address);
 	const quote = await waitForQuote(net, item.id);
-	if (!quote?.txBase64) throw new Error('Could not price that purchase — try again.');
+	if (!quote?.txBase64) throw new Error('Could not price that purchase, try again.');
 
 	onStage('signing');
 	const { Transaction, Connection } = await import('@solana/web3.js');

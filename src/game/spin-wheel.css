@@ -1,4 +1,4 @@
-/* Wheel of Fortune — styles for the openSpinWheel modal in spin-wheel-ui.js.
+/* Wheel of Fortune, styles for the openSpinWheel modal in spin-wheel-ui.js.
    Imported by that module so the modal carries its own styles wherever it is
    opened (it ships as its own lazy chunk, so it cannot rely on
    coincommunities.css having loaded first).

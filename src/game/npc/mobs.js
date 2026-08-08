@@ -1,6 +1,6 @@
 // Hostile mobs & enforcers (W08 × W07).
 //
-// Mobs are consequential — they deal damage and drop loot — so unlike the
+// Mobs are consequential, they deal damage and drop loot, so unlike the
 // ambient crowd they are NOT client-authoritative. Their existence, health,
 // damage, movement, and rewards belong to the combat system (W07). This module
 // is the *visual* half: given an authoritative hostile from W07, it puts a body
@@ -10,13 +10,13 @@
 // nothing here grants an effect.
 //
 // W07 isn't merged yet, so this system is fully gated: with no `window.twsCombat`
-// contract present it spawns nothing and fakes no combat — it simply sleeps until
+// contract present it spawns nothing and fakes no combat, it simply sleeps until
 // the foundation it depends on lands. The contract it consumes:
 //
 //   window.twsCombat.onHostileSpawn(cb)    cb({ id, kind, pos, target, speed })
 //   window.twsCombat.onHostileState(cb)    cb({ id, pos?, target? })   // server moves
 //   window.twsCombat.onHostileDespawn(cb)  cb({ id })
-//   window.twsCombat.reportContact(id)     // mob reached melee range — server rules
+//   window.twsCombat.reportContact(id)     // mob reached melee range, server rules
 //
 // When W07 ships, mobs light up with zero changes here.
 
@@ -28,9 +28,9 @@ const MOB_TINT = {
 	enforcer: 0x3a4656, bandit: 0x5a2a2a,
 	dummy: 0x9aa3b2, goblin: 0x5f8a3a, ogre: 0x8a6a3a, troll: 0x4a6a6a,
 };
-const CONTACT_RANGE = 1.6;       // metres — when we tell W07 the mob is in melee
+const CONTACT_RANGE = 1.6;       // metres, when we tell W07 the mob is in melee
 const YAW_EPSILON_M = 0.005;     // per-frame moves smaller than this don't steer
-const YAW_LERP = 10;             // 1/s — how fast the body turns into its heading
+const YAW_LERP = 10;             // 1/s, how fast the body turns into its heading
 
 function shortestAngle(a, b) {
 	let d = b - a;
@@ -39,7 +39,7 @@ function shortestAngle(a, b) {
 	return d;
 }
 
-// A single hostile body — a menacing capsule until W07 supplies a model. The
+// A single hostile body, a menacing capsule until W07 supplies a model. The
 // server (via W07's per-frame setPos stream) owns where it stands; this class
 // only makes the body face the way it is actually moving and reports melee
 // contact. It never decides anything.
@@ -78,7 +78,7 @@ class Mob {
 	}
 
 	update(dt, onContact) {
-		// Ease the body toward its latest heading — a small lerp keeps turns smooth
+		// Ease the body toward its latest heading, a small lerp keeps turns smooth
 		// even though the heading itself updates in discrete per-frame steps.
 		this.rig.rotation.y += shortestAngle(this.rig.rotation.y, this._yaw) * Math.min(1, dt * YAW_LERP);
 
@@ -88,11 +88,11 @@ class Mob {
 			this._contacted = true;
 			onContact?.(this.id);
 		} else if (this._contacted && Math.hypot(tx, tz) > CONTACT_RANGE * 1.5) {
-			this._contacted = false; // left melee — allow a future contact report
+			this._contacted = false; // left melee, allow a future contact report
 		}
 	}
 
-	// Mobs respawn continuously all session — free the GPU resources, not just the
+	// Mobs respawn continuously all session, free the GPU resources, not just the
 	// scene-graph node, or every kill leaks a capsule + sphere + two materials.
 	dispose() {
 		this.scene.remove(this.rig);
@@ -114,7 +114,7 @@ export class MobSystem {
 
 		const combat = typeof window !== 'undefined' ? window.twsCombat : null;
 		this.enabled = !!(combat && typeof combat.onHostileSpawn === 'function');
-		if (!this.enabled) return; // W07 absent — sleep, spawn nothing, fake nothing
+		if (!this.enabled) return; // W07 absent, sleep, spawn nothing, fake nothing
 
 		this.combat = combat;
 		this._unsub.push(combat.onHostileSpawn((spec) => this._spawn(spec)));

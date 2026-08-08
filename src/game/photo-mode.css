@@ -1,4 +1,4 @@
-/* Photo mode (/play) — shutter flash + the preview card.
+/* Photo mode (/play), shutter flash + the preview card.
    Loaded with src/game/photo-mode.js, which is imported lazily on the first
    press, so none of this reaches a player who never takes a photo.
    Tokens come from coincommunities.css; the fallbacks keep the sheet readable

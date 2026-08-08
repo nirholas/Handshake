@@ -1,14 +1,14 @@
-// Wheel of Fortune — the in-world spinner UI for /play (Task 19/W09).
+// Wheel of Fortune, the in-world spinner UI for /play (Task 19/W09).
 //
 // Opened when the player reaches Fortune's Folly, the Mainland casino wheel
 // (multiplayer/src/wheel-station.js renders the landmark + prompt; this module
 // is lazy-imported on first interaction). The SERVER owns every outcome: this
 // module renders the 20-segment wheel, requests a spin, and animates the wheel
-// to land on exactly the segment the server rolled — it never decides a prize.
+// to land on exactly the segment the server rolled, it never decides a prize.
 // Two ways to spin:
-//   • Free — one per account every 12h, with a live countdown.
-//   • Paid — $3 in $THREE, split 50% to the holder-rewards pool / 50% to the
-//     treasury (see multiplayer/src/game-token.js — the platform never burns
+//   • Free, one per account every 12h, with a live countdown.
+//   • Paid, $3 in $THREE, split 50% to the holder-rewards pool / 50% to the
+//     treasury (see multiplayer/src/game-token.js, the platform never burns
 //     supply; the share that historically went to the incinerator now
 //     reflects back to holders instead). The server builds the split
 //     transaction, the player's wallet signs + broadcasts it, and the server
@@ -57,7 +57,7 @@ function el(tag, props = {}, kids = []) {
 const kindOf = (seg) => (seg.kind === 'gold' ? 'gold' : seg.item || 'stone');
 
 /**
- * Open the Wheel of Fortune. Idempotent — a second call focuses the existing
+ * Open the Wheel of Fortune. Idempotent, a second call focuses the existing
  * modal. Returns a controller with `.close()`.
  * @param {{ net: object, onClose?: () => void }} opts
  */
@@ -101,7 +101,7 @@ class SpinWheel {
 		}, 12_000);
 	}
 
-	// Loading never resolved — show an actionable error with a retry that re-asks
+	// Loading never resolved, show an actionable error with a retry that re-asks
 	// the server, instead of an indefinite spinner.
 	_loadFailed() {
 		this.phase = 'error';
@@ -212,7 +212,7 @@ class SpinWheel {
 			// The payment is confirmed on our end but the server's RPC node hasn't
 			// indexed it yet. Retry; the signature is already reserved so no double-roll
 			// is possible regardless of how many times this fires.
-			this._status(`Payment confirmed — waiting for server to see it… (attempt ${this._settleAttempts}/5)`, '');
+			this._status(`Payment confirmed, waiting for server to see it… (attempt ${this._settleAttempts}/5)`, '');
 			setTimeout(() => { if (!this._closed && this.phase === 'spinning') this._settle(); }, 2500);
 			return;
 		}
@@ -289,14 +289,14 @@ class SpinWheel {
 			case 'cooldown': return 'Your free spin isn’t ready yet.';
 			case 'token_unavailable': return 'Paid spins are unavailable right now.';
 			case 'no_wallet': return 'Connect a Solana wallet to buy a spin.';
-			case 'price_unavailable': return 'Live token price unavailable — try again in a moment.';
+			case 'price_unavailable': return 'Live token price unavailable, try again in a moment.';
 			case 'service_unavailable':
 			case 'treasury_unavailable':
-			case 'rewards_unavailable': return 'Paid spins are briefly unavailable — try again in a moment.';
+			case 'rewards_unavailable': return 'Paid spins are briefly unavailable, try again in a moment.';
 			case 'build_failed': return 'Could not prepare the payment. Try again.';
 			case 'no_signature': return 'No transaction signature received.';
 			case 'already_settled': return 'That payment was already used for a spin.';
-			case 'not_found': return 'Payment not confirmed on-chain yet — give it a moment and try again.';
+			case 'not_found': return 'Payment not confirmed on-chain yet, give it a moment and try again.';
 			case 'underpaid': return 'The payment amount didn’t match the quote. No spin was taken.';
 			case 'quote_expired': return 'Your quote expired before the payment confirmed. Try again.';
 			default: return 'The spin couldn’t be completed.';
@@ -308,7 +308,7 @@ class SpinWheel {
 		if (this.busy || !this._levelOk()) return;
 		const now = this.info?.now ?? Date.now();
 		const next = this.info?.nextFreeSpinAt ?? 0;
-		if (now < next) return; // not ready — button is disabled, but guard anyway
+		if (now < next) return; // not ready, button is disabled, but guard anyway
 		this.busy = true;
 		this.phase = 'spinning';
 		this.resultLine.textContent = '';
@@ -329,7 +329,7 @@ class SpinWheel {
 		this.resultLine.textContent = '';
 		this._status('Connecting your wallet…', '');
 		this._sync();
-		// Same connect + address-extraction step boutique-purchase.js uses — the
+		// Same connect + address-extraction step boutique-purchase.js uses, the
 		// server prices the quote for a specific buyer, so it needs the address
 		// before it can build anything.
 		let address = wallet.publicKey?.toString?.();
@@ -365,7 +365,7 @@ class SpinWheel {
 		this._paymentLive = true;
 
 		const url = solanaTxExplorerUrl(NETWORK, sig);
-		this._statusNode(el('span', {}, ['Confirming payment — ', el('a', { href: url, target: '_blank', rel: 'noopener', text: 'view ↗' }), '…']), 'ok');
+		this._statusNode(el('span', {}, ['Confirming payment, ', el('a', { href: url, target: '_blank', rel: 'noopener', text: 'view ↗' }), '…']), 'ok');
 		await this._confirm(conn, sig);
 
 		// Hand the signature to the server: it verifies the burn + treasury legs
@@ -383,7 +383,7 @@ class SpinWheel {
 		this.net.spinPaidSettle(this._prep.quote, this._sig);
 	}
 
-	// Poll signature status over HTTP (no WS — the public RPC refuses subscriptions).
+	// Poll signature status over HTTP (no WS, the public RPC refuses subscriptions).
 	async _confirm(conn, sig, timeoutMs = 35_000) {
 		const start = Date.now();
 		while (Date.now() - start < timeoutMs) {
@@ -397,7 +397,7 @@ class SpinWheel {
 			}
 			await new Promise((r) => setTimeout(r, 1500));
 		}
-		// Timed out waiting — let the server try anyway; it may already see it.
+		// Timed out waiting, let the server try anyway; it may already see it.
 	}
 
 	_payError(err) {
@@ -625,14 +625,14 @@ class SpinWheel {
 		// The gate level is always the server's own MIN_AVG_LEVEL, carried on spinInfo.
 		// The banner only renders once info has landed, so it never has to guess.
 		const min = this.info?.minLevel;
-		// Level gate banner — the designed "not eligible" state with a how-to.
+		// Level gate banner, the designed "not eligible" state with a how-to.
 		if (this.info && !lvlOk) {
 			this.gate.hidden = false;
 			this.gate.replaceChildren(
 				el('div', { class: 'kg-spin-gate-h', text: 'Locked' }),
 				el('div', { class: 'kg-spin-gate-b' }, [
 					`Spinning needs an average skill level of ${min}. You're at ${this.info.avgLevel ?? 0}. `,
-					'Chop, mine, fish, cook and fight to raise your skills — the wheel unlocks at level ' + min + '.',
+					'Chop, mine, fish, cook and fight to raise your skills, the wheel unlocks at level ' + min + '.',
 				]),
 			);
 		} else {

@@ -1,4 +1,4 @@
-// Coin Communities UI layer — lobby + in-world chrome.
+// Coin Communities UI layer, lobby + in-world chrome.
 //
 // Two surfaces:
 //   1. Lobby: live pump.fun coin grid (each coin = a community to enter) + a
@@ -26,12 +26,12 @@ import { announce } from './a11y.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
 // storage is blocked (the `?bg=transparent` embed). Guard every access so a
-// blocked store degrades to defaults instead of throwing while the HUD builds —
+// blocked store degrades to defaults instead of throwing while the HUD builds,
 // same contract as play-onboard.js / play-intro.js / play-handoff.js.
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch { /* storage disabled */ } }
 
-// Degrees shown on the rotate button for each quarter-turn step (0–3).
+// Degrees shown on the rotate button for each quarter-turn step (0, 3).
 const ROT_DEG = ['0°', '90°', '180°', '270°'];
 
 // ── Emote wheel (R09) ────────────────────────────────────────────────────────
@@ -182,7 +182,7 @@ export class CommunityUI {
 	}
 
 	// Signed-in identity (W10): a logged-in player enters the world AS their
-	// three.ws account — default the nameplate to their display name and show
+	// three.ws account, default the nameplate to their display name and show
 	// the @handle peers will see (and can follow/DM) beside the name field.
 	// Anonymous visitors keep the plain guest field; getMe() resolves null.
 	async _hydrateAccountIdentity() {
@@ -200,7 +200,7 @@ export class CommunityUI {
 				href: `/u/${encodeURIComponent(me.username)}`,
 				target: '_blank',
 				rel: 'noopener',
-				title: 'Signed in — players you meet can open your profile, follow you, and message you',
+				title: 'Signed in, players you meet can open your profile, follow you, and message you',
 				text: `@${me.username}`,
 			});
 			this.nameRow.appendChild(this._identityChip);
@@ -212,7 +212,7 @@ export class CommunityUI {
 		this.searchInput = el('input', { type: 'text', placeholder: 'Search any pump.fun coin…', oninput: () => this._onSearchInput() });
 		this.grid = el('div', { class: 'cc-grid' });
 
-		// Your display name — the label peers see above your avatar and in chat.
+		// Your display name, the label peers see above your avatar and in chat.
 		// Persisted so it sticks across sessions; broadcast live if changed in-world.
 		this.nameInput = el('input', {
 			type: 'text', maxlength: '24', class: 'cc-name-input', id: 'cc-name-input',
@@ -253,17 +253,17 @@ export class CommunityUI {
 			el('span', { class: 'cc-gallery-ico', text: '🖼' }),
 			el('span', { class: 'cc-gallery-text', text: 'Browse gallery' }),
 		]);
-		// Create a brand-new avatar without leaving the lobby — the headline action.
+		// Create a brand-new avatar without leaving the lobby, the headline action.
 		// Opens the in-app creator (design from scratch or from a photo); the exported
 		// GLB is staged locally and adopted instantly, then the world uploads it so
 		// peers see it too. Lazy-loaded so the avatar SDK never bloats the lobby boot.
 		this.createBtn = el('button', {
 			type: 'button', class: 'cc-create-btn',
-			title: 'Create a brand-new 3D avatar — design it or build it from a photo',
+			title: 'Create a brand-new 3D avatar, design it or build it from a photo',
 			onclick: () => this._openCreate(),
 		}, [
 			el('span', { class: 'cc-create-ico', 'aria-hidden': 'true', text: '✦' }),
-			el('span', { class: 'cc-create-copy', html: 'Create your avatar<small>Design from scratch or from a photo — drop straight in</small>' }),
+			el('span', { class: 'cc-create-copy', html: 'Create your avatar<small>Design from scratch or from a photo, drop straight in</small>' }),
 			el('span', { class: 'cc-create-arrow', 'aria-hidden': 'true', text: '→' }),
 		]);
 
@@ -290,7 +290,7 @@ export class CommunityUI {
 						el('span', { class: 'cc-adventure-ico', 'aria-hidden': 'true', html: ADVENTURE_MARK }),
 						el('span', { html: 'Adventure mode<small>Gather · fight · level up</small>' }),
 					]),
-					// Cold-open reopener (see play-intro.js) — the intro auto-shows once
+					// Cold-open reopener (see play-intro.js), the intro auto-shows once
 					// per browser; this brings it back for anyone who skipped it.
 					makeIntroReopener(() => this.h.onDropIn?.()),
 				]),
@@ -332,13 +332,13 @@ export class CommunityUI {
 			['Build', [
 				['/create', 'Create agent', 'Avatar + brain wizard'],
 				['/create/selfie', 'Selfie to avatar', 'One photo → rigged 3D avatar', 'New'],
-				['/worlds', 'Worlds', 'Every coin is a 3D world — drop in & hang out', 'New'],
+				['/worlds', 'Worlds', 'Every coin is a 3D world, drop in & hang out', 'New'],
 				['/app', 'Viewer', 'Drag-and-drop GLB'],
 				['/playground', 'Playground', 'Viewer + environment + embed code'],
 				['/voice', 'Voice Lab', 'Clone your voice · TTS playground', 'New'],
 			]],
 			['Discover', [
-				['/features', 'Features', 'Everything an agent gets — interactive tour'],
+				['/features', 'Features', 'Everything an agent gets, interactive tour'],
 				['/discover', 'ERC-8004 Agents', 'On-chain agent directory'],
 				['/marketplace', 'Marketplace', 'Buy, sell & remix agents'],
 				['/gallery', 'Avatar Gallery', 'Every public 3D avatar'],
@@ -358,18 +358,18 @@ export class CommunityUI {
 				['/tutorials', 'Tutorials', 'Step-by-step guides'],
 				['/brain', 'Brain', 'Claude · GPT · DeepSeek · Qwen · Llama', 'New'],
 				['/chat', 'Chat', 'Talk to your agent'],
-				['/pay', 'Pay', 'Agent payments — x402 + USDC', 'New'],
+				['/pay', 'Pay', 'Agent payments, x402 + USDC', 'New'],
 			]],
 			['Labs', [
 				['/launchpad', 'Launchpad Studio', 'Build a 3D launchpad · token · concierge', 'New'],
 				['/mocap-studio', 'Mocap Studio', 'Record face → save clip → replay', 'New'],
 				['/pose', 'Pose Studio', 'Click-to-pose mannequin + export PNG'],
-				['/temporary', 'Walk', 'Walk your avatar — multiplayer + AR', 'New'],
+				['/temporary', 'Walk', 'Walk your avatar, multiplayer + AR', 'New'],
 				['/xr', 'XR', 'Place your avatar in the real world', 'New'],
-				['/three-live', '$THREE Live', 'Protocol pulse — live trades in 3D', 'New'],
+				['/three-live', '$THREE Live', 'Protocol pulse, live trades in 3D', 'New'],
 				['/pump-visualizer', 'Pump Visualizer', '3D view of trending tokens'],
-				['/club', 'Pole Club', 'x402 micro-tip demo — $0.001 / dance', 'New'],
-				['/play/agent-wallet', 'Agent Wallet', 'Your avatar pays an endpoint — USDC on Solana', 'New'],
+				['/club', 'Pole Club', 'x402 micro-tip demo, $0.001 / dance', 'New'],
+				['/play/agent-wallet', 'Agent Wallet', 'Your avatar pays an endpoint, USDC on Solana', 'New'],
 			], true],
 		];
 
@@ -679,14 +679,14 @@ export class CommunityUI {
 	async _adoptCreatedAvatar(blob, meta = {}) {
 		this._setUploadState('working', 'Saving your new avatar…');
 		try {
-			// Pass the player's chosen name only if they set one — playAs persists it as
+			// Pass the player's chosen name only if they set one, playAs persists it as
 			// the display name, and we don't want a placeholder shadowing the guest-id
 			// fallback the world assigns to unnamed players.
 			const name = this.getName();
 			await playAs({ blob, name, source: meta.provider || 'three-ws-create', dest: null });
 			this._addCreatedChip(name || 'My avatar');
-			this._setUploadState('done', 'Your avatar is ready — pick a community to drop in.');
-			this.toast('Your avatar is ready — pick a community below to drop in.', 'info');
+			this._setUploadState('done', 'Your avatar is ready, pick a community to drop in.');
+			this.toast('Your avatar is ready, pick a community below to drop in.', 'info');
 		} catch (err) {
 			log.warn('[coincommunities] could not adopt created avatar:', err?.message);
 			this._setUploadState('error', 'Couldn’t save your new avatar. Please try again.');
@@ -695,7 +695,7 @@ export class CommunityUI {
 
 	// Surface the just-created avatar as its own selected chip (replacing any prior
 	// one) and make the guest sentinel the active avatar. The chip starts with a
-	// loading shimmer, then renders a real portrait of the new model — the sentinel
+	// loading shimmer, then renders a real portrait of the new model, the sentinel
 	// resolves to the locally-staged blob, so no upload round-trip is needed.
 	_addCreatedChip(name) {
 		if (this._createdChip?.isConnected) this._createdChip.remove();
@@ -777,7 +777,7 @@ export class CommunityUI {
 					if (it.glbUrl) presets.push({ label: it.name || 'Avatar', url: it.glbUrl, thumb: it.image });
 				}
 			}
-		} catch { /* offline / no API — default preset still works */ }
+		} catch { /* offline / no API, default preset still works */ }
 		this.presets = presets.slice(0, 7);
 		this.presetRow.textContent = '';
 		for (const p of this.presets) {
@@ -924,7 +924,7 @@ export class CommunityUI {
 		// The pinned official town leads the grid when it matches the current query,
 		// and is excluded from the regular list so it never appears twice.
 		const featured = this.featured && matches(this.featured) ? this.featured : null;
-		// Trending matches first, then live search hits not already on screen —
+		// Trending matches first, then live search hits not already on screen,
 		// deduped by mint so a coin never appears twice.
 		const list = this.coins.filter((c) => matches(c) && c.mint !== this.featured?.mint);
 		const seen = new Set(list.map((c) => c.mint));
@@ -948,7 +948,7 @@ export class CommunityUI {
 			}
 			this.grid.appendChild(el('div', { class: 'cc-state' }, [
 				el('span', { class: 'cc-state-ico', text: '🪙' }),
-				el('div', { text: q ? 'No coins match — try a different name, symbol, or mint.' : 'No communities yet — be the first in!' }),
+				el('div', { text: q ? 'No coins match, try a different name, symbol, or mint.' : 'No communities yet, be the first in!' }),
 			]));
 			return;
 		}
@@ -976,7 +976,7 @@ export class CommunityUI {
 		// discoverable on touch too; clicking it routes the player through the gate.
 		const holdersBadge = el('button', {
 			type: 'button', class: 'cc-card-holders',
-			title: `Holders only — hold ${sym} to enter this coin’s gated world`,
+			title: `Holders only, hold ${sym} to enter this coin’s gated world`,
 			'aria-label': `Enter the ${sym} holders-only world`,
 			onclick: (e) => { e.stopPropagation(); this.h.onEnter(c, 'holders'); },
 		}, [el('span', { class: 'cc-card-holders-ico', 'aria-hidden': 'true', text: '🔒' }), document.createTextNode('Holders')]);
@@ -1021,12 +1021,12 @@ export class CommunityUI {
 	// ---------------------------------------------------------------- holder gate
 	// A coin's Holders world is gated: the player must prove they hold ≥ the floor
 	// (default $8) of the coin. This overlay is a thin view over the scene's gate
-	// state machine (coincommunities.js _passHolderGate) — the scene drives us
+	// state machine (coincommunities.js _passHolderGate), the scene drives us
 	// through setHolderGate(state, data) and we report the player's choice back via
 	// onHolderAction(action): 'signin' | 'wallet' | 'switch' | 'buy' | 'recheck' |
 	// 'general' (continue this entry into the open world) | 'cancel'.
 	openHolderGate(coin) {
-		if (this._gate) return; // already open — the scene re-uses it across states
+		if (this._gate) return; // already open, the scene re-uses it across states
 		this._gateBody = el('div', { class: 'cc-gate-body' });
 		const modal = el('div', {
 			class: 'cc-gate-modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Holder verification',
@@ -1133,10 +1133,10 @@ export class CommunityUI {
 			placeholder: 'e.g. 1000000', 'aria-label': `Minimum ${sym} to enter the holders world`,
 		});
 		const errLine = el('p', { class: 'cc-gatecfg-err', hidden: !unknown });
-		if (unknown) errLine.textContent = 'Couldn’t load the current gate — saving will overwrite it.';
+		if (unknown) errLine.textContent = 'Couldn’t load the current gate, saving will overwrite it.';
 		const hint = el('p', { class: 'cc-gatecfg-hint', text: `Leave blank to use the default ($-value) floor. Set a number to require that many ${sym} on-chain.` });
 		const saveBtn = el('button', { type: 'button', class: 'cc-gate-btn cc-gate-primary', text: 'Save gate' });
-		// "Remove gate" whenever a gate exists — or might exist (the read failed). Only
+		// "Remove gate" whenever a gate exists, or might exist (the read failed). Only
 		// a confirmed-ungated world shows a plain "Cancel".
 		const canRemove = minTokens > 0 || unknown;
 		const clearBtn = el('button', {
@@ -1154,7 +1154,7 @@ export class CommunityUI {
 			try {
 				await onSave?.(value);
 				this.closeGateConfig();
-				this.toast(value > 0 ? `Holders world now needs ${fmtCompact(value)} ${sym}.` : 'Holders gate removed — default floor applies.', 'success');
+				this.toast(value > 0 ? `Holders world now needs ${fmtCompact(value)} ${sym}.` : 'Holders gate removed, default floor applies.', 'success');
 			} catch (err) {
 				fail(err?.message || 'Couldn’t save the gate. Try again.');
 			}
@@ -1262,7 +1262,7 @@ export class CommunityUI {
 					msg(`You hold ${held} of ${sym}. This world is for holders of ${min} or more.`),
 					actions(
 						btn(`Buy ${sym}`, 'buy', 'cc-gate-primary'),
-						btn('I bought — re-check', 'recheck'),
+						btn('I bought, re-check', 'recheck'),
 						btn('Use a different wallet', 'switch'),
 						btn('Enter the open world instead', 'general', 'cc-gate-ghost'),
 					),
@@ -1345,7 +1345,7 @@ export class CommunityUI {
 		// Marks the gated Holders world so the player always knows which room they're
 		// in and the floor they cleared. Hidden in the open General world.
 		this.tierBadge = el('span', { class: 'cc-tier-badge', hidden: true });
-		// Buy this coin from inside its own world — the most natural action in a
+		// Buy this coin from inside its own world, the most natural action in a
 		// pump.fun community. Opens the native on-chain buy modal (lazy chunk).
 		this.buyBtnLabel = el('span', { class: 'cc-buy-btn-text', text: 'Buy', 'data-i18n': 'play.buy' });
 		this.buyBtn = el('button', {
@@ -1362,7 +1362,7 @@ export class CommunityUI {
 			'data-i18n-attr': 'title:play.gate_title;aria-label:play.gate_aria',
 			onclick: () => this.h.onConfigureGate?.(),
 		}, [el('span', { class: 'cc-gate-cfg-ico', 'aria-hidden': 'true', text: '🔑' }), el('span', { class: 'cc-gate-cfg-text', text: 'Gate', 'data-i18n': 'play.gate' })]);
-		// Open the cosmetics shop — browse + try cosmetics on your avatar live.
+		// Open the cosmetics shop, browse + try cosmetics on your avatar live.
 		this.shopBtn = el('button', {
 			class: 'cc-shop-btn', type: 'button', title: 'Cosmetics: try looks on your avatar',
 			'aria-label': 'Open cosmetics shop',
@@ -1378,14 +1378,14 @@ export class CommunityUI {
 			'data-i18n-attr': 'title:play.avatar_title;aria-label:play.avatar_aria',
 			onclick: () => this.h.onAvatarPanel?.(),
 		}, [el('span', { class: 'cc-avatarbtn-ico', 'aria-hidden': 'true', text: '🧍' }), el('span', { class: 'cc-avatarbtn-text', text: 'Avatar', 'data-i18n': 'play.avatar' })]);
-		// Open the "My Cosmetics" wardrobe — equip owned items, persists across worlds.
+		// Open the "My Cosmetics" wardrobe, equip owned items, persists across worlds.
 		this.wardrobeBtn = el('button', {
 			class: 'cc-wardrobe-btn', type: 'button', title: 'My Cosmetics: equip your owned looks',
 			'aria-label': 'Open my cosmetics wardrobe',
 			'data-i18n-attr': 'title:play.wardrobe_title;aria-label:play.wardrobe_aria',
 			onclick: () => this.h.onWardrobe?.(),
 		}, [el('span', { class: 'cc-wardrobe-btn-ico', 'aria-hidden': 'true', text: '👗' }), el('span', { class: 'cc-wardrobe-btn-text', text: 'My Fits', 'data-i18n': 'play.wardrobe' })]);
-		// Open the Jobs Board (W08 hooking W05) — dailies, repeatable work, and
+		// Open the Jobs Board (W08 hooking W05), dailies, repeatable work, and
 		// the co-op vault heist, the same board every quest-giver NPC opens.
 		this.jobsBtn = el('button', {
 			class: 'cc-jobs-btn', type: 'button', title: 'Jobs Board: dailies, courier runs, and the vault heist',
@@ -1393,7 +1393,7 @@ export class CommunityUI {
 			'data-i18n-attr': 'title:play.jobs_title;aria-label:play.jobs_aria',
 			onclick: () => this.h.onJobs?.(),
 		}, [el('span', { class: 'cc-jobs-btn-ico', 'aria-hidden': 'true', text: '🎯' }), el('span', { class: 'cc-jobs-btn-text', text: 'Jobs', 'data-i18n': 'play.jobs' })]);
-		// Friends panel (W09) — the account-level social graph: requests, live
+		// Friends panel (W09), the account-level social graph: requests, live
 		// presence across every coin world, and DM threads. The badge carries the
 		// unread-DM count so a message landing while the panel is closed still
 		// shows; the button is also the touch equivalent of the J hotkey, since
@@ -1485,7 +1485,7 @@ export class CommunityUI {
 		]);
 		this.chatHead = head;
 		this.chat = el('div', { id: 'cc-chat', role: 'region', 'aria-label': 'Chat', 'data-i18n-attr': 'aria-label:play.chat' }, [head, this.chatBody]);
-		// Default: collapsed on touch (small screens), open on desktop — unless the
+		// Default: collapsed on touch (small screens), open on desktop, unless the
 		// user has expressed a preference before.
 		const stored = lsGet('cc-chat-min');
 		this._unread = 0;
@@ -1515,7 +1515,7 @@ export class CommunityUI {
 			this.voiceLabel,
 		]);
 
-		// Power saver — one shared preference across every three.ws 3D surface
+		// Power saver, one shared preference across every three.ws 3D surface
 		// (also read by /club). Caps the render loop at 30fps and drops to the
 		// cheapest render state so laptops stay cool and quiet. The button both
 		// toggles and mirrors the preference, so a change made on another page
@@ -1532,7 +1532,7 @@ export class CommunityUI {
 		]);
 		onPowerSaverChange((on) => this.powerBtn.setAttribute('aria-pressed', on ? 'true' : 'false'));
 
-		// Photo mode — capture the world (never the chrome) onto a share card.
+		// Photo mode, capture the world (never the chrome) onto a share card.
 		// Survives zen mode by design (see the zen block in coincommunities.css):
 		// a clean world is exactly when someone wants the shot. The host loads
 		// src/game/photo-mode.js on the first press, so nothing here costs a
@@ -1575,7 +1575,7 @@ export class CommunityUI {
 		]);
 		document.body.appendChild(this.zenExit);
 
-		// Dance floor button — hidden until the player steps onto the pad.
+		// Dance floor button, hidden until the player steps onto the pad.
 		this.danceBtnLabel = el('span', { class: 'cc-dance-label', text: 'Dance', 'data-i18n': 'play.dance' });
 		this.danceBtn = el('button', {
 			class: 'cc-dance-btn', type: 'button', hidden: true,
@@ -1671,14 +1671,14 @@ export class CommunityUI {
 	// ── King of the Totem HUD (R07) ───────────────────────────────────────────
 	// Top-centre panel: round countdown, who holds the totem, a live scoreboard
 	// (your row highlighted, the king crowned), and a centre-screen winner banner.
-	// Every value here is server-authoritative — the HUD only renders the last
+	// Every value here is server-authoritative, the HUD only renders the last
 	// snapshot and runs a local countdown between the per-second broadcasts.
 
 	_buildKingHud() {
 		this._kingTimer = el('div', { class: 'cc-king-timer', text: '1:30' });
 		this._kingTimerCap = el('div', { class: 'cc-king-timer-cap', text: 'round time' });
 		// aria-live on the status line only (not the whole panel) so a screen reader
-		// announces phase changes — "X holds the totem", "Round over" — without
+		// announces phase changes, "X holds the totem", "Round over", without
 		// reading the per-second countdown.
 		this._kingPhase = el('div', { class: 'cc-king-phase', 'aria-live': 'polite' });
 		this._kingBoard = el('div', { class: 'cc-king-board', role: 'list', 'aria-label': 'King of the Totem scoreboard' });
@@ -1719,7 +1719,7 @@ export class CommunityUI {
 		if (phase === 'idle') {
 			this._kingBoard.hidden = true;
 			this._kingEmpty.hidden = false;
-			this._kingEmpty.textContent = 'Waiting for players — step onto the gold ring at the totem to start a round.';
+			this._kingEmpty.textContent = 'Waiting for players, step onto the gold ring at the totem to start a round.';
 			this._kingPhase.textContent = 'Waiting for players';
 			return;
 		}
@@ -1729,12 +1729,12 @@ export class CommunityUI {
 		this._renderKingBoard(scores, kingId, localId);
 
 		if (phase === 'intermission') {
-			this._kingPhase.textContent = winner ? `🏆 ${winner.name} won the round` : 'Round over — nobody held it';
+			this._kingPhase.textContent = winner ? `🏆 ${winner.name} won the round` : 'Round over, nobody held it';
 		} else {
 			const kRow = kingId ? scores.find((s) => s.id === kingId) : null;
 			this._kingPhase.textContent = kingId
 				? (kingId === localId ? '👑 You hold the totem!' : `👑 ${kRow ? kRow.name : 'Someone'} holds the totem`)
-				: 'Totem is open — claim it!';
+				: 'Totem is open, claim it!';
 		}
 	}
 
@@ -1744,7 +1744,7 @@ export class CommunityUI {
 		if (!c || !this._kingTimer) return;
 		const serverNow = Date.now() + c.skew;
 		if (c.phase === 'idle') {
-			this._kingTimer.textContent = '—';
+			this._kingTimer.textContent = ', ';
 			this._kingTimer.classList.remove('cc-king-low');
 			this._kingTimerCap.textContent = 'waiting';
 			return;
@@ -1819,7 +1819,7 @@ export class CommunityUI {
 				const btn = el('button', {
 					class: 'cc-st-piece' + (p.id === null ? ' cc-on' : ''), type: 'button',
 					role: 'radio', 'aria-checked': p.id === null ? 'true' : 'false',
-					title: p.id === null ? 'Single block' : `${p.name} — one-click structure (R rotates)`,
+					title: p.id === null ? 'Single block' : `${p.name}, one-click structure (R rotates)`,
 					'aria-label': p.name,
 					onclick: () => this.h.onPickPiece?.(p.id),
 				}, [
@@ -2048,7 +2048,7 @@ export class CommunityUI {
 		const btn = el('button', {
 			class: 'cc-prop', type: 'button',
 			role: 'radio', 'aria-checked': 'false',
-			title: `${p.name} — place a prop (R rotates, break mode removes yours)`,
+			title: `${p.name}, place a prop (R rotates, break mode removes yours)`,
 			'aria-label': p.name,
 			onclick: () => this.h.onPickProp?.(this._activeProp === p.id ? null : p.id),
 		}, [ico, el('span', { class: 'cc-prop-name', text: p.name })]);
@@ -2097,7 +2097,7 @@ export class CommunityUI {
 	}
 
 	// Drop every streamed gallery button (keeping built-in props) and re-page from the
-	// top — used when the search query changes.
+	// top, used when the search query changes.
 	_resetGallery() {
 		for (const [id, btn] of this._propBtns) {
 			if (id.startsWith(GALLERY_PROP_PREFIX)) { btn.remove(); this._propBtns.delete(id); }
@@ -2132,7 +2132,7 @@ export class CommunityUI {
 			this._setGalleryStatus(count ? '' : (g.q ? `No models match “${g.q}”.` : 'No community models yet.'), false);
 		} catch (e) {
 			log.warn('[cc-ui] gallery load failed', e?.message || e);
-			this._setGalleryStatus('Couldn’t load models — tap to retry.', true);
+			this._setGalleryStatus('Couldn’t load models, tap to retry.', true);
 			this._galleryMore.hidden = true;
 		} finally {
 			g.loading = false;
@@ -2160,7 +2160,7 @@ export class CommunityUI {
 	// ---- player-uploaded props (P3.3) ---------------------------------------------
 	/**
 	 * Add an uploaded model to the palette as a first-class prop button and select
-	 * it, so the next click in the world places it. Idempotent per model id — a
+	 * it, so the next click in the world places it. Idempotent per model id, a
 	 * re-upload of the same file re-selects the existing button instead of stacking
 	 * duplicates.
 	 * @param {{id:string,name?:string,thumbnail?:string}} def
@@ -2230,7 +2230,7 @@ export class CommunityUI {
 			[el('span', { 'aria-hidden': 'true', text: '🔗' }), document.createTextNode('Copy link')]);
 		copyBtn.addEventListener('click', async () => {
 			try { await navigator.clipboard.writeText(link); setStatus('Link copied to clipboard.', 'ok'); }
-			catch { setStatus('Couldn’t copy — select and copy the link manually.', 'warn'); }
+			catch { setStatus('Couldn’t copy, select and copy the link manually.', 'warn'); }
 		});
 
 		const dlBtn = el('a', {
@@ -2250,7 +2250,7 @@ export class CommunityUI {
 				setStatus('Published! It’s now in this world’s featured builds.', 'ok');
 				publishBtn.textContent = '✓ Published';
 			} else {
-				setStatus(res?.error || 'Couldn’t publish — try again.', 'warn');
+				setStatus(res?.error || 'Couldn’t publish, try again.', 'warn');
 				publishBtn.disabled = false;
 			}
 		};
@@ -2382,12 +2382,12 @@ export class CommunityUI {
 	setVoiceState(state) {
 		if (!this.voiceBtn) return;
 		const map = {
-			off:        ['Voice',        'Join voice — talk to people near you'],
+			off:        ['Voice',        'Join voice, talk to people near you'],
 			connecting: ['Connecting…',  'Requesting microphone access…'],
-			on:         ['Mic on',       'You’re live — click to mute'],
-			muted:      ['Muted',        'Muted — click to unmute (you can still hear everyone)'],
-			denied:     ['Mic blocked',  'Microphone blocked — allow it in your browser settings'],
-			error:      ['Voice error',  'Couldn’t start voice — check your mic and try again'],
+			on:         ['Mic on',       'You’re live, click to mute'],
+			muted:      ['Muted',        'Muted, click to unmute (you can still hear everyone)'],
+			denied:     ['Mic blocked',  'Microphone blocked, allow it in your browser settings'],
+			error:      ['Voice error',  'Couldn’t start voice, check your mic and try again'],
 			unsupported:['No voice',     'Voice chat isn’t supported in this browser'],
 		};
 		const [label, title] = map[state] || map.off;
@@ -2438,10 +2438,10 @@ export class CommunityUI {
 				onclick: () => this.h.onEmote(e.name),
 			}));
 		}
-		// Wheel launcher — opens the full radial emote wheel.
+		// Wheel launcher, opens the full radial emote wheel.
 		this.wheelBtn = el('button', {
 			class: 'cc-emote cc-emote-wheel-btn', type: 'button',
-			'aria-label': 'All emotes — open emote wheel (hold Q)',
+			'aria-label': 'All emotes, open emote wheel (hold Q)',
 			title: 'All emotes (hold Q)',
 			text: '⋯',
 			onclick: () => this.openEmoteWheel(),
@@ -2499,7 +2499,7 @@ export class CommunityUI {
 		const SVG_SIZE = 300; const OUTER_R = 148; const INNER_R = 54;
 		const cxy = SVG_SIZE / 2;
 
-		// SVG background arcs — one donut sector per category (68° each).
+		// SVG background arcs, one donut sector per category (68° each).
 		const svgNS = 'http://www.w3.org/2000/svg';
 		const svg = document.createElementNS(svgNS, 'svg');
 		svg.setAttribute('viewBox', `0 0 ${SVG_SIZE} ${SVG_SIZE}`);
@@ -2531,7 +2531,7 @@ export class CommunityUI {
 			]);
 		});
 
-		// Center label — updated on hover / keyboard navigation.
+		// Center label, updated on hover / keyboard navigation.
 		this._ewCenterEl = el('div', {
 			class: 'cc-ew-center', 'aria-live': 'polite', 'aria-atomic': 'true',
 		}, [
@@ -2539,7 +2539,7 @@ export class CommunityUI {
 			el('span', { class: 'cc-ew-center-txt', text: 'Move to select' }),
 		]);
 
-		// Per-category clip grids — one panel per category, shown for the active one.
+		// Per-category clip grids, one panel per category, shown for the active one.
 		this._ewClipPanels = categories.map((cat) => {
 			const segs = cat.clips.map((d) =>
 				el('button', {
@@ -2595,7 +2595,7 @@ export class CommunityUI {
 		const rect = this._ewRing.getBoundingClientRect();
 		const dx = e.clientX - (rect.left + rect.width / 2);
 		const dy = e.clientY - (rect.top + rect.height / 2);
-		if (Math.sqrt(dx * dx + dy * dy) < 44) return; // dead zone — no jitter at center
+		if (Math.sqrt(dx * dx + dy * dy) < 44) return; // dead zone, no jitter at center
 		const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
 		let best = 0; let bestD = Infinity;
 		for (let i = 0; i < this._ewCategories.length; i++) {
@@ -2772,7 +2772,7 @@ export class CommunityUI {
 		// The latency readout is only meaningful while the link is live.
 		if (state !== 'online') this.pingText.hidden = true;
 		// Only expose the pill to the keyboard / label it as actionable while a
-		// retry actually does something — otherwise it's a passive status readout.
+		// retry actually does something, otherwise it's a passive status readout.
 		const retryable = state === 'offline' || state === 'failed';
 		if (retryable) {
 			this.statusPill.setAttribute('tabindex', '0');

@@ -1,4 +1,4 @@
-// Photo mode for /play — the screenshot people post.
+// Photo mode for /play, the screenshot people post.
 //
 // Press the HUD camera button or P and the world is captured, composited onto a
 // share card, and offered back as a download or a clipboard image. Everything
@@ -286,7 +286,7 @@ function showPreview({ blob, width, height, stamp, filename, onClose }) {
 		'aria-disabled': copyable ? null : 'true',
 		title: copyable
 			? 'Copy the image to your clipboard'
-			: 'This browser cannot put images on the clipboard — Download saves the same file',
+			: 'This browser cannot put images on the clipboard, Download saves the same file',
 	}, [el('span', { 'aria-hidden': 'true', text: '⧉' }), document.createTextNode('Copy image')]);
 	copyBtn.addEventListener('click', async () => {
 		// Honest rather than hidden: browsers without the async clipboard image
@@ -384,7 +384,7 @@ export async function takePhoto({ renderer, scene, camera, coinLabel, worldLabel
 		shutter();
 		const shot = captureSceneCanvas(renderer, scene, camera, { maxWidth: MAX_CAPTURE_WIDTH });
 		if (!shot) {
-			toast?.('Couldn’t photograph the world just now — try again in a moment.', 'warn');
+			toast?.('Couldn’t photograph the world just now, try again in a moment.', 'warn');
 			return false;
 		}
 
@@ -396,7 +396,7 @@ export async function takePhoto({ renderer, scene, camera, coinLabel, worldLabel
 
 		const blob = await new Promise((resolve) => card.toBlob(resolve, 'image/png'));
 		if (!blob) {
-			toast?.('Couldn’t save that photo — try again in a moment.', 'warn');
+			toast?.('Couldn’t save that photo, try again in a moment.', 'warn');
 			return false;
 		}
 
@@ -411,7 +411,7 @@ export async function takePhoto({ renderer, scene, camera, coinLabel, worldLabel
 		return true;
 	} catch (err) {
 		log.warn('[photo-mode] photo failed:', err?.message);
-		toast?.('Couldn’t photograph the world just now — try again in a moment.', 'warn');
+		toast?.('Couldn’t photograph the world just now, try again in a moment.', 'warn');
 		return false;
 	} finally {
 		capturing = false;
