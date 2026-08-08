@@ -381,7 +381,10 @@ html[data-bg="transparent"] #cc-lobby {
 /* Padded to a thumb-sized target rather than the 16px a bare 13px link gives.
    These sit in a row of their own, so the WCAG 2.5.8 inline-link exemption
    does not apply to them. */
-.cc-foot-links a { color: var(--cc-dim); font-size: 13px; padding: 12px 0; transition: color 0.15s ease; }
+.cc-foot-links a {
+	display: inline-flex; align-items: center; min-height: 44px;
+	color: var(--cc-dim); font-size: 13px; transition: color 0.15s ease;
+}
 .cc-foot-links a:hover { color: var(--cc-text); }
 .cc-foot-links a:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; border-radius: var(--cc-radius-sm); }
 
@@ -414,7 +417,7 @@ html[data-bg="transparent"] #cc-lobby {
    tappable target was only as tall as one line of text (20px), and a thumb
    landing anywhere else in the bar did nothing. */
 .cc-search input {
-	flex: 1; min-width: 0; align-self: stretch; padding: 11px 0;
+	flex: 1; min-width: 0; align-self: stretch; min-height: 44px; padding: 11px 0;
 	background: none; border: none; color: var(--cc-text); font-size: 14px; outline: none;
 }
 .cc-search input::placeholder { color: var(--cc-dim); }
