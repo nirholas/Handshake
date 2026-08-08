@@ -267,8 +267,49 @@ export async function rig(base, glbUrl, { timeoutEnv } = {}) {
 // providers), so the director silently never ran on any surface. Fail-soft:
 // returns null on any failure so the caller forwards the original prompt
 // unchanged, never faked.
-const DIRECTOR_MAX_TOKENS = 200;
+// A complete director spec (subject, construction, materials, lighting, framing,
+// negatives) measures ~800 characters, which is right at what 200 tokens buys.
+// With no headroom, any model even slightly more verbose than average had its
+// answer cut mid-clause, and the fragment was then forwarded as the brief:
+// observed on production 2026-08-07, "a red wooden rocking chair" directed to
+// "A classic wooden rocking chair with gracefully curved" and "a small ceramic
+// teapot with a bamboo handle" to "A small,", which reconstructed as a coffee
+// tamper. Budget for a whole spec instead of a clipped one.
+const DIRECTOR_MAX_TOKENS = 400;
 const DIRECTOR_TIMEOUT_MS = 20_000;
+
+// Longest brief we forward. The director's own specs land near 800 characters;
+// beyond this the model has stopped writing a prompt and started writing prose.
+const DIRECTOR_MAX_CHARS = 1000;
+
+// The director's system prompts ask for a complete spec, and a complete spec is
+// a finished sentence: every well-formed one observed in production closes on a
+// period after its negatives clause ("...no second subject."). A generation that
+// ran out of tokens cannot, which makes terminal punctuation the one signal that
+// separates a whole brief from a clipped one without guessing at grammar. Both
+// production truncations fail it, as does any fragment ending on a separator or
+// a dangling connective, with no per-word list to keep current.
+const ENDS_COMPLETE = /[.!?]["'\u201d\u2019)\]]*$/;
+
+// Decide whether a director rewrite is safe to forward in place of the user's
+// own words. The director is a quality lever that must never cost a caller their
+// intent, so anything that fails this check falls back to the raw prompt rather
+// than shipping a fragment. Erring toward rejection is cheap: the fallback is
+// the caller's own wording, which is always a valid brief. Pure: same inputs to
+// same verdict.
+export function isUsableDirectorRewrite(refined, rawPrompt) {
+	if (typeof refined !== 'string') return false;
+	const text = refined.trim();
+	if (text.length < 3 || text.length > DIRECTOR_MAX_CHARS) return false;
+	if (!ENDS_COMPLETE.test(text)) return false;
+	// The director's contract is to ENRICH a rough idea into a denser spec. A
+	// result no longer than what the caller typed has added nothing, and is more
+	// likely a clipped opening clause than a genuine tightening, so the user's
+	// own wording is the better brief.
+	const raw = String(rawPrompt ?? '').trim();
+	if (raw && text.length <= raw.length) return false;
+	return true;
+}
 
 export async function directPrompt(instruction, rawPrompt) {
 	const user = `Idea: ${rawPrompt}`;
@@ -321,7 +362,9 @@ export async function directPrompt(instruction, rawPrompt) {
 	// dangling quote when the model adds commentary lines after a quoted prompt.
 	const firstLine = text.trim().split('\n')[0].trim();
 	const refined = firstLine.replace(/^["'“”]+|["'“”]+$/g, '').trim();
-	return refined.length >= 3 && refined.length <= 1000 ? refined : null;
+	// Returning null here is the documented fail-soft path: the caller forwards
+	// the caller's original prompt unchanged, which is always a valid brief.
+	return isUsableDirectorRewrite(refined, rawPrompt) ? refined : null;
 }
 
 function sleep(ms) {
