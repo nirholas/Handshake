@@ -62,7 +62,14 @@
 .qb-lb-name { flex: 1; min-width: 0; font-size: 13px; color: var(--cc-text); overflow-wrap: anywhere; }
 .qb-lb-score { flex: none; font-size: 11px; color: var(--cc-dim); font-variant-numeric: tabular-nums; }
 
-.qb-lb-you-wrap { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--cc-edge-soft); }
+/* Your own rank is PINNED, not merely appended: on a long board it sticks to the
+ * bottom of the scrolling body so "where am I" is answered without scrolling. */
+.qb-lb-you-wrap {
+	position: sticky; bottom: -16px; z-index: 1;
+	margin-top: 12px; padding: 10px 0 16px;
+	border-top: 1px solid var(--cc-edge-soft);
+	background: linear-gradient(to bottom, transparent, var(--cc-panel-solid) 18%);
+}
 .qb-lb-prize { margin-top: 12px; font-size: 10px; color: var(--cc-dim); line-height: 1.5; opacity: 0.85; }
 
 /* Skeleton rows while the first read is in flight — the shape of the answer,
