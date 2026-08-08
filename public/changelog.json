@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-08T16:33:19.139Z",
+	"generated_at": "2026-08-08T16:34:20.069Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -23564,7 +23564,7 @@
 		{
 			"date": "2026-06-12",
 			"type": "launch",
-			"title": "Text to 3D Is Live: Type a Prompt, Download a 3D Model",
+			"title": "Text to 3D Is Live - Type a Prompt, Download a 3D Model",
 			"summary": "Forge is live on three.ws: type a description and get a textured, downloadable 3D model (GLB) in your browser. Image to 3D from photos works too. Free draft tier, no install.",
 			"link": "/blog/text-to-3d-is-live",
 			"tags": [
@@ -24267,7 +24267,7 @@
 		{
 			"date": "2026-06-09",
 			"type": "launch",
-			"title": "three.ws Wins DEXTools Social Boost: $5,543 $three Buyback",
+			"title": "three.ws Wins DEXTools Social Boost - $5,543 $three Buyback",
 			"summary": "three.ws is DEXTools",
 			"link": "/blog/three-ws-dextools-social-boost-buyback",
 			"tags": [
@@ -24298,7 +24298,7 @@
 			"date": "2026-06-08",
 			"type": "launch",
 			"title": "three.ws Featured on the Alibaba Cloud Marketplace Blog",
-			"summary": "Alibaba Cloud Marketplace published an editorial on three.ws: browser-native 3D AI agents you deploy with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
+			"summary": "Alibaba Cloud Marketplace published an editorial on three.ws - browser-native 3D AI agents you deploy with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
 			"link": "/blog/three-ws-featured-on-alibaba-cloud-marketplace-blog",
 			"tags": [
 				"launch"
@@ -24932,7 +24932,7 @@
 			"date": "2026-05-27",
 			"type": "launch",
 			"title": "three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement",
-			"summary": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments: for the first fully on-chain 3D AI agent platform.",
+			"summary": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments - for the first fully on-chain 3D AI agent platform.",
 			"link": "/blog/three-ws-on-aws-marketplace",
 			"tags": [
 				"launch"
@@ -24993,7 +24993,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "$THREE Listed on Coinbase, CoinGecko, Jupiter, and Investing.com",
-			"summary": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com: giving the three.ws community every major on-ramp and price discovery surface.",
+			"summary": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com - giving the three.ws community every major on-ramp and price discovery surface.",
 			"link": "/blog/three-token-listings",
 			"tags": [
 				"launch"
@@ -25003,7 +25003,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "2,500 New 3D Animations Coming to three.ws",
-			"summary": "three.ws is expanding its animation library with 2,500 new 3D animations: giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
+			"summary": "three.ws is expanding its animation library with 2,500 new 3D animations - giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
 			"link": "/blog/2500-new-animations",
 			"tags": [
 				"launch"
@@ -25012,7 +25012,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "Agent Builder Live: Studio Redesign, LLM Chat Upgrade",
+			"title": "Agent Builder Live - Studio Redesign, LLM Chat Upgrade",
 			"summary": "three.ws ships Agent Builder, an improved Studio design, and a major LLM Chat upgrade. Agents are now payable, tradeable, and discoverable.",
 			"link": "/blog/agent-builder-studio-launch",
 			"tags": [
@@ -25082,7 +25082,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "Full Animation & Emotion Control: Plus Pump.fun Live Feed",
+			"title": "Full Animation & Emotion Control - Plus Pump.fun Live Feed",
 			"summary": "three.ws now ships full animation and emotion control for 3D agents, with live Pump.fun feed integration. Your agents react to any API or data feed in real time.",
 			"link": "/blog/animation-emotion-control",
 			"tags": [
@@ -25122,7 +25122,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "Real-Time Voice Interaction with 3D AI Agents: Preview",
+			"title": "Real-Time Voice Interaction with 3D AI Agents - Preview",
 			"summary": "three.ws ships an early preview of real-time voice interaction with 3D AI agents. Agents listen, reason with memory and emotions, respond in voice, and support AR/VR.",
 			"link": "/blog/real-time-voice-interaction",
 			"tags": [
@@ -25153,7 +25153,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "Solana Wallet Integration for Autonomous 3D Agents",
-			"summary": "three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously: earning from skills, paying for inference, and executing on-chain transactions while you sleep.",
+			"summary": "three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously - earning from skills, paying for inference, and executing on-chain transactions while you sleep.",
 			"link": "/blog/solana-wallet-integration",
 			"tags": [
 				"launch"
@@ -25173,7 +25173,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "three.ws Is Now Live on CoinMarketCap",
-			"summary": "three.ws is now live on CoinMarketCap: join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
+			"summary": "three.ws is now live on CoinMarketCap - join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
 			"link": "/blog/three-ws-on-coinmarketcap",
 			"tags": [
 				"launch"
@@ -25203,7 +25203,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "three.ws Listed on Coinbase x402 Bazaar and agentic.market",
-			"summary": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market: the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
+			"summary": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market - the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
 			"link": "/blog/three-ws-x402-bazaar",
 			"tags": [
 				"launch"
@@ -25212,8 +25212,8 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face",
-			"summary": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity: and they react to DeFi events in real time.",
+			"title": "three.ws Ships Inside SperaxUSD - DeFi Gets a 3D Face",
+			"summary": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity - and they react to DeFi events in real time.",
 			"link": "/blog/three-ws-speraxusd-integration",
 			"tags": [
 				"launch"
@@ -25232,7 +25232,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "We Just Shipped the 3D Layer for the Internet: <agent-3d>",
+			"title": "We Just Shipped the 3D Layer for the Internet - <agent-3d>",
 			"summary": "Drop one <agent-3d> web component on your site and give any page an AI with LLM brain, memory, emotions, DOM awareness, password field privacy, and an on-chain identity that lives forever.",
 			"link": "/blog/agent-3d-web-component",
 			"tags": [
@@ -26001,7 +26001,7 @@
 			"date": "2026-05-04",
 			"type": "launch",
 			"title": "How to Embed 3D On-Chain Agents on Your Site",
-			"summary": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component: from setup to CORS configuration and page integration.",
+			"summary": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component - from setup to CORS configuration and page integration.",
 			"link": "/blog/how-to-embed-3d-onchain-agents",
 			"tags": [
 				"launch"

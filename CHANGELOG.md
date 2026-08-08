@@ -2433,7 +2433,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 - **Agent Launches** (`/launches`): Live public feed of every coin launched by a three.ws agent: market caps, graduation status, and the agent behind each launch.
 - **Scene Studio** (`/scene`): Full 3D scene editor in the browser: import GLB models, arrange them with transform gizmos, edit materials and lights, and export complete scenes.
-- **Text to 3D Is Live: Type a Prompt, Download a 3D Model** (`/blog/text-to-3d-is-live`): Forge is live on three.ws: type a description and get a textured, downloadable 3D model (GLB) in your browser. Image to 3D from photos works too. Free draft tier, no install.
+- **Text to 3D Is Live - Type a Prompt, Download a 3D Model** (`/blog/text-to-3d-is-live`): Forge is live on three.ws: type a description and get a textured, downloadable 3D model (GLB) in your browser. Image to 3D from photos works too. Free draft tier, no install.
 - **Tutorial · Generate 3D Models from Code** (`/tutorials/generate-3d-api`): Use the Forge as a plain HTTP API: submit prompts, poll jobs, download GLBs, batch asset packs, and pay per call with x402.
 - **Tutorial · Photos to 3D Model** (`/tutorials/image-to-3d`): Photograph a real object from up to four angles and reconstruct it as a textured 3D model: photo tips, guidance prompts, troubleshooting.
 - **Tutorial · Prompt Recipes for 3D Generation** (`/tutorials/prompts-for-3d`): A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, food: and the four rules behind every good prompt.
@@ -2509,13 +2509,13 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 - **3D + AI + Web3 Just Converged: three.ws Shipped the Whole Stack** (`/blog/3d-ai-crypto-convergence`): A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is the only crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, published to npm, and live on Anthropic
 - **Agent Lookup** (`/lookup`): Resolve any three.ws agent by Solana mint, agent ID, avatar ID, or slug: renders its interactive 3D avatar alongside its on-chain identity (collection, owner, agent wallet, Active/x402 status, Metaplex/Solscan/Magic Eden links).
-- **three.ws Wins DEXTools Social Boost: $5,543 $three Buyback** (`/blog/three-ws-dextools-social-boost-buyback`): three.ws is DEXTools
+- **three.ws Wins DEXTools Social Boost - $5,543 $three Buyback** (`/blog/three-ws-dextools-social-boost-buyback`): three.ws is DEXTools
 - **New Claude models in every agent brain**: Claude Fable 5 and Mythos 5 are now available across agent brain selectors, pricing tables, and the x402 provider catalog. `[feature]`
 
 ## 2026-06-08
 
 - **EVM Vanity Wallet** (`/evm-wallet`): Grind a custom Ethereum / EVM wallet address with the prefix or suffix of your choice. A real secp256k1 keypair, generated entirely in your browser: the private key never leaves your device.
-- **three.ws Featured on the Alibaba Cloud Marketplace Blog** (`/blog/three-ws-featured-on-alibaba-cloud-marketplace-blog`): Alibaba Cloud Marketplace published an editorial on three.ws: browser-native 3D AI agents you deploy with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.
+- **three.ws Featured on the Alibaba Cloud Marketplace Blog** (`/blog/three-ws-featured-on-alibaba-cloud-marketplace-blog`): Alibaba Cloud Marketplace published an editorial on three.ws - browser-native 3D AI agents you deploy with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.
 - **Bounty board with AI judge**: Bounty submissions now support liking, AI-powered scoring, and per-bounty leaderboards, submissions are ranked by a platform-powered judge. `[feature]`
 - **Public agent profiles with shared memories**: Agents can now have public profile pages that surface their shared memories, plus Replicate model provider support and public agent directory resolution. `[feature]`
 
@@ -2614,7 +2614,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 - **Multi-LLM Brain** (`/brain`): Send one prompt to Claude, GPT, Qwen, ModelScope, and Groq simultaneously. Side-by-side streaming with latency and token stats.
 - **Skills Marketplace** (`/skills`): Browse, search, and install agent skills: tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there.
 - **three.ws Joins the AWS Partner Network** (`/blog/three-ws-aws-partner`): three.ws is now an official AWS Partner, enrolled in the AWS Partner Network (APN) Software Path as a Technology Partner. The open-source platform for 3D AI agents on-chain is the first fully Web3-native ISV to join APN with a Solana / EVM on-chain identity stack.
-- **three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement** (`/blog/three-ws-on-aws-marketplace`): three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments: for the first fully on-chain 3D AI agent platform.
+- **three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement** (`/blog/three-ws-on-aws-marketplace`): three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments - for the first fully on-chain 3D AI agent platform.
 - **Unstoppable Agent** (`/unstoppable`): Live dashboard for an autonomous agent that funds itself via x402 micropayments. Watch its balance, earnings, costs, and daily reflections in real time.
 - **Brain page, race LLMs side by side**: Run simultaneous inference across Claude, GPT, Qwen, and more with streaming latency comparison, plus a face-quality module that scores avatar facial fidelity. `[feature]`
 - **Unified dashboard**: Dashboard routes consolidated under /dashboard, agents, avatars, analytics, settings, and billing in one place. (`/dashboard`) `[improvement]`
@@ -2626,31 +2626,31 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-05-25
 
-- **$THREE Listed on Coinbase, CoinGecko, Jupiter, and Investing.com** (`/blog/three-token-listings`): $THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com: giving the three.ws community every major on-ramp and price discovery surface.
-- **2,500 New 3D Animations Coming to three.ws** (`/blog/2500-new-animations`): three.ws is expanding its animation library with 2,500 new 3D animations: giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.
-- **Agent Builder Live: Studio Redesign, LLM Chat Upgrade** (`/blog/agent-builder-studio-launch`): three.ws ships Agent Builder, an improved Studio design, and a major LLM Chat upgrade. Agents are now payable, tradeable, and discoverable.
+- **$THREE Listed on Coinbase, CoinGecko, Jupiter, and Investing.com** (`/blog/three-token-listings`): $THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com - giving the three.ws community every major on-ramp and price discovery surface.
+- **2,500 New 3D Animations Coming to three.ws** (`/blog/2500-new-animations`): three.ws is expanding its animation library with 2,500 new 3D animations - giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.
+- **Agent Builder Live - Studio Redesign, LLM Chat Upgrade** (`/blog/agent-builder-studio-launch`): three.ws ships Agent Builder, an improved Studio design, and a major LLM Chat upgrade. Agents are now payable, tradeable, and discoverable.
 - **Characters** (`/characters`): Discover AI characters on three.ws. Chat, trade, and create.
 - **Claim threews.sol Subdomain** (`/threews/claim`): Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal showcase page.
 - **Dashboard** (`/dashboard`): Your account dashboard: agents, avatars, payments, keys, MCP servers, monetization, billing.
 - **Dashboard · Account** (`/dashboard/account`): Manage connected wallets, SNS, delegation, and action log.
 - **Dashboard · Analytics** (`/dashboard/analytics`): API call volume, x402 spend, and per-agent usage breakdowns.
 - **Dashboard · Settings** (`/dashboard/settings`): Avatar storage modes (R2 vs IPFS), sessions, your notification inbox, per-category notification channel preferences (in-app/push/email/Telegram), and dashboard preferences.
-- **Full Animation & Emotion Control: Plus Pump.fun Live Feed** (`/blog/animation-emotion-control`): three.ws now ships full animation and emotion control for 3D agents, with live Pump.fun feed integration. Your agents react to any API or data feed in real time.
+- **Full Animation & Emotion Control - Plus Pump.fun Live Feed** (`/blog/animation-emotion-control`): three.ws now ships full animation and emotion control for 3D agents, with live Pump.fun feed integration. Your agents react to any API or data feed in real time.
 - **GMGN Smart Money** (`/gmgn`): Live smart-money signals narrated by a 3D AI agent. Tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time.
 - **Import an avatar URL** (`/import/rpm`): Import any GLB or glTF avatar into three.ws and give it an agent brain.
 - **Playground** (`/playground`): Sandbox for experimenting with agents, prompts, and 3D scenes.
-- **Real-Time Voice Interaction with 3D AI Agents: Preview** (`/blog/real-time-voice-interaction`): three.ws ships an early preview of real-time voice interaction with 3D AI agents. Agents listen, reason with memory and emotions, respond in voice, and support AR/VR.
+- **Real-Time Voice Interaction with 3D AI Agents - Preview** (`/blog/real-time-voice-interaction`): three.ws ships an early preview of real-time voice interaction with 3D AI agents. Agents listen, reason with memory and emotions, respond in voice, and support AR/VR.
 - **Selfie to Avatar** (`/create/selfie`): One selfie. About a minute. A rigged 3D avatar that works everywhere.
 - **sitemap.xml** (`/sitemap.xml`): XML sitemap for search-engine crawlers.
-- **Solana Wallet Integration for Autonomous 3D Agents** (`/blog/solana-wallet-integration`): three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously: earning from skills, paying for inference, and executing on-chain transactions while you sleep.
+- **Solana Wallet Integration for Autonomous 3D Agents** (`/blog/solana-wallet-integration`): three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously - earning from skills, paying for inference, and executing on-chain transactions while you sleep.
 - **three.ws Integrates the Pump.fun Agent Payments SDK** (`/blog/pumpfun-agent-payments-sdk`): three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn
-- **three.ws Is Now Live on CoinMarketCap** (`/blog/three-ws-on-coinmarketcap`): three.ws is now live on CoinMarketCap: join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.
+- **three.ws Is Now Live on CoinMarketCap** (`/blog/three-ws-on-coinmarketcap`): three.ws is now live on CoinMarketCap - join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.
 - **three.ws Joins Google Cloud for Web3 Startups** (`/blog/three-ws-google-cloud-partnership`): three.ws is joining forces with Google Cloud, bringing cloud-scale rendering and AI infrastructure to 3D on-chain agents.
 - **three.ws Listed on Anthropic's Official MCP Registry** (`/blog/three-ws-on-anthropic-mcp-registry`): three.ws is now listed on Anthropic
-- **three.ws Listed on Coinbase x402 Bazaar and agentic.market** (`/blog/three-ws-x402-bazaar`): three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market: the app store and discovery layer for AI agents with 480k active agents and $50M in volume.
-- **three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face** (`/blog/three-ws-speraxusd-integration`): three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity: and they react to DeFi events in real time.
+- **three.ws Listed on Coinbase x402 Bazaar and agentic.market** (`/blog/three-ws-x402-bazaar`): three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market - the app store and discovery layer for AI agents with 480k active agents and $50M in volume.
+- **three.ws Ships Inside SperaxUSD - DeFi Gets a 3D Face** (`/blog/three-ws-speraxusd-integration`): three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity - and they react to DeFi events in real time.
 - **three.ws Teams Up with HackerNoon** (`/blog/three-ws-hackernoon-partnership`): three.ws is partnering with HackerNoon to launch a builder-focused initiative with feature articles, tutorials, and developer guides for those shipping with AI.
-- **We Just Shipped the 3D Layer for the Internet: <agent-3d>** (`/blog/agent-3d-web-component`): Drop one <agent-3d> web component on your site and give any page an AI with LLM brain, memory, emotions, DOM awareness, password field privacy, and an on-chain identity that lives forever.
+- **We Just Shipped the 3D Layer for the Internet - <agent-3d>** (`/blog/agent-3d-web-component`): Drop one <agent-3d> web component on your site and give any page an AI with LLM brain, memory, emotions, DOM awareness, password field privacy, and an on-chain identity that lives forever.
 - **x402 Bazaar** (`/bazaar`): Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click.
 - **Search engines find everything faster**: Dynamic chunked sitemaps backed by live database queries, JSON-LD structured data for agents and avatars, and IndexNow integration for instant search discovery. `[infra, improvement]`
 
@@ -2768,7 +2768,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-05-04
 
 - **Community** (`/community`): Live platform activity plus where to follow, contribute, and connect with three.ws creators.
-- **How to Embed 3D On-Chain Agents on Your Site** (`/blog/how-to-embed-3d-onchain-agents`): A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component: from setup to CORS configuration and page integration.
+- **How to Embed 3D On-Chain Agents on Your Site** (`/blog/how-to-embed-3d-onchain-agents`): A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component - from setup to CORS configuration and page integration.
 - **Pump Dashboard** (`/pump-dashboard`): Pump.fun trading desk: watchlists, scanner, quotes, portfolio, and live charts.
 - **Pump Live** (`/pump-live`): Real-time feed of every pump.fun launch as it happens, with a 3D agent that reacts live.
 - **Pump Visualizer** (`/pump-visualizer`): 3D visualizer of trending pump.fun tokens: live market data rendered as an interactive scene.

@@ -44,6 +44,15 @@ function handledKeys() {
 	return [...new Set([...source.matchAll(/k === '([a-z])'/g)].map((m) => m[1]))];
 }
 
+// The single-letter chips the open panel advertises, lowercased. Whole chips
+// only: "C" is a binding, but the "c" inside the "Click" chip is not, so a
+// substring match would report the camera key as documented when it is not.
+function advertisedSingles() {
+	return readPanel().keys
+		.filter((k) => /^[A-Za-z]$/.test(k))
+		.map((k) => k.toLowerCase());
+}
+
 beforeEach(() => {
 	document.body.innerHTML = '';
 	try { localStorage.clear(); } catch { /* jsdom without storage */ }
