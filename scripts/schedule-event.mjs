@@ -154,9 +154,44 @@ if (!apply) {
 	process.exit(0);
 }
 
-// The file is tab-indented and ends with a newline; keep it byte-compatible so a
-// reschedule is a two-line diff instead of a whole-file reformat.
-writeFileSync(CONFIG_PATH, `${JSON.stringify(doc, null, '\t')}\n`, 'utf8');
+// Rewrite the changed scalars in place rather than re-serialising the document.
+// Re-serialising would expand the hand-formatted one-line-per-beat agenda into
+// forty lines, turning a two-line reschedule into a whole-file diff that buries
+// the only thing that actually changed and collides with every other agent
+// editing this file. Only the fields this run set are touched; every byte of
+// comment, ordering and spacing around them survives.
+const raw = readFileSync(CONFIG_PATH, 'utf8');
+const setString = (text, key, value) => {
+	// The value is JSON-encoded, so quotes and backslashes in a name are safe.
+	const pattern = new RegExp(`("${key}"\\s*:\\s*)"(?:[^"\\\\]|\\\\.)*"`);
+	if (!pattern.test(text)) {
+		console.error(`[event-schedule] could not find a "${key}" string field to update in public/event.json`);
+		process.exit(1);
+	}
+	return text.replace(pattern, (_m, head) => head + JSON.stringify(value));
+};
+
+let next = raw;
+if (startsAt !== null) {
+	next = setString(next, 'startsAt', doc.startsAt);
+	next = setString(next, 'endsAt', doc.endsAt);
+}
+if (nameArg) next = setString(next, 'name', doc.name);
+if (taglineArg) next = setString(next, 'tagline', doc.tagline);
+
+// Never write a file we cannot read back as the document we just validated.
+try {
+	const roundTrip = JSON.parse(next);
+	for (const key of ['startsAt', 'endsAt', 'name', 'tagline']) {
+		if (doc[key] !== undefined && roundTrip[key] !== doc[key]) {
+			throw new Error(`${key} did not survive the in-place edit`);
+		}
+	}
+} catch (err) {
+	console.error(`[event-schedule] refusing to write: the edited file would not parse back correctly (${err?.message || err})`);
+	process.exit(1);
+}
+writeFileSync(CONFIG_PATH, next, 'utf8');
 console.log('[event-schedule]');
 console.log(`[event-schedule] WROTE public/event.json: ${doc.startsAt} to ${doc.endsAt}`);
 console.log(`[event-schedule] state at the judged instant: ${String(state).toUpperCase()}`);
