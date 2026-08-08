@@ -5,7 +5,8 @@
 // invariants a malicious client must not be able to break.
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { WalkRoom } from '../multiplayer/src/rooms/WalkRoom.js';
+import { WalkRoom, BLOCK_SIZE_M } from '../multiplayer/src/rooms/WalkRoom.js';
+import { PLAZA_STAGE } from '../multiplayer/src/world-features.js';
 
 // Build a WalkRoom instance without the Colyseus constructor, wiring only the state
 // the permission helpers touch.

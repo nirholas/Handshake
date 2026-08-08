@@ -246,7 +246,7 @@ const transport = new WebSocketTransport({
 	// apps, locks the screen, or pulls down a notification, so the socket stops
 	// answering pings and the server reaps it before they have finished reading
 	// the message. Because WalkRoom.onLeave has no allowReconnection window, that
-	// reap is permanent — the client rejoins with a NEW sessionId and respawns at
+	// reap is permanent: the client rejoins with a NEW sessionId and respawns at
 	// the world origin, which is exactly the reported "kicked out right after
 	// joining". A terminate() is also an abrupt close with no close frame, so the
 	// player gets no explanation, just a world that resets under them.

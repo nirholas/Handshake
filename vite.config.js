@@ -277,7 +277,7 @@ const appConfig = {
 			// Loaded lazily by src/shared/cinematic-render.js. Without it here the
 			// dev optimizer discovers it mid-session and restarts the page under
 			// whichever viewer just asked for an HDRI.
-			'three/addons/loaders/RGBELoader.js',
+			'three/addons/loaders/HDRLoader.js',
 		],
 		exclude: ['@three-ws/agent-payments'],
 	},

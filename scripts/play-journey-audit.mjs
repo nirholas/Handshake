@@ -57,7 +57,7 @@ const findings = { console: [], network: [], overflow: [], touch: [], focus: [],
 // Noise that is not our code: the swiftshader driver's own performance chatter,
 // and Vite's dev-only HMR client, whose websocket cannot reach a forwarded
 // Codespaces port. Everything else counts as a defect.
-const NOISE = /GL Driver Message|GPU stall|\[vite\]|@vite\/client|WebSocket closed without opened|Third-party cookie|preloaded using link preload/i;
+const NOISE = /GL Driver Message|GPU stall|\[vite\]|@vite\/client|WebSocket closed without opened|Error during WebSocket handshake|Third-party cookie|preloaded using link preload/i;
 const OURS = (text) => !NOISE.test(text);
 
 page.on('console', (m) => {
@@ -223,7 +223,12 @@ async function noteState(label, fn) {
 // ── 1. cold load into the lobby ────────────────────────────────────────────
 console.log(at(), `journey start ${BASE} @ ${width}x${height}${MOBILE ? ' (touch)' : ''}`);
 await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 60000 });
-await page.waitForSelector('#cc-lobby', { timeout: 30000 }).catch(() => console.log(at(), 'LOBBY NEVER RENDERED'));
+// The lobby element exists from boot but stays hidden behind the loader, so
+// "rendered" means a coin card (or a designed empty/error state) is on screen.
+await page.waitForFunction(() => {
+	const lobby = document.getElementById('cc-lobby');
+	return !!lobby && lobby.getBoundingClientRect().height > 0;
+}, { timeout: 60000 }).catch(() => console.log(at(), 'LOBBY NEVER BECAME VISIBLE'));
 
 // The skeleton has to exist before data lands, otherwise the grid pops in.
 await noteState('lobby-first-paint', () => ({

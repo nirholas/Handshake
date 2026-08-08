@@ -204,7 +204,7 @@ const PROTECTED_RADIUS_CELLS = 3;    // keep this many cells clear around each p
 // client's BLOCK size (1.5 m). The spawn point is the origin; the coin totem
 // renders at world z = -12 → grid z = round(-12 / 1.5) = -8. Protect both columns
 // at every height so neither can be buried or walled in.
-const BLOCK_SIZE_M = 1.5;             // client BLOCK: one grid cell ↔ metres
+export const BLOCK_SIZE_M = 1.5;      // client BLOCK: one grid cell ↔ metres
 // Each disc carries its own radius (in cells) so a landmark bigger than the
 // default keeps a guard that matches its real footprint. The plaza stage's disc
 // is derived from world-features.PLAZA_STAGE, so moving the venue moves its

@@ -291,6 +291,7 @@
 		"verify:ibm": "node scripts/verify-ibm-pages.mjs",
 		"verify:zauth": "node scripts/verify-zauth-runtime.mjs",
 		"verify:sign-avatar": "node scripts/verify-sign-avatar.mjs",
+		"verify:event": "node scripts/verify-event-countdown.mjs",
 		"triage": "node scripts/verify-task-completion.mjs",
 		"prioritize": "node scripts/verify-task-completion.mjs && node scripts/rank-backlog.mjs",
 		"zauth:register": "node scripts/zauth-register-endpoints.mjs",
