@@ -3,6 +3,44 @@
 	"entries": [
 		{
 			"date": "2026-08-08",
+			"title": "Coin Wars is now a door in your world, not a hidden game",
+			"summary": "Every coin world's plaza has a war portal. Walk up and the board shows your community's real standing on the war ladder: its Elo rating, record, kill/death, and the last battles it fought. Press E and the portal checks you hold the coin, puts your community in line, and the moment another community queues you are both dropped into the same arena to fight it out. While a war involving your coin is running, the board turns into a live scoreboard with the round clock and a kill feed, so the plaza can watch without joining. When the battle ends the result comes home: it lands on the board, a win takes the board over for a moment, and walking back from the arena drops you in the same world you left rather than the lobby. Nothing polls while nobody is standing there.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
+			"title": "Every walker in a coin world is somebody you can meet and talk to",
+			"summary": "The crowd strolling a /play plaza already wore real community avatars from the public gallery, and most of those avatars represent a registered three.ws agent with its own wallet and earned reputation. The world used to throw all of that away and render anonymous scenery. Now a walker keeps the identity of the avatar it wears: click a nameplate or tap a body and their profile opens with the live agent, trust score, wallet and holdings every other surface reads, plus a Talk 1-on-1 button that starts a real streamed conversation where they answer in character as themselves. While you talk they stop walking and turn to face you, then catch back up with the crowd when you leave. The townsfolk who run the paid counters are selectable from any distance too: up close they still open their counter, and from across the plaza their profile opens instead of nothing happening. Nothing is invented: a walker wearing the bundled default avatar, or one still on an onboarding placeholder name, carries no identity and is presented honestly as scenery with no nameplate and no profile.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
+			"title": "Voice Lab now has every voice we can reach, not just cloned ones",
+			"summary": "Pick your agent's voice from about 850 ready-made voices in one searchable grid: roughly 500 free Microsoft Edge neural voices across 100+ locales, Google's 30 Gemini voices that take a spoken direction like \"warm and unhurried\", NVIDIA's multilingual set, OpenAI's eleven, your own ElevenLabs voices, and the public ElevenLabs Voice Library you can copy a voice out of in one click. Preview any of them, then speak your own text with a model, a direction, and a speed. Edge, Gemini, and NVIDIA are free and work signed out; the ElevenLabs and OpenAI lanes are metered to your credits or run on your own key. Cloning your own voice still works exactly as before.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/voice"
+		},
+		{
+			"date": "2026-08-08",
+			"title": "Paid Solana calls stop failing when a free RPC provider blocks us",
+			"summary": "The platform reads Solana through a chain of RPC providers so no single one going down can take a feature with it. One of those providers began refusing every request from our servers outright, and because it still sat near the front of the chain, each balance read, holder check, and payment burned requests on it before reaching a provider that would answer. Under load the whole chain could run out mid-request. The blocked provider is now removed, and the remaining ones are ordered by what they will actually serve rather than by how fast they reply, so wallet balances and $THREE holder gating stay readable when the paid capacity is spent. Two providers that quietly refuse balance lookups on the free tier no longer sit in front of the one that answers them. The image-understanding endpoint at /api/vision also now counts a slow upload against its own time budget instead of adding to it, so a large image returns a clear explanation rather than an unexplained timeout.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-08",
 			"title": "Rejoining a world after a dropped connection no longer leaves ghosts behind",
 			"summary": "If your connection dropped inside a coin world and came back, the people around you could end up duplicated: a frozen copy of everyone standing where they were when you dropped, plus their live selves, and a motionless copy of you standing at the spawn point on everyone else's screen. Reconnecting now rebuilds the crowd from what the world server actually holds, retires anyone who left while you were away, and tells the server to retire your old session the moment you return. Standing still through a drop no longer strands you at the spawn point either, and a tab you left in the background for a few minutes now checks its connection the instant you come back instead of sitting on a dead one that still claims to be connected. Nameplates past sixty metres stop being drawn, so a plaza with a hundred people in it costs what the people near you cost.",
 			"tags": [
