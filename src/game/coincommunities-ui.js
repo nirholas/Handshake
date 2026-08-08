@@ -1395,9 +1395,16 @@ export class CommunityUI {
 			onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tryRetry(); } },
 		}, [el('span', { class: 'cc-dot' }), this.statusText, this.pingText]);
 
-		this.chatLog = el('div', { class: 'cc-chat-log' });
+		// role=log + polite live region: an incoming line is the one thing in this
+		// world a screen-reader player cannot see happening, so it has to be read
+		// out. Polite (not assertive) so a busy room never talks over the player.
+		this.chatLog = el('div', {
+			class: 'cc-chat-log', role: 'log', 'aria-live': 'polite', 'aria-relevant': 'additions text',
+			'aria-label': 'Chat messages',
+		});
 		this.chatInput = el('input', {
 			type: 'text', maxlength: '200', placeholder: 'Say something…',
+			'aria-label': 'Chat message',
 			onkeydown: (e) => {
 				if (e.key === 'Enter') this._sendChat();
 				else if (e.key === 'Escape') this.chatInput.blur();
@@ -1408,18 +1415,20 @@ export class CommunityUI {
 		this.chatChevron = el('span', { class: 'cc-chat-chevron', text: '▾' });
 		const head = el('div', {
 			class: 'cc-chat-head', role: 'button', tabindex: '0', 'aria-label': 'Toggle chat',
+			'aria-expanded': 'true', 'aria-controls': 'cc-chat-body',
 			onclick: () => this.toggleChat(),
-			onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.toggleChat(); } },
+			onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); this.toggleChat(); } },
 		}, [
 			el('span', { class: 'cc-chat-title' }, [el('span', { class: 'cc-chat-ico', text: '💬' }), document.createTextNode('Chat')]),
 			this.chatUnread,
 			this.chatChevron,
 		]);
-		this.chatBody = el('div', { class: 'cc-chat-body' }, [
+		this.chatBody = el('div', { class: 'cc-chat-body', id: 'cc-chat-body' }, [
 			this.chatLog,
-			el('div', { class: 'cc-chat-input' }, [this.chatInput, el('button', { class: 'cc-chat-send', text: 'Send', onclick: () => this._sendChat() })]),
+			el('div', { class: 'cc-chat-input' }, [this.chatInput, el('button', { class: 'cc-chat-send', type: 'button', text: 'Send', onclick: () => this._sendChat() })]),
 		]);
-		this.chat = el('div', { id: 'cc-chat' }, [head, this.chatBody]);
+		this.chatHead = head;
+		this.chat = el('div', { id: 'cc-chat', role: 'region', 'aria-label': 'Chat' }, [head, this.chatBody]);
 		// Default: collapsed on touch (small screens), open on desktop — unless the
 		// user has expressed a preference before.
 		const stored = lsGet('cc-chat-min');
@@ -1520,11 +1529,15 @@ export class CommunityUI {
 		const hint = el('div', { id: 'cc-hint', html:
 			'<kbd>W A S D</kbd> / drag-joystick to move · <kbd>drag</kbd> to look · scroll zoom · <kbd>Enter</kbd> chat · <kbd>Q</kbd> emotes · <kbd>I</kbd> inspect · <kbd>P</kbd> photo · <kbd>Z</kbd> zen' });
 
-		this.joystick = el('div', { id: 'cc-joystick' });
+		// Touch-only control surface: it has no keyboard equivalent to offer and
+		// nothing a screen reader can act on, so it stays out of both trees.
+		this.joystick = el('div', { id: 'cc-joystick', 'aria-hidden': 'true' });
 
 		this._buildTagHud();
 		this._buildKingHud();
-		this.hud = el('div', { id: 'cc-hud', hidden: true }, [banner, leave, this.statusPill, this.voiceBtn, this.powerBtn, this.zenBtn, this.photoBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
+		// A labelled landmark, so a screen reader can jump straight to the world
+		// controls instead of arrowing through the whole document.
+		this.hud = el('div', { id: 'cc-hud', hidden: true, role: 'region', 'aria-label': 'World controls' }, [banner, leave, this.statusPill, this.voiceBtn, this.powerBtn, this.zenBtn, this.photoBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
 		document.body.appendChild(this.hud);
 	}
 
@@ -2748,7 +2761,9 @@ export class CommunityUI {
 		this._chatMin = typeof force === 'boolean' ? force : !this._chatMin;
 		this.chat.classList.toggle('cc-min', this._chatMin);
 		this.chatChevron.textContent = this._chatMin ? '▴' : '▾';
-		this.chat.setAttribute('aria-expanded', String(!this._chatMin));
+		// aria-expanded belongs on the control that does the expanding, not on the
+		// region it expands; it was on the region, where nothing announces it.
+		this.chatHead.setAttribute('aria-expanded', String(!this._chatMin));
 		lsSet('cc-chat-min', this._chatMin ? '1' : '0');
 		if (!this._chatMin) {
 			this._unread = 0;
