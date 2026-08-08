@@ -1,4 +1,4 @@
-// Event souvenir drop — the server's read of /event.json.
+// Event souvenir drop, the server's read of /event.json.
 //
 // A live community event (the countdown pill, the in-world agenda, the fireworks
 // finale) is configured in ONE file: public/event.json on three.ws. This module
@@ -11,14 +11,14 @@
 // live. The rules are deliberately narrow:
 //
 //   • The window is [startsAt, endsAt) from the config. Before it, nothing is
-//     granted. After it, nothing is granted, ever again — that is the whole
+//     granted. After it, nothing is granted, ever again, that is the whole
 //     point of a souvenir, and there is no purchase path to soften it.
 //   • The world must be the one the config's `link` points at (its `coin`
 //     query param). Standing in an unrelated coin world during the window
 //     earns nothing.
 //   • The item must be a catalog cosmetic with tier 'event'. A config that
 //     names a boutique item grants nothing rather than giving away a paid
-//     cosmetic — a misconfiguration must not be able to devalue the shop.
+//     cosmetic, a misconfiguration must not be able to devalue the shop.
 //
 // The server is a separate deployment from the site (its Docker image carries
 // only multiplayer/src), so the config arrives over HTTP from the same origin
@@ -33,10 +33,13 @@ const CONFIG_URL = process.env.EVENT_CONFIG_URL
 
 // How long a fetched config is trusted before a refresh. Short enough that an
 // operator moving the event window is picked up within a couple of minutes,
-// long enough that a busy world isn't refetching per join.
-const TTL_MS = 120_000;
-// A failed fetch backs off for this long instead of retrying on every join.
-const ERROR_TTL_MS = 30_000;
+// long enough that a busy world isn't refetching per join. Overridable so live
+// ops can tighten it while an event is being set up, and so a conformance run
+// can flip the window without waiting two minutes for it to be noticed.
+const TTL_MS = Math.max(1000, Number(process.env.EVENT_CONFIG_TTL_MS) || 120_000);
+// A failed fetch backs off for this long instead of retrying on every join,
+// bounded by the TTL so a tightened TTL cannot invert the two.
+const ERROR_TTL_MS = Math.min(30_000, TTL_MS);
 // The join path must never wait on the network. Anything slower than this is
 // treated as "no config yet"; the background refresh still completes and warms
 // the cache for the next arrival.
@@ -46,7 +49,7 @@ const FETCH_TIMEOUT_MS = 3000;
 // "/play?coin=<mint>&name=…"). The link is what the countdown's CTA sends
 // players to, so reading the world from it means the drop can never target a
 // different world than the one the event advertises. Returns '' for a link with
-// no coin — the Mainland, which every world-scoped drop then declines.
+// no coin, the Mainland, which every world-scoped drop then declines.
 export function eventCoinFromLink(link) {
 	const raw = String(link ?? '');
 	const q = raw.indexOf('?');
@@ -60,7 +63,7 @@ export function eventCoinFromLink(link) {
 }
 
 // Reduce a raw /event.json document to the drop the server enforces, or null
-// when this config has no souvenir to grant. Pure — every gate below is
+// when this config has no souvenir to grant. Pure, every gate below is
 // testable without a network or a clock.
 export function parseEventDrop(doc) {
 	if (!doc || typeof doc !== 'object') return null;
