@@ -210,14 +210,42 @@ async function checkPumpFun() {
 // -- LLM: the NPC citizens, the concierge, in-world chat -----------------------
 
 async function checkLlm(base) {
-	// The platform already ships a real probe of its own routing chain; asking the
-	// live deployment is more truthful than re-deriving the chain here, because it
-	// answers with the keys production actually holds, not the ones in this shell.
-	// The endpoint is cron-secret gated on purpose: its error strings name which
-	// provider key is bad and can carry quota detail. Present the same secret an
-	// operator or external monitor would.
+	// Two different questions, and only the first one decides pass/fail.
+	//
+	// What a player experiences is one real NPC turn through /api/brain/chat. That
+	// endpoint streams an SSE `fallback` event every time the router demotes a
+	// rung, so a single request both delivers the answer AND shows the rotation
+	// doing its job — a better proof than any synthetic poisoning, because the
+	// chain is failing over against whatever is genuinely broken right now.
+	//
+	// /api/llm/health is the second question: it probes only the PAID tier
+	// (OpenRouter / OpenAI / Vertex). Its verdict is reported as context, not as a
+	// gate, because llm.js leads with free providers and a degraded paid tier is
+	// invisible to players until the free rungs go too.
+	const turn = await timed(async () => {
+		const res = await fetch(`${base}/api/brain/chat`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', origin: 'https://three.ws' },
+			body: JSON.stringify({ messages: [{ role: 'user', content: 'Say hello in five words.' }] }),
+			signal: AbortSignal.timeout(90_000),
+		});
+		if (!res.ok) throw new Error(`http ${res.status}`);
+		const body = await res.text();
+		const fallbacks = [...body.matchAll(/^event: fallback\ndata: (.+)$/gm)].map((m) => {
+			try {
+				return JSON.parse(m[1]).route;
+			} catch {
+				return 'unparsed';
+			}
+		});
+		const served = /^data: "/m.test(body);
+		if (!served) throw new Error('stream carried no content tokens');
+		const lead = body.match(/^event: meta\ndata: (.+)$/m);
+		return { fallbacks, lead: lead ? JSON.parse(lead[1]).provider : 'unknown' };
+	});
+
 	const secret = process.env.CRON_SECRET || '';
-	const r = await timed(async () => {
+	const paid = await timed(async () => {
 		const res = await fetch(`${base}/api/llm/health`, {
 			headers: secret ? { 'x-cron-secret': secret } : {},
 			signal: AbortSignal.timeout(60_000),
@@ -225,31 +253,36 @@ async function checkLlm(base) {
 		if (!res.ok) throw new Error(`http ${res.status}${res.status === 403 ? ' (set CRON_SECRET to probe this)' : ''}`);
 		return await res.json();
 	});
-	if (!r.ok) {
-		record('llm', { what: 'NPC citizens, concierge, in-world chat', rungsTotal: 0, rungsLive: 0, rungs: [], failoverProven: false, failoverDetail: r.error, pass: false });
-		return;
+
+	const rungs = [];
+	if (turn.ok) {
+		rungs.push({ rung: `player turn (lead: ${turn.value.lead})`, ok: true, ms: turn.ms, error: null });
+		for (const route of turn.value.fallbacks) {
+			rungs.push({ rung: `  demoted → ${route}`, ok: true, ms: null, error: null });
+		}
+	} else {
+		rungs.push({ rung: 'player turn (/api/brain/chat)', ok: false, ms: turn.ms, error: turn.error });
 	}
-	// The payload is keyed by provider with a sibling `overall` verdict, so read
-	// every entry that carries a status rather than assuming a `providers` array.
-	const rungs = Object.entries(r.value || {})
-		.filter(([key, v]) => key !== 'overall' && v && typeof v === 'object' && 'status' in v)
-		.map(([key, v]) => ({
-			rung: key,
-			ok: v.status === 'ok' || v.status === 'healthy',
-			ms: v.ms ?? null,
-			error: v.error || (v.status !== 'ok' ? v.status : null),
-		}));
-	const live = rungs.filter((x) => x.ok);
+	if (paid.ok) {
+		for (const [key, v] of Object.entries(paid.value || {})) {
+			if (key === 'overall' || !v || typeof v !== 'object' || !('status' in v)) continue;
+			rungs.push({ rung: `paid tier: ${key}`, ok: v.status === 'ok', ms: v.latencyMs ?? null, error: v.error || null });
+		}
+	} else {
+		rungs.push({ rung: 'paid tier probe', ok: false, ms: paid.ms, error: paid.error });
+	}
+
+	const paidLive = rungs.filter((x) => x.rung.startsWith('paid tier:') && x.ok).length;
 	record('llm', {
 		what: 'NPC citizens, concierge, in-world chat',
 		rungsTotal: rungs.length,
-		rungsLive: live.length,
+		rungsLive: rungs.filter((x) => x.ok).length,
 		rungs,
-		// llm.js is free-first with several free rungs; two live providers means a
-		// single provider outage is invisible to players.
-		failoverProven: live.length >= 2,
-		failoverDetail: `${live.length}/${rungs.length} providers answering`,
-		pass: live.length >= 2,
+		failoverProven: turn.ok && turn.value.fallbacks.length > 0,
+		failoverDetail: turn.ok
+			? `answered in ${turn.ms}ms after ${turn.value.fallbacks.length} live demotion(s); paid tier ${paidLive} live (${paid.ok ? paid.value.overall : 'unprobed'})`
+			: turn.error,
+		pass: turn.ok,
 	});
 }
 
