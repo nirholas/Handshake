@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-08T15:12:58.006Z",
+	"generated_at": "2026-08-08T15:27:43.012Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -24,6 +24,49 @@
 			"link": "/docs/play-hardening",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "/play tells you the truth when something fails, instead of showing green",
+			"summary": "A handful of places in the coin worlds reported success no matter what the server actually said. A $THREE boutique purchase that failed verification showed the same green Unlocked toast as one that worked, and a token swap that reverted on-chain still said Bought. Both now check the real outcome and show the failure with a link to the transaction. Every server message the world sends back now carries an explicit success or failure flag, so store, bank, job and wardrobe panels style errors as errors rather than guessing from the wording. A refused wardrobe change clears its spinner and says why instead of spinning forever, the jobs board says Loading jobs rather than flashing There are no jobs before the first reply arrives, and the in-world price screen switches from a pulsing LIVE badge to STALE with the age of the data when its feed stops responding.",
+			"link": "/play",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Coin Wars is now a door in your world, not a hidden game",
+			"summary": "Every coin world's plaza has a war portal. Walk up and the board shows your community's real standing on the war ladder: its Elo rating, record, kill/death, and the last battles it fought. Press E and the portal checks you hold the coin, puts your community in line, and the moment another community queues you are both dropped into the same arena to fight it out. While a war involving your coin is running, the board turns into a live scoreboard with the round clock and a kill feed, so the plaza can watch without joining. When the battle ends the result comes home: it lands on the board, a win takes the board over for a moment, and walking back from the arena drops you in the same world you left rather than the lobby. Nothing polls while nobody is standing there.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Death, loot and driving in /play stop taking things you should have kept",
+			"summary": "Looting a marker with a nearly full pack used to destroy everything that did not fit: the marker was cleared before the pack was checked, so a full backpack quietly ate the rest of your run. Loot now takes only what fits and leaves the remainder standing in the marker for another trip. Quitting on the death screen used to save you at zero health, so you came back walking but died to the next hit; you now always stand back up. A very large cash balance no longer wraps around to zero when it loads. Cars are held to their real top speed over real elapsed time rather than per network message, which closes a route that let a scripted client drive at ten times the speed limit and farm the delivery jobs. Kicking the plaza ball now requires standing next to it, and the store, boutique, character and jobs-board requests are rate limited like every other action, so one client can no longer slow a world down for the hundred people in it.",
+			"link": "/play",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Every walker in a coin world is somebody you can meet and talk to",
+			"summary": "The crowd strolling a /play plaza already wore real community avatars from the public gallery, and most of those avatars represent a registered three.ws agent with its own wallet and earned reputation. The world used to throw all of that away and render anonymous scenery. Now a walker keeps the identity of the avatar it wears: click a nameplate or tap a body and their profile opens with the live agent, trust score, wallet and holdings every other surface reads, plus a Talk 1-on-1 button that starts a real streamed conversation where they answer in character as themselves. While you talk they stop walking and turn to face you, then catch back up with the crowd when you leave. The townsfolk who run the paid counters are selectable from any distance too: up close they still open their counter, and from across the plaza their profile opens instead of nothing happening. Nothing is invented: a walker wearing the bundled default avatar, or one still on an onboarding placeholder name, carries no identity and is presented honestly as scenery with no nameplate and no profile.",
+			"link": "/play",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -73,12 +116,45 @@
 		{
 			"date": "2026-08-08",
 			"type": "update",
+			"title": "The /play lobby and world stop leaking, and work on a phone",
+			"summary": "Entering and leaving coin worlds repeatedly used to leave the previous world behind: peers were duplicated on every reconnect, mobs and vehicles could vanish for an entire session if your avatar loaded slowly, and cancelling the holders gate left an invisible dialog trapping your keyboard until you reloaded. Those are fixed, along with a set of memory leaks that piled up every time you hopped worlds. On touch devices the Enter community button on each lobby card was invisible, because it only appeared on mouse hover; it is now always visible on phones and when tabbing with a keyboard. The three contextual action buttons that could stack exactly on top of each other now each have their own row, so standing near the wheel and a gather node no longer hides one behind the other. Denying microphone access repeatedly no longer breaks voice for the rest of your session.",
+			"link": "/play",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "The world stops crying wolf: ad blockers and flaky wifi no longer fake a broken /play",
+			"summary": "If an ad blocker or privacy extension ate one of the optional page scripts, or a background request failed on venue wifi, /play could cover a world that was loading perfectly well with a full-screen \"Couldn’t load the world\" card. The loading watchdog now only fires for the failure it was built for, a genuinely missing app file after a deploy, and gives a slow but healthy boot time to finish instead. A shared world link is also handled more carefully now: the coin name and symbol in it are stripped of line breaks and hidden characters and cut to a sane length so nobody can rearrange your screen with a link, and an image address that is not really an image is dropped instead of loading a dead tile. Finally, every screen of the holders-only door now offers a way into the coin’s open world, so a check you cannot pass or complete is never a dead end.",
+			"link": "/play",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
 			"title": "Voice Lab now has every voice we can reach, not just cloned ones",
 			"summary": "Pick your agent's voice from about 850 ready-made voices in one searchable grid: roughly 500 free Microsoft Edge neural voices across 100+ locales, Google's 30 Gemini voices that take a spoken direction like \"warm and unhurried\", NVIDIA's multilingual set, OpenAI's eleven, your own ElevenLabs voices, and the public ElevenLabs Voice Library you can copy a voice out of in one click. Preview any of them, then speak your own text with a model, a direction, and a speed. Edge, Gemini, and NVIDIA are free and work signed out; the ElevenLabs and OpenAI lanes are metered to your credits or run on your own key. Cloning your own voice still works exactly as before.",
 			"link": "/voice",
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Your /play progress is now yours alone, and one payment buys exactly one thing",
+			"summary": "Two things that guard what you own in the coin worlds got rebuilt. Your saved character (cash, bank, pack, unlocked fits, job log) used to be reachable by anyone who simply claimed your player id when joining, which meant someone else could load your character, spend it, and save over it. Progress is now tied to a signed credential the server issues and only your browser holds, so nobody can wear your account by asking for it. Existing guests keep everything they have earned: the first time you come back, your old id is migrated onto a signed one automatically. Separately, a paid wheel spin or a $THREE boutique purchase is now spent once and only once. The check that stops a settled payment being redeemed twice used to live inside a single world, so the same transaction could be replayed in another coin world, or after a server restart, to claim a second prize. It is now one shared record across every world and restart, and a quote is sealed to the character that asked for it, so a payment can never land on somebody else's profile.",
+			"link": "/play",
+			"tags": [
+				"security",
+				"fix"
 			]
 		},
 		{
@@ -23341,7 +23417,7 @@
 		{
 			"date": "2026-06-12",
 			"type": "launch",
-			"title": "Text to 3D Is Live - Type a Prompt, Download a 3D Model",
+			"title": "Text to 3D Is Live: Type a Prompt, Download a 3D Model",
 			"summary": "Forge is live on three.ws: type a description and get a textured, downloadable 3D model (GLB) in your browser. Image to 3D from photos works too. Free draft tier, no install.",
 			"link": "/blog/text-to-3d-is-live",
 			"tags": [
@@ -24044,7 +24120,7 @@
 		{
 			"date": "2026-06-09",
 			"type": "launch",
-			"title": "three.ws Wins DEXTools Social Boost - $5,543 $three Buyback",
+			"title": "three.ws Wins DEXTools Social Boost: $5,543 $three Buyback",
 			"summary": "three.ws is DEXTools",
 			"link": "/blog/three-ws-dextools-social-boost-buyback",
 			"tags": [
@@ -24075,7 +24151,7 @@
 			"date": "2026-06-08",
 			"type": "launch",
 			"title": "three.ws Featured on the Alibaba Cloud Marketplace Blog",
-			"summary": "Alibaba Cloud Marketplace published an editorial on three.ws - browser-native 3D AI agents you deploy with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
+			"summary": "Alibaba Cloud Marketplace published an editorial on three.ws: browser-native 3D AI agents you deploy with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
 			"link": "/blog/three-ws-featured-on-alibaba-cloud-marketplace-blog",
 			"tags": [
 				"launch"
@@ -24709,7 +24785,7 @@
 			"date": "2026-05-27",
 			"type": "launch",
 			"title": "three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement",
-			"summary": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments - for the first fully on-chain 3D AI agent platform.",
+			"summary": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments: for the first fully on-chain 3D AI agent platform.",
 			"link": "/blog/three-ws-on-aws-marketplace",
 			"tags": [
 				"launch"
@@ -24770,7 +24846,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "$THREE Listed on Coinbase, CoinGecko, Jupiter, and Investing.com",
-			"summary": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com - giving the three.ws community every major on-ramp and price discovery surface.",
+			"summary": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com: giving the three.ws community every major on-ramp and price discovery surface.",
 			"link": "/blog/three-token-listings",
 			"tags": [
 				"launch"
@@ -24780,7 +24856,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "2,500 New 3D Animations Coming to three.ws",
-			"summary": "three.ws is expanding its animation library with 2,500 new 3D animations - giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
+			"summary": "three.ws is expanding its animation library with 2,500 new 3D animations: giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
 			"link": "/blog/2500-new-animations",
 			"tags": [
 				"launch"
@@ -24789,7 +24865,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "Agent Builder Live - Studio Redesign, LLM Chat Upgrade",
+			"title": "Agent Builder Live: Studio Redesign, LLM Chat Upgrade",
 			"summary": "three.ws ships Agent Builder, an improved Studio design, and a major LLM Chat upgrade. Agents are now payable, tradeable, and discoverable.",
 			"link": "/blog/agent-builder-studio-launch",
 			"tags": [
@@ -24859,7 +24935,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "Full Animation & Emotion Control - Plus Pump.fun Live Feed",
+			"title": "Full Animation & Emotion Control: Plus Pump.fun Live Feed",
 			"summary": "three.ws now ships full animation and emotion control for 3D agents, with live Pump.fun feed integration. Your agents react to any API or data feed in real time.",
 			"link": "/blog/animation-emotion-control",
 			"tags": [
@@ -24899,7 +24975,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "Real-Time Voice Interaction with 3D AI Agents - Preview",
+			"title": "Real-Time Voice Interaction with 3D AI Agents: Preview",
 			"summary": "three.ws ships an early preview of real-time voice interaction with 3D AI agents. Agents listen, reason with memory and emotions, respond in voice, and support AR/VR.",
 			"link": "/blog/real-time-voice-interaction",
 			"tags": [
@@ -24930,7 +25006,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "Solana Wallet Integration for Autonomous 3D Agents",
-			"summary": "three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously - earning from skills, paying for inference, and executing on-chain transactions while you sleep.",
+			"summary": "three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously: earning from skills, paying for inference, and executing on-chain transactions while you sleep.",
 			"link": "/blog/solana-wallet-integration",
 			"tags": [
 				"launch"
@@ -24950,7 +25026,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "three.ws Is Now Live on CoinMarketCap",
-			"summary": "three.ws is now live on CoinMarketCap - join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
+			"summary": "three.ws is now live on CoinMarketCap: join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
 			"link": "/blog/three-ws-on-coinmarketcap",
 			"tags": [
 				"launch"
@@ -24980,7 +25056,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "three.ws Listed on Coinbase x402 Bazaar and agentic.market",
-			"summary": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market - the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
+			"summary": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market: the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
 			"link": "/blog/three-ws-x402-bazaar",
 			"tags": [
 				"launch"
@@ -24989,8 +25065,8 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "three.ws Ships Inside SperaxUSD - DeFi Gets a 3D Face",
-			"summary": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity - and they react to DeFi events in real time.",
+			"title": "three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face",
+			"summary": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity: and they react to DeFi events in real time.",
 			"link": "/blog/three-ws-speraxusd-integration",
 			"tags": [
 				"launch"
@@ -25009,7 +25085,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "We Just Shipped the 3D Layer for the Internet - <agent-3d>",
+			"title": "We Just Shipped the 3D Layer for the Internet: <agent-3d>",
 			"summary": "Drop one <agent-3d> web component on your site and give any page an AI with LLM brain, memory, emotions, DOM awareness, password field privacy, and an on-chain identity that lives forever.",
 			"link": "/blog/agent-3d-web-component",
 			"tags": [
@@ -25778,7 +25854,7 @@
 			"date": "2026-05-04",
 			"type": "launch",
 			"title": "How to Embed 3D On-Chain Agents on Your Site",
-			"summary": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component - from setup to CORS configuration and page integration.",
+			"summary": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component: from setup to CORS configuration and page integration.",
 			"link": "/blog/how-to-embed-3d-onchain-agents",
 			"tags": [
 				"launch"

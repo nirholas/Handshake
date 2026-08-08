@@ -3,6 +3,46 @@
 	"entries": [
 		{
 			"date": "2026-08-08",
+			"title": "Your /play progress is now yours alone, and one payment buys exactly one thing",
+			"summary": "Two things that guard what you own in the coin worlds got rebuilt. Your saved character (cash, bank, pack, unlocked fits, job log) used to be reachable by anyone who simply claimed your player id when joining, which meant someone else could load your character, spend it, and save over it. Progress is now tied to a signed credential the server issues and only your browser holds, so nobody can wear your account by asking for it. Existing guests keep everything they have earned: the first time you come back, your old id is migrated onto a signed one automatically. Separately, a paid wheel spin or a $THREE boutique purchase is now spent once and only once. The check that stops a settled payment being redeemed twice used to live inside a single world, so the same transaction could be replayed in another coin world, or after a server restart, to claim a second prize. It is now one shared record across every world and restart, and a quote is sealed to the character that asked for it, so a payment can never land on somebody else's profile.",
+			"tags": [
+				"security",
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
+			"title": "Death, loot and driving in /play stop taking things you should have kept",
+			"summary": "Looting a marker with a nearly full pack used to destroy everything that did not fit: the marker was cleared before the pack was checked, so a full backpack quietly ate the rest of your run. Loot now takes only what fits and leaves the remainder standing in the marker for another trip. Quitting on the death screen used to save you at zero health, so you came back walking but died to the next hit; you now always stand back up. A very large cash balance no longer wraps around to zero when it loads. Cars are held to their real top speed over real elapsed time rather than per network message, which closes a route that let a scripted client drive at ten times the speed limit and farm the delivery jobs. Kicking the plaza ball now requires standing next to it, and the store, boutique, character and jobs-board requests are rate limited like every other action, so one client can no longer slow a world down for the hundred people in it.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
+			"title": "/play tells you the truth when something fails, instead of showing green",
+			"summary": "A handful of places in the coin worlds reported success no matter what the server actually said. A $THREE boutique purchase that failed verification showed the same green Unlocked toast as one that worked, and a token swap that reverted on-chain still said Bought. Both now check the real outcome and show the failure with a link to the transaction. Every server message the world sends back now carries an explicit success or failure flag, so store, bank, job and wardrobe panels style errors as errors rather than guessing from the wording. A refused wardrobe change clears its spinner and says why instead of spinning forever, the jobs board says Loading jobs rather than flashing There are no jobs before the first reply arrives, and the in-world price screen switches from a pulsing LIVE badge to STALE with the age of the data when its feed stops responding.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
+			"title": "The /play lobby and world stop leaking, and work on a phone",
+			"summary": "Entering and leaving coin worlds repeatedly used to leave the previous world behind: peers were duplicated on every reconnect, mobs and vehicles could vanish for an entire session if your avatar loaded slowly, and cancelling the holders gate left an invisible dialog trapping your keyboard until you reloaded. Those are fixed, along with a set of memory leaks that piled up every time you hopped worlds. On touch devices the Enter community button on each lobby card was invisible, because it only appeared on mouse hover; it is now always visible on phones and when tabbing with a keyboard. The three contextual action buttons that could stack exactly on top of each other now each have their own row, so standing near the wheel and a gather node no longer hides one behind the other. Denying microphone access repeatedly no longer breaks voice for the rest of your session.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
 			"title": "Coin Wars is now a door in your world, not a hidden game",
 			"summary": "Every coin world's plaza has a war portal. Walk up and the board shows your community's real standing on the war ladder: its Elo rating, record, kill/death, and the last battles it fought. Press E and the portal checks you hold the coin, puts your community in line, and the moment another community queues you are both dropped into the same arena to fight it out. While a war involving your coin is running, the board turns into a live scoreboard with the round clock and a kill feed, so the plaza can watch without joining. When the battle ends the result comes home: it lands on the board, a win takes the board over for a moment, and walking back from the arena drops you in the same world you left rather than the lobby. Nothing polls while nobody is standing there.",
 			"tags": [
@@ -18612,6 +18652,16 @@
 			"summary": "Trying to enter a coin's holders-only world while our holder-verification service is unavailable used to dump a cryptic internal error (\"CoinCommunities is not configured\") with a retry button that could never succeed. The gate now says plainly that the holder check is offline on our side, that your tokens are unaffected, and offers a one-click way into the coin's open world instead. That open-world button, in the too-few-tokens screen as well, now actually takes you into the open world rather than kicking you back to the lobby to start over.",
 			"tags": [
 				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
+			"title": "The world stops crying wolf: ad blockers and flaky wifi no longer fake a broken /play",
+			"summary": "If an ad blocker or privacy extension ate one of the optional page scripts, or a background request failed on venue wifi, /play could cover a world that was loading perfectly well with a full-screen \"Couldn’t load the world\" card. The loading watchdog now only fires for the failure it was built for, a genuinely missing app file after a deploy, and gives a slow but healthy boot time to finish instead. A shared world link is also handled more carefully now: the coin name and symbol in it are stripped of line breaks and hidden characters and cut to a sane length so nobody can rearrange your screen with a link, and an image address that is not really an image is dropped instead of loading a dead tile. Finally, every screen of the holders-only door now offers a way into the coin’s open world, so a check you cannot pass or complete is never a dead end.",
+			"tags": [
+				"fix",
+				"improvement"
 			],
 			"link": "/play"
 		}

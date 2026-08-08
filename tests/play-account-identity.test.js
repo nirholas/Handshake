@@ -8,7 +8,7 @@
 // wiring in place: a bare pid is never an account key again, and the signed
 // token is the only thing that carries a guest's progression forward.
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { WalkRoom } from '../multiplayer/src/rooms/WalkRoom.js';
 import { newGuestId, signGuestToken, verifyGuestToken } from '../multiplayer/src/guest-token.js';
 import { playerStore, savePlayer, loadPlayer } from '../multiplayer/src/playerStore.js';

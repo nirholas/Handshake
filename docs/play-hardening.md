@@ -105,6 +105,64 @@ Examples currently holding the line:
 - The **boutique purchase flow** ([src/game/boutique-purchase.js](../src/game/boutique-purchase.js)) rejects on the server's own failure notices rather than treating any `boutique` notice as success.
 - The **boot loader** cannot strand: an inline watchdog in [pages/play.html](../pages/play.html) replaces the spinner with a real error card (with a retry) if a script or stylesheet fails, and `enter()` failures tear down and return a working lobby.
 
+## 7. A saved character belongs to one credential
+
+**Invariant: the account key a profile loads under is never a raw join option.**
+
+A `/play` profile is everything a player has earned: cash, bank, pack, unlocked cosmetics, quest log. It is keyed by `playerId`, resolved in `WalkRoom._resolveIdentity()` ([multiplayer/src/rooms/WalkRoom.js](../multiplayer/src/rooms/WalkRoom.js)).
+
+`playerId` used to fall back to `options.pid`, a string the browser sent verbatim. Joining with `pid` set to somebody else's wallet address or guest id loaded *their* profile: you could spend their cash, sell their items, wear their premium cosmetics, and every mutation persisted back over their record. Their placed blocks and props also became yours to delete, because build ownership keys off the same id.
+
+The trust order is now explicit, highest first:
+
+1. The wallet `onAuth` verified, when the platform token gate is on.
+2. A wallet sealed inside a valid play pass ([multiplayer/src/play-pass.js](../multiplayer/src/play-pass.js)). Possession of the HMAC-signed pass proves the wallet even when the gate is off.
+3. A guest id sealed inside a signed guest token ([multiplayer/src/guest-token.js](../multiplayer/src/guest-token.js)). **The token is the credential, not the id.**
+4. A one-time migration for the legacy `guest-…` ids clients persisted in `localStorage` before tokens existed. Honored only if that record has never been upgraded, never for a wallet-shaped id, and the id is sealed into a signed token on the spot. The record is stamped `guestUpgraded`, so the same bare claim from anyone else afterwards gets a fresh guest instead.
+5. A brand new server-minted guest id.
+
+Lanes 3 to 5 send the client a `guestToken` message, which it stores under `tws-guest-token` and replays on the next join ([src/game/community-net.js](../src/game/community-net.js)). Guest ids are minted server-side with 12 random bytes, so they cannot be guessed the way a sequential or client-chosen id can.
+
+`guest-token.js` shipped with a header describing this exact fix and **zero callers** for months. If you write a module to close a hole, wire it in the same change.
+
+Tests: [tests/play-account-identity.test.js](../tests/play-account-identity.test.js), which drives `_resolveIdentity` through every lane including the original exploit.
+
+## 8. One payment grants exactly one thing
+
+**Invariant: a settled transaction is consumed once, process-wide and across restarts.**
+
+Paid wheel spins and `$THREE` boutique purchases both verify a real Solana transaction before granting anything. The replay guard that stops a verified payment being cashed twice used to be a `Map` on each `WalkRoom` instance.
+
+Rooms are partitioned per coin world, so that guard only held *within one room*. The same `{ quoteToken, txSig }` pair replayed into N different coin worlds verified on-chain N times and granted N times. One $3 payment could be rolled into a best-of-N jackpot hunt, and a process restart or a second Cloud Run instance widened it further.
+
+Replay protection now lives in [multiplayer/src/settlement-guard.js](../multiplayer/src/settlement-guard.js): one shared ledger for the whole process, backed by Redis `SET NX` when `UPSTASH_REDIS_REST_URL`/`_TOKEN` are configured, so consumption spans rooms, restarts, and instances. Both the quote nonce **and** the transaction signature are consumed, so a second quote cannot be settled by the same transfer.
+
+Quotes are also sealed to the profile that asked for them (`forAccount` in [multiplayer/src/game-token.js](../multiplayer/src/game-token.js)). A leaked `{ quote, txSig }` pair can no longer be redeemed onto a different account.
+
+Settlement reads at `confirmed` for latency; set `GAME_TOKEN_VERIFY_COMMITMENT=finalized` to trade responsiveness for fork certainty.
+
+Tests: [tests/spin-wheel.test.js](../tests/spin-wheel.test.js) covers same-room replay and cross-world replay.
+
+## 9. The world never destroys what a player earned
+
+**Invariant: a server action that cannot complete leaves the player's things where they were.**
+
+Each of these shipped as a real loss:
+
+- **Loot no longer eats an overflowing drop.** `handleLoot` ([multiplayer/src/combat-handlers.js](../multiplayer/src/combat-handlers.js)) used to delete the tombstone and *then* check pack space, so everything that did not fit was destroyed silently. It now absorbs what fits, writes the remainder back, and only removes the marker once it is fully drained.
+- **Dying and disconnecting no longer bricks a character.** The respawn timer bailed early when the session had already left, persisting `hp: 0`; the player returned walking but died to the next hit. `reviveProfile` now runs unconditionally, and `onJoin` self-heals any profile restored at zero health.
+- **A large balance no longer wraps to zero.** `restoreProfile` clamped with `saved.gold | 0`, which is ToInt32 and runs *before* the ceiling, so anything past 2^31 wrapped negative and clamped to 0. It now floors then clamps, and every reward path credits through `creditGold()` so a balance saturates instead of overflowing.
+
+## 10. Movement and interaction are policed against real time and real distance
+
+**Invariant: an anti-cheat clamp is derived from elapsed time and world distance, never from a per-message constant.**
+
+The vehicle teleport clamp allowed a fixed displacement *per `vsync` message*, sized for a 15Hz sender. The rate limiter permits 30 messages a second, so maxing the step on every message legally covered roughly ten times a car's top speed, fast enough to farm the repeatable cross-town delivery jobs. The clamp now derives its allowance from `Date.now() - v.tsServer` and validates the derived speed rather than the client's self-reported scalar.
+
+Every world interaction gates on the server's authoritative position: fishing spots, the wheel, quest zones, loot reach, vehicle entry, and now `ball:kick`, which had no proximity check and let anyone in the district drive the shared ball.
+
+Read-only request handlers are rate limited too. `storeReq`, `boutiqueReq`, `profileReq`, `questReq`, and `spinInfo` each had a declared bucket in `ACTION_RATES` that nothing consulted. `questReq` is the expensive one: it rebuilds the whole mission registry per call, so an unbounded loop from one client was a self-service denial of service against every player in that room.
+
 ## Verifying a change
 
 ```bash
@@ -115,6 +173,10 @@ npx vitest run tests/play-deeplink-safety.test.js
 npx vitest run tests/play-gate.test.js tests/play-pass.test.js \
   tests/minimap-projection.test.js tests/quests-vehicle-delivery.test.js \
   tests/play-friends-presence.test.js
+
+# Account identity and one-payment-one-grant: the two invariants above that
+# protect what a player owns.
+npx vitest run tests/play-account-identity.test.js tests/spin-wheel.test.js
 
 # A real browser: console errors, boot, reconnect helpers, CSS injection,
 # malformed mints, wheel styles. Point it at prod or a local `npm run dev`.

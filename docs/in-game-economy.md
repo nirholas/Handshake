@@ -97,8 +97,13 @@ touches a blockchain.
    price is never trusted.
 2. **Sign.** You sign one split transaction from your wallet.
 3. **Verify.** The server re-fetches the confirmed transaction from Solana RPC and
-   checks the destination and amount before granting the cosmetic. Settled quote
-   nonces are retained, so a transaction cannot be replayed for a second item.
+   checks the destination and amount before granting the cosmetic. The settled
+   quote nonce and the transaction signature are both consumed in a shared,
+   Redis-backed ledger
+   ([multiplayer/src/settlement-guard.js](../multiplayer/src/settlement-guard.js)),
+   so one payment grants exactly one item across every coin world, every server
+   restart, and every instance. The quote is also sealed to the character that
+   requested it, so it cannot be redeemed onto another profile.
 
 You are never granted an item on the strength of a client claiming it paid.
 
