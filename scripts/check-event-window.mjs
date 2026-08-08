@@ -56,9 +56,19 @@ const ZONES = [
 /** The instant as an ISO string without the noise of trailing milliseconds. */
 export const isoOf = (ms) => new Date(ms).toISOString().replace('.000', '');
 
-/** The instant as a human reads it in `tz`, which is what announcement copy quotes. */
+/**
+ * The instant as a human reads it in `tz`, which is what announcement copy quotes.
+ *
+ * Modern ICU separates the time from AM/PM with a NARROW NO-BREAK SPACE (U+202F)
+ * rather than a plain one. These strings exist to be pasted into posts and blog
+ * copy, so that invisible character would travel into published announcements and
+ * into any search for the time that assumes a normal space. Normalised to ASCII
+ * spaces for exactly that reason.
+ */
 export const clockIn = (ms, tz) =>
-	new Intl.DateTimeFormat('en-US', { timeZone: tz, dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ms));
+	new Intl.DateTimeFormat('en-US', { timeZone: tz, dateStyle: 'medium', timeStyle: 'short' })
+		.format(new Date(ms))
+		.replace(/[\u202f\u00a0]/g, ' ');
 
 /** One line per announcement timezone, in the order the marketing copy lists them. */
 export function zoneLines(ms) {
