@@ -22,6 +22,7 @@ import { threeMarkSvg } from '../shared/brand-mark.js';
 import { proxiedImageURL } from '../ipfs.js';
 import { log } from '../shared/log.js';
 import { t, onLocaleChange } from './i18n-play.js';
+import { announce } from './a11y.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
 // storage is blocked (the `?bg=transparent` embed). Guard every access so a
@@ -137,9 +138,9 @@ const fmtCompact = (n) => {
 
 // Compact "3h ago" / "just now" relative time from an epoch-ms timestamp.
 function timeAgo(ts) {
-	const t = Number(ts);
-	if (!t || !isFinite(t)) return '';
-	const s = Math.max(0, (Date.now() - t) / 1000);
+	const at = Number(ts);
+	if (!at || !isFinite(at)) return '';
+	const s = Math.max(0, (Date.now() - at) / 1000);
 	if (s < 60) return 'just now';
 	if (s < 3600) return `${Math.floor(s / 60)}m ago`;
 	if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
@@ -1204,6 +1205,13 @@ export class CommunityUI {
 		setTimeout(done, 280);
 	}
 
+	// One invariant across every state below: a visitor who cannot clear the
+	// holder floor, or who does not want to sign in, or whose check simply broke,
+	// is always offered the open world ('general') rather than only a retry and a
+	// Cancel back to the lobby. Someone arriving from a shared link came to see a
+	// world, and the open one beside it is live for everyone, so a gate that can
+	// only say no is a wall. Only 'checking' and 'granted' are transient enough to
+	// need no exit.
 	setHolderGate(state, data = {}) {
 		if (!this._gate) this.openHolderGate(data);
 		const body = this._gateBody;
@@ -1225,8 +1233,8 @@ export class CommunityUI {
 			onclick: () => this.h.onHolderAction?.(action),
 		}, [label]);
 		const spin = () => el('div', { class: 'cc-gate-spin' }, [el('span', { class: 'cc-spinner cc-spinner-lg' })]);
-		const title = (t) => el('h3', { class: 'cc-gate-title', text: t });
-		const msg = (t) => el('p', { class: 'cc-gate-msg', text: t });
+		const title = (copy) => el('h3', { class: 'cc-gate-title', text: copy });
+		const msg = (copy) => el('p', { class: 'cc-gate-msg', text: copy });
 		const errLine = data.error ? el('p', { class: 'cc-gate-err', text: data.error }) : null;
 		const actions = (...kids) => el('div', { class: 'cc-gate-actions' }, kids.filter(Boolean));
 
@@ -1275,7 +1283,11 @@ export class CommunityUI {
 					title('Verify you’re a holder'),
 					msg(`Sign in with X so we can check the wallet you hold ${sym} in. Your wallet is read server-side and never shared.`),
 					errLine,
-					actions(btn('Sign in with X', 'signin', 'cc-gate-primary'), btn('Cancel', 'cancel', 'cc-gate-ghost')),
+					actions(
+						btn('Sign in with X', 'signin', 'cc-gate-primary'),
+						btn('Enter the open world instead', 'general'),
+						btn('Cancel', 'cancel', 'cc-gate-ghost'),
+					),
 				];
 				break;
 			case 'wallet':
@@ -1284,7 +1296,11 @@ export class CommunityUI {
 					title('Link your Solana wallet'),
 					msg(`Connect the wallet that holds ${sym} and sign a message to link it. No transaction, no fee.`),
 					errLine,
-					actions(btn('Connect wallet', 'wallet', 'cc-gate-primary'), btn('Cancel', 'cancel', 'cc-gate-ghost')),
+					actions(
+						btn('Connect wallet', 'wallet', 'cc-gate-primary'),
+						btn('Enter the open world instead', 'general'),
+						btn('Cancel', 'cancel', 'cc-gate-ghost'),
+					),
 				];
 				break;
 			case 'error':
@@ -1295,6 +1311,7 @@ export class CommunityUI {
 					msg(data.error || 'Something went wrong checking your holdings.'),
 					actions(
 						btn('Try again', 'recheck', 'cc-gate-primary'),
+						btn('Enter the open world instead', 'general'),
 						btn('Use a different wallet', 'switch'),
 						btn('Cancel', 'cancel', 'cc-gate-ghost'),
 					),
@@ -1618,11 +1635,11 @@ export class CommunityUI {
 		for (const row of leaderboard) {
 			const isMe = row.id === localId;
 			const secs = Math.floor(row.timeMs / 1000);
-			const t = secs >= 60 ? `${Math.floor(secs/60)}m ${secs%60}s` : `${secs}s`;
+			const left = secs >= 60 ? `${Math.floor(secs/60)}m ${secs%60}s` : `${secs}s`;
 			this._tagLeaderboard.appendChild(
 				el('div', { class: `cc-tag-row${isMe ? ' cc-tag-me' : ''}` }, [
 					el('span', { class: 'cc-tag-row-name', text: row.name }),
-					el('span', { class: 'cc-tag-row-time', text: t }),
+					el('span', { class: 'cc-tag-row-time', text: left }),
 				]),
 			);
 		}
@@ -2665,6 +2682,13 @@ export class CommunityUI {
 		if (!text) return;
 		// `/forge <prompt>` forges an item without opening the build palette: the
 		// finished prop lands armed for placement, announced by a local system line.
+		// A bare `/forge` is a mistyped command, not a message: answer it locally
+		// rather than broadcasting the slash text to everyone in the world.
+		if (/^\/forge\s*$/i.test(text)) {
+			this.chatInput.value = '';
+			this.addChat({ name: 'Forge', text: 'Say what to forge, e.g. /forge a glowing campfire', mine: true });
+			return;
+		}
 		const forge = text.match(/^\/forge\s+(.+)/i);
 		if (forge) {
 			this.chatInput.value = '';
@@ -2792,6 +2816,12 @@ export class CommunityUI {
 			document.body.appendChild(this._toast);
 		}
 		clearTimeout(this._toastTimer);
+		// A warning is something the player has to act on (an expired pass, a
+		// refused trade) and the toast is gone in 4.2s, so it interrupts; ordinary
+		// confirmations stay polite and wait their turn.
+		const urgent = kind === 'warn' || kind === 'err';
+		this._toast.setAttribute('role', urgent ? 'alert' : 'status');
+		this._toast.setAttribute('aria-live', urgent ? 'assertive' : 'polite');
 		this._toast.textContent = msg;
 		this._toast.setAttribute('data-kind', kind);
 		this._toast.classList.add('cc-on');
@@ -2799,8 +2829,8 @@ export class CommunityUI {
 	}
 
 	addChat({ name, text, mine }) {
-		const t = new Date();
-		const stamp = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+		const now = new Date();
+		const stamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 		// Stick to bottom only if the user is already near it, so reading scrollback
 		// isn't yanked away when a new message lands.
 		const nearBottom = this.chatLog.scrollHeight - this.chatLog.scrollTop - this.chatLog.clientHeight < 60;
@@ -2818,6 +2848,11 @@ export class CommunityUI {
 			this._unread += 1;
 			this.chatUnread.textContent = this._unread > 99 ? '99+' : String(this._unread);
 			this.chatUnread.hidden = false;
+			// The log is a live region, but a collapsed sidebar is display:none and
+			// a hidden live region is never spoken. Route the line through the
+			// standalone announcer so a message still reaches a screen reader when
+			// the panel is shut (which is the default on touch).
+			announce(t('play.chat_from', '{{name}} says: {{text}}', { name, text }));
 		}
 	}
 
