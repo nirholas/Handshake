@@ -194,6 +194,15 @@ const WATCHDOG_GRACE_MS = 3000;
 // so it isn't projected or written to the DOM at all. Bounds the per-frame label
 // cost by how many people are NEAR you, not by how many are in the world.
 const LABEL_RANGE_M = 60;
+// Animation LOD thresholds for remote players (see RemotePlayer.tick). Inside
+// 22m a peer fills enough of the screen that anything less than full rate is
+// visible, so that band is never stepped down; past 55m a peer is a silhouette
+// and 6fps of skeleton is indistinguishable from 60. Squared to keep the
+// per-peer test to a multiply, since it runs for every peer every frame.
+const ANIM_LOD_NEAR_SQ = 22 * 22;
+const ANIM_LOD_FAR_SQ = 55 * 55;
+const ANIM_LOD_MID_INTERVAL_S = 1 / 20;
+const ANIM_LOD_FAR_INTERVAL_S = 1 / 6;
 const JOY_DEADZONE = 0.12; // swallow tiny stick grazes so the avatar doesn't drift
 const UNDO_LIMIT = 50; // how many build actions Ctrl/Cmd+Z can walk back
 const LONG_PRESS_MS = 420; // hold-to-break threshold for touch (no right-click there)
@@ -452,7 +461,11 @@ class RemotePlayer {
 		this._speaking = on;
 		this.label.classList.toggle('cc-speaking', on);
 	}
-	tick(dt) {
+	// `viewer` is the camera position, used only to pick an animation rate. Moving
+	// and turning stay per-frame for every peer however far away they are: those
+	// are three lerps, and a peer that slides at 12fps reads as broken from any
+	// distance. What LOD drops is the expensive half, the skeleton update.
+	tick(dt, viewer) {
 		this.rig.position.x += (this.targetX - this.rig.position.x) * REMOTE_LERP;
 		this.rig.position.y += (this.targetY - this.rig.position.y) * REMOTE_LERP;
 		this.rig.position.z += (this.targetZ - this.rig.position.z) * REMOTE_LERP;
@@ -462,8 +475,25 @@ class RemotePlayer {
 		this.curYaw += d * 0.2;
 		this.rig.rotation.y = this.curYaw;
 		if (this.anim.currentName === CLIP_WALK) this.anim.setSpeed(this.motion === 'run' ? RUN_TIMESCALE : 1);
-		this.anim.update(dt);
-		this.cosmetics?.tick(dt);
+		// Animation LOD. Posing a skinned avatar costs a bone-matrix pass per peer
+		// per frame, so a plaza with a live-event crowd in it spends most of its
+		// frame budget animating people who are specks on the horizon. Peers near
+		// enough to read keep full-rate animation; the rest are stepped down. The
+		// elapsed time is accumulated and handed over whole, so a stepped-down peer
+		// plays its clip at the correct speed, just in coarser increments, and
+		// crossing a threshold never skips or replays motion.
+		this._animDue = (this._animDue || 0) + dt;
+		const dx = this.rig.position.x - viewer.x;
+		const dz = this.rig.position.z - viewer.z;
+		const distSq = dx * dx + dz * dz;
+		const interval = distSq < ANIM_LOD_NEAR_SQ ? 0
+			: distSq < ANIM_LOD_FAR_SQ ? ANIM_LOD_MID_INTERVAL_S
+				: ANIM_LOD_FAR_INTERVAL_S;
+		if (this._animDue >= interval) {
+			this.anim.update(this._animDue);
+			this.cosmetics?.tick(this._animDue);
+			this._animDue = 0;
+		}
 	}
 	dispose() {
 		this._disposed = true;
@@ -4661,7 +4691,7 @@ export class CoinCommunities {
 			this._checkFloorOccupancy();
 			this.localAnim?.update(dt);
 			this.localCosmetics?.tick(dt);
-			for (const [, r] of this.remotes) r.tick(dt);
+			for (const [, r] of this.remotes) r.tick(dt, this.camera.position);
 			this.worldObjects?.update();
 			this._updateLabels();
 			this._tickKingZone(dt);
