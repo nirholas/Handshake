@@ -84,8 +84,18 @@ const _envCache = new Map();
 
 /**
  * Load a curated HDRI as the scene's IBL environment, PMREM-prefiltered.
- * Falls back to the procedural RoomEnvironment (still correct, just not a
- * real photograph) on fetch failure or when `preset` is null/'mobile' tier.
+ *
+ * The procedural RoomEnvironment is installed FIRST, synchronously, every time.
+ * It is convolved from a handful of emissive boxes and costs a millisecond, so
+ * it lights the scene on its very first frame. The HDRI then replaces it when it
+ * arrives. This ordering matters because the curated HDRIs are 1-2 MB files: a
+ * scene that waited for one rendered its metals and roughness response unlit for
+ * as long as that download took (measured at ~8s into a cold /play boot), then
+ * popped to full lighting all at once. Now the pop is a refinement of an already
+ * correct image rather than the moment the world becomes lit.
+ *
+ * The room environment is also the permanent answer when `preset` is null (the
+ * 'mobile'/'low' tier opts out of HDRIs entirely) or when the fetch fails.
  * @param {import('three').WebGLRenderer} renderer
  * @param {import('three').Scene} scene
  * @param {'studio'|'outdoor'|'sunset'|null} preset
@@ -93,8 +103,14 @@ const _envCache = new Map();
 export async function loadEnvironment(renderer, scene, preset = 'studio') {
 	const pmrem = new PMREMGenerator(renderer);
 	pmrem.compileEquirectangularShader();
+	const roomTarget = pmrem.fromScene(new RoomEnvironment(), 0.04);
+	scene.environment = roomTarget.texture;
+	scene.environmentIntensity ??= 1;
 	if (!preset || !HDRI_PRESETS[preset]) {
-		scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+		// PMREMGenerator holds its own materials and LOD planes; the render target
+		// it just handed back stays valid after the generator is disposed, so this
+		// frees the scratch without touching the environment map itself.
+		pmrem.dispose();
 		return scene.environment;
 	}
 	try {
@@ -106,13 +122,21 @@ export async function loadEnvironment(renderer, scene, preset = 'studio') {
 			hdrTexture = await new HDRLoader().loadAsync(HDRI_PRESETS[preset]);
 			_envCache.set(preset, hdrTexture);
 		}
-		const envMap = pmrem.fromEquirectangular(hdrTexture).texture;
-		scene.environment = envMap;
-		scene.environmentIntensity ??= 1;
-		return envMap;
-	} catch (err) {
-		scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+		const envTarget = pmrem.fromEquirectangular(hdrTexture);
+		// Another loadEnvironment call (a coin switch rebuilding the world, a stage
+		// swapping presets) may have re-pointed the environment while this HDRI was
+		// in flight. Losing that race means our map is stale: free it rather than
+		// stamp it over the newer one.
+		if (scene.environment === roomTarget.texture) scene.environment = envTarget.texture;
+		else envTarget.dispose();
+		roomTarget.dispose();
 		return scene.environment;
+	} catch {
+		// Fetch or decode failed. The room environment installed above stands, so
+		// the scene is still lit; there is nothing to recover.
+		return scene.environment;
+	} finally {
+		pmrem.dispose();
 	}
 }
 

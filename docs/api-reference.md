@@ -640,7 +640,120 @@ Your original body is never mutated, and none of this changes the response shape
 
 ## TTS API
 
-### Text-to-speech
+### Voice catalog
+
+```
+GET /api/tts/catalog
+```
+
+Every voice the platform can synthesize, across every provider, in one shape.
+Auth is optional: anonymous callers see the keyless lanes (Microsoft Edge,
+Gemini, NVIDIA), a session adds the metered ones (OpenAI, ElevenLabs), and an
+`x-eleven-key` header adds that account's ElevenLabs voices.
+
+**Query**
+
+| Param | Meaning |
+| --- | --- |
+| `provider` | `edge`, `gemini`, `nvidia`, `openai`, `elevenlabs`. Omit for all. |
+| `q` | Substring match over name, id, locale, and labels. |
+| `language` | Primary subtag or full locale, e.g. `ja`, `en-GB`. |
+| `limit` | Max voices returned (default 400, max 2000). |
+
+**Response**
+
+```json
+{
+	"providers": [
+		{
+			"id": "edge",
+			"label": "Microsoft Edge",
+			"billing": "free",
+			"usdPer1k": 0,
+			"byok": false,
+			"clone": false,
+			"direction": false,
+			"available": true,
+			"reason": null,
+			"models": [],
+			"defaultVoice": "en-US-AriaNeural"
+		}
+	],
+	"voices": [
+		{
+			"id": "en-GB-SoniaNeural",
+			"name": "Sonia",
+			"provider": "edge",
+			"gender": "female",
+			"locale": "en-GB",
+			"language": "en",
+			"labels": { "categories": ["News"], "personalities": ["Authentic"] },
+			"preview_url": null
+		}
+	],
+	"counts": { "edge": 316 },
+	"total": 316,
+	"truncated": false
+}
+```
+
+`billing` is `free` (no vendor cost), `gcp` (platform Google credits, also free
+to you), or `credits` (metered per 1,000 characters at `usdPer1k`). A lane that
+cannot serve is still listed, with `available: false` and a `reason`.
+
+### Speak on any provider
+
+```
+POST /api/tts/synthesize
+```
+
+One endpoint for every lane. Pass the `provider` + `voiceId` pair from the
+catalog. The free lanes work without auth (rate-limited per IP); the metered
+lanes require a session or bearer token.
+
+**Request body**
+
+```json
+{
+	"provider": "gemini",
+	"voiceId": "Sulafat",
+	"text": "Your agent is live.",
+	"model": "gemini-2.5-flash-preview-tts",
+	"direction": "Warm and unhurried, like sharing good news",
+	"speed": 1.0
+}
+```
+
+`model` and `direction` apply only where the lane supports them (the catalog's
+`models` and `direction` fields say which). `speed` is clamped to 0.5 to 2.0.
+Max 1,000 characters. ElevenLabs additionally accepts `voice_settings`.
+
+**Response**
+
+Audio binary in the lane's container (`audio/mpeg` for Edge and ElevenLabs,
+`audio/wav` for Gemini and NVIDIA, caller-chosen for OpenAI). Response headers:
+`x-tts-provider`, `x-tts-voice`, `x-tts-model`, `x-tts-format`,
+`x-tts-cache` (`hit`/`miss`), `x-tts-billing` (`free` | `gcp` | `byok` |
+`credits` | `cached`), and `x-tts-charged-usd` when credits were spent. Every
+clip is cached in R2 for 30 days on a hash of the full request; cache hits are
+never charged. A short credit balance returns `402 insufficient_credits` with a
+`top_up_url`.
+
+### ElevenLabs Voice Library
+
+```
+GET  /api/tts/eleven/library
+POST /api/tts/eleven/library
+```
+
+Search the public catalog ElevenLabs users share (`q`, `gender`, `accent`,
+`age`, `category`, `language`, `use_cases`, `page`, `page_size` up to 100), then
+`POST { publicUserId, voiceId, name }` to copy one into the account behind the
+request (yours with `x-eleven-key`, the platform's otherwise). The POST returns
+a normal `voice_id` usable with `/api/tts/synthesize`. Both require auth and an
+ElevenLabs key.
+
+### Text-to-speech (ElevenLabs, streaming)
 
 ```
 POST /api/tts/eleven

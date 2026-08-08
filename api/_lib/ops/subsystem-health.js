@@ -37,6 +37,7 @@ import { rateLimiterHealth } from '../rate-limit.js';
 import { checkRingInvariants } from '../x402/ring-allowlist.js';
 import { gatherX402SettleHealth } from './x402-settle-health.js';
 import { gatherForgeHealth } from './forge-health-sensor.js';
+import { describeSolvency } from '../sniper-solvency.js';
 
 const DB_PING_TIMEOUT_MS = 2_500;
 const DB_SLOW_MS = 1_000;
@@ -377,6 +378,25 @@ export function classifySniperBeat(beat, now = Date.now()) {
 	if (ageMs > SNIPER_FRESH_MS) {
 		return { ...base, status: 'degraded', detail: `heartbeat ${Math.round(ageMs / 1000)}s old — worker slow or mid-restart` };
 	}
+	// Money before mechanics. A worker whose wallets cannot pay for an entry is
+	// not performing its function, however healthy its feed is. That combination
+	// (fresh heartbeat, live feed, empty wallets) reported 'ok' here for ten days
+	// while the fleet booked a thousand failed buys. Checked before the feed for
+	// the same reason it outranks it in /api/sniper/status: it is the more
+	// specific diagnosis and the one nothing else was watching.
+	const solvency = meta.solvency && typeof meta.solvency === 'object' ? meta.solvency : null;
+	if (solvency?.state === 'starved' || solvency?.state === 'degraded') {
+		const fullyStarved = solvency.state === 'starved';
+		return {
+			...base,
+			status: fullyStarved ? 'down' : 'degraded',
+			detail: `worker alive but out of trading capital. ${describeSolvency(solvency)}`,
+			hint: solvency.masterCanCover === false
+				? 'The funding master cannot cover the refills: move SOL to it, then the auto-funder tops the agent wallets up within 5 minutes.'
+				: 'The auto-funder should refill these wallets on its next 5-minute tick; if it does not, check SNIPER_AUTO_FUND caps and the master balance.',
+		};
+	}
+
 	const watchdogMs = Number(meta.feedWatchdogMs) || 180_000;
 	if (meta.feedConnected !== true || Number(meta.lastEventAgeMs) > watchdogMs) {
 		return {

@@ -24,6 +24,7 @@ import {
 	AVATAR_DEFAULT, CLIP_IDLE, CLIP_WALK,
 } from './avatar-rig.js';
 import { loadCitizenPool, isCitizen, openCitizenProfile } from './npc/citizens.js';
+import { log } from '../shared/log.js';
 
 const WORLD_RADIUS = 54;       // a touch inside the plaza edge
 const AMBIENT_SPEED = 1.7;     // gentle stroll, slower than the player
@@ -346,6 +347,10 @@ class AmbientCrowd {
 	}
 }
 
+// How long the world must have been standing before the crowd starts spending
+// on itself. See SETTLE_MS's use below for why this exists at all.
+const SETTLE_MS = 2500;
+
 // ---- bootstrap: wait for the scene, then run an independent update loop ----
 async function attach(attempt = 0) {
 	const cc = window.__CC__;
@@ -355,18 +360,42 @@ async function attach(attempt = 0) {
 		if (attempt < 300) setTimeout(() => attach(attempt + 1), 300);
 		return;
 	}
-	await Promise.all([loadManifest(), loadAvatarPool()]);
 	const crowd = new AmbientCrowd(cc);
 	let last = performance.now();
 	let realCount = -1;
+	// When the current world became playable. The crowd is scenery, and scenery
+	// must never compete with the thing it decorates: populating it the instant
+	// the world opened put a gallery fetch, several multi-megabyte GLB downloads,
+	// and a skeleton retarget per wanderer directly on top of world entry, which
+	// is already the busiest moment of the session (physics boot, district build,
+	// the player's own avatar, the room join). Everything below waits out
+	// SETTLE_MS of actual world time first, so the player's own world lands
+	// clean and the crowd fills in behind it.
+	let worldSince = 0;
+	// Started once, on the first settled world, and awaited before the first
+	// wanderer is built. The pool fetch used to run at module load, i.e. during
+	// the page's cold boot, for a crowd that could not be shown for seconds yet.
+	let assets = null;
 	const tick = () => {
 		requestAnimationFrame(tick);
 		const now = performance.now();
 		const dt = Math.min(0.05, (now - last) / 1000);
 		last = now;
 		if (cc.phase === 'world') {
+			if (!crowd.active) { crowd.active = true; realCount = -1; worldSince = now; }
+			if (now - worldSince < SETTLE_MS) return;
+			if (!assets) {
+				// A failed emote manifest costs the crowd its gestures, not its
+				// existence, and the citizen pool resolves to [] rather than throwing.
+				// Swallow so neither turns into an unhandled rejection.
+				assets = Promise.all([loadManifest(), loadAvatarPool()])
+					.catch((e) => log.warn('[ambient-crowd] asset load failed:', e?.message));
+			}
+			// The pool is what decides which models a wanderer may wear, so building
+			// one before it resolves would dress the whole crowd in the default
+			// avatar. Hold the population (not the update loop) until it lands.
+			if (!_avatars) return;
 			const rc = (cc.remotes?.size) | 0;
-			if (!crowd.active) { crowd.active = true; realCount = -1; }
 			if (rc !== realCount) { realCount = rc; crowd.sync(rc); }
 			crowd.update(dt);
 		} else if (crowd.active) {

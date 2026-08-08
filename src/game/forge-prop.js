@@ -44,7 +44,8 @@ function headers(extra = {}) {
 // A short palette-friendly display name for the forged prop.
 export function forgePropName(prompt, file) {
 	const base = String(prompt || '').trim() || String(file?.name || '').replace(/\.[a-z0-9]+$/i, '');
-	return (base || 'Forged item').slice(0, 24);
+	// Trim after clamping so a cut mid-phrase does not leave a dangling space.
+	return ((base || 'Forged item').slice(0, 24).trim()) || 'Forged item';
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

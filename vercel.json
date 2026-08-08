@@ -1351,6 +1351,10 @@
 			"dest": "/play/arena.html"
 		},
 		{
+			"src": "/play/war/?",
+			"dest": "/play/war.html"
+		},
+		{
 			"src": "/play/economy/?",
 			"dest": "/play/economy.html"
 		},

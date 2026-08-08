@@ -209,7 +209,12 @@ function applyStatus(root, s) {
 	if (!s) return;
 
 	let cls = 'live', label = 'Engine live';
+	// 'starved' means the process is fine and the wallets are empty: nothing can
+	// fill. It reads as offline to a visitor because, for every purpose they care
+	// about, it is. The pill promising "Engine live" over a fleet that had not
+	// completed a trade in ten days is the failure this state exists to end.
 	if (s.state === 'down') { cls = 'down'; label = 'Engine offline'; }
+	else if (s.state === 'starved') { cls = 'down'; label = 'Engine out of SOL'; }
 	else if (s.state === 'degraded') { cls = 'degraded'; label = 'Feed degraded'; }
 	else if (s.state === 'unknown') { cls = 'degraded'; label = 'Engine idle'; }
 	else if (s.alive === false) { cls = 'down'; label = 'Engine offline'; }
@@ -219,6 +224,10 @@ function applyStatus(root, s) {
 	if (text) text.textContent = label;
 	if (sub) {
 		const parts = [];
+		// Lead with the blocker when there is one: "13 strategies armed" beside a
+		// dead engine is the reassuring half of a true sentence.
+		if (s.state === 'starved') parts.push('no wallet can fund a trade');
+		else if (s.solvency?.state === 'degraded') parts.push(`${s.solvency.tradeable}/${s.solvency.agents} wallets funded`);
 		if (Number.isFinite(s.strategies)) parts.push(`${s.strategies} ${s.strategies === 1 ? 'strategy' : 'strategies'} armed`);
 		if (Number.isFinite(s.openPositions)) parts.push(`${s.openPositions} open`);
 		sub.textContent = parts.join(' · ');
