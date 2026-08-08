@@ -4,7 +4,7 @@
 #
 # Cloud Run builds the local Dockerfile via Cloud Build (no local docker push),
 # terminates TLS, and hands back a stable https URL. The client connects to the
-# wss:// form of that URL — wire it into pages/play.html's <meta name="game-server">.
+# wss:// form of that URL - wire it into pages/play.html's <meta name="game-server">.
 #
 # Prereqs (one time):
 #   gcloud auth login
@@ -24,13 +24,13 @@ PROJECT="$(gcloud config get-value project 2>/dev/null)"
 
 # ── Capacity tunables ──────────────────────────────────────────────────────
 # CONCURRENCY is the # of simultaneous connections Cloud Run routes to ONE
-# instance. The platform default is 80 — for a WebSocket server that is a hard
+# instance. The platform default is 80 - for a WebSocket server that is a hard
 # ~80-player ceiling, so we raise it well above the per-instance comfort limit.
 #
 # CPU/MEMORY are the defaults a redeploy applies, so they are not merely a first
 # -deploy convenience: `gcloud run deploy` REPLACES the resource limits every
 # time. Raising them by hand on the live service (as event pre-scaling did on
-# 2026-08-07) survives exactly until the next deploy from this script, and a
+# 2026-08-08) survives exactly until the next deploy from this script, and a
 # mid-event hotfix that silently halves the world server's CPU is the worst
 # possible time to discover that. The defaults below are the event-day floor;
 # lower them here, not on the service.
@@ -58,7 +58,7 @@ fi
 # Durable build storage (Upstash Redis REST). This is SEPARATE from REDIS_URI
 # above: REDIS_URI is Colyseus's room-registry/presence Redis for horizontal
 # scaling; these two power block-store.js so each coin world's voxel build
-# survives a redeploy/restart. They must be set on THIS Cloud Run service — the
+# survives a redeploy/restart. They must be set on THIS Cloud Run service - the
 # same vars on Vercel only reach the Vercel API functions, never this process.
 # Pass them through when present in the deploy shell (export them, or source an
 # env file, before running this script). For the token, Secret Manager via
@@ -70,7 +70,7 @@ UPSTASH_REDIS_REST_TOKEN="${UPSTASH_REDIS_REST_TOKEN:-}"
 # monitor creds are only passed when provided. Applied with --update-env-vars
 # (NOT --set-env-vars): a redeploy from a shell without HOLDER_PASS_SECRET or
 # the Upstash creds must merge into the service's existing env, never replace
-# it — --set-env-vars silently wipes every var not named here.
+# it - --set-env-vars silently wipes every var not named here.
 ENV_VARS="NODE_ENV=production@ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
 [[ -n "${REDIS_URI}" ]] && ENV_VARS="${ENV_VARS}@REDIS_URI=${REDIS_URI}"
 [[ -n "${UPSTASH_REDIS_REST_URL}" ]] && ENV_VARS="${ENV_VARS}@UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}"
@@ -82,7 +82,7 @@ ENV_VARS="NODE_ENV=production@ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
 # --update-env-vars a value already set on the service survives the redeploy,
 # so this only bites a FIRST deploy (or a service that never had them).
 if [[ -z "${UPSTASH_REDIS_REST_URL}" || -z "${UPSTASH_REDIS_REST_TOKEN}" ]]; then
-	echo "  ⚠ UPSTASH_REDIS_REST_URL/_TOKEN not set in this shell — kept from the service's current env if present, else builds are MEMORY-ONLY." >&2
+	echo "  ⚠ UPSTASH_REDIS_REST_URL/_TOKEN not set in this shell - kept from the service's current env if present, else builds are MEMORY-ONLY." >&2
 fi
 
 echo "Deploying '${SERVICE}' to Cloud Run (project=${PROJECT}, region=${REGION})..."
@@ -92,7 +92,7 @@ echo "  cpu=${CPU} memory=${MEMORY} concurrency=${CONCURRENCY} instances=${MIN_I
 #   --no-cpu-throttling : keep CPU allocated between requests so the room
 #                         simulation/patch loop never stalls (the #1 gotcha).
 #   --concurrency       : connections routed per instance. The default 80 is a
-#                         hard WS-connection ceiling — raised here.
+#                         hard WS-connection ceiling - raised here.
 #   --min-instances     : rooms live in-memory; keep ≥1 warm so they never
 #                         cold-start away.
 #   --max-instances     : >1 ONLY with REDIS_URI (shared room registry/presence);
