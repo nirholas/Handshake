@@ -184,20 +184,35 @@ souvenir there would hand it to everyone.
 
 ## Verifying it
 
-Two layers, both real.
+Three layers, all real. None of them edits `public/event.json`, so no run can
+leave a live window behind.
 
 ```bash
-npx vitest run tests/event-souvenir.test.js   # window gating, idempotency, economy separation
-node scripts/play-souvenir-e2e.mjs            # a real browser against a real game server
+npx vitest run tests/event-souvenir.test.js       # window gating, idempotency, economy separation
+node scripts/play-souvenir-conformance.mjs        # the contract, against a real game server
+node scripts/play-souvenir-ui-check.mjs           # the card and the wardrobe, in a real browser
+node scripts/play-souvenir-e2e.mjs                # the whole feature through the real /play world
 ```
 
-The e2e run boots Vite and Colyseus on private ports, serves an event config it
-controls, and walks the whole feature: a player joins during a live window and
-is granted the item once, wears it from the card, a second player sees it on
-them, a full reconnect re-grants nothing and the item is still worn, and a fresh
-player joining after the window closes gets nothing while the earlier attendee
-keeps theirs. It edits nothing in the repo to do it, so there is no live window
-left behind to clean up.
+**The conformance run** boots Colyseus on a private port against an event config
+it serves itself, then joins with the real `colyseus.js` client and walks the
+contract: granted once on join, announced once, equips, published on the shared
+schema, seen by a second player, nothing granted in a different world at the same
+instant, nothing more on reconnect (and still worn, so the grant persisted), and
+after the window closes nothing for a newcomer while an earlier attendee still
+owns, wears, and can re-equip theirs. No browser and no GPU, so it runs anywhere.
+
+**The UI check** mounts the real drop card and the real wardrobe panel in
+headless Chromium and drives them: the poster loads, "Wear it" fires exactly one
+equip, the card retires itself, Escape dismisses it, an owned souvenir renders as
+equipped with "Event souvenir" instead of a price, a locked one says "Not for
+sale" and routes nowhere, and a locked *premium* item still opens the shop (so
+that rule is targeted, not a broken click handler).
+
+**The e2e run** is the full-fat version: Vite plus Colyseus on private ports and
+the actual `/play` world in a browser. It is the slowest of the three because it
+compiles the whole `/play` module graph and holds a WebGL scene open; on a busy
+machine prefer the two above, which cover the same ground between them.
 
 ---
 
@@ -213,6 +228,7 @@ left behind to clean up.
 | Wardrobe treatment ("New", "Not for sale") | [src/game/cosmetics-wardrobe.js](../src/game/cosmetics-wardrobe.js) |
 | Event config | [public/event.json](../public/event.json) |
 | Asset generators | [scripts/generate-accessory-glbs.mjs](../scripts/generate-accessory-glbs.mjs), [scripts/render-accessory-thumbs.mjs](../scripts/render-accessory-thumbs.mjs) |
+| Verification | [tests/event-souvenir.test.js](../tests/event-souvenir.test.js), [scripts/play-souvenir-conformance.mjs](../scripts/play-souvenir-conformance.mjs), [scripts/play-souvenir-ui-check.mjs](../scripts/play-souvenir-ui-check.mjs), [scripts/play-souvenir-e2e.mjs](../scripts/play-souvenir-e2e.mjs) |
 
 ---
 
