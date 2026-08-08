@@ -4301,6 +4301,44 @@ curl 'https://three.ws/api/animations/signatures?similar=wave&limit=5'
 
 ---
 
+## Play Population API
+
+```
+GET /api/play/population
+GET /api/play/population?coin=<mint-or-contract>
+```
+
+How many people are standing in the `/play` worlds right now. No auth, CORS open, cached 5 seconds at the edge.
+
+`/play` presence lives in Colyseus rooms on the standalone multiplayer server, not in Postgres, so this handler proxies that server's own `/population` aggregate. That aggregate reads the matchmaker's driver-backed room listing, so the count spans every instance when the fleet is scaled horizontally. Only a count crosses the boundary: no session ids, no display names, no wallets, no positions.
+
+`coin` narrows the count to one community's worlds (a Solana mint or an EVM contract address). Anything that is not a well-formed address is ignored rather than forwarded, and the response reports the filter that was actually applied.
+
+**Response**
+
+```json
+{
+	"ok": true,
+	"coin": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+	"players": 4,
+	"rooms": 1
+}
+```
+
+When the multiplayer server is unreachable the endpoint still answers `200`, with the count omitted:
+
+```json
+{ "ok": false, "reason": "unavailable", "coin": null }
+```
+
+Callers must render a live state without a number in that case rather than substituting one. The `/event` landing page does exactly this: it shows "The doors are open" instead of inventing a crowd.
+
+```bash
+curl -s 'https://three.ws/api/play/population?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump'
+```
+
+---
+
 ## Config API
 
 ```

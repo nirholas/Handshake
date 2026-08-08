@@ -16,7 +16,7 @@
 // first failed expectation so it can gate a release.
 
 import { Client } from 'colyseus.js';
-import { TREES } from '../multiplayer/src/world-features.js';
+import { TREES, VENDOR_STALLS, ATMS } from '../multiplayer/src/world-features.js';
 
 const URL = process.env.WS || 'ws://127.0.0.1:2567';
 // A stable key so the persistence check at the end has something to reclaim.
@@ -121,7 +121,21 @@ check('a swing always pays woodcutting XP, hit or miss', box.xp.filter((g) => g.
 check('XP events carry exact level boundaries so the bar needs no round trip',
 	box.xp.every((g) => Number.isFinite(g.levelXp) && (g.nextXp === null || Number.isFinite(g.nextXp))), '');
 
+// --- the counter has to be walked to ------------------------------------------
+// Trading from the tree line must be refused: "walk to the shop" is a rule the
+// server keeps, not a courtesy the client extends.
+const noticesBeforeRemote = box.notices.length;
+const purseAtTree = purseOf(box);
+room.send('storeSell', { slot: { zone: 'inv', i: slotOf(box.inv || box.profile, 'wood') } });
+room.send('bank', { amount: 1 });
+await sleep(800);
+check('trading and banking from out in the world are refused',
+	purseOf(box) === purseAtTree,
+	box.notices.slice(noticesBeforeRemote).map((n) => n.text).join(' | ') || 'no refusal notice');
+
 // --- sell ---------------------------------------------------------------------
+const stall = VENDOR_STALLS[0];
+await walkTo(stall.x, stall.z);
 room.send('storeReq');
 await sleep(500);
 const woodPrice = box.store?.sell?.find((s) => s.item === 'wood')?.price;
@@ -162,6 +176,8 @@ if (purseBeforeBuy >= potion.price) {
 }
 
 // --- bank ---------------------------------------------------------------------
+const atm = ATMS[0];
+await walkTo(atm.x, atm.z);
 const purse = purseOf(box);
 room.send('bank', { amount: purse });
 await sleep(700);

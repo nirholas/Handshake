@@ -74,10 +74,19 @@ function fmtCompactUsd(v) {
 	return `$${n.toFixed(0)}`;
 }
 
-class MeetupEvent {
-	constructor(event, cc) {
+export class MeetupEvent {
+	/**
+	 * @param {object} opts
+	 * @param {object} opts.event      parsed event (meetup-schedule.js parseEvent)
+	 * @param {object} opts.cc         the live CoinCommunities app (window.__CC__)
+	 * @param {Function} opts.Fireworks the Fireworks class, injected so the heavy
+	 *   three.js module stays a lazy import at the boot edge and tests can run the
+	 *   whole DOM layer without a WebGL scene.
+	 */
+	constructor({ event, cc, Fireworks }) {
 		this.ev = event;
 		this.cc = cc;
+		this._Fireworks = Fireworks;
 		this.chip = null;
 		this.panel = null;
 		this.banner = null;
@@ -355,7 +364,7 @@ class MeetupEvent {
 
 	// --------------------------------------------------------------- fireworks
 	_ensureFireworks() {
-		if (!this.fireworks && this.cc.scene) this.fireworks = new (this._FireworksCtor)({ scene: this.cc.scene });
+		if (!this.fireworks && this._Fireworks && this.cc.scene) this.fireworks = new this._Fireworks({ scene: this.cc.scene });
 		return this.fireworks;
 	}
 
@@ -427,10 +436,10 @@ class MeetupEvent {
 	}
 }
 
-// Fireworks is heavier (three.js geometry churn), loaded only when a mount is
-// actually possible; the class is stashed on the instance so _ensureFireworks
-// can construct synchronously inside the frame loop.
-async function boot() {
+// Fireworks drags in three.js geometry churn, so it is imported only once an
+// event that can actually mount is confirmed: a plain /play visit with no live
+// event never pays for it.
+export async function boot() {
 	let cfg = null;
 	try {
 		const res = await fetch(CONFIG_URL, { cache: 'no-cache' });
@@ -442,22 +451,21 @@ async function boot() {
 	// every other surface that reads the event).
 	cfg = applyPreviewOverride(cfg, location.search);
 
-	if (!cfg) return;
-	if (eventState(cfg, Date.now()).phase === PHASE.ENDED) return;
+	if (!cfg) return null;
+	if (eventState(cfg, Date.now()).phase === PHASE.ENDED) return null;
 
 	const { Fireworks } = await import('./fireworks.js');
 
 	// Wait for the app the same way ambient-crowd.js does.
-	let tries = 0;
-	(function wait() {
-		const cc = window.__CC__;
-		if (cc) {
-			const m = new MeetupEvent(cfg, cc);
-			m._FireworksCtor = Fireworks;
-		} else if (++tries < 300) {
-			setTimeout(wait, 300);
-		}
-	})();
+	return new Promise((resolve) => {
+		let tries = 0;
+		(function wait() {
+			const cc = window.__CC__;
+			if (cc) resolve(new MeetupEvent({ event: cfg, cc, Fireworks }));
+			else if (++tries < 300) setTimeout(wait, 300);
+			else resolve(null);
+		})();
+	});
 }
 
 boot();

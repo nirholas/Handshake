@@ -16,14 +16,30 @@
 // body's translation is its FEET (the collider is offset upward by its own
 // half-height), so callers can copy it straight onto an avatar rig whose
 // origin sits on the floor.
-
-import RAPIER from '@dimforge/rapier3d-compat';
+//
+// That inline WASM is why the import below is dynamic and NOT a static top-level
+// one. The `-compat` build base64s a ~1.6 MB WASM binary into its JavaScript,
+// which Rollup then folds into whatever chunk statically imports it: a static
+// import here put 2.27 MB of parsed JS (774 KB over the wire) on the critical
+// path of every page that draws a physics scene — /play and /walk both
+// modulepreloaded it before the first frame, and the browser paid a multi-second
+// parse for a module nothing needs until the world is already standing. Loading
+// it from inside initRapier() gives it its own async chunk that downloads
+// alongside world entry instead of ahead of it. Callers already tolerate the
+// delay: PhysicsWorld.create() is awaited, and the scenes run their documented
+// direct-mutation movement fallback until it resolves.
 
 let _rapierReady = null;
 
 /** Initialize the Rapier WASM runtime once and reuse it across worlds. */
 export function initRapier() {
-	if (!_rapierReady) _rapierReady = RAPIER.init().then(() => RAPIER);
+	if (!_rapierReady) {
+		_rapierReady = import('@dimforge/rapier3d-compat').then(async (mod) => {
+			const RAPIER = mod.default ?? mod;
+			await RAPIER.init();
+			return RAPIER;
+		});
+	}
 	return _rapierReady;
 }
 
@@ -31,7 +47,7 @@ const _v = { x: 0, y: 0, z: 0 };
 
 export class PhysicsWorld {
 	/**
-	 * @param {typeof RAPIER} rapier  initialized Rapier module
+	 * @param {object} rapier  initialized Rapier module (from initRapier)
 	 * @param {{ gravity?: {x:number,y:number,z:number} }} [opts]
 	 */
 	constructor(rapier, { gravity = { x: 0, y: -14, z: 0 } } = {}) {

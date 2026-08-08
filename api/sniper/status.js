@@ -37,6 +37,7 @@
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
+import { deriveSniperState } from '../_lib/sniper-solvency.js';
 
 const WORKER = 'agent-sniper';
 // Allow 2× the default heartbeat cadence (30s) plus slack before declaring the
@@ -136,14 +137,9 @@ export default wrap(async (req, res) => {
 	// yet run) degrades to 'unknown', which never overrides the feed verdict — an
 	// unmeasured fleet must not read as a broke one.
 	const solvency = meta.solvency && typeof meta.solvency === 'object' ? meta.solvency : null;
-	const solvencyState = solvency?.state || 'unknown';
-	const state = !alive
-		? 'down'
-		: solvencyState === 'starved'
-			? 'starved'
-			: feedSilent || !feedLive || solvencyState === 'degraded'
-				? 'degraded'
-				: 'live';
+	const state = deriveSniperState({
+		alive, feedLive, feedSilent: !!feedSilent, solvencyState: solvency?.state || 'unknown',
+	});
 
 	return json(
 		res,
