@@ -101,6 +101,20 @@ if (notes.length) {
 	for (const n of [...new Set(notes)].slice(0, 10)) console.log('  ' + n);
 }
 
+// Frame the same vantage in every run before capturing, so two runs are
+// comparable pixel for pixel. The follow camera is driven from localPos/camYaw
+// every frame, so steering those is the only way to aim it from outside; the
+// pause lets the camera's own smoothing settle.
+if (process.env.SHOT) {
+	await page.evaluate(() => {
+		const g = window.__CC__;
+		g.localPos.set(0, 0, 0);
+		g.camYaw = Math.PI * 0.75;
+		g.camPitch = 0.12;
+	});
+	await page.waitForTimeout(6000);
+}
+
 // Capture through CDP rather than page.screenshot(): the world runs a rAF loop
 // forever, so Playwright's wait-for-stability never settles on a busy main
 // thread and the capture times out with the numbers already in hand.
