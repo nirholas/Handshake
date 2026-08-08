@@ -2,13 +2,13 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { CharacterManager } from "./characterManager";
 
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader';
 
 export function sceneInitializer(canvasId) {
     const scene = new THREE.Scene()
 
     
-    new RGBELoader().load("./hdr/studio_small_09_2k.hdr", (hdr_) => {
+    new HDRLoader().load("./hdr/studio_small_09_2k.hdr", (hdr_) => {
         hdr_.mapping = THREE.EquirectangularReflectionMapping;
         hdr_.colorSpace = THREE.LinearSRGBColorSpace
         scene.environment = hdr_;
