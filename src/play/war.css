@@ -1,4 +1,4 @@
-/* Coin Wars arena (/play/war) — the battle HUD over the 3D field.
+/* Coin Wars arena (/play/war): the battle HUD over the 3D field.
  *
  * A fighting HUD has one job: never get between the player and the fight. So it
  * lives at the screen edges, uses opaque-enough panels to stay readable over a

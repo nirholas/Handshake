@@ -4,7 +4,7 @@
 // (api/_lib/war-ticket.js signs, multiplayer/src/war-ticket.js verifies).
 //
 // Both are dependency-free, so they run without Redis, a Colyseus room, or a
-// browser — the same isolation clash.js and war-standings.js already rely on.
+// browser, the same isolation clash.js and war-standings.js already rely on.
 
 import { describe, it, expect } from 'vitest';
 import {
@@ -15,7 +15,7 @@ import { signWarTicket } from '../api/_lib/war-ticket.js';
 import { verifyWarTicket } from '../multiplayer/src/war-ticket.js';
 
 // Two synthetic mints of a realistic length. ALPHA sorts below BRAVO, so ALPHA is
-// always faction A — that ordering is the whole point of the key format.
+// always faction A, that ordering is the whole point of the key format.
 const ALPHA = 'ALPHAsynthetic11111111111111111111111111111';
 const BRAVO = 'BRAVOsynthetic11111111111111111111111111111';
 const CHARLIE = 'CHARLIEsynthetic111111111111111111111111111';

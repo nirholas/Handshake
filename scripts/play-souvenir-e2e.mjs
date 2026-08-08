@@ -16,7 +16,7 @@
 // The event config is served from THIS process (a throwaway static endpoint) so
 // nothing in the repo is edited to fake a live window, and the window can be
 // opened and closed between phases of one run. Point the game server at it with
-// EVENT_CONFIG_URL — see below.
+// EVENT_CONFIG_URL, see below.
 //
 // Requires vite on :3000 and colyseus on :2567 with the config override:
 //
@@ -47,7 +47,7 @@ const results = [];
 
 function check(name, ok, detail = '') {
 	results.push({ name, ok, detail });
-	console.log(`${at()} ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`);
+	console.log(`${at()} ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `: ${detail}` : ''}`);
 	return ok;
 }
 
@@ -247,7 +247,7 @@ async function main() {
 		}, { timeout: 30_000, arg: [SOUVENIR_ID] });
 		check('live window: souvenir published on the shared schema', onWire?.ok === true, JSON.stringify(onWire));
 
-		// A peer must actually see it — that is what a souvenir is for.
+		// A peer must actually see it, that is what a souvenir is for.
 		const bob = await openPlayer(browser, 'bob');
 		players.push(bob);
 		// `_cosWire` is the loadout string the peer's RemotePlayer last rendered, so
@@ -342,7 +342,7 @@ async function main() {
 	const failed = results.filter((r) => !r.ok);
 	console.log(`\n${at()} ${results.length - failed.length}/${results.length} checks passed`);
 	if (failed.length) {
-		for (const f of failed) console.log(`  FAIL ${f.name} — ${f.detail}`);
+		for (const f of failed) console.log(`  FAIL ${f.name}: ${f.detail}`);
 		process.exit(1);
 	}
 }

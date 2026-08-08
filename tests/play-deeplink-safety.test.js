@@ -3,13 +3,13 @@
 // part of it is untrusted text. Three defences are covered here, each of which
 // failed in a real audit of the live surface:
 //
-//   1. cssBgImage()      — a coin image lands inside a CSS `url("…")`, so a
+//   1. cssBgImage(): a coin image lands inside a CSS `url("…")`, so a
 //                          crafted value must not be able to close the
 //                          declaration and paint its own full-screen overlay.
-//   2. isPlausibleMint() — a malformed mint used to build a complete, convincing
+//   2. isPlausibleMint(): a malformed mint used to build a complete, convincing
 //                          world keyed on garbage instead of saying the link was
 //                          broken.
-//   3. clampParam()      — name/symbol are display-only and must be stripped of
+//   3. clampParam(): name/symbol are display-only and must be stripped of
 //                          control characters and cut to the room server's caps.
 //
 // The three helpers are module-private (they guard call sites inside very large

@@ -63,7 +63,7 @@ describe('guest-token', () => {
 	});
 });
 
-describe('WalkRoom._resolveIdentity — who may claim a saved profile', () => {
+describe('WalkRoom._resolveIdentity: who may claim a saved profile', () => {
 	let room;
 	beforeEach(() => {
 		room = makeRoom();

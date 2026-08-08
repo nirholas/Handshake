@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 //
-// Meetup event layer DOM contract — what /play actually paints during a live
+// Meetup event layer DOM contract: what /play actually paints during a live
 // community event. The schedule math is covered in meetup-schedule.test.js;
 // these tests lock the view: when the chip mounts (and when it must NOT), the
 // agenda drawer's active/done marking, the one-shot go-live moment (including
