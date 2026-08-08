@@ -10,6 +10,7 @@
 import './economy-ui.css';
 import { itemDisplay } from './items.js';
 import { openModal, announce } from './a11y.js';
+import { t } from './i18n-play.js';
 
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -34,7 +35,11 @@ export class EconPanel {
 		this._onClose = onClose;
 		this.body = el('div', { class: 'ec-body' });
 		this.status = el('div', { class: 'ec-status', role: 'status', 'aria-live': 'polite' });
-		this.closeBtn = el('button', { class: 'ec-x', type: 'button', 'aria-label': 'Close', text: '✕', onclick: () => this.close() });
+		this.closeBtn = el('button', {
+			class: 'ec-x', type: 'button', text: '✕',
+			'aria-label': t('play.close', 'Close'), 'data-i18n-attr': 'aria-label:play.close',
+			onclick: () => this.close(),
+		});
 		this.card = el('div', { class: 'ec-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': title }, [
 			el('div', { class: 'ec-head' }, [
 				el('span', { class: 'ec-title', text: title }),
@@ -198,20 +203,20 @@ export function openStorePanel({ ui, net }) {
 
 class StorePanel extends EconPanel {
 	constructor({ ui, net, onClose }) {
-		super({ title: 'General Store', onClose });
+		super({ title: t('play.store_title', 'General Store'), onClose });
 		this.ui = ui;
 		this.net = net;
 		this.tab = 'buy';
 		this.catalog = { sell: [], buy: [] };
 		this.profile = { gold: 0, inv: [] };
 
-		this.tabs = el('div', { class: 'ec-tabs', role: 'tablist', 'aria-label': 'Store mode' }, [
-			el('button', { class: 'ec-tab ec-on', type: 'button', role: 'tab', 'data-tab': 'buy', 'aria-selected': 'true', text: 'Buy', onclick: () => this._setTab('buy') }),
-			el('button', { class: 'ec-tab', type: 'button', role: 'tab', 'data-tab': 'sell', 'aria-selected': 'false', text: 'Sell', onclick: () => this._setTab('sell') }),
+		this.tabs = el('div', { class: 'ec-tabs', role: 'tablist', 'aria-label': t('play.store_mode', 'Store mode'), 'data-i18n-attr': 'aria-label:play.store_mode' }, [
+			el('button', { class: 'ec-tab ec-on', type: 'button', role: 'tab', 'data-tab': 'buy', 'aria-selected': 'true', text: 'Buy', 'data-i18n': 'play.store_buy', onclick: () => this._setTab('buy') }),
+			el('button', { class: 'ec-tab', type: 'button', role: 'tab', 'data-tab': 'sell', 'aria-selected': 'false', text: 'Sell', 'data-i18n': 'play.store_sell', onclick: () => this._setTab('sell') }),
 		]);
 		this.purseValue = el('b', { text: '0' });
 		this.purse = el('div', { class: 'ec-purse' }, [
-			el('span', { text: 'Cash on hand' }),
+			el('span', { text: 'Cash on hand', 'data-i18n': 'play.cash_on_hand' }),
 			this.purseValue,
 		]);
 		this.card.insertBefore(this.purse, this.body);
@@ -352,7 +357,7 @@ export function openBankPanel({ ui, net }) {
 
 class BankPanel extends EconPanel {
 	constructor({ ui, net, onClose }) {
-		super({ title: 'Bank / ATM', onClose });
+		super({ title: t('play.bank_title', 'Bank / ATM'), onClose });
 		this.ui = ui;
 		this.net = net;
 		this.gold = 0;
@@ -363,33 +368,33 @@ class BankPanel extends EconPanel {
 		// simply not looked yet is the worst thing this panel could say.
 		this.purseValue = el('b', { class: 'ec-pending-val', text: '…' });
 		this.purse = el('div', { class: 'ec-purse' }, [
-			el('span', { text: 'Cash on hand' }),
+			el('span', { text: 'Cash on hand', 'data-i18n': 'play.cash_on_hand' }),
 			this.purseValue,
 		]);
 		this.bankValue = el('b', { class: 'ec-pending-val', text: '…' });
 		this.bankLine = el('div', { class: 'ec-purse' }, [
-			el('span', { text: 'Banked (protected)' }),
+			el('span', { text: 'Banked (protected)', 'data-i18n': 'play.banked' }),
 			this.bankValue,
 		]);
 		this.card.insertBefore(this.purse, this.body);
 		this.card.insertBefore(this.bankLine, this.body);
 
-		this.depositInput = el('input', { type: 'number', min: '0', step: '1', class: 'ec-bank-input', 'aria-label': 'Amount to deposit', placeholder: '0' });
-		this.withdrawInput = el('input', { type: 'number', min: '0', step: '1', class: 'ec-bank-input', 'aria-label': 'Amount to withdraw', placeholder: '0' });
+		this.depositInput = el('input', { type: 'number', min: '0', step: '1', class: 'ec-bank-input', 'aria-label': 'Amount to deposit', 'data-i18n-attr': 'aria-label:play.bank_deposit_aria', placeholder: '0' });
+		this.withdrawInput = el('input', { type: 'number', min: '0', step: '1', class: 'ec-bank-input', 'aria-label': 'Amount to withdraw', 'data-i18n-attr': 'aria-label:play.bank_withdraw_aria', placeholder: '0' });
 
-		this.depositBtn = el('button', { class: 'ec-row-btn', type: 'button', text: 'Deposit', onclick: () => this._deposit() });
-		this.withdrawBtn = el('button', { class: 'ec-row-btn ec-secondary', type: 'button', text: 'Withdraw', onclick: () => this._withdraw() });
+		this.depositBtn = el('button', { class: 'ec-row-btn', type: 'button', text: 'Deposit', 'data-i18n': 'play.bank_deposit', onclick: () => this._deposit() });
+		this.withdrawBtn = el('button', { class: 'ec-row-btn ec-secondary', type: 'button', text: 'Withdraw', 'data-i18n': 'play.bank_withdraw', onclick: () => this._withdraw() });
 
 		// "Max" fills the field from a balance we may not know yet, so both
 		// presets are held with the transfer buttons until the profile lands.
 		this.depositMaxBtn = el('button', { class: 'ec-bank-preset', type: 'button', text: 'Max', onclick: () => { this.depositInput.value = String(this.gold); } });
 		this.withdrawMaxBtn = el('button', { class: 'ec-bank-preset', type: 'button', text: 'Max', onclick: () => { this.withdrawInput.value = String(this.bankBal); } });
 
-		this.body.appendChild(el('div', { class: 'ec-row-sub', text: 'Deposit: protects cash from a death drop.' }));
+		this.body.appendChild(el('div', { class: 'ec-row-sub', text: 'Deposit: protects cash from a death drop.', 'data-i18n': 'play.bank_deposit_sub' }));
 		this.body.appendChild(el('div', { class: 'ec-bank-amount' }, [this.depositInput, this.depositBtn]));
 		this.body.appendChild(el('div', { class: 'ec-bank-presets' }, [this.depositMaxBtn]));
 
-		this.body.appendChild(el('div', { class: 'ec-row-sub', text: 'Withdraw: moves banked cash back to your purse.' }));
+		this.body.appendChild(el('div', { class: 'ec-row-sub', text: 'Withdraw: moves banked cash back to your purse.', 'data-i18n': 'play.bank_withdraw_sub' }));
 		this.body.appendChild(el('div', { class: 'ec-bank-amount' }, [this.withdrawInput, this.withdrawBtn]));
 		this.body.appendChild(el('div', { class: 'ec-bank-presets' }, [this.withdrawMaxBtn]));
 

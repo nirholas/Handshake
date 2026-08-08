@@ -18,6 +18,7 @@
 import { log } from '../shared/log.js';
 import { purchaseCosmetic, resolveShopAccount } from './cosmetics-purchase.js';
 import { openModal } from './a11y.js';
+import { t } from './i18n-play.js';
 
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -97,12 +98,13 @@ export class CosmeticsShop {
 
 		this.panel = el('div', {
 			class: 'cc-shop-panel', role: 'dialog', 'aria-modal': 'true',
-			'aria-label': 'Cosmetics shop',
+			'aria-label': t('play.shop_aria', 'Open cosmetics shop'),
+			'data-i18n-attr': 'aria-label:play.shop_panel_aria',
 		}, [
 			el('div', { class: 'cc-shop-head' }, [
 				el('div', { class: 'cc-shop-title' }, [
-					el('span', { class: 'cc-shop-title-main', text: 'Cosmetics' }),
-					el('span', { class: 'cc-shop-title-sub', text: 'Preview live on your avatar' }),
+					el('span', { class: 'cc-shop-title-main', text: 'Cosmetics', 'data-i18n': 'play.shop_h' }),
+					el('span', { class: 'cc-shop-title-sub', text: 'Preview live on your avatar', 'data-i18n': 'play.shop_sub' }),
 				]),
 				// Rarest Fits — the platform flex board (R25). Lazy-loaded on click so
 				// it never weighs down the shop bundle.

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-08T15:03:38.488Z",
+	"generated_at": "2026-08-08T15:04:47.608Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -9,12 +9,33 @@
 		{
 			"date": "2026-08-08",
 			"type": "update",
+			"title": "One link to share for the live event, with a real headcount",
+			"summary": "three.ws/event is the front door for anyone who has never been in the world. It carries a ticking countdown, the run of show converted into your own timezone, an add-to-calendar file built in your browser (nothing about who is coming leaves your device), a plain-language walkthrough of what actually happens in there, and one big button into the world. It reads the same schedule file the countdown inside Play reads, so the two can never disagree. While the event is running the page shows how many people are standing in the world right now, read live from the game servers through a new public endpoint at /api/play/population. If that count cannot be reached the page says the doors are open and shows no number, rather than making one up.",
+			"link": "/event",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
 			"title": "Play is safer, lighter on phones, and honest when something breaks",
 			"summary": "A deep audit of the Play world shipped a batch of fixes. A player can no longer put markup in their display name and have it run in everyone else's browser when they loot that player's tombstone, and a coin whose artwork link was crafted to escape its CSS can no longer paint anything over the lobby. Losing your connection now recovers cleanly: the peers who left while you were offline disappear instead of standing around frozen and inflating the headcount, and rejoining no longer strands you behind a \"You died\" screen in a world you are actually alive in. Phones hold up far better, because the world now genuinely frees what it loads: crowd and NPC models, the sun's shadow map, the totem, the jumbotron and the dance floor are all released when you leave a world instead of piling up until the tab is killed. The Wheel of Fortune finally looks like a modal instead of an unstyled block, tells you when it cannot reach the server and lets you retry, and if you close it mid-payment the spin still settles and shows you what you won rather than silently swallowing a paid spin. The jobs board says it is loading instead of claiming there is no work, a very long coin symbol can no longer run over the LIVE badge on the market screen, and a broken world link now says so and leaves you in the lobby instead of building a convincing world nobody else can join.",
 			"link": "/play",
 			"tags": [
 				"fix",
 				"security",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Rejoining a world after a dropped connection no longer leaves ghosts behind",
+			"summary": "If your connection dropped inside a coin world and came back, the people around you could end up duplicated: a frozen copy of everyone standing where they were when you dropped, plus their live selves, and a motionless copy of you standing at the spawn point on everyone else's screen. Reconnecting now rebuilds the crowd from what the world server actually holds, retires anyone who left while you were away, and tells the server to retire your old session the moment you return. Standing still through a drop no longer strands you at the spawn point either, and a tab you left in the background for a few minutes now checks its connection the instant you come back instead of sitting on a dead one that still claims to be connected. Nameplates past sixty metres stop being drawn, so a plaza with a hundred people in it costs what the people near you cost.",
+			"link": "/play",
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},

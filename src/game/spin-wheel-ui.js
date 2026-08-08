@@ -21,6 +21,7 @@
 import './spin-wheel.css';
 import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
 import { openModal, prefersReducedMotion } from './a11y.js';
+import { t } from './i18n-play.js';
 
 const NETWORK = 'mainnet';
 const SPIN_DECIMALS = 6; // $THREE uses 6 decimals (same as pump.fun mints)
@@ -121,7 +122,7 @@ class SpinWheel {
 
 	// ----------------------------------------------------------------- view
 	_build() {
-		this.overlay = el('div', { class: 'kg-spin-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Wheel of Fortune' });
+		this.overlay = el('div', { class: 'kg-spin-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('play.wheel_title', 'Wheel of Fortune'), 'data-i18n-attr': 'aria-label:play.wheel_title' });
 		this.overlay.addEventListener('click', (e) => { if (e.target === this.overlay) this.close(); });
 
 		this.canvas = el('canvas', { class: 'kg-spin-canvas', width: '640', height: '640' });
@@ -131,11 +132,11 @@ class SpinWheel {
 
 		this.resultLine = el('div', { class: 'kg-spin-result', 'aria-live': 'polite' });
 
-		this.freeBtn = el('button', { class: 'kg-spin-btn kg-spin-free', type: 'button', onclick: () => this._free() }, 'Free spin');
+		this.freeBtn = el('button', { class: 'kg-spin-btn kg-spin-free', type: 'button', 'data-i18n': 'play.wheel_free', onclick: () => this._free() }, 'Free spin');
 		this.freeSub = el('div', { class: 'kg-spin-sub' });
 		const freeBlock = el('div', { class: 'kg-spin-action' }, [this.freeBtn, this.freeSub]);
 
-		this.paidBtn = el('button', { class: 'kg-spin-btn kg-spin-paid', type: 'button', onclick: () => this._paid() }, 'Paid spin');
+		this.paidBtn = el('button', { class: 'kg-spin-btn kg-spin-paid', type: 'button', 'data-i18n': 'play.wheel_paid', onclick: () => this._paid() }, 'Paid spin');
 		this.paidSub = el('div', { class: 'kg-spin-sub' });
 		const paidBlock = el('div', { class: 'kg-spin-action' }, [this.paidBtn, this.paidSub]);
 
@@ -145,9 +146,12 @@ class SpinWheel {
 		this.gate = el('div', { class: 'kg-spin-gate', hidden: true });
 		this.legend = el('div', { class: 'kg-spin-legend' });
 
-		const close = el('button', { class: 'kg-spin-close', type: 'button', 'aria-label': 'Close', onclick: () => this.close() }, '✕');
+		const close = el('button', { class: 'kg-spin-close', type: 'button', 'aria-label': t('play.close', 'Close'), 'data-i18n-attr': 'aria-label:play.close', onclick: () => this.close() }, '✕');
 		const head = el('div', { class: 'kg-spin-head' }, [
-			el('div', { class: 'kg-spin-title' }, ["Wheel of Fortune", el('span', { class: 'kg-spin-sub2', text: "Fortune's Folly · Mainland" })]),
+			el('div', { class: 'kg-spin-title' }, [
+				el('span', { text: 'Wheel of Fortune', 'data-i18n': 'play.wheel_title' }),
+				el('span', { class: 'kg-spin-sub2', text: "Fortune's Folly · Mainland", 'data-i18n': 'play.wheel_sub' }),
+			]),
 			close,
 		]);
 

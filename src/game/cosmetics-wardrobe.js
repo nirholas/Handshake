@@ -21,6 +21,7 @@ import {
 	COSMETICS, SLOTS, SLOT_LABELS, DEFAULT_LOADOUT,
 } from '../../multiplayer/src/cosmetics-catalog.js';
 import { openModal } from './a11y.js';
+import { t } from './i18n-play.js';
 
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -72,7 +73,7 @@ export class CosmeticsWardrobe {
 		this._injectStyles();
 
 		this.closeBtn = el('button', {
-			class: 'cw-close', type: 'button', 'aria-label': 'Close wardrobe',
+			class: 'cw-close', type: 'button', 'aria-label': 'Close wardrobe', 'data-i18n-attr': 'aria-label:play.wardrobe_close_aria',
 			onclick: () => this.close(),
 		}, [el('span', { 'aria-hidden': 'true', text: '✕' })]);
 
@@ -80,11 +81,12 @@ export class CosmeticsWardrobe {
 
 		this.panel = el('div', {
 			class: 'cw-panel', role: 'dialog', 'aria-modal': 'true',
-			'aria-label': 'My Cosmetics wardrobe',
+			'aria-label': t('play.wardrobe_panel_aria', 'My Cosmetics wardrobe'),
+			'data-i18n-attr': 'aria-label:play.wardrobe_panel_aria',
 		}, [
 			el('div', { class: 'cw-head' }, [
 				el('div', { class: 'cw-title' }, [
-					el('span', { class: 'cw-title-main', text: 'My Cosmetics' }),
+					el('span', { class: 'cw-title-main', text: 'My Cosmetics', 'data-i18n': 'play.wardrobe_h' }),
 					el('span', { class: 'cw-title-sub', text: 'Equip your owned looks — persists across all worlds' }),
 				]),
 				this.closeBtn,

@@ -12,6 +12,7 @@
 // this one is styled to match.
 
 import { EconPanel } from './economy-ui.js';
+import { t } from './i18n-play.js';
 import './quests-ui.css';
 
 function el(tag, props = {}, kids = []) {
@@ -65,7 +66,7 @@ export function openQuestsPanel({ ui, net } = {}, highlight) {
 
 class QuestsPanel extends EconPanel {
 	constructor({ ui, net, highlight, onClose }) {
-		super({ title: 'Jobs Board', onClose });
+		super({ title: t('play.jobs_title_panel', 'Jobs Board'), onClose });
 		this.ui = ui;
 		this.net = net;
 		this.tab = 'board';
@@ -86,8 +87,8 @@ class QuestsPanel extends EconPanel {
 		this.eventBoard = null;
 		this._boardPoll = null;
 
-		this.boardTabBtn = el('button', { class: 'ec-tab ec-on', type: 'button', role: 'tab', 'aria-selected': 'true', text: 'Board', onclick: () => this._setTab('board') });
-		this.activeTabBtn = el('button', { class: 'ec-tab', type: 'button', role: 'tab', 'aria-selected': 'false', text: 'Active', onclick: () => this._setTab('active') });
+		this.boardTabBtn = el('button', { class: 'ec-tab ec-on', type: 'button', role: 'tab', 'aria-selected': 'true', text: 'Board', 'data-i18n': 'play.jobs_tab_board', onclick: () => this._setTab('board') });
+		this.activeTabBtn = el('button', { class: 'ec-tab', type: 'button', role: 'tab', 'aria-selected': 'false', text: 'Active', 'data-i18n': 'play.jobs_tab_active', onclick: () => this._setTab('active') });
 		// The Event tab only exists when there is an event to show: live right now, or
 		// finished with a standing still worth reading. Hidden until then rather than
 		// shown empty, so the board doesn't grow a dead tab for 51 weeks of the year.
@@ -95,7 +96,7 @@ class QuestsPanel extends EconPanel {
 			class: 'ec-tab qb-event-tab', type: 'button', hidden: true, role: 'tab', 'aria-selected': 'false',
 			text: `${EVENT_GLYPH} Event`, onclick: () => this._setTab('event'),
 		});
-		this.tabs = el('div', { class: 'ec-tabs', role: 'tablist', 'aria-label': 'Jobs board sections' }, [this.boardTabBtn, this.activeTabBtn, this.eventTabBtn]);
+		this.tabs = el('div', { class: 'ec-tabs', role: 'tablist', 'aria-label': t('play.jobs_sections', 'Jobs board sections'), 'data-i18n-attr': 'aria-label:play.jobs_sections' }, [this.boardTabBtn, this.activeTabBtn, this.eventTabBtn]);
 		this.card.insertBefore(this.tabs, this.body);
 
 		this.track(net.on('quests', (snap) => {
@@ -185,7 +186,11 @@ class QuestsPanel extends EconPanel {
 	}
 
 	_render() {
-		this.activeTabBtn.textContent = this.board.active.length ? `Active (${this.board.active.length})` : 'Active';
+		// Interpolated, so it cannot be a static data-i18n attribute; the count has
+		// to sit inside the translated string, not be glued onto the end of it.
+		this.activeTabBtn.textContent = this.board.active.length
+			? t('play.jobs_tab_active_n', 'Active ({{n}})', { n: this.board.active.length })
+			: t('play.jobs_tab_active', 'Active');
 		const showEvent = this._hasEvent();
 		this.eventTabBtn.hidden = !showEvent;
 		// The tab can vanish under the player when the window closes mid-session.
