@@ -53,12 +53,23 @@ A dropped client does not resume its old session: `src/game/community-net.js` re
 
 **The client rebuilds its roster from the snapshot, not from memory.** The old room's listeners are removed before it leaves, so `onRemove` never fires for the peers it had. `/play` flags every peer stale when a reconnect starts, clears the flag for each peer the new room re-announces, and disposes whatever is still flagged once the first full state patch lands. Anyone who left while the client was away disappears then, instead of standing in the world for the rest of the session.
 
-`scripts/play-multiplayer-e2e.mjs` (repo root) asserts both ends of this against two real browser contexts:
+Two scripts in the repo root hold this behaviour down.
+
+`scripts/play-reconnect-proof.mjs` is the fast one and needs nothing but Node: it starts its own server, joins as two players over `colyseus.js`, and asserts the room's end state directly. Nine checks, seconds to run, and it fails loudly if the eviction is removed (the room ends up holding the same player twice).
+
+```bash
+node scripts/play-reconnect-proof.mjs      # wire level, starts and stops its own server
+```
+
+`scripts/play-multiplayer-e2e.mjs` is the full product check: two real browser contexts in one coin world, exchanging movement, emotes and chat, surviving a forced network drop, then asserting the resynced state on both sides. It also covers what only a browser can judge, that chat is written as text and never parsed as markup, that the burst throttle holds, and that the log is capped.
 
 ```bash
 npm run dev:walk-all                       # vite :3000 + this server :2567
 node scripts/play-multiplayer-e2e.mjs      # two contexts, forced drop, resync assertions
+BASE=https://three.ws node scripts/play-multiplayer-e2e.mjs   # against the live world
 ```
+
+Two software-rendered 3D worlds at once is the heaviest thing you can ask a headless Chrome to do, so give the browser run a machine with headroom; the wire-level proof is the one to reach for on a busy box or in a tight loop.
 
 ## Deploy to Fly.io
 
