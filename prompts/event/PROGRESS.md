@@ -84,7 +84,7 @@ Locally the same paths are 200. The whole event pack is unshipped, so no countdo
 |---|---|
 | `tests/fixtures/mcp-golden-tools.json` refreshed | `9f61d7fe5` (2026-08-06) intentionally corrected the `maxPrice` unit in the `query_x402_services` and `agora_board` schemas but never refreshed the fixture, leaving `npm run gate` red on `main` for two days. Exactly 2 hashes changed. |
 | `src/deployments.js` inline `onerror` to `data-fallback="invisible"` | The 114th inline handler, missed by the CSP cleanup in `e30315833`. The site CSP has no `unsafe-inline`, so it never ran. |
-| `tests/forge-gameready-gate.test.js` GLB URL | `2ccc29093` used the dead `cdn.three.ws` host, which the asset-host guard forbids. Now `https://three.ws/cdn/...`. |
+| `tests/forge-gameready-gate.test.js` GLB URL | `2ccc29093` used the dead legacy CDN subdomain, which the asset-host guard forbids. Now `https://three.ws/cdn/...`. (Spelling that host here is what the guard checks for, so this note names it indirectly.) |
 | `tests/walkroom-build-perms.test.js` + `export const BLOCK_SIZE_M` | The "open plaza" sample (15,15) fell inside the new `PLAZA_STAGE` guard disc once `57c8bc1c4` sited the venue at (18,26,r5). Sample moved clear, and the stage disc is now pinned by deriving it from `PLAZA_STAGE` so the venue and its build protection can never drift. |
 
 ### Residuals, each named and sized
@@ -107,3 +107,27 @@ Built from a clean worktree at a pinned SHA, per the runbook (worktree `/workspa
 Pin the SHA explicitly rather than resolving HEAD at submit time; main moved 80+ commits during this order.
 
 **Not mine, observed in passing.** Four defects I found were fixed by other agents mid-session before I could act on them (`ADVENTURE_MARK` undefined in the lobby, `CommunityNet: unknown event "souvenir"`, the `a11y.js` detached-region guard, and the 36px event CTA touch target, now `min-height: 44px`). `npm run audit:links` reports 81 empty `href="#"` anchors across the repo, none in `pages/play.html`, exit 0, pre-existing and out of scope here.
+
+## 2026-08-08 · Countdown verification, two fixes, and the one dependency that arms the server-side event
+
+Ran as a second pass over what orders 01, 03 and 07 had already landed, verifying rather than rebuilding.
+
+**Fixed.**
+
+1. **The in-world pill rendered on top of the lobby banner.** `.cc-event-pill` sets `display: flex`, which outranks the browser's `[hidden] { display: none }`, so `_tick()` marking the pill hidden had no visual effect and the lobby showed two countdowns at once. Added `.cc-event-pill[hidden] { display: none; }` to the module's own style block. Caught by looking at a screenshot; the assertion that missed it was reading the `hidden` property instead of the computed style, which is the lesson worth keeping.
+2. **`/event` printed the timezone twice** ("Doors open Sunday, August 9 at 5:00 PM UTC (UTC)"). The hero formatted the start with `timeZoneName: 'short'` and then appended the IANA zone unconditionally. Now appended only when it adds information (`30853417b`). Verified in Chromium under three timezones: UTC reads "5:00 PM UTC", Berlin reads "7:00 PM GMT+2 (Europe/Berlin)", New York reads "1:00 PM EDT (America/New_York)".
+3. **`npm run audit:docs` was reporting seven undiscoverable public docs.** `docs/event-souvenirs.md` is player-facing and now has a `data/pages.json` entry; the six others (launch-day post copy, IBM Community reaction and recap sources, an external-publisher article, the `/play` boot runbook) are internal drafts and now carry `UNPUBLISHED_DOCS` reasons. Publishing draft post copy into the sitemap the day before the event would have been exactly wrong. Audit is clean across 1284 files.
+
+**Verified, no change needed.**
+
+- **Countdown states, all three, in a real browser** against the dev server: upcoming ticks a live D/H/M/S clock and shows the start in the visitor's timezone; live swaps to a pulsing LIVE marker; past `endsAt` nothing mounts at all. Pill hidden in the lobby and painted in-world (computed style, not the attribute), dismissal persisted under `cc-event-dismissed:<startsAt>` and surviving a reload, no horizontal overflow at 375px, no console errors. The full `/play` page is unreachable under Playwright on this box (the 3D boot OOMs the browser under load), so the module was exercised against a same-origin harness serving the real module, the real `/event.json` and the real Vite transform.
+- **One clock, no copies.** Twelve files read `/event.json` and none of them hardcodes a date: `grep -rn "2026-08"` over every event surface returns nothing.
+- **Multiplayer request timeout is 3600s**, `minScale = maxScale = 1`, container concurrency 1000. Residual 4 above is right that attendees get dropped at the Cloud Run request ceiling; note the arithmetic is two drops across a 150-minute event, not one.
+
+**The dependency worth knowing before the ship.**
+
+`multiplayer/src/event-window.js` reads `https://three.ws/event.json` (60s cache), so the game server learns the event window from the DEPLOYED frontend. Production currently answers that URL with HTML, because the running build predates the file. Consequence: **the event quests, the leaderboard and the souvenir grant stay dark until the frontend deploy lands**, even though the multiplayer service itself is already deployed and needs no redeploy for a schedule change. Checked that this resolves on deploy rather than being a routing trap: no pre-filesystem rule in `vercel.json` shadows `/event.json` (the only matches are a headers rule with `continue: true` and the identity rewrite `/(.*) -> /$1`), and `dist/event.json` is emitted from `public/`.
+
+**Blocked on the box, not on the code.**
+
+No complete frontend build has succeeded here today. Mine died `EXIT:143` (SIGTERM, killed, not a compile error) after clearing the transform stage, and `/workspaces/.preflight-ship/dist` holds only `chat/`. At the time of writing: load average 176 on 16 cores, 46 of 62 GB used, and a concurrent `npm ci` rewriting the shared `node_modules`. Residual 1 above ("one clean `npm test` is still owed") has the same cause. Whoever runs the ship should expect to retry the build on a quieter box rather than to debug it. `dist/` in the main worktree is currently a half-written build from that kill and should not be trusted or shipped; the deploy runbook builds in its own worktree anyway.
