@@ -58,7 +58,13 @@ steps:
       - --platform=managed
       - --port=8080
       - --cpu=4
-      - --memory=8Gi
+      # 16Gi, raised from 8Gi on 2026-08-07 after production OOMed ("Memory limit
+      # of 8192 MiB exceeded with 8645 MiB used") and Cloud Run killed the
+      # instance with SIGKILL, taking any in-flight garment job with it. MAX_CONCURRENT
+      # is 2, so the ceiling has to cover two pipelines at peak plus the model
+      # residents; 8Gi only covered it when the second job lagged the first.
+      # 16Gi is the most Cloud Run allows at --cpu=4.
+      - --memory=16Gi
       # Jobs run as post-202 background work, so the CPU must stay allocated
       # between requests (throttled CPU starves a job the moment pollers go
       # quiet) and one instance stays warm so a scale-to-zero reclaim cannot
