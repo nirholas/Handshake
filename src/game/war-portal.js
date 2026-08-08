@@ -549,7 +549,8 @@ export class WarPortal {
 		ctx.fillText(
 			m.phase === 'countdown' ? `starts in ${clock(remaining)}`
 				: m.phase === 'sudden_death' ? 'next kill takes it'
-					: `${clock(remaining)} left · first to ${m.scoreCap || 25}`,
+					: m.phase === 'lobby' ? 'waiting on both sides'
+						: `${clock(remaining)} left · first to ${m.scoreCap || 25}`,
 			CW / 2, 214,
 		);
 		ctx.textAlign = 'left';
