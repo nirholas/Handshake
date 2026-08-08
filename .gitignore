@@ -449,3 +449,4 @@ public/docs-search-index.json
 .gauth/
 .capacity-*.json
 .play-profile-check.mjs
+.failover-report.json
