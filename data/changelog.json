@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-08",
+			"title": "The coin community list reads like a finished page now",
+			"summary": "Four things were wrong with the list of coin worlds on /play, and together they made the grid look unfinished. Every card carried a wide band of empty space under the coin's name, because the \"Enter community\" button was hidden until you hovered the card, while still taking up its full height. On a phone or tablet, where there is no hover, that button never appeared at all, so the most important control on the page was invisible to most of the people looking at it. The button now rests on every card as a quiet outline and turns solid white on hover or when you tab to it, which fills the space, works on touch, and tells you the tile is clickable in the first place. The cards also showed no market cap, because the trending and search feeds behind them were dropping the number before it ever reached the page; they now carry it, so each coin shows its size the way the featured world already did. The Adventure mode button's crossed-swords icon was an emoji with the colour stripped out, which on most machines collapses into a plain X and read as a close button next to the search field, so it is now a drawn icon. And an avatar in the character picker could show as an empty square: if a model turned out to have nothing measurable to photograph, the picker replaced a perfectly good preview with a fully transparent one. It now keeps whatever it was already showing.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
 			"title": "Play now opens fast instead of stuttering for its first few seconds",
 			"summary": "Opening a coin world, especially from a shared /play link, used to lurch: a long pause, a few juddering seconds, then everything settling into place and staying smooth. Four separate causes, all measured on the live site. The physics engine was being downloaded and parsed before the page could draw anything, even though nothing needs it until you are already standing in the world, which alone put about three quarters of a megabyte on the critical path. The graphics card was being asked to compile every shader in the town on the single frame that first showed it to you. The world was lit only once a one-and-a-half megabyte lighting file finished downloading, so it looked flat and then suddenly popped. And the decorative crowd of wandering avatars started downloading its models on top of everything else, at the busiest possible moment. Each now happens in the right order: physics loads alongside the world, shaders compile before the frame that needs them, the lighting is correct from the first frame and refines afterwards, and the crowd fills in once your own world has landed. The coin's artwork is also decoded once now rather than twice, and the automatic quality governor no longer mistakes a still-loading world for a slow computer and dims the picture for the next several seconds.",
 			"tags": [
@@ -18746,16 +18756,6 @@
 			"date": "2026-08-08",
 			"title": "Forge items straight into a /play world, from a prompt or a photo",
 			"summary": "In any coin's world you can now describe an item and have it built for real, right there. Open build mode, click Forge in the props palette, and type something like a mossy stone lantern with a copper roof, or attach a reference photo and let it work from that. About half a minute later the finished 3D model is added to your props and armed, so the next click drops it into the world. There is a chat shortcut too: type /forge a brass telescope and the item lands ready to place without opening the palette at all. Anything you place appears for everyone else connected to that server and stays there, exactly like a block you built by hand. It is free, needs no account or wallet, and every failure explains itself and can be retried.",
-			"tags": [
-				"feature",
-				"improvement"
-			],
-			"link": "/play"
-		},
-		{
-			"date": "2026-08-08",
-			"title": "Forge items straight into a /play world, from a prompt or a photo",
-			"summary": "You can now create a brand-new 3D item without leaving a world. Open the build palette, click Forge, and describe what you want (\"a mossy stone lantern with a copper roof\"), or attach a reference photo and let it build the thing in the picture. About half a minute later the finished model is armed in your props, and one click drops it into the world for everyone connected to that server: it renders for every other player, and it is saved with the rest of the build, so it is still standing when people come back. There is also a chat shortcut, /forge a brass telescope, for when you do not want to open the palette at all. It is free, it needs no account or wallet, and every failure along the way (a busy queue, a prompt the lane refuses, a dropped connection) tells you what happened and how to retry.",
 			"tags": [
 				"feature",
 				"improvement"
