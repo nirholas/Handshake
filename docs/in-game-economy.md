@@ -83,6 +83,12 @@ This is the only real risk decision in the economy:
 That asymmetry is the entire point of the bank existing. If you are about to go
 somewhere dangerous, deposit first. The walk back to the bank is the cost.
 
+**The walk is enforced by the server, not by the UI.** Deposits, withdrawals and
+every store trade are refused unless you are actually standing at the teller or a
+store counter, the same proximity rule the ponds, the gather nodes and the wheel
+have always used. Without it the cost above is imaginary: anything that can bank
+from the middle of a fight never risks a coin.
+
 ---
 
 ## The `$THREE` boutique
@@ -138,8 +144,15 @@ an implementation detail to be tuned away: the client renders a fixed-angle whee
 so the visual and the probability must stay identical or the wheel would lie.
 
 Before a spin is offered or paid for, the server checks there is inventory room
-for **any** item prize the wheel can award. A win can never be lost to a full
-pack, and you can never pay for a spin whose prize would be discarded.
+for **every** item prize the wheel can award, not just one of them: the roll is
+uniform across wood, stone and coal, so room for only one of the three would
+still leave two thirds of the wheel with nowhere to land. A win can never be lost
+to a full pack, and you can never pay for a spin whose prize would be discarded.
+
+If a pack somehow fills between paying and rolling (you have a wallet open for a
+while), the prize is never voided. It converts to its cash value and the result
+says so in as many words, because a prize that quietly became four cash reads as
+a broken wheel.
 
 The full paytable with real per-outcome odds is on
 [three.ws/play/economy](https://three.ws/play/economy).

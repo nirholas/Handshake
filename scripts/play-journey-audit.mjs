@@ -6,6 +6,8 @@
 //
 //   node scripts/play-journey-audit.mjs                       # desktop, local
 //   VIEWPORT=375 node scripts/play-journey-audit.mjs
+//   VIEWPORT=375 LOBBY_ONLY=1 node scripts/play-journey-audit.mjs   # skip the world
+//   TAB_CHECK=1 node scripts/play-journey-audit.mjs                 # add a real Tab pass
 //   VIEWPORT=320 node scripts/play-journey-audit.mjs https://three.ws/play
 //
 // Nothing here is inferred from source. Every finding is a resolved computed
@@ -226,6 +228,24 @@ async function tabTrapCheck(label, steps = 25) {
 	return seen.size;
 }
 
+/** The run's verdict, in the same shape whichever depth the run went to. */
+function summarize() {
+	console.log('\n=== summary @' + VIEWPORT + ' ===');
+	const counts = new Map();
+	for (const c of findings.console) {
+		const k = c.replace(/\d+/g, 'N').slice(0, 160);
+		counts.set(k, (counts.get(k) || 0) + 1);
+	}
+	console.log('console issues:', findings.console.length);
+	for (const [k, n] of [...counts].sort((a, b) => b[1] - a[1])) console.log('  ', String(n).padStart(3), 'x', k);
+	console.log('network issues:', findings.network.length);
+	for (const n of [...new Set(findings.network)].slice(0, 15)) console.log('   ', n);
+	console.log('overflow scans with hits:', findings.overflow.length);
+	console.log('touch-target scans with hits:', findings.touch.length);
+	console.log('focus stops without a ring:', findings.focus.reduce((a, f) => a + f.bad.length, 0));
+	console.log('CLS:', findings.cls?.cls);
+}
+
 async function noteState(label, fn) {
 	const v = await page.evaluate(fn).catch((e) => ({ error: String(e) }));
 	findings.states.push({ label, v });
@@ -284,25 +304,49 @@ await page.waitForTimeout(600);
 if (process.env.TAB_CHECK === '1') await tabTrapCheck('lobby');
 
 // ── 2. search: a query with hits, then one with none ───────────────────────
-const search = await page.$('.cc-search input');
-if (search) {
-	await search.focus().catch(() => {});
-	await search.type('dog', { delay: 30 });
-	await page.waitForTimeout(3500);
+//
+// The value is set and an `input` event dispatched rather than typed through
+// the keyboard: Playwright's actionability wait needs the main thread, and this
+// one is busy rendering a world in software. The handler under test is the
+// same either way, since the lobby listens for `input`.
+const typeSearch = (value) => page.evaluate((v) => {
+	const el = document.querySelector('.cc-search input');
+	if (!el) return false;
+	el.focus();
+	el.value = v;
+	el.dispatchEvent(new Event('input', { bubbles: true }));
+	return true;
+}, value);
+
+if (await typeSearch('dog')) {
+	await page.waitForTimeout(4000);
 	await noteState('search-hits', () => ({
 		cards: document.querySelectorAll('.cc-card:not(.cc-skeleton)').length,
 		more: !!document.querySelector('.cc-search-more'),
 		empty: !!document.querySelector('.cc-state'),
 	}));
-	await search.fill('zzzqqqxnotacoin9999');
-	await page.waitForTimeout(4000);
+	await typeSearch('zzzqqqxnotacoin9999');
+	await page.waitForTimeout(5000);
 	await noteState('search-no-hits', () => ({
 		cards: document.querySelectorAll('.cc-card:not(.cc-skeleton)').length,
 		empty: !!document.querySelector('.cc-state'),
-		emptyText: document.querySelector('.cc-state')?.textContent?.trim().slice(0, 140) || null,
+		emptyText: document.querySelector('.cc-state')?.textContent?.trim().replace(/\s+/g, ' ').slice(0, 140) || null,
 	}));
-	await search.fill('');
+	await typeSearch('');
 	await page.waitForTimeout(1500);
+} else {
+	console.log(at(), '[missing] lobby search input');
+}
+
+// A phone-sized sweep is worth running on its own: the lobby is where the
+// layout defects live, and skipping the world keeps the run inside the memory
+// a shared machine can spare.
+if (process.env.LOBBY_ONLY === '1') {
+	findings.cls = await page.evaluate(() => ({ cls: Number((window.__cls || 0).toFixed(4)), shifts: (window.__shifts || []).slice(0, 8) }));
+	console.log(at(), '[cls]', JSON.stringify(findings.cls));
+	summarize();
+	await browser.close();
+	process.exit(findings.console.length || findings.network.length ? 1 : 0);
 }
 
 // ── 3. avatar bar: gallery + create modal open/close ───────────────────────
@@ -425,20 +469,7 @@ console.log(at(), '[cls]', JSON.stringify(findings.cls));
 
 await page.screenshot({ path: process.env.SHOT || `/tmp/play-journey-${VIEWPORT}.png` }).catch(() => {});
 
-console.log('\n=== summary @' + VIEWPORT + ' ===');
-const counts = new Map();
-for (const c of findings.console) {
-	const k = c.replace(/\d+/g, 'N').slice(0, 160);
-	counts.set(k, (counts.get(k) || 0) + 1);
-}
-console.log('console issues:', findings.console.length);
-for (const [k, n] of [...counts].sort((a, b) => b[1] - a[1])) console.log('  ', String(n).padStart(3), 'x', k);
-console.log('network issues:', findings.network.length);
-for (const n of [...new Set(findings.network)].slice(0, 15)) console.log('   ', n);
-console.log('overflow scans with hits:', findings.overflow.length);
-console.log('touch-target scans with hits:', findings.touch.length);
-console.log('focus stops without a ring:', findings.focus.reduce((a, f) => a + f.bad.length, 0));
-console.log('CLS:', findings.cls?.cls);
+summarize();
 
 await browser.close();
 process.exit(findings.console.length || findings.network.length ? 1 : 0);

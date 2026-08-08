@@ -178,6 +178,7 @@
 		"smoke:mcp": "node scripts/smoke-mcp-remotes.mjs",
 		"test:mcp": "node scripts/test-mcp-all.mjs",
 		"audit:pages": "node scripts/audit-page-index.mjs --strict",
+		"audit:meetup": "node scripts/meetup-audit.mjs",
 		"audit:docs": "node scripts/audit-docs.mjs",
 		"docs:freshness": "node scripts/doc-freshness.mjs",
 		"check:docs-freshness": "node scripts/doc-freshness.mjs --check",

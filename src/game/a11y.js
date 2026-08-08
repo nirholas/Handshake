@@ -178,7 +178,11 @@ let assertiveEl = null;
 let flip = false;
 
 function ensureRegions() {
-	if (politeEl || typeof document === 'undefined' || !document.body) return;
+	if (typeof document === 'undefined' || !document.body) return;
+	// Re-create when the regions have been torn out from under us. /play replaces
+	// whole subtrees (leaving a world, the zen teardown), and a cached reference
+	// to a detached node announces into nothing, silently and forever.
+	if (politeEl?.isConnected && assertiveEl?.isConnected) return;
 	const style = document.createElement('style');
 	style.textContent =
 		'.cc-sr-live{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;' +

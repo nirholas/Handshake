@@ -187,7 +187,19 @@ async function moveTo(page, x, z) {
 	}, { x, z });
 }
 
-const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+	args: [
+		// Two software-rendered 3D worlds at once is the whole point of this run,
+		// and it is the heaviest thing you can ask a headless Chrome to do.
+		'--use-gl=swiftshader',
+		'--enable-unsafe-swiftshader',
+		// Containers ship a 64 MB /dev/shm, which is where Chrome puts its shared
+		// render buffers. The second world crashes the renderer outright there,
+		// which surfaces as "Page crashed" mid-navigation and looks like a product
+		// bug. Fall back to /tmp so the ceiling is the disk, not a 64 MB tmpfs.
+		'--disable-dev-shm-usage',
+	],
+});
 let a; let b;
 try {
 	// ---------------------------------------------------------------- join path

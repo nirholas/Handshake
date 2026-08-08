@@ -170,7 +170,10 @@ async function openPlayer(browser, tag, storageState) {
 	page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${String(e.message).slice(0, 200)}`));
 	// Record every souvenir announcement this client receives, so "exactly once"
 	// is measurable rather than assumed. Installed before any app code runs.
-	await page.addInitScript(() => {
+	// The same script pins the game server to this run's private instance
+	// (src/shared/game-server-url.js checks window.GAME_SERVER_URL first).
+	await page.addInitScript((gameServer) => {
+		window.GAME_SERVER_URL = gameServer;
 		window.__SOUVENIRS__ = [];
 		const tick = setInterval(() => {
 			const net = window.__CC__?.net;
@@ -179,7 +182,7 @@ async function openPlayer(browser, tag, storageState) {
 			try { net.on('souvenir', (m) => window.__SOUVENIRS__.push(m)); } catch { /* older build */ }
 			clearInterval(tick);
 		}, 200);
-	});
+	}, GAME_SERVER);
 	await page.goto(WORLD, { waitUntil: 'domcontentloaded', timeout: LOAD_MS });
 	await dismissOverlays(page);
 	const joined = await until(page, () => {
@@ -210,16 +213,16 @@ async function main() {
 	console.log(`${at()} event config served at http://127.0.0.1:${CONFIG_PORT}/event.json (window: ${windowState})`);
 
 	if (!EXTERNAL) {
-		start('vite', 'npx', ['vite', '--port', '3000']);
+		start('vite', 'npx', ['vite', '--port', String(VITE_PORT), '--strictPort']);
 		// The game server reads the event config from THIS process, not from
 		// three.ws, which is what lets the run open and close the window at will.
 		start('colyseus', 'node', ['src/index.js'], {
 			cwd: resolve(ROOT, 'multiplayer'),
-			env: { PORT: '2567', EVENT_CONFIG_URL: `http://127.0.0.1:${CONFIG_PORT}/event.json` },
+			env: { PORT: String(MP_PORT), EVENT_CONFIG_URL: `http://127.0.0.1:${CONFIG_PORT}/event.json` },
 		});
-		if (!await waitFor('http://127.0.0.1:2567/health', 90_000)) throw new Error('colyseus never came up');
+		if (!await waitFor(`http://127.0.0.1:${MP_PORT}/health`, 90_000)) throw new Error('colyseus never came up');
 		if (!await waitFor(BASE, 120_000)) throw new Error('vite never came up');
-		console.log(`${at()} servers up`);
+		console.log(`${at()} servers up: vite :${VITE_PORT}, colyseus :${MP_PORT}`);
 	}
 
 	const browser = await chromium.launch();
