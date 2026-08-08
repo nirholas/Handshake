@@ -6,10 +6,14 @@
  * to be distinguishable at a glance without relying on colour alone (every one
  * also carries a text tag). */
 
+/* The walk-up prompt inherits the shared .ps-action chip. Its position comes from
+ * the stacking contract in play-systems.css (`.ps-action.wp-action`), which is
+ * where every contextual prompt claims its row; only the tint is set here, so the
+ * war prompt is distinguishable from cast/chop/spin at a glance while staying the
+ * same shape and size as the rest. */
 .wp-action {
-	/* Inherits the shared .ps-action prompt chip; only the accent differs so the
-	 * war prompt is distinguishable from fish/chop/spin at the same glance. */
-	--ps-accent: #8fd0ff;
+	background: linear-gradient(180deg, #eaf6ff, #cfe9ff);
+	border-color: #eaf6ff;
 }
 
 /* ── overlay ─────────────────────────────────────────────────────────────── */

@@ -147,14 +147,15 @@
 }
 /* Contextual-action stacking contract. Three independent systems mount a
    `.ps-action` button at the same fixed spot: play-systems (fish/equip rod),
-   play-activities (`.pa-action`: chop/mine/cook/gather) and wheel-station
-   (`.wh-action`: spin). Standing where two are in range used to render them
-   pixel-perfectly on top of each other, so only the last-appended one was
-   clickable. Each modifier claims its own row, bottom-up, in the order a player
-   is most likely to want them. Keep the 52px step in sync with the mobile
-   overrides at the bottom of this file. */
+   play-activities (`.pa-action`: chop/mine/cook/gather), wheel-station
+   (`.wh-action`: spin) and war-portal (`.wp-action`: enter the war). Standing
+   where two are in range used to render them pixel-perfectly on top of each
+   other, so only the last-appended one was clickable. Each modifier claims its
+   own row, bottom-up, in the order a player is most likely to want them. Keep
+   the 52px step in sync with the mobile overrides at the bottom of this file. */
 .ps-action.pa-action { bottom: 184px; }
 .ps-action.wh-action { bottom: 236px; }
+.ps-action.wp-action { bottom: 288px; }
 .ps-action:hover { filter: brightness(0.9); transform: translateX(-50%) translateY(-2px); }
 .ps-action:active { transform: translateX(-50%) scale(0.97); }
 .ps-action.is-disabled {
@@ -494,6 +495,7 @@
 	   mobile origin so the joystick and hotbar still clear all three. */
 	.ps-action.pa-action { bottom: 260px; }
 	.ps-action.wh-action { bottom: 312px; }
+	.ps-action.wp-action { bottom: 364px; }
 	.ps-rail { top: auto; bottom: 232px; transform: none; right: 10px; }
 	.ps-panel { right: 10px; left: 10px; width: auto; max-width: none; }
 }
