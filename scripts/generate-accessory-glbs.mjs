@@ -541,7 +541,13 @@ function laurelParts() {
 	const BAND_Y = 0.085;   // crown height above the head bone
 	const GAP = 0.24;       // radians of bare band left open at the front (+Z)
 	const LEAF_COUNT = 18;
-	const LEAF = [0.012, 0.027, 0.0045]; // half-extents: narrow, long, near-flat
+	// Half-extents: narrow, long, near-flat. The length and the outward tilt below
+	// are doing more than styling. mountProp() normalises EVERY worn prop to the
+	// same 0.34 m width, so what the wearer actually sees is the ratio of the band
+	// to the full leaf-tip span: the further the leaves reach, the smaller the
+	// circlet ends up on the head. Short leaves made the band land wider than the
+	// skull and read as hovering beside the temples rather than resting on them.
+	const LEAF = [0.012, 0.036, 0.0045];
 	const GOLD = [0.86, 0.71, 0.28];
 
 	// Circlet: a torus is authored in the XY plane, so tip it into XZ to ride the
@@ -559,7 +565,7 @@ function laurelParts() {
 	const leaves = [];
 	for (let i = 0; i < LEAF_COUNT; i++) {
 		const theta = GAP + (i / (LEAF_COUNT - 1)) * (Math.PI * 2 - GAP * 2);
-		const tilt = i % 2 === 0 ? 0.46 : 0.64;
+		const tilt = i % 2 === 0 ? 0.72 : 0.92;
 		const rotation = quatMul(quatAxis('y', theta), quatAxis('x', tilt));
 		const stem = quatRotate(rotation, [0, LEAF[1] * 0.92, 0]);
 		leaves.push(transformGeom(leafBase, {
