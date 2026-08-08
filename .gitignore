@@ -450,3 +450,4 @@ public/docs-search-index.json
 .capacity-*.json
 .play-profile-check.mjs
 .failover-report.json
+.meetup-audit/
