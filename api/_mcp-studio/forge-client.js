@@ -248,29 +248,27 @@ const DIRECTOR_TIMEOUT_MS = 20_000;
 // beyond this the model has stopped writing a prompt and started writing prose.
 const DIRECTOR_MAX_CHARS = 1000;
 
-// A rewrite that stops mid-clause is a truncated generation, not a brief. The
-// tell is the final character: a complete spec ends on a word or terminal
-// punctuation, never on a separator that promises more text. Hyphen, en-dash
-// and em-dash are written as escapes (not literal glyphs) so this regex itself
-// never trips the repo's own em-dash ban.
-const ENDS_MID_CLAUSE = /[,;:\-\u2013\u2014/&+([{]$/;
-
-// Trailing function words carry the same tell without the punctuation ("...with
-// gracefully curved" is complete only if "curved" is the last adjective, which a
-// dangling connective rules out).
-const DANGLING_CONNECTIVE =
-	/\b(?:and|or|with|without|of|in|on|at|to|for|from|by|as|the|a|an|its|their|plus|featuring|including|made|constructed)$/i;
+// The director's system prompts ask for a complete spec, and a complete spec is
+// a finished sentence: every well-formed one observed in production closes on a
+// period after its negatives clause ("...no second subject."). A generation that
+// ran out of tokens cannot, which makes terminal punctuation the one signal that
+// separates a whole brief from a clipped one without guessing at grammar. Both
+// production truncations fail it ("A small," and "A classic wooden rocking chair
+// with gracefully curved"), as does any fragment ending on a separator or a
+// dangling connective, with no per-word list to keep current.
+const ENDS_COMPLETE = /[.!?]["'\u201d\u2019)\]]*$/;
 
 // Decide whether a director rewrite is safe to forward in place of the user's
 // own words. The director is a quality lever that must never cost a caller their
 // intent, so anything that fails this check falls back to the raw prompt rather
-// than shipping a fragment. Pure: same inputs → same verdict.
+// than shipping a fragment. Erring toward rejection is cheap: the fallback is
+// the caller's own wording, which is always a valid brief. Pure: same inputs to
+// same verdict.
 export function isUsableDirectorRewrite(refined, rawPrompt) {
 	if (typeof refined !== 'string') return false;
 	const text = refined.trim();
 	if (text.length < 3 || text.length > DIRECTOR_MAX_CHARS) return false;
-	if (ENDS_MID_CLAUSE.test(text)) return false;
-	if (DANGLING_CONNECTIVE.test(text)) return false;
+	if (!ENDS_COMPLETE.test(text)) return false;
 	// The director's contract is to ENRICH a rough idea into a denser spec. A
 	// result no longer than what the caller typed has added nothing, and is far
 	// more likely a clipped opening clause than a genuine tightening, so the
