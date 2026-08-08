@@ -336,8 +336,8 @@ export class CombatSystem {
 		if (!v) return;
 		// A 'death' notice hides only on a matching 'respawn' notice, but a reconnect
 		// re-sends the authoritative profile without either notice. If the server says
-		// we're alive, clear any death overlay left pinned from before the drop — else
-		// a player rejoins into a live world stuck behind a full-screen "You died".
+		// we're alive, clear any death overlay left pinned from before the drop.
+		// Otherwise a player rejoins a live world stuck behind "You died".
 		if (Number.isFinite(v.hp) && v.hp > 0 && this.deathOverlay && !this.deathOverlay.hidden) this._hideDeath();
 		if (Number.isFinite(v.hp) && Number.isFinite(v.maxHp)) this.hud.setHealth(v.hp, v.maxHp);
 		if (Number.isFinite(v.armor) && Number.isFinite(v.maxArmor)) this.hud.setArmor(v.armor, v.maxArmor);
