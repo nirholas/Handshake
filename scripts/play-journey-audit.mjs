@@ -314,6 +314,24 @@ await page.waitForTimeout(600);
 // looks wrong with the tab order specifically.
 if (process.env.TAB_CHECK === '1') await tabTrapCheck('lobby');
 
+// LOBBY_ONLY stops here. The lobby's layout and focus story is what a responsive
+// pass re-checks over and over, and it is reachable in a fraction of the time a
+// world entry costs, so it is worth being able to ask for on its own.
+if (process.env.LOBBY_ONLY === '1') {
+	findings.cls = await page.evaluate(() => ({ cls: Number((window.__cls || 0).toFixed(4)), shifts: (window.__shifts || []).slice(0, 8) }));
+	console.log(at(), '[cls]', JSON.stringify(findings.cls));
+	console.log(`\n=== lobby summary @${VIEWPORT} ===`);
+	console.log('console issues:', findings.console.length);
+	for (const c of [...new Set(findings.console)].slice(0, 10)) console.log('   ', c);
+	console.log('network issues:', findings.network.length);
+	for (const n of [...new Set(findings.network)].slice(0, 10)) console.log('   ', n);
+	console.log('overflow scans with hits:', findings.overflow.length);
+	console.log('touch-target scans with hits:', findings.touch.length);
+	console.log('focus problems:', findings.focus.reduce((a, f) => a + f.bad.length, 0));
+	await browser.close();
+	process.exit(findings.console.length || findings.network.length ? 1 : 0);
+}
+
 // ── 2. search: a query with hits, then one with none ───────────────────────
 //
 // The value is set and an `input` event dispatched rather than typed through
