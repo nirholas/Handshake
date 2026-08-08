@@ -59,13 +59,19 @@ if (REDIS_URL && REDIS_TOKEN) {
  * @param {object} snapshot see ClashRoom._liveSnapshot() for the fields
  */
 export function publishWarLive(snapshot) {
-	if (!_redis || !snapshot?.matchKey) return Promise.resolve(null);
+	if (!_redisReady || !snapshot?.matchKey) return Promise.resolve(null);
 	const record = {
 		...snapshot,
 		kills: (snapshot.kills || []).slice(-KILL_FEED_MAX),
 		updatedAt: Number.isFinite(snapshot.updatedAt) ? snapshot.updatedAt : Date.now(),
 	};
 	return (async () => {
+		// Wait for the handshake before deciding there is no client. The very first
+		// publish of a process (a room created seconds after boot) would otherwise
+		// be dropped silently while the connection was still being verified, which
+		// is exactly the battle a spectator is most likely to be waiting on.
+		await _redisReady;
+		if (!_redis) return null;
 		try {
 			await _redis.set(LIVE_KEY(record.matchKey), JSON.stringify(record), { ex: SNAPSHOT_TTL_S });
 			await _redis.zadd(LIVE_INDEX, { score: record.updatedAt, member: record.matchKey });
@@ -86,8 +92,10 @@ export function publishWarLive(snapshot) {
  * the TTL to expire it.
  */
 export function clearWarLive(matchKey) {
-	if (!_redis || !matchKey) return Promise.resolve(false);
+	if (!_redisReady || !matchKey) return Promise.resolve(false);
 	return (async () => {
+		await _redisReady;
+		if (!_redis) return false;
 		try {
 			await _redis.del(LIVE_KEY(matchKey));
 			await _redis.zrem(LIVE_INDEX, matchKey);

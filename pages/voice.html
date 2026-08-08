@@ -11,10 +11,10 @@
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title data-i18n="voice.meta_title">Voice Lab · three.ws</title>
-		<meta name="description" content="Clone your voice in seconds. Record, preview, and use your cloned voice across three.ws avatars and agents."  data-i18n-attr="content:voice.meta_description"/>
+		<meta name="description" content="Browse hundreds of voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own, then use it across three.ws avatars and agents."  data-i18n-attr="content:voice.meta_description"/>
 		<link rel="canonical" href="https://three.ws/voice" />
 		<meta property="og:title" content="Voice Lab · three.ws"  data-i18n-attr="content:voice.meta_og_title"/>
-		<meta property="og:description" content="Clone your voice and give your 3D avatars and AI agents a unique voice. Record 20-30 seconds and get an instant voice clone."  data-i18n-attr="content:voice.meta_og_description"/>
+		<meta property="og:description" content="Pick your agent's voice from hundreds across five providers, free lanes included, or clone your own from a 20-30 second recording."  data-i18n-attr="content:voice.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/voice" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<link rel="stylesheet" href="/style.css" />
@@ -909,7 +909,7 @@
 		<main class="vl-root">
 			<div class="vl-header">
 				<h1 data-i18n="voice.voice_lab">Voice Lab</h1>
-				<p data-i18n="voice.clone_your_voice_in_seconds_record_20">Clone your voice in seconds. Record 20-30 seconds of clear speech, and we'll create a digital replica you can use across your avatars and agents.</p>
+				<p data-i18n="voice.pick_a_voice_or_clone_your_own">Pick a voice from hundreds across Microsoft Edge, Google Gemini, NVIDIA, OpenAI and ElevenLabs, or record 20-30 seconds of clear speech and clone your own. Either way it works across your avatars and agents.</p>
 			</div>
 
 			<!-- ── Recorder ─────────────────────────────── -->
@@ -1073,14 +1073,16 @@
 				<div class="vl-card">
 					<div class="vl-card-body">
 						<p class="vl-byok-copy">
-							Cloning and speech on the three.ws account are metered to your
-							<a href="/credits">credit balance</a> (top up with $THREE or SOL):
-							$0.50 per voice clone and $0.30 per 1,000 spoken characters, with repeated
-							clips served from cache free. Prefer to use your own account? Paste your
+							The Microsoft Edge, Google Gemini and NVIDIA lanes above are free and always
+							will be. Only ElevenLabs and OpenAI cost anything: on the three.ws account
+							they are metered to your <a href="/credits">credit balance</a> (top up with
+							$THREE or SOL) at $0.50 per voice clone, $0.30 per 1,000 spoken characters on
+							ElevenLabs and $0.03 on OpenAI, with repeated clips served from cache free.
+							Prefer to use your own account? Paste your
 							<a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener">ElevenLabs API key</a>
-							and everything runs on it instead: your voices, your quota, no platform charges.
-							The key is stored only in this browser and sent only with your own voice
-							requests; the server never keeps it.
+							and every ElevenLabs call runs on it instead: your voices, the full public
+							Voice Library, your quota, no platform charges. The key is stored only in this
+							browser and sent only with your own voice requests; the server never keeps it.
 						</p>
 						<div class="vl-byok-row">
 							<input type="password" id="byokKey" placeholder="sk_..." autocomplete="off" spellcheck="false" aria-label="ElevenLabs API key" />
