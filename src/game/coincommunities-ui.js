@@ -1322,19 +1322,21 @@ export class CommunityUI {
 		this.tierBadge = el('span', { class: 'cc-tier-badge', hidden: true });
 		// Buy this coin from inside its own world — the most natural action in a
 		// pump.fun community. Opens the native on-chain buy modal (lazy chunk).
-		this.buyBtnLabel = el('span', { class: 'cc-buy-btn-text', text: 'Buy' });
+		this.buyBtnLabel = el('span', { class: 'cc-buy-btn-text', text: 'Buy', 'data-i18n': 'play.buy' });
 		this.buyBtn = el('button', {
 			class: 'cc-buy-btn', type: 'button', title: 'Buy this coin',
+			'data-i18n-attr': 'title:play.buy_title',
 			onclick: () => this.h.onBuy?.(),
-		}, [el('span', { class: 'cc-buy-btn-ico', text: '⚡' }), this.buyBtnLabel]);
+		}, [el('span', { class: 'cc-buy-btn-ico', 'aria-hidden': 'true', text: '⚡' }), this.buyBtnLabel]);
 		// Creator-only (R24): set the token threshold to enter this coin's Holders
 		// world. Hidden until the server confirms this player is the coin's creator
 		// (build-perms snapshot); shown in both the General and Holders worlds.
 		this.gateBtn = el('button', {
 			class: 'cc-gate-cfg-btn', type: 'button', hidden: true,
 			title: 'Set who can enter the Holders world', 'aria-label': 'Configure the holders gate',
+			'data-i18n-attr': 'title:play.gate_title;aria-label:play.gate_aria',
 			onclick: () => this.h.onConfigureGate?.(),
-		}, [el('span', { class: 'cc-gate-cfg-ico', 'aria-hidden': 'true', text: '🔑' }), el('span', { class: 'cc-gate-cfg-text', text: 'Gate' })]);
+		}, [el('span', { class: 'cc-gate-cfg-ico', 'aria-hidden': 'true', text: '🔑' }), el('span', { class: 'cc-gate-cfg-text', text: 'Gate', 'data-i18n': 'play.gate' })]);
 		// Open the cosmetics shop — browse + try cosmetics on your avatar live.
 		this.shopBtn = el('button', {
 			class: 'cc-shop-btn', type: 'button', title: 'Cosmetics — try looks on your avatar',
@@ -1347,8 +1349,9 @@ export class CommunityUI {
 		this.avatarBtn = el('button', {
 			class: 'cc-avatarbtn', type: 'button', title: 'Change your avatar (V)',
 			'aria-label': 'Change your avatar', 'aria-expanded': 'false',
+			'data-i18n-attr': 'title:play.avatar_title;aria-label:play.avatar_aria',
 			onclick: () => this.h.onAvatarPanel?.(),
-		}, [el('span', { class: 'cc-avatarbtn-ico', 'aria-hidden': 'true', text: '🧍' }), el('span', { class: 'cc-avatarbtn-text', text: 'Avatar' })]);
+		}, [el('span', { class: 'cc-avatarbtn-ico', 'aria-hidden': 'true', text: '🧍' }), el('span', { class: 'cc-avatarbtn-text', text: 'Avatar', 'data-i18n': 'play.avatar' })]);
 		// Open the "My Cosmetics" wardrobe — equip owned items, persists across worlds.
 		this.wardrobeBtn = el('button', {
 			class: 'cc-wardrobe-btn', type: 'button', title: 'My Cosmetics — equip your owned looks',
@@ -1360,8 +1363,9 @@ export class CommunityUI {
 		this.jobsBtn = el('button', {
 			class: 'cc-jobs-btn', type: 'button', title: 'Jobs Board — dailies, courier runs, and the vault heist',
 			'aria-label': 'Open the jobs board',
+			'data-i18n-attr': 'title:play.jobs_title;aria-label:play.jobs_aria',
 			onclick: () => this.h.onJobs?.(),
-		}, [el('span', { class: 'cc-jobs-btn-ico', 'aria-hidden': 'true', text: '🎯' }), el('span', { class: 'cc-jobs-btn-text', text: 'Jobs' })]);
+		}, [el('span', { class: 'cc-jobs-btn-ico', 'aria-hidden': 'true', text: '🎯' }), el('span', { class: 'cc-jobs-btn-text', text: 'Jobs', 'data-i18n': 'play.jobs' })]);
 		// Friends panel (W09) — the account-level social graph: requests, live
 		// presence across every coin world, and DM threads. The badge carries the
 		// unread-DM count so a message landing while the panel is closed still

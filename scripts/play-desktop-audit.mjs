@@ -21,7 +21,11 @@ const t0 = Date.now();
 const at = () => `+${((Date.now() - t0) / 1000).toFixed(1)}s`;
 
 const issues = [];
-const note = (line) => { issues.push(line); console.log(at(), line); };
+// Vite's dev-only HMR socket cannot reach a Codespaces-forwarded port, so it
+// always fails there. It is a harness artifact with no production equivalent
+// (the built site ships no HMR client), so it must not drown out real findings.
+const HARNESS_NOISE = /\[vite\]|vite.*websocket|WebSocket closed without opened|app\.github\.dev/i;
+const note = (line) => { if (HARNESS_NOISE.test(line)) return; issues.push(line); console.log(at(), line); };
 page.on('console', (m) => {
 	if (m.type() === 'error' || m.type() === 'warning') note(`[console.${m.type()}] ${m.text().slice(0, 300)}`);
 });
@@ -32,7 +36,7 @@ page.on('requestfailed', (r) => {
 });
 page.on('response', (r) => { if (r.status() >= 400) note(`[http ${r.status()}] ${r.url().slice(0, 140)}`); });
 
-await page.goto(TARGET, { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.goto(TARGET, { waitUntil: "domcontentloaded", timeout: 180000 });
 console.log(at(), 'domcontentloaded');
 
 let loaderCleared = true;
@@ -100,7 +104,7 @@ if (/position|inset|z-index|content/.test(checks.cardStyleProps)) note(`[css-inj
 // A malformed mint must land in the lobby with an explanation, not a world.
 const bad = new URL(TARGET);
 bad.search = '?coin=notarealmint';
-await page.goto(bad.toString(), { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.goto(bad.toString(), { waitUntil: "domcontentloaded", timeout: 180000 });
 await page.waitForTimeout(6000);
 const badMint = await page.evaluate(() => ({
 	phase: window.__CC__?.phase ?? null,

@@ -38,14 +38,23 @@ export function emptyEventRecord(account, name = '') {
 // value is clamped here rather than at the call sites, so a malformed report can
 // dirty a row but never poison the ranking with NaN or a negative score.
 export function applyEventRun(rec, { missionId = '', gold = 0, at = 0, name = '' } = {}) {
-	rec.runs = Math.max(0, (rec.runs | 0) + 1);
-	rec.cash = Math.max(0, (rec.cash | 0) + Math.max(0, Math.round(Number(gold) || 0)));
-	const ts = Math.max(0, Math.round(Number(at) || 0));
+	rec.runs = nonNegInt(rec.runs) + 1;
+	rec.cash = nonNegInt(rec.cash) + nonNegInt(gold);
+	const ts = nonNegInt(at);
 	if (ts > rec.lastAt) rec.lastAt = ts;
 	if (name) rec.name = String(name).slice(0, 24);
 	const id = String(missionId || '').slice(0, 64);
-	if (id) rec.missions[id] = (rec.missions[id] | 0) + 1;
+	if (id) rec.missions[id] = nonNegInt(rec.missions[id]) + 1;
 	return rec;
+}
+
+// Coerce an untrusted field to a non-negative integer. Deliberately NOT `| 0`:
+// that truncates to 32 bits, and an epoch-ms timestamp is far past 2^31, so a
+// bitwise coercion silently zeroed every `lastAt` and with it the tiebreak that
+// puts the earlier finisher ahead.
+function nonNegInt(v) {
+	const n = Math.floor(Number(v));
+	return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
 // Normalize a persisted/transported row back into a full record. Tolerant of
@@ -53,12 +62,12 @@ export function applyEventRun(rec, { missionId = '', gold = 0, at = 0, name = ''
 // throwing inside a read that the whole panel depends on.
 export function normalizeEventRecord(row, account = '') {
 	const rec = emptyEventRecord(row?.account || account, row?.name || '');
-	rec.runs = Math.max(0, Number(row?.runs) | 0);
-	rec.cash = Math.max(0, Number(row?.cash) | 0);
-	rec.lastAt = Math.max(0, Number(row?.lastAt) | 0);
+	rec.runs = nonNegInt(row?.runs);
+	rec.cash = nonNegInt(row?.cash);
+	rec.lastAt = nonNegInt(row?.lastAt);
 	if (row?.missions && typeof row.missions === 'object') {
 		for (const [id, n] of Object.entries(row.missions)) {
-			const count = Number(n) | 0;
+			const count = nonNegInt(n);
 			if (count > 0) rec.missions[String(id).slice(0, 64)] = count;
 		}
 	}

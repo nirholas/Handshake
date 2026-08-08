@@ -45,7 +45,7 @@ const HDRI_ORIGIN = new URL(DEFAULT_ASSET_BASE).origin;
 let _hdriPromise = null;
 function getHdriTexture() {
 	if (!_hdriPromise) {
-		// RGBELoader on purpose, not HDRLoader — same reasoning as
+		// RGBELoader on purpose, not HDRLoader. Same reasoning as
 		// avatar-sdk/src/viewer.js: three renamed the class in r180, but this
 		// package's peer range is `three >= 0.150.0` and the ESM build leaves
 		// three external, so the specifier resolves against the CONSUMER's

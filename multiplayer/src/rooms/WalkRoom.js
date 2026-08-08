@@ -2150,6 +2150,7 @@ export class WalkRoom extends Room {
 		const profile = this.econ.get(client.sessionId);
 		if (!profile) return;
 		if (!this._actionOk(client.sessionId, 'storeSell')) return;
+		if (!this._atCounter(client, 'store')) return;
 		const slot = resolveSlot(profile, payload?.slot);
 		if (!slot || !slot.item) {
 			client.send('notice', { kind: 'store', ok: false, text: 'Nothing there to sell.' });
@@ -2179,6 +2180,7 @@ export class WalkRoom extends Room {
 		const profile = this.econ.get(client.sessionId);
 		if (!profile) return;
 		if (!this._actionOk(client.sessionId, 'bank')) return;
+		if (!this._atCounter(client, 'bank')) return;
 		const amount = Number.isFinite(payload?.amount) ? payload.amount | 0 : 0;
 		if (!amount) return;
 		const moved = bankTransfer(profile, amount);
