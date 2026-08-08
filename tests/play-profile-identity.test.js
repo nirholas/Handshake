@@ -277,3 +277,81 @@ describe('avatar inspector profile card (W10)', () => {
 		expect(buttons.map((b) => b.textContent)).toEqual(['Follow']);
 	});
 });
+
+// ── 4. the verified nameplate badge ──────────────────────────────────────────
+//
+// `RemotePlayer._updateHandleBadge()` is what puts the @handle on a peer's
+// nameplate in-world, and it is module-private inside src/game/coincommunities.js
+// (a browser module far too large to import under node: three.js, physics,
+// colyseus). Same approach the deep-link hardening suite uses on its private
+// guards: lift the method's real source out of the shipping file and exercise
+// it against a real DOM, so the behaviour is covered and the extraction fails
+// loudly if the implementation is ever renamed or rewritten.
+
+function extractMethod(source, name) {
+	const start = source.indexOf(`\t${name}() {`);
+	if (start === -1) throw new Error(`${name}() is no longer defined in coincommunities.js; update this test with the code that replaced it`);
+	let depth = 0;
+	let i = source.indexOf('{', start);
+	const from = i;
+	for (; i < source.length; i++) {
+		if (source[i] === '{') depth++;
+		else if (source[i] === '}') {
+			depth--;
+			if (depth === 0) return source.slice(from, i + 1);
+		}
+	}
+	throw new Error(`unbalanced braces reading ${name}()`);
+}
+
+describe('verified nameplate badge (W10)', () => {
+	const src = readFileSync(path.join(__dirname, '../src/game/coincommunities.js'), 'utf8');
+	// eslint-disable-next-line no-new-func -- the method's own shipping source, evaluated against a real DOM
+	const updateHandleBadge = new Function(`return function () ${extractMethod(src, '_updateHandleBadge')}`)();
+
+	function peer(username) {
+		const label = document.createElement('div');
+		label.className = 'cc-label';
+		const nameEl = document.createElement('span');
+		nameEl.className = 'cc-label-name';
+		nameEl.textContent = 'Nick';
+		label.appendChild(nameEl);
+		document.body.appendChild(label);
+		return { username, label, _handleEl: null };
+	}
+
+	it('stamps the @handle and the verified class on a signed-in peer', () => {
+		const p = peer('nirholas');
+		updateHandleBadge.call(p);
+		expect(p.label.querySelector('.cc-label-handle').textContent).toBe('@nirholas');
+		expect(p.label.classList.contains('cc-verified')).toBe(true);
+		expect(p.label.title).toBe("View @nirholas's profile (I)");
+		// The display name is untouched; the handle rides beside it.
+		expect(p.label.querySelector('.cc-label-name').textContent).toBe('Nick');
+	});
+
+	it('leaves a guest nameplate bare', () => {
+		const p = peer('');
+		updateHandleBadge.call(p);
+		expect(p.label.querySelector('.cc-label-handle')).toBeNull();
+		expect(p.label.classList.contains('cc-verified')).toBe(false);
+		expect(p.label.title).toBe('Inspect this player (I)');
+	});
+
+	it('reuses one span across updates and strips it when the handle goes away', () => {
+		const p = peer('nirholas');
+		updateHandleBadge.call(p);
+		const first = p.label.querySelector('.cc-label-handle');
+
+		p.username = 'someone-else';
+		updateHandleBadge.call(p);
+		expect(p.label.querySelectorAll('.cc-label-handle').length).toBe(1);
+		expect(p.label.querySelector('.cc-label-handle')).toBe(first); // reused, not re-created
+		expect(first.textContent).toBe('@someone-else');
+
+		p.username = '';
+		updateHandleBadge.call(p);
+		expect(p.label.querySelector('.cc-label-handle')).toBeNull();
+		expect(p.label.classList.contains('cc-verified')).toBe(false);
+	});
+});
