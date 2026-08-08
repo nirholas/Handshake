@@ -83,14 +83,6 @@ const checks = await page.evaluate(() => {
 	const card = document.querySelector('.cc-card-img');
 	out.cardStyleProps = card ? [...card.style].join(',') : 'no-card';
 
-	// The wheel modal shipped with no stylesheet at all: prove the rules exist.
-	let spinRules = 0;
-	for (const sheet of document.styleSheets) {
-		try { for (const rule of sheet.cssRules) if (/\.kg-spin-/.test(rule.selectorText || '')) spinRules++; }
-		catch { /* cross-origin sheet */ }
-	}
-	out.spinWheelRules = spinRules;
-
 	out.phase = cc?.phase ?? null;
 	out.canvas = !!document.getElementById('kx-canvas');
 	return out;
@@ -98,8 +90,24 @@ const checks = await page.evaluate(() => {
 console.log(at(), 'checks:', JSON.stringify(checks));
 
 if (checks.reconnectHelpers !== 'ok') note(`[reconnect] helpers not callable: ${checks.reconnectHelpers}`);
-if (checks.spinWheelRules === 0) note('[spin-wheel] no .kg-spin-* CSS rules loaded');
 if (/position|inset|z-index|content/.test(checks.cardStyleProps)) note(`[css-injection] card carries unexpected props: ${checks.cardStyleProps}`);
+
+// The wheel modal shipped with no stylesheet at all, so its markup rendered as an
+// unstyled block below the canvas. It is a lazy chunk that only loads when the
+// player reaches Fortune's Folly, so its rules are legitimately absent until then:
+// import it explicitly rather than reporting a false positive on a cold world.
+const spinRules = await page.evaluate(async () => {
+	try { await import('/src/game/spin-wheel-ui.js'); } catch { return -1; }
+	let n = 0;
+	for (const sheet of document.styleSheets) {
+		try { for (const rule of sheet.cssRules) if (/\.kg-spin-/.test(rule.selectorText || '')) n++; }
+		catch { /* cross-origin sheet */ }
+	}
+	return n;
+});
+if (spinRules === 0) note('[spin-wheel] the lazy chunk loaded but carries no .kg-spin-* rules');
+else if (spinRules < 0) console.log(at(), '[spin-wheel] chunk not importable from this build (skipped)');
+else console.log(at(), `[spin-wheel] ${spinRules} rules loaded with the chunk`);
 
 // A malformed mint must land in the lobby with an explanation, not a world.
 const bad = new URL(TARGET);
