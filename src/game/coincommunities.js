@@ -824,6 +824,42 @@ export class CoinCommunities {
 		window.addEventListener('resize', () => this._onResize());
 		this._watchDevicePixelRatio();
 		this._bindContextLoss();
+		this._trackSoftKeyboard();
+	}
+
+	// Keep bottom-docked HUD controls above the on-screen keyboard.
+	//
+	// The HUD is `position: fixed`, which anchors to the LAYOUT viewport. When a
+	// phone keyboard opens it shrinks the VISUAL viewport instead, so the layout
+	// viewport never changes and the chat input the player is typing into sits
+	// calmly underneath the keyboard, invisible. `vh` units have the same blind
+	// spot, which is why swapping in dvh does not fix a fixed element.
+	//
+	// visualViewport is the only API that reports the covered strip. Publish it as
+	// --cc-kb and let the bottom-docked rules add it to their offset, so the chat
+	// (and the emote/reaction rows stacked above it) ride up with the keyboard and
+	// drop back when it closes. Desktop and any browser without visualViewport keep
+	// --cc-kb at 0px and are untouched.
+	_trackSoftKeyboard() {
+		const vv = window.visualViewport;
+		if (!vv) return;
+		const root = document.documentElement;
+		this._onKeyboard = () => {
+			// The strip of layout viewport the keyboard (and any pinch-zoom offset)
+			// is covering. Never negative: an over-scrolled URL bar can report a
+			// visual viewport TALLER than the layout one, which would otherwise
+			// yank the HUD downward off-screen.
+			const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+			// Sub-pixel churn on every scroll frame would thrash layout for no
+			// visible gain; round and only write when it actually moved.
+			const px = Math.round(covered);
+			if (px === this._kbPx) return;
+			this._kbPx = px;
+			root.style.setProperty('--cc-kb', `${px}px`);
+		};
+		vv.addEventListener('resize', this._onKeyboard);
+		vv.addEventListener('scroll', this._onKeyboard);
+		this._onKeyboard();
 	}
 
 	// A browser may take the WebGL context away at any time. On phones it is the
@@ -1958,6 +1994,15 @@ export class CoinCommunities {
 			removeEventListener('online', this._onResume);
 			removeEventListener('focus', this._onResume);
 			this._onResume = null;
+		}
+		if (this._onKeyboard) {
+			window.visualViewport?.removeEventListener('resize', this._onKeyboard);
+			window.visualViewport?.removeEventListener('scroll', this._onKeyboard);
+			this._onKeyboard = null;
+			this._kbPx = 0;
+			// Leaving the world must not strand a keyboard offset on <html>: the
+			// lobby renders under the same :root and would sit shifted up.
+			document.documentElement.style.removeProperty('--cc-kb');
 		}
 		if (this.net) { this.net.destroy(); this.net = null; }
 		clearTimeout(this._announceTimer);
