@@ -45,6 +45,33 @@ export function alertFeedDown({ network, mode }) {
 	);
 }
 
+/**
+ * The fleet cannot place a single entry — every armed wallet is below the size
+ * its own executor would accept. This is the alert the 2026-07-29 outage did not
+ * have: the worker stayed green for ten days while booking a thousand failed
+ * buys, because nothing watched the money.
+ */
+export function alertFleetStarved({ summary, network, mode }) {
+	alert(
+		'fleet starved — no wallet can trade',
+		`${summary} Network ${network} (${mode}). Nothing will fill until SOL reaches these wallets.`,
+		'sniper:fleet-starved',
+	);
+}
+
+/**
+ * The auto-funder has wallets to refill and not enough SOL to do it. Distinct
+ * from the starved alert on purpose: this one cannot self-heal, so it names the
+ * human action rather than describing a condition that may pass on its own.
+ */
+export function alertFundingMasterDry({ summary, network, mode }) {
+	alert(
+		'funding master cannot cover refills',
+		`${summary} Network ${network} (${mode}). Auto-funding is a no-op until the master wallet is topped up.`,
+		'sniper:funding-master-dry',
+	);
+}
+
 /** Executor / RPC errors crossed the run-window threshold. */
 export function alertErrorSpike({ count, windowMs, lastError, network, mode }) {
 	alert(

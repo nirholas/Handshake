@@ -225,20 +225,24 @@ const PUBLIC_DEVNET = 'https://api.devnet.solana.com';
 // for the methods it serves without ever blinding a balance/signature caller.
 // The free public-RPC pool has thinned (most providers now 401/403/429
 // keyless), so this set is curated to ones that actually respond; re-verify any
-// that start cooling persistently in the failover logs. (solana.therpc.io was
-// pruned 2026-07-17 after going fully unreachable, DNS fetch failures on every
-// probe of both getLatestBlockhash and getBalance.)
+// that start cooling persistently in the failover logs. Two pruned so far:
+// solana.therpc.io on 2026-07-17 after going fully unreachable (DNS fetch
+// failures on every probe of both getLatestBlockhash and getBalance), and
+// rpc.magicblock.app on 2026-08-07 after it began answering EVERY method on
+// EVERY call with HTTP 403 "Your IP or provider is blocked from this endpoint".
+// A lane blocked at the caller level is worse than absent: the breadth guard
+// parks it for 30m, then the next rotation spends another real request
+// rediscovering the same block, which is capacity burned to learn nothing.
 //
-// MagicBlock + Tatum's gateway host were verified live (getLatestBlockhash +
-// sendTransaction enabled) on 2026-07-04 when the free pool was re-probed after
-// a Helius plan lapsed mid-cycle. They deepen the keyless chain precisely for
-// the "every paid key is exhausted" case; the classifyRpcBody guard still fails
-// them over if either returns garbage.
+// Tatum's gateway host was verified live (getLatestBlockhash + sendTransaction
+// enabled) on 2026-07-04 when the free pool was re-probed after a Helius plan
+// lapsed mid-cycle. It deepens the keyless chain precisely for the "every paid
+// key is exhausted" case; the classifyRpcBody guard still fails it over if it
+// returns garbage.
 const FREE_KEYLESS_MAINNET = [
 	'https://solana-rpc.publicnode.com',
 	'https://solana.leorpc.com/?api_key=FREE',
 	'https://api.tatum.io/v3/blockchain/node/solana-mainnet',
-	'https://rpc.magicblock.app/mainnet',
 	'https://solana-mainnet.gateway.tatum.io',
 	PUBLIC_MAINNET,
 ];

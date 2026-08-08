@@ -46,6 +46,13 @@ const FORGE_GAMEREADY_USD = Number(priceUsdcForOutput('gameready')); // 0.10
 // BYOK requests bypass the charge entirely (api/tts/eleven.js).
 export const TTS_ELEVEN_USD_PER_1K = 0.3;
 
+// OpenAI TTS (gpt-4o-mini-tts / tts-1): retail USD per 1,000 synthesized
+// characters on the platform key. Upstream is ~$0.015/1k chars; $0.03 retail
+// keeps the same margin shape as the ElevenLabs rung. Same policy applies —
+// a vendor-billed lane never has a free tier (owner policy 2026-08-06), so
+// every platform-key OpenAI synthesis is metered to the caller's credits.
+export const TTS_OPENAI_USD_PER_1K = 0.03;
+
 // ── The catalog ─────────────────────────────────────────────────────────────────
 // id → { label, category, policy, usd }. `usd: null` ⇒ price set per-call.
 export const CATALOG = Object.freeze({
@@ -109,6 +116,12 @@ export const CATALOG = Object.freeze({
 		category: 'generation',
 		policy: POLICY.CONSUMPTION,
 		usd: null, // per-call: characters * TTS_ELEVEN_USD_PER_1K / 1000
+	},
+	'tts.openai': {
+		label: 'Voice: OpenAI TTS synthesis (per 1k characters)',
+		category: 'generation',
+		policy: POLICY.CONSUMPTION,
+		usd: null, // per-call: characters * TTS_OPENAI_USD_PER_1K / 1000
 	},
 	'selfie.reconstruct': {
 		label: 'Selfie → Avatar reconstruction',

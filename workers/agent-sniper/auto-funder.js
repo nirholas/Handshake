@@ -31,6 +31,8 @@ import { screenPush } from './screen-push.js';
 import { cachedStrategies, getRealizedNetLamports, effectiveDailyLossLimitLamports } from './strategy-store.js';
 import { checkDailyLoss } from '../../api/_lib/agent-trade-guards.js';
 import { autoFundMinSol, autoFundTargetSol, fundTriggerSol, fundTargetSol } from '../../api/_lib/agent-funding-policy.js';
+import { summarizeFleetSolvency, describeSolvency } from '../../api/_lib/sniper-solvency.js';
+import { alertFleetStarved, alertFundingMasterDry } from './alerts.js';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -90,6 +92,26 @@ function activeAgentIds(network) {
 }
 
 /**
+ * Unique agent ids with an ARMED strategy on this network, opted into funding or
+ * not. Solvency is reported over this set rather than the opted-in one: an agent
+ * that never consented to auto-funding still trades and still starves, and a
+ * fleet report that quietly omitted it would be the same blind spot one level up.
+ *
+ * Pure over its `strategies` arg so it can be unit-tested without the cache.
+ *
+ * @param {Array<{agent_id?: string, network?: string}>} strategies
+ * @param {string} network
+ * @returns {string[]}
+ */
+export function armedAgentIds(strategies, network) {
+	const ids = new Set();
+	for (const s of strategies || []) {
+		if (s.agent_id && s.network === network) ids.add(s.agent_id);
+	}
+	return [...ids];
+}
+
+/**
  * Largest configured trade size among an agent's opted-in strategies, in SOL.
  * The funding levels are sized off this: a wallet that cannot cover the arm's own
  * per-trade size plus the entry's fixed overhead is not "healthy", however far it
@@ -102,10 +124,11 @@ function activeAgentIds(network) {
  * @param {string} network
  * @returns {number} SOL, 0 when unknown
  */
-export function agentPerTradeSol(strategies, agentId, network) {
+export function agentPerTradeSol(strategies, agentId, network, { optedInOnly = true } = {}) {
 	let max = 0;
 	for (const s of strategies || []) {
-		if (s.agent_id !== agentId || s.network !== network || s.auto_fund_enabled !== true) continue;
+		if (s.agent_id !== agentId || s.network !== network) continue;
+		if (optedInOnly && s.auto_fund_enabled !== true) continue;
 		const sol = Number(s.per_trade_lamports) / 1e9;
 		if (Number.isFinite(sol) && sol > max) max = sol;
 	}
@@ -170,33 +193,114 @@ async function agentAddresses(agentIds) {
 	return m;
 }
 
-async function tick(cfg) {
-	const agentIds = activeAgentIds(cfg.network);
-	if (!agentIds.length) return;
+// Latest fleet solvency snapshot, published on every tick and read by the
+// heartbeat. Null until the first tick completes, which the status endpoint
+// renders as 'unknown' rather than inventing a healthy default.
+let _solvency = null;
 
-	const addresses = await agentAddresses(agentIds);
+/** The most recent fleet solvency snapshot, or null before the first tick. */
+export function latestSolvency() {
+	return _solvency;
+}
+
+/**
+ * Measure every armed wallet and publish the fleet's solvency. Runs before any
+ * funding decision so the snapshot reflects what the executor is up against
+ * right now, not what the funder left behind.
+ *
+ * Balance reads are per-wallet and independent: one failed read is recorded as
+ * unmeasured (null) rather than zero, so an RPC blip degrades coverage instead
+ * of faking a starved fleet.
+ *
+ * Returns the balances it read so the funding loop below spends them rather than
+ * re-reading. Beyond halving the RPC calls, this is what guarantees the fleet
+ * report and the funding decision are made from the same numbers.
+ */
+async function publishSolvency(cfg, addresses, conn) {
+	const wallets = [];
+	const balances = new Map();
+	for (const [agentId, address] of addresses) {
+		let balanceSol = null;
+		try {
+			({ sol: balanceSol } = await getSolBalance(conn, address));
+			balances.set(agentId, balanceSol);
+		} catch (err) {
+			log.warn('solvency balance read failed', { agentId, err: err?.message });
+		}
+		wallets.push({
+			agentId, address, balanceSol,
+			perTradeSol: agentPerTradeSol(cachedStrategies(), agentId, cfg.network, { optedInOnly: false }),
+		});
+	}
+
+	let masterSol = null;
+	try {
+		masterSol = await masterBalanceSol(cfg.network);
+	} catch (err) {
+		log.warn('solvency master balance read failed', { err: err?.message });
+	}
+
+	const snapshot = summarizeFleetSolvency({ wallets, masterSol });
+	_solvency = { ...snapshot, at: new Date().toISOString() };
+
+	const summary = describeSolvency(snapshot);
+	if (snapshot.state === 'starved') {
+		log.error('fleet starved — no armed wallet can place an entry', {
+			network: cfg.network, agents: snapshot.agents, deficit_sol: snapshot.deficitSol, master_sol: snapshot.masterSol,
+		});
+		screenPush('Sniper fleet is out of SOL — no wallet can trade', 'guard');
+		// Live money only: a simulate-mode fleet is starved by design (it never
+		// funds anything), and paging on that would train operators to ignore this.
+		if (cfg.mode === 'live') alertFleetStarved({ summary, network: cfg.network, mode: cfg.mode });
+	} else if (snapshot.state === 'degraded') {
+		log.warn('fleet partially starved', {
+			network: cfg.network, tradeable: snapshot.tradeable, agents: snapshot.agents, deficit_sol: snapshot.deficitSol,
+		});
+	}
+	// A master that cannot cover the deficit is its own condition: the fleet may
+	// still be limping along on one funded wallet, and the refills that would fix
+	// it are silently no-ops. Alerted separately so it can't hide behind 'degraded'.
+	if (cfg.mode === 'live' && snapshot.deficitSol > 0 && snapshot.masterCanCover === false) {
+		log.error('funding master cannot cover refills', {
+			network: cfg.network, master_sol: snapshot.masterSol, deficit_sol: snapshot.deficitSol,
+		});
+		alertFundingMasterDry({ summary, network: cfg.network, mode: cfg.mode });
+	}
+
+	return { snapshot, balances };
+}
+
+async function tick(cfg) {
+	const conn = solanaConnection(cfg.network);
+
+	// Solvency is measured over every ARMED agent; funding still only ever touches
+	// the opted-in subset. Reading the wider set costs one balance call per armed
+	// wallet per 5 minutes and is what makes a starved non-consenting agent visible.
+	const armed = armedAgentIds(cachedStrategies(), cfg.network);
+	const addresses = await agentAddresses(armed);
 	if (!addresses.size) return;
+	const { balances } = await publishSolvency(cfg, addresses, conn);
+
+	const optedIn = new Set(activeAgentIds(cfg.network));
+	if (!optedIn.size) return;
 
 	// One daily-spend read per tick; decremented locally as we fund so several
 	// agents in the same tick can't collectively blow past the cap.
 	let dailyRemaining = DAILY_CAP_SOL > 0 ? Math.max(0, DAILY_CAP_SOL - (await dailyFundedSol(cfg.network))) : Infinity;
 	// Per-agent funded-today, so one wallet can't consume the whole fleet budget.
 	const perAgentFunded = PER_AGENT_DAILY_CAP_SOL > 0 ? await perAgentFundedSol(cfg.network) : new Map();
-	const conn = solanaConnection(cfg.network);
 
 	for (const [agentId, address] of addresses) {
+		if (!optedIn.has(agentId)) continue; // measured for solvency, never funded
 		if (DAILY_CAP_SOL > 0 && dailyRemaining <= 0) {
 			log.warn('auto-fund daily cap reached — skipping remaining agents', { network: cfg.network, dailyCapSol: DAILY_CAP_SOL });
 			break;
 		}
 
-		let balanceSol;
-		try {
-			({ sol: balanceSol } = await getSolBalance(conn, address));
-		} catch (err) {
-			log.warn('auto-fund balance read failed', { agentId, err: err?.message });
-			continue;
-		}
+		// From the solvency pass above — an unreadable balance is absent, and a
+		// wallet we could not measure is never funded on a guess.
+		const balanceSol = balances.get(agentId);
+		if (balanceSol == null) continue;
 
 		// "Healthy" is per-arm, not a flat number: a wallet that cannot cover this
 		// arm's own trade size plus the entry's fixed overhead is not healthy, however
