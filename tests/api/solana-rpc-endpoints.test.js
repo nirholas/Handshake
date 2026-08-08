@@ -60,21 +60,37 @@ describe('solanaRpcEndpoints', () => {
 		// chain must still resolve a usable node, never collapse to one throttled lane.
 		// Five independent public nodes were each verified answering live mainnet RPC,
 		// so a request only errors if all five are down at once. (solana.therpc.io was
-		// pruned 2026-07-17 after going fully unreachable; MagicBlock took its slot.)
+		// pruned 2026-07-17 after going fully unreachable; MagicBlock took its slot,
+		// then was pruned itself 2026-08-07 after it began 403ing every method.)
 		const eps = solanaRpcEndpoints('mainnet');
 		const keyless = [
 			'https://solana-rpc.publicnode.com',
 			'https://solana.leorpc.com/?api_key=FREE',
 			'https://api.tatum.io/v3/blockchain/node/solana-mainnet',
-			'https://rpc.magicblock.app/mainnet',
+			'https://solana-mainnet.gateway.tatum.io',
 			'https://api.mainnet-beta.solana.com',
 		];
 		for (const u of keyless) expect(eps).toContain(u);
 	});
 
-	it('keeps the public mainnet-beta endpoint last (most rate-limited)', () => {
+	it('drops lanes that hard-block our egress rather than re-probing them', () => {
+		// A 403 "Your IP or provider is blocked from this endpoint" on every method
+		// is not a throttle that recovers: re-probing it every cooldown burns a real
+		// request to relearn the same block, which is what turned one bad lane into
+		// "all N endpoints failed this request" on 2026-08-07.
+		expect(solanaRpcEndpoints('mainnet')).not.toContain('https://rpc.magicblock.app/mainnet');
+	});
+
+	it('ranks keyless lanes that serve getBalance ahead of the paid-tier-gated ones', () => {
+		// Both Tatum hosts answer getBalance/getTokenAccountsByOwner with -16401
+		// "available for paid plans only", so they must never sit in front of a lane
+		// that actually serves a balance read.
 		const eps = solanaRpcEndpoints('mainnet');
-		expect(eps[eps.length - 1]).toBe('https://api.mainnet-beta.solana.com');
+		const publicMainnet = eps.indexOf('https://api.mainnet-beta.solana.com');
+		expect(publicMainnet).toBeGreaterThanOrEqual(0);
+		for (const gated of ['https://api.tatum.io/v3/blockchain/node/solana-mainnet', 'https://solana-mainnet.gateway.tatum.io']) {
+			expect(eps.indexOf(gated)).toBeGreaterThan(publicMainnet);
+		}
 	});
 
 	it('adds Ankr only in its authenticated form when ANKR_API_KEY is set', () => {

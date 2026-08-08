@@ -13,7 +13,16 @@
  *   alive          — a heartbeat within the freshness window (process is up)
  *   feedLive       — the worker reports its feed subscription is currently up
  *   degraded       — alive but the feed has been silent past its watchdog window
- *                    (the worst, otherwise-invisible failure: up but deaf)
+ *                    (up but deaf), or part of the fleet can no longer trade
+ *   starved        — alive, feed fine, and NO armed wallet can afford an entry
+ *
+ * That last state is why this endpoint no longer answers liveness alone. From
+ * 2026-07-29 to 2026-08-08 it reported `live` continuously while the fleet
+ * booked a thousand consecutive failed buys and closed nothing: every process
+ * fact it measured was true, and the wallets were empty. A trading worker that
+ * cannot pay for a trade is not live, so solvency (published in the heartbeat by
+ * the worker's funding loop, see api/_lib/sniper-solvency.js) now outranks the
+ * feed checks in the verdict.
  *
  * The two cheapest counts (active strategies, open positions) give the page a
  * one-glance "what is it doing" without a second round-trip. Public + IP
@@ -122,7 +131,19 @@ export default wrap(async (req, res) => {
 	const watchdogMs = Number(meta.feedWatchdogMs) || 180_000;
 	const feedSilent = alive && Number(meta.lastEventAgeMs) > watchdogMs;
 
-	const state = !alive ? 'down' : feedSilent || !feedLive ? 'degraded' : 'live';
+	// Money before mechanics: a worker that cannot fund an entry is not 'live', no
+	// matter how healthy its feed is. Absent (older worker build, first tick not
+	// yet run) degrades to 'unknown', which never overrides the feed verdict — an
+	// unmeasured fleet must not read as a broke one.
+	const solvency = meta.solvency && typeof meta.solvency === 'object' ? meta.solvency : null;
+	const solvencyState = solvency?.state || 'unknown';
+	const state = !alive
+		? 'down'
+		: solvencyState === 'starved'
+			? 'starved'
+			: feedSilent || !feedLive || solvencyState === 'degraded'
+				? 'degraded'
+				: 'live';
 
 	return json(
 		res,
@@ -147,6 +168,7 @@ export default wrap(async (req, res) => {
 			strategies: meta.strategies ?? strategies,
 			openPositions,
 			funding,
+			solvency,
 		},
 		// Heartbeat refreshes every ~30s; a short shared cache absorbs status-page
 		// bursts without meaningfully staling the liveness answer.

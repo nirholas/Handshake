@@ -281,6 +281,11 @@ async function tick(cfg) {
 	if (!addresses.size) return;
 	const { balances } = await publishSolvency(cfg, addresses, conn);
 
+	// Measuring is unconditional; moving money is not. With auto-funding disarmed
+	// the loop above still reports whether the fleet can trade, which is exactly
+	// the fleet nobody else is watching.
+	if (!cfg.autoFund) return;
+
 	const optedIn = new Set(activeAgentIds(cfg.network));
 	if (!optedIn.size) return;
 
@@ -427,8 +432,8 @@ export function startAutoFunderWatch({ cfg, signal } = {}) {
 	const interval = setInterval(runTick, POLL_INTERVAL_MS);
 	if (interval.unref) interval.unref();
 
-	log.info('auto-funder armed', {
-		network: cfg.network, mode: cfg.mode, pollMs: POLL_INTERVAL_MS,
+	log.info(cfg.autoFund ? 'auto-funder armed' : 'solvency watch armed (auto-funding disabled)', {
+		network: cfg.network, mode: cfg.mode, pollMs: POLL_INTERVAL_MS, autoFund: !!cfg.autoFund,
 		minSol: MIN_SOL, targetSol: TARGET_SOL, perTxCapSol: PER_TX_CAP_SOL, dailyCapSol: DAILY_CAP_SOL,
 		perAgentDailyCapSol: PER_AGENT_DAILY_CAP_SOL,
 		lossCapSol: num('SNIPER_MAX_DAILY_LOSS_SOL', null),

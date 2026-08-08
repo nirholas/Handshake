@@ -39,7 +39,7 @@ import { screenPush } from './screen-push.js';
 import { scoreAlpha } from './alpha-hunt.js';
 import { startAutoClaimerWatch } from './auto-claimer.js';
 import { graduationRideGate, executeBoostRideBuy } from './graduation-ride.js';
-import { startAutoFunderWatch } from './auto-funder.js';
+import { startAutoFunderWatch, latestSolvency } from './auto-funder.js';
 import { startLauncherWatch } from './launcher.js';
 import { startMarketMakerWatch } from './market-maker.js';
 
@@ -377,10 +377,12 @@ async function main() {
 
 	// Buy-side auto-funding — keeps each armed agent's wallet topped from the
 	// launcher master so a live sniper never silently runs out of SOL mid-run.
-	let stopAutoFunder = () => {};
-	if (cfg.autoFund) {
-		stopAutoFunder = startAutoFunderWatch({ cfg, signal: abort.signal });
-	}
+	//
+	// Started unconditionally: the same loop measures fleet solvency, and a fleet
+	// running with auto-funding OFF is the one most likely to starve unnoticed
+	// (nothing refills it at all). Funding itself still requires cfg.autoFund —
+	// the loop measures always, moves money only when armed to.
+	const stopAutoFunder = startAutoFunderWatch({ cfg, signal: abort.signal });
 
 	// Market maker — range-based liquidity provisioning with Jito execution.
 	let stopMarketMaker = () => {};
@@ -482,6 +484,10 @@ async function main() {
 			intel: cfg.intel,
 			inFlightBuys: queue.inFlight,
 			radar: cfg.radar ? radar.getState() : { active: false, paused: true, reason: 'disabled' },
+			// Can the fleet actually afford to trade? Liveness alone reported a
+			// green worker through ten days of unaffordable entries; this is the
+			// money half of the same question. Null until the funder's first tick.
+			solvency: latestSolvency(),
 			bootAt: BOOT_AT,
 		}),
 	});

@@ -234,17 +234,26 @@ const PUBLIC_DEVNET = 'https://api.devnet.solana.com';
 // parks it for 30m, then the next rotation spends another real request
 // rediscovering the same block, which is capacity burned to learn nothing.
 //
-// Tatum's gateway host was verified live (getLatestBlockhash + sendTransaction
-// enabled) on 2026-07-04 when the free pool was re-probed after a Helius plan
-// lapsed mid-cycle. It deepens the keyless chain precisely for the "every paid
-// key is exhausted" case; the classifyRpcBody guard still fails it over if it
-// returns garbage.
+// ORDER IS BY MEASURED CAPABILITY ON THE HOT METHODS, not by latency. Re-probed
+// 2026-08-07 (docs/ops/solana-rpc-lanes.md carries the full table): getBalance
+// and getTokenAccountsByOwner are what the balance, holder-gate, and treasury
+// readers actually call, so a lane that refuses those belongs at the back no
+// matter how fast it answers the ones it does serve.
+//
+// Both Tatum hosts moved behind PUBLIC_MAINNET for exactly that reason: they
+// answer getBalance and getTokenAccountsByOwner with -16401 "available for paid
+// plans only" and cap the keyless tier at 5 requests per minute. Sitting them
+// ahead of mainnet-beta meant every balance read burned two lanes discovering a
+// refusal before reaching the lane that serves it, which is how a single
+// throttled provider escalated into "all N endpoints failed this request"
+// (2026-08-07). They stay in the chain as last-resort depth for the methods they
+// do serve; the classifyRpcBody guard still fails them over on garbage.
 const FREE_KEYLESS_MAINNET = [
 	'https://solana-rpc.publicnode.com',
+	PUBLIC_MAINNET,
 	'https://solana.leorpc.com/?api_key=FREE',
 	'https://api.tatum.io/v3/blockchain/node/solana-mainnet',
 	'https://solana-mainnet.gateway.tatum.io',
-	PUBLIC_MAINNET,
 ];
 
 // Hostnames of every keyless free lane, plus the public devnet cluster. A URL
