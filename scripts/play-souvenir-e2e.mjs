@@ -18,7 +18,12 @@
 // opened and closed between phases of one run. Point the game server at it with
 // EVENT_CONFIG_URL, see below.
 //
-// Requires vite on :3000 and colyseus on :2567 with the config override:
+// Both servers run on PRIVATE ports, and the browser is pointed at the game
+// server with window.GAME_SERVER_URL. This machine routinely has several agents'
+// Vite instances and load tests running at once, and an earlier run on the
+// conventional :3000/:2567 pair ended up sharing its world with another job's
+// synthetic clients: hundreds of unrelated joins, seat reservations expiring,
+// and no trustworthy read on anything.
 //
 //   node scripts/play-souvenir-e2e.mjs            # boots both servers itself
 //   EXTERNAL=1 node scripts/play-souvenir-e2e.mjs # you started them yourself
@@ -32,7 +37,12 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const BASE = (process.env.BASE || 'http://localhost:3000').replace(/\/$/, '');
+// Private ports by default, so a neighbouring agent's dev server or load test
+// can neither serve this run's pages nor join this run's world.
+const VITE_PORT = Number(process.env.VITE_PORT || 3111);
+const MP_PORT = Number(process.env.MP_PORT || 2571);
+const BASE = (process.env.BASE || `http://localhost:${VITE_PORT}`).replace(/\/$/, '');
+const GAME_SERVER = process.env.GAME_SERVER || `ws://127.0.0.1:${MP_PORT}`;
 const MINT = process.env.COIN || 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const WORLD = `${BASE}/play?coin=${encodeURIComponent(MINT)}&name=three.ws&symbol=three`;
 const SOUVENIR_ID = 'laurel-meetup';

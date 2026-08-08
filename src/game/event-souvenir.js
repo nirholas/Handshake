@@ -15,7 +15,7 @@
 //
 // Rendering reads the shared catalog, so the card shows the item's real poster
 // and name rather than re-describing it (an event that swaps its souvenir needs
-// no change here.
+// no change here).
 
 import { getCosmetic } from '../../multiplayer/src/cosmetics-catalog.js';
 
