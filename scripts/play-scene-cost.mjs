@@ -10,6 +10,7 @@
 // even under swiftshader; use scripts/play-perf-audit.mjs for network, frame
 // timing and heap growth.
 import { chromium } from 'playwright';
+import { writeFile } from 'node:fs/promises';
 
 const TARGET = process.argv[2] || 'http://localhost:3000/play';
 const SETTLE_MS = Number(process.argv[3] || 25) * 1000;
@@ -100,5 +101,17 @@ if (notes.length) {
 	for (const n of [...new Set(notes)].slice(0, 10)) console.log('  ' + n);
 }
 
-if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT, timeout: 30000 }).catch(() => {});
+// Capture through CDP rather than page.screenshot(): the world runs a rAF loop
+// forever, so Playwright's wait-for-stability never settles on a busy main
+// thread and the capture times out with the numbers already in hand.
+if (process.env.SHOT) {
+	try {
+		const cdp = await page.context().newCDPSession(page);
+		const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' });
+		await writeFile(process.env.SHOT, Buffer.from(data, 'base64'));
+		console.log('\nscreenshot →', process.env.SHOT);
+	} catch (err) {
+		console.log('\nscreenshot failed:', String(err).slice(0, 120));
+	}
+}
 await browser.close();
