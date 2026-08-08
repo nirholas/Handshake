@@ -10,7 +10,7 @@
 export const DEFAULT_VOICE = 'nova';
 
 export const TTS_VOICES = [
-	{ id: 'nova', name: 'Nova', description: 'Bright and energetic — the default companion voice' },
+	{ id: 'nova', name: 'Nova', description: 'Bright and energetic, the default companion voice' },
 	{ id: 'alloy', name: 'Alloy', description: 'Neutral and balanced' },
 	{ id: 'ash', name: 'Ash', description: 'Warm and expressive' },
 	{ id: 'ballad', name: 'Ballad', description: 'Soft and lyrical' },
