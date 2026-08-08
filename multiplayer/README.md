@@ -43,6 +43,23 @@ Every `move` message is validated server-side in [`WalkRoom.js`](src/rooms/WalkR
 - **Rate limit**: 30 moves/sec per client window — well above the 15Hz the client sends, so it absorbs jitter without dropping legit traffic.
 - **Field types**: every numeric field is `Number.isFinite`-checked; motion strings are validated against an allow-list.
 
+## Reconnects
+
+A dropped client does not resume its old session: `src/game/community-net.js` re-runs `joinOrCreate`, so it comes back with a new `sessionId`. Two things make that clean rather than messy, and both matter at event scale.
+
+**The client's own previous session is retired on sight.** A socket that dies uncleanly (a phone sleeping, a tab freezing, a wifi handover) stays half-open here: the transport still reads it as OPEN and only reaps it once its ping retries expire, several seconds later. The client reconnects well inside that window, so without help the room holds two sessions for one person, and every other player watches a frozen copy of them standing at spawn. So a reconnecting client sends its previous session id as a `prevSession` join option and `WalkRoom._evictPriorSession` closes exactly that session.
+
+`prevSession` on its own would be a kick primitive, since session ids are published on the player schema and anyone could name a stranger's. It is honoured only alongside a matching persistent player key (`client.userData.playerKey`, set from the identity `_resolveIdentity` verified: the wallet from `onAuth`, a wallet proven by a signed play pass, or a server-minted guest id sealed in an HMAC token). A second tab or a second device is never touched, because each carries its own prior session id.
+
+**The client rebuilds its roster from the snapshot, not from memory.** The old room's listeners are removed before it leaves, so `onRemove` never fires for the peers it had. `/play` flags every peer stale when a reconnect starts, clears the flag for each peer the new room re-announces, and disposes whatever is still flagged once the first full state patch lands. Anyone who left while the client was away disappears then, instead of standing in the world for the rest of the session.
+
+`scripts/play-multiplayer-e2e.mjs` (repo root) asserts both ends of this against two real browser contexts:
+
+```bash
+npm run dev:walk-all                       # vite :3000 + this server :2567
+node scripts/play-multiplayer-e2e.mjs      # two contexts, forced drop, resync assertions
+```
+
 ## Deploy to Fly.io
 
 ```bash
