@@ -177,7 +177,7 @@ material.
 
 Do **not** add an event souvenir to
 [`public/accessories/presets.json`](../public/accessories/presets.json). That
-catalog is the character studio's, it is not ownership-gated, and listing a
+catalog is the Avatar Studio's, it is not ownership-gated, and listing a
 souvenir there would hand it to everyone.
 
 ---
