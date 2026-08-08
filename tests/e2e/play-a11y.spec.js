@@ -57,13 +57,16 @@ async function mountHud(page) {
 	await page.evaluate(() => {
 		const ui = window.__CC__.ui;
 		window.__ui = ui;
-		// Lobby, boot loader and the cold-open intro all overlay the HUD; this
-		// audit is about the in-world chrome, so show that instead.
+		// Boot loader and the cold-open intro both overlay the HUD; this audit is
+		// about the in-world chrome, so clear them and switch the UI to its world
+		// view through its own public entry point.
 		document.getElementById('kx-loading')?.remove();
 		document.querySelector('.pi-overlay, #cc-intro')?.remove();
-		ui.lobby.hidden = true;
-		ui.hud.hidden = false;
-		ui.setCoin?.({ name: 'three.ws', symbol: 'three', mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' });
+		// The scene is still in its lobby phase and would flip the HUD back off
+		// when the trending grid lands; pin it so the audit measures a stable HUD.
+		window.__CC__.phase = 'world';
+		ui.showLobby = () => {};
+		ui.enterWorld({ name: 'three.ws', symbol: 'three', mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' });
 		ui.setOnline(42);
 		ui.setStatus('online');
 		ui.setEmotes([
@@ -75,7 +78,10 @@ async function mountHud(page) {
 		ui.addChat({ name: 'holder', text: 'gm from the plaza', mine: false });
 		ui.addChat({ name: 'you', text: 'gm', mine: true });
 	});
-	await page.waitForSelector('#cc-hud:not([hidden])', { timeout: 30_000 });
+	await page.waitForFunction(() => {
+		const h = document.getElementById('cc-hud');
+		return h && !h.hidden && h.getBoundingClientRect().height > 0;
+	}, null, { timeout: 30_000 });
 }
 
 test.describe('/play accessibility floor', () => {
