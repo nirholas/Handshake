@@ -225,7 +225,7 @@ async function samplePopulation(httpBase, coin) {
 // The page probe runs inside the same process that is driving every virtual
 // player, so its timings are only as trustworthy as this process's event loop.
 // At 400 clients decoding hundreds of thousands of state patches, a `fetch`
-// resolves late because the loop is busy, not because the origin is slow — a
+// resolves late because the loop is busy, not because the origin is slow, a
 // 2026-08-07 run read 20 s page latency against an origin that was serving 420 ms
 // to an idle curl in the same second. Reporting the loop's own lag next to the
 // page number is what lets a reader tell those two apart, so the harness never
@@ -279,7 +279,7 @@ async function run() {
 	);
 	const rampMs = Date.now() - started;
 	const joined = players.filter((p) => p.room).length;
-	console.log(`[capacity] ramp complete in ${(rampMs / 1000).toFixed(1)}s — ${joined}/${args.n} joined`);
+	console.log(`[capacity] ramp complete in ${(rampMs / 1000).toFixed(1)}s - ${joined}/${args.n} joined`);
 
 	await sleep(args.hold * 1000);
 	clearInterval(sampler);
