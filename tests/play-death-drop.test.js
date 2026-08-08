@@ -92,16 +92,19 @@ describe('killPlayer — what the dying player is told', () => {
 		const { sent, room } = makeRoom(profile);
 		killPlayer(room, 's1', 'a goblin');
 
+		// Counted as units, not stacks: the starter clip of 24 ammo and the vest go
+		// down with the 30 wood and 4 cooked fish.
 		const deaths = sent.filter((m) => m.type === 'notice' && m.msg.kind === 'death');
 		expect(deaths.length).toBe(2);
 		expect(deaths[0].msg.text).toContain('killed by a goblin');
 		expect(deaths[1].msg.text).toContain('240 cash');
-		expect(deaths[1].msg.text).toContain('2 items');
+		expect(deaths[1].msg.text).toContain('59 items');
 		expect(deaths[1].msg.text).toContain('500 cash stayed safe in the bank');
 	});
 
 	it('says so plainly when there was nothing on you to lose', () => {
 		const profile = newProfile('acct-broke');
+		for (const s of profile.inv) { s.item = ''; s.qty = 0; }
 		profile.bank = 75;
 		const { sent, room } = makeRoom(profile);
 		killPlayer(room, 's1', null);
