@@ -202,7 +202,9 @@ The inline watchdog in [pages/play.html](../pages/play.html) exists for one fail
 - An ad blocker or privacy extension blocks `/brand.js` or `/i18n.js`, or any third-party script. The world does not depend on one of them, but the card appeared instantly anyway, over game modules that were downloading normally.
 - Venue wifi makes some background request reject. Every fetch boundary in `/play` already handles its own failure, so the rejection is noise, but on a connection slow enough that boot took longer than the 8s grace, it replaced the loading card with "Couldn't load the world".
 
-A resource error now counts only when it is same-origin *and* not one of the optional extras. A rejection whose reason is network-shaped (`Failed to fetch`, `NetworkError`, `AbortError`, `ERR_BLOCKED`) is ignored outright, and anything else gets 20 seconds, long enough for a slow but healthy boot to finish and disarm it via `bootPending()`. The 45s hard timeout is untouched: a boot that truly stalls still gets its error card with a working retry.
+A resource error now counts only when it is same-origin *and* not one of the optional extras. A rejection whose reason is network-shaped (`Failed to fetch`, `NetworkError`, `AbortError`, `ERR_BLOCKED`, anything naming a `WebSocket`) is ignored outright, and anything else gets 20 seconds, long enough for a slow but healthy boot to finish and disarm it via `bootPending()`. The 45s hard timeout is untouched: a boot that truly stalls still gets its error card with a working retry.
+
+The `WebSocket` case is not hypothetical: `/play` opens the multiplayer socket during boot, `community-net` already reconnects it with backoff, and a socket that cannot open on venue wifi surfaces as an uncaught `WebSocket closed without opened.` It has no business replacing a working world with an error screen.
 
 `adblock-extras` and `api-blackout` in [scripts/audit-play-failure-modes.mjs](../scripts/audit-play-failure-modes.mjs) assert that neither situation produces a card.
 
