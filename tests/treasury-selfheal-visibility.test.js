@@ -65,7 +65,10 @@ vi.mock('../api/_lib/economy-sweepback.js', () => ({
 const sendOpsAlert = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert }));
 
-vi.mock('../api/_lib/solana/connection.js', () => ({
+// Only the network call is stubbed; the module's other exports (isTransientRpcError)
+// keep their real behaviour so this mock cannot drift out of its export list.
+vi.mock('../api/_lib/solana/connection.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	// The master sits under RESERVE_SOL + operating headroom, so there is a real
 	// deficit and both reclaim legs are reached. This is the 07-29 balance.
 	solanaConnection: () => ({ getBalance: vi.fn(async () => 3_843_137) }),

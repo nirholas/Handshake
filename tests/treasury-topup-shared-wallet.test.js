@@ -68,7 +68,11 @@ vi.mock('../api/_lib/economy-sweepback.js', () => ({
 	reclaimIdleAgentSol: vi.fn(async () => ({ reclaimedSol: 0, moves: [], skipped: [], failed: [] })),
 }));
 vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert: vi.fn(async () => {}) }));
-vi.mock('../api/_lib/solana/connection.js', () => ({
+// Only the network call is stubbed. Everything else (notably isTransientRpcError,
+// which the handler consults to decide whether a read failure is retryable) keeps
+// its real behaviour, so this mock cannot drift out of the module's export list.
+vi.mock('../api/_lib/solana/connection.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	// 0.012 SOL everywhere: above the relayer's 0.01 floor, below the
 	// circulation treasury's 0.2 and the loner's 0.02.
 	solanaConnection: () => ({ getBalance: vi.fn(async () => 12_214_000) }),

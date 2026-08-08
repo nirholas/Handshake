@@ -60,7 +60,10 @@ vi.mock('../api/_lib/economy-sweepback.js', () => ({
 	reclaimIdleSol: vi.fn(async () => ({ reclaimedSol: 0, moves: [], skipped: [], failed: [] })),
 }));
 vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert: vi.fn(async () => {}) }));
-vi.mock('../api/_lib/solana/connection.js', () => ({
+// Only the network call is stubbed; the module's other exports (isTransientRpcError)
+// keep their real behaviour so this mock cannot drift out of its export list.
+vi.mock('../api/_lib/solana/connection.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	// Every wallet reads under-floor so both candidate specs would qualify as
 	// targets if the alias guard failed.
 	solanaConnection: () => ({ getBalance: vi.fn(async () => 10_000_000) }),
