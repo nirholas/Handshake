@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-08T16:28:29.626Z",
+	"generated_at": "2026-08-08T16:33:19.139Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "Docs · Coin Wars",
 			"summary": "How community-vs-community battles work on three.ws: the war portal in every coin world, the matchmaking key two communities meet under, the signed pairing the arena trusts, the Elo ladder recomputed from the battle ledger, and the /api/wars endpoint behind all of it.",
 			"link": "/docs/coin-wars",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "launch",
+			"title": "Docs · Event souvenirs: the wearable you keep",
+			"summary": "The free commemorative wearable granted once to every player who is in the $THREE world while a live event is running: what it is, how the server decides who earns it, why it can never be bought, and how to equip it afterwards.",
+			"link": "/docs/event-souvenirs",
 			"tags": [
 				"launch"
 			]
@@ -134,17 +144,6 @@
 		{
 			"date": "2026-08-08",
 			"type": "update",
-			"title": "Forge items straight into a /play world, from a prompt or a photo",
-			"summary": "You can now create a brand-new 3D item without leaving a world. Open the build palette, click Forge, and describe what you want (\"a mossy stone lantern with a copper roof\"), or attach a reference photo and let it build the thing in the picture. About half a minute later the finished model is armed in your props, and one click drops it into the world for everyone connected to that server: it renders for every other player, and it is saved with the rest of the build, so it is still standing when people come back. There is also a chat shortcut, /forge a brass telescope, for when you do not want to open the palette at all. It is free, it needs no account or wallet, and every failure along the way (a busy queue, a prompt the lane refuses, a dropped connection) tells you what happened and how to retry.",
-			"link": "/play",
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-08-08",
-			"type": "update",
 			"title": "One link to share for the live event, with a real headcount",
 			"summary": "three.ws/event is the front door for anyone who has never been in the world. It carries a ticking countdown, the run of show converted into your own timezone, an add-to-calendar file built in your browser (nothing about who is coming leaves your device), a plain-language walkthrough of what actually happens in there, and one big button into the world. It reads the same schedule file the countdown inside Play reads, so the two can never disagree. While the event is running the page shows how many people are standing in the world right now, read live from the game servers through a new public endpoint at /api/play/population. If that count cannot be reached the page says the doors are open and shows no number, rather than making one up.",
 			"link": "/event",
@@ -173,6 +172,17 @@
 				"fix",
 				"security",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Play now opens fast instead of stuttering for its first few seconds",
+			"summary": "Opening a coin world, especially from a shared /play link, used to lurch: a long pause, a few juddering seconds, then everything settling into place and staying smooth. Four separate causes, all measured on the live site. The physics engine was being downloaded and parsed before the page could draw anything, even though nothing needs it until you are already standing in the world, which alone put about three quarters of a megabyte on the critical path. The graphics card was being asked to compile every shader in the town on the single frame that first showed it to you. The world was lit only once a one-and-a-half megabyte lighting file finished downloading, so it looked flat and then suddenly popped. And the decorative crowd of wandering avatars started downloading its models on top of everything else, at the busiest possible moment. Each now happens in the right order: physics loads alongside the world, shaders compile before the frame that needs them, the lighting is correct from the first frame and refines afterwards, and the crowd fills in once your own world has landed. The coin's artwork is also decoded once now rather than twice, and the automatic quality governor no longer mistakes a still-loading world for a slow computer and dims the picture for the next several seconds.",
+			"link": "/play",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
