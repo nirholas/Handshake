@@ -149,12 +149,20 @@ async function main() {
 		}), [SOUVENIR_ID]);
 		await sleep(700);
 
+		// The poster is lazy-loaded; give it a beat rather than racing it.
+		await page.waitForFunction(() => {
+			const img = document.querySelector('.es-card .es-thumb img');
+			return !img || (img.complete && img.naturalWidth > 0);
+		}, null, { timeout: 15_000 }).catch(() => {});
+
 		const card = await page.evaluate(() => {
 			const c = document.querySelector('.es-card');
 			if (!c) return null;
 			const img = c.querySelector('.es-thumb img');
+			const r = c.getBoundingClientRect();
 			return {
-				visible: !!c.offsetParent,
+				// A fixed-position element has no offsetParent, so measure it instead.
+				visible: r.width > 0 && r.height > 0 && getComputedStyle(c).visibility !== 'hidden',
 				kicker: c.querySelector('.es-kicker')?.textContent.trim(),
 				name: c.querySelector('.es-name')?.textContent,
 				sub: c.querySelector('.es-sub')?.textContent,
@@ -262,7 +270,7 @@ async function main() {
 		await page.evaluate(() => {
 			window.__wardrobe.close();
 			window.__SHOP_OPENS__ = 0;
-			window.__wardrobe.setProfile({ owned: [], equipped: {} });
+			window.__wardrobe.setProfile({ cosmetics: { owned: [], equipped: {} } });
 			window.__wardrobe.open();
 		});
 		await sleep(700);

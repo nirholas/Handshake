@@ -108,7 +108,13 @@ export class CosmeticsWardrobe {
 	toggle() { this.isOpen() ? this.close() : this.open(); }
 
 	open() {
-		if (this.isOpen()) return;
+		// A close() still playing its exit animation has not set `hidden` yet, so
+		// isOpen() reads true and this would early-return: the panel would look
+		// open for 180ms and then vanish when the pending hide fired. Reopening
+		// inside that window is a real path (dismiss the panel, then click "My
+		// Fits" on a souvenir card), so cancel the hide and carry on re-opening.
+		if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = 0; }
+		else if (this.isOpen()) return;
 		this.root.hidden = false;
 		requestAnimationFrame(() => this.root.classList.add('cw-in'));
 		// Escape stack + Tab containment + focus restore, shared with every other
@@ -138,10 +144,11 @@ export class CosmeticsWardrobe {
 		this.root.classList.remove('cw-in');
 		this._releaseModal?.();
 		this._releaseModal = null;
-		setTimeout(() => { this.root.hidden = true; }, 180);
+		this._hideTimer = setTimeout(() => { this._hideTimer = 0; this.root.hidden = true; }, 180);
 	}
 
 	dispose() {
+		if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = 0; }
 		this._releaseModal?.();
 		this._releaseModal = null;
 		this.root.remove();
