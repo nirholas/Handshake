@@ -2383,6 +2383,14 @@
 					"added": "2026-08-04"
 				},
 				{
+					"path": "/docs/play-live-events",
+					"title": "Docs · Live events in the /play world",
+					"description": "How a scheduled event runs inside the $THREE world: one config file drives the countdown chip, the agenda drawer, the go-live moment, and a fireworks show every player sees identically without a single packet. Includes how to schedule, preview, and verify one.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-08-08"
+				},
+				{
 					"path": "/docs/play-hardening",
 					"title": "Docs · How /play stays safe, honest, and light",
 					"description": "The invariants that keep the Play world safe: untrusted names never become markup, a coin image cannot escape its CSS, a broken world link says so, a reconnect retires the peers who left, and everything the world loads gets freed. Each rule names the failure it prevents.",
@@ -2408,7 +2416,7 @@
 				},
 				{
 					"path": "/docs/coin-wars",
-					"title": "Docs \u00b7 Coin Wars",
+					"title": "Docs · Coin Wars",
 					"description": "How community-vs-community battles work on three.ws: the war portal in every coin world, the matchmaking key two communities meet under, the signed pairing the arena trusts, the Elo ladder recomputed from the battle ledger, and the /api/wars endpoint behind all of it.",
 					"priority": 0.6,
 					"changefreq": "monthly",
