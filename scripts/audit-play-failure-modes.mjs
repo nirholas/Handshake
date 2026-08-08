@@ -78,12 +78,25 @@ const XSS_PAYLOADS = {
 // `routes` entries run through page.route(); `expect` runs in Node with the
 // collected observations.
 
+// The top-level document is never the thing under test: a scenario injects a
+// failure into the page's SUBRESOURCES. It has to be excluded explicitly,
+// because /play carries its deep link in the query string, so the page URL for
+// the canonical link literally contains "/api/img" and an unguarded matcher
+// aborts the navigation itself. That failure reads as "the whole scenario
+// crashed" while actually testing nothing at all.
+const notDocument = (route) => route.request().resourceType() !== 'document';
+
 /** Abort every request whose URL matches, as an ad blocker or a dead host would. */
-const block = (re, code = 'blockedbyclient') => ({ match: re, handler: (route) => route.abort(code) });
+const block = (re, code = 'blockedbyclient') => ({
+	match: re,
+	handler: (route) => (notDocument(route) ? route.abort(code) : route.continue()),
+});
 /** Answer with a status, as a throttled or broken upstream would. */
 const status = (re, s, body = '{"error":"injected"}') => ({
 	match: re,
-	handler: (route) => route.fulfill({ status: s, contentType: 'application/json', body }),
+	handler: (route) => (notDocument(route)
+		? route.fulfill({ status: s, contentType: 'application/json', body })
+		: route.continue()),
 });
 
 const SCENARIOS = [
@@ -193,6 +206,35 @@ const SCENARIOS = [
 					get: () => ({ getItem: boom, setItem: boom, removeItem: boom, clear: boom, key: boom, length: 0 }),
 				});
 			}`,
+	},
+	{
+		id: 'script-scheme-image',
+		title: 'Script-scheme ?image= (javascript: and data:text/html)',
+		// proxiedImageURL must refuse these outright rather than pass them to an
+		// <img src> / TextureLoader, where they cannot execute but do produce an
+		// ERR_UNKNOWN_URL_SCHEME console error and a permanently broken tile.
+		url: `/play?coin=${THREE_MINT}&name=three.ws&symbol=three&image=${encodeURIComponent('javascript:window.__xss=1')}`,
+		expect: (o) => (o.hostileSrc?.length ? `hostile ?image= reached an image sink: ${o.hostileSrc[0]}` : null),
+	},
+	{
+		id: 'adblock-extras',
+		title: 'Ad blocker eats the optional page scripts',
+		// The single most likely visitor at an event: uBlock/Brave/a corporate
+		// filter kills the non-critical extras. The world does not depend on any
+		// of them, so the boot watchdog must NOT paint its error card over a page
+		// that is loading normally.
+		url: CANONICAL,
+		routes: [block(/\/(brand|i18n|theme-switcher)\.js(\?|$)/)],
+		expect: (o) => (o.errorCard ? 'boot error card shown after only optional scripts were blocked' : null),
+	},
+	{
+		id: 'api-blackout',
+		title: 'Every /api/* request blocked (venue filter / API down)',
+		// Each fetch boundary owns its own failure state, so the world must still
+		// open onto designed empty/error states rather than a boot error card.
+		url: CANONICAL,
+		routes: [block(/\/api\//)],
+		expect: (o) => (o.errorCard ? 'boot error card shown for an API outage the page is meant to absorb' : null),
 	},
 ];
 
@@ -308,6 +350,14 @@ async function runScenario(browser, base, sc) {
 		const styleBreakout = Array.from(document.querySelectorAll('[style]'))
 			.map((n) => n.getAttribute('style') || '')
 			.filter((s) => /url\(["'][^"']*["']\)\s*;\s*\S/.test(s) || /position:\s*fixed;inset:0;z-index:2147483647/.test(s));
+		// A script-scheme or HTML-document URL that reached any image sink. It
+		// cannot execute from an <img src>, but it is a value that should have
+		// been refused upstream, and it always shows up as a console error.
+		const HOSTILE = /^\s*(javascript|vbscript|data\s*:\s*text\/html)/i;
+		const hostileSrc = Array.from(document.querySelectorAll('[src],[href],[style]'))
+			.flatMap((n) => [n.getAttribute('src'), n.getAttribute('href'), n.getAttribute('style')])
+			.filter((v) => v && (HOSTILE.test(v) || /url\(["']?\s*(javascript|vbscript):/i.test(v)))
+			.slice(0, 3);
 		let stored = null;
 		try { stored = sessionStorage.getItem('cc-play-pass'); } catch { stored = null; }
 		const rig = window.__CC__?.localRig;
@@ -321,6 +371,7 @@ async function runScenario(browser, base, sc) {
 			xss: window.__xss === 1,
 			injectedScripts: document.querySelectorAll('script[src*="onerror"], img[onerror]').length,
 			styleBreakout,
+			hostileSrc,
 			storedPass: stored,
 			phase: window.__CC__?.phase || null,
 			hasScene: !!window.__CC__?.scene,

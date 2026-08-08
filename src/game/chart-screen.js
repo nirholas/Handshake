@@ -32,6 +32,8 @@ const TRADES_URL = (mint, limit = 100) => {
 const POLL_MS = 5000;
 const REDRAW_MS = 100;          // ~10fps: enough for a smooth ticker, cheap on the GPU
 const MAX_POINTS = 220;         // rolling price history kept across the session
+// Consecutive failed polls before the badge stops claiming the tape is live.
+const STALE_AFTER_MISSES = 3;
 const CW = 1280, CH = 720;      // 16:9 logical layout grid for the draw code
 const SS = 1.5;                 // supersample: 1920x1080 backing store, crisp text
 
@@ -175,9 +177,13 @@ export function createChartScreen(scene, coin, opts = {}) {
 	let seen = new Set();     // trade tx signatures already ingested
 	let points = [];          // [{ ts, price }] ascending by ts
 	let recent = [];          // newest-first trades for the ticker/flow
-	let status = 'loading';   // loading | live | empty | error
+	let status = 'loading';   // loading | live | stale | empty | error
 	let firstFill = true;     // suppress the reactor on the initial backlog poll
 	let lastErr = 0;
+	// Consecutive failed polls. One dropped request on flaky wifi is noise; a run
+	// of them is an outage the viewer deserves to see rather than a green badge
+	// over a frozen price.
+	let misses = 0;
 	let pollTimer = null;
 	let destroyed = false;
 	let acc = 0;              // redraw accumulator
@@ -235,9 +241,18 @@ export function createChartScreen(scene, coin, opts = {}) {
 			// here (not in ingest) so an empty-on-entry coin still reacts to its
 			// genuine first trade on a later poll.
 			firstFill = false;
+			misses = 0;
 			if (status === 'loading') status = trades.length ? 'live' : 'empty';
 		} catch {
 			lastErr = Date.now();
+			misses++;
+			// A feed that worked once and then died used to keep pulsing a green
+			// LIVE badge over a frozen price forever, because `status` only ever
+			// became 'error' when the screen had NEVER had data. Three consecutive
+			// misses is a real outage rather than one dropped poll, so say so: the
+			// badge flips to STALE and the drawn age tells the viewer how old the
+			// tape they are looking at actually is.
+			if (misses >= STALE_AFTER_MISSES && status === 'live') status = 'stale';
 			if (!points.length && !recent.length) status = 'error';
 		}
 	}
@@ -326,11 +341,25 @@ export function createChartScreen(scene, coin, opts = {}) {
 		ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.stroke();
 		ctx.beginPath();
 		ctx.arc(bx + 26, by + badgeH / 2, 6, 0, Math.PI * 2);
-		ctx.fillStyle = status === 'live' ? `rgba(95,208,138,${pulse})` : COL.faint;
+		ctx.fillStyle = status === 'live' ? `rgba(95,208,138,${pulse})`
+			: status === 'stale' ? 'rgba(232,178,90,0.9)'
+			: COL.faint;
 		ctx.fill();
 		ctx.fillStyle = COL.text;
 		ctx.font = '700 18px Inter, system-ui, sans-serif';
-		ctx.fillText(status === 'live' ? 'LIVE' : status === 'error' ? 'OFFLINE' : '···', bx + 44, by + 26);
+		const badgeLabel = status === 'live' ? 'LIVE'
+			: status === 'stale' ? 'STALE'
+			: status === 'error' ? 'OFFLINE'
+			: '···';
+		ctx.fillText(badgeLabel, bx + 44, by + 26);
+		// How old the tape is, so "STALE" carries a number instead of just a mood.
+		if (status === 'stale' && lastErr) {
+			const ageS = Math.max(0, Math.round((Date.now() - lastErr) / 1000));
+			const age = ageS < 90 ? `${ageS}s` : `${Math.round(ageS / 60)}m`;
+			ctx.font = '600 13px Inter, system-ui, sans-serif';
+			ctx.fillStyle = COL.faint;
+			ctx.fillText(age, bx + 44, by + 34);
+		}
 
 		// "↗ pump.fun" affordance, bottom-right of header row
 		ctx.fillStyle = COL.faint;

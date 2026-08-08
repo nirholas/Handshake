@@ -23,29 +23,68 @@ const ONBOARD_KEY = 'cc-onboarded-v1';
 
 // ── Real controls sourced from coincommunities.js _bindInput() / _stepLocal() ─
 
+// `essential` marks the handful a first-timer needs in the 3-step overlay; the
+// Controls help panel always shows the full reference. Keep both in sync with
+// _bindInput() — a control listed here that no longer exists is worse than one
+// that is missing, because the player trusts it and it silently does nothing.
+
 const DESK_CONTROLS = [
-	{ key: 'W A S D', desc: 'Move' },
+	{ group: 'Move' },
+	{ key: 'W A S D', desc: 'Move', essential: true },
 	{ key: '↑ ↓ ← →', desc: 'Move (arrows)' },
-	{ key: 'Shift', desc: 'Sprint' },
-	{ key: 'Space', desc: 'Jump' },
-	{ key: 'Drag', desc: 'Look around' },
+	{ key: 'Shift', desc: 'Sprint', essential: true },
+	{ key: 'Space', desc: 'Jump (handbrake while driving)', essential: true },
+	{ key: 'Drag', desc: 'Look around', essential: true },
 	{ key: 'Scroll', desc: 'Zoom camera' },
-	{ key: 'Enter', desc: 'Chat' },
+	{ key: 'C', desc: 'Cycle camera: follow, cinematic, first person, top down' },
+
+	{ group: 'Interact' },
+	{ key: 'E', desc: 'Talk to whoever is near: townsfolk, kiosk, agent exchange', essential: true },
+	{ key: 'F', desc: 'Drive a nearby vehicle, work a station, or cast a line', essential: true },
+	{ key: 'X', desc: 'Attack with the equipped weapon' },
+	{ key: '1 – 6', desc: 'Hotbar slot' },
+	{ key: 'I', desc: 'Inspect the nearest avatar' },
+	{ key: 'Click', desc: 'Tap a player, agent, vehicle, or screen to use it' },
+
+	{ group: 'Social' },
+	{ key: 'Enter', desc: 'Chat', essential: true },
+	{ key: 'Q', desc: 'Hold for the emote wheel, release to play', essential: true },
+	{ key: 'J', desc: 'Friends' },
+	{ key: 'V', desc: 'Change your avatar' },
+
+	{ group: 'Build' },
 	{ key: 'B', desc: 'Build mode' },
-	{ key: 'E', desc: 'Watch agent trade' },
-	{ key: 'F', desc: 'Fish (near ponds)' },
-	{ key: 'I', desc: 'Inspect nearest avatar' },
-	{ key: '1–6', desc: 'Hotbar slot' },
-	{ key: 'Ctrl/⌘+Z', desc: 'Undo build' },
+	{ key: '1 – 0', desc: 'Pick a block (while building)' },
+	{ key: 'R', desc: 'Rotate the armed prop or piece' },
+	{ key: 'Right-click', desc: 'Break a block (hold also works)' },
+	{ key: 'Ctrl/⌘ + Z', desc: 'Undo your last build edit' },
+
+	{ group: 'View' },
+	{ key: 'P', desc: 'Photo mode', essential: true },
+	{ key: 'Z', desc: 'Zen mode: hide every panel' },
+	{ key: 'Esc', desc: 'Close the open drawer or panel' },
 ];
 
 const TOUCH_CONTROLS = [
-	{ key: 'Joystick', desc: 'Move (bottom-left)' },
-	{ key: 'Drag', desc: 'Look around' },
-	{ key: 'Scroll / pinch', desc: 'Zoom camera' },
+	{ group: 'Move' },
+	{ key: 'Joystick', desc: 'Move (bottom-left)', essential: true },
+	{ key: 'Drag', desc: 'Look around', essential: true },
+	{ key: 'Pinch', desc: 'Zoom camera' },
+
+	{ group: 'Tap to use' },
+	{ key: 'A person', desc: 'Talk to townsfolk, agents, and kiosks', essential: true },
+	{ key: 'A vehicle', desc: 'Take the wheel', essential: true },
+	{ key: 'A player', desc: 'Inspect them' },
+	{ key: 'A screen', desc: 'Open the live chart on pump.fun' },
+
+	{ group: 'Social' },
+	{ key: 'Chat bar', desc: 'Chat', essential: true },
+	{ key: 'HUD buttons', desc: 'Emotes, friends, avatar, jobs' },
+
+	{ group: 'Build' },
 	{ key: '⛏ button', desc: 'Build mode' },
-	{ key: 'Tap agents', desc: 'Watch agent trade' },
-	{ key: 'Chat bar', desc: 'Chat' },
+	{ key: 'Tap', desc: 'Place a block (while building)' },
+	{ key: 'Hold', desc: 'Break a block (while building)' },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -191,7 +230,7 @@ export class PlayOnboard {
 		// ── Body ──
 		let body;
 		if (slide.isControls) {
-			body = this._buildControlsGrid(isTouch());
+			body = this._buildControlsGrid(isTouch(), true);
 		} else {
 			body = mk('p', { className: 'po-body', textContent: slide.body });
 		}
@@ -254,10 +293,17 @@ export class PlayOnboard {
 
 	// ── Controls grid (used in overlay slide + help panel) ─────────────────────
 
-	_buildControlsGrid(touch) {
-		const list = touch ? TOUCH_CONTROLS : DESK_CONTROLS;
+	// `essentialsOnly` trims the list to what a first-timer needs mid-onboarding;
+	// the help panel passes false and gets every binding, grouped.
+	_buildControlsGrid(touch, essentialsOnly = false) {
+		const all = touch ? TOUCH_CONTROLS : DESK_CONTROLS;
+		const list = essentialsOnly ? all.filter((c) => c.essential) : all;
 		const grid = mk('div', { className: 'po-ctrl-grid' });
-		for (const { key, desc } of list) {
+		for (const { group, key, desc } of list) {
+			if (group) {
+				grid.appendChild(mk('div', { className: 'po-ctrl-group', textContent: group }));
+				continue;
+			}
 			const row = mk('div', { className: 'po-ctrl-row' });
 			row.appendChild(mk('kbd', { className: 'po-kbd', textContent: key }));
 			row.appendChild(mk('span', { className: 'po-ctrl-desc', textContent: desc }));
@@ -419,6 +465,14 @@ body.po-onboarding #cc-joystick { z-index: 60; }
 .po-ctrl-grid::-webkit-scrollbar { width: 4px; }
 .po-ctrl-grid::-webkit-scrollbar-thumb { background: var(--cc-edge, rgba(255,255,255,0.12)); }
 .po-ctrl-row { display: contents; }
+.po-ctrl-group {
+  grid-column: 1 / -1;
+  margin-top: 10px; padding-bottom: 3px;
+  border-bottom: 1px solid var(--cc-edge, rgba(255,255,255,0.12));
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--cc-dim, #8c8c92);
+}
+.po-ctrl-group:first-child { margin-top: 0; }
 .po-kbd {
   display: inline-flex; align-items: center; justify-content: center;
   background: rgba(255,255,255,0.06);

@@ -83,6 +83,19 @@
 .wh-feel-flourish-sub { margin-top: 4px; font-size: 14px; color: var(--cc-dim, #9a9aa2); }
 
 @media (prefers-reduced-motion: reduce) {
-	.wh-feel-vignette.is-hit, .wh-feel-flash.is-on, .wh-feel-flourish.is-show { animation-duration: 0.01s; }
+	/* Collapsing these to 0.01s (what this block used to do) turned the
+	   full-screen white flash into a single-frame strobe, strictly worse for a
+	   photosensitive player than the original fade. So the flash is removed
+	   outright, the damage vignette keeps a single soft fade at half intensity
+	   (it is the only feedback that you were hit), and the flourish just
+	   appears instead of popping. */
+	.wh-feel-flash.is-on { animation: none; opacity: 0; }
+	.wh-feel-vignette { --feel-vig: 0.3; }
+	.wh-feel-flourish.is-show {
+		animation: none;
+		opacity: 1;
+		transform: translate(-50%, -50%) scale(1);
+	}
 	.wh-feel-money { transition: opacity 0.3s ease; }
+	.wh-feel-money.is-go { transform: translate(-50%, 0); }
 }

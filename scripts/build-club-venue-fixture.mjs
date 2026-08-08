@@ -10,7 +10,7 @@
 //   spec uses elsewhere. No geometry, no materials — just transforms.
 //
 //   tests/_fixtures/club-hdri.hdr — a hand-rolled minimal Radiance HDR
-//   (a 4x4 mid-grey image) so RGBELoader resolves and PMREMGenerator
+//   (a 4x4 mid-grey image) so HDRLoader resolves and PMREMGenerator
 //   can pre-filter it.
 //
 // Re-run with `node scripts/build-club-venue-fixture.mjs` after edits to

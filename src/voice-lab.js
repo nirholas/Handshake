@@ -477,70 +477,163 @@ function timeAgo(ts) {
 }
 
 // ── Playground ───────────────────────────────────────────────────────────────
+//
+// One picker over every lane. Options are keyed "<provider>:<voiceId>" so the
+// same select can hold a cloned ElevenLabs voice, a free Edge neural voice and
+// a Gemini prebuilt without the ids ever colliding.
 
-function renderPlaygroundVoices() {
-	const voices = loadVoices();
+// Voices the browser handed over, in pick order (most recent first). Kept in
+// memory only: the browser re-fetches the catalog on load, so persisting them
+// would risk offering a voice the account no longer has.
+let pickedVoices = [];
+let providerMeta = [];
+
+function voiceKey(provider, id) {
+	return `${provider}:${id}`;
+}
+
+function providerFor(id) {
+	return providerMeta.find((p) => p.id === id) || null;
+}
+
+/** Add (or promote) a voice the user selected in the browser, then select it. */
+export function usePlaygroundVoice(voice) {
+	const key = voiceKey(voice.provider, voice.id);
+	pickedVoices = [
+		{ key, provider: voice.provider, voiceId: voice.id, name: voice.name },
+		...pickedVoices.filter((v) => v.key !== key),
+	].slice(0, 12);
+	renderPlaygroundVoices(key);
+	$('playgroundSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/** Called once the catalog is known, so the model/direction controls can adapt. */
+export function setProviderMeta(providers) {
+	providerMeta = providers;
+	renderModelOptions();
+}
+
+function renderPlaygroundVoices(preferKey = null) {
+	const cloned = loadVoices();
 	const sel = $('pgVoice');
 	const prev = sel.value;
 
 	sel.innerHTML = '';
-	if (!voices.length) {
-		sel.innerHTML = '<option value="" disabled selected>Clone a voice first</option>';
+	if (!cloned.length && !pickedVoices.length) {
+		sel.innerHTML = '<option value="" disabled selected>Pick a voice above</option>';
 		$('pgSpeak').disabled = true;
+		renderModelOptions();
 		return;
 	}
 
-	voices.forEach((v) => {
-		const opt = document.createElement('option');
-		opt.value = v.voiceId;
-		opt.textContent = v.name;
-		sel.appendChild(opt);
-	});
+	const addGroup = (label, items) => {
+		if (!items.length) return;
+		const group = document.createElement('optgroup');
+		group.label = label;
+		items.forEach((v) => {
+			const opt = document.createElement('option');
+			opt.value = v.key;
+			opt.textContent = v.name;
+			group.appendChild(opt);
+		});
+		sel.appendChild(group);
+	};
 
-	if (lastClonedVoiceId && voices.find((v) => v.voiceId === lastClonedVoiceId)) {
-		sel.value = lastClonedVoiceId;
-	} else if (prev && voices.find((v) => v.voiceId === prev)) {
-		sel.value = prev;
-	} else {
-		sel.value = voices[0].voiceId;
-	}
+	addGroup(
+		'My cloned voices',
+		cloned.map((v) => ({
+			key: voiceKey('elevenlabs', v.voiceId),
+			name: v.name,
+		})),
+	);
+	addGroup('Picked from the browser', pickedVoices);
+
+	const options = [...sel.options].map((o) => o.value);
+	const wanted = [
+		preferKey,
+		lastClonedVoiceId ? voiceKey('elevenlabs', lastClonedVoiceId) : null,
+		prev,
+	].find((k) => k && options.includes(k));
+	sel.value = wanted || options[0];
 
 	$('pgSpeak').disabled = false;
+	renderModelOptions();
+}
+
+/** Show the model select and the direction field only where the lane has them. */
+function renderModelOptions() {
+	const { provider } = currentSelection();
+	const meta = providerFor(provider);
+	const models = meta?.models || [];
+	const modelField = $('pgModelField');
+	const modelSel = $('pgModel');
+
+	if (!models.length) {
+		modelField.hidden = true;
+		modelSel.innerHTML = '';
+	} else {
+		const prev = modelSel.value;
+		modelSel.innerHTML = models
+			.map((m) => `<option value="${esc(m.id)}" title="${esc(m.note || '')}">${esc(m.label)}</option>`)
+			.join('');
+		if (prev && models.some((m) => m.id === prev)) modelSel.value = prev;
+		modelField.hidden = false;
+	}
+
+	$('pgDirectionRow').hidden = !meta?.direction;
+}
+
+function currentSelection() {
+	const raw = $('pgVoice').value || '';
+	const idx = raw.indexOf(':');
+	if (idx === -1) return { provider: '', voiceId: '' };
+	return { provider: raw.slice(0, idx), voiceId: raw.slice(idx + 1) };
 }
 
 async function speakPlayground() {
-	const voiceId = $('pgVoice').value;
+	const { provider, voiceId } = currentSelection();
 	const text = $('pgText').value.trim();
-	if (!voiceId || !text) return;
+	if (!provider || !voiceId || !text) return;
 
 	$('pgSpeak').disabled = true;
 	$('pgHint').textContent = 'Synthesizing...';
 
+	const payload = { provider, voiceId, text, speed: Number($('pgSpeed').value) || 1 };
+	const modelSel = $('pgModel');
+	if (!$('pgModelField').hidden && modelSel.value) payload.model = modelSel.value;
+	if (!$('pgDirectionRow').hidden) {
+		const direction = $('pgDirection').value.trim();
+		if (direction) payload.direction = direction;
+	}
+
 	try {
-		const r = await fetch('/api/tts/eleven', {
+		const r = await fetch('/api/tts/synthesize', {
 			method: 'POST',
 			credentials: 'include',
 			headers: withElevenKey({ 'content-type': 'application/json' }),
-			body: JSON.stringify({ voiceId, text }),
+			body: JSON.stringify(payload),
 		});
 
 		if (!r.ok) {
 			const errText = await r.text().catch(() => '');
 			let msg = '';
+			let topUp = '';
 			try {
 				const body = JSON.parse(errText);
 				msg = body.message || body.error_description || body.error || '';
+				if (body.top_up_url) topUp = ` Top up at ${body.top_up_url}.`;
 			} catch {
 				msg = errText.slice(0, 200);
 			}
-			throw new Error(msg || `HTTP ${r.status}`);
+			throw new Error((msg || `HTTP ${r.status}`) + topUp);
 		}
 
 		const cacheHit = r.headers.get('x-tts-cache') === 'hit';
 		const billing = r.headers.get('x-tts-billing');
 		const chargedUsd = Number(r.headers.get('x-tts-charged-usd') || 0);
+		const contentType = r.headers.get('content-type') || 'audio/mpeg';
 		const buf = await r.arrayBuffer();
-		const blob = new Blob([buf], { type: 'audio/mpeg' });
+		const blob = new Blob([buf], { type: contentType });
 		const url = URL.createObjectURL(blob);
 
 		const audio = $('pgAudio');
@@ -550,7 +643,9 @@ async function speakPlayground() {
 		audio.play().catch(() => {});
 
 		const billingNote =
-			billing === 'byok' ? ' · your key'
+			billing === 'byok' ? ' · your ElevenLabs key'
+			: billing === 'gcp' ? ' · free on platform credits'
+			: billing === 'free' ? ' · free lane'
 			: chargedUsd > 0 ? ` · $${chargedUsd.toFixed(4)} credits`
 			: '';
 		$('pgHint').textContent = `${(buf.byteLength / 1024).toFixed(0)} KB · ${cacheHit ? 'cached' : 'generated'}${billingNote}`;
@@ -569,16 +664,20 @@ async function playVoiceSample(voiceId) {
 	if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }
 
 	try {
-		const r = await fetch('/api/tts/eleven', {
+		const r = await fetch('/api/tts/synthesize', {
 			method: 'POST',
 			credentials: 'include',
 			headers: withElevenKey({ 'content-type': 'application/json' }),
 			body: JSON.stringify({
+				provider: 'elevenlabs',
 				voiceId,
 				text: "Hello, I'm your cloned voice. How does this sound?",
 			}),
 		});
-		if (!r.ok) throw new Error(`HTTP ${r.status}`);
+		if (!r.ok) {
+			const body = await r.json().catch(() => ({}));
+			throw new Error(body.message || body.error_description || `HTTP ${r.status}`);
+		}
 		const blob = await r.blob();
 		const audio = new Audio(URL.createObjectURL(blob));
 		audio.onended = () => URL.revokeObjectURL(audio.src);
@@ -633,6 +732,11 @@ $('voiceLibrary').addEventListener('click', (e) => {
 
 $('pgVoice').addEventListener('change', () => {
 	$('pgSpeak').disabled = !$('pgVoice').value;
+	renderModelOptions();
+});
+
+$('pgSpeed').addEventListener('input', () => {
+	$('pgSpeedVal').textContent = `${Number($('pgSpeed').value).toFixed(2)}×`;
 });
 
 // Keyboard shortcut: Space to toggle record/stop when not in an input

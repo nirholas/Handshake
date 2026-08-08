@@ -67,18 +67,30 @@ function injectStyles() {
 }
 #pi-overlay.pi-show .pi-card { transform: none; }
 
+/* Skip control. The BUTTON is 44x44 (the WCAG 2.5.5 / iOS minimum) while the
+   drawn square stays 30px: the extra 7px on each side is invisible touch slop,
+   so a thumb aiming at "skip" on a phone lands on it without the intro card
+   gaining a chunky close box. Offsets are 6px (13px minus the 7px slop) so the
+   visible square sits exactly where it always did. */
 .pi-close {
-  position: absolute; top: 13px; right: 13px;
-  width: 30px; height: 30px;
+  position: absolute; top: 6px; right: 6px;
+  width: 44px; height: 44px; padding: 0;
+  background: none; border: none; isolation: isolate;
+  color: var(--cc-dim, #8c8c92); font-size: 21px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.12s ease;
+}
+.pi-close::before {
+  content: ""; position: absolute; inset: 7px; z-index: -1;
   border-radius: var(--cc-radius-sm, 2px);
   background: var(--cc-bg2, #101012);
   border: 1px solid var(--cc-edge, rgba(255,255,255,0.12));
-  color: var(--cc-dim, #8c8c92); font-size: 21px; line-height: 1; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: color 0.12s ease, border-color 0.12s ease;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
-.pi-close:hover { color: var(--cc-text, #f5f5f6); border-color: var(--cc-edge-hi, rgba(255,255,255,0.55)); }
-.pi-close:focus-visible { outline: none; border-color: #fff; box-shadow: 0 0 0 1px #fff; }
+.pi-close:hover { color: var(--cc-text, #f5f5f6); }
+.pi-close:hover::before { border-color: var(--cc-edge-hi, rgba(255,255,255,0.55)); }
+.pi-close:focus-visible { outline: none; }
+.pi-close:focus-visible::before { border-color: #fff; box-shadow: 0 0 0 1px #fff; }
 
 .pi-tag {
   font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
@@ -114,7 +126,10 @@ function injectStyles() {
 .pi-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .pi-btn {
   appearance: none; font: inherit; cursor: pointer;
-  padding: 11px 22px; border-radius: var(--cc-radius-sm, 2px);
+  /* 11px padding on a 13.5px/1 line box measured 40px tall, just under the 44px
+     WCAG 2.5.5 / iOS minimum. min-height carries the target the last 4px without
+     changing the padding rhythm on wider rows. */
+  padding: 11px 22px; min-height: 44px; border-radius: var(--cc-radius-sm, 2px);
   font-weight: 700; font-size: 13.5px; letter-spacing: 0.02em;
   display: inline-flex; align-items: center; gap: 8px;
   transition: filter 0.12s ease, transform 0.1s ease, border-color 0.12s ease, color 0.12s ease, background 0.12s ease;

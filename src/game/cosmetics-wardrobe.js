@@ -60,6 +60,9 @@ export class CosmeticsWardrobe {
 		this._cosmetics = null;
 		// pending equip animation (id being processed by server)
 		this._pending = null;
+		// Cosmetic id the current session just unlocked (an event souvenir drop),
+		// badged "New" until the player opens the panel and sees it.
+		this._newId = null;
 		this._build();
 	}
 
@@ -110,11 +113,26 @@ export class CosmeticsWardrobe {
 		// /play panel (src/game/a11y.js).
 		this._releaseModal = openModal(this.panel, { close: () => this.close(), initialFocus: this.closeBtn });
 		// If no profile yet show loading skeleton; it fills in when setProfile arrives.
+		// Otherwise repaint: a souvenir may have been granted (markNew) while the
+		// panel was closed, and the stale render wouldn't be showing it.
 		if (!this._cosmetics) this._renderLoading();
+		else { this._render(); this._scrollToNew(); }
+	}
+
+	// Bring a freshly granted souvenir into view. A wardrobe with five slots of
+	// cards can easily open with the new item below the fold, which would make the
+	// "go look in My Fits" prompt land on an apparently unchanged panel.
+	_scrollToNew() {
+		if (!this._newId) return;
+		const card = this.body.querySelector(`.cw-card[data-id="${CSS.escape(this._newId)}"]`);
+		card?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 	}
 
 	close() {
 		if (!this.isOpen()) return;
+		// The panel has been seen, so the "New" highlight has done its job. Leaving
+		// it up would turn a one-time nudge into permanent noise.
+		this._newId = null;
 		this.root.classList.remove('cw-in');
 		this._releaseModal?.();
 		this._releaseModal = null;
@@ -142,8 +160,45 @@ export class CosmeticsWardrobe {
 			owned: new Set(Array.isArray(cs.owned) ? cs.owned : []),
 			equipped: (cs.equipped && typeof cs.equipped === 'object') ? cs.equipped : {},
 		};
-		// Clear any pending indicator — the server responded
+		// Only clear the pending indicator once the equipped loadout actually
+		// reflects the change we asked for. Clearing on ANY profile message meant
+		// an unrelated echo (a gold change from a mob hit, a quest payout) wiped
+		// the spinner while the equip was still in flight, so the card looked
+		// settled before it was.
+		if (this._pending && this._equippedHas(this._pending)) this._pending = null;
+		if (this.isOpen()) this._render();
+	}
+
+	// Is `id` currently worn in any slot of the latest snapshot? An unequip
+	// (pending id '') settles when no slot holds the item any more, which the
+	// caller expresses by passing the emptied slot's id.
+	_equippedHas(id) {
+		const eq = this._cosmetics?.equipped || {};
+		return Object.values(eq).includes(id);
+	}
+
+	/**
+	 * The server refused the in-flight equip. There is no profile echo on that
+	 * path, so without this the card's pending spinner would run forever.
+	 * @param {string} [text] the server's reason, shown on the panel
+	 */
+	onRejected(text) {
+		if (!this._pending) return;
 		this._pending = null;
+		this._rejectNote = text || 'That change did not go through.';
+		if (this.isOpen()) this._render();
+	}
+
+	/**
+	 * Flag a cosmetic as freshly unlocked this session, so the panel points at it
+	 * when the player gets here. Called by the souvenir drop (src/game/
+	 * event-souvenir.js is the toast; this is the other half of the same moment,
+	 * for the player who dismisses the toast and comes looking later).
+	 * @param {string} id catalog id the server just granted
+	 */
+	markNew(id) {
+		if (typeof id !== 'string' || !id) return;
+		this._newId = id;
 		if (this.isOpen()) this._render();
 	}
 
@@ -167,6 +222,12 @@ export class CosmeticsWardrobe {
 		const { owned, equipped } = this._cosmetics;
 		this.body.textContent = '';
 
+		// A refused change explains itself at the top of the panel rather than
+		// leaving the player to guess why nothing happened.
+		if (this._rejectNote) {
+			this.body.appendChild(el('div', { class: 'cw-reject', role: 'status', text: this._rejectNote }));
+		}
+
 		for (const { slot, label, items } of BY_SLOT) {
 			const row = el('div', { class: 'cw-slot-row', 'data-slot': slot });
 			row.appendChild(el('div', { class: 'cw-slot-label', text: label }));
@@ -189,6 +250,14 @@ export class CosmeticsWardrobe {
 
 		// The none/default items are special: clicking them unequips the slot.
 		const isNone = item.id === DEFAULT_LOADOUT[item.slot];
+		// Event souvenirs are granted for being somewhere at some time and have no
+		// purchase path at all, so a locked one must never be dressed up as
+		// something to buy: no price, no shop shortcut, and copy that says why it
+		// is locked instead of implying money would fix it.
+		const isEvent = item.tier === 'event';
+		// The item this session's souvenir drop just granted, highlighted until the
+		// player has actually laid eyes on the panel.
+		const isNew = this._newId === item.id && isOwned;
 
 		const thumb = item.thumb
 			? el('img', {
@@ -197,20 +266,26 @@ export class CosmeticsWardrobe {
 			})
 			: this._swatch(item);
 
+		const lockedReason = isEvent
+			? 'Event exclusive, granted to everyone in the world while the event was live'
+			: 'Locked · buy in the shop to unlock';
+
 		const card = el('button', {
 			class: 'cw-card'
 				+ (isOwned ? '' : ' cw-locked')
 				+ (isEquipped ? ' cw-equipped' : '')
-				+ (isPending ? ' cw-pending' : ''),
+				+ (isPending ? ' cw-pending' : '')
+				+ (isNew ? ' cw-new' : ''),
 			type: 'button',
 			'data-id': item.id,
+			'data-tier': item.tier,
 			'aria-pressed': isOwned ? (isEquipped ? 'true' : 'false') : undefined,
 			'aria-label': isOwned
-				? `${isEquipped ? 'Unequip' : 'Equip'} ${item.name}`
-				: `${item.name} — locked, open shop to buy`,
+				? `${isEquipped ? 'Unequip' : 'Equip'} ${item.name}${isNew ? ', just unlocked' : ''}`
+				: `${item.name}: ${isEvent ? 'event exclusive, not for sale' : 'locked, open shop to buy'}`,
 			title: isOwned
 				? (isEquipped ? `Equipped · click to unequip` : `Click to equip ${item.name}`)
-				: `Locked · buy in the shop to unlock`,
+				: lockedReason,
 			onclick: () => this._onCardClick(item, isOwned, isEquipped),
 		}, [
 			el('div', { class: 'cw-thumb' }, [
@@ -219,19 +294,23 @@ export class CosmeticsWardrobe {
 					? el('span', { class: 'cw-check', 'aria-hidden': 'true' },
 						[el('svg', { viewBox: '0 0 16 16', width: '12', height: '12', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' },
 							[el('polyline', { points: '2 8 6 12 14 4' })])])
-					: (isOwned ? null : el('span', { class: 'cw-lock', 'aria-hidden': 'true', text: '🔒' })),
+					: (isOwned ? null : el('span', { class: 'cw-lock', 'aria-hidden': 'true', text: isEvent ? '🏅' : '🔒' })),
 				item.rarity !== 'common'
 					? el('span', { class: 'cw-rarity', 'data-rarity': item.rarity, text: RARITY_LABEL[item.rarity] })
 					: null,
 			]),
 			el('div', { class: 'cw-meta' }, [
 				el('span', { class: 'cw-name', text: isNone ? 'None' : item.name }),
-				!isOwned && item.price
-					? el('span', { class: 'cw-price', text: `${item.price} $THREE` })
-					: null,
+				isEvent
+					? el('span', { class: 'cw-price cw-price-event', text: isOwned ? 'Event souvenir' : 'Not for sale' })
+					: (!isOwned && item.price
+						? el('span', { class: 'cw-price', text: `${item.price} $THREE` })
+						: null),
 				isEquipped
 					? el('span', { class: 'cw-tag cw-tag-on', text: 'Equipped' })
-					: (isPending ? el('span', { class: 'cw-tag cw-tag-pending', text: '…' }) : null),
+					: (isPending
+						? el('span', { class: 'cw-tag cw-tag-pending', text: '…' })
+						: (isNew ? el('span', { class: 'cw-tag cw-tag-new', text: 'New' }) : null)),
 			]),
 		]);
 
@@ -254,14 +333,22 @@ export class CosmeticsWardrobe {
 
 	_onCardClick(item, isOwned, isEquipped) {
 		if (!isOwned) {
+			// A locked event souvenir has no purchase path, so sending this player to
+			// the shop would be a dead end, so the card is simply inert and its
+			// title/aria copy already explains that it had to be earned live.
+			if (item.tier === 'event') return;
 			// Locked item — shortcut to the shop so the player can buy it.
 			try { this.h.onShop?.(); } catch { /* ignore */ }
 			return;
 		}
+		// Looking at it counts as seeing it: clear the "new" highlight on the item
+		// the souvenir drop flagged, so it doesn't keep shouting after the visit.
+		if (this._newId === item.id) this._newId = null;
 		// Equip the item, or unequip by equipping the slot's `none` default.
 		const targetId = isEquipped ? DEFAULT_LOADOUT[item.slot] : item.id;
 		if (this._pending === targetId) return; // already in flight
 		this._pending = targetId;
+		this._rejectNote = ''; // a fresh attempt clears the previous refusal
 		// Optimistic re-render: mark the card pending immediately.
 		this._refreshCard(item.id, isEquipped);
 		try { this.h.onEquip?.(targetId); } catch { /* ignore */ }
@@ -335,6 +422,13 @@ export class CosmeticsWardrobe {
 
 /* Per-slot section */
 .cw-slot-row { display: flex; flex-direction: column; gap: 9px; }
+.cw-reject {
+	margin: 0 0 12px; padding: 9px 12px;
+	border: 1px solid rgba(224, 108, 117, 0.4);
+	border-radius: 8px;
+	background: rgba(224, 108, 117, 0.1);
+	color: #e8a0a6; font-size: 12px; line-height: 1.45;
+}
 .cw-slot-label {
 	font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
 	color: var(--cc-faint, #5a5a60);
@@ -433,6 +527,25 @@ export class CosmeticsWardrobe {
 }
 .cw-tag-on { color: #060607; background: #fff; }
 .cw-tag-pending { color: var(--cc-dim, #8c8c92); background: rgba(255,255,255,.08); }
+.cw-tag-new { color: #060607; background: #fff; }
+
+/* Event souvenirs: earned, never sold. A locked one is inert: no hover lift, no
+   pointer, nothing implying a purchase would unlock it. */
+.cw-price-event { font-style: normal; letter-spacing: 0.06em; text-transform: uppercase; font-size: 9px; }
+.cw-card[data-tier="event"].cw-locked { cursor: default; }
+.cw-card[data-tier="event"].cw-locked:hover { transform: none; }
+/* The souvenir just granted this session: a steady ring, plus one attention
+   pulse that settles rather than looping forever. */
+.cw-card.cw-new { border-color: #fff; box-shadow: 0 0 16px rgba(255,255,255,.3); }
+.cw-card.cw-new .cw-thumb::after {
+	content: ''; position: absolute; inset: 0; pointer-events: none;
+	box-shadow: inset 0 0 24px rgba(255,255,255,.32);
+	animation: cw-new-pulse 1.5s ease-out 3;
+}
+@keyframes cw-new-pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+	.cw-card.cw-new .cw-thumb::after { animation: none; opacity: 0.5; }
+}
 
 @media (max-width: 480px) {
 	.cw-cards { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }

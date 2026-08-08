@@ -129,8 +129,21 @@ async function openClient(browser, tag, name) {
 		console.log(`${at()} [${tag}][ws open] ${ws.url().slice(0, 90)}`);
 		ws.on('close', () => console.log(`${at()} [${tag}][ws close]`));
 	});
-	await page.goto(WORLD, { waitUntil: 'domcontentloaded', timeout: LOAD_MS });
-	return { tag, ctx, page };
+	// A dev origin can restart under you (a config edit reloads the Vite server and
+	// drops the port for a moment), which surfaces as a connection refusal rather
+	// than a slow load. Retry the navigation instead of failing the whole run on it.
+	let lastErr;
+	for (let attempt = 0; attempt < 3; attempt++) {
+		try {
+			await page.goto(WORLD, { waitUntil: 'domcontentloaded', timeout: LOAD_MS });
+			return { tag, ctx, page };
+		} catch (err) {
+			lastErr = err;
+			console.log(`${at()} [${tag}][load retry ${attempt + 1}] ${String(err).slice(0, 120)}`);
+			await page.waitForTimeout(5000);
+		}
+	}
+	throw lastErr;
 }
 
 // Onboarding cards and the intro sheet sit over the world; clear whatever is up.

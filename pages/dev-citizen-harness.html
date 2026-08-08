@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="robots" content="noindex, nofollow" />
+		<title>Citizen layer harness</title>
+		<style>
+			body { background: #0b0b0b; color: #e7e7ea; font: 14px system-ui, sans-serif; padding: 24px; }
+			button { padding: 8px 14px; margin-right: 8px; border-radius: 8px; border: 1px solid #26262b; background: #16161a; color: #e7e7ea; cursor: pointer; }
+			pre { background: #121216; padding: 12px; border-radius: 8px; overflow: auto; max-height: 40vh; }
+		</style>
+	</head>
+	<body>
+		<h1>Citizen layer harness</h1>
+		<p>Exercises the real citizen identity layer against the real gallery API, with no 3D world.</p>
+		<button id="load">1. Load citizen pool</button>
+		<button id="profile">2. Open citizen profile</button>
+		<button id="talk">3. Talk 1-on-1</button>
+		<pre id="out">ready</pre>
+		<script type="module">
+			import { loadCitizenPool, isCitizen, openCitizenProfile, talkToCitizen } from '/src/game/npc/citizens.js';
+
+			const out = document.getElementById('out');
+			const say = (o) => { out.textContent = typeof o === 'string' ? o : JSON.stringify(o, null, 2); };
+			const world = { mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump', name: 'three.ws', symbol: 'three' };
+			let pool = [];
+			let citizen = null;
+
+			const makeCitizen = (record) => ({
+				record,
+				name: record.name,
+				said: [],
+				held: 0,
+				say(t) { this.said.push(t); },
+				hold() { this.held++; },
+				release() { this.held--; },
+			});
+
+			document.getElementById('load').onclick = async () => {
+				pool = await loadCitizenPool();
+				const named = pool.filter(isCitizen);
+				citizen = named.length ? makeCitizen(named[0]) : null;
+				window.__harness = { pool, named, citizen };
+				say({
+					poolSize: pool.length,
+					named: named.length,
+					withAgent: named.filter((r) => r.agentId).length,
+					withBio: named.filter((r) => r.description).length,
+					sample: named.slice(0, 3).map((r) => ({ name: r.name, agentId: r.agentId, bio: (r.description || '').slice(0, 60) })),
+				});
+			};
+
+			document.getElementById('profile').onclick = () => {
+				if (!citizen) return say('load the pool first');
+				openCitizenProfile(citizen, { world });
+				say('profile opened for ' + citizen.name);
+			};
+
+			document.getElementById('talk').onclick = async () => {
+				if (!citizen) return say('load the pool first');
+				await talkToCitizen(citizen, { world });
+				say('talk opened for ' + citizen.name);
+			};
+		</script>
+	</body>
+</html>

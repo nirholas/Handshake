@@ -147,6 +147,18 @@ function timeAgo(ts) {
 
 const DEFAULT_AVATAR = '/avatars/default.glb';
 
+// Crossed swords for the Adventure-mode button. Drawn rather than typed: the
+// ⚔️ emoji has no color glyph on most Linux/headless font stacks and the button
+// grayscaled it anyway, so it degraded to a bare monochrome ✕ that read as a
+// close button sitting next to the search field. Two blades on the diagonals
+// with a cross-guard low on each grip; the guards are what keep it from
+// reading as an X.
+const ADVENTURE_MARK =
+	'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+	'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+	'<path d="M21 3 4.5 19.5"/><path d="M7 13 11 17"/>' +
+	'<path d="M3 3 19.5 19.5"/><path d="M13 17 17 13"/></svg>';
+
 export class CommunityUI {
 	/**
 	 * @param {object} h handlers: { onEnter(coin), onLeave(), onChat(text), onEmote(name) }
@@ -273,7 +285,7 @@ export class CommunityUI {
 						type: 'button', class: 'cc-adventure', title: 'Drop into the home town: gather, fight, level up',
 						onclick: () => this.h.onDropIn?.(),
 					}, [
-						el('span', { class: 'cc-adventure-ico', text: '⚔️' }),
+						el('span', { class: 'cc-adventure-ico', 'aria-hidden': 'true', html: ADVENTURE_MARK }),
 						el('span', { html: 'Adventure mode<small>Gather · fight · level up</small>' }),
 					]),
 					// Cold-open reopener (see play-intro.js) — the intro auto-shows once
@@ -1293,7 +1305,15 @@ export class CommunityUI {
 
 	// ---------------------------------------------------------------- HUD
 	_buildHud() {
-		this.coinImg = el('img', { class: 'cc-coin-img', alt: '' });
+		// The coin art comes from a shared link's ?image= (an /api/img proxy in front
+		// of IPFS), so it can fail on a bad venue connection while everything else
+		// about the world is fine. A blank 40px hole in the corner of the HUD reads
+		// as broken; the monogram below stands in and keeps the banner whole.
+		this.coinImg = el('img', {
+			class: 'cc-coin-img', alt: '', loading: 'eager', decoding: 'async',
+			onerror: () => { this.coinImg.hidden = true; this.coinMono.hidden = false; },
+		});
+		this.coinMono = el('span', { class: 'cc-coin-mono', 'aria-hidden': 'true', hidden: true, text: '' });
 		this.coinName = el('div', { class: 'cc-coin-name', text: '' });
 		this.coinSym = el('span', { class: 'cc-coin-sym', text: '' });
 		this.onlineCount = el('span', { text: '1 online' });
@@ -1359,6 +1379,7 @@ export class CommunityUI {
 		]);
 		const banner = el('div', { class: 'cc-coin-banner' }, [
 			this.coinImg,
+			this.coinMono,
 			el('div', { class: 'cc-coin-info' }, [
 				this.coinName,
 				el('div', { class: 'cc-coin-sub' }, [
@@ -2640,8 +2661,17 @@ export class CommunityUI {
 		this.coinName.textContent = coin.name || 'Community';
 		this.coinSym.textContent = coin.symbol ? '$' + coin.symbol : '';
 		this.buyBtnLabel.textContent = coin.symbol ? 'Buy $' + coin.symbol.toUpperCase() : 'Buy';
-		if (coin.image) { this.coinImg.src = coin.image; this.coinImg.style.display = ''; }
-		else this.coinImg.style.display = 'none';
+		// Monogram first, art over it: whichever of the two ends up visible, the
+		// banner always has a 40px identity mark and never a hole.
+		this.coinMono.textContent = (coin.symbol || coin.name || '?').replace(/^\$/, '').charAt(0).toUpperCase();
+		if (coin.image) {
+			this.coinMono.hidden = true;
+			this.coinImg.hidden = false;
+			this.coinImg.src = coin.image;
+		} else {
+			this.coinImg.hidden = true;
+			this.coinMono.hidden = false;
+		}
 		this.refreshTierBadge(coin);
 		this.chatLog.textContent = '';
 		this._unread = 0;

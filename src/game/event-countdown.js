@@ -80,6 +80,10 @@ const STYLE = `
 	font-size: 12.5px; font-variant-numeric: tabular-nums;
 	transition: opacity 0.25s ease;
 }
+/* `display: flex` above outranks the browser's [hidden] { display: none }, so
+   without this the pill kept rendering over the lobby banner while _tick marked
+   it hidden: two countdowns stacked on the one screen that already has one. */
+.cc-event-pill[hidden] { display: none; }
 .cc-event-pill[data-state="live"] { border-color: var(--cc-edge-hi, rgba(255,255,255,0.55)); }
 .cc-event-pill a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .cc-event-pill a:hover { color: #fff; }

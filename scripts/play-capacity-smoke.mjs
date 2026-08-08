@@ -41,6 +41,7 @@
 // can gate a release as well as inform one.
 
 import { writeFileSync } from 'node:fs';
+import { monitorEventLoopDelay } from 'node:perf_hooks';
 import process from 'node:process';
 
 // See note 1 above: must happen before colyseus.js is loaded.
@@ -221,6 +222,16 @@ async function samplePopulation(httpBase, coin) {
 	}
 }
 
+// The page probe runs inside the same process that is driving every virtual
+// player, so its timings are only as trustworthy as this process's event loop.
+// At 400 clients decoding hundreds of thousands of state patches, a `fetch`
+// resolves late because the loop is busy, not because the origin is slow — a
+// 2026-08-07 run read 20 s page latency against an origin that was serving 420 ms
+// to an idle curl in the same second. Reporting the loop's own lag next to the
+// page number is what lets a reader tell those two apart, so the harness never
+// invents an outage out of its own saturation.
+const OBSERVER_LAG_WARN_MS = 250;
+
 async function probeHttp(url) {
 	const started = Date.now();
 	try {
@@ -240,6 +251,9 @@ async function run() {
 	console.log(`[capacity] world       coin=${args.coin.slice(0, 12)}… tier=${args.tier || 'general'}`);
 	console.log(`[capacity] plan        ${args.n} players, ${args.ramp}s ramp, ${args.hold}s hold, ${args.rate} moves/s each`);
 	console.log(`[capacity] baseline    ${JSON.stringify(await samplePopulation(httpBase, args.coin))}`);
+
+	const loopLag = monitorEventLoopDelay({ resolution: 20 });
+	loopLag.enable();
 
 	const players = Array.from({ length: args.n }, (_, i) => new VirtualPlayer(i, args));
 	const rampGapMs = args.n > 1 ? (args.ramp * 1000) / args.n : 0;
@@ -285,8 +299,18 @@ async function run() {
 		failReasons[key] = (failReasons[key] || 0) + 1;
 	}
 
+	loopLag.disable();
+	const observerLagMs = {
+		p50: Math.round(loopLag.percentile(50) / 1e6),
+		p95: Math.round(loopLag.percentile(95) / 1e6),
+		max: Math.round(loopLag.max / 1e6),
+	};
+	const observerSaturated = observerLagMs.p95 > OBSERVER_LAG_WARN_MS;
+
 	const pageMs = httpProbes.filter((p) => p.status >= 200 && p.status < 400).map((p) => p.ms);
 	const report = {
+		observerLagMs,
+		observerSaturated,
 		target: args.host,
 		coin: args.coin,
 		tier: args.tier || 'general',
@@ -325,6 +349,16 @@ async function run() {
 	console.log(`moves sent       ${report.movesSent}`);
 	console.log(`state patches    ${report.statePatchesReceived}`);
 	console.log(`page latency     p50 ${report.pageLatencyMs.p50}ms · p95 ${report.pageLatencyMs.p95}ms (${report.pageErrors} errors)`);
+	console.log(`observer lag     p50 ${observerLagMs.p50}ms · p95 ${observerLagMs.p95}ms · max ${observerLagMs.max}ms`);
+	if (observerSaturated) {
+		console.log(
+			`\n  NOTE: this harness's own event loop stalled up to ${observerLagMs.max}ms, so the page latency above\n` +
+				'        measures THIS box, not the origin. Re-measure the page from an idle process\n' +
+				`        (curl -w '%{time_total}' ${pageUrl}) before calling it a server-side regression.\n` +
+				'        The world-server numbers are unaffected: join and drop counts come from the\n' +
+				'        server\'s own accept/close decisions, not from local timing.',
+		);
+	}
 	if (Object.keys(failReasons).length) console.log(`fail reasons     ${JSON.stringify(failReasons)}`);
 
 	let pass = true;

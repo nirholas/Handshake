@@ -222,7 +222,7 @@ async function noteState(label, fn) {
 
 // ── 1. cold load into the lobby ────────────────────────────────────────────
 console.log(at(), `journey start ${BASE} @ ${width}x${height}${MOBILE ? ' (touch)' : ''}`);
-await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 150000 });
 // The lobby element exists from boot but stays hidden behind the loader, so
 // "rendered" means a coin card (or a designed empty/error state) is on screen.
 await page.waitForFunction(() => {
@@ -234,18 +234,18 @@ await page.waitForFunction(() => {
 await noteState('lobby-first-paint', () => ({
 	skeletons: document.querySelectorAll('.cc-skeleton').length,
 	cards: document.querySelectorAll('.cc-card:not(.cc-skeleton)').length,
-	empty: !!document.querySelector('.cc-empty'),
+	empty: !!document.querySelector('.cc-state'),
 }));
 
 await page.waitForFunction(() => document.querySelectorAll('.cc-card:not(.cc-skeleton)').length > 0
-	|| document.querySelector('.cc-empty') || document.querySelector('.cc-grid-error'), { timeout: 30000 })
+	|| document.querySelector('.cc-state'), { timeout: 30000 })
 	.catch(() => console.log(at(), 'GRID NEVER RESOLVED (no cards, no empty state, no error state)'));
 
 await noteState('lobby-loaded', () => ({
 	cards: document.querySelectorAll('.cc-card:not(.cc-skeleton)').length,
 	skeletons: document.querySelectorAll('.cc-skeleton').length,
-	empty: !!document.querySelector('.cc-empty'),
-	error: !!document.querySelector('.cc-grid-error'),
+	empty: !!document.querySelector('.cc-state'),
+	stateText: document.querySelector('.cc-state')?.textContent?.trim().slice(0, 140) || null,
 	presets: document.querySelectorAll('.cc-avatar-chip').length,
 }));
 
@@ -263,14 +263,14 @@ if (search) {
 	await noteState('search-hits', () => ({
 		cards: document.querySelectorAll('.cc-card:not(.cc-skeleton)').length,
 		more: !!document.querySelector('.cc-search-more'),
-		empty: !!document.querySelector('.cc-empty'),
+		empty: !!document.querySelector('.cc-state'),
 	}));
 	await search.fill('zzzqqqxnotacoin9999');
 	await page.waitForTimeout(4000);
 	await noteState('search-no-hits', () => ({
 		cards: document.querySelectorAll('.cc-card:not(.cc-skeleton)').length,
-		empty: !!document.querySelector('.cc-empty'),
-		emptyText: document.querySelector('.cc-empty')?.textContent?.trim().slice(0, 120) || null,
+		empty: !!document.querySelector('.cc-state'),
+		emptyText: document.querySelector('.cc-state')?.textContent?.trim().slice(0, 140) || null,
 	}));
 	await search.fill('');
 	await page.waitForTimeout(1500);
@@ -305,7 +305,7 @@ for (const [name, sel] of [['create', '.cc-create-btn'], ['gallery', '.cc-galler
 // ── 4. into the $THREE world ───────────────────────────────────────────────
 const worldUrl = `${BASE}${BASE.includes('?') ? '&' : '?'}coin=${HOME_COIN}`;
 console.log(at(), 'entering world', worldUrl);
-await page.goto(worldUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.goto(worldUrl, { waitUntil: 'domcontentloaded', timeout: 150000 });
 await page.waitForFunction(() => {
 	const l = document.getElementById('kx-loading');
 	return !l || l.classList.contains('kx-hidden') || l.hidden || getComputedStyle(l).display === 'none';

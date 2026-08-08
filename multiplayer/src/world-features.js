@@ -124,6 +124,35 @@ export const WHEEL_REACH = 3.0;
 export function nearestWheel(x, z) { return nearestNode(x, z, WHEEL, WHEEL_REACH); }
 export function wheelInRange(x, z) { return nodeInRange(x, z, WHEEL, WHEEL_REACH); }
 
+// The cash counters — the general store's vendor stalls and the bank/ATM (W04).
+//
+// Mirrors of the 'vendor' and 'atm' spawns in src/game/world-zones.js, where the
+// economy NPCs stand (tests/play-counters.test.js pins the two lists equal, so a
+// stall that moves on the client can never leave the server checking thin air).
+//
+// They live here because trading and banking were the only cash actions with no
+// proximity check at all: the server priced them correctly but never asked where
+// the player was standing. That quietly removed the risk the bank exists to
+// price, since a client could deposit the purse from the middle of a fight and
+// never lose a coin to a death drop. Same range rule, same module, as every other
+// station in the world.
+export const VENDOR_STALLS = [
+	{ id: 'vendor-ne', x: 44, z: -44, r: 0 },
+	{ id: 'vendor-sw', x: -44, z: 44, r: 0 },
+];
+export const ATMS = [
+	{ id: 'atm-downtown', x: 0, z: -30, r: 0 },
+];
+// Deliberately generous. The NPC's walk-up prompt fires at 5 m and its panel stays
+// open while the player shuffles about the stall, so the counter has to reach
+// further than the prompt that opened it, or an honest player gets refused for
+// taking a step back mid-trade.
+export const COUNTER_REACH = 9;
+export function nearestVendor(x, z) { return nearestNode(x, z, VENDOR_STALLS, COUNTER_REACH); }
+export function vendorInRange(x, z) { return nodeInRange(x, z, VENDOR_STALLS, COUNTER_REACH); }
+export function nearestAtm(x, z) { return nearestNode(x, z, ATMS, COUNTER_REACH); }
+export function atmInRange(x, z) { return nodeInRange(x, z, ATMS, COUNTER_REACH); }
+
 // The Plaza Stage — the Living Stages venue standing in every coin world's plaza
 // (F17). `r` is the footprint of the built structure (platform + backdrop), which
 // is what the client renders and what WalkRoom protects from being buried or

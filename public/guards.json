@@ -903,6 +903,22 @@
 				"kind": "live",
 				"reason": "It reads the production wallet table and the live encryption key, then decrypts in memory to test each secret against the current key. There is no offline fixture for 'this ciphertext no longer opens' that would prove anything about the real fleet. Read-only: it never writes, signs, or broadcasts."
 			}
+		},
+		{
+			"id": "audit-play-failure-modes",
+			"script": "scripts/audit-play-failure-modes.mjs",
+			"npm": "audit:play-failures",
+			"title": "/play failure-mode audit",
+			"protects": "/play stays usable when its dependencies fail, and hostile deep-link params never execute.",
+			"why": "The clean-path console audit proves nothing about the paths an event crowd actually hits: no session, an ad blocker eating IPFS, a dead GLB, a 500 on the auth nonce, a pass that expires mid-session, a pasted link carrying hostile name/symbol/image params. Each scenario is injected in a real browser and the boot loader must always resolve, into the world or into a designed error card with a recovery action, never a stuck spinner.",
+			"stages": [
+				"manual"
+			],
+			"needs": "browser",
+			"proof": {
+				"kind": "live",
+				"reason": "Needs Playwright plus a running server, because the thing under test is how the page behaves when a specific request is aborted or rewritten mid-load. A static fixture cannot fail a fetch the page has not made yet."
+			}
 		}
 	],
 	"exempt": [

@@ -87,6 +87,7 @@ import { clearStoredPass, refreshPlayPass, loadStoredPass, storePass } from './p
 import { PlaySystems } from './play-systems.js';
 import { PlayActivities } from './play-activities.js';
 import { WheelStation } from './wheel-station.js';
+import { WarPortal } from './war-portal.js';
 import { PlayOnboard } from './play-onboard.js';
 import { log } from '../shared/log.js';
 import { openAvatarInspector, isAvatarInspectorOpen, closeAvatarInspector } from '../shared/avatar-inspector.js';
@@ -114,6 +115,19 @@ function clampParam(value, max) {
 		.replace(/[\u0000-\u001f\u007f\u200b-\u200f\u2028\u2029\u202a-\u202e]+/g, ' ')
 		.trim()
 		.slice(0, max);
+}
+
+// A mint we are willing to open a world for: a Solana base58 address (pump.fun
+// mints, including $THREE) or an EVM 0x address (Robinhood Chain coins). Anything
+// else came from a typo or a mangled share link, and building a full world for it
+// is worse than saying so: the player would get a real district, a totem reading
+// "COMMUNITY", a room keyed on garbage, and a build layer no other player will
+// ever see, with nothing anywhere telling them the link was broken.
+const SOLANA_MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
+function isPlausibleMint(mint) {
+	const v = String(mint || '').trim();
+	return SOLANA_MINT_RE.test(v) || EVM_ADDRESS_RE.test(v);
 }
 
 // True when the keystroke belongs to an editable surface — a DM input in the
@@ -677,13 +691,24 @@ export class CoinCommunities {
 		// rewrite drops unknown params); _restoreZen() reads it at world entry,
 		// where the zen preference actually applies.
 		this._urlUi = (p.get('ui') || '').trim();
+		// Captured for the same reason: a player walking back out of a Coin Wars
+		// battle returns on /play?…&war=<matchKey>, and the war portal echoes that
+		// result into the world. enter() rewrites the URL before the portal is
+		// built, so the key has to be read here or it is gone.
+		this._urlWar = clampParam(p.get('war'), 200);
 		// Everything past `coin` is decoration a stranger typed into a link they
 		// shared: it is display-only, never trusted, and clamped to the exact
 		// lengths the room server clamps to (WalkRoom.onCreate) so what this client
 		// paints is what every peer will see. Without the clamp a 10 KB `name=`
 		// tears the HUD apart locally and is silently truncated for everyone else.
 		const mint = clampParam(p.get('coin'), 64);
-		if (mint) {
+		if (mint && !isPlausibleMint(mint)) {
+			// A malformed mint means the link is broken, not that the world is empty.
+			// Say so and leave them in the lobby, where every real world is one tap
+			// away, instead of building a convincing world nobody else can join.
+			log.warn('[coincommunities] ignoring a malformed ?coin= mint:', mint);
+			this.ui.toast('That world link looks broken, so we left you in the lobby. Pick a community below.', 'warn');
+		} else if (mint) {
 			const tier = p.get('tier') === 'holders' ? 'holders' : 'general';
 			this.enter({
 				mint,
@@ -1219,6 +1244,7 @@ export class CoinCommunities {
 		coin = { ...coin, tier, holderMinUsd, holderMinTokens };
 		this.coin = coin;
 		this.ui.enterWorld(coin);
+		this._setTabTitle(coin.symbol ? '$' + coin.symbol.toUpperCase() : (coin.name || 'Community'));
 		document.body.classList.toggle('cc-holders', tier === 'holders');
 		// Reflect the community in the URL so it can be shared / refreshed into. A
 		// holder-world link carries &tier=holders so refreshing re-runs the gate.
@@ -1534,6 +1560,23 @@ export class CoinCommunities {
 			getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z }),
 			net: this.net,
 		});
+		// F18: the War Portal, the door from this world into Coin Wars. Shows this
+		// community's real league standing off /api/wars, queues it for a battle,
+		// and hands the player to the arena at /play/war with a return link back
+		// into this exact world. It runs THIS coin's holder gate before queueing
+		// (the same overlay world entry uses), because ClashRoom only seats a
+		// fighter under the community whose coin they actually hold.
+		this.warPortal = new WarPortal({
+			scene: this.scene,
+			getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z }),
+			coin: this.coin,
+			ui: this.ui,
+			ensureHolderPass: () => this._passHolderGate(this.coin),
+			returningMatchKey: this._urlWar,
+		});
+		// One echo per return: clear the key so re-entering another world from the
+		// lobby does not replay a battle the player already saw.
+		this._urlWar = '';
 		this.net.on('profile', (snap) => { this.playSystems?.setProfile(snap); this._onCosmeticsProfile(snap); });
 		this.net.on('inv', (delta) => this.playSystems?.applyInv(delta));
 		this.net.on('xpgain', (g) => this.playSystems?.onXpGain(g));
@@ -1543,8 +1586,17 @@ export class CoinCommunities {
 			// /internal/announce) get the centre-screen treatment; every other
 			// notice stays a play-systems activity toast.
 			if (n?.kind === 'event') return this._onEventAnnounce(n);
+			// A refused equip sends a notice and NO profile echo, so the wardrobe's
+			// pending spinner had nothing to clear it and span forever on the card.
+			// Hand it the refusal so it can drop the spinner and say why.
+			if (n?.kind === 'cosmetic' && n.ok === false) this._wardrobe?.onRejected?.(n.text);
 			this.playSystems?.onNotice(n);
 		});
+		// Event souvenir: the server granted this account a live event's free
+		// commemorative wearable. Sent exactly once, on the join where the unlock
+		// landed (never on a rejoin) so it is a moment to celebrate, not state
+		// to reconcile.
+		this.net.on('souvenir', (m) => this._onSouvenir(m));
 		// Friends (W09): live DMs + request/accept pushed by the social hub over this
 		// world's socket. The FriendsClient owns all social state — it updates its
 		// threads/unread counts and notifies the panel, open or not, so a DM that
@@ -1709,6 +1761,9 @@ export class CoinCommunities {
 				openQuests: (highlight) => this._toggleQuests(highlight),
 			},
 			radius: WORLD_RADIUS - 4,
+			// Selecting an interactive NPC from outside its range opens its profile
+			// in the shared inspector (with a Talk action) instead of doing nothing.
+			onInspectNpc: (npc) => this._inspectNpc(npc),
 		});
 		// Everything visual is up; now settle the join. Voice needs the live
 		// sessionId, and the profile re-request needs an open socket (it is a
@@ -2011,6 +2066,7 @@ export class CoinCommunities {
 		if (this.playSystems) { this.playSystems.dispose(); this.playSystems = null; }
 		if (this.playActivities) { this.playActivities.dispose(); this.playActivities = null; }
 		if (this.wheelStation) { this.wheelStation.dispose(); this.wheelStation = null; }
+		if (this.warPortal) { this.warPortal.dispose(); this.warPortal = null; }
 		this._disposeFriends();
 		this._disposeAvatarPanel();
 		if (this.agentCommerce) { this.agentCommerce.dispose(); this.agentCommerce = null; }
@@ -2020,6 +2076,11 @@ export class CoinCommunities {
 		// Close the shop + wardrobe and drop the rig binding — the next world rebuilds both.
 		if (this._shop?.isOpen()) this._shop.close();
 		if (this._wardrobe?.isOpen()) this._wardrobe.close();
+		// A souvenir card is bound to the world that granted it; leaving mid-linger
+		// must take it with us rather than float it over the lobby.
+		if (this._souvenirDrop) { this._souvenirDrop.dispose(); this._souvenirDrop = null; }
+		this._newCosmeticId = null;
+		this._cosmeticsSnap = null;
 		this._accessoryMgr = null;
 		this._previewPresetId = null; this._previewLayers = false; this._previewItem = null;
 		for (const [, r] of this.remotes) r.dispose();
@@ -2090,6 +2151,7 @@ export class CoinCommunities {
 		// avatar inspector's World row) stops naming the one we just left.
 		this.coin = null;
 		this.phase = 'lobby';
+		this._setTabTitle('');
 		try { history.replaceState(null, '', location.pathname); } catch { /* non-fatal */ }
 		this.ui.showLobby();
 	}
@@ -2769,8 +2831,41 @@ export class CoinCommunities {
 				onEquip: (id) => { this._equipCosmeticDurable(id); },
 				onShop: () => { this._wardrobe?.close(); this._toggleShop(); },
 			});
+			// A souvenir granted before the panel was ever opened still deserves the
+			// "New" highlight: the flag waits here until the panel exists.
+			if (this._newCosmeticId) this._wardrobe.markNew(this._newCosmeticId);
+			if (this._cosmeticsSnap) this._wardrobe.setProfile(this._cosmeticsSnap);
 		}
 		this._wardrobe.toggle();
+	}
+
+	// A live event just handed this player a free commemorative wearable. Two
+	// halves to the moment: a card that says what landed and offers to put it on,
+	// and a highlight waiting in the wardrobe for whoever dismisses the card and
+	// comes looking later. Both are lazy: the module only loads for the players
+	// who actually earn something.
+	async _onSouvenir(msg) {
+		const id = typeof msg?.id === 'string' ? msg.id : '';
+		if (!id) return;
+		this._newCosmeticId = id;
+		this._wardrobe?.markNew(id);
+		try {
+			if (!this._souvenirModule) this._souvenirModule = import('./event-souvenir.js');
+			const { SouvenirDrop } = await this._souvenirModule;
+			if (!this._souvenirDrop) {
+				this._souvenirDrop = new SouvenirDrop({
+					onEquip: (cid) => this._equipCosmeticDurable(cid),
+					onWardrobe: () => this._toggleWardrobe(),
+				});
+			}
+			this._souvenirDrop.show(msg);
+		} catch (err) {
+			// The item is already granted and persisted server-side; a failed chunk
+			// load costs the announcement, never the souvenir. Say so plainly rather
+			// than letting the grant pass in silence.
+			log.warn('[souvenir] drop card failed to load:', err?.message);
+			this.ui?.toast?.(`Souvenir unlocked: ${msg?.name || 'a commemorative item'}. Find it in My Fits.`, 'success');
+		}
 	}
 
 	// Open/close the Jobs Board (W08 hooking W05). Lazy-imported so the panel
@@ -2837,6 +2932,10 @@ export class CoinCommunities {
 		if (!equipped || typeof equipped !== 'object') return;
 		setPlayCosmetics(equipped);
 		this._applyLocalCosmetics(equipped);
+		// Keep the latest snapshot so a wardrobe built LATER (the panel is lazy, and
+		// a souvenir card can be the thing that sends a player to it) opens on real
+		// data instead of a loading skeleton that only clears on the next echo.
+		this._cosmeticsSnap = snap;
 		// Relay the full cosmetics snapshot to the wardrobe panel (if open) so
 		// it reflects owned + equipped state without a separate API call.
 		this._wardrobe?.setProfile(snap);
@@ -2844,6 +2943,22 @@ export class CoinCommunities {
 
 	// Surface unread chat in the tab title when the page is backgrounded, so a
 	// new message pulls the user back. Cleared the moment they refocus the tab.
+	// Name the world in the tab. A shared /play link opened into a background tab
+	// (the normal case at an event: paste, keep browsing, come back) read as a
+	// generic "Play · Coin Communities" for every world; now the tab says which
+	// one. pages/play.html sets a provisional title from the URL before the bundle
+	// loads, and this replaces it with the resolved coin. Written through
+	// _baseTitle so an unread-chat badge composes with it instead of fighting it.
+	_setTabTitle(label) {
+		// The lobby title is whatever pages/play.html shipped (localised by i18n.js),
+		// stashed by the same inline script that sets the provisional per-coin title.
+		if (this._lobbyTitle === undefined) {
+			this._lobbyTitle = document.documentElement.dataset.lobbyTitle || document.title;
+		}
+		this._baseTitle = label ? `${label} · Play · three.ws` : this._lobbyTitle;
+		document.title = this._tabUnread ? `(${this._tabUnread}) ${this._baseTitle}` : this._baseTitle;
+	}
+
 	_bumpTabUnread() {
 		if (!document.hidden) return;
 		this._tabUnread = (this._tabUnread || 0) + 1;
@@ -3255,7 +3370,8 @@ export class CoinCommunities {
 					// Talk to the nearest townsperson (vendor/quest/flavor); if none is
 					// in range, try the Intel Kiosk, then fall through to the Agent
 					// Exchange.
-					if (!this.worldLife?.interact() && !this.intelKiosk?.interact() && !this.combat?.interact() && !this.wheelStation?.interact()) this.agentCommerce?.interact();
+					if (!this.worldLife?.interact() && !this.intelKiosk?.interact() && !this.combat?.interact()
+						&& !this.wheelStation?.interact() && !this.warPortal?.interact()) this.agentCommerce?.interact();
 					return;
 				}
 				// F is contextual: enter/exit a nearby vehicle takes priority (the
@@ -4441,6 +4557,7 @@ export class CoinCommunities {
 			this.playSystems?.tick(dt);
 			this.playActivities?.tick(dt);
 			this.wheelStation?.tick(dt);
+			this.warPortal?.tick(dt);
 			this.agentCommerce?.tick(dt);
 			this.intelKiosk?.tick(dt);
 			if (this.worldLife) { this.worldLife.setRealPeers(this.remotes.size); this.worldLife.tick(dt); }

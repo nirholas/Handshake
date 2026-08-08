@@ -35,7 +35,7 @@ export function loadCitizenPool() {
 	if (!_poolPromise) {
 		_poolPromise = fetch(GALLERY_URL, { headers: { accept: 'application/json' } })
 			.then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-			.then(({ avatars }) => (avatars || []).map(toRecord).filter((r) => r.url))
+			.then(({ avatars }) => balancePool((avatars || []).map(toRecord).filter((r) => r.url)))
 			.catch((e) => {
 				_poolPromise = null; // allow a retry on the next crowd sync
 				log.warn('[citizens] gallery pool failed:', e?.message);
@@ -43,6 +43,31 @@ export function loadCitizenPool() {
 			});
 	}
 	return _poolPromise;
+}
+
+// Keep the crowd a crowd of individuals.
+//
+// The gallery is dominated by onboarding placeholders: a live sample of the
+// first 96 public avatars was 62 copies of "My First Agent". Drawn straight,
+// two thirds of the plaza would be identically-named clones, which reads as
+// obviously fake the moment anyone looks twice. Every real identity is kept,
+// and the anonymous remainder is capped at ANON_KEEP so those models still add
+// body variety to the background without taking over the cast.
+const ANON_KEEP = 6;
+
+function balancePool(records) {
+	const citizens = records.filter(isCitizen);
+	const anonymous = records.filter((r) => !isCitizen(r));
+	// Drop duplicate models among the anonymous keepers so the cap buys variety.
+	const seen = new Set();
+	const keptAnon = [];
+	for (const r of anonymous) {
+		if (keptAnon.length >= ANON_KEEP) break;
+		if (seen.has(r.url)) continue;
+		seen.add(r.url);
+		keptAnon.push(r);
+	}
+	return [...citizens, ...keptAnon];
 }
 
 function toRecord(a) {
@@ -63,10 +88,33 @@ function toRecord(a) {
 	};
 }
 
-// A record is a citizen (someone you can meet) when it has at least a name to
-// introduce itself with. Nameless gallery models stay anonymous scenery.
+// Names that are not identities: the onboarding defaults an untouched agent
+// still wears (mirrors PLACEHOLDER_NAMES in api/agents/public.js, which keeps
+// the same rows off the live agent wall) and the raw export filenames that come
+// off the generation lanes. An avatar wearing one of these has told us nothing
+// about who it is, so introducing it by that name would be inventing a
+// character the platform cannot back.
+const PLACEHOLDER_NAMES = new Set([
+	'my first agent', 'agent', 'avatar', 'my avatar', 'my agent',
+	'untitled agent', 'new agent', 'untitled', 'character', 'model',
+]);
+
+function looksAnonymous(name) {
+	const n = name.toLowerCase();
+	if (PLACEHOLDER_NAMES.has(n)) return true;
+	if (/^avatar[\s#_-]/.test(n)) return true;        // "Avatar #e6f105"
+	if (/^model\s*[({[]?\d+/.test(n)) return true;    // "model (11)"
+	if (/_(merged|meshy|biped|animations)/i.test(name)) return true; // export blob
+	if (name.length > 40) return true;                // a filename, not a display name
+	return false;
+}
+
+// A record is a citizen (someone you can meet) when it carries a name that
+// actually identifies somebody. Nameless and placeholder-named gallery models
+// stay honest anonymous scenery: they still walk the plaza, but with no
+// nameplate, no profile, and no conversation.
 export function isCitizen(record) {
-	return !!(record && record.name);
+	return !!(record && record.name && !looksAnonymous(record.name));
 }
 
 // ── profile card ──────────────────────────────────────────────────────────────

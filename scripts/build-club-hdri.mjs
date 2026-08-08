@@ -18,8 +18,8 @@
  *   nightclub HDR will of course beat it. Drop a Polyhaven .hdr into this
  *   directory and update the LICENSES entry to upgrade later.
  *
- * Output format: Radiance RGBE — the standard `.hdr` format three.js's
- * RGBELoader consumes. Uncompressed (no RLE) for simplicity; the file ends
+ * Output format: Radiance RGBE, the standard `.hdr` format three.js's
+ * HDRLoader consumes. Uncompressed (no RLE) for simplicity; the file ends
  * up around 32 kB which is fine for /club.
  */
 

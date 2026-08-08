@@ -114,6 +114,33 @@ const waitForPill = (page) => page.waitForFunction(() => {
 
 const cssAnim = (loc) => loc.evaluate((n) => getComputedStyle(n).animationName);
 
+// A first visit to /play opens the intro dialog (src/game/play-intro.js), which
+// is modal and sits over the lobby. Skip it the way a player does, so the checks
+// below exercise the lobby a returning player actually sees.
+async function dismissIntro(page) {
+	const close = page.locator('#pi-overlay .pi-close');
+	if (!(await close.count())) return;
+	await close.click({ timeout: 10000 }).catch(() => {});
+	await page.waitForSelector('#pi-overlay', { state: 'detached', timeout: 10000 }).catch(() => {});
+}
+
+// /play renders a full 3D world on a software rasterizer here, which can starve
+// a 1s interval for several seconds at a time. Sampling twice with a fixed sleep
+// reports that jank as a stopped clock, so wait for the value to actually move.
+async function ticks(page, selector, label) {
+	const before = await page.locator(selector).textContent();
+	const moved = await page.waitForFunction(
+		([sel, prev]) => {
+			const n = document.querySelector(sel);
+			return !!n && n.textContent !== prev;
+		},
+		[selector, before],
+		{ timeout: 30000 },
+	).then(() => true, () => false);
+	const after = await page.locator(selector).textContent().catch(() => '(gone)');
+	check(label, moved, `${before} -> ${after}`);
+}
+
 // ── /play lobby banner: upcoming ───────────────────────────────────────────
 console.log('\n/play lobby banner, upcoming');
 {
@@ -129,11 +156,9 @@ console.log('\n/play lobby banner, upcoming');
 	const labels = await b.locator('.cc-event-seg span').allTextContents();
 	check('D/H/M/S segments', JSON.stringify(labels) === '["days","hrs","min","sec"]', JSON.stringify(labels));
 
-	const s1 = await b.locator('.cc-event-seg b').last().textContent();
-	await page.waitForTimeout(2100);
-	const s2 = await b.locator('.cc-event-seg b').last().textContent();
-	check('clock ticks', s1 !== s2, `${s1} -> ${s2}`);
+	await ticks(page, '.cc-event-banner .cc-event-seg:last-child b', 'clock ticks');
 
+	await dismissIntro(page);
 	const cta = b.locator('.cc-event-cta');
 	check('CTA points into the $THREE world', (await cta.getAttribute('href')).includes(COIN));
 	const rest = await cta.evaluate((n) => getComputedStyle(n).boxShadow);
@@ -206,12 +231,10 @@ console.log('\n/play in-world pill');
 	await go(page, EVENT_LINK);
 	await waitForPill(page);
 	check('pill visible in-world', true);
-	const t1 = await page.locator('.cc-event-pill [role="timer"]').textContent();
-	await page.waitForTimeout(2100);
-	const t2 = await page.locator('.cc-event-pill [role="timer"]').textContent();
-	check('pill clock ticks', t1 !== t2, `${t1} -> ${t2}`);
+	await ticks(page, '.cc-event-pill [role="timer"]', 'pill clock ticks');
 	check('CTA absent while standing in the event world',
 		(await page.locator('.cc-event-pill a').count()) === 0);
+	await dismissIntro(page);
 
 	const x = page.locator('.cc-event-pill-x');
 	const xRest = await x.evaluate((n) => getComputedStyle(n).backgroundColor);
@@ -248,6 +271,7 @@ console.log('\n/play at 375px');
 	});
 	await go(page, EVENT_LINK);
 	await page.waitForSelector('.cc-event-banner', { timeout: WORLD_TIMEOUT });
+	await dismissIntro(page);
 	const doc = await page.evaluate(() => ({
 		scrollW: document.documentElement.scrollWidth,
 		clientW: document.documentElement.clientWidth,
@@ -295,10 +319,7 @@ console.log('\nhome page strip, upcoming');
 		return { aboveHero: b.bottom <= hero.top + 1, belowNav: b.top >= nav.bottom - 1 };
 	});
 	check('sits between the nav and the hero', place.aboveHero && place.belowNav, JSON.stringify(place));
-	const c1 = await bar.locator('.tws-eventbar-clock').textContent();
-	await page.waitForTimeout(2100);
-	const c2 = await bar.locator('.tws-eventbar-clock').textContent();
-	check('clock ticks', c1 !== c2, `${c1} -> ${c2}`);
+	await ticks(page, '.tws-eventbar-clock', 'clock ticks');
 
 	const cta = bar.locator('.tws-eventbar-cta');
 	check('CTA points into the $THREE world', (await cta.getAttribute('href')).includes(COIN));

@@ -304,6 +304,13 @@ export function createX402Jumbotron(scene, opts = {}) {
 				: 'No payments yet — be the first to trigger one.';
 			ctx.fillText(msg, padX, feedTop + 36);
 		} else {
+			// The slide-in bookkeeping only ever needs the rows currently on screen.
+			// Rows churn every poll, so without this prune the map grew for the whole
+			// session, holding a timestamp for every payment ever rendered.
+			if (firstSeen.size > list.length * 4) {
+				const live = new Set(list.map(rowKey));
+				for (const key of firstSeen.keys()) if (!live.has(key)) firstSeen.delete(key);
+			}
 			list.forEach((r, i) => {
 				const key = rowKey(r);
 				if (!firstSeen.has(key)) firstSeen.set(key, t);

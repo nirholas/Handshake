@@ -45,8 +45,16 @@ const HDRI_ORIGIN = new URL(DEFAULT_ASSET_BASE).origin;
 let _hdriPromise = null;
 function getHdriTexture() {
 	if (!_hdriPromise) {
-		_hdriPromise = import('three/addons/loaders/HDRLoader.js').then(({ HDRLoader }) =>
-			new HDRLoader().loadAsync(`${HDRI_ORIGIN}/hdri/studio.hdr`),
+		// RGBELoader on purpose, not HDRLoader — same reasoning as
+		// avatar-sdk/src/viewer.js: three renamed the class in r180, but this
+		// package's peer range is `three >= 0.150.0` and the ESM build leaves
+		// three external, so the specifier resolves against the CONSUMER's
+		// three. HDRLoader.js is absent before r180 and bundlers resolve literal
+		// dynamic imports statically, so naming it would trade one cosmetic
+		// console line on new three for a build failure on older three.
+		// Revisit when the peer floor moves to >= 0.180.0.
+		_hdriPromise = import('three/addons/loaders/RGBELoader.js').then(({ RGBELoader }) =>
+			new RGBELoader().loadAsync(`${HDRI_ORIGIN}/hdri/studio.hdr`),
 		);
 	}
 	return _hdriPromise;

@@ -672,6 +672,17 @@
 			.vl-byok-row input:focus { border-color: #ffffff; }
 
 			/* ── Voice browser ──────────────────────────── */
+			.sr-only {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0, 0, 0, 0);
+				white-space: nowrap;
+				border: 0;
+			}
 			.vb-filters {
 				display: flex;
 				gap: 10px;
@@ -1016,7 +1027,7 @@
 						</div>
 						<div class="vl-pg-row" id="pgDirectionRow" hidden>
 							<div class="vl-pg-field">
-								<label for="pgDirection" data-i18n="voice.direction">Direction &mdash; how it should be said</label>
+								<label for="pgDirection" data-i18n="voice.direction">Direction (how it should be said)</label>
 								<input type="text" id="pgDirection" maxlength="200" placeholder="Warm and unhurried, like you're telling a friend a secret" />
 							</div>
 						</div>

@@ -12,6 +12,7 @@
 import { Client, getStateCallbacks } from 'colyseus.js';
 import { log } from '../shared/log.js';
 import { joinRoomWithTimeout } from '../shared/colyseus-connect.js';
+import { defaultGameServerUrl } from '../shared/game-server-url.js';
 
 const ROOM_NAME = 'walk_world';
 const RECONNECT_BASE_MS = 3000;
@@ -40,39 +41,7 @@ const SEND_INTERVAL_MS = 1000 / SEND_HZ;
 const POSITION_EPSILON = 0.01;
 const YAW_EPSILON = 0.01;
 
-function defaultServerUrl() {
-	if (typeof window !== 'undefined' && window.GAME_SERVER_URL) return window.GAME_SERVER_URL;
-	// Local dev always talks to the local Colyseus server (`npm run dev:walk-all`),
-	// ignoring the production <meta game-server> baked into the static page.
-	const host = typeof location !== 'undefined' ? location.hostname : '';
-	if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') {
-		return `ws://${host}:2567`;
-	}
-	if (typeof document !== 'undefined') {
-		for (const sel of ['meta[name="game-server"]', 'meta[name="walk-server"]']) {
-			const v = document.querySelector(sel)?.getAttribute('content')?.trim();
-			if (v) return v;
-		}
-	}
-	try {
-		const envUrl = import.meta?.env?.VITE_GAME_SERVER_URL || import.meta?.env?.VITE_WALK_SERVER_URL;
-		if (envUrl) return String(envUrl).trim().replace(/\/$/, '');
-	} catch (_) {}
-	if (typeof location !== 'undefined') {
-		const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-		// Codespaces / Gitpod forward each port as its own subdomain (-3000 → -2567).
-		const fwd = host.match(/^(.*)-(\d+)\.(app\.github\.dev|githubpreview\.dev|gitpod\.io)$/);
-		if (fwd) return `${proto}//${fwd[1]}-2567.${fwd[3]}`;
-		// Same-host:2567 is a dev convenience; the public domain doesn't expose
-		// :2567. In production with no meta/env configured, return '' so the
-		// caller stays single-player instead of looping on a dead socket.
-		let isProd = false;
-		try { isProd = import.meta?.env?.PROD === true; } catch (_) {}
-		if (!isProd) return `${proto}//${host}:2567`;
-		return '';
-	}
-	return '';
-}
+const defaultServerUrl = defaultGameServerUrl;
 
 export class CommunityNet {
 	/**

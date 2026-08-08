@@ -75,8 +75,18 @@ function getDracoLoader() {
 let _hdriPromise = null;
 function getHdriTexture() {
 	if (!_hdriPromise) {
-		_hdriPromise = import('three/addons/loaders/HDRLoader.js').then(({ HDRLoader }) =>
-			new HDRLoader().loadAsync(`${AR_LAUNCH_ORIGIN}/hdri/studio.hdr`),
+		// RGBELoader on purpose, not HDRLoader. three renamed the class in r180
+		// (RGBELoader now subclasses HDRLoader and logs a deprecation warning on
+		// construction), but our peer range is `three >= 0.150.0` and this file
+		// ships as raw source on the "./viewer" subpath: the CONSUMER's bundler
+		// resolves this specifier against THEIR three. HDRLoader.js does not
+		// exist before r180, and a bundler resolves a literal dynamic import
+		// statically, so naming it here turns one cosmetic console line on new
+		// three into a hard "module not found" build failure on older three. A
+		// runtime try/catch cannot rescue that: the failure is at build time.
+		// Revisit when the peer floor moves to >= 0.180.0.
+		_hdriPromise = import('three/addons/loaders/RGBELoader.js').then(({ RGBELoader }) =>
+			new RGBELoader().loadAsync(`${AR_LAUNCH_ORIGIN}/hdri/studio.hdr`),
 		);
 	}
 	return _hdriPromise;

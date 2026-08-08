@@ -113,10 +113,20 @@ export class VoiceChat {
 		const Ctx = window.AudioContext || window.webkitAudioContext;
 		this.ctx = new Ctx();
 		if (this.ctx.state === 'suspended') await this.ctx.resume();
-		this.localStream = await navigator.mediaDevices.getUserMedia({
-			audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-			video: false,
-		});
+		try {
+			this.localStream = await navigator.mediaDevices.getUserMedia({
+				audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+				video: false,
+			});
+		} catch (err) {
+			// A denied or failed mic must not strand the AudioContext we just
+			// opened. Browsers cap concurrent contexts (~6), so leaking one per
+			// refusal made voice permanently unopenable after a few "Block" taps,
+			// long after the user changed their mind.
+			try { await this.ctx.close(); } catch { /* already closed */ }
+			this.ctx = null;
+			throw err;
+		}
 		this.localTrack = this.localStream.getAudioTracks()[0] || null;
 
 		// Meter our own mic so we can show the local "speaking" pulse. This tap is
@@ -165,12 +175,18 @@ export class VoiceChat {
 			.filter(({ p }) => p.voice)
 			.sort((a, b) => a.d - b.d);
 		const keep = new Set(inVoice.slice(0, MAX_VOICE_PEERS).map(({ p }) => p.id));
+		// Rank hysteresis. `keep` decides who we DIAL; dropping used the same
+		// boundary, so in a crowd a peer oscillating around rank N was closed and
+		// re-dialled on consecutive frames, tearing down and re-handshaking WebRTC
+		// continuously and dropping audio for everyone involved. Hold an already
+		// connected peer until they fall two ranks past the cap.
+		const hold = new Set(inVoice.slice(0, MAX_VOICE_PEERS + 2).map(({ p }) => p.id));
 
 		for (const { p, d } of inVoice) {
 			const peer = this.peers.get(p.id);
 			if (peer) {
 				this._setPanner(peer, p);
-				if (d > DISCONNECT_RANGE || !keep.has(p.id)) this._closePeer(p.id);
+				if (d > DISCONNECT_RANGE || !hold.has(p.id)) this._closePeer(p.id);
 			} else if (keep.has(p.id) && d < CONNECT_RANGE && this.selfId < p.id) {
 				// Deterministic initiator: the lower sessionId dials, so two peers
 				// entering range simultaneously never both offer.

@@ -10,14 +10,23 @@
 	--cc-bg: #060607;
 	--cc-bg2: #101010;
 	--cc-bg3: #181818;
-	--cc-panel: rgba(12, 12, 14, 0.78);
+	/* Panel fill doubles as the contrast scrim. Every HUD panel floats over a
+	   live 3D scene whose brightness we do not control (noon sky, snow biome, a
+	   white plaza), so panel opacity is what decides whether the text on it is
+	   readable. At the old 0.78 a bright scene composited the fill up to ~rgb(59)
+	   and dropped the secondary label colour to 3.3:1, below AA. 0.92 pins the
+	   worst case (pure-white scene) at rgb(31), where --cc-dim measures 4.9:1 and
+	   --cc-faint 5.1:1. Do not lower it without re-running those numbers. */
+	--cc-panel: rgba(12, 12, 14, 0.92);
 	--cc-panel-solid: #0c0c0c;
 	--cc-edge: rgba(255, 255, 255, 0.12);
 	--cc-edge-soft: rgba(255, 255, 255, 0.07);
 	--cc-edge-hi: rgba(255, 255, 255, 0.55);
 	--cc-text: #f5f5f6;
 	--cc-dim: #8c8c92;
-	--cc-faint: #5a5a60;
+	/* Was #5a5a60 at 2.8:1 even against the darkest panel, so timestamps, hint
+	   copy and empty-state text failed AA everywhere they appeared. */
+	--cc-faint: #8f8f96;
 	--cc-accent: #ffffff;        /* light is the only "colour" */
 	--cc-ink: #060607;           /* text on white surfaces */
 	--cc-live: #ffffff;          /* presence / live signal */
@@ -27,7 +36,7 @@
 	--cc-radius: 4px;
 	--cc-radius-sm: 2px;
 	/* Home-indicator / notch insets. The page is viewport-fit=cover (see
-	   pages/play.html), so the canvas correctly fills the display cutout — but
+	   pages/play.html), so the canvas correctly fills the display cutout, but
 	   that also means every fixed HUD control anchored with a raw `bottom:` px
 	   lands INSIDE the home-indicator strip on a modern iPhone. There iOS both
 	   draws its indicator over the control and swallows the first touch as a
@@ -77,7 +86,13 @@ html[data-bg="transparent"] #cc-lobby {
 	transition: opacity 0.5s ease;
 }
 #kx-loading.kx-hidden, #cc-loading.cc-hidden { opacity: 0; pointer-events: none; }
-.kx-loading-card { text-align: center; display: flex; flex-direction: column; align-items: center; }
+.kx-loading-card {
+	text-align: center; display: flex; flex-direction: column; align-items: center;
+	/* The card is taller than a laptop viewport once browser chrome is subtracted,
+	   and it used to overflow silently: the progress hairline fell off the bottom
+	   edge. Bound it to the viewport and let the avatar stage take the squeeze. */
+	max-height: 100dvh; padding: 16px 20px; box-sizing: border-box;
+}
 .kx-loading-logo {
 	width: 38px; height: 38px; opacity: 0; margin-bottom: 18px;
 	filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.28));
@@ -89,10 +104,57 @@ html[data-bg="transparent"] #cc-lobby {
 	color: #fff; text-transform: uppercase;
 	opacity: 0; animation: kx-rise 0.7s ease 0.14s forwards;
 }
+
+/* Deep-link identity (filled inline by pages/play.html from ?name/?symbol/?image).
+   When a shared link names a community, that community is the headline and the
+   product wordmark steps back to an eyebrow. */
+.kx-has-coin .kx-loading-logo { width: 30px; height: 30px; margin-bottom: 12px; }
+.kx-has-coin .kx-loading-mark {
+	font-size: 11px; letter-spacing: 0.34em; text-indent: 0.34em;
+	color: var(--cc-faint); font-weight: 700;
+}
+.kx-boot-coin {
+	display: flex; align-items: center; gap: 12px; margin-top: 14px;
+	max-width: min(420px, calc(100vw - 48px));
+	opacity: 0; animation: kx-rise 0.7s ease 0.2s forwards;
+}
+.kx-boot-coin-art {
+	position: relative; flex: none; width: 44px; height: 44px; border-radius: 50%;
+	display: grid; place-items: center; overflow: hidden;
+	background: var(--cc-bg2); border: 1px solid var(--cc-edge);
+	box-shadow: 0 0 22px rgba(255, 255, 255, 0.14);
+}
+.kx-boot-coin-art img {
+	position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+	opacity: 0; transition: opacity 0.4s ease;
+}
+.kx-boot-coin-ok .kx-boot-coin-art img { opacity: 1; }
+/* Monogram stand-in under the art: covers the decode window and stays put for
+   good if the gateway fetch fails, so this is never a broken-image glyph. */
+.kx-boot-coin-mono {
+	font-weight: 800; font-size: 18px; color: var(--cc-text); letter-spacing: 0.02em;
+}
+.kx-boot-coin-text {
+	display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+	min-width: 0; text-align: left;
+}
+.kx-boot-coin-name {
+	font-size: clamp(20px, 3.4vw, 28px); font-weight: 800; line-height: 1.15;
+	color: var(--cc-text); letter-spacing: -0.01em;
+	max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.kx-boot-coin-sym {
+	font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+	font-size: 12px; letter-spacing: 0.08em; color: var(--cc-dim);
+}
+.kx-boot-coin-sym:empty { display: none; }
 /* The 3D avatar turntable — the loader's hero. Falls back to a soft glyph mark
    if WebGL or the avatar asset is unavailable (.kx-boot-noavatar). */
 .kx-boot-stage {
-	position: relative; width: clamp(200px, 38vw, 264px); height: clamp(248px, 46vw, 320px);
+	position: relative; width: clamp(200px, 38vw, 264px);
+	/* Height yields to a short viewport (see .kx-loading-card) rather than pushing
+	   the sub-label and progress bar off screen. */
+	height: min(clamp(248px, 46vw, 320px), 38dvh); min-height: 150px;
 	margin: 22px 0 14px; opacity: 0; animation: kx-rise 0.8s ease 0.24s forwards;
 }
 .kx-boot-stage::after {
@@ -101,6 +163,20 @@ html[data-bg="transparent"] #cc-lobby {
 	background: radial-gradient(ellipse, rgba(0, 0, 0, 0.55), transparent 70%);
 	filter: blur(2px); pointer-events: none;
 }
+/* Lit pedestal. The avatar GLB lands a beat after the card does, and the stage
+   was a plain void until it did. This disc is on screen from the first frame, so
+   the space reads as a stage waiting for its character; it breathes while the
+   model is still downloading and settles the moment it arrives. */
+.kx-boot-stage::before {
+	content: ""; position: absolute; left: 50%; bottom: 9%; transform: translateX(-50%);
+	width: 62%; height: 30px; border-radius: 50%; pointer-events: none;
+	background: radial-gradient(ellipse, rgba(255, 255, 255, 0.16), transparent 72%);
+	animation: kx-pedestal 2.4s ease-in-out infinite;
+}
+.kx-boot-stage.kx-boot-ready::before, .kx-boot-stage.kx-boot-noavatar::before {
+	animation: none; opacity: 0.55;
+}
+@keyframes kx-pedestal { 50% { opacity: 0.45; transform: translateX(-50%) scale(0.92); } }
 #kx-boot-avatar {
 	display: block; width: 100%; height: 100%; position: relative; z-index: 1;
 	opacity: 0; transition: opacity 0.6s ease;
@@ -141,9 +217,11 @@ html[data-bg="transparent"] #cc-lobby {
 }
 @keyframes cc-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
-	.kx-loading-logo, .kx-loading-mark, .kx-boot-stage, .kx-loading-sub, .kx-boot-bar { animation: none; opacity: 1; }
+	.kx-loading-logo, .kx-loading-mark, .kx-boot-stage, .kx-boot-coin, .kx-loading-sub, .kx-boot-bar { animation: none; opacity: 1; }
+	.kx-boot-coin-art img { transition: none; }
 	.kx-boot-bar span { animation: none; width: 100%; transform: none; opacity: 0.5; }
 	.kx-boot-stage.kx-boot-noavatar .kx-boot-fallback { animation: none; }
+	.kx-boot-stage::before { animation: none; opacity: 0.55; }
 }
 /* Boot failure (most often no WebGL): the spinner is swapped for this card so a
    player never gets stranded on a loader that can't resolve. */
@@ -663,14 +741,33 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-card-name { font-weight: 700; font-size: 15px; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cc-card-meta { display: flex; align-items: center; gap: 8px; color: var(--cc-dim); font-size: 12px; font-variant-numeric: tabular-nums; }
 .cc-card-sym { color: var(--cc-text); font-weight: 700; }
+/* Always on screen, in one of two weights. Hiding it until hover reserved its
+   full height anyway, so every card carried a card-wide band of dead space
+   under the meta row and the grid read as a wall of unfinished tiles. It also
+   left touch visitors (no hover) with no affordance at all, and the reveal was
+   the only thing that told a mouse user the tile was clickable. Resting state
+   is a quiet ghost button that fills the space and names the action; hover,
+   keyboard focus, and any hover-less pointer promote it to solid white. */
 .cc-card-cta {
-	margin-top: 11px; padding: 9px 0; text-align: center; border-radius: var(--cc-radius-sm);
-	background: #fff; color: var(--cc-ink);
+	margin-top: 11px; padding: 8px 0; text-align: center; border-radius: var(--cc-radius-sm);
+	background: rgba(255, 255, 255, 0.05); color: var(--cc-dim);
+	border: 1px solid var(--cc-edge-soft);
 	font-weight: 700; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
-	transform: translateY(2px); opacity: 0; transition: opacity 0.16s ease, transform 0.16s ease, filter 0.12s ease;
+	transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, filter 0.12s ease;
 }
-.cc-card:hover .cc-card-cta { opacity: 1; transform: translateY(0); }
+.cc-card:hover .cc-card-cta,
+/* Keyboard parity: tabbing to a card must promote its call to action, not just
+   hovering it. Without this the card's primary affordance was mouse-only. */
+.cc-card:focus-visible .cc-card-cta,
+.cc-card:focus-within .cc-card-cta {
+	background: #fff; border-color: #fff; color: var(--cc-ink);
+}
 .cc-card-cta:hover { filter: brightness(0.92); }
+/* Touch devices never hover, so there is no second state to promote into: give
+   them the solid button outright. */
+@media (hover: none) {
+	.cc-card-cta { background: #fff; border-color: #fff; color: var(--cc-ink); }
+}
 
 /* Featured / official town — the pinned flagship. Spans the full first row as a
    hero: art on the left, identity on the right, with a bright persistent frame
@@ -751,6 +848,15 @@ html[data-bg="transparent"] #cc-lobby {
 	backdrop-filter: blur(10px); max-width: 70vw;
 }
 .cc-coin-img { width: 40px; height: 40px; border-radius: var(--cc-radius-sm); object-fit: cover; background: var(--cc-bg2); flex: none; filter: saturate(1.04) contrast(1.03); }
+/* Stand-in for coin art that failed to load (or was never supplied) so the
+   banner keeps its 40px identity mark instead of a hole. See coinMono in
+   coincommunities-ui.js. */
+.cc-coin-mono {
+	width: 40px; height: 40px; border-radius: var(--cc-radius-sm); flex: none;
+	display: grid; place-items: center;
+	background: var(--cc-bg2); border: 1px solid var(--cc-edge);
+	font-weight: 800; font-size: 17px; color: var(--cc-text); letter-spacing: 0.01em;
+}
 .cc-coin-info { min-width: 0; }
 .cc-coin-name { font-weight: 800; font-size: 15px; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cc-coin-sub { display: flex; align-items: center; gap: 9px; color: var(--cc-dim); font-size: 12px; margin-top: 2px; font-variant-numeric: tabular-nums; }
@@ -1090,7 +1196,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 
 /* Phone HUD. Keyed on width OR a short touch viewport, not width alone: a
    phone rotated to landscape is ~844x390, which sails past a max-width:640px
-   query and silently fell back to the DESKTOP HUD mid-session — the exact
+   query and silently fell back to the DESKTOP HUD mid-session: the exact
    "rotate and the HUD doesn't reflow" failure. Matching short coarse-pointer
    viewports keeps the three-zone touch layout in both orientations. */
 @media (max-width: 640px), (pointer: coarse) and (max-height: 520px) {
@@ -1151,11 +1257,13 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-adventure:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--cc-edge-hi); transform: translateY(-1px); }
 .cc-adventure:active { transform: translateY(1px); }
 .cc-adventure:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-/* Inline SVG mark: the grayscaled ⚔️ emoji collapsed into a bare ✕ glyph on
-   most platforms, which read as a close button instead of "adventure". */
-.cc-adventure-ico { display: inline-flex; width: 18px; height: 18px; flex: none; }
-.cc-adventure-ico svg { width: 100%; height: 100%; }
 .cc-adventure span { display: flex; flex-direction: column; font-weight: 700; font-size: 13px; line-height: 1.2; letter-spacing: 0.02em; }
+/* Inline SVG mark: the grayscaled ⚔️ emoji collapsed into a bare ✕ glyph on
+   most platforms, which read as a close button instead of "adventure". Selector
+   outranks the `.cc-adventure span` label rule above, which would otherwise
+   turn the icon box into a 13px column flex and squash the mark. */
+.cc-adventure .cc-adventure-ico { display: block; width: 18px; height: 18px; flex: none; color: var(--cc-text); }
+.cc-adventure .cc-adventure-ico svg { display: block; width: 100%; height: 100%; }
 .cc-adventure small { font-weight: 500; font-size: 11px; color: var(--cc-dim); }
 @media (max-width: 640px) { .cc-adventure small { display: none; } }
 
@@ -3298,4 +3406,88 @@ body.is-zen.zen-revealed #cc-zen-exit { opacity: 0.85; }
 #cc-zen-exit svg { width: 14px; height: 14px; display: block; }
 @media (prefers-reduced-motion: reduce) {
 	#cc-zen-exit { transition: none; }
+}
+
+/* ============================================================================
+   Accessibility floor
+   ----------------------------------------------------------------------------
+   /play builds its chrome from ~15 JS modules, each shipping its own
+   stylesheet. Component-level rules cover most of this surface, but "most" is
+   how a keyboard user ends up on an invisible focus ring in the one panel
+   nobody styled. These are the guarantees that hold for the whole page, placed
+   last so they apply wherever a component did not already do better.
+   ========================================================================= */
+
+/* 1. Nothing focusable is invisible.
+   Bare-element specificity on purpose: every bespoke `.cc-x:focus-visible`
+   ring in this file outranks it, so this only fills the gaps. */
+a[href]:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible {
+	outline: 2px solid var(--cc-accent);
+	outline-offset: 2px;
+}
+
+/* 2. Text inputs signalled focus with a 1px border-colour change alone, which
+   is easy to miss against a moving 3D scene. Keep the border tint and add a
+   real ring. `:focus-visible` so a pointer click doesn't draw one. */
+.cc-search input:focus-visible,
+.cc-chat-input input:focus-visible,
+.cc-avatar-custom input:focus-visible,
+.cc-name-input:focus-visible,
+.cc-prop-search:focus-visible,
+.cc-forge-prompt:focus-visible,
+.cc-share-title:focus-visible,
+.npc-svc-input:focus-visible,
+.npc-chat-input:focus-visible {
+	outline: 2px solid var(--cc-accent);
+	outline-offset: 1px;
+}
+
+/* 3. The world canvas is a tab stop (see pages/play.html). Keyboard players
+   have to be able to see when the world, rather than the HUD, has the keys,
+   inset so a full-viewport outline is not clipped by the window edge. */
+#kx-canvas:focus-visible {
+	outline: 3px solid var(--cc-accent);
+	outline-offset: -3px;
+}
+
+/* 4. Text scaling. At 200% browser zoom the HUD has half the room, so the
+   fixed-width panels have to become elastic instead of clipping their labels.
+   Driven off viewport height because that is what browser zoom shrinks. */
+@media (max-height: 560px), (max-width: 900px) {
+	#cc-chat { max-height: min(46vh, 340px); }
+	.cc-coin-banner { flex-wrap: wrap; row-gap: 6px; max-width: calc(100vw - 24px); }
+	#cc-hint { display: none; }
+}
+
+/* 5. Reduced motion, page-wide. Individual components below/above tune their
+   own effects; this is the backstop that catches every decorative animation
+   the /play surface loads from its sibling stylesheets (economy, jobs board,
+   wheel, combat, photo mode) without each of them having to remember. Motion
+   that carries meaning is handled in JS instead: camera shake and the wheel's
+   spin flourish read prefers-reduced-motion directly (src/game/a11y.js). */
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+	/* Pulses and sweeps are pure decoration: stop them outright rather than
+	   compressing them into a one-frame strobe. */
+	.cc-dot,
+	.cc-live-dot,
+	.kx-boot-bar span,
+	.cc-skel,
+	.ec-skel-line,
+	.cc-avsw-skel {
+		animation: none !important;
+	}
 }

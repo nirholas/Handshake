@@ -10,6 +10,13 @@
 // the final transform onto the three camera each frame.
 
 import { Vector3, Raycaster } from 'three';
+import { onReducedMotionChange } from '../a11y.js';
+
+// Camera shake and the speed FOV kick are exactly the vestibular triggers
+// `prefers-reduced-motion` exists to switch off. The rig keeps following and
+// colliding as normal; only the involuntary movement is suppressed.
+let reducedMotion = false;
+onReducedMotionChange((on) => { reducedMotion = on; });
 
 const MODES = {
 	follow:  { distMul: 1.0,  height: 1.45, shoulder: 0.0,  fov: 0,   posLerp: 0.16, lookHeight: 1.4 },
@@ -53,7 +60,10 @@ export class CameraRig {
 
 	// Add camera trauma (0..1). Stacks; decays in update(). Use for damage, hard
 	// landings, explosions — the game-feel layer calls this.
-	shake(amount = 0.4) { this._trauma = Math.min(1, this._trauma + amount); }
+	shake(amount = 0.4) {
+		if (reducedMotion) return;
+		this._trauma = Math.min(1, this._trauma + amount);
+	}
 
 	/**
 	 * @param {number} dt
@@ -135,7 +145,7 @@ export class CameraRig {
 
 		// FOV: base + per-mode bias + a speed/sprint kick, all eased.
 		const speed = ctx.speed || 0;
-		const kickTarget = m.fov + (ctx.sprinting ? 4 : 0) + Math.min(10, speed * 0.7);
+		const kickTarget = m.fov + (reducedMotion ? 0 : (ctx.sprinting ? 4 : 0) + Math.min(10, speed * 0.7));
 		this._fovKick = lerp(this._fovKick, kickTarget, 1 - Math.pow(0.001, dt));
 		this.fov = this.baseFov + this._fovKick;
 

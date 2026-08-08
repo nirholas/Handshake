@@ -2,9 +2,9 @@
 //
 // The world chrome is built entirely in JS across ~15 modules (HUD, store,
 // bank, jobs board, wheel, cosmetics, wardrobe, friends, buy). Each one had
-// grown its own half of the modal contract — one had `aria-modal` but never
+// grown its own half of the modal contract: one had `aria-modal` but never
 // moved focus into the card, another bound Escape to `window` and leaked the
-// listener, a third had neither — so keyboard and screen-reader players could
+// listener, a third had neither, so keyboard and screen-reader players could
 // open a panel and then be stranded outside it with no way back.
 //
 // This module owns that contract once:
@@ -141,7 +141,7 @@ export function trapFocus(root, { initialFocus } = {}) {
 		if (released) return;
 		released = true;
 		root.removeEventListener('keydown', onKey);
-		// Only pull focus back if it is still inside the panel we are closing —
+		// Only pull focus back if it is still inside the panel we are closing:
 		// if the player already clicked elsewhere, stealing it would be worse
 		// than leaving it.
 		if (root.contains(document.activeElement) || document.activeElement === document.body) {
@@ -195,6 +195,36 @@ function ensureRegions() {
 	};
 	politeEl = make('polite');
 	assertiveEl = make('assertive');
+}
+
+// ── reduced motion ──────────────────────────────────────────────────────────
+// CSS handles the DOM chrome (see the accessibility floor in
+// coincommunities.css). The parts of /play that CSS cannot reach (camera
+// shake, the wheel's spin flourish, ambient idle motion) read this instead.
+// Live-updating: a visitor who flips the OS setting mid-session gets the calm
+// world immediately, without a reload.
+
+const motionQuery = typeof matchMedia === 'function'
+	? matchMedia('(prefers-reduced-motion: reduce)')
+	: null;
+
+/** True when the visitor has asked the OS for reduced motion. */
+export function prefersReducedMotion() {
+	return !!motionQuery?.matches;
+}
+
+/**
+ * Subscribe to changes. Fires immediately with the current value.
+ * @param {(reduced: boolean) => void} fn
+ * @returns {() => void} unsubscribe
+ */
+export function onReducedMotionChange(fn) {
+	if (typeof fn !== 'function') return () => {};
+	fn(prefersReducedMotion());
+	if (!motionQuery?.addEventListener) return () => {};
+	const handler = (e) => fn(!!e.matches);
+	motionQuery.addEventListener('change', handler);
+	return () => motionQuery.removeEventListener('change', handler);
 }
 
 /**

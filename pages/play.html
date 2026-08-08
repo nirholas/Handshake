@@ -128,7 +128,12 @@
 
 				var label = sym ? '$' + sym : name;
 				document.querySelector('.kx-loading-sub').textContent = 'Entering ' + (name || label) + '…';
-				if (label) document.title = label + ' · Play — three.ws';
+				/* Stash the untouched title so leaving the world can restore it verbatim
+				   (coincommunities.js _setTabTitle) instead of re-spelling it. */
+				if (label) {
+					document.documentElement.dataset.lobbyTitle = document.title;
+					document.title = label + ' · Play · three.ws';
+				}
 			} catch (e) { /* the generic loader stands in */ }
 		})();
 		</script>

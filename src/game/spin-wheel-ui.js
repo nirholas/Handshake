@@ -20,7 +20,7 @@
 
 import './spin-wheel.css';
 import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
-import { openModal } from './a11y.js';
+import { openModal, prefersReducedMotion } from './a11y.js';
 
 const NETWORK = 'mainnet';
 const SPIN_DECIMALS = 6; // $THREE uses 6 decimals (same as pump.fun mints)
@@ -498,6 +498,10 @@ class SpinWheel {
 
 	_startSpin() {
 		this._stopSpin();
+		// Reduced motion: no idle whirl while we wait. The status line and the
+		// live result region already say a spin is in flight, so nothing is lost
+		// except the part that makes people queasy.
+		if (prefersReducedMotion()) return;
 		this._spinVel = 0.45; // rad/frame while waiting for the server outcome
 		const tick = () => {
 			this.rotation = (this.rotation + this._spinVel) % (Math.PI * 2);
@@ -520,6 +524,14 @@ class SpinWheel {
 		const cur = ((this.rotation % TAU) + TAU) % TAU;
 		// Target rotation (mod TAU) that puts segment `index` centre at the top.
 		const targetMod = ((-index * seg) % TAU + TAU) % TAU;
+		// Reduced motion: land on the server's segment immediately rather than
+		// riding five full turns of flourish. The outcome is identical either way.
+		if (prefersReducedMotion()) {
+			this.rotation = targetMod;
+			this._drawWheel();
+			done && done();
+			return;
+		}
 		const spins = 5; // full turns of flourish before landing
 		const delta = spins * TAU + ((targetMod - cur + TAU) % TAU);
 		const from = this.rotation;

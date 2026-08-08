@@ -29,8 +29,13 @@ function smoothstep(edge0, edge1, x) {
 	return t * t * (3 - 2 * t);
 }
 
+// Scratch target for the string-hex branch, so a sky crossfade allocates nothing
+// per frame (this runs three times per update, every update, for the whole
+// session). Callers pass pre-built Colors where they can; biome palettes still
+// arrive as hex strings, and those parse into this one reused instance.
+const _lerpScratch = new Color();
 function lerpHex(a, b, t, out) {
-	return out.set(a).lerp(typeof b === 'string' ? new Color(b) : b, t);
+	return out.set(a).lerp(typeof b === 'string' ? _lerpScratch.set(b) : b, t);
 }
 
 /**
