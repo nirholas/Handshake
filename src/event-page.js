@@ -130,6 +130,26 @@ function localZoneName() {
 	}
 }
 
+// The formatted time already carries a short zone label ("UTC", "GMT+2"), so
+// appending the IANA zone on top of it read "5:00 PM UTC (UTC)" for every
+// visitor whose clock is on UTC. Append the zone only when it adds something
+// the short label did not: "(Europe/Berlin)" after "GMT+2" tells you which city
+// the clock belongs to, "(UTC)" after "UTC" is noise on the event's own page.
+function zoneSuffix(ts) {
+	const zone = localZoneName();
+	if (!zone) return '';
+	let short = '';
+	try {
+		short = new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' })
+			.formatToParts(new Date(ts))
+			.find((p) => p.type === 'timeZoneName')?.value || '';
+	} catch {
+		short = '';
+	}
+	const norm = (s) => s.replace(/[^a-z0-9]/gi, '').toLowerCase();
+	return norm(zone) === norm(short) ? '' : ` (${zone})`;
+}
+
 function segments(ms) {
 	const s = Math.max(0, Math.floor(ms / 1000));
 	return { d: Math.floor(s / 86400), h: Math.floor((s % 86400) / 3600), m: Math.floor((s % 3600) / 60), s: s % 60 };
@@ -406,14 +426,12 @@ class EventPage {
 
 	_enterState(state) {
 		els.hero.setAttribute('data-state', state);
-		const zone = localZoneName();
-		const zoneSuffix = zone ? ` (${zone})` : '';
 
 		if (state === 'upcoming') {
 			els.chipLabel.textContent = 'Upcoming';
 			els.ctaLabel.textContent = this.cfg.linkLabel;
 			els.cal.hidden = false;
-			els.when.textContent = `Doors open ${fmtDateTime(this.cfg.startsAt)}${zoneSuffix}. Runs until ${fmtTimeOnly(this.cfg.endsAt)}.`;
+			els.when.textContent = `Doors open ${fmtDateTime(this.cfg.startsAt)}${zoneSuffix(this.cfg.startsAt)}. Runs until ${fmtTimeOnly(this.cfg.endsAt)}.`;
 			els.live.hidden = true;
 			this.population.stop();
 			return;
@@ -423,7 +441,7 @@ class EventPage {
 			els.chipLabel.textContent = 'Live now';
 			els.ctaLabel.textContent = this.cfg.linkLabel;
 			els.cal.hidden = false;
-			els.when.textContent = `Running now until ${fmtTimeOnly(this.cfg.endsAt)}${zoneSuffix}.`;
+			els.when.textContent = `Running now until ${fmtTimeOnly(this.cfg.endsAt)}${zoneSuffix(this.cfg.endsAt)}.`;
 			els.live.hidden = false;
 			this.population.start();
 			return;
