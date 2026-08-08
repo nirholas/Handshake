@@ -239,7 +239,7 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 			{
 				id: 'elevenlabs-library',
 				label: 'ElevenLabs Library',
-				tagline: 'Thousands of community voices — add one to your account to use it',
+				tagline: 'Thousands of community voices, add one to your account to use it',
 				billing: 'credits',
 				available: Boolean(elevenlabs?.available),
 				reason: elevenlabs?.reason || null,
@@ -335,7 +335,7 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 		// nothing and needs no account, so never synthesize one.
 		if (v.preview_url) {
 			previewAudio.src = v.preview_url;
-			previewAudio.play().catch(() => setStatus('Autoplay was blocked — press Preview again.', 'warn'));
+			previewAudio.play().catch(() => setStatus('Autoplay was blocked, press Preview again.', 'warn'));
 			return;
 		}
 
@@ -359,7 +359,7 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 			previewAudio.src = URL.createObjectURL(blob);
 			await previewAudio.play().catch(() => {});
 			const billing = r.headers.get('x-tts-billing');
-			setStatus(billing === 'credits' ? 'Preview rendered — charged to credits.' : 'Preview rendered.');
+			setStatus(billing === 'credits' ? 'Preview rendered, charged to credits.' : 'Preview rendered.');
 		} catch (err) {
 			setStatus(`Preview failed: ${err.message}`, 'err');
 		} finally {

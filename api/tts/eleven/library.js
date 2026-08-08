@@ -1,6 +1,6 @@
 /**
- * GET  /api/tts/eleven/library — search the public ElevenLabs Voice Library
- * POST /api/tts/eleven/library — add one of those voices to the account
+ * GET  /api/tts/eleven/library: search the public ElevenLabs Voice Library
+ * POST /api/tts/eleven/library: add one of those voices to the account
  *
  * The Voice Library is the several-thousand-voice catalog ElevenLabs users
  * share publicly. It is a different surface from /api/tts/eleven/voices, which

@@ -1,7 +1,7 @@
 /**
  * POST /api/tts/edge
  *
- * Microsoft Edge TTS proxy. No API key required — the protocol and the voice
+ * Microsoft Edge TTS proxy. No API key required: the protocol and the voice
  * catalog live in api/_lib/tts-edge.js, shared with the unified router
  * (/api/tts/synthesize) so the handshake quirks are implemented once.
  * Caches synthesized clips in R2 by sha256(voice + text + rate + pitch) for 30 days.

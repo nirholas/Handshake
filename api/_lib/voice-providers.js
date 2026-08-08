@@ -8,14 +8,14 @@
 // studio) now reads `VOICE_PROVIDERS` for what exists and posts to
 // /api/tts/synthesize to hear it.
 //
-// Billing doctrine (owner policy 2026-08-06 — no free tier on a vendor-billed
+// Billing doctrine (owner policy 2026-08-06, no free tier on a vendor-billed
 // feature):
-//   free    — no vendor invoice at all (Edge) or a free vendor tier
+//   free    : no vendor invoice at all (Edge) or a free vendor tier
 //             (NVIDIA NIM). Served without charge.
-//   credits — the vendor bills the platform (ElevenLabs, OpenAI). Metered to
+//   credits : the vendor bills the platform (ElevenLabs, OpenAI). Metered to
 //             the caller's prepaid credit wallet, or bypassed entirely with
 //             BYOK where the provider supports it.
-//   gcp     — billed to the platform's Google credits under the standing
+//   gcp     : billed to the platform's Google credits under the standing
 //             owner-approved spend (docs/ops/gcp-credits-plan.md), same
 //             doctrine as the Vertex chat anchor. Free to the caller.
 

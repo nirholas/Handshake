@@ -19,13 +19,13 @@
  * }
  *
  * Billing (`x-tts-billing` reports which rung served):
- *   free    — Edge / NVIDIA: no vendor invoice, nothing charged.
- *   gcp     — Gemini on Vertex: platform Google credits, nothing charged.
- *   byok    — the request carried `x-eleven-key`: the user's ElevenLabs account pays.
- *   credits — a vendor-billed lane on the platform key: metered to the caller's
+ *   free    : Edge / NVIDIA: no vendor invoice, nothing charged.
+ *   gcp     : Gemini on Vertex: platform Google credits, nothing charged.
+ *   byok    : the request carried `x-eleven-key`: the user's ElevenLabs account pays.
+ *   credits : a vendor-billed lane on the platform key: metered to the caller's
  *             prepaid credit wallet before the upstream call, refunded if the
  *             clip never renders. 402 + top_up_url when short.
- *   cached  — R2 cache hit: no upstream call, nothing charged.
+ *   cached  : R2 cache hit: no upstream call, nothing charged.
  *
  * Response: audio in the lane's container (content-type is always truthful).
  */
@@ -127,7 +127,7 @@ export default wrap(async (req, res) => {
 
 	// ── R2 cache ──────────────────────────────────────────────────────────────
 	// Checked BEFORE metering: a cached clip costs nothing upstream, so it is
-	// never charged. BYOK clips are keyed separately — they render on a
+	// never charged. BYOK clips are keyed separately: they render on a
 	// different account and must not be served from (or into) the shared cache.
 	const cacheHash = await sha256(
 		[
@@ -158,7 +158,7 @@ export default wrap(async (req, res) => {
 			res.setHeader('cache-control', 'private, max-age=86400');
 			return res.end(buf);
 		} catch {
-			// Cache read failed — synthesize fresh.
+			// Cache read failed, synthesize fresh.
 		}
 	}
 

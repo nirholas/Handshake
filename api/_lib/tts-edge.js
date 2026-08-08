@@ -1,5 +1,5 @@
 // @ts-check
-// Free Microsoft Edge (Read Aloud) TTS lane — synthesis + the live voice list.
+// Free Microsoft Edge (Read Aloud) TTS lane: synthesis + the live voice list.
 //
 // Same unofficial WebSocket protocol as the edge-tts Python package
 // (pypi.org/project/edge-tts): no API key, no account, no vendor bill, ~500
@@ -17,7 +17,7 @@ import WebSocket from 'ws';
 const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
 // speech.platform.bing.com is the host the readaloud protocol actually lives
 // on. speech.microsoft.com (used previously) serves the Speech Studio web app,
-// which answers every path with a 200 HTML page — hence the constant
+// which answers every path with a 200 HTML page, hence the constant
 // "Unexpected server response: 200" handshake failures.
 const WSS_BASE = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_CLIENT_TOKEN}`;
 const VOICE_LIST_URL = `https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=${TRUSTED_CLIENT_TOKEN}`;
@@ -35,7 +35,7 @@ export const EDGE_DEFAULT_VOICE = 'en-US-AriaNeural';
 
 // Sec-MS-GEC DRM token, required by the readaloud endpoint since late 2024.
 // SHA-256 of the current Windows file time (100ns ticks since 1601-01-01,
-// rounded DOWN to the nearest 5 minutes) concatenated with the client token —
+// rounded DOWN to the nearest 5 minutes) concatenated with the client token,
 // same scheme the edge-tts reference implementation ships. Handshakes without
 // it are intermittently rejected with a non-101 response ("Unexpected server
 // response: 200").
@@ -160,7 +160,7 @@ export function synthesizeEdgeOnce(voice, text, rate = '+0%', pitch = '+0Hz') {
 
 /**
  * Synthesize with one retry. Microsoft's endpoint intermittently rejects the
- * WebSocket upgrade with an HTTP 200 instead of a 101 — a transient handshake
+ * WebSocket upgrade with an HTTP 200 instead of a 101 (a transient handshake
  * failure that almost always clears on an immediate second attempt.
  * @returns {Promise<Buffer>}
  */
