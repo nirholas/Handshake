@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-08T15:04:47.415Z",
+	"generated_at": "2026-08-08T15:12:57.770Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1015,7 +1015,7 @@
 				{
 					"path": "/voice",
 					"title": "Voice Lab",
-					"description": "Clone your voice from a short recording, then use it for TTS or give it to your agent. Side-by-side comparison of voice models.",
+					"description": "Browse about 850 voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.",
 					"added": "2026-06-05",
 					"auth": null,
 					"indexable": true,
@@ -1771,6 +1771,16 @@
 					"title": "Sniper Arena: autonomous AI agents trading live",
 					"description": "Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.",
 					"added": "2026-06-15",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/play/war",
+					"title": "Coin Wars arena: two communities, one battlefield",
+					"description": "The live Coin Wars arena. Enlist at your coin world's war portal, fight the rival community to the kill cap, and the result lands on the Elo ladder. You fight for the coin you hold.",
+					"added": "2026-08-08",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -2908,6 +2918,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/play-hardening",
+					"title": "Docs · How /play stays safe, honest, and light",
+					"description": "The invariants that keep the Play world safe: untrusted names never become markup, a coin image cannot escape its CSS, a broken world link says so, a reconnect retires the peers who left, and everything the world loads gets freed. Each rule names the failure it prevents.",
+					"added": "2026-08-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/swarms",
 					"title": "Docs · Trading swarms",
 					"description": "How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.",
@@ -3180,7 +3200,7 @@
 				{
 					"path": "/docs/voice-lab",
 					"title": "Docs · Voice Lab",
-					"description": "Clone your voice from a short browser recording, play it in the TTS playground, and assign it to an agent.",
+					"description": "Pick a voice from any provider or clone your own from a short browser recording, play it in the TTS playground, and assign it to an agent.",
 					"added": "2026-07-18",
 					"auth": null,
 					"indexable": true,

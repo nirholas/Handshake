@@ -38,6 +38,7 @@ const REFRESH_MS = 500;           // DOM refresh cadence
 const FINALE_MS = 15 * 60 * 1000; // the closing barrage window
 const RING_RADIUS = 38;           // fireworks launch ring around the plaza
 const MAX_LIVE_BURSTS = 14;       // hard cap on simultaneous shells
+const CATCHUP_MS = 2 * 4000;      // never replay more than two buckets of missed show
 
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -173,6 +174,7 @@ export class MeetupEvent {
 		this.panel?.remove(); this.panel = null;
 		this.fireworks?.dispose(); this.fireworks = null;
 		this._queue = [];
+		this._lastShowMs = 0;
 		clearInterval(this._signalTimer);
 		this._signalTimer = 0;
 	}
@@ -392,6 +394,12 @@ export class MeetupEvent {
 			if (state.msToEnd <= FINALE_MS) intensity = 1 + 1.6 * (1 - state.msToEnd / FINALE_MS);
 			if (getPowerSaver()) intensity *= 0.5;
 			if (this._lastShowMs === 0) this._lastShowMs = now;
+			// Never replay a backlog. requestAnimationFrame is paused while the tab
+			// is hidden, so a player who tabs away for ten minutes would otherwise
+			// come back to every missed bucket detonating in one frame. The show is
+			// a shared moment, not a queue to catch up on: drop what was missed and
+			// rejoin it live.
+			this._lastShowMs = Math.max(this._lastShowMs, now - CATCHUP_MS);
 			// Cover the buckets the window [lastShowMs, now] touches.
 			for (let b = Math.floor(this._lastShowMs / BUCKET_MS); b <= Math.floor(now / BUCKET_MS); b++) {
 				for (const l of fireworkPlan(this.ev.id, b * BUCKET_MS, { intensity })) {

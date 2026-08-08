@@ -247,13 +247,18 @@
 			"dir": "ltr"
 		},
 		{
-			"code": "pa",
-			"name": "ਪੰਜਾਬੀ",
+			"code": "or",
+			"name": "ଓଡ଼ିଆ",
 			"dir": "ltr"
 		},
 		{
-			"code": "or",
-			"name": "ଓଡ଼ିଆ",
+			"code": "si",
+			"name": "සිංහල",
+			"dir": "ltr"
+		},
+		{
+			"code": "ka",
+			"name": "ქართული",
 			"dir": "ltr"
 		},
 		{

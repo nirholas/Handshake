@@ -7,12 +7,36 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Coin Wars arena: two communities, one battlefield</title>
+			<link>https://three.ws/play/war</link>
+			<guid isPermaLink="false">2026-08-08:Coin Wars arena: two communities, one battlefield</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The live Coin Wars arena. Enlist at your coin world's war portal, fight the rival community to the kill cap, and the result lands on the Elo ladder. You fight for the coin you hold.</description>
+		</item>
+		<item>
+			<title>Docs · How /play stays safe, honest, and light</title>
+			<link>https://three.ws/docs/play-hardening</link>
+			<guid isPermaLink="false">2026-08-08:Docs · How /play stays safe, honest, and light</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The invariants that keep the Play world safe: untrusted names never become markup, a coin image cannot escape its CSS, a broken world link says so, a reconnect retires the peers who left, and everything the world loads gets freed. Each rule names the failure it prevents.</description>
+		</item>
+		<item>
 			<title>One link to share for the live event, with a real headcount</title>
 			<link>https://three.ws/event</link>
 			<guid isPermaLink="false">2026-08-08:One link to share for the live event, with a real headcount</guid>
 			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>three.ws/event is the front door for anyone who has never been in the world. It carries a ticking countdown, the run of show converted into your own timezone, an add-to-calendar file built in your browser (nothing about who is coming leaves your device), a plain-language walkthrough of what actually happens in there, and one big button into the world. It reads the same schedule file the countdown inside Play reads, so the two can never disagree. While the event is running the page shows how many people are standing in the world right now, read live from the game servers through a new public endpoint at /api/play/population. If that count cannot be reached the page says the doors are open and shows no number, rather than making one up.</description>
+		</item>
+		<item>
+			<title>Paid Solana calls stop failing when a free RPC provider blocks us</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-08:Paid Solana calls stop failing when a free RPC provider blocks us</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The platform reads Solana through a chain of RPC providers so no single one going down can take a feature with it. One of those providers began refusing every request from our servers outright, and because it still sat near the front of the chain, each balance read, holder check, and payment burned requests on it before reaching a provider that would answer. Under load the whole chain could run out mid-request. The blocked provider is now removed, and the remaining ones are ordered by what they will actually serve rather than by how fast they reply, so wallet balances and $THREE holder gating stay readable when the paid capacity is spent. Two providers that quietly refuse balance lookups on the free tier no longer sit in front of the one that answers them. The image-understanding endpoint at /api/vision also now counts a slow upload against its own time budget instead of adding to it, so a large image returns a clear explanation rather than an unexplained timeout.</description>
 		</item>
 		<item>
 			<title>Play is safer, lighter on phones, and honest when something breaks</title>
@@ -29,6 +53,14 @@
 			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>If your connection dropped inside a coin world and came back, the people around you could end up duplicated: a frozen copy of everyone standing where they were when you dropped, plus their live selves, and a motionless copy of you standing at the spawn point on everyone else's screen. Reconnecting now rebuilds the crowd from what the world server actually holds, retires anyone who left while you were away, and tells the server to retire your old session the moment you return. Standing still through a drop no longer strands you at the spawn point either, and a tab you left in the background for a few minutes now checks its connection the instant you come back instead of sitting on a dead one that still claims to be connected. Nameplates past sixty metres stop being drawn, so a plaza with a hundred people in it costs what the people near you cost.</description>
+		</item>
+		<item>
+			<title>Voice Lab now has every voice we can reach, not just cloned ones</title>
+			<link>https://three.ws/voice</link>
+			<guid isPermaLink="false">2026-08-08:Voice Lab now has every voice we can reach, not just cloned ones</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Pick your agent's voice from about 850 ready-made voices in one searchable grid: roughly 500 free Microsoft Edge neural voices across 100+ locales, Google's 30 Gemini voices that take a spoken direction like &quot;warm and unhurried&quot;, NVIDIA's multilingual set, OpenAI's eleven, your own ElevenLabs voices, and the public ElevenLabs Voice Library you can copy a voice out of in one click. Preview any of them, then speak your own text with a model, a direction, and a speed. Edge, Gemini, and NVIDIA are free and work signed out; the ElevenLabs and OpenAI lanes are metered to your credits or run on your own key. Cloning your own voice still works exactly as before.</description>
 		</item>
 		<item>
 			<title>Docs · The agent runtime and transaction guard</title>
@@ -4460,7 +4492,7 @@
 			<guid isPermaLink="false">2026-07-18:Docs · Voice Lab</guid>
 			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Clone your voice from a short browser recording, play it in the TTS playground, and assign it to an agent.</description>
+			<description>Pick a voice from any provider or clone your own from a short browser recording, play it in the TTS playground, and assign it to an agent.</description>
 		</item>
 		<item>
 			<title>Docs · x402 Studio</title>
@@ -18628,7 +18660,7 @@
 			<guid isPermaLink="false">2026-06-05:Voice Lab</guid>
 			<pubDate>Fri, 05 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Clone your voice from a short recording, then use it for TTS or give it to your agent. Side-by-side comparison of voice models.</description>
+			<description>Browse about 850 voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.</description>
 		</item>
 		<item>
 			<title>Walk: 3D Avatar AR</title>

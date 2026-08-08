@@ -621,7 +621,7 @@ Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal 
 
 URL: https://three.ws/voice
 
-Clone your voice from a short recording, then use it for TTS or give it to your agent. Side-by-side comparison of voice models.
+Browse about 850 voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.
 
 ### Make Dad a 3D Avatar
 
@@ -1076,6 +1076,12 @@ Watch your 3D avatar walk up to a paid endpoint and pay for it with its agent wa
 URL: https://three.ws/play/arena
 
 Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.
+
+### Coin Wars arena: two communities, one battlefield
+
+URL: https://three.ws/play/war
+
+The live Coin Wars arena. Enlist at your coin world's war portal, fight the rival community to the kill cap, and the result lands on the Elo ladder. You fight for the coin you hold.
 
 ### Sniper Experiments: rules vs LLM judgment, scored live
 
@@ -1774,6 +1780,12 @@ URL: https://three.ws/docs/ibm-community
 
 The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.
 
+### Docs · How /play stays safe, honest, and light
+
+URL: https://three.ws/docs/play-hardening
+
+The invariants that keep the Play world safe: untrusted names never become markup, a coin image cannot escape its CSS, a broken world link says so, a reconnect retires the peers who left, and everything the world loads gets freed. Each rule names the failure it prevents.
+
 ### Docs · Trading swarms
 
 URL: https://three.ws/docs/swarms
@@ -1940,7 +1952,7 @@ Point your camera at your face and get a rigged 3D avatar in about a minute, fre
 
 URL: https://three.ws/docs/voice-lab
 
-Clone your voice from a short browser recording, play it in the TTS playground, and assign it to an agent.
+Pick a voice from any provider or clone your own from a short browser recording, play it in the TTS playground, and assign it to an agent.
 
 ### Docs · Lipsync
 

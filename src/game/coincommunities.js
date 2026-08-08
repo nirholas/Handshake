@@ -82,7 +82,7 @@ import { isAixbtPanelOpen } from './npc/npc-aixbt.js';
 import { isZauthPanelOpen } from './npc/npc-zauth.js';
 import { requestHolderPass, signInWithX, ensureSolanaWallet, relinkSolanaWallet, getSession, getWorldGate, setWorldGate } from '../community/town-auth.js';
 import { ensurePlayAccess } from './play-gate.js';
-import { hasOpenOverlay, announce } from './a11y.js';
+import { hasOpenOverlay } from './a11y.js';
 import { clearStoredPass, refreshPlayPass, loadStoredPass, storePass } from './play-auth.js';
 import { PlaySystems } from './play-systems.js';
 import { PlayActivities } from './play-activities.js';
@@ -185,6 +185,11 @@ const RUN_TIMESCALE = 1.7; // speed the walk cycle up so a sprint reads as a run
 const JUMP_VELOCITY = 5.5; // m/s upward kick on Space; ~1m apex under GRAVITY
 const GRAVITY = 15; // m/s^2 pulling the jumper back down
 const REMOTE_LERP = 0.18;
+// Longest the canvas may hold its last frame while shaders pre-compile
+// (_warmShaders), and how long after world entry the render-tier watchdog stays
+// out of the way (_loop). See each for why.
+const WARM_TIMEOUT_MS = 1200;
+const WATCHDOG_GRACE_MS = 3000;
 // Past this ground distance a peer's nameplate is a couple of unreadable pixels,
 // so it isn't projected or written to the DOM at all. Bounds the per-frame label
 // cost by how many people are NEAR you, not by how many are in the world.
@@ -563,6 +568,12 @@ export class CoinCommunities {
 
 		// True between webglcontextlost and webglcontextrestored (see _bindContextLoss).
 		this._contextLost = false;
+		// True while _warmShaders holds the canvas to pre-compile programs.
+		this._warming = false;
+		// When the current world became playable, so _loop can give the render-tier
+		// watchdog a grace period over the tail of world entry. Infinity until then:
+		// a world that has not opened yet has no frames worth judging.
+		this._worldSince = Infinity;
 		this._initRenderer();
 		this._initScene();
 
@@ -998,6 +1009,42 @@ export class CoinCommunities {
 		this._tickDanceFloor(dt);
 	}
 
+	// Compile the shader programs for everything currently in the scene, off the
+	// render path, before the frame that would otherwise compile them mid-draw.
+	//
+	// three.js compiles a material's program the first time it draws it. World
+	// entry adds the biome, the district grid, the totem, the jumbotron, the chart
+	// screen, the oracle ribbon and the player's skinned avatar inside a couple of
+	// synchronous bursts, so the very next rendered frame after each burst has to
+	// compile and link all of it at once. That is a single multi-hundred-millisecond
+	// stall, on the exact frame the player is first looking at the world, and it is
+	// what makes /play feel slow for its first seconds and perfectly smooth after
+	// (compiled programs are cached for the rest of the session).
+	//
+	// compileAsync does the same work through KHR_parallel_shader_compile where the
+	// driver supports it, so linking happens on driver threads instead of blocking
+	// the main one. Rendering is suspended for the duration (the canvas holds its
+	// last frame) so a rAF tick can't slip in and force the synchronous compile we
+	// are trying to avoid.
+	async _warmShaders() {
+		const r = this.renderer;
+		if (!r || this._contextLost) return;
+		this._warming = true;
+		try {
+			// A driver that never reports completion must not freeze the canvas: cap
+			// the suspension and let the remaining programs compile on demand, which
+			// is exactly the old behaviour and never worse than it.
+			const compile = typeof r.compileAsync === 'function'
+				? r.compileAsync(this.scene, this.camera)
+				: Promise.resolve(r.compile(this.scene, this.camera));
+			await Promise.race([compile, new Promise((res) => setTimeout(res, WARM_TIMEOUT_MS))]);
+		} catch (err) {
+			log.warn('[coincommunities] shader warm-up failed:', err?.message);
+		} finally {
+			this._warming = false;
+		}
+	}
+
 	// One decode and one GPU upload of the coin's artwork, shared by every surface
 	// that shows it: the totem's two faces and the jumbotron's art panel.
 	//
@@ -1373,6 +1420,10 @@ export class CoinCommunities {
 		// Granite TimeSeries forecast, rendered as a glowing ribbon standing in the
 		// world (no backdrop, just the line) that players can walk around.
 		this._oracleRibbon = mountOracleRibbon(this.scene, { x: 17, y: 4.2, z: -20, scale: 0.7 });
+		// Everything above landed in the scene inside one synchronous task, so no
+		// frame has drawn any of it yet. Compile it now, off the render path.
+		await this._warmShaders();
+		if (epoch !== this._enterEpoch) return;
 		this.localRig = new Group();
 		this.localRig.position.copy(this.localPos);
 		this.scene.add(this.localRig);
@@ -1705,11 +1756,19 @@ export class CoinCommunities {
 		if (avatarFallback && avatarInput !== GUEST_SENTINEL) {
 			this.ui.toast('Couldn’t load that avatar, so a stand-in is filling in. Try another in the lobby.', 'warn');
 		}
+		// Second warm pass: the avatar's skinned materials (and its cosmetics) are
+		// the last thing added before the player takes control, and a skinned
+		// program is among the most expensive to compile. Do it here so the first
+		// frame the player actually steers is not the frame that compiles it.
+		await this._warmShaders();
+		if (epoch !== this._enterEpoch || !this.net) return;
 		// The world is playable the moment the avatar stands. Don't freeze movement
 		// behind the join handshake (up to 15s on a cold multiplayer instance):
 		// everything below that touches the net only *subscribes*, so it works
 		// while the join is still in flight, and the status pill narrates it.
 		this.phase = 'world';
+		// Frame health is judged from here, but not immediately: see _loop.
+		this._worldSince = performance.now();
 		this._initJoystick();
 		this._restoreZen();
 		this._onboardBuild();
@@ -2189,6 +2248,8 @@ export class CoinCommunities {
 		// avatar inspector's World row) stops naming the one we just left.
 		this.coin = null;
 		this.phase = 'lobby';
+		// Re-arm the watchdog grace so the next world entry gets its own runway.
+		this._worldSince = Infinity;
 		this._setTabTitle('');
 		try { history.replaceState(null, '', location.pathname); } catch { /* non-fatal */ }
 		this.ui.showLobby();
@@ -3360,9 +3421,12 @@ export class CoinCommunities {
 			// Esc closes the friends/avatar drawers before anything else claims the key.
 			if (e.key === 'Escape' && this._friendsOpen) { e.preventDefault(); this._closeFriends(); return; }
 			if (e.key === 'Escape' && this._avatarPanelOpen) { e.preventDefault(); this._closeAvatarPanel(); return; }
-			// Enter/Space belong to a focused button or link (see isActivationTarget)
-			// — hijacking them there leaves the whole HUD un-operable by keyboard.
+			// Enter/Space belong to a focused button or link (see isActivationTarget):
+			// hijacking them there leaves the whole HUD un-operable by keyboard.
 			const onControl = isActivationTarget(e.target);
+			// A modal panel owns the keyboard while it is up, so `f` inside the store
+			// must not also cast a fishing line at the avatar behind the card.
+			if (hasOpenOverlay()) return;
 			if (e.key === 'Enter' && this.phase === 'world' && !onControl) { e.preventDefault(); this.ui.focusChat(); return; }
 			// Space jumps on foot; while driving it's the handbrake instead (held,
 			// released in the keyup handler below) — never scrolls the page either way.
@@ -4567,7 +4631,17 @@ export class CoinCommunities {
 		// Only judge frame health at the full-rate cap — a deliberately
 		// throttled frame (blur, lobby, saver) is slow by design, not a
 		// struggling GPU.
-		if (this.phase === 'world' && fpsCap >= FPS_ACTIVE) this._watchdog.tick(dt);
+		// Frame health is judged at the full-rate cap only, and never during the
+		// first seconds in a world. Entry keeps working after the player takes
+		// control (agent desks arrive over the network, the NPC crowd builds, the
+		// HDRI upgrade convolves), so frames there are slow because the world is
+		// still assembling, not because the device can't draw it. Judged live, that
+		// burst downgraded the render tier of machines that had no trouble at all,
+		// and the tier only climbs back after six sustained fast seconds: the player
+		// spent their first ten seconds looking at a needlessly soft world.
+		if (this.phase === 'world' && fpsCap >= FPS_ACTIVE && now - this._worldSince > WATCHDOG_GRACE_MS) {
+			this._watchdog.tick(dt);
+		}
 
 		if (this.phase === 'world') {
 			// W02: while driving, the vehicle IS the local player's movement — skip
@@ -4624,7 +4698,11 @@ export class CoinCommunities {
 		// Drawing into a lost context throws GL errors on every call and can keep
 		// the browser from handing it back. Simulation above keeps running, so the
 		// world is live and correct the instant the context returns.
-		if (!this._contextLost) this.renderer.render(this.scene, this.camera);
+		// _warmShaders holds the canvas on its last frame while it pre-compiles the
+		// world's programs; drawing here would force the synchronous compile it is
+		// there to prevent. Everything above still ticks, so no simulation time is
+		// lost, and the suspension is capped at WARM_TIMEOUT_MS.
+		if (!this._contextLost && !this._warming) this.renderer.render(this.scene, this.camera);
 	}
 
 	// Kick the avatar into the air. Ignored while already airborne so a held key

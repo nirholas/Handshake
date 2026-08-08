@@ -374,9 +374,13 @@ html[data-bg="transparent"] #cc-lobby {
 	max-width: 1180px; margin: 0 auto; padding: 28px 22px 40px;
 }
 .cc-foot-copy { color: var(--cc-faint); font-size: 12.5px; }
-.cc-foot-links { display: flex; flex-wrap: wrap; gap: 18px; }
-.cc-foot-links a { color: var(--cc-dim); font-size: 13px; transition: color 0.15s ease; }
+.cc-foot-links { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+/* Padded to a thumb-sized target rather than the 16px a bare 13px link gives.
+   These sit in a row of their own, so the WCAG 2.5.8 inline-link exemption
+   does not apply to them. */
+.cc-foot-links a { color: var(--cc-dim); font-size: 13px; padding: 12px 0; transition: color 0.15s ease; }
 .cc-foot-links a:hover { color: var(--cc-text); }
+.cc-foot-links a:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; border-radius: var(--cc-radius-sm); }
 
 .cc-lobby-inner { position: relative; max-width: 1180px; margin: 0 auto; padding: 26px 22px 56px; }
 .cc-lobby-head { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -397,12 +401,19 @@ html[data-bg="transparent"] #cc-lobby {
 	margin-left: auto; flex: 1; min-width: 220px; max-width: 380px;
 	display: flex; align-items: center; gap: 9px;
 	background: var(--cc-panel); border: 1px solid var(--cc-edge);
-	border-radius: var(--cc-radius); padding: 10px 14px;
+	border-radius: var(--cc-radius); padding: 0 14px;
 	transition: border-color 0.15s ease;
 }
 .cc-search:focus-within { border-color: var(--cc-edge-hi); }
 .cc-search span { color: var(--cc-faint); }
-.cc-search input { flex: 1; background: none; border: none; color: var(--cc-text); font-size: 14px; outline: none; }
+/* The field carries the row's vertical padding rather than the wrapper, so the
+   input's own hit box fills the search bar. With the padding on the wrapper the
+   tappable target was only as tall as one line of text (20px), and a thumb
+   landing anywhere else in the bar did nothing. */
+.cc-search input {
+	flex: 1; min-width: 0; align-self: stretch; padding: 11px 0;
+	background: none; border: none; color: var(--cc-text); font-size: 14px; outline: none;
+}
 .cc-search input::placeholder { color: var(--cc-dim); }
 
 /* avatar picker */
@@ -439,11 +450,19 @@ html[data-bg="transparent"] #cc-lobby {
 @media (prefers-reduced-motion: reduce) { .cc-avatar-chip.cc-avatar-loading::after { animation: none; } }
 .cc-avatar-custom { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 240px; }
 .cc-avatar-custom input {
-	flex: 1; background: var(--cc-bg2); border: 1px solid var(--cc-edge);
+	flex: 1; min-width: 0; background: var(--cc-bg2); border: 1px solid var(--cc-edge);
 	border-radius: var(--cc-radius-sm); padding: 10px 12px; color: var(--cc-text); font-size: 13px; outline: none;
 	transition: border-color 0.15s ease;
 }
 .cc-avatar-custom input:focus { border-color: var(--cc-edge-hi); }
+/* On a phone the paste field plus two nowrap buttons is wider than the screen,
+   which pushed "Upload model" clean off the right edge and out of reach. Stack
+   the field over the two actions and let them share the row instead. */
+@media (max-width: 560px) {
+	.cc-avatar-custom { flex-wrap: wrap; min-width: 0; }
+	.cc-avatar-custom input { flex: 1 1 100%; }
+	.cc-gallery-btn, .cc-upload-btn { flex: 1 1 0; justify-content: center; padding: 11px 10px; }
+}
 
 /* bring-your-own .glb: upload button, drop target, status */
 .cc-avatar-bar { position: relative; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
