@@ -32,11 +32,6 @@
 			"dir": "ltr"
 		},
 		{
-			"code": "de",
-			"name": "Deutsch",
-			"dir": "ltr"
-		},
-		{
 			"code": "pt-BR",
 			"name": "Português (BR)",
 			"dir": "ltr"
