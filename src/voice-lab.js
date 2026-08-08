@@ -1,4 +1,5 @@
 import { getElevenKey, setElevenKey, clearElevenKey, withElevenKey, maskElevenKey } from './voice/eleven-key.js';
+import { mountVoiceBrowser } from './voice/voice-browser.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -497,7 +498,7 @@ function providerFor(id) {
 }
 
 /** Add (or promote) a voice the user selected in the browser, then select it. */
-export function usePlaygroundVoice(voice) {
+function usePlaygroundVoice(voice) {
 	const key = voiceKey(voice.provider, voice.id);
 	pickedVoices = [
 		{ key, provider: voice.provider, voiceId: voice.id, name: voice.name },
@@ -508,7 +509,7 @@ export function usePlaygroundVoice(voice) {
 }
 
 /** Called once the catalog is known, so the model/direction controls can adapt. */
-export function setProviderMeta(providers) {
+function setProviderMeta(providers) {
 	providerMeta = providers;
 	renderModelOptions();
 }
@@ -771,6 +772,7 @@ $('byokSave').addEventListener('click', () => {
 	setElevenKey(value);
 	$('byokKey').value = '';
 	renderByokState();
+	voiceBrowser.reload();
 });
 
 $('byokKey').addEventListener('keydown', (e) => {
@@ -784,6 +786,7 @@ $('byokClear').addEventListener('click', () => {
 	clearElevenKey();
 	$('byokKey').value = '';
 	renderByokState();
+	voiceBrowser.reload();
 });
 
 // ── Init ─────────────────────────────────────────────────────────────────────
@@ -791,6 +794,16 @@ $('byokClear').addEventListener('click', () => {
 renderLibrary();
 renderPlaygroundVoices();
 renderByokState();
+
+// The browser owns discovery (every lane, every voice); the playground owns
+// synthesis. They meet here: a pick in the browser becomes the playground's
+// selected voice, and the catalog's provider metadata decides which playground
+// controls (model, direction) are even meaningful.
+const voiceBrowser = mountVoiceBrowser({
+	root: $('browserSection'),
+	onCatalog: setProviderMeta,
+	onSelect: usePlaygroundVoice,
+});
 
 // Auto-populate voice name with a sensible default
 const now = new Date();

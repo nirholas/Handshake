@@ -65,7 +65,7 @@ function voiceTags(v) {
 	return out;
 }
 
-export function mountVoiceBrowser({ root, onSelect }) {
+export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 	const els = {
 		pills: root.querySelector('#vbProviders'),
 		search: root.querySelector('#vbSearch'),
@@ -251,6 +251,7 @@ export function mountVoiceBrowser({ root, onSelect }) {
 		renderPills();
 		populateLanguages();
 		applyFilter();
+		onCatalog?.(providers);
 	}
 
 	function populateLanguages() {

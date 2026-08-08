@@ -77,22 +77,46 @@ classifies on:
 ## The lanes are not interchangeable
 
 A lane answering `getBalance` does **not** qualify it as a primary. Each free lane
-refuses a different subset of methods. Measured 2026-07-30:
+refuses a different subset of methods, and which ones changes without notice.
+Re-measured 2026-08-07 (3 samples per cell, p50 of the three):
 
 | Lane | `getBalance` | `getTokenAccountsByOwner` | `getProgramAccounts` | p50 |
 |---|---|---|---|---|
-| MagicBlock `rpc.magicblock.app/mainnet` | 6/6 | ok (programId + mint) | 403 IP block | 46ms |
-| PublicNode `solana-rpc.publicnode.com` | 6/6 | **refused** | **refused** | 97ms |
-| Leo RPC `?api_key=FREE` | 5/6 | 429 | 429 | 211ms |
-| `api.mainnet-beta.solana.com` | 6/6 | ok | ok | 146ms |
+| `api.mainnet-beta.solana.com` | 3/3 | 3/3 | 403 IP block | 94ms |
+| PublicNode `solana-rpc.publicnode.com` | 3/3 | **20s timeout** | -32010 not indexed | 137ms |
+| Leo RPC `?api_key=FREE` | 3/3 | 2/3 (`-32603`) | 429 | 254ms |
+| Tatum `api.tatum.io/v3/...` | **-16401 paid only** | **-16401 paid only** | 429 | 58ms |
+| Tatum `solana-mainnet.gateway.tatum.io` | **-16401 paid only** | **-16401 paid only** | 429 | 70ms |
+| MagicBlock `rpc.magicblock.app/mainnet` | **403 IP block** | **403 IP block** | **403 IP block** | 159ms |
 
-**MagicBlock is the best free primary.** PublicNode is the trap: it serves `getBalance`
-perfectly while refusing precisely the calls behind $THREE holder gating and token
-balances ([api/\_lib/balances.js](../../api/_lib/balances.js),
-[api/\_lib/coin/holders.js](../../api/_lib/coin/holders.js),
-[api/\_lib/embed-gate.js](../../api/_lib/embed-gate.js),
-[api/scene/gate-check.js](../../api/scene/gate-check.js)). Putting it in front of those
-readers takes the feature down while every dashboard still reads green.
+**`api.mainnet-beta.solana.com` is now the best free primary**, and it is the only
+keyless lane serving both `getBalance` and `getTokenAccountsByOwner`.
+
+Three lanes that a naive latency ranking would promote are traps:
+
+- **MagicBlock was the recommended primary until 2026-08-07**, when it began answering
+  every method with HTTP 403 "Your IP or provider is blocked from this endpoint". It is
+  pruned from `FREE_KEYLESS_MAINNET` entirely: a hard egress block never recovers on a
+  cooldown, so re-probing it only burns a real request to relearn the block.
+- **Both Tatum hosts** are the fastest numbers in the table and the least useful: they
+  gate `getBalance` and `getTokenAccountsByOwner` behind a paid plan (`-16401`) and cap
+  the keyless tier at 5 requests/minute. They now rank last, behind mainnet-beta.
+- **PublicNode** serves `getBalance` perfectly while refusing precisely the calls behind
+  $THREE holder gating and token balances
+  ([api/\_lib/balances.js](../../api/_lib/balances.js),
+  [api/\_lib/coin/holders.js](../../api/_lib/coin/holders.js),
+  [api/\_lib/embed-gate.js](../../api/_lib/embed-gate.js),
+  [api/scene/gate-check.js](../../api/scene/gate-check.js)), and it does so by *hanging*
+  rather than erroring, so each first call costs the full attempt timeout before the
+  method demotion parks it. Putting it in front of those readers takes the feature down
+  while every dashboard still reads green.
+
+A balance read that cannot reach a lane must never be recorded as a balance of zero.
+[scripts/audit-service-wallets.mjs](../../scripts/audit-service-wallets.mjs) reports an
+unreadable wallet as `‼ unreadable`, and
+[scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs) classifies that as `investigate`,
+never as the `owner` "fund this wallet" finding. On 2026-08-07 the older behaviour turned
+one throttled lane into four fake below-floor money emergencies.
 
 ## Why a refusal must rotate, and when it must not
 
@@ -190,9 +214,12 @@ itself: read these before concluding the tier is dead.
 
 ```sh
 # Repoint the primary at a healthy lane (config only, takes effect on the new revision).
+# Re-probe with the capability table above before picking one: the right answer
+# changes as free providers gate methods. As of 2026-08-07 mainnet-beta is the only
+# keyless lane serving getBalance AND getTokenAccountsByOwner.
 gcloud run services update three-ws-api --region us-central1 \
   --project aerial-vehicle-466722-p5 \
-  --update-env-vars SOLANA_RPC_URL=https://rpc.magicblock.app/mainnet
+  --update-env-vars SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 ```
 
 Then confirm the tier view recovered:
