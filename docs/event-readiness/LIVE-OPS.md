@@ -189,6 +189,39 @@ code's own documented landmines plus what was measured on 2026-08-08.
 
 ---
 
+## Talk to the whole world mid-event
+
+`scripts/announce-play.mjs` pushes a message to every player standing in a live
+world, right now. It is the host's microphone: use it to call each agenda beat,
+to tell people where to go, and to say anything that cannot wait for chat to
+scroll. Requires the world server to be running the event build (the endpoint is
+`/internal/announce`; a 404 means the deploy below has not happened yet).
+
+```bash
+# Every live world, toast only
+node scripts/announce-play.mjs "Totem showdown starts in 2 minutes. Get to the plaza."
+
+# With a title: also raises the centre-screen banner for 12s
+node scripts/announce-play.mjs \
+  --title "Wheel hour" \
+  --detail "Free spin at Fortune's Folly, prizes on every wedge" \
+  "Wheel hour is open. Head to the plaza wheel."
+
+# Only the $THREE world, and hold the banner 30s
+node scripts/announce-play.mjs --coin FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump \
+  --duration-ms 30000 --title "Fireworks" "Look up."
+```
+
+It prints how many rooms and players it reached, so `0 player(s)` is your cue
+that nobody is in the world yet (or that you targeted the wrong coin). The
+request is HMAC-signed with `MULTIPLAYER_SHARED_SECRET` (falling back to
+`HOLDER_PASS_SECRET`, which is in `.env`), and the server rejects an unsigned or
+stale call, so the endpoint is safe to leave exposed. Announcements ride the same
+`notice` channel the game already uses, so they reach every connected client
+regardless of which build the player loaded.
+
+---
+
 ## Escalation: which tool for which subsystem
 
 | Subsystem | Tool |
