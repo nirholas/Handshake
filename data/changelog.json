@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-08",
+			"title": "Garment generations that lose their worker are picked back up again",
+			"summary": "If the machine building your garment went away mid-job (a restart, a scale-down, a crash), the job is designed to survive that: it is written down durably, and a sweep every ten minutes asks a live machine to pick it back up. That sweep had been failing since late July, because the garment worker was running an older build that did not yet answer the sweep call, so orphaned jobs sat waiting instead of finishing. The worker now runs the current build and the sweep completes normally, so a garment whose machine disappeared gets re-driven within ten minutes instead of being buried. Nothing about how you submit a garment changes; jobs that used to quietly stall now finish.",
+			"tags": [
+				"fix"
+			],
+			"link": "/studio"
+		},
+		{
+			"date": "2026-08-08",
 			"title": "Show up to a live event and you keep something from it",
 			"summary": "There is now a free commemorative wearable for being somewhere at a particular time. Walk into the event world while a live event is running and the Meetup Laurel, a gold laurel circlet with three pearl berries at the front, lands on your account. A card slides in over the corner of the screen telling you what you got, with a button to put it on right there; it is not a pop-up, so it never interrupts what you were doing, and if you dismiss it the laurel is waiting in My Fits. It is yours permanently and wears in every coin world, not just the one you earned it in. The part that makes it worth having is what does not happen: when the event ends, it is never granted again. It has no price, it is not in the boutique, and there is no way to buy one afterwards. Joining twice does not give you two, and the server, not your browser, decides you earned it. The only way to have one is to have been there.",
 			"tags": [

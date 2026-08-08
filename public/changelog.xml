@@ -111,6 +111,14 @@
 			<description>In any coin's world you can now describe an item and have it built for real, right there. Open build mode, click Forge in the props palette, and type something like a mossy stone lantern with a copper roof, or attach a reference photo and let it work from that. About half a minute later the finished 3D model is added to your props and armed, so the next click drops it into the world. There is a chat shortcut too: type /forge a brass telescope and the item lands ready to place without opening the palette at all. Anything you place appears for everyone else connected to that server and stays there, exactly like a block you built by hand. It is free, needs no account or wallet, and every failure explains itself and can be retried.</description>
 		</item>
 		<item>
+			<title>Garment generations that lose their worker are picked back up again</title>
+			<link>https://three.ws/studio</link>
+			<guid isPermaLink="false">2026-08-08:Garment generations that lose their worker are picked back up again</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>If the machine building your garment went away mid-job (a restart, a scale-down, a crash), the job is designed to survive that: it is written down durably, and a sweep every ten minutes asks a live machine to pick it back up. That sweep had been failing since late July, because the garment worker was running an older build that did not yet answer the sweep call, so orphaned jobs sat waiting instead of finishing. The worker now runs the current build and the sweep completes normally, so a garment whose machine disappeared gets re-driven within ten minutes instead of being buried. Nothing about how you submit a garment changes; jobs that used to quietly stall now finish.</description>
+		</item>
+		<item>
 			<title>One link to share for the live event, with a real headcount</title>
 			<link>https://three.ws/event</link>
 			<guid isPermaLink="false">2026-08-08:One link to share for the live event, with a real headcount</guid>
