@@ -175,6 +175,53 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 
 	// ── Filtering ─────────────────────────────────────────────────────────────
 
+	// Sorted by relevance to THIS visitor, not by locale code. Unranked, a
+	// ~500-voice Edge catalog opens on af-ZA and sq-AL, which reads like a
+	// database dump. Voices that speak the visitor's own language come first,
+	// then English, then everything else; multi-language lanes (Gemini, OpenAI,
+	// NVIDIA) count as speaking it. Ties break on provider order, then name.
+	const PROVIDER_ORDER = new Map(
+		['gemini', 'edge', 'nvidia', 'openai', 'elevenlabs'].map((id, i) => [id, i]),
+	);
+	const uiLocale = String(
+		(typeof navigator !== 'undefined' && navigator.language) || 'en-US',
+	).toLowerCase();
+	const uiPrimary = uiLocale.split('-')[0];
+
+	function localeRank(v) {
+		const locale = String(v.locale || '').toLowerCase();
+		if (!locale) return String(v.language || '') === 'multi' ? 0 : 3;
+		if (locale === uiLocale) return 0;
+		if (locale.split('-')[0] === uiPrimary) return 1;
+		return locale.startsWith('en') ? 2 : 3;
+	}
+
+	/**
+	 * Order a filtered list for display. Within a relevance rank the providers
+	 * are round-robined rather than grouped, so the first screen is a mix (a
+	 * Gemini voice, an Edge voice, an NVIDIA voice) instead of 30 Gemini cards
+	 * with the visitor's own locale buried on page two.
+	 */
+	function rankForDisplay(list) {
+		const seen = new Map(); // "<rank>:<provider>" -> how many placed so far
+		return list
+			.map((v) => {
+				const rank = localeRank(v);
+				const key = `${rank}:${v.provider}`;
+				const slot = seen.get(key) || 0;
+				seen.set(key, slot + 1);
+				return { v, rank, slot, order: PROVIDER_ORDER.get(v.provider) ?? 9 };
+			})
+			.sort(
+				(a, b) =>
+					a.rank - b.rank ||
+					a.slot - b.slot ||
+					a.order - b.order ||
+					String(a.v.name).localeCompare(String(b.v.name)),
+			)
+			.map((e) => e.v);
+	}
+
 	function applyFilter() {
 		const q = els.search.value.trim().toLowerCase();
 		const lang = els.language.value;
@@ -196,6 +243,9 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 			}
 			return true;
 		});
+		// The shared library arrives in ElevenLabs' own relevance order; re-sorting
+		// it would throw away the ranking the search just produced.
+		if (activeProvider !== 'elevenlabs-library') filtered = rankForDisplay(filtered);
 		renderCards(true);
 		setStatus(
 			`${filtered.length} voice${filtered.length === 1 ? '' : 's'}` +

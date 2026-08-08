@@ -118,6 +118,9 @@
 .kg-spin-btn:active:not(:disabled) { transform: translateY(1px); }
 .kg-spin-btn:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
 .kg-spin-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* `.kg-spin-free` carries no rules on purpose: the free spin is the primary
+   action, so it takes `.kg-spin-btn` above unchanged. The class stays as a hook
+   for tests and future theming. Only the paid button overrides. */
 /* The paid spin is the secondary action: quieter than the free one. */
 .kg-spin-btn.kg-spin-paid {
 	background: var(--cc-bg2); color: var(--cc-text); border-color: var(--cc-edge); box-shadow: none;

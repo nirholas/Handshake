@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-08",
+			"title": "Show up to a live event and you keep something from it",
+			"summary": "There is now a free commemorative wearable for being somewhere at a particular time. Walk into the event world while a live event is running and the Meetup Laurel, a gold laurel circlet with three pearl berries at the front, lands on your account. A card slides in over the corner of the screen telling you what you got, with a button to put it on right there; it is not a pop-up, so it never interrupts what you were doing, and if you dismiss it the laurel is waiting in My Fits. It is yours permanently and wears in every coin world, not just the one you earned it in. The part that makes it worth having is what does not happen: when the event ends, it is never granted again. It has no price, it is not in the boutique, and there is no way to buy one afterwards. Joining twice does not give you two, and the server, not your browser, decides you earned it. The only way to have one is to have been there.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
 			"title": "The coin community list reads like a finished page now",
 			"summary": "Four things were wrong with the list of coin worlds on /play, and together they made the grid look unfinished. Every card carried a wide band of empty space under the coin's name, because the \"Enter community\" button was hidden until you hovered the card, while still taking up its full height. On a phone or tablet, where there is no hover, that button never appeared at all, so the most important control on the page was invisible to most of the people looking at it. The button now rests on every card as a quiet outline and turns solid white on hover or when you tab to it, which fills the space, works on touch, and tells you the tile is clickable in the first place. The cards also showed no market cap, because the trending and search feeds behind them were dropping the number before it ever reached the page; they now carry it, so each coin shows its size the way the featured world already did. The Adventure mode button's crossed-swords icon was an emoji with the colour stripped out, which on most machines collapses into a plain X and read as a close button next to the search field, so it is now a drawn icon. And an avatar in the character picker could show as an empty square: if a model turned out to have nothing measurable to photograph, the picker replaced a perfectly good preview with a fully transparent one. It now keeps whatever it was already showing.",
 			"tags": [

@@ -142,3 +142,35 @@ describe('clampParam: name and symbol are display-only text', () => {
 		expect(clampParam(null, 16)).toBe('');
 	});
 });
+
+// The Wheel of Fortune modal shipped with no stylesheet at all: its markup was
+// appended to document.body with `position`, `z-index` and sizing all undefined,
+// so the paid-spin flow rendered as an unstyled block below the WebGL canvas and
+// was effectively unreachable. It is a lazy chunk, so it cannot rely on
+// coincommunities.css having loaded; it must carry its own styles.
+describe('the spin wheel carries its own styles', () => {
+	const js = read('../src/game/spin-wheel-ui.js');
+	const css = read('../src/game/spin-wheel.css');
+
+	it('imports its stylesheet', () => {
+		expect(js).toMatch(/import '\.\/spin-wheel\.css'/);
+	});
+
+	it('positions the overlay itself rather than inheriting from the page', () => {
+		expect(css).toMatch(/\.kg-spin-overlay\s*\{[^}]*position:\s*fixed/s);
+		expect(css).toMatch(/\.kg-spin-overlay\s*\{[^}]*z-index/s);
+	});
+
+	it('has a rule for every class the modal renders', () => {
+		const used = new Set(
+			[...js.matchAll(/class: '([^']+)'/g)]
+				.flatMap((m) => m[1].split(/\s+/))
+				.filter((c) => c.startsWith('kg-spin')),
+		);
+		expect(used.size).toBeGreaterThan(10);
+		// `.kg-spin-free` is deliberately rule-less: the free spin is the primary
+		// action and takes `.kg-spin-btn` unchanged (see the note in the CSS).
+		const missing = [...used].filter((c) => c !== 'kg-spin-free' && !css.includes('.' + c));
+		expect(missing).toEqual([]);
+	});
+});

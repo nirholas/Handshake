@@ -151,12 +151,28 @@
 			<description>If your connection dropped inside a coin world and came back, the people around you could end up duplicated: a frozen copy of everyone standing where they were when you dropped, plus their live selves, and a motionless copy of you standing at the spawn point on everyone else's screen. Reconnecting now rebuilds the crowd from what the world server actually holds, retires anyone who left while you were away, and tells the server to retire your old session the moment you return. Standing still through a drop no longer strands you at the spawn point either, and a tab you left in the background for a few minutes now checks its connection the instant you come back instead of sitting on a dead one that still claims to be connected. Nameplates past sixty metres stop being drawn, so a plaza with a hundred people in it costs what the people near you cost.</description>
 		</item>
 		<item>
+			<title>Show up to a live event and you keep something from it</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-08:Show up to a live event and you keep something from it</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>There is now a free commemorative wearable for being somewhere at a particular time. Walk into the event world while a live event is running and the Meetup Laurel, a gold laurel circlet with three pearl berries at the front, lands on your account. A card slides in over the corner of the screen telling you what you got, with a button to put it on right there; it is not a pop-up, so it never interrupts what you were doing, and if you dismiss it the laurel is waiting in My Fits. It is yours permanently and wears in every coin world, not just the one you earned it in. The part that makes it worth having is what does not happen: when the event ends, it is never granted again. It has no price, it is not in the boutique, and there is no way to buy one afterwards. Joining twice does not give you two, and the server, not your browser, decides you earned it. The only way to have one is to have been there.</description>
+		</item>
+		<item>
 			<title>The /play lobby and world stop leaking, and work on a phone</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-08-08:The /play lobby and world stop leaking, and work on a phone</guid>
 			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Entering and leaving coin worlds repeatedly used to leave the previous world behind: peers were duplicated on every reconnect, mobs and vehicles could vanish for an entire session if your avatar loaded slowly, and cancelling the holders gate left an invisible dialog trapping your keyboard until you reloaded. Those are fixed, along with a set of memory leaks that piled up every time you hopped worlds. On touch devices the Enter community button on each lobby card was invisible, because it only appeared on mouse hover; it is now always visible on phones and when tabbing with a keyboard. The three contextual action buttons that could stack exactly on top of each other now each have their own row, so standing near the wheel and a gather node no longer hides one behind the other. Denying microphone access repeatedly no longer breaks voice for the rest of your session.</description>
+		</item>
+		<item>
+			<title>The coin community list reads like a finished page now</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-08:The coin community list reads like a finished page now</guid>
+			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Four things were wrong with the list of coin worlds on /play, and together they made the grid look unfinished. Every card carried a wide band of empty space under the coin's name, because the &quot;Enter community&quot; button was hidden until you hovered the card, while still taking up its full height. On a phone or tablet, where there is no hover, that button never appeared at all, so the most important control on the page was invisible to most of the people looking at it. The button now rests on every card as a quiet outline and turns solid white on hover or when you tab to it, which fills the space, works on touch, and tells you the tile is clickable in the first place. The cards also showed no market cap, because the trending and search feeds behind them were dropping the number before it ever reached the page; they now carry it, so each coin shows its size the way the featured world already did. The Adventure mode button's crossed-swords icon was an emoji with the colour stripped out, which on most machines collapses into a plain X and read as a close button next to the search field, so it is now a drawn icon. And an avatar in the character picker could show as an empty square: if a model turned out to have nothing measurable to photograph, the picker replaced a perfectly good preview with a fully transparent one. It now keeps whatever it was already showing.</description>
 		</item>
 		<item>
 			<title>The meetup has its own jobs, and a live leaderboard to race on</title>
