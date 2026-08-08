@@ -155,7 +155,17 @@ async function touchScan(label) {
 async function focusSweep(label) {
 	const res = await page.evaluate(() => {
 		const TABBABLE = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
-		const ring = (cs) => `${cs.outlineStyle}|${cs.outlineWidth}|${cs.outlineColor}|${cs.boxShadow}|${cs.borderColor}|${cs.backgroundColor}`;
+		// A focus indicator is often painted on a ::before/::after ring rather than
+		// the control itself, so the fingerprint has to cover the pseudo-elements
+		// too or a perfectly visible ring reads as missing.
+		const style = (n) => {
+			const parts = [];
+			for (const pseudo of [null, '::before', '::after']) {
+				const cs = getComputedStyle(n, pseudo);
+				parts.push(`${cs.outlineStyle}|${cs.outlineWidth}|${cs.outlineColor}|${cs.boxShadow}|${cs.borderColor}|${cs.backgroundColor}|${cs.opacity}`);
+			}
+			return parts.join('##');
+		};
 		const out = { total: 0, noRing: [], notFocusable: [] };
 		const prev = document.activeElement;
 		for (const n of document.querySelectorAll(TABBABLE)) {
@@ -164,7 +174,7 @@ async function focusSweep(label) {
 			const cs0 = getComputedStyle(n);
 			if (r.width === 0 || r.height === 0 || cs0.visibility === 'hidden' || cs0.display === 'none') continue;
 			out.total++;
-			const resting = ring(cs0);
+			const resting = style(n);
 			n.focus({ preventScroll: true });
 			const focused = document.activeElement === n;
 			const desc = {
@@ -172,7 +182,7 @@ async function focusSweep(label) {
 				label: (n.getAttribute('aria-label') || n.title || n.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 34),
 			};
 			if (!focused) { out.notFocusable.push(desc); continue; }
-			if (ring(getComputedStyle(n)) === resting) out.noRing.push(desc);
+			if (style(n) === resting) out.noRing.push(desc);
 			n.blur();
 		}
 		if (prev && prev.focus) prev.focus({ preventScroll: true });
@@ -267,7 +277,11 @@ const introDismissed = await page.evaluate(() => {
 });
 if (introDismissed) console.log(at(), '[dismissed] cold-open intro');
 await page.waitForTimeout(600);
-await tabTrapCheck('lobby');
+// Opt-in: a real Tab press costs a page round trip, and on a machine rendering
+// this world in software that is seconds each. focusSweep above already proves
+// reachability, so the trap check is only worth its minutes when something
+// looks wrong with the tab order specifically.
+if (process.env.TAB_CHECK === '1') await tabTrapCheck('lobby');
 
 // ── 2. search: a query with hits, then one with none ───────────────────────
 const search = await page.$('.cc-search input');

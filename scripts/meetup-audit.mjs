@@ -127,14 +127,22 @@ check('zen mode hides the event UI', await page.evaluate(() => {
 await page.keyboard.press('z');
 await page.waitForTimeout(600);
 
-// --- photo --------------------------------------------------------------------
+// --- photo ----------------------------------------------------------------------
+// The agenda's photo action hands off to /play's shared photo mode
+// (src/game/photo-mode.js), which stamps the shot with this same event.
 await page.evaluate(() => document.getElementById('cc-meetup-chip')?.click());
 await page.waitForSelector('#cc-meetup-panel.cc-meetup-panel--open', { timeout: 8000 }).catch(() => {});
-const download = page.waitForEvent('download', { timeout: 30_000 }).catch(() => null);
 await page.evaluate(() => document.querySelector('.cc-meetup-photo-btn')?.click());
-const dl = await download;
-check('commemorative photo downloads a framed image', !!dl, dl ? dl.suggestedFilename() : 'no download event');
-if (dl) await dl.saveAs(`${SHOTS}/03-photo.jpg`).catch(() => {});
+const photoCard = await page.waitForSelector('.cc-photo-card', { timeout: 30_000 }).catch(() => null);
+check('photo action opens the shared photo mode', photoCard);
+check('agenda drawer gets out of the shot', await page.evaluate(() =>
+	!document.querySelector('#cc-meetup-panel.cc-meetup-panel--open')));
+check('photo card offers a download of the framed shot', await page.evaluate(() => {
+	const a = document.querySelector('.cc-photo-card a.cc-photo-primary[download]');
+	return !!a && /^blob:/.test(a.href);
+}));
+await page.screenshot({ path: `${SHOTS}/03-photo.png`, timeout: 60_000 }).catch(() => {});
+await page.keyboard.press('Escape');
 
 // --- mobile ---------------------------------------------------------------------
 await page.setViewportSize({ width: 390, height: 844 });

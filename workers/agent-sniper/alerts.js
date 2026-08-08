@@ -46,14 +46,14 @@ export function alertFeedDown({ network, mode }) {
 }
 
 /**
- * The fleet cannot place a single entry — every armed wallet is below the size
+ * The fleet cannot place a single entry: every armed wallet is below the size
  * its own executor would accept. This is the alert the 2026-07-29 outage did not
  * have: the worker stayed green for ten days while booking a thousand failed
  * buys, because nothing watched the money.
  */
 export function alertFleetStarved({ summary, network, mode }) {
 	alert(
-		'fleet starved — no wallet can trade',
+		'fleet starved, no wallet can trade',
 		`${summary} Network ${network} (${mode}). Nothing will fill until SOL reaches these wallets.`,
 		'sniper:fleet-starved',
 	);

@@ -43,13 +43,24 @@ function check(name, ok, detail = '') {
 	return ok;
 }
 
+// page.evaluate has no timeout of its own: a page whose main thread is wedged
+// (a stuck render loop, a renderer starved on a loaded box) never resolves it,
+// and a polling loop built on it hangs forever instead of failing its check.
+// Race every probe so a hung page reads as a failed assertion, not a dead run.
+function evalWithTimeout(page, fn, arg, ms = 15000) {
+	return Promise.race([
+		page.evaluate(fn, arg),
+		new Promise((resolve) => setTimeout(() => resolve({ evalError: `page did not answer in ${ms}ms` }), ms)),
+	]);
+}
+
 // Poll a page expression until it is truthy or the deadline passes. Returns the
 // last value seen, so a failed wait can report what it actually got.
 async function until(page, fn, { timeout = 30000, every = 250, arg } = {}) {
 	const deadline = Date.now() + timeout;
 	let last;
 	for (;;) {
-		try { last = await page.evaluate(fn, arg); } catch (err) { last = { evalError: String(err).slice(0, 120) }; }
+		try { last = await evalWithTimeout(page, fn, arg); } catch (err) { last = { evalError: String(err).slice(0, 120) }; }
 		if (last && !last.evalError && (last === true || last.ok !== false)) {
 			if (last === true || last.ok === true) return last;
 		}
@@ -149,7 +160,7 @@ async function openClient(browser, tag, name) {
 // Onboarding cards and the intro sheet sit over the world; clear whatever is up.
 async function dismissOverlays(page, rounds = 4) {
 	for (let i = 0; i < rounds; i++) {
-		const clicked = await page.evaluate(() => {
+		const clicked = await evalWithTimeout(page, () => {
 			const btn = [...document.querySelectorAll('button')].find(
 				(b) => /^(continue|enter the world|got it|start|close|skip|drop in now)$/i.test(b.textContent.trim()) && b.offsetParent,
 			);
@@ -169,7 +180,7 @@ async function sendChat(page, text) {
 // Drive the local avatar to a position and let the send loop publish it. Uses the
 // same sendMove the input handler calls, so this exercises the real wire.
 async function moveTo(page, x, z) {
-	await page.evaluate(({ x, z }) => {
+	await evalWithTimeout(page, ({ x, z }) => {
 		const cc = window.__CC__;
 		cc.localPos.x = x; cc.localPos.z = z;
 		cc.net.sendMove({ x, y: cc.localPos.y, z, yaw: cc.localYaw, motion: 'walk' });
@@ -204,7 +215,7 @@ try {
 	check('B sees A', bSees?.ok === true, JSON.stringify(bSees));
 
 	// ------------------------------------------------------- name + look sync
-	let bSnap = await b.page.evaluate(snapshot);
+	let bSnap = await evalWithTimeout(b.page, snapshot);
 	check('B renders A\'s display name on the nameplate',
 		bSnap.remotes.some((r) => r.name === 'AliceQA'),
 		JSON.stringify(bSnap.remotes.map((r) => r.name)));
@@ -224,7 +235,7 @@ try {
 	check('A\'s movement reaches B', moved?.ok === true, `${Date.now() - moveStart}ms · ${JSON.stringify(moved)}`);
 
 	// --------------------------------------------------------------- emotes
-	await a.page.evaluate(() => window.__CC__.net.sendEmote('wave'));
+	await evalWithTimeout(a.page, () => window.__CC__.net.sendEmote('wave'));
 	const emoted = await until(b.page, () => {
 		const st = window.__CC__?.net?.state;
 		const players = st?.players ? [...st.players.values()] : [];
@@ -254,7 +265,7 @@ try {
 	const xss = '<img src=x onerror="window.__XSS__=1"><b>bold</b>';
 	await sendChat(a.page, xss);
 	await b.page.waitForTimeout(1200);
-	const escaped = await b.page.evaluate((raw) => {
+	const escaped = await evalWithTimeout(b.page, (raw) => {
 		const rows = [...document.querySelectorAll('.cc-chat-msg .cc-chat-text')];
 		const row = rows.find((n) => n.textContent === raw);
 		return {
@@ -273,16 +284,16 @@ try {
 	const burst = Date.now();
 	for (let i = 0; i < 8; i++) await sendChat(a.page, `spam-${burst}-${i}`);
 	await b.page.waitForTimeout(2000);
-	const delivered = await b.page.evaluate((tag) =>
+	const delivered = await evalWithTimeout(b.page, (tag) =>
 		[...document.querySelectorAll('.cc-chat-msg .cc-chat-text')].filter((n) => n.textContent.startsWith(`spam-${tag}-`)).length, burst);
 	check('chat burst is throttled server-side', delivered < 8, `${delivered}/8 relayed`);
 
 	// The log must not grow without bound — the UI caps it.
-	const capped = await b.page.evaluate(() => document.querySelectorAll('.cc-chat-msg').length <= 200);
+	const capped = await evalWithTimeout(b.page, () => document.querySelectorAll('.cc-chat-msg').length <= 200);
 	check('chat log is capped in the DOM', capped === true);
 
 	// ------------------------------------------------------- forced disconnect
-	const aBefore = await a.page.evaluate(snapshot);
+	const aBefore = await evalWithTimeout(a.page, snapshot);
 	console.log(`${at()} [A] going offline for ${OFFLINE_MS}ms (session ${aBefore.sessionId})`);
 	await a.ctx.setOffline(true);
 	const dropped = await until(a.page, () => {
@@ -290,14 +301,14 @@ try {
 		return { ok: s !== 'online', status: s };
 	}, { timeout: 30000, every: 250 });
 	check('A notices the drop', dropped?.ok === true, JSON.stringify(dropped));
-	const pill = await a.page.evaluate(() => document.querySelector('#cc-hud [role]')?.textContent || document.body.innerText.match(/reconnecting…|offline, tap to retry/i)?.[0] || null);
+	const pill = await evalWithTimeout(a.page, () => document.querySelector('#cc-hud [role]')?.textContent || document.body.innerText.match(/reconnecting…|offline, tap to retry/i)?.[0] || null);
 	check('A shows a reconnect indicator while down', /reconnect|offline/i.test(String(pill)), String(pill).slice(0, 60));
 
 	await a.page.waitForTimeout(OFFLINE_MS);
 	await a.ctx.setOffline(false);
 	// Simulate the tab coming back to the foreground: the same path a phone takes
 	// after Safari froze the page, and the fast lane out of the retry backoff.
-	await a.page.evaluate(() => {
+	await evalWithTimeout(a.page, () => {
 		document.dispatchEvent(new Event('visibilitychange'));
 		dispatchEvent(new Event('online'));
 	});
@@ -307,7 +318,7 @@ try {
 	}, { timeout: 20000, every: 250 });
 	check('A reconnects automatically after the network returns', back?.ok === true, JSON.stringify(back));
 
-	const aAfter = await a.page.evaluate(snapshot);
+	const aAfter = await evalWithTimeout(a.page, snapshot);
 	check('A gets a fresh session on reconnect', !!aAfter.sessionId && aAfter.sessionId !== aBefore.sessionId,
 		`${aBefore.sessionId} → ${aAfter.sessionId}`);
 	check('A\'s roster after resync holds exactly one peer (no ghosts)', aAfter.remotes.length === 1,

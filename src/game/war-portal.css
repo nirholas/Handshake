@@ -1,4 +1,4 @@
-/* War Portal (F18) — the in-world Coin Wars panel and its prompt button.
+/* War Portal (F18): the in-world Coin Wars panel and its prompt button.
  *
  * Scoped entirely to .wp-* so it can never reach into the rest of the /play HUD.
  * Colours come from the world's existing dark UI vocabulary; the only accents are

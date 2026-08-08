@@ -1,8 +1,8 @@
-// war-world.js — the 3D arena a Coin Wars battle is fought in.
+// war-world.js: the 3D arena a Coin Wars battle is fought in.
 //
 // ClashRoom (multiplayer/src/rooms/ClashRoom.js) is fully authoritative: it owns
 // positions, targeting, damage, respawns, the round clock and the score. This
-// module is the eyes and hands for that room and nothing more — it renders the
+// module is the eyes and hands for that room and nothing more: it renders the
 // arena and every fighter in it, walks the local fighter around (sending intent,
 // never claiming an outcome), and plays the feedback the server broadcasts.
 //

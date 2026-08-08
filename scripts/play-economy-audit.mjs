@@ -30,7 +30,7 @@ const log = (...a) => console.log(...a);
 const results = [];
 function check(name, pass, detail) {
 	results.push({ name, pass });
-	log(`${pass ? '  ok  ' : ' FAIL '} ${name}${detail ? ` — ${detail}` : ''}`);
+	log(`${pass ? '  ok  ' : ' FAIL '} ${name}${detail ? `: ${detail}` : ''}`);
 }
 
 // Every targeted message the economy speaks, captured as it arrives. The room

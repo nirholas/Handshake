@@ -124,7 +124,7 @@ export const WHEEL_REACH = 3.0;
 export function nearestWheel(x, z) { return nearestNode(x, z, WHEEL, WHEEL_REACH); }
 export function wheelInRange(x, z) { return nodeInRange(x, z, WHEEL, WHEEL_REACH); }
 
-// The cash counters — the general store's vendor stalls and the bank/ATM (W04).
+// The cash counters: the general store's vendor stalls and the bank/ATM (W04).
 //
 // Mirrors of the 'vendor' and 'atm' spawns in src/game/world-zones.js, where the
 // economy NPCs stand (tests/play-counters.test.js pins the two lists equal, so a

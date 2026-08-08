@@ -1,12 +1,12 @@
 // @ts-check
 /**
- * Agent Sniper — fleet solvency.
+ * Agent Sniper: fleet solvency.
  *
  * The failure this module exists to make visible: between 2026-07-29 and
  * 2026-08-08 the sniper fleet booked over a thousand consecutive failed entries
  * and closed zero trades, while `/api/sniper/status` reported `state: "live"`
- * the entire time. Everything the status endpoint measured was true — the
- * process was up, the feed was connected, strategies were armed — and none of
+ * the entire time. Everything the status endpoint measured was true (the
+ * process was up, the feed was connected, strategies were armed), and none of
  * it was the thing that mattered. The wallets were too poor to place a single
  * buy, and the funding master they refill from was itself down to dust, so the
  * auto-funder could not fix it either.
@@ -17,7 +17,7 @@
  * every check that only looks at the process.
  *
  * The rule that keeps this honest: a wallet's trade state is decided by
- * `resolveEntrySize` — the SAME function the executor calls to size or skip a
+ * `resolveEntrySize`, the SAME function the executor calls to size or skip a
  * real entry (api/_lib/agent-trade-guards.js, used at workers/agent-sniper/
  * executor.js step 4). Duplicating its thresholds here is how this surface
  * would drift into claiming "tradeable" for a wallet the executor skips, which
@@ -52,10 +52,10 @@ function toLamports(sol) {
 /**
  * What one wallet can do with its next entry, per the executor's own sizing rule.
  *
- *   'funded'  — can place the arm's configured size
- *   'shrunk'  — can still trade, but only below the configured size (the
+ *   'funded'  : can place the arm's configured size
+ *   'shrunk'  : can still trade, but only below the configured size (the
  *               executor shrinks rather than skips: learning > profit)
- *   'starved' — cannot place any entry; the executor sits this wallet out
+ *   'starved' : cannot place any entry; the executor sits this wallet out
  *
  * @param {number} balanceSol current wallet balance
  * @param {number} perTradeSol the arm's configured per-trade size
@@ -79,16 +79,16 @@ export function walletTradeState(balanceSol, perTradeSol, minTradeLamports = DEF
  * `state` is the headline, and it is deliberately about capability rather than
  * count: a fleet where every wallet is starved is `starved` no matter how many
  * strategies are armed, because the honest answer to "is the sniper working" is
- * no. One tradeable wallet among starved ones is `degraded` — it still trades,
+ * no. One tradeable wallet among starved ones is `degraded`: it still trades,
  * just not at fleet strength.
  *
- *   'unknown'  — nothing measured yet (no armed wallets, or balances unread)
- *   'funded'   — every wallet can place its configured size
- *   'degraded' — at least one wallet can still trade, at least one cannot
- *   'starved'  — no wallet can place any entry; the fleet is financially dead
+ *   'unknown'  : nothing measured yet (no armed wallets, or balances unread)
+ *   'funded'   : every wallet can place its configured size
+ *   'degraded' : at least one wallet can still trade, at least one cannot
+ *   'starved'  : no wallet can place any entry; the fleet is financially dead
  *
  * `deficitSol` is what it would cost to lift every starved wallet back to its
- * own refill target — i.e. the number to hand an operator who asks "how much
+ * own refill target, i.e. the number to hand an operator who asks "how much
  * SOL does this need?". `masterCanCover` answers whether the auto-funder can
  * close that gap by itself, which is the difference between "it will heal in
  * five minutes" and "a human has to move money".
@@ -167,7 +167,7 @@ export function summarizeFleetSolvency({ wallets, masterSol = null, minTradeLamp
  * (nothing else can be true). Solvency outranks the feed checks: "no wallet can
  * pay for a trade" is both more specific and more actionable than "the feed is
  * quiet", and it is the condition that went unreported for ten days. An
- * unmeasured fleet ('unknown') never downgrades anything — absence of a
+ * unmeasured fleet ('unknown') never downgrades anything: absence of a
  * measurement is not evidence of insolvency.
  *
  * Pure. Exported so the verdict is testable without a DB or a live worker.

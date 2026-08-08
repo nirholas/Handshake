@@ -48,7 +48,7 @@ export const TTS_ELEVEN_USD_PER_1K = 0.3;
 
 // OpenAI TTS (gpt-4o-mini-tts / tts-1): retail USD per 1,000 synthesized
 // characters on the platform key. Upstream is ~$0.015/1k chars; $0.03 retail
-// keeps the same margin shape as the ElevenLabs rung. Same policy applies —
+// keeps the same margin shape as the ElevenLabs rung. Same policy applies:
 // a vendor-billed lane never has a free tier (owner policy 2026-08-06), so
 // every platform-key OpenAI synthesis is metered to the caller's credits.
 export const TTS_OPENAI_USD_PER_1K = 0.03;

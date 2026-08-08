@@ -1,8 +1,8 @@
-// War Portal — the Coin Wars door standing in every /play coin world (F18).
+// War Portal: the Coin Wars door standing in every /play coin world (F18).
 //
 // Coin Wars is a finished game: ClashRoom runs real community-vs-community
 // battles with a countdown, a round clock, sudden death and an Elo league behind
-// it. Until this landed, none of that was reachable from inside a world — a
+// it. Until this landed, none of that was reachable from inside a world, a
 // player standing in their coin's plaza had no way to know wars existed. This is
 // the door.
 //
@@ -11,13 +11,13 @@
 //      the chart jumbotron) painted with this community's real league standing,
 //      the last battles it fought, and any war running right now. Data comes
 //      from /api/wars, which folds the battle ledger through the SAME Elo math
-//      the arena uses (multiplayer/src/war-standings.js) — nothing is recomputed
+//      the arena uses (multiplayer/src/war-standings.js): nothing is recomputed
 //      here.
 //   2. THE QUEUE. Press E and the portal runs this coin's holder gate (the exact
 //      gate the Holders world runs), queues the community for a battle, and the
 //      moment a second community is waiting hands the player through to the
 //      arena at /play/war with a signed war ticket and a return link that
-//      carries the full coin identity — so walking back in lands in this same
+//      carries the full coin identity, so walking back in lands in this same
 //      world, not the lobby.
 //   3. SPECTATING. While a war involving this coin is live, the board becomes a
 //      scoreboard: score, round clock, kill feed. Text and numbers off a cheap
@@ -102,16 +102,6 @@ function clock(ms) {
 
 function label(side) {
 	return side?.symbol ? `$${side.symbol}` : (side?.name || 'Community');
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-	ctx.beginPath();
-	ctx.moveTo(x + r, y);
-	ctx.arcTo(x + w, y, x + w, y + h, r);
-	ctx.arcTo(x + w, y + h, x, y + h, r);
-	ctx.arcTo(x, y + h, x, y, r);
-	ctx.arcTo(x, y, x + w, y, r);
-	ctx.closePath();
 }
 
 export class WarPortal {
@@ -296,7 +286,7 @@ export class WarPortal {
 		}
 	}
 
-	// Public: act if in range. SYNCHRONOUS for the same reason WheelStation's is —
+	// Public: act if in range. SYNCHRONOUS for the same reason WheelStation's is:
 	// coincommunities' E-key chain calls each system's interact() looking for the
 	// one that consumed the press, and a Promise is always truthy.
 	interact() {
@@ -418,10 +408,10 @@ export class WarPortal {
 		const won = battle.winner === mint;
 		const drew = battle.winner === 'draw';
 		const line = drew
-			? `⚔ War drawn with ${label(them)} — ${us.score}:${them.score}`
+			? `⚔ War drawn with ${label(them)}: ${us.score}:${them.score}`
 			: won
-				? `⚔ ${label(us)} won the war against ${label(them)} — ${us.score}:${them.score}`
-				: `⚔ ${label(them)} took the war — ${them.score}:${us.score}`;
+				? `⚔ ${label(us)} won the war against ${label(them)}: ${us.score}:${them.score}`
+				: `⚔ ${label(them)} took the war: ${them.score}:${us.score}`;
 		this.ui?.toast?.(line, won ? 'success' : drew ? 'info' : 'warn');
 		if (won) {
 			this._hype = { until: Date.now() + HYPE_MS, battle, us, them };
@@ -445,7 +435,7 @@ export class WarPortal {
 
 		if (this._hype) this._paintHype(ctx);
 		else if (this._loading && !this._board) this._paintCentred(ctx, 'READING THE LEAGUE', 'Standings load as you walk up.');
-		else if (this._boardError && !this._board) this._paintCentred(ctx, 'LEAGUE UNREACHABLE', this._boardError + ' — press E to retry.');
+		else if (this._boardError && !this._board) this._paintCentred(ctx, 'LEAGUE UNREACHABLE', this._boardError + ', press E to retry.');
 		else {
 			const live = this._liveHere();
 			if (live) this._paintLive(ctx, live);
@@ -500,7 +490,7 @@ export class WarPortal {
 		ctx.fillText('WAR WON', CW / 2, 130);
 		ctx.fillStyle = COL.text;
 		ctx.font = '800 30px Inter, system-ui, sans-serif';
-		ctx.fillText(`${label(us)}  ${us.score} — ${them.score}  ${label(them)}`, CW / 2, 196);
+		ctx.fillText(`${label(us)}  ${us.score} - ${them.score}  ${label(them)}`, CW / 2, 196);
 		ctx.fillStyle = COL.dim;
 		ctx.font = '600 18px Inter, system-ui, sans-serif';
 		ctx.fillText(reasonLine(battle.reason), CW / 2, 236);
@@ -588,7 +578,7 @@ export class WarPortal {
 	}
 
 	// The resting board: where this community sits in the league, and the last
-	// battles it fought. Both have designed empty states — an unranked community
+	// battles it fought. Both have designed empty states: an unranked community
 	// is told exactly what to do about it.
 	_paintStandings(ctx) {
 		const standing = this._board?.standing || null;
@@ -654,7 +644,7 @@ export class WarPortal {
 				ctx,
 				waiting.length
 					? `${waiting.length} ${waiting.length === 1 ? 'community is' : 'communities are'} queued right now. Press E to take the fight.`
-					: 'No wars fought yet. Press E to queue this community — the arena opens as soon as a second one does.',
+					: 'No wars fought yet. Press E to queue this community, the arena opens as soon as a second one does.',
 				26, 214, CW - 52, 24,
 			);
 		} else {
@@ -670,7 +660,7 @@ export class WarPortal {
 				ctx.fillText(drew ? 'DRAW' : won ? 'WIN' : 'LOSS', 26, y);
 				ctx.fillStyle = COL.text;
 				ctx.font = '600 15px Inter, system-ui, sans-serif';
-				ctx.fillText(`${us.score}–${them.score}  vs ${clipText(label(them), 18)}`, 92, y);
+				ctx.fillText(`${us.score}-${them.score}  vs ${clipText(label(them), 18)}`, 92, y);
 				ctx.fillStyle = COL.faint;
 				ctx.textAlign = 'right';
 				ctx.fillText(relTime(b.endedAt), CW - 26, y);
@@ -682,7 +672,7 @@ export class WarPortal {
 		ctx.fillStyle = COL.faint;
 		ctx.font = '600 15px Inter, system-ui, sans-serif';
 		ctx.textAlign = 'center';
-		ctx.fillText('Press E — enter the war', CW / 2, CH - 24);
+		ctx.fillText('Press E: enter the war', CW / 2, CH - 24);
 		ctx.textAlign = 'left';
 	}
 
@@ -763,7 +753,7 @@ export class WarPortal {
 		if (d) {
 			parts.push(d.standing ? standingCard(d.standing) : emptyCard(
 				'Unranked',
-				'This community has not fought a war yet. The first battle puts it on the ladder — win or lose.',
+				'This community has not fought a war yet. The first battle puts it on the ladder, win or lose.',
 			));
 		}
 
@@ -806,7 +796,7 @@ export class WarPortal {
 		if (this._queue?.status === 'waiting') {
 			cta.textContent = 'Waiting for an opponent…';
 			cta.disabled = true;
-			note.textContent = 'Stay here — the arena opens the moment another community queues.';
+			note.textContent = 'Stay here, the arena opens the moment another community queues.';
 			return;
 		}
 		cta.disabled = false;
@@ -824,7 +814,7 @@ export class WarPortal {
 		const them = m.a?.mint === mint ? m.b : m.a;
 		const remaining = m.phase === 'countdown' ? (m.countdownEndsAt || 0) - Date.now() : (m.endsAt || 0) - Date.now();
 		const status = m.phase === 'countdown' ? `Starts in ${clock(remaining)}`
-			: m.phase === 'sudden_death' ? 'Sudden death — the next kill takes it'
+			: m.phase === 'sudden_death' ? 'Sudden death: the next kill takes it'
 				: m.phase === 'ended' ? 'Battle over'
 					: `${clock(remaining)} left · first to ${m.scoreCap || 25}`;
 		const kills = (m.kills || []).slice(-6).reverse();
@@ -854,7 +844,7 @@ export class WarPortal {
 					el('span', { class: 'wp-row-vs', text: `${clipText(k.killer, 18)} → ${clipText(k.victim, 18)}` }),
 					el('span', { class: 'wp-row-when', text: relTime(k.ts) }),
 				])))
-				: el('p', { class: 'wp-empty-b', text: 'No knockdowns yet — the first one lands here.' }),
+				: el('p', { class: 'wp-empty-b', text: 'No knockdowns yet, the first one lands here.' }),
 		]);
 	}
 
@@ -867,14 +857,14 @@ export class WarPortal {
 		this._renderCta();
 		try {
 			// The same gate the Holders world runs. A community whose world is open
-			// still gates the war on holding the coin — you cannot wear a
+			// still gates the war on holding the coin: you cannot wear a
 			// community's colours without holding its coin, which is the rule
 			// ClashRoom.onAuth enforces server-side too.
 			const pass = await this.ensureHolderPass?.();
 			if (!pass || !pass.holderPass) {
 				// Two clean refusals, neither an error. A null means the player
 				// backed out of the gate; the string 'general' means they chose the
-				// open world from inside it, which for a war means declining — you
+				// open world from inside it, which for a war means declining, you
 				// cannot wear a community's colours without holding its coin, and
 				// ClashRoom.onAuth enforces exactly that server-side.
 				this._busy = false;
@@ -951,7 +941,7 @@ export class WarPortal {
 
 	// Hand the player to the arena. The return link carries the FULL coin identity
 	// plus the match key, so coming back lands in this exact world with the result
-	// already in hand — no lobby detour, no re-picking a community.
+	// already in hand, no lobby detour, no re-picking a community.
 	_handoff(match) {
 		const q = new URLSearchParams({
 			match: match.matchKey,
@@ -965,7 +955,7 @@ export class WarPortal {
 		if (this.coin.symbol) q.set('symbol', this.coin.symbol);
 		if (this.coin.image) q.set('image', this.coin.image);
 		if (this._holderPass) q.set('holderPass', this._holderPass);
-		this.ui?.toast?.(`⚔ Matched against ${label(match.opponent)} — entering the arena`, 'success');
+		this.ui?.toast?.(`⚔ Matched against ${label(match.opponent)}: entering the arena`, 'success');
 		location.href = `/play/war?${q}`;
 	}
 
@@ -1068,7 +1058,7 @@ function recentCard(recent, mint) {
 		const won = b.winner === mint;
 		return el('li', { class: `wp-row wp-row-${drew ? 'draw' : won ? 'win' : 'loss'}` }, [
 			el('span', { class: 'wp-row-tag', text: drew ? 'DRAW' : won ? 'WIN' : 'LOSS' }),
-			el('span', { class: 'wp-row-score', text: `${us.score}–${them.score}` }),
+			el('span', { class: 'wp-row-score', text: `${us.score}-${them.score}` }),
 			el('span', { class: 'wp-row-vs', text: label(them) }),
 			el('span', { class: 'wp-row-when', text: relTime(b.endedAt) }),
 		]);
@@ -1094,7 +1084,7 @@ function ladderCard(standings, mint) {
 // ── formatting helpers ───────────────────────────────────────────────────────
 
 function streakLabel(streak) {
-	if (!streak) return '—';
+	if (!streak) return '-';
 	return streak > 0 ? `${streak}W` : `${-streak}L`;
 }
 
@@ -1113,7 +1103,7 @@ function clipText(s, max) {
 	return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 }
 
-// Shrink a label until it fits the canvas column rather than bleeding off it —
+// Shrink a label until it fits the canvas column rather than bleeding off it,
 // a pump.fun name can be far longer than the space a scoreboard gives it.
 function clip(ctx, text, maxW) {
 	let t = String(text ?? '');

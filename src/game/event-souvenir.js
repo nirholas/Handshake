@@ -1,4 +1,4 @@
-// Event souvenir drop — the in-world moment when a live event hands you a
+// Event souvenir drop: the in-world moment when a live event hands you a
 // commemorative wearable.
 //
 // The server grants the item (multiplayer/src/event-drop.js →
@@ -14,7 +14,7 @@
 // both reach it; nothing traps focus; Escape dismisses.
 //
 // Rendering reads the shared catalog, so the card shows the item's real poster
-// and name rather than re-describing it — an event that swaps its souvenir needs
+// and name rather than re-describing it (an event that swaps its souvenir needs
 // no change here.
 
 import { getCosmetic } from '../../multiplayer/src/cosmetics-catalog.js';
@@ -125,8 +125,8 @@ function injectStyles() {
 export class SouvenirDrop {
 	/**
 	 * @param {object} h handlers:
-	 *   onEquip(id)   — player wants to wear it now (scene sends equip-cosmetic)
-	 *   onWardrobe()  — player wants to see it in the wardrobe instead
+	 *   onEquip(id)   : player wants to wear it now (scene sends equip-cosmetic)
+	 *   onWardrobe()  : player wants to see it in the wardrobe instead
 	 */
 	constructor(h = {}) {
 		this.h = h;
@@ -143,7 +143,7 @@ export class SouvenirDrop {
 		const id = typeof msg?.id === 'string' ? msg.id : '';
 		const item = getCosmetic(id);
 		// An id this build's catalog doesn't know (a server running ahead of this
-		// client) is still granted and still persists — it just has no poster to
+		// client) is still granted and still persists, it just has no poster to
 		// show, so there is no honest moment to render. Staying silent beats a
 		// card describing an item we cannot name.
 		if (!item) return;
@@ -198,7 +198,7 @@ export class SouvenirDrop {
 	}
 
 	// Retire on a timer, but never out from under someone who is reading or
-	// tabbing through it — the CSS pauses the hairline, and these listeners pause
+	// tabbing through it: the CSS pauses the hairline, and these listeners pause
 	// the real clock with it.
 	_arm() {
 		const start = () => {
@@ -220,7 +220,7 @@ export class SouvenirDrop {
 		}
 		try { this.h.onEquip?.(item.id); } catch { /* net unavailable; card still retires */ }
 		// Leave the confirmation up briefly so the click reads as accepted, then
-		// clear the screen — the avatar itself is the real confirmation.
+		// clear the screen, the avatar itself is the real confirmation.
 		clearTimeout(this._timer);
 		this._timer = setTimeout(() => this.dismiss(), 900);
 	}

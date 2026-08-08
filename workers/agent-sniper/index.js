@@ -380,7 +380,7 @@ async function main() {
 	//
 	// Started unconditionally: the same loop measures fleet solvency, and a fleet
 	// running with auto-funding OFF is the one most likely to starve unnoticed
-	// (nothing refills it at all). Funding itself still requires cfg.autoFund —
+	// (nothing refills it at all). Funding itself still requires cfg.autoFund,
 	// the loop measures always, moves money only when armed to.
 	const stopAutoFunder = startAutoFunderWatch({ cfg, signal: abort.signal });
 

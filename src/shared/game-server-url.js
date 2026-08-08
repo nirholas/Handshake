@@ -1,8 +1,8 @@
 // Where the Colyseus game server lives, as seen from a browser.
 //
-// Every realtime surface on the site has to answer this identically — /play
+// Every realtime surface on the site has to answer this identically: /play
 // (community-net.js), the Coin Wars arena (src/play/war.js), and anything that
-// joins a room next — because the resolution order is full of environment
+// joins a room next, because the resolution order is full of environment
 // specifics that are easy to get subtly wrong: a Codespace forwards each port as
 // its own subdomain, a local dev server must ignore the production <meta> baked
 // into the static page, and production with nothing configured must return ''
@@ -12,8 +12,8 @@
 
 /**
  * Resolve the websocket origin for the game server, in priority order:
- *   1. `window.GAME_SERVER_URL`   — a runtime override (ops, embeds)
- *   2. localhost                  — always the local server, never the baked meta
+ *   1. `window.GAME_SERVER_URL`   : a runtime override (ops, embeds)
+ *   2. localhost                  : always the local server, never the baked meta
  *   3. `<meta name="game-server">` / `<meta name="walk-server">`
  *   4. `VITE_GAME_SERVER_URL` / `VITE_WALK_SERVER_URL`
  *   5. the Codespaces/Gitpod port-forward subdomain, then same-host:2567 in dev

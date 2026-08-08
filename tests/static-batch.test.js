@@ -1,5 +1,5 @@
 /**
- * Static geometry batcher — unit tests.
+ * Static geometry batcher: unit tests.
  *
  * The batcher is what keeps the /play world dressing (hundreds of trees, boxes
  * and posts cut from a handful of shared buffers) down to a handful of draw

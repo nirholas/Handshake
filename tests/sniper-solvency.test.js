@@ -36,7 +36,7 @@ describe('walletTradeState', () => {
 	});
 
 	it('reports starved for the exact balance that produced the live outage', () => {
-		// 0.0048 SOL — above the entry headroom, below the operational floor, so
+		// 0.0048 SOL, above the entry headroom, below the operational floor, so
 		// every attempt died at a simulation the wallet could not afford to run.
 		expect(walletTradeState(0.0048, 0.05)).toBe('starved');
 	});
@@ -76,7 +76,7 @@ describe('summarizeFleetSolvency', () => {
 		expect(s.deficitSol).toBe(0);
 	});
 
-	it('is starved when no wallet can place any entry — the live outage shape', () => {
+	it('is starved when no wallet can place any entry, the live outage shape', () => {
 		const s = summarizeFleetSolvency({
 			wallets: [wallet(0.0048, 0.05, 'a'), wallet(0.0002, 0.05, 'b')],
 			masterSol: 0.0018,

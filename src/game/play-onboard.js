@@ -25,7 +25,7 @@ const ONBOARD_KEY = 'cc-onboarded-v1';
 
 // `essential` marks the handful a first-timer needs in the 3-step overlay; the
 // Controls help panel always shows the full reference. Keep both in sync with
-// _bindInput() — a control listed here that no longer exists is worse than one
+// _bindInput(): a control listed here that no longer exists is worse than one
 // that is missing, because the player trusts it and it silently does nothing.
 
 const DESK_CONTROLS = [
@@ -42,7 +42,7 @@ const DESK_CONTROLS = [
 	{ key: 'E', desc: 'Talk to whoever is near: townsfolk, kiosk, agent exchange', essential: true },
 	{ key: 'F', desc: 'Drive a nearby vehicle, work a station, or cast a line', essential: true },
 	{ key: 'X', desc: 'Attack with the equipped weapon' },
-	{ key: '1 – 6', desc: 'Hotbar slot' },
+	{ key: '1-6', desc: 'Hotbar slot' },
 	{ key: 'I', desc: 'Inspect the nearest avatar' },
 	{ key: 'Click', desc: 'Tap a player, agent, vehicle, or screen to use it' },
 
@@ -54,7 +54,7 @@ const DESK_CONTROLS = [
 
 	{ group: 'Build' },
 	{ key: 'B', desc: 'Build mode' },
-	{ key: '1 – 0', desc: 'Pick a block (while building)' },
+	{ key: '1-0', desc: 'Pick a block (while building)' },
 	{ key: 'R', desc: 'Rotate the armed prop or piece' },
 	{ key: 'Right-click', desc: 'Break a block (hold also works)' },
 	{ key: 'Ctrl/⌘ + Z', desc: 'Undo your last build edit' },
@@ -195,6 +195,11 @@ export class PlayOnboard {
 		this._keyFn = (e) => {
 			if (!this._overlay) return;
 			if (e.key === 'Escape') { e.preventDefault(); this._dismiss(); }
+			// Arrows page the card ONLY while it holds focus. They are also the
+			// avatar's movement keys, and this card is deliberately non-blocking
+			// ("start walking the moment the world loads"), so swallowing left/right
+			// globally made that promise false for anyone not using WASD.
+			if (!this._overlay.contains(document.activeElement)) return;
 			if (e.key === 'ArrowRight') { e.preventDefault(); this._stepTo(this._step + 1); }
 			if (e.key === 'ArrowLeft')  { e.preventDefault(); this._stepTo(this._step - 1); }
 		};
@@ -515,8 +520,14 @@ body.po-onboarding #cc-joystick { z-index: 60; }
   display: flex; flex-direction: column; gap: 6px;
   pointer-events: auto;
 }
-/* Hide on narrow screens — the onboarding overlay covers economy info there */
-@media (max-width: 640px) { #po-strip { display: none; } }
+/* Phones kept the whole strip hidden, which took the Controls button with it:
+   once the first-join card was dismissed there was no way back to the control
+   reference on the device that needs it most. Keep the button, drop the economy
+   label (it is the part that does not fit), and sit clear of the coin banner. */
+@media (max-width: 640px) {
+  #po-strip { top: 84px; left: 12px; }
+  #po-strip .po-econ-row { display: none; }
+}
 
 .po-econ-row {
   display: inline-flex; align-items: center; gap: 7px;

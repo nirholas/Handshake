@@ -1,4 +1,4 @@
-// war.js — the Coin Wars arena page (/play/war).
+// war.js: the Coin Wars arena page (/play/war).
 //
 // A player presses "Enter the war" at the portal in their coin's world; the
 // matchmaker pairs their community with another and hands both sides the same
@@ -156,7 +156,7 @@ let attackCooldownUntil = 0;
 
 	sendTimer = setInterval(sendPose, 1000 / SEND_HZ);
 	// The round clock is derived from `endsAt`, which only changes when the match
-	// starts — so it has to be ticked locally or it would freeze between the
+	// starts, so it has to be ticked locally or it would freeze between the
 	// state patches that carry a score change.
 	clockTimer = setInterval(tickClock, 500);
 	addEventListener('beforeunload', () => { try { room?.leave(); } catch { /* closing anyway */ } });
@@ -232,7 +232,7 @@ function onPhase(next, s) {
 		lobby: 'Waiting for the other community',
 		countdown: 'Get ready',
 		live: 'Fight',
-		sudden_death: 'Sudden death — next kill takes it',
+		sudden_death: 'Sudden death: next kill takes it',
 		ended: 'Battle over',
 	}[next] || next;
 	banner.textContent = text;
@@ -241,7 +241,7 @@ function onPhase(next, s) {
 	if (next === 'live') setTimeout(() => { if (phase === 'live') banner.hidden = true; }, 1800);
 	if (next === 'lobby') {
 		$('lobby-note').hidden = false;
-		$('lobby-note').textContent = `Holding the line for ${factionLabel(s, cfg.side)} — the battle starts when ${factionLabel(s, cfg.side === 'a' ? 'b' : 'a')} fields a fighter.`;
+		$('lobby-note').textContent = `Holding the line for ${factionLabel(s, cfg.side)}: the battle starts when ${factionLabel(s, cfg.side === 'a' ? 'b' : 'a')} fields a fighter.`;
 	} else {
 		$('lobby-note').hidden = true;
 	}
@@ -294,7 +294,7 @@ function tickClock() {
 	const s = room?.state;
 	if (!s) return;
 	if (s.phase === 'sudden_death') { $('clock').textContent = 'OT'; return; }
-	if (s.phase === 'lobby') { $('clock').textContent = '—'; return; }
+	if (s.phase === 'lobby') { $('clock').textContent = '-'; return; }
 	const target = s.phase === 'countdown' ? s.countdownEndsAt : s.endsAt;
 	$('clock').textContent = clock(target - Date.now());
 }
@@ -355,10 +355,10 @@ function showResult(m) {
 
 	$('result-title').textContent = drew ? 'Draw' : won ? 'Victory' : 'Defeat';
 	$('result-title').dataset.outcome = drew ? 'draw' : won ? 'win' : 'loss';
-	$('result-score').textContent = `${mine} — ${theirs}`;
+	$('result-score').textContent = `${mine} - ${theirs}`;
 	$('result-reason').textContent = reasonLine(m.reason);
 	$('result-mvp').textContent = m.mvp
-		? `MVP: ${m.mvp.kills} kills, ${m.mvp.deaths} deaths, ${m.mvp.damage} damage${m.mvp.id === localId ? ' — that was you' : ''}`
+		? `MVP: ${m.mvp.kills} kills, ${m.mvp.deaths} deaths, ${m.mvp.damage} damage${m.mvp.id === localId ? ', that was you' : ''}`
 		: 'No knockdowns were scored.';
 	$('result').hidden = false;
 	$('controls').hidden = true;
@@ -392,7 +392,7 @@ function wireChrome() {
 	});
 	mountJoystick();
 	// The coin the player fights for, painted into the page chrome the moment it
-	// loads — before any room state arrives — so the page is never anonymous.
+	// loads, before any room state arrives, so the page is never anonymous.
 	$('coin-label').textContent = coinLabel();
 	if (cfg.image) {
 		const img = $('coin-img');
@@ -402,7 +402,7 @@ function wireChrome() {
 	}
 }
 
-// A thumb stick for phones. Pointer events only — no library, no dependency, and
+// A thumb stick for phones. Pointer events only: no library, no dependency, and
 // it releases cleanly if the finger leaves the screen mid-drag.
 function mountJoystick() {
 	const pad = $('stick');
@@ -460,7 +460,7 @@ function fail(title, detail, action = 'Back to the world') {
 // The room throws named errors; each one has a player-readable cause.
 function joinErrorText(err) {
 	const msg = String(err?.message || '');
-	if (msg.includes('war_ticket')) return 'This pairing has expired. Walk back to the war portal and queue again — it only takes a moment.';
+	if (msg.includes('war_ticket')) return 'This pairing has expired. Walk back to the war portal and queue again, it only takes a moment.';
 	if (msg.includes('holder_pass_mismatch')) return 'Your holding was verified for a different coin than the one this battle seats you under.';
 	if (msg.includes('holder_pass_required')) return 'The arena needs a fresh proof that you hold this coin. Queue again from the portal.';
 	if (msg.includes('play_pass')) return 'This deployment gates play on a token balance and yours did not clear it.';

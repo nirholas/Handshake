@@ -245,10 +245,10 @@ async function publishSolvency(cfg, addresses, conn) {
 
 	const summary = describeSolvency(snapshot);
 	if (snapshot.state === 'starved') {
-		log.error('fleet starved — no armed wallet can place an entry', {
+		log.error('fleet starved, no armed wallet can place an entry', {
 			network: cfg.network, agents: snapshot.agents, deficit_sol: snapshot.deficitSol, master_sol: snapshot.masterSol,
 		});
-		screenPush('Sniper fleet is out of SOL — no wallet can trade', 'guard');
+		screenPush('Sniper fleet is out of SOL, no wallet can trade', 'guard');
 		// Live money only: a simulate-mode fleet is starved by design (it never
 		// funds anything), and paging on that would train operators to ignore this.
 		if (cfg.mode === 'live') alertFleetStarved({ summary, network: cfg.network, mode: cfg.mode });
@@ -302,7 +302,7 @@ async function tick(cfg) {
 			break;
 		}
 
-		// From the solvency pass above — an unreadable balance is absent, and a
+		// From the solvency pass above: an unreadable balance is absent, and a
 		// wallet we could not measure is never funded on a guess.
 		const balanceSol = balances.get(agentId);
 		if (balanceSol == null) continue;

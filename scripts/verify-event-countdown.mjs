@@ -90,17 +90,19 @@ async function newPage({ body, viewport, reducedMotion, storage }) {
 	return { ctx, page, errors };
 }
 
-// A dev server shared with other work restarts under you; a single navigation is
-// not a reliable signal of whether the site is reachable.
+// A dev server shared with other work restarts under you, and a Vite config
+// reload takes it offline for up to half a minute. A single failed navigation
+// says nothing about the feature, so ride the restart out rather than reporting
+// someone else's edit as a countdown failure.
 async function go(page, path) {
 	let last;
-	for (let attempt = 0; attempt < 4; attempt++) {
+	for (let attempt = 0; attempt < 12; attempt++) {
 		try {
 			await page.goto(BASE + path, { waitUntil: 'commit', timeout: PAGE_TIMEOUT });
 			return;
 		} catch (err) {
 			last = err;
-			await page.waitForTimeout(3000);
+			await page.waitForTimeout(10000);
 		}
 	}
 	throw last;

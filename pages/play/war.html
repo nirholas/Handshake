@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Coin Wars arena — fight for your community · three.ws</title>
+	<meta name="description" content="The live Coin Wars arena: two coin communities meet in one 3D battlefield, fight to the kill cap, and the result lands on the war league ladder. You fight for the coin you hold." />
+	<meta property="og:title" content="Coin Wars arena · three.ws" />
+	<meta property="og:description" content="Two coin communities, one battlefield. Hold the coin, enlist from your world's war portal, and fight for the ladder." />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:url" content="https://three.ws/play/war" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Coin+Wars+arena&amp;d=Two+coin+communities+meet+in+one+3D+battlefield.+Hold+the+coin%2C+enlist+at+your+world%27s+war+portal%2C+and+fight+for+the+league+ladder.&amp;p=%2Fplay%2Fwar" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Coin Wars arena · three.ws" />
+	<meta name="twitter:description" content="Two coin communities, one battlefield. Hold the coin, enlist from your world's war portal, and fight for the ladder." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Coin+Wars+arena&amp;d=Two+coin+communities+meet+in+one+3D+battlefield.+Hold+the+coin%2C+enlist+at+your+world%27s+war+portal%2C+and+fight+for+the+league+ladder.&amp;p=%2Fplay%2Fwar" />
+	<link rel="canonical" href="https://three.ws/play/war" />
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="preload" href="/animations/manifest.json" as="fetch" crossorigin />
+	<link rel="preload" href="/avatars/default.glb" as="fetch" crossorigin />
+	<meta name="robots" content="index, follow, max-image-preview:large" />
+</head>
+<body>
+	<canvas id="scene" aria-label="Coin Wars battlefield"></canvas>
+	<div class="war-vignette" aria-hidden="true"></div>
+	<div id="labels" aria-hidden="true"></div>
+
+	<!-- Loading / working. Never a spinner alone: it always says what it is doing. -->
+	<div id="status" class="war-status" role="status" aria-live="polite">
+		<span class="war-spinner" aria-hidden="true"></span>
+		<span id="status-text">Preparing the arena…</span>
+	</div>
+
+	<!-- The battle HUD. Hidden until the room is joined. -->
+	<header id="hud" class="war-hud" hidden>
+		<div class="war-side war-side-us">
+			<span id="score-us" class="war-score">0</span>
+			<span class="war-side-meta">
+				<span id="name-us" class="war-side-name">Your community</span>
+				<span id="roster-us" class="war-side-roster">0 fighting</span>
+			</span>
+		</div>
+		<div class="war-mid">
+			<span id="clock" class="war-clock">—</span>
+			<span id="cap" class="war-cap"></span>
+			<span class="war-coin">
+				<img id="coin-img" class="war-coin-img" alt="" hidden />
+				<span id="coin-label"></span>
+			</span>
+		</div>
+		<div class="war-side war-side-them">
+			<span id="score-them" class="war-score">0</span>
+			<span class="war-side-meta">
+				<span id="name-them" class="war-side-name">Opponent</span>
+				<span id="roster-them" class="war-side-roster">0 fighting</span>
+			</span>
+		</div>
+	</header>
+
+	<p id="phase" class="war-phase" role="status" aria-live="polite" hidden></p>
+	<p id="lobby-note" class="war-lobby-note" hidden></p>
+
+	<!-- Controls. Hidden until joined; the stick is thumb-sized on phones. -->
+	<div id="controls" class="war-controls" hidden>
+		<div id="stick" class="war-stick no-orbit" aria-label="Move">
+			<span id="stick-nub" class="war-stick-nub" aria-hidden="true"></span>
+		</div>
+		<div class="war-right">
+			<dl class="war-vitals" aria-label="Your record this battle">
+				<div><dt>Kills</dt><dd id="kills">0</dd></div>
+				<div><dt>Downs</dt><dd id="deaths">0</dd></div>
+			</dl>
+			<button id="attack" class="war-attack no-orbit" type="button">Fire<small>space</small></button>
+			<button id="leave" class="war-leave no-orbit" type="button">Leave</button>
+		</div>
+		<p id="downed" class="war-downed" role="status" hidden>You are down — respawning shortly.</p>
+	</div>
+
+	<!-- Terminal states. Both are designed cards with the one way out. -->
+	<div id="result" class="war-modal" role="dialog" aria-modal="true" aria-labelledby="result-title" hidden>
+		<div class="war-modal-card">
+			<h1 id="result-title" class="war-result-title">Battle over</h1>
+			<p id="result-score" class="war-result-score"></p>
+			<p id="result-reason" class="war-modal-b"></p>
+			<p id="result-mvp" class="war-modal-b war-modal-faint"></p>
+			<button id="result-back" class="war-modal-btn" type="button">Back to the world</button>
+		</div>
+	</div>
+
+	<div id="fail" class="war-modal" role="dialog" aria-modal="true" aria-labelledby="fail-title" hidden>
+		<div class="war-modal-card">
+			<h1 id="fail-title" class="war-fail-title">No battle to join</h1>
+			<p id="fail-detail" class="war-modal-b"></p>
+			<button id="fail-back" class="war-modal-btn" type="button">Back to the world</button>
+		</div>
+	</div>
+
+	<script type="module" src="/src/play/war.js"></script>
+</body>
+</html>

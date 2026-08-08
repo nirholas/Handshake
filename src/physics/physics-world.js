@@ -21,7 +21,7 @@
 // one. The `-compat` build base64s a ~1.6 MB WASM binary into its JavaScript,
 // which Rollup then folds into whatever chunk statically imports it: a static
 // import here put 2.27 MB of parsed JS (774 KB over the wire) on the critical
-// path of every page that draws a physics scene — /play and /walk both
+// path of every page that draws a physics scene: /play and /walk both
 // modulepreloaded it before the first frame, and the browser paid a multi-second
 // parse for a module nothing needs until the world is already standing. Loading
 // it from inside initRapier() gives it its own async chunk that downloads

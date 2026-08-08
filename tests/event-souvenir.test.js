@@ -1,4 +1,4 @@
-// Coverage for the event souvenir drop — the free commemorative wearable every
+// Coverage for the event souvenir drop: the free commemorative wearable every
 // attendee of a live /play event keeps forever.
 //
 // The whole feature rests on two properties that are easy to state and easy to
@@ -10,7 +10,7 @@
 //      the one thing a souvenir is: proof you were there.
 //   2. GRANT IDEMPOTENCY (multiplayer/src/economy.js). A player reconnects,
 //      hops rooms, or refreshes ten times during the event and ends up with
-//      exactly one copy — and, just as importantly, the souvenir SURVIVES a
+//      exactly one copy, and, just as importantly, the souvenir SURVIVES a
 //      persistence round-trip, because after the window closes there is no path
 //      that could ever re-grant it.
 //
@@ -149,7 +149,7 @@ describe('granting the souvenir', () => {
 		const restored = restoreProfile(JSON.parse(JSON.stringify(serializeProfile(profile))), 'wallet-under-test');
 		expect(restored.cosmetics.owned).toContain(SOUVENIR_ID);
 		expect(restored.cosmetics.equipped.headwear).toBe(SOUVENIR_ID);
-		// And still wearable after the window has long closed — the item is owned,
+		// And still wearable after the window has long closed: the item is owned,
 		// and ownership is not time-scoped.
 		expect(canWear(SOUVENIR_ID, ownedCosmeticSet(restored))).toBe(true);
 	});
