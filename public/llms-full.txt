@@ -1786,11 +1786,23 @@ URL: https://three.ws/docs/play-hardening
 
 The invariants that keep the Play world safe: untrusted names never become markup, a coin image cannot escape its CSS, a broken world link says so, a reconnect retires the peers who left, and everything the world loads gets freed. Each rule names the failure it prevents.
 
+### Docs · Forge items into a /play world from a prompt
+
+URL: https://three.ws/docs/play-forge-in-world
+
+Describe an item in a coin's world, or attach a reference photo, and the free forge lane builds a real 3D model in about half a minute. It is armed for placement and, once placed, appears for everyone connected to that server and persists like any other build.
+
 ### Docs · Trading swarms
 
 URL: https://three.ws/docs/swarms
 
 How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.
+
+### Docs · Coin Wars
+
+URL: https://three.ws/docs/coin-wars
+
+How community-vs-community battles work on three.ws: the war portal in every coin world, the matchmaking key two communities meet under, the signed pairing the arena trusts, the Elo ladder recomputed from the battle ledger, and the /api/wars endpoint behind all of it.
 
 ### Docs · The in-game economy
 

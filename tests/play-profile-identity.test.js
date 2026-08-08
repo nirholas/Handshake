@@ -249,6 +249,24 @@ describe('avatar inspector profile card (W10)', () => {
 		expect(fakeFriends.sendRequest).toHaveBeenCalledWith('u-1');
 	});
 
+	it('leaves no verified profile section behind when switching to a guest', async () => {
+		// Switching subjects overlaps two panels for the exit transition (220ms).
+		// Once it finishes, exactly one panel may remain, and a guest's panel must
+		// carry no profile section — otherwise the previous player's identity is
+		// still on screen over an anonymous avatar.
+		routeApi();
+		openAvatarInspector({ kind: 'peer', name: 'Nick', username: 'nirholas' });
+		await settle();
+		expect(document.querySelectorAll('.avi-root').length).toBe(1);
+
+		openAvatarInspector({ kind: 'peer', name: 'guest-ab12' });
+		await new Promise((r) => setTimeout(r, 300)); // outlast the 220ms exit
+		await settle();
+
+		expect(document.querySelectorAll('.avi-root').length).toBe(1);
+		expect(document.querySelector('[data-avi="profile"]')).toBeNull();
+	});
+
 	it('hides the friends verb (but keeps follow) for an anonymous viewer', async () => {
 		routeApi();
 		fakeFriends.loadError = 'signin';

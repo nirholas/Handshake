@@ -265,7 +265,11 @@ describe('play a11y: HUD copy goes through the i18n layer', () => {
 	].map((rel) => readFileSync(join(ROOT, rel), 'utf8')).join('\n');
 
 	it('every play.* key the world references exists in the source catalog', () => {
-		const referenced = new Set([...sources.matchAll(/\bplay\.[a-z0-9_]+/g)].map((m) => m[0]));
+		// Quoted or `attr:key`-delimited only, so a filename in a comment
+		// ("pages/play.html") is not mistaken for a catalog key.
+		const referenced = new Set(
+			[...sources.matchAll(/['":;](play\.[a-z0-9_]+)(?=['";]|$)/gm)].map((m) => m[1]),
+		);
 		expect(referenced.size).toBeGreaterThan(40);
 		const missing = [...referenced].filter((key) => catalog.play?.[key.slice('play.'.length)] === undefined);
 		expect(missing, `keys used by /play but absent from public/locales/en.json: ${missing.join(', ')}`).toEqual([]);

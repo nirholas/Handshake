@@ -25,6 +25,7 @@ import {
 	MIN_AVG_LEVEL,
 } from '../../multiplayer/src/spin-wheel.js';
 import { SKILLS, LEVEL_CAP, INV_SIZE, HOTBAR_SIZE, MAX_STACK } from '../../multiplayer/src/economy.js';
+import { COUNTER_REACH } from '../../multiplayer/src/world-features.js';
 import { TOKEN_SYMBOL } from '../../multiplayer/src/game-token.js';
 
 // The boutique and paid spins split their $THREE 50/50 between the holder-rewards
@@ -113,12 +114,22 @@ export default wrap(async (req, res) => {
 				price: e.price,
 				unitPrice: Math.round((e.price / e.qty) * 100) / 100,
 			})),
+			// Trading is a walk-up action: the server refuses a buy or a sell from
+			// anywhere but a counter, same as every other station in the world.
+			counterReachM: COUNTER_REACH,
+			requiresStandingAtCounter: true,
 		},
 
 		bank: {
 			summary:
 				'Deposit cash with the teller to protect it. Dying drops the carried purse and carried items into a tombstone; banked cash survives, which is the whole risk-versus-reward point of walking to the bank.',
 			protectsOnDeath: true,
+			// The walk is the price of the protection, so the server enforces it on
+			// every trade and transfer rather than trusting the client to only open
+			// the panel at the counter. Published because it is a rule a player (and
+			// anyone building against this) can otherwise only discover by refusal.
+			counterReachM: COUNTER_REACH,
+			requiresStandingAtCounter: true,
 		},
 
 		boutique: {
@@ -138,6 +149,10 @@ export default wrap(async (req, res) => {
 			paidSpinUsd: SPIN_COST_USD,
 			minAvgLevel: MIN_AVG_LEVEL,
 			wedges: WHEEL_SEGMENTS.length,
+			// The roll is uniform across every item prize, so the pack has to have
+			// room for all of them before a spin is offered or sold. Stated here
+			// because it is the reason a spin can be refused with a full pack.
+			requiresRoomForEveryItemPrize: true,
 			rewardsBps: REWARDS_BPS,
 			treasuryBps: 10000 - REWARDS_BPS,
 			paytable,

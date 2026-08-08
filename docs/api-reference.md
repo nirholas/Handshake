@@ -4452,6 +4452,50 @@ curl -s 'https://three.ws/api/play/population?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bf
 
 ---
 
+## Event Leaderboard API
+
+```
+GET /api/play/event-leaderboard
+GET /api/play/event-leaderboard?account=<player-account>&limit=<1..100>
+```
+
+The live standing for the event quest line: during a platform event (the window in `public/event.json`) the `/play` jobs board carries a set of event-only jobs, and this is the ranking of who has completed the most of them. No auth, CORS open, cached 5 seconds at the edge.
+
+Ranking is completions first, then total event gold earned, then the earlier finisher, then a stable id fallback. It is computed by `multiplayer/src/event-leaderboard.js`, the same module the in-world panel's rows come from, so the web and the world can never disagree.
+
+`account` pins that player's own row into `you` even when they rank below the returned page; omit it for an anonymous read. `limit` defaults to 10 and clamps to 100. Account keys never appear in the response, only rank, display name and score.
+
+Scores are written exclusively by the authoritative game server (through the world-service-token endpoint `POST /api/internal/event-score`, which additionally refuses any run reported outside the configured window). Nothing here grants anything: **prizes are announced from this board and settled manually by the three.ws team after the event, never paid automatically or on-chain.**
+
+**Response**
+
+```json
+{
+	"event": {
+		"id": "three-first-meetup",
+		"name": "$THREE First Holders Meetup",
+		"startsAt": "2026-08-09T17:00:00Z",
+		"endsAt": "2026-08-09T19:30:00Z",
+		"live": true
+	},
+	"top": [
+		{ "rank": 1, "name": "Alpha", "runs": 12, "cash": 2640, "lastAt": 1786201408856 }
+	],
+	"you": { "rank": 17, "name": "You", "runs": 2, "cash": 440, "lastAt": 1786201499000, "inTop": false },
+	"players": 41,
+	"totalRuns": 96,
+	"prizes": { "settlement": "manual", "summary": "…" }
+}
+```
+
+An event nobody has played yet is an empty board (`top: []`, `players: 0`) with a `200`, not an error: render the "no runs yet" state rather than a failure. `404 no_event` means no event is configured at all.
+
+```bash
+curl -s 'https://three.ws/api/play/event-leaderboard?limit=10'
+```
+
+---
+
 ## Config API
 
 ```

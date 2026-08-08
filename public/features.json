@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-08T15:35:15.366Z",
+	"generated_at": "2026-08-08T15:44:09.457Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2928,10 +2928,30 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/play-forge-in-world",
+					"title": "Docs · Forge items into a /play world from a prompt",
+					"description": "Describe an item in a coin's world, or attach a reference photo, and the free forge lane builds a real 3D model in about half a minute. It is armed for placement and, once placed, appears for everyone connected to that server and persists like any other build.",
+					"added": "2026-08-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/swarms",
 					"title": "Docs · Trading swarms",
 					"description": "How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/coin-wars",
+					"title": "Docs · Coin Wars",
+					"description": "How community-vs-community battles work on three.ws: the war portal in every coin world, the matchmaking key two communities meet under, the signed pairing the arena trusts, the Elo ladder recomputed from the battle ledger, and the /api/wars endpoint behind all of it.",
+					"added": "2026-08-08",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

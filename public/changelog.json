@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-08T15:35:15.385Z",
+	"generated_at": "2026-08-08T15:44:09.472Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,26 @@
 			"title": "Coin Wars arena: two communities, one battlefield",
 			"summary": "The live Coin Wars arena. Enlist at your coin world's war portal, fight the rival community to the kill cap, and the result lands on the Elo ladder. You fight for the coin you hold.",
 			"link": "/play/war",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "launch",
+			"title": "Docs · Coin Wars",
+			"summary": "How community-vs-community battles work on three.ws: the war portal in every coin world, the matchmaking key two communities meet under, the signed pairing the arena trusts, the Elo ladder recomputed from the battle ledger, and the /api/wars endpoint behind all of it.",
+			"link": "/docs/coin-wars",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "launch",
+			"title": "Docs · Forge items into a /play world from a prompt",
+			"summary": "Describe an item in a coin's world, or attach a reference photo, and the free forge lane builds a real 3D model in about half a minute. It is armed for placement and, once placed, appears for everyone connected to that server and persists like any other build.",
+			"link": "/docs/play-forge-in-world",
 			"tags": [
 				"launch"
 			]
@@ -72,6 +92,17 @@
 		{
 			"date": "2026-08-08",
 			"type": "update",
+			"title": "Forge items straight into a /play world, from a prompt or a photo",
+			"summary": "In any coin's world you can now describe an item and have it built for real, right there. Open build mode, click Forge in the props palette, and type something like a mossy stone lantern with a copper roof, or attach a reference photo and let it work from that. About half a minute later the finished 3D model is added to your props and armed, so the next click drops it into the world. There is a chat shortcut too: type /forge a brass telescope and the item lands ready to place without opening the palette at all. Anything you place appears for everyone else connected to that server and stays there, exactly like a block you built by hand. It is free, needs no account or wallet, and every failure explains itself and can be retried.",
+			"link": "/play",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
 			"title": "One link to share for the live event, with a real headcount",
 			"summary": "three.ws/event is the front door for anyone who has never been in the world. It carries a ticking countdown, the run of show converted into your own timezone, an add-to-calendar file built in your browser (nothing about who is coming leaves your device), a plain-language walkthrough of what actually happens in there, and one big button into the world. It reads the same schedule file the countdown inside Play reads, so the two can never disagree. While the event is running the page shows how many people are standing in the world right now, read live from the game servers through a new public endpoint at /api/play/population. If that count cannot be reached the page says the doors are open and shows no number, rather than making one up.",
 			"link": "/event",
@@ -122,6 +153,37 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "The meetup has its own jobs, and a live leaderboard to race on",
+			"summary": "For the length of the live event, the /play jobs board carries four jobs you can only take while the doors are open: land a haul of fish for the plaza pit, drive the party supplies across town, clear four foes out of the Southern Wilds, and tour the three meetup landmarks. They pay better than the everyday board and they are all repeatable, because the point is the race. A new Event tab on the jobs board shows the standing: the top ten by jobs finished, tiebroken by the cash those jobs paid, with your own rank pinned at the bottom whether or not you made the cut. It updates as people finish runs, and it is the same ranking the event page reads, so the plaza and the web never disagree. When the window closes the jobs vanish from the board and the final standings stay readable. Winners are announced from that board and settled by us afterwards: nothing is paid out automatically.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "The world economy pays what it says, and the bank makes you walk there",
+			"summary": "An end-to-end pass over the /play money loops. The wheel now checks it has room for every prize it can award before it lets you spin, instead of just one of the three, so a stone win can no longer land in a pack that only had space for wood and quietly turn into two cash; if a pack does fill while you are approving a paid spin in your wallet, the prize converts to cash and the result tells you so in plain words. Store and bank buttons now disable while a trade is in flight, so a double-click can never buy twice, and if the world stops answering the panel says nothing was charged and re-reads your purse instead of leaving a stale balance on screen. Dying reports itself honestly: the HUD empties the moment the tombstone drops rather than eight seconds later at respawn, and the message names what you lost and what the bank protected. Trading and banking are now walk-up actions the server enforces, like fishing and the wheel already were, which is what makes depositing before a fight a real decision. The skills panel shows the XP left to each next level and what the next unlock is, the wheel links its full published paytable, and a boutique purchase that runs out of $THREE now says where to get more.",
+			"link": "/play/economy",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "The world knows when the meetup is, and throws fireworks when it starts",
+			"summary": "Until now a scheduled event in the $THREE world was only a line on a page: you had to remember the time, and once you were in the plaza nothing told you what was happening or what came next. The world now runs the event itself. A countdown sits at the top of the screen from a day out and turns into a LIVE marker at the start, always showing how long until the next thing on the schedule. Tap it for the full running order: what just finished, what is on right now, and when each remaining item starts in your own timezone, alongside the live $THREE price and a one-tap way to buy or take a commemorative photo. Every time the schedule moves on, the plaza says so with a banner. And when the event goes live, fireworks go up over the town. They are not decoration bolted onto one machine: every player watching sees the same shells in the same places at the same moment, worked out from the clock rather than sent over the network, so the show holds together no matter how many people are in the plaza or how good their connection is. The finale builds into a proper barrage. If none of this is scheduled, the world looks exactly as it always did.",
+			"link": "/play",
+			"tags": [
+				"feature"
 			]
 		},
 		{

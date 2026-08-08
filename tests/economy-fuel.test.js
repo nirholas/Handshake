@@ -81,6 +81,23 @@ describe('planRefuel', () => {
 		expect(r.spendUsd).toBeLessThanOrEqual(2 * base.solUsd * 1.03 + 0.01);
 	});
 
+	it('spends a sub-dollar USDC balance rather than letting the sponsor stay under its floor', () => {
+		// The 2026-08-07 outage: sponsor 171k lamports under its SOL floor (Solana
+		// accepts withdrawn, paid routes 503ing) holding $0.54 USDC. The old $1
+		// hardcoded minimum refused the swap, so the only lane that could refill
+		// the master without owner money was dead. $0.54 buys ~0.0035 SOL, which
+		// clears that breach ~20x over, so the lane must act.
+		const r = planRefuel({ ...base, usdcAvailable: 0.5446, caps: { ...CAPS, minSwapUsd: 0.1 } });
+		expect(r.act).toBe(true);
+		expect(r.spendUsd).toBeCloseTo(0.5446, 4);
+	});
+
+	it('still refuses a swap that would cost more in fees than it buys in gas', () => {
+		const r = planRefuel({ ...base, usdcAvailable: 0.02, caps: { ...CAPS, minSwapUsd: 0.1 } });
+		expect(r.act).toBe(false);
+		expect(r.reason).toBe('no_spare_usdc');
+	});
+
 	it('sizes the buy toward the target buffer, not just the gap', () => {
 		// small gap (0.15) but target is 1.0 → buy ~1 SOL of headroom
 		const r = planRefuel({ ...base, deficitSol: 0.17, usdcAvailable: 100000, caps: { ...CAPS, perRunUsd: 100000, dailyUsd: 100000 } });

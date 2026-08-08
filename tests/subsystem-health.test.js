@@ -205,4 +205,52 @@ describe('classifySniperBeat', () => {
 	it('treats a row with no last_beat_at as DOWN, not ok', () => {
 		expect(classifySniperBeat({ mode: 'live', last_beat_at: null, meta: {} }, NOW).status).toBe('down');
 	});
+
+	// Solvency: the 2026-07-29 outage shape. Fresh heartbeat, live feed, strategies
+	// armed, and every wallet too poor to place a buy. This block used to report OK
+	// for ten days while the fleet booked 1,000+ failed entries and closed nothing.
+	it('reports DOWN when the process is healthy but no wallet can fund a trade', () => {
+		const s = classifySniperBeat(
+			beat(30_000, { ...liveMeta, solvency: { state: 'starved', agents: 2, starved: 2, tradeable: 0, deficitSol: 0.13, masterSol: 0.0018, masterCanCover: false } }),
+			NOW,
+		);
+		expect(s.status).toBe('down');
+		expect(s.detail).toContain('out of trading capital');
+		// The master held dust, so the hint must name the human action.
+		expect(s.hint).toContain('move SOL');
+	});
+
+	it('reports DEGRADED when only part of the fleet can still trade', () => {
+		const s = classifySniperBeat(
+			beat(30_000, { ...liveMeta, solvency: { state: 'degraded', agents: 3, starved: 1, tradeable: 2, deficitSol: 0.05, masterSol: 5, masterCanCover: true } }),
+			NOW,
+		);
+		expect(s.status).toBe('degraded');
+		expect(s.hint).toContain('auto-funder');
+	});
+
+	it('ranks starvation above a silent feed: the more actionable diagnosis wins', () => {
+		const s = classifySniperBeat(
+			beat(30_000, { ...liveMeta, lastEventAgeMs: 240_000, solvency: { state: 'starved', agents: 1, starved: 1, tradeable: 0, deficitSol: 0.06, masterSol: 0, masterCanCover: false } }),
+			NOW,
+		);
+		expect(s.status).toBe('down');
+		expect(s.detail).toContain('out of trading capital');
+	});
+
+	it('still reports OK when the fleet is funded', () => {
+		const s = classifySniperBeat(
+			beat(30_000, { ...liveMeta, solvency: { state: 'funded', agents: 2, starved: 0, tradeable: 2, deficitSol: 0 } }),
+			NOW,
+		);
+		expect(s.status).toBe('ok');
+	});
+
+	it('does not downgrade a worker build that reports no solvency at all', () => {
+		// Older revisions publish no solvency key. Absence is not insolvency, or
+		// every pre-upgrade deploy would page as broken.
+		expect(classifySniperBeat(beat(30_000, liveMeta), NOW).status).toBe('ok');
+		expect(classifySniperBeat(beat(30_000, { ...liveMeta, solvency: null }), NOW).status).toBe('ok');
+		expect(classifySniperBeat(beat(30_000, { ...liveMeta, solvency: { state: 'unknown' } }), NOW).status).toBe('ok');
+	});
 });

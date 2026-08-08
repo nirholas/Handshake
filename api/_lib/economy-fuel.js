@@ -64,8 +64,15 @@ export const FUEL_MIN_GAP_SOL = num('ECONOMY_FUEL_MIN_GAP_SOL', 0.1);
 /** When we do refuel, lift the master's spendable SOL up toward this so we are
  *  not swapping dust every single minute the fleet is thirsty. */
 export const FUEL_TARGET_SOL = num('ECONOMY_FUEL_TARGET_SOL', 1.0);
-/** Below this USDC a swap is not worth the fees. */
-const MIN_SWAP_USDC = 1;
+/** Below this USDC a swap is not worth the fees. The floor is economic, not
+ *  cosmetic: at roughly $150/SOL, $0.10 of USDC buys ~0.00065 SOL, over 100x
+ *  the 5000-lamport base transaction fee the swap itself costs, so the master
+ *  nets gas on every swap at or above it. A higher floor reads as prudence but
+ *  starves the lane exactly when it matters: on 2026-08-07 the sponsor sat 171k
+ *  lamports under its SOL floor (Solana accepts withdrawn, paid routes 503ing)
+ *  while holding $0.54 USDC, and the old hardcoded $1 minimum refused the one
+ *  swap that would have refilled it. */
+export const FUEL_MIN_SWAP_USDC = num('ECONOMY_FUEL_MIN_SWAP_USDC', 0.1);
 /** Minimum seconds between two fuel swaps. The topup runs every minute and could
  *  overlap itself under load; this is a cheap belt against a double-swap racing
  *  the daily-cap read (the DB counter closes the gap after the first swap lands,
@@ -282,7 +289,7 @@ export async function refuelMasterFromUsdc({ connection, deficitSol, network = '
 		usdcKeep: FUEL_USDC_KEEP,
 		minGapSol: FUEL_MIN_GAP_SOL,
 		targetSol: FUEL_TARGET_SOL,
-		minSwapUsd: MIN_SWAP_USDC,
+		minSwapUsd: FUEL_MIN_SWAP_USDC,
 	};
 	const decision = planRefuel({
 		masterSol, reserveSol: RESERVE_SOL, runCapSol: RUN_CAP_SOL,

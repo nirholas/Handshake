@@ -993,7 +993,12 @@ export class CommunityUI {
 				if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.h.onEnter(c, ''); }
 			},
 		}, [
-			el('div', { class: 'cc-card-img', style: cssBgImage(c.image) }, [liveBadge, holdersBadge]),
+			// Badges anchor to the artwork on a regular card, where the art IS the
+			// card's top edge. On the featured hero the art is only the left ~38%,
+			// so anchoring there stranded the Holders badge in the middle of the
+			// card, floating over the seam. Hang them off the card instead, which
+			// is also position:relative, so they land on its real top corners.
+			el('div', { class: 'cc-card-img', style: cssBgImage(c.image) }, featured ? [] : [liveBadge, holdersBadge]),
 			el('div', { class: 'cc-card-body' }, [
 				el('div', { class: 'cc-card-name', text: c.name || 'Unnamed coin' }),
 				el('div', { class: 'cc-card-meta' }, [
@@ -1002,6 +1007,7 @@ export class CommunityUI {
 				]),
 				el('div', { class: 'cc-card-cta', text: featured ? 'Enter home town →' : 'Enter community →' }),
 			]),
+			...(featured ? [liveBadge, holdersBadge] : []),
 		]);
 	}
 

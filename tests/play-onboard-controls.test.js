@@ -58,23 +58,22 @@ describe('/play controls reference', () => {
 
 	it('documents every single-key binding the world actually handles', () => {
 		openPanel();
-		const listed = readPanel().keys.join(' ').toLowerCase();
+		// Compare whole chips, not substrings: "C" must be its own chip, and must
+		// not be considered covered because the word "Click" happens to contain a c.
+		const advertised = new Set(advertisedSingles());
 
 		const handled = handledKeys();
 		expect(handled.length).toBeGreaterThan(6); // the regex still matches the handler
 
-		const missing = handled.filter((k) => !listed.includes(k));
+		const missing = handled.filter((k) => !advertised.has(k));
 		expect(missing, `handled in _bindInput() but absent from the Controls panel: ${missing.join(', ')}`).toEqual([]);
 	});
 
 	it('never advertises a binding the world does not handle', () => {
 		openPanel();
-		// Single-letter chips only; multi-key chips (W A S D, Ctrl/⌘ + Z) are
-		// combinations covered by the branches above.
-		const singles = readPanel().keys.filter((k) => /^[A-Za-z]$/.test(k)).map((k) => k.toLowerCase());
 		const handled = new Set(handledKeys());
 
-		const phantom = singles.filter((k) => !handled.has(k));
+		const phantom = advertisedSingles().filter((k) => !handled.has(k));
 		expect(phantom, `advertised to players but not handled in _bindInput(): ${phantom.join(', ')}`).toEqual([]);
 	});
 

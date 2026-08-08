@@ -80,6 +80,22 @@ The case study above audits one trade. [/sniper/experiments](/sniper/experiments
 
 This is deliberately the same infrastructure the case study above uses, generalized: `agent_decisions` + `decision_outcomes` (the reasoning ledger), `sniper_llm_verdicts` (the judgment ledger), and `api/cron/reconcile-decisions` (closes the loop from an open prediction to a proven outcome, then anchors the chain head on-chain via SPL-Memo so the history is independently verifiable at `GET /api/ledger/verify/:agentId`).
 
+## Is it actually trading? Liveness vs solvency
+
+A trading worker can be dead in two ways, and only one of them is loud. A crashed process or a dropped feed shows up immediately in the heartbeat. The quiet one is **solvency**: the process is up, the feed is connected, the strategies are armed, and every wallet is too poor to pay for a buy. Nothing crashes. The engine simply stops filling.
+
+That is not hypothetical. Between 2026-07-29 and 2026-08-08 the fleet booked over a thousand consecutive failed entries and closed zero trades while `/api/sniper/status` reported `state: "live"` throughout. Every fact it measured was true. The wallets held 0.0048 SOL against a 0.012 SOL operational floor, and the funding master that should have refilled them held 0.0018 SOL, so the auto-funder was a no-op too. Nothing alerted, because nothing was watching the money.
+
+Solvency is now a first-class part of the worker's reported state:
+
+- **What gets measured.** Every 5 minutes the funding loop (`workers/agent-sniper/auto-funder.js`) reads the balance of every **armed** wallet, not just the ones opted into auto-funding, since an agent that never consented to top-ups still trades and still starves. It also reads the funding master's balance. The snapshot rides the existing heartbeat, so the public status path stays DB-only and pays no RPC hop.
+- **How a wallet is judged.** `api/_lib/sniper-solvency.js` classifies each wallet as `funded` (can place its configured size), `shrunk` (can still trade, but below the configured size), or `starved` (cannot place any entry). Crucially, it decides this by calling `resolveEntrySize`, the *same* function the executor calls to size or skip a real buy. Re-deriving the thresholds here would let the status page claim a wallet is tradeable that the executor silently skips, which is the original bug one level up. A unit test sweeps the whole balance range asserting the two never disagree.
+- **What the fleet state means.** `funded` (every wallet can trade), `degraded` (some can, some cannot), `starved` (none can), or `unknown` (nothing measured yet). An unread balance counts as unmeasured rather than zero, so an RPC blip degrades coverage instead of faking an outage.
+- **Where it surfaces.** `GET /api/sniper/status` returns a `solvency` block and a `state` of `starved` that outranks the feed checks, because "no wallet can pay for a trade" is both more specific and more actionable than "the feed is quiet". `/api/healthz` reports the sniper subsystem as down (fully starved) or degraded (partially), with a hint naming the actual fix. The homepage engine pill reads "Engine out of SOL" instead of "Engine live".
+- **Who gets paged.** A live-mode fleet that cannot trade fires `sniper:fleet-starved`. A funding master that cannot cover the refills fires `sniper:funding-master-dry` separately, because that one cannot self-heal and needs a human to move SOL. Both dedup hourly through the shared ops-alert pipeline. Simulate mode never pages: it is starved by design.
+
+The snapshot also prices the fix. `deficitSol` is what it would cost to lift every starved wallet back to its own refill target, and `masterCanCover` answers whether the auto-funder can close that gap by itself, which is the difference between "this heals in five minutes" and "someone has to fund the master".
+
 ## Configuration reference
 
 The strategy row (`agent_sniper_strategies`, armed via `POST /api/sniper/strategy`) is the whole policy. The load-bearing fields:

@@ -23,7 +23,18 @@ const MOBILE = VIEWPORT !== 'desktop';
 const width = MOBILE ? Number(VIEWPORT) : 1440;
 const height = MOBILE ? 812 : 900;
 
-const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+// NO_WEBGL=1 drops the software renderer entirely. The lobby's layout is pure
+// DOM and CSS, so a chrome without 3D measures it exactly the same while using
+// a fraction of the memory, and it doubles as a check that the WebGL-unavailable
+// fallbacks (avatar-thumb.js, the world boot) degrade instead of stranding the
+// page. Use it for layout and touch-target sweeps; use the default for anything
+// that has to actually render the world.
+const NO_WEBGL = process.env.NO_WEBGL === '1';
+const browser = await chromium.launch({
+	args: NO_WEBGL
+		? ['--disable-3d-apis', '--disable-gpu']
+		: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const ctx = await browser.newContext(
 	MOBILE
 		? { ...devices['iPhone 14'], viewport: { width, height }, screen: { width, height } }

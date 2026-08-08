@@ -3,6 +3,34 @@
 	"entries": [
 		{
 			"date": "2026-08-08",
+			"title": "The world knows when the meetup is, and throws fireworks when it starts",
+			"summary": "Until now a scheduled event in the $THREE world was only a line on a page: you had to remember the time, and once you were in the plaza nothing told you what was happening or what came next. The world now runs the event itself. A countdown sits at the top of the screen from a day out and turns into a LIVE marker at the start, always showing how long until the next thing on the schedule. Tap it for the full running order: what just finished, what is on right now, and when each remaining item starts in your own timezone, alongside the live $THREE price and a one-tap way to buy or take a commemorative photo. Every time the schedule moves on, the plaza says so with a banner. And when the event goes live, fireworks go up over the town. They are not decoration bolted onto one machine: every player watching sees the same shells in the same places at the same moment, worked out from the clock rather than sent over the network, so the show holds together no matter how many people are in the plaza or how good their connection is. The finale builds into a proper barrage. If none of this is scheduled, the world looks exactly as it always did.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
+			"title": "The world economy pays what it says, and the bank makes you walk there",
+			"summary": "An end-to-end pass over the /play money loops. The wheel now checks it has room for every prize it can award before it lets you spin, instead of just one of the three, so a stone win can no longer land in a pack that only had space for wood and quietly turn into two cash; if a pack does fill while you are approving a paid spin in your wallet, the prize converts to cash and the result tells you so in plain words. Store and bank buttons now disable while a trade is in flight, so a double-click can never buy twice, and if the world stops answering the panel says nothing was charged and re-reads your purse instead of leaving a stale balance on screen. Dying reports itself honestly: the HUD empties the moment the tombstone drops rather than eight seconds later at respawn, and the message names what you lost and what the bank protected. Trading and banking are now walk-up actions the server enforces, like fishing and the wheel already were, which is what makes depositing before a fight a real decision. The skills panel shows the XP left to each next level and what the next unlock is, the wheel links its full published paytable, and a boutique purchase that runs out of $THREE now says where to get more.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play/economy"
+		},
+		{
+			"date": "2026-08-08",
+			"title": "The meetup has its own jobs, and a live leaderboard to race on",
+			"summary": "For the length of the live event, the /play jobs board carries four jobs you can only take while the doors are open: land a haul of fish for the plaza pit, drive the party supplies across town, clear four foes out of the Southern Wilds, and tour the three meetup landmarks. They pay better than the everyday board and they are all repeatable, because the point is the race. A new Event tab on the jobs board shows the standing: the top ten by jobs finished, tiebroken by the cash those jobs paid, with your own rank pinned at the bottom whether or not you made the cut. It updates as people finish runs, and it is the same ranking the event page reads, so the plaza and the web never disagree. When the window closes the jobs vanish from the board and the final standings stay readable. Winners are announced from that board and settled by us afterwards: nothing is paid out automatically.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
 			"title": "Your /play progress is now yours alone, and one payment buys exactly one thing",
 			"summary": "Two things that guard what you own in the coin worlds got rebuilt. Your saved character (cash, bank, pack, unlocked fits, job log) used to be reachable by anyone who simply claimed your player id when joining, which meant someone else could load your character, spend it, and save over it. Progress is now tied to a signed credential the server issues and only your browser holds, so nobody can wear your account by asking for it. Existing guests keep everything they have earned: the first time you come back, your old id is migrated onto a signed one automatically. Separately, a paid wheel spin or a $THREE boutique purchase is now spent once and only once. The check that stops a settled payment being redeemed twice used to live inside a single world, so the same transaction could be replayed in another coin world, or after a server restart, to claim a second prize. It is now one shared record across every world and restart, and a quote is sealed to the character that asked for it, so a payment can never land on somebody else's profile.",
 			"tags": [
@@ -18661,6 +18689,16 @@
 			"summary": "If an ad blocker or privacy extension ate one of the optional page scripts, or a background request failed on venue wifi, /play could cover a world that was loading perfectly well with a full-screen \"Couldn’t load the world\" card. The loading watchdog now only fires for the failure it was built for, a genuinely missing app file after a deploy, and gives a slow but healthy boot time to finish instead. A shared world link is also handled more carefully now: the coin name and symbol in it are stripped of line breaks and hidden characters and cut to a sane length so nobody can rearrange your screen with a link, and an image address that is not really an image is dropped instead of loading a dead tile. Finally, every screen of the holders-only door now offers a way into the coin’s open world, so a check you cannot pass or complete is never a dead end.",
 			"tags": [
 				"fix",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
+			"title": "Forge items straight into a /play world, from a prompt or a photo",
+			"summary": "In any coin's world you can now describe an item and have it built for real, right there. Open build mode, click Forge in the props palette, and type something like a mossy stone lantern with a copper roof, or attach a reference photo and let it work from that. About half a minute later the finished 3D model is added to your props and armed, so the next click drops it into the world. There is a chat shortcut too: type /forge a brass telescope and the item lands ready to place without opening the palette at all. Anything you place appears for everyone else connected to that server and stays there, exactly like a block you built by hand. It is free, needs no account or wallet, and every failure explains itself and can be retried.",
+			"tags": [
+				"feature",
 				"improvement"
 			],
 			"link": "/play"

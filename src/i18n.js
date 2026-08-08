@@ -176,8 +176,129 @@ function detectLocale(manifest) {
 	);
 }
 
-async function loadCatalog(code) {
-	return fetchJSON(`${LOCALES_BASE}/${code}.json`).catch(() => ({}));
+// --- namespace-scoped catalog loading --------------------------------------
+//
+// A catalog file covers the whole site (585 sections, 1.8 MB for English), but a
+// page uses a handful of them. Every key is a dot path whose first segment names
+// its section, so the set a page needs is readable straight off the DOM: collect
+// the first segment of every data-i18n key present and ask /api/locale for
+// exactly those. See api/locale.js for the server side.
+//
+// Namespaces already fetched for the active locale, so re-entering setLocale or
+// translating late-injected DOM never refetches what is already merged.
+const loaded = { code: null, ns: new Set(), fallbackNs: new Set() };
+
+// Sections that are not annotated in the initial HTML but are translated by
+// runtime-built components (the global nav, the footer, the getting-started
+// widget, corner cards). They are injected after first paint, and asking for
+// them up front costs a few KB and saves a second round trip on every page.
+const ALWAYS_NS = ['nav', 'footer', 'common'];
+
+const I18N_SELECTOR = '[data-i18n],[data-i18n-html],[data-i18n-attr]';
+
+// Every namespace referenced by annotations inside `root`. Exported for tests.
+export function namespacesIn(root) {
+	const out = new Set();
+	if (!root?.querySelectorAll) return out;
+	const add = (key) => {
+		const ns = String(key || '').split('.')[0].trim();
+		// Section names are plain identifiers (see api/locale.js NS_RE); anything
+		// else is a malformed annotation and would just 400 the whole request.
+		if (ns && /^[a-z0-9_]+$/i.test(ns)) out.add(ns);
+	};
+	for (const el of root.querySelectorAll(I18N_SELECTOR)) {
+		add(el.getAttribute('data-i18n'));
+		add(el.getAttribute('data-i18n-html'));
+		for (const pair of (el.getAttribute('data-i18n-attr') || '').split(';')) {
+			const [, key] = pair.split(':');
+			if (key) add(key);
+		}
+	}
+	// The root element itself may carry the annotation (an injected node passed
+	// straight to applyCatalog), which querySelectorAll does not match.
+	if (root.getAttribute) {
+		add(root.getAttribute('data-i18n'));
+		add(root.getAttribute('data-i18n-html'));
+		for (const pair of (root.getAttribute('data-i18n-attr') || '').split(';')) {
+			const [, key] = pair.split(':');
+			if (key) add(key);
+		}
+	}
+	return out;
+}
+
+// Merge a slice into an existing catalog. Sections are replaced wholesale (a
+// slice is authoritative for the sections it carries) rather than deep-merged,
+// so a re-fetch can never leave half of an old section behind.
+function mergeCatalog(target, slice) {
+	for (const [ns, value] of Object.entries(slice || {})) target[ns] = value;
+	return target;
+}
+
+// Fetch `names` of `code` from the slice endpoint. Falls back to the whole-site
+// catalog if the endpoint is unavailable, so a broken or not-yet-deployed
+// /api/locale degrades to exactly the old behaviour rather than an untranslated
+// page. `null` means even that failed and the caller should keep what it has.
+async function fetchSlice(code, names) {
+	if (!names.length) return {};
+	try {
+		return await fetchJSON(`/api/locale?code=${encodeURIComponent(code)}&ns=${names.join(',')}`);
+	} catch {
+		try {
+			return await fetchJSON(`${LOCALES_BASE}/${code}.json`);
+		} catch {
+			return null;
+		}
+	}
+}
+
+// Load (or extend) the active locale's catalog and its fallback so that every
+// namespace in `names` is present, then return whether anything new arrived.
+async function ensureNamespaces(names, manifest) {
+	const wanted = names.filter((n) => !loaded.ns.has(n));
+	const fallbackWanted = state.current === manifest.default
+		? []
+		: names.filter((n) => !loaded.fallbackNs.has(n));
+	if (!wanted.length && !fallbackWanted.length) return false;
+
+	// The active locale and the English fallback are independent fetches, so they
+	// go out together rather than one after the other.
+	const [slice, fallbackSlice] = await Promise.all([
+		wanted.length ? fetchSlice(state.current, wanted) : null,
+		fallbackWanted.length ? fetchSlice(manifest.default, fallbackWanted) : null,
+	]);
+
+	if (slice) {
+		mergeCatalog(state.catalog, slice);
+		for (const n of wanted) loaded.ns.add(n);
+	}
+	if (fallbackSlice) {
+		mergeCatalog(state.fallback, fallbackSlice);
+		for (const n of fallbackWanted) loaded.fallbackNs.add(n);
+	}
+	// On the default locale the two catalogs are the same object, so one fetch
+	// serves both roles and both ledgers advance together.
+	if (state.current === manifest.default && slice) {
+		for (const n of wanted) loaded.fallbackNs.add(n);
+	}
+	return !!(slice || fallbackSlice);
+}
+
+// Translate a subtree, fetching any catalog sections it needs first.
+//
+// What is already loaded is applied immediately, so known copy never waits on a
+// round trip; a section the page has not fetched yet (runtime-injected content
+// routinely introduces one) is fetched and the subtree re-applied. Until it
+// lands the element keeps its English source text, which is what applyCatalog
+// does for a miss anyway.
+async function translateSubtree(root) {
+	const target = root || (hasDOM ? document : null);
+	if (!target) return;
+	applyCatalog(target, t);
+	const needed = [...namespacesIn(target)].filter((n) => !loaded.ns.has(n));
+	if (!needed.length) return;
+	const manifest = await loadManifest();
+	if (await ensureNamespaces(needed, manifest)) applyCatalog(target, t);
 }
 
 export async function setLocale(code) {
@@ -186,13 +307,29 @@ export async function setLocale(code) {
 
 	// The entryLocale catalog is both the fallback (so partial translations never
 	// leave blanks) AND what restores the original copy when switching back to
-	// the default language — the committed English JSON, not the live DOM, is the
-	// source of truth, so a default ⇄ translated round-trip is lossless.
-	if (!Object.keys(state.fallback).length) {
-		state.fallback = await loadCatalog(manifest.default);
+	// the default language: the committed English JSON, not the live DOM, is the
+	// source of truth, so a default to translated round-trip is lossless.
+	//
+	// On the default locale the two are deliberately the SAME object, so one set
+	// of fetches serves both roles.
+	if (loaded.code !== entry) {
+		loaded.code = entry;
+		if (entry === manifest.default) {
+			state.catalog = state.fallback;
+			loaded.ns = new Set(loaded.fallbackNs);
+		} else {
+			state.catalog = {};
+			loaded.ns = new Set();
+		}
 	}
-	state.catalog = entry === manifest.default ? state.fallback : await loadCatalog(entry);
 	state.current = entry;
+
+	// Sections this page needs: whatever its markup references, plus the ones
+	// runtime-injected chrome always wants.
+	await ensureNamespaces(
+		[...new Set([...ALWAYS_NS, ...(hasDOM ? namespacesIn(document) : [])])],
+		manifest,
+	);
 
 	if (hasDOM) {
 		safeStorage.set(STORAGE_KEY, entry);
@@ -362,7 +499,10 @@ function observeInjectedContent() {
 		scheduled = false;
 		const roots = [...pending];
 		pending.clear();
-		for (const root of roots) applyCatalog(root, t);
+		// translateSubtree, not applyCatalog: injected chrome routinely references
+		// a catalog section the initial HTML never did, and that section has to be
+		// fetched before its copy can be translated.
+		for (const root of roots) translateSubtree(root);
 	};
 	const SEL = '[data-i18n],[data-i18n-html],[data-i18n-attr]';
 	const observer = new MutationObserver((mutations) => {
@@ -388,7 +528,7 @@ if (hasDOM) {
 		await initI18n();
 		observeInjectedContent();
 		// Catch content injected during init (before the observer was attached).
-		applyCatalog(document, t);
+		translateSubtree(document);
 		mountFloatingSwitcher();
 		injectHreflang();
 	};
@@ -400,5 +540,7 @@ if (hasDOM) {
 	// `apply` lets a runtime-built component (nav.js, getting-started.js) request
 	// an immediate translation of the subtree it just rendered, without waiting
 	// for the observer's next frame.
-	window.threewsI18n = { t, setLocale, getLocale, initI18n, apply: (root) => applyCatalog(root || document, t) };
+	// `apply` returns the translateSubtree promise so a caller that needs the
+	// fetched sections applied (rather than just scheduled) can await it.
+	window.threewsI18n = { t, setLocale, getLocale, initI18n, apply: (root) => translateSubtree(root) };
 }

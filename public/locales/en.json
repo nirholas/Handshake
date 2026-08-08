@@ -15808,6 +15808,7 @@
 		"canvas_label": "The 3D coin community world. Walk with W A S D or the arrow keys, hold Shift to run, Space to jump, drag or use the mouse to look around. Press Enter to open chat, Q for emotes, E to talk to whoever is nearby, and Z to hide the panels.",
 		"cash_on_hand": "Cash on hand",
 		"chat": "Chat",
+		"chat_from": "{{name}} says: {{text}}",
 		"chat_input_aria": "Chat message",
 		"chat_log_aria": "Chat messages",
 		"chat_placeholder": "Say something…",
