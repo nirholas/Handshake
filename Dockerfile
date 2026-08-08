@@ -39,7 +39,7 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
 # differently. That is not hypothetical: on 2026-08-08 the base image moved from
 # npm 11.9.0 to 11.17.0 and the production build died at this exact layer with
 # "npm ci can only install packages when your package.json and package-lock.json
-# are in sync — Missing: <dep> from lock file", against a lockfile nobody had
+# are in sync, Missing: <dep> from lock file", against a lockfile nobody had
 # touched. It reads like a dependency mistake and is really an unpinned
 # toolchain. Verified both ways in the real base image: 11.17.0 fails on this
 # context, 11.9.0 installs 3241 packages from it.
