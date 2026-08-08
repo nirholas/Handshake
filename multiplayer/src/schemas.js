@@ -1,7 +1,7 @@
 // Schema definitions shared between the WalkRoom (server) and the client.
 //
 // @colyseus/schema uses delta encoding: only fields that changed since the
-// last patch are sent over the wire. Keep this schema small and primitive —
+// last patch are sent over the wire. Keep this schema small and primitive,
 // every field here is paid for on every state diff.
 
 import { Schema, MapSchema, defineTypes } from '@colyseus/schema';
@@ -29,19 +29,19 @@ export class Player extends Schema {
 		// WebRTC connection to them and the UI can mark their nameplate.
 		this.voice = false;
 		this.tsServer = 0;     // server-side last-update epoch ms (for interpolation)
-		// Verified Solana wallet address bound at sign-in — the account id this
+		// Verified Solana wallet address bound at sign-in, the account id this
 		// player persists under and is known by in the social graph. Empty in the
 		// open (un-gated) world; set from the play pass when the token gate is on.
 		this.account = '';
 		// Combat (W07). HP/armor stay PRIVATE (off-schema, streamed only to the
 		// owner) so peers can't read exact vitals, but two states MUST be visible to
 		// everyone: whether you're downed (peers render the ragdoll + skip you as a
-		// target) and your wanted level (0–5 stars peers can see to bounty you). Both
-		// are tiny and authoritative — set only by the server's combat resolution.
+		// target) and your wanted level (0, 5 stars peers can see to bounty you). Both
+		// are tiny and authoritative, set only by the server's combat resolution.
 		this.dead = false;
-		this.heat = 0; // wanted/heat stars (0–5), derived from the private heat meter
+		this.heat = 0; // wanted/heat stars (0, 5), derived from the private heat meter
 		// Equipped cosmetic loadout (R03/R23) as the compact wire string peers render
-		// — the worn ids in slot order, comma-joined, `none` defaults dropped (see
+		//, the worn ids in slot order, comma-joined, `none` defaults dropped (see
 		// cosmetics-catalog.serializeLoadout). Set authoritatively from the owner's
 		// persisted, ownership-validated loadout so a peer can trust the look and an
 		// unowned cosmetic can never appear on anyone. Empty ⇒ the bare avatar.
@@ -52,7 +52,7 @@ export class Player extends Schema {
 		// type would lose precision past 2^53 but float64 covers epoch ms safely.
 		this.it = false;
 		this.itSince = 0;
-		// Verified three.ws username (W10) — set only from a signed presence
+		// Verified three.ws username (W10), set only from a signed presence
 		// ticket, never from a raw client option, so peers can trust it enough to
 		// open the real /u/<username> profile, follow, and DM this player. Empty
 		// for guests and wallet-only sessions.
@@ -95,7 +95,7 @@ defineTypes(Player, {
 
 // A single placed voxel in a coin's world. Keyed in the blocks MapSchema by its
 // packed grid coordinate ("gx,gy,gz"), so the position never has to ride on the
-// wire — only the block type does. Delta encoding then makes a place/break a
+// wire, only the block type does. Delta encoding then makes a place/break a
 // one-entry patch. `t` is the palette index (see build-voxels.js BLOCK_TYPES).
 export class Block extends Schema {
 	constructor() {
@@ -110,7 +110,7 @@ defineTypes(Block, {
 // A drivable vehicle living in the shared world. Unlike a player's private
 // economy (off-schema), a vehicle is a world entity everyone must see, so it
 // rides on the synced state. The driver's client simulates it with Rapier and
-// streams the authoritative transform (full quaternion — cars pitch/roll over
+// streams the authoritative transform (full quaternion, cars pitch/roll over
 // the ground, a single yaw can't express that); the server validates per-type
 // speed/bounds and relays. `driver` is the sessionId at the wheel ('' = parked),
 // the field that gates who is allowed to write this vehicle's transform.
@@ -118,7 +118,7 @@ export class Vehicle extends Schema {
 	constructor() {
 		super();
 		this.id = '';
-		this.type = 'sedan'; // VEHICLE_TYPES key — picks the mesh + handling profile
+		this.type = 'sedan'; // VEHICLE_TYPES key, picks the mesh + handling profile
 		this.color = 0xffffff;
 		this.x = 0;
 		this.y = 0;
@@ -128,7 +128,7 @@ export class Vehicle extends Schema {
 		this.qy = 0;
 		this.qz = 0;
 		this.qw = 1;
-		this.speed = 0;        // signed forward speed (m/s) — drives wheel spin + audio
+		this.speed = 0;        // signed forward speed (m/s), drives wheel spin + audio
 		this.driver = '';      // sessionId at the wheel; '' when parked
 		this.health = 100;     // damage hooks for W07 (combat); full here
 		this.tsServer = 0;     // last authoritative update (epoch ms) for interpolation
@@ -153,14 +153,14 @@ defineTypes(Vehicle, {
 
 // A PvE enemy in the shared world (W07). Unlike a player's private vitals, a mob
 // is a world entity everyone must see and fight, so it rides on the synced state.
-// The SERVER owns every field — spawns it, runs its AI, applies damage — so a
+// The SERVER owns every field, spawns it, runs its AI, applies damage, so a
 // client can never move, heal, or kill a mob by writing state; it only renders
 // what the room replicates. Keyed in the mobs MapSchema by its id.
 export class Mob extends Schema {
 	constructor() {
 		super();
 		this.id = '';
-		this.kind = 'goblin'; // MOB_STATS key — picks stats, mesh, loot table
+		this.kind = 'goblin'; // MOB_STATS key, picks stats, mesh, loot table
 		this.x = 0;
 		this.y = 0;
 		this.z = 0;
@@ -212,13 +212,13 @@ defineTypes(Tombstone, {
 	ts: 'float64',
 });
 
-// A generic networked world object (R01) — the single shared channel every later
+// A generic networked world object (R01), the single shared channel every later
 // object feature reuses: thrown balls, placed build props, pickups, confetti.
 // Unlike a player's private economy (off-schema), an object is a world entity
 // everyone must see, so it rides on the synced state. Keyed in the `objects`
 // MapSchema by its id. `ownerId` is the account/session allowed to move or remove
 // it; the sentinel 'server' means the room owns it (clients can't write it, e.g.
-// the R05 physics ball). `kind` is the category — build props persist across a
+// the R05 physics ball). `kind` is the category, build props persist across a
 // server restart (R17); transient kinds like 'ball' are never saved.
 export class WorldObject extends Schema {
 	constructor() {
@@ -274,7 +274,7 @@ export class WalkState extends Schema {
 		// Access tier for this instance. '' = the open General world anyone can
 		// enter; 'holders' = a gated world only wallets holding ≥ holderMinUsd of
 		// `coin` can join (enforced in WalkRoom.onAuth). The same coin therefore has
-		// two isolated rooms — General and Holders — kept apart by filterBy.
+		// two isolated rooms, General and Holders, kept apart by filterBy.
 		this.tier = '';
 		this.holderMinUsd = 0; // USD floor for the holder world (0 in General)
 		// Creator-set token threshold for this coin's holder world (R24): hold ≥ this
@@ -303,7 +303,7 @@ export class WalkState extends Schema {
 		// the schema (append-only) so an older client isn't shifted off the format.
 		this.mobs = new MapSchema();
 		this.tombstones = new MapSchema();
-		// Generic placed/networked world objects (R01) — balls, props, pickups —
+		// Generic placed/networked world objects (R01), balls, props, pickups,
 		// keyed by object id. Durable build props in here are persisted per coin
 		// world (R17); transient ones (the R05 ball) are not. Append-only at the end.
 		this.objects = new MapSchema();

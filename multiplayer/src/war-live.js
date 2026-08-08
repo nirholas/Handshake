@@ -1,4 +1,4 @@
-// Live war registry — the multiplayer server's spectator half of Coin Wars.
+// Live war registry, the multiplayer server's spectator half of Coin Wars.
 //
 // A battle runs inside a ClashRoom, which only its fighters are connected to.
 // Players standing in either community's world want to watch it without joining
@@ -10,7 +10,7 @@
 //
 // Same writer/reader split as feed.js and presence-store.js: Redis is the bus
 // between the long-running game server and the serverless API. Every write is
-// best-effort — spectating is a delight layer, never on the battle's critical
+// best-effort, spectating is a delight layer, never on the battle's critical
 // path, so an unreachable Redis means no spectators, never a thrown error inside
 // a room handler.
 
@@ -47,7 +47,7 @@ if (REDIS_URL && REDIS_TOKEN) {
 		})
 		.catch((err) => {
 			_redis = null;
-			console.warn('[war-live] Redis unreachable — wars will not be spectatable:', err?.message);
+			console.warn('[war-live] Redis unreachable, wars will not be spectatable:', err?.message);
 		});
 } else {
 	console.log('[war-live] live war registry disabled (no UPSTASH_REDIS_REST_URL/_TOKEN)');

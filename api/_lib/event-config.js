@@ -4,7 +4,7 @@
 // countdown pill, the in-world meetup layer, the game server's quest gate
 // (multiplayer/src/event-window.js, which reads the same file over HTTP because its
 // container ships without public/) and now the leaderboard endpoints. The API
-// process serves that file from disk, so it reads it from disk — no HTTP hop to
+// process serves that file from disk, so it reads it from disk, no HTTP hop to
 // itself, and no second copy of the times anywhere.
 //
 // Parsing is delegated to parseEventWindow so the API and the game server agree on

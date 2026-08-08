@@ -1,22 +1,22 @@
 <!doctype html>
 <html lang="en">
 	<head>
-		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
-		<script>/* embed bg — ?bg=transparent composites the world onto the host page (e.g. the IBM x402 showcase) instead of a black box. Set before first paint so there is no dark flash. */(function(){try{if(new URLSearchParams(location.search).get('bg')==='transparent')document.documentElement.setAttribute('data-bg','transparent');}catch(e){}})();</script>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<script>/* embed bg, ?bg=transparent composites the world onto the host page (e.g. the IBM x402 showcase) instead of a black box. Set before first paint so there is no dark flash. */(function(){try{if(new URLSearchParams(location.search).get('bg')==='transparent')document.documentElement.setAttribute('data-bg','transparent');}catch(e){}})();</script>
 		<meta charset="utf-8" />
-		<title data-i18n="play.meta_title">Play · Coin Communities — three.ws</title>
+		<title data-i18n="play.meta_title">Play · Coin Communities, three.ws</title>
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1, viewport-fit=cover"
 		/>
 		<meta
 			name="description"
-			content="Coin Communities — a browser isometric MMO on three.ws. Join coin communities, gather, fight, trade, and explore a shared world. Sign in with your wallet and play."
+			content="Coin Communities, a browser isometric MMO on three.ws. Join coin communities, gather, fight, trade, and explore a shared world. Sign in with your wallet and play."
 		 data-i18n-attr="content:play.meta_description"/>
 		<meta name="theme-color" content="#060607" />
 
 		<!--
-			Multiplayer server URL — the deployed Colyseus host (Cloud Run).
+			Multiplayer server URL, the deployed Colyseus host (Cloud Run).
 			Local dev ignores this and uses ws://localhost:2567 automatically
 			(see defaultServerUrl in src/game/community-net.js), so
 			`npm run dev:walk-all` still works out of the box.
@@ -33,14 +33,14 @@
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:title" content="Play · Coin Communities"  data-i18n-attr="content:play.meta_og_title"/>
-		<meta property="og:description" content="A browser isometric MMO on three.ws — join coin communities, gather, fight, trade, explore."  data-i18n-attr="content:play.meta_og_description"/>
+		<meta property="og:description" content="A browser isometric MMO on three.ws, join coin communities, gather, fight, trade, explore."  data-i18n-attr="content:play.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/play" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Play&amp;d=Jump+into+a+live+coin+community+world+and+explore+it+with+your+avatar.&amp;p=%2Fplay" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Play · Coin Communities — three.ws"  data-i18n-attr="content:play.meta_twitter_title"/>
+	<meta name="twitter:title" content="Play · Coin Communities, three.ws"  data-i18n-attr="content:play.meta_twitter_title"/>
 	<meta name="twitter:description" content="Play in your coin's 3D community world. Walk, chat, and hang out with fellow holders."  data-i18n-attr="content:play.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Play&amp;d=Jump+into+a+live+coin+community+world+and+explore+it+with+your+avatar.&amp;p=%2Fplay" />
 
@@ -49,7 +49,7 @@
 			page never loaded a face for it, so the whole surface (including the boot
 			wordmark) silently rendered in the OS default. Preload the latin subset so
 			the loader's first paint is already on-brand, no FOUT.
-			See docs/DESIGN-TOKENS.md — standalone pages must load /fonts/fonts.css.
+			See docs/DESIGN-TOKENS.md, standalone pages must load /fonts/fonts.css.
 		-->
 		<link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
@@ -58,7 +58,7 @@
 	<link rel="canonical" href="https://three.ws/play">
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Play — three.ws">
+	<meta property="og:image:alt" content="Play, three.ws">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Play","description":"Jump into a live coin community world and explore it with your avatar.","url":"https://three.ws/play","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&amp;t=Play&amp;d=Jump+into+a+live+coin+community+world+and+explore+it+with+your+avatar.&amp;p=%2Fplay"}]}</script>
 </head>
 	<body>
@@ -194,11 +194,19 @@
 				msg.style.cssText = 'opacity:.8;font-size:14px;line-height:1.5;margin:0 0 18px;';
 				var actions = document.createElement('div');
 				actions.className = 'kx-boot-error-actions';
+				/* This card exists because a stylesheet may be exactly what failed, so
+				   the two things a stranded player needs, a thumb-sized target and a
+				   visible focus ring, cannot be left to coincommunities.css. Inline
+				   style attributes cannot express :focus-visible, so the rules ride
+				   along in their own <style> element. */
+				var ring = document.createElement('style');
+				ring.textContent = '.kx-boot-error-btn:focus-visible,.kx-boot-error-link:focus-visible{outline:2px solid #fff;outline-offset:2px;}';
+				card.appendChild(ring);
 				var retry = document.createElement('button');
 				retry.type = 'button';
 				retry.className = 'kx-boot-error-btn';
 				retry.textContent = 'Try again';
-				retry.style.cssText = 'padding:10px 22px;border-radius:8px;border:1px solid #555;background:#191a1c;color:#fff;cursor:pointer;font-size:14px;';
+				retry.style.cssText = 'min-height:44px;padding:12px 22px;border-radius:8px;border:1px solid #555;background:#191a1c;color:#fff;cursor:pointer;font-size:14px;';
 				retry.addEventListener('click', function () {
 					/* Hard reload: a stale cached HTML referencing dead chunks needs a
 					   revalidated document, not a memory-cache replay. */
@@ -208,7 +216,7 @@
 				home.className = 'kx-boot-error-link';
 				home.href = '/';
 				home.textContent = 'Back to three.ws';
-				home.style.cssText = 'display:inline-block;margin-left:14px;color:#9ab;font-size:14px;';
+				home.style.cssText = 'display:inline-flex;align-items:center;min-height:44px;padding:0 10px;margin-left:14px;color:#9ab;font-size:14px;';
 				actions.appendChild(retry);
 				actions.appendChild(home);
 				card.appendChild(mark);

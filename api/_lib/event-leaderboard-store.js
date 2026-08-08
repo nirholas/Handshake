@@ -1,15 +1,15 @@
-// Event leaderboard — durable storage for the live event quest line's standing.
+// Event leaderboard, durable storage for the live event quest line's standing.
 //
 // The authoritative game server (multiplayer WalkRoom) reports every finished event
 // quest here through api/internal/event-score.js; api/play/event-leaderboard.js and
 // the in-world panel read the ranked table back. The ranking itself lives in
-// multiplayer/src/event-leaderboard.js so both sides sort identically — this module
+// multiplayer/src/event-leaderboard.js so both sides sort identically, this module
 // is purely the store.
 //
 // Shape: one Redis HASH per event (`event:lb:<eventId>`), field = the player's
 // account key, value = the JSON record. A HASH (rather than the ZSET clash-store
-// uses) because a row carries more than a score — display name, cash earned, the
-// per-mission breakdown, the timestamp that breaks ties — and the population is one
+// uses) because a row carries more than a score, display name, cash earned, the
+// per-mission breakdown, the timestamp that breaks ties, and the population is one
 // event's worth of players, small enough that HGETALL plus an in-process sort is a
 // single cheap round-trip. Distinct accounts write distinct fields, and one account
 // can only be in one live session (playerStore enforces that upstream), so a per-
@@ -28,7 +28,7 @@ import { applyEventRun, emptyEventRecord, normalizeEventRecord } from '../../mul
 
 const redis = getRedis();
 
-// Keep a finished event's standing around for a week — long enough for the owner to
+// Keep a finished event's standing around for a week, long enough for the owner to
 // read the winners off it and settle prizes by hand.
 export const BOARD_TTL_S = 7 * 24 * 60 * 60;
 
@@ -61,7 +61,7 @@ function redisDegraded(err) {
 	const now = Date.now();
 	if (now - _degradedAt > 60_000) {
 		_degradedAt = now;
-		console.warn('[event-leaderboard] redis degraded — serving from in-memory fallback:', err?.message || err);
+		console.warn('[event-leaderboard] redis degraded, serving from in-memory fallback:', err?.message || err);
 	}
 }
 

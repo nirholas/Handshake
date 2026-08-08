@@ -1,7 +1,7 @@
 // Economy & progression for the /play coin worlds.
 //
 // /play is a free-roam, per-coin social world where a player's pack and purse are
-// PRIVATE — no peer needs to see them — so we keep all of it OFF the shared
+// PRIVATE, no peer needs to see them, so we keep all of it OFF the shared
 // WalkState schema and stream each owner only their own state via targeted
 // messages.
 //
@@ -9,7 +9,7 @@
 // peers zero extra wire bytes, and lets the economy grow (cooking, gathering,
 // commerce) without ever repricing the movement-critical position deltas.
 //
-// A "profile" here is a plain JS object — not a Schema — so these helpers operate
+// A "profile" here is a plain JS object, not a Schema, so these helpers operate
 // on ordinary arrays. The shapes mirror items.js/playerStore.js so a fish caught on
 // /play means the same thing it does in /game, and a profile persists through the
 // same account-keyed playerStore.
@@ -27,20 +27,20 @@ export const HOTBAR_SIZE = 6;
 export const MAX_STACK = 999;
 export const LEVEL_CAP = 99;
 export const SKILLS = ['combat', 'woodcutting', 'mining', 'fishing', 'cooking'];
-// The armor layer's ceiling — a vest tops you up to here, and incoming damage eats
+// The armor layer's ceiling, a vest tops you up to here, and incoming damage eats
 // armor before HP (see combat.js applyDamage). One capped bar, so it reads cleanly.
 export const MAX_ARMOR = 100;
 
 // Starter kit handed to a brand-new player so the loop is exercisable the moment
 // they land: a fishing rod (cast at any pond), the gathering tools, and BOTH a
-// melee (sword) and ranged (pistol) weapon so the W07 combat loop — swing, shoot,
-// heal, re-armor — is playable on arrival. Tools occupy the hotbar.
+// melee (sword) and ranged (pistol) weapon so the W07 combat loop, swing, shoot,
+// heal, re-armor, is playable on arrival. Tools occupy the hotbar.
 const STARTER_HOTBAR = ['rod', 'axe', 'pickaxe', 'sword', 'pistol'];
 // Backpack seed so a new player can fire and survive their first fight without a
 // shop run: a clip of pistol ammo and one body-armor vest.
 const STARTER_INV = [{ item: 'ammo', qty: 24 }, { item: 'vest', qty: 1 }];
 
-// XP curve — the canonical progression for the platform: level n needs
+// XP curve, the canonical progression for the platform: level n needs
 // 50 * n^1.8 cumulative XP, capped at LEVEL_CAP.
 export function levelForXp(xp) {
 	let lvl = 1;
@@ -70,19 +70,19 @@ export function newProfile(playerId = '') {
 	return {
 		playerId,
 		gold: 0,
-		bank: 0,        // banked cash — protected on death (carried `gold` drops). W04 extends.
+		bank: 0,        // banked cash, protected on death (carried `gold` drops). W04 extends.
 		hp: 100,
 		maxHp: 100,
 		armor: 0,       // armor layer that absorbs damage before HP; refilled by a vest.
 		maxArmor: MAX_ARMOR,
-		heat: 0,        // wanted/heat meter (0..MAX_HEAT) — raised by crimes, decays over time.
+		heat: 0,        // wanted/heat meter (0..MAX_HEAT), raised by crimes, decays over time.
 		inv,
 		hotbar,
 		activeSlot: 0, // the rod, ready to cast
 		xp: Object.fromEntries(SKILLS.map((s) => [s, 0])),
 		levels: Object.fromEntries(SKILLS.map((s) => [s, 1])),
 		// Wheel of Fortune (W09/Task 19): epoch ms the next free spin unlocks. Unlike
-		// the ephemeral per-action `cd` map (WalkRoom.js, reset every reconnect —
+		// the ephemeral per-action `cd` map (WalkRoom.js, reset every reconnect,
 		// fine for a sub-second gather cooldown), this MUST survive a disconnect: a
 		// 12h cooldown that resets on reconnect would be free to farm. Persisted
 		// through serializeProfile/restoreProfile below.
@@ -106,7 +106,7 @@ export function ownedCosmeticSet(profile) {
 // Grant an unlockable cosmetic into an account's owned list. Two callers: the
 // W04 boutique after a $THREE payment settles (premium tier), and the event-drop
 // grant when a player is in the world during a live meetup (event tier).
-// Idempotent; ignores free or unknown ids — a free cosmetic is implicitly owned
+// Idempotent; ignores free or unknown ids, a free cosmetic is implicitly owned
 // and storing it would bloat every save with nothing. Returns true when it newly
 // unlocked something, so the caller can skip a persist that would change nothing.
 export function grantCosmetic(profile, id) {
@@ -123,7 +123,7 @@ export function grantCosmetic(profile, id) {
 // Redis) into a profile's unlocked set. `ledgerIds` is the raw SMEMBERS of
 // `cosmetics:owned:<account>`; only ids that are premium cosmetics in THIS
 // catalog are granted (the ledger may also hold ids from a sibling catalog the
-// rig can't render — those are ignored, never errored). Idempotent via
+// rig can't render, those are ignored, never errored). Idempotent via
 // grantCosmetic. Returns the count newly unlocked, so a caller can skip a persist
 // when nothing changed.
 //
@@ -154,7 +154,7 @@ export function equipCosmetic(profile, id) {
 }
 
 // Rebuild a profile from a persisted blob (playerStore `profile` field). Tolerant
-// of partial/legacy/missing data — every field is clamped and defaulted so a
+// of partial/legacy/missing data, every field is clamped and defaulted so a
 // corrupt save can never crash a join; missing → a fresh starter profile.
 export function restoreProfile(saved, playerId = '') {
 	if (!saved || typeof saved !== 'object') return newProfile(playerId);
@@ -269,7 +269,7 @@ export function addItem(profile, item, qty) {
 	return left;
 }
 
-// Total quantity of `item` held across the backpack (hotbar tools aren't counted —
+// Total quantity of `item` held across the backpack (hotbar tools aren't counted,
 // resources and food live in the pack). Used to gate cooking ("any raw fish?").
 export function countItem(profile, item) {
 	let n = 0;
@@ -305,7 +305,7 @@ export function resolveSlot(profile, ref) {
 }
 
 // Grant XP in a skill. Mutates the profile and returns the detail the owner's
-// client needs to animate the gain and (when crossed) the level-up — including the
+// client needs to animate the gain and (when crossed) the level-up, including the
 // current level's XP boundaries so the bar is exact without a round-trip.
 export function grantXp(profile, skill, amount) {
 	if (!SKILLS.includes(skill)) return null;
@@ -364,7 +364,7 @@ export function profileSnapshot(profile) {
 export function consumeSlot(profile, slot) {
 	if (!slot || !slot.item) return { ok: false, reason: 'inedible' };
 
-	// Body armor — refill the armor bar instead of HP.
+	// Body armor, refill the armor bar instead of HP.
 	const armorPts = armorValue(slot.item);
 	if (armorPts > 0) {
 		const cap = profile.maxArmor || MAX_ARMOR;
@@ -391,7 +391,7 @@ export function consumeSlot(profile, slot) {
 
 // Strip the carried valuables a tombstone inherits when this player dies: all
 // carried cash (`gold`) plus everything in the BACKPACK. Equipped hotbar tools and
-// weapons are kept so a respawn isn't toothless, and BANKED cash is untouched —
+// weapons are kept so a respawn isn't toothless, and BANKED cash is untouched,
 // that's the whole risk/reward point of banking. Mutates the profile (zeroing the
 // dropped slice) and returns { gold, items:[{item,qty}] } for the tombstone.
 export function dropCarried(profile) {
@@ -415,7 +415,7 @@ export function creditGold(profile, amount) {
 }
 
 // Restore a player to fighting shape after respawn: full HP and a cleared armor bar
-// (you lose your vest on death — re-armor from the pack or a vendor).
+// (you lose your vest on death, re-armor from the pack or a vendor).
 export function reviveProfile(profile) {
 	profile.hp = profile.maxHp;
 	profile.armor = 0;

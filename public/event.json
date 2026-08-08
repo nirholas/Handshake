@@ -9,7 +9,7 @@
 	"linkLabel": "Join the $THREE world",
 	"souvenir": {
 		"cosmeticId": "laurel-meetup",
-		"$comment": "Free commemorative wearable granted once to every player in the world named by `link` between startsAt and endsAt. Must be an id in multiplayer/src/cosmetics-catalog.js with tier 'event' — the server refuses to grant anything else, so this field can never hand out a boutique item. Drop the field to run an event with no souvenir."
+		"$comment": "Free commemorative wearable granted once to every player in the world named by `link` between startsAt and endsAt. Must be an id in multiplayer/src/cosmetics-catalog.js with tier 'event', the server refuses to grant anything else, so this field can never hand out a boutique item. Drop the field to run an event with no souvenir."
 	},
 	"agenda": [
 		{ "atMin": 0, "title": "Doors open in the plaza", "detail": "Say hi in chat, show off your fit, grab a commemorative photo", "icon": "👋" },

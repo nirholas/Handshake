@@ -1,9 +1,9 @@
-// Live activity feed store — the cross-surface "something is always happening
+// Live activity feed store, the cross-surface "something is always happening
 // here" ticker that makes three.ws feel alive on every page.
 //
-// Events are produced from many places — a coin buy confirmed in api/pump, an
+// Events are produced from many places, a coin buy confirmed in api/pump, an
 // agent deployed in api/agents, a level-up or a world-join in the standalone
-// multiplayer server — and read by the site-wide widget (public/feed.js) via
+// multiplayer server, and read by the site-wide widget (public/feed.js) via
 // GET /api/feed. Storage is a single capped Redis list `feed:events` ordered
 // newest-first.
 //
@@ -14,33 +14,33 @@
 //
 // ── Event shape ──────────────────────────────────────────────────────────────
 //   { id, type, ts, actor, ...typeSpecific }
-//     id    — opaque unique key; the widget de-dupes and uses it as a render key
-//     type  — one of ALLOWED_TYPES
-//     ts    — epoch ms
-//     actor — short, already-sanitized display label (truncated wallet, player
+//     id, opaque unique key; the widget de-dupes and uses it as a render key
+//     type, one of ALLOWED_TYPES
+//     ts, epoch ms
+//     actor, short, already-sanitized display label (truncated wallet, player
 //             name, agent name). NEVER a raw secret or full address we wouldn't
-//             show publicly — this list is world-readable.
+//             show publicly, this list is world-readable.
 //   coin-buy      → { mint, sol, network }
-//   agent-deploy  → { agentId, name }  — new agent joined the registry (off-chain)
-//   agent-onchain → { agentId, name, chain }  — agent verified on-chain
+//   agent-deploy  → { agentId, name }, new agent joined the registry (off-chain)
+//   agent-onchain → { agentId, name, chain }, agent verified on-chain
 //   level-up      → { skill, level, coin }
 //   world-join   → { coin, coinName }
 //   jackpot      → { reward, coin }
-//   mission-complete → { mission, gold, coop, coin }  — /play job or heist finished
-//   war-result   → { winner, reason, a, b, matchKey, network }  — a Coin Wars battle ended; actor is the winning community
-//   agora-registered    → { citizenId, agentPda, profession, narrative }  — a citizen joined Agora (AgenC registerAgent)
-//   agora-task-posted   → { actor, taskPda, profession, rewardLabel, minReputation, cluster }  — a bounty was escrowed on the board (createTask)
-//   agora-hired         → { actor, taskPda, profession, rewardLabel, cluster }  — a citizen hired a sub-agent (agent-to-agent)
-//   agora-task-claimed  → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  — claimed an on-chain task
-//   agora-task-completed→ { citizenId, agentPda, profession, taskPda, proofHash, txSig, explorerUrl, narrative }  — proof accepted
-//   agora-earned        → { citizenId, agentPda, profession, rewardLabel, txSig, explorerUrl, narrative }  — escrow released to the worker
+//   mission-complete → { mission, gold, coop, coin }, /play job or heist finished
+//   war-result   → { winner, reason, a, b, matchKey, network }, a Coin Wars battle ended; actor is the winning community
+//   agora-registered    → { citizenId, agentPda, profession, narrative }, a citizen joined Agora (AgenC registerAgent)
+//   agora-task-posted   → { actor, taskPda, profession, rewardLabel, minReputation, cluster }, a bounty was escrowed on the board (createTask)
+//   agora-hired         → { actor, taskPda, profession, rewardLabel, cluster }, a citizen hired a sub-agent (agent-to-agent)
+//   agora-task-claimed  → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }, claimed an on-chain task
+//   agora-task-completed→ { citizenId, agentPda, profession, taskPda, proofHash, txSig, explorerUrl, narrative }, proof accepted
+//   agora-earned        → { citizenId, agentPda, profession, rewardLabel, txSig, explorerUrl, narrative }, escrow released to the worker
 //   agora-arena-entered → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  : joined a Competitive task; first valid proof takes the purse
 //   agora-arena-won     → { citizenId, agentPda, profession, taskPda, rewardLabel, txSig, explorerUrl, narrative }  : won an Arena race
 //   agora-arena-lost    → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  : another racer proved it first
 //   agora-guild-joined  → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  : joined a Collaborative task alongside other citizens
 //   agora-guild-contributed → { citizenId, agentPda, profession, taskPda, rewardLabel, txSig, explorerUrl, narrative }  : contributed a proof to a Guild; the pool splits across contributors
-//   agora-vouched       → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  — a Verifier re-derived a proof and it held
-//   agora-flagged       → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }  — a Verifier re-derived a proof and it did NOT match
+//   agora-vouched       → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }, a Verifier re-derived a proof and it held
+//   agora-flagged       → { citizenId, agentPda, profession, taskPda, txSig, explorerUrl, narrative }, a Verifier re-derived a proof and it did NOT match
 //
 // All writes are best-effort. The feed is a delight layer, never on a critical
 // path: a Redis outage degrades to an empty feed, never a thrown error.
@@ -50,7 +50,7 @@ import { getRedis } from './redis.js';
 import { insertNotification } from './notify.js';
 
 const FEED_KEY = 'feed:events';
-const MAX_EVENTS = 200; // capped list — the widget shows ~30; we keep headroom
+const MAX_EVENTS = 200; // capped list, the widget shows ~30; we keep headroom
 
 export const ALLOWED_TYPES = new Set([
 	'coin-buy',
@@ -62,9 +62,9 @@ export const ALLOWED_TYPES = new Set([
 	'payment',  // skill/service payment confirmed; { usdcAtomic, recipientLabel, txSig, explorerUrl }
 	'mission-complete',  // /play job or co-op heist finished; { mission, gold, coop, coin }
 	'member-join',  // a person signed in to three.ws; { handle } (actor = display name)
-	'agent-guard',  // an autonomous buy was REFUSED by a safety rule; { agentId, mint, reason, label } — trust made visible
+	'agent-guard',  // an autonomous buy was REFUSED by a safety rule; { agentId, mint, reason, label }, trust made visible
 	'war-result',   // a Coin Wars battle ended; { winner, reason, a:{mint,name,symbol,score}, b:{…}, matchKey, network }
-	// Agora — the living agent economy (workers/agora-citizens). Each is a real
+	// Agora, the living agent economy (workers/agora-citizens). Each is a real
 	// on-chain AgenC action projected onto the ticker; see docs/agora.md.
 	'agora-registered',       // a citizen registered on AgenC
 	'agora-task-posted',      // a bounty was escrowed on the board (createTask)
@@ -77,7 +77,7 @@ export const ALLOWED_TYPES = new Set([
 	'agora-arena-lost',       // another racer proved the Arena task first
 	'agora-guild-joined',     // joined a Collaborative task (Guild)
 	'agora-guild-contributed',// contributed a proof to a Guild; the pool splits
-	'agora-vouched',          // a Verifier re-derived a deliverable's proof — it holds
+	'agora-vouched',          // a Verifier re-derived a deliverable's proof, it holds
 	'agora-flagged',          // a Verifier re-derived a proof and it did NOT match
 ]);
 
@@ -121,8 +121,8 @@ function eventId(ts) {
 // { id, type, ts, actor, ...typeSpecific } plus `read` flag and a `link` for
 // click-through. Fire-and-forget: never throws.
 //
-// @param {string} userId  — recipient's user id
-// @param {object} event   — { type (USER_EVENT_TYPES), actor, link, ...rest }
+// @param {string} userId, recipient's user id
+// @param {object} event, { type (USER_EVENT_TYPES), actor, link, ...rest }
 export function publishUserEvent(userId, event) {
 	if (!userId || !event || !USER_EVENT_TYPES.has(event.type)) return;
 	const ts = Number.isFinite(event.ts) ? event.ts : Date.now();
@@ -137,7 +137,7 @@ export function publishUserEvent(userId, event) {
 
 // Append an event to the feed. Returns the stored record (with id + ts filled
 // in) or null on a no-op (unknown type, Redis down, malformed input). Never
-// throws — every caller is fire-and-forget on a non-critical path.
+// throws, every caller is fire-and-forget on a non-critical path.
 export async function publishFeedEvent(event) {
 	const r = redis();
 	if (!r || !event || !ALLOWED_TYPES.has(event.type)) return null;
@@ -208,7 +208,7 @@ const MEMBER_JOIN_TTL_S = 6 * 60 * 60; // 6h
 /**
  * Publish a 'member-join' feed event when someone signs in, throttled to once
  * per `userKey` per MEMBER_JOIN_TTL_S so re-logins don't spam the ticker.
- * Best-effort and fire-and-forget — never throws, returns the stored record or
+ * Best-effort and fire-and-forget, never throws, returns the stored record or
  * null (throttled / Redis down / no display name).
  *
  * @param {object} opts
@@ -238,9 +238,9 @@ export async function publishMemberJoin({ userKey, actor, handle } = {}) {
 
 // Short-lived in-process read cache. The widget is mounted on every page and
 // polls this endpoint continuously, so without dedup each poll becomes a Redis
-// command — at platform scale that alone can exhaust the Upstash request quota.
+// command, at platform scale that alone can exhaust the Upstash request quota.
 // A warm serverless instance serving a burst of polls reuses one underlying
-// read for READ_CACHE_MS; we always fetch the top CACHE_N (cheap — one command
+// read for READ_CACHE_MS; we always fetch the top CACHE_N (cheap, one command
 // regardless of count) and slice per caller, so every limit ≤ CACHE_N is served
 // from the same cached array. This bounds Redis reads to ~one per instance per
 // window instead of one per client poll. The feed is a delight layer, so a few

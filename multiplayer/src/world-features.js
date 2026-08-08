@@ -5,8 +5,8 @@
 // gather nodes) are re-anchored here to fixed positions in continuous world space.
 //
 // This module is the ONE source of truth for those positions, imported by BOTH the
-// server (WalkRoom — validates "are you actually beside the water?") and the client
-// (coincommunities/play-systems — renders the pond and gates the Cast button), so
+// server (WalkRoom, validates "are you actually beside the water?") and the client
+// (coincommunities/play-systems, renders the pond and gates the Cast button), so
 // the playable world and the authoritative world can never drift apart. Coordinates
 // are world metres in the XZ plane; the ground sits at y = 0.
 //
@@ -22,7 +22,7 @@ export const FISHING_SPOTS = [
 	{ id: 'pond-west', x: -28, z: 16, r: 4.6, quality: 1.4 },
 ];
 
-// How far BEYOND a pond's water edge a player may stand and still cast — you fish
+// How far BEYOND a pond's water edge a player may stand and still cast, you fish
 // from the bank, not from the middle of the water. Generous enough that the Cast
 // button feels reliable as you walk up, tight enough that it's clearly "at" the pond.
 export const FISH_REACH = 3.4;
@@ -42,19 +42,19 @@ export function nearestFishingSpot(x, z) {
 
 // Server-side gate: is the player standing close enough to a pond to cast? Returns
 // the spot (with its quality) or null. The single check both the server trusts and
-// the client mirrors for the button — same function, no drift.
+// the client mirrors for the button, same function, no drift.
 export function fishingSpotInRange(x, z) {
 	const near = nearestFishingSpot(x, z);
 	return near && near.gap <= 0 ? near.spot : null;
 }
 
 // ---------------------------------------------------------------------------
-// Gather & craft stations — woodcutting, mining, cooking (W06)
+// Gather & craft stations, woodcutting, mining, cooking (W06)
 // ---------------------------------------------------------------------------
 //
 // The gather→craft loop's fixed world stations, the chop/mine/cook counterpart to
 // the fishing ponds above. All sited in the SAFE town (clear of the W07 danger
-// zones), so the gather economy stays peaceful — you fight foes in the wilds, you
+// zones), so the gather economy stays peaceful, you fight foes in the wilds, you
 // gather and cook at home. Generalised over `nearestNode` so the range rule the
 // server trusts and the client renders the button from is byte-identical to fishing.
 
@@ -103,7 +103,7 @@ export const MINE_REACH = 2.8;
 export function nearestRock(x, z) { return nearestNode(x, z, ROCKS, MINE_REACH); }
 export function rockInRange(x, z) { return nodeInRange(x, z, ROCKS, MINE_REACH); }
 
-// Roast pits — cook raw fish into edible cooked fish. Sited beside the ponds so the
+// Roast pits, cook raw fish into edible cooked fish. Sited beside the ponds so the
 // catch→cook→eat loop is a short walk, not a trek.
 export const FIREPITS = [
 	{ id: 'fire-east', x: 23, z: 13, r: 1.0 },
@@ -113,9 +113,9 @@ export const COOK_REACH = 2.6;
 export function nearestFirepit(x, z) { return nearestNode(x, z, FIREPITS, COOK_REACH); }
 export function firepitInRange(x, z) { return nodeInRange(x, z, FIREPITS, COOK_REACH); }
 
-// The Wheel of Fortune — "Fortune's Folly" (W09/Task 19). One per world, in the
-// open plaza north of the totem: clear of both ponds (~29–33m away), both
-// firepits (~22–25m), and the plaza rod pickup (~16m) — a landmark on its own,
+// The Wheel of Fortune, "Fortune's Folly" (W09/Task 19). One per world, in the
+// open plaza north of the totem: clear of both ponds (~29, 33m away), both
+// firepits (~22, 25m), and the plaza rod pickup (~16m), a landmark on its own,
 // not crowded against another station.
 export const WHEEL = [
 	{ id: 'wheel-plaza', x: 0, z: 22, r: 2.0 },
@@ -153,15 +153,15 @@ export function vendorInRange(x, z) { return nodeInRange(x, z, VENDOR_STALLS, CO
 export function nearestAtm(x, z) { return nearestNode(x, z, ATMS, COUNTER_REACH); }
 export function atmInRange(x, z) { return nodeInRange(x, z, ATMS, COUNTER_REACH); }
 
-// The Plaza Stage — the Living Stages venue standing in every coin world's plaza
+// The Plaza Stage, the Living Stages venue standing in every coin world's plaza
 // (F17). `r` is the footprint of the built structure (platform + backdrop), which
 // is what the client renders and what WalkRoom protects from being buried or
 // walled in (its protected discs are derived from this point, so the landmark and
 // the grief guard can never drift apart).
 //
 // Sited in the north-east plaza: a short walk from the wheel at (0,22) and clear
-// of every other feature — the east pond (~22 m), the east firepit (~14 m), the
-// plaza rod pickup (~15 m) — and well outside all three danger zones, so the
+// of every other feature, the east pond (~22 m), the east firepit (~14 m), the
+// plaza rod pickup (~15 m), and well outside all three danger zones, so the
 // crowd that gathers for a show is standing in safe town.
 export const PLAZA_STAGE = { id: 'plaza-stage', x: 18, z: 26, r: 5 };
 
@@ -180,7 +180,7 @@ export function nearestStage(x, z) { return nearestNode(x, z, [PLAZA_STAGE], STA
 export function stageInRange(x, z) { return nodeInRange(x, z, [PLAZA_STAGE], STAGE_ATTEND_REACH); }
 export function stageMarqueeInRange(x, z) { return nodeInRange(x, z, [PLAZA_STAGE], STAGE_MARQUEE_REACH); }
 
-// The War Portal — the Coin Wars door standing in every coin world's plaza
+// The War Portal, the Coin Wars door standing in every coin world's plaza
 // (F18). Walking up to it shows this community's league standing, the last
 // battles fought, and any war running right now; interacting with it queues the
 // community for a battle and hands the player through to the arena at /play/war.
@@ -192,7 +192,7 @@ export function stageMarqueeInRange(x, z) { return nodeInRange(x, z, [PLAZA_STAG
 // the northern wilds (0,42,r10), so the crowd reading the board is in safe town.
 export const WAR_PORTAL = { id: 'war-portal', x: -20, z: 30, r: 3 };
 
-// How close a player must stand to use the portal (the "E — Enter the war"
+// How close a player must stand to use the portal (the "E, Enter the war"
 // prompt). Matches the other landmark reaches so every plaza interaction has the
 // same feel underfoot.
 export const WAR_PORTAL_REACH = 3.5;
@@ -206,7 +206,7 @@ export function nearestWarPortal(x, z) { return nearestNode(x, z, [WAR_PORTAL], 
 export function warPortalInRange(x, z) { return nodeInRange(x, z, [WAR_PORTAL], WAR_PORTAL_REACH); }
 export function warPortalBoardInRange(x, z) { return nodeInRange(x, z, [WAR_PORTAL], WAR_PORTAL_BOARD_REACH); }
 
-// Fishing-rod pickups — a spare rod waiting on the bank for anyone without one
+// Fishing-rod pickups, a spare rod waiting on the bank for anyone without one
 // (or anyone who wants a backup to store). Every player already starts with a
 // rod in the hotbar and it's never lost on death, so these exist for
 // discoverability and flavour, not survival: sited just past each pond's cast
@@ -222,7 +222,7 @@ export const PICKUP_REACH = 2.4;
 export function nearestRodPickup(x, z) { return nearestNode(x, z, ROD_PICKUPS, PICKUP_REACH); }
 export function rodPickupInRange(x, z) { return nodeInRange(x, z, ROD_PICKUPS, PICKUP_REACH); }
 
-// Mob spawn points — used by W07 combat and the ACTIVITIES dispatch in play-systems.
+// Mob spawn points, used by W07 combat and the ACTIVITIES dispatch in play-systems.
 export const MOB_SPAWNS = [
 	{ id: 'mob-danger-n', x: 0, z: -60, r: 1.5 },
 	{ id: 'mob-danger-e', x: 60, z: 0, r: 1.5 },
@@ -233,11 +233,11 @@ export const MOB_REACH = 4.0;
 export function nearestMobSpawn(x, z) { return nearestNode(x, z, MOB_SPAWNS, MOB_REACH); }
 
 // ---------------------------------------------------------------------------
-// Safe vs danger zones — opt-in PvP by location (W07)
+// Safe vs danger zones, opt-in PvP by location (W07)
 // ---------------------------------------------------------------------------
 //
 // GTA / Kintara-style risk geography: the whole built-up town (spawn, totem,
-// trading screen, and the gather/fish stations) is SAFE — no player may damage
+// trading screen, and the gather/fish stations) is SAFE, no player may damage
 // another there and no roaming mob enters it. Combat tension is confined to a
 // handful of named WILDERNESS pockets sited in the open ground away from those
 // landmarks: inside one, PvP is on and PvE mobs roam and drop the better loot.
@@ -246,8 +246,8 @@ export function nearestMobSpawn(x, z) { return nearestNode(x, z, MOB_SPAWNS, MOB
 // the gather economy undisturbed.
 //
 // This is the ONE source of truth for the boundary, imported by BOTH the server
-// (WalkRoom — gates every attack, confines + seeds mobs, picks death-drop rules)
-// and the client (PlayCombat — paints the danger ground ring, signposts the
+// (WalkRoom, gates every attack, confines + seeds mobs, picks death-drop rules)
+// and the client (PlayCombat, paints the danger ground ring, signposts the
 // crossing, gates the attack button). A circle test is exact, cheap and trivially
 // unit-testable; W01 can later refine these into full districts.
 // Sited within the area players actually roam today (the ~58 m central plaza the
@@ -261,7 +261,7 @@ export const DANGER_ZONES = [
 ];
 
 export const WORLD_RADIUS = 60;            // matches WalkRoom's authoritative clamp
-export const SPAWN_POINT = { x: 0, z: 0 }; // where the dead respawn — always safe
+export const SPAWN_POINT = { x: 0, z: 0 }; // where the dead respawn, always safe
 
 // The danger zone a world point sits inside, or null when it's in safe town.
 export function dangerZoneAt(x, z) {

@@ -1,4 +1,4 @@
-// Walk-room registry — the in-process lookup that lets the internal
+// Walk-room registry, the in-process lookup that lets the internal
 // /internal/announce webhook (called by an operator during a live event, signed
 // with the shared secret) reach every live walk_world room on this instance and
 // broadcast an announcement to the players in it.
@@ -9,7 +9,7 @@
 // at broadcast time) is therefore the right shape, not a Map keyed by coin.
 // Under horizontal scaling (Redis driver) an announce only reaches the rooms
 // hosted on the instance that received the webhook; the caller fans out to
-// every instance or accepts partial delivery — nothing here breaks.
+// every instance or accepts partial delivery, nothing here breaks.
 
 const _rooms = new Set(); // live WalkRoom instances on this process
 

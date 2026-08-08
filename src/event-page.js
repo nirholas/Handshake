@@ -52,6 +52,23 @@ const els = {
 };
 
 // ── config ──────────────────────────────────────────────────────────────────
+// The config is a repo file, but it arrives over the network and its `link`
+// becomes an href and an .ics URL. Accept only a same-origin http(s) target, so
+// a swapped or tampered event.json cannot turn the page's one big button into a
+// `javascript:` payload or an off-site redirect. Anything else falls back to
+// /play, which is always the right door.
+function safeLink(raw) {
+	if (!raw) return '/play';
+	try {
+		const u = new URL(String(raw), location.origin);
+		if (u.origin !== location.origin) return '/play';
+		if (u.protocol !== 'http:' && u.protocol !== 'https:') return '/play';
+		return u.pathname + u.search + u.hash;
+	} catch {
+		return '/play';
+	}
+}
+
 // Deliberately the same shape and the same fallbacks as event-countdown.js: an
 // event with no usable end time is treated as six hours long by both surfaces.
 function parseConfig(raw) {
@@ -65,7 +82,7 @@ function parseConfig(raw) {
 		tagline: raw.tagline ? String(raw.tagline) : '',
 		startsAt,
 		endsAt: Number.isFinite(endsAt) ? endsAt : startsAt + 6 * 3600 * 1000,
-		link: raw.link ? String(raw.link) : '/play',
+		link: safeLink(raw.link),
 		linkLabel: raw.linkLabel ? String(raw.linkLabel) : 'Join the event',
 		agenda: Array.isArray(raw.agenda)
 			? raw.agenda

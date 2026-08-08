@@ -1,18 +1,18 @@
-// ClashRoom — the live arena for Coin Wars (community-vs-community battles).
+// ClashRoom, the live arena for Coin Wars (community-vs-community battles).
 //
 // Two coin communities meet here. A fighter joins FOR the coin they hold (proven by
 // the same holder pass that gates that coin's Holders world), is seated on that
 // faction, and fights the other community in a shared 3D arena. The room is a thin
 // validator-and-replicator over two pure cores:
-//   • combat.js   — picks which enemy a swing lands on, from authoritative positions.
-//   • clash.js    — the match: friendly-fire rules, kill scoring, respawns, the round
+//   • combat.js, picks which enemy a swing lands on, from authoritative positions.
+//   • clash.js, the match: friendly-fire rules, kill scoring, respawns, the round
 //                   clock, sudden death, and the final result.
 // Neither core touches the network or the schema, so the rules are unit-tested in
 // isolation (tests/clash-match.test.js); this file just feeds them validated input
 // and mirrors their state onto the wire.
 //
 // Matchmaking: rooms are defined with filterBy(['matchKey']) so every fighter who
-// passes the same matchKey lands in the same arena instance — the /wars lobby mints a
+// passes the same matchKey lands in the same arena instance, the /wars lobby mints a
 // matchKey for a challenge and hands it to both communities.
 
 import { Room } from '@colyseus/core';
@@ -41,7 +41,7 @@ const ARENA_BOUND_M = 60;              // square arena half-extent
 const SPAWN_OFFSET = 22;               // each faction spawns this far up/down the z axis
 const MOTION_VALUES = new Set(['idle', 'walk', 'run']);
 
-// The arena weapon. Everyone fights with the same kit in v1 — a mid-range blaster —
+// The arena weapon. Everyone fights with the same kit in v1, a mid-range blaster,
 // so a clash is decided by positioning and teamwork, not gear. Real game constant
 // (not a placeholder): the same {kind,dmg,range,aimTol} shape combat.js expects.
 const CLASH_WEAPON = Object.freeze({ kind: 'ranged', dmg: 34, range: 26, aimTol: 0.32 });
@@ -59,7 +59,7 @@ export class ClashRoom extends Room {
 	// Admission. The platform play gate (if a game token is pinned) applies exactly as
 	// in WalkRoom. Then the fighter must prove they hold the coin they want to fight
 	// for: a holder pass whose mint equals their declared `coin`. That single check is
-	// what makes a clash a battle BETWEEN communities — you can only wear a community's
+	// what makes a clash a battle BETWEEN communities, you can only wear a community's
 	// colours if you actually hold its coin. The faction must also be one of the two in
 	// this match. Throw on refusal so the client routes back to its gate.
 	//
@@ -296,7 +296,7 @@ export class ClashRoom extends Room {
 	}
 
 	// The spectator's view of this battle: text and numbers only, everything the
-	// portal board renders without joining the room. Deliberately small — it is
+	// portal board renders without joining the room. Deliberately small, it is
 	// written every couple of seconds for the whole length of a war.
 	_liveSnapshot(now = Date.now()) {
 		const s = this.state;
@@ -360,7 +360,7 @@ export class ClashRoom extends Room {
 		// (with the winner set) instead of the last live tick before the end.
 		this._publishLive(true);
 		// Echo the outcome into the site-wide activity feed, which is what carries
-		// the result back into BOTH communities' worlds — the portal board reads the
+		// the result back into BOTH communities' worlds, the portal board reads the
 		// ledger, the ticker reads this. Best-effort like every feed write.
 		const winnerName = result.winner === this.state.aMint ? this.state.aName
 			: result.winner === this.state.bMint ? this.state.bName : 'Draw';

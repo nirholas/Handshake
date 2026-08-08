@@ -1,8 +1,8 @@
-// Quest engine — jobs, missions & heists for the /play coin worlds (W05).
+// Quest engine, jobs, missions & heists for the /play coin worlds (W05).
 //
 // A mission is DATA, not code: a spec of ordered objectives + a reward. The same
 // engine drives one-tap daily jobs, repeatable courier runs, and multi-stage
-// co-op heists — authoring new content is adding an entry to MISSIONS, never
+// co-op heists, authoring new content is adding an entry to MISSIONS, never
 // writing a new handler. This mirrors how items.js is the one source of truth for
 // items and economy.js for the pack/purse: rooms read THIS instead of branching on
 // mission ids inline.
@@ -10,28 +10,28 @@
 // Authority is server-side. The WalkRoom owns a player's quest state OFF the synced
 // WalkState schema (it's private, like the pack/purse), feeds real gameplay events
 // (a fish caught, a zone entered, a terminal activated) into applyEvent(), and grants
-// rewards only when the engine — not the client — says an objective is done. A client
+// rewards only when the engine, not the client, says an objective is done. A client
 // claiming "I finished" advances nothing; only the event it actually produced does.
 //
 // Objective vocabulary (every mission is expressible in these, all backed by a REAL
-// server handler that emits the matching event — no objective is un-completable):
-//   collect      — gather N of an item        (emitted by the fishing handler)
-//   goto         — enter a named world zone    (emitted by movement zone-entry)
-//   interact     — act at a quest object/zone  (emitted by the questInteract handler)
-//   defeat       — kill N foes in the wilds    (emitted by the combat handler on a kill)
+// server handler that emits the matching event, no objective is un-completable):
+//   collect, gather N of an item        (emitted by the fishing handler)
+//   goto, enter a named world zone    (emitted by movement zone-entry)
+//   interact, act at a quest object/zone  (emitted by the questInteract handler)
+//   defeat, kill N foes in the wilds    (emitted by the combat handler on a kill)
 // Heists compose these as a SHARED instance (see WalkRoom): the same objective shape,
 // advanced by any crew member, finishing only when the party is assembled at the finale.
 //
 // A mission flagged `event: true` only exists inside the live window of the platform
 // event (public/event.json, read server-side by event-window.js). The gate is applied
-// HERE — in the offer/accept/prune rules every caller already goes through — so no
+// HERE, in the offer/accept/prune rules every caller already goes through, so no
 // surface can accidentally serve an event job out of window: outside it, the job is
 // not on the board, cannot be accepted, and any stale run is dropped unpaid.
 
 import { SKILLS } from './economy.js';
 
 // ---------------------------------------------------------------------------
-// Mission registry — the single source of truth for what missions exist.
+// Mission registry, the single source of truth for what missions exist.
 // ---------------------------------------------------------------------------
 //
 // Fields:
@@ -43,16 +43,16 @@ import { SKILLS } from './economy.js';
 //   repeat    'daily' (once per UTC day, rotated) | 'repeatable' (any time) |
 //             'once' (a one-shot the account completes a single time, ever).
 //   party     minimum crew size to FINISH (1 for solo; ≥2 for a heist finale).
-//   objectives ordered list — complete one to advance to the next.
+//   objectives ordered list, complete one to advance to the next.
 //   reward    { gold, xp?: { skill, amount } } granted server-side on completion.
 //             Heist gold is the TOTAL pot, split evenly among the crew at payout.
 //   prereq    mission ids that must be completed before this one is offered.
 //
-// In-world spendable currency is "gold" (a game resource, per the program rules) —
+// In-world spendable currency is "gold" (a game resource, per the program rules),
 // never an on-chain token. The only coin that ever exists is $THREE, and missions
 // never mint or reference it.
 export const MISSIONS = {
-	// — Daily collect job (the Kintara retention mechanic): cheap, once/day, fishing. —
+	//, Daily collect job (the Kintara retention mechanic): cheap, once/day, fishing.,
 	'daily-anglers-haul': {
 		id: 'daily-anglers-haul',
 		title: "Angler's Daily Haul",
@@ -67,8 +67,8 @@ export const MISSIONS = {
 		reward: { gold: 140, xp: { skill: 'fishing', amount: 120 } },
 	},
 
-	// — Daily survey job: a movement loop that teaches the map. One tap to accept,
-	//   finished by simply touring the landmarks. —
+	//, Daily survey job: a movement loop that teaches the map. One tap to accept,
+	//   finished by simply touring the landmarks.,
 	'daily-grounds-survey': {
 		id: 'daily-grounds-survey',
 		title: 'Grounds Survey',
@@ -85,12 +85,12 @@ export const MISSIONS = {
 		reward: { gold: 90 },
 	},
 
-	// — Repeatable collect: a bigger fishing contract for grinders. —
+	//, Repeatable collect: a bigger fishing contract for grinders.,
 	'stock-the-kitchen': {
 		id: 'stock-the-kitchen',
 		title: 'Stock the Kitchen',
 		giver: 'Cook Mara',
-		summary: 'The roast pit is running low — bring in 12 fresh fish.',
+		summary: 'The roast pit is running low, bring in 12 fresh fish.',
 		kind: 'job',
 		repeat: 'repeatable',
 		party: 1,
@@ -100,10 +100,10 @@ export const MISSIONS = {
 		reward: { gold: 260, xp: { skill: 'fishing', amount: 220 } },
 	},
 
-	// — Repeatable courier run: pick up at the dock, deliver to the market. A
-	//   two-stage go-there / act, then go-there / act loop — the spine of every
+	//, Repeatable courier run: pick up at the dock, deliver to the market. A
+	//   two-stage go-there / act, then go-there / act loop, the spine of every
 	//   GTA-style delivery mission. (Vehicles, W02, will make the legs faster; on
-	//   foot it already plays.) —
+	//   foot it already plays.),
 	'harbor-courier': {
 		id: 'harbor-courier',
 		title: 'Harbor Courier',
@@ -119,8 +119,8 @@ export const MISSIONS = {
 		reward: { gold: 180 },
 	},
 
-	// — One-shot intro mission: first taste of the loop, unlocks nothing but pays a
-	//   welcome purse and points the player at the board. —
+	//, One-shot intro mission: first taste of the loop, unlocks nothing but pays a
+	//   welcome purse and points the player at the board.,
 	'welcome-to-work': {
 		id: 'welcome-to-work',
 		title: 'First Day on the Job',
@@ -135,12 +135,12 @@ export const MISSIONS = {
 		reward: { gold: 60, xp: { skill: 'fishing', amount: 40 } },
 	},
 
-	// — Vehicle deliveries: the actual "drive around, go on missions" loop. Both
+	//, Vehicle deliveries: the actual "drive around, go on missions" loop. Both
 	//   legs are `goto` objectives flagged `vehicle: true`, so entering the depot
-	//   zone on foot doesn't count — you have to actually be behind the wheel
+	//   zone on foot doesn't count, you have to actually be behind the wheel
 	//   (validated server-side off the authoritative vehicle-driver map, never the
 	//   client). Depots sit at the four avenue vehicle spawns (vehicles.js
-	//   VEHICLE_SPAWNS), so a real car is always parked right where the job starts. —
+	//   VEHICLE_SPAWNS), so a real car is always parked right where the job starts.,
 	'cross-town-delivery': {
 		id: 'cross-town-delivery',
 		title: 'Cross-Town Delivery',
@@ -150,8 +150,8 @@ export const MISSIONS = {
 		repeat: 'repeatable',
 		party: 1,
 		objectives: [
-			{ type: 'goto', zone: 'depot-north', vehicle: true, label: '🚗 Load the order — drive to the North Depot' },
-			{ type: 'goto', zone: 'depot-south', vehicle: true, label: '🚗 Drop it off — drive to the South Depot' },
+			{ type: 'goto', zone: 'depot-north', vehicle: true, label: '🚗 Load the order, drive to the North Depot' },
+			{ type: 'goto', zone: 'depot-south', vehicle: true, label: '🚗 Drop it off, drive to the South Depot' },
 		],
 		reward: { gold: 220 },
 	},
@@ -164,17 +164,17 @@ export const MISSIONS = {
 		repeat: 'repeatable',
 		party: 1,
 		objectives: [
-			{ type: 'goto', zone: 'depot-east', vehicle: true, label: '🚗 Load the order — drive to the East Depot' },
-			{ type: 'goto', zone: 'depot-west', vehicle: true, label: '🚗 Drop it off — drive to the West Depot' },
+			{ type: 'goto', zone: 'depot-east', vehicle: true, label: '🚗 Load the order, drive to the East Depot' },
+			{ type: 'goto', zone: 'depot-west', vehicle: true, label: '🚗 Drop it off, drive to the West Depot' },
 		],
 		reward: { gold: 220 },
 	},
 
-	// — Co-op heist: the flagship multi-stage crew job. Stage 1 disables both alarm
-	//   terminals (either crew member can tap either terminal — SHARED progress);
-	//   the finale cracks the vault and only completes with the full crew assembled
-	//   at the door. The pot is split evenly at payout. Repeatable so a crew can run
-	//   it again. —
+	// Co-op heist: the flagship multi-stage crew job. Stage 1 disables both alarm
+	// terminals. Either crew member can tap either terminal, since progress is
+	// SHARED. The finale cracks the vault and only completes with the full crew
+	// assembled at the door. The pot is split evenly at payout, and the job is
+	// repeatable so a crew can run it again.
 	'vault-job': {
 		id: 'vault-job',
 		title: 'The Vault Job',
@@ -191,18 +191,18 @@ export const MISSIONS = {
 			},
 			{
 				type: 'interact', action: 'crack', zone: 'vault-door', shared: true, finale: true,
-				label: 'Crack the vault — full crew at the door',
+				label: 'Crack the vault, full crew at the door',
 			},
 		],
 		// 900 gold total, split among the crew (e.g. 450 each for a duo).
 		reward: { gold: 900, xp: { skill: 'combat', amount: 200 } },
 	},
 
-	// — Event quest line —————————————————————————————————————————————————————
+	//, Event quest line -----------------------------------------------------
 	// Four jobs that only exist while the platform event is live, one per thing the
 	// world already does well: gather, drive, fight, tour. All repeatable, because
 	// the event leaderboard ranks players by how many of these they finish inside
-	// the window — a closed-ended set would decide the ranking in the first ten
+	// the window, a closed-ended set would decide the ranking in the first ten
 	// minutes. Payouts are richer than the everyday board (it's a two-hour window,
 	// not an all-day grind) but still ordinary in-world gold: the leaderboard's
 	// prizes are settled by the owner after the event, never paid on-chain by code.
@@ -210,7 +210,7 @@ export const MISSIONS = {
 		id: 'event-plaza-catch',
 		title: 'Meetup Fish Fry',
 		giver: 'Cook Mara',
-		summary: 'The plaza pit is feeding the whole meetup — land 8 fish before the doors close.',
+		summary: 'The plaza pit is feeding the whole meetup, land 8 fish before the doors close.',
 		kind: 'job',
 		repeat: 'repeatable',
 		party: 1,
@@ -270,7 +270,7 @@ export const MISSIONS = {
 	},
 };
 
-// The event quest line, in board order — the ids the leaderboard counts and the
+// The event quest line, in board order, the ids the leaderboard counts and the
 // only missions the event window gates.
 export const EVENT_MISSION_IDS = Object.values(MISSIONS)
 	.filter((m) => m.event)
@@ -304,7 +304,7 @@ function objCount(obj) {
 }
 
 // ---------------------------------------------------------------------------
-// Daily rotation — deterministic per UTC day, so every player and every room
+// Daily rotation, deterministic per UTC day, so every player and every room
 // instance offers the same daily set, and it changes exactly at the UTC midnight
 // boundary with no scheduler.
 // ---------------------------------------------------------------------------
@@ -326,14 +326,14 @@ function hashStr(s) {
 	return h >>> 0;
 }
 
-// The daily job ids for a given UTC day — a stable shuffle of DAILY_POOL seeded by
+// The daily job ids for a given UTC day, a stable shuffle of DAILY_POOL seeded by
 // the day, then the first DAILY_COUNT. Pure: same day in → same ids out, anywhere.
 export function dailyJobIds(dayKey, count = DAILY_COUNT) {
 	const pool = [...DAILY_POOL];
 	if (pool.length <= count) return pool;
 	let seed = hashStr(String(dayKey)) || 1;
 	const rng = () => {
-		// LCG (Numerical Recipes constants) — deterministic, no Math.random.
+		// LCG (Numerical Recipes constants), deterministic, no Math.random.
 		seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
 		return seed / 0x100000000;
 	};
@@ -345,7 +345,7 @@ export function dailyJobIds(dayKey, count = DAILY_COUNT) {
 }
 
 // ---------------------------------------------------------------------------
-// Per-player quest state — lives on the player's profile (off-schema), persisted
+// Per-player quest state, lives on the player's profile (off-schema), persisted
 // through the account-keyed player store alongside the pack/purse.
 //   active:    { [missionId]: run }            in-progress missions
 //   completed: { [missionId]: { count, ts } }  lifetime completions (for one-shots
@@ -362,7 +362,7 @@ export function newQuestState(dayKey = utcDayKey()) {
 	};
 }
 
-// Rebuild from a persisted blob, tolerant of partial/legacy/missing data — a
+// Rebuild from a persisted blob, tolerant of partial/legacy/missing data, a
 // corrupt save can never crash a join; it degrades to a fresh quest log. Stale
 // daily state is rolled over to the current day on load (yesterday's completions
 // don't block today's offers).
@@ -374,7 +374,7 @@ export function restoreQuestState(saved, dayKey = utcDayKey()) {
 		for (const [id, run] of Object.entries(saved.active)) {
 			const mission = MISSIONS[id];
 			if (!mission || !run || typeof run !== 'object') continue;
-			// Heists are ephemeral, room-scoped shared instances — never restored as a
+			// Heists are ephemeral, room-scoped shared instances, never restored as a
 			// solo active run (you re-join the crew live), so drop any persisted heist.
 			if (mission.kind === 'heist') continue;
 			const stage = Math.max(0, Math.min(mission.objectives.length - 1, run.stage | 0));
@@ -434,7 +434,7 @@ export function rolloverDaily(state, dayKey = utcDayKey()) {
 }
 
 // ---------------------------------------------------------------------------
-// Offers — which missions the board may show this player right now.
+// Offers, which missions the board may show this player right now.
 // ---------------------------------------------------------------------------
 
 function prereqMet(state, mission) {
@@ -472,7 +472,7 @@ export function boardOffers(state, dayKey = utcDayKey(), ctx = {}) {
 		if (!canAccept(state, mission, dayKey, ctx)) continue;
 		offers.push(offerView(mission, state));
 	}
-	// Event jobs lead the board while the window is open — they expire with it, the
+	// Event jobs lead the board while the window is open, they expire with it, the
 	// everyday work does not.
 	offers.sort((a, b) => (b.event ? 1 : 0) - (a.event ? 1 : 0));
 	return offers;
@@ -537,7 +537,7 @@ export function abandonMission(state, id) {
 }
 
 // ---------------------------------------------------------------------------
-// Progress — feed a real gameplay event into a run.
+// Progress, feed a real gameplay event into a run.
 // ---------------------------------------------------------------------------
 
 // Does objective `obj` match gameplay `event`?
@@ -553,7 +553,7 @@ export function objectiveMatches(obj, event) {
 	}
 	if (obj.type === 'goto') {
 		if (event.type !== 'enter-zone' || event.zone !== obj.zone) return false;
-		// A `vehicle: true` goto is a driving leg — walking through the zone doesn't
+		// A `vehicle: true` goto is a driving leg, walking through the zone doesn't
 		// count, only crossing it in the driver's seat (event.inVehicle, set by the
 		// room from the authoritative vehicle-driver map).
 		if (obj.vehicle && !event.inVehicle) return false;
@@ -579,7 +579,7 @@ export function objectiveMatches(obj, event) {
 	return false;
 }
 
-// Apply an event to a run (or a shared heist instance — same shape). Mutates the
+// Apply an event to a run (or a shared heist instance, same shape). Mutates the
 // run's stage/counts. Returns:
 //   { matched, objComplete, missionComplete, stage }
 // `progressed` runs carry an optional `seen` Set on shared multi-zone objectives so
@@ -643,7 +643,7 @@ export function missionReward(mission) {
 	return out;
 }
 
-// Split a heist pot across `n` crew members — even split, remainder to the first
+// Split a heist pot across `n` crew members, even split, remainder to the first
 // member so no gold is lost to rounding. Returns an array of per-member gold.
 export function splitPot(totalGold, n) {
 	const count = Math.max(1, n | 0);

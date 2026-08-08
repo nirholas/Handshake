@@ -1,14 +1,14 @@
 // @ts-check
-// GET /api/cron/treasury-topup — economy funding-root auto-refill.
+// GET /api/cron/treasury-topup, economy funding-root auto-refill.
 //
 // The companion to relayer-balance-check (which only ALERTS). This cron reads
 // every configured engine signer's mainnet SOL balance and, for any that has
 // dropped below its `minSol` floor, tops it up from the ONE economy master
-// wallet (api/_lib/economy-master.js) — the "masters fund engines, engines do
+// wallet (api/_lib/economy-master.js), the "masters fund engines, engines do
 // the work" model applied platform-wide.
 //
 // Safe by construction:
-//   • Inert until ECONOMY_MASTER_SECRET_BASE58 is set — with no master it does
+//   • Inert until ECONOMY_MASTER_SECRET_BASE58 is set, with no master it does
 //     nothing (relayer-balance-check keeps alerting), so shipping it is a no-op
 //     until the operator funds WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW.
 //   • Only ever pays pubkeys derived from SOLANA_SIGNERS (the registry is the
@@ -16,15 +16,15 @@
 //   • Reserve floor + per-engine cap + per-run cap (see economy-master.js) bound
 //     every sweep; the reserve floor is an on-chain read, so it holds with no DB.
 //
-// Runs every 30 min — fast enough that no engine dries out between sweeps, cheap
+// Runs every 30 min, fast enough that no engine dries out between sweeps, cheap
 // enough (one getBalance per signer + at most a handful of transfers) to stay
 // well inside the RPC/Upstash budgets.
 //
 // Env (reuses existing infra):
-//   CRON_SECRET   — Vercel cron bearer auth (shared with other crons)
-//   SOLANA_RPC_URL — mainnet RPC (defaults to api.mainnet-beta)
-//   ECONOMY_MASTER_SECRET_BASE58 — the funding-root key (unset ⇒ inert)
-//   ECONOMY_MASTER_RESERVE_SOL / _PER_TOPUP_MAX_SOL / _RUN_CAP_SOL — guard caps
+//   CRON_SECRET, Vercel cron bearer auth (shared with other crons)
+//   SOLANA_RPC_URL, mainnet RPC (defaults to api.mainnet-beta)
+//   ECONOMY_MASTER_SECRET_BASE58, the funding-root key (unset ⇒ inert)
+//   ECONOMY_MASTER_RESERVE_SOL / _PER_TOPUP_MAX_SOL / _RUN_CAP_SOL, guard caps
 
 import { randomUUID } from 'node:crypto';
 import { error, json, method, wrapCron } from '../_lib/http.js';
@@ -60,7 +60,7 @@ export default wrapCron(async (req, res) => {
 	const errors = [];
 	// A non-master signer whose SECRET resolves to the master's own wallet (env
 	// aliasing, e.g. THREE_BUYBACK_SECRET_KEY_B64 set to the master key). Its
-	// balance IS the master's balance, so it can never be a refill target — before
+	// balance IS the master's balance, so it can never be a refill target, before
 	// this check, every sweep listed it as underfunded, filterToRegistry rejected
 	// the master-to-itself transfer, and the pair of alerts re-fired forever
 	// (~10k repeats each) while misreporting the count of genuinely dry engines.
@@ -129,7 +129,7 @@ export default wrapCron(async (req, res) => {
 	// Self-healing fuel: before the master distributes, if it cannot cover the
 	// engines' real SOL deficit, convert a small bounded slice of its own idle
 	// USDC into native SOL. The circulation loop leaks SOL to fees every tick, so
-	// without a source the funding root drains to zero and /pulse goes quiet —
+	// without a source the funding root drains to zero and /pulse goes quiet,
 	// this keeps the tank full from revenue instead of waiting on a human. No-op
 	// unless there is a genuine shortage AND spare USDC (see economy-fuel.js).
 	const engineDeficitSol = targets.reduce((s, t) => s + Math.max(0, t.refillToSol - t.currentSol), 0);
@@ -185,11 +185,11 @@ export default wrapCron(async (req, res) => {
 	// Self-healing, step 1b (the other half of the fleet's SOL): the engine reclaim
 	// above only walks the SOLANA_SIGNERS registry. Most of the platform's SOL lives
 	// one layer down, in PLATFORM-OWNED agent custody wallets, which had no return
-	// path at all — master → agent funding is one-way and snipe proceeds settle back
+	// path at all, master → agent funding is one-way and snipe proceeds settle back
 	// into the agent, never the master. Without this the fleet can hold plenty of SOL
 	// while the fee wallet starves under its settle floor (audited 2026-07-28: 7.2 of
 	// 7.53 SOL stranded in agent wallets, engines at 0.31, rail fully 503). Customer
-	// agents are never touched — see reclaimIdleAgentSol's ownership gate.
+	// agents are never touched, see reclaimIdleAgentSol's ownership gate.
 	let agentReclaim = { reclaimedSol: 0, moves: [], skipped: [], failed: [] };
 	if (totalDeficitSol > 0 && reclaim.reclaimedSol < totalDeficitSol) {
 		try {
@@ -298,7 +298,7 @@ export default wrapCron(async (req, res) => {
 	// Self-healing, step 2 (revenue): if reclaim did not close the gap, convert a
 	// small bounded slice of the master's own idle USDC into native SOL. The
 	// circulation loop leaks SOL to fees every tick, so without a source the funding
-	// root drains to zero and /pulse goes quiet — this keeps the tank full from
+	// root drains to zero and /pulse goes quiet, this keeps the tank full from
 	// revenue instead of waiting on a human. No-op unless a genuine shortage remains
 	// AND there is spare USDC (see economy-fuel.js).
 	let fuel = { acted: false, reason: 'not_needed' };
@@ -358,7 +358,7 @@ export default wrapCron(async (req, res) => {
 
 	// The sweep is the only leg that both reads AND moves SOL, so it is the one
 	// that dies when every RPC lane is cooling at once. Letting it throw took the
-	// whole cron down with a 500 (2026-08-07: ~1 in 15 ticks) — and this cron IS
+	// whole cron down with a 500 (2026-08-07: ~1 in 15 ticks), and this cron IS
 	// the self-heal for a starved engine, so the outage disabled its own remedy
 	// exactly when the ring needed it. An exhausted lane chain is upstream
 	// weather, not a bug: report it as a skipped sweep the same way wrapCron
@@ -371,7 +371,7 @@ export default wrapCron(async (req, res) => {
 	} catch (e) {
 		if (!isTransientRpcError(e)) throw e;
 		const reason = e?.message || 'rpc_unavailable';
-		console.warn(`[cron] treasury-topup sweep skipped — solana rpc unavailable: ${reason}`);
+		console.warn(`[cron] treasury-topup sweep skipped, solana rpc unavailable: ${reason}`);
 		return json(res, 200, {
 			ok: false,
 			reason: 'rpc_unavailable',
@@ -414,7 +414,7 @@ export default wrapCron(async (req, res) => {
 
 	// Record the sweep to the tamper-evident accounting ledger. Every transfer,
 	// block, and failure becomes a hash-chained row; the heartbeat row proves the
-	// monitor ran even on a no-op sweep. The write never fails the response — but
+	// monitor ran even on a no-op sweep. The write never fails the response, but
 	// if SOL moved and the record was dropped, that is a monitoring gap an operator
 	// must know about (the reconcile cron would flag the tx as unrecorded).
 	let ledger = { written: 0 };
@@ -433,7 +433,7 @@ export default wrapCron(async (req, res) => {
 		if (ledger.skippedWrite && result.funded.length > 0) {
 			await sendOpsAlert(
 				`🧾 Economy ledger did NOT record a real transfer`,
-				`sweep ${runId} moved ${result.spentSol} SOL across ${result.funded.length} transfer(s) but the ledger write failed (${ledger.skippedWrite}). The money moved; the book is behind. economy-reconcile will flag these as unrecorded — reconcile manually.`,
+				`sweep ${runId} moved ${result.spentSol} SOL across ${result.funded.length} transfer(s) but the ledger write failed (${ledger.skippedWrite}). The money moved; the book is behind. economy-reconcile will flag these as unrecorded, reconcile manually.`,
 				{ signature: `economy-ledger-miss:${runId}` },
 			);
 		}
@@ -441,7 +441,7 @@ export default wrapCron(async (req, res) => {
 
 	// Alert when the master is configured but too drained to cover a real deficit
 	// AND self-healing could not rescue it (USDC exhausted, daily cap hit, or fuel
-	// disabled) — that is the one condition a human must act on (fund the root).
+	// disabled), that is the one condition a human must act on (fund the root).
 	// When the refuel swap DID act, the shortage is being handled autonomously, so
 	// suppress the page: the next tick distributes the freshly-bought SOL.
 	if (result.configured && targets.length > 0 && result.spentSol === 0 && result.funded.length === 0 && !fuel.acted) {

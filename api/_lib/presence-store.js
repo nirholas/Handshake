@@ -1,4 +1,4 @@
-// Presence store — the volatile half of the friends system. Who is online and
+// Presence store, the volatile half of the friends system. Who is online and
 // which realm they're in changes by the second and is shared across every
 // realm-room instance, so it lives in Redis (Upstash REST), not Postgres.
 //
@@ -6,7 +6,7 @@
 // player joins a realm room it verifies their presence ticket (minted here),
 // then writes `presence:<userId>` with a short TTL and refreshes it on a
 // heartbeat; on leave it deletes the key. This API only ever READS presence
-// (to annotate the friends list) and MINTS the tickets — it never writes
+// (to annotate the friends list) and MINTS the tickets, it never writes
 // presence itself, so a stale process can't claim a user is online forever.
 //
 // This module also signs the tickets and fires the internal notify webhook the
@@ -17,7 +17,7 @@ import { getRedis } from './redis.js';
 import { hmacSha256, constantTimeEquals, sha256Base64Url } from './crypto.js';
 
 const PRESENCE_PREFIX = 'presence:';
-const TICKET_TTL_SEC = 600; // 10 min — the client refreshes well before expiry
+const TICKET_TTL_SEC = 600; // 10 min, the client refreshes well before expiry
 
 function redis() { return getRedis(); }
 
@@ -68,13 +68,13 @@ function safeParse(s) {
 // the avatar without a DB of its own and without trusting a client option.
 // The bearer's public profile handle (username + display name) rides the same
 // way: it is what lets a realm room publish a VERIFIED three.ws identity on the
-// player schema, so peers can open the real profile, follow, and DM — a client
+// player schema, so peers can open the real profile, follow, and DM, a client
 // option could claim anyone's handle, a signed ticket cannot.
 // Format: base64url(JSON{uid,exp,crew,crewName,u,dn}).base64url(hmac).
 export async function signPresenceTicket(userId) {
 	const exp = Math.floor(Date.now() / 1000) + TICKET_TTL_SEC;
 	// Fold in the bearer's crew tag if they're in one. Defensive: a missing crews
-	// table (pre-migration) or any lookup error must never break ticket minting —
+	// table (pre-migration) or any lookup error must never break ticket minting,
 	// friends presence has to keep working regardless of the crew feature.
 	let crew = '';
 	let crewName = '';
@@ -107,7 +107,7 @@ export async function signPresenceTicket(userId) {
 // Verify a ticket and return { uid, crew, crewName, username, displayName }, or
 // null. Mirrored byte-for-byte on the multiplayer side
 // (multiplayer/src/presence-token.js); keep the two in sync. (No API caller
-// today — the multiplayer server is the verifier; this stays here as the
+// today, the multiplayer server is the verifier; this stays here as the
 // canonical reference implementation.)
 export async function verifyPresenceTicket(token) {
 	if (typeof token !== 'string' || !token.includes('.')) return null;

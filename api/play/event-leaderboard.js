@@ -2,22 +2,22 @@
 //
 // The live standing for the platform event's in-world quest line: who has completed
 // the most event jobs inside the window, tiebroken by the event gold they earned.
-// One read, two consumers — the in-world panel (the multiplayer room proxies this
-// call for its clients) and the web event page — so the ranking a player sees at the
+// One read, two consumers, the in-world panel (the multiplayer room proxies this
+// call for its clients) and the web event page, so the ranking a player sees at the
 // jobs board is byte-for-byte the ranking the site shows.
 //
 // Query:
-//   account   optional — a player's account key; pins their own row in `you`, even
+//   account   optional, a player's account key; pins their own row in `you`, even
 //                        when they are outside the top N. Omitted for an anonymous
 //                        web read.
-//   limit     optional — how many rows to return (default 10, max 100).
+//   limit     optional, how many rows to return (default 10, max 100).
 //
 // Scores are written only by the authoritative game server through
 // api/internal/event-score.js; this endpoint is read-only and never grants anything.
 // Prizes are NOT settled here: the board ranks, and the owner pays the winners
 // manually after the event. Nothing in this path touches a wallet or a chain.
 //
-// Shape (always 200 when an event is configured — an event nobody has played yet is
+// Shape (always 200 when an event is configured, an event nobody has played yet is
 // an empty board, not an error):
 //   {
 //     event: { id, name, startsAt, endsAt, live },

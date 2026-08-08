@@ -1,17 +1,17 @@
-// Quest zones (W05) — the named world locations missions reference for goto /
+// Quest zones (W05), the named world locations missions reference for goto /
 // interact objectives, waypoints, and the heist district.
 //
 // This is the ONE source of truth for those positions, imported by BOTH the server
-// (WalkRoom — validates "are you actually at the dock / vault?") and the client
-// (quest-systems — renders the markers and gates the interact prompt), so the
+// (WalkRoom, validates "are you actually at the dock / vault?") and the client
+// (quest-systems, renders the markers and gates the interact prompt), so the
 // playable world and the authoritative world can never drift. It sits alongside
 // world-features.js (fishing/gather positions) rather than inside it so the quest
 // layer stays self-contained and conflict-free. Coordinates are world metres in the
 // XZ plane; the ground sits at y = 0.
 //
 // `kind` tags how a zone is used:
-//   'goto'     — a survey/patrol point you reach (drives an enter-zone objective)
-//   'interact' — a quest object you act at (pickup/dropoff/terminal/crack)
+//   'goto', a survey/patrol point you reach (drives an enter-zone objective)
+//   'interact', a quest object you act at (pickup/dropoff/terminal/crack)
 // `r` is the trigger radius. Two survey points reuse the pond centres (see
 // world-features.FISHING_SPOTS) so a survey also reveals where the fishing is. The
 // vault district sits out east, clear of the spawn ring, the totem (0,0,-12) and the
@@ -36,9 +36,9 @@ export const QUEST_ZONES = [
 	{ id: 'depot-west', kind: 'goto', x: -90, z: -6, r: 8, label: 'West Depot', glyph: '🚚' },
 
 	// Event landmarks (the Meetup Grand Tour). Deliberately sited ON the three
-	// places the event agenda already sends people — the totem the showdown is
+	// places the event agenda already sends people, the totem the showdown is
 	// held at, the Fortune's Folly wheel (world-features.WHEEL) and the trading
-	// screen — so the tour walks the party route instead of inventing empty
+	// screen, so the tour walks the party route instead of inventing empty
 	// waypoints. Generous radii: these are crowded during the event and a marker
 	// you have to thread a crowd to hit is a bad objective.
 	{ id: 'event-totem', kind: 'goto', x: 0, z: -12, r: 6, label: 'The Totem', glyph: '🎉' },
@@ -53,7 +53,7 @@ export const QUEST_ZONES = [
 
 const QUEST_ZONE_BY_ID = new Map(QUEST_ZONES.map((z) => [z.id, z]));
 
-// Reach beyond a zone's radius that still counts as "at" it — a little margin so the
+// Reach beyond a zone's radius that still counts as "at" it, a little margin so the
 // prompt feels reliable as you walk up (mirrors FISH_REACH for activities).
 export const ZONE_REACH = 1.6;
 
@@ -64,7 +64,7 @@ export function questZone(id) {
 // Which quest zone (if any) the point (x,z) is inside, including the reach margin.
 // Nearest centre wins on overlap. The single check the server trusts for both
 // zone-entry (goto) and the interact gate, mirrored by the client for waypoints and
-// the interact prompt — same function, no drift.
+// the interact prompt, same function, no drift.
 export function zoneAt(x, z) {
 	let best = null;
 	let bestD = Infinity;

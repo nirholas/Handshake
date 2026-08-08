@@ -1,4 +1,4 @@
-// WalkRoom — authoritative state for the three.ws /walk experience.
+// WalkRoom, authoritative state for the three.ws /walk experience.
 //
 // Players send 'move' messages 15× per second. The server validates each
 // update (max-step clamp, world bounds, name length, message rate) and
@@ -6,12 +6,12 @@
 // protocol broadcasts only fields that actually changed to every other
 // client in the same room, at the configured patch rate.
 //
-// Generic world objects (R01) — balls, placed props, pickups — ride the same
+// Generic world objects (R01), balls, placed props, pickups, ride the same
 // pattern on their own `objects` map (see schemas.js WorldObject). The full
 // obj:spawn / obj:update / obj:remove wire contract (payload shape, who's
 // authorized, rate limits and caps) is documented at the
 // "── Generic world objects (R01 protocol) ──" comment block below, right
-// above _handleObjSpawn — read that before adding a new object-driven
+// above _handleObjSpawn, read that before adding a new object-driven
 // feature (R02 client manager, R05 ball physics, R17 persistence and later
 // briefs all build on that single channel).
 
@@ -94,7 +94,7 @@ import { reportQuestComplete } from '../quest-notify.js';
 
 // Platform entry gate (wallet-first sign-in + game-token balance). When a game
 // token is pinned (PLAY_GATE_MINT, falling back to THREE_MINT) every join must
-// carry a valid play pass — minted by api/play/verify after proving wallet
+// carry a valid play pass, minted by api/play/verify after proving wallet
 // ownership and a balance ≥ PLAY_GATE_MIN of that token. An unset mint leaves
 // walk_world open exactly as before, so /walk and un-pinned deploys are
 // unaffected. Read at boot: gate config doesn't change without a redeploy.
@@ -167,7 +167,7 @@ const BATCHES_PER_SEC_LIMIT = 4;
 //   ball:kick  { vx, vy, vz }
 //       Any joined player, BALL_KICKS_PER_SEC rate limit. The server caps impulse
 //       magnitude and ensures a minimum upward component, then adds it to the
-//       authoritative velocity. Ball id is fixed (BALL_ID) — one per room.
+//       authoritative velocity. Ball id is fixed (BALL_ID), one per room.
 //
 // Velocity kept in _ballVx/y/z server vars, written to the WorldObject schema
 // each tick. A settled ball (speed < BALL_IDLE_SPEED_SQ on ground) skips
@@ -180,8 +180,8 @@ const BALL_BOUNCE = 0.55;            // vertical energy retained on ground bounc
 const BALL_WALL_BOUNCE = 0.80;       // energy retained on world-edge bounce
 const BALL_ROLLING_FRICTION = 2.0;   // per-second horizontal speed decay on ground
 const BALL_AIR_DRAG = 0.12;          // per-second speed decay while airborne
-const BALL_MAX_IMPULSE = 12;         // m/s — cap on a single client kick
-const BALL_POST_KICK_CAP = 18;       // m/s — absolute total velocity cap post-kick
+const BALL_MAX_IMPULSE = 12;         // m/s, cap on a single client kick
+const BALL_POST_KICK_CAP = 18;       // m/s, absolute total velocity cap post-kick
 const BALL_MIN_UPY = 0.8;            // minimum upward component on any kick
 const BALL_KICK_REACH_M = 3.5;       // must stand beside the ball to kick it (mirrors LOOT_REACH_M-style gates)
 const BALL_WORLD_RADIUS = 54;        // keep inside the visible arena
@@ -189,7 +189,7 @@ const BALL_SPAWN_X = 0;
 const BALL_SPAWN_Y = BALL_RADIUS;
 const BALL_SPAWN_Z = 5;
 const BALL_OOB_Y = -10;              // respawn below this y
-const BALL_IDLE_SPEED_SQ = 0.04;     // (m/s)^2 — skip integration when settled
+const BALL_IDLE_SPEED_SQ = 0.04;     // (m/s)^2, skip integration when settled
 const BALL_KICKS_PER_SEC = 3;
 
 // --- Build permissions & anti-grief (R19) ---------------------------------
@@ -223,7 +223,7 @@ const PROTECTED_POINTS = [
 // grid cells, so its grief guard has its own protected discs and density tile. The
 // protected world points are the spawn (origin) and the rendered totem (world z=-12);
 // the radius matches the voxel discs (PROTECTED_RADIUS_CELLS cells). PER_TILE_PROP_CAP
-// stops a builder piling props onto one spot to bury a landmark or wall an area off —
+// stops a builder piling props onto one spot to bury a landmark or wall an area off,
 // the per-player count (MAX_OBJECTS_PER_PLAYER) and world cap bound the rest.
 const PROTECTED_RADIUS_M = PROTECTED_RADIUS_CELLS * BLOCK_SIZE_M;
 const PROTECTED_POINTS_M = [
@@ -263,7 +263,7 @@ const TAG_LB_INTERVAL_MS = 8000;
 // occupant of the king-zone at the totem base earns points each tick; two or more
 // inside is "contested" and nobody scores. Rounds run on a fixed timer with a
 // short intermission between them. The zone is centred on the totem (rendered at
-// world (0, -12) — see PROTECTED_POINTS) so its radius matches the client ring.
+// world (0, -12), see PROTECTED_POINTS) so its radius matches the client ring.
 // Occupancy is judged from the server's authoritative player positions, so a
 // client can never score from outside the zone. KING_TICK_MS is the scoring +
 // timer cadence; KING_POINTS_PER_SEC is awarded scaled by real elapsed time so a
@@ -279,7 +279,7 @@ const KING_MIN_PLAYERS = 1;
 
 // Open-world district bounds (W01). The /play world is no longer the 60 m disc:
 // it's a square district the client renders streets/buildings across. These
-// mirror DISTRICT.half in src/game/world-zones.js — keep the two in sync so the
+// mirror DISTRICT.half in src/game/world-zones.js, keep the two in sync so the
 // authoritative bounds and the rendered ground agree. The anti-teleport MAX_STEP
 // clamp above is independent and still applies on every move.
 const WORLD_HALF_M = 200;
@@ -299,8 +299,8 @@ const MOVE_WINDOW_MS = 1000;
 const MOTION_VALUES = new Set(['idle', 'walk', 'run']);
 
 // --- Economy & activities (off-schema) ------------------------------------
-// A player's pack, purse and skills are PRIVATE to them — peers never render
-// them in this free-roam world — so they live off the synced WalkState schema
+// A player's pack, purse and skills are PRIVATE to them, peers never render
+// them in this free-roam world, so they live off the synced WalkState schema
 // (kept in this.econ) and stream to the owning client via targeted messages.
 // This keeps the shared /walk schema untouched and peers' wire cost at zero.
 // Per-cast reel time. Read from the shared cadence table in activities.js (which the
@@ -308,7 +308,7 @@ const MOTION_VALUES = new Set(['idle', 'walk', 'run']);
 // gather cadence in the codebase.
 const FISH_COOLDOWN_MS = ACTIVITY_COOLDOWN_MS.fish;
 const CONSUME_COOLDOWN_MS = 1100; // pace between bites, no instant heal-spam
-// Per-action rate ceilings (messages/sec/client) — a flooding client is dropped.
+// Per-action rate ceilings (messages/sec/client), a flooding client is dropped.
 // vsync rides at the same 15Hz the move netcode uses; allow 2× for jitter, like
 // MOVES_PER_SEC_LIMIT. enter/exit are deliberate, rare actions.
 const ACTION_RATES = {
@@ -318,13 +318,13 @@ const ACTION_RATES = {
 	// The room caches the upstream read (event-score.js), so this ceiling bounds the
 	// per-client chatter, not the API load.
 	eventBoard: 4,
-	// General store, bank/ATM, and the $THREE boutique (W04) — low-frequency,
+	// General store, bank/ATM, and the $THREE boutique (W04), low-frequency,
 	// currency-mutating actions, throttled tighter than the gather loop.
 	store: 6, storeBuy: 6, storeSell: 6, bank: 6, boutique: 4, boutiqueQuote: 3, boutiqueSettle: 3,
 	// Combat (W07): attack rides at a swing/shot cadence a touch above the fastest
 	// weapon's cooldown (pistol ~430ms); loot is a deliberate, rare action.
 	attack: 5, loot: 4,
-	// Wheel of Fortune (W09) — deliberate, low-frequency, currency/payment-mutating
+	// Wheel of Fortune (W09), deliberate, low-frequency, currency/payment-mutating
 	// actions, throttled like the boutique's above.
 	spinInfo: 4, spinFree: 3, spinPaidPrep: 3, spinPaidSettle: 3,
 	// Read-only snapshot requests. profile is cheap but unbounded outbound;
@@ -345,7 +345,7 @@ const ACTION_RATES = {
 const VOICE_SIGNALS_PER_SEC_LIMIT = 60;
 const MAX_VOICE_SIGNAL_BYTES = 16_000;
 
-// Solana mint addresses are base58, 32–44 chars. Anything else (including '')
+// Solana mint addresses are base58, 32, 44 chars. Anything else (including '')
 // collapses to the default mainland world.
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 function cleanCoin(v) {
@@ -355,7 +355,7 @@ function cleanCoin(v) {
 
 // Access tier. Only 'holders' is gated; anything else (including '') is the open
 // General world. A coin's General and Holders worlds are kept in separate room
-// instances by filterBy(['coin','tier']) — see multiplayer/src/index.js.
+// instances by filterBy(['coin','tier']), see multiplayer/src/index.js.
 function cleanTier(v) {
 	return v === 'holders' ? 'holders' : '';
 }
@@ -383,7 +383,7 @@ function round3(n) {
 }
 
 function pickPlayerColor(sessionId) {
-	// Deterministic pleasant hue from sessionId — every client renders the
+	// Deterministic pleasant hue from sessionId, every client renders the
 	// same player in the same color without us needing to sync it explicitly.
 	let h = 0;
 	for (let i = 0; i < sessionId.length; i++) {
@@ -406,12 +406,12 @@ function hslToHex(h, s, l) {
 
 export class WalkRoom extends Room {
 	// Players are matched into the same room instance only when their `coin`
-	// join option matches — so each coin community is an isolated world while a
+	// join option matches, so each coin community is an isolated world while a
 	// single room definition serves them all. Coin-less players share the
 	// default mainland instance.
 	//
 	// Tier gate: the General world ('') is open to everyone. The Holders world
-	// ('holders') admits a client only with a valid holder pass — an HMAC-signed
+	// ('holders') admits a client only with a valid holder pass, an HMAC-signed
 	// token the API mints after pricing the user's authenticated wallet against
 	// HOLDER_MIN_USD of this exact coin. We verify the pass here, before onJoin,
 	// and reject otherwise. Returning false makes Colyseus answer the
@@ -426,7 +426,7 @@ export class WalkRoom extends Room {
 	// time and its return value is stored as client.auth.
 	onAuth(client, options) {
 		// Platform token gate (orthogonal to the per-coin holder tier below). When a
-		// game token is pinned, no client reaches any world — General or Holders —
+		// game token is pinned, no client reaches any world, General or Holders,
 		// without a play pass proving a signed-in wallet holds ≥ the floor. Throw
 		// (not return false) so a refusal arrives as a `play_pass`-prefixed error the
 		// client routes back to its sign-in gate. The verified wallet is bound to the
@@ -434,15 +434,15 @@ export class WalkRoom extends Room {
 		//
 		// KNOWN LANDMINE (2026-07-10): this gate is enforced against every client of
 		// this shared room, but only `/play` (src/game/community-net.js) actually
-		// carries a `playPass` in its join options — it has the whole wallet
+		// carries a `playPass` in its join options, it has the whole wallet
 		// sign-in + pass-minting flow. `/walk` (src/walk-net.js) has never had that
 		// UI and sends no `playPass` field at all. As long as PLAY_GATE_MINT is unset
-		// (the default today) this is inert — every join sails past the `if` below.
+		// (the default today) this is inert, every join sails past the `if` below.
 		// The moment an operator sets PLAY_GATE_MINT/THREE_MINT, every `/walk` join
 		// and reconnect will throw `play_pass_required` and the page will look
 		// completely offline, while `/play` keeps working. Fixing this properly means
 		// porting real sign-in UI into `/walk` (or extracting the pass-minting flow
-		// out of coincommunities.js into a shared module both pages call) — a
+		// out of coincommunities.js into a shared module both pages call), a
 		// deliberate product decision about whether `/walk` stays a simpler,
 		// no-sign-in surface, not a one-line wiring fix. Do this BEFORE flipping the
 		// platform gate on in production, not after someone reports `/walk` is dead.
@@ -461,7 +461,7 @@ export class WalkRoom extends Room {
 
 		// A holder world must name a real coin. Throw (rather than return false) so
 		// every holder-gate refusal reaches the client as a `holder_pass`-prefixed
-		// error its gate UI routes on — a uniform denial contract.
+		// error its gate UI routes on, a uniform denial contract.
 		const coin = cleanCoin(options?.coin);
 		if (!coin) throw new Error('holder_pass_required');
 
@@ -469,7 +469,7 @@ export class WalkRoom extends Room {
 		if (!pass) {
 			throw new Error('holder_pass_required');
 		}
-		// The pass is for this exact coin's holder tier — a pass minted for coin A
+		// The pass is for this exact coin's holder tier, a pass minted for coin A
 		// can't unlock coin B's holder world.
 		if (pass.mint !== coin || pass.tier !== 'holders') {
 			throw new Error('holder_pass_mismatch');
@@ -501,7 +501,7 @@ export class WalkRoom extends Room {
 		// stable persistence id + per-action cooldowns). Never synced to peers.
 		this.econ = new Map();
 		this._actionCounters = new Map(); // sessionId → { [action]: { windowStart, count } }
-		// On-chain settlement replay protection lives in settlement-guard.js — one
+		// On-chain settlement replay protection lives in settlement-guard.js, one
 		// durable, process-wide (and Redis-backed, when configured) consumption
 		// ledger shared by the boutique and the paid wheel, replacing the per-room
 		// nonce Maps that let one payment re-grant across rooms and restarts.
@@ -518,7 +518,7 @@ export class WalkRoom extends Room {
 		this.coinCreator = '';
 		// Co-op heist instances live on the room, not on a profile: a SHARED run a
 		// crew advances together. Keyed by mission id (one live instance per heist per
-		// world). Each value: { missionId, members:Set<sessionId>, run } — the run
+		// world). Each value: { missionId, members:Set<sessionId>, run }, the run
 		// carries its own per-stage seen-zone dedupe (quests.js applyEvent).
 		this.heists = new Map();
 		// Tag mini-game (R08): off-schema state. _tagImmunity tracks who is immune
@@ -588,7 +588,7 @@ export class WalkRoom extends Room {
 			this.state.holderMinTokens = Number.isFinite(signedTokens) && signedTokens > 0 ? signedTokens : 0;
 		}
 		// Persisted-build key. General and Holders are separate worlds for the same
-		// coin, so their voxel builds must persist independently — otherwise the two
+		// coin, so their voxel builds must persist independently, otherwise the two
 		// rooms would load and flush over each other's creation.
 		this.worldKey = this.state.tier === 'holders' ? `${this.state.coin}#holders` : this.state.coin;
 
@@ -627,7 +627,7 @@ export class WalkRoom extends Room {
 		// the schema so peers re-render, and echoes the owner a fresh profile.
 		this.onMessage('equip-cosmetic', (client, payload) => this._handleEquipCosmetic(client, payload));
 		// Full-loadout broadcast (R03): replaces the player's entire equipped state in
-		// one shot, re-validated against ownership — mirrors how `avatar` is sent.
+		// one shot, re-validated against ownership, mirrors how `avatar` is sent.
 		this.onMessage('set-cosmetics', (client, payload) => this._handleSetCosmetics(client, payload));
 		this.onMessage('profileReq', (client) => { if (this._actionOk(client.sessionId, 'profile')) this._sendProfile(client); });
 		// Quests, jobs & heists (W05, off-schema). The board, accepting/abandoning a
@@ -654,7 +654,7 @@ export class WalkRoom extends Room {
 		this.onMessage('obj:remove', (client, payload) => this._handleObjRemove(client, payload));
 		// R05 physics ball: client sends kick intent with impulse; server validates,
 		// applies velocity, and integrates physics on its own tick. Clients never move
-		// the ball directly — ownerId is 'server', blocking obj:update from them.
+		// the ball directly, ownerId is 'server', blocking obj:update from them.
 		this.onMessage('ball:kick', (client, payload) => this._handleBallKick(client, payload));
 		// Broadcast reactions (R04): a client sends an emoji; the server rate-limits
 		// and rebroadcasts to all clients in the room (including the sender).
@@ -687,8 +687,8 @@ export class WalkRoom extends Room {
 			console.warn(`[walk_world ${this.roomId}] block restore failed:`, err?.message);
 		}
 
-		// Rehydrate this coin's durable placed objects (R17) — the build props the
-		// community left behind — from the per-world persistence store before the
+		// Rehydrate this coin's durable placed objects (R17), the build props the
+		// community left behind, from the per-world persistence store before the
 		// first client renders, mirroring how blocks are restored above. The store is
 		// keyed by world id; mainland (empty coin) gets a stable fallback key. Blocks
 		// and objects share the world key but live in separate backends, so they
@@ -714,7 +714,7 @@ export class WalkRoom extends Room {
 
 		// Seed this world's drivable fleet. Vehicles are world entities (everyone sees
 		// them) so they ride on the synced state, parked until someone takes the wheel.
-		// Spawned for every coin world — driving is a core verb, not a flagship-only
+		// Spawned for every coin world, driving is a core verb, not a flagship-only
 		// affordance. v1 fleet is ephemeral per room (re-spawned fresh each time the
 		// room is created); persistence of parked vehicles is a later concern.
 		this._seedVehicles();
@@ -742,7 +742,7 @@ export class WalkRoom extends Room {
 		// Re-check policy for the token gate. The game server has no RPC of its own,
 		// so "still holding the token" is re-proven by the client minting a fresh
 		// play pass (which re-reads the chain) before the current one's 10-min TTL
-		// runs out and reconnecting — onAuth then re-validates. To actively evict a
+		// runs out and reconnecting, onAuth then re-validates. To actively evict a
 		// wallet that offloaded below the floor mid-session, we sweep once a minute
 		// and disconnect any client whose bound pass has expired without a refresh.
 		// The client refreshes ahead of expiry, so a holder never sees this; only a
@@ -766,7 +766,7 @@ export class WalkRoom extends Room {
 			if (this._itPlayer()) this._broadcastTagState();
 		}, TAG_LB_INTERVAL_MS);
 
-		// Dance floor beat — every 4 s, aligned across all clients in the room so
+		// Dance floor beat, every 4 s, aligned across all clients in the room so
 		// avatars standing on the disco pad start the same crossfade at the same
 		// wall-clock moment. Clip rotates through the four dance animations.
 		const DANCE_FLOOR_CLIPS = ['av-dance-shuffle', 'av-rap-dance', 'av-headbang', 'dance'];
@@ -776,7 +776,7 @@ export class WalkRoom extends Room {
 		}, 4000);
 
 		// King of the Totem (R07): the single authoritative clock that runs the round
-		// machine — awards points to a sole zone occupant, ends a round on time, and
+		// machine, awards points to a sole zone occupant, ends a round on time, and
 		// schedules the next one. One interval drives scoring, the countdown, and the
 		// idle→active→intermission transitions so the timing can never drift apart.
 		this.clock.setInterval(() => this._kingTick(), KING_TICK_MS);
@@ -799,7 +799,7 @@ export class WalkRoom extends Room {
 		player.motion = 'idle';
 		player.avatar = cleanAvatarUrl(options?.avatar);
 		player.agent = clean(options?.agent, 64);
-		// The account id is the wallet verified in onAuth — bound server-side, never
+		// The account id is the wallet verified in onAuth, bound server-side, never
 		// from a client option, so it's a trustworthy persistence + social-graph key.
 		player.account = clean(client.userData?.account, 64);
 		player.tsServer = Date.now();
@@ -808,7 +808,7 @@ export class WalkRoom extends Room {
 		// Friends presence (Task 15): a presence ticket signed by the three.ws API
 		// proves which account this socket belongs to, independent of the wallet
 		// holder gate. Register it so friends see this player as online in this
-		// coin world and can DM them live. Spoof-proof — the account id comes from
+		// coin world and can DM them live. Spoof-proof, the account id comes from
 		// the verified ticket, never a raw client option.
 		const presence = verifyPresenceTicket(options?.presence);
 		if (presence?.uid) {
@@ -816,7 +816,7 @@ export class WalkRoom extends Room {
 			socialHub.register(presence.uid, client, this.state.coinName || 'Mainland');
 			// Verified three.ws profile (W10): publish the ticket's username on the
 			// schema so every peer can open this player's real profile, follow them,
-			// and DM them. Trustworthy by construction — it came out of the signed
+			// and DM them. Trustworthy by construction, it came out of the signed
 			// ticket, so nobody can wear a handle they don't own. A signed-in player
 			// who never picked a nameplate gets their account display name instead of
 			// an anonymous guest-xxxx handle.
@@ -830,7 +830,7 @@ export class WalkRoom extends Room {
 		// from onAuth when the platform gate is on, else a wallet proven by a signed
 		// play pass the client volunteered, else a server-minted guest id sealed in
 		// an HMAC guest token (guest-token.js). A raw `pid` join option is never an
-		// account key anymore — it let any client load, spend, and overwrite any
+		// account key anymore, it let any client load, spend, and overwrite any
 		// victim's saved profile (gold, bank, items, cosmetics) just by asserting
 		// their id. Legacy `guest-…` pids migrate once (see _resolveIdentity).
 		const identity = await this._resolveIdentity(client, options);
@@ -842,7 +842,7 @@ export class WalkRoom extends Room {
 		client.userData = { ...(client.userData || {}), playerKey: playerId };
 		this._evictPriorSession(client, playerId, clean(options?.prevSession, 32));
 		if (identity.wallet && !client.userData?.account) {
-			// The play pass proved this wallet even though the platform gate is off —
+			// The play pass proved this wallet even though the platform gate is off,
 			// bind it as the session account so ownership + moderation checks and the
 			// on-schema account field agree with the persistence key.
 			client.userData = { ...(client.userData || {}), account: identity.wallet };
@@ -872,7 +872,7 @@ export class WalkRoom extends Room {
 		this.econ.set(client.sessionId, profile);
 		// Cosmetics ownership (R22 → R23): fold the premium cosmetics this account
 		// bought over the x402 rail into its unlocked set, so a purchase persists and
-		// equips in EVERY world the account joins — not just the one it was bought in.
+		// equips in EVERY world the account joins, not just the one it was bought in.
 		// The ledger is keyed by the same account id as the profile (playerId), reads
 		// fail-open (own nothing extra) and never block the join. Persist only when a
 		// new unlock actually landed so a returning player keeps it across restarts.
@@ -892,7 +892,7 @@ export class WalkRoom extends Room {
 		if (!this.state.players.has(client.sessionId)) return;
 		// Cosmetics (W03): apply any loadout the player chose pre-join (in the
 		// character creator) on top of their persisted one, validating each id
-		// against what they own — free cosmetics always pass, premium only when
+		// against what they own, free cosmetics always pass, premium only when
 		// unlocked, so a join option can never put an unowned cosmetic on a player.
 		// Then publish the equipped loadout on the schema so peers render the look.
 		this._applyJoinCosmetics(profile, options?.cosmetics);
@@ -912,7 +912,7 @@ export class WalkRoom extends Room {
 			`[walk_world ${this.roomId} coin=${this.state.coin || 'mainland'}${tierTag}] +join ${client.sessionId} ${name} (n=${this.state.players.size})`,
 		);
 
-		// "Someone is hanging out in <world>" — social proof + FOMO on the site-wide
+		// "Someone is hanging out in <world>", social proof + FOMO on the site-wide
 		// ticker. Throttled per world so a popular coin emits at most once a minute,
 		// not once per arrival. Mainland falls back to a friendly label.
 		publishFeedEvent(
@@ -951,7 +951,7 @@ export class WalkRoom extends Room {
 	// A socket that dies uncleanly (phone slept, tab froze, wifi handover) stays
 	// half-open: the transport still reads it as OPEN and only reaps it when its
 	// ping retries expire, several seconds later. The client reconnects well inside
-	// that window, so the room briefly holds two sessions for one person — the
+	// that window, so the room briefly holds two sessions for one person, the
 	// returning player sees a frozen ghost of themselves at spawn, and so does
 	// everyone else. Liveness cannot be probed synchronously here (that is exactly
 	// what the half-open socket hides), so the reconnecting client tells us which
@@ -959,7 +959,7 @@ export class WalkRoom extends Room {
 	//
 	// `prevSession` alone would be a kick primitive: session ids are published on
 	// the player schema, so anyone could name a stranger's. It is only honoured
-	// together with a matching persistent player key — the wallet the server itself
+	// together with a matching persistent player key, the wallet the server itself
 	// verified in onAuth, or a guest id that is never broadcast to peers. A second
 	// tab or a second device is untouched: each carries its own prior session id.
 	_evictPriorSession(client, playerKey, prevSession) {
@@ -978,11 +978,11 @@ export class WalkRoom extends Room {
 		// Tag mini-game (R08): capture wasIt BEFORE state.players.delete below, so
 		// we know if someone needs reassigning. Cleanup runs after the delete.
 		const _tagWasIt = this.state.players.get(client.sessionId)?.it ?? false;
-		// Resolve this owner's object key up front — _ownerKey reads the econ profile,
+		// Resolve this owner's object key up front, _ownerKey reads the econ profile,
 		// which the block below deletes, so capture it before reaping their objects.
 		const ownerKey = this._ownerKey(client.sessionId);
 		// Free any vehicle this player was driving so it parks where it was left and
-		// becomes available again — otherwise a disconnect would lock a car forever.
+		// becomes available again, otherwise a disconnect would lock a car forever.
 		this._releaseVehicleOf(client.sessionId);
 		// Drop the player from any co-op heist instance they were in, so the shared run
 		// doesn't hold a phantom crew member (and disposes when the last one leaves).
@@ -997,7 +997,7 @@ export class WalkRoom extends Room {
 		}
 		// Reap this owner's transient objects (R01): balls and fx they spawned die
 		// with their session. Their durable build props stay as part of the world
-		// (R17) — that's the whole point of persistence.
+		// (R17), that's the whole point of persistence.
 		this._reapOwnerTransients(ownerKey);
 		this.state.players.delete(client.sessionId);
 		// Tag mini-game (R08): finalize this player's tracked time, purge immunity,
@@ -1041,14 +1041,14 @@ export class WalkRoom extends Room {
 		unregisterWalkRoom(this);
 		// Persist the final build so the community's creation survives the room
 		// being torn down when the last player leaves. Awaited (Colyseus waits on
-		// the returned promise) so the Redis write lands before the room is gone —
+		// the returned promise) so the Redis write lands before the room is gone,
 		// fire-and-forget here would race the process exiting on a redeploy.
 		try {
 			await blockStore.flush(this.worldKey);
 		} catch (err) {
 			console.warn(`[walk_world ${this.roomId}] final flush failed:`, err?.message);
 		}
-		// Flush the durable placed objects (R17) the same way — any spawn/move/remove
+		// Flush the durable placed objects (R17) the same way, any spawn/move/remove
 		// whose debounce hadn't fired lands before the room is gone, so leaving and
 		// re-entering (or a redeploy) shows the same build.
 		try {
@@ -1070,7 +1070,7 @@ export class WalkRoom extends Room {
 		const player = this.state.players.get(client.sessionId);
 		if (!player) return;
 		// W07: a downed player is off their feet until the respawn timer clears
-		// them (killPlayer teleports to SPAWN_POINT itself) — reject stray moves so
+		// them (killPlayer teleports to SPAWN_POINT itself), reject stray moves so
 		// a "ragdolled" peer can't be walked around mid-death.
 		if (player.dead) return;
 
@@ -1091,7 +1091,7 @@ export class WalkRoom extends Room {
 			return;
 		}
 
-		// Max-step clamp — reject teleports.
+		// Max-step clamp, reject teleports.
 		const dx = x - player.x;
 		const dz = z - player.z;
 		if (Math.hypot(dx, dz) > MAX_STEP_M) {
@@ -1103,7 +1103,7 @@ export class WalkRoom extends Room {
 			return;
 		}
 
-		// World bounds clamp — the square open-world district (W01).
+		// World bounds clamp, the square open-world district (W01).
 		player.x = Math.max(-WORLD_BOUND_M, Math.min(WORLD_BOUND_M, x));
 		player.z = Math.max(-WORLD_BOUND_M, Math.min(WORLD_BOUND_M, z));
 		player.y = Math.max(-10, Math.min(10, y)); // keep avatars near the ground plane
@@ -1117,13 +1117,13 @@ export class WalkRoom extends Room {
 
 		// Tag mini-game (R08): if this mover is "it", check whether they've caught
 		// an adjacent player. All proximity math uses the server's authoritative
-		// positions — the client can never claim a tag.
+		// positions, the client can never claim a tag.
 		if (player.it) this._checkTag(client.sessionId, player);
 	}
 
 	// Edge-detect quest-zone entry on the server's authoritative position. Emits a
 	// single 'enter-zone' event when the player crosses into a zone they weren't in
-	// last tick — never per-frame while standing in it — so survey/patrol objectives
+	// last tick, never per-frame while standing in it, so survey/patrol objectives
 	// advance exactly once per visit. Cheap (a handful of zones); only does work when
 	// the current zone actually changed.
 
@@ -1252,7 +1252,7 @@ export class WalkRoom extends Room {
 	}
 
 	/** One authoritative beat: drives scoring, the countdown, and every phase
-	 *  transition. Idempotent per second — safe even if a tick is delayed. */
+	 *  transition. Idempotent per second, safe even if a tick is delayed. */
 	_kingTick() {
 		const now = Date.now();
 		const k = this._king;
@@ -1308,7 +1308,7 @@ export class WalkRoom extends Room {
 	}
 
 	/** End the active round: pick the highest-scoring PRESENT player as winner
-	 *  (a score of 0 across the board ⇒ no winner — an honest "nobody held it"),
+	 *  (a score of 0 across the board ⇒ no winner, an honest "nobody held it"),
 	 *  enter the intermission, and announce the result so clients celebrate. */
 	_endKingRound() {
 		const now = Date.now();
@@ -1387,7 +1387,7 @@ export class WalkRoom extends Room {
 	}
 
 	// Send the owning client its jobs board + active runs ({offers, active, day,
-	// eventLive} — the shape community-net.js documents). Solo runs come straight from
+	// eventLive}, the shape community-net.js documents). Solo runs come straight from
 	// the engine's snapshot (which also rolls stale daily state over to today); a heist
 	// run is overlaid with the crew's SHARED instance so every member's tracker
 	// shows the same live progress, plus the current crew size.
@@ -1403,7 +1403,7 @@ export class WalkRoom extends Room {
 			this._persistEcon(client.sessionId);
 			client.send('notice', {
 				kind: 'quest', ok: false,
-				text: 'The event has ended — its jobs have closed for now.',
+				text: 'The event has ended, its jobs have closed for now.',
 			});
 		}
 		const snap = questSnapshot(profile.quests, utcDayKey(), ctx);
@@ -1419,7 +1419,7 @@ export class WalkRoom extends Room {
 	// Accept a mission off the board. The engine owns the eligibility rules (already
 	// active, prereqs, daily/once repeats); a refusal is surfaced as a notice, never
 	// a silent no-op. Accepting a heist joins (or founds) this world's one shared
-	// instance — the crew advances a single run together and splits the pot at payout.
+	// instance, the crew advances a single run together and splits the pot at payout.
 	_handleQuestAccept(client, payload) {
 		const profile = this.econ.get(client.sessionId);
 		if (!profile) return;
@@ -1430,7 +1430,7 @@ export class WalkRoom extends Room {
 		const res = acceptMission(profile.quests, id, utcDayKey(), this._questCtx());
 		if (!res.ok) {
 			const text = res.reason === 'active' ? 'You already took that job.'
-				: res.reason === 'daily-done' ? 'That job is done for today — check back tomorrow.'
+				: res.reason === 'daily-done' ? 'That job is done for today, check back tomorrow.'
 				: res.reason === 'done' ? 'You’ve already completed that job.'
 				: res.reason === 'event-closed' ? 'That job only runs during the live event.'
 				: 'That job isn’t available to you yet.';
@@ -1441,12 +1441,12 @@ export class WalkRoom extends Room {
 			let inst = this.heists.get(id);
 			if (!inst) {
 				// First accept founds the instance; the founder's fresh run IS the shared
-				// run every later member advances (it's never persisted — see quests.js).
+				// run every later member advances (it's never persisted, see quests.js).
 				inst = { missionId: id, members: new Set(), run: res.run };
 				this.heists.set(id, inst);
 			}
 			inst.members.add(client.sessionId);
-			// The crew grew — every member's tracker shows the new headcount.
+			// The crew grew, every member's tracker shows the new headcount.
 			this._sendQuestsToCrew(inst, client.sessionId);
 		}
 		this._persistEcon(client.sessionId);
@@ -1456,7 +1456,7 @@ export class WalkRoom extends Room {
 
 	// Abandon an active mission. Solo progress is simply dropped (a daily can be
 	// re-accepted the same day); leaving a heist removes this member from the shared
-	// crew — the rest keep the run, and the instance dissolves with its last member.
+	// crew, the rest keep the run, and the instance dissolves with its last member.
 	_handleQuestAbandon(client, payload) {
 		const profile = this.econ.get(client.sessionId);
 		if (!profile) return;
@@ -1470,7 +1470,7 @@ export class WalkRoom extends Room {
 
 	// Act at the quest object the player is standing at (courier pickup/dropoff, a
 	// heist terminal, the vault door). The zone comes from the SERVER's authoritative
-	// position — the client's prompt is a hint, never the authority — and the event
+	// position, the client's prompt is a hint, never the authority, and the event
 	// carries the zone's action so objectiveMatches can tell a pickup from a dropoff.
 	_handleQuestInteract(client) {
 		const player = this.state.players.get(client.sessionId);
@@ -1490,7 +1490,7 @@ export class WalkRoom extends Room {
 	// run it could advance. Called from the move path, so it stays cheap: a player
 	// has a handful of active runs at most, and live heist instances are bounded by
 	// the mission registry. Solo runs live on the profile; heists advance the crew's
-	// shared run — any member's action moves everyone, and the finale gates on
+	// shared run, any member's action moves everyone, and the finale gates on
 	// assembly (the whole crew at the door, judged from server positions).
 	_questEvent(client, profile, event) {
 		const dayKey = utcDayKey();
@@ -1511,7 +1511,7 @@ export class WalkRoom extends Room {
 			if (!inst.members.has(client.sessionId)) continue;
 			const mission = missionDef(inst.missionId);
 			if (!mission) continue;
-			// The finale only lands with the whole crew assembled at its zone — checked
+			// The finale only lands with the whole crew assembled at its zone, checked
 			// BEFORE applying, so a lone cracker gets a hint instead of a silent miss.
 			const obj = mission.objectives[inst.run.stage];
 			if (obj?.finale && objectiveMatches(obj, event) && !this._heistFinaleReady(client, inst, mission, obj)) continue;
@@ -1549,9 +1549,9 @@ export class WalkRoom extends Room {
 	}
 
 	// Pay out a finished heist to the LIVE crew: the pot splits evenly (remainder to
-	// the first member — splitPot loses no gold to rounding), each member's own
+	// the first member, splitPot loses no gold to rounding), each member's own
 	// completion log records it, and each gets their share + XP through their own
-	// client. The instance is consumed — a crew founds a fresh one to run it again.
+	// client. The instance is consumed, a crew founds a fresh one to run it again.
 	_completeHeist(client, inst, mission, dayKey) {
 		const members = [...inst.members];
 		const reward = missionReward(mission);
@@ -1582,12 +1582,12 @@ export class WalkRoom extends Room {
 	}
 
 	// The finale gate: a heist only finishes with a big-enough crew ALL standing at
-	// the finale zone — server positions, never client claims. A failed gate tells
+	// the finale zone, server positions, never client claims. A failed gate tells
 	// the actor why, so "nothing happened" is never the answer at the vault door.
 	_heistFinaleReady(client, inst, mission, obj) {
 		const need = Math.max(1, mission.party | 0 || 1);
 		if (inst.members.size < need) {
-			client.send('notice', { kind: 'quest', ok: false, text: `This job needs a crew of ${need} — recruit before the finale.` });
+			client.send('notice', { kind: 'quest', ok: false, text: `This job needs a crew of ${need}, recruit before the finale.` });
 			return false;
 		}
 		for (const sid of inst.members) {
@@ -1602,7 +1602,7 @@ export class WalkRoom extends Room {
 	}
 
 	// Re-send the quest snapshot to every member of a heist crew (optionally skipping
-	// one — the actor, whose re-send rides on the caller). Best-effort per client so
+	// one, the actor, whose re-send rides on the caller). Best-effort per client so
 	// a mid-send disconnect can't break the loop for the rest of the crew.
 	_sendQuestsToCrew(inst, exceptSessionId = null) {
 		for (const sid of inst.members) {
@@ -1626,7 +1626,7 @@ export class WalkRoom extends Room {
 	}
 
 	// Drop a departing session from EVERY heist crew (onLeave) so no shared run holds
-	// a phantom member. Never throws — it runs inside the leave teardown.
+	// a phantom member. Never throws, it runs inside the leave teardown.
 	_leaveHeists(sessionId) {
 		for (const id of [...this.heists.keys()]) {
 			try { this._leaveHeistCrew(id, sessionId); } catch { /* best-effort */ }
@@ -1650,7 +1650,7 @@ export class WalkRoom extends Room {
 			},
 			`${player?.account || client.sessionId}:${mission.id}`,
 		);
-		// Per-user bell notification, distinct from the anonymous ticker above —
+		// Per-user bell notification, distinct from the anonymous ticker above,
 		// only fires for a player whose presence ticket verified a real account.
 		const accountUid = client.userData?.accountUid;
 		if (accountUid) {
@@ -1752,7 +1752,7 @@ export class WalkRoom extends Room {
 		// NOT a profanity filter (crypto chat is crude by nature), but a slur is
 		// never relayed to fifty screens with our nameplate UI around it.
 		if (containsHateSlur(text)) return;
-		// One message per 700ms per client — enough for conversation, not spam.
+		// One message per 700ms per client, enough for conversation, not spam.
 		const now = Date.now();
 		const last = this._chatCooldowns.get(client.sessionId) || 0;
 		if (now - last < 700) return;
@@ -1823,7 +1823,7 @@ export class WalkRoom extends Room {
 	}
 
 	// Send just the mutable economy slice after a change the client can't infer
-	// (a catch, an eat, a purse change) — lighter than a full profile resend.
+	// (a catch, an eat, a purse change), lighter than a full profile resend.
 	_sendInv(client, profile) {
 		client.send('inv', {
 			inv: profile.inv.map((s) => ({ item: s.item, qty: s.qty })),
@@ -1926,7 +1926,7 @@ export class WalkRoom extends Room {
 	}
 
 	// Event souvenir grant. When a community event is live in THIS world, every
-	// player who joins keeps a free commemorative wearable — a souvenir, not a
+	// player who joins keeps a free commemorative wearable, a souvenir, not a
 	// sale: there is no purchase path for it before, during or after.
 	//
 	// Server-authoritative and idempotent by construction. The window and the
@@ -1934,7 +1934,7 @@ export class WalkRoom extends Room {
 	// reading /event.json), never from a client option, and the grant itself is
 	// grantCosmetic(), which is a no-op on an account that already owns the item.
 	// So a reconnect, a room hop, or ten rejoins produce exactly one unlock and
-	// exactly one announcement — the `souvenir` message only goes out on the
+	// exactly one announcement, the `souvenir` message only goes out on the
 	// transition from not-owned to owned.
 	//
 	// Fail-open on every axis: no config, an unreachable config, a closed window,
@@ -1968,8 +1968,8 @@ export class WalkRoom extends Room {
 
 	// Dress the player from a pre-join loadout wire (the character-creator / a
 	// world hand-off in `cosmetics` join option), merged on top of their persisted
-	// loadout and validated per id against what they own — free cosmetics always
-	// pass, premium only when unlocked — so a join option can never put an unowned
+	// loadout and validated per id against what they own, free cosmetics always
+	// pass, premium only when unlocked, so a join option can never put an unowned
 	// cosmetic on a player. Mutates profile.cosmetics.equipped in place.
 	_applyJoinCosmetics(profile, wire) {
 		if (!profile.cosmetics) profile.cosmetics = { owned: [], equipped: {} };
@@ -1983,7 +1983,7 @@ export class WalkRoom extends Room {
 	}
 
 	// Equip/unequip one cosmetic into its slot (R23). The economy validates the id
-	// is owned (or free) before it moves — an unowned id is rejected, never worn —
+	// is owned (or free) before it moves, an unowned id is rejected, never worn,
 	// then we re-publish the loadout on the schema (peers re-render the fit), echo
 	// the owner a fresh profile (inventory reflects the new equipped state), and
 	// persist to the account so it survives logout and applies in every world.
@@ -2006,7 +2006,7 @@ export class WalkRoom extends Room {
 		if (!equipped && getCosmetic(id)?.tier === 'premium') {
 			try {
 				if (mergeOwnedFromLedger(profile, await readOwnedCosmetics(profile.playerId)) > 0) {
-					// The await could have outlived the session — bail if they left.
+					// The await could have outlived the session, bail if they left.
 					if (!this.econ.has(client.sessionId)) return;
 					equipped = equipCosmetic(profile, id);
 				}
@@ -2025,7 +2025,7 @@ export class WalkRoom extends Room {
 	}
 
 	// Replace the player's entire equipped loadout in one shot (R03). The wire
-	// is re-validated against the catalog and account ownership before applying —
+	// is re-validated against the catalog and account ownership before applying,
 	// any unknown id, any id in the wrong slot, and any unowned premium id are
 	// silently dropped to the slot default. This is the full-loadout counterpart to
 	// equip-cosmetic (which changes one slot); the schema update and persist follow
@@ -2084,14 +2084,14 @@ export class WalkRoom extends Room {
 	// server prices every trade from shop.js (never a client-supplied number),
 	// mutates the profile, and echoes the owner a fresh inv/profile snapshot.
 
-	// The general store's catalog — sell prices + the buy list — so the client
+	// The general store's catalog, sell prices + the buy list, so the client
 	// renders exactly what the server will charge/pay, no drift possible.
 	_sendStore(client) {
 		client.send('store', clientStoreCatalog());
 	}
 
 	// Buy `item` from the general store for cash. Validates the catalog entry,
-	// the purse, and pack room before moving anything — a rejected buy costs
+	// the purse, and pack room before moving anything, a rejected buy costs
 	// nothing and leaves the pack untouched.
 	// Is this session standing at a counter? Trading and banking are walk-up
 	// actions like every other station in the world, and the check has to live
@@ -2124,7 +2124,7 @@ export class WalkRoom extends Room {
 			return;
 		}
 		if (profile.gold < entry.price) {
-			client.send('notice', { kind: 'store', ok: false, text: `Not enough cash — ${entry.price} needed.` });
+			client.send('notice', { kind: 'store', ok: false, text: `Not enough cash, ${entry.price} needed.` });
 			return;
 		}
 		if (!hasRoomFor(profile, entry.item)) {
@@ -2174,7 +2174,7 @@ export class WalkRoom extends Room {
 	// Move cash between the carried purse and the protected bank (the ATM).
 	// Positive amounts deposit, negative withdraw; bankTransfer clamps to
 	// what's actually available so it can never mint or strand cash. Banked
-	// cash is untouched by a death drop (economy.js dropCarried) — the whole
+	// cash is untouched by a death drop (economy.js dropCarried), the whole
 	// risk/reward point of using the bank.
 	_handleBank(client, payload) {
 		const profile = this.econ.get(client.sessionId);
@@ -2192,7 +2192,7 @@ export class WalkRoom extends Room {
 		client.send('notice', {
 			kind: 'bank',
 			ok: true,
-			text: moved > 0 ? `Deposited ${moved} cash — protected from drops.` : `Withdrew ${-moved} cash.`,
+			text: moved > 0 ? `Deposited ${moved} cash, protected from drops.` : `Withdrew ${-moved} cash.`,
 		});
 		this._persistEcon(client.sessionId);
 	}
@@ -2200,12 +2200,12 @@ export class WalkRoom extends Room {
 	// --- $THREE boutique (W04) -------------------------------------------------
 	//
 	// Premium in-game cosmetics (multiplayer/src/cosmetics-catalog.js), priced
-	// and unlocked entirely separately from the R21–25 avatar-shop/x402 rail
+	// and unlocked entirely separately from the R21, 25 avatar-shop/x402 rail
 	// (which sells a different catalog, settled in USDC, for the standalone
 	// character creator). This is the purpose-built W04 rail: the buyer's own
 	// Solana wallet sends ONE real $THREE transaction (game-token.js), split
 	// between the holder-rewards pool and the treasury, and the server re-reads
-	// that transaction from RPC before granting anything — never trusting a
+	// that transaction from RPC before granting anything, never trusting a
 	// client "it worked" claim.
 
 	// The boutique catalog (priced in $THREE) + this account's owned ids.
@@ -2220,10 +2220,10 @@ export class WalkRoom extends Room {
 
 	// Price + build the unsigned $THREE purchase transaction for one boutique
 	// item. `wallet` is whichever Solana wallet the player has connected in the
-	// browser — it pays; the unlock always lands on THIS session's profile
+	// browser, it pays; the unlock always lands on THIS session's profile
 	// regardless of who fronts the tokens (the same "anyone can settle a quote"
 	// model buildSpinPayment already uses). The price is read from the server
-	// catalog only — a client can never move it.
+	// catalog only, a client can never move it.
 	async _handleBoutiqueQuote(client, payload) {
 		const profile = this.econ.get(client.sessionId);
 		if (!profile) return;
@@ -2263,7 +2263,7 @@ export class WalkRoom extends Room {
 			console.warn('[walk_world] boutique quote failed:', err?.message);
 		}
 		if (!built) {
-			client.send('notice', { kind: 'boutique', ok: false, text: 'Could not price that purchase — try again in a moment.' });
+			client.send('notice', { kind: 'boutique', ok: false, text: 'Could not price that purchase, try again in a moment.' });
 			return;
 		}
 		client.send('boutiqueQuote', { id, price, quoteToken: built.quoteToken, txBase64: built.txBase64 });
@@ -2285,7 +2285,7 @@ export class WalkRoom extends Room {
 			result = await verifyTokenPurchase({ quoteToken, txSig, purpose: 'boutique', forAccount: profile.playerId });
 		} catch (err) {
 			console.warn('[walk_world] boutique settle failed:', err?.message);
-			client.send('notice', { kind: 'boutique', ok: false, text: 'Could not verify that payment — try again.' });
+			client.send('notice', { kind: 'boutique', ok: false, text: 'Could not verify that payment, try again.' });
 			return;
 		}
 		if (!result?.ok) {
@@ -2303,7 +2303,7 @@ export class WalkRoom extends Room {
 		}
 		const cosmeticId = result.quote?.cosmeticId;
 		if (ownedCosmeticSet(profile).has(cosmeticId)) {
-			client.send('notice', { kind: 'boutique', ok: true, text: 'Payment verified — you already owned this.' });
+			client.send('notice', { kind: 'boutique', ok: true, text: 'Payment verified, you already owned this.' });
 			return;
 		}
 		const granted = cosmeticId ? grantCosmetic(profile, cosmeticId) : false;
@@ -2312,13 +2312,13 @@ export class WalkRoom extends Room {
 			return;
 		}
 		this._sendProfile(client);
-		client.send('notice', { kind: 'boutique', ok: true, text: `Unlocked ${getCosmetic(cosmeticId)?.name || 'the item'} — check your wardrobe.` });
+		client.send('notice', { kind: 'boutique', ok: true, text: `Unlocked ${getCosmetic(cosmeticId)?.name || 'the item'}, check your wardrobe.` });
 		this._persistEcon(client.sessionId);
 	}
 
 	// Resolve the stable persistence identity for a joining session. Trust order:
 	//   1. The wallet onAuth verified (platform gate on).
-	//   2. A wallet sealed in a valid play pass the client sent voluntarily —
+	//   2. A wallet sealed in a valid play pass the client sent voluntarily,
 	//      possession of the HMAC-signed pass proves the wallet even when the
 	//      gate is off, so signed-in players keep one profile across deploys.
 	//   3. A guest id sealed in a signed guest token (minted below on a prior
@@ -2385,7 +2385,7 @@ export class WalkRoom extends Room {
 			v.type = spawn.type;
 			v.color = Number.isInteger(spawn.color) ? spawn.color : spec.color;
 			v.x = spawn.x;
-			// Rest the chassis on its suspension, not embedded in the asphalt — see
+			// Rest the chassis on its suspension, not embedded in the asphalt, see
 			// vehicleRestHeight's doc for the geometry this mirrors.
 			v.y = vehicleRestHeight(spawn.type);
 			v.z = spawn.z;
@@ -2403,7 +2403,7 @@ export class WalkRoom extends Room {
 	// Take the wheel of a parked vehicle. Gated by: the vehicle exists, it isn't
 	// already occupied, and the player is standing within range of it. A player can
 	// only drive one vehicle, so any prior one is released first. The grant is the
-	// authoritative `driver` field flipping to this session — the client waits for
+	// authoritative `driver` field flipping to this session, the client waits for
 	// that echo (plus a targeted ack) before it starts simulating.
 	_handleVehicleEnter(client, payload) {
 		const player = this.state.players.get(client.sessionId);
@@ -2416,7 +2416,7 @@ export class WalkRoom extends Room {
 			client.send('vehicle', { event: 'deny', id, reason: 'occupied' });
 			return;
 		}
-		// Proximity gate — can't claim a car from across the map.
+		// Proximity gate, can't claim a car from across the map.
 		const dist = Math.hypot(player.x - v.x, player.z - v.z);
 		if (dist > VEHICLE_ENTER_RANGE_M) {
 			client.send('vehicle', { event: 'deny', id, reason: 'range' });
@@ -2431,7 +2431,7 @@ export class WalkRoom extends Room {
 	// Leave the wheel. The client sends its final resting transform; the server
 	// parks the car there, clears the driver, and authors the player's drop point
 	// beside the door so the next ordinary 'move' is continuous (no teleport
-	// rejection). The drop is server-computed and bounds-clamped — a client can't
+	// rejection). The drop is server-computed and bounds-clamped, a client can't
 	// use exit to warp.
 	_handleVehicleExit(client, payload) {
 		const player = this.state.players.get(client.sessionId);
@@ -2463,7 +2463,7 @@ export class WalkRoom extends Room {
 	// Adopt the driver's streamed transform. Server-authoritative validation: only
 	// the seated driver may write; reject NaNs; reject a jump larger than the type's
 	// top speed allows over the send window (teleport) and an implausible reported
-	// speed (speed hack). A rejected position is simply not applied — the car holds
+	// speed (speed hack). A rejected position is simply not applied, the car holds
 	// its last authoritative transform, which the cheating client then sees snap back.
 	_handleVehicleSync(client, payload) {
 		if (!this._actionOk(client.sessionId, 'vsync')) return;
@@ -2483,7 +2483,7 @@ export class WalkRoom extends Room {
 			player.motion = 'idle';
 			player.tsServer = v.tsServer;
 			// The ordinary 'move' handler drives zone-entry detection, but a seated
-			// driver never sends 'move' — they stream 'vsync' instead. Without this, a
+			// driver never sends 'move', they stream 'vsync' instead. Without this, a
 			// vehicle-flagged goto objective could never be reached by driving through
 			// it. Check here too so cross-town delivery jobs actually progress.
 			this._checkZoneEntry(client);
@@ -2514,7 +2514,7 @@ export class WalkRoom extends Room {
 		const sp = typeof speed === 'number' && Number.isFinite(speed) ? speed : 0;
 		if (Math.abs(sp) > vehicleMaxSpeedMps(v.type)) return false;
 
-		// World bounds — the same square district clamp ordinary movement uses, so a
+		// World bounds, the same square district clamp ordinary movement uses, so a
 		// car can reach the avenue spawns at x/z=±90 without being pulled toward the
 		// centre by a stale circular radius.
 		v.x = Math.max(-VEHICLE_WORLD_BOUND_M, Math.min(VEHICLE_WORLD_BOUND_M, x));
@@ -2587,11 +2587,11 @@ export class WalkRoom extends Room {
 
 	// Adopt a mid-session play-pass refresh. The client re-mints a pass (re-reading
 	// the chain) ahead of the 10-min TTL and pushes it here so this live session's
-	// bound expiry tracks the fresh credential — without this, the once-a-minute
+	// bound expiry tracks the fresh credential, without this, the once-a-minute
 	// expiry sweep evicts a still-qualifying player at the original TTL, which is
 	// what kicked anyone in a long building session. We re-verify exactly as onAuth
 	// does: a valid pass for this gate's mint, at or above the floor, bound to the
-	// same wallet. Anything else is silently ignored — the stale expiry stands and
+	// same wallet. Anything else is silently ignored, the stale expiry stands and
 	// the sweep handles it, so a forged refresh can't extend or hijack a session.
 	_handlePlayPassRefresh(client, payload) {
 		if (!PLAY_GATE_MINT) return;
@@ -2616,7 +2616,7 @@ export class WalkRoom extends Room {
 		const existing = this.state.blocks.get(key);
 		if (existing) {
 			// Re-painting an existing cell. It doesn't grow the world, but it DOES
-			// rewrite someone's build — only the piece's owner (or the coin creator)
+			// rewrite someone's build, only the piece's owner (or the coin creator)
 			// may change it, so a passer-by can't recolour another player's work.
 			if (existing.t === t) return; // no-op
 			if (!this._mayModify(client, key)) { this._rejectEdit(client, 'owned'); return; }
@@ -2626,7 +2626,7 @@ export class WalkRoom extends Room {
 		}
 		// New cell. Enforce, in order: the per-world budget, the protected spawn/totem
 		// discs, the per-player ownership cap, and the per-column density cap. Each is
-		// surfaced to the builder with its own reason — never a silent drop.
+		// surfaced to the builder with its own reason, never a silent drop.
 		if (this.state.blocks.size >= MAX_BLOCKS) { this._rejectEdit(client, 'budget'); return; }
 		const reason = this._placementBlock(owner, payload.x, payload.z);
 		if (reason) { this._rejectEdit(client, reason); return; }
@@ -2638,7 +2638,7 @@ export class WalkRoom extends Room {
 		this._sendBuildPerms(client);
 	}
 
-	// Place a composite piece — a handful of cells in one atomic, all-or-nothing
+	// Place a composite piece, a handful of cells in one atomic, all-or-nothing
 	// stamp. Validated exactly like a single place (in-bounds integer cell, real
 	// type) for EVERY cell before anything lands, plus a whole-batch budget check,
 	// so a wall never half-appears and the per-world cap can't be straddled. Rate
@@ -2654,7 +2654,7 @@ export class WalkRoom extends Room {
 		}
 		// First pass: validate every cell and count how many are new, so the budget,
 		// per-player cap, per-column density, protected-zone, and ownership checks all
-		// cover the WHOLE stamp before anything lands — a single bad cell rejects the
+		// cover the WHOLE stamp before anything lands, a single bad cell rejects the
 		// lot. Cumulative tallies (ownerAdds, per-column) are tracked across the batch
 		// so a single stamp can't straddle a cap the same way a sequence of singles can't.
 		const owner = this._ownerKey(client.sessionId);
@@ -2749,7 +2749,7 @@ export class WalkRoom extends Room {
 		if (!this.state.players.has(client.sessionId)) return;
 		if (!this._objOk(client.sessionId)) return;
 		if (!payload || typeof payload !== 'object') return;
-		// Position is mandatory and must be finite — a NaN slips past clamps.
+		// Position is mandatory and must be finite, a NaN slips past clamps.
 		if (!Number.isFinite(payload.x) || !Number.isFinite(payload.y) || !Number.isFinite(payload.z)) return;
 		if (this.state.objects.size >= MAX_WORLD_OBJECTS) { client.send('obj:reject', { reason: 'world_full' }); return; }
 
@@ -2783,7 +2783,7 @@ export class WalkRoom extends Room {
 		// Grief guard (R19): a durable build prop may not bury the spawn or totem, nor
 		// pile onto a tile past the density cap so it can't wall an area off. Checked on
 		// the clamped position so a client can't dodge it with an out-of-bounds value.
-		// Transient kinds (ball, fx) and server objects are exempt — only build props.
+		// Transient kinds (ball, fx) and server objects are exempt, only build props.
 		if (this._objectIsPersistent(obj)) {
 			const reason = this._propPlacementBlock(obj.x, obj.z);
 			if (reason) { client.send('obj:reject', { reason }); return; }
@@ -2864,7 +2864,7 @@ export class WalkRoom extends Room {
 		for (const id of doomed) this.state.objects.delete(id);
 	}
 
-	// Snapshot the durable build props for storage — transient and server-owned
+	// Snapshot the durable build props for storage, transient and server-owned
 	// objects are excluded. Coordinates are rounded to keep the doc compact.
 	_snapshotObjects() {
 		const out = [];
@@ -2926,7 +2926,7 @@ export class WalkRoom extends Room {
 	}
 
 	// Creator-only moderation: clear a disc of blocks around a grid point, or the
-	// whole world. Validated server-side — the creator identity comes from the coin's
+	// whole world. Validated server-side, the creator identity comes from the coin's
 	// on-chain creator matching this client's verified wallet, never a client claim.
 	// Bounded radius keeps even a malformed call from over-reaching; 'all' is the
 	// explicit full wipe. Every removed cell streams out via the blocks state, so all
@@ -2943,14 +2943,14 @@ export class WalkRoom extends Room {
 			cx = Number(payload.x); cz = Number(payload.z); r = Number(payload.r);
 			if (!Number.isFinite(cx) || !Number.isFinite(cz) || !Number.isFinite(r)) return;
 			// Clamp to the tier this caller earned (P3.2), then to the absolute
-			// ceiling — a client asking for more gets the honest maximum, never more.
+			// ceiling, a client asking for more gets the honest maximum, never more.
 			const earned = Math.min(this._clearRadiusFor(client), BUILD_CLEAR_RADIUS_MAX);
 			r = Math.max(1, Math.min(earned, Math.round(r)));
 		}
 
 		let cleared = 0;
 		for (const key of [...this.state.blocks.keys()]) {
-			const [bx, , bz] = key.split(',').map(Number);
+			const [bx, bz] = key.split(',').map(Number);
 			if (!all && Math.hypot(bx - cx, bz - cz) > r) continue;
 			const owner = this.blockOwners.get(key) || '';
 			this.state.blocks.delete(key);
@@ -2960,8 +2960,8 @@ export class WalkRoom extends Room {
 		}
 		// Durable props (obj:spawn build pieces) live in the objects map, not the voxel
 		// grid, so a sweep that only touched blocks would leave a prop-griefed area
-		// untouched. Clear them on the same disc — mapped from grid cells to world metres
-		// (the centre/radius arrive in cells) — and never the ball or transient fx.
+		// untouched. Clear them on the same disc, mapped from grid cells to world metres
+		// (the centre/radius arrive in cells), and never the ball or transient fx.
 		let clearedObjs = 0;
 		const wx = cx * BLOCK_SIZE_M, wz = cz * BLOCK_SIZE_M, wr = r * BLOCK_SIZE_M;
 		for (const [id, o] of [...this.state.objects]) {
@@ -2989,7 +2989,7 @@ export class WalkRoom extends Room {
 		return this.econ.get(sessionId)?.playerId || sessionId;
 	}
 
-	// Whether this client may modify the block at `key` — its owner, or the creator.
+	// Whether this client may modify the block at `key`, its owner, or the creator.
 	// An ownerless cell (a legacy/pre-ownership restore) is creator-only, so restored
 	// builds stay protected from griefing while the creator can still moderate them.
 	_mayModify(client, key) {
@@ -3006,7 +3006,7 @@ export class WalkRoom extends Room {
 		return !!player && !!player.account && player.account === this.coinCreator;
 	}
 
-	// True if (x,z) is inside a protected disc (spawn, totem, or the plaza stage) —
+	// True if (x,z) is inside a protected disc (spawn, totem, or the plaza stage),
 	// placement there is refused at every height so no landmark can be buried or
 	// fenced in.
 	_isProtectedColumn(x, z) {
@@ -3069,7 +3069,7 @@ export class WalkRoom extends Room {
 
 	// Tell one client what they're allowed to do and how much of their build budget
 	// they've used, so the HUD can surface the per-player cap and reveal the creator
-	// moderation control — no silent limits. Sent on join and after their tally moves.
+	// moderation control, no silent limits. Sent on join and after their tally moves.
 	_sendBuildPerms(client) {
 		const owner = this._ownerKey(client.sessionId);
 		const creator = this._isCreator(client);
@@ -3079,7 +3079,7 @@ export class WalkRoom extends Room {
 			used: this.blockCounts.get(owner) || 0,
 			// P3.2: the radius this caller has actually earned, not a flat constant.
 			// The client renders this number in the confirm prompt, and
-			// _handleBuildClear clamps to the same call — one source of truth, so the
+			// _handleBuildClear clamps to the same call, one source of truth, so the
 			// HUD can never promise reach the server would refuse.
 			clearMaxRadius: this._clearRadiusFor(client),
 			holderWorld: this.state.tier === 'holders',
@@ -3104,7 +3104,7 @@ export class WalkRoom extends Room {
 	// their moderation control the moment it resolves.
 	async _resolveCoinCreator() {
 		const mint = this.state.coin;
-		if (!mint) return; // mainland — no coin, no creator
+		if (!mint) return; // mainland, no coin, no creator
 		try {
 			const ctrl = new AbortController();
 			const timer = setTimeout(() => ctrl.abort(), 6000);
@@ -3196,7 +3196,7 @@ export class WalkRoom extends Room {
 		// Respawn if out of bounds
 		const rSq = ball.x * ball.x + ball.z * ball.z;
 		if (ball.y < BALL_OOB_Y || rSq > (BALL_WORLD_RADIUS + 6) * (BALL_WORLD_RADIUS + 6)) {
-			console.log(`[walk_world ${this.roomId}] ball out of bounds — respawning`);
+			console.log(`[walk_world ${this.roomId}] ball out of bounds, respawning`);
 			this._spawnBall();
 			return;
 		}
@@ -3260,7 +3260,7 @@ export class WalkRoom extends Room {
 
 	// Handle a kick intent from a client. Server validates and caps the impulse,
 	// then applies it to the authoritative ball velocity. Never trusts the client's
-	// raw values — only direction + a capped magnitude survive.
+	// raw values, only direction + a capped magnitude survive.
 	_handleBallKick(client, payload) {
 		if (!this.state.players.has(client.sessionId)) return;
 		if (!this._kickOk(client.sessionId)) return;

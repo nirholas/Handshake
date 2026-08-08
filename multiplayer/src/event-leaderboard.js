@@ -1,4 +1,4 @@
-// Event leaderboard — the pure ranking math behind the live event quest line.
+// Event leaderboard, the pure ranking math behind the live event quest line.
 //
 // The event jobs (quests.js, `event: true`) pay in ordinary in-world gold; this is
 // the standing that says who ran the most of them inside the window. Like
@@ -9,11 +9,11 @@
 // never rank the same data two different ways.
 //
 // Ranking, in order:
-//   1. runs   — event quests completed inside the window (the headline)
-//   2. cash   — total event gold earned (the tiebreak: harder jobs pay more)
-//   3. lastAt — earliest to reach that score wins (a tie broken by the clock is
+//   1. runs, event quests completed inside the window (the headline)
+//   2. cash, total event gold earned (the tiebreak: harder jobs pay more)
+//   3. lastAt, earliest to reach that score wins (a tie broken by the clock is
 //               fairer than one broken by an id, and it rewards finishing early)
-//   4. account — a stable last resort so the order is total and reproducible
+//   4. account, a stable last resort so the order is total and reproducible
 //
 // Prizes are NOT paid here or anywhere in code. The board ranks; the owner settles
 // after the event.
@@ -58,7 +58,7 @@ function nonNegInt(v) {
 }
 
 // Normalize a persisted/transported row back into a full record. Tolerant of
-// partial and legacy blobs — a corrupt row degrades to a zeroed one rather than
+// partial and legacy blobs, a corrupt row degrades to a zeroed one rather than
 // throwing inside a read that the whole panel depends on.
 export function normalizeEventRecord(row, account = '') {
 	const rec = emptyEventRecord(row?.account || account, row?.name || '');
@@ -104,7 +104,7 @@ function publicRow(row) {
 // The payload the in-world panel and the read endpoint both serve: the top N, the
 // requesting player's own row (pinned, whatever their rank), and the totals that let
 // a UI say "12 of 41 runners" without a second call. `account` may be omitted for an
-// anonymous read (the web page) — `you` is then null.
+// anonymous read (the web page), `you` is then null.
 export function eventBoardView(records = [], { account = '', limit = TOP_LIMIT } = {}) {
 	const ranked = rankEventBoard(records);
 	const cap = Math.max(1, Math.min(100, limit | 0 || TOP_LIMIT));

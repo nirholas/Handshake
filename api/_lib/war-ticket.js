@@ -1,4 +1,4 @@
-// War ticket — a short-lived, HMAC-signed pairing the Coin Wars arena trusts.
+// War ticket, a short-lived, HMAC-signed pairing the Coin Wars arena trusts.
 //
 // Why this exists: ClashRoom is defined with filterBy(['matchKey']), so whoever
 // joins a key FIRST also creates the room, and the room reads the two competing
@@ -37,13 +37,13 @@ function secret() {
 	if (s) return s;
 	if (process.env.NODE_ENV === 'production') {
 		throw new Error(
-			'[war-ticket] WAR_TICKET_SECRET (or WAR_RESULT_SECRET / HOLDER_PASS_SECRET) is required in production — refusing to mint tickets with the dev secret.',
+			'[war-ticket] WAR_TICKET_SECRET (or WAR_RESULT_SECRET / HOLDER_PASS_SECRET) is required in production, refusing to mint tickets with the dev secret.',
 		);
 	}
 	if (!_warned) {
 		_warned = true;
 		console.warn(
-			'[war-ticket] no ticket secret set — using the insecure dev secret. ' +
+			'[war-ticket] no ticket secret set, using the insecure dev secret. ' +
 				'Set WAR_TICKET_SECRET in production or a war pairing can be forged.',
 		);
 	}

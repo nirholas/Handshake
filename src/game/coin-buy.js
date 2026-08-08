@@ -759,6 +759,33 @@ class TradeModal {
 		}
 	}
 
+	// The quote endpoint is advisory: the swap is priced server-side at execution,
+	// so a failed quote never blocks the trade. It does have to be honest about WHY
+	// there is no number. "Priced at buy" is true when the server answered and had
+	// no pre-quote to give (a coin still on the bonding curve) and a lie when the
+	// quote service itself is down, and a bare `.then(r => r.json())` collapsed
+	// the two, so a 429 or a 502 rendered the reassuring on-curve copy and fed the
+	// error body to _captureFee. Surface the status so the caller can tell them
+	// apart, exactly like _quoteSolBuy already does for the on-chain lane.
+	async _fetchQuote(params) {
+		const r = await fetch(`/api/pump/quote?${params}`);
+		if (!r.ok) {
+			const err = new Error(`HTTP ${r.status}`);
+			err.status = r.status;
+			throw err;
+		}
+		return r.json();
+	}
+
+	// What to tell the player when no price could be fetched at all. Rate limiting
+	// is transient and worth naming (retrying in a moment works); anything else is
+	// an outage. Either way the trade itself still prices at execution.
+	_quoteUnavailable(status) {
+		return status === 429
+			? 'Pricing is busy right now, retry in a moment.'
+			: 'Price check unavailable, this still prices at execution.';
+	}
+
 	async _quoteServer() {
 		const seq = ++this._quoteSeq;
 		this.quoteLine.classList.remove('cc-buy-quote-warn');
@@ -768,7 +795,7 @@ class TradeModal {
 			this.quoteLine.textContent = 'Fetching price…';
 			const u = new URLSearchParams({ mint: this.coin.mint, network: NETWORK, direction: 'buy', usdc: String(this.amount), slippage_bps: String(this.slippageBps) });
 			try {
-				const data = await fetch(`/api/pump/quote?${u}`).then((r) => r.json());
+				const data = await this._fetchQuote(u);
 				if (seq !== this._quoteSeq) return;
 				if (typeof data?.graduated === 'boolean') { this.graduated = data.graduated; this._renderStage(); }
 				this._captureFee(data);
@@ -779,13 +806,14 @@ class TradeModal {
 					this.quoteLine.append(el('span', { class: 'cc-buy-quote-out', text: tokens ? `≈ ${tokens} ${this.symTokens}` : 'Quoted at market' }));
 					this.quoteLine.append(el('span', { class: 'cc-buy-quote-impact', text: ` · for ${this.amount} USDC` }));
 				} else {
+					// The server answered and had no pre-quote: genuinely on-curve.
 					this.quoteLine.classList.add('cc-buy-quote-warn');
 					this.quoteLine.textContent = `Priced at buy — you'll receive ${this.sym} for ${this.amount} USDC.`;
 				}
-			} catch {
+			} catch (err) {
 				if (seq !== this._quoteSeq) return;
 				this.quoteLine.classList.add('cc-buy-quote-warn');
-				this.quoteLine.textContent = `Priced at buy — you'll receive ${this.sym} for ${this.amount} USDC.`;
+				this.quoteLine.textContent = this._quoteUnavailable(err?.status);
 			}
 			return;
 		}
@@ -796,7 +824,7 @@ class TradeModal {
 		this.quoteLine.textContent = 'Fetching price…';
 		const u = new URLSearchParams({ mint: this.coin.mint, network: NETWORK, direction: 'sell', token: tokens, slippage_bps: String(this.slippageBps) });
 		try {
-			const data = await fetch(`/api/pump/quote?${u}`).then((r) => r.json());
+			const data = await this._fetchQuote(u);
 			if (seq !== this._quoteSeq) return;
 			if (typeof data?.graduated === 'boolean') { this.graduated = data.graduated; this._renderStage(); }
 			this._captureFee(data);
@@ -807,13 +835,14 @@ class TradeModal {
 				this.quoteLine.append(el('span', { class: 'cc-buy-quote-out', text: `≈ ${fmtQuote(out, this.denom)} ${this.denom.label}` }));
 				this.quoteLine.append(el('span', { class: 'cc-buy-quote-impact', text: ` · you receive` }));
 			} else {
+				// The server answered and had no pre-quote: genuinely on-curve.
 				this.quoteLine.classList.add('cc-buy-quote-warn');
 				this.quoteLine.textContent = `Priced at sale — you'll receive ${this.denom.label}.`;
 			}
-		} catch {
+		} catch (err) {
 			if (seq !== this._quoteSeq) return;
 			this.quoteLine.classList.add('cc-buy-quote-warn');
-			this.quoteLine.textContent = `Priced at sale — you'll receive ${this.denom.label}.`;
+			this.quoteLine.textContent = this._quoteUnavailable(err?.status);
 		}
 	}
 

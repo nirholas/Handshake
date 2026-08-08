@@ -1,4 +1,4 @@
-// Event leaderboard bridge — the game server's client for the event standing.
+// Event leaderboard bridge, the game server's client for the event standing.
 //
 // The board is stored on the API side (api/_lib/event-leaderboard-store.js) rather
 // than in this process because a player's runs have to survive a room disposal, a
@@ -42,7 +42,7 @@ function secret() {
 
 /**
  * Report one finished event quest. Returns the player's updated totals, or null if
- * the report did not land (offline API, closed window, unconfigured secret) — the
+ * the report did not land (offline API, closed window, unconfigured secret), the
  * caller has already paid the player their in-world gold either way.
  *
  * @param {{ eventId: string, account: string, name?: string, missionId: string, gold?: number }} run
@@ -77,7 +77,7 @@ const _cache = new Map(); // `${eventId}|${account}` → { at, body }
 
 /**
  * Read the ranked board (top rows plus this account's own row). Returns the API's
- * payload, or null when it is unreachable — the client renders its error state
+ * payload, or null when it is unreachable, the client renders its error state
  * rather than a stale or invented ranking.
  */
 export async function fetchEventBoard({ account = '', limit = 10 } = {}) {

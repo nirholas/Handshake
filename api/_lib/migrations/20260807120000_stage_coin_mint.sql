@@ -2,7 +2,7 @@
 -- stands in.
 --
 -- The stage's id is already derived from the mint (uuidv5, see
--- multiplayer/src/plaza-stage.js), so this column stores no new authority — it
+-- multiplayer/src/plaza-stage.js), so this column stores no new authority, it
 -- records the binding in a readable, queryable form so the /stage directory can
 -- link a show back to the world you can walk into, and so a plaza claim can be
 -- verified against the row it is about to write.

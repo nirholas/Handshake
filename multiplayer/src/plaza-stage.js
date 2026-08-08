@@ -1,4 +1,4 @@
-// Plaza stage identity — the deterministic bridge between a /play coin world and
+// Plaza stage identity, the deterministic bridge between a /play coin world and
 // its Living Stage (stage_world room + the /api/stage record).
 //
 // A coin world has no stage column to look up and no directory to search: the
@@ -16,7 +16,7 @@
 //
 // Imported by the browser client (src/game/plaza-stage.js) and the three.ws API
 // (api/stage/index.js), both of which resolve `uuid` from the repo root. The
-// Colyseus server never derives an id — it is handed one on join — so this file
+// Colyseus server never derives an id, it is handed one on join, so this file
 // deliberately adds no dependency to the multiplayer workspace. It lives here,
 // beside world-features.js, because it is the same kind of thing: one source of
 // truth that the world and the platform must agree on exactly.
@@ -41,7 +41,7 @@ export function plazaStageKey(mint) {
 
 /**
  * The stage id for a coin world's plaza. Deterministic, isomorphic, and a valid
- * UUID — the same value on the client, in the API, and in the database.
+ * UUID, the same value on the client, in the API, and in the database.
  * @param {string} mint  the world's coin mint ('' / null ⇒ the mainland world)
  * @returns {string} UUIDv5
  */

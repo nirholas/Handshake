@@ -1,4 +1,4 @@
-// Live-event window — the server's own read of public/event.json.
+// Live-event window, the server's own read of public/event.json.
 //
 // The countdown pill, the in-world meetup layer and the /play agenda all derive
 // their timing from ONE config file (public/event.json). The event quest line and
@@ -7,7 +7,7 @@
 //
 // This process ships without the repo's `public/` directory (multiplayer/Dockerfile
 // copies only src/), so the config is read over HTTP from the site that serves it
-// — the same origin persistence.js and quest-notify.js already talk to. The times
+//, the same origin persistence.js and quest-notify.js already talk to. The times
 // are never transcribed into code here: parse what the file says, or run nothing.
 //
 // Failure is CLOSED. A missing, unreachable or malformed config means "there is no

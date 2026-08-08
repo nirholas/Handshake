@@ -1,4 +1,4 @@
-// Coin Wars store — the read/write half of the war league.
+// Coin Wars store, the read/write half of the war league.
 //
 // Three surfaces live here, all serving /api/wars:
 //
@@ -33,7 +33,7 @@ const STANDINGS_WINDOW = 2000;
 const RECENT_DEFAULT = 12;
 const RECENT_MAX = 50;
 
-// Redis keys. Shared verbatim with multiplayer/src/war-live.js — the game server
+// Redis keys. Shared verbatim with multiplayer/src/war-live.js, the game server
 // writes these, this module reads them, exactly like feed.js / presence-store.js.
 const LIVE_KEY = (matchKey) => `wars:live:${matchKey}`;
 const LIVE_INDEX = 'wars:live:index';
@@ -140,7 +140,7 @@ export async function readStandings({ network = 'mainnet' } = {}) {
 /**
  * Every battle currently running, newest heartbeat first. `mint` narrows to wars
  * one community is fighting in, which is what the portal board asks for.
- * Returns [] (never throws) when Redis is unavailable — a missing spectator feed
+ * Returns [] (never throws) when Redis is unavailable, a missing spectator feed
  * must not take down the standings board it sits beside.
  */
 export async function readLiveMatches({ network = 'mainnet', mint = '' } = {}) {
@@ -236,7 +236,7 @@ function requireRedis() {
 
 // A best-effort mutex. Upstash SET NX PX is atomic, so at most one writer holds
 // the queue at a time; if the lock cannot be taken within the retry budget we
-// proceed anyway rather than refusing the player — the worst case is the same
+// proceed anyway rather than refusing the player, the worst case is the same
 // unpaired-this-poll outcome they would get from an empty queue, and the next
 // poll pairs them.
 async function acquireQueueLock(redis, network) {

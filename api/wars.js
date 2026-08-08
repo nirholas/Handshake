@@ -1,4 +1,4 @@
-// /api/wars — the public face of Coin Wars.
+// /api/wars, the public face of Coin Wars.
 //
 // One endpoint serves everything the war portal in /play and the arena page at
 // /play/war need, plus the write the game server makes when a battle ends:
@@ -51,7 +51,7 @@ export default wrap(async (req, res) => {
 		if (action === 'report') return handleReport(req, res);
 		if (action === 'queue') return handleQueue(req, res, url);
 		if (action === 'leave') return handleLeave(req, res, url);
-		return error(res, 400, 'validation_error', 'unknown action — expected report, queue or leave');
+		return error(res, 400, 'validation_error', 'unknown action, expected report, queue or leave');
 	}
 
 	const rl = await limits.publicIp(clientIp(req));
@@ -70,7 +70,7 @@ async function handleBoard(res, url) {
 
 	// Each surface degrades on its own. A cold database must not blank the live
 	// war a player is standing in front of, and a Redis outage must not hide the
-	// league table — so failures resolve to an explicit availability flag rather
+	// league table, so failures resolve to an explicit availability flag rather
 	// than to a 500 or, worse, to a silently empty board that reads as "no wars".
 	const [standings, recent, live, queue] = await Promise.all([
 		readStandings({ network }).catch((err) => ({ error: err, standings: [], battlesRead: 0, windowFull: false })),
@@ -88,7 +88,7 @@ async function handleBoard(res, url) {
 			network,
 			coin: coin || null,
 			// The requesting community's league row, or null when it has never
-			// fought — the portal renders a designed "unranked" state from that.
+			// fought, the portal renders a designed "unranked" state from that.
 			standing: row,
 			standings: table,
 			ledgerAvailable: !standings.error,

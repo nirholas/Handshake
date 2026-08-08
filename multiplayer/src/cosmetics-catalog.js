@@ -1,19 +1,19 @@
-// Cosmetics catalog — the single source of truth for every wearable in the
+// Cosmetics catalog, the single source of truth for every wearable in the
 // world, shared verbatim by the authoritative server (WalkRoom validates equips
 // and ownership against it) and the client (the creator wardrobe renders it, and
 // every player's rig applies it). Keep it dependency-free so both the Node server
-// and the Vite client import the exact same table — a cosmetic that exists on one
+// and the Vite client import the exact same table, a cosmetic that exists on one
 // side but not the other would let a player wear something peers can't render.
 //
 // A cosmetic is purely visual (see cosmetics-visual.js): it never touches a
 // gameplay value. Each entry carries a `visual` spec the renderer turns into
 // Three.js objects:
-//   tint  — recolour the body (a dye), { tint:'#rrggbb' }
-//   prop  — a GLB worn on the head/face, { prop:'/url.glb', anchor:'head'|'face' }
-//   aura  — a glowing ground ring, { aura:'#rrggbb' }
+//   tint, recolour the body (a dye), { tint:'#rrggbb' }
+//   prop, a GLB worn on the head/face, { prop:'/url.glb', anchor:'head'|'face' }
+//   aura, a glowing ground ring, { aura:'#rrggbb' }
 //
 // Slots are exclusive: a player wears at most one cosmetic per slot. The `none`
-// entry in each slot is the bare default everyone owns — equipping it clears the
+// entry in each slot is the bare default everyone owns, equipping it clears the
 // slot. Props reference the real GLBs already shipped in public/accessories/, so
 // nothing here points at an asset that 404s.
 
@@ -30,7 +30,7 @@ export const SLOT_LABELS = {
 
 // tier: 'free' is owned by everyone implicitly; 'premium' must be unlocked
 // (W04's shop grants it into the account's owned list). `price` is the $THREE
-// cost the shop will charge — surfaced here so the wardrobe can show it, but W03
+// cost the shop will charge, surfaced here so the wardrobe can show it, but W03
 // never sells (it only exposes the unlock hook).
 //
 // A third tier, 'event', is a souvenir: it is GRANTED, never sold. The server
@@ -96,7 +96,7 @@ export function isFreeCosmetic(id) {
 	return !!c && c.tier === 'free';
 }
 
-// Is this id an event souvenir — granted for being somewhere at some time, never
+// Is this id an event souvenir, granted for being somewhere at some time, never
 // purchasable? The grant path (event-drop.js → WalkRoom) checks this so a
 // misconfigured event can never hand out a boutique item for nothing, and the
 // wardrobe checks it so a locked souvenir offers no "buy it" shortcut.
@@ -106,7 +106,7 @@ export function isEventCosmetic(id) {
 }
 
 // Is this id one an account has to explicitly own to wear (premium or event)?
-// The inverse of isFreeCosmetic for known ids — used by the persistence layer,
+// The inverse of isFreeCosmetic for known ids, used by the persistence layer,
 // which must keep every unlocked id regardless of how it was unlocked.
 export function isUnlockableCosmetic(id) {
 	const c = getCosmetic(id);
@@ -125,7 +125,7 @@ export function canWear(id, owned) {
 
 // Coerce an arbitrary equipped map (from a client or a persisted blob) into a
 // valid, slot-correct loadout the wearer is actually allowed to use. Anything
-// invalid, in the wrong slot, or unowned falls back to that slot's default — so a
+// invalid, in the wrong slot, or unowned falls back to that slot's default, so a
 // tampered payload can never put an unowned cosmetic on a player.
 export function sanitizeLoadout(equipped, owned) {
 	const out = { ...DEFAULT_LOADOUT };
@@ -153,7 +153,7 @@ export function serializeLoadout(equipped) {
 }
 
 // Parse the wire string back into the list of catalog entries to render. Tolerant
-// of unknown/empty ids (a peer on a newer catalog) — they're simply skipped.
+// of unknown/empty ids (a peer on a newer catalog), they're simply skipped.
 export function parseLoadout(str) {
 	if (!str || typeof str !== 'string') return [];
 	return str.split(',').map((id) => getCosmetic(id.trim())).filter((c) => c && c.visual);

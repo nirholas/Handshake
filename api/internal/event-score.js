@@ -1,10 +1,10 @@
-// POST /api/internal/event-score — the multiplayer server → API bridge for the live
+// POST /api/internal/event-score, the multiplayer server → API bridge for the live
 // event leaderboard.
 //
 // When a player finishes one of the event quest line's jobs (multiplayer/src/
 // quests.js, `event: true`), the authoritative Colyseus room reports it here. Only
 // completions that the room's own quest engine granted ever reach this endpoint, and
-// only inside the event window that the room re-derives server-side — a client can
+// only inside the event window that the room re-derives server-side, a client can
 // neither claim a run nor forge one for another player.
 //
 // Trust model mirrors api/internal/quest-notify.js: a valid world-service token
@@ -25,7 +25,7 @@ import { isEventLive } from '../../multiplayer/src/event-window.js';
 import { isEventMission } from '../../multiplayer/src/quests.js';
 
 export default wrap(async (req, res) => {
-	// Server-to-server only — no browser origin ever calls this directly.
+	// Server-to-server only, no browser origin ever calls this directly.
 	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['POST'])) return;
 

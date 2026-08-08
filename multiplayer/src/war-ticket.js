@@ -1,4 +1,4 @@
-// War ticket verification — the game-server half of Coin Wars matchmaking.
+// War ticket verification, the game-server half of Coin Wars matchmaking.
 //
 // The API's matchmaker (api/wars.js over war-matchmaking.js) pairs two coin
 // communities and seals the pairing into an HMAC-signed ticket
@@ -23,12 +23,12 @@ function secret() {
 	// let anyone open an arena naming any two communities.
 	if (process.env.NODE_ENV === 'production') {
 		throw new Error(
-			'[war-ticket] WAR_TICKET_SECRET (or WAR_RESULT_SECRET / HOLDER_PASS_SECRET) is required in production — refusing to verify tickets with the dev secret.',
+			'[war-ticket] WAR_TICKET_SECRET (or WAR_RESULT_SECRET / HOLDER_PASS_SECRET) is required in production, refusing to verify tickets with the dev secret.',
 		);
 	}
 	if (!_warned) {
 		_warned = true;
-		console.warn('[war-ticket] no ticket secret set — verifying with the insecure dev secret (development only).');
+		console.warn('[war-ticket] no ticket secret set, verifying with the insecure dev secret (development only).');
 	}
 	return DEV_SECRET;
 }

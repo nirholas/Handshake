@@ -1,18 +1,18 @@
-// Combat handlers for the /play coin worlds (W07) — the network-and-AI half of
+// Combat handlers for the /play coin worlds (W07), the network-and-AI half of
 // combat.js's pure math. Mirrors activities.js's split: the room registers a
 // couple of message handlers and two ticks here, and this file reaches back into
 // the room's authoritative helpers (`_actionOk`, `_grantXp`, `_sendInv`,
 // `_questEvent`, `_persistEcon`, `econ`, `clients`) rather than duplicating them.
 //
 // Three things live here:
-//   1. Mob AI — roaming PvE enemies confined to the named DANGER_ZONES, chasing
+//   1. Mob AI, roaming PvE enemies confined to the named DANGER_ZONES, chasing
 //      and attacking the nearest player through the SAME damage path an 'attack'
 //      intent uses, so a mob hit and a player hit are one code path
 //      (combat.js applyDamage), not two.
-//   2. The 'attack' intent — validate weapon/ammo/cooldown/zone, pick a target
+//   2. The 'attack' intent, validate weapon/ammo/cooldown/zone, pick a target
 //      with combat.selectTarget, roll damage, apply it, and (on a kill) spill a
 //      lootable tombstone.
-//   3. The 'loot' intent — claim a tombstone's cash + items when standing beside
+//   3. The 'loot' intent, claim a tombstone's cash + items when standing beside
 //      it.
 //
 // Authority model mirrors _handleFish/activities.js: the client only ever sends
@@ -32,7 +32,7 @@ import {
 } from './combat.js';
 import { Mob, Tombstone } from './schemas.js';
 
-// How often the mob AI advances (ms). Coarser than the 15 Hz move rate — mobs
+// How often the mob AI advances (ms). Coarser than the 15 Hz move rate, mobs
 // don't need move-grade smoothness, and the client interpolates between ticks.
 export const MOB_TICK_MS = 200;
 // Wanted/heat decay cadence (ms). Independent of the mob tick so tuning one
@@ -48,7 +48,7 @@ export const TOMBSTONE_TTL_MS = 180_000;
 // How close a player must stand to a tombstone to loot it.
 export const LOOT_REACH_M = 3.2;
 
-// This zone's PvE roster, by DANGER_ZONES id — a difficulty gradient across the
+// This zone's PvE roster, by DANGER_ZONES id, a difficulty gradient across the
 // three named wilds so a player has somewhere easier to start and something to
 // grow into, matching the loot tables' own "richer than an ogre" framing for the
 // troll. Kept here (not in world-features.js) since it's a combat-only concern.
@@ -230,7 +230,7 @@ function spillTombstone(room, x, z, ownerName, drop) {
 }
 
 // Kill a player: drop their carried gold + pack into a tombstone (banked cash
-// and equipped hotbar tools/weapons are untouched — dropCarried's own risk/
+// and equipped hotbar tools/weapons are untouched, dropCarried's own risk/
 // reward contract), flag them downed on the shared schema so peers stop
 // targeting them and render the ragdoll, and schedule a clean respawn at the
 // safe spawn point.
@@ -302,7 +302,7 @@ export function handleAttack(room, client) {
 		return;
 	}
 	if (!isDangerZone(player.x, player.z)) {
-		client.send('notice', { kind: 'attack', ok: false, text: 'The wilds are past the edge of town — fights only break out there.' });
+		client.send('notice', { kind: 'attack', ok: false, text: 'The wilds are past the edge of town, fights only break out there.' });
 		return;
 	}
 	const now = Date.now();

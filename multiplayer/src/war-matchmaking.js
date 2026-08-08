@@ -1,4 +1,4 @@
-// War matchmaking — the pure pairing math behind the Coin Wars portal.
+// War matchmaking, the pure pairing math behind the Coin Wars portal.
 //
 // A player standing in their coin's world presses "Enter the war". That queues
 // their community. When a SECOND community is waiting, the two are paired and
@@ -106,12 +106,12 @@ export function entryLive(entry, now) {
  * fight, return the next queue and what to tell the caller.
  *
  * Four outcomes, in the order they are checked:
- *   'paired'   — this community was already matched by an earlier call (the
+ *   'paired', this community was already matched by an earlier call (the
  *                other side queued first and paired with us); hand back the key.
- *   'matched'  — we just paired with a waiting community; both entries are
+ *   'matched', we just paired with a waiting community; both entries are
  *                stamped with the new key.
- *   'waiting'  — nobody else is queued; we are now the one waiting.
- *   'invalid'  — the community is not a coin we can seat.
+ *   'waiting', nobody else is queued; we are now the one waiting.
+ *   'invalid', the community is not a coin we can seat.
  *
  * @param {object} args
  * @param {Array<object>} args.queue    stored entries (any staleness)
@@ -131,7 +131,7 @@ export function joinQueue({ queue = [], coin, network = 'mainnet', now = 0 }) {
 	const live = liveOnly(queue, now).filter((e) => e.network === net || !e.network);
 	const mine = live.find((e) => e.mint === mint) || null;
 
-	// Already paired by whoever queued second — nothing to do but report it.
+	// Already paired by whoever queued second, nothing to do but report it.
 	if (mine?.matchKey) {
 		const rest = live.filter((e) => e.mint !== mint);
 		return {
@@ -152,7 +152,7 @@ export function joinQueue({ queue = [], coin, network = 'mainnet', now = 0 }) {
 		image: str(coin?.image, 400),
 	};
 
-	// The oldest unpaired community that is not us — first come, first fought.
+	// The oldest unpaired community that is not us, first come, first fought.
 	const rival = live
 		.filter((e) => e.mint !== mint && !e.matchKey)
 		.sort((x, y) => (x.at || 0) - (y.at || 0))[0] || null;

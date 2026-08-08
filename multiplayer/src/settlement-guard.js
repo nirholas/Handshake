@@ -41,7 +41,7 @@ class SettlementGuard {
 				})
 				.catch((err) => {
 					this._redis = null;
-					console.error('[settlement-guard] Redis unreachable — replay guard is per-process only:', err?.message);
+					console.error('[settlement-guard] Redis unreachable, replay guard is per-process only:', err?.message);
 				});
 		} else {
 			console.log('[settlement-guard] replay guard: memory-only (set UPSTASH_REDIS_REST_URL/_TOKEN to span instances + restarts)');
@@ -69,7 +69,7 @@ class SettlementGuard {
 					if (res === null) return false;
 				}
 			} catch (err) {
-				console.error(`[settlement-guard] Redis consume failed for ${key} — continuing on the in-process guard:`, err?.message);
+				console.error(`[settlement-guard] Redis consume failed for ${key}, continuing on the in-process guard:`, err?.message);
 			}
 		}
 		return true;

@@ -1,5 +1,5 @@
 /**
- * Living Stages — stage + show lifecycle (Moonshot 04).
+ * Living Stages, stage + show lifecycle (Moonshot 04).
  *
  * A "stage" is a venue where an embodied AI agent hosts live, monetized shows.
  * A "show" is one live session against that stage; "show_tips" is the per-show
@@ -78,7 +78,7 @@ async function ensureTables() {
 		)
 	`;
 	await sql`CREATE INDEX IF NOT EXISTS shows_stage ON shows (stage_id, started_at DESC)`;
-	// Exactly one open show per stage — a partial unique index makes "go live twice"
+	// Exactly one open show per stage, a partial unique index makes "go live twice"
 	// a no-op rather than a second open row the tips would split across.
 	await sql`CREATE UNIQUE INDEX IF NOT EXISTS shows_one_open ON shows (stage_id) WHERE ended_at IS NULL`;
 	await sql`
@@ -115,7 +115,7 @@ async function ensureTables() {
 }
 
 // Resolve the host agent's Solana wallet (the tip target) without provisioning on
-// a public read — only return an address that already exists. Provisioning
+// a public read, only return an address that already exists. Provisioning
 // happens at stage creation, when the owner is authenticated.
 async function readHostWallet(agentId) {
 	const [row] = await sql`SELECT meta FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL LIMIT 1`;
@@ -216,7 +216,7 @@ async function handleGet(req, res) {
 
 	// ── the stage standing in a coin world's plaza (F17) ──────────────────────
 	// The /play client derives this id itself (multiplayer/src/plaza-stage.js) and
-	// only needs the show state, so an UNCLAIMED plaza is a 200 with stage:null —
+	// only needs the show state, so an UNCLAIMED plaza is a 200 with stage:null,
 	// the quiet-landmark case is normal, not an error.
 	if (req.query.coin) {
 		const mint = cleanStr(req.query.coin, MAX_MINT);
@@ -345,13 +345,13 @@ async function claimPlaza(req, res, session, body) {
 		});
 	}
 	// One stage per agent (stages_agent_uniq). An agent that already has a stage
-	// elsewhere cannot also take a plaza — say so with the id they already own
+	// elsewhere cannot also take a plaza, say so with the id they already own
 	// rather than failing on a constraint the caller can't see.
 	const [existing] = await sql`SELECT id FROM stages WHERE agent_id = ${agent.id} LIMIT 1`;
 	if (existing && existing.id !== stageId) {
 		return json(res, 409, {
 			error: 'agent_has_stage',
-			message: 'this agent already hosts another stage — use a different agent for the plaza',
+			message: 'this agent already hosts another stage, use a different agent for the plaza',
 			stageId: existing.id,
 		});
 	}
@@ -391,7 +391,7 @@ async function goLive(req, res, session, body) {
 	const stage = await ownedStage(body.stageId, session.id);
 	if (!stage) return json(res, 403, { error: 'you do not own this stage' });
 
-	// Open a show (idempotent via the partial unique index — a second go-live
+	// Open a show (idempotent via the partial unique index, a second go-live
 	// returns the already-open show rather than a duplicate).
 	const [show] = await sql`
 		INSERT INTO shows (stage_id) VALUES (${stage.id})
@@ -400,7 +400,7 @@ async function goLive(req, res, session, body) {
 	`;
 	await sql`UPDATE stages SET status = 'live', updated_at = NOW() WHERE id = ${stage.id}`;
 
-	// Tell holders the show is starting — in-app bell + a best-effort Telegram ping.
+	// Tell holders the show is starting, in-app bell + a best-effort Telegram ping.
 	insertNotification(session.id, 'stage_live', {
 		stage_id: stage.id,
 		agent_id: stage.agent_id,
@@ -451,7 +451,7 @@ function shapeStage(s) {
 		next_show_at: s.next_show_at ? Date.parse(s.next_show_at) : null,
 		host_name: s.agent_name,
 		host_avatar: s.avatar_url || s.profile_image_url || null,
-		// The /play world this stage stands in, when it is a plaza stage — lets the
+		// The /play world this stage stands in, when it is a plaza stage, lets the
 		// directory card offer "attend in-world" alongside the /stage venue link.
 		coin_mint: s.coin_mint || null,
 	};
