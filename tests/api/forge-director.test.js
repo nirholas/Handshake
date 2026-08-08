@@ -49,10 +49,10 @@ describe('directPrompt — in-process Granite director', () => {
 		globalThis.fetch = vi.fn(async () => {
 			throw new Error('the director must not make HTTP calls');
 		});
-		state.watsonx.mockResolvedValue({ text: 'A glossy two-tone gel capsule, studio lighting, plain background' });
+		state.watsonx.mockResolvedValue({ text: 'A glossy two-tone gel capsule, studio lighting, plain background.' });
 
 		const out = await directPrompt(MESH_DIRECTOR, 'a capsule pill');
-		expect(out).toBe('A glossy two-tone gel capsule, studio lighting, plain background');
+		expect(out).toBe('A glossy two-tone gel capsule, studio lighting, plain background.');
 		expect(globalThis.fetch).not.toHaveBeenCalled();
 		expect(state.chain).not.toHaveBeenCalled();
 
@@ -64,17 +64,17 @@ describe('directPrompt — in-process Granite director', () => {
 	});
 
 	it('cleans the model output: wrapping quotes stripped, first line only', async () => {
-		state.watsonx.mockResolvedValue({ text: '"A brushed steel teapot, centered"\nSecond line the model added anyway' });
+		state.watsonx.mockResolvedValue({ text: '"A brushed steel teapot, centered."\nSecond line the model added anyway' });
 		const out = await directPrompt(MESH_DIRECTOR, 'teapot');
-		expect(out).toBe('A brushed steel teapot, centered');
+		expect(out).toBe('A brushed steel teapot, centered.');
 	});
 
 	it('falls back to the free llmComplete chain when watsonx is not configured', async () => {
 		state.configured = false;
-		state.chain.mockResolvedValue({ text: 'A matte ceramic robot figurine, centered', provider: 'groq', model: 'x' });
+		state.chain.mockResolvedValue({ text: 'A matte ceramic robot figurine, centered.', provider: 'groq', model: 'x' });
 
 		const out = await directPrompt(MESH_DIRECTOR, 'robot');
-		expect(out).toBe('A matte ceramic robot figurine, centered');
+		expect(out).toBe('A matte ceramic robot figurine, centered.');
 		expect(state.watsonx).not.toHaveBeenCalled();
 		expect(state.chain).toHaveBeenCalledTimes(1);
 		expect(state.chain.mock.calls[0][0]).toMatchObject({ system: MESH_DIRECTOR, user: 'Idea: robot' });
@@ -82,20 +82,20 @@ describe('directPrompt — in-process Granite director', () => {
 
 	it('falls back to the chain when watsonx throws', async () => {
 		state.watsonx.mockRejectedValue(new Error('watsonx 429: quota'));
-		state.chain.mockResolvedValue({ text: 'A worn oak chair, centered' });
+		state.chain.mockResolvedValue({ text: 'A worn oak chair, centered.' });
 		const out = await directPrompt(MESH_DIRECTOR, 'chair');
-		expect(out).toBe('A worn oak chair, centered');
+		expect(out).toBe('A worn oak chair, centered.');
 	});
 
 	it('falls back to the chain when watsonx hangs past the director timeout', async () => {
 		vi.useFakeTimers();
 		state.watsonx.mockReturnValue(new Promise(() => {}));
-		state.chain.mockResolvedValue({ text: 'A cast iron lantern, centered' });
+		state.chain.mockResolvedValue({ text: 'A cast iron lantern, centered.' });
 
 		const pending = directPrompt(MESH_DIRECTOR, 'lantern');
 		await vi.advanceTimersByTimeAsync(20_000);
 		const out = await pending;
-		expect(out).toBe('A cast iron lantern, centered');
+		expect(out).toBe('A cast iron lantern, centered.');
 	});
 
 	it('returns null (fail-soft) when every lane fails, so callers keep the raw prompt', async () => {
@@ -107,5 +107,20 @@ describe('directPrompt — in-process Granite director', () => {
 	it('returns null on a degenerate rewrite instead of forwarding junk', async () => {
 		state.watsonx.mockResolvedValue({ text: '""' });
 		expect(await directPrompt(MESH_DIRECTOR, 'anything')).toBeNull();
+	});
+
+	// The truncation guard (isUsableDirectorRewrite) lives between the model call
+	// and the return, so directPrompt's contract depends on it. Pinning it here
+	// keeps the two from drifting apart: every fixture above now ends on terminal
+	// punctuation because a rewrite that does NOT is treated as clipped, and the
+	// caller keeps their own wording instead.
+	it('rejects a rewrite that stopped mid-sentence, so the caller keeps their prompt', async () => {
+		state.watsonx.mockResolvedValue({ text: 'A classic wooden rocking chair with gracefully curved' });
+		expect(await directPrompt(MESH_DIRECTOR, 'rocking chair')).toBeNull();
+	});
+
+	it('rejects a rewrite no longer than what the caller typed', async () => {
+		state.watsonx.mockResolvedValue({ text: 'A red car.' });
+		expect(await directPrompt(MESH_DIRECTOR, 'a red sports car with chrome trim')).toBeNull();
 	});
 });
