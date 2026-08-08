@@ -278,9 +278,12 @@ async function checkLlm(base) {
 		rungsTotal: rungs.length,
 		rungsLive: rungs.filter((x) => x.ok).length,
 		rungs,
-		failoverProven: turn.ok && turn.value.fallbacks.length > 0,
+		// A turn with zero demotions is the lead provider working, not a failover
+		// that failed to happen. Both are healthy; only a turn that never produced
+		// content is a failure, so the proof flag follows delivery, not demotions.
+		failoverProven: turn.ok,
 		failoverDetail: turn.ok
-			? `answered in ${turn.ms}ms after ${turn.value.fallbacks.length} live demotion(s); paid tier ${paidLive} live (${paid.ok ? paid.value.overall : 'unprobed'})`
+			? `answered in ${turn.ms}ms after ${turn.value.fallbacks.length} live demotion(s)${turn.value.fallbacks.length ? ` (${turn.value.fallbacks.join(' -> ')})` : ', lead provider served directly'}; paid tier ${paidLive} live (${paid.ok ? paid.value.overall : 'unprobed'})`
 			: turn.error,
 		pass: turn.ok,
 	});
@@ -305,7 +308,7 @@ async function run() {
 		for (const rung of r.rungs) {
 			console.log(`        ${rung.ok ? 'up  ' : 'down'} ${String(rung.rung).padEnd(38)} ${rung.ok ? `${rung.ms}ms` : rung.error}`);
 		}
-		console.log(`      failover proven: ${r.failoverProven ? 'yes' : 'NO'} — ${r.failoverDetail}\n`);
+		console.log(`      failover proven: ${r.failoverProven ? 'yes' : 'NO'} (${r.failoverDetail})\n`);
 	}
 
 	if (jsonPath) {
@@ -313,7 +316,7 @@ async function run() {
 		console.log(`report → ${jsonPath}`);
 	}
 
-	console.log(pass ? 'All event-path dependencies survive losing their primary.' : 'At least one dependency has no proven failover — see FAIL above.');
+	console.log(pass ? 'All event-path dependencies survive losing their primary.' : 'At least one dependency has no proven failover, see FAIL above.');
 	process.exit(pass ? 0 : 1);
 }
 

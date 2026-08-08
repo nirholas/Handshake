@@ -122,7 +122,9 @@ const frameStats = async (reset = false) => {
 };
 
 console.log(at(), 'goto', TARGET.slice(0, 120));
-await page.goto(TARGET, { waitUntil: 'domcontentloaded', timeout: 60000 });
+// Generous: an unbundled dev server serves the world as ~1500 separate module
+// requests, and a software rasterizer makes the first paint slow on top of that.
+await page.goto(TARGET, { waitUntil: 'domcontentloaded', timeout: 180000 });
 
 try {
 	await page.waitForSelector('.pi-btn-primary', { timeout: 25000 });

@@ -99,7 +99,15 @@
 			try {
 				var p = new URLSearchParams(location.search);
 				if (!p.get('coin')) return;
-				var trim = function (s, max) { return (s || '').trim().replace(/\s+/g, ' ').slice(0, max); };
+				/* Bound the length a shared link can inject, and cut on a word boundary
+				   so an over-long community name doesn't leave a dangling letter. */
+				var trim = function (s, max) {
+					var v = (s || '').trim().replace(/\s+/g, ' ');
+					if (v.length <= max) return v;
+					var cut = v.slice(0, max);
+					var sp = cut.lastIndexOf(' ');
+					return (sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s.,;:-]+$/, '');
+				};
 				var name = trim(p.get('name'), 28);
 				var sym = trim(p.get('symbol'), 12).replace(/^\$/, '').toUpperCase();
 				/* Only same-origin paths (the /api/img proxy) and https URLs. Anything

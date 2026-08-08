@@ -1,11 +1,11 @@
 // @ts-check
-// Gemini native TTS lane — 30 prebuilt voices, controllable by prompt.
+// Gemini native TTS lane: 30 prebuilt voices, controllable by prompt.
 //
 // Two rungs, in this order:
 //   1. Vertex AI (`GOOGLE_CLOUD_PROJECT`) authenticated with the GCP service
 //      account and billed to the platform's Google credits. This is the lane
 //      that actually runs in production: same anchor doctrine as
-//      api/_lib/vertex-gemini.js — no third-party quota, no API key to rot,
+//      api/_lib/vertex-gemini.js (no third-party quota, no API key to rot,
 //      standing owner-approved spend (docs/ops/gcp-credits-plan.md).
 //   2. The Generative Language API with `GEMINI_API_KEY`, for local dev and as
 //      a backstop when the Vertex token mint fails.
@@ -95,11 +95,24 @@ export function isGeminiVoice(id) {
 const SAMPLE_RATE_HZ = 24_000;
 const DEFAULT_TIMEOUT_MS = 45_000;
 
-// The preview TTS models are not served from every Vertex region; us-central1
-// is the one that has carried them since launch. Env-tunable so a region move
-// needs no code change.
-function vertexLocation() {
-	return process.env.GOOGLE_CLOUD_LOCATION_TTS || 'us-central1';
+// The preview TTS models are not served from every Vertex region, and Google
+// moves which ones carry a preview model without notice. Rather than bet the
+// lane on one region, try each in turn: an explicit env pin first, then the
+// two that have carried these models since launch. A region that does not host
+// the model answers 404, which costs one round trip and falls through.
+function vertexLocations() {
+	const pinned = process.env.GOOGLE_CLOUD_LOCATION_TTS;
+	const ordered = pinned ? [pinned, 'us-central1', 'global'] : ['us-central1', 'global'];
+	return [...new Set(ordered)];
+}
+
+function vertexUrl(location, project, modelId) {
+	const host =
+		location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
+	return (
+		`https://${host}/v1/projects/${project}/locations/${location}` +
+		`/publishers/google/models/${modelId}:generateContent`
+	);
 }
 
 /** True when either rung can serve. Read per call so late-injected env works. */
@@ -205,20 +218,31 @@ export async function synthesizeGeminiTts({
 	// ── Rung 1: Vertex AI on platform credits ────────────────────────────────
 	if (process.env.GOOGLE_CLOUD_PROJECT) {
 		const project = process.env.GOOGLE_CLOUD_PROJECT;
-		const location = vertexLocation();
+		let token = null;
 		try {
-			const token = await getGcpAccessToken();
-			pcm = await callGemini({
-				url:
-					`https://${location}-aiplatform.googleapis.com/v1/projects/${project}` +
-					`/locations/${location}/publishers/google/models/${modelId}:generateContent`,
-				headers: { authorization: `Bearer ${token}` },
-				body,
-				timeoutMs,
-			});
-			lane = 'vertex';
+			token = await getGcpAccessToken();
 		} catch (e) {
-			laneErrors.push(`vertex: ${e?.code || 'error'} ${e?.message || ''}`.trim());
+			laneErrors.push({ code: 'no_credentials', text: `vertex: no_credentials ${e?.message || ''}`.trim() });
+		}
+		for (const location of token ? vertexLocations() : []) {
+			try {
+				pcm = await callGemini({
+					url: vertexUrl(location, project, modelId),
+					headers: { authorization: `Bearer ${token}` },
+					body,
+					timeoutMs,
+				});
+				lane = `vertex:${location}`;
+				break;
+			} catch (e) {
+				laneErrors.push({
+					code: e?.code || 'error',
+					text: `vertex/${location}: ${e?.code || 'error'} ${e?.message || ''}`.trim(),
+				});
+				// An auth or quota failure will repeat in every region; only a
+				// missing-model 404 is worth retrying elsewhere.
+				if (e?.code === 'invalid_key' || e?.code === 'rate_limited') break;
+			}
 		}
 	}
 
@@ -234,13 +258,24 @@ export async function synthesizeGeminiTts({
 			});
 			lane = 'api-key';
 		} catch (e) {
-			laneErrors.push(`api-key: ${e?.code || 'error'} ${e?.message || ''}`.trim());
+			laneErrors.push({
+				code: e?.code || 'error',
+				text: `api-key: ${e?.code || 'error'} ${e?.message || ''}`.trim(),
+			});
 		}
 	}
 
 	if (!pcm) {
 		if (!laneErrors.length) throw tagged('Gemini TTS is not configured', 'not_configured');
-		throw tagged(`Gemini TTS failed — ${laneErrors.join('; ')}`, 'provider_error');
+		// When every rung failed the same way the cause is the request, not the
+		// infrastructure: keep that code so the caller can answer 422 (blocked
+		// prompt) or 429 (quota) instead of a blanket 502.
+		const codes = new Set(laneErrors.map((e) => e.code));
+		const code = codes.size === 1 ? [...codes][0] : 'provider_error';
+		throw tagged(
+			`Gemini TTS failed: ${laneErrors.map((e) => e.text).join('; ')}`,
+			code === 'no_credentials' || code === 'error' ? 'provider_error' : code,
+		);
 	}
 
 	return {

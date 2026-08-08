@@ -25,10 +25,21 @@ export const maxDuration = 60;
 // bounding the in-memory buffer per request.
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const VISION_TIMEOUT_MS = 20_000;
-// Overall budget for the whole provider chain (free NIM models + paid backstop),
-// kept well under the function wall-clock limit so describeImage returns a clean
-// 504 instead of being hard-killed by the platform ("Task timed out after 30s").
+// Overall budget for the WHOLE request, not just the provider chain. It used to
+// bound only describeImage, which meant the real wall clock was this plus
+// whatever the body read took first, up to READ_BODY_TIMEOUT_MS (15s) for a
+// 12 MB upload on a slow link, so ~39s worst case. That overruns a 30s gateway
+// timeout, and the caller gets an opaque 504 from the edge instead of the clean,
+// diagnosable one this endpoint is careful to produce (2026-08-07: two 504s on
+// agent uploads with no matching app-level error, the signature of the request
+// dying above the handler).
+//
+// Charging the upload against the same budget keeps the endpoint's total under
+// the gateway's, so a slow upload eats into model time rather than adding to it.
 const VISION_DEADLINE_MS = 24_000;
+// Floor for the model chain after a slow upload: below this even the fastest
+// lane cannot answer, so it is better to say so than to burn the remainder.
+const VISION_MIN_CHAIN_MS = 4_000;
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const DEFAULT_PROMPT =
@@ -40,6 +51,7 @@ function isAcceptedImageType(ct) {
 }
 
 export default wrap(async function handler(req, res) {
+	const startedAt = Date.now();
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
@@ -113,6 +125,20 @@ export default wrap(async function handler(req, res) {
 		return error(res, e?.status || 400, 'bad_request', e?.message || 'could not read request body');
 	}
 
+	// What is left of the request budget after auth, rate limiting, and the body
+	// read. describeImage caps each provider attempt at min(timeoutMs, remaining),
+	// so handing it the true remainder is what keeps the endpoint's own 504 ahead
+	// of the gateway's.
+	const chainBudgetMs = VISION_DEADLINE_MS - (Date.now() - startedAt);
+	if (chainBudgetMs < VISION_MIN_CHAIN_MS) {
+		return error(
+			res,
+			504,
+			'deadline_exceeded',
+			'Reading the image used the request budget before a model could run. Send a smaller image, or an imageUrl instead of inline bytes.',
+		);
+	}
+
 	try {
 		const out = await describeImage({
 			prompt: String(prompt).slice(0, 2000),
@@ -120,8 +146,8 @@ export default wrap(async function handler(req, res) {
 			imageBase64,
 			mimeType,
 			maxTokens: Math.min(Math.max(maxTokens, 16), 2048),
-			timeoutMs: VISION_TIMEOUT_MS,
-			deadlineMs: VISION_DEADLINE_MS,
+			timeoutMs: Math.min(VISION_TIMEOUT_MS, chainBudgetMs),
+			deadlineMs: chainBudgetMs,
 			track: { userId, tool: 'api/vision' },
 		});
 		return json(

@@ -1,4 +1,4 @@
-// Unit tests for api/_lib/sniper-solvency.js — the fleet's "can it afford to
+// Unit tests for api/_lib/sniper-solvency.js: the fleet's "can it afford to
 // trade at all?" verdict.
 //
 // The incident this pins down: from 2026-07-29 to 2026-08-08 the sniper fleet
@@ -12,7 +12,7 @@
 // The load-bearing invariant here is the LAST describe block: solvency must be
 // decided by resolveEntrySize, the same function the executor uses to size or
 // skip a real entry. If these two ever disagree, the status page starts claiming
-// wallets are tradeable that the executor silently skips — the original bug,
+// wallets are tradeable that the executor silently skips: the original bug,
 // one level up.
 //
 // Pure functions, no mocks needed.
@@ -22,6 +22,7 @@ import {
 	walletTradeState,
 	summarizeFleetSolvency,
 	describeSolvency,
+	deriveSniperState,
 	MASTER_COVER_BUFFER_SOL,
 } from '../api/_lib/sniper-solvency.js';
 import { resolveEntrySize, MIN_OPERATIONAL_WALLET_SOL } from '../api/_lib/agent-trade-guards.js';
@@ -143,6 +144,40 @@ describe('describeSolvency', () => {
 	it('handles the unmeasured case without inventing a verdict', () => {
 		expect(describeSolvency(summarizeFleetSolvency({ wallets: [] }))).toMatch(/No armed wallet balances measured/);
 		expect(describeSolvency(null)).toMatch(/No armed wallet balances measured/);
+	});
+});
+
+describe('deriveSniperState', () => {
+	const healthy = { alive: true, feedLive: true, feedSilent: false };
+
+	it('reports live only when the process, the feed, and the money are all fine', () => {
+		expect(deriveSniperState({ ...healthy, solvencyState: 'funded' })).toBe('live');
+	});
+
+	it('does NOT report live for a starved fleet (the ten-day bug)', () => {
+		// Exactly the observed production state: heartbeat fresh, feed connected,
+		// strategies armed, wallets empty. This used to return 'live'.
+		expect(deriveSniperState({ ...healthy, solvencyState: 'starved' })).toBe('starved');
+	});
+
+	it('ranks a dead process above every other signal', () => {
+		expect(deriveSniperState({ alive: false, feedLive: false, feedSilent: true, solvencyState: 'starved' })).toBe('down');
+	});
+
+	it('ranks starvation above a feed problem (the more actionable diagnosis)', () => {
+		expect(deriveSniperState({ alive: true, feedLive: false, feedSilent: true, solvencyState: 'starved' })).toBe('starved');
+	});
+
+	it('degrades on a silent feed or a partially starved fleet', () => {
+		expect(deriveSniperState({ ...healthy, feedSilent: true, solvencyState: 'funded' })).toBe('degraded');
+		expect(deriveSniperState({ ...healthy, solvencyState: 'degraded' })).toBe('degraded');
+	});
+
+	it('never downgrades on an unmeasured fleet', () => {
+		// Older worker builds publish no solvency at all; absence must not read as
+		// insolvency, or every pre-upgrade deploy would page as broken.
+		expect(deriveSniperState({ ...healthy, solvencyState: 'unknown' })).toBe('live');
+		expect(deriveSniperState(healthy)).toBe('live');
 	});
 });
 

@@ -998,6 +998,36 @@ export class CoinCommunities {
 		this._tickDanceFloor(dt);
 	}
 
+	// One decode and one GPU upload of the coin's artwork, shared by every surface
+	// that shows it: the totem's two faces and the jumbotron's art panel.
+	//
+	// Each surface used to run its own TextureLoader against the same URL. The
+	// HTTP cache deduped the download, so this looked free, but it isn't: the
+	// browser decoded the image twice and three.js uploaded two independent
+	// textures to the GPU. Token art routinely runs past half a megabyte (the
+	// flagship $THREE image is 567 KB), and that second decode + upload lands
+	// squarely inside world entry, where the frame budget is already spent.
+	//
+	// The promise is memoized per URL for the life of the world and dropped in
+	// leave(), so the next coin loads its own art and this one's texture is freed
+	// with the meshes that carry it.
+	_loadCoinArt(url) {
+		if (!url) return Promise.resolve(null);
+		if (this._coinArt?.url === url) return this._coinArt.promise;
+		const promise = new Promise((resolve) => {
+			new TextureLoader().load(
+				url,
+				(tex) => { tex.colorSpace = SRGBColorSpace; resolve(tex); },
+				undefined,
+				// Blocked or broken art is not fatal: the totem keeps its gold disc and
+				// the jumbotron keeps its text. Resolve null so callers just skip.
+				() => resolve(null),
+			);
+		});
+		this._coinArt = { url, promise };
+		return promise;
+	}
+
 	// Central coin totem — the community's banner in 3D.
 	_buildTotem(coin) {
 		const g = new Group();
@@ -1014,13 +1044,15 @@ export class CoinCommunities {
 		spin.add(disc);
 		this._totemDisc = disc;
 		if (coin.image) {
-			new TextureLoader().load(coin.image, (tex) => {
-				tex.colorSpace = SRGBColorSpace;
+			this._loadCoinArt(coin.image).then((tex) => {
+				// Left the world (or hopped coins) while the art was decoding: `spin` is
+				// detached and already disposed, so anything added now would leak.
+				if (!tex || this._coinSpin !== spin) return;
 				const face = new Mesh(new CircleGeometry(1.9, 40), new MeshBasicMaterial({ map: tex }));
 				face.position.set(0, 0, 0.18); spin.add(face);
 				const back = new Mesh(new CircleGeometry(1.9, 40), new MeshBasicMaterial({ map: tex }));
 				back.position.set(0, 0, -0.18); back.rotation.y = Math.PI; spin.add(back);
-			}, undefined, () => { /* image blocked — totem still shows */ });
+			});
 		}
 		g.add(spin);
 		this._coinSpin = spin;
@@ -1075,13 +1107,14 @@ export class CoinCommunities {
 		// the totem) overlaid on the panel's left third, so compositing the image
 		// into the canvas can never taint it.
 		if (coin.image) {
-			new TextureLoader().load(coin.image, (imgTex) => {
-				imgTex.colorSpace = SRGBColorSpace;
+			this._loadCoinArt(coin.image).then((imgTex) => {
+				// Same guard as the totem: never graft art onto a disposed screen.
+				if (!imgTex || this._screen !== g) return;
 				imgTex.anisotropy = screenAnisotropy();
 				const art = new Mesh(new PlaneGeometry(8.4, 8.4), screenMaterial(imgTex));
 				art.position.set(-6.7, 11, 0.04); g.add(art);
 				this._screenArt = art;
-			}, undefined, () => { /* image blocked — panel still shows text */ });
+			});
 		}
 
 		// A LIVE bar that pulses along the panel's base (animated in _tickEnv) — the
@@ -2094,6 +2127,11 @@ export class CoinCommunities {
 			this._screen = null; this._screenCanvas = null; this._screenTex = null;
 			this._screenArt = null; this._screenPulse = null;
 		}
+		// The shared coin-art texture is disposed with the meshes above (both the
+		// totem and the screen carry it, and a second dispose() on an already-freed
+		// texture is a no-op). Drop the memo so the next coin loads its own art
+		// rather than inheriting a disposed texture from this world.
+		this._coinArt = null;
 		if (this._chartScreen) { this._chartScreen.dispose(); this._chartScreen = null; }
 		if (this._oracleRibbon) { this._oracleRibbon.dispose(); this._oracleRibbon = null; }
 		if (this._agentDesks?.length) {
