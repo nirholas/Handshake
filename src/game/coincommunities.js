@@ -1979,7 +1979,6 @@ export class CoinCommunities {
 		this._previewPresetId = null; this._previewLayers = false; this._previewItem = null;
 		for (const [, r] of this.remotes) r.dispose();
 		this.remotes.clear();
-		this._pendingStale = null;
 		closeAvatarInspector(); // whoever it showed just left the world with us
 		if (this._totem) { this._disposeObject3D(this._totem); this.world.remove(this._totem); this._totem = null; this._coinSpin = null; }
 		if (this._screen) {
@@ -3606,6 +3605,9 @@ export class CoinCommunities {
 		this.ui.setForgeBusy(true);
 		const status = (m) => this.ui.setPropUploadStatus(m || '');
 		try {
+			// Only reachable from the Forge form / `/forge` chat command, so the lane
+			// client loads with the first forge rather than with the world.
+			const { forgeWorldProp } = await import('./forge-prop.js');
 			const out = await forgeWorldProp({ prompt, file, onStatus: status });
 			const def = registerUploadedProp(out.url, { name: out.name });
 			this.ui.addUploadedProp({ id: def.id, name: def.name });
@@ -3622,8 +3624,11 @@ export class CoinCommunities {
 				this.ui.toast('This model is on temporary storage, so the world may refuse it. If placing fails, forge it again.', 'warn');
 			}
 		} catch (err) {
-			if (err instanceof ForgeError && err.cancelled) return;
-			const message = err instanceof ForgeError ? err.message : 'The forge hit an error. Try again in a moment.';
+			// The lane client is loaded lazily above, so identify its errors by their
+			// own name rather than by a class binding this scope may not hold.
+			const fromLane = err?.name === 'ForgeError';
+			if (fromLane && err.cancelled) return;
+			const message = fromLane ? err.message : 'The forge hit an error. Try again in a moment.';
 			this.ui.setPropUploadStatus(message, true);
 			this.ui.toast(message, 'warn');
 		} finally {

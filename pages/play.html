@@ -88,6 +88,51 @@
 			</div>
 		</div>
 
+		<script>
+		/* Deep-link identity on the loader, inline on purpose: the app bundle takes a
+		   moment to arrive, and for that whole window a shared world link showed a
+		   generic "COIN COMMUNITIES / Joining the community…" with no hint of WHICH
+		   community. Everything needed is already in the URL, so paint it now. The tab
+		   title moves too, so a link parked in a background tab reads as the world it
+		   opens. The app re-asserts both once it knows the real coin. */
+		(function () {
+			try {
+				var p = new URLSearchParams(location.search);
+				if (!p.get('coin')) return;
+				var trim = function (s, max) { return (s || '').trim().replace(/\s+/g, ' ').slice(0, max); };
+				var name = trim(p.get('name'), 28);
+				var sym = trim(p.get('symbol'), 12).replace(/^\$/, '').toUpperCase();
+				/* Only same-origin paths (the /api/img proxy) and https URLs. Anything
+				   else in a shared link is not art we should point an <img> at. */
+				var raw = (p.get('image') || '').trim();
+				var art = (raw.charAt(0) === '/' && raw.charAt(1) !== '/') || /^https:\/\//i.test(raw) ? raw : '';
+				if (!name && !sym && !art) return;
+
+				var box = document.querySelector('.kx-boot-coin');
+				var img = box.querySelector('img');
+				/* Monogram stand-in: shown until the art decodes, and kept for good if
+				   the fetch fails (an IPFS gateway on a bad venue connection), so the
+				   slot is never a broken-image glyph. */
+				box.querySelector('.kx-boot-coin-mono').textContent = (sym || name || '?').charAt(0).toUpperCase();
+				if (art) {
+					img.addEventListener('load', function () { box.classList.add('kx-boot-coin-ok'); });
+					img.addEventListener('error', function () { img.remove(); });
+					img.src = art;
+				} else {
+					img.remove();
+				}
+				box.querySelector('.kx-boot-coin-name').textContent = name || 'Coin community';
+				box.querySelector('.kx-boot-coin-sym').textContent = sym ? '$' + sym : '';
+				box.hidden = false;
+				document.querySelector('.kx-loading-card').classList.add('kx-has-coin');
+
+				var label = sym ? '$' + sym : name;
+				document.querySelector('.kx-loading-sub').textContent = 'Entering ' + (name || label) + '…';
+				if (label) document.title = label + ' · Play — three.ws';
+			} catch (e) { /* the generic loader stands in */ }
+		})();
+		</script>
+
 		<!--
 			The world itself is a keyboard stop, not a decorative image: Tab lands
 			here, the label says what it is and how to drive it, and role=application
