@@ -21,6 +21,7 @@ import { getMe } from '../account.js';
 import { threeMarkSvg } from '../shared/brand-mark.js';
 import { proxiedImageURL } from '../ipfs.js';
 import { log } from '../shared/log.js';
+import { t, onLocaleChange } from './i18n-play.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
 // storage is blocked (the `?bg=transparent` embed). Guard every access so a
@@ -1316,7 +1317,8 @@ export class CommunityUI {
 		this.coinMono = el('span', { class: 'cc-coin-mono', 'aria-hidden': 'true', hidden: true, text: '' });
 		this.coinName = el('div', { class: 'cc-coin-name', text: '' });
 		this.coinSym = el('span', { class: 'cc-coin-sym', text: '' });
-		this.onlineCount = el('span', { text: '1 online' });
+		this.onlineCount = el('span', { text: t('play.online', '{{n}} online', { n: 1 }) });
+		this._online = 1;
 		// Marks the gated Holders world so the player always knows which room they're
 		// in and the floor they cleared. Hidden in the open General world.
 		this.tierBadge = el('span', { class: 'cc-tier-badge', hidden: true });
@@ -1339,10 +1341,11 @@ export class CommunityUI {
 		}, [el('span', { class: 'cc-gate-cfg-ico', 'aria-hidden': 'true', text: '🔑' }), el('span', { class: 'cc-gate-cfg-text', text: 'Gate', 'data-i18n': 'play.gate' })]);
 		// Open the cosmetics shop — browse + try cosmetics on your avatar live.
 		this.shopBtn = el('button', {
-			class: 'cc-shop-btn', type: 'button', title: 'Cosmetics — try looks on your avatar',
+			class: 'cc-shop-btn', type: 'button', title: 'Cosmetics: try looks on your avatar',
 			'aria-label': 'Open cosmetics shop',
+			'data-i18n-attr': 'title:play.shop_title;aria-label:play.shop_aria',
 			onclick: () => this.h.onShop?.(),
-		}, [el('span', { class: 'cc-shop-btn-ico', 'aria-hidden': 'true', text: '🛍️' }), el('span', { class: 'cc-shop-btn-text', text: 'Shop' })]);
+		}, [el('span', { class: 'cc-shop-btn-ico', 'aria-hidden': 'true', text: '🛍️' }), el('span', { class: 'cc-shop-btn-text', text: 'Shop', 'data-i18n': 'play.shop' })]);
 		// Change avatar without leaving the world: opens the in-world switcher
 		// drawer (saved avatars, quick picks, gallery, upload, creator). Touch
 		// equivalent of the V hotkey.
@@ -1354,14 +1357,15 @@ export class CommunityUI {
 		}, [el('span', { class: 'cc-avatarbtn-ico', 'aria-hidden': 'true', text: '🧍' }), el('span', { class: 'cc-avatarbtn-text', text: 'Avatar', 'data-i18n': 'play.avatar' })]);
 		// Open the "My Cosmetics" wardrobe — equip owned items, persists across worlds.
 		this.wardrobeBtn = el('button', {
-			class: 'cc-wardrobe-btn', type: 'button', title: 'My Cosmetics — equip your owned looks',
+			class: 'cc-wardrobe-btn', type: 'button', title: 'My Cosmetics: equip your owned looks',
 			'aria-label': 'Open my cosmetics wardrobe',
+			'data-i18n-attr': 'title:play.wardrobe_title;aria-label:play.wardrobe_aria',
 			onclick: () => this.h.onWardrobe?.(),
-		}, [el('span', { class: 'cc-wardrobe-btn-ico', 'aria-hidden': 'true', text: '👗' }), el('span', { class: 'cc-wardrobe-btn-text', text: 'My Fits' })]);
+		}, [el('span', { class: 'cc-wardrobe-btn-ico', 'aria-hidden': 'true', text: '👗' }), el('span', { class: 'cc-wardrobe-btn-text', text: 'My Fits', 'data-i18n': 'play.wardrobe' })]);
 		// Open the Jobs Board (W08 hooking W05) — dailies, repeatable work, and
 		// the co-op vault heist, the same board every quest-giver NPC opens.
 		this.jobsBtn = el('button', {
-			class: 'cc-jobs-btn', type: 'button', title: 'Jobs Board — dailies, courier runs, and the vault heist',
+			class: 'cc-jobs-btn', type: 'button', title: 'Jobs Board: dailies, courier runs, and the vault heist',
 			'aria-label': 'Open the jobs board',
 			'data-i18n-attr': 'title:play.jobs_title;aria-label:play.jobs_aria',
 			onclick: () => this.h.onJobs?.(),
@@ -1373,12 +1377,13 @@ export class CommunityUI {
 		// mobile has no keyboard.
 		this.friendsBadge = el('span', { class: 'cc-friends-badge', hidden: true });
 		this.friendsBtn = el('button', {
-			class: 'cc-friends-btn', type: 'button', title: 'Friends — presence and messages (J)',
+			class: 'cc-friends-btn', type: 'button', title: 'Friends: presence and messages (J)',
 			'aria-label': 'Open friends panel', 'aria-expanded': 'false',
+			'data-i18n-attr': 'title:play.friends_title;aria-label:play.friends_aria',
 			onclick: () => this.h.onFriends?.(),
 		}, [
 			el('span', { class: 'cc-friends-btn-ico', 'aria-hidden': 'true', text: '👥' }),
-			el('span', { class: 'cc-friends-btn-text', text: 'Friends' }),
+			el('span', { class: 'cc-friends-btn-text', text: 'Friends', 'data-i18n': 'play.friends' }),
 			this.friendsBadge,
 		]);
 		const banner = el('div', { class: 'cc-coin-banner' }, [
@@ -1401,8 +1406,9 @@ export class CommunityUI {
 			this.buyBtn,
 		]);
 
-		const leave = el('button', { class: 'cc-leave', onclick: () => this.h.onLeave() }, [
-			el('span', { text: '←' }), document.createTextNode('Communities'),
+		const leave = el('button', { class: 'cc-leave', type: 'button', onclick: () => this.h.onLeave() }, [
+			el('span', { 'aria-hidden': 'true', text: '←' }),
+			el('span', { text: 'Communities', 'data-i18n': 'play.leave' }),
 		]);
 
 		this.statusText = el('span', { text: 'connecting…' });
@@ -1425,11 +1431,12 @@ export class CommunityUI {
 		// out. Polite (not assertive) so a busy room never talks over the player.
 		this.chatLog = el('div', {
 			class: 'cc-chat-log', role: 'log', 'aria-live': 'polite', 'aria-relevant': 'additions text',
-			'aria-label': 'Chat messages',
+			'aria-label': 'Chat messages', 'data-i18n-attr': 'aria-label:play.chat_log_aria',
 		});
 		this.chatInput = el('input', {
 			type: 'text', maxlength: '200', placeholder: 'Say something…',
 			'aria-label': 'Chat message',
+			'data-i18n-attr': 'placeholder:play.chat_placeholder;aria-label:play.chat_input_aria',
 			onkeydown: (e) => {
 				if (e.key === 'Enter') this._sendChat();
 				else if (e.key === 'Escape') this.chatInput.blur();
@@ -1441,19 +1448,20 @@ export class CommunityUI {
 		const head = el('div', {
 			class: 'cc-chat-head', role: 'button', tabindex: '0', 'aria-label': 'Toggle chat',
 			'aria-expanded': 'true', 'aria-controls': 'cc-chat-body',
+			'data-i18n-attr': 'aria-label:play.chat_toggle_aria',
 			onclick: () => this.toggleChat(),
 			onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); this.toggleChat(); } },
 		}, [
-			el('span', { class: 'cc-chat-title' }, [el('span', { class: 'cc-chat-ico', text: '💬' }), document.createTextNode('Chat')]),
+			el('span', { class: 'cc-chat-title' }, [el('span', { class: 'cc-chat-ico', 'aria-hidden': 'true', text: '💬' }), el('span', { text: 'Chat', 'data-i18n': 'play.chat' })]),
 			this.chatUnread,
 			this.chatChevron,
 		]);
 		this.chatBody = el('div', { class: 'cc-chat-body', id: 'cc-chat-body' }, [
 			this.chatLog,
-			el('div', { class: 'cc-chat-input' }, [this.chatInput, el('button', { class: 'cc-chat-send', type: 'button', text: 'Send', onclick: () => this._sendChat() })]),
+			el('div', { class: 'cc-chat-input' }, [this.chatInput, el('button', { class: 'cc-chat-send', type: 'button', text: 'Send', 'data-i18n': 'play.send', onclick: () => this._sendChat() })]),
 		]);
 		this.chatHead = head;
-		this.chat = el('div', { id: 'cc-chat', role: 'region', 'aria-label': 'Chat' }, [head, this.chatBody]);
+		this.chat = el('div', { id: 'cc-chat', role: 'region', 'aria-label': 'Chat', 'data-i18n-attr': 'aria-label:play.chat' }, [head, this.chatBody]);
 		// Default: collapsed on touch (small screens), open on desktop — unless the
 		// user has expressed a preference before.
 		const stored = lsGet('cc-chat-min');
@@ -1461,17 +1469,18 @@ export class CommunityUI {
 		this.toggleChat(stored != null ? stored === '1' : matchMedia('(pointer: coarse)').matches);
 		const chat = this.chat;
 
-		this.emoteTray = el('div', { id: 'cc-emotes', role: 'toolbar', 'aria-label': 'Emotes' });
+		this.emoteTray = el('div', { id: 'cc-emotes', role: 'toolbar', 'aria-label': 'Emotes', 'data-i18n-attr': 'aria-label:play.emotes' });
 		// Reaction bar (R04): 6 emoji that broadcast a floating sprite above the sender's avatar.
-		this.reactionBar = el('div', { id: 'cc-reactions', role: 'toolbar', 'aria-label': 'Reactions' });
+		this.reactionBar = el('div', { id: 'cc-reactions', role: 'toolbar', 'aria-label': 'Reactions', 'data-i18n-attr': 'aria-label:play.reactions' });
 
 		// Spatial voice toggle. Off by default (no mic until the player opts in);
 		// the icon + label reflect every state (connecting / live / muted / blocked).
 		// The SVG carries its own mute slash, shown via the button's data-state.
-		this.voiceLabel = el('span', { class: 'cc-voice-label', text: 'Voice' });
+		this.voiceLabel = el('span', { class: 'cc-voice-label', text: 'Voice', 'data-i18n': 'play.voice' });
 		this.voiceBtn = el('button', {
 			class: 'cc-voice', type: 'button', 'data-state': 'off',
-			'aria-label': 'Voice chat', title: 'Join voice — talk to people near you',
+			'aria-label': 'Voice chat', title: 'Join voice: talk to people near you',
+			'data-i18n-attr': 'aria-label:play.voice_aria;title:play.voice_title',
 			onclick: () => this.h.onVoiceToggle?.(),
 		}, [
 			el('span', { class: 'cc-voice-ico', html:
@@ -1491,11 +1500,12 @@ export class CommunityUI {
 		this.powerBtn = el('button', {
 			class: 'cc-power-btn', type: 'button',
 			'aria-pressed': getPowerSaver() ? 'true' : 'false',
-			'aria-label': 'Power saver', title: 'Power saver — 30fps + lighter rendering, for a cooler, quieter machine',
+			'aria-label': 'Power saver', title: 'Power saver: 30fps and lighter rendering, for a cooler, quieter machine',
+			'data-i18n-attr': 'aria-label:play.eco_aria;title:play.eco_title',
 			onclick: () => setPowerSaver(this.powerBtn.getAttribute('aria-pressed') !== 'true'),
 		}, [
 			el('span', { class: 'cc-power-ico', 'aria-hidden': 'true', text: '⚡' }),
-			el('span', { class: 'cc-power-label', text: 'Eco' }),
+			el('span', { class: 'cc-power-label', text: 'Eco', 'data-i18n': 'play.eco' }),
 		]);
 		onPowerSaverChange((on) => this.powerBtn.setAttribute('aria-pressed', on ? 'true' : 'false'));
 
@@ -1522,37 +1532,45 @@ export class CommunityUI {
 		this.zenBtn = el('button', {
 			class: 'cc-zen-btn', type: 'button', 'aria-pressed': 'false',
 			'aria-label': 'Zen mode', title: 'Zen mode: hide every panel, just the world (Z)',
+			'data-i18n-attr': 'aria-label:play.zen_aria;title:play.zen_title',
 			onclick: () => this.h.onZen?.(),
 		}, [
 			el('span', { class: 'cc-zen-ico', 'aria-hidden': 'true', text: '🧘' }),
-			el('span', { class: 'cc-zen-label', text: 'Zen' }),
+			el('span', { class: 'cc-zen-label', text: 'Zen', 'data-i18n': 'play.zen' }),
 		]);
 		this.zenExit = el('button', {
 			id: 'cc-zen-exit', type: 'button',
 			'aria-label': 'Show controls', title: 'Show controls (Z)',
+			'data-i18n-attr': 'aria-label:play.show_ui_aria;title:play.show_ui_title',
 			onclick: () => this.h.onZen?.(),
 		}, [
 			el('span', { 'aria-hidden': 'true', html:
 				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" focusable="false">'
 				+ '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>'
 				+ '</svg>' }),
-			document.createTextNode('Show UI'),
+			el('span', { text: 'Show UI', 'data-i18n': 'play.show_ui' }),
 		]);
 		document.body.appendChild(this.zenExit);
 
 		// Dance floor button — hidden until the player steps onto the pad.
-		this.danceBtnLabel = el('span', { class: 'cc-dance-label', text: 'Dance' });
+		this.danceBtnLabel = el('span', { class: 'cc-dance-label', text: 'Dance', 'data-i18n': 'play.dance' });
 		this.danceBtn = el('button', {
 			class: 'cc-dance-btn', type: 'button', hidden: true,
 			'aria-label': 'Dance on the floor', title: 'Sync-dance with everyone on the floor',
+			'data-i18n-attr': 'aria-label:play.dance_aria;title:play.dance_title',
 			onclick: () => this.h.onDance?.(),
 		}, [
 			el('span', { class: 'cc-dance-ico', 'aria-hidden': 'true', text: '🪩' }),
 			this.danceBtnLabel,
 		]);
 
-		const hint = el('div', { id: 'cc-hint', html:
-			'<kbd>W A S D</kbd> / drag-joystick to move · <kbd>drag</kbd> to look · scroll zoom · <kbd>Enter</kbd> chat · <kbd>Q</kbd> emotes · <kbd>I</kbd> inspect · <kbd>P</kbd> photo · <kbd>Z</kbd> zen' });
+		const hint = el('div', {
+			id: 'cc-hint', 'data-i18n-html': 'play.hint',
+			// Duplicated by the canvas aria-label in pages/play.html, which is what a
+			// screen reader reads; this strip is the sighted player's copy.
+			'aria-hidden': 'true',
+			html: '<kbd>W A S D</kbd> / drag-joystick to move · <kbd>drag</kbd> to look · scroll zoom · <kbd>Enter</kbd> chat · <kbd>Q</kbd> emotes · <kbd>I</kbd> inspect · <kbd>P</kbd> photo · <kbd>Z</kbd> zen',
+		});
 
 		// Touch-only control surface: it has no keyboard equivalent to offer and
 		// nothing a screen reader can act on, so it stays out of both trees.
@@ -2703,7 +2721,17 @@ export class CommunityUI {
 	}
 
 	setStatus(state, error = null) {
-		const labels = { connecting: 'connecting…', online: 'connected', offline: 'reconnecting…', unavailable: 'multiplayer unavailable', failed: 'offline, tap to retry', denied: 'sign-in required', idle: 'idle' };
+		this._statusState = state;
+		this._statusError = error;
+		const labels = {
+			connecting: t('play.status_connecting', 'connecting…'),
+			online: t('play.status_online', 'connected'),
+			offline: t('play.status_offline', 'reconnecting…'),
+			unavailable: t('play.status_unavailable', 'multiplayer unavailable'),
+			failed: t('play.status_failed', 'offline, tap to retry'),
+			denied: t('play.status_denied', 'sign-in required'),
+			idle: t('play.status_idle', 'idle'),
+		};
 		// 'offline' is two different truths: a transient drop mid-reconnect (no
 		// error) vs the client having exhausted its retries (community-net attaches
 		// an error string). Telling a player "reconnecting…" forever after the
@@ -2719,8 +2747,8 @@ export class CommunityUI {
 		if (retryable) {
 			this.statusPill.setAttribute('tabindex', '0');
 			this.statusPill.setAttribute('role', 'button');
-			this.statusPill.setAttribute('aria-label', `Connection ${this.statusText.textContent}. Activate to reconnect.`);
-			this.statusPill.title = 'Reconnect';
+			this.statusPill.setAttribute('aria-label', t('play.status_retry_aria', 'Connection {{state}}. Activate to reconnect.', { state: this.statusText.textContent }));
+			this.statusPill.title = t('play.status_retry_title', 'Reconnect');
 		} else {
 			this.statusPill.removeAttribute('tabindex');
 			this.statusPill.setAttribute('role', 'status');
@@ -2738,7 +2766,10 @@ export class CommunityUI {
 		this.pingText.setAttribute('data-grade', ms < 90 ? 'good' : ms < 200 ? 'ok' : 'bad');
 	}
 
-	setOnline(n) { this.onlineCount.textContent = `${n} online`; }
+	setOnline(n) {
+		this._online = n;
+		this.onlineCount.textContent = t('play.online', '{{n}} online', { n });
+	}
 
 	/** Persist the typed display name and, if connected, broadcast it live. */
 	_commitName() {

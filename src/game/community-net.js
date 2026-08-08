@@ -111,6 +111,7 @@ export class CommunityNet {
 			xpgain: new Set(),      // ({skill, amount, xp, level, levelXp, nextXp})
 			levelup: new Set(),     // ({skill, level})
 			notice: new Set(),      // ({kind, text, ...}) — activity result toast (fish/eat/tool/full/quest)
+			souvenir: new Set(),    // ({id, name, slot, eventId, eventName}) — a live event just granted this account its free commemorative wearable (once, ever)
 			// General store, bank/ATM & the $THREE boutique (W04).
 			store: new Set(),          // ({sell:[{item,label,price}], buy:[{item,qty,price,label}]})
 			boutique: new Set(),       // ({listings, owned, configured}) — premium cosmetics priced in $THREE

@@ -46,6 +46,16 @@ describe('applyEventRun', () => {
 		expect(rec.cash).toBe(0);
 		expect(rec.lastAt).toBe(0);
 	});
+
+	// A real epoch-ms stamp is past 2^31, so a bitwise coercion anywhere on this
+	// path silently zeroes it and the "earlier finisher wins" tiebreak stops
+	// working. Caught in a live run where every row came back with lastAt: 0.
+	it('keeps a real epoch-millisecond timestamp intact', () => {
+		const now = Date.UTC(2026, 7, 8, 17, 30, 0); // ~1.786e12, well past 2^31
+		const rec = applyEventRun(emptyEventRecord('acct-1'), { missionId: 'm', gold: 220, at: now });
+		expect(rec.lastAt).toBe(now);
+		expect(normalizeEventRecord(rec).lastAt).toBe(now);
+	});
 });
 
 describe('normalizeEventRecord', () => {

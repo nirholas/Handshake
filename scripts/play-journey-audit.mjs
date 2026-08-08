@@ -210,6 +210,9 @@ async function tabTrapCheck(label, steps = 25) {
 		if (sel) seen.add(sel);
 	}
 	console.log(at(), `[tab:${label}] ${steps} presses reached ${seen.size} distinct controls`);
+	// Naming them is what separates "a modal is trapping focus, as designed"
+	// from "the tab order is broken", which look identical as a bare count.
+	for (const s of [...seen].slice(0, 12)) console.log('    ', s);
 	return seen.size;
 }
 
@@ -252,6 +255,18 @@ await noteState('lobby-loaded', () => ({
 await overflowScan('lobby');
 if (MOBILE) await touchScan('lobby');
 await focusSweep('lobby');
+
+// The cold-open intro (src/game/play-intro.js) auto-shows once per browser and
+// correctly traps focus while it is up. Measuring the lobby's own tab order
+// means dismissing it first, or the trap check just re-reports the modal.
+const introDismissed = await page.evaluate(() => {
+	const skip = document.querySelector('.pi-close, .pi-btn-ghost');
+	if (!skip) return false;
+	skip.click();
+	return true;
+});
+if (introDismissed) console.log(at(), '[dismissed] cold-open intro');
+await page.waitForTimeout(600);
 await tabTrapCheck('lobby');
 
 // ── 2. search: a query with hits, then one with none ───────────────────────

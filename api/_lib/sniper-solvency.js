@@ -161,6 +161,32 @@ export function summarizeFleetSolvency({ wallets, masterSol = null, minTradeLamp
 }
 
 /**
+ * The worker's overall state, combining process liveness with fleet solvency.
+ *
+ * Precedence is the point of this function. A dead process outranks everything
+ * (nothing else can be true). Solvency outranks the feed checks: "no wallet can
+ * pay for a trade" is both more specific and more actionable than "the feed is
+ * quiet", and it is the condition that went unreported for ten days. An
+ * unmeasured fleet ('unknown') never downgrades anything — absence of a
+ * measurement is not evidence of insolvency.
+ *
+ * Pure. Exported so the verdict is testable without a DB or a live worker.
+ *
+ * @param {object} p
+ * @param {boolean} p.alive       heartbeat within the freshness window
+ * @param {boolean} p.feedLive    worker reports its feed subscription up
+ * @param {boolean} p.feedSilent  no feed events past the watchdog window
+ * @param {string}  [p.solvencyState] from summarizeFleetSolvency().state
+ * @returns {'down'|'starved'|'degraded'|'live'}
+ */
+export function deriveSniperState({ alive, feedLive, feedSilent, solvencyState = 'unknown' }) {
+	if (!alive) return 'down';
+	if (solvencyState === 'starved') return 'starved';
+	if (feedSilent || !feedLive || solvencyState === 'degraded') return 'degraded';
+	return 'live';
+}
+
+/**
  * One-line operator summary of a solvency snapshot. Shared by the worker's alert
  * body and the status page so both describe the same condition the same way.
  *

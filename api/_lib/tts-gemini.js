@@ -23,6 +23,13 @@ import { pcmToWav } from './tts-nvidia.js';
 import { getGcpAccessToken } from './gcp-auth.js';
 import { env } from './env.js';
 
+// Google's own SDKs accept either name for a Generative Language API key, and
+// this workspace has historically used GOOGLE_API_KEY. Read both so a working
+// key never sits in .env unused.
+function geminiApiKey() {
+	return env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || null;
+}
+
 // Preview TTS models. Flash is the real-time lane; Pro is the quality lane.
 export const GEMINI_TTS_MODELS = [
 	{
@@ -97,14 +104,14 @@ function vertexLocation() {
 
 /** True when either rung can serve. Read per call so late-injected env works. */
 export function geminiTtsConfigured() {
-	return Boolean(process.env.GOOGLE_CLOUD_PROJECT || env.GEMINI_API_KEY);
+	return Boolean(process.env.GOOGLE_CLOUD_PROJECT || geminiApiKey());
 }
 
 /** Which rungs are live, for the catalog endpoint's provider report. */
 export function geminiTtsLanes() {
 	return {
 		vertex: Boolean(process.env.GOOGLE_CLOUD_PROJECT),
-		apiKey: Boolean(env.GEMINI_API_KEY),
+		apiKey: Boolean(geminiApiKey()),
 	};
 }
 
@@ -216,11 +223,12 @@ export async function synthesizeGeminiTts({
 	}
 
 	// ── Rung 2: Generative Language API key ──────────────────────────────────
-	if (!pcm && env.GEMINI_API_KEY) {
+	const apiKey = geminiApiKey();
+	if (!pcm && apiKey) {
 		try {
 			pcm = await callGemini({
 				url: `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`,
-				headers: { 'x-goog-api-key': env.GEMINI_API_KEY },
+				headers: { 'x-goog-api-key': apiKey },
 				body,
 				timeoutMs,
 			});

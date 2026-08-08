@@ -61,6 +61,7 @@ let phase = 'lobby';
 let ended = null;      // { winner, reason, scoreA, scoreB, mvp }
 let labelEls = new Map();
 let sendTimer = 0;
+let clockTimer = 0;
 let lastSent = { x: NaN, z: NaN, yaw: NaN, motion: '' };
 let attackCooldownUntil = 0;
 
@@ -154,6 +155,10 @@ let attackCooldownUntil = 0;
 	$('controls').hidden = false;
 
 	sendTimer = setInterval(sendPose, 1000 / SEND_HZ);
+	// The round clock is derived from `endsAt`, which only changes when the match
+	// starts — so it has to be ticked locally or it would freeze between the
+	// state patches that carry a score change.
+	clockTimer = setInterval(tickClock, 500);
 	addEventListener('beforeunload', () => { try { room?.leave(); } catch { /* closing anyway */ } });
 })();
 
@@ -282,8 +287,16 @@ function renderScore(s) {
 	$('name-them').textContent = factionLabel(s, cfg.side === 'a' ? 'b' : 'a');
 	$('cap').textContent = s.scoreCap ? `first to ${s.scoreCap}` : '';
 
+	tickClock();
+}
+
+function tickClock() {
+	const s = room?.state;
+	if (!s) return;
+	if (s.phase === 'sudden_death') { $('clock').textContent = 'OT'; return; }
+	if (s.phase === 'lobby') { $('clock').textContent = '—'; return; }
 	const target = s.phase === 'countdown' ? s.countdownEndsAt : s.endsAt;
-	$('clock').textContent = s.phase === 'sudden_death' ? 'OT' : clock(target - Date.now());
+	$('clock').textContent = clock(target - Date.now());
 }
 
 function renderVitals(f) {
@@ -441,6 +454,7 @@ function fail(title, detail, action = 'Back to the world') {
 	$('fail-back').textContent = action;
 	$('fail').hidden = false;
 	clearInterval(sendTimer);
+	clearInterval(clockTimer);
 }
 
 // The room throws named errors; each one has a player-readable cause.
@@ -474,12 +488,16 @@ function displayName() {
 	return '';
 }
 
+// The body the player picked in /play. The lobby also stores non-loadable values
+// there (a locally-staged guest avatar that was never uploaded), so only a real
+// URL or site path is carried into the arena; anything else takes the default rig
+// rather than putting an unloadable body on the field.
 function savedAvatar() {
+	let stored = '';
 	try {
-		return localStorage.getItem(AVATAR_KEY) || FALLBACK_AVATAR;
-	} catch {
-		return FALLBACK_AVATAR;
-	}
+		stored = localStorage.getItem(AVATAR_KEY) || '';
+	} catch { /* storage disabled */ }
+	return /^https?:\/\//i.test(stored) || stored.startsWith('/') ? stored : FALLBACK_AVATAR;
 }
 
 function clock(ms) {
