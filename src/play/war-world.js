@@ -181,7 +181,14 @@ export class WarWorld {
 	// arrives. Called with the mints so the caller does not have to know the
 	// palette.
 	setFactions({ a, b }) {
+		if (a === this.factions.a && b === this.factions.b) return;
 		this.factions = { a: a || '', b: b || '' };
+		// Fighters can be seated before the room state that names the two
+		// communities lands, so re-colour anyone already on the field rather than
+		// leaving a whole side wearing the wrong colour for the rest of the battle.
+		for (const [, f] of this.fighters) {
+			if (f?.disc) f.disc.material.color.setHex(this.factionColor(f.faction));
+		}
 	}
 
 	factionColor(mint) {

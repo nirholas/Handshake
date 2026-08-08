@@ -149,6 +149,9 @@ let attackCooldownUntil = 0;
 	}
 
 	localId = room.sessionId;
+	// The two communities are already on the joined state, so colour the arena
+	// before any fighter callback runs rather than after the first patch.
+	world.setFactions({ a: room.state.aMint, b: room.state.bMint });
 	wireRoom(room);
 	setStatus(null);
 	$('hud').hidden = false;
