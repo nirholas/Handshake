@@ -11,12 +11,14 @@ first person, no marketing voice. Companion piece for three.ws/blog:
 [ibm-user-group-first-in-world-meetup-recap.html](../blog/ibm-user-group-first-in-world-meetup-recap.html),
 also written in my voice, for readers who came from that side instead of this group._
 
-_[Fill in before posting: the standout demo or Q&A moment, and the final headcount if tracked,
-same two gaps as Jessica's recap. Don't publish with either left generic.]_
+_[Fill in before posting: the standout demo or Q&A moment, same gap as Jessica's recap. Don't
+publish with it left generic. The final headcount is filled in below: peak concurrency was 3,145.]_
 
 Yesterday I hosted the first meetup of this group, nine hours, 8 AM to 5 PM Pacific, entirely
-inside three.ws itself. I want to write down how it actually went while it is still fresh, from the
-side of the person who built the thing everyone was standing in.
+inside three.ws itself. The group is small and the world was not gated to its members: anyone with
+the link could walk in, and the open world peaked at 3,145 concurrent avatars at once over the
+course of the day. I want to write down how it actually went while it is still fresh, from the side
+of the person who built the thing everyone was standing in.
 
 ## Why we did it this way
 
@@ -50,8 +52,9 @@ sitting through a deck about it.
 Strip the fun away and a nine-hour meetup held entirely inside a live multiplayer world is a real
 stress test, in front of exactly the audience that would notice if it broke: an authoritative
 Colyseus server on Cloud Run, 15 Hz binary delta sync, proximity-gated spatial voice, carrying real
-conversations for a full workday. It held. I do not say that lightly; that is the kind of claim I
-would want proven in front of me too, and yesterday it was.
+conversations for a full workday, with concurrency climbing past a thousand early and topping out at
+3,145 at once. It held. I do not say that lightly; that is the kind of claim I would want proven in
+front of me too, and yesterday it was.
 
 ## What I'd tell the next community trying this
 

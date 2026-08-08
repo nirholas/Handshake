@@ -9,8 +9,8 @@ Honest Take So Far](./ibm-community-live-reaction-jessica.md). Header image: reu
 the day once one is ready; do not paste this note into the published post._
 
 _[Fill in once picked: the strongest single moment from the day, named specifically, whether that's
-a demo, a build, or a conversation, and the final in-world headcount if you tracked it. Do not
-publish this post with those left generic.]_
+a demo, a build, or a conversation. Do not publish this post with that left generic. The final
+in-world headcount is filled in below: peak concurrency was 3,145.]_
 
 I wrote a live post in the middle of the meetup because I wanted the group to have my honest
 reaction while it was happening, not a cleaned-up version after the fact. Now that the day is over,
@@ -27,7 +27,11 @@ with this group noticed. That's not the usual thing I get to say about a partner
 What made the day itself work is the same thing I said mid-event: neither IBM nor three.ws is the
 slow, boring-enterprise thing people assume from the outside. We both like trying things that are
 actually new, and a nine-hour user-group meetup held entirely inside a 3D world, instead of on a
-call, is exactly that kind of thing. It held up. People stayed.
+call, is exactly that kind of thing. It held up. This group is still small, but the open world we
+held it in is not gated to members: anyone with the link could walk in, and a lot of people did.
+Peak concurrency in the world hit 3,145 avatars at once over the course of the day, well past
+anything a call could have seated, even though most of that crowd came for the open world itself
+rather than being User Group members.
 
 ## What the day actually looked like
 
