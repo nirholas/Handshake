@@ -185,7 +185,8 @@ code's own documented landmines plus what was measured on 2026-08-08.
 | Wallet balances read as zero / holder tier collapses to Member | Helius and Alchemy are both `429` today. 6 free rungs plus the QuickNode reserve carry it (proven by poisoning the primary) | `npm run event:failover` to see which rungs are live now |
 | Coin image missing on the event link or OG card | `4everland.io` gateway times out, `gateway.pinata.cloud` is slow (~4s). `api/img.js` races five gateways and takes the first valid one | Nothing. 4 of 5 gateways served the CID on 2026-08-08 |
 | An x402 / boutique payment does not settle | `/api/healthz` shows 50,442 settle failures with `fee_runway_exhausted`. This is settle-floor starvation, which looks identical to "the wallets are dry" and has a different fix | Run the `x402-economy-triage` agent BEFORE concluding anything about wallet balances |
-| Something breaks and nobody is told | **Push alerting does not reach a human.** `TELEGRAM_ALERTS_CHAT_ID` is unset in production, so `/api/healthz` reports `telegram_push: "disabled"` and alerts land only in the `ops_alerts` table. The only Cloud Monitoring policy that emails `nich@sperax.io` is a Blockchain RPC quota alert; there is no Cloud Run uptime or error-rate policy | Keep `npm run event:watch` open on a screen. That is the alerting for this event. See [Open items](#open-items) |
+| A deploy dies at `npm ci` with "package.json and package-lock.json are not in sync" | Almost certainly NOT a dependency mistake. `FROM node:24-slim` floats, so a newer bundled npm resolves the tree differently and rejects an untouched lockfile. This took the 2026-08-08 release build down | The Dockerfile now pins `ARG NPM_VERSION`. If it recurs, compare `npm --version` locally against `docker run --rm node:24-slim npm --version` and set the pin to the version that produced the lockfile |
+| Something breaks and nobody is told | Push alerting is thin. `TELEGRAM_ALERTS_CHAT_ID` is unset in production, so `/api/healthz` reports `telegram_push: "disabled"` and platform alerts land only in the `ops_alerts` table | Email now works: two uptime checks (site + world server) and two alert policies (uptime failure, `three-ws-api` 5xx rate) were created 2026-08-08 and page `nich@sperax.io`. Email is slow, so also keep `npm run event:watch` open on a screen |
 
 ---
 
@@ -268,9 +269,25 @@ page.
    `gcloud run services update three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --update-env-vars=TELEGRAM_ALERTS_CHAT_ID=<id>`
    (`--update-env-vars`, never `--set-env-vars`.) It must be a private chat: alerts
    carry stack traces, URLs, and IPs.
-2. **No Cloud Run uptime or error-rate alert policy exists.** Creating one needs a
-   live gcloud credential, which expired mid-session here
-   (`invalid_grant: reauth related error (invalid_rapt)`). Re-auth with
-   `gcloud auth login --no-launch-browser`, then add an uptime check on
-   `https://three.ws/api/healthz` and on the world server's `/health`, both wired
-   to the existing verified `nich@sperax.io` channel.
+2. **Email alerting now exists; it did not before 2026-08-08.** Created that day
+   and wired to the existing verified `nich@sperax.io` channel:
+
+   - uptime check `three.ws API healthz` on `https://three.ws/api/healthz`
+   - uptime check `three.ws world server` on the world server's `/health`
+   - policy "Event: three.ws or the /play world server is DOWN" (uptime failing
+     from more than 2 probe locations)
+   - policy "Event: three-ws-api 5xx rate elevated" (5xx above 5/s for 5 minutes)
+
+   Both policies link back to this page. Email is minutes-slow by nature, so it is
+   the backstop, not the primary: `npm run event:watch` is the primary.
+
+3. **The release build failed once on 2026-08-08** at the `npm ci` layer, root
+   caused to the floating base image (see the failure-modes table). The Dockerfile
+   pin is committed; the build has not been re-run since, so the release still
+   needs a green build before the deploy commands above are known good.
+
+4. **`gcloud` auth expires on its own schedule here.** It died mid-session
+   (`invalid_grant: reauth related error (invalid_rapt)`) and was restored with
+   `gcloud auth login --no-launch-browser`. Verify with a real call
+   (`gcloud run services describe three-ws-api --region us-central1`), never with
+   `gcloud auth list`, which reports an expired account as ACTIVE.
