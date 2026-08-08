@@ -61,6 +61,14 @@ function cfg({ startsIn, endsIn }) {
 const IGNORE = [/favicon/i, /Failed to load resource/i, /net::ERR_/i, /WebGL/i, /THREE\./i, /\[vite\]/i, /websocket/i];
 const ownErrors = (errs) => errs.filter((e) => !IGNORE.some((re) => re.test(e)));
 
+// A first visit to /play opens the welcome dialog (src/game/play-intro.js): modal,
+// focus-trapped, and sitting over the lobby, so it swallows the pointer events the
+// hover checks below depend on. It shows once per browser off `cc-lobby-intro-v1`,
+// and it mounts later than the countdown banner does, so racing it with a click is
+// unreliable. Arrive as a returning player instead, which is the state the event
+// surfaces are actually judged in.
+const INTRO_SEEN = 'cc-lobby-intro-v1';
+
 const browser = await chromium.launch({
 	args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'],
 });
@@ -72,6 +80,9 @@ async function newPage({ body, viewport, reducedMotion, storage }) {
 		storageState: storage,
 	});
 	const page = await ctx.newPage();
+	await page.addInitScript((k) => {
+		try { localStorage.setItem(k, '1'); } catch { /* private mode: the dialog just re-opens */ }
+	}, INTRO_SEEN);
 	const errors = [];
 	page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 	page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
@@ -128,16 +139,6 @@ const waitForPill = (page) => page.waitForFunction(() => {
 
 const cssAnim = (loc) => loc.evaluate((n) => getComputedStyle(n).animationName);
 
-// A first visit to /play opens the intro dialog (src/game/play-intro.js), which
-// is modal and sits over the lobby. Skip it the way a player does, so the checks
-// below exercise the lobby a returning player actually sees.
-async function dismissIntro(page) {
-	const close = page.locator('#pi-overlay .pi-close');
-	if (!(await close.count())) return;
-	await close.click({ timeout: 10000 }).catch(() => {});
-	await page.waitForSelector('#pi-overlay', { state: 'detached', timeout: 10000 }).catch(() => {});
-}
-
 // /play renders a full 3D world on a software rasterizer here, which can starve
 // a 1s interval for several seconds at a time. Sampling twice with a fixed sleep
 // reports that jank as a stopped clock, so wait for the value to actually move.
@@ -172,7 +173,6 @@ console.log('\n/play lobby banner, upcoming');
 
 	await ticks(page, '.cc-event-banner .cc-event-seg:last-child b', 'clock ticks');
 
-	await dismissIntro(page);
 	const cta = b.locator('.cc-event-cta');
 	check('CTA points into the $THREE world', (await cta.getAttribute('href')).includes(COIN));
 	const rest = await cta.evaluate((n) => getComputedStyle(n).boxShadow);
@@ -248,7 +248,6 @@ console.log('\n/play in-world pill');
 	await ticks(page, '.cc-event-pill [role="timer"]', 'pill clock ticks');
 	check('CTA absent while standing in the event world',
 		(await page.locator('.cc-event-pill a').count()) === 0);
-	await dismissIntro(page);
 
 	const x = page.locator('.cc-event-pill-x');
 	const xRest = await x.evaluate((n) => getComputedStyle(n).backgroundColor);
@@ -285,7 +284,6 @@ console.log('\n/play at 375px');
 	});
 	await go(page, EVENT_LINK);
 	await waitFor(page, '.cc-event-banner');
-	await dismissIntro(page);
 	const doc = await page.evaluate(() => ({
 		scrollW: document.documentElement.scrollWidth,
 		clientW: document.documentElement.clientWidth,

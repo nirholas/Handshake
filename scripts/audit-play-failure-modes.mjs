@@ -309,6 +309,11 @@ async function warmup(base) {
 async function runScenario(base, sc) {
 	const browser = await chromium.launch({ headless: !process.env.HEADFUL });
 	const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+	// Close the process, not just the context. Every exit path goes through this.
+	const teardown = async () => {
+		await context.close().catch(() => {});
+		await browser.close().catch(() => {});
+	};
 	const consoleIssues = [];
 	const pageErrors = [];
 
@@ -343,9 +348,7 @@ async function runScenario(base, sc) {
 		await page.goto(base + sc.url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 	} catch (err) {
 		findings.push(`navigation failed: ${err.message}`);
-		await context.close();
-	await browser.close();
-		await browser.close();
+		await teardown();
 		return { findings, consoleIssues, pageErrors };
 	}
 
@@ -413,7 +416,7 @@ async function runScenario(base, sc) {
 
 	if (sc.expect) { const extra = sc.expect(o); if (extra) findings.push(extra); }
 
-	await context.close();
+	await teardown();
 	return { findings, consoleIssues, pageErrors, o };
 }
 

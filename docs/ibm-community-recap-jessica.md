@@ -1,60 +1,94 @@
-# Recap: The First Three.ws User Group Meetup (skeleton, fill in after the day ends)
+# The First Three.ws User Group Meetup: How It Actually Went
 
-This is a skeleton for the recap blog, to be finished once today's meetup (Friday, August 7, 8 AM
-to 5 PM Pacific) actually wraps. It cannot be written honestly before the day happens, so the
-sections below are structure and anchor material, not a finished post. Two separate writeups come
-out of it, both real pieces, neither a copy-paste of the other:
+_By Jessica Swanson, posted as a follow-up blog in the [Three.ws User Group on IBM
+Community](https://community.ibm.com/community/user/usergroup?CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016),
+closing out the arc that started with [Join the Three.ws User Group's First In-World Meetup This
+Friday](./ibm-community-blog-meetup-jessica.md) and continued mid-day with [LIVE at the Meetup: My
+Honest Take So Far](./ibm-community-live-reaction-jessica.md). Header image: reuse
+[media/ibm-x-threews-lockup.png](./media/ibm-x-threews-lockup.png), or swap in a real photo from
+the day once one is ready; do not paste this note into the published post._
 
-- **On IBM Community**, as Jessica's follow-up blog in the Three.ws User Group, the way [Join the
-  Three.ws User Group's First In-World Meetup This Friday](./ibm-community-blog-meetup-jessica.md)
-  was her announcement post and [LIVE at the Meetup: My Honest Take So
-  Far](./ibm-community-live-reaction-jessica.md) was her mid-day reaction.
-- **On three.ws/blog**, the team's own side of the day, written separately, not translated from
-  Jessica's post.
+_[Fill in once picked: the strongest single moment from the day, named specifically, whether that's
+a demo, a build, or a conversation, and the final in-world headcount if you tracked it. Do not
+publish this post with those left generic.]_
 
-## Anchor material (already true, do not invent more)
+I wrote a live post in the middle of the meetup because I wanted the group to have my honest
+reaction while it was happening, not a cleaned-up version after the fact. Now that the day is over,
+here's the close of that arc.
 
-These are the specifics Jessica gave for her live reaction and they carry into the recap:
+Going in, I already knew this was a unique situation. Three.ws is the only project I know of with
+its own dedicated user group here on IBM Community, and that group exists because the project had
+already been on our radar before it launched. Some of that is because our timelines crossed in
+public first: IBM's own account traded posts with three.ws on X that went a little viral (see
+[here](https://x.com/IBM/status/2061418285896269952) and
+[here](https://x.com/IBM/status/2061488909264040194)), and people inside IBM who have nothing to do
+with this group noticed. That's not the usual thing I get to say about a partner.
 
-- Went in knowing this was a unique situation: three.ws is the only project with its own dedicated
-  group on IBM Community, and the project had already been on IBM's radar before the group existed.
-- The X exchanges between IBM and three.ws went viral a few weeks before the event, and people
-  inside IBM talk about three.ws because of it, not just because of this group.
-- The framing that made the day work: neither IBM nor three.ws is the slow, boring-enterprise
-  thing people assume; both like trying things that are actually new.
-- Fishing, cooking what was caught, driving the cars around, and hanging out and talking with
-  Broke Boi and bigB, no pitch deck, no slides.
-- Jessica was never really into crypto before this; three.ws changed that, not through a pitch but
-  through the time spent in and around it.
-- She said she feels lucky to have a role where a day like this is the work.
+What made the day itself work is the same thing I said mid-event: neither IBM nor three.ws is the
+slow, boring-enterprise thing people assume from the outside. We both like trying things that are
+actually new, and a nine-hour user-group meetup held entirely inside a 3D world, instead of on a
+call, is exactly that kind of thing. It held up. People stayed.
 
-## Jessica's IBM Community recap blog: skeleton
+## What the day actually looked like
 
-_By Jessica Swanson. Header image: reuse [media/ibm-x-threews-lockup.png](./media/ibm-x-threews-lockup.png)
-or a real photo from the day if one is ready by publish time._
+The agenda ran the way it was supposed to: a live tour of the platform from inside the world,
+community demos from people who brought what they'd built, and open Q&A with the three.ws team,
+including real questions about `@three-ws/ibm-watsonx-mcp` and `@three-ws/ibm-x402-mcp`, the two
+open-source connectors into watsonx.ai and Granite. [Name the standout demo or Q&A exchange here
+once known.]
 
-1. **Opening**: one honest line on how the day actually went, in her voice, referencing her live
-   post from earlier so the two connect as one continuous account rather than restating it.
-2. **The moment that landed best**: name the specific demo, conversation, or exchange that stood
-   out, not a generic "great turnout" line.
-3. **What people missed if they skipped it**: said plainly, one or two sentences.
-4. **The personal thread, closed out**: the crypto-skeptic-to-genuinely-interested arc, and the
-   fishing/cooking/cars/Broke Boi/bigB day, tied back to why an IBM user group met inside a game
-   world instead of on a call.
-5. **What's next**: the world stays open at [three.ws/play](https://three.ws/play), the group stays
-   open, and (if true by publish time) a date or plan for the next one.
-6. **Links**: same link block as her announcement post, plus a link back to this recap's
-   companion post on three.ws/blog once that's live.
+But the part I keep coming back to is everything that happened around the agenda, not in it. I
+spent a big chunk of the day with Broke Boi and bigB: we went fishing, cooked what we caught, and
+drove the cars around the map for no reason other than it was fun. No pitch deck, no slides, just
+people, in a place, doing things together. That's not a sentence I expected to write about a work
+event, and it's exactly why it's the one I'm leading with.
 
-Once posted, add it to the catalog in [ibm-community.md](./ibm-community.md) as the next blog
-entry, following the same fields (author, published date, activity, URL, summary) as the existing
-three entries, and update the "Discussion threads" section if the live-reaction post from
-[ibm-community-live-reaction-jessica.md](./ibm-community-live-reaction-jessica.md) was posted too.
+## The part I don't usually put in a work post
 
-## three.ws/blog recap: skeleton
+I was never really into crypto before this partnership. I'm not going to soften that for the sake
+of the group. Three.ws is what changed it for me, and it didn't happen through a pitch. It happened
+through spending real time in and around what they've built, today especially.
 
-The team's own writeup, not Jessica's voice. Follow the existing `three.ws/blog` structure and
-add the entry to `data/changelog.json` per the Changelog rule in `CLAUDE.md`, since this ships a
-link worth surfacing to $THREE holders. Cover: what the meetup was and why it happened inside
-`/play` rather than on a call, what the group demoed, and a link to Jessica's IBM Community recap
-so readers can see the partner side of the same day.
+I know how lucky I am to have a role where a day like this is the actual job. Not many people get to
+say "went fishing with Broke Boi and bigB" and mean it as a line item in their week.
+
+## What's next
+
+The world stays open at [three.ws/play](https://three.ws/play), and the group stays open too.
+[Add the date or plan for the next meetup here once one is set; if nothing is confirmed yet, say
+plainly that the team is deciding and members should watch this space rather than implying a date
+that doesn't exist.]
+
+If you were there today, thank you for making it a real room and not just an announcement people
+clicked past. If you missed it, the recording and the best clips [link once available] are the
+closest thing to having been there, and the world itself never closes.
+
+## Links
+
+- Platform: [three.ws](https://three.ws)
+- Free text-to-3D: [three.ws/create](https://three.ws/create)
+- The worlds: [three.ws/play](https://three.ws/play)
+- Docs: [three.ws/docs](https://three.ws/docs)
+- Blog: [three.ws/blog](https://three.ws/blog)
+- GitHub: [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws)
+- X: [@trythreews](https://x.com/trythreews)
+- The team's own recap, from the other side of the day: [three.ws/blog/ibm-user-group-first-in-world-meetup-recap](https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap)
+
+---
+
+## Rules for posting this
+
+- **Post from Jessica's own IBM Community profile**, as a new blog entry in the Three.ws User
+  Group, the same surface as her announcement post and her mid-day live reaction. This closes a
+  three-part arc; don't fold it into an edit of either earlier post.
+- **Fill both bracketed sections before publishing.** The standout-moment placeholder and the
+  next-meetup placeholder are the two claims in this draft that need a real answer, not a
+  confident-sounding guess. If there's no next date yet, say so plainly rather than implying one.
+- **Let Jessica edit freely.** This is a starting draft in her established voice, not a final
+  script; she should change anything that doesn't match how the day actually felt to her.
+- Confirm how Broke Boi and bigB actually go by on IBM Community today before posting, so any
+  mentions or tags resolve correctly.
+- Once posted, add it to the catalog in [ibm-community.md](./ibm-community.md) as the group's next
+  blog entry, following the same fields (author, published date, activity, URL, summary) as the
+  existing three entries, and cross-link it from the live-reaction catalog entry if that post was
+  published too.

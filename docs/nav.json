@@ -134,6 +134,10 @@
 					"path": "image-to-3d"
 				},
 				{
+					"label": "Forge in world (spawn items into /play)",
+					"path": "play-forge-in-world"
+				},
+				{
 					"label": "Diorama (text to world)",
 					"path": "diorama"
 				},

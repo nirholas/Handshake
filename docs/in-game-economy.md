@@ -126,6 +126,13 @@ character creator, which sells a different catalog through
 [x402](x402.md) and is surfaced publicly at [/fits](https://three.ws/fits).
 Two catalogs, two currencies, two rails. Do not confuse them.
 
+It is also not the only way to own a wardrobe item. A third tier exists that the
+boutique deliberately cannot see: **[event souvenirs](event-souvenirs.md)** are
+granted to everyone present in the world during a live event and are never sold,
+before, during, or after. They carry no price, so the boutique's listing filter
+(`tier === 'premium'` **and** `price > 0`) excludes them by construction, and the
+`$THREE` purchase ledger is filtered to premium ids so it cannot mint one.
+
 ---
 
 ## Fortune's Folly (the wheel)
@@ -234,6 +241,7 @@ every number in this system.
 | Store and bank UI | [src/game/economy-ui.js](../src/game/economy-ui.js) |
 | Vendor NPCs | [src/game/npc/economy-npcs.js](../src/game/npc/economy-npcs.js) |
 | Boutique purchase flow | [src/game/boutique-purchase.js](../src/game/boutique-purchase.js) |
+| Event souvenir drop (granted, never sold) | [multiplayer/src/event-drop.js](../multiplayer/src/event-drop.js) |
 | Public reference endpoint | [api/play/economy.js](../api/play/economy.js) |
 
 ---

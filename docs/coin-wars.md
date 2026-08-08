@@ -138,7 +138,7 @@ as "no wars".
 
 ### `GET /api/wars?action=live&coin=<mint>`
 
-Just the running battles. This is the spectator poll; it never touches Postgres.
+Just the running battles. This is the spectator poll: it never touches Postgres.
 
 ### `POST /api/wars?action=queue`
 

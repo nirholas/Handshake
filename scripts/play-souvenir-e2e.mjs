@@ -183,7 +183,22 @@ async function openPlayer(browser, tag, storageState) {
 			clearInterval(tick);
 		}, 200);
 	}, GAME_SERVER);
-	await page.goto(WORLD, { waitUntil: 'domcontentloaded', timeout: LOAD_MS });
+	// A /play page is a WebGL scene under software rasterisation, and this repo is
+	// worked on by several agents at once: a neighbouring test suite can take the
+	// box to zero free memory and Chromium answers with "Page crashed" rather than
+	// a load error. Retry rather than reporting a machine-state failure as a
+	// feature failure.
+	let loaded = false;
+	for (let attempt = 1; attempt <= 3 && !loaded; attempt++) {
+		try {
+			await page.goto(WORLD, { waitUntil: 'domcontentloaded', timeout: LOAD_MS });
+			loaded = true;
+		} catch (err) {
+			console.log(`${at()} [${tag}] load attempt ${attempt} failed: ${String(err.message).split('\n')[0]}`);
+			if (attempt === 3) throw err;
+			await new Promise((r) => setTimeout(r, 10_000));
+		}
+	}
 	await dismissOverlays(page);
 	const joined = await until(page, () => {
 		const net = window.__CC__?.net;
@@ -218,14 +233,29 @@ async function main() {
 		// three.ws, which is what lets the run open and close the window at will.
 		start('colyseus', 'node', ['src/index.js'], {
 			cwd: resolve(ROOT, 'multiplayer'),
-			env: { PORT: String(MP_PORT), EVENT_CONFIG_URL: `http://127.0.0.1:${CONFIG_PORT}/event.json` },
+			env: {
+				PORT: String(MP_PORT),
+				EVENT_CONFIG_URL: `http://127.0.0.1:${CONFIG_PORT}/event.json`,
+				// Re-read the window quickly so the closed-window phase does not cost
+				// two minutes of wall clock.
+				EVENT_CONFIG_TTL_MS: String(process.env.EVENT_CONFIG_TTL_MS || 10_000),
+			},
 		});
 		if (!await waitFor(`http://127.0.0.1:${MP_PORT}/health`, 90_000)) throw new Error('colyseus never came up');
 		if (!await waitFor(BASE, 120_000)) throw new Error('vite never came up');
 		console.log(`${at()} servers up: vite :${VITE_PORT}, colyseus :${MP_PORT}`);
 	}
 
-	const browser = await chromium.launch();
+	// Memory-frugal flags: /dev/shm in this container is far smaller than
+	// Chromium assumes, and a shared box means the renderer must not be greedy.
+	const browser = await chromium.launch({
+		args: [
+			'--disable-dev-shm-usage',
+			'--disable-extensions',
+			'--disable-background-timer-throttling',
+			'--js-flags=--max-old-space-size=768',
+		],
+	});
 	const players = [];
 	try {
 		// ── Phase 1: window LIVE ───────────────────────────────────────────────
@@ -312,10 +342,12 @@ async function main() {
 
 		// ── Phase 3: window CLOSED ─────────────────────────────────────────────
 		windowState = 'ended';
-		console.log(`${at()} event window flipped to ENDED; waiting out the server's config TTL`);
-		// The reader caches for 120s; wait past it so the next join reads the
-		// closed window rather than the cached live one.
-		await new Promise((r) => setTimeout(r, 125_000));
+		// The server was started with a short EVENT_CONFIG_TTL_MS, so waiting a
+		// little past it is enough for the next join to read the closed window
+		// rather than the cached live one.
+		const ttlWait = Number(process.env.EVENT_CONFIG_TTL_MS || 10_000) + 5_000;
+		console.log(`${at()} event window flipped to ENDED; waiting ${Math.round(ttlWait / 1000)}s for the server's config TTL`);
+		await new Promise((r) => setTimeout(r, ttlWait));
 
 		const carol = await openPlayer(browser, 'carol-after');
 		players.push(carol);
