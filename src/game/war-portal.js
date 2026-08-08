@@ -346,10 +346,14 @@ export class WarPortal {
 		this._schedule(this._pollInterval());
 	}
 
-	// The live war this community is in, if any.
+	// The live war this community is in, if any. A finished battle is deliberately
+	// NOT live: the room publishes one last snapshot with the winner set, and the
+	// board should hand that moment to the result echo (and then to the standings)
+	// rather than keep flying a "war in progress" banner over a settled scoreline.
 	_liveHere() {
 		const mint = this.coin?.mint;
-		return (this._board?.live || []).find((m) => m.a?.mint === mint || m.b?.mint === mint) || null;
+		return (this._board?.live || []).find((m) =>
+			m.phase !== 'ended' && (m.a?.mint === mint || m.b?.mint === mint)) || null;
 	}
 
 	// ── results echo ─────────────────────────────────────────────────────────
@@ -815,7 +819,7 @@ export class WarPortal {
 		const remaining = m.phase === 'countdown' ? (m.countdownEndsAt || 0) - Date.now() : (m.endsAt || 0) - Date.now();
 		const status = m.phase === 'countdown' ? `Starts in ${clock(remaining)}`
 			: m.phase === 'sudden_death' ? 'Sudden death: the next kill takes it'
-				: m.phase === 'ended' ? 'Battle over'
+				: m.phase === 'lobby' ? 'Waiting for both communities to field a fighter'
 					: `${clock(remaining)} left · first to ${m.scoreCap || 25}`;
 		const kills = (m.kills || []).slice(-6).reverse();
 		return el('section', { class: 'wp-card wp-live', 'aria-live': 'polite' }, [
