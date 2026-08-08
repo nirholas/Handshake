@@ -11,7 +11,7 @@
 //   node --env-file=.env.audit.local scripts/audit-service-wallets.mjs
 // Or run in any environment that already has the wallet secrets exported.
 //
-// Read-only: derives pubkeys and queries RPC. Never logs secret material — only
+// Read-only: derives pubkeys and queries RPC. Never logs secret material, only
 // derived public keys, balances, and pass/fail verdicts.
 
 import bs58 from 'bs58';
@@ -29,13 +29,15 @@ const ORIGIN = process.env.AUDIT_ORIGIN || 'https://three.ws';
 // SOL=0.0000 because the configured lane was 429ing, and the audit reported
 // four "below floor" money emergencies against wallets that were actually
 // funded. A balance the audit could not read must never render as a balance of
-// zero — see readBalance() below.
+// zero, see readBalance() below.
+// rpc.magicblock.app is deliberately absent: it 403s every method from our
+// egress, and it is still what SOLANA_RPC_URL points at in some environments,
+// which is exactly how this audit came to read every wallet as empty.
 const RPC_LANES = [
 	process.env.SOLANA_RPC_URL,
 	'https://solana-rpc.publicnode.com',
 	'https://api.mainnet-beta.solana.com',
 	'https://solana.leorpc.com/?api_key=FREE',
-	'https://rpc.magicblock.app/mainnet',
 ].filter(Boolean);
 
 // Mirrors api/_lib/solana-signers.js SIGNER_SPECS (name, secret env, floor). Kept
@@ -58,7 +60,7 @@ const SIGNERS = [
 	{ name: 'collection-authority', env: 'SOLANA_AGENT_COLLECTION_AUTHORITY_KEY',   minSol: 0.02, purpose: 'agent NFT collection authority' },
 ];
 
-// Address-only vars (public keys advertised in 402 challenges — no secret here).
+// Address-only vars (public keys advertised in 402 challenges, no secret here).
 const ADVERTISED = [
 	{ name: 'x402 payTo (Solana)',     env: 'X402_PAY_TO_SOLANA', fb: 'X402_PAY_TO' },
 	{ name: 'x402 fee-payer (Solana)', env: 'X402_FEE_PAYER_SOLANA' },
@@ -148,7 +150,7 @@ const sponsorDerived = {};
 for (const s of SIGNERS) {
 	const p = pub(s);
 	if (!p.configured) { console.log(`  ⚪ ${s.name.padEnd(22)} UNCONFIGURED (${s.env} not set)`); continue; }
-	if (p.bad) { console.log(`  ❌ ${s.name.padEnd(22)} SECRET PRESENT BUT UNDECODABLE (${s.env}) — malformed key`); flags.push(`${s.name}: secret malformed`); continue; }
+	if (p.bad) { console.log(`  ❌ ${s.name.padEnd(22)} SECRET PRESENT BUT UNDECODABLE (${s.env}), malformed key`); flags.push(`${s.name}: secret malformed`); continue; }
 	const oc = await onchain(p.pubkey);
 	// An unreadable balance is a blind spot, never a funding verdict. Judging
 	// null against a floor is how a throttled RPC turns into four fake money
@@ -158,7 +160,7 @@ for (const s of SIGNERS) {
 	const mark = unread ? '‼️' : low ? '⚠️ ' : '✅';
 	const note = unread ? ` (READ FAILED: ${oc.readError})` : low ? ` (BELOW floor ${s.minSol})` : '';
 	console.log(`  ${mark} ${s.name.padEnd(22)} ${p.pubkey}  SOL=${fmtSol(oc.sol)}${note}  USDC=${fmtUsdc(oc.usdc)}`);
-	if (unread) blind.push(`${s.name} (${p.pubkey}): balance unreadable — ${oc.readError}`);
+	if (unread) blind.push(`${s.name} (${p.pubkey}): balance unreadable, ${oc.readError}`);
 	if (low) flags.push(`${s.name}: SOL ${oc.sol.toFixed(4)} below floor ${s.minSol}`);
 	if (s.name === 'x402-ring-sponsor') sponsorDerived.pubkey = p.pubkey;
 }
@@ -172,7 +174,7 @@ for (const a of ADVERTISED) {
 	const oc = await onchain(addr);
 	const unread = oc.sol === null;
 	console.log(`  ${unread ? '‼️' : '✅'} ${a.name.padEnd(24)} ${addr}  SOL=${fmtSol(oc.sol)}  USDC=${fmtUsdc(oc.usdc)}`);
-	if (unread) blind.push(`${a.name} (${addr}): balance unreadable — ${oc.readError}`);
+	if (unread) blind.push(`${a.name} (${addr}): balance unreadable, ${oc.readError}`);
 }
 
 // Live cross-check: what production actually advertises right now.
@@ -188,12 +190,12 @@ try {
 		if (advFee === sponsorDerived.pubkey) console.log(`  ✅ advertised fee-payer MATCHES the sponsor secret we co-sign with`);
 		else { console.log(`  ❌ MISMATCH: advertised fee-payer ${advFee} != sponsor secret pubkey ${sponsorDerived.pubkey} → every sponsor-mode settle 502s`); flags.push('fee-payer advertised != sponsor secret → settles 502'); }
 	} else {
-		console.log(`  ⚠️  cannot compare — X402_FEE_PAYER_SECRET_BASE58 not resolvable in this env`);
+		console.log(`  ⚠️  cannot compare, X402_FEE_PAYER_SECRET_BASE58 not resolvable in this env`);
 	}
 	// PayAI shared account guard
 	if (advFee === '2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4') {
-		console.log(`  ❌ advertised fee-payer is PayAI's PUBLIC shared account — self-hosted facilitator cannot co-sign for it`);
-		flags.push("fee-payer is PayAI's public account (2wKupLR9…) — override X402_FEE_PAYER_SOLANA");
+		console.log(`  ❌ advertised fee-payer is PayAI's PUBLIC shared account, self-hosted facilitator cannot co-sign for it`);
+		flags.push("fee-payer is PayAI's public account (2wKupLR9…), override X402_FEE_PAYER_SOLANA");
 	}
 } catch (e) { console.log(`  (could not fetch ${ORIGIN}/api/x402-status: ${e.message})`); }
 
