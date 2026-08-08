@@ -62,6 +62,39 @@ describe('isSafeImageURL', () => {
 		expect(isSafeImageURL('java\u0000script:window.x=1')).toBe(false);
 	});
 
+	it('refuses a scheme-less value carrying CSS/HTML breakout characters', () => {
+		// The /play CSS-breakout payload. cssBgImage percent-encodes these before
+		// they reach a style attribute, so nothing escapes the declaration, but the
+		// value is still not art: passing it through cost a doomed relative-path
+		// request and a 404 in the console on a surface whose bar is zero console
+		// output. It is rejected at the source instead.
+		for (const url of [
+			'x");position:fixed;inset:0;z-index:2147483647;background:red;--x:url("y',
+			'art.png";background:red',
+			"art.png');background:red",
+			'art<img>.png',
+			'art .png',
+			'art\\..png',
+			'https://example.com/a");background:red;--x:url("b.png',
+		]) {
+			expect(isSafeImageURL(url), url).toBe(false);
+		}
+	});
+
+	it('still accepts the ordinary paths and query strings real art uses', () => {
+		// The tightening above must not cost a legitimate source. Query strings,
+		// percent-encoding, dashes, dots and nested paths all stay valid.
+		for (const url of [
+			'/api/img?url=https%3A%2F%2Fipfs.io%2Fipfs%2Fbafy&seed=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+			'/avatars/default.glb',
+			'art/token-01.png',
+			'https://cdn.example.com/a/b/c_d-e.f.png?v=2&x=1',
+			'blob:https://three.ws/6d9a-4c2f',
+		]) {
+			expect(isSafeImageURL(url), url).toBe(true);
+		}
+	});
+
 	it('refuses non-strings and empties rather than throwing on them', () => {
 		for (const v of [null, undefined, 42, {}, [], '', '   ']) {
 			expect(isSafeImageURL(v)).toBe(false);

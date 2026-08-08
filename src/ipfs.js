@@ -93,10 +93,19 @@ const SAFE_IMAGE_SCHEMES = new Set(['http', 'https', 'ipfs', 'ar', 'blob']);
 // us issue an oversized upstream request, and the proxy would reject it anyway.
 const MAX_SOURCE_URL = 2048;
 
+// Characters that never appear unencoded in a real image path, and that are
+// exactly the ones a crafted value uses to break out of the syntax it lands in:
+// quotes and parentheses close a CSS url(), a semicolon starts a new declaration,
+// angle brackets open a tag, whitespace and backslash split the token. A
+// scheme-less value carrying any of them is not art someone forgot to encode, it
+// is a payload, and handing it to an image sink costs a doomed request and a
+// console error even when the escaping downstream holds.
+const CSS_HTML_UNSAFE = /["'()<>;\\\s]/;
+
 /**
  * True when a URL is safe to hand to an <img>/TextureLoader as an image source.
- * Relative and site-absolute paths (no scheme) always qualify; `data:` only when
- * it declares an image media type.
+ * Relative and site-absolute paths qualify as long as they still look like paths;
+ * `data:` only when it declares an image media type.
  *
  * @param {string} url
  * @returns {boolean}
@@ -109,9 +118,12 @@ export function isSafeImageURL(url) {
 	// ("java\tscript:alert(1)" is a live URL in some engines). Refuse outright.
 	if (/[\u0000-\u001f\u007f]/.test(s)) return false;
 	const scheme = s.match(/^([a-z][a-z0-9+.\-]*):/i)?.[1]?.toLowerCase();
-	if (!scheme) return true; // relative or site-absolute path, no scheme to abuse
+	if (!scheme) return !CSS_HTML_UNSAFE.test(s); // relative or site-absolute path
 	if (scheme === 'data') return /^data:image\/[a-z0-9.+\-]+[,;]/i.test(s);
-	return SAFE_IMAGE_SCHEMES.has(scheme);
+	if (!SAFE_IMAGE_SCHEMES.has(scheme)) return false;
+	// blob: is an opaque single token; the rest are real URLs whose path is subject
+	// to the same no-breakout-characters rule as a relative path.
+	return scheme === 'blob' || !CSS_HTML_UNSAFE.test(s);
 }
 
 /**
