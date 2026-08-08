@@ -4,8 +4,8 @@
 // needed it, which is how a logo ends up subtly different on three pages. It
 // lives here now as raw path data plus two renderers:
 //
-//   threeMarkSvg(), an inline <svg> string for DOM chrome (nav, HUD, footers)
-//   threeMarkPath2D(), a Path2D for <canvas> compositing (share cards, exports)
+//   the threeMarkSvg() export, an inline <svg> string for DOM chrome (nav, HUD, footers)
+//   the threeMarkPath2D() export, a Path2D for <canvas> compositing (share cards, exports)
 //
 // Both draw the SAME path in the SAME 32x32 viewBox, so a mark stamped onto a
 // downloaded PNG is pixel-for-pixel the mark in the page header.
