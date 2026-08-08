@@ -215,7 +215,7 @@ async function checkLlm(base) {
 	// What a player experiences is one real NPC turn through /api/brain/chat. That
 	// endpoint streams an SSE `fallback` event every time the router demotes a
 	// rung, so a single request both delivers the answer AND shows the rotation
-	// doing its job — a better proof than any synthetic poisoning, because the
+	// doing its job: a better proof than any synthetic poisoning, because the
 	// chain is failing over against whatever is genuinely broken right now.
 	//
 	// /api/llm/health is the second question: it probes only the PAID tier
