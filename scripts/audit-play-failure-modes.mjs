@@ -64,6 +64,13 @@ const CANONICAL = `/play?coin=${THREE_MINT}&name=three.ws&symbol=three&image=${e
 // resolution point while staying well inside the watchdog.
 const SETTLE_MS = 20_000;
 
+// Navigation budget. 60s is generous against a healthy host, but this repo's dev
+// box is shared by many concurrent agents and a starved chromium can take minutes
+// to reach DOMContentLoaded on a page it would otherwise open in two seconds.
+// Raise it there (NAV_TIMEOUT_MS=180000) so host contention shows up as a slow
+// pass instead of a fabricated "the world hung" finding.
+const NAV_TIMEOUT_MS = Number(process.env.NAV_TIMEOUT_MS) || 60_000;
+
 // ── Hostile inputs ───────────────────────────────────────────────────────────
 // Every payload calls the same sentinel, so one flag proves script execution
 // regardless of which vector fired.
@@ -345,7 +352,7 @@ async function runScenario(base, sc) {
 
 	const findings = [];
 	try {
-		await page.goto(base + sc.url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+		await page.goto(base + sc.url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
 	} catch (err) {
 		const m = String(err?.message || err);
 		await teardown();
