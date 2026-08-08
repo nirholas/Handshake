@@ -33,6 +33,21 @@ RUN apt-get update \
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
     PUPPETEER_SKIP_DOWNLOAD=1
 
+# Pin npm to the version that PRODUCED package-lock.json. `FROM node:24-slim`
+# floats, so its bundled npm changes under us without a single line of this repo
+# changing, and `npm ci` refuses a lockfile whose tree a newer npm resolves
+# differently. That is not hypothetical: on 2026-08-08 the base image moved from
+# npm 11.9.0 to 11.17.0 and the production build died at this exact layer with
+# "npm ci can only install packages when your package.json and package-lock.json
+# are in sync — Missing: <dep> from lock file", against a lockfile nobody had
+# touched. It reads like a dependency mistake and is really an unpinned
+# toolchain. Verified both ways in the real base image: 11.17.0 fails on this
+# context, 11.9.0 installs 3241 packages from it.
+#
+# When you regenerate package-lock.json with a newer npm, bump this to match.
+ARG NPM_VERSION=11.9.0
+RUN npm install -g npm@${NPM_VERSION}
+
 # 1. Manifests only → cacheable `npm ci` layer. --parents preserves the
 #    workspace directory structure (requires the dockerfile 1.7-labs syntax).
 COPY --parents package.json package-lock.json .npmrc* **/package.json /app/
