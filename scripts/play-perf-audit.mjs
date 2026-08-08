@@ -132,18 +132,19 @@ try {
 	console.log(at(), 'clicked drop-in');
 } catch { console.log(at(), 'no intro CTA (deep link drops straight in)'); }
 
-// "Interactive" = the world phase is live and the renderer is drawing. The
-// third argument is where waitForFunction takes its options; passing them as
-// the second silently falls back to the 30 s default and reports a healthy
-// world as a failure.
+// "Interactive" = the world environment is built and the renderer is drawing it.
+// Deliberately not `phase === 'world'`: that flips only after the shader warm
+// pass, which on a software rasterizer takes minutes and would report a healthy
+// world as a failure. The third argument is where waitForFunction takes its
+// options; passing them as the second silently falls back to the 30 s default.
 try {
 	await page.waitForFunction(
 		() => {
 			const l = document.getElementById('kx-loading');
-			return (!l || l.classList.contains('kx-hidden')) && window.__CC__?.phase === 'world';
+			return (!l || l.classList.contains('kx-hidden')) && !!window.__CC__?.env;
 		},
 		null,
-		{ timeout: 120000 },
+		{ timeout: 300000 },
 	);
 } catch { console.log(at(), 'WORLD NEVER BECAME INTERACTIVE, phase =', await page.evaluate(() => window.__CC__?.phase)); }
 const interactiveAt = (Date.now() - t0) / 1000;
@@ -166,18 +167,25 @@ await page.mouse.click(720, 500);
 await page.waitForTimeout(2000);
 await frameStats(true);
 
-console.log(at(), `walking ${WALK_MS / 1000}s`);
-const walkEnd = Date.now() + WALK_MS;
-const keys = ['KeyW', 'KeyA', 'KeyW', 'KeyD', 'KeyS', 'KeyD', 'KeyW', 'KeyA'];
-let ki = 0;
-while (Date.now() < walkEnd) {
-	const k = keys[ki++ % keys.length];
-	await page.keyboard.down(k);
-	await page.waitForTimeout(1500);
-	await page.keyboard.up(k);
-	await page.mouse.move(400 + ((ki * 137) % 640), 450);
+// Walking is optional (pass 0 walk seconds): driving input through a software
+// rasterizer costs minutes per keystroke and the frame numbers it produces say
+// more about the rasterizer than about the world. The renderer/heap sections
+// below are the hardware-independent ones.
+let walk = null;
+if (WALK_MS > 0) {
+	console.log(at(), `walking ${WALK_MS / 1000}s`);
+	const walkEnd = Date.now() + WALK_MS;
+	const keys = ['KeyW', 'KeyA', 'KeyW', 'KeyD', 'KeyS', 'KeyD', 'KeyW', 'KeyA'];
+	let ki = 0;
+	while (Date.now() < walkEnd) {
+		const k = keys[ki++ % keys.length];
+		await page.keyboard.down(k);
+		await page.waitForTimeout(1500);
+		await page.keyboard.up(k);
+		await page.mouse.move(400 + ((ki * 137) % 640), 450);
+	}
+	walk = await frameStats(true);
 }
-const walk = await frameStats(true);
 const render = await rendererStats();
 
 const heapAfterWalk = await heapMB();
