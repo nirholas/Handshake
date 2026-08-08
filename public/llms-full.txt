@@ -1780,6 +1780,12 @@ URL: https://three.ws/docs/ibm-community
 
 The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.
 
+### Docs · Event souvenirs: the wearable you keep
+
+URL: https://three.ws/docs/event-souvenirs
+
+The free commemorative wearable granted once to every player who is in the $THREE world while a live event is running: what it is, how the server decides who earns it, why it can never be bought, and how to equip it afterwards.
+
 ### Docs · Live events in the /play world
 
 URL: https://three.ws/docs/play-live-events
