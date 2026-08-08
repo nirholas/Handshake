@@ -43,45 +43,38 @@ const CONTRAST_HELPERS = `
 	};
 `;
 
-// Mount the real HUD + lobby with stub handlers. No WebGL, no network.
-const MOUNT = `
-	const { CommunityUI } = await import('/src/game/coincommunities-ui.js');
-	const noop = () => {};
-	const ui = new CommunityUI({
-		onEnter: noop, onLeave: noop, onChat: noop, onEmote: noop, onDropIn: noop,
-		onBuy: noop, onShop: noop, onJobs: noop, onFriends: noop, onWardrobe: noop,
-		onAvatarPanel: noop, onVoiceToggle: noop, onZen: noop, onDance: noop,
-		onRetry: noop, onConfigureGate: noop, onPhoto: noop, onReaction: noop,
-	});
-	window.__ui = ui;
-	ui.hud.hidden = false;
-	ui.lobby.hidden = true;
-	ui.setCoin?.({ name: 'three.ws', symbol: 'three', mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' });
-	ui.setOnline(42);
-	ui.setStatus('online');
-	ui.setEmotes([
-		{ name: 'wave', label: 'Wave', icon: '👋' },
-		{ name: 'dance', label: 'Dance', icon: '💃' },
-	]);
-	ui.setReactions?.([{ emoji: '🎉', label: 'Celebrate' }, { emoji: '🔥', label: 'Fire' }]);
-	ui.addChat({ name: 'holder', text: 'gm from the plaza', mine: false });
-	ui.addChat({ name: 'you', text: 'gm', mine: true });
-	document.title = 'play a11y harness';
-`;
-
+// Load /play, then drive the real UI object the page already built.
+//
+// `CommunityUI` is constructed during boot, well before the world connects, and
+// the app parks it on `window.__CC__` (see the bottom of coincommunities.js).
+// So the HUD under audit is the production one, populated through its own public
+// setters, without waiting on WebGL, a Colyseus join, or any avatar download.
+// A plain `/play` (no `?coin=`) stays in the lobby and never starts the scene.
 async function mountHud(page) {
-	// Any page on the origin will do: we only need the dev server's module graph
-	// and the /play stylesheet, both of which are loaded explicitly below.
 	await page.goto('/play', { waitUntil: 'commit' });
-	// Stop the real world from booting behind the harness (it would fight us for
-	// the DOM and burn minutes on WebGL in headless).
-	await page.addStyleTag({ content: '#kx-loading{display:none!important}' });
-	await page.evaluate(() => {
-		document.querySelectorAll('#cc-lobby, #cc-hud, #cc-chat').forEach((n) => n.remove());
-	});
-	await page.addStyleTag({ url: '/src/game/coincommunities.css' });
+	await page.waitForFunction(() => window.__CC__?.ui?.hud, null, { timeout: 180_000 });
 	await page.evaluate(CONTRAST_HELPERS);
-	await page.evaluate(`(async () => { ${MOUNT} })()`);
+	await page.evaluate(() => {
+		const ui = window.__CC__.ui;
+		window.__ui = ui;
+		// Lobby, boot loader and the cold-open intro all overlay the HUD; this
+		// audit is about the in-world chrome, so show that instead.
+		document.getElementById('kx-loading')?.remove();
+		document.querySelector('.pi-overlay, #cc-intro')?.remove();
+		ui.lobby.hidden = true;
+		ui.hud.hidden = false;
+		ui.setCoin?.({ name: 'three.ws', symbol: 'three', mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' });
+		ui.setOnline(42);
+		ui.setStatus('online');
+		ui.setEmotes([
+			{ name: 'wave', label: 'Wave', icon: '👋' },
+			{ name: 'dance', label: 'Dance', icon: '💃' },
+		]);
+		ui.setReactions?.([{ emoji: '🎉', label: 'Celebrate' }, { emoji: '🔥', label: 'Fire' }]);
+		ui.toggleChat(false);
+		ui.addChat({ name: 'holder', text: 'gm from the plaza', mine: false });
+		ui.addChat({ name: 'you', text: 'gm', mine: true });
+	});
 	await page.waitForSelector('#cc-hud:not([hidden])', { timeout: 30_000 });
 }
 
