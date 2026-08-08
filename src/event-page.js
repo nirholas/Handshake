@@ -46,6 +46,7 @@ const els = {
 	liveTitle: $('#ev-live-title'),
 	liveNote: $('#ev-live-note'),
 	scheduleSec: $('#ev-schedule-sec'),
+	scheduleHeading: $('#ev-schedule-h'),
 	scheduleLede: $('#ev-schedule-lede'),
 	agenda: $('#ev-agenda'),
 };
@@ -266,16 +267,21 @@ class Population {
 }
 
 // ── render ──────────────────────────────────────────────────────────────────
-function renderAgenda(cfg, now) {
+function renderAgenda(cfg, now, state) {
 	if (!cfg.agenda.length) {
 		els.scheduleSec.hidden = true;
 		return;
 	}
 	els.scheduleSec.hidden = false;
 	const zone = localZoneName();
-	els.scheduleLede.textContent = zone
-		? `Doors at ${fmtTimeOnly(cfg.startsAt)}, wrap at ${fmtTimeOnly(cfg.endsAt)}. Every time below is converted into your own timezone (${zone}).`
-		: `Doors at ${fmtTimeOnly(cfg.startsAt)}, wrap at ${fmtTimeOnly(cfg.endsAt)}. Every time below is in your own timezone.`;
+	const inZone = zone ? ` (${zone})` : '';
+	if (state === 'ended') {
+		els.scheduleHeading.textContent = 'What happened';
+		els.scheduleLede.textContent = `It ran ${fmtDateOnly(cfg.startsAt)}, ${fmtTimeOnly(cfg.startsAt)} to ${fmtTimeOnly(cfg.endsAt)} in your own timezone${inZone}.`;
+	} else {
+		els.scheduleHeading.textContent = 'The run of show';
+		els.scheduleLede.textContent = `Doors at ${fmtTimeOnly(cfg.startsAt)}, wrap at ${fmtTimeOnly(cfg.endsAt)}. Every time below is converted into your own timezone${inZone}.`;
+	}
 
 	const rows = cfg.agenda.map((a, i) => {
 		const at = cfg.startsAt + a.atMin * 60_000;
@@ -342,7 +348,10 @@ class EventPage {
 	_tick() {
 		const now = Date.now();
 		const state = now >= this.cfg.endsAt ? 'ended' : now >= this.cfg.startsAt ? 'live' : 'upcoming';
-		if (state !== this.state) this._enterState(state);
+		if (state !== this.state) {
+			this._enterState(state);
+			this.agendaMinute = -1; // force the agenda to redraw under the new state
+		}
 		this.state = state;
 
 		if (state === 'upcoming') {
@@ -364,7 +373,7 @@ class EventPage {
 		const minute = Math.floor(now / 60_000);
 		if (minute !== this.agendaMinute) {
 			this.agendaMinute = minute;
-			renderAgenda(this.cfg, now);
+			renderAgenda(this.cfg, now, state);
 		}
 	}
 

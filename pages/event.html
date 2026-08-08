@@ -78,6 +78,9 @@
 
 			/* ── Countdown ──────────────────────────────────────────────────── */
 			.ev-clock { display: flex; flex-wrap: wrap; gap: clamp(10px, 1.6vw, 18px); margin: clamp(22px, 3vw, 32px) 0 0; }
+			/* The ended state has no clock. Collapse it rather than leaving its
+			   margin behind as a hole between the tagline and the CTA. */
+			.ev-clock:empty { display: none; margin: 0; }
 			.ev-seg {
 				min-width: 78px; padding: 12px 16px 10px; text-align: center;
 				border: 1px solid var(--stroke); border-radius: var(--radius-card);

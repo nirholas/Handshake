@@ -1,0 +1,171 @@
+#!/usr/bin/env node
+// Set the live event's window in public/event.json, safely.
+//
+// public/event.json is the single source of truth for every event surface (see
+// scripts/check-event-window.mjs for the full list), which makes hand-editing it
+// the highest-leverage two-line edit in the repo: a wrong timestamp silently
+// removes the countdown, the agenda, the fireworks, the souvenir grant and the
+// event leaderboard from the product, with no error anywhere. Both real failures
+// so far were edits by hand:
+//
+//   • a rehearsal window left in the file after a test run, so the advertised
+//     event was already "over" before anyone arrived, and
+//   • a config whose clock time disagreed with the time the announcement posts
+//     quoted, so holders were counted down to an hour nobody published.
+//
+// So this script never lets you write a window it cannot defend: it validates
+// with the very same rules that gate the deploy (validateEventConfig), refuses
+// to write a config that fails them, and prints the window in the exact zones
+// the announcement copy quotes so the config and the copy can be checked against
+// each other in one glance.
+//
+// Usage:
+//   npm run event:schedule
+//       Preview the configured event: window, per-zone clock, agenda, state.
+//       Reads only, writes nothing.
+//
+//   npm run event:schedule -- --start 2026-08-09T17:00Z --duration 150 --apply
+//       Move the event to that UTC instant for that many minutes.
+//
+//   npm run event:schedule -- --rehearse 10 --apply
+//       A local dry run: a 60-minute window starting 10 minutes from now, so the
+//       live states can be walked in a browser. Prints the revert command,
+//       because a rehearsal left behind is the first bug listed above.
+//
+//   Also: --name "..."  --tagline "..."  --duration <minutes>  --at <ISO>
+//   (--at judges the result from that instant instead of now, for proving a
+//   future window is correct today.)
+//
+// Dry run is the default. Nothing is written without --apply.
+
+import { readFileSync, writeFileSync } from 'node:fs';
+import { validateEventConfig, CONFIG_PATH, isoOf, zoneLines } from './check-event-window.mjs';
+
+const argv = process.argv.slice(2);
+const flag = (name) => {
+	const i = argv.indexOf(`--${name}`);
+	return i >= 0 ? (argv[i + 1] ?? '') : null;
+};
+const has = (name) => argv.includes(`--${name}`);
+
+const apply = has('apply');
+const rehearse = flag('rehearse');
+const startArg = flag('start');
+const durationArg = flag('duration');
+const nameArg = flag('name');
+const taglineArg = flag('tagline');
+const atArg = flag('at');
+
+const judgeAt = atArg ? Date.parse(atArg) : Date.now();
+if (!Number.isFinite(judgeAt)) {
+	console.error('[event-schedule] --at needs an ISO-8601 instant, e.g. --at 2026-08-09T17:30:00Z');
+	process.exit(2);
+}
+
+let doc;
+try {
+	doc = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
+} catch (err) {
+	console.error(`[event-schedule] cannot read public/event.json: ${err?.message || err}`);
+	console.error('[event-schedule] Create it from a previous event (git show HEAD:public/event.json) before scheduling.');
+	process.exit(1);
+}
+
+// Work out the new window, if the caller asked for one. Everything else in the
+// file (agenda, souvenir, link, comments) is preserved untouched: agenda beats
+// are minutes-after-start, so they follow a reschedule with no edits at all.
+let startsAt = null;
+let durationMin = null;
+
+if (rehearse !== null) {
+	const lead = Number(rehearse || 0);
+	if (!Number.isFinite(lead) || lead < 0) {
+		console.error('[event-schedule] --rehearse takes the number of minutes from now until the window opens, e.g. --rehearse 10');
+		process.exit(2);
+	}
+	startsAt = Date.now() + lead * 60_000;
+	durationMin = Number(durationArg ?? 60);
+} else if (startArg) {
+	startsAt = Date.parse(startArg);
+	if (!Number.isFinite(startsAt)) {
+		console.error(`[event-schedule] --start "${startArg}" is not an ISO-8601 instant. Use e.g. --start 2026-08-09T17:00:00Z`);
+		process.exit(2);
+	}
+	const current = Date.parse(doc.startsAt);
+	const currentEnd = Date.parse(doc.endsAt);
+	const keptMin = Number.isFinite(current) && Number.isFinite(currentEnd) ? (currentEnd - current) / 60_000 : 150;
+	durationMin = Number(durationArg ?? keptMin);
+} else if (durationArg !== null) {
+	startsAt = Date.parse(doc.startsAt);
+	durationMin = Number(durationArg);
+	if (!Number.isFinite(startsAt)) {
+		console.error('[event-schedule] --duration alone needs the config to already carry a valid startsAt');
+		process.exit(2);
+	}
+}
+
+if (startsAt !== null) {
+	if (!Number.isFinite(durationMin) || durationMin <= 0) {
+		console.error(`[event-schedule] --duration must be a positive number of minutes, got "${durationArg}"`);
+		process.exit(2);
+	}
+	doc.startsAt = isoOf(startsAt);
+	doc.endsAt = isoOf(startsAt + durationMin * 60_000);
+}
+if (nameArg) doc.name = nameArg;
+if (taglineArg) doc.tagline = taglineArg;
+
+// Validate the document as it would actually ship, with the deploy's own rules.
+const { failures, notes, window: win, state } = validateEventConfig(doc, judgeAt);
+
+console.log(`[event-schedule] ${startsAt !== null ? 'proposed' : 'current'} configuration:`);
+for (const n of notes) console.log(`[event-schedule] ${n}`);
+
+if (win) {
+	console.log('[event-schedule]');
+	console.log('[event-schedule] announcement clock (quote these, so copy and config agree):');
+	for (const line of zoneLines(win.startsAt)) console.log(`[event-schedule]   ${line}`);
+	if (Array.isArray(doc.agenda) && doc.agenda.length) {
+		console.log('[event-schedule]');
+		console.log('[event-schedule] agenda, as players will see it:');
+		for (const beat of doc.agenda) {
+			const at = win.startsAt + Number(beat.atMin || 0) * 60_000;
+			console.log(`[event-schedule]   ${isoOf(at)}  ${beat.icon || ''} ${beat.title || ''}`);
+		}
+	}
+}
+
+if (failures.length) {
+	console.error('[event-schedule]');
+	console.error(`[event-schedule] ${failures.length} problem(s); refusing to write:`);
+	for (const f of failures) console.error(`[event-schedule]   ${f}`);
+	process.exit(1);
+}
+
+if (startsAt === null) {
+	console.log('[event-schedule]');
+	console.log('[event-schedule] OK: the configured event is coherent. Pass --start/--duration/--rehearse to change it.');
+	process.exit(0);
+}
+
+if (!apply) {
+	console.log('[event-schedule]');
+	console.log('[event-schedule] DRY RUN: nothing written. Re-run with --apply to save this window.');
+	process.exit(0);
+}
+
+// The file is tab-indented and ends with a newline; keep it byte-compatible so a
+// reschedule is a two-line diff instead of a whole-file reformat.
+writeFileSync(CONFIG_PATH, `${JSON.stringify(doc, null, '\t')}\n`, 'utf8');
+console.log('[event-schedule]');
+console.log(`[event-schedule] WROTE public/event.json: ${doc.startsAt} to ${doc.endsAt}`);
+console.log(`[event-schedule] state at the judged instant: ${String(state).toUpperCase()}`);
+
+if (rehearse !== null) {
+	console.log('[event-schedule]');
+	console.log('[event-schedule] This is a REHEARSAL window and it must not ship. When the walkthrough is done:');
+	console.log('[event-schedule]   git checkout -- public/event.json');
+	console.log('[event-schedule] A rehearsal window committed by accident is exactly how a live event went dark before.');
+} else {
+	console.log('[event-schedule] Commit it: git add public/event.json && git commit');
+}

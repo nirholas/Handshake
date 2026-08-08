@@ -66,6 +66,7 @@ import {
 } from '../items.js';
 import {
 	fishingSpotInRange, treeInRange, rockInRange, firepitInRange,
+	vendorInRange, atmInRange,
 	DANGER_ZONES, SPAWN_POINT, dangerZoneAt, isSafeZone, isDangerZone, randomPointInZone,
 	PLAZA_STAGE,
 } from '../world-features.js';
@@ -2092,10 +2093,30 @@ export class WalkRoom extends Room {
 	// Buy `item` from the general store for cash. Validates the catalog entry,
 	// the purse, and pack room before moving anything — a rejected buy costs
 	// nothing and leaves the pack untouched.
+	// Is this session standing at a counter? Trading and banking are walk-up
+	// actions like every other station in the world, and the check has to live
+	// server-side: the NPC panel is the only way an honest client opens them, but
+	// "you must be at the bank" is exactly what makes the death drop a real risk,
+	// so it can't rest on the client choosing to enforce it.
+	_atCounter(client, kind) {
+		const player = this.state.players.get(client.sessionId);
+		if (!player) return false;
+		const near = kind === 'bank' ? atmInRange(player.x, player.z) : vendorInRange(player.x, player.z);
+		if (near) return true;
+		client.send('notice', {
+			kind, ok: false,
+			text: kind === 'bank'
+				? 'Step up to the bank teller to move cash.'
+				: 'Step up to a general store counter to trade.',
+		});
+		return false;
+	}
+
 	_handleStoreBuy(client, payload) {
 		const profile = this.econ.get(client.sessionId);
 		if (!profile) return;
 		if (!this._actionOk(client.sessionId, 'storeBuy')) return;
+		if (!this._atCounter(client, 'store')) return;
 		const item = typeof payload?.item === 'string' ? payload.item.slice(0, 32) : '';
 		const entry = buyEntry(item);
 		if (!entry) {

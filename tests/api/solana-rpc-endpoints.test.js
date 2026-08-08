@@ -128,8 +128,9 @@ describe('solanaRpcEndpoints', () => {
 		expect(eps.indexOf('https://free-a.example/sol')).toBeLessThan(
 			eps.indexOf('https://api.mainnet-beta.solana.com'),
 		);
-		// And the public mainnet-beta endpoint is still last.
-		expect(eps[eps.length - 1]).toBe('https://api.mainnet-beta.solana.com');
+		// And the keyless chain still ends on a free lane, never on an operator's
+		// own fallback: the last-resort slot belongs to the pool we do not pay for.
+		expect(eps[eps.length - 1]).toBe('https://solana-mainnet.gateway.tatum.io');
 	});
 
 	it('places SOLANA_RPC_LAST_RESORT_URLS after EVERY free endpoint (paid quota preserved)', () => {

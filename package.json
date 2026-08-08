@@ -292,6 +292,8 @@
 		"verify:zauth": "node scripts/verify-zauth-runtime.mjs",
 		"verify:sign-avatar": "node scripts/verify-sign-avatar.mjs",
 		"verify:event": "node scripts/verify-event-countdown.mjs",
+		"check:event": "node scripts/check-event-window.mjs",
+		"event:schedule": "node scripts/schedule-event.mjs",
 		"triage": "node scripts/verify-task-completion.mjs",
 		"prioritize": "node scripts/verify-task-completion.mjs && node scripts/rank-backlog.mjs",
 		"zauth:register": "node scripts/zauth-register-endpoints.mjs",
