@@ -15808,6 +15808,7 @@
 		"canvas_label": "Svět 3D komunity mincí. Pohybujte se pomocí W A S D nebo šipek, držte Shift pro běh, Mezerník pro skok, táhněte nebo použijte myš pro rozhlížení. Stiskněte Enter pro otevření chatu, Q pro emotikony, E pro rozhovor s kýmkoli v okolí a Z pro skrytí panelů.",
 		"cash_on_hand": "Hotovost u sebe",
 		"chat": "Chat",
+		"chat_from": "{{name}} říká: {{text}}",
 		"chat_input_aria": "Zpráva chatu",
 		"chat_log_aria": "Zprávy chatu",
 		"chat_placeholder": "Napište něco…",

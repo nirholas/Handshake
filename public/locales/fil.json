@@ -15808,6 +15808,7 @@
 		"canvas_label": "Ang 3D coin community world. Maglakad gamit ang W A S D o ang arrow keys, pindutin ang Shift para tumakbo, Space para tumalon, i-drag o gamitin ang mouse para lumingon. Pindutin ang Enter para buksan ang chat, Q para sa emotes, E para makipag-usap sa sinumang malapit, at Z para itago ang mga panel.",
 		"cash_on_hand": "Pera sa kamay",
 		"chat": "Chat",
+		"chat_from": "Sabi ni {{name}}: {{text}}",
 		"chat_input_aria": "Mensahe sa chat",
 		"chat_log_aria": "Mga mensahe sa chat",
 		"chat_placeholder": "Magsalita ka…",

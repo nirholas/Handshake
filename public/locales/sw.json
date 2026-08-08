@@ -15808,6 +15808,7 @@
 		"canvas_label": "Ulimwengu wa jamii ya sarafu za 3D. Tembea kwa W A S D au vitufe vya mshale, shikilia Shift kukimbia, Space kuruka, buruta au tumia kipanya kutazama pande zote. Bonyeza Enter kufungua gumzo, Q kwa hisia, E kuzungumza na yeyote aliye karibu, na Z kuficha paneli.",
 		"cash_on_hand": "Pesa taslimu mkononi",
 		"chat": "Gumzo",
+		"chat_from": "{{name}} anasema: {{text}}",
 		"chat_input_aria": "Ujumbe wa gumzo",
 		"chat_log_aria": "Ujumbe wa gumzo",
 		"chat_placeholder": "Sema kitu…",

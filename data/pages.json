@@ -4927,6 +4927,15 @@
 					"added": "2026-05-17"
 				},
 				{
+					"path": "/blog/ibm-user-group-first-in-world-meetup-recap",
+					"title": "The Three.ws User Group's First In-World Meetup: How It Went",
+					"description": "The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, in the $THREE home town at three.ws/play. Here",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-08-08",
+					"added": "2026-08-08"
+				},
+				{
 					"path": "/blog/image-to-3d-on-nvidia-l4-and-blackwell",
 					"title": "Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs",
 					"description": "A field report from the three.ws GPU fleet: why Hunyuan3D 2.1 could not load on an NVIDIA L4, why CUDA 12.4 wheels have no sm_120 kernels for RTX PRO 6000 Blackwell, and the regional quota that made the bigger card the available card.",

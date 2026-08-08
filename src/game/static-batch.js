@@ -20,7 +20,7 @@
 // Anything that has to animate individually (the tumbleweeds, the market ring)
 // must NOT go through here, add it to the scene the ordinary way.
 
-import { InstancedMesh, Matrix4, StaticDrawUsage } from 'three';
+import { InstancedMesh, StaticDrawUsage } from 'three';
 
 // A single-instance bucket is a plain mesh with extra bookkeeping, so those are
 // re-emitted as ordinary meshes. Two is already a win: one draw call instead of

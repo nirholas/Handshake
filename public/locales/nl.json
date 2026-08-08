@@ -15808,6 +15808,7 @@
 		"canvas_label": "De 3D coin community wereld. Loop met W A S D of de pijltjestoetsen, houd Shift ingedrukt om te rennen, Spatie om te springen, sleep of gebruik de muis om rond te kijken. Druk op Enter om de chat te openen, Q voor emotes, E om te praten met wie in de buurt is, en Z om de panelen te verbergen.",
 		"cash_on_hand": "Geld op zak",
 		"chat": "Chat",
+		"chat_from": "{{name}} zegt: {{text}}",
 		"chat_input_aria": "Chatbericht",
 		"chat_log_aria": "Chatberichten",
 		"chat_placeholder": "Zeg iets…",

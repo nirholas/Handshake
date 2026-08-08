@@ -204,9 +204,9 @@ describe('gemini synthesis', () => {
 	it('prefixes the direction onto the prompt', async () => {
 		process.env.GEMINI_API_KEY = 'gk-test';
 		global.fetch.mockResolvedValue(geminiAudioResponse());
-		await synthesizeGeminiTts({ text: 'hello', direction: 'Say it slowly' });
+		await synthesizeGeminiTts({ text: 'hello', direction: 'slowly and low' });
 		const body = JSON.parse(global.fetch.mock.calls[0][1].body);
-		expect(body.contents[0].parts[0].text).toBe('Say it slowly: hello');
+		expect(body.contents[0].parts[0].text).toBe('Say the following, slowly and low: hello');
 		expect(body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName).toBe(
 			GEMINI_DEFAULT_VOICE,
 		);
@@ -244,6 +244,35 @@ describe('gemini synthesis', () => {
 		await expect(synthesizeGeminiTts({ text: 'hello' })).rejects.toMatchObject({
 			code: 'content_blocked',
 		});
+	});
+
+	it('retries without the direction when the model answers instead of speaking', async () => {
+		process.env.GEMINI_API_KEY = 'gk-test';
+		global.fetch
+			.mockResolvedValueOnce({
+				ok: false,
+				status: 400,
+				text: async () =>
+					'{"error":{"message":"Model tried to generate text, but it should only be used for TTS."}}',
+			})
+			.mockResolvedValueOnce(geminiAudioResponse());
+		const out = await synthesizeGeminiTts({ text: 'hello', direction: 'brightly' });
+		expect(out.lane).toBe('api-key');
+		// The retry drops the style framing so the transcript is unambiguous.
+		expect(JSON.parse(global.fetch.mock.calls[1][1].body).contents[0].parts[0].text).toBe('hello');
+	});
+
+	it('does not retry the same prompt when there was no direction to drop', async () => {
+		process.env.GEMINI_API_KEY = 'gk-test';
+		global.fetch.mockResolvedValue({
+			ok: false,
+			status: 400,
+			text: async () => 'Model tried to generate text, but it should only be used for TTS.',
+		});
+		await expect(synthesizeGeminiTts({ text: 'hello' })).rejects.toMatchObject({
+			code: 'answered_instead_of_spoke',
+		});
+		expect(global.fetch).toHaveBeenCalledTimes(1);
 	});
 
 	it('keeps a quota failure distinct so the caller can answer 429', async () => {

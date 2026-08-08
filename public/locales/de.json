@@ -15808,6 +15808,7 @@
 		"canvas_label": "Die 3D-Münz-Community-Welt. Bewege dich mit W A S D oder den Pfeiltasten, halte Shift zum Rennen, Leertaste zum Springen, ziehe oder benutze die Maus, um dich umzusehen. Drücke Enter, um den Chat zu öffnen, Q für Emotes, E, um mit Personen in der Nähe zu sprechen, und Z, um die Panels auszublenden.",
 		"cash_on_hand": "Bargeld",
 		"chat": "Chat",
+		"chat_from": "{{name}} sagt: {{text}}",
 		"chat_input_aria": "Chat-Nachricht",
 		"chat_log_aria": "Chat-Nachrichten",
 		"chat_placeholder": "Sag etwas…",

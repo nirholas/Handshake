@@ -332,6 +332,15 @@ const appConfig = {
 					)
 						return 'solana';
 					if (id.includes('node_modules/@mediapipe/')) return 'mediapipe';
+					// Rapier is 2.2 MB of WASM glue and is ALWAYS loaded through a
+					// dynamic import (see src/physics/physics-world.js). Left to
+					// Rollup's automatic grouping it gets folded into whichever
+					// shared chunk happens to also be statically reachable, and on
+					// /play it was: it rode a shared world-HUD chunk onto the
+					// critical path and cost the world 800 KB gzip before the first
+					// frame. Pinning it here means no future static import can drag
+					// the physics engine back in front of the world.
+					if (id.includes('node_modules/@dimforge/')) return 'rapier';
 				},
 				// A few entries need stable, unhashed filenames so plain public/
 				// scripts can load them by a predictable URL without knowing the

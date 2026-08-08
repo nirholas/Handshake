@@ -15808,6 +15808,7 @@
 		"canvas_label": "3D-kolikkoyhteisön maailma. Liiku W A S D -näppäimillä tai nuolinäppäimillä, pidä Shiftiä pohjassa juostaksesi, välilyönti hypätäksesi, vedä tai käytä hiirtä katsoaksesi ympärillesi. Paina Enter avataksesi chatin, Q eleille, E puhuaksesi lähellä oleville ja Z piilottaaksesi paneelit.",
 		"cash_on_hand": "Käteinen",
 		"chat": "Chat",
+		"chat_from": "{{name}} sanoo: {{text}}",
 		"chat_input_aria": "Chat-viesti",
 		"chat_log_aria": "Chat-viestit",
 		"chat_placeholder": "Sano jotain…",

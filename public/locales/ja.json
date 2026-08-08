@@ -15808,6 +15808,7 @@
 		"canvas_label": "3Dコインコミュニティワールド。W A S Dまたは矢印キーで移動、Shiftキーで走り、Spaceキーでジャンプ、ドラッグまたはマウスで視点変更。Enterキーでチャット、Qでエモート、Eで近くの人と会話、Zでパネルを非表示。",
 		"cash_on_hand": "手持ち現金",
 		"chat": "チャット",
+		"chat_from": "{{name}}: {{text}}",
 		"chat_input_aria": "チャットメッセージ",
 		"chat_log_aria": "チャットメッセージ",
 		"chat_placeholder": "何か話しましょう…",

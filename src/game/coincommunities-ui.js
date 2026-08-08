@@ -830,7 +830,16 @@ export class CommunityUI {
 		} catch { /* keep fallback */ }
 		if (!chip.isConnected) return;
 		chip.classList.remove('cc-avatar-loading');
-		if (!dataUrl) return;
+		if (!dataUrl) {
+			// Nothing rendered, so whatever the chip already shows is the best we
+			// have. Unless it shows nothing: a thumbnail that 404s removes its own
+			// <img> on the way here, and a chip with an empty box and no glyph is
+			// indistinguishable from a broken one. Put the glyph back.
+			if (!chip.childElementCount) {
+				chip.appendChild(el('span', { class: 'cc-avatar-glyph', text: p.icon || '🙂' }));
+			}
+			return;
+		}
 		chip.textContent = '';
 		chip.appendChild(el('img', { class: 'cc-avatar-render', src: dataUrl, alt: p.label }));
 	}

@@ -15808,6 +15808,7 @@
 		"canvas_label": "A 3D érme közösségi világ. Sétálj W A S D vagy a nyílbillentyűkkel, tartsd lenyomva a Shiftet a futáshoz, Szóköz az ugráshoz, húzd vagy használd az egeret a körbenézéshez. Nyomd meg az Entert a chat megnyitásához, Q az emote-okhoz, E a közelben lévőkkel való beszélgetéshez, és Z a panelek elrejtéséhez.",
 		"cash_on_hand": "Készpénz",
 		"chat": "Chat",
+		"chat_from": "{{name}} mondja: {{text}}",
 		"chat_input_aria": "Chat üzenet",
 		"chat_log_aria": "Chat üzenetek",
 		"chat_placeholder": "Írj valamit…",

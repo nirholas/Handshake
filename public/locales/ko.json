@@ -15808,6 +15808,7 @@
 		"canvas_label": "3D 코인 커뮤니티 월드. W A S D 또는 화살표 키로 걷고, Shift를 눌러 달리고, Space로 점프하고, 드래그하거나 마우스를 사용하여 주변을 둘러보세요. Enter를 눌러 채팅을 열고, Q로 이모트를 사용하고, E로 근처 사람과 대화하고, Z로 패널을 숨길 수 있습니다.",
 		"cash_on_hand": "보유 현금",
 		"chat": "채팅",
+		"chat_from": "{{name}}: {{text}}",
 		"chat_input_aria": "채팅 메시지",
 		"chat_log_aria": "채팅 메시지",
 		"chat_placeholder": "메시지를 입력하세요…",

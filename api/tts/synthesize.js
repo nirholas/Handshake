@@ -61,6 +61,10 @@ const STATUS_BY_CODE = {
 	rate_limited: 429,
 	provider_unreachable: 502,
 	provider_error: 502,
+	// Gemini answered the prompt instead of speaking it, and there was no style
+	// direction left to drop on the retry. That is an upstream misread, not a
+	// caller error.
+	answered_instead_of_spoke: 502,
 };
 
 export default wrap(async (req, res) => {

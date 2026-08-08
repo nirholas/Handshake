@@ -15808,6 +15808,7 @@
 		"canvas_label": "Thế giới cộng đồng tiền xu 3D. Di chuyển bằng W A S D hoặc phím mũi tên, giữ Shift để chạy, Space để nhảy, kéo hoặc dùng chuột để nhìn xung quanh. Nhấn Enter để mở trò chuyện, Q để dùng biểu cảm, E để nói chuyện với người gần đó, và Z để ẩn các bảng điều khiển.",
 		"cash_on_hand": "Tiền mặt hiện có",
 		"chat": "Trò chuyện",
+		"chat_from": "{{name}} nói: {{text}}",
 		"chat_input_aria": "Tin nhắn trò chuyện",
 		"chat_log_aria": "Nhật ký trò chuyện",
 		"chat_placeholder": "Nói gì đó…",

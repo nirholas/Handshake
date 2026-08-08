@@ -15808,6 +15808,7 @@
 		"canvas_label": "Lumea comunității de monede 3D. Mergi cu W A S D sau cu săgețile, ține Shift pentru a alerga, Space pentru a sări, trage sau folosește mouse-ul pentru a te uita în jur. Apasă Enter pentru a deschide chat-ul, Q pentru emoticoane, E pentru a vorbi cu oricine este în apropiere, și Z pentru a ascunde panourile.",
 		"cash_on_hand": "Numerar disponibil",
 		"chat": "Chat",
+		"chat_from": "{{name}} spune: {{text}}",
 		"chat_input_aria": "Mesaj chat",
 		"chat_log_aria": "Mesaje chat",
 		"chat_placeholder": "Spune ceva…",

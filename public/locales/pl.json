@@ -15808,6 +15808,7 @@
 		"canvas_label": "Świat społeczności monet 3D. Poruszaj się za pomocą W A S D lub strzałek, przytrzymaj Shift, aby biec, Spacja, aby skakać, przeciągnij lub użyj myszy, aby się rozejrzeć. Naciśnij Enter, aby otworzyć czat, Q dla emotek, E, aby rozmawiać z osobami w pobliżu, i Z, aby ukryć panele.",
 		"cash_on_hand": "Gotówka w portfelu",
 		"chat": "Czat",
+		"chat_from": "{{name}} mówi: {{text}}",
 		"chat_input_aria": "Wiadomość na czacie",
 		"chat_log_aria": "Wiadomości na czacie",
 		"chat_placeholder": "Powiedz coś…",

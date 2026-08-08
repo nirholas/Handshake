@@ -69,19 +69,25 @@ function safeLink(raw) {
 	}
 }
 
-// Deliberately the same shape and the same fallbacks as event-countdown.js: an
-// event with no usable end time is treated as six hours long by both surfaces.
+// Deliberately the same window definition the rest of the platform uses: an event
+// with no usable end time is six hours long. The `rawEnd > startsAt` guard matches
+// the server's parseEventWindow (multiplayer/src/event-window.js), which gates the
+// event quests and leaderboard, so an inverted window in the config reads as "six
+// hours from the start" on both sides instead of "already over" here and "running"
+// there. That module is not imported directly because it reads process.env at load
+// and would not survive the browser bundle.
 function parseConfig(raw) {
 	if (!raw || typeof raw !== 'object') return null;
 	const startsAt = Date.parse(raw.startsAt);
 	if (!Number.isFinite(startsAt)) return null;
-	const endsAt = Date.parse(raw.endsAt);
+	const rawEnd = Date.parse(raw.endsAt);
+	const endsAt = Number.isFinite(rawEnd) && rawEnd > startsAt ? rawEnd : startsAt + 6 * 3600 * 1000;
 	return {
 		id: String(raw.id || 'three-ws-event'),
 		name: String(raw.name || 'Live event'),
 		tagline: raw.tagline ? String(raw.tagline) : '',
 		startsAt,
-		endsAt: Number.isFinite(endsAt) ? endsAt : startsAt + 6 * 3600 * 1000,
+		endsAt,
 		link: safeLink(raw.link),
 		linkLabel: raw.linkLabel ? String(raw.linkLabel) : 'Join the event',
 		agenda: Array.isArray(raw.agenda)
@@ -238,11 +244,15 @@ class Population {
 	constructor(coin) {
 		this.coin = coin;
 		this.timer = 0;
-		this.stopped = false;
 	}
 
 	start() {
 		if (this.timer) return;
+		// Show the panel in its loading state rather than a placeholder digit: a
+		// stand-in number would be a number the visitor could believe.
+		els.liveNum.hidden = true;
+		els.liveTitle.textContent = 'Checking who is in the world';
+		els.liveNote.textContent = 'Reading the live count from the event world.';
 		this._read();
 		this.timer = setInterval(() => this._read(), POPULATION_POLL_MS);
 	}

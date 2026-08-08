@@ -239,6 +239,11 @@ async function main() {
 				// Re-read the window quickly so the closed-window phase does not cost
 				// two minutes of wall clock.
 				EVENT_CONFIG_TTL_MS: String(process.env.EVENT_CONFIG_TTL_MS || 10_000),
+				// The server's default origin allowlist is localhost:3000-3003, and
+				// this run deliberately sits outside that range to stay clear of other
+				// agents' dev servers. Without this the socket is refused and the page
+				// sits on "loading" forever, which reads exactly like a broken feature.
+				ALLOWED_ORIGINS: `${BASE},http://127.0.0.1:${VITE_PORT}`,
 			},
 		});
 		if (!await waitFor(`http://127.0.0.1:${MP_PORT}/health`, 90_000)) throw new Error('colyseus never came up');

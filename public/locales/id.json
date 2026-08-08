@@ -15808,6 +15808,7 @@
 		"canvas_label": "Dunia komunitas koin 3D. Berjalan dengan W A S D atau tombol panah, tahan Shift untuk berlari, Spasi untuk melompat, seret atau gunakan mouse untuk melihat-lihat. Tekan Enter untuk membuka obrolan, Q untuk emote, E untuk berbicara dengan siapa pun yang ada di dekat Anda, dan Z untuk menyembunyikan panel.",
 		"cash_on_hand": "Uang tunai di tangan",
 		"chat": "Obrolan",
+		"chat_from": "{{name}}: {{text}}",
 		"chat_input_aria": "Pesan obrolan",
 		"chat_log_aria": "Pesan obrolan",
 		"chat_placeholder": "Ketik sesuatu…",

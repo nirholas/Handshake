@@ -37,6 +37,7 @@ disagree about when the event is.
   "endsAt": "2026-08-09T19:30:00Z",
   "link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three",
   "linkLabel": "Join the $THREE world",
+  "souvenir": { "cosmeticId": "laurel-meetup" },
   "agenda": [
     { "atMin": 0,   "title": "Doors open in the plaza", "detail": "Say hi in chat", "icon": "👋" },
     { "atMin": 20,  "title": "King of the Totem showdown", "detail": "Hold the gold ring", "icon": "👑" },
@@ -52,6 +53,7 @@ disagree about when the event is.
 | `startsAt` / `endsAt` | ISO-8601 UTC. A missing or inverted `endsAt` defaults to six hours after the start. |
 | `agenda[].atMin` | Minutes after `startsAt`. Order does not matter; segments are sorted. Invalid or untitled entries are dropped rather than breaking the event. |
 | `agenda[].icon` | One emoji. Used on the segment row and its moment banner. |
+| `souvenir.cosmeticId` | Optional. A free commemorative wearable granted once to everyone who joins the world named by `link` while the event is live, kept forever, never granted again after `endsAt`. Must be a `tier: 'event'` cosmetic; anything else grants nothing. See [Event souvenirs](event-souvenirs.md). |
 
 `id`, `agenda`, and `tagline` are optional: an event with none of them still runs
 its countdown, its go-live moment, and its fireworks.

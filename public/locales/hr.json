@@ -15808,6 +15808,7 @@
 		"canvas_label": "Svijet 3D zajednice novčića. Hodaj s W A S D ili strelicama, drži Shift za trčanje, Space za skok, povuci ili koristi miš za razgledavanje. Pritisni Enter za otvaranje chata, Q za emotikone, E za razgovor s kim je u blizini, i Z za skrivanje panela.",
 		"cash_on_hand": "Gotovina pri ruci",
 		"chat": "Chat",
+		"chat_from": "{{name}} kaže: {{text}}",
 		"chat_input_aria": "Poruka chata",
 		"chat_log_aria": "Poruke chata",
 		"chat_placeholder": "Reci nešto…",

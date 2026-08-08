@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-08-08",
+			"title": "Play now opens fast instead of stuttering for its first few seconds",
+			"summary": "Opening a coin world, especially from a shared /play link, used to lurch: a long pause, a few juddering seconds, then everything settling into place and staying smooth. Four separate causes, all measured on the live site. The physics engine was being downloaded and parsed before the page could draw anything, even though nothing needs it until you are already standing in the world, which alone put about three quarters of a megabyte on the critical path. The graphics card was being asked to compile every shader in the town on the single frame that first showed it to you. The world was lit only once a one-and-a-half megabyte lighting file finished downloading, so it looked flat and then suddenly popped. And the decorative crowd of wandering avatars started downloading its models on top of everything else, at the busiest possible moment. Each now happens in the right order: physics loads alongside the world, shaders compile before the frame that needs them, the lighting is correct from the first frame and refines afterwards, and the crowd fills in once your own world has landed. The coin's artwork is also decoded once now rather than twice, and the automatic quality governor no longer mistakes a still-loading world for a slow computer and dims the picture for the next several seconds.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-08",
+			"title": "The treasury self-heal no longer dies when Solana RPC is congested",
+			"summary": "The job that keeps the platform's engine wallets funded reads balances over a chain of Solana RPC providers. When every provider was rate-limiting at once, the last one's error reached the job unrecognised and took the whole run down with a server error, which meant the automatic top-up stopped working at exactly the moment wallets were most likely to run low. A congested provider is now understood for what it is, upstream weather, so the run reports a skipped sweep and retries on the next tick instead of failing.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-08",
 			"title": "The store, the bank and the phone layout in Play got a polish pass",
 			"summary": "Walking up to the general store or the bank used to show you the finished screen before the world had answered: an empty shelf that actually meant \"still loading\", and a cash balance of zero that actually meant \"we haven't checked yet\". Both now show placeholder rows while they wait, read your balances as unknown until the world reports them, and, if the world never answers, say so plainly with a Try again button instead of leaving a wrong screen up for good. Deposits and withdrawals hold a single request open at a time, so a double-tapped Deposit can no longer send the same transfer twice, and the amount is checked against what you are actually carrying before anything is sent. On a phone, the avatar row no longer pushes the Upload model button off the right edge of the screen where it could not be reached, the lobby search box responds to a tap anywhere in the bar rather than only on the one line of text inside it, and the footer links and the boot recovery screen now have thumb-sized targets and a visible keyboard focus ring.",
 			"tags": [

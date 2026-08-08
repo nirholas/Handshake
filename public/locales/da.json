@@ -15808,6 +15808,7 @@
 		"canvas_label": "3D-møntfællesskabsverdenen. Gå med W A S D eller piletasterne, hold Shift for at løbe, Mellemrum for at hoppe, træk eller brug musen til at se dig omkring. Tryk Enter for at åbne chat, Q for emotes, E for at tale med dem i nærheden, og Z for at skjule panelerne.",
 		"cash_on_hand": "Kontanter på hånden",
 		"chat": "Chat",
+		"chat_from": "{{name}} siger: {{text}}",
 		"chat_input_aria": "Chatbesked",
 		"chat_log_aria": "Chatbeskeder",
 		"chat_placeholder": "Sig noget…",

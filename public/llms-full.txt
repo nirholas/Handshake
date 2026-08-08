@@ -1780,6 +1780,12 @@ URL: https://three.ws/docs/ibm-community
 
 The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.
 
+### Docs · Live events in the /play world
+
+URL: https://three.ws/docs/play-live-events
+
+How a scheduled event runs inside the $THREE world: one config file drives the countdown chip, the agenda drawer, the go-live moment, and a fireworks show every player sees identically without a single packet. Includes how to schedule, preview, and verify one.
+
 ### Docs · How /play stays safe, honest, and light
 
 URL: https://three.ws/docs/play-hardening
@@ -3853,6 +3859,12 @@ Long-form announcements, launches, and writing from three.ws.
 URL: https://three.ws/blog
 
 Editorial index of three.ws launches and long-form posts.
+
+### The Three.ws User Group's First In-World Meetup: How It Went
+
+URL: https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap
+
+The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, in the $THREE home town at three.ws/play. Here
 
 ### Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs
 

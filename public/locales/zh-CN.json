@@ -15808,6 +15808,7 @@
 		"canvas_label": "3D 币社区世界。使用 W A S D 或方向键移动，按住 Shift 奔跑，空格键跳跃，拖动或使用鼠标环顾四周。按 Enter 键打开聊天，Q 键使用表情，E 键与附近的人交谈，Z 键隐藏面板。",
 		"cash_on_hand": "手头现金",
 		"chat": "聊天",
+		"chat_from": "{{name}} 说： {{text}}",
 		"chat_input_aria": "聊天消息",
 		"chat_log_aria": "聊天记录",
 		"chat_placeholder": "说点什么…",

@@ -32,14 +32,36 @@ describe('examples index generator', () => {
 	let originalDoc;
 	let originalJson;
 
+	function restore() {
+		if (originalDoc === undefined) return;
+		writeFileSync(DOC, originalDoc);
+		if (originalJson !== null) writeFileSync(JSON_OUT, originalJson);
+	}
+
+	// afterEach never runs if the run is interrupted (a killed CI job, a Ctrl-C,
+	// a vitest timeout), which would leave the real docs/examples.md holding the
+	// malformed fixture below and every later run failing on a doc no one edited.
+	// The same restore is therefore armed at the process level for the signals a
+	// test run actually dies from.
+	const onExit = () => restore();
+	const onSignal = () => {
+		restore();
+		process.exit(1);
+	};
+
 	beforeEach(() => {
 		originalDoc = readFileSync(DOC, 'utf8');
 		originalJson = existsSync(JSON_OUT) ? readFileSync(JSON_OUT, 'utf8') : null;
+		process.once('exit', onExit);
+		process.once('SIGINT', onSignal);
+		process.once('SIGTERM', onSignal);
 	});
 
 	afterEach(() => {
-		writeFileSync(DOC, originalDoc);
-		if (originalJson !== null) writeFileSync(JSON_OUT, originalJson);
+		restore();
+		process.off('exit', onExit);
+		process.off('SIGINT', onSignal);
+		process.off('SIGTERM', onSignal);
 	});
 
 	it('emits a machine-readable index whose entries all exist on disk', () => {

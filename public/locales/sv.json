@@ -15808,6 +15808,7 @@
 		"canvas_label": "3D-myntgemenskapens värld. Gå med W A S D eller piltangenterna, håll Skift för att springa, Mellanslag för att hoppa, dra eller använd musen för att titta runt. Tryck Enter för att öppna chatten, Q för emotes, E för att prata med den som är i närheten, och Z för att dölja panelerna.",
 		"cash_on_hand": "Kontanter i handen",
 		"chat": "Chatt",
+		"chat_from": "{{name}} säger: {{text}}",
 		"chat_input_aria": "Chattmeddelande",
 		"chat_log_aria": "Chattmeddelanden",
 		"chat_placeholder": "Säg något…",

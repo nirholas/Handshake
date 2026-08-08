@@ -62,7 +62,10 @@ const STYLE = `
 .cc-event-seg b { display: block; font-size: 22px; font-weight: 700; line-height: 1.1; }
 .cc-event-seg span { display: block; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cc-dim, #8c8c92); margin-top: 2px; }
 .cc-event-cta {
-	display: inline-block; padding: 10px 18px; border-radius: var(--cc-radius, 4px);
+	/* The event's one call to action, and on a phone it is tapped with a thumb,
+	   so it clears the 44px bar rather than sitting at the 36px the text gave. */
+	display: inline-flex; align-items: center; min-height: 44px;
+	padding: 10px 18px; border-radius: var(--cc-radius, 4px);
 	background: var(--cc-accent, #fff); color: var(--cc-ink, #060607);
 	font-weight: 600; font-size: 13.5px; text-decoration: none; white-space: nowrap;
 	transition: box-shadow 0.15s ease, transform 0.15s ease;

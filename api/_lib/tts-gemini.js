@@ -136,9 +136,17 @@ function tagged(message, code, extra = {}) {
  * Compose the request payload. `direction` is a natural-language style
  * instruction Gemini honors as part of the prompt; it is prefixed rather than
  * sent as a separate field because that is the documented control surface.
+ *
+ * The framing matters. A bare "<direction>: <text>" prompt occasionally reads
+ * to the model as a request to ANSWER rather than to speak, and the API then
+ * rejects the turn with "Model tried to generate text, but it should only be
+ * used for TTS". Naming the task first ("Say the following...") makes the
+ * transcript unambiguous; `synthesizeGeminiTts` still retries without the
+ * direction if it happens anyway, so a clip is never lost to phrasing.
  */
 function buildBody({ text, voice, direction }) {
-	const prompt = direction ? `${direction.replace(/:\s*$/, '')}: ${text}` : text;
+	const style = String(direction || '').trim().replace(/[:.\s]+$/, '');
+	const prompt = style ? `Say the following, ${style}: ${text}` : text;
 	return {
 		contents: [{ role: 'user', parts: [{ text: prompt }] }],
 		generationConfig: {
@@ -182,6 +190,7 @@ async function callGemini({ url, headers, body, timeoutMs }) {
 		const code =
 			resp.status === 429 ? 'rate_limited'
 			: resp.status === 401 || resp.status === 403 ? 'invalid_key'
+			: /should only be used for TTS/i.test(detail) ? 'answered_instead_of_spoke'
 			: 'provider_error';
 		throw tagged(`Gemini TTS returned ${resp.status}: ${detail.slice(0, 300)}`, code, {
 			status: resp.status,
@@ -209,7 +218,21 @@ export async function synthesizeGeminiTts({
 	if (!text || !String(text).trim()) throw tagged('text is required', 'invalid_argument');
 	const voiceName = isGeminiVoice(voice) ? voice : GEMINI_DEFAULT_VOICE;
 	const modelId = isGeminiTtsModel(model) ? model : GEMINI_TTS_DEFAULT_MODEL;
-	const body = buildBody({ text: String(text), voice: voiceName, direction: String(direction || '') });
+	const styled = buildBody({ text: String(text), voice: voiceName, direction: String(direction || '') });
+	// The fallback prompt drops the style direction entirely. It is only used
+	// when the styled prompt made the model answer instead of speak, so a
+	// user's clip degrades to plain narration rather than to an error.
+	const plain = direction ? buildBody({ text: String(text), voice: voiceName }) : null;
+
+	/** One rung's request, retried once without the direction if Gemini answers. */
+	async function speak({ url, headers, timeoutMs: ms }) {
+		try {
+			return await callGemini({ url, headers, body: styled, timeoutMs: ms });
+		} catch (e) {
+			if (e?.code !== 'answered_instead_of_spoke' || !plain) throw e;
+			return callGemini({ url, headers, body: plain, timeoutMs: ms });
+		}
+	}
 
 	const laneErrors = [];
 	let pcm = null;
@@ -226,10 +249,9 @@ export async function synthesizeGeminiTts({
 		}
 		for (const location of token ? vertexLocations() : []) {
 			try {
-				pcm = await callGemini({
+				pcm = await speak({
 					url: vertexUrl(location, project, modelId),
 					headers: { authorization: `Bearer ${token}` },
-					body,
 					timeoutMs,
 				});
 				lane = `vertex:${location}`;
@@ -250,10 +272,9 @@ export async function synthesizeGeminiTts({
 	const apiKey = geminiApiKey();
 	if (!pcm && apiKey) {
 		try {
-			pcm = await callGemini({
+			pcm = await speak({
 				url: `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`,
 				headers: { 'x-goog-api-key': apiKey },
-				body,
 				timeoutMs,
 			});
 			lane = 'api-key';

@@ -15808,6 +15808,7 @@
 		"canvas_label": "Le monde communautaire des pièces 3D. Déplacez-vous avec W A S D ou les touches fléchées, maintenez Shift pour courir, Espace pour sauter, faites glisser ou utilisez la souris pour regarder autour de vous. Appuyez sur Entrée pour ouvrir le chat, Q pour les émotes, E pour parler aux personnes à proximité, et Z pour masquer les panneaux.",
 		"cash_on_hand": "Argent en main",
 		"chat": "Chat",
+		"chat_from": "{{name}} dit : {{text}}",
 		"chat_input_aria": "Message de chat",
 		"chat_log_aria": "Messages du chat",
 		"chat_placeholder": "Dites quelque chose…",

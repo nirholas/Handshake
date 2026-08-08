@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-08T16:18:10.331Z",
+	"generated_at": "2026-08-08T16:28:29.170Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6379,6 +6379,16 @@
 					"title": "Blog",
 					"description": "Editorial index of three.ws launches and long-form posts.",
 					"added": "2026-05-17",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/blog/ibm-user-group-first-in-world-meetup-recap",
+					"title": "The Three.ws User Group's First In-World Meetup: How It Went",
+					"description": "The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, in the $THREE home town at three.ws/play. Here",
+					"added": "2026-08-08",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

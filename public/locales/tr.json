@@ -15808,6 +15808,7 @@
 		"canvas_label": "3D coin topluluğu dünyası. W A S D veya ok tuşlarıyla yürü, koşmak için Shift'e basılı tut, zıplamak için Space'e bas, etrafa bakmak için sürükle veya fareyi kullan. Sohbeti açmak için Enter'a bas, ifadeler için Q, yakındaki kişilerle konuşmak için E ve panelleri gizlemek için Z.",
 		"cash_on_hand": "Eldeki nakit",
 		"chat": "Sohbet",
+		"chat_from": "{{name}} diyor: {{text}}",
 		"chat_input_aria": "Sohbet mesajı",
 		"chat_log_aria": "Sohbet mesajları",
 		"chat_placeholder": "Bir şeyler söyle…",

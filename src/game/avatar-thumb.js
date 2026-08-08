@@ -18,6 +18,38 @@ import { applyCinematicDefaults, loadEnvironment } from '../shared/cinematic-ren
 
 const SIZE = 160; // square render target, downscaled by the chip's CSS box
 
+const isFiniteVec = (v) => Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z);
+
+/**
+ * Can this bounding box be framed by the portrait camera?
+ *
+ * False for the two ways a GLB arrives unmeasurable. A model with no renderable
+ * geometry measures as an empty box (min +Infinity, max -Infinity). A model with
+ * NaN vertex data measures as NaN, which every comparison inside Box3.isEmpty()
+ * answers false to, so it reads as a perfectly good box unless checked for
+ * separately. Framing off either puts the rig at a NaN position and the snapshot
+ * comes back fully transparent.
+ *
+ * @param {import('three').Box3} box
+ * @returns {boolean}
+ */
+export function canFrame(box) {
+	if (!box || box.isEmpty()) return false;
+	return isFiniteVec(box.min) && isFiniteVec(box.max);
+}
+
+// Does the frame we just drew contain anything at all? The renderer is alpha:true
+// over no background, so the alpha channel is the ground truth. Runs once per
+// distinct avatar (results are cached by URL) against a 160px square, and reads
+// the default framebuffer, which preserveDrawingBuffer above keeps readable.
+function hasVisiblePixels() {
+	const gl = _renderer.getContext();
+	const px = new Uint8Array(SIZE * SIZE * 4);
+	gl.readPixels(0, 0, SIZE, SIZE, gl.RGBA, gl.UNSIGNED_BYTE, px);
+	for (let i = 3; i < px.length; i += 4) if (px[i] > 8) return true;
+	return false;
+}
+
 // Share the rig's Draco-enabled loader so compressed avatar GLBs preview too,
 // plus the shared meshopt decoder so EXT_meshopt_compression GLBs (incl. the
 // default avatar) preview instead of throwing.
@@ -116,6 +148,13 @@ async function _snapshot(url) {
 		const box = new Box3().setFromObject(model);
 		const size = new Vector3(); box.getSize(size);
 		const center = new Vector3(); box.getCenter(center);
+		// Unmeasurable geometry frames to a NaN position and snapshots as a fully
+		// transparent PNG, which the caller would then swap over the chip's emoji.
+		// Bail so the fallback survives. See canFrame.
+		if (!canFrame(box)) {
+			log.warn('[avatar-thumb] no measurable geometry, keeping the fallback:', url);
+			return null;
+		}
 		model.position.x -= center.x;
 		model.position.z -= center.z;
 		model.position.y -= box.min.y;
@@ -132,6 +171,14 @@ async function _snapshot(url) {
 		_camera.updateProjectionMatrix();
 
 		_renderer.render(_scene, _camera);
+		// A model can measure fine and still draw nothing: materials that decode to
+		// fully transparent, geometry framed past the far plane, a skinned mesh whose
+		// bones collapse it to a point. Returning that blank PNG is worse than
+		// returning nothing, because the caller clears the chip to show it.
+		if (!hasVisiblePixels()) {
+			log.warn('[avatar-thumb] preview rendered empty, keeping the fallback:', url);
+			return null;
+		}
 		return _renderer.domElement.toDataURL('image/png');
 	} finally {
 		anim?.dispose?.();

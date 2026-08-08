@@ -15808,6 +15808,7 @@
 		"canvas_label": "Svet 3D skupnosti kovancev. Hodi z W A S D ali s puščicami, drži Shift za tek, Space za skok, povleci ali uporabi miško za razgledovanje. Pritisni Enter za odprtje klepeta, Q za čustva, E za pogovor s tistim, ki je v bližini, in Z za skrivanje plošč.",
 		"cash_on_hand": "Gotovina pri roki",
 		"chat": "Klepet",
+		"chat_from": "{{name}} pravi: {{text}}",
 		"chat_input_aria": "Sporočilo klepeta",
 		"chat_log_aria": "Sporočila klepeta",
 		"chat_placeholder": "Reci nekaj…",

@@ -9,7 +9,7 @@
 // model + animation rig.
 
 import {
-	Group, Box3, Mesh, MeshStandardMaterial, CapsuleGeometry, SphereGeometry,
+	Box3, Mesh, MeshStandardMaterial, CapsuleGeometry, SphereGeometry,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';

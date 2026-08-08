@@ -15808,6 +15808,7 @@
 		"canvas_label": "Dunia komuniti syiling 3D. Berjalan dengan W A S D atau kekunci anak panah, tahan Shift untuk berlari, Space untuk melompat, seret atau gunakan tetikus untuk melihat sekeliling. Tekan Enter untuk membuka sembang, Q untuk emot, E untuk bercakap dengan sesiapa yang berdekatan, dan Z untuk menyembunyikan panel.",
 		"cash_on_hand": "Tunai di tangan",
 		"chat": "Sembang",
+		"chat_from": "{{name}} ujar: {{text}}",
 		"chat_input_aria": "Mesej sembang",
 		"chat_log_aria": "Mesej sembang",
 		"chat_placeholder": "Katakan sesuatu…",

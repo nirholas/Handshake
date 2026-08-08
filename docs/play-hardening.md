@@ -42,7 +42,7 @@ this.prompt.replaceChildren(key, document.createTextNode(` Loot ${nearest.t.owne
 
 **Invariant: a URL that lands inside a CSS `url(...)` value goes through `cssBgImage()` in [src/game/coincommunities-ui.js](../src/game/coincommunities-ui.js).**
 
-Lobby cards paint the coin's artwork as a background image. `proxiedImageURL()` ([src/ipfs.js](../src/ipfs.js)) only URL-encodes values matching `^(https?|ipfs|ar):`; anything else is returned unchanged. So a coin minted with an `image_uri` of
+Lobby cards paint the coin's artwork as a background image. `proxiedImageURL()` ([src/ipfs.js](../src/ipfs.js)) URL-encodes values matching `^(https?|ipfs|ar):` and passes relative, `blob:` and `data:image/*` sources through untouched (see section 11 for what it now refuses outright). A coin minted with an `image_uri` of
 
 ```
 x");position:fixed;inset:0;z-index:99999;background:#000 url(//evil/phish.png);content:"
@@ -65,6 +65,21 @@ The payload may still be *present* in the output, but only ever as inert text in
 A mint is either a Solana base58 address (pump.fun mints, including `$THREE`) or an EVM `0x` address (Robinhood Chain coins). `/play?coin=notarealmint` used to build a complete, convincing world: a real district, a totem reading "COMMUNITY", a Colyseus room keyed on the garbage string, and a persistent build layer no other player would ever see. Nothing anywhere told the visitor the link was broken.
 
 Now a malformed mint leaves the player in the lobby with a plain explanation, one tap from every real world. `name` and `symbol` are separately clamped by `clampParam()` to the same caps the room server enforces, with control characters, line breaks, bidi overrides and zero-width characters stripped, so a 10 KB `name=` cannot rewrap the HUD.
+
+### 3a. The loading screen reads the same URL, and obeys the same rules
+
+**Invariant: the inline identity script in [pages/play.html](../pages/play.html) writes only `textContent`, accepts only site-absolute or `https:` image URLs, and length-clamps every value.**
+
+The app bundle is not on screen yet while the boot loader is up, so the loader has its own, deliberately tiny reader of `?name` / `?symbol` / `?image`. It exists because a shared world link spent that entire window saying nothing about which world was opening. It is a *second* consumer of the least trusted input on the platform, running earlier than every guard in section 1 through 3, so it repeats them locally rather than importing them (importing a module would defeat the point of painting before the bundle arrives):
+
+- Text goes in with `textContent`. There is no `innerHTML` in the script.
+- `image` is accepted only when it starts with a single `/` (the same-origin `/api/img` proxy, which is what the share-link rewrite emits) or `https://`. A `javascript:` or `data:` value is dropped and the letter-mark stands in.
+- `name` is capped at 28 characters and `symbol` at 12, cut on a word boundary.
+- Anything unexpected throws into a `catch` that leaves the generic loader exactly as it shipped.
+
+The art has a designed failure path in both places it appears. In the loader, a monogram sits under the `<img>` and the image only fades in on `load`; an `error` removes the `<img>` and leaves the monogram. In the world, the HUD banner's `.cc-coin-img` does the same against `.cc-coin-mono` ([src/game/coincommunities-ui.js](../src/game/coincommunities-ui.js)). The 3D totem and jumbotron already degraded to text-only on a failed `TextureLoader` fetch. This matters on venue wifi, where the IPFS gateway behind `/api/img` is the single most likely thing to fail while everything else about the world works.
+
+The loader also sets a provisional `document.title` from the link and stashes the original in `documentElement.dataset.lobbyTitle`; `_setTabTitle()` in [src/game/coincommunities.js](../src/game/coincommunities.js) replaces it with the resolved coin on entry and restores the stashed original on leave, so the two writers never fight and the localised title is never re-spelled in JS.
 
 ## 4. Losing the connection recovers cleanly
 
@@ -163,11 +178,45 @@ Every world interaction gates on the server's authoritative position: fishing sp
 
 Read-only request handlers are rate limited too. `storeReq`, `boutiqueReq`, `profileReq`, `questReq`, and `spinInfo` each had a declared bucket in `ACTION_RATES` that nothing consulted. `questReq` is the expensive one: it rebuilds the whole mission registry per call, so an unbounded loop from one client was a self-service denial of service against every player in that room.
 
+## 11. A value that is not an image never reaches an image sink
+
+**Invariant: every URL bound for an `<img src>`, a `TextureLoader`, or a CSS `url()` passes `isSafeImageURL()` in [src/ipfs.js](../src/ipfs.js) first.**
+
+Section 2 stops a hostile value from escaping the CSS declaration it lands in. This is the layer before that: deciding whether the value is art at all. `proxiedImageURL()` used to return anything it did not recognise unchanged, so `/play?image=javascript:…` travelled all the way into `this.coinImg.src` and `new TextureLoader().load(coin.image, …)`. It cannot execute from either sink, but it does log `ERR_UNKNOWN_URL_SCHEME` and leave a permanently dead tile, on a surface whose bar is a clean console.
+
+The resolver now answers with `''` for anything outside `http`, `https`, `ipfs`, `ar`, `blob`, `data:image/*`, and plain relative paths, which includes `javascript:`, `vbscript:`, `data:text/html`, `file:`, `about:`, a scheme smuggled past a naive parser with a control character (`java\tscript:`), and any source past 2048 characters. Every caller already branches on `if (coin.image)`, so a refused value falls through to the world's own generated-art path.
+
+Two consequences worth knowing:
+
+- **Protocol-relative art is proxied, not fetched raw.** `//cdn.example/art.png` gets the page's scheme before resolution, so it goes through `/api/img` like every other cross-origin source instead of bypassing it.
+- **Avatar and build thumbnails go through the proxy too.** `thumbnail_url` values from the public gallery and R2 were being set directly on `<img src>`, where Chrome's Opaque Response Blocking killed them with `ERR_BLOCKED_BY_ORB`: a console error on a plain `/play` load and a lost tile. Routing them through `/api/img`, which always answers with a valid image, fixes both.
+
+[tests/ipfs-image-url-safety.test.js](../tests/ipfs-image-url-safety.test.js) pins the allowlist, the length cap, and the proxy routing.
+
+## 12. The boot watchdog only fires for failures that are actually fatal
+
+**Invariant: the `#kx-loading` error card is reserved for a world that genuinely cannot start, never for a page that is merely still loading.**
+
+The inline watchdog in [pages/play.html](../pages/play.html) exists for one failure: a stale cached document pointing at chunks a deploy already removed, where nothing will ever finish and only a reload helps. It used to treat *any* failed `SCRIPT`/`LINK` as fatal immediately, and *any* uncaught rejection as fatal within 8 seconds. Both misfire on visitors we expect at an event:
+
+- An ad blocker or privacy extension blocks `/brand.js` or `/i18n.js`, or any third-party script. The world does not depend on one of them, but the card appeared instantly anyway, over game modules that were downloading normally.
+- Venue wifi makes some background request reject. Every fetch boundary in `/play` already handles its own failure, so the rejection is noise, but on a connection slow enough that boot took longer than the 8s grace, it replaced the loading card with "Couldn't load the world".
+
+A resource error now counts only when it is same-origin *and* not one of the optional extras. A rejection whose reason is network-shaped (`Failed to fetch`, `NetworkError`, `AbortError`, `ERR_BLOCKED`) is ignored outright, and anything else gets 20 seconds, long enough for a slow but healthy boot to finish and disarm it via `bootPending()`. The 45s hard timeout is untouched: a boot that truly stalls still gets its error card with a working retry.
+
+`adblock-extras` and `api-blackout` in [scripts/audit-play-failure-modes.mjs](../scripts/audit-play-failure-modes.mjs) assert that neither situation produces a card.
+
 ## Verifying a change
 
 ```bash
-# Pure-logic guards: CSS-injection, mint validation, param clamping.
-npx vitest run tests/play-deeplink-safety.test.js
+# Pure-logic guards: CSS-injection, mint validation, param clamping,
+# and the image-URL scheme allowlist.
+npx vitest run tests/play-deeplink-safety.test.js tests/ipfs-image-url-safety.test.js
+
+# Deliberate failure injection in a real browser: hostile query strings, blocked
+# coin art and GLBs, a dead auth gate, an ad blocker, a total API outage.
+npm run audit:play-failures                       # local dev server
+BASE_URL=https://three.ws npm run audit:play-failures
 
 # Everything else that touches the surface.
 npx vitest run tests/play-gate.test.js tests/play-pass.test.js \

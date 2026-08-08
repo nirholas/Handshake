@@ -15808,6 +15808,7 @@
 		"canvas_label": "O mundo 3D da comunidade de moedas. Ande com W A S D ou as setas, segure Shift para correr, Espaço para pular, arraste ou use o mouse para olhar ao redor. Pressione Enter para abrir o chat, Q para emotes, E para falar com quem estiver por perto e Z para esconder os painéis.",
 		"cash_on_hand": "Dinheiro em mãos",
 		"chat": "Chat",
+		"chat_from": "{{name}} diz: {{text}}",
 		"chat_input_aria": "Mensagem do chat",
 		"chat_log_aria": "Mensagens do chat",
 		"chat_placeholder": "Diga algo…",

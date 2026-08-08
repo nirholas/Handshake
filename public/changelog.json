@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-08T16:18:10.751Z",
+	"generated_at": "2026-08-08T16:28:29.626Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -52,6 +52,16 @@
 			"title": "Docs · Live events in the /play world",
 			"summary": "How a scheduled event runs inside the $THREE world: one config file drives the countdown chip, the agenda drawer, the go-live moment, and a fireworks show every player sees identically without a single packet. Includes how to schedule, preview, and verify one.",
 			"link": "/docs/play-live-events",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "launch",
+			"title": "The Three.ws User Group's First In-World Meetup: How It Went",
+			"summary": "The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, in the $THREE home town at three.ws/play. Here",
+			"link": "/blog/ibm-user-group-first-in-world-meetup-recap",
 			"tags": [
 				"launch"
 			]
@@ -214,6 +224,17 @@
 			"title": "The trading engine now tells you when it is out of money",
 			"summary": "The autonomous sniper could fail in a way nothing caught: the process healthy, the launch feed connected, every strategy armed, and every wallet too poor to actually pay for a trade. In that state it kept trying and failing to buy, closed nothing, and still reported itself as live, because everything being watched was about the software and nothing was about the money. Solvency is now part of how the engine reports itself. Every armed wallet balance is checked every five minutes against the exact rule the trader uses to decide whether it can afford an entry, so the status can never call a wallet ready when the trader would skip it. If no wallet can fund a trade, the engine now reports itself as out of SOL on the status page, in the health check and on the homepage, instead of showing green. It also says how much SOL would fix it and whether the funding wallet can cover that by itself, and it pages operators, with a separate alert for the case where the funding wallet is itself empty and a person has to step in.",
 			"link": "/trading",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "The treasury self-heal no longer dies when Solana RPC is congested",
+			"summary": "The job that keeps the platform's engine wallets funded reads balances over a chain of Solana RPC providers. When every provider was rate-limiting at once, the last one's error reached the job unrecognised and took the whole run down with a server error, which meant the automatic top-up stopped working at exactly the moment wallets were most likely to run low. A congested provider is now understood for what it is, upstream weather, so the run reports a skipped sweep and retries on the next tick instead of failing.",
+			"link": null,
 			"tags": [
 				"fix",
 				"infra"

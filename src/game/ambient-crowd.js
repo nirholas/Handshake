@@ -113,14 +113,16 @@ async function loadAvatarPool() {
 async function buildAvatar(rig, anim, pick) {
 	const url = pick?.url || AVATAR_DEFAULT;
 	if (!hasModelTemplate(url)) _spentBytes += pick?.bytes || 0;
-	const { height } = await buildRigAvatar(rig, url, anim, { clips: 'locomotion' });
-	_worn.add(url);
+	const { height, downgraded } = await buildRigAvatar(rig, url, anim, { clips: 'locomotion' });
+	// Only record what is actually resident: a model that was refused (over the
+	// mobile size cap) or failed to parse must not be offered back as a "free"
+	// pick once the download budget runs out.
+	_worn.add(downgraded ? AVATAR_DEFAULT : url);
 	// Shadow casting is the crowd's own budget line: on the low tier five
 	// shadow-casting skinned meshes cost more than a decorative crowd is worth.
 	if (!BUDGET.shadows) rig.traverse((n) => { if (n.isMesh) n.castShadow = false; });
 	return height;
 }
-
 
 async function playEmote(anim, motion) {
 	if (!_emotes?.length) return;
