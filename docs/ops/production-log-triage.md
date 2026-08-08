@@ -627,11 +627,22 @@ ws error: Unexpected server response: 301
 HTTP 503 GET /api/community/worlds   body: {"error":"cc_unconfigured","error_description":"CoinCommunities is not configured"}
 ```
 
-- **Source:** [api/community/worlds.js](../../api/community/worlds.js) throws
-  its designed `UnconfiguredError` 503 because `CC_API_KEY` is not set. Swept
-  2026-07-26: the key exists nowhere — not on the Cloud Run service, not in
-  `.env`/`.env.local`, not in Secret Manager. The coin-worlds lobby renders its
-  empty state; nothing is crashing.
+- **Source:** every `api/community/*` and `api/clash/*` handler throws the
+  designed `UnconfiguredError` 503 from [api/_lib/coin-communities.js](../../api/_lib/coin-communities.js)
+  because `CC_API_KEY` is not set. Re-swept 2026-08-08: the key still exists
+  nowhere, not on the Cloud Run service (checked all 200 env vars), not in
+  `.env`/`.env.local`, not in Secret Manager. Nothing is crashing, and every
+  surface has a designed answer for it:
+  - `/worlds` fails over to the live pump.fun trending feed and tags the
+    response `source: "pump-trending"`, so the world picker stays populated.
+  - `/messages` renders the town's unavailable state and a locked composer
+    ("Posting opens soon"); the live feed stays open.
+  - `/holder-pass` drives the Play holders gate to its `unavailable` state
+    ("Holder check is offline") with a working one-click path into the coin's
+    open world. Before 2026-08-08 this was the one dead end: the gate showed
+    the raw upstream string with retry-only actions that could never succeed.
+  - `/clash/*` pins the battle tabs on a human message and stops the 5s poll
+    on the first `cc_unconfigured` answer.
 - **Resolve (owner, credential):** provision a CoinCommunities API key
   (api.coin-communities.xyz), then:
   `gcloud run services update three-ws-api --region us-central1 --update-env-vars CC_API_KEY=<key>`.
