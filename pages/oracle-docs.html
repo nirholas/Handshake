@@ -409,155 +409,72 @@
 			<!-- PILLARS -->
 			<section id="pillars">
 				<div class="kicker">The model · part 1</div>
-				<h2 data-i18n="oracle_docs.the_four_pillars_2">The four pillars</h2>
-				<p class="lead-in" data-i18n="oracle_docs.conviction_is_the_weighted_fusion_of_four">Conviction is the weighted fusion of four independent reads. Each pillar is scored 0–100 on its own, for its own reasons, and contributes a fixed share of the final number.</p>
+				<h2>A model fitted from real outcomes</h2>
+				<p class="lead-in">Since 2026-08-09 the conviction engine is a bucketed logistic model fitted on the platform's own labeled outcome history (92,906 launches at first fit, growing daily). Every launch-time signal is bucketed by its empirically observed ranges, each bucket carries a fitted log-odds weight, and the fused sum passes through a sigmoid into a calibrated probability that the coin graduates or hits a 3x-plus ATH. The full weight table ships in <code class="t">conviction-model.json</code> with each bucket's sample size and observed good-rate. Not a black box: a lookup table anyone can audit.</p>
 
-				<div class="diagram">
-					<div class="cap">Pillar weights — what moves the final score</div>
-					<div class="weighbox">
-						<svg viewBox="0 0 42 42" width="200" height="200" role="img" aria-label="Donut chart: pedigree 34 percent, structure 30 percent, narrative 18 percent, momentum 18 percent" style="transform:rotate(-90deg)">
-							<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--line)" stroke-width="6"></circle>
-							<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--p-ped)" stroke-width="6" stroke-dasharray="34 66" stroke-dashoffset="0"></circle>
-							<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--p-str)" stroke-width="6" stroke-dasharray="30 70" stroke-dashoffset="-34"></circle>
-							<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--p-nar)" stroke-width="6" stroke-dasharray="18 82" stroke-dashoffset="-64"></circle>
-							<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--p-mom)" stroke-width="6" stroke-dasharray="18 82" stroke-dashoffset="-82"></circle>
-						</svg>
-						<div class="legend">
-							<div class="lrow"><span class="sw" style="background:var(--p-ped)"></span><span class="nm" data-i18n="oracle_docs.who_pedigree">WHO · Pedigree</span><span class="wt">0.34</span><span class="ds" data-i18n="oracle_docs.buyer_track_record_is_the_single_most">— buyer track record is the single most predictive signal.</span></div>
-							<div class="lrow"><span class="sw" style="background:var(--p-str)"></span><span class="nm" data-i18n="oracle_docs.how_structure">HOW · Structure</span><span class="wt">0.30</span><span class="ds" data-i18n="oracle_docs.the_fair_launch_guardrail_also_imposes_hard">— the fair-launch guardrail; also imposes hard ceilings.</span></div>
-							<div class="lrow"><span class="sw" style="background:var(--p-nar)"></span><span class="nm" data-i18n="oracle_docs.what_narrative">WHAT · Narrative</span><span class="wt">0.18</span><span class="ds" data-i18n="oracle_docs.cultural_strength_a_tie_breaker_not_a">— cultural strength; a tie-breaker, not a savior.</span></div>
-							<div class="lrow"><span class="sw" style="background:var(--p-mom)"></span><span class="nm" data-i18n="oracle_docs.move_momentum">MOVE · Momentum</span><span class="wt">0.18</span><span class="ds" data-i18n="oracle_docs.is_real_buying_pressure_actually_showing_up">— is real buying pressure actually showing up?</span></div>
-						</div>
-					</div>
+				<div class="note">
+					<span class="nt">Measured, not asserted</span>
+					<p>On a time-split holdout (the newest 25% of labels, never seen in training): <b>AUC 0.879</b> against 0.627 for the previous hand-tuned engine; <b>62.5%</b> of coins in the top decile of score were good against an <b>11.7%</b> base rate; the Prime band observed <b>72.7%</b> good.</p>
 				</div>
-				<p data-i18n-html="oracle_docs.who_and_how_together_carry_nearly_two">WHO and HOW together carry nearly two-thirds of the weight because <b>who is buying</b> and <b>how fair the launch is</b> are the two facts that most reliably separate runners from rugs. WHAT and MOVE are lighter — they break ties and confirm, but a good story or a green first minute can't rescue a coin the harder pillars condemn.</p>
+
+				<p>The four pillars remain as the lens: every feature belongs to WHO, HOW, WHAT, or MOVE, each pillar bar shows what its own evidence alone would imply, and the pillar weights shown in the API are derived from the fitted model (each pillar's share of the total log-odds range its features span) instead of hand-picked constants.</p>
 
 				<!-- PEDIGREE -->
-				<h3 style="color:var(--p-ped)" data-i18n="oracle_docs.who_pedigree_2">① WHO — Pedigree</h3>
-				<p data-i18n-html="oracle_docs.the_question_who_is_already_in_this"><b>The question:</b> who is already in this coin, and what is their record? Pedigree rewards launches where wallets with a <i>proven</i> history of getting into winners early are already buying — and penalizes the presence of known ruggers, dumpers, and serial failed-launch creators.</p>
-				<p data-i18n-html="oracle_docs.plain_english_drivers_more_proven_wallets_in"><b>Plain-English drivers:</b> more proven wallets in is better; a large share of the buy volume coming from proven money is better; a creator who has shipped graduated launches before is better. Conversely, flagged wallets, smart money already <i>selling</i>, and a creator with a rug pattern all cut the score — and a serial rugger <b>caps</b> it outright.</p>
-				<details class="dive">
-					<summary data-i18n-html="oracle_docs.deep_dive_pedigree_exact_rules_constants"><span class="layer deep"><b></b>Deep dive</span> Pedigree — exact rules &amp; constants <span class="chev">›</span></summary>
-					<div class="body">
-						<p>Inputs come from the brain's smart-money slice (a pre-computed 0–100 composite, proven/total buy &amp; sell lamports, a list of notable wallets with labels) and the creator's record (label, prior launches, graduated launches, dump rate). The base is the brain's composite, or the average of notable wallets' scores if the composite is absent. When there is <i data-i18n="oracle_docs.no">no</i> pedigree observation at all — no composite, no notable wallets, no creator record — the base anchors at a neutral prior of <b>38</b> rather than 0 (unknown is the market norm, not a red flag), and the final fused score is capped at <b>71</b>, one point below Strong: unknown pedigree can read Lean at most; Strong and Prime must be earned with observed evidence.</p>
-						<div class="tbl-wrap"><table>
-							<thead><tr><th data-i18n="oracle_docs.signal">Signal</th><th data-i18n="oracle_docs.adjustment">Adjustment</th><th data-i18n="oracle_docs.note">Note</th></tr></thead>
-							<tbody>
-								<tr><td data-i18n="oracle_docs.5_proven_wallets_in">≥5 proven wallets in</td><td><b>+14</b></td><td data-i18n="oracle_docs.9_at_3_5_at_1">+9 at ≥3, +5 at ≥1</td></tr>
-								<tr><td data-i18n="oracle_docs.proven_share_of_buy_vol_40">Proven share of buy vol ≥40%</td><td><b>+8</b></td><td data-i18n="oracle_docs.4_at_20">+4 at ≥20%</td></tr>
-								<tr><td data-i18n="oracle_docs.flagged_wallet_present_rugger_dumper">Flagged wallet present (rugger/dumper)</td><td data-i18n-html="oracle_docs.12_each"><b>−12</b> each</td><td data-i18n="oracle_docs.capped_at_36_3_wallets">capped at −36 (3 wallets)</td></tr>
-								<tr><td data-i18n="oracle_docs.smart_money_sold_50_of_position">Smart money sold ≥50% of position</td><td><b>−16</b></td><td data-i18n="oracle_docs.8_at_25_trimming">−8 at ≥25% (trimming)</td></tr>
-								<tr><td data-i18n="oracle_docs.creator_3_launches_0_graduated">Creator: ≥3 launches, 0 graduated</td><td data-i18n-html="oracle_docs.22_cap_45"><b>−22</b>, cap ≤45</td><td data-i18n="oracle_docs.rug_pattern_hard_ceiling">rug pattern → hard ceiling</td></tr>
-								<tr><td data-i18n="oracle_docs.creator_3_graduated_launches">Creator: ≥3 graduated launches</td><td><b>+12</b></td><td data-i18n="oracle_docs.6_at_1">+6 at ≥1</td></tr>
-								<tr><td data-i18n="oracle_docs.creator_dumps_50_of_launches">Creator dumps ≥50% of launches</td><td><b>−8</b></td><td data-i18n="oracle_docs.consistent_exit_pattern">consistent exit pattern</td></tr>
-							</tbody>
-						</table></div>
-						<p data-i18n-html="oracle_docs.returns_the_is_a_hard_ceiling_on">Returns <code class="t">{ score, reasons[], cap }</code>. The <code class="t">cap</code> is a hard ceiling on the <i>final</i> fused score — the mechanism by which a serial rugger can never produce a "prime" coin no matter how good the other pillars look. A wallet counts as "proven" if it is labelled <code class="t">smart_money</code>/<code class="t">kol</code> or carries a reputation score ≥70.</p>
-					</div>
-				</details>
+				<h3 style="color:var(--p-ped)">① WHO: Pedigree</h3>
+				<p><b>The question:</b> who launched this coin, and who is already in it? The fitted features: the creator's launch record (a first launch runs at 1.9x the base good-rate; a creator with any prior graduation at 1.5x; five-plus launches with none graduated at 0.26x), the dev's buy size, and whether the dev sold inside the observation window.</p>
+				<p>On top of the fitted features sits the <b>smart-money overlay</b>: proven wallets are too rare to fit statistically (998 platform-wide against 288k judged), so when they appear they adjust the fused log-odds as documented expert priors: proven wallets in the book add up to +0.75 log-odds, a 40%-plus proven share of buy volume adds +0.3, each flagged rugger/dumper wallet subtracts 0.45 (up to three), smart money already exiting half its position subtracts 0.7. A wallet counts as proven if labelled <code class="t">smart_money</code>/<code class="t">kol</code>, scores ≥70, or holds a 35%-plus win rate over 8-plus judged coins: a sustained ~3x edge, validated on holdout outcomes (coins with 3+ such wallets buying early were good 95% of the time).</p>
+				<p><b>One hard cap survives:</b> a creator with 3-plus launches and zero graduations (or a wallet flagged as a rugger) ceilings the final score at 45, inside Watch. A graveyard dev can never present as Strong. Every other old cap: including the unknown-pedigree ceiling that silently pinned the entire feed below Strong: is gone: missing data now reads as fitted null-bucket evidence, not as a verdict.</p>
 
 				<!-- STRUCTURE -->
-				<h3 style="color:var(--p-str)" data-i18n="oracle_docs.how_structure_2">② HOW — Structure</h3>
-				<p data-i18n-html="oracle_docs.the_question_is_this_a_fair_launch"><b>The question:</b> is this a fair launch or an engineered one? Structure is the guardrail. It reads the distribution and timing of the launch — bundle likelihood, holder concentration, snipe pressure, fresh-wallet farming, single-funder clusters, dev selling — and rewards broad, organic bases while punishing coordination and concentration.</p>
-				<p data-i18n-html="oracle_docs.plain_english_drivers_many_unique_early_buye"><b>Plain-English drivers:</b> many unique early buyers and low concentration push the score up. Bundles, a top wallet holding half the supply, 70% of volume sniped in the first seconds, armies of freshly-funded wallets, or a dev who already sold all push it down — and the worst of these <b>cap</b> the whole coin in the 38–55 range regardless of pedigree.</p>
-				<details class="dive">
-					<summary data-i18n-html="oracle_docs.deep_dive_structure_exact_rules_the_cap"><span class="layer deep"><b></b>Deep dive</span> Structure — exact rules &amp; the cap mechanism <span class="chev">›</span></summary>
-					<div class="body">
-						<p data-i18n-html="oracle_docs.the_base_is_anchored_to_the_brain">The base is anchored to the brain's organic-demand score: <code class="t">base = 30 + organic·0.55</code> (so structure alone lives in ~30–85), or a neutral 62 when organic isn't available. Then a battery of red-flag checks subtract and, for the severe ones, set a hard ceiling.</p>
-						<div class="tbl-wrap"><table>
-							<thead><tr><th data-i18n="oracle_docs.signal_2">Signal</th><th data-i18n="oracle_docs.adjustment_2">Adjustment</th><th data-i18n="oracle_docs.cap">Cap</th></tr></thead>
-							<tbody>
-								<tr><td data-i18n="oracle_docs.bundle_likelihood_60_35">Bundle likelihood ≥60% (≥35%)</td><td>−20 (−11)</td><td>≤46</td></tr>
-								<tr><td data-i18n="oracle_docs.top_10_wallets_hold_80_60">Top-10 wallets hold ≥80% (≥60%)</td><td>−22 (−12)</td><td>≤44</td></tr>
-								<tr><td data-i18n="oracle_docs.buyer_interconnectivity_60">Buyer interconnectivity ≥60%</td><td>−10</td><td>≤55</td></tr>
-								<tr><td data-i18n="oracle_docs.snipe_ratio_70_45">Snipe ratio ≥70% (≥45%)</td><td>−16 (−8)</td><td>≤50</td></tr>
-								<tr><td data-i18n="oracle_docs.fresh_farmed_wallets_70_45">Fresh/farmed wallets ≥70% (≥45%)</td><td>−18 (−9)</td><td>≤48</td></tr>
-								<tr><td data-i18n="oracle_docs.60_unique_buyers_25_8">≥60 unique buyers (≥25 / &lt;8)</td><td>+16 (+9 / −8)</td><td>—</td></tr>
-								<tr><td data-i18n="oracle_docs.top_holder_50_30">Top holder ≥50% (≥30%)</td><td>−26 (−14)</td><td>≤45</td></tr>
-								<tr><td data-i18n="oracle_docs.creator_still_holds_25">Creator still holds ≥25%</td><td>−16</td><td>—</td></tr>
-								<tr><td data-i18n="oracle_docs.dev_sold_50_20">Dev sold ≥50% (≥20%)</td><td>−24 (−10)</td><td>≤38</td></tr>
-								<tr><td data-i18n="oracle_docs.single_funder_cluster_50_30">Single-funder cluster ≥50% (≥30%)</td><td>−22 (−12)</td><td>≤42</td></tr>
-								<tr><td data-i18n="oracle_docs.explicit_bundle_risk_flag">Explicit bundle risk flag</td><td>−18</td><td>≤48</td></tr>
-							</tbody>
-						</table></div>
-						<p data-i18n-html="oracle_docs.the_lowest_cap_triggered_wins_this_is">The lowest cap triggered wins. This is the formal statement of "structure is a veto": a launch with a serious structural defect is ceiling-limited <i>before</i> the weighted average is taken, so no amount of pedigree or narrative lifts it into a high tier.</p>
-					</div>
-				</details>
+				<h3 style="color:var(--p-str)">② HOW: Structure</h3>
+				<p><b>The question:</b> what does the launch's shape say? The fitted features: organic-demand score (the single strongest signal: below 0.2 observes 0.11x the base good-rate, 0.8-plus observes 5.1x), bundle score, snipe ratio, coordination score, buy-timing entropy, and top-1/top-10 holder concentration.</p>
+				<p><b>What the data corrected:</b> several old structure penalties were backwards at the 90-second observation window. Top-10 concentration in the 0.3-0.9 band is a <i>positive</i> signal (5-8x base): "low concentration" at 90 seconds usually means nobody bought. A mid-range snipe ratio (10-70% of the open) is a <i>positive</i> signal (2.7-3.6x): bots racing an open is evidence of demand; the poison is 70%-plus. The fitted buckets encode the real curve instead of a hand-drawn one.</p>
 
 				<!-- NARRATIVE -->
-				<h3 style="color:var(--p-nar)" data-i18n="oracle_docs.what_narrative_2">③ WHAT — Narrative</h3>
-				<p data-i18n-html="oracle_docs.the_question_what_is_this_coin_about"><b>The question:</b> what is this coin about, and does the story have cultural legs? Narrative classifies the launch into one of eleven categories (meme, ai, culture, news, animal, celebrity, political, community, tech, utility, unknown) and estimates its virality — preferentially with a language model that is given <b>live crypto headlines</b> so it can recognize a coin riding today's news.</p>
-				<p data-i18n-html="oracle_docs.plain_english_drivers_each_category_carries"><b>Plain-English drivers:</b> each category carries a prior (how durable that kind of story tends to be), and the model's virality estimate is blended with that prior, weighted by the model's own confidence. A confidently-viral culture coin scores high; an unclassifiable one is treated with caution. It's the lightest pillar on purpose — a story is a multiplier on a real launch, not a substitute for one.</p>
-				<details class="dive">
-					<summary data-i18n-html="oracle_docs.deep_dive_narrative_priors_blending_and_the"><span class="layer deep"><b></b>Deep dive</span> Narrative — priors, blending, and the classifier chain <span class="chev">›</span></summary>
-					<div class="body">
-						<p data-i18n-html="oracle_docs.category_priors_base_virality"><b>Category priors</b> (base virality): <code class="t">news 70 · culture 66 · ai 64 · meme 60 · animal 56 · community 58 · celebrity 54 · political 52 · tech 50 · utility 46 · unknown 40</code>.</p>
-						<p data-i18n-html="oracle_docs.blending_when_a_virality_estimate_exists"><b>Blending</b> when a virality estimate exists:</p>
-						<pre><span class="k">score</span> = virality · (0.4 + 0.4·confidence) + prior · (0.6 − 0.4·confidence)</pre>
-						<p data-i18n-html="oracle_docs.so_high_model_confidence_leans_on_the">So high model confidence leans on the virality estimate; low confidence falls back toward the category prior. With no estimate, <code class="t">score = prior</code>. A <code class="t">news</code> coin adds the reason "fast but fragile"; an <code class="t">unknown</code> coin adds "treat with caution."</p>
-						<p><b data-i18n="oracle_docs.classifier_chain">Classifier chain</b> (preference order): (1) LLM with live headlines from a public crypto-news API — fuzzy-matched against the coin's name/symbol/tags, contributing up to +30 virality when the coin clearly rides a current story; (2) LLM without news context; (3) a deterministic keyword classifier with per-category lexicons and a social-presence virality heuristic. The chain degrades gracefully — if the model is unavailable, the heuristic always produces a usable classification, tagged <code class="t">source: heuristic</code> vs <code class="t">llm</code>. A separate social-ingestion path can additively boost virality from tweet engagement, but never downgrades an LLM classification.</p>
-					</div>
-				</details>
+				<h3 style="color:var(--p-nar)">③ WHAT: Narrative</h3>
+				<p><b>The question:</b> what is the coin about? The classifier assigns each launch a category; the category's fitted weight is what the outcome data actually supports: which is far less than the old hand-set priors assumed. Deliberately the lightest lane now: the observed spread across meme/animal/ai/tech is small, and roughly inverted from the old ranking in places (tech observes 0.32x base; "unknown" 1.52x).</p>
 
 				<!-- MOMENTUM -->
-				<h3 style="color:var(--p-mom)" data-i18n="oracle_docs.move_momentum_2">④ MOVE — Momentum</h3>
-				<p data-i18n-html="oracle_docs.the_question_is_real_buying_pressure_actuall"><b>The question:</b> is real buying pressure actually showing up, right now? Momentum reads the earliest footprint — the buy/sell balance, how fast unique buyers are piling in, and the size of the dev's own buy as a tell.</p>
-				<p data-i18n-html="oracle_docs.plain_english_drivers_buyers_strongly_outnum"><b>Plain-English drivers:</b> buyers strongly outnumbering sellers, a rapid pile-in of unique early buyers, and a dev who put a <i>sensible</i> amount of skin in the game all lift the score. Heavy early selling cuts it, and an <i>oversized</i> dev buy is read as a honeypot risk and penalized.</p>
-				<details class="dive">
-					<summary data-i18n-html="oracle_docs.deep_dive_momentum_exact_rules"><span class="layer deep"><b></b>Deep dive</span> Momentum — exact rules <span class="chev">›</span></summary>
-					<div class="body">
-						<p data-i18n="oracle_docs.starts_at_a_neutral_50">Starts at a neutral 50.</p>
-						<div class="tbl-wrap"><table>
-							<thead><tr><th data-i18n="oracle_docs.signal_3">Signal</th><th data-i18n="oracle_docs.adjustment_3">Adjustment</th></tr></thead>
-							<tbody>
-								<tr><td data-i18n="oracle_docs.buy_share_80_10_buys">Buy share ≥80% &amp; ≥10 buys</td><td data-i18n-html="oracle_docs.22_strong_inflow"><b>+22</b> (strong inflow)</td></tr>
-								<tr><td data-i18n="oracle_docs.buy_share_65">Buy share ≥65%</td><td data-i18n="oracle_docs.12_buyers_outnumber_sellers">+12 (buyers outnumber sellers)</td></tr>
-								<tr><td data-i18n="oracle_docs.buy_share_45">Buy share &lt;45%</td><td data-i18n="oracle_docs.16_distribution">−16 (distribution)</td></tr>
-								<tr><td data-i18n="oracle_docs.40_early_buyers_15">≥40 early buyers (≥15)</td><td data-i18n="oracle_docs.14_7_pile_in">+14 (+7) — pile-in</td></tr>
-								<tr><td data-i18n="oracle_docs.dev_buy_0_2_2_5_sol">Dev buy 0.2–2.5 SOL</td><td data-i18n="oracle_docs.8_skin_in_the_game">+8 (skin in the game)</td></tr>
-								<tr><td data-i18n="oracle_docs.dev_buy_6_sol">Dev buy &gt;6 SOL</td><td data-i18n="oracle_docs.14_oversized_honeypot_risk">−14 (oversized → honeypot risk)</td></tr>
-							</tbody>
-						</table></div>
-						<p data-i18n="oracle_docs.with_no_signal_yet_it_returns_too">With no signal yet it returns "too early," keeping the pillar neutral rather than inventing momentum that isn't there.</p>
-					</div>
-				</details>
+				<h3 style="color:var(--p-mom)">④ MOVE: Momentum</h3>
+				<p><b>The question:</b> is real demand showing up, right now? The fitted features: unique early buyers (40-plus observes 6.8x base), buy/sell ratio, total early buy volume (25-plus SOL: 6.0x), largest single buy, average buy size, and market cap at first sight: the dead-on-arrival tell the old engine ignored entirely (below 28 SOL observes 0.27x base). An oversized dev buy is <i>not</i> penalized anymore: 6-plus SOL observes 1.36x base, the opposite of the old honeypot heuristic.</p>
 			</section>
 
 			<!-- FUSION -->
 			<section id="fusion">
 				<div class="kicker">The model · part 2</div>
-				<h2 data-i18n="oracle_docs.fusion_tiers_2">Fusion &amp; tiers</h2>
-				<p class="lead-in" data-i18n="oracle_docs.the_four_pillar_scores_collapse_into_one">The four pillar scores collapse into one number by a weighted average — then the structural and pedigree caps clamp it down, it rounds, and it lands in a tier.</p>
+				<h2>Fusion &amp; tiers</h2>
+				<p class="lead-in">The fusion is a sum in log-odds space, a sigmoid, and a fixed monotone map onto the public 0-100 ladder: so every tier boundary states a measured probability.</p>
 
 				<div class="eq">
-<span class="op" data-i18n="oracle_docs.weighted_average_of_the_four_pillar_scores"># weighted average of the four pillar scores</span>
-score = WHO·<span class="w">0.34</span> <span class="op">+</span> HOW·<span class="w">0.30</span> <span class="op">+</span> WHAT·<span class="w">0.18</span> <span class="op">+</span> MOVE·<span class="w">0.18</span>
+<span class="op"># fitted bucket weights + smart-money overlay, in log-odds</span>
+z = intercept <span class="op">+</span> Σ w[bucket(feature)] <span class="op">+</span> overlay
 
-<span class="op" data-i18n="oracle_docs.structure_and_pedigree_can_veto_the_lowest"># structure (and pedigree) can veto — the lowest cap wins</span>
-score = min(score, structure.cap)
+<span class="op"># calibrated probability the coin graduates or hits 3x+ ATH</span>
+p = 1 / (1 + e^(−z))
 
-<span class="op" data-i18n="oracle_docs.round_clamp_to_the_0_100_integer"># round + clamp to the 0–100 integer line</span>
-score = clamp(round(score), 0, 100)
+<span class="op"># fixed monotone map; anchors: 5%→34, 12%→56, 30%→72, 55%→86</span>
+score = map(p)
+
+<span class="op"># the one surviving veto: serial-rugger creator</span>
+score = min(score, 45 if rugger_creator)
 				</div>
 
-				<p data-i18n-html="oracle_docs.the_cap_step_is_the_whole_philosophy">The cap step is the whole philosophy in one line: pillars <i>add up</i>, but a serious red flag in HOW (or a rugger creator in WHO) sets a ceiling the average cannot exceed. A coin with stellar pedigree and a bundle flag does not average out to "pretty good" — it is capped at ~46 and lands in <b>watch</b>, exactly where it belongs.</p>
-
-				<h3 data-i18n="oracle_docs.the_tier_ladder">The tier ladder</h3>
-				<p data-i18n="oracle_docs.the_final_integer_maps_to_one_of">The final integer maps to one of five tiers. Tiers are how humans skim the feed and how agents set a bar.</p>
+				<h3>The tier ladder</h3>
+				<p>Each boundary is anchored to a probability, and each band's holdout performance is published. Tiers are how humans skim the feed and how agents set a bar.</p>
 				<div class="diagram">
-					<div class="cap">Conviction tiers — score → tier</div>
+					<div class="cap">Conviction tiers: score → tier → measured odds</div>
 					<div class="ladder">
-						<div class="rung"><span class="nm" style="color:#eceff5" data-i18n="oracle_docs.prime">Prime</span><div class="bar" style="background:#eceff5; width:100%">86–100 · every axis agrees; rare</div><span class="rng">≥ 86</span></div>
-						<div class="rung"><span class="nm" style="color:#cdd2e0" data-i18n="oracle_docs.strong">Strong</span><div class="bar" style="background:#cdd2e0; width:84%">72–85 · favorable across the hard pillars</div><span class="rng">≥ 72</span></div>
-						<div class="rung"><span class="nm" style="color:#9aa0b0" data-i18n="oracle_docs.lean">Lean</span><div class="bar" style="background:#9aa0b0; width:70%; color:#06070d">56–71 · leaning positive, inconclusive</div><span class="rng">≥ 56</span></div>
-						<div class="rung"><span class="nm" style="color:#8a92a8" data-i18n="oracle_docs.watch">Watch</span><div class="bar" style="background:#8a92a8; width:58%; color:#06070d">34–55 · mixed signals</div><span class="rng">≥ 34</span></div>
-						<div class="rung"><span class="nm" style="color:#6c7280" data-i18n="oracle_docs.avoid">Avoid</span><div class="bar" style="background:#6c7280; width:46%">0–33 · structural red flags</div><span class="rng">≥ 0</span></div>
+						<div class="rung"><span class="nm" style="color:#eceff5">Prime</span><div class="bar" style="background:#eceff5; width:100%">86-100 · P(good) ≥ 55% · holdout observed 72.7%</div><span class="rng">≥ 86</span></div>
+						<div class="rung"><span class="nm" style="color:#cdd2e0">Strong</span><div class="bar" style="background:#cdd2e0; width:84%">72-85 · P(good) ≥ 30% · observed 36.5%</div><span class="rng">≥ 72</span></div>
+						<div class="rung"><span class="nm" style="color:#9aa0b0">Lean</span><div class="bar" style="background:#9aa0b0; width:70%; color:#06070d">56-71 · P(good) ≥ 12% · observed 16.8%</div><span class="rng">≥ 56</span></div>
+						<div class="rung"><span class="nm" style="color:#8a92a8">Watch</span><div class="bar" style="background:#8a92a8; width:58%; color:#06070d">34-55 · P(good) ≥ 5% · below base rate</div><span class="rng">≥ 34</span></div>
+						<div class="rung"><span class="nm" style="color:#6c7280">Avoid</span><div class="bar" style="background:#6c7280; width:46%">0-33 · P(good) &lt; 5% · observed 2.5% good, 96.3% rugged</div><span class="rng">≥ 0</span></div>
 					</div>
 				</div>
-				<p data-i18n-html="oracle_docs.alongside_the_score_the_engine_emits_badges">Alongside the score, the engine emits <b>badges</b> (e.g. <code class="t">smart-money</code>, <code class="t">structure-flag</code>, <code class="t">news</code>, <code class="t">momentum</code>, <code class="t">prime</code>) for fast visual scanning, and an ordered list of <b>reasons</b> — each tagged to the pillar that produced it — so the score is never a black box.</p>
+				<p>Alongside the score, the engine emits <b>badges</b> (e.g. <code class="t">smart-money</code>, <code class="t">structure-flag</code>, <code class="t">pedigree-flag</code>, <code class="t">news</code>, <code class="t">momentum</code>, <code class="t">thin-data</code>, <code class="t">prime</code>) for fast visual scanning, and an ordered list of <b>reasons</b>: strongest evidence first, each quoting the observed outcome rate for the bucket it hit ("organic demand ≥0.8: 60% of similar launches worked"). The engine cites its training data instead of asserting adjectives.</p>
 				<div class="note warn">
-					<span class="nt" data-i18n="oracle_docs.read_the_reasons_not_just_the_number">Read the reasons, not just the number</span>
-					<p data-i18n-html="oracle_docs.two_coins_can_both_score_70_for">Two coins can both score 70 for completely different reasons — one on pure pedigree with weak momentum, another on a viral narrative over a thin base. The tier tells you <i>how strong</i>; the reasons tell you <i>why</i>, and the why is what you trade on.</p>
+					<span class="nt">Read the reasons, not just the number</span>
+					<p>Two coins can both score 70 for completely different reasons: one on a broad organic base with an unknown creator, another on a proven creator over a thin book. The tier tells you <i>how strong</i>; the reasons tell you <i>why</i>, and the why is what you trade on.</p>
 				</div>
 			</section>
 
@@ -572,8 +489,8 @@ score = clamp(round(score), 0, 100)
 				</figure>
 				<p data-i18n="oracle_docs.walking_the_drawer_top_to_bottom_mirrors">Walking the drawer top to bottom mirrors the model exactly:</p>
 				<ul>
-					<li data-i18n-html="oracle_docs.the_four_pillar_bars_who_how_what"><b>The four pillar bars</b> — WHO / HOW / WHAT / MOVE — are the sub-scores from the section above. The big number is their capped, weighted fusion.</li>
-					<li data-i18n-html="oracle_docs.why_this_score_is_the_array_each"><b>“Why this score”</b> is the <code class="t">reasons[]</code> array, each line tagged to the pillar that generated it. In this example: "no proven wallets identified yet" (WHO), "clean, distributed launch structure" (HOW), "meme narrative, virality 45/100" (WHAT), "no clear momentum yet — too early" (MOVE). A clean-but-unproven young launch — correctly a <b>watch</b>, not an avoid and not a buy.</li>
+					<li><b>The four pillar bars</b> (WHO / HOW / WHAT / MOVE) are the sub-scores: what each pillar's own fitted evidence would imply alone, on the same probability-to-score map as the big number.</li>
+					<li><b>“Why this score”</b> is the <code class="t">reasons[]</code> array, strongest evidence first, each line tagged to its pillar and quoting the observed outcome rate for the bucket it hit, e.g. "unique early buyers >=40: 80% of similar launches worked (6.8x base rate)" (MOVE). The engine cites its training data instead of asserting adjectives.</li>
 					<li data-i18n-html="oracle_docs.structure_wallet_graph_buy_pattern_expose_th"><b>Structure / wallet-graph / buy-pattern</b> expose the raw HOW inputs (organic-buy %, bundle %, the funder graph) so you can audit the guardrail.</li>
 					<li data-i18n-html="oracle_docs.who_s_in_is_the_live_pedigree"><b>Who's-in</b> is the live pedigree roster — every notable wallet, its label, and its track record.</li>
 					<li data-i18n-html="oracle_docs.live_trades_streams_the_coin_s_buys"><b>Live trades</b> streams the coin's buys and sells in real time, each annotated with the trader's wallet archetype.</li>
@@ -848,7 +765,7 @@ CI = [centre − margin, centre + margin]</pre>
 					<div class="card"><h4 data-i18n="oracle_docs.adversarial_structure">Adversarial structure</h4><p data-i18n="oracle_docs.the_how_pillar_is_a_guardrail_against">The HOW pillar is a guardrail against known manipulation — bundles, fresh-wallet farms, funder clusters — but launderers iterate. New evasion patterns are caught by the outcome loop (they rug, reputation updates) before they're caught by a rule. The defense is the closed loop, not any single check.</p></div>
 					<div class="card"><h4 data-i18n="oracle_docs.narrative_lag_model_error">Narrative lag &amp; model error</h4><p data-i18n="oracle_docs.the_what_pillar_depends_on_a_language">The WHAT pillar depends on a language model and a news feed; both can misread a story or miss a fast-breaking one. It's the lightest-weighted pillar for exactly this reason, and it degrades to a deterministic classifier rather than failing.</p></div>
 					<div class="card"><h4 data-i18n="oracle_docs.outcome_latency">Outcome latency</h4><p data-i18n="oracle_docs.win_loss_isn_t_known_until_a">Win/loss isn't known until a coin resolves, so the backtest always trails the present. Recent windows are thin and their confidence bands are wide — and the page shows the width rather than hiding it.</p></div>
-					<div class="card"><h4 data-i18n="oracle_docs.weights_are_expert_priors_for_now">Weights are expert priors (for now)</h4><p data-i18n="oracle_docs.the_0_34_0_30_0_18">The 0.34 / 0.30 / 0.18 / 0.18 weights and every threshold are hand-set from domain knowledge, not yet learned from outcomes. That's a deliberate, transparent starting point — and the single biggest opportunity, covered next.</p></div>
+					<div class="card"><h4>Weights are fitted, and drift is real</h4><p>Since 2026-08-09 every bucket weight is fitted from labeled outcomes and validated on a temporal holdout. The flip side: a fitted model is only as current as its last refit, the launch meta drifts, and the training window always lags the newest evasion pattern by however long outcomes take to resolve. The refit script exists to be rerun.</p></div>
 				</div>
 				<div class="note warn">
 					<span class="nt" data-i18n="oracle_docs.not_financial_advice">Not financial advice</span>
@@ -877,12 +794,11 @@ CI = [centre − margin, centre + margin]</pre>
 				<h2 data-i18n="oracle_docs.phd_appendix_2">PhD appendix</h2>
 				<p class="lead-in" data-i18n="oracle_docs.the_formal_view_for_readers_who_want">The formal view, for readers who want the model stated as a model.</p>
 				<h3 data-i18n="oracle_docs.oracle_as_a_calibrated_scoring_classifier">Oracle as a calibrated scoring classifier</h3>
-				<p data-i18n-html="oracle_docs.let_a_launch_be_a_feature_vector">Let a launch be a feature vector <code class="t">x</code>. Oracle computes four pillar functions <code class="t">f_k(x) ∈ [0,100]</code> for <code class="t">k ∈ {ped, str, nar, mom}</code>, a weighted score, and a capped, clamped output:</p>
-				<pre>s(x) = clamp( min( Σ_k w_k · f_k(x),  c(x) ),  0, 100 )
-
-  w = (0.34, 0.30, 0.18, 0.18),   Σ w_k = 1
-  c(x) = min over triggered structural/pedigree ceilings   <span class="c">// the veto</span></pre>
-				<p data-i18n-html="oracle_docs.the_intended_semantics_is_that_where_calibra">The intended semantics is that <code class="t">s(x)/100 ≈ P(win | x)</code>, where <code class="t">win = graduated ∨ ATH ≥ 2×</code>. Calibration measures the gap between intent and reality.</p>
+				<p>Let a launch be a feature vector <code class="t">x</code>. Since v2 (2026-08-09), Oracle is a bucketed logistic model: each feature <code class="t">j</code> is discretized by fixed empirical bin edges into a one-hot <code class="t">b_j(x)</code>, each bin carries a fitted weight, and:</p>
+				<pre>z(x) = w_0 + Σ_j w[j, b_j(x)] + o(x)   <span class="c">// o(x): smart-money overlay (documented priors)</span>
+p(x) = σ(z(x)) = 1 / (1 + e^(−z(x)))  <span class="c">// calibrated P(good | x)</span>
+s(x) = min( m(p(x)),  c(x) )           <span class="c">// m: fixed monotone map; c: 45 iff serial rugger</span></pre>
+				<p>with <code class="t">good = graduated ∨ ATH ≥ 3×</code>, fitted by L2-regularized SGD on the labeled outcome set with a deterministic seed. <code class="t">m</code> is anchored so the public tier boundaries land on fixed probabilities (34 ↦ 0.05, 56 ↦ 0.12, 72 ↦ 0.30, 86 ↦ 0.55). Evaluation is a strict temporal split: train on the oldest 75%, report AUC, precision-at-depth, and per-band reliability on the newest 25%.</p>
 				<h3 data-i18n="oracle_docs.calibration_objects">Calibration objects</h3>
 				<ul>
 					<li data-i18n-html="oracle_docs.reliability_calibration_ladder_partition_sco"><b>Reliability (calibration ladder):</b> partition scores into bins <code class="t">B_j</code>; plot empirical <code class="t">ŷ_j = (1/|B_j|)Σ 1[win]</code> against the bin's predicted rate. Perfect calibration ⇒ <code class="t">ŷ_j ≈ s̄_j/100</code> for all j (the identity line).</li>
@@ -891,7 +807,7 @@ CI = [centre − margin, centre + margin]</pre>
 					<li data-i18n-html="oracle_docs.monotonicity_edge_require_non_decreasing_in"><b>Monotonicity &amp; edge:</b> require <code class="t">ŷ</code> non-decreasing in the score bin (within tolerance); define edge multiple = <code class="t">P(win | prime) / P(win | any)</code> and lift = the difference, both reported with their CIs.</li>
 				</ul>
 				<h3 data-i18n="oracle_docs.the_improvement_path_formally">The improvement path, formally</h3>
-				<p>The current <code class="t">w</code> and thresholds are an expert prior — a fixed, interpretable linear model. The principled upgrade is to (1) fit <code class="t">w</code> (and pillar internals) by maximizing log-likelihood / minimizing Brier on resolved outcomes, and (2) compose a monotonic calibration map <code class="t">g: s ↦ P̂(win)</code> (Platt / isotonic) so the published number is a true probability. The cap <code class="t">c(x)</code> can be retained as a hard monotone constraint, preserving interpretability — "structure can veto" — while the rest is learned. Crucially, the data, the outcome join, and the calibration metrics needed to <i data-i18n="oracle_docs.measure">measure</i> that upgrade are already in production; the prior is a starting point chosen to be honest and legible, not a ceiling.</p>
+				<p>v2 delivered the first two upgrades this appendix used to promise: the weights are fitted by maximizing regularized log-likelihood on resolved outcomes, and the published score is a fixed monotone map of a calibrated probability. Open next, in order of expected value: (1) automated refit cadence with a champion/challenger holdout gate so a refit never silently regresses; (2) interaction terms or shallow trees over the same buckets, since the model is additive and the strongest observed patterns (concentration crossed with buyer count) are plausibly interactive; (3) fitting the smart-money overlay once the widened proven-wallet ledger accumulates enough judged appearances; (4) survival-style labels (time-to-rug) so the engine can price exit windows, not just entries.</p>
 				<div class="note tip">
 					<span class="nt" data-i18n="oracle_docs.references_further_reading">References &amp; further reading</span>
 					<p data-i18n-html="oracle_docs.wilson_1927_probable_inference_the_law_of">Wilson (1927), <i>Probable inference, the law of succession, and statistical inference</i> — the score interval. Brier (1950), <i>Verification of forecasts expressed in terms of probability</i>. Platt (1999), probabilistic outputs for SVMs (Platt scaling). Zadrozny &amp; Elkan (2002), isotonic calibration. Niculescu-Mizil &amp; Caruana (2005), <i>Predicting good probabilities with supervised learning</i>.</p>
@@ -909,7 +825,7 @@ CI = [centre − margin, centre + margin]</pre>
 						<tr><td data-i18n-html="oracle_docs.pillar"><b>Pillar</b></td><td data-i18n="oracle_docs.one_of_the_four_independent_reads_who">One of the four independent reads: WHO (pedigree), HOW (structure), WHAT (narrative), MOVE (momentum).</td></tr>
 						<tr><td data-i18n-html="oracle_docs.tier"><b>Tier</b></td><td data-i18n="oracle_docs.the_coarse_band_a_score_falls_in">The coarse band a score falls in: prime / strong / lean / watch / avoid.</td></tr>
 						<tr><td data-i18n-html="oracle_docs.cap_veto"><b>Cap (veto)</b></td><td data-i18n="oracle_docs.a_hard_ceiling_on_the_final_score">A hard ceiling on the final score, set by a severe structural or pedigree red flag, applied before clamping.</td></tr>
-						<tr><td data-i18n-html="oracle_docs.proven_wallet"><b>Proven wallet</b></td><td data-i18n="oracle_docs.a_wallet_labelled_smart_money_kol_or">A wallet labelled smart-money/KOL or with a reputation score ≥70 — the pedigree currency.</td></tr>
+						<tr><td><b>Proven wallet</b></td><td>A wallet labelled smart-money/KOL, scoring ≥70, or holding a 35%+ win rate over 8+ judged coins (a sustained ~3x edge): the pedigree currency.</td></tr>
 						<tr><td data-i18n-html="oracle_docs.win_loss_flat"><b>Win / loss / flat</b></td><td data-i18n="oracle_docs.outcome_grades_win_graduated_or_2_ath">Outcome grades: win = graduated or ≥2× ATH; loss = rugged or &lt;1.2×; flat = in between.</td></tr>
 						<tr><td data-i18n-html="oracle_docs.graduated"><b>Graduated</b></td><td data-i18n="oracle_docs.a_pump_fun_coin_that_completed_its">A pump.fun coin that completed its bonding curve — the canonical success event.</td></tr>
 						<tr><td data-i18n-html="oracle_docs.armed_2"><b>Armed</b></td><td data-i18n="oracle_docs.an_agent_configured_to_act_on_conviction">An agent configured to act on conviction automatically, in simulate or live mode.</td></tr>

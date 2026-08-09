@@ -31,108 +31,71 @@ Oracle is a pipeline, and every stage of it is watchable live at three.ws/pipeli
 
 One design commitment holds the whole thing together: scoring is a pure, side-effect-free function of assembled intel. Everything stateful, ingestion, persistence, execution, settlement, lives outside it. That boundary is why the math is testable, the verdicts are reproducible, and the same engine powers the live feed, the API, and an agent's decision with identical results.
 
-## The four pillars, with the real math
+## The model: fitted from real outcomes
 
-Every score fuses four independent reads. The weights are public and shipped in every API response: pedigree 0.34, structure 0.30, narrative 0.18, momentum 0.18. Pedigree leads because buyer track record is the single most predictive signal we have. Structure is a near-equal guardrail. Narrative and momentum refine.
+Since 2026-08-09 the conviction engine is a bucketed logistic model fitted on the platform's own labeled outcome history (92,906 launches at first fit, growing ~30k/day), not a hand-tuned point system. "Good" is defined as the coin graduated or reached a 3x-or-greater ATH multiple. Every launch-time signal is bucketed by its empirically observed ranges, each bucket carries a fitted log-odds weight, and the fused sum passes through a sigmoid to yield a calibrated P(good). The full weight table ships in `api/_lib/oracle/conviction-model.json` with each bucket's sample size and observed good-rate, and `scripts/oracle-fit.mjs` refits it from the durable training snapshot (`oracle_training_set`) whenever the data has grown.
 
-### WHO, the Pedigree pillar (weight 0.34)
+The honest numbers, measured on a time-split holdout (the newest 25 percent of labels, never seen in training): AUC 0.879 (the hand-tuned v1 engine measured 0.627 on the same window), 62.5 percent of coins in the top decile of score were good against an 11.7 percent base rate, and the Prime tier observed 72.7 percent good.
 
-Reputation earned on chain. Which smart wallets are in this coin, and what is the creator's launch history? Oracle keeps a ledger of wallets that have proven they win, and every early buyer is labeled by its archetype and track record. Creators it has never seen get a cold start prior, honest uncertainty instead of fake confidence. A confirmed serial rugger does not just lower the score, it imposes a hard ceiling on the final number that no other pillar can lift.
+The fit corrected several v1 beliefs that were backwards at the 90-second observation window:
 
-The exact adjustments, shipped in the code. Inputs come from the brain's smart-money slice (a pre-computed 0 to 100 composite, proven and total buy/sell lamports, a list of notable wallets with labels) and the creator's record (label, prior launches, graduated launches, dump rate). The base is the brain's composite, or the average of notable wallets' scores if the composite is absent. When there is no pedigree observation at all — no composite, no notable wallets, no creator record — the base anchors at a neutral prior of **38** rather than 0 (unknown buyers are the market norm, not a red flag; scoring them 0 used to pin every ordinary launch under a hard ~55 fused ceiling), and the final fused score is capped at **71**, one point below Strong. Unknown pedigree can read Lean at most; Strong and Prime must be earned with observed evidence.
+- **Top-10 holder concentration in the 0.3-0.9 band is a positive signal** (5-8x base rate), because "low concentration" 90 seconds in usually means nobody bought at all. v1 penalized it.
+- **A mid-range snipe ratio (10-70 percent of the open) is a positive signal** (2.7-3.6x base). Bots racing an open is evidence of demand; the poison is when snipers are 70 percent or more of everything. v1 penalized from 45 percent up.
+- **An oversized dev buy is not a red flag** (6+ SOL: 1.36x base). v1 subtracted 14 points for it.
+- **Category priors barely matter.** The observed spread across meme/animal/ai/tech is a fraction of what v1's hand-set priors claimed, and roughly inverted in places (tech: 0.32x base; "unknown": 1.52x).
+- **The dead-on-arrival signal v1 ignored is market cap at first sight**: below 28 SOL observes 0.27x base. Also newly used: buy-timing entropy (0.6-0.8: 3.56x), total early buy volume (25+ SOL: 5.98x), and the creator's launch history (5+ launches with zero graduations: 0.26x; a creator with any prior graduation: 1.49x).
 
-- 5 or more proven wallets in: **+14** (+9 at 3 or more, +5 at 1 or more)
-- Proven share of buy volume 40 percent or more: **+8** (+4 at 20 percent or more)
-- Flagged wallet present (rugger/dumper): **minus 12 each**, capped at minus 36 (3 wallets)
-- Smart money sold 50 percent or more of position: **minus 16** (minus 8 at 25 percent or more, trimming)
-- Creator with 3 or more launches, 0 graduated: **minus 22, hard ceiling of 45** (rug pattern)
-- Creator with 3 or more graduated launches: **+12** (+6 at 1 or more)
-- Creator dumps 50 percent or more of launches: **minus 8** (consistent exit pattern)
+The four pillars remain as the presentation layer: every feature belongs to WHO (pedigree), HOW (structure), WHAT (narrative), or MOVE (momentum), each pillar bar shows what that pillar's evidence alone would imply, and the pillar weights shown in the API are derived from the fitted model (each pillar's share of the total log-odds range its features span) instead of hand-picked constants.
 
-Returns `{ score, reasons[], cap }`. The `cap` is a hard ceiling on the final fused score, the mechanism by which a serial rugger can never produce a prime coin no matter how good the other pillars look. A wallet counts as proven if it is labelled `smart_money`/`kol` or carries a reputation score of 70 or more.
+### The features, by pillar
 
-### HOW, the Structure pillar (weight 0.30)
+Each feature below is bucketed and carries fitted weights in `conviction-model.json`. The observed good-rates quoted are from the training set at first fit; the shipped JSON is always the source of truth.
 
-The engineering of the launch itself, and the pillar with teeth. Rugs are a structure problem before they are a price problem, so structure gets a veto. The base is anchored to the brain's organic-demand score: `base = 30 + organic·0.55` (so structure alone lives in roughly 30 to 85), or a neutral 62 when organic isn't available. Then a battery of red-flag checks subtract and, for the severe ones, set a hard ceiling. The lowest cap triggered wins.
+**WHO (pedigree)**: the creator's launch record (`creator_record`: first launch 1.9x base; any prior graduation 1.5x; 5+ launches with none graduated 0.26x), dev buy size, and whether the dev sold inside the observation window. On top of the fitted features sits the smart-money overlay (below).
 
-Real deductions from the shipped code:
+**HOW (structure)**: organic-demand score (below 0.2: 0.11x base; 0.8+: 5.1x, the single strongest signal), bundle score, snipe ratio, coordination score, buy-timing entropy, and top-1/top-10 holder concentration with their empirically non-monotone buckets.
 
-- Dev sold 50 percent or more of their bag: **minus 24, caps the score at 38** (minus 10 at 20 percent or more)
-- Single-funder cluster 50 percent or more (half the "different" wallets share one funding source, a bundle in a wide-base costume): **minus 22, caps at 42** (minus 12 at 30 percent or more)
-- Flagged bundle launch: **minus 18, caps at 48**
-- Bundle likelihood 60 percent or more: **minus 20, caps at 46** (minus 11 at 35 percent or more)
-- Top-10 wallets hold 80 percent or more: **minus 22, caps at 44** (minus 12 at 60 percent or more)
-- Top holder 50 percent or more: **minus 26, caps at 45** (minus 14 at 30 percent or more)
-- Fresh/farmed wallets 70 percent or more: **minus 18, caps at 48** (minus 9 at 45 percent or more)
-- Snipe ratio 70 percent or more: **minus 16, caps at 50** (minus 8 at 45 percent or more)
-- Buyer interconnectivity 60 percent or more: **minus 10, caps at 55**
-- Creator still holds 25 percent or more: **minus 16**
-- 60 or more unique buyers: **+16** (+9 at 25 or more, minus 8 below 8)
+**WHAT (narrative)**: the classified category. Deliberately the lightest lane now: the outcome data shows category explains far less than v1's priors assumed.
 
-This is the formal statement of "structure is a veto": a launch with a serious structural defect is ceiling-limited before the weighted average is taken, so no amount of pedigree or narrative lifts it into a high tier.
+**MOVE (momentum)**: unique early buyers (40+: 6.8x base), buy/sell ratio, total early buy volume (25+ SOL: 6.0x), largest single buy, average buy size, and market cap at first sight (below 28 SOL: 0.27x, the dead-on-arrival tell).
 
-### WHAT, the Narrative pillar (weight 0.18)
+### The smart-money overlay
 
-What the coin actually is. A classifier with the news on its desk assigns every launch a category (news, culture, ai, meme, animal, celebrity, political, community, tech, utility, or unknown) and a virality estimate from 0 to 100. Each category carries a tuned prior for how often that flavor sustains attention: news launches prior at 70, culture at 66, ai at 64, unknown at 40. The virality estimate blends with the prior, weighted by the classifier's own confidence, so a low-confidence call leans on the prior instead of pretending to know. A news coin gets flagged for what it is: fast but fragile.
+Proven and flagged wallets are too rare to fit statistically (998 proven wallets platform-wide against 288k judged), but when they do appear they are the highest-fidelity evidence there is, so they adjust the fused log-odds as documented expert priors: proven wallets in the book add up to +0.75 log-odds (about a 2.1x odds bump), a 40-percent-plus proven share of buy volume adds +0.3, each flagged rugger/dumper wallet subtracts 0.45 (up to three), and smart money already exiting half its position subtracts 0.7. A wallet counts as proven if labelled `smart_money`/`kol` or scoring 70+; since 2026-08-09 a wallet also earns `smart_money` at 8-plus judged coins with a 35-percent-plus win rate, a sustained ~3x edge over the market, validated against holdout outcomes (coins with 3 or more such wallets buying early were good 95 percent of the time).
 
-Full category priors (base virality): news 70, culture 66, ai 64, meme 60, community 58, animal 56, celebrity 54, political 52, tech 50, utility 46, unknown 40.
+### One cap survives: the serial rugger
 
-The blend, when a virality estimate exists:
-
-```
-score = virality · (0.4 + 0.4·confidence) + prior · (0.6 − 0.4·confidence)
-```
-
-So high model confidence leans on the virality estimate; low confidence falls back toward the category prior. With no estimate, `score = prior`. A `news` coin adds the reason "fast but fragile"; an `unknown` coin adds "treat with caution."
-
-The classifier chain, in preference order: (1) an LLM given live crypto headlines from a public news API (cached about 90 seconds), fuzzy-matched against the coin's name, symbol, and tags, contributing up to +30 virality when the coin clearly rides a current story; (2) an LLM without news context; (3) a deterministic keyword classifier with per-category lexicons and a social-presence virality heuristic. The chain degrades gracefully: if the model is unavailable, the heuristic always produces a usable classification, tagged `source: heuristic` versus `llm`. A separate social-ingestion path can additively boost virality from tweet engagement, but never downgrades an LLM classification.
-
-### MOVE, the Momentum pillar (weight 0.18)
-
-The early footprint. Momentum is deliberately the lightest pillar, because it is the easiest signal to fake and the last to matter. It starts at a neutral 50.
-
-- Buy share 80 percent or more across at least 10 trades: **+22** (strong inflow)
-- Buy share 65 percent or more: **+12** (buyers outnumber sellers)
-- Buy share below 45 percent: **minus 16** (distribution)
-- 40 or more early buyers: **+14** (+7 at 15 or more, pile-in)
-- Dev buy 0.2 to 2.5 SOL: **+8** (skin in the game)
-- Dev buy over 6 SOL: **minus 14** (dev is the top holder, honeypot risk)
-
-With no signal yet it returns "too early," keeping the pillar neutral rather than inventing momentum that isn't there.
+v1 had seven different hard ceilings. The outcome data supported exactly one, so exactly one remains: a creator with 3 or more launches and zero graduations (or a wallet flagged `rugger`) ceilings the final score at 45, inside Watch. A graveyard dev can never present as Strong, no matter how clean the launch looks. Every other v1 cap, including the unknown-pedigree ceiling that silently pinned the entire feed below Strong for the engine's whole first two weeks, is gone: missing data now reads as the fitted null-bucket evidence it is, not as a verdict.
 
 ## Fusion, tiers, and badges
 
-The weighted blend is then capped: the lowest triggered ceiling from structure or pedigree wins, so a great story can never paper over a bundle or a dumping dev.
+The fusion is a sum in log-odds space, then a sigmoid, then a fixed monotone map onto the public 0-100 ladder:
 
 ```
-# weighted average of the four pillar scores
-score = WHO·0.34 + HOW·0.30 + WHAT·0.18 + MOVE·0.18
-
-# structure (and pedigree) can veto, the lowest cap wins
-score = min(score, structure.cap)
-
-# round + clamp to the 0 to 100 integer line
-score = clamp(round(score), 0, 100)
+z = intercept + sum(fitted bucket weights) + smart-money overlay
+p = 1 / (1 + e^(-z))                # calibrated P(graduated or 3x+ ATH)
+score = piecewise-linear map of p   # anchors: 5% -> 34, 12% -> 56, 30% -> 72, 55% -> 86
+score = min(score, 45 if serial-rugger creator)
 ```
 
-The final 0 to 100 score maps to a tier ladder whose names are chosen to be honest, because most launches are noise:
+The tier ladder is unchanged in public shape, but each boundary now states a measured probability:
 
-- **Prime, 86 and up.** Top conviction: proven money in a clean, on-narrative launch. Rare.
-- **Strong, 72 to 85.** Favorable across pedigree and structure.
-- **Lean, 56 to 71.** Leaning positive, not decisive. Watch for confirmation.
-- **Watch, 34 to 55.** Inconclusive. No edge yet.
-- **Avoid, below 34.** Structural or pedigree red flags. Full stop.
+- **Prime, 86 and up.** P(good) at least 55 percent. On holdout this band observed 72.7 percent good.
+- **Strong, 72 to 85.** P(good) at least 30 percent (observed 36.5 percent).
+- **Lean, 56 to 71.** P(good) at least 12 percent, above base rate but not decisive (observed 16.8 percent).
+- **Watch, 34 to 55.** P(good) at least 5 percent. Below base rate; no edge.
+- **Avoid, below 34.** P(good) under 5 percent (observed 2.5 percent good, 96.3 percent rugged).
 
 Only prime and strong are act signals. A conviction engine that likes everything is a hype engine.
 
-Every verdict also carries compact badges the UI renders as pills: `smart-money` (three or more proven wallets in), `structure-flag` (a ceiling triggered), `news` (riding a live story), `momentum` (subscore 72 plus), and `prime`. And every verdict ships its reasons in plain language, ordered by pillar contribution, so the most decisive fact shows first. You never get a bare number.
+Every verdict also carries compact badges the UI renders as pills: `smart-money` (three or more proven wallets in), `structure-flag` (a strongly negative fitted structure bucket), `pedigree-flag` (the rugger cap fired), `news` (riding a live story), `momentum` (subscore 72 plus), `thin-data` (most model features unobserved), and `prime`. And every verdict ships its reasons in plain language ordered by evidence strength, each quoting the observed outcome rate for its bucket ("organic demand >=0.8: 60 percent of similar launches worked"). You never get a bare number.
 
 ## Anatomy of a score
 
 The coin drawer the product shows when you click any launch is the score, fully unpacked, the same object the API returns, rendered for a human. Walking it top to bottom mirrors the model exactly:
 
-- **The four pillar bars**, WHO / HOW / WHAT / MOVE, are the sub-scores. The big number is their capped, weighted fusion.
-- **"Why this score"** is the `reasons[]` array, each line tagged to the pillar that generated it. Example on a clean-but-unproven young launch scoring 35 (watch): "no proven wallets identified yet" (WHO), "clean, distributed launch structure" (HOW), "meme narrative, virality 45/100" (WHAT), "no clear momentum yet, too early" (MOVE). Correctly a watch, not an avoid and not a buy.
+- **The four pillar bars**, WHO / HOW / WHAT / MOVE, are the sub-scores: what each pillar's own fitted evidence would imply alone, on the same probability-to-score map as the big number.
+- **"Why this score"** is the `reasons[]` array, strongest evidence first, each line tagged to its pillar and quoting the observed outcome rate for the bucket it hit, e.g. "unique early buyers >=40: 80 percent of similar launches worked (6.8x base rate)" (MOVE) or "creator has 5+ prior launches, none graduated: rug pattern" (WHO). The engine cites its training data instead of asserting adjectives.
 - **Structure / wallet-graph / buy-pattern** expose the raw HOW inputs (organic-buy percent, bundle percent, the funder graph) so you can audit the guardrail.
 - **Who's-in** is the live pedigree roster: every notable wallet, its label, and its track record.
 - **Live trades** streams the coin's buys and sells in real time, each annotated with the trader's wallet archetype.
@@ -327,7 +290,7 @@ Oracle owns five tables. The verdict cache is the heart; the rest are history, c
 
 Oracle publishes its failure modes next to its wins, so here they are. Brand-new creators and wallets start on priors, and a cold start prior is a guess with error bars, not knowledge. Momentum is the lightest pillar on purpose, which means Oracle will be late to pure momentum plays, and we accept that trade. The backtest counts only resolved outcomes, so very recent calls are invisible to it until the brain grades them. Market data sources rate-limit and go down; every consumer of them degrades gracefully to null rather than inventing a number. And live mode is deliberately conservative: hard caps, kill switch, one action per agent per coin. The engine is built to be wrong safely.
 
-A few more, stated plainly. A high score is the weight of on-chain evidence, not a prophecy; pump.fun is adversarial and heavy-tailed, and even a calibrated edge loses often, so read the tier as odds and size accordingly. The HOW pillar guards against known manipulation, but launderers iterate, and new evasion patterns are caught by the outcome loop (they rug, reputation updates) before any single rule catches them; the defense is the closed loop, not one check. And the 0.34 / 0.30 / 0.18 / 0.18 weights and every threshold are hand-set expert priors, not yet learned from outcomes; that is a deliberate, transparent starting point, and the single biggest opportunity.
+A few more, stated plainly. A high score is the weight of on-chain evidence, not a prophecy; pump.fun is adversarial and heavy-tailed, and even a calibrated edge loses often, so read the tier as odds and size accordingly. The HOW pillar guards against known manipulation, but launderers iterate, and new evasion patterns are caught by the outcome loop (they rug, reputation updates) before any single rule catches them; the defense is the closed loop, not one check. The fitted weights are only as current as the last refit, and the launch meta drifts, so `scripts/oracle-fit.mjs` exists to be rerun, and the training window (first fit: 2026-07-26 to 2026-08-09) will always lag the newest evasion pattern by however long outcomes take to resolve. And the smart-money overlay magnitudes are still documented expert priors, because proven wallets remain rare; as the widened ledger accumulates judged coins, those too become fittable.
 
 None of this is financial advice. Oracle is an analytics and automation tool. Conviction scores, signals, and agent actions are informational. Live trading risks real funds; simulate first, cap hard, and treat every number as one input among many.
 
@@ -337,16 +300,16 @@ Every coin watched sharpens the priors. Every graded outcome tunes the calibrati
 
 ## PhD appendix: Oracle as a calibrated scoring classifier
 
-Let a launch be a feature vector `x`. Oracle computes four pillar functions `f_k(x) ∈ [0,100]` for `k ∈ {ped, str, nar, mom}`, a weighted score, and a capped, clamped output:
+Let a launch be a feature vector `x`. Since v2 (2026-08-09), Oracle is a bucketed logistic model: each feature `j` is discretized by fixed empirical bin edges into a one-hot `b_j(x)`, each bin carries a fitted weight `w_{j,b}`, and
 
 ```
-s(x) = clamp( min( Σ_k w_k · f_k(x),  c(x) ),  0, 100 )
-
-  w = (0.34, 0.30, 0.18, 0.18),   Σ w_k = 1
-  c(x) = min over triggered structural/pedigree ceilings   // the veto
+z(x) = w_0 + Σ_j w_{j, b_j(x)} + o(x)     # o(x): the smart-money overlay (documented priors)
+p(x) = σ(z(x)) = 1 / (1 + e^(−z(x)))      # calibrated P(good | x)
+s(x) = min( m(p(x)),  c(x) )              # m: fixed monotone piecewise-linear map to [0,100]
+                                          # c: 45 iff serial-rugger creator, else 100
 ```
 
-The intended semantics is that `s(x)/100 ≈ P(win | x)`, where `win = graduated ∨ (ATH ≥ 2× ∧ ¬rugged)`. Calibration measures the gap between intent and reality.
+with `good = graduated ∨ ATH ≥ 3×`, fitted by SGD on the labeled outcome set (L2-regularized, deterministic seed, time-ordered rows; `scripts/oracle-fit.mjs`). `m` is anchored so the public tier boundaries land on fixed probabilities (34 ↦ 0.05, 56 ↦ 0.12, 72 ↦ 0.30, 86 ↦ 0.55). Evaluation is a strict temporal split: train on the oldest 75 percent, report AUC, precision-at-depth, and per-band reliability on the newest 25 percent. Calibration measures the gap between `p(x)` and reality out of sample.
 
 The calibration objects:
 
@@ -355,17 +318,17 @@ The calibration objects:
 - **Wilson interval**: for `w` wins in `n` resolved coins, the 95 percent Wilson score interval (z = 1.96, z² = 3.8416) is `centre = (p + z²/2n) / (1 + z²/n)` and `margin = z·√((p(1−p) + z²/4n) / n) / (1 + z²/n)` with `p = w/n`. Unlike the normal approximation `p ± z·√(p(1−p)/n)`, it stays inside [0,1], doesn't collapse to zero width at p=0 or p=1, and behaves correctly for the small `n` that young backtests have. It is the difference between an honest "we don't know yet" and a dishonest "0 percent ± 0 percent."
 - **Monotonicity and edge**: require `ŷ` non-decreasing in the score bin (within tolerance); define edge multiple `= P(win | prime) / P(win | any)` and lift as the difference, both reported with their CIs.
 
-The improvement path, formally. The current `w` and thresholds are an expert prior, a fixed, interpretable linear model. The principled upgrade is to (1) fit `w` (and pillar internals) by maximizing log-likelihood or minimizing Brier on resolved outcomes, and (2) compose a monotonic calibration map `g: s ↦ P̂(win)` (Platt or isotonic) so the published number is a true probability. The cap `c(x)` can be retained as a hard monotone constraint, preserving interpretability, "structure can veto," while the rest is learned. The data, the outcome join, and the calibration metrics needed to measure that upgrade are already in production.
+The improvement path, formally. v2 delivered the first two upgrades the v1 appendix promised: the weights are now fitted by maximizing regularized log-likelihood on resolved outcomes, and the published score is a fixed monotone map of a calibrated probability. What remains open, in order of expected value: (1) refit cadence, ideally automated once the labeled set's growth is stable, with a champion/challenger holdout gate so a refit never silently regresses; (2) interaction terms or shallow trees over the same buckets, since the current model is additive and the strongest observed patterns (concentration crossed with buyer count) are plausibly interactive; (3) fitting the smart-money overlay once the widened proven-wallet ledger accumulates enough judged appearances; (4) survival-style labels (time-to-rug) instead of the binary good, so the engine can price exit windows and not just entries.
 
 References and further reading. Wilson (1927), *Probable inference, the law of succession, and statistical inference*. Brier (1950), *Verification of forecasts expressed in terms of probability*. Platt (1999), probabilistic outputs for SVMs (Platt scaling). Zadrozny and Elkan (2002), isotonic calibration. Niculescu-Mizil and Caruana (2005), *Predicting good probabilities with supervised learning*.
 
 ## Glossary
 
-- **Conviction**: the fused 0 to 100 score, the weight of on-chain evidence that a launch will win.
+- **Conviction**: the fused 0 to 100 score, a fixed monotone map of the model's calibrated P(good) so tier boundaries land on stated probabilities.
 - **Pillar**: one of the four independent reads, WHO (pedigree), HOW (structure), WHAT (narrative), MOVE (momentum).
 - **Tier**: the coarse band a score falls in: prime / strong / lean / watch / avoid.
 - **Cap (veto)**: a hard ceiling on the final score, set by a severe structural or pedigree red flag, applied before clamping.
-- **Proven wallet**: a wallet labelled smart-money/KOL or with a reputation score of 70 or more, the pedigree currency.
+- **Proven wallet**: a wallet labelled smart-money/KOL, scoring 70 or more, or holding a 35-percent-plus win rate over 8-plus judged coins (a sustained ~3x edge), the pedigree currency.
 - **Win / loss / flat**: outcome grades. Win = graduated or 2 times or greater ATH; loss = rugged or below 1.2 times; flat = in between.
 - **Graduated**: a pump.fun coin that completed its bonding curve, the canonical success event.
 - **Armed**: an agent configured to act on conviction automatically, in simulate or live mode.

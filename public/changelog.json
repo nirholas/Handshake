@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-08-09T09:42:19.262Z",
+	"generated_at": "2026-08-09T09:43:52.145Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-09",
+			"type": "update",
+			"title": "The Oracle now scores from measured outcomes, and its top tiers finally mean something",
+			"summary": "The Oracle's conviction score was rebuilt on what actually happened to 92,906 real pump.fun launches instead of hand-set rules. Every score is now a measured probability that a coin graduates or pumps 3x or more, and each tier states its real-world odds: on data the model never trained on, Prime picks were good 72.7% of the time while Avoid picks rugged 96.3% of the time. The old engine had never once produced a Strong or Prime score; several of its penalties turned out to be backwards against the data and are fixed. Every verdict now cites its evidence with the observed success rate for each signal, the smart-money wallet ledger grew from 214 to 998 proven wallets under a validated definition, and the learning pipeline that grades every launch was unblocked so the model keeps sharpening daily.",
+			"link": "/oracle",
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
 		{
 			"date": "2026-08-09",
 			"type": "update",

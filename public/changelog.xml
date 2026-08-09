@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>The Oracle now scores from measured outcomes, and its top tiers finally mean something</title>
+			<link>https://three.ws/oracle</link>
+			<guid isPermaLink="false">2026-08-09:The Oracle now scores from measured outcomes, and its top tiers finally mean something</guid>
+			<pubDate>Sun, 09 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Oracle's conviction score was rebuilt on what actually happened to 92,906 real pump.fun launches instead of hand-set rules. Every score is now a measured probability that a coin graduates or pumps 3x or more, and each tier states its real-world odds: on data the model never trained on, Prime picks were good 72.7% of the time while Avoid picks rugged 96.3% of the time. The old engine had never once produced a Strong or Prime score; several of its penalties turned out to be backwards against the data and are fixed. Every verdict now cites its evidence with the observed success rate for each signal, the smart-money wallet ledger grew from 214 to 998 proven wallets under a validated definition, and the learning pipeline that grades every launch was unblocked so the model keeps sharpening daily.</description>
+		</item>
+		<item>
 			<title>The wardrobe panel no longer glitches shut when you reopen it quickly</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-08-09:The wardrobe panel no longer glitches shut when you reopen it quickly</guid>
