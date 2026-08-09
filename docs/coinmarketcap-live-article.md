@@ -17,10 +17,9 @@ holding its first in-world meetup: not a webinar, not a call, an actual persiste
 anyone can walk into from a browser tab. **Friday, August 7, 2026, 8 AM to 5 PM Pacific**, in the
 $THREE home town, the flagship world pinned at the top of the /play lobby.
 
-As of publishing: **[X] avatars in the plaza**, drawn from **[list of orgs/communities
-represented if known, otherwise omit]**. That number is live and moves throughout the day; the
-in-world jumbotron over the plaza shows the current headcount to anyone who walks up to it, which
-is itself part of the point: a community meetup you can watch fill up in real time, from inside the
+The number climbed all day and peaked at **3,145 avatars in the plaza at once**. The in-world
+jumbotron over the plaza showed the running headcount to anyone who walked up to it, which was
+itself part of the point: a community meetup you could watch fill up in real time, from inside the
 room.
 
 ## Why this one is worth watching

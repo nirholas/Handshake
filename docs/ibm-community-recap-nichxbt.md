@@ -47,6 +47,21 @@ side, was doing the same thing, and I remember thinking that was the entire argu
 in one sentence: an IBM Community organizer spending her afternoon fishing in our product instead of
 sitting through a deck about it.
 
+## The rest of the platform got demoed too
+
+The MCP connectors were the official agenda item, but the Q&A wandered into everything else people
+wanted to poke at, and I was glad it did. Forge came up a lot: free text-to-3D, type a sentence, get
+a textured model, no account required. So did Avatar Studio, which is Forge's rigged sibling, it
+doesn't just generate a mesh, it skeletonizes it, so whatever comes out can walk and sit down like
+everyone else in the world. Someone asked whether that only works on avatars made in our own tool,
+and the honest answer is no: the retargeting layer reads whatever bone naming convention a GLB
+arrives with, Mixamo, Avaturn, Unreal, VRM and VRM 1.0, Daz/Genesis, MakeHuman, Blender's own `.L`
+suffix convention, and maps it onto a canonical skeleton, so an avatar someone made somewhere else
+entirely still walks and waves correctly the moment it loads. We also walked through the wardrobe
+and cosmetics layer, which is shared across every coin's world rather than scoped to one, and the
+agent-3d web component, which is the piece that lets a site that isn't three.ws at all embed one of
+these avatars and drive its animation state from outside code.
+
 ## What it proved as an engineer, not just as a host
 
 Strip the fun away and a nine-hour meetup held entirely inside a live multiplayer world is a real
@@ -56,6 +71,19 @@ conversations for a full workday, with concurrency climbing past a thousand earl
 3,145 at once. It held. I do not say that lightly; that is the kind of claim I would want proven in
 front of me too, and yesterday it was.
 
+None of the event dressing around the meetup was hand-built for the day either, and that mattered
+more than I expected once people started asking about it. The live countdown that turned into
+fireworks at 8 AM was worked out from a shared clock rather than pushed over the network, so the show
+held together no matter how many of us were watching or how good anyone's connection was. Everyone
+who walked in while the event was live got a Meetup Laurel, a small gold circlet with three pearl
+berries, permanently, for free, decided server-side, and it will never be granted again once the
+window closes: the only way to have one is to have actually been there. There was an event-only jobs
+board too, four repeatable tasks that paid better than the everyday ones and fed a live leaderboard,
+which is what Broke Boi and BigB and I were actually racing each other on between the fishing trips.
+None of that is a demo built to impress a partner; it's the same event infrastructure every /play
+world gets when its coin runs a scheduled event, and yesterday was the first time it ran at this
+scale in front of an audience that would notice if it didn't.
+
 ## What I'd tell the next community trying this
 
 Every world here is a shareable URL, and every pump.fun coin already has one derived from its mint.
@@ -63,6 +91,21 @@ The mechanics that carried a nine-hour, formal, all-day meetup are the same mech
 gets for free. If your group is deciding between another call and an afternoon inside a world your
 members can actually walk around in, I know which one I would pick, and now I have a day's worth of
 uptime to back that up.
+
+## Where I want to take this partnership next
+
+One meetup doesn't make a partnership, it's the proof that the partnership is worth investing in
+further, and that's how we're treating it. Jessica and I are already talking about making this a
+rhythm rather than a one-off: more joint blog posts on both sides instead of one recap each, and more
+of what we actually ship getting a shoutout through IBM's own channels instead of staying inside our
+own. There's also a bigger swing we're now looking at seriously. IBM opened up its Partner Plus
+marketplace motions to business partners this month: Microsoft Multiparty Private Offers across 35
+countries and Google Cloud Marketplace Channel Private Offers across 43, on top of AWS reseller
+transactions that are already integrated with automatic rebates. We're now pursuing what it would
+take for three.ws to be eligible and approved to sell through those hyperscaler marketplaces
+alongside IBM software. Nothing here is confirmed yet, that approval is IBM's to grant, not mine to
+claim, but it's a real conversation growing directly out of yesterday, and I'll post an update the
+moment there's something concrete to report.
 
 ## What's next
 

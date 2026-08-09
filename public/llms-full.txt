@@ -3870,7 +3870,7 @@ Editorial index of three.ws launches and long-form posts.
 
 URL: https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap
 
-The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, in the $THREE home town at three.ws/play. Here
+The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, peaking at 3,145 concurrent users in the $THREE home town at three.ws/play.
 
 ### Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs
 

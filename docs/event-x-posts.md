@@ -213,6 +213,77 @@ community.ibm.com so the IBM domain is visible in the frame.
 
 ---
 
+## 5c. Sharing Jessica's recap (published)
+
+Jessica's recap, ["The First Three.ws User Group Meetup: How It
+Went"](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/08/08/the-first-threews-user-group-meetup-ibm),
+is up on IBM Community. Same two-account split as the announcement post in 5b: `@trythreews` posts
+the institutional version, `@nichxbt` quote-tweets it with the human one. Do not post both within a
+few minutes of each other.
+
+### From @trythreews (recommended, leads with the concurrency stat). This is the posted version.
+
+The stat is the hook: it's the single number in her post a reader has no way to guess, and it lands
+harder on X than the framing sentence does. This excerpt is contiguous, verbatim, straight out of
+her post, just the framing clause and the number, without the full paragraph's extra sentence.
+
+> Jessica, the @IBM Community organizer behind the Three.ws User Group, just published her own recap
+> of Friday's meetup.
+>
+> "This group is still small, but the open world we held it in is not gated to members: anyone with
+> the link could walk in, and a lot of people did. Peak concurrency in the world hit 3,145 avatars at
+> once over the course of the day, well past anything a call could have seated."
+>
+> https://community.ibm.com/community/user/blogs/jessica-swanson/2026/08/08/the-first-threews-user-group-meetup-ibm
+
+### From @trythreews (alternate, tight quote without the stat)
+
+> Jessica, the @IBM Community organizer behind the Three.ws User Group, just published her own recap
+> of Friday's meetup.
+>
+> "Neither IBM nor three.ws is the slow, boring-enterprise thing people assume from the outside. We
+> both like trying things that are actually new, and a nine-hour user-group meetup held entirely
+> inside a 3D world, instead of on a call, is exactly that kind of thing. It held up."
+>
+> https://community.ibm.com/community/user/blogs/jessica-swanson/2026/08/08/the-first-threews-user-group-meetup-ibm
+
+### From @trythreews (full quote, if you want both the framing and the number)
+
+> Jessica, the @IBM Community organizer behind the Three.ws User Group, just published her own recap
+> of Friday's meetup.
+>
+> "Neither IBM nor three.ws is the slow, boring-enterprise thing people assume from the outside. We
+> both like trying things that are actually new, and a nine-hour user-group meetup held entirely
+> inside a 3D world, instead of on a call, is exactly that kind of thing. It held up. This group is
+> still small, but the open world we held it in is not gated to members: anyone with the link could
+> walk in, and a lot of people did. Peak concurrency in the world hit 3,145 avatars at once over the
+> course of the day, well past anything a call could have seated, even though most of that crowd
+> came for the open world itself rather than being User Group members."
+>
+> https://community.ibm.com/community/user/blogs/jessica-swanson/2026/08/08/the-first-threews-user-group-meetup-ibm
+
+### From @nichxbt (the human one, quote-tweeting the @trythreews post above)
+
+> Jessica called it exactly right: this was never going to be the slow, boring-enterprise version of
+> a partnership. Proud of what we built together and even more proud she felt like writing that.
+>
+> Read the whole thing, then go stand in the world she's describing: three.ws/play
+
+**Media for the @trythreews post:** a clean screenshot of the recap's header on community.ibm.com,
+so the IBM domain and Jessica's byline are visible in the frame. Second choice: the in-world plaza
+shot from the day, if you have one with a visibly dense crowd, since the post is making a
+concurrency claim.
+
+**Rules for this one, same as 5b:**
+
+- Name her and her role in the first line. "Jessica wrote a recap" is the headline, not the blog
+  title.
+- Quote verbatim inside quotation marks. Do not paraphrase her into our voice.
+- One link, hers, at the end. Do not stack the event listing or the user group link on this post.
+- Do not add our own "and here is why that matters" paragraph. Her post already argues it.
+
+---
+
 ## 6. Recycling the existing `/play` footage
 
 Map what you already have to the beats above, so each post carries a clip that matches its copy:
