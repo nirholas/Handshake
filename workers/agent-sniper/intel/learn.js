@@ -229,39 +229,80 @@ export function deriveOutcome(coin, mcSolFirstSeen) {
 	return { outcome, graduated, rugged, ath_multiple, last_market_cap_usd: usdMc, ath_market_cap_usd: athUsd };
 }
 
+// How many pump.fun coin lookups run at once inside labelOutcomes. The coin API
+// tolerates modest parallelism fine; 8 keeps a 500-coin batch under ~30s instead
+// of the serial ~8 minutes that let the labeler drown in the firehose (labels
+// stopped entirely for 11 days in Aug 2026 because inflow outpaced a serial,
+// 100-per-15-min loop).
+const LABEL_CONCURRENCY = 8;
+
 /**
  * Label coins observed ≥ minAgeMinutes ago that have no outcome yet.
+ *
+ * Throughput is load-bearing: the firehose adds ~30k coins/day and every one of
+ * them needs a verdict for the Oracle/intel learners to have ground truth.
+ * Lookups run LABEL_CONCURRENCY at a time and results land in batched upserts.
+ * Each labeled coin is also snapshotted into oracle_training_set, the durable
+ * (never-pruned) copy of (launch-time features, outcome) that survives the
+ * db-retention window pump_coin_intel/pump_coin_outcomes live under.
+ *
+ * A deadline bounds the wall clock (the coin API can degrade to per-call
+ * timeouts); whatever isn't reached this run is picked up by the next.
+ *
  * @returns {Promise<{ labeled: number }>}
  */
-export async function labelOutcomes({ network = 'mainnet', limit = 100, minAgeMinutes = 60 } = {}) {
+export async function labelOutcomes({ network = 'mainnet', limit = 100, minAgeMinutes = 60, deadlineMs = 180_000 } = {}) {
 	const sql = await getSql();
 	if (!sql) return { labeled: 0 };
+	const startedAt = Date.now();
 
 	const rows = await sql`
-		select i.mint, i.signals
+		select i.mint, i.signals, i.category, i.first_seen_at,
+		       wr.creator_count, wr.creator_wins, wr.dump_rate
 		from pump_coin_intel i
 		left join pump_coin_outcomes o on o.mint = i.mint
+		left join wallet_reputation wr on wr.wallet = i.creator and wr.network = i.network
 		where i.network = ${network}
 		  and o.mint is null
 		  and i.first_seen_at <= now() - (${minAgeMinutes} || ' minutes')::interval
 		order by i.first_seen_at asc
-		limit ${Math.max(1, Math.min(500, limit | 0))}
+		limit ${Math.max(1, Math.min(2000, limit | 0))}
 	`;
 
+	// Fetch pump.fun state concurrently in fixed-size waves.
+	const results = [];
+	for (let i = 0; i < rows.length; i += LABEL_CONCURRENCY) {
+		if (Date.now() - startedAt > deadlineMs) break;
+		const wave = rows.slice(i, i + LABEL_CONCURRENCY);
+		const coins = await Promise.all(wave.map((row) => fetchCoin(row.mint)));
+		for (let j = 0; j < wave.length; j++) {
+			const row = wave[j];
+			const mcSol = Number(row.signals?.mc_sol_first_seen) || 0;
+			results.push({ row, o: deriveOutcome(coins[j], mcSol) });
+		}
+	}
+
 	let labeled = 0;
-	for (const row of rows) {
-		const mcSol = Number(row.signals?.mc_sol_first_seen) || 0;
-		const coin = await fetchCoin(row.mint);
-		const o = deriveOutcome(coin, mcSol);
+	const BATCH = 50;
+	for (let i = 0; i < results.length; i += BATCH) {
+		const batch = results.slice(i, i + BATCH);
 		try {
 			await sql`
 				insert into pump_coin_outcomes (
 					mint, graduated, rugged, ath_market_cap_usd, ath_multiple,
 					last_market_cap_usd, outcome
-				) values (
-					${row.mint}, ${o.graduated}, ${o.rugged}, ${o.ath_market_cap_usd},
-					${o.ath_multiple}, ${o.last_market_cap_usd}, ${o.outcome}
 				)
+				select u.mint, u.graduated, u.rugged, u.ath_market_cap_usd,
+				       u.ath_multiple, u.last_market_cap_usd, u.outcome
+				from unnest(
+					${batch.map((b) => b.row.mint)}::text[],
+					${batch.map((b) => b.o.graduated)}::boolean[],
+					${batch.map((b) => b.o.rugged)}::boolean[],
+					${batch.map((b) => b.o.ath_market_cap_usd)}::double precision[],
+					${batch.map((b) => b.o.ath_multiple)}::double precision[],
+					${batch.map((b) => b.o.last_market_cap_usd)}::double precision[],
+					${batch.map((b) => b.o.outcome)}::text[]
+				) as u(mint, graduated, rugged, ath_market_cap_usd, ath_multiple, last_market_cap_usd, outcome)
 				on conflict (mint) do update set
 					graduated = excluded.graduated, rugged = excluded.rugged,
 					ath_market_cap_usd = excluded.ath_market_cap_usd,
@@ -269,9 +310,43 @@ export async function labelOutcomes({ network = 'mainnet', limit = 100, minAgeMi
 					last_market_cap_usd = excluded.last_market_cap_usd,
 					outcome = excluded.outcome, labeled_at = now()
 			`;
-			labeled++;
+			labeled += batch.length;
 		} catch (err) {
-			console.warn('[coin-intel] label outcome failed:', err?.message);
+			console.warn('[coin-intel] label outcome batch failed:', err?.message);
+			continue;
+		}
+
+		// Durable training snapshot: only for coins with a real verdict.
+		const judged = batch.filter((b) => b.o.outcome && b.o.outcome !== 'unknown');
+		if (!judged.length) continue;
+		try {
+			await sql`
+				insert into oracle_training_set (
+					mint, network, features, category,
+					creator_launches, creator_wins, creator_dump_rate,
+					outcome, graduated, rugged, ath_multiple, first_seen_at
+				)
+				select u.mint, ${network}, u.features::jsonb, u.category,
+				       u.creator_launches, u.creator_wins, u.creator_dump_rate,
+				       u.outcome, u.graduated, u.rugged, u.ath_multiple, u.first_seen_at
+				from unnest(
+					${judged.map((b) => b.row.mint)}::text[],
+					${judged.map((b) => JSON.stringify(b.row.signals || {}))}::text[],
+					${judged.map((b) => b.row.category)}::text[],
+					${judged.map((b) => b.row.creator_count)}::int[],
+					${judged.map((b) => b.row.creator_wins)}::int[],
+					${judged.map((b) => b.row.dump_rate)}::real[],
+					${judged.map((b) => b.o.outcome)}::text[],
+					${judged.map((b) => b.o.graduated)}::boolean[],
+					${judged.map((b) => b.o.rugged)}::boolean[],
+					${judged.map((b) => b.o.ath_multiple)}::double precision[],
+					${judged.map((b) => b.row.first_seen_at)}::timestamptz[]
+				) as u(mint, features, category, creator_launches, creator_wins, creator_dump_rate,
+				       outcome, graduated, rugged, ath_multiple, first_seen_at)
+				on conflict (mint, network) do nothing
+			`;
+		} catch (err) {
+			console.warn('[coin-intel] training snapshot batch failed:', err?.message);
 		}
 	}
 	return { labeled };

@@ -27,8 +27,12 @@ export default wrapCron(async (req, res) => {
 	const started = Date.now();
 
 	// Label coins observed ≥ 60 min ago (enough time for a verdict to form) that
-	// have no outcome yet. Bounded per run; the cadence catches up over time.
-	const { labeled } = await labelOutcomes({ network: NETWORK, limit: 100, minAgeMinutes: 60 });
+	// have no outcome yet. The budget must OUTRUN the firehose: ~30k new coins/day
+	// against this cron's 96 runs/day means anything under ~350/run falls behind
+	// forever (the serial 100/run era ended with an 11-day labeling blackout and a
+	// 370k backlog). 1500/run ≈ 144k/day: catches up a backlog in days, then
+	// idles cheaply (the query returns only unlabeled coins).
+	const { labeled } = await labelOutcomes({ network: NETWORK, limit: 1500, minAgeMinutes: 60 });
 
 	// Retrain once there's enough labeled history. Skips quietly below the floor.
 	// The sample ceiling keeps the training query's memory bounded (the signals
