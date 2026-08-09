@@ -148,6 +148,43 @@ channel when any answer exceeds that loop's cadence-derived limit. A loop with
 no rows at all is the worst finding, not an exemption. Policy is pure and
 tested: [api/_lib/sniper-loops-health.js](../api/_lib/sniper-loops-health.js).
 
+## The 2026-08-09 retune (what 254 closed trades actually said)
+
+A full autopsy of every closed mainnet trade (254 closes, 31.9% win rate, net
+-0.159 SOL) reduced the fleet's whole history to five findings, and the strategy
+table was rewritten to match them:
+
+1. **Exits were the leak, not entries.** 132 of 254 trades were green at some
+   point; peak unrealized gains summed to +0.93 SOL against -0.16 realized. 51
+   trades went green and still closed red. The entry pickers found the upside;
+   the exit policy gave it back.
+2. **Stop-losses do not cap downside on this venue.** The five worst trades all
+   had a 15% stop set and still closed -84% to -99.9%: a rug gaps through the
+   stop before it can fire, and the entry-time firewall sim passes because the
+   pool is honest until it isn't. Size every entry as if it can go to zero.
+3. **The one net-positive pattern was the take-initials ladder.** The 5 trades
+   that recovered initials at 2x: +0.41 SOL realized plus a moon bag still held.
+   The other 249: -0.57 SOL. `initials_out_multiple=2` + `moonbag_always` is now
+   enforced on every enabled arm instead of being an accident.
+4. **Hold-time has a sweet spot.** Sub-400s scalps lost 0.36 SOL across 153
+   trades even at a 49% win rate; the 10-15 minute band made +0.37 SOL on 5;
+   everything past an hour went 0-for-20. Scalp arms were stretched into the
+   band, and the timeout is treated as a failure mode, not an exit.
+5. **A capped-upside/uncapped-downside arm loses even when it wins.** The
+   graduation-ride arm won 63% of 90 trades and still lost money with TP 20 /
+   SL 15 against occasional -99% rugs. Reward must be a multiple of risk
+   everywhere: no arm keeps a TP below 2x its SL, and no arm trades with a null
+   TP (that arm went 0-for-24).
+
+The applied changes: six lifetime-negative `new_mint` spray arms disabled (that
+trigger went 4-for-64, -0.17 SOL, worst in the fleet), TP set on all 14 arms
+that had none, the graduation-ride arm retuned to TP 100 / hold 900s / size
+matched to the auto-funder's top-up, the tightest LLM arm widened to TP 60, and
+the ladder policy enforced fleet-wide. The oracle-crossing arm, the only
+strategy with a real lifetime profit (+0.17 SOL on 8 selective trades, wide TP,
+1-hour hold), was deliberately left untouched: the rebuilt fleet copies its
+shape rather than diluting it.
+
 ## Why an arm shows zero trades (the silent-death class)
 
 A sniper arm can be enabled, funded, and evaluating every launch that crosses the

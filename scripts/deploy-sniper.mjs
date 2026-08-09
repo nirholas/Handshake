@@ -183,7 +183,27 @@ function deploy() {
 		const m = yaml.match(/name:\s*SNIPER_MODE[\s\S]*?value:\s*["']?(live|simulate)/);
 		if (m) mode = m[1];
 	} catch { /* fall back to "unknown" in the log */ }
-	log(`deploying service (minScale=maxScale=1, no CPU throttling, mode=${mode})…`);
+
+	// An existing service may carry env the manifest does not know about: the
+	// live cutover (SNIPER_MODE=live), WALLET_ENCRYPTION_KEY, the RPC failover
+	// chain, LLM keys. `services replace` would wipe every one of them: that
+	// exact footgun was caught mid-deploy on 2026-08-09, where a replace would
+	// have silently flipped the live fleet back to simulate AND removed the
+	// wallet decryption key. So: replace only on first deploy; after that, roll
+	// code with `services update --image`, which preserves the running config.
+	const existing = gcloud(['run', 'services', 'describe', SERVICE, `--region=${REGION}`,
+		'--format=value(spec.template.spec.containers[0].image)'], { mutating: false, capture: true });
+	if (existing.status === 0 && existing.stdout.trim()) {
+		const image = existing.stdout.trim();
+		log(`service exists: rolling a new revision of ${image} (running env preserved, incl. any live cutover)…`);
+		const r = gcloud(['run', 'services', 'update', SERVICE, `--region=${REGION}`, `--image=${image}`]);
+		if (r.status !== 0) die('gcloud run services update failed');
+		ok('new revision rolled out with the running config intact');
+		warn('the checked-in cloudrun.yaml was NOT applied (it would clobber the running env). To change service config, use `gcloud run services update --update-env-vars` per key.');
+		return;
+	}
+
+	log(`first deploy: applying manifest (minScale=maxScale=1, no CPU throttling, mode=${mode})…`);
 	if (mode === 'live') warn('LIVE mode: this service will sign + broadcast real trades from agent wallets.');
 	const r = gcloud(['run', 'services', 'replace', CLOUDRUN, `--region=${REGION}`]);
 	if (r.status !== 0) die('gcloud run services replace failed');
@@ -231,7 +251,7 @@ async function main() {
 	build();
 	deploy();
 	await verifyHeartbeat();
-	ok('done. Worker deployed in SIMULATE mode (zero spend).');
+	ok('done. First deploys land in SIMULATE mode (zero spend); redeploys keep the running mode.');
 	log('Live cutover (gated): see deploy/sniper/README.md → "Cutover to live".');
 	log('Status surface: https://three.ws/api/sniper/status');
 }
