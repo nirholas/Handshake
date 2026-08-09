@@ -280,6 +280,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['ibm-community-article', 'internal: source draft of an IBM Community post'],
 	['ibm-community-live-reaction-jessica', 'internal: source draft of an IBM Community post'],
 	['ibm-community-recap-jessica', 'internal: source draft of an IBM Community post'],
+	['ibm-community-recap-nichxbt', 'internal: source draft of an IBM Community post'],
 	['ibm-community-blog-meetup-jessica', 'internal: source draft of an IBM Community post'],
 	['ibm-community-thread', 'internal: source draft of an IBM Community post'],
 	['launch-usecases', 'owner-gated: names a crypto project other than $THREE'],
