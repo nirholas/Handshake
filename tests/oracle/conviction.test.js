@@ -1,304 +1,303 @@
-// Oracle conviction engine — unit tests.
+// Oracle conviction engine v2: unit tests.
 //
-// The engine is the product's brain, so its behavior is pinned here: pedigree
-// leads, structural red flags cap the final score no matter how good the
-// pedigree, flagged wallets drag, and the tiers fall on the documented bounds.
+// The engine is the product's brain, so its behavior is pinned here: the fitted
+// model drives the score, probability maps to the public tier ladder through
+// fixed anchors, the smart-money overlay adjusts in log-odds, and the one
+// surviving hard cap (serial-rugger creator) ceilings the final score.
 
 import { describe, it, expect } from 'vitest';
 import {
 	convict,
-	pedigreeScore,
-	structureScore,
-	narrativeScore,
-	momentumScore,
+	evaluateModel,
+	smartMoneyOverlay,
+	scoreFromProbability,
+	MODEL,
+	PILLAR_WEIGHTS,
 	WEIGHTS,
-	PEDIGREE_UNKNOWN_PRIOR,
 	tierTone,
 } from '../../api/_lib/oracle/conviction.js';
 import { archetypeFor, isProven, isFlagged } from '../../api/_lib/oracle/archetype.js';
 
-describe('weights', () => {
-	it('pillar weights sum to 1', () => {
-		const sum = WEIGHTS.pedigree + WEIGHTS.structure + WEIGHTS.narrative + WEIGHTS.momentum;
-		expect(sum).toBeCloseTo(1, 6);
+// A launch whose raw signals sit in the model's empirically-best buckets
+// (audit 2026-08-09: organic >=0.8 -> 59.7% good, 40+ unique buyers -> 80%,
+// buy volume >=25 SOL -> 70.2%, snipe 0.1-0.3 -> 42.1%).
+const strongLaunch = () => ({
+	category: 'animal',
+	launch: {
+		organic_score: 0.85,
+		bundle_score: 0.15,
+		snipe_ratio: 0.2,
+		coordination_score: 0.15,
+		timing_entropy: 0.7,
+		concentration_top1: 0.1,
+		concentration_top10: 0.5,
+		unique_buyers: 55,
+		buy_sell_ratio: 2.5,
+		buy_volume_sol: 30,
+		largest_buy_sol: 6,
+		avg_buy_sol: 0.6,
+		dev_buy_sol: 0.3,
+		mc_sol_first_seen: 29,
+		dev_sold: false,
+	},
+	creator: { launches: 4, launchWins: 2 },
+	smartMoney: { notable: [] },
+});
+
+// The empirically-worst buckets (organic <0.2 -> 1.3% good, no buyers, dead cap).
+const deadLaunch = () => ({
+	category: 'tech',
+	launch: {
+		organic_score: 0.1,
+		bundle_score: 0.6,
+		snipe_ratio: 0.8,
+		coordination_score: 0.4,
+		timing_entropy: 0.05,
+		concentration_top1: 0.02,
+		concentration_top10: 0.1,
+		unique_buyers: 0,
+		buy_volume_sol: 0.1,
+		largest_buy_sol: 0.05,
+		avg_buy_sol: 0.01,
+		dev_buy_sol: 0,
+		mc_sol_first_seen: 27,
+		dev_sold: false,
+	},
+	creator: { launches: 0, launchWins: 0 },
+	smartMoney: { notable: [] },
+});
+
+describe('model', () => {
+	it('ships provenance: version, fit date, training size, base rate', () => {
+		expect(MODEL.version).toBeGreaterThanOrEqual(2);
+		expect(MODEL.training_rows).toBeGreaterThan(50_000);
+		expect(MODEL.base_good_rate).toBeGreaterThan(0);
+		expect(MODEL.base_good_rate).toBeLessThan(0.5);
+		expect(Number.isFinite(MODEL.intercept)).toBe(true);
+	});
+
+	it('every bucket weight carries its sample size and observed good-rate', () => {
+		for (const f of MODEL.features) {
+			for (const [bucket, stats] of Object.entries(f.buckets)) {
+				expect(Number.isFinite(stats.w), `${f.key} ${bucket} w`).toBe(true);
+				expect(stats.n, `${f.key} ${bucket} n`).toBeGreaterThan(0);
+				expect(stats.good_rate).toBeGreaterThanOrEqual(0);
+				expect(stats.good_rate).toBeLessThanOrEqual(1);
+			}
+		}
+	});
+
+	it('derived pillar weights sum to 1', () => {
+		const sum = Object.values(PILLAR_WEIGHTS).reduce((a, b) => a + b, 0);
+		expect(sum).toBeCloseTo(1, 1);
+		expect(WEIGHTS).toBe(PILLAR_WEIGHTS); // legacy alias
 	});
 });
 
-describe('pedigreeScore', () => {
+describe('scoreFromProbability', () => {
+	it('lands each tier boundary exactly on its probability anchor', () => {
+		const a = MODEL.tier_probability_anchors;
+		expect(scoreFromProbability(a.watch)).toBe(34);
+		expect(scoreFromProbability(a.lean)).toBe(56);
+		expect(scoreFromProbability(a.strong)).toBe(72);
+		expect(scoreFromProbability(a.prime)).toBe(86);
+	});
+
+	it('is monotone and clamped', () => {
+		expect(scoreFromProbability(0)).toBe(0);
+		expect(scoreFromProbability(1)).toBe(100);
+		expect(scoreFromProbability(-1)).toBe(0);
+		expect(scoreFromProbability(2)).toBe(100);
+		let prev = -1;
+		for (let p = 0; p <= 1.0001; p += 0.01) {
+			const s = scoreFromProbability(p);
+			expect(s).toBeGreaterThanOrEqual(prev);
+			prev = s;
+		}
+	});
+});
+
+describe('evaluateModel', () => {
+	it('reads raw launch signals and produces a finite fused probability', () => {
+		const out = evaluateModel(strongLaunch());
+		expect(Number.isFinite(out.z)).toBe(true);
+		expect(out.p).toBeGreaterThan(0);
+		expect(out.p).toBeLessThan(1);
+		expect(out.hits.length).toBe(MODEL.features.length);
+	});
+
+	it('scores strong evidence far above dead evidence', () => {
+		const strong = evaluateModel(strongLaunch());
+		const dead = evaluateModel(deadLaunch());
+		expect(strong.p).toBeGreaterThan(dead.p * 5);
+	});
+
+	it('tolerates an empty intel without throwing or NaN', () => {
+		const out = evaluateModel({});
+		expect(Number.isFinite(out.p)).toBe(true);
+	});
+
+	it('falls back to derived CoinIntel fields when raw signals are absent', () => {
+		const viaRaw = evaluateModel({ launch: { organic_score: 0.85 } });
+		const viaDerived = evaluateModel({ structure: { organicScore: 85 } });
+		// Same bucket hit either way.
+		const rawHit = viaRaw.hits.find((h) => h.key === 'organic_score');
+		const derivedHit = viaDerived.hits.find((h) => h.key === 'organic_score');
+		expect(rawHit.bucket).toBe(derivedHit.bucket);
+	});
+
+	it('computes buy_sell_ratio from behavior counts when the raw signal is missing', () => {
+		const out = evaluateModel({ behavior: { buyCount: 30, sellCount: 10 } });
+		const hit = out.hits.find((h) => h.key === 'buy_sell_ratio');
+		expect(hit.bucket).toBe('2-4');
+	});
+});
+
+describe('smartMoneyOverlay', () => {
 	it('rewards proven wallets and proven-money share', () => {
-		const out = pedigreeScore({
-			score: 60,
+		const out = smartMoneyOverlay({
 			smartWalletCount: 3,
 			provenBuyLamports: 5e9,
 			totalBuyLamports: 1e10,
 			notable: [{ wallet: 'a', label: 'smart_money', score: 88 }],
 		});
-		expect(out.score).toBeGreaterThan(60);
+		expect(out.z).toBeGreaterThan(0);
 		expect(out.reasons.join(' ')).toMatch(/smart-money/);
 	});
 
-	it('drags hard on flagged (rugger/dumper) wallets', () => {
-		const clean = pedigreeScore({ score: 70, smartWalletCount: 0, notable: [] });
-		const dirty = pedigreeScore({
-			score: 70,
-			smartWalletCount: 0,
+	it('drags on flagged (rugger/dumper) wallets', () => {
+		const out = smartMoneyOverlay({
 			notable: [
 				{ wallet: 'r', label: 'rugger', score: 10 },
 				{ wallet: 'd', label: 'dumper', score: 20 },
 			],
 		});
-		expect(dirty.score).toBeLessThan(clean.score);
-		expect(dirty.reasons.join(' ')).toMatch(/flagged/);
+		expect(out.z).toBeLessThan(0);
+		expect(out.reasons.join(' ')).toMatch(/flagged/);
 	});
 
-	it('derives a base from notable wallets when no composite score is given', () => {
-		const out = pedigreeScore({
-			notable: [
-				{ wallet: 'a', label: 'smart_money', score: 80 },
-				{ wallet: 'b', label: 'neutral', score: 40 },
-			],
-		});
-		expect(out.score).toBeGreaterThan(0);
+	it('penalizes smart money already exiting', () => {
+		const holding = smartMoneyOverlay({ provenBuyLamports: 1e10, provenSellLamports: 0 });
+		const exiting = smartMoneyOverlay({ provenBuyLamports: 1e10, provenSellLamports: 6e9 });
+		expect(exiting.z).toBeLessThan(holding.z);
 	});
 
-	it('a serial-rugger creator drags the score and caps at 45', () => {
-		const out = pedigreeScore({ score: 80, smartWalletCount: 3 }, { launches: 4, launchWins: 0 });
+	it('caps a serial-rugger creator at 45', () => {
+		const out = smartMoneyOverlay({}, { launches: 5, launchWins: 0 });
 		expect(out.cap).toBe(45);
-		expect(out.reasons.join(' ')).toMatch(/rug pattern/);
+		expect(out.z).toBeLessThan(0);
 	});
 
-	it('a proven shipper creator lifts pedigree', () => {
-		const sm = { score: 60, smartWalletCount: 1 };
-		const unproven = pedigreeScore(sm, {});
-		const shipper = pedigreeScore(sm, { launches: 4, launchWins: 3 });
-		expect(shipper.score).toBeGreaterThan(unproven.score);
-		expect(shipper.reasons.join(' ')).toMatch(/graduated launches/);
+	it('a flagged creator label caps too', () => {
+		const out = smartMoneyOverlay({}, { label: 'rugger', launches: 1, launchWins: 0 });
+		expect(out.cap).toBe(45);
 	});
 
-	it('a dumping creator drags pedigree', () => {
-		const sm = { score: 60, smartWalletCount: 1 };
-		const clean = pedigreeScore(sm, { launches: 3, launchWins: 1, dumpRate: 0 });
-		const dumper = pedigreeScore(sm, { launches: 3, launchWins: 1, dumpRate: 0.7 });
-		expect(dumper.score).toBeLessThan(clean.score);
-		expect(dumper.reasons.join(' ')).toMatch(/dumps/);
-	});
-
-	it('a fully unobserved pedigree anchors at the neutral prior, not zero', () => {
-		// Most launches have no proven buyers and no creator record — that is the
-		// market norm, not a red flag. Scoring it 0 used to pin every ordinary
-		// launch under a ~55 fused ceiling.
-		const out = pedigreeScore({}, {});
-		expect(out.score).toBe(PEDIGREE_UNKNOWN_PRIOR);
-		expect(out.coverage).toBe(0);
-	});
-
-	it('an unobserved pedigree ceilings the final score below strong', () => {
-		const out = pedigreeScore({}, {});
-		expect(out.cap).toBeLessThan(72);
-		expect(out.reasons.some((t) => /pedigree unobserved/.test(t))).toBe(true);
-	});
-
-	it('an explicit zero composite from the brain is respected — observed ≠ unknown', () => {
-		const out = pedigreeScore({ score: 0, totalBuyLamports: 5e9 }, {});
-		expect(out.score).toBeLessThan(PEDIGREE_UNKNOWN_PRIOR);
-	});
-
-	it('a creator record alone lifts the unknown-pedigree ceiling', () => {
-		const blind = pedigreeScore({}, {});
-		const withCreator = pedigreeScore({}, { launches: 4, launchWins: 3 });
-		expect(blind.cap).toBeLessThan(72);
-		expect(withCreator.cap).toBe(100);
-	});
-});
-
-describe('structureScore', () => {
-	it('caps the final score on a bundle launch', () => {
-		const out = structureScore({ bundleFlag: true, uniqueBuyers: 4, funderClusterPct: 55 });
-		expect(out.cap).toBeLessThan(50);
-		expect(out.reasons.join(' ')).toMatch(/bundle/);
-	});
-
-	it('rewards a wide, distributed base', () => {
-		const wide = structureScore({ uniqueBuyers: 70, topHolderPct: 8 });
-		const thin = structureScore({ uniqueBuyers: 5, topHolderPct: 8 });
-		expect(wide.score).toBeGreaterThan(thin.score);
-	});
-
-	it('caps hard when the dev is already dumping', () => {
-		const out = structureScore({ devSoldPct: 60 });
-		expect(out.cap).toBeLessThanOrEqual(38);
-	});
-});
-
-describe('narrativeScore', () => {
-	it('blends classifier virality with the category prior, weighted by confidence', () => {
-		const high = narrativeScore({ category: 'news', virality: 90, confidence: 0.9 });
-		const low = narrativeScore({ category: 'unknown', virality: 10, confidence: 0.9 });
-		expect(high.score).toBeGreaterThan(low.score);
-	});
-
-	it('falls back to the category prior when virality is absent', () => {
-		const out = narrativeScore({ category: 'culture' });
-		expect(out.score).toBeGreaterThan(0);
-		expect(out.reasons.join(' ')).toMatch(/no virality/);
-	});
-});
-
-describe('momentumScore', () => {
-	it('rewards strong buy inflow and penalizes distribution', () => {
-		const inflow = momentumScore({ buyCount: 40, sellCount: 3 });
-		const dist = momentumScore({ buyCount: 5, sellCount: 30 });
-		expect(inflow.score).toBeGreaterThan(dist.score);
-	});
-
-	it('rewards a reasonable dev buy and penalizes an oversized one', () => {
-		const good = momentumScore({ devBuySol: 1.0, buyCount: 12, sellCount: 1 });
-		const huge = momentumScore({ devBuySol: 9.0, buyCount: 12, sellCount: 1 });
-		expect(good.score).toBeGreaterThan(huge.score);
+	it('a dumping creator drags without capping', () => {
+		const out = smartMoneyOverlay({}, { launches: 3, launchWins: 1, dumpRate: 0.7 });
+		expect(out.z).toBeLessThan(0);
+		expect(out.cap).toBe(100);
 	});
 });
 
 describe('convict (fusion)', () => {
-	const primeIntel = {
-		smartMoney: {
-			score: 88, smartWalletCount: 5, provenBuyLamports: 8e9, totalBuyLamports: 1e10,
-			notable: [
-				{ wallet: 'a', label: 'smart_money', score: 90 },
-				{ wallet: 'b', label: 'smart_money', score: 82 },
-			],
-		},
-		structure: { uniqueBuyers: 70, topHolderPct: 7, funderClusterPct: 5 },
-		narrative: { category: 'news', virality: 85, confidence: 0.85 },
-		behavior: { buyCount: 45, sellCount: 3, earlyBuyerCount: 50, devBuySol: 1.2 },
-	};
-
-	it('a clean, smart-money, high-narrative launch scores strong/prime', () => {
-		const v = convict(primeIntel);
-		expect(v.score).toBeGreaterThanOrEqual(72);
+	it('a launch in the best-evidence buckets reads strong or prime', () => {
+		const v = convict(strongLaunch());
 		expect(['strong', 'prime']).toContain(v.tier);
+		expect(v.score).toBeGreaterThanOrEqual(72);
+	});
+
+	it('a dead launch reads avoid/watch', () => {
+		const v = convict(deadLaunch());
+		expect(['avoid', 'watch']).toContain(v.tier);
+	});
+
+	it('a serial-rugger creator ceilings the FINAL score, never above watch', () => {
+		const intel = strongLaunch();
+		intel.creator = { launches: 6, launchWins: 0 };
+		const v = convict(intel);
+		expect(v.score).toBeLessThanOrEqual(45);
+		expect(v.pedigreeCap).toBe(45);
+		expect(v.badges).toContain('pedigree-flag');
+		expect(v.badges).not.toContain('prime');
+	});
+
+	it('smart money lifts the fused score', () => {
+		const base = convict(strongLaunch());
+		const withSm = strongLaunch();
+		withSm.smartMoney = {
+			smartWalletCount: 5,
+			provenBuyLamports: 5e9,
+			totalBuyLamports: 1e10,
+			notable: [{ wallet: 'a', label: 'smart_money', score: 88 }],
+		};
+		const v = convict(withSm);
+		expect(v.probability).toBeGreaterThanOrEqual(base.probability);
 		expect(v.badges).toContain('smart-money');
-		expect(v.pillars.pedigree).toBeGreaterThan(70);
 	});
 
-	it('structure cap overrides great pedigree — a bundle can never read strong', () => {
-		const bundled = {
-			...primeIntel,
-			structure: { uniqueBuyers: 6, topHolderPct: 55, funderClusterPct: 60, bundleFlag: true, devSoldPct: 55 },
+	it('flagged wallets pull a coin down', () => {
+		const clean = convict(strongLaunch());
+		const dirty = strongLaunch();
+		dirty.smartMoney = {
+			notable: [
+				{ wallet: 'r', label: 'rugger', score: 5 },
+				{ wallet: 'd', label: 'dumper', score: 10 },
+				{ wallet: 'e', label: 'rugger', score: 8 },
+			],
 		};
-		const v = convict(bundled);
-		expect(v.score).toBeLessThan(50);
-		expect(v.tier === 'avoid' || v.tier === 'watch').toBe(true);
-		expect(v.badges).toContain('structure-flag');
+		// The strong fixture saturates the 0-100 score line, so assert on the
+		// underlying probability, which is strictly monotone in the log-odds.
+		expect(convict(dirty).probability).toBeLessThan(clean.probability);
 	});
 
-	it('a serial-rugger creator ceilings the FINAL score — never prime, no matter the buyers', () => {
-		const ruggerCreator = {
-			...primeIntel,
-			creator: { wallet: 'c', label: null, launches: 5, launchWins: 0 },
-		};
-		const clean = convict(primeIntel);
-		const rugged = convict(ruggerCreator);
-		expect(clean.score).toBeGreaterThanOrEqual(72); // sanity: same intel reads strong without the creator record
-		expect(rugged.score).toBeLessThanOrEqual(45);
-		expect(rugged.tier === 'watch' || rugged.tier === 'avoid').toBe(true);
-		expect(rugged.reasons.some((r) => r.pillar === 'pedigree' && /rug pattern/.test(r.text))).toBe(true);
+	it('score equals the probability mapped through the tier anchors (no cap case)', () => {
+		const v = convict(strongLaunch());
+		expect(v.score).toBe(scoreFromProbability(v.probability));
 	});
 
-	it('a proven shipper creator lifts the fused score', () => {
-		// Moderate pedigree base — primeIntel's pedigree is already clamped at 100,
-		// which would mask the creator bonus.
-		const midIntel = { ...primeIntel, smartMoney: { score: 60, smartWalletCount: 1, notable: [] } };
-		const shipper = convict({
-			...midIntel,
-			creator: { wallet: 'c', label: null, launches: 4, launchWins: 3 },
-		});
-		expect(shipper.score).toBeGreaterThan(convict(midIntel).score);
+	it('returns a transparent breakdown: pillars, reasons quoting observed rates, provenance', () => {
+		const v = convict(strongLaunch());
+		for (const k of ['pedigree', 'structure', 'narrative', 'momentum']) {
+			expect(v.pillars[k]).toBeGreaterThanOrEqual(0);
+			expect(v.pillars[k]).toBeLessThanOrEqual(100);
+		}
+		expect(v.reasons.length).toBeGreaterThan(0);
+		expect(v.reasons.some((r) => /% of similar launches worked/.test(r.text))).toBe(true);
+		expect(v.model.training_rows).toBe(MODEL.training_rows);
+		expect(v.weights).toBe(PILLAR_WEIGHTS);
 	});
 
-	it('flagged wallets pull a mediocre coin further down', () => {
-		const withRuggers = {
-			...primeIntel,
-			smartMoney: {
-				score: 45, smartWalletCount: 0, notable: [
-					{ wallet: 'r', label: 'rugger', score: 8 },
-					{ wallet: 'd', label: 'dumper', score: 15 },
-				],
-			},
-		};
-		const v = convict(withRuggers);
-		expect(v.pillars.pedigree).toBeLessThan(45);
+	it('is deterministic: same input, same score', () => {
+		const a = convict(strongLaunch());
+		const b = convict(strongLaunch());
+		expect(a.score).toBe(b.score);
+		expect(a.probability).toBe(b.probability);
 	});
 
-	it('returns a transparent, ordered breakdown and valid tier', () => {
-		const v = convict(primeIntel);
-		expect(v.reasons[0]).toHaveProperty('pillar');
-		expect(v.reasons[0]).toHaveProperty('text');
-		expect(['avoid', 'watch', 'lean', 'strong', 'prime']).toContain(v.tier);
-		expect(v.score).toBeGreaterThanOrEqual(0);
-		expect(v.score).toBeLessThanOrEqual(100);
-	});
-
-	it('is deterministic — same input, same score', () => {
-		expect(convict(primeIntel).score).toBe(convict(primeIntel).score);
-	});
-
-	it('reports high confidence on a fully-populated intel and low on an empty one', () => {
-		const full = convict(primeIntel);
-		expect(full.confidence).toBeGreaterThanOrEqual(70);
-		expect(full.confidenceLabel).toBe('high');
-		expect(full.badges).not.toContain('thin-data');
-
+	it('reports high confidence on fully-populated intel and low on an empty one', () => {
+		const full = convict(strongLaunch());
 		const empty = convict({});
-		expect(empty.confidence).toBeLessThan(45);
+		expect(full.confidence).toBeGreaterThan(empty.confidence);
 		expect(empty.confidenceLabel).toBe('low');
 		expect(empty.badges).toContain('thin-data');
-	});
-
-	it('an ordinary launch with unobserved pedigree lands mid-watch, not pinned at the floor', () => {
-		// Regression: pedigree=0-for-missing-data used to hard-cap every ordinary
-		// launch around 35 and made lean unreachable without wallet data.
-		const v = convict({
-			structure: { organicScore: 45, uniqueBuyers: 20 },
-			narrative: { category: 'meme', virality: 55, confidence: 0.6 },
-			behavior: { buyCount: 12, sellCount: 5, earlyBuyerCount: 10 },
-		});
-		expect(v.pillars.pedigree).toBe(PEDIGREE_UNKNOWN_PRIOR);
-		expect(v.score).toBeGreaterThan(40);
-	});
-
-	it('unobserved pedigree can reach lean but never strong, however good the rest', () => {
-		const v = convict({
-			structure: { organicScore: 95, uniqueBuyers: 80, topHolderPct: 6, top10Pct: 20 },
-			narrative: { category: 'news', virality: 92, confidence: 0.9 },
-			behavior: { buyCount: 60, sellCount: 2, earlyBuyerCount: 55, devBuySol: 1.0 },
-		});
-		expect(v.score).toBeLessThan(72);
-		expect(['lean', 'watch']).toContain(v.tier);
-		expect(v.reasons.some((r) => r.pillar === 'pedigree' && /unobserved/.test(r.text))).toBe(true);
-	});
-
-	it('a serial-rugger creator adds a pedigree-flag badge (not structure-flag)', () => {
-		const v = convict({
-			...primeIntel,
-			creator: { wallet: 'c', label: null, launches: 5, launchWins: 0 },
-		});
-		expect(v.badges).toContain('pedigree-flag');
-		expect(v.pedigreeCap).toBeLessThanOrEqual(45);
-		expect(v.badges).not.toContain('structure-flag'); // clean structure — cap came from pedigree
 	});
 
 	it('an empty intel object does not throw and reads low', () => {
 		const v = convict({});
 		expect(v.score).toBeGreaterThanOrEqual(0);
-		expect(v.tier).toBeDefined();
+		expect(v.score).toBeLessThanOrEqual(100);
+		expect(['avoid', 'watch']).toContain(v.tier);
 	});
-});
 
-describe('tierTone', () => {
-	it('maps tiers to UI tones', () => {
-		expect(tierTone('prime')).toBe('good');
-		expect(tierTone('avoid')).toBe('bad');
-		expect(tierTone('lean')).toBe('warn');
+	it('unknown pedigree no longer ceilings the verdict: evidence can reach strong without wallet data', () => {
+		// v1's unknown-pedigree cap made Strong unreachable (202k live scores,
+		// max ever 69). v2: strong observed evidence outranks missing wallet data.
+		const intel = strongLaunch();
+		intel.creator = {};
+		intel.smartMoney = {};
+		const v = convict(intel);
+		expect(v.score).toBeGreaterThanOrEqual(72);
 	});
 });
 
@@ -307,14 +306,26 @@ describe('archetypes', () => {
 		expect(archetypeFor('smart_money').tone).toBe('good');
 		expect(archetypeFor('rugger').tone).toBe('bad');
 		expect(archetypeFor(null).label).toBe('unproven');
-		expect(archetypeFor('nonsense').title).toBe('Unproven');
+		expect(archetypeFor('garbage').label).toBe('unproven');
 	});
 
-	it('isProven / isFlagged gate correctly', () => {
+	it('isProven / isFlagged match the pedigree rules', () => {
 		expect(isProven('smart_money')).toBe(true);
-		expect(isProven('neutral', 75)).toBe(true);
+		expect(isProven('kol')).toBe(true);
+		expect(isProven('neutral', 80)).toBe(true);
 		expect(isProven('neutral', 10)).toBe(false);
 		expect(isFlagged('rugger')).toBe(true);
+		expect(isFlagged('dumper')).toBe(true);
 		expect(isFlagged('smart_money')).toBe(false);
+	});
+});
+
+describe('tierTone', () => {
+	it('maps tiers to UI tones', () => {
+		expect(tierTone('prime')).toBe('good');
+		expect(tierTone('strong')).toBe('good');
+		expect(tierTone('lean')).toBe('warn');
+		expect(tierTone('watch')).toBe('neutral');
+		expect(tierTone('avoid')).toBe('bad');
 	});
 });

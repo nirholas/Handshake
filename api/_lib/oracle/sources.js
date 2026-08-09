@@ -69,7 +69,7 @@ export async function assembleIntel(mint, network = 'mainnet') {
 		       unique_buyers, unique_sellers, largest_buy_lamports,
 		       bundle_score, organic_score, snipe_ratio, fresh_wallet_ratio,
 		       concentration_top10, bubblemap_connectivity,
-		       quality_score, risk_flags
+		       quality_score, risk_flags, signals
 		from pump_coin_intel where mint = ${mint} and network = ${network} limit 1
 	`;
 	const coin = coinRows[0] || null;
@@ -243,6 +243,14 @@ export function toCoinIntel({ coin, smart, narr, funder, provenFlow, creatorRep 
 		image_uri: coin.image_uri,
 		category: narrative.category,
 		createdAt: coin.created_at || coin.first_seen_at,
+
+		// Raw launch-time signals exactly as the intel watcher recorded them
+		// (organic_score, timing_entropy, concentration_top1, mc_sol_first_seen,
+		// buy_sell_ratio, ...). The fitted conviction model reads these directly:
+		// they are the same values the model was trained on, so no unit drift
+		// between training and inference. The derived fields below remain for
+		// display and for callers that predate the model.
+		launch: coin.signals && typeof coin.signals === 'object' ? coin.signals : {},
 
 		// Off-chain signal the classifier weighs (link presence lifts virality) and
 		// the API surfaces. Previously never threaded through — a dead input.
