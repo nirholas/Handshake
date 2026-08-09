@@ -518,5 +518,10 @@
 		"pattern": "Mixamo, Avaturn, Unreal",
 		"file": "docs/ibm-community-recap-nichxbt.md",
 		"reason": "First-person recap of a live Q&A; the sentence lists third-party rig-naming conventions the animation retargeter supports (same list as the 'Avatar animation is universal' note in CLAUDE.md), which is factual interop reference, not product copy naming a competing feature."
+	},
+	{
+		"pattern": "Mixamo, Avaturn, VRM/VRoid, Daz/Genes",
+		"file": "docs/announcement-coverage.md",
+		"reason": "Coverage table quoting @three-ws/retarget's own package description verbatim; the rig-name list is the same factual interop reference as the other retargeter mentions above, not product copy naming a competing feature."
 	}
 ]
