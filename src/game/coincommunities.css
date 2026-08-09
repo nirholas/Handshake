@@ -928,7 +928,15 @@ html[data-bg="transparent"] #cc-lobby {
 	transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
 }
 .cc-voice:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.05); }
-.cc-voice:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
+/* The glow below rides `.cc-voice`'s own transition, so a keyboard user tabbing
+   here would otherwise get no visible change for a whole 120ms (masked further
+   for anyone with reduced-motion, whose transitions collapse to ~0). Every other
+   bespoke focus ring in this file uses `outline`, which is not transitioned and
+   so lands the instant focus moves; this one relied on `outline: none` plus an
+   animated border/shadow and was the one control in the HUD with no immediate
+   focus signal. Keep the glow, but pair it with an instant outline like its
+   siblings (.cc-emote, .cc-reaction) so the ring is never mid-transition-only. */
+.cc-voice:focus-visible { outline: 1px solid var(--cc-edge-hi); outline-offset: 2px; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
 .cc-voice:disabled { opacity: 0.45; cursor: not-allowed; }
 .cc-voice-ico { display: inline-flex; }
 .cc-voice-ico svg { width: 16px; height: 16px; display: block; }

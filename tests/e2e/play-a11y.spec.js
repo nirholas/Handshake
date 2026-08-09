@@ -90,16 +90,27 @@ test.describe('/play accessibility floor', () => {
 		const rows = await page.evaluate(() => {
 			const W = window.__wcag;
 			const WHITE_SCENE = [255, 255, 255]; // noon sky / snow / white plaza
+			// Emoji glyphs render in their own native full colour regardless of the
+			// CSS `color` value (the same reason axe-core's colour-contrast rule
+			// exempts them), so measuring "text colour vs background" for a cell
+			// that is only emoji is a false signal, not a real legibility problem.
+			const EMOJI_ONLY = /^[\p{Extended_Pictographic}\p{Emoji_Presentation}\s‍️]+$/u;
 			const out = [];
 			for (const el of document.querySelectorAll('#cc-hud *')) {
 				if (el.children.length || !el.textContent.trim()) continue;
+				if (EMOJI_ONLY.test(el.textContent.trim())) continue;
 				const r = el.getBoundingClientRect();
 				if (!r.width || !r.height) continue;
 				const s = getComputedStyle(el);
 				if (s.visibility === 'hidden' || s.display === 'none') continue;
 				const fg = W.parse(s.color);
 				if (!fg) continue;
-				const bg = W.effectiveBg(el.parentElement, WHITE_SCENE);
+				// Composite from the element itself, not just its ancestors: a leaf
+				// control that paints its own opaque background (e.g. the white
+				// .cc-chat-send button) is what visually sits behind its own text,
+				// and starting one level up skipped that background entirely,
+				// reading the HUD panel's dark background behind it instead.
+				const bg = W.effectiveBg(el, WHITE_SCENE);
 				const size = parseFloat(s.fontSize);
 				const large = size >= 24 || (size >= 18.66 && parseInt(s.fontWeight, 10) >= 700);
 				out.push({
