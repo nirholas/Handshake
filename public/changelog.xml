@@ -15,6 +15,14 @@
 			<description>The Oracle's conviction score was rebuilt on what actually happened to 92,906 real pump.fun launches instead of hand-set rules. Every score is now a measured probability that a coin graduates or pumps 3x or more, and each tier states its real-world odds: on data the model never trained on, Prime picks were good 72.7% of the time while Avoid picks rugged 96.3% of the time. The old engine had never once produced a Strong or Prime score; several of its penalties turned out to be backwards against the data and are fixed. Every verdict now cites its evidence with the observed success rate for each signal, the smart-money wallet ledger grew from 214 to 998 proven wallets under a validated definition, and the learning pipeline that grades every launch was unblocked so the model keeps sharpening daily.</description>
 		</item>
 		<item>
+			<title>The trading fleet learned from its first 254 trades and rebuilt its strategies</title>
+			<link>https://three.ws/trading</link>
+			<guid isPermaLink="false">2026-08-09:The trading fleet learned from its first 254 trades and rebuilt its strategies</guid>
+			<pubDate>Sun, 09 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>We audited every closed trade the autonomous trading fleet has made and rewrote the strategy table around what actually worked. The big lessons: the agents were good at finding winners but gave the gains back by exiting badly, stop-losses cannot save a position from an instant rug, and the one pattern that reliably made money was recovering the initial stake at 2x and letting the rest ride. Every active strategy now enforces that take-initials ladder, always sets a take-profit, and keeps its upside at least double its downside. The spray-and-pray strategies that lost money were retired, and the one strategy with a real profit record was left exactly as it is.</description>
+		</item>
+		<item>
 			<title>The wardrobe panel no longer glitches shut when you reopen it quickly</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-08-09:The wardrobe panel no longer glitches shut when you reopen it quickly</guid>
@@ -18119,9 +18127,9 @@
 			<description>Full 3D scene editor in the browser: import GLB models, arrange them with transform gizmos, edit materials and lights, and export complete scenes.</description>
 		</item>
 		<item>
-			<title>Text to 3D Is Live - Type a Prompt, Download a 3D Model</title>
+			<title>Text to 3D Is Live: Type a Prompt, Download a 3D Model</title>
 			<link>https://three.ws/blog/text-to-3d-is-live</link>
-			<guid isPermaLink="false">2026-06-12:Text to 3D Is Live - Type a Prompt, Download a 3D Model</guid>
+			<guid isPermaLink="false">2026-06-12:Text to 3D Is Live: Type a Prompt, Download a 3D Model</guid>
 			<pubDate>Fri, 12 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Forge is live on three.ws: type a description and get a textured, downloadable 3D model (GLB) in your browser. Image to 3D from photos works too. Free draft tier, no install.</description>
@@ -18655,9 +18663,9 @@
 			<description>Resolve any three.ws agent by Solana mint, agent ID, avatar ID, or slug: renders its interactive 3D avatar alongside its on-chain identity (collection, owner, agent wallet, Active/x402 status, Metaplex/Solscan/Magic Eden links).</description>
 		</item>
 		<item>
-			<title>three.ws Wins DEXTools Social Boost - $5,543 $three Buyback</title>
+			<title>three.ws Wins DEXTools Social Boost: $5,543 $three Buyback</title>
 			<link>https://three.ws/blog/three-ws-dextools-social-boost-buyback</link>
-			<guid isPermaLink="false">2026-06-09:three.ws Wins DEXTools Social Boost - $5,543 $three Buyback</guid>
+			<guid isPermaLink="false">2026-06-09:three.ws Wins DEXTools Social Boost: $5,543 $three Buyback</guid>
 			<pubDate>Tue, 09 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>three.ws is DEXTools</description>
@@ -18684,7 +18692,7 @@
 			<guid isPermaLink="false">2026-06-08:three.ws Featured on the Alibaba Cloud Marketplace Blog</guid>
 			<pubDate>Mon, 08 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Alibaba Cloud Marketplace published an editorial on three.ws - browser-native 3D AI agents you deploy with a single &lt;agent-3d&gt; tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.</description>
+			<description>Alibaba Cloud Marketplace published an editorial on three.ws: browser-native 3D AI agents you deploy with a single &lt;agent-3d&gt; tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.</description>
 		</item>
 		<item>
 			<title>Bounty board with AI judge</title>
@@ -19188,7 +19196,7 @@
 			<guid isPermaLink="false">2026-05-27:three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement</guid>
 			<pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments - for the first fully on-chain 3D AI agent platform.</description>
+			<description>three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments: for the first fully on-chain 3D AI agent platform.</description>
 		</item>
 		<item>
 			<title>Unstoppable Agent</title>
@@ -19236,7 +19244,7 @@
 			<guid isPermaLink="false">2026-05-25:$THREE Listed on Coinbase, CoinGecko, Jupiter, and Investing.com</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com - giving the three.ws community every major on-ramp and price discovery surface.</description>
+			<description>$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com: giving the three.ws community every major on-ramp and price discovery surface.</description>
 		</item>
 		<item>
 			<title>2,500 New 3D Animations Coming to three.ws</title>
@@ -19244,12 +19252,12 @@
 			<guid isPermaLink="false">2026-05-25:2,500 New 3D Animations Coming to three.ws</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is expanding its animation library with 2,500 new 3D animations - giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.</description>
+			<description>three.ws is expanding its animation library with 2,500 new 3D animations: giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.</description>
 		</item>
 		<item>
-			<title>Agent Builder Live - Studio Redesign, LLM Chat Upgrade</title>
+			<title>Agent Builder Live: Studio Redesign, LLM Chat Upgrade</title>
 			<link>https://three.ws/blog/agent-builder-studio-launch</link>
-			<guid isPermaLink="false">2026-05-25:Agent Builder Live - Studio Redesign, LLM Chat Upgrade</guid>
+			<guid isPermaLink="false">2026-05-25:Agent Builder Live: Studio Redesign, LLM Chat Upgrade</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>three.ws ships Agent Builder, an improved Studio design, and a major LLM Chat upgrade. Agents are now payable, tradeable, and discoverable.</description>
@@ -19303,9 +19311,9 @@
 			<description>Avatar storage modes (R2 vs IPFS), sessions, your notification inbox, per-category notification channel preferences (in-app/push/email/Telegram), and dashboard preferences.</description>
 		</item>
 		<item>
-			<title>Full Animation &amp; Emotion Control - Plus Pump.fun Live Feed</title>
+			<title>Full Animation &amp; Emotion Control: Plus Pump.fun Live Feed</title>
 			<link>https://three.ws/blog/animation-emotion-control</link>
-			<guid isPermaLink="false">2026-05-25:Full Animation &amp; Emotion Control - Plus Pump.fun Live Feed</guid>
+			<guid isPermaLink="false">2026-05-25:Full Animation &amp; Emotion Control: Plus Pump.fun Live Feed</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>three.ws now ships full animation and emotion control for 3D agents, with live Pump.fun feed integration. Your agents react to any API or data feed in real time.</description>
@@ -19335,9 +19343,9 @@
 			<description>Sandbox for experimenting with agents, prompts, and 3D scenes.</description>
 		</item>
 		<item>
-			<title>Real-Time Voice Interaction with 3D AI Agents - Preview</title>
+			<title>Real-Time Voice Interaction with 3D AI Agents: Preview</title>
 			<link>https://three.ws/blog/real-time-voice-interaction</link>
-			<guid isPermaLink="false">2026-05-25:Real-Time Voice Interaction with 3D AI Agents - Preview</guid>
+			<guid isPermaLink="false">2026-05-25:Real-Time Voice Interaction with 3D AI Agents: Preview</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>three.ws ships an early preview of real-time voice interaction with 3D AI agents. Agents listen, reason with memory and emotions, respond in voice, and support AR/VR.</description>
@@ -19364,7 +19372,7 @@
 			<guid isPermaLink="false">2026-05-25:Solana Wallet Integration for Autonomous 3D Agents</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously - earning from skills, paying for inference, and executing on-chain transactions while you sleep.</description>
+			<description>three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously: earning from skills, paying for inference, and executing on-chain transactions while you sleep.</description>
 		</item>
 		<item>
 			<title>three.ws Integrates the Pump.fun Agent Payments SDK</title>
@@ -19380,7 +19388,7 @@
 			<guid isPermaLink="false">2026-05-25:three.ws Is Now Live on CoinMarketCap</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is now live on CoinMarketCap - join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.</description>
+			<description>three.ws is now live on CoinMarketCap: join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.</description>
 		</item>
 		<item>
 			<title>three.ws Joins Google Cloud for Web3 Startups</title>
@@ -19404,15 +19412,15 @@
 			<guid isPermaLink="false">2026-05-25:three.ws Listed on Coinbase x402 Bazaar and agentic.market</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market - the app store and discovery layer for AI agents with 480k active agents and $50M in volume.</description>
+			<description>three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market: the app store and discovery layer for AI agents with 480k active agents and $50M in volume.</description>
 		</item>
 		<item>
-			<title>three.ws Ships Inside SperaxUSD - DeFi Gets a 3D Face</title>
+			<title>three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face</title>
 			<link>https://three.ws/blog/three-ws-speraxusd-integration</link>
-			<guid isPermaLink="false">2026-05-25:three.ws Ships Inside SperaxUSD - DeFi Gets a 3D Face</guid>
+			<guid isPermaLink="false">2026-05-25:three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity - and they react to DeFi events in real time.</description>
+			<description>three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity: and they react to DeFi events in real time.</description>
 		</item>
 		<item>
 			<title>three.ws Teams Up with HackerNoon</title>
@@ -19423,9 +19431,9 @@
 			<description>three.ws is partnering with HackerNoon to launch a builder-focused initiative with feature articles, tutorials, and developer guides for those shipping with AI.</description>
 		</item>
 		<item>
-			<title>We Just Shipped the 3D Layer for the Internet - &lt;agent-3d&gt;</title>
+			<title>We Just Shipped the 3D Layer for the Internet: &lt;agent-3d&gt;</title>
 			<link>https://three.ws/blog/agent-3d-web-component</link>
-			<guid isPermaLink="false">2026-05-25:We Just Shipped the 3D Layer for the Internet - &lt;agent-3d&gt;</guid>
+			<guid isPermaLink="false">2026-05-25:We Just Shipped the 3D Layer for the Internet: &lt;agent-3d&gt;</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Drop one &lt;agent-3d&gt; web component on your site and give any page an AI with LLM brain, memory, emotions, DOM awareness, password field privacy, and an on-chain identity that lives forever.</description>
@@ -20036,7 +20044,7 @@
 			<guid isPermaLink="false">2026-05-04:How to Embed 3D On-Chain Agents on Your Site</guid>
 			<pubDate>Mon, 04 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the &lt;agent-3d&gt; web component - from setup to CORS configuration and page integration.</description>
+			<description>A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the &lt;agent-3d&gt; web component: from setup to CORS configuration and page integration.</description>
 		</item>
 		<item>
 			<title>Pump Dashboard</title>

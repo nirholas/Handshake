@@ -5030,7 +5030,7 @@
 				},
 				{
 					"path": "/blog/see-your-3d-in-ar",
-					"title": "See Your 3D Avatar in the Real World — AR Lands on three.ws",
+					"title": "See Your 3D Avatar in the Real World: AR Lands on three.ws",
 					"description": "Every 3D model and avatar on three.ws now has a View in AR button. On mobile it places the model in your real space through the camera. On desktop, a QR code gets you there in one scan. No app, no download.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5038,7 +5038,7 @@
 				},
 				{
 					"path": "/blog/text-to-3d-is-live",
-					"title": "Text to 3D Is Live — Type a Prompt, Download a 3D Model",
+					"title": "Text to 3D Is Live: Type a Prompt, Download a 3D Model",
 					"description": "Forge is live on three.ws: type a description and get a textured, downloadable 3D model (GLB) in your browser. Image to 3D from photos works too. Free draft tier, no install.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5056,7 +5056,7 @@
 				},
 				{
 					"path": "/blog/three-ws-dextools-social-boost-buyback",
-					"title": "three.ws Wins DEXTools Social Boost — $5,543 $three Buyback",
+					"title": "three.ws Wins DEXTools Social Boost: $5,543 $three Buyback",
 					"description": "three.ws is DEXTools",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5066,7 +5066,7 @@
 				{
 					"path": "/blog/three-ws-featured-on-alibaba-cloud-marketplace-blog",
 					"title": "three.ws Featured on the Alibaba Cloud Marketplace Blog",
-					"description": "Alibaba Cloud Marketplace published an editorial on three.ws — browser-native 3D AI agents you deploy with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
+					"description": "Alibaba Cloud Marketplace published an editorial on three.ws: browser-native 3D AI agents you deploy with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-06-08",
@@ -5101,7 +5101,7 @@
 				{
 					"path": "/blog/three-ws-on-aws-marketplace",
 					"title": "three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement",
-					"description": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments — for the first fully on-chain 3D AI agent platform.",
+					"description": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments: for the first fully on-chain 3D AI agent platform.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-27",
@@ -5109,7 +5109,7 @@
 				},
 				{
 					"path": "/blog/agent-3d-web-component",
-					"title": "We Just Shipped the 3D Layer for the Internet — <agent-3d>",
+					"title": "We Just Shipped the 3D Layer for the Internet: <agent-3d>",
 					"description": "Drop one <agent-3d> web component on your site and give any page an AI with LLM brain, memory, emotions, DOM awareness, password field privacy, and an on-chain identity that lives forever.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5119,7 +5119,7 @@
 				{
 					"path": "/blog/2500-new-animations",
 					"title": "2,500 New 3D Animations Coming to three.ws",
-					"description": "three.ws is expanding its animation library with 2,500 new 3D animations — giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
+					"description": "three.ws is expanding its animation library with 2,500 new 3D animations: giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-22",
@@ -5128,7 +5128,7 @@
 				{
 					"path": "/blog/three-ws-x402-bazaar",
 					"title": "three.ws Listed on Coinbase x402 Bazaar and agentic.market",
-					"description": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market — the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
+					"description": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market: the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-21",
@@ -5136,7 +5136,7 @@
 				},
 				{
 					"path": "/blog/real-time-voice-interaction",
-					"title": "Real-Time Voice Interaction with 3D AI Agents — Preview",
+					"title": "Real-Time Voice Interaction with 3D AI Agents: Preview",
 					"description": "three.ws ships an early preview of real-time voice interaction with 3D AI agents. Agents listen, reason with memory and emotions, respond in voice, and support AR/VR.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5173,7 +5173,7 @@
 				{
 					"path": "/blog/three-ws-on-coinmarketcap",
 					"title": "three.ws Is Now Live on CoinMarketCap",
-					"description": "three.ws is now live on CoinMarketCap — join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
+					"description": "three.ws is now live on CoinMarketCap: join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-17",
@@ -5182,7 +5182,7 @@
 				{
 					"path": "/blog/how-to-embed-3d-onchain-agents",
 					"title": "How to Embed 3D On-Chain Agents on Your Site",
-					"description": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component — from setup to CORS configuration and page integration.",
+					"description": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component: from setup to CORS configuration and page integration.",
 					"priority": 0.5,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-15",
@@ -5199,8 +5199,8 @@
 				},
 				{
 					"path": "/blog/three-ws-speraxusd-integration",
-					"title": "three.ws Ships Inside SperaxUSD — DeFi Gets a 3D Face",
-					"description": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity — and they react to DeFi events in real time.",
+					"title": "three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face",
+					"description": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity: and they react to DeFi events in real time.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-11",
@@ -5208,7 +5208,7 @@
 				},
 				{
 					"path": "/blog/agent-builder-studio-launch",
-					"title": "Agent Builder Live — Studio Redesign, LLM Chat Upgrade",
+					"title": "Agent Builder Live: Studio Redesign, LLM Chat Upgrade",
 					"description": "three.ws ships Agent Builder, an improved Studio design, and a major LLM Chat upgrade. Agents are now payable, tradeable, and discoverable.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5217,7 +5217,7 @@
 				},
 				{
 					"path": "/blog/animation-emotion-control",
-					"title": "Full Animation & Emotion Control — Plus Pump.fun Live Feed",
+					"title": "Full Animation & Emotion Control: Plus Pump.fun Live Feed",
 					"description": "three.ws now ships full animation and emotion control for 3D agents, with live Pump.fun feed integration. Your agents react to any API or data feed in real time.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5235,7 +5235,7 @@
 				{
 					"path": "/blog/three-token-listings",
 					"title": "$THREE Listed on Coinbase, CoinGecko, Jupiter, and Investing.com",
-					"description": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com — giving the three.ws community every major on-ramp and price discovery surface.",
+					"description": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com: giving the three.ws community every major on-ramp and price discovery surface.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-05",
@@ -5244,7 +5244,7 @@
 				{
 					"path": "/blog/solana-wallet-integration",
 					"title": "Solana Wallet Integration for Autonomous 3D Agents",
-					"description": "three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously — earning from skills, paying for inference, and executing on-chain transactions while you sleep.",
+					"description": "three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously: earning from skills, paying for inference, and executing on-chain transactions while you sleep.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-04-30",
