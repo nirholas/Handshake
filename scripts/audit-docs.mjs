@@ -255,6 +255,7 @@ if (!explicitFiles.length) {
 //               a commit, so registering one is a decision, never a default.
 const UNPUBLISHED_DOCS = new Map([
 	['agora', 'internal: strategy framing, not a reader-facing product doc'],
+	['announcement-coverage', 'internal: X announcement coverage matrix for marketing planning'],
 	['avatar-cli', 'internal: in-flight, register when the CLI ships'],
 	['avatar-fidelity-program', 'internal: program goals and competitive targets'],
 	['aws-marketplace-listing-kit', 'internal: paste-ready listing copy and portal steps'],
