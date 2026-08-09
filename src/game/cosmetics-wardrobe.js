@@ -64,6 +64,9 @@ export class CosmeticsWardrobe {
 		// Cosmetic id the current session just unlocked (an event souvenir drop),
 		// badged "New" until the player opens the panel and sees it.
 		this._newId = null;
+		// Pending `hidden = true` from close(), so the panel counts as closed the
+		// moment it starts its exit rather than 180ms later. See isOpen().
+		this._hideTimer = 0;
 		this._build();
 	}
 
@@ -104,17 +107,18 @@ export class CosmeticsWardrobe {
 
 	// ── open / close ──────────────────────────────────────────────────────────
 
-	isOpen() { return !this.root.hidden; }
+	// A panel mid-exit is NOT open: `hidden` only lands when the 180ms animation
+	// finishes, and treating that window as open made toggle() close an already
+	// closing panel and made close() arm a second hide.
+	isOpen() { return !this.root.hidden && !this._hideTimer; }
 	toggle() { this.isOpen() ? this.close() : this.open(); }
 
 	open() {
-		// A close() still playing its exit animation has not set `hidden` yet, so
-		// isOpen() reads true and this would early-return: the panel would look
-		// open for 180ms and then vanish when the pending hide fired. Reopening
-		// inside that window is a real path (dismiss the panel, then click "My
-		// Fits" on a souvenir card), so cancel the hide and carry on re-opening.
+		if (this.isOpen()) return;
+		// Reopening while the exit animation is still running is a real path
+		// (dismiss the panel, then click "My Fits" on a souvenir card). Cancel the
+		// pending hide, or it fires mid-visit and takes the panel with it.
 		if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = 0; }
-		else if (this.isOpen()) return;
 		this.root.hidden = false;
 		requestAnimationFrame(() => this.root.classList.add('cw-in'));
 		// Escape stack + Tab containment + focus restore, shared with every other
@@ -137,6 +141,10 @@ export class CosmeticsWardrobe {
 	}
 
 	close() {
+		// A panel already playing its exit reads as closed (see isOpen), so this
+		// bails out here instead of arming a second hide. Two timers would mean
+		// a subsequent open call could only cancel the newer one, and the orphan
+		// would hide the panel out from under the reopen.
 		if (!this.isOpen()) return;
 		// The panel has been seen, so the "New" highlight has done its job. Leaving
 		// it up would turn a one-time nudge into permanent noise.
