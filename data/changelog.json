@@ -2,6 +2,25 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-09",
+			"title": "The Oracle now scores from measured outcomes, and its top tiers finally mean something",
+			"summary": "The Oracle's conviction score was rebuilt on what actually happened to 92,906 real pump.fun launches instead of hand-set rules. Every score is now a measured probability that a coin graduates or pumps 3x or more, and each tier states its real-world odds: on data the model never trained on, Prime picks were good 72.7% of the time while Avoid picks rugged 96.3% of the time. The old engine had never once produced a Strong or Prime score; several of its penalties turned out to be backwards against the data and are fixed. Every verdict now cites its evidence with the observed success rate for each signal, the smart-money wallet ledger grew from 214 to 998 proven wallets under a validated definition, and the learning pipeline that grades every launch was unblocked so the model keeps sharpening daily.",
+			"tags": [
+				"improvement",
+				"feature"
+			],
+			"link": "/oracle"
+		},
+		{
+			"date": "2026-08-09",
+			"title": "The wardrobe panel no longer glitches shut when you reopen it quickly",
+			"summary": "Opening My Fits right after dismissing it, for example clicking a souvenir card's \"wear it\" button while the panel was still sliding away, could yank the panel back out from under you a moment later. The panel counted itself closed only once its 180ms slide-out animation fully finished, so a quick reopen during that window could arm two closes at once, and whichever fired last would slam the panel shut again even though you had just opened it. It now counts as closed the instant it starts leaving, so a fast reopen cancels the exit cleanly instead of racing it.",
+			"tags": [
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
 			"date": "2026-08-08",
 			"title": "Garment generations that lose their worker are picked back up again",
 			"summary": "If the machine building your garment went away mid-job (a restart, a scale-down, a crash), the job is designed to survive that: it is written down durably, and a sweep every ten minutes asks a live machine to pick it back up. That sweep had been failing since late July, because the garment worker was running an older build that did not yet answer the sweep call, so orphaned jobs sat waiting instead of finishing. The worker now runs the current build and the sweep completes normally, so a garment whose machine disappeared gets re-driven within ten minutes instead of being buried. Nothing about how you submit a garment changes; jobs that used to quietly stall now finish.",

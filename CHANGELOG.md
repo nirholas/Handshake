@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-08-09
+
+- **The wardrobe panel no longer glitches shut when you reopen it quickly**: Opening My Fits right after dismissing it, for example clicking a souvenir card's "wear it" button while the panel was still sliding away, could yank the panel back out from under you a moment later. The panel counted itself closed only once its 180ms slide-out animation fully finished, so a quick reopen during that window could arm two closes at once, and whichever fired last would slam the panel shut again even though you had just opened it. It now counts as closed the instant it starts leaving, so a fast reopen cancels the exit cleanly instead of racing it. (`/play`) `[fix]`
+
 ## 2026-08-08
 
 - **Coin Wars arena: two communities, one battlefield** (`/play/war`): The live Coin Wars arena. Enlist at your coin world's war portal, fight the rival community to the kill cap, and the result lands on the Elo ladder. You fight for the coin you hold.
