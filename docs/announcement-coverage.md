@@ -450,7 +450,7 @@ One 2026-07-08 [post](https://x.com/trythreews/status/2074761553346478138) said 
 | `@three-ws/react` | React components for embedding three.ws 3D AI agents | No |  |
 | `readme-3d` | Put interactive, rotatable 3D models in your GitHub README. Converts GLB, glTF, OBJ, and binary STL into the A | No |  |
 | `@three-ws/reputation` | Read ERC-8004 agent trust scores and attest agent-to-agent feedback on-chain, in one import. The three.ws repu | No |  |
-| `@three-ws/retarget` | Retarget animations onto any humanoid GLB. Canonicalizes bone names from Mixamo, Avaturn, VRM/VRoid, Daz/Genes | No |  |
+| `@three-ws/retarget` | Retarget animations onto any humanoid GLB; canonicalizes bone names across every supported rig convention | No |  |
 | `@three-ws/scene-mcp` | Speak 3D worlds into being from any AI agent. compose_scene turns one sentence into a placed diorama plan (moo | No |  |
 | `@three-ws/sign-language` | American Sign Language for 3D avatars. Compile text into one continuous signed animation clip: known words sig | Yes | [2026-08-01](https://x.com/trythreews/status/2083675644463038810) |
 | `@three-ws/signals-mcp` | Discover, subscribe to, and track three.ws copy-trade signal feeds from any AI agent - a marketplace ranked by | No |  |
