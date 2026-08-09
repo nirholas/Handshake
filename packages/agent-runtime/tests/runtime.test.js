@@ -8,7 +8,7 @@ class MockAgent {
     switch (context.phase) {
       case "user_input":
         return { type: "call_llm", payload: { messages: state.messages } };
-      case "llm_result":
+      case "llm_result": {
         const llmPayload = context.payload;
         if (llmPayload.hasToolCalls) {
           return {
@@ -17,6 +17,7 @@ class MockAgent {
           };
         }
         return { type: "finish", reason: "completed", reasonDetail: "Done" };
+      }
       case "tool_result":
         return { type: "call_llm", payload: { messages: state.messages } };
       default:
@@ -745,7 +746,7 @@ describe("AgentRuntime", () => {
         switch (context.phase) {
           case "user_input":
             return Promise.resolve({ type: "call_llm", payload: { messages: state2.messages } });
-          case "llm_result":
+          case "llm_result": {
             const llmPayload = context.payload;
             if (llmPayload.hasToolCalls) {
               const pendingToolsCalling = llmPayload.result.tool_calls.map((tc) => ({
@@ -761,7 +762,8 @@ describe("AgentRuntime", () => {
               });
             }
             return Promise.resolve({ type: "finish", reason: "completed", reasonDetail: "Done" });
-          case "human_approved_tool":
+          }
+          case "human_approved_tool": {
             const approvedPayload = context.payload;
             return Promise.resolve({
               payload: {
@@ -770,6 +772,7 @@ describe("AgentRuntime", () => {
               },
               type: "call_tool"
             });
+          }
           case "tool_result":
             return Promise.resolve({ type: "call_llm", payload: { messages: state2.messages } });
           default:
@@ -1438,6 +1441,7 @@ describe("AgentRuntime", () => {
     });
     it("should handle LLM errors", async () => {
       const agent = new MockAgent();
+      // eslint-disable-next-line require-yield -- must reject on first next(), before any chunk
       agent.modelRuntime = async function* () {
         throw new Error("LLM API error");
       };

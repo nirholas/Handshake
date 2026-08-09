@@ -2,7 +2,6 @@
  * UsageCounter - Pure accumulator for usage and cost tracking
  * Focuses only on usage/cost calculations without managing state
  */
-/* eslint-disable unicorn/no-static-only-class */
 export class UsageCounter {
     /**
      * Create default usage statistics

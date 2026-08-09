@@ -28,10 +28,11 @@ describe('toAtomic', () => {
 	});
 
 	it('refuses a Number that has already lost digits instead of laundering it', () => {
-		// 9007199254740993 cannot be represented: the literal is 9007199254740992
-		// before this function is even called. Converting it would hand back a
-		// string of the WRONG number, which is worse than failing.
-		expect(() => toAtomic(9007199254740993)).toThrow(/not an exact integer/);
+		// MAX_SAFE_INTEGER + 2 is the first even value past the safe range: the
+		// double may already have lost digits before this function is even
+		// called. Converting it would hand back a string of the WRONG number,
+		// which is worse than failing.
+		expect(() => toAtomic(Number.MAX_SAFE_INTEGER + 2)).toThrow(/not an exact integer/);
 		expect(() => toAtomic(1.5)).toThrow(/not an exact integer/);
 		expect(() => toAtomic('1.5')).toThrow(/not an integer/);
 		expect(() => toAtomic(null)).toThrow(/not an integer/);

@@ -32,3 +32,28 @@ open order there was already sized for a single agent chat.
 
 Left: everything; the map is the queue. The most time-critical row is OWNER-ACTIONS row 1
 (the deploy) with the event window hours away.
+
+## 2026-08-09: 01 ship-readiness (first run: shipped and verified)
+
+Measured: prod was at c1e600a04 (2026-08-07) with every event surface 404; main
+at a81f2701a and moving. Gate red on audit:docs (an unregistered recap draft)
+and token drift (5 hardcoded hexes). Committed changelog feeds were stale
+against data/changelog.json.
+
+Did: fixed both gate reds, regenerated the eight feed outputs, stripped 17
+banned dashes from data/pages.json, built clean at pinned 4a748fbde
+(BUILD_EXIT 0, all 691 pages resolve), ran deploy-preflight (all PASS; its one
+blocker, a deterministic /api/locale 404 in e2e, root-caused to the dev server
+proxying /api to stale production, proven by running the handler standalone:
+200 with the namespace), submitted Cloud Build 015cc079 (SUCCESS, 22m37s,
+revision 00365), purged the CDN synchronously, and verified: a concurrent
+agent's build superseded mine minutes later as revision 00366 at 2841ab5df,
+which contains my commits (ancestry verified), so production is CURRENT.
+/event 200, event.json serving, /api/locale 200, fact-check benchmark
+ran:true source:database, smoke:prod all 691 pages green. Vitest 19027/19027
+green; the only e2e failures were the stale-prod proxy artifact above.
+Also cleared fix-queue 02 (lint) and retired its file.
+
+Left: this order stands (it retires only at campaign end). OWNER-ACTIONS row 1
+(the deploy) is satisfied for today; the event window 17:00-19:30 UTC is armed
+on production ahead of time.

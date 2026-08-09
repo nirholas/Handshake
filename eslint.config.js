@@ -42,6 +42,7 @@ export default [
 			// Saved Workflow-DSL scripts (top-level await/return + injected
 			// runtime globals like agent()/log() — not standalone ES modules).
 			'scripts/wf-*.mjs',
+			'.claude/workflows/**',
 			// Bundled/minified build artifacts
 			'**/*.min.js',
 			// Bundler output formats (tsup/esbuild IIFE + global builds) and

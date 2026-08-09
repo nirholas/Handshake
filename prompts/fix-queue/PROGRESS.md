@@ -28,3 +28,14 @@ production sample avatars (default.glb 748,088 to 890,160; michelle.glb 849,756
 to 974,036), and the Draco output still carries `EXT_meshopt_compression`. Note
 this supersedes the older `ISSUES.md` item 9 claim of a 500 `transcode_failed`,
 which is fixed | sizes measured with `curl -w '%{size_download}'`
+
+2026-08-09 | 02-lint-errors | eslint now exits 0 with zero errors. The three
+original errors were partly fixed by earlier sessions (the vite.config
+duplicate key was gone); this session cleared the rest plus four newer ones:
+the money-test precision literal replaced with Number.MAX_SAFE_INTEGER + 2
+(same guarantee, no lossy literal; 22/22 tests pass), .claude/workflows/**
+added to eslint ignores beside scripts/wf-*.mjs (same Workflow-DSL rationale),
+an unknown-rule disable comment removed from agent-runtime UsageCounter, three
+case-block declarations braced and one intentionally yield-less error-path
+generator annotated in agent-runtime runtime.test.js (48/48 tests pass) |
+npm run lint exit 0 (8352 warnings remain, all pre-existing)
