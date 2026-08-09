@@ -55,7 +55,8 @@ for (const file of ['.env', '.env.local']) {
 
 const { sql } = await import('../api/_lib/db.js');
 const { decryptSecret } = await import('../api/_lib/secret-box.js');
-const { Connection, PublicKey } = await import('@solana/web3.js');
+const { PublicKey } = await import('@solana/web3.js');
+const { solanaConnection } = await import('../api/_lib/solana/connection.js');
 
 const rows = await sql`
 	SELECT a.id                               AS agent_id,
@@ -91,10 +92,13 @@ for (const w of wallets) {
 	}
 }
 
-const connection = new Connection(
-	process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
-	'confirmed',
-);
+// Same rotating multi-lane connection production reads balances through
+// (api/_lib/solana/connection.js), not a single bare endpoint. A script that
+// hits exactly one RPC URL dies the moment that one lane rate-limits or
+// blocks the caller's IP (observed 2026-08-09: SOLANA_RPC_URL pinned to a
+// single free lane returned 403 for every wallet), and the failure was
+// invisible because unread balances silently summed as zero (see below).
+const connection = solanaConnection({ url: process.env.SOLANA_RPC_URL || null });
 
 const balances = new Map();
 const readErrors = [];
@@ -115,13 +119,26 @@ for (let i = 0; i < wallets.length; i += 100) {
 	}
 }
 
-const sum = (list) => list.reduce((t, w) => t + (balances.get(w.address) || 0), 0);
+// balances.has() is load-bearing: a wallet whose chunk hit an RPC error has no
+// entry at all, and must never be treated as a confirmed zero balance. Coalescing
+// "unread" into "0" is exactly the bug that let this audit report "0 SOL
+// stranded" while two undecryptable wallets actually held 0.12 SOL (2026-08-09;
+// caught only because the treasury-topup cron's *live* reclaim attempt, which
+// reads balances through Cloud Run's own multi-lane connection, tried to sweep
+// them and hit secret_undecryptable on wallets this audit had certified as
+// zero). `sum()` therefore only totals wallets with a confirmed read, and the
+// caller must check `unreadCount` before trusting a "0 stranded" verdict.
+const sum = (list) => list.reduce((t, w) => (balances.has(w.address) ? t + balances.get(w.address) : t), 0);
+const unread = (list) => list.filter((w) => !balances.has(w.address));
 const round = (n) => Number(n.toFixed(9));
 
 const platform = wallets.filter((w) => isPlatform(w.owner));
 const customer = wallets.filter((w) => !isPlatform(w.owner));
 const stranded = wallets.filter((w) => !w.decryptable);
-const strandedFunded = stranded.filter((w) => (balances.get(w.address) || 0) > 0);
+// "Funded" requires a CONFIRMED positive balance; a stranded wallet whose
+// balance we never read is neither funded nor cleared, it is unknown.
+const strandedFunded = stranded.filter((w) => balances.has(w.address) && balances.get(w.address) > 0);
+const strandedUnread = unread(stranded);
 
 const report = {
 	checked_at: new Date().toISOString(),
@@ -131,6 +148,9 @@ const report = {
 	decryptable: wallets.length - stranded.length,
 	undecryptable: stranded.length,
 	sol: {
+		// Every figure below is a sum over CONFIRMED reads only (sum() skips
+		// addresses with no balances.has() entry) - never trust these as
+		// complete while unread_stranded_count > 0 below.
 		total: round(sum(wallets)),
 		decryptable: round(sum(wallets.filter((w) => w.decryptable))),
 		stranded: round(sum(stranded)),
@@ -143,6 +163,7 @@ const report = {
 		stranded_platform: stranded.filter((w) => isPlatform(w.owner)).length,
 		stranded_customer: stranded.filter((w) => !isPlatform(w.owner)).length,
 		stranded_funded: strandedFunded.length,
+		stranded_unread: strandedUnread.length,
 	},
 	top_stranded: strandedFunded
 		.sort((a, b) => (balances.get(b.address) || 0) - (balances.get(a.address) || 0))
@@ -156,6 +177,14 @@ const report = {
 			created_at: w.created_at,
 			platform: isPlatform(w.owner),
 		})),
+	unread_stranded: strandedUnread.map((w) => ({
+		name: w.name,
+		address: w.address,
+		owner: w.owner,
+		reason: w.reason,
+		created_at: w.created_at,
+		platform: isPlatform(w.owner),
+	})),
 };
 
 if (AS_JSON) {
@@ -168,12 +197,18 @@ console.log(`custodial key health  (${report.checked_at})`);
 console.log(`  rpc                 ${report.rpc}`);
 console.log(`  wallets             ${report.wallets} (${report.counts.platform} platform, ${report.counts.customer} customer)`);
 console.log(`  decryptable         ${report.decryptable} (${pct(report.decryptable, report.wallets)})`);
-console.log(`  undecryptable       ${report.undecryptable} (${pct(report.undecryptable, report.wallets)}), ${report.counts.stranded_funded} of them funded`);
+console.log(`  undecryptable       ${report.undecryptable} (${pct(report.undecryptable, report.wallets)}), ${report.counts.stranded_funded} confirmed funded, ${report.counts.stranded_unread} unread`);
 console.log(`  read errors         ${report.read_errors}`);
 console.log('');
-console.log(`  SOL total           ${report.sol.total}`);
-console.log(`  SOL spendable       ${report.sol.decryptable}`);
-console.log(`  SOL stranded        ${report.sol.stranded}  (platform ${report.sol.stranded_platform}, customer ${report.sol.stranded_customer})`);
+if (report.counts.stranded_unread > 0) {
+	console.log(`  SOL stranded        UNKNOWN: ${report.counts.stranded_unread} undecryptable wallet(s) never got a balance read`);
+	console.log('                      (RPC failed for their chunk). Do NOT read this as "0 stranded".');
+	console.log('                      Re-run once the RPC lane recovers, or set SOLANA_RPC_URL to a working lane.');
+} else {
+	console.log(`  SOL total           ${report.sol.total}`);
+	console.log(`  SOL spendable       ${report.sol.decryptable}`);
+	console.log(`  SOL stranded        ${report.sol.stranded}  (platform ${report.sol.stranded_platform}, customer ${report.sol.stranded_customer})`);
+}
 if (report.top_stranded.length) {
 	console.log('');
 	console.log('  largest stranded wallets');

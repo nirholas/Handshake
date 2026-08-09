@@ -739,13 +739,29 @@ async function probeCustodialKeys() {
 	let report;
 	try { report = JSON.parse(r.stdout); } catch { return { status: 'error', note: 'unparseable custodial audit output' }; }
 	const strandedFunded = report.counts?.stranded_funded || 0;
-	const note = `${report.wallets} wallets, ${report.undecryptable} undecryptable, ${report.sol?.stranded ?? 0} SOL stranded`;
-	if (!strandedFunded) return { status: 'ok', note };
-	const sample = (report.top_stranded || []).slice(0, 6).map((w) => `${w.sol} SOL ${w.address} ${w.platform ? 'platform' : 'CUSTOMER'} (${w.reason})`).join('\n');
-	return { status: 'findings', note, findings: [deepFinding('custodial-keys', 'owner', `${strandedFunded} funded custodial wallet(s) behind undecryptable keys`, {
-		count: strandedFunded, sample,
-		action: 'These balances are invisible to treasury self-heal and, for customer wallets, block withdrawals (support obligation; escalate those first). Usual cause is a WALLET_ENCRYPTION_KEY rotation; scripts/rekey-stale-launch-wallets.mjs documents the recovery path.',
-	})] };
+	const strandedUnread = report.counts?.stranded_unread || 0;
+	const findings = [];
+	// A "0 SOL stranded" verdict is only trustworthy if every undecryptable
+	// wallet actually got a balance read. When the audit's RPC lane fails, its
+	// own sum() now skips unread addresses instead of coalescing them to zero
+	// (2026-08-09 fix), so surface that here too rather than reporting "ok".
+	if (strandedUnread) {
+		const sample = (report.unread_stranded || []).slice(0, 6).map((w) => `${w.address} ${w.platform ? 'platform' : 'CUSTOMER'} (${w.reason})`).join('\n');
+		findings.push(deepFinding('custodial-keys-unread', 'investigate', `${strandedUnread} undecryptable wallet(s) never got a balance read, so "stranded" is unknown for them`, {
+			count: strandedUnread, sample,
+			action: 'NOT a "0 stranded" verdict: the audit could not reach a working Solana RPC lane for these wallets. Check healthz rpc_lanes for how many lanes are cooling, then re-run once a lane recovers.',
+		}));
+	}
+	const note = `${report.wallets} wallets, ${report.undecryptable} undecryptable, ${strandedUnread ? 'unknown (unread)' : `${report.sol?.stranded ?? 0}`} SOL stranded`;
+	if (strandedFunded) {
+		const sample = (report.top_stranded || []).slice(0, 6).map((w) => `${w.sol} SOL ${w.address} ${w.platform ? 'platform' : 'CUSTOMER'} (${w.reason})`).join('\n');
+		findings.push(deepFinding('custodial-keys', 'owner', `${strandedFunded} funded custodial wallet(s) behind undecryptable keys`, {
+			count: strandedFunded, sample,
+			action: 'These balances are invisible to treasury self-heal and, for customer wallets, block withdrawals (support obligation; escalate those first). Usual cause is a WALLET_ENCRYPTION_KEY rotation; scripts/rekey-stale-launch-wallets.mjs documents the recovery path.',
+		}));
+	}
+	if (findings.length) return { status: 'findings', note, findings };
+	return { status: 'ok', note };
 }
 
 const DEEP_PROBES = {

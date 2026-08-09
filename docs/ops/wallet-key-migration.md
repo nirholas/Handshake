@@ -104,6 +104,37 @@ still unopenable, holding **0.49 SOL, of which 0.35 SOL is customer money** in t
 user-owned agents. Those users cannot withdraw. Re-keying a customer wallet would abandon
 their balance, so that decision is the owner's, not an agent's.
 
+## Still stranded, and a blind spot in how we knew that (2026-08-09)
+
+A production triage sweep hit this incident again from a new angle: `treasury-topup`'s
+live agent-reclaim leg tried to sweep two platform pool wallets (Atlas #22, Echo #22,
+both created 2026-06-26, the same batch as the original 12) that showed real balances
+(0.068 and 0.054 SOL) and failed with `secret_undecryptable` on both. Same root cause,
+same unresolved batch, not a new incident.
+
+What was new: `scripts/audit-custodial-key-health.mjs`, run locally in this codespace at
+the same time, reported "0 SOL stranded" for the whole fleet, flatly contradicting the
+live reclaim failure. The audit was wrong for two independent reasons, both now fixed:
+
+1. It hit exactly one hardcoded `SOLANA_RPC_URL` lane (`rpc.magicblock.app`) with no
+   fallback. That lane returned `403 Forbidden` for this caller's IP, so every balance
+   read failed. The script now uses `solanaConnection()` from
+   `api/_lib/solana/connection.js`, the same rotating multi-lane connection production
+   reads balances through, so one blocked or rate-limited lane no longer blinds the
+   whole audit.
+2. Worse, an unread balance was silently summed as zero (`balances.get(addr) || 0`), so
+   a total RPC failure printed a confident "SOL stranded: 0" instead of "unknown." The
+   script now tracks reads with `balances.has()` and refuses to print a stranded total
+   while any undecryptable wallet's balance is unconfirmed; `scripts/gcp-triage.mjs`'s
+   `custodial-keys` probe carries the same guard, so the deep sweep no longer reports
+   `ok` off an unread balance either.
+
+With the fix, the audit reads correctly again: **8 undecryptable wallets, 0.49 SOL
+stranded (0.35 SOL customer, 0.14 SOL platform)**, matching the 2026-08-01 measurement
+almost exactly. Nothing changed in the underlying incident: the customer-fund decision
+documented above (re-keying abandons the balance; that call is the owner's) is still
+open, and no funds were moved.
+
 ## Takeaways
 
 - **A key rotation must carry the old key forward, or accompany a sweep.** This is now
