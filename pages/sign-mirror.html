@@ -29,6 +29,7 @@
 
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/tokens.css" />
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
@@ -169,9 +170,9 @@
 			}
 			#sm-score-bar::before {
 				content: ''; position: absolute; inset: 0; width: var(--sm-fill, 0%);
-				background: #f87171; border-radius: inherit; transition: width .12s linear, background .2s ease;
+				background: var(--danger); border-radius: inherit; transition: width .12s linear, background .2s ease;
 			}
-			#sm-score-bar[data-state='close']::before { background: #fbbf24; }
+			#sm-score-bar[data-state='close']::before { background: var(--warn); }
 			#sm-score-bar[data-state='good']::before { background: #34d399; }
 			#sm-score-bar::after {
 				content: ''; position: absolute; inset: 0; width: var(--sm-hold, 0%);
@@ -184,9 +185,9 @@
 			.sm-finger-bar { position: relative; height: 7px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--stroke); overflow: hidden; }
 			.sm-finger-bar::before {
 				content: ''; position: absolute; inset: 0; width: var(--sm-fill, 0%);
-				background: #f87171; border-radius: inherit; transition: width .15s linear, background .2s ease;
+				background: var(--danger); border-radius: inherit; transition: width .15s linear, background .2s ease;
 			}
-			.sm-finger[data-state='close'] .sm-finger-bar::before { background: #fbbf24; }
+			.sm-finger[data-state='close'] .sm-finger-bar::before { background: var(--warn); }
 			.sm-finger[data-state='good'] .sm-finger-bar::before { background: #34d399; }
 
 			.sm-camera-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
