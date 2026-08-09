@@ -13,7 +13,7 @@
 // coincommunities.js and asserts the panel covers it, which means the next
 // binding added there fails here instead of quietly going undocumented.
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PlayOnboard } from '../src/game/play-onboard.js';
@@ -33,8 +33,15 @@ function readPanel() {
 	return { keys, groups, text: panel.textContent };
 }
 
+// Every instance arms a 650ms first-visit timer in its constructor; an
+// undisposed one fires after jsdom teardown and crashes the vitest run
+// (`document is not defined`) even with every test green, so each test's
+// instances are disposed in afterEach.
+const instances = [];
+
 function openPanel() {
 	const ob = new PlayOnboard({ coin: COIN });
+	instances.push(ob);
 	document.querySelector('.po-ctrl-btn').click();
 	return ob;
 }
@@ -56,6 +63,10 @@ function advertisedSingles() {
 beforeEach(() => {
 	document.body.innerHTML = '';
 	try { localStorage.clear(); } catch { /* jsdom without storage */ }
+});
+
+afterEach(() => {
+	while (instances.length) instances.pop().dispose();
 });
 
 describe('/play controls reference', () => {
