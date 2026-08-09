@@ -4452,6 +4452,65 @@ curl -s 'https://three.ws/api/play/population?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bf
 
 ---
 
+## Coin Wars API
+
+```
+GET  /api/wars?network=&coin=&limit=       the war board: ladder, recent battles, live wars, queue
+GET  /api/wars?action=live&coin=           only the running battles (spectator poll)
+POST /api/wars?action=queue                queue a community for a battle
+POST /api/wars?action=leave                take a community out of the queue
+POST /api/wars?action=report               game-server only, HMAC-signed battle result
+```
+
+Coin Wars is community-vs-community combat: two coin communities meet in one arena, the side that reaches the kill cap first wins, and an Elo ladder is recomputed from the battle ledger. This endpoint is what the war portal in every `/play` world reads and what the arena at [`/play/war`](https://three.ws/play/war) queues through. The reads are open and CORS-enabled; the report write is signed. Full subsystem doc: [Coin Wars](coin-wars.md).
+
+Standings are **not** computed here. `multiplayer/src/war-standings.js` folds the `clash_battles` ledger, and it is the same module the arena's league uses, so a rating in the world and a rating in the API can never disagree.
+
+**The board.** `coin` adds that community's own league row (`standing`, `null` when it has never fought) and narrows `recent` to its battles.
+
+```bash
+curl -s 'https://three.ws/api/wars?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&limit=5'
+```
+
+```json
+{
+	"data": {
+		"network": "mainnet",
+		"standing": { "rank": 1, "rating": 1016, "wins": 1, "losses": 0, "draws": 0, "kd": 1.39, "streak": 1, "winRate": 1 },
+		"standings": [],
+		"ledgerAvailable": true,
+		"battlesRead": 1,
+		"seasonWindowFull": false,
+		"recent": [],
+		"recentAvailable": true,
+		"live": [],
+		"queue": { "available": true, "waiting": [] }
+	}
+}
+```
+
+The ledger (Postgres) and the live registry (Redis) fail independently, so `ledgerAvailable`, `recentAvailable` and `queue.available` report which surface is actually answering. A caller must render the missing one as unavailable rather than as "no wars".
+
+**Queueing.** Post the community, poll until it pairs. A pairing returns the `matchKey` both sides join under plus a signed `ticket`; the arena room takes the two competing communities from that ticket, never from the joining client, so a fighter cannot open a battle against a community that never agreed to fight.
+
+```bash
+curl -s -X POST 'https://three.ws/api/wars?action=queue' \
+  -H 'content-type: application/json' \
+  -d '{"coin":"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump","symbol":"THREE"}'
+```
+
+```json
+{ "data": { "status": "matched", "matchKey": "w1:mainnet:...", "ticket": "<signed>", "side": "a", "opponent": { "mint": "...", "symbol": "..." } } }
+```
+
+`status` is `waiting` while nobody else is in line. An unpaired place in the queue expires after 90 seconds; a pairing stays claimable for 10 minutes. `POST ?action=leave` with `{"coin":"<mint>"}` gives the place up immediately.
+
+Queueing does not grant entry. The arena still requires a holder pass for the coin you fight for, exactly as a coin's Holders world does, and that check runs server-side in the room.
+
+**Reporting.** `POST ?action=report` is for the authoritative game server only: HMAC-SHA256 of the raw body in `x-war-signature`, keyed on `WAR_RESULT_SECRET`. It is idempotent on `matchKey`, so a retried report updates the row rather than counting a battle twice. Any unsigned or mis-signed request is `401`.
+
+---
+
 ## Event Leaderboard API
 
 ```
