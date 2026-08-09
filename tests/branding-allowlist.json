@@ -513,5 +513,10 @@
 		"pattern": "a full character studio",
 		"file": "docs/ibm-community-thread.md",
 		"reason": "Verbatim record of a published IBM Community thread; 'character studio' is used generically (lowercase feature description), and the archive must match the live post."
+	},
+	{
+		"pattern": "Mixamo, Avaturn, Unreal",
+		"file": "docs/ibm-community-recap-nichxbt.md",
+		"reason": "First-person recap of a live Q&A; the sentence lists third-party rig-naming conventions the animation retargeter supports (same list as the 'Avatar animation is universal' note in CLAUDE.md), which is factual interop reference, not product copy naming a competing feature."
 	}
 ]
