@@ -15,8 +15,8 @@ const bodySchema = z.object({
 		.max(260)
 		.regex(/^[A-Za-z0-9._-]+$/, 'invalid filename characters'),
 	// base64-encoded bytes (encrypted, or plaintext for MEMORY.md). `Buffer.from`
-	// never throws on malformed base64 — it silently drops the invalid characters
-	// — so garbage would otherwise be pinned to IPFS as a valid-looking CID. The
+	// never throws on malformed base64: it silently drops the invalid characters
+	// so garbage would otherwise be pinned to IPFS as a valid-looking CID. The
 	// shape is enforced here, before any byte reaches a pinning provider.
 	data: z
 		.string()

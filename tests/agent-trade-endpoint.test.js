@@ -475,7 +475,7 @@ describe('POST /api/agents/:id/trade — execution', () => {
 // answered 200 as though it had tightened it. A spend guardrail must never be
 // relaxed by a value the server could not parse.
 
-describe('PUT /api/agents/:id/trade/limits — input validation', () => {
+describe('PUT /api/agents/:id/trade/limits: input validation', () => {
 	async function putLimits(body) {
 		const req = mockReq({ method: 'PUT', url: `/api/agents/${AGENT_ID}/trade/limits`, body });
 		const res = mockRes();

@@ -149,7 +149,7 @@ async function handlePatch(req, res, agentId, ruleId) {
 
 	// start_at/end_at are nullable on purpose: sending an explicit null is how a
 	// seller reopens a time window that had a bound. COALESCE alone cannot express
-	// that — it reads an explicit null exactly like an omitted key and keeps the
+	// that: it reads an explicit null exactly like an omitted key and keeps the
 	// old timestamp, so the write returned 200 while silently discarding the
 	// clear. Distinguish "present and null" from "absent" before the query runs.
 	const clearStart = Object.hasOwn(parsed.data, 'start_at') && start_at === null;

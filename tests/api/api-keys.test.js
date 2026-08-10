@@ -286,7 +286,7 @@ describe('DELETE /api/api-keys/:id — revoke 200', () => {
 	});
 });
 
-describe('DELETE /api/api-keys/:id — malformed id', () => {
+describe('DELETE /api/api-keys/:id with a malformed id', () => {
 	// api_keys.id is a uuid column, so a non-uuid segment used to reach Postgres
 	// and come back as 22P02 → 500 with a support ref. Bad input is a 400.
 	it.each(['not-a-uuid', ' ', '', "'; drop table api_keys; --"])(

@@ -18,7 +18,7 @@ const MAX_BYTES = 512 * 1024;
 
 // A public gateway can hang indefinitely on an unpinned CID. Without a deadline
 // the request holds a server slot until Cloud Run kills it, and three of those in
-// series is three times the wait — bound each attempt so the chain can actually
+// series is three times the wait, so bound each attempt so the chain can actually
 // reach the next gateway.
 const GATEWAY_TIMEOUT_MS = 12_000;
 

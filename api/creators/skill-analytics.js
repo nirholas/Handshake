@@ -3,8 +3,8 @@
  *
  * Aggregated skill usage metrics for all agents owned by the authenticated creator.
  * Query params:
- *   agent_id  — filter to a specific agent (optional, must be a UUID)
- *   days      — lookback window in days (default 30, clamped to 1..365)
+ *   agent_id: filter to a specific agent (optional, must be a UUID)
+ *   days:     lookback window in days (default 30, clamped to 1..365)
  */
 
 import { sql } from '../_lib/db.js';

@@ -310,7 +310,7 @@ function autoSlug(name) {
 function encodeCursor({ createdAt }) {
 	return Buffer.from(JSON.stringify({ c: createdAt })).toString('base64url');
 }
-// A cursor the caller mangled is ignored, never fatal — but the decoded date has
+// A cursor the caller mangled is ignored, never fatal, but the decoded date has
 // to be real, or it reaches Postgres as an invalid timestamp and turns a typo in
 // a query string into a 500.
 function decodeCursor(cursor) {

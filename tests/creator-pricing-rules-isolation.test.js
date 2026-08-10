@@ -97,7 +97,7 @@ describe('pricing-rules owner isolation', () => {
 		});
 		expect(status).toBe(401);
 		expect(body.error).toBe('unauthorized');
-		// A rule set names scheduled and deactivated prices — never read it for an
+		// A rule set names scheduled and deactivated prices, never read it for an
 		// anonymous caller.
 		expect(sqlState.calls.some((c) => /FROM skill_pricing_rules/i.test(c.query))).toBe(false);
 	});

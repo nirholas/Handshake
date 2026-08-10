@@ -16,7 +16,7 @@
 //   401 auth_required     — POST without a CoinCommunities session
 //   403 not_creator       — signed in, but not this coin's creator
 //   403 wallet_required   — signed in, but no linked Solana wallet to match
-//   400 solana_only       — POST for a non-Solana world (see below)
+//   400 solana_only:      POST for a non-Solana world (see below)
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import {

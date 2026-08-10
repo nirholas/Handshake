@@ -44,7 +44,7 @@ export const handlePayments = wrap(async (req, res, id) => {
 	// `id < cursor` keyset compared random v4 uuids against a timestamp ordering
 	// and silently skipped or repeated rows across pages; the id is only the
 	// tiebreaker for rows sharing a `created_at`. A malformed cursor used to hit
-	// Postgres as an invalid uuid literal and 500 — it is validated here instead.
+	// Postgres as an invalid uuid literal and 500, so it is validated here instead.
 	const rawCursor = url.searchParams.get('cursor');
 	let cursorTs = null;
 	let cursorId = null;

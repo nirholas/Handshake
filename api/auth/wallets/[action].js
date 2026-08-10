@@ -585,7 +585,7 @@ async function handleUnlinkWallet(req, res, address) {
 	if (!wallet) return error(res, 404, 'not_found', 'wallet not found');
 
 	// 2. Check if this is the only wallet. Postgres count(*) is a bigint and the
-	// Neon driver hands it back as a STRING ("1"), so this must be coerced —
+	// Neon driver hands it back as a STRING ("1"), so this must be coerced:
 	// a strict `=== 1` against the raw column never matched and let a
 	// password-less account unlink its last wallet, its only way back in.
 	const [count] = await sql`

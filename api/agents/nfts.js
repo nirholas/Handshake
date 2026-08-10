@@ -25,7 +25,7 @@ const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 // DAS (`getAssetsByOwner`) is a Helius extension, not core Solana JSON-RPC.
 // dasRpcUrl() resolves HELIUS_API_KEY (or a SOLANA_RPC_URL that already points at
-// Helius) and returns null when neither is set — which is a configuration fault,
+// Helius) and returns null when neither is set, which is a configuration fault,
 // not a client error, so it maps to 503.
 const DAS_RPC = () => {
 	const url = dasRpcUrl();

@@ -19,7 +19,7 @@ import { getSplitConfig, setSplitConfig, splitConfigMessage, isMint, MAX_CREATOR
 
 export default wrap(async (req, res) => {
 	// Public origins: a config read is public, and a write is authorized by an
-	// ed25519 signature in the body, never by a cookie — so no credentialed CORS.
+	// ed25519 signature in the body, never by a cookie, so no credentialed CORS.
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', origins: '*' })) return;
 
 	if (req.method === 'GET') {

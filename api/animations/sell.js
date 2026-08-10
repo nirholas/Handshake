@@ -118,10 +118,10 @@ async function handleList(req, res, auth, raw) {
 	// clips/:id enforces the other half of that: a private clip 404s for
 	// non-owners, and a priced unlisted one comes back `paywalled` with no
 	// tracks. Listing for sale is intentionally not the same as publishing the
-	// clip free to the gallery — that is what `visibility: 'public'` means, and
+	// clip free to the gallery: that is what `visibility: 'public'` means, and
 	// a creator who chooses it is giving the motion away deliberately.
 	// Re-pricing an existing listing usually re-sends only the key, so keep the
-	// size we already measured for that same artifact — dropping it blanks the
+	// size we already measured for that same artifact, and dropping it blanks the
 	// "size" a buyer sees in the marketplace feed. A new key resets it.
 	const artifactBytes =
 		input.artifact_bytes ??

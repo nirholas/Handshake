@@ -63,7 +63,7 @@ export const handleReserves = wrap(async (req, res, agentId) => {
 	}
 
 	// Reserves are live; flows are a paginated ledger window. Short public cache so
-	// the "verify on-chain" claim stays close to real-time — but only for the
+	// the "verify on-chain" claim stays close to real-time, but only for the
 	// anonymous variant. The payload echoes `is_owner`, so an authenticated read is
 	// personal and must never land in the shared CDN cache under this URL.
 	varyOn(res, 'Cookie', 'Authorization');

@@ -1,4 +1,4 @@
-// Tests for api/agents/recovery.js — the HTTP dispatcher behind
+// Tests for api/agents/recovery.js, the HTTP dispatcher behind
 // /api/agents/:id/recovery. It is not a routable file of its own: the
 // vercel.json rule sends the path to api/agents/[id].js, which imports this
 // module and calls it with (req, res, id, action, parts). So nothing exercises

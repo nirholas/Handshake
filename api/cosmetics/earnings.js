@@ -24,7 +24,7 @@ export default wrap(async (req, res) => {
 	}
 
 	// A creator with no sales yet already reads back as zeroed totals from the
-	// ledger — not a 404 — so the dashboard renders the designed empty state.
+	// ledger, not a 404, so the dashboard renders the designed empty state.
 	// A read FAILURE is a different thing entirely and must not be flattened into
 	// the same zeros: telling a creator they earned nothing because the ledger was
 	// unreachable is fabricated financial data. Surface it as a retryable 503 so
@@ -35,7 +35,7 @@ export default wrap(async (req, res) => {
 	} catch (err) {
 		console.warn('[cosmetics/earnings] read failed:', err?.message);
 		return error(res, 503, 'ledger_unavailable',
-			'the cosmetic sales ledger is temporarily unreachable — retry in a moment');
+			'the cosmetic sales ledger is temporarily unreachable, retry in a moment');
 	}
 
 	return json(res, 200, earnings, { 'cache-control': 'no-store' });
