@@ -110,5 +110,7 @@ export default wrapCron(async (req, res) => {
 		console.log('[cron] quality-bench smoke run', summary);
 	}
 
-	json(res, regressed ? 200 : 200, { ok: true, regressed, ...summary });
+	// Always 200: a regression is a reported finding, not a failed invocation.
+	// A non-2xx here would make Cloud Scheduler retry the (expensive) bench run.
+	json(res, 200, { ok: true, regressed, ...summary });
 });

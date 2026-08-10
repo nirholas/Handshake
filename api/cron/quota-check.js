@@ -18,8 +18,7 @@
 // Kept as a concrete file to keep the import graph tiny — this cron must not
 // share a cold start with the heavy SDK bundles.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { getRedis } from '../_lib/redis.js';
 import { requireCron } from '../_lib/cron-auth.js';

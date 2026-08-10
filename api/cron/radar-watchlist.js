@@ -11,7 +11,6 @@
 // radar's own table.
 
 import { json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { recomputeWatchlist } from '../../workers/agent-sniper/radar-watchlist.js';
 import { requireCron } from '../_lib/cron-auth.js';
 

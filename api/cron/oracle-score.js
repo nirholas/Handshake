@@ -20,7 +20,6 @@
 // executor) and a watch is itself armed in live mode.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { loadConfig } from '../../workers/oracle/config.js';
 import { runScorePass } from '../../workers/oracle/score-loop.js';
 import { actOnFreshCoins, freshlyScored } from '../../workers/oracle/agent-loop.js';

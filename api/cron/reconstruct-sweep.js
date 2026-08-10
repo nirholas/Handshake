@@ -25,7 +25,7 @@
 // jobs stay browser-driven and the age reaper below is their only backstop.
 // They are a rounding error in practice (1 of the last ~100 reconstruct jobs).
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { getRegenProviderForMode } from '../_lib/regen-provider.js';
 import { finalizeReconstructStage, pollRiggingStage } from '../_lib/reconstruct-finalize.js';

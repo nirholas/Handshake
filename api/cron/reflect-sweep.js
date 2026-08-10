@@ -14,8 +14,7 @@
 //     and picked up on the next tick — never silently dropped.
 
 import { sql } from '../_lib/db.js';
-import { env } from '../_lib/env.js';
-import { cors, error, json, method, wrapCron } from '../_lib/http.js';
+import { cors, json, method, wrapCron } from '../_lib/http.js';
 import { runReflection } from '../_lib/reflection.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
@@ -72,7 +71,14 @@ export default wrapCron(async (req, res) => {
 			});
 			if (result.status === 'ok') summary.dreamsCreated += result.created.length;
 			else if (result.status === 'skipped') summary.skipped++;
-			else summary.errors++;
+			else {
+				summary.errors++;
+				// runReflection reports engine failures by return value, not by throwing
+				// (it records the run either way). Without this the response says
+				// "errors: 1" and nothing anywhere says which agent or why.
+				summary.lastError = result.reason || 'reflection failed';
+				console.error(`[reflect-sweep] agent=${agent.id} reflection error:`, summary.lastError);
+			}
 		} catch (err) {
 			summary.errors++;
 			console.error(`[reflect-sweep] agent=${agent.id} failed:`, err?.message);
