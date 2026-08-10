@@ -3,6 +3,15 @@
   "entries": [
     {
       "date": "2026-08-10",
+      "title": "Autopilot answers a bad request with a clear error instead of an internal failure",
+      "summary": "The autopilot API (the proposal queue, the permission panel, and the signed activity feed) treated a few kinds of bad input as a server crash: an agent or proposal id that was not a real id, a negative page size, or a pagination cursor larger than the feed can hold all came back as an anonymous internal error with a support reference. Each of those now returns a plain 400 that names the offending field, and asking the proposal queue for an action it does not support says which actions exist instead of complaining about a missing proposal. Nothing about what autopilot can do changed: the ownership, permission and confirmation rules are untouched.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/autopilot-activity"
+    },
+    {
+      "date": "2026-08-10",
       "title": "Revoking an API key with a malformed id now gives a clear error instead of a server fault",
       "summary": "Deleting an API key through the developer API used to hand whatever id it was given straight to the database, so an id that could never match a key came back as a generic \"internal error, quote this reference to support\" 500. It now answers a plain 400 saying the id must be a key identifier, and the database is never touched for input that cannot match. Real revokes, the ownership check that stops one account revoking another account's key, and the already-revoked case all behave exactly as before.",
       "tags": [

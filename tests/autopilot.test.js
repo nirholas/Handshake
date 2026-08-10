@@ -32,6 +32,9 @@ const {
 	computeTrust,
 	decorateProposal,
 	AUTOPILOT_DEFAULTS,
+	AUTOPILOT_PROPOSAL_ACTIONS,
+	pageLimit,
+	parseCursor,
 } = await import('../api/_lib/autopilot.js');
 
 const MEM_A = '11111111-1111-1111-1111-111111111111';
@@ -202,5 +205,51 @@ describe('decorateProposal', () => {
 		expect(d.sourceMemoryIds).toEqual([MEM_A]);
 		expect(d.executedActionId).toBe('42');
 		expect(d.createdAt).toBe('2026-06-23T00:00:00.000Z');
+	});
+});
+
+// The paging inputs reach Postgres directly on /api/autopilot/activity and
+// /api/autopilot/proposals: a negative LIMIT and an out-of-range bigint cursor
+// are both server errors there, so they have to be caught at the boundary.
+describe('pageLimit', () => {
+	it('falls back on missing, non-numeric, zero and negative input', () => {
+		for (const raw of [null, undefined, '', 'abc', '0', '-5', '-1e9']) expect(pageLimit(raw)).toBe(50);
+	});
+
+	it('honors a valid size, truncates fractions and caps at the max', () => {
+		expect(pageLimit('10')).toBe(10);
+		expect(pageLimit('10.9')).toBe(10);
+		expect(pageLimit('500')).toBe(200);
+		expect(pageLimit('5', { fallback: 25, max: 3 })).toBe(3);
+	});
+});
+
+describe('parseCursor', () => {
+	it('treats missing and empty as the first page', () => {
+		expect(parseCursor(null)).toEqual({ ok: true, cursor: null });
+		expect(parseCursor('')).toEqual({ ok: true, cursor: null });
+	});
+
+	it('accepts a decimal id and preserves it verbatim', () => {
+		expect(parseCursor('4077')).toEqual({ ok: true, cursor: '4077' });
+		expect(parseCursor('9223372036854775807').ok).toBe(true);
+	});
+
+	it('rejects non-numeric, signed and over-long input', () => {
+		expect(parseCursor('abc')).toEqual({ ok: false, reason: 'cursor must be numeric' });
+		expect(parseCursor('-1').ok).toBe(false);
+		expect(parseCursor('99999999999999999999999999')).toEqual({ ok: false, reason: 'cursor must be numeric' });
+	});
+
+	it('rejects a 19-digit value past the bigint ceiling', () => {
+		expect(parseCursor('9223372036854775808')).toEqual({ ok: false, reason: 'cursor out of range' });
+	});
+});
+
+describe('AUTOPILOT_PROPOSAL_ACTIONS', () => {
+	it('is the frozen allowlist the proposals handler validates against', () => {
+		expect(AUTOPILOT_PROPOSAL_ACTIONS).toEqual(['generate', 'dryrun', 'execute', 'dismiss', 'undo', 'adjust']);
+		expect(Object.isFrozen(AUTOPILOT_PROPOSAL_ACTIONS)).toBe(true);
+		expect(AUTOPILOT_PROPOSAL_ACTIONS.includes('nope')).toBe(false);
 	});
 });
