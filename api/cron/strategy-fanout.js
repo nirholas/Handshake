@@ -11,7 +11,7 @@
 // The per-owner global kill switch halts all of an owner's strategies at once;
 // exits still mark-to-market while killed but never initiate a trade.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sweepStrategies } from '../_lib/agent-strategy-runtime.js';
 import { requireCron } from '../_lib/cron-auth.js';
 

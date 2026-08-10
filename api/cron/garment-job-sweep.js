@@ -19,7 +19,6 @@
 // job — the claim is an atomic generation-matched write.
 
 import { error, json, method, reportServerError, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 export default wrapCron(async (req, res) => {

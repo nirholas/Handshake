@@ -27,7 +27,7 @@
 // Failures page the ops Telegram channel; recovery is announced once. Like
 // uptime-check, a concrete file keeps the import graph tiny.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { sendOpsAlert } from '../_lib/alerts.js';

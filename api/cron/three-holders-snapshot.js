@@ -16,8 +16,7 @@
 // Standalone (not [name].js) so the import graph stays minimal — just the snapshot
 // module and its Helius/DB dependencies.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { refreshThreeHolderSnapshot } from '../_lib/coin/three-holders.js';
 import { isRpcRateLimited } from '../_lib/coin/holders.js';
 import { isDbUnavailableError } from '../_lib/db.js';

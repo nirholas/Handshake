@@ -20,8 +20,7 @@
 // The Redis verdict cache is disabled for the run. A benchmark that reads
 // week-old cached verdicts measures the cache, not the chain.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import {
 	acquireLock,
 	buildReport,

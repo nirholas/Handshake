@@ -21,8 +21,7 @@
 // financial-integrity board alongside x402 revenue discrepancies. Read-only
 // on-chain — it never moves funds.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { withDbRetry } from '../_lib/db-retry.js';
 import { sql } from '../_lib/db.js';

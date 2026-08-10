@@ -32,7 +32,7 @@
 
 import { randomUUID } from 'node:crypto';
 
-import { json, wrapCron, method, error } from '../_lib/http.js';
+import { json, wrapCron, method } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { withDbRetry } from '../_lib/db-retry.js';

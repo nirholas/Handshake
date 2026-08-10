@@ -27,8 +27,7 @@
 //   ECONOMY_MASTER_RESERVE_SOL / _PER_TOPUP_MAX_SOL / _RUN_CAP_SOL, guard caps
 
 import { randomUUID } from 'node:crypto';
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
 import { sweepTopUps, RESERVE_SOL, RUN_CAP_SOL, PER_TOPUP_MAX_SOL, ECONOMY_MASTER_ADDRESS } from '../_lib/economy-master.js';

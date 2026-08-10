@@ -14,7 +14,6 @@
 // mainnet. Idempotent + bounded so a frequent cron can never run away.
 
 import { json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { labelOutcomes, trainWeights } from '../../workers/agent-sniper/intel/learn.js';
 import { requireCron } from '../_lib/cron-auth.js';
 

@@ -28,7 +28,6 @@
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 import { json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { publishFeedEvent } from '../_lib/feed.js';
 import {
 	authoritySecret,

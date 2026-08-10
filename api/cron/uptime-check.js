@@ -15,7 +15,7 @@
 // path, which keeps this handler's import graph tiny — a monitor must not
 // share a 10s cold start with ethers/viem/pump-sdk.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { sendOpsAlert } from '../_lib/alerts.js';

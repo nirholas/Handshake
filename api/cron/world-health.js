@@ -15,7 +15,6 @@
 // cold start with the heavy generation/pump SDKs behind the [name].js dispatcher.
 
 import { json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { cacheSet } from '../_lib/cache.js';
 import { requireCron } from '../_lib/cron-auth.js';

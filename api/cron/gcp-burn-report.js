@@ -21,7 +21,6 @@
 // deps don't share a cold start with the heavy SDK bundles.
 
 import { json, method, wrapCron } from '../_lib/http.js';
-import { error } from '../_lib/http.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { buildBurnReport, billingConfigured, BillingUnavailableError, usd, PROGRAM_LANES } from '../_lib/gcp-billing.js';
 import { requireCron } from '../_lib/cron-auth.js';

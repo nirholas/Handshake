@@ -39,7 +39,7 @@
 //
 // Runs hourly. Idempotent: re-running deletes nothing new once the table is clean.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { requireCron } from '../_lib/cron-auth.js';

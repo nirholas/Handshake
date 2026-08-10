@@ -12,7 +12,7 @@
 // now. Idempotent (user_badges is unique on user_id+code), so a user who holds
 // top-10 for a week earns the badge once, on day one.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { unlockBadge, BADGES } from '../_lib/streaks.js';
 import { requireCron } from '../_lib/cron-auth.js';

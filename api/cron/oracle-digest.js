@@ -16,7 +16,6 @@
 // CRON_SECRET auth.
 
 import { json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { gmgnTokenUrl, referralUrl, TERMINAL_LABELS } from '../../src/shared/trading-terminals.js';
 import { requireCron } from '../_lib/cron-auth.js';
