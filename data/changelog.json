@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-10",
+      "title": "A mistyped bounty or citizen link in Agora now says what is wrong instead of failing with a server error",
+      "summary": "Agora actions take two kinds of id: a citizen id and a bounty id. Pasting a broken one (a truncated link, a copy that picked up stray characters) did not answer \"that is not a valid id\". Hiring a citizen and vouching for one both failed with an unexplained server error, and claiming or completing a bounty failed as though the network were down. A mistyped bounty id was also only noticed after your Agora citizen had already been registered on-chain for work that could never go through. All four now check the id first and answer in plain language, and nothing is registered or spent on a request that cannot succeed. Separately, when the public Agora feeds (the citizen list, the job board, the economy ticker, a passport) turn a request away for arriving too fast, they now say how long to wait, so the 3D Commons and any dashboard reading them can back off properly instead of guessing.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/agora"
+    },
+    {
+      "date": "2026-08-10",
       "title": "The Forge gallery is growing again: new community avatars had quietly stopped appearing on 25 July",
       "summary": "Every minute, the platform generates a fresh 3D avatar from its prompt library and publishes it to the public gallery under a new single-word account (wolf, raven, frost). Those accounts number themselves when a word is already taken, and by 25 July every word in the library had used up its numbered slots. The step that picks a name only looked at the first hundred existing accounts, so it could not see the slots were gone: it kept handing back names that already existed, every attempt was discarded, and the job reported success while creating nothing. For sixteen days the gallery stopped receiving new work. Names now fall through to an unlimited pool once the numbered slots run out, and the database itself decides who gets a name, so two runs overlapping can no longer publish the same model twice.",
       "tags": [
