@@ -260,7 +260,7 @@ typed state, never a crash or a fake number.
 |---|---|---|---|
 | `validation_error` | 400 | sentiment | `token` isn't a base58 mint, or body is malformed. Fix the input. |
 | `aixbt_not_configured` | 503 | intel / projects | Deployment has no `AIXBT_API_KEY`. Response carries a `setup` hint pointing at the aixbt key pass. |
-| `aixbt_unauthorized` | 401/403 | intel / projects | aixbt rejected the key. Rotate it. |
+| `aixbt_unauthorized` | 503 | intel / projects | aixbt rejected the deployment's key (expired, revoked, or below the required plan). Rotate it. Carries the same `setup` hint as `aixbt_not_configured`. |
 | `aixbt_rate_limited` | 429 | intel / projects | aixbt throttled the bridge. Back off and retry. |
 | `aixbt_upstream_error` | 502/504 | intel / projects | aixbt was unreachable or errored. Retry. |
 | `invalid_mint` | — | snapshot | `token` isn't a valid Solana pubkey. Fix it. |

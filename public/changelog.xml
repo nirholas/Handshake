@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>The CA to x402 tool now always hands you a three.ws payment address</title>
+			<link>https://three.ws/ca2x402</link>
+			<guid isPermaLink="false">2026-08-10:The CA to x402 tool now always hands you a three.ws payment address</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Paste a contract address into the CA to x402 tool and it generates a paid data service for that token, complete with copy-paste commands you run to pay for and call it. Those commands were built from the web address in your browser's request, which anyone could forge: a crafted link could have handed a visitor a set of &quot;pay here&quot; commands pointing at somebody else's server, and because the answer is cached at the edge, that swapped copy could then have been served on to other visitors. The generated endpoint and every snippet are now pinned to three.ws itself, so what you copy is always ours no matter how the page was reached.</description>
+		</item>
+		<item>
+			<title>The chat plugin now tells you when your Agent ID is wrong</title>
+			<link>https://three.ws/docs/embedding</link>
+			<guid isPermaLink="false">2026-08-10:The chat plugin now tells you when your Agent ID is wrong</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>In the SperaxOS and LobeChat plugin, a mistyped or deleted Agent ID used to come back as a cheerful confirmation while the avatar panel stayed empty, so the model told you it had bound an agent that does not exist. The plugin now checks the ID against your real agents before answering: a bad ID returns a clear error pointing you back to the dashboard to recopy it, and a good one comes back with the agent name so you can see at a glance which identity the panel is wearing. Stray spaces around a pasted ID are trimmed instead of breaking the binding.</description>
+		</item>
+		<item>
 			<title>The Oracle now scores from measured outcomes, and its top tiers finally mean something</title>
 			<link>https://three.ws/oracle</link>
 			<guid isPermaLink="false">2026-08-09:The Oracle now scores from measured outcomes, and its top tiers finally mean something</guid>
@@ -2992,7 +3008,7 @@
 		</item>
 		<item>
 			<title>Solana name registration works again, and embeds stop crashing on older phones</title>
-			<link>https://three.ws/embed</link>
+			<link>https://three.ws/docs/embedding</link>
 			<guid isPermaLink="false">2026-07-27:Solana name registration works again, and embeds stop crashing on older phones</guid>
 			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>

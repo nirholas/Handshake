@@ -443,6 +443,8 @@ Then set the one setting — your **Agent ID** (a UUID or `@handle` from the das
 | `gesture` | `{ name: wave\|nod\|point\|shrug }` | Play a physical gesture |
 | `emote` | `{ trigger, weight? }` | Blend an emotion into the Empathy Layer |
 
+`render_agent` verifies the binding before it answers: a UUID `agentId` is looked up on the platform, so a typo in your plugin settings comes back as a `404 not_found` telling you to recopy the ID from the dashboard instead of a silent no-op. A resolved agent's name is returned as `agentName` and included in the model-facing message. A non-UUID `@handle` is resolved in the browser by the `<agent-3d>` element, so the endpoint passes it through unverified.
+
 ### Protocol
 
 The host renders the manifest's `ui.url` iframe and delivers the triggering call over postMessage. Channel names differ only by prefix — `speraxos:` on SperaxOS, `lobe-chat:` on LobeChat — and are otherwise identical:

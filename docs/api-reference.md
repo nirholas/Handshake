@@ -4368,6 +4368,72 @@ Returns `{ "clips": [], "total": 0 }` until the library has been published, so c
 
 ---
 
+## Asset Library API
+
+```
+GET /api/assets
+```
+
+One catalog for everything the viewer can put on an avatar or behind it: accessories (`public/accessories/presets.json`), the curated starter animation clips (`public/animations/manifest.json`), and the HDRI environments the viewer ships with (`src/environments.js`). No auth. CORS open to any origin, on the success path and on errors alike. `HEAD` is answered like `GET`. Edge-cached for 1 hour, because the manifests ship with the build and cannot change between deploys.
+
+For the full 2,800-clip motion library use [Animations Library API](#animations-library-api) instead; this endpoint carries only the starter set that ships in the box.
+
+**Query parameters** (all optional)
+
+| Param   | Description                                                                                                        |
+| ------- | ------------------------------------------------------------------------------------------------------------------ |
+| `type`  | `accessory`, `animation`, or `environment`. Omit for all three.                                                     |
+| `kind`  | Accessory subkind: `hat`, `glasses`, `earrings`, `outfit`. Validated against the manifest, so new subkinds work.     |
+| `loop`  | `true` or `false`. Restricts the result to animations with that loop flag.                                          |
+| `limit` | Integer `1` to `500`. Default `200`. A value above `500` clamps to `500`.                                            |
+
+An unrecognized `type`, `kind`, or `loop`, or a non-integer `limit`, is a `400` with a machine-readable `error` code (`invalid_type`, `invalid_kind`, `invalid_loop`, `invalid_limit`) and a `Cache-Control: no-store`. A filter typo never returns a silently empty catalog.
+
+**Response**
+
+```json
+{
+	"ok": true,
+	"total": 126,
+	"items": [
+		{
+			"id": "hat-baseball",
+			"type": "accessory",
+			"kind": "hat",
+			"name": "Baseball Cap",
+			"thumbnail": "/accessories/thumbs/hat-baseball.png",
+			"glb_url": "/accessories/hat-baseball.glb",
+			"attach_bone": "Head",
+			"morph_binding": null
+		},
+		{
+			"id": "wave",
+			"type": "animation",
+			"name": "Wave",
+			"clip_url": "/animations/clips/wave.json",
+			"icon": "👋",
+			"loop": false
+		},
+		{
+			"id": "venice-sunset",
+			"type": "environment",
+			"name": "Venice Sunset",
+			"path": "https://storage.googleapis.com/donmccurdy-static/venice_sunset_1k.exr",
+			"format": ".exr"
+		}
+	]
+}
+```
+
+`total` is the number of items matching the filters before `limit` is applied, so a client can tell a truncated page from a complete one. Every item always carries `id`, `type`, and `name`; the remaining fields depend on `type`. The viewer's "no environment" preset is published with the id `none`.
+
+```bash
+curl 'https://three.ws/api/assets?type=accessory&kind=hat'
+curl 'https://three.ws/api/assets?type=animation&loop=true&limit=10'
+```
+
+---
+
 ## Motion Signatures API
 
 ```
