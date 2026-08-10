@@ -546,6 +546,11 @@ export class AnimationManager {
 		const json = await res.json();
 		// API responses wrap the baked clip one level deeper.
 		const clipJson = isApiClip ? json?.clip?.clip : json;
+		// A clip listed for sale answers with metadata only. Say so, rather than
+		// letting a paywall read as a corrupt payload.
+		if (!clipJson && json?.clip?.paywalled) {
+			throw new Error(`animation ${name} is a paid clip, unlock it at ${json.clip.download_url}`);
+		}
 		if (!clipJson) throw new Error(`clip payload missing from ${url}`);
 		const clip = AnimationClip.parse(clipJson);
 		clip.name = name;

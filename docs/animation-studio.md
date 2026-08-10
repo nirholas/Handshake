@@ -82,6 +82,7 @@ curl -X POST 'https://three.ws/api/animations/clips' \
 - **Autosave is local, not the account.** Posing and keyframing never touch your account until you explicitly Save. The autosave draft lives in local storage and is offered back next session; an unload guard warns while work is unsaved.
 - **Saving and selling need an account.** Export and download are open to everyone; saving to the library and listing for sale require sign-in.
 - **The sellable artifact is the baked GLB.** A marketplace listing sells the baked animated GLB, so the buyer gets a self-contained, playable file.
+- **Pricing a clip hides its keyframes.** Once a private or unlisted clip carries a price, `GET /api/animations/clips/:id` answers non-owners with the clip's metadata, poster and price but no motion tracks, flagged `paywalled: true` and carrying a `download_url` to the paid download. You keep full access to your own clip. Setting visibility to **public** publishes the motion to the free gallery, so a public clip's tracks stay readable even when it is also priced: price a clip you want to sell as private or unlisted.
 - **Mannequin-only controls.** Build, skin color, and joint constraints apply to the primitive mannequin; on a loaded GLB avatar those controls are disabled.
 - **Fingerspelling spells letters and numbers.** The Spell box keeps A to Z, the ASL number handshapes 0 to 9, and spaces, and drops punctuation. It needs a loaded rigged avatar with finger bones; the mannequin and finger-less rigs are refused with an explanation.
 

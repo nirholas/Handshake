@@ -11,6 +11,11 @@ import { limits } from '../_lib/rate-limit.js';
 import { isUuid } from '../_lib/validate.js';
 
 const MAX_PNG_BYTES = 1_500_000;
+// base64 inflates by 4/3, and the poster travels inside a JSON envelope. Read
+// with a body limit that actually admits a MAX_PNG_BYTES image: on readJson's
+// 1 MB default, every poster over ~749 KB died as an unexplained parse failure
+// long before the size check below could name the real problem.
+const MAX_BODY_BYTES = Math.ceil(MAX_PNG_BYTES * 1.4) + 4096;
 const PNG_HEADER = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 export default wrap(async (req, res) => {
@@ -23,7 +28,15 @@ export default wrap(async (req, res) => {
 	const rl = await limits.upload(auth.userId);
 	if (!rl.success) return rateLimited(res, rl, 'thumbnail upload rate exceeded');
 
-	const body = await readJson(req).catch(() => null);
+	let body;
+	try {
+		body = await readJson(req, MAX_BODY_BYTES);
+	} catch (err) {
+		if (err?.status === 413) {
+			return error(res, 413, 'too_large', `png must be 1..${MAX_PNG_BYTES} bytes`);
+		}
+		return error(res, 400, 'invalid_request', 'body must be JSON');
+	}
 	const id = body?.id;
 	const pngB64 = body?.png_base64;
 

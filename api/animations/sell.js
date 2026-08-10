@@ -120,12 +120,8 @@ async function handleList(req, res, auth, raw) {
 	// tracks. Listing for sale is intentionally not the same as publishing the
 	// clip free to the gallery: that is what `visibility: 'public'` means, and
 	// a creator who chooses it is giving the motion away deliberately.
-	// Re-pricing an existing listing usually re-sends only the key, so keep the
-	// size we already measured for that same artifact, and dropping it blanks the
-	// "size" a buyer sees in the marketplace feed. A new key resets it.
-	const artifactBytes =
-		input.artifact_bytes ??
-		(clip.artifact_key === input.artifact_key ? (clip.artifact_bytes ?? null) : null);
+
+	const artifactBytes = resolveArtifactBytes(input, clip);
 
 	let row;
 	try {
@@ -172,6 +168,16 @@ async function handleDelist(req, res, auth, raw) {
 			bsc: row.creator_payto_bsc,
 		}),
 	});
+}
+
+// Re-pricing an existing listing usually re-sends only the artifact key, so keep
+// the size we already measured for that same artifact. Dropping it blanks the
+// size a buyer sees on the marketplace card. A different key resets it, because
+// the measurement no longer describes the file being sold.
+export function resolveArtifactBytes(input, clip) {
+	if (input.artifact_bytes != null) return input.artifact_bytes;
+	if (clip?.artifact_key !== input.artifact_key) return null;
+	return clip?.artifact_bytes ?? null;
 }
 
 // Explicit payout overrides win; otherwise pull the seller's default wallets.
@@ -221,4 +227,4 @@ async function resolveAuth(req, requiredScope) {
 	return bearer;
 }
 
-export const __test__ = { listSchema, delistSchema, shape, resolvePayto };
+export const __test__ = { listSchema, delistSchema, shape, resolvePayto, resolveArtifactBytes };
