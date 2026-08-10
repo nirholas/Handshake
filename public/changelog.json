@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-10T18:03:34.467Z",
+	"generated_at": "2026-08-10T18:14:15.927Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -24,6 +24,17 @@
 			"summary": "The creator earnings lookup used to answer a database outage with a clean set of zeroes, so a creator with real settled sales was told they had earned nothing and the dashboard rendered its \"no cosmetic sales yet\" empty state on top of it. An unreachable sales ledger is now reported as a temporary error the page can retry, while a creator who genuinely has no sales still reads back as real zeroes from the ledger. Two smaller fixes in the same family of endpoints: posting a split-config change under the wrong content type now returns an unsupported-media-type error naming the header instead of claiming the payload was malformed, and that endpoint no longer advertises credentialed cross-origin access it never used.",
 			"link": "/fits",
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "A deleted account stays deleted on wallet sign-in, and \"log out everywhere\" reports what it actually revoked",
+			"summary": "An audit of the sign-in endpoints turned up four things worth your attention. Signing in again with the same Ethereum wallet or Privy identity used to quietly restore an account you had deleted, even though you had typed the confirmation phrase to retire it; both paths now refuse it the same way the Solana and SSO sign-ins already did. Wallet sign-in also enforces its domain check properly again: the rule that a signature only counts when it was signed for three.ws was being skipped on the live site because of a hosting setting that no longer exists, which meant a signature collected by some other site could in principle be spent here. \"Log out of all other sessions\" and \"log out everywhere\" told you nothing about how many sessions they closed, because the count was read from a field the database driver never sends; both now report a real number. For the same reason, deleting your account always claimed it had retired zero avatars, agents, and widgets no matter how much you had; that tally is now accurate, in the response and in the support record.",
+			"link": null,
+			"tags": [
+				"security",
 				"fix"
 			]
 		},
@@ -109,6 +120,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "Expired payment sessions always get their unused budget refunded",
+			"summary": "The sweep that closes out expired payment sessions marked every due session as expired in one go but only issued refunds for the first hundred of them. Any session past that point was left closed with its unspent budget still held, and because the next sweep only looks at sessions that are still open, those refunds were never picked up. The limit now applies to the closing step itself, so a sweep only closes the sessions it refunds in the same pass and the rest stay open for the next one. The same endpoint also now rejects request methods it does not implement instead of running the refund pass for them, and a reflection that fails during the scheduled memory sweep now says which agent failed and why.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
