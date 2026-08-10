@@ -347,12 +347,23 @@ async function uploadAudio(file) {
 	const presignRes = await apiFetch('/api/avatar/presign-audio', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ filename: file.name, content_type: contentType }),
+		body: JSON.stringify({ filename: file.name, content_type: contentType, bytes: file.size }),
 	});
 
+	// No data-URI fallback: /api/avatar/video-generate only accepts an https
+	// audio_url on a three.ws-controlled host (the worker fetches it server-side,
+	// so anything else would hand it an SSRF primitive), so a data: URI is
+	// rejected with a 400 before the worker ever sees it. A failed presign is a
+	// real failure and is reported as one.
 	if (!presignRes.ok) {
-		// Fallback: the worker accepts data URIs when a public URL is unavailable.
-		return await fileToDataUri(file);
+		const e = await presignRes.json().catch(() => ({}));
+		if (presignRes.status === 413) {
+			throw new Error('That clip is too large to upload. Trim it and try again.');
+		}
+		if (presignRes.status === 429) {
+			throw new Error('Too many uploads just now. Wait a minute and try again.');
+		}
+		throw new Error(e.error_description || `could not get an upload URL (HTTP ${presignRes.status})`);
 	}
 
 	const { upload_url, public_url } = await presignRes.json();
@@ -365,15 +376,6 @@ async function uploadAudio(file) {
 
 	if (!uploadRes.ok) throw new Error(`Audio upload failed: HTTP ${uploadRes.status}`);
 	return public_url;
-}
-
-function fileToDataUri(file) {
-	return new Promise((resolve, reject) => {
-		const reader = new FileReader();
-		reader.onload = () => resolve(reader.result);
-		reader.onerror = () => reject(new Error('FileReader failed'));
-		reader.readAsDataURL(file);
-	});
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────

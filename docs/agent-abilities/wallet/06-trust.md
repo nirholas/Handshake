@@ -70,7 +70,7 @@ In the product, open `three.ws/agent/<agent-id>/wallet` and pick the **Trust** t
 
 - `GET /api/agents/:id/reputation`
 - `GET|POST /api/agents/reputation-batch`
-- `GET /api/agents/:id/solana/reserves`
+- `GET /api/agents/:id/solana/reserves` (also served at the shorter `GET /api/agents/:id/reserves`)
 - `GET /api/agents/:id/unlocks`
 - `POST /api/agents/:id/unlocks/claim`
 

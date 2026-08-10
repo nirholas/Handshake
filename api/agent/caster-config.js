@@ -46,14 +46,16 @@ export default wrap(async (req, res) => {
 	const agentId = typeof body?.agentId === 'string' ? body.agentId.trim() : '';
 	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'valid agentId required');
 
-	// Confirm the caller owns this agent.
+	// Confirm the caller owns this agent. agent_identities has `name`, not
+	// `display_name`: selecting a column that isn't there made every otherwise
+	// valid request die as a 42703 500.
 	const [agentRow] = await sql`
-		SELECT id, name, display_name FROM agent_identities
+		SELECT id, name FROM agent_identities
 		WHERE id = ${agentId} AND user_id = ${userId} AND deleted_at IS NULL
 	`;
 	if (!agentRow) return error(res, 403, 'forbidden', 'not your agent');
 
-	const agentName = agentRow.name || agentRow.display_name || agentId.slice(0, 8);
+	const agentName = agentRow.name || agentId.slice(0, 8);
 
 	// Create the API key.
 	const rawToken  = `sk_live_${randomToken(32)}`;

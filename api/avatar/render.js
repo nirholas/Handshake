@@ -116,7 +116,7 @@ export default wrap(async function handler(req, res) {
 		return error(res, 404, 'not_found', 'Avatar not found or is private');
 	}
 	if (!avatar.model_url) {
-		return error(res, 403, 'private', 'Avatar is private — only public or unlisted avatars can be rendered');
+		return error(res, 403, 'private', 'Avatar is private: only public or unlisted avatars can be rendered');
 	}
 
 	const resolved = resolveRenderParams({

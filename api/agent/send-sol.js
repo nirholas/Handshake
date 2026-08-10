@@ -56,7 +56,7 @@ export default wrap(async (req, res) => {
 			res,
 			503,
 			'wallet_unconfigured',
-			'avatar wallet is not configured — set AVATAR_WALLET_SECRET (run scripts/gen-avatar-wallet.mjs)',
+			'avatar wallet is not configured. Set AVATAR_WALLET_SECRET (run scripts/gen-avatar-wallet.mjs).',
 		);
 	}
 
@@ -98,7 +98,7 @@ export default wrap(async (req, res) => {
 		recipient = body.to || cfg.defaultRecipient;
 	}
 	if (!recipient) {
-		return error(res, 400, 'no_recipient', 'no recipient — pass `to` or set AVATAR_DEFAULT_RECIPIENT');
+		return error(res, 400, 'no_recipient', 'no recipient: pass `to` or set AVATAR_DEFAULT_RECIPIENT');
 	}
 	if (!isValidPubkey(recipient)) {
 		return error(res, 400, 'bad_recipient', 'recipient is not a valid Solana address');
@@ -146,7 +146,7 @@ export default wrap(async (req, res) => {
 			res,
 			409,
 			'insufficient_funds',
-			`avatar wallet has ${(balance / LAMPORTS_PER_SOL).toFixed(5)} SOL — needs ~${((lamports + FEE_BUFFER_LAMPORTS) / LAMPORTS_PER_SOL).toFixed(5)} SOL. Fund ${cfg.address}.`,
+			`avatar wallet has ${(balance / LAMPORTS_PER_SOL).toFixed(5)} SOL, needs about ${((lamports + FEE_BUFFER_LAMPORTS) / LAMPORTS_PER_SOL).toFixed(5)} SOL. Fund ${cfg.address}.`,
 			{ address: cfg.address, fundUrl: explorerAccountUrl(cfg.address, cfg.network) },
 		);
 	}

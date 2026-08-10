@@ -56,6 +56,13 @@ export function makeRes() {
 		setHeader(k, v) {
 			this.headers[k.toLowerCase()] = v;
 		},
+		// A real ServerResponse exposes this and api/_lib/http.js reads it: the
+		// secure-cache default checks for an already-set Cache-Control, and
+		// varyOn() merges into an existing Vary. Without it those paths silently
+		// no-op under test and a header regression sails straight through.
+		getHeader(k) {
+			return this.headers[k.toLowerCase()];
+		},
 		end(chunk) {
 			if (chunk !== undefined) this.body += chunk;
 			this.writableEnded = true;

@@ -16,7 +16,7 @@
  * /api/agents/:id/sign            — owner-only: sign message with server wallet
  * /api/agents/:id/usage           — owner-only: LLM usage stats
  * /api/agents/:id/achievements    — public: earned + locked achievements from real platform data
- * /api/agents/:id/reserves        public proof-of-reserves (alias of /solana/reserves)
+ * /api/agents/:id/reserves        : public proof-of-reserves (alias of /solana/reserves)
  *
  * /api/agents/:id/livekit-token     — GET short-lived LiveKit room JWT
  * /api/agents/:id/embed             — POST text → 1024-dim embedding vector

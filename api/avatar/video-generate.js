@@ -16,9 +16,10 @@
 //   { job_id, status: "queued" }
 //
 // Errors:
-//   400 invalid_request   — missing required fields
-//   402 free_trial_used   — free user has already used their 1 free generation
-//   502 worker_error      — Cloud Run worker returned an error
+//   400 invalid_request   - missing required fields
+//   402 free_trial_used   - free user has already used their 1 free generation
+//   502 worker_error      - Cloud Run worker returned an error
+//   503 worker_unconfigured - LongCat worker is not configured on this deployment
 
 import { cors, error, json, wrap, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -53,24 +54,18 @@ function trustedMediaUrl(url) {
 	return allowed.has(u.host);
 }
 
-function workerUrl() {
-	const u = process.env.LONGCAT_WORKER_URL;
-	if (!u)
-		throw Object.assign(new Error('LONGCAT_WORKER_URL not configured'), {
-			code: 'worker_unconfigured',
-			status: 503,
-		});
-	return u.replace(/\/$/, '');
-}
-
-function workerKey() {
-	const k = process.env.LONGCAT_WORKER_KEY;
-	if (!k)
-		throw Object.assign(new Error('LONGCAT_WORKER_KEY not configured'), {
-			code: 'worker_unconfigured',
-			status: 503,
-		});
-	return k;
+// Resolve the worker's address and credential together, returning null when
+// either is unset. Both used to throw from inside the `fetch` try-block, so an
+// unconfigured deployment answered `502 worker_unreachable` with the literal
+// env-var name in the body: the wrong status (nothing was unreachable, the
+// endpoint was never configured) and an operator detail the caller has no
+// business seeing. Resolving up front turns that into the documented 503 and
+// keeps the var name in the server log where it belongs.
+function workerConfig() {
+	const url = process.env.LONGCAT_WORKER_URL;
+	const key = process.env.LONGCAT_WORKER_KEY;
+	if (!url || !key) return null;
+	return { url: url.replace(/\/$/, ''), key };
 }
 
 async function resolveImageUrl(avatarId, requesterId) {
@@ -166,6 +161,22 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'invalid_request', 'audio_url must be an https three.ws-hosted URL');
 	}
 
+	// Validation first (a malformed request deserves an actionable 400, not a
+	// misleading "service unavailable"), then the worker-config gate, and only
+	// then the reservation. The free-trial reservation below is a real DB write,
+	// so a deployment that can never reach the worker must not insert and then
+	// delete a usage row on every attempt.
+	const worker = workerConfig();
+	if (!worker) {
+		console.error('[video-generate] LONGCAT_WORKER_URL / LONGCAT_WORKER_KEY not set on this deployment');
+		return error(
+			res,
+			503,
+			'worker_unconfigured',
+			'Talking-avatar video generation is not available on this deployment.',
+		);
+	}
+
 	// Atomically reserve the free-trial slot BEFORE submitting the worker job.
 	// The old check-then-insert straddled the worker call, so two concurrent
 	// requests could both pass the count check and both generate. Reserving
@@ -201,11 +212,11 @@ export default wrap(async (req, res) => {
 	try {
 		let workerRes;
 		try {
-			workerRes = await fetch(`${workerUrl()}/generate`, {
+			workerRes = await fetch(`${worker.url}/generate`, {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
-					authorization: `Bearer ${workerKey()}`,
+					authorization: `Bearer ${worker.key}`,
 				},
 				body: JSON.stringify({
 					image_url: imageUrl,
