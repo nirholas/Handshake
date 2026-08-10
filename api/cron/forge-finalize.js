@@ -32,7 +32,7 @@
 // other cron in /api/cron/.
 
 import { sql } from '../_lib/db.js';
-import { cors, json, wrapCron } from '../_lib/http.js';
+import { cors, json, method, wrapCron } from '../_lib/http.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { materializeCreation, markFailed, forgeStoreEnabled, createCreation } from '../_lib/forge-store.js';
 import { notifyForgeComplete, notifyForgeFailed } from '../_lib/forge-notify.js';
@@ -205,8 +205,8 @@ async function tryCronRedispatch(row, ageMinutes) {
 }
 
 export default wrapCron(async (req, res) => {
-	cors(req, res, { methods: 'GET,POST,OPTIONS' });
-	if (req.method?.toUpperCase() === 'OPTIONS') return;
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
 	if (!forgeStoreEnabled()) {
 		return json(res, 200, { enabled: false, swept: 0 });

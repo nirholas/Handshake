@@ -27,8 +27,7 @@
 // which shares this claim ledger. `?dry_run=1` reports coverage without
 // rendering. Skips cleanly when forge persistence is unconfigured.
 
-import { json, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { logger } from '../_lib/usage.js';
 import { forgeStoreEnabled } from '../_lib/forge-store.js';
 import { renderBatch, coverage } from '../_lib/forge-thumbs.js';
@@ -42,6 +41,7 @@ const RENDER_BATCH = Math.max(0, Number(process.env.FORGE_THUMBNAIL_RENDER_BATCH
 const CONCURRENCY = Math.max(1, Number(process.env.FORGE_THUMBNAIL_CONCURRENCY || 2));
 
 export default wrapCron(async (req, res) => {
+	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
 
 	// Renders upload to R2 and read/write the DB — no store, nothing to do.

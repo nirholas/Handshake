@@ -22,7 +22,7 @@
 import { readFileSync } from 'node:fs';
 import bs58 from 'bs58';
 import {
-	Connection, PublicKey, Keypair, TransactionMessage, VersionedTransaction,
+	PublicKey, Keypair, TransactionMessage, VersionedTransaction,
 	ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
@@ -31,7 +31,7 @@ import {
 	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getMint,
 } from '@solana/spl-token';
 
-import { json, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { getRedis, isRedisAuthError } from '../_lib/redis.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
@@ -220,7 +220,7 @@ async function pushFeedEntry(entry) {
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 export default wrapCron(async (req, res) => {
-	if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
+	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
 
 	if (process.env.X402_SEED_ENABLED === 'false') {

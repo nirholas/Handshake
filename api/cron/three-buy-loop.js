@@ -34,7 +34,7 @@ import { randomUUID } from 'node:crypto';
 import { PublicKey } from '@solana/web3.js';
 import { getMint } from '@solana/spl-token';
 
-import { json, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { getRedis } from '../_lib/redis.js';
@@ -103,7 +103,7 @@ async function nextTickSeq() {
 }
 
 export default wrapCron(async (req, res) => {
-	if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
+	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
 
 	// ── Kill switches ───────────────────────────────────────────────────────

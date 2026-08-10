@@ -42,7 +42,7 @@ import {
 	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 
-import { json, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { getRedis } from '../_lib/redis.js';
 import { sql } from '../_lib/db.js';
@@ -184,7 +184,7 @@ function isFloorSignal(result) {
 }
 
 export default wrapCron(async (req, res) => {
-	if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
+	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
 
 	const origin = ORIGIN();
@@ -474,7 +474,7 @@ export default wrapCron(async (req, res) => {
 			}),
 		isFloorSignal,
 	});
-	const { results, calls, paid, errors, spent, lastTxSig, floorHit } = exec;
+	const { results, calls, paid, errors, spent, floorHit } = exec;
 	if (exec.capReached) {
 		log.info('ring_tick_cap_reached', { spent_atomic: spent, launched: calls, picks: picks.length });
 	}
