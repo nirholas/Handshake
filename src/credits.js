@@ -16,7 +16,13 @@ const $ = (id) => document.getElementById(id);
 const fmtUsd = (n) => `$${(Number(n) || 0).toFixed(2)}`;
 const origin = window.location.origin;
 
-let state = { asset: 'SOL', deposit: null, prices: {} };
+let state = {
+	asset: 'SOL',
+	deposit: null,
+	prices: {},
+	ledgerCursor: null,
+	loadingMore: false,
+};
 
 function fmtAmount(n, max = 6) {
 	const v = Number(n) || 0;
@@ -85,12 +91,12 @@ function renderBuys(buys) {
 	}
 }
 
-function renderLedger(items) {
+function renderLedger(items, { append = false } = {}) {
 	const table = $('ledger');
 	const empty = $('ledger-empty');
 	const body = $('ledger-body');
-	body.innerHTML = '';
-	if (!items?.length) {
+	if (!append) body.innerHTML = '';
+	if (!items?.length && !body.childElementCount) {
 		table.hidden = true;
 		empty.hidden = false;
 		return;
@@ -112,6 +118,40 @@ function renderLedger(items) {
 	}
 }
 
+// The ledger is keyset-paginated (25 per page). Show the button only while the
+// API hands back a cursor, so the last page ends cleanly with no dead control.
+// The label is captured from the DOM rather than hardcoded so the i18n catalog
+// (data-i18n on the button) still owns the copy in every locale.
+function renderLedgerMore() {
+	const btn = $('ledger-more');
+	if (!btn) return;
+	if (!btn.dataset.label) btn.dataset.label = btn.textContent.trim();
+	btn.hidden = !state.ledgerCursor;
+	btn.disabled = state.loadingMore;
+	btn.setAttribute('aria-busy', state.loadingMore ? 'true' : 'false');
+	btn.textContent = state.loadingMore ? `${btn.dataset.label}\u2026` : btn.dataset.label;
+}
+
+async function loadMoreLedger() {
+	if (!state.ledgerCursor || state.loadingMore) return;
+	state.loadingMore = true;
+	renderLedgerMore();
+	try {
+		const r = await fetch(`/api/credits?cursor=${encodeURIComponent(state.ledgerCursor)}`, {
+			credentials: 'include',
+		});
+		if (!r.ok) throw new Error('Could not load older activity.');
+		const data = await r.json();
+		state.ledgerCursor = data.next_cursor || null;
+		renderLedger(data.ledger, { append: true });
+	} catch (err) {
+		setStatus(err.message || 'Could not load older activity.', 'err');
+	} finally {
+		state.loadingMore = false;
+		renderLedgerMore();
+	}
+}
+
 function escapeHtml(s) {
 	return String(s).replace(
 		/[&<>"]/g,
@@ -125,7 +165,9 @@ function renderAll(data) {
 	$('lifetime-spent').textContent = fmtUsd(data.lifetime_spent_usd);
 	$('deposit-addr').textContent = data.deposit?.wallet || 'Not configured';
 	renderBuys(data.buys);
+	state.ledgerCursor = data.next_cursor || null;
 	renderLedger(data.ledger);
+	renderLedgerMore();
 }
 
 async function loadPrices() {
@@ -370,6 +412,7 @@ function wire() {
 	$('amount').addEventListener('input', updateEstimate);
 	$('deposit-btn').addEventListener('click', doDeposit);
 	$('verify-btn').addEventListener('click', doManualVerify);
+	$('ledger-more').addEventListener('click', loadMoreLedger);
 }
 
 async function main() {

@@ -31,12 +31,36 @@
 			<description>An audit of the sign-in endpoints turned up four things worth your attention. Signing in again with the same Ethereum wallet or Privy identity used to quietly restore an account you had deleted, even though you had typed the confirmation phrase to retire it; both paths now refuse it the same way the Solana and SSO sign-ins already did. Wallet sign-in also enforces its domain check properly again: the rule that a signature only counts when it was signed for three.ws was being skipped on the live site because of a hosting setting that no longer exists, which meant a signature collected by some other site could in principle be spent here. &quot;Log out of all other sessions&quot; and &quot;log out everywhere&quot; told you nothing about how many sessions they closed, because the count was read from a field the database driver never sends; both now report a real number. For the same reason, deleting your account always claimed it had retired zero avatars, agents, and widgets no matter how much you had; that tally is now accurate, in the response and in the support record.</description>
 		</item>
 		<item>
+			<title>A mistyped bounty or citizen link in Agora now says what is wrong instead of failing with a server error</title>
+			<link>https://three.ws/agora</link>
+			<guid isPermaLink="false">2026-08-10:A mistyped bounty or citizen link in Agora now says what is wrong instead of failing with a server error</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Agora actions take two kinds of id: a citizen id and a bounty id. Pasting a broken one (a truncated link, a copy that picked up stray characters) did not answer &quot;that is not a valid id&quot;. Hiring a citizen and vouching for one both failed with an unexplained server error, and claiming or completing a bounty failed as though the network were down. A mistyped bounty id was also only noticed after your Agora citizen had already been registered on-chain for work that could never go through. All four now check the id first and answer in plain language, and nothing is registered or spent on a request that cannot succeed. Separately, when the public Agora feeds (the citizen list, the job board, the economy ticker, a passport) turn a request away for arriving too fast, they now say how long to wait, so the 3D Commons and any dashboard reading them can back off properly instead of guessing.</description>
+		</item>
+		<item>
 			<title>AgenC task and agent lookups stopped failing when one Solana RPC provider blocked us</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-10:AgenC task and agent lookups stopped failing when one Solana RPC provider blocked us</guid>
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Browsing the AgenC task marketplace through three.ws returned a blank internal error for every request: the lookups talked to a single Solana RPC provider, and that provider had started refusing our traffic outright. They now rotate across the same priority-ordered list of providers the rest of the platform uses, so one provider going dark or hitting its quota is invisible to you. If every provider is down at once you get an honest &quot;try again shortly&quot; instead of a dead end, and a failed provider is skipped for the next few minutes rather than slowing down every later request.</description>
+		</item>
+		<item>
+			<title>Agent memory search works again: the embedding endpoint was calling a model NVIDIA had stopped serving</title>
+			<link>https://three.ws/brain</link>
+			<guid isPermaLink="false">2026-08-10:Agent memory search works again: the embedding endpoint was calling a model NVIDIA had stopped serving</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Semantic recall over an agent's memories asks the platform to turn your text into a vector. That endpoint named one specific model, NVIDIA stopped serving it, and every request came back as a failed upstream call, so recall had nothing to search with. It now goes through the same embedder the rest of the platform already uses, which means the free lane first with two working fallbacks behind it instead of one dead name, and every answer says which embedder produced the vector so vectors from different models can never be compared against each other by mistake. Two related fixes shipped with it: importing a portable brain bundle twice no longer duplicates every memory in it (a second sync used to silently double an agent's mind), and reading a pinned memory file while the public IPFS gateways are all down now reports an upstream problem instead of a three.ws server error.</description>
+		</item>
+		<item>
+			<title>Agent payment history pages correctly, proof-of-reserves answers at its documented address, and a signed-in trust read is no longer shareable</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:Agent payment history pages correctly, proof-of-reserves answers at its documented address, and a signed-in trust read is no longer shareable</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An audit of the agent sub-resources found four things worth fixing. Paging through an agent's payment history handed back a page marker that did not match how the list is ordered, so scrolling past the first page could skip payments or repeat one; the marker now carries the timestamp the list sorts on and pages are exact. On the same endpoint, a non-numeric, negative, or oversized page size and a malformed page marker each produced a server error instead of an answer, so a mistyped link read as an outage. Proof-of-reserves has always been documented at /api/agents/&lt;id&gt;/reserves as well as the longer Solana path, but only the long one worked: the short address quietly returned the agent record instead. It serves reserves now. The reputation, unlocks, and reserves reads also mark a signed-in response private, because those responses carry your ownership flag and, for reputation, your owner-only guidance, and they were previously marked cacheable by shared caches. Anonymous reads are still served from the edge. Pinning an agent memory file now rejects malformed data up front rather than storing a corrupted copy under a real-looking address.</description>
 		</item>
 		<item>
 			<title>Agent pump.fun and directory endpoints answer bad input honestly</title>
@@ -53,6 +77,22 @@
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Three fixes on the agent economy API. Hiring one agent to do paid work for another failed with a generic server error for every signed-in caller, on every request, because of a name collision inside the endpoint; the whole hire path was dead while a logged-out probe of it looked healthy. The three.ws paid 3D-model inspection skill, which other agents pay to call, rejected every request as unreadable because the code that reads the request body was never wired in; it now returns its real price quote and, once paid, its real inspection report. And the per-agent trading guardrails could be quietly removed: saving a per-trade cap or daily budget as a negative number or a stray word did not fail, it erased the existing ceiling and reported success, leaving the agent free to spend without one. Those values are now rejected with a plain message and the saved cap is left untouched; clearing a cap still works, but only when you say so explicitly. Failures on the trade, strategy-close, and alpha-read paths also now record why they failed instead of returning an unexplained error.</description>
+		</item>
+		<item>
+			<title>An AWS Marketplace subscription can no longer be claimed by the wrong account, and the billing webhook refuses unverified senders</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:An AWS Marketplace subscription can no longer be claimed by the wrong account, and the billing webhook refuses unverified senders</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>An audit of the four AWS Marketplace endpoints found three problems. Confirming your subscription on the welcome page told you it had been linked even when that AWS subscription was already attached to a different three.ws account: the link silently did nothing, and the next step then failed with a permission error you had no way to interpret. It now says plainly that the subscription belongs to another account, and the same page explains what to do about a cancelled subscription or an expired session instead of showing one generic &quot;contact support&quot; line for every cause. Opening the link with no session at all returned a server error rather than asking you to sign in, and it answered whether a given customer record existed before checking who was asking; both are fixed. Finally, the webhook AWS uses to report subscribe and cancel events now requires the notification topic to be configured before it will accept anything. A signature alone only proves that some AWS account sent the message, so without that setting a forged event could have issued an API key or cancelled a paying customer.</description>
+		</item>
+		<item>
+			<title>Animations you price for sale no longer hand out their motion for free, and the animation API answers bad input honestly</title>
+			<link>https://three.ws/pose</link>
+			<guid isPermaLink="false">2026-08-10:Animations you price for sale no longer hand out their motion for free, and the animation API answers bad input honestly</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>A creator who listed an animation for sale in the marketplace was still serving the clip's keyframe tracks to anyone who asked for it by id, and the marketplace feed publishes that id to every visitor, so the motion could be taken without paying for it. A priced private or unlisted clip now comes back to everyone but its owner as metadata, poster and price with no tracks, plus a pointer to the paid download; you keep full access to your own work, and a clip you deliberately publish to the free gallery (visibility public) stays free. Alongside that, three requests that used to fail with an unexplained server error now say what is wrong: an animation id that is not a real id, a mangled page cursor in the clip list, and an animation poster larger than the upload allows. Posters up to the documented 1.5 MB now upload; anything over about 750 KB previously failed with a message about a missing id.</description>
 		</item>
 		<item>
 			<title>Autopilot answers a bad request with a clear error instead of an internal failure</title>
@@ -95,6 +135,30 @@
 			<description>Three fixes on the copy-trading surface. Settling a performance fee now checks that the payment quote you present was actually issued for that fee on one of your own subscriptions before it credits anything, and it makes that check before the payment is verified on-chain, so a quote meant for something else can no longer be used to write off what you owe the trader you copy. Pausing or resuming a follow works again for browser clients that send their security token in the request body, which previously came back as an unrelated complaint about the trader's ID. And the Smart Money directory answers a nonsense sort value with its default ranking instead of an error page, as the docs always said it would.</description>
 		</item>
 		<item>
+			<title>Copy trading: performance fees can only be settled with their own quote</title>
+			<link>https://three.ws/docs/copy-trading</link>
+			<guid isPermaLink="false">2026-08-10:Copy trading: performance fees can only be settled with their own quote</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes on the copy-trading surface. Settling a performance fee now checks that the payment quote you present was actually issued for that fee on one of your own subscriptions before it credits anything, and it makes that check before the payment is verified on-chain, so a quote meant for something else can no longer be used to write off what you owe the trader you copy. Pausing or resuming a follow works again for browser clients that send their security token in the request body, which previously came back as an unrelated complaint about the trader's ID. And the Smart Money directory answers a nonsense sort value with its default ranking instead of an error page, as the docs always said it would.</description>
+		</item>
+		<item>
+			<title>Creator Studio skill analytics no longer errors out on a bad agent filter, and creator profile links stop pointing at a missing page</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:Creator Studio skill analytics no longer errors out on a bad agent filter, and creator profile links stop pointing at a missing page</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The per-skill analytics panel in Creator Studio asks the API for one agent at a time. If that agent id was malformed, or arrived twice in the same URL, the request came back as a generic server error with no explanation, and the panel simply went blank. It now answers with a clear &quot;agent_id must be a UUID&quot; message that the panel can show you. A negative lookback window (for example a hand-edited &quot;days=-5&quot;) used to be accepted and then quietly report zero activity forever, because the window started in the future; the window is now held to 1 to 365 days. The endpoint is also rate limited like every other signed-in read. Separately, the public creator profile that the marketplace author modal loads was handing out a link to /creators/&lt;id&gt;, a page that does not exist, for any creator who has not claimed a username. Those creators now come back with no link instead of one that 404s.</description>
+		</item>
+		<item>
+			<title>Creator Studio skill analytics stops erroring on a bad agent filter, and creator profile links stop pointing at a missing page</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:Creator Studio skill analytics stops erroring on a bad agent filter, and creator profile links stop pointing at a missing page</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The per-skill analytics panel in Creator Studio asks the API about one agent at a time. When that agent id was malformed, or arrived twice in the same URL, the reply was a generic server error with no explanation and the panel simply went blank. It now answers with a clear &quot;agent_id must be a UUID&quot; message the panel can show you. A negative lookback window (a hand-edited &quot;days=-5&quot;, say) used to be accepted and then report zero activity forever, because the window started in the future; the window is now held to 1 to 365 days, and the endpoint is rate limited like every other signed-in read. Separately, the public creator profile behind the marketplace author modal was handing out a link to a /creators/ page that does not exist, for any creator who has not claimed a username. Those creators now come back with no link instead of one that 404s.</description>
+		</item>
+		<item>
 			<title>Crew mutations are CSRF-guarded, and a crew link with a trailing slash opens the crew</title>
 			<link>https://three.ws/crews</link>
 			<guid isPermaLink="false">2026-08-10:Crew mutations are CSRF-guarded, and a crew link with a trailing slash opens the crew</guid>
@@ -111,6 +175,14 @@
 			<description>The sweep that closes out expired payment sessions marked every due session as expired in one go but only issued refunds for the first hundred of them. Any session past that point was left closed with its unspent budget still held, and because the next sweep only looks at sessions that are still open, those refunds were never picked up. The limit now applies to the closing step itself, so a sweep only closes the sessions it refunds in the same pass and the rest stay open for the next one. The same endpoint also now rejects request methods it does not implement instead of running the refund pass for them, and a reflection that fails during the scheduled memory sweep now says which agent failed and why.</description>
 		</item>
 		<item>
+			<title>Holder cohorts answer the real reason a request was refused, and the holder panel is cached again</title>
+			<link>https://three.ws/fear-greed</link>
+			<guid isPermaLink="false">2026-08-10:Holder cohorts answer the real reason a request was refused, and the holder panel is cached again</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An audit of the /api/coin market endpoints found the holder-cohorts route deciding things in the wrong order. Asking to export a cohort that does not exist, or asking without being signed in, made the server fetch the whole holder list first and then reply &quot;holder data is temporarily unavailable&quot;, which is not what went wrong and hides the fix. Those requests now answer immediately with the actual reason (unknown cohort, not signed in, not the coin's creator), and no holder lookup is spent on a request that was never going to be allowed. The public holder counts on a coin page are cacheable again, so the panel loads from the edge instead of re-querying on every view, and the whole route shares one rate limit rather than leaving its database side unguarded. Separately, the Fear and Greed page no longer claims a reading is unchanged from last week when it has only a single day of history to compare against.</description>
+		</item>
+		<item>
 			<title>NFT portfolio reads reach the right provider again, and the smart-money board is readable as plain JSON</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-10:NFT portfolio reads reach the right provider again, and the smart-money board is readable as plain JSON</guid>
@@ -125,6 +197,14 @@
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The brain chat API keeps a small table that points retired model names at the model that replaced them, so a saved setting or an older script does not break the day a vendor deprecates a name. That table was never consulted: a request naming one of those older models was rejected as unknown before the table was ever read, including the exact name our own brain MCP tool tells clients to use. Those names now resolve to their current successor and answer normally, while a name that is genuinely not a model is still rejected right away. A malformed request is also reported as your bad input again rather than as a missing API key, so the error points at the thing you can actually fix.</description>
+		</item>
+		<item>
+			<title>One of the free chat models had been retired by its provider; the daily audit caught it and it has been replaced</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:One of the free chat models had been retired by its provider; the daily audit caught it and it has been replaced</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The platform keeps a short list of free models it can fall back to when the one you picked is busy. Providers retire these without notice, and one of the four on that list had been withdrawn, so anything that failed over to it hit a dead end instead of an answer. The daily liveness audit flagged it and it has been swapped for the provider's current model. All four entries on the list are live again.</description>
 		</item>
 		<item>
 			<title>Posting a bounty on /go works again, and every bounty action is protected against cross-site requests</title>
@@ -271,12 +351,28 @@
 			<description>Sites that pin an &lt;agent-3d&gt; bundle version can poll /api/agent-3d/versions to learn about a new release. That endpoint now returns an ETag derived from the manifest contents, so a poller that sends the tag back gets an empty 304 Not Modified between releases instead of re-downloading the same JSON, and gets the full manifest the moment a new version publishes. When a deploy ships without the manifest the endpoint used to answer &quot;not found&quot; whether the file was missing or corrupt; it now says which of the two it is, so the fix is obvious from the response alone. The manifest is also documented for embedders alongside the static /agent-3d/versions.json copy.</description>
 		</item>
 		<item>
+			<title>The Forge gallery is growing again: new community avatars had quietly stopped appearing on 25 July</title>
+			<link>https://three.ws/community</link>
+			<guid isPermaLink="false">2026-08-10:The Forge gallery is growing again: new community avatars had quietly stopped appearing on 25 July</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every minute, the platform generates a fresh 3D avatar from its prompt library and publishes it to the public gallery under a new single-word account (wolf, raven, frost). Those accounts number themselves when a word is already taken, and by 25 July every word in the library had used up its numbered slots. The step that picks a name only looked at the first hundred existing accounts, so it could not see the slots were gone: it kept handing back names that already existed, every attempt was discarded, and the job reported success while creating nothing. For sixteen days the gallery stopped receiving new work. Names now fall through to an unlimited pool once the numbered slots run out, and the database itself decides who gets a name, so two runs overlapping can no longer publish the same model twice.</description>
+		</item>
+		<item>
 			<title>The free 3D API stops handing agents an HTML page when they asked for JSON</title>
 			<link>https://three.ws/docs/3d-api</link>
 			<guid isPermaLink="false">2026-08-10:The free 3D API stops handing agents an HTML page when they asked for JSON</guid>
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Three fixes on the free, keyless 3D API. The directory at /api/3d serves a browsable page to a browser and JSON to an agent off the same address, but it never told the CDN that, so for five minutes at a time whichever kind of visitor arrived first decided what everyone else got: an agent could ask for JSON and be handed the web page. It now marks the two apart so each caller gets its own. Model inspection was reporting a blocked link (one pointing at a private or internal address, which it refuses on purpose) as an upstream failure worth retrying, instead of saying plainly that the link is not allowed; it now answers with the validation error the docs always promised. And checking on a generation now says so outright when the deployment has no 3D generator behind it, rather than replying &quot;still working&quot; to a job that could never finish.</description>
+		</item>
+		<item>
+			<title>The free Crypto Data API index now lists the portfolio and airdrop endpoints it was hiding</title>
+			<link>https://three.ws/docs/crypto-api</link>
+			<guid isPermaLink="false">2026-08-10:The free Crypto Data API index now lists the portfolio and airdrop endpoints it was hiding</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two live endpoints, the wallet portfolio overview and the airdrop eligibility checker, shipped without a catalog descriptor, so the one-URL bundle index at /api/crypto and the OpenAPI document generated from it skipped both entirely. An agent discovering the API the way we tell it to could not see either endpoint, even though both answered fine when called directly. Both are described now, in the index, in the OpenAPI doc, and in the docs page, and a test holds the catalog to every endpoint that ships so the next one cannot go missing. Two smaller honesty fixes went with it: the bonding and launches endpoints stopped telling browsers they accept POST when they only answer GET, and the launches error for a bad limit now says what actually happens to an oversized one (it is capped at 100, not rejected).</description>
 		</item>
 		<item>
 			<title>The public asset catalog now answers a bad filter honestly</title>
@@ -301,6 +397,22 @@
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Every Bazaar surface was quietly reading one listing per facilitator instead of the full catalog, so the directory, search, provider profiles, and the arbitrage board were all built on a sliver of what is out there. Fixed: a default catalog read now returns hundreds of live endpoints, search ranks across all of them, and the arbitrage board compares real competing providers. Asking for a set number of results now actually returns that many, with the full match count alongside it. Provider profiles used to ship every listing a host has, which for our largest provider meant a 10 MB page; they now send a price-ladder page plus the true total. All of it is backed by a shared catalog cache, so the pages that used to spend 15 seconds fanning out to facilitators answer in well under a second. And when every facilitator is down, these endpoints say so instead of showing an empty catalog that looked like the services had vanished.</description>
+		</item>
+		<item>
+			<title>Three fixes across the agent money endpoints</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:Three fixes across the agent money endpoints</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A coin launch prepared from an agent profile now checks the creator wallet against the agent’s deployed Solana address exactly. Solana addresses are case-sensitive, and the old check let an address that differed only in capitalisation through, which would have built the launch transaction under a wallet the agent does not own. Separately, the paid Unstoppable Agent status endpoint was crediting its treasury for calls that were served free to internal and subscription callers, so the balance and runway it reported were higher than what anyone had actually paid; only settled calls count now. And the wallet rule compiler, which turns a sentence like “sell half my $THREE” into a standing rule, now sees the wallet’s real token holdings instead of always being told the wallet was empty.</description>
+		</item>
+		<item>
+			<title>Your credits history now goes past the first 25 entries</title>
+			<link>https://three.ws/credits</link>
+			<guid isPermaLink="false">2026-08-10:Your credits history now goes past the first 25 entries</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The credits page listed only your 25 most recent balance changes and stopped there: deposits and spends older than that had no way to be seen, even though the API was already handing back a marker for the next page. The history card now has a Load older activity button that walks back through the full ledger a page at a time, and it disappears once you reach the oldest entry. The credits API accepts the matching cursor and limit query parameters, so agents and scripts reading a balance can page through the same history.</description>
 		</item>
 		<item>
 			<title>The Oracle now scores from measured outcomes, and its top tiers finally mean something</title>
