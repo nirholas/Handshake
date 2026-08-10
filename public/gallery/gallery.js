@@ -423,8 +423,10 @@ function renderPopular() {
 	els.pops.innerHTML = popularSearches
 		.map((s) => {
 			const active = s.query === state.query;
+			// Eager: these are 22px images at the top of the controls, always in the
+			// first viewport, so deferring them only delays the row settling.
 			const thumb = s.sample_thumbnail
-				? `<img class="gallery-pop-thumb" src="${escapeAttr(s.sample_thumbnail)}" alt="" loading="lazy" decoding="async" />`
+				? `<img class="gallery-pop-thumb" src="${escapeAttr(s.sample_thumbnail)}" alt="" decoding="async" />`
 				: '';
 			const count = s.result_count > 0 ? `<span class="gallery-pop-count">${s.result_count}</span>` : '';
 			const label = active ? `Clear the ${s.query} search` : `Search for ${s.query}`;
@@ -435,6 +437,11 @@ function renderPopular() {
 			)}</span>${count}</button>`;
 		})
 		.join('');
+	// A thumbnail whose object was pruned would otherwise leave a broken-image
+	// box in the chip; drop the img and let the chip render as text only.
+	for (const img of els.pops.querySelectorAll('.gallery-pop-thumb')) {
+		img.addEventListener('error', () => img.remove(), { once: true });
+	}
 }
 
 async function loadPopularSearches() {
