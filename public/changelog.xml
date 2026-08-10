@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>A cosmetic earnings outage now says so instead of showing you zero</title>
+			<link>https://three.ws/fits</link>
+			<guid isPermaLink="false">2026-08-10:A cosmetic earnings outage now says so instead of showing you zero</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The creator earnings lookup used to answer a database outage with a clean set of zeroes, so a creator with real settled sales was told they had earned nothing and the dashboard rendered its &quot;no cosmetic sales yet&quot; empty state on top of it. An unreachable sales ledger is now reported as a temporary error the page can retry, while a creator who genuinely has no sales still reads back as real zeroes from the ledger. Two smaller fixes in the same family of endpoints: posting a split-config change under the wrong content type now returns an unsupported-media-type error naming the header instead of claiming the payload was malformed, and that endpoint no longer advertises credentialed cross-origin access it never used.</description>
+		</item>
+		<item>
+			<title>Agent pump.fun and directory endpoints answer bad input honestly</title>
+			<link>https://three.ws/agents</link>
+			<guid isPermaLink="false">2026-08-10:Agent pump.fun and directory endpoints answer bad input honestly</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes across the agent APIs. Calling a pump.fun action (portfolio, buy, sell, swap, launch, pay) with an id that is not a real agent id returned an anonymous internal error with a support reference; it now returns a plain not-found, matching every other agent endpoint. The pump.fun intel proxy checked whether the upstream feed was configured before it checked your request, so an unknown operation or a token lookup with no mint address could answer 200 with empty data on one deployment and a validation error on another; the request is now validated first, so the same call gets the same answer everywhere. A legacy single-skill price endpoint that no route could reach, and that skipped the cross-site protection its live replacement enforces, has been removed: setting one skill price still goes through the documented per-skill route. The public agent directory also logs a failed lookup now instead of quietly rendering as if nobody had published an agent.</description>
+		</item>
+		<item>
 			<title>Autopilot answers a bad request with a clear error instead of an internal failure</title>
 			<link>https://three.ws/autopilot-activity</link>
 			<guid isPermaLink="false">2026-08-10:Autopilot answers a bad request with a clear error instead of an internal failure</guid>

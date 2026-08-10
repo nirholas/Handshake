@@ -3,6 +3,24 @@
   "entries": [
     {
       "date": "2026-08-10",
+      "title": "Agent pump.fun and directory endpoints answer bad input honestly",
+      "summary": "Three fixes across the agent APIs. Calling a pump.fun action (portfolio, buy, sell, swap, launch, pay) with an id that is not a real agent id returned an anonymous internal error with a support reference; it now returns a plain not-found, matching every other agent endpoint. The pump.fun intel proxy checked whether the upstream feed was configured before it checked your request, so an unknown operation or a token lookup with no mint address could answer 200 with empty data on one deployment and a validation error on another; the request is now validated first, so the same call gets the same answer everywhere. A legacy single-skill price endpoint that no route could reach, and that skipped the cross-site protection its live replacement enforces, has been removed: setting one skill price still goes through the documented per-skill route. The public agent directory also logs a failed lookup now instead of quietly rendering as if nobody had published an agent.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/agents"
+    },
+    {
+      "date": "2026-08-10",
+      "title": "A cosmetic earnings outage now says so instead of showing you zero",
+      "summary": "The creator earnings lookup used to answer a database outage with a clean set of zeroes, so a creator with real settled sales was told they had earned nothing and the dashboard rendered its \"no cosmetic sales yet\" empty state on top of it. An unreachable sales ledger is now reported as a temporary error the page can retry, while a creator who genuinely has no sales still reads back as real zeroes from the ledger. Two smaller fixes in the same family of endpoints: posting a split-config change under the wrong content type now returns an unsupported-media-type error naming the header instead of claiming the payload was malformed, and that endpoint no longer advertises credentialed cross-origin access it never used.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/fits"
+    },
+    {
+      "date": "2026-08-10",
       "title": "Older model names still work when you chat through the API",
       "summary": "The brain chat API keeps a small table that points retired model names at the model that replaced them, so a saved setting or an older script does not break the day a vendor deprecates a name. That table was never consulted: a request naming one of those older models was rejected as unknown before the table was ever read, including the exact name our own brain MCP tool tells clients to use. Those names now resolve to their current successor and answer normally, while a name that is genuinely not a model is still rejected right away. A malformed request is also reported as your bad input again rather than as a missing API key, so the error points at the thing you can actually fix.",
       "tags": [
