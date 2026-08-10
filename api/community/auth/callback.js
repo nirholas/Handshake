@@ -3,9 +3,10 @@
 // X redirects the popup here after the user authorizes. We exchange the
 // one-time challenge code for the user's CoinCommunities session server-side,
 // set httpOnly cookies, then hand control back to the opener via postMessage
-// and close the popup. Only the one-time challengeCode exchange is accepted —
+// and close the popup. Only the one-time challengeCode exchange is accepted;
 // raw tokens in the redirect URL are never trusted (login CSRF / fixation).
-import { text, wrap } from '../../_lib/http.js';
+import { method, text, wrap } from '../../_lib/http.js';
+import { clientIp, limits } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
 import { cc, setUserSession, UnconfiguredError } from '../../_lib/coin-communities.js';
 import { publishMemberJoin } from '../../_lib/feed.js';
@@ -26,7 +27,7 @@ function page({ ok, user = null, message = '' }) {
 	const payload = JSON.stringify({ type: 'cc-auth', ok, user, message }).replace(/</g, '\\u003c');
 	return `<!doctype html><meta charset="utf-8"><title>Signing in…</title>
 <body style="margin:0;display:grid;place-items:center;height:100vh;font:15px system-ui;background:#0a0e1c;color:#cdd9f5">
-<div>${ok ? 'Signed in — you can close this window.' : 'Sign-in failed. You can close this window.'}</div>
+<div>${ok ? 'Signed in. You can close this window.' : 'Sign-in failed. You can close this window.'}</div>
 <script>
 (function(){
   var msg = ${payload};
@@ -36,7 +37,24 @@ function page({ ok, user = null, message = '' }) {
 </script>`;
 }
 
+function htmlPage(res, status, opts) {
+	return text(res, status, page(opts), { 'content-type': 'text/html; charset=utf-8' });
+}
+
 export default wrap(async (req, res) => {
+	// The redirect target is a browser navigation, nothing else. Anything with a
+	// body is someone probing the exchange, not X handing back a user.
+	if (!method(req, res, ['GET'])) return;
+
+	// A challenge code is a one-shot credential: without a ceiling this endpoint
+	// is an unmetered oracle for guessing them. The rest of the session surface
+	// (wallet link, unlink, posting) already sits behind the same bucket, and one
+	// sign-in spends exactly one request of it.
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) {
+		return htmlPage(res, 429, { ok: false, message: 'too many sign-in attempts, try again shortly' });
+	}
+
 	const url = new URL(req.url, 'http://x');
 	const challengeCode = url.searchParams.get('challengeCode');
 
@@ -45,9 +63,7 @@ export default wrap(async (req, res) => {
 		api = cc();
 	} catch (err) {
 		if (err instanceof UnconfiguredError) {
-			return text(res, 503, page({ ok: false, message: 'not configured' }), {
-				'content-type': 'text/html; charset=utf-8',
-			});
+			return htmlPage(res, 503, { ok: false, message: 'not configured' });
 		}
 		throw err;
 	}
@@ -61,12 +77,8 @@ export default wrap(async (req, res) => {
 		const session = data;
 		setUserSession(res, session);
 		announceSignIn(session.user);
-		return text(res, 200, page({ ok: true, user: session.user }), {
-			'content-type': 'text/html; charset=utf-8',
-		});
+		return htmlPage(res, 200, { ok: true, user: session.user });
 	} catch (err) {
-		return text(res, 200, page({ ok: false, message: err.message || 'sign-in failed' }), {
-			'content-type': 'text/html; charset=utf-8',
-		});
+		return htmlPage(res, 200, { ok: false, message: err.message || 'sign-in failed' });
 	}
 });

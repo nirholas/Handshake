@@ -1,6 +1,6 @@
 // POST /api/community/wallet/unlink
 // Unlinks the signed-in user's Solana (svm) wallet(s) so they can link a
-// different one — e.g. when the wallet they linked first doesn't hold the coin
+// different one, e.g. when the wallet they linked first doesn't hold the coin
 // and they need to switch to the one that does. Idempotent: succeeds (unlinked:0)
 // when nothing is linked, so the gate's "use a different wallet" path is safe to
 // call from any state.

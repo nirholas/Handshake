@@ -1,7 +1,7 @@
 // POST /api/community/holder-pass?token=<mint>
 //
-// Mints a holder pass — proof a signed-in user holds at least HOLDER_MIN_USD of
-// a coin — so the multiplayer server can admit them into that coin's gated
+// Mints a holder pass (proof a signed-in user holds at least HOLDER_MIN_USD of
+// a coin) so the multiplayer server can admit them into that coin's gated
 // Holders world without running Solana RPC itself.
 //
 // The check is on the user's *authenticated* wallet: we read the linked Solana
@@ -11,12 +11,12 @@
 // pass can't be minted against someone else's address.
 //
 // Responses (always 200 unless the request itself is bad):
-//   { eligible: true,  usd, amount, minUsd, wallet, holderPass }  — admit
-//   { eligible: false, usd, amount, minUsd, wallet }              — short; UI
-//                                                                    shows buy CTA
+//   { eligible: true,  usd, amount, minUsd, wallet, holderPass }  admit them
+//   { eligible: false, usd, amount, minUsd, wallet }              short, so the
+//                                                                 UI shows a buy CTA
 // Auth/wallet problems are real errors the gate UI routes on:
-//   401 auth_required   — not signed in to CoinCommunities
-//   403 wallet_required — signed in but no linked Solana wallet
+//   401 auth_required:   not signed in to CoinCommunities
+//   403 wallet_required: signed in but no linked Solana wallet
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { cc, withAuthRefresh, isValidToken, UnconfiguredError } from '../_lib/coin-communities.js';
@@ -54,7 +54,7 @@ export default wrap(async (req, res) => {
 		throw err;
 	}
 
-	// The wallets are taken from the authenticated session — never the request
+	// The wallets are taken from the authenticated session, never the request
 	// body. Transparently refreshes an expired (1h) access token off the 30-day
 	// refresh token before giving up, so a player who's been signed in for a
 	// while isn't wrongly bounced out of the holders-world gate as "not signed in".
@@ -103,7 +103,7 @@ export default wrap(async (req, res) => {
 			primaryWallet = address;
 		}
 	}
-	// Only surface an upstream error if we couldn't read *any* wallet — a partial
+	// Only surface an upstream error if we couldn't read *any* wallet: a partial
 	// failure still gates correctly on whatever we did read.
 	if (amount === 0 && balanceError) {
 		const status = balanceError?.status === 503 ? 503 : 502;
@@ -123,7 +123,7 @@ export default wrap(async (req, res) => {
 	const minUsd = HOLDER_MIN_USD;
 
 	// A coin's creator may pin a token-amount threshold (R24); absent that, the
-	// world gates on the platform USD floor. Read it best-effort — a KV hiccup
+	// world gates on the platform USD floor. Read it best-effort: a KV hiccup
 	// falls back to the USD floor rather than wrongly locking the world.
 	const gate = await readWorldGate(token);
 	const minTokens = gate?.minTokens || 0;

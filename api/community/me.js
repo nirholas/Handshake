@@ -31,7 +31,7 @@ export default wrap(async (req, res) => {
 		return { data: { user: me.data?.user, wallets } };
 	});
 
-	// No usable session — never signed in, or the refresh token itself expired.
+	// No usable session: never signed in, or the refresh token itself expired.
 	if (!headers) return json(res, 200, { data: { user: null } });
 	if (apiErr) return error(res, 502, 'upstream_error', apiErr.message || 'failed to load user');
 

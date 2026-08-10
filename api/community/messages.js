@@ -1,6 +1,6 @@
 // /api/community/messages?token=<mint>
-//   GET  — recent messages for a coin's community (public read).
-//   POST — post a message. Two real paths, preferred in this order:
+//   GET:  recent messages for a coin's community (public read).
+//   POST: post a message. Two real paths, preferred in this order:
 //          1. User-scoped: a signed-in CoinCommunities user (session cookie)
 //             posts as themselves from their linked wallet (api.postMessage).
 //          2. Server attribution: when the server key-pair is configured and a

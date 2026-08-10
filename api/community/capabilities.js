@@ -1,7 +1,7 @@
 // GET /api/community/capabilities
 // Tells the browser which Town affordances are live: reads/realtime (needs
 // CC_API_KEY) and posting (needs the server key-pair). The browser uses this
-// to render the composer enabled vs. in its designed locked state — never a
+// to render the composer enabled vs. in its designed locked state, never a
 // dead button.
 import { cors, json, method, wrap } from '../_lib/http.js';
 import { capabilities } from '../_lib/coin-communities.js';

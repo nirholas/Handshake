@@ -1,4 +1,4 @@
-// POST /api/community/logout — clears the CoinCommunities user session cookies.
+// POST /api/community/logout clears the CoinCommunities user session cookies.
 import { cors, json, method, wrap } from '../_lib/http.js';
 import { clearUserSession } from '../_lib/coin-communities.js';
 
