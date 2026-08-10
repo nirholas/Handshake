@@ -3,6 +3,24 @@
   "entries": [
     {
       "date": "2026-08-10",
+      "title": "Skill licence NFTs show their real name and artwork in every wallet again",
+      "summary": "Every skill you buy from an agent is minted as an NFT, and that NFT carries a link back to three.ws for its name, description, and artwork. That link had never been wired into the site's routing table, so wallets, explorers, and marketplaces asking for it got an error page instead and the licence showed up blank. Both links (the one on each skill NFT and the one on the agent's skill collection) now resolve, so every skill licence ever minted, including the ones already sitting in wallets, renders properly from here on. A new test walks the whole dispatch table so no future metadata link can ship unrouted.",
+      "tags": [
+        "fix"
+      ]
+    },
+    {
+      "date": "2026-08-10",
+      "title": "The agent trade demo stops before spending SOL it cannot deliver on",
+      "summary": "Two fixes on the agent-to-agent trade surface. The live demo used to pay the Oracle agent real SOL and only then discover that no analysis model was reachable, so the buyer's money bought nothing; it now confirms a model can answer before any payment is signed, and stops with a clear message when none can. While it worked, the demo also announced the wrong model (it always said Claude Haiku, whichever model was really about to run) and now names the lane that actually produces the analysis. On the paid Oracle skill endpoint itself, a payment proof that is not a real Solana signature comes back immediately as an invalid-payment error instead of spending several seconds asking the chain about it.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/agent-trade"
+    },
+    {
+      "date": "2026-08-10",
       "title": "Billing pages stop answering a mistyped link with a support reference",
       "summary": "Four paths through the billing API turned a bad request into an anonymous internal error. Opening a receipt, a withdrawal, or a saved payout wallet whose id in the URL was not a real id (a truncated copy-paste, a stale bookmark, a hand-edited link) returned a 500 with a support reference instead of simply saying the id was malformed. Paging your withdrawal history with a non-numeric page size did the same. All four now answer with a plain validation error naming the field, and the withdrawal list falls back to its normal page size instead of failing. Nothing about who can read what changed: every one of these endpoints still requires your session and still only ever returns your own billing records.",
       "tags": [
@@ -18919,6 +18937,16 @@
         "improvement"
       ],
       "link": "/trading"
+    },
+    {
+      "date": "2026-08-10",
+      "title": "Pump alerts sign every webhook and explain rejected edits properly",
+      "summary": "Three fixes to the alert rules behind the pump dashboard. Any rule that sends to a webhook now always carries its own signing secret, so your receiver can verify a delivery really came from us: rules carried over from the old single-alert setup were missing that secret and were being delivered unsigned. When an edit is rejected, the message now names the field it is complaining about, the same way creating a rule always has, instead of a bare sentence you had to guess at. And editing a rule that was deleted in another tab now answers with a plain not-found instead of a server error.",
+      "tags": [
+        "fix",
+        "security"
+      ],
+      "link": "/pump-dashboard"
     }
   ]
 }

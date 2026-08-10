@@ -55,12 +55,36 @@
 			<description>Three fixes to the agent pricing and earnings APIs. A seller's dynamic pricing rules (scheduled discounts, first-N-buyer deals, experiments they switched off) were readable by anyone who knew the agent id; listing them now requires being signed in as the agent's owner, the same rule that already applied to creating and deleting them. Clearing the start or end of a scheduled price window used to report success and quietly keep the old date, so a window you thought you reopened stayed shut; sending an empty date now really clears it. And asking the earnings summary, skill pricing, or X memory seeder about an id that is not a real agent id returned an anonymous internal error with a support reference instead of a plain not-found.</description>
 		</item>
 		<item>
+			<title>Pump alerts sign every webhook and explain rejected edits properly</title>
+			<link>https://three.ws/pump-dashboard</link>
+			<guid isPermaLink="false">2026-08-10:Pump alerts sign every webhook and explain rejected edits properly</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes to the alert rules behind the pump dashboard. Any rule that sends to a webhook now always carries its own signing secret, so your receiver can verify a delivery really came from us: rules carried over from the old single-alert setup were missing that secret and were being delivered unsigned. When an edit is rejected, the message now names the field it is complaining about, the same way creating a rule always has, instead of a bare sentence you had to guess at. And editing a rule that was deleted in another tab now answers with a plain not-found instead of a server error.</description>
+		</item>
+		<item>
 			<title>Revoking an API key with a malformed id now gives a clear error instead of a server fault</title>
 			<link>https://three.ws/dashboard</link>
 			<guid isPermaLink="false">2026-08-10:Revoking an API key with a malformed id now gives a clear error instead of a server fault</guid>
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Deleting an API key through the developer API used to hand whatever id it was given straight to the database, so an id that could never match a key came back as a generic &quot;internal error, quote this reference to support&quot; 500. It now answers a plain 400 saying the id must be a key identifier, and the database is never touched for input that cannot match. Real revokes, the ownership check that stops one account revoking another account's key, and the already-revoked case all behave exactly as before.</description>
+		</item>
+		<item>
+			<title>Skill licence NFTs show their real name and artwork in every wallet again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:Skill licence NFTs show their real name and artwork in every wallet again</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every skill you buy from an agent is minted as an NFT, and that NFT carries a link back to three.ws for its name, description, and artwork. That link had never been wired into the site's routing table, so wallets, explorers, and marketplaces asking for it got an error page instead and the licence showed up blank. Both links (the one on each skill NFT and the one on the agent's skill collection) now resolve, so every skill licence ever minted, including the ones already sitting in wallets, renders properly from here on. A new test walks the whole dispatch table so no future metadata link can ship unrouted.</description>
+		</item>
+		<item>
+			<title>The agent trade demo stops before spending SOL it cannot deliver on</title>
+			<link>https://three.ws/agent-trade</link>
+			<guid isPermaLink="false">2026-08-10:The agent trade demo stops before spending SOL it cannot deliver on</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two fixes on the agent-to-agent trade surface. The live demo used to pay the Oracle agent real SOL and only then discover that no analysis model was reachable, so the buyer's money bought nothing; it now confirms a model can answer before any payment is signed, and stops with a clear message when none can. While it worked, the demo also announced the wrong model (it always said Claude Haiku, whichever model was really about to run) and now names the lane that actually produces the analysis. On the paid Oracle skill endpoint itself, a payment proof that is not a real Solana signature comes back immediately as an invalid-payment error instead of spending several seconds asking the chain about it.</description>
 		</item>
 		<item>
 			<title>The agent-to-agent economy demo speaks again, and never pays for a service it could not deliver</title>
