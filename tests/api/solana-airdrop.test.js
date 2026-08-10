@@ -37,7 +37,9 @@ vi.mock('../../api/_lib/agent-pumpfun.js', () => ({
 	solanaConnection: vi.fn(() => conn),
 }));
 
-const { default: handler } = await import('../../api/agents/solana-airdrop.js');
+// The production path: /api/agents/:id/solana/airdrop is dispatched by
+// api/agents/[id].js into the solana-wallet handler with action='airdrop'.
+const { default: handler } = await import('../../api/agents/solana-wallet.js');
 
 function makeReq() {
 	const base = Readable.from([]);
@@ -56,7 +58,7 @@ function makeRes() {
 async function invoke() {
 	const req = makeReq();
 	const res = makeRes();
-	await handler(req, res, 'agent-1');
+	await handler(req, res, 'agent-1', 'airdrop');
 	return { status: res.statusCode, body: res.body ? JSON.parse(res.body) : null };
 }
 
