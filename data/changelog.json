@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-10",
+      "title": "NFT portfolio reads reach the right provider again, and the smart-money board is readable as plain JSON",
+      "summary": "Three fixes on the agent API. An agent asking for its NFT portfolio was sending that request to a Solana node that does not answer NFT queries at all, so it failed no matter what was in the wallet; it now goes to the provider that does. A mistyped wallet address on the same endpoint used to come back as an upstream failure, which told you nothing; it now says plainly that the address is not valid. And the GMGN smart-money board, which until now existed only as a live stream, also answers as one ordinary JSON response, so anything that cannot hold a stream open (a server, an agent tool call, a curl) can read the same board. A public payment-config lookup also gained the method and rate limits its neighbours already had.",
+      "tags": [
+        "fix",
+        "improvement",
+        "security"
+      ]
+    },
+    {
+      "date": "2026-08-10",
       "title": "A coin's exchange listings answer a bad page number instead of quietly ignoring it",
       "summary": "The exchange-listings table on a coin page reads its rows one page at a time. Asking for page 11 correctly said the page was out of range, but asking for page 0, a decimal, or a word silently served page 1 instead, so anything scripted against the endpoint got a page it never asked for and had no way to tell. It now applies one rule: leave the page off and you get the first one, otherwise it must be a whole number from 1 to 10 or you get a plain validation error saying so. The related-news rail on the same page also stops turning a publisher-feed outage into an anonymous internal error, and a coin's on-chain pool lookup no longer converts an upstream timeout into one. The coin market data reference now documents which paging limits are clamped and which are rejected.",
       "tags": [
