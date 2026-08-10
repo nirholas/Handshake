@@ -22,7 +22,6 @@
 //   THUMBNAIL_RENDER_BG          background color or 'transparent' (default #0a0a0a)
 
 import { json, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { logger } from '../_lib/usage.js';
 import { presignGet, putObject, publicUrl } from '../_lib/r2.js';
 import { renderGlbToPng } from '../_lib/render-glb.js';

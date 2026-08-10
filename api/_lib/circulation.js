@@ -33,6 +33,7 @@ import { createSession } from './auth.js';
 import { solUsdPrice } from './avatar-wallet.js';
 import { CHAIN_BY_ID } from './erc8004-chains.js';
 import { publicUrl as r2PublicUrl } from './r2.js';
+import { claimSeedUsername, seedDisplayName } from './seed-username.js';
 import { pinToIPFS } from './ipfs-pin.js';
 import { confirmSkillPurchase, resolvePayoutAddress } from './purchase-confirm.js';
 import { consumeTrialUse, logSkillUsage } from './skill-access.js';
@@ -469,19 +470,6 @@ function slugify(s) {
 		.slice(0, 40);
 }
 
-// Claim a unique username from a base word (mirrors the forge-seed username claim).
-async function claimUsername(base) {
-	const existing = await sql`
-		select username from users where username = ${base} or username like ${base + '%'} limit 100
-	`;
-	const taken = new Set(existing.map((r) => r.username));
-	if (!taken.has(base)) return base;
-	for (let n = 2; n <= 99; n++) {
-		if (!taken.has(`${base}${n}`)) return `${base}${n}`;
-	}
-	return `${base}_${randomUUID().slice(0, 4)}`;
-}
-
 // Clone a random public avatar into `userId`'s ownership so the new agent has a
 // real 3D body + thumbnail (reusing the platform's own generated gallery) and so
 // the coin launcher can use it as the token image. Returns the new avatar id or
@@ -553,14 +541,12 @@ async function createPoolAgent() {
 	const agentName = variant === 0 ? persona.name : `${persona.name} #${variant + 1}`;
 
 	const ownerWord = `${pick(OWNER_FIRST_NAMES)}${persona.handle}`.replace(/[^a-z0-9]/g, '');
-	const username = await claimUsername(slugify(ownerWord) || persona.handle);
+	const username = await claimSeedUsername(slugify(ownerWord) || persona.handle);
+	// Only reachable if a persona ever ships with an empty handle, but a null
+	// username would insert a nameless account rather than skip the tick.
+	if (!username) return { skipped: 'no_username', persona: persona.handle };
 	const email = `${username}@agents.three.ws`;
-	// Drop claimUsername's collision suffixes (`_xxxx` uuid fallback, numbered
-	// slot) before titling; stripping digits alone left names like "Fog_".
-	const displayName = username
-		.replace(/_[0-9a-f]{4}$/, '')
-		.replace(/\d+$/, '')
-		.replace(/\b\w/g, (c) => c.toUpperCase());
+	const displayName = seedDisplayName(username);
 
 	const [user] = await sql`
 		insert into users (email, display_name, username, plan, email_verified, service_account, created_at, updated_at)

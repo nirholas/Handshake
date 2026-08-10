@@ -18,7 +18,7 @@
 // UniRig pipeline) — deterministic precedence means it matches the provider the
 // submit path chose. No per-job BYOK key juggling.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { getRegenProviderForMode } from '../_lib/regen-provider.js';
 import { finalizeAutoRigStage } from '../_lib/auto-rig.js';

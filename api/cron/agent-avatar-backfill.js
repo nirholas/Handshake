@@ -18,7 +18,6 @@
 //   AGENT_AVATAR_BACKFILL_BATCH agents assigned per tick (default 100)
 
 import { json, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { logger } from '../_lib/usage.js';
 import { backfillAgentAvatars, agentAvatarCoverage } from '../_lib/agent-avatars.js';
 import { requireCron } from '../_lib/cron-auth.js';

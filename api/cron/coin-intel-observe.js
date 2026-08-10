@@ -17,8 +17,7 @@
 // so overlapping runs converge instead of duplicating.
 
 import WebSocket from 'ws';
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { finalizeObservation } from '../../workers/agent-sniper/intel/finalize.js';
 import { pumpPortalWsUrl, handlePumpPortalAck } from '../_lib/pumpportal.js';
 import { subscribePumpOnchainTrades } from '../_lib/pump-onchain-trades.js';

@@ -37,7 +37,6 @@
 // the cron exists to keep coverage at 100% once it is there.
 
 import { json, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { logger } from '../_lib/usage.js';
 import {
 	ensureBackfillSchema,

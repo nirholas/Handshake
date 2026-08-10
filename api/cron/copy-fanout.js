@@ -20,7 +20,6 @@
 //   (subscription_id, leader_oracle_action_id, direction) when leader_oracle_action_id is not null
 
 import { json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { planCopyOrder } from '../_lib/copy-engine.js';
 import { requireCron } from '../_lib/cron-auth.js';
@@ -55,8 +54,10 @@ function buyIntentMessage({ sym, name, plannedSol, leaderName, oracleScore, orac
 		`Your order: ${plannedSol != null ? `${plannedSol.toFixed(4)} SOL` : 'sized by your rules'}`,
 		``,
 		`Act now → https://three.ws${traderUrl}/dashboard/copy`,
-		mint ? `pump.fun → https://pump.fun/${mint}` : '',
-	].filter((l) => l !== undefined);
+	];
+	// Only append the coin link when there is a mint; a blank entry here rendered
+	// as a trailing empty line in the Telegram message.
+	if (mint) lines.push(`pump.fun → https://pump.fun/${mint}`);
 	return lines.join('\n');
 }
 
@@ -378,7 +379,14 @@ export default wrapCron(async (req, res) => {
 	if (!requireCron(req, res)) return;
 
 	const stats = {};
+	// Every per-run memo is dropped at the top of a tick. Cloud Run keeps a
+	// container warm across ticks, so a Map that is only ever written grows
+	// without bound and, worse, pins a stale answer: an unscored mint cached as
+	// null would keep failing a subscription's min_oracle_score filter long after
+	// the Oracle scored it.
 	_coinCache.clear();
+	_oracleScoreCache.clear();
+	_agentNameCache.clear();
 	for (const network of NETWORKS) {
 		try {
 			await fanoutBuys(network, stats);

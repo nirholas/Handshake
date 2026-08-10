@@ -17,7 +17,7 @@
 //
 // A DB lock (app_settings) keeps overlapping ticks from double-posting.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { acquireLock, releaseLock, pushTelegramLane } from '../_lib/commit-feed-push.js';
 import { requireCron } from '../_lib/cron-auth.js';
 

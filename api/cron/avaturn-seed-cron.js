@@ -37,6 +37,7 @@ import { isFlagEnabled } from '../_lib/flags.js';
 import { pickDiversityProfile, describeProfile } from '../_lib/avaturn-seed.js';
 import { pickBaseBody, pickColorway, pickScale, recolorGlb } from '../_lib/studio-avatar.js';
 import { composeStudioAvatar } from '../_lib/avatar-composer/index.js';
+import { claimSeedUsername, seedDisplayName } from '../_lib/seed-username.js';
 import { randomUUID } from 'node:crypto';
 import { requireCron } from '../_lib/cron-auth.js';
 
@@ -45,24 +46,11 @@ const CIRCUIT_THRESHOLD = 3;
 const CIRCUIT_BASE_MS = 10 * 60_000; // 10 min × consecutive failures
 // One recolor at a time across all instances (fast, but keeps the tick serial).
 const SLOT_TTL_MS = 280_000;
+// Username claims that may be retried within a tick before it gives up.
+const CLAIM_ATTEMPTS = 3;
 
 // Origin the rigged base bodies are served from (/avatars/*.glb).
 const ORIGIN = () => env.APP_ORIGIN || 'https://three.ws';
-
-// Try to claim `word` as a username, skipping to the next free numbered slot.
-// Returns the claimed username or null. (Mirrors the forge seeder's helper.)
-async function claimUsername(word) {
-	const existing = await sql`
-		select username from users where username = ${word} or username like ${word + '%'} limit 100
-	`;
-	const taken = new Set(existing.map((r) => r.username));
-	if (!taken.has(word)) return word;
-	for (let n = 2; n <= 99; n++) {
-		const candidate = `${word}${n}`;
-		if (!taken.has(candidate)) return candidate;
-	}
-	return `${word}_${randomUUID().slice(0, 4)}`;
-}
 
 function toSlug(name) {
 	const base = String(name)
@@ -83,27 +71,27 @@ async function runOnce() {
 		};
 	}
 
-	const baseWord = OG_USERNAMES[Math.floor(Math.random() * OG_USERNAMES.length)];
-	const username = await claimUsername(baseWord);
-	if (!username)
-		return { skipped: true, reason: 'could not claim OG username — retry next tick' };
-
-	// Drop claimUsername's collision suffixes before titling: the `_xxxx` uuid
-	// fallback first, then a numbered slot. Stripping digits alone turned
-	// "fog_1a2b" into the literal display name "Fog_".
-	const displayName = username
-		.replace(/_[0-9a-f]{4}$/, '')
-		.replace(/\d+$/, '')
-		.replace(/\b\w/g, (c) => c.toUpperCase());
-	const email = `${username}@avaturn.three.ws`;
-
-	const [user] = await sql`
-		insert into users (email, display_name, username, plan, email_verified, service_account, created_at, updated_at)
-		values (${email}, ${displayName}, ${username}, 'free', false, true, now(), now())
-		on conflict do nothing
-		returning id
-	`;
-	if (!user?.id) return { skipped: true, reason: 'user insert conflict — retry next tick' };
+	// Claiming a name is a read, not a reservation, so two ticks landing in the
+	// same second can still collide on the insert. Redraw and retry inside the
+	// tick rather than throwing the whole minute away on a lost race.
+	let user = null;
+	let username = null;
+	let displayName = null;
+	for (let attempt = 0; attempt < CLAIM_ATTEMPTS && !user; attempt++) {
+		const baseWord = OG_USERNAMES[Math.floor(Math.random() * OG_USERNAMES.length)];
+		username = await claimSeedUsername(baseWord);
+		if (!username) continue;
+		displayName = seedDisplayName(username);
+		const [row] = await sql`
+			insert into users (email, display_name, username, plan, email_verified, service_account, created_at, updated_at)
+			values (${`${username}@avaturn.three.ws`}, ${displayName}, ${username}, 'free', false, true, now(), now())
+			on conflict do nothing
+			returning id
+		`;
+		if (row?.id) user = row;
+	}
+	if (!user?.id)
+		return { skipped: true, reason: `username claim lost ${CLAIM_ATTEMPTS} races, retrying next tick` };
 
 	const seed = randomUUID();
 	// Draw a person from the diversity matrix, then COMPOSE a rigged avatar for
