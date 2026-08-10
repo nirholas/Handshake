@@ -147,7 +147,7 @@ export async function rotateSession({ currentSid, userId, userAgent, ip }) {
 	return newSecret;
 }
 
-export async function createSession({ userId, userAgent, ip }) {
+export async function createSession({ userId, userAgent, ip, recordActivity = true }) {
 	const secret = randomToken(32);
 	const hash = await sha256(secret);
 	await sql`
@@ -157,8 +157,25 @@ export async function createSession({ userId, userAgent, ip }) {
 	// A login (or the once-a-day silent session rotation in getSessionUser)
 	// is a qualifying activity for the cross-surface streak. Fire-and-forget —
 	// a streak-tracking hiccup must never block sign-in.
-	recordDailyActivity(userId).catch(() => {});
+	//
+	// Machine callers that mint a session purely to reach an owner-scoped
+	// endpoint on the user's behalf (the launcher claimer's fee sweep, and any
+	// future background sweep) pass recordActivity:false. A cron running on a
+	// timer is not the owner showing up, and counting it would keep those
+	// owners' streaks alive forever without them ever opening the site.
+	if (recordActivity) recordDailyActivity(userId).catch(() => {});
 	return secret;
+}
+
+/**
+ * Revoke a session by its plaintext token. Machine callers that mint a
+ * short-lived session use this to leave no usable credential behind once their
+ * sweep is done, instead of letting it sit valid for the full session TTL.
+ */
+export async function revokeSessionToken(token) {
+	if (!token) return;
+	const hash = await sha256(token);
+	await sql`update sessions set revoked_at = now() where token_hash = ${hash}`;
 }
 
 export function sessionCookie(token, { clear = false } = {}) {
@@ -232,10 +249,7 @@ export async function getSessionUser(req, res) {
 }
 
 export async function destroySession(req) {
-	const token = readSessionCookie(req);
-	if (!token) return;
-	const hash = await sha256(token);
-	await sql`update sessions set revoked_at = now() where token_hash = ${hash}`;
+	await revokeSessionToken(readSessionCookie(req));
 }
 
 // CSRF token bound to the session cookie value. Because the cookie is HttpOnly,

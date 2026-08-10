@@ -17,10 +17,10 @@
 //
 // Auth: CRON_SECRET Bearer (same pattern as all cron endpoints).
 
-import { json, error, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
-import { createSession } from '../_lib/auth.js';
+import { createSession, revokeSessionToken } from '../_lib/auth.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 const CLAIM_THRESHOLD_SOL = 0.01;
@@ -53,11 +53,29 @@ async function ensureSchema() {
 	_schemaDone = true;
 }
 
-// Create a session as an agent's owner, then make a fetch call to an internal API
-// path. The agent's owner session is required because collect-creator-fee-agent
-// verifies the caller owns the agent.
-async function agentFetch(ownerUserId, urlOrPath, opts = {}) {
-	const token = await createSession({ userId: ownerUserId, userAgent: 'launcher-claimer', ip: null });
+// One machine session per owner per tick, minted lazily and revoked when the
+// tick ends (see runClaimerTick's finally). Minting one per REQUEST, the
+// previous shape, left two live sessions behind for every coin checked, up to
+// 40 per tick every five minutes, and because createSession records a daily
+// activity it also made a background sweep look like the owner signing in,
+// keeping every launcher owner's streak alive without them opening the site.
+async function sessionFor(ownerUserId, cache) {
+	let token = cache.get(ownerUserId);
+	if (!token) {
+		token = await createSession({
+			userId: ownerUserId,
+			userAgent: 'launcher-claimer',
+			ip: null,
+			recordActivity: false,
+		});
+		cache.set(ownerUserId, token);
+	}
+	return token;
+}
+
+// Call an internal API path as the agent's owner. The owner session is required
+// because collect-creator-fee-agent verifies the caller owns the agent.
+async function agentFetch(token, urlOrPath, opts = {}) {
 	const url = urlOrPath.startsWith('http') ? urlOrPath : `${ORIGIN}${urlOrPath}`;
 	const res = await fetch(url, {
 		...opts,
@@ -71,12 +89,12 @@ async function agentFetch(ownerUserId, urlOrPath, opts = {}) {
 	return res;
 }
 
-async function processMint(run) {
-	const { id: runId, mint, agent_id: agentId, network, buyback_bps, owner_user_id: userId } = run;
+async function processMint(run, token) {
+	const { id: runId, mint, agent_id: agentId, network, buyback_bps } = run;
 
 	// 1. Fetch live claimable balance.
 	const feeRes = await agentFetch(
-		userId,
+		token,
 		`/api/pump/fee-info?mint=${encodeURIComponent(mint)}&network=${encodeURIComponent(network)}`,
 	);
 	if (!feeRes || !feeRes.ok) return { runId, status: 'fee-info-failed' };
@@ -89,7 +107,7 @@ async function processMint(run) {
 	}
 
 	// 2. Claim — the agent signs its own fee claim (same identity that created the coin).
-	const claimRes = await agentFetch(userId, '/api/pump/collect-creator-fee-agent', {
+	const claimRes = await agentFetch(token, '/api/pump/collect-creator-fee-agent', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ agentId, mint, network }),
@@ -148,22 +166,34 @@ async function runClaimerTick() {
 		limit ${MAX_PER_TICK}
 	`;
 
-	if (!runs.length) return { checked: 0, claimed: 0, skipped: 0, errors: 0 };
+	if (!runs.length) return { checked: 0, claimed: 0, skipped: 0, errors: 0, details: [] };
 
 	let claimed = 0, skipped = 0, errors = 0;
 	const details = [];
+	const sessions = new Map();
 
-	for (const run of runs) {
-		const result = await processMint(run).catch((err) => ({
-			runId: run.id, status: 'error', error: err?.message,
-		}));
-		details.push(result);
-		if (result.status === 'claimed') claimed++;
-		else if (result.status === 'below-threshold') skipped++;
-		else errors++;
+	try {
+		for (const run of runs) {
+			const result = await sessionFor(run.owner_user_id, sessions)
+				.then((token) => processMint(run, token))
+				.catch((err) => ({ runId: run.id, status: 'error', error: err?.message }));
+			details.push(result);
+			if (result.status === 'claimed') claimed++;
+			else if (result.status === 'below-threshold') skipped++;
+			else errors++;
+		}
+	} finally {
+		// Never leave a usable owner credential sitting valid for the full session
+		// TTL because a claim threw halfway through the sweep.
+		await Promise.all(
+			[...sessions.values()].map((t) => revokeSessionToken(t).catch(() => {})),
+		);
 	}
 
-	return { checked: runs.length, claimed, skipped, errors };
+	// details is bounded by MAX_PER_TICK, and it is the only place a per-run
+	// failure reason (fee-info-failed, claim-rejected) is visible to whoever
+	// reads the cron response.
+	return { checked: runs.length, claimed, skipped, errors, details };
 }
 
 export default wrapCron(async (req, res) => {
