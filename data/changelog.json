@@ -3,16 +3,6 @@
   "entries": [
     {
       "date": "2026-08-10",
-      "title": "Copy trading: performance fees can only be settled with their own quote",
-      "summary": "Three fixes on the copy-trading surface. Settling a performance fee now checks that the payment quote you present was actually issued for that fee on one of your own subscriptions before it credits anything, and it makes that check before the payment is verified on-chain, so a quote meant for something else can no longer be used to write off what you owe the trader you copy. Pausing or resuming a follow works again for browser clients that send their security token in the request body, which previously came back as an unrelated complaint about the trader's ID. And the Smart Money directory answers a nonsense sort value with its default ranking instead of an error page, as the docs always said it would.",
-      "tags": [
-        "fix",
-        "security"
-      ],
-      "link": "/docs/copy-trading"
-    },
-    {
-      "date": "2026-08-10",
       "title": "Creator Studio skill analytics stops erroring on a bad agent filter, and creator profile links stop pointing at a missing page",
       "summary": "The per-skill analytics panel in Creator Studio asks the API about one agent at a time. When that agent id was malformed, or arrived twice in the same URL, the reply was a generic server error with no explanation and the panel simply went blank. It now answers with a clear \"agent_id must be a UUID\" message the panel can show you. A negative lookback window (a hand-edited \"days=-5\", say) used to be accepted and then report zero activity forever, because the window started in the future; the window is now held to 1 to 365 days, and the endpoint is rate limited like every other signed-in read. Separately, the public creator profile behind the marketplace author modal was handing out a link to a /creators/ page that does not exist, for any creator who has not claimed a username. Those creators now come back with no link instead of one that 404s.",
       "tags": [

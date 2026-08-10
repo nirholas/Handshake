@@ -9,29 +9,6 @@ import { clientIp, limits } from '../_lib/rate-limit.js';
 import { readPresence } from '../_lib/presence-store.js';
 import { getCrewByTag, normalizeTag, isMissingRelation } from '../_lib/crews-store.js';
 
-// The crew a request is asking for. Its identity is the path segment, never the
-// query string: the router merges route params into req.query after the search
-// params (route params win), so reading req.query.tag first is what stops
-// `/api/crews/AAA?tag=BBB` from answering with BBB's roster at AAA's URL. The
-// path fallback covers callers that invoke this handler directly, and drops
-// empty segments so `/api/crews/AAA/` resolves like `/api/crews/AAA` instead of
-// reading the trailing slash as an empty tag and rejecting a valid link.
-export function crewTagFromRequest(req) {
-	const fromRoute = req?.query?.tag;
-	if (typeof fromRoute === 'string' && fromRoute) return normalizeTag(fromRoute);
-	const { pathname } = new URL(req?.url || '/', 'http://x');
-	const segments = pathname.split('/').filter(Boolean);
-	const last = segments[segments.length - 1] || '';
-	try {
-		return normalizeTag(decodeURIComponent(last));
-	} catch {
-		// A malformed %-escape has no tag in it. Failing closed matters: stripping
-		// the escape characters instead would turn `%E0%A4%A` into the plausible
-		// tag E0A4A and answer for whichever crew happens to fly it.
-		return '';
-	}
-}
-
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -39,7 +16,9 @@ export default wrap(async (req, res) => {
 	const rl = await limits.publicIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const tag = crewTagFromRequest(req);
+	const url = new URL(req.url, 'http://x');
+	const raw = url.searchParams.get('tag') || url.pathname.split('/').pop() || '';
+	const tag = normalizeTag(decodeURIComponent(raw));
 	if (!tag) return error(res, 400, 'bad_tag', 'invalid crew tag');
 
 	let crew;

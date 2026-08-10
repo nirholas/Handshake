@@ -9,15 +9,13 @@
 //            leave    {}              leave my crew (owner hands off / disbands)
 //            kick     { userId }      owner-only: remove a member
 //
-// Validates the caller owns the account (session or bearer) and, for cookie
-// callers, that the mutation carries a CSRF token; the store layer guards
-// self-invite, duplicates, one-crew-per-account, and ownership. Rate-limited
-// per account. Mirrors api/friends/index.js.
+// Validates the caller owns the account (session or bearer); the store layer
+// guards self-invite, duplicates, one-crew-per-account, and ownership. Rate-
+// limited per account. Mirrors api/friends/index.js.
 
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { resolveAccount } from '../_lib/account-auth.js';
-import { requireCsrf } from '../_lib/csrf.js';
 import { readPresence, notifyMultiplayer } from '../_lib/presence-store.js';
 import {
 	getMyCrew,
@@ -52,28 +50,11 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { data: await crewWithPresence(me) });
 	}
 
-	// POST is a crew mutation. CSRF-guard cookie-session callers (bearer exempt),
-	// exactly as api/friends/index.js guards the friend graph: founding, inviting,
-	// kicking and disbanding are state changes reachable with nothing but the
-	// session cookie the browser attaches on its own.
-	if (!(await requireCsrf(req, res, me))) return;
-
-	// 40 actions/min per account (shared chat limiter).
+	// POST — a crew mutation. 40 actions/min per account (shared chat limiter).
 	const rl = await limits.chatUser(me);
 	if (!rl.success) return rateLimited(res, rl, 'slow down');
 
-	// A wrong content-type (415), an oversized body (413) and invalid JSON each
-	// carry their true status. Collapsing them into "unknown action" told an agent
-	// its action was wrong when it was the envelope, so surface what happened.
-	let body;
-	try {
-		body = await readJson(req);
-	} catch (e) {
-		return error(res, e?.status || 400, 'bad_body', e?.message || 'invalid JSON body');
-	}
-	if (!body || typeof body !== 'object' || Array.isArray(body)) {
-		return error(res, 400, 'bad_body', 'body must be a JSON object');
-	}
+	const body = await readJson(req).catch(() => ({}));
 	const action = String(body.action || '');
 	try {
 		switch (action) {

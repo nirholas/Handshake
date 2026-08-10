@@ -51,11 +51,7 @@ export default wrap(async (req, res) => {
 	const params = new URL(req.url, `http://${req.headers.host || 'x'}`).searchParams;
 	const chain = CHAINS.has(params.get('chain')) ? params.get('chain') : null;
 	const category = CATEGORIES.has(params.get('category')) ? params.get('category') : null;
-	// Own-property lookup only: a bare `SORTERS[value]` truthiness test resolves
-	// inherited keys, so ?sort=__proto__ / valueOf / hasOwnProperty would hand
-	// Array.sort a non-comparator and 500 the request.
-	const sortParam = params.get('sort') || '';
-	const sort = Object.hasOwn(SORTERS, sortParam) ? sortParam : 'score';
+	const sort = SORTERS[params.get('sort')] ? params.get('sort') : 'score';
 	const q = (params.get('q') || '').trim().toLowerCase();
 	const limit = clampInt(params.get('limit'), 1, 100, 30);
 	const offset = clampInt(params.get('offset'), 0, 100000, 0);

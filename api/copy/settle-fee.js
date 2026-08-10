@@ -22,7 +22,6 @@ import { sql } from '../_lib/db.js';
 import { subscriptionOwed } from '../_lib/copy-earnings.js';
 import { issueQuote } from '../_lib/token/quote.js';
 import { verifyAndSettlePayment } from '../_lib/token/payments.js';
-import { verifyQuote } from '../_lib/token/quote.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
 import { isUuid } from '../_lib/validate.js';
 
@@ -52,32 +51,6 @@ export default wrap(async (req, res) => {
 
 	// --- SETTLE phase ---
 	if (body.quoteToken && body.tx_signature) {
-		// Bind the settlement to a copy-fee quote BEFORE anything is verified
-		// on-chain. The generic quote surfaces (/api/token/quote, /api/three/charge)
-		// let the caller choose ref_id, so without this a copier could mint a cheap
-		// quote for an unrelated purpose carrying refId "<their-sub-uuid>|999999",
-		// settle it here, and ratchet their high-water mark past every fee they owe
-		// their leader. Rejecting up-front also means we never accept a payment we
-		// would then be unable to apply.
-		let claim;
-		try {
-			claim = verifyQuote(body.quoteToken);
-		} catch (e) {
-			return error(res, e.status || 422, e.code || 'invalid_quote', e.message || 'quote invalid');
-		}
-		if (claim.purpose !== 'copy_performance_fee' || claim.refType !== 'copy_perf_fee') {
-			return error(res, 400, 'wrong_quote', 'That quote was not issued for a copy performance fee.');
-		}
-		const [subId, cumulativeStr] = String(claim.refId || '').split('|');
-		const cumulative = Number(cumulativeStr);
-		if (!isUuid(subId) || !Number.isFinite(cumulative)) {
-			return error(res, 400, 'wrong_quote', 'That quote is not bound to a subscription.');
-		}
-		const [owned] = await sql`
-			select id from copy_subscriptions where id = ${subId} and copier_user_id = ${userId} limit 1
-		`;
-		if (!owned) return error(res, 404, 'not_found', 'No such subscription.');
-
 		let result;
 		try {
 			result = await verifyAndSettlePayment({
@@ -89,20 +62,17 @@ export default wrap(async (req, res) => {
 		} catch (e) {
 			return error(res, e.status || 402, e.code || 'settle_failed', e.message || 'settlement failed');
 		}
-		// Ratchet the HWM to the cumulative profit the quote was bound to, so the
-		// same realized profit is never billed twice.
-		await sql`
-			update copy_subscriptions
-			set high_water_mark_sol = greatest(high_water_mark_sol, ${cumulative}), updated_at = now()
-			where id = ${subId} and copier_user_id = ${userId}
-		`;
-		return json(res, 200, {
-			ok: true,
-			paid: true,
-			payment_id: result.payment_id,
-			subscription_id: subId,
-			high_water_mark_sol: cumulative,
-		});
+		// Ratchet the HWM to the cumulative profit the quote was bound to (refId).
+		const [subId, cumulativeStr] = String(result.quote?.refId || '').split('|');
+		const cumulative = Number(cumulativeStr);
+		if (isUuid(subId) && Number.isFinite(cumulative)) {
+			await sql`
+				update copy_subscriptions
+				set high_water_mark_sol = greatest(high_water_mark_sol, ${cumulative}), updated_at = now()
+				where id = ${subId} and copier_user_id = ${userId}
+			`;
+		}
+		return json(res, 200, { ok: true, paid: true, payment_id: result.payment_id });
 	}
 
 	// --- CHARGE phase ---

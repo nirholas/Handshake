@@ -90,37 +90,21 @@ export async function subscriptionOwed(sub) {
  * @returns {Promise<{ copiers:number, accrued_fee_sol:number, copier_profit_sol:number }>}
  */
 export async function accruedLeaderEarnings(leaderAgentId, network) {
-	// One grouped query, not one per copier: this backs a public endpoint, and a
-	// trader with a thousand copiers must not cost a thousand round-trips. The
-	// left joins reproduce cumulativeCopyProfit's inner-join filter exactly (a
-	// subscription with no closed acted copies contributes a null sum, so it
-	// still counts as a copier with zero profit).
 	let subs;
 	try {
 		subs = await sql`
-			select s.id, s.high_water_mark_sol, s.perf_fee_bps,
-			       coalesce(sum(e.planned_sol * (p.realized_pnl_pct / 100.0)), 0) as profit_sol
-			from copy_subscriptions s
-			left join copy_executions e
-			  on e.subscription_id = s.id and e.direction = 'buy' and e.status = 'acted'
-			left join agent_sniper_positions p
-			  on p.id = e.leader_position_id and p.status = 'closed' and p.realized_pnl_pct is not null
-			where s.leader_agent_id = ${leaderAgentId} and s.network = ${network} and s.status = 'active'
-			group by s.id, s.high_water_mark_sol, s.perf_fee_bps
+			select id, high_water_mark_sol, perf_fee_bps
+			from copy_subscriptions
+			where leader_agent_id = ${leaderAgentId} and network = ${network} and status = 'active'
 		`;
 	} catch {
 		return { copiers: 0, accrued_fee_sol: 0, copier_profit_sol: 0 };
 	}
 	let accruedFee = 0, profit = 0;
 	for (const sub of subs) {
-		const cumulative = round6(n(sub.profit_sol));
-		const fee = computePerfFee({
-			realizedProfitSol: cumulative,
-			highWaterMarkSol: n(sub.high_water_mark_sol),
-			feeBps: n(sub.perf_fee_bps) || 1000,
-		});
-		accruedFee += fee.fee_sol;
-		profit += Math.max(0, cumulative);
+		const owed = await subscriptionOwed(sub);
+		accruedFee += owed.fee_sol;
+		profit += Math.max(0, owed.cumulative_profit_sol);
 	}
 	return {
 		copiers: subs.length,

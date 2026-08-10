@@ -98,16 +98,6 @@ curl -s https://three.ws/api/crews \
   -d '{"action":"create","tag":"NOVA","name":"Nova Collective"}'
 ```
 
-Mutations are CSRF-guarded. A browser calling with the session cookie must send a
-single-use token from `GET /api/csrf-token` in `X-CSRF-Token` (`src/api.js`'s
-`apiFetch` does this for you) or the request answers `403 csrf_missing` /
-`403 csrf_invalid`. Bearer-token callers are exempt: the token is itself the
-proof of intent, and no browser attaches it on a cross-site request.
-
-A malformed envelope answers with its own status rather than a guess at your
-intent: `415` for a non-JSON content-type, `413` for an oversized body, `400
-bad_body` for anything that is not a JSON object.
-
 Error codes you should handle: `bad_tag`, `tag_taken`, `tag_reserved`,
 `already_in_crew`, `target_in_crew`, `no_invite`, `not_owner`, `not_member`.
 
@@ -122,11 +112,6 @@ breaking an existing crew's link.
 
 The public view of one crew: identity plus roster with presence and standees. No
 auth required. `404 not_found` when no crew flies that tag.
-
-The tag is case-insensitive and a trailing slash is fine, so `/api/crews/NOVA`,
-`/api/crews/nova` and `/api/crews/NOVA/` are one resource. The path is the only
-thing that selects the crew: a `?tag=` on the query string is ignored, so a link
-can never answer with a different crew's roster than the one its URL names.
 
 ### `GET /api/crews/search?q=<term>`
 
