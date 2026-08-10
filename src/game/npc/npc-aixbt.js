@@ -545,12 +545,15 @@ export function openAixbtTerminal(npc, { ui } = {}) {
 			if (err.setup) body.appendChild(el('div', { class: 'aixbt-setup', text: err.setup }));
 			npc?.say?.("My feed isn't wired up here yet.");
 		} else if (err?.code === 'aixbt_unauthorized') {
+			// Covers both halves of the rejection: a key that expired or was
+			// revoked, and a key on a plan below what this read needs.
 			body.appendChild(
 				el('div', {
 					class: 'aixbt-error',
-					text: 'That read needs a higher aixbt plan than this key has.',
+					text: "This deployment's aixbt key was rejected. It has expired, been revoked, or sits below the plan this read needs.",
 				}),
 			);
+			if (err.setup) body.appendChild(el('div', { class: 'aixbt-setup', text: err.setup }));
 			npc?.say?.("My key can't reach that one.");
 		} else {
 			body.appendChild(

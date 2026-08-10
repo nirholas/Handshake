@@ -550,7 +550,10 @@
 				const net = el('net');
 				net.classList.toggle('mainnet', wallet.network === 'mainnet');
 				el('net-label').textContent = wallet.network;
-				el('bal-amt').textContent = `${fmtSol(wallet.sol)} SOL`;
+				// The API reports an unreadable balance as null rather than failing the
+				// whole response, so the address and explorer link survive an RPC blip.
+				const balanceKnown = wallet.balanceAvailable !== false && wallet.sol != null;
+				el('bal-amt').textContent = balanceKnown ? `${fmtSol(wallet.sol)} SOL` : 'balance unavailable';
 				el('bal-usd').textContent = wallet.usd != null ? `$${wallet.usd.toFixed(2)}` : '';
 				el('addr-short').textContent = short(wallet.address);
 				el('addr-link').href = wallet.explorer;
@@ -564,6 +567,12 @@
 			function renderFundHint() {
 				const hint = el('fund-hint');
 				if (!hint || !wallet) return;
+				// An unknown balance is not a zero balance: never tell someone their
+				// funded wallet is empty because the RPC was unreachable this poll.
+				if (wallet.balanceAvailable === false || wallet.sol == null) {
+					hint.classList.remove('show');
+					return;
+				}
 				const sol = Number(wallet.sol) || 0;
 				const price = Number(wallet.solPriceUsd) || 0;
 				// Smallest send the avatar offers is $1; need that in SOL + a fee buffer.

@@ -25,6 +25,8 @@ const els = {
 	cats: document.querySelector('[data-role="cats"]'),
 	rigWrap: document.querySelector('[data-role="rig-wrap"]'),
 	rigs: document.querySelector('[data-role="rigs"]'),
+	popWrap: document.querySelector('[data-role="pop-wrap"]'),
+	pops: document.querySelector('[data-role="pops"]'),
 	tagWrap: document.querySelector('[data-role="tag-wrap"]'),
 	tags: document.querySelector('[data-role="tags"]'),
 	grid: document.querySelector('[data-role="grid"]'),
@@ -86,6 +88,7 @@ els.search.addEventListener('input', () => {
 	clearTimeout(searchDebounce);
 	searchDebounce = setTimeout(() => {
 		state.query = els.search.value.trim();
+		renderPopular();
 		syncUrl();
 		resetAndLoad();
 	}, 250);
@@ -95,6 +98,7 @@ els.searchClear.addEventListener('click', () => {
 	els.search.value = '';
 	state.query = '';
 	updateSearchClearVisibility();
+	renderPopular();
 	syncUrl();
 	resetAndLoad();
 	els.search.focus();
@@ -136,6 +140,20 @@ els.rigs?.addEventListener('click', (e) => {
 	const rig = btn.dataset.rig === state.rigged ? '' : btn.dataset.rig;
 	state.rigged = rig;
 	renderRigs();
+	syncUrl();
+	resetAndLoad();
+});
+
+els.pops?.addEventListener('click', (e) => {
+	const btn = e.target.closest('[data-pop]');
+	if (!btn) return;
+	// A second click on the active chip clears it, matching the tag/category chips.
+	const next = btn.dataset.pop === state.query ? '' : btn.dataset.pop;
+	state.query = next;
+	els.search.value = next;
+	clearTimeout(searchDebounce);
+	updateSearchClearVisibility();
+	renderPopular();
 	syncUrl();
 	resetAndLoad();
 });
@@ -198,6 +216,7 @@ function clearAllFilters() {
 	renderTags();
 	renderCats();
 	renderRigs();
+	renderPopular();
 	syncUrl();
 	resetAndLoad();
 }
@@ -385,6 +404,55 @@ function renderRigs() {
 			}" data-rig="${escapeAttr(value)}">${escapeHtml(label)}</button>`,
 	).join('');
 }
+
+// ── Popular searches ───────────────────────────────────────────────────────
+// Chips for the queries that surface the most public inventory, served by
+// GET /api/avatars/popular-searches off the warm cache the Avatar Search Index
+// Warmup pipeline fills. Each chip carries a sample thumbnail from that query's
+// real top result, so the row previews what the search will return.
+let popularSearches = [];
+
+function renderPopular() {
+	if (!els.pops || !els.popWrap) return;
+	if (!popularSearches.length) {
+		els.popWrap.hidden = true;
+		els.pops.innerHTML = '';
+		return;
+	}
+	els.popWrap.hidden = false;
+	els.pops.innerHTML = popularSearches
+		.map((s) => {
+			const active = s.query === state.query;
+			const thumb = s.sample_thumbnail
+				? `<img class="gallery-pop-thumb" src="${escapeAttr(s.sample_thumbnail)}" alt="" loading="lazy" decoding="async" />`
+				: '';
+			const count = s.result_count > 0 ? `<span class="gallery-pop-count">${s.result_count}</span>` : '';
+			const label = active ? `Clear the ${s.query} search` : `Search for ${s.query}`;
+			return `<button type="button" class="gallery-tag gallery-pop${active ? ' is-active' : ''}" data-pop="${escapeAttr(
+				s.query,
+			)}" aria-pressed="${active}" aria-label="${escapeAttr(label)}">${thumb}<span>${escapeHtml(
+				s.query,
+			)}</span>${count}</button>`;
+		})
+		.join('');
+}
+
+async function loadPopularSearches() {
+	try {
+		const res = await fetch('/api/avatars/popular-searches?limit=10');
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		const data = await res.json();
+		popularSearches = Array.isArray(data?.searches) ? data.searches.filter((s) => s?.query) : [];
+		renderPopular();
+	} catch {
+		// Additive row: if the warm cache is unreachable the gallery loses a
+		// shortcut, never a capability, so leave the row hidden and stay silent.
+		popularSearches = [];
+		renderPopular();
+	}
+}
+
+loadPopularSearches();
 
 // Classify a card's rig state via the shared classifier (window.twsRig bridge),
 // degrading to source_meta inspection if the module hasn't loaded yet.
