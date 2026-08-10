@@ -3,6 +3,15 @@
   "entries": [
     {
       "date": "2026-08-10",
+      "title": "Agent-to-agent hiring works again, the paid inspection skill accepts calls again, and a trade cap can no longer be deleted by a typo",
+      "summary": "Three fixes on the agent economy API. Hiring one agent to do paid work for another failed with a generic server error for every signed-in caller, on every request, because of a name collision inside the endpoint; the whole hire path was dead while a logged-out probe of it looked healthy. The three.ws paid 3D-model inspection skill, which other agents pay to call, rejected every request as unreadable because the code that reads the request body was never wired in; it now returns its real price quote and, once paid, its real inspection report. And the per-agent trading guardrails could be quietly removed: saving a per-trade cap or daily budget as a negative number or a stray word did not fail, it erased the existing ceiling and reported success, leaving the agent free to spend without one. Those values are now rejected with a plain message and the saved cap is left untouched; clearing a cap still works, but only when you say so explicitly. Failures on the trade, strategy-close, and alpha-read paths also now record why they failed instead of returning an unexplained error.",
+      "tags": [
+        "fix",
+        "security"
+      ]
+    },
+    {
+      "date": "2026-08-10",
       "title": "Removing a wallet can no longer lock you out of your account, and linking one is bound to this site everywhere",
       "summary": "If your account signs in with a wallet and has no password, that wallet is your only way back in, and the settings page was supposed to refuse to remove it. The check compared the wallet count against a value the database returns as text, so it never matched and the removal went through anyway. It now refuses, and says why. Removing the wallet you had marked primary also used to leave the account with no primary at all, which is the wallet royalties, agent payouts, and paid skill calls are sent to; the next wallet on the account is now promoted automatically and named in the response. Linking a wallet also checks that the message you signed names this site, with an exception for developers running the site on their own machine. That exception was keyed to a setting our servers never set, so it was open in production too. It is now keyed to the address the site is actually served from.",
       "tags": [
@@ -10,6 +19,16 @@
         "security"
       ],
       "link": "/settings"
+    },
+    {
+      "date": "2026-08-10",
+      "title": "Crew mutations are CSRF-guarded, and a crew link with a trailing slash opens the crew",
+      "summary": "Three fixes on the crews API. Founding, inviting, accepting, kicking and leaving a crew now require the same single-use CSRF token the friends graph already required, so a crew can only be changed by a request your browser actually meant to send; the Crew HQ page already sends the token, so nothing changes for you there. A public crew link that ended in a slash used to answer \"invalid crew tag\" instead of opening the crew, and a tag on the query string could make one crew's URL return a different crew's roster: the path is now the only thing that names a crew. A malformed request body also answers with what was actually wrong (wrong content type, too large, not an object) instead of reporting an unknown action.",
+      "tags": [
+        "fix",
+        "security"
+      ],
+      "link": "/crews"
     },
     {
       "date": "2026-08-10",
