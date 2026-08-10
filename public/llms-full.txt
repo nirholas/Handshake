@@ -811,6 +811,12 @@ A live holographic foil sticker rendered in your browser: tilt it with your poin
 
 On-chain features: pay-per-call, token launches, vanity wallets.
 
+### GO Bounty Board
+
+URL: https://three.ws/go
+
+Post a bounty with a SOL reward, submit proof of doing it, and let the poster (or the AI judge) pick a winner. Live earner and spender leaderboards.
+
 ### Sperax on three.ws
 
 URL: https://three.ws/sperax

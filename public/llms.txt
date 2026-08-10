@@ -171,6 +171,7 @@ Experimental features actively shipping. Expect fast iteration.
 
 On-chain features: pay-per-call, token launches, vanity wallets.
 
+- [GO Bounty Board](https://three.ws/go): Post a bounty with a SOL reward, submit proof of doing it, and let the poster (or the AI judge) pick a winner. Live earner and spender leaderboards.
 - [Sperax on three.ws](https://three.ws/sperax): Free AI credits for three.ws users on chat.sperax.io: what the integration is and how to claim it.
 - [The AGI: narrow by design](https://three.ws/agi): The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing: trading memecoins on pump.fun (Solana): and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.
 - [Oracle: AI Conviction Engine](https://three.ws/oracle): A fused AI conviction engine for every pump.fun launch: pedigree (who's buying), structure (bundle vs organic), narrative (what story is it riding), and momentum: fused into a single 0-100 conviction score with transparent pillar reasoning.

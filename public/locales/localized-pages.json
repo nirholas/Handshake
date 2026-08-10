@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 353,
+	"count": 354,
 	"paths": [
 		"/",
 		"/3d",
@@ -118,6 +118,7 @@
 		"/genome",
 		"/glossary",
 		"/gmgn",
+		"/go",
 		"/guardian",
 		"/hacks",
 		"/heatmap",
