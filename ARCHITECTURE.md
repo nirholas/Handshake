@@ -497,7 +497,7 @@ Requests authenticate through one of these gates:
 | `/api/agents/:id/memory` | GET/POST/DELETE | Agent memory CRUD |
 | `/api/agents/:id/brain` | GET/PUT | Persona + LLM config |
 | `/api/agents/:id/voice` · `/api/agents/:id/voice/clone` | GET/PUT · POST | Voice status/assign/tune; ElevenLabs voice clone (POST `/voice/clone`) |
-| `/api/agents/:id/embed` | GET | Embedding vector (NIM or VoyageAI) |
+| `/api/agents/:id/embed` | POST | Embedding vector via the `api/_lib/embeddings.js` registry (free NIM `nv-embedqa-e5-v5` → Vertex → OpenAI); response carries the embedder tag |
 | `/api/agents/:id/strategies` | GET/POST | Agent strategy management |
 | `/api/agents/:id/sns` | POST | Mint `*.threews.sol` subdomain |
 | `/api/agents/a2a-mandate` | POST | Issue JWS A2A mandate (user consent) |

@@ -35,7 +35,7 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 | **LLM (default lane)** | `meta/llama-3.3-70b-instruct` | `api/_lib/llm.js`, `api/_lib/chat-models.js` | ✅ |
 | **LLM (model garden)** | Nemotron 120B / 49B / Nano 9B, Llama 4 Maverick, DeepSeek V4 Pro, Kimi K2.6, MiniMax M2.7 | `api/brain/chat.js` | ✅ |
 | **Vision / VLM** | `nvidia/nemotron-nano-12b-v2-vl`, `meta/llama-3.2-11b-vision-instruct` | `api/_lib/vision.js` | ✅ |
-| **Embeddings** | `nvidia/nv-embedqa-e5-v5`, `baai/bge-m3` | `api/_lib/embeddings.js`, `api/agents/_id/embed.js` | ✅ |
+| **Embeddings** | `nvidia/nv-embedqa-e5-v5` | `api/_lib/embeddings.js` (and `api/agents/_id/embed.js`, which delegates to it) | ✅ |
 | **Reranking** | `nvidia/rerank-qa-mistral-4b` | `api/_lib/rerank.js` | ✅ |
 | **Content safety** | `nvidia/llama-3.1-nemoguard-8b-content-safety`, `meta/llama-guard-4-12b` | `api/_lib/publish-safety.js` | ✅ |
 | **Text-to-speech** | `magpie-tts-multilingual` (Riva) | `api/_lib/tts-nvidia.js` | ✅ |
@@ -136,7 +136,7 @@ All three **fail safe**: if the vision lane is unavailable, the feature quietly 
 
 The default embedder for new vectors — **free with the one key, 1024 dimensions, hard-capped at 512 input tokens** (longer inputs are rejected upstream, so callers chunk to fit). Vectors are tagged with `model@dimension` so a later model swap can't silently mix incompatible spaces. Powers **agent memory and knowledge-widget retrieval**; the paid embedding provider is demoted to backup behind it.
 
-**Also:** `baai/bge-m3` — a second NIM-hosted embedder used by [api/agents/_id/embed.js](../api/agents/_id/embed.js) for the agent-embed path.
+**Also:** the agent-embed endpoint [api/agents/_id/embed.js](../api/agents/_id/embed.js) does not carry a provider list of its own. It delegates to the registry above, so `POST /api/agents/:id/embed` serves this same model and returns the tag alongside the vector. It previously called `baai/bge-m3` directly; NVIDIA stopped serving that model on the hosted endpoint (500 on every request), which is exactly the failure mode a single registry prevents.
 
 ---
 
