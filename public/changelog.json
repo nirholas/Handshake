@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-10T17:00:29.080Z",
+	"generated_at": "2026-08-10T17:03:58.542Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,27 @@
 			"link": "/autopilot-activity",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "Older model names still work when you chat through the API",
+			"summary": "The brain chat API keeps a small table that points retired model names at the model that replaced them, so a saved setting or an older script does not break the day a vendor deprecates a name. That table was never consulted: a request naming one of those older models was rejected as unknown before the table was ever read, including the exact name our own brain MCP tool tells clients to use. Those names now resolve to their current successor and answer normally, while a name that is genuinely not a model is still rejected right away. A malformed request is also reported as your bad input again rather than as a missing API key, so the error points at the thing you can actually fix.",
+			"link": "/brain",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "Pricing rules are private to their seller, and clearing a scheduled window now sticks",
+			"summary": "Three fixes to the agent pricing and earnings APIs. A seller's dynamic pricing rules (scheduled discounts, first-N-buyer deals, experiments they switched off) were readable by anyone who knew the agent id; listing them now requires being signed in as the agent's owner, the same rule that already applied to creating and deleting them. Clearing the start or end of a scheduled price window used to report success and quietly keep the old date, so a window you thought you reopened stayed shut; sending an empty date now really clears it. And asking the earnings summary, skill pricing, or X memory seeder about an id that is not a real agent id returned an anonymous internal error with a support reference instead of a plain not-found.",
+			"link": "/dashboard/creator",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
