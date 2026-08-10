@@ -235,6 +235,7 @@ coin-intel, pump-visualizer and pump-live: adding a coin on any surface shows up
 
 ### GMGN Smart Money — `/gmgn`
 - **Source:** `public/gmgn.html` (pre-built static; ~900 lines); backend `api/agents/gmgn.js`; `vercel.json` rewrite `/gmgn → /gmgn.html`, `/api/agents/gmgn-feed → /api/agents/gmgn?_handler=feed`
+- **Two read lanes on one backend:** `GET /api/agents/gmgn-feed` streams SSE (what this page uses); `GET /api/agents/gmgn` returns the same board as one JSON response for callers that cannot hold a stream open (server-side fetches, agent tool calls, curl). Both accept `chain`, `interval`, and `minSmartBuys`; the JSON lane also accepts `limit` (1-50, default 25) and answers `{ data: { chain, interval, min_smart_buys, source, count, items } }` with the same normalized item shape the `smart_entry` events carry.
 - **Entry point:** nav / direct URL.
 - **Prerequisites / gates:** None — public live feed. Narration needs browser Web Speech API; "My agents" avatar tab needs auth.
 - **Steps (N):**
