@@ -218,9 +218,13 @@ describe('method routing', () => {
 	});
 });
 
+// api_keys.id is a uuid column and the handler rejects anything else with a
+// 400 before it reaches Postgres, so the revoke tests use real uuids.
+const KEY_ID = '9f2b6d41-6c1b-4a0e-9a5f-2f0c9c4d7b31';
+
 describe('DELETE /api/api-keys/:id — revoke 200', () => {
 	it('returns 401 when unauthenticated', async () => {
-		const { status, body } = await invokeRevoke({ id: 'k1' });
+		const { status, body } = await invokeRevoke({ id: KEY_ID });
 		expect(status).toBe(401);
 		expect(body.error).toBe('unauthorized');
 	});
@@ -228,12 +232,12 @@ describe('DELETE /api/api-keys/:id — revoke 200', () => {
 	it('revokes the owner’s live key and returns { id, revoked: true }', async () => {
 		authState.session = { id: 'user-1' };
 		// UPDATE ... returning id — one row means the live key was found + revoked.
-		sqlState.queue.push([{ id: 'k1' }]);
+		sqlState.queue.push([{ id: KEY_ID }]);
 
-		const { status, body } = await invokeRevoke({ id: 'k1' });
+		const { status, body } = await invokeRevoke({ id: KEY_ID });
 
 		expect(status).toBe(200);
-		expect(body.data).toEqual({ id: 'k1', revoked: true });
+		expect(body.data).toEqual({ id: KEY_ID, revoked: true });
 
 		// The UPDATE must scope to the owner and only touch live keys, so a key
 		// can't be revoked by a non-owner or revoked twice.
@@ -242,7 +246,7 @@ describe('DELETE /api/api-keys/:id — revoke 200', () => {
 		expect(updateCall.query).toMatch(/set revoked_at = now\(\)/i);
 		expect(updateCall.query).toMatch(/user_id =/i);
 		expect(updateCall.query).toMatch(/revoked_at is null/i);
-		expect(updateCall.values).toContain('k1');
+		expect(updateCall.values).toContain(KEY_ID);
 		expect(updateCall.values).toContain('user-1');
 	});
 
@@ -250,8 +254,8 @@ describe('DELETE /api/api-keys/:id — revoke 200', () => {
 		authState.session = { id: 'user-1' };
 
 		// Revoke the live key.
-		sqlState.queue.push([{ id: 'k1' }]);
-		const revoke = await invokeRevoke({ id: 'k1' });
+		sqlState.queue.push([{ id: KEY_ID }]);
+		const revoke = await invokeRevoke({ id: KEY_ID });
 		expect(revoke.status).toBe(200);
 
 		// The list endpoint filters on `revoked_at is null`, so the revoked key
@@ -270,15 +274,43 @@ describe('DELETE /api/api-keys/:id — revoke 200', () => {
 		authState.session = { id: 'user-1' };
 
 		// First revoke succeeds.
-		sqlState.queue.push([{ id: 'k1' }]);
-		const first = await invokeRevoke({ id: 'k1' });
+		sqlState.queue.push([{ id: KEY_ID }]);
+		const first = await invokeRevoke({ id: KEY_ID });
 		expect(first.status).toBe(200);
 
 		// Second revoke: the `revoked_at is null` guard matches nothing → no row.
 		sqlState.queue.push([]);
-		const second = await invokeRevoke({ id: 'k1' });
+		const second = await invokeRevoke({ id: KEY_ID });
 		expect(second.status).toBe(404);
 		expect(second.body.error).toBe('not_found');
+	});
+});
+
+describe('DELETE /api/api-keys/:id — malformed id', () => {
+	// api_keys.id is a uuid column, so a non-uuid segment used to reach Postgres
+	// and come back as 22P02 → 500 with a support ref. Bad input is a 400.
+	it.each(['not-a-uuid', ' ', '', "'; drop table api_keys; --"])(
+		'returns 400 for %j without touching the database',
+		async (id) => {
+			authState.session = { id: 'user-1' };
+
+			const { status, body } = await invokeRevoke({ id });
+
+			expect(status).toBe(400);
+			expect(body.error).toBe('invalid_id');
+			expect(sqlState.calls.find((c) => /update api_keys/i.test(c.query))).toBeUndefined();
+		},
+	);
+
+	it('returns 400 when the id segment is missing entirely', async () => {
+		authState.session = { id: 'user-1' };
+		const req = makeReq({ method: 'DELETE', url: '/api/api-keys/' });
+		req.query = {};
+		const res = makeRes();
+		await revokeHandler(req, res);
+
+		expect(res.statusCode).toBe(400);
+		expect(JSON.parse(res.body).error).toBe('invalid_id');
 	});
 });
 
@@ -288,7 +320,7 @@ describe('DELETE /api/api-keys/:id — 404 unknown id', () => {
 		// UPDATE matches no row → empty result.
 		sqlState.queue.push([]);
 
-		const { status, body } = await invokeRevoke({ id: 'does-not-exist' });
+		const { status, body } = await invokeRevoke({ id: '00000000-0000-4000-8000-000000000000' });
 		expect(status).toBe(404);
 		expect(body.error).toBe('not_found');
 	});
@@ -299,7 +331,7 @@ describe('DELETE /api/api-keys/:id — 404 unknown id', () => {
 		authState.session = { id: 'user-2' };
 		sqlState.queue.push([]);
 
-		const { status, body } = await invokeRevoke({ id: 'k1' });
+		const { status, body } = await invokeRevoke({ id: KEY_ID });
 		expect(status).toBe(404);
 		expect(body.error).toBe('not_found');
 

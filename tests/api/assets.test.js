@@ -1,4 +1,4 @@
-// Tests for /api/assets — public asset library REST API. Reads on-disk
+// Tests for /api/assets: public asset library REST API. Reads on-disk
 // manifests from /public/* via fs; no mocking needed for those (the real
 // committed files are stable for the test).
 
@@ -8,6 +8,7 @@ import { Readable } from 'node:stream';
 process.env.PUBLIC_APP_ORIGIN = 'https://three.ws';
 
 const { default: handler } = await import('../../api/assets/index.js');
+const { environments } = await import('../../src/environments.js');
 
 function makeReq(qs = '') {
 	const req = Readable.from([]);
@@ -74,6 +75,25 @@ describe('GET /api/assets', () => {
 		const res = makeRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(405);
+		expect(res.headers.allow).toContain('GET');
+	});
+
+	it('answers HEAD like GET (CDNs and uptime probes send it)', async () => {
+		const req = makeReq();
+		req.method = 'HEAD';
+		const res = makeRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(200);
+	});
+
+	it('answers the CORS preflight with an allow-origin header', async () => {
+		const req = makeReq();
+		req.method = 'OPTIONS';
+		req.headers.origin = 'https://example.com';
+		const res = makeRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(204);
+		expect(res.headers['access-control-allow-origin']).toBe('*');
 	});
 
 	it('filters by type=accessory', async () => {
@@ -120,6 +140,37 @@ describe('GET /api/assets', () => {
 		expect(body.items.length).toBeLessThanOrEqual(500);
 	});
 
+	it('rejects an unknown type instead of serving an empty catalog', async () => {
+		const { status, body, res } = await invoke('type=bogus');
+		expect(status).toBe(400);
+		expect(body.error).toBe('invalid_type');
+		// A 400 must never be cached: the next caller may send a valid filter.
+		expect(res.headers['cache-control']).toBe('no-store');
+		// …and must still be readable cross-origin, like the success path.
+		expect(res.headers['access-control-allow-origin']).toBe('*');
+	});
+
+	it('rejects an unknown accessory kind', async () => {
+		const { status, body } = await invoke('kind=fedora');
+		expect(status).toBe(400);
+		expect(body.error).toBe('invalid_kind');
+		expect(body.error_description).toContain('hat');
+	});
+
+	it('rejects a non-boolean loop value', async () => {
+		const { status, body } = await invoke('loop=yes');
+		expect(status).toBe(400);
+		expect(body.error).toBe('invalid_loop');
+	});
+
+	it('rejects a non-integer or non-positive limit rather than silently defaulting', async () => {
+		for (const qs of ['limit=abc', 'limit=0', 'limit=-5', 'limit=2.5']) {
+			const { status, body } = await invoke(qs);
+			expect(status, qs).toBe(400);
+			expect(body.error, qs).toBe('invalid_limit');
+		}
+	});
+
 	it('sets a long-lived cache-control header', async () => {
 		const { res } = await invoke();
 		const cc = res.headers['cache-control'];
@@ -132,11 +183,17 @@ describe('GET /api/assets', () => {
 		expect(res.headers['access-control-allow-origin']).toBe('*');
 	});
 
-	it('environments include the named "Venice Sunset" and "Footprint Court"', () => {
+	it('publishes exactly the viewer environments from src/environments.js', () => {
 		const envs = all.items.filter((i) => i.type === 'environment');
-		const names = envs.map((e) => e.name);
-		expect(names).toContain('Venice Sunset');
-		expect(names).toContain('Footprint Court');
+		expect(envs.length).toBe(environments.length);
+		for (const source of environments) {
+			// The viewer's "no environment" entry has an empty id; the catalog
+			// publishes it as `none` so every item carries a usable id.
+			const published = envs.find((e) => e.id === (source.id || 'none'));
+			expect(published, `no catalog entry for environment "${source.name}"`).toBeTruthy();
+			expect(published.name).toBe(source.name);
+			expect(published.path).toBe(source.path ?? null);
+		}
 	});
 
 	it('accessories include the seven committed accessory ids', () => {

@@ -409,6 +409,49 @@ describe('GET /api/3d/generate?job= — poll lifecycle', () => {
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('pending');
 	});
+
+	it('503s instead of looping forever when the lane is unconfigured here', async () => {
+		// A deployment with no 3D lane answers the poll 503 unconfigured. Reporting
+		// that as 'pending' would hand the agent a poll loop that can never finish,
+		// so it has to surface as the same terminal not_configured the submit path
+		// returns.
+		globalThis.fetch = vi.fn(async () =>
+			jsonResponse({ error: 'unconfigured', message: 'Set NVIDIA_API_KEY.' }, { status: 503 }),
+		);
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: `/api/3d/generate?job=${SUBMIT_QUEUED.job_id}` }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(503);
+		expect(body.error).toBe('not_configured');
+		expect(body.status).toBeUndefined();
+	});
+
+	it('501 backend_unconfigured is terminal too, not pending', async () => {
+		globalThis.fetch = vi.fn(async () =>
+			jsonResponse(
+				{ error: 'backend_unconfigured', message: 'no NIM lane here' },
+				{ status: 501 },
+			),
+		);
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: `/api/3d/generate?job=${SUBMIT_QUEUED.job_id}` }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(503);
+		expect(body.error).toBe('not_configured');
+	});
+
+	it('keeps an unlabelled upstream 5xx as pending so the loop retries', async () => {
+		// Only an explicit unconfigured verdict is terminal; a bare 502 stays a blip.
+		globalThis.fetch = vi.fn(async () => jsonResponse({ error: 'boom' }, { status: 502 }));
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: `/api/3d/generate?job=${SUBMIT_QUEUED.job_id}` }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(200);
+		expect(body.status).toBe('pending');
+	});
 });
 
 describe('catalog entry', () => {

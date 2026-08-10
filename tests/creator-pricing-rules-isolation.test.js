@@ -88,6 +88,33 @@ describe('pricing-rules owner isolation', () => {
 		expect(sqlState.calls.some((c) => /INSERT INTO skill_pricing_rules/i.test(c.query))).toBe(true);
 	});
 
+	it('rejects an unauthenticated list with 401', async () => {
+		authState.session = null;
+		const { status, body } = await invoke(pricingRulesHandler, {
+			method: 'GET',
+			url: `/api/agents/${AGENT_ID}/pricing-rules`,
+			query: { id: AGENT_ID },
+		});
+		expect(status).toBe(401);
+		expect(body.error).toBe('unauthorized');
+		// A rule set names scheduled and deactivated prices — never read it for an
+		// anonymous caller.
+		expect(sqlState.calls.some((c) => /FROM skill_pricing_rules/i.test(c.query))).toBe(false);
+	});
+
+	it('returns 403 when a non-owner tries to list rules', async () => {
+		authState.session = { id: 'attacker-user' };
+		sqlState.queue = [[]]; // ownership lookup → empty
+		const { status, body } = await invoke(pricingRulesHandler, {
+			method: 'GET',
+			url: `/api/agents/${AGENT_ID}/pricing-rules`,
+			query: { id: AGENT_ID },
+		});
+		expect(status).toBe(403);
+		expect(body.error).toBe('forbidden');
+		expect(sqlState.calls.some((c) => /FROM skill_pricing_rules/i.test(c.query))).toBe(false);
+	});
+
 	it('returns 403 when a non-owner tries to delete a rule', async () => {
 		authState.session = { id: 'attacker-user' };
 		sqlState.queue = [[]]; // ownership lookup → empty
@@ -100,5 +127,59 @@ describe('pricing-rules owner isolation', () => {
 		expect(status).toBe(403);
 		expect(body.error).toBe('forbidden');
 		expect(sqlState.calls.some((c) => /UPDATE skill_pricing_rules/i.test(c.query))).toBe(false);
+	});
+});
+
+// A PATCH body distinguishes three intents per timestamp: omit the key (keep the
+// current value), send a timestamp (set it), send null (clear it). COALESCE alone
+// collapses the last two, so the clear used to return 200 and change nothing.
+describe('pricing-rules PATCH timestamp clearing', () => {
+	const RULE_ID = '00000000-0000-4000-8000-0000000000bb';
+
+	async function patch(body) {
+		authState.session = { id: 'owner-user' };
+		sqlState.queue = [
+			[{ id: AGENT_ID }],  // ownership lookup
+			[{ id: RULE_ID }],   // existing-rule lookup
+			[],                  // UPDATE
+		];
+		const result = await invoke(pricingRulesHandler, {
+			method: 'PATCH',
+			url: `/api/agents/${AGENT_ID}/pricing-rules/${RULE_ID}`,
+			query: { id: AGENT_ID, rule_id: RULE_ID },
+			body,
+		});
+		const update = sqlState.calls.find((c) => /UPDATE skill_pricing_rules/i.test(c.query));
+		return { ...result, update };
+	}
+
+	it('clears start_at when the caller sends an explicit null', async () => {
+		const { status, update } = await patch({ start_at: null });
+		expect(status).toBe(200);
+		// [threshold, price_amount, clearStart, start_at, clearEnd, end_at, …]
+		expect(update.values[2]).toBe(true);
+		expect(update.values[4]).toBe(false);
+	});
+
+	it('clears end_at when the caller sends an explicit null', async () => {
+		const { status, update } = await patch({ end_at: null });
+		expect(status).toBe(200);
+		expect(update.values[2]).toBe(false);
+		expect(update.values[4]).toBe(true);
+	});
+
+	it('keeps both timestamps when neither key is sent', async () => {
+		const { status, update } = await patch({ price_amount: 650 });
+		expect(status).toBe(200);
+		expect(update.values[1]).toBe(650);
+		expect(update.values[2]).toBe(false);
+		expect(update.values[4]).toBe(false);
+	});
+
+	it('sets start_at when the caller sends a timestamp', async () => {
+		const { status, update } = await patch({ start_at: '2026-10-01T00:00:00.000Z' });
+		expect(status).toBe(200);
+		expect(update.values[2]).toBe(false);
+		expect(update.values[3]).toBe('2026-10-01T00:00:00.000Z');
 	});
 });

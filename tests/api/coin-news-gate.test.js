@@ -72,6 +72,17 @@ describe('/api/coin/news outage gate', () => {
 		expect(body.error).toBe('upstream_error');
 	});
 
+	it('maps a hard aggregator reject to the same 502, not a generic 500', async () => {
+		// Before this was caught here it bubbled to wrap(), which answers a generic
+		// `internal_error` AND pages ops with an "unhandled 5xx" alert for what is
+		// an ordinary publisher-feed outage.
+		searchNews.mockRejectedValue(new Error('fan-out failed: getaddrinfo ENOTFOUND'));
+		const { res, body } = await call('q=Solana&limit=8');
+		expect(res.statusCode).toBe(502);
+		expect(body.error).toBe('upstream_error');
+		expect(body.ref).toBeUndefined();
+	});
+
 	it('still rejects a missing query', async () => {
 		const { res, body } = await call('limit=8');
 		expect(res.statusCode).toBe(400);

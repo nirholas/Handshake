@@ -154,6 +154,69 @@ describe('nested /api/agents handlers are reachable, not shadowed by the [id] ca
 		);
 	});
 
+	// Same outage class one level down: api/agents/solana/[action].js is a
+	// dispatcher keyed on ?action=, so an action is only reachable if some route
+	// names it. Two never did, and both were load-bearing: api/_lib/skill-nft.js
+	// bakes /api/agents/solana/skill-nft-metadata and
+	// /api/agents/solana/skill-collection-metadata into the on-chain URI of every
+	// skill NFT it mints. Those URIs are immutable once minted, and both paths were
+	// swallowed by the [id] catch-all, so every skill license ever sold pointed at
+	// {"error":"not_found"} in every wallet and marketplace that read it.
+	//
+	// Derived from the dispatch table on disk so the next action added is covered
+	// the moment it lands.
+	const actionDispatcher = '/api/agents/solana/[action]';
+	const solanaActions = (() => {
+		const src = readFileSync(new URL('../api/agents/solana/[action].js', import.meta.url), 'utf8');
+		const table = src.slice(src.indexOf('const DISPATCH = {'), src.indexOf('export default'));
+		return [...table.matchAll(/^\t'?([a-z0-9-]+)'?:\s*handle/gm)].map((m) => m[1]);
+	})();
+
+	it('reads the solana action dispatch table', () => {
+		// An empty parse would make the sweep below vacuously pass.
+		expect(solanaActions.length).toBeGreaterThan(10);
+		expect(solanaActions).toContain('skill-nft-metadata');
+	});
+
+	it.each(solanaActions)('solana action %s is reachable', (action) => {
+		const candidates = routes
+			.slice(0, fsPhase)
+			.filter(
+				(r) =>
+					typeof r.src === 'string' &&
+					String(r.dest || '').split('?')[0] === actionDispatcher &&
+					new URLSearchParams(String(r.dest).split('?')[1] || '').get('action') === action,
+			);
+
+		expect(
+			candidates.length,
+			`no route in vercel.json dispatches action=${action}, so it can never run`,
+		).toBeGreaterThan(0);
+
+		const reachable = candidates.filter((r) => {
+			const dest = resolve(samplePath(r.src));
+			return (
+				dest?.split('?')[0] === actionDispatcher &&
+				new URLSearchParams(dest.split('?')[1] || '').get('action') === action
+			);
+		});
+		expect(
+			reachable.length,
+			`every route for action=${action} is shadowed by a broader route above it (likely ${DISPATCHER}); move it up`,
+		).toBeGreaterThan(0);
+	});
+
+	it('routes the exact skill-NFT metadata URIs that are minted on-chain', () => {
+		// These two strings are built by api/_lib/skill-nft.js and written into the
+		// asset's immutable `uri` field. They must resolve verbatim, forever.
+		expect(resolve('/api/agents/solana/skill-nft-metadata')).toBe(
+			'/api/agents/solana/[action]?action=skill-nft-metadata',
+		);
+		expect(resolve('/api/agents/solana/skill-collection-metadata')).toBe(
+			'/api/agents/solana/[action]?action=skill-collection-metadata',
+		);
+	});
+
 	it('keeps the ens route above the catch-all', () => {
 		const ens = routes.findIndex((r) => r.src === '/api/agents/ens/([^/]+)');
 		const catchAll = routes.findIndex((r) => r.src === '/api/agents/([^/]+)(?:/.*)?');

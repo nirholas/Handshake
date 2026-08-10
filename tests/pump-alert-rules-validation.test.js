@@ -4,6 +4,7 @@ import {
 	updateRuleSchema,
 	validateUpdate,
 	normalizeForKind,
+	rulesMissingWebhookSecret,
 	serializeRule,
 } from '../api/alerts/_rules.js';
 
@@ -128,6 +129,41 @@ describe('validateUpdate (merge + re-validate)', () => {
 	it('rejects disabling every delivery channel', () => {
 		const r = validateUpdate(current, { deliver_in_app: false });
 		expect(r.ok).toBe(false);
+	});
+
+	// The update path must report failures exactly the way the create path does
+	// (api/_lib/validate.js `parse()`): "<field>: <message>", joined by "; ".
+	// A bare message here made PATCH and POST disagree on the same rule.
+	it('formats issues with the same field prefix the create path uses', () => {
+		const r = validateUpdate(current, { kind: 'graduation', target_agent: AGENT });
+		expect(r.ok).toBe(false);
+		expect(r.message).toBe('target_agent: set either target_mint or target_agent, not both');
+	});
+
+	it('joins multiple issues into one message', () => {
+		const grad = { ...current, kind: 'graduation', target_mint: null, threshold: null };
+		const r = validateUpdate(grad, { kind: 'price_below' });
+		expect(r.ok).toBe(false);
+		expect(r.message).toBe(
+			'target_mint: price_below requires a target_mint; threshold: price_below requires a positive threshold',
+		);
+	});
+});
+
+describe('rulesMissingWebhookSecret', () => {
+	const row = (over) => ({ id: 'r', webhook_url: null, webhook_secret: null, ...over });
+
+	it('flags a rule that has a webhook but no signing secret', () => {
+		const rows = [row({ id: 'legacy', webhook_url: 'https://example.com/hook' })];
+		expect(rulesMissingWebhookSecret(rows).map((r) => r.id)).toEqual(['legacy']);
+	});
+
+	it('ignores rules with no webhook and rules already carrying a secret', () => {
+		const rows = [
+			row({ id: 'in-app-only' }),
+			row({ id: 'signed', webhook_url: 'https://example.com/hook', webhook_secret: 'whsec_abc' }),
+		];
+		expect(rulesMissingWebhookSecret(rows)).toEqual([]);
 	});
 });
 
