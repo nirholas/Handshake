@@ -16,7 +16,7 @@
 
 import { json, wrap, readBody } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
-import { verifySnsMessage } from '../_lib/aws-marketplace.js';
+import { verifySnsMessage, assertAwsHttpsUrl } from '../_lib/aws-marketplace.js';
 import { revokeSubscriptionForCustomer } from '../_lib/aws-marketplace-bridge.js';
 import { env } from '../_lib/env.js';
 
@@ -34,6 +34,19 @@ export default wrap(async (req, res) => {
 		res.statusCode = 405;
 		res.end();
 		return;
+	}
+
+	// The topic pin is what binds this webhook to OUR listing. A valid signature
+	// alone only proves "some AWS account signed this": anyone can create their
+	// own SNS topic and have AWS sign a Notification for it, so an unpinned
+	// handler would accept a forged subscribe-success (minting a free x402 key
+	// for an attacker-chosen customer) or unsubscribe-success (revoking a paying
+	// customer's key). Refuse delivery entirely until the ARN is configured
+	// instead of trusting whatever topic shows up. SNS retries with backoff, so
+	// an operator who sets the var recovers the missed notifications.
+	if (!env.AWS_MP_SNS_TOPIC_ARN) {
+		console.error('[aws-marketplace/subscription] refusing SNS delivery: AWS_MP_SNS_TOPIC_ARN is not set');
+		return json(res, 503, { error: 'not_configured' });
 	}
 
 	let msg;
@@ -57,9 +70,20 @@ export default wrap(async (req, res) => {
 	}
 
 	if (msg.Type === 'SubscriptionConfirmation' || msg.Type === 'UnsubscribeConfirmation') {
+		// The signature covers SubscribeURL, so by here it is AWS-authored. Check
+		// the host anyway before following it: this is the one outbound request
+		// this handler makes from payload-supplied data, and the check costs
+		// nothing next to the blast radius if the signature step ever regresses.
+		let subscribeUrl;
+		try {
+			subscribeUrl = assertAwsHttpsUrl(msg.SubscribeURL, 'SNS SubscribeURL');
+		} catch (err) {
+			console.error('[aws-marketplace/subscription] refusing SubscribeURL', err?.message);
+			return json(res, 400, { error: 'invalid_subscribe_url' });
+		}
 		// Confirm the SNS subscription by hitting the provided URL.
 		try {
-			await fetch(msg.SubscribeURL);
+			await fetch(subscribeUrl);
 		} catch (err) {
 			console.error('[aws-marketplace/subscription] failed to confirm SNS subscription', err?.message);
 		}

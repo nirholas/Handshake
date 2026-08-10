@@ -145,14 +145,36 @@ export async function customerEntitlement(customerIdentifier) {
 
 const certCache = new Map();
 
+/**
+ * Assert that a URL taken from an SNS payload is an AWS-hosted HTTPS endpoint
+ * before anything dereferences it. Both places that follow such a URL (the
+ * signing certificate and the SubscribeURL handshake) go through this, so a
+ * payload can never steer an outbound request at a host of its choosing.
+ * Also turns a missing/garbage URL into this same refusal instead of a
+ * TypeError from the URL constructor.
+ *
+ * @param {unknown} value  the URL as it appeared in the payload
+ * @param {string} label   what the URL is, for the thrown message
+ * @returns {URL} the parsed, trusted URL
+ */
+export function assertAwsHttpsUrl(value, label) {
+	let parsed;
+	try {
+		parsed = new URL(String(value));
+	} catch {
+		throw new Error(`Untrusted ${label}: ${value}`);
+	}
+	if (parsed.protocol !== 'https:' || !parsed.hostname.endsWith('.amazonaws.com')) {
+		throw new Error(`Untrusted ${label}: ${value}`);
+	}
+	return parsed;
+}
+
 async function fetchCert(url) {
 	if (certCache.has(url)) return certCache.get(url);
 
 	// Only trust certs hosted on *.amazonaws.com over HTTPS.
-	const parsed = new URL(url);
-	if (parsed.protocol !== 'https:' || !parsed.hostname.endsWith('.amazonaws.com')) {
-		throw new Error(`Untrusted SNS signing cert URL: ${url}`);
-	}
+	assertAwsHttpsUrl(url, 'SNS signing cert URL');
 
 	const res = await fetch(url);
 	if (!res.ok) throw new Error(`Failed to fetch SNS cert: ${res.status}`);

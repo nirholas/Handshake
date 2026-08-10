@@ -18,10 +18,22 @@ const isTrial = p.get('trial') === '1';
 const wantsSignup = p.get('signup') === '1';
 
 const ERROR_MESSAGES = {
-	token_expired: 'The AWS Marketplace registration link has expired. Please return to AWS Marketplace and subscribe again.',
-	link_failed:   'We could not link your AWS subscription to your account. Please try signing in again or contact support.',
-	default:       'We couldn\'t complete your AWS Marketplace subscription setup.',
+	token_expired:  'The AWS Marketplace registration link has expired. Please return to AWS Marketplace and subscribe again.',
+	not_configured: 'AWS Marketplace subscriptions are temporarily unavailable on three.ws. Your AWS subscription is unaffected. Please open this link again shortly, or contact support if it persists.',
+	link_failed:    'We could not link your AWS subscription to your account. Please try signing in again or contact support.',
+	// Error codes returned by /api/aws-marketplace/link, so a rejected link says
+	// what to do about it instead of "contact support" for every cause.
+	unauthenticated: 'Your session expired before we could link the subscription. Please sign in again.',
+	customer_linked_to_other_account: 'This AWS subscription is already linked to a different three.ws account. Sign in with that account, or contact support to move it.',
+	subscription_inactive: 'This AWS Marketplace subscription is no longer active. Re-subscribe in AWS Marketplace, then open this link again.',
+	customer_not_found: 'We could not find this AWS Marketplace subscription. Please return to AWS Marketplace and open the setup link again.',
+	default:        'We couldn\'t complete your AWS Marketplace subscription setup.',
 };
+
+/** Map a thrown link/auth error onto a message the customer can act on. */
+function messageFor(err) {
+	return ERROR_MESSAGES[err?.message] || err?.message || ERROR_MESSAGES.link_failed;
+}
 
 function show(id) {
 	document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
@@ -47,7 +59,13 @@ async function linkSubscription() {
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ customer: customerId }),
 	});
-	if (!resp.ok) throw new Error('link_failed');
+	if (!resp.ok) {
+		// Carry the server's error code up so the caller can explain the specific
+		// failure (wrong account, cancelled subscription) instead of showing the
+		// same "contact support" line for all of them.
+		const data = await resp.json().catch(() => ({}));
+		throw new Error(data.error || 'link_failed');
+	}
 }
 
 async function issueApiKey() {
@@ -161,10 +179,10 @@ async function init() {
 			try {
 				const sub = await linkAndIssue();
 				showSuccess(sub);
-			} catch {
+			} catch (err) {
 				btn.disabled = false;
 				btn.textContent = 'Confirm & activate';
-				showErr('err-link', ERROR_MESSAGES.link_failed);
+				showErr('err-link', messageFor(err));
 			}
 		});
 		return;
@@ -228,7 +246,7 @@ async function handleSignup(e) {
 	} catch (err) {
 		btn.disabled = false;
 		btn.textContent = 'Create account & activate';
-		showErr('err-auth', err.message);
+		showErr('err-auth', messageFor(err));
 	}
 }
 
@@ -258,7 +276,7 @@ async function handleSignin(e) {
 	} catch (err) {
 		btn.disabled = false;
 		btn.textContent = 'Sign in & activate';
-		showErr('err-auth', err.message);
+		showErr('err-auth', messageFor(err));
 	}
 }
 

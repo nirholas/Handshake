@@ -17,7 +17,7 @@
 
 import { readForm, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
-import { resolveCustomer } from '../_lib/aws-marketplace.js';
+import { resolveCustomer, awsMarketplaceConfigured } from '../_lib/aws-marketplace.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { env } from '../_lib/env.js';
 
@@ -47,6 +47,21 @@ export default wrap(async (req, res) => {
 	}
 
 	const isFreeTrial = offerType === 'free-trial';
+
+	// Without AWS credentials, ResolveCustomer throws on the missing env var and
+	// the customer used to be told their registration token had expired: a dead
+	// end that blames them for our deployment gap and sends the operator hunting
+	// the wrong bug. Name the real cause in the log and in the reason code.
+	if (!awsMarketplaceConfigured()) {
+		console.error(
+			'[aws-marketplace/register] AWS Marketplace is not configured; set AWS_MP_ACCESS_KEY_ID, AWS_MP_SECRET_ACCESS_KEY and AWS_MP_PRODUCT_CODE',
+		);
+		res.statusCode = 302;
+		res.setHeader('location', `${env.APP_ORIGIN}/aws-marketplace/error?reason=not_configured`);
+		res.setHeader('cache-control', 'no-store');
+		res.end();
+		return;
+	}
 
 	let customer;
 	try {

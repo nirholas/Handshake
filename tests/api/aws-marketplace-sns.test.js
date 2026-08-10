@@ -55,6 +55,7 @@ function validNotification(overrides = {}) {
 }
 
 let verifySnsMessage;
+let assertAwsHttpsUrl;
 
 beforeEach(async () => {
 	delete process.env.AWS_MP_SNS_TOPIC_ARN; // default: no ARN pin unless a test sets it
@@ -68,7 +69,7 @@ beforeEach(async () => {
 	);
 	// Import fresh each test so the module-level cert cache / env reads are clean.
 	vi.resetModules();
-	({ verifySnsMessage } = await import('../../api/_lib/aws-marketplace.js'));
+	({ verifySnsMessage, assertAwsHttpsUrl } = await import('../../api/_lib/aws-marketplace.js'));
 });
 
 afterEach(() => {
@@ -120,5 +121,33 @@ describe('verifySnsMessage', () => {
 	it('accepts the matching TopicArn when pinned', async () => {
 		process.env.AWS_MP_SNS_TOPIC_ARN = 'arn:aws:sns:us-east-1:155407237916:marketplace-topic';
 		await expect(verifySnsMessage(validNotification())).resolves.toBeUndefined();
+	});
+});
+
+// The same guard now protects both URLs this integration dereferences from an
+// SNS payload: the signing certificate and the SubscribeURL handshake.
+describe('assertAwsHttpsUrl', () => {
+	it('accepts an AWS HTTPS endpoint and returns the parsed URL', () => {
+		const url = assertAwsHttpsUrl(CERT_URL, 'SNS signing cert URL');
+		expect(url.hostname).toBe('sns.us-east-1.amazonaws.com');
+	});
+
+	it('refuses a host that merely ends in a lookalike domain', () => {
+		expect(() => assertAwsHttpsUrl('https://sns.us-east-1.amazonaws.com.evil.test/c.pem', 'SNS signing cert URL'))
+			.toThrow(/untrusted/i);
+	});
+
+	it('refuses a non-HTTPS scheme', () => {
+		expect(() => assertAwsHttpsUrl('http://sns.us-east-1.amazonaws.com/c.pem', 'SNS signing cert URL'))
+			.toThrow(/untrusted/i);
+	});
+
+	it('refuses link-local metadata addresses', () => {
+		expect(() => assertAwsHttpsUrl('http://169.254.169.254/latest/meta-data/', 'SNS SubscribeURL'))
+			.toThrow(/untrusted/i);
+	});
+
+	it('turns a missing URL into the same refusal, not a TypeError', () => {
+		expect(() => assertAwsHttpsUrl(undefined, 'SNS SubscribeURL')).toThrow(/untrusted/i);
 	});
 });
