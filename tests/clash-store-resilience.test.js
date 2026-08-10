@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const boom = () => Promise.reject(Object.assign(new Error('fetch failed'), { name: 'TypeError' }));
 const throwingRedis = {
 	incrby: boom, expire: boom, set: boom, get: boom,
-	zincrby: boom, zrange: boom, hmget: boom, hset: boom,
+	zincrby: boom, zrange: boom, zscore: boom, hmget: boom, hset: boom,
 };
 
 vi.mock('../api/_lib/redis.js', () => ({ getRedis: () => throwingRedis }));
@@ -45,6 +45,19 @@ describe('clash-store resilience under a Redis outage', () => {
 
 	it('setMomentum tolerates a write failure without throwing', async () => {
 		await expect(store.setMomentum(MINT, 1.2)).resolves.toBeUndefined();
+	});
+
+	it('factionPower degrades to zero instead of throwing', async () => {
+		await expect(store.factionPower(42, MINT)).resolves.toBe(0);
+	});
+
+	it('the price snapshot degrades to a cache miss and an absorbed write', async () => {
+		await expect(store.getPrice(MINT)).resolves.toBeNull();
+		await expect(
+			store.setPrice(MINT, { spot: 1, at: 2, base: 1, baseAt: 2 }, 60),
+		).resolves.toBeUndefined();
+		// The write landed in the in-memory model, so the next read still answers.
+		await expect(store.getPrice(MINT)).resolves.toEqual({ spot: 1, at: 2, base: 1, baseAt: 2 });
 	});
 
 	it('addPower falls back to the in-memory tally instead of throwing', async () => {

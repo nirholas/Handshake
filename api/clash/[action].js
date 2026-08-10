@@ -380,9 +380,9 @@ async function handleLeaderboard(req, res) {
 		.sort((a, b) => b.w - a.w || b.power - a.power);
 
 	// Optional: a single faction's top soldiers this round.
-	const mintParam = new URL(req.url, 'http://x').searchParams.get('faction');
+	const mintParam = req.query?.faction;
 	let soldiers = null;
-	if (mintParam && isValidToken(mintParam)) {
+	if (isValidToken(mintParam)) {
 		soldiers = await topSoldiers({ epoch: epochAt(Date.now()), mint: mintParam, limit: 10 });
 	}
 
