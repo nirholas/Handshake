@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-10",
+      "title": "The aixbt market feeds now say when the key, not you, is the problem",
+      "summary": "When aixbt turned down this deployment's API key, the narrative intel, momentum projects, grounding and chat feeds all answered with a plain 'unauthorized' aimed at you. Nothing on those surfaces ever asked you to sign in, so the message read as a dead end nobody could act on. They now report the real cause, that the platform's aixbt key has expired or sits below the plan the read needs, and carry the same setup pointer the missing-key state shows, so the in-world aixbt panel and the intel SDK both render something an operator can fix. The intel and projects feeds also stop advertising a page size of 100 they were never able to return, and a chat turn that comes back empty now says so instead of handing you a blank answer marked successful.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/docs/api-reference"
+    },
+    {
+      "date": "2026-08-10",
       "title": "The chat plugin now tells you when your Agent ID is wrong",
       "summary": "In the SperaxOS and LobeChat plugin, a mistyped or deleted Agent ID used to come back as a cheerful confirmation while the avatar panel stayed empty, so the model told you it had bound an agent that does not exist. The plugin now checks the ID against your real agents before answering: a bad ID returns a clear error pointing you back to the dashboard to recopy it, and a good one comes back with the agent name so you can see at a glance which identity the panel is wearing. Stray spaces around a pasted ID are trimmed instead of breaking the binding.",
       "tags": [
