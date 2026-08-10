@@ -307,6 +307,21 @@ async function poll(req, res, jobId, title) {
 	if (upstream.status === 400) {
 		return json(res, 400, { error: 'invalid_job', message: data?.message || 'Unknown or malformed job id.' });
 	}
+	// A deployment that cannot serve this job at all (the lane behind the handle is
+	// unconfigured here) is not the transient blip the pending fallback below is
+	// for: 'pending' would leave the GPT polling a job that can never finish. The
+	// published Actions contract has no 503 on this operation, so answer with its
+	// documented terminal state instead.
+	if (
+		(upstream.status === 503 || upstream.status === 501) &&
+		(data?.error === 'unconfigured' || data?.error === 'backend_unconfigured')
+	) {
+		return json(res, 200, {
+			status: 'error',
+			job: jobId,
+			error: '3D generation is temporarily unavailable, so this job cannot be checked right now.',
+		});
+	}
 	if (upstream.status === 429) {
 		const retryAfter = Number(data?.retry_after) || 5;
 		res.setHeader('retry-after', String(retryAfter));

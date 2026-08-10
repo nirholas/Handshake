@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../../_lib/http.js';
 import { clientIp, limits } from '../../_lib/rate-limit.js';
-import { cc, userAuthHeaders, UnconfiguredError } from '../../_lib/coin-communities.js';
+import { cc, hasUserSession, withAuthRefresh, UnconfiguredError } from '../../_lib/coin-communities.js';
 
 const schema = z.object({
 	address: z.string().trim().min(32).max(60),
@@ -19,8 +19,7 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const headers = userAuthHeaders(req);
-	if (!headers) return error(res, 401, 'unauthorized', 'sign in with X first');
+	if (!hasUserSession(req)) return error(res, 401, 'unauthorized', 'sign in with X first');
 
 	const parsed = schema.safeParse(await readJson(req).catch(() => null));
 	if (!parsed.success) {
@@ -42,10 +41,15 @@ export default wrap(async (req, res) => {
 		throw err;
 	}
 
-	const { data, error: apiErr } = await api.linkWallet({
-		body: { address: parsed.data.address, chainType: 'svm', signature: parsed.data.signature },
-		headers,
-	});
+	// The challenge that produced this signature is one-shot: refresh the session
+	// rather than 401 the user and force them to sign a whole new message.
+	const { data, error: apiErr, headers } = await withAuthRefresh(req, res, (h) =>
+		api.linkWallet({
+			body: { address: parsed.data.address, chainType: 'svm', signature: parsed.data.signature },
+			headers: h,
+		}),
+	);
+	if (!headers) return error(res, 401, 'unauthorized', 'session expired, sign in with X again');
 	if (apiErr) {
 		// 401 invalid signature, 409 already linked, 400 no pending challenge.
 		const status = [400, 401, 409].includes(apiErr.statusCode) ? apiErr.statusCode : 502;

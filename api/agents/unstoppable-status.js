@@ -218,8 +218,14 @@ export default paidEndpoint({
 	}),
 	requiredScope: 'x402:bypass',
 	accessControl: installAccessControl({ requiredScope: 'x402:bypass' }),
-	async handler({ req }) {
+	async handler({ bypass }) {
 		const data = await loadStatus();
+
+		// Record revenue ONLY for a call that actually settled a payment. An
+		// `x402:bypass`-scoped caller is served free by the access-control hook, so
+		// crediting the treasury for it reports money the agent never earned and
+		// inflates the runway this endpoint exists to report honestly.
+		if (bypass) return data;
 
 		// Record the revenue from this paid query — every call funds the agent.
 		// Fire-and-forget: a logging failure must not break the paid response.

@@ -96,9 +96,21 @@ export const updateRuleSchema = z
 	.refine((v) => Object.keys(v).length > 0, 'no fields to update');
 
 /**
+ * Render zod-style issues into one message, using the exact convention
+ * api/_lib/validate.js `parse()` uses on the create path. Both paths validate
+ * through this module, so both must also *report* identically: without this the
+ * update path returned a bare "price_below requires a target_mint" while create
+ * returned "target_mint: price_below requires a target_mint", and a client
+ * parsing the prefix off one envelope mis-read the other.
+ */
+function formatIssues(issues) {
+	return issues.map((i) => `${i.path.join('.') || 'body'}: ${i.message}`).join('; ');
+}
+
+/**
  * Merge a partial update over the current row, normalize targeting/threshold to
  * the effective kind, then run the shared cross-field validation.
- * @returns {{ ok: true, value: object } | { ok: false, issues: any[] }}
+ * @returns {{ ok: true, value: object } | { ok: false, issues: any[], message: string }}
  */
 export function validateUpdate(current, patch) {
 	const merged = {
@@ -119,8 +131,21 @@ export function validateUpdate(current, patch) {
 	const normalized = normalizeForKind(merged);
 	const issues = [];
 	refineRule(normalized, { addIssue: (i) => issues.push(i) });
-	if (issues.length) return { ok: false, issues };
+	if (issues.length) return { ok: false, issues, message: formatIssues(issues) };
 	return { ok: true, value: normalized };
+}
+
+/**
+ * Rules that have a live webhook but no signing secret. Such a rule delivers
+ * UNSIGNED webhooks (api/_lib/alert-delivery.js only sets the
+ * `webhook-signature` header when a secret exists), leaving the receiver with
+ * no way to verify the payload came from us. The create and update paths both
+ * mint a secret alongside the URL, but the legacy backfill in
+ * 2026-06-15-pump-alert-rules.sql copies `user_alert_configs.webhook_url`
+ * without one, so any DB carrying those rows can still hold the combination.
+ */
+export function rulesMissingWebhookSecret(rows) {
+	return rows.filter((r) => r.webhook_url && !r.webhook_secret);
 }
 
 /** Null out fields that don't apply to the rule's kind so stale values can't leak. */

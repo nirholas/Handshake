@@ -57,17 +57,31 @@ function poseById(id) {
 	return found ? { id: found.id, label: found.label, pose: found.pose } : null;
 }
 
+// JSON.stringify is not enough to embed a value inside a <script> block: it
+// leaves "</script" and the JS line terminators U+2028/U+2029 intact, so any
+// caller-supplied string (a background color, a pose label) could close the tag
+// and run its own code inside the render page. That page has network access, so
+// injected script can fetch internal endpoints and paint them into the
+// screenshot we hand back. Escape here, once, so no caller has to remember to.
+function scriptJson(value) {
+	return JSON.stringify(value === undefined ? null : value)
+		.replace(/</g, '\\u003c')
+		.replace(/>/g, '\\u003e')
+		.replace(/\u2028/g, '\\u2028')
+		.replace(/\u2029/g, '\\u2029');
+}
+
 function viewerHtml({ glbBase64, width, height, background, pose, cameraOrbit, expression }) {
-	const bg = background === 'transparent' ? 'null' : JSON.stringify(background || '#0a0a0a');
-	const poseJson = pose ? JSON.stringify(pose.pose) : 'null';
-	const orbitJson = JSON.stringify(cameraOrbit || { theta: 0, phi: 80, radius: null });
-	const expressionJson = JSON.stringify(expression || null);
+	const bg = background === 'transparent' ? 'null' : scriptJson(background || '#0a0a0a');
+	const poseJson = pose ? scriptJson(pose.pose) : 'null';
+	const orbitJson = scriptJson(cameraOrbit || { theta: 0, phi: 80, radius: null });
+	const expressionJson = scriptJson(expression || null);
 	return `<!doctype html>
 <html><head><meta charset="utf-8" />
 <style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}</style>
 </head><body>
 <canvas id="c" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px"></canvas>
-<script>window.__GLB_B64=${JSON.stringify(glbBase64)};</script>
+<script>window.__GLB_B64=${scriptJson(glbBase64)};</script>
 <script type="importmap">{ "imports": {
 	"three": "https://unpkg.com/three@${THREE_VERSION}/build/three.module.js",
 	"three/addons/": "https://unpkg.com/three@${THREE_VERSION}/examples/jsm/"

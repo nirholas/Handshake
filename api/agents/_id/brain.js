@@ -416,12 +416,28 @@ async function importBundle(req, res, agent, userId) {
 		return error(res, 422, 'integrity_failed', `memory ${forged.id} has an invalid signature (${forged.reason})`);
 	}
 
-	// Diff against the target agent's existing memories (by content_hash) so a
-	// merge is idempotent and the response is a real, reviewable diff.
+	// Diff against the target agent's existing memories so a merge is idempotent
+	// and the response is a real, reviewable diff.
+	//
+	// Two hashes per row, and both are load-bearing. A row's own `content_hash` is
+	// the digest of THAT row (memoryDigest folds in the row id and created_at), so
+	// an imported copy hashes differently from the bundle entry it came from: on a
+	// re-import the source hash would miss every time and the merge would insert a
+	// fresh duplicate of every memory, forever. The source digest recorded in
+	// provenance at import time is the stable key across that boundary, so match on
+	// either.
 	const existing = await sql`
-		SELECT content_hash FROM agent_memories WHERE agent_id = ${agent.id} AND content_hash IS NOT NULL
+		SELECT content_hash, context->'provenance'->>'source_content_hash' AS source_hash
+		FROM agent_memories
+		WHERE agent_id = ${agent.id}
+		  AND (content_hash IS NOT NULL OR context->'provenance'->>'source_content_hash' IS NOT NULL)
 	`;
-	const existingHashes = new Set(existing.map((r) => r.content_hash?.toLowerCase()).filter(Boolean));
+	const existingHashes = new Set(
+		existing
+			.flatMap((r) => [r.content_hash, r.source_hash])
+			.filter(Boolean)
+			.map((h) => h.toLowerCase()),
+	);
 
 	if (body.strategy === 'replace') {
 		await sql`DELETE FROM agent_memories WHERE agent_id = ${agent.id}`;
@@ -446,11 +462,14 @@ async function importBundle(req, res, agent, userId) {
 		existingHashes.add(hash);
 
 		// Preserve the original authorship as provenance; the new agent re-signs
-		// for its own chain of custody (handled after insert).
+		// for its own chain of custody (handled after insert). `source_content_hash`
+		// doubles as the dedupe key above, so record the digest actually matched on
+		// rather than the bundle's optional field: an entry that shipped without one
+		// would otherwise leave the next re-import nothing to match against.
 		const provenance = {
 			source_agent_id: bundle.agent.id,
 			source_memory_id: m.id,
-			source_content_hash: m.content_hash || null,
+			source_content_hash: hash,
 			source_signature: m.signature || null,
 			source_signer_address: m.signer_address || null,
 		};

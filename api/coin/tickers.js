@@ -70,8 +70,14 @@ export default wrap(async (req, res) => {
 	if (!isPlausibleCoinId(id)) {
 		return error(res, 400, 'bad_id', 'id must be a CoinGecko coin id (lowercase slug)');
 	}
-	const page = parseInt(params.get('page') || '1', 10) || 1;
-	if (page < 1 || page > 10) {
+	// Validate the raw value, not a coerced one. `parseInt(v) || 1` silently
+	// rewrote every falsy parse to page 1, so `page=0`, `page=abc`, and `page=2.9`
+	// all answered 200 with a page the caller never asked for while `page=11`
+	// answered 400 (and the `page < 1` guard was unreachable for 0). One rule now:
+	// absent means 1, anything else must be an integer in range or it is a 400.
+	const rawPage = params.get('page');
+	const page = rawPage === null || rawPage.trim() === '' ? 1 : Number(rawPage);
+	if (!Number.isInteger(page) || page < 1 || page > 10) {
 		return error(res, 400, 'bad_page', 'page must be an integer between 1 and 10');
 	}
 

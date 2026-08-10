@@ -543,6 +543,18 @@
 			"dest": "/api/agents/solana/[action]?action=skill-collection-metadata"
 		},
 		{
+			"src": "/api/agents/solana/skill-collection-metadata",
+			"dest": "/api/agents/solana/[action]?action=skill-collection-metadata"
+		},
+		{
+			"src": "/api/agents/solana/skill-nft-metadata",
+			"dest": "/api/agents/solana/[action]?action=skill-nft-metadata"
+		},
+		{
+			"src": "/api/agents/solana-skill-nft-metadata",
+			"dest": "/api/agents/solana/[action]?action=skill-nft-metadata"
+		},
+		{
 			"src": "/api/agents/solana-edit",
 			"dest": "/api/agents/solana/[action]?action=edit"
 		},
@@ -3753,6 +3765,10 @@
 		{
 			"src": "/api/avatars/library",
 			"dest": "/api/avatars/library"
+		},
+		{
+			"src": "/api/avatars/popular-searches",
+			"dest": "/api/avatars/popular-searches"
 		},
 		{
 			"src": "/api/avatars/draft/([^/]+)",

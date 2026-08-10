@@ -7,6 +7,7 @@ import { getSessionUser } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../../_lib/http.js';
 import { parse, isValidSolanaAddress, isValidEvmAddress } from '../../_lib/validate.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
+import { parseLimit, parseOffset } from '../../_lib/http-params.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 
 // Note: the payout destination is intentionally NOT accepted from the client.
@@ -34,8 +35,11 @@ export default wrap(async (req, res) => {
 	if (req.method === 'GET') {
 		const params = new URL(req.url, 'http://x').searchParams;
 		const status = params.get('status') || null;
-		const limit = Math.min(100, Math.max(1, parseInt(params.get('limit') || '20', 10)));
-		const offset = Math.max(0, parseInt(params.get('offset') || '0', 10));
+		// clampInt-backed so `?limit=abc` falls back to the default instead of
+		// sending NaN into `limit $1::int`, which Postgres rejects and the wrap()
+		// boundary turns into a 500 on an otherwise harmless typo.
+		const limit = parseLimit(params, { fallback: 20, max: 100 });
+		const offset = parseOffset(params);
 
 		// Branching on `status` avoids Postgres's `42P18: could not determine
 		// data type of parameter` when the entire predicate compares two NULLs

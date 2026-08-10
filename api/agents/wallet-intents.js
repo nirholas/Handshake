@@ -25,6 +25,7 @@ import { sql } from '../_lib/db.js';
 import { loadUserProviderKeys } from '../_lib/provider-keys.js';
 import { getSpendLimits, getTradeLimits } from '../_lib/agent-trade-guards.js';
 import { getSolanaAddressBalances } from '../_lib/agent-wallet.js';
+import { getBalances } from '../_lib/balances.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
 import {
 	listIntents,
@@ -63,6 +64,23 @@ async function loadOwned(req, res, id) {
 function netOf(req) {
 	const url = new URL(req.url, 'http://x');
 	return url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
+}
+
+// readJson resolves whatever valid JSON the caller sent, which includes `null`,
+// a bare string, and a number. Every handler below then reads a property off it
+// (`body.text`, `body.intent`, `'enabled' in body`), which throws a TypeError on
+// a non-object and surfaces as a 500 for what is really malformed input. Funnel
+// the body through here so a scalar degrades to an empty object and the
+// handler's own validation returns its normal 400.
+async function readJsonObject(req, res) {
+	let body;
+	try {
+		body = await readJson(req);
+	} catch (e) {
+		error(res, e?.status === 415 ? 415 : 400, 'bad_request', e?.message || 'invalid request body');
+		return null;
+	}
+	return body && typeof body === 'object' && !Array.isArray(body) ? body : {};
 }
 
 export default async function handler(req, res, id, action) {
@@ -121,6 +139,10 @@ async function handleList(req, res, id) {
 async function handleGetOne(req, res, id, intentId) {
 	const owned = await loadOwned(req, res, id);
 	if (owned.error) return;
+	// Same meter as the collection read: this is the one owner-scoped read that
+	// was unmetered, so a loop over intent ids could out-run the list endpoint.
+	const rl = await limits.walletRead(owned.auth.userId);
+	if (!rl.success) return rateLimited(res, rl);
 	const intent = await getIntent(id, intentId);
 	if (!intent) return error(res, 404, 'not_found', 'intent not found');
 	return json(res, 200, { data: { intent } });
@@ -134,6 +156,19 @@ async function compileContext(req, owned, network) {
 		const bal = await getSolanaAddressBalances(owned.meta.solana_address, network);
 		balanceSol = Number(bal?.sol ?? null);
 	} catch { /* unknown */ }
+	// The compiler prompt lists the wallet's real tokens so a rule like "sell half
+	// my $THREE" grounds against something the agent actually holds. This used to
+	// be declared and never filled, so every compile claimed "Tokens held: none
+	// detected." even for a funded wallet. Mainnet only: the shared cached
+	// getBalances path (Helius DAS, then public RPC) indexes mainnet mints.
+	if (network === 'mainnet' && owned.meta.solana_address) {
+		try {
+			const balances = await getBalances({ chain: 'solana', address: owned.meta.solana_address });
+			holdings = (balances?.tokens || [])
+				.filter((t) => t.mint && Number(t.amount) > 0)
+				.map((t) => ({ mint: t.mint, symbol: t.symbol || null, ui_amount: t.amount }));
+		} catch { /* holdings unavailable, the prompt falls back to "none detected" */ }
+	}
 	let userKeys = {};
 	try {
 		const [u] = await sql`SELECT provider_keys FROM users WHERE id = ${owned.auth.userId}`;
@@ -161,8 +196,8 @@ async function handleCompile(req, res, id) {
 	const rl = await limits.chatUser(owned.auth.userId);
 	if (!rl.success) return rateLimited(res, rl, 'slow down — too many compile requests');
 
-	let body;
-	try { body = await readJson(req); } catch (e) { return error(res, e?.status === 415 ? 415 : 400, 'bad_request', e?.message || 'invalid request body'); }
+	const body = await readJsonObject(req, res);
+	if (!body) return;
 	const text = typeof body.text === 'string' ? body.text : '';
 	if (!text.trim()) return error(res, 400, 'validation_error', 'describe a rule to compile');
 
@@ -221,8 +256,8 @@ async function handleCreate(req, res, id) {
 	if (owned.error) return;
 	if (!(await requireCsrf(req, res, owned.auth.userId))) return;
 
-	let body;
-	try { body = await readJson(req); } catch (e) { return error(res, e?.status === 415 ? 415 : 400, 'bad_request', e?.message || 'invalid request body'); }
+	const body = await readJsonObject(req, res);
+	if (!body) return;
 	if (!body.intent || typeof body.intent !== 'object') return error(res, 400, 'validation_error', 'an intent object is required');
 
 	const norm = normalizeIntent(body.intent);
@@ -255,8 +290,8 @@ async function handleUpdate(req, res, id, intentId) {
 	if (owned.error) return;
 	if (!(await requireCsrf(req, res, owned.auth.userId))) return;
 
-	let body;
-	try { body = await readJson(req); } catch (e) { return error(res, e?.status === 415 ? 415 : 400, 'bad_request', e?.message || 'invalid request body'); }
+	const body = await readJsonObject(req, res);
+	if (!body) return;
 
 	const patch = {};
 	if ('enabled' in body) patch.enabled = body.enabled === true;
@@ -297,7 +332,10 @@ async function handleRun(req, res, id) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	let body = {};
-	try { body = await readJson(req); } catch { body = {}; }
+	try {
+		const raw = await readJson(req);
+		if (raw && typeof raw === 'object' && !Array.isArray(raw)) body = raw;
+	} catch { body = {}; }
 	const intentId = String(body.intent_id || '');
 	if (!UUID_RE.test(intentId)) return error(res, 400, 'validation_error', 'intent_id is required');
 	const dryRun = body.dry_run !== false; // default to a safe simulation
@@ -320,8 +358,8 @@ async function handleCopilot(req, res, id) {
 	const rl = await limits.chatUser(owned.auth.userId);
 	if (!rl.success) return rateLimited(res, rl, 'slow down');
 
-	let body;
-	try { body = await readJson(req); } catch (e) { return error(res, e?.status === 415 ? 415 : 400, 'bad_request', e?.message || 'invalid request body'); }
+	const body = await readJsonObject(req, res);
+	if (!body) return;
 	const message = typeof body.message === 'string' ? body.message.trim().slice(0, 500) : '';
 	if (!message) return error(res, 400, 'validation_error', 'ask a question');
 

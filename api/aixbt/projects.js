@@ -1,8 +1,8 @@
-// GET /api/aixbt/projects — momentum-ranked projects from aixbt.
+// GET /api/aixbt/projects: momentum-ranked projects from aixbt.
 //
-// Part of the three.ws ⇄ aixbt bridge. Public, read-only, cache-friendly.
+// Part of the three.ws / aixbt bridge. Public, read-only, cache-friendly.
 //
-// Query: ?limit=20&page=1&names=<comma list>&chain=<chain>
+// Query: ?limit=20 (1-50) &page=1&names=<comma list>&chain=<chain>
 // Response: { projects: [...], pagination } | { error, error_description }
 
 import { wrap, cors, method, json, rateLimited } from '../_lib/http.js';
@@ -19,7 +19,10 @@ export default wrap(async (req, res) => {
 	if (!rlg.success) return rateLimited(res, rlg);
 
 	const url = new URL(req.url, 'http://x');
-	const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 20, 1), 100);
+	// 50 is aixbt's page ceiling, enforced again in api/_lib/aixbt.js. Clamping
+	// to the same number here keeps the documented contract honest: a wider cap
+	// would promise 100 projects and silently hand back 50.
+	const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 20, 1), 50);
 	const page = Math.min(Math.max(Number(url.searchParams.get('page')) || 1, 1), 100);
 	const names = url.searchParams.get('names') || undefined;
 	const chain = url.searchParams.get('chain') || undefined;

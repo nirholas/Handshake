@@ -10,6 +10,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../../_lib/http.js
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
 import { llmComplete } from '../../_lib/llm.js';
+import { isUuid } from '../../_lib/validate.js';
 import { decryptToken, encryptToken } from '../../auth/x/[action].js';
 
 // ── Token refresh ─────────────────────────────────────────────────────────────
@@ -212,6 +213,10 @@ export default wrap(async (req, res) => {
 
 	const agentId = req.query?.id;
 	if (!agentId) return error(res, 400, 'validation_error', 'agent id required');
+	// /api/agents/:id/memory/seed/x has its own vercel.json rewrite, so the uuid
+	// gate in api/agents/[id].js never runs for it. A malformed id would reach a
+	// uuid column and turn Postgres 22P02 into a 500.
+	if (!isUuid(agentId)) return error(res, 404, 'not_found', 'agent not found');
 
 	if (req.method === 'GET') return handleGet(req, res, agentId);
 	if (req.method === 'POST') return handlePost(req, res, agentId);

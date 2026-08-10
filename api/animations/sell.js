@@ -86,7 +86,7 @@ async function handleList(req, res, auth, raw) {
 	}
 
 	const [clip] = await sql`
-		select id, owner_id, name, slug, deleted_at
+		select id, owner_id, name, slug, artifact_key, artifact_bytes, deleted_at
 		from animation_clips
 		where id = ${input.id} and deleted_at is null
 		limit 1
@@ -114,9 +114,19 @@ async function handleList(req, res, auth, raw) {
 
 	// Visibility is left untouched here: the marketplace feed keys on `listed`,
 	// so a listed clip surfaces with public metadata + poster while its baked
-	// motion data stays gated behind the x402 paywall (a private clip's
-	// GET /api/animations/clips/:id still 404s for non-owners). Listing for sale
-	// is intentionally not the same as publishing the clip free to the gallery.
+	// motion data stays gated behind the x402 paywall. GET /api/animations/
+	// clips/:id enforces the other half of that: a private clip 404s for
+	// non-owners, and a priced unlisted one comes back `paywalled` with no
+	// tracks. Listing for sale is intentionally not the same as publishing the
+	// clip free to the gallery — that is what `visibility: 'public'` means, and
+	// a creator who chooses it is giving the motion away deliberately.
+	// Re-pricing an existing listing usually re-sends only the key, so keep the
+	// size we already measured for that same artifact — dropping it blanks the
+	// "size" a buyer sees in the marketplace feed. A new key resets it.
+	const artifactBytes =
+		input.artifact_bytes ??
+		(clip.artifact_key === input.artifact_key ? (clip.artifact_bytes ?? null) : null);
+
 	let row;
 	try {
 		[row] = await sql`
@@ -125,7 +135,7 @@ async function handleList(req, res, auth, raw) {
 				price_amount = ${priceAmount},
 				price_currency = ${priceCurrency},
 				artifact_key = ${input.artifact_key},
-				artifact_bytes = ${input.artifact_bytes ?? null},
+				artifact_bytes = ${artifactBytes},
 				artifact_mime = ${input.artifact_mime},
 				creator_payto_base = ${payto.base},
 				creator_payto_solana = ${payto.solana},

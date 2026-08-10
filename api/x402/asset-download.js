@@ -175,7 +175,9 @@ export default async function handler(req, res) {
 		}
 		return sendDiscoveryChallenge(
 			res,
-			`no paid_assets row with slug "${slug}" — browse /api/assets for available slugs`,
+			// Do not point callers at /api/assets: that is the free accessory,
+			// animation, and environment catalog and carries no paid_assets slug.
+			`no paid_assets row with slug "${slug}"`,
 		);
 	}
 

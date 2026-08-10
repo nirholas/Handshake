@@ -463,6 +463,26 @@ const IBM_ORIGIN = /^https:\/\/([a-z0-9-]+\.)*ibm\.com$/i;
 // seismic.com.evil.example can't match.
 const SEISMIC_ORIGIN = /^https:\/\/([a-z0-9-]+\.)*seismic\.com$/i;
 
+// Add fields to the response's `Vary` header without dropping what is already
+// there. `res.setHeader('vary', …)` REPLACES, so a handler that varies on Cookie
+// would otherwise erase the `vary: origin` cors() just set (and vice versa), and
+// a shared cache would then serve one origin's CORS headers to another. Use this
+// on any public-cacheable read whose body changes with a request header.
+export function varyOn(res, ...fields) {
+	const current = String(res.getHeader?.('vary') || '')
+		.split(',')
+		.map((f) => f.trim())
+		.filter(Boolean);
+	const seen = new Set(current.map((f) => f.toLowerCase()));
+	for (const field of fields) {
+		if (!seen.has(field.toLowerCase())) {
+			seen.add(field.toLowerCase());
+			current.push(field);
+		}
+	}
+	res.setHeader('vary', current.join(', '));
+}
+
 export function cors(
 	req,
 	res,
@@ -717,7 +737,9 @@ export function method(req, res, allowed) {
 	// set req.method to here.
 	if (effective === 'GET' && m === 'HEAD') req.method = 'GET';
 	if (!allowed.includes(effective)) {
-		const advertised = allowed.includes('GET') ? [...allowed, 'HEAD'] : allowed;
+		// Dedupe: a handler that already lists HEAD alongside GET would otherwise
+		// advertise `Allow: GET, HEAD, HEAD`.
+		const advertised = allowed.includes('GET') ? [...new Set([...allowed, 'HEAD'])] : allowed;
 		res.setHeader('allow', advertised.join(', '));
 		error(res, 405, 'method_not_allowed', `method ${m} not allowed`);
 		return false;

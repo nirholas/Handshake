@@ -1,20 +1,20 @@
 // GET /api/agent-economy/volume
 //
-// The platform-wide agent-to-agent economy roll-up — the single read behind the
+// The platform-wide agent-to-agent economy roll-up: the single read behind the
 // public A2A volume dashboard (/agent-economy-volume). Every number is a live
 // aggregate over the real `agent_hires` ledger: one row per settled hire where
 // one agent paid another for a paid skill over the x402 rails. "Completed" hires
-// are the authoritative volume — real USDC moved on-chain, recorded with the
+// are the authoritative volume: real USDC moved on-chain, recorded with the
 // settlement signature.
 //
-// Public + read-only. No auth, no PII — only aggregate counts, USD totals, and
+// Public + read-only. No auth, no PII: only aggregate counts, USD totals, and
 // on-chain identifiers (agent ids + payment signatures) that are already public.
 //
 // Query params:
-//   window  — trailing window in days for the daily series + leaderboards
-//             (1–365, default 30).
-//   top     — ranked agents per leaderboard (1–50, default 10).
-//   recent  — settled hires in the live feed (1–50, default 12).
+//   window  = trailing window in days for the daily series + leaderboards
+//             (1 to 365, default 30).
+//   top     = ranked agents per leaderboard (1 to 50, default 10).
+//   recent  = settled hires in the live feed (1 to 50, default 12).
 //
 // No mock path: when the ledger table is unmigrated/empty the endpoint returns a
 // real zero shape so the dashboard renders its empty state, never a fabricated

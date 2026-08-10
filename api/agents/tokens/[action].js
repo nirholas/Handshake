@@ -158,11 +158,12 @@ async function handleLaunchPrep(req, res) {
 			'agent must be deployed on Solana before launching a token',
 		);
 	}
-	if (onchain.wallet?.toLowerCase?.() !== body.wallet_address.toLowerCase?.()) {
-		// Solana addresses are case-sensitive; equality check is exact.
-		if (onchain.wallet !== body.wallet_address) {
-			return error(res, 403, 'forbidden', 'wallet does not match agent owner');
-		}
+	// Solana addresses are case-sensitive base58, so "AbC" and "aBc" are two
+	// different accounts. A case-insensitive pre-check used to wrap this
+	// comparison, which let a case-variant address skip the exact check entirely
+	// and become the launch transaction's creator. Compare exactly, once.
+	if (onchain.wallet !== body.wallet_address) {
+		return error(res, 403, 'forbidden', 'wallet does not match agent owner');
 	}
 	if (agent.meta?.token?.mint) {
 		return error(res, 409, 'conflict', 'agent already has a launched token');

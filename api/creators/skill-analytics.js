@@ -3,13 +3,21 @@
  *
  * Aggregated skill usage metrics for all agents owned by the authenticated creator.
  * Query params:
- *   agent_id  — filter to a specific agent (optional)
- *   days      — lookback window in days (default 30, max 365)
+ *   agent_id  — filter to a specific agent (optional, must be a UUID)
+ *   days      — lookback window in days (default 30, clamped to 1..365)
  */
 
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
-import { cors, error, json, method, wrap } from '../_lib/http.js';
+import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
+import { clientIp, limits } from '../_lib/rate-limit.js';
+import { isUuid } from '../_lib/validate.js';
+
+/** Repeated query keys arrive as an array; take the first value and trim it. */
+function queryValue(raw) {
+	const v = Array.isArray(raw) ? raw[0] : raw;
+	return typeof v === 'string' ? v.trim() : '';
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -18,9 +26,22 @@ export default wrap(async (req, res) => {
 	const user = await getSessionUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
 	const q = req.query ?? {};
-	const days = Math.min(parseInt(q.days || '30', 10) || 30, 365);
-	const agentIdFilter = q.agent_id || null;
+	// Clamped low as well as high: a negative window put `since` in the future
+	// and answered every panel with a silent, permanently empty result set.
+	const requestedDays = parseInt(queryValue(q.days), 10);
+	const days = Number.isFinite(requestedDays) && requestedDays > 0 ? Math.min(requestedDays, 365) : 30;
+
+	// agent_id reaches Postgres as a uuid comparison, so anything else is a
+	// 22P02 cast failure (a 500) unless it is rejected at the boundary here.
+	const agentIdRaw = queryValue(q.agent_id);
+	if (agentIdRaw && !isUuid(agentIdRaw)) {
+		return error(res, 400, 'invalid_agent_id', 'agent_id must be a UUID');
+	}
+	const agentIdFilter = agentIdRaw || null;
 
 	const since = new Date(Date.now() - days * 86400_000);
 

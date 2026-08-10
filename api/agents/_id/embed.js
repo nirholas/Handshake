@@ -1,44 +1,30 @@
 // POST /api/agents/:id/embed
-// Generates a 1024-dim text embedding. Used by AgentMemory.recall() for
-// semantic similarity search.
+// Generates a text embedding. Used by AgentMemory.recall() for semantic
+// similarity search.
 //
-// Provider policy mirrors api/_lib/llm.js: the FREE lane leads — NVIDIA NIM's
-// baai/bge-m3 (1024-dim, one free nvapi key) — and paid Voyage (voyage-3-lite,
-// also 1024-dim) is only a keyed fallback. The response carries the `model`
-// that produced the vector: embeddings from different models live in different
-// vector spaces, so callers that persist vectors should store the model id
-// alongside them and only compare like with like.
+// Provider policy is NOT restated here: it is delegated to api/_lib/embeddings.js,
+// the platform's single embedder registry (free NVIDIA NIM nv-embedqa-e5-v5 first,
+// then the GCP-credit-funded Vertex lane, then OpenAI as the paid backstop). That
+// module exists to prevent one specific trap: embeddings from different models are
+// different vector spaces, and comparing across them yields plausible-looking
+// garbage. So the response carries the registry's `embedder` tag (model + dim,
+// e.g. "nvidia/nv-embedqa-e5-v5@1024"). Callers that persist a vector must persist
+// that tag beside it and only compare vectors sharing one.
+//
+// `inputType` matters for the same reason: NIM's retrieval models are asymmetric.
+// Search strings embed as 'query' (the default, matching recall()); corpus text
+// being stored for later retrieval embeds as 'passage'.
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../../_lib/auth.js';
 import { cors, json, method, readJson, error, rateLimited } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { sql } from '../../_lib/db.js';
-import { env } from '../../_lib/env.js';
-
-// Ordered free-first. Both produce 1024-dim vectors, matching this endpoint's
-// documented contract.
-function embedProviderChain() {
-	const chain = [];
-	if (env.NVIDIA_API_KEY) {
-		chain.push({
-			name: 'nvidia',
-			model: 'baai/bge-m3',
-			url: 'https://integrate.api.nvidia.com/v1/embeddings',
-			key: env.NVIDIA_API_KEY,
-			buildBody: (text) => ({ model: 'baai/bge-m3', input: [text] }),
-		});
-	}
-	if (env.VOYAGE_API_KEY) {
-		chain.push({
-			name: 'voyage',
-			model: 'voyage-3-lite',
-			url: 'https://api.voyageai.com/v1/embeddings',
-			key: env.VOYAGE_API_KEY,
-			buildBody: (text) => ({ model: 'voyage-3-lite', input: [text], input_type: 'query' }),
-		});
-	}
-	return chain;
-}
+import {
+	embedWith,
+	embedderInfo,
+	defaultIngestEmbedderTag,
+	embedderConfigured,
+} from '../../_lib/embeddings.js';
 
 export async function handleEmbed(req, res, id) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -76,47 +62,46 @@ export async function handleEmbed(req, res, id) {
 	if (text.length > 8192) {
 		return error(res, 400, 'validation_error', 'text exceeds 8192 character limit');
 	}
-
-	const chain = embedProviderChain();
-	if (!chain.length) {
-		return error(res, 503, 'not_configured',
-			'No embedding provider configured. Set NVIDIA_API_KEY (free) or VOYAGE_API_KEY.');
+	const inputType = body?.inputType ?? 'query';
+	if (inputType !== 'query' && inputType !== 'passage') {
+		return error(res, 400, 'validation_error', "inputType must be 'query' or 'passage'");
 	}
 
-	let lastStatus = 0;
-	for (const p of chain) {
-		let upstream;
-		try {
-			upstream = await fetch(p.url, {
-				method: 'POST',
-				headers: {
-					'content-type': 'application/json',
-					authorization: `Bearer ${p.key}`,
-				},
-				body: JSON.stringify(p.buildBody(text.trim())),
-				signal: AbortSignal.timeout(15_000),
-			});
-		} catch (err) {
-			console.error(`[embed] ${p.name} unreachable`, err?.message);
-			lastStatus = 502;
-			continue;
+	// An explicit `embedder` lets a caller re-embed into the same space its stored
+	// vectors already live in, which is the whole point of tagging them.
+	const requested = body?.embedder;
+	let tag;
+	if (requested) {
+		if (!embedderInfo(requested)) {
+			return error(res, 400, 'validation_error', `unknown embedder: ${requested}`);
 		}
-		if (!upstream.ok) {
-			const msg = await upstream.text().catch(() => '');
-			console.error(`[embed] ${p.name} error`, upstream.status, msg.slice(0, 200));
-			lastStatus = upstream.status;
-			continue;
+		if (!embedderConfigured(requested)) {
+			return error(res, 503, 'not_configured', `embedder ${requested} is not configured on this server`);
 		}
-		const data = await upstream.json();
-		const embedding = data?.data?.[0]?.embedding;
-		if (!Array.isArray(embedding)) {
-			console.error(`[embed] ${p.name} unexpected response shape`);
-			lastStatus = 502;
-			continue;
+		tag = requested;
+	} else {
+		tag = defaultIngestEmbedderTag();
+		if (!tag) {
+			return error(res, 503, 'not_configured',
+				'No embedding provider configured. Set NVIDIA_API_KEY (free), GOOGLE_CLOUD_PROJECT, or OPENAI_API_KEY.');
 		}
-		return json(res, 200, { embedding, model: p.model, provider: p.name });
 	}
 
-	return error(res, 502, 'upstream_error',
-		`embedding service unavailable (last upstream status ${lastStatus})`);
+	const info = embedderInfo(tag);
+	let vector;
+	try {
+		[vector] = await embedWith(tag, [text.trim()], inputType);
+	} catch (err) {
+		console.error('[embed] provider failed', tag, err?.message);
+		return error(res, 502, 'upstream_error', `embedding service unavailable (${info.provider})`);
+	}
+
+	return json(res, 200, {
+		embedding: Array.from(vector),
+		embedder: info.tag,
+		model: info.model,
+		provider: info.provider,
+		dim: info.dim,
+		inputType,
+	});
 }

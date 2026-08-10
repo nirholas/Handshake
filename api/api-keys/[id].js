@@ -4,6 +4,7 @@ import { logAudit } from '../_lib/audit.js';
 import { cors, json, error, wrap, method, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { isUuid } from '../_lib/validate.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'DELETE,OPTIONS', credentials: true })) return;
@@ -21,6 +22,10 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const { id } = req.query;
+	// api_keys.id is a uuid column: a non-uuid path segment makes Postgres raise
+	// 22P02 and the request lands as a 500 with a support ref. It is bad input,
+	// not a server fault, so reject it here.
+	if (!isUuid(id)) return error(res, 400, 'invalid_id', 'API key id must be a UUID');
 
 	const [row] = await sql`
 		update api_keys

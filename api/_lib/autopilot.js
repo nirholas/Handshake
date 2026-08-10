@@ -38,6 +38,34 @@ const MAX_DAILY_SOL = 1000; // sane ceiling on the daily autonomous SOL spend ca
 
 export const AUTOPILOT_ACTION_KINDS = ['create_alert', 'briefing', 'wallet_transfer'];
 
+// The actions /api/autopilot/proposals accepts on a POST. Kept beside the engine
+// so the handler's allowlist and its error message can never drift apart.
+export const AUTOPILOT_PROPOSAL_ACTIONS = Object.freeze([
+	'generate', 'dryrun', 'execute', 'dismiss', 'undo', 'adjust',
+]);
+
+// ── Request-input guards for the autopilot read surfaces ─────────────────────
+// Every autopilot endpoint takes the same two user-supplied paging inputs. Both
+// reach Postgres directly, which rejects a negative LIMIT and an out-of-range
+// bigint cursor with an error that would surface to the caller as a 500. Clamp
+// and validate them here, at the boundary, so bad input reads as bad input.
+
+const MAX_BIGINT = 9223372036854775807n;
+
+export function pageLimit(raw, { fallback = 50, max = 200 } = {}) {
+	const n = Math.trunc(Number(raw));
+	if (!Number.isFinite(n) || n <= 0) return fallback;
+	return Math.min(n, max);
+}
+
+// agent_actions.id is a bigserial, so the cursor is an opaque decimal string.
+export function parseCursor(raw) {
+	if (raw == null || raw === '') return { ok: true, cursor: null };
+	if (typeof raw !== 'string' || !/^\d{1,19}$/.test(raw)) return { ok: false, reason: 'cursor must be numeric' };
+	if (BigInt(raw) > MAX_BIGINT) return { ok: false, reason: 'cursor out of range' };
+	return { ok: true, cursor: raw };
+}
+
 // Action types written to the signed agent_actions log, one per executable kind.
 const ACTION_TYPE = {
 	create_alert: 'autopilot.alert.created',

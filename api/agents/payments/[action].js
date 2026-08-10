@@ -13,7 +13,7 @@
 
 import { z } from 'zod';
 import { solanaConnection } from '../../_lib/solana/connection.js';
-import { Connection, PublicKey, Transaction, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, Transaction, ComputeBudgetProgram } from '@solana/web3.js';
 import {
 	PumpAgentOffline,
 	PumpAgent,
@@ -232,7 +232,10 @@ async function handleCreateConfirm(req, res) {
 		cluster: prep.cluster,
 		tx_signature: body.tx_signature,
 		configured_at: new Date().toISOString(),
-		accepted_tokens: [], // reserved — populate via updateBuybackBps later
+		// Currency mints this agent accepts. The create instruction registers the PDA
+		// with the program defaults, so no mint is restricted at configuration time;
+		// the owner narrows this through the buyback-bps update flow.
+		accepted_tokens: [],
 	};
 
 	const mergedMeta = { ...(agent.meta || {}), payments };
@@ -663,9 +666,19 @@ async function handleWithdrawConfirm(req, res) {
 
 // ── check-whitelist ───────────────────────────────────────────────────────────
 
+const checkWhitelistSchema = z.object({
+	cluster: z.enum(['mainnet', 'devnet']).default('mainnet'),
+});
+
 async function handleCheckWhitelist(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
-	const cluster = req.query?.cluster || 'mainnet';
+	// Unauthenticated and read-only, so it carries the same guards as `balances`:
+	// a method gate (an unguarded POST reached the RPC too) and the public-IP
+	// limiter, so an anonymous caller cannot drive unbounded fetchGlobal() reads.
+	if (!method(req, res, ['GET'])) return;
+	const rl = await limits.publicIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+	const { cluster } = parse(checkWhitelistSchema, { ...req.query });
 	const conn = solanaConnection({ url: rpcUrl(cluster), commitment: 'confirmed' });
 	const global = await new OnlinePumpSdk(conn).fetchGlobal();
 	const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';

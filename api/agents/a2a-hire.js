@@ -116,7 +116,9 @@ export default wrap(async (req, res) => {
 	// a frame write must NEVER block or fail a real settlement.
 	let hireRow = null;
 	let baseCtx = {}; // filled once the offer resolves; merged into every phase
-	const limits = getSpendLimits(hirer.meta);
+	// NOT named `limits`: that shadows the rate-limit import used above, which put
+	// the whole handler in a temporal dead zone and 500'd every authenticated hire.
+	const spendPolicy = getSpendLimits(hirer.meta);
 	const pushPhase = (phase, extra = {}) => {
 		const frame = hirePhaseFrame(phase, {
 			...baseCtx,
@@ -132,8 +134,8 @@ export default wrap(async (req, res) => {
 		const m = hireCapMath({
 			usd: priceUsd,
 			maxUsd: typeof maxUsd === 'number' ? maxUsd : null,
-			perTxUsd: limits.per_tx_usd,
-			dailyUsd: limits.daily_usd,
+			perTxUsd: spendPolicy.per_tx_usd,
+			dailyUsd: spendPolicy.daily_usd,
 			dailySpentUsd,
 		});
 		return {

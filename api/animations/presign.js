@@ -6,7 +6,7 @@
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { presignUpload } from '../_lib/r2.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
+import { limits } from '../_lib/rate-limit.js';
 import { z } from 'zod';
 
 const bodySchema = z.object({
@@ -70,7 +70,7 @@ export default wrap(async (req, res) => {
 async function resolveUser(req, requiredScope) {
 	const session = await getSessionUser(req);
 	if (session) return session.id;
-	const bearer = await authenticateBearer(extractBearer(req), { audience: undefined });
+	const bearer = await authenticateBearer(extractBearer(req));
 	if (!bearer) return null;
 	if (!hasScope(bearer.scope, requiredScope)) return null;
 	return bearer.userId;

@@ -20,6 +20,7 @@
 //     → 200 { status:'pending', retryAfter }                   (still generating — wait retryAfter s, then poll)
 //     → 200 { status:'done',  glbUrl, viewerUrl, arUrl }       (GLB ready)
 //     → 200 { status:'error', error }                          (upstream failed; free = no charge)
+//     → 503 { error:'not_configured' }                         (no 3D lane here; polling can never finish)
 //
 // Every pending/queued response carries a `retryAfter` (seconds) poll-cadence hint
 // — ETA-derived on submit, echoed on each poll — and sets the standard Retry-After
@@ -354,6 +355,20 @@ async function poll(req, res, jobId, title) {
 		return json(res, 400, {
 			error: 'invalid_job',
 			message: data?.message || 'Unknown or malformed job id.',
+		});
+	}
+	// A deployment that cannot serve this job AT ALL (the lane behind the handle is
+	// unconfigured here) is not the transient blip the pending fallback below is
+	// for: answering 'pending' would hand the agent a poll loop that can never
+	// finish. Surface the same designed not_configured the submit path returns.
+	if (
+		(upstream.status === 503 || upstream.status === 501) &&
+		(data?.error === 'unconfigured' || data?.error === 'backend_unconfigured')
+	) {
+		return json(res, 503, {
+			error: 'not_configured',
+			message:
+				'Free text-to-3D is not configured on this deployment, so this job cannot be polled here.',
 		});
 	}
 	if (upstream.status === 429) {

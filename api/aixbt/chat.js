@@ -1,6 +1,6 @@
-// POST /api/aixbt/chat — converse with aixbt's `indigo` research agent.
+// POST /api/aixbt/chat: converse with aixbt's `indigo` research agent.
 //
-// Part of the three.ws ⇄ aixbt bridge. Lets a three.ws agent ask aixbt a
+// Part of the three.ws / aixbt bridge. Lets a three.ws agent ask aixbt a
 // free-form market question and relay the answer (Pro/Holder aixbt plans).
 //
 // Body: { messages: [{ role, content }], ... } OR { message: "..." }
@@ -34,8 +34,13 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const rl = await limits.aixbtIp(clientIp(req));
+	// Every /api/aixbt/* lane spends the same shared upstream key quota, so the
+	// per-IP budget alone cannot protect it: a spread of callers would drain the
+	// plan one compliant IP at a time. Chat is the lane that needs the global
+	// ceiling most, being the only uncached, per-turn-billed one.
+	const [rl, rlg] = await Promise.all([limits.aixbtIp(clientIp(req)), limits.aixbtGlobal()]);
 	if (!rl.success) return rateLimited(res, rl);
+	if (!rlg.success) return rateLimited(res, rlg);
 
 	const body = await readJson(req).catch(() => null);
 	const messages = normalizeMessages(body);
@@ -44,8 +49,13 @@ export default wrap(async (req, res) => {
 	}
 
 	try {
-		const result = await chatIndigo(messages);
-		return json(res, 200, result);
+		const { reply, source } = await chatIndigo(messages);
+		// A 200 carrying `reply: null` is a broken answer dressed as a good one.
+		// aixbt changed its payload shape or returned an empty turn; say so.
+		if (typeof reply !== 'string' || !reply.trim()) {
+			return error(res, 502, 'aixbt_empty_reply', 'aixbt returned no answer for this turn');
+		}
+		return json(res, 200, { reply, source });
 	} catch (err) {
 		return respondAixbtError(res, err);
 	}

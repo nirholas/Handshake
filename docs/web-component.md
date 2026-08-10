@@ -892,7 +892,19 @@ Three URL channels are available. Pick based on how strictly you need to control
 | `/agent-3d/<MAJOR>/agent-3d.js` | 5 min | Follow minor + patch releases. |
 | `/agent-3d/latest/agent-3d.js` | 5 min | Demos and prototypes only. Never in production. |
 
-Current SRI hashes are at `/agent-3d/<version>/integrity.json`. The full release manifest is at `/agent-3d/versions.json`.
+Current SRI hashes are at `/agent-3d/<version>/integrity.json`. The full release manifest is at `/agent-3d/versions.json`, or from the origin API at `/api/agent-3d/versions`, which serves the identical JSON with an `ETag`:
+
+```bash
+curl -s https://three.ws/api/agent-3d/versions
+# {"latest":"1.5.2","channels":{…},"publishedAt":"2026-08-10T16:20:09.870Z"}
+
+# Poll cheaply: an unchanged manifest answers 304 with no body.
+curl -s -o /dev/null -w '%{http_code}\n' \
+  -H 'If-None-Match: "9yN2NE81wIeacx634mP3ShqfkuR"' \
+  https://three.ws/api/agent-3d/versions
+```
+
+Both are CORS-open (`access-control-allow-origin: *`) and cached for 60 seconds.
 
 **Recommended production snippet:**
 

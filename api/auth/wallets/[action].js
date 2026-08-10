@@ -578,18 +578,21 @@ async function handleUnlinkWallet(req, res, address) {
 
 	// 1. Check that this wallet belongs to the user.
 	const [wallet] = await sql`
-		select id, address from user_wallets
+		select id, address, is_primary from user_wallets
 		where user_id = ${session.id} and address = any(${candidates}::text[])
 		limit 1
 	`;
 	if (!wallet) return error(res, 404, 'not_found', 'wallet not found');
 
-	// 2. Check if this is the only wallet.
+	// 2. Check if this is the only wallet. Postgres count(*) is a bigint and the
+	// Neon driver hands it back as a STRING ("1"), so this must be coerced —
+	// a strict `=== 1` against the raw column never matched and let a
+	// password-less account unlink its last wallet, its only way back in.
 	const [count] = await sql`
 		select count(*) as n from user_wallets
 		where user_id = ${session.id}
 	`;
-	const walletCount = count.n;
+	const walletCount = Number(count.n);
 
 	if (walletCount === 1) {
 		// 3. If only wallet, check if user has password-based auth.
@@ -610,5 +613,23 @@ async function handleUnlinkWallet(req, res, address) {
 	await sql`delete from user_wallets where id = ${wallet.id} and user_id = ${session.id}`;
 	logAudit({ userId: session.id, action: 'unlink_wallet', resourceId: wallet.address, req });
 
-	return json(res, 200, { removed: true });
+	// 5. Removing the primary wallet must not leave the account with none:
+	// royalty payouts, agent-wallet resolution, and x402 skill calls all select
+	// the payout address by `is_primary = true`. Promote the oldest survivor.
+	let promoted = null;
+	if (wallet.is_primary && walletCount > 1) {
+		const [next] = await sql`
+			update user_wallets set is_primary = true
+			where id = (
+				select id from user_wallets
+				where user_id = ${session.id}
+				order by created_at asc
+				limit 1
+			)
+			returning address
+		`;
+		promoted = next?.address ?? null;
+	}
+
+	return json(res, 200, { removed: true, primary: promoted });
 }

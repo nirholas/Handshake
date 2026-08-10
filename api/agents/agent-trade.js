@@ -816,6 +816,9 @@ async function handleLimits(req, res, id) {
 	let body;
 	try { body = await readJson(req); } catch (e) { return error(res, 400, 'bad_request', e?.message || 'invalid request body'); }
 
+	const invalid = validateLimitsPatch(body);
+	if (invalid) return error(res, 400, 'validation_error', invalid);
+
 	try {
 		const next = await setTradeLimits(id, auth.userId, body, { req });
 		return json(res, 200, { data: { limits: next } });
@@ -823,6 +826,35 @@ async function handleLimits(req, res, id) {
 		if (e?.status) return error(res, e.status, e.code || 'error', e.message);
 		return error(res, 500, 'limit_update_failed', 'could not update the trade limits — try again');
 	}
+}
+
+// Reject a bad limits patch instead of letting it through. normalizeTradeLimits
+// coerces anything it cannot read into "no cap" / the default, so an unvalidated
+// `{"per_trade_sol": -1}` (or a typo, or a string) SILENTLY DELETES the owner's
+// existing per-trade ceiling and answers 200 as if it had tightened it. A spend
+// guardrail must never be relaxed by an input the server could not parse: the
+// only way to clear a cap is to send it as an explicit null.
+const LIMIT_RANGES = {
+	per_trade_sol: { min: 0, max: 1e6, label: 'per_trade_sol must be a positive number of SOL, or null to clear the cap' },
+	daily_budget_sol: { min: 0, max: 1e6, label: 'daily_budget_sol must be a positive number of SOL, or null to clear the budget' },
+	max_price_impact_pct: { min: 0, max: 100, label: 'max_price_impact_pct must be a number between 0 and 100' },
+	max_slippage_bps: { min: 0, max: 10000, label: 'max_slippage_bps must be a number between 0 and 10000' },
+	max_concurrent: { min: 1, max: 10000, label: 'max_concurrent must be a whole number of at least 1, or null for no ceiling' },
+};
+
+function validateLimitsPatch(patch) {
+	if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return 'body must be a JSON object of limit fields';
+	for (const [key, range] of Object.entries(LIMIT_RANGES)) {
+		if (!(key in patch)) continue;
+		const v = patch[key];
+		if (v === null) continue; // explicit clear
+		const n = typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' ? Number(v) : NaN;
+		if (!Number.isFinite(n) || n < range.min || n > range.max) return range.label;
+	}
+	if ('kill_switch' in patch && typeof patch.kill_switch !== 'boolean') {
+		return 'kill_switch must be true or false';
+	}
+	return null;
 }
 
 function boundaryError(res, e) {

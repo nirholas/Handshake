@@ -25,6 +25,7 @@ import {
 	respondError,
 } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
+import { isUuid } from '../../_lib/validate.js';
 import { loadAgentForSigning, solanaConnection } from '../../_lib/agent-pumpfun.js';
 import { submitProtected } from '../../_lib/execution-engine.js';
 import { reserveSpend, finalizeSpend, releaseSpend } from '../../_lib/agent-spend-policy.js';
@@ -70,6 +71,15 @@ export default wrap(async (req, res) => {
 	if (!id) {
 		if (cors(req, res)) return;
 		return error(res, 400, 'bad_request', 'missing agent id');
+	}
+
+	// agent_identities.id is a uuid column. Every handler below looks the agent up
+	// by it, so a malformed id reaches Postgres and comes back as error 22P02,
+	// which surfaces to the caller as an opaque 500. Answer the same clean 404 the
+	// rest of the agent surface does (see handleMetadata in api/agents/pumpfun.js).
+	if (!isUuid(id)) {
+		if (cors(req, res)) return;
+		return error(res, 404, 'not_found', 'agent not found');
 	}
 
 	if (action === 'buy') return handleBuy(req, res, id);

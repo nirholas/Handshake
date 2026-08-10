@@ -2,6 +2,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/au
 import { cors, json, method, readJson, wrap, error, respondError } from '../../_lib/http.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { MonetizationService } from '../../_lib/services/MonetizationService.js';
+import { isUuid } from '../../_lib/validate.js';
 import { z } from 'zod';
 
 const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -46,12 +47,18 @@ const pricingUpdateSchema = z.object({
 export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const parts = url.pathname.split('/').filter(Boolean);
-	const id = parts[2];
+	const id = url.searchParams.get('id') || parts[2];
 
 	if (cors(req, res, { methods: 'GET,PUT,OPTIONS', credentials: true })) return;
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+
+	// This handler has its own vercel.json rewrite, so the uuid gate in
+	// api/agents/[id].js never runs for it. A malformed id would reach a uuid
+	// column and surface Postgres 22P02 to the caller as a 500 whose `error` field
+	// was the raw SQLSTATE.
+	if (!isUuid(id)) return error(res, 404, 'not_found', 'agent not found');
 
 	// CSRF on state-changing session-cookie requests; bearer tokens are exempt.
 	if (req.method === 'PUT' && !(await requireCsrf(req, res, auth.userId))) return;
@@ -62,8 +69,14 @@ export default wrap(async (req, res) => {
 	try {
 		await service.assertOwnership(id);
 	} catch (e) {
-		console.error('[agents/skills-pricing] ownership check failed', e?.message);
-		return respondError(res, e.status || 500, e.code || 'error', e);
+		// A 404/403 here is the gate doing its job, not an incident: log only when
+		// something genuinely broke, and never echo a driver error code back to the
+		// caller as if it were this API's error contract.
+		if (!e?.status || e.status >= 500) {
+			console.error('[agents/skills-pricing] ownership check failed', e?.message);
+			return respondError(res, 500, 'error', e);
+		}
+		return respondError(res, e.status, e.code || 'error', e);
 	}
 
 	if (req.method === 'GET') return handleGet(req, res, service, id);

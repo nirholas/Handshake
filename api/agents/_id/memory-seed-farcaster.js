@@ -20,9 +20,12 @@ const bodySchema = z
 const NEYNAR_BASE = 'https://api.neynar.com/v2/farcaster';
 const SEED_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 
+const NEYNAR_TIMEOUT_MS = 15_000;
+
 async function neynarGet(path, apiKey) {
 	const resp = await fetch(`${NEYNAR_BASE}${path}`, {
 		headers: { api_key: apiKey },
+		signal: AbortSignal.timeout(NEYNAR_TIMEOUT_MS),
 	});
 	if (!resp.ok) {
 		const err = new Error(`Neynar ${resp.status}`);
@@ -32,7 +35,7 @@ async function neynarGet(path, apiKey) {
 	return resp.json();
 }
 
-async function distillFacts(profile, casts, apiKey) {
+async function distillFacts(profile, casts) {
 	const castTexts = casts
 		.slice(0, 50)
 		.map((c) => c.text || '')
@@ -150,11 +153,23 @@ export default wrap(async (req, res) => {
 		if (!fid) return error(res, 404, 'farcaster_user_not_found', 'Farcaster user not found');
 	}
 
-	// Fetch casts and profile in parallel
-	const [castsData, profileData] = await Promise.all([
-		neynarGet(`/feed/user/casts?fid=${fid}&limit=50&include_replies=false`, env.NEYNAR_API_KEY),
-		neynarGet(`/user?fid=${fid}`, env.NEYNAR_API_KEY),
-	]);
+	// Fetch casts and profile in parallel. A Neynar outage is an upstream failure,
+	// not an internal one: neynarGet tags its error with `httpStatus`, which wrap()
+	// does not read (it reads `status`), so an uncaught throw here surfaced as a
+	// bare 500 plus an ops alert for somebody else's downtime.
+	let castsData;
+	let profileData;
+	try {
+		[castsData, profileData] = await Promise.all([
+			neynarGet(`/feed/user/casts?fid=${fid}&limit=50&include_replies=false`, env.NEYNAR_API_KEY),
+			neynarGet(`/user?fid=${fid}`, env.NEYNAR_API_KEY),
+		]);
+	} catch (e) {
+		if (e.httpStatus === 404)
+			return error(res, 404, 'farcaster_user_not_found', 'Farcaster user not found');
+		console.error('[memory-seed-farcaster] Neynar fetch failed', e?.message);
+		return error(res, 502, 'upstream_error', 'Farcaster data is unavailable right now');
+	}
 
 	const casts = castsData?.casts ?? [];
 	const profile = profileData?.users?.[0] ?? profileData?.user ?? {};

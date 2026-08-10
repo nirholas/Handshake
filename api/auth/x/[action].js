@@ -207,8 +207,12 @@ async function handleCallback(req, res) {
 		return redirect(res, errorRedirect);
 	}
 
-	const tokens = await tokenRes.json();
+	const tokens = await tokenRes.json().catch(() => ({}));
 	const { access_token, refresh_token, expires_in } = tokens;
+	if (!access_token) {
+		console.error('[x-oauth] token response carried no access_token');
+		return redirect(res, errorRedirect);
+	}
 	const expiresAt = new Date(Date.now() + (expires_in ?? 7200) * 1000).toISOString();
 
 	// Fetch X profile
@@ -220,7 +224,15 @@ async function handleCallback(req, res) {
 		console.error('[x-oauth] profile fetch failed', await profileRes.text());
 		return redirect(res, errorRedirect);
 	}
-	const { data: profile } = await profileRes.json();
+	const { data: profile } = await profileRes.json().catch(() => ({}));
+	// X answers 200 with an `errors` array (and no `data`) for a suspended or
+	// otherwise unreadable account. Treat a profile without an id as a failed
+	// connect and send the user back to the UI, not into a NULL provider_uid
+	// insert that 500s on the not-null constraint.
+	if (!profile?.id) {
+		console.error('[x-oauth] profile response missing data.id');
+		return redirect(res, errorRedirect);
+	}
 
 	const encAccess = encryptToken(access_token);
 	const encRefresh = refresh_token ? encryptToken(refresh_token) : null;

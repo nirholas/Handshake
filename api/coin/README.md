@@ -51,10 +51,12 @@ No install step: these deploy with the rest of `api/` and run locally under the 
 Example, straight from the route contract at the top of [`markets.js`](./markets.js) (`GET /api/coin/markets?page=1&per_page=100` returns ranked market table rows):
 
 ```sh
-curl -s 'https://three.ws/api/coin/markets?page=1&per_page=5' | head -c 600
+curl -s 'https://three.ws/api/coin/markets?page=1&per_page=10' | head -c 600
 ```
 
-Returns `{ "coins": [ { rows with rank, price, 24h change, market cap, downsampled 7d sparkline } ], "page": 1, "per_page": 5, "category": null }`. Add `?q=solana` for the search shape instead, or `&category=layer-1` to scope the table to one CoinGecko category.
+Returns `{ "coins": [ { rows with rank, price, 24h change, market cap, downsampled 7d sparkline } ], "page": 1, "per_page": 10, "category": null }`. Add `?q=solana` for the search shape instead, or `&category=layer-1` to scope the table to one CoinGecko category.
+
+`page` and `per_page` are clamped rather than rejected: `page` to 1..20 and `per_page` to 10..250, and the response echoes the clamped values it actually used. So `per_page=5` returns ten rows and reports `"per_page": 10`. `/api/coin/tickers` is the one endpoint here that rejects instead of clamping, because its upstream page ceiling is a real limit rather than a preference: a `page` outside 1..10, or one that is not an integer, answers `400 bad_page`.
 
 ## Related
 

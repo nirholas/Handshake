@@ -114,6 +114,47 @@ export function gmgnSmartMoneyRank(opts = {}) {
 	return fetchRank(opts);
 }
 
+/**
+ * One-shot smart-money snapshot: the same live rank the streaming poller reads,
+ * with the same GMGN → DexScreener failover, the same minSmartBuys floor, and the
+ * same normalized item shape the SSE lane emits. Lets a plain JSON client (or a
+ * server that cannot hold an SSE connection open) read the board without opening
+ * a poll. Never throws; a dead upstream returns { ok: false, items: [] }.
+ *
+ * @param {{ chain?: string, interval?: string, minSmartBuys?: number, limit?: number }} opts
+ * @returns {Promise<{ ok: boolean, source: string|null, items: object[], status?: number, error?: string }>}
+ */
+export async function gmgnSmartMoneySnapshot({
+	chain = 'sol',
+	interval = '1h',
+	minSmartBuys = 2,
+	limit = 25,
+} = {}) {
+	let result = await fetchRank({ chain, interval });
+	let source = 'gmgn';
+	// A 403 is Cloudflare refusing this egress IP, not an outage: fall back to the
+	// DexScreener board exactly as the poller does.
+	if (!result.ok && result.status === 403) {
+		result = await fetchDexScreener({ chain });
+		source = 'dexscreener';
+	}
+	if (!result.ok) {
+		return { ok: false, source: null, items: [], status: result.status, error: result.error };
+	}
+	source = result.source || source;
+	const items = [];
+	for (const item of result.rank) {
+		if (!item.address) continue;
+		const smartCount = Number(item.smart_buy_24h ?? item.smart_buy ?? 0);
+		if (smartCount < minSmartBuys) continue;
+		// prevCount is 0 for a one-shot read: there is no prior snapshot to diff
+		// against, so `smart_buy_delta` reports the full count and `is_new` is true.
+		items.push(normalize(item, smartCount, 0, chain, interval, source));
+		if (items.length >= limit) break;
+	}
+	return { ok: true, source, items };
+}
+
 let _pollerId = 0;
 // Map<pollerId, Map<address, prevItem>>
 const _snapshots = new Map();

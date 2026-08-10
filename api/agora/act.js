@@ -31,6 +31,10 @@ import {
 	sendOnchainAttestation, explorerTx, recoverTimedOutSignature, findCompletionSignature,
 } from '../_lib/agora-human.js';
 import { resolveCluster, reservePostSpend, settlePostSpend, releasePostSpend } from '../_lib/agora-policy.js';
+// Boundary shape checks for the two id kinds a caller can hand us: a citizen id
+// (uuid column) and a task PDA (base58 pubkey). Both must be rejected here, or a
+// malformed value reaches Postgres / PublicKey and surfaces as a 5xx.
+import { isUuid, isValidSolanaAddress } from '../_lib/validate.js';
 import { redactUrlSecrets as redactSecrets } from '../_lib/scrub-secrets.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000n;
@@ -186,6 +190,10 @@ async function postTaskCore({ user, body, requestedCluster, hire }) {
 	let minReputation = Number.isFinite(+body.minReputation) ? Math.max(0, Math.floor(+body.minReputation)) : 0;
 	if (hire) {
 		if (!body.citizenId) return { err: [400, 'validation_error', 'hire requires citizenId'] };
+		// agora_citizens.id is a uuid column: a non-uuid value makes Postgres throw
+		// 22P02 and the request 500s. The user-visible outcome is the same as a
+		// well-formed id nobody holds, so answer it the same way.
+		if (!isUuid(String(body.citizenId))) return { err: [404, 'not_found', 'no such citizen to hire'] };
 		[target] = await sql`select * from agora_citizens where id = ${String(body.citizenId)} limit 1`;
 		if (!target) return { err: [404, 'not_found', 'no such citizen to hire'] };
 		profession = profession || target.profession;
@@ -355,6 +363,10 @@ async function actClaim(user, body) {
 	const cluster = resolveCluster(body.cluster);
 	const taskPda = String(body.taskPda || '').trim();
 	if (!taskPda) return { err: [400, 'validation_error', 'taskPda is required'] };
+	// Shape-check before any wallet or chain work: a malformed PDA would otherwise
+	// throw inside the claim call and read as a 502 outage, after we had already
+	// registered this citizen on-chain for a request that could never succeed.
+	if (!isValidSolanaAddress(taskPda)) return { err: [400, 'validation_error', 'taskPda must be a base58 Solana address'] };
 
 	const { citizen } = await ensureHumanCitizen({ user, cluster });
 
@@ -408,6 +420,9 @@ async function actComplete(user, body) {
 	const cluster = resolveCluster(body.cluster);
 	const taskPda = String(body.taskPda || '').trim();
 	if (!taskPda) return { err: [400, 'validation_error', 'taskPda is required'] };
+	// Same boundary as claim: `new PublicKey(taskPda)` below throws outside every
+	// try, so an unvalidated PDA collapses a plain typo into an opaque 500.
+	if (!isValidSolanaAddress(taskPda)) return { err: [400, 'validation_error', 'taskPda must be a base58 Solana address'] };
 
 	const deliverable = String(body.deliverable || body.deliverableUrl || '').trim();
 	if (!deliverable) return { err: [400, 'validation_error', 'deliverable (text or url) is required'] };
@@ -519,6 +534,8 @@ async function actVouch(user, body) {
 	const cluster = resolveCluster(body.cluster);
 	const subjectId = String(body.subjectCitizenId || body.citizenId || '').trim();
 	if (!subjectId) return { err: [400, 'validation_error', 'subjectCitizenId is required'] };
+	// uuid column, same 22P02 trap as hire: a malformed id is simply nobody.
+	if (!isUuid(subjectId)) return { err: [404, 'not_found', 'no such citizen to vouch for'] };
 
 	const { citizen } = await ensureHumanCitizen({ user, cluster });
 	if (subjectId === citizen.id) return { err: [400, 'validation_error', 'you cannot vouch for yourself'] };

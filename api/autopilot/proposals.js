@@ -23,7 +23,9 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import {
 	generateProposals, executeProposal, dismissProposal, undoProposal, dryRunProposal,
 	computeTrust, getAutopilotConfig, decorateProposal, validateProposal, AutopilotError,
+	AUTOPILOT_PROPOSAL_ACTIONS, pageLimit,
 } from '../_lib/autopilot.js';
+import { isUuid } from '../_lib/validate.js';
 
 export const maxDuration = 60;
 
@@ -38,6 +40,10 @@ async function resolveAuth(req) {
 async function ownedAgent(req, res, agentId, auth) {
 	if (!agentId) {
 		error(res, 400, 'validation_error', 'agentId required');
+		return null;
+	}
+	if (!isUuid(agentId)) {
+		error(res, 400, 'validation_error', 'agentId must be a uuid');
 		return null;
 	}
 	const [agent] = await sql`
@@ -82,7 +88,7 @@ async function handleList(req, res, auth) {
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('agentId') || url.searchParams.get('agent_id');
 	const status = url.searchParams.get('status');
-	const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
+	const limit = pageLimit(url.searchParams.get('limit'));
 
 	const agent = await ownedAgent(req, res, agentId, auth);
 	if (!agent) return;
@@ -102,6 +108,9 @@ async function handleAct(req, res, auth) {
 	const body = await readJson(req);
 	const agentId = body.agentId || body.agent_id;
 	const action = body.action;
+	if (!AUTOPILOT_PROPOSAL_ACTIONS.includes(action)) {
+		return error(res, 400, 'validation_error', `action must be one of: ${AUTOPILOT_PROPOSAL_ACTIONS.join(', ')}`);
+	}
 
 	const agent = await ownedAgent(req, res, agentId, auth);
 	if (!agent) return;
@@ -140,6 +149,7 @@ async function handleAct(req, res, auth) {
 	// All remaining actions operate on a specific proposal.
 	const proposalId = body.proposalId || body.proposal_id;
 	if (!proposalId) return error(res, 400, 'validation_error', 'proposalId required');
+	if (!isUuid(proposalId)) return error(res, 400, 'validation_error', 'proposalId must be a uuid');
 	const [row] = await sql`SELECT * FROM agent_autopilot_proposals WHERE id = ${proposalId} AND agent_id = ${agentId}`;
 	if (!row) return error(res, 404, 'not_found', 'proposal not found');
 	const proposal = decorateProposal(row);

@@ -18,7 +18,9 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getSplitConfig, setSplitConfig, splitConfigMessage, isMint, MAX_CREATOR_BPS } from '../_lib/cosmetics-economy.js';
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,POST,OPTIONS', origins: '*', credentials: true })) return;
+	// Public origins: a config read is public, and a write is authorized by an
+	// ed25519 signature in the body, never by a cookie — so no credentialed CORS.
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', origins: '*' })) return;
 
 	if (req.method === 'GET') {
 		if (!method(req, res, ['GET'])) return;
@@ -50,7 +52,16 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl, 'too many requests — slow down');
 
 	let body;
-	try { body = await readJson(req); } catch { return error(res, 400, 'bad_json', 'invalid request body'); }
+	try {
+		body = await readJson(req);
+	} catch (err) {
+		// readJson rejects a non-JSON content-type with 415 and unparseable bytes
+		// with 400. Collapsing both to "invalid request body" told a client that
+		// sent perfectly good JSON under the wrong header to go fix its payload.
+		const status = err?.status === 415 ? 415 : 400;
+		const code = status === 415 ? 'unsupported_media_type' : 'bad_json';
+		return error(res, status, code, err?.message || 'invalid request body');
+	}
 
 	try {
 		const config = await setSplitConfig({

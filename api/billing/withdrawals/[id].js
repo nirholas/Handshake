@@ -4,6 +4,7 @@ import { sql } from '../../_lib/db.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error, rateLimited } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
+import { isUuid } from '../../_lib/validate.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -16,6 +17,9 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const id = req.query?.id;
+	// `agent_withdrawals.id` is a uuid column: comparing it to a non-uuid string
+	// makes Postgres raise 22P02, which surfaces as a 500 on a mistyped URL.
+	if (!isUuid(id)) return error(res, 400, 'validation_error', 'withdrawal id must be a UUID');
 
 	const [withdrawal] = await sql`
 		select id, agent_id, amount, currency_mint, chain, to_address,

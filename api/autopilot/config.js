@@ -13,6 +13,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { getAutopilotConfig, setAutopilotConfig, computeTrust } from '../_lib/autopilot.js';
+import { isUuid } from '../_lib/validate.js';
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -25,6 +26,10 @@ async function resolveAuth(req) {
 async function ownedAgent(req, res, agentId, auth) {
 	if (!agentId) {
 		error(res, 400, 'validation_error', 'agentId required');
+		return null;
+	}
+	if (!isUuid(agentId)) {
+		error(res, 400, 'validation_error', 'agentId must be a uuid');
 		return null;
 	}
 	const [agent] = await sql`

@@ -23,15 +23,22 @@ export default wrap(async (req, res) => {
 			res,
 			503,
 			'wallet_unconfigured',
-			'avatar wallet is not configured — set AVATAR_WALLET_SECRET (run scripts/gen-avatar-wallet.mjs)',
+			'avatar wallet is not configured: set AVATAR_WALLET_SECRET (run scripts/gen-avatar-wallet.mjs)',
 		);
 	}
 
 	const connection = getConnection(cfg.rpcUrl);
-	const [{ lamports, sol }, solPriceUsd] = await Promise.all([
-		getSolBalance(connection, cfg.address),
+	// The RPC is a network boundary: a provider blip used to take the whole
+	// response down with a sanitized 500, so the chip lost the address, the
+	// explorer link and the send cap along with the balance. Report the balance
+	// as unknown instead and keep every configured field, so the widget can
+	// render "balance unavailable" over a wallet the user can still inspect.
+	const [balance, solPriceUsd] = await Promise.all([
+		getSolBalance(connection, cfg.address).catch(() => null),
 		solUsdPrice().catch(() => 0),
 	]);
+	const lamports = balance ? balance.lamports : null;
+	const sol = balance ? balance.sol : null;
 
 	return json(
 		res,
@@ -41,14 +48,16 @@ export default wrap(async (req, res) => {
 			network: cfg.network,
 			lamports,
 			sol,
-			usd: solPriceUsd ? sol * solPriceUsd : null,
+			balanceAvailable: balance != null,
+			usd: sol != null && solPriceUsd ? sol * solPriceUsd : null,
 			solPriceUsd: solPriceUsd || null,
 			maxSendUsd: cfg.maxSendUsd,
 			defaultRecipient: cfg.defaultRecipient,
 			recipientLocked: cfg.lockRecipient,
 			explorer: explorerAccountUrl(cfg.address, cfg.network),
 		},
-		// Short cache so the chip feels live without hammering the RPC.
-		{ 'Cache-Control': 'public, max-age=10' },
+		// Short cache so the chip feels live without hammering the RPC. A failed
+		// balance read is never cached: the next poll must be able to recover.
+		{ 'Cache-Control': balance ? 'public, max-age=10' : 'no-store' },
 	);
 });

@@ -16,13 +16,20 @@
 //   401 auth_required     — POST without a CoinCommunities session
 //   403 not_creator       — signed in, but not this coin's creator
 //   403 wallet_required   — signed in, but no linked Solana wallet to match
+//   400 solana_only       — POST for a non-Solana world (see below)
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
-import { cc, userAuthHeaders, withAuthRefresh, isValidToken, UnconfiguredError } from '../_lib/coin-communities.js';
+import {
+	cc,
+	hasUserSession,
+	withAuthRefresh,
+	isValidToken,
+	isSolanaToken,
+	UnconfiguredError,
+} from '../_lib/coin-communities.js';
 import { readWorldGate, writeWorldGate, normalizeMinTokens } from '../_lib/world-gate.js';
 
 const PUMP_FRONTEND_BASE = process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
-const MAX_WALLETS_CHECKED = 5;
 
 // Resolve a coin's on-chain creator from pump.fun. Returns '' when unknown (a
 // non-pump mint, or pump didn't answer) so the caller fails closed (not creator).
@@ -42,15 +49,17 @@ async function resolveCoinCreator(mint) {
 }
 
 // The signed-in user's linked Solana wallets, as { data: { wallets }, error }
-// shaped like the SDK's so it composes directly with withAuthRefresh.
+// shaped like the SDK's so it composes directly with withAuthRefresh. Every
+// linked wallet is returned: matching the creator is one in-memory comparison
+// over an already-fetched list, so capping it bought nothing and would tell a
+// real creator who happened to link that wallet late that they are not one.
 async function linkedSvmWallets(api, headers) {
 	const w = await api.getWallets({ headers });
 	if (w.error) return { error: w.error };
 	const wallets = (w.data?.wallets ?? [])
 		.filter((x) => x.chainType === 'svm')
 		.map((x) => x.address)
-		.filter(Boolean)
-		.slice(0, MAX_WALLETS_CHECKED);
+		.filter(Boolean);
 	return { data: { wallets } };
 }
 
@@ -74,7 +83,7 @@ export default wrap(async (req, res) => {
 		// coin's creator. Best-effort — any failure just yields canEdit:false (the
 		// read still succeeds), so the requirement is always visible.
 		let canEdit = false;
-		if (userAuthHeaders(req)) {
+		if (hasUserSession(req)) {
 			try {
 				const api = cc();
 				const [{ data: walletsData }, creator] = await Promise.all([
@@ -89,6 +98,22 @@ export default wrap(async (req, res) => {
 	}
 
 	// POST — set the threshold. Creator-only.
+	//
+	// Creator ownership is proved against pump.fun and enforced against a linked
+	// Solana wallet, and the gate it writes is spent by the Solana holder pass
+	// (api/community/holder-pass.js). None of that can answer for an EVM-chain
+	// world, whose Town chat is valid but whose creator we cannot verify. Say that
+	// plainly here instead of letting it surface as a "try again" upstream error
+	// the caller would retry forever.
+	if (!isSolanaToken(mint)) {
+		return error(
+			res,
+			400,
+			'solana_only',
+			'world gates are available for Solana coins only',
+		);
+	}
+
 	let api;
 	try {
 		api = cc();
@@ -124,7 +149,7 @@ export default wrap(async (req, res) => {
 
 	const creator = await resolveCoinCreator(mint);
 	if (!creator) {
-		return error(res, 502, 'creator_unresolved', 'could not resolve this coin’s creator — try again');
+		return error(res, 502, 'creator_unresolved', 'could not resolve this coin’s creator, try again');
 	}
 	if (!wallets.includes(creator)) {
 		return error(res, 403, 'not_creator', 'only the coin’s creator can gate this world');

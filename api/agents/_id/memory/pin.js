@@ -14,7 +14,15 @@ const bodySchema = z.object({
 		.min(1)
 		.max(260)
 		.regex(/^[A-Za-z0-9._-]+$/, 'invalid filename characters'),
-	data: z.string().min(1), // base64-encoded bytes (encrypted or plaintext for MEMORY.md)
+	// base64-encoded bytes (encrypted, or plaintext for MEMORY.md). `Buffer.from`
+	// never throws on malformed base64 — it silently drops the invalid characters
+	// — so garbage would otherwise be pinned to IPFS as a valid-looking CID. The
+	// shape is enforced here, before any byte reaches a pinning provider.
+	data: z
+		.string()
+		.min(1)
+		.regex(/^[A-Za-z0-9+/\r\n]+={0,2}$/, 'data must be base64')
+		.refine((s) => s.replace(/[\r\n]/g, '').length % 4 === 0, 'data must be base64'),
 });
 
 async function pinViaPinata(buf, filename) {
@@ -58,11 +66,9 @@ export default wrap(async (req, res) => {
 
 	const body = parse(bodySchema, await readJson(req));
 
-	let buf;
-	try {
-		buf = Buffer.from(body.data, 'base64');
-	} catch {
-		return error(res, 400, 'validation_error', 'data must be valid base64');
+	const buf = Buffer.from(body.data, 'base64');
+	if (buf.byteLength === 0) {
+		return error(res, 400, 'validation_error', 'data decodes to zero bytes');
 	}
 	if (buf.byteLength > MAX_BYTES) {
 		return error(res, 413, 'payload_too_large', 'file exceeds 512 KB limit');

@@ -1,11 +1,33 @@
 {
-	"generated_at": "2026-08-09T09:53:46.176Z",
+	"generated_at": "2026-08-10T16:28:46.720Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "The embed release manifest answers cheap polls and says plainly when a build is missing",
+			"summary": "Sites that pin an <agent-3d> bundle version can poll /api/agent-3d/versions to learn about a new release. That endpoint now returns an ETag derived from the manifest contents, so a poller that sends the tag back gets an empty 304 Not Modified between releases instead of re-downloading the same JSON, and gets the full manifest the moment a new version publishes. When a deploy ships without the manifest the endpoint used to answer \"not found\" whether the file was missing or corrupt; it now says which of the two it is, so the fix is obvious from the response alone. The manifest is also documented for embedders alongside the static /agent-3d/versions.json copy.",
+			"link": "/docs/web-component",
+			"tags": [
+				"improvement",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "The public asset catalog now answers a bad filter honestly",
+			"summary": "The open asset list at /api/assets, which anyone can call to browse our accessories, starter animations, and lighting environments, used to answer a mistyped filter with an empty list and a 200 OK, then cache that empty answer for an hour. A typo looked exactly like an empty catalog. It now returns a clear error naming the accepted values, and never caches it. Two more fixes came out of the same pass: browsers can read the response cross-origin on error replies and preflight checks, not just on success, and HEAD requests from uptime monitors and CDNs are answered instead of rejected. The environment list is also read straight from the viewer's own presets now, so names can no longer drift between the site and the API.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-08-09",
 			"type": "update",

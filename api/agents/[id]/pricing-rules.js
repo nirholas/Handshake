@@ -1,6 +1,12 @@
 /**
  * Dynamic pricing rules for a specific agent skill.
  *
+ * Every verb is owner-only: a rule set is a seller's unpublished strategy
+ * (scheduled discounts, deactivated experiments), not public catalog data. The
+ * price a buyer actually pays is resolved server-side by
+ * api/_lib/skill-pricing-rules.js and published through the public skill
+ * endpoints; nothing outside Creator Studio reads this one.
+ *
  * Routes:
  *   GET    /api/agents/:id/pricing-rules?skill=:skill   list rules for skill
  *   POST   /api/agents/:id/pricing-rules                create rule
@@ -76,7 +82,13 @@ async function ownerCheck(req, res, agentId) {
 
 async function handleList(req, res, agentId) {
 	if (!method(req, res, ['GET'])) return;
-	const skill = req.query?.skill || null;
+	// Reads are gated too: the list includes deactivated rules and time windows
+	// that have not opened yet, which is the seller's pricing plan, not a price
+	// a buyer is entitled to see ahead of time.
+	if (!(await ownerCheck(req, res, agentId))) return;
+
+	const url = new URL(req.url, 'http://x');
+	const skill = req.query?.skill || url.searchParams.get('skill') || null;
 
 	const rules = await sql`
 		SELECT id, skill_name, rule_type, threshold, price_amount, currency_mint, chain,
@@ -135,6 +147,14 @@ async function handlePatch(req, res, agentId, ruleId) {
 
 	const { threshold, price_amount, start_at, end_at, priority, is_active } = parsed.data;
 
+	// start_at/end_at are nullable on purpose: sending an explicit null is how a
+	// seller reopens a time window that had a bound. COALESCE alone cannot express
+	// that — it reads an explicit null exactly like an omitted key and keeps the
+	// old timestamp, so the write returned 200 while silently discarding the
+	// clear. Distinguish "present and null" from "absent" before the query runs.
+	const clearStart = Object.hasOwn(parsed.data, 'start_at') && start_at === null;
+	const clearEnd = Object.hasOwn(parsed.data, 'end_at') && end_at === null;
+
 	const [existing] = await sql`
 		SELECT id FROM skill_pricing_rules WHERE id = ${ruleId} AND agent_id = ${agentId}
 	`;
@@ -144,8 +164,10 @@ async function handlePatch(req, res, agentId, ruleId) {
 		UPDATE skill_pricing_rules SET
 			threshold    = COALESCE(${threshold ?? null}, threshold),
 			price_amount = COALESCE(${price_amount ?? null}, price_amount),
-			start_at     = COALESCE(${start_at !== undefined ? start_at : undefined}, start_at),
-			end_at       = COALESCE(${end_at !== undefined ? end_at : undefined}, end_at),
+			start_at     = CASE WHEN ${clearStart}::boolean THEN NULL
+			                    ELSE COALESCE(${start_at ?? null}, start_at) END,
+			end_at       = CASE WHEN ${clearEnd}::boolean THEN NULL
+			                    ELSE COALESCE(${end_at ?? null}, end_at) END,
 			priority     = COALESCE(${priority ?? null}, priority),
 			is_active    = COALESCE(${is_active ?? null}, is_active),
 			updated_at   = now()

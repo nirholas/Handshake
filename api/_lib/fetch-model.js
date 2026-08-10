@@ -24,8 +24,18 @@ export class FetchModelError extends Error {
 
 // Map a shared SsrfError to the FetchModelError shape callers already expect, so
 // existing { code: 'private_address' } / 'scheme_not_allowed' assertions hold.
+// Callers branch on the CLASS, not just the code, to tell a caller-fault URL
+// (400: blocked, private, malformed) from an upstream failure (502), so an
+// SsrfError that escapes this module raw gets misfiled as an upstream fault. Two
+// escape routes exist beyond the initial URL validation: the per-hop DNS
+// resolution inside the redirect loop, and the pinned agent refusing a rebound
+// address at connect time, which undici surfaces as a TypeError wrapping the
+// original in `cause`.
 function asFetchModelError(err) {
 	if (err instanceof SsrfError) return new FetchModelError(err.message, err.code);
+	if (err?.cause instanceof SsrfError) {
+		return new FetchModelError(err.cause.message, err.cause.code);
+	}
 	return err;
 }
 
@@ -137,6 +147,11 @@ export async function fetchModel(rawUrl, opts = {}) {
 				filename,
 			};
 		}
+	} catch (err) {
+		// Normalize every SSRF refusal raised inside the loop (per-hop resolution,
+		// connect-time pin rejection) to FetchModelError. Anything else (an abort on
+		// timeout, a plain network TypeError) passes through untouched.
+		throw asFetchModelError(err);
 	} finally {
 		clearTimeout(timer);
 		if (agent) await agent.close().catch(() => {});

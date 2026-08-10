@@ -32,6 +32,10 @@ import {
 	verifyChallenge,
 	signWarPass,
 	verifyWarPass,
+	priceIsStale,
+	rollPrice,
+	priceChangePct,
+	PRICE_BASELINE_MS,
 	EPOCH_MS,
 	MAX_FACTIONS,
 	MAX_TAPS_PER_RALLY,
@@ -40,12 +44,14 @@ import {
 } from '../_lib/clash.js';
 import {
 	addPower,
-	walletPower,
+	factionPower,
 	factionPowers,
 	topSoldiers,
 	getRecords,
 	getMomentum,
 	setMomentum,
+	getPrice,
+	setPrice,
 	settleRound,
 } from '../_lib/clash-store.js';
 
@@ -86,6 +92,44 @@ async function loadFactions() {
 		.slice(0, MAX_FACTIONS);
 }
 
+/**
+ * Bring one faction's live vigor up to date on the shared cache and stamp it
+ * onto the world-card for this response.
+ *
+ * Every open Clash tab polls state every few seconds, so pricing every faction
+ * upstream on every request would mean thousands of Jupiter/pump.fun calls a
+ * minute for a number that barely moves. A faction is therefore priced once per
+ * spot TTL for the whole fleet; between refreshes the cached snapshot serves.
+ * The same snapshot carries a rolling daily baseline, which is what turns a
+ * spot price into the real market move momentum wants.
+ */
+async function refreshVigor(f, now) {
+	const [snap, cachedMomentum] = await Promise.all([
+		getPrice(f.token).catch(() => null),
+		getMomentum(f.token).catch(() => null),
+	]);
+	const vigor = (priceChange) =>
+		momentumFactor({ members: f.members, latestPostAt: f.latestPostAt, priceChange });
+
+	if (!priceIsStale(snap, now)) {
+		f._priceUsd = snap.spot;
+		f._momentum = cachedMomentum || vigor(priceChangePct(snap));
+		return;
+	}
+
+	// Price is flavour, never fatal: an upstream that can't price the mint yields
+	// 0 and the faction simply fights on its social signals.
+	const spot = await solanaMintUsdPrice(f.token).catch(() => 0);
+	const next = rollPrice(snap, spot, now);
+	const factor = vigor(priceChangePct(next));
+	f._priceUsd = next.spot;
+	f._momentum = factor;
+	await Promise.all([
+		setPrice(f.token, next, Math.ceil(PRICE_BASELINE_MS / 1000)).catch(() => {}),
+		setMomentum(f.token, factor, Math.ceil(EPOCH_MS / 1000)).catch(() => {}),
+	]);
+}
+
 // ─── state ───────────────────────────────────────────────────────────────────
 
 async function handleState(req, res) {
@@ -118,26 +162,9 @@ async function handleState(req, res) {
 
 	const [powers, records] = await Promise.all([factionPowers(epoch), getRecords(mints)]);
 
-	// Refresh each faction's momentum factor (bounded vigor bonus) and cache it so
-	// the hot rally path can read it cheaply. Derived from real social + market data.
-	await Promise.all(
-		factions.map(async (f) => {
-			let priceChange = null; // best-effort live pump move; absent → social-only
-			try {
-				const p = await solanaMintUsdPrice(f.token).catch(() => 0);
-				f._priceUsd = p || 0;
-			} catch {
-				/* price is flavour, never fatal */
-			}
-			const factor = momentumFactor({
-				members: f.members,
-				latestPostAt: f.latestPostAt,
-				priceChange,
-			});
-			f._momentum = factor;
-			setMomentum(f.token, factor, Math.ceil(EPOCH_MS / 1000)).catch(() => {});
-		}),
-	);
+	// Refresh each faction's live vigor (price + momentum) and cache it so the hot
+	// rally path can read it cheaply. Derived from real social + market data.
+	await Promise.all(factions.map((f) => refreshVigor(f, now)));
 
 	const sideOf = (mint) => {
 		const f = byMint.get(mint);
@@ -309,7 +336,7 @@ async function handleRally(req, res) {
 			walletPower: result.walletTotal,
 			walletCap: MAX_POWER_PER_WALLET_EPOCH,
 			capped: result.capped,
-			factionPower: Math.round((await factionPowers(epoch))[mint] || 0),
+			factionPower: Math.round(await factionPower(epoch, mint)),
 			msLeft,
 		},
 	});

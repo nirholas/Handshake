@@ -12,7 +12,7 @@
 // timestamp — never a stale "verified now". All compute lives in
 // api/_lib/trust/proof-of-reserves.js.
 
-import { cors, json, error, method, wrap, rateLimited } from '../../_lib/http.js';
+import { cors, json, error, method, wrap, rateLimited, varyOn } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
 import { sql } from '../../_lib/db.js';
@@ -63,6 +63,13 @@ export const handleReserves = wrap(async (req, res, agentId) => {
 	}
 
 	// Reserves are live; flows are a paginated ledger window. Short public cache so
-	// the "verify on-chain" claim stays close to real-time.
-	return json(res, 200, payload, { 'cache-control': 'public, max-age=30, stale-while-revalidate=120' });
+	// the "verify on-chain" claim stays close to real-time — but only for the
+	// anonymous variant. The payload echoes `is_owner`, so an authenticated read is
+	// personal and must never land in the shared CDN cache under this URL.
+	varyOn(res, 'Cookie', 'Authorization');
+	return json(res, 200, payload, {
+		'cache-control': userId
+			? 'private, no-store'
+			: 'public, max-age=30, stale-while-revalidate=120',
+	});
 });

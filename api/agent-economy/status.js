@@ -1,12 +1,18 @@
 // GET /api/agent-economy/status
 //
-// Returns live wallet info for both agents — no auth required, read-only.
+// Returns live wallet info for both agents. No auth required, read-only.
 //   agentA = the buyer  (AVATAR_WALLET_SECRET keypair)
 //   agentB = the seller (AGENT_B_ADDRESS public key only)
 //
 // Both balances are fetched from Solana mainnet. The seller balance uses a
-// public RPC query on the configured address — no private key needed.
+// public RPC query on the configured address, so no private key is needed.
 // Returns configured:false for either agent when their env var is absent.
+//
+// `configured` reports CONFIGURATION, never RPC health: an agent whose env var
+// is set stays configured:true with `sol: null` when the balance read fails, so
+// the caller can tell "no wallet set up" apart from "Solana RPC is down". Those
+// two used to collapse into the same configured:false, which made an RPC blip
+// read as a missing wallet.
 
 import {
 	avatarWalletConfig,
@@ -20,6 +26,19 @@ import {
 import { cors, method, wrap } from '../_lib/http.js';
 
 const RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+
+function unfundedShape({ address, network }) {
+	return {
+		configured: true,
+		address,
+		sol: null,
+		lamports: null,
+		usd: null,
+		solPriceUsd: null,
+		network,
+		explorer: explorerAccountUrl(address, network),
+	};
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -35,23 +54,20 @@ export default wrap(async (req, res) => {
 	const fetches = [];
 
 	if (cfgA.configured) {
+		const addr = loadAvatarKeypair(process.env.AVATAR_WALLET_SECRET).publicKey.toBase58();
+		agentA = unfundedShape({ address: addr, network: cfgA.network });
 		fetches.push(
 			(async () => {
-				const kp = loadAvatarKeypair(process.env.AVATAR_WALLET_SECRET);
-				const addr = kp.publicKey.toBase58();
 				const [{ sol, lamports }, price] = await Promise.all([
 					getSolBalance(conn, addr),
 					pricePromise,
 				]);
 				agentA = {
-					configured: true,
-					address: addr,
+					...agentA,
 					sol,
 					lamports,
 					usd: price > 0 ? sol * price : null,
 					solPriceUsd: price || null,
-					network: cfgA.network,
-					explorer: explorerAccountUrl(addr, cfgA.network),
 				};
 			})(),
 		);
@@ -59,6 +75,7 @@ export default wrap(async (req, res) => {
 
 	const bAddr = process.env.AGENT_B_ADDRESS?.trim();
 	if (bAddr && isValidPubkey(bAddr)) {
+		agentB = unfundedShape({ address: bAddr, network: 'mainnet' });
 		fetches.push(
 			(async () => {
 				const [{ sol, lamports }, price] = await Promise.all([
@@ -66,14 +83,11 @@ export default wrap(async (req, res) => {
 					pricePromise,
 				]);
 				agentB = {
-					configured: true,
-					address: bAddr,
+					...agentB,
 					sol,
 					lamports,
 					usd: price > 0 ? sol * price : null,
 					solPriceUsd: price || null,
-					network: 'mainnet',
-					explorer: explorerAccountUrl(bAddr, 'mainnet'),
 				};
 			})(),
 		);

@@ -443,6 +443,8 @@ The bundle is published from the main app's deploy at `https://three.ws/agent-3d
 
 The current SRI hash for each release lives in `/agent-3d/<version>/integrity.json`. The full release manifest (channels, current version, publish time) is `/agent-3d/versions.json` (max-age 60s).
 
+`GET /api/agent-3d/versions` returns the same manifest from the origin, with `access-control-allow-origin: *`, the same 60s cache policy, and a content-derived `ETag`. Send the tag back as `If-None-Match` and an unchanged manifest answers `304 Not Modified` with no body, so a release poller costs nothing between publishes. If a deploy ever ships without the manifest the endpoint answers `503 versions_unavailable` rather than an empty or partial body: treat it as "unknown, retry", never as "no releases".
+
 UMD build available at the same path with `agent-3d.umd.cjs` if you can't use ES modules.
 
 All bundle responses ship `access-control-allow-origin: *` and `cross-origin-resource-policy: cross-origin`, so the script loads fine from any origin.

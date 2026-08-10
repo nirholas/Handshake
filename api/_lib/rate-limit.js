@@ -491,6 +491,15 @@ export const limits = {
 	// 40 per 5 min per IP comfortably covers rapid rerolling, well under abuse.
 	surpriseIp: (ip) =>
 		getLimiter('avatar:surprise:ip', { limit: 40, window: '5 m', local: true }).limit(ip),
+	// Gallery view tracking (/api/avatars/view). Deliberately a dedupe rather than
+	// a throttle: one counted view per (IP, avatar) per 30 minutes, so a reader
+	// who reopens a card ten times moves view_count by one. Keyed on
+	// `${ip}:${avatarId}` so a browsing session can still count a view on every
+	// distinct avatar it opens. NOT local: with several Cloud Run instances a
+	// per-instance counter would let the same viewer count once per instance,
+	// which is exactly the inflation this bucket exists to stop.
+	avatarViewIp: (ipAndAvatar) =>
+		getLimiter('avatar:view:ip', { limit: 1, window: '30 m' }).limit(ipAndAvatar),
 	// Webcam sign-language transcription (/api/asl-recognition). Each call runs
 	// a sub-second CPU inference on the worker; 30 per 5 min per IP covers an
 	// active signed conversation while stopping scripted hammering.
@@ -583,6 +592,13 @@ export const limits = {
 	// few reshares of the same moment, tight enough that scripting the upload path
 	// can't be used as free image-hosting.
 	irlShareIp: (ip) => getLimiter('irl:share:ip', { limit: 10, window: '10 m' }).limit(ip),
+	// /club viewer-presence heartbeat (api/club/presence.js). Every open tab posts
+	// once per 15s, so a handful of tabs behind one address sits near 20/min; 120
+	// leaves a shared NAT egress plenty of room while capping how fast a script can
+	// churn distinct session ids at the counter. `local` on purpose: the counter it
+	// guards is per-instance in-memory state, so a per-instance bucket is exactly
+	// the right scope and costs zero Redis commands on a page that polls forever.
+	clubPresenceIp: (ip) => getLimiter('club:presence:ip', { limit: 120, window: '1 m', local: true }).limit(ip),
 	// Living Stages tip recording (api/stage/tip.js). Each call carries a real
 	// on-chain settlement signature and is deduped per signature, so the limiter
 	// only blunts a forger spamming distinct fake signatures at the recorder — a

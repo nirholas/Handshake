@@ -21,6 +21,7 @@
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { isUuid } from '../_lib/validate.js';
 import { sql } from '../_lib/db.js';
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
@@ -38,7 +39,12 @@ async function resolveUserId(req) {
 
 // ── Ownership check ───────────────────────────────────────────────────────────
 
+// agent_identities.id and agent_launcher_configs.id are uuid columns: an id that
+// isn't a uuid makes Postgres raise 22P02, which surfaces to the caller as a 500
+// (and pages ops) instead of the 400 that actually describes the mistake. Every
+// id reaching a query below is shape-checked first.
 async function assertOwnsAgent(userId, agentId) {
+	if (!isUuid(agentId)) return false;
 	const [row] = await sql`
 		SELECT id FROM agent_identities
 		WHERE id = ${agentId} AND user_id = ${userId} AND deleted_at IS NULL
@@ -74,6 +80,7 @@ async function getConfigs(req, res, userId) {
 	const agentId = searchParams.get('agentId');
 
 	if (!agentId) return error(res, 400, 'missing_agent_id', 'agentId is required');
+	if (!isUuid(agentId)) return error(res, 400, 'invalid_agent_id', 'agentId must be a uuid');
 	if (!(await assertOwnsAgent(userId, agentId))) {
 		return error(res, 404, 'not_found', 'agent not found or not owned by you');
 	}
@@ -101,6 +108,10 @@ async function getConfigs(req, res, userId) {
 async function triggerNow(req, res, userId, body) {
 	const { agentId, configId, network } = body || {};
 	if (!agentId) return error(res, 400, 'missing_agent_id', 'agentId is required');
+	if (!isUuid(agentId)) return error(res, 400, 'invalid_agent_id', 'agentId must be a uuid');
+	if (configId != null && !isUuid(configId)) {
+		return error(res, 400, 'invalid_config_id', 'configId must be a uuid');
+	}
 	if (!(await assertOwnsAgent(userId, agentId))) {
 		return error(res, 404, 'not_found', 'agent not found or not owned by you');
 	}
@@ -125,18 +136,19 @@ async function triggerNow(req, res, userId, body) {
 	}
 	const [config] = await query;
 	if (!config) return error(res, 404, 'not_found', 'launcher config not found');
-	return json(res, 200, { ok: true, config, message: 'Launch scheduled — worker will fire within 60s' });
+	return json(res, 200, { ok: true, config, message: 'Launch scheduled. The worker fires within 60s.' });
 }
 
 // ── POST — upsert ────────────────────────────────────────────────────────────
 
 async function upsertConfig(req, res, userId, body) {
-	body = body ?? (await readJson(req));
-
+	// The body was already read by the dispatcher (a request stream can only be
+	// consumed once), so it arrives here parsed, or `{}` when it wasn't JSON.
 	const { agentId } = body || {};
 	if (!agentId || typeof agentId !== 'string') {
 		return error(res, 400, 'missing_agent_id', 'agentId is required');
 	}
+	if (!isUuid(agentId)) return error(res, 400, 'invalid_agent_id', 'agentId must be a uuid');
 	if (!(await assertOwnsAgent(userId, agentId))) {
 		return error(res, 404, 'not_found', 'agent not found or not owned by you');
 	}
@@ -306,6 +318,7 @@ async function deleteConfig(req, res, userId) {
 	const configId = searchParams.get('id');
 
 	if (!configId) return error(res, 400, 'missing_id', 'id is required');
+	if (!isUuid(configId)) return error(res, 400, 'invalid_id', 'id must be a uuid');
 
 	// Verify ownership transitively via agent_id
 	const [cfg] = await sql`

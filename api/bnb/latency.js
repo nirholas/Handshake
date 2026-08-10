@@ -12,7 +12,7 @@
 // the others keep racing (00-CONTEXT honesty doctrine: never fabricate a
 // number for an unreachable chain).
 
-import { cors, json, method, wrap } from '../_lib/http.js';
+import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { probeAllLanes } from '../_lib/bnb/latency-lanes.js';
 
@@ -32,10 +32,12 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
+	// The /bnb-latency page polls this on a timer, so a 429 has to carry
+	// retry-after (and the limiter's `reason`, which distinguishes a real quota
+	// hit from a degraded limiter failing closed). rateLimited() sets both; the
+	// hand-rolled 429 this replaces set neither, leaving the poller to guess.
 	const rl = await limits.publicIp(clientIp(req));
-	if (!rl.success) {
-		return json(res, 429, { error: 'rate_limited', error_description: 'too many requests' }, { 'cache-control': 'no-store' });
-	}
+	if (!rl.success) return rateLimited(res, rl);
 
 	const payload = await build();
 	return json(res, 200, payload, {

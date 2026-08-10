@@ -310,10 +310,14 @@ function autoSlug(name) {
 function encodeCursor({ createdAt }) {
 	return Buffer.from(JSON.stringify({ c: createdAt })).toString('base64url');
 }
+// A cursor the caller mangled is ignored, never fatal — but the decoded date has
+// to be real, or it reaches Postgres as an invalid timestamp and turns a typo in
+// a query string into a 500.
 function decodeCursor(cursor) {
 	try {
 		const obj = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
-		return { createdAt: new Date(obj.c) };
+		const createdAt = new Date(obj.c);
+		return Number.isNaN(createdAt.getTime()) ? null : { createdAt };
 	} catch {
 		return null;
 	}

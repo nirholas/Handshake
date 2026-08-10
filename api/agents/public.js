@@ -40,6 +40,14 @@ const SORTS = new Set(['newest', 'popular', 'name', 'live']);
 // — kept out of the live wall (it's still reachable via search and /agents).
 const PLACEHOLDER_NAMES = ['My First Agent', 'Agent', 'Avatar', 'My Avatar', 'Untitled Agent', 'New Agent'];
 
+// A failed query here degrades to an empty page rather than a 5xx, because a
+// blank directory beats a broken one for a public browse surface. Log it anyway:
+// without this, a DB outage or a migration that renamed a column reads to
+// operators exactly like "nobody has published an agent yet".
+function logQueryFailure(scope, err) {
+	console.error(`[agents/public] ${scope} query failed:`, err?.message || err);
+}
+
 function mapAgent(r) {
 	const meta   = r.meta || {};
 	const onchain = meta.onchain || null;
@@ -130,7 +138,7 @@ export default wrap(async (req, res) => {
 			      )
 			order by ac.last_action_at desc nulls last, i.created_at desc
 			limit ${limit + 1} offset ${offset}
-		`.catch(() => []);
+		`.catch((err) => { logQueryFailure('live', err); return []; });
 
 		const hasMore = rows.length > limit;
 		const agents  = rows.slice(0, limit).map(mapAgent);
@@ -160,7 +168,7 @@ export default wrap(async (req, res) => {
 				              and i.name not like 'Selfie avatar%'
 				           )
 				      )
-			`.catch(() => [{}]);
+			`.catch((err) => { logQueryFailure('live-totals', err); return [{}]; });
 			total = t?.total ?? null;
 			activeTotal = t?.active_total ?? null;
 		}
@@ -213,7 +221,7 @@ export default wrap(async (req, res) => {
 			  sort === 'name'   ? sql`i.name asc` :
 			                      sql`chat_count desc nulls last, i.created_at desc`}
 		limit ${limit + 1}
-	`.catch(() => []);
+	`.catch((err) => { logQueryFailure(sort, err); return []; });
 
 	const hasMore = rows.length > limit;
 	const agents  = rows.slice(0, limit).map(mapAgent);

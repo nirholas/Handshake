@@ -1,4 +1,4 @@
-// GET /api/agent-trade/demo — Server-Sent Events orchestrator for the
+// GET /api/agent-trade/demo: Server-Sent Events orchestrator for the
 // agent-to-agent x402 trade demo.
 //
 // Autonomously drives the full buyer-agent flow, streaming events so the
@@ -26,7 +26,7 @@ import {
 	LAMPORTS_PER_SOL,
 } from '../_lib/avatar-wallet.js';
 import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
-import { llmComplete } from '../_lib/llm.js';
+import { llmComplete, providerChain } from '../_lib/llm.js';
 import { cors, method, json, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
@@ -72,7 +72,7 @@ async function generateAnalysis(topic) {
 			const messages = [
 				{
 					role: 'user',
-					content: `Provide a concise 2–3 sentence crypto market insight on: ${topic}. Be specific, data-driven, and actionable.`,
+					content: `Provide a concise 2 to 3 sentence crypto market insight on: ${topic}. Be specific, data-driven, and actionable.`,
 				},
 			];
 			const { text } = await watsonxChatComplete(wx, {
@@ -91,9 +91,9 @@ async function generateAnalysis(topic) {
 	}
 
 	// Platform LLM policy (api/_lib/llm.js): free providers first, paid keys as
-	// the automatic last resort — a dead Anthropic key must not kill the demo.
+	// the automatic last resort, so a dead Anthropic key cannot kill the demo.
 	const { text, model, provider } = await llmComplete({
-		system: 'You are a concise crypto market analyst. Respond in 2–3 sharp sentences.',
+		system: 'You are a concise crypto market analyst. Respond in 2 to 3 sharp sentences.',
 		user: `Market insight on: ${topic}`,
 		maxTokens: 200,
 		track: { tool: 'agent-trade.demo' },
@@ -112,7 +112,7 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const env = tradeEnv();
 
-	// Pre-flight check — JSON (not SSE) so the page can show the config overlay.
+	// Pre-flight check: JSON (not SSE) so the page can show the config overlay.
 	if (url.searchParams.get('check') === '1') {
 		return json(res, 200, {
 			configured: env.buyer.configured && env.seller.configured,
@@ -197,9 +197,25 @@ export default wrap(async (req, res) => {
 			);
 			emit('error', {
 				code: 'insufficient_funds',
-				message: `Nexus has ${buyerBal.sol.toFixed(5)} SOL — needs ~${needed} SOL. Fund: ${env.buyer.address}`,
+				message: `Nexus has ${buyerBal.sol.toFixed(5)} SOL, needs ~${needed} SOL. Fund: ${env.buyer.address}`,
 				address: env.buyer.address,
 				network: env.network,
+			});
+			res.end();
+			return;
+		}
+
+		// Never move SOL for an analysis nobody can produce. Both lanes that can
+		// answer (Granite, then the platform LLM chain) are checked HERE, before
+		// the payment step: a lane failure discovered at step 6 has already cost
+		// the buyer real SOL, and the demo can only apologise for it.
+		const wx = watsonxConfig();
+		const leadProvider = providerChain()[0] || null;
+		if (!wx.configured && !leadProvider) {
+			emit('error', {
+				code: 'analysis_unavailable',
+				message:
+					'Oracle has no analysis model configured, so the demo stopped before spending SOL on a skill it cannot deliver.',
 			});
 			res.end();
 			return;
@@ -294,8 +310,16 @@ export default wrap(async (req, res) => {
 		await sleep(800);
 
 		// ── Step 6: Oracle delivers analysis ─────────────────────────────
-		const wx = watsonxConfig();
-		const providerLabel = wx.configured ? 'IBM Granite' : 'Claude Haiku';
+		// The label names the lane that is actually about to run: the Granite
+		// model when watsonx is configured, otherwise the LEAD rung of the
+		// platform chain. It used to say "Claude Haiku" unconditionally, which
+		// the free-first chain in _lib/llm.js almost never selects, so the scene
+		// announced a model that never produced a word of the analysis. The
+		// `delivered` event below carries the provider that truly answered, and
+		// corrects the label if the chain failed over.
+		const providerLabel = wx.configured
+			? wx.chatModel || 'IBM Granite'
+			: leadProvider.model || leadProvider.name;
 		emit('delivering', {
 			model: providerLabel,
 			message: `Oracle is analyzing with ${providerLabel}…`,

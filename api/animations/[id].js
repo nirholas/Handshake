@@ -5,11 +5,16 @@
 // Mirrors api/mocap/[id].js. The baked clip resolves from R2 when offloaded
 // (storage_key set); the editor_doc is returned so the studio can reopen the
 // animation for lossless re-editing.
+//
+// A priced, listed, non-public clip comes back with `paywalled: true` and no
+// baked tracks for anyone but its owner: that motion sells through
+// api/x402/animation-download.js, and `download_url` points there.
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { getObjectBuffer, thumbnailUrl } from '../_lib/r2.js';
+import { isUuid } from '../_lib/validate.js';
 import { clipSchema, editorDocSchema, validateClipTrackStrides, materializeClip } from './clips.js';
 import { z } from 'zod';
 
@@ -33,11 +38,14 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,PATCH,DELETE,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'PATCH', 'DELETE'])) return;
 
+	// The route pattern admits any hex-and-dash string, but the column is a uuid:
+	// anything looser reaches Postgres as an invalid uuid literal and surfaces as
+	// a 500 instead of the 400 the caller earned.
 	const id =
 		req.query?.id ||
 		new URL(req.url, 'http://x').pathname.split('/').filter(Boolean).pop();
-	if (!id || !/^[0-9a-f-]{8,}$/i.test(id)) {
-		return error(res, 400, 'invalid_request', 'id required');
+	if (!isUuid(id)) {
+		return error(res, 400, 'invalid_request', 'id must be an animation clip uuid');
 	}
 
 	const auth = await resolveAuth(req);
@@ -64,9 +72,18 @@ async function handleGet(req, res, auth, id) {
 		return error(res, 404, 'not_found', 'animation not found');
 	}
 
+	// A priced listing sells the motion, and the marketplace feed publishes the
+	// clip id to every browser, so handing the baked tracks back here would give
+	// away exactly what api/x402/animation-download.js charges for. Metadata,
+	// poster and price still render so the listing card works; the motion itself
+	// arrives through the paid download. `public` visibility is the creator
+	// deliberately publishing the clip to the free gallery, so it is never gated.
+	const paywalled =
+		!ownerView && !!row.listed && row.visibility !== 'public' && Number(row.price_amount || 0) > 0;
+
 	// Resolve the baked clip body from R2 when it was offloaded.
-	let clip = row.clip || null;
-	if (!clip && row.storage_key) {
+	let clip = paywalled ? null : row.clip || null;
+	if (!paywalled && !clip && row.storage_key) {
 		try {
 			const buf = await getObjectBuffer(row.storage_key);
 			clip = JSON.parse(buf.toString('utf8'));
@@ -79,7 +96,7 @@ async function handleGet(req, res, auth, id) {
 	// Bump play_count only when a non-owner fetches with ?play=1 (real playback,
 	// not editor opens or scrubbing). Fire-and-forget.
 	const isPlay = new URL(req.url, 'http://x').searchParams.get('play') === '1';
-	if (!ownerView && isPlay) {
+	if (!ownerView && isPlay && clip) {
 		queueMicrotask(async () => {
 			try {
 				await sql`update animation_clips set play_count = play_count + 1 where id = ${id}`;
@@ -106,7 +123,9 @@ async function handleGet(req, res, auth, id) {
 			frame_count: row.frame_count,
 			fps: row.fps,
 			loop: row.loop,
-			clip, // baked THREE.AnimationClip.toJSON()
+			clip, // baked THREE.AnimationClip.toJSON(); null behind the paywall
+			paywalled,
+			download_url: paywalled ? `/api/x402/animation-download?id=${row.id}` : null,
 			editor_doc: ownerView ? row.editor_doc || null : null, // editing source is owner-only
 			editable: ownerView && !!row.editor_doc,
 			tags: row.tags || [],

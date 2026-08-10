@@ -50,8 +50,11 @@ export default wrap(async (req, res) => {
 		// A coin with no indexed pool is a normal outcome (404), not an error;
 		// throttles and outages surface their true status so the client can
 		// fall back to the "open on GeckoTerminal" link without a false chart.
-		if (err.status === 404) return error(res, 404, 'no_pool', 'no on-chain pool found for this token');
-		if (err.status === 429) return error(res, 429, 'rate_limited', 'pool source is throttled, retry shortly');
+		// Optional-chained: a rejection that is not an object (or an AbortError,
+		// which carries no `status`) would otherwise throw a TypeError inside this
+		// catch and turn a routine upstream timeout into an unhandled 500.
+		if (err?.status === 404) return error(res, 404, 'no_pool', 'no on-chain pool found for this token');
+		if (err?.status === 429) return error(res, 429, 'rate_limited', 'pool source is throttled, retry shortly');
 		return error(res, 502, 'upstream_error', 'pool source is temporarily unavailable');
 	}
 });

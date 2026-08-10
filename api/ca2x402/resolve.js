@@ -35,12 +35,6 @@ const PRICE_USD = Number(PRICE_ATOMICS) / 1e6; // USDC has 6 decimals
 const NETWORKS = ['solana', 'base'];
 const ENDPOINT_PATH = '/api/x402/token-intel';
 
-function originOf(req) {
-	const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
-	const host = req.headers['x-forwarded-host'] || req.headers.host || 'three.ws';
-	return `${proto}://${host}`;
-}
-
 function buildSnippets(endpointUrl) {
 	const curl =
 		`# 1) See the price (returns HTTP 402 + payment requirements)\n` +
@@ -115,8 +109,15 @@ async function handler(req, res) {
 	const signal = market.change_24h != null ? buildTokenSignal(market) : null;
 	const risk = buildTokenRisk(market);
 
-	const origin = originOf(req);
-	const endpointUrl = `${origin}${ENDPOINT_PATH}?mint=${encodeURIComponent(market.mint)}`;
+	// Anchor the advertised endpoint on env.APP_ORIGIN, never on `host` /
+	// `x-forwarded-host`. Those headers are caller-controlled, and everything
+	// downstream of this URL is a payment instruction: the copy-paste curl, the
+	// x402-fetch snippet, and the agent call all point wherever it points. A
+	// spoofed host would hand the buyer an attacker-owned 402 challenge to pay,
+	// and because this response is CDN-cacheable that poisoned copy would be
+	// served on to other visitors. Same reasoning as resolveResourceUrl() in
+	// api/_lib/x402-spec.js.
+	const endpointUrl = `${env.APP_ORIGIN}${ENDPOINT_PATH}?mint=${encodeURIComponent(market.mint)}`;
 
 	const token = {
 		mint: market.mint,

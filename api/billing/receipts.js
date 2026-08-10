@@ -13,6 +13,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { getReceipt } from '../_lib/metering.js';
+import { isUuid } from '../_lib/validate.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -39,6 +40,9 @@ export default wrap(async (req, res) => {
 
 	const purchaseId = params.get('purchase_id');
 	if (!purchaseId) return error(res, 400, 'bad_request', 'event_id or purchase_id required');
+	// `skill_purchases.id` is a uuid column: a malformed value makes Postgres
+	// raise 22P02, turning a client typo into a 500.
+	if (!isUuid(purchaseId)) return error(res, 400, 'bad_request', 'purchase_id must be a UUID');
 
 	// Verify ownership before returning receipt
 	const [purchase] = await sql`

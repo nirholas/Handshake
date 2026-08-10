@@ -8,6 +8,7 @@ import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../
 import { putObject, deleteObject, publicUrl } from '../_lib/r2.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
+import { isUuid } from '../_lib/validate.js';
 
 const MAX_PNG_BYTES = 1_500_000;
 const PNG_HEADER = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -26,8 +27,10 @@ export default wrap(async (req, res) => {
 	const id = body?.id;
 	const pngB64 = body?.png_base64;
 
-	if (!id || typeof id !== 'string' || !/^[0-9a-f-]{8,}$/i.test(id)) {
-		return error(res, 400, 'invalid_request', 'id required');
+	// animation_clips.id is a uuid: a looser id reaches Postgres as an invalid
+	// uuid literal and surfaces as a 500 instead of the 400 the caller earned.
+	if (!isUuid(id)) {
+		return error(res, 400, 'invalid_request', 'id must be an animation clip uuid');
 	}
 	if (!pngB64 || typeof pngB64 !== 'string') {
 		return error(res, 400, 'invalid_request', 'png_base64 required');

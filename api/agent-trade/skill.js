@@ -1,4 +1,4 @@
-// GET /api/agent-trade/skill — Oracle agent's paid market-analysis skill.
+// GET /api/agent-trade/skill: Oracle agent's paid market-analysis skill.
 //
 // Without ?sig=  → HTTP 402 with x402 price manifest:
 //   { x402:true, price:{sol,lamports}, currency:'SOL', recipient, network, memo }
@@ -7,8 +7,9 @@
 //   → Verifies payment on-chain, runs IBM Granite (or Claude fallback),
 //     returns { content, model, provider, topic, payment:{sig,lamports,blockTime} }
 //
-// Independently callable by any agent — not coupled to the demo orchestrator.
+// Independently callable by any agent, not coupled to the demo orchestrator.
 
+import bs58 from 'bs58';
 import { loadAvatarKeypair, getConnection, LAMPORTS_PER_SOL } from '../_lib/avatar-wallet.js';
 import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
 import { llmComplete } from '../_lib/llm.js';
@@ -23,6 +24,20 @@ const MAX_PAYMENT_AGE_SEC = 300; // 5 minutes
 // period during which verifyPayment would still accept it (and then some).
 const SIG_CONSUMED_TTL_SEC = 900; // 15 minutes
 const sigConsumedKey = (sig) => `x402-skill-sig:${sig}`;
+
+// A Solana transaction signature is exactly 64 bytes of base58. Checking that
+// here, before any RPC work, keeps a junk `sig` from costing three getTransaction
+// round-trips plus two seconds of back-off per request, and from tripping the
+// shared RPC pool's per-method circuit breaker: an "Invalid param: WrongSize"
+// reply is indistinguishable, to the breaker, from a provider refusing the
+// method, so garbage input was demoting healthy RPC endpoints for other callers.
+function isSignatureShaped(sig) {
+	try {
+		return bs58.decode(sig).length === 64;
+	} catch {
+		return false;
+	}
+}
 
 function skillConfig() {
 	const sellerSecret = process.env.AGENT_SELLER_SECRET || '';
@@ -54,7 +69,7 @@ function skillConfig() {
 }
 
 // Verify that sig is a confirmed Solana transfer of at least priceLamports to sellerAddress.
-// Retries 3× with 1s back-off — public RPC can lag after a fresh confirmation.
+// Retries 3x with 1s back-off, because public RPC can lag a fresh confirmation.
 async function verifyPayment(connection, sig, { sellerAddress, priceLamports, buyerAddress }) {
 	let lastErr;
 	for (let attempt = 0; attempt < 3; attempt++) {
@@ -71,7 +86,17 @@ async function verifyPayment(connection, sig, { sellerAddress, priceLamports, bu
 		}
 		if (!tx?.meta) continue;
 
-		const age = Date.now() / 1000 - (tx.blockTime || 0);
+		// No blockTime means the cluster cannot tell us WHEN this settled, so the
+		// freshness window is unenforceable and the payment cannot be accepted.
+		// Reporting that honestly matters: calling it "expired" sent buyers off to
+		// re-send a payment whose age was never the problem.
+		if (!tx.blockTime) {
+			throw Object.assign(new Error('transaction has no block time; cannot verify payment freshness'), {
+				code: 'bad_payment',
+			});
+		}
+
+		const age = Date.now() / 1000 - tx.blockTime;
 		if (age > MAX_PAYMENT_AGE_SEC) {
 			throw Object.assign(new Error('payment expired (>5 min old)'), {
 				code: 'payment_expired',
@@ -120,8 +145,8 @@ async function verifyPayment(connection, sig, { sellerAddress, priceLamports, bu
 }
 
 async function generateAnalysis(topic) {
-	// The buyer has already paid on-chain by the time this runs — a watsonx
-	// outage must not turn their purchase into an error, so a Granite failure
+	// The buyer has already paid on-chain by the time this runs, so a watsonx
+	// outage must not turn their purchase into an error: a Granite failure
 	// degrades to the platform LLM chain below instead of propagating.
 	const wx = watsonxConfig();
 	if (wx.configured) {
@@ -129,7 +154,7 @@ async function generateAnalysis(topic) {
 			const messages = [
 				{
 					role: 'user',
-					content: `Provide a concise 2–3 sentence crypto market insight on: ${topic}. Be specific, data-driven, and actionable.`,
+					content: `Provide a concise 2 to 3 sentence crypto market insight on: ${topic}. Be specific, data-driven, and actionable.`,
 				},
 			];
 			const { text } = await watsonxChatComplete(wx, {
@@ -148,9 +173,9 @@ async function generateAnalysis(topic) {
 	}
 
 	// Platform LLM policy (api/_lib/llm.js): free providers first, paid keys as
-	// the automatic last resort — a dead Anthropic key must not fail a paid call.
+	// the automatic last resort, so a dead Anthropic key cannot fail a paid call.
 	const { text, model, provider } = await llmComplete({
-		system: 'You are a concise crypto market analyst. Respond in 2–3 sharp sentences.',
+		system: 'You are a concise crypto market analyst. Respond in 2 to 3 sharp sentences.',
 		user: `Market insight on: ${topic}`,
 		maxTokens: 200,
 		track: { tool: 'agent-trade.skill' },
@@ -199,7 +224,17 @@ export default wrap(async (req, res) => {
 		return;
 	}
 
-	// Replay check first — a consumed signature never buys a second call, and
+	// Shape check before anything touches the chain (see isSignatureShaped).
+	if (!isSignatureShaped(sig)) {
+		return error(
+			res,
+			402,
+			'bad_payment',
+			'sig must be a base58-encoded 64-byte Solana transaction signature',
+		);
+	}
+
+	// Replay check next: a consumed signature never buys a second call, and
 	// rejecting before verification saves the RPC round-trips.
 	const consumedKey = sigConsumedKey(sig);
 	if (await cacheGet(consumedKey)) {
@@ -231,7 +266,7 @@ export default wrap(async (req, res) => {
 	try {
 		analysis = await generateAnalysis(topic);
 	} catch (e) {
-		// The buyer paid but got nothing — release the signature so a retry
+		// The buyer paid but got nothing, so release the signature and let a retry
 		// within the freshness window isn't treated as a replay.
 		await cacheDel(consumedKey).catch(() => {});
 		return error(res, 502, 'analysis_failed', e.message);

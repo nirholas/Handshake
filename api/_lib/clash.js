@@ -200,6 +200,54 @@ export function momentumFactor(s = {}) {
 	return Math.round(factor * 1000) / 1000;
 }
 
+// ─── Price snapshot (spot cache + 24h baseline) ──────────────────────────────
+
+// The state endpoint is polled every few seconds by every open Clash tab, and
+// each poll would otherwise price every faction upstream. So a faction's spot
+// price is cached and only re-fetched once it goes stale.
+export const PRICE_SPOT_TTL_MS = 60_000;
+
+// The baseline a faction's move is measured against. Rolled forward once a day,
+// so `priceChangePct` reports a genuine ~24h move built from our own samples
+// rather than a number no upstream gives us per-mint.
+export const PRICE_BASELINE_MS = 24 * 3_600_000;
+
+/** True when a stored snapshot is missing or its spot price has aged out. */
+export function priceIsStale(snap, now) {
+	const at = Number(snap?.at) || 0;
+	return !(at > 0) || now - at >= PRICE_SPOT_TTL_MS;
+}
+
+/**
+ * Fold a freshly fetched spot price into a faction's stored snapshot. The
+ * baseline is seeded on the first priced sample and rolled forward once it is
+ * older than PRICE_BASELINE_MS, so the pair always spans at most a day.
+ *
+ * @param {{ spot?: number, at?: number, base?: number, baseAt?: number }|null} prev
+ * @param {number} spot  upstream price, 0 when nothing could price the mint
+ * @param {number} now
+ */
+export function rollPrice(prev, spot, now) {
+	const price = Math.max(0, Number(spot) || 0);
+	const base = Math.max(0, Number(prev?.base) || 0);
+	const baseAt = Number(prev?.baseAt) || 0;
+	const rebase = price > 0 && (base <= 0 || baseAt <= 0 || now - baseAt >= PRICE_BASELINE_MS);
+	return {
+		spot: price,
+		at: now,
+		base: rebase ? price : base,
+		baseAt: rebase ? now : baseAt,
+	};
+}
+
+/** Percent move of a snapshot's spot against its baseline, or null if unknown. */
+export function priceChangePct(snap) {
+	const spot = Number(snap?.spot) || 0;
+	const base = Number(snap?.base) || 0;
+	if (spot <= 0 || base <= 0) return null;
+	return ((spot - base) / base) * 100;
+}
+
 // ─── Enlist challenge (stateless) ────────────────────────────────────────────
 
 /**

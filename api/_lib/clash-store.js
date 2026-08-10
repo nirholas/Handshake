@@ -44,6 +44,7 @@ const K = {
 	members: (epoch, mint) => `clash:mem:${epoch}:${mint}`, // ZSET wallet → power
 	wallet: (epoch, mint, wallet) => `clash:w:${epoch}:${mint}:${wallet}`, // INT cap counter
 	momentum: (mint) => `clash:mom:${mint}`, // JSON cached factor
+	price: (mint) => `clash:px:${mint}`, // JSON { spot, at, base, baseAt }
 	settled: (epoch) => `clash:settled:${epoch}`, // marker
 	record: 'clash:record', // HASH mint → JSON {w,l,battles,power}
 };
@@ -160,6 +161,21 @@ export async function factionPowers(epoch) {
 	return out;
 }
 
+/**
+ * One faction's power this round. The rally path echoes this back on every tap
+ * flush, so it reads a single score rather than ranging the whole round ZSET.
+ */
+export async function factionPower(epoch, mint) {
+	if (redis) {
+		try {
+			return Number((await redis.zscore(K.factions(epoch), mint)) || 0);
+		} catch (err) {
+			redisDegraded(err);
+		}
+	}
+	return Number(memZ(K.factions(epoch)).get(mint) || 0);
+}
+
 /** Top soldiers for a faction this round: [{ wallet, power }] descending. */
 export async function topSoldiers({ epoch, mint, limit = 10 }) {
 	if (redis) {
@@ -204,6 +220,33 @@ export async function setMomentum(mint, factor, ttlS = 120) {
 		}
 	}
 	mem.s.set(K.momentum(mint), { value: factor, exp: Date.now() + ttlS * 1000 });
+}
+
+// ─── Price snapshot cache ────────────────────────────────────────────────────
+// Shared across instances so a faction is priced upstream once per spot TTL for
+// the whole fleet, not once per poll per viewer.
+
+export async function getPrice(mint) {
+	if (redis) {
+		try {
+			return parsePrice(await redis.get(K.price(mint)));
+		} catch (err) {
+			redisDegraded(err);
+		}
+	}
+	return parsePrice(memValid(K.price(mint)));
+}
+
+export async function setPrice(mint, snap, ttlS) {
+	const value = JSON.stringify(snap);
+	if (redis) {
+		try {
+			return void (await redis.set(K.price(mint), value, { ex: ttlS }));
+		} catch (err) {
+			redisDegraded(err);
+		}
+	}
+	mem.s.set(K.price(mint), { value, exp: Date.now() + ttlS * 1000 });
 }
 
 // ─── All-time war record + lazy settlement ───────────────────────────────────
@@ -325,6 +368,22 @@ function parseRecord(raw) {
 		};
 	} catch {
 		return empty;
+	}
+}
+
+function parsePrice(raw) {
+	if (!raw) return null;
+	try {
+		const v = typeof raw === 'string' ? JSON.parse(raw) : raw;
+		if (!v || typeof v !== 'object') return null;
+		return {
+			spot: Number(v.spot) || 0,
+			at: Number(v.at) || 0,
+			base: Number(v.base) || 0,
+			baseAt: Number(v.baseAt) || 0,
+		};
+	} catch {
+		return null;
 	}
 }
 

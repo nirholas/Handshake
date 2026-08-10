@@ -10,15 +10,26 @@
  *   &page=1           — pagination page (default 1)
  *
  * Auth: session OR bearer (scope `mcp` or `profile`).
- * Requires HELIUS_API_KEY env var.
+ * Requires HELIUS_API_KEY env var: both ops are Helius-only surfaces (DAS
+ * `getAssetsByOwner` and the enhanced-transactions REST API). A plain Solana RPC
+ * does not implement DAS, so the endpoint reports 503 not_configured rather than
+ * forwarding a call that can only fail upstream.
  */
 
 import { cors, json, method, error, wrap, rateLimited, serverError } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
+import { dasRpcUrl } from '../_lib/nft-gate.js';
 
-const HELIUS_RPC = () => {
-	const url = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+// DAS (`getAssetsByOwner`) is a Helius extension, not core Solana JSON-RPC.
+// dasRpcUrl() resolves HELIUS_API_KEY (or a SOLANA_RPC_URL that already points at
+// Helius) and returns null when neither is set — which is a configuration fault,
+// not a client error, so it maps to 503.
+const DAS_RPC = () => {
+	const url = dasRpcUrl();
+	if (!url) throw Object.assign(new Error('HELIUS_API_KEY not configured'), { status: 503, code: 'not_configured' });
 	return url;
 };
 
@@ -27,6 +38,21 @@ const RECENT_TX_URL = () => {
 	if (!k) throw Object.assign(new Error('HELIUS_API_KEY not configured'), { status: 503, code: 'not_configured' });
 	return `https://api.helius.xyz/v0/addresses/{address}/transactions?api-key=${k}`;
 };
+
+// Both ops address a wallet by public key. Validate the shape here so a typo
+// returns an actionable 400 instead of an opaque 502 from the upstream provider.
+function walletParam(req, res) {
+	const wallet = String(req.query.wallet || '').trim();
+	if (!wallet) {
+		error(res, 400, 'bad_request', 'wallet required');
+		return null;
+	}
+	if (!BASE58_RE.test(wallet)) {
+		error(res, 400, 'validation_error', 'wallet must be a base58 Solana address');
+		return null;
+	}
+	return wallet;
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -50,15 +76,15 @@ export default wrap(async (req, res) => {
 });
 
 async function handlePortfolio(req, res) {
-	const wallet = String(req.query.wallet || '').trim();
-	if (!wallet) return error(res, 400, 'bad_request', 'wallet required');
+	const wallet = walletParam(req, res);
+	if (!wallet) return;
 
 	const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
 	const page = Math.max(1, parseInt(req.query.page) || 1);
 
 	let rpcUrl;
 	try {
-		rpcUrl = HELIUS_RPC();
+		rpcUrl = DAS_RPC();
 	} catch (e) {
 		return error(res, e.status || 503, e.code || 'not_configured', e.message);
 	}
@@ -121,8 +147,8 @@ async function handlePortfolio(req, res) {
 }
 
 async function handleActivity(req, res) {
-	const wallet = String(req.query.wallet || '').trim();
-	if (!wallet) return error(res, 400, 'bad_request', 'wallet required');
+	const wallet = walletParam(req, res);
+	if (!wallet) return;
 
 	const limit = Math.min(20, Math.max(1, parseInt(req.query.limit) || 10));
 

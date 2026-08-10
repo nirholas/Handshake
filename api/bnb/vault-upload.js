@@ -163,10 +163,6 @@ export default wrap(async (req, res) => {
 	const rl = await limits.bnbVaultUploadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl, 'too many vault uploads');
 
-	if (!env.GREENFIELD_VAULT_OPERATOR_KEY) {
-		return error(res, 503, 'vault_not_configured', 'GREENFIELD_VAULT_OPERATOR_KEY is not set — the vault storage account is not provisioned yet');
-	}
-
 	let body;
 	try {
 		body = await readJson(req, MAX_JSON_BODY_BYTES);
@@ -196,6 +192,14 @@ export default wrap(async (req, res) => {
 		const hasBase64 = typeof body?.glbBase64 === 'string' && body.glbBase64.trim();
 		if (Boolean(hasUrl) === Boolean(hasBase64)) {
 			return error(res, 400, 'bad_request', 'exactly one of glbUrl or glbBase64 is required');
+		}
+
+		// Storage-account gate, checked AFTER the cheap field validation above so a
+		// malformed request still gets the 4xx that names its actual problem, and
+		// BEFORE the GLB is fetched or decoded so an unconfigured deployment never
+		// pulls tens of megabytes it cannot store.
+		if (!env.GREENFIELD_VAULT_OPERATOR_KEY) {
+			return error(res, 503, 'vault_not_configured', 'GREENFIELD_VAULT_OPERATOR_KEY is not set, the vault storage account is not provisioned yet');
 		}
 
 		let glbBytes;

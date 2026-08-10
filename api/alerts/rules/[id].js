@@ -47,9 +47,7 @@ export default wrap(async (req, res) => {
 	const patch = parse(updateRuleSchema, await readJson(req));
 	const result = validateUpdate(current, patch);
 	if (!result.ok) {
-		return error(res, 400, 'validation_error', result.issues[0]?.message || 'invalid update', {
-			issues: result.issues,
-		});
+		return error(res, 400, 'validation_error', result.message, { issues: result.issues });
 	}
 	const next = result.value;
 
@@ -103,6 +101,10 @@ export default wrap(async (req, res) => {
 		) rd ON true
 		WHERE r.id = ${id} AND r.user_id = ${user.id}
 	`;
+	// The row can be gone by now if a concurrent DELETE landed between the UPDATE
+	// and this read. Serializing `undefined` would throw and surface as a 500 on
+	// what is really a plain "it's not there anymore".
+	if (!row) return error(res, 404, 'not_found', 'rule not found');
 
 	return json(res, 200, { rule: serializeRule(row) });
 });

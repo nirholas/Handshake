@@ -16,17 +16,28 @@ const CID_RE = /^[a-zA-Z0-9]+$/;
 // it to avoid streaming an arbitrary-size body back through the proxy.
 const MAX_BYTES = 512 * 1024;
 
+// A public gateway can hang indefinitely on an unpinned CID. Without a deadline
+// the request holds a server slot until Cloud Run kills it, and three of those in
+// series is three times the wait — bound each attempt so the chain can actually
+// reach the next gateway.
+const GATEWAY_TIMEOUT_MS = 12_000;
+
+// Returns the first gateway response that carries the file, or null when every
+// gateway refused. The caller turns that into a 502: a public-gateway outage is
+// an upstream failure, not an internal one, and the old `throw` surfaced it as a
+// bare 500 (and threw `undefined` outright when every gateway answered with a
+// non-ok status rather than a network error).
 async function fetchFromIPFS(cid) {
-	let lastErr;
 	for (const gw of IPFS_GATEWAYS) {
 		try {
-			const resp = await fetch(gw + cid);
+			const resp = await fetch(gw + cid, { signal: AbortSignal.timeout(GATEWAY_TIMEOUT_MS) });
 			if (resp.ok) return resp;
+			console.warn(`[memory/cid] ${gw} returned ${resp.status} for ${cid}`);
 		} catch (err) {
-			lastErr = err;
+			console.warn(`[memory/cid] ${gw} unreachable for ${cid}: ${err?.message}`);
 		}
 	}
-	throw lastErr || new Error('All IPFS gateways failed for ' + cid);
+	return null;
 }
 
 // GET /api/agents/:id/memory/:cid
@@ -65,6 +76,9 @@ export default wrap(async (req, res) => {
 	if (!pin) return error(res, 404, 'not_found', 'memory file not found for this agent');
 
 	const ipfsResp = await fetchFromIPFS(cid);
+	if (!ipfsResp) {
+		return error(res, 502, 'upstream_error', 'no IPFS gateway could serve this memory file');
+	}
 
 	// Bound the proxied body. Trust the gateway's Content-Length when present, then
 	// re-check the materialized buffer (a lying header can't exceed the real cap).

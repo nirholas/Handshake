@@ -45,6 +45,18 @@ export default wrap(async (req, res) => {
 	const op = url.searchParams.get('op') || 'claims';
 	const limit = clamp(Number(url.searchParams.get('limit')) || 10, 1, 50);
 
+	// Validate the request BEFORE the not-configured degrade below, so a bad `op`
+	// or a missing mint/wallet is the same 400 whether or not the upstream bot is
+	// wired up. Deciding this after the degrade made the contract depend on the
+	// deployment's env: `?op=bogus` answered 400 with the bot on and 200 with it off.
+	const mint = url.searchParams.get('mint');
+	const wallet = url.searchParams.get('wallet');
+	if (!['claims', 'graduations', 'token', 'creator'].includes(op)) {
+		return error(res, 400, 'validation_error', 'unknown op');
+	}
+	if (op === 'token' && !mint) return error(res, 400, 'validation_error', 'mint required');
+	if (op === 'creator' && !wallet) return error(res, 400, 'validation_error', 'wallet required');
+
 	// Soft-degrade to empty data when the upstream feed isn't configured —
 	// callers get a usable 200 rather than a noisy 503 on every poll.
 	if (!pumpfunBotEnabled()) {
@@ -60,20 +72,12 @@ export default wrap(async (req, res) => {
 		case 'graduations':
 			result = await pumpfunMcp.graduations({ limit });
 			break;
-		case 'token': {
-			const mint = url.searchParams.get('mint');
-			if (!mint) return error(res, 400, 'validation_error', 'mint required');
+		case 'token':
 			result = await pumpfunMcp.tokenIntel({ mint });
 			break;
-		}
-		case 'creator': {
-			const wallet = url.searchParams.get('wallet');
-			if (!wallet) return error(res, 400, 'validation_error', 'wallet required');
+		default:
 			result = await pumpfunMcp.creatorIntel({ wallet });
 			break;
-		}
-		default:
-			return error(res, 400, 'validation_error', 'unknown op');
 	}
 
 	if (!result.ok) {

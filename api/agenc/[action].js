@@ -24,9 +24,9 @@
 //       bridge and checks whether that PDA is already registered on-chain.
 //
 // Cluster defaults to `mainnet`. Set `?cluster=devnet` for devnet program
-// 6UcJzbTEemBz3aY5wK5qKHGMD7bdRsmR4smND29gB2ab. RPC endpoint is the public
-// Solana cluster RPC unless `AGENC_RPC_URL` (or `SOLANA_RPC_URL_DEVNET` /
-// `SOLANA_RPC_URL`) is set.
+// 6UcJzbTEemBz3aY5wK5qKHGMD7bdRsmR4smND29gB2ab. Reads rotate across the
+// platform's canonical Solana RPC chain (see withAgenC below); `AGENC_RPC_URL`
+// pins a preferred endpoint at the head of that chain.
 
 import { PublicKey } from '@solana/web3.js';
 import { createHash } from 'node:crypto';
@@ -35,6 +35,14 @@ import { getTask, getTaskLifecycleSummary, getTasksByCreator, getAgent, deriveTa
 import { cors, json, method, readJson, wrap, error, rateLimited, serverError } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
+import {
+	solanaRpcEndpoints,
+	isEndpointCooling,
+	markEndpointCooldown,
+	hydrateEndpointCooldowns,
+	shouldRotate,
+	isTransientRpcError,
+} from '../_lib/solana/connection.js';
 import { Bazaar, filterByExtension, filterByMaxPrice, filterByNetwork, parseAtomicAmount } from '../_lib/x402/bazaar-client.js';
 
 // @three-ws/solana-agent (the symlinked `file:solana-agent-sdk` SDK) is loaded
@@ -46,15 +54,6 @@ import { Bazaar, filterByExtension, filterByMaxPrice, filterByNetwork, parseAtom
 function pickCluster(req) {
 	const c = (req.query?.cluster || '').toString().trim().toLowerCase();
 	return c === 'devnet' ? 'devnet' : 'mainnet';
-}
-
-function pickRpc(cluster) {
-	const override = (process.env.AGENC_RPC_URL || '').trim();
-	if (override) return override;
-	if (cluster === 'devnet') {
-		return (process.env.SOLANA_RPC_URL_DEVNET || '').trim() || undefined;
-	}
-	return (process.env.SOLANA_RPC_URL || '').trim() || undefined;
 }
 
 function parsePubkey(s, label) {
@@ -117,11 +116,77 @@ function agentStatusLabel(status) {
 	return String(status);
 }
 
-async function clientFor(req) {
+// `createAgenCClient` builds its own Connection from ONE url, so a client made
+// here is bound to a single endpoint with no failover of its own. Pointing it at
+// `SOLANA_RPC_URL` alone is what took every chain-backed AgenC route down: the
+// configured primary began answering this egress with a hard 403, and each read
+// became an opaque 500 while eight healthy lanes sat unused. So we walk the
+// platform's canonical, priority-ordered endpoint chain instead and share its
+// process-wide cooldown map, which means a lane another surface just parked is
+// skipped here too, and a lane we park is skipped there. `AGENC_RPC_URL` still
+// wins: it is pinned to the head of the chain rather than being the whole of it.
+async function agenCEndpoints(cluster) {
+	// Inherit the fleet's view of dead lanes first. Without it a cold Cloud Run
+	// instance re-discovers a quota-dead provider the expensive way: web3.js runs
+	// its own 429 backoff (500/1000/2000/4000ms) inside the Connection before the
+	// error ever reaches us, so each already-known-dead lane costs ~7.5s.
+	await hydrateEndpointCooldowns();
+	const pinned = (process.env.AGENC_RPC_URL || '').trim() || null;
+	const urls = solanaRpcEndpoints(cluster, pinned);
+	const live = urls.filter((u) => !isEndpointCooling(u));
+	// Every lane cooling at once is upstream weather, not a reason to answer with
+	// nothing: re-probe the full chain rather than skipping straight to a 503.
+	return live.length ? live : urls;
+}
+
+// Recover the upstream HTTP status from a web3.js error, which reports it as the
+// head of the message ("403 Forbidden: {…}"). 0 means "no status in there".
+function rpcStatus(err) {
+	const m = String(err?.message || err).match(/\b(401|403|404|408|410|429|5\d\d)\b/);
+	return m ? Number(m[1]) : 0;
+}
+
+// Thrown once every endpoint has refused the same read. Distinct from a normal
+// failure so the wrapper can answer 503 + Retry-After (upstream weather the
+// caller should retry) instead of a 500 (a defect the caller cannot act on).
+class RpcChainExhausted extends Error {
+	constructor(cluster, tried, cause) {
+		super(`all ${tried} Solana RPC endpoints refused this ${cluster} read: ${cause?.message || 'unknown error'}`);
+		this.name = 'RpcChainExhausted';
+		this.cluster = cluster;
+		this.tried = tried;
+		this.cause = cause;
+	}
+}
+
+// Run `fn` against an AgenC client, rotating to the next endpoint whenever one
+// fails in a way the next provider may not share (401/403/404/408/410/429/5xx,
+// timeouts, network blips). A real request error, e.g. a malformed account the
+// chain decodes the same way everywhere, is re-thrown on the first endpoint
+// rather than replayed nine times.
+async function withAgenC(cluster, fn) {
 	const { createAgenCClient } = await import('@three-ws/solana-agent');
-	const cluster = pickCluster(req);
-	const rpcUrl = pickRpc(cluster);
-	return createAgenCClient({ cluster, rpcUrl });
+	const endpoints = await agenCEndpoints(cluster);
+	let last = null;
+	for (const rpcUrl of endpoints) {
+		let client;
+		try {
+			client = createAgenCClient({ cluster, rpcUrl });
+		} catch (err) {
+			last = err;
+			continue;
+		}
+		try {
+			return await fn(client);
+		} catch (err) {
+			const status = rpcStatus(err);
+			if (!shouldRotate(status) && !isTransientRpcError(err)) throw err;
+			const ms = markEndpointCooldown(rpcUrl, status || 429, String(err?.message || ''));
+			console.info(`[agenc] rpc lane failed (${status || 'transient'}), cooling ${Math.round(ms / 1000)}s, rotating`);
+			last = err;
+		}
+	}
+	throw new RpcChainExhausted(cluster, endpoints.length, last);
 }
 
 async function handleListTasks(req, res) {
@@ -131,8 +196,10 @@ async function handleListTasks(req, res) {
 	} catch (err) {
 		return error(res, 400, 'validation_error', err.message);
 	}
-	const client = await clientFor(req);
-	const tasks = await getTasksByCreator(client.program, creator);
+	const { client, tasks } = await withAgenC(pickCluster(req), async (c) => ({
+		client: c,
+		tasks: await getTasksByCreator(c.program, creator),
+	}));
 	return json(res, 200, serialize({
 		ok: true,
 		cluster: client.cluster,
@@ -158,14 +225,17 @@ async function handleListTasks(req, res) {
 
 async function handleGetTask(req, res) {
 	const q = req.query || {};
-	const client = await clientFor(req);
-	let pda;
+	// Resolve the caller's identifiers BEFORE touching the chain: a malformed pubkey
+	// or task id is a 400 that must not cost an RPC round trip (or nine of them).
+	let explicitPda = null;
+	let creator = null;
+	let taskIdSeed = null;
 	try {
 		if (q.taskPda) {
-			pda = parsePubkey(q.taskPda, 'taskPda');
+			explicitPda = parsePubkey(q.taskPda, 'taskPda');
 		} else if (q.creator && q.taskId) {
-			const creator = parsePubkey(q.creator, 'creator');
-			pda = deriveTaskPda(creator, resolveIdInput(q.taskId), client.programId);
+			creator = parsePubkey(q.creator, 'creator');
+			taskIdSeed = resolveIdInput(q.taskId);
 		} else {
 			return error(res, 400, 'validation_error', 'provide taskPda OR (creator + taskId)');
 		}
@@ -173,23 +243,18 @@ async function handleGetTask(req, res) {
 		return error(res, 400, 'validation_error', err.message);
 	}
 
-	const task = await getTask(client.program, pda);
-	if (!task) {
-		return json(res, 404, {
-			ok: false,
-			error: 'not_found',
-			cluster: client.cluster,
-			programId: client.programId.toBase58(),
-			taskPda: pda.toBase58(),
-		});
-	}
-
 	const wantLifecycle = q.lifecycle === '1' || q.lifecycle === 'true';
-	let lifecycle = null;
-	if (wantLifecycle) {
-		const s = await getTaskLifecycleSummary(client.program, pda);
-		if (s) {
-			lifecycle = {
+	const { client, pda, task, lifecycle } = await withAgenC(pickCluster(req), async (c) => {
+		const taskPda = explicitPda || deriveTaskPda(creator, taskIdSeed, c.programId);
+		const found = await getTask(c.program, taskPda);
+		if (!found || !wantLifecycle) return { client: c, pda: taskPda, task: found, lifecycle: null };
+		const s = await getTaskLifecycleSummary(c.program, taskPda);
+		if (!s) return { client: c, pda: taskPda, task: found, lifecycle: null };
+		return {
+			client: c,
+			pda: taskPda,
+			task: found,
+			lifecycle: {
 				currentState: taskStateLabel(s.currentState),
 				createdAt: s.createdAt,
 				currentWorkers: s.currentWorkers,
@@ -200,10 +265,23 @@ async function handleGetTask(req, res) {
 					txSignature: e.txSignature ?? null,
 					actor: e.actor ? e.actor.toBase58() : null,
 				})),
-			};
-			await enrichLifecycleFromProjection(lifecycle, pda.toBase58());
-		}
+			},
+		};
+	});
+
+	if (!task) {
+		return json(res, 404, {
+			ok: false,
+			error: 'not_found',
+			cluster: client.cluster,
+			programId: client.programId.toBase58(),
+			taskPda: pda.toBase58(),
+		});
 	}
+
+	// Journal enrichment reads our own DB, not the chain, so it stays outside the
+	// RPC rotation: a DB blip must never cost a second pass over every endpoint.
+	if (lifecycle) await enrichLifecycleFromProjection(lifecycle, pda.toBase58());
 
 	return json(res, 200, serialize({
 		ok: true,
@@ -299,20 +377,23 @@ export async function enrichLifecycleFromProjection(lifecycle, taskPda) {
 
 async function handleGetAgent(req, res) {
 	const q = req.query || {};
-	const client = await clientFor(req);
-	let pda;
+	let explicitPda = null;
+	let agentIdSeed = null;
 	try {
 		if (q.agentPda) {
-			pda = parsePubkey(q.agentPda, 'agentPda');
+			explicitPda = parsePubkey(q.agentPda, 'agentPda');
 		} else if (q.agentId) {
-			pda = deriveAgentPda(resolveIdInput(q.agentId), client.programId);
+			agentIdSeed = resolveIdInput(q.agentId);
 		} else {
 			return error(res, 400, 'validation_error', 'provide agentPda or agentId');
 		}
 	} catch (err) {
 		return error(res, 400, 'validation_error', err.message);
 	}
-	const agent = await getAgent(client.program, pda);
+	const { client, pda, agent } = await withAgenC(pickCluster(req), async (c) => {
+		const agentPda = explicitPda || deriveAgentPda(agentIdSeed, c.programId);
+		return { client: c, pda: agentPda, agent: await getAgent(c.program, agentPda) };
+	});
 	if (!agent) {
 		return json(res, 404, {
 			ok: false,
@@ -352,7 +433,7 @@ async function handleLink(req, res) {
 		return error(res, 400, 'validation_error', 'invalid json');
 	}
 	const { erc8004AgentId, mplCoreAsset, handle, cluster, baseUrl } = body || {};
-	const { createAgenCClient, getCanonicalThreewsAgenCId, buildThreewsMetadataUri, agenCAgentIdToHex } =
+	const { getCanonicalThreewsAgenCId, buildThreewsMetadataUri, agenCAgentIdToHex } =
 		await import('@three-ws/solana-agent');
 	let canonical;
 	try {
@@ -366,10 +447,10 @@ async function handleLink(req, res) {
 	}
 
 	const cl = cluster === 'devnet' ? 'devnet' : 'mainnet';
-	const rpcUrl = pickRpc(cl);
-	const client = createAgenCClient({ cluster: cl, rpcUrl });
-	const pda = deriveAgentPda(canonical.agenCAgentId, client.programId);
-	const agent = await getAgent(client.program, pda);
+	const { client, pda, agent } = await withAgenC(cl, async (c) => {
+		const agentPda = deriveAgentPda(canonical.agenCAgentId, c.programId);
+		return { client: c, pda: agentPda, agent: await getAgent(c.program, agentPda) };
+	});
 
 	const metadataUri = buildThreewsMetadataUri(
 		{ erc8004AgentId: erc8004AgentId ?? null, mplCoreAsset: mplCoreAsset ?? null, handle: handle ?? null },
@@ -503,6 +584,18 @@ export default wrap(async (req, res) => {
 	try {
 		return await route.fn(req, res);
 	} catch (err) {
+		// Every RPC lane refusing the same read is upstream weather with a real
+		// remedy (retry once a cooldown lapses), so it gets an honest 503 + a
+		// Retry-After the caller can act on. A 500 here told clients "we are
+		// broken, do not retry" for a condition that clears itself in seconds.
+		if (err instanceof RpcChainExhausted) {
+			console.error('[agenc] rpc chain exhausted', err.message);
+			res.setHeader('retry-after', '30');
+			return error(res, 503, 'rpc_unavailable', `Solana ${err.cluster} RPC is unavailable right now; retry in ~30s`, {
+				cluster: err.cluster,
+				endpointsTried: err.tried,
+			});
+		}
 		console.error('[agenc] unexpected error', err?.message);
 		return serverError(res, 500, 'agenc_error', err);
 	}

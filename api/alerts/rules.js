@@ -13,7 +13,7 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
 import { randomToken } from '../_lib/crypto.js';
-import { createRuleSchema, normalizeForKind, serializeRule } from './_rules.js';
+import { createRuleSchema, normalizeForKind, rulesMissingWebhookSecret, serializeRule } from './_rules.js';
 
 const MAX_RULES_PER_USER = 50;
 
@@ -28,6 +28,7 @@ export default wrap(async (req, res) => {
 		const rl = await limits.notificationsRead(user.id);
 		if (!rl.success) return rateLimited(res, rl);
 		const rows = await listRules(user.id);
+		await healWebhookSecrets(rows);
 		return json(res, 200, { rules: rows.map(serializeRule) });
 	}
 
@@ -68,6 +69,29 @@ export default wrap(async (req, res) => {
 
 	return json(res, 201, { rule: serializeRule({ ...row, last_fired_at: null, recent_failures: 0, recent_deliveries: [] }) });
 });
+
+/**
+ * Back-fill a signing secret for any listed rule that has a webhook but none,
+ * mutating the rows in place so the caller serializes the healed value. Those
+ * rules deliver unsigned webhooks until this runs, and this list response is
+ * where the user reads the secret to configure verification on their receiver.
+ * Costs nothing in the normal case: the scan is in-memory and issues no query
+ * unless a rule is actually missing its secret.
+ */
+async function healWebhookSecrets(rows) {
+	for (const row of rulesMissingWebhookSecret(rows)) {
+		const secret = `whsec_${randomToken(24)}`;
+		const [updated] = await sql`
+			UPDATE pump_alert_rules SET webhook_secret = ${secret}, updated_at = now()
+			WHERE id = ${row.id} AND webhook_secret IS NULL
+			RETURNING webhook_secret, updated_at
+		`;
+		if (updated) {
+			row.webhook_secret = updated.webhook_secret;
+			row.updated_at = updated.updated_at;
+		}
+	}
+}
 
 async function listRules(userId) {
 	return sql`

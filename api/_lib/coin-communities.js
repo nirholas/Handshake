@@ -57,6 +57,15 @@ export function isValidToken(token) {
 	return typeof token === 'string' && (BASE58_RE.test(token) || EVM_RE.test(token));
 }
 
+/**
+ * Solana-only variant, for surfaces backed by Solana-only machinery: pump.fun
+ * creator lookups, SPL balance reads, holder passes. Those cannot answer for an
+ * EVM-chain world, so they check this instead of isValidToken and say so.
+ */
+export function isSolanaToken(token) {
+	return typeof token === 'string' && BASE58_RE.test(token);
+}
+
 class UnconfiguredError extends Error {
 	constructor() {
 		super('CoinCommunities is not configured (set CC_API_KEY)');
@@ -161,6 +170,35 @@ export function userAuthHeaders(req) {
 }
 
 /**
+ * True when the request carries any usable session cookie, access or refresh.
+ * Handlers that gate on "is this user signed in?" must use this rather than
+ * `userAuthHeaders(req)`: the access-token cookie expires out of the browser
+ * after 1h, so an hours-old but perfectly valid session has only `cc_rt` left
+ * and a bare `userAuthHeaders` check would call that user a stranger.
+ */
+export function hasUserSession(req) {
+	return Boolean(userToken(req) || userRefreshToken(req));
+}
+
+/**
+ * Mint a fresh access token from the refresh cookie and persist it. Returns the
+ * new bearer headers, or null when there is nothing to refresh with (or the
+ * refresh token itself is dead, in which case the stale cookies are cleared).
+ */
+async function refreshSession(req, res) {
+	const refreshToken = userRefreshToken(req);
+	if (!refreshToken || !isConfigured()) return null;
+
+	const { data, error } = await cc().refreshToken({ body: { refreshToken } });
+	if (error || !data?.accessToken) {
+		clearUserSession(res);
+		return null;
+	}
+	setUserSession(res, data);
+	return { Authorization: `Bearer ${data.accessToken}` };
+}
+
+/**
  * Runs an authenticated CoinCommunities API call, transparently refreshing the
  * session on a 401 and retrying once before giving up. The `cc_at` access-token
  * cookie only lives 1h; without this, any signed-in player who comes back to
@@ -176,28 +214,26 @@ export function userAuthHeaders(req) {
  */
 export async function withAuthRefresh(req, res, call) {
 	const headers = userAuthHeaders(req);
-	if (!headers) return { data: null, error: null, headers: null };
+	if (!headers) {
+		// No access-token cookie at all. That is the *normal* state one hour after
+		// sign-in, since `cc_at` and the JWT inside it share a 1h lifetime: the
+		// browser drops the cookie and the request arrives carrying only `cc_rt`.
+		// Refresh from it before concluding the caller is signed out, otherwise the
+		// 30-day refresh token is never once used and every session dies at 1h.
+		const fresh = await refreshSession(req, res);
+		if (!fresh) return { data: null, error: null, headers: null };
+		const result = await call(fresh);
+		return { ...result, headers: fresh };
+	}
 
 	let result = await call(headers);
 	if (result?.error?.statusCode !== 401) return { ...result, headers };
 
-	const refreshToken = userRefreshToken(req);
-	if (!refreshToken) {
-		clearUserSession(res);
-		return { ...result, headers: null };
-	}
+	const refreshed = await refreshSession(req, res);
+	if (!refreshed) return { ...result, headers: null };
 
-	const api = cc();
-	const { data: refreshed, error: refreshErr } = await api.refreshToken({ body: { refreshToken } });
-	if (refreshErr || !refreshed?.accessToken) {
-		clearUserSession(res);
-		return { ...result, headers: null };
-	}
-
-	setUserSession(res, refreshed);
-	const freshHeaders = { Authorization: `Bearer ${refreshed.accessToken}` };
-	result = await call(freshHeaders);
-	return { ...result, headers: freshHeaders };
+	result = await call(refreshed);
+	return { ...result, headers: refreshed };
 }
 
 /**

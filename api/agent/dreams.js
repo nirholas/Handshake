@@ -18,6 +18,7 @@ import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
+import { isUuid } from '../_lib/validate.js';
 import { decorateReflection } from '../_lib/reflection.js';
 
 async function resolveAuth(req) {
@@ -29,8 +30,11 @@ async function resolveAuth(req) {
 }
 
 async function requireOwnedAgent(req, res, agentId, auth) {
-	if (!agentId) {
-		error(res, 400, 'validation_error', 'agentId required');
+	// Shape-check before the query: agent_identities.id is a uuid column, so a
+	// non-uuid id makes Postgres raise (22P02) and the request lands as a 500
+	// plus an ops alert, when the honest answer is a 400 the caller can act on.
+	if (!isUuid(agentId)) {
+		error(res, 400, 'validation_error', 'valid agentId required');
 		return null;
 	}
 	const [agent] = await sql`
@@ -133,11 +137,11 @@ async function handleReview(req, res, auth) {
 	if (!(await requireCsrf(req, res, auth.userId))) return;
 
 	const body = await readJson(req);
-	const agentId = body.agentId || body.agent_id;
-	const dreamId = body.dreamId || body.dream_id;
-	const decision = body.decision;
+	const agentId = body?.agentId || body?.agent_id;
+	const dreamId = body?.dreamId || body?.dream_id;
+	const decision = body?.decision;
 
-	if (!dreamId) return error(res, 400, 'validation_error', 'dreamId required');
+	if (!isUuid(dreamId)) return error(res, 400, 'validation_error', 'valid dreamId required');
 	if (!['accept', 'reject', 'answer'].includes(decision)) {
 		return error(res, 400, 'validation_error', "decision must be 'accept', 'reject', or 'answer'");
 	}
@@ -174,7 +178,7 @@ async function handleReview(req, res, auth) {
 		answer = typeof body.answer === 'string' ? body.answer.trim() : '';
 		if (!answer) return error(res, 400, 'validation_error', 'answer required for an answer decision');
 		answer = answer.slice(0, 2000);
-		content = `${dream.statement} — ${answer}`;
+		content = `${dream.statement} (answer: ${answer})`;
 	}
 
 	const memType = ['user', 'feedback', 'project', 'reference'].includes(dream.proposed_type)

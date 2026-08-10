@@ -7,7 +7,7 @@
 // score is a trust signal others rely on, so owner and visitor see the same
 // number; only the owner additionally receives the `guidance` block.
 
-import { cors, json, error, method, wrap, rateLimited } from '../../_lib/http.js';
+import { cors, json, error, method, wrap, rateLimited, varyOn } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { getRedis } from '../../_lib/redis.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
@@ -82,5 +82,16 @@ export const handleReputation = wrap(async (req, res, agentId) => {
 	const payload = { ...result, is_owner: isOwner };
 	if (!isOwner) delete payload.guidance;
 
-	return json(res, 200, payload, { 'cache-control': 'public, max-age=60, stale-while-revalidate=300' });
+	// The score is public, but `is_owner` and the owner-only `guidance` block make
+	// an authenticated response personal. A shared cache (Cloud CDN fronts /api/*)
+	// keys on the URL, so serving that under `public` would hand one owner's
+	// guidance to the next anonymous reader. Vary tells compliant caches the
+	// credential is part of the key; the private/no-store branch is the belt to
+	// that suspenders for caches that ignore it.
+	varyOn(res, 'Cookie', 'Authorization');
+	return json(res, 200, payload, {
+		'cache-control': userId
+			? 'private, no-store'
+			: 'public, max-age=60, stale-while-revalidate=300',
+	});
 });

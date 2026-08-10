@@ -13,7 +13,8 @@
 import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, json, method, wrap, error } from '../_lib/http.js';
-import { computeTrust } from '../_lib/autopilot.js';
+import { computeTrust, pageLimit, parseCursor } from '../_lib/autopilot.js';
+import { isUuid } from '../_lib/validate.js';
 
 const AUTOPILOT_TYPES = ['autopilot.alert.created', 'autopilot.briefing.authored', 'autopilot.wallet.transfer'];
 
@@ -34,10 +35,11 @@ export default wrap(async (req, res) => {
 
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('agentId') || url.searchParams.get('agent_id');
-	const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
-	const cursorRaw = url.searchParams.get('cursor');
-	if (cursorRaw != null && !/^\d+$/.test(cursorRaw)) return error(res, 400, 'validation_error', 'cursor must be numeric');
-	const cursor = cursorRaw || null;
+	if (agentId && !isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
+	const limit = pageLimit(url.searchParams.get('limit'));
+	const parsed = parseCursor(url.searchParams.get('cursor'));
+	if (!parsed.ok) return error(res, 400, 'validation_error', parsed.reason);
+	const cursor = parsed.cursor;
 
 	// Resolve the set of agents to read. A specific agent must be owned by caller;
 	// otherwise aggregate across all of the caller's agents.
@@ -52,14 +54,15 @@ export default wrap(async (req, res) => {
 		agentIds = owned.map((a) => a.id);
 	}
 
+	// A caller with no agents yet has nothing to read: answer before touching the log.
+	if (!agentIds.length) {
+		return json(res, 200, { receipts: [], next_cursor: null, agents: [], trust: null });
+	}
+
 	const agents = await sql`
 		SELECT id, name, avatar_id FROM agent_identities WHERE id = ANY(${agentIds}::uuid[])
 	`;
 	const agentById = new Map(agents.map((a) => [a.id, { id: a.id, name: a.name, avatarId: a.avatar_id }]));
-
-	if (!agentIds.length) {
-		return json(res, 200, { receipts: [], next_cursor: null, agents: [], trust: null });
-	}
 
 	const rows = cursor
 		? await sql`

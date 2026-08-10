@@ -14,6 +14,7 @@ import { cors, error, json, method, readJson, wrap, rateLimited } from '../../_l
 import { clientIp, limits } from '../../_lib/rate-limit.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { invalidateSkillPriceCache } from '../../_lib/skill-price-cache.js';
+import { isUuid } from '../../_lib/validate.js';
 import { z } from 'zod';
 
 const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -71,6 +72,10 @@ export default wrap(async (req, res) => {
 	const parts = url.pathname.split('/').filter(Boolean);
 	const agentId = url.searchParams.get('id') || parts[2];
 	if (!agentId) return error(res, 400, 'validation_error', 'agent id required');
+	// This handler is reached by its own vercel.json rewrite, so the uuid gate in
+	// api/agents/[id].js never runs for it. A malformed id would otherwise hit a
+	// uuid column and turn Postgres 22P02 into a 500.
+	if (!isUuid(agentId)) return error(res, 404, 'not_found', 'agent not found');
 
 	const [agent] = await sql`
 		SELECT id, user_id FROM agent_identities

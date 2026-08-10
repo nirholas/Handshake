@@ -21,7 +21,17 @@ export default wrap(async (req, res) => {
 	if (!q) return error(res, 400, 'bad_query', 'q is required');
 	const limit = Math.min(Math.max(1, parseInt(params.get('limit') || '8', 10) || 8), 20);
 
-	const result = await searchNews(q, limit);
+	// The aggregator fan-out is a network boundary: it degrades per source, but a
+	// hard reject (DNS gone, the whole fan-out timing out) still throws. Catch it
+	// here so it lands the same documented 502 as the empty-handed case below,
+	// instead of bubbling to wrap() as a generic 500 that also pages ops with an
+	// "unhandled 5xx" alert for what is an ordinary publisher-feed outage.
+	let result;
+	try {
+		result = await searchNews(q, limit);
+	} catch {
+		return error(res, 502, 'upstream_error', 'related news is unavailable right now');
+	}
 	// `sources_ok` counts publishers whose LAST refresh succeeded, which is not
 	// the same question as "do we have anything to show". The aggregator also
 	// serves recent-but-not-just-refreshed copies, so a rail holding eight real

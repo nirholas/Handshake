@@ -13,9 +13,10 @@ import { clientIp, limits } from '../_lib/rate-limit.js';
 import {
 	cc,
 	canPostServer,
+	hasUserSession,
 	isValidToken,
 	serverHeaders,
-	userAuthHeaders,
+	withAuthRefresh,
 	toTownMessage,
 	UnconfiguredError,
 } from '../_lib/coin-communities.js';
@@ -69,8 +70,8 @@ async function handlePost(req, res, token) {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const userHeaders = userAuthHeaders(req);
-	if (!userHeaders && !canPostServer()) {
+	const signedIn = hasUserSession(req);
+	if (!signedIn && !canPostServer()) {
 		return error(res, 403, 'posting_locked', 'sign in with X to post in this world');
 	}
 
@@ -89,15 +90,29 @@ async function handlePost(req, res, token) {
 
 	const { content, walletAddress, chainId, twitterId } = parsed.data;
 
-	let result;
-	if (userHeaders) {
-		// Post as the signed-in user from their linked wallet.
-		result = await api.postMessage({
-			path: { token_address: token },
-			body: { content, walletAddress, chainId },
-			headers: userHeaders,
-		});
-	} else {
+	let result = null;
+	if (signedIn) {
+		// Post as the signed-in user from their linked wallet. withAuthRefresh
+		// renews the 1h access token off the refresh cookie first, so composing a
+		// message an hour after sign-in posts instead of silently locking.
+		const attempt = await withAuthRefresh(req, res, (h) =>
+			api.postMessage({
+				path: { token_address: token },
+				body: { content, walletAddress, chainId },
+				headers: h,
+			}),
+		);
+		if (attempt.headers) {
+			result = { data: attempt.data, error: attempt.error };
+		} else if (!canPostServer() || !twitterId) {
+			// The session is genuinely dead and there is no server-attribution path
+			// to fall back to. Say so precisely rather than reusing posting_locked,
+			// which the composer renders as "this world does not take posts".
+			return error(res, 401, 'auth_required', 'session expired, sign in with X again');
+		}
+	}
+
+	if (!result) {
 		// Server attribution requires the user's twitterId.
 		if (!twitterId) {
 			return error(res, 400, 'validation_error', 'twitterId required for server posting');

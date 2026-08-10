@@ -30,6 +30,7 @@ import { cors, json, method, wrap, error } from '../../_lib/http.js';
 import { sql } from '../../_lib/db.js';
 import { getSpendLimits, getDailySpendUsd } from '../../_lib/agent-trade-guards.js';
 import { composeEarnings } from '../../_lib/economy-shape.js';
+import { isUuid } from '../../_lib/validate.js';
 import { env } from '../../_lib/env.js';
 
 // Skill prices are denominated in USDC (6 decimals) across the platform — the
@@ -56,6 +57,12 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const id = url.searchParams.get('id') || url.pathname.split('/').filter(Boolean)[2];
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
+
+	// vercel.json rewrites /api/agents/:id/economy straight here, so the uuid gate
+	// that api/agents/[id].js applies to its own sub-resources never runs. Without
+	// this, a malformed id reaches `WHERE id = $1` on a uuid column and Postgres
+	// 22P02 surfaces to the caller as a 500.
+	if (!isUuid(id)) return error(res, 404, 'not_found', 'agent not found');
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');

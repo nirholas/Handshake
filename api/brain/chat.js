@@ -846,8 +846,21 @@ const PROVIDER_ALIASES = {
 	'o3-mini': 'o3',
 };
 
+/**
+ * The live provider key a request should be served on: a retired key maps to its
+ * successor, everything else passes through unchanged. EVERY key-keyed decision
+ * (the anon-tier gate, the thinking-model token floor, the spec lookup) has to run
+ * on this value, or the alias table is dead: the handler used to reject `gpt-4o`
+ * with a 400 before resolveBrain() ever saw it, which is exactly the key
+ * packages/brain-mcp advertises to MCP clients in its chat tool schema.
+ * Exported for tests.
+ */
+export function canonicalProviderKey(providerKey) {
+	return PROVIDER_ALIASES[providerKey] || providerKey;
+}
+
 export function resolveBrain(providerKey) {
-	const spec = PROVIDERS[PROVIDER_ALIASES[providerKey] || providerKey];
+	const spec = PROVIDERS[canonicalProviderKey(providerKey)];
 	if (!spec) {
 		return {
 			ok: false,
@@ -1135,7 +1148,10 @@ export default wrap(async function handler(req, res) {
 		return error(res, e.status || 400, 'bad_request', e.message);
 	}
 
-	const providerKey = String(body.provider || 'gpt-oss-120b');
+	// Retired keys resolve to their successor before anything else reads them, so
+	// the anon-tier gate, the plan, and the output-token floor all judge the model
+	// that will actually serve the turn rather than the name the caller sent.
+	const providerKey = canonicalProviderKey(String(body.provider || 'gpt-oss-120b'));
 	const spec = PROVIDERS[providerKey];
 	if (!spec) {
 		return error(res, 400, 'unknown_provider', `unknown provider: ${providerKey}`, {
@@ -1148,17 +1164,20 @@ export default wrap(async function handler(req, res) {
 		return error(res, 401, 'unauthorized', 'sign in to use this model');
 	}
 
-	const plan = resolveBrain(providerKey);
-	if (!plan.ok) {
-		return error(res, plan.status, plan.code, plan.message,
-			plan.available ? { available: plan.available } : undefined);
-	}
-
+	// Validate the caller's own input before resolving routes: a malformed message
+	// list is the caller's 400 to fix, and reporting it as the provider's 503
+	// ("add your own key") sends them after the wrong problem entirely.
 	let messages;
 	try {
 		messages = validateMessages(body.messages);
 	} catch (e) {
 		return error(res, e.status || 400, 'bad_request', e.message);
+	}
+
+	const plan = resolveBrain(providerKey);
+	if (!plan.ok) {
+		return error(res, plan.status, plan.code, plan.message,
+			plan.available ? { available: plan.available } : undefined);
 	}
 
 	const system = typeof body.system === 'string' ? body.system.slice(0, 8000) : undefined;

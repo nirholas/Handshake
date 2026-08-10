@@ -12,12 +12,23 @@
 // (00-CONTEXT.md verified fact #3) — pass ?network=bscTestnet to probe the
 // write network instead.
 
-import { cors, json, method, wrap, error } from '../_lib/http.js';
+import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { probeBlockTime, BnbRpcError } from '../_lib/bnb/chains.js';
 
 const TTL_MS = 10_000;
 const _cache = new Map(); // network -> { value, expiresAt }
+
+// Same alias set api/bnb/babt-check.js and api/bnb/world-config.js accept, and
+// the same refusal to guess: an unrecognized `network` is a caller bug, so say
+// so instead of silently answering about a different chain than the one asked
+// about. Returns null for "unknown"; the empty value means "use the default".
+function normalizeNetworkParam(raw) {
+	const v = String(raw ?? '').trim().toLowerCase();
+	if (v === 'testnet' || v === '97' || v === 'bsctestnet') return 'bscTestnet';
+	if (v === '' || v === 'mainnet' || v === '56' || v === 'bscmainnet') return 'bscMainnet';
+	return null;
+}
 
 async function build(network) {
 	const now = Date.now();
@@ -34,11 +45,14 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const rl = await limits.publicIp(clientIp(req));
-	if (!rl.success) return json(res, 429, { error: 'rate_limited', error_description: 'too many requests' }, { 'cache-control': 'no-store' });
+	if (!rl.success) return rateLimited(res, rl);
 
 	const p = new URL(req.url, `http://${req.headers.host || 'x'}`).searchParams;
 	const requested = p.get('network');
-	const network = requested === 'bscTestnet' || requested === 'testnet' || requested === '97' ? 'bscTestnet' : 'bscMainnet';
+	const network = normalizeNetworkParam(requested);
+	if (network === null) {
+		return error(res, 400, 'bad_request', `unknown network "${String(requested).slice(0, 64)}", use "mainnet" or "testnet"`);
+	}
 
 	try {
 		const payload = await build(network);

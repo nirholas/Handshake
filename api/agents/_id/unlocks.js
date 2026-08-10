@@ -14,7 +14,7 @@
 // Real capability gates (e.g. the arena elite floor) call requireUnlock() from the
 // protected route itself; this endpoint is the read + the cosmetic-claim surface.
 
-import { cors, json, error, method, wrap, rateLimited, readJson } from '../../_lib/http.js';
+import { cors, json, error, method, wrap, rateLimited, readJson, varyOn } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { requireCsrf } from '../../_lib/csrf.js';
@@ -46,11 +46,19 @@ export const handleUnlocks = wrap(async (req, res, agentId, action) => {
 			isOwner = Boolean(own);
 		}
 
+		// `is_owner` gates the client's claim controls, so an authenticated read is
+		// personal: only the anonymous variant may sit in the shared CDN cache
+		// under this URL. Vary states the credential is part of the cache key.
+		varyOn(res, 'Cookie', 'Authorization');
 		return json(
 			res,
 			200,
 			{ ...payload, is_owner: isOwner },
-			{ 'cache-control': 'public, max-age=30, stale-while-revalidate=180' },
+			{
+				'cache-control': userId
+					? 'private, no-store'
+					: 'public, max-age=30, stale-while-revalidate=180',
+			},
 		);
 	}
 

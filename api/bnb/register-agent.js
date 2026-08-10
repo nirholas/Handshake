@@ -22,6 +22,19 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { relayGaslessRegistration, RegisterRelayError } from '../_lib/bnb/erc8004-gasless.js';
 import { BNB_CHAINS } from '../_lib/bnb/chains.js';
 
+// erc8004-gasless.js's own normalizer maps anything it does not recognize to
+// bscTestnet, which is the right default for an absent value but the wrong
+// answer for a typo: `network: "bscTestnett"` would quietly register on a
+// chain the caller never asked for. Validate at the boundary instead, and pass
+// undefined through untouched so the lib keeps owning the default.
+function normalizeNetworkParam(raw) {
+	if (raw == null || raw === '') return undefined;
+	const v = String(raw).trim().toLowerCase();
+	if (v === 'testnet' || v === '97' || v === 'bsctestnet') return 'bscTestnet';
+	if (v === 'mainnet' || v === '56' || v === 'bsc' || v === 'bscmainnet') return 'bscMainnet';
+	return null;
+}
+
 function withExplorerUrl(result) {
 	const explorer = BNB_CHAINS[result.network]?.explorer;
 	if (!explorer) return result;
@@ -45,10 +58,14 @@ export default wrap(async (req, res) => {
 	}
 
 	const signedRegisterTx = body?.signedRegisterTx;
-	const network = body?.network;
 
 	if (!signedRegisterTx || typeof signedRegisterTx !== 'string') {
 		return error(res, 400, 'bad_request', 'signedRegisterTx (a 0x-prefixed signed raw transaction) is required');
+	}
+
+	const network = normalizeNetworkParam(body?.network);
+	if (network === null) {
+		return error(res, 400, 'bad_request', `unknown network "${String(body?.network).slice(0, 64)}", use "bscTestnet" or "bscMainnet"`);
 	}
 
 	try {

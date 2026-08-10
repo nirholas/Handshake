@@ -40,7 +40,9 @@ export default wrap(async (req, res) => {
 	const items = buildCatalog({ rarity: rarity || null, ownedIds });
 
 	// Per-account responses must not be shared at the edge; the anonymous catalog
-	// is static and cacheable. Vary so a CDN never crosses the two.
+	// is static and cacheable. The two can never cross: `account` is part of the
+	// URL, so it is part of every shared cache's key, and the per-account variant
+	// is additionally marked private/no-store so no shared cache retains it.
 	const cacheControl = account
 		? 'private, no-store'
 		: 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400';

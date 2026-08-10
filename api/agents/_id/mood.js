@@ -16,7 +16,8 @@
 
 import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin } from '../../_lib/auth.js';
-import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
+import { cors, json, method, readJson, wrap, error, rateLimited } from '../../_lib/http.js';
+import { limits } from '../../_lib/rate-limit.js';
 import { parse } from '../../_lib/validate.js';
 import { z } from 'zod';
 import { BASELINE, clampSensitivity, moodLabel, SIGNALS } from '../../../src/agents/mood-model.js';
@@ -83,6 +84,14 @@ export const handleMood = wrap(async (req, res, id, action) => {
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+
+	// Every mood POST appends a permanent agent_mood_history row, so the writes
+	// need the same per-user ceiling the sibling persona writes carry. Reads are
+	// a bounded single query and stay unmetered here.
+	if (req.method === 'POST') {
+		const rl = await limits.widgetWrite(auth.userId);
+		if (!rl.success) return rateLimited(res, rl, 'too many mood updates, slow down');
+	}
 
 	const [agent] = await sql`
 		SELECT id, user_id, meta FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL

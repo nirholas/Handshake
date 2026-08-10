@@ -16,6 +16,7 @@
  * /api/agents/:id/sign            — owner-only: sign message with server wallet
  * /api/agents/:id/usage           — owner-only: LLM usage stats
  * /api/agents/:id/achievements    — public: earned + locked achievements from real platform data
+ * /api/agents/:id/reserves        — public: proof-of-reserves (alias of /solana/reserves)
  *
  * /api/agents/:id/livekit-token     — GET short-lived LiveKit room JWT
  * /api/agents/:id/embed             — POST text → 1024-dim embedding vector
@@ -236,6 +237,14 @@ export default wrap(async function handler(req, res) {
 	if (sub === 'reputation') {
 		const mod = await import('./_id/reputation.js');
 		return mod.handleReputation(req, res, id);
+	}
+
+	// Proof-of-reserves is documented at both /reserves and /solana/reserves (the
+	// latter dispatches from solana-wallet.js). Without this branch the short path
+	// fell through to handleGetOne and quietly answered with the agent record.
+	if (sub === 'reserves') {
+		const mod = await import('./_id/reserves.js');
+		return mod.handleReserves(req, res, id);
 	}
 
 	if (sub === 'achievements') {

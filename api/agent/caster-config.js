@@ -2,45 +2,54 @@
 //
 // Generates a scoped API key for an agent and returns a ready-to-copy
 // .env file + Docker run command for the agent-screen-caster service.
-// The key is stored hashed — this is the only time the plaintext is returned.
+// The key is stored hashed: this is the only time the plaintext is returned.
 //
 // Body: { agentId: string }
-// Auth: session cookie or bearer token
+// Auth: session cookie (CSRF-guarded) or a bearer token carrying the `profile`
+// scope. Same contract as api/api-keys.js, because this endpoint mints exactly
+// the same kind of live key.
 
-import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
-import { getSessionUser, authenticateBearer } from '../_lib/auth.js';
+import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
+import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
+import { requireCsrf } from '../_lib/csrf.js';
+import { randomToken, sha256 } from '../_lib/crypto.js';
+import { isUuid } from '../_lib/validate.js';
 import { sql } from '../_lib/db.js';
 
-// Mirrored from api/api-keys.js — same hashing, prefix, and storage.
-import { randomBytes, createHash } from 'crypto';
-
 const CASTER_SCOPE = 'agents:read agents:write';
-
-function randomToken(len) {
-	return randomBytes(len).toString('base64url').slice(0, len);
-}
-
-async function sha256(str) {
-	return createHash('sha256').update(str).digest('hex');
-}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const auth = await getSessionUser(req).catch(() => null)
-		|| await authenticateBearer(req).catch(() => null);
-	if (!auth?.userId) return error(res, 401, 'unauthorized', 'sign in required');
+	// getSessionUser returns the user row (`id`), authenticateBearer takes the
+	// raw token and returns `{ userId, scope }`. Mixing the two shapes up is what
+	// made every call here answer 401 regardless of credentials.
+	const session = await getSessionUser(req);
+	const bearer = session ? null : await authenticateBearer(extractBearer(req));
+	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
+	if (bearer && !hasScope(bearer.scope, 'profile')) {
+		return error(res, 403, 'insufficient_scope', 'requires profile scope');
+	}
+	const userId = session?.id ?? bearer.userId;
 
-	const body = await readJson(req, res);
-	if (!body) return;
-	const { agentId } = body;
-	if (!agentId) return error(res, 400, 'validation_error', 'agentId required');
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	// Minting a live key off a cookie session is precisely the request worth
+	// forging cross-site, so the cookie lane carries the same CSRF guard as
+	// api/api-keys.js. requireCsrf is a no-op for bearer callers.
+	if (!(await requireCsrf(req, res, userId))) return;
+
+	const body = await readJson(req);
+	const agentId = typeof body?.agentId === 'string' ? body.agentId.trim() : '';
+	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'valid agentId required');
 
 	// Confirm the caller owns this agent.
 	const [agentRow] = await sql`
 		SELECT id, name, display_name FROM agent_identities
-		WHERE id = ${agentId} AND user_id = ${auth.userId} AND deleted_at IS NULL
+		WHERE id = ${agentId} AND user_id = ${userId} AND deleted_at IS NULL
 	`;
 	if (!agentRow) return error(res, 403, 'forbidden', 'not your agent');
 
@@ -50,16 +59,16 @@ export default wrap(async (req, res) => {
 	const rawToken  = `sk_live_${randomToken(32)}`;
 	const prefix    = rawToken.slice(0, 14);
 	const tokenHash = await sha256(rawToken);
-	const keyName   = `Screen Caster — ${agentName}`;
+	const keyName   = `Screen Caster: ${agentName}`;
 
 	const [keyRow] = await sql`
 		INSERT INTO api_keys (user_id, name, token_hash, prefix, scope)
-		VALUES (${auth.userId}, ${keyName}, ${tokenHash}, ${prefix}, ${CASTER_SCOPE})
+		VALUES (${userId}, ${keyName}, ${tokenHash}, ${prefix}, ${CASTER_SCOPE})
 		RETURNING id, created_at
 	`;
 
 	const envBlock = [
-		`# Screen Caster — ${agentName}`,
+		`# Screen Caster: ${agentName}`,
 		`# Generated ${new Date().toISOString()}`,
 		``,
 		`AGENT_ID=${agentId}`,

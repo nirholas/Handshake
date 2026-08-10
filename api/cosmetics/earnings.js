@@ -23,22 +23,19 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'creator_required', 'query parameter "creator" must be a Solana wallet address');
 	}
 
+	// A creator with no sales yet already reads back as zeroed totals from the
+	// ledger — not a 404 — so the dashboard renders the designed empty state.
+	// A read FAILURE is a different thing entirely and must not be flattened into
+	// the same zeros: telling a creator they earned nothing because the ledger was
+	// unreachable is fabricated financial data. Surface it as a retryable 503 so
+	// the dashboard shows its error state instead of a wrong balance.
 	let earnings;
 	try {
 		earnings = await creatorEarnings(creator);
 	} catch (err) {
 		console.warn('[cosmetics/earnings] read failed:', err?.message);
-		earnings = null;
-	}
-	// A creator with no sales yet → zeroed totals, not a 404, so the dashboard
-	// renders the designed empty state.
-	if (!earnings) {
-		earnings = {
-			creatorWallet: creator,
-			currency: 'USDC',
-			totals: { sales: 0, buyers: 0, earnedUsdc: 0, paidUsdc: 0, pendingUsdc: 0, earned30dUsdc: 0, grossUsdc: 0, firstSaleAt: null, lastSaleAt: null },
-			perCoin: [], perCosmetic: [], recent: [],
-		};
+		return error(res, 503, 'ledger_unavailable',
+			'the cosmetic sales ledger is temporarily unreachable — retry in a moment');
 	}
 
 	return json(res, 200, earnings, { 'cache-control': 'no-store' });

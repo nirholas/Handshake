@@ -501,7 +501,15 @@ app.use((err, req, res, next) => {
 			});
 			return;
 		}
-		res.status(status).json({ error: 'bad_request', message: err.message });
+		// Same reason as the 413 branch above: client error paths read
+		// error/error_description, so a body-parser rejection that carried only
+		// `message` rendered as an empty reason next to every handler-emitted
+		// 4xx on the same endpoint.
+		res.status(status).json({
+			error: 'bad_request',
+			error_description: err.message,
+			message: err.message,
+		});
 		return;
 	}
 	console.error('[server] unexpected middleware error:', err);
