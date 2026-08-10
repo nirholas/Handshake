@@ -77,7 +77,7 @@ export const MODEL_CATALOG = {
 	'openai/gpt-oss-20b:free':                    { provider: 'openrouter', tools: true },
 	'nvidia/nemotron-3-super-120b-a12b:free':     { provider: 'openrouter', tools: true },
 	'google/gemma-4-31b-it:free':                 { provider: 'openrouter', tools: true },
-	'inclusionai/ling-3.0-flash:free':            { provider: 'openrouter', tools: true },
+	'inclusionai/ling-3.0-tiny:free':             { provider: 'openrouter', tools: true },
 
 	// ── OpenRouter paid Claude mirrors: the no-ANTHROPIC_API_KEY escape hatch ──
 	// api/chat.js and _lib/llm.js reach Anthropic ONLY through api.anthropic.com,
@@ -344,7 +344,7 @@ export const OPENROUTER_SIBLINGS = [
 	DEFAULT_FREE_MODEL,
 	'nvidia/nemotron-3-super-120b-a12b:free',
 	'google/gemma-4-31b-it:free',
-	'inclusionai/ling-3.0-flash:free',
+	'inclusionai/ling-3.0-tiny:free',
 ];
 
 /**
