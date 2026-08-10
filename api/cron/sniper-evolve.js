@@ -16,8 +16,7 @@
 //   SNIPER_EVOLVE_APPLY = 1   enact mutations (default: dry-run, log only)
 //   plus the EVOLVE_* tunables read by runEvolve (fleet budget, floors, samples).
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { runEvolve } from '../../scripts/sniper-evolve.mjs';
 import { requireCron } from '../_lib/cron-auth.js';
 

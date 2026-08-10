@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-10T16:28:46.720Z",
+	"generated_at": "2026-08-10T16:34:05.109Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -9,23 +9,22 @@
 		{
 			"date": "2026-08-10",
 			"type": "update",
-			"title": "The embed release manifest answers cheap polls and says plainly when a build is missing",
-			"summary": "Sites that pin an <agent-3d> bundle version can poll /api/agent-3d/versions to learn about a new release. That endpoint now returns an ETag derived from the manifest contents, so a poller that sends the tag back gets an empty 304 Not Modified between releases instead of re-downloading the same JSON, and gets the full manifest the moment a new version publishes. When a deploy ships without the manifest the endpoint used to answer \"not found\" whether the file was missing or corrupt; it now says which of the two it is, so the fix is obvious from the response alone. The manifest is also documented for embedders alongside the static /agent-3d/versions.json copy.",
-			"link": "/docs/web-component",
+			"title": "The CA to x402 tool now always hands you a three.ws payment address",
+			"summary": "Paste a contract address into the CA to x402 tool and it generates a paid data service for that token, complete with copy-paste commands you run to pay for and call it. Those commands were built from the web address in your browser's request, which anyone could forge: a crafted link could have handed a visitor a set of \"pay here\" commands pointing at somebody else's server, and because the answer is cached at the edge, that swapped copy could then have been served on to other visitors. The generated endpoint and every snippet are now pinned to three.ws itself, so what you copy is always ours no matter how the page was reached.",
+			"link": "/ca2x402",
 			"tags": [
-				"improvement",
-				"sdk"
+				"security",
+				"fix"
 			]
 		},
 		{
 			"date": "2026-08-10",
 			"type": "update",
-			"title": "The public asset catalog now answers a bad filter honestly",
-			"summary": "The open asset list at /api/assets, which anyone can call to browse our accessories, starter animations, and lighting environments, used to answer a mistyped filter with an empty list and a 200 OK, then cache that empty answer for an hour. A typo looked exactly like an empty catalog. It now returns a clear error naming the accepted values, and never caches it. Two more fixes came out of the same pass: browsers can read the response cross-origin on error replies and preflight checks, not just on success, and HEAD requests from uptime monitors and CDNs are answered instead of rejected. The environment list is also read straight from the viewer's own presets now, so names can no longer drift between the site and the API.",
-			"link": null,
+			"title": "The chat plugin now tells you when your Agent ID is wrong",
+			"summary": "In the SperaxOS and LobeChat plugin, a mistyped or deleted Agent ID used to come back as a cheerful confirmation while the avatar panel stayed empty, so the model told you it had bound an agent that does not exist. The plugin now checks the ID against your real agents before answering: a bad ID returns a clear error pointing you back to the dashboard to recopy it, and a good one comes back with the agent name so you can see at a glance which identity the panel is wearing. Stray spaces around a pasted ID are trimmed instead of breaking the binding.",
+			"link": "/docs/embedding",
 			"tags": [
-				"fix",
-				"improvement"
+				"fix"
 			]
 		},
 		{
@@ -3947,7 +3946,7 @@
 			"type": "update",
 			"title": "Solana name registration works again, and embeds stop crashing on older phones",
 			"summary": "Claiming a .sol domain for an agent, and claiming your own name under threews.sol, both ran against a Solana naming library so old that the functions doing the registering had been renamed out from under us: the calls resolved to nothing and the whole attempt failed. The library is now current, every naming path has been re-checked against the live Solana mainnet, and handing a fresh subdomain to its new owner no longer trips over an account that the same transaction is still creating. Looking up a wallet's primary name also stops reporting a name the wallet no longer owns. Separately, the embeddable 3D avatar used a newer JavaScript feature than some older Android browsers ship, so the avatar page went blank instead of loading; the missing piece is now included in the embed, which matters because the embed is designed to run on other people's sites where we do not get to pick the browser.",
-			"link": "/embed",
+			"link": "/docs/embedding",
 			"tags": [
 				"fix"
 			]

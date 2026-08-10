@@ -467,3 +467,68 @@ describe('POST /api/agents/:id/trade — execution', () => {
 		expect(ammExit.buildAmmSellInstructions).toHaveBeenCalled();
 	});
 });
+
+// ── PUT /trade/limits input validation ───────────────────────────────────────
+// normalizeTradeLimits coerces anything it cannot read into "no cap" (or the
+// default), so before the boundary validated its input a typo like
+// { per_trade_sol: -1 } DELETED the owner's existing per-trade ceiling and
+// answered 200 as though it had tightened it. A spend guardrail must never be
+// relaxed by a value the server could not parse.
+
+describe('PUT /api/agents/:id/trade/limits — input validation', () => {
+	async function putLimits(body) {
+		const req = mockReq({ method: 'PUT', url: `/api/agents/${AGENT_ID}/trade/limits`, body });
+		const res = mockRes();
+		await handler(req, res, AGENT_ID, 'limits');
+		return res;
+	}
+
+	function savedLimits() {
+		const write = sqlState.calls.filter((c) => /update agent_identities set meta/.test(c.q)).pop();
+		return write ? JSON.parse(write.values[0]).trade_limits : null;
+	}
+
+	it('rejects a negative cap instead of silently clearing it', async () => {
+		const res = await putLimits({ per_trade_sol: -1 });
+		expect(res.statusCode).toBe(400);
+		expect(res.json.error).toBe('validation_error');
+		expect(savedLimits()).toBeNull();
+	});
+
+	it('rejects an unparseable cap instead of silently clearing it', async () => {
+		const res = await putLimits({ daily_budget_sol: 'abc' });
+		expect(res.statusCode).toBe(400);
+		expect(savedLimits()).toBeNull();
+	});
+
+	it('rejects max_concurrent below 1, which normalization would read as "no ceiling"', async () => {
+		const res = await putLimits({ max_concurrent: 0 });
+		expect(res.statusCode).toBe(400);
+		expect(savedLimits()).toBeNull();
+	});
+
+	it('rejects a non-boolean kill switch', async () => {
+		const res = await putLimits({ kill_switch: 'yes' });
+		expect(res.statusCode).toBe(400);
+		expect(savedLimits()).toBeNull();
+	});
+
+	it('rejects an out-of-range price-impact breaker', async () => {
+		const res = await putLimits({ max_price_impact_pct: 500 });
+		expect(res.statusCode).toBe(400);
+		expect(savedLimits()).toBeNull();
+	});
+
+	it('accepts real caps, numeric strings, and an explicit null clear', async () => {
+		const set = await putLimits({ per_trade_sol: 0.5, daily_budget_sol: '2', max_concurrent: 3, kill_switch: true });
+		expect(set.statusCode).toBe(200);
+		expect(set.json.data.limits.per_trade_sol).toBe(0.5);
+		expect(set.json.data.limits.daily_budget_sol).toBe(2);
+		expect(set.json.data.limits.max_concurrent).toBe(3);
+		expect(set.json.data.limits.kill_switch).toBe(true);
+
+		const cleared = await putLimits({ per_trade_sol: null });
+		expect(cleared.statusCode).toBe(200);
+		expect(cleared.json.data.limits.per_trade_sol).toBeNull();
+	});
+});

@@ -21,8 +21,7 @@
 // Signer secrets themselves are optional: an unconfigured signer is skipped, not
 // flagged — only configured-but-underfunded signers alert.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
 import { requireCron } from '../_lib/cron-auth.js';

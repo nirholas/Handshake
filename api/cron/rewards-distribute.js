@@ -16,8 +16,7 @@
 // Standalone (not [name].js) so the import graph stays minimal — just the token
 // config, the holder snapshot reader, and the pure distribution math.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { TOKEN_MINT, ATOMICS_PER_TOKEN, treasuryWalletOrNull, rewardsWalletOrNull } from '../_lib/token/config.js';
 import { fetchHolderBalances } from '../_lib/coin/holders.js';
 import { getBalances } from '../_lib/balances.js';

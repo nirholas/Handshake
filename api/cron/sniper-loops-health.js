@@ -13,7 +13,7 @@
 // rather than swallowed: an unqueryable ledger is exactly the kind of silence
 // this watchdog exists to catch.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { LOOPS, classifyLlmRouting, classifyLoopHealth, describeStale, findWalletlessArms, isFallbackAnswer } from '../_lib/sniper-loops-health.js';

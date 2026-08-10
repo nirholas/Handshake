@@ -18,7 +18,7 @@
 // Bounded so a 2-minute cron can never run away: only feeds with recent publisher
 // activity emit, and each subscription delivers at most N emissions per run.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { syncFeedEmissions, deliverSubscription } from '../_lib/signal-engine.js';
 import { requireCron } from '../_lib/cron-auth.js';

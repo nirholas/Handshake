@@ -28,8 +28,7 @@
 //   SNIPER_OPTIMIZER_WINDOW = 24h | 7d | 30d     (default 7d)
 //   SNIPER_OPTIMIZER_MAX_APPLIES = integer        (default 5 arms mutated/run)
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { recordDecision } from '../_lib/reasoning-ledger.js';
 import { proposeAdjustments } from '../_lib/sniper-optimizer.js';
@@ -193,8 +192,8 @@ export default wrapCron(async (req, res) => {
 			if (willApply) {
 				// Enact each proposal on the strategy row (bounded values only).
 				for (const p of proposals) {
-						await applyProposal(r.strategy_id, p.field, p.to);
-					}
+					await applyProposal(r.strategy_id, p.field, p.to);
+				}
 				// Log the tuning to the agent's tamper-evident ledger so the loop's
 				// own decisions are auditable next to the trades that drove them.
 				const dec = await recordDecision({

@@ -43,6 +43,7 @@ import { execSync } from 'node:child_process';
 import './lib/gcloud-path.mjs';
 import { createRequire } from 'node:module';
 import { budgetWeightFor, classifyAutonomy } from '../api/_lib/sniper-autonomy.js';
+import { resolveDatabaseUrl as resolveConfiguredDatabaseUrl } from '../api/_lib/env.js';
 const require = createRequire(import.meta.url);
 const { Pool } = require('@neondatabase/serverless');
 
@@ -61,8 +62,18 @@ const REVIVE_AFTER_HOURS = num('EVOLVE_REVIVE_HOURS', 24);        // re-test a r
 // safety field appearing here would be a bug; the list is short and reviewed.
 const WRITABLE = new Set(['enabled', 'daily_budget_lamports']);
 
+// Ask the platform's own resolver first. It reads every DATABASE_URL alias and
+// the .env file, which is how the connection string is configured everywhere
+// except a bare shell, so the cron (api/cron/sniper-evolve.js) resolves without
+// ever reaching for a CLI. That mattered: a raw `process.env.DATABASE_URL` read
+// missed the alias set, and the gcloud fallback below then ran inside the
+// request, where it either fails on expired local credentials or, in the Cloud
+// Run container that has no gcloud binary, turns the whole cron into an error
+// response. The shellout survives only as the last resort for an operator
+// running the CLI on a machine with no env configured at all.
 function resolveDatabaseUrl() {
-	if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+	const configured = resolveConfiguredDatabaseUrl();
+	if (configured) return configured;
 	const svc = JSON.parse(execSync(
 		'gcloud run services describe three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --format=json',
 		{ encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
