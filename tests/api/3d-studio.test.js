@@ -517,6 +517,27 @@ describe('GET /api/3d/studio?job= — poll lifecycle', () => {
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('pending');
 	});
+
+	it('ends the poll loop when the lane is unconfigured here, leaking no deployment internals', async () => {
+		// 'pending' on a job that can never finish leaves the GPT polling forever.
+		// The published Actions contract has no 503 on this operation, so the
+		// terminal answer is its documented status:'error' state.
+		globalThis.fetch = vi.fn(async () =>
+			jsonResponse({ error: 'unconfigured', message: 'Set NVIDIA_API_KEY.' }, { status: 503 }),
+		);
+		const { res, body } = await dispatch(makeReq({ method: 'GET', url: `/api/3d/studio?job=${SUBMIT_QUEUED.job_id}` }), makeRes());
+		expect(res.statusCode).toBe(200);
+		expect(body.status).toBe('error');
+		expect(body.error).not.toMatch(/NVIDIA_API_KEY/);
+		expectCleanWire(body);
+	});
+
+	it('keeps an unlabelled upstream 5xx as pending so the loop retries', async () => {
+		globalThis.fetch = vi.fn(async () => jsonResponse({ error: 'boom' }, { status: 502 }));
+		const { res, body } = await dispatch(makeReq({ method: 'GET', url: `/api/3d/studio?job=${SUBMIT_QUEUED.job_id}` }), makeRes());
+		expect(res.statusCode).toBe(200);
+		expect(body.status).toBe('pending');
+	});
 });
 
 describe('endpoint source — GPT Store compliance', () => {

@@ -185,4 +185,44 @@ describe('GET /api/3d content negotiation', () => {
 		expect(res._body).toContain('three.ws 3D API');
 		expect(res._body).toContain('Paid tiers');
 	});
+
+	it('varies on Accept so the CDN cannot serve one variant to the other client', async () => {
+		// The response is publicly cacheable for 5 minutes and its body depends on
+		// Accept. Without Vary the edge stores whichever variant it saw first and
+		// hands an HTML page to an agent that asked for JSON.
+		for (const accept of ['application/json', 'text/html']) {
+			const res = mockRes();
+			await threeIndex(mockReq({ accept }), res);
+			expect(String(res.getHeader('cache-control'))).toContain('s-maxage=300');
+			expect(String(res.getHeader('vary')).toLowerCase()).toContain('accept');
+		}
+	});
+});
+
+describe('GET /api/3d/openapi', () => {
+	it('serves a valid, CDN-cacheable OpenAPI 3.1 doc built from the live catalog', async () => {
+		const openapiHandler = (await import('../api/3d/openapi.js')).default;
+		const res = mockRes();
+		await openapiHandler(mockReq({ accept: 'application/json' }), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.getHeader('content-type')).toMatch(/application\/json/);
+		expect(String(res.getHeader('cache-control'))).toContain('s-maxage=300');
+		const doc = res.json;
+		expect(doc.openapi).toBe('3.1.0');
+		expect(validateOpenApiDoc(doc)).toEqual([]);
+		// Every free endpoint the index advertises is callable from the spec.
+		const indexRes = mockRes();
+		await threeIndex(mockReq({ accept: 'application/json' }), indexRes);
+		for (const ep of indexRes.json.endpoints) expect(doc.paths[ep.path]).toBeTruthy();
+	});
+
+	it('rejects a non-GET method rather than generating the doc', async () => {
+		const openapiHandler = (await import('../api/3d/openapi.js')).default;
+		const req = mockReq({ accept: 'application/json' });
+		req.method = 'POST';
+		const res = mockRes();
+		await openapiHandler(req, res);
+		expect(res.statusCode).toBe(405);
+	});
 });

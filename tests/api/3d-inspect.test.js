@@ -219,4 +219,17 @@ describe('input validation', () => {
 		expect(res.statusCode).toBe(429);
 		expect(body.error).toBe('rate_limited');
 	});
+
+	it('a URL pointing at a private address is the caller fault → 400, not a 502', async () => {
+		// The SSRF guard refuses this before any bytes are fetched. It has to reach
+		// the caller as invalid_url: a 502 says "our upstream broke, retry", which
+		// sends an agent into a retry loop over a URL that can never be allowed.
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: '/api/3d/inspect?url=https://127.0.0.1/model.glb' }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(400);
+		expect(body.error).toBe('invalid_url');
+		expect(body.error_description).toMatch(/private address/i);
+	});
 });

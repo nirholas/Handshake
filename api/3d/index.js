@@ -68,7 +68,14 @@ export default wrap(async (req, res) => {
 
 	// Public + CDN-cacheable: the catalog only changes on deploy, so a short edge
 	// cache keeps this instant without hiding new endpoints for long.
-	const cache = { 'cache-control': 'public, s-maxage=300, stale-while-revalidate=600' };
+	// One URL, two representations (HTML for a browser, JSON for an agent), so it
+	// MUST vary on Accept: without it the CDN caches whichever variant it saw
+	// first and serves that to everyone for the next 5 minutes, which is how an
+	// agent asking for JSON ends up parsing an HTML page.
+	const cache = {
+		'cache-control': 'public, s-maxage=300, stale-while-revalidate=600',
+		vary: 'accept',
+	};
 
 	if (String(req.headers.accept || '').includes('text/html')) {
 		return text(res, 200, renderHtml(payload, origin), {

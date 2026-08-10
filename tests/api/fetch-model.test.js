@@ -77,4 +77,15 @@ describe('fetchModel SSRF guard', () => {
 			FetchModelError,
 		);
 	});
+
+	it('raises a private-address refusal as FetchModelError, not a raw SsrfError', async () => {
+		// Callers branch on the CLASS to separate a caller-fault URL (400) from an
+		// upstream failure (502). The per-hop resolution inside the redirect loop
+		// used to let the SsrfError escape untyped, so a blocked URL was reported
+		// to the caller as "our upstream broke, retry" on a URL that can never work.
+		dnsState.records = [{ address: '10.1.2.3', family: 4 }];
+		await expect(fetchModel('https://internal.example.com/model.glb')).rejects.toBeInstanceOf(
+			FetchModelError,
+		);
+	});
 });
