@@ -18,6 +18,7 @@ import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
+import { isUuid } from '../_lib/validate.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
 import { getSpendLimits, setSpendLimits, SpendLimitError } from '../_lib/agent-trade-guards.js';
 import {
@@ -155,6 +156,9 @@ async function handleSettings(req, res, id, userId) {
 
 // ── POST revoke / revoke-all ────────────────────────────────────────────────────
 async function handleRevoke(req, res, id, userId, cid) {
+	// The capability id is a uuid column; a malformed one reaches Postgres as
+	// error 22P02 and would surface as a 500. An unknown grant is a 404 either way.
+	if (!isUuid(cid)) return error(res, 404, 'not_found', 'capability not found');
 	const existing = await getCapability(cid);
 	if (!existing || String(existing.agent_id) !== String(id)) {
 		return error(res, 404, 'not_found', 'capability not found');

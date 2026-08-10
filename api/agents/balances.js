@@ -188,8 +188,9 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
+	// getSessionUser returns the user row, so the id lives on `.id` (not `.userId`).
 	const auth = await getSessionUser(req).catch(() => null);
-	const rl = await limits.walletRead(auth?.userId || clientIp(req));
+	const rl = await limits.walletRead(auth?.id || clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const body = await readJson(req).catch(() => null);
@@ -209,7 +210,7 @@ export default wrap(async (req, res) => {
 	const entries = rows.map((row) => ({
 		agentId: row.id,
 		address: row.meta?.solana_address || null,
-		isOwner: !!(auth && row.user_id === auth.userId),
+		isOwner: !!(auth && row.user_id === auth.id),
 		ownerId: row.user_id,
 		forkedFrom: row.meta?.forked_from || null,
 		summary: null,

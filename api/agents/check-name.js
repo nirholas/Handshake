@@ -3,6 +3,7 @@
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
+import { isUuid } from '../_lib/validate.js';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
@@ -34,7 +35,12 @@ export default wrap(async (req, res) => {
 
 	const url = new URL(req.url, 'http://x');
 	const name = (url.searchParams.get('name') || '').trim();
+	// agent_id feeds a `WHERE id != $1` against a uuid column. A malformed value
+	// otherwise surfaces Postgres 22P02 to the caller as a 500; reject it here.
 	const agentId = (url.searchParams.get('agent_id') || '').trim() || null;
+	if (agentId && !isUuid(agentId)) {
+		return error(res, 400, 'validation_error', 'agent_id must be a uuid');
+	}
 
 	if (!name) return json(res, 200, { available: false, reason: 'invalid' });
 

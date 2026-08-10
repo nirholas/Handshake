@@ -24,7 +24,14 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'validation_error', 'invalid wallet address');
 	}
 	const address = raw.toLowerCase();
-	const chainId = Number(url.searchParams.get('chain_id')) || null;
+	// A non-numeric chain_id used to coerce to NaN and then to null, silently
+	// dropping the filter and returning every chain's agents as if the caller had
+	// asked for that. A filter that cannot be honored is a 400, not a wider result.
+	const rawChainId = (url.searchParams.get('chain_id') || '').trim();
+	if (rawChainId && !/^[0-9]+$/.test(rawChainId)) {
+		return error(res, 400, 'validation_error', 'chain_id must be a positive integer');
+	}
+	const chainId = rawChainId ? Number(rawChainId) : null;
 
 	const rows = chainId
 		? await sql`

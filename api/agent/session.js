@@ -12,12 +12,14 @@
 //   commands: { node, docker }  // ready-to-run launch strings
 // }
 //
-// Auth: requires a signed-in session or an existing bearer token.
+// Auth: requires a signed-in session (plus an X-CSRF-Token header) or an
+// existing bearer token.
 
 import { SignJWT } from 'jose';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { isUuid } from '../_lib/validate.js';
+import { requireCsrf } from '../_lib/csrf.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 
@@ -63,6 +65,12 @@ export default wrap(async (req, res) => {
 		|| (await authenticateBearer(extractBearer(req)).catch(() => null))?.userId
 		|| null;
 	if (!userId) return error(res, 401, 'unauthorized', 'sign in required');
+
+	// Minting a 7-day bearer token is a state-changing POST, and a cookie rides
+	// along automatically on a cross-site request. requireCsrf exempts bearer
+	// callers (the token is its own proof of intent), so only the browser path
+	// pays for it, exactly as the other cookie-authenticated mutations do.
+	if (!(await requireCsrf(req, res, userId))) return;
 
 	// Bound the body: this is a two-field request, and passing `res` here as the
 	// limit disabled the size cap entirely (every comparison against an object

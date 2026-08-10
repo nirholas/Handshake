@@ -13,6 +13,7 @@
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
+import { isUuid } from '../_lib/validate.js';
 import {
 	agentEconomySummary,
 	getHireById,
@@ -23,6 +24,15 @@ import {
 	rateHire,
 } from '../_lib/agent-economy.js';
 
+// Every id below lands in a `WHERE col = $1` against a uuid column. Without this
+// gate a malformed id reaches Postgres and comes back as error 22P02, which the
+// wrap boundary can only render as a 500. A caller typo has to be a 400 instead.
+function badId(res, field, value) {
+	if (value == null || isUuid(value)) return false;
+	error(res, 400, 'validation_error', `${field} must be a uuid`);
+	return true;
+}
+
 async function handleGet(req, res) {
 	const url = new URL(req.url, 'http://x');
 	const view = url.searchParams.get('view') || 'offers';
@@ -30,6 +40,7 @@ async function handleGet(req, res) {
 	if (view === 'offers') {
 		const limit = Number(url.searchParams.get('limit')) || 60;
 		const providerAgentId = url.searchParams.get('agentId') || null;
+		if (badId(res, 'agentId', providerAgentId)) return;
 		const offers = await listOffersWithStats({ limit, providerAgentId });
 		return json(res, 200, { data: { offers } }, { 'cache-control': 'public, max-age=15' });
 	}
@@ -45,9 +56,11 @@ async function handleGet(req, res) {
 	if (view === 'hires') {
 		const agentId = url.searchParams.get('agentId');
 		if (!agentId) return error(res, 400, 'validation_error', 'agentId is required');
+		if (badId(res, 'agentId', agentId)) return;
 		const role = url.searchParams.get('role') || 'all';
 		const limit = Number(url.searchParams.get('limit')) || 40;
 		const beforeId = url.searchParams.get('beforeId') || null;
+		if (badId(res, 'beforeId', beforeId)) return;
 		const hires = await listHiresForAgent(agentId, { role, limit, beforeId });
 		const next_cursor = hires.length === limit ? hires[hires.length - 1].id : null;
 		return json(res, 200, { data: { hires, next_cursor } });
@@ -56,6 +69,7 @@ async function handleGet(req, res) {
 	if (view === 'summary') {
 		const agentId = url.searchParams.get('agentId');
 		if (!agentId) return error(res, 400, 'validation_error', 'agentId is required');
+		if (badId(res, 'agentId', agentId)) return;
 		const [summary, reputation] = await Promise.all([
 			agentEconomySummary(agentId),
 			providerStats(agentId),
@@ -78,6 +92,7 @@ async function handlePost(req, res) {
 
 	const { hireId, rating } = body;
 	if (!hireId) return error(res, 400, 'validation_error', 'hireId is required');
+	if (badId(res, 'hireId', hireId)) return;
 
 	const hire = await getHireById(hireId);
 	if (!hire) return error(res, 404, 'not_found', 'hire not found');
