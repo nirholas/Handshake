@@ -71,6 +71,14 @@
 			<description>Four paths through the billing API turned a bad request into an anonymous internal error. Opening a receipt, a withdrawal, or a saved payout wallet whose id in the URL was not a real id (a truncated copy-paste, a stale bookmark, a hand-edited link) returned a 500 with a support reference instead of simply saying the id was malformed. Paging your withdrawal history with a non-numeric page size did the same. All four now answer with a plain validation error naming the field, and the withdrawal list falls back to its normal page size instead of failing. Nothing about who can read what changed: every one of these endpoints still requires your session and still only ever returns your own billing records.</description>
 		</item>
 		<item>
+			<title>Coin Clash momentum now tracks a real price move, and the arena stops re-pricing every faction on every poll</title>
+			<link>https://three.ws/clash</link>
+			<guid isPermaLink="false">2026-08-10:Coin Clash momentum now tracks a real price move, and the arena stops re-pricing every faction on every poll</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A faction's momentum bonus was documented as blending social activity with its coin's price move, but the market half never actually fired: the price signal was read and then thrown away, so every army fought on social signals alone. Momentum now folds in a genuine move, measured against a baseline the platform samples and rolls forward once a day. The same change fixes what that cost: the arena used to price every faction from scratch on each five-second poll, which meant hundreds of upstream price calls a minute for a number that barely moves. A faction is now priced at most once a minute for everyone, and a tap flush reads its own army's score instead of the whole round's table.</description>
+		</item>
+		<item>
 			<title>Coin creators with several linked wallets can set their world entry gate again</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-08-10:Coin creators with several linked wallets can set their world entry gate again</guid>
