@@ -12,6 +12,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 const sqlMock = vi.fn();
 vi.mock('../../api/_lib/db.js', () => ({ sql: sqlMock, isDbUnavailableError: () => false, isDbCapacityError: () => false }));
 
+// The handler memoizes each window through cacheWrap. Run it as a pass-through
+// here so every case below still exercises the query it names, and assert the
+// key + TTL it was called with separately.
+const cacheWrapMock = vi.fn(async (_key, _ttl, fn) => fn());
+vi.mock('../../api/_lib/cache.js', () => ({ cacheWrap: (...args) => cacheWrapMock(...args) }));
+
+vi.mock('../../api/_lib/alerts.js', () => ({ sendOpsAlert: vi.fn() }));
+
 vi.mock('../../api/_lib/env.js', () => ({
 	env: { APP_ORIGIN: 'http://localhost:3000' },
 }));
@@ -65,6 +73,7 @@ const sampleRows = [
 beforeEach(() => {
 	sqlMock.mockReset();
 	sqlMock.mockResolvedValue(sampleRows);
+	cacheWrapMock.mockClear();
 });
 
 describe('GET /api/club/leaderboard', () => {
@@ -112,6 +121,21 @@ describe('GET /api/club/leaderboard', () => {
 	it('echoes the window back in the response', async () => {
 		const { body } = await invoke({ query: { window: 'day' } });
 		expect(body.window).toBe('day');
+	});
+
+	it('memoizes each window under its own cache key and TTL', async () => {
+		await invoke({ query: { window: 'day' } });
+		expect(cacheWrapMock).toHaveBeenCalledOnce();
+		const [key, ttl] = cacheWrapMock.mock.calls[0];
+		expect(key).toBe('club:leaderboard:day');
+		// A TTL well under the 30s client poll cadence, so the widget still moves.
+		expect(ttl).toBeGreaterThan(0);
+		expect(ttl).toBeLessThan(30);
+	});
+
+	it('never reaches the cache for an unknown window', async () => {
+		await invoke({ query: { window: 'forever' } });
+		expect(cacheWrapMock).not.toHaveBeenCalled();
 	});
 
 	it('returns 500 db_error and logs the Postgres code when the query throws', async () => {

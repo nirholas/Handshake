@@ -84,24 +84,48 @@ async function runSharedPoll() {
 }
 
 function ensureSharedPoll() {
-	if (!pollTimer) {
-		pollTimer = setTimeout(runSharedPoll, POLL_MS_MIN);
-	}
+	if (pollTimer) return;
+	// Cold start: the loop stopped when the last listener left, so the cursor is
+	// pinned to that moment. Rewind it to now before the first tick, or a room
+	// that went quiet for a while replays everything banked during the gap (up to
+	// MAX_ROWS_PER_TICK of it) into the first viewer back as if it were live.
+	// Resetting idleTicks with it also puts that viewer on the fast cadence
+	// instead of the 5s one the previous idle ramp had settled into.
+	sharedCursor = new Date();
+	sharedCursorId = '';
+	idleTicks = 0;
+	pollTimer = setTimeout(runSharedPoll, POLL_MS_MIN);
 }
+
+const SSE_HEADERS = {
+	'Content-Type': 'text/event-stream; charset=utf-8',
+	'Cache-Control': 'no-cache, no-transform',
+	'Connection': 'keep-alive',
+	// Critical: Vercel's edge gateway buffers responses by default; without
+	// this header SSE frames are held until the function returns, defeating the stream.
+	'X-Accel-Buffering': 'no',
+};
 
 // ── Per-connection handler ────────────────────────────────────────────────────
 export default async function handleTipsStream(req, res) {
+	// Capture the verb before method() normalizes a HEAD probe to GET for dispatch.
+	const isHead = (req.method || 'GET').toUpperCase() === 'HEAD';
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	res.writeHead(200, {
-		'Content-Type': 'text/event-stream; charset=utf-8',
-		'Cache-Control': 'no-cache, no-transform',
-		'Connection': 'keep-alive',
-		// Critical: Vercel's edge gateway buffers responses by default; without
-		// this header SSE frames are held until the function returns, defeating the stream.
-		'X-Accel-Buffering': 'no',
-	});
+	// A HEAD asks for the headers this GET would answer with, not the stream
+	// itself, and a HEAD response can never carry a body anyway. Answer and end.
+	// Opening a real stream for one (api/ops/health.js probes this endpoint that
+	// way on every sweep) registered a listener that nothing would ever close, so
+	// each probe parked a client slot and a heartbeat timer until the 275s
+	// graceful shutdown finally reclaimed them.
+	if (isHead) {
+		res.writeHead(200, SSE_HEADERS);
+		res.end();
+		return;
+	}
+
+	res.writeHead(200, SSE_HEADERS);
 
 	let closed = false;
 	const send = (event, data) => {
