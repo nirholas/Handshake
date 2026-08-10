@@ -3,6 +3,15 @@
   "entries": [
     {
       "date": "2026-08-10",
+      "title": "Billing pages stop answering a mistyped link with a support reference",
+      "summary": "Four paths through the billing API turned a bad request into an anonymous internal error. Opening a receipt, a withdrawal, or a saved payout wallet whose id in the URL was not a real id (a truncated copy-paste, a stale bookmark, a hand-edited link) returned a 500 with a support reference instead of simply saying the id was malformed. Paging your withdrawal history with a non-numeric page size did the same. All four now answer with a plain validation error naming the field, and the withdrawal list falls back to its normal page size instead of failing. Nothing about who can read what changed: every one of these endpoints still requires your session and still only ever returns your own billing records.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/dashboard/billing"
+    },
+    {
+      "date": "2026-08-10",
       "title": "Agent pump.fun and directory endpoints answer bad input honestly",
       "summary": "Three fixes across the agent APIs. Calling a pump.fun action (portfolio, buy, sell, swap, launch, pay) with an id that is not a real agent id returned an anonymous internal error with a support reference; it now returns a plain not-found, matching every other agent endpoint. The pump.fun intel proxy checked whether the upstream feed was configured before it checked your request, so an unknown operation or a token lookup with no mint address could answer 200 with empty data on one deployment and a validation error on another; the request is now validated first, so the same call gets the same answer everywhere. A legacy single-skill price endpoint that no route could reach, and that skipped the cross-site protection its live replacement enforces, has been removed: setting one skill price still goes through the documented per-skill route. The public agent directory also logs a failed lookup now instead of quietly rendering as if nobody had published an agent.",
       "tags": [
