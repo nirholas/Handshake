@@ -3,6 +3,15 @@
   "entries": [
     {
       "date": "2026-08-10",
+      "title": "The \"Claim Your 3D Avatar\" Blink names the avatar it points at, and refuses inputs it should never have accepted",
+      "summary": "The shareable Solana Blink that claims a 3D avatar now looks the avatar up before it draws the card: it shows that avatar's real name, and returns a clear not-available error for one that is private, deleted, or does not exist, instead of advertising a claim nobody can complete. The card and its claim transaction now only accept \"default\" or a genuine avatar id, so an arbitrary string can no longer ride into the on-chain memo the wallet signs, and a wallet address that no key can ever sign for is rejected before a transaction is built rather than after. The live 3D portrait rendered into the card had a bigger hole: its background-colour setting was passed straight into the rendering page, so a crafted share link could run its own code inside our renderer. That input is now validated as a colour, the renderer escapes every value it embeds regardless of caller, and the portrait endpoint no longer starts a render for a request method it does not serve. A rendering failure now says which side failed, and a Solana node that will not answer comes back as a service-unavailable message rather than a hang.",
+      "tags": [
+        "security",
+        "fix"
+      ]
+    },
+    {
+      "date": "2026-08-10",
       "title": "Skill licence NFTs show their real name and artwork in every wallet again",
       "summary": "Every skill you buy from an agent is minted as an NFT, and that NFT carries a link back to three.ws for its name, description, and artwork. That link had never been wired into the site's routing table, so wallets, explorers, and marketplaces asking for it got an error page instead and the licence showed up blank. Both links (the one on each skill NFT and the one on the agent's skill collection) now resolve, so every skill licence ever minted, including the ones already sitting in wallets, renders properly from here on. A new test walks the whole dispatch table so no future metadata link can ship unrouted.",
       "tags": [
@@ -18947,6 +18956,15 @@
         "security"
       ],
       "link": "/pump-dashboard"
+    },
+    {
+      "date": "2026-08-10",
+      "title": "The public asset catalog now answers a bad filter honestly",
+      "summary": "The open asset list at /api/assets, which anyone can call to browse our accessories, starter animations, and lighting environments, used to answer a mistyped filter with an empty list and a 200 OK, then cache that empty answer for an hour. A typo looked exactly like an empty catalog. It now returns a clear error naming the accepted values, and never caches it. Two more fixes came out of the same pass: browsers can read the response cross-origin on error replies and preflight checks, not just on success, and HEAD requests from uptime monitors and CDNs are answered instead of rejected. The environment list is also read straight from the viewer's own presets now, so names can no longer drift between the site and the API, and the endpoint is documented in the API reference.",
+      "tags": [
+        "fix",
+        "improvement"
+      ]
     }
   ]
 }

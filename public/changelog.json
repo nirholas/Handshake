@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-10T17:22:25.587Z",
+	"generated_at": "2026-08-10T17:27:55.180Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -101,6 +101,17 @@
 		{
 			"date": "2026-08-10",
 			"type": "update",
+			"title": "The \"Claim Your 3D Avatar\" Blink names the avatar it points at, and refuses inputs it should never have accepted",
+			"summary": "The shareable Solana Blink that claims a 3D avatar now looks the avatar up before it draws the card: it shows that avatar's real name, and returns a clear not-available error for one that is private, deleted, or does not exist, instead of advertising a claim nobody can complete. The card and its claim transaction now only accept \"default\" or a genuine avatar id, so an arbitrary string can no longer ride into the on-chain memo the wallet signs, and a wallet address that no key can ever sign for is rejected before a transaction is built rather than after. The live 3D portrait rendered into the card had a bigger hole: its background-colour setting was passed straight into the rendering page, so a crafted share link could run its own code inside our renderer. That input is now validated as a colour, the renderer escapes every value it embeds regardless of caller, and the portrait endpoint no longer starts a render for a request method it does not serve. A rendering failure now says which side failed, and a Solana node that will not answer comes back as a service-unavailable message rather than a hang.",
+			"link": null,
+			"tags": [
+				"security",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
 			"title": "The agent trade demo stops before spending SOL it cannot deliver on",
 			"summary": "Two fixes on the agent-to-agent trade surface. The live demo used to pay the Oracle agent real SOL and only then discover that no analysis model was reachable, so the buyer's money bought nothing; it now confirms a model can answer before any payment is signed, and stops with a clear message when none can. While it worked, the demo also announced the wrong model (it always said Claude Haiku, whichever model was really about to run) and now names the lane that actually produces the analysis. On the paid Oracle skill endpoint itself, a payment proof that is not a real Solana signature comes back immediately as an invalid-payment error instead of spending several seconds asking the chain about it.",
 			"link": "/agent-trade",
@@ -160,6 +171,17 @@
 			"tags": [
 				"improvement",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "The public asset catalog now answers a bad filter honestly",
+			"summary": "The open asset list at /api/assets, which anyone can call to browse our accessories, starter animations, and lighting environments, used to answer a mistyped filter with an empty list and a 200 OK, then cache that empty answer for an hour. A typo looked exactly like an empty catalog. It now returns a clear error naming the accepted values, and never caches it. Two more fixes came out of the same pass: browsers can read the response cross-origin on error replies and preflight checks, not just on success, and HEAD requests from uptime monitors and CDNs are answered instead of rejected. The environment list is also read straight from the viewer's own presets now, so names can no longer drift between the site and the API, and the endpoint is documented in the API reference.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
