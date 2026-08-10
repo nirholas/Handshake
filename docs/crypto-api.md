@@ -43,9 +43,11 @@ is documented in its section below and machine-readable in the OpenAPI doc.
 
 | Endpoint | Verb(s) | What it answers |
 |----------|---------|-----------------|
+| [`/api/crypto/airdrops`](https://three.ws/api/crypto/airdrops) | `GET` | Which airdrops a wallet is on track for - its real on-chain activity scored against the live registry, with met/missing criteria per airdrop. |
 | [`/api/crypto/bonding`](https://three.ws/api/crypto/bonding) | `GET` | Where a pump.fun token sits on its bonding curve — % to graduation, SOL in the curve, and whether it has migrated to an AMM. |
 | [`/api/crypto/holders`](https://three.ws/api/crypto/holders) | `GET` | Holder distribution for a Solana token — top wallets with % of supply, cumulative top-10 share, and a documented concentration verdict. |
 | [`/api/crypto/launches`](https://three.ws/api/crypto/launches) | `GET` | The freshest pump.fun launches, newest first — age, market cap, bonding-curve progress, dev wallet — with `minMarketCap` / `maxAgeMin` filters built for polling agents. |
+| [`/api/crypto/portfolio`](https://three.ws/api/crypto/portfolio) | `GET` | A wallet read shaped for a portfolio view - stable/major/other split, top-asset allocation, per-token 24h change, and an aggregate 24h move that states its own coverage. |
 | [`/api/crypto/security`](https://three.ws/api/crypto/security) | `GET` | Pre-trade rug check for a Solana token — authority, concentration, liquidity, mutability, and LP-custody facts composed into a deterministic riskLevel. |
 | [`/api/crypto/symbol`](https://three.ws/api/crypto/symbol) | `GET` · `POST` | Whether up to 20 candidate tickers are taken — exact and fuzzy (look-alike) collisions across live registries. |
 | [`/api/crypto/token`](https://three.ws/api/crypto/token) | `GET` | The current market state of any token by contract address — price, 24 h change, market cap, FDV, liquidity, volume, and venue link in one call. |
@@ -821,6 +823,193 @@ curl -s "https://three.ws/api/crypto/holders?address=FeMbDoX7R1Psc4GEcvJdsbNbZA3
 
 # Just the verdict for position sizing
 curl -s "https://three.ws/api/crypto/holders?address=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" | jq '{top10Pct, concentration}'
+```
+
+---
+
+## `GET /api/crypto/portfolio` - Portfolio overview
+
+**Use-case.** A *treasury or reporting agent* already has the raw balances from
+[`/api/crypto/wallet`](#get-apicryptowallet--wallet-portfolio) and needs the
+next layer: how the value splits across stables, majors and everything else,
+which assets dominate, and whether the book is up or down on the day. This is
+that layer, computed once server-side so every client renders the same numbers.
+
+### Request
+
+| Param     | Type   | Default  | Notes |
+|-----------|--------|----------|-------|
+| `address` | string | required | Wallet address. Solana base58 or EVM `0x`. |
+| `chain`   | enum   | `solana` | `solana` (alias `sol`) or `ethereum` (aliases `eth`, `evm`, `mainnet`). |
+
+### Response
+
+```json
+{
+  "address": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+  "chain": "solana",
+  "totalUsd": 1284.51,
+  "unpricedCount": 2,
+  "change24h": { "usd": -22.4, "pct": -1.71, "coveragePct": 96.2 },
+  "summary": {
+    "stable": { "usd": 400.0, "pct": 31.14, "count": 1 },
+    "major": { "usd": 800.5, "pct": 62.32, "count": 1 },
+    "other": { "usd": 84.01, "pct": 6.54, "count": 3 }
+  },
+  "topAssets": [
+    { "id": "native", "symbol": "SOL", "name": "Solana", "usd": 800.5, "pct": 62.32, "slot": 1, "logo": null }
+  ],
+  "rows": [
+    {
+      "id": "native",
+      "symbol": "SOL",
+      "name": "Solana",
+      "kind": "native",
+      "class": "major",
+      "amount": 10.58,
+      "price": 75.66,
+      "usd": 800.5,
+      "pct": 62.32,
+      "change24h": -1.78,
+      "logo": null
+    }
+  ],
+  "tokenCount": 5,
+  "truncated": false,
+  "ts": "2026-08-10T16:31:34.527Z",
+  "sources": ["solana-rpc", "jupiter-lite", "dexscreener"]
+}
+```
+
+- **`change24h.coveragePct`** - the share of portfolio value the aggregate move
+  actually covers. Tokens beyond the enrichment cap keep `change24h: null` and
+  are excluded from the aggregate rather than extrapolated over.
+- **`class`** - `stable`, `major` or `other`, so a chart can group without
+  re-deriving the taxonomy per client.
+- **`slot`** - a palette slot per top asset, so the same wallet colors the same
+  way across reloads and across surfaces.
+- **`stale: true`** - present only when the balance source served a cached read.
+
+### Sources
+
+- **Solana (keyless):** Helius DAS when the deployment has a key, else a public
+  RPC walk; prices from Jupiter Lite plus the pump.fun curve; 24h changes from
+  DexScreener's batch endpoint (30 mints per call, top 60 holdings) and the
+  multi-provider SOL price failover.
+- **Ethereum:** the same `getBalances()` EVM path (needs a provider key) - its
+  tokens already carry CoinGecko 24h changes.
+
+### States
+
+- **Wallet with holdings** -> `200` with the full overview.
+- **Empty wallet** -> `200` with `totalUsd: 0`, empty `rows`/`topAssets` - a
+  valid empty, not an error.
+- **Missing/invalid `address`, unsupported `chain`** -> `400` with an example.
+- **Chain needs a key this deployment lacks** -> `503 not_configured`, naming
+  that Solana works keyless.
+- **Balance source unreachable** -> `503` + `Retry-After`. Never `500`.
+- **Rate-limited** -> `429`.
+
+### Examples
+
+```bash
+# Full overview for a Solana wallet
+curl -s "https://three.ws/api/crypto/portfolio?address=<wallet>"
+
+# Just the day's move and how much of the book it covers
+curl -s "https://three.ws/api/crypto/portfolio?address=<wallet>" | jq '.change24h'
+```
+
+---
+
+## `GET /api/crypto/airdrops` - Airdrop eligibility
+
+**Use-case.** A *wallet-strategy agent* wants to know which upcoming airdrops a
+wallet is already on track for, and exactly what is missing for the rest. One
+call measures the wallet's real on-chain activity and scores it against the live
+registry, so the agent can act on the gap instead of guessing at farming advice.
+
+### Request
+
+| Param     | Type   | Default | Notes |
+|-----------|--------|---------|-------|
+| `address` | string | none    | Wallet to score (Solana base58 or EVM `0x`). Omit it to get the registry alone - the directory view before any lookup. |
+
+### Response
+
+```json
+{
+  "address": "<wallet>",
+  "family": "solana",
+  "activity": {
+    "family": "solana",
+    "tx_count": 412,
+    "days_active": 96,
+    "account_age_days": 640,
+    "unique_tokens": 23,
+    "capped": false,
+    "chains": ["solana"]
+  },
+  "opportunities": [
+    {
+      "id": "jupiter-jupuary",
+      "name": "Jupiter",
+      "chain": "solana",
+      "status": "confirmed",
+      "score": 82,
+      "eligibility": "qualified",
+      "met": [{ "description": "50+ transactions on Solana", "met": true }],
+      "missing": [],
+      "manual": [{ "description": "Swap through the aggregator and try limit orders" }],
+      "estimatedValue": "$100 - $2,000",
+      "deadline": null,
+      "source": "https://jup.ag"
+    }
+  ],
+  "otherFamily": [],
+  "summary": { "qualified": 3, "inProgress": 2, "notEligible": 4 },
+  "thresholds": { "qualified": 70, "inProgress": 40 },
+  "registryUpdated": "2026-08-01",
+  "ts": "2026-08-10T16:31:34.527Z"
+}
+```
+
+- **`met` / `missing` / `manual`** - criteria that the measured activity clears,
+  criteria it does not, and criteria no on-chain read can settle (governance
+  votes, off-chain quests). Manual criteria never inflate the score.
+- **`otherFamily`** - registry entries for the chain family this address is not
+  on, returned unevaluated so a UI can say "check this with your other wallet"
+  instead of rendering a fake zero.
+- **`eligibility`** - `qualified`, `in_progress` or `not_eligible`, decided by
+  the `thresholds` returned alongside it, so the cutoffs are never implicit.
+
+### Sources
+
+- **Solana (keyless):** the rotating RPC chain, for transaction count, active
+  days, account age and distinct tokens touched.
+- **EVM:** Etherscan V2 behind `ETHERSCAN_API_KEY`.
+- **Registry:** [`data/airdrops.json`](../data/airdrops.json), with its
+  `updated` date echoed as `registryUpdated`.
+
+### States
+
+- **No `address`** -> `200` with `registry` + `thresholds`: the directory view.
+- **Scored wallet** -> `200` with activity, opportunities and summary.
+- **Invalid address (neither Solana nor EVM)** -> `400`.
+- **EVM requested where no explorer key is set** -> `503 not_configured`,
+  naming that Solana wallets work keyless.
+- **Activity sources unreachable** -> `503` + `Retry-After`. Never `500`.
+- **Rate-limited** -> `429`.
+
+### Examples
+
+```bash
+# The registry alone, before any wallet lookup
+curl -s "https://three.ws/api/crypto/airdrops" | jq '.registry[].name'
+
+# Score a wallet and list only what it already qualifies for
+curl -s "https://three.ws/api/crypto/airdrops?address=<wallet>" \
+  | jq '.opportunities[] | select(.eligibility == "qualified") | .name'
 ```
 
 ---

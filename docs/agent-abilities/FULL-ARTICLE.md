@@ -2153,7 +2153,7 @@ Token sentiment on demand: POST /api/sentiment scores any text (Positive/Negativ
 
 A free, no-key, no-account crypto data API built for AI agents: token snapshots, security/rug signals, holder concentration, live pump.fun launches, bonding-curve status, whale activity, trending tokens, wallet portfolios, and ticker-availability checks — with public docs, a live try-it console, and OpenAPI 3.1 discovery.
 
-**How it works:** pages/crypto.html documents /api/crypto/*; api/crypto/index.js and api/crypto/openapi.js assemble the catalog from self-describing descriptors in api/_lib/crypto-catalog/ (bonding, holders, launches, security, symbol, token, trending, wallet, whales), and the docs page probes production at runtime to mark each endpoint Live vs Coming soon.
+**How it works:** pages/crypto.html documents /api/crypto/*; api/crypto/index.js and api/crypto/openapi.js assemble the catalog from self-describing descriptors in api/_lib/crypto-catalog/ (airdrops, bonding, holders, launches, portfolio, security, symbol, token, trending, wallet, whales), and the docs page probes production at runtime to mark each endpoint Live vs Coming soon.
 
 **Why it matters:** Agents and developers get real on-chain and market data with zero signup friction — the funnel-top for the platform's paid unique services.
 

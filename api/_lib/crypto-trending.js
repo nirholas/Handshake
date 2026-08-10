@@ -33,6 +33,7 @@
 import { scorePressure } from './x402/pump-trending-score.js';
 import { summarizeWindowUsd, median } from './x402/pump-volume-anomaly.js';
 import { dexScreenerTrending, gmgnSmartMoneyRank } from './gmgn-feed.js';
+import { cacheWrap } from './cache.js';
 import { gmgnTokenUrl } from '../../src/shared/trading-terminals.js';
 
 const PUMP_FRONTEND_BASE = process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
@@ -43,6 +44,9 @@ const FETCH_TIMEOUT_MS = Number(process.env.CRYPTO_TRENDING_TIMEOUT_MS || 6000);
 const PUMP_TRADE_COINS = Number(process.env.CRYPTO_TRENDING_TRADE_COINS || 20);
 const PUMP_TRADES_PER_COIN = Number(process.env.CRYPTO_TRENDING_TRADES_PER_COIN || 100);
 const PUMP_CONCURRENCY = Number(process.env.CRYPTO_TRENDING_CONCURRENCY || 6);
+// Seconds a composed pump.fun leg is reused across callers. Matches the
+// cache-control max-age /api/crypto/trending sets on its own response.
+const PUMP_CACHE_TTL_S = Number(process.env.CRYPTO_TRENDING_PUMP_TTL_S || 30);
 
 // Ranking weights + saturation caps (see header). Exported so tests + docs read
 // from one source of truth.
@@ -327,7 +331,17 @@ export async function fetchGmgnTrending({ window }) {
 export async function composeTrending({ window, limit, source, nowMs = Date.now(), deps = {} }) {
 	const windowSec = windowToSec(window);
 	const cappedLimit = Math.min(50, Math.max(1, limit));
-	const pumpfun = deps.pumpfun || (() => fetchPumpfunTrending({ windowSec, limit: cappedLimit, nowMs }));
+	// One trending call costs pump.fun ~21 requests (the board plus per-coin trade
+	// feeds), and pump.fun throttles a caller that repeats that too quickly. Without
+	// a shared cache, back-to-back requests starve their own pump leg and the fused
+	// ranking silently degrades to dexscreener-only. The TTL matches the endpoint's
+	// own edge cache, so a cached leg is never staler than the response around it.
+	const pumpfun =
+		deps.pumpfun ||
+		(() =>
+			cacheWrap(`crypto:trending:pumpfun:${windowSec}:${cappedLimit}`, PUMP_CACHE_TTL_S, () =>
+				fetchPumpfunTrending({ windowSec, limit: cappedLimit, nowMs }),
+			));
 	const dexscreener = deps.dexscreener || (() => fetchDexTrending({ window }));
 	const gmgn = deps.gmgn || (() => fetchGmgnTrending({ window }));
 
@@ -362,7 +376,7 @@ export async function composeTrending({ window, limit, source, nowMs = Date.now(
 		sources,
 	};
 	if (!sources.length) {
-		out.note = 'All upstream market sources were unavailable — returning an empty ranking. Retry shortly.';
+		out.note = 'All upstream market sources were unavailable. Returning an empty ranking; retry shortly.';
 	} else if (source === 'all' && sources.length < jobs.length) {
 		const down = settled.filter((s) => s.rows.length === 0).map((s) => s.name);
 		out.note = `Partial data: ${down.join(', ')} unavailable; ranked from ${sources.join(', ')}.`;

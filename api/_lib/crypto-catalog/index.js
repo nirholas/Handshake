@@ -23,9 +23,11 @@ import { readdirSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { basename, dirname, join } from 'node:path';
 
+import airdropsEntry from './airdrops.js';
 import bondingEntry from './bonding.js';
 import holdersEntry from './holders.js';
 import launchesEntry from './launches.js';
+import portfolioEntry from './portfolio.js';
 import securityEntry from './security.js';
 import symbolEntry from './symbol.js';
 import tokenEntry from './token.js';
@@ -43,9 +45,11 @@ import whalesEntry from './whales.js';
 // >>> Adding an endpoint: drop `api/_lib/crypto-catalog/<slug>.js` AND add its
 // >>> import + line here. The import is what makes it exist in production.
 const STATIC_ENTRIES = [
+	{ mod: airdropsEntry, source: 'airdrops.js' },
 	{ mod: bondingEntry, source: 'bonding.js' },
 	{ mod: holdersEntry, source: 'holders.js' },
 	{ mod: launchesEntry, source: 'launches.js' },
+	{ mod: portfolioEntry, source: 'portfolio.js' },
 	{ mod: securityEntry, source: 'security.js' },
 	{ mod: symbolEntry, source: 'symbol.js' },
 	{ mod: tokenEntry, source: 'token.js' },

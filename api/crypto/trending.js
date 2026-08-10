@@ -1,8 +1,8 @@
 // GET /api/crypto/trending
 // -------------------------
 // Free, keyless "what's hot right now" feed for AI agents. Returns Solana tokens
-// ranked by MOMENTUM — a blend of windowed trade volume, buy pressure, a volume
-// spike (anomaly) signal, and short-window price change — fused across pump.fun,
+// ranked by MOMENTUM: a blend of windowed trade volume, buy pressure, a volume
+// spike (anomaly) signal, and short-window price change, fused across pump.fun,
 // DexScreener's boosted board, and (best-effort) GMGN smart money.
 //
 // A discovery agent asks one URL instead of scraping five sites: it gets a
@@ -11,13 +11,13 @@
 // docs/crypto-api.md.
 //
 // Query:
-//   window = 5m | 1h | 24h          (default 1h) — trade window the score measures
+//   window = 5m | 1h | 24h          (default 1h) trade window the score measures
 //   limit  = 1..50                  (default 20)
-//   source = pumpfun | all          (default all) — 'pumpfun' restricts to the
+//   source = pumpfun | all          (default all) where 'pumpfun' restricts to the
 //                                     pump.fun board; 'all' fuses every source
 //
 // Response: { window, tokens: [{ mint, symbol, name, marketCapUsd, volumeUsd,
-//   change, score, url }], count, ts, sources[] }  — tokens ranked by score desc.
+//   change, score, url }], count, ts, sources[] }. Tokens are ranked by score desc.
 //
 // Never 500s on a well-formed request: every source failing yields 200 with an
 // empty ranking + a note. Bad window/source/limit are coerced to sane defaults.

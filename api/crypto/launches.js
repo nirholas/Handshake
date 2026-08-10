@@ -52,7 +52,9 @@ export function toLaunch(coin, nowMs) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { origins: '*' })) return;
+	// Pin the advertised verbs to what this handler answers: the shared default
+	// also names POST, which preflight-approves a request that then 405s.
+	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const rl = await limits.marketDataIp(clientIp(req));
@@ -63,7 +65,7 @@ export default wrap(async (req, res) => {
 
 	const limitRaw = numParam(p, 'limit');
 	if (Number.isNaN(limitRaw) || (limitRaw != null && (!Number.isInteger(limitRaw) || limitRaw < 1))) {
-		return error(res, 400, 'invalid_limit', `\`limit\` must be an integer between 1 and ${MAX_LIMIT} (default ${DEFAULT_LIMIT})`);
+		return error(res, 400, 'invalid_limit', `\`limit\` must be a positive integer (default ${DEFAULT_LIMIT}); values above ${MAX_LIMIT} are capped at ${MAX_LIMIT}, not rejected`);
 	}
 	const limit = Math.min(MAX_LIMIT, limitRaw ?? DEFAULT_LIMIT);
 

@@ -1,9 +1,9 @@
-// GET /api/crypto/whales — FREE whale / large-buy activity for AI agents.
+// GET /api/crypto/whales: FREE whale / large-buy activity for AI agents.
 //
 // Agent use-case: a trading or sniper agent, mid-task, wants to know if big
 // money is moving into a token (or the pump.fun market broadly) BEFORE it
 // commits. A whale already in = price impact ahead; no whales = thin. This is a
-// free, keyless read of large buys — high signal, no account, no payment.
+// free, keyless read of large buys: high signal, no account, no payment.
 //
 //   ?mint=<spl-mint>  → whale BUYS of that token (per-transaction rows)
 //   (omit mint)       → top whale WALLETS active across pump.fun right now
@@ -36,7 +36,7 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	// Public read bucket — keyless, generous, per-IP flood guard.
+	// Public read bucket: keyless, generous, per-IP flood guard.
 	const rl = await limits.marketDataIp(clientIp(req));
 	setRateLimitHeaders(res, rl);
 	if (!rl.success) return rateLimited(res, rl);
@@ -85,7 +85,7 @@ export default wrap(async (req, res) => {
 	// Feed down (no trades reachable) → 200 empty + a note, per the never-500 rule.
 	if (degraded) {
 		body.note =
-			'pump.fun feed is temporarily unavailable — returning an empty whale set; retry shortly';
+			'pump.fun feed is temporarily unavailable. Returning an empty whale set; retry shortly.';
 	}
 
 	return json(res, 200, body, {

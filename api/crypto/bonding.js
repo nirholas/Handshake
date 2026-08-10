@@ -19,7 +19,9 @@ import { getBondingStatus } from '../_lib/pump-bonding.js';
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { origins: '*' })) return;
+	// Pin the advertised verbs to what this handler answers: the shared default
+	// also names POST, which preflight-approves a request that then 405s.
+	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const rl = await limits.marketDataIp(clientIp(req));

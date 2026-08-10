@@ -1,7 +1,7 @@
-// GET /api/crypto/wallet — free, keyless wallet portfolio for AI agents.
+// GET /api/crypto/wallet: free, keyless wallet portfolio for AI agents.
 //
-// Agent use-case: an autonomous agent needs to inspect a wallet — its own or a
-// counterparty's — before it transacts. A treasury agent checks its runway, a
+// Agent use-case: an autonomous agent needs to inspect a wallet (its own or a
+// counterparty's) before it transacts. A treasury agent checks its runway, a
 // copy-trade agent mirrors a leader's holdings, a pre-trade check inspects who
 // it's about to deal with. One call returns native balance, every SPL token,
 // and a rough USD valuation, so the agent doesn't have to juggle an RPC + a
@@ -10,7 +10,7 @@
 // Free-endpoint pattern (x402-overhaul campaign convention): plain handler,
 // `cors`/`wrap`/`error` from _lib/http.js, rate-limited by IP via _lib/rate-limit.js.
 // No key, no account. The Solana path returns REAL balances even without a Helius
-// key — it falls back to the public RPC `getTokenAccountsByOwner` walk and prices
+// key: it falls back to the public RPC `getTokenAccountsByOwner` walk and prices
 // via Jupiter Lite + the pump.fun bonding curve (all keyless). Helius DAS is used
 // only as a faster path when HELIUS_API_KEY is present.
 
@@ -37,7 +37,7 @@ const CHAIN_ALIASES = {
 	mainnet: 'evm',
 };
 
-// Round a USD figure to cents-ish precision without importing a bignum lib — these
+// Round a USD figure to cents-ish precision without importing a bignum lib. These
 // are display valuations, not settlement amounts. Keeps 6 significant sub-dollar
 // digits so sub-cent token values ($0.0000123) don't collapse to 0.
 function roundUsd(n) {
@@ -46,7 +46,7 @@ function roundUsd(n) {
 }
 
 // Map the rich internal balance shape to the stable public contract. Unpriced
-// tokens (price 0 — Jupiter/pump.fun couldn't route them) keep their amount but
+// tokens (price 0, meaning Jupiter/pump.fun couldn't route them) keep their amount but
 // report `usd: null`, never a fake 0 valuation and never dropped from the list.
 function shapeToken(t) {
 	const priced = Number(t.price) > 0;
@@ -81,7 +81,7 @@ export default wrap(async function handler(req, res) {
 	const ip = clientIp(req);
 	const [ipRl, globalRl] = await Promise.all([limits.cryptoDataIp(ip), limits.cryptoDataGlobal()]);
 	if (!ipRl.success || !globalRl.success) {
-		return error(res, 429, 'rate_limited', 'too many requests — slow down and retry shortly', {
+		return error(res, 429, 'rate_limited', 'too many requests, slow down and retry shortly', {
 			retryAfter: 60,
 		});
 	}
@@ -118,14 +118,14 @@ export default wrap(async function handler(req, res) {
 	} catch (err) {
 		// EVM without an Alchemy key: honest 503 naming the gap, never a mock.
 		if (err?.code === 'not_configured') {
-			return error(res, 503, 'not_configured', 'this chain requires a provider key that is not set on this deployment — Solana works keyless', {
+			return error(res, 503, 'not_configured', 'this chain requires a provider key that is not set on this deployment; Solana works keyless', {
 				chain: rawChain,
 			});
 		}
 		// Every live RPC path failed and there was no cached snapshot to fall back on.
-		// Surface a retryable 503 with Retry-After — never a 500 on a well-formed request.
+		// Surface a retryable 503 with Retry-After, never a 500 on a well-formed request.
 		res.setHeader('retry-after', '15');
-		return error(res, 503, 'upstream_unavailable', 'wallet data source is temporarily unavailable — retry shortly', {
+		return error(res, 503, 'upstream_unavailable', 'wallet data source is temporarily unavailable, retry shortly', {
 			retryAfter: 15,
 		});
 	}
@@ -151,7 +151,7 @@ export default wrap(async function handler(req, res) {
 		sources: sourcesFor(chain),
 	};
 	// A stale flag from the balance layer means every live path failed and we served
-	// the wallet's last-known-good snapshot — pass that honesty through to the caller.
+	// the wallet's last-known-good snapshot. Pass that honesty through to the caller.
 	if (balances.stale) body.stale = true;
 
 	// Public read, safe to CDN-cache briefly: balances move, but a 30s edge cache

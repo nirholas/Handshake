@@ -3,7 +3,7 @@
 // the GET /api/crypto index handler's HTML-vs-JSON content negotiation.
 
 import { describe, it, expect } from 'vitest';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -188,5 +188,40 @@ describe('GET /api/crypto content negotiation', () => {
 		expect(res.getHeader('content-type')).toMatch(/text\/html/);
 		expect(res._body).toContain('<!doctype html>');
 		expect(res._body).toContain('three.ws Crypto Data API');
+	});
+});
+
+// The discovery contract promises the catalog lists EVERY endpoint in the
+// bundle ("a new endpoint appears the moment it ships"). It only holds if each
+// api/crypto/<slug>.js handler has a descriptor wired into the static barrel:
+// /api/crypto/portfolio and /api/crypto/airdrops shipped live but undescribed,
+// so agents reading the index or the OpenAPI doc could not see them at all.
+describe('crypto-catalog covers every shipped endpoint', () => {
+	const HANDLER_DIR = resolve(HERE, '../api/crypto');
+	// Discovery machinery, not endpoints of their own.
+	const NON_ENDPOINT = new Set(['index.js', 'openapi.js']);
+
+	it('has a descriptor for every api/crypto handler, and no descriptor without one', async () => {
+		const handlers = readdirSync(HANDLER_DIR)
+			.filter((f) => f.endsWith('.js') && !NON_ENDPOINT.has(f) && !f.startsWith('_'))
+			.map((f) => f.replace(/\.js$/, ''))
+			.sort();
+
+		const entries = await loadCatalog({ fresh: true });
+		const slugs = entries.map((e) => e.slug).sort();
+
+		expect(slugs).toEqual(handlers);
+		for (const e of entries) {
+			expect(e.path).toBe(`/api/crypto/${e.slug}`);
+		}
+	});
+
+	it('surfaces every descriptor in the generated OpenAPI paths', async () => {
+		const entries = await loadCatalog({ fresh: true });
+		const doc = buildOpenApiDoc(entries, { origin: 'https://three.ws', version: '1.0.0' });
+		for (const e of entries) {
+			expect(doc.paths[e.path]).toBeTruthy();
+		}
+		expect(validateOpenApiDoc(doc)).toEqual([]);
 	});
 });
