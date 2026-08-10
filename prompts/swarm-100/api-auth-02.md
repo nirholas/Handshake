@@ -1,4 +1,4 @@
-# API audit: api/bazaar batch 01 (5 files)
+# API audit: api/auth batch 02 (4 files)
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this
 repository and say "run this work order". This file is fully self-contained:
@@ -37,11 +37,10 @@ Every claim below rots; step 0 re-measures, and what you measure wins.
 
 Files in this batch:
 
-- api/bazaar/arbitrage.js
-- api/bazaar/context.js
-- api/bazaar/list.js
-- api/bazaar/providers.js
-- api/bazaar/search.js
+- api/auth/siws/[action].js
+- api/auth/wallets/[action].js
+- api/auth/wallets/_link-nonces.js
+- api/auth/x/[action].js
 
 For every routed handler:
 
@@ -91,7 +90,7 @@ For every internal (non-routed) module:
    style: type(scope): what changed and why a reader cares).
 3. Delete this prompt file in that same commit:
 
-       git rm prompts/swarm-100/api-bazaar-01.md
+       git rm prompts/swarm-100/api-auth-02.md
 
    The shrinking directory is this campaign's only progress ledger; there is
    no progress log to update.

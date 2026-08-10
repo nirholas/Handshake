@@ -1097,6 +1097,14 @@
 			"title": "Crypto",
 			"description": "On-chain features: pay-per-call, token launches, vanity wallets.",
 			"pages": [
+        {
+          "path": "/go",
+          "title": "GO Bounty Board",
+          "description": "Post a bounty with a SOL reward, submit proof of doing it, and let the poster (or the AI judge) pick a winner. Live earner and spender leaderboards.",
+          "priority": 0.7,
+          "changefreq": "daily",
+          "added": "2026-06-05"
+        },
 				{
 					"path": "/sperax",
 					"title": "Sperax on three.ws",

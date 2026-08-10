@@ -2,14 +2,16 @@
 // GET /api/bazaar/providers?host=<host>
 //
 // Aggregates the merged x402 catalog into per-provider profiles. A "provider"
-// is the host of the resource URL — the actual API operator, not the
-// facilitator that listed it. Each provider profile carries enough data to
-// drive a Hunch-style reputation card: service count, price band, dominant
-// categories, networks, facilitators discovered on, and the underlying
-// listings.
+// is the host of the resource URL (the actual API operator, not the facilitator
+// that listed it). Each provider profile carries enough data to drive a
+// Hunch-style reputation card: service count, price band, dominant categories,
+// networks, facilitators discovered on, and the underlying listings.
+//
+// `limit` caps the directory (providers) in list mode and the `listings` array
+// in host mode; `listingTotal` reports the provider's full listing count.
 
 import { cors, json, error, wrap, serverError } from '../_lib/http.js';
-import { Bazaar } from '../_lib/x402/bazaar-client.js';
+import { allSourcesFailed, Bazaar, sourceErrorText } from '../_lib/x402/bazaar-client.js';
 
 function hostOf(url) {
 	try { return new URL(url).host; } catch { return ''; }
@@ -95,12 +97,16 @@ async function handler(req, res) {
 	let httpRes, mcpRes;
 	try {
 		[httpRes, mcpRes] = await Promise.all([
-			baz.list({ type: 'http', maxItems: 3000 }),
-			baz.list({ type: 'mcp', maxItems: 3000 }),
+			baz.listCached({ type: 'http', maxItems: 3000 }),
+			baz.listCached({ type: 'mcp', maxItems: 3000 }),
 		]);
 	} catch (e) {
 		console.error('[bazaar] facilitator error', e?.message || e);
 		return serverError(res, 502, 'facilitator_error', e);
+	}
+
+	if (allSourcesFailed(httpRes, mcpRes)) {
+		return error(res, 502, 'facilitator_error', sourceErrorText(httpRes, mcpRes));
 	}
 
 	const items = [...(httpRes.items || []), ...(mcpRes.items || [])];
@@ -120,8 +126,10 @@ async function handler(req, res) {
 		}
 		const summary = summarize(wantHost, matched);
 
-		// Listings sorted cheap → expensive so the profile reads like a price
-		// ladder. Unknown-price items sink to the bottom.
+		// Listings sorted cheap to expensive so the profile reads like a price
+		// ladder. Unknown-price items sink to the bottom. The array is capped by
+		// `limit`: the largest provider in the live catalog carries ~3k listings,
+		// which serialized to a 10 MB response and as many DOM rows.
 		const listings = matched
 			.map((it) => ({ it, p: minUsdcAtomic(it) }))
 			.sort((a, b) => {
@@ -130,6 +138,7 @@ async function handler(req, res) {
 				if (b.p == null) return -1;
 				return a.p - b.p;
 			})
+			.slice(0, limit)
 			.map(({ it, p }) => ({
 				type: it.type,
 				resource: it.resource,
@@ -148,7 +157,7 @@ async function handler(req, res) {
 			}));
 
 		res.setHeader('cache-control', 'public, max-age=30, stale-while-revalidate=120');
-		return json(res, 200, { ...summary, listings });
+		return json(res, 200, { ...summary, listingTotal: matched.length, listings });
 	}
 
 	const providers = [...byHost.entries()]
@@ -165,7 +174,11 @@ async function handler(req, res) {
 	});
 }
 
+// An absent query param arrives as null, and Number(null) is 0, not NaN: the
+// unguarded version returned min instead of the fallback, so every default
+// here silently collapsed to 1 (one catalog item per facilitator page).
 function clampInt(v, fallback, min, max) {
+	if (v == null || v === '') return fallback;
 	const n = Number(v);
 	if (!Number.isFinite(n)) return fallback;
 	return Math.max(min, Math.min(max, Math.floor(n)));

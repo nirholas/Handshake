@@ -9,12 +9,15 @@
 // thing, different price.
 //
 // Query params:
-//   minSpreadPct  — discard groups whose max/min - 1 is below this (default 0)
-//   minProviders  — require at least this many distinct provider hosts (default 2)
-//   limit         — cap returned opportunities (default 100, max 500)
+//   minSpreadPct: discard groups whose max/min - 1 is below this (default 0)
+//   minProviders: require at least this many distinct provider hosts (default 2)
+//   limit:        cap returned opportunities (default 100, max 500)
 
 import { cors, json, error, wrap, serverError } from '../_lib/http.js';
-import { Bazaar } from '../_lib/x402/bazaar-client.js';
+import { allSourcesFailed, Bazaar, sourceErrorText } from '../_lib/x402/bazaar-client.js';
+
+// Two distinct provider hosts is the floor for calling a price gap arbitrage.
+const DEFAULT_MIN_PROVIDERS = 2;
 
 const STOP_WORDS = new Set([
 	'api', 'apis', 'service', 'endpoint', 'endpoints', 'paid', 'free',
@@ -55,7 +58,7 @@ function capabilityKey(it) {
 		return k ? `mcp:${k}` : null;
 	}
 	// Prefer serviceName; single-token names are fine because the facilitator
-	// chose them deliberately. URL-derived keys are noisier — a single short
+	// chose them deliberately. URL-derived keys are noisier: a single short
 	// path like /buy collides across totally unrelated services, so require
 	// at least two informative tokens before treating them as a capability.
 	const nameTokens = tokenize(it.serviceName).slice(0, 3);
@@ -100,19 +103,23 @@ async function handler(req, res) {
 
 	const url = new URL(req.url, 'http://x');
 	const minSpreadPct = clampNum(url.searchParams.get('minSpreadPct'), 0, 0, 10000);
-	const minProviders = clampInt(url.searchParams.get('minProviders'), 2, 2, 10);
+	const minProviders = clampInt(url.searchParams.get('minProviders'), DEFAULT_MIN_PROVIDERS, 2, 10);
 	const limit = clampInt(url.searchParams.get('limit'), 100, 1, 500);
 
 	const baz = new Bazaar();
 	let httpRes, mcpRes;
 	try {
 		[httpRes, mcpRes] = await Promise.all([
-			baz.list({ type: 'http', maxItems: 3000 }),
-			baz.list({ type: 'mcp', maxItems: 3000 }),
+			baz.listCached({ type: 'http', maxItems: 3000 }),
+			baz.listCached({ type: 'mcp', maxItems: 3000 }),
 		]);
 	} catch (e) {
 		console.error('[bazaar] facilitator error', e?.message || e);
 		return serverError(res, 502, 'facilitator_error', e);
+	}
+
+	if (allSourcesFailed(httpRes, mcpRes)) {
+		return error(res, 502, 'facilitator_error', sourceErrorText(httpRes, mcpRes));
 	}
 
 	const items = [...(httpRes.items || []), ...(mcpRes.items || [])];
@@ -132,9 +139,14 @@ async function handler(req, res) {
 		if (list.length < 2) continue;
 		const hosts = new Set(list.map(({ it }) => hostOf(it.resource)).filter(Boolean));
 		const facilitators = new Set(list.map(({ it }) => hostOf(it.facilitator)).filter(Boolean));
-		// Internal pricing tiers on a single host aren't arbitrage; require
-		// at least two distinct hosts OR two distinct facilitators.
-		if (hosts.size < minProviders && facilitators.size < 2) continue;
+		// Internal pricing tiers on a single host aren't arbitrage, so a group
+		// needs `minProviders` distinct hosts. At the default floor a single host
+		// listed on two facilitators also counts, because the same capability can
+		// be priced differently per venue. A caller who raises the floor is asking
+		// for genuinely competing providers, so that escape hatch closes.
+		const spansEnoughHosts = hosts.size >= minProviders;
+		const spansFacilitators = minProviders === DEFAULT_MIN_PROVIDERS && facilitators.size >= 2;
+		if (!spansEnoughHosts && !spansFacilitators) continue;
 
 		const prices = list.map((x) => x.usdc);
 		const minAtomic = Math.min(...prices);
@@ -225,12 +237,17 @@ async function handler(req, res) {
 	});
 }
 
+// An absent query param arrives as null, and Number(null) is 0, not NaN: the
+// unguarded version returned min instead of the fallback, so every default
+// here silently collapsed to 1 (one catalog item per facilitator page).
 function clampInt(v, fallback, min, max) {
+	if (v == null || v === '') return fallback;
 	const n = Number(v);
 	if (!Number.isFinite(n)) return fallback;
 	return Math.max(min, Math.min(max, Math.floor(n)));
 }
 function clampNum(v, fallback, min, max) {
+	if (v == null || v === '') return fallback;
 	const n = Number(v);
 	if (!Number.isFinite(n)) return fallback;
 	return Math.max(min, Math.min(max, n));

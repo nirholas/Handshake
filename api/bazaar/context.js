@@ -2,18 +2,18 @@
 //
 // Produces a Hunch-style "What's the context?" panel for a single x402
 // service. We pull the merged catalog, locate the item, gather peers (same
-// capability and same provider), then ask an LLM to write 2–3 sentences
+// capability and same provider), then ask an LLM to write two or three sentences
 // grounded in inline [n] citations that the UI renders as chips. Generation
 // runs on the free platform providers (Groq/OpenRouter); Anthropic is BYOK.
 //
 // Falls back to a deterministic, citation-only summary if no LLM provider is
-// available or the upstream call fails — the panel should always render
+// available or the upstream call fails, because the panel should always render
 // something useful.
 
 import { cors, json, error, wrap, rateLimited, serverError } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { llmComplete } from '../_lib/llm.js';
-import { Bazaar } from '../_lib/x402/bazaar-client.js';
+import { allSourcesFailed, Bazaar, sourceErrorText } from '../_lib/x402/bazaar-client.js';
 
 const STOP_WORDS = new Set([
 	'api',
@@ -94,7 +94,7 @@ function minUsdcAtomic(item) {
 }
 
 function priceLabel(atomic) {
-	if (atomic == null) return '—';
+	if (atomic == null) return 'no USDC price';
 	const n = atomic / 1_000_000;
 	if (n === 0) return '0 USDC';
 	if (n < 0.01) return `${n.toFixed(6).replace(/0+$/, '').replace(/\.$/, '')} USDC`;
@@ -116,9 +116,15 @@ function percentile(sortedAsc, value) {
 function buildCitations({ target, peers, providerSiblings }) {
 	const cits = [];
 	if (peers.length) {
+		// Many facilitator listings ship an empty serviceName, which used to make
+		// this chip link at /bazaar?q= and re-list the whole catalog. Fall back to
+		// the capability in the URL tail, then the host, so the chip always lands
+		// on the peer set it claims to show.
+		const peerQuery =
+			target.serviceName || target.toolName || tailFromUrl(target.resource) || hostOf(target.resource);
 		cits.push({
 			label: `${peers.length} peer ${peers.length === 1 ? 'listing' : 'listings'}`,
-			url: `/bazaar?q=${encodeURIComponent(target.serviceName || target.toolName || '')}`,
+			url: `/bazaar?q=${encodeURIComponent(peerQuery)}`,
 			kind: 'peers',
 		});
 	}
@@ -215,7 +221,7 @@ async function llmSummary({ target, targetPrice, peers, providerSiblings, citati
 			.slice(0, 8)
 			.map((p) => {
 				const price = priceLabel(minUsdcAtomic(p));
-				return `- ${p.serviceName || p.toolName || '(unnamed)'} @ ${hostOf(p.resource)} — ${price} via ${hostOf(p.facilitator)}`;
+				return `- ${p.serviceName || p.toolName || '(unnamed)'} @ ${hostOf(p.resource)}: ${price} via ${hostOf(p.facilitator)}`;
 			})
 			.join('\n') || '(none discovered)';
 
@@ -224,13 +230,13 @@ async function llmSummary({ target, targetPrice, peers, providerSiblings, citati
 			.slice(0, 8)
 			.map((p) => {
 				const price = priceLabel(minUsdcAtomic(p));
-				return `- ${p.serviceName || p.toolName || p.resource} — ${price}`;
+				return `- ${p.serviceName || p.toolName || p.resource}: ${price}`;
 			})
 			.join('\n') || '(none)';
 
-	const citationLines = citations.map((c, i) => `[${i + 1}] ${c.label} — ${c.url}`).join('\n');
+	const citationLines = citations.map((c, i) => `[${i + 1}] ${c.label} (${c.url})`).join('\n');
 
-	const prompt = `You write the "What's the context?" panel for an x402 paid API listing — a brief, grounded analysis that tells a builder why this listing is interesting right now.
+	const prompt = `You write the "What's the context?" panel for an x402 paid API listing: a brief, grounded analysis that tells a builder why this listing is interesting right now.
 
 # Rules
 - 2 to 3 sentences total, no more.
@@ -248,7 +254,7 @@ async function llmSummary({ target, targetPrice, peers, providerSiblings, citati
 - Type: ${target.type}${target.toolName ? ` · tool: ${target.toolName}` : ''}
 - Provider host: ${hostOf(target.resource)}
 - Facilitator host: ${hostOf(target.facilitator)}
-- Networks: ${(target.networks || []).join(', ') || '—'}
+- Networks: ${(target.networks || []).join(', ') || '(none)'}
 - Price (min USDC across accepts): ${priceLabel(targetPrice)}
 - Description: ${target.description || '(none)'}
 - Tags: ${(target.tags || []).join(', ') || '(none)'}
@@ -266,7 +272,7 @@ Respond with only the JSON object.`;
 
 	// Free platform providers (Groq/OpenRouter) handle this; Anthropic is BYOK.
 	// If no provider is available llmComplete throws, and the caller falls back
-	// to the deterministic summary — so the panel still renders.
+	// to the deterministic summary, so the panel still renders.
 	const { text, provider } = await llmComplete({
 		system: 'You summarize x402 bazaar services. Respond with only the JSON object the prompt requests.',
 		user: prompt,
@@ -288,7 +294,7 @@ async function handler(req, res) {
 	if (req.method !== 'GET') return error(res, 405, 'method_not_allowed', 'GET only');
 
 	// Unauthenticated endpoint that fans out to facilitators and runs an LLM
-	// completion on the platform keys — bound per IP like the other public LLM
+	// completion on the platform keys. Bound per IP like the other public LLM
 	// surfaces so one client can't drain the shared provider budget.
 	const rl = await limits.publicIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -302,13 +308,18 @@ async function handler(req, res) {
 	let httpRes, mcpRes;
 	try {
 		[httpRes, mcpRes] = await Promise.all([
-			baz.list({ type: 'http', maxItems: 3000 }),
-			baz.list({ type: 'mcp', maxItems: 3000 }),
+			baz.listCached({ type: 'http', maxItems: 3000 }),
+			baz.listCached({ type: 'mcp', maxItems: 3000 }),
 		]);
 	} catch (e) {
 		console.error('[bazaar] facilitator error', e?.message || e);
 		return serverError(res, 502, 'facilitator_error', e);
 	}
+	// A dead catalog must not masquerade as "service not in current catalog".
+	if (allSourcesFailed(httpRes, mcpRes)) {
+		return error(res, 502, 'facilitator_error', sourceErrorText(httpRes, mcpRes));
+	}
+
 	const items = [...(httpRes.items || []), ...(mcpRes.items || [])];
 
 	const wantKey = toolName ? `${resource}#${toolName}` : resource;
@@ -337,8 +348,8 @@ async function handler(req, res) {
 	try {
 		result = await llmSummary({ target, targetPrice, peers, providerSiblings, citations });
 	} catch (e) {
-		// Always return something useful — the panel is decorative if
-		// missing and frustrating if it 500s.
+		// Always return something useful: the panel is decorative if missing
+		// and frustrating if it 500s.
 		result = deterministicSummary({
 			target,
 			targetPrice,

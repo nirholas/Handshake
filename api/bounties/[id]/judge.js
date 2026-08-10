@@ -13,6 +13,7 @@
 import { sql } from '../../_lib/db.js';
 import { cors, json, error, wrap, method, rateLimited } from '../../_lib/http.js';
 import { getSessionUser } from '../../_lib/auth.js';
+import { requireCsrf } from '../../_lib/csrf.js';
 import { isUuid } from '../../_lib/validate.js';
 import { llmComplete, LlmUnavailableError } from '../../_lib/llm.js';
 import { cacheGet, cacheSet } from '../../_lib/cache.js';
@@ -32,6 +33,7 @@ export default wrap(async (req, res) => {
 
 	const user = await getSessionUser(req).catch(() => null);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in to use the AI judge');
+	if (!(await requireCsrf(req, res, user.id))) return;
 
 	const rl = await limits.bountyJudge(user.id);
 	if (!rl.success)
@@ -73,6 +75,7 @@ export default wrap(async (req, res) => {
 			user: userPrompt,
 			maxTokens: 1400,
 			timeoutMs: 30_000,
+			track: { userId: user.id, tool: 'bounties/judge' },
 		});
 		result = normalizeJudgement(out.text, validIds);
 		result.model = out.model;
@@ -81,12 +84,14 @@ export default wrap(async (req, res) => {
 		if (e instanceof LlmUnavailableError) {
 			return error(res, 503, 'llm_unavailable', 'AI judge is unavailable right now');
 		}
-		return error(
-			res,
-			502,
-			'judge_failed',
-			e?.message || 'the judge could not score this field',
-		);
+		// Upstream provider errors carry vendor detail (billing state, keys, model
+		// names) that must never reach a bounty poster's screen. Log it, answer
+		// with a stable message the resolve modal can render as-is.
+		console.warn('[bounties/judge] scoring failed for %s: %s', id, e?.message);
+		if (e?.status === 429) {
+			return error(res, 429, 'judge_limit', 'AI judge budget spent for today, try again tomorrow');
+		}
+		return error(res, 502, 'judge_failed', 'the judge could not score this field');
 	}
 
 	// Decorate each ranking with display context the client needs (author,

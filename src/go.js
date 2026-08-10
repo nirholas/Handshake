@@ -1,6 +1,7 @@
 // Bounty board — three.ws/go
 
 import { safeUrl } from './safe-url.js';
+import { apiFetch } from './api.js';
 
 const API = '/api/bounties';
 let currentTab = 'feed';
@@ -26,9 +27,13 @@ async function init() {
 
 async function loadUser() {
 	try {
-		const r = await fetch('/api/auth/me', { credentials: 'include' });
+		const r = await apiFetch('/api/auth/me', { allowAnonymous: true });
 		if (r.ok) {
-			currentUser = await r.json();
+			// /api/auth/me answers { user: {...} }; reading the envelope as the
+			// user left the account chip labelled "account" for everyone.
+			currentUser = (await r.json())?.user || null;
+		}
+		if (currentUser) {
 			const btn = document.getElementById('user-btn');
 			btn.textContent =
 				currentUser.display_name || currentUser.email?.split('@')[0] || 'account';
@@ -66,7 +71,9 @@ async function loadFeed(reset = false) {
 	}
 
 	try {
-		const r = await fetch(`${API}?tab=${currentTab}&limit=20&offset=${feedOffset}`);
+		const r = await apiFetch(`${API}?tab=${currentTab}&limit=20&offset=${feedOffset}`, {
+			allowAnonymous: true,
+		});
 		const data = await r.json();
 
 		if (reset) el.innerHTML = '';
@@ -218,7 +225,7 @@ async function loadSidebar() {
 async function loadTopBounties() {
 	const el = document.getElementById('top-bounties');
 	try {
-		const r = await fetch(`${API}?tab=open&limit=5`);
+		const r = await apiFetch(`${API}?tab=open&limit=5`, { allowAnonymous: true });
 		const { bounties } = await r.json();
 		if (!bounties?.length) {
 			el.innerHTML =
@@ -252,7 +259,7 @@ async function loadLeaderboards() {
 	const spendersEl = document.getElementById('top-spenders');
 
 	try {
-		const r = await fetch('/api/bounties/leaderboard');
+		const r = await apiFetch('/api/bounties/leaderboard', { allowAnonymous: true });
 		if (r.ok) {
 			const { earners, spenders } = await r.json();
 			earnersEl.innerHTML = renderLeaderboard(earners);
@@ -372,9 +379,8 @@ function bindCreate() {
 		btn.disabled = true;
 
 		try {
-			const r = await fetch(API, {
+			const r = await apiFetch(API, {
 				method: 'POST',
-				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({
 					title,
@@ -436,9 +442,8 @@ function bindSubmit() {
 		btn.disabled = true;
 
 		try {
-			const r = await fetch(`${API}/${activeBountyId}/submissions`, {
+			const r = await apiFetch(`${API}/${activeBountyId}/submissions`, {
 				method: 'POST',
-				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({
 					content: content || undefined,
@@ -480,8 +485,8 @@ async function openResolveModal(bountyId) {
 	openModal('resolve-modal');
 
 	try {
-		const r = await fetch(`${API}/${bountyId}/submissions?limit=50`, {
-			credentials: 'include',
+		const r = await apiFetch(`${API}/${bountyId}/submissions?limit=50`, {
+			allowAnonymous: true,
 		});
 		const data = await r.json();
 		resolveSubmissions = data.submissions || [];
@@ -547,9 +552,8 @@ function bindResolve() {
 		btn.disabled = true;
 
 		try {
-			const r = await fetch(`${API}/${activeBountyId}/resolve`, {
+			const r = await apiFetch(`${API}/${activeBountyId}/resolve`, {
 				method: 'POST',
-				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({
 					submission_id: selectedSubmissionId,
@@ -596,9 +600,8 @@ async function toggleLike(btn) {
 	btn.disabled = true;
 
 	try {
-		const r = await fetch(`${API}/${bid}/likes`, {
+		const r = await apiFetch(`${API}/${bid}/likes`, {
 			method: 'POST',
-			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ submission_id: sid }),
 		});
@@ -631,10 +634,7 @@ async function runJudge() {
 	btn.textContent = '✨ Judging…';
 
 	try {
-		const r = await fetch(`${API}/${activeBountyId}/judge`, {
-			method: 'POST',
-			credentials: 'include',
-		});
+		const r = await apiFetch(`${API}/${activeBountyId}/judge`, { method: 'POST' });
 		const data = await r.json();
 		if (!r.ok) throw new Error(data.error_description || data.error || 'failed');
 

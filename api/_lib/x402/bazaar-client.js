@@ -1,7 +1,7 @@
 // x402 Bazaar discovery client.
 //
 // Talks directly to facilitator `/discovery/resources` endpoints (HTTP GET).
-// No SDK dependency — the wire format is stable enough to consume with fetch.
+// No SDK dependency: the wire format is stable enough to consume with fetch.
 // We normalize items returned by both spec versions:
 //   - v1 facilitators (PayAI): flat shape, network strings like "base"/"solana"
 //   - v2 facilitators (CDP):   `extensions.bazaar.info`, CAIP-2 networks
@@ -67,7 +67,7 @@ function pickAmount(accept) {
 }
 
 // Convert atomic units to a human string. We don't trust the decimals when
-// unknown — fall back to USDC 6dp which is the common case in practice.
+// unknown, so fall back to USDC 6dp which is the common case in practice.
 function formatPrice(atomic, asset) {
 	const { symbol, decimals } = assetInfo(asset);
 	const n = Number(atomic) / 10 ** decimals;
@@ -198,11 +198,23 @@ async function fetchJson(url, { timeoutMs = 15000 } = {}) {
 	}
 }
 
+// Identity of a raw (pre-normalization) discovery item, mirroring the
+// `uniqueKey` normalizeItem() derives. Used only to spot a facilitator that
+// replays the same page; the authoritative dedupe still happens in list().
+function rawItemKey(item) {
+	const url = typeof item?.resource === 'string' ? item.resource : item?.resource?.url || '';
+	const info = item?.extensions?.bazaar?.info || item?.inputSchema || null;
+	const input = info?.input || info || null;
+	const tool = input?.type === 'mcp' ? input?.toolName || '' : '';
+	return tool ? `${url}#${tool}` : url;
+}
+
 // Page through a facilitator's /discovery/resources. We stop at `maxItems`
-// (default 500) to keep responses bounded — operators that need everything can
+// (default 500) to keep responses bounded. Operators that need everything can
 // raise the cap explicitly.
 async function listOneFacilitator(facilitatorUrl, { type, limit, maxItems }) {
 	const items = [];
+	const seen = new Set();
 	const pageSize = Math.min(200, Math.max(1, limit || 200));
 	let offset = 0;
 	let total = null;
@@ -214,15 +226,48 @@ async function listOneFacilitator(facilitatorUrl, { type, limit, maxItems }) {
 		const body = await fetchJson(u.toString());
 		const got = Array.isArray(body?.items) ? body.items : Array.isArray(body) ? body : [];
 		if (got.length === 0) break;
-		for (const it of got) items.push(it);
+		let fresh = 0;
+		for (const it of got) {
+			const k = rawItemKey(it);
+			if (k && !seen.has(k)) {
+				seen.add(k);
+				fresh++;
+			}
+			items.push(it);
+		}
 		if (body?.pagination?.total != null) total = body.pagination.total;
 		offset += got.length;
+		// A facilitator that ignores `offset` replays page one forever, which
+		// turned a small `limit` into hundreds of identical round trips. Stop as
+		// soon as a page carries nothing we have not already collected.
+		if (fresh === 0) break;
 		// Stop if facilitator returned fewer than requested (last page).
 		if (got.length < pageSize) break;
 		// Or if we've reached the reported total.
 		if (total != null && offset >= total) break;
 	}
-	return items;
+	// One page can exceed the cap when a facilitator ignores `limit`, so enforce
+	// the bound on the way out instead of trusting the loop guard.
+	return items.length > maxItems ? items.slice(0, maxItems) : items;
+}
+
+const CATALOG_TTL_MS = Math.max(0, Number(process.env.BAZAAR_CATALOG_TTL_MS) || 60_000);
+const catalogMemo = new Map();
+
+// Callers filter and sort what they get back, so hand out fresh array wrappers
+// around the shared item objects rather than the memo's own arrays.
+function shallowCopy(result) {
+	return {
+		items: [...(result.items || [])],
+		sources: [...(result.sources || [])],
+		errors: [...(result.errors || [])],
+	};
+}
+
+// Drop every memoized catalog. Used by tests and by the catalog-refresh
+// pipeline, which must observe a facilitator change immediately.
+export function clearCatalogCache() {
+	catalogMemo.clear();
 }
 
 // Bazaar client. Stateless aside from the configured facilitator list.
@@ -276,7 +321,10 @@ export class Bazaar {
 
 	async search({ query, type = 'http', maxItems = 500 } = {}) {
 		const q = String(query || '').trim().toLowerCase();
-		const { items, sources, errors } = await this.list({ type, maxItems });
+		// Scoring is local, so search rides the same memoized catalog as the
+		// aggregate views; list() stays the uncached primitive for the pipelines
+		// that snapshot the catalog.
+		const { items, sources, errors } = await this.listCached({ type, maxItems });
 		if (!q) return { resources: items, sources, errors };
 		const terms = q.split(/\s+/g).filter(Boolean);
 		const scored = items
@@ -285,6 +333,30 @@ export class Bazaar {
 			.sort((a, b) => b.score - a.score)
 			.map((x) => x.it);
 		return { resources: scored, sources, errors };
+	}
+
+	// Same catalog as list(), memoized per (facilitators, type, maxItems) for
+	// CATALOG_TTL_MS. The aggregate views (/api/bazaar/providers, /arbitrage,
+	// /context) each sweep the full http + mcp catalog across every facilitator,
+	// which measured ~15s per request against the live facilitators; one shared
+	// in-process sweep per minute makes those pages interactive. In-process on
+	// purpose: the merged catalog is tens of MB, far past what belongs in Redis.
+	// Concurrent callers share the in-flight promise, so a cold instance under
+	// load makes one sweep, not one per request.
+	async listCached({ type = 'http', limit = 200, maxItems = 500 } = {}) {
+		const key = `${this.facilitators.join('|')}::${type}::${limit}::${maxItems}`;
+		const hit = catalogMemo.get(key);
+		const now = Date.now();
+		if (hit && now - hit.at < CATALOG_TTL_MS) return shallowCopy(await hit.promise);
+		const promise = this.list({ type, limit, maxItems });
+		catalogMemo.set(key, { at: now, promise });
+		try {
+			return shallowCopy(await promise);
+		} catch (e) {
+			// A failed sweep must not be served for the rest of the TTL.
+			if (catalogMemo.get(key)?.promise === promise) catalogMemo.delete(key);
+			throw e;
+		}
 	}
 
 	// Look up a single resource by URL (and optional MCP tool name).
@@ -395,6 +467,20 @@ export function sortByPriceAsc(items) {
 		const bv = b.minPriceAtomic ?? Number.MAX_SAFE_INTEGER;
 		return av - bv;
 	});
+}
+
+// True when every facilitator we asked failed. list() resolves partial
+// failures internally (Promise.allSettled), so without this check a total
+// outage reaches callers as an empty catalog, and an empty catalog reads as
+// "no such service exists" rather than "discovery is down".
+export function allSourcesFailed(...results) {
+	const sources = results.flatMap((r) => r?.sources || []);
+	return sources.length > 0 && sources.every((s) => !s.ok);
+}
+
+export function sourceErrorText(...results) {
+	const errs = results.flatMap((r) => r?.errors || []);
+	return errs.map((e) => `${e.facilitator}: ${e.error}`).join('; ') || 'no facilitator answered';
 }
 
 export function defaultFacilitators() {

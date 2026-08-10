@@ -577,11 +577,16 @@ Representative endpoints:
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /api/bazaar/list` | Paginated catalog from PayAI + CDP facilitators |
-| `GET /api/bazaar/search` | Ranked text search across bazaar |
-| `GET /api/bazaar/providers` | Per-host reputation cards |
-| `GET /api/bazaar/arbitrage` | Cross-venue price disparity |
-| `GET /api/bazaar/context` | Contextual service suggestions |
+| `GET /api/bazaar/list` | Merged catalog from the configured facilitators. `maxItems` (default 500) bounds the sweep per facilitator, `limit` (default 200) bounds the returned rows, `total` reports matches before that cut |
+| `GET /api/bazaar/search` | Ranked text search over the same catalog. `limit` default 50, with `total` as above |
+| `GET /api/bazaar/providers` | Per-host reputation cards. `limit` caps the directory, or the `listings` array in `?host=` mode (default 200, max 1000); `listingTotal` reports the provider's real count |
+| `GET /api/bazaar/arbitrage` | Cross-venue price disparity. `minProviders` (default 2) is honored strictly when raised above the default |
+| `GET /api/bazaar/context` | Grounded, cited context panel for one listing, with a deterministic fallback when no LLM answers |
+
+All five read a merged catalog memoized in-process for 60s (`BAZAAR_CATALOG_TTL_MS`);
+a sweep across every facilitator takes seconds, so the aggregate views share one.
+When every facilitator fails they answer `502 facilitator_error` rather than an
+empty `200`, which would read as "no such service exists".
 
 #### Wallet Management (`api/user/wallet/*`, `api/wallet/`)
 

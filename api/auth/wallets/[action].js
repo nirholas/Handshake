@@ -29,10 +29,6 @@ import { issueNonce, consumeNonce, NONCE_TTL_SEC } from './_link-nonces.js';
 const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const ALLOWED_SOLANA_CHAINS = new Set(['mainnet', 'devnet', 'testnet']);
 
-// Localhost is a development-only escape hatch, so it is gated on THIS
-// deployment actually being a local one (see the link handlers below).
-const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
-
 const linkBody = z.object({
 	message: z.string().min(64).max(4000),
 	signature: z.string().regex(/^0x[a-fA-F0-9]+$/),
@@ -139,11 +135,8 @@ async function handleLinkWallet(userId, req, res) {
 	const appOrigin = env.APP_ORIGIN;
 	const appHost = new URL(appOrigin).host;
 	const vercelHost = process.env.VERCEL_URL || null;
-	// Gated on this deployment's own APP_ORIGIN, not on VERCEL_ENV. Cloud Run
-	// never sets VERCEL_ENV, so the old check read "not production" on the live
-	// site and a link message signed for localhost cleared the domain binding
-	// there. Same fix as api/auth/siwe/[action].js and api/auth/siws/[action].js.
-	const isLocalDev = !env.isProduction && LOCAL_ORIGIN.test(appOrigin);
+	const isLocalDev =
+		process.env.VERCEL_ENV !== 'production' && process.env.VERCEL_ENV !== 'preview';
 	const allowedHosts = new Set([appHost, vercelHost].filter(Boolean));
 	const domainOk =
 		allowedHosts.has(fields.domain) || (isLocalDev && /^localhost(:\d+)?$/.test(fields.domain));
@@ -402,11 +395,8 @@ async function handleLinkSolana(req, res) {
 	const appOrigin = env.APP_ORIGIN;
 	const appHost = new URL(appOrigin).host;
 	const vercelHost = process.env.VERCEL_URL || null;
-	// Gated on this deployment's own APP_ORIGIN, not on VERCEL_ENV. Cloud Run
-	// never sets VERCEL_ENV, so the old check read "not production" on the live
-	// site and a link message signed for localhost cleared the domain binding
-	// there. Same fix as api/auth/siwe/[action].js and api/auth/siws/[action].js.
-	const isLocalDev = !env.isProduction && LOCAL_ORIGIN.test(appOrigin);
+	const isLocalDev =
+		process.env.VERCEL_ENV !== 'production' && process.env.VERCEL_ENV !== 'preview';
 	const allowedHosts = new Set([appHost, vercelHost].filter(Boolean));
 	const domainOk =
 		allowedHosts.has(fields.domain) || (isLocalDev && /^localhost(:\d+)?$/.test(fields.domain));

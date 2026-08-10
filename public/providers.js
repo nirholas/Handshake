@@ -226,7 +226,11 @@ async function loadProfile(host) {
 		return;
 	}
 
-	const totalListings = data.listings.length;
+	// The API caps the listings array (a 3k-endpoint provider used to ship a
+	// 10 MB profile), so the headline count comes from listingTotal and the
+	// tag/network bars are normalised against the rows we actually received.
+	const shownListings = data.listings.length;
+	const totalListings = data.listingTotal ?? shownListings;
 	const tagCounts = new Map();
 	for (const l of data.listings) for (const t of l.tags || []) tagCounts.set(t, (tagCounts.get(t) || 0) + 1);
 	const topTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
@@ -258,7 +262,7 @@ async function loadProfile(host) {
 					</div>
 				</div>
 				<div class="panel" style="margin-top: 14px;">
-					<h3>Profile · ${totalListings} listings</h3>
+					<h3>Profile · ${totalListings} listings${shownListings < totalListings ? ` (showing ${shownListings})` : ''}</h3>
 					<div class="metric-list">
 						<div class="row"><span class="k">HTTP endpoints</span><span class="v">${typeBreakdown.http}</span></div>
 						<div class="row"><span class="k">MCP tools</span><span class="v">${typeBreakdown.mcp}</span></div>
@@ -292,7 +296,7 @@ async function loadProfile(host) {
 					<div class="bar-list">${netRows.map(([n, c]) => `
 						<div class="bar-row">
 							<div class="label">${escapeHtml(shortNet(n))}</div>
-							<div class="bar"><div class="fill" style="width:${Math.round((c / totalListings) * 100)}%"></div></div>
+							<div class="bar"><div class="fill" style="width:${Math.round((c / shownListings) * 100)}%"></div></div>
 							<div class="pct">${c}</div>
 						</div>
 					`).join('')}</div>

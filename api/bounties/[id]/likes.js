@@ -8,6 +8,7 @@
 import { sql } from '../../_lib/db.js';
 import { cors, json, error, readJson, wrap, method } from '../../_lib/http.js';
 import { getSessionUser } from '../../_lib/auth.js';
+import { requireCsrf } from '../../_lib/csrf.js';
 import { isUuid } from '../../_lib/validate.js';
 
 export default wrap(async (req, res) => {
@@ -20,6 +21,7 @@ export default wrap(async (req, res) => {
 
 	const user = await getSessionUser(req).catch(() => null);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in to like submissions');
+	if (!(await requireCsrf(req, res, user.id))) return;
 
 	const body = await readJson(req);
 	const submissionId = body?.submission_id;
