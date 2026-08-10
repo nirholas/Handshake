@@ -3,6 +3,15 @@
   "entries": [
     {
       "date": "2026-08-10",
+      "title": "A deleted account stays deleted on wallet sign-in, and \"log out everywhere\" reports what it actually revoked",
+      "summary": "An audit of the sign-in endpoints turned up four things worth your attention. Signing in again with the same Ethereum wallet or Privy identity used to quietly restore an account you had deleted, even though you had typed the confirmation phrase to retire it; both paths now refuse it the same way the Solana and SSO sign-ins already did. Wallet sign-in also enforces its domain check properly again: the rule that a signature only counts when it was signed for three.ws was being skipped on the live site because of a hosting setting that no longer exists, which meant a signature collected by some other site could in principle be spent here. \"Log out of all other sessions\" and \"log out everywhere\" told you nothing about how many sessions they closed, because the count was read from a field the database driver never sends; both now report a real number. For the same reason, deleting your account always claimed it had retired zero avatars, agents, and widgets no matter how much you had; that tally is now accurate, in the response and in the support record.",
+      "tags": [
+        "security",
+        "fix"
+      ]
+    },
+    {
+      "date": "2026-08-10",
       "title": "Agent-to-agent hiring works again, the paid inspection skill accepts calls again, and a trade cap can no longer be deleted by a typo",
       "summary": "Three fixes on the agent economy API. Hiring one agent to do paid work for another failed with a generic server error for every signed-in caller, on every request, because of a name collision inside the endpoint; the whole hire path was dead while a logged-out probe of it looked healthy. The three.ws paid 3D-model inspection skill, which other agents pay to call, rejected every request as unreadable because the code that reads the request body was never wired in; it now returns its real price quote and, once paid, its real inspection report. And the per-agent trading guardrails could be quietly removed: saving a per-trade cap or daily budget as a negative number or a stray word did not fail, it erased the existing ceiling and reported success, leaving the agent free to spend without one. Those values are now rejected with a plain message and the saved cap is left untouched; clearing a cap still works, but only when you say so explicitly. Failures on the trade, strategy-close, and alpha-read paths also now record why they failed instead of returning an unexplained error.",
       "tags": [

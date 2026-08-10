@@ -236,7 +236,9 @@ const res = await fetch('/api/auth/siwe/verify', {
 const { user, wallet } = await res.json();
 ```
 
-> **Security note:** Never submit the SIWE message to a domain other than where the nonce was issued. The backend validates that `domain` and `uri` in the message match the deployment's `APP_ORIGIN`. Replaying a valid signature from a phishing page is rejected.
+> **Security note:** Never submit the SIWE message to a domain other than where the nonce was issued. The backend validates that `domain` and `uri` in the message match the deployment's `APP_ORIGIN`. Replaying a valid signature from a phishing page is rejected. A localhost `domain` is accepted only by a deployment whose own `APP_ORIGIN` is localhost, never by three.ws itself.
+>
+> A wallet whose account was closed through `DELETE /api/auth/me` gets `403 account_deleted`. Signing in again does not revive it: the same answer the [SIWS](#verify-errors) and SAML paths give.
 
 ### Terms of Service acceptance
 
@@ -310,6 +312,8 @@ const { user } = await res.json();
 // Any wallets Privy has linked are synced onto the account automatically;
 // list them afterwards with GET /api/auth/wallets.
 ```
+
+A Privy identity attached to an account that was closed through `DELETE /api/auth/me` gets `403 account_deleted` instead of a session. Signing in again never revives a deleted account on any path.
 
 ### Linking additional wallets
 
@@ -415,10 +419,21 @@ CoinCommunities upstream, kept in two httpOnly cookies scoped to
 
 Expiry is handled transparently: every authenticated community endpoint runs
 through `withAuthRefresh()` ([api/_lib/coin-communities.js](../api/_lib/coin-communities.js)),
-which retries a failed upstream call once after exchanging `cc_rt` for a fresh
-access token and re-setting both cookies on the response. Callers only appear
-signed out when the 30-day refresh token itself is missing or expired, so an
-open `/play` tab no longer kicks you out after the first hour.
+which exchanges `cc_rt` for a fresh access token and re-sets both cookies on the
+response. It fires on both ways a session goes stale:
+
+1. **The `cc_at` cookie is gone.** This is the ordinary case an hour after
+   sign-in, since the cookie and the JWT inside it share the same 1h lifetime,
+   so the request arrives carrying only `cc_rt`. The refresh runs first and the
+   call proceeds on the new token.
+2. **The cookie is still there but the upstream answers 401** (a revoked or
+   early-expired JWT). The call is retried once on the refreshed token.
+
+Handlers must therefore test "is this user signed in?" with `hasUserSession(req)`,
+which accepts either cookie, rather than `userAuthHeaders(req)`, which only sees
+`cc_at` and would call an hours-old but perfectly valid session a stranger.
+Callers only appear signed out when the 30-day refresh token itself is missing or
+expired, so an open `/play` tab no longer kicks you out after the first hour.
 
 ## API Keys
 

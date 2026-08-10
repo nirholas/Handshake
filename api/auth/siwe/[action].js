@@ -17,6 +17,10 @@ import { tosAcceptanceFromBody, recordTosAcceptance } from '../../_lib/legal.js'
 const NONCE_TTL_SEC = 5 * 60;
 const CSRF_COOKIE = '__Host-csrf-siwe';
 
+// Localhost is a development-only escape hatch, so it is gated on THIS
+// deployment actually being a local one. See handleVerify.
+const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
 const verifyBody = z.object({
 	message: z.string().min(64).max(4000),
 	signature: z.string().regex(/^0x[a-fA-F0-9]+$/),
@@ -123,11 +127,18 @@ async function handleVerify(req, res) {
 	const appOrigin = env.APP_ORIGIN;
 	const appHost = new URL(appOrigin).host;
 	const vercelHost = process.env.VERCEL_URL || null;
-	const isLocalDev =
-		process.env.VERCEL_ENV !== 'production' && process.env.VERCEL_ENV !== 'preview';
+	// Keying the localhost escape hatch off VERCEL_ENV alone opened it on the
+	// live site: three.ws runs on Cloud Run, which never sets VERCEL_ENV, so the
+	// check read "not production" in production and a message signed for
+	// localhost cleared the EIP-4361 domain binding there. That binding is the
+	// whole defense against redeeming a signature harvested by another site, and
+	// /nonce is public, so anyone could mint a nonce, collect a localhost-domain
+	// signature elsewhere, and spend it here. APP_ORIGIN is the deployment's own
+	// identity and is always set, so gating on it cannot fail open.
+	const isLocalDev = !env.isProduction && LOCAL_ORIGIN.test(appOrigin);
 	const allowedHosts = new Set([appHost, vercelHost].filter(Boolean));
-	// In local dev, accept any localhost domain so vercel dev works without
-	// overriding PUBLIC_APP_ORIGIN.
+	// On a localhost deployment, accept any localhost port so a dev server works
+	// without overriding PUBLIC_APP_ORIGIN.
 	const domainOk =
 		allowedHosts.has(fields.domain) || (isLocalDev && /^localhost(:\d+)?$/.test(fields.domain));
 	if (!domainOk) {
@@ -227,9 +238,9 @@ async function handleVerify(req, res) {
 		// before user_wallets existed, or by a different flow that only set the
 		// users column. Reconcile by backfilling user_wallets.
 		const placeholderEmail = `wallet-${addrLower}@wallet.local`;
-		// Include soft-deleted rows so we don't collide on the email unique
-		// constraint. Re-signing-in with the same wallet restores the account —
-		// the placeholder email is wallet-derived, so SIWE proves ownership.
+		// Include soft-deleted rows: the email unique index ignores deleted_at, so
+		// skipping them would turn a retired account into a duplicate-key 500 on
+		// the insert below. A soft-deleted hit is refused, never revived.
 		const [existingUser] = await sql`
 			select id, deleted_at from users
 			where wallet_address = ${addrLower} or email = ${placeholderEmail}
@@ -237,13 +248,17 @@ async function handleVerify(req, res) {
 		`;
 
 		if (existingUser) {
+			// The owner typed a confirmation phrase to retire this account, so a
+			// later sign-in with the same wallet answers account_deleted (what the
+			// SIWS and SAML paths already do) instead of silently undoing it.
+			if (existingUser.deleted_at) {
+				return error(res, 403, 'account_deleted', 'this wallet is linked to a deleted account');
+			}
 			userId = existingUser.id;
 			await sql`
 				update users
-				set wallet_address = ${addrLower},
-					deleted_at = null
-				where id = ${userId}
-					and (wallet_address is distinct from ${addrLower} or deleted_at is not null)
+				set wallet_address = ${addrLower}
+				where id = ${userId} and wallet_address is distinct from ${addrLower}
 			`;
 			await sql`
 				insert into user_wallets (user_id, address, chain_id, is_primary)
@@ -260,10 +275,14 @@ async function handleVerify(req, res) {
 				insert into users (email, display_name, wallet_address)
 				values (${placeholderEmail}, ${shortAddr(claimed)}, ${addrLower})
 				on conflict (email) do update
-					set wallet_address = ${addrLower},
-						deleted_at = null
-				returning id, (xmax = 0) as inserted
+					set wallet_address = ${addrLower}
+				returning id, deleted_at, (xmax = 0) as inserted
 			`;
+			// The conflict branch is the race window against the lookup above, so
+			// it re-checks deletion rather than trusting the earlier read.
+			if (user.deleted_at) {
+				return error(res, 403, 'account_deleted', 'this wallet is linked to a deleted account');
+			}
 			userId = user.id;
 			await sql`
 				insert into user_wallets (user_id, address, chain_id, is_primary)

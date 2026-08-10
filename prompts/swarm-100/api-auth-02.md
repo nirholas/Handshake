@@ -1,4 +1,4 @@
-# API audit: api/auth batch 01 (10 files)
+# API audit: api/auth batch 02 (4 files)
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this
 repository and say "run this work order". This file is fully self-contained:
@@ -37,16 +37,10 @@ Every claim below rots; step 0 re-measures, and what you measure wins.
 
 Files in this batch:
 
-- api/auth/[action].js
-- api/auth/captcha.js
-- api/auth/extension-token.js
-- api/auth/github/[action].js
-- api/auth/persona/[action].js
-- api/auth/privy/verify.js
-- api/auth/saml/[action].js
-- api/auth/session/[action].js
-- api/auth/sessions/[action].js
-- api/auth/siwe/[action].js
+- api/auth/siws/[action].js
+- api/auth/wallets/[action].js
+- api/auth/wallets/_link-nonces.js
+- api/auth/x/[action].js
 
 For every routed handler:
 
@@ -96,7 +90,7 @@ For every internal (non-routed) module:
    style: type(scope): what changed and why a reader cares).
 3. Delete this prompt file in that same commit:
 
-       git rm prompts/swarm-100/api-auth-01.md
+       git rm prompts/swarm-100/api-auth-02.md
 
    The shrinking directory is this campaign's only progress ledger; there is
    no progress log to update.

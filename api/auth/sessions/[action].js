@@ -74,12 +74,16 @@ async function handleIndex(req, res) {
 	if (!(await requireCsrf(req, res, user.id))) return;
 
 	const ua = req.headers['user-agent'] || null;
+	// `returning id` is load-bearing: Neon's HTTP driver resolves a query to a
+	// plain rows array, so an UPDATE without RETURNING has no `.count` and this
+	// endpoint answered a bare `{}` instead of the revoked tally.
 	const result = await sql`
 		update sessions
 		set revoked_at = now()
 		where user_id = ${user.id}
 		  and revoked_at is null
 		  and id != ${user.sid}
+		returning id
 	`;
 
 	// Rotate the current session so any stolen copy of this cookie is invalidated.
@@ -93,7 +97,7 @@ async function handleIndex(req, res) {
 	const arr = Array.isArray(existing) ? existing : [existing];
 	res.setHeader('set-cookie', [...arr, sessionCookie(newToken)]);
 
-	return json(res, 200, { revoked: result.count });
+	return json(res, 200, { revoked: result.length });
 }
 
 // ── Revoke one session by id ──────────────────────────────────────────────

@@ -7,7 +7,7 @@ import { webcrypto } from 'node:crypto';
 import { sql } from '../../_lib/db.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { hmacSha256, constantTimeEquals } from '../../_lib/crypto.js';
-import { cors, json, redirect, error, wrap, rateLimited } from '../../_lib/http.js';
+import { cors, json, redirect, error, method, wrap, rateLimited } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
 
@@ -65,6 +65,7 @@ async function verifyState(state) {
 
 async function handleConnect(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
 
 	if (!env.GITHUB_OAUTH_CLIENT_ID) {
 		return error(res, 501, 'not_configured', 'GitHub OAuth is not configured');
@@ -95,6 +96,9 @@ async function handleConnect(req, res) {
 
 async function handleCallback(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	// The IdP sends the user back here as a top-level GET navigation. Anything
+	// else is not the OAuth flow, and the preflight above already says so.
+	if (!method(req, res, ['GET'])) return;
 
 	if (!env.GITHUB_OAUTH_CLIENT_ID || !env.GITHUB_OAUTH_CLIENT_SECRET) {
 		return error(res, 501, 'not_configured', 'GitHub OAuth is not configured');
@@ -193,6 +197,7 @@ async function handleCallback(req, res) {
 
 async function handleStatus(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
 
 	const session = await getSessionUser(req);
 	if (!session) return error(res, 401, 'unauthorized', 'sign in required');

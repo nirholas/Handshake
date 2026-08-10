@@ -18,6 +18,10 @@ const NONCE_TTL_SEC = 5 * 60;
 const CSRF_COOKIE = '__Host-csrf-siws';
 const ALLOWED_CHAIN_IDS = new Set(['mainnet', 'devnet', 'testnet']);
 
+// Localhost is a development-only escape hatch, so it is gated on THIS
+// deployment actually being a local one. See handleVerify.
+const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
 const verifyBody = z.object({
 	message: z.string().min(32).max(4000),
 	// base58 (Phantom) or base64 (other wallets) encoded 64-byte ed25519 signature
@@ -121,8 +125,11 @@ async function handleVerify(req, res) {
 	const appOrigin = env.APP_ORIGIN;
 	const appHost = new URL(appOrigin).host;
 	const vercelHost = process.env.VERCEL_URL || null;
-	const isLocalDev =
-		process.env.VERCEL_ENV !== 'production' && process.env.VERCEL_ENV !== 'preview';
+	// Gated on this deployment's own APP_ORIGIN, not on VERCEL_ENV. Cloud Run
+	// never sets VERCEL_ENV, so the old check read "not production" on the live
+	// site and a message signed for localhost cleared the domain binding there.
+	// See the matching note in api/auth/siwe/[action].js.
+	const isLocalDev = !env.isProduction && LOCAL_ORIGIN.test(appOrigin);
 	const allowedHosts = new Set([appHost, vercelHost].filter(Boolean));
 	const domainOk =
 		allowedHosts.has(fields.domain) || (isLocalDev && /^localhost(:\d+)?$/.test(fields.domain));

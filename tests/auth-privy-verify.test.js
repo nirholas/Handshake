@@ -121,3 +121,27 @@ describe('POST /api/auth/privy/verify — login-CSRF gate', () => {
 		expect(res.statusCode).toBe(200);
 	});
 });
+
+describe('POST /api/auth/privy/verify: deleted accounts', () => {
+	it('refuses to revive an account the owner deleted', async () => {
+		// The ON CONFLICT branch used to clear deleted_at, so signing in with the
+		// same Privy identity silently undid a deletion the owner had confirmed
+		// by typing the phrase. It now answers account_deleted, like SIWE/SIWS/SAML.
+		sqlMock.mockImplementation(async (strings) => {
+			const text = Array.isArray(strings) ? strings.join(' ') : String(strings);
+			if (text.includes('insert into users')) {
+				return [{ id: 'user-gone', deleted_at: '2026-01-01T00:00:00.000Z', inserted: false }];
+			}
+			return [];
+		});
+
+		const res = makeRes();
+		await handler(makeReq({ origin: 'https://three.ws' }), res);
+
+		expect(res.statusCode).toBe(403);
+		expect(res.json().error).toBe('account_deleted');
+		expect(res._h['set-cookie']).toBeUndefined();
+		const statements = sqlMock.mock.calls.map(([s]) => (Array.isArray(s) ? s.join(' ') : String(s)));
+		expect(statements.some((t) => /deleted_at = null/i.test(t))).toBe(false);
+	});
+});

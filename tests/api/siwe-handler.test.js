@@ -109,22 +109,26 @@ async function invoke(opts) {
 	return { res, status: res.statusCode, body: json };
 }
 
-// EIP-4361 message with localhost domain (accepted in non-production env).
-// verifyMessage mock returns the same address so signer === claimed.
+// EIP-4361 message bound to this deployment's own domain (PUBLIC_APP_ORIGIN
+// above). verifyMessage mock returns the same address so signer === claimed.
 const WALLET_ADDR = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
 const TEST_NONCE = 'testNonce1234567890ab';
 // Use a fresh issuedAt so the handler's anti-stale freshness check accepts it.
 const ISSUED_AT = new Date().toISOString();
-const SIWE_MESSAGE = [
-	'localhost wants you to sign in with your Ethereum account:',
+const siweMessage = (domain, uri) => [
+	`${domain} wants you to sign in with your Ethereum account:`,
 	WALLET_ADDR,
 	'',
-	'URI: http://localhost/login',
+	`URI: ${uri}`,
 	'Version: 1',
 	'Chain ID: 1',
 	`Nonce: ${TEST_NONCE}`,
 	`Issued At: ${ISSUED_AT}`,
 ].join('\n');
+const SIWE_MESSAGE = siweMessage('app.test', 'https://app.test/login');
+// The same message re-pointed at localhost. A deployment whose own APP_ORIGIN
+// is not localhost must refuse it.
+const LOCALHOST_MESSAGE = siweMessage('localhost', 'http://localhost/login');
 
 const FUTURE = new Date(Date.now() + 300_000).toISOString();
 
@@ -245,6 +249,44 @@ describe('POST /api/auth/siwe/verify', () => {
 
 		expect(status).toBe(400);
 		expect(body.error).toBe('invalid_nonce');
+	});
+
+	it('rejects a localhost-domain message on a non-localhost deployment', async () => {
+		// The domain binding is what stops a signature harvested by another site
+		// from being redeemed here, and /nonce is public, so anyone can mint a
+		// nonce and go collect one. Gating the localhost escape hatch on
+		// VERCEL_ENV left it wide open on Cloud Run, which never sets that var.
+		const { status, body } = await invoke({
+			action: 'verify',
+			method: 'POST',
+			body: { message: LOCALHOST_MESSAGE, signature: `0x${'ab'.repeat(65)}` },
+			headers: withCsrf(),
+		});
+
+		expect(status).toBe(400);
+		expect(body.error).toBe('invalid_domain');
+		// Refused before the nonce is even looked up, let alone burned.
+		expect(sqlState.calls).toHaveLength(0);
+	});
+
+	it('refuses to revive a soft-deleted account for a returning wallet', async () => {
+		sqlState.queue.push([{ nonce: TEST_NONCE, expires_at: FUTURE, consumed_at: null }]);
+		sqlState.queue.push([{ nonce: TEST_NONCE }]); // burn RETURNING
+		sqlState.queue.push([]); // no user_wallets row
+		sqlState.queue.push([{ id: 'user-gone', deleted_at: '2026-01-01T00:00:00.000Z' }]);
+
+		const { status, body, res } = await invoke({
+			action: 'verify',
+			method: 'POST',
+			body: { message: SIWE_MESSAGE, signature: `0x${'ab'.repeat(65)}` },
+			headers: withCsrf(),
+		});
+
+		expect(status).toBe(403);
+		expect(body.error).toBe('account_deleted');
+		expect(res.headers['set-cookie']).toBeUndefined();
+		// No statement may clear deleted_at behind the user's back.
+		expect(sqlState.calls.some((c) => /deleted_at = null/i.test(c.query))).toBe(false);
 	});
 
 	it('returns 403 when CSRF header is missing', async () => {

@@ -98,12 +98,16 @@ async function handleLogoutEverywhere(req, res) {
 	if (!(await requireCsrf(req, res, user.id))) return;
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
-	const sessionResult = await sql`update sessions set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
+	// `returning id` is load-bearing. The Neon HTTP driver resolves a query to a
+	// plain rows array, so an UPDATE with no RETURNING carries no `.count`: the
+	// tally read `undefined` and JSON.stringify dropped the key from the
+	// response entirely. Count the returned rows instead.
+	const revokedSessions = await sql`update sessions set revoked_at = now() where user_id = ${user.id} and revoked_at is null returning id`;
 	await sql`update oauth_refresh_tokens set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
 	const clearCookies = sessionCookie('', { clear: true });
 	const existing = res.getHeader('set-cookie') || [];
 	res.setHeader('set-cookie', [...(Array.isArray(existing) ? existing : [existing]), ...clearCookies]);
-	return json(res, 200, { ok: true, revoked: sessionResult.count });
+	return json(res, 200, { ok: true, revoked: revokedSessions.length });
 }
 
 // ── register ──────────────────────────────────────────────────────────────────
@@ -234,10 +238,11 @@ async function handleMe(req, res) {
 // ── delete account (DELETE /api/auth/me) ──────────────────────────────────────
 
 // Soft delete, matching the model the rest of auth already assumes: every login
-// path (password, SIWE, SIWS, SAML, Privy) filters on `deleted_at is null` and
-// the wallet paths answer `account_deleted` rather than minting a fresh account
-// for a wallet whose owner left. Rows stay for support/forensics; what changes
-// is that nothing can sign in as this user and none of their content is public.
+// path (password, SIWE, SIWS, SAML, Privy) filters on `deleted_at is null`, and
+// the wallet and SSO paths answer `account_deleted` rather than reviving the row
+// or minting a fresh account for a subject whose owner left. Rows stay for
+// support/forensics; what changes is that nothing can sign in as this user and
+// none of their content is public.
 //
 // Three explicit gates before anything is written: a live session, a single-use
 // CSRF token, and a typed confirmation phrase in the body. CSRF alone would let
@@ -263,9 +268,9 @@ async function handleDeleteAccount(req, res) {
 	// Content first, identity second: if the request dies midway the account is
 	// still signable-in and can be retried, rather than orphaned with its avatars
 	// and embeds left serving publicly under a dead owner.
-	const avatars = await sql`update avatars set deleted_at = now() where owner_id = ${user.id} and deleted_at is null`;
-	const agents = await sql`update agent_identities set deleted_at = now() where user_id = ${user.id} and deleted_at is null`;
-	const widgets = await sql`update widgets set deleted_at = now() where user_id = ${user.id} and deleted_at is null`;
+	const avatars = await sql`update avatars set deleted_at = now() where owner_id = ${user.id} and deleted_at is null returning id`;
+	const agents = await sql`update agent_identities set deleted_at = now() where user_id = ${user.id} and deleted_at is null returning id`;
+	const widgets = await sql`update widgets set deleted_at = now() where user_id = ${user.id} and deleted_at is null returning id`;
 
 	// The handle is released (its unique index ignores deleted_at, so keeping it
 	// would hold /u/<name> hostage forever); the previous value goes to the audit
@@ -276,10 +281,14 @@ async function handleDeleteAccount(req, res) {
 	await sql`update oauth_refresh_tokens set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
 
 	res.setHeader('set-cookie', sessionCookie('', { clear: true }));
+	// Counted from `returning id`, not a driver `.count` field: Neon's HTTP
+	// driver hands back a plain rows array, so `.count` was always undefined and
+	// every deletion was reported and audited as retiring 0 avatars, 0 agents,
+	// and 0 widgets no matter how much content the account actually had.
 	const deleted = {
-		avatars: avatars.count ?? 0,
-		agents: agents.count ?? 0,
-		widgets: widgets.count ?? 0,
+		avatars: avatars.length,
+		agents: agents.length,
+		widgets: widgets.length,
 	};
 	logAudit({
 		userId: user.id,

@@ -92,15 +92,21 @@ export default wrap(async (req, res) => {
 		// synthetic scoped to the DID (matches the SIWE/SIWS @*.local convention).
 		const effectiveEmail =
 			realEmail || `privy-${privyDid.replace('did:privy:', '')}@privy.local`;
+		// The conflict branch relinks the Privy identity but never clears
+		// deleted_at: the owner confirmed that deletion by hand, so a later Privy
+		// sign-in answers account_deleted (matching the SIWE, SIWS, and SAML
+		// paths) instead of quietly restoring the account.
 		const [created] = await sql`
 			insert into users (email, display_name, privy_did)
 			values (${effectiveEmail}, ${displayName}, ${privyDid})
 			on conflict (email) do update
-				set deleted_at = null,
-					privy_did = excluded.privy_did,
+				set privy_did = excluded.privy_did,
 					display_name = excluded.display_name
-			returning id, (xmax = 0) as inserted
+			returning id, deleted_at, (xmax = 0) as inserted
 		`;
+		if (created.deleted_at) {
+			return error(res, 403, 'account_deleted', 'this Privy identity is linked to a deleted account');
+		}
 		userId = created.id;
 		isNew = created.inserted;
 	}

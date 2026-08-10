@@ -19,7 +19,13 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 	const text = Array.isArray(strings) ? strings.join(' ') : String(strings);
 	statements.push({ text: text.replace(/\s+/g, ' ').trim(), values });
 	if (text.includes('select username from users')) return [{ username: 'ada' }];
-	return Object.assign([], { count: 2 });
+	// Neon's HTTP driver resolves every query to a plain rows array: a statement
+	// with no RETURNING yields [] and carries no `.count` field. Mocking a
+	// `.count` is what let the handler ship reporting every deletion as having
+	// retired 0 avatars, 0 agents, and 0 widgets, so this mock refuses to invent
+	// one and the handler has to count `returning id` rows like production does.
+	if (/returning id/i.test(text)) return [{ id: 'row-1' }, { id: 'row-2' }];
+	return [];
 });
 vi.mock('../api/_lib/db.js', () => ({ sql: (strings, ...values) => sqlMock(strings, ...values) }));
 
@@ -129,6 +135,25 @@ describe('DELETE /api/auth/me', () => {
 		expect(written('update sessions set revoked_at')).toHaveLength(1);
 		expect(written('update oauth_refresh_tokens set revoked_at')).toHaveLength(1);
 		expect(res.getHeader('set-cookie')).toMatch(/Max-Age=0/);
+	});
+
+	it('counts retired content from RETURNING rows, not a driver row-count field', async () => {
+		const res = makeRes();
+		await handler(makeReq({ confirm: 'delete my account' }), res);
+		// Every content sweep must ask for its rows back. Without RETURNING the
+		// tally silently reads undefined and both the response and the audit row
+		// claim nothing was retired.
+		for (const fragment of [
+			'update avatars set deleted_at',
+			'update agent_identities set deleted_at',
+			'update widgets set deleted_at',
+		]) {
+			expect(written(fragment)[0].text).toContain('returning id');
+		}
+		expect(logAudit).toHaveBeenCalledWith(expect.objectContaining({
+			action: 'delete_account',
+			meta: expect.objectContaining({ avatars: 2, agents: 2, widgets: 2 }),
+		}));
 	});
 
 	it('releases the username so the /u/ handle is not held forever', async () => {
