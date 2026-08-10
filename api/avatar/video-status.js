@@ -17,25 +17,26 @@
 //   }
 //
 // Errors:
-//   400 invalid_request  — missing job_id
-//   403 forbidden        — job belongs to a different user
-//   404 not_found        — job not found
-//   502 worker_error     — Cloud Run worker returned an error
+//   400 invalid_request  - missing job_id
+//   403 forbidden        - job belongs to a different user
+//   404 not_found        - job not found
+//   502 worker_error     - Cloud Run worker returned an error
+//   503 worker_unconfigured - LongCat worker is not configured on this deployment
 
 import { cors, error, json, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 
-function workerUrl() {
-	const u = process.env.LONGCAT_WORKER_URL;
-	if (!u) throw Object.assign(new Error('LONGCAT_WORKER_URL not configured'), { code: 'worker_unconfigured', status: 503 });
-	return u.replace(/\/$/, '');
-}
-
-function workerKey() {
-	const k = process.env.LONGCAT_WORKER_KEY;
-	if (!k) throw Object.assign(new Error('LONGCAT_WORKER_KEY not configured'), { code: 'worker_unconfigured', status: 503 });
-	return k;
+// Mirror of workerConfig() in api/avatar/video-generate.js: resolve address and
+// credential together and return null when either is unset. Throwing from inside
+// the `fetch` try-block made an unconfigured deployment answer
+// `502 worker_unreachable` with the literal env-var name in the body: the wrong
+// status, and an operator detail the caller should never see.
+function workerConfig() {
+	const url = process.env.LONGCAT_WORKER_URL;
+	const key = process.env.LONGCAT_WORKER_KEY;
+	if (!url || !key) return null;
+	return { url: url.replace(/\/$/, ''), key };
 }
 
 export default wrap(async (req, res) => {
@@ -65,10 +66,16 @@ export default wrap(async (req, res) => {
 	if (!ownership) return error(res, 404, 'not_found', 'job not found');
 	if (String(ownership.user_id) !== String(userId)) return error(res, 403, 'forbidden', 'access denied');
 
+	const worker = workerConfig();
+	if (!worker) {
+		console.error('[video-status] LONGCAT_WORKER_URL / LONGCAT_WORKER_KEY not set on this deployment');
+		return error(res, 503, 'worker_unconfigured', 'Talking-avatar video generation is not available on this deployment.');
+	}
+
 	let workerRes;
 	try {
-		workerRes = await fetch(`${workerUrl()}/jobs/${encodeURIComponent(jobId)}`, {
-			headers: { authorization: `Bearer ${workerKey()}` },
+		workerRes = await fetch(`${worker.url}/jobs/${encodeURIComponent(jobId)}`, {
+			headers: { authorization: `Bearer ${worker.key}` },
 		});
 	} catch (err) {
 		return error(res, 502, 'worker_unreachable', err?.message || 'worker request failed');

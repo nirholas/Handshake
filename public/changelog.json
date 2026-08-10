@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-10T18:14:33.702Z",
+	"generated_at": "2026-08-10T18:28:15.863Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -52,6 +52,27 @@
 		{
 			"date": "2026-08-10",
 			"type": "update",
+			"title": "Agent memory search works again: the embedding endpoint was calling a model NVIDIA had stopped serving",
+			"summary": "Semantic recall over an agent's memories asks the platform to turn your text into a vector. That endpoint named one specific model, NVIDIA stopped serving it, and every request came back as a failed upstream call, so recall had nothing to search with. It now goes through the same embedder the rest of the platform already uses, which means the free lane first with two working fallbacks behind it instead of one dead name, and every answer says which embedder produced the vector so vectors from different models can never be compared against each other by mistake. Two related fixes shipped with it: importing a portable brain bundle twice no longer duplicates every memory in it (a second sync used to silently double an agent's mind), and reading a pinned memory file while the public IPFS gateways are all down now reports an upstream problem instead of a three.ws server error.",
+			"link": "/brain",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "Agent payment history pages correctly, proof-of-reserves answers at its documented address, and a signed-in trust read is no longer shareable",
+			"summary": "An audit of the agent sub-resources found four things worth fixing. Paging through an agent's payment history handed back a page marker that did not match how the list is ordered, so scrolling past the first page could skip payments or repeat one; the marker now carries the timestamp the list sorts on and pages are exact. On the same endpoint, a non-numeric, negative, or oversized page size and a malformed page marker each produced a server error instead of an answer, so a mistyped link read as an outage. Proof-of-reserves has always been documented at /api/agents/<id>/reserves as well as the longer Solana path, but only the long one worked: the short address quietly returned the agent record instead. It serves reserves now. The reputation, unlocks, and reserves reads also mark a signed-in response private, because those responses carry your ownership flag and, for reputation, your owner-only guidance, and they were previously marked cacheable by shared caches. Anonymous reads are still served from the edge. Pinning an agent memory file now rejects malformed data up front rather than storing a corrupted copy under a real-looking address.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
 			"title": "Agent pump.fun and directory endpoints answer bad input honestly",
 			"summary": "Three fixes across the agent APIs. Calling a pump.fun action (portfolio, buy, sell, swap, launch, pay) with an id that is not a real agent id returned an anonymous internal error with a support reference; it now returns a plain not-found, matching every other agent endpoint. The pump.fun intel proxy checked whether the upstream feed was configured before it checked your request, so an unknown operation or a token lookup with no mint address could answer 200 with empty data on one deployment and a validation error on another; the request is now validated first, so the same call gets the same answer everywhere. A legacy single-skill price endpoint that no route could reach, and that skipped the cross-site protection its live replacement enforces, has been removed: setting one skill price still goes through the documented per-skill route. The public agent directory also logs a failed lookup now instead of quietly rendering as if nobody had published an agent.",
 			"link": "/agents",
@@ -68,6 +89,29 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "An AWS Marketplace subscription can no longer be claimed by the wrong account, and the billing webhook refuses unverified senders",
+			"summary": "An audit of the four AWS Marketplace endpoints found three problems. Confirming your subscription on the welcome page told you it had been linked even when that AWS subscription was already attached to a different three.ws account: the link silently did nothing, and the next step then failed with a permission error you had no way to interpret. It now says plainly that the subscription belongs to another account, and the same page explains what to do about a cancelled subscription or an expired session instead of showing one generic \"contact support\" line for every cause. Opening the link with no session at all returned a server error rather than asking you to sign in, and it answered whether a given customer record existed before checking who was asking; both are fixed. Finally, the webhook AWS uses to report subscribe and cancel events now requires the notification topic to be configured before it will accept anything. A signature alone only proves that some AWS account sent the message, so without that setting a forged event could have issued an API key or cancelled a paying customer.",
+			"link": null,
+			"tags": [
+				"security",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "Animations you price for sale no longer hand out their motion for free, and the animation API answers bad input honestly",
+			"summary": "A creator who listed an animation for sale in the marketplace was still serving the clip's keyframe tracks to anyone who asked for it by id, and the marketplace feed publishes that id to every visitor, so the motion could be taken without paying for it. A priced private or unlisted clip now comes back to everyone but its owner as metadata, poster and price with no tracks, plus a pointer to the paid download; you keep full access to your own work, and a clip you deliberately publish to the free gallery (visibility public) stays free. Alongside that, three requests that used to fail with an unexplained server error now say what is wrong: an animation id that is not a real id, a mangled page cursor in the clip list, and an animation poster larger than the upload allows. Posters up to the documented 1.5 MB now upload; anything over about 750 KB previously failed with a message about a missing id.",
+			"link": "/pose",
+			"tags": [
+				"security",
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -125,6 +169,39 @@
 		{
 			"date": "2026-08-10",
 			"type": "update",
+			"title": "Copy trading: performance fees can only be settled with their own quote",
+			"summary": "Three fixes on the copy-trading surface. Settling a performance fee now checks that the payment quote you present was actually issued for that fee on one of your own subscriptions before it credits anything, and it makes that check before the payment is verified on-chain, so a quote meant for something else can no longer be used to write off what you owe the trader you copy. Pausing or resuming a follow works again for browser clients that send their security token in the request body, which previously came back as an unrelated complaint about the trader's ID. And the Smart Money directory answers a nonsense sort value with its default ranking instead of an error page, as the docs always said it would.",
+			"link": "/docs/copy-trading",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "Creator Studio skill analytics no longer errors out on a bad agent filter, and creator profile links stop pointing at a missing page",
+			"summary": "The per-skill analytics panel in Creator Studio asks the API for one agent at a time. If that agent id was malformed, or arrived twice in the same URL, the request came back as a generic server error with no explanation, and the panel simply went blank. It now answers with a clear \"agent_id must be a UUID\" message that the panel can show you. A negative lookback window (for example a hand-edited \"days=-5\") used to be accepted and then quietly report zero activity forever, because the window started in the future; the window is now held to 1 to 365 days. The endpoint is also rate limited like every other signed-in read. Separately, the public creator profile that the marketplace author modal loads was handing out a link to /creators/<id>, a page that does not exist, for any creator who has not claimed a username. Those creators now come back with no link instead of one that 404s.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "Creator Studio skill analytics stops erroring on a bad agent filter, and creator profile links stop pointing at a missing page",
+			"summary": "The per-skill analytics panel in Creator Studio asks the API about one agent at a time. When that agent id was malformed, or arrived twice in the same URL, the reply was a generic server error with no explanation and the panel simply went blank. It now answers with a clear \"agent_id must be a UUID\" message the panel can show you. A negative lookback window (a hand-edited \"days=-5\", say) used to be accepted and then report zero activity forever, because the window started in the future; the window is now held to 1 to 365 days, and the endpoint is rate limited like every other signed-in read. Separately, the public creator profile behind the marketplace author modal was handing out a link to a /creators/ page that does not exist, for any creator who has not claimed a username. Those creators now come back with no link instead of one that 404s.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
 			"title": "Crew mutations are CSRF-guarded, and a crew link with a trailing slash opens the crew",
 			"summary": "Three fixes on the crews API. Founding, inviting, accepting, kicking and leaving a crew now require the same single-use CSRF token the friends graph already required, so a crew can only be changed by a request your browser actually meant to send; the Crew HQ page already sends the token, so nothing changes for you there. A public crew link that ended in a slash used to answer \"invalid crew tag\" instead of opening the crew, and a tag on the query string could make one crew's URL return a different crew's roster: the path is now the only thing that names a crew. A malformed request body also answers with what was actually wrong (wrong content type, too large, not an object) instead of reporting an unknown action.",
 			"link": "/crews",
@@ -141,6 +218,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "Holder cohorts answer the real reason a request was refused, and the holder panel is cached again",
+			"summary": "An audit of the /api/coin market endpoints found the holder-cohorts route deciding things in the wrong order. Asking to export a cohort that does not exist, or asking without being signed in, made the server fetch the whole holder list first and then reply \"holder data is temporarily unavailable\", which is not what went wrong and hides the fix. Those requests now answer immediately with the actual reason (unknown cohort, not signed in, not the coin's creator), and no holder lookup is spent on a request that was never going to be allowed. The public holder counts on a coin page are cacheable again, so the panel loads from the edge instead of re-querying on every view, and the whole route shares one rate limit rather than leaving its database side unguarded. Separately, the Fear and Greed page no longer claims a reading is unchanged from last week when it has only a single day of history to compare against.",
+			"link": "/fear-greed",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -369,6 +457,18 @@
 		{
 			"date": "2026-08-10",
 			"type": "update",
+			"title": "The free Crypto Data API index now lists the portfolio and airdrop endpoints it was hiding",
+			"summary": "Two live endpoints, the wallet portfolio overview and the airdrop eligibility checker, shipped without a catalog descriptor, so the one-URL bundle index at /api/crypto and the OpenAPI document generated from it skipped both entirely. An agent discovering the API the way we tell it to could not see either endpoint, even though both answered fine when called directly. Both are described now, in the index, in the OpenAPI doc, and in the docs page, and a test holds the catalog to every endpoint that ships so the next one cannot go missing. Two smaller honesty fixes went with it: the bonding and launches endpoints stopped telling browsers they accept POST when they only answer GET, and the launches error for a bad limit now says what actually happens to an oversized one (it is capped at 100, not rejected).",
+			"link": "/docs/crypto-api",
+			"tags": [
+				"fix",
+				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
 			"title": "The public asset catalog now answers a bad filter honestly",
 			"summary": "The open asset list at /api/assets, which anyone can call to browse our accessories, starter animations, and lighting environments, used to answer a mistyped filter with an empty list and a 200 OK, then cache that empty answer for an hour. A typo looked exactly like an empty catalog. It now returns a clear error naming the accepted values, and never caches it. Two more fixes came out of the same pass: browsers can read the response cross-origin on error replies and preflight checks, not just on success, and HEAD requests from uptime monitors and CDNs are answered instead of rejected. The environment list is also read straight from the viewer's own presets now, so names can no longer drift between the site and the API, and the endpoint is documented in the API reference.",
 			"link": null,
@@ -396,6 +496,18 @@
 			"link": "/bazaar",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "Three fixes across the agent money endpoints",
+			"summary": "A coin launch prepared from an agent profile now checks the creator wallet against the agent’s deployed Solana address exactly. Solana addresses are case-sensitive, and the old check let an address that differed only in capitalisation through, which would have built the launch transaction under a wallet the agent does not own. Separately, the paid Unstoppable Agent status endpoint was crediting its treasury for calls that were served free to internal and subscription callers, so the balance and runway it reported were higher than what anyone had actually paid; only settled calls count now. And the wallet rule compiler, which turns a sentence like “sell half my $THREE” into a standing rule, now sees the wallet’s real token holdings instead of always being told the wallet was empty.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security",
 				"improvement"
 			]
 		},

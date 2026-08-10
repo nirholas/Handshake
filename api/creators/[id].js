@@ -3,7 +3,7 @@
  *
  * Public creator profile keyed by user UUID. Returns the creator's display
  * info plus their published marketplace agents and public avatars. Used by
- * the marketplace creator-profile modal — clickable author names route here.
+ * the marketplace creator-profile modal: clickable author names route here.
  *
  * Cached for a minute so popular creators don't hammer the DB on every modal
  * open.
@@ -106,7 +106,9 @@ export default wrap(async (req, res) => {
 				display_name: user.display_name || user.username || 'Anonymous',
 				username: user.username || null,
 				avatar_url: user.avatar_url || null,
-				profile_url: user.username ? `/@${user.username}` : `/creators/${user.id}`,
+				// Only /@handle is a real page; no /creators/:id route exists, so a
+				// creator without a username gets null instead of a 404 link.
+				profile_url: user.username ? `/@${user.username}` : null,
 				joined: user.created_at,
 				totals: {
 					agents: totals.agents_total || 0,

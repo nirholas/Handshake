@@ -25,12 +25,16 @@ export default wrap(async (req, res) => {
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const url = new URL(req.url, 'http://x');
-	const q = url.searchParams.get('q') || '';
+	// A search term is a UI input, not a payload: bound it at the boundary so a
+	// pathological query string can never reach the store as a giant ILIKE pattern.
+	const q = (url.searchParams.get('q') || '').slice(0, 64);
 
 	try {
 		const crew = await getMyCrew(auth.userId);
 		if (!crew) return error(res, 400, 'no_crew', 'found or join a crew before inviting');
-		return json(res, 200, { data: { results: await searchInvitees(auth.userId, q) } });
+		// Hand the crew we just resolved to the store rather than letting it look the
+		// same row up again: this endpoint runs on every keystroke of the invite box.
+		return json(res, 200, { data: { results: await searchInvitees(auth.userId, q, { crew }) } });
 	} catch (err) {
 		if (isMissingRelation(err)) return json(res, 200, { data: { results: [] } });
 		throw err;

@@ -40,7 +40,7 @@ function isPoolWorker(bearer) {
 const scriptKey = (agentId) => `agent:anchor:${agentId}:script`;
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
 	const r = getRedis();

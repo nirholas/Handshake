@@ -8,6 +8,7 @@
 import { cors, error, json, method, readJson, rateLimited, wrap } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { isUuid } from '../_lib/validate.js';
 import { sql } from '../_lib/db.js';
 
 // ── auth ──────────────────────────────────────────────────────────────────────
@@ -22,7 +23,12 @@ async function resolveAuth(req) {
 
 // ── ownership ─────────────────────────────────────────────────────────────────
 
+// agent_identities.id and agent_market_maker_configs.id are uuid columns: an id
+// that isn't a uuid makes Postgres raise 22P02, which reaches the caller as a
+// 500 (and pages ops) instead of the 400 that names the real mistake. Every id
+// that reaches a query below is shape-checked first.
 async function assertOwnsAgent(userId, agentId) {
+	if (!isUuid(agentId)) return false;
 	const [row] = await sql`
 		SELECT id FROM agent_identities
 		WHERE id = ${agentId} AND user_id = ${userId} AND deleted_at IS NULL
@@ -61,6 +67,7 @@ export default wrap(async (req, res) => {
 		const url = new URL(req.url, 'http://x');
 		const agentId = url.searchParams.get('agentId');
 		if (!agentId) return error(res, 400, 'validation_error', 'agentId query param required');
+		if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
 		if (!(await assertOwnsAgent(auth.userId, agentId))) {
 			return error(res, 403, 'forbidden', 'agent not owned by this user');
 		}
@@ -87,6 +94,7 @@ export default wrap(async (req, res) => {
 		const url = new URL(req.url, 'http://x');
 		const configId = url.searchParams.get('id');
 		if (!configId) return error(res, 400, 'validation_error', 'id query param required');
+		if (!isUuid(configId)) return error(res, 400, 'validation_error', 'id must be a uuid');
 
 		// Ownership check via join — one query.
 		const [cfg] = await sql`
@@ -113,8 +121,9 @@ export default wrap(async (req, res) => {
 	const { agentId, mint } = body ?? {};
 
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId is required');
+	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
 	if (!mint || !VALID_BASE58.test(mint)) {
-		return error(res, 400, 'validation_error', 'mint must be a valid base-58 Solana address (32–44 chars)');
+		return error(res, 400, 'validation_error', 'mint must be a valid base-58 Solana address (32 to 44 chars)');
 	}
 	if (!(await assertOwnsAgent(auth.userId, agentId))) {
 		return error(res, 403, 'forbidden', 'agent not owned by this user');
@@ -122,7 +131,9 @@ export default wrap(async (req, res) => {
 
 	// Coerce and clamp all optional fields against spec limits.
 	const symbol              = body.symbol ? String(body.symbol).trim().slice(0, 16) || null : null;
-	const network             = String(body.network ?? 'mainnet').slice(0, 32);
+	// The worker only runs the two Solana clusters; anything else would write a
+	// config no runner ever picks up.
+	const network             = body.network === 'devnet' ? 'devnet' : 'mainnet';
 	const enabled             = body.enabled != null ? Boolean(body.enabled) : true;
 	const spread_bps          = clampInt(body.spread_bps, 10, 2000, 200);
 	const order_size_sol      = clampFloat(body.order_size_sol, 0, 100, 0.05);

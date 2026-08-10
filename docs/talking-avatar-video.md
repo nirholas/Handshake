@@ -17,7 +17,7 @@ The page ([`pages/create/video.html`](../pages/create/video.html)) loads [`src/c
 
 1. **Auth gate.** On load it checks `GET /api/auth/me`; if you are not signed in it redirects to `/login?next=%2Fcreate%2Fvideo`.
 2. **Pick an avatar.** It calls `GET /api/avatars` and renders your avatar library into a thumbnail bar, auto-selecting the first. The selected GLB is shown in a `<model-viewer>`. Private avatars resolve their GLB lazily through `GET /api/avatars/:id` (a short-lived signed URL). With no avatars it falls back to `/avatars/default.glb`.
-3. **Upload audio.** Drag in or pick a WAV, MP3, M4A, OGG, or FLAC file. The client POSTs `{ filename, content_type }` to `/api/avatar/presign-audio`, gets a presigned PUT URL plus a `public_url`, and PUTs the raw bytes to R2/S3. If presign fails it falls back to a base64 data URI.
+3. **Upload audio.** Drag in or pick a WAV, MP3, M4A, OGG, or FLAC file. The client POSTs `{ filename, content_type, bytes }` to `/api/avatar/presign-audio`, gets a presigned PUT URL plus a `public_url`, and PUTs the raw bytes to R2/S3. `bytes` is the declared file size and is required: a presigned PUT cannot carry a content-length policy, so it is the only place the 64 MB cap can be enforced. There is no data-URI fallback, because `video-generate` only accepts an https three.ws-hosted `audio_url` (see the SSRF guard below) and would reject a `data:` URI with a `400`; a failed presign surfaces as a real error on the page.
 4. **Describe the scene (optional).** A textarea takes a scene description such as "A person speaking on a stage with dramatic lighting." This is a scene prompt, not a script.
 5. **Generate.** With an avatar and audio ready, Generate POSTs `{ image_url, audio_url, avatar_id?, prompt? }` to `/api/avatar/video-generate`. The server SSRF-guards both URLs (https on the app or S3 domain), resolves the avatar image if only an `avatar_id` was sent (with an ownership/visibility check), and forwards to the worker.
 6. **Render, server-side.** The generate endpoint calls the **LongCat-Video-Avatar-1.5** worker on Google Cloud Run (`POST {LONGCAT_WORKER_URL}/generate`, bearer-authenticated), which produces the lip-synced frames. The endpoint returns `202 { job_id, status }`.
@@ -43,7 +43,7 @@ surface, so from a script reuse the cookie from a logged-in browser session.
 # 1. Presign an audio upload slot.
 curl -X POST 'https://three.ws/api/avatar/presign-audio' \
   -H 'cookie: __Host-sid=<SESSION>' -H 'content-type: application/json' \
-  -d '{ "filename": "line.mp3", "content_type": "audio/mpeg" }'
+  -d '{ "filename": "line.mp3", "content_type": "audio/mpeg", "bytes": 184320 }'
 # -> { "upload_url": "<PUT url>", "public_url": "https://…/line.mp3", "storage_key": "u/<uid>/audio/<uuid>.mp3" }
 
 # 2. PUT the raw bytes to the presigned URL.
@@ -70,6 +70,7 @@ curl -H 'cookie: __Host-sid=<SESSION>' \
 - **Free tier: one lifetime generation.** Free-plan users get exactly one video. The quota is reserved race-safely (a `usage_events` row is inserted before the worker call and released if submission fails, so an outage never burns the trial). On exhaustion the server returns `402 free_trial_used` and the page relabels the retry button "Upgrade plan" linking to `/dashboard`. Paid plans are unlimited.
 - **Rate limits.** Per-user and global rate limits on `video-generate` return `429`.
 - **Input formats.** Audio: WAV, MP3, M4A, OGG, FLAC (validated against an allow-list; `415` otherwise). Uploads go to R2/S3 under `u/{userId}/audio/{uuid}.{ext}`.
+- **Upload limits.** `presign-audio` requires a declared `bytes` (`400 invalid_request` without one) and caps a clip at 64 MB (`413 payload_too_large`). Signing also draws on the per-user upload bucket, so a session cannot mint unlimited write grants (`429` when spent).
 - **SSRF guard.** `image_url` and `audio_url` must be https on the app origin or the S3 public domain, else `400 invalid_request`.
 - **Ownership.** `video-status` verifies the job belongs to you (`404` if unknown, `403` if another user's). Avatar image resolution enforces owner-or-public visibility.
 - **Timing and errors.** Renders take ~2 to 4 minutes; the client times out after 20 minutes. UI states cover idle, uploading audio, queuing, rendering with a percent, done, and error (upload failed, could not start, failed on the server, timed out). Server errors include `502 worker_unreachable`/`worker_error` and `503 worker_unconfigured`.

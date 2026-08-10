@@ -35,8 +35,6 @@
 //   502 upstream_unreachable     source fetch/read failed
 //   504 source_timeout           source did not respond or stalled mid-download
 
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 import { cors, error, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';

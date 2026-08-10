@@ -160,7 +160,7 @@
   2. Pick an avatar from the strip (click, or Enter/Space; each thumb is a real `role="button"` with an aria-label). Private avatars come back from the list endpoint with no CDN URL, so `selectAvatar` lazily resolves a short-lived signed URL from `GET /api/avatars/:id` and guards against the user switching avatars mid-await. The pick renders in the `model-viewer` stage.
   3. Add audio: drag-drop onto `#audio-drop` or pick a file. A non-audio drop is rejected with a toast. The chosen filename shows with a clear button. "Generate" stays disabled until both an avatar and an audio file are present.
   4. (optional) Type a direction prompt in `#prompt-input` to steer the render.
-  5. Click "Generate". `uploadAudio` requests `POST /api/avatar/presign-audio` and PUTs the file to R2; if presign fails it falls back to inlining the clip as a data URI, which the worker also accepts.
+  5. Click "Generate". `uploadAudio` requests `POST /api/avatar/presign-audio` (declaring `bytes`, capped at 64 MB) and PUTs the file to R2. A failed presign is reported as an error: there is no data-URI fallback, since `video-generate` only accepts an https three.ws-hosted `audio_url`.
   6. `POST /api/avatar/video-generate` `{ image_url, audio_url, avatar_id, prompt }` returns `{ job_id }`.
   7. `pollJob` polls `GET /api/avatar/video-status?job_id=…` every 5 s with a 20-minute deadline, surfacing the worker's percentage in the progress label. Transient non-2xx and network errors are swallowed and retried until the deadline.
   8. On `status: 'done'`: the returned `video_url` loads into the result `<video>` with a Download link and a "Make another" button that resets to idle.

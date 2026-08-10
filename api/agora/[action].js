@@ -27,7 +27,7 @@ import { PublicKey } from '@solana/web3.js';
 import { getAgent, getTaskLifecycleSummary, deriveTaskPda } from '@tetsuo-ai/sdk';
 import { createHash } from 'node:crypto';
 
-import { cors, json, method, error, wrap, serverError } from '../_lib/http.js';
+import { cors, json, method, error, rateLimited, wrap, serverError } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
@@ -673,7 +673,11 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, route.methods)) return;
 
 	const rl = await limits.publicIp(clientIp(req));
-	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+	// Match the sibling AgenC read model: a 429 here must carry retry-after +
+	// the limiter's own reason, so a poller (the 3D Commons refreshes board and
+	// pulse on a timer) can back off correctly and can tell a genuine quota hit
+	// from a fail-closed limiter outage.
+	if (!rl.success) return rateLimited(res, rl);
 
 	try {
 		return await route.fn(req, res);
