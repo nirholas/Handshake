@@ -313,7 +313,9 @@ async function getSolanaBalancesViaDas(address) {
 			if (!rawBalance) return null;
 			const amount = rawBalance / Math.pow(10, decimals);
 			const md = a?.content?.metadata || {};
-			const symbol = ti.symbol || md.symbol || a.id.slice(0, 6);
+			// No mint-slice placeholder: an unnamed mint reports null so callers
+			// (and /api/crypto/wallet consumers) can tell "unknown" from a real ticker.
+			const symbol = ti.symbol || md.symbol || null;
 			const name = md.name || symbol;
 			const logo = a?.content?.links?.image || a?.content?.files?.[0]?.uri || null;
 			const priceFromHelius = ti.price_info?.price_per_token ?? null;
@@ -322,20 +324,35 @@ async function getSolanaBalancesViaDas(address) {
 		.filter(Boolean)
 		.filter((t) => t.amount > 0);
 
+	// DAS knows most mints but not all. Anything it returned unnamed goes through
+	// the shared resolver, whose keyless Jupiter rung names it, so the DAS path
+	// never reports a holding the fallback path could have identified.
+	const unnamed = fungible.filter((t) => !t.symbol).map((t) => t.mint);
+	if (unnamed.length > 0) {
+		const filled = await getMetadataForMints(unnamed);
+		for (const t of fungible) {
+			const md = filled.get(t.mint);
+			if (!md) continue;
+			t.symbol = t.symbol || md.symbol || null;
+			t.name = t.name || md.name || md.symbol || null;
+			t.logo = t.logo || md.logo || null;
+		}
+	}
+
 	// Persist metadata for everything we just resolved so other callers
-	// (which may not use DAS) can hit cache instead of re-fetching.
-	const metaPayload = fungible.map((t) => ({
-		mint: t.mint,
-		symbol: t.symbol,
-		name: t.name,
-		logo: t.logo,
-		decimals: t.decimals,
-	}));
+	// (which may not use DAS) can hit cache instead of re-fetching. Rows with no
+	// symbol, name, or logo are skipped: caching "unknown" would shadow the
+	// Jupiter rung on every later read.
+	const metaPayload = fungible
+		.filter((t) => t.symbol || t.name || t.logo)
+		.map((t) => ({
+			mint: t.mint,
+			symbol: t.symbol,
+			name: t.name,
+			logo: t.logo,
+			decimals: t.decimals,
+		}));
 	if (metaPayload.length > 0) {
-		// Fire-and-forget — never block balance response on cache write.
-		import('./token-metadata.js')
-			.then((mod) => mod.getMetadataForMints([])) // ensure module loaded
-			.catch(() => {});
 		// Direct write (cheaper than going through getMetadataForMints):
 		try {
 			const { sql, sqlValues } = await import('./db.js');
@@ -455,8 +472,8 @@ async function getSolanaBalancesFallback(address) {
 			const priceInfo = jupPrices?.[t.mint] || {};
 			const price = Number(priceInfo.usdPrice ?? priceInfo.price ?? 0);
 			return {
-				symbol: md.symbol || t.mint.slice(0, 6),
-				name: md.name || md.symbol || t.mint.slice(0, 6),
+				symbol: md.symbol || null,
+				name: md.name || md.symbol || null,
 				mint: t.mint,
 				decimals: t.decimals,
 				amount: t.amount,
@@ -587,8 +604,8 @@ async function getEvmBalances(address) {
 		const price = priceInfo.usd ?? 0;
 		const change24h = priceInfo.usd_24h_change ?? null;
 		return {
-			symbol: meta?.symbol || t.contractAddress.slice(0, 8),
-			name: meta?.name || meta?.symbol || t.contractAddress.slice(0, 8),
+			symbol: meta?.symbol || null,
+			name: meta?.name || meta?.symbol || null,
 			contract: t.contractAddress,
 			decimals,
 			amount,
