@@ -24,19 +24,30 @@
 //
 // Runs Monday 00:07 UTC (just after the week rolls over). Auth: CRON_SECRET.
 
-import { json, method, wrapCron } from '../_lib/http.js';
+import { error, json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { forgeOffWeekStart, forgeStoreEnabled } from '../_lib/forge-store.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 // The Monday that starts the week we are crowning. Default: the week that just
 // completed (the previous Monday relative to now). `weekParam` (YYYY-MM-DD)
-// overrides for backfills — it is snapped to its own week's Monday so a mid-week
+// overrides for backfills: it is snapped to its own week's Monday so a mid-week
 // date still resolves to a valid week boundary.
-function resolveWeekStart(weekParam) {
+//
+// An unparseable `weekParam` returns null rather than falling back to the
+// default week. A crowning is permanent (ON CONFLICT DO NOTHING below), so an
+// owner backfilling `?week=2026-13-99` used to silently and irreversibly crown
+// the CURRENT default week instead of erroring: a typo with no undo. The caller
+// turns null into a 400.
+export function resolveWeekStart(weekParam) {
 	if (weekParam) {
+		// Strict YYYY-MM-DD. Date.parse alone is not a validator here: V8 falls back
+		// to a lenient parser that happily reads `2026-07T00:00:00Z` as 1 July, so a
+		// truncated backfill date would resolve to a real (wrong) week rather than
+		// erroring, which is the same silent-misread this guard exists to stop.
+		if (!/^\d{4}-\d{2}-\d{2}$/.test(weekParam)) return null;
 		const t = Date.parse(`${weekParam}T00:00:00Z`);
-		if (Number.isFinite(t)) return forgeOffWeekStart(new Date(t));
+		return Number.isFinite(t) ? forgeOffWeekStart(new Date(t)) : null;
 	}
 	const thisWeek = forgeOffWeekStart();
 	const prev = new Date(thisWeek);
@@ -59,7 +70,11 @@ export default wrapCron(async (req, res) => {
 
 	const url = new URL(req.url || '/', 'https://three.ws');
 	const dryRun = url.searchParams.get('dry_run') === '1';
-	const weekStart = resolveWeekStart(url.searchParams.get('week'));
+	const weekParam = url.searchParams.get('week');
+	const weekStart = resolveWeekStart(weekParam);
+	if (!weekStart) {
+		return error(res, 400, 'invalid_week', `week must be a YYYY-MM-DD date; got "${String(weekParam).slice(0, 40)}"`);
+	}
 	const weekKey = toDateKey(weekStart);
 	const weekEnd = new Date(weekStart);
 	weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);

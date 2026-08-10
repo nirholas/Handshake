@@ -411,7 +411,12 @@ async function advanceGates(origin) {
 			}
 
 			const avatarId = await publishSeedAvatar({ job, verdict, rigged: false });
-			results.push({ job_id: job.id, status: 'published', avatar_id: avatarId, prompt: job.prompt });
+			results.push({
+				job_id: job.id,
+				status: avatarId ? 'published' : 'already_published',
+				avatar_id: avatarId,
+				prompt: job.prompt,
+			});
 
 		} catch (err) {
 			// The gate itself broke (storage read, renderer, judge transport). That is
@@ -432,7 +437,26 @@ async function advanceGates(origin) {
 
 // Publish a gated keeper and close the job out. Shared by the direct path and
 // the post-rig path so the avatar row is written in exactly one place.
+//
+// The close-out is a compare-and-set, and it runs BEFORE the avatar insert: the
+// gate and rig phases select their rows by status with no lock, so two ticks
+// overlapping (a Cloud Scheduler retry, a manual run alongside the schedule) can
+// both hand the same row here. The avatar insert cannot dedupe on its own since
+// every call mints a fresh random slug, so the loser would publish a second
+// public avatar for one creation. Only the tick that wins the transition writes.
+// Returns null when this tick lost, so the caller reports that instead of
+// claiming a publish it did not do.
 async function publishSeedAvatar({ job, verdict, rigged, rigCreationId = null }) {
+	const [won] = await sql`
+		update forge_seed_jobs
+		set status = 'done',
+		    finished_at = now()
+		where id = ${job.id}
+		  and status <> 'done'
+		returning id
+	`;
+	if (!won) return null;
+
 	const avatarId = await insertSeedAvatar({
 		userId: job.user_id,
 		prompt: job.prompt,
@@ -442,13 +466,7 @@ async function publishSeedAvatar({ job, verdict, rigged, rigCreationId = null })
 		gate: gateSummary(verdict),
 		rigged,
 	});
-	await sql`
-		update forge_seed_jobs
-		set status = 'done',
-		    avatar_id = ${avatarId},
-		    finished_at = now()
-		where id = ${job.id}
-	`;
+	await sql`update forge_seed_jobs set avatar_id = ${avatarId} where id = ${job.id}`;
 	return avatarId;
 }
 
@@ -533,18 +551,30 @@ async function advanceRigs(origin) {
 					rigged: true,
 					rigCreationId,
 				});
-				results.push({ job_id: job.id, status: 'published', rigged: true, avatar_id: avatarId });
+				results.push({
+					job_id: job.id,
+					status: avatarId ? 'published' : 'already_published',
+					rigged: true,
+					avatar_id: avatarId,
+				});
 
 			} else if (poll.body?.status === 'failed' || poll.status >= 400) {
 				// The mesh already passed the gate. A rig fault must not cost the
 				// catalog the asset: publish it static and say so on the row.
 				const avatarId = await publishSeedAvatar({ job, verdict: job.gate, rigged: false });
-				await sql`
-					update forge_seed_jobs
-					set error = ${('rig failed: ' + (poll.body?.error || poll.status)).slice(0, 500)}
-					where id = ${job.id}
-				`;
-				results.push({ job_id: job.id, status: 'published', rigged: false, avatar_id: avatarId });
+				if (avatarId) {
+					await sql`
+						update forge_seed_jobs
+						set error = ${('rig failed: ' + (poll.body?.error || poll.status)).slice(0, 500)}
+						where id = ${job.id}
+					`;
+				}
+				results.push({
+					job_id: job.id,
+					status: avatarId ? 'published' : 'already_published',
+					rigged: false,
+					avatar_id: avatarId,
+				});
 			} else {
 				results.push({ job_id: job.id, status: 'rigging' });
 			}
@@ -612,33 +642,15 @@ async function startNextJob(origin, claimed = new Set()) {
 	const chosen = pool[Math.floor(Math.random() * pool.length)];
 	claimed.add(chosen.prompt);
 
-	// Claim an OG username. Try the bare word first; if taken, try word + 2,
-	// word + 3 … up to word + 99 before falling back to word + short uuid hex.
+	// Claim an OG username and mint the account that owns it.
 	const baseWord = OG_USERNAMES[Math.floor(Math.random() * OG_USERNAMES.length)];
-	const username = await claimUsername(baseWord);
-	if (!username) {
-		return { skipped: true, reason: 'could not claim OG username — will retry next tick' };
+	const claim = await claimSeedUser(baseWord);
+	if (!claim) {
+		return { skipped: true, reason: `could not mint a seed account for "${baseWord}"; will retry next tick` };
 	}
+	const { user, username } = claim;
 
 	const rawClientId = randomUUID();
-	// Display name is the word, capitalised — looks like a real account. Drop
-	// claimUsername's collision suffixes (`_xxxx` uuid fallback, numbered slot)
-	// first; stripping digits alone turned "fog_1a2b" into "Fog_".
-	const displayName = username
-		.replace(/_[0-9a-f]{4}$/, '')
-		.replace(/\d+$/, '')
-		.replace(/\b\w/g, c => c.toUpperCase());
-	const email = `${username}@forge.three.ws`;
-
-	const [user] = await sql`
-		insert into users (email, display_name, username, plan, email_verified, service_account, created_at, updated_at)
-		values (${email}, ${displayName}, ${username}, 'free', false, true, now(), now())
-		on conflict do nothing
-		returning id
-	`;
-	if (!user?.id) {
-		return { skipped: true, reason: 'user insert conflict — will retry next tick' };
-	}
 
 	const cronSecret = process.env.CRON_SECRET || env.CRON_SECRET || '';
 	const submit = await fetchJson(`${origin}/api/forge`, {
@@ -741,24 +753,68 @@ async function startNextJob(origin, claimed = new Set()) {
 	};
 }
 
-// Try to claim `word` as a username. Returns the claimed username string or null.
-async function claimUsername(word) {
-	// Check which variants already exist so we skip to the next free slot.
+// Mint the seed account for an OG word, letting the users unique index arbitrate
+// the username. Returns { user: { id }, username } or null when every candidate
+// collided.
+//
+// This used to read a bounded slice of the existing names (`limit 100`) and trust
+// it as the complete picture. Once a word's numbered slots filled up, the slice
+// hid the exhaustion and handed back a name that already existed; the insert's
+// `on conflict do nothing` then returned no row and the tick skipped with "user
+// insert conflict". By 2026-07-25 all 171 OG words were saturated (word plus
+// word2..word99), so every tick skipped and seeding stopped dead for weeks while
+// the cron kept answering 200 OK. The index is the only honest arbiter: propose
+// candidates, INSERT, and move to the next one on a conflict.
+const CLAIM_ATTEMPTS = 6;
+
+/**
+ * The usernames to try for `word`, best first, given the ones already taken.
+ * Always returns CLAIM_ATTEMPTS names: a word whose numbered slots are all gone
+ * falls through to random hex slots, which are unbounded, so a saturated word
+ * can never come back empty and stall the tick.
+ * @param {string} word
+ * @param {Set<string>} taken
+ * @returns {string[]}
+ */
+export function seedUsernameCandidates(word, taken) {
+	const candidates = [];
+	if (!taken.has(word)) candidates.push(word);
+	for (let n = 2; n <= 99 && candidates.length < CLAIM_ATTEMPTS; n++) {
+		if (!taken.has(`${word}${n}`)) candidates.push(`${word}${n}`);
+	}
+	while (candidates.length < CLAIM_ATTEMPTS) {
+		candidates.push(`${word}_${randomUUID().slice(0, 4)}`);
+	}
+	return candidates;
+}
+
+async function claimSeedUser(word) {
+	// Exactly the numbered candidate space (word, word2..word99), so the row set
+	// is complete by construction and can never be truncated into a wrong answer.
 	const existing = await sql`
 		select username from users
 		where username = ${word}
-		   or username like ${word + '%'}
-		limit 100
+		   or username ~ ${`^${word}[0-9]{1,2}$`}
 	`;
-	const taken = new Set(existing.map(r => r.username));
+	const taken = new Set(existing.map((r) => r.username));
 
-	if (!taken.has(word)) return word;
-	for (let n = 2; n <= 99; n++) {
-		const candidate = `${word}${n}`;
-		if (!taken.has(candidate)) return candidate;
+	for (const username of seedUsernameCandidates(word, taken)) {
+		// Display name is the word, capitalised, so it reads like a real account.
+		// Drop the collision suffixes (`_xxxx` hex fallback, numbered slot) first;
+		// stripping digits alone turned "fog_1a2b" into "Fog_".
+		const displayName = username
+			.replace(/_[0-9a-f]{4}$/, '')
+			.replace(/\d+$/, '')
+			.replace(/\b\w/g, (c) => c.toUpperCase());
+		const [user] = await sql`
+			insert into users (email, display_name, username, plan, email_verified, service_account, created_at, updated_at)
+			values (${`${username}@forge.three.ws`}, ${displayName}, ${username}, 'free', false, true, now(), now())
+			on conflict do nothing
+			returning id
+		`;
+		if (user?.id) return { user, username };
 	}
-	// All numbered variants taken — fall back to word + short hex (rare).
-	return `${word}_${randomUUID().slice(0, 4)}`;
+	return null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

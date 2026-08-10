@@ -25,8 +25,7 @@
 // this pages ops with the exact manual command instead of pretending to have
 // replenished anything.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { inventoryStats, sweepExpiredSecrets, isDbUnavailableError } from '../_lib/vanity-inventory-store.js';
 import { getGcpAccessToken, gcpAuthConfigured } from '../_lib/gcp-auth.js';
@@ -35,6 +34,27 @@ import { requireCron } from '../_lib/cron-auth.js';
 // Below this many available items platform-wide, fire a replenishment run.
 // Overridable so ops can tune the shelf depth without a redeploy.
 const LOW_WATERMARK = Number(process.env.VANITY_INVENTORY_LOW_WATERMARK || 25);
+// …and below this many DISTINCT rarity tiers in stock, fire one too. Raw depth
+// alone is a misleading signal: the premium tiers sell at very different prices
+// (api/_lib/vanity-inventory-pricing.js), so a shelf holding 300 items that are
+// all one tier cannot serve a buyer asking for any other, while `available`
+// reads comfortably above the watermark and the grinder never runs. Five tiers
+// exist today (uncommon → mythic); three is "the shelf still has a spread".
+const MIN_TIERS = Number(process.env.VANITY_INVENTORY_MIN_TIERS || 3);
+
+/**
+ * Does the shelf need a grind? Depth OR spread failing is enough. See the
+ * watermarks above for why spread is not derivable from depth. Exported so the
+ * trigger is testable without a DB or a Cloud Run job.
+ * @param {{available:number, tiers:number}} stats
+ * @returns {{low:boolean, reasons:string[]}}
+ */
+export function replenishTrigger(stats) {
+	const reasons = [];
+	if (Number(stats?.available || 0) < LOW_WATERMARK) reasons.push(`available ${Number(stats?.available || 0)} < ${LOW_WATERMARK}`);
+	if (Number(stats?.tiers || 0) < MIN_TIERS) reasons.push(`tiers ${Number(stats?.tiers || 0)} < ${MIN_TIERS}`);
+	return { low: reasons.length > 0, reasons };
+}
 
 const PROJECT = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT_ID || '';
 const REGION = process.env.VANITY_GRIND_REGION || 'us-central1';
@@ -88,33 +108,34 @@ export default wrapCron(async (req, res) => {
 		console.error('[vanity-inventory-replenish] sweep failed', err?.message || err);
 	}
 
-	const low = stats.available < LOW_WATERMARK;
+	const { low, reasons } = replenishTrigger(stats);
 	if (!low) {
 		return json(res, 200, { ok: true, low_stock: false, stats, swept });
 	}
+	const why = reasons.join('; ');
 
 	if (!jobConfigured()) {
 		await sendOpsAlert(
 			'Vanity inventory low — replenishment job not configured',
-			`Available: ${stats.available} (watermark ${LOW_WATERMARK}). Run manually: ` +
+			`Low on ${why}. Run manually: ` +
 				`PROJECT_ID=<gcp-project> ./scripts/gcp/vanity-grind-deploy.sh --run — or set ` +
 				`GOOGLE_CLOUD_PROJECT (+ GCP auth) so this cron can trigger the Cloud Run Job itself.`,
 			{ signature: 'vanity-replenish-not-configured' },
 		);
-		return json(res, 200, { ok: true, low_stock: true, configured: false, stats, swept });
+		return json(res, 200, { ok: true, low_stock: true, configured: false, reasons, stats, swept });
 	}
 
 	try {
 		const execution = await triggerGrindJob();
 		await sendOpsAlert(
 			'🟡 Vanity inventory low — replenishment grind triggered',
-			`Available: ${stats.available} (watermark ${LOW_WATERMARK}). Fired Cloud Run Job ` +
+			`Low on ${why}. Fired Cloud Run Job ` +
 				`${JOB} in ${REGION}. Execution: ${execution || '(unnamed)'}.`,
 			{ signature: `vanity-replenish-fired:${new Date().toISOString().slice(0, 13)}` },
 		);
-		return json(res, 200, { ok: true, low_stock: true, configured: true, triggered: true, execution, stats, swept });
+		return json(res, 200, { ok: true, low_stock: true, configured: true, triggered: true, execution, reasons, stats, swept });
 	} catch (err) {
 		await sendOpsAlert('Vanity inventory low — replenishment trigger failed', err.message, { signature: 'vanity-replenish-trigger-failed' });
-		return json(res, 200, { ok: false, low_stock: true, error: err.message, stats, swept });
+		return json(res, 200, { ok: false, low_stock: true, error: err.message, reasons, stats, swept });
 	}
 });

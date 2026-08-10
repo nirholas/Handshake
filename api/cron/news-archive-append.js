@@ -16,7 +16,7 @@
 //
 // ?dry_run=1 computes and reports without writing.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { getGcpAccessToken } from '../_lib/gcp-auth.js';
 import { getNews } from '../_lib/news.js';
 import { geckoFetch } from '../_lib/coingecko.js';
@@ -212,6 +212,10 @@ export default wrapCron(async (req, res) => {
 
 	const marketContext = await currentMarketContext();
 	const appendedByMonth = {};
+	const racedMonths = [];
+	// Only the articles this run actually landed. The stats rollup below must
+	// not count a month whose write lost the generation guard.
+	const written = [];
 
 	if (!dryRun) {
 		for (const [m, { existing, fresh }] of Object.entries(months)) {
@@ -220,25 +224,38 @@ export default wrapCron(async (req, res) => {
 			const body = existing.text
 				? `${existing.text.replace(/\n$/, '')}\n${lines.join('\n')}\n`
 				: `${lines.join('\n')}\n`;
-			await gcsPutObject(token, `articles/${m}.jsonl`, body, existing.generation, 'application/x-ndjson');
+			try {
+				await gcsPutObject(token, `articles/${m}.jsonl`, body, existing.generation, 'application/x-ndjson');
+			} catch (err) {
+				// The header promises the loser of an overlapping run just retries
+				// next hour, but an uncaught 412 threw out of the handler instead:
+				// wrap() turns that into a 5xx and pages ops for a race the design
+				// already tolerates. Records are content-addressed, so the winner
+				// wrote the same ids and nothing is lost.
+				if (err?.code !== 'race') throw err;
+				racedMonths.push(m);
+				console.warn(`news-archive-append: ${m} lost the generation guard to an overlapping run; retrying next hour`);
+				continue;
+			}
 			appendedByMonth[m] = fresh.length;
+			written.push(...fresh);
 		}
 
 		// Keep corpus stats truthful for /markets/archive and the API's
 		// stats mode. Best-effort: a stats race loses to next hour's run.
 		try {
-			const stats = await gcsGetObject(token, 'meta/stats.json');
+			const stats = written.length ? await gcsGetObject(token, 'meta/stats.json') : { exists: false };
 			if (stats.exists) {
 				const parsed = JSON.parse(stats.text);
-				parsed.total_articles += allFresh.length;
-				parsed.total_with_url += allFresh.length;
-				parsed.total_with_date += allFresh.filter((a) => a.pub_date).length;
-				parsed.total_with_description += allFresh.filter((a) => a.description).length;
-				const newest = allFresh.map((a) => a.pub_date).filter(Boolean).sort().pop();
+				parsed.total_articles += written.length;
+				parsed.total_with_url += written.length;
+				parsed.total_with_date += written.filter((a) => a.pub_date).length;
+				parsed.total_with_description += written.filter((a) => a.description).length;
+				const newest = written.map((a) => a.pub_date).filter(Boolean).sort().pop();
 				if (newest && (!parsed.last_article_date || newest > parsed.last_article_date)) {
 					parsed.last_article_date = newest;
 				}
-				for (const a of allFresh) {
+				for (const a of written) {
 					parsed.sources[a.source_key] = (parsed.sources[a.source_key] || 0) + 1;
 				}
 				await gcsPutObject(token, 'meta/stats.json', JSON.stringify(parsed, null, 2), stats.generation, 'application/json');
@@ -255,8 +272,9 @@ export default wrapCron(async (req, res) => {
 	return json(res, 200, {
 		ok: true,
 		month,
-		appended: allFresh.length,
+		appended: dryRun ? allFresh.length : written.length,
 		appended_by_month: appendedByMonth,
+		...(racedMonths.length ? { raced_months: racedMonths } : {}),
 		live_considered: live.articles.length,
 		already_archived: alreadyArchived,
 		skipped_backlog: skippedBacklog,

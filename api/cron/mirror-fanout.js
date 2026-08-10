@@ -10,7 +10,7 @@
 // Bounded so a 2-minute cron can never run away: only edges with a leader trade
 // in the recent window are scanned, and each edge processes at most N events.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { syncFollow } from '../_lib/agent-mirror.js';
 import { requireCron } from '../_lib/cron-auth.js';
@@ -42,8 +42,8 @@ async function fanout(network, stats) {
 		ORDER BY f.updated_at ASC
 		LIMIT ${MAX_FOLLOWS_PER_RUN}
 	`;
-	if (!follows.length) return;
 	stats.edges = (stats.edges || 0) + follows.length;
+	if (!follows.length) return;
 
 	for (const f of follows) {
 		try {
@@ -62,7 +62,10 @@ export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
 
-	const stats = {};
+	// Seeded so an idle run answers {edges:0} rather than a bare {ok:true}: a
+	// scan that found nothing has to be distinguishable from a scan that never
+	// reached the query.
+	const stats = { edges: 0 };
 	for (const network of NETWORKS) {
 		try { await fanout(network, stats); }
 		catch (err) { stats[`error_${network}`] = (err?.message || 'error').slice(0, 160); }

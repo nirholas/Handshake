@@ -186,3 +186,50 @@ describe('GET /api/cron/news-archive-append', () => {
 		expect(stats.last_article_date).toBe(`${NOW_MONTH}-05T10:00:00.000Z`);
 	});
 });
+
+describe('an overlapping run losing the GCS generation guard', () => {
+	// The header promises the loser of a race just retries next hour, but the
+	// 412 threw straight out of the handler, so wrap() turned a benign,
+	// designed-for race into a 5xx that pages ops. Records are content
+	// addressed, so the winner wrote the same ids and nothing was lost.
+	it('is tolerated per month: the run still 200s and the other month still lands', async () => {
+		const base = global.fetch;
+		global.fetch = vi.fn(async (url, opts = {}) => {
+			if (opts.method === 'POST' && String(url).includes(`articles%2F${NOW_MONTH}.jsonl`)) {
+				return { ok: false, status: 412, json: async () => ({}), text: async () => 'precondition failed' };
+			}
+			return base(url, opts);
+		});
+		const res = await call('/api/cron/news-archive-append');
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.raced_months).toEqual([NOW_MONTH]);
+		expect(res._json.body.appended_by_month).toEqual({ [PREV_MONTH]: 1 });
+		expect(res._json.body.appended).toBe(1);
+	});
+
+	it('does not credit the raced month to the corpus stats', async () => {
+		const base = global.fetch;
+		global.fetch = vi.fn(async (url, opts = {}) => {
+			if (opts.method === 'POST' && String(url).includes(`articles%2F${NOW_MONTH}.jsonl`)) {
+				return { ok: false, status: 412, json: async () => ({}), text: async () => 'precondition failed' };
+			}
+			return base(url, opts);
+		});
+		await call('/api/cron/news-archive-append');
+		const statsWrite = writes.find((w) => w.url.includes('meta%2Fstats.json'));
+		// 662047 + only the one article that actually landed
+		expect(JSON.parse(statsWrite.body).total_articles).toBe(662048);
+		expect(JSON.parse(statsWrite.body).sources.coindesk).toBe(2108);
+	});
+
+	it('a real GCS write failure still fails the run', async () => {
+		const base = global.fetch;
+		global.fetch = vi.fn(async (url, opts = {}) => {
+			if (opts.method === 'POST') {
+				return { ok: false, status: 503, json: async () => ({}), text: async () => 'backend error' };
+			}
+			return base(url, opts);
+		});
+		await expect(call('/api/cron/news-archive-append')).rejects.toThrow(/GCS write/);
+	});
+});

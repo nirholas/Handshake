@@ -9,12 +9,13 @@
 // Idempotent and cheap: getKolTracker's own cache checks make a warm run mostly
 // no-ops.
 
-import { json, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 const WINDOWS = ['24h', '7d', '30d'];
 
 export default wrapCron(async (req, res) => {
+	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
 	const started = Date.now();
 
@@ -23,10 +24,28 @@ export default wrapCron(async (req, res) => {
 		WINDOWS.map((window) => getKolTracker({ window, limit: 100 })),
 	);
 
+	// A prewarm that silently returned nulls for every window still read as a
+	// healthy 200, so a tracker broken for hours looked identical to a warm
+	// cache. Report the failed windows and their reason instead.
 	const byWindow = {};
+	const failures = {};
 	results.forEach((r, i) => {
-		byWindow[WINDOWS[i]] = r.status === 'fulfilled' ? r.value.length : null;
+		const window = WINDOWS[i];
+		if (r.status === 'fulfilled') {
+			byWindow[window] = r.value.length;
+		} else {
+			byWindow[window] = null;
+			failures[window] = String(r.reason?.message || r.reason).slice(0, 160);
+		}
 	});
+	const failed = Object.keys(failures).length;
+	if (failed) console.warn('[kol-tracker-refresh] prewarm failed for', failures);
 
-	return json(res, 200, { ok: true, rows: byWindow, ms: Date.now() - started });
+	return json(res, 200, {
+		ok: failed < WINDOWS.length,
+		rows: byWindow,
+		failed,
+		...(failed ? { failures } : {}),
+		ms: Date.now() - started,
+	});
 });

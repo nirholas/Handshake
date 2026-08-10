@@ -61,6 +61,29 @@ async function upsertAt402Index(entry) {
 	return { ok: r.ok, status: r.status, body: body.slice(0, 200) };
 }
 
+/**
+ * Which slice of the live paid catalog this hour re-upserts.
+ *
+ * The cursor is derived from the hour number rather than persisted, so the
+ * rotation survives a cold start, a redeploy, and a skipped tick without any
+ * state of its own: hour N always maps to the same window. Callers pass `nowMs`
+ * so the mapping is testable without a clock.
+ *
+ * @param {Array<object>} candidates live x402 catalog entries
+ * @param {number} nowMs epoch milliseconds
+ * @param {number} [windowSize] entries per tick (402index rate-limits to 10/h/IP)
+ * @returns {{ windows: number, cursor: number, batch: Array<object> }}
+ */
+export function registrarWindow(candidates, nowMs, windowSize = WINDOW) {
+	// An empty catalog would make `% windows` a modulo by zero (NaN), which slices
+	// to nothing and reports "window NaN/0". The handler refuses an empty catalog
+	// outright; this keeps the pure function total regardless.
+	const windows = Math.max(1, Math.ceil(candidates.length / windowSize));
+	const cursor = Math.floor(nowMs / HOUR_MS) % windows;
+	const start = cursor * windowSize;
+	return { windows, cursor, batch: candidates.slice(start, start + windowSize) };
+}
+
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
@@ -71,9 +94,7 @@ export default wrapCron(async (req, res) => {
 		return error(res, 500, 'empty_catalog', 'paid catalog rendered empty — refusing to run');
 	}
 
-	const windows = Math.ceil(candidates.length / WINDOW);
-	const cursor = Math.floor(Date.now() / HOUR_MS) % windows;
-	const batch = candidates.slice(cursor * WINDOW, cursor * WINDOW + WINDOW);
+	const { windows, cursor, batch } = registrarWindow(candidates, Date.now());
 
 	const results = [];
 	for (const entry of batch) {

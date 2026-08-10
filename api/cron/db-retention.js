@@ -61,8 +61,7 @@
 // runtime and hardcodes no specific mint — generic retention plumbing, not an
 // endorsement of any coin.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { sql, isDbCapacityError } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { requireCron } from '../_lib/cron-auth.js';
@@ -125,6 +124,20 @@ const COMPACT_MAX_TABLES = 3; // per tick; the cron re-runs on its schedule
 //     pressure valve, because shortening it is exactly what re-opens the replay
 //     hole the table exists to close. The rows are tiny (a hash, a route, an
 //     amount), so it cannot be the reason the branch is under pressure.
+//
+// DELIBERATELY UNMANAGED, and the single biggest table this cron does NOT prune:
+// x402_self_facilitator_log (632 MB as of 2026-08-10, third largest in the
+// branch). Every other big grower above is churn; this one is the settle book.
+// It is excluded because /api/x402-ring aggregates it with NO time filter for
+// its `lifetime` period (api/x402-ring.js, sinceFor() returns null), so any
+// retention window silently shrinks published lifetime settlement and fee
+// totals. Every other reader is short-window (healthz 24h, fee-audit and
+// wallet-fee-meter current-day, ring-reconciliation LOOKBACK_HOURS,
+// sponsor-runway X402_SPONSOR_BURN_WINDOW_DAYS), so a window is technically
+// safe for them. Pruning it is therefore a product decision about the public
+// revenue figures, not a mechanical retention one: get owner sign-off on what
+// `lifetime` should mean (and roll the pruned totals into a summary row first)
+// before adding it here.
 const TIME_SERIES_TABLES = [
 	{ table: 'pump_launch_snapshots', tsColumn: 'ts', windowKind: 'firehose' },
 	{ table: 'x402_autonomous_log', tsColumn: 'ts', windowKind: 'audit' },

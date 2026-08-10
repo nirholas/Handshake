@@ -121,9 +121,11 @@ function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
  * Upsert a batch of seeded wallets into wallet_reputation.
  * Only touches label + smart_money_score if the wallet has < 5 judged coins
  * in our own system — once we've observed them ourselves we trust our own data.
+ * @returns {Promise<{ written: number, failed: number }>} rows actually written
+ *   vs rejected, so the response reports what landed rather than what was tried.
  */
 async function upsertSeeded(batch) {
-	if (!batch.length) return 0;
+	if (!batch.length) return { written: 0, failed: 0 };
 	// Build values for a single multi-row upsert.
 	const values = batch.map((w) => ({
 		wallet: w.wallet,
@@ -133,12 +135,16 @@ async function upsertSeeded(batch) {
 	}));
 
 	// Postgres doesn't support VALUES with json arrays easily via tagged sql;
-	// process in chunks of 50 with individual upserts.
-	let count = 0;
+	// process in chunks of 50 with individual upserts. allSettled keeps one bad
+	// row from sinking the chunk, so the count has to come from the fulfilled
+	// results: counting chunk.length reported a clean run while every write was
+	// rejecting, which is exactly the failure this cron would need to surface.
+	let written = 0;
+	let failed = 0;
 	const CHUNK = 50;
 	for (let i = 0; i < values.length; i += CHUNK) {
 		const chunk = values.slice(i, i + CHUNK);
-		await Promise.allSettled(chunk.map((v) =>
+		const settled = await Promise.allSettled(chunk.map((v) =>
 			sql`
 				insert into wallet_reputation (wallet, network, label, smart_money_score, first_seen_at, updated_at)
 				values (${v.wallet}, ${v.network}, ${v.label}, ${v.score}, now(), now())
@@ -154,9 +160,19 @@ async function upsertSeeded(batch) {
 					updated_at = now()
 			`,
 		));
-		count += chunk.length;
+		for (const r of settled) {
+			if (r.status === 'fulfilled') written++;
+			else {
+				failed++;
+				// The first fault message plus a total, not one line per row: a chunk
+				// that fails wholesale (schema drift, permissions, a dead connection)
+				// would otherwise print the same line fifty times.
+				if (failed === 1) console.warn(`[gmgn-seed] wallet_reputation upsert failed: ${r.reason?.message || r.reason}`);
+			}
+		}
 	}
-	return count;
+	if (failed) console.warn(`[gmgn-seed] ${failed} of ${values.length} upserts failed`);
+	return { written, failed };
 }
 
 export default wrapCron(async (req, res) => {
@@ -199,12 +215,13 @@ export default wrapCron(async (req, res) => {
 	}
 
 	const batch = [...collected.values()];
-	const upserted = await upsertSeeded(batch);
+	const { written, failed } = await upsertSeeded(batch);
 
 	return json(res, 200, {
-		ok: true,
+		ok: failed === 0,
 		fetched: collected.size,
-		upserted,
+		upserted: written,
+		upsert_failed: failed,
 		tags_tried: tags.length,
 		fallback_used: fallbackUsed,
 		ms: Date.now() - started,
