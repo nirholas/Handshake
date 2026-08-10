@@ -121,7 +121,7 @@ const TOOLS = [
 		type: 'function',
 		function: {
 			name: 'propose_buy',
-			description: 'Surface a BUY proposal for the owner to confirm. Does NOT execute — it returns a confirm card grounded with a fresh quote + firewall verdict. Call this when the owner clearly wants to buy. Never claim a buy happened until the owner confirms it.',
+			description: 'Surface a BUY proposal for the owner to confirm. Does NOT execute. It returns a confirm card grounded with a fresh quote + firewall verdict. Call this when the owner clearly wants to buy. Never claim a buy happened until the owner confirms it.',
 			parameters: {
 				type: 'object',
 				properties: {
@@ -187,7 +187,7 @@ async function loadIntel(mint, network) {
 		LEFT JOIN pump_coin_outcomes o ON o.mint = i.mint AND o.network = i.network
 		WHERE i.mint = ${mint} AND i.network = ${network}
 		LIMIT 1`.catch(() => []);
-	if (!row) return { mint, found: false, note: 'No intelligence on this mint yet — the engine only fingerprints pump.fun launches it has observed.' };
+	if (!row) return { mint, found: false, note: 'No intelligence on this mint yet. The engine only fingerprints pump.fun launches it has observed.' };
 	return {
 		mint, found: true, symbol: row.symbol, name: row.name,
 		quality_score: num(row.quality_score),
@@ -281,14 +281,14 @@ function buildSystemPrompt({ agentName, persona, network }) {
 	return [
 		base ? `You speak in character as ${agentName}. Persona:\n${base}\n` : `You are ${agentName}, a trading copilot.`,
 		`You are the in-world CONVERSATIONAL TRADING COPILOT for the three.ws agent "${agentName}" and its self-custodied Solana wallet (network: ${network}).`,
-		`Your job: help the owner snipe, trade, and manage risk by talking. You have real tools — use them; never invent numbers, prices, balances, safety verdicts, or smart-money counts. If a tool returns no data, say so plainly.`,
+		`Your job: help the owner snipe, trade, and manage risk by talking. You have real tools, so use them; never invent numbers, prices, balances, safety verdicts, or smart-money counts. If a tool returns no data, say so plainly.`,
 		`RULES:`,
-		`• ACT, don't ask. The read-only tools (get_portfolio, get_coin_intel, get_smart_money, assess_safety, get_quote, get_trade_limits) are free and instant — CALL them immediately to answer. NEVER ask the owner for permission to read their own wallet or check a coin ("would you like me to check…?" is forbidden). If they ask "how's my portfolio?", call get_portfolio right away and answer with the real numbers. Only the propose_* actions need confirmation.`,
-		`• You NEVER execute or sign anything. To buy, sell, or change risk limits you MUST call the matching propose_* tool, which surfaces a confirm card. The owner confirms; a guarded server endpoint then enforces spend caps, the firewall, and the kill switch and signs. Never say a trade is done — say you've prepared it for confirmation.`,
+		`• ACT, don't ask. The read-only tools (get_portfolio, get_coin_intel, get_smart_money, assess_safety, get_quote, get_trade_limits) are free and instant, so CALL them immediately to answer. NEVER ask the owner for permission to read their own wallet or check a coin ("would you like me to check…?" is forbidden). If they ask "how's my portfolio?", call get_portfolio right away and answer with the real numbers. Only the propose_* actions need confirmation.`,
+		`• You NEVER execute or sign anything. To buy, sell, or change risk limits you MUST call the matching propose_* tool, which surfaces a confirm card. The owner confirms; a guarded server endpoint then enforces spend caps, the firewall, and the kill switch and signs. Never say a trade is done. Say you've prepared it for confirmation.`,
 		`• Before proposing OR recommending a buy, ground it: call assess_safety (firewall) and get_quote, and mention the safety verdict and price impact. If the firewall verdict is "block", refuse the buy and explain why.`,
-		`• Keep answers tight and conversational (2-5 sentences) — this may be read aloud. Light markdown is fine (bold, short bullet lists) but no tables or code blocks. The UI already shows the raw numbers as cards, so narrate the takeaway — don't re-list every figure.`,
+		`• Keep answers tight and conversational (2-5 sentences), because this may be read aloud. Light markdown is fine (bold, short bullet lists) but no tables or code blocks. The UI already shows the raw numbers as cards, so narrate the takeaway and don't re-list every figure.`,
 		`• The only coin three.ws promotes is $THREE. You may trade any mint the owner explicitly names (that is their call), but never suggest, shill, or name a specific other token on your own initiative.`,
-		`• When the owner is vague ("buy the safe one"), ask one brief clarifying question or have them paste a mint — do not guess a mint address.`,
+		`• When the owner is vague ("buy the safe one"), ask one brief clarifying question or have them paste a mint. Do not guess a mint address.`,
 	].join('\n');
 }
 
@@ -369,7 +369,7 @@ export default async function handler(req, res, id) {
 			citations.push({ kind: 'intel', mint: args.mint, quality: intel.quality_score ?? null });
 			return {
 				result: intel,
-				summary: intel.found ? `Intel ${intel.symbol || ''}: quality ${intel.quality_score ?? '—'}/100, ${(intel.risk_flags || []).length} risk flag(s)${intel.outcome ? `, outcome ${intel.outcome}` : ''}` : 'No intel on this mint',
+				summary: intel.found ? `Intel ${intel.symbol || ''}: quality ${intel.quality_score ?? 'n/a'}/100, ${(intel.risk_flags || []).length} risk flag(s)${intel.outcome ? `, outcome ${intel.outcome}` : ''}` : 'No intel on this mint',
 				card: { kind: 'intel', ...intel },
 			};
 		}
@@ -389,7 +389,7 @@ export default async function handler(req, res, id) {
 			citations.push({ kind: 'safety', mint: args.mint, verdict: a.verdict, score: a.score });
 			return {
 				result: { verdict: a.verdict, score: a.score, reasons: a.reasons, simulated: a.simulated },
-				summary: `Firewall: ${a.verdict.toUpperCase()} (${a.score}/100)${a.reasons?.[0] ? ' — ' + a.reasons[0] : ''}`,
+				summary: `Firewall: ${a.verdict.toUpperCase()} (${a.score}/100)${a.reasons?.[0] ? ': ' + a.reasons[0] : ''}`,
 				card: { kind: 'safety', mint: args.mint, verdict: a.verdict, score: a.score, reasons: a.reasons || [], simulated: !!a.simulated },
 			};
 		}
@@ -398,7 +398,7 @@ export default async function handler(req, res, id) {
 			citations.push({ kind: 'quote', mint: args.mint, side: args.side, impact: q.price_impact_pct });
 			return {
 				result: q,
-				summary: `Quote ${args.side}: ${q.expected_out != null ? q.expected_out.toLocaleString(undefined, { maximumFractionDigits: 4 }) : '—'} ${q.out_asset}, ${q.price_impact_pct != null ? q.price_impact_pct.toFixed(2) + '% impact' : 'impact n/a'}`,
+				summary: `Quote ${args.side}: ${q.expected_out != null ? q.expected_out.toLocaleString(undefined, { maximumFractionDigits: 4 }) : 'n/a'} ${q.out_asset}, ${q.price_impact_pct != null ? q.price_impact_pct.toFixed(2) + '% impact' : 'impact n/a'}`,
 				card: { kind: 'quote', mint: args.mint, side: q.side, in_asset: q.in_asset, in_amount: q.in_amount, out_asset: q.out_asset, expected_out: q.expected_out, price_impact_pct: q.price_impact_pct, min_received: q.min_received },
 			};
 		}
@@ -429,7 +429,7 @@ export default async function handler(req, res, id) {
 			proposals.push(proposal);
 			send('proposal', proposal);
 			const blocked = safety?.verdict === 'block';
-			return { result: { surfaced: true, blocked, safety_verdict: safety?.verdict, price_impact_pct: quote?.price_impact_pct }, summary: `Buy proposal surfaced (awaiting confirmation). Firewall ${safety?.verdict || 'n/a'}.${blocked ? ' BLOCKED — do not encourage this trade.' : ''}` };
+			return { result: { surfaced: true, blocked, safety_verdict: safety?.verdict, price_impact_pct: quote?.price_impact_pct }, summary: `Buy proposal surfaced (awaiting confirmation). Firewall ${safety?.verdict || 'n/a'}.${blocked ? ' BLOCKED, do not encourage this trade.' : ''}` };
 		}
 		if (name === 'propose_sell') {
 			if (!BASE58_RE.test(args.mint || '')) return { result: { error: 'invalid_mint' }, summary: 'invalid mint' };
@@ -449,7 +449,7 @@ export default async function handler(req, res, id) {
 			const proposal = { id: `p${proposals.length + 1}`, kind: 'sell', mint: args.mint, coin: label, token_amount: tokenAmount, token_pct: tokenPct ?? null, decimals: held?.decimals ?? 6, slippage_bps: slippageBps, network, quote, rationale: args.rationale || null };
 			proposals.push(proposal);
 			send('proposal', proposal);
-			return { result: { surfaced: true, expected_sol: quote?.expected_out }, summary: `Sell proposal surfaced (awaiting confirmation): ~${quote?.expected_out != null ? Number(quote.expected_out).toFixed(4) : '—'} SOL.` };
+			return { result: { surfaced: true, expected_sol: quote?.expected_out }, summary: `Sell proposal surfaced (awaiting confirmation): ~${quote?.expected_out != null ? Number(quote.expected_out).toFixed(4) : 'n/a'} SOL.` };
 		}
 		if (name === 'propose_set_limits') {
 			const cur = getTradeLimits(meta);

@@ -229,7 +229,7 @@ export default async function handler(req, res, id, action) {
 		}
 
 		if (meta.eth_vanity) {
-			return error(res, 409, 'conflict', 'agent already has an eth vanity record — DELETE /api/agents/:id/eth-vanity first to replace');
+			return error(res, 409, 'conflict', 'agent already has an eth vanity record. DELETE /api/agents/:id/eth-vanity first to replace');
 		}
 
 		meta.eth_vanity = {

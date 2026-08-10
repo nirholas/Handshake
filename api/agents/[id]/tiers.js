@@ -187,7 +187,7 @@ async function handleDelete(req, res, agentId, tierId) {
 		ok: true,
 		active_subscribers: subCount,
 		message: subCount > 0
-			? `Plan deactivated — ${subCount} subscriber(s) will keep access until their period ends.`
+			? `Plan deactivated. ${subCount} subscriber(s) will keep access until their period ends.`
 			: 'Plan deactivated.',
 	});
 }

@@ -21,7 +21,7 @@ import { run } from '../../agents/endpoint-shopper/src/orchestrator.js';
 const ROUTE = '/api/agents/endpoint-shopper-run';
 
 const DESCRIPTION =
-	'three.ws Endpoint Shopper — given a task description and a budget ceiling, ' +
+	'three.ws Endpoint Shopper: given a task description and a budget ceiling, ' +
 	'the agent discovers relevant paid x402 endpoints in the Bazaar, plans a ' +
 	'multi-step execution, calls each endpoint within budget, and synthesizes a ' +
 	'concise final answer. Returns the full step trace with per-step cost breakdowns ' +

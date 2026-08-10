@@ -102,7 +102,7 @@ async function distillFacts(githubData) {
 		maxTokens: 1024,
 		system:
 			'You distill GitHub activity into concise memory facts for an AI agent. ' +
-			'Each fact is a single self-contained sentence about the developer — tech stack, ' +
+			'Each fact is a single self-contained sentence about the developer: tech stack, ' +
 			'project types, commit style, interests, or notable contributions. ' +
 			'Output ONLY a JSON array of strings, no other text.',
 		user:
