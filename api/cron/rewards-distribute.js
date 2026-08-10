@@ -7,11 +7,13 @@
 // the plan. The plan is the deflation-free alternative to a burn: value flows back
 // to holders rather than being destroyed.
 //
-// Execution: distributing on-chain requires a funded distributor key
-// (REWARDS_DISTRIBUTOR_SECRET). When it's absent the cron is authoritative as a
-// DRY RUN — it returns exactly who would receive what so the plan can be audited
-// offline — and reports executed:false with the reason. This mirrors the funded-
-// signer gating on the platform's other on-chain payout lanes.
+// Execution: this endpoint PLANS and never sends. Moving $THREE to thousands of
+// holder wallets is an irreversible on-chain spend, so it stays owner-gated and
+// is not something a schedule may trigger on its own. Every run is therefore an
+// authoritative dry run: it reports exactly who would receive what, down to the
+// atomic unit, so the plan is auditable offline before anyone signs it. Whether
+// REWARDS_DISTRIBUTOR_SECRET happens to be configured changes only the reported
+// reason, never the outcome; executed is always false.
 //
 // Standalone (not [name].js) so the import graph stays minimal — just the token
 // config, the holder snapshot reader, and the pure distribution math.
@@ -69,12 +71,12 @@ export default wrapCron(async (req, res) => {
 
 	const plan = computeRewardsDistribution({ poolAtomics, holders, minPayoutAtomics });
 
-	// Distribution requires a funded signer; without it this run is an authoritative
-	// dry run (the plan is exact and auditable). Executing is the only step gated.
+	// The plan is exact and auditable either way; only the reason text differs, so
+	// an operator reading the ledger can tell a missing signer from a present one.
 	const distributorConfigured = Boolean(process.env.REWARDS_DISTRIBUTOR_SECRET);
 	const note = distributorConfigured
-		? 'executor pending funded-distributor verification'
-		: 'REWARDS_DISTRIBUTOR_SECRET not configured — dry run only';
+		? 'plan only: sending is owner-gated and never auto-executed'
+		: 'REWARDS_DISTRIBUTOR_SECRET not configured; plan only';
 
 	// Record the run so /three can show a real, verifiable distribution history.
 	// Status 'planned' (dry run) is logged but excluded from the reflected total —
