@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-10",
+      "title": "A coin's exchange listings answer a bad page number instead of quietly ignoring it",
+      "summary": "The exchange-listings table on a coin page reads its rows one page at a time. Asking for page 11 correctly said the page was out of range, but asking for page 0, a decimal, or a word silently served page 1 instead, so anything scripted against the endpoint got a page it never asked for and had no way to tell. It now applies one rule: leave the page off and you get the first one, otherwise it must be a whole number from 1 to 10 or you get a plain validation error saying so. The related-news rail on the same page also stops turning a publisher-feed outage into an anonymous internal error, and a coin's on-chain pool lookup no longer converts an upstream timeout into one. The coin market data reference now documents which paging limits are clamped and which are rejected.",
+      "tags": [
+        "fix",
+        "docs"
+      ],
+      "link": "/coins"
+    },
+    {
+      "date": "2026-08-10",
       "title": "The \"Claim Your 3D Avatar\" Blink names the avatar it points at, and refuses inputs it should never have accepted",
       "summary": "The shareable Solana Blink that claims a 3D avatar now looks the avatar up before it draws the card: it shows that avatar's real name, and returns a clear not-available error for one that is private, deleted, or does not exist, instead of advertising a claim nobody can complete. The card and its claim transaction now only accept \"default\" or a genuine avatar id, so an arbitrary string can no longer ride into the on-chain memo the wallet signs, and a wallet address that no key can ever sign for is rejected before a transaction is built rather than after. The live 3D portrait rendered into the card had a bigger hole: its background-colour setting was passed straight into the rendering page, so a crafted share link could run its own code inside our renderer. That input is now validated as a colour, the renderer escapes every value it embeds regardless of caller, and the portrait endpoint no longer starts a render for a request method it does not serve. A rendering failure now says which side failed, and a Solana node that will not answer comes back as a service-unavailable message rather than a hang.",
       "tags": [
