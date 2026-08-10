@@ -127,11 +127,15 @@ describe('router', () => {
 		expect(status).toBe(405);
 	});
 
-	it('429s when the rate limiter denies', async () => {
+	it('429s when the rate limiter denies, with a retry-after a poller can obey', async () => {
 		H.rlSuccess = false;
-		const { status, body } = await call('pulse');
+		const { status, body, res } = await call('pulse');
 		expect(status).toBe(429);
 		expect(body.error).toBe('rate_limited');
+		// The 3D Commons polls board + pulse on a timer, so the 429 has to say how
+		// long to wait rather than leaving the client to guess.
+		expect(Number(res.getHeader('retry-after'))).toBeGreaterThan(0);
+		expect(body.retry_after).toBeGreaterThan(0);
 	});
 });
 
