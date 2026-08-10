@@ -4,25 +4,25 @@ Work top-to-bottom. Do not submit until every box is checked.
 
 ## 1. Web app readiness (three.ws itself)
 
-- [ ] `https://three.ws/manifest.webmanifest` returns 200 with `Content-Type: application/manifest+json`.
-- [ ] `/pwa-192x192.png` and `/pwa-512x512.png` return 200 with `image/png`.
+- [x] `https://three.ws/manifest.webmanifest` returns 200 with `Content-Type: application/manifest+json`. (verified 2026-08-10)
+- [x] `/pwa-192x192.png` and `/pwa-512x512.png` return 200 with `image/png`. (verified 2026-08-10)
 - [ ] The site is installable from Chrome → "Add to Home screen" produces a standalone window.
 - [ ] `start_url` resolves and renders without console errors.
-- [ ] Service worker registered (the build already emits `/registerSW.js` via vite-plugin-pwa).
+- [x] Service worker registered (the build already emits `/registerSW.js` via vite-plugin-pwa). (verified 2026-08-10)
 - [ ] All third-party fonts and scripts allow embedding in a TWA (no `X-Frame-Options: DENY` on the root).
 
 ## 2. Digital Asset Links (DAL)
 
-- [ ] `solana-mobile/scripts/build-apk.sh` has been run once locally so the SHA-256 fingerprint is known.
-- [ ] `public/.well-known/assetlinks.json` exists, contains the real fingerprint (no `{{RELEASE_SHA256}}` placeholders), and is checked into `main`.
+- [x] `solana-mobile/scripts/build-apk.sh` has been run once locally so the SHA-256 fingerprint is known. (2026-08-10, keystore at `solana-mobile/android.keystore`, password in `.env` `SOLANA_MOBILE_KEYSTORE_PASSWORD`; on a fresh headless machine run `scripts/setup-android-sdk.sh` first)
+- [x] `public/.well-known/assetlinks.json` exists, contains the real fingerprint (no `{{RELEASE_SHA256}}` placeholders), and is checked into `main`. (2026-08-10)
 - [ ] `https://three.ws/.well-known/assetlinks.json` returns 200, `Content-Type: application/json`, max-age ≤ 3600.
 - [ ] Verified via Google's tool: `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://three.ws&relation=delegate_permission/common.handle_all_urls`.
 
 ## 3. APK build
 
-- [ ] Release keystore exists and is backed up offsite (lose this = lose the app forever).
-- [ ] `solana-mobile/build/three-ws-release.apk` was produced by `scripts/build-apk.sh` and is signed.
-- [ ] `apksigner verify --print-certs` prints the expected SHA-256 (matches the one in `assetlinks.json`).
+- [ ] Release keystore exists and is backed up offsite (lose this = lose the app forever). (keystore generated 2026-08-10 in the codespace; OFFSITE BACKUP STILL NEEDED: download `solana-mobile/android.keystore` + the `.env` password to the owner's password manager)
+- [x] `solana-mobile/build/three-ws-release.apk` was produced by `scripts/build-apk.sh` and is signed. (2026-08-10, 4.5 MB)
+- [x] `apksigner verify --print-certs` prints the expected SHA-256 (matches the one in `assetlinks.json`). (verified 2026-08-10: `49:84:9C:CC:...:DC:27`)
 - [ ] APK installs cleanly on a Seeker device: launches into three.ws full-screen, no Chrome address bar visible.
 - [ ] App icon, name, and splash colors match brand (`three.ws`, `#080814` background, `#000000` theme).
 - [ ] Three shortcuts (Create / Discover / My agents) appear on long-press of the app icon.
@@ -30,7 +30,7 @@ Work top-to-bottom. Do not submit until every box is checked.
 ## 4. MWA integration
 
 - [x] Wrapper logic is unit-tested against a fake transport (`npx vitest run tests/solana-mobile-mwa-*.test.js tests/solana-mobile-seeker-detect.test.js`) — authorize/resume, one-tap `signIn`, sign/send, error normalization, disconnect, session persistence, detection boundaries.
-- [ ] `solana-mobile/src/index.js` is imported from a top-level entry point (see `docs/INTEGRATION.md`).
+- [x] `solana-mobile/src/index.js` is imported from a top-level entry point (see `docs/INTEGRATION.md`). (verified 2026-08-10: imported by `src/wallet.js` and `src/game/play-auth.js`)
 - [ ] In a real TWA session, `window.threeWsWallet` is defined and `isSolanaMobileTwa()` returns `true`.
 - [ ] First sign-in triggers the Seed Vault sheet (no Phantom/Solflare prompts).
 - [ ] One-tap SIWS: wallet linking via `signIn()` shows a SINGLE Seed Vault sheet (not connect-then-sign), and `/api/auth/siws/verify` accepts the wallet-built message.

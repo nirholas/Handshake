@@ -2,6 +2,8 @@
 
 Drop these files into `solana-mobile/publish/media/` (referenced from `config.yaml`). Every asset must be PNG, RGB or RGBA, no transparency on the icon. Use 100% real product UI — Solana dApp Store reviewers reject mocked screenshots.
 
+`icon.png`, `banner.png`, and `feature.png` are generated: run `node solana-mobile/scripts/make-media.mjs` from the repo root. The icon is the flattened PWA icon, the banner is composed from the vector logo plus the listing tagline, and the feature graphic is a live Playwright capture of a real agent page on three.ws. Only the five screenshots below require a physical Seeker.
+
 | File              | Purpose         | Size            | Required | Notes                                                            |
 | ----------------- | --------------- | --------------- | -------- | ---------------------------------------------------------------- |
 | `icon.png`        | App icon        | 512 × 512       | yes      | Same image as `/public/pwa-512x512.png`; no transparency.        |

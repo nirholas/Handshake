@@ -17,7 +17,9 @@ solana-mobile/
 │   └── package.json          #   declares MWA peer/runtime deps
 ├── scripts/
 │   ├── init-publisher.sh     # one-time: mint Publisher + App NFTs on Solana
+│   ├── setup-android-sdk.sh  # headless machines: stage JDK 17 + Android SDK for Bubblewrap
 │   ├── build-apk.sh          # generate keystore (if needed), build + sign release APK
+│   ├── make-media.mjs        # generate icon/banner/feature listing assets from the live product
 │   ├── update-assetlinks.sh  # refresh /public/.well-known/assetlinks.json from the keystore
 │   └── publish.sh            # mint Release NFT + submit to the dApp Store
 ├── publish/                  # solana-mobile/dapp-store-cli config + listing copy
@@ -53,6 +55,11 @@ cd solana-mobile
 SOLANA_KEYPAIR=~/.config/solana/publisher.json ./scripts/init-publisher.sh
 # Commit the addresses written into publish/config.yaml.
 
+# 1.5. Headless machine (codespace/container) with no Android toolchain yet:
+#      stages JDK 17 + Android SDK under ~/.bubblewrap with the exact layout
+#      Bubblewrap expects and seeds its config. Idempotent.
+./scripts/setup-android-sdk.sh
+
 # 2. Build the signed APK (creates the keystore on first run — back it up!).
 #    Runs unattended: passwords reach Bubblewrap via env vars, the Android
 #    project is regenerated from twa/twa-manifest.json with `bubblewrap
@@ -79,7 +86,7 @@ repo does not use GitHub Actions.
 ## What was NOT added to the bundle (intentional)
 
 - **Promo video** — optional for v1, can be added later via `publish/media/video.mp4`.
-- **Screenshots** — must be captured on a real Seeker device (see `docs/ASSETS.md`); no placeholders are checked in because reviewers reject them.
+- **Screenshots**: must be captured on a real Seeker device (see `docs/ASSETS.md`); no placeholders are checked in because reviewers reject them. The three buildable assets (`icon.png`, `banner.png`, `feature.png`) ARE checked in under `publish/media/`; regenerate them any time with `node scripts/make-media.mjs` (the feature graphic is a live Playwright capture of a real agent page).
 - **Privacy policy + EULA pages** — these are content for the main three.ws site, not this bundle. They must be live at `/legal/privacy` and `/legal/eula` before submission.
 
 ## See also

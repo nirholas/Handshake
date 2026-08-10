@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ws.three.app",
+      "sha256_cert_fingerprints": [
+        "49:84:9C:CC:7B:7D:19:87:F6:14:BD:DD:F6:FE:21:63:F8:2B:FD:EF:A1:C1:5F:2F:0A:B9:CF:37:4D:77:DC:27"
+      ]
+    }
+  }
+]
