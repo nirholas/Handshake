@@ -77,8 +77,11 @@ export default wrap(async (req, res) => {
 	const body = await readJson(req).catch(() => null);
 	if (!body || typeof body !== 'object') return error(res, 400, 'bad_request', 'JSON body required');
 
-	// Status-only update (pause / resume / stop).
-	if (body.id && body.status && Object.keys(body).length <= 2) {
+	// Status-only update (pause / resume / stop). Keyed on the absence of the
+	// create fields rather than a key count: cookie clients may carry the CSRF
+	// token in the body (_csrf), and a count test sent those through the create
+	// path and answered a pause with "leader_agent_id must be an agent UUID".
+	if (body.id && body.status && body.leader_agent_id == null && body.copier_wallet == null) {
 		if (!isUuid(body.id)) return error(res, 400, 'invalid_id', 'id must be a subscription UUID');
 		if (!['active', 'paused', 'stopped'].includes(body.status)) {
 			return error(res, 400, 'invalid_status', 'status must be active, paused, or stopped');

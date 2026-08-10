@@ -314,6 +314,8 @@ new_high_water    = max(high_water_mark, cumulative_profit)
 
 Losing copies lower the cumulative, and the high-water mark only ever ratchets up, so a drawdown followed by a recovery is never billed twice. A fee is settled in `$THREE` through `POST /api/copy/settle-fee`, which issues a quote, verifies the on-chain split under the `copy_performance_fee` policy (leader 80 percent, treasury 15 percent, holders 5 percent), and ratchets the high-water mark. That is a spend: confirm the recipient and amount before signing.
 
+Settling is a two-call flow and the two calls are bound to each other. `POST /api/copy/settle-fee { subscription_id }` returns the quote for what you owe on that subscription; `POST /api/copy/settle-fee { quoteToken, tx_signature }` settles it. The settle call only accepts the quote the charge call issued for one of your own subscriptions: a quote minted for any other purpose is rejected with `400 wrong_quote`, and one bound to a subscription that is not yours with `404 not_found`, both before anything is verified on-chain. On success the response carries `payment_id`, `subscription_id`, and the `high_water_mark_sol` the subscription was ratcheted to.
+
 ---
 
 ## The Smart Money directory

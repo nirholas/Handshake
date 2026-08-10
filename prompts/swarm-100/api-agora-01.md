@@ -1,4 +1,4 @@
-# API audit: api/copy batch 01 (5 files)
+# API audit: api/agora batch 01 (2 files)
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this
 repository and say "run this work order". This file is fully self-contained:
@@ -37,11 +37,8 @@ Every claim below rots; step 0 re-measures, and what you measure wins.
 
 Files in this batch:
 
-- api/copy/earnings.js
-- api/copy/executions.js
-- api/copy/settle-fee.js
-- api/copy/smart-wallets.js
-- api/copy/subscriptions.js
+- api/agora/[action].js
+- api/agora/act.js
 
 For every routed handler:
 
@@ -91,7 +88,7 @@ For every internal (non-routed) module:
    style: type(scope): what changed and why a reader cares).
 3. Delete this prompt file in that same commit:
 
-       git rm prompts/swarm-100/api-copy-01.md
+       git rm prompts/swarm-100/api-agora-01.md
 
    The shrinking directory is this campaign's only progress ledger; there is
    no progress log to update.

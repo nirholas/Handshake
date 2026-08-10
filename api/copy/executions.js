@@ -1,7 +1,7 @@
 /**
  * Copy-trading executions — the copier's intent inbox + history.
  *
- *   GET  /api/copy/executions?status=pending|acted|dismissed|skipped|all&limit=
+ *   GET  /api/copy/executions?status=pending|acted|dismissed|skipped|expired|all&limit=
  *        list the signed-in copier's copy intents (newest first), with leader + coin info.
  *   POST /api/copy/executions  { id, action: 'acted'|'dismissed', tx_signature? }
  *        the copier records that they acted on (or dismissed) a pending intent.
