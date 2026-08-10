@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-10T16:42:01.468Z",
+	"generated_at": "2026-08-10T16:52:30.839Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "Revoking an API key with a malformed id now gives a clear error instead of a server fault",
+			"summary": "Deleting an API key through the developer API used to hand whatever id it was given straight to the database, so an id that could never match a key came back as a generic \"internal error, quote this reference to support\" 500. It now answers a plain 400 saying the id must be a key identifier, and the database is never touched for input that cannot match. Real revokes, the ownership check that stops one account revoking another account's key, and the already-revoked case all behave exactly as before.",
+			"link": "/dashboard",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-08-10",
 			"type": "update",
@@ -36,6 +46,17 @@
 			"link": "/docs/embedding",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "The embed release manifest answers cheap polls and says plainly when a build is missing",
+			"summary": "Sites that pin an <agent-3d> bundle version can poll /api/agent-3d/versions to learn about a new release. That endpoint now returns an ETag derived from the manifest contents, so a poller that sends the tag back gets an empty 304 Not Modified between releases instead of re-downloading the same JSON, and gets the full manifest the moment a new version publishes. When a deploy ships without the manifest the endpoint used to answer \"not found\" whether the file was missing or corrupt; it now says which of the two it is, so the fix is obvious from the response alone. The manifest is also documented for embedders alongside the static /agent-3d/versions.json copy.",
+			"link": "/docs/web-component",
+			"tags": [
+				"improvement",
+				"sdk"
 			]
 		},
 		{

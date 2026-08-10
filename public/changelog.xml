@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Revoking an API key with a malformed id now gives a clear error instead of a server fault</title>
+			<link>https://three.ws/dashboard</link>
+			<guid isPermaLink="false">2026-08-10:Revoking an API key with a malformed id now gives a clear error instead of a server fault</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Deleting an API key through the developer API used to hand whatever id it was given straight to the database, so an id that could never match a key came back as a generic &quot;internal error, quote this reference to support&quot; 500. It now answers a plain 400 saying the id must be a key identifier, and the database is never touched for input that cannot match. Real revokes, the ownership check that stops one account revoking another account's key, and the already-revoked case all behave exactly as before.</description>
+		</item>
+		<item>
+			<title>The aixbt market feeds now say when the key, not you, is the problem</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-08-10:The aixbt market feeds now say when the key, not you, is the problem</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When aixbt turned down this deployment's API key, the narrative intel, momentum projects, grounding and chat feeds all answered with a plain 'unauthorized' aimed at you. Nothing on those surfaces ever asked you to sign in, so the message read as a dead end nobody could act on. They now report the real cause, that the platform's aixbt key has expired or sits below the plan the read needs, and carry the same setup pointer the missing-key state shows, so the in-world aixbt panel and the intel SDK both render something an operator can fix. The intel and projects feeds also stop advertising a page size of 100 they were never able to return, and a chat turn that comes back empty now says so instead of handing you a blank answer marked successful.</description>
+		</item>
+		<item>
 			<title>The CA to x402 tool now always hands you a three.ws payment address</title>
 			<link>https://three.ws/ca2x402</link>
 			<guid isPermaLink="false">2026-08-10:The CA to x402 tool now always hands you a three.ws payment address</guid>
@@ -21,6 +37,14 @@
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>In the SperaxOS and LobeChat plugin, a mistyped or deleted Agent ID used to come back as a cheerful confirmation while the avatar panel stayed empty, so the model told you it had bound an agent that does not exist. The plugin now checks the ID against your real agents before answering: a bad ID returns a clear error pointing you back to the dashboard to recopy it, and a good one comes back with the agent name so you can see at a glance which identity the panel is wearing. Stray spaces around a pasted ID are trimmed instead of breaking the binding.</description>
+		</item>
+		<item>
+			<title>The embed release manifest answers cheap polls and says plainly when a build is missing</title>
+			<link>https://three.ws/docs/web-component</link>
+			<guid isPermaLink="false">2026-08-10:The embed release manifest answers cheap polls and says plainly when a build is missing</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Sites that pin an &lt;agent-3d&gt; bundle version can poll /api/agent-3d/versions to learn about a new release. That endpoint now returns an ETag derived from the manifest contents, so a poller that sends the tag back gets an empty 304 Not Modified between releases instead of re-downloading the same JSON, and gets the full manifest the moment a new version publishes. When a deploy ships without the manifest the endpoint used to answer &quot;not found&quot; whether the file was missing or corrupt; it now says which of the two it is, so the fix is obvious from the response alone. The manifest is also documented for embedders alongside the static /agent-3d/versions.json copy.</description>
 		</item>
 		<item>
 			<title>The Oracle now scores from measured outcomes, and its top tiers finally mean something</title>
