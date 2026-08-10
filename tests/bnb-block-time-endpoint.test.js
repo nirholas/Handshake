@@ -61,12 +61,21 @@ async function call(qs = '', { method = 'GET' } = {}) {
 	return res;
 }
 
+// The handler's TTL cache is module state shared by every test in this file.
+// Jump the clock a full minute between tests (the TTL is 10s) so each one
+// starts from a cold cache and the cache assertions below count only their own
+// probes. `shouldAdvanceTime` keeps the clock ticking so awaited work inside a
+// test still sees time pass normally.
+let tick = 0;
 beforeEach(() => {
+	vi.useFakeTimers({ shouldAdvanceTime: true });
+	vi.setSystemTime(new Date(Date.UTC(2026, 0, 1) + ++tick * 60_000));
 	rl.ok = true;
 	probeState.calls = 0;
 	probeState.fail = false;
 });
 afterEach(() => {
+	vi.useRealTimers();
 	vi.clearAllMocks();
 });
 
