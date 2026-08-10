@@ -86,7 +86,12 @@ export async function lastActivityMs(table, tsColumn = 'created_at') {
 		const rows = await sql(`SELECT extract(epoch from max(${tsColumn})) * 1000 AS ms FROM ${table}`);
 		const ms = rows?.[0]?.ms;
 		return ms != null ? Number(ms) : null;
-	} catch {
-		return null; // table absent / empty → treat as no activity on record
+	} catch (err) {
+		// A missing table legitimately means "nothing has happened yet", but a typo'd
+		// column name produces the same null and turns the tripwire into a permanent
+		// false "enabled but SILENT" alarm. Say so in the logs so the next mismatch
+		// is one grep away instead of an alert nobody can explain.
+		console.warn('[tripwire] last-activity read failed', { table, column: tsColumn, message: err?.message });
+		return null;
 	}
 }

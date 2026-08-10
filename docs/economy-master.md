@@ -98,6 +98,26 @@ every lamport cycles master → engines → work → master:
   rejects a transfer that would leave a wallet below rent exemption). Engines are
   left unfunded until the next topup — use it to decommission the fleet or
   recover everything to the root in one call.
+- **Dry run (either mode).** Append `?dry=1` to plan without moving anything:
+  the same balance reads, alias merging, and floor math run, then every entry
+  comes back flagged `dryRun` with a `null` signature. Nothing is signed or
+  broadcast, no ledger row is written, and no alert fires. A dry drain does not
+  need the `confirm=drain` token, because a preview cannot empty anything:
+
+  ```bash
+  # what would the scheduled 6-hourly sweep consolidate right now?
+  curl -s -H "Authorization: Bearer $CRON_SECRET" \
+    'https://three.ws/api/cron/treasury-sweepback?dry=1' | jq .would_sweep_sol
+
+  # and what would a full drain pull back, tokens included?
+  curl -s -H "Authorization: Bearer $CRON_SECRET" \
+    'https://three.ws/api/cron/treasury-sweepback?mode=drain&dry=1' | jq
+  ```
+
+  This is the mirror of the topup's own `?dry=1`, and it is what makes the
+  return leg inspectable (and testable, see
+  [`tests/cron-sweepback-dryrun.test.js`](../tests/cron-sweepback-dryrun.test.js))
+  without moving real mainnet SOL.
 
 The destination lock is the mirror of the topup allowlist: the only recipient in
 the module is the `ECONOMY_MASTER_ADDRESS` constant — not a parameter — so no

@@ -15,7 +15,7 @@
 // never moves funds, CRON_SECRET-authed, bounded (≤100 sigs/wallet/run).
 
 import { randomUUID } from 'node:crypto';
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
@@ -226,7 +226,12 @@ export default wrapCron(async (req, res) => {
 	// loop that DRIVES it (pipelines + tick), which should never be idle when on.
 	const now = Date.now();
 	const autoConfigured = String(env.X402_AUTONOMOUS_ENABLED ?? '').toLowerCase() !== 'false';
-	const autoLast = await lastActivityMs('x402_autonomous_log', 'created_at');
+	// The log's timestamp column is `ts` (see the CREATE TABLE in
+	// x402-autonomous-loop.js). Naming a column that does not exist made
+	// lastActivityMs swallow the SQL error and answer null, so the tripwire read a
+	// loop with half a million rows and activity seconds old as "no activity on
+	// record" and alerted "enabled but SILENT" on every run.
+	const autoLast = await lastActivityMs('x402_autonomous_log', 'ts');
 	const tripwire = await runTripwire({
 		subsystem: 'x402_autonomous_loop', configured: autoConfigured,
 		lastActivityMs: autoLast, windowMinutes: 60, now, runId,

@@ -94,7 +94,7 @@ export function planSweepback(targets, opts = {}) {
  * @param {'mainnet'|'devnet'} args.network
  * @returns {Promise<{ swept: Array<{mint:string,amount:string,decimals:number,signature:string}>, failed: Array<{mint:string,reason:string}> }>}
  */
-async function sweepTokenBalances({ connection, owner, network }) {
+async function sweepTokenBalances({ connection, owner, network, dryRun = false }) {
 	const { PublicKey } = await import('@solana/web3.js');
 	const {
 		TOKEN_PROGRAM_ID,
@@ -139,6 +139,12 @@ async function sweepTokenBalances({ connection, owner, network }) {
 
 		for (let i = 0; i < holdings.length; i += TOKEN_ACCOUNTS_PER_TX) {
 			const chunk = holdings.slice(i, i + TOKEN_ACCOUNTS_PER_TX);
+			if (dryRun) {
+				for (const h of chunk) {
+					swept.push({ mint: h.mint, amount: h.amount.toString(), decimals: h.decimals, signature: null, dryRun: true });
+				}
+				continue;
+			}
 			const instructions = [];
 			for (const h of chunk) {
 				const mint = new PublicKey(h.mint);
@@ -176,9 +182,10 @@ async function sweepTokenBalances({ connection, owner, network }) {
  * @param {'excess'|'drain'} [args.mode]
  * @param {boolean} [args.includeTokens]
  * @param {'mainnet'|'devnet'} [args.network]
+ * @param {boolean} [args.dryRun] plan only: same reads, same guards, no sends
  * @returns {Promise<object>}
  */
-export async function sweepBack({ connection, mode = 'excess', includeTokens = true, network = 'mainnet' }) {
+export async function sweepBack({ connection, mode = 'excess', includeTokens = true, network = 'mainnet', dryRun = false }) {
 	const { PublicKey } = await import('@solana/web3.js');
 	const master = ECONOMY_MASTER_ADDRESS;
 
@@ -238,7 +245,7 @@ export async function sweepBack({ connection, mode = 'excess', includeTokens = t
 		// (buyback USDC, withdrawal SPL float, NFT collection) keeps them; a
 		// drain takes all.
 		if (includeTokens && (mode === 'drain' || !wallet.holdsTokens)) {
-			const tokens = await sweepTokenBalances({ connection, owner: wallet.keypair, network });
+			const tokens = await sweepTokenBalances({ connection, owner: wallet.keypair, network, dryRun });
 			for (const t of tokens.swept) sweptTokens.push({ name, pubkey: wallet.pubkey, ...t });
 			for (const f of tokens.failed) failed.push({ name, pubkey: wallet.pubkey, sol: null, reason: `token ${f.mint}: ${f.reason}` });
 		}
@@ -256,6 +263,10 @@ export async function sweepBack({ connection, mode = 'excess', includeTokens = t
 		);
 		skipped.push(...planSkipped);
 		for (const step of plan) {
+			if (dryRun) {
+				sweptSol.push({ name: step.name, pubkey: step.pubkey, sol: step.sol, signature: null, dryRun: true });
+				continue;
+			}
 			try {
 				const signature = await sendSol({
 					connection,
@@ -281,6 +292,7 @@ export async function sweepBack({ connection, mode = 'excess', includeTokens = t
 
 	return {
 		mode,
+		dryRun,
 		master,
 		masterSolBefore,
 		masterSolAfter,

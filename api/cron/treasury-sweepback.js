@@ -17,6 +17,10 @@
 //     every reclaimed rent lamport, all SOL minus fee headroom. Engines are left
 //     unfunded until the next topup, so this is for decommission or emergency
 //     recovery and requires the explicit confirm token.
+//   • ?dry=1 (either mode) is plan only. Same balance reads, same alias merging
+//     and floor math, but nothing is signed or sent, no ledger row is written and
+//     no alert fires. It is the only way to inspect what a sweep would consolidate
+//     without moving money, and the mirror of treasury-topup's own ?dry=1.
 //
 // Every movement lands in the tamper-evident economy_master_ledger as `inflow`
 // / `inflow_token` rows chained onto the same history the topup writes.
@@ -27,7 +31,6 @@
 
 import { randomUUID } from 'node:crypto';
 import { error, json, method, wrapCron } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { sweepBack } from '../_lib/economy-sweepback.js';
 import { ECONOMY_MASTER_ADDRESS } from '../_lib/economy-master.js';
@@ -41,10 +44,13 @@ export default wrapCron(async (req, res) => {
 	const url = new URL(req.url || '/', 'https://internal');
 	const mode = url.searchParams.get('mode') === 'drain' ? 'drain' : 'excess';
 	const includeTokens = url.searchParams.get('tokens') !== '0';
+	// Plan-only inspection. Deliberately checked BEFORE the drain guard below so an
+	// operator can preview a drain without holding the confirm token.
+	const dryRun = /^(1|true)$/i.test(url.searchParams.get('dry') || '');
 
 	// A drain empties every engine — never something a schedule or a stray GET
 	// should be able to do. Require the explicit method + confirm token.
-	if (mode === 'drain' && (req.method !== 'POST' || url.searchParams.get('confirm') !== 'drain')) {
+	if (mode === 'drain' && !dryRun && (req.method !== 'POST' || url.searchParams.get('confirm') !== 'drain')) {
 		return error(res, 400, 'confirm_required', 'a full drain needs POST with ?mode=drain&confirm=drain');
 	}
 
@@ -52,7 +58,26 @@ export default wrapCron(async (req, res) => {
 	const { solanaConnection } = await import('../_lib/solana/connection.js');
 	const connection = solanaConnection({ url: rpcUrl, network: 'mainnet', commitment: 'confirmed' });
 
-	const result = await sweepBack({ connection, mode, includeTokens, network: 'mainnet' });
+	const result = await sweepBack({ connection, mode, includeTokens, network: 'mainnet', dryRun });
+
+	// A plan moved nothing, so there is nothing to book and nobody to page. Return
+	// the plan verbatim: same shape as a real run, with every entry flagged dryRun.
+	if (dryRun) {
+		return json(res, 200, {
+			ok: true,
+			dry_run: true,
+			rpc: rpcUrl,
+			mode,
+			master: result.master,
+			master_sol_before: result.masterSolBefore,
+			would_sweep_sol: result.sweptSol,
+			would_sweep_tokens: result.sweptTokens,
+			would_receive_sol: result.receivedSol,
+			failed: result.failed,
+			skipped: result.skipped,
+			read_errors: result.readErrors,
+		});
+	}
 
 	// Book every movement onto the master's hash chain. Same contract as the
 	// topup: a dropped write never fails the response, but real money moving
