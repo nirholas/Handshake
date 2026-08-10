@@ -63,7 +63,7 @@ function poseById(id) {
 // and run its own code inside the render page. That page has network access, so
 // injected script can fetch internal endpoints and paint them into the
 // screenshot we hand back. Escape here, once, so no caller has to remember to.
-function scriptJson(value) {
+export function scriptJson(value) {
 	return JSON.stringify(value === undefined ? null : value)
 		.replace(/</g, '\\u003c')
 		.replace(/>/g, '\\u003e')

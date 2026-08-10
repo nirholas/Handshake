@@ -4697,6 +4697,94 @@ The same stamp is served statically at `/build-info.json`.
 
 ---
 
+## Solana Actions API (Blinks)
+
+three.ws publishes a Solana Action so "Claim Your 3D Avatar" unfurls as a Blink
+card on X and in any Blink-aware wallet. `/.well-known/solana/actions.json` maps
+`/api/actions/**` for Action clients, and the card's icon is a live headless
+render of the avatar's own GLB rather than a static image.
+
+### Claim-avatar action
+
+```
+GET  /api/actions/avatar?avatar=default
+POST /api/actions/avatar?avatar=<avatarId>
+```
+
+No auth required. `avatar` is either `default` or an avatar UUID; anything else is
+`400 bad_request`. An avatar that is private, deleted, or unknown is `404 not_found`,
+so a card never advertises a claim the viewer cannot complete. A named avatar's card
+is titled with that avatar's name.
+
+Responses carry `x-action-version: 2.1.3` and `x-blockchain-ids: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`,
+including on the `OPTIONS` preflight. Errors carry both the standard
+`error` / `error_description` envelope and the Actions spec's `message` field.
+
+**GET response** (`ActionGetResponse`):
+
+```json
+{
+  "type": "action",
+  "icon": "https://three.ws/api/actions/avatar-icon?avatar=default",
+  "label": "Claim Avatar",
+  "title": "My 3D Avatar on three.ws",
+  "description": "Register your Solana wallet to this 3D avatar. ...",
+  "links": {
+    "actions": [
+      { "type": "transaction", "label": "Claim This Avatar", "href": "/api/actions/avatar?avatar=default" }
+    ]
+  }
+}
+```
+
+**POST body:** `{ "account": "<wallet pubkey>" }`. The account must be a base58
+ed25519 public key that is on the curve; a program-derived address (which no key
+can sign for) is rejected with `400 bad_request` before any transaction is built.
+
+**POST response** (`ActionPostResponse`): a base64 `VersionedTransaction` carrying a
+single unsigned SPL Memo instruction. The server never signs; the wallet does.
+
+```json
+{
+  "type": "transaction",
+  "transaction": "AQAAAAAA...",
+  "message": "Your 3D avatar identity is now recorded on Solana. Welcome to three.ws."
+}
+```
+
+The memo payload is `{"v":1,"action":"avatar-claim","avatar":"<avatarId>","site":"three.ws"}`.
+A Solana RPC that will not answer returns `503 rpc_unavailable`.
+
+```bash
+curl -s https://three.ws/api/actions/avatar | jq .title
+curl -s -X POST https://three.ws/api/actions/avatar \
+  -H 'content-type: application/json' \
+  -d '{"account":"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"}' | jq -r .type
+```
+
+---
+
+### Blink card icon
+
+```
+GET /api/actions/avatar-icon?avatar=default&pose=tpose&bg=%230a0a0a
+```
+
+Renders the avatar's GLB to a 512x512 `image/png` through headless chromium and
+serves it with a one-day browser / one-week edge cache. No auth required; `GET`
+and `HEAD` only, since every other method would boot a browser for nothing.
+
+| Parameter | Default | Notes |
+|---|---|---|
+| `avatar` | `default` | `default` or an avatar UUID. Anything else is `400`. An avatar with no reachable model falls back to the default GLB. |
+| `pose` | none | A pose preset id from `GET /api/render/avatar-clip`. Anything that is not a preset-shaped id is `400`. |
+| `bg` | `#0a0a0a` | A CSS color (hex, `rgb()`/`rgba()`, `hsl()`/`hsla()`, a named color) or `transparent`. Anything else is `400`: this value is embedded in the renderer's page, so it is never passed through unchecked. |
+
+Render failures surface the class of failure rather than one blanket code: `400`
+for an unfetchable GLB, `413` for one over the size cap, `502` for a renderer fault.
+
+---
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).
