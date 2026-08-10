@@ -23,6 +23,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from './cinematic-render.js';
+import { consumeCsrfToken } from '../api.js';
 
 // Top-level endpoint — this is the real-time frame+log SSE stream.
 const STREAM_URL   = (id) => `/api/agent-screen-stream?agentId=${encodeURIComponent(id)}`;
@@ -912,15 +913,23 @@ class WatchPanel {
 		btn.disabled = true;
 		btn.classList.add('loading');
 		try {
+			// Single-use CSRF token, burned by this request: fetch a fresh one per
+			// mint rather than caching, so two panels open at once can't race.
+			const csrf = await consumeCsrfToken().catch(() => null);
+			const headers = { 'Content-Type': 'application/json' };
+			if (csrf) headers['x-csrf-token'] = csrf;
 			const res = await fetch(SESSION_URL(), {
 				method: 'POST',
 				credentials: 'include',
-				headers: { 'Content-Type': 'application/json' },
+				headers,
 				body: JSON.stringify({ agentId: this.agentId }),
 			});
 			if (!res.ok) {
+				// The API error envelope is { error, error_description }; reading only
+				// `message` reduced every failure to a bare "HTTP 401" with no hint that
+				// signing in (or owning the agent) was the missing piece.
 				const err = await res.json().catch(() => ({}));
-				throw new Error(err.message || `HTTP ${res.status}`);
+				throw new Error(err.error_description || err.message || `HTTP ${res.status}`);
 			}
 			const data = await res.json();
 			this._showSessionModal(data);
