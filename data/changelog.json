@@ -12,6 +12,15 @@
     },
     {
       "date": "2026-08-10",
+      "title": "The agent-to-agent economy demo speaks again, and never pays for a service it could not deliver",
+      "summary": "On the live agent economy page, Nova hires Oracle for a paid data service and Oracle answers with a real model response. That answer had gone silent: the endpoint fetched it over an internal HTTP call to an address that does not exist in production, so both agents stayed mute while the page still reported the trade as complete. The delivery now runs directly against the platform model chain, and it runs before the payment: if no model can produce the service, the request stops with a clear \"try again in a moment\" and not one lamport leaves Nova's wallet. A request naming a service that does not exist is now rejected outright instead of slipping through as an unnamed, unpriced one, and the daily on-chain spending ceiling is only spent when a payment actually fires, so an empty wallet can no longer exhaust the day's budget for everyone.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/agent-economy"
+    },
+    {
+      "date": "2026-08-10",
       "title": "Revoking an API key with a malformed id now gives a clear error instead of a server fault",
       "summary": "Deleting an API key through the developer API used to hand whatever id it was given straight to the database, so an id that could never match a key came back as a generic \"internal error, quote this reference to support\" 500. It now answers a plain 400 saying the id must be a key identifier, and the database is never touched for input that cannot match. Real revokes, the ownership check that stops one account revoking another account's key, and the already-revoked case all behave exactly as before.",
       "tags": [
