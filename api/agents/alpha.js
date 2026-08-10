@@ -213,7 +213,6 @@ async function gatherSignals(mint, network, { agentId, meta, owner }) {
 		owner ? getDailySpendLamports(agentId, network).catch(() => 0n) : Promise.resolve(0n),
 	]);
 
-	const solPrice = num(coin?.usd_market_cap) && num(coin?.market_cap) ? coin.usd_market_cap / coin.market_cap : null;
 	const createdSec = num(coin?.created_timestamp) ? Math.floor(coin.created_timestamp / 1000) : null;
 	const liquiditySol = curve ? round3(Number(BigInt(curve.realSolReserves)) / 1e9) : null;
 	const gradPct = num(grad?.progress) != null ? Math.round(num(grad.progress) * 100) : (curve?.complete ? 100 : null);
@@ -316,6 +315,7 @@ async function handleRead(req, res, id) {
 	try {
 		({ signals, context, hasData } = await gatherSignals(mint, network, { agentId: id, meta, owner }));
 	} catch (e) {
+		console.error('[agents/alpha] signal gather failed', mint, e?.message || e);
 		return error(res, 502, 'signal_error', 'could not read live signals for this launch — try again');
 	}
 

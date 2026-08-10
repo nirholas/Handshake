@@ -270,6 +270,9 @@ async function handleClose(req, res, id) {
 	try {
 		result = await closeStrategyPositionNow({ positionId: body.position_id, ownerId: owned.auth.userId, agentId: id });
 	} catch (err) {
+		// A force-close moves real funds; swallowing the cause left nothing to
+		// diagnose from when one failed.
+		console.error('[agents/strategies] close failed', body.position_id, err?.message || err);
 		return error(res, 500, 'internal_error', 'unexpected error closing the position');
 	}
 	if (!result.ok) return error(res, result.status || 500, result.code || 'error', result.message || 'could not close the position');

@@ -526,6 +526,9 @@ describe('PUT /api/agents/:id/trade/limits: input validation', () => {
 		expect(set.json.data.limits.daily_budget_sol).toBe(2);
 		expect(set.json.data.limits.max_concurrent).toBe(3);
 		expect(set.json.data.limits.kill_switch).toBe(true);
+		// Proves savedLimits() is not vacuously null in the rejection cases above:
+		// an accepted patch really does reach the meta write.
+		expect(savedLimits().per_trade_sol).toBe(0.5);
 
 		const cleared = await putLimits({ per_trade_sol: null });
 		expect(cleared.statusCode).toBe(200);

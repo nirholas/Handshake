@@ -21,7 +21,7 @@
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
-import { cors, json, method, error, readJson, rateLimited, serverError } from '../_lib/http.js';
+import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { ensureAgentWallet, recoverSolanaAgentKeypair } from '../_lib/agent-wallet.js';
@@ -449,6 +449,7 @@ export async function executeAgentTrade({ id, userId, meta, input, req = null, s
 	try {
 		address = (await ensureAgentWallet(id, userId, { reason: custodyReason })).address;
 	} catch (e) {
+		console.error('[agents/agent-trade] wallet prepare failed', e?.message);
 		return fail(500, 'wallet_unavailable', 'could not prepare the agent wallet — try again');
 	}
 	const ownerPk = new PublicKey(address);
@@ -474,6 +475,7 @@ export async function executeAgentTrade({ id, userId, meta, input, req = null, s
 	try {
 		ctx = await getPumpTradeClient({ network });
 	} catch (e) {
+		console.error('[agents/agent-trade] trade RPC unavailable', e?.message);
 		return fail(502, 'rpc_error', 'could not connect to the trade RPC — try again');
 	}
 	const conn = ctx.connection;
@@ -502,6 +504,7 @@ export async function executeAgentTrade({ id, userId, meta, input, req = null, s
 	try {
 		blocked = await runGuards({ id, side, tradeLimits, prep, walletLamports, network, meta, mintPk: input.mintPk, ownerPk, userId });
 	} catch (e) {
+		console.error('[agents/agent-trade] guard check failed', e?.message);
 		return fail(502, 'guard_check_failed', 'could not verify the trade guardrails — try again');
 	}
 	if (blocked) return fail(blocked.status, blocked.code, blocked.message, blocked.detail);
@@ -587,6 +590,7 @@ export async function executeAgentTrade({ id, userId, meta, input, req = null, s
 			meta: { mint: input.mint, network, venue: prep.venue, custody_event_id: claimId, ...(isStrategy ? { strategy_id: sourceMeta?.strategy_id ?? null, equip_id: sourceMeta?.equip_id ?? null } : {}) },
 		});
 	} catch (e) {
+		console.error('[agents/agent-trade] key recover failed', e?.message);
 		await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'key_recover_failed' } }).catch(() => {});
 		return fail(500, 'key_recover_failed', 'could not access the agent wallet key — no funds were moved');
 	}
