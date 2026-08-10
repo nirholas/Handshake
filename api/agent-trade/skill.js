@@ -4,7 +4,7 @@
 //   { x402:true, price:{sol,lamports}, currency:'SOL', recipient, network, memo }
 //
 // With ?sig=<base58-txSig>&topic=<topic>&buyer=<buyerAddr>
-//   → Verifies payment on-chain, runs IBM Granite (or Claude fallback),
+//   → Verifies payment on-chain, runs IBM Granite (or the platform LLM chain),
 //     returns { content, model, provider, topic, payment:{sig,lamports,blockTime} }
 //
 // Independently callable by any agent, not coupled to the demo orchestrator.
@@ -266,8 +266,8 @@ export default wrap(async (req, res) => {
 	try {
 		analysis = await generateAnalysis(topic);
 	} catch (e) {
-		// The buyer paid but got nothing, so release the signature and let a retry
-		// within the freshness window isn't treated as a replay.
+		// The buyer paid but got nothing, so release the signature: a retry inside
+		// the freshness window must not be turned away as a replay.
 		await cacheDel(consumedKey).catch(() => {});
 		return error(res, 502, 'analysis_failed', e.message);
 	}
