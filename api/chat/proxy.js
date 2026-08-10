@@ -12,6 +12,29 @@ const UPGRADE_URL = `${env.APP_ORIGIN}/pricing`;
 // surfacing the upstream's raw "This model is unavailable for free" text.
 const MAX_MODEL_ATTEMPTS = 3;
 
+/**
+ * Seconds to wait after an upstream 429, when OpenRouter sent no Retry-After.
+ * It answers the free-tier quota cap with the reset time buried in the error
+ * body (`error.metadata.headers['X-RateLimit-Reset']`, epoch milliseconds)
+ * instead of a header, so without this a quota-exhausted response reached the
+ * browser carrying no backoff hint at all and clients could only guess or spin.
+ * Reading the body is safe here: nothing has been streamed to the client yet.
+ */
+async function retryAfterFromBody(upstream) {
+	let reset;
+	try {
+		const parsed = JSON.parse(await upstream.text());
+		reset = Number(parsed?.error?.metadata?.headers?.['X-RateLimit-Reset']);
+	} catch {
+		return null;
+	}
+	if (!Number.isFinite(reset) || reset <= 0) return null;
+	const seconds = Math.ceil((reset - Date.now()) / 1000);
+	// A reset already in the past means the window just rolled: tell the caller to
+	// retry now rather than emitting a negative (and so ignored) Retry-After.
+	return String(Math.max(1, seconds));
+}
+
 /** Upstream said the named model is gone / not free — not that the request was bad. */
 function isModelUnavailable(status, body) {
 	if (status !== 400 && status !== 404) return false;
@@ -141,7 +164,10 @@ export default wrap(async (req, res) => {
 	}
 
 	if (upstream.status === 429) {
-		const retryAfter = upstream.headers.get('retry-after') || upstream.headers.get('x-ratelimit-reset-requests');
+		const retryAfter =
+			upstream.headers.get('retry-after') ||
+			upstream.headers.get('x-ratelimit-reset-requests') ||
+			(await retryAfterFromBody(upstream));
 		if (retryAfter) res.setHeader('retry-after', String(retryAfter));
 		return json(res, 429, {
 			error: 'rate_limited',

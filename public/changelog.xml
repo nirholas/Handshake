@@ -135,14 +135,6 @@
 			<description>Three fixes on the copy-trading surface. Settling a performance fee now checks that the payment quote you present was actually issued for that fee on one of your own subscriptions before it credits anything, and it makes that check before the payment is verified on-chain, so a quote meant for something else can no longer be used to write off what you owe the trader you copy. Pausing or resuming a follow works again for browser clients that send their security token in the request body, which previously came back as an unrelated complaint about the trader's ID. And the Smart Money directory answers a nonsense sort value with its default ranking instead of an error page, as the docs always said it would.</description>
 		</item>
 		<item>
-			<title>Copy trading: performance fees can only be settled with their own quote</title>
-			<link>https://three.ws/docs/copy-trading</link>
-			<guid isPermaLink="false">2026-08-10:Copy trading: performance fees can only be settled with their own quote</guid>
-			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
-			<category>fix</category>
-			<description>Three fixes on the copy-trading surface. Settling a performance fee now checks that the payment quote you present was actually issued for that fee on one of your own subscriptions before it credits anything, and it makes that check before the payment is verified on-chain, so a quote meant for something else can no longer be used to write off what you owe the trader you copy. Pausing or resuming a follow works again for browser clients that send their security token in the request body, which previously came back as an unrelated complaint about the trader's ID. And the Smart Money directory answers a nonsense sort value with its default ranking instead of an error page, as the docs always said it would.</description>
-		</item>
-		<item>
 			<title>Creator Studio skill analytics no longer errors out on a bad agent filter, and creator profile links stop pointing at a missing page</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-10:Creator Studio skill analytics no longer errors out on a bad agent filter, and creator profile links stop pointing at a missing page</guid>
@@ -373,6 +365,14 @@
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two live endpoints, the wallet portfolio overview and the airdrop eligibility checker, shipped without a catalog descriptor, so the one-URL bundle index at /api/crypto and the OpenAPI document generated from it skipped both entirely. An agent discovering the API the way we tell it to could not see either endpoint, even though both answered fine when called directly. Both are described now, in the index, in the OpenAPI doc, and in the docs page, and a test holds the catalog to every endpoint that ships so the next one cannot go missing. Two smaller honesty fixes went with it: the bonding and launches endpoints stopped telling browsers they accept POST when they only answer GET, and the launches error for a bad limit now says what actually happens to an oversized one (it is capped at 100, not rejected).</description>
+		</item>
+		<item>
+			<title>The premium vanity shelf restocks when its rarity spread collapses, not just when it runs low</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:The premium vanity shelf restocks when its rarity spread collapses, not just when it runs low</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Instant-delivery vanity addresses are sold per rarity tier, but the restock job only ever watched the raw item count. A shelf holding hundreds of addresses that had all drifted into one or two tiers read as perfectly healthy, so the grinder never ran and a buyer looking for any other tier found nothing to buy. Restock now fires when either signal drops: too few addresses in stock, or too few distinct tiers left, and the ops alert names which of the two triggered it. Two smaller operational fixes ride along: the treasury consolidation job gained a preview mode, so an operator can see exactly which wallets it would sweep and how much without any funds moving, and the $THREE micro-buy driver now answers an unsupported HTTP method the same way every other endpoint on the platform does.</description>
 		</item>
 		<item>
 			<title>The public asset catalog now answers a bad filter honestly</title>

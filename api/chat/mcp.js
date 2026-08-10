@@ -16,7 +16,7 @@
 
 import { env } from '../_lib/env.js';
 import { authenticateBearer, extractBearer } from '../_lib/auth.js';
-import { cors, readJson, wrap } from '../_lib/http.js';
+import { cors, method, readJson, wrap } from '../_lib/http.js';
 import { recordEvent, logger } from '../_lib/usage.js';
 
 const PROTOCOL_VERSION = '2025-06-18';
@@ -117,14 +117,34 @@ const VIEWER_TOOLS = [
 const TOOL_NAMES = new Set(VIEWER_TOOLS.map((t) => t.name));
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
-	if (req.method !== 'POST') return send401(res, 'method not supported');
+	// `origins: '*'` matches every other MCP server in this repo (api/mcp.js,
+	// mcp-3d, mcp-studio, mcp-agent, mcp-bazaar, ibm-mcp, pump-fun-mcp). This one
+	// exists so browser-hosted MCP clients (the LobeHub plugin iframe) can drive
+	// the viewer, and the default APP_ORIGIN allowlist blocked exactly those.
+	// Safe because the endpoint is Bearer-only: no credentials flag is set, so a
+	// cross-origin page still cannot ride a signed-in user's session, it can only
+	// spend a token it already holds.
+	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*' })) return;
+	// A wrong method is a 405 with an Allow header, NOT a 401. Answering GET with
+	// "unauthorized" sent MCP clients into a re-auth loop over what was only ever
+	// a method mismatch, and hid the real contract from anyone probing the URL.
+	if (!method(req, res, ['POST'])) return;
 
 	const auth = await authenticateBearer(extractBearer(req), { audience: env.MCP_RESOURCE });
 	if (!auth) return send401(res, 'missing or invalid access token');
 
 	const body = await readJson(req);
 	const result = await dispatch(body, auth);
+	res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
+	// JSON-RPC notifications (a message with no `id`) must never be answered.
+	// dispatch() returns null for those; every real MCP client sends
+	// `notifications/initialized` straight after initialize, and replying to it
+	// with a -32601 error made the handshake look broken to the client.
+	if (result === null) {
+		res.statusCode = 202;
+		res.end();
+		return;
+	}
 	res.statusCode = 200;
 	res.setHeader('content-type', 'application/json');
 	res.end(JSON.stringify(result));
@@ -133,6 +153,18 @@ export default wrap(async (req, res) => {
 async function dispatch(msg, auth) {
 	if (!msg || msg.jsonrpc !== '2.0' || typeof msg.method !== 'string') {
 		return rpcErr(msg?.id ?? null, -32600, 'invalid request');
+	}
+
+	// A message without an `id` is a notification: the caller expects no reply at
+	// all, not even an error one. Handled before the switch so an unknown
+	// notification stays silent instead of drawing a -32601 the client can only
+	// read as a failed handshake.
+	const isNotification = msg.id === undefined || msg.id === null;
+	if (isNotification) {
+		if (msg.method === 'notifications/initialized') {
+			log.info('client-initialized', { actor: auth.userId ?? auth.payer ?? 'anonymous' });
+		}
+		return null;
 	}
 
 	switch (msg.method) {

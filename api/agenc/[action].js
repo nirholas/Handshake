@@ -149,7 +149,7 @@ function rpcStatus(err) {
 // Thrown once every endpoint has refused the same read. Distinct from a normal
 // failure so the wrapper can answer 503 + Retry-After (upstream weather the
 // caller should retry) instead of a 500 (a defect the caller cannot act on).
-class RpcChainExhausted extends Error {
+export class RpcChainExhausted extends Error {
 	constructor(cluster, tried, cause) {
 		super(`all ${tried} Solana RPC endpoints refused this ${cluster} read: ${cause?.message || 'unknown error'}`);
 		this.name = 'RpcChainExhausted';
@@ -159,25 +159,25 @@ class RpcChainExhausted extends Error {
 	}
 }
 
-// Run `fn` against an AgenC client, rotating to the next endpoint whenever one
+// Run `run` against an AgenC client, rotating to the next endpoint whenever one
 // fails in a way the next provider may not share (401/403/404/408/410/429/5xx,
 // timeouts, network blips). A real request error, e.g. a malformed account the
 // chain decodes the same way everywhere, is re-thrown on the first endpoint
 // rather than replayed nine times.
-async function withAgenC(cluster, fn) {
-	const { createAgenCClient } = await import('@three-ws/solana-agent');
-	const endpoints = await agenCEndpoints(cluster);
+export async function rotateRpc({ cluster, endpoints, createClient, run }) {
 	let last = null;
 	for (const rpcUrl of endpoints) {
 		let client;
 		try {
-			client = createAgenCClient({ cluster, rpcUrl });
+			client = createClient(rpcUrl);
 		} catch (err) {
+			// A URL this build of web3.js refuses to construct a Connection from is a
+			// dead lane, not a dead chain: skip it and let the next endpoint answer.
 			last = err;
 			continue;
 		}
 		try {
-			return await fn(client);
+			return await run(client);
 		} catch (err) {
 			const status = rpcStatus(err);
 			if (!shouldRotate(status) && !isTransientRpcError(err)) throw err;
@@ -187,6 +187,17 @@ async function withAgenC(cluster, fn) {
 		}
 	}
 	throw new RpcChainExhausted(cluster, endpoints.length, last);
+}
+
+async function withAgenC(cluster, run) {
+	const { createAgenCClient } = await import('@three-ws/solana-agent');
+	const endpoints = await agenCEndpoints(cluster);
+	return rotateRpc({
+		cluster,
+		endpoints,
+		createClient: (rpcUrl) => createAgenCClient({ cluster, rpcUrl }),
+		run,
+	});
 }
 
 async function handleListTasks(req, res) {
@@ -590,7 +601,9 @@ export default wrap(async (req, res) => {
 		// broken, do not retry" for a condition that clears itself in seconds.
 		if (err instanceof RpcChainExhausted) {
 			console.error('[agenc] rpc chain exhausted', err.message);
-			res.setHeader('retry-after', '30');
+			// A handler that already wrote a response before throwing would make this
+			// setHeader throw ERR_HTTP_HEADERS_SENT, turning a clean 503 into a crash.
+			if (!res.headersSent) res.setHeader('retry-after', '30');
 			return error(res, 503, 'rpc_unavailable', `Solana ${err.cluster} RPC is unavailable right now; retry in ~30s`, {
 				cluster: err.cluster,
 				endpointsTried: err.tried,

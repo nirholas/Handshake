@@ -11,14 +11,20 @@ export default wrap(async (req, res) => {
 
 	// Ranked best-first, so a client can take data[0] as the default without
 	// knowing anything about which ids exist today.
-	const models = await listFreeModels();
-	// The server-side agent loop rides the same picker as a virtual model. It is
-	// appended, never first, so it can never become the silent default: it runs
-	// multiple LLM rounds per message and answers slower than a plain model.
-	models.push({
-		id: AGENT_MODEL_ID,
-		name: 'three.ws Agent · server tools',
-	});
+	//
+	// COPY, never mutate: listFreeModels() hands back its own module-level cache
+	// array by reference, and that same array is what isLiveFreeModel() and
+	// pickDefaultFreeModel() read. Pushing onto it appended one more agent row per
+	// request (the picker grew a duplicate on every call until the 5-minute TTL
+	// refetched) and seeded a non-`:free` id into a cache whose whole contract is
+	// "free models only".
+	const models = [
+		...(await listFreeModels()),
+		// The server-side agent loop rides the same picker as a virtual model. It is
+		// appended, never first, so it can never become the silent default: it runs
+		// multiple LLM rounds per message and answers slower than a plain model.
+		{ id: AGENT_MODEL_ID, name: 'three.ws Agent · server tools' },
+	];
 	res.setHeader('cache-control', 'public, max-age=60');
 	return json(res, 200, { data: models });
 });

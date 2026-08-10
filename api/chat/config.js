@@ -89,18 +89,34 @@ export default wrap(async (req, res) => {
 	const defaultModel =
 		body.default_model ?? (await pickDefaultFreeModel()) ?? configRow?.default_model ?? '';
 
+	// UPSERT, not UPDATE: a plain UPDATE matches zero rows when the seeded
+	// 'global' row is absent (a fresh branch database, or a row someone deleted),
+	// and the handler then answered 200 with an empty body: an admin's save
+	// silently did nothing while reporting success. ON CONFLICT keeps the write
+	// authoritative either way, and leaves admin_key untouched so the credential
+	// that authorized this call survives its own save.
 	const [row] = await sql`
-		UPDATE chat_brand_config
-		SET
-			name          = ${body.name},
-			logo_url      = ${body.logo_url ?? null},
-			accent_color  = ${body.accent_color},
-			tagline       = ${body.tagline ?? DEFAULTS.tagline},
-			default_model = ${defaultModel},
-			agent_id      = ${body.agent_id ?? null},
-			system_prompt = ${body.system_prompt ?? DEFAULT_SYSTEM_PROMPT},
+		INSERT INTO chat_brand_config (key, name, logo_url, accent_color, tagline, default_model, agent_id, system_prompt, updated_at)
+		VALUES (
+			'global',
+			${body.name},
+			${body.logo_url ?? null},
+			${body.accent_color},
+			${body.tagline ?? DEFAULTS.tagline},
+			${defaultModel},
+			${body.agent_id ?? null},
+			${body.system_prompt ?? DEFAULT_SYSTEM_PROMPT},
+			now()
+		)
+		ON CONFLICT (key) DO UPDATE SET
+			name          = EXCLUDED.name,
+			logo_url      = EXCLUDED.logo_url,
+			accent_color  = EXCLUDED.accent_color,
+			tagline       = EXCLUDED.tagline,
+			default_model = EXCLUDED.default_model,
+			agent_id      = EXCLUDED.agent_id,
+			system_prompt = EXCLUDED.system_prompt,
 			updated_at    = now()
-		WHERE key = 'global'
 		RETURNING name, logo_url, accent_color, tagline, default_model, agent_id, system_prompt, updated_at
 	`;
 

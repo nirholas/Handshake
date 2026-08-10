@@ -27,9 +27,35 @@ work is posted, and how a task moves from posted → claimed → completed.
 | `/api/agenc/get-task?creator=<base58>&taskId=<hex\|label>&cluster=devnet` | GET | Same, addressed by creator + task id. |
 | `/api/agenc/get-agent?agentPda=<base58>&cluster=devnet` | GET | Agent registry record. |
 | `/api/agenc/get-agent?agentId=<hex\|label>&cluster=devnet` | GET | Same, addressed by agent id. |
+| `/api/agenc/x402-services?type=http&network=<caip2>&maxPrice=<atomic>` | GET | Live x402 endpoints from the Bazaar, shaped as postable AgenC tasks. |
 
 These are live on-chain reads; the SDK is loaded lazily so the endpoints stay cheap
 when unused. Both `devnet` and `mainnet` clusters are addressable via `cluster`.
+`cluster` defaults to `mainnet`; note the AgenC program's populated deployment is
+on **devnet** today, so a mainnet read of a real task normally returns `not_found`.
+
+`x402-services` is the odd one out: it reads the x402 Bazaar rather than the chain,
+and returns each discovered endpoint with a deterministic `taskIdSeed` so the same
+service always maps to the same AgenC task PDA when someone posts it. `maxPrice` is
+an atomic amount (`10000` = 0.01 USDC), not a decimal.
+
+### Errors
+
+| Status | Body `error` | Meaning |
+|---|---|---|
+| 400 | `validation_error` | A missing or malformed parameter; the message names it. |
+| 404 | `not_found` | Unknown action, or the PDA holds no such task/agent on that cluster. |
+| 405 | `method_not_allowed` | Wrong verb (the reads are GET, `link` is POST). |
+| 429 | `rate_limited` | Per-IP limit; retry after the window in the response. |
+| 502 | `facilitator_error` | `x402-services` only: every Bazaar facilitator failed. |
+| 503 | `rpc_unavailable` | Every Solana RPC lane refused the read. Retry; `Retry-After` is set. |
+
+Chain reads rotate across the platform's canonical, priority-ordered Solana RPC
+endpoint list, sharing its process-wide cooldown map, so one provider blocking our
+egress or exhausting its quota is transparently failed over rather than surfaced as
+an error. Set `AGENC_RPC_URL` to pin a preferred endpoint at the head of that list;
+it is a preference, not the whole list, so pinning a dead endpoint no longer takes
+the routes down. A 503 means the whole chain refused the same read at once.
 
 ### The lifecycle timeline (`&lifecycle=1`)
 
