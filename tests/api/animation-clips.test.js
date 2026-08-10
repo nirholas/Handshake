@@ -92,6 +92,13 @@ describe('cursor round-trip', () => {
 	it('returns null for a garbage cursor', () => {
 		expect(decodeCursor('@@@not-base64@@@')).toBeNull();
 	});
+	it('returns null for a well-formed cursor carrying an unparsable date', () => {
+		// Regression: an Invalid Date reached Postgres as "0NaN-NaN-NaN..." and
+		// turned a mangled query string into a 500 instead of an ignored cursor.
+		const cur = Buffer.from(JSON.stringify({ c: 'garbage' })).toString('base64url');
+		expect(decodeCursor(cur)).toBeNull();
+		expect(decodeCursor(Buffer.from(JSON.stringify({})).toString('base64url'))).toBeNull();
+	});
 });
 
 describe('listItem projection', () => {
