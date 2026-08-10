@@ -13,7 +13,7 @@
 // stay open so any surface can render the segmentation UI.
 
 import { sql } from '../../_lib/db.js';
-import { cors, json, error, method, wrap } from '../../_lib/http.js';
+import { cors, json, error, method, wrap, rateLimited } from '../../_lib/http.js';
 import { isValidSolanaAddress } from '../../_lib/validate.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
@@ -89,9 +89,6 @@ function ownsAgentToken(user, agentToken) {
 // Tenure cohorts (diamond-hands / new-buyers / exited) report null / 422 —
 // they need holder history this token has not accrued yet.
 async function serveLiveCohorts(req, res, { mint, agentToken }) {
-	const rl = await limits.cohortsIp(clientIp(req));
-	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
-
 	const url = new URL(req.url, 'http://localhost');
 	const cohortId = url.searchParams.get('cohort');
 	const params = {
@@ -104,6 +101,30 @@ async function serveLiveCohorts(req, res, { mint, agentToken }) {
 	const token = agentToken.token || {};
 	const network = token.cluster === 'devnet' ? 'devnet' : 'mainnet';
 	const coinInfo = { mint, symbol: token.symbol || null, name: token.name || null };
+
+	// Everything the export path can reject on its own is decided BEFORE the
+	// holder set is fetched. That fetch costs a Helius call and can fail with a
+	// 503 of its own, which used to swallow the real answer: an anonymous caller
+	// asking for a bogus cohort got "holder data is temporarily unavailable"
+	// instead of 404 or 401, and every such request still spent an upstream call.
+	if (cohortId) {
+		if (!isCohortId(cohortId)) {
+			return error(res, 404, 'not_found', `unknown cohort: ${cohortId}`);
+		}
+		const user = await getSessionUser(req, res).catch(() => null);
+		if (!user) return error(res, 401, 'unauthenticated', 'sign in to export cohort members');
+		if (!ownsAgentToken(user, agentToken)) {
+			return error(res, 403, 'forbidden', 'only the token creator can export holder cohorts');
+		}
+		if (!isLiveCohort(cohortId)) {
+			return error(
+				res,
+				422,
+				'snapshot_required',
+				`the "${cohortId}" cohort needs holder history, which this token has not accrued yet`,
+			);
+		}
+	}
 
 	let set;
 	try {
@@ -131,24 +152,7 @@ async function serveLiveCohorts(req, res, { mint, agentToken }) {
 		});
 	}
 
-	// ── Member export: token creator only ────────────────────────────────────
-	if (!isCohortId(cohortId)) {
-		return error(res, 404, 'not_found', `unknown cohort: ${cohortId}`);
-	}
-	const user = await getSessionUser(req, res).catch(() => null);
-	if (!user) return error(res, 401, 'unauthenticated', 'sign in to export cohort members');
-	if (!ownsAgentToken(user, agentToken)) {
-		return error(res, 403, 'forbidden', 'only the token creator can export holder cohorts');
-	}
-	if (!isLiveCohort(cohortId)) {
-		return error(
-			res,
-			422,
-			'snapshot_required',
-			`the "${cohortId}" cohort needs holder history, which this token has not accrued yet`,
-		);
-	}
-
+	// ── Member export: the creator gate above already passed ─────────────
 	const limit = numParam(url, 'limit') ?? 200;
 	const sampleRaw = numParam(url, 'sample');
 	const sample = sampleRaw != null && sampleRaw > 0 && sampleRaw < 1 ? sampleRaw : undefined;
@@ -177,8 +181,14 @@ async function serveLiveCohorts(req, res, { mint, agentToken }) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res)) return;
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
+
+	// One limiter for every shape. It used to guard only the live (Helius) path,
+	// so the snapshot overview and the snapshot member export, both of which run
+	// unbounded DB work, were reachable at any rate.
+	const rl = await limits.cohortsIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 
 	const mint = mintFromReq(req);
 	if (!mint || !isValidSolanaAddress(mint)) {
@@ -208,6 +218,7 @@ export default wrap(async (req, res) => {
 	// ── Overview: definitions + counts (public) ──────────────────────────────
 	if (!cohortId) {
 		const counts = await cohortCounts({ coinId: coin.id, params });
+		res.setHeader('Cache-Control', OVERVIEW_CACHE);
 		return json(res, 200, {
 			coin: { mint: coin.mint, symbol: coin.symbol, name: coin.name },
 			lastSnapshotAt: coin.last_snapshot_at || null,

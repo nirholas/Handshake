@@ -53,8 +53,12 @@ async function fetchFng(limit) {
 	if (!history.length) throw new Error('empty fng payload');
 
 	const latest = history[history.length - 1];
-	// A 7-day-ago comparison point powers the "vs last week" delta.
-	const weekAgo = history.length > 7 ? history[Math.max(0, history.length - 8)] : history[0];
+	// A 7-day-ago comparison point powers the "vs last week" delta. Only a real
+	// week back qualifies: a short window used to fall back to history[0], so
+	// `?limit=1` reported the current reading as its own previous week and the
+	// page rendered "Unchanged from last week" from a single data point. With no
+	// week-old point the field is null and the client omits the delta.
+	const weekAgo = history.length > 7 ? history[history.length - 8] : null;
 	const value = {
 		current: { value: latest.value, label: latest.label, ts: latest.ts },
 		previous_week: weekAgo

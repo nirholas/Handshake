@@ -31,7 +31,13 @@ All endpoints are `GET`, CORS-open, and rate-limited per client IP via [`../_lib
 | `GET /api/coin/gas` | /gas Ethereum fee tiers with USD estimates | On-chain `eth_feeHistory` via public RPC, no gas API |
 | `GET /api/coin/rates` | /converter fiat rates | CoinGecko `/exchange_rates` |
 | `GET /api/coin/liquidations` | /coins liquidations pulse strip | [`services/liquidation-collector`](../../services/liquidation-collector/README.md) |
-| `GET /api/coin/:mint/cohorts[?cohort&…]` | Holder cohorts for one agent token (creator-gated export) | Platform DB, see [`[mint]/cohorts.js`](./%5Bmint%5D/cohorts.js) |
+| `GET /api/coin/:mint/cohorts[?cohort&…]` | Holder cohorts for one launched coin or agent token (creator-gated export) | Platform DB snapshot, or a live Helius holder set for agent tokens, see [`[mint]/cohorts.js`](./%5Bmint%5D/cohorts.js) |
+
+### Two contracts worth knowing before you call them
+
+**`/api/coin/fear-greed`** returns `current`, `previous_week`, and the full `history` (oldest first). `previous_week` is the reading exactly seven days before `current`, so it is `null` whenever the requested `limit` is too small to contain one (`limit=7` or less). It is never the oldest point standing in for a week: a client that renders a delta must handle `null` by omitting it, as [`src/fear-greed.js`](../../src/fear-greed.js) does.
+
+**`/api/coin/:mint/cohorts`** has two shapes on one route. Without `?cohort`, it is public: cohort definitions with live counts, cacheable at the CDN. With `?cohort=<id>`, it is a member export restricted to the coin's creator (or an admin), and it answers in this order, before any holder data is fetched: `404` for an unknown cohort id, `401` when signed out, `403` when the caller is not the creator, and `422` for a tenure cohort on an agent token that has not accrued holder history yet. Only after all four pass does it read the holder set, which can itself answer `503 holders_unavailable` when Helius is unreachable. Every shape shares one per-IP limiter (`limits.cohortsIp`).
 
 Frontend consumers live in `src/`: `coins-index.js`, `coin-page.js`, `markets-page.js`, `markets-trending.js`, `categories.js`, `category-page.js`, `exchanges.js`, `exchange-page.js`, `derivatives.js`, `fear-greed.js`, `gas.js`, `converter.js`, plus the Markets tools `heatmap.js`, `screener.js`, and `compare.js`. The public pages are declared in [`data/pages.json`](../../data/pages.json) (/coins, /heatmap, /screener, /compare, /categories, /exchanges, /derivatives, /fear-greed, /gas, /converter, /markets/trending).
 

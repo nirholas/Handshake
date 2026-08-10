@@ -35,11 +35,14 @@ const TTL_MS = 15_000;
 const hexToNum = (h) => (typeof h === 'string' ? parseInt(h, 16) : Number(h));
 const weiToGwei = (wei) => wei / 1e9;
 
-async function rpc(url, method, params) {
+// `rpcMethod`, not `method`: the module already imports a `method()` request
+// guard from ../_lib/http.js, and a parameter of that name shadows it inside
+// this function.
+async function rpc(url, rpcMethod, params) {
 	const resp = await fetch(url, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json', accept: 'application/json' },
-		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: rpcMethod, params }),
 		signal: AbortSignal.timeout(6000),
 	});
 	if (!resp.ok) throw new Error(`rpc ${resp.status}`);
