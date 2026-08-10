@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-08-10T17:27:55.180Z",
+	"generated_at": "2026-08-10T17:35:13.219Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "A coin's exchange listings answer a bad page number instead of quietly ignoring it",
+			"summary": "The exchange-listings table on a coin page reads its rows one page at a time. Asking for page 11 correctly said the page was out of range, but asking for page 0, a decimal, or a word silently served page 1 instead, so anything scripted against the endpoint got a page it never asked for and had no way to tell. It now applies one rule: leave the page off and you get the first one, otherwise it must be a whole number from 1 to 10 or you get a plain validation error saying so. The related-news rail on the same page also stops turning a publisher-feed outage into an anonymous internal error, and a coin's on-chain pool lookup no longer converts an upstream timeout into one. The coin market data reference now documents which paging limits are clamped and which are rejected.",
+			"link": "/coins",
+			"tags": [
+				"fix",
+				"docs"
+			]
+		},
 		{
 			"date": "2026-08-10",
 			"type": "update",
@@ -49,11 +60,33 @@
 		{
 			"date": "2026-08-10",
 			"type": "update",
+			"title": "Coin Clash momentum now tracks a real price move, and the arena stops re-pricing every faction on every poll",
+			"summary": "A faction's momentum bonus was documented as blending social activity with its coin's price move, but the market half never actually fired: the price signal was read and then dropped, so every army fought on social signals alone. Momentum now folds in a genuine move, measured against a baseline the platform samples and rolls forward once a day. The same change fixes what that cost: the arena used to price every faction from scratch on each 5-second poll, which meant hundreds of upstream price calls a minute for a number that barely moves. A faction is now priced at most once a minute for everyone, and a tap flush reads its own army's score instead of the whole round's table.",
+			"link": "/clash",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
 			"title": "Older model names still work when you chat through the API",
 			"summary": "The brain chat API keeps a small table that points retired model names at the model that replaced them, so a saved setting or an older script does not break the day a vendor deprecates a name. That table was never consulted: a request naming one of those older models was rejected as unknown before the table was ever read, including the exact name our own brain MCP tool tells clients to use. Those names now resolve to their current successor and answer normally, while a name that is genuinely not a model is still rejected right away. A malformed request is also reported as your bad input again rather than as a missing API key, so the error points at the thing you can actually fix.",
 			"link": "/brain",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "Posting a bounty on /go works again, and every bounty action is protected against cross-site requests",
+			"summary": "Posting a bounty from the bounty board had stopped working: the page never sent the cross-site request token the server demands, so the Post Bounty button always failed. The board now sends that token on every action, and posting, submitting proof, liking a submission, running the AI judge, and confirming a winner all go through it, so another site can no longer make your browser close your bounty or accept a submission on your behalf. Four requests that used to come back as an anonymous internal error now answer plainly: resolving a bounty while signed out says sign in, a bounty link with a malformed id says not found, a malformed submission id says so, and a submission list asked for a nonsense page size returns the first page instead of failing. Confirming a winner now writes the winner, the rejected entries, and the closure together, so a failure part-way through can no longer leave a bounty with every entry rejected and no winner. The AI judge no longer echoes a raw error from its model provider into the page, and the account chip on the board shows your name instead of the word \"account\".",
+			"link": "/go",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -128,6 +161,17 @@
 			"link": "/agent-economy",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-10",
+			"type": "update",
+			"title": "The AGI page can no longer show you the wrong mind",
+			"summary": "Asking /agi to inspect a specific agent with a malformed ID used to quietly answer with a different agent entirely, so the decisions, track record, and mood on screen belonged to somebody else with nothing saying so. A bad ID is now a clear error. The flagship pointer is also checked before anything is published: if it names an agent that was made private or deleted, the page shows its designed awakening state instead of exposing a private ledger or inventing an identity for an agent that no longer exists.",
+			"link": "/agi",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{

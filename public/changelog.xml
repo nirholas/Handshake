@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>A coin's exchange listings answer a bad page number instead of quietly ignoring it</title>
+			<link>https://three.ws/coins</link>
+			<guid isPermaLink="false">2026-08-10:A coin's exchange listings answer a bad page number instead of quietly ignoring it</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The exchange-listings table on a coin page reads its rows one page at a time. Asking for page 11 correctly said the page was out of range, but asking for page 0, a decimal, or a word silently served page 1 instead, so anything scripted against the endpoint got a page it never asked for and had no way to tell. It now applies one rule: leave the page off and you get the first one, otherwise it must be a whole number from 1 to 10 or you get a plain validation error saying so. The related-news rail on the same page also stops turning a publisher-feed outage into an anonymous internal error, and a coin's on-chain pool lookup no longer converts an upstream timeout into one. The coin market data reference now documents which paging limits are clamped and which are rejected.</description>
+		</item>
+		<item>
 			<title>A cosmetic earnings outage now says so instead of showing you zero</title>
 			<link>https://three.ws/fits</link>
 			<guid isPermaLink="false">2026-08-10:A cosmetic earnings outage now says so instead of showing you zero</guid>
@@ -39,12 +47,28 @@
 			<description>Four paths through the billing API turned a bad request into an anonymous internal error. Opening a receipt, a withdrawal, or a saved payout wallet whose id in the URL was not a real id (a truncated copy-paste, a stale bookmark, a hand-edited link) returned a 500 with a support reference instead of simply saying the id was malformed. Paging your withdrawal history with a non-numeric page size did the same. All four now answer with a plain validation error naming the field, and the withdrawal list falls back to its normal page size instead of failing. Nothing about who can read what changed: every one of these endpoints still requires your session and still only ever returns your own billing records.</description>
 		</item>
 		<item>
+			<title>Coin Clash momentum now tracks a real price move, and the arena stops re-pricing every faction on every poll</title>
+			<link>https://three.ws/clash</link>
+			<guid isPermaLink="false">2026-08-10:Coin Clash momentum now tracks a real price move, and the arena stops re-pricing every faction on every poll</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A faction's momentum bonus was documented as blending social activity with its coin's price move, but the market half never actually fired: the price signal was read and then dropped, so every army fought on social signals alone. Momentum now folds in a genuine move, measured against a baseline the platform samples and rolls forward once a day. The same change fixes what that cost: the arena used to price every faction from scratch on each 5-second poll, which meant hundreds of upstream price calls a minute for a number that barely moves. A faction is now priced at most once a minute for everyone, and a tap flush reads its own army's score instead of the whole round's table.</description>
+		</item>
+		<item>
 			<title>Older model names still work when you chat through the API</title>
 			<link>https://three.ws/brain</link>
 			<guid isPermaLink="false">2026-08-10:Older model names still work when you chat through the API</guid>
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The brain chat API keeps a small table that points retired model names at the model that replaced them, so a saved setting or an older script does not break the day a vendor deprecates a name. That table was never consulted: a request naming one of those older models was rejected as unknown before the table was ever read, including the exact name our own brain MCP tool tells clients to use. Those names now resolve to their current successor and answer normally, while a name that is genuinely not a model is still rejected right away. A malformed request is also reported as your bad input again rather than as a missing API key, so the error points at the thing you can actually fix.</description>
+		</item>
+		<item>
+			<title>Posting a bounty on /go works again, and every bounty action is protected against cross-site requests</title>
+			<link>https://three.ws/go</link>
+			<guid isPermaLink="false">2026-08-10:Posting a bounty on /go works again, and every bounty action is protected against cross-site requests</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Posting a bounty from the bounty board had stopped working: the page never sent the cross-site request token the server demands, so the Post Bounty button always failed. The board now sends that token on every action, and posting, submitting proof, liking a submission, running the AI judge, and confirming a winner all go through it, so another site can no longer make your browser close your bounty or accept a submission on your behalf. Four requests that used to come back as an anonymous internal error now answer plainly: resolving a bounty while signed out says sign in, a bounty link with a malformed id says not found, a malformed submission id says so, and a submission list asked for a nonsense page size returns the first page instead of failing. Confirming a winner now writes the winner, the rejected entries, and the closure together, so a failure part-way through can no longer leave a bounty with every entry rejected and no winner. The AI judge no longer echoes a raw error from its model provider into the page, and the account chip on the board shows your name instead of the word &quot;account&quot;.</description>
 		</item>
 		<item>
 			<title>Pricing rules are private to their seller, and clearing a scheduled window now sticks</title>
@@ -101,6 +125,14 @@
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>On the live agent economy page, Nova hires Oracle for a paid data service and Oracle answers with a real model response. That answer had gone silent: the endpoint fetched it over an internal HTTP call to an address that does not exist in production, so both agents stayed mute while the page still reported the trade as complete. The delivery now runs directly against the platform model chain, and it runs before the payment: if no model can produce the service, the request stops with a clear &quot;try again in a moment&quot; and not one lamport leaves Nova's wallet. A request naming a service that does not exist is now rejected outright instead of slipping through as an unnamed, unpriced one, and the daily on-chain spending ceiling is only spent when a payment actually fires, so an empty wallet can no longer exhaust the day's budget for everyone.</description>
+		</item>
+		<item>
+			<title>The AGI page can no longer show you the wrong mind</title>
+			<link>https://three.ws/agi</link>
+			<guid isPermaLink="false">2026-08-10:The AGI page can no longer show you the wrong mind</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Asking /agi to inspect a specific agent with a malformed ID used to quietly answer with a different agent entirely, so the decisions, track record, and mood on screen belonged to somebody else with nothing saying so. A bad ID is now a clear error. The flagship pointer is also checked before anything is published: if it names an agent that was made private or deleted, the page shows its designed awakening state instead of exposing a private ledger or inventing an identity for an agent that no longer exists.</description>
 		</item>
 		<item>
 			<title>The aixbt market feeds now say when the key, not you, is the problem</title>

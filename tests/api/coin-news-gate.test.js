@@ -17,7 +17,12 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	clientIp: () => '203.0.113.1',
 }));
 
-const searchNews = vi.fn();
+// Re-created per test rather than cleared between them. Clearing a vitest mock
+// detaches the rejection tracking it attaches to a promise result, so the
+// derived promise behind a `mockRejectedValue` lane surfaces as an unhandled
+// rejection and fails the test even though the handler awaited and caught it.
+// A fresh mock keeps an empty call history with the tracking intact.
+let searchNews = vi.fn();
 vi.mock('../../api/_lib/news.js', () => ({ searchNews: (...a) => searchNews(...a) }));
 
 const news = (await import('../../api/coin/news.js')).default;
@@ -48,7 +53,7 @@ async function call(query) {
 }
 
 describe('/api/coin/news outage gate', () => {
-	beforeEach(() => searchNews.mockReset());
+	beforeEach(() => { searchNews = vi.fn(); });
 
 	it('serves articles held from a stale-but-usable cache, even with zero ok sources', async () => {
 		searchNews.mockResolvedValue({ articles: [article('One'), article('Two')], total: 2, sources_ok: 0, sources_total: 158 });

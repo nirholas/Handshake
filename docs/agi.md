@@ -19,11 +19,11 @@ The second bet is accountability. Every decision it makes is logged with its rea
 
 **Which agent is the AGI** is resolved in priority order, never hardcoded to a fake:
 
-1. `?agent=<uuid>` inspects any public agent through the AGI lens.
-2. `AGI_AGENT_ID` env var names the platform's flagship, when set.
+1. `?agent=<uuid>` inspects any public agent through the AGI lens. A value that is not a UUID is a `400`, never a silent fall-through to a different agent: asking about one mind and being answered about another is worse than an error.
+2. `AGI_AGENT_ID` env var names the platform's flagship, when set. It is still checked against the database: if it points at an agent that is private or no longer exists, the API returns the awakening envelope rather than publishing that agent.
 3. Otherwise, a deterministic real fallback: the public agent with the strongest on-chain pump.fun track record (most closed positions, tie-broken by most recent activity). A platform with zero trading agents collapses to a designed "awakening" state rather than inventing one.
 
-**The truth layers**, fetched in parallel, each degrading to null on its own failure rather than failing the page:
+**The truth layers**, fetched in parallel. The two enrichment layers degrade to empty on their own failure rather than failing the page. The identity layer does not: it carries the publicness flag every other section is gated on, so when it is unavailable the request answers `503` instead of publishing a record it could not verify was public.
 
 - `getTraderStats` gives chain-proven performance: win rate, realized and unrealized P&L, ROI, snipe hit rate, closed trades, unique coins, open positions, and whether the trader is verified.
 - The Reasoning Ledger (`getReputationRecords`, `computeReputation`, `getDecisionsWithOutcomes`) gives the explainable reputation score and the recent decisions with their reconciled outcomes.
@@ -68,7 +68,7 @@ An "awakening" envelope (no eligible trading agent yet) is still valid and fully
 - **Always real, never sampled.** The AGI is a designated real agent resolved from live data. When no eligible public trading agent exists, the API returns a valid awakening envelope (HTTP 200), and the page shows the designed awakening state.
 - **Autonomy is capped.** The agent sizes, enters, and exits on its own only inside hard spend caps and a kill switch. It cannot be talked past its safety policy, and the doctrine says so.
 - **Accountability is mechanical.** Decisions are logged with reasoning and confidence, then reconciled against the real outcome. Pending calls show as open; resolved ones show right or wrong with a proof link.
-- **Graceful degradation.** Each truth layer degrades to null on failure rather than failing the page. An explicit `?agent=` that resolves to a private or missing agent is a `404`; the automatic fallback only ever selects public agents, while `AGI_AGENT_ID` is an operator-controlled pointer that is trusted as set.
+- **Graceful degradation, but never at the cost of privacy.** The reputation and decision layers degrade to empty on failure rather than failing the page; the identity layer that carries the publicness flag answers `503` instead. An explicit `?agent=` that resolves to a private or missing agent is a `404`, and a malformed one is a `400`. The `AGI_AGENT_ID` and automatic paths only ever publish an agent that exists and is public: anything else renders the awakening state, so a stale operator pointer can never expose a private ledger or invent an identity.
 - **Reputation is regressed.** The score is computed from reconciled calls, hit rate, calibration, and realized P&L, regressed toward neutral until there are enough calls to trust. Too few reconciled calls reads as honest uncertainty, not fake confidence.
 - **Embodiment is enhancement, never a dependency.** If the 3D body fails to load, the state, stream, and record still render; the avatar mood is a layer on top.
 - **Not financial advice.** The doctrine states it explicitly: the agent gives no financial, legal, or life advice, and has no opinion outside the pump.fun order book.
