@@ -227,7 +227,10 @@ export async function listCrewDirectory(limit = 24) {
 // what a crew owner actually needs to know before clicking: whether the person
 // is already in a crew (and which), and whether this crew already invited them.
 // Both make the invite button render its true state instead of failing on click.
-export async function searchInvitees(meId, q, limit = 12) {
+// `crew` lets a caller that already resolved the searcher's crew (api/crews/
+// search.js does, to reject a crewless searcher) pass it in instead of paying for
+// the same lookup twice on a per-keystroke endpoint.
+export async function searchInvitees(meId, q, { crew = null, limit = 12 } = {}) {
 	const term = String(q || '').trim();
 	if (term.length < 2) return [];
 	const like = `%${term.replace(/[%_]/g, (m) => `\\${m}`)}%`;
@@ -246,7 +249,7 @@ export async function searchInvitees(meId, q, limit = 12) {
 
 	const ids = rows.map((r) => r.id);
 	const tags = await crewTagsFor(ids);
-	const myCrew = await getMyCrew(meId);
+	const myCrew = crew || (await getMyCrew(meId));
 	const invited = myCrew
 		? new Set(
 				(
