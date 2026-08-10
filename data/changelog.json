@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-08-10",
+			"title": "The agent wallet chip can tell your own wallets apart again, and four agent endpoints answer a typo with a plain error",
+			"summary": "Five fixes across the agent identity endpoints. The batched wallet read that hydrates every wallet chip in a list was looking up the signed-in visitor under the wrong field, so it never recognised you as the owner of your own agents and the \"Yours\" marker could never appear; it does now. Four endpoints also used to hand a caller a generic server error when an id in the URL was simply mistyped: checking whether an agent name is free, the agent economy's offers, hires and summary views, and revoking one wallet capability all now answer with a plain validation message naming the bad field. Finally, asking the wallet lookup for a chain that is not a number quietly ignored the filter and returned agents from every chain as if you had asked for that; it now says the chain is invalid instead of answering a different question.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-10",
 			"title": "Copy trading: performance fees can only be settled with their own quote",
 			"summary": "Three fixes on the copy-trading surface. Settling a performance fee now checks that the payment quote you present was actually issued for that fee on one of your own subscriptions before it credits anything, and it makes that check before the payment is verified on-chain, so a quote meant for something else can no longer be used to write off what you owe the trader you copy. Pausing or resuming a follow works again for browser clients that send their security token in the request body, which previously came back as an unrelated complaint about the trader's ID. And the Smart Money directory answers a nonsense sort value with its default ranking instead of an error page, as the docs always said it would.",
 			"tags": [

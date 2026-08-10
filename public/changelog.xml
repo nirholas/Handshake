@@ -23,6 +23,14 @@
 			<description>The creator earnings lookup used to answer a database outage with a clean set of zeroes, so a creator with real settled sales was told they had earned nothing and the dashboard rendered its &quot;no cosmetic sales yet&quot; empty state on top of it. An unreachable sales ledger is now reported as a temporary error the page can retry, while a creator who genuinely has no sales still reads back as real zeroes from the ledger. Two smaller fixes in the same family of endpoints: posting a split-config change under the wrong content type now returns an unsupported-media-type error naming the header instead of claiming the payload was malformed, and that endpoint no longer advertises credentialed cross-origin access it never used.</description>
 		</item>
 		<item>
+			<title>AgenC task and agent lookups stopped failing when one Solana RPC provider blocked us</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:AgenC task and agent lookups stopped failing when one Solana RPC provider blocked us</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Browsing the AgenC task marketplace through three.ws returned a blank internal error for every request: the lookups talked to a single Solana RPC provider, and that provider had started refusing our traffic outright. They now rotate across the same priority-ordered list of providers the rest of the platform uses, so one provider going dark or hitting its quota is invisible to you. If every provider is down at once you get an honest &quot;try again shortly&quot; instead of a dead end, and a failed provider is skipped for the next few minutes rather than slowing down every later request.</description>
+		</item>
+		<item>
 			<title>Agent pump.fun and directory endpoints answer bad input honestly</title>
 			<link>https://three.ws/agents</link>
 			<guid isPermaLink="false">2026-08-10:Agent pump.fun and directory endpoints answer bad input honestly</guid>
@@ -47,12 +55,28 @@
 			<description>Four paths through the billing API turned a bad request into an anonymous internal error. Opening a receipt, a withdrawal, or a saved payout wallet whose id in the URL was not a real id (a truncated copy-paste, a stale bookmark, a hand-edited link) returned a 500 with a support reference instead of simply saying the id was malformed. Paging your withdrawal history with a non-numeric page size did the same. All four now answer with a plain validation error naming the field, and the withdrawal list falls back to its normal page size instead of failing. Nothing about who can read what changed: every one of these endpoints still requires your session and still only ever returns your own billing records.</description>
 		</item>
 		<item>
-			<title>Coin Clash momentum now tracks a real price move, and the arena stops re-pricing every faction on every poll</title>
-			<link>https://three.ws/clash</link>
-			<guid isPermaLink="false">2026-08-10:Coin Clash momentum now tracks a real price move, and the arena stops re-pricing every faction on every poll</guid>
+			<title>Coin creators with several linked wallets can set their world entry gate again</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-10:Coin creators with several linked wallets can set their world entry gate again</guid>
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
-			<description>A faction's momentum bonus was documented as blending social activity with its coin's price move, but the market half never actually fired: the price signal was read and then dropped, so every army fought on social signals alone. Momentum now folds in a genuine move, measured against a baseline the platform samples and rolls forward once a day. The same change fixes what that cost: the arena used to price every faction from scratch on each 5-second poll, which meant hundreds of upstream price calls a minute for a number that barely moves. A faction is now priced at most once a minute for everyone, and a tap flush reads its own army's score instead of the whole round's table.</description>
+			<description>Two fixes to the Holders-world entry gate on /play. A coin creator sets the gate, and the server proves ownership by matching the coin creator address against the Solana wallets linked to that account. It only ever looked at the first five of them, so a creator who linked the creating wallet later was told they were not the creator and could not touch their own world; every linked wallet is now checked. Separately, a creator on an EVM-chain world got back &quot;could not resolve this coin creator, try again&quot;, an answer that could never succeed, because creator proof and the holder check both run on Solana. That case now says plainly that world gates are a Solana feature instead of inviting an endless retry.</description>
+		</item>
+		<item>
+			<title>Copy trading: performance fees can only be settled with their own quote</title>
+			<link>https://three.ws/docs/copy-trading</link>
+			<guid isPermaLink="false">2026-08-10:Copy trading: performance fees can only be settled with their own quote</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes on the copy-trading surface. Settling a performance fee now checks that the payment quote you present was actually issued for that fee on one of your own subscriptions before it credits anything, and it makes that check before the payment is verified on-chain, so a quote meant for something else can no longer be used to write off what you owe the trader you copy. Pausing or resuming a follow works again for browser clients that send their security token in the request body, which previously came back as an unrelated complaint about the trader's ID. And the Smart Money directory answers a nonsense sort value with its default ranking instead of an error page, as the docs always said it would.</description>
+		</item>
+		<item>
+			<title>NFT portfolio reads reach the right provider again, and the smart-money board is readable as plain JSON</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:NFT portfolio reads reach the right provider again, and the smart-money board is readable as plain JSON</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes on the agent API. An agent asking for its NFT portfolio was sending that request to a Solana node that does not answer NFT queries at all, so it failed no matter what was in the wallet; it now goes to the provider that does. A mistyped wallet address on the same endpoint used to come back as an upstream failure, which told you nothing; it now says plainly that the address is not valid. And the GMGN smart-money board, which until now existed only as a live stream, also answers as one ordinary JSON response, so anything that cannot hold a stream open (a server, an agent tool call, a curl) can read the same board. A public payment-config lookup also gained the method and rate limits its neighbours already had.</description>
 		</item>
 		<item>
 			<title>Older model names still work when you chat through the API</title>
@@ -95,12 +119,28 @@
 			<description>Deleting an API key through the developer API used to hand whatever id it was given straight to the database, so an id that could never match a key came back as a generic &quot;internal error, quote this reference to support&quot; 500. It now answers a plain 400 saying the id must be a key identifier, and the database is never touched for input that cannot match. Real revokes, the ownership check that stops one account revoking another account's key, and the already-revoked case all behave exactly as before.</description>
 		</item>
 		<item>
+			<title>Signing in to a coin world now lasts 30 days, not one hour</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:Signing in to a coin world now lasts 30 days, not one hour</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Signing in with X to a coin's world hands out two things: a short access pass good for an hour, and a 30-day pass that renews it. The renewal never once ran. An hour after signing in the short pass expired out of the browser and every community surface decided you had never signed in at all: the chat composer locked itself, linking a wallet asked you to sign in again, and the holder check that lets you into a gated world stopped recognising your wallet. Sessions now renew themselves the moment the short pass lapses, on every one of those surfaces, so a tab you left open all day keeps working and you only sign in again after the full 30 days. The sign-in callback that completes the X handshake also got a rate limit and now refuses anything but a real browser redirect.</description>
+		</item>
+		<item>
 			<title>Skill licence NFTs show their real name and artwork in every wallet again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-10:Skill licence NFTs show their real name and artwork in every wallet again</guid>
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Every skill you buy from an agent is minted as an NFT, and that NFT carries a link back to three.ws for its name, description, and artwork. That link had never been wired into the site's routing table, so wallets, explorers, and marketplaces asking for it got an error page instead and the licence showed up blank. Both links (the one on each skill NFT and the one on the agent's skill collection) now resolve, so every skill licence ever minted, including the ones already sitting in wallets, renders properly from here on. A new test walks the whole dispatch table so no future metadata link can ship unrouted.</description>
+		</item>
+		<item>
+			<title>Talking-avatar video says what actually went wrong, and audio uploads are bounded</title>
+			<link>https://three.ws/create/video</link>
+			<guid isPermaLink="false">2026-08-10:Talking-avatar video says what actually went wrong, and audio uploads are bounded</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the talking-avatar video worker is not switched on for a deployment, the two endpoints behind /create/video used to report it as a network failure and printed the name of an internal server setting into the reply. They now answer with a plain &quot;video generation is not available here&quot; and keep the operator detail in the server log, and a request with a bad audio or image link still gets the specific error about that link rather than a misleading outage message. On free plans, a deployment with no worker no longer touches your one free generation at all. Audio uploads also gained the limits their model-upload sibling already had: a clip declares its size up front, anything over 64 MB is refused before an upload slot is handed out, and repeated requests draw on your normal upload allowance. The upload page reports a refused upload honestly instead of silently retrying in a way the server was always going to reject.</description>
 		</item>
 		<item>
 			<title>The &quot;Claim Your 3D Avatar&quot; Blink names the avatar it points at, and refuses inputs it should never have accepted</title>
@@ -127,14 +167,6 @@
 			<description>On the live agent economy page, Nova hires Oracle for a paid data service and Oracle answers with a real model response. That answer had gone silent: the endpoint fetched it over an internal HTTP call to an address that does not exist in production, so both agents stayed mute while the page still reported the trade as complete. The delivery now runs directly against the platform model chain, and it runs before the payment: if no model can produce the service, the request stops with a clear &quot;try again in a moment&quot; and not one lamport leaves Nova's wallet. A request naming a service that does not exist is now rejected outright instead of slipping through as an unnamed, unpriced one, and the daily on-chain spending ceiling is only spent when a payment actually fires, so an empty wallet can no longer exhaust the day's budget for everyone.</description>
 		</item>
 		<item>
-			<title>The AGI page can no longer show you the wrong mind</title>
-			<link>https://three.ws/agi</link>
-			<guid isPermaLink="false">2026-08-10:The AGI page can no longer show you the wrong mind</guid>
-			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
-			<category>fix</category>
-			<description>Asking /agi to inspect a specific agent with a malformed ID used to quietly answer with a different agent entirely, so the decisions, track record, and mood on screen belonged to somebody else with nothing saying so. A bad ID is now a clear error. The flagship pointer is also checked before anything is published: if it names an agent that was made private or deleted, the page shows its designed awakening state instead of exposing a private ledger or inventing an identity for an agent that no longer exists.</description>
-		</item>
-		<item>
 			<title>The aixbt market feeds now say when the key, not you, is the problem</title>
 			<link>https://three.ws/docs/api-reference</link>
 			<guid isPermaLink="false">2026-08-10:The aixbt market feeds now say when the key, not you, is the problem</guid>
@@ -143,12 +175,28 @@
 			<description>When aixbt turned down this deployment's API key, the narrative intel, momentum projects, grounding and chat feeds all answered with a plain 'unauthorized' aimed at you. Nothing on those surfaces ever asked you to sign in, so the message read as a dead end nobody could act on. They now report the real cause, that the platform's aixbt key has expired or sits below the plan the read needs, and carry the same setup pointer the missing-key state shows, so the in-world aixbt panel and the intel SDK both render something an operator can fix. The intel and projects feeds also stop advertising a page size of 100 they were never able to return, and a chat turn that comes back empty now says so instead of handing you a blank answer marked successful.</description>
 		</item>
 		<item>
+			<title>The avatar gallery is growing again</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-08-10:The avatar gallery is growing again</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The job that adds a fresh, fully rigged avatar to the public gallery every minute had quietly stopped producing anything. It picks a short word for the new account name and checks which variants of that word are already taken, but it only ever looked at the first 100 matches: once a word like wolf or fog passed that many, the check came back with a partial answer and handed out a name that already existed, so the insert was rejected and the tick did nothing. Every popular word was past the line, so the gallery had stopped growing while the job kept reporting success. The name check now reads the whole set, matches names case-insensitively the way the database does, and counts far past 99, and two sibling seeders that carried the same copied check were fixed with it.</description>
+		</item>
+		<item>
 			<title>The CA to x402 tool now always hands you a three.ws payment address</title>
 			<link>https://three.ws/ca2x402</link>
 			<guid isPermaLink="false">2026-08-10:The CA to x402 tool now always hands you a three.ws payment address</guid>
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>Paste a contract address into the CA to x402 tool and it generates a paid data service for that token, complete with copy-paste commands you run to pay for and call it. Those commands were built from the web address in your browser's request, which anyone could forge: a crafted link could have handed a visitor a set of &quot;pay here&quot; commands pointing at somebody else's server, and because the answer is cached at the edge, that swapped copy could then have been served on to other visitors. The generated endpoint and every snippet are now pinned to three.ws itself, so what you copy is always ours no matter how the page was reached.</description>
+		</item>
+		<item>
+			<title>The chat model picker stops duplicating itself, MCP viewer clients connect cleanly, and a throttled chat now says how long to wait</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:The chat model picker stops duplicating itself, MCP viewer clients connect cleanly, and a throttled chat now says how long to wait</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Four fixes across the chat API. The model picker appended a second, third, and fourth copy of the three.ws Agent entry as visitors loaded the page, because the endpoint was writing into the shared model cache instead of into its own copy of it; the list is clean again, and the cache it polluted is back to holding only real free models. External MCP clients that drive the 3D viewer (Claude Desktop, Cursor, LobeHub) were answered with an error on the very first message they send after connecting, which made a working handshake look broken; that message is now acknowledged silently as the protocol requires, and probing the endpoint with the wrong HTTP method returns a plain method-not-allowed instead of a misleading authentication failure. When the built-in free model is throttled, the reply now carries how many seconds to wait, which the upstream had been reporting in a place we were not reading. And saving the chat branding settings can no longer report success while writing nothing.</description>
 		</item>
 		<item>
 			<title>The chat plugin now tells you when your Agent ID is wrong</title>
@@ -167,12 +215,36 @@
 			<description>Sites that pin an &lt;agent-3d&gt; bundle version can poll /api/agent-3d/versions to learn about a new release. That endpoint now returns an ETag derived from the manifest contents, so a poller that sends the tag back gets an empty 304 Not Modified between releases instead of re-downloading the same JSON, and gets the full manifest the moment a new version publishes. When a deploy ships without the manifest the endpoint used to answer &quot;not found&quot; whether the file was missing or corrupt; it now says which of the two it is, so the fix is obvious from the response alone. The manifest is also documented for embedders alongside the static /agent-3d/versions.json copy.</description>
 		</item>
 		<item>
+			<title>The free 3D API stops handing agents an HTML page when they asked for JSON</title>
+			<link>https://three.ws/docs/3d-api</link>
+			<guid isPermaLink="false">2026-08-10:The free 3D API stops handing agents an HTML page when they asked for JSON</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes on the free, keyless 3D API. The directory at /api/3d serves a browsable page to a browser and JSON to an agent off the same address, but it never told the CDN that, so for five minutes at a time whichever kind of visitor arrived first decided what everyone else got: an agent could ask for JSON and be handed the web page. It now marks the two apart so each caller gets its own. Model inspection was reporting a blocked link (one pointing at a private or internal address, which it refuses on purpose) as an upstream failure worth retrying, instead of saying plainly that the link is not allowed; it now answers with the validation error the docs always promised. And checking on a generation now says so outright when the deployment has no 3D generator behind it, rather than replying &quot;still working&quot; to a job that could never finish.</description>
+		</item>
+		<item>
 			<title>The public asset catalog now answers a bad filter honestly</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-10:The public asset catalog now answers a bad filter honestly</guid>
 			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The open asset list at /api/assets, which anyone can call to browse our accessories, starter animations, and lighting environments, used to answer a mistyped filter with an empty list and a 200 OK, then cache that empty answer for an hour. A typo looked exactly like an empty catalog. It now returns a clear error naming the accepted values, and never caches it. Two more fixes came out of the same pass: browsers can read the response cross-origin on error replies and preflight checks, not just on success, and HEAD requests from uptime monitors and CDNs are answered instead of rejected. The environment list is also read straight from the viewer's own presets now, so names can no longer drift between the site and the API, and the endpoint is documented in the API reference.</description>
+		</item>
+		<item>
+			<title>The Screen Caster setup panel works again, and agent config pages answer a bad id with a real message</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-10:The Screen Caster setup panel works again, and agent config pages answer a bad id with a real message</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Generating the .env file and Docker command for an agent's Screen Caster was broken for everyone: the panel answered &quot;sign in required&quot; no matter who asked, and the request behind it would have failed on a database error even if it had gotten past that. Both are fixed, so the panel hands you a working key, env file, and run command again, and the key it mints is now protected against cross-site forgery like every other key on the platform. Separately, the launcher, market-maker, dreams, and reflection endpoints used to answer a mistyped agent or config id with a bare &quot;internal error&quot;; they now name the malformed id, and a market-maker config can no longer be saved against a cluster no worker runs.</description>
+		</item>
+		<item>
+			<title>The x402 Bazaar now shows the whole catalog, and provider pages load in under a second</title>
+			<link>https://three.ws/bazaar</link>
+			<guid isPermaLink="false">2026-08-10:The x402 Bazaar now shows the whole catalog, and provider pages load in under a second</guid>
+			<pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every Bazaar surface was quietly reading one listing per facilitator instead of the full catalog, so the directory, search, provider profiles, and the arbitrage board were all built on a sliver of what is out there. Fixed: a default catalog read now returns hundreds of live endpoints, search ranks across all of them, and the arbitrage board compares real competing providers. Asking for a set number of results now actually returns that many, with the full match count alongside it. Provider profiles used to ship every listing a host has, which for our largest provider meant a 10 MB page; they now send a price-ladder page plus the true total. All of it is backed by a shared catalog cache, so the pages that used to spend 15 seconds fanning out to facilitators answer in well under a second. And when every facilitator is down, these endpoints say so instead of showing an empty catalog that looked like the services had vanished.</description>
 		</item>
 		<item>
 			<title>The Oracle now scores from measured outcomes, and its top tiers finally mean something</title>
@@ -18989,6 +19061,14 @@
 			<pubDate>Fri, 05 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Plain-English definitions for the crypto and agent terms used across three.ws: no jargon required to get started.</description>
+		</item>
+		<item>
+			<title>GO Bounty Board</title>
+			<link>https://three.ws/go</link>
+			<guid isPermaLink="false">2026-06-05:GO Bounty Board</guid>
+			<pubDate>Fri, 05 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Post a bounty with a SOL reward, submit proof of doing it, and let the poster (or the AI judge) pick a winner. Live earner and spender leaderboards.</description>
 		</item>
 		<item>
 			<title>Labs Showcase</title>

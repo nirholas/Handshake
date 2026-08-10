@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-10T17:35:13.041Z",
+	"generated_at": "2026-08-10T18:00:18.924Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1336,6 +1336,16 @@
 			"title": "Crypto",
 			"description": "On-chain features: pay-per-call, token launches, vanity wallets.",
 			"pages": [
+				{
+					"path": "/go",
+					"title": "GO Bounty Board",
+					"description": "Post a bounty with a SOL reward, submit proof of doing it, and let the poster (or the AI judge) pick a winner. Live earner and spender leaderboards.",
+					"added": "2026-06-05",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
 				{
 					"path": "/sperax",
 					"title": "Sperax on three.ws",
