@@ -16,6 +16,14 @@ RUN pip install -r /app/requirements.txt
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY main.py /app/main.py
+COPY test_stylize.py /app/test_stylize.py
+
+# Build-time guard: the four filters, the color sampler, the export round-trip,
+# the memory caps, the SSRF gate, and the upload retry policy must pass their
+# unit suite or the image does not ship. This is also the only place open3d's
+# decimation path (used by voronoi + lowpoly) is exercised; the local run falls
+# back to trimesh.
+RUN python /app/test_stylize.py
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
