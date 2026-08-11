@@ -40,6 +40,16 @@ peak hours via Cloud Scheduler) holds allowlisted scale-to-zero lanes resident
 where warming them does not contend for that L4 pool (`FORGE_KEEPWARM_LANES`
 overrides the set without a deploy).
 
+`us-east4` has its own grant of 3 L4s and the same arithmetic applies there. It
+runs standbys of `model-trellis` (pinned at min 1), `model-hunyuan3d`,
+`model-triposr`, and `model-text2motion`, which is that region's production lane
+(`GCP_TEXT2MOTION_URL`, max 2) and the only one of the four carrying user
+traffic. The `model-triposr` standby was pinned at min 1 until 2026-08-11, which
+left text2motion a single slot to burst into; it now scales to zero, as does the
+`model-triposr-warm` Cloud Scheduler probe in `us-central1` (paused the same
+day, since each 10-minute ping cold-booted an L4 for a lane with no traffic).
+Re-pinning either one is a quota decision: name the lane giving up the slot.
+
 Wire shapes: `model-trellis` and `model-hunyuan3d` both speak the standard task
 shape (`POST /infer` → `{ task_id }`, `GET /tasks/:id` → `result_gcs_url`);
 the gcp provider drives them with modes `trellis` and `hunyuan` respectively.
