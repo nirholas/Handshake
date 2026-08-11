@@ -57,14 +57,15 @@ GET  /health       → { ok, models_loaded }
 ```
 
 `fps` is clamped to 8..30 by request validation; `max_seconds` is clamped down
-to `MAX_SECONDS`. `job_id`, when supplied, becomes the task id (the platform
-passes its own job id so a poll needs no id mapping). `status` moves
-`queued` → `running` → `done` | `failed`; a failure carries an opaque
-`error` string with a correlation id that matches the server log line.
+to `MAX_SECONDS`. `job_id`, when supplied, becomes the task id, which lets a
+caller choose its own correlation id; the platform does not send one and simply
+polls the `task_id` it got back. `status` moves `queued` to `running` to `done`
+or `failed`; a failure carries an opaque `error` string with a correlation id
+that matches the server log line.
 
 Bearer auth on `/infer` and `/tasks/:id` (`Authorization: Bearer $API_KEY`);
-`/health` is open so the Cloud Run probe can reach it. Input is fetched through
-the SSRF-hardened `worker_security.fetch_remote_bytes` (https-only,
+`/health` is unauthenticated so uptime checks need no secret. Input is fetched
+through the SSRF-hardened `worker_security.fetch_remote_bytes` (https-only,
 private/loopback/metadata IPs rejected, redirect hops re-validated), capped at
 256 MiB, and processing is capped at `MAX_SECONDS` (default 90).
 
@@ -178,4 +179,8 @@ curl -s localhost:8080/tasks/<task_id> -H 'Authorization: Bearer local-key'
 ```
 
 `status: "done"` carries the four artifact URLs. Capture is CPU-bound and runs
-roughly 4x the clip's wall time on 8 cores.
+around 6x the clip's own length on the deployed 8-core instance (a 6 s clip at
+12 fps, 72 frames, took 37.9 s end to end including fetch and upload, measured
+against the live service 2026-08-11; the 30 s clip behind
+`MODE_ETA.video2motion = 120` in `api/_providers/gcp.js` lands in the same
+ratio).
