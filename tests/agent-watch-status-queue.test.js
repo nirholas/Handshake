@@ -53,6 +53,18 @@ describe('classifyRank — caster handoff state from wanted-set rank', () => {
 		expect(classifyRank(1, 1)).toEqual({ state: 'queued', position: 1 });
 	});
 
+	it('falls back to the activity view when no caster pool is alive', () => {
+		// warming/queued promise a real browser is coming. With no pool polling
+		// watch-wanted nothing can keep that promise, so every rank reads activity
+		// rather than spinning "warming up" at the viewer forever.
+		for (const rank of [0, MAX - 1, MAX, MAX + 9]) {
+			expect(classifyRank(rank, MAX, { poolAlive: false })).toEqual({ state: 'activity' });
+		}
+		// An explicitly live pool keeps the normal handoff.
+		expect(classifyRank(0, MAX, { poolAlive: true })).toEqual({ state: 'warming' });
+		expect(classifyRank(MAX, MAX, { poolAlive: true })).toEqual({ state: 'queued', position: 1 });
+	});
+
 	it('defaults to the documented POOL_MAX when no max is passed', () => {
 		expect(POOL_MAX).toBeGreaterThanOrEqual(1);
 		// At rank = POOL_MAX the agent is exactly one slot over capacity → queued #1.
