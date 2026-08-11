@@ -62,9 +62,17 @@ const SNAPSHOT_TTL_MS = 20_000;
 
 let snapshotCache = null; // { at, byId }
 
-// Probe one self-host worker: authenticated GET against its root. Returns a status
-// record. The URL/key being absent is reported `unknown` (env-gating already
-// keeps an unconfigured lane out of routing) rather than `down`.
+// Probe one self-host worker: authenticated GET against its /health route.
+// Returns a status record. The URL/key being absent is reported `unknown`
+// (env-gating already keeps an unconfigured lane out of routing) rather than
+// `down`.
+//
+// This probed the service ROOT until 2026-08-11 and read anything under 500 as
+// a healthy lane. No worker serves its root, so the probe scored a 404 as "ok"
+// and logged a warning in the worker's own log on every generation; worse, a
+// worker whose weight load had FAILED answered that 404 identically to a
+// working one, so routing kept sending generations at a lane that could only
+// fail them. /health carries the real state, at the same cost.
 async function probeSelfHostLane(backendId) {
 	const meta = BACKENDS[backendId];
 	const urlEnv = meta?.requiresEnv?.[0];
@@ -75,7 +83,7 @@ async function probeSelfHostLane(backendId) {
 	const started = Date.now();
 	let res;
 	try {
-		res = await fetch(url, {
+		res = await fetch(`${url.replace(/\/+$/, '')}/health`, {
 			headers: { authorization: `Bearer ${key}` },
 			signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
 		});
@@ -84,9 +92,21 @@ async function probeSelfHostLane(backendId) {
 	}
 	const latencyMs = Date.now() - started;
 	if (res.status >= 500) return { id: backendId, status: 'down', warm: false, latencyMs };
-	// <500 (200/401/404/…) means the container is up and routable — a generation
-	// would reach the worker. Latency tells us whether it is warm.
-	return { id: backendId, status: 'ok', warm: latencyMs <= WARM_LATENCY_MS, latencyMs };
+	const warm = latencyMs <= WARM_LATENCY_MS;
+	// A worker that publishes no health body is still routable: fail open on the
+	// old "reachable means ok" rule rather than dropping a working lane.
+	const body = res.status < 400 ? await res.json().catch(() => null) : null;
+	if (!body || typeof body !== 'object') return { id: backendId, status: 'ok', warm, latencyMs };
+	// A failed model load is terminal for this revision: every generation routed
+	// here would come back failed.
+	if (body.load_error) return { id: backendId, status: 'down', warm: false, latencyMs };
+	// Field name varies by worker generation (Hunyuan3D: ready/pipeline_loaded,
+	// TripoSG: model_loaded). Still-loading is reachable but never warm: the
+	// caller widens its ETA by the lane's cold-start budget instead of promising
+	// a fast turnaround the worker cannot deliver.
+	const readiness = [body.ready, body.pipeline_loaded, body.model_loaded].find((v) => typeof v === 'boolean');
+	if (readiness === false) return { id: backendId, status: 'ok', warm: false, latencyMs };
+	return { id: backendId, status: 'ok', warm, latencyMs };
 }
 
 // Health snapshot for a set of candidate lane ids. Self-host lanes are probed
