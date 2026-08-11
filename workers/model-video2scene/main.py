@@ -1,14 +1,15 @@
 """
-model-video2scene — streaming video → 3D point-cloud reconstruction.
+model-video2scene: streaming video to 3D point-cloud reconstruction.
 
 Wraps LingBot-Map (Apache-2.0, github.com/Robbyant/lingbot-map), a feed-forward
 "Geometric Context Transformer" that reconstructs a dense world-space point cloud
-from a monocular video or image sequence. We run the model's documented inference
-path, fuse the per-frame world points + RGB into a single coloured point cloud,
-write a binary little-endian PLY, and upload it to Cloud Storage. The three.ws
-Scene Capture page renders that PLY directly with a WebGL point-cloud viewer.
+from a monocular video or image sequence. We drive the repo's own demo entry
+points (load_images / load_model / postprocess), fuse the per-frame world points
++ RGB into a single coloured point cloud, write a binary little-endian PLY, and
+upload it to Cloud Storage. The three.ws Scene Capture page renders that PLY
+directly with a WebGL point-cloud viewer.
 
-API contract (mirrors the other three.ws model workers — triposr, hunyuan3d):
+API contract (mirrors the other three.ws model workers: triposr, hunyuan3d):
   POST /infer
     {
       video_url?:        https URL to an .mp4/.mov/.webm        (one of video_url
@@ -22,26 +23,31 @@ API contract (mirrors the other three.ws model workers — triposr, hunyuan3d):
       mask_sky?:         bool,  drop sky points                 (default true)
       conf_percentile?:  0..95, drop low-confidence points      (default 30)
       max_points?:       int,   downsample budget               (default 1_500_000)
+      voxel_size?:       float, voxel-merge cell edge, 0 = off  (default 0)
       job_id?:           str    caller correlation id
     }
-    → 202 { task_id, status: "queued" }
+    -> 202 { task_id, status: "queued" }
 
-  GET  /tasks/:id → { task_id, status, result_gcs_url?, num_points?, frames?, error? }
-  GET  /health    → { ok, model, gpu_available, model_loaded }
+  GET  /tasks/:id -> { task_id, status, result_gcs_url?, num_points?, frames?, error? }
+  GET  /health    -> { ok, model, gpu_available, model_loaded, weights_present }
 
 Model weights are mounted read-only from the shared weights bucket at
-  WEIGHTS_DIR/lingbot-map-long.pt
+  WEIGHTS_DIR/MODEL_FILE
 (see cloudbuild.yaml --add-volume). Pre-populate once with:
-  huggingface-cli download robbyant/lingbot-map-long --local-dir /tmp/lm
-  gsutil -m cp -r /tmp/lm/* gs://three-ws-model-weights/lingbot-map/
+  huggingface-cli download robbyant/lingbot-map lingbot-map-long.pt --local-dir /tmp/lm
+  gsutil cp /tmp/lm/lingbot-map-long.pt gs://three-ws-model-weights/lingbot-map/
 
 Environment variables:
-  API_KEY         — shared bearer secret (Cloud Run secret)
-  GCS_BUCKET      — Cloud Storage bucket for output point clouds
-  WEIGHTS_DIR     — local mount of model weights (default /weights/lingbot-map)
-  MODEL_FILE      — checkpoint filename (default lingbot-map-long.pt)
-  LINGBOT_DIR     — repo checkout on PYTHONPATH (default /opt/lingbot-map)
-  MAX_CONCURRENT  — max parallel reconstructions (default 1 — heavy, long jobs)
+  API_KEY          shared bearer secret (Cloud Run secret)
+  GCS_BUCKET       Cloud Storage bucket for output point clouds
+  WEIGHTS_DIR      local mount of model weights (default /weights/lingbot-map)
+  MODEL_FILE       checkpoint filename (default lingbot-map-long.pt)
+  SKYSEG_FILE      sky-segmentation ONNX filename (default skyseg.onnx)
+  LINGBOT_DIR      repo checkout on PYTHONPATH (default /opt/lingbot-map)
+  MAX_CONCURRENT   max parallel reconstructions (default 1, heavy long jobs)
+  MAX_FRAMES       hard frame cap per job (default 512, RAM-bound, see README)
+  MAX_FRAME_NUM    3D RoPE frame budget the model is built with (default 1024)
+  USE_SDPA         set to 1 to force PyTorch SDPA attention over FlashInfer
 """
 
 from __future__ import annotations
@@ -50,8 +56,8 @@ import asyncio
 import base64
 import logging
 import os
-import struct
 import tempfile
+import threading
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -64,6 +70,7 @@ from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
+from scene_fusion import fuse_point_cloud, to_np, write_ply
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes,
@@ -81,73 +88,168 @@ API_KEY = os.environ["API_KEY"]
 GCS_BUCKET = os.environ["GCS_BUCKET"]
 WEIGHTS_DIR = os.environ.get("WEIGHTS_DIR", "/weights/lingbot-map")
 MODEL_FILE = os.environ.get("MODEL_FILE", "lingbot-map-long.pt")
+SKYSEG_FILE = os.environ.get("SKYSEG_FILE", "skyseg.onnx")
+SKYSEG_CACHE_DIR = os.environ.get("SKYSEG_CACHE_DIR", "/tmp/skyseg")
 LINGBOT_DIR = os.environ.get("LINGBOT_DIR", "/opt/lingbot-map")
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
 
-# Hard ceilings so a caller can't ask for an unbounded job.
-MAX_FRAMES = 4000
+# Structural model config. These are LingBot-Map's own demo.py defaults, which is
+# what the published checkpoints are exercised with; load_model() builds GCTStream
+# from them (the checkpoint carries weights, not architecture), so they have to be
+# spelled out here rather than inferred.
+IMAGE_SIZE = 518
+PATCH_SIZE = 14
+ENABLE_3D_ROPE = True
+KV_CACHE_SLIDING_WINDOW = 64
+CAMERA_NUM_ITERATIONS = 4
+
+# 3D RoPE is sized for MAX_FRAME_NUM frames, so no job may exceed it. MAX_FRAMES
+# is the tighter, host-RAM-bound cap: fusion holds world points, confidences and
+# RGB for every pixel of every frame at once (~12 MB per 518x518 frame), so 512
+# frames peaks around 10 GB of the instance's 32 GiB. Long clips lower `fps`
+# instead of raising this.
+MAX_FRAME_NUM = int(os.environ.get("MAX_FRAME_NUM", "1024"))
+MAX_FRAMES = min(int(os.environ.get("MAX_FRAMES", "512")), MAX_FRAME_NUM)
 MAX_POINT_BUDGET = 4_000_000
 
-_model = None
+# Finished tasks are kept so callers can poll after the fact; the oldest are
+# dropped past this so a long-lived instance cannot grow without bound.
+TASK_HISTORY = 256
+
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
 _tasks: dict[str, dict] = {}
 _device = "cuda" if torch.cuda.is_available() else "cpu"
 
+# One model at a time: a checkpoint is ~4.6 GB and the streaming and windowed
+# modes are different classes, so the loaded model is cached under its build key
+# and swapped when a request needs a different one.
+_model = None
+_model_key: Optional[tuple[str, int]] = None
+_model_error: Optional[str] = None
+_model_lock = threading.Lock()
 
-# ── model loading ─────────────────────────────────────────────────────────────
+
+# -- model loading -------------------------------------------------------------
 
 
-def _default_args() -> SimpleNamespace:
-    """The CLI arg surface LingBot-Map's demo.load_model() reads from.
+def _use_sdpa() -> bool:
+    """FlashInfer is the fast path; SDPA is the fallback when it is unusable.
 
-    demo.load_model(args, device) reconstructs GCTStream and loads the checkpoint
-    from args.model_path. We feed it the same namespace the CLI would build so the
-    sanctioned loader (which reads model config out of the checkpoint) stays the
-    single source of truth — no hand-reconstructed constructor args to drift.
+    FlashInfer JIT-compiles CUDA kernels, so it is neither importable nor useful
+    on a CPU-only host. USE_SDPA=1 forces the fallback if the JIT ever breaks in
+    production without needing a code change.
+    """
+    if os.environ.get("USE_SDPA", "").strip().lower() in ("1", "true", "yes"):
+        return True
+    if not torch.cuda.is_available():
+        return True
+    try:
+        import flashinfer  # noqa: F401
+    except Exception:
+        log.warning("flashinfer unavailable; falling back to SDPA attention")
+        return True
+    return False
+
+
+def _build_args(mode: str, num_scale_frames: int) -> SimpleNamespace:
+    """Exactly the attributes LingBot-Map's demo.load_model() reads off argparse.
+
+    Feeding it the same namespace the CLI builds keeps the repo's own loader as
+    the single source of truth for how GCTStream is constructed and how the
+    checkpoint is applied.
     """
     return SimpleNamespace(
         model_path=os.path.join(WEIGHTS_DIR, MODEL_FILE),
-        mode="streaming",
-        num_scale_frames=8,
-        keyframe_interval=4,
-        window_size=128,
-        overlap_size=16,
-        overlap_keyframes=16,
-        camera_num_iterations=4,
-        downsample_factor=1,
-        mask_sky=True,
-        offload_to_cpu=False,
+        mode=mode,
+        image_size=IMAGE_SIZE,
+        patch_size=PATCH_SIZE,
+        enable_3d_rope=ENABLE_3D_ROPE,
+        max_frame_num=MAX_FRAME_NUM,
+        kv_cache_sliding_window=KV_CACHE_SLIDING_WINDOW,
+        num_scale_frames=num_scale_frames,
+        use_sdpa=_use_sdpa(),
+        camera_num_iterations=CAMERA_NUM_ITERATIONS,
     )
 
 
-def _load_model():
-    global _model
+def _inference_dtype() -> torch.dtype:
+    if not torch.cuda.is_available():
+        return torch.float32
+    return torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+
+
+def _ensure_lingbot_on_path() -> None:
     import sys
 
     if LINGBOT_DIR not in sys.path:
         sys.path.insert(0, LINGBOT_DIR)
-    # demo.py is the repo's own entrypoint; load_model() is the documented,
-    # checkpoint-config-driven constructor used by demo.py and demo_render.
-    from demo import load_model
 
-    ckpt = os.path.join(WEIGHTS_DIR, MODEL_FILE)
-    if not os.path.exists(ckpt):
-        raise FileNotFoundError(f"checkpoint not found: {ckpt}")
-    log.info("Loading LingBot-Map checkpoint %s on %s", ckpt, _device)
-    _model = load_model(_default_args(), torch.device(_device))
-    _model.eval()
-    log.info("LingBot-Map model loaded")
+
+def _get_model(mode: str, num_scale_frames: int):
+    """Return the GCTStream for this (mode, scale-frame) build, loading if needed.
+
+    ``kv_cache_scale_frames`` is baked in at construction from num_scale_frames,
+    and windowed inference lives on a different class than streaming, so both are
+    part of the cache key. A request that needs a different build swaps the
+    resident model rather than holding two multi-GB models on one L4.
+    """
+    global _model, _model_key, _model_error
+
+    key = (mode, int(num_scale_frames))
+    with _model_lock:
+        if _model is not None and _model_key == key:
+            return _model
+
+        _ensure_lingbot_on_path()
+        from demo import load_model
+
+        ckpt = os.path.join(WEIGHTS_DIR, MODEL_FILE)
+        if not os.path.exists(ckpt):
+            raise FileNotFoundError(f"checkpoint not found: {ckpt}")
+
+        if _model is not None:
+            log.info("Swapping model build %s -> %s", _model_key, key)
+            _model = None
+            _model_key = None
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+        t0 = time.time()
+        log.info("Loading LingBot-Map %s (%s) on %s", MODEL_FILE, key, _device)
+        model = load_model(_build_args(mode, num_scale_frames), torch.device(_device))
+
+        dtype = _inference_dtype()
+        if dtype != torch.float32 and getattr(model, "aggregator", None) is not None:
+            # Upstream demo.py casts the DINOv2-style trunk to the inference dtype:
+            # it drops the redundant fp32 master copy plus the autocast weight cache
+            # (a few GB) with no measurable quality change, while the camera/depth/
+            # point heads keep fp32 weights of their own accord.
+            model.aggregator = model.aggregator.to(dtype=dtype)
+
+        model.eval()
+        _model, _model_key, _model_error = model, key, None
+        log.info("Model ready in %.1fs (dtype=%s)", time.time() - t0, dtype)
+        return _model
+
+
+def _weights_present() -> bool:
+    return os.path.isfile(os.path.join(WEIGHTS_DIR, MODEL_FILE))
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _bucket, _sem
+    global _bucket, _sem, _model_error
     _bucket = storage.Client().bucket(GCS_BUCKET)
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
     loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, _load_model)
-    log.info("Service ready — max_concurrent=%d device=%s", MAX_CONCURRENT, _device)
+    try:
+        # Warm the default build so the first real request does not pay the load.
+        await loop.run_in_executor(None, _get_model, "streaming", 8)
+    except Exception as exc:  # noqa: BLE001 - startup must not take the port down
+        _model_error = str(exc)
+        log.exception("Model preload failed; /health will report model_loaded=false")
+    log.info("Service ready: max_concurrent=%d device=%s", MAX_CONCURRENT, _device)
     yield
 
 
@@ -161,7 +263,7 @@ def _require_api_key(authorization: str) -> None:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 
-# ── input acquisition ─────────────────────────────────────────────────────────
+# -- input acquisition ---------------------------------------------------------
 
 
 def _fetch_video(video_url: str, dst_dir: str) -> str:
@@ -182,7 +284,7 @@ def _materialize_images(images: list[str], dst_dir: str) -> str:
     """Write caller-supplied frames to a folder LingBot-Map's loader can read."""
     folder = os.path.join(dst_dir, "frames")
     os.makedirs(folder, exist_ok=True)
-    for i, src in enumerate(images[:MAX_FRAMES]):
+    for i, src in enumerate(images[: MAX_FRAMES + 1]):
         if src.startswith("data:image"):
             payload = base64.b64decode(src.split(",", 1)[1])
         elif src.startswith("https://"):
@@ -197,138 +299,116 @@ def _materialize_images(images: list[str], dst_dir: str) -> str:
     return folder
 
 
-# ── point-cloud fusion + PLY export ───────────────────────────────────────────
+# -- sky masking ---------------------------------------------------------------
 
 
-def _to_np(x) -> np.ndarray:
-    if isinstance(x, torch.Tensor):
-        return x.detach().to("cpu").float().numpy()
-    return np.asarray(x)
+def _skyseg_model_path() -> str:
+    """Path to skyseg.onnx: the weights mount first, a local cache as fallback.
 
-
-def _voxel_downsample(
-    pts: np.ndarray, cols: np.ndarray, voxel: float
-) -> tuple[np.ndarray, np.ndarray]:
-    """Merge points sharing a voxel cell into one averaged, colour-averaged point.
-
-    Far higher quality than blind stride subsampling: it removes the redundant
-    overlap where many frames re-observe the same surface, evens out density, and
-    suppresses single-frame noise — while preserving the true shape. Deterministic
-    (no RNG). ``voxel`` is the cell edge length in world units.
+    Staging it next to the checkpoint keeps the instance off the public internet
+    on the hot path; the download fallback keeps sky masking working on a mount
+    that predates the file.
     """
-    if voxel <= 0 or pts.shape[0] == 0:
-        return pts, cols
-    keys = np.floor(pts / voxel).astype(np.int64)
-    # Order points by voxel cell, then reduce each contiguous run to its mean.
-    order = np.lexsort((keys[:, 2], keys[:, 1], keys[:, 0]))
-    keys, pts, cols = keys[order], pts[order], cols[order]
-    boundaries = np.any(np.diff(keys, axis=0) != 0, axis=1)
-    starts = np.concatenate(([0], np.nonzero(boundaries)[0] + 1))
-    ends = np.concatenate((starts[1:], [pts.shape[0]]))
-    out_pts = np.empty((starts.shape[0], 3), dtype=np.float32)
-    out_cols = np.empty((starts.shape[0], 3), dtype=np.uint8)
-    colf = cols.astype(np.float32)
-    for i, (s, e) in enumerate(zip(starts, ends)):
-        out_pts[i] = pts[s:e].mean(axis=0)
-        out_cols[i] = np.clip(colf[s:e].mean(axis=0), 0, 255).astype(np.uint8)
-    return out_pts, out_cols
+    mounted = os.path.join(WEIGHTS_DIR, SKYSEG_FILE)
+    if os.path.isfile(mounted):
+        return mounted
+
+    local = os.path.join(SKYSEG_CACHE_DIR, SKYSEG_FILE)
+    if not os.path.isfile(local):
+        os.makedirs(SKYSEG_CACHE_DIR, exist_ok=True)
+        _ensure_lingbot_on_path()
+        from lingbot_map.vis import download_skyseg_model
+
+        log.info("skyseg model absent from %s; downloading to %s", mounted, local)
+        download_skyseg_model(local)
+    return local
 
 
-def _fuse_point_cloud(
-    predictions: dict,
-    conf_percentile: float,
-    max_points: int,
-    voxel_size: float = 0.0,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Flatten per-frame world points + RGB into one coloured cloud.
+def _sky_keep_mask(conf, images, dst_dir: str) -> tuple[Optional[np.ndarray], int]:
+    """Per-point boolean mask with sky pixels removed, plus how many were dropped.
 
-    LingBot-Map returns world_points (..., 3) in a shared world frame, an aligned
-    world_points_conf, and the source images. We drop the low-confidence tail,
-    colour each surviving point from its pixel, optionally voxel-downsample to
-    de-duplicate overlapping observations, and cap the total at max_points.
+    Runs LingBot-Map's own sky segmentation over the preprocessed frames, which
+    zeroes the confidence of sky pixels; anything left at zero confidence is not
+    scene geometry and is dropped.
     """
-    pts = _to_np(predictions["world_points"]).reshape(-1, 3)
+    if conf is None:
+        return None, 0
+    try:
+        import onnxruntime  # noqa: F401
+    except ImportError:
+        log.warning("onnxruntime unavailable; sky masking skipped for this job")
+        return None, 0
 
-    imgs = _to_np(predictions["images"])
-    # Images may arrive as (..., 3) HWC or (..., 3, H, W) CHW. Normalize to (-1, 3).
-    if imgs.shape[-1] == 3:
-        cols = imgs.reshape(-1, 3)
-    elif imgs.ndim >= 3 and imgs.shape[-3] == 3:
-        cols = np.moveaxis(imgs, -3, -1).reshape(-1, 3)
-    else:
-        cols = imgs.reshape(-1, 3)
-    if cols.shape[0] != pts.shape[0]:
-        # Defensive: fall back to a neutral grey if the loader changed layout.
-        cols = np.full((pts.shape[0], 3), 0.7, dtype=np.float32)
-    if cols.max() <= 1.0 + 1e-6:
-        cols = cols * 255.0
-    cols = np.clip(cols, 0, 255).astype(np.uint8)
+    _ensure_lingbot_on_path()
+    from lingbot_map.vis import apply_sky_segmentation
 
-    conf = predictions.get("world_points_conf")
-    mask = np.isfinite(pts).all(axis=1)
-    if conf is not None:
-        conf = _to_np(conf).reshape(-1)
-        if conf.shape[0] == pts.shape[0] and conf_percentile > 0:
-            thresh = np.percentile(conf[np.isfinite(conf)], conf_percentile)
-            mask &= conf >= thresh
-    pts, cols = pts[mask], cols[mask]
-
-    # Voxel-merge overlapping observations first (quality), then hard-cap.
-    if voxel_size > 0:
-        pts, cols = _voxel_downsample(pts.astype(np.float32), cols, voxel_size)
-
-    if pts.shape[0] > max_points:
-        # Deterministic stride subsample — preserves spatial spread without RNG.
-        idx = np.linspace(0, pts.shape[0] - 1, max_points).astype(np.int64)
-        pts, cols = pts[idx], cols[idx]
-
-    return pts.astype(np.float32), cols
+    conf_np = to_np(conf)
+    masked = apply_sky_segmentation(
+        conf_np,
+        images=to_np(images),
+        skyseg_model_path=_skyseg_model_path(),
+        sky_mask_dir=os.path.join(dst_dir, "sky_masks"),
+    )
+    keep = np.asarray(masked).reshape(-1) > 0
+    return keep, int(keep.size - int(keep.sum()))
 
 
-def _write_ply(points: np.ndarray, colors: np.ndarray) -> bytes:
-    """Binary little-endian PLY: x y z float + red green blue uchar."""
-    n = points.shape[0]
-    header = (
-        "ply\n"
-        "format binary_little_endian 1.0\n"
-        f"comment generated by three.ws model-video2scene (LingBot-Map)\n"
-        f"element vertex {n}\n"
-        "property float x\nproperty float y\nproperty float z\n"
-        "property uchar red\nproperty uchar green\nproperty uchar blue\n"
-        "end_header\n"
-    ).encode("ascii")
-    # Interleave xyz(f32) + rgb(u8) into a packed structured buffer.
-    body = np.empty(n, dtype=[("xyz", "<f4", 3), ("rgb", "u1", 3)])
-    body["xyz"] = points
-    body["rgb"] = colors
-    return header + body.tobytes()
+# -- inference -----------------------------------------------------------------
 
 
-# ── inference ─────────────────────────────────────────────────────────────────
+def _load_frames(req: "InferRequest", dst_dir: str):
+    """Decode the request's input into LingBot-Map's preprocessed frame tensor.
 
-
-def _run(req: "InferRequest", dst_dir: str) -> tuple[bytes, int, int]:
-    import sys
-
-    if LINGBOT_DIR not in sys.path:
-        sys.path.insert(0, LINGBOT_DIR)
-    from demo import load_images, postprocess
+    Asks the loader for one frame more than the cap so an over-long input is
+    detectable, then truncates: reporting the truncation beats silently
+    reconstructing a prefix of what the caller sent.
+    """
+    _ensure_lingbot_on_path()
+    from demo import load_images
 
     if req.video_url:
         video_path = _fetch_video(req.video_url, dst_dir)
-        images = load_images(video_path=video_path, fps=req.fps)
+        images, _paths, _folder = load_images(
+            video_path=video_path,
+            fps=req.fps,
+            first_k=MAX_FRAMES + 1,
+            image_size=IMAGE_SIZE,
+            patch_size=PATCH_SIZE,
+        )
     else:
         folder = _materialize_images(req.images or [], dst_dir)
-        images = load_images(image_folder=folder)
+        images, _paths, _folder = load_images(
+            image_folder=folder,
+            first_k=MAX_FRAMES + 1,
+            image_size=IMAGE_SIZE,
+            patch_size=PATCH_SIZE,
+        )
 
-    frames = int(images.shape[0]) if hasattr(images, "shape") else len(images)
+    truncated = int(images.shape[0]) > MAX_FRAMES
+    if truncated:
+        images = images[:MAX_FRAMES]
+    return images, truncated
+
+
+def _run(req: "InferRequest", dst_dir: str) -> dict:
+    _ensure_lingbot_on_path()
+    from demo import postprocess
+
+    images, truncated = _load_frames(req, dst_dir)
+    frames = int(images.shape[0])
     if frames == 0:
         raise ValueError("no frames decoded from input")
 
-    images = images.to(_device)
-    with torch.no_grad():
+    model = _get_model(req.mode, req.num_scale_frames)
+    dtype = _inference_dtype()
+
+    # The frames stay on CPU on purpose: both inference paths slice-then-move per
+    # iteration, so peak VRAM tracks one window instead of the whole sequence.
+    with torch.no_grad(), torch.amp.autocast(
+        "cuda", dtype=dtype, enabled=torch.cuda.is_available()
+    ):
         if req.mode == "windowed":
-            predictions = _model.inference_windowed(
+            predictions = model.inference_windowed(
                 images,
                 window_size=req.window_size,
                 overlap_size=req.overlap_size,
@@ -337,20 +417,42 @@ def _run(req: "InferRequest", dst_dir: str) -> tuple[bytes, int, int]:
                 output_device=torch.device("cpu"),
             )
         else:
-            predictions = _model.inference_streaming(
+            predictions = model.inference_streaming(
                 images,
                 num_scale_frames=req.num_scale_frames,
                 keyframe_interval=req.keyframe_interval,
                 output_device=torch.device("cpu"),
             )
-    predictions, _ = postprocess(predictions, images.to("cpu"))
 
-    pts, cols = _fuse_point_cloud(
-        predictions, req.conf_percentile, req.max_points, req.voxel_size
+    # postprocess() converts poses to c2w, moves everything to CPU, drops the
+    # leading batch dim, and hands the frames back separately (it removes the
+    # "images" key from predictions), so the colours come from its return value.
+    predictions, images_cpu = postprocess(predictions, images)
+
+    conf = predictions.get("world_points_conf")
+    keep, sky_dropped = (None, 0)
+    if req.mask_sky:
+        keep, sky_dropped = _sky_keep_mask(conf, images_cpu, dst_dir)
+
+    pts, cols = fuse_point_cloud(
+        predictions["world_points"],
+        images_cpu,
+        conf=conf,
+        keep=keep,
+        conf_percentile=req.conf_percentile,
+        max_points=req.max_points,
+        voxel_size=req.voxel_size,
     )
     if pts.shape[0] == 0:
         raise ValueError("reconstruction produced no points above the confidence floor")
-    return _write_ply(pts, cols), pts.shape[0], frames
+
+    return {
+        "ply": write_ply(pts, cols),
+        "num_points": int(pts.shape[0]),
+        "frames": frames,
+        "frames_truncated": truncated,
+        "sky_points_removed": sky_dropped,
+    }
 
 
 async def _run_inference(task_id: str, req: "InferRequest") -> None:
@@ -360,10 +462,9 @@ async def _run_inference(task_id: str, req: "InferRequest") -> None:
         t0 = time.time()
         try:
             with tempfile.TemporaryDirectory() as dst_dir:
-                ply_bytes, num_points, frames = await loop.run_in_executor(
-                    None, _run, req, dst_dir
-                )
+                result = await loop.run_in_executor(None, _run, req, dst_dir)
 
+            ply_bytes = result.pop("ply")
             blob_name = f"scenes/video2scene/{task_id}.ply"
             blob = _bucket.blob(blob_name)
             await loop.run_in_executor(
@@ -379,17 +480,17 @@ async def _run_inference(task_id: str, req: "InferRequest") -> None:
                 {
                     "status": "done",
                     "result_gcs_url": gcs_url,
-                    "num_points": num_points,
-                    "frames": frames,
                     "bytes": len(ply_bytes),
                     "elapsed_ms": int(elapsed * 1000),
+                    **result,
                 }
             )
             log.info(
-                "[%s] done in %.1fs — %d frames → %d points (%d bytes) → %s",
-                task_id, elapsed, frames, num_points, len(ply_bytes), gcs_url,
+                "[%s] done in %.1fs: %d frames -> %d points (%d bytes) -> %s",
+                task_id, elapsed, result["frames"], result["num_points"],
+                len(ply_bytes), gcs_url,
             )
-        except Exception as exc:  # noqa: BLE001 — surfaced opaquely below
+        except Exception as exc:  # noqa: BLE001 - surfaced opaquely below
             _tasks[task_id].update(
                 {
                     "status": "failed",
@@ -397,14 +498,29 @@ async def _run_inference(task_id: str, req: "InferRequest") -> None:
                     "elapsed_ms": int((time.time() - t0) * 1000),
                 }
             )
+        finally:
+            _prune_tasks()
 
 
-# ── API ───────────────────────────────────────────────────────────────────────
+def _prune_tasks() -> None:
+    """Drop the oldest settled tasks once the history budget is exceeded."""
+    overflow = len(_tasks) - TASK_HISTORY
+    if overflow <= 0:
+        return
+    for task_id, task in list(_tasks.items()):
+        if overflow <= 0:
+            return
+        if task.get("status") in ("done", "failed"):
+            _tasks.pop(task_id, None)
+            overflow -= 1
+
+
+# -- API -----------------------------------------------------------------------
 
 
 class InferRequest(BaseModel):
     video_url: str | None = None
-    images: list[str] | None = Field(default=None, max_length=MAX_FRAMES)
+    images: list[str] | None = Field(default=None, max_length=MAX_FRAME_NUM)
     mode: str = "streaming"
     fps: int = Field(default=8, ge=1, le=30)
     keyframe_interval: int = Field(default=4, ge=1, le=64)
@@ -429,6 +545,13 @@ async def infer(
         raise HTTPException(status_code=400, detail="provide video_url or images[]")
     if body.mode not in ("streaming", "windowed"):
         raise HTTPException(status_code=400, detail="mode must be streaming or windowed")
+    if not _weights_present():
+        # Fail the submission rather than queue a job that cannot succeed; the
+        # three.ws API maps this to its "capture is unconfigured" state.
+        raise HTTPException(
+            status_code=503,
+            detail=f"model weights are not mounted at {WEIGHTS_DIR}/{MODEL_FILE}",
+        )
     task_id = str(uuid.uuid4())
     _tasks[task_id] = {"task_id": task_id, "status": "queued", "model": "video2scene"}
     background_tasks.add_task(_run_inference, task_id, body)
@@ -452,4 +575,8 @@ async def health() -> dict:
         "gpu_available": torch.cuda.is_available(),
         "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
         "model_loaded": _model is not None,
+        "model_build": list(_model_key) if _model_key else None,
+        "weights_present": _weights_present(),
+        "max_frames": MAX_FRAMES,
+        "error": _model_error,
     }
