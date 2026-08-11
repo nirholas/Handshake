@@ -7,16 +7,22 @@
 // into the vanity_inventory table). Plaintext keys never touch disk, a log, or
 // the network.
 //
-// RESUMABLE: a checkpoint file records which targets are already done. On restart
-// (spot preemption → the MIG relaunches, or Cloud Run Job retry) it skips
-// completed targets and continues. SIGTERM (the preemption signal) flushes the
-// checkpoint and exits cleanly so no in-flight state is lost — an interrupted
-// target simply restarts from scratch (a random search has no resumable inner
-// state; expected work is unchanged).
+// RESUMABLE, on two levels:
+//   • A checkpoint FILE records which targets this container already finished.
+//   • With WRITE_DB=1 the completed-set is ALSO seeded from `vanity_inventory`
+//     itself, because a Cloud Run task's /tmp checkpoint dies with the task. The
+//     DB is the only state that survives a spot preemption, so without this every
+//     retry re-ground patterns already sitting on the shelf.
+// SIGTERM (the preemption signal) flushes the checkpoint and exits cleanly so no
+// in-flight state is lost. An interrupted target simply restarts from scratch (a
+// random search has no resumable inner state; expected work is unchanged).
+// MAX_RUNTIME_SEC does the same thing proactively: it winds the run down and
+// exits 0 BEFORE the platform's task timeout kills it, so a long shard reports a
+// successful execution with a real summary instead of a timeout failure.
 //
 // Designed for GCP spot CPU (Cloud Run Job or a GCE spot MIG) but runs anywhere
 // with Node — the local dev run that seeds the initial inventory uses the exact
-// same code path (see docs/gcp-credits.md).
+// same code path (see docs/ops/gcp-credits.md).
 //
 // Config (all via env):
 //   OUTPUT_FILE      encrypted JSONL out (default ./out/inventory.jsonl)
@@ -26,6 +32,8 @@
 //   INCLUDE_5        '1' to include slow 5-char stretch targets
 //   IGNORE_CASE      '1' to fold case on prefix targets
 //   MAX_FOUND        stop after N addresses (default: all targets)
+//   MAX_RUNTIME_SEC  wind down cleanly after N seconds (default: no budget)
+//   MAX_ATTEMPTS_PER_TARGET  give up on one target after N tries (default 200M)
 //   WORKERS          worker count (default: available parallelism)
 //   RETENTION_DAYS   ciphertext retention after reveal (default 0 = delete-on-reveal)
 //   BATCH_LABEL      label for this run (default: timestamped)
@@ -43,6 +51,7 @@ import os from 'node:os';
 import bs58 from 'bs58';
 
 import { defaultTargets, targetId, labelFor } from './targets.mjs';
+import { resolveGceShardIndex } from './gce-shard.mjs';
 import { computeRarity } from '../../src/solana/vanity/rarity.js';
 import { priceFromRarity } from '../../api/_lib/vanity-inventory-pricing.js';
 import { sealSecret, preferredScheme } from '../../api/_lib/vanity-vault.js';
@@ -55,12 +64,38 @@ const CHECKPOINT_FILE = resolve(env.CHECKPOINT_FILE || join(HERE, 'out', 'checkp
 const SUMMARY_FILE = resolve(env.SUMMARY_FILE || join(HERE, 'out', 'summary.json'));
 const RETENTION_DAYS = Math.max(0, parseInt(env.RETENTION_DAYS || '0', 10) || 0);
 const MAX_FOUND = env.MAX_FOUND ? parseInt(env.MAX_FOUND, 10) : Infinity;
+// Wall-clock budget. Cloud Run kills a task at its --task-timeout and reports the
+// whole execution FAILED even though every sealed key already landed in the DB
+// (observed on execution vanity-grinder-jx97w: 2/4 tasks "The configured timeout
+// was reached"). Setting this a couple of minutes under the platform timeout lets
+// the run stop itself, write its summary, and exit 0.
+const MAX_RUNTIME_SEC = Math.max(0, parseInt(env.MAX_RUNTIME_SEC || '0', 10) || 0);
 const WORKER_COUNT = Math.max(1, parseInt(env.WORKERS || String(os.availableParallelism?.() || os.cpus().length), 10));
 const RUNNER = env.RUNNER || 'local';
 const BATCH_LABEL = env.BATCH_LABEL || `batch-${new Date().toISOString().replace(/[:.]/g, '-')}`;
 const WRITE_DB = env.WRITE_DB === '1' || env.WRITE_DB === 'true';
 
-function loadTargets() {
+// Which slice of the target list this instance owns.
+//
+// Cloud Run Jobs hand every task its ordinal in CLOUD_RUN_TASK_INDEX. A GCE MIG
+// hands out nothing: its VMs get identical container-env and randomly-suffixed
+// names, so every VM used to read shard 0 and grind the same targets as all its
+// siblings. gce-shard.mjs resolves a real position from the instance group.
+async function resolveShardIndex(shardCount) {
+	if (env.SHARD_INDEX != null && env.SHARD_INDEX !== '') {
+		return { index: Math.max(0, parseInt(env.SHARD_INDEX, 10) || 0), source: 'env' };
+	}
+	if (env.CLOUD_RUN_TASK_INDEX != null && env.CLOUD_RUN_TASK_INDEX !== '') {
+		return { index: Math.max(0, parseInt(env.CLOUD_RUN_TASK_INDEX, 10) || 0), source: 'cloud-run-task' };
+	}
+	if (shardCount > 1 && RUNNER === 'gce-spot-mig') {
+		const resolved = await resolveGceShardIndex(shardCount);
+		return { index: resolved.index, source: resolved.source };
+	}
+	return { index: 0, source: 'default' };
+}
+
+async function loadTargets() {
 	let list;
 	if (env.TARGETS_FILE && existsSync(resolve(env.TARGETS_FILE))) {
 		const raw = JSON.parse(readFileSync(resolve(env.TARGETS_FILE), 'utf8'));
@@ -68,12 +103,36 @@ function loadTargets() {
 	} else {
 		list = defaultTargets({ include5: env.INCLUDE_5 === '1', ignoreCase: env.IGNORE_CASE === '1' });
 	}
-	// Shard across parallel instances. Cloud Run Jobs expose the task ordinal as
-	// CLOUD_RUN_TASK_INDEX — without this fallback every task would grind shard 0.
 	const shardCount = Math.max(1, parseInt(env.SHARD_COUNT || '1', 10));
-	const shardIndex = Math.max(0, parseInt(env.SHARD_INDEX ?? env.CLOUD_RUN_TASK_INDEX ?? '0', 10));
-	if (shardCount > 1) list = list.filter((_, i) => i % shardCount === shardIndex);
-	return list;
+	if (shardCount === 1) return list;
+	const { index, source } = await resolveShardIndex(shardCount);
+	console.log(`[grind] shard ${index}/${shardCount} (source: ${source})`);
+	return list.filter((_, i) => i % shardCount === index % shardCount);
+}
+
+// Durable resume signal. A Cloud Run task's checkpoint file lives in the task's
+// own ephemeral /tmp, so a preemption or retry loses it entirely; the inventory
+// table is the only state that survives. Seeding the completed-set from patterns
+// already in stock is what makes a retried shard continue instead of restart.
+// Never fatal: a DB hiccup must not stop a grinder that can still write a JSONL.
+async function loadDbCompleted() {
+	if (!WRITE_DB) return 0;
+	try {
+		const store = await import('../../api/_lib/vanity-inventory-store.js');
+		const patterns = await store.availableTargetPatterns();
+		let added = 0;
+		for (const p of patterns) {
+			const id = targetId({ prefix: p.prefix || '', suffix: p.suffix || '', ignoreCase: p.ignoreCase });
+			if (!completed.has(id)) {
+				completed.add(id);
+				added += 1;
+			}
+		}
+		return added;
+	} catch (err) {
+		console.error(`[grind] could not read inventory for resume (${err.message}); grinding the full shard`);
+		return 0;
+	}
 }
 
 function loadCheckpoint() {
@@ -183,6 +242,9 @@ async function persistFound({ target, publicKey, secretKey, attempts, durationMs
 
 // ── Orchestration ────────────────────────────────────────────────────────────
 let stopping = false;
+// Why the run wound down early, so the summary distinguishes a real spot
+// preemption (retry the shard) from an intentional stop (quota met, budget spent).
+let stopReason = '';
 let onStop = null;
 const workers = [];
 
@@ -211,10 +273,13 @@ async function main() {
 		process.exit(3);
 	}
 
-	const all = loadTargets();
-	const pending = all.filter((t) => !completed.has(targetId(t)));
 	console.log(`[grind] ${BATCH_LABEL} runner=${RUNNER} scheme=${preferredScheme()} workers=${WORKER_COUNT}`);
-	console.log(`[grind] targets: ${all.length} total, ${completed.size} already done, ${pending.length} to grind`);
+	const all = await loadTargets();
+	const fromDb = await loadDbCompleted();
+	if (fromDb) console.log(`[grind] ${fromDb} target(s) already in stock per vanity_inventory, skipping them`);
+	const pending = all.filter((t) => !completed.has(targetId(t)));
+	console.log(`[grind] targets: ${all.length} total, ${all.length - pending.length} already done, ${pending.length} to grind`);
+	if (MAX_RUNTIME_SEC) console.log(`[grind] runtime budget: ${MAX_RUNTIME_SEC}s`);
 	if (!pending.length) {
 		await writeSummary(all.length);
 		console.log('[grind] nothing to do — inventory target list already complete.');
@@ -223,6 +288,7 @@ async function main() {
 
 	let cursor = 0;
 	let active = 0;
+	let deadline = null;
 
 	await new Promise((resolveAll) => {
 		let settled = false;
@@ -241,8 +307,33 @@ async function main() {
 			maybeFinish();
 		};
 
+		// Proactive wind-down before the platform's task timeout turns a productive
+		// run into a FAILED execution. Same path as SIGTERM: flush, let workers
+		// abort at their next batch boundary, write the summary, exit 0.
+		if (MAX_RUNTIME_SEC) {
+			deadline = setTimeout(() => {
+				if (stopping) return;
+				console.log(`[grind] runtime budget ${MAX_RUNTIME_SEC}s reached: checkpointing and finishing cleanly`);
+				stopping = true;
+				stopReason = 'runtime-budget';
+				saveCheckpoint();
+				onStop();
+			}, MAX_RUNTIME_SEC * 1000);
+		}
+
 		const assign = (worker) => {
-			if (stopping || cursor >= pending.length || stats.found >= MAX_FOUND) {
+			// Quota already met, possibly on the FIRST assign, when a resumed
+			// checkpoint carries found >= MAX_FOUND. Winding the run down here is
+			// what stops that case from idling every worker with no target while
+			// `active` never rises off zero and the run never settles.
+			if (stats.found >= MAX_FOUND) {
+				stopping = true;
+				stopReason = stopReason || 'max-found';
+				stopAllWorkers();
+				maybeFinish();
+				return;
+			}
+			if (stopping || cursor >= pending.length) {
 				maybeFinish();
 				return;
 			}
@@ -276,6 +367,7 @@ async function main() {
 						// its current (possibly hard) target to completion. Each aborts at
 						// its next batch boundary and reports 'aborted', winding active to 0.
 						stopping = true;
+						stopReason = stopReason || 'max-found';
 						stopAllWorkers();
 						maybeFinish();
 						return;
@@ -311,6 +403,7 @@ async function main() {
 		}
 	});
 
+	if (deadline) clearTimeout(deadline);
 	for (const w of workers) await w.terminate();
 	await writeSummary(all.length);
 }
@@ -329,7 +422,12 @@ async function writeSummary(targetCount) {
 		elapsedSec: Math.round(elapsedSec * 100) / 100,
 		keysPerSec: Math.round(keysPerSec),
 		keysPerSecPerWorker: Math.round(keysPerSec / WORKER_COUNT),
-		preempted: stopping && stats.found < targetCount,
+		stopReason: stopReason || (stopping ? 'signal' : 'complete'),
+		// A real spot preemption (SIGTERM) leaves work on the table and the shard
+		// should be retried. Hitting MAX_FOUND or the runtime budget is a clean,
+		// intentional stop; reporting those as "preempted" made a healthy run look
+		// like a failure.
+		preempted: stopReason === 'signal',
 		finishedAt: new Date().toISOString(),
 	};
 	writeFileSync(SUMMARY_FILE, JSON.stringify(summary, null, '\t'));
@@ -343,6 +441,7 @@ for (const sig of ['SIGTERM', 'SIGINT']) {
 		if (stopping) return;
 		console.log(`[grind] ${sig} received — checkpointing and shutting down`);
 		stopping = true;
+		stopReason = 'signal';
 		saveCheckpoint();
 		if (onStop) onStop();
 	});
