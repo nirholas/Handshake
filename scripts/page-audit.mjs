@@ -568,7 +568,26 @@ async function reverify(browser, results, viewports, authed) {
 	}
 	if (!suspects.length) return { checked: 0, demoted: 0, skipped: 0 };
 
-	const budget = suspects.slice(0, REVERIFY_CAP);
+	// The cap is spread evenly across viewports, never spent in arrival order.
+	// Desktop runs first, so a flat slice handed all 60 slots to desktop and left
+	// every mobile suspect reported-but-unverified: on 2026-08-11 that published
+	// 28 unchecked mobile pages as the report's worst offenders while the desktop
+	// pages beside them demoted at 4-in-5. Round-robin keeps one slow viewport
+	// from starving the other.
+	const byViewport = new Map();
+	for (const s of suspects) {
+		if (!byViewport.has(s.viewport)) byViewport.set(s.viewport, []);
+		byViewport.get(s.viewport).push(s);
+	}
+	const lanes = [...byViewport.values()];
+	const budget = [];
+	for (let i = 0; budget.length < Math.min(REVERIFY_CAP, suspects.length); i++) {
+		for (const lane of lanes) {
+			if (i >= lane.length) continue;
+			budget.push(lane[i]);
+			if (budget.length >= REVERIFY_CAP) break;
+		}
+	}
 	const skipped = suspects.length - budget.length;
 	console.log(
 		`\n── re-verify: ${budget.length} route/viewport pair(s) with errors, re-checked one at a time ──`,
