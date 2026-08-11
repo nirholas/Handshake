@@ -13,7 +13,7 @@ Both on the three.ws MCP server (`@three-ws/mcp-server`).
 
 ### `rig_mesh` — rig an existing GLB ($0.20 USDC)
 
-Auto-rig a static GLB: adds a humanoid skeleton and per-vertex skin weights via the three.ws rig pipeline (VAST-AI UniRig by default).
+Auto-rig a static GLB: adds a humanoid skeleton and per-vertex skin weights via the three.ws rig pipeline (Make-It-Animatable by default).
 
 | Param | Required | Notes |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ Returns the **rigged** `glbUrl` and a three.ws pose-studio link (`https://three.
 
 ### `forge_avatar` — text/image → rigged avatar in one call ($0.45 USDC)
 
-Chains the whole pipeline: Granite prompt director → FLUX + TRELLIS/Hunyuan3D mesh → UniRig auto-rig, so the model loads straight into the pose studio.
+Chains the whole pipeline: Granite prompt director → FLUX + TRELLIS/Hunyuan3D mesh → Make-It-Animatable auto-rig, so the model loads straight into the pose studio.
 
 | Param | Required | Notes |
 | --- | --- | --- |
