@@ -140,10 +140,25 @@
 
 		/* load more */
 		.load-more-wrap { text-align: center; margin-top: 28px; }
+		/* Busy shows as aria-busy plus a real spinner instead of a swapped label,
+		   so a translated "Load more" survives a fetch round trip. */
+		#ag-more[aria-busy="true"] { pointer-events: none; }
+		#ag-more[aria-busy="true"]::after { content: ''; width: 13px; height: 13px; border: 2px solid currentColor;
+			border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+		@keyframes spin { to { transform: rotate(360deg); } }
+		@media (prefers-reduced-motion: reduce) {
+			#ag-more[aria-busy="true"]::after { animation-duration: 2.4s; }
+			.sk { animation: none; opacity: .7; }
+			.ag-card { transition: none; }
+		}
 
 		@media (max-width: 600px) {
 			.controls { gap: 6px; }
 			.hero h1 { font-size: 26px; }
+			/* Site-wide 44px tap-target floor. mobile.css sets it for the fields by
+			   id; these chips and CTAs carry page-local classes it cannot know. */
+			.chip, .btn { min-height: 44px; }
+			.src-chips { gap: 8px; }
 		}
 		</style>
 		<!-- Site-wide mobile polish: horizontal-scroll guard, iOS focus-zoom
@@ -365,7 +380,7 @@
 
 		function setBusy(on) {
 			moreBtn.disabled = on;
-			moreBtn.textContent = on ? 'Loading…' : 'Load more';
+			moreBtn.setAttribute('aria-busy', on ? 'true' : 'false');
 		}
 
 		async function load(reset = false) {
