@@ -303,4 +303,30 @@ describe('normalizeVariantMarket', () => {
 	it('falls back to source when metricsSource is absent', () => {
 		expect(normalizeVariantMarket({ price: 1, source: 'birdeye' }).metrics_source).toBe('birdeye');
 	});
+
+	// Undocumented in the published v1 type but present live on birdeye-sourced
+	// rows (verified 2026-08-11). Dropping them cost the cascade its holder count
+	// on exactly the reads where Birdeye's own quota is exhausted.
+	it('carries the holder count and supply that live rows include', () => {
+		const m = normalizeVariantMarket({
+			price: 76.08,
+			holder: 7_709_323,
+			circulatingSupply: 582_481_767.41,
+			totalSupply: 632_009_825.03,
+			fdv: 48_082_911_165.48,
+		});
+		expect(m).toMatchObject({
+			holders: 7_709_323,
+			supply: 582_481_767.41,
+			total_supply: 632_009_825.03,
+			fdv: 48_082_911_165.48,
+		});
+	});
+
+	it('leaves holders and supply null on a row that omits them', () => {
+		const m = normalizeVariantMarket({ price: 1, metricsSource: 'clickhouse_trades' });
+		expect(m.holders).toBeNull();
+		expect(m.supply).toBeNull();
+		expect(m.total_supply).toBeNull();
+	});
 });
