@@ -120,6 +120,15 @@
 
 /* dashboard */
 .lc-dash { display: flex; flex-direction: column; gap: var(--space-md); }
+/* engine-down banner: the policy is armed but no worker is sweeping it */
+.lc-notice {
+	display: flex; gap: var(--space-sm); align-items: flex-start;
+	padding: var(--space-sm); border-radius: var(--radius-md);
+	background: color-mix(in srgb, var(--warn) 8%, var(--surface-1));
+	border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent);
+}
+.lc-notice__icon { color: var(--warn); font-size: var(--text-md); line-height: 1.2; flex: none; }
+.lc-notice__title { font-family: var(--font-display); font-size: var(--text-sm); color: var(--warn); margin: 0 0 2px; }
 .lc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: var(--space-xs); }
 .lc-stat { display: flex; flex-direction: column; gap: 2px; padding: var(--space-sm); border-radius: var(--radius-md); background: var(--surface-1); border: 1px solid var(--stroke); }
 .lc-stat__v { font-family: var(--font-mono); font-size: var(--text-md); font-weight: var(--weight-semibold); color: var(--ink-bright); }

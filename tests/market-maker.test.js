@@ -13,6 +13,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	GUARDS, PRESETS, PolicyError,
 	normalizePolicyPatch, assertPolicySafe, toPublicPolicy, toPublicAction, SOL,
+	engineLivenessFromBeat, ENGINE_STALE_AFTER_SECONDS,
 } from '../api/_lib/market-maker.js';
 
 describe('normalizePolicyPatch — presets + coercion', () => {
@@ -142,5 +143,40 @@ describe('toPublicPolicy / toPublicAction', () => {
 		expect(a.id).toBe(7);
 		expect(a.sol).toBeCloseTo(0.1, 6);
 		expect(a.kind).toBe('defend_buy');
+	});
+});
+
+describe('engineLivenessFromBeat: is a worker actually sweeping?', () => {
+	const NOW = Date.parse('2026-06-23T12:00:00Z');
+
+	it('reports a fresh heartbeat as live', () => {
+		const e = engineLivenessFromBeat({ mode: 'simulate', last_beat_at: '2026-06-23T11:59:30Z' }, NOW);
+		expect(e.live).toBe(true);
+		expect(e.mode).toBe('simulate');
+		expect(e.seconds_since_beat).toBe(30);
+		expect(e.stale_after_seconds).toBe(ENGINE_STALE_AFTER_SECONDS);
+	});
+
+	it('reports a stale heartbeat as down (six missed beats)', () => {
+		const e = engineLivenessFromBeat({ mode: 'live', last_beat_at: '2026-06-23T11:50:00Z' }, NOW);
+		expect(e.live).toBe(false);
+		expect(e.seconds_since_beat).toBe(600);
+		expect(e.last_beat_at).toBe('2026-06-23T11:50:00.000Z');
+	});
+
+	it('treats a missing or unreadable heartbeat as down, never as live', () => {
+		for (const row of [null, undefined, {}, { last_beat_at: null }, { last_beat_at: 'not-a-date' }]) {
+			const e = engineLivenessFromBeat(row, NOW);
+			expect(e.live).toBe(false);
+			expect(e.last_beat_at).toBeNull();
+			expect(e.seconds_since_beat).toBeNull();
+		}
+	});
+
+	it('holds the boundary exactly at the stale window', () => {
+		const at = new Date(NOW - ENGINE_STALE_AFTER_SECONDS * 1000).toISOString();
+		const past = new Date(NOW - (ENGINE_STALE_AFTER_SECONDS + 1) * 1000).toISOString();
+		expect(engineLivenessFromBeat({ last_beat_at: at }, NOW).live).toBe(true);
+		expect(engineLivenessFromBeat({ last_beat_at: past }, NOW).live).toBe(false);
 	});
 });
