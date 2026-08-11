@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createAgenc, ThreeWsError } from '../src/index.js';
+import { createAgenc, ThreeWsError, AgenCError } from '../src/index.js';
 
 // A scripted fetch double: each call shifts the next queued response and records
 // the request. No network, no real endpoints — we assert on request shaping and
@@ -171,6 +171,7 @@ test('a 404 from the bridge surfaces as a typed not_found ThreeWsError', async (
 	const client = createAgenc({ fetch });
 	await assert.rejects(() => client.getTask('TaskPdaMissing1111111111111111111111111111'), (e) => {
 		assert.ok(e instanceof ThreeWsError);
+		assert.ok(e instanceof AgenCError, 'the README-documented AgenCError alias must match thrown errors');
 		assert.equal(e.code, 'not_found');
 		assert.equal(e.status, 404);
 		return true;

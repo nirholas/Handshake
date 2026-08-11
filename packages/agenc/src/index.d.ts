@@ -13,6 +13,9 @@ export declare class PaymentRequiredError extends ThreeWsError {
 	accepts: unknown | null;
 }
 
+/** Ergonomic alias for ThreeWsError, matching the README's error reference. */
+export declare const AgenCError: typeof ThreeWsError;
+
 export declare const DEFAULT_BASE_URL: string;
 
 export type Cluster = 'mainnet' | 'devnet';
