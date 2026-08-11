@@ -5,9 +5,24 @@
 # and --min-instances=1 so the loop keeps ticking between probes. Build context is
 # the REPO ROOT (the Dockerfile compiles the @three-ws/solana-agent SDK).
 #
-# Secrets (Secret Manager): DATABASE_URL, UPSTASH_REDIS_REST_URL,
-# UPSTASH_REDIS_REST_TOKEN, and optionally AGENC_DEVNET_RPC_URL (a private devnet
-# RPC to dodge the public faucet rate limit).
+# Runtime config mirrors three-ws-api: the DATABASE_URL secret (the same Neon
+# projection sink the API reads), the shared Redis proxy on the private VPC range
+# for the feed:events ticker, and the pinned three-ws@ runtime service account
+# (the project's default compute SA was deleted, so an unpinned deploy fails).
+# Both secrets referenced below already exist in Secret Manager; a --set-secrets
+# entry naming a secret that does NOT exist fails the deploy step, which is why
+# AGENC_DEVNET_RPC_URL is not wired here (it is optional and the engine falls back
+# to the public devnet endpoint). To use a private devnet RPC, create it once and
+# add it to --set-secrets:
+#
+#   printf '%s' "$AGENC_DEVNET_RPC_URL" | gcloud secrets create agenc-devnet-rpc-url --data-file=-
+#   gcloud secrets add-iam-policy-binding agenc-devnet-rpc-url \
+#     --member=serviceAccount:three-ws@$PROJECT_ID.iam.gserviceaccount.com \
+#     --role=roles/secretmanager.secretAccessor
+#
+# An unattended fleet also needs a funded devnet wallet to top its signers up from
+# (AGORA_DEVNET_FUNDER_SECRET, see README) - without it the public faucet 429s and
+# the citizens cannot pay their own stake. Add it the same way once it exists.
 #
 #   gcloud builds submit --config workers/agora-citizens/cloudbuild.yaml .
 
@@ -16,10 +31,14 @@
 # "Unknown service account".
 serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
 
+# _REPO is the SHARED "workers" Artifact Registry repo the other long-lived Node
+# workers (agent-mm, agent-orders, okx-chat-bot) publish into. Cloud Build does not
+# create an Artifact Registry repo on demand, so a per-worker repo name that has
+# never been created fails the push step after a full image build.
 substitutions:
   _REGION: us-central1
   _SERVICE: agora-citizens
-  _REPO: agora-citizens
+  _REPO: workers
   _MIN_INSTANCES: "1"
   _MAX_INSTANCES: "1"
   _MAX_CITIZENS: "4"
@@ -32,19 +51,20 @@ steps:
       - --file
       - workers/agora-citizens/Dockerfile
       - --tag
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/worker:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
       - --tag
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/worker:latest
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
       - --cache-from
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/worker:latest
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
       - .
+    timeout: 1800s
 
   - id: push
     name: gcr.io/cloud-builders/docker
     args:
       - push
       - --all-tags
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/worker
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}
 
   - id: deploy
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
@@ -53,7 +73,7 @@ steps:
       - run
       - deploy
       - ${_SERVICE}
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/worker:$SHORT_SHA
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
       - --region=${_REGION}
       - --platform=managed
       - --no-cpu-throttling
@@ -62,11 +82,20 @@ steps:
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}
       - --no-allow-unauthenticated
-      - --set-env-vars=AGORA_CLUSTER=devnet,AGORA_MAX_CITIZENS=${_MAX_CITIZENS},AGORA_DISPATCH_TASKS=1
-      - --set-secrets=DATABASE_URL=agora-database-url:latest,UPSTASH_REDIS_REST_URL=upstash-redis-rest-url:latest,UPSTASH_REDIS_REST_TOKEN=upstash-redis-rest-token:latest,AGENC_DEVNET_RPC_URL=agenc-devnet-rpc-url:latest
+      - --service-account=three-ws@$PROJECT_ID.iam.gserviceaccount.com
+      # The feed:events ticker lives on the shared Redis proxy at a private VPC
+      # address, so the worker needs the same connector three-ws-api uses. Without
+      # it the REST calls simply never reach the proxy and the world loses its
+      # live ticker (the projection still lands in Postgres).
+      - --vpc-connector=three-ws-vpc
+      - --vpc-egress=private-ranges-only
+      - --set-env-vars=AGORA_CLUSTER=devnet,AGORA_MAX_CITIZENS=${_MAX_CITIZENS},AGORA_DISPATCH_TASKS=1,UPSTASH_REDIS_REST_URL=http://10.128.15.228
+      - --set-secrets=DATABASE_URL=DATABASE_URL:latest,UPSTASH_REDIS_REST_TOKEN=upstash-redis-rest-token:latest
 
 images:
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/worker:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
 
 options:
+  machineType: E2_HIGHCPU_8
   logging: CLOUD_LOGGING_ONLY
