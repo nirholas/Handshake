@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WORKER_DIR = join(ROOT, 'workers', 'agora-citizens');
 const DOCKERFILE = join(WORKER_DIR, 'Dockerfile');
+const DOCKERIGNORE = join(ROOT, '.dockerignore');
 
 /** Every .js file under the worker directory. */
 function walk(dir, out = []) {
@@ -84,6 +85,26 @@ describe('agora-citizens image carries the worker dependencies', () => {
 			`workers/agora-citizens imports ${target}, but no COPY in workers/agora-citizens/Dockerfile ` +
 				`brings it into the image. The build will still succeed and the container will crash on boot ` +
 				`with "Cannot find module". Add a COPY for it.\nCurrent COPY sources: ${copies.join(', ')}`,
+		).toBe(true);
+	});
+
+	// The mirror image of the check above: the Dockerfile COPYs the worker directory
+	// wholesale, and that directory also holds .cache/ - one RAW devnet secret key per
+	// citizen, gitignored precisely because it must never leave the machine. Nothing in
+	// the Dockerfile can opt out of it; only the build context can. Left in, every
+	// pushed image carries the keys and the deployed fleet drives the same on-chain
+	// identities as the local one (the double-claim failure the README warns about).
+	it('.dockerignore keeps the worker signing-key cache out of the build context', () => {
+		const patterns = readFileSync(DOCKERIGNORE, 'utf8')
+			.split('\n')
+			.map((l) => l.trim())
+			.filter((l) => l && !l.startsWith('#'));
+		const excluded = patterns.some((p) => p === 'workers/*/.cache' || p === 'workers/agora-citizens/.cache' || p === '**/.cache');
+		expect(
+			excluded,
+			'workers/agora-citizens/.cache holds raw devnet secret keys and the Dockerfile COPYs the whole ' +
+				'worker directory, so without a .dockerignore entry those keys are baked into the pushed image. ' +
+				`Add "workers/*/.cache" to .dockerignore.\nCurrent patterns: ${patterns.join(', ')}`,
 		).toBe(true);
 	});
 });
