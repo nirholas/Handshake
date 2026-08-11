@@ -420,14 +420,18 @@ async function dwellTask(entry, ms) {
 
 async function readText(entry, step) {
 	const loc = entry.page.locator(step.selector);
-	if (step.multi) {
-		const texts = (await loc.allInnerTexts().catch(() => []))
-			.map((t) => t.replace(/\s+/g, ' ').trim())
-			.filter(Boolean);
-		return texts.slice(0, step.limit || 5).join('  ·  ');
-	}
-	const t = await loc.first().innerText({ timeout: 8_000 }).catch(() => '');
-	return t.replace(/\s+/g, ' ').trim();
+	// A content selector matches layout nodes as well as prose: Wikipedia's first
+	// `> p` is an empty spacer element, and MDN's is a breadcrumb shell. Taking
+	// first() blind returned '' and the run narrated nothing back, so read across
+	// the matches and take the first one that actually carries text.
+	// allInnerTexts() does not auto-wait, so keep the old read's patience: give the
+	// content a beat to attach before reading whatever is there.
+	await loc.first().waitFor({ state: 'attached', timeout: 8_000 }).catch(() => {});
+	const texts = (await loc.allInnerTexts().catch(() => []))
+		.map((t) => t.replace(/\s+/g, ' ').trim())
+		.filter(Boolean);
+	if (step.multi) return texts.slice(0, step.limit || 5).join('  ·  ');
+	return texts[0] || '';
 }
 
 // The executor the sequencer (task-runner.js) drives: narrate → perform → shot.
@@ -463,12 +467,12 @@ function makeExecutor(entry) {
 		},
 		async fail(step, err) {
 			await pushTaskFrame(entry, {
-				activity: `${step.narration} — hit a snag (${(err?.message || 'error').slice(0, 60)}), recovering`,
+				activity: `${step.narration}: hit a snag (${(err?.message || 'error').slice(0, 60)}), recovering`,
 				type: 'activity',
 			});
 		},
 		async done(task) {
-			await pushTaskFrame(entry, { activity: `Done — researched ${task.topic}`, type: 'analysis' });
+			await pushTaskFrame(entry, { activity: `Done, researched ${task.topic}`, type: 'analysis' });
 		},
 	};
 }
