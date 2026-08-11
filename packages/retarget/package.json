@@ -48,6 +48,7 @@
 	"sideEffects": false,
 	"scripts": {
 		"build": "node build.mjs",
+		"pretest": "npm run build",
 		"test": "node --test test/*.test.mjs",
 		"prepublishOnly": "npm run build && npm test"
 	},
