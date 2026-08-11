@@ -133,6 +133,43 @@ describe('page structure', () => {
 		expect(js).toContain("show('directory')");
 	});
 
+	it('designs an empty state for every grid that can come back empty', () => {
+		// Both grids can legitimately render zero cards: a registry between
+		// updates, and a filter bucket no program landed in. Neither may leave a
+		// blank void where the cards were.
+		expect(js).toContain('No programs are being tracked right now');
+		expect(js).toContain('data-clear-filter');
+		expect(css).toContain('.ad-empty {');
+	});
+
+	it('resets the filter chips with the bucket on a new lookup', () => {
+		// state.filter and the chips are one thing: setting the bucket back to
+		// "all" without repainting the chips leaves a chip claiming a filter that
+		// is not applied.
+		expect(js).toContain("setFilter('all')");
+		expect(js).not.toMatch(/state\.filter\s*=\s*'all'\s*;\s*\n\s*saveRecent/);
+	});
+
+	it('tells a visitor why a shared link with a broken address scanned nothing', () => {
+		expect(js).toContain('The address in this link is not a valid Solana or Ethereum address');
+	});
+
+	it('claims the "/" shortcut its own hint promises', () => {
+		// The site-wide Atlas palette also listens for "/" and stands down only on
+		// defaultPrevented (see tests/atlas.test.js). Without the preventDefault
+		// here the hint under the form is a lie.
+		expect(html).toContain('Press <kbd>/</kbd> to focus');
+		expect(js).toMatch(/e\.key !== '\/'[\s\S]{0,400}e\.preventDefault\(\)/);
+	});
+
+	it('never builds a card track wider than its own container', () => {
+		// A bare minmax(20rem, …) track is wider than the 320px container's inner
+		// width, so every card's right edge (status pill, score) is clipped off
+		// screen on a small phone.
+		const grid = css.slice(css.indexOf('.ad-grid {'));
+		expect(grid.slice(0, grid.indexOf('}'))).toContain('minmax(min(20rem, 100%), 1fr)');
+	});
+
 	it('respects a reduced-motion preference', () => {
 		expect(css).toContain('@media (prefers-reduced-motion: reduce)');
 	});

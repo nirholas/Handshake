@@ -29,6 +29,25 @@
 	border: 0;
 }
 
+/* One designed focus ring for every interactive element on the page, in the
+ * page's own accent language rather than whatever ring the browser happens to
+ * ship. Keyboard-only (:focus-visible), so pointer users never see it. */
+.ad-go:focus-visible,
+.ad-filter:focus-visible,
+.ad-chip-btn:focus-visible,
+.ad-recent-chip:focus-visible,
+.ad-card-src:focus-visible,
+.ad-form-hint a:focus-visible {
+	outline: 2px solid var(--cv-accent, #60a5fa);
+	outline-offset: 2px;
+	border-radius: var(--cv-radius-sm, 4px);
+}
+.ad-filter:focus-visible,
+.ad-chip-btn:focus-visible,
+.ad-recent-chip:focus-visible {
+	border-radius: 999px;
+}
+
 /* ---------------- Hero + form (mirrors the portfolio page) ---------------- */
 
 .ad-hero { max-width: 46rem; }
@@ -368,7 +387,11 @@
 
 .ad-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+	/* min(20rem, 100%) and not a bare 20rem: at 320px the container's inner
+	   width is narrower than the 20rem track, so a bare minimum builds a track
+	   wider than its own container and the right edge of every card (status
+	   pill, score number) is clipped off screen. */
+	grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
 	gap: 0.9rem;
 }
 .ad-card {
@@ -496,13 +519,34 @@
 	color: var(--cv-text-2, #a1a1aa);
 	margin: 0.2rem 0 0.9rem;
 }
-.ad-empty-filter {
+/* One empty-state treatment, used wherever a grid comes back with nothing:
+ * a filter bucket with no programs, or a registry that returned zero entries. */
+.ad-empty {
 	font-size: 0.8rem;
 	color: var(--cv-text-3, #64748b);
 	padding: 1.2rem;
 	text-align: center;
+	line-height: 1.6;
 	border: 1px dashed var(--cv-border, #27272a);
 	border-radius: var(--cv-radius-md, 8px);
+	grid-column: 1 / -1;
+}
+.ad-empty b { color: var(--cv-text-2, #a1a1aa); font-weight: 600; }
+.ad-empty button {
+	font: inherit;
+	font-size: 0.78rem;
+	color: var(--cv-accent, #60a5fa);
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	text-decoration: underline;
+}
+.ad-empty button:hover { color: var(--cv-text, #fafafa); }
+.ad-empty button:focus-visible {
+	outline: 2px solid var(--cv-accent, #60a5fa);
+	outline-offset: 2px;
+	border-radius: var(--cv-radius-sm, 4px);
 }
 
 /* ---------------- States ---------------- */
