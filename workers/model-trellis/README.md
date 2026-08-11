@@ -216,10 +216,25 @@ python3 -m pip install pytest httpx
 python3 -m pytest test_request_policy.py -q     # 18 tests
 ```
 
-The same suite runs **inside `docker build`** (see the `RUN python3 -m pytest`
-step in the Dockerfile), so a broken tier table or clamp fails the build instead
-of a user's generation. The GPU-bound half of the service is covered by the
-platform-side integration tests in
+[`test_app_contract.py`](./test_app_contract.py) covers the served surface
+instead, and needs the image's dependency set (torch, FastAPI, the cloned
+TRELLIS tree), so it runs inside the container rather than on your machine:
+
+```bash
+docker run --rm model-trellis python3 test_app_contract.py
+```
+
+It asserts the TRELLIS import chain resolves (FlexiCubes submodule included, the
+packaging bug that only ever surfaced minutes into a doomed revision), the auth
+boundary rejects a wrong bearer, `/` and `/health` answer, `images` arrays
+outside 1 to 6 entries are refused, and the SSRF guard rejects cleartext,
+loopback, and metadata-server sources. No GPU, no weights, no credentials: the
+ASGI lifespan is not started.
+
+**Both suites run inside `docker build`** (see the `RUN` gate in the Dockerfile),
+so a broken tier table, a bad dependency resolve, or a hole in the auth boundary
+fails the build instead of a user's generation. The GPU-bound half of the
+service is covered by the platform-side integration tests in
 [`tests/api/forge-trellis-selfhost.test.js`](../../tests/api/forge-trellis-selfhost.test.js).
 
 ## Run locally

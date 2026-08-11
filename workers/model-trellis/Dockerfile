@@ -95,12 +95,17 @@ WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY request_policy.py /app/request_policy.py
 COPY main.py /app/main.py
-COPY test_request_policy.py /app/test_request_policy.py
+COPY test_request_policy.py test_app_contract.py /app/
 
-# Build-time gate: the quality tiers, the clamps that keep a caller value from
-# crashing the nvdiffrast bake, and the image-fetch retry policy are all pure
-# logic, so they are proven here rather than in production. Needs no GPU.
-RUN python3 -m pytest /app/test_request_policy.py -q
+# Build-time gate, neither half of which needs a GPU:
+#   1. The quality tiers, the clamps that keep a caller value from crashing the
+#      nvdiffrast bake, and the image-fetch retry policy are pure logic, proven
+#      here rather than in production.
+#   2. The served contract, against the exact dependency set that will run: the
+#      TRELLIS import chain (FlexiCubes submodule included), the auth boundary,
+#      the probe surfaces, request validation, and the SSRF guard.
+RUN python3 -m pytest /app/test_request_policy.py -q \
+    && python3 /app/test_app_contract.py
 
 EXPOSE 8080
 
