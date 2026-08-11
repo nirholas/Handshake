@@ -114,6 +114,23 @@ describe('assessPhotoQuality', () => {
 		const r = assessPhotoQuality({ ...sharpClearFace, faceBox: { x: 470, y: 470, w: 90, h: 90 } });
 		expect(r.issues).toContain('far');
 	});
+
+	it('warns "dark" when the measured face luma is below the lighting gate', () => {
+		const r = assessPhotoQuality({ ...sharpClearFace, luma: 25 });
+		expect(r.verdict).toBe('warn');
+		expect(r.primary).toBe('dark');
+	});
+
+	it('warns "bright" when the measured face luma is blown out', () => {
+		const r = assessPhotoQuality({ ...sharpClearFace, luma: 240 });
+		expect(r.issues).toContain('bright');
+	});
+
+	it('does not judge lighting when luma was not measured', () => {
+		const r = assessPhotoQuality(sharpClearFace);
+		expect(r.issues).not.toContain('dark');
+		expect(r.issues).not.toContain('bright');
+	});
 });
 
 describe('computeSubjectFrame', () => {

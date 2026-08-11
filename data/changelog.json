@@ -19575,6 +19575,16 @@
 				"infra"
 			],
 			"link": "/wardrobe"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The selfie scanner now grades every shot before you commit to a build",
+			"summary": "Taking a selfie for an avatar got a real quality copilot. The viewfinder already tracked your face live; now the hint line names the exact fix (turn back to the camera, hold steady, find better light) instead of a generic warning, and after the countdown fires the captured still itself is re-scored, so motion blur or a lighting change in those last three seconds is caught on the review screen rather than a minute into the build. Uploaded photos get a lighting check too. Every threshold behind these gates is derived from the ways the reconstruction engine actually fails, so a shot that passes on your phone is a shot the engine can build from. And if your browser refreshes mid-capture, the shots you already took come back instead of starting you over.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/create/selfie"
 		}
 	]
 }
