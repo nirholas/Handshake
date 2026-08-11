@@ -51,6 +51,12 @@ steps:
       - --min-instances=0
       - --max-instances=4
       - --timeout=60
+      # One LiteRT interpreter per process, guarded by a lock in main.py, so
+      # inference is serialized inside an instance no matter how many requests
+      # land on it. Cloud Run's default (320) would queue hundreds behind that
+      # lock and blow the 60s timeout instead of scaling out; 8 keeps the
+      # in-instance wait to a few seconds and lets autoscaling add instances.
+      - --concurrency=8
       - --allow-unauthenticated
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
