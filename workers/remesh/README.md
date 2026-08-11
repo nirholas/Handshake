@@ -109,23 +109,60 @@ Unauthenticated, so Cloud Run's startup probe can reach it.
 | `API_KEY` | yes | — | Shared bearer secret (Secret Manager: `avatar-reconstruction-key`) |
 | `GCS_BUCKET` | yes | — | Output bucket; artifacts land under the `remesh/` prefix (`three-ws-avatar-reconstructions`) |
 | `MAX_CONCURRENT` | no | `2` | In-flight jobs |
-| `QUADRIFLOW_BIN` | no | `quadriflow` | Path to the QuadriFlow executable (built into the image) |
+| `QUADRIFLOW_BIN` | no | `quadriflow` | Path to the QuadriFlow executable. The image builds it and sets this to `/usr/local/bin/quadriflow` |
 | `BLENDER_TIMEOUT` | no | `300` | Seconds before a Blender FBX export is killed |
+
+## Build and test locally
+
+The image builds from [`Dockerfile`](./Dockerfile) with no arguments or build
+args. It compiles QuadriFlow from source and installs the ~1 GB Blender `bpy`
+wheel, so a cold build takes several minutes:
+
+```bash
+docker build -t remesh workers/remesh
+```
+
+[`test_remesh.py`](./test_remesh.py) is the core-path smoke test: the OBJ bridge
+to QuadriFlow, repair, QEM decimation, every `operation`, xatlas UV unwrap,
+texture bake and seam dilation, every export format, request validation, a real
+QuadriFlow quad remesh, and a rigged GLB to FBX round trip re-checked with
+[`verify_fbx.py`](./verify_fbx.py). The Docker build runs it as a gate, so a
+regression fails the image instead of reaching Cloud Run. Run it on its own
+against the built image:
+
+```bash
+docker run --rm remesh python test_remesh.py
+```
+
+Serving the container locally additionally needs credentials that can write
+`GCS_BUCKET`: results are uploaded straight to GCS, and `storage.Client()` is
+constructed at startup, so a container without application-default credentials
+fails its startup probe rather than failing per job.
 
 ## How it ships
 
 Built and deployed by **Google Cloud Build** from
-[`cloudbuild.yaml`](./cloudbuild.yaml) to **Cloud Run** — service `remesh-service`
-in `us-central1` (project `aerial-vehicle-466722-p5`), 8 vCPU / 16 GiB, port
-8080, scale-to-zero (`min 0`, `max 3`), 300 s request timeout, run as the
-`avatar-reconstruction-sa` service account. `API_KEY` is mounted from the
-`avatar-reconstruction-key` secret; `GCS_BUCKET` is set to
-`three-ws-avatar-reconstructions`. There is no local run target — build the image
-from [`Dockerfile`](./Dockerfile) (it compiles QuadriFlow from source and
-installs the Blender `bpy` wheel) and run the container, or submit the build:
+[`cloudbuild.yaml`](./cloudbuild.yaml) to **Cloud Run**: service
+`remesh-service` in `us-central1` (project `aerial-vehicle-466722-p5`), 8 vCPU /
+16 GiB, port 8080, kept warm (`min 1`, `max 3`), 300 s request timeout, always-on
+CPU (`--no-cpu-throttling`), run as the `avatar-reconstruction-sa` service
+account. `API_KEY` is mounted from the `avatar-reconstruction-key` secret;
+`GCS_BUCKET` is set to `three-ws-avatar-reconstructions`.
+
+Always-on CPU is load-bearing rather than a tuning knob. `POST /process` answers
+`202` and finishes the job in a background task, so every expensive step runs
+outside a request; under Cloud Run's default throttling the container is given
+almost no CPU there. On 2026-08-09 a 2000-face lowpoly bake that measures around
+160 s under active polling took 51,173 s (14 h) once its caller stopped polling,
+and on 2026-08-06 a quad job tripped the 600 s QuadriFlow guard for the same
+reason.
+
+Submit the build from the repo root. The config's build step sets
+`dir: workers/remesh`, which is resolved against the submitted source, so
+submitting this directory instead of `.` fails to find the Dockerfile:
 
 ```bash
-gcloud builds submit --config workers/remesh/cloudbuild.yaml workers/remesh
+gcloud builds submit --config workers/remesh/cloudbuild.yaml .
 ```
 
 This is not a GitHub Actions job — three.ws has no Actions; all CI/CD runs on
