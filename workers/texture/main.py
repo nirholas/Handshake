@@ -383,13 +383,15 @@ def _load_mesh(url: str):
 
 # ── Depth rendering ─────────────────────────────────────────────────────────────
 
-def _render_view_depth(mesh, view: tp.OrthographicView) -> tuple[Image.Image, np.ndarray]:
-    """Render one viewpoint's depth.
+def _render_view_depth(mesh, view: tp.OrthographicView) -> Image.Image:
+    """Render one viewpoint as the ControlNet conditioning image.
 
-    Returns the ControlNet conditioning image (near bright, background black) and
-    the raw depth buffer in world units. The raw buffer is not a debug artifact:
-    back-projection needs it to reject texels that some nearer part of the mesh
-    hides from this camera, and it comes free with the render we already do.
+    Near is bright, background black. Only the ordering of the values matters
+    here, which is just as well: pyrender un-projects its depth buffer with the
+    perspective formula whatever camera drew it, so under an orthographic camera
+    the numbers are a monotonic but nonlinear remap of true depth. That is fine
+    for conditioning and useless for geometry, which is why the occlusion test in
+    texture_projection builds its own z-buffer instead of reusing this render.
     """
     import pyrender
 
@@ -406,8 +408,7 @@ def _render_view_depth(mesh, view: tp.OrthographicView) -> tuple[Image.Image, np
     finally:
         renderer.delete()
 
-    depth = np.asarray(depth, dtype=np.float32)
-    return Image.fromarray(tp.depth_to_control_image(depth)), depth
+    return Image.fromarray(tp.depth_to_control_image(np.asarray(depth, dtype=np.float32)))
 
 
 # ── Texture generation ──────────────────────────────────────────────────────────
@@ -446,7 +447,6 @@ def _project_texture_onto_uv(
     mesh,
     views: list[tp.OrthographicView],
     view_images: list[Image.Image],
-    depth_buffers: list[np.ndarray],
     texture_size: int,
 ) -> Image.Image:
     """Back-project the generated views onto the mesh's UV atlas.
@@ -462,7 +462,6 @@ def _project_texture_onto_uv(
         views,
         [np.asarray(img.convert("RGB")) for img in view_images],
         texture_size,
-        depth_buffers=depth_buffers,
     )
     total = int(covered.sum())
     seen = int((weight > 0).sum())
@@ -494,9 +493,7 @@ def _run_texturing(
     views = tp.canonical_views(sphere.center, sphere.radius, viewpoints, texture_size)
 
     log.info("Rendering %d depth maps at %dpx", len(views), texture_size)
-    rendered = [_render_view_depth(mesh, view) for view in views]
-    depth_maps = [image for image, _ in rendered]
-    depth_buffers = [buffer for _, buffer in rendered]
+    depth_maps = [_render_view_depth(mesh, view) for view in views]
 
     log.info("Generating texture views with SDXL+ControlNet (material_class=%s)", material_class or "default")
     view_images = [
@@ -505,7 +502,7 @@ def _run_texturing(
     ]
 
     log.info("Projecting views onto UV atlas (%dpx)", texture_size)
-    texture_atlas = _project_texture_onto_uv(mesh, views, view_images, depth_buffers, texture_size)
+    texture_atlas = _project_texture_onto_uv(mesh, views, view_images, texture_size)
 
     log.info("Baking textured GLB with metallic=%.2f roughness=%.2f", pbr["metallic"], pbr["roughness"])
     material = trimesh.visual.material.PBRMaterial(

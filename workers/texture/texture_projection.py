@@ -47,10 +47,11 @@ FACING_EXPONENT = 2.0
 # to. Those samples are dropped rather than down-weighted.
 MIN_FACING = 0.12
 
-# Depth-test slack, as a fraction of the mesh's bounding radius. Absorbs the
-# rasterization error between the GPU depth buffer and the analytic projection of
-# a texel's position, while staying far tighter than the gap between an arm and
-# the torso behind it.
+# Floor on the depth-test slack, as a fraction of the mesh's bounding radius.
+# Absorbs the quantisation between a texel's analytic depth and the binned
+# z-buffer it is tested against, while staying far tighter than the gap between
+# an arm and the torso behind it. Tilted surfaces get more than this floor, see
+# the slope-scaled bias in project_views_to_uv.
 DEPTH_TOLERANCE_FRAC = 0.01
 
 _WORLD_UP = np.array([0.0, 1.0, 0.0])
@@ -280,6 +281,62 @@ def rasterize_uv(
     return pos_map, nrm_map, covered
 
 
+def occlusion_buffer_size(view_size: int) -> int:
+    """Resolution of the occlusion z-buffer for a view of `view_size` pixels.
+
+    Deliberately coarser than the view. The occluders are surface samples taken
+    at atlas texel density, and where the atlas is sparser than the view (any UV
+    island scaled down relative to its screen area) one sample per pixel leaves
+    the buffer full of holes: two surfaces then interleave into alternating
+    pixels and neither ever sees the other. Binning several samples together is
+    what lets the near surface win. The cost is precision at depth
+    discontinuities, which the slope-scaled bias and the gap fill absorb.
+    """
+    return max(32, min(512, int(view_size) // 2))
+
+
+def view_depth_buffer(
+    view: OrthographicView, points: np.ndarray, resolution: Optional[int] = None
+) -> np.ndarray:
+    """Nearest surface depth per buffer bin, z-buffered from `points`.
+
+    Built here rather than read back from the render for one specific reason:
+    pyrender converts its depth buffer with the perspective un-projection
+    formula whatever camera drew it, so for an orthographic camera the numbers
+    it returns are a nonlinear remap of the real depth. Comparing an analytic
+    depth against them rejects almost every texel, and the symptom is not a
+    wrong texture but a job that fails with "no view could see the surface".
+
+    The occluders are the same rasterized surface samples being tested, so a
+    sample is always its own nearest hit and the comparison degenerates to
+    "is anything else in front of me". `inf` means no sample landed on that
+    pixel, which is read as nothing occluding.
+    """
+    size = int(resolution or view.size)
+    pixels, depth = view.project(points)
+    u, v = pixels[:, 0], pixels[:, 1]
+    scale = size / float(view.size)
+    x = np.rint(u * scale).astype(np.int64)
+    y = np.rint(v * scale).astype(np.int64)
+    inside = (x >= 0) & (x < size) & (y >= 0) & (y < size) & (depth > 0)
+
+    buffer = np.full(size * size, np.inf, dtype=np.float32)
+    if inside.any():
+        np.minimum.at(buffer, y[inside] * size + x[inside], depth[inside].astype(np.float32))
+    buffer = buffer.reshape(size, size)
+
+    # Spread each hit into its neighbouring bins. Sample density is uneven (a UV
+    # island scaled down relative to its screen area contributes fewer samples
+    # than it covers bins), so an occluder can miss a bin the surface behind it
+    # does hit, and that one row of holes is enough to let a hidden strip take
+    # colour from a view that cannot see it. Dilating makes the test err toward
+    # refusing a texel near an occluder's edge, which the gap fill then paints
+    # from its neighbours.
+    from scipy.ndimage import minimum_filter
+
+    return minimum_filter(buffer, size=3, mode="nearest")
+
+
 def fill_gaps(canvas: np.ndarray, filled: np.ndarray) -> np.ndarray:
     """Flood every unwritten texel with its nearest written neighbour.
 
@@ -306,7 +363,7 @@ def project_views_to_uv(
     views: Sequence[OrthographicView],
     images: Sequence[np.ndarray],
     texture_size: int,
-    depth_buffers: Optional[Sequence[Optional[np.ndarray]]] = None,
+    occlude: bool = True,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Back-project the generated views onto the UV atlas.
 
@@ -315,18 +372,15 @@ def project_views_to_uv(
     facing the camera, nothing nearer along the ray) are averaged with weight
     cos(angle) ** FACING_EXPONENT.
 
-    `depth_buffers` are the rendered depth maps of the same views, in the same
-    order, in world units with 0 meaning "nothing hit". Passing them enables the
-    occlusion gate; passing None for a view (or for the whole sequence) keeps
-    only the facing gate, which is correct for a convex mesh and lets the
-    geometry be tested without a GPU rasterizer.
+    `occlude` builds a z-buffer per view (see view_depth_buffer) so a texel on a
+    surface hidden behind another part of the mesh takes no colour from the view
+    that cannot actually see it. Turning it off is only correct for a convex
+    mesh, where nothing can hide anything.
 
     Returns (atlas uint8 (S, S, 3), weight float32 (S, S), covered bool (S, S)).
     """
     if len(views) != len(images):
         raise ValueError("views and images must be the same length")
-    if depth_buffers is not None and len(depth_buffers) != len(views):
-        raise ValueError("depth_buffers must match the number of views")
 
     pos_map, nrm_map, covered = rasterize_uv(positions, normals, uv, faces, texture_size)
     if not covered.any():
@@ -337,7 +391,7 @@ def project_views_to_uv(
     accum = np.zeros((flat_pos.shape[0], 3), dtype=np.float32)
     weight = np.zeros(flat_pos.shape[0], dtype=np.float32)
 
-    for idx, (view, image) in enumerate(zip(views, images)):
+    for view, image in zip(views, images):
         img = np.asarray(image)
         if img.ndim == 2:
             img = np.stack([img] * 3, axis=-1)
@@ -354,7 +408,8 @@ def project_views_to_uv(
             u = (u + 0.5) * (img_w / view.size) - 0.5
             v = (v + 0.5) * (img_h / view.size) - 0.5
 
-        confidence = np.clip(flat_nrm @ view.view_direction(), 0.0, 1.0) ** FACING_EXPONENT
+        facing = np.clip(flat_nrm @ view.view_direction(), 0.0, 1.0)
+        confidence = facing ** FACING_EXPONENT
         confidence = np.where(confidence >= MIN_FACING, confidence, 0.0)
         # Half a pixel of slack at the frame border. A texel on the silhouette
         # projects exactly onto the edge pixel, and float error in the rasterized
@@ -367,16 +422,28 @@ def project_views_to_uv(
             0.0,
         )
 
-        buffer = depth_buffers[idx] if depth_buffers is not None else None
-        if buffer is not None:
-            buf = np.asarray(buffer, dtype=np.float32)
-            scale_x = buf.shape[1] / float(view.size)
-            scale_y = buf.shape[0] / float(view.size)
-            bx = np.clip((u * scale_x).astype(np.int32), 0, buf.shape[1] - 1)
-            by = np.clip((v * scale_y).astype(np.int32), 0, buf.shape[0] - 1)
+        if occlude:
+            resolution = occlusion_buffer_size(view.size)
+            buf = view_depth_buffer(view, flat_pos, resolution)
+            scale = resolution / float(view.size)
+            bx = np.clip(np.rint(pixels[:, 0] * scale).astype(np.int64), 0, resolution - 1)
+            by = np.clip(np.rint(pixels[:, 1] * scale).astype(np.int64), 0, resolution - 1)
             nearest = buf[by, bx]
-            tol = max(view.radius * DEPTH_TOLERANCE_FRAC, 1e-6)
-            confidence = np.where((nearest > 0) & (depth <= nearest + tol), confidence, 0.0)
+            # Slope-scaled bias. Within one bin a surface tilted away from the
+            # camera spans bin_width * tan(angle) of depth, so a flat tolerance
+            # makes the near edge of a bin reject its own far edge: the surface
+            # shadows itself and the texture drops out in exactly the grazing
+            # regions that already have the least coverage.
+            cos_angle = np.clip(facing, MIN_FACING, 1.0)
+            slope = np.sqrt(1.0 - cos_angle ** 2) / cos_angle
+            bin_width = 2.0 * view.xmag / resolution
+            # 4 bin widths: one for the spread inside a bin, one more for the
+            # dilation above, and a factor of two so a surface never shadows
+            # itself at the angles where coverage is already thinnest.
+            bias = np.maximum(view.radius * DEPTH_TOLERANCE_FRAC, 4.0 * bin_width * slope)
+            confidence = np.where(
+                ~np.isfinite(nearest) | (depth <= nearest + bias), confidence, 0.0
+            )
 
         if not confidence.any():
             continue

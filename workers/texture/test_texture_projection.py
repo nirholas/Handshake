@@ -198,29 +198,61 @@ def test_back_facing_views_are_refused():
     print("ok  surfaces turned away from a view take no colour from it")
 
 
-def test_occluded_texels_are_refused_against_the_depth_buffer():
+def _occluded_pair():
+    """A back quad, and a nearer quad covering its left half from the front view.
+
+    The back quad owns the top half of the atlas, the front quad the bottom
+    half, so which texels each one contributed to is unambiguous.
+    """
+    back_pos = np.array([
+        [-1.0, -1.0, 0.0], [1.0, -1.0, 0.0], [1.0, 1.0, 0.0], [-1.0, 1.0, 0.0],
+    ], dtype=np.float32)
+    front_pos = np.array([
+        [-1.0, -1.0, 0.5], [0.0, -1.0, 0.5], [0.0, 1.0, 0.5], [-1.0, 1.0, 0.5],
+    ], dtype=np.float32)
+    positions = np.concatenate([back_pos, front_pos])
+    normals = np.tile(np.array([0.0, 0.0, 1.0], dtype=np.float32), (8, 1))
+    # v in [0.5, 1] is the back quad (atlas rows 0..31), v in [0, 0.5] the front.
+    uv = np.array([
+        [0.0, 0.5], [1.0, 0.5], [1.0, 1.0], [0.0, 1.0],
+        [0.0, 0.0], [1.0, 0.0], [1.0, 0.5], [0.0, 0.5],
+    ], dtype=np.float32)
+    faces = np.array([[0, 1, 2], [0, 2, 3], [4, 5, 6], [4, 6, 7]], dtype=np.int64)
+    return positions, normals, uv, faces
+
+
+def test_occluded_texels_are_refused():
     """A texel hidden behind nearer geometry must not take that geometry's colour."""
-    positions, normals, uv, faces = _unit_plane()
-    size = 32
+    positions, normals, uv, faces = _occluded_pair()
+    size = 64
     view = _quad_view(0, size)
     image = np.full((size, size, 3), (10, 20, 30), dtype=np.uint8)
 
-    # The quad sits at z=0, so its depth from this camera is exactly `distance`.
-    # A buffer claiming a surface half a radius nearer over the left half of the
-    # frame means that half is hidden.
-    buffer = np.full((size, size), view.distance, dtype=np.float32)
-    buffer[:, : size // 2] = view.distance - view.radius * 0.5
-
-    atlas, weight, _ = tp.project_views_to_uv(
-        positions, normals, uv, faces, [view], [image], texture_size=size,
-        depth_buffers=[buffer],
+    atlas, weight, covered = tp.project_views_to_uv(
+        positions, normals, uv, faces, [view], [image], texture_size=size
     )
-    left = weight[:, : size // 2 - 1]
-    right = weight[:, size // 2 + 1:]
-    assert not left.any(), f"occluded half kept {int((left > 0).sum())} texels"
-    assert (right > 0).all(), "visible half should be fully painted"
-    # Gap filling still leaves a complete atlas, sourced from the visible half.
-    assert (atlas[:, : size // 2 - 1] == (10, 20, 30)).all()
+
+    back_half = weight[: size // 2]
+    front_half = weight[size // 2:]
+    # The back quad's left half sits behind the front quad, so it must stay
+    # unpainted. The occluder's edge is only resolved to a z-buffer bin (here 2
+    # atlas columns) plus the dilation around it, so the assertions skip a
+    # 4-column band either side of the boundary rather than pretend the cut is
+    # texel-exact.
+    edge = 4
+    hidden = back_half[:, : size // 2 - edge]
+    visible = back_half[:, size // 2 + edge:]
+    assert not hidden.any(), f"occluded region kept {int((hidden > 0).sum())} texels"
+    assert (visible > 0).all(), "the unobstructed half of the back quad should be painted"
+    assert (front_half[:, : size // 2 - edge] > 0).all(), "the occluder itself is visible"
+    # Gap filling still leaves a complete atlas rather than black holes.
+    assert (atlas == (10, 20, 30)).all()
+
+    # With the gate off, the hidden region takes colour it should never see.
+    _, weight_no_gate, _ = tp.project_views_to_uv(
+        positions, normals, uv, faces, [view], [image], texture_size=size, occlude=False
+    )
+    assert (weight_no_gate[: size // 2, : size // 2 - edge] > 0).all()
     print("ok  occlusion gate refuses texels hidden behind nearer geometry")
 
 
@@ -264,7 +296,7 @@ TESTS = [
     test_back_projection_lands_the_view_pixels_where_they_belong,
     test_a_view_rendered_at_another_size_still_lands_correctly,
     test_back_facing_views_are_refused,
-    test_occluded_texels_are_refused_against_the_depth_buffer,
+    test_occluded_texels_are_refused,
     test_grazing_views_lose_to_face_on_views,
     test_gap_fill_never_leaves_a_hole,
 ]
