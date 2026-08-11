@@ -82,9 +82,9 @@ import { poseSeed } from '@three-ws/pose';
 const pose = await poseSeed('wave hello');
 
 console.log(pose.presetId);   // → 'wave'
-console.log(pose.seed);       // → '8c12…e0f9' (stable sha256-derived)
+console.log(pose.seed);       // → '4ae1977023a2568b' (stable sha256-derived)
 console.log(pose.parameters); // → { shoulderR: { x: 0, y: 0, z: -2.45 }, elbowR: { x: -1.2, … }, … }
-console.log(pose.previewUrl); // → https://three.ws/pose?seed=8c12…&preset=wave
+console.log(pose.previewUrl); // → https://three.ws/pose?seed=4ae1977023a2568b&preset=wave
 ```
 
 Apply the rotations straight to a Three.js skeleton:

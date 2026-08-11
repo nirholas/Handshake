@@ -120,9 +120,11 @@ contract AgentPayments is ReentrancyGuard, Ownable {
     error NoTokensBought();
     error NativeTransferFailed();
 
-    constructor(address initialOwner) Ownable(initialOwner) {
-        if (initialOwner == address(0)) revert ZeroAddress();
-    }
+    /// @dev A zero `initialOwner` is rejected by `Ownable`'s constructor with
+    ///      `OwnableInvalidOwner`, which runs before this body, so there is no
+    ///      second check to add here: an unreachable one would only look like
+    ///      protection that is never exercised.
+    constructor(address initialOwner) Ownable(initialOwner) {}
 
     // ── Agent registration ───────────────────────────────────────────────────
 

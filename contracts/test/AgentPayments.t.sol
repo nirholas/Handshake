@@ -385,7 +385,9 @@ contract AgentPaymentsTest is Test {
     }
 
     function testConstructorRejectsZeroOwner() public {
-        vm.expectRevert();
+        // Ownable rejects it before the body runs; assert the exact error so a
+        // future refactor cannot silently drop the guard.
+        vm.expectRevert(abi.encodeWithSignature("OwnableInvalidOwner(address)", address(0)));
         new AgentPayments(address(0));
     }
 
@@ -544,9 +546,10 @@ contract AgentPaymentsTest is Test {
     // ── AP-6: currency validation ────────────────────────────────────────────
 
     function testAcceptPaymentRejectsNativeSentinel() public {
+        address sentinel = ap.NATIVE_TOKEN();
         vm.prank(payer);
         vm.expectRevert(AgentPayments.InvalidCurrency.selector);
-        ap.acceptPayment(address(agentTok), ap.NATIVE_TOKEN(), 1e18, 1, 0, 0);
+        ap.acceptPayment(address(agentTok), sentinel, 1e18, 1, 0, 0);
     }
 
     function testAcceptPaymentRejectsZeroCurrency() public {
@@ -686,6 +689,25 @@ contract AgentPaymentsTest is Test {
 
         (, uint256 bb,) = ap.getBalances(address(agentTok), address(usdc));
         assertEq(bb, 30e18);
+    }
+
+    function testNativeBuybackRevertsWhenTheSwapReverts() public {
+        address nativeCur = ap.NATIVE_TOKEN();
+        vm.deal(payer, 10 ether);
+        vm.prank(payer);
+        ap.acceptPaymentNative{value: 10 ether}(address(agentTok), 1, 0, 0);
+        ap.distributePayments(address(agentTok), nativeCur);
+
+        FailingRouter bad = new FailingRouter();
+        vm.startPrank(owner);
+        ap.setRouterAllowed(address(bad), true);
+        vm.expectRevert(AgentPayments.SwapFailed.selector);
+        ap.buybackTrigger(address(agentTok), nativeCur, address(bad), hex"1234");
+        vm.stopPrank();
+
+        (, uint256 bb,) = ap.getBalances(address(agentTok), nativeCur);
+        assertEq(bb, 3 ether, "AP-9: a reverted native swap must leave the vault intact");
+        assertEq(address(ap).balance, 10 ether);
     }
 
     function testBuybackLeavesNoStandingRouterAllowance() public {

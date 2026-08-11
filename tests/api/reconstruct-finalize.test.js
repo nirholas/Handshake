@@ -29,6 +29,14 @@ vi.mock('../../api/_lib/glb-inspect.js', () => ({
 
 vi.mock('../../api/_lib/webhook-dispatch.js', () => ({ dispatchWebhooks: async () => {} }));
 
+// Every terminal materialize also registers the result in the Forge store so
+// galleries/share pages see reconstructions; mocked here so the control flow
+// (and its never-blocks-delivery contract) is what's under test.
+const registerReconstructionCreationMock = vi.fn(async () => 'creation-1');
+vi.mock('../../api/_lib/forge-store.js', () => ({
+	registerReconstructionCreation: (...a) => registerReconstructionCreationMock(...a),
+}));
+
 const providerMock = { name: 'replicate', instance: null };
 vi.mock('../../api/_lib/regen-provider.js', () => ({
 	getRegenProvider: async () => providerMock,
@@ -96,6 +104,33 @@ describe('finalizeReconstructStage', () => {
 		const out = await finalizeReconstructStage({ userId: 'u1', jobId: 'j1', job: baseJob, glbUrl: 'https://x/m.glb' });
 		expect(out.status).toBe('done');
 		expect(createAvatarMock.mock.calls[0][0].input.tags).toContain('unrigged');
+	});
+
+	it('registers the delivered avatar in the Forge store with its visibility mirrored', async () => {
+		inspectGlbMock.mockReturnValue(RIGGED);
+		await finalizeReconstructStage({
+			userId: 'u1',
+			jobId: 'j1',
+			job: { provider: 'gcp', params: { name: 'Me', visibility: 'unlisted' } },
+			glbUrl: 'https://x/m.glb',
+		});
+		expect(registerReconstructionCreationMock).toHaveBeenCalledOnce();
+		const reg = registerReconstructionCreationMock.mock.calls[0][0];
+		expect(reg.userId).toBe('u1');
+		expect(reg.avatarId).toBe('avatar-1');
+		expect(reg.jobId).toBe('j1');
+		expect(reg.provider).toBe('gcp');
+		expect(reg.visibility).toBe('unlisted');
+		expect(reg.glbUrl).toMatch(/^https:\/\/cdn\.test\/u\/u1\//);
+		// The selfie lane has no prompt: the honest display line is the name.
+		expect(reg.prompt).toBe('Me');
+	});
+
+	it('still delivers the avatar when Forge-store registration throws', async () => {
+		inspectGlbMock.mockReturnValue(RIGGED);
+		registerReconstructionCreationMock.mockRejectedValueOnce(new Error('store down'));
+		const out = await finalizeReconstructStage({ userId: 'u1', jobId: 'j1', job: baseJob, glbUrl: 'https://x/m.glb' });
+		expect(out).toEqual({ status: 'done', resultAvatarId: 'avatar-1' });
 	});
 });
 
