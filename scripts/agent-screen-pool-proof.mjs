@@ -33,8 +33,11 @@ const WORKER_DIR = resolve(__dir, '../workers/agent-screen-pool');
 const SECRET = 'proof-secret-0123456789abcdef';
 const AGENT_ID = '3a7c1f52-9d4e-4b61-8f20-2c5e7a91d0b4';
 const AGENT_NAME = 'Proof Agent';
-const CAST_MS = Number(process.env.PROOF_CAST_MS || 45_000);   // how long to watch the cast
-const TEARDOWN_MS = 8_000;                                      // grace for the pool to drop the page
+// How long to watch the cast before asserting. The window has to cover a real
+// browser launch plus a real multi-step task against a real public site, so it is
+// generous: the loop exits as soon as the run has produced its read.
+const CAST_MS = Number(process.env.PROOF_CAST_MS || 120_000);
+const TEARDOWN_MS = 8_000; // grace for the pool to drop the page
 
 const results = [];
 const ok = (name, cond, detail = '') => {

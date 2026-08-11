@@ -44,7 +44,11 @@ export const TASKS = [
 				fallbackUrl: 'https://en.wikipedia.org/wiki/Three.js',
 				narration: 'Waiting for the article to load',
 			},
-			{ id: 'read', kind: 'read', selector: '#mw-content-text .mw-parser-output > p', narration: 'Reading the opening summary' },
+			// Descendant, not a direct child of .mw-parser-output: Wikipedia now wraps
+			// article prose in an inner content div, so the old `> p` matched nothing
+			// and the agent narrated its way to an empty read. The executor takes the
+			// first paragraph that carries text, which is the lead summary.
+			{ id: 'read', kind: 'read', selector: '#mw-content-text p', narration: 'Reading the opening summary' },
 		],
 	},
 	{
