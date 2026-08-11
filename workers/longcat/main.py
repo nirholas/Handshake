@@ -176,7 +176,9 @@ def _probe_audio_seconds(path: Path) -> float | None:
             check=True,
         )
         return float(completed.stdout.strip())
-    except (subprocess.SubprocessError, ValueError) as exc:
+    except (subprocess.SubprocessError, OSError, ValueError) as exc:
+        # OSError covers a missing ffprobe binary. Sizing falls back to a single
+        # segment, which is upstream's default: a shorter video beats a dead job.
         log.warning("ffprobe could not read a duration from %s: %s", path, exc)
         return None
 

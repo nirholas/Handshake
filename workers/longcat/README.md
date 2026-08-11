@@ -103,9 +103,14 @@ wants.
 | `FIRESTORE_PROJECT` | yes | | project hosting the `longcat_video_jobs` collection |
 | `WEIGHTS_DIR` | no | `/weights/longcat` | root holding both model repos |
 | `LONGCAT_REPO_DIR` | no | `/longcat` | the cloned upstream repo |
-| `MAX_CONCURRENT` | no | `1` | parallel jobs; the GPU is the bottleneck |
+| `MAX_CONCURRENT` | no | `1` | parallel jobs; keep it at 1 (see below) |
 | `MAX_SEGMENTS` | no | `8` | segment cap, so one long upload cannot monopolise the GPU |
 | `RESOLUTION` | no | `720p` | `480p` (480x832) or `720p` (768x1280); anything else fails at boot |
+
+Leave `MAX_CONCURRENT` at `1`. Beyond the obvious point that one GPU cannot run
+two of these jobs, upstream writes its vocal-separation scratch files to a fixed
+`./audio_temp_file` relative to the repo, so two concurrent runs would race on
+the same path. Scale with more hosts, not more workers per host.
 
 ## Model weights
 
@@ -207,10 +212,25 @@ docker run --rm --gpus all -p 8080:8080 \
 curl -s localhost:8080/health   # model_loaded must be true before generating
 ```
 
-GPU quota in `us-central1` on project `aerial-vehicle-466722-p5` as of
-2026-08-11: `NVIDIA_A100_80GB_GPUS` is **0** and `NVIDIA_A100_GPUS` (the 40 GB
-part, itself too small) is 1. An increase request for one 80 GB device is a
-prerequisite for the first real run.
+GPU quota is the gate on the first real run. Read the live numbers rather than
+trusting this paragraph:
+
+```bash
+gcloud compute regions describe us-central1 --project aerial-vehicle-466722-p5 \
+  --format=json | python3 -c '
+import json,sys
+for q in json.load(sys.stdin)["quotas"]:
+    if "A100" in q["metric"] or "H100" in q["metric"]:
+        print(q["metric"], q["limit"], "used", q["usage"])'
+```
+
+As of 2026-08-11 that prints `NVIDIA_A100_80GB_GPUS 0.0` and
+`NVIDIA_A100_GPUS 1.0` (the 40 GB part, itself too small for a 45 GB weight
+set), with no H100 metric present. So one 80 GB device has to be requested
+first: filter for `NVIDIA_A100_80GB_GPUS` on the
+[quotas page](https://console.cloud.google.com/iam-admin/quotas?project=aerial-vehicle-466722-p5)
+and raise the `us-central1` limit to 1. Credits policy and the fleet's GPU
+budget: [docs/ops/gcp-credits-plan.md](../../docs/ops/gcp-credits-plan.md).
 
 Once a host is serving, point the site at it and the `503` path turns into real
 generation:
