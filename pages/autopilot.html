@@ -5,9 +5,9 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title data-i18n="autopilot.meta_title">Coin Autopilot — three.ws</title>
-	<meta name="description" content="Put your pump.fun coin on autopilot. Your agent runs buybacks and distributes creator fees to holders on rules you set — and narrates every on-chain move in real time."  data-i18n-attr="content:autopilot.meta_description"/>
-	<meta property="og:title" content="Coin Autopilot — three.ws"  data-i18n-attr="content:autopilot.meta_og_title"/>
+	<title data-i18n="autopilot.meta_title">Coin Autopilot · three.ws</title>
+	<meta name="description" content="A hands-off token cockpit. Set the rules (buyback floors, distribution floors, and guardrails), and your agent runs buybacks and pays creator fees out to holders on its own, narrating every on-chain move."  data-i18n-attr="content:autopilot.meta_description"/>
+	<meta property="og:title" content="Coin Autopilot · three.ws"  data-i18n-attr="content:autopilot.meta_og_title"/>
 	<meta property="og:description" content="An autonomous coin agent that runs buybacks and distributes fees on your rules, narrated live by its avatar."  data-i18n-attr="content:autopilot.meta_og_description"/>
 	<meta name="twitter:card" content="summary_large_image" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -90,21 +90,34 @@
 		/* SECTIONS */
 		section { padding: 40px 0; }
 		.section-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-3); margin: 0 0 20px; }
+		.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+		.section-head .section-title { margin-bottom: 0; }
+		.section-link { font-size: 12.5px; color: var(--text-3); border-bottom: 1px solid transparent; transition: color 0.15s, border-color 0.15s; }
+		.section-link:hover, .section-link:focus-visible { color: var(--mint); border-color: var(--mint); outline: none; }
+		.section-link:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; border-radius: 3px; }
+		.section-head + * { margin-top: 20px; }
 
 		/* COIN CARDS */
 		.coins { display: flex; flex-direction: column; gap: 16px; }
 		.coin-card { border: 1px solid var(--hairline-strong); border-radius: 14px; background: var(--surface-1); overflow: hidden; transition: border-color 0.2s; }
 		.coin-card.on { border-color: rgba(120,200,140,0.3); }
-		.coin-head { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-bottom: 1px solid var(--hairline); }
+		.coin-head { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-bottom: 1px solid var(--hairline); flex-wrap: wrap; }
 		.coin-img { width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0; overflow: hidden; background: var(--surface-3); display: flex; align-items: center; justify-content: center; }
 		.coin-img img { width: 100%; height: 100%; object-fit: cover; }
 		.coin-img .cf { font-family: var(--font-display); font-weight: 700; color: var(--mint); }
-		.coin-id { min-width: 0; flex: 1; }
+		.coin-id { min-width: 0; flex: 1 1 160px; }
 		.coin-name { font-weight: 600; font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		.coin-sub { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-4); margin-top: 2px; }
 		.coin-sub a { color: var(--text-3); border-bottom: 1px solid transparent; }
 		.coin-sub a:hover { color: var(--mint); border-color: var(--mint); }
-		.coin-status { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+		.coin-status { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; margin-left: auto; }
+		/* Below ~560px the head row can no longer hold the identity and the controls
+		   side by side, so the status block drops to its own full-width row rather
+		   than pushing the master toggle off the right edge of the viewport. */
+		@media (max-width: 560px) {
+			.coin-status { width: 100%; margin-left: 0; justify-content: flex-start; }
+			.coin-status .sw { margin-left: auto; }
+		}
 
 		/* TOGGLE SWITCH */
 		.sw { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
@@ -172,6 +185,11 @@
 		.btn.primary:hover { background: #8cd79e; }
 		.skeleton { background: var(--surface-2); border-radius: 8px; animation: shimmer 1.6s ease-in-out infinite; }
 		@keyframes shimmer { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+		@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } .narrator.flash .narrator-pulse { animation: none; } }
+		.act-skel { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--hairline); }
+		.act-skel:last-child { border-bottom: none; }
+		.quiet { font-family: var(--font-body); font-size: 13.5px; color: var(--text-3); padding: 20px 0; }
+		.quiet .btn { margin-top: 12px; padding: 8px 14px; font-size: 13px; }
 
 		#toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface-2); border: 1px solid var(--hairline-strong); border-radius: 8px; padding: 12px 20px; font-size: 13.5px; color: var(--text); opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 999; }
 		#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -185,12 +203,12 @@
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Coin Autopilot — three.ws">
+	<meta property="og:image:alt" content="Coin Autopilot · three.ws">
 	<meta name="twitter:site" content="@trythreews">
 	<meta name="twitter:title" content="Coin Autopilot · three.ws" data-i18n-attr="content:autopilot.meta_twitter_title">
-	<meta name="twitter:description" content="A hands-off token cockpit: set the rules — buys, sells, and guardrails — and let your agent run the coin autonomously." data-i18n-attr="content:autopilot.meta_twitter_description">
+	<meta name="twitter:description" content="A hands-off token cockpit. Set the rules (buys, sells, and guardrails) and let your agent run the coin autonomously." data-i18n-attr="content:autopilot.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Coin+Autopilot&amp;d=A+hands-off+token+cockpit.+Set+the+rules+%28buys%2C+sells%2C+and+guardrails%29+and+let+your+agent+run+the+coin+autonomously.&amp;p=%2Fautopilot">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Coin Autopilot","description":"A hands-off token cockpit: set the rules — buys, sells, and guardrails — and let your agent run the coin autonomously.","url":"https://three.ws/autopilot","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&amp;t=Coin+Autopilot&amp;d=A+hands-off+token+cockpit%3A+set+the+rules+%E2%80%94+buys%2C+sells%2C+and+guardrails+%E2%80%94+and+let+your+agent+run+the+coin+autonomously.&amp;p=%2Fautopilot"}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Coin Autopilot","description":"A hands-off token cockpit. Set the rules (buys, sells, and guardrails) and let your agent run the coin autonomously.","url":"https://three.ws/autopilot","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&amp;t=Coin+Autopilot&amp;d=A+hands-off+token+cockpit.+Set+the+rules+%28buys%2C+sells%2C+and+guardrails%29+and+let+your+agent+run+the+coin+autonomously.&amp;p=%2Fautopilot"}]}</script>
 </head>
 <body>
 	<nav class="nav">
