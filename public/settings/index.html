@@ -850,13 +850,15 @@
 					const data = await apiJson('/api/auth/github/status');
 					if (data.connected) {
 						const when = new Date(data.connected_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-						statusEl.textContent = `@${data.username} · connected ${when}`;
-						actionsEl.innerHTML = '<span class="tag green">Connected</span>';
+						const seeded = data.seeded_fact_count
+							? ` · ${data.seeded_fact_count} seeded ${data.seeded_fact_count === 1 ? 'memory' : 'memories'}`
+							: '';
+						statusEl.textContent = `@${data.username} · connected ${when}${seeded}`;
+						actionsEl.innerHTML = '<span class="tag green">Connected</span><button class="btn sec" id="github-disconnect-btn" style="font-size:12px;padding:5px 14px">Disconnect</button>';
+						document.getElementById('github-disconnect-btn')?.addEventListener('click', disconnectGitHub);
 						if (seedArea) {
 							seedArea.style.display = 'block';
-							// Pre-fill agent id from URL
-							const agentIdFromQuery = _urlP.get('agent_id');
-							if (agentIdFromQuery) document.getElementById('inp-seed-agent-id').value = agentIdFromQuery;
+							mountSeedPanel();
 						}
 					} else {
 						statusEl.textContent = 'Not connected';
@@ -877,35 +879,213 @@
 				}
 			}
 
-			document.getElementById('seed-btn')?.addEventListener('click', async () => {
-				const btn = document.getElementById('seed-btn');
-				const msg = document.getElementById('seed-msg');
-				const resultsEl = document.getElementById('seed-results');
-				const agentId = document.getElementById('inp-seed-agent-id').value.trim();
-				if (!agentId) return showMsg(msg, 'err', 'Enter an agent ID.');
-				btn.disabled = true;
-				btn.textContent = 'Seeding…';
-				if (resultsEl) resultsEl.style.display = 'none';
-				try {
-					const data = await apiJson(`/api/agents/${encodeURIComponent(agentId)}/memory-seed`, {
-						method: 'POST',
-						headers: { 'content-type': 'application/json' },
-						body: '{}',
-					});
-					showMsg(msg, 'ok', `Seeded ${data.seeded} fact${data.seeded === 1 ? '' : 's'}.`);
-					if (resultsEl && data.facts && data.facts.length) {
-						resultsEl.style.display = 'block';
-						resultsEl.innerHTML = `<p class="muted" style="font-size:12px;margin:0 0 8px">Facts stored:</p><ul style="margin:0;padding-left:18px;color:#ccc;font-size:13px">` +
-							data.facts.map(f => `<li style="margin-bottom:4px">${f.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</li>`).join('') +
-							`</ul>`;
-					}
-				} catch (e) {
-					showMsg(msg, 'err', e.data?.error_description || 'Seed failed.');
-				} finally {
-					btn.disabled = false;
-					btn.textContent = 'Seed memory';
+			// ── GitHub memory seeding (consent-first) ─────────────────────
+				// The catalog the user is shown IS the permission boundary: the seed POST
+				// sends only ticked keys, and the server refuses anything not in it.
+				let seedAgentId = '';
+				let seedCatalog = null;
+				let seedMounted = false;
+
+				const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+				function seedSelection() {
+					const root = document.getElementById('seed-catalog');
+					if (!root) return { include_profile: false, repos: [], readmes: [] };
+					const repos = [...root.querySelectorAll('input[data-repo]:checked')].map((i) => i.dataset.repo);
+					const readmes = [...root.querySelectorAll('input[data-readme]:checked')].map((i) => i.dataset.readme);
+					return {
+						include_profile: Boolean(root.querySelector('#consent-profile')?.checked),
+						repos,
+						readmes: readmes.filter((k) => repos.includes(k)),
+					};
 				}
-			});
+
+				function refreshSeedControls() {
+					const root = document.getElementById('seed-catalog');
+					const btn = document.getElementById('seed-btn');
+					const summary = document.getElementById('consent-summary-text');
+					if (!root || !btn) return;
+					// A README can only be read for a repo that is itself selected, which is
+					// also what the server enforces — keeping the checkbox in lockstep means
+					// the user never assembles a selection the API will reject.
+					const chosen = new Set([...root.querySelectorAll('input[data-repo]:checked')].map((i) => i.dataset.repo));
+					for (const box of root.querySelectorAll('input[data-readme]')) {
+						const allowed = chosen.has(box.dataset.readme);
+						box.disabled = !allowed;
+						if (!allowed) box.checked = false;
+					}
+					const sel = seedSelection();
+					const count = (sel.include_profile ? 1 : 0) + sel.repos.length;
+					btn.disabled = count === 0;
+					if (summary) {
+						summary.textContent = count === 0
+							? 'Nothing selected — your agent will read nothing.'
+							: `${count} item${count === 1 ? '' : 's'} selected${sel.readmes.length ? `, ${sel.readmes.length} README${sel.readmes.length === 1 ? '' : 's'}` : ''}. Nothing else is read or stored.`;
+					}
+				}
+
+				function renderSeedCatalog(data) {
+					const root = document.getElementById('seed-catalog');
+					const revokeBtn = document.getElementById('seed-revoke-btn');
+					if (!root) return;
+					seedCatalog = data.catalog;
+
+					if (revokeBtn) {
+						revokeBtn.style.display = data.fact_count > 0 ? 'inline-flex' : 'none';
+						revokeBtn.textContent = `Delete ${data.fact_count} seeded ${data.fact_count === 1 ? 'memory' : 'memories'}`;
+					}
+
+					if (!data.catalog) {
+						root.innerHTML = '<p class="muted" style="font-size:13px;margin:0">Connect GitHub to choose what your agent reads.</p>';
+						refreshSeedControls();
+						return;
+					}
+
+					const p = data.catalog.profile;
+					const repos = data.catalog.repos || [];
+					const seededNote = data.seeded_at
+						? `<p class="muted" style="font-size:12px;margin:0 0 8px">Last seeded ${new Date(data.seeded_at).toLocaleString()} — ${data.fact_count} ${data.fact_count === 1 ? 'memory' : 'memories'} stored. Seeding again replaces them.</p>`
+						: '';
+
+					const profileRow = p ? `
+						<li class="consent-item">
+							<input type="checkbox" id="consent-profile" checked />
+							<div class="ci-body">
+								<label class="ci-title" for="consent-profile">Public profile <span class="tag">@${esc(p.login)}</span></label>
+								<div class="ci-meta">${esc([p.name, p.bio, p.company, p.location].filter(Boolean).join(' · ') || 'Name, bio, company, location, follower count')}</div>
+							</div>
+						</li>` : '';
+
+					const repoRows = repos.map((r) => `
+						<li class="consent-item">
+							<input type="checkbox" data-repo="${esc(r.key)}" id="consent-repo-${esc(r.key)}" ${r.pinned ? 'checked' : ''} />
+							<div class="ci-body">
+								<label class="ci-title" for="consent-repo-${esc(r.key)}">
+									<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.key)}</a>
+									${r.pinned ? '<span class="tag">pinned</span>' : ''}
+									${r.language ? `<span class="tag">${esc(r.language)}</span>` : ''}
+								</label>
+								<div class="ci-meta">${esc(r.description || 'No description')}${r.stars ? ` · ★ ${r.stars}` : ''}</div>
+							</div>
+							<label class="consent-readme">
+								<input type="checkbox" data-readme="${esc(r.key)}" />
+								<span>README</span>
+							</label>
+						</li>`).join('');
+
+					const emptyState = !p && repos.length === 0
+						? '<p class="muted" style="font-size:13px;margin:0">This GitHub account has no public profile or public repositories yet. Push a public repo, then reload this page.</p>'
+						: '';
+
+					root.innerHTML = emptyState || `
+						${seededNote}
+						<ul class="consent-list">${profileRow}${repoRows}</ul>
+						<div class="consent-summary"><span id="consent-summary-text"></span><span class="muted">Pinned repositories are ticked by default.</span></div>`;
+
+					for (const box of root.querySelectorAll('input[type="checkbox"]')) {
+						box.addEventListener('change', refreshSeedControls);
+					}
+					refreshSeedControls();
+				}
+
+				async function loadSeedCatalog(agentId) {
+					const root = document.getElementById('seed-catalog');
+					const btn = document.getElementById('seed-btn');
+					seedAgentId = agentId;
+					if (!root) return;
+					if (btn) btn.disabled = true;
+					root.innerHTML = '<div class="consent-list">' + '<div class="consent-skeleton"></div>'.repeat(4) + '</div>';
+					try {
+						renderSeedCatalog(await apiJson(`/api/agents/${encodeURIComponent(agentId)}/memory/seed/github`));
+					} catch (e) {
+						root.innerHTML = `<p class="muted" style="font-size:13px;margin:0">Could not load your GitHub catalog: ${esc(e.data?.error_description || e.message || 'unknown error')}. <button class="btn sec" id="seed-retry-btn" style="font-size:12px;padding:4px 12px;margin-left:6px">Retry</button></p>`;
+						document.getElementById('seed-retry-btn')?.addEventListener('click', () => loadSeedCatalog(agentId));
+					}
+				}
+
+				async function mountSeedPanel() {
+					if (seedMounted) return;
+					seedMounted = true;
+					const select = document.getElementById('sel-seed-agent');
+					const fallback = document.getElementById('seed-agent-fallback');
+					const preset = _urlP.get('agent_id') || '';
+
+					let agents = [];
+					try {
+						agents = (await apiJson('/api/agents/me'))?.agents || [];
+					} catch { agents = []; }
+
+					if (agents.length) {
+						select.innerHTML = agents.map((a) => `<option value="${esc(a.id)}">${esc(a.name || a.id)}</option>`).join('');
+						if (preset && agents.some((a) => a.id === preset)) select.value = preset;
+						select.addEventListener('change', () => loadSeedCatalog(select.value));
+						loadSeedCatalog(select.value);
+					} else {
+						// No agents on this account yet, or the list call failed: fall back to
+						// an explicit id so the panel is still usable rather than dead.
+						select.style.display = 'none';
+						fallback.style.display = 'block';
+						const input = document.getElementById('inp-seed-agent-id');
+						if (preset) input.value = preset;
+						document.getElementById('seed-load-btn')?.addEventListener('click', () => {
+							const id = input.value.trim();
+							if (!id) return showMsg(document.getElementById('seed-msg'), 'err', 'Enter an agent ID.');
+							loadSeedCatalog(id);
+						});
+						if (preset) loadSeedCatalog(preset);
+					}
+				}
+
+				document.getElementById('seed-btn')?.addEventListener('click', async () => {
+					const btn = document.getElementById('seed-btn');
+					const msg = document.getElementById('seed-msg');
+					const resultsEl = document.getElementById('seed-results');
+					if (!seedAgentId) return showMsg(msg, 'err', 'Pick an agent first.');
+					const selection = seedSelection();
+					btn.disabled = true;
+					btn.textContent = 'Seeding…';
+					if (resultsEl) resultsEl.style.display = 'none';
+					try {
+						const data = await apiJson(`/api/agents/${encodeURIComponent(seedAgentId)}/memory/seed/github`, {
+							method: 'POST',
+							headers: { 'content-type': 'application/json' },
+							body: JSON.stringify(selection),
+						});
+						showMsg(msg, 'ok', `Seeded ${data.seeded} fact${data.seeded === 1 ? '' : 's'}.`);
+						if (resultsEl && data.facts?.length) {
+							resultsEl.style.display = 'block';
+							resultsEl.innerHTML =
+								`<p class="muted" style="font-size:12px;margin:0 0 8px">Stored from ${data.selection.repos.length} ${data.selection.repos.length === 1 ? 'repository' : 'repositories'}${data.selection.profile ? ' and your public profile' : ''}:</p>` +
+								`<ul class="seed-facts">${data.facts.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>`;
+						}
+						loadSeedCatalog(seedAgentId);
+					} catch (e) {
+						showMsg(msg, 'err', e.data?.error_description || 'Seed failed.');
+					} finally {
+						btn.textContent = 'Seed memory';
+						refreshSeedControls();
+					}
+				});
+
+				document.getElementById('seed-revoke-btn')?.addEventListener('click', async () => {
+					const btn = document.getElementById('seed-revoke-btn');
+					const msg = document.getElementById('seed-msg');
+					if (!seedAgentId) return;
+					if (!confirm('Delete every memory this agent seeded from GitHub? This cannot be undone.')) return;
+					btn.disabled = true;
+					btn.textContent = 'Deleting…';
+					try {
+						const data = await apiJson(`/api/agents/${encodeURIComponent(seedAgentId)}/memory/seed/github`, { method: 'DELETE' });
+						showMsg(msg, 'ok', `Deleted ${data.deleted} seeded ${data.deleted === 1 ? 'memory' : 'memories'}.`);
+						document.getElementById('seed-results').style.display = 'none';
+						loadSeedCatalog(seedAgentId);
+						loadGitHubStatus();
+					} catch (e) {
+						showMsg(msg, 'err', e.data?.error_description || 'Delete failed.');
+					} finally {
+						btn.disabled = false;
+					}
+				});
 
 			async function loadConnectedAccounts() {
 				loadGitHubStatus();
