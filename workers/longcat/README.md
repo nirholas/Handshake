@@ -177,7 +177,9 @@ GPUs and neither works:
   use context parallelism, which splits activations but replicates weights on
   every rank, so 2 x L4 does not help either.
 - **NVIDIA RTX PRO 6000 Blackwell, 96 GB.** Enough memory, wrong architecture:
-  it is compute capability sm_120, and the `torch==2.6.0+cu124` and
+  it is compute capability 12.0 per
+  [NVIDIA's own table](https://developer.nvidia.com/cuda-gpus) (where A100 is 8.0
+  and H100 is 9.0), and the `torch==2.6.0+cu124` and
   `flash-attn==2.7.4.post1` wheels this stack pins ship kernels only up to
   sm_90. The shipped `base_model_int8/config.json` sets
   `enable_flashattn2: true`, so flash-attn is a hard runtime import, not an

@@ -56,17 +56,12 @@ RUN pip install -c /app/constraints.txt -r /app/requirements-model.txt
 COPY requirements.txt /app/requirements.txt
 RUN pip install -c /app/constraints.txt -r /app/requirements.txt
 
-# Fail the build, not the first job, if a transitive resolution replaced the
-# CUDA torch build or moved numpy to 2.x.
-RUN python - <<'PY'
-import numpy, torch, transformers, diffusers
-assert torch.__version__.startswith("2.6.0"), f"torch drifted to {torch.__version__}"
-assert "cu124" in torch.__version__ or torch.version.cuda == "12.4", (
-    f"expected a cu124 torch build, got {torch.__version__} / cuda {torch.version.cuda}"
-)
-assert numpy.__version__.startswith("1.26"), f"numpy drifted to {numpy.__version__}"
-print("pins ok:", torch.__version__, numpy.__version__, transformers.__version__, diffusers.__version__)
-PY
+# Fail the build, not the first job, if a transitive resolution replaced the CUDA
+# torch build or moved numpy to 2.x. A copied script rather than a RUN heredoc:
+# Cloud Build's docker builder does not enable BuildKit, and RUN heredocs need
+# the 1.4+ Dockerfile frontend.
+COPY check_pins.py /app/check_pins.py
+RUN python /app/check_pins.py
 
 # ── App code ───────────────────────────────────────────────────────────────────
 WORKDIR /app
