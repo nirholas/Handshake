@@ -21,7 +21,8 @@
 #   _REGION  Artifact Registry / build region (default: us-central1)
 #   _REPO    Artifact Registry repository name (default: longcat-video-avatar)
 #
-# Manual submit (SHORT_SHA is only populated for trigger builds):
+# Manual submit (SHORT_SHA is only populated for trigger builds, and an empty tag
+# fails the push):
 #   gcloud builds submit --config workers/longcat/cloudbuild.yaml \
 #     --region us-central1 --project aerial-vehicle-466722-p5 \
 #     --substitutions=SHORT_SHA=manual$(date +%s)
@@ -35,26 +36,12 @@ substitutions:
   _REGION: us-central1
   _REPO: longcat-video-avatar
 
-steps:
-  # ── Ensure the Artifact Registry repository exists ──────────────────────────
-  # Idempotent, so a first build in a fresh project does not fail at the push
-  # step with "repository not found".
-  - id: ensure-repo
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        set -euo pipefail
-        if ! gcloud artifacts repositories describe "${_REPO}" \
-             --location "${_REGION}" --project "$PROJECT_ID" >/dev/null 2>&1; then
-          gcloud artifacts repositories create "${_REPO}" \
-            --repository-format=docker \
-            --location "${_REGION}" \
-            --project "$PROJECT_ID" \
-            --description="LongCat-Video-Avatar-1.5 talking-avatar worker"
-        fi
+# The Artifact Registry repository is a one-time prerequisite, not a build step:
+# three-ws-build@ deliberately lacks artifactregistry.repositories.create, so a
+# self-provisioning step fails the build before it starts. Created on 2026-08-11;
+# the command is in README.md under "Prerequisites for a first deploy".
 
+steps:
   # ── Build ──────────────────────────────────────────────────────────────────
   # The Dockerfile runs the worker's three test suites as build gates, so a
   # green build here also means the unit tests passed.

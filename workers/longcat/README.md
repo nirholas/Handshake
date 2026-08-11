@@ -261,9 +261,17 @@ openssl rand -hex 32 | tr -d '\n' | \
 gcloud firestore databases create --location=us-central1
 ```
 
-The Artifact Registry repository is created by the build itself. Output MP4s go
-to `three-ws-avatar-reconstructions`, the bucket the other model workers already
-use, under the `avatar-videos/` prefix; no new bucket is needed. Weights go to
+```bash
+# Artifact Registry repository (created 2026-08-11; kept out of cloudbuild.yaml
+# because three-ws-build@ has no artifactregistry.repositories.create permission)
+gcloud artifacts repositories create longcat-video-avatar \
+  --repository-format=docker --location us-central1 \
+  --project aerial-vehicle-466722-p5 \
+  --description="LongCat-Video-Avatar-1.5 talking-avatar worker"
+```
+
+Output MP4s go to `three-ws-avatar-reconstructions`, the bucket the other model
+workers already use, under the `avatar-videos/` prefix; no new bucket is needed. Weights go to
 `three-ws-model-weights` under `longcat/`, which is the same shared bucket the
 rig, text2motion and TripoSG workers mount.
 
