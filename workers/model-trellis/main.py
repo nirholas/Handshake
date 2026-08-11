@@ -23,16 +23,25 @@ API contract (consumed by the Pipeline Controller):
 
   GET  /health    → { ok, model, gpu_available, tiers, rembg_matte }
 
+  GET  /          → { service, model, ready, endpoints }. Unauthenticated
+                    service descriptor for the platform's warmth probe.
+
 Model weights pre-population:
   pip install huggingface_hub
   huggingface-cli download microsoft/TRELLIS-image-large --local-dir /tmp/trellis-large
   gsutil -m cp -r /tmp/trellis-large gs://three-ws-model-weights/trellis-large/
 
-Environment variables:
-  API_KEY           — shared bearer secret
-  GCS_BUCKET        — Cloud Storage bucket for output meshes
-  WEIGHTS_DIR       — local path to model weights (default: /weights/trellis-large)
-  MAX_CONCURRENT    — max parallel inferences (default: 1)
+Environment variables (README.md carries the full table):
+  API_KEY               shared bearer secret
+  GCS_BUCKET            Cloud Storage bucket for output meshes
+  WEIGHTS_DIR           local path to weights (default: /weights/trellis-large)
+  WEIGHTS_GCS_URI       optional gs:// tree staged to local disk at startup
+  WEIGHTS_LOCAL_DIR     where that staging lands (default: /tmp/trellis-weights)
+  MAX_CONCURRENT        max parallel inferences (default: 1)
+  REMBG_SERVICE_URL     sibling rembg worker for the matte pre-step
+  REMBG_MODEL           default rembg model (default: isnet-general-use)
+  REMBG_TIMEOUT_S       matte round-trip budget (default: 90)
+  IMAGE_FETCH_TIMEOUT_S per-attempt image fetch timeout (default: 30)
 """
 
 from __future__ import annotations
@@ -56,6 +65,7 @@ os.environ.setdefault("ATTN_BACKEND", "xformers")
 os.environ.setdefault("SPCONV_ALGO", "native")
 from contextlib import asynccontextmanager
 from typing import Optional
+from urllib.parse import urlsplit
 
 import torch
 from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
@@ -64,6 +74,15 @@ from google.cloud import storage
 from PIL import Image
 from pydantic import BaseModel, Field
 
+from request_policy import (
+    FETCH_ATTEMPTS,
+    QUALITY_DEFAULTS,
+    TIER_PRESETS,
+    call_with_retry,
+    clamped_quality,
+    matte_enabled,
+    normalize_tier,
+)
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes,
@@ -217,6 +236,64 @@ def _require_api_key(authorization: str) -> None:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 
+class ImageSourceError(ValueError):
+    """A caller-supplied image could not be read.
+
+    Distinct from an internal failure: the cause is the request's own `images`
+    entry (unreachable host, rejected target, undecodable bytes), so the message
+    is safe and useful to hand back verbatim instead of an opaque error ref.
+    """
+
+
+IMAGE_FETCH_TIMEOUT_S = float(os.environ.get("IMAGE_FETCH_TIMEOUT_S", "30"))
+
+
+def _source_label(src: str) -> str:
+    """Short, non-leaking identifier for an image source, for error messages."""
+    if src.startswith("data:image"):
+        return "inline data uri"
+    host = urlsplit(src).hostname
+    return host or src[:60]
+
+
+def _fetch_image_bytes(src: str) -> bytes:
+    """Fetch one https image source, retrying transient network failures.
+
+    A single read timeout against a public image host used to fail the entire
+    generation (observed live 2026-08-10). The fetch itself stays SSRF-hardened:
+    https-only, private/loopback/link-local/metadata IPs rejected after DNS
+    resolution, redirects re-validated per hop, response size bounded.
+    """
+    label = _source_label(src)
+
+    def attempt() -> bytes:
+        return fetch_remote_bytes(src, timeout=IMAGE_FETCH_TIMEOUT_S)
+
+    def note_retry(number: int, delay: float, exc: BaseException) -> None:
+        log.warning(
+            "image fetch attempt %d/%d for %s failed (%s); retrying in %.1fs",
+            number, FETCH_ATTEMPTS, label, type(exc).__name__, delay,
+        )
+
+    try:
+        return call_with_retry(attempt, sleep=time.sleep, on_retry=note_retry)
+    except UnsafeUrlError as exc:
+        raise ImageSourceError(f"refused to fetch image source ({label}): {exc}") from exc
+    except httpx.HTTPStatusError as exc:
+        raise ImageSourceError(
+            f"image source {label} returned HTTP {exc.response.status_code}"
+        ) from exc
+    except httpx.HTTPError as exc:
+        raise ImageSourceError(
+            f"image source {label} unreachable after {FETCH_ATTEMPTS} attempts "
+            f"({type(exc).__name__}); check the URL is publicly readable"
+        ) from exc
+    except ValueError as exc:
+        # The guard's own size ceiling. Caught after UnsafeUrlError (a ValueError
+        # subclass) so the more specific message wins.
+        raise ImageSourceError(f"image source {label} rejected: {exc}") from exc
+
+
 def _decode_image(src: str, keep_alpha: bool = False) -> Image.Image:
     # keep_alpha=True preserves an RGBA cutout's transparency so TRELLIS uses the
     # supplied alpha as the subject mask (its preprocess_image path respects an
@@ -225,16 +302,23 @@ def _decode_image(src: str, keep_alpha: bool = False) -> Image.Image:
     mode = "RGBA" if keep_alpha else "RGB"
     if src.startswith("data:image"):
         b64 = src.split(",", 1)[1]
-        return Image.open(io.BytesIO(base64.b64decode(b64))).convert(mode)
-    if src.startswith("https://"):
-        # SSRF-hardened: https-only, private/loopback/link-local/metadata IPs
-        # rejected after DNS resolution, redirects re-validated per hop, bounded.
         try:
-            data = fetch_remote_bytes(src, timeout=30)
-        except UnsafeUrlError as exc:
-            raise ValueError(f"refused to fetch image source: {exc}") from exc
+            raw = base64.b64decode(b64)
+        except Exception as exc:  # noqa: BLE001 - caller's own payload, report it as such
+            raise ImageSourceError(f"inline data uri is not valid base64: {exc}") from exc
+        return _open_image(raw, mode, "inline data uri")
+    if src.startswith("https://"):
+        return _open_image(_fetch_image_bytes(src), mode, _source_label(src))
+    raise ImageSourceError(f"unsupported image source: {src[:60]}")
+
+
+def _open_image(data: bytes, mode: str, label: str) -> Image.Image:
+    try:
         return Image.open(io.BytesIO(data)).convert(mode)
-    raise ValueError(f"unsupported image source: {src[:60]}")
+    except Exception as exc:  # noqa: BLE001 - undecodable caller input, not an internal fault
+        raise ImageSourceError(
+            f"image source {label} is not a decodable image ({type(exc).__name__})"
+        ) from exc
 
 
 async def _matte_via_rembg(src: str, model: str) -> tuple[str, bool]:
@@ -350,93 +434,9 @@ async def _resolve_task(task_id: str) -> dict:
     return task
 
 
-# Per-request quality knobs, clamped to safe envelopes for a 24 GB L4.
-# Defaults are the platform's production quality bar, not the TRELLIS demo's
-# (steps=12, simplify=0.95, texture_size=1024): GPU time is cheap against the
-# platform's GCP credit budget ($100k+ provisioned, owner has explicitly signed
-# off on spending it here), so both diffusion stages run well past the demo
-# step count and the texture bake runs at the model's max resolution by
-# default. Callers may still override per request (e.g. a lower-cost preview
-# lane). Measured warm cost at the PRIOR defaults (steps=25/25, texture=2048,
-# simplify=0.90) was ~50s/asset (docs/ops/gcp-credits.md) against a 300s client
-# poll budget (src/home-forge.js MAX_POLL_MS) — ample headroom to push further:
-#   - ss_steps/slat_steps 25→40: sharper structure and surface detail. Cost
-#     scales roughly linearly with steps, so ~1.6x the diffusion time.
-#   - texture_size 2048→4096 (the clamp ceiling): texture baking is a
-#     resize/encode pass, not a diffusion stage, so this is a small time cost
-#     for a large perceptual win — resolution is one of the single biggest
-#     levers on whether a result reads as "real" vs "generated."
-#   - simplify 0.90→0.75: keeps meaningfully more geometry (25% of triangles
-#     removed instead of 90%) — low-poly faceting is one of the most obvious
-#     tells of AI-generated 3D, and this is otherwise-idle GPU decimation cost.
-# Together these land well inside the poll budget (est. ~90-120s warm) while
-# meaningfully closing the gap toward a photograph-real result.
-# `simplify` is the FRACTION OF TRIANGLES REMOVED by to_glb's decimation —
-# lower keeps more geometry. Raising steps sharpens structure and appearance
-# at roughly linear GPU-time cost; the L4 has headroom (MAX_CONCURRENT=1).
-_QUALITY_DEFAULTS = {
-    "ss_steps": 40,
-    "slat_steps": 40,
-    "ss_cfg": 7.5,
-    "slat_cfg": 3.0,
-    "simplify": 0.75,
-    "texture_size": 4096,
-}
-
-# Named quality tiers. A caller sends `tier` to pick one preset; an explicit
-# `quality` dict still overrides individual fields on top of it. When no tier is
-# sent the base stays _QUALITY_DEFAULTS, so the existing lane's behaviour is
-# byte-for-byte unchanged — tiers are purely additive.
-#   draft    — latency lane: demo-grade steps, aggressive decimation, 1K texture.
-#   standard — the platform's prior default (steps 25, 2K texture, simplify 0.90).
-#   high     — the current default (steps 40, 4K texture, simplify 0.75).
-#   max      — maximum fidelity: steps at the sampler ceiling, near-zero geometry
-#              decimation (keep ~all triangles), firmer guidance, 4K texture.
-# `simplify` is the FRACTION OF TRIANGLES REMOVED, so a lower value keeps MORE
-# geometry. texture_size caps at 4096 (the clamp ceiling and TRELLIS's practical
-# bake limit on the L4). max is meant to be paired with rembg pre-matting.
-_TIER_PRESETS = {
-    "draft":    {"ss_steps": 12, "slat_steps": 12, "ss_cfg": 7.5, "slat_cfg": 3.0, "simplify": 0.95, "texture_size": 1024},
-    "standard": {"ss_steps": 25, "slat_steps": 25, "ss_cfg": 7.5, "slat_cfg": 3.0, "simplify": 0.90, "texture_size": 2048},
-    "high":     {"ss_steps": 40, "slat_steps": 40, "ss_cfg": 7.5, "slat_cfg": 3.0, "simplify": 0.75, "texture_size": 4096},
-    "max":      {"ss_steps": 50, "slat_steps": 50, "ss_cfg": 8.5, "slat_cfg": 4.5, "simplify": 0.50, "texture_size": 4096},
-}
-
-
-def _clamped_quality(q: dict | None, tier: str | None = None) -> dict:
-    # Base = the named tier preset when a valid one is given, else the historical
-    # defaults. An explicit `quality` dict then overrides field-by-field.
-    base = dict(_QUALITY_DEFAULTS)
-    if tier:
-        preset = _TIER_PRESETS.get(str(tier).strip().lower())
-        if preset:
-            base = dict(preset)
-    src = {**base, **(q or {})}
-
-    def num(key, lo, hi, cast=float):
-        raw = src.get(key)
-        try:
-            val = cast(raw)
-        except (TypeError, ValueError):
-            return base[key]
-        return max(lo, min(hi, val))
-
-    # nvdiffrast's texture bake builds a mip stack and hard-fails on any
-    # non-power-of-two extent (proven live 2026-07-16: a 3072 request killed
-    # every generation at the bake step). Snap the requested size down to the
-    # nearest power of two inside the clamp envelope so no caller value can
-    # crash the bake.
-    tex = num("texture_size", 512, 4096, int)
-    tex = 1 << (int(tex).bit_length() - 1)
-
-    return {
-        "ss_steps": num("ss_steps", 8, 50, int),
-        "slat_steps": num("slat_steps", 8, 50, int),
-        "ss_cfg": num("ss_cfg", 1.0, 15.0),
-        "slat_cfg": num("slat_cfg", 1.0, 10.0),
-        "simplify": num("simplify", 0.5, 0.98),
-        "texture_size": tex,
-    }
+# Quality tiers, clamps, and the matte default live in request_policy.py so the
+# decision logic that shapes every generation can be unit tested without torch,
+# CUDA, or the TRELLIS source tree (see test_request_policy.py).
 
 
 async def _run_inference(
@@ -464,12 +464,12 @@ async def _run_inference(
         await _update_task(task_id, status="failed", error=f"pipeline unavailable: {_load_error}")
         return
 
-    q = _clamped_quality(quality, tier)
+    q = clamped_quality(quality, tier)
     # Matting defaults on for the MAX tier (paired for maximum fidelity) and off
     # everywhere else, preserving the free/default lane. An explicit `matte`
     # value always wins. It only actually runs when REMBG_SERVICE_URL is set.
-    tier_key = str(tier).strip().lower() if tier else None
-    do_matte = matte if matte is not None else (tier_key == "max")
+    tier_key = normalize_tier(tier)
+    do_matte = matte_enabled(matte, tier_key)
 
     async with _sem:
         await _update_task(task_id, status="running")
@@ -551,6 +551,17 @@ async def _run_inference(
                 task_id, elapsed, tier_key or "default", matted_count, q, len(glb_bytes), gcs_url,
             )
 
+        except ImageSourceError as exc:
+            # The request's own `images` entry is at fault, so hand the reason
+            # back verbatim: an opaque error ref would tell the caller nothing
+            # and leaves the router retrying a URL that can never work.
+            log.warning("[%s] image source rejected: %s", task_id, exc)
+            await _update_task(
+                task_id,
+                status="failed",
+                error=str(exc),
+                elapsed_ms=int((time.time() - t0) * 1000),
+            )
         except Exception as exc:
             await _update_task(
                 task_id,
@@ -564,8 +575,8 @@ class InferRequest(BaseModel):
     images: list[str] = Field(..., min_length=1, max_length=6)
     body_type: str = "neutral"
     job_id: str | None = None
-    # Optional per-request override of _QUALITY_DEFAULTS (ss_steps, slat_steps,
-    # ss_cfg, slat_cfg, simplify, texture_size) — see _clamped_quality. Omitted
+    # Optional per-request override of the resolved tier (ss_steps, slat_steps,
+    # ss_cfg, slat_cfg, simplify, texture_size), see request_policy. Omitted
     # or partial fields fall back to the platform quality-bar defaults.
     quality: dict | None = None
     # Named quality tier: draft | standard | high | max. Seeds the base quality
@@ -615,6 +626,26 @@ async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
     return await _resolve_task(task_id)
 
 
+@app.get("/")
+async def root() -> dict:
+    """Service descriptor for the platform's warmth probe.
+
+    api/_lib/forge-lane-health.js and api/cron/gpu-keepwarm.js keep this worker
+    resident with an authenticated GET against the root, and treat any status
+    below 500 as "the container is up". Without a route here every one of those
+    probes logged a 404 at WARNING severity, roughly once a minute forever,
+    which buried the real errors in this service's log. Answering 200 with the
+    readiness the probe actually wants costs nothing and keeps the log honest.
+    Unauthenticated, exposing exactly what /health already does.
+    """
+    return {
+        "service": "model-trellis",
+        "model": "trellis-image-large",
+        "ready": bool(_ready and _ready.is_set()),
+        "endpoints": ["POST /infer", "GET /tasks/{task_id}", "GET /health"],
+    }
+
+
 @app.get("/health")
 async def health() -> dict:
     return {
@@ -625,7 +656,7 @@ async def health() -> dict:
         "pipeline_loaded": _pipeline is not None,
         "ready": bool(_ready and _ready.is_set()),
         "load_error": _load_error,
-        "tiers": list(_TIER_PRESETS),
-        "default_quality": _QUALITY_DEFAULTS,
+        "tiers": list(TIER_PRESETS),
+        "default_quality": QUALITY_DEFAULTS,
         "rembg_matte": bool(REMBG_SERVICE_URL),
     }

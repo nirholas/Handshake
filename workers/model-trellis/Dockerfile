@@ -70,9 +70,13 @@ RUN git clone https://github.com/autonomousvision/mip-splatting.git /tmp/ext/mip
     && rm -rf /tmp/ext
 
 # ── 5. Server deps ────────────────────────────────────────────────────────────
+# pytest is here for the build-time gate at the bottom of this file, the same
+# pattern workers/garment-forge uses: the request policy is unit tested during
+# `docker build`, so a broken tier table or clamp can never reach a revision.
 RUN pip install \
         "fastapi==0.115.0" "uvicorn[standard]==0.32.0" "pydantic>=2.0.0" \
-        "httpx>=0.27.0" "google-cloud-storage==2.18.0" "safetensors>=0.4.0"
+        "httpx>=0.27.0" "google-cloud-storage==2.18.0" "safetensors>=0.4.0" \
+        "pytest>=8.0.0"
 
 # ── 6. TRELLIS source (imported via PYTHONPATH, pinned for reproducibility) ───
 # --recurse-submodules is REQUIRED: TRELLIS vendors FlexiCubes (its mesh
@@ -89,7 +93,14 @@ RUN git clone --recurse-submodules https://github.com/microsoft/TRELLIS.git /app
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
+COPY request_policy.py /app/request_policy.py
 COPY main.py /app/main.py
+COPY test_request_policy.py /app/test_request_policy.py
+
+# Build-time gate: the quality tiers, the clamps that keep a caller value from
+# crashing the nvdiffrast bake, and the image-fetch retry policy are all pure
+# logic, so they are proven here rather than in production. Needs no GPU.
+RUN python3 -m pytest /app/test_request_policy.py -q
 
 EXPOSE 8080
 

@@ -18,7 +18,11 @@ served back as an `https://storage.googleapis.com/…` URL.
 ## Endpoints
 
 `POST /infer` and `GET /tasks/{id}` require `Authorization: Bearer $API_KEY`.
-`GET /health` is unauthenticated so Cloud Run's startup probe can reach it.
+`GET /health` and `GET /` are unauthenticated: they carry no secrets, and the
+platform's warmth probe ([`api/_lib/forge-lane-health.js`](../../api/_lib/forge-lane-health.js),
+[`api/cron/gpu-keepwarm.js`](../../api/cron/gpu-keepwarm.js)) reads the root to
+decide whether this lane is up. Cloud Run's own startup probe is a TCP check on
+port 8080, not an HTTP one.
 
 ### `POST /infer` → `202`
 
@@ -42,7 +46,12 @@ Request:
   turnaround views (front/side/back) of the **same** subject via
   `run_multi_image`. `https` sources are pulled through the SSRF guard in
   [`worker_security.py`](./worker_security.py) (https-only; private, loopback,
-  link-local, and cloud-metadata IPs rejected on every redirect hop).
+  link-local, and cloud-metadata IPs rejected on every redirect hop). Each fetch
+  is retried up to 3 times with exponential backoff on a timeout, a connection
+  failure, or a retryable upstream status (408/425/429/5xx); a 404 or 403 fails
+  immediately because it will never succeed. When a source is genuinely
+  unusable the task's `error` names the reason and the host instead of an
+  opaque error ref, so the caller can fix the URL.
 - `body_type` — optional, default `"neutral"` (accepted, not used by TRELLIS).
 - `job_id` — optional correlation string.
 - `tier` — optional named quality preset: `draft` | `standard` | `high` | `max`
@@ -109,8 +118,13 @@ or `failed`.
 }
 ```
 
-On failure the record carries a sanitized `error` string (the full traceback
-stays in the container log). Unknown ids return `404`.
+On failure the record carries an `error` string. A bad image source reports the
+actual reason (`image source cdn.example.com unreachable after 3 attempts
+(ReadTimeout); check the URL is publicly readable`) because the fault is in the
+request; anything internal is reduced to a correlation-id ref with the full
+traceback kept in the container log. A `queued` or `running` record that makes
+no progress for 30 minutes is expired to `failed` so a client cannot poll
+forever behind a dead runner. Unknown ids return `404`.
 
 ### `GET /health`
 
@@ -133,6 +147,20 @@ The ~3 GB pipeline loads in the background after the port opens, so a cold
 instance reports `ready: false` briefly; `/infer` tasks submitted during that
 window wait for `ready` (up to 600 s) rather than failing.
 
+### `GET /`
+
+Unauthenticated service descriptor, answered so the platform's warmth probe
+stops recording a 404 every minute in this service's log:
+
+```json
+{
+	"service": "model-trellis",
+	"model": "trellis-image-large",
+	"ready": true,
+	"endpoints": ["POST /infer", "GET /tasks/{task_id}", "GET /health"]
+}
+```
+
 ## Environment
 
 | Var | Required | Default | Purpose |
@@ -146,16 +174,49 @@ window wait for `ready` (up to 600 s) rather than failing.
 | `REMBG_SERVICE_URL` | no | — | Sibling [`rembg-service`](../rembg/) base URL for the `matte` pre-step. Unset disables matting (TRELLIS still removes the background internally). |
 | `REMBG_MODEL` | no | `isnet-general-use` | Default rembg model for the pre-matte |
 | `REMBG_TIMEOUT_S` | no | `90` | Max seconds to wait on the rembg-service round-trip before falling back to the un-matted image |
+| `WEIGHTS_GCS_URI` | no | - | `gs://` weight tree staged to local disk at startup with the storage client. Set in production; see the note below |
+| `WEIGHTS_LOCAL_DIR` | no | `/tmp/trellis-weights` | Where that staging lands, and what the pipeline then loads from |
+| `IMAGE_FETCH_TIMEOUT_S` | no | `30` | Per-attempt timeout for fetching a caller-supplied `https://` image (3 attempts) |
 
 Weights are **not** baked into the image — the `three-ws-model-weights` bucket
-is mounted at `/weights`, so refreshing weights needs no rebuild. Pre-populate
-once with:
+is mounted at `/weights`, so refreshing weights needs no rebuild.
+
+At startup the loader **stages** that tree to local disk (`WEIGHTS_GCS_URI` →
+`WEIGHTS_LOCAL_DIR`) with the storage client and loads from there. The GCS FUSE
+mount serves the model's random-access reads over the network, and a cold load
+routinely stalled on it (`stalled read-req cancelled`, `context deadline
+exceeded`), turning a ~50 s load into 15+ minutes or a hard timeout; a plain
+sequential GET per object does not. If `WEIGHTS_GCS_URI` is unset, or staging
+fails for any reason, the loader falls back to reading `WEIGHTS_DIR` off the
+mount, so this can only add reliability. Already-staged objects whose size
+matches are reused, so a same-instance reload does not re-pull 3 GB.
+
+Pre-populate the bucket once with:
 
 ```bash
 pip install huggingface_hub
 huggingface-cli download microsoft/TRELLIS-image-large --local-dir /tmp/trellis-large
 gsutil -m cp -r /tmp/trellis-large gs://three-ws-model-weights/trellis-large/
 ```
+
+## Tests
+
+The request policy (quality tiers, the clamps that stop a caller value from
+crashing the texture bake, the image-fetch retry) lives in
+[`request_policy.py`](./request_policy.py), deliberately free of torch and CUDA
+so it can be proven anywhere:
+
+```bash
+cd workers/model-trellis
+python3 -m pip install pytest httpx
+python3 -m pytest test_request_policy.py -q     # 18 tests
+```
+
+The same suite runs **inside `docker build`** (see the `RUN python3 -m pytest`
+step in the Dockerfile), so a broken tier table or clamp fails the build instead
+of a user's generation. The GPU-bound half of the service is covered by the
+platform-side integration tests in
+[`tests/api/forge-trellis-selfhost.test.js`](../../tests/api/forge-trellis-selfhost.test.js).
 
 ## Run locally
 
@@ -195,14 +256,22 @@ Submit from the **repo root** — the build step declares `dir: workers/model-tr
 so the upload source is the whole repo:
 
 ```bash
-gcloud builds submit --config workers/model-trellis/cloudbuild.yaml .
+gcloud builds submit --config workers/model-trellis/cloudbuild.yaml . \
+	--region us-central1 --project aerial-vehicle-466722-p5 \
+	--substitutions=SHORT_SHA=manual$(date +%s)
 ```
 
+`SHORT_SHA` is only populated automatically for trigger-driven builds; a manual
+submit must pass it, because the config tags and deploys
+`.../server:$SHORT_SHA`. The config also pins the `three-ws-build@` service
+account (the project's default compute SA was deleted).
+
 Or provision it alongside the rest of the fleet (idempotent; prints the URLs to
-set on the `three-ws-api` service env):
+set on the `three-ws-api` service env). Valid service ids are exactly
+`hunyuan3d trellis triposr triposg rig`:
 
 ```bash
-PROJECT_ID=<gcp-project> SERVICES="hunyuan3d trellis triposg unirig" \
+PROJECT_ID=<gcp-project> SERVICES="hunyuan3d trellis triposg rig" \
 	workers/deploy/deploy-all.sh
 ```
 
@@ -210,9 +279,10 @@ Builds the image (CUDA extension compiles push the build past an hour — the
 config sets `timeout: 3600s`) and deploys Cloud Run service **`model-trellis`**
 in `us-central1`: **1× `nvidia-l4` GPU**, 8 vCPU, 32 GiB, 900 s request timeout,
 `min-instances=1` (one instance stays warm because a cold start pays a
-multi-minute weight load), `max-instances=2`. The weights bucket
-(`three-ws-model-weights`) is mounted at `/weights` and `API_KEY` comes from the
-`avatar-reconstruction-key` secret.
+multi-minute weight load), `max-instances=3`. Each instance serializes its own
+GPU at `MAX_CONCURRENT=1`, so the instance count *is* the concurrent-generation
+count. The weights bucket (`three-ws-model-weights`) is mounted at `/weights`
+and `API_KEY` comes from the `avatar-reconstruction-key` secret.
 
 ## Example — submit, poll, fetch
 
@@ -224,7 +294,7 @@ KEY=your-api-key
 TASK=$(curl -s -X POST "$BASE/infer" \
 	-H "Authorization: Bearer $KEY" \
 	-H 'Content-Type: application/json' \
-	-d '{"images":["https://storage.googleapis.com/three-ws-public/samples/chair.png"]}' \
+	-d '{"images":["https://three.ws/avatars/thumbs/default.png"]}' \
 	| python3 -c 'import sys,json; print(json.load(sys.stdin)["task_id"])')
 
 # 2. Poll until done
