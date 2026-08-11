@@ -21,6 +21,15 @@ const WANTED_KEY = 'screen:wanted';
 const WINDOW_MS = 90_000; // agents wanted within the last 90s are "live-watched"
 const MAX_AGENTS = 48;    // hard cap returned to the worker
 
+// Pool liveness. An authenticated poll is proof a caster pool is running right
+// now, so every poll refreshes this key and /api/agent/watch-status reads it to
+// decide whether a browser can actually be on its way. Without it the wall
+// promised "warming up" forever whenever no pool was deployed. The TTL is many
+// poll intervals wide (the worker's POLL_MS default is 3s) so a slow round or a
+// rolling redeploy never reads as an outage.
+export const POOL_ALIVE_KEY = 'screen:pool:alive';
+export const POOL_ALIVE_TTL_S = 45;
+
 // A secret shorter than this is treated as absent: a stray one-character value
 // in the env would otherwise be a trivially guessable key to the whole watch set.
 export const MIN_SECRET_LEN = 16;
@@ -61,6 +70,11 @@ export default wrap(async (req, res) => {
 	if (!r) return json(res, 200, { agents: [], ts: Date.now() }, NO_STORE);
 
 	const now = Date.now();
+	// Mark the pool alive before anything can fail below: the caller IS a caster,
+	// and the wall's handoff should reflect that even on a degraded read.
+	try {
+		await r.set(POOL_ALIVE_KEY, now, { ex: POOL_ALIVE_TTL_S });
+	} catch { /* a liveness blip degrades the wall to the activity view, never an error */ }
 	let ids = [];
 	try {
 		// Most-recently-wanted first, capped.
