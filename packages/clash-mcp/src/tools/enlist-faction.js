@@ -30,17 +30,12 @@ export const def = {
 			.optional()
 			.describe('Base58 Solana secret of the enlisting wallet. Falls back to SOLANA_SECRET_KEY env. The wallet must hold the faction coin.'),
 	},
+	// Failures (no signer, bad secret, upstream rejection) propagate to the
+	// server wrapper, which formats them and marks the result isError - the same
+	// error channel the read tools use. An ineligible wallet is NOT an error:
+	// the proof ran and answered, so it returns ok:true with eligible:false.
 	async handler(args) {
-		try {
-			const result = await enlist({ token: args?.token, secret: args?.secret });
-			return { ok: true, ...result };
-		} catch (err) {
-			return {
-				ok: false,
-				error: err?.code || 'enlist_failed',
-				message: err?.message || String(err),
-				...(err?.status ? { status: err.status } : {}),
-			};
-		}
+		const result = await enlist({ token: args?.token, secret: args?.secret });
+		return { ok: true, ...result };
 	},
 };
