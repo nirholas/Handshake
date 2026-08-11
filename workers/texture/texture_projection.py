@@ -14,10 +14,12 @@ Conventions, both load-bearing:
 
   * Camera. OpenGL/pyrender style: the camera looks down its own -Z, so the pose
     matrix carries (right, up, -forward) in its rotation columns. `project`
-    returns pixel coordinates in the rendered view plus a positive depth measured
-    along the view axis, which is the same quantity pyrender's offscreen renderer
-    writes into its depth buffer, so the two can be compared directly for the
-    occlusion test.
+    returns pixel coordinates in the rendered view plus a true linear depth
+    along the view axis. That is NOT what pyrender hands back from a render:
+    it un-projects its depth buffer with the perspective formula whatever camera
+    drew it, so an orthographic render's depths come back nonlinearly warped.
+    The occlusion test therefore z-buffers the surface samples here rather than
+    reusing the render (see view_depth_buffer).
 
   * UV. trimesh flips V on glTF import and flips it back on export, so inside
     trimesh (and therefore here) V points up and the atlas row for a texel is
