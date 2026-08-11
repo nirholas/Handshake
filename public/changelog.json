@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-11T02:04:43.813Z",
+	"generated_at": "2026-08-11T02:48:45.043Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -36,6 +36,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Auto-rigging tells you when a model cannot be rigged, instead of just failing",
+			"summary": "When you rig an avatar and the source file is not actually a 3D model (a broken link that returns an error page) or has no surface to rig (a point cloud rather than a mesh), the job used to end with a generic internal error that gave you nothing to act on. The rigger now checks the file up front and reports the real reason, so you know whether to fix the link or supply a different model, and the check runs before any GPU time is spent. Separately, a finished rig could be thrown away if the network dropped while the result was being saved; uploads now retry, so completed work is no longer lost to a transient blip.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

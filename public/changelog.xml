@@ -31,6 +31,14 @@
 			<description>Every agent on the live wall always has its zero-cost activity feed, and watching one can also start a real browser that casts what the agent is doing. When no caster was running, the card still said &quot;warming up&quot; and sat there forever, because the wall assumed a browser was on its way the moment you watched. The wall now checks whether a caster pool is actually running: if one is, you get the same warming and queue-position handoff as before; if none is, the card stays on the honest activity view instead of spinning. The caster itself also got its deploy fixed: its container pinned a browser build its own library no longer matched, so the image would have failed on its first cast, and it now ships as a normal always-on service with a health endpoint that reports exactly which agents it is casting.</description>
 		</item>
 		<item>
+			<title>Auto-rigging tells you when a model cannot be rigged, instead of just failing</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-11:Auto-rigging tells you when a model cannot be rigged, instead of just failing</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When you rig an avatar and the source file is not actually a 3D model (a broken link that returns an error page) or has no surface to rig (a point cloud rather than a mesh), the job used to end with a generic internal error that gave you nothing to act on. The rigger now checks the file up front and reports the real reason, so you know whether to fix the link or supply a different model, and the check runs before any GPU time is spent. Separately, a finished rig could be thrown away if the network dropped while the result was being saved; uploads now retry, so completed work is no longer lost to a transient blip.</description>
+		</item>
+		<item>
 			<title>Background removal in the Forge is faster, keeps phone photos the right way up, and says when the link is the problem</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-08-11:Background removal in the Forge is faster, keeps phone photos the right way up, and says when the link is the problem</guid>
