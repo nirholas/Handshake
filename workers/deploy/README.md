@@ -166,10 +166,13 @@ Three workers are deliberately **not** staged by `stage-weights.sh`:
 - **`rig`** stages via [`workers/rig/stage-assets.sh`](../rig/stage-assets.sh).
   Its assets span an LFS-filtered model repo, a gated Mixamo dataset, and a baked
   ARKit template, which a one-repo-per-service map cannot express.
-- **`texture`** needs nothing staged. Its
-  [`Dockerfile`](../texture/Dockerfile) bakes SDXL and ControlNet-Depth into
-  `/opt/hf-cache` at image build time; the `sdxl-texture` bucket prefix is an
-  optional cold-start accelerator, and the loader degrades to the baked cache.
+- **`texture`** stages via
+  [`workers/texture/stage_weights.py`](../texture/stage_weights.py)
+  (`--prefix sdxl-texture`). It hands the staged directory to diffusers as
+  `cache_dir`, so the tree has to be a Hugging Face *cache* tree, not the flat
+  `--local-dir` layout `stage_repo` writes. Its image bakes ControlNet-Depth
+  only, so skipping this leaves the service downloading SDXL inside the first
+  request and burning the 600 s timeout.
 - **`text2motion`** reads the MDM checkpoint from `gs://<bucket>/mdm/`
   (`model.pt` + `args.json`). That checkpoint is not a Hugging Face repo; it is
   the `humanml_trans_enc_512` release of
@@ -198,8 +201,9 @@ command that sets them. Pass `WIRE_SITE=1` to have the script run that update
 itself; it is opt-in because it mutates a running production service.
 
 GPU extras: `SERVICES="texture text2motion"` deploys the retexture and
-text-to-animation workers too. Both need L4 quota; only `text2motion` needs
-staged weights (see the weights table above).
+text-to-animation workers too. Both need L4 quota, and both need weights staged
+by their own stager first (see the section above); the script warns about each
+before it starts building.
 
 ---
 
