@@ -145,7 +145,11 @@ Every tool is a read-only model-inference call — nothing in your environment o
 | `WATSONX_URL`            | no                                  | `https://us-south.ml.cloud.ibm.com`       |
 | `WATSONX_MODEL_ID`       | no                                  | `ibm/granite-3-8b-instruct`               |
 | `WATSONX_EMBED_MODEL_ID` | no                                  | `ibm/granite-embedding-278m-multilingual` |
+| `WATSONX_FORECAST_MODEL` | no                                  | `ibm/granite-ttm-512-96-r2`               |
 | `WATSONX_API_VERSION`    | no                                  | `2024-05-31`                              |
+| `WATSONX_TS_API_VERSION` | no                                  | `2025-02-11` (time-series API date)       |
+| `WATSONX_TIMEOUT_MS`     | no                                  | `60000`                                   |
+| `WATSONX_IAM_URL`        | no                                  | `https://iam.cloud.ibm.com/identity/token` |
 
 Regional hosts: `us-south`, `eu-de`, `eu-gb`, `jp-tok`, `au-syd`, `ca-tor` — e.g. `https://eu-de.ml.cloud.ibm.com`.
 
@@ -158,7 +162,7 @@ Regional hosts: `us-south`, `eu-de`, `eu-gb`, `jp-tok`, `au-syd`, `ca-tor` — e
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, all rights reserved; see [LICENSE](./LICENSE)
 
 ---
 

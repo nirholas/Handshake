@@ -37,6 +37,7 @@ import { log } from './shared/log.js';
 import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { mountViewSwitcher } from './view-switcher.js';
 import { mountCoinStatus } from './pump/coin-status-card.js';
+import { mountAgentTokenPlan } from './agent-token-plan.js';
 import { consumeCsrfToken } from './api.js';
 import { countUp, updateValue, flashValue, ring, playRings, sparkline, enterStagger } from './ui-juice.js';
 
@@ -303,6 +304,7 @@ if (typeof window !== 'undefined') {
 		try { _cardHandle?.destroy?.(); } catch { /* idempotent */ } _cardHandle = null;
 		try { _watchHandle?.destroy?.(); } catch { /* idempotent */ } _watchHandle = null;
 		try { _achievementsHandle?.destroy?.(); } catch { /* idempotent */ } _achievementsHandle = null;
+		try { _tokenPlanHandle?.destroy?.(); } catch { /* idempotent */ } _tokenPlanHandle = null;
 		// Release the WebGL contexts so they don't count against the browser's
 		// hard context budget once the user navigates away.
 		try { _heroAvatarHandle?.dispose(); } catch { /* idempotent */ } _heroAvatarHandle = null;
@@ -321,6 +323,20 @@ function destroyCoinStatus() {
 			/* ignore */
 		}
 	}
+}
+
+// The token-plan panel (the coin this agent is configured to become, before it
+// mints). Re-rendering the token card discards its DOM, so the handle is torn
+// down first to abort its in-flight fetch.
+let _tokenPlanHandle = null;
+
+function destroyTokenPlan() {
+	try {
+		_tokenPlanHandle?.destroy();
+	} catch {
+		/* idempotent */
+	}
+	_tokenPlanHandle = null;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -1475,6 +1491,23 @@ function render(agent) {
 	// Full launch history from the pump_agent_mints registry — fire-and-forget;
 	// renders nothing extra when the agent has no launches beyond the chip above.
 	renderLaunchHistory($('ad-token-body'), agent);
+
+	// The token plan: what this agent's coin IS before it exists on chain. Owners
+	// get the designer plus the free devnet rehearsal; visitors see a ready plan
+	// as a quiet "coming: $TICKER" and never see a draft. A plan on a profile with
+	// no coin reveals the card the same way launch history does.
+	destroyTokenPlan();
+	if (!agent.token) {
+		_tokenPlanHandle = mountAgentTokenPlan($('ad-token-body'), {
+			agentId: agent.id,
+			isOwner: !!agent.isOwner,
+			network: 'mainnet',
+			onReveal: () => {
+				const card = document.getElementById('ad-token-card');
+				if (card) card.hidden = false;
+			},
+		});
+	}
 
 	// 3D creations minted as NFTs — fire-and-forget; the card stays hidden when
 	// this agent hasn't minted anything yet.

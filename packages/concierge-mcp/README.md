@@ -23,7 +23,7 @@ Three tools:
 | Tool | What it does | Network |
 | --- | --- | --- |
 | **`concierge_ask`** | Ask a website's AI concierge a question. Give it a `url` and it fetches that page and answers grounded in the real content (title, headings, nav, main text), the way to *ask any website a question*. Or pass `knowledge`/`content` to answer from text you already have. | Free three.ws lane + fetches the URL |
-| **`concierge_embed`** | Generate ready-to-paste embed code that adds a Concierge to a website: the one-tag `<script>`, the `<three-concierge>` web component, or an npm snippet, configured with accent, avatar, greeting, curated knowledge, and suggested prompts. | Offline |
+| **`concierge_embed`** | Generate ready-to-paste embed code that adds a Concierge to a website: the one-tag `<script>`, the `<three-concierge>` web component, an npm snippet, or an imperative `mount()` call, configured with accent, avatar, greeting, curated knowledge, and suggested prompts. | Offline |
 | **`concierge_avatars`** | List the rigged 3D avatars a Concierge can wear. | Offline |
 
 No API key, no signer, no payment. `concierge_ask` runs on the public, free `POST /api/concierge` answer lane; the other two are pure local generators.
@@ -104,15 +104,15 @@ Read-only, open-world.
 | `persona` | string | Tone instruction for the reply. |
 | `lang` | string | BCP-47 hint, e.g. `en`, `es`. |
 
-At least one of `url`, `knowledge`, or `content` is required. Returns `{ answer, grounded_in, provider, model }`.
+At least one of `url`, `knowledge`, or `content` is required. Returns `{ ok, question, answer, grounded_in, provider, model, endpoint }`.
 
 ### `concierge_embed`
 Read-only, idempotent, offline.
 
-Key parameters: `siteName`, `flavor` (`script` \| `web-component` \| `npm` \| `imperative` \| `all`), `accent`, `avatar`, `customAvatar`, `position`, `theme`, `greeting`, `persona`, `knowledge`, `suggestions[]`, `endpoint`, `muted`, `open`, `noPicker`, `noTeaser`, `lang`. Returns `{ snippets, applied_config }`.
+Key parameters: `siteName`, `flavor` (`script` \| `web-component` \| `npm` \| `imperative` \| `all`, default `all`), `accent`, `avatar`, `customAvatar`, `position`, `theme`, `greeting`, `persona`, `knowledge`, `suggestions[]`, `endpoint`, `muted`, `open`, `noPicker`, `noTeaser`, `lang`. Returns `{ ok, flavor, snippets, applied_config, docs }`. The `script`, `web-component`, and `imperative` snippets are all plain-HTML paste-ready (they load the CDN global build); the `npm` snippet is for bundler users.
 
 ### `concierge_avatars`
-Read-only, idempotent, offline. No parameters. Returns the catalog (`id`, `name`, `tagline`, `style`).
+Read-only, idempotent, offline. No parameters. Returns `{ ok, default, count, avatars, note }`, each avatar carrying `id`, `name`, `tagline`, `style`, and `framing`.
 
 ## Configuration
 
@@ -123,6 +123,20 @@ All optional environment variables:
 | `THREE_WS_BASE` | `https://three.ws` | API origin for the answer call + the origin the embed snippets point at. |
 | `THREE_WS_TIMEOUT_MS` | `45000` | Timeout for the concierge answer (it may fail over across LLM providers). |
 | `CONCIERGE_PAGE_TIMEOUT_MS` | `12000` | Timeout for fetching a page in `concierge_ask`. |
+
+## Errors
+
+A failed tool call returns an MCP error result (`isError: true`) whose text is a single JSON object: `{ "ok": false, "error": "<code>", "message": "…" }`, plus `status` on upstream rejections:
+
+| `error` | Meaning | Recovery |
+| --- | --- | --- |
+| `bad_request` | Bad arguments: no `url`/`knowledge`/`content` on `concierge_ask`, a non-http(s) `url`, or an unknown `avatar` id. | Fix the call. |
+| `unsupported_media` | The fetched `url` is not an HTML/text page. | Point at a readable page, or pass `content`. |
+| `upstream_error` | The answer endpoint rejected the request; `status` carries the HTTP code (`429` = the free lane's IP rate limit). | Act on `status`; back off on `429`. |
+| `stream_error` | The answer stream failed before completing. | Retry. |
+| `timeout` | No answer within `THREE_WS_TIMEOUT_MS`, or the page fetch outran `CONCIERGE_PAGE_TIMEOUT_MS`. | Retry or raise the timeout. |
+| `network_error` | The request never reached the API (DNS, offline, TLS). | Check connectivity / `THREE_WS_BASE`. |
+| `bad_config` | `THREE_WS_TIMEOUT_MS` is not a positive number. Thrown while the server starts (module load), so the process exits before serving. | Fix the env var. |
 
 ## How it relates to the widget
 

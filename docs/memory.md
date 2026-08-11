@@ -380,8 +380,23 @@ In `ipfs` mode without encryption, treat the memory as semi-public. Don't store 
 
 ---
 
+## Seeding memory from an existing account
+
+A brand-new agent starts with nothing to remember. Three consent-gated lanes fill
+that gap from an account the user already has, each writing rows into the same
+store described above and each revocable by deleting exactly what it wrote:
+
+| Source | Endpoint | Ownership proof |
+|---|---|---|
+| Farcaster | `/api/agents/:id/memory/seed/farcaster` | Wallet signature against the fid's public verifications. See [Farcaster memory seeding](/docs/farcaster-memory-seeding). |
+| X | `/api/agents/:id/memory/seed/x` | OAuth connection on the user's account |
+| GitHub | `/api/agents/:id/memory/seed/github` | OAuth connection on the user's account |
+
+---
+
 ## Related
 
+- [Farcaster memory seeding](/docs/farcaster-memory-seeding): consent-first seeding from your casts, proved with a Solana wallet
 - [Create, enhance & edit agent memory](/docs/tutorials/create-and-edit-memory): the hands-on tutorial
 - [Agent system](/docs/agent-system): how memory feeds the LLM runtime
 - [Skills](/docs/skills): the `ctx.memory` API skills use

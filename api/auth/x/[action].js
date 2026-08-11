@@ -19,6 +19,7 @@ import {
 import { cors, method, wrap, error, redirect, rateLimited } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
+import { revokeAllSeedConsentsForUser } from '../../_lib/x-seed-consent.js';
 
 // ── Signed-cookie PKCE state ─────────────────────────────────────────────────
 
@@ -209,6 +210,11 @@ async function handleCallback(req, res) {
 
 	const tokens = await tokenRes.json().catch(() => ({}));
 	const { access_token, refresh_token, expires_in } = tokens;
+	// X echoes the scopes it actually granted, which can be narrower than what we
+	// asked for if the user unticked a permission. Record them: social_connections
+	// .scopes is NOT NULL, and the memory-seeding consent screen shows the owner
+	// what this connection is allowed to do.
+	const grantedScopes = typeof tokens.scope === 'string' ? tokens.scope : '';
 	if (!access_token) {
 		console.error('[x-oauth] token response carried no access_token');
 		return redirect(res, errorRedirect);
@@ -237,12 +243,24 @@ async function handleCallback(req, res) {
 	const encAccess = encryptToken(access_token);
 	const encRefresh = refresh_token ? encryptToken(refresh_token) : null;
 
+	// Reconnecting a DIFFERENT X account retires every memory-seeding grant made
+	// for the previous one and deletes the memories it produced. Consent was
+	// given for that account's posts, and it does not transfer to this one.
+	const [prior] = await sql`
+		SELECT provider_uid FROM social_connections
+		WHERE user_id = ${userId} AND provider = 'x'
+		LIMIT 1
+	`;
+	if (prior?.provider_uid && prior.provider_uid !== profile.id) {
+		await revokeAllSeedConsentsForUser(userId, 'x_account_changed');
+	}
+
 	// Upsert by (user_id, provider) — uses the existing unique constraint
 	await sql`
 		INSERT INTO social_connections
-			(user_id, provider, provider_uid, username, access_token, refresh_token, expires_at, raw_data)
+			(user_id, provider, provider_uid, username, access_token, refresh_token, expires_at, raw_data, scopes)
 		VALUES
-			(${userId}, 'x', ${profile.id}, ${profile.username}, ${encAccess}, ${encRefresh}, ${expiresAt}, ${JSON.stringify(profile)})
+			(${userId}, 'x', ${profile.id}, ${profile.username}, ${encAccess}, ${encRefresh}, ${expiresAt}, ${JSON.stringify(profile)}, ${grantedScopes})
 		ON CONFLICT (user_id, provider) DO UPDATE SET
 			provider_uid    = EXCLUDED.provider_uid,
 			username        = EXCLUDED.username,
@@ -250,6 +268,7 @@ async function handleCallback(req, res) {
 			refresh_token   = EXCLUDED.refresh_token,
 			expires_at      = EXCLUDED.expires_at,
 			raw_data        = EXCLUDED.raw_data,
+			scopes          = EXCLUDED.scopes,
 			disconnected_at = NULL,
 			updated_at      = now()
 	`;

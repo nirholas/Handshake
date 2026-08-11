@@ -228,7 +228,7 @@ should be split.
 ## Errors & edge cases
 
 The endpoints return structured JSON errors `{ error: { code, message } }`. The
-SDK surfaces them as a typed `MocapError` carrying the `code`:
+SDK surfaces them as a typed `ThreeWsError` carrying the `code`:
 
 | `code` | HTTP | Meaning | Recovery |
 |---|---|---|---|

@@ -27,6 +27,7 @@
  * and never throws into the capture flow.
  */
 
+import { GATES } from './selfie-gates.js';
 import { log } from './shared/log.js';
 
 // MediaPipe tasks-vision — same pinned build the face stack uses, so the WASM
@@ -175,7 +176,9 @@ export function meanSaturation(rgba, w, h, stride = 4) {
  *   sharpness: number,
  *   flatness: number,
  *   saturation: number,
- * }} m
+ *   luma?: number,
+ * }} m `luma` is the mean face luma (0..255) when the caller measured it;
+ *   omitted, lighting is not judged (the server stays the final authority).
  * @returns {{ verdict: 'good'|'warn'|'block', issues: string[], primary: string|null, message: string }}
  */
 export function assessPhotoQuality(m) {
@@ -201,6 +204,10 @@ export function assessPhotoQuality(m) {
 
 	if (m.width < THRESH.minDimPx || m.height < THRESH.minDimPx) issues.push('low-res');
 	if (m.sharpness < THRESH.sharpnessBlurry) issues.push('blurry');
+	if (typeof m.luma === 'number') {
+		if (m.luma < GATES.LUMA_MIN) issues.push('dark');
+		else if (m.luma > GATES.LUMA_MAX) issues.push('bright');
+	}
 	if (m.flatness > THRESH.flatnessHigh && m.saturation > THRESH.saturationHigh)
 		issues.push('illustration');
 
@@ -208,12 +215,14 @@ export function assessPhotoQuality(m) {
 		illustration:
 			'This looks like a drawing or cartoon. 3D works best from a real photo — a flat illustration may come out flat. You can continue, but a real selfie gives a real you.',
 		blurry: 'This photo looks soft. A sharper, well-lit shot reconstructs with more detail.',
+		dark: 'Your face is in shadow. Face a light source so your features are visible.',
+		bright: 'Your face is washed out. Step away from direct light or glare.',
 		far: 'Your face is small in frame. Move closer or crop tighter for a stronger likeness.',
 		'low-res': 'This image is low-resolution. A larger photo captures more facial detail.',
 		'multiple-faces': "More than one face detected — we'll use the largest. Crop to just you for the best result.",
 	};
 
-	const order = ['illustration', 'blurry', 'far', 'low-res', 'multiple-faces'];
+	const order = ['illustration', 'blurry', 'dark', 'bright', 'far', 'low-res', 'multiple-faces'];
 	const primary = order.find((k) => issues.includes(k)) || null;
 	return {
 		verdict: issues.length ? 'warn' : 'good',
@@ -453,6 +462,20 @@ export async function assessPhoto(bitmap) {
 			? { x: face.x * w, y: face.y * h, w: face.w * w, h: face.h * h }
 			: null;
 
+		// Mean luma over the face region (whole frame when no box): the lighting
+		// gate cares whether the FACE is legible, not whether the room is bright.
+		let luma;
+		{
+			const bx = face ? Math.max(0, Math.round(face.x * s.w)) : 0;
+			const by = face ? Math.max(0, Math.round(face.y * s.h)) : 0;
+			const bw = face ? Math.min(s.w - bx, Math.max(1, Math.round(face.w * s.w))) : s.w;
+			const bh = face ? Math.min(s.h - by, Math.max(1, Math.round(face.h * s.h))) : s.h;
+			let sum = 0;
+			for (let y = by; y < by + bh; y++)
+				for (let x = bx; x < bx + bw; x++) sum += grey[y * s.w + x];
+			luma = sum / (bw * bh);
+		}
+
 		const assessment = assessPhotoQuality({
 			width: w,
 			height: h,
@@ -461,6 +484,7 @@ export async function assessPhoto(bitmap) {
 			sharpness: laplacianVariance(grey, s.w, s.h),
 			flatness: flatnessScore(grey, s.w, s.h),
 			saturation: meanSaturation(data, s.w, s.h),
+			luma,
 		});
 		return { ...assessment, faceBox: faceBoxPx };
 	} catch (err) {

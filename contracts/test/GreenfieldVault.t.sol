@@ -8,6 +8,29 @@ import {IPermissionHub} from "../src/greenfield/IPermissionHub.sol";
 import {MockCrossChain, MockPermissionHub, MockGnfdAccessControl} from "./mocks/MockGreenfield.sol";
 import {Reentrant} from "./mocks/Reentrant.sol";
 
+/// @notice Counterparty with no `receive`, so any ETH the vault sends it fails.
+///         Proves the payout-failure branches of `buy`, `revoke`, and
+///         `withdraw` revert instead of silently discarding the credit.
+contract EthRejector {
+    function doList(GreenfieldVault vault, bytes32 objectId, uint256 price) external {
+        vault.list(objectId, price, address(this));
+    }
+
+    function doBuy(GreenfieldVault vault, bytes32 objectId, bytes calldata policyData) external payable {
+        vault.buy{value: msg.value}(objectId, policyData);
+    }
+
+    function doRevoke(GreenfieldVault vault, uint256 saleId) external payable {
+        vault.revoke{value: msg.value}(saleId);
+    }
+
+    function doWithdraw(GreenfieldVault vault) external {
+        vault.withdraw();
+    }
+}
+
+/// @dev Invariants under proof: GV-1 .. GV-8 of
+///      `specs/ECONOMY_CONTRACT_INVARIANTS.md`.
 contract GreenfieldVaultTest is Test {
     MockCrossChain internal crossChain;
     MockPermissionHub internal permissionHub;
@@ -107,6 +130,9 @@ contract GreenfieldVaultTest is Test {
 
         vm.expectRevert(GreenfieldVault.BadPrice.selector);
         vault.list(OBJECT_ID, 0, seller);
+
+        vm.expectRevert(GreenfieldVault.ZeroAddress.selector);
+        vault.list(OBJECT_ID, PRICE, address(0));
         vm.stopPrank();
     }
 
@@ -394,6 +420,77 @@ contract GreenfieldVaultTest is Test {
         vm.prank(seller);
         vm.expectRevert(GreenfieldVault.NothingToWithdraw.selector);
         vault.withdraw();
+    }
+
+    /// GV-4: a seller that cannot receive ETH gets a revert, not a silent
+    /// zeroing of its credited balance.
+    function testWithdrawToARejectingSellerReverts() public {
+        EthRejector badSeller = new EthRejector();
+        bytes32 role = vault.ROLE_CREATE();
+        vm.prank(address(badSeller));
+        accessControl.grantRole(role, address(vault), 0);
+        badSeller.doList(vault, OBJECT_ID, PRICE);
+
+        _buy(buyer, OBJECT_ID);
+        assertEq(vault.pendingWithdrawals(address(badSeller)), PRICE);
+
+        vm.expectRevert(GreenfieldVault.TransferFailed.selector);
+        badSeller.doWithdraw(vault);
+
+        assertEq(vault.pendingWithdrawals(address(badSeller)), PRICE, "GV-4: the credit survives a failed payout");
+    }
+
+    /// GV-3: a buyer that cannot receive its refund gets a revert, so the
+    /// purchase never half-lands.
+    function testBuyRefundFailureRevertsTheWholePurchase() public {
+        _list(seller, OBJECT_ID, PRICE);
+
+        EthRejector badBuyer = new EthRejector();
+        vm.deal(address(badBuyer), 10 ether);
+
+        vm.expectRevert(GreenfieldVault.TransferFailed.selector);
+        badBuyer.doBuy{value: TOTAL_REQUIRED + 1 ether}(vault, OBJECT_ID, POLICY_DATA);
+
+        assertEq(vault.saleIdOf(OBJECT_ID, address(badBuyer)), 0, "GV-3: no sale may survive a failed refund");
+        assertEq(vault.pendingWithdrawals(seller), 0);
+    }
+
+    /// GV-7: same for a seller's excess relay fee on revoke.
+    function testRevokeRefundFailureReverts() public {
+        EthRejector badSeller = new EthRejector();
+        bytes32 role = vault.ROLE_CREATE();
+        vm.prank(address(badSeller));
+        accessControl.grantRole(role, address(vault), 0);
+        badSeller.doList(vault, OBJECT_ID, PRICE);
+        vm.deal(address(badSeller), 10 ether);
+
+        uint256 saleId = _buy(buyer, OBJECT_ID);
+        vm.prank(address(permissionHub));
+        vault.greenfieldCall(STATUS_SUCCESS, 0x07, 2, 777, abi.encode(saleId));
+
+        vm.expectRevert(GreenfieldVault.TransferFailed.selector);
+        badSeller.doRevoke{value: TOTAL_FEE + 1 ether}(vault, saleId);
+
+        (,,,,, GreenfieldVault.SaleStatus status) = vault.sales(saleId);
+        assertEq(uint8(status), uint8(GreenfieldVault.SaleStatus.Granted), "the sale stays Granted");
+    }
+
+    // ── GV-5: the vault always holds enough to pay every seller ──────────────
+
+    function testVaultBalanceCoversEveryPendingWithdrawal() public {
+        _list(seller, OBJECT_ID, PRICE);
+        _list(seller, OBJECT_ID_2, 2 ether);
+
+        _buy(buyer, OBJECT_ID);
+        vm.prank(buyer2);
+        vault.buy{value: 2 ether + TOTAL_FEE}(OBJECT_ID_2, POLICY_DATA);
+
+        assertEq(vault.pendingWithdrawals(seller), 3 ether);
+        assertGe(address(vault).balance, vault.pendingWithdrawals(seller), "GV-5: held ETH must cover every credit");
+
+        vm.prank(seller);
+        vault.withdraw();
+        assertGe(address(vault).balance, vault.pendingWithdrawals(seller));
     }
 
     // ── views ────────────────────────────────────────────────────────────

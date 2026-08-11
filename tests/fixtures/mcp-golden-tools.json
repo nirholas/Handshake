@@ -762,7 +762,7 @@
 			"name": "pose_model",
 			"title": "Resolve a text prompt to a pose-studio seed + joint rotations",
 			"descHead": "Map a natural-language pose description to a deterministic pose-studio s",
-			"descHash": "f90f437e72b1",
+			"descHash": "c6138b729e0e",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,

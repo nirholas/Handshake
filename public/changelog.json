@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-11T18:53:02.179Z",
+	"generated_at": "2026-08-11T21:45:57.459Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -139,6 +139,16 @@
 			"link": "/gallery",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Design your agent's coin before you launch it, and rehearse the launch for free",
+			"summary": "Your agent can now carry a token plan: the name, ticker, story, artwork, pairing, buyback share and dev buy of the coin it is going to become, saved on the agent itself instead of typed into a form and thrown away. The plan shows up on the agent's profile, so visitors can see the coin is coming before it exists, and it tells you what is still missing and what the launch will cost in SOL. There is also a rehearsal: one button builds the real launch transaction from your saved plan and asks Solana to run it on devnet without broadcasting anything, so you find out whether it would work before a single lamport moves. Saving and rehearsing cost nothing and mint nothing; launching stays a separate, deliberate step. Coins launched from your own wallet also now appear in the public launch feed and in your agent's launch history, which they previously did not.",
+			"link": "/launches",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -436,6 +446,17 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "The selfie scanner now grades every shot before you commit to a build",
+			"summary": "Taking a selfie for an avatar got a real quality copilot. The viewfinder already tracked your face live; now the hint line names the exact fix (turn back to the camera, hold steady, find better light) instead of a generic warning, and after the countdown fires the captured still itself is re-scored, so motion blur or a lighting change in those last three seconds is caught on the review screen rather than a minute into the build. Uploaded photos get a lighting check too. Every threshold behind these gates is derived from the ways the reconstruction engine actually fails, so a shot that passes on your phone is a shot the engine can build from. And if your browser refreshes mid-capture, the shots you already took come back instead of starting you over.",
+			"link": "/create/selfie",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "The sign-language recognition API now documents the confidence score it returns with every transcription",
 			"summary": "When you fingerspell into the webcam, the recognizer reports how sure it is of what it read, and the page uses that to flag a shaky capture instead of quietly dropping wrong words into your message. That score was in every response but appeared in none of the docs, so anyone building on the recognition API had no way to know it existed. The API reference, the sign-language guide and the worker's own README now list the full response, including the raw decode before the cleanup pass and whether the cleanup changed anything, so a caller can build the same warning we do. The recognizer itself was also capped to a sane number of simultaneous captures per instance, so a burst of signers scales out instead of queueing behind each other.",
 			"link": "/sign-language",
@@ -498,6 +519,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Your agent's personality is now signed and published to IPFS",
+			"summary": "Every time you save your agent's persona, three.ws now writes down exactly how that agent is configured, signs it with the platform's signing key, and publishes it to IPFS. You get back a permanent address anyone can open. That means the instructions behind your agent are no longer something people have to take on trust: a visitor, a buyer, or another agent can fetch the record, confirm it really came from three.ws, read the exact prompt, and see whether the agent running today still matches what was published. Anyone can run the check themselves without an account. Only public agents publish automatically, and you can publish a private agent deliberately whenever you choose.",
+			"link": "/agents",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{

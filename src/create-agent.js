@@ -1,11 +1,13 @@
 // Agent Creation Wizard — /create-agent
 //
-// A five-step, state-driven flow that produces a real agent identity:
+// A six-step, state-driven flow that produces a real agent identity:
 //   1. Basics       → name, description, tags
 //   2. 3D model     → starter library | own GLB upload | attach later
 //   3. Skills       → core (always on) + optional capabilities
-//   4. Personality  → category, greeting, profile prompt, voice
-//   5. Review       → POST /api/agents, optional marketplace publish
+//   4. Personality  → category, greeting, profile prompt
+//   5. Voice        → built-in speech, or a recorded/uploaded sample cloned onto
+//                     the agent (src/voice/voice-setup.js) the moment it exists
+//   6. Review       → POST /api/agents, voice bind, optional marketplace publish
 //
 // Everything writes through the same verified endpoints the agent editor uses
 // (account.js#saveRemoteGlbToAccount for the model, /api/agents for the
@@ -19,9 +21,10 @@ import { log } from './shared/log.js';
 import { isValidGlbMagic } from './shared/glb-magic.js';
 import { track, trackFunnelStep, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { draftHasContent, isDraftFresh } from './create-agent-draft.js';
+import { VoiceSetup } from './voice/voice-setup.js';
 
-const TOTAL_STEPS = 5;
-const STEP_LABELS = ['Basics', 'Model', 'Skills', 'Personality', 'Review'];
+const TOTAL_STEPS = 6;
+const STEP_LABELS = ['Basics', 'Model', 'Skills', 'Personality', 'Voice', 'Review'];
 const MAX_TAGS = 8;
 
 // Marketplace categories — mirrors api/marketplace/[action].js CATEGORIES.

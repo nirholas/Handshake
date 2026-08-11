@@ -120,9 +120,11 @@ contract AgentPayments is ReentrancyGuard, Ownable {
     error NoTokensBought();
     error NativeTransferFailed();
 
-    constructor(address initialOwner) Ownable(initialOwner) {
-        if (initialOwner == address(0)) revert ZeroAddress();
-    }
+    /// @dev A zero `initialOwner` is rejected by `Ownable`'s constructor with
+    ///      `OwnableInvalidOwner`, which runs before this body, so there is no
+    ///      second check to add here: an unreachable one would only look like
+    ///      protection that is never exercised.
+    constructor(address initialOwner) Ownable(initialOwner) {}
 
     // ── Agent registration ───────────────────────────────────────────────────
 
@@ -266,7 +268,11 @@ contract AgentPayments is ReentrancyGuard, Ownable {
         uint256 spend = acct.buybackVault;
         if (spend == 0) revert NothingToProcess();
 
-        acct.buybackVault = 0; // effects before interactions
+        // Effects before interactions. Both accounting writes that are knowable
+        // up front happen here; only `tokensBurned` has to wait, because the
+        // amount bought is not knowable until the swap returns.
+        acct.buybackVault = 0;
+        acct.totalBuybacks += spend;
 
         uint256 agentBefore = IERC20(agentToken).balanceOf(address(this));
 
@@ -286,7 +292,6 @@ contract AgentPayments is ReentrancyGuard, Ownable {
         IERC20(agentToken).safeTransfer(BURN_ADDRESS, bought);
         tokensBurned = bought;
 
-        acct.totalBuybacks += spend;
         acct.tokensBurned += bought;
 
         emit BuybackTriggered(agentToken, currencyToken, spend, tokensBurned);

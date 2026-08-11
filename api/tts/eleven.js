@@ -8,16 +8,21 @@
  * Billing (header `x-tts-billing` reports which rung served the call). There
  * is no free platform lane: every clip the platform pays ElevenLabs for is
  * paid for by the caller (owner policy 2026-08-06).
- *   byok    - request carried an `x-eleven-key` header: the user's own
- *             ElevenLabs account pays, so credits never apply.
- *   credits - platform key: the request is metered against the user's prepaid
- *             credit wallet (top up with $THREE or SOL at /credits) at
- *             TTS_ELEVEN_USD_PER_1K, with a 402 + top_up_url when short.
- *   cached  - R2 cache hit: no upstream call, nothing charged.
+ *   byok        - request carried an `x-eleven-key` header: the user's own
+ *                 ElevenLabs account pays, so credits never apply.
+ *   agent_byok  - `agentId` names an agent whose voice is bound to its owner's
+ *                 saved ElevenLabs key: that owner's account pays. This is what
+ *                 lets an agent's cloned voice speak to visitors on the chat and
+ *                 embed surfaces, not just to the person who cloned it.
+ *   credits     - platform key: the request is metered against the user's prepaid
+ *                 credit wallet (top up with $THREE or SOL at /credits) at
+ *                 TTS_ELEVEN_USD_PER_1K, with a 402 + top_up_url when short.
+ *   cached      - R2 cache hit: no upstream call, nothing charged.
  *
  * Body: {
  *   voiceId: string,
  *   text: string,
+ *   agentId?: string,                        // speak as this agent's bound voice
  *   modelId?: string,                        // default eleven_flash_v2_5
  *   voice_settings?: {                        // canonical ElevenLabs shape, honored verbatim
  *     stability?, similarity_boost?, style?,  // clamped to 0..1
@@ -25,12 +30,18 @@
  *   }
  * }
  * Response: audio/mpeg (chunked)
+ *
+ * Auth: a session or bearer token, except on the agent_byok lane — an agent whose
+ * owner bound their own key speaks to anonymous visitors too (rate limited per IP),
+ * because that is the whole point of binding a voice to a public agent.
  */
 
 import { randomUUID } from 'node:crypto';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, method, wrap, error, json, readJson, rateLimited } from '../_lib/http.js';
-import { limits } from '../_lib/rate-limit.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
+import { sql } from '../_lib/db.js';
+import { resolveAgentElevenKey, normalizeKeySource } from '../_lib/agent-voice-key.js';
 import { sha256 } from '../_lib/crypto.js';
 import { headObject, getObjectBuffer, putObject } from '../_lib/r2.js';
 import { chargeCreditsForAction, refundCredits } from '../_lib/credits.js';
@@ -57,7 +68,52 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const { apiKey, byok } = resolveElevenKey(req);
+	const body = await readJson(req);
+	const voiceId = String(body.voiceId || '').trim();
+	const text = String(body.text || '').trim();
+	const modelId = String(body.modelId || DEFAULT_TTS_MODEL).trim();
+	const agentId = String(body.agentId || '').trim();
+
+	if (!voiceId) return error(res, 400, 'validation_error', 'voiceId is required');
+	if (!text) return error(res, 400, 'validation_error', 'text is required');
+	if (text.length > 500)
+		return error(res, 400, 'validation_error', 'text exceeds 500 chars per request');
+
+	const session = await getSessionUser(req);
+	const bearer = session ? null : await authenticateBearer(extractBearer(req));
+	const userId = session?.id ?? bearer?.userId ?? null;
+
+	// ── Agent BYOK lane ───────────────────────────────────────────────────────
+	// `agentId` asks to speak as that agent's bound voice. When the binding lives
+	// on the owner's own ElevenLabs key, that key serves the clip and the owner's
+	// ElevenLabs account is billed, so anyone can hear the agent: the chat page, a
+	// cross-origin embed, a signed-out visitor. The requested voiceId must be the
+	// agent's own bound voice, so the owner's credential can never be borrowed to
+	// synthesize something else.
+	let agentKey = null;
+	if (agentId) {
+		const [agentRow] = await sql`
+			SELECT user_id, voice_id, voice_key_source
+			FROM agent_identities
+			WHERE id = ${agentId} AND deleted_at IS NULL
+		`;
+		if (agentRow?.voice_id && agentRow.voice_id === voiceId) {
+			const pin = normalizeKeySource(agentRow.voice_key_source);
+			if (pin === 'owner') {
+				const resolved = await resolveAgentElevenKey({ ownerId: agentRow.user_id, pin });
+				if (resolved.apiKey) {
+					const ipRl = await limits.ttsAgentVoiceIp(`${agentId}:${clientIp(req)}`);
+					if (!ipRl.success) return rateLimited(res, ipRl);
+					agentKey = resolved.apiKey;
+				}
+			}
+		}
+	}
+
+	const requestKey = resolveElevenKey(req);
+	// Precedence: an explicit per-request key, then the agent's own bound
+	// credential, then the platform key.
+	const apiKey = requestKey.byok ? requestKey.apiKey : agentKey || requestKey.apiKey;
 	if (!apiKey)
 		return error(
 			res,
@@ -66,23 +122,16 @@ export default wrap(async (req, res) => {
 			'ElevenLabs is not configured on this server. Send your own key in the x-eleven-key header to use your account.',
 		);
 
-	const session = await getSessionUser(req);
-	const bearer = session ? null : await authenticateBearer(extractBearer(req));
-	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
-	const userId = session?.id ?? bearer.userId;
+	// Only the agent lane serves anonymous callers; the platform key never does,
+	// because every platform clip has to be charged to somebody.
+	const servedByAgentKey = !requestKey.byok && !!agentKey;
+	if (!servedByAgentKey && !session && !bearer)
+		return error(res, 401, 'unauthorized', 'sign in required');
 
-	const rl = await limits.ttsSpeakUser(userId);
-	if (!rl.success) return rateLimited(res, rl);
-
-	const body = await readJson(req);
-	const voiceId = String(body.voiceId || '').trim();
-	const text = String(body.text || '').trim();
-	const modelId = String(body.modelId || DEFAULT_TTS_MODEL).trim();
-
-	if (!voiceId) return error(res, 400, 'validation_error', 'voiceId is required');
-	if (!text) return error(res, 400, 'validation_error', 'text is required');
-	if (text.length > 500)
-		return error(res, 400, 'validation_error', 'text exceeds 500 chars per request');
+	if (userId) {
+		const rl = await limits.ttsSpeakUser(userId);
+		if (!rl.success) return rateLimited(res, rl);
+	}
 
 	// Honor the canonical ElevenLabs `voice_settings` object the client sends
 	// (the ElevenLabsTTS client maps `rate` → `style` and forwards it here);
@@ -116,14 +165,14 @@ export default wrap(async (req, res) => {
 	}
 
 	// ── Metering: no free platform lane ───────────────────────────────────────
-	// BYOK requests run on the user's own ElevenLabs account, so credits never
-	// apply. Every platform-key synthesis is charged to the user's credit wallet
-	// (topped up with $THREE or SOL) BEFORE the upstream call, and refunded if
-	// the clip is never delivered.
-	const billing = byok ? 'byok' : 'credits';
+	// Both BYOK lanes run on somebody's own ElevenLabs account (the caller's, or
+	// the agent owner's), so credits never apply to them. Every platform-key
+	// synthesis is charged to the user's credit wallet (topped up with $THREE or
+	// SOL) BEFORE the upstream call, and refunded if the clip is never delivered.
+	const billing = requestKey.byok ? 'byok' : servedByAgentKey ? 'agent_byok' : 'credits';
 	let creditCharge = null;
 
-	if (!byok) {
+	if (billing === 'credits') {
 		const idempotencyKey = `tts:eleven:${randomUUID()}`;
 		const usd = Math.max(0.0001, (text.length / 1000) * TTS_ELEVEN_USD_PER_1K);
 		try {

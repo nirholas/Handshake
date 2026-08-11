@@ -98,13 +98,16 @@ The reads return live data — power and standings move between calls, so neithe
 {
   "ok": true,
   "epoch": 486231,
+  "epochMs": 3600000,
+  "endsAt": 1750000000000,
   "msLeft": 1843000,
   "factionCount": 16,
   "arena": [
     {
       "id": "486231:…",
-      "a": { "token": "…", "symbol": "ALPHA", "members": 8200, "momentum": 1.31, "power": 940, "record": { "w": 12, "l": 4, "d": 1 } },
-      "b": { "token": "…", "symbol": "BETA",  "members": 5100, "momentum": 1.12, "power": 610, "record": { "w": 7,  "l": 9, "d": 0 } },
+      // each side also carries image, posts, and priceUsd (elided here)
+      "a": { "token": "…", "symbol": "ALPHA", "members": 8200, "momentum": 1.31, "power": 940, "record": { "w": 12, "l": 4, "d": 1, "battles": 17, "power": 8100 } },
+      "b": { "token": "…", "symbol": "BETA",  "members": 5100, "momentum": 1.12, "power": 610, "record": { "w": 7,  "l": 9, "d": 0, "battles": 16, "power": 5400 } },
       "aShare": 0.61,
       "leader": "…ALPHA mint…"
     }
@@ -121,9 +124,9 @@ The reads return live data — power and standings move between calls, so neithe
   "enlisted": { "wallet": "…", "amount": 1250000, "usd": 84.20 },
   "epoch": 486231,
   "mint": "…faction mint…",
-  "added": 65,
+  "added": 66,
   "momentum": 1.31,
-  "walletPower": 65,
+  "walletPower": 66,
   "walletCap": 5000,
   "capped": false,
   "factionPower": 1005,
@@ -144,15 +147,30 @@ The reads return live data — power and standings move between calls, so neithe
 | `THREE_WS_BASE`       | no                 | `https://three.ws` | API deployment to talk to.                                            |
 | `THREE_WS_TIMEOUT_MS` | no                 | `20000`            | Per-request timeout.                                                  |
 | `SOLANA_SECRET_KEY`   | writes only        | —                  | Base58 secret of the enlisting wallet. Per-call `secret` overrides it. **Treat like cash.** |
+| `CLASH_SOLANA_SECRET` | no                 | —                  | Fallback signer read when `SOLANA_SECRET_KEY` is unset, for hosts that scope env vars per server. Same format and the same care. |
 
 > The `secret` is only ever used to sign the enlist challenge locally — a detached ed25519 signature over the challenge text. It never signs a transaction and no funds move. Still, it controls a wallet: prefer a per-call `secret` or a dedicated env on a machine you trust.
+
+## Errors
+
+A failed tool call returns an MCP error result (`isError: true`) whose text is a single JSON object: `{ "ok": false, "error": "<code>", "message": "…" }`, plus `status` on upstream rejections and `detail` where the failure carries context (e.g. which wallet was not a holder):
+
+| `error` | Meaning | Recovery |
+| ------- | ------- | -------- |
+| `validation_error` | Bad arguments: a missing faction `token`, or `rally_faction` called with neither a `pass` nor a `token`. | Fix the call. |
+| `no_signer` / `invalid_secret` | A write tool had no Solana key, or the key was not a base58 64-byte secret. | Pass `secret` or set `SOLANA_SECRET_KEY`. |
+| `not_eligible` | The auto-enlisting wallet does not hold the faction coin, so no pass was issued. `detail` carries `wallet`, `faction`, and `reason`. | Hold the coin, then retry. |
+| `upstream_error` | The API rejected the request. `status` carries the HTTP code; notable bodies include `bad_challenge`, `bad_signature`, `pass_invalid` (expired or foreign war pass), `balance_unavailable` (RPC could not read the holding), and `cc_unconfigured` (the deployment has no CoinCommunities config). | Act on the code; re-enlist on `pass_invalid`. |
+| `timeout` | No response within `THREE_WS_TIMEOUT_MS`. | Retry or raise the timeout. |
+| `network_error` | The request never reached the API (DNS, offline, TLS). | Check connectivity / `THREE_WS_BASE`. |
+| `bad_config` | `THREE_WS_TIMEOUT_MS` is not a positive number (thrown at startup). | Fix the env var. |
 
 ## Links
 
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, see [LICENSE](./LICENSE)
 
 ---
 

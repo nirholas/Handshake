@@ -33,7 +33,7 @@
  *   solana-attestations-crawl     → handleSolanaAttestationsCrawl
  */
 
-import { id as keccakId, AbiCoder, getAddress, Interface } from 'ethers';
+import { Interface } from 'ethers';
 import { createPublicClient, encodeFunctionData, parseAbi } from 'viem';
 import { evmTransport } from '../_lib/evm/rpc.js';
 import { baseSepolia, base } from 'viem/chains';
@@ -45,6 +45,8 @@ import { cors, error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { llmComplete } from '../_lib/llm.js';
 import { CHAINS } from '../_lib/erc8004-chains.js';
+import { REGISTRY_TOPICS, decodeRegistryLog } from '../_lib/erc8004-registry-events.js';
+import { agentRef, recordEvents } from '../_lib/onchain-events.js';
 import { DELEGATION_MANAGER_DEPLOYMENTS, DELEGATION_MANAGER_ABI } from '../../src/erc7710/abi.js';
 import {
 	getPumpAgent,
@@ -208,9 +210,6 @@ async function handleSolanaAgentsCrawl(req, res) {
 // erc8004-crawl
 // ═══════════════════════════════════════════════════════════════════════════
 
-const REGISTERED_TOPIC = keccakId('Registered(uint256,string,address)');
-const ABI_CODER = AbiCoder.defaultAbiCoder();
-
 // Blocks scanned per chain per cron invocation. Public RPCs typically allow
 // 2000-block ranges; lower this if a chain's RPC rejects with "block range".
 const ERC8004_BLOCK_CHUNK = 1_000;
@@ -299,10 +298,14 @@ async function erc8004CrawlChain(chain) {
 	const chunkSize = chain.blockChunk || ERC8004_BLOCK_CHUNK;
 	const toBlock = Math.min(fromBlock + chunkSize - 1, latestBlock);
 
+	// Topic OR-set, not the single Registered topic: an agent's row used to
+	// freeze at its registration block because ownership transfers, URI updates
+	// and metadata writes were never requested from the RPC at all. See the
+	// coverage census in api/_lib/erc8004-registry-events.js.
 	const logs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
 		{
 			address: chain.registry,
-			topics: [REGISTERED_TOPIC],
+			topics: [REGISTRY_TOPICS],
 			fromBlock: '0x' + fromBlock.toString(16),
 			toBlock: '0x' + toBlock.toString(16),
 		},
@@ -329,34 +332,86 @@ async function erc8004CrawlChain(chain) {
 	}
 
 	let inserted = 0;
+	const byClass = { registration: 0, metadata: 0, transfer: 0 };
+	const events = [];
+
 	for (const log of logs) {
 		try {
-			const agentId = BigInt(log.topics[1]).toString();
-			const ownerHex = '0x' + log.topics[2].slice(-40);
-			const owner = getAddress(ownerHex).toLowerCase();
-			const [agentURI] = ABI_CODER.decode(['string'], log.data);
-			const blockNumber = Number.parseInt(log.blockNumber, 16);
-			const ts = blockTimes[log.blockNumber];
-			const registeredAt = ts ? new Date(ts * 1000).toISOString() : null;
+			const ev = decodeRegistryLog(log);
+			if (!ev) continue;
 
-			await sql`
-				INSERT INTO erc8004_agents_index
-					(chain_id, agent_id, owner, registry, agent_uri,
-					 registered_block, registered_tx, registered_at, last_seen_at)
-				VALUES
-					(${chain.id}, ${agentId}, ${owner}, ${chain.registry.toLowerCase()},
-					 ${agentURI || null}, ${blockNumber}, ${log.transactionHash},
-					 ${registeredAt}, now())
-				ON CONFLICT (chain_id, agent_id) DO UPDATE SET
-					owner = excluded.owner,
-					agent_uri = COALESCE(excluded.agent_uri, erc8004_agents_index.agent_uri),
-					last_seen_at = now()
-			`;
-			inserted += 1;
+			const ts = blockTimes[log.blockNumber];
+			const occurredAt = ts ? new Date(ts * 1000).toISOString() : null;
+			// Absolute on-chain time only. A log whose block timestamp could not be
+			// read is still applied to the agent row, but is NOT written to the event
+			// index, because a timeline entry stamped with ingestion time is a lie.
+			if (occurredAt) {
+				events.push({
+					chain: 'evm',
+					chainId: chain.id,
+					network: chain.testnet ? 'testnet' : 'mainnet',
+					agentRef: agentRef({ chain: 'evm', chainId: chain.id, agentId: ev.agentId }),
+					eventClass: ev.eventClass,
+					eventName: ev.eventName,
+					tx: ev.tx,
+					logIndex: ev.logIndex,
+					blockNumber: ev.blockNumber,
+					occurredAt,
+					actor: ev.type === 'transfer' ? ev.from : ev.owner || null,
+					counterparty: ev.type === 'transfer' ? ev.to : null,
+					payload: erc8004EventPayload(ev, chain),
+				});
+			}
+
+			if (ev.type === 'registered') {
+				await sql`
+					INSERT INTO erc8004_agents_index
+						(chain_id, agent_id, owner, registry, agent_uri,
+						 registered_block, registered_tx, registered_at, last_seen_at)
+					VALUES
+						(${chain.id}, ${ev.agentId}, ${ev.owner}, ${chain.registry.toLowerCase()},
+						 ${ev.agentUri || null}, ${ev.blockNumber}, ${ev.tx},
+						 ${occurredAt}, now())
+					ON CONFLICT (chain_id, agent_id) DO UPDATE SET
+						owner = excluded.owner,
+						agent_uri = COALESCE(excluded.agent_uri, erc8004_agents_index.agent_uri),
+						last_seen_at = now()
+				`;
+				inserted += 1;
+				byClass.registration += 1;
+			} else if (ev.type === 'uri_updated') {
+				// A new agentURI invalidates every enriched field. Clearing
+				// last_metadata_at re-queues the row for the enrichment pass instead
+				// of serving the old name and image for the next seven days.
+				await sql`
+					UPDATE erc8004_agents_index
+					SET agent_uri = ${ev.agentUri || null},
+					    last_metadata_at = null,
+					    metadata_error = null,
+					    last_seen_at = now()
+					WHERE chain_id = ${chain.id} AND agent_id = ${ev.agentId}
+				`;
+				byClass.metadata += 1;
+			} else if (ev.type === 'metadata_set') {
+				byClass.metadata += 1;
+			} else if (ev.type === 'transfer' && !ev.isMint) {
+				// The reason an agent's indexed owner could never change: nothing
+				// watched Transfer. Only a row that already exists is updated; a
+				// transfer of an agent registered before the crawl window is
+				// recorded as history and reconciled when Registered is backfilled.
+				await sql`
+					UPDATE erc8004_agents_index
+					SET owner = ${ev.to}, last_seen_at = now()
+					WHERE chain_id = ${chain.id} AND agent_id = ${ev.agentId}
+				`;
+				byClass.transfer += 1;
+			}
 		} catch (decodeErr) {
 			console.warn('[crawl] decode failed', chain.id, log.transactionHash, decodeErr.message);
 		}
 	}
+
+	const recorded = events.length ? await recordEvents(events) : { inserted: 0, rejected: 0 };
 
 	// Always advance cursor to toBlock so the next run continues from here.
 	await sql`
@@ -367,7 +422,29 @@ async function erc8004CrawlChain(chain) {
 			updated_at = now()
 	`;
 
-	return { inserted, scanned: toBlock - fromBlock + 1, lastBlock: toBlock, fromBlock };
+	return {
+		inserted,
+		scanned: toBlock - fromBlock + 1,
+		lastBlock: toBlock,
+		fromBlock,
+		logs: logs.length,
+		events: recorded.inserted,
+		byClass,
+	};
+}
+
+// Per-class payload for the event index. Keeps the raw on-chain detail that the
+// agent-row columns cannot hold (which metadata key changed, the URI at the time
+// of the event, whether a transfer was the registration mint).
+function erc8004EventPayload(ev, chain) {
+	const base = { registry: chain.registry.toLowerCase(), agentId: ev.agentId };
+	if (ev.type === 'registered' || ev.type === 'uri_updated') {
+		return { ...base, agentUri: ev.agentUri || null, owner: ev.owner };
+	}
+	if (ev.type === 'metadata_set') {
+		return { ...base, key: ev.key, value: ev.value };
+	}
+	return { ...base, from: ev.from, to: ev.to, mint: ev.isMint };
 }
 
 async function erc8004EnrichMetadata(limit, deadline) {
@@ -3087,6 +3164,14 @@ async function handleSolanaAttestEventCleanup(req, res) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const SOL_ATTEST_PER_RUN_MAX = 50; // bound RPC fan-out per cron tick
+// Agents whose full event history (registration, token launch, delegation,
+// transfer, metadata) is walked per tick. Separate from the attestation budget
+// because this half covers the external registry directory too, which is two
+// orders of magnitude larger than the platform's own Solana agents.
+const SOL_EVENT_PER_RUN_MAX = 40;
+// Hard wall-clock budget for the event half, leaving the attestation half its
+// own share of the function's 300s ceiling.
+const SOL_EVENT_BUDGET_MS = 120_000;
 
 async function handleSolanaAttestationsCrawl(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
@@ -3110,7 +3195,7 @@ async function handleSolanaAttestationsCrawl(req, res) {
 		limit ${SOL_ATTEST_PER_RUN_MAX}
 	`;
 
-	const report = { agents: [], errors: [] };
+	const report = { agents: [], errors: [], events: null };
 	for (const row of agents) {
 		try {
 			const r = await crawlAgentAttestations({
@@ -3124,7 +3209,53 @@ async function handleSolanaAttestationsCrawl(req, res) {
 		}
 	}
 
+	// Second half: the cross-chain event index. Draws its batch from the
+	// platform's own agents AND the external Solana registry directory, which
+	// had no event coverage at all before this ran.
+	report.events = await solanaEventSweep();
+
 	return json(res, 200, report);
+}
+
+async function solanaEventSweep() {
+	const { crawlAgentEvents, markAgentEventError, nextAgentBatch } = await import(
+		'../_lib/solana-agent-events.js'
+	);
+
+	const startedAt = Date.now();
+	const summary = { agents: 0, scanned: 0, inserted: 0, rejected: 0, failed: 0, truncated: false };
+
+	let batch;
+	try {
+		batch = await nextAgentBatch({ limit: SOL_EVENT_PER_RUN_MAX });
+	} catch (err) {
+		return { ...summary, error: err.message || String(err) };
+	}
+
+	for (const row of batch) {
+		if (Date.now() - startedAt > SOL_EVENT_BUDGET_MS) {
+			summary.truncated = true;
+			break;
+		}
+		try {
+			const r = await crawlAgentEvents({ agentRef: row.agent_ref, network: row.network });
+			summary.agents += 1;
+			summary.scanned += r.scanned;
+			summary.inserted += r.inserted;
+			summary.rejected += r.rejected;
+		} catch (err) {
+			summary.failed += 1;
+			// Stamp the cursor even on failure so one permanently unreadable
+			// account cannot hold the oldest-first queue head forever.
+			await markAgentEventError({
+				agentRef: row.agent_ref,
+				network: row.network,
+				error: err.message || String(err),
+			}).catch(() => {});
+		}
+	}
+
+	return summary;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

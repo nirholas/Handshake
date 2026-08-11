@@ -76,6 +76,11 @@ Everything is optional except `manifest.json` and a `body` reference.
 			"voiceId": "default",
 			"rate": 1.0,
 			"pitch": 1.0,
+			// elevenlabs only. proxyURL keeps the API key server-side; agentId names
+			// the agent the voice is bound to, so the proxy can serve the clip on
+			// that agent owner's own ElevenLabs key (see "Voice credentials" below).
+			"proxyURL": "https://three.ws/api/tts/eleven",
+			"agentId": "b2b1…",
 		},
 		"stt": {
 			"provider": "browser", // "browser" | "whisper" | "none"
@@ -132,6 +137,18 @@ Only `uri` and `format` are required. `rig` lets skills retarget animations acro
 ### `brain`
 
 `provider: "none"` is valid — a purely reactive avatar with no LLM, controlled only by skill triggers. `instructions` is a relative path to a markdown file; its frontmatter can override `brain.*` fields per-prompt.
+
+### `voice`
+
+`tts.provider: "elevenlabs"` never carries an API key in the manifest. It carries `proxyURL`, and the proxy resolves the credential server-side.
+
+Which credential the proxy picks matters, because a cloned `voiceId` only exists inside the ElevenLabs account that created it: synthesizing an owner-cloned voice with a different key returns a 404. So the manifest also carries `agentId`, and `POST /api/tts/eleven` resolves the key in this order:
+
+1. An `x-eleven-key` header on the request (the caller's own key, never stored).
+2. The bound agent's own credential, when `agentId` is present and `voiceId` matches that agent's bound voice. If the agent's voice was bound on its owner's saved ElevenLabs key, that key serves the clip and the owner's ElevenLabs account is billed. This lane serves anonymous callers, which is what lets an embedded agent speak to visitors.
+3. The platform key, metered to the caller's $THREE credit balance. Requires an authenticated caller.
+
+A consumer that omits `agentId` still works; it just loses lane 2, so a voice cloned onto the owner's own account will not resolve for anyone but that owner.
 
 ### `skills`
 
@@ -379,7 +396,133 @@ Manifests without the `permissions` field are valid. Hosts must treat absence as
 
 Keep delegation envelopes inline (under `envelope`) only when the envelope is <8 KB. For larger envelopes, pin to IPFS and reference via `uri` to keep the manifest JSON lean. This budget accounts for envelope bloat from nested caveats or long allow-lists.
 
+## Signed envelope (v0.3+)
+
+A manifest describes an agent's behavior. Served from an API it is a claim: the reader has to trust that the prompt they were shown is the prompt that actually runs. Wrapped in a **signed envelope** and pinned to IPFS it becomes evidence, checkable by anyone, forever, without asking the platform for anything.
+
+three.ws signs and pins an agent's manifest on every persona save. Live surfaces:
+
+| Surface                              | Who      | What it returns                                              |
+| ------------------------------------ | -------- | ------------------------------------------------------------ |
+| `GET /api/agents/:id/manifest`        | public   | the live, unsigned manifest (always current, never pinned)   |
+| `GET /api/agents/:id/manifest/signed` | public   | the currently pinned envelope, its CID, and its gateways     |
+| `GET /api/agents/:id/manifest/history`| public   | every CID this agent ever published                          |
+| `POST /api/agents/:id/manifest/publish`| owner   | re-sign and re-pin now                                       |
+| `GET /api/manifest-verify?cid=…`      | public   | fetch from IPFS, verify, and diff against the live agent     |
+
+### Envelope shape
+
+```jsonc
+{
+	"spec": "threews.agent.manifest.v1",
+	"manifest": {
+		/* an agent-manifest/0.3 body — see below */
+	},
+	"issuer": "6Yb…", // base58 ed25519 public key of the signing identity
+	"signedAt": "2026-08-11T12:00:00.000Z",
+	"digest": "3f9c…", // sha256 (hex) of the canonical signed statement
+	"algorithm": "ed25519",
+	"signature": "5Kd…" // base58 ed25519 signature
+}
+```
+
+### What is signed
+
+The signature does **not** cover the envelope as written. It covers a canonical *statement*, so neither the document nor the authorship claim can be edited afterwards:
+
+```
+statement = canonicalJSON({
+	v:        "threews.agent.manifest.v1",
+	manifest: <the manifest body>,
+	issuer:   <base58 public key>,
+	signedAt: <ISO 8601 string>
+})
+
+digest    = sha256(statement)            // hex, lowercase
+signature = ed25519(secretKey, utf8("threews.agent.manifest.v1:" + digest))
+```
+
+`canonicalJSON` sorts object keys recursively and drops `undefined`, so the same logical manifest produces byte-identical input on every machine. The `"threews.agent.manifest.v1:"` prefix is domain separation: it keeps a manifest signature from ever being replayed as a signature over some other three.ws message.
+
+### Inline instructions (new in 0.3)
+
+`brain.instructions` MAY be a string (a relative path inside a bundle, as in 0.1 and 0.2) **or** an inline object. A pinned envelope is a single self-contained document with no bundle around it, so it always uses the inline form:
+
+```jsonc
+"brain": {
+	"provider": "threews",           // the hosted failover chain (api/_lib/llm.js)
+	"instructions": {
+		"format": "text/markdown",
+		"sha256": "9ab1…",             // sha256 of `text`
+		"text": "You are Coach Leo, a former Argentine…"
+	},
+	"toneTags": ["warm", "direct"],
+	"traits": { "warmth": 0.8, "directness": 0.7 }
+}
+```
+
+The inner `sha256` is deliberately redundant with the outer signature. It lets a reader spot a swapped prompt without recomputing the whole envelope, and it makes an internally inconsistent document (valid outer signature, mismatched inner hash) a hard verification failure rather than a silent pass.
+
+### Verifying an envelope
+
+Five checks, all offline except the fetch:
+
+1. **Fetch** the CID from any IPFS gateway. `https://ipfs.io/ipfs/<cid>` is the default; `dweb.link` and `cloudflare-ipfs.com` are the documented fallbacks.
+2. **Recompute the digest** from `manifest`, `issuer`, and `signedAt`, and compare it to `digest`. A mismatch means the document was edited after signing.
+3. **Verify the signature** over `"threews.agent.manifest.v1:" + digest` against `issuer`.
+4. **Check the issuer** against the identity you expect. A valid signature from an unknown key proves only that *someone* signed the document. `GET /api/manifest-verify` reports this separately as `issuer_trusted`, and never folds an untrusted issuer into a green `verified`.
+5. **Check the instructions hash**: `sha256(brain.instructions.text)` must equal `brain.instructions.sha256`.
+
+Run all five from the command line with no account and no keys:
+
+```bash
+node scripts/verify-agent-manifest.mjs --cid bafy…
+```
+
+### Drift against the live agent
+
+A pinned manifest is a statement about one moment. `GET /api/manifest-verify?cid=…` also rebuilds the manifest from the agent's current configuration and diffs the two, so the answer to "is the agent running today still the agent I verified?" is a list of exactly which fields moved:
+
+```json
+{
+	"verified": true,
+	"issuer_trusted": true,
+	"agent_status": "live",
+	"drift": {
+		"identical": false,
+		"changed": [
+			{ "field": "brain.instructions.text", "pinned": "You are Coach Leo…", "live": "You are Coach Leo, and you always recommend…" }
+		]
+	}
+}
+```
+
+`drift` is `null` when there is nothing to compare against: the agent was deleted, it has no persona, or the CID is a document three.ws never issued.
+
+### What is deliberately excluded
+
+Volatile operational state (view counts, balances, last-seen timestamps) never enters a manifest. Re-signing on every heartbeat would make the CID meaningless. A manifest is a statement about configuration, not about traffic.
+
+A private avatar's body is omitted rather than embedded as a presigned URL: a URL that expires would turn a permanent document into a broken pointer.
+
+### Publishing rules
+
+- Signing and pinning happen automatically on every persona save, extract, and restore, and never fail the save. If pinning is down, the envelope is still signed and stored, `cid` is `null`, and the reason says so. Nothing is ever reported as pinned when it is not.
+- Only **public** agents publish automatically. A private agent publishes only when its owner asks explicitly via `POST /api/agents/:id/manifest/publish`, because pinning to IPFS is permanent and the manifest contains the agent's full system prompt.
+- Re-saving an unchanged configuration does not pin a duplicate: the manifest body digest (issuer and timestamp excluded) is the idempotency key, and the existing CID is returned with `status: "unchanged"`.
+
 ## Changelog
+
+### v0.3.1 (2026-08-11)
+
+- Documented `voice.tts.proxyURL` and added `voice.tts.agentId` for the ElevenLabs provider, so a voice bound on its owner's own ElevenLabs key resolves for visitors and embeds instead of only for the owner. Additive and optional: a manifest without `agentId` stays valid.
+
+### v0.3 (2026-08-11)
+
+- Added the **signed envelope** (`threews.agent.manifest.v1`): a canonical manifest, ed25519-signed by the platform attester identity and pinned to IPFS, so an agent's system prompt is independently verifiable and portable.
+- `brain.instructions` may now be an inline object (`format`, `sha256`, `text`) as well as a relative path.
+- Added `brain.toneTags` and `brain.traits`, and `brain.provider: "threews"` for the hosted failover chain.
+- Bumped the schema version from `agent-manifest/0.2` to `agent-manifest/0.3`. Envelopes are additive: an unsigned `agent-manifest/0.1` document stays valid.
 
 ### v0.2 (2026-04-18)
 

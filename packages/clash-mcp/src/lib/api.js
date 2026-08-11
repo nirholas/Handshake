@@ -59,7 +59,8 @@ export async function apiRequest(path, { method = 'GET', query, body } = {}) {
 	}
 
 	if (!res.ok) {
-		const message = data?.message || data?.error || `three.ws ${path} returned HTTP ${res.status}`;
+		const message =
+			data?.error_description || data?.message || data?.error || `three.ws ${path} returned HTTP ${res.status}`;
 		throw Object.assign(new Error(message), { code: 'upstream_error', status: res.status, body: data });
 	}
 	return data;

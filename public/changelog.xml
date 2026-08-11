@@ -111,6 +111,14 @@
 			<description>A copy, remix or forge variant of an avatar points at the same stored model and thumbnail as the avatar it came from rather than duplicating the file. Deleting any one of them removed those files outright, so the originals that were still in use lost their model and their picture: 32 public avatars ended up with a model that would not load and 33 with a broken thumbnail, showing up as blank tiles across the gallery, Money Pulse and agent cards. Deletion now checks whether any avatar still in use points at a file before removing it. The already-broken thumbnails have been cleared so the thumbnail renderer picks them up again.</description>
 		</item>
 		<item>
+			<title>Design your agent's coin before you launch it, and rehearse the launch for free</title>
+			<link>https://three.ws/launches</link>
+			<guid isPermaLink="false">2026-08-11:Design your agent's coin before you launch it, and rehearse the launch for free</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Your agent can now carry a token plan: the name, ticker, story, artwork, pairing, buyback share and dev buy of the coin it is going to become, saved on the agent itself instead of typed into a form and thrown away. The plan shows up on the agent's profile, so visitors can see the coin is coming before it exists, and it tells you what is still missing and what the launch will cost in SOL. There is also a rehearsal: one button builds the real launch transaction from your saved plan and asks Solana to run it on devnet without broadcasting anything, so you find out whether it would work before a single lamport moves. Saving and rehearsing cost nothing and mint nothing; launching stays a separate, deliberate step. Coins launched from your own wallet also now appear in the public launch feed and in your agent's launch history, which they previously did not.</description>
+		</item>
+		<item>
 			<title>Embedded agents render on other people's sites again</title>
 			<link>https://three.ws/embed/v1/preview</link>
 			<guid isPermaLink="false">2026-08-11:Embedded agents render on other people's sites again</guid>
@@ -327,6 +335,14 @@
 			<description>Ask the pump.fun MCP server for a token's details and it reported no name, no symbol, and no image link for essentially every coin launched recently, including $THREE. The reason: pump.fun now mints Token-2022 tokens, which carry their name and symbol inside the mint itself rather than in the separate metadata account the server was reading. It now reads both places, so a request for a current token returns its actual name, symbol, and metadata link alongside supply and decimals. Older tokens are unaffected.</description>
 		</item>
 		<item>
+			<title>The selfie scanner now grades every shot before you commit to a build</title>
+			<link>https://three.ws/create/selfie</link>
+			<guid isPermaLink="false">2026-08-11:The selfie scanner now grades every shot before you commit to a build</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Taking a selfie for an avatar got a real quality copilot. The viewfinder already tracked your face live; now the hint line names the exact fix (turn back to the camera, hold steady, find better light) instead of a generic warning, and after the countdown fires the captured still itself is re-scored, so motion blur or a lighting change in those last three seconds is caught on the review screen rather than a minute into the build. Uploaded photos get a lighting check too. Every threshold behind these gates is derived from the ways the reconstruction engine actually fails, so a shot that passes on your phone is a shot the engine can build from. And if your browser refreshes mid-capture, the shots you already took come back instead of starting you over.</description>
+		</item>
+		<item>
 			<title>The sign-language recognition API now documents the confidence score it returns with every transcription</title>
 			<link>https://three.ws/sign-language</link>
 			<guid isPermaLink="false">2026-08-11:The sign-language recognition API now documents the confidence score it returns with every transcription</guid>
@@ -373,6 +389,14 @@
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>When an operator casts a live avatar forge onto an agent's screen, the narration used to open with the same line twice and then say only &quot;Queued&quot;, never naming which free engine took the job or why a slow start was slow. It now names the engine that actually ran (which is not always the one requested, since the platform routes to whichever free lane is healthy) and, when a GPU worker has to boot from zero, says so with the real spin-up estimate instead of looking stalled. Failures now show their own recovery step rather than blanket prompt advice, and the High tier, which needs a $THREE hold, is refused up front instead of failing mid-cast.</description>
+		</item>
+		<item>
+			<title>Your agent's personality is now signed and published to IPFS</title>
+			<link>https://three.ws/agents</link>
+			<guid isPermaLink="false">2026-08-11:Your agent's personality is now signed and published to IPFS</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every time you save your agent's persona, three.ws now writes down exactly how that agent is configured, signs it with the platform's signing key, and publishes it to IPFS. You get back a permanent address anyone can open. That means the instructions behind your agent are no longer something people have to take on trust: a visitor, a buyer, or another agent can fetch the record, confirm it really came from three.ws, read the exact prompt, and see whether the agent running today still matches what was published. Anyone can run the check themselves without an account. Only public agents publish automatically, and you can publish a private agent deliberately whenever you choose.</description>
 		</item>
 		<item>
 			<title>A coin's exchange listings answer a bad page number instead of quietly ignoring it</title>

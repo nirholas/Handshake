@@ -199,6 +199,7 @@ registerWalletTab({
 				<div class="awp-caps" style="margin-top:10px;">
 					<span class="awp-cap">Daily cap: ${caps.daily_usd != null ? esc(formatUsd(caps.daily_usd)) : 'none'}</span>
 					<span class="awp-cap">Per-tx cap: ${caps.per_tx_usd != null ? esc(formatUsd(caps.per_tx_usd)) : 'none'}</span>
+					<span class="awp-cap">Per-counterparty cap: ${caps.per_counterparty_daily_usd != null ? esc(formatUsd(caps.per_counterparty_daily_usd)) : 'none'}</span>
 					<span class="awp-cap">${caps.frozen ? '🔒 frozen' : 'active'}</span>
 				</div>
 				<p class="awp-hint" style="margin:8px 0 0;">Numeric caps and the freeze switch are always enforced — edit them under Withdraw → Limits & Safety.</p>`;

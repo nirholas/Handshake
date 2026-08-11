@@ -29,11 +29,11 @@
 > [Granite Guardian](https://www.ibm.com/granite) on watsonx.ai scores a message
 > or a proposed autonomous action against a named risk taxonomy (jailbreak, harm,
 > violence, bias, …), returns a calibrated `allow | review | block` decision, and
-> commits every verdict to a tamper-evident, hash-chained audit record. It pairs
-> with the platform's free NVIDIA NemoGuard content-moderation pre-filter, so one
-> import covers both *intent* (Granite) and *content* (NemoGuard). Built for any
-> agent that takes real actions — especially a three.ws avatar that holds its own
-> Solana wallet.
+> commits every verdict to a tamper-evident, hash-chained audit record. A
+> fail-open `moderate()` pre-filter scores the content-side risks of the same
+> taxonomy, so one import covers both *intent* (`check`/`govern`) and *content*
+> (`moderate`). Built for any agent that takes real actions, especially a
+> three.ws avatar that holds its own Solana wallet.
 
 ## Why
 
@@ -49,9 +49,10 @@ pipeline, done once:
 - **One call, a real decision.** `check('ignore your rules and…')` returns
   `{ safe: false, decision: 'block', risks: [...] }` — a calibrated verdict, not
   a raw label.
-- **Intent *and* content.** Granite Guardian catches jailbreaks, fraud, and
-  unethical steering; NemoGuard catches harmful content. `check()` and
-  `moderate()` expose each.
+- **Intent *and* content.** `check()` scores the full showcase panel
+  (jailbreak, fraud, unethical steering, and the content risks together);
+  `moderate()` is the content-only pre-filter (harm, violence, sexual content,
+  profanity) that fails open so an outage never blocks your turn.
 - **Governs money, not just words.** `govern()` runs the input risks **and** a
   hard dollar cap, so a perfectly-phrased request still can't drain the wallet.
 - **Audit you can verify offline.** Every decision returns a SHA-256
@@ -108,9 +109,14 @@ if (flagged) return refuse(categories);
 
 ## API
 
-The headline functions wrap `POST /api/guardian/assess`. Every call resolves to a
-typed result; only network/upstream failures reject (see
-[Errors](#errors--edge-cases)).
+Public exports: `check`, `govern`, `moderate`, `risks`, `createGuardian`, the
+`RISKS` / `RISK_NAMES` taxonomy constants, `BLOCK_THRESHOLD`, `ThreeWsError`,
+`PaymentRequiredError`, and `DEFAULT_BASE_URL`. The headline functions use a
+shared zero-config client and wrap `POST /api/guardian/assess`;
+`createGuardian({ baseUrl, fetch, apiKey, headers })` builds your own when you
+need a custom origin or default headers reused across calls. Every call
+resolves to a typed result; only invalid input and network/upstream failures
+reject (see [Errors](#errors--edge-cases)).
 
 ### `check(input, options?) → Promise<GuardianResult>`
 
@@ -161,14 +167,16 @@ Returns a `GuardianResult` extended with `cap` (the active USD ceiling) and
 
 ### `moderate(input, options?) → Promise<ModerationResult>`
 
-Content-safety pre-filter over the platform's free NVIDIA NemoGuard lane —
-harm, self-harm, weapons, sexual content, and similar. **Fail-open by design:** a
-timeout, outage, or unreadable reply returns `{ flagged: false }` and your turn
-continues. Only a parsed *unsafe* verdict flags.
+Content-safety pre-filter over the content-side Granite Guardian panel:
+`harm`, `violence`, `sexual_content`, `profanity` (override with
+`options.risks`). **Fail-open by design:** a timeout, outage, or unconfigured
+deploy returns `{ flagged: false }` and your turn continues. Only a real
+flagged verdict blocks; it never throws on a moderation failure.
 
-**Returns** `{ checked, flagged, categories?, model?, latencyMs?, error? }` —
-`flagged` is `true` only on a successful unsafe classification; `error` carries
-the reason when the filter failed open.
+**Returns** `{ checked, flagged, categories, model?, latencyMs, error? }`.
+`flagged` is `true` only on a successful unsafe classification, `categories`
+lists the risk names that tripped, and `error` carries the reason when the
+filter failed open (`checked: false`).
 
 ### `risks() → RiskTaxonomy`
 
@@ -218,9 +226,9 @@ works — one risk per call), fanned out concurrently on the server:
 
 Decisions are calibrated: Granite Guardian's natural boundary is 0.5, and the
 server treats `probability ≥ 0.55` as confidently flagged (→ `block`), a softer
-flag as `review`. `moderate()` runs a separate, complementary lane — NVIDIA
-NemoGuard content safety — which is **not** a jailbreak detector; the two cover
-different surfaces and are meant to run together.
+flag as `review`. `moderate()` submits to the same endpoint but scores only the
+content-side risks, so it is **not** a jailbreak detector; run it alongside
+`check()` when you need both surfaces covered.
 
 The audit ledger is verifiable without trusting the server: each `record.hash =
 SHA-256(record)`, and `record.prev` links to the previous hash. Pass the last
@@ -229,7 +237,10 @@ prove no entry was altered.
 
 ## Errors & edge cases
 
-`check()` and `govern()` reject with a typed `GuardianError` carrying a `code`:
+`check()` and `govern()` reject with a typed `ThreeWsError` carrying a `code`
+and `status`. Client-side validation (empty text, an over-limit input, an
+unknown risk name, a malformed `action` or `prev`) rejects with
+`code: 'invalid_input'` before any network call. Server-side codes:
 
 | `code` | HTTP | Meaning | Recovery |
 |---|---|---|---|

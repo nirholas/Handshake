@@ -1331,7 +1331,7 @@
 					<div class="wizard-body" id="wizard-body">
 						<!-- Step 1 — Basics -->
 						<section class="panel is-active" data-step="0" aria-label="Basic info">
-							<p class="panel-eyebrow" data-i18n="create_agent.step_1_of_5">Step 1 of 5</p>
+							<p class="panel-eyebrow" data-i18n="create_agent.step_1_of_6">Step 1 of 6</p>
 							<h2 class="panel-title" data-i18n="create_agent.the_basics">The basics</h2>
 							<p class="panel-help" data-i18n="create_agent.describe_your_agent_in_a_sentence_and">
 								Describe your agent in a sentence and we'll fill in everything —
@@ -1441,7 +1441,7 @@
 
 						<!-- Step 2 — 3D Model -->
 						<section class="panel" data-step="1" aria-label="3D model">
-							<p class="panel-eyebrow" data-i18n="create_agent.step_2_of_5">Step 2 of 5</p>
+							<p class="panel-eyebrow" data-i18n="create_agent.step_2_of_6">Step 2 of 6</p>
 							<h2 class="panel-title" data-i18n="create_agent.give_it_a_body">Give it a body</h2>
 							<p class="panel-help" data-i18n-html="create_agent.every_agent_gets_a_3d_avatar_pick">
 								Every agent gets a 3D avatar. Pick a ready-made character, upload
@@ -1586,7 +1586,7 @@
 
 						<!-- Step 3 — Skills -->
 						<section class="panel" data-step="2" aria-label="Skills">
-							<p class="panel-eyebrow" data-i18n="create_agent.step_3_of_5">Step 3 of 5</p>
+							<p class="panel-eyebrow" data-i18n="create_agent.step_3_of_6">Step 3 of 6</p>
 							<h2 class="panel-title" data-i18n="create_agent.pick_its_skills">Pick its skills</h2>
 							<p class="panel-help" data-i18n="create_agent.every_agent_ships_with_a_core_set">
 								Every agent ships with a core set. Toggle on extra capabilities to
@@ -1599,9 +1599,9 @@
 						</section>
 
 						<!-- Step 4 — Personality & Voice -->
-						<section class="panel" data-step="3" aria-label="Personality and voice">
-							<p class="panel-eyebrow" data-i18n="create_agent.step_4_of_5">Step 4 of 5</p>
-							<h2 class="panel-title" data-i18n="create_agent.personality_voice">Personality &amp; voice</h2>
+						<section class="panel" data-step="3" aria-label="Personality">
+							<p class="panel-eyebrow" data-i18n="create_agent.step_4_of_6">Step 4 of 6</p>
+							<h2 class="panel-title" data-i18n="create_agent.personality">Personality</h2>
 							<p class="panel-help" data-i18n="create_agent.shape_how_your_agent_talks_a_category">
 								Shape how your agent talks. A category and a profile prompt are what
 								publish it to the marketplace.
@@ -1654,8 +1654,18 @@
 								</p>
 							</div>
 
+						</section>
+
+						<!-- Step 5 - Voice -->
+						<section class="panel" data-step="4" aria-label="Voice">
+							<p class="panel-eyebrow" data-i18n="create_agent.step_5_of_6">Step 5 of 6</p>
+							<h2 class="panel-title" data-i18n="create_agent.give_it_a_voice">Give it a voice</h2>
+							<p class="panel-help" data-i18n="create_agent.every_agent_speaks_pick_the_built_in">
+								Every agent speaks. Pick the built-in voice, or record a short sample
+								and your agent talks in your own cloned voice everywhere on three.ws.
+							</p>
+
 							<div class="field">
-								<label class="field-label" data-i18n-html="create_agent.voice"><span>Voice</span></label>
 								<div class="opt-grid cols-2">
 									<button
 										type="button"
@@ -1708,23 +1718,23 @@
 												<line x1="12" y1="19" x2="12" y2="23" />
 											</svg>
 										</div>
-										<span class="opt-name" data-i18n="create_agent.custom_voice">Custom voice</span>
+										<span class="opt-name" data-i18n="create_agent.clone_your_voice">Clone your voice</span>
 										<span class="opt-desc"
-											 data-i18n="create_agent.pick_or_clone_a_premium_voice_in">Pick or clone a premium voice in the editor after
-											creating.</span
+											 data-i18n="create_agent.record_thirty_seconds_and_your_agent_speaks">Record 30 seconds (or upload a clip) and your agent
+											speaks in your voice.</span
 										>
 									</button>
 								</div>
-								<p class="field-hint" data-i18n="create_agent.starts_on_the_built_in_voice_you">
-									Starts on the built-in voice — you can upgrade to a premium or
-									cloned voice anytime.
-								</p>
+							</div>
+
+							<div class="field" id="voice-clone-field" hidden>
+								<div id="voice-setup-host"></div>
 							</div>
 						</section>
 
-						<!-- Step 5 — Review -->
-						<section class="panel" data-step="4" aria-label="Review and create">
-							<p class="panel-eyebrow" data-i18n="create_agent.step_5_of_5">Step 5 of 5</p>
+						<!-- Step 6 — Review -->
+						<section class="panel" data-step="5" aria-label="Review and create">
+							<p class="panel-eyebrow" data-i18n="create_agent.step_6_of_6">Step 6 of 6</p>
 							<h2 class="panel-title" data-i18n="create_agent.review_create">Review &amp; create</h2>
 							<p class="panel-help" data-i18n="create_agent.here_s_the_agent_you_re_about">
 								Here's the agent you're about to ship. Edit any step, then create

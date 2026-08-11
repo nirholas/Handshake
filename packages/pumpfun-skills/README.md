@@ -122,6 +122,12 @@ All build functions return a base64 Solana transaction the caller signs and
 broadcasts. Amounts are strings in base units (lamports for SOL, token smallest
 units for SPL). `NATIVE_MINT` is re-exported as a convenience for SOL.
 
+Also exported: `createPumpfunSkills(options)` builds a configured client (custom
+`fetch`, `agentBaseUrl`, `coinsV2Base`, `apiKey`, `headers`) whose methods match
+the functions below; plus the `AGENT_API_BASE`, `COINS_V2_BASE`, and
+`FEE_DESTINATIONS` constants and the `ThreeWsError` / `PaymentRequiredError`
+error classes.
+
 ### `createCoin(input) → Promise<BuiltTx & { mint: string }>`
 
 Build a new-coin transaction with an optional initial buy. The mint keypair is
@@ -163,8 +169,8 @@ set `outputMint` to `NATIVE_MINT`. Wraps `POST /agents/swap`.
 ### `coinFees(mint) → Promise<FeeInfo>`
 
 Read-only. Resolve the fee destination, vault balances, sharing config, and
-graduation state for a mint. Reads the bonding curve / AMM pool and
-`coins-v2` directly — no transaction.
+graduation state for a mint. Reads the public `coins-v2` API, which carries the
+bonding-curve, pool, cashback, and sharing-config state. No transaction, no RPC.
 
 **Returns** `FeeInfo`
 
@@ -177,7 +183,7 @@ graduation state for a mint. Reads the bonding curve / AMM pool and
 | `isCashbackCoin` | `boolean` | True if fees route as cashback. |
 | `hasSharingConfig` | `boolean` | True if a fee-sharing config is active. |
 | `creator` | `string` | Effective creator public key. |
-| `creatorVaultLamports` | `string` | Claimable lamports in the creator vault. |
+| `creatorVaultLamports` | `string` | Claimable lamports in the creator vault (`'0'` when `coins-v2` carries no balance). |
 | `sharingConfig` | `object \| null` | `{ address, admin, adminRevoked, shareholders[] }`. |
 | `feeDestination` | `'creator' \| 'cashback' \| 'sharing_config'` | Where fees go. |
 
@@ -216,8 +222,8 @@ Two surfaces, one rule — **the function builds, you sign**:
 createCoin / swap        coinFees                 collectFees / sharingConfig
    │                        │                          │
    ▼                        ▼                          ▼
-POST fun-block.pump.fun   read bonding curve /       POST fun-block.pump.fun
-  /agents/create-coin     AMM pool + coins-v2          /agents/collect-fees
+POST fun-block.pump.fun   read coins-v2 (curve,      POST fun-block.pump.fun
+  /agents/create-coin     pool + fee state)            /agents/collect-fees
   /agents/swap            (no transaction)             /agents/sharing-config
    │                        │                          │
    ▼                        ▼                          ▼
@@ -235,9 +241,9 @@ base64 transaction        FeeInfo JSON               base64 transaction
   **mint keypair already signed** — you only add the wallet signature. `swap`,
   `collect-fees`, and `sharing-config` return a transaction for the wallet to
   sign outright.
-- **Read calls** (`coinFees`) hit `coins-v2` and the on-chain bonding
-  curve / AMM pool to derive the fee destination and balances. No wallet, no
-  signing.
+- **Read calls** (`coinFees`) hit `coins-v2`, which carries the bonding-curve,
+  pool, cashback, and sharing-config state, and derive the fee destination and
+  balances from it. No wallet, no signing, no RPC.
 - **State detection is automatic.** `swap` and `collectFees` inspect whether the
   coin is still on the bonding curve or graduated to an AMM pool and build the
   correct route — you never branch on it yourself.
@@ -247,9 +253,10 @@ environment variable; the build API base is `https://fun-block.pump.fun/agents`.
 
 ## Errors & edge cases
 
-Build functions reject with a `PumpSkillError` carrying the HTTP `status` and
-the upstream body; read functions reject with a plain `Error`. Every state is
-surfaced, never swallowed:
+Every function rejects with a typed `ThreeWsError` carrying a `code`, the HTTP
+`status`, and the upstream `body`; a 402 surfaces as `PaymentRequiredError`, a
+`ThreeWsError` subclass carrying the x402 challenge. Every state is surfaced,
+never swallowed:
 
 | Where | Condition | Meaning | Recovery |
 |---|---|---|---|

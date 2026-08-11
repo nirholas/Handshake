@@ -83,6 +83,7 @@ contract IdentityRegistry is ERC721Enumerable, EIP712, ReentrancyGuard {
     error InsufficientAgentBalance();
     error DirectTransferRejected();
     error EthTransferFailed();
+    error ZeroRecipient();
 
     // ---------------------------------------------------------------------
     // Constructor
@@ -242,6 +243,7 @@ contract IdentityRegistry is ERC721Enumerable, EIP712, ReentrancyGuard {
         nonReentrant
     {
         if (ownerOf(agentId) != msg.sender) revert NotAgentOwner();
+        if (recipient == address(0)) revert ZeroRecipient();
         if (agentBalance[agentId] < amountWei) revert InsufficientAgentBalance();
         agentBalance[agentId] -= amountWei;
         (bool ok, ) = recipient.call{value: amountWei}("");
@@ -270,6 +272,7 @@ contract IdentityRegistry is ERC721Enumerable, EIP712, ReentrancyGuard {
         string calldata memo
     ) external nonReentrant {
         require(spendAllowance[agentId][msg.sender] >= amountWei, "allowance exceeded");
+        if (recipient == address(0)) revert ZeroRecipient();
         if (agentBalance[agentId] < amountWei) revert InsufficientAgentBalance();
         spendAllowance[agentId][msg.sender] -= amountWei;
         agentBalance[agentId] -= amountWei;

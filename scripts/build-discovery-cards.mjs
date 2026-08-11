@@ -33,8 +33,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { getCatalog } = await import(path.join(root, 'api/_lib/service-catalog/index.js'));
 
 const DESCRIPTION =
-	'three.ws — the 3D agent economy. Generate, rig, and animate 3D avatars and worlds; ' +
-	'buy and sell agent services with x402 micropayments (USDC on Solana, Base, BSC, and X Layer); ' +
+	'three.ws: the 3D agent economy. Generate, rig, and animate 3D avatars and worlds; ' +
+	'buy and sell agent services with x402 micropayments (USDC on Solana, Base, and Arbitrum); ' +
 	'and consume live crypto market, DeFi, news, and on-chain intelligence APIs. ' +
 	'Machine-readable paid-service catalog at https://three.ws/.well-known/x402.json.';
 
@@ -84,9 +84,9 @@ if (paid.length < 40) {
 		id: 'x402-service-catalog',
 		name: 'Paid x402 Service Catalog',
 		description:
-			`${paid.length} pay-per-call services settled via x402 (USDC on Solana and Base): ` +
+			`${paid.length} pay-per-call services settled via x402 (USDC on Solana, Base, and Arbitrum): ` +
 			`${categorySummary}. Every service is listed with price, input schema, and output example ` +
-			'in the machine-readable discovery document — fetch it, pick a service, and pay the 402 challenge.',
+			'in the machine-readable discovery document: fetch it, pick a service, and pay the 402 challenge.',
 		tags: ['x402', 'paid', 'catalog', 'discovery'],
 		examples: [
 			'Fetch https://three.ws/.well-known/x402.json and list the market-data services',

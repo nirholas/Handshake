@@ -1,8 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import {
 	createPose,
+	poseSeed,
+	presetPose,
 	listPresetGroups,
+	PRESETS,
 	PRESET_GROUPS,
 	PoseError,
 	PaymentRequiredError,
@@ -162,4 +166,76 @@ test('listPresetGroups() returns the four real groups synchronously', () => {
 	assert.deepEqual(listPresetGroups(), ['Standing', 'Action', 'Sitting & Floor', 'Expressive']);
 	const client = createPose({ fetch: async () => { throw new Error('no network'); } });
 	assert.deepEqual(client.listPresetGroups(), PRESET_GROUPS);
+});
+
+// ── The local lane (zero-config default: no network, no key, no payment) ──
+
+test('zero-config poseSeed() resolves locally and never touches the network', async (t) => {
+	const originalFetch = globalThis.fetch;
+	globalThis.fetch = async () => {
+		throw new Error('the local lane must not fetch');
+	};
+	t.after(() => {
+		globalThis.fetch = originalFetch;
+	});
+
+	const pose = await poseSeed('wave hello');
+	assert.equal(pose.presetId, 'wave');
+	assert.equal(pose.presetLabel, 'Wave hello');
+	assert.equal(pose.group, 'Standing');
+	assert.equal(pose.match.reason, 'token-match');
+	assert.ok(pose.match.score > 0);
+	assert.match(pose.seed, /^[0-9a-f]{16}$/);
+	assert.equal(pose.previewUrl, `https://three.ws/pose?seed=${pose.seed}&preset=wave`);
+	assert.deepEqual(pose.groups, PRESET_GROUPS);
+	assert.ok(Object.keys(pose.parameters).length > 0, 'a real rotation map came back');
+});
+
+test('the local seed matches the hosted algorithm: sha256(prompt|presetId) first 16 hex', async () => {
+	const pose = await poseSeed('wave hello');
+	const expected = createHash('sha256').update(`wave hello|${pose.presetId}`).digest('hex').slice(0, 16);
+	assert.equal(pose.seed, expected);
+});
+
+test('local resolution is deterministic across calls and clients', async () => {
+	const a = await poseSeed('crouch');
+	const b = await poseSeed('crouch');
+	const c = await createPose().poseSeed('crouch');
+	assert.equal(a.seed, b.seed);
+	assert.equal(a.seed, c.seed);
+	assert.equal(a.presetId, b.presetId);
+});
+
+test('a no-match prompt falls back to a deterministic pick, never an error', async () => {
+	const prompt = 'zzz qqq xyzzy';
+	const a = await poseSeed(prompt);
+	const b = await poseSeed(prompt);
+	assert.equal(a.match.reason, 'no-match-deterministic-pick');
+	assert.equal(a.match.score, 0);
+	assert.equal(a.presetId, b.presetId, 'the fallback pick is stable');
+	assert.ok(PRESETS.some((p) => p.id === a.presetId), 'the pick is a real preset');
+});
+
+test('presetPose() resolves every bundled preset locally, exactly by id', async () => {
+	for (const preset of PRESETS) {
+		const pose = await presetPose(preset.id);
+		assert.equal(pose.presetId, preset.id, `presetPose('${preset.id}') returns its own preset`);
+		assert.deepEqual(pose.parameters, preset.pose);
+		assert.equal(pose.match.reason, 'preset-id');
+	}
+});
+
+test('previewBase override applies on the local lane too', async () => {
+	const client = createPose({ previewBase: 'https://staging.three.ws/pose' });
+	const pose = await client.poseSeed('wave hello');
+	assert.ok(pose.previewUrl.startsWith('https://staging.three.ws/pose?seed='));
+});
+
+test('an aborted signal rejects the local call with AbortError', async () => {
+	const controller = new AbortController();
+	controller.abort();
+	await assert.rejects(() => poseSeed('wave hello', { signal: controller.signal }), (e) => {
+		assert.equal(e.name, 'AbortError');
+		return true;
+	});
 });

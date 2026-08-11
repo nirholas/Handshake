@@ -64,6 +64,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { resolveOrCreateAgentForAvatar as resolveLaunchAgentId } from '../_lib/agent-identity.js';
 import { parse, isUuid } from '../_lib/validate.js';
 import { queryAgentLaunches } from '../_lib/pump-agent-launches.js';
+import { markPlanLaunched } from '../_lib/agent-token-plan.js';
 import { randomToken } from '../_lib/crypto.js';
 import { publishFeedEvent } from '../_lib/feed.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
@@ -1893,6 +1894,12 @@ async function handleLaunchAgent(req, res) {
 		coin_type: body.coin_type,
 		source: 'studio_agent_wallet',
 	});
+
+	// Bind the launch back to the agent's saved token plan, if it launched from
+	// one: the plan flips to 'launched' and records the mint, so the profile stops
+	// advertising a coin that now exists and starts rendering its market instead.
+	// A launch configured inline (no saved plan) writes nothing and is unaffected.
+	await markPlanLaunched({ agentId: resolvedAgentId, network: body.network, mint: mintAddr });
 
 	// Surface the confirmed agent-wallet launch on the site-wide live activity ticker.
 	publishFeedEvent({

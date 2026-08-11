@@ -61,10 +61,14 @@ function hostOf(raw) {
 	try { return new URL(raw).hostname; } catch { return 'unparseable'; }
 }
 
-async function failJob(jobId, userId, reason) {
+// errorKind carries the worker's failure taxonomy when the provider reported
+// one ('input' = caller-facing copy the status endpoint may relay; 'internal'
+// = opaque correlation id). Sweep-originated failures pass none.
+async function failJob(jobId, userId, reason, errorKind = null) {
+	const kind = errorKind === 'input' || errorKind === 'internal' ? errorKind : null;
 	await sql`
 		update avatar_regen_jobs
-		set status = 'failed', error = ${reason}, updated_at = now()
+		set status = 'failed', error = ${reason}, error_kind = ${kind}, updated_at = now()
 		where job_id = ${jobId} and user_id = ${userId}
 	`;
 }
@@ -201,7 +205,7 @@ export default wrapCron(async (req, res) => {
 				if (result.status === 'rigging') summary.rigging++;
 				else summary.finalized++;
 			} else if (update.status === 'failed') {
-				await failJob(job.job_id, job.user_id, update.error || 'provider reported reconstruction failure');
+				await failJob(job.job_id, job.user_id, update.error || 'provider reported reconstruction failure', update.errorKind);
 				summary.failed++;
 			} else {
 				// Genuinely still running — bump updated_at so the next tick doesn't

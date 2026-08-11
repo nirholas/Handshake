@@ -1,5 +1,5 @@
 {
-	"$comment": "Directory of hosted three.ws Model Context Protocol servers. Every endpoint speaks MCP over Streamable HTTP (JSON-RPC 2.0, POST). Thirty-seven more install-and-run servers are published on npm under the @three-ws scope; find all of them in the official MCP registry.",
+	"$comment": "Directory of hosted three.ws Model Context Protocol servers. Every endpoint speaks MCP over Streamable HTTP (JSON-RPC 2.0, POST). Dozens more install-and-run servers are published on npm under the @three-ws scope; find all of them in the official MCP registry.",
 	"name": "three.ws",
 	"description": "The 3D agent economy: generate, rig, and animate 3D avatars and worlds; pay and get paid per call with x402 (USDC on Solana and Base); read live crypto market and on-chain intelligence.",
 	"website": "https://three.ws",

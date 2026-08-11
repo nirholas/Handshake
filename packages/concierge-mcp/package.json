@@ -54,7 +54,7 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.29.0",
-		"@three-ws/tool-sdk": "file:../tool-sdk",
-		"zod": "^3.23.8"
+		"zod": "^3.23.8",
+		"zod-to-json-schema": "^3.25.2"
 	}
 }

@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { Agent3D } from '../dist/index.esm.js';
+import { Agent3D } from '../dist/index.mjs';
 import { render, iframeSrc, attrOf, styleOf } from './helpers.mjs';
 
 // --- Embed URL construction -------------------------------------------------

@@ -1383,6 +1383,15 @@ export const limits = {
 	// Persona extraction: Claude API call — 5 per user per day.
 	personaExtract: (userId) =>
 		getLimiter('persona:extract', { limit: 5, window: '1 d' }).limit(userId),
+	// Onboarding interview (POST /api/persona/interview) in the create-agent
+	// wizard. Same try-first shape as agentSuggest: signed-in callers get room to
+	// re-run the interview while they tune their answers, signed-out callers get a
+	// tight per-IP budget because the call hits the shared LLM chain with no user
+	// attribution behind it. Keyed per IP in both cases (the wizard is one browser
+	// per build) with the global daily spend cap in api/_lib/llm.js behind it.
+	personaInterview: (ip) => getLimiter('persona:interview', { limit: 30, window: '1 h' }).limit(ip),
+	personaInterviewAnon: (ip) =>
+		getLimiter('persona:interview:anon', { limit: 8, window: '1 h' }).limit(ip),
 	// Persona preview: Claude API call on the server key. Looser than extract (it's
 	// interactive) but still per-user critical so a free-signup loop can't run up an
 	// unbounded LLM bill. Anonymous shouldn't reach it (auth required), so per-user.
@@ -1417,6 +1426,16 @@ export const limits = {
 		getLimiter('tts:speak:user', { limit: 40, window: '1 h', critical: true }).limit(userId),
 	ttsSpeakIp: (ip) =>
 		getLimiter('tts:speak:ip', { limit: 10, window: '1 h', critical: true }).limit(ip),
+	// An agent's bound voice speaking to a visitor (api/tts/eleven agent_byok lane).
+	// The agent owner's own ElevenLabs account pays, so this bucket protects THEIR
+	// quota from a scripted visitor: generous enough for a real back-and-forth
+	// conversation, tight enough that one IP cannot drain an owner's character
+	// budget. Keyed per agent AND per IP so one noisy visitor can't mute an agent
+	// for everyone else. Critical — fail closed rather than uncap someone's bill.
+	ttsAgentVoiceIp: (agentIdAndIp) =>
+		getLimiter('tts:agent-voice:ip', { limit: 60, window: '1 h', critical: true }).limit(
+			agentIdAndIp,
+		),
 	// NVIDIA Riva ASR (api/asr) — free upstream but credit-metered, and each call
 	// streams an audio clip the server holds in memory, so meter per principal.
 	// Authenticated users get a generous bucket; anonymous callers (keyed by IP) a
@@ -1502,6 +1521,16 @@ export const limits = {
 		getLimiter('brain:chat:ip', { limit: 20, window: '1 m', critical: true }).limit(ip),
 	// X (Twitter) memory seeding: 1 seed per agent per 6 hours.
 	xSeed: (agentId) => getLimiter('memory:seed:x', { limit: 1, window: '6 h' }).limit(agentId),
+	// Consent-first GitHub memory seeding: reads the GitHub API and one LLM pass
+	// per run. 1 seed per agent per 6 hours, matching the X lane.
+	githubSeed: (agentId) =>
+		getLimiter('memory:seed:github', { limit: 1, window: '6 h' }).limit(agentId),
+	// Consent-first Farcaster memory seeding: reads a hub (or Neynar) and runs one
+	// LLM pass per seed. 1 seed per agent per 6 hours, matching the X and GitHub
+	// lanes. Issuing a signing challenge is deliberately outside this budget so a
+	// user can retry the wallet step without burning the window.
+	farcasterSeed: (agentId) =>
+		getLimiter('memory:seed:farcaster', { limit: 1, window: '6 h' }).limit(agentId),
 	// Withdrawal requests: 5 per user per day. This is the daily cap on the only
 	// owner-initiated path that sweeps real funds out of custody, so it is critical
 	// — a missing Redis in prod must fail closed rather than fall back to the

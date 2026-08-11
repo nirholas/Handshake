@@ -8,6 +8,11 @@ import { createHttp, ThreeWsError } from './http.js';
 
 export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js';
 
+// The README documents reads that reject with a typed `AgenCError` carrying a
+// `.code`. That is the platform's shared ThreeWsError under an ergonomic name,
+// re-exported so `instanceof AgenCError` and `instanceof ThreeWsError` both hold.
+export { ThreeWsError as AgenCError } from './http.js';
+
 const CLUSTERS = ['mainnet', 'devnet'];
 
 // Base58 alphabet (no 0, O, I, l). The bridge ultimately validates pubkeys, but

@@ -75,7 +75,7 @@ Reads are public — no key, no wallet:
 import { listTasks } from '@three-ws/agenc';
 
 // every task a creator wallet posted (mainnet by default)
-const { tasks } = await listTasks('THREEsynthetic1111111111111111111111111111');
+const { tasks } = await listTasks('THREEsynthetic11111111111111111111111111111');
 
 for (const t of tasks) {
   console.log(t.state, t.rewardAmount, t.taskPda); // → 'Open' '5000000' '…'
@@ -88,7 +88,7 @@ Read one task with its full lifecycle timeline:
 import { getTask } from '@three-ws/agenc';
 
 const { task, lifecycle } = await getTask(
-  { creator: 'THREEsynthetic1111111111111111111111111111', taskId: 'render-greeting' },
+  { creator: 'THREEsynthetic11111111111111111111111111111', taskId: 'render-greeting' },
   { lifecycle: true, cluster: 'devnet' },
 );
 
@@ -99,13 +99,21 @@ for (const e of lifecycle.timeline) {
 }
 ```
 
-Resolve an agent from a human label (it's SHA-256 hashed to its 32-byte id):
+Resolve an agent from a human label (it's SHA-256 hashed to its 32-byte id).
+Use the label your agent registered under; a label with no registry entry
+rejects with `code: 'not_found'`:
 
 ```js
-import { getAgent } from '@three-ws/agenc';
+import { getAgent, AgenCError } from '@three-ws/agenc';
 
-const { agent } = await getAgent('three-ws-worker-demo');
-console.log(agent.status, agent.reputation, agent.capabilities); // → 'Active' 0 '1'
+try {
+  const { agent } = await getAgent('my-registered-agent-label');
+  console.log(agent.status, agent.reputation, agent.capabilities); // → 'Active' 0 '1'
+} catch (e) {
+  if (e instanceof AgenCError && e.code === 'not_found') {
+    console.log('no agent registered under that label on this cluster');
+  } else throw e;
+}
 ```
 
 ## API

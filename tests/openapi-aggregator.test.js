@@ -40,6 +40,10 @@ function mockReq() {
 	};
 }
 
+// Path-item keys that are operations; everything else ($ref, parameters,
+// summary, description) is path-item metadata, not an operation to audit.
+const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
+
 describe('GET /openapi.json — aggregator coverage', () => {
 	let doc;
 
@@ -162,5 +166,45 @@ describe('GET /openapi.json — aggregator coverage', () => {
 		expect(priced.description).toMatch(/2000\/day/);
 		expect(priced.security).toEqual([]);
 		expect(priced['x-payment-info']).toBeUndefined();
+	});
+
+	// The three guards below encode what `redocly lint` (recommended ruleset)
+	// checks, so the failure lands in `npm test` instead of on whoever next runs
+	// an external validator against the published document.
+	it('declares security on every operation', () => {
+		// This document sets no root-level `security`, so an operation that omits
+		// its own inherits nothing: validators report undefined auth and agent
+		// tooling that infers an auth mode from the security list reports
+		// "unknown" instead of "public, pay-per-call". All 24 /api/x402/* paths
+		// once omitted it. Payment-gated operations declare [] (no credential
+		// required); credential-gated ones name their scheme.
+		for (const [path, pathItem] of Object.entries(doc.paths)) {
+			for (const [verb, op] of Object.entries(pathItem)) {
+				if (!HTTP_METHODS.includes(verb)) continue;
+				expect(op.security, `${verb.toUpperCase()} ${path} declares no security`).toBeDefined();
+				expect(Array.isArray(op.security), `${verb.toUpperCase()} ${path} security is not an array`).toBe(true);
+			}
+		}
+	});
+
+	it('documents at least one 4xx response on every operation', () => {
+		for (const [path, pathItem] of Object.entries(doc.paths)) {
+			for (const [verb, op] of Object.entries(pathItem)) {
+				if (!HTTP_METHODS.includes(verb)) continue;
+				const codes = Object.keys(op.responses || {});
+				expect(
+					codes.some((code) => /^4/.test(code)),
+					`${verb.toUpperCase()} ${path} documents no 4xx response (has ${codes.join(', ') || 'none'})`,
+				).toBe(true);
+			}
+		}
+	});
+
+	it('states the API license', () => {
+		// Without it, spec renderers and SDK codegen present the API as
+		// unlicensed, which reads as public domain to anyone bundling our
+		// document into a client. The repo LICENSE is proprietary.
+		expect(doc.info.license?.name).toBeTruthy();
+		expect(doc.info.license?.url || doc.info.license?.identifier).toBeTruthy();
 	});
 });

@@ -1,47 +1,18 @@
 // GitHub OAuth social connect.
-// Routes: /api/auth/github/connect  — redirect to GitHub OAuth
-//         /api/auth/github/callback — exchange code, store encrypted token
-//         /api/auth/github/status   — connection status for the signed-in user
+// Routes: /api/auth/github/connect    — redirect to GitHub OAuth
+//         /api/auth/github/callback   — exchange code, store encrypted token
+//         /api/auth/github/status     — connection status for the signed-in user
+//         /api/auth/github/disconnect — revoke the grant and delete every memory
+//                                       seeded from GitHub across the user's agents
 
-import { webcrypto } from 'node:crypto';
 import { sql } from '../../_lib/db.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { hmacSha256, constantTimeEquals } from '../../_lib/crypto.js';
 import { cors, json, redirect, error, method, wrap, rateLimited } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
-
-const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
-
-// ── Key derivation (HKDF from JWT_SECRET, info = 'github-token') ──────────────
-
-async function deriveKey() {
-	const raw = new TextEncoder().encode(env.JWT_SECRET);
-	const base = await subtle.importKey('raw', raw, 'HKDF', false, ['deriveKey']);
-	return subtle.deriveKey(
-		{
-			name: 'HKDF',
-			hash: 'SHA-256',
-			salt: new TextEncoder().encode('github-token'),
-			info: new Uint8Array(0),
-		},
-		base,
-		{ name: 'AES-GCM', length: 256 },
-		false,
-		['encrypt', 'decrypt'],
-	);
-}
-
-async function encryptToken(plaintext) {
-	const key = await deriveKey();
-	const iv = new Uint8Array(12);
-	(globalThis.crypto || webcrypto).getRandomValues(iv);
-	const ct = await subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext));
-	const buf = new Uint8Array(iv.length + ct.byteLength);
-	buf.set(iv, 0);
-	buf.set(new Uint8Array(ct), iv.length);
-	return Buffer.from(buf).toString('base64');
-}
+import { encryptGithubToken, decryptGithubToken } from '../../_lib/github-token.js';
+import { revokeGrant } from '../../_lib/github-api.js';
 
 // ── CSRF state (HMAC-signed payload) ─────────────────────────────────────────
 
@@ -166,7 +137,7 @@ async function handleCallback(req, res) {
 	}
 	const profile = await profileRes.json();
 
-	const encryptedToken = await encryptToken(tokenData.access_token);
+	const encryptedToken = await encryptGithubToken(tokenData.access_token);
 
 	await sql`
 		INSERT INTO social_connections (user_id, provider, provider_uid, username, access_token, scopes)
@@ -207,11 +178,74 @@ async function handleStatus(req, res) {
 		WHERE user_id = ${session.id} AND provider = 'github'
 	`;
 
-	if (!row) return json(res, 200, { connected: false });
+	if (!row) return json(res, 200, { connected: false, seeded_fact_count: 0 });
+
+	const [seeded] = await sql`
+		SELECT count(*)::int AS n
+		FROM agent_memories m
+		JOIN agent_identities a ON a.id = m.agent_id
+		WHERE a.user_id = ${session.id} AND m.context->>'source' = 'github_seed'
+	`;
+
 	return json(res, 200, {
 		connected: true,
 		username: row.username,
 		connected_at: row.connected_at,
+		seeded_fact_count: seeded?.n ?? 0,
+	});
+}
+
+// ── disconnect ────────────────────────────────────────────────────────────────
+
+/**
+ * Revocation is not just "forget the token". Everything the connection was used
+ * to learn goes with it: every memory seeded from GitHub, on every agent this
+ * user owns, is deleted in the same transaction that drops the connection. The
+ * grant is also revoked on GitHub's side so the token stops working there too.
+ */
+async function handleDisconnect(req, res) {
+	if (cors(req, res, { methods: 'POST,DELETE,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST', 'DELETE'])) return;
+
+	const session = await getSessionUser(req);
+	if (!session) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const [row] = await sql`
+		SELECT id, access_token FROM social_connections
+		WHERE user_id = ${session.id} AND provider = 'github'
+	`;
+	if (!row) return json(res, 200, { disconnected: false, memories_deleted: 0 });
+
+	const [deleted] = await sql.transaction([
+		sql`
+			DELETE FROM agent_memories
+			WHERE context->>'source' = 'github_seed'
+			  AND agent_id IN (SELECT id FROM agent_identities WHERE user_id = ${session.id})
+			RETURNING id
+		`,
+		sql`DELETE FROM social_connections WHERE id = ${row.id}`,
+	]);
+
+	// GitHub-side revocation is best effort: the local grant is already gone, and
+	// a GitHub outage must not leave the user's memories un-deleted.
+	let revoked = false;
+	if (env.GITHUB_OAUTH_CLIENT_ID && env.GITHUB_OAUTH_CLIENT_SECRET) {
+		try {
+			const token = await decryptGithubToken(row.access_token);
+			revoked = await revokeGrant(
+				token,
+				env.GITHUB_OAUTH_CLIENT_ID,
+				env.GITHUB_OAUTH_CLIENT_SECRET,
+			);
+		} catch (e) {
+			console.error('[auth/github] grant revoke failed', e?.message);
+		}
+	}
+
+	return json(res, 200, {
+		disconnected: true,
+		memories_deleted: deleted.length,
+		grant_revoked: revoked,
 	});
 }
 
@@ -224,5 +258,6 @@ export default wrap(async (req, res) => {
 	if (action === 'connect') return handleConnect(req, res);
 	if (action === 'callback') return handleCallback(req, res);
 	if (action === 'status') return handleStatus(req, res);
+	if (action === 'disconnect') return handleDisconnect(req, res);
 	return error(res, 404, 'not_found', 'unknown github auth action');
 });

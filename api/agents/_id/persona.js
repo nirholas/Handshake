@@ -10,6 +10,12 @@
 //                                            writes a real agent_versions entry.
 // GET    /api/agents/:id/persona/versions — persona version history (for diff).
 // POST   /api/agents/:id/persona/restore  — restore a prior version as a new save.
+//
+// Every write path here also republishes the agent's signed manifest: the
+// compiled prompt is canonicalized, signed with the platform ed25519 attester
+// identity, and pinned to IPFS so the resulting CID is a permanent, portable
+// record of exactly how this agent was configured. See
+// api/_lib/agent-manifest-publish.js and specs/AGENT_MANIFEST.md.
 
 import { createHash, createHmac } from 'node:crypto';
 import { sql } from '../../_lib/db.js';
@@ -17,8 +23,12 @@ import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin } f
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
-import { llmComplete, LlmUnavailableError } from '../../_lib/llm.js';
+import {
+	extractPersonaFromInterview,
+	PersonaExtractionError,
+} from '../../_lib/persona-interview-extract.js';
 import { parse } from '../../_lib/validate.js';
+import { publishAgentManifestSafely } from '../../_lib/agent-manifest-publish.js';
 import { z } from 'zod';
 import {
 	compilePersona,
@@ -27,11 +37,42 @@ import {
 	sanitizeVocabulary,
 	PERSONA_TRAIT_KEYS,
 } from '../../../src/agents/persona-compile.js';
+import {
+	INTERVIEW_QUESTIONS,
+	normalizeInterview,
+	MAX_INTERVIEW_ANSWERS,
+} from '../../../src/agents/persona-interview.js';
 
+// Two accepted answer shapes, one interview. The structured form
+// ([{ id?, question?, answer }]) is what the create-agent wizard and the current
+// Brain Studio modal send: 5 to 8 questions, any of them skippable. The legacy
+// form (five bare strings, positionally mapped onto the canonical questions) is
+// still accepted so an older client or an SDK caller keeps working.
 const extractBody = z.object({
 	answers: z
-		.array(z.string().trim().min(5, 'Each answer must be at least 5 characters').max(1000))
-		.length(5, 'Exactly 5 answers required'),
+		.union([
+			z.array(z.string().max(1000)).min(1).max(MAX_INTERVIEW_ANSWERS),
+			z
+				.array(
+					z.object({
+						id: z.string().max(40).optional(),
+						question: z.string().max(240).optional(),
+						answer: z.string().max(1000),
+					}),
+				)
+				.min(1)
+				.max(MAX_INTERVIEW_ANSWERS),
+		])
+		.transform((rows) =>
+			normalizeInterview(
+				rows.map((row, i) =>
+					typeof row === 'string'
+						? { id: INTERVIEW_QUESTIONS[i]?.id, question: INTERVIEW_QUESTIONS[i]?.prompt, answer: row }
+						: row,
+				),
+			),
+		)
+		.refine((rows) => rows.length > 0, 'Answer at least one interview question'),
 });
 
 const traitsSchema = z.record(z.string(), z.number()).default({});
@@ -42,6 +83,20 @@ const saveBody = z.object({
 	vocabulary: z.array(z.string()).max(24).default([]),
 	base: z.string().max(4000).optional(),
 	changelog: z.string().trim().max(280).optional(),
+	// Interview provenance. The create-agent wizard runs the interview before the
+	// agent exists (POST /api/persona/interview) and hands the answers over on the
+	// first save, so the agent records WHICH questions produced its voice — that is
+	// what `persona.interview` on the public manifest reports.
+	interview: z
+		.array(
+			z.object({
+				id: z.string().max(40).optional(),
+				question: z.string().max(240).optional(),
+				answer: z.string().max(1000),
+			}),
+		)
+		.max(MAX_INTERVIEW_ANSWERS)
+		.optional(),
 });
 
 const restoreBody = z.object({ version: z.number().int().positive() });
@@ -72,13 +127,29 @@ function signPrompt(systemPrompt) {
 }
 
 // Read the structured persona state stored on the agent. persona_traits holds
-// { values: {key:0..1}, vocabulary: [...], base: "..." }.
+// { values: {key:0..1}, vocabulary: [...], base: "...", interview: {...} }.
 function readStructured(agent) {
 	const raw = agent.persona_traits && typeof agent.persona_traits === 'object' ? agent.persona_traits : {};
 	return {
 		values: clampTraits(raw.values || {}),
 		vocabulary: sanitizeVocabulary(raw.vocabulary || []),
 		base: typeof raw.base === 'string' ? raw.base : '',
+		interview: raw.interview && typeof raw.interview === 'object' ? raw.interview : null,
+	};
+}
+
+// The interview provenance block stored inside persona_traits: which questions
+// were answered, when, and where the interview ran. The answers themselves are
+// kept so the owner can reopen and edit them; the public manifest exposes only
+// the counts (see api/agents/_id/_sub.js handleManifest).
+function interviewRecord(answers, source) {
+	return {
+		source,
+		question_ids: answers.map((row) => row.id),
+		questions_answered: answers.length,
+		questions_total: INTERVIEW_QUESTIONS.length,
+		answers,
+		at: new Date().toISOString(),
 	};
 }
 
@@ -112,6 +183,7 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 			tone_tags: agent.persona_tone_tags || [],
 			vocabulary: structured.vocabulary,
 			base: structured.base,
+			interview: structured.interview,
 			persona_prompt: agent.persona_prompt || '',
 			extracted_at: agent.persona_extracted_at || null,
 			updated_at: agent.persona_updated_at || null,
@@ -150,51 +222,36 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 		if (!rl.success) return rateLimited(res, rl, 'persona extraction limit reached (5 per day)');
 
 		const body = parse(extractBody, await readJson(req));
-		const { answers } = body;
-
-		let raw;
-		try {
-			({ text: raw } = await llmComplete({
-				maxTokens: 1024,
-				system:
-					'You are a persona architect. Given a person\'s interview answers, extract their communication style, tone, and voice. Produce a concise first-person system prompt that an LLM can use to impersonate this person faithfully. Be specific. Avoid clichés.\n\n' +
-					'Output ONLY a single JSON object (no markdown fences, no prose) with EXACTLY these fields:\n' +
-					'{\n' +
-					'  "system_prompt": string,        // 150-300 word first-person system prompt, starting with "You are ..."\n' +
-					'  "tone_tags": string[],          // up to 8 single-word tone descriptors\n' +
-					'  "vocabulary_samples": string[]  // up to 10 short phrases characteristic of this persona\n' +
-					'}',
-				user: `Interview answers:\n1. ${answers[0]}\n2. ${answers[1]}\n3. ${answers[2]}\n4. ${answers[3]}\n5. ${answers[4]}`,
-			}));
-		} catch (err) {
-			if (err instanceof LlmUnavailableError) {
-				return error(res, 503, 'llm_unavailable', 'persona extraction is not available right now');
-			}
-			console.error('[persona/extract] LLM error', err.status || '', err.message);
-			return error(res, 502, 'upstream_error', 'persona extraction failed');
-		}
+		const answers = body.answers;
 
 		let extracted;
 		try {
-			const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-			extracted = JSON.parse(stripped);
-		} catch {
-			console.error('[persona/extract] non-JSON model output', raw.slice(0, 400));
-			return error(res, 502, 'upstream_error', 'unexpected response from persona extraction');
+			extracted = await extractPersonaFromInterview({
+				name: agent.name,
+				description: agent.description,
+				greeting: agent.greeting,
+				answers,
+				userId: auth.userId,
+				tool: 'persona_extract_rerun',
+			});
+		} catch (err) {
+			if (err instanceof PersonaExtractionError) {
+				return error(res, err.status, err.code, err.message);
+			}
+			throw err;
 		}
 
-		const base = typeof extracted.system_prompt === 'string' ? extracted.system_prompt.trim() : '';
-		const tone_tags = sanitizeToneTags(extracted.tone_tags).slice(0, 8);
-		const vocabulary_samples = sanitizeVocabulary(extracted.vocabulary_samples);
-		if (!base) {
-			return error(res, 502, 'upstream_error', 'unexpected response from persona extraction');
-		}
-
-		// Seed the structured persona with the extracted base + current (or default)
-		// traits, then compile so the saved prompt already reflects both. The
-		// interview supplies the voice; the trait sliders refine it.
+		// The interview supplies the voice; the owner's trait sliders refine it.
+		// A FIRST extraction has no tuned sliders to protect, so the interview's own
+		// trait read is adopted. A re-run keeps whatever the owner has since dialled
+		// in — re-running the interview must never silently undo their edits.
 		const structured = readStructured(agent);
-		const traits = structured.values;
+		const firstExtraction = !agent.persona_prompt_hash;
+		const traits = firstExtraction ? extracted.traits : structured.values;
+		const base = extracted.base;
+		const tone_tags = extracted.toneTags;
+		const vocabulary_samples = extracted.vocabulary;
+
 		const compiled = compilePersona({
 			name: agent.name,
 			description: agent.description,
@@ -204,7 +261,12 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 			vocabulary: vocabulary_samples,
 		});
 		const { hash, sig } = signPrompt(compiled);
-		const personaTraits = { values: traits, vocabulary: vocabulary_samples, base };
+		const personaTraits = {
+			values: traits,
+			vocabulary: vocabulary_samples,
+			base,
+			interview: interviewRecord(answers, 'brain-studio'),
+		};
 
 		const [updated] = await sql`
 			UPDATE agent_identities
@@ -220,14 +282,18 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 			RETURNING persona_extracted_at
 		`;
 
+		const manifest = await publishAgentManifestSafely(id, { reason: 'persona_extract' });
+
 		return json(res, 200, {
 			system_prompt: compiled,
 			base,
 			traits,
 			tone_tags,
 			vocabulary: vocabulary_samples,
+			questions_answered: answers.length,
 			hash,
 			extracted_at: updated.persona_extracted_at,
+			manifest,
 		});
 	}
 
@@ -243,6 +309,15 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 		const vocabulary = sanitizeVocabulary(body.vocabulary);
 		const base = body.base != null ? String(body.base).trim() : prev.base;
 
+		// A save that carries interview answers is the wizard handing over an
+		// interview that ran before the agent existed. Record it as provenance and
+		// stamp persona_extracted_at, so the agent reports an interviewed persona
+		// exactly like a Brain Studio re-run does.
+		const interviewAnswers = body.interview ? normalizeInterview(body.interview) : [];
+		const interview = interviewAnswers.length
+			? interviewRecord(interviewAnswers, 'create-wizard')
+			: prev.interview;
+
 		const compiled = compilePersona({
 			name: agent.name,
 			description: agent.description,
@@ -252,7 +327,7 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 			vocabulary,
 		});
 		const { hash, sig } = signPrompt(compiled);
-		const personaTraits = { values: traits, vocabulary, base };
+		const personaTraits = { values: traits, vocabulary, base, ...(interview ? { interview } : {}) };
 		const changelog = body.changelog || 'Persona updated';
 
 		const [{ next_version }] = await sql`
@@ -268,6 +343,7 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 				    persona_prompt_sig  = ${sig},
 				    persona_tone_tags   = ${JSON.stringify(toneTags)}::jsonb,
 				    persona_traits      = ${JSON.stringify(personaTraits)}::jsonb,
+				    persona_extracted_at = CASE WHEN ${interviewAnswers.length > 0} THEN now() ELSE persona_extracted_at END,
 				    persona_updated_at  = now(),
 				    updated_at          = now()
 				WHERE id = ${id}
@@ -288,6 +364,11 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 			`,
 		]);
 
+		// The prompt that just landed is the agent's behavior, so pin the proof of
+		// it now. Best-effort by design: the save above is already committed and a
+		// pinning hiccup reports itself in `manifest.reason` rather than failing.
+		const manifest = await publishAgentManifestSafely(id, { reason: 'persona_save' });
+
 		return json(res, 200, {
 			version: next_version,
 			persona_prompt: compiled,
@@ -298,6 +379,7 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 			hash,
 			changelog,
 			updated_at: updatedRows[0]?.persona_updated_at || null,
+			manifest,
 		});
 	}
 
@@ -365,6 +447,8 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 			`,
 		]);
 
+		const manifest = await publishAgentManifestSafely(id, { reason: 'persona_restore' });
+
 		return json(res, 200, {
 			version: next_version,
 			restored_from: snap.version,
@@ -375,6 +459,7 @@ export const handlePersona = wrap(async (req, res, id, action) => {
 			base,
 			hash,
 			changelog,
+			manifest,
 		});
 	}
 

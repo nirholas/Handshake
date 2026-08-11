@@ -13,7 +13,7 @@
  * head-pose estimation, blur/lighting/centering quality gates.
  */
 
-import { createQualitySession, preload, SLOT_PRESETS } from './face-quality.js';
+import { checkImageQuality, createQualitySession, preload } from './face-quality.js';
 import { log } from './shared/log.js';
 
 const REQUIRED_SLOT = 'frontal';
@@ -154,6 +154,7 @@ styleBtns.forEach((btn) => {
 		const val = /** @type {'v1'|'v2'} */ (btn.getAttribute('data-type'));
 		state.avatarType = val;
 		styleBtns.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+		persistProgress();
 	});
 });
 
@@ -162,7 +163,11 @@ document.addEventListener('selfie:reset', () => {
 	ALL_SLOTS.forEach((s) => { state.files[s] = null; });
 	ALL_SLOTS.forEach(renderSlot);
 	updateSubmit();
+	clearProgress();
 });
+
+// The avatar landed in the user's library; the capture session is spent.
+document.addEventListener('selfie:done', clearProgress);
 
 // ── Submit ─────────────────────────────────────────────────────────────────
 submitBtn.addEventListener('click', () => {
@@ -219,6 +224,7 @@ function setSlot(slot, file) {
 	state.files[slot] = file;
 	renderSlot(slot);
 	updateSubmit();
+	persistProgress();
 	// Let the page assess the freshly-added photo and warn early (before the
 	// minute-long build) if it's a drawing, blurry, or has no face.
 	document.dispatchEvent(new CustomEvent('selfie:photo-added', { detail: { slot, file } }));
@@ -229,6 +235,7 @@ function clearSlot(slot) {
 	state.files[slot] = null;
 	renderSlot(slot);
 	updateSubmit();
+	persistProgress();
 }
 
 /** @param {string} slot */
@@ -417,7 +424,7 @@ async function startFaceQuality(slot) {
 			slot: slotKey,
 			onUpdate: (report) => {
 				renderQualityBadges(badges, report, slotKey);
-				updateCameraHints(report, slotKey);
+				updateCameraHints(report);
 			},
 		});
 		cam.qualitySession.start();
@@ -436,7 +443,6 @@ function renderQualityBadges(container, report, slot) {
 		return;
 	}
 
-	const slotCfg = SLOT_PRESETS[slot] || SLOT_PRESETS.frontal;
 	const chips = [
 		{ text: 'Face', ok: true },
 		{ text: `Yaw ${Math.round(report.yaw)}°`, ok: report.yawOk },
@@ -452,42 +458,29 @@ function renderQualityBadges(container, report, slot) {
 	).join('');
 }
 
-function updateCameraHints(report, slot) {
+function updateCameraHints(report) {
 	if (!report.faceFound) {
 		setShutterEnabled(false);
 		camOval?.classList.remove('detected');
 		if (camHint) {
-			camHint.textContent = 'No face detected — face the camera';
+			camHint.textContent = report.reason || 'No face detected. Face the camera.';
 			camHint.classList.remove('ok');
 		}
 		return;
 	}
 
-	const allPass = report.allPass;
 	setShutterEnabled(true);
-	camOval?.classList.toggle('detected', allPass);
+	camOval?.classList.toggle('detected', report.allPass);
 
 	if (camHint) {
-		if (allPass) {
-			camHint.textContent = 'Looks good — tap the shutter';
+		if (report.allPass) {
+			camHint.textContent = 'Looks good. Tap the shutter.';
 			camHint.classList.add('ok');
 			cam.faceLocked = true;
-		} else if (!report.yawOk) {
-			camHint.textContent = slot === 'frontal'
-				? 'Face the camera straight on'
-				: `Turn your head ${slot} (~45°)`;
-			camHint.classList.remove('ok');
-		} else if (!report.centered) {
-			camHint.textContent = 'Center your face in the oval';
-			camHint.classList.remove('ok');
-		} else if (!report.blurOk) {
-			camHint.textContent = 'Hold steady — image is blurry';
-			camHint.classList.remove('ok');
-		} else if (!report.lumaOk) {
-			camHint.textContent = report.luma < 40 ? 'Too dark — find better light' : 'Too bright — reduce glare';
-			camHint.classList.remove('ok');
 		} else {
-			camHint.textContent = 'Almost there...';
+			// The grader names the single most actionable fix (yaw, framing,
+			// blur, lighting) in the order the user should address them.
+			camHint.textContent = report.reason || 'Almost there...';
 			camHint.classList.remove('ok');
 		}
 	}
@@ -533,6 +526,7 @@ function clearPending() {
 	cam.pendingUrl = null;
 	cam.pendingFile = null;
 	document.querySelector('#cam-stage img.preview')?.remove();
+	clearStillVerdict();
 }
 
 /** @param {'live' | 'review'} mode */
@@ -658,6 +652,75 @@ async function shoot() {
 		stage.appendChild(img);
 	}
 	setCamMode('review');
+	scoreStill(canvas, cam.slot || REQUIRED_SLOT);
+}
+
+/**
+ * Score the frozen still in review mode. The live gates watched the video
+ * feed, but the countdown leaves ~3s for motion blur, a lighting change, or a
+ * head turn to land in the actual capture; this grades the exact pixels that
+ * would be submitted, against the same shared gates. Only a missing face
+ * blocks "Use this" (mirroring the reconstruction worker's one hard input
+ * rejection); everything else is a warning the user can accept.
+ *
+ * @param {HTMLCanvasElement} canvas the captured frame
+ * @param {string} slot
+ */
+async function scoreStill(canvas, slot) {
+	const badges = document.getElementById('cam-badges');
+	const verdictEl = document.getElementById('cam-review-verdict');
+	const useBtn = /** @type {HTMLButtonElement | null} */ (
+		document.querySelector('[data-cam-action="use"]')
+	);
+	const seq = ++_stillSeq;
+	if (verdictEl) {
+		verdictEl.textContent = 'Checking shot...';
+		verdictEl.className = '';
+		verdictEl.removeAttribute('hidden');
+	}
+	let report;
+	try {
+		report = await checkImageQuality(canvas, slot);
+	} catch (err) {
+		// Scoring is advisory; if the model can't load, the server-side
+		// assessment at submit time remains the authority. Never trap the user.
+		log.warn('[selfie] still scoring failed, allowing through:', err);
+		if (seq === _stillSeq) verdictEl?.setAttribute('hidden', '');
+		return;
+	}
+	// A retake or slot change superseded this scoring pass.
+	if (seq !== _stillSeq || !cam.pendingFile) return;
+
+	renderQualityBadges(badges, report, slot);
+	if (verdictEl) {
+		if (!report.faceFound) {
+			verdictEl.textContent =
+				'No face in this shot. Retake it so your avatar has something to build from.';
+			verdictEl.className = 'bad';
+		} else if (report.allPass) {
+			verdictEl.textContent = 'Sharp, lit, and framed. Use this shot.';
+			verdictEl.className = 'ok';
+		} else {
+			verdictEl.textContent = `${report.reason || 'This shot could be better.'} You can still use it.`;
+			verdictEl.className = 'warn';
+		}
+		verdictEl.removeAttribute('hidden');
+	}
+	if (useBtn) useBtn.disabled = !report.faceFound;
+}
+
+let _stillSeq = 0;
+
+function clearStillVerdict() {
+	_stillSeq++;
+	const verdictEl = document.getElementById('cam-review-verdict');
+	verdictEl?.setAttribute('hidden', '');
+	const useBtn = /** @type {HTMLButtonElement | null} */ (
+		document.querySelector('[data-cam-action="use"]')
+	);
+	if (useBtn) useBtn.disabled = false;
+	const badges = document.getElementById('cam-badges');
+	if (badges) badges.innerHTML = '';
 }
 
 function confirmCamShot() {
@@ -669,6 +732,123 @@ function confirmCamShot() {
 	closeCamera();
 	setSlot(slot, file);
 }
+
+// ── Capture progress persistence ───────────────────────────────────────────
+// A phone refresh, an accidental back-swipe, or a tab discard mid-capture used
+// to throw away every shot already taken. Each confirmed slot is mirrored to
+// sessionStorage (downscaled: the reconstruction lane caps input at 1024px
+// anyway) and restored on load, so the user resumes exactly where they were.
+// The building phase has its own resume rail (selfie:pendingJobId in
+// selfie-pipeline.js); this covers the capture phase before submit.
+const PROGRESS_KEY = 'threews:selfie-progress';
+const PERSIST_MAX_DIM = 1024;
+const PERSIST_JPEG_QUALITY = 0.85;
+
+async function persistProgress() {
+	let payload;
+	try {
+		payload = { avatarType: state.avatarType, slots: {} };
+		for (const slot of ALL_SLOTS) {
+			const file = state.files[slot];
+			if (!file) continue;
+			payload.slots[slot] = {
+				name: file.name || `${slot}.jpg`,
+				dataUrl: await fileToScaledDataUrl(file),
+			};
+		}
+	} catch (err) {
+		log.warn('[selfie] could not serialize capture progress:', err);
+		return;
+	}
+	try {
+		if (Object.keys(payload.slots).length === 0 && state.avatarType === 'v1') {
+			sessionStorage.removeItem(PROGRESS_KEY);
+		} else {
+			sessionStorage.setItem(PROGRESS_KEY, JSON.stringify(payload));
+		}
+	} catch (err) {
+		// Storage full or blocked: capture still works, it just won't survive a
+		// refresh. Never let persistence break the flow.
+		log.warn('[selfie] could not persist capture progress:', err);
+	}
+}
+
+function clearProgress() {
+	try { sessionStorage.removeItem(PROGRESS_KEY); } catch (_) {}
+}
+
+/** @param {File} file */
+async function fileToScaledDataUrl(file) {
+	const bitmap = await (async () => {
+		if (typeof createImageBitmap === 'function') {
+			try { return await createImageBitmap(file); } catch (_) {}
+		}
+		return new Promise((resolve, reject) => {
+			const img = new Image();
+			const url = URL.createObjectURL(file);
+			img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+			img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('could not decode image')); };
+			img.src = url;
+		});
+	})();
+	const w = bitmap.width || bitmap.naturalWidth;
+	const h = bitmap.height || bitmap.naturalHeight;
+	const scale = Math.min(1, PERSIST_MAX_DIM / Math.max(w, h));
+	const canvas = document.createElement('canvas');
+	canvas.width = Math.max(1, Math.round(w * scale));
+	canvas.height = Math.max(1, Math.round(h * scale));
+	const ctx = canvas.getContext('2d');
+	if (!ctx) throw new Error('2d canvas unsupported');
+	ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+	try { bitmap.close?.(); } catch (_) {}
+	return canvas.toDataURL('image/jpeg', PERSIST_JPEG_QUALITY);
+}
+
+(function restoreProgress() {
+	let raw;
+	try {
+		raw = sessionStorage.getItem(PROGRESS_KEY);
+	} catch {
+		return; // storage blocked (private mode / cookies off)
+	}
+	if (!raw) return;
+	let parsed;
+	try {
+		parsed = JSON.parse(raw);
+	} catch {
+		clearProgress();
+		return;
+	}
+	if (parsed?.avatarType === 'v2') {
+		state.avatarType = 'v2';
+		styleBtns.forEach((b) => {
+			b.setAttribute('aria-pressed', String(b.getAttribute('data-type') === 'v2'));
+		});
+	}
+	let restoredAny = false;
+	for (const slot of ALL_SLOTS) {
+		const entry = parsed?.slots?.[slot];
+		if (!entry || typeof entry.dataUrl !== 'string' || !entry.dataUrl.startsWith('data:image/')) continue;
+		const file = dataUrlToFile(entry.dataUrl, typeof entry.name === 'string' ? entry.name : `${slot}.jpg`);
+		if (!file) continue;
+		state.files[slot] = file;
+		renderSlot(slot);
+		restoredAny = true;
+		if (slot !== REQUIRED_SLOT) {
+			// Reveal restored side shots; they live behind the disclosure.
+			const fid = /** @type {HTMLDetailsElement|null} */ (document.getElementById('fidelity-boost'));
+			if (fid) fid.open = true;
+		}
+	}
+	if (restoredAny) {
+		updateSubmit();
+		if (state.files[REQUIRED_SLOT]) {
+			document.dispatchEvent(new CustomEvent('selfie:photo-added', {
+				detail: { slot: REQUIRED_SLOT, file: state.files[REQUIRED_SLOT] },
+			}));
+		}
+	}
+})();
 
 // ── Homepage handoff ─────────────────────────────────────────────────────────
 // The homepage Avatar Studio teaser lets a visitor drop/capture a selfie, then

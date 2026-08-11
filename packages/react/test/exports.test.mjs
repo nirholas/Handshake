@@ -7,11 +7,11 @@ import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import * as esm from '../dist/index.esm.js';
+import * as esm from '../dist/index.mjs';
 import { render, iframeSrc } from './helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const cjs = require('../dist/index.cjs.js');
+const cjs = require('../dist/index.cjs');
 
 const FORWARD_REF = Symbol.for('react.forward_ref');
 

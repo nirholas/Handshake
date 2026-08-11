@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 
-import { defineTool, defineExecutor, toMcpTools } from '@three-ws/tool-sdk';
+import { defineTool, defineExecutor, toMcpTools } from '../lib/tool-sdk/index.js';
 
 import { buildEmbed } from '../lib/embed.js';
 import { isKnownAvatar, AVATARS } from '../lib/catalog.js';
@@ -13,9 +13,10 @@ const AVATAR_IDS = AVATARS.map((a) => a.id);
 
 const DESCRIPTION =
 	'Generate ready-to-paste embed code for adding a three.ws Concierge (an AI chat widget with a talking 3D ' +
-	'avatar) to a website. Returns the one-tag <script> install by default, or the <three-concierge> web ' +
-	'component / npm snippet / all of them. Configure the accent color, avatar, greeting, curated knowledge, ' +
-	'suggested prompts, position and theme. Offline: this only composes the code, it installs nothing.';
+	'avatar) to a website. Returns every install flavor by default (flavor "all"): the one-tag <script> install, ' +
+	'the <three-concierge> web component, the npm snippet, and the imperative mount() call; pass `flavor` to get ' +
+	'just one. Configure the accent color, avatar, greeting, curated knowledge, suggested prompts, position and ' +
+	'theme. Offline: this only composes the code, it installs nothing.';
 
 const tool = defineTool({
 	id: 'concierge-embed',

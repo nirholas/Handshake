@@ -10,12 +10,6 @@
 // A paid lane, `grindViaApi()`, wraps the hosted x402 endpoint (GET
 // /api/x402/vanity) for environments that can't grind locally — short patterns
 // only, settled in USDC. See README.md for the full reference.
-//
-// DEVIATION FROM README (one line): the README describes a Rust→WASM grinder
-// fanned across Web Workers; this build ships a zero-dependency pure-platform
-// implementation instead (no WASM binary, no Worker pool) so the package stays
-// dependency-free and importable everywhere — the `grind()` surface, options,
-// validation, difficulty math, and result shape are identical.
 
 import { createHttp, ThreeWsError } from './http.js';
 
@@ -326,10 +320,14 @@ export async function grind(opts = {}) {
 
 function buildProgress(attempts, durationMs, expected) {
 	const rate = durationMs > 0 ? (attempts / durationMs) * 1000 : 0;
+	// The geometric distribution is memoryless: past attempts don't bring the
+	// next hit closer, so the honest expected-remaining is always the full
+	// expectation. Counting down (expected - attempts) would read "any second
+	// now" for minutes on an unlucky grind.
 	return {
 		attempts,
 		rate,
-		eta: formatTimeEstimate(Math.max(0, expected - attempts), rate),
+		eta: formatTimeEstimate(expected, rate),
 	};
 }
 

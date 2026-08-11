@@ -164,7 +164,7 @@ with Forge's `seed` semantics so a variant set is shareable by number.
 
 Preset values are derived from Ready Player Me's `visage` viewer (MIT) and re-tuned
 for three.ws. See [NOTICE](./NOTICE) for details. This package is distributed under
-Apache-2.0.
+a proprietary license; see [LICENSE](./LICENSE).
 
 ## Related packages
 
@@ -176,7 +176,7 @@ Apache-2.0.
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, see [LICENSE](./LICENSE)
 
 ---
 

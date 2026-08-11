@@ -225,6 +225,24 @@ test('snapshot() surfaces a 402 as PaymentRequiredError carrying the x402 challe
 	});
 });
 
+test('snapshot() surfaces the x402-over-401 challenge the live MCP transport issues', async () => {
+	// The production /api/mcp endpoint quotes its x402 challenge over HTTP 401
+	// (x402Version + accepts in the body, next to the OAuth www-authenticate
+	// header), not 402. The http core must still map it to PaymentRequiredError.
+	const accepts = [{ scheme: 'exact', network: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp', amount: '1000', payTo: SYNTH }];
+	const { fetch } = stubFetch([
+		{ status: 401, body: { x402Version: 2, error: 'X-PAYMENT header is required', accepts } },
+	]);
+	await assert.rejects(() => createIntel({ fetch }).snapshot(THREE), (e) => {
+		assert.ok(e instanceof PaymentRequiredError);
+		assert.equal(e.code, 'payment_required');
+		assert.equal(e.status, 401);
+		assert.equal(e.message, 'X-PAYMENT header is required');
+		assert.deepEqual(e.accepts, accepts);
+		return true;
+	});
+});
+
 test('snapshot() maps a JSON-RPC tool error to a typed ThreeWsError', async () => {
 	const { fetch } = stubFetch([
 		{ body: { jsonrpc: '2.0', id: 1, error: { code: -32602, message: 'unknown tool: pump_snapshot' } } },

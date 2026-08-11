@@ -35,7 +35,7 @@ export interface GrindProgress {
 	attempts: number;
 	/** Keypairs/sec. */
 	rate: number;
-	/** Human estimate of remaining time, e.g. "~12 seconds", "unknown". */
+	/** Expected time to a hit at the current rate, e.g. "~12 seconds", "unknown". Memoryless: does not count down. */
 	eta: string;
 }
 

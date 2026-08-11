@@ -14,6 +14,7 @@
 //
 //   daily_usd          rolling-24h total USD-equivalent outflow ceiling
 //   per_tx_usd         max USD-equivalent for any single outbound tx
+//   per_counterparty_daily_usd  rolling-24h ceiling PER recipient/payee
 //   withdraw_allowlist if non-empty, withdraws may only target these addresses
 //
 // Spends are recorded into agent_custody_events (the audit trail + ledger). The
@@ -85,6 +86,15 @@ export const MIN_OPERATIONAL_WALLET_SOL = 0.012;
 export const SPEND_LIMIT_DEFAULTS = Object.freeze({
 	daily_usd: null,
 	per_tx_usd: null,
+	// Rolling-24h ceiling on what this agent may send to ONE counterparty (the
+	// on-chain payee for a trade/x402/a2a payment, the recipient address for a
+	// withdraw). The wallet-wide `daily_usd` cap bounds total damage; this one
+	// bounds concentrated damage, which is the shape an autonomous agent actually
+	// fails in: a peer that reprices upward every call, or a compromised endpoint
+	// the agent keeps paying, drains the whole daily budget into one address while
+	// every individual payment stays under `per_tx_usd`. Null means no per-payee
+	// cap (unchanged behavior for wallets that never set one).
+	per_counterparty_daily_usd: null,
 	withdraw_allowlist: [],
 	// Wallet freeze / kill switch. When true, every AUTONOMOUS outbound path
 	// (trade, snipe, x402) is rejected immediately. The owner's own withdraw is
@@ -195,6 +205,7 @@ export function normalizeSpendLimits(raw) {
 	return {
 		daily_usd: numOrNull(r.daily_usd),
 		per_tx_usd: numOrNull(r.per_tx_usd),
+		per_counterparty_daily_usd: numOrNull(r.per_counterparty_daily_usd),
 		withdraw_allowlist: deduped,
 		frozen: r.frozen === true,
 		require_capabilities: r.require_capabilities === true,
@@ -224,6 +235,10 @@ export async function setSpendLimits(agentId, userId, patch, { req = null } = {}
 	const next = normalizeSpendLimits({
 		daily_usd: 'daily_usd' in patch ? patch.daily_usd : prev.daily_usd,
 		per_tx_usd: 'per_tx_usd' in patch ? patch.per_tx_usd : prev.per_tx_usd,
+		per_counterparty_daily_usd:
+			'per_counterparty_daily_usd' in patch
+				? patch.per_counterparty_daily_usd
+				: prev.per_counterparty_daily_usd,
 		withdraw_allowlist:
 			'withdraw_allowlist' in patch ? patch.withdraw_allowlist : prev.withdraw_allowlist,
 		frozen: 'frozen' in patch ? patch.frozen === true : prev.frozen,
@@ -559,6 +574,34 @@ export async function getDailySpendUsd(agentId, network = 'mainnet', windowHours
 	return Number(row?.usd || 0);
 }
 
+/**
+ * USD this agent has already sent to ONE counterparty over the trailing window.
+ * Backs the `per_counterparty_daily_usd` ceiling. `destination` is whatever the
+ * spending path recorded as the recipient: the on-chain payee for an x402 / a2a
+ * payment, the withdraw recipient for a sweep. A null/empty destination has no
+ * counterparty to meter, so it reports 0 and the cap cannot block it.
+ */
+export async function getCounterpartySpendUsd(
+	agentId,
+	destination,
+	network = 'mainnet',
+	windowHours = 24,
+) {
+	if (!destination) return 0;
+	const [row] = await sql`
+		SELECT COALESCE(SUM(usd), 0)::float8 AS usd
+		FROM agent_custody_events
+		WHERE agent_id = ${agentId}
+		  AND network = ${network}
+		  AND event_type = 'spend'
+		  AND destination = ${destination}
+		  AND status IN ('ok', 'pending', 'confirmed')
+		  AND usd IS NOT NULL
+		  AND created_at > now() - (${windowHours} || ' hours')::interval
+	`;
+	return Number(row?.usd || 0);
+}
+
 // ── natural-language policy enforcement ───────────────────────────────────────
 // The owner-authored, code-enforced policy (meta.policy_rules) layered on top of
 // the numeric caps. A block here returns the HUMAN rule that caught the spend.
@@ -868,6 +911,25 @@ export async function enforceSpendLimit({
 		}
 	}
 
+	// 4c. Per-counterparty rolling ceiling. Bounds concentration, not just total:
+	// a wallet-wide daily cap still permits the entire day's budget to flow into
+	// one payee.
+	if (lim.per_counterparty_daily_usd != null && hasUsd && destination) {
+		const cpSpent = await getCounterpartySpendUsd(agentId, destination, network);
+		if (cpSpent + usdValue > lim.per_counterparty_daily_usd + 1e-9) {
+			throw new SpendLimitError(
+				'counterparty_daily_exceeded',
+				`This ${category} would bring today’s spend to this counterparty to $${(cpSpent + usdValue).toFixed(2)}, over the per-counterparty limit of $${lim.per_counterparty_daily_usd.toFixed(2)}.`,
+				{
+					usd: usdValue,
+					destination,
+					counterparty_spent_usd: cpSpent,
+					per_counterparty_daily_usd: lim.per_counterparty_daily_usd,
+				},
+			);
+		}
+	}
+
 	// 5. Behavioral anomaly guard (the wallet's immune system). Scores this action
 	// against the agent's learned normal; on a freeze verdict it has already frozen
 	// the wallet + notified the owner, and we surface a SpendLimitError so the
@@ -977,6 +1039,7 @@ export async function reserveSpendUsd({
 			const _r = await reserveCapabilitySpend({
 				capabilityId: _cap.id, agentId, userId, action: category,
 				target: target ?? destination, usdValue, dailyUsd: lim.daily_usd,
+				counterpartyDailyUsd: lim.per_counterparty_daily_usd,
 				network, asset, destination, rowMeta, now,
 			});
 			return { ok: true, reservationId: _r.reservationId, dailySpentUsd: _r.spentBefore, capabilityId: _cap.id };
@@ -1001,9 +1064,15 @@ export async function reserveSpendUsd({
 		return { ok: true, reservationId, dailySpentUsd, anomaly: anomaly.verdict || null };
 	};
 
-	// No daily ceiling, or an unpriceable spend: just reserve a pending row (it
+	// The per-counterparty ceiling only has something to meter when the spend names
+	// a recipient. An unaddressed spend (no payee recorded) is governed by the
+	// wallet-wide cap alone rather than silently passing a cap it cannot evaluate.
+	const cpCap = destination ? lim.per_counterparty_daily_usd : null;
+	const cpDestination = cpCap != null ? destination : null;
+
+	// No metered ceiling, or an unpriceable spend: just reserve a pending row (it
 	// can't gate a cap it has no number for) so the ledger still reflects it.
-	if (lim.daily_usd == null || !hasUsd) {
+	if ((lim.daily_usd == null && cpCap == null) || !hasUsd) {
 		const reservationId = await recordCustodyEvent({
 			agentId, userId, eventType: 'spend', category, network, asset,
 			usd: hasUsd ? usdValue : null, destination, status: 'pending', meta: rowMeta,
@@ -1011,10 +1080,12 @@ export async function reserveSpendUsd({
 		return runAnomaly(reservationId, null);
 	}
 
-	// Atomic daily-cap reserve: the advisory xact lock serializes concurrent spends
-	// per agent, and the INSERT…SELECT only materializes the pending row when the
-	// rolling 24h total plus this spend stays within the cap — check + reserve are
-	// one statement, so two requests can never both pass on the same stale total.
+	// Atomic cap reserve: the advisory xact lock serializes concurrent spends per
+	// agent, and the INSERT…SELECT only materializes the pending row when BOTH the
+	// rolling 24h wallet total and the rolling 24h total to this counterparty stay
+	// within their ceilings — check + reserve are one statement, so two requests can
+	// never both pass on the same stale total. A null ceiling drops out of the
+	// predicate, so this one statement serves a wallet that sets either cap or both.
 	const rows = await sql`
 		WITH locked AS (
 			SELECT pg_advisory_xact_lock(hashtextextended(${String(agentId)}, 0))
@@ -1028,22 +1099,49 @@ export async function reserveSpendUsd({
 			  AND status IN ('ok', 'pending', 'confirmed')
 			  AND usd IS NOT NULL
 			  AND created_at > now() - interval '24 hours'
+		),
+		cp AS (
+			SELECT COALESCE(SUM(usd), 0)::float8 AS s
+			FROM agent_custody_events
+			WHERE agent_id = ${agentId}
+			  AND network = ${network}
+			  AND event_type = 'spend'
+			  AND destination = ${cpDestination}
+			  AND status IN ('ok', 'pending', 'confirmed')
+			  AND usd IS NOT NULL
+			  AND created_at > now() - interval '24 hours'
 		)
 		INSERT INTO agent_custody_events
 			(agent_id, user_id, event_type, category, network, asset, usd, destination, status, meta)
 		SELECT ${agentId}, ${userId ?? null}, 'spend', ${category}, ${network}, ${asset},
 		       ${usdValue}, ${destination ?? null}, 'pending', ${metaJson}::jsonb
-		FROM spent, locked
-		WHERE spent.s + ${usdValue}::float8 <= ${lim.daily_usd}::float8 + 1e-9
-		RETURNING id, (SELECT s FROM spent) AS spent_before
+		FROM spent, cp, locked
+		WHERE (${lim.daily_usd}::float8 IS NULL OR spent.s + ${usdValue}::float8 <= ${lim.daily_usd}::float8 + 1e-9)
+		  AND (${cpCap}::float8 IS NULL OR cp.s + ${usdValue}::float8 <= ${cpCap}::float8 + 1e-9)
+		RETURNING id, (SELECT s FROM spent) AS spent_before, (SELECT s FROM cp) AS cp_spent_before
 	`;
 
 	if (!rows.length) {
-		// Re-read the total for an accurate error message (outside the lock is fine).
+		// Re-read the totals for an accurate error message (outside the lock is fine)
+		// and name the ceiling that actually rejected the spend — a caller told to
+		// wait out a daily window it never hit would keep retrying forever.
+		const cpSpentUsd = cpCap != null ? await getCounterpartySpendUsd(agentId, destination, network) : 0;
+		if (cpCap != null && cpSpentUsd + usdValue > cpCap + 1e-9) {
+			throw new SpendLimitError(
+				'counterparty_daily_exceeded',
+				`This ${category} would bring today’s spend to this counterparty to $${(cpSpentUsd + usdValue).toFixed(2)}, over the per-counterparty limit of $${cpCap.toFixed(2)}.`,
+				{
+					usd: usdValue,
+					destination,
+					counterparty_spent_usd: cpSpentUsd,
+					per_counterparty_daily_usd: cpCap,
+				},
+			);
+		}
 		const dailySpentUsd = await getDailySpendUsd(agentId, network);
 		throw new SpendLimitError(
 			'daily_exceeded',
-			`This ${category} would bring today’s spend to $${(dailySpentUsd + usdValue).toFixed(2)}, over the daily limit of $${lim.daily_usd.toFixed(2)}.`,
+			`This ${category} would bring today’s spend to $${(dailySpentUsd + usdValue).toFixed(2)}, over the daily limit of $${Number(lim.daily_usd).toFixed(2)}.`,
 			{ usd: usdValue, spent_usd: dailySpentUsd, daily_usd: lim.daily_usd },
 		);
 	}

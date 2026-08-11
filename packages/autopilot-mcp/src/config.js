@@ -19,7 +19,7 @@ export const THREE_WS_BASE = env('THREE_WS_BASE', 'https://three.ws').replace(/\
 // The agent's three.ws credential. Either a three.ws API key (sk_live_… /
 // sk_test_…) or an OAuth access token — both authenticate as the owning user via
 // `Authorization: Bearer`. REQUIRED: every autopilot endpoint is owner-scoped and
-// returns 401 without it. Treat it like a password; it can move real $THREE.
+// returns 401 without it. Treat it like a password; it can move real SOL.
 export const THREE_WS_API_KEY =
 	env('THREE_WS_API_KEY') || env('THREE_WS_TOKEN') || env('THREE_WS_BEARER') || '';
 

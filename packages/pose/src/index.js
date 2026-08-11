@@ -1,15 +1,19 @@
-// @three-ws/pose — a phrase → a deterministic seed + the full Euler
-// joint-rotation map for a rigged 3D avatar. Thin client over the public,
-// auth-free `pose_model` tool on the Streamable-HTTP MCP server at
-// POST /api/mcp-3d (the SDK twin of the 3D Studio MCP server).
+// @three-ws/pose: a phrase in, a deterministic seed + the full Euler
+// joint-rotation map for a rigged 3D avatar out.
 //
-// The wire call is a standard JSON-RPC `tools/call`. The tool is pure local
-// computation — it scores the prompt against an in-repo preset library, picks
-// one, derives a seed, and returns the preset's pre-authored rotation map. No
-// model inference, no GPU, nothing persisted; the same prompt always resolves
-// to the same pose. See README.md for the full reference.
+// The zero-config path computes the pose LOCALLY: the pose_model algorithm is
+// pure deterministic computation (token scoring + sha256) over the preset
+// library this package bundles, so `poseSeed('wave hello')` needs no network,
+// no key, and no payment, and returns the same result as the hosted tool.
+//
+// The hosted lane on the Streamable-HTTP MCP server at POST /api/mcp-3d stays
+// available as an opt-in: pass `baseUrl`, `apiKey`, or `fetch` to createPose()
+// and calls go over the wire as standard JSON-RPC `tools/call` requests.
+// Keyless wire calls are x402-priced per call; OAuth principals (apiKey) run
+// operator-funded. See README.md for the full reference.
 
 import { createHttp, ThreeWsError } from './http.js';
+import { resolvePoseLocal, resolvePresetLocal } from './local.js';
 import { PRESETS, PRESET_GROUPS, getPresetById } from './pose-presets.js';
 
 export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js';
@@ -33,20 +37,22 @@ export class PoseError extends ThreeWsError {
 }
 
 /**
- * Create a Pose client bound to a base URL, fetch, and optional auth.
- * For most callers the default export `poseSeed()` is enough; use this when
- * you want to reuse configuration (a payment-aware fetch for the paid MCP
- * lane, a custom origin) across many calls.
+ * Create a Pose client. With no transport options this resolves poses locally
+ * (no network, no key, no payment). Passing `baseUrl`, `apiKey`, or `fetch`
+ * switches the client to the hosted pose_model tool on /api/mcp-3d: use that
+ * to reuse configuration (a payment-aware fetch for the x402 lane, an OAuth
+ * key for operator-funded calls, a custom origin) across many calls.
  *
  * @param {object} [options]
- * @param {string} [options.baseUrl]   API origin (default https://three.ws).
- * @param {typeof fetch} [options.fetch]  fetch implementation.
- * @param {string} [options.apiKey]    OAuth bearer — runs the call operator-funded (free).
- * @param {string} [options.previewBase]  base URL for the returned previewUrl.
+ * @param {string} [options.baseUrl]   API origin (default https://three.ws). Selects the hosted lane.
+ * @param {typeof fetch} [options.fetch]  fetch implementation. Selects the hosted lane.
+ * @param {string} [options.apiKey]    OAuth bearer, runs hosted calls operator-funded. Selects the hosted lane.
+ * @param {string} [options.previewBase]  base URL for the returned previewUrl (local or hosted).
  * @param {Record<string,string>} [options.headers]
  */
 export function createPose(options = {}) {
-	const request = createHttp(options);
+	const remote = Boolean(options.baseUrl || options.apiKey || options.fetch);
+	const request = remote ? createHttp(options) : null;
 	const previewBase = stripTrailingSlash(options.previewBase || PREVIEW_BASE);
 
 	let nextId = 1;
@@ -63,7 +69,7 @@ export function createPose(options = {}) {
 				{ code: 'invalid_prompt' },
 			);
 		}
-		return callPoseModel(text, opts);
+		return remote ? callPoseModel(text, opts) : resolveLocally(text, opts);
 	}
 
 	/**
@@ -78,7 +84,17 @@ export function createPose(options = {}) {
 				{ code: 'invalid_prompt' },
 			);
 		}
-		return callPoseModel(presetId, opts);
+		if (remote) return callPoseModel(presetId, opts);
+		throwIfAborted(opts);
+		return shape(await resolvePresetLocal(presetId), previewBase);
+	}
+
+	// The zero-config lane: run the pose_model algorithm in-process over the
+	// bundled preset library, then normalize through the same shape() step the
+	// wire response goes through, so both lanes return identical PoseResults.
+	async function resolveLocally(prompt, opts) {
+		throwIfAborted(opts);
+		return shape(await resolvePoseLocal(prompt), previewBase);
 	}
 
 	// One JSON-RPC tools/call to pose_model, shaped into a PoseResult.
@@ -173,4 +189,12 @@ function shape(sc, previewBase) {
 
 function stripTrailingSlash(s) {
 	return String(s).replace(/\/+$/, '');
+}
+
+function throwIfAborted(opts) {
+	if (opts?.signal?.aborted) {
+		const e = new Error('The operation was aborted.');
+		e.name = 'AbortError';
+		throw e;
+	}
 }

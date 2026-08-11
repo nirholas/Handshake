@@ -1,6 +1,7 @@
 // GET  /api/user/provider-keys  — returns which keys are set (never returns values)
 // PATCH /api/user/provider-keys  — set or clear individual provider keys
-//   body: { anthropic?, openai?, grok?, meshy?, tripo?, rodin?, stability?, replicate? } — each string | null
+//   body: { anthropic?, openai?, grok?, meshy?, tripo?, rodin?, stability?, replicate?, elevenlabs? }
+//         — each string | null
 //   null = delete that key; string = store encrypted
 
 import { sql } from '../_lib/db.js';
@@ -20,6 +21,7 @@ const patchSchema = z.object({
 	rodin:     z.string().min(1).max(512).nullable().optional(),
 	stability: z.string().min(1).max(512).nullable().optional(),
 	replicate: z.string().min(1).max(512).nullable().optional(),
+	elevenlabs: z.string().min(1).max(512).nullable().optional(),
 });
 
 export default wrap(async (req, res) => {

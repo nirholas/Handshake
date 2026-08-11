@@ -107,7 +107,8 @@ export function harvestHtml(html, opts = {}) {
 	const content = collapse(stripTags(mainMatch ? mainMatch[0] : cleaned)).slice(0, MAX_CONTENT_CHARS);
 
 	return {
-		url: opts.url || '',
+		// The answer endpoint caps site.url at 600 chars; a longer one would 400.
+		url: (opts.url || '').slice(0, 600),
 		name: siteName.slice(0, 120),
 		title,
 		description,

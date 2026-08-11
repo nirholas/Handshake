@@ -191,9 +191,15 @@ export async function createClonedVoice({ name, description, files, apiKey: keyO
 /**
  * Best-effort deletion to free a quota slot. Never throws — a failed cleanup is
  * logged and swallowed so it can't break the caller's primary flow.
+ *
+ * A voice only exists inside the account that created it, so `apiKey` must be
+ * the same credential the clone was made with (BYOK clones live on the user's
+ * own account, not the platform's).
+ * @param {string} voiceId
+ * @param {{ apiKey?: string|null }} [opts]
  */
-export async function deleteVoice(voiceId) {
-	const apiKey = elevenApiKey();
+export async function deleteVoice(voiceId, { apiKey: keyOverride = null } = {}) {
+	const apiKey = keyOverride || elevenApiKey();
 	if (!apiKey || !voiceId) return;
 	try {
 		await fetch(`${ELEVEN_BASE}/voices/${encodeURIComponent(voiceId)}`, {

@@ -1077,7 +1077,7 @@ async function handleLimits(req, res, id) {
 		// owner surface. A PUT may patch either or both: a `trade_limits` object
 		// updates the discretionary-trade caps (per-trade SOL, daily budget, breaker,
 		// kill switch); the top-level USD/allowlist keys update the spend policy.
-		const wantsSpend = ['daily_usd', 'per_tx_usd', 'withdraw_allowlist', 'frozen'].some((k) => k in body);
+		const wantsSpend = ['daily_usd', 'per_tx_usd', 'per_counterparty_daily_usd', 'withdraw_allowlist', 'frozen'].some((k) => k in body);
 		let limitsOut = getSpendLimits(meta);
 		let tradeLimitsOut = getTradeLimits(meta);
 		try {

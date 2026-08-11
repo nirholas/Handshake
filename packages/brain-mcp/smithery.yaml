@@ -4,7 +4,23 @@ startCommand:
   type: stdio
   configSchema:
     type: object
-    properties: {}
+    properties:
+      threeWsApiKey:
+        type: string
+        description: >-
+          three.ws API key (sk_live_/sk_test_) that unlocks the paid
+          first-party flagships. The free open-weight tiers need no key.
+      threeWsBase:
+        type: string
+        description: three.ws API deployment to talk to.
+        default: https://three.ws
     required: []
   commandFunction: |
-    (config) => ({ command: "npx", args: ["-y", "@three-ws/brain-mcp"], env: {} })
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@three-ws/brain-mcp"],
+      env: {
+        ...(config.threeWsApiKey ? { THREE_WS_API_KEY: config.threeWsApiKey } : {}),
+        ...(config.threeWsBase ? { THREE_WS_BASE: config.threeWsBase } : {}),
+      },
+    })

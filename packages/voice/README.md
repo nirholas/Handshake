@@ -259,7 +259,7 @@ configured; the free Magpie lane covers the default voices end to end.
 
 ## Errors & edge cases
 
-Each call rejects with a typed `VoiceError` carrying a `code` that mirrors the
+Each call rejects with a typed `ThreeWsError` carrying a `code` that mirrors the
 endpoint's response:
 
 | `code` | HTTP | Meaning | Recovery |

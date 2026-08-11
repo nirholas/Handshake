@@ -195,6 +195,10 @@ export default wrap(async (req, res) => {
 							status: s.status,
 							detail: s.detail ?? null,
 							hint: s.hint ?? null,
+							// Structured numbers for the checks that carry them (agent
+							// index lag). Integrators reading this feed should not have
+							// to parse a human sentence to get the lag in minutes.
+							...(s.metrics ? { metrics: s.metrics } : {}),
 						})),
 					}
 				: null,

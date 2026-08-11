@@ -46,7 +46,6 @@
 		"src",
 		"bin",
 		"web",
-		"assets",
 		"server.json",
 		"README.md",
 		"LICENSE",

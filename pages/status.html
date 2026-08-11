@@ -333,6 +333,34 @@
 				padding-left: 0.75rem;
 				border-left: 2px solid var(--stroke-strong);
 			}
+			/* Structured numbers a subsystem publishes alongside its sentence, so a
+			   reader can see the index's freshness without parsing prose. */
+			.st-sub-metrics {
+				grid-column: 2 / -1;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.35rem 0.5rem;
+				margin-top: 0.4rem;
+			}
+			.st-metric {
+				display: inline-flex;
+				align-items: baseline;
+				gap: 0.35rem;
+				border: 1px solid var(--stroke);
+				border-radius: var(--radius-sm, 6px);
+				padding: 0.15rem 0.5rem;
+				background: var(--surface-1);
+			}
+			.st-metric-k {
+				font: var(--text-xs, 0.75rem) var(--font-mono, monospace);
+				color: var(--ink-dim);
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+			}
+			.st-metric-v {
+				font: var(--text-sm) var(--font-mono, monospace);
+				color: var(--ink);
+			}
 
 			.st-note {
 				border: 1px solid var(--stroke);
@@ -492,6 +520,34 @@
 			const esc = (s) =>
 				String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
+			// Minutes → a compact human duration for the metric pills.
+			const lagWord = (min) => {
+				if (min == null) return 'no data';
+				if (min < 60) return `${min}m`;
+				const h = Math.floor(min / 60);
+				const m = min % 60;
+				return m ? `${h}h ${m}m` : `${h}h`;
+			};
+
+			// Structured numbers a subsystem chose to publish (currently the agent
+			// index lag). Rendered as pills so the freshness of the on-chain index is
+			// a figure you can read at a glance, not prose buried in the detail line.
+			function subMetrics(m) {
+				if (!m || !m.solana || !m.evm) return '';
+				const pills = [
+					['Solana lag', lagWord(m.solana.medianLagMin)],
+					['Solana agents', String(m.solana.agents)],
+					['EVM lag', lagWord(m.evm.lagMin)],
+					['Events indexed', String((m.solana.events || 0) + (m.evm.events || 0))],
+				];
+				return `<span class="st-sub-metrics">${pills
+					.map(
+						([k, v]) =>
+							`<span class="st-metric"><span class="st-metric-k">${esc(k)}</span><b class="st-metric-v">${esc(v)}</b></span>`,
+					)
+					.join('')}</span>`;
+			}
+
 			function renderSubsystems(subs) {
 				// Older API shapes / warming-up omit the block — keep it hidden then.
 				if (!subs || !Array.isArray(subs.items) || subs.items.length === 0) {
@@ -510,6 +566,7 @@
 							<span class="st-sub-name">${esc(it.label || it.name)}</span>
 							<span class="st-sub-state">${esc(word)}</span>
 							${it.detail ? `<span class="st-sub-detail">${esc(it.detail)}</span>` : ''}
+							${subMetrics(it.metrics)}
 							${showHint ? `<span class="st-sub-hint">${esc(it.hint)}</span>` : ''}
 						</div>`;
 					})

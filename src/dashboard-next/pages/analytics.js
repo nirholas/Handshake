@@ -56,12 +56,16 @@ async function loadAndRender(root) {
 	const from = new Date(Date.now() - range.days * 86400_000).toISOString();
 	const to = new Date().toISOString();
 
-	const [revenue, agents, widgets, summary, monRevenue] = await Promise.all([
+	const [revenue, agents, widgets, summary, monRevenue, retention] = await Promise.all([
 		safe(() => get(`/api/billing/revenue?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&granularity=${range.granularity}`)),
 		safe(() => get('/api/agents?limit=50')),
 		safe(() => get('/api/widgets')),
 		safe(() => get('/api/billing/summary')),
 		safe(() => get(`/api/monetization/revenue?period=${range.key}`)),
+		// Platform-wide week-2 retention on minted agents. Admin-only upstream, so
+		// a non-admin gets a 403 that `safe` turns into null and the panel simply
+		// does not appear — no error, no empty shell.
+		safe(() => get('/api/analytics/retention?metric=week2_converse&weeks=12')),
 	]);
 
 	// Every primary surface (revenue, agents, widgets, summary) failing means the
@@ -125,6 +129,7 @@ async function loadAndRender(root) {
 		topAgent,
 	}));
 	root.appendChild(renderRevenueChart(timeseries));
+	if (retention) root.appendChild(renderRetentionChart(retention));
 	root.appendChild(renderTwoCol(
 		renderSkillBreakdown(bySkill),
 		renderAgentTable(agentList, widgetList, widgetStats)
@@ -353,6 +358,191 @@ function formatPeriod(p) {
 	const d = new Date(p);
 	if (isNaN(d)) return String(p).slice(0, 10);
 	return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// -- Week-2 retention on minted agents (Canvas 2D column chart) --
+//
+// The README roadmap's phase-2 verification metric. One column per cohort week
+// (owners grouped by the ISO week they minted their first agent on-chain), height
+// = the share of them who came back to converse on days 7..13. The dashed line is
+// the roadmap's 30% bar. Cohorts whose 14-day window is still open are drawn
+// muted and labelled "open", because their number can still move.
+
+function formatPct(rate) {
+	return rate == null ? '--' : `${(rate * 100).toFixed(1)}%`;
+}
+
+function formatCohortWeek(week) {
+	const d = new Date(`${week}T00:00:00Z`);
+	if (isNaN(d)) return String(week);
+	return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
+function renderRetentionChart(data) {
+	const panel = document.createElement('div');
+	panel.className = 'dn-panel ana-chart-panel';
+
+	const cohorts = data.cohorts ?? [];
+	const s = data.summary ?? {};
+	const label = data.metric_label || 'Returned to converse';
+
+	if (!cohorts.length) {
+		panel.innerHTML = `
+			<div class="dn-panel-title">Week-2 Retention · Minted Agents</div>
+			<div class="ana-chart-empty">
+				No cohorts rolled up yet. The weekly rollup fills this in once owners have minted
+				agents and their 14-day window opens.
+			</div>`;
+		return panel;
+	}
+
+	const target = Number(data.target ?? 0.3);
+	const headline = s.latestCompleteWeek
+		? `Latest closed cohort ${formatCohortWeek(s.latestCompleteWeek)}: <strong>${formatPct(s.latestRate)}</strong>`
+		: 'No cohort has closed its 14-day window yet';
+	const pooled = s.pooledRate != null
+		? ` · pooled <strong>${formatPct(s.pooledRate)}</strong> across ${s.completeCohorts} closed cohort${s.completeCohorts === 1 ? '' : 's'} (${s.retainedOwners}/${s.mintedOwners} owners)`
+		: '';
+
+	panel.innerHTML = `
+		<div class="dn-panel-title">Week-2 Retention · Minted Agents</div>
+		<div class="ana-ret-summary">${headline}${pooled}</div>
+		<div data-slot="ret" style="position:relative;width:100%;height:220px;margin-top:12px"></div>
+		<div class="ana-ret-legend">
+			<span><i class="ana-ret-swatch is-hit"></i>${esc(label)}, at or above the ${Math.round(target * 100)}% target</span>
+			<span><i class="ana-ret-swatch is-miss"></i>below target</span>
+			<span><i class="ana-ret-swatch is-open"></i>window still open</span>
+		</div>
+	`;
+
+	const host = panel.querySelector('[data-slot="ret"]');
+	requestAnimationFrame(() => paintRetentionColumns(host, cohorts, target, label));
+
+	return panel;
+}
+
+function paintRetentionColumns(host, cohorts, target, label) {
+	host.innerHTML = '';
+	const canvas = document.createElement('canvas');
+	canvas.style.cssText = 'width:100%;height:100%;display:block';
+	canvas.setAttribute('role', 'img');
+	canvas.setAttribute(
+		'aria-label',
+		`${label} week-2 retention by mint cohort, ${cohorts.length} weeks. ` +
+			cohorts
+				.map(
+					(c) =>
+						`Week of ${c.cohort_week}: ${formatPct(Number(c.retention_rate))} of ${c.minted_owners} owners` +
+						`${c.is_complete ? '' : ', window still open'}`,
+				)
+				.join('. ') +
+			`. Target ${Math.round(target * 100)} percent.`,
+	);
+	host.appendChild(canvas);
+
+	const dpr = window.devicePixelRatio || 1;
+	const rect = host.getBoundingClientRect();
+	canvas.width = Math.round(rect.width * dpr);
+	canvas.height = Math.round(rect.height * dpr);
+	const ctx = canvas.getContext('2d');
+	ctx.scale(dpr, dpr);
+
+	const W = rect.width;
+	const H = rect.height;
+	const PAD = { top: 16, right: 16, bottom: 34, left: 44 };
+	const innerW = W - PAD.left - PAD.right;
+	const innerH = H - PAD.top - PAD.bottom;
+
+	// Always show at least up to the target so the bar is never off-canvas, and
+	// give a headroom cohort room to breathe above it.
+	const peak = cohorts.reduce((m, c) => Math.max(m, Number(c.retention_rate) || 0), 0);
+	const max = Math.min(1, Math.max(target * 1.4, peak * 1.2, 0.1));
+
+	const slot = innerW / cohorts.length;
+	const barW = Math.max(6, Math.min(46, slot * 0.62));
+
+	const duration = 600;
+	const startTime = performance.now();
+
+	function draw(now) {
+		const progress = Math.min(1, (now - startTime) / duration);
+		const eased = 1 - Math.pow(1 - progress, 3);
+
+		ctx.clearRect(0, 0, W, H);
+
+		// Grid + percentage axis
+		ctx.font = '10px Inter, system-ui, sans-serif';
+		for (let i = 0; i <= 4; i++) {
+			const y = PAD.top + (i / 4) * innerH;
+			ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+			ctx.lineWidth = 0.5;
+			ctx.beginPath();
+			ctx.moveTo(PAD.left, y);
+			ctx.lineTo(W - PAD.right, y);
+			ctx.stroke();
+
+			ctx.fillStyle = 'rgba(255,255,255,0.3)';
+			ctx.textAlign = 'right';
+			ctx.fillText(`${Math.round(((4 - i) / 4) * max * 100)}%`, PAD.left - 8, y + 4);
+		}
+
+		// Columns
+		cohorts.forEach((c, i) => {
+			const rate = Number(c.retention_rate) || 0;
+			const h = Math.max(rate > 0 ? 2 : 0, (rate / max) * innerH * eased);
+			const x = PAD.left + i * slot + (slot - barW) / 2;
+			const y = PAD.top + innerH - h;
+
+			ctx.fillStyle = !c.is_complete
+				? 'rgba(148,163,184,0.45)'
+				: rate >= target
+					? '#4ade80'
+					: '#fbbf24';
+			ctx.beginPath();
+			ctx.roundRect(x, y, barW, h, [3, 3, 0, 0]);
+			ctx.fill();
+		});
+
+		// Target line, drawn over the columns so the bar is always readable.
+		const targetY = PAD.top + innerH - (Math.min(target, max) / max) * innerH;
+		ctx.save();
+		ctx.setLineDash([4, 4]);
+		ctx.strokeStyle = 'rgba(96,165,250,0.8)';
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		ctx.moveTo(PAD.left, targetY);
+		ctx.lineTo(W - PAD.right, targetY);
+		ctx.stroke();
+		ctx.restore();
+		ctx.fillStyle = 'rgba(96,165,250,0.9)';
+		ctx.textAlign = 'left';
+		ctx.fillText(`${Math.round(target * 100)}% target`, PAD.left + 4, targetY - 4);
+
+		// X labels — thinned so they never collide on a narrow viewport.
+		const showEvery = Math.max(1, Math.ceil(cohorts.length / Math.max(1, Math.floor(innerW / 56))));
+		ctx.fillStyle = 'rgba(255,255,255,0.3)';
+		ctx.textAlign = 'center';
+		cohorts.forEach((c, i) => {
+			if (i % showEvery === 0) {
+				ctx.fillText(formatCohortWeek(c.cohort_week), PAD.left + i * slot + slot / 2, H - 8);
+			}
+		});
+
+		if (progress < 1) requestAnimationFrame(draw);
+	}
+
+	if (prefersReducedMotion()) draw(startTime + duration);
+	else requestAnimationFrame(draw);
+
+	canvas.addEventListener('mousemove', (e) => {
+		const br = canvas.getBoundingClientRect();
+		const idx = Math.floor((e.clientX - br.left - PAD.left) / slot);
+		const c = cohorts[Math.max(0, Math.min(cohorts.length - 1, idx))];
+		canvas.title =
+			`Minted week of ${c.cohort_week}: ${formatPct(Number(c.retention_rate))} ` +
+			`(${c.retained_owners}/${c.minted_owners} owners)` +
+			`${c.is_complete ? '' : ' · window open until ' + c.window_end}`;
+	});
 }
 
 // -- Skill breakdown (horizontal bar chart with Canvas) --
@@ -668,6 +858,15 @@ function injectStyles() {
 .ana-chart-panel { padding: 20px; }
 .ana-chart-empty { padding: 40px 0; text-align: center; color: var(--nxt-ink-dim); font-size: 13px; }
 .ana-chart-empty a { color: var(--nxt-success); }
+
+.ana-ret-summary { font-size: 13px; color: var(--nxt-ink-dim); margin-top: 6px; }
+.ana-ret-summary strong { color: var(--nxt-ink); font-variant-numeric: tabular-nums; }
+.ana-ret-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 11px; color: var(--nxt-ink-fade); }
+.ana-ret-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.ana-ret-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.ana-ret-swatch.is-hit { background: #4ade80; }
+.ana-ret-swatch.is-miss { background: #fbbf24; }
+.ana-ret-swatch.is-open { background: rgba(148,163,184,0.45); }
 
 .ana-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 

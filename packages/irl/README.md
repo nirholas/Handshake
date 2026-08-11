@@ -134,7 +134,7 @@ alongside the fix so `nearby()` can prove the read.
 |---|---|---|
 | `lat` / `lng` | `number` | The fix used to mint the token. |
 | `token` | `string` | HMAC-signed presence token (header `x-irl-fix` on reads). |
-| `expires_in` | `number` | Token lifetime in seconds — **180** (3 min). Re-`checkIn()` when it lapses. |
+| `expiresIn` | `number` | Token lifetime in seconds: **180** (3 min). Re-`checkIn()` when it lapses. |
 | `cell` | `string` | The precision-7 geohash (~153 m) the fix fell in — the client's "re-mint on cell change" trigger. |
 
 The token anchor is coarsened to ~110 m server-side, so the token itself never
@@ -392,7 +392,7 @@ Presence is the gate on every read. You can never query a point you aren't at:
 
 ## Errors & edge cases
 
-`nearby()` and the write functions reject with a typed `IrlError` carrying a
+`nearby()` and the write functions reject with a typed `ThreeWsError` carrying a
 `code` mapped from the endpoint's response:
 
 | `code` | HTTP | Meaning | Recovery |

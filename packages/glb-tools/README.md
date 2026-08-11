@@ -104,10 +104,16 @@ const baked = await bake('avatar_8f3a…', {
   accessories: ['glasses-aviator'],
 }, { token: process.env.THREE_WS_TOKEN });
 
-console.log(baked.baked_storage_key, baked.size_bytes);
+console.log(baked.bakedStorageKey, baked.sizeBytes);
 ```
 
 ## API
+
+Public exports: `inspect`, `theme`, `bake`, `createGlbTools`, `ThreeWsError`,
+`PaymentRequiredError`, and `DEFAULT_BASE_URL`. The three headline functions
+use a shared zero-config client; `createGlbTools({ baseUrl, fetch, apiKey,
+headers })` builds your own when you need a payment-aware fetch, an owner
+token, or a custom origin reused across calls.
 
 ### `inspect(url, options?) → Promise<InspectReport>`
 
@@ -191,10 +197,11 @@ account).
 | `morphs` | `Record<name, 0..1>` | Raw morph-target overrides (win over preset bindings). |
 | `hidden` | `string[]` | Slots to hide, exposing the base body. |
 
-A bakeable appearance returns `BakeResult` `{ baked_storage_key,
-appearance_hash, size_bytes }`. An **empty / cleared** appearance clears the
-cached baked GLB (the base model is served again) and resolves with the avatar's
-`baked_storage_key` set to `null`.
+A bakeable appearance returns `BakeResult` `{ avatarId, bakedStorageKey,
+appearanceHash, sizeBytes, cleared, bakeError }` (the endpoint's snake_case
+avatar fields, shaped to camelCase). An **empty / cleared** appearance clears
+the cached baked GLB (the base model is served again) and resolves with
+`bakedStorageKey: null` and `cleared: true`.
 
 ## How it works
 
@@ -239,7 +246,7 @@ The inspection and theming endpoints are pay-per-call x402 lanes settled in USDC
 | Capability | Endpoint | Lane | Price |
 |---|---|---|---|
 | `inspect()` | `/api/x402/model-check` | x402 / USDC on **Solana** | **$0.001** per call |
-| `theme()` | `/api/x402/mint-to-mesh` | x402 / USDC on **Base** | **$0.001** per call |
+| `theme()` | `/api/x402/mint-to-mesh` | x402 / USDC on **Solana** | **$0.001** per call |
 | `bake()` | `/api/avatars/:id` | authenticated owner | included with the avatar |
 
 Set `payWith: 'x402'` (default) to pay per call with USDC, or `payWith:
@@ -251,8 +258,14 @@ also exposed as MCP tools on the [3D Studio server](https://three.ws/mcp).
 
 ## Errors & edge cases
 
-`inspect()`, `theme()`, and `bake()` reject with a typed `GlbToolsError`
-carrying a `code` that mirrors the endpoint's error contract:
+`inspect()`, `theme()`, and `bake()` reject with a typed `ThreeWsError`
+carrying a `code` and `status`. A payment challenge (HTTP 402, or the
+x402-over-401 envelope some transports use) rejects with its
+`PaymentRequiredError` subclass, whose `accepts` field carries the x402
+challenge. Client-side validation (a missing or malformed `url`, `mint`,
+`avatarId`, or `appearance`) rejects with `code: 'invalid_input'` or
+`'invalid_mint'` before any network call. Server-side codes mirror the
+endpoint's error contract:
 
 | `code` | HTTP | Meaning | Recovery |
 |---|---|---|---|

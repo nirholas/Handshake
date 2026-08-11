@@ -1744,7 +1744,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			'Map a natural-language pose description to a deterministic pose-studio seed and the full Euler joint-rotation map for the three.ws humanoid mannequin, picked from the in-repo preset library. Returns the preset id, the complete pose (radians per joint), a stable seed, and a previewUrl on three.ws/pose. Deterministic and free — the same prompt always yields the same pose. Pair with auto_rig_model to pose a rigged character.',
+			'Map a natural-language pose description to a deterministic pose-studio seed and the full Euler joint-rotation map for the three.ws humanoid mannequin, picked from the in-repo preset library. Returns the preset id, the complete pose (radians per joint), a stable seed, and a previewUrl on three.ws/pose. Deterministic: the same prompt always yields the same pose. Same engine as the free local @three-ws/pose npm package. Pair with auto_rig_model to pose a rigged character.',
 		inputSchema: {
 			type: 'object',
 			properties: {

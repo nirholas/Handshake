@@ -122,6 +122,7 @@ Curious what happens between the prompt and the model? [How the Forge works](./h
 - **Want other agents to pay for your tools?** → [Monetize an MCP server](./tutorials/monetize-mcp-server.md): build an MCP server that charges per `tools/call` in USDC on Solana, with a free orientation tool in front of the paid ones and the verify-work-settle ordering that means a failed call never takes money. The runnable code is [examples/paid-mcp-server](https://github.com/nirholas/three.ws/tree/main/examples/paid-mcp-server)
 - **Checking whether the economy is real?** → [Agent economy volume](./agent-economy-volume.md) counts only settled agent-to-agent USDC for paid skills, and [Viability](./viability.md) shows the unit economics (GMV, take rate, repeat buyers, realized P&L) from on-chain data with no projections
 - **Designing an agent's look and brand?** → [Agent Identity Studio](./agent-identities.md) turns a brand brief into a rigged avatar plus posed studio renders; [Living Stages](./stage.md) covers shareable stages; [the Avatar Engines Atlas](./avatar-engines.md) is the factual survey of the engines in this space and which ones we animate
+- **Need to prove what an agent was told to do?** → [Signed manifests](./agent-manifest.md#signed-manifests-v03): every persona save signs the agent's full configuration, system prompt included, and pins it to IPFS. Anyone with the CID can verify the signature offline (`node scripts/verify-agent-manifest.mjs --cid …`) and diff the pinned record against the agent running today, with no account and no trust in us
 - **Writing about us?** → [The press kit](./press-kit.md) has the logos, the usage rules, and the boilerplate (editorial use needs no permission), and [the partner ecosystem](./partners.md) maps every partner program to what the integration actually is
 - **Backing an agent with capital?** → [USDC agent vaults](./vaults.md): NAV-priced deposits and redemptions, the drawdown breaker that halts a vault, performance-fee claims, and the public audit ledger anyone can read
 - **Funding your own agents?** → [Your master wallet](./user-wallet.md): the per-user custodial hub you fund once, then top up agent wallets, send SOL or USDC, and read on-chain history from
@@ -168,12 +169,14 @@ Deeper references that don't fit a track above but answer real questions:
 - [Agent trading spec](./specs/agent-trading.md): the proposed agent trading capability contract
 - [ERC-8004 validation attestation](./erc8004/validation-attestation.md): the attestation written when an agent registers on-chain
 - [zauth](./zauth/index.md): the vendored security infrastructure docs our agent auth builds on
+- [Agent tokens](./agent-tokens.md): configure the coin an agent will become, rehearse the launch for free against a real cluster, then launch it on Solana
 - [pump.fun program docs](./pumpfun-program/README.md): the vendored on-chain program reference behind the launch surfaces
 - [pump-fun-mcp at the edge](./pump-fun-mcp-edge.md): the Cloudflare Workers mirror of the pump.fun MCP endpoint
 - [Package extraction](./package-extraction.md): how reusable packages graduate out of the monorepo
 - [Agent task briefs](./agent-tasks/README.md): self-contained task prompts for AI agents working on the platform
 - [Troubleshooting and FAQ](./troubleshooting.md): fixes organized by symptom
 - [The 3D viewer](./viewer.md): the rendering layer reference (model loading, cameras, animation, lighting)
+- [Farcaster memory seeding](./farcaster-memory-seeding.md): give an agent your Farcaster voice, proved with a wallet the account already verified, and revoke it in one click
 - [The catalog quality gate](./seed-quality.md): how a platform-seeded model earns its slot in the public catalog, the two stages it must pass, and why a rejected asset is kept rather than deleted
 - [Examples gallery](./examples.md): copy-paste-ready code for common use cases
 - [Cookbook](/cookbook): recipes you download and run, each one a real file executed against the live API, with the prose explaining why it is shaped that way

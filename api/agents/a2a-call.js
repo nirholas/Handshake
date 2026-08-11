@@ -3,7 +3,7 @@
 // This is the load-bearing piece of agent-to-agent commerce: it lets one of the
 // caller's agents discover a peer's paid A2A skill, pay for it under a signed
 // Intent Mandate, and return the peer's result — without a human approving each
-// individual payment. Safety comes from three gates, all enforced here before a
+// individual payment. Safety comes from four gates, all enforced here before a
 // single token moves:
 //
 //   1. Mandate signature + per-call policy (mandate.js): is this spend authorized
@@ -12,6 +12,17 @@
 //      the mandate over its total cap? Reserved atomically, released on failure.
 //   3. Reputation (reputation-gate.js): does the peer clear the caller's ERC-8004
 //      trust bar? Opt-in per call.
+//   4. The subject agent's own spend policy (agent-trade-guards.js): the freeze
+//      switch, the per-transaction ceiling, the rolling daily ceiling, the
+//      per-counterparty ceiling, the owner's natural-language rules, the anomaly
+//      guard, and any scoped capability. This is the gate a mandate CANNOT widen.
+//      A mandate is a signed, offline-verifiable bearer credential that lives for
+//      up to 90 days, so on its own it has no revocation story: whoever holds it
+//      can spend its remaining budget until it expires. Routing every A2A payment
+//      through the same server-side policy every other outbound path already uses
+//      is what makes an outstanding mandate stoppable, and it is what makes each
+//      payment leave a durable receipt in the agent's custody ledger instead of
+//      only a response body the caller may never persist.
 //
 // Settlement itself reuses the existing A2A x402 client (api/_lib/x402/a2a-client.js)
 // so this inherits the spec-compliant two-leg handshake. Solana is the primary
@@ -22,11 +33,19 @@ import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.
 import { cors, error, json, method, rateLimited, readJson, respondError, serverError, wrap } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
+import { sql } from '../_lib/db.js';
 import { assertSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
 import { assertMandateAllows, MandateError, verifyIntentMandate } from '../_lib/a2a/mandate.js';
 import { issueCartMandate } from '../_lib/a2a/cart-mandate.js';
 import { release, reserve } from '../_lib/a2a/spend-ledger.js';
 import { assertReputationOk, ReputationError } from '../_lib/a2a/reputation-gate.js';
+import {
+	getSpendLimits,
+	releaseSpendReservation,
+	reserveSpendUsd,
+	SpendLimitError,
+	updateCustodyEvent,
+} from '../_lib/agent-trade-guards.js';
 import {
 	A2AClientError,
 	buildEvmExactPayload,
@@ -34,6 +53,7 @@ import {
 	createPrivateKeySigner,
 	createSolanaSigner,
 	isSolanaNetwork,
+	NETWORK_SOLANA_DEVNET,
 	NETWORK_SOLANA_MAINNET,
 	requestQuote,
 	submitPayment,
@@ -72,6 +92,39 @@ function pickAccept(accepts, preference) {
 function currencyOf(accept) {
 	const name = accept?.extra?.name || '';
 	return /usdc|usd coin/i.test(name) ? 'USDC' : name || undefined;
+}
+
+// USDC is the only currency the A2A rails settle in, and it is a dollar with six
+// decimals, so the atomic amount IS the USD value. Any other asset is left
+// unpriced rather than guessed: the spend guard treats a null USD as unpriceable
+// and still writes the receipt, but will not pretend to meter a number it does
+// not have. Returns null when the amount is unusable.
+const USDC_ATOMICS_PER_USD = 1e6;
+function spendUsdOf(amountAtomics, currency) {
+	if (currency !== 'USDC') return null;
+	const n = Number(amountAtomics);
+	if (!Number.isFinite(n) || n < 0) return null;
+	return n / USDC_ATOMICS_PER_USD;
+}
+
+// Map a CAIP-2 settlement network onto the custody ledger's coarse network name.
+// The ledger meters one budget per (agent, network); folding every mainnet rail
+// (Solana mainnet and every EVM mainnet) into 'mainnet' is deliberate, so an agent
+// cannot double its real daily cap by alternating rails. Solana devnet is the only
+// test rail and keeps its own budget.
+function custodyNetworkOf(caip2) {
+	return caip2 === NETWORK_SOLANA_DEVNET ? 'devnet' : 'mainnet';
+}
+
+// Bare hostname of a peer endpoint, used as the capability holder ref so a
+// per-integration scoped key resolves preferentially. Never throws: the URL was
+// already parsed by the SSRF guard, but a caller-shaped string is not worth a 500.
+function hostOf(url) {
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return null;
+	}
 }
 
 export default wrap(async (req, res) => {
@@ -121,6 +174,38 @@ export default wrap(async (req, res) => {
 	}
 	if (mandate.ownerUserId !== userId) {
 		return error(res, 403, 'mandate_not_yours', 'this mandate was issued to a different user');
+	}
+
+	// ── Gate 4a: the subject agent still exists and is still the caller's ───
+	// The mandate names the agent that may spend. Re-resolving it here (rather than
+	// trusting the signed claim alone) is what binds a long-lived credential to the
+	// CURRENT state of the account: an agent that was deleted, or transferred to
+	// another owner since the mandate was issued, stops being spendable immediately.
+	const [agent] = await sql`
+		SELECT id, user_id, meta FROM agent_identities
+		WHERE id = ${mandate.subjectAgentId} AND deleted_at IS NULL
+	`;
+	if (!agent) {
+		return error(res, 404, 'agent_not_found', 'the agent this mandate authorizes no longer exists');
+	}
+	if (String(agent.user_id) !== String(userId)) {
+		return error(res, 403, 'agent_not_yours', 'the agent this mandate authorizes is not yours');
+	}
+
+	// ── Gate 4b: kill switch ────────────────────────────────────────────────
+	// Checked BEFORE the peer is contacted. A halted agent must not spend, and it
+	// must not phone a paid endpoint either: the quote leg is outbound traffic in
+	// the agent's name, and letting it through would leak that the agent is live
+	// and keep the peer's meter running while the owner believes it is stopped.
+	const agentLimits = getSpendLimits(agent.meta);
+	if (agentLimits.frozen) {
+		return error(
+			res,
+			403,
+			'wallet_frozen',
+			'This agent is halted. Autonomous spending (trades, snipes, payments) is paused, so this mandate cannot be used. Unfreeze it under Limits & Safety to resume.',
+			{ agent_id: String(agent.id) },
+		);
 	}
 
 	// ── Discover the peer's price (first leg of the A2A handshake) ──────────
@@ -187,6 +272,58 @@ export default wrap(async (req, res) => {
 		});
 	}
 
+	// ── Gate 4c: the agent's own spend policy + the receipt ─────────────────
+	// Atomic: this both enforces the per-transaction, rolling-daily and
+	// per-counterparty ceilings (plus the owner's English rules, the anomaly guard
+	// and any scoped capability) AND writes the pending receipt row under a
+	// per-agent lock, so concurrent A2A calls cannot all pass on the same stale
+	// total. The counterparty is the peer's on-chain payee, the same identity the
+	// x402 pay path meters, so an agent that pays one peer through two different
+	// surfaces still draws down one per-counterparty budget.
+	const custodyNetwork = custodyNetworkOf(network);
+	const spendUsd = spendUsdOf(amount, currencyOf(accept));
+	let receiptId = null;
+	try {
+		const guarded = await reserveSpendUsd({
+			agentId: String(agent.id),
+			userId,
+			meta: agent.meta,
+			limits: agentLimits,
+			category: 'x402',
+			usdValue: spendUsd,
+			destination: accept.payTo || null,
+			network: custodyNetwork,
+			asset: currencyOf(accept) || 'USDC',
+			target: safeEndpoint,
+			capabilityHolderRef: hostOf(safeEndpoint),
+			rowMeta: {
+				kind: 'a2a',
+				mandate_id: mandate.mandateId,
+				endpoint: safeEndpoint,
+				task_id: quote.taskId,
+				settlement_network: network,
+				amount_atomics: String(amount),
+			},
+		});
+		receiptId = guarded.reservationId;
+	} catch (err) {
+		await release(mandate.mandateId, amount);
+		if (err instanceof SpendLimitError) {
+			return error(res, err.status, err.code, err.message, err.detail);
+		}
+		throw err;
+	}
+
+	// Every exit below this point must settle the receipt one way or the other: a
+	// pending row left behind would hold daily headroom forever for a payment that
+	// never happened.
+	const abandonReceipt = async (reason) => {
+		await releaseSpendReservation(receiptId, reason).catch((e) =>
+			console.error('[agents/a2a-call] receipt release failed', e?.message || e),
+		);
+		await release(mandate.mandateId, amount);
+	};
+
 	// ── Settle ──────────────────────────────────────────────────────────────
 	// Pick the payer wallet for the chosen rail. Solana is primary (SPL
 	// TransferChecked co-signed by the peer's facilitator fee payer); EVM is the
@@ -194,7 +331,7 @@ export default wrap(async (req, res) => {
 	const onSolana = isSolanaNetwork(network);
 	const payerKey = onSolana ? env.A2A_PAYER_SOLANA_SECRET : env.A2A_PAYER_PRIVATE_KEY;
 	if (!payerKey) {
-		await release(mandate.mandateId, amount);
+		await abandonReceipt('payer_not_configured');
 		return error(
 			res,
 			501,
@@ -226,7 +363,7 @@ export default wrap(async (req, res) => {
 			},
 		}));
 	} catch (err) {
-		await release(mandate.mandateId, amount);
+		await abandonReceipt('cart_mandate_failed');
 		if (err instanceof MandateError) return respondError(res, err.status, err.code, err);
 		throw err;
 	}
@@ -257,17 +394,35 @@ export default wrap(async (req, res) => {
 		});
 
 		if (result.state !== 'completed') {
-			await release(mandate.mandateId, amount);
+			await abandonReceipt('peer_task_incomplete');
 			return error(res, 502, 'payment_failed', result.receipts?.[0]?.errorReason || `peer task ended in state ${result.state}`, {
 				state: result.state,
 				receipts: result.receipts || [],
 			});
 		}
 
+		// Settled. Finalize the receipt with everything needed to audit this payment
+		// later without re-reading the peer: who was paid, on what rail, under which
+		// mandate, and the signed cart proving what was bought. The owner reads these
+		// back from GET /api/agents/:id/solana/custody?category=x402.
+		const settlementSignature = result.receipts?.find((r) => r?.transaction)?.transaction || null;
+		await updateCustodyEvent(receiptId, {
+			status: 'confirmed',
+			signature: settlementSignature,
+			meta: {
+				payer: payerAddress,
+				cart_mandate: cartMandateJws,
+				peer_receipts: result.receipts || [],
+				mandate_spent_atomics: String(reservation.spent),
+				mandate_cap_atomics: String(reservation.cap),
+			},
+		}).catch((e) => console.error('[agents/a2a-call] receipt finalize failed', e?.message || e));
+
 		const artifacts = Array.isArray(result.task?.artifacts) ? result.task.artifacts : [];
 		return json(res, 200, {
 			ok: true,
 			mandate_id: mandate.mandateId,
+			agent_id: String(agent.id),
 			task_id: quote.taskId,
 			amount,
 			network,
@@ -275,6 +430,11 @@ export default wrap(async (req, res) => {
 			payer: payerAddress,
 			spent: reservation.spent,
 			cap: reservation.cap,
+			// The custody-ledger row for this payment. Queryable at
+			// GET /api/agents/:id/solana/custody — the durable side of the receipt,
+			// where the signed cart below is the portable, verifiable side.
+			receipt_id: receiptId != null ? String(receiptId) : null,
+			usd: spendUsd,
 			// AP2 Cart Mandate: a signed, independently-verifiable proof of this exact
 			// transaction (verify via POST /api/agents/a2a-cart-verify).
 			cart_mandate: cartMandateJws,
@@ -284,8 +444,9 @@ export default wrap(async (req, res) => {
 		});
 	} catch (err) {
 		// Any failure after reservation but before a confirmed settlement must
-		// release the hold so the mandate's budget isn't silently consumed.
-		await release(mandate.mandateId, amount);
+		// release the hold so neither the mandate's budget nor the agent's daily
+		// headroom is silently consumed by a payment that never landed.
+		await abandonReceipt('settlement_failed');
 		if (err instanceof A2AClientError) {
 			console.error('[agents/a2a-call] peer payment failed', err?.code, err?.message);
 			return serverError(res, 502, err.code || 'payment_failed', err);
