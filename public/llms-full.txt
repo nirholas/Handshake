@@ -1846,6 +1846,12 @@ URL: https://three.ws/docs/economy-solver
 
 The closed-form model behind /play/solver: expected cash, XP and yield per hour for every gatherable node at every level, the optimal fish-and-cook split, store payback, and the exact assumptions the arithmetic rests on.
 
+### Docs · Freshness
+
+URL: https://three.ws/docs/freshness
+
+Does this documentation still describe the code? Every doc is scored against the source files it documents, and this dashboard ranks the drift so the stalest pages get fixed first.
+
 ### Docs · Overlay audit
 
 URL: https://three.ws/docs/overlay-audit
@@ -2944,7 +2950,7 @@ URL: https://three.ws/docs/atlas
 
 How the site-wide Cmd+K palette works, how the task shortcuts answer a goal with ordered steps instead of a link, how to add one, and how to open the palette from your own page.
 
-### Repository guards
+### Docs · Repository guards
 
 URL: https://three.ws/docs/guards
 
@@ -3082,11 +3088,11 @@ URL: https://three.ws/docs/avatar-wardrobe
 
 Dress any avatar from the garment catalogue. The subtractive half recolours or hides layers a GLB already contains; the additive half fits new garments onto a body that never had them, and this documents both.
 
-### Docs · Avatar Studio
+### Docs · Character Studio builder
 
 URL: https://three.ws/docs/character-studio
 
-The browser-based avatar builder: design a customised humanoid (body, hair, face, clothing, accessories) with point-and-click controls, then export it rigged and ready to animate. No modelling experience required.
+Character Studio is the browser-based builder behind Avatar Studio, a rebranded MIT-licensed fork that lives in character-studio/. Design a customised humanoid (body, hair, face, clothing, accessories) with point-and-click controls, then export it rigged as GLB or VRM.
 
 ### Docs · Concierge, an AI chat widget with a 3D face
 
@@ -3814,7 +3820,7 @@ URL: https://three.ws/guards
 
 Every mechanical guard that protects the three.ws codebase, and the stage each one runs in. This repository has no CI, so correctness is enforced by fast local checks wired into the prebuild, the gate, the deploy build, and the git pre-push hook. Filter by stage, search by command, and read the incident behind each one.
 
-### Tutorial · Write a repository guard
+### Docs · Write a repository guard
 
 URL: https://three.ws/docs/tutorials/write-a-guard
 
@@ -3882,7 +3888,7 @@ Editorial index of three.ws launches and long-form posts.
 
 URL: https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap
 
-The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, peaking at 3,145 concurrent users in the $THREE home town at three.ws/play.
+The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, peaking at 3,145 concurrent users in the $THREE home town at three.ws/play. Here's how a nine-hour user group meetup held inside a 3D world actually went.
 
 ### Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs
 
@@ -3960,13 +3966,13 @@ Forge is live on three.ws: type a description and get a textured, downloadable 3
 
 URL: https://three.ws/blog/3d-ai-crypto-convergence
 
-A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is the only crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, published to npm, and live on Anthropic
+A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is the only crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, published to npm, and live on Anthropic's MCP Registry.
 
 ### three.ws Wins DEXTools Social Boost: $5,543 $three Buyback
 
 URL: https://three.ws/blog/three-ws-dextools-social-boost-buyback
 
-three.ws is DEXTools
+three.ws is DEXTools' Social Boost winner of the week, earning a $5,543 buyback. The DEXTools wallet now holds 2.47M $three.
 
 ### three.ws Featured on the Alibaba Cloud Marketplace Blog
 
@@ -3984,7 +3990,7 @@ three.ws and IBM showcased their partnership: embedding a persistent, on-chain 3
 
 URL: https://three.ws/blog/three-ws-play-coin-communities
 
-How we built /play: isolated multiplayer worlds keyed to a token
+How we built /play: isolated multiplayer worlds keyed to a token's mint, driven by live on-chain trades, with proximity voice chat, an in-world buy flow, and worlds generated deterministically from the mint address.
 
 ### three.ws Joins the AWS Partner Network
 
@@ -3996,7 +4002,7 @@ three.ws is now an official AWS Partner, enrolled in the AWS Partner Network (AP
 
 URL: https://three.ws/blog/three-ws-on-aws-marketplace
 
-three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments: for the first fully on-chain 3D AI agent platform.
+three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments. It is the first fully on-chain 3D AI agent platform.
 
 ### We Just Shipped the 3D Layer for the Internet: <agent-3d>
 
@@ -4008,15 +4014,15 @@ Drop one <agent-3d> web component on your site and give any page an AI with LLM 
 
 URL: https://three.ws/blog/2500-new-animations
 
-three.ws is expanding its animation library with 2,500 new 3D animations: giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.
+three.ws is expanding its animation library with 2,500 new 3D animations, giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.
 
 ### three.ws Listed on Coinbase x402 Bazaar and agentic.market
 
 URL: https://three.ws/blog/three-ws-x402-bazaar
 
-three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market: the app store and discovery layer for AI agents with 480k active agents and $50M in volume.
+three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market, the app store and discovery layer for AI agents with 480k active agents and $50M in volume.
 
-### Real-Time Voice Interaction with 3D AI Agents: Preview
+### Real-Time Voice Interaction with 3D AI Agents (Preview)
 
 URL: https://three.ws/blog/real-time-voice-interaction
 
@@ -4032,7 +4038,7 @@ three.ws is now live on the Alibaba Cloud International Marketplace. The listing
 
 URL: https://three.ws/blog/three-ws-on-bnb-chain-dappbay
 
-three.ws is now listed on Dappbay, BNB Chain
+three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts the <agent-3d> tag in front of the BNB Chain ecosystem's AI dApp discovery surface.
 
 ### three.ws Teams Up with HackerNoon
 
@@ -4044,25 +4050,25 @@ three.ws is partnering with HackerNoon to launch a builder-focused initiative wi
 
 URL: https://three.ws/blog/three-ws-on-coinmarketcap
 
-three.ws is now live on CoinMarketCap: join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.
+three.ws is now live on CoinMarketCap. Join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.
 
 ### How to Embed 3D On-Chain Agents on Your Site
 
 URL: https://three.ws/blog/how-to-embed-3d-onchain-agents
 
-A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component: from setup to CORS configuration and page integration.
+A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component, from setup to CORS configuration and page integration.
 
 ### three.ws Integrates the Pump.fun Agent Payments SDK
 
 URL: https://three.ws/blog/pumpfun-agent-payments-sdk
 
-three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn
+three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn't just execute tasks, it earns on-chain revenue and fuels its own autonomous economy.
 
 ### three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face
 
 URL: https://three.ws/blog/three-ws-speraxusd-integration
 
-three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity: and they react to DeFi events in real time.
+three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity, and they react to DeFi events in real time.
 
 ### Agent Builder Live: Studio Redesign, LLM Chat Upgrade
 
@@ -4070,7 +4076,7 @@ URL: https://three.ws/blog/agent-builder-studio-launch
 
 three.ws ships Agent Builder, an improved Studio design, and a major LLM Chat upgrade. Agents are now payable, tradeable, and discoverable.
 
-### Full Animation & Emotion Control: Plus Pump.fun Live Feed
+### Full Animation & Emotion Control, Plus Pump.fun Live Feed
 
 URL: https://three.ws/blog/animation-emotion-control
 
@@ -4080,13 +4086,13 @@ three.ws now ships full animation and emotion control for 3D agents, with live P
 
 URL: https://three.ws/blog/three-ws-ibm-business-partner
 
-three.ws has been accepted into IBM
+three.ws has been accepted into IBM's official Business Partner program, bringing together decentralized on-chain 3D agent identity with IBM's leadership in enterprise AI and solutions.
 
 ### $THREE Listed on Coinbase, CoinGecko, Jupiter, and Investing.com
 
 URL: https://three.ws/blog/three-token-listings
 
-$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com: giving the three.ws community every major on-ramp and price discovery surface.
+$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com, giving the three.ws community every major on-ramp and price discovery surface.
 
 ### Solana Wallet Integration for Autonomous 3D Agents
 
@@ -4104,7 +4110,7 @@ three.ws is joining forces with Google Cloud, bringing cloud-scale rendering and
 
 URL: https://three.ws/blog/three-ws-on-anthropic-mcp-registry
 
-three.ws is now listed on Anthropic
+three.ws is now listed on Anthropic's official Model Context Protocol Registry, the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor, and more.
 
 ## Legal
 

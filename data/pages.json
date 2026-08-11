@@ -1097,14 +1097,14 @@
 			"title": "Crypto",
 			"description": "On-chain features: pay-per-call, token launches, vanity wallets.",
 			"pages": [
-        {
-          "path": "/go",
-          "title": "GO Bounty Board",
-          "description": "Post a bounty with a SOL reward, submit proof of doing it, and let the poster (or the AI judge) pick a winner. Live earner and spender leaderboards.",
-          "priority": 0.7,
-          "changefreq": "daily",
-          "added": "2026-06-05"
-        },
+				{
+					"path": "/go",
+					"title": "GO Bounty Board",
+					"description": "Post a bounty with a SOL reward, submit proof of doing it, and let the poster (or the AI judge) pick a winner. Live earner and spender leaderboards.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-06-05"
+				},
 				{
 					"path": "/sperax",
 					"title": "Sperax on three.ws",
@@ -2471,6 +2471,14 @@
 					"added": "2026-08-01"
 				},
 				{
+					"path": "/docs/freshness",
+					"title": "Docs · Freshness",
+					"description": "Does this documentation still describe the code? Every doc is scored against the source files it documents, and this dashboard ranks the drift so the stalest pages get fixed first.",
+					"priority": 0.5,
+					"changefreq": "weekly",
+					"added": "2026-08-01"
+				},
+				{
 					"path": "/docs/overlay-audit",
 					"title": "Docs · Overlay audit",
 					"description": "The measured report on every UI overlay surface: which pages draw what over the content, what the audit sweep checks, and how to read a finding before fixing it.",
@@ -3794,7 +3802,7 @@
 				},
 				{
 					"path": "/docs/guards",
-					"title": "Repository guards",
+					"title": "Docs · Repository guards",
 					"description": "The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -3960,8 +3968,8 @@
 				},
 				{
 					"path": "/docs/character-studio",
-					"title": "Docs · Avatar Studio",
-					"description": "The browser-based avatar builder: design a customised humanoid (body, hair, face, clothing, accessories) with point-and-click controls, then export it rigged and ready to animate. No modelling experience required.",
+					"title": "Docs · Character Studio builder",
+					"description": "Character Studio is the browser-based builder behind Avatar Studio, a rebranded MIT-licensed fork that lives in character-studio/. Design a customised humanoid (body, hair, face, clothing, accessories) with point-and-click controls, then export it rigged as GLB or VRM.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
@@ -4865,7 +4873,7 @@
 				},
 				{
 					"path": "/docs/tutorials/write-a-guard",
-					"title": "Tutorial · Write a repository guard",
+					"title": "Docs · Write a repository guard",
 					"description": "Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -4953,7 +4961,7 @@
 				{
 					"path": "/blog/ibm-user-group-first-in-world-meetup-recap",
 					"title": "The Three.ws User Group's First In-World Meetup: How It Went",
-					"description": "The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, peaking at 3,145 concurrent users in the $THREE home town at three.ws/play.",
+					"description": "The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, peaking at 3,145 concurrent users in the $THREE home town at three.ws/play. Here's how a nine-hour user group meetup held inside a 3D world actually went.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-08-08",
@@ -5064,7 +5072,7 @@
 				{
 					"path": "/blog/3d-ai-crypto-convergence",
 					"title": "3D + AI + Web3 Just Converged: three.ws Shipped the Whole Stack",
-					"description": "A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is the only crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, published to npm, and live on Anthropic",
+					"description": "A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is the only crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, published to npm, and live on Anthropic's MCP Registry.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-06-08",
@@ -5073,7 +5081,7 @@
 				{
 					"path": "/blog/three-ws-dextools-social-boost-buyback",
 					"title": "three.ws Wins DEXTools Social Boost: $5,543 $three Buyback",
-					"description": "three.ws is DEXTools",
+					"description": "three.ws is DEXTools' Social Boost winner of the week, earning a $5,543 buyback. The DEXTools wallet now holds 2.47M $three.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-06-08",
@@ -5099,7 +5107,7 @@
 				{
 					"path": "/blog/three-ws-play-coin-communities",
 					"title": "We turned every memecoin into a live 3D world you can walk into",
-					"description": "How we built /play: isolated multiplayer worlds keyed to a token",
+					"description": "How we built /play: isolated multiplayer worlds keyed to a token's mint, driven by live on-chain trades, with proximity voice chat, an in-world buy flow, and worlds generated deterministically from the mint address.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-30",
@@ -5117,7 +5125,7 @@
 				{
 					"path": "/blog/three-ws-on-aws-marketplace",
 					"title": "three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement",
-					"description": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments: for the first fully on-chain 3D AI agent platform.",
+					"description": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments. It is the first fully on-chain 3D AI agent platform.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-27",
@@ -5135,7 +5143,7 @@
 				{
 					"path": "/blog/2500-new-animations",
 					"title": "2,500 New 3D Animations Coming to three.ws",
-					"description": "three.ws is expanding its animation library with 2,500 new 3D animations: giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
+					"description": "three.ws is expanding its animation library with 2,500 new 3D animations, giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-22",
@@ -5144,7 +5152,7 @@
 				{
 					"path": "/blog/three-ws-x402-bazaar",
 					"title": "three.ws Listed on Coinbase x402 Bazaar and agentic.market",
-					"description": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market: the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
+					"description": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market, the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-21",
@@ -5152,7 +5160,7 @@
 				},
 				{
 					"path": "/blog/real-time-voice-interaction",
-					"title": "Real-Time Voice Interaction with 3D AI Agents: Preview",
+					"title": "Real-Time Voice Interaction with 3D AI Agents (Preview)",
 					"description": "three.ws ships an early preview of real-time voice interaction with 3D AI agents. Agents listen, reason with memory and emotions, respond in voice, and support AR/VR.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5171,7 +5179,7 @@
 				{
 					"path": "/blog/three-ws-on-bnb-chain-dappbay",
 					"title": "three.ws Listed on BNB Chain's Dappbay Directory",
-					"description": "three.ws is now listed on Dappbay, BNB Chain",
+					"description": "three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts the <agent-3d> tag in front of the BNB Chain ecosystem's AI dApp discovery surface.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-17",
@@ -5189,7 +5197,7 @@
 				{
 					"path": "/blog/three-ws-on-coinmarketcap",
 					"title": "three.ws Is Now Live on CoinMarketCap",
-					"description": "three.ws is now live on CoinMarketCap: join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
+					"description": "three.ws is now live on CoinMarketCap. Join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-17",
@@ -5198,7 +5206,7 @@
 				{
 					"path": "/blog/how-to-embed-3d-onchain-agents",
 					"title": "How to Embed 3D On-Chain Agents on Your Site",
-					"description": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component: from setup to CORS configuration and page integration.",
+					"description": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component, from setup to CORS configuration and page integration.",
 					"priority": 0.5,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-15",
@@ -5207,7 +5215,7 @@
 				{
 					"path": "/blog/pumpfun-agent-payments-sdk",
 					"title": "three.ws Integrates the Pump.fun Agent Payments SDK",
-					"description": "three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn",
+					"description": "three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn't just execute tasks, it earns on-chain revenue and fuels its own autonomous economy.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-13",
@@ -5216,7 +5224,7 @@
 				{
 					"path": "/blog/three-ws-speraxusd-integration",
 					"title": "three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face",
-					"description": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity: and they react to DeFi events in real time.",
+					"description": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity, and they react to DeFi events in real time.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-11",
@@ -5233,7 +5241,7 @@
 				},
 				{
 					"path": "/blog/animation-emotion-control",
-					"title": "Full Animation & Emotion Control: Plus Pump.fun Live Feed",
+					"title": "Full Animation & Emotion Control, Plus Pump.fun Live Feed",
 					"description": "three.ws now ships full animation and emotion control for 3D agents, with live Pump.fun feed integration. Your agents react to any API or data feed in real time.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5243,7 +5251,7 @@
 				{
 					"path": "/blog/three-ws-ibm-business-partner",
 					"title": "three.ws Is Now an Official IBM Business Partner",
-					"description": "three.ws has been accepted into IBM",
+					"description": "three.ws has been accepted into IBM's official Business Partner program, bringing together decentralized on-chain 3D agent identity with IBM's leadership in enterprise AI and solutions.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-06"
@@ -5251,7 +5259,7 @@
 				{
 					"path": "/blog/three-token-listings",
 					"title": "$THREE Listed on Coinbase, CoinGecko, Jupiter, and Investing.com",
-					"description": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com: giving the three.ws community every major on-ramp and price discovery surface.",
+					"description": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com, giving the three.ws community every major on-ramp and price discovery surface.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-05-05",
@@ -5278,7 +5286,7 @@
 				{
 					"path": "/blog/three-ws-on-anthropic-mcp-registry",
 					"title": "three.ws Listed on Anthropic's Official MCP Registry",
-					"description": "three.ws is now listed on Anthropic",
+					"description": "three.ws is now listed on Anthropic's official Model Context Protocol Registry, the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor, and more.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-04-30",
