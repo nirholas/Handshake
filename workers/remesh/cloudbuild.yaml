@@ -9,10 +9,10 @@ substitutions:
   _SERVICE: remesh-service
   _REPO: remesh-service
   _GCS_BUCKET: three-ws-avatar-reconstructions
-  # Kept warm (not scale-to-zero): this worker backs interactive material
-  # editing (restyle_material) — a cold start here is a user-facing multi-second
-  # stall mid-edit. CPU-only, no GPU, cheap to keep resident against the $100k
-  # GCP credit pool. 2026-07-16.
+  # Kept warm (not scale-to-zero): this worker backs Game-Ready export and the
+  # paid pipeline's remesh stage, and a cold start on an 8 vCPU / 16 GiB Python
+  # image is a user-facing multi-second stall mid-export. CPU-only, no GPU,
+  # cheap to keep resident against the GCP credit pool. 2026-07-16.
   _MIN_INSTANCES: "1"
   _MAX_INSTANCES: "3"
 
@@ -54,6 +54,14 @@ steps:
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}
       - --timeout=300
+      # /process answers 202 and finishes the job in a FastAPI BackgroundTask,
+      # so the work runs entirely outside a request. Under Cloud Run's default
+      # throttling the container gets almost no CPU there: on 2026-08-09 a
+      # 2000-face lowpoly bake that takes ~160 s under load took 51,173 s (14 h)
+      # once the caller stopped polling, and on 2026-08-06 a quad job tripped
+      # the 600 s QuadriFlow guard for the same reason. Always-on CPU is what
+      # every other task-shaped worker here already deploys with.
+      - --no-cpu-throttling
       - --allow-unauthenticated
       - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MAX_CONCURRENT=2
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
