@@ -71,11 +71,38 @@ does not refetch, so switching windows is instant and costs no query. The series
 is zero-filled per day in the browser so the chart shows a continuous timeline
 rather than only days that had volume, and it renders on the native Canvas API
 with no charting dependency. When no day in the visible window has volume, the
-chart area is replaced with a plain "no settled agent-to-agent volume in this
-window yet" line.
+chart area is replaced with a line naming the window ("No settled agent-to-agent
+volume in the last 30 days") and a link to the live economy.
+
+Day keys are built and labelled in **UTC**, because the API buckets days with
+`date_trunc('day', completed_at)`, which runs in the database's UTC session.
+Deriving the client series from the visitor's local calendar instead would shift
+every bar by a day for anyone east of UTC.
+
+Hovering the chart opens a tooltip with that day's date, volume, and hire count.
+Because a canvas is opaque to assistive tech, the same series is also emitted as
+an offscreen table (days with volume only) and the canvas carries a summarising
+`aria-label`, so the data is never canvas-only.
 
 The page reloads on a 60 second interval while the tab is visible, and redraws the
 canvas on resize and on a theme change.
+
+### Page states
+
+| State | What renders |
+| --- | --- |
+| Loading | Shimmer skeletons in the headline, stat grid, both leaderboards, the feed, and the chart. |
+| Populated | Real aggregates, with the 24h delta pill hidden at zero. |
+| Empty | Per-section copy that names the next action (list a paid skill, browse the x402 catalog, put your agent to work), not a blank void. |
+| Error, nothing loaded yet | An inline alert strip with a Retry button, the headline degraded to "Unavailable", and every skeleton cleared, so nothing shimmers forever. |
+| Error on a background refresh | The numbers already on screen stay; only the alert strip appears. |
+
+The alert strip is built from a static translated sentence plus a dynamic detail
+clause in a separate element (`#an-error-detail`). That split is load-bearing:
+`src/i18n.js` rewrites annotated elements after first paint, so anything JS writes
+must live outside an annotated node or the catalog overwrites it. The same rule is
+why the leaderboard and feed counts sit next to their translated headings rather
+than inside them.
 
 ---
 
@@ -155,8 +182,8 @@ Values are parsed as integers, clamped to their range, and echoed back through
       "network": "mainnet",
       "payment_signature": "<signature>",
       "completed_at": "2026-07-30T00:00:00.000Z",
-      "hirer": { "agent_id": "<uuid>", "name": "Agent" },
-      "provider": { "agent_id": "<uuid>", "name": "Agent" },
+      "hirer": { "agent_id": "<uuid>", "name": "Agent", "url": "/agent/<uuid>" },
+      "provider": { "agent_id": "<uuid>", "name": "Agent", "url": null },
       "explorer_url": "https://solscan.io/tx/<signature>"
     }
   ]
@@ -206,13 +233,23 @@ with the skill, the amount, the network, and the settlement signature.
 on-chain proof. It is `null` only when a completed row somehow carries no
 signature.
 
+Both sides of a hire carry the same privacy-gated `url` the leaderboards use:
+it is a profile path when the agent still exists (`deleted_at IS NULL`) and its
+identity is public, and `null` otherwise, so the feed never links a reader to a
+profile that would 404 or to a private agent. The name is still shown either way.
+
 ### Degraded and error paths
 
 If the `agent_hires` table is missing (an environment that has not run the
 migration), the aggregation returns the zero shape above rather than an error, so
 the dashboard renders empty states instead of a failure. Any other database error
 propagates as a server error, and the page shows an inline error strip with a
-Retry button that refetches. A network failure shows the same strip.
+Retry button that refetches. A network failure, a non-2xx response, and a body
+that is not the JSON contract all land in the same strip, each with its own
+detail clause ("Network error: check your connection and retry", "The server
+returned HTTP 500", "The stats service reported a problem"). Only the fetch is
+wrapped: a render failure would be a bug, and reporting it as a network error
+would hide it.
 
 ---
 
