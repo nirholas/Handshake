@@ -32,7 +32,10 @@ before you assume:
 
 ```bash
 gcloud run services describe three-ws-api --region us-central1 \
-	--format='value(spec.template.spec.containers[0].env)' | tr ',' '\n' | grep HUNYUAN
+	--flatten="spec.template.spec.containers[].env[]" \
+	--format="value(spec.template.spec.containers.env.name, spec.template.spec.containers.env.value)" \
+	| grep HUNYUAN
+# GCP_HUNYUAN3D_URL	https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app
 ```
 
 **Why an RTX build exists.** Two hard walls, found live on 2026-07-17:
