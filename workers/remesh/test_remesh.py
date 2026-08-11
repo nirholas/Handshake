@@ -446,6 +446,24 @@ if shutil.which(remesh.QUADRIFLOW_BIN) or os.path.isfile(remesh.QUADRIFLOW_BIN):
         ).faces) > 0,
     )
 
+    # QuadriFlow needs watertight input; the rebuild is what makes an open
+    # character mesh usable at all, so prove it closes one.
+    with tempfile.TemporaryDirectory() as tmp:
+        raw = Path(tmp) / "open.obj"
+        healed = Path(tmp) / "healed.obj"
+        remesh._write_obj_geometry(open_sphere, raw)
+        check("fixture for the rebuild is not watertight", not open_sphere.is_watertight)
+        if remesh._watertight_obj(raw, healed):
+            rebuilt = trimesh.load(str(healed), force="mesh", process=False)
+            check(
+                "manifold rebuild closes an open mesh",
+                rebuilt.is_watertight,
+                f"{len(rebuilt.faces)} faces, watertight={rebuilt.is_watertight}",
+            )
+            check("manifold rebuild keeps geometry", len(rebuilt.faces) > 0)
+        else:
+            skip("manifold rebuild", f"binary not found ({remesh.MANIFOLD_BIN})")
+
     check(
         "the solver ladder starts with minimum-cost flow and ends bare",
         remesh.QUADRIFLOW_ATTEMPTS[0] == ("-mcf", "-sharp")
