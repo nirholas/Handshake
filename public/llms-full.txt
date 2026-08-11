@@ -2692,6 +2692,12 @@ URL: https://three.ws/docs/agent-runtime
 
 The seven-layer policy engine that preflights every fund-moving tool call in chat before the wallet prompts: security blacklist, approval policy, dollar caps with live SOL pricing, spend envelope with a token and destination firewall, MEV slippage clamp, and x402 budgets. Ships as @three-ws/agent-runtime.
 
+### Docs · Tokens API on three.ws
+
+URL: https://three.ws/docs/tokens-xyz
+
+The Solana Foundation asset layer wired into three.ws: how one canonical asset maps to every Solana mint that represents it, the batch market read that prices a whole portfolio in one call, and where it sits in the price failover chain behind Birdeye.
+
 ### Docs · The free LLM failover chain
 
 URL: https://three.ws/docs/free-llm-providers
