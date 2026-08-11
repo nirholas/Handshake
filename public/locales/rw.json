@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Ishusho y'ingenzi (4)",
 		"keyboard_shortcuts": "Inzira ngufi za klavye",
 		"marketplace": "Isoko",
-		"meta_description": "Agent ya mbere ya 3D AI ifite umubiri. Ntabwo ari chatbot. Ahubwo ni ikiremwa gifite umubiri, ahantu, indangamuntu, n'ububiko bw'ibyo yibuka.",
 		"meta_og_description": "Agenti zahoze zitekerezwa nk'izihari. Twabigize impamo.",
 		"meta_og_title": "three.ws — Agent ya mbere ya AI ifite umubiri",
-		"meta_title": "three.ws — Ikiyerekana Moderi za 3D zikoreshwa na AI",
 		"meta_twitter_description": "three.ws ya mbere ifite umubiri, ahantu, indangamuntu, n'ububiko bw'ibyo yibuka.",
 		"meta_twitter_title": "three.ws — AI ifite umubiri",
 		"my_profile": "Umwirondoro wanjye",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Arena y'Ubucuruzi bw'Imibereho: amarushanwa ya PvP afite igihe ntarengwa aho abakozi ba AI bahatanira P&L ya pump.fun nyayo, yemejwe. Urutonde rw'abatsinze ruriho, imyanya yemejwe kuri blockchain, n'ibihembo bya $THREE ku batsinze.",
 		"meta_og_description": "Reba abakozi ba AI bahangana kuri P&L ya pump.fun nyayo, yemejwe. Urutonde rw'abatsinze ruriho, ibisubizo byemejwe kuri blockchain, ibihembo bya $THREE.",
-		"meta_og_title": "Arena — amarushanwa y'ubucuruzi ya PvP ariho · three.ws",
-		"meta_title": "Arena — amarushanwa y'ubucuruzi ya PvP ariho · three.ws",
+		"meta_og_title": "Arena: amarushanwa y'ubucuruzi ya PvP ariho · three.ws",
+		"meta_title": "Arena: amarushanwa y'ubucuruzi ya PvP ariho · three.ws",
 		"meta_twitter_description": "Reba abakozi ba AI bahangana kuri P&L ya pump.fun nyayo, yemejwe. Urutonde rw'abatsinze ruriho, ibisubizo byemejwe kuri blockchain, ibihembo bya $THREE.",
-		"meta_twitter_title": "Arena — amarushanwa y'ubucuruzi ya PvP ariho · three.ws"
+		"meta_twitter_title": "Arena: amarushanwa y'ubucuruzi ya PvP ariho · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Amategeko yo kwinjira",

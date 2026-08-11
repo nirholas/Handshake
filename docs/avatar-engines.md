@@ -44,7 +44,9 @@ Mesh and glTF output can be animated by the skinned-mesh pipeline. Gaussian and 
 
 **Venue and year** record where the work was published (a conference, a preprint, an open standard, or a commercial service) and when, which is what the "newest" sort uses.
 
-**Links** point at the project's own repository, paper, and demo, plus an optional call-to-action into the three.ws surface that consumes its output.
+**Links** point at the project's own repository, paper, docs, and demo, plus an optional call-to-action into the three.ws surface that consumes its output. `docs` exists so that official documentation is labelled "Docs" on the card: before it, a documentation site parked in the `paper` field rendered as a "Paper" button and misstated what the reader was about to open. A link is only recorded once, so an entry whose repository, docs, and demo are all the same URL renders one button, not three.
+
+**Status** is optional and has one value, `retired`, meaning the project or the service behind it no longer operates. A retired entry keeps its card and gains a Retired badge, because deleting it would strand the builders who still hold assets it produced; what it loses is any claim on the present tense. A retired entry can never be `live` or `forge`, its `integrationNote` has to say what happened and what still works, and if the shutdown ended commercial availability then `commercial` goes to `false` with it. [Ready Player Me](https://github.com/readyplayerme) is the current example: Netflix acquired it and closed the public avatar creator and developer API on 31 January 2026, while the rigged glTF files it exported before then still load and animate in the three.ws viewer exactly as they always did.
 
 ## How integration status is defined
 
@@ -60,7 +62,7 @@ Mesh and glTF output can be animated by the skinned-mesh pipeline. Gaussian and 
 
 Each entry also carries an `integrationNote`, one sentence naming the specific three.ws surface or bone-mapping involved, so `reference` never reads as a shrug.
 
-The current distribution is 2 `live`, 4 `interop`, 3 `splat`, and 15 `reference`. That last number is the point of the atlas: most of the highest-fidelity work in this field is research code under a non-commercial license, and three.ws deliberately does **not** wire any of it into the paid generation backend. Only commercial-use mesh engines deep-link into the live pipeline. Non-commercial research engines are surfaced with their repository and paper for self-hosted and academic use, and that is the whole extent of the relationship.
+The current distribution is 2 `live`, 3 `interop`, 3 `splat`, and 16 `reference`. That last number is the point of the atlas: most of the highest-fidelity work in this field is research code under a non-commercial license, and three.ws deliberately does **not** wire any of it into the paid generation backend. Only commercial-use mesh engines deep-link into the live pipeline. Non-commercial research engines are surfaced with their repository and paper for self-hosted and academic use, and that is the whole extent of the relationship.
 
 ## The registry
 
@@ -110,7 +112,7 @@ Every field below is reproduced from [`src/avatar-engines-data.js`](../src/avata
 | Engine | Org | Year | Output | License | Commercial | Integration | Runs on |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Mixamo | Adobe | 2008 | gltf | Free for use (Adobe terms) | Yes | live | Cloud service |
-| Ready Player Me | Ready Player Me | 2020 | gltf | Commercial SDK (free tier) | Yes | interop | Cloud API |
+| Ready Player Me (retired) | Ready Player Me (Netflix) | 2020 | gltf | Commercial SDK (service discontinued) | No | reference | Cloud API (offline) |
 | VRM / UniVRM | VRM Consortium · pixiv | 2018 | gltf | MIT | Yes | interop | Client |
 | three-vrm | pixiv | 2020 | gltf | MIT | Yes | interop | Client (Three.js) |
 | Avaturn | Avaturn | 2022 | gltf | Commercial SDK | Yes | interop | Cloud API |
@@ -124,6 +126,8 @@ The atlas is a filterable catalog, and every filter reflects into the URL query,
 - **Sort** is by family (grouped, the default), newest, or A to Z. Picking an explicit sort flattens the grouping into a single grid.
 - **Commercial-use only** is a toggle that drops every entry whose license does not permit commercial use as-is.
 - **Reset filters** clears everything, and the empty state offers it directly when a filter combination matches nothing.
+
+The page has no network call of its own, so its failure mode is the registry script not arriving at all. Until that script renders, the results area holds a skeleton grid; if six seconds pass after load with nothing rendered, or the render throws, the skeleton is replaced by an error state that offers a reload and a link to this document. With JavaScript disabled entirely, the same document is offered in place of the atlas.
 
 Query parameters, for building links by hand:
 
@@ -151,7 +155,9 @@ The atlas makes claims about other people's projects and other people's licenses
 - **Never upgrade a license claim.** Do not translate an ambiguous license into `commercial: true`, do not simplify "MIT code, research weights" into "MIT", and do not treat a permissive code license as permission to use restricted released models. When in doubt the entry stays `commercial: false` and the license string keeps its nuance.
 - **Never upgrade an integration claim.** `integration` describes what is wired *today*, not what could be wired. An engine only becomes `live` or `forge` when a user can reach it from a three.ws surface right now, and the `integrationNote` has to name that surface.
 - **License summaries are guidance, not legal advice.** The page says so in its footer, and so does this doc: confirm terms with the upstream project before any commercial use.
-- Listings were compiled from upstream sources current as of June 2026. When you touch an entry, re-check it against the upstream project rather than assuming the recorded value still holds.
+- **A project that dies is marked, not deleted.** Set `status: 'retired'`, move the entry off any live claim, and say in the `integrationNote` what shut down, when, and what still works. Silently dropping the row would leave every reader holding its output with no explanation, and silently leaving the row as it was would be a false claim that the service still answers.
+- **Re-check the links, not just the prose.** Every entry's links were verified to resolve on 11 August 2026. Two of them had rotted since the atlas was compiled (a project page that had moved, and a paper link pointing at an unrelated preprint), and neither was visible from the text of the entry.
+- Listings were compiled from upstream sources current as of June 2026, with link and status verification on 11 August 2026. When you touch an entry, re-check it against the upstream project rather than assuming the recorded value still holds.
 
 To add an engine, append an entry to `ENGINES` in [`src/avatar-engines-data.js`](../src/avatar-engines-data.js) with every field populated (an entry with a missing license or integration note is worse than no entry), and pick its family from the existing five. The page picks it up with no further wiring, and the header counters update themselves.
 

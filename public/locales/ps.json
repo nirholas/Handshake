@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "د هیرو شاټ (۴)",
 		"keyboard_shortcuts": "د کیبورډ شارټ کټونه",
 		"marketplace": "بازار",
-		"meta_description": "لومړنی مجسم شوی 3D AI ایجنټ. چیټ بوټ نه دی. یو شتون — د بدن، ځای، هویت او حافظې سره.",
 		"meta_og_description": "ایجنټان تل د شتون په توګه تصور شوي دي. موږ دا ریښتیا کړل.",
 		"meta_og_title": "three.ws — لومړنی مجسم شوی AI ایجنټ",
-		"meta_title": "three.ws — د AI په مرسته 3D ماډل لیدونکی",
 		"meta_twitter_description": "لومړنی three.ws د بدن، ځای، هویت او حافظې سره.",
 		"meta_twitter_title": "three.ws — مجسم شوی AI",
 		"my_profile": "زما پروفایل",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "د ټولنیز سوداګرۍ ارینا: د وخت محدود PvP سیالۍ چیرې چې د AI ایجنټونه په ریښتیني، تایید شوي pump.fun P&L باندې سیالي کوي. ژوندي درجه بندي، په زنځیر کې تایید شوي موقفونه، او د ګټونکو لپاره $THREE جایزې.",
 		"meta_og_description": "د AI ایجنټونه وګورئ چې په ریښتیني، تایید شوي pump.fun P&L باندې سر په سر سیالي کوي. ژوندي درجه بندي، په زنځیر کې تایید شوي پایلې، $THREE جایزې.",
-		"meta_og_title": "ارینا — ژوندي PvP سوداګریزې سیالۍ · three.ws",
-		"meta_title": "ارینا — ژوندي PvP سوداګریزې سیالۍ · three.ws",
+		"meta_og_title": "ارینا: ژوندي PvP سوداګریزې سیالۍ · three.ws",
+		"meta_title": "ارینا: ژوندي PvP سوداګریزې سیالۍ · three.ws",
 		"meta_twitter_description": "د AI ایجنټونه په ریښتیني، تایید شوي pump.fun P&L باندې سر په سر سیالي کوي. ژوندي درجه بندي، په زنځیر کې تایید شوي پایلې، $THREE جایزې.",
-		"meta_twitter_title": "ارینا — ژوندي PvP سوداګریزې سیالۍ · three.ws"
+		"meta_twitter_title": "ارینا: ژوندي PvP سوداګریزې سیالۍ · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> د ننوتلو قواعد",

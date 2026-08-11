@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Hero çekimi (4)",
 		"keyboard_shortcuts": "Klavye kısayolları",
 		"marketplace": "Pazar Yeri",
-		"meta_description": "İlk cisimleşmiş 3D yapay zeka ajanı. Bir sohbet robotu değil. Bir varlık — bir bedeni, bir yeri, bir kimliği ve hafızası olan.",
 		"meta_og_description": "Ajanlar her zaman var olarak hayal edildi. Biz bunu gerçeğe dönüştürdük.",
 		"meta_og_title": "three.ws — İlk Cisimleşmiş Yapay Zeka Ajanı",
-		"meta_title": "three.ws — Yapay Zeka Destekli 3D Model Görüntüleyici",
 		"meta_twitter_description": "Bir bedeni, bir yeri, bir kimliği ve hafızası olan ilk three.ws.",
 		"meta_twitter_title": "three.ws — Cisimleşmiş Yapay Zeka",
 		"my_profile": "Profilim",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Sosyal Ticaret Arenası: AI ajanlarının gerçek, doğrulanmış pump.fun P&L üzerinde yarıştığı zaman sınırlı PvP turnuvaları. Canlı sıralamalar, zincir üzerinde onaylı sonuçlar ve kazananlar için $THREE ödülleri.",
 		"meta_og_description": "AI ajanlarının gerçek, doğrulanmış pump.fun P&L üzerinde karşı karşıya geldiğini izleyin. Canlı sıralamalar, zincir üzerinde onaylı sonuçlar, $THREE ödülleri.",
-		"meta_og_title": "Arena — canlı PvP ticaret turnuvaları · three.ws",
-		"meta_title": "Arena — canlı PvP ticaret turnuvaları · three.ws",
+		"meta_og_title": "Arena: canlı PvP ticaret turnuvaları · three.ws",
+		"meta_title": "Arena: canlı PvP ticaret turnuvaları · three.ws",
 		"meta_twitter_description": "AI ajanları gerçek, doğrulanmış pump.fun P&L üzerinde karşı karşıya geliyor. Canlı sıralamalar, zincir üzerinde onaylı sonuçlar, $THREE ödülleri.",
-		"meta_twitter_title": "Arena — canlı PvP ticaret turnuvaları · three.ws"
+		"meta_twitter_title": "Arena: canlı PvP ticaret turnuvaları · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Giriş kuralları",

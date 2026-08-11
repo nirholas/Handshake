@@ -1,8 +1,14 @@
 // ── agent-exchange.js ────────────────────────────────────────────────────────
 // Two 3D AI avatars buying and selling live crypto intel for real USDC via x402.
 // Agent A (seller) hosts /api/x402/crypto-intel. Agent B (buyer) pays $0.01 per
-// call through the server-side x402 payer at /api/x402-pay, which handles the
-// challenge → sign → verify → settle → confirm flow and streams SSE events.
+// call through the server-side x402 payer at /api/x402-pay, which probes the 402
+// challenge, signs the Solana transfer, replays the request with the payment,
+// and streams each step back as SSE events.
+//
+// The stage strip below mirrors those SSE events one-for-one. It deliberately
+// carries no step the server does not report: an x402 purchase of an external
+// route verifies and settles inside the paid request itself, so there is no
+// separate verify or dispatch signal to show.
 //
 // Every on-chain confirmation is real: real USDC on Solana mainnet, real Solscan
 // link. The avatars are iframed into the page and driven via postMessage.
@@ -20,34 +26,33 @@ const TOPICS = [
 	{ id: 'bnb',  label: '⬡ BNB'  },
 ];
 
-// Stage config matches the SSE event names /api/x402-pay emits.
+// Stage config matches the SSE event names /api/x402-pay emits, one stage per
+// event, plus the terminal 'done' the client resolves once the result lands.
 // narration: plain-language line shown to the viewer as each stage arrives.
 const STAGE_DEFS = [
-	{ id: 'challenge',  label: '402 Challenge', narration: 'The seller issued a $0.01 USDC payment challenge — the buyer is building a Solana transaction.' },
-	{ id: 'built',      label: 'Build tx',      narration: 'Transaction signed. Submitting to the x402 facilitator for verification…' },
-	{ id: 'verified',   label: 'Verify',        narration: 'Payment verified by the facilitator. Dispatching the intel request…' },
-	{ id: 'dispatched', label: 'Dispatch',      narration: 'Request dispatched — the intel agent is preparing the market signal.' },
-	{ id: 'settled',    label: 'Settle',        narration: 'Settling USDC on Solana mainnet — a real on-chain transfer is confirming.' },
+	{ id: 'challenge',  label: '402 Challenge', narration: 'The intel agent answered with a $0.01 USDC payment challenge. The buyer is building a Solana transaction.' },
+	{ id: 'built',      label: 'Sign tx',       narration: 'Transaction signed. Replaying the request with the payment attached…' },
+	{ id: 'settled',    label: 'Settle',        narration: 'Settling USDC on Solana mainnet. A real on-chain transfer is confirming.' },
 	{ id: 'done',       label: 'Confirmed',     narration: 'Confirmed on-chain. Intel delivered.' },
 ];
 
-// Terminal failure stage — rendered alongside the flow stages but hidden until
+// Terminal failure stage: rendered alongside the flow stages but hidden until
 // a payment errors out, times out, or is rejected. It always reflects the final
 // failure reason so the viewer sees exactly where the exchange stopped.
 const ERROR_STAGE = { id: 'failed', label: 'Failed', narration: 'Payment did not complete. No funds were moved.' };
 
 // How long a single x402-pay request may run before we abort it and surface a
-// timeout. The full challenge→settle flow is fast; 30s covers a slow facilitator
-// or RPC without leaving the viewer staring at a hung "Paying…" button.
+// timeout. The full challenge to settle flow is fast; 30s covers a slow
+// facilitator or RPC without leaving the viewer staring at a hung "Paying…"
+// button.
 const PAY_TIMEOUT_MS = 30000;
 
-// Agent scripts — lines spoken at each stage of the exchange.
+// Agent scripts: lines spoken at each stage of the exchange.
 const LINES = {
 	A: {
 		idle:      'I have live crypto intel. $0.01 USDC per signal, settled on-chain.',
 		challenge: 'Payment challenge issued. Awaiting your signed transaction…',
-		built:     'Transaction received. Forwarding to the facilitator…',
-		verified:  'Payment verified. Preparing the intel…',
+		built:     'Transaction received. Verifying and settling now…',
 		settled:   'Funds confirmed on-chain. Delivering now.',
 		done:      (headline) => `Here's your signal: ${headline}`,
 		error:     'Payment failed. No charge made.',
@@ -55,8 +60,7 @@ const LINES = {
 	B: {
 		idle:      (topic) => `I need live ${topic.toUpperCase()} intelligence. Initiating payment.`,
 		challenge: 'Building and signing the Solana transfer…',
-		built:     'Signed. Sending to the facilitator for verification.',
-		verified:  'Verified on-chain. Waiting for settlement…',
+		built:     'Signed. Sending the paid request through.',
 		settled:   'Settled. Collecting my intel.',
 		done:      (signal) => `Signal received: ${signal.toUpperCase()}. Updating my model.`,
 		error:     'Transaction rolled back. Wallet unchanged.',
@@ -78,13 +82,21 @@ const els = {
 	bubbleBText: $('bubbleBText'),
 	topics:    $('topics'),
 	payBtn:    $('payBtn'),
-	payLabel:  null, // set in init()
 	stages:      $('stages'),
 	receipt:     $('receipt'),
-	totalUsdc:   $('totalUsdc'),
 	narration:   $('narration'),
 	walletState: $('walletState'),
 };
+
+// #txTicker and #payBtn both carry data-i18n-html, so the runtime translator
+// swaps their innerHTML after first paint and any child captured at init would
+// become a detached node that silently stops updating. Resolve these two at use
+// time instead of caching them.
+const totalUsdc = () => $('totalUsdc');
+function setPayLabel(text) {
+	const lbl = els.payBtn.querySelector('.lbl');
+	if (lbl) lbl.textContent = text;
+}
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let activeTopic    = 'sol';
@@ -187,31 +199,47 @@ function resetStages() {
 }
 
 // ── Receipt renderer ──────────────────────────────────────────────────────────
+// Signal classes are looked up, never interpolated: the signal string comes off
+// the wire, and a class name is one of the few places escHtml cannot help.
+const SIGNAL_CLASS = { bullish: 'signal-bullish', bearish: 'signal-bearish', neutral: 'signal-neutral' };
+const SIGNAL_GLYPH = { bullish: '▲', bearish: '▼', neutral: '→' };
+
+// Solana signatures and addresses are base58. Anything else is not a value we
+// will put in an href or a receipt field.
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,90}$/;
+function shortB58(v, head, tail) {
+	const s = typeof v === 'string' ? v : '';
+	if (!BASE58_RE.test(s)) return 'unavailable';
+	return `${s.slice(0, head)}…${s.slice(-tail)}`;
+}
+
 function renderReceipt(payment, intel) {
 	const humanAmount = payment.amount ? Number(payment.amount) / 1e6 : 0.01;
 	const amountStr   = `${humanAmount.toFixed(4)} USDC`;
 	const usdEqStr    = formatUsdcEq(humanAmount);
-	const amount      = usdEqStr ? `${amountStr} <span style="color:rgba(255,255,255,.45);font-size:0.9em">${usdEqStr}</span>` : amountStr;
-	const payer     = payment.payer ? `${payment.payer.slice(0, 8)}…${payment.payer.slice(-4)}` : '—';
-	const payTo     = payment.payTo ? `${payment.payTo.slice(0, 8)}…${payment.payTo.slice(-4)}` : '—';
-	const txShort   = payment.tx ? `${payment.tx.slice(0, 10)}…${payment.tx.slice(-6)}` : null;
-	const explorer  = payment.tx ? `https://solscan.io/tx/${payment.tx}` : null;
-	const signalCls = `signal-${intel.signal}`;
-	const signalEmoji = { bullish: '▲', bearish: '▼', neutral: '→' }[intel.signal] || '';
+	const amount      = usdEqStr ? `${escHtml(amountStr)} <span style="color:rgba(255,255,255,.45);font-size:0.9em">${escHtml(usdEqStr)}</span>` : escHtml(amountStr);
+	const payer     = escHtml(shortB58(payment.payer, 8, 4));
+	const payTo     = escHtml(shortB58(payment.payTo, 8, 4));
+	const tx        = typeof payment.tx === 'string' && BASE58_RE.test(payment.tx) ? payment.tx : null;
+	const txShort   = tx ? escHtml(shortB58(tx, 10, 6)) : null;
+	const explorer  = tx ? `https://solscan.io/tx/${encodeURIComponent(tx)}` : null;
+	const signal    = SIGNAL_CLASS[intel.signal] ? intel.signal : 'neutral';
+	const signalCls = SIGNAL_CLASS[signal];
+	const signalGlyph = SIGNAL_GLYPH[signal];
 
-	const changeStr = intel.change_24h != null
+	const changeStr = Number.isFinite(intel.change_24h)
 		? ` ${intel.change_24h >= 0 ? '+' : ''}${intel.change_24h.toFixed(2)}% 24h`
 		: '';
-	const priceStr = intel.price_usd != null
+	const priceStr = Number.isFinite(intel.price_usd)
 		? ` · $${intel.price_usd >= 100 ? intel.price_usd.toFixed(2) : intel.price_usd.toFixed(4)}`
 		: '';
 
 	els.receipt.innerHTML =
 		`<div class="r-head">` +
 		`<span class="r-badge">` +
-		`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>` +
+		`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>` +
 		`Confirmed on-chain · ${amount}</span>` +
-		`<span class="r-time">${new Date().toLocaleTimeString()}</span>` +
+		`<span class="r-time">${escHtml(new Date().toLocaleTimeString())}</span>` +
 		`</div>` +
 		`<div class="r-grid">` +
 		`<div class="rf"><span class="k">Payer (buyer agent)</span><span class="v">${payer}</span></div>` +
@@ -222,9 +250,10 @@ function renderReceipt(payment, intel) {
 			: '') +
 		`</div>` +
 		`<div class="r-headline">` +
-		`<span class="r-signal ${signalCls}">${signalEmoji} ${intel.signal.toUpperCase()}</span>` +
-		`<strong>${escHtml(intel.topic.toUpperCase())}</strong>${escHtml(priceStr)}${escHtml(changeStr)} · ` +
+		`<span class="r-signal ${signalCls}">${signalGlyph} ${escHtml(signal.toUpperCase())}</span>` +
+		`<strong>${escHtml(String(intel.topic || '').toUpperCase())}</strong>${escHtml(priceStr)}${escHtml(changeStr)} · ` +
 		escHtml(intel.headline) +
+		(intel.rationale ? `<div class="r-rationale">${escHtml(intel.rationale)}</div>` : '') +
 		`</div>`;
 
 	els.receipt.classList.add('show');
@@ -235,7 +264,7 @@ function renderReceipt(payment, intel) {
 function showEmptyState() {
 	els.narration.innerHTML =
 		`<div class="nr-pre">` +
-		`<span class="nr-kicker">What you'll watch —</span>` +
+		`<span class="nr-kicker">What you'll watch:</span>` +
 		`<span>Intel Agent issues a $0.01 USDC challenge</span>` +
 		`<span class="nr-arrow">→</span>` +
 		`<span>Buyer signs a Solana transaction</span>` +
@@ -268,7 +297,7 @@ function narrateDone(intelObj, paymentObj) {
 	els.narration.innerHTML =
 		`<div class="nr-done">` +
 		`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>` +
-		`${escHtml(amount)} USDC settled — ${escHtml(topic)} intelligence delivered.${txLink}` +
+		`${escHtml(amount)} USDC settled. ${escHtml(topic)} intelligence delivered.${txLink}` +
 		`</div>`;
 }
 
@@ -285,12 +314,12 @@ async function checkWallet() {
 				`Demo wallet not configured` +
 				`</div>` +
 				`<div class="ws-body">` +
-				`This demo settles real USDC on Solana mainnet. The agent wallet isn't configured right now — live settlements are paused. ` +
+				`This demo settles real USDC on Solana mainnet. The agent wallet isn't configured right now, so live settlements are paused. ` +
 				`To enable: set <span class="ws-mono">X402_AGENT_SOLANA_SECRET_BASE58</span> and fund the wallet.` +
 				`</div>`;
 			els.payBtn.disabled = true;
 		} else if (typeof b.usdc === 'number' && b.usdc < 0.01) {
-			const addr = b.address ? `${b.address.slice(0, 8)}…${b.address.slice(-4)}` : '—';
+			const addr = b.address ? `${b.address.slice(0, 8)}…${b.address.slice(-4)}` : 'unavailable';
 			els.walletState.className = 'show ws-low';
 			els.walletState.innerHTML =
 				`<div class="ws-head">` +
@@ -298,12 +327,12 @@ async function checkWallet() {
 				`Agent wallet low on USDC` +
 				`</div>` +
 				`<div class="ws-body">` +
-				`The buyer wallet holds ${b.usdc.toFixed(4)} USDC — below the $0.01 minimum for a live settlement. ` +
+				`The buyer wallet holds ${b.usdc.toFixed(4)} USDC, below the $0.01 minimum for a live settlement. ` +
 				`Fund <span class="ws-mono">${escHtml(addr)}</span> with USDC on Solana mainnet to run the demo.` +
 				`</div>`;
 		}
 	} catch {
-		// Network failures silently ignored — don't block the page.
+		// Network failures silently ignored so they never block the page.
 	}
 }
 
@@ -313,14 +342,14 @@ async function doPurchase() {
 	busy = true;
 	els.payBtn.classList.add('busy');
 	els.payBtn.disabled = true;
-	els.payLabel.textContent = 'Paying…';
+	setPayLabel('Paying…');
 	resetStages();
 
 	// Show "initiating" in the narration region immediately.
 	els.narration.innerHTML =
 		`<div class="nr-live">` +
 		`<span class="nr-dot" aria-hidden="true"></span>` +
-		`<span class="nr-text">Initiating payment — connecting to the x402 facilitator…</span>` +
+		`<span class="nr-text">Initiating payment. Connecting to the x402 endpoint…</span>` +
 		`</div>`;
 
 	// Both agents react to the initiation.
@@ -372,23 +401,11 @@ async function doPurchase() {
 				sayA(LINES.A.challenge);
 			} else if (event === 'built') {
 				setStage('built', 'done', `${data.build_ms} ms`);
-				setStage('verified', 'active', 'facilitator…');
-				activeStage = 'verified';
+				setStage('settled', 'active', 'on-chain…');
+				activeStage = 'settled';
 				narrate('built', `(${data.build_ms} ms)`);
 				sayB(LINES.B.built);
 				sayA(LINES.A.built);
-			} else if (event === 'verified') {
-				setStage('verified', 'done', `${data.verify_ms} ms`);
-				setStage('dispatched', 'active', 'dispatching…');
-				activeStage = 'dispatched';
-				narrate('verified', `(${data.verify_ms} ms)`);
-				sayB(LINES.B.verified);
-				sayA(LINES.A.verified);
-			} else if (event === 'dispatched') {
-				setStage('dispatched', 'done', `${data.dispatch_ms} ms`);
-				setStage('settled', 'active', 'on-chain…');
-				activeStage = 'settled';
-				narrate('dispatched');
 			} else if (event === 'settled') {
 				setStage('settled', 'done', `${data.settle_ms} ms · ${data.tx ? data.tx.slice(0, 8) + '…' : ''}`);
 				setStage('done', 'active');
@@ -398,7 +415,7 @@ async function doPurchase() {
 				sayB(LINES.B.settled);
 				sayA(LINES.A.settled);
 			} else if (event === 'result') {
-				// result carries { ok, tool, args, result: <intelObj>, payment: <paymentObj>, durations }
+				// result carries { ok, result: <intelObj>, payment: <paymentObj>, resource, durations }
 				if (data.result != null) intel = data.result;
 				if (data.payment) settled = { ...settled, ...data.payment };
 			} else if (event === 'error') {
@@ -425,9 +442,12 @@ async function doPurchase() {
 		// Update session total.
 		const paidAmount = settled.amount ? Number(settled.amount) / 1e6 : 0.01;
 		sessionTotal += paidAmount;
-		els.totalUsdc.textContent = `$${sessionTotal.toFixed(2)}`;
-		els.totalUsdc.classList.add('flash');
-		setTimeout(() => els.totalUsdc.classList.remove('flash'), 600);
+		const ticker = totalUsdc();
+		if (ticker) {
+			ticker.textContent = `${sessionTotal.toFixed(2)}`;
+			ticker.classList.add('flash');
+			setTimeout(() => ticker.classList.remove('flash'), 600);
+		}
 
 		renderReceipt(settled, intel);
 
@@ -436,7 +456,7 @@ async function doPurchase() {
 		focusReceipt();
 
 	} catch (err) {
-		// A timeout surfaces as an AbortError — translate it into a clear reason.
+		// A timeout surfaces as an AbortError; translate it into a clear reason.
 		const timedOut = err?.name === 'AbortError';
 		const reason = timedOut
 			? `No response in ${Math.round(PAY_TIMEOUT_MS / 1000)}s`
@@ -452,8 +472,8 @@ async function doPurchase() {
 		gestureA('idle');
 
 		const headline = timedOut
-			? 'Payment timed out — no funds moved'
-			: 'Payment failed — no funds moved';
+			? 'Payment timed out, no funds moved'
+			: 'Payment failed, no funds moved';
 		const body = timedOut
 			? 'The payment service did not respond in time. No USDC left the wallet. Pick a topic and try again.'
 			: escHtml(reason);
@@ -477,7 +497,7 @@ async function doPurchase() {
 		busy = false;
 		els.payBtn.classList.remove('busy');
 		els.payBtn.disabled = false;
-		els.payLabel.textContent = 'Buy intel — $0.01 USDC';
+		setPayLabel('Buy intel · $0.01 USDC');
 	}
 }
 
@@ -543,7 +563,7 @@ function buildTopics() {
 }
 
 function mountAvatars() {
-	// Agent A (seller) — faces right (mirror = true flips the avatar).
+	// Agent A (seller) sits on the left of the arena.
 	const aqA = new URLSearchParams();
 	aqA.set('model', '/avatars/default.glb');
 	aqA.set('bg', 'transparent');
@@ -553,7 +573,7 @@ function mountAvatars() {
 	aqA.set('overlayMode', '1');
 	els.frameA.src = `/avatar-embed.html?${aqA}`;
 
-	// Agent B (buyer) — same setup on the right side.
+	// Agent B (buyer) uses the same setup on the right side.
 	const aqB = new URLSearchParams();
 	aqB.set('model', '/avatars/default.glb');
 	aqB.set('bg', 'transparent');
@@ -565,8 +585,6 @@ function mountAvatars() {
 }
 
 function init() {
-	els.payLabel = els.payBtn.querySelector('.lbl');
-
 	buildTopics();
 	renderStages();
 	mountAvatars();

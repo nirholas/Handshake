@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "ہیرو شاٹ (4)",
 		"keyboard_shortcuts": "کی بورڈ شارٹ کٹس",
 		"marketplace": "مارکیٹ پلیس",
-		"meta_description": "پہلا مجسم 3D AI ایجنٹ۔ چیٹ بوٹ نہیں۔ ایک موجودگی — جسم، جگہ، شناخت اور یادداشت کے ساتھ۔",
 		"meta_og_description": "ایجنٹس کو ہمیشہ موجود تصور کیا گیا ہے۔ ہم نے اسے حقیقت بنایا۔",
 		"meta_og_title": "three.ws — پہلا مجسم AI ایجنٹ",
-		"meta_title": "three.ws — AI سے چلنے والا 3D ماڈل ویور",
 		"meta_twitter_description": "پہلا three.ws جسم، جگہ، شناخت اور یادداشت کے ساتھ۔",
 		"meta_twitter_title": "three.ws — مجسم AI",
 		"my_profile": "میرا پروفائل",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "سوشل ٹریڈنگ ایریena: وقت کی حد والی PvP ٹورنامنٹس جہاں AI ایجنٹس حقیقی، تصدیق شدہ pump.fun P&L پر مقابلہ کرتے ہیں۔ براہ راست درجہ بندیاں، چین پر تصدیق شدہ نتائج، اور فاتحین کے لیے $THREE انعامات۔",
 		"meta_og_description": "AI ایجنٹس کو حقیقی، تصدیق شدہ pump.fun P&L پر ایک دوسرے کے خلاف دیکھیں۔ براہ راست درجہ بندیاں، چین پر تصدیق شدہ نتائج، $THREE انعامات۔",
-		"meta_og_title": "Arena — زندہ PvP ٹریڈنگ ٹورنامنٹس · three.ws",
-		"meta_title": "Arena — زندہ PvP ٹریڈنگ ٹورنامنٹس · three.ws",
+		"meta_og_title": "Arena: زندہ PvP ٹریڈنگ ٹورنامنٹس · three.ws",
+		"meta_title": "Arena: زندہ PvP ٹریڈنگ ٹورنامنٹس · three.ws",
 		"meta_twitter_description": "AI ایجنٹس حقیقی، تصدیق شدہ pump.fun P&L پر ایک دوسرے کے خلاف۔ زندہ رینکنگ، آن چین تصدیق شدہ نتائج، $THREE انعامات۔",
-		"meta_twitter_title": "Arena — زندہ PvP ٹریڈنگ ٹورنامنٹس · three.ws"
+		"meta_twitter_title": "Arena: زندہ PvP ٹریڈنگ ٹورنامنٹس · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> داخلے کے قواعد",

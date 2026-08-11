@@ -27,6 +27,11 @@
 				max-width: 1160px;
 				margin: 0 auto;
 				padding: calc(var(--header-h, 64px) + var(--space-xl)) var(--space-lg) var(--space-2xl);
+				/* The body is a column flex container, so this main is a flex item with
+				   min-width:auto: its min-content width (a couple of pixels over 320)
+				   was widening the whole document and scrolling the page sideways on a
+				   320px screen. Nothing inside needs more than the viewport. */
+				min-width: 0;
 			}
 			.ai-hero {
 				max-width: 720px;
@@ -61,9 +66,14 @@
 				padding: 2px 10px;
 				margin-bottom: var(--space-sm);
 			}
+			.ai-price {
+				color: var(--accent);
+			}
 			.ai-grid {
 				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+				/* min() keeps the track from forcing a 300px column (and a horizontally
+				   scrolling page) inside a ~288px viewport at 320px wide. */
+				grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
 				gap: var(--space-lg);
 			}
 			.ai-card {
@@ -107,10 +117,63 @@
 			.ai-pending {
 				display: grid;
 				place-items: center;
+				align-content: center;
+				gap: var(--space-2xs);
 				color: var(--ink-dim);
 				font-size: var(--text-sm);
 				text-align: center;
 				padding: var(--space-lg);
+			}
+			.ai-pending strong {
+				color: var(--ink);
+				font-family: var(--font-display);
+			}
+			.ai-3d-status {
+				position: absolute;
+				left: var(--space-sm);
+				right: var(--space-sm);
+				bottom: var(--space-sm);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 0.6ch;
+				flex-wrap: wrap;
+				padding: 8px 10px;
+				border-radius: var(--radius-control);
+				border: 1px solid var(--stroke);
+				background: rgba(10, 12, 16, 0.82);
+				backdrop-filter: blur(6px);
+				color: var(--ink-dim);
+				font-size: var(--text-xs);
+				font-family: var(--font-mono);
+				text-align: center;
+			}
+			.ai-3d-status a {
+				color: var(--accent);
+			}
+			.ai-3d-error {
+				border-color: var(--danger, #ff6b6b);
+			}
+			.ai-spinner {
+				width: 12px;
+				height: 12px;
+				border-radius: 50%;
+				border: 2px solid var(--stroke-strong);
+				border-top-color: var(--accent);
+				animation: ai-spin 0.8s linear infinite;
+			}
+			@keyframes ai-spin {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.ai-spinner {
+					animation-duration: 2.4s;
+				}
+				.ai-skel {
+					animation: none;
+				}
 			}
 			.ai-pfp {
 				position: absolute;
@@ -212,12 +275,91 @@
 				border-color: var(--accent);
 				background: var(--surface-3);
 			}
+			.ai-meta {
+				font-family: var(--font-mono);
+				font-size: var(--text-2xs);
+				color: var(--ink-dim);
+				margin: 0;
+			}
+			.ai-skel {
+				background: linear-gradient(
+					90deg,
+					var(--surface-2) 0%,
+					var(--surface-3) 50%,
+					var(--surface-2) 100%
+				);
+				background-size: 200% 100%;
+				animation: ai-shimmer 1.4s ease-in-out infinite;
+				border-radius: var(--radius-sm);
+			}
+			@keyframes ai-shimmer {
+				to {
+					background-position: -200% 0;
+				}
+			}
+			.ai-card-skeleton {
+				pointer-events: none;
+			}
+			.ai-card-skeleton:hover {
+				transform: none;
+				box-shadow: none;
+			}
+			.ai-skel-line {
+				display: block;
+				height: 0.75rem;
+			}
+			.ai-skel-kind {
+				width: 38%;
+				height: 0.6rem;
+			}
+			.ai-skel-name {
+				width: 62%;
+				height: 1.1rem;
+			}
+			.ai-skel-short {
+				width: 45%;
+			}
+			.ai-state {
+				grid-column: 1 / -1;
+				background: var(--surface-1);
+				border: 1px solid var(--stroke);
+				border-radius: var(--radius-card);
+				padding: var(--space-xl);
+				text-align: center;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: var(--space-sm);
+			}
+			.ai-state-title {
+				font-family: var(--font-display);
+				font-size: var(--text-lg);
+				margin: 0;
+			}
+			.ai-state-msg {
+				color: var(--ink-dim);
+				font-size: var(--text-sm);
+				line-height: var(--leading-normal);
+				max-width: 56ch;
+				margin: 0;
+			}
+			.ai-state-actions {
+				display: flex;
+				gap: var(--space-sm);
+				flex-wrap: wrap;
+				justify-content: center;
+			}
+			.ai-noscript {
+				grid-column: 1 / -1;
+				color: var(--ink-dim);
+				font-size: var(--text-sm);
+			}
 			.ai-how {
 				margin-top: var(--space-2xl);
 				border-top: 1px solid var(--hairline);
 				padding-top: var(--space-xl);
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+				grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
 				gap: var(--space-lg);
 			}
 			.ai-how h2 {
@@ -272,7 +414,11 @@
 	<body>
 		<main class="ai-wrap">
 			<header class="ai-hero">
-				<span class="ai-badge" data-i18n="agent_identities.a2mcp_service_1_50_per_identity_live">A2MCP service · $1.50 per identity · live on OKX.AI rails</span>
+				<span class="ai-badge">
+					<span data-i18n="agent_identities.a2mcp_service_live_on_okx_ai_rails">A2MCP service · live on OKX.AI rails</span>
+					<!-- Price comes from the OKX catalog at runtime, never from page copy. -->
+					<span class="ai-price" id="ai-service-price" hidden></span>
+				</span>
 				<h1 data-i18n="agent_identities.every_ai_agent_deserves_a_face">Every AI agent deserves a face.</h1>
 				<p data-i18n="agent_identities.the_agent_identity_studio_turns_a_brand">
 					The Agent Identity Studio turns a brand brief into a complete 3D identity: a rigged,
@@ -286,8 +432,20 @@
 				</div>
 			</header>
 
-			<section class="ai-grid" id="identity-grid" aria-label="Demo agent identities">
-				<!-- cards rendered by src/agent-identities.js -->
+			<section
+				class="ai-grid"
+				id="identity-grid"
+				aria-label="Demo agent identities"
+				aria-busy="true"
+			>
+				<!-- Cards render from /api/agent-identities via src/agent-identities.js. -->
+				<noscript>
+					<p class="ai-noscript">
+						The identity gallery renders in the browser. With JavaScript off, read the
+						<a href="/docs/okx-marketplace">service docs</a> or fetch the showcase feed at
+						<a href="/api/agent-identities">/api/agent-identities</a>.
+					</p>
+				</noscript>
 			</section>
 
 			<section class="ai-how">

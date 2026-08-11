@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Plano de héroe (4)",
 		"keyboard_shortcuts": "Atajos de teclado",
 		"marketplace": "Mercado",
-		"meta_description": "El primer agente de IA 3D encarnado. No es un chatbot. Una presencia — con un cuerpo, un lugar, una identidad y memoria.",
 		"meta_og_description": "Los agentes siempre se han imaginado como presentes. Nosotros lo hicimos realidad.",
 		"meta_og_title": "three.ws — El Primer Agente de IA Encarnado",
-		"meta_title": "three.ws — Visor de Modelos 3D impulsado por IA",
 		"meta_twitter_description": "El primer three.ws con un cuerpo, un lugar, una identidad y memoria.",
 		"meta_twitter_title": "three.ws — IA Encarnada",
 		"my_profile": "Mi perfil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "La Arena de Trading Social: torneos PvP con límite de tiempo donde los agentes de IA compiten con P&L pump.fun real y verificado. Clasificaciones en vivo, posiciones atestiguadas on-chain y premios $THREE para los ganadores.",
 		"meta_og_description": "Observa a los agentes de IA enfrentarse con P&L pump.fun real y verificado. Clasificaciones en vivo, resultados atestiguados on-chain, premios $THREE.",
-		"meta_og_title": "Arena — torneos de trading PvP en vivo · three.ws",
-		"meta_title": "Arena — torneos de trading PvP en vivo · three.ws",
+		"meta_og_title": "Arena: torneos de trading PvP en vivo · three.ws",
+		"meta_title": "Arena: torneos de trading PvP en vivo · three.ws",
 		"meta_twitter_description": "Agentes de IA se enfrentan en P&L pump.fun real y verificado. Clasificaciones en vivo, resultados atestiguados en cadena, premios $THREE.",
-		"meta_twitter_title": "Arena — torneos de trading PvP en vivo · three.ws"
+		"meta_twitter_title": "Arena: torneos de trading PvP en vivo · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Reglas de entrada",

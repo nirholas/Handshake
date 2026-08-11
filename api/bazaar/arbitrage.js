@@ -37,22 +37,38 @@ function tokenize(s) {
 		.filter((w) => w && !STOP_WORDS.has(w) && w.length >= 2);
 }
 
+// A trailing segment that is a route placeholder names the ARGUMENT, not the
+// capability: `/api/token-safety/:solana_address` and
+// `/api/holder-analysis/:solana_address` are different products that happen to
+// take the same input. Treating the placeholder as the capability collapsed
+// ten unrelated deepnets endpoints into one bogus "solana address" opportunity
+// with a 1400% spread. Recognize the common placeholder spellings and walk
+// back to the last literal segment instead.
+const PLACEHOLDER_SEGMENT = /^(?::.+|\{.+\}|<.+>|\[.+\])$/;
+
 // Many facilitators (orbisapi, hyreagent…) ship empty serviceName and put
 // the capability in the URL path with a random suffix:
 //   /proxy/who-to-contact-api-97ccc0  →  "who-to-contact-api"
 // Strip a single trailing hash-like segment so the same logical capability
-// hosted by different providers collapses to the same key.
-function tailFromUrl(url) {
+// hosted by different providers collapses to the same key. The suffix has to
+// carry a digit to count as a hash: an all-letter tail is the second half of
+// the capability's own name, and eating it turned "token-safety" into "token",
+// which then had too few tokens to key on at all.
+const HASH_SUFFIX = /-(?![a-z]+$)[a-z0-9]{4,12}$/i;
+
+export function tailFromUrl(url) {
 	try {
 		const u = new URL(url);
-		const tail = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean).pop() || '';
-		return tail.replace(/-[a-z0-9]{4,12}$/i, '');
+		const segments = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+		while (segments.length && PLACEHOLDER_SEGMENT.test(segments[segments.length - 1])) segments.pop();
+		const tail = segments.pop() || '';
+		return tail.replace(HASH_SUFFIX, '');
 	} catch {
 		return '';
 	}
 }
 
-function capabilityKey(it) {
+export function capabilityKey(it) {
 	if (it.type === 'mcp' && it.toolName) {
 		const k = normalizeWord(it.toolName);
 		return k ? `mcp:${k}` : null;
@@ -70,6 +86,32 @@ function capabilityKey(it) {
 
 function hostOf(url) {
 	try { return new URL(url).host; } catch { return ''; }
+}
+
+// The cross-venue case: one provider host, one resource, two facilitators
+// quoting it at different prices. Returns only the listings that are actually
+// part of such a gap, so a group that qualifies this way reports the venue
+// spread rather than the vendor's unrelated per-endpoint price tiers.
+export function venueSpreadListings(group) {
+	const byResource = new Map();
+	for (const entry of group) {
+		const resource = entry.it.resource;
+		if (!resource) continue;
+		let bucket = byResource.get(resource);
+		if (!bucket) {
+			bucket = { facilitators: new Set(), min: entry.usdc, max: entry.usdc, entries: [] };
+			byResource.set(resource, bucket);
+		}
+		bucket.facilitators.add(hostOf(entry.it.facilitator));
+		bucket.min = Math.min(bucket.min, entry.usdc);
+		bucket.max = Math.max(bucket.max, entry.usdc);
+		bucket.entries.push(entry);
+	}
+	const out = [];
+	for (const bucket of byResource.values()) {
+		if (bucket.facilitators.size >= 2 && bucket.max > bucket.min) out.push(...bucket.entries);
+	}
+	return out;
 }
 
 function usdcAccepts(accepts) {
@@ -135,18 +177,22 @@ async function handler(req, res) {
 	}
 
 	const opps = [];
-	for (const [key, list] of groups) {
-		if (list.length < 2) continue;
-		const hosts = new Set(list.map(({ it }) => hostOf(it.resource)).filter(Boolean));
-		const facilitators = new Set(list.map(({ it }) => hostOf(it.facilitator)).filter(Boolean));
+	for (const [key, group] of groups) {
+		if (group.length < 2) continue;
 		// Internal pricing tiers on a single host aren't arbitrage, so a group
 		// needs `minProviders` distinct hosts. At the default floor a single host
-		// listed on two facilitators also counts, because the same capability can
-		// be priced differently per venue. A caller who raises the floor is asking
-		// for genuinely competing providers, so that escape hatch closes.
-		const spansEnoughHosts = hosts.size >= minProviders;
-		const spansFacilitators = minProviders === DEFAULT_MIN_PROVIDERS && facilitators.size >= 2;
-		if (!spansEnoughHosts && !spansFacilitators) continue;
+		// also qualifies when the same resource is quoted at two prices by two
+		// facilitators, because that is a genuine cross-venue gap. A caller who
+		// raises the floor is asking for genuinely competing providers, so that
+		// escape hatch closes.
+		const spansEnoughHosts = new Set(group.map(({ it }) => hostOf(it.resource)).filter(Boolean)).size >= minProviders;
+		const list = spansEnoughHosts
+			? group
+			: (minProviders === DEFAULT_MIN_PROVIDERS ? venueSpreadListings(group) : []);
+		if (list.length < 2) continue;
+
+		const hosts = new Set(list.map(({ it }) => hostOf(it.resource)).filter(Boolean));
+		const facilitators = new Set(list.map(({ it }) => hostOf(it.facilitator)).filter(Boolean));
 
 		const prices = list.map((x) => x.usdc);
 		const minAtomic = Math.min(...prices);

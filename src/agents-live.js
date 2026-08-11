@@ -24,6 +24,7 @@ import { sanitizeMmEvent, fmtPriceSol } from './shared/mm-render.js';
 import { parseForgeFrame } from './shared/forge-frames.js';
 import { createArena } from './agents-live-arena.js';
 import { createShowrunner } from './showrunner.js';
+import { noteSession } from './api.js';
 
 // Subtle accent for a card showing a live Coin World Tour walkthrough.
 (() => {
@@ -145,11 +146,30 @@ function esc(s) {
 // identity) are suppressed server-side, so the grid reads as alive instead of a
 // graveyard of empty test agents. When signed in we also merge the caller's own
 // agents (which may be private) so an owner always sees theirs.
+// Resolve the viewer's session exactly once. /api/auth/me answers 200 with
+// `{ user: null }` for a signed-out visitor, so this costs one clean request and
+// buys two things: we skip the owner-roster read (/api/agents) that could only
+// 401 for an anonymous viewer, and we tell the shared client to skip the CSRF
+// pre-flight on the public batch-balance POST. Both of those 401s used to land
+// as red console errors on every signed-out visit to this very public page.
+let _sessionPromise = null;
+function hasSession() {
+	if (!_sessionPromise) {
+		_sessionPromise = fetch('/api/auth/me', { credentials: 'include', headers: { accept: 'application/json' } })
+			.then((r) => (r.ok ? r.json() : null))
+			.then((d) => !!(d && d.user))
+			.catch(() => false)
+			.then((ok) => { noteSession(ok); return ok; });
+	}
+	return _sessionPromise;
+}
+
 async function fetchRosterPage() {
 	const firstPage = _offset === 0;
 	const params = new URLSearchParams({ sort: 'live', limit: '48', offset: String(_offset) });
 	let agents = [];
 	let hasMore = false;
+	let failed = false;
 	try {
 		const res = await fetch(`/api/agents/public?${params}`, { headers: { accept: 'application/json' } });
 		if (res.ok) {
@@ -161,12 +181,15 @@ async function fetchRosterPage() {
 			// First page carries the platform-wide header-stat counts.
 			if (Number.isFinite(data.total)) _rosterTotal = data.total;
 			if (Number.isFinite(data.active_total)) _activeTotal = data.active_total;
+		} else {
+			failed = true;
 		}
-	} catch { /* network — handled by caller via empty page */ }
+	} catch { failed = true; }
 
 	// First page only: merge the owner's own agents so a signed-in user always
 	// sees their roster even if some are private / not yet in the public index.
-	if (firstPage) {
+	// Gated on a resolved session: asking anonymously only ever returns 401.
+	if (firstPage && await hasSession()) {
 		try {
 			const res = await fetch('/api/agents', { credentials: 'include', headers: { accept: 'application/json' } });
 			if (res.ok) {
@@ -183,7 +206,10 @@ async function fetchRosterPage() {
 		} catch { /* anonymous — public list only */ }
 	}
 
-	return { agents, hasMore };
+	// `failed` only stands if we ended up with nothing to show: when the owner's
+	// own agents merged in, the wall still has real cards and the public-list
+	// outage degrades to a partial roster rather than an error screen.
+	return { agents, hasMore, failed: failed && !agents.length };
 }
 
 // ── card ──────────────────────────────────────────────────────────────────────
@@ -845,11 +871,94 @@ function renderEmpty() {
 </div>`;
 }
 
+// ── roster error state ───────────────────────────────────────────────────────
+// The roster request failing is NOT the same thing as the platform having no
+// agents, and rendering "No agents yet" for an outage tells the viewer a lie.
+// This panel says what actually happened, retries on its own with backoff, and
+// offers both a manual retry and a route to the full directory.
+
+const RETRY_BACKOFF_MS = [8000, 16000, 30000, 60000];
+let _retryAttempt = 0;
+let _retryTimer = null;
+// While the error panel owns the wall, scroll must not re-fire the failing
+// request on every wheel tick. The backoff timer and the button are the only
+// retry paths.
+let _rosterErrored = false;
+
+function clearRosterError() {
+	if (_retryTimer) { clearTimeout(_retryTimer); _retryTimer = null; }
+	_retryAttempt = 0;
+	_rosterErrored = false;
+	document.getElementById('al-roster-error')?.remove();
+}
+
+async function retryRoster(box) {
+	const btn = box.querySelector('.al-error-retry');
+	const next = box.querySelector('.al-error-next');
+	btn.disabled = true;
+	btn.textContent = 'Retrying…';
+	if (next) next.textContent = '';
+	_hasMore = true;       // a failed page must not permanently end pagination
+	_rosterErrored = false; // this call IS the retry, so let it through
+	await loadMore();
+	// Still on screen ⇒ the retry failed too; hand control back and re-arm.
+	if (document.getElementById('al-roster-error') === box) {
+		btn.disabled = false;
+		btn.textContent = 'Try again';
+		scheduleRosterRetry(box);
+	}
+}
+
+function scheduleRosterRetry(box) {
+	if (_retryTimer) clearTimeout(_retryTimer);
+	const wait = RETRY_BACKOFF_MS[Math.min(_retryAttempt, RETRY_BACKOFF_MS.length - 1)];
+	_retryAttempt++;
+	const next = box.querySelector('.al-error-next');
+	if (next) next.textContent = `Retrying automatically in ${Math.round(wait / 1000)}s`;
+	_retryTimer = setTimeout(() => {
+		_retryTimer = null;
+		if (document.getElementById('al-roster-error') !== box) return;
+		if (document.hidden) { scheduleRosterRetry(box); return; }
+		retryRoster(box);
+	}, wait);
+}
+
+function renderRosterError() {
+	_rosterErrored = true;
+	if (document.getElementById('al-roster-error')) return;
+	const firstLoad = _cards.size === 0;
+	if (firstLoad) grid.querySelectorAll('.al-skeleton').forEach((s) => s.remove());
+	const box = document.createElement('div');
+	box.id = 'al-roster-error';
+	box.className = 'al-error';
+	box.setAttribute('role', 'alert');
+	box.innerHTML = `
+<div class="al-error-icon" aria-hidden="true">⚠</div>
+<h2>${firstLoad ? "Couldn't load the agent wall" : "Couldn't load more agents"}</h2>
+<p>The live roster request didn't come back. Your connection or the roster API is briefly unavailable.${firstLoad ? '' : ' The agents already on the wall keep streaming.'}</p>
+<div class="al-error-actions">
+	<button type="button" class="al-error-retry">Try again</button>
+	<a class="al-error-alt" href="/agents">Browse the agent directory</a>
+</div>
+<div class="al-error-next" aria-live="polite"></div>`;
+	grid.appendChild(box);
+	box.querySelector('.al-error-retry').addEventListener('click', () => retryRoster(box));
+	scheduleRosterRetry(box);
+}
+
 async function loadMore() {
-	if (_loading || !_hasMore) return;
+	if (_loading || !_hasMore || _rosterErrored) return;
 	_loading = true;
-	const { agents, hasMore } = await fetchRosterPage();
+	const { agents, hasMore, failed } = await fetchRosterPage();
+
+	if (failed) {
+		// Leave `_hasMore` alone so infinite scroll and the retry can try again.
+		renderRosterError();
+		_loading = false;
+		return;
+	}
 	_hasMore = hasMore;
+	clearRosterError();
 
 	if (!_cards.size && !agents.length) {
 		renderEmpty();

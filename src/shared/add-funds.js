@@ -1,18 +1,50 @@
 /**
- * add-funds.js — in-product "Add funds / Buy USDC" overlay.
+ * add-funds.js: in-product "Add funds" overlay.
  *
  * Opens a Coinbase Onramp popup (or shows a wallet-address fallback) so a
- * zero-balance user can get USDC without leaving the app.  Polls the wallet
+ * zero-balance wallet can be funded without leaving the app.  Polls the wallet
  * balance every 5 s and resolves when the balance increases.
+ *
+ * Funds USDC by default.  Pass `asset: 'SOL'` for a wallet that spends native
+ * lamports (the agent-economy demo wallet, for one): the copy, the onramp
+ * asset, and the balance being watched all switch together, so a caller can
+ * never send a wallet an asset it cannot spend.
  *
  * Usage:
  *   const newBalance = await showAddFunds({ walletAddress, requiredUsdc });
  *   // newBalance: { usdc: 1.23 } or null if dismissed
+ *   const solBalance = await showAddFunds({ walletAddress, asset: 'SOL' });
+ *   // solBalance: { sol: 0.05 } or null if dismissed
  */
 
 import { ensureRiskAck } from './risk-ack.js';
 
 const USDC_MINT_SOLANA = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+// Per-asset copy, precision, and balance reader. Everything that differs
+// between a USDC top-up and a SOL top-up lives here, so the overlay itself
+// stays asset-agnostic.
+const ASSETS = {
+	USDC: {
+		label: 'USDC',
+		desc: 'Buy USDC to use skills and pay for services. Funds are deposited directly to your connected wallet.',
+		altLabel: 'Or send USDC directly to your wallet:',
+		note: 'Solana network · USDC only',
+		decimals: 2,
+		resultKey: 'usdc',
+		readBalance: fetchUsdcBalance,
+	},
+	SOL: {
+		label: 'SOL',
+		desc: 'Buy SOL to cover this wallet\'s on-chain transactions. Funds are deposited directly to the wallet address below.',
+		altLabel: 'Or send SOL directly to this wallet:',
+		note: 'Solana network · native SOL only',
+		decimals: 5,
+		resultKey: 'sol',
+		readBalance: fetchSolBalance,
+	},
+};
+const DEFAULT_ASSET = 'USDC';
 const POLL_INTERVAL_MS = 5000;
 // Stop actively polling after this long with no deposit, then surface a manual
 // "Check again" affordance instead of spinning forever. Card buys land in
@@ -27,7 +59,7 @@ function esc(s) {
 		.replace(/"/g, '&quot;');
 }
 
-const OVERLAY_HTML = `
+const overlayHtml = (asset) => `
 <div class="af-overlay" id="af-overlay" role="dialog" aria-modal="true" aria-labelledby="af-title">
 	<div class="af-box">
 		<div class="af-head">
@@ -35,20 +67,20 @@ const OVERLAY_HTML = `
 			<button class="af-close" id="af-close" aria-label="Close">×</button>
 		</div>
 		<div class="af-body">
-			<p class="af-desc">Buy USDC to use skills and pay for services. Funds are deposited directly to your connected wallet.</p>
+			<p class="af-desc">${esc(asset.desc)}</p>
 			<div class="af-amounts" id="af-amounts">
 				<button class="af-amt" data-amount="10">$10</button>
 				<button class="af-amt" data-amount="25">$25</button>
 				<button class="af-amt" data-amount="50">$50</button>
 			</div>
-			<button class="af-cta" id="af-cta">Buy USDC</button>
+			<button class="af-cta" id="af-cta">Buy ${esc(asset.label)}</button>
 			<div class="af-alt" id="af-alt">
-				<div class="af-alt-label">Or send USDC directly to your wallet:</div>
+				<div class="af-alt-label">${esc(asset.altLabel)}</div>
 				<div class="af-addr-row">
 					<code class="af-addr" id="af-addr"></code>
 					<button class="af-copy" id="af-copy" title="Copy address">Copy</button>
 				</div>
-				<div class="af-alt-note">Solana network · USDC only</div>
+				<div class="af-alt-note">${esc(asset.note)}</div>
 			</div>
 			<div class="af-status" id="af-status" role="status" aria-live="polite"></div>
 			<div class="af-poll" id="af-poll" hidden>
@@ -206,14 +238,38 @@ async function fetchUsdcBalance(address) {
 }
 
 /**
+ * Fetch the native SOL balance for a Solana address via the same wallet
+ * endpoint, which reports native holdings separately from SPL tokens.
+ * Returns the decimal SOL amount (e.g. 0.05) or null on failure.
+ * @param {string} address
+ * @returns {Promise<number|null>}
+ */
+async function fetchSolBalance(address) {
+	try {
+		const r = await fetch('/api/wallet/balances', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({ chain: 'solana', address }),
+		});
+		if (!r.ok) return null;
+		const data = await r.json();
+		return Number(data.native?.amount) || 0;
+	} catch {
+		return null;
+	}
+}
+
+/**
  * Fetch an onramp URL from our server endpoint.
- * Returns { url, mode } or null on failure.
+ * Returns { url, mode, asset } or null on failure.
  * @param {string} address  Solana wallet address
  * @param {number} [amount] suggested USD amount
+ * @param {string} [asset]  asset to buy (USDC or SOL)
  */
-async function fetchOnrampLink(address, amount = 25) {
+async function fetchOnrampLink(address, amount = 25, asset = DEFAULT_ASSET) {
 	try {
-		const params = new URLSearchParams({ address, amount: String(amount) });
+		const params = new URLSearchParams({ address, amount: String(amount), asset });
 		const r = await fetch(`/api/onramp/link?${params}`, { credentials: 'include' });
 		if (!r.ok) return null;
 		return await r.json();
@@ -228,11 +284,16 @@ async function fetchOnrampLink(address, amount = 25) {
  * @param {object} opts
  * @param {string}  opts.walletAddress    the Phantom/Solana wallet to fund
  * @param {number}  [opts.requiredUsdc]   minimum amount needed (shows as suggestion)
+ * @param {string}  [opts.asset]          'USDC' (default) or 'SOL'
  * @param {Element} [opts.container]      defaults to document.body
- * @returns {Promise<{usdc: number}|null>}  resolves with new balance or null if dismissed
+ * @returns {Promise<{usdc: number}|{sol: number}|null>}  new balance, or null if dismissed
  */
-export async function showAddFunds({ walletAddress, requiredUsdc, container } = {}) {
-	// Buying USDC is a real-money commitment — require the risk acknowledgment.
+export async function showAddFunds({ walletAddress, requiredUsdc, asset: assetName, container } = {}) {
+	const assetKey = Object.hasOwn(ASSETS, String(assetName || '').toUpperCase())
+		? String(assetName).toUpperCase()
+		: DEFAULT_ASSET;
+	const asset = ASSETS[assetKey];
+	// Buying crypto is a real-money commitment, so require the risk acknowledgment.
 	if (!(await ensureRiskAck({ context: 'onramp' }))) return null;
 	return new Promise((resolve) => {
 		const root = container || document.body;
@@ -246,7 +307,7 @@ export async function showAddFunds({ walletAddress, requiredUsdc, container } = 
 		}
 
 		const wrapper = document.createElement('div');
-		wrapper.innerHTML = OVERLAY_HTML;
+		wrapper.innerHTML = overlayHtml(asset);
 		root.appendChild(wrapper);
 
 		const overlay = wrapper.querySelector('#af-overlay');
@@ -263,7 +324,7 @@ export async function showAddFunds({ walletAddress, requiredUsdc, container } = 
 		let selectedAmount = 25;
 		let pollTimer = null;
 		let pollStart = 0;
-		let baselineUsdc = null;
+		let baselineBalance = null;
 		let popupWindow = null;
 		let destroyed = false;
 
@@ -317,22 +378,22 @@ export async function showAddFunds({ walletAddress, requiredUsdc, container } = 
 		// Snapshot the current balance so we can detect an increase
 		async function snapshotBalance() {
 			if (!walletAddress) return;
-			baselineUsdc = await fetchUsdcBalance(walletAddress);
+			baselineBalance = await asset.readBalance(walletAddress);
 		}
 
 		// Detect the deposit landing and resolve the overlay.
 		function showSuccess(current) {
 			clearInterval(pollTimer);
 			pollEl.setAttribute('hidden', '');
-			setStatus(`✓ Deposit confirmed — ${current.toFixed(2)} USDC added`, 'ok');
-			setTimeout(() => dismiss({ usdc: current }), 1800);
+			setStatus(`✓ Deposit confirmed: ${current.toFixed(asset.decimals)} ${asset.label} added`, 'ok');
+			setTimeout(() => dismiss({ [asset.resultKey]: current }), 1800);
 		}
 
-		// Resolves true (and shows success) once USDC lands above the baseline.
+		// Resolves true (and shows success) once the asset lands above the baseline.
 		async function checkForDeposit() {
-			const current = await fetchUsdcBalance(walletAddress);
+			const current = await asset.readBalance(walletAddress);
 			if (current === null) return false;
-			if (baselineUsdc !== null && current > baselineUsdc) {
+			if (baselineBalance !== null && current > baselineBalance) {
 				showSuccess(current);
 				return true;
 			}
@@ -379,7 +440,7 @@ export async function showAddFunds({ walletAddress, requiredUsdc, container } = 
 
 			await snapshotBalance();
 
-			const onramp = await fetchOnrampLink(walletAddress, selectedAmount);
+			const onramp = await fetchOnrampLink(walletAddress, selectedAmount, assetKey);
 
 			if (onramp?.url) {
 				popupWindow = window.open(
@@ -395,7 +456,7 @@ export async function showAddFunds({ walletAddress, requiredUsdc, container } = 
 					setStatus('Popup blocked. Opening in new tab…');
 					window.open(onramp.url, '_blank', 'noopener');
 				} else {
-					setStatus('Copy your address below and send USDC from any exchange.', '');
+					setStatus(`Copy the address below and send ${asset.label} from any exchange.`, '');
 				}
 			} else {
 				setStatus('');

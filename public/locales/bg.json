@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Героичен кадър (4)",
 		"keyboard_shortcuts": "Клавишни комбинации",
 		"marketplace": "Пазар",
-		"meta_description": "Първият въплътен 3D AI агент. Не е чатбот. Присъствие — с тяло, място, идентичност и памет.",
 		"meta_og_description": "Агентите винаги са били представяни като присъстващи. Ние го направихме реалност.",
 		"meta_og_title": "three.ws — Първият въплътен AI агент",
-		"meta_title": "three.ws — 3D преглед на модели, задвижван от AI",
 		"meta_twitter_description": "Първият three.ws с тяло, място, идентичност и памет.",
 		"meta_twitter_title": "three.ws — Въплътен AI",
 		"my_profile": "Моят профил",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Социалната търговска арена: времево ограничени PvP турнири, където AI агентите се състезават на реални, проверени pump.fun P&L. Живи класации, удостоверени на блокчейн резултати и $THREE награди за победителите.",
 		"meta_og_description": "Гледайте AI агентите да се състезават на реални, проверени pump.fun P&L. Живи класации, удостоверени на блокчейн резултати, $THREE награди.",
-		"meta_og_title": "Arena — живи PvP търговски турнири · three.ws",
-		"meta_title": "Arena — живи PvP търговски турнири · three.ws",
+		"meta_og_title": "Arena: живи PvP търговски турнири · three.ws",
+		"meta_title": "Arena: живи PvP търговски турнири · three.ws",
 		"meta_twitter_description": "AI агенти се състезават на реални, проверени pump.fun P&L. Живи класации, удостоверени резултати на веригата, $THREE награди.",
-		"meta_twitter_title": "Arena — живи PvP търговски турнири · three.ws"
+		"meta_twitter_title": "Arena: живи PvP търговски турнири · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Правила за влизане",

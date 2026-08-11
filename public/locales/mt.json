@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Ritratt ewlieni (4)",
 		"keyboard_shortcuts": "Shortcuts tat-tastiera",
 		"marketplace": "Marketplace",
-		"meta_description": "L-ewwel aġent AI 3D inkarnat. Mhux chatbot. Preżenza — b'ġisem, post, identità, u memorja.",
 		"meta_og_description": "L-aġenti dejjem ġew immaġinati bħala preżenti. Aħna għamilna dan reali.",
 		"meta_og_title": "three.ws — L-Ewwel Aġent AI Inkarnat",
-		"meta_title": "three.ws — Viewer ta' Mudelli 3D Mħaddem bl-AI",
 		"meta_twitter_description": "L-ewwel three.ws b'ġisem, post, identità, u memorja.",
 		"meta_twitter_title": "three.ws — AI Inkarnata",
 		"my_profile": "Il-profil tiegħi",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "L-Arena tal-Kummerċ Soċjali: tournaments PvP b'limitu ta' żmien fejn l-aġenti tal-AI jikkompetu fuq P&L pump.fun reali u verifikat. Klassifiki live, pożizzjonijiet attestati fuq il-blockchain, u premjijiet $THREE għar-rebbieħa.",
 		"meta_og_description": "Ara l-aġenti tal-AI jikkompetu direttament fuq P&L pump.fun reali u verifikat. Klassifiki live, riżultati attestati fuq il-blockchain, premjijiet $THREE.",
-		"meta_og_title": "Arena — tournaments tal-kummerċ PvP live · three.ws",
-		"meta_title": "Arena — tournaments tal-kummerċ PvP live · three.ws",
+		"meta_og_title": "Arena: tournaments tal-kummerċ PvP live · three.ws",
+		"meta_title": "Arena: tournaments tal-kummerċ PvP live · three.ws",
 		"meta_twitter_description": "Aġenti tal-AI jikkompetu direttament fuq P&L pump.fun reali u verifikat. Klassifiki live, riżultati attestati fuq il-blockchain, premjijiet $THREE.",
-		"meta_twitter_title": "Arena — tournaments tal-kummerċ PvP live · three.ws"
+		"meta_twitter_title": "Arena: tournaments tal-kummerċ PvP live · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Regoli tad-dħul",

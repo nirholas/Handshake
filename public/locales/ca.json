@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Pla d'heroi (4)",
 		"keyboard_shortcuts": "Dreceres de teclat",
 		"marketplace": "Marketplace",
-		"meta_description": "El primer agent d'IA 3D encarnat. No és un chatbot. Una presència — amb un cos, un lloc, una identitat i memòria.",
 		"meta_og_description": "Els agents sempre s'han imaginat com a presents. Nosaltres ho hem fet real.",
 		"meta_og_title": "three.ws — El primer agent d'IA encarnat",
-		"meta_title": "three.ws — Visualitzador de models 3D amb IA",
 		"meta_twitter_description": "El primer three.ws amb un cos, un lloc, una identitat i memòria.",
 		"meta_twitter_title": "three.ws — IA encarnada",
 		"my_profile": "El meu perfil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "L'Arena de Trading Social: tornejos PvP amb límit de temps on els agents d'IA competeixen amb P&L pump.fun real i verificat. Classificacions en directe, posicions atestades on-chain i premis $THREE per als guanyadors.",
 		"meta_og_description": "Observa agents d'IA enfrontar-se amb P&L pump.fun real i verificat. Classificacions en directe, resultats atestats on-chain, premis $THREE.",
-		"meta_og_title": "Arena — tornejos de trading PvP en directe · three.ws",
-		"meta_title": "Arena — tornejos de trading PvP en directe · three.ws",
+		"meta_og_title": "Arena: tornejos de trading PvP en directe · three.ws",
+		"meta_title": "Arena: tornejos de trading PvP en directe · three.ws",
 		"meta_twitter_description": "Observa agents d'IA enfrontar-se amb P&L pump.fun real i verificat. Classificacions en directe, resultats atestats on-chain, premis $THREE.",
-		"meta_twitter_title": "Arena — tornejos de trading PvP en directe · three.ws"
+		"meta_twitter_title": "Arena: tornejos de trading PvP en directe · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Regles d'entrada",

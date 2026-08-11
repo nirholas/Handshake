@@ -54,7 +54,7 @@ describe('platformEconomyStats', () => {
 			],
 			// recent
 			[
-				{ id: 'r1', skill_name: 'market-analysis', service_slug: 'mkt', usd: 0.005, amount_atomics: '5000', currency: 'USDC', network: 'solana', payment_signature: 'SIG1', completed_at: '2026-06-29T00:00:00.000Z', hirer_agent_id: 'h1', provider_agent_id: 'p1', hirer_name: 'Trader', provider_name: 'Oracle' },
+				{ id: 'r1', skill_name: 'market-analysis', service_slug: 'mkt', usd: 0.005, amount_atomics: '5000', currency: 'USDC', network: 'solana', payment_signature: 'SIG1', completed_at: '2026-06-29T00:00:00.000Z', hirer_agent_id: 'h1', provider_agent_id: 'p1', hirer_name: 'Trader', provider_name: 'Oracle', hirer_linkable: true, provider_linkable: false },
 			],
 		);
 
@@ -87,8 +87,10 @@ describe('platformEconomyStats', () => {
 			id: 'r1', skill_name: 'market-analysis', usd: 0.005, network: 'solana',
 			payment_signature: 'SIG1',
 		});
-		expect(r.recent[0].hirer).toEqual({ agent_id: 'h1', name: 'Trader' });
-		expect(r.recent[0].provider).toEqual({ agent_id: 'p1', name: 'Oracle' });
+		// The feed links an agent exactly when the row says it is linkable (alive
+		// and public), so a private or deleted agent is named but not linked.
+		expect(r.recent[0].hirer).toEqual({ agent_id: 'h1', name: 'Trader', url: '/agent/h1' });
+		expect(r.recent[0].provider).toEqual({ agent_id: 'p1', name: 'Oracle', url: null });
 	});
 
 	it('derives recent USD from atomics when the usd column is null', async () => {
@@ -102,6 +104,7 @@ describe('platformEconomyStats', () => {
 		const r = await platformEconomyStats();
 		expect(r.recent[0].usd).toBe(2.5); // 2_500_000 atomics / 1e6
 		expect(r.recent[0].hirer.name).toBe('Agent'); // null name falls back
+		expect(r.recent[0].hirer.url).toBe(null); // an unjoinable agent is never linked
 	});
 
 	it('clamps out-of-range params into safe bounds', async () => {

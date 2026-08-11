@@ -280,6 +280,14 @@ const ALLOWED_TOOLS = new Set([
 	'search_public_avatars',
 ]);
 
+// In-house x402 routes the public showcase pages buy from the shared platform
+// wallet (/agent-exchange drives the crypto-intel one). This branch is
+// unauthenticated, exactly like the MCP `tool` path above, and it spends real
+// USDC per call, so what it can buy is a fixed server-side allowlist and never
+// a caller-supplied URL. Arbitrary endpoints go through handleExternalPay,
+// which is owner-authenticated and pays from that owner's own agent wallet.
+const SHOWCASE_ENDPOINTS = new Set(['/api/x402/crypto-intel']);
+
 const SOLANA_RPC = env.SOLANA_RPC_URL;
 const USDC_MAINNET_MINT = env.X402_ASSET_MINT_SOLANA;
 
@@ -890,6 +898,75 @@ function payErrorStatus(err) {
 	return 500;
 }
 
+// Buy one of the in-house SHOWCASE_ENDPOINTS from the shared platform wallet and
+// stream the payment lifecycle. This is what /agent-exchange runs: the two 3D
+// avatars are a view over a real x402 purchase of /api/x402/crypto-intel, so the
+// flow here is the same probe → sign → settle path an external agent would take
+// against the same public route. Unauthenticated by design (a viewer has no
+// wallet), bounded by the per-IP and global rate limits already applied on the
+// POST path plus the platform wallet's own balance.
+async function handleShowcasePay(req, res, input, ip) {
+	const endpoint = String(input.endpoint || '');
+	if (!SHOWCASE_ENDPOINTS.has(endpoint)) {
+		log.warn('showcase_endpoint_rejected', { endpoint: endpoint.slice(0, 120), ip });
+		return json(res, 400, {
+			error: 'invalid_endpoint',
+			error_description: 'that endpoint is not payable from the showcase wallet',
+			allowed: [...SHOWCASE_ENDPOINTS],
+		});
+	}
+
+	let buyer;
+	try {
+		buyer = loadAgentKeypair();
+	} catch {
+		return json(res, 503, {
+			error: 'config_missing',
+			error_description: 'payment processing not available',
+		});
+	}
+
+	const url = resolveResourceUrl(req, endpoint);
+	const body = input.body && typeof input.body === 'object' ? input.body : {};
+	const wantsStream =
+		(req.headers.accept || '').includes('text/event-stream') || input.stream === true;
+
+	// No spendGuard: the platform wallet has no per-agent daily policy to charge
+	// against. The rate limiters upstream are the ceiling for this path.
+	const flowArgs = {
+		url,
+		method: 'POST',
+		body,
+		buyer,
+		spendGuard: null,
+		serviceLabel: typeof input.service_label === 'string' ? input.service_label : null,
+	};
+
+	if (wantsStream) {
+		sseInit(res);
+		const emit = (ev, data) => sseSend(res, ev, data);
+		try {
+			await runExternalFlow({ ...flowArgs, emit });
+		} catch (err) {
+			emit('error', payErrorEnvelope(err));
+		} finally {
+			res.end();
+		}
+		return;
+	}
+
+	let final = null;
+	const emit = (ev, data) => {
+		if (ev === 'result') final = data;
+	};
+	try {
+		await runExternalFlow({ ...flowArgs, emit });
+	} catch (err) {
+		return json(res, payErrorStatus(err), payErrorEnvelope(err));
+	}
+	return json(res, 200, final);
+}
+
 // Pay an arbitrary external x402 endpoint from the owner's agent wallet. This is
 // the money core behind the wallet hub Pay tab. Owner-authenticated + ownership-
 // gated; the agent key is decrypted server-side via recoverSolanaAgentKeypair
@@ -1072,6 +1149,12 @@ export default wrap(async (req, res) => {
 	// platform wallet. Owner-authenticated, per-agent spend policy enforced.
 	if (typeof input.url === 'string' && input.url) {
 		return handleExternalPay(req, res, input, ip);
+	}
+
+	// Showcase pay: an in-house /api/x402/* route bought from the platform wallet
+	// for a public demo page. Allowlisted server-side (SHOWCASE_ENDPOINTS).
+	if (typeof input.endpoint === 'string' && input.endpoint) {
+		return handleShowcasePay(req, res, input, ip);
 	}
 
 	const tool = String(input.tool || '');

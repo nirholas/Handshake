@@ -24,7 +24,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { getTraderStats } from '../_lib/trader-stats.js';
 import { getReputationRecords, computeReputation, getDecisionsWithOutcomes } from '../_lib/reasoning-ledger.js';
-import { isUuid } from '../_lib/validate.js';
+import { isUuid, isValidSolanaAddress } from '../_lib/validate.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 
@@ -96,13 +96,29 @@ function ageMs(ts, now) {
 	return Number.isFinite(t) ? now - t : Infinity;
 }
 
+// Trading verbs, for decisions whose subject is not itself a coin (an exit keyed
+// by a position id, say). Kept as a hint on top of the shape test below, never as
+// the only signal, so a new verb still classifies correctly the moment its
+// subject is a mint.
+const TRADE_KINDS = new Set(['snipe', 'buy', 'sell', 'entry', 'exit', 'trade', 'scale', 'hold']);
+
 export function shapeDecision(d, network) {
 	const reconciled = d.outcome_status != null && d.was_correct != null;
+	// `subject_ref` is a free-form pointer: a coin mint for a trading call, but an
+	// internal id (a tuner arm, say) for an operational one. Publishing the latter
+	// as `mint` sent the page to solscan.io/token/<uuid>, a link to nothing. Only a
+	// real base58 address is a mint; everything else keeps its raw ref and is
+	// classified as operations so a reader can tell the two apart.
+	const subjectRef = d.subject_ref ?? null;
+	const mint = isValidSolanaAddress(subjectRef) ? subjectRef : null;
+	const kind = d.kind;
 	return {
 		id: d.id,
 		seq: Number(d.seq),
-		kind: d.kind,
-		mint: d.subject_ref,
+		kind,
+		subject_ref: subjectRef,
+		mint,
+		domain: mint || TRADE_KINDS.has(String(kind || '').toLowerCase()) ? 'trade' : 'operations',
 		rationale: d.rationale,
 		confidence: d.confidence != null ? Number(d.confidence) : null,
 		prediction: d.prediction || {},
@@ -251,7 +267,9 @@ export default wrap(async (req, res) => {
 	const [stats, repRecords, rawDecisions] = await Promise.all([
 		getTraderStats({ agentId, network, window: 'all', now }),
 		getReputationRecords(agentId).catch(() => []),
-		getDecisionsWithOutcomes(agentId, { limit: 24 }).catch(() => []),
+		// Wide enough that a burst of operational self-tuning calls cannot push every
+		// trading decision out of the window the page filters over.
+		getDecisionsWithOutcomes(agentId, { limit: 40 }).catch(() => []),
 	]);
 
 	// A private or missing agent never gets published, whichever path selected it.

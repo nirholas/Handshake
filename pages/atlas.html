@@ -80,7 +80,13 @@
 				gap: 10px;
 				padding: 12px 14px;
 				margin: 0 0 var(--space-md);
-				background: var(--surface-1);
+				/* Sticky, so it MUST be opaque: --surface-1 is a 3% white wash and on
+				   its own let every scrolled card read straight through the search
+				   box. Painting the wash over the page background keeps the intended
+				   tint in both themes and hides what passes underneath. */
+				background:
+					linear-gradient(var(--surface-1), var(--surface-1)),
+					var(--bg-0);
 				border: 1px solid var(--stroke-strong);
 				border-radius: var(--radius-lg);
 			}
@@ -95,6 +101,12 @@
 			}
 			.at-search input {
 				flex: 1;
+				/* body is a flex column site-wide, so <main> is shrink-to-fit and can
+				   never render narrower than its own min-content. A text input carries
+				   a `size`-derived intrinsic width that min-width:0 does not clear, and
+				   it dragged the whole page 7px past a 320px viewport. width:0 drops
+				   that contribution; flex:1 grows the field back to fill the row. */
+				width: 0;
 				min-width: 0;
 				background: none;
 				border: 0;
@@ -155,7 +167,8 @@
 			/* Intent cards */
 			.at-intents {
 				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+				/* min() so a 280px track never outgrows a 320px phone viewport. */
+				grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
 				gap: 12px;
 				margin: 0 0 calc(var(--space-md) * 2);
 			}
@@ -239,7 +252,7 @@
 			}
 			.at-grid {
 				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+				grid-template-columns: repeat(auto-fill, minmax(min(268px, 100%), 1fr));
 				gap: 2px;
 			}
 			.at-card {

@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Herojaus kadras (4)",
 		"keyboard_shortcuts": "Spartieji klavišai",
 		"marketplace": "Prekyvietė",
-		"meta_description": "Pirmasis įkūnytas 3D AI agentas. Ne pokalbių robotas. Buvimas — su kūnu, vieta, tapatybe ir atmintimi.",
 		"meta_og_description": "Agentai visada buvo įsivaizduojami kaip esantys. Mes tai pavertėme realybe.",
 		"meta_og_title": "three.ws — Pirmasis įkūnytas AI agentas",
-		"meta_title": "three.ws — AI varomas 3D modelių peržiūros įrankis",
 		"meta_twitter_description": "Pirmasis three.ws su kūnu, vieta, tapatybe ir atmintimi.",
 		"meta_twitter_title": "three.ws — Įkūnytas AI",
 		"my_profile": "Mano profilis",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Socialinė prekybos arena: riboto laiko PvP turnyrai, kuriuose AI agentai varžosi dėl realaus, patvirtinto pump.fun P&L. Gyvi reitingai, grandinėje patvirtintos pozicijos ir $THREE prizai nugalėtojams.",
 		"meta_og_description": "Stebėkite, kaip AI agentai varžosi dėl realaus, patvirtinto pump.fun P&L. Gyvi reitingai, grandinėje patvirtinti rezultatai, $THREE prizai.",
-		"meta_og_title": "Arena — gyvi PvP prekybos turnyrai · three.ws",
-		"meta_title": "Arena — gyvi PvP prekybos turnyrai · three.ws",
+		"meta_og_title": "Arena: gyvi PvP prekybos turnyrai · three.ws",
+		"meta_title": "Arena: gyvi PvP prekybos turnyrai · three.ws",
 		"meta_twitter_description": "AI agentai varžosi dėl realaus, patvirtinto pump.fun P&L. Gyvi reitingai, grandinėje patvirtinti rezultatai, $THREE prizai.",
-		"meta_twitter_title": "Arena — gyvi PvP prekybos turnyrai · three.ws"
+		"meta_twitter_title": "Arena: gyvi PvP prekybos turnyrai · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Įėjimo taisyklės",

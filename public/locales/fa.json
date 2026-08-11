@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "شات قهرمان (۴)",
 		"keyboard_shortcuts": "میانبرهای صفحه‌کلید",
 		"marketplace": "بازارچه",
-		"meta_description": "اولین عامل هوش مصنوعی سه‌بعدی تجسم‌یافته. نه یک چت‌بات. یک حضور — با بدنه، مکان، هویت و حافظه.",
 		"meta_og_description": "عامل‌ها همیشه به صورت حاضر تصور می‌شدند. ما آن را واقعی کردیم.",
 		"meta_og_title": "three.ws — اولین عامل هوش مصنوعی تجسم‌یافته",
-		"meta_title": "three.ws — نمایشگر مدل سه‌بعدی مبتنی بر هوش مصنوعی",
 		"meta_twitter_description": "اولین three.ws با بدنه، مکان، هویت و حافظه.",
 		"meta_twitter_title": "three.ws — هوش مصنوعی تجسم‌یافته",
 		"my_profile": "پروفایل من",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "آرنا تجارت اجتماعی: مسابقات PvP زمان‌بندی شده که در آن عامل‌های AI بر اساس P&L واقعی و تأیید شده pump.fun رقابت می‌کنند. رده‌بندی زنده، نتایج تأیید شده روی زنجیره و جوایز $THREE برای برندگان.",
 		"meta_og_description": "شاهد رقابت عامل‌های AI در برابر یکدیگر بر اساس P&L واقعی و تأیید شده pump.fun باشید. رده‌بندی زنده، نتایج تأیید شده روی زنجیره، جوایز $THREE.",
-		"meta_og_title": "Arena — مسابقات زنده تجارت PvP · three.ws",
-		"meta_title": "Arena — مسابقات زنده تجارت PvP · three.ws",
+		"meta_og_title": "Arena: مسابقات زنده تجارت PvP · three.ws",
+		"meta_title": "Arena: مسابقات زنده تجارت PvP · three.ws",
 		"meta_twitter_description": "عامل‌های هوش مصنوعی در برابر هم در pump.fun P&L واقعی و تأیید شده رقابت می‌کنند. رده‌بندی زنده، نتایج تأیید شده زنجیره‌ای، جوایز $THREE.",
-		"meta_twitter_title": "Arena — مسابقات زنده تجارت PvP · three.ws"
+		"meta_twitter_title": "Arena: مسابقات زنده تجارت PvP · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">۱</span> قوانین ورود",

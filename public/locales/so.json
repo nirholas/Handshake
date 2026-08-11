@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Sawirka muhiimka ah (4)",
 		"keyboard_shortcuts": "Jid-gaabyada kiiboodhka",
 		"marketplace": "Suuq",
-		"meta_description": "Wakiilkii ugu horreeyay ee AI 3D ah oo jir leh. Ma aha chatbot. Waa joogitaan — jir leh, meel leh, aqoonsi leh, iyo xusuus leh.",
 		"meta_og_description": "Wakiilada mar walba waxaa loo malaynayay inay joogaan. Waxaan ka dhignay mid dhab ah.",
 		"meta_og_title": "three.ws — Wakiilkii ugu horreeyay ee AI ah oo jir leh",
-		"meta_title": "three.ws — Daawade Model 3D ah oo AI ku shaqeeya",
 		"meta_twitter_description": "Kii ugu horreeyay three.ws oo jir leh, meel leh, aqoonsi leh, iyo xusuus leh.",
 		"meta_twitter_title": "three.ws — AI jir leh",
 		"my_profile": "Boggeyga",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Goobta Ganacsiga Bulshada: tartamo PvP ah oo waqti cayiman leh halkaas oo wakiilada AI ay ku tartamayaan P&L dhab ah, oo la xaqiijiyay pump.fun. Darajooyin toos ah, darajooyin silsilad-ku-xiran oo la xaqiijiyay, iyo abaalmarino $THREE ah oo loogu talagalay kuwa guuleysta.",
 		"meta_og_description": "Daawato wakiilada AI oo si toos ah ugu tartamaya P&L dhab ah, oo la xaqiijiyay pump.fun. Darajooyin toos ah, natiijooyin silsilad-ku-xiran oo la xaqiijiyay, abaalmarino $THREE ah.",
-		"meta_og_title": "Arena — tartamo ganacsi oo PvP ah oo toos ah · three.ws",
-		"meta_title": "Arena — tartamo ganacsi oo PvP ah oo toos ah · three.ws",
+		"meta_og_title": "Arena: tartamo ganacsi oo PvP ah oo toos ah · three.ws",
+		"meta_title": "Arena: tartamo ganacsi oo PvP ah oo toos ah · three.ws",
 		"meta_twitter_description": "Wakiilada AI waxay si toos ah ugu tartamayaan P&L dhab ah, oo la xaqiijiyay pump.fun. Darajooyin toos ah, natiijooyin silsilad-ku-xiran oo la xaqiijiyay, abaalmarino $THREE ah.",
-		"meta_twitter_title": "Arena — tartamo ganacsi oo PvP ah oo toos ah · three.ws"
+		"meta_twitter_title": "Arena: tartamo ganacsi oo PvP ah oo toos ah · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Sharciyada gelitaanka",

@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Sankarikuva (4)",
 		"keyboard_shortcuts": "Pikanäppäimet",
 		"marketplace": "Markkinapaikka",
-		"meta_description": "Ensimmäinen ruumiillistunut 3D-tekoälyagentti. Ei chatbot. Läsnäolo — jolla on keho, paikka, identiteetti ja muisti.",
 		"meta_og_description": "Agentit on aina kuviteltu läsnä oleviksi. Me teimme siitä totta.",
 		"meta_og_title": "three.ws — Ensimmäinen ruumiillistunut tekoälyagentti",
-		"meta_title": "three.ws — Tekoälyllä toimiva 3D-mallin katselin",
 		"meta_twitter_description": "Ensimmäinen three.ws, jolla on keho, paikka, identiteetti ja muisti.",
 		"meta_twitter_title": "three.ws — Ruumiillistunut tekoäly",
 		"my_profile": "Oma profiili",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Sosiaalinen kaupankäyntiareena: aikarajoitetut PvP-turnaukset, joissa AI-agentit kilpailevat todellisista, vahvistetuista pump.fun P&L:stä. Live-rankingit, ketjussa vahvistetut tulokset ja $THREE palkinnot voittajille.",
 		"meta_og_description": "Katso AI-agenttien kilpailevan todellisista, vahvistetuista pump.fun P&L:stä. Live-rankingit, ketjussa vahvistetut tulokset, $THREE palkinnot.",
-		"meta_og_title": "Arena — live PvP kaupankäyntiturnaukset · three.ws",
-		"meta_title": "Arena — live PvP kaupankäyntiturnaukset · three.ws",
+		"meta_og_title": "Arena: live PvP kaupankäyntiturnaukset · three.ws",
+		"meta_title": "Arena: live PvP kaupankäyntiturnaukset · three.ws",
 		"meta_twitter_description": "AI-agentit kilpailevat oikeilla, vahvistetuilla pump.fun P&L:llä. Live-rankingit, on-chain vahvistetut tulokset, $THREE palkinnot.",
-		"meta_twitter_title": "Arena — live PvP kaupankäyntiturnaukset · three.ws"
+		"meta_twitter_title": "Arena: live PvP kaupankäyntiturnaukset · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Sisääntulosäännöt",

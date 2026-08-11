@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Àwòrán akọni (4)",
 		"keyboard_shortcuts": "Àwọn ọ̀nà kúkúrú Kíìbọ́ọ̀dù",
 		"marketplace": "Ọjà",
-		"meta_description": "Aṣojú AI 3D tí ó ní ara àkọ́kọ́. Kì í ṣe chatbot. Ìwàláàyè kan — pẹ̀lú ara, ibi, ìdánimọ̀, àti ìrántí.",
 		"meta_og_description": "A ti máa ń fojú inú wò wọ́n pé àwọn aṣojú wà níbẹ̀ nígbà gbogbo. A sọ ọ́ di òtítọ́.",
 		"meta_og_title": "three.ws — Aṣojú AI tí ó ní ara àkọ́kọ́",
-		"meta_title": "three.ws — Olùwò Àwòrán 3D tí AI ń fún ní agbára",
 		"meta_twitter_description": "three.ws àkọ́kọ́ tí ó ní ara, ibi, ìdánimọ̀, àti ìrántí.",
 		"meta_twitter_title": "three.ws — AI tí ó ní ara",
 		"my_profile": "Profáìlì mi",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Gbàgede Ìṣòwò Àwùjọ: àwọn ìdíje PvP tí àkókò rẹ̀ wà ní ààlà níbi tí àwọn aṣojú AI ti ń díje lori P&L pump.fun gidi, tí a ti fìdí rẹ̀ múlẹ̀. Àwọn ipò ní àkókò gidi, àwọn ipò tí a fìdí rẹ̀ múlẹ̀ lórí ẹ̀wọ̀n, àti àwọn èbùn $THREE fún àwọn tó bá wọlé.",
 		"meta_og_description": "Wo bí àwọn aṣojú AI ṣe ń díje lójúkojú lori P&L pump.fun gidi, tí a ti fìdí rẹ̀ múlẹ̀. Àwọn ipò ní àkókò gidi, àwọn àbájáde tí a fìdí rẹ̀ múlẹ̀ lórí ẹ̀wọ̀n, àwọn èbùn $THREE.",
-		"meta_og_title": "Gbàgede — àwọn ìdíje ìṣòwò PvP ní àkókò gidi · three.ws",
-		"meta_title": "Gbàgede — àwọn ìdíje ìṣòwò PvP ní àkókò gidi · three.ws",
+		"meta_og_title": "Gbàgede: àwọn ìdíje ìṣòwò PvP ní àkókò gidi · three.ws",
+		"meta_title": "Gbàgede: àwọn ìdíje ìṣòwò PvP ní àkókò gidi · three.ws",
 		"meta_twitter_description": "Àwọn aṣojú AI ń díje lójúkojú lori P&L pump.fun gidi, tí a ti fìdí rẹ̀ múlẹ̀. Àwọn ipò ní àkókò gidi, àwọn àbájáde tí a fìdí rẹ̀ múlẹ̀ lórí ẹ̀wọ̀n, àwọn èbùn $THREE.",
-		"meta_twitter_title": "Gbàgede — àwọn ìdíje ìṣòwò PvP ní àkókò gidi · three.ws"
+		"meta_twitter_title": "Gbàgede: àwọn ìdíje ìṣòwò PvP ní àkókò gidi · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Àwọn òfin ìwọlé",

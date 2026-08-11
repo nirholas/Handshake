@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-11T21:39:58.612Z",
+	"generated_at": "2026-08-11T21:45:57.459Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -76,6 +76,17 @@
 			"link": "/discover",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "AR Forge stops spinning forever, and its failure states now hand you the model",
+			"summary": "AR Forge at /ar turns a sentence into a real 3D model you can place in your room. Three ways it could leave you stuck are gone. Reopening a model you had already loaded, from the Recent forges row or a shared link you were already viewing, showed a loading spinner that never finished, because the 3D viewer only announces a load when the model actually changes; it now snaps straight back to the loaded model. When a model could not be displayed at all, because the 3D viewer script was blocked or the file would not render, the page offered Download GLB and Open in viewer buttons that had no link behind them and sat underneath an invisible layer that swallowed the click; those buttons are now wired the moment the model URL is known and are clickable, so the advice to download the file is advice you can follow. A model that simply never arrives no longer spins indefinitely either: if nothing has downloaded for thirty seconds it stops and offers the same real exits, and the countdown restarts whenever data is still coming in, so a large model on a slow connection is never cut off. The waiting copy also tells the truth now, moving from sending your prompt through queued on the free lane to sculpting geometry as the generation actually progresses, instead of freezing on the first line for a minute. A network drop used to surface the browser wording Failed to fetch; it now says the forge could not be reached and to check your connection. The View in your space button also keeps the language you are reading the site in rather than flipping back to English once a model loads.",
+			"link": "/ar",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -304,6 +315,18 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "The Agent Identity Studio showcase is live data now, and its 3D button goes both ways",
+			"summary": "The gallery at /agent-identities shows what the Identity Studio produces: a brand brief in, a rigged 3D avatar and a set of studio renders out. Until now those demo identities were frozen into the page at build time, and the price in the header was typed into the copy, so a fresh demo run or a price change only showed up at the next site build. The page now reads a live feed at /api/agent-identities, which is also public for anyone else to call: it carries every demo identity, its renders, its rigged model, and the verified joint count, plus the service price read straight from the marketplace catalogue the paid endpoint charges from. Because the page now waits on something, it was given the states to match: shimmering placeholder cards while the feed loads, a real error panel with a working retry if it never arrives, and an honest empty state instead of a blank grid. View in 3D is a proper toggle at last, turning into Back to renders rather than becoming a dead button after one click, and it shows a spinner while the avatar downloads and a link to the full viewer if it fails. A render whose image is missing now says so instead of leaving a broken-image icon. On a phone-width screen the cards no longer push the page sideways.",
+			"link": "/agent-identities",
+			"tags": [
+				"improvement",
+				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "The agent-to-agent invocation SDK now states the truth about its Solana program",
 			"summary": "@three-ws/agent-protocol-sdk records agent-to-agent skill calls on Solana against the agent_invocation program. Its docs described that program as live and deployed on mainnet and devnet; the account is not on-chain yet, so anyone building on the promise hit a cluster rejection with no explanation. The README, the package constants table and the architecture reference now say exactly where the program stands and how to check the account yourself. The on-chain smoke harness that covers this path was checking a build artifact instead of the chain, so it reported a missing file rather than the deployment state; it now asks the cluster directly and runs from a clean checkout. Separately, the Solana address guard that verifies the $THREE mint and the pump.fun programs against mainnet on every build was reading a single RPC provider, so an exhausted provider key left it verifying nothing while still printing a clean result. It now walks the same provider failover chain the platform runs on.",
 			"link": null,
@@ -316,11 +339,43 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "The Avatar Engines Atlas tells the truth about Ready Player Me, and two of its links now go where they say",
+			"summary": "The atlas at /avatar-engines is a reference for builders choosing an engine to make a realistic 3D human, so a stale entry there sends someone down a dead end. Ready Player Me, listed as a live commercial platform you could call, shut its avatar creator and developer API on 31 January 2026 after Netflix acquired it. Its card now carries a Retired badge and says plainly what closed and what still works: GLB files exported before the shutdown are ordinary rigged glTF and still load and animate here. Every one of the atlas's 63 outbound links was checked. IMavatar's project page had moved and returned a 404, and the FLAME entry's Paper button opened an unrelated aerodynamics preprint rather than the FLAME paper; both now resolve. Documentation sites that had been sitting in the paper field, and so rendered as a Paper button, are labelled Docs. The page also handles its own bad day now: a skeleton grid while the registry loads, and, if the registry never arrives, an error state that offers a reload and the atlas documentation instead of an empty page.",
+			"link": "/avatar-engines",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "The character library opens instantly instead of downloading 122 MB first",
 			"summary": "Every card in the 107-character library started streaming its full 3D model the moment the page opened, four of them at once and more than 120 MB before you had asked for anything. Cards now show their picture and load the model when you hover or tab onto one, so the page opens immediately, a phone never pays for a preview it did not ask for, and sweeping the mouse across the grid costs nothing.",
 			"link": "/character-library",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The Claude artifact builder now picks your agent for you",
+			"summary": "Embedding an agent in a Claude conversation used to start with a blank box asking for an agent ID that nothing on the page told you how to find. The builder at /artifact now lists real public agents that carry an embeddable avatar, with their thumbnails; click one and the artifact builds, previews in a sandboxed frame and is ready to paste. Everything you configure (agent, theme, idle clip, background) is now carried in the page's address, so the link you copy rebuilds the same artifact for whoever you send it to. Typing an ID that was not an agent UUID used to come back as an internal error with a support reference; it now says plainly that agent IDs are UUIDs and where to find one. The sandbox CSP panel reads from three.ws instead of a third-party mirror, so it fills in even when GitHub is unreachable, and the whole page fits a 320px phone screen without sideways scrolling.",
+			"link": "/artifact",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The Club no longer freezes, and tips survive wallet transaction protection",
+			"summary": "Two ways the 3D club at /club could go wrong for a paying visitor are gone. The live tip feed froze the whole page the moment its 21st tip arrived: the code that trims the feed to 20 rows waited for a fade-out animation that never got a chance to run, and the browser locked up with a 'page unresponsive' warning. The feed now trims cleanly, keeps its fade, and can no longer strand rows even in a background tab. And tipping from a wallet with transaction protection or automatic priority fees turned on (Phantom and Solflare both ship these) was rejected with a 'transaction modification' error before any money moved; the checkout now recognizes that a wallet retuning its network fee is harmless, verifies nothing else about the payment changed, and lets the tip settle. A wallet that alters the actual payment is still refused, now with a message naming exactly what it changed.",
+			"link": "/club",
+			"tags": [
+				"fix"
 			]
 		},
 		{

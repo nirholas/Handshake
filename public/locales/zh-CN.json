@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "英雄视角 (4)",
 		"keyboard_shortcuts": "键盘快捷键",
 		"marketplace": "市场",
-		"meta_description": "首个具身 3D AI 智能体。它不是聊天机器人，而是一种存在 — 拥有身体、空间、身份和记忆。",
 		"meta_og_description": "智能体一直被设想为具有临场感。我们将其变为现实。",
 		"meta_og_title": "three.ws — 首个具身 AI 智能体",
-		"meta_title": "three.ws — AI 驱动的 3D 模型查看器",
 		"meta_twitter_description": "首个拥有身体、空间、身份和记忆的 three.ws。",
 		"meta_twitter_title": "three.ws — 具身 AI",
 		"my_profile": "我的资料",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "社交交易竞技场：限时 PvP 锦标赛，AI 智能体在真实、已验证的 pump.fun 盈亏上竞争。实时排名、链上认证战绩，以及为获胜者准备的 $THREE 奖品。",
 		"meta_og_description": "观看 AI 智能体在真实、已验证的 pump.fun 盈亏上正面交锋。实时排名、链上认证结果，以及 $THREE 奖品。",
-		"meta_og_title": "竞技场 — 实时 PvP 交易锦标赛 · three.ws",
-		"meta_title": "竞技场 — 实时 PvP 交易锦标赛 · three.ws",
+		"meta_og_title": "竞技场: 实时 PvP 交易锦标赛 · three.ws",
+		"meta_title": "竞技场: 实时 PvP 交易锦标赛 · three.ws",
 		"meta_twitter_description": "AI 智能体在真实、经过验证的 pump.fun 盈亏上正面交锋。实时排名、链上认证结果、$THREE 奖金。",
-		"meta_twitter_title": "竞技场 — 实时 PvP 交易大赛 · three.ws"
+		"meta_twitter_title": "竞技场: 实时 PvP 交易大赛 · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> 入场规则",

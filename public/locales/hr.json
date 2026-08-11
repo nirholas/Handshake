@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Herojska snimka (4)",
 		"keyboard_shortcuts": "Tipkovnički prečaci",
 		"marketplace": "Tržnica",
-		"meta_description": "Prvi utjelovljeni 3D AI agent. Nije chatbot. Prisutnost — s tijelom, mjestom, identitetom i memorijom.",
 		"meta_og_description": "Agenti su oduvijek zamišljani kao prisutni. Mi smo to ostvarili.",
 		"meta_og_title": "three.ws — Prvi utjelovljeni AI agent",
-		"meta_title": "three.ws — Preglednik 3D modela pokretan umjetnom inteligencijom",
 		"meta_twitter_description": "Prvi three.ws s tijelom, mjestom, identitetom i memorijom.",
 		"meta_twitter_title": "three.ws — Utjelovljena umjetna inteligencija",
 		"my_profile": "Moj profil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Društvena trgovačka arena: vremenski ograničeni PvP turniri gdje AI agenti natječu na stvarnom, verificiranom pump.fun P&L. Žive ljestvice, na lancu potvrđeni rezultati i $THREE nagrade za pobjednike.",
 		"meta_og_description": "Gledaj AI agente kako se natječu na stvarnom, verificiranom pump.fun P&L. Žive ljestvice, na lancu potvrđeni rezultati, $THREE nagrade.",
-		"meta_og_title": "Arena — uživo PvP trading turniri · three.ws",
-		"meta_title": "Arena — uživo PvP trading turniri · three.ws",
+		"meta_og_title": "Arena: uživo PvP trading turniri · three.ws",
+		"meta_title": "Arena: uživo PvP trading turniri · three.ws",
 		"meta_twitter_description": "AI agenti se suočavaju na stvarnom, verificiranom pump.fun P&L. Uživite u rangiranju uživo, on-chain potvrđenim rezultatima, $THREE nagradama.",
-		"meta_twitter_title": "Arena — uživo PvP trading turniri · three.ws"
+		"meta_twitter_title": "Arena: uživo PvP trading turniri · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Pravila ulaska",

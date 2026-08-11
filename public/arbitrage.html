@@ -4,10 +4,10 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title data-i18n="arbitrage.meta_title">x402 Arbitrage — same capability, different price</title>
+<title data-i18n="arbitrage.meta_title">x402 Arbitrage: same capability, different price</title>
 <meta name="description" content="Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability."  data-i18n-attr="content:arbitrage.meta_description"/>
 <meta name="theme-color" content="#0b0b0b" />
-<meta property="og:title" content="x402 Arbitrage — same capability, different price"  data-i18n-attr="content:arbitrage.meta_og_title"/>
+<meta property="og:title" content="x402 Arbitrage: same capability, different price"  data-i18n-attr="content:arbitrage.meta_og_title"/>
 <meta property="og:description" content="Live cross-provider price disparities from the merged x402 catalog."  data-i18n-attr="content:arbitrage.meta_og_description"/>
 <meta property="og:type" content="website" />
 <link rel="stylesheet" href="/nav.css" />
@@ -79,17 +79,30 @@
 		margin: 24px 0 18px;
 		display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
 	}
+	.chips { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 	.chip {
 		background: var(--panel);
 		border: 1px solid var(--border-strong);
 		color: var(--muted);
 		padding: 7px 13px;
 		font-size: 13px;
+		font-family: inherit;
 		border-radius: 999px;
 		cursor: pointer;
+		transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
 	}
 	.chip:hover { color: var(--text); border-color: var(--accent-blue); }
+	.chip:active { transform: translateY(1px); }
+	.chip:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
 	.chip.active { background: var(--panel-2); color: var(--text); border-color: var(--accent-blue); }
+
+	/* Visible to screen readers only: the search field needs a real label even
+	   though the placeholder carries the same wording for sighted users. */
+	.sr-only {
+		position: absolute; width: 1px; height: 1px;
+		padding: 0; margin: -1px; overflow: hidden;
+		clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+	}
 	.toolbar input[type=search] {
 		flex: 1 1 220px;
 		min-width: 180px;
@@ -102,20 +115,22 @@
 		outline: none;
 	}
 	.toolbar input[type=search]:focus { border-color: var(--accent-blue); }
+	.toolbar input[type=search]:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
 	.toolbar .count { color: var(--muted); font-size: 13px; margin-left: auto; }
 	.toolbar .count strong { color: var(--text); font-weight: 600; }
 
 	.grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		/* min() caps the track floor at the container width, so a 320px viewport
+		   gets one fluid column instead of a 300px track that overflows. */
+		grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
 		gap: 14px;
 		padding-bottom: 56px;
 	}
-	/* Below ~340px, min() prevents the 300px track from overflowing the viewport
-	   and forcing a horizontal scroll — collapse to a single fluid column. */
-	@media (max-width: 360px) {
-		.grid { grid-template-columns: 1fr; }
-	}
+	/* A grid item's automatic minimum size is its min-content width, which the
+	   four-up stat strip pushes past the track. Opting out lets the card shrink
+	   to the column instead of widening the page. */
+	.grid > * { min-width: 0; }
 	.arb {
 		background: var(--panel);
 		border: 1px solid var(--border);
@@ -193,8 +208,16 @@
 		padding: 9px 10px;
 		border-right: 1px solid var(--border);
 		background: var(--bg-2);
+		min-width: 0;
 	}
 	.stats > div:last-child { border-right: none; }
+	/* Four columns of uppercase labels need ~400px. Below that the strip folds
+	   to 2x2 rather than forcing the card wider than the viewport. */
+	@media (max-width: 430px) {
+		.stats { grid-template-columns: repeat(2, 1fr); }
+		.stats > div:nth-child(2n) { border-right: none; }
+		.stats > div:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+	}
 	.stats .k {
 		font-size: 9.5px;
 		letter-spacing: 0.08em;
@@ -220,7 +243,9 @@
 		font-size: 12.5px;
 		transition: border-color 0.15s ease;
 	}
-	.provider:hover { border-color: var(--border-strong); }
+	a.provider:hover { border-color: var(--accent-blue); }
+	a.provider:active { border-color: var(--accent-blue); background: var(--panel); }
+	a.provider:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
 	.provider.cheapest { border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.05); }
 	.provider .dot {
 		width: 8px; height: 8px; border-radius: 50%;
@@ -265,19 +290,24 @@
 		cursor: pointer;
 		font-weight: 600;
 		font-family: inherit;
+		transition: background 0.15s ease, transform 0.1s ease;
 	}
+	.arb .actions button:active, .arb .actions a:active { transform: translateY(1px); }
+	.arb .actions button[disabled] { cursor: progress; opacity: 0.75; transform: none; }
 	.btn-best {
 		background: rgba(74,222,128,0.12);
 		color: var(--accent-green);
 		border: 1px solid rgba(74,222,128,0.3);
 	}
 	.btn-best:hover { background: rgba(74,222,128,0.18); }
+	.btn-best:focus-visible { outline: 2px solid var(--accent-green); outline-offset: 2px; }
 	.btn-worst {
 		background: rgba(248,113,113,0.08);
 		color: var(--accent-red);
 		border: 1px solid rgba(248,113,113,0.25);
 	}
 	.btn-worst:hover { background: rgba(248,113,113,0.15); }
+	.btn-worst:focus-visible { outline: 2px solid var(--accent-red); outline-offset: 2px; }
 
 	.empty, .err {
 		padding: 60px 20px;
@@ -288,7 +318,25 @@
 		margin-bottom: 56px;
 	}
 	.err { color: #fecaca; border-color: rgba(248,113,113,0.3); border-style: solid; }
-	.err .err-title { font-weight: 600; margin-bottom: 6px; }
+	.err .err-title, .empty .empty-title { font-weight: 600; margin-bottom: 6px; color: var(--text); }
+	.empty .empty-actions {
+		margin-top: 16px;
+		display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+	}
+	.empty .empty-actions a, .empty .empty-actions button {
+		background: var(--panel);
+		border: 1px solid var(--border-strong);
+		color: var(--text);
+		padding: 8px 16px;
+		font-size: 13px;
+		font-family: inherit;
+		font-weight: 600;
+		border-radius: 999px;
+		cursor: pointer;
+	}
+	.empty .empty-actions a:hover, .empty .empty-actions button:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+	.empty .empty-actions a:active, .empty .empty-actions button:active { transform: translateY(1px); }
+	.empty .empty-actions a:focus-visible, .empty .empty-actions button:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
 	.err .retry-btn {
 		margin-top: 16px;
 		background: rgba(74,222,128,0.12);
@@ -322,6 +370,14 @@
 	}
 	@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 	.sk-card { height: 240px; }
+
+	@media (prefers-reduced-motion: reduce) {
+		*, *::before, *::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+		}
+	}
 </style>
 
 	<link rel="canonical" href="https://three.ws/arbitrage">
@@ -338,7 +394,7 @@
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="x402 Arbitrage — three.ws">
+	<meta property="og:image:alt" content="x402 Arbitrage on three.ws">
 	<meta name="twitter:site" content="@trythreews">
 </head>
 <body>
@@ -349,7 +405,7 @@
 		<div class="left">
 			<div class="eyebrow"><span class="pulse"></span>Cross-provider arbitrage</div>
 			<h1 data-i18n="arbitrage.spot_the_same_capability_priced_differently">Spot the same capability priced differently.</h1>
-			<p data-i18n="arbitrage.live_opportunities_surfaced_from_the_merged">Live opportunities surfaced from the merged x402 facilitator catalog. Same tool, same intent — different price.</p>
+			<p data-i18n="arbitrage.live_opportunities_surfaced_from_the_merged">Live opportunities surfaced from the merged x402 facilitator catalog. Same tool, same intent, different price.</p>
 		</div>
 		<div class="updated">
 			Updated: <strong id="updated">…</strong>
@@ -357,14 +413,17 @@
 	</header>
 
 	<div class="toolbar">
-		<button type="button" class="chip active" data-filter="all" data-i18n="arbitrage.all">All</button>
-		<button type="button" class="chip" data-filter="http" data-i18n="arbitrage.http">HTTP</button>
-		<button type="button" class="chip" data-filter="mcp" data-i18n="arbitrage.mcp">MCP</button>
+		<div class="chips" role="group" aria-label="Filter opportunities by listing type">
+			<button type="button" class="chip active" data-filter="all" aria-pressed="true" data-i18n="arbitrage.all">All</button>
+			<button type="button" class="chip" data-filter="http" aria-pressed="false" data-i18n="arbitrage.http">HTTP</button>
+			<button type="button" class="chip" data-filter="mcp" aria-pressed="false" data-i18n="arbitrage.mcp">MCP</button>
+		</div>
+		<label class="sr-only" for="q" data-i18n="arbitrage.filter_label">Filter by capability or provider</label>
 		<input type="search" id="q" placeholder="Filter by capability or provider…" />
-		<div class="count"><strong id="count">…</strong> opportunities</div>
+		<div class="count" aria-live="polite"><strong id="count">…</strong> opportunities</div>
 	</div>
 
-	<div id="grid" class="grid"></div>
+	<div id="grid" class="grid" aria-busy="true"></div>
 	<div id="empty" class="empty" hidden></div>
 </div>
 

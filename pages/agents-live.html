@@ -722,11 +722,11 @@
 		.al-empty h2 {
 			font-size: 17px;
 			font-weight: 700;
-			color: rgba(255,255,255,0.55);
+			color: var(--al-muted);
 		}
 		.al-empty p {
 			font-size: 13px;
-			color: rgba(255,255,255,0.25);
+			color: var(--al-faint);
 			max-width: 340px;
 			line-height: 1.55;
 		}
@@ -743,6 +743,79 @@
 			transition: opacity 0.12s;
 		}
 		.al-empty-cta:hover { opacity: 0.85; }
+		.al-empty-cta:focus-visible,
+		.al-error-retry:focus-visible,
+		.al-error-alt:focus-visible {
+			outline: 2px solid var(--al-accent);
+			outline-offset: 3px;
+		}
+
+		/* ── error state ──────────────────────────────────────────────── */
+		/* Shown when the roster request itself fails. Deliberately distinct from
+		   the empty state: "no agents yet" would misread an outage as an empty
+		   platform. Carries a real retry plus a route to the full directory. */
+		.al-error {
+			grid-column: 1 / -1;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 12px;
+			padding: 56px 24px;
+			text-align: center;
+			border: 1px solid var(--al-border-hi);
+			border-radius: 12px;
+			background: var(--al-surface);
+		}
+		.al-error-icon { font-size: 30px; opacity: 0.5; line-height: 1; }
+		.al-error h2 {
+			font-size: 16px;
+			font-weight: 700;
+			color: var(--al-text);
+		}
+		.al-error p {
+			font-size: 13px;
+			color: var(--al-muted);
+			max-width: 400px;
+			line-height: 1.55;
+		}
+		.al-error-actions {
+			margin-top: 4px;
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+		}
+		.al-error-retry {
+			padding: 9px 20px;
+			border-radius: 7px;
+			background: var(--al-text);
+			border: 1px solid var(--al-text);
+			color: var(--al-bg);
+			font: 700 13px/1 var(--al-font);
+			cursor: pointer;
+			transition: opacity 0.12s;
+		}
+		.al-error-retry:hover:not(:disabled) { opacity: 0.85; }
+		.al-error-retry:active:not(:disabled) { transform: translateY(1px); }
+		.al-error-retry:disabled { opacity: 0.5; cursor: progress; }
+		.al-error-alt {
+			padding: 9px 16px;
+			border-radius: 7px;
+			border: 1px solid var(--al-border-hi);
+			color: var(--al-text);
+			font-size: 13px;
+			font-weight: 600;
+			text-decoration: none;
+			transition: background 0.12s;
+		}
+		.al-error-alt:hover { background: var(--al-surface-2); }
+		.al-error-next {
+			font-size: 12px;
+			color: var(--al-faint);
+			min-height: 15px;
+		}
 
 		/* ── skeleton loader ──────────────────────────────────────────── */
 		.al-skeleton {

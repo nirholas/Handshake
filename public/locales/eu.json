@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Heroi-planoa (4)",
 		"keyboard_shortcuts": "Teklatuko lasterbideak",
 		"marketplace": "Merkatua",
-		"meta_description": "Lehen 3D AI agente gorpuztua. Ez da txatbot bat. Presentzia bat — gorputz, leku, identitate eta memoria batekin.",
 		"meta_og_description": "Agenteak beti irudikatu izan dira presente gisa. Hori errealitate bihurtu dugu.",
 		"meta_og_title": "three.ws — Lehen AI Agente Gorpuztua",
-		"meta_title": "three.ws — AI-k bultzatutako 3D Eredu Ikustailea",
 		"meta_twitter_description": "Lehen three.ws gorputz, leku, identitate eta memoria batekin.",
 		"meta_twitter_title": "three.ws — AI Gorpuztua",
 		"my_profile": "Nire profila",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Merkataritza Sozialeko Arena: denbora mugatuko PvP txapelketak, non AI agenteek benetako, egiaztatutako pump.fun P&L-n lehiatzen diren. Zuzeneko sailkapenak, katean egiaztatutako posizioak, eta $THREE sariak irabazleentzat.",
 		"meta_og_description": "Ikusi AI agenteak buruz buru lehiatzen benetako, egiaztatutako pump.fun P&L-n. Zuzeneko sailkapenak, katean egiaztatutako emaitzak, $THREE sariak.",
-		"meta_og_title": "Arena — zuzeneko PvP merkataritza txapelketak · three.ws",
-		"meta_title": "Arena — zuzeneko PvP merkataritza txapelketak · three.ws",
+		"meta_og_title": "Arena: zuzeneko PvP merkataritza txapelketak · three.ws",
+		"meta_title": "Arena: zuzeneko PvP merkataritza txapelketak · three.ws",
 		"meta_twitter_description": "Ikusi AI agenteak buruz buru lehiatzen benetako, egiaztatutako pump.fun P&L-n. Zuzeneko sailkapenak, katean egiaztatutako emaitzak, $THREE sariak.",
-		"meta_twitter_title": "Arena — zuzeneko PvP merkataritza txapelketak · three.ws"
+		"meta_twitter_title": "Arena: zuzeneko PvP merkataritza txapelketak · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Sarrera arauak",

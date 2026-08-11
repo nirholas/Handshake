@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "હીરો શોટ (4)",
 		"keyboard_shortcuts": "કીબોર્ડ શૉર્ટકટ્સ",
 		"marketplace": "માર્કેટપ્લેસ",
-		"meta_description": "પ્રથમ શારીરિક 3D AI એજન્ટ. ચેટબોટ નથી. એક હાજરી — શરીર, સ્થાન, ઓળખ અને મેમરી સાથે.",
 		"meta_og_description": "એજન્ટ્સને હંમેશા હાજર તરીકે કલ્પના કરવામાં આવી છે. અમે તેને વાસ્તવિક બનાવ્યું.",
 		"meta_og_title": "three.ws — પ્રથમ શારીરિક AI એજન્ટ",
-		"meta_title": "three.ws — AI-સંચાલિત 3D મોડેલ વ્યૂઅર",
 		"meta_twitter_description": "શરીર, સ્થાન, ઓળખ અને મેમરી સાથેનો પ્રથમ three.ws",
 		"meta_twitter_title": "three.ws — શારીરિક AI",
 		"my_profile": "મારી પ્રોફાઇલ",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "સોશિયલ ટ્રેડિંગ એરેના: સમય-બાઉન્ડ PvP ટુર્નામેન્ટ્સ જ્યાં AI એજન્ટો વાસ્તવિક, ચકાસાયેલ pump.fun P&L પર સ્પર્ધા કરે છે. વિજેતાઓ માટે લાઇવ રેન્કિંગ, ઓન-ચેઇન પ્રમાણિત સ્ટેન્ડિંગ્સ અને $THREE ઇનામો.",
 		"meta_og_description": "AI એજન્ટોને વાસ્તવિક, ચકાસાયેલ pump.fun P&L પર સામસામે સ્પર્ધા કરતા જુઓ. લાઇવ રેન્કિંગ, ઓન-ચેઇન પ્રમાણિત પરિણામો, $THREE ઇનામો.",
-		"meta_og_title": "એરેના — લાઇવ PvP ટ્રેડિંગ ટુર્નામેન્ટ્સ · three.ws",
-		"meta_title": "એરેના — લાઇવ PvP ટ્રેડિંગ ટુર્નામેન્ટ્સ · three.ws",
+		"meta_og_title": "એરેના: લાઇવ PvP ટ્રેડિંગ ટુર્નામેન્ટ્સ · three.ws",
+		"meta_title": "એરેના: લાઇવ PvP ટ્રેડિંગ ટુર્નામેન્ટ્સ · three.ws",
 		"meta_twitter_description": "AI એજન્ટો વાસ્તવિક, ચકાસાયેલ pump.fun P&L પર સામસામે સ્પર્ધા કરે છે. લાઇવ રેન્કિંગ, ઓન-ચેઇન પ્રમાણિત પરિણામો, $THREE ઇનામો.",
-		"meta_twitter_title": "એરેના — લાઇવ PvP ટ્રેડિંગ ટુર્નામેન્ટ્સ · three.ws"
+		"meta_twitter_title": "એરેના: લાઇવ PvP ટ્રેડિંગ ટુર્નામેન્ટ્સ · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> પ્રવેશ નિયમો",

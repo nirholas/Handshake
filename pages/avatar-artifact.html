@@ -2,7 +2,9 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title data-i18n="avatar_artifact.meta_title">Avatar Viewer — three.ws</title>
+		<title data-i18n="avatar_artifact.meta_title">
+			Avatar Artifact: standalone 3D avatar viewer · three.ws
+		</title>
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -39,7 +41,7 @@
 				touch-action: none; /* we own the gesture for parallax */
 			}
 
-			/* ── Chrome overlay: keeps the viewer from being a dead-end ── */
+			/* Chrome overlay: keeps the viewer from being a dead-end */
 			.chrome {
 				position: fixed;
 				inset: 0;
@@ -53,15 +55,24 @@
 				display: flex;
 				align-items: center;
 				justify-content: space-between;
-				gap: 12px;
+				flex-wrap: wrap;
+				gap: 10px;
 				padding: 14px 18px;
 				background: linear-gradient(180deg, rgba(8, 8, 12, 0.7), rgba(8, 8, 12, 0));
 			}
 			.bar.bottom {
 				background: linear-gradient(0deg, rgba(8, 8, 12, 0.7), rgba(8, 8, 12, 0));
+				justify-content: flex-start;
+				/* The bottom-right corner belongs to the shared corner stack
+				   (public/corner-stack.js: language switcher, search pill), fixed at
+				   right:18px with a 380px cap. Reserve that lane so this page's own
+				   controls are never covered by it. */
+				padding-right: calc(30px + min(380px, 55vw));
 			}
-			.chrome a {
+			.chrome a,
+			.chrome button {
 				pointer-events: auto;
+				font: inherit;
 				color: var(--ink);
 				text-decoration: none;
 				font-size: 14px;
@@ -74,19 +85,23 @@
 				border-radius: 10px;
 				border: 1px solid rgba(255, 255, 255, 0.08);
 				background: rgba(255, 255, 255, 0.04);
+				cursor: pointer;
 				transition:
 					background 0.18s ease,
 					border-color 0.18s ease,
 					transform 0.18s ease;
 			}
-			.chrome a:hover {
+			.chrome a:hover,
+			.chrome button:hover {
 				background: rgba(255, 255, 255, 0.1);
 				border-color: rgba(255, 255, 255, 0.18);
 			}
-			.chrome a:active {
+			.chrome a:active,
+			.chrome button:active {
 				transform: translateY(1px);
 			}
-			.chrome a:focus-visible {
+			.chrome a:focus-visible,
+			.chrome button:focus-visible {
 				outline: 2px solid var(--accent);
 				outline-offset: 2px;
 			}
@@ -100,14 +115,59 @@
 				display: flex;
 				gap: 8px;
 				flex-wrap: wrap;
+				pointer-events: none;
 			}
 			.hint {
 				pointer-events: none;
 				color: var(--muted);
 				font-size: 12px;
+				font-weight: 400;
+			}
+			h1.hint {
+				font-size: 12px;
+			}
+			.status {
+				color: var(--accent);
+			}
+			.status:empty {
+				display: none;
 			}
 
-			/* ── Loading + error states ── */
+			/* Embed snippet: the manual path when the clipboard is unavailable
+			   (cross-origin iframes and Safari both refuse the write). */
+			.snippet {
+				pointer-events: auto;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				width: 100%;
+				max-width: 560px;
+			}
+			.snippet[hidden] {
+				display: none;
+			}
+			.snippet label {
+				font-size: 12px;
+				color: var(--muted);
+				white-space: nowrap;
+			}
+			.snippet input {
+				flex: 1;
+				min-width: 0;
+				font: inherit;
+				font-size: 12px;
+				color: var(--ink);
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				border-radius: 8px;
+				padding: 7px 9px;
+			}
+			.snippet input:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 1px;
+			}
+
+			/* Loading + error states */
 			.overlay {
 				position: fixed;
 				inset: 0;
@@ -129,6 +189,43 @@
 				opacity: 0;
 				pointer-events: none;
 			}
+			.overlay .foot-links {
+				pointer-events: auto;
+			}
+			.overlay a,
+			.overlay button {
+				pointer-events: auto;
+				font: inherit;
+				font-size: 14px;
+				font-weight: 600;
+				color: var(--ink);
+				text-decoration: none;
+				display: inline-flex;
+				align-items: center;
+				padding: 8px 12px;
+				border-radius: 10px;
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				background: rgba(255, 255, 255, 0.04);
+				cursor: pointer;
+				transition:
+					background 0.18s ease,
+					border-color 0.18s ease,
+					transform 0.18s ease;
+			}
+			.overlay a:hover,
+			.overlay button:hover {
+				background: rgba(255, 255, 255, 0.1);
+				border-color: rgba(255, 255, 255, 0.18);
+			}
+			.overlay a:active,
+			.overlay button:active {
+				transform: translateY(1px);
+			}
+			.overlay a:focus-visible,
+			.overlay button:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
 			.spinner {
 				width: 38px;
 				height: 38px;
@@ -145,7 +242,7 @@
 			.overlay p {
 				color: var(--muted);
 				font-size: 14px;
-				max-width: 30ch;
+				max-width: 34ch;
 				line-height: 1.5;
 			}
 			.overlay h2 {
@@ -158,27 +255,32 @@
 				}
 			}
 
-			/* ── Mobile adaptation ── */
+			/* Mobile adaptation: the bars wrap instead of dropping links, so no
+			   navigation target becomes unreachable on a phone. */
 			@media (max-width: 640px) {
 				.bar {
 					padding: 11px 12px;
 				}
-				.chrome a {
+				.chrome a,
+				.chrome button {
 					font-size: 13px;
 					padding: 7px 10px;
 				}
-				.hint {
+				.bar.top .hint {
 					display: none;
 				}
-				.foot-links a:nth-child(n + 3) {
-					display: none; /* keep the bottom bar to two primary links on phones */
+				.bar.bottom {
+					/* Too narrow to reserve a side lane: lift the row above the corner
+					   stack instead, so the widgets and these controls never collide. */
+					padding-right: 12px;
+					padding-bottom: 60px;
 				}
 			}
 		</style>
 
 		<meta
 			name="description"
-			content="Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page."
+			content="Standalone Three.js viewer for avatar artifacts: embeddable and shareable without any wrapper page."
 		 data-i18n-attr="content:avatar_artifact.meta_description"/>
 		<link rel="canonical" href="https://three.ws/avatar-artifact" />
 		<meta property="og:type" content="website" />
@@ -186,7 +288,7 @@
 		<meta property="og:title" content="Avatar Artifact · three.ws"  data-i18n-attr="content:avatar_artifact.meta_og_title"/>
 		<meta
 			property="og:description"
-			content="Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page."
+			content="Standalone Three.js viewer for avatar artifacts: embeddable and shareable without any wrapper page."
 		 data-i18n-attr="content:avatar_artifact.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/avatar-artifact" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Avatar+Artifact&amp;d=Standalone+Three.js+viewer+for+avatar+artifacts%3A+embeddable+and+shareable+without+any+wrapper+page.&amp;p=%2Favatar-artifact" />
@@ -196,7 +298,7 @@
 		<meta name="twitter:title" content="Avatar Artifact · three.ws"  data-i18n-attr="content:avatar_artifact.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
-			content="Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page."
+			content="Standalone Three.js viewer for avatar artifacts: embeddable and shareable without any wrapper page."
 		 data-i18n-attr="content:avatar_artifact.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Avatar+Artifact&amp;d=Standalone+Three.js+viewer+for+avatar+artifacts%3A+embeddable+and+shareable+without+any+wrapper+page.&amp;p=%2Favatar-artifact" />
 		<script type="application/ld+json">
@@ -204,34 +306,47 @@
 				"@context": "https://schema.org",
 				"@type": "WebPage",
 				"name": "Avatar Artifact",
-				"description": "Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page.",
+				"description": "Standalone Three.js viewer for avatar artifacts: embeddable and shareable without any wrapper page.",
 				"url": "https://three.ws/avatar-artifact",
 				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
 			}
 		</script>
-	
+
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Avatar Artifact — three.ws">
+	<meta property="og:image:alt" content="Avatar Artifact, a live Three.js portrait on three.ws">
 	<meta name="twitter:site" content="@trythreews">
 </head>
 	<body>
 		<!-- Persistent chrome so the standalone viewer is never a dead-end -->
-		<div class="chrome" aria-hidden="false">
+		<div class="chrome">
 			<div class="bar top">
 				<a href="/" aria-label="Back to three.ws home" data-i18n-html="avatar_artifact.three_ws" data-i18n-attr="aria-label:avatar_artifact.back_to_three_ws_home_arialabel">
-					<span aria-hidden="true">←</span>
+					<span aria-hidden="true">&#8592;</span>
 					<span class="brand">three<span class="dot">.</span>ws</span>
 				</a>
 				<span class="hint" data-i18n="avatar_artifact.move_your_cursor_drag_on_touch_arrow">Move your cursor · drag on touch · arrow keys</span>
 			</div>
 			<div class="bar bottom">
-				<span class="hint" data-i18n="avatar_artifact.avatar_artifact_a_live_three_js_portrait">Avatar Artifact — a live Three.js portrait</span>
-				<nav class="foot-links" aria-label="Explore three.ws">
+				<h1 class="hint" data-i18n="avatar_artifact.avatar_artifact_a_live_three_js_portrait">Avatar Artifact: a live Three.js portrait</h1>
+				<div class="foot-links">
+					<button
+						type="button"
+						id="copy-embed"
+						data-copied="Embed code copied"
+						data-manual="Copy the snippet below"
+						data-i18n="avatar_artifact.copy_embed"
+						data-i18n-attr="data-copied:avatar_artifact.embed_code_copied;data-manual:avatar_artifact.copy_the_snippet_below"
+					>Copy embed</button>
 					<a href="/playground" data-i18n="avatar_artifact.playground">Playground</a>
 					<a href="/labs" data-i18n="avatar_artifact.labs">Labs</a>
 					<a href="/agents" data-i18n="avatar_artifact.agents">Agents</a>
-				</nav>
+				</div>
+				<span class="hint status" id="copy-status" role="status" aria-live="polite"></span>
+				<div class="snippet" id="embed-snippet" hidden>
+					<label for="embed-code" data-i18n="avatar_artifact.embed_code">Embed code</label>
+					<input id="embed-code" type="text" readonly value="" />
+				</div>
 			</div>
 		</div>
 
@@ -244,335 +359,393 @@
 		<!-- Designed failure state if the 3D runtime can't load -->
 		<div class="overlay" id="error" hidden>
 			<h2 data-i18n="avatar_artifact.couldn_t_load_the_3d_viewer">Couldn’t load the 3D viewer</h2>
-			<p data-i18n="avatar_artifact.the_graphics_runtime_failed_to_load_this">
-				The graphics runtime failed to load — this usually means a network
-				hiccup or a browser without WebGL.
+			<p id="error-detail" data-i18n="avatar_artifact.the_graphics_runtime_failed_to_load_this">
+				The graphics runtime failed to load. That usually means a network
+				hiccup, so a reload is worth a try.
 			</p>
 			<div class="foot-links">
-				<a href="#" id="artifact-retry" data-i18n="avatar_artifact.retry">Retry</a>
+				<button type="button" id="artifact-retry" data-i18n="avatar_artifact.retry">Retry</button>
 				<a href="/" data-i18n="avatar_artifact.back_to_three_ws">Back to three.ws</a>
 			</div>
 		</div>
 
 		<script>
-			// Show the designed error state if the CDN runtime never arrives,
-			// rather than leaving a blank canvas behind.
-			window.__avatarArtifactFailed = function () {
+			// Designed failure state, shared by every boot path: a runtime that
+			// never arrives, a browser without WebGL, and the watchdog below.
+			window.__avatarArtifactFailed = function (detail) {
+				if (window.__avatarArtifactPainted) return;
 				document.getElementById('loading')?.setAttribute('hidden', '');
+				if (detail) {
+					const el = document.getElementById('error-detail');
+					if (el) el.textContent = detail;
+				}
 				document.getElementById('error')?.removeAttribute('hidden');
 			};
-			document.getElementById('artifact-retry')?.addEventListener('click', (event) => {
-				event.preventDefault();
+			document.getElementById('artifact-retry')?.addEventListener('click', () => {
 				location.reload();
 			});
-		</script>
-		<script
-			src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
-			integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu"
-			crossorigin="anonymous"
-		></script>
-		<script>
-			// WebGL / runtime guard: if Three.js didn't load or WebGL is
-			// unavailable, surface the designed error state instead of throwing.
-			if (!window.THREE) {
+
+			// Watchdog: covers the case where the module script itself never runs
+			// (asset 404, blocked by an extension), which no in-script catch can
+			// see. Cleared by the first painted frame.
+			window.__avatarArtifactWatchdog = setTimeout(() => {
 				window.__avatarArtifactFailed();
-			} else {
+			}, 12000);
+
+			// Embed + share. The snippet is the page's own URL, so the viewer is
+			// shareable from inside itself, which is the point of a standalone
+			// artifact page.
+			(function embedControls() {
+				const button = document.getElementById('copy-embed');
+				const status = document.getElementById('copy-status');
+				const panel = document.getElementById('embed-snippet');
+				const field = document.getElementById('embed-code');
+				if (!button || !status || !panel || !field) return;
+
+				const url = new URL('/avatar-artifact', location.href).href;
+				const snippet =
+					'<iframe src="' +
+					url +
+					'" width="100%" height="600" style="border:0" loading="lazy" title="Avatar Artifact"></iframe>';
+				field.value = snippet;
+
+				let clearStatus;
+				function announce(message) {
+					status.textContent = message;
+					clearTimeout(clearStatus);
+					clearStatus = setTimeout(() => {
+						status.textContent = '';
+					}, 4000);
+				}
+
+				button.addEventListener('click', async () => {
+					try {
+						await navigator.clipboard.writeText(snippet);
+						panel.setAttribute('hidden', '');
+						announce(button.dataset.copied);
+					} catch {
+						// Clipboard denied (cross-origin frame, insecure context):
+						// reveal the snippet so it can still be copied by hand.
+						panel.removeAttribute('hidden');
+						field.focus();
+						field.select();
+						announce(button.dataset.manual);
+					}
+				});
+			})();
+		</script>
+		<script type="module">
+			// Three.js ships with the app rather than a third-party CDN: this page
+			// is meant to be embedded in other sites, where an extra cross-origin
+			// script is a dependency the host never agreed to.
+			let THREE;
+			try {
+				THREE = await import('three');
+			} catch {
+				window.__avatarArtifactFailed();
+			}
+			if (THREE) boot(THREE);
+
+			function boot(THREE) {
 				const W = window.innerWidth,
 					H = window.innerHeight;
 				const scene = new THREE.Scene();
-			const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
-			camera.position.set(0, 1.6, 4.2);
-			camera.lookAt(0, 1.6, 0);
+				const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+				camera.position.set(0, 1.6, 4.2);
+				camera.lookAt(0, 1.6, 0);
 
-			// Coarse pointer (phones/tablets) → lighter render: fewer DPR samples
-			// and no shadow pass, so the canvas stays smooth on mobile GPUs.
-			const isCoarse =
-				window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+				// Coarse pointer (phones/tablets) -> lighter render: fewer DPR samples
+				// and no shadow pass, so the canvas stays smooth on mobile GPUs.
+				const isCoarse =
+					window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+				const reduceMotion =
+					window.matchMedia &&
+					window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-			let renderer;
-			try {
-				renderer = new THREE.WebGLRenderer({
-					antialias: !isCoarse,
-					alpha: true,
+				let renderer;
+				try {
+					renderer = new THREE.WebGLRenderer({
+						antialias: !isCoarse,
+						alpha: true,
+					});
+				} catch {
+					// No WebGL context available: show the designed error state.
+					window.__avatarArtifactFailed(
+						'This browser could not start WebGL, so the 3D portrait cannot render here. Try another browser or enable hardware acceleration.',
+					);
+					return;
+				}
+				renderer.setSize(W, H);
+				renderer.setPixelRatio(Math.min(devicePixelRatio, isCoarse ? 1.5 : 2));
+				renderer.shadowMap.enabled = !isCoarse;
+				document.body.appendChild(renderer.domElement);
+
+				// Lights. Intensities are in physical units (three r155+ dropped the
+				// legacy PI scaling), so they read high next to the old CDN build.
+				scene.add(new THREE.AmbientLight(0x2a2a5a, 3.8));
+
+				const key = new THREE.DirectionalLight(0x99aaff, 6.9);
+				key.position.set(2, 5, 4);
+				key.castShadow = true;
+				scene.add(key);
+
+				const rim = new THREE.PointLight(0xff4488, 22, 10, 1.4);
+				rim.position.set(-3, 2, -1);
+				scene.add(rim);
+
+				const fill = new THREE.PointLight(0x4488ff, 12, 8, 1.4);
+				fill.position.set(3, 0, 2);
+				scene.add(fill);
+
+				// Materials
+				const skinMat = new THREE.MeshStandardMaterial({
+					color: 0x7ba3d4,
+					roughness: 0.25,
+					metalness: 0.05,
 				});
-			} catch {
-				// No WebGL context available — show the designed error state.
-				window.__avatarArtifactFailed();
-				throw new Error('webgl-unavailable');
-			}
-			renderer.setSize(W, H);
-			renderer.setPixelRatio(Math.min(devicePixelRatio, isCoarse ? 1.5 : 2));
-			renderer.shadowMap.enabled = !isCoarse;
-			document.body.appendChild(renderer.domElement);
+				const darkMat = new THREE.MeshStandardMaterial({
+					color: 0x0d1a2e,
+					roughness: 0.2,
+					metalness: 0.6,
+				});
+				const irisMat = new THREE.MeshStandardMaterial({
+					color: 0x55aaff,
+					roughness: 0.05,
+					metalness: 0.3,
+					emissive: 0x1144cc,
+					emissiveIntensity: 0.6,
+				});
+				const suitMat = new THREE.MeshStandardMaterial({
+					color: 0x1a2540,
+					roughness: 0.6,
+					metalness: 0.3,
+				});
+				const glareMat = new THREE.MeshStandardMaterial({
+					color: 0xffffff,
+					roughness: 0,
+					metalness: 0,
+					transparent: true,
+					opacity: 0.55,
+				});
 
-			// Lights
-			scene.add(new THREE.AmbientLight(0x2a2a5a, 1.2));
+				// Avatar
+				const avatar = new THREE.Group();
+				scene.add(avatar);
 
-			const key = new THREE.DirectionalLight(0x99aaff, 2.2);
-			key.position.set(2, 5, 4);
-			key.castShadow = true;
-			scene.add(key);
-
-			const rim = new THREE.PointLight(0xff4488, 1.4, 10);
-			rim.position.set(-3, 2, -1);
-			scene.add(rim);
-
-			const fill = new THREE.PointLight(0x4488ff, 0.8, 8);
-			fill.position.set(3, 0, 2);
-			scene.add(fill);
-
-			// Materials
-			const skinMat = new THREE.MeshStandardMaterial({
-				color: 0x7ba3d4,
-				roughness: 0.25,
-				metalness: 0.05,
-			});
-			const darkMat = new THREE.MeshStandardMaterial({
-				color: 0x0d1a2e,
-				roughness: 0.2,
-				metalness: 0.6,
-			});
-			const irisMat = new THREE.MeshStandardMaterial({
-				color: 0x55aaff,
-				roughness: 0.05,
-				metalness: 0.3,
-				emissive: 0x1144cc,
-				emissiveIntensity: 0.6,
-			});
-			const suitMat = new THREE.MeshStandardMaterial({
-				color: 0x1a2540,
-				roughness: 0.6,
-				metalness: 0.3,
-			});
-			const glareMat = new THREE.MeshStandardMaterial({
-				color: 0xffffff,
-				roughness: 0,
-				metalness: 0,
-				transparent: true,
-				opacity: 0.55,
-			});
-
-			// ─── Avatar ───────────────────────────────────────────────────────────────────
-			const avatar = new THREE.Group();
-			scene.add(avatar);
-
-			// Torso
-			const torsoMesh = new THREE.Mesh(
-				new THREE.CylinderGeometry(0.38, 0.32, 1.0, 20),
-				suitMat,
-			);
-			torsoMesh.position.y = 0.82;
-			torsoMesh.castShadow = true;
-			avatar.add(torsoMesh);
-
-			// Neck
-			const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.19, 0.28, 16), skinMat);
-			neck.position.y = 1.47;
-			avatar.add(neck);
-
-			// Head group (rotates for mouse tracking)
-			const headGroup = new THREE.Group();
-			headGroup.position.y = 1.94;
-			avatar.add(headGroup);
-
-			const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.52, 40, 40), skinMat);
-			headMesh.scale.set(1, 1.08, 0.96);
-			headMesh.castShadow = true;
-			headGroup.add(headMesh);
-
-			// Eye sockets (slight indents via dark spheres behind eyes)
-			function makeEye(x) {
-				const group = new THREE.Group();
-				group.position.set(x, 0.06, 0.44);
-
-				// White
-				const white = new THREE.Mesh(
-					new THREE.SphereGeometry(0.105, 20, 20),
-					new THREE.MeshStandardMaterial({
-						color: 0xddeeff,
-						roughness: 0.3,
-						metalness: 0,
-					}),
-				);
-				group.add(white);
-
-				// Iris
-				const iris = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 16), irisMat);
-				iris.position.z = 0.055;
-				group.add(iris);
-
-				// Pupil
-				const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 12), darkMat);
-				pupil.position.z = 0.088;
-				group.add(pupil);
-
-				// Glare
-				const glare = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 8), glareMat);
-				glare.position.set(0.022, 0.025, 0.1);
-				group.add(glare);
-
-				return group;
-			}
-
-			const leftEyeGroup = makeEye(-0.185);
-			const rightEyeGroup = makeEye(0.185);
-			headGroup.add(leftEyeGroup, rightEyeGroup);
-
-			// Eyelids (scale Y to blink)
-			function makeLid(x) {
-				const lid = new THREE.Mesh(
-					new THREE.SphereGeometry(0.112, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.5),
-					new THREE.MeshStandardMaterial({
-						color: 0x6a95c0,
-						roughness: 0.3,
-						side: THREE.FrontSide,
-					}),
-				);
-				lid.position.set(x, 0.06, 0.43);
-				lid.rotation.x = Math.PI;
-				lid.scale.y = 0.01; // starts closed-ish (will animate open)
-				return lid;
-			}
-			const leftLid = makeLid(-0.185);
-			const rightLid = makeLid(0.185);
-			headGroup.add(leftLid, rightLid);
-
-			// Eyebrows
-			function makeBrow(x) {
-				const geo = new THREE.BoxGeometry(0.16, 0.03, 0.04);
-				const brow = new THREE.Mesh(
-					geo,
-					new THREE.MeshStandardMaterial({ color: 0x3a6090, roughness: 0.5 }),
-				);
-				brow.position.set(x, 0.215, 0.455);
-				brow.rotation.z = x > 0 ? -0.12 : 0.12;
-				return brow;
-			}
-			headGroup.add(makeBrow(-0.185), makeBrow(0.185));
-
-			// Nose
-			const noseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), skinMat);
-			noseMesh.scale.set(0.7, 0.65, 0.8);
-			noseMesh.position.set(0, -0.07, 0.5);
-			headGroup.add(noseMesh);
-
-			// Mouth
-			const mouthGeo = new THREE.TorusGeometry(0.1, 0.025, 8, 20, Math.PI);
-			const mouth = new THREE.Mesh(
-				mouthGeo,
-				new THREE.MeshStandardMaterial({ color: 0x3a5a80, roughness: 0.5 }),
-			);
-			mouth.position.set(0, -0.2, 0.46);
-			mouth.rotation.z = Math.PI;
-			headGroup.add(mouth);
-
-			// Shoulders / arms
-			function makeArm(x) {
-				const arm = new THREE.Mesh(
-					new THREE.CylinderGeometry(0.11, 0.09, 0.75, 14),
+				// Torso
+				const torsoMesh = new THREE.Mesh(
+					new THREE.CylinderGeometry(0.38, 0.32, 1.0, 20),
 					suitMat,
 				);
-				arm.position.set(x, 0.85, 0);
-				arm.rotation.z = x > 0 ? -0.35 : 0.35;
-				arm.castShadow = true;
-				return arm;
-			}
-			avatar.add(makeArm(-0.52), makeArm(0.52));
+				torsoMesh.position.y = 0.82;
+				torsoMesh.castShadow = true;
+				avatar.add(torsoMesh);
 
-			// Shoulder pads
-			function makePad(x) {
-				const pad = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), suitMat);
-				pad.scale.set(1, 0.7, 1);
-				pad.position.set(x, 1.3, 0);
-				return pad;
-			}
-			avatar.add(makePad(-0.52), makePad(0.52));
+				// Neck
+				const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.19, 0.28, 16), skinMat);
+				neck.position.y = 1.47;
+				avatar.add(neck);
 
-			// Chest detail (glowing panel)
-			const panelMat = new THREE.MeshStandardMaterial({
-				color: 0x1155cc,
-				emissive: 0x0033aa,
-				emissiveIntensity: 1.2,
-				roughness: 0.2,
-			});
-			const panel = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.04), panelMat);
-			panel.position.set(0, 0.88, 0.37);
-			avatar.add(panel);
+				// Head group (rotates for gaze tracking)
+				const headGroup = new THREE.Group();
+				headGroup.position.y = 1.94;
+				avatar.add(headGroup);
 
-			// Ground plane (subtle)
-			const ground = new THREE.Mesh(
-				new THREE.CircleGeometry(3, 48),
-				new THREE.MeshStandardMaterial({ color: 0x0a0a20, roughness: 0.9, metalness: 0.1 }),
-			);
-			ground.rotation.x = -Math.PI / 2;
-			ground.receiveShadow = true;
-			scene.add(ground);
+				const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.52, 40, 40), skinMat);
+				headMesh.scale.set(1, 1.08, 0.96);
+				headMesh.castShadow = true;
+				headGroup.add(headMesh);
 
-			// Fog
-			scene.fog = new THREE.FogExp2(0x070714, 0.06);
+				// Eyes
+				function makeEye(x) {
+					const group = new THREE.Group();
+					group.position.set(x, 0.06, 0.44);
 
-			// Particles
-			const pCount = 120;
-			const pPos = new Float32Array(pCount * 3);
-			const pVel = new Float32Array(pCount);
-			for (let i = 0; i < pCount; i++) {
-				pPos[i * 3] = (Math.random() - 0.5) * 8;
-				pPos[i * 3 + 1] = Math.random() * 5;
-				pPos[i * 3 + 2] = (Math.random() - 0.5) * 8;
-				pVel[i] = 0.003 + Math.random() * 0.008;
-			}
-			const pGeo = new THREE.BufferGeometry();
-			pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-			const pMat = new THREE.PointsMaterial({
-				color: 0x6699ff,
-				size: 0.04,
-				transparent: true,
-				opacity: 0.55,
-			});
-			const pts = new THREE.Points(pGeo, pMat);
-			scene.add(pts);
+					// White
+					const white = new THREE.Mesh(
+						new THREE.SphereGeometry(0.105, 20, 20),
+						new THREE.MeshStandardMaterial({
+							color: 0xddeeff,
+							roughness: 0.3,
+							metalness: 0,
+						}),
+					);
+					group.add(white);
 
-			// ─── Input tracking (mouse · touch · keyboard) ──────────────────────────────────
-			// The avatar's gaze follows a single normalized look-target so every
-			// input modality drives the same code path.
-			const mouse = { x: 0, y: 0 };
-			let keyTarget = null; // when set, keyboard overrides pointer
+					// Iris
+					const iris = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 16), irisMat);
+					iris.position.z = 0.055;
+					group.add(iris);
 
-			function aim(clientX, clientY) {
-				mouse.x = (clientX / window.innerWidth - 0.5) * 2;
-				mouse.y = (clientY / window.innerHeight - 0.5) * 2;
-			}
+					// Pupil
+					const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 12), darkMat);
+					pupil.position.z = 0.088;
+					group.add(pupil);
 
-			window.addEventListener('mousemove', (e) => {
-				keyTarget = null;
-				aim(e.clientX, e.clientY);
-			});
+					// Glare
+					const glare = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 8), glareMat);
+					glare.position.set(0.022, 0.025, 0.1);
+					group.add(glare);
 
-			// Touch: track a finger drag so the portrait is interactive on phones.
-			window.addEventListener(
-				'touchmove',
-				(e) => {
-					const tch = e.touches && e.touches[0];
-					if (!tch) return;
+					return group;
+				}
+
+				headGroup.add(makeEye(-0.185), makeEye(0.185));
+
+				// Eyelids: a blink is a Y scale on these caps.
+				function makeLid(x) {
+					const lid = new THREE.Mesh(
+						new THREE.SphereGeometry(0.112, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.5),
+						new THREE.MeshStandardMaterial({
+							color: 0x6a95c0,
+							roughness: 0.3,
+							side: THREE.FrontSide,
+						}),
+					);
+					lid.position.set(x, 0.06, 0.43);
+					lid.rotation.x = Math.PI;
+					lid.scale.y = 0.01; // open; blinking animates this to 1
+					return lid;
+				}
+				const leftLid = makeLid(-0.185);
+				const rightLid = makeLid(0.185);
+				headGroup.add(leftLid, rightLid);
+
+				// Eyebrows
+				function makeBrow(x) {
+					const geo = new THREE.BoxGeometry(0.16, 0.03, 0.04);
+					const brow = new THREE.Mesh(
+						geo,
+						new THREE.MeshStandardMaterial({ color: 0x3a6090, roughness: 0.5 }),
+					);
+					brow.position.set(x, 0.215, 0.455);
+					brow.rotation.z = x > 0 ? -0.12 : 0.12;
+					return brow;
+				}
+				headGroup.add(makeBrow(-0.185), makeBrow(0.185));
+
+				// Nose
+				const noseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), skinMat);
+				noseMesh.scale.set(0.7, 0.65, 0.8);
+				noseMesh.position.set(0, -0.07, 0.5);
+				headGroup.add(noseMesh);
+
+				// Mouth
+				const mouthGeo = new THREE.TorusGeometry(0.1, 0.025, 8, 20, Math.PI);
+				const mouth = new THREE.Mesh(
+					mouthGeo,
+					new THREE.MeshStandardMaterial({ color: 0x3a5a80, roughness: 0.5 }),
+				);
+				mouth.position.set(0, -0.2, 0.46);
+				mouth.rotation.z = Math.PI;
+				headGroup.add(mouth);
+
+				// Shoulders / arms
+				function makeArm(x) {
+					const arm = new THREE.Mesh(
+						new THREE.CylinderGeometry(0.11, 0.09, 0.75, 14),
+						suitMat,
+					);
+					arm.position.set(x, 0.85, 0);
+					arm.rotation.z = x > 0 ? -0.35 : 0.35;
+					arm.castShadow = true;
+					return arm;
+				}
+				avatar.add(makeArm(-0.52), makeArm(0.52));
+
+				// Shoulder pads
+				function makePad(x) {
+					const pad = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), suitMat);
+					pad.scale.set(1, 0.7, 1);
+					pad.position.set(x, 1.3, 0);
+					return pad;
+				}
+				avatar.add(makePad(-0.52), makePad(0.52));
+
+				// Chest detail (glowing panel)
+				const panelMat = new THREE.MeshStandardMaterial({
+					color: 0x1155cc,
+					emissive: 0x0033aa,
+					emissiveIntensity: 1.2,
+					roughness: 0.2,
+				});
+				const panel = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.04), panelMat);
+				panel.position.set(0, 0.88, 0.37);
+				avatar.add(panel);
+
+				// Ground plane (subtle)
+				const ground = new THREE.Mesh(
+					new THREE.CircleGeometry(3, 48),
+					new THREE.MeshStandardMaterial({ color: 0x0a0a20, roughness: 0.9, metalness: 0.1 }),
+				);
+				ground.rotation.x = -Math.PI / 2;
+				ground.receiveShadow = true;
+				scene.add(ground);
+
+				// Fog
+				scene.fog = new THREE.FogExp2(0x070714, 0.06);
+
+				// Particles
+				const pCount = 120;
+				const pPos = new Float32Array(pCount * 3);
+				const pVel = new Float32Array(pCount);
+				for (let i = 0; i < pCount; i++) {
+					pPos[i * 3] = (Math.random() - 0.5) * 8;
+					pPos[i * 3 + 1] = Math.random() * 5;
+					pPos[i * 3 + 2] = (Math.random() - 0.5) * 8;
+					pVel[i] = 0.003 + Math.random() * 0.008;
+				}
+				const pGeo = new THREE.BufferGeometry();
+				pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+				const pMat = new THREE.PointsMaterial({
+					color: 0x6699ff,
+					size: 0.04,
+					transparent: true,
+					opacity: 0.55,
+				});
+				const pts = new THREE.Points(pGeo, pMat);
+				scene.add(pts);
+
+				// Input tracking (mouse, touch, keyboard). The avatar's gaze follows
+				// a single normalized look-target so every input modality drives the
+				// same code path.
+				const mouse = { x: 0, y: 0 };
+				let keyTarget = null; // when set, keyboard overrides pointer
+
+				function aim(clientX, clientY) {
+					mouse.x = (clientX / window.innerWidth - 0.5) * 2;
+					mouse.y = (clientY / window.innerHeight - 0.5) * 2;
+				}
+
+				window.addEventListener('mousemove', (e) => {
 					keyTarget = null;
-					aim(tch.clientX, tch.clientY);
-				},
-				{ passive: true },
-			);
+					aim(e.clientX, e.clientY);
+				});
 
-			// Keyboard: arrow keys / WASD nudge the gaze, so the viewer is usable
-			// without a pointer and remains keyboard-accessible.
-			const canvasEl = renderer.domElement;
-			canvasEl.tabIndex = 0;
-			canvasEl.setAttribute('role', 'img');
-			canvasEl.setAttribute(
-				'aria-label',
-				'Interactive 3D avatar portrait that follows your cursor, touch, or arrow keys',
-			);
-			const KEY_STEP = 0.25;
-			window.addEventListener('keydown', (e) => {
-				const k = e.key.toLowerCase();
-				const map = {
+				// Touch: track a finger drag so the portrait is interactive on phones.
+				window.addEventListener(
+					'touchmove',
+					(e) => {
+						const tch = e.touches && e.touches[0];
+						if (!tch) return;
+						keyTarget = null;
+						aim(tch.clientX, tch.clientY);
+					},
+					{ passive: true },
+				);
+
+				// Keyboard: arrow keys and WASD nudge the gaze, so the viewer is
+				// usable without a pointer. Only the arrows suppress their default
+				// (scrolling); the letters stay available to the browser.
+				const canvasEl = renderer.domElement;
+				canvasEl.tabIndex = 0;
+				canvasEl.setAttribute('role', 'img');
+				canvasEl.setAttribute(
+					'aria-label',
+					'Interactive 3D avatar portrait that follows your cursor, touch, or arrow keys',
+				);
+				const KEY_STEP = 0.25;
+				const KEY_MAP = {
 					arrowleft: [-1, 0],
 					a: [-1, 0],
 					arrowright: [1, 0],
@@ -582,113 +755,138 @@
 					arrowdown: [0, 1],
 					s: [0, 1],
 				};
-				const v = map[k];
-				if (!v) return;
-				e.preventDefault();
-				if (!keyTarget) keyTarget = { x: mouse.x, y: mouse.y };
-				keyTarget.x = Math.max(-1, Math.min(1, keyTarget.x + v[0] * KEY_STEP));
-				keyTarget.y = Math.max(-1, Math.min(1, keyTarget.y + v[1] * KEY_STEP));
-				mouse.x = keyTarget.x;
-				mouse.y = keyTarget.y;
-			});
+				window.addEventListener('keydown', (e) => {
+					if (e.metaKey || e.ctrlKey || e.altKey) return;
+					const target = e.target;
+					// Never steal a keystroke aimed at the embed field or a control.
+					if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+					const k = e.key.toLowerCase();
+					const v = KEY_MAP[k];
+					if (!v) return;
+					if (k.startsWith('arrow')) e.preventDefault();
+					if (!keyTarget) keyTarget = { x: mouse.x, y: mouse.y };
+					keyTarget.x = Math.max(-1, Math.min(1, keyTarget.x + v[0] * KEY_STEP));
+					keyTarget.y = Math.max(-1, Math.min(1, keyTarget.y + v[1] * KEY_STEP));
+					mouse.x = keyTarget.x;
+					mouse.y = keyTarget.y;
+				});
 
-			// ─── Animate ──────────────────────────────────────────────────────────────────
-			let t = 0;
-			let blinkTimer = 0;
-			let blinkInterval = 3 + Math.random() * 3;
-			let blinking = false;
-			let blinkT = 0;
+				// Animate
+				let t = 0;
+				let blinkTimer = 0;
+				let blinkInterval = 3 + Math.random() * 3;
+				let blinking = false;
+				let blinkT = 0;
+				let firstFramePainted = false;
 
-			const targetHeadRot = { x: 0, y: 0 };
-			const currentHeadRot = { x: 0, y: 0 };
+				const targetHeadRot = { x: 0, y: 0 };
+				const currentHeadRot = { x: 0, y: 0 };
 
-			function animate() {
-				requestAnimationFrame(animate);
-				t += 0.016;
+				function frame() {
+					t += 0.016;
 
-				// Breathing
-				const breathe = Math.sin(t * 1.15) * 0.025;
-				torsoMesh.scale.y = 1 + breathe;
-				torsoMesh.position.y = 0.82 + breathe * 0.3;
+					// Breathing
+					const breathe = reduceMotion ? 0 : Math.sin(t * 1.15) * 0.025;
+					torsoMesh.scale.y = 1 + breathe;
+					torsoMesh.position.y = 0.82 + breathe * 0.3;
 
-				// Chest glow pulse
-				panelMat.emissiveIntensity = 1.0 + Math.sin(t * 2.3) * 0.3;
+					// Chest glow pulse
+					panelMat.emissiveIntensity = reduceMotion ? 1.0 : 1.0 + Math.sin(t * 2.3) * 0.3;
 
-				// Head follows mouse (smoothed)
-				targetHeadRot.y = mouse.x * 0.35;
-				targetHeadRot.x = -mouse.y * 0.2;
-				currentHeadRot.x += (targetHeadRot.x - currentHeadRot.x) * 0.06;
-				currentHeadRot.y += (targetHeadRot.y - currentHeadRot.y) * 0.06;
-				headGroup.rotation.x = currentHeadRot.x;
-				headGroup.rotation.y = currentHeadRot.y;
+					// Head follows the look-target (smoothed)
+					targetHeadRot.y = mouse.x * 0.35;
+					targetHeadRot.x = -mouse.y * 0.2;
+					currentHeadRot.x += (targetHeadRot.x - currentHeadRot.x) * 0.06;
+					currentHeadRot.y += (targetHeadRot.y - currentHeadRot.y) * 0.06;
+					headGroup.rotation.x = currentHeadRot.x;
+					headGroup.rotation.y = currentHeadRot.y;
 
-				// Idle body sway
-				avatar.rotation.y = Math.sin(t * 0.35) * 0.06;
+					// Idle body sway
+					avatar.rotation.y = reduceMotion ? 0 : Math.sin(t * 0.35) * 0.06;
 
-				// Blink
-				blinkTimer += 0.016;
-				if (!blinking && blinkTimer > blinkInterval) {
-					blinking = true;
-					blinkT = 0;
-					blinkInterval = 2.5 + Math.random() * 4;
-					blinkTimer = 0;
-				}
-				if (blinking) {
-					blinkT += 0.016;
-					const half = 0.09;
-					const progress =
-						blinkT < half
-							? blinkT / half
-							: blinkT < half * 2
-								? 1 - (blinkT - half) / half
-								: -1;
-					if (progress < 0) {
-						leftLid.scale.y = 0.01;
-						rightLid.scale.y = 0.01;
-						blinking = false;
-					} else {
-						leftLid.scale.y = progress;
-						rightLid.scale.y = progress;
+					// Blink
+					if (!reduceMotion) {
+						blinkTimer += 0.016;
+						if (!blinking && blinkTimer > blinkInterval) {
+							blinking = true;
+							blinkT = 0;
+							blinkInterval = 2.5 + Math.random() * 4;
+							blinkTimer = 0;
+						}
+						if (blinking) {
+							blinkT += 0.016;
+							const half = 0.09;
+							const progress =
+								blinkT < half
+									? blinkT / half
+									: blinkT < half * 2
+										? 1 - (blinkT - half) / half
+										: -1;
+							if (progress < 0) {
+								leftLid.scale.y = 0.01;
+								rightLid.scale.y = 0.01;
+								blinking = false;
+							} else {
+								leftLid.scale.y = progress;
+								rightLid.scale.y = progress;
+							}
+						}
+					}
+
+					// Particles drift upward
+					if (!reduceMotion) {
+						const pos = pGeo.attributes.position;
+						for (let i = 0; i < pCount; i++) {
+							pos.array[i * 3 + 1] += pVel[i];
+							if (pos.array[i * 3 + 1] > 5) pos.array[i * 3 + 1] = 0;
+						}
+						pos.needsUpdate = true;
+						pts.rotation.y += 0.0006;
+					}
+
+					renderer.render(scene, camera);
+
+					// Fade out the loading overlay once the first frame is on screen.
+					if (!firstFramePainted) {
+						firstFramePainted = true;
+						window.__avatarArtifactPainted = true;
+						clearTimeout(window.__avatarArtifactWatchdog);
+						// A slow runtime can trip the watchdog and still arrive; the
+						// error state must not outlive a working scene.
+						document.getElementById('error')?.setAttribute('hidden', '');
+						const loading = document.getElementById('loading');
+						if (loading) {
+							loading.classList.add('fade');
+							setTimeout(() => loading.setAttribute('hidden', ''), 450);
+						}
 					}
 				}
 
-				// Particles drift upward
-				const pos = pGeo.attributes.position;
-				for (let i = 0; i < pCount; i++) {
-					pos.array[i * 3 + 1] += pVel[i];
-					if (pos.array[i * 3 + 1] > 5) pos.array[i * 3 + 1] = 0;
+				renderer.setAnimationLoop(frame);
+
+				// A hidden tab has nothing to animate: stop the loop so an embedded
+				// viewer never burns a host page's GPU in the background.
+				document.addEventListener('visibilitychange', () => {
+					renderer.setAnimationLoop(document.hidden ? null : frame);
+				});
+
+				// Keep the canvas matched to the viewport (handles orientation changes
+				// and mobile browser-chrome resize, not just desktop window drags).
+				function onResize() {
+					const w = window.innerWidth,
+						h = window.innerHeight;
+					camera.aspect = w / h;
+					camera.updateProjectionMatrix();
+					renderer.setSize(w, h);
 				}
-				pos.needsUpdate = true;
-				pts.rotation.y += 0.0006;
-
-				renderer.render(scene, camera);
-
-				// Fade out the loading overlay once the first frame is on screen.
-				if (!firstFramePainted) {
-					firstFramePainted = true;
-					const loading = document.getElementById('loading');
-					if (loading) {
-						loading.classList.add('fade');
-						setTimeout(() => loading.setAttribute('hidden', ''), 450);
-					}
-				}
-			}
-			let firstFramePainted = false;
-			animate();
-
-			// Keep the canvas matched to the viewport (handles orientation changes
-			// and mobile browser-chrome resize, not just desktop window drags).
-			function onResize() {
-				const w = window.innerWidth,
-					h = window.innerHeight;
-				camera.aspect = w / h;
-				camera.updateProjectionMatrix();
-				renderer.setSize(w, h);
-			}
-			window.addEventListener('resize', onResize);
-			window.addEventListener('orientationchange', onResize);
+				window.addEventListener('resize', onResize);
+				window.addEventListener('orientationchange', onResize);
 			}
 		</script>
+		<!-- Shared bottom-right corner stack. Without it the widgets that mount
+		     themselves there (the Atlas Ctrl+K chip, the language switcher) each fall
+		     back to their own fixed position and pile onto the same pixel. -->
+		<script src="/corner-stack.js" defer></script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

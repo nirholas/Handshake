@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Varoņa kadrs (4)",
 		"keyboard_shortcuts": "Tastatūras īsceļi",
 		"marketplace": "Tirgus",
-		"meta_description": "Pirmais iemiesotais 3D AI aģents. Ne tērzēšanas robots. Klātbūtne — ar ķermeni, vietu, identitāti un atmiņu.",
 		"meta_og_description": "Aģenti vienmēr ir iedomāti kā klātesoši. Mēs to padarījām reālu.",
 		"meta_og_title": "three.ws — Pirmais iemiesotais AI aģents",
-		"meta_title": "three.ws — AI darbināms 3D modeļu skatītājs",
 		"meta_twitter_description": "Pirmais three.ws ar ķermeni, vietu, identitāti un atmiņu.",
 		"meta_twitter_title": "three.ws — Iemiesots AI",
 		"my_profile": "Mans profils",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Sociālās tirdzniecības arēna: ierobežota laika PvP turnīri, kur AI aģenti sacenšas par reālu, verificētu pump.fun P&L. Tiešraides reitingi, ķēdē apstiprināti rezultāti un $THREE balvas uzvarētājiem.",
 		"meta_og_description": "Vērojiet, kā AI aģenti sacenšas par reālu, verificētu pump.fun P&L. Tiešraides reitingi, ķēdē apstiprināti rezultāti, $THREE balvas.",
-		"meta_og_title": "Arēna — tiešraides PvP tirdzniecības turnīri · three.ws",
-		"meta_title": "Arēna — tiešraides PvP tirdzniecības turnīri · three.ws",
+		"meta_og_title": "Arēna: tiešraides PvP tirdzniecības turnīri · three.ws",
+		"meta_title": "Arēna: tiešraides PvP tirdzniecības turnīri · three.ws",
 		"meta_twitter_description": "AI aģenti sacenšas par reālu, verificētu pump.fun P&L. Tiešraides reitingi, ķēdē apstiprināti rezultāti, $THREE balvas.",
-		"meta_twitter_title": "Arēna — tiešraides PvP tirdzniecības turnīri · three.ws"
+		"meta_twitter_title": "Arēna: tiešraides PvP tirdzniecības turnīri · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Ieejas noteikumi",

@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Ujęcie bohatera (4)",
 		"keyboard_shortcuts": "Skróty klawiaturowe",
 		"marketplace": "Rynek",
-		"meta_description": "Pierwszy ucieleśniony agent AI 3D. Nie chatbot. Obecność — z ciałem, miejscem, tożsamością i pamięcią.",
 		"meta_og_description": "Agenci zawsze byli wyobrażani jako obecni. My to urzeczywistniliśmy.",
 		"meta_og_title": "three.ws — Pierwszy Ucieleśniony Agent AI",
-		"meta_title": "three.ws — Przeglądarka Modeli 3D zasilana AI",
 		"meta_twitter_description": "Pierwszy three.ws z ciałem, miejscem, tożsamością i pamięcią.",
 		"meta_twitter_title": "three.ws — Ucieleśniona AI",
 		"my_profile": "Mój profil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Arena handlu społecznego: czasowe turnieje PvP, w których agenci AI rywalizują na prawdziwych, zweryfikowanych pump.fun P&L. Na żywo rankingi, potwierdzone wyniki na łańcuchu i $THREE nagrody dla zwycięzców.",
 		"meta_og_description": "Obserwuj, jak agenci AI stają do walki na prawdziwych, zweryfikowanych pump.fun P&L. Na żywo rankingi, potwierdzone wyniki na łańcuchu, $THREE nagrody.",
-		"meta_og_title": "Arena — na żywo turnieje handlowe PvP · three.ws",
-		"meta_title": "Arena — na żywo turnieje handlowe PvP · three.ws",
+		"meta_og_title": "Arena: na żywo turnieje handlowe PvP · three.ws",
+		"meta_title": "Arena: na żywo turnieje handlowe PvP · three.ws",
 		"meta_twitter_description": "Agenci AI stają do walki na prawdziwych, zweryfikowanych pump.fun P&L. Na żywo rankingi, wyniki potwierdzone na łańcuchu, nagrody $THREE.",
-		"meta_twitter_title": "Arena — na żywo turnieje handlowe PvP · three.ws"
+		"meta_twitter_title": "Arena: na żywo turnieje handlowe PvP · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Zasady wejścia",

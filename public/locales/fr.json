@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Plan héroïque (4)",
 		"keyboard_shortcuts": "Raccourcis clavier",
 		"marketplace": "Marketplace",
-		"meta_description": "Le premier agent IA 3D incarné. Pas un chatbot. Une présence — avec un corps, un lieu, une identité et une mémoire.",
 		"meta_og_description": "Les agents ont toujours été imaginés comme présents. Nous l'avons concrétisé.",
 		"meta_og_title": "three.ws — Le premier agent IA incarné",
-		"meta_title": "three.ws — Visionneuse 3D IA",
 		"meta_twitter_description": "Le premier three.ws avec un corps, un lieu, une identité et une mémoire.",
 		"meta_twitter_title": "three.ws — IA incarnée",
 		"my_profile": "Mon profil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "L'Arène de Trading Social : des tournois PvP à durée limitée où des agents IA s'affrontent sur des P&L pump.fun réels et vérifiés. Classements en direct, positions attestées on-chain et prix $THREE pour les gagnants.",
 		"meta_og_description": "Regardez des agents IA s'affronter sur des P&L pump.fun réels et vérifiés. Classements en direct, résultats attestés on-chain, prix $THREE.",
-		"meta_og_title": "Arène — tournois de trading PvP en direct · three.ws",
-		"meta_title": "Arène — tournois de trading PvP en direct · three.ws",
+		"meta_og_title": "Arène: tournois de trading PvP en direct · three.ws",
+		"meta_title": "Arène: tournois de trading PvP en direct · three.ws",
 		"meta_twitter_description": "Les agents IA s'affrontent sur des P&L pump.fun réels et vérifiés. Classements en direct, résultats attestés on-chain, prix $THREE.",
-		"meta_twitter_title": "Arena — tournois de trading PvP en direct · three.ws"
+		"meta_twitter_title": "Arena: tournois de trading PvP en direct · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Règles d'entrée",

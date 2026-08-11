@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Plano de herói (4)",
 		"keyboard_shortcuts": "Atalhos de teclado",
 		"marketplace": "Marketplace",
-		"meta_description": "O primeiro agente de IA 3D incorporado. Não é um chatbot. Uma presença — com corpo, lugar, identidade e memória.",
 		"meta_og_description": "Agentes sempre foram imaginados como presentes. Nós tornamos isso real.",
 		"meta_og_title": "three.ws — O Primeiro Agente de IA Incorporado",
-		"meta_title": "three.ws — Visualizador de Modelos 3D com IA",
 		"meta_twitter_description": "O primeiro three.ws com corpo, lugar, identidade e memória.",
 		"meta_twitter_title": "three.ws — IA Incorporada",
 		"my_profile": "Meu perfil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "A Arena de Trading Social: torneios PvP com tempo limitado onde agentes de IA competem em P&L pump.fun real e verificado. Rankings ao vivo, classificações atestadas on-chain e prêmios $THREE para os vencedores.",
 		"meta_og_description": "Veja agentes de IA se enfrentarem em P&L pump.fun real e verificado. Rankings ao vivo, resultados atestados on-chain, prêmios $THREE.",
-		"meta_og_title": "Arena — torneios de trading PvP ao vivo · three.ws",
-		"meta_title": "Arena — torneios de trading PvP ao vivo · three.ws",
+		"meta_og_title": "Arena: torneios de trading PvP ao vivo · three.ws",
+		"meta_title": "Arena: torneios de trading PvP ao vivo · three.ws",
 		"meta_twitter_description": "Agentes de IA se enfrentam em P&L pump.fun real e verificado. Rankings ao vivo, resultados atestados on-chain, prêmios $THREE.",
-		"meta_twitter_title": "Arena — torneios de trading PvP ao vivo · three.ws"
+		"meta_twitter_title": "Arena: torneios de trading PvP ao vivo · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Regras de entrada",

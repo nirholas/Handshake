@@ -44,7 +44,7 @@
 		<link rel="stylesheet" href="/avatar-cli.css" />
 		<script defer src="/footer-newsletter.js"></script>
 
-		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Avatar CLI","description":"Terminal-native tooling for on-chain avatars: scaffold, validate, hash, and preview avatar manifests from your shell.","url":"https://three.ws/avatar-cli","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"SoftwareApplication","name":"@three-ws/avatar-cli","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, macOS, Windows","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"softwareVersion":"0.2.0","url":"https://www.npmjs.com/package/@three-ws/avatar-cli"}]}</script>
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Avatar CLI","description":"Terminal-native tooling for on-chain avatars: scaffold, validate, hash, and preview avatar manifests from your shell.","url":"https://three.ws/avatar-cli","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"SoftwareApplication","name":"@three-ws/avatar-cli","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, macOS, Windows","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"softwareVersion":"0.2.1","url":"https://www.npmjs.com/package/@three-ws/avatar-cli"}]}</script>
 	</head>
 	<body>
 		<header><div id="nav-container"></div></header>
@@ -66,7 +66,7 @@
 						</div>
 
 						<h1 class="cli-h1" id="cli-hero-title">
-							Avatars belong in your<br /><em>build pipeline</em>.
+							Avatars belong in your <br /><em>build pipeline</em>.
 						</h1>
 
 						<p class="cli-sub">
@@ -185,6 +185,8 @@
 							<pre class="cli-snip"><code>$ three-ws-avatar validate broken.json
 <span class="e">✖ broken.json is invalid (7 errors)</span>
   • / must have required property 'mesh'
+  • / must have required property 'skeleton'
+<span class="dim">  …</span>
   • /id must match a schema in anyOf</code></pre>
 						</article>
 
@@ -214,9 +216,9 @@ $ echo "$sha"
 								<code>mesh.uri</code> is still a local path.
 							</p>
 							<pre class="cli-snip"><code>$ three-ws-avatar preview manifest.json
-<span class="dim">› web component</span>
-&lt;script type="module" src="…/agent-3d.js"&gt;&lt;/script&gt;
-&lt;agent-3d src="…/michelle.glb"&gt;&lt;/agent-3d&gt;</code></pre>
+<span class="dim">› web component (loader registers &lt;agent-3d&gt;)</span>
+&lt;script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"&gt;&lt;/script&gt;
+&lt;agent-3d src="https://three.ws/avatars/michelle.glb" style="width:400px;height:600px"&gt;&lt;/agent-3d&gt;</code></pre>
 						</article>
 					</div>
 				</div>
@@ -244,14 +246,14 @@ $ echo "$sha"
 									<span class="cli-copy-label">Copy</span>
 								</button>
 							</div>
-							<pre class="cli-snip cli-snip-lg"><code id="live-snippet">&lt;script type="module" src="/agent-3d/latest/agent-3d.js"&gt;&lt;/script&gt;
-&lt;agent-3d
-  src="https://three.ws/avatars/michelle.glb"
-  style="width:100%;height:420px"&gt;&lt;/agent-3d&gt;</code></pre>
+							<pre class="cli-snip cli-snip-lg"><code id="live-snippet">&lt;script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"&gt;&lt;/script&gt;
+&lt;agent-3d src="https://three.ws/avatars/michelle.glb" style="width:400px;height:600px"&gt;&lt;/agent-3d&gt;</code></pre>
 							<p class="cli-live-note">
 								Both lines matter. <code>&lt;agent-3d&gt;</code> is an unknown element until the
 								loader registers it, so pasting only the tag gives you an empty box with no
-								warning. That is why <code>preview</code> always prints them together.
+								warning. That is why <code>preview</code> always prints them together. The
+								viewer opposite is this exact markup; only a stylesheet rule caps its width on
+								narrow screens, which the element handles by re-laying out.
 							</p>
 						</div>
 
@@ -267,14 +269,8 @@ $ echo "$sha"
 										see the <a href="/docs/web-component">web component reference</a>.
 									</span>
 								</p>
-								<script
-								type="module"
-								src="https://three.ws/agent-3d/latest/agent-3d.js"
-							></script>
-								<agent-3d
-									src="https://three.ws/avatars/michelle.glb"
-									style="width:100%;height:420px"
-								></agent-3d>
+								<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+								<agent-3d src="https://three.ws/avatars/michelle.glb" style="width:400px;height:600px"></agent-3d>
 							</div>
 							<p class="cli-live-caption">
 								<code>michelle.glb</code> &middot; Mixamo rig &middot; served from three.ws

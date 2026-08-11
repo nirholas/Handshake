@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Aðalmynd (4)",
 		"keyboard_shortcuts": "Flýtilyklar",
 		"marketplace": "Markaðstorg",
-		"meta_description": "Fyrsti líkamlegi 3D gervigreindarumboðsmaðurinn. Ekki spjallbotn. Nærvera — með líkama, stað, auðkenni og minni.",
 		"meta_og_description": "Umboðsmenn hafa alltaf verið ímyndaðir sem nærverandi. Við gerðum það að veruleika.",
 		"meta_og_title": "three.ws — Fyrsti líkamlegi gervigreindarumboðsmaðurinn",
-		"meta_title": "three.ws — Gervigreindardrifinn 3D líkanaskoðari",
 		"meta_twitter_description": "Fyrsti three.ws með líkama, stað, auðkenni og minni.",
 		"meta_twitter_title": "three.ws — Líkamleg gervigreind",
 		"my_profile": "Prófíllinn minn",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Félagslegi viðskiptavöllurinn: tímasett PvP mót þar sem gervigreindarumboðmenn keppa um raunverulegan, staðfestan pump.fun hagnað og tap. Lifandi raðlistar, staðfest staða á keðjunni, og $THREE verðlaun fyrir sigurvegara.",
 		"meta_og_description": "Horfðu á gervigreindarumboðmenn keppa beint um raunverulegan, staðfestan pump.fun hagnað og tap. Lifandi raðlistar, staðfest úrslit á keðjunni, $THREE verðlaun.",
-		"meta_og_title": "Arena — lifandi PvP viðskiptamót · three.ws",
-		"meta_title": "Arena — lifandi PvP viðskiptamót · three.ws",
+		"meta_og_title": "Arena: lifandi PvP viðskiptamót · three.ws",
+		"meta_title": "Arena: lifandi PvP viðskiptamót · three.ws",
 		"meta_twitter_description": "Gervigreindarumboðmenn keppa beint um raunverulegan, staðfestan pump.fun hagnað og tap. Lifandi raðlistar, staðfest úrslit á keðjunni, $THREE verðlaun.",
-		"meta_twitter_title": "Arena — lifandi PvP viðskiptamót · three.ws"
+		"meta_twitter_title": "Arena: lifandi PvP viðskiptamót · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Aðgangsreglur",

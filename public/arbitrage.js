@@ -1,9 +1,13 @@
-// public/arbitrage.js — drives the x402 arbitrage page.
+// public/arbitrage.js drives the x402 arbitrage page.
 //
 // Pulls /api/bazaar/arbitrage, renders one card per opportunity, supports
 // a type filter (HTTP / MCP) and a free-text search across capability and
 // provider host. "Pay cheapest" launches the existing x402.js payment modal
 // so the arb view stays one click from execution.
+//
+// Inbound state comes from the query string: /bazaar deep-links here as
+// /arbitrage?focus=<service> when a listing has priced peers, and the filter
+// state is written back with replaceState so a filtered view is shareable.
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -16,10 +20,17 @@ const els = {
 	q: $('#q'),
 };
 
+const FILTERS = new Set(['all', 'http', 'mcp']);
+
+const params = new URLSearchParams(location.search);
+const initialFilter = String(params.get('type') || '').toLowerCase();
+
 const state = {
 	all: [],
-	filter: 'all',
-	q: '',
+	filter: FILTERS.has(initialFilter) ? initialFilter : 'all',
+	// /bazaar sends the capability it wants compared as ?focus=; ?q= is the
+	// form this page writes back, so accept either.
+	q: params.get('focus') || params.get('q') || '',
 };
 
 function escapeHtml(s) {
@@ -27,7 +38,7 @@ function escapeHtml(s) {
 }
 
 function relativeTime(iso) {
-	if (!iso) return '—';
+	if (!iso) return 'unknown';
 	const d = new Date(iso);
 	const diff = Date.now() - d.getTime();
 	if (diff < 60_000) return 'just now';
@@ -38,6 +49,8 @@ function relativeTime(iso) {
 
 function renderSkeleton() {
 	els.empty.hidden = true;
+	els.grid.setAttribute('aria-busy', 'true');
+	els.updated.textContent = 'loading';
 	const frag = document.createDocumentFragment();
 	for (let i = 0; i < 6; i++) {
 		const sk = document.createElement('div');
@@ -45,6 +58,17 @@ function renderSkeleton() {
 		frag.appendChild(sk);
 	}
 	els.grid.replaceChildren(frag);
+}
+
+// Keep the address bar in step with the visible filters so a filtered view can
+// be shared or reloaded. replaceState keeps the back button pointing at
+// whatever page linked here rather than at every keystroke.
+function syncUrl() {
+	const next = new URLSearchParams();
+	if (state.filter !== 'all') next.set('type', state.filter);
+	if (state.q.trim()) next.set('q', state.q.trim());
+	const qs = next.toString();
+	history.replaceState(null, '', qs ? `${location.pathname}?${qs}` : location.pathname);
 }
 
 function visibleOpps() {
@@ -66,19 +90,51 @@ function visibleOpps() {
 function renderGrid() {
 	const opps = visibleOpps();
 	els.count.textContent = String(opps.length);
+	els.grid.setAttribute('aria-busy', 'false');
 	if (opps.length === 0) {
-		els.grid.innerHTML = '';
-		els.empty.hidden = false;
-		els.empty.className = 'empty';
-		els.empty.textContent = state.all.length
-			? 'No matches. Clear the filter or search.'
-			: 'No arbitrage opportunities right now. Check back as facilitators add listings.';
+		renderEmpty();
 		return;
 	}
 	els.empty.hidden = true;
 	const frag = document.createDocumentFragment();
 	for (const o of opps) frag.appendChild(card(o));
 	els.grid.replaceChildren(frag);
+}
+
+// Two distinct empty states: the filters excluded everything (recoverable right
+// here), or the feed genuinely has no cross-provider gap right now (the next
+// useful move is the full catalog).
+function renderEmpty() {
+	els.grid.replaceChildren();
+	els.empty.hidden = false;
+	els.empty.className = 'empty';
+	els.empty.removeAttribute('role');
+	const narrowed = state.all.length > 0;
+	els.empty.innerHTML = narrowed
+		? `<div class="empty-title">No opportunities match these filters</div>
+			<div>${state.all.length} live ${state.all.length === 1 ? 'opportunity is' : 'opportunities are'} hidden by the current type filter or search.</div>
+			<div class="empty-actions"><button type="button" class="clear-btn">Clear filters</button><a href="/bazaar">Browse the full catalog</a></div>`
+		: `<div class="empty-title">No cross-provider price gaps right now</div>
+			<div>Every capability in the merged catalog is currently quoted at one price. New listings land continuously, so this fills back in on its own.</div>
+			<div class="empty-actions"><button type="button" class="clear-btn">Refresh</button><a href="/bazaar">Browse the full catalog</a><a href="/providers">See provider profiles</a></div>`;
+	els.empty.querySelector('.clear-btn').addEventListener('click', narrowed ? clearFilters : load);
+}
+
+function clearFilters() {
+	state.filter = 'all';
+	state.q = '';
+	els.q.value = '';
+	syncChips();
+	syncUrl();
+	renderGrid();
+}
+
+function syncChips() {
+	for (const chip of $$('.chip[data-filter]')) {
+		const on = chip.dataset.filter === state.filter;
+		chip.classList.toggle('active', on);
+		chip.setAttribute('aria-pressed', on ? 'true' : 'false');
+	}
 }
 
 function card(o) {
@@ -154,12 +210,21 @@ function card(o) {
 	best.onclick = () => payCheapest(o, best);
 	const worst = document.createElement('a');
 	worst.className = 'btn-worst';
-	worst.href = `/bazaar?q=${encodeURIComponent(o.capability || o.serviceName || '')}`;
+	worst.href = bazaarLink(o);
+	worst.title = `Most expensive listing is ${o.mostExpensive?.host || 'unknown'} at ${o.maxPriceLabel}. Opens every listing for this capability in the catalog.`;
 	worst.textContent = `Avoid · ${o.maxPriceLabel}`;
 	actions.append(best, worst);
 
 	el.append(top, title, stats, providers, actions);
 	return el;
+}
+
+// The catalog defaults to HTTP listings, so an MCP capability has to say so or
+// the deep link lands on a tab that cannot contain it.
+function bazaarLink(o) {
+	const p = new URLSearchParams({ q: o.capability || o.serviceName || '' });
+	if (o.type === 'mcp') p.set('type', 'mcp');
+	return `/bazaar?${p.toString()}`;
 }
 
 function formatSpread(o) {
@@ -176,7 +241,9 @@ function shortFac(host) {
 async function payCheapest(o, btn) {
 	if (!o.cheapest?.resource) return;
 	if (o.type === 'mcp') {
-		window.location.href = `/bazaar?q=${encodeURIComponent(o.capability)}`;
+		// MCP tools are invoked through a client session, not a one-shot HTTP
+		// payment, so the cheapest listing opens in the catalog's tool inspector.
+		window.location.href = bazaarLink(o);
 		return;
 	}
 	const orig = btn.textContent;
@@ -186,7 +253,7 @@ async function payCheapest(o, btn) {
 		try {
 			await loadX402();
 		} catch {
-			// /x402.js 404'd or failed to evaluate — surface it instead of no-op.
+			// /x402.js 404'd or failed to evaluate: surface it instead of no-op.
 			btn.textContent = 'Payment modal failed to load';
 			setTimeout(() => { btn.disabled = false; btn.textContent = orig; }, 4000);
 			return;
@@ -262,9 +329,13 @@ async function load() {
 		const sub = timedOut
 			? 'The facilitator feed took too long to respond.'
 			: network ? 'Check your connection and try again.' : escapeHtml(e?.message || String(e));
-		els.grid.innerHTML = '';
+		els.grid.replaceChildren();
+		els.grid.setAttribute('aria-busy', 'false');
+		els.count.textContent = '0';
+		els.updated.textContent = 'unavailable';
 		els.empty.hidden = false;
 		els.empty.className = 'err';
+		els.empty.setAttribute('role', 'alert');
 		els.empty.innerHTML = `
 			<div class="err-title">${title}</div>
 			<div>${sub}</div>
@@ -276,11 +347,15 @@ async function load() {
 
 for (const chip of $$('.chip[data-filter]')) {
 	chip.addEventListener('click', () => {
-		$$('.chip[data-filter]').forEach((c) => c.classList.toggle('active', c === chip));
 		state.filter = chip.dataset.filter;
+		syncChips();
+		syncUrl();
 		renderGrid();
 	});
 }
-els.q.addEventListener('input', () => { state.q = els.q.value; renderGrid(); });
+els.q.addEventListener('input', () => { state.q = els.q.value; syncUrl(); renderGrid(); });
+
+els.q.value = state.q;
+syncChips();
 
 load();

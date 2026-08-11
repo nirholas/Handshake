@@ -1,10 +1,10 @@
-/* The AGI — flagship surface for the platform's narrow-domain trading agent.
+/* The AGI: flagship surface for the platform's narrow-domain trading agent.
  * Monochrome on near-black, φ-spaced (tokens.css). The one chromatic license is
  * the mood aura around the embodied body, whose hue is set at runtime from the
  * live cognition vector (--agi-aura). Semantic green/red only ever mark P&L. */
 
 /* This page doesn't load /style.css, so the near-black canvas isn't painted
-   by default — without this, every --ink/--ink-dim token here renders against
+   by default. Without this, every --ink/--ink-dim token here renders against
    the browser's white default background instead of --bg-0. */
 body {
 	background: var(--bg-0);
@@ -124,7 +124,7 @@ body {
 	flex-direction: column;
 }
 .agi-stage::before {
-	/* mood aura — hue/intensity set at runtime via --agi-aura / --agi-aura-strength */
+	/* mood aura: hue/intensity set at runtime via --agi-aura / --agi-aura-strength */
 	content: '';
 	position: absolute; inset: 0;
 	background: radial-gradient(60% 55% at 50% 62%, var(--agi-aura, rgba(124, 147, 179, 0.28)), transparent 70%);
@@ -176,6 +176,28 @@ body {
 
 /* ── live mind (decision stream) ──────────────────────────────────────────── */
 .agi-mind { min-height: 360px; }
+/* Lens over the stream. Only shown once the agent has logged both trading and
+   operational calls, so it never appears as a control with nothing to switch. */
+.agi-filter { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: var(--space-md); }
+.agi-chip {
+	display: inline-flex; align-items: center; gap: var(--space-2xs);
+	padding: var(--space-2xs) var(--space-sm);
+	border-radius: var(--radius-pill);
+	border: 1px solid var(--stroke);
+	background: var(--surface-2);
+	color: var(--ink-dim);
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs);
+	letter-spacing: 0.04em;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.agi-chip:hover { border-color: var(--ink-dim); color: var(--ink); background: var(--surface-3); }
+.agi-chip:active { transform: translateY(1px); }
+.agi-chip:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.agi-chip[aria-pressed='true'] { border-color: var(--ink-bright); color: var(--ink-bright); background: var(--surface-3); }
+.agi-chip-n { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.agi-chip[aria-pressed='true'] .agi-chip-n { color: var(--ink-dim); }
 .agi-stream { display: flex; flex-direction: column; gap: var(--space-sm); }
 .agi-thought {
 	border: 1px solid var(--stroke);
@@ -193,6 +215,9 @@ body {
 }
 .agi-thought-mint a { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--stroke-strong); }
 .agi-thought-mint a:hover { color: var(--ink-bright); }
+/* An operational call's subject is an internal id, not a coin: same slot, but
+   plainly not a link to a token. */
+.agi-thought-ref { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-faint); }
 .agi-thought-time { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-faint); white-space: nowrap; }
 .agi-thought-body { font-size: var(--text-md); line-height: 1.5; color: var(--ink); margin: var(--space-2xs) 0; }
 .agi-thought-meta { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; font-family: var(--font-mono); font-size: var(--text-2xs); }
@@ -220,6 +245,8 @@ body {
 .agi-stat .k { font-family: var(--font-mono); font-size: var(--text-2xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-dim); }
 .agi-stat .v { font-family: var(--font-display); font-size: var(--text-lg); margin-top: 2px; }
 
+.agi-open-head { margin-bottom: var(--space-sm); }
+.agi-open-head h3 { font-family: var(--font-display); font-size: var(--text-md); font-weight: 600; margin: 0; letter-spacing: -0.01em; }
 .agi-positions { display: flex; flex-direction: column; gap: var(--space-2xs); }
 .agi-position { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); padding: var(--space-xs) 0; border-bottom: 1px solid var(--stroke); font-family: var(--font-mono); font-size: var(--text-sm); }
 .agi-position:last-child { border-bottom: none; }
@@ -243,8 +270,12 @@ body {
 .agi-skel { background: linear-gradient(90deg, var(--surface-1) 25%, var(--surface-2) 37%, var(--surface-1) 63%); background-size: 400% 100%; animation: agi-shimmer 1.4s ease infinite; border-radius: var(--radius-md); }
 @keyframes agi-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 .agi-empty, .agi-error { text-align: center; padding: var(--space-xl); color: var(--ink-dim); }
-.agi-empty h2 { font-family: var(--font-display); color: var(--ink); margin: 0 0 var(--space-sm); }
+.agi-empty h2, .agi-error h2 { font-family: var(--font-display); color: var(--ink); margin: 0 0 var(--space-sm); }
+.agi-empty p { margin: 0 auto; max-width: 52ch; line-height: 1.55; }
+.agi-empty .agi-btn { margin-top: var(--space-md); }
 .agi-error { border: 1px solid rgba(248, 113, 113, 0.3); border-radius: var(--radius-lg); background: var(--surface-1); }
+.agi-error p { margin: 0 auto; max-width: 54ch; line-height: 1.55; }
+.agi-error-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); justify-content: center; margin-top: var(--space-lg); }
 
 /* ── responsive ───────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
@@ -260,4 +291,5 @@ body {
 @media (prefers-reduced-motion: reduce) {
 	.agi-thought, .agi-domain-tag .agi-dot, .agi-skel { animation: none; }
 	.agi-stage::before, .agi-stage agent-3d, .agi-ring .agi-ring-val { transition: none; }
+	.agi-chip, .agi-btn { transition: none; }
 }

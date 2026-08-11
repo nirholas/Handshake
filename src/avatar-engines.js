@@ -1,4 +1,4 @@
-// Avatar Engines Atlas — renders the curated engine registry into a filterable,
+// Avatar Engines Atlas: renders the curated engine registry into a filterable,
 // searchable, deep-linkable catalog. Pure client render from avatar-engines-data.js;
 // no network. Filters reflect into the URL query so a filtered view is shareable.
 
@@ -8,6 +8,7 @@ import {
 	INTEGRATIONS,
 	REPRESENTATIONS,
 	engineStats,
+	isRetired,
 } from './avatar-engines-data.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -123,9 +124,14 @@ function card(engine) {
 	const rep = REPRESENTATIONS[engine.representation];
 	const integ = INTEGRATIONS[engine.integration];
 
+	const heading = el('h3', { text: engine.name });
+	if (isRetired(engine)) {
+		heading.appendChild(el('span', { class: 'ae-retired', title: 'This project or service no longer operates' }, 'Retired'));
+	}
+
 	const top = el('div', { class: 'ae-card-top' }, [
 		el('div', {}, [
-			el('h3', { text: engine.name }),
+			heading,
 			el('p', { class: 'ae-org', text: `${engine.org} · ${engine.year}` }),
 		]),
 		el('span', { class: 'ae-rep', 'data-rep': engine.representation, title: rep?.note || '' }, rep?.label || engine.representation),
@@ -161,10 +167,19 @@ function card(engine) {
 	if (engine.links?.repo) actions.appendChild(linkBtn(engine.links.repo, repoLabel(engine.links.repo)));
 	if (engine.links?.paper && engine.links.paper !== engine.links.repo)
 		actions.appendChild(linkBtn(engine.links.paper, 'Paper'));
+	if (engine.links?.docs && engine.links.docs !== engine.links.repo)
+		actions.appendChild(linkBtn(engine.links.docs, 'Docs'));
 	if (engine.links?.demo && engine.links.demo !== engine.cta?.href && !engine.links.demo.startsWith('/') && engine.links.demo !== engine.links.repo && engine.links.demo !== engine.links.paper)
 		actions.appendChild(linkBtn(engine.links.demo, 'Demo'));
 
-	return el('article', { class: 'ae-card', 'data-id': engine.id }, [top, el('p', { class: 'ae-blurb', text: engine.blurb }), meta, tags, integBox, actions]);
+	return el('article', { class: 'ae-card', 'data-id': engine.id, 'data-status': isRetired(engine) ? 'retired' : 'active' }, [
+		top,
+		el('p', { class: 'ae-blurb', text: engine.blurb }),
+		meta,
+		tags,
+		integBox,
+		actions,
+	]);
 }
 
 function repoLabel(url) {
@@ -184,8 +199,13 @@ function renderStats() {
 		[s.live, 'live in three.ws'],
 		[s.commercial, 'commercial-use'],
 	];
+	// A <dl> of label/value pairs: the numbers are content, not decoration, so a
+	// screen reader gets "engines, 24" rather than a bare unlabelled digit.
 	for (const [n, l] of items) {
-		host.appendChild(el('div', {}, [el('div', { class: 'ae-stat-n', text: String(n) }), el('div', { class: 'ae-stat-l', text: l })]));
+		host.appendChild(el('div', { class: 'ae-stat' }, [
+			el('dt', { class: 'ae-stat-l', text: l }),
+			el('dd', { class: 'ae-stat-n', text: String(n) }),
+		]));
 	}
 }
 
@@ -244,6 +264,11 @@ let _searchTimer = null;
 
 function init() {
 	if (!$('#ae-results')) return;
+	// The pre-hydration skeleton stays until real cards exist; the inline
+	// watchdog in the page turns it into an error state if we never get here.
+	const boot = $('#ae-boot');
+	if (boot) boot.hidden = true;
+	document.documentElement.setAttribute('data-ae', 'ready');
 	readUrl();
 	renderStats();
 	renderFamilyOptions();
@@ -270,5 +295,20 @@ function init() {
 	});
 }
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-else init();
+// The registry is the entire page. A throw anywhere in the render would leave a
+// hero above an empty void, so failure has to surface as the designed error
+// state rather than as a silent blank.
+function bootstrap() {
+	try {
+		init();
+	} catch (err) {
+		const boot = $('#ae-boot');
+		const error = $('#ae-error');
+		if (boot) boot.hidden = true;
+		if (error) error.hidden = false;
+		console.error('[avatar-engines] registry render failed', err);
+	}
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootstrap);
+else bootstrap();

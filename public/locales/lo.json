@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "ພາບຖ່າຍ Hero (4)",
 		"keyboard_shortcuts": "ປຸ່ມລັດແປ້ນພິມ",
 		"marketplace": "ຕະຫຼາດ",
-		"meta_description": "ຕົວແທນ AI 3D ທີ່ມີຮ່າງກາຍທຳອິດ. ບໍ່ແມ່ນແຊັດບອດ. ເປັນການມີຕົວຕົນ — ດ້ວຍຮ່າງກາຍ, ສະຖານທີ່, ຕົວຕົນ, ແລະ ຄວາມຊົງຈຳ.",
 		"meta_og_description": "ຕົວແທນຕ່າງໆໄດ້ຖືກຈິນຕະນາການວ່າມີຕົວຕົນມາຕະຫຼອດ. ພວກເຮົາໄດ້ເຮັດໃຫ້ມັນເປັນຈິງ.",
 		"meta_og_title": "three.ws — ຕົວແທນ AI ທີ່ມີຮ່າງກາຍທຳອິດ",
-		"meta_title": "three.ws — ຕົວເບິ່ງໂມເດວ 3D ທີ່ຂັບເຄື່ອນດ້ວຍ AI",
 		"meta_twitter_description": "three.ws ທຳອິດທີ່ມີຮ່າງກາຍ, ສະຖານທີ່, ຕົວຕົນ, ແລະ ຄວາມຊົງຈຳ.",
 		"meta_twitter_title": "three.ws — AI ທີ່ມີຮ່າງກາຍ",
 		"my_profile": "ໂປຣໄຟລ໌ຂອງຂ້ອຍ",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Social Trading Arena: ການແຂ່ງຂັນ PvP ແບບຈຳກັດເວລາທີ່ຕົວແທນ AI ແຂ່ງຂັນກັນດ້ວຍ P&L pump.fun ທີ່ແທ້ຈິງ ແລະຖືກຢືນຢັນ. ອັນດັບສົດ, ຕຳແໜ່ງທີ່ຖືກຢືນຢັນໃນລະບົບຕ່ອງໂສ້, ແລະລາງວັນ $THREE ສຳລັບຜູ້ຊະນະ.",
 		"meta_og_description": "ເບິ່ງຕົວແທນ AI ແຂ່ງຂັນກັນດ້ວຍ P&L pump.fun ທີ່ແທ້ຈິງ ແລະຖືກຢືນຢັນ. ອັນດັບສົດ, ຜົນໄດ້ຮັບທີ່ຖືກຢືນຢັນໃນລະບົບຕ່ອງໂສ້, ລາງວັນ $THREE.",
-		"meta_og_title": "Arena — ການແຂ່ງຂັນການຊື້ຂາຍ PvP ສົດ · three.ws",
-		"meta_title": "Arena — ການແຂ່ງຂັນການຊື້ຂາຍ PvP ສົດ · three.ws",
+		"meta_og_title": "Arena: ການແຂ່ງຂັນການຊື້ຂາຍ PvP ສົດ · three.ws",
+		"meta_title": "Arena: ການແຂ່ງຂັນການຊື້ຂາຍ PvP ສົດ · three.ws",
 		"meta_twitter_description": "ເບິ່ງຕົວແທນ AI ແຂ່ງຂັນກັນດ້ວຍ P&L pump.fun ທີ່ແທ້ຈິງ ແລະຖືກຢືນຢັນ. ອັນດັບສົດ, ຜົນໄດ້ຮັບທີ່ຖືກຢືນຢັນໃນລະບົບຕ່ອງໂສ້, ລາງວັນ $THREE.",
-		"meta_twitter_title": "Arena — ການແຂ່ງຂັນການຊື້ຂາຍ PvP ສົດ · three.ws"
+		"meta_twitter_title": "Arena: ການແຂ່ງຂັນການຊື້ຂາຍ PvP ສົດ · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> ກົດລະບຽບການເຂົ້າ",

@@ -1,19 +1,19 @@
 <!doctype html>
 <html lang="en">
 	<head>
-		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<script>/* three.ws theme boot, no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<title data-i18n="avatar_engines.meta_title">Avatar Engines Atlas · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars — technique, license, compute, and exactly how three.ws uses each one."  data-i18n-attr="content:avatar_engines.meta_description"/>
+		<meta name="description" content="A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars: technique, license, compute, and exactly how three.ws uses each one."  data-i18n-attr="content:avatar_engines.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/avatar-engines" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:title" content="Avatar Engines Atlas · three.ws"  data-i18n-attr="content:avatar_engines.meta_og_title"/>
-		<meta property="og:description" content="Every major engine for high-quality and photoreal 3D human avatars — Gaussian-splat heads, image→human, text→avatar, and the rigs three.ws already animates. Technique, license, and integration status for each."  data-i18n-attr="content:avatar_engines.meta_og_description"/>
+		<meta property="og:description" content="Every major engine for high-quality and photoreal 3D human avatars: Gaussian-splat heads, image→human, text→avatar, and the rigs three.ws already animates. Technique, license, and integration status for each."  data-i18n-attr="content:avatar_engines.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/avatar-engines" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Avatar+Engines+Atlas&amp;d=A+curated%2C+factual+atlas+of+the+open-source+and+commercial+engines+that+build+high-quality+and+photoreal+3D+human+avatars%3A+Gaussian-splat+heads%2C+single-photo&amp;p=%2Favatar-engines" />
 		<meta name="twitter:card" content="summary_large_image" />
@@ -30,6 +30,10 @@
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
+
+		<!-- With scripting off the registry never renders, so the pre-hydration
+		     skeleton would shimmer forever. Hide it and let <noscript> speak. -->
+		<noscript><style>#ae-boot { display: none; }</style></noscript>
 
 		<style>
 			.ae-page {
@@ -94,11 +98,15 @@
 				gap: 28px;
 				margin-top: 28px;
 			}
+			/* Number above label, but dt (label) has to precede dd (number) in the
+			   DOM for a valid definition list, so the column is reversed. */
+			.ae-stat { display: flex; flex-direction: column-reverse; }
 			.ae-stat-n {
 				font-family: var(--font-display, 'Space Grotesk', sans-serif);
 				font-size: 26px;
 				font-weight: 700;
 				line-height: 1;
+				margin: 0;
 			}
 			.ae-stat-l {
 				font-size: 12px;
@@ -136,7 +144,11 @@
 				border-radius: 9px;
 				transition: border-color 0.15s;
 			}
-			.ae-search:focus-within { border-color: var(--hairline-strong, #2a2a2a); }
+			.ae-search:focus-within {
+				border-color: var(--hairline-strong, #2a2a2a);
+				outline: 2px solid var(--accent, #fff);
+				outline-offset: 2px;
+			}
 			.ae-search svg { flex: 0 0 auto; color: var(--text-3, #8a8a8a); }
 			.ae-search input {
 				flex: 1;
@@ -177,6 +189,8 @@
 				user-select: none;
 			}
 			.ae-toggle:hover { border-color: var(--hairline-strong, #2a2a2a); color: var(--text, #f6f6f6); }
+			.ae-toggle:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
+			.ae-toggle:active { transform: translateY(1px); }
 			.ae-toggle[aria-pressed='true'] {
 				background: var(--accent, #fff);
 				color: #000;
@@ -282,12 +296,46 @@
 			.ae-btn--primary:hover { background: #e3e3e3; opacity: 1; }
 			.ae-btn svg { flex: 0 0 auto; }
 
-			/* ── Empty state ───────────────────────────────────────── */
-			.ae-empty {
+			/* Retired: the project or service no longer operates. */
+			.ae-retired {
+				display: inline-block; margin-left: 8px; vertical-align: middle;
+				font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+				font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+				padding: 2px 7px; border-radius: 5px;
+				color: #fca5a5; border: 1px solid #6e2c2c; background: rgba(239, 68, 68, 0.1);
+			}
+			.ae-card[data-status='retired'] { border-style: dashed; }
+
+			/* ── Empty / loading / error states ─────────────────────── */
+			.ae-empty, .ae-error {
 				text-align: center; padding: 80px 24px; color: var(--text-3, #8a8a8a);
 			}
-			.ae-empty h3 { font-size: 17px; color: var(--text, #f6f6f6); margin: 0 0 8px; font-family: var(--font-display, 'Space Grotesk', sans-serif); }
-			.ae-empty p { font-size: 14px; margin: 0 0 18px; }
+			.ae-empty h3, .ae-error h3 { font-size: 17px; color: var(--text, #f6f6f6); margin: 0 0 8px; font-family: var(--font-display, 'Space Grotesk', sans-serif); }
+			.ae-empty p, .ae-error p { font-size: 14px; margin: 0 0 18px; }
+			.ae-error p { max-width: 460px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+			.ae-error-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+			/* Pre-hydration skeleton. Replaced by real cards the moment the
+			   registry module runs; swapped for .ae-error if it never does. */
+			.ae-skeleton { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-top: 42px; }
+			.ae-skel-card {
+				height: 268px; border-radius: 13px;
+				border: 1px solid var(--hairline, #1c1c1c); background: var(--surface-1, #111);
+				position: relative; overflow: hidden;
+			}
+			.ae-skel-card::after {
+				content: ''; position: absolute; inset: 0;
+				background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.045), transparent);
+				transform: translateX(-100%);
+				animation: ae-shimmer 1.4s ease-in-out infinite;
+			}
+			@keyframes ae-shimmer { to { transform: translateX(100%); } }
+			@media (prefers-reduced-motion: reduce) {
+				.ae-skel-card::after { animation: none; }
+				.ae-dot { animation: none; }
+				.ae-card { transition: none; }
+			}
+			.ae-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 			.ae-foot-note {
 				max-width: 1120px; margin: 0 auto; padding: 0 24px 60px;
@@ -304,8 +352,8 @@
 	
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Avatar Engines Atlas — three.ws">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Avatar Engines Atlas","description":"A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars — Gaussian-splat heads, single-photo humans, text→avatar generators, and the rigs three.ws already animates. Technique, license, compute, and integration status for each.","url":"https://three.ws/avatar-engines","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&amp;t=Avatar+Engines+Atlas&amp;d=A+curated%2C+factual+atlas+of+the+open-source+and+commercial+engines+that+build+high-quality+and+photoreal+3D+human+avatars+%E2%80%94+Gaussian-splat+heads%2C+single-photo+h&amp;p=%2Favatar-engines"}]}</script>
+	<meta property="og:image:alt" content="Avatar Engines Atlas · three.ws">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Avatar Engines Atlas","description":"A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars: Gaussian-splat heads, single-photo humans, text→avatar generators, and the rigs three.ws already animates. Technique, license, compute, and integration status for each.","url":"https://three.ws/avatar-engines","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&amp;t=Avatar+Engines+Atlas&amp;d=A+curated%2C+factual+atlas+of+the+open-source+and+commercial+engines+that+build+high-quality+and+photoreal+3D+human+avatars%3A+Gaussian-splat+heads%2C+single-photo+h&amp;p=%2Favatar-engines"}]}</script>
 </head>
 	<body>
 		<div class="ae-page">
@@ -317,11 +365,11 @@
 				<h1 data-i18n="avatar_engines.every_engine_for_a_high_quality_human">Every engine for a high-quality human avatar.</h1>
 				<p data-i18n="avatar_engines.a_factual_map_of_the_open_source">
 					A factual map of the open-source and commercial systems that build realistic and
-					high-quality 3D avatars — Gaussian-splat heads, single-photo humans, text→avatar
+					high-quality 3D avatars: Gaussian-splat heads, single-photo humans, text→avatar
 					generators, and the rigs three.ws already animates. For each: what it makes, what it
 					runs on, what its license permits, and exactly how three.ws uses it.
 				</p>
-				<div class="ae-stats" id="ae-stats" aria-hidden="true"></div>
+				<dl class="ae-stats" id="ae-stats"></dl>
 			</header>
 
 			<div class="ae-controls">
@@ -344,7 +392,7 @@
 					<select class="ae-select" id="ae-sort" aria-label="Sort engines">
 						<option value="family" data-i18n="avatar_engines.sort_by_family">Sort: by family</option>
 						<option value="newest" data-i18n="avatar_engines.sort_newest">Sort: newest</option>
-						<option value="name" data-i18n="avatar_engines.sort_a_z">Sort: A–Z</option>
+						<option value="name" data-i18n="avatar_engines.sort_a_z">Sort: A-Z</option>
 					</select>
 					<button class="ae-toggle" id="ae-commercial" type="button" aria-pressed="false" data-i18n-html="avatar_engines.commercial_use_only">
 						<span class="ae-tg-box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></span>
@@ -356,16 +404,58 @@
 			<main class="ae-main">
 				<div class="ae-count" id="ae-count" aria-live="polite"></div>
 				<div id="ae-results"></div>
+
+				<!-- Shown until the registry module renders; the watchdog below
+				     swaps it for #ae-error if that never happens. -->
+				<div id="ae-boot">
+					<p class="ae-sr" role="status" data-i18n="avatar_engines.loading_the_engine_registry">Loading the engine registry.</p>
+					<div class="ae-skeleton" aria-hidden="true">
+						<div class="ae-skel-card"></div>
+						<div class="ae-skel-card"></div>
+						<div class="ae-skel-card"></div>
+						<div class="ae-skel-card"></div>
+						<div class="ae-skel-card"></div>
+						<div class="ae-skel-card"></div>
+					</div>
+				</div>
+
 				<div class="ae-empty" id="ae-empty" hidden>
 					<h3 data-i18n="avatar_engines.no_engines_match_those_filters">No engines match those filters.</h3>
 					<p data-i18n="avatar_engines.try_clearing_the_search_or_switching_off">Try clearing the search or switching off “commercial-use only”.</p>
 					<button class="ae-btn ae-btn--primary" id="ae-reset" type="button" data-i18n="avatar_engines.reset_filters">Reset filters</button>
 				</div>
+
+				<div class="ae-error" id="ae-error" hidden>
+					<h3 data-i18n="avatar_engines.the_engine_registry_did_not_load">The engine registry did not load.</h3>
+					<p data-i18n="avatar_engines.the_atlas_renders_from_a_script_that">
+						The atlas renders from a script that ships with this page, so this normally
+						means the page was interrupted mid-load or a network filter blocked it.
+						Reloading fixes it in almost every case. The same registry, engine by engine,
+						is also written up in the atlas documentation.
+					</p>
+					<div class="ae-error-actions">
+						<button class="ae-btn ae-btn--primary" id="ae-reload" type="button" data-i18n="avatar_engines.reload_the_page">Reload the page</button>
+						<a class="ae-btn" href="/docs/avatar-engines" data-i18n="avatar_engines.read_the_atlas_doc">Read the atlas doc</a>
+					</div>
+				</div>
+
+				<noscript>
+					<div class="ae-error">
+						<h3>This atlas needs JavaScript.</h3>
+						<p>
+							The engine registry is filtered and rendered in your browser. With
+							JavaScript off, the full atlas is available as documentation instead.
+						</p>
+						<div class="ae-error-actions">
+							<a class="ae-btn ae-btn--primary" href="/docs/avatar-engines">Read the atlas doc</a>
+						</div>
+					</div>
+				</noscript>
 			</main>
 
 			<p class="ae-foot-note" data-i18n-html="avatar_engines.listings_are_reference_material_compiled_fro">
 				Listings are reference material compiled from each project's own repository and paper, current as of June 2026.
-				License summaries are guidance, not legal advice — confirm terms with the upstream project before any commercial use.
+				License summaries are guidance, not legal advice: confirm terms with the upstream project before any commercial use.
 				Non-commercial research engines are linked for self-hosted and academic use and are deliberately not wired into the
 				three.ws paid generation pipeline. The only token three.ws references is
 				<a href="/three-token">$THREE</a>.
@@ -376,6 +466,25 @@
 		</div>
 
 		<script type="module" src="/src/avatar-engines.js"></script>
+		<script>
+			/* Registry watchdog. The module above is the page's only data source, so
+			   if it is blocked, 404s, or fails to parse, nothing else on the page
+			   would ever say so. Six seconds after load without a rendered registry,
+			   swap the skeleton for the actionable error state. */
+			(function () {
+				var GRACE_MS = 6000;
+				function fail() {
+					if (document.documentElement.getAttribute('data-ae') === 'ready') return;
+					var boot = document.getElementById('ae-boot');
+					var err = document.getElementById('ae-error');
+					if (boot) boot.hidden = true;
+					if (err) err.hidden = false;
+				}
+				window.addEventListener('load', function () { setTimeout(fail, GRACE_MS); });
+				var reload = document.getElementById('ae-reload');
+				if (reload) reload.addEventListener('click', function () { location.reload(); });
+			})();
+		</script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

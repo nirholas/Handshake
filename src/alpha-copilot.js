@@ -23,6 +23,18 @@ const LS_KEY = 'ac_last_agent';
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// Copy in the markup carries `data-i18n` keys, and the runtime i18n pass rewrites
+// those nodes from the catalog whenever it runs (boot, and again on every locale
+// change). Writing straight over such a node loses the new string on the next
+// pass: the "Hide ID entry" toggle label flipped back to "Use an agent ID" with
+// the row still open. Dropping the key hands ownership of that node to the JS.
+function setOwnText(el, text) {
+	if (!el) return;
+	el.removeAttribute('data-i18n');
+	el.removeAttribute('data-i18n-html');
+	el.textContent = text;
+}
+
 // ── formatting ──────────────────────────────────────────────────────────────
 const num = (v) => (v == null || !Number.isFinite(Number(v)) ? null : Number(v));
 function fmtUsd(v) {
@@ -142,6 +154,7 @@ function agentCard(a) {
 	node.type = 'button';
 	node.className = 'ac-agent-card';
 	node.setAttribute('role', 'option');
+	node.setAttribute('aria-selected', 'false');
 	node.dataset.id = a.id;
 	const meta = a.featured ? 'Featured' : a.onchain ? esc(a.onchain.network || 'on-chain') : a.chats ? `${a.chats.toLocaleString()} chats` : a.skill ? esc(a.skill.replace(/[-_]/g, ' ')) : 'agent';
 	const fallback = `<span class="ac-agent-initials">${esc(initials(a.name))}</span>`;
@@ -158,14 +171,20 @@ function agentCard(a) {
 	return node;
 }
 
+// The rail is a listbox, so the highlight has to reach the accessibility tree
+// too: a screen reader gets "selected" from aria-selected, never from a class.
 function markActiveCard(id) {
-	dom.gallery.querySelectorAll('.ac-agent-card').forEach((c) => c.classList.toggle('is-active', c.dataset.id === id));
+	dom.gallery.querySelectorAll('.ac-agent-card[role="option"]').forEach((c) => {
+		const on = c.dataset.id === id;
+		c.classList.toggle('is-active', on);
+		c.setAttribute('aria-selected', String(on));
+	});
 }
 
 function revealIdRow(open) {
 	dom.idRow.hidden = !open;
 	dom.idToggle.setAttribute('aria-expanded', String(open));
-	dom.idToggle.textContent = open ? 'Hide ID entry' : 'Use an agent ID';
+	setOwnText(dom.idToggle, open ? 'Hide ID entry' : 'Use an agent ID');
 	if (open) dom.agentInput.focus();
 }
 
@@ -235,8 +254,18 @@ function setCount(n) {
 	} else dom.launchesCount.hidden = true;
 }
 
+// The launches column is the page's call to action, so it must never render as
+// an empty box. Before an agent is on stage (first paint, or every agent source
+// down) it says what to do next instead of showing nothing at all.
+function showLaunchesIdle(message) {
+	setCount(0);
+	dom.launchesList.innerHTML = `<div class="ac-state"><div class="ac-state-orb" aria-hidden="true"></div><p>${esc(message)}</p></div>`;
+}
+const IDLE_PICK = 'Pick a co-pilot above and the live launches it can read land here.';
+const IDLE_ID = 'Load an agent by ID above and the live launches it can read land here.';
+
 async function loadCandidates() {
-	if (!state.agent) return;
+	if (!state.agent) { showLaunchesIdle(IDLE_PICK); return; }
 	setCount(0);
 	dom.launchesList.innerHTML = skeletonLaunches(4);
 	let items = [];
@@ -338,6 +367,8 @@ function markActiveLaunch(mint) {
 // ── the read ────────────────────────────────────────────────────────────────
 function resetRead() {
 	state.read = null;
+	state.activeMint = null;
+	markActiveLaunch(null);
 	dom.readEmpty.hidden = false;
 	dom.readBody.hidden = true;
 	dom.readBody.innerHTML = '';
@@ -609,9 +640,20 @@ function openActDrawer(data) {
 	});
 }
 
+// Focus follows the dialog: opening it moves the caret inside (otherwise a
+// keyboard user keeps tabbing the page behind an aria-modal overlay) and closing
+// it hands focus back to whatever opened it.
+let drawerReturnFocus = null;
 function showDrawer(open) {
 	dom.actDrawer.hidden = !open;
 	document.body.style.overflow = open ? 'hidden' : '';
+	if (open) {
+		drawerReturnFocus = document.activeElement;
+		dom.actDrawer.querySelector('.ac-modal-x')?.focus();
+	} else if (drawerReturnFocus) {
+		try { drawerReturnFocus.focus(); } catch { /* the trigger left the DOM */ }
+		drawerReturnFocus = null;
+	}
 }
 function wireDrawer() {
 	dom.actDrawer.addEventListener('click', (e) => {
@@ -649,6 +691,7 @@ async function resolveInitialAgent() {
 async function init() {
 	cacheDom();
 	wireDrawer();
+	showLaunchesIdle(IDLE_PICK);
 	dom.idToggle.addEventListener('click', () => revealIdRow(dom.idRow.hidden));
 	dom.agentLoad.addEventListener('click', () => {
 		const id = parseAgentId(dom.agentInput.value);
@@ -673,7 +716,8 @@ async function init() {
 		// as a fallback only if the gallery also came up empty.
 		await galleryP;
 		if (!state.gallery.length) {
-			dom.avatarPlaceholder.querySelector('span:last-child').textContent = 'Enter an agent ID (or paste a profile URL) to begin.';
+			setOwnText(dom.avatarPlaceholder.querySelector('span:last-child'), 'Enter an agent ID (or paste a profile URL) to begin.');
+			showLaunchesIdle(IDLE_ID);
 		}
 	}
 	await galleryP;

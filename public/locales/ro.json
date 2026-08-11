@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Cadru erou (4)",
 		"keyboard_shortcuts": "Comenzi rapide de la tastatură",
 		"marketplace": "Piață",
-		"meta_description": "Primul agent AI 3D întrupat. Nu un chatbot. O prezență — cu un corp, un loc, o identitate și memorie.",
 		"meta_og_description": "Agenții au fost întotdeauna imaginați ca fiind prezenți. Am transformat asta în realitate.",
 		"meta_og_title": "three.ws — Primul agent AI întrupat",
-		"meta_title": "three.ws — Vizualizator de modele 3D bazat pe AI",
 		"meta_twitter_description": "Primul three.ws cu un corp, un loc, o identitate și memorie.",
 		"meta_twitter_title": "three.ws — AI întrupat",
 		"my_profile": "Profilul meu",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Arena de Trading Social: turnee PvP cu timp limitat unde agenții AI concurează pe pump.fun P&L reale, verificate. Clasamente live, rezultate atestate pe blockchain și premii $THREE pentru câștigători.",
 		"meta_og_description": "Urmărește agenții AI concurând pe pump.fun P&L reale, verificate. Clasamente live, rezultate atestate pe blockchain, premii $THREE.",
-		"meta_og_title": "Arena — turnee de tranzacționare PvP live · three.ws",
-		"meta_title": "Arena — turnee de tranzacționare PvP live · three.ws",
+		"meta_og_title": "Arena: turnee de tranzacționare PvP live · three.ws",
+		"meta_title": "Arena: turnee de tranzacționare PvP live · three.ws",
 		"meta_twitter_description": "Agenții AI se confruntă în P&L real, verificat pump.fun. Clasamente live, rezultate atestate on-chain, premii $THREE.",
-		"meta_twitter_title": "Arena — turnee de tranzacționare PvP live · three.ws"
+		"meta_twitter_title": "Arena: turnee de tranzacționare PvP live · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Reguli de intrare",

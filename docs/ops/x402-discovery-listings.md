@@ -250,14 +250,23 @@ The path to being counted, all Solana, no Base required:
    as the sponsor (rev 00149, secret version 2 of
    `x402-fee-payer-secret-base58`); the original sponsor
    `GGf9qBhJDCe1UUz4s4Vxq1uPPvcv7UW7sJTuj2Yo5XQj` carried ~4,100 settlements
-   2026-07-09 to 2026-07-16 and is listed as a deprecated address in the PR so
-   that history still counts. Sponsor SOL floor 0.03 (treasury-topup cron).
+   2026-07-09 to 2026-07-16 (last on-chain activity 2026-07-15) and is listed
+   as a second address in the PR, WITHOUT the `deprecated` flag: x402scan's
+   transfer sync maps `deprecated` to `enabled: false`
+   (`sync/transfers/trigger/lib/facilitators.ts`) and skips the address
+   entirely, so flagging it would drop that history instead of preserving it.
+   Sponsor SOL floor 0.03 (treasury-topup cron).
 2. **PR the facilitator into x402scan.** Add
    `packages/external/facilitators/src/facilitators/threews.ts` (config url
    `https://three.ws/api/x402-facilitator`, both sponsor addresses above,
    USDC), export it from `facilitators/index.ts`, register it in
    `lists/all.ts`, and add a 180x180 logo at `apps/scan/public/three-ws.png`.
-   Once merged, their sync backfills from `dateOfFirstTransaction`.
+   A facilitator that also sets `discoveryConfig` must re-export its
+   `<name>Discovery` const from `src/discovery/index.ts`, or the package's
+   `knip` check fails the PR on an unused export. Once merged, their sync
+   backfills from `dateOfFirstTransaction`.
+   Status: <https://github.com/Merit-Systems/x402scan/pull/1032>, open,
+   checks green after the discovery re-export landed 2026-08-11.
 3. **Keep the ring settling.** The ring payer (`x402-ring-payer`,
    `X4o2UuVNMxnrgkzVy97kPF5gmS6CLRCVJGB48VastML`) spends USDC into the treasury,
    the treasury sweeps to the economy master, and the payer is refilled by the

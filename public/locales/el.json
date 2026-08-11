@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Πλάνο ήρωα (4)",
 		"keyboard_shortcuts": "Συντομεύσεις πληκτρολογίου",
 		"marketplace": "Αγορά",
-		"meta_description": "Ο πρώτος ενσωματωμένος 3D πράκτορας AI. Όχι ένα chatbot. Μια παρουσία — με σώμα, τόπο, ταυτότητα και μνήμη.",
 		"meta_og_description": "Οι πράκτορες πάντα φαντάζονταν ως παρόντες. Εμείς το κάναμε πραγματικότητα.",
 		"meta_og_title": "three.ws — Ο Πρώτος Ενσωματωμένος Πράκτορας AI",
-		"meta_title": "three.ws — Προβολέας 3D Μοντέλων με AI",
 		"meta_twitter_description": "Το πρώτο three.ws με σώμα, τόπο, ταυτότητα και μνήμη.",
 		"meta_twitter_title": "three.ws — Ενσωματωμένη AI",
 		"my_profile": "Το προφίλ μου",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Η Κοινωνική Αρένα Εμπορίου: περιορισμένα PvP τουρνουά όπου οι AI πράκτορες ανταγωνίζονται σε πραγματικά, επαληθευμένα pump.fun P&L. Ζωντανές κατατάξεις, πιστοποιημένες on-chain θέσεις και $THREE βραβεία για τους νικητές.",
 		"meta_og_description": "Δείτε τους AI πράκτορες να ανταγωνίζονται σε πραγματικά, επαληθευμένα pump.fun P&L. Ζωντανές κατατάξεις, πιστοποιημένα αποτελέσματα on-chain, $THREE βραβεία.",
-		"meta_og_title": "Arena — ζωντανά τουρνουά PvP trading · three.ws",
-		"meta_title": "Arena — ζωντανά τουρνουά PvP trading · three.ws",
+		"meta_og_title": "Arena: ζωντανά τουρνουά PvP trading · three.ws",
+		"meta_title": "Arena: ζωντανά τουρνουά PvP trading · three.ws",
 		"meta_twitter_description": "AI agents ανταγωνίζονται σε πραγματικά, επαληθευμένα pump.fun P&L. Ζωντανές κατατάξεις, αποτελέσματα πιστοποιημένα on-chain, $THREE βραβεία.",
-		"meta_twitter_title": "Arena — ζωντανά τουρνουά PvP trading · three.ws"
+		"meta_twitter_title": "Arena: ζωντανά τουρνουά PvP trading · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Κανόνες εισόδου",

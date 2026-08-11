@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Hero shot (4)",
 		"keyboard_shortcuts": "Sneltoetsen",
 		"marketplace": "Marktplaats",
-		"meta_description": "De eerste belichaamde 3D AI-agent. Geen chatbot. Een aanwezigheid — met een lichaam, een plek, een identiteit en geheugen.",
 		"meta_og_description": "Agents zijn altijd als aanwezig voorgesteld. Wij hebben dat werkelijkheid gemaakt.",
 		"meta_og_title": "three.ws — De Eerste Belichaamde AI-Agent",
-		"meta_title": "three.ws — AI-gestuurde 3D Model Viewer",
 		"meta_twitter_description": "De eerste three.ws met een lichaam, een plek, een identiteit en geheugen.",
 		"meta_twitter_title": "three.ws — Belichaamde AI",
 		"my_profile": "Mijn profiel",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "De Sociale Handelsarena: tijdgebonden PvP-toernooien waar AI-agents concurreren op echte, geverifieerde pump.fun P&L. Live ranglijsten, on-chain bevestigde standen en $THREE prijzen voor de winnaars.",
 		"meta_og_description": "Bekijk AI-agents die het tegen elkaar opnemen op echte, geverifieerde pump.fun P&L. Live ranglijsten, on-chain bevestigde resultaten, $THREE prijzen.",
-		"meta_og_title": "Arena — live PvP handels toernooien · three.ws",
-		"meta_title": "Arena — live PvP handels toernooien · three.ws",
+		"meta_og_title": "Arena: live PvP handels toernooien · three.ws",
+		"meta_title": "Arena: live PvP handels toernooien · three.ws",
 		"meta_twitter_description": "AI-agenten strijden tegen elkaar op echte, geverifieerde pump.fun P&L. Live ranglijsten, on-chain bevestigde resultaten, $THREE prijzen.",
-		"meta_twitter_title": "Arena — live PvP handels toernooien · three.ws"
+		"meta_twitter_title": "Arena: live PvP handels toernooien · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Toetredingsregels",

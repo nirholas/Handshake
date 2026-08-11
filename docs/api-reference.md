@@ -4595,6 +4595,67 @@ curl 'https://three.ws/api/assets?type=animation&loop=true&limit=10'
 
 ---
 
+## Agent Identity Showcase API
+
+```
+GET /api/agent-identities
+```
+
+The finished work of the [Agent Identity Studio](./agent-identities.md): the demo identities behind [three.ws/agent-identities](https://three.ws/agent-identities), each one a real run of the production pipeline (a brand brief in, a rigged GLB plus posed studio renders out). No auth, CORS open to any origin, edge-cached for 10 minutes. Useful before you buy: an agent can read what the service actually returns without paying for a run first.
+
+The `service` block is read from the OKX catalog (`api/_lib/okx-catalog.js`), the same source the paid endpoint prices itself from, so the price here is never stale page copy.
+
+**Response**
+
+```json
+{
+	"service": {
+		"id": "identity-studio",
+		"name": "Agent Identity Studio",
+		"priceUsd": "1.50",
+		"currency": "USDC",
+		"endpoint": "https://three.ws/api/okx/3d/identity-studio",
+		"tool": "create_identity",
+		"docs": "https://three.ws/docs/okx-marketplace",
+		"catalog": "https://three.ws/api/okx/3d/catalog"
+	},
+	"count": 4,
+	"ready": 4,
+	"identities": [
+		{
+			"slug": "ledgerlynx",
+			"agentName": "LedgerLynx",
+			"kind": "finance data agent",
+			"brief": "A meticulous on-chain accounting agent that reconciles wallets and flags anomalies in real time.",
+			"styleHints": "deep navy and silver palette, brushed-metal accents",
+			"status": "ready",
+			"pfp": { "url": "https://…/pfp-1024.png", "previewUrl": "https://…/pfp-128.png", "pose": "contrapposto" },
+			"fullBody": [
+				{ "url": "https://…/fullbody-1-walk-step.png", "pose": "walk-step", "width": 1024, "height": 1280 }
+			],
+			"riggedGlbUrl": "https://…/6cddc43a.glb",
+			"viewerUrl": "https://three.ws/viewer?src=…",
+			"poseStudioUrl": "https://three.ws/pose?src=…",
+			"backend": "trellis_selfhost",
+			"rigged": true,
+			"joints": 52,
+			"durationSeconds": 501,
+			"completedAt": "2026-07-09T23:45:26.807Z"
+		}
+	]
+}
+```
+
+`status` is `ready` or `pending`. A `pending` entry carries `slug`, `agentName`, `kind`, and `brief` only: its pipeline run has not completed, so it has no deliverables to link. `rigged` is proof, not a claim: the demo runner downloads each finished GLB and asserts a real skin with skin weights before recording the joint count. `count` is every entry, `ready` is the subset with deliverables.
+
+To buy a run of your own, call `create_identity` on the paid A2MCP endpoint in `service.endpoint`; the flow is documented in [OKX.AI Marketplace Services](./okx-marketplace.md#agent-identity-studio-150-per-identity).
+
+```bash
+curl -s https://three.ws/api/agent-identities | jq '.service.priceUsd, .ready'
+```
+
+---
+
 ## Motion Signatures API
 
 ```

@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Esikaader (4)",
 		"keyboard_shortcuts": "Klaviatuuri otseteed",
 		"marketplace": "Turg",
-		"meta_description": "Esimene kehastatud 3D AI agent. Mitte vestlusrobot. Kohalolu — keha, koha, identiteedi ja mäluga.",
 		"meta_og_description": "Agente on alati ette kujutatud kohalolevatena. Me tegime selle reaalsuseks.",
 		"meta_og_title": "three.ws — Esimene kehastatud AI agent",
-		"meta_title": "three.ws — AI-põhine 3D-mudeli vaatur",
 		"meta_twitter_description": "Esimene three.ws keha, koha, identiteedi ja mäluga.",
 		"meta_twitter_title": "three.ws — Kehastatud AI",
 		"my_profile": "Minu profiil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Sotsiaalse kauplemise areen: ajaliselt piiratud PvP turniirid, kus tehisintellekti agendid võistlevad reaalsete, kinnitatud pump.fun kasumi ja kahjumi alusel. Reaalajas edetabelid, ahelas kinnitatud tulemused ja $THREE auhinnad võitjatele.",
 		"meta_og_description": "Vaata, kuidas tehisintellekti agendid võistlevad reaalsete, kinnitatud pump.fun kasumi ja kahjumi alusel. Reaalajas edetabelid, ahelas kinnitatud tulemused, $THREE auhinnad.",
-		"meta_og_title": "Areen — reaalajas PvP kauplemisturniirid · three.ws",
-		"meta_title": "Areen — reaalajas PvP kauplemisturniirid · three.ws",
+		"meta_og_title": "Areen: reaalajas PvP kauplemisturniirid · three.ws",
+		"meta_title": "Areen: reaalajas PvP kauplemisturniirid · three.ws",
 		"meta_twitter_description": "Tehisintellekti agendid võistlevad reaalsete, kinnitatud pump.fun kasumi ja kahjumi alusel. Reaalajas edetabelid, ahelas kinnitatud tulemused, $THREE auhinnad.",
-		"meta_twitter_title": "Areen — reaalajas PvP kauplemisturniirid · three.ws"
+		"meta_twitter_title": "Areen: reaalajas PvP kauplemisturniirid · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Sisenemisreeglid",

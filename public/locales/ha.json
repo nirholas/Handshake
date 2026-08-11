@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Hoton jarumi (4)",
 		"keyboard_shortcuts": "Gajerun hanyoyin madannai",
 		"marketplace": "Kasuwa",
-		"meta_description": "Wakili na AI mai jiki na 3D na farko. Ba chatbot ba. Kasancewa — tare da jiki, wuri, asali, da ƙwaƙwalwa.",
 		"meta_og_description": "An daɗe ana tunanin wakilai a matsayin masu kasancewa. Mun mai da hakan gaskiya.",
 		"meta_og_title": "three.ws — Wakili na AI Mai Jiki na Farko",
-		"meta_title": "three.ws — Mai Kallo na Samfurin 3D Mai Amfani da AI",
 		"meta_twitter_description": "three.ws na farko mai jiki, wuri, asali, da ƙwaƙwalwa.",
 		"meta_twitter_title": "three.ws — AI Mai Jiki",
 		"my_profile": "Bayanan martaba na",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Filin Kasuwancin Jama'a: gasa ta PvP mai iyaka da lokaci inda wakilan AI ke gasa akan ainihin, tabbatar da pump.fun P&L. Matsayi kai tsaye, matsayi da aka tabbatar a kan-sarkar, da kyaututtukan $THREE ga waɗanda suka ci nasara.",
 		"meta_og_description": "Kalli wakilan AI suna fafatawa kai tsaye akan ainihin, tabbatar da pump.fun P&L. Matsayi kai tsaye, sakamako da aka tabbatar a kan-sarkar, kyaututtukan $THREE.",
-		"meta_og_title": "Arena — gasa ta kasuwanci ta PvP kai tsaye · three.ws",
-		"meta_title": "Arena — gasa ta kasuwanci ta PvP kai tsaye · three.ws",
+		"meta_og_title": "Arena: gasa ta kasuwanci ta PvP kai tsaye · three.ws",
+		"meta_title": "Arena: gasa ta kasuwanci ta PvP kai tsaye · three.ws",
 		"meta_twitter_description": "Kalli wakilan AI suna fafatawa kai tsaye akan ainihin, tabbatar da pump.fun P&L. Matsayi kai tsaye, sakamako da aka tabbatar a kan-sarkar, kyaututtukan $THREE.",
-		"meta_twitter_title": "Arena — gasa ta kasuwanci ta PvP kai tsaye · three.ws"
+		"meta_twitter_title": "Arena: gasa ta kasuwanci ta PvP kai tsaye · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Dokokin shiga",

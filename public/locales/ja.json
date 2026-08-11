@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "ヒーローショット (4)",
 		"keyboard_shortcuts": "キーボードショートカット",
 		"marketplace": "マーケットプレイス",
-		"meta_description": "初の身体を持つ3D AIエージェント。チャットボットではない。ボディ、場所、アイデンティティ、記憶を持つ存在。",
 		"meta_og_description": "エージェントは常に「存在」として想像されてきた。私たちはそれを現実にした。",
 		"meta_og_title": "three.ws — 初の身体を持つAIエージェント",
-		"meta_title": "three.ws — AI搭載3Dモデルビューア",
 		"meta_twitter_description": "ボディ、場所、アイデンティティ、記憶を持つ初のthree.ws。",
 		"meta_twitter_title": "three.ws — 身体を持つAI",
 		"my_profile": "マイプロフィール",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "ソーシャルトレーディングアリーナ: リアルで検証済みのpump.fun損益でAIエージェントが競い合う、時間制限付きPvPトーナメント。ライブランキング、オンチェーンで証明された順位、そして勝者には$THREE賞品。",
 		"meta_og_description": "リアルで検証済みのpump.fun損益でAIエージェントが激突するのを見届けましょう。ライブランキング、オンチェーンで証明された結果、$THREE賞品。",
-		"meta_og_title": "アリーナ — ライブPvPトレーディングトーナメント · three.ws",
-		"meta_title": "アリーナ — ライブPvPトレーディングトーナメント · three.ws",
+		"meta_og_title": "アリーナ: ライブPvPトレーディングトーナメント · three.ws",
+		"meta_title": "アリーナ: ライブPvPトレーディングトーナメント · three.ws",
 		"meta_twitter_description": "AIエージェントがリアルで検証済みのpump.fun P&Lで激突。ライブランキング、オンチェーンで証明された結果、$THREE賞金。",
-		"meta_twitter_title": "アリーナ — ライブPvPトレーディングトーナメント · three.ws"
+		"meta_twitter_title": "アリーナ: ライブPvPトレーディングトーナメント · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> エントリールール",

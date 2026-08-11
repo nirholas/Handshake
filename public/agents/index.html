@@ -5,12 +5,12 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title data-i18n="agents_index.meta_title">Agents Index · three.ws</title>
-		<meta name="description" content="Browse every agent registered on three.ws across every supported chain — inspect their services and bring them into 3D."  data-i18n-attr="content:agents_index.meta_description"/>
+		<meta name="description" content="Browse every agent registered on three.ws across Solana and every supported EVM chain. Inspect their services and bring them into 3D."  data-i18n-attr="content:agents_index.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/agents" />
 		<meta property="og:title" content="Agents Index · three.ws"  data-i18n-attr="content:agents_index.meta_og_title"/>
-		<meta property="og:description" content="Browse every agent registered on three.ws across every supported chain — inspect their services and bring them into 3D."  data-i18n-attr="content:agents_index.meta_og_description"/>
+		<meta property="og:description" content="Browse every agent registered on three.ws across Solana and every supported EVM chain. Inspect their services and bring them into 3D."  data-i18n-attr="content:agents_index.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=agent-tools&amp;t=Agents+Index&amp;d=Browse+every+registered+agent+on+three.ws.&amp;p=%2Fagents" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
@@ -60,6 +60,9 @@
 		.btn-primary:hover { opacity: .88; }
 		.btn-ghost { background: rgba(255,255,255,0.05); color: var(--ink); }
 		.btn-ghost:hover { background: rgba(255,255,255,0.1); }
+		.btn:active { transform: translateY(1px); }
+		.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+		.btn[disabled] { opacity: .55; cursor: progress; }
 
 		/* source chips */
 		.src-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -90,7 +93,12 @@
 		.ag-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
 			padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: border-color .18s, transform .18s; position: relative; overflow: hidden; }
 		.ag-card:hover { border-color: color-mix(in srgb, var(--cyan) 35%, var(--line)); transform: translateY(-2px); }
+		/* The card's link is a transparent overlay, so its own focus ring would be
+		   invisible: promote it to the card itself for keyboard users. */
+		.ag-card:focus-within { border-color: color-mix(in srgb, var(--cyan) 55%, var(--line));
+			outline: 2px solid var(--cyan); outline-offset: 2px; }
 		.ag-card-link { position: absolute; inset: 0; z-index: 1; }
+		.ag-card-link:focus { outline: none; }
 		.ag-top { display: flex; gap: 12px; align-items: flex-start; }
 		.ag-avatar { width: 52px; height: 52px; border-radius: 11px; object-fit: cover;
 			background: rgba(255,255,255,0.07); border: 1px solid var(--line); flex-shrink: 0; }
@@ -124,6 +132,11 @@
 		.state { text-align: center; padding: 60px 20px; color: var(--muted); }
 		.state b { display: block; font-size: 17px; color: var(--ink); margin-bottom: 8px; }
 		.state a { color: var(--cyan); }
+		.state-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+
+		/* visually hidden, still read by screen readers and still focusable */
+		.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+			overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 		/* load more */
 		.load-more-wrap { text-align: center; margin-top: 28px; }
@@ -154,37 +167,39 @@
 			<section class="hero">
 				<div class="eyebrow">3D AI Agents</div>
 				<h1 data-i18n-html="agents_index.agent_index">Agent <span>Index</span></h1>
-				<p data-i18n="agents_index.every_on_chain_agent_across_solana_and">Every on-chain agent — across Solana and every EVM chain, not just the ones launched on three.ws. We crawl the Metaplex Agent Registry, the AgenC protocol and ERC-8004 registries so the whole ecosystem lives in one place. Inspect their services and bring any of them into 3D.</p>
+				<p data-i18n="agents_index.every_on_chain_agent_across_solana_and">Every on-chain agent, across Solana and every EVM chain, not just the ones launched on three.ws. We crawl the Metaplex Agent Registry, the AgenC protocol and ERC-8004 registries so the whole ecosystem lives in one place. Inspect their services and bring any of them into 3D.</p>
 				<div class="hero-ctas">
 					<a class="btn btn-primary" href="/create-agent" data-i18n="agents_index.create_an_agent">Create an agent</a>
 					<a class="btn btn-ghost" href="/marketplace" data-i18n="agents_index.marketplace">Marketplace</a>
 				</div>
 			</section>
 
-			<div class="src-chips" role="tablist" aria-label="Filter by source">
-				<button class="chip is-active" data-src="agents" role="tab" aria-selected="true" data-i18n="agents_index.all_sources">All sources</button>
-				<button class="chip" data-src="solana" role="tab" aria-selected="false" data-i18n="agents_index.solana">Solana</button>
-				<button class="chip" data-src="onchain" role="tab" aria-selected="false" data-i18n="agents_index.evm">EVM</button>
+			<div class="src-chips" role="group" aria-label="Filter by source">
+				<button type="button" class="chip is-active" data-src="agents" aria-pressed="true" data-i18n="agents_index.all_sources">All sources</button>
+				<button type="button" class="chip" data-src="solana" aria-pressed="false" data-i18n="agents_index.solana">Solana</button>
+				<button type="button" class="chip" data-src="onchain" aria-pressed="false" data-i18n="agents_index.evm">EVM</button>
 			</div>
 
 			<div class="controls">
 				<div class="search-wrap">
+					<label class="sr-only" for="ag-search" data-i18n="agents_index.search_agents_label">Search agents by name or description</label>
 					<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
 					</svg>
 					<input id="ag-search" type="search" placeholder="Search agents…" autocomplete="off" />
 				</div>
-				<select id="ag-sort" class="ctrl" aria-label="Sort">
+				<label class="sr-only" for="ag-sort" data-i18n="agents_index.sort_label">Sort agents</label>
+				<select id="ag-sort" class="ctrl">
 					<option value="newest" data-i18n="agents_index.newest_first">Newest first</option>
-					<option value="name" data-i18n="agents_index.name_a_z">Name A–Z</option>
+					<option value="name" data-i18n="agents_index.name_a_z">Name A-Z</option>
 				</select>
-				<span id="ag-count" class="count-label"></span>
+				<span id="ag-count" class="count-label" role="status" aria-live="polite"></span>
 			</div>
 
 			<div id="ag-grid" class="agents-grid" aria-label="Agents" aria-busy="true"></div>
 			<div id="ag-state" class="state" hidden></div>
 			<div class="load-more-wrap" id="ag-more-wrap" hidden>
-				<button id="ag-more" class="btn btn-ghost" data-i18n="agents_index.load_more">Load more</button>
+				<button type="button" id="ag-more" class="btn btn-ghost" data-i18n="agents_index.load_more">Load more</button>
 			</div>
 		</main>
 
@@ -202,8 +217,24 @@
 		const countEl = $('ag-count');
 		const moreWrap = $('ag-more-wrap');
 		const moreBtn  = $('ag-more');
+		const searchEl = $('ag-search');
+		const sortEl   = $('ag-sort');
 
-		const state = { q: '', sort: 'newest', source: 'agents', cursor: null, loading: false, items: [] };
+		const SOURCES = new Set(['agents', 'solana', 'onchain']);
+		const params = new URLSearchParams(location.search);
+		const state = {
+			// ?source= and ?q= make a filtered view shareable and reload-safe.
+			q: (params.get('q') || '').trim().slice(0, 80),
+			sort: params.get('sort') === 'name' ? 'name' : 'newest',
+			source: SOURCES.has(params.get('source')) ? params.get('source') : 'agents',
+			cursor: null,
+			loading: false,
+			items: [],
+			// Monotonic token: only the newest request may touch the DOM, so a
+			// filter change mid-flight supersedes the request it replaced instead
+			// of being dropped or racing it to render.
+			req: 0,
+		};
 
 		function skeletons(n = 8) {
 			return Array.from({length: n}, () => `
@@ -231,14 +262,17 @@
 			return { label: 'Solana', src: 'metaplex' };
 		}
 
-		// Each kind links to its natural detail surface: EVM → /a/<chain>/<id>,
-		// our Solana agents → their profile, external Solana → the 3D viewer or
-		// the on-chain explorer when there's nothing else to open.
+		// Each kind links to its natural detail surface: EVM to /a/<chain>/<id>,
+		// our Solana agents to their profile, external Solana to the 3D viewer or
+		// the on-chain explorer when there's nothing else to open. A registry row
+		// with no asset and no ref has nowhere real to go, so it returns null and
+		// the card renders without a link rather than with a dead href="#".
 		function hrefFor(a) {
-			if (a.kind === 'onchain') return `/a/${encodeURIComponent(a.chainId)}/${encodeURIComponent(a.agentId)}`;
-			if (a.source === 'three.ws') return `/agent/${encodeURIComponent(a.agentId)}`;
-			if (a.viewerUrl) return a.viewerUrl;
-			return a.explorerUrl || '#';
+			if (a.kind === 'onchain' && a.chainId != null && a.agentId != null) {
+				return `/a/${encodeURIComponent(a.chainId)}/${encodeURIComponent(a.agentId)}`;
+			}
+			if (a.source === 'three.ws' && a.agentId) return `/agent/${encodeURIComponent(a.agentId)}`;
+			return a.viewerUrl || a.explorerUrl || null;
 		}
 
 		function cardHtml(a) {
@@ -254,10 +288,15 @@
 			const x402 = a.x402Support ? `<span class="ag-skill" title="Accepts x402 payments">x402</span>` : '';
 			const b = badge(a);
 			const href = hrefFor(a);
-			const ext = a.kind === 'onchain' || a.source === 'three.ws' ? '' : ' target="_blank" rel="noopener"';
+			const offsite = href ? /^https?:/i.test(href) : false;
+			const ext = offsite ? ' target="_blank" rel="noopener noreferrer"' : '';
+			const label = offsite ? `${a.name || 'Agent'} (opens on ${b.label})` : (a.name || 'Agent');
+			const link = href
+				? `<a class="ag-card-link" href="${esc(href)}"${ext} aria-label="${esc(label)}"></a>`
+				: '';
 
 			return `<div class="ag-card">
-				<a class="ag-card-link" href="${esc(href)}"${ext} aria-label="${esc(a.name)}"></a>
+				${link}
 				<div class="ag-top">
 					<div style="display:flex;flex-direction:column;gap:6px;align-items:center">
 						${avatar}
@@ -284,10 +323,68 @@
 			grid.setAttribute('aria-busy', 'false');
 		}
 
+		// Keep the address bar in step with the view so a filtered directory is a
+		// shareable link and survives a refresh. replaceState, not pushState: a
+		// per-keystroke history entry would trap the back button in the search box.
+		function syncUrl() {
+			const u = new URL(location.href);
+			const set = (k, v) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
+			set('source', state.source === 'agents' ? '' : state.source);
+			set('q', state.q);
+			set('sort', state.sort === 'newest' ? '' : state.sort);
+			history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+		}
+
+		function showState(html) {
+			stateEl.innerHTML = html;
+			stateEl.hidden = false;
+		}
+
+		function emptyStateHtml() {
+			if (state.q) {
+				return `<b>No agents match "${esc(state.q)}"</b>Nothing in this source matches that search.
+					<div class="state-actions">
+						<button type="button" class="btn btn-ghost" data-act="clear-search">Clear search</button>
+						<a class="btn btn-ghost" href="/create-agent">Create an agent</a>
+					</div>`;
+			}
+			return `<b>No agents in this source yet</b>The on-chain registries are crawled continuously, so this fills in as they land.
+				<div class="state-actions">
+					<button type="button" class="btn btn-ghost" data-act="retry">Check again</button>
+					<a class="btn btn-primary" href="/create-agent">Create the first one</a>
+				</div>`;
+		}
+
+		function errorStateHtml(detail) {
+			return `<b>Couldn't load agents</b>The agent registry feed didn't respond (${esc(detail)}). Your connection or our API may be having a moment.
+				<div class="state-actions">
+					<button type="button" class="btn btn-primary" data-act="retry">Try again</button>
+					<a class="btn btn-ghost" href="/marketplace">Browse the marketplace</a>
+				</div>`;
+		}
+
+		function setBusy(on) {
+			moreBtn.disabled = on;
+			moreBtn.textContent = on ? 'Loading…' : 'Load more';
+		}
+
 		async function load(reset = false) {
-			if (state.loading) return;
+			// A reset always wins over whatever is in flight; only a "load more"
+			// defers, since two appends would duplicate the same cursor page.
+			if (state.loading && !reset) return;
+			const req = ++state.req;
 			state.loading = true;
-			if (reset) { state.cursor = null; state.items = []; grid.innerHTML = skeletons(); grid.setAttribute('aria-busy', 'true'); stateEl.hidden = true; }
+			if (reset) {
+				state.cursor = null;
+				state.items = [];
+				grid.innerHTML = skeletons();
+				grid.setAttribute('aria-busy', 'true');
+				stateEl.hidden = true;
+				moreWrap.hidden = true;
+				countEl.textContent = '';
+			} else {
+				setBusy(true);
+			}
 
 			const url = new URL(API, location.origin);
 			url.searchParams.set('source', state.source);
@@ -299,6 +396,7 @@
 				const r = await fetch(url, { headers: { accept: 'application/json' } });
 				if (!r.ok) throw new Error('HTTP ' + r.status);
 				const data = await r.json();
+				if (req !== state.req) return;
 				// Defensive: source=agents never returns avatars, but filter anyway so
 				// a future server change can't leak non-agent rows into this view.
 				const items = (data.items || []).filter((it) => it.kind === 'onchain' || it.kind === 'solana');
@@ -308,33 +406,55 @@
 				renderList();
 
 				const more = !!data.nextCursor;
-				countEl.textContent = state.items.length > 0 ? `${state.items.length}${more ? '+' : ''} agents` : '';
+				countEl.textContent = state.items.length > 0
+					? `${state.items.length}${more ? '+' : ''} ${state.items.length === 1 && !more ? 'agent' : 'agents'}`
+					: '';
 				moreWrap.hidden = !more;
 
-				if (!state.items.length) {
-					stateEl.innerHTML = state.q
-						? `<b>No agents found</b>Search found nothing for "${esc(state.q)}". Try a different term.`
-						: `<b>No agents in this source yet</b>The on-chain registries are crawled continuously — check back shortly, or <a href="/create-agent">create the first one →</a>`;
-					stateEl.hidden = false;
-				}
-			} catch {
+				if (!state.items.length) showState(emptyStateHtml());
+			} catch (err) {
+				if (req !== state.req) return;
 				if (reset) {
-					stateEl.innerHTML = `<b>Couldn't load agents</b>Try refreshing the page.`;
-					stateEl.hidden = false;
 					grid.innerHTML = '';
 					grid.setAttribute('aria-busy', 'false');
+					showState(errorStateHtml(err?.message || 'network error'));
+				} else {
+					// A failed "load more" keeps the results already on screen and
+					// offers the retry inline instead of wiping the page.
+					showState(errorStateHtml(err?.message || 'network error'));
 				}
 				moreWrap.hidden = true;
+			} finally {
+				if (req === state.req) {
+					state.loading = false;
+					setBusy(false);
+				}
 			}
-			state.loading = false;
 		}
 
-		let _t;
-		$('ag-search').addEventListener('input', (e) => {
-			clearTimeout(_t);
-			_t = setTimeout(() => { state.q = e.target.value.trim(); load(true); }, 320);
+		// The empty/error states are re-rendered on every load, so their buttons are
+		// bound by delegation rather than re-wired each time.
+		stateEl.addEventListener('click', (e) => {
+			const act = e.target.closest('[data-act]')?.dataset.act;
+			if (!act) return;
+			if (act === 'clear-search') {
+				searchEl.value = '';
+				state.q = '';
+				syncUrl();
+			}
+			load(true);
 		});
-		$('ag-sort').addEventListener('change', (e) => { state.sort = e.target.value; renderList(); });
+
+		let _t;
+		searchEl.addEventListener('input', (e) => {
+			clearTimeout(_t);
+			_t = setTimeout(() => {
+				state.q = e.target.value.trim();
+				syncUrl();
+				load(true);
+			}, 320);
+		});
+		sortEl.addEventListener('change', (e) => { state.sort = e.target.value; syncUrl(); renderList(); });
 		moreBtn.addEventListener('click', () => load(false));
 
 		document.querySelectorAll('.src-chips .chip').forEach((chip) => {
@@ -342,11 +462,22 @@
 				if (chip.classList.contains('is-active')) return;
 				document.querySelectorAll('.src-chips .chip').forEach((c) => {
 					c.classList.toggle('is-active', c === chip);
-					c.setAttribute('aria-selected', c === chip ? 'true' : 'false');
+					c.setAttribute('aria-pressed', c === chip ? 'true' : 'false');
 				});
 				state.source = chip.dataset.src;
+				syncUrl();
 				load(true);
 			});
+		});
+
+		// Reflect the URL-restored filters in the controls before the first fetch,
+		// so a shared /agents?source=solana&q=trader link opens showing what it says.
+		searchEl.value = state.q;
+		sortEl.value = state.sort;
+		document.querySelectorAll('.src-chips .chip').forEach((c) => {
+			const on = c.dataset.src === state.source;
+			c.classList.toggle('is-active', on);
+			c.setAttribute('aria-pressed', on ? 'true' : 'false');
 		});
 
 		load(true);

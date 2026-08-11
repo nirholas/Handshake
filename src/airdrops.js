@@ -94,8 +94,16 @@ async function loadDirectory() {
 		const res = await fetch('/api/crypto/airdrops', { headers: { accept: 'application/json' } });
 		const body = await res.json().catch(() => null);
 		if (!res.ok) return renderError(res.status, body);
-		$('ad-dir-sub').textContent = `${body.registry.length} programs · registry updated ${body.updated}`;
-		$('ad-dir-grid').innerHTML = body.registry.map((e) => directoryCard(e)).join('');
+		const entries = Array.isArray(body?.registry) ? body.registry : [];
+		$('ad-dir-sub').textContent = entries.length
+			? `${entries.length} programs · registry updated ${body.updated}`
+			: `registry updated ${body.updated}`;
+		$('ad-dir-grid').innerHTML = entries.length
+			? entries.map((e) => directoryCard(e)).join('')
+			: `<p class="ad-empty"><b>No programs are being tracked right now.</b><br />
+				The registry is between updates. You can still scan a wallet: paste an address above and the
+				scan reports its measured on-chain activity, or open the
+				<a class="ad-card-src" href="/portfolio">wallet portfolio</a> for balances.</p>`;
 		show('directory');
 		enterStagger($('ad-dir-grid').children);
 	} catch (err) {
@@ -146,7 +154,6 @@ async function lookup(address, { push = true } = {}) {
 			return;
 		}
 		state.data = body;
-		state.filter = 'all';
 		saveRecent(address);
 		renderReport(body);
 		show('report');
@@ -207,7 +214,9 @@ function renderReport(d) {
 	$('ad-c-tracked').textContent = d.summary.tracked;
 
 	renderActivity(d);
-	renderCards();
+	// setFilter, not renderCards: a new wallet resets the bucket to All, and the
+	// filter chips have to follow it or they claim a filter that is not applied.
+	setFilter('all');
 	renderOtherFamily(d);
 
 	$('ad-report-fineprint').textContent =
@@ -274,11 +283,26 @@ function renderCards() {
 		: d.opportunities.filter((o) => o.eligibility === state.filter);
 	const grid = $('ad-grid');
 	if (!list.length) {
-		grid.innerHTML = `<p class="ad-empty-filter">No programs in this bucket for this wallet. Try another filter.</p>`;
+		grid.innerHTML = d.opportunities.length
+			? `<p class="ad-empty">No programs scored <b>${escapeHtml(eligLabel(state.filter).replace('✓ ', ''))}</b> for this wallet.
+				<button type="button" data-clear-filter>Show all ${d.opportunities.length} programs</button></p>`
+			: `<p class="ad-empty"><b>No programs are tracked for this chain yet.</b><br />
+				Nothing in the registry targets ${escapeHtml(d.family === 'solana' ? 'Solana' : 'EVM')} wallets right now.
+				The measured activity above is still real, and the other chain family is listed below.</p>`;
 		return;
 	}
 	grid.innerHTML = list.map((o) => opportunityCard(o)).join('');
 	enterStagger(grid.children);
+}
+
+function setFilter(name) {
+	state.filter = name;
+	document.querySelectorAll('.ad-filter').forEach((b) => {
+		const on = b.dataset.filter === name;
+		b.classList.toggle('active', on);
+		b.setAttribute('aria-pressed', String(on));
+	});
+	if (state.data) renderCards();
 }
 
 function opportunityCard(o) {
@@ -364,19 +388,20 @@ function init() {
 	});
 
 	$('ad-retry').addEventListener('click', () => {
-		if (state.address) lookup(state.address);
+		// Prefer whatever is in the field: after a bad-address error the visitor
+		// fixes it there, and retrying the old address would ignore the fix.
+		const typed = $('ad-address').value.trim();
+		if (typed && detectFamily(typed)) lookup(typed);
+		else if (state.address) lookup(state.address);
 		else loadDirectory();
 	});
 
 	document.querySelectorAll('.ad-filter').forEach((btn) => {
-		btn.addEventListener('click', () => {
-			state.filter = btn.dataset.filter;
-			document.querySelectorAll('.ad-filter').forEach((b) => {
-				b.classList.toggle('active', b === btn);
-				b.setAttribute('aria-pressed', String(b === btn));
-			});
-			if (state.data) renderCards();
-		});
+		btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+	});
+
+	$('ad-grid').addEventListener('click', (e) => {
+		if (e.target.closest('[data-clear-filter]')) setFilter('all');
 	});
 
 	$('ad-copy-addr').addEventListener('click', () => {
@@ -386,17 +411,34 @@ function init() {
 		copyWithFeedback($('ad-share'), location.href, 'Link copied');
 	});
 
+	// "/" focuses the address field, as the hint under the form promises. The
+	// preventDefault is what tells the site-wide Atlas palette to stand down:
+	// it also listens for "/" and opens the search dialog when no page claimed
+	// the key first. Modified presses and typing targets are left alone.
 	document.addEventListener('keydown', (e) => {
-		if (e.key === '/' && !/^(input|textarea|select)$/i.test(document.activeElement?.tagName || '')) {
-			e.preventDefault();
-			$('ad-address').focus();
-		}
+		if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+		const target = e.target instanceof Element ? e.target : document.activeElement;
+		if (target?.isContentEditable) return;
+		if (/^(input|textarea|select)$/i.test(target?.tagName || '')) return;
+		e.preventDefault();
+		$('ad-address').focus();
 	});
 
 	const params = new URLSearchParams(location.search);
 	const address = (params.get('address') || '').trim();
-	if (address && detectFamily(address)) lookup(address, { push: false });
-	else loadDirectory();
+	if (address && detectFamily(address)) {
+		lookup(address, { push: false });
+	} else if (address) {
+		// A shared link with a broken address: keep what the visitor arrived with
+		// in the field and say why nothing was scanned, rather than silently
+		// dropping it and showing the directory as though no address was given.
+		$('ad-address').value = address;
+		renderError(400, {
+			message: 'The address in this link is not a valid Solana or Ethereum address. Fix it above and check again.',
+		});
+	} else {
+		loadDirectory();
+	}
 }
 
 init();

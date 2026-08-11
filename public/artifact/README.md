@@ -10,8 +10,12 @@ The response is a **single self-contained HTML page** — three.js, GLTFLoader, 
 
 ```
 Here's my agent for this conversation:
-https://three.ws/api/artifact?agent=alice
+https://three.ws/api/artifact?agent=27a0f649-3b59-4552-bb0b-faf616ac448b
 ```
+
+The `agent` value is the agent's UUID, shown on its profile page and returned by
+`GET /api/agents/public`. Anything that is not a UUID is rejected with a 400 and an
+`invalid_request` envelope, because the column it looks up is a `uuid`.
 
 Claude embeds the artifact and the live 3D character renders inline.
 
@@ -19,7 +23,7 @@ Claude embeds the artifact and the live 3D character renders inline.
 
 | Param   | Description                                             |
 | ------- | ------------------------------------------------------- |
-| `agent` | Agent ID (required unless `model` is set)               |
+| `agent` | Agent UUID (required unless `model` is set)             |
 | `model` | Absolute `https://` URL to a GLB from a whitelisted CDN |
 | `theme` | `dark` (default) or `light`                             |
 | `idle`  | Animation clip name to play while idle                  |
@@ -34,6 +38,17 @@ Claude embeds the artifact and the live 3D character renders inline.
 ## How to test before pasting
 
 The page at [`/artifact/`](https://three.ws/artifact/) renders the response inside a sandboxed iframe whose CSP mirrors Claude's. If it works there, it works in Claude.
+
+You do not need to know an agent ID to try it: the builder lists real public agents that
+carry an embeddable avatar (`GET /api/agents/public?sort=popular&limit=12&avatar=1`), and
+clicking one builds its artifact immediately. Typing an ID by hand still works, and the
+full configuration (agent, theme, idle clip, background) is mirrored into the page's query
+string, so the URL in the address bar rebuilds the same artifact for anyone you send it to.
+
+The "Claude artifact sandbox CSP" panel shows the vendored copy served at
+[`/claude-artifact-csp.txt`](https://three.ws/claude-artifact-csp.txt). Those are the same
+bytes `tests/api/artifact.test.js` pins the endpoint against; refresh them from the upstream
+scraper with `node scripts/refresh-claude-csp.mjs`.
 
 ## Behaviour and contract
 

@@ -126,15 +126,64 @@ When `status` is `"done"`, the same body carries a `deliverables` object with th
 
 Two free companion endpoints round out the surface: `GET /api/okx/3d/catalog` is the machine-readable service index, and `GET /api/okx/3d/health` probes every subsystem a paid identity job passes through (generation, renderer, storage, the animation clip lane, and the payment rail) with real requests rather than a static `ok`. Both are documented in [OKX.AI Marketplace Services](./okx-marketplace.md#free-discovery-lane).
 
+### The showcase feed
+
+`GET /api/agent-identities` ([`api/agent-identities.js`](../api/agent-identities.js)) is a third free, public, unauthenticated endpoint: the finished work, so a buyer can see what $1.50 actually returns before spending it. It merges the demo runs in `data/agent-identities.json` with the live catalog row for `identity-studio`, so the price it quotes is the price the paid endpoint charges.
+
+```bash
+curl -s https://three.ws/api/agent-identities | jq '.service.priceUsd, .count, .identities[0].agentName'
+```
+
+```json
+{
+  "service": {
+    "id": "identity-studio",
+    "name": "Agent Identity Studio",
+    "priceUsd": "1.50",
+    "currency": "USDC",
+    "endpoint": "https://three.ws/api/okx/3d/identity-studio",
+    "tool": "create_identity",
+    "docs": "https://three.ws/docs/okx-marketplace",
+    "catalog": "https://three.ws/api/okx/3d/catalog"
+  },
+  "count": 4,
+  "ready": 4,
+  "identities": [
+    {
+      "slug": "ledgerlynx",
+      "agentName": "LedgerLynx",
+      "kind": "finance data agent",
+      "brief": "A meticulous on-chain accounting agent…",
+      "styleHints": "deep navy and silver palette…",
+      "status": "ready",
+      "pfp": { "url": "…/pfp-1024.png", "previewUrl": "…/pfp-128.png", "pose": "contrapposto" },
+      "fullBody": [{ "url": "…/fullbody-1-walk-step.png", "pose": "walk-step", "width": 1024, "height": 1280 }],
+      "riggedGlbUrl": "…glb",
+      "viewerUrl": "https://three.ws/viewer?src=…",
+      "poseStudioUrl": "https://three.ws/pose?src=…",
+      "backend": "trellis_selfhost",
+      "rigged": true,
+      "joints": 52,
+      "durationSeconds": 501,
+      "completedAt": "2026-07-09T23:45:26.807Z"
+    }
+  ]
+}
+```
+
+`status` is `ready` or `pending`: an entry whose pipeline run has not completed carries the brief but no deliverables, and the showcase page renders it as such rather than guessing from a missing field. Responses are cached at the edge for 10 minutes.
+
 Prices, descriptions, and input schemas are not written twice: [`api/_lib/okx-catalog.js`](../api/_lib/okx-catalog.js) is the single source of truth that the tool definitions, the catalog endpoint, and the marketplace listing all read.
 
 ## The showcase page
 
 [/agent-identities](https://three.ws/agent-identities) renders the demo identities in [`data/agent-identities.json`](../data/agent-identities.json). Every entry there is a **real run of the production pipeline**, the same module the endpoint executes, driven locally by [`scripts/okx-identity-demo.mjs`](../scripts/okx-identity-demo.mjs), which writes the results back into the JSON file. Nothing on that page is a mock or a hand-picked asset.
 
+The page reads that data over the network from `/api/agent-identities` (above) rather than inlining it at build time, which buys three things: a fresh demo run is live as soon as the data lands instead of at the next frontend build, the price chip in the hero comes from the catalog instead of page copy that can drift, and the grid has a real loading, error, and empty state to design for. While the feed is in flight the grid shows shimmering skeleton cards; a failed fetch renders an actionable panel with a working retry (the docs and catalog links stay reachable because they are static); an empty feed says so and points at the service instead of leaving a void.
+
 The script does not take the pipeline's word for it either. It downloads the finished GLB, parses its JSON chunk, and asserts real rigging: at least one skin, at least 10 joints in total, and at least one mesh primitive carrying both `JOINTS_0` and `WEIGHTS_0`. A run that fails that check is recorded as failed rather than shipped as a success. The verified numbers (byte size, skins, joints, skinned primitives, glTF generator) are stored per identity alongside the wall-clock duration and completion timestamp.
 
-Each card ([`src/agent-identities.js`](../src/agent-identities.js)) shows the full-body hero shot with the PFP crop pinned over it, thumbnail buttons to switch poses (with `aria-pressed` tracking the active one), and a "View in 3D" action that lazy-loads `model-viewer` and swaps the still for the orbitable rigged GLB. The 3D runtime is only fetched when someone asks for it, never on page load. An entry without a completed run renders an honest "still in the studio" state instead of a broken card.
+Each card ([`src/agent-identities.js`](../src/agent-identities.js)) shows the full-body hero shot with the PFP crop pinned over it, thumbnail buttons to switch poses (with `aria-pressed` tracking the active one), a verified-rig line (joint count, pipeline duration, render count), and a "View in 3D" action that lazy-loads `model-viewer` and swaps the still for the orbitable rigged GLB. The 3D runtime is only fetched when someone asks for it, never on page load. "View in 3D" is a real toggle: it turns into "Back to renders" and restores the still, and switching poses closes the viewer too, so the button label and the stage can never disagree. The GLB is a large network fetch, so the viewer shows a spinner until `model-viewer` reports `load` and falls back to a link into the full viewer if it errors. An entry without a completed run renders an honest "still in the studio" state instead of a broken card, and a render whose object 404s is replaced by a labelled notice rather than a broken-image glyph.
 
 To regenerate or add a demo identity, add the entry (slug, kind, agent name, brief, style hints) and run the script. It needs the object-storage credentials from your local env; generation, rigging, and rendering all run against the deployed surfaces.
 

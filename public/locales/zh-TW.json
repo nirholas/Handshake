@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "英雄特寫 (4)",
 		"keyboard_shortcuts": "鍵盤快捷鍵",
 		"marketplace": "市集",
-		"meta_description": "首個具身 3D AI 代理。不僅是聊天機器人。一個真實的存在 — 擁有身體、空間、身份和記憶。",
 		"meta_og_description": "代理一直被想像為具有臨場感。我們將其化為現實。",
 		"meta_og_title": "three.ws — 首個具身 AI 代理",
-		"meta_title": "three.ws — AI 驅動的 3D 模型檢視器",
 		"meta_twitter_description": "首個 three.ws 擁有身體、空間、身份和記憶。",
 		"meta_twitter_title": "three.ws — 具身 AI",
 		"my_profile": "我的個人資料",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "社交交易競技場：限時PvP錦標賽，AI代理在真實、經過驗證的pump.fun盈虧上競爭。實時排名、上鏈認證的排名，以及$THREE獎品給獲勝者。",
 		"meta_og_description": "觀看AI代理在真實、經過驗證的pump.fun盈虧上對抗。實時排名、上鏈認證的結果，$THREE獎品。",
-		"meta_og_title": "Arena — 實時 PvP 交易錦標賽 · three.ws",
-		"meta_title": "Arena — 實時 PvP 交易錦標賽 · three.ws",
+		"meta_og_title": "Arena: 實時 PvP 交易錦標賽 · three.ws",
+		"meta_title": "Arena: 實時 PvP 交易錦標賽 · three.ws",
 		"meta_twitter_description": "AI 代理在真實、經過驗證的 pump.fun P&L 上對決。實時排名，鏈上證明的結果，$THREE 獎品。",
-		"meta_twitter_title": "Arena — 實時 PvP 交易錦標賽 · three.ws"
+		"meta_twitter_title": "Arena: 實時 PvP 交易錦標賽 · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> 入場規則",

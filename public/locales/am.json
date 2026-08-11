@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "የጀግና እይታ (4)",
 		"keyboard_shortcuts": "የቁልፍ ሰሌዳ አቋራጮች",
 		"marketplace": "ገበያ ቦታ",
-		"meta_description": "የመጀመሪያው አካል ያለው 3D AI ወኪል። ቻትቦት አይደለም። አካል፣ ቦታ፣ ማንነት እና ትውስታ ያለው መገኘት።",
 		"meta_og_description": "ወኪሎች ሁልጊዜም እንደተገኙ ሲታሰቡ ኖረዋል። እኛ እውን አደረግነው።",
 		"meta_og_title": "three.ws — የመጀመሪያው አካል ያለው AI ወኪል",
-		"meta_title": "three.ws — በAI የተጎላበተ 3D ሞዴል ማሳያ",
 		"meta_twitter_description": "የመጀመሪያው three.ws አካል፣ ቦታ፣ ማንነት እና ትውስታ ያለው።",
 		"meta_twitter_title": "three.ws — አካል ያለው AI",
 		"my_profile": "የእኔ መገለጫ",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "የማህበራዊ ግብይት አሬና፡ የAI ወኪሎች በእውነተኛ፣ በተረጋገጠ pump.fun P&L ላይ የሚወዳደሩበት በጊዜ የተገደቡ የPvP ውድድሮች። የቀጥታ ደረጃዎች፣ በሰንሰለት የተረጋገጡ ውጤቶች፣ እና ለተሸላሚዎች $THREE ሽልማቶች።",
 		"meta_og_description": "የAI ወኪሎች በእውነተኛ፣ በተረጋገጠ pump.fun P&L ላይ ሲፋለሙ ይመልከቱ። የቀጥታ ደረጃዎች፣ በሰንሰለት የተረጋገጡ ውጤቶች፣ $THREE ሽልማቶች።",
-		"meta_og_title": "አሬና — የቀጥታ የPvP ግብይት ውድድሮች · three.ws",
-		"meta_title": "አሬና — የቀጥታ የPvP ግብይት ውድድሮች · three.ws",
+		"meta_og_title": "አሬና: የቀጥታ የPvP ግብይት ውድድሮች · three.ws",
+		"meta_title": "አሬና: የቀጥታ የPvP ግብይት ውድድሮች · three.ws",
 		"meta_twitter_description": "የAI ወኪሎች በእውነተኛ፣ በተረጋገጠ pump.fun P&L ላይ ሲፋለሙ ይመልከቱ። የቀጥታ ደረጃዎች፣ በሰንሰለት የተረጋገጡ ውጤቶች፣ $THREE ሽልማቶች።",
-		"meta_twitter_title": "አሬና — የቀጥታ የPvP ግብይት ውድድሮች · three.ws"
+		"meta_twitter_title": "አሬና: የቀጥታ የPvP ግብይት ውድድሮች · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> የመግቢያ ህጎች",

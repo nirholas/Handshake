@@ -1,10 +1,15 @@
 #!/usr/bin/env node
-// Refresh tests/_fixtures/claude-artifact-csp.txt from simonw's scraper.
+// Refresh public/claude-artifact-csp.txt from simonw's scraper.
 //
 // Run periodically (or via a cron). The contract test reads the vendored
 // copy so it doesn't depend on network at run time; this script keeps it
 // honest. If the upstream CSP changes shape, the test will start failing
 // until /api/artifact is updated to match.
+//
+// The copy lives under public/ so it is also served at
+// https://three.ws/claude-artifact-csp.txt: the artifact builder page reads
+// the same bytes the contract test pins, from our own origin, instead of
+// reaching GitHub at page load.
 
 import { writeFileSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +19,7 @@ const SOURCE =
 	'https://raw.githubusercontent.com/simonw/scrape-claude-artifacts/main/content-security-policy.txt';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const TARGET = resolve(__dirname, '../tests/_fixtures/claude-artifact-csp.txt');
+const TARGET = resolve(__dirname, '../public/claude-artifact-csp.txt');
 
 const res = await fetch(SOURCE);
 if (!res.ok) {

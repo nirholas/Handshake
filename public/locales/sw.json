@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Picha ya shujaa (4)",
 		"keyboard_shortcuts": "Njia za mkato za kibodi",
 		"marketplace": "Soko",
-		"meta_description": "Wakala wa kwanza wa AI wa 3D mwenye umbo. Sio chatbot. Uwepo — wenye mwili, mahali, utambulisho, na kumbukumbu.",
 		"meta_og_description": "Mawakala wamekuwa wakifikiriwa kuwa na uwepo. Tumefanya hilo kuwa kweli.",
 		"meta_og_title": "three.ws — Wakala wa Kwanza wa AI Mwenye Umbo",
-		"meta_title": "three.ws — Kitazamaji cha Miundo ya 3D Kinachotumia AI",
 		"meta_twitter_description": "three.ws wa kwanza wenye mwili, mahali, utambulisho, na kumbukumbu.",
 		"meta_twitter_title": "three.ws — AI Yenye Umbo",
 		"my_profile": "Wasifu wangu",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Uwanja wa Biashara wa Kijamii: mashindano ya PvP yaliyo na muda ambapo wakala wa AI wanashindana kwenye pump.fun P&L halisi, zilizothibitishwa. Nafasi za moja kwa moja, matokeo yaliyothibitishwa kwenye mnyororo, na $THREE zawadi kwa washindi.",
 		"meta_og_description": "Tazama wakala wa AI wakishindana kwenye pump.fun P&L halisi, zilizothibitishwa. Nafasi za moja kwa moja, matokeo yaliyothibitishwa kwenye mnyororo, $THREE zawadi.",
-		"meta_og_title": "Arena — mashindano ya biashara ya PvP ya moja kwa moja · three.ws",
-		"meta_title": "Arena — mashindano ya biashara ya PvP ya moja kwa moja · three.ws",
+		"meta_og_title": "Arena: mashindano ya biashara ya PvP ya moja kwa moja · three.ws",
+		"meta_title": "Arena: mashindano ya biashara ya PvP ya moja kwa moja · three.ws",
 		"meta_twitter_description": "Wakilishi wa AI wanapambana uso kwa uso kwenye pump.fun P&L halisi, zilizothibitishwa. Nafasi za moja kwa moja, matokeo yaliyothibitishwa kwenye blockchain, zawadi za $THREE.",
-		"meta_twitter_title": "Arena — mashindano ya biashara ya PvP ya moja kwa moja · three.ws"
+		"meta_twitter_title": "Arena: mashindano ya biashara ya PvP ya moja kwa moja · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Sheria za kuingia",
