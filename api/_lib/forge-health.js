@@ -185,8 +185,29 @@ async function probeHuggingFace() {
 }
 
 // Self-hosted Cloud Run workers (Hunyuan3D, TripoSG): an authenticated GET
-// against the service root. Cloud Run answers anything <500 when the
-// container is up and routable.
+// against the worker's own /health route.
+//
+// This probe used to GET the service ROOT and call anything under 500 "ok".
+// That was wrong twice over. Routability is not readiness: every one of these
+// workers binds its port and answers immediately, then loads multi-GiB weights
+// in a background thread, so a worker whose model load has already FAILED
+// (/health carries a populated load_error) still answered a root GET and still
+// read green here: exactly the "misrouted Hunyuan3D worker" class of outage
+// this module exists to catch. It was also pure noise: no worker serves the
+// root, so each probe logged a 404 in the worker's own logs, once a minute,
+// forever.
+//
+// /health is unauthenticated on these workers and reports the real state
+// (ready / pipeline_loaded / model_loaded / load_error). The bearer header is
+// still sent so the probe keeps working if a worker ever gates the route.
+//
+// Verdicts:
+//   load_error populated        → down     (a generation cannot succeed)
+//   ready/loaded flag is false  → degraded (up, weights still streaming in;
+//                                           a submit queues until ready)
+//   otherwise 2xx/3xx           → ok
+// A 4xx means the worker is routable but exposes no health contract; that is
+// still reachable, so it stays ok with the readiness caveat in the message.
 function gcpWorkerProbe(id, urlEnv) {
 	return async function probeGcpWorker() {
 		const label = BACKENDS[id]?.label || id;
@@ -196,13 +217,31 @@ function gcpWorkerProbe(id, urlEnv) {
 			return result(id, 'unconfigured', `The ${label} self-host worker is not deployed on this deployment.`);
 		}
 		const started = Date.now();
-		const res = await probeFetch(url, {
+		const res = await probeFetch(`${url.replace(/\/+$/, '')}/health`, {
 			headers: { authorization: `Bearer ${key}` },
 		});
 		const latency = Date.now() - started;
 		if (!res) return result(id, 'down', `The ${label} worker is unreachable.`, { latency_ms: latency });
 		if (res.status >= 500) {
 			return result(id, 'down', `The ${label} worker returned HTTP ${res.status}.`, { http_status: res.status, latency_ms: latency });
+		}
+		if (res.status >= 400) {
+			return result(id, 'ok', `The ${label} worker is reachable, but exposes no health contract.`, { http_status: res.status, latency_ms: latency });
+		}
+		const body = await res.json().catch(() => null);
+		if (!body || typeof body !== 'object') {
+			return result(id, 'ok', `The ${label} worker is reachable.`, { latency_ms: latency });
+		}
+		if (body.load_error) {
+			return result(id, 'down', `The ${label} worker failed to load its model: ${body.load_error}`, { latency_ms: latency });
+		}
+		// Field name varies by worker generation: Hunyuan3D reports `ready` +
+		// `pipeline_loaded`, TripoSG reports `model_loaded`. Read whichever the
+		// worker actually publishes; a worker that publishes none is not held to
+		// a readiness bar it never claimed.
+		const readiness = [body.ready, body.pipeline_loaded, body.model_loaded].find((v) => typeof v === 'boolean');
+		if (readiness === false) {
+			return result(id, 'degraded', `The ${label} worker is up but still loading its model; a generation will queue until it is ready.`, { latency_ms: latency });
 		}
 		return result(id, 'ok', `The ${label} worker is reachable.`, { latency_ms: latency });
 	};
