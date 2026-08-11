@@ -268,7 +268,7 @@
 			.ae-tag .ae-tdot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
 			.ae-int {
-				display: flex; align-items: center; gap: 8px;
+				display: flex; align-items: flex-start; gap: 8px;
 				font-size: 12px; padding: 9px 11px; border-radius: 9px; margin-bottom: 14px;
 				background: var(--surface-0, #0b0b0b); border: 1px solid var(--hairline, #1c1c1c);
 			}
@@ -280,7 +280,11 @@
 			.ae-int-badge[data-tone='splat'] { background: rgba(124,93,243,0.16); color: #c4b5fd; }
 			.ae-int-badge[data-tone='interop'] { background: rgba(234,179,8,0.14); color: #fcd34d; }
 			.ae-int-badge[data-tone='reference'] { background: rgba(255,255,255,0.06); color: var(--text-3, #8a8a8a); }
-			.ae-int span { color: var(--text-3, #8a8a8a); line-height: 1.4; }
+			/* A flex item will not shrink below its longest word without min-width:0,
+			   which pushed long engine names past the card edge at 320px. */
+			.ae-int span { color: var(--text-3, #8a8a8a); line-height: 1.4; min-width: 0; overflow-wrap: break-word; }
+			.ae-card h3, .ae-blurb, .ae-org, .ae-meta dd, .ae-tag { overflow-wrap: break-word; }
+			.ae-meta { min-width: 0; }
 
 			.ae-actions { margin-top: auto; display: flex; flex-wrap: wrap; gap: 8px; }
 			.ae-btn {
