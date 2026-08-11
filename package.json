@@ -332,7 +332,7 @@
 		"db:migrate": "node scripts/apply-migrations.mjs --apply",
 		"db:status": "node scripts/apply-migrations.mjs",
 		"db:check": "node scripts/apply-migrations.mjs --check",
-		"worker:oracle": "node workers/oracle/index.js",
+		"worker:oracle": "node --env-file-if-exists=.env workers/oracle/index.js",
 		"worker:sniper": "node workers/agent-sniper/index.js",
 		"worker:sniper:live": "SNIPER_MODE=live node workers/agent-sniper/index.js",
 		"worker:orders": "node workers/agent-orders/index.js",
