@@ -41,12 +41,13 @@ RUN pip install -r /app/requirements.txt
 # then ignores while it downloads the 2.3 GiB it actually asked for.
 ARG CONTROLNET_MODEL=diffusers/controlnet-depth-sdxl-1.0
 ARG WEIGHT_VARIANT=fp16
-RUN python3 -c " \
+# No space after the opening quote: a line continuation collapses to one, and
+# python -c rejects a leading space as an IndentationError before it runs a
+# single statement. That is how this layer failed for as long as it existed.
+RUN python3 -c "import torch; \
 from diffusers import ControlNetModel; \
-import torch; \
 ControlNetModel.from_pretrained('${CONTROLNET_MODEL}', torch_dtype=torch.float16, use_safetensors=True, variant='${WEIGHT_VARIANT}', cache_dir='/opt/hf-cache'); \
-print('ControlNet cached') \
-"
+print('ControlNet cached')"
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
