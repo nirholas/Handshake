@@ -15,10 +15,13 @@ Two capabilities share one model server:
 
 Full-retexture pipeline:
   1. Load mesh (trimesh), ensure UV mapping exists (auto-unwrap if missing)
-  2. Render depth maps from 8 canonical viewpoints using pyrender
-  3. For each view: run SDXL Img2Img + ControlNet-Depth to generate textures
-  4. Back-project each generated image onto the mesh UV map (pytorch3d)
-  5. Blend overlapping UV regions by confidence (distance-weighted)
+  2. Render depth maps from 8 canonical orthographic viewpoints using pyrender
+  3. For each view: run SDXL + ControlNet-Depth to generate a texture view
+  4. Rasterize the mesh into UV space and back-project each generated view onto
+     the atlas through the same camera it was rendered with (texture_projection)
+  5. Blend overlapping UV regions by confidence (cos of the angle between the
+     surface normal and the view axis), rejecting occluded texels against the
+     rendered depth buffer
   6. Bake final texture atlas and export as textured GLB
 
 Region-retexture pipeline (UV-space inpainting):
@@ -40,7 +43,7 @@ API contract:
     prompt: str,       # texture description, e.g. "worn leather, dark brown"
     negative_prompt?: str,
     num_views?: int,   # 4 or 8 (default: 8)
-    texture_size?: int, # 512|1024|2048 (default: 1024)
+    texture_size?: int, # 512|1024|2048 (default: 2048)
     material_class?: str # person|metal|wood|fabric|plastic|glass — sets the
                           # baked roughness/metallic factors to measured
                           # real-world values instead of a flat guess, and
@@ -55,7 +58,7 @@ API contract:
     mask?: url,         # … or a public https URL to the mask PNG.
     color?: str,        # optional "#rrggbb" target colour for the region
     negative_prompt?: str,
-    texture_size?: int, # 512|1024|2048 working/output atlas size (default: 1024)
+    texture_size?: int, # 512|1024|2048 working/output atlas size (default: 2048)
     strength?: float,   # inpaint denoise strength 0.2–1.0 (default 0.85)
     feather?: int,      # seam feather radius in atlas px (default 24)
     seed?: int
@@ -72,6 +75,7 @@ Environment variables:
                          (default: diffusers/controlnet-depth-sdxl-1.0)
   SDXL_INPAINT_MODEL   — SDXL inpainting checkpoint for the magic brush
                          (default: diffusers/stable-diffusion-xl-1.0-inpainting-0.1)
+  WEIGHT_VARIANT         checkpoint variant to resolve (default: fp16)
   WEIGHTS_DIR: cache dir used when GCS staging is off (default: /weights)
   WEIGHTS_GCS_URI: gs:// prefix holding the HuggingFace cache tree. When set,
                          weights are copied to local disk at load time instead of
@@ -102,8 +106,8 @@ from google.cloud import storage
 from PIL import Image, ImageFilter
 from pydantic import BaseModel, Field, field_validator
 
+import texture_projection as tp
 from worker_security import (
-    UnsafeUrlError,
     fetch_remote_bytes,
     require_api_key,
     safe_error,
@@ -126,6 +130,16 @@ SDXL_INPAINT_MODEL = os.environ.get(
     "SDXL_INPAINT_MODEL", "diffusers/stable-diffusion-xl-1.0-inpainting-0.1"
 )
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
+
+# Every checkpoint here is loaded in half precision and run on an L4, so the
+# fp16 variant of each repo is the only one this service ever uses. Naming it
+# explicitly is not a micro-optimisation: without it diffusers resolves the
+# full-precision safetensors, which is 44 GiB across the three SDXL repos
+# against 15 GiB for the fp16 set. That is the difference between a cold start
+# that can finish inside the 600 s request timeout and one that cannot, and it
+# is also what the staged weights prefix and the image cache are built from, so
+# changing it means restaging both.
+WEIGHT_VARIANT = os.environ.get("WEIGHT_VARIANT", "fp16")
 
 # Weight staging: copy the HuggingFace cache tree from GCS to local disk with the
 # storage client before loading, instead of letting diffusers read ~15 GiB of
@@ -259,11 +273,15 @@ def _load_pipeline() -> None:
         CONTROLNET_MODEL,
         torch_dtype=torch.float16,
         use_safetensors=True,
+        variant=WEIGHT_VARIANT,
         cache_dir=cache_dir,
     )
 
     log.info("Loading SDXL model: %s", SDXL_MODEL)
     vae = AutoencoderKL.from_pretrained(
+        # No variant here: this VAE is published fp16-native as a single set of
+        # files, so asking for an fp16 variant of it would look for names the
+        # repo does not carry.
         "madebyollin/sdxl-vae-fp16-fix",
         torch_dtype=torch.float16,
         cache_dir=cache_dir,
@@ -274,9 +292,13 @@ def _load_pipeline() -> None:
         vae=vae,
         torch_dtype=torch.float16,
         use_safetensors=True,
+        variant=WEIGHT_VARIANT,
         cache_dir=cache_dir,
     )
-    _pipe.to("cuda")
+    # No .to("cuda") first: enable_model_cpu_offload moves the whole pipeline back
+    # to CPU itself and then streams each submodule to the GPU as it is needed, so
+    # an eager .to("cuda") only buys a full round trip of the weights over PCIe
+    # during a cold start that already pays for the load.
     _pipe.enable_model_cpu_offload()
     _pipe.enable_xformers_memory_efficient_attention()
     log.info("Texture pipeline loaded")
@@ -310,9 +332,9 @@ def _load_inpaint_pipeline() -> None:
             vae=vae,
             torch_dtype=torch.float16,
             use_safetensors=True,
+            variant=WEIGHT_VARIANT,
             cache_dir=cache_dir,
         )
-        pipe.to("cuda")
         pipe.enable_model_cpu_offload()
         try:
             pipe.enable_xformers_memory_efficient_attention()
@@ -361,59 +383,31 @@ def _load_mesh(url: str):
 
 # ── Depth rendering ─────────────────────────────────────────────────────────────
 
-def _render_depth(mesh, azimuth_deg: float, elevation_deg: float, size: int = 512) -> Image.Image:
-    """Render an orthographic depth map from a given viewpoint."""
+def _render_view_depth(mesh, view: tp.OrthographicView) -> tuple[Image.Image, np.ndarray]:
+    """Render one viewpoint's depth.
+
+    Returns the ControlNet conditioning image (near bright, background black) and
+    the raw depth buffer in world units. The raw buffer is not a debug artifact:
+    back-projection needs it to reject texels that some nearer part of the mesh
+    hides from this camera, and it comes free with the render we already do.
+    """
     import pyrender
-    import trimesh
-    import math
-
-    az = math.radians(azimuth_deg)
-    el = math.radians(elevation_deg)
-
-    # Camera position on unit sphere
-    cx = math.cos(el) * math.sin(az)
-    cy = math.sin(el)
-    cz = math.cos(el) * math.cos(az)
-    dist = mesh.bounding_sphere.primitive.radius * 2.5
-    eye = np.array([cx, cy, cz]) * dist + mesh.bounding_sphere.primitive.center
-
-    # Look-at matrix
-    up = np.array([0, 1, 0])
-    center = mesh.bounding_sphere.primitive.center
-    forward = center - eye
-    forward /= np.linalg.norm(forward)
-    right = np.cross(forward, up)
-    right /= np.linalg.norm(right) + 1e-9
-    up = np.cross(right, forward)
-    camera_pose = np.eye(4)
-    camera_pose[:3, 0] = right
-    camera_pose[:3, 1] = up
-    camera_pose[:3, 2] = -forward
-    camera_pose[:3, 3] = eye
 
     scene = pyrender.Scene(ambient_light=[0.5, 0.5, 0.5])
-    py_mesh = pyrender.Mesh.from_trimesh(mesh, smooth=False)
-    scene.add(py_mesh)
-    camera = pyrender.OrthographicCamera(xmag=dist * 0.6, ymag=dist * 0.6)
-    scene.add(camera, pose=camera_pose)
+    scene.add(pyrender.Mesh.from_trimesh(mesh, smooth=False))
+    camera = pyrender.OrthographicCamera(
+        xmag=view.xmag, ymag=view.ymag, znear=view.znear, zfar=view.zfar
+    )
+    scene.add(camera, pose=view.pose_matrix())
 
-    renderer = pyrender.OffscreenRenderer(size, size)
+    renderer = pyrender.OffscreenRenderer(view.size, view.size)
     try:
         _, depth = renderer.render(scene)
     finally:
         renderer.delete()
 
-    # Normalize depth to [0, 255]
-    valid = depth[depth > 0]
-    if len(valid) == 0:
-        return Image.fromarray(np.zeros((size, size), dtype=np.uint8))
-    d_min, d_max = valid.min(), valid.max()
-    depth_norm = np.zeros_like(depth, dtype=np.float32)
-    mask = depth > 0
-    depth_norm[mask] = (depth[mask] - d_min) / (d_max - d_min + 1e-9)
-    depth_u8 = (depth_norm * 255).clip(0, 255).astype(np.uint8)
-    depth_rgb = np.stack([depth_u8] * 3, axis=-1)
-    return Image.fromarray(depth_rgb)
+    depth = np.asarray(depth, dtype=np.float32)
+    return Image.fromarray(tp.depth_to_control_image(depth)), depth
 
 
 # ── Texture generation ──────────────────────────────────────────────────────────
@@ -450,64 +444,33 @@ def _generate_view_texture(
 
 def _project_texture_onto_uv(
     mesh,
+    views: list[tp.OrthographicView],
     view_images: list[Image.Image],
-    viewpoints: list[tuple[float, float]],
+    depth_buffers: list[np.ndarray],
     texture_size: int,
 ) -> Image.Image:
+    """Back-project the generated views onto the mesh's UV atlas.
+
+    The geometry lives in texture_projection so it can be tested without a GPU;
+    this is the trimesh adapter around it.
     """
-    Back-project each view image onto the mesh UV map using rasterization.
-    Blends overlaps by confidence (cos(angle between view direction and face normal)).
-    """
-    import trimesh
-    import math
-
-    uv = mesh.visual.uv  # (N_verts, 2)
-    faces = mesh.faces   # (N_faces, 3)
-    verts = mesh.vertices
-
-    canvas = np.zeros((texture_size, texture_size, 3), dtype=np.float32)
-    weights = np.zeros((texture_size, texture_size), dtype=np.float32)
-
-    for (az_deg, el_deg), view_img in zip(viewpoints, view_images):
-        az = math.radians(az_deg)
-        el = math.radians(el_deg)
-        view_dir = -np.array([
-            math.cos(el) * math.sin(az),
-            math.sin(el),
-            math.cos(el) * math.cos(az),
-        ])
-
-        img_arr = np.array(view_img.resize((texture_size, texture_size))).astype(np.float32)
-
-        # For each face, compute confidence = max(0, dot(face_normal, view_dir))
-        face_normals = mesh.face_normals
-        face_confidence = np.clip(face_normals @ view_dir, 0, 1)
-
-        # For each visible face, scatter view pixels onto UV space
-        for fi, (f, conf) in enumerate(zip(faces, face_confidence)):
-            if conf < 0.1:
-                continue
-            # UV coords of the 3 face vertices → pixel coords in texture atlas
-            uvs_face = uv[f]  # (3, 2)
-            px = (uvs_face[:, 0] * (texture_size - 1)).astype(int).clip(0, texture_size - 1)
-            py = ((1 - uvs_face[:, 1]) * (texture_size - 1)).astype(int).clip(0, texture_size - 1)
-
-            # Sample the view image at those projected pixels and write to canvas
-            for px_i, py_i in zip(px, py):
-                canvas[py_i, px_i] += img_arr[py_i, px_i] * conf
-                weights[py_i, px_i] += conf
-
-    # Normalize
-    mask = weights > 0
-    canvas[mask] /= weights[mask, np.newaxis]
-    # Fill gaps with nearest-neighbour
-    from scipy.ndimage import distance_transform_edt
-    gap = ~mask
-    if gap.any():
-        _, indices = distance_transform_edt(gap, return_indices=True)
-        canvas[gap] = canvas[tuple(indices[:, gap])]
-
-    return Image.fromarray(canvas.clip(0, 255).astype(np.uint8))
+    atlas, weight, covered = tp.project_views_to_uv(
+        np.asarray(mesh.vertices, dtype=np.float32),
+        np.asarray(mesh.vertex_normals, dtype=np.float32),
+        np.asarray(mesh.visual.uv, dtype=np.float32),
+        np.asarray(mesh.faces, dtype=np.int64),
+        views,
+        [np.asarray(img.convert("RGB")) for img in view_images],
+        texture_size,
+        depth_buffers=depth_buffers,
+    )
+    total = int(covered.sum())
+    seen = int((weight > 0).sum())
+    log.info(
+        "UV coverage: %d/%d texels painted from the views (%.1f%%), rest filled from neighbours",
+        seen, total, (100.0 * seen / total) if total else 0.0,
+    )
+    return Image.fromarray(atlas)
 
 
 # ── Full pipeline ────────────────────────────────────────────────────────────────
@@ -527,12 +490,13 @@ def _run_texturing(
 
     mesh = _load_mesh(mesh_url)
     viewpoints = VIEWPOINTS_8 if num_views >= 8 else VIEWPOINTS_4
+    sphere = mesh.bounding_sphere.primitive
+    views = tp.canonical_views(sphere.center, sphere.radius, viewpoints, texture_size)
 
-    log.info("Rendering %d depth maps at %dpx", len(viewpoints), texture_size)
-    depth_maps = [
-        _render_depth(mesh, az, el, size=texture_size)
-        for az, el in viewpoints
-    ]
+    log.info("Rendering %d depth maps at %dpx", len(views), texture_size)
+    rendered = [_render_view_depth(mesh, view) for view in views]
+    depth_maps = [image for image, _ in rendered]
+    depth_buffers = [buffer for _, buffer in rendered]
 
     log.info("Generating texture views with SDXL+ControlNet (material_class=%s)", material_class or "default")
     view_images = [
@@ -541,7 +505,7 @@ def _run_texturing(
     ]
 
     log.info("Projecting views onto UV atlas (%dpx)", texture_size)
-    texture_atlas = _project_texture_onto_uv(mesh, view_images, viewpoints, texture_size)
+    texture_atlas = _project_texture_onto_uv(mesh, views, view_images, depth_buffers, texture_size)
 
     log.info("Baking textured GLB with metallic=%.2f roughness=%.2f", pbr["metallic"], pbr["roughness"])
     material = trimesh.visual.material.PBRMaterial(
