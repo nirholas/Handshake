@@ -4,7 +4,7 @@
 //
 // Takes a GLB mesh URL and returns a rigged GLB — a humanoid skeleton plus
 // per-vertex skin weights — produced by the three.ws auto-rig pipeline
-// (/api/forge?action=rig, VAST-AI UniRig by default). Like mesh_forge, this is
+// (/api/forge?action=rig, Make-It-Animatable by default). Like mesh_forge, this is
 // a thin x402-gated client over the prod pipeline: it holds no generation
 // credentials; the USDC payment gates the call and all GPU work runs on
 // three.ws prod.
@@ -26,7 +26,7 @@ import { runRigMesh } from './_studio-core.js';
 
 const TOOL_NAME = 'rig_mesh';
 const TOOL_DESCRIPTION =
-	'Auto-rig a static 3D GLB mesh into an animation-ready model: adds a humanoid skeleton and per-vertex skin weights via the three.ws rig pipeline (VAST-AI UniRig by default). Takes a GLB URL, returns the rigged GLB URL and a three.ws pose-studio link. Pairs with mesh_forge — forge a mesh, then rig it. Paid: $0.20 USDC.';
+	'Auto-rig a static 3D GLB mesh into an animation-ready model: adds a humanoid skeleton and per-vertex skin weights via the three.ws rig pipeline (Make-It-Animatable by default). Takes a GLB URL, returns the rigged GLB URL and a three.ws pose-studio link. Pairs with mesh_forge: forge a mesh, then rig it. Paid: $0.20 USDC.';
 
 const inputZodShape = {
 	glb_url: z
