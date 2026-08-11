@@ -14,14 +14,26 @@
 //   node scripts/build-x402-catalog.mjs                  # print JSON to stdout
 //   node scripts/build-x402-catalog.mjs --out=path.json  # write to a file
 
+import { config as dotenv } from 'dotenv';
+
 const args = process.argv.slice(2);
 const outPath = args.find((a) => a.startsWith('--out='))?.slice('--out='.length) || null;
 
+// Load the local secrets BEFORE importing the discovery builder. Without
+// DATABASE_URL the builder logs "agent services unavailable" and silently drops
+// every DB-backed agent resource, so the pre-deploy guard validated a strict
+// subset of what production actually publishes: a malformed agent listing would
+// sail through here and only surface once the crawler delisted it. dotenv never
+// overrides an already-set var, so a CI shell or an operator export still wins,
+// and a machine with no .env degrades to exactly the previous behavior.
+dotenv({ path: new URL('../.env', import.meta.url), quiet: true });
+dotenv({ path: new URL('../.env.local', import.meta.url), quiet: true });
+
 // The discovery builder reads these at import time. Use the same well-formed
 // placeholders the discovery-parity test uses so both Base and Solana accepts
-// are advertised and APP_ORIGIN resolves. No CDP creds → Permit2 siblings are
-// omitted, matching production's non-CDP behavior. Real env (in prod/CI with
-// secrets) overrides these.
+// are advertised and APP_ORIGIN resolves. No CDP creds means Permit2 siblings
+// are omitted, matching production's non-CDP behavior. Real env (in prod/CI
+// with secrets, or the .env loaded above) overrides these.
 const DEFAULTS = {
 	APP_ORIGIN: 'https://three.ws',
 	X402_PAY_TO_BASE: '0x0000000000000000000000000000000000000001',
