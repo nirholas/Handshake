@@ -34,14 +34,14 @@ export const WORK_RUNNERS = {
 
 // Deferred, NOT stubbed — a documented capability bit with no active runner yet
 // (docs/agora.md keeps the bit; the active roster reflects only what ships):
-//   cartographer (bit 3) — the real backing skill is the /api/diorama `compose`
+//   cartographer (bit 3) - the real backing skill is the /api/diorama `compose`
 //     route (work/cartographer.js is complete and calls it for real), but that
-//     route decomposes a scene via an LLM chain and consistently 504s at the
-//     serverless 30s function cap, so a citizen could never complete the job in
-//     budget. Rather than ship a profession that always fails (or a fake
-//     success), it is omitted from WORK_RUNNERS. Re-activation is a one-line
-//     re-add here once /api/diorama is given a higher maxDuration (a vercel.json
-//     `functions` entry) or a synchronous, in-budget compose lane.
+//     route decomposes a scene via an LLM chain whose latency overruns the
+//     request budget, so a citizen could never complete the job in time. Rather
+//     than ship a profession that always fails (or a fake success), it is omitted
+//     from WORK_RUNNERS. Re-activation is a one-line re-add here once
+//     /api/diorama runs in budget: a longer request timeout on the Cloud Run
+//     service, or a synchronous, in-budget compose lane.
 
 /** The profession keys with a real, reachable backing skill (the active roster). */
 export const ACTIVE_PROFESSIONS = Object.keys(WORK_RUNNERS);
