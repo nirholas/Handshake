@@ -44,7 +44,9 @@ const TOKENS_XYZ_OK = {
 					marketCap: 250_000,
 					priceChange24hPercent: 3.2,
 					decimals: 6,
-					metricsSource: 'clickhouse_trades',
+					holder: 4_211,
+					circulatingSupply: 900_000,
+					metricsSource: 'birdeye',
 				},
 				executionQuality: null,
 			},
@@ -93,10 +95,23 @@ describe('tokens.xyz rung', () => {
 			volume_24h: 12_000,
 			liquidity: 90_000,
 			decimals: 6,
+			// The whole point of the rung: a Birdeye-grade row, holders included,
+			// on the reads where our own Birdeye quota is spent.
+			holders: 4_211,
+			supply: 900_000,
 		});
-		// No supply field upstream; derived from cap / price like the DexScreener rung.
-		expect(out.supply).toBe(1_000_000);
 		expect(fetchCalls.some((u) => u.includes('dexscreener'))).toBe(false);
+	});
+
+	it('derives supply from cap over price when the row omits circulating supply', async () => {
+		process.env.TOKENS_XYZ_API_KEY = 'test-key';
+		fetchResponses = [
+			{ body: { variants: [{ mint: MINT, assetId: 'three', chain: 'solana', market: { price: 0.25, marketCap: 250_000 }, executionQuality: null }] } },
+		];
+		const out = await fetchTokenMarketData(MINT, { fresh: true });
+
+		expect(out.supply).toBe(1_000_000);
+		expect(out.holders).toBeNull();
 	});
 
 	it('sits behind Birdeye and takes over when Birdeye is down', async () => {
