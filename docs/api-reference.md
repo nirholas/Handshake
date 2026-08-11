@@ -1747,6 +1747,117 @@ curl -s -X POST https://three.ws/api/asl-recognition \
 
 ---
 
+## Agent Tokens API
+
+The coin an agent is configured to become, before it exists on chain. Full guide,
+including the launch paths and the mainnet activation step:
+[Agent tokens](./agent-tokens.md).
+
+### Read an agent's token plan
+
+```
+GET /api/agents/tokens/plan?agent_id=<uuid>&network=mainnet
+```
+
+Open. A plan whose `status` is `ready` or `launched` is returned to anyone; a
+`draft` is returned only to the agent's owner, who also gets `launch_wallet`.
+
+**Response**
+
+```json
+{
+	"agent_id": "8f14e45f-ceea-467a-9f27-1f0f8b1cba1c",
+	"network": "mainnet",
+	"is_owner": false,
+	"launch_wallet": null,
+	"plan": {
+		"name": "Ada Ledger",
+		"symbol": "ADA",
+		"coin_type": "agent",
+		"quote_currency": "sol",
+		"buyback_bps": 2500,
+		"sol_buy_in": 0.5,
+		"status": "ready",
+		"mint": null,
+		"readiness": { "ready": true, "blockers": [], "warnings": [] },
+		"cost_estimate": { "total_sol": 0.514105, "dev_buy_usdc": 0 }
+	}
+}
+```
+
+---
+
+### Save an agent's token plan
+
+```
+PUT /api/agents/tokens/plan
+```
+
+Requires the agent owner's session. Saving costs nothing and mints nothing.
+`status` is derived from the readiness check on every save. A plan that already
+launched is permanent and answers `409 conflict`.
+
+**Request body**
+
+```json
+{
+	"agent_id": "8f14e45f-ceea-467a-9f27-1f0f8b1cba1c",
+	"network": "mainnet",
+	"name": "Ada Ledger",
+	"symbol": "ADA",
+	"description": "The ledger of a working agent.",
+	"coin_type": "agent",
+	"quote_currency": "sol",
+	"buyback_bps": 2500,
+	"sol_buy_in": 0.5
+}
+```
+
+---
+
+### Discard an unlaunched plan
+
+```
+DELETE /api/agents/tokens/plan?agent_id=<uuid>&network=mainnet
+```
+
+Requires the agent owner's session. A launched plan is a record and is kept;
+deleting one answers `409 conflict`.
+
+---
+
+### Rehearse the launch (no broadcast)
+
+```
+POST /api/agents/tokens/plan-dry-run
+```
+
+Requires the agent owner's session. Builds the real pump.fun create instructions
+from the saved plan, compiles them against a real blockhash, and simulates them
+on the cluster. Never signs, never broadcasts, costs nothing. `network` defaults
+to `devnet`.
+
+**Response**
+
+```json
+{
+	"ok": true,
+	"broadcast": false,
+	"network": "devnet",
+	"result": {
+		"verdict": "would_succeed",
+		"compiled": true,
+		"tx_bytes": 918,
+		"simulation": { "error": null, "units_consumed": 121843, "logs": ["…"] }
+	}
+}
+```
+
+`verdict` is one of `would_succeed`, `funding_required`, `would_fail`,
+`compile_failed`, `rpc_unavailable`.
+
+---
+
 ## Token API — security
 
 Rug-check any Solana token in one free call. Instead of an invented "risk score",

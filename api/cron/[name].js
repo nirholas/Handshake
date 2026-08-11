@@ -45,6 +45,8 @@ import { cors, error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { llmComplete } from '../_lib/llm.js';
 import { CHAINS } from '../_lib/erc8004-chains.js';
+import { REGISTRY_TOPICS, decodeRegistryLog } from '../_lib/erc8004-registry-events.js';
+import { agentRef, recordEvents } from '../_lib/onchain-events.js';
 import { DELEGATION_MANAGER_DEPLOYMENTS, DELEGATION_MANAGER_ABI } from '../../src/erc7710/abi.js';
 import {
 	getPumpAgent,
@@ -207,9 +209,6 @@ async function handleSolanaAgentsCrawl(req, res) {
 // ═══════════════════════════════════════════════════════════════════════════
 // erc8004-crawl
 // ═══════════════════════════════════════════════════════════════════════════
-
-const REGISTERED_TOPIC = keccakId('Registered(uint256,string,address)');
-const ABI_CODER = AbiCoder.defaultAbiCoder();
 
 // Blocks scanned per chain per cron invocation. Public RPCs typically allow
 // 2000-block ranges; lower this if a chain's RPC rejects with "block range".

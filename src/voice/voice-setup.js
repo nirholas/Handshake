@@ -72,6 +72,7 @@ export class VoiceSetup {
 		this._stream = null;
 		this._destroyed = false;
 		this._el = null;
+		this._sampleUrl = null;
 	}
 
 	async mount() {
@@ -87,6 +88,10 @@ export class VoiceSetup {
 		this._destroyed = true;
 		this._stopTimer();
 		this._releaseMic();
+		if (this._sampleUrl) {
+			URL.revokeObjectURL(this._sampleUrl);
+			this._sampleUrl = null;
+		}
 		this._el?.remove();
 		this._el = null;
 	}

@@ -4,7 +4,24 @@ startCommand:
   type: stdio
   configSchema:
     type: object
-    properties: {}
-    required: []
+    properties:
+      threeWsApiKey:
+        type: string
+        description: >-
+          three.ws bearer credential (API key sk_live_/sk_test_ or OAuth token).
+          Required for every tool except a leader's public aggregate earnings.
+      threeWsBase:
+        type: string
+        description: three.ws API deployment to talk to.
+        default: https://three.ws
+    required:
+      - threeWsApiKey
   commandFunction: |
-    (config) => ({ command: "npx", args: ["-y", "@three-ws/copy-mcp"], env: {} })
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@three-ws/copy-mcp"],
+      env: {
+        THREE_WS_API_KEY: config.threeWsApiKey,
+        ...(config.threeWsBase ? { THREE_WS_BASE: config.threeWsBase } : {}),
+      },
+    })

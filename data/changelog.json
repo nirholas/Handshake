@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "Design your agent's coin before you launch it, and rehearse the launch for free",
+			"summary": "Your agent can now carry a token plan: the name, ticker, story, artwork, pairing, buyback share and dev buy of the coin it is going to become, saved on the agent itself instead of typed into a form and thrown away. The plan shows up on the agent's profile, so visitors can see the coin is coming before it exists, and it tells you what is still missing and what the launch will cost in SOL. There is also a rehearsal: one button builds the real launch transaction from your saved plan and asks Solana to run it on devnet without broadcasting anything, so you find out whether it would work before a single lamport moves. Saving and rehearsing cost nothing and mint nothing; launching stays a separate, deliberate step. Coins launched from your own wallet also now appear in the public launch feed and in your agent's launch history, which they previously did not.",
+			"tags": [
+				"feature"
+			],
+			"link": "/launches"
+		},
+		{
+			"date": "2026-08-11",
 			"title": "Your agent's personality is now signed and published to IPFS",
 			"summary": "Every time you save your agent's persona, three.ws now writes down exactly how that agent is configured, signs it with the platform's signing key, and publishes it to IPFS. You get back a permanent address anyone can open. That means the instructions behind your agent are no longer something people have to take on trust: a visitor, a buyer, or another agent can fetch the record, confirm it really came from three.ws, read the exact prompt, and see whether the agent running today still matches what was published. Anyone can run the check themselves without an account. Only public agents publish automatically, and you can publish a private agent deliberately whenever you choose.",
 			"tags": [
