@@ -525,6 +525,24 @@ contract IdentityRegistryTest is Test {
         assertEq(address(reg).balance, 1 ether);
     }
 
+    function testSpendPayoutFailureRevertsTheWholeCall() public {
+        EthRejectingRecipient sink = new EthRejectingRecipient();
+
+        vm.prank(alice);
+        uint256 id = reg.register("ipfs://x");
+        vm.prank(alice);
+        reg.deposit{value: 1 ether}(id);
+        vm.prank(alice);
+        reg.setSpendAllowance(id, spender, 1 ether);
+
+        vm.prank(spender);
+        vm.expectRevert(IdentityRegistry.EthTransferFailed.selector);
+        reg.spend(id, payable(address(sink)), 1 ether, "undeliverable");
+
+        assertEq(reg.agentBalance(id), 1 ether, "ID-9: the debit must not survive a failed payout");
+        assertEq(reg.spendAllowance(id, spender), 1 ether);
+    }
+
     // ── ID-10: reentrancy ────────────────────────────────────────────────────
 
     function testReentrantSpendIsBlocked() public {
