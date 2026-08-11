@@ -17,22 +17,26 @@
 #   PROJECT_ID=my-proj SERVICES="stylize" ./workers/deploy/deploy-editing.sh
 #
 # Env:
-#   PROJECT_ID        required — target GCP project
+#   PROJECT_ID        required: target GCP project
 #   REGION            default us-central1
 #   SERVICES          default "stylize remesh segment rembg" (all CPU).
-#                     GPU extras (need L4 quota + staged weights — see
-#                     stage-weights.sh): texture text2motion
+#                     GPU extras (need L4 quota): texture text2motion.
+#                     texture bakes its SDXL weights into the image; text2motion
+#                     additionally needs the MDM checkpoint staged by hand at
+#                     gs://$WEIGHTS_BUCKET/mdm/ (see stage-weights.sh's header).
 #   OUTPUT_BUCKET     default three-ws-avatar-reconstructions
 #   WEIGHTS_BUCKET    default three-ws-model-weights (GPU services only)
-#   RUN_SA / BUILD_SA default avatar-reconstruction-sa@$PROJECT_ID (created
-#                     if missing; same identity builds and runs)
+#   RUN_SA            default avatar-reconstruction-sa@$PROJECT_ID (created if
+#                     missing; every deployed service runs as it)
+#   BUILD_SA          default three-ws-build@$PROJECT_ID when that SA exists,
+#                     else RUN_SA
 #
-# Optional Vercel auto-wiring — set these and the script upserts the
-# GCP_*_URL vars + GCP_RECONSTRUCTION_KEY into Vercel production for you
-# (the Vercel CLI silently writes EMPTY sensitive values, so we use REST):
-#   VERCEL_TOKEN       a Vercel API token (vercel.com/account/tokens)
-#   VERCEL_PROJECT_ID  default prj_IWZmEnqR1pCZRCRuvhCFCDcOx5Wc (3dagent)
-#   VERCEL_TEAM_ID     default team_zRpaxHPiMnQGXurBbegM3PCA
+# Optional site auto-wiring: set WIRE_SITE=1 and the script upserts the
+# GCP_*_URL vars onto the site's Cloud Run service with --update-env-vars
+# (a merge, never a replace). Off by default because that mutates a running
+# production service:
+#   WIRE_SITE         "1" to update SITE_SERVICE's env after a successful deploy
+#   SITE_SERVICE      default three-ws-api
 
 set -euo pipefail
 
@@ -42,8 +46,8 @@ SERVICES="${SERVICES:-stylize remesh segment rembg}"
 OUTPUT_BUCKET="${OUTPUT_BUCKET:-three-ws-avatar-reconstructions}"
 WEIGHTS_BUCKET="${WEIGHTS_BUCKET:-three-ws-model-weights}"
 SECRET_NAME="avatar-reconstruction-key"
-VERCEL_PROJECT_ID="${VERCEL_PROJECT_ID:-prj_IWZmEnqR1pCZRCRuvhCFCDcOx5Wc}"
-VERCEL_TEAM_ID="${VERCEL_TEAM_ID:-team_zRpaxHPiMnQGXurBbegM3PCA}"
+SITE_SERVICE="${SITE_SERVICE:-three-ws-api}"
+WIRE_SITE="${WIRE_SITE:-0}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO_ROOT"
@@ -56,7 +60,7 @@ die()  { printf '\033[1;31m[deploy] ERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 command -v gcloud >/dev/null 2>&1 || die "gcloud not found on PATH"
 gcloud auth print-access-token >/dev/null 2>&1 || die "gcloud is not authenticated — run 'gcloud auth login'"
 
-# service key -> worker dir | Cloud Run service name | Vercel env var | needs GPU/weights
+# service key -> worker dir | Cloud Run service name | site env var | needs GPU
 svc_dir()    { case "$1" in stylize) echo stylize;; remesh) echo remesh;; segment) echo segment;; rembg) echo rembg;; texture) echo texture;; text2motion) echo model-text2motion;; *) echo "";; esac; }
 svc_run()    { case "$1" in stylize) echo stylize-service;; remesh) echo remesh-service;; segment) echo segment-service;; rembg) echo rembg-service;; texture) echo texture-service;; text2motion) echo model-text2motion;; *) echo "";; esac; }
 svc_envvar() { case "$1" in stylize) echo GCP_STYLIZE_URL;; remesh) echo GCP_REMESH_URL;; segment) echo GCP_SEGMENT_URL;; rembg) echo GCP_REMBG_URL;; texture) echo GCP_TEXTURE_URL;; text2motion) echo GCP_TEXT2MOTION_URL;; *) echo "";; esac; }
@@ -65,9 +69,16 @@ svc_gpu()    { case "$1" in texture|text2motion) echo yes;; *) echo no;; esac; }
 for svc in $SERVICES; do
   [ -n "$(svc_dir "$svc")" ] || die "unknown service '$svc' (valid: stylize remesh segment rembg texture text2motion)"
   if [ "$(svc_gpu "$svc")" = yes ]; then
-    warn "'$svc' needs Cloud Run L4 GPU quota in $REGION and staged weights (./workers/deploy/stage-weights.sh)"
+    warn "'$svc' needs Cloud Run L4 GPU quota in $REGION"
   fi
 done
+# text2motion is the only worker here that reads the weights bucket at runtime
+# (MOTION_MODEL_DIR=/weights/mdm). texture bakes SDXL + ControlNet into
+# /opt/hf-cache at image build time, so it needs no staging at all.
+case " $SERVICES " in
+  *" text2motion "*)
+    warn "'text2motion' loads the MDM checkpoint from gs://${WEIGHTS_BUCKET}/mdm/ (model.pt + args.json); stage it before the first request or the service 503s on cold start" ;;
+esac
 
 TAG="$(git rev-parse --short HEAD 2>/dev/null || echo manual)"
 
@@ -82,7 +93,15 @@ gcloud services enable \
 ok "APIs enabled"
 
 RUN_SA="${RUN_SA:-avatar-reconstruction-sa@${PROJECT_ID}.iam.gserviceaccount.com}"
-BUILD_SA="${BUILD_SA:-$RUN_SA}"
+# Every workers/*/cloudbuild.yaml pins `serviceAccount:` to the canonical build
+# SA, but that pin hardcodes THIS project's number, so a build run against any
+# other project must re-point it; --service-account overrides the pin. Prefer
+# the same name in the target project, and fall back to the runtime SA (which
+# step 5 grants cloudbuild.builds.builder) when it is absent.
+if [ -z "${BUILD_SA:-}" ]; then
+  BUILD_SA="three-ws-build@${PROJECT_ID}.iam.gserviceaccount.com"
+  gcloud iam service-accounts describe "$BUILD_SA" >/dev/null 2>&1 || BUILD_SA="$RUN_SA"
+fi
 
 # ── 2. build/runtime service account ──────────────────────────────────────────
 if gcloud iam service-accounts describe "$RUN_SA" >/dev/null 2>&1; then
@@ -102,7 +121,7 @@ else
   gcloud storage buckets create "gs://$OUTPUT_BUCKET" --location="$REGION" --uniform-bucket-level-access >/dev/null
   ok "created gs://$OUTPUT_BUCKET"
 fi
-# Result meshes are fetched by URL from the browser/Vercel, so public-read.
+# Result meshes are fetched by URL from the browser and the site API, so public-read.
 gcloud storage buckets add-iam-policy-binding "gs://$OUTPUT_BUCKET" \
   --member=allUsers --role=roles/storage.objectViewer >/dev/null 2>&1 || \
   warn "could not make $OUTPUT_BUCKET public-read (org policy may block allUsers) — result URLs will 403"
@@ -162,8 +181,6 @@ for svc in $SERVICES; do
   ok "$runname → $url"
 done
 
-API_KEY_VALUE="$(gcloud secrets versions access latest --secret="$SECRET_NAME")"
-
 # ── 7. health checks ──────────────────────────────────────────────────────────
 for svc in $SERVICES; do
   url="${SERVICE_URL[$svc]}"
@@ -174,46 +191,46 @@ for svc in $SERVICES; do
   fi
 done
 
-# ── 8. Vercel env wiring ──────────────────────────────────────────────────────
-vercel_upsert() {
-  local key="$1" value="$2"
-  curl -fsS -X POST \
-    "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env?upsert=true&teamId=${VERCEL_TEAM_ID}" \
-    -H "Authorization: Bearer ${VERCEL_TOKEN}" \
-    -H "Content-Type: application/json" \
-    -d "{\"key\":\"${key}\",\"value\":\"${value}\",\"type\":\"sensitive\",\"target\":[\"production\"]}" \
-    >/dev/null
-}
+# ── 8. site env wiring (Cloud Run) ────────────────────────────────────────────
+# The site has run on Cloud Run since 2026-07-07. GCP_RECONSTRUCTION_KEY is not
+# written here: the site mounts it straight from Secret Manager
+# ($SECRET_NAME), which is the same secret these workers authenticate against.
+SITE_ENV=""
+for svc in $SERVICES; do
+  SITE_ENV="${SITE_ENV:+$SITE_ENV,}$(svc_envvar "$svc")=${SERVICE_URL[$svc]}"
+done
 
-if [ -n "${VERCEL_TOKEN:-}" ]; then
-  log "upserting Vercel production env vars via REST…"
-  for svc in $SERVICES; do
-    vercel_upsert "$(svc_envvar "$svc")" "${SERVICE_URL[$svc]}" \
-      && ok "Vercel: $(svc_envvar "$svc") set" \
-      || warn "Vercel: failed to set $(svc_envvar "$svc")"
-  done
-  vercel_upsert "GCP_RECONSTRUCTION_KEY" "$API_KEY_VALUE" \
-    && ok "Vercel: GCP_RECONSTRUCTION_KEY set" \
-    || warn "Vercel: failed to set GCP_RECONSTRUCTION_KEY"
-  warn "env vars apply on the NEXT production deploy — push to main or redeploy from the Vercel dashboard"
+if [ "$WIRE_SITE" = "1" ]; then
+  log "updating ${SITE_SERVICE} env (merge, not replace)…"
+  # --update-env-vars MERGES; --set-env-vars would drop every other variable
+  # the site needs. Never swap one for the other here.
+  gcloud run services update "$SITE_SERVICE" --region "$REGION" --project "$PROJECT_ID" \
+    --update-env-vars "$SITE_ENV" >/dev/null \
+    && ok "${SITE_SERVICE} updated; the new revision serves the new URLs" \
+    || warn "could not update ${SITE_SERVICE}, run the command printed below by hand"
 else
-  log "VERCEL_TOKEN not set — skipping Vercel wiring; set the vars below manually"
+  log "WIRE_SITE not set, printing the wiring command instead of running it"
 fi
 
 # ── 9. handoff ────────────────────────────────────────────────────────────────
 cat <<EOF
 
 ────────────────────────────────────────────────────────────────────────
- DEPLOY COMPLETE. Vercel (Production) needs these, then a redeploy:
+ DEPLOY COMPLETE. Deployed services:
 ────────────────────────────────────────────────────────────────────────
 EOF
 for svc in $SERVICES; do
   printf '  %-24s = %s\n' "$(svc_envvar "$svc")" "${SERVICE_URL[$svc]}"
 done
 cat <<EOF
-  GCP_RECONSTRUCTION_KEY   = ${API_KEY_VALUE}
 
- Verify after redeploy (expect 202 with a job_id, then a result GLB):
+ Wire them onto the site (Cloud Run ${SITE_SERVICE}):
+   gcloud run services update ${SITE_SERVICE} --region ${REGION} \\
+     --project ${PROJECT_ID} \\
+     --update-env-vars ${SITE_ENV}
+
+ Verify once the new revision is serving (expect 202 with a job_id, then a
+ result GLB):
    curl -X POST https://three.ws/api/forge-stylize \\
      -H 'content-type: application/json' \\
      -d '{"mesh_url":"<your GLB url>","style":"voxel"}'
