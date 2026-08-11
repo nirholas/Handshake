@@ -9,6 +9,7 @@
  *       &before=<iso>        cursor (created_at <) for pagination  (newest|popular|name)
  *       &offset=<n>          offset pagination                     (live)
  *       &network=mainnet     only show on-chain agents on this network
+ *       &avatar=1            only agents whose avatar GLB is publicly readable
  *
  * Returns { agents, count, has_more, generated_at }. Each agent has the
  * public-safe fields: id, name, description, skills, avatar_thumbnail_url,
@@ -91,6 +92,11 @@ export default wrap(async (req, res) => {
 	const before = p.get('before') || null;
 	const offset = Math.max(0, Math.min(5000, Number(p.get('offset') || 0) | 0));
 	const onchainOnly = p.get('onchain') === '1' || p.get('onchain') === 'true';
+	// avatar=1 keeps only agents that carry a publicly readable avatar GLB. Surfaces
+	// that render or export the model itself (the Claude artifact builder, embeds)
+	// need this: an agent with no avatar, or one whose avatar is private, cannot be
+	// rendered at all and would offer the visitor a pick that can only fail.
+	const avatarOnly = p.get('avatar') === '1' || p.get('avatar') === 'true';
 
 	// ── live sort: activity-first, placeholder-suppressed, offset-paginated ──────
 	if (sort === 'live') {
@@ -123,6 +129,10 @@ export default wrap(async (req, res) => {
 			  and (${!onchainOnly} or (
 			        i.meta->'onchain' is not null
 			        or i.meta->>'sol_mint_address' is not null
+			      ))
+			  and (${!avatarOnly} or (
+			        a.storage_key is not null
+			        and a.visibility in ('public', 'unlisted')
 			      ))
 			  and (
 			        ac.last_action_at is not null
@@ -215,6 +225,10 @@ export default wrap(async (req, res) => {
 		  and (${!onchainOnly} or (
 		        i.meta->'onchain' is not null
 		        or i.meta->>'sol_mint_address' is not null
+		      ))
+		  and (${!avatarOnly} or (
+		        a.storage_key is not null
+		        and a.visibility in ('public', 'unlisted')
 		      ))
 		order by
 			${sort === 'newest' ? sql`i.created_at desc` :
