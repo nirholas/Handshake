@@ -1657,16 +1657,24 @@ POST /api/asl-recognition
 **Response (200)**
 
 ```json
-{ "text": "hello world", "raw": "helo worlld", "cleaned": true, "frames": 214, "ms": 380 }
+{
+	"text": "hello world",
+	"raw": "helo worlld",
+	"cleaned": true,
+	"confidence": 0.812,
+	"frames": 214,
+	"ms": 380
+}
 ```
 
-| Field     | Type    | Description                                                              |
-| --------- | ------- | -------------------------------------------------------------------------- |
-| `text`    | string  | The transcription, after cleanup when it ran                              |
-| `raw`     | string  | The model's untouched decode                                              |
-| `cleaned` | boolean | Whether cleanup changed the decode                                        |
-| `frames`  | number  | Frames decoded                                                            |
-| `ms`      | number  | Recognition time                                                          |
+| Field        | Type    | Description                                                              |
+| ------------ | ------- | -------------------------------------------------------------------------- |
+| `text`       | string  | The transcription, after cleanup when it ran                              |
+| `raw`        | string  | The model's untouched decode                                              |
+| `cleaned`    | boolean | Whether cleanup changed the decode                                        |
+| `confidence` | number  | Mean per-character softmax probability of the raw decode, 0 to 1. Near 1 is a clean read; low values mean the capture was poor, and the browser surfaces a warning rather than inserting the text silently |
+| `frames`     | number  | Frames decoded                                                            |
+| `ms`         | number  | Recognition time                                                          |
 
 Webcam fingerspelling decodes at a **10-20% character error rate**, which is why a
 constrained LLM pass recovers the intended word and why the browser surfaces the
