@@ -28,7 +28,11 @@ default and clamped `min`/`max`:
 Source color/material is preserved where the style allows: each output element
 is tinted by sampling the nearest source-face color (vertex colors, texture via
 `to_color`, or a material base color), falling back to a tasteful cool-neutral
-default when the mesh is untextured. Hard safety caps (`MAX_VOXELS = 60_000`,
+default when the mesh carries no color of its own. (That fallback is gated on
+trimesh's `visual.defined`, because trimesh otherwise hands back a stock flat
+gray for an uncolored mesh, which reads as a real color and is not one.) A mesh
+with no size at all is refused rather than stylized into invisible geometry.
+Hard safety caps (`MAX_VOXELS = 60_000`,
 `MAX_LATTICE_EDGES = 6_000`, `MAX_MESH_BYTES = 128 MiB`) mean a hostile or huge
 input can never exhaust memory — resolution backs off automatically.
 
@@ -38,7 +42,8 @@ Input formats: `.glb`, `.gltf`, `.obj`, `.stl`, `.ply`, `.fbx`, `.off`, `.dae`
 ## HTTP contract
 
 Bearer-authenticated on `/process` and `/tasks/:id`; `/styles` and `/health`
-are public. Jobs are async — `POST /process` returns immediately with a
+are public. A missing, malformed, or wrong `Authorization: Bearer <key>` header
+is a `401`. Jobs are async: `POST /process` returns immediately with a
 `task_id`, then you poll `GET /tasks/:id`.
 
 ### `POST /process` → `202`
@@ -83,7 +88,15 @@ Response:
 `status` is `queued` → `running` → `done` | `failed`. On failure the body
 carries a sanitized `error`. Unknown ids return `404`. The finished mesh is
 uploaded to the `GCS_BUCKET` under `stylize/<task_id>.<format>` and served from
-its public GCS URL.
+its public GCS URL; that upload retries transient transport failures, so a TLS
+blip no longer discards work the worker already did.
+
+Task records are instance-local and bounded: the most recent
+`MAX_TRACKED_TASKS = 500` are kept, oldest finished ones evicted first, and a
+queued or running job is never evicted. Poll promptly and keep the `result_url`,
+which is durable; the record behind it is not (a restart clears it either way,
+and `api/_providers/gcp.js` already maps that `404` to a terminal
+`gcp_task_missing`).
 
 ### `GET /styles` → `200`
 
@@ -108,13 +121,23 @@ gallery. Public, no auth.
 
 Deployed as the Cloud Run service **`stylize-service`** in **`us-central1`**,
 built by Cloud Build from [`cloudbuild.yaml`](cloudbuild.yaml) (CPU-only:
-`--cpu=8 --memory=16Gi`, `--min-instances=0 --max-instances=3`, 300 s timeout,
-run SA `avatar-reconstruction-sa`). Scale-to-zero means the first request after
-idle pays a container cold start.
+`--cpu=8 --memory=16Gi`, `--min-instances=1 --max-instances=3`, 300 s timeout,
+run SA `avatar-reconstruction-sa`, build SA `three-ws-build@` as every build in
+this project must pin). It is kept warm rather than scaled to zero: a job itself
+finishes in under ten seconds, so a cold start on top of it would be the
+dominant stall in an interactive edit.
+
+Submit from the **repo root** and pass `SHORT_SHA` explicitly, since the config
+tags images with it and `gcloud builds submit` does not populate it:
 
 ```bash
-gcloud builds submit --config workers/stylize/cloudbuild.yaml .
+gcloud builds submit --config workers/stylize/cloudbuild.yaml \
+  --region us-central1 --project aerial-vehicle-466722-p5 \
+  --substitutions=SHORT_SHA=manual$(date +%s) .
 ```
+
+The build runs [`test_stylize.py`](test_stylize.py) as a gate, so a regression in
+any filter stops the image instead of reaching a user mid-edit.
 
 three.ws reaches it through [`api/_providers/gcp.js`](../../api/_providers/gcp.js)
 (`stylize` mode) when **`GCP_STYLIZE_URL`** points at the service URL and the
@@ -141,6 +164,23 @@ API_KEY=dev-secret GCS_BUCKET=your-dev-bucket \
 (Uploads need Application Default Credentials with write access to
 `GCS_BUCKET`.) The container image installs `libassimp` + `libgl` system libs
 so FBX/DAE input and headless mesh IO work.
+
+## Tests
+
+```bash
+python3 workers/stylize/test_stylize.py
+```
+
+[`test_stylize.py`](test_stylize.py) covers the core path with no GCS, no
+network, and no server: the catalog and its resolution bounds, request
+validation, scene loading, color preservation and the untextured fallback, all
+four filters (geometry, tint, and the shape property each one promises), the
+zero-extent refusal, the `MAX_VOXELS` / `MAX_LATTICE_EDGES` backoff, an export
+round-trip in every output format, the SSRF gate, the `401` contract, and the
+upload retry policy. It needs `trimesh`, `numpy`, `scipy`, `fastapi`,
+`pydantic`, and `google-cloud-storage`; `open3d` is optional locally (`_decimate`
+falls back to trimesh without it) and present in the image, so the Docker build
+gate is what exercises the open3d decimation path.
 
 ## Usage example
 
@@ -176,6 +216,7 @@ curl -s -X POST https://three.ws/api/forge-stylize \
 | File | Role |
 |------|------|
 | [`main.py`](main.py) | FastAPI app: filters, color sampler, task queue, GCS upload, routes. |
+| [`test_stylize.py`](test_stylize.py) | Core-path unit suite; also a Docker build gate. |
 | [`worker_security.py`](worker_security.py) | Shared bearer-auth, SSRF-safe fetch, error sanitizer. |
 | [`requirements.txt`](requirements.txt) | Pinned deps (`trimesh`, `open3d`, `scipy`, `pyassimp`, …). |
 | [`Dockerfile`](Dockerfile) | `python:3.11-slim` + assimp/GL system libs; uvicorn on `:8080`. |
