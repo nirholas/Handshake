@@ -18,6 +18,15 @@ const PROTOCOL_VERSION = '2025-06-18';
 // indexer-configured branch is exercised without an upstream or a mock.
 const DEAD_INDEXER = { PUMPFUN_BOT_URL: 'http://127.0.0.1:1' };
 
+// Two unreachable RPCs. Because the worker only falls back to the public
+// endpoint when NOTHING is configured, this pins the whole chain to closed local
+// ports: the failover runs for real and exhausts without leaving the machine.
+const DEAD_RPC_CHAIN = {
+	SOLANA_RPC_URL: 'http://127.0.0.1:1',
+	SOLANA_RPC_FALLBACKS: 'http://127.0.0.1:2',
+};
+const REAL_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+
 const ON_CHAIN_TOOLS = ['get_bonding_curve', 'get_token_details', 'get_token_holders'];
 const INDEXER_TOOLS = [
 	'search_tokens',
@@ -214,6 +223,16 @@ describe('pump-fun-mcp worker: tools/call', () => {
 		for (const name of ON_CHAIN_TOOLS) {
 			const json = await callTool(name, { mint: 'not-a-mint' });
 			expect(json.error.code, name).toBe(-32602);
+		}
+	});
+
+	it('exhausts the RPC failover chain and reports -32004, never an internal error', async () => {
+		// Every configured endpoint is refused, so each tool must surface the
+		// upstream-data code its siblings use instead of leaking a -32603.
+		for (const name of ON_CHAIN_TOOLS) {
+			const json = await callTool(name, { mint: REAL_MINT }, DEAD_RPC_CHAIN);
+			expect(json.error.code, name).toBe(-32004);
+			expect(json.error.message, name).toMatch(/unavailable/);
 		}
 	});
 
