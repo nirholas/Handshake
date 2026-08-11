@@ -42,12 +42,12 @@ on-chain proof. [`verifier.js`](./verifier.js) does exactly that and emits a
 | 7 | `namekeeper` | `.sol` resolve (`@three-ws/names`) | resolution JSON | sha256(canonical) |
 
 The **active roster** (`index.js` `WORK_RUNNERS`) is bits **0, 1, 2, 4, 5, 6, 7**.
-Bit 3 (`cartographer`) is **deferred, not stubbed** — [`cartographer.js`](./cartographer.js)
+Bit 3 (`cartographer`) is **deferred, not stubbed**: [`cartographer.js`](./cartographer.js)
 is real and calls `/api/diorama` `compose`, but that route decomposes a scene via
-an LLM chain and consistently `504`s at the serverless 30 s function cap, so a
-citizen can't finish it in budget. Re-activation is a one-line re-add to
-`WORK_RUNNERS` once `/api/diorama` gets a higher `maxDuration` or an in-budget
-compose lane.
+an LLM chain whose latency overruns the request budget, so a citizen can't finish
+it in time. Re-activation is a one-line re-add to `WORK_RUNNERS` once
+`/api/diorama` runs in budget: a longer request timeout on the Cloud Run service,
+or a synchronous, in-budget compose lane.
 
 [`index.js`](./index.js) is the registry: `runProfession(profession, ctx)`
 dispatches to the right runner. Open by design — add a bit + a real skill + its
