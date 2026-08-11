@@ -1301,6 +1301,10 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/irl/': resolve(root, 'pages/irl.html'),
 					'/ar/studio': resolve(root, 'pages/ar-studio.html'),
 					'/ar/studio/': resolve(root, 'pages/ar-studio.html'),
+					// AR Forge lives in public/ (no bundler), so dev must map /ar the
+					// same way vercel.json does or the route 404s only in dev.
+					'/ar': resolve(root, 'public/ar-forge.html'),
+					'/ar/': resolve(root, 'public/ar-forge.html'),
 					'/daily': resolve(root, 'pages/daily.html'),
 					'/daily/': resolve(root, 'pages/daily.html'),
 					'/irl-privacy': resolve(root, 'pages/irl-privacy.html'),
