@@ -45,9 +45,13 @@ export default async function handleAgentTask(req, res) {
 		const agentId = (new URL(req.url, `http://${req.headers.host || 'x'}`).searchParams.get('agentId') || '').trim();
 		if (!agentId) return error(res, 400, 'missing_agent_id', 'agentId required');
 
-		// Verify the polling identity owns this agent
+		// Verify the polling identity owns this agent. Agents live in
+		// agent_identities, the same table agent-screen-push.js authorizes
+		// against; there is no `agents` table.
 		const [agentRow] = await sql`
-			SELECT id FROM agents WHERE id = ${agentId} AND user_id = ${userId} LIMIT 1
+			SELECT id FROM agent_identities
+			WHERE id = ${agentId} AND user_id = ${userId} AND deleted_at IS NULL
+			LIMIT 1
 		`;
 		if (!agentRow) return error(res, 403, 'forbidden', 'agent not owned by this user');
 
@@ -93,7 +97,9 @@ export default async function handleAgentTask(req, res) {
 
 		// Verify ownership
 		const [agentRow] = await sql`
-			SELECT id, name FROM agents WHERE id = ${agentId} AND user_id = ${userId} LIMIT 1
+			SELECT id, name FROM agent_identities
+			WHERE id = ${agentId} AND user_id = ${userId} AND deleted_at IS NULL
+			LIMIT 1
 		`;
 		if (!agentRow) return error(res, 403, 'forbidden', 'agent not owned by this user');
 
