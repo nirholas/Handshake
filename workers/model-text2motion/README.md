@@ -30,6 +30,7 @@ requires `Authorization: Bearer $API_KEY`.
 POST /infer   { prompt, duration_seconds?=4, fps?=30, job_id? } → 202 { task_id, status }
 GET  /tasks/:id → { task_id, status, model, result_url?, frames?, fps?, elapsed_ms?, error? }
 GET  /health    → { ok, model_loaded, status: loading|ready|failed, load_error }
+GET  /          → { service, model, health, endpoints }   (identity, no auth)
 ```
 
 `prompt` is 3 to 1000 characters, `fps` is 8 to 60, and `duration_seconds` is
@@ -101,9 +102,10 @@ quota raise. Full history and the measurement procedure:
 [docs/ops/gcp-credits-plan.md](../../docs/ops/gcp-credits-plan.md).
 
 `api/cron/gpu-keepwarm.js` pings the lane root every 10 minutes during peak
-hours to absorb the cold start; a 404 at `/` is the expected success signal
-there (the worker defines no root route), so those 404 lines in the logs are the
-probe working, not a fault.
+hours to absorb the cold start, counting any response under 500 as warm. `GET /`
+answers with the service identity and endpoint map, matching the other `model-*`
+workers; it used to 404, which the probe accepted but which wrote 90 WARNING
+lines a day into the triage sweep.
 
 ## Tests
 
