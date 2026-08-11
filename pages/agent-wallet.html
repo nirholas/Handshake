@@ -3,17 +3,17 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title data-i18n="agent_wallet.meta_title">Agent wallet — three.ws</title>
+		<title data-i18n="agent_wallet.meta_title">Agent Wallet · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#000000" />
 		<meta
 			name="description"
-			content="Manage a three.ws 3D AI agent's self-custodied Solana wallet — live balance, deposits, trading, sniping, x402 payments, and withdrawals, all in one place."
+			content="Manage a three.ws 3D AI agent's self-custodied Solana wallet: live balance, deposits, trading, sniping, x402 payments, and withdrawals, all in one place."
 		 data-i18n-attr="content:agent_wallet.meta_description"/>
 		<meta name="robots" content="noindex" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Agent wallet — three.ws"  data-i18n-attr="content:agent_wallet.meta_og_title"/>
+		<meta property="og:title" content="Agent Wallet · three.ws"  data-i18n-attr="content:agent_wallet.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Your 3D AI agent's own Solana wallet: balance, deposit, trade, snipe, pay, and withdraw."
@@ -149,6 +149,133 @@
 				.awh-page-skel-tabs,
 				.awh-page-skel-card {
 					animation: none;
+				}
+			}
+
+			/* Agent picker: shown when the signed-in owner has more than one agent. */
+			.awh-pick {
+				max-width: 640px;
+				margin: 0 auto;
+			}
+			.awh-pick-h {
+				font-family: var(--font-display);
+				font-size: var(--text-xl);
+				color: var(--ink-bright);
+				margin: 0 0 var(--space-xs);
+				line-height: var(--leading-tight, 1.15);
+			}
+			.awh-pick-lede {
+				color: var(--ink-dim);
+				font: var(--text-md) var(--font-body);
+				line-height: var(--leading-normal);
+				margin: 0 0 var(--space-lg);
+			}
+			.awh-pick-list {
+				list-style: none;
+				margin: 0 0 var(--space-lg);
+				padding: 0;
+				display: flex;
+				flex-direction: column;
+				gap: var(--space-sm);
+			}
+			.awh-pick-row {
+				display: flex;
+				align-items: center;
+				gap: var(--space-sm);
+				padding: 12px 14px;
+				border: 1px solid var(--stroke);
+				border-radius: var(--radius-lg);
+				background: var(--surface-1);
+				text-decoration: none;
+				color: inherit;
+				transition:
+					background var(--duration-fast) var(--ease-standard),
+					border-color var(--duration-fast) var(--ease-standard),
+					transform var(--duration-instant, 80ms) var(--ease-standard);
+			}
+			.awh-pick-row:hover {
+				background: var(--surface-2);
+				border-color: var(--stroke-strong);
+			}
+			.awh-pick-row:active {
+				transform: translateY(1px);
+			}
+			.awh-pick-row:focus-visible {
+				outline: var(--focus-ring-width) solid var(--focus-ring-color);
+				outline-offset: var(--focus-ring-offset);
+			}
+			.awh-pick-av {
+				width: 40px;
+				height: 40px;
+				flex: none;
+				border-radius: var(--radius-md);
+				object-fit: cover;
+				background: var(--surface-2);
+				border: 1px solid var(--stroke);
+			}
+			.awh-pick-id {
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				min-width: 0;
+				flex: 1 1 auto;
+			}
+			.awh-pick-name {
+				font-size: var(--text-md);
+				font-weight: 600;
+				color: var(--ink-bright);
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.awh-pick-sub {
+				font-family: var(--font-mono, ui-monospace, monospace);
+				font-size: var(--text-sm);
+				color: var(--ink-dim);
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.awh-pick-state {
+				flex: none;
+				font-size: var(--text-2xs, 0.6875rem);
+				font-weight: 600;
+				padding: 2px 8px;
+				border-radius: var(--radius-pill, 999px);
+				border: 1px solid transparent;
+				white-space: nowrap;
+			}
+			.awh-pick-state[data-state='ready'] {
+				color: var(--success, #4ade80);
+				background: color-mix(in srgb, var(--success, #4ade80) 14%, transparent);
+				border-color: color-mix(in srgb, var(--success, #4ade80) 35%, transparent);
+			}
+			.awh-pick-state[data-state='preparing'] {
+				color: var(--warn, #fbbf24);
+				background: color-mix(in srgb, var(--warn, #fbbf24) 12%, transparent);
+				border-color: color-mix(in srgb, var(--warn, #fbbf24) 32%, transparent);
+			}
+			.awh-pick-go {
+				flex: none;
+				color: var(--ink-dim);
+				transition: transform var(--duration-fast) var(--ease-standard);
+			}
+			.awh-pick-row:hover .awh-pick-go {
+				transform: translateX(2px);
+				color: var(--ink);
+			}
+			.awh-pick-foot {
+				justify-content: flex-start;
+			}
+			@media (max-width: 420px) {
+				.awh-pick-state {
+					display: none;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.awh-pick-row,
+				.awh-pick-go {
+					transition: none;
 				}
 			}
 		</style>
