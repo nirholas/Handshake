@@ -71,6 +71,13 @@ const FORBIDDEN = [
 	{ glob: '.env.*.local' },
 	{ glob: '.x402-ring-secrets.json' },
 	{ glob: 'three.ws-log-export-*.json' },
+	// Worker signing-key caches. workers/agora-citizens/.cache holds one raw
+	// Solana secret key per citizen (a bare JSON byte array, no PEM armour and no
+	// telltale extension, so nothing else in this list would catch it). They are
+	// gitignored, but .gcloudignore replaces .gitignore rather than extending it,
+	// so without an explicit rule every Cloud Build submit shipped the fleet's
+	// private keys into the source bucket.
+	{ glob: 'workers/*/.cache/*' },
 	{ glob: '*.pem', sniff: true },
 	{ glob: '*.key', sniff: true },
 ];
@@ -114,6 +121,11 @@ const REQUIRED = [
 	{ path: 'Dockerfile', kind: 'file', why: 'the root image build' },
 	{ path: 'agents', kind: 'dir', why: 'api/x402/fact-check.js + tutor.js import ../../agents/*' },
 	{ path: 'agent-payments-sdk', kind: 'dir', why: 'copied by the sniper image build' },
+	{
+		path: '.agents/skills',
+		kind: 'dir',
+		why: "workers/okx-chat-bot's image copies it; without it the chat bot's AI subsession boots with no skills",
+	},
 	{ path: 'data', kind: 'dir', why: 'handlers read data/*.json at runtime' },
 	{
 		path: 'tests/fixtures/fact-check-benchmark.json',
