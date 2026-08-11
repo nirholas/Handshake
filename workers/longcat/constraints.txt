@@ -1,0 +1,15 @@
+# Pins that must survive every transitive dependency resolution in this image.
+#
+# audio-separator brings its own torch and numpy requirements. Left
+# unconstrained, pip happily replaces the cu124 torch 2.6.0 wheel installed from
+# download.pytorch.org with a CPU-only build from PyPI, and the image then fails
+# at inference with "Torch not compiled with CUDA enabled" after a 40-minute
+# build. It also upgrades numpy past 1.x, which breaks the compiled extensions
+# in av and opencv.
+#
+# The Dockerfile asserts these versions after installing, so drift fails the
+# build instead of the first job.
+torch==2.6.0
+numpy==1.26.4
+transformers==4.41.0
+diffusers==0.35.1
