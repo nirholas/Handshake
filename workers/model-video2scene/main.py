@@ -367,7 +367,10 @@ def _world_points_and_conf(predictions: dict):
     points = unproject_depth_map_to_point_map(
         predictions["depth"], extrinsic_w2c, predictions["intrinsic"]
     )
-    return points, predictions.get("depth_conf")
+    # The unprojector's world transform is float64, so its output is too. A cloud
+    # of 500 frames is 3.4 GB at that width and half of it at float32, which is
+    # the precision the PLY carries anyway.
+    return np.asarray(points, dtype=np.float32), predictions.get("depth_conf")
 
 
 def _sky_keep_mask(conf, images, dst_dir: str) -> tuple[Optional[np.ndarray], int]:
