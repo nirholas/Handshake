@@ -139,7 +139,16 @@ export function normalizeVariantMarket(m) {
 		price_change_1h: num(m.priceChange1hPercent),
 		price_change_24h: num(m.priceChange24hPercent),
 		market_cap: num(m.marketCap),
+		fdv: num(m.fdv),
 		liquidity: num(m.liquidity),
+		// Holder count and supply are absent from the published v1 type but are
+		// present live on birdeye-sourced rows (verified 2026-08-11 against
+		// wSOL and the 27 USD variants). Mapped when present, null otherwise,
+		// so a clickhouse_trades row that omits them degrades honestly instead
+		// of reporting zero holders.
+		holders: num(m.holder),
+		supply: num(m.circulatingSupply),
+		total_supply: num(m.totalSupply),
 		volume_1h: num(m.volume1hUSD),
 		volume_24h: num(m.volume24hUSD),
 		volume_30d: num(m.volume30dUSD),
