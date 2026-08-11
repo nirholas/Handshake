@@ -19,6 +19,7 @@ import { createInterface } from 'node:readline';
 import { config } from './config.js';
 import * as store from './store.js';
 import { attention } from './server.js';
+import { partialReasons } from './scan.js';
 
 const PROTOCOL_VERSION = '2024-11-05';
 const consoleUrl = (process.env.FLEET_CONSOLE_URL || '').replace(/\/+$/, '');
@@ -109,6 +110,11 @@ async function callTool(name, args = {}) {
 			owner: snapshot.owner,
 			generatedAt: snapshot.generatedAt,
 			partial: snapshot.partial,
+			// An agent acting on this needs to know whether it is looking at the
+			// whole fleet, and if not, why not: a capped scan is a configuration
+			// choice, an exhausted budget means the numbers themselves are shaky.
+			partialReason: snapshot.partialReason || '',
+			partialDetail: partialReasons(snapshot),
 			...snapshot.summary
 		});
 	}
