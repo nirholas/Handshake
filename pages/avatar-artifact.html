@@ -592,7 +592,7 @@
 
 				headGroup.add(makeEye(-0.185), makeEye(0.185));
 
-				// Eyelids (scale Y to blink)
+				// Eyelids: a blink is a Y scale on these caps.
 				function makeLid(x) {
 					const lid = new THREE.Mesh(
 						new THREE.SphereGeometry(0.112, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.5),
