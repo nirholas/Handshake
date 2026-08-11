@@ -108,11 +108,12 @@ function serviceUrlForMode(mode) {
 			// mask/video/meta sidecar URLs.
 			return readEnv('GCP_VIDEO2MOTION_URL');
 		case 'rerig':
-			// Rigging: prefer the standalone UniRig worker (workers/unirig — direct
-			// /rig + /tasks/:id, `mesh_gcs_url` request schema) when GCP_UNIRIG_URL
-			// is set; otherwise the legacy pipeline-controller /rig endpoint behind
-			// GCP_RECONSTRUCTION_URL. The deployed avatar-reconstruction service
-			// exposes no /rig, so without GCP_UNIRIG_URL every rig submit 404s.
+			// Rigging: prefer the standalone rig worker (workers/rig, Cloud Run
+			// `model-rig`: direct /rig + /tasks/:id, `mesh_gcs_url` request schema)
+			// when GCP_UNIRIG_URL is set; otherwise the legacy pipeline-controller
+			// /rig endpoint behind GCP_RECONSTRUCTION_URL. The deployed
+			// avatar-reconstruction service exposes no /rig, so without
+			// GCP_UNIRIG_URL every rig submit 404s.
 			return readEnv('GCP_UNIRIG_URL') || readEnv('GCP_RECONSTRUCTION_URL');
 		default:
 			return null;
