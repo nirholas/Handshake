@@ -3,8 +3,9 @@
  *
  * A static (un-rigged) mesh can't play the pre-baked animation library: it has
  * no skeleton to drive. This panel turns such a mesh into an animation-ready
- * avatar by routing it through the platform's auto-rig backend (UniRig on the
- * GCP pipeline, or a Replicate rerig model) via the existing regenerate API.
+ * avatar by routing it through the platform's auto-rig backend (the model-rig
+ * worker on the GCP pipeline, or a Replicate rerig model) via the existing
+ * regenerate API.
  *
  * Flow (client side of the documented REGENERATE.md contract):
  *   1. POST /api/avatars/regenerate { sourceAvatarId, mode: 'rerig' }  → jobId
