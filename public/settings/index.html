@@ -285,6 +285,16 @@
 			.social-card .provider-name { font-size: 14px; color: #ddd; font-weight: 500; }
 			.social-card .provider-meta { font-size: 12px; color: #888; margin-top: 2px; }
 			.social-card .actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+			/* The X card carries a consent disclosure under its header row, so it
+			   stacks instead of laying its children out as one centred row. */
+			#x-card { display: block; }
+			#x-connect-status { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+			#x-connect-status > .provider-info { flex: 1 1 auto; }
+			#x-connect-status > *:not(.provider-info):not(.actions) { flex-basis: 100%; }
+			.btn:focus-visible, input:focus-visible, a.action:focus-visible {
+				outline: 2px solid #6aa9ff; outline-offset: 2px;
+			}
+			.btn[disabled] { opacity: 0.55; cursor: not-allowed; filter: none; }
 			.agent-seed-area {
 				margin-top: 16px; padding: 14px 16px;
 				background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
@@ -850,22 +860,22 @@
 						: '/api/auth/x/connect';
 
 					if (!_xAgentId) {
-						el.innerHTML = `
-							<div class="link-row">
-								<div><div class="label">X (Twitter)</div><div class="val" id="x-status-val">Loading…</div></div>
-								<a href="${connectUrl}" class="btn sec" id="x-connect-btn">Connect X</a>
-							</div>`;
-						// Try to get status from a user's first agent
+						el.innerHTML = xCardHeader('Loading…');
+						// Seeding always targets one agent. With no ?agent_id= in the
+						// URL, fall back to the account's first agent so the card is
+						// usable from a bare /settings visit.
+						let agentId = null;
 						try {
 							const agents = await apiJson('/api/agents/me');
-							const agentId = agents?.agents?.[0]?.id;
-							if (agentId) {
-								renderXStatus(el, agentId, connectUrl);
-							} else {
-								document.getElementById('x-status-val').textContent = 'Not connected';
-							}
+							agentId = agents?.agents?.[0]?.id ?? null;
 						} catch {
-							document.getElementById('x-status-val').textContent = 'Not connected';
+							agentId = null;
+						}
+						if (agentId) {
+							renderXStatus(el, agentId, connectUrl);
+						} else {
+							el.innerHTML = xCardHeader('Create an agent to seed its memory from X')
+								+ '<div class="actions"><a href="/create" class="btn sec" style="font-size:12px;padding:5px 14px;text-decoration:none">Create an agent</a></div>';
 						}
 					} else {
 						renderXStatus(el, _xAgentId, connectUrl);
@@ -881,53 +891,165 @@
 				else if (xResult === 'error') showMsg(msg, 'err', 'X connection failed — try again.');
 			}
 
+			function escHtml(s) {
+				return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+			}
+
+			function xCardHeader(meta) {
+				return `
+					<div class="provider-info">
+						<div class="provider-icon">𝕏</div>
+						<div>
+							<div class="provider-name">X (Twitter)</div>
+							<div class="provider-meta">${meta}</div>
+						</div>
+					</div>`;
+			}
+
+			// The consent screen is rendered from the server's own disclosure, never
+			// from copy kept here. What the seeder reads and stores is declared once
+			// (api/_lib/x-memory-seed.js) and shown verbatim, so the two can't drift.
+			function xConsentPanel(disclosure) {
+				const list = (items, color) => (items || [])
+					.map(i => `<li style="margin:0 0 5px;color:${color}">${escHtml(i)}</li>`).join('');
+				return `
+					<div style="margin-top:14px;padding:14px;border:1px solid #2a2a2a;border-radius:8px;background:#131313">
+						<div style="font-size:13px;font-weight:600;color:#eee;margin-bottom:4px">${escHtml(disclosure.title)}</div>
+						<p class="muted" style="font-size:13px;margin:0 0 12px">${escHtml(disclosure.summary)}</p>
+						<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+							<div>
+								<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:5px">Read from X</div>
+								<ul style="margin:0;padding-left:16px;font-size:12.5px;line-height:1.45">${list(disclosure.reads, '#ccc')}${list(disclosure.skips, '#8a8a8a')}</ul>
+							</div>
+							<div>
+								<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:5px">Stored on this agent</div>
+								<ul style="margin:0;padding-left:16px;font-size:12.5px;line-height:1.45">${list(disclosure.stores, '#ccc')}</ul>
+							</div>
+							<div>
+								<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#666;margin-bottom:5px">Never stored</div>
+								<ul style="margin:0;padding-left:16px;font-size:12.5px;line-height:1.45">${list(disclosure.never, '#8a8a8a')}</ul>
+							</div>
+						</div>
+						<p class="muted" style="font-size:12px;margin:12px 0 0">${escHtml(disclosure.retention)} ${escHtml(disclosure.revocation)}</p>
+						<label for="x-consent-check" style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;cursor:pointer;font-size:13px;color:#ddd">
+							<input type="checkbox" id="x-consent-check" style="margin-top:3px;cursor:pointer" />
+							<span>I have read the above and consent to seeding this agent's memory from my X account.</span>
+						</label>
+						<div class="row" style="margin-top:12px;align-items:center;gap:10px">
+							<button class="btn" id="x-consent-btn" disabled>Grant consent and seed</button>
+							<span class="muted" style="font-size:11.5px">Disclosure version ${escHtml(disclosure.version)}</span>
+						</div>
+					</div>`;
+			}
+
+			function xSeedSummary(data) {
+				if (!data.seeded_at) return 'Consent granted. No memories seeded yet.';
+				const hours = Math.round((Date.now() - new Date(data.seeded_at)) / 3600000);
+				const when = hours < 1 ? 'just now' : hours < 24 ? `${hours}h ago` : `${Math.round(hours / 24)}d ago`;
+				return `${data.fact_count} seeded ${data.fact_count === 1 ? 'memory' : 'memories'}, last refreshed ${when}.`;
+			}
+
 			async function renderXStatus(el, agentId, connectUrl) {
+				const msg = document.getElementById('x-msg');
+				let data;
 				try {
-					const data = await apiJson(`/api/agents/${agentId}/memory/seed/x`);
-					if (!data.connected) {
-						el.innerHTML = `
-							<div class="link-row">
-								<div><div class="label">X (Twitter)</div><div class="val">Not connected</div></div>
-								<a href="${connectUrl}" class="btn sec">Connect X</a>
-							</div>`;
-					} else {
-						const seededAgo = data.seeded_at
-							? Math.round((Date.now() - new Date(data.seeded_at)) / 3600_000)
-							: null;
-						const seededLabel = seededAgo === null
-							? 'Never seeded'
-							: seededAgo < 1 ? 'Seeded just now'
-							: `Last seeded ${seededAgo}h ago`;
-						el.innerHTML = `
-							<div class="link-row">
-								<div>
-									<div class="label">X (Twitter)</div>
-									<div class="val">@${data.username} &mdash; ${seededLabel}${data.fact_count ? ` &mdash; ${data.fact_count} facts` : ''}</div>
-								</div>
-								<div style="display:flex;gap:8px;align-items:center">
-									<button class="btn sec" id="x-seed-btn">Seed memory</button>
-									<a href="${connectUrl}" class="action" style="font-size:13px">Reconnect</a>
-								</div>
-							</div>`;
-						document.getElementById('x-seed-btn')?.addEventListener('click', async () => {
-							const btn = document.getElementById('x-seed-btn');
-							const msg = document.getElementById('x-msg');
-							btn.disabled = true;
-							btn.textContent = 'Seeding…';
-							try {
-								const res = await apiJson(`/api/agents/${agentId}/memory/seed/x`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
-								showMsg(msg, 'ok', `Seeded ${res.seeded} facts from @${res.username}.`);
-								renderXStatus(el, agentId, connectUrl);
-							} catch (e) {
-								showMsg(msg, 'err', e.data?.error_description || 'Seeding failed.');
-								btn.disabled = false;
-								btn.textContent = 'Seed memory';
-							}
-						});
-					}
-				} catch {
-					el.innerHTML = '<p class="muted" style="font-size:14px">Could not load X status.</p>';
+					data = await apiJson(`/api/agents/${agentId}/memory/seed/x`);
+				} catch (e) {
+					el.innerHTML = xCardHeader('Could not load status')
+						+ `<div class="actions"><button class="btn sec" id="x-retry-btn">Retry</button></div>`;
+					document.getElementById('x-retry-btn')?.addEventListener('click', () => renderXStatus(el, agentId, connectUrl));
+					return;
 				}
+
+				if (!data.configured) {
+					el.innerHTML = xCardHeader('X connections are not enabled on this deployment')
+						+ `<div class="actions"><span class="muted" style="font-size:12.5px">Ask an operator to configure X OAuth.</span></div>`;
+					return;
+				}
+
+				if (!data.connected) {
+					el.innerHTML = xCardHeader('Not connected')
+						+ `<div class="actions"><a href="${connectUrl}" class="btn" style="font-size:12px;padding:5px 14px;text-decoration:none">Connect X</a></div>`;
+					return;
+				}
+
+				const consent = data.consent || {};
+				const scopes = data.connection_scopes
+					? `<p class="muted" style="font-size:11.5px;margin:10px 0 0">This connection holds the X permissions: ${escHtml(data.connection_scopes)}. Seeding only uses the read permissions listed above.</p>`
+					: '';
+
+				if (!consent.granted) {
+					const why = consent.reason === 'scope_version_changed'
+						? 'What gets read and stored has changed since you last agreed. Review it again to keep seeding.'
+						: consent.reason === 'account_changed'
+							? 'You reconnected a different X account. Its posts need their own consent.'
+							: 'Connected. Seeding is off until you consent.';
+					el.innerHTML = xCardHeader(`@${escHtml(data.username)} &middot; ${escHtml(why)}`)
+						+ xConsentPanel(data.disclosure) + scopes;
+
+					const check = document.getElementById('x-consent-check');
+					const grant = document.getElementById('x-consent-btn');
+					check.addEventListener('change', () => { grant.disabled = !check.checked; });
+					grant.addEventListener('click', async () => {
+						grant.disabled = true;
+						grant.textContent = 'Reading X and seeding…';
+						try {
+							const res = await apiJson(`/api/agents/${agentId}/memory/seed/x`, {
+								method: 'POST',
+								headers: { 'content-type': 'application/json' },
+								body: JSON.stringify({ consent: { accepted: true, scope_version: data.scope_version } }),
+							});
+							showMsg(msg, 'ok', `Seeded ${res.seeded} ${res.seeded === 1 ? 'memory' : 'memories'} from ${res.posts_read} posts by @${res.username}. ${res.in_context} stay in the agent's live context.`);
+							renderXStatus(el, agentId, connectUrl);
+						} catch (e) {
+							showMsg(msg, 'err', e.data?.error_description || 'Seeding failed.');
+							grant.disabled = false;
+							grant.textContent = 'Grant consent and seed';
+						}
+					});
+					return;
+				}
+
+				el.innerHTML = xCardHeader(`@${escHtml(consent.username || data.username)} &middot; ${escHtml(xSeedSummary(data))}`)
+					+ `<div class="actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+							<button class="btn sec" id="x-seed-btn">Re-seed</button>
+							<button class="btn danger" id="x-revoke-btn">Revoke and delete</button>
+							<a href="${connectUrl}" class="action" style="font-size:12.5px">Reconnect</a>
+						</div>
+						<p class="muted" style="font-size:11.5px;margin:10px 0 0">Consented ${escHtml(new Date(consent.granted_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }))} to disclosure ${escHtml(consent.scope_version)}. Re-seeding replaces the previous batch; revoking deletes every one of them.</p>${scopes}`;
+
+				document.getElementById('x-seed-btn').addEventListener('click', async () => {
+					const btn = document.getElementById('x-seed-btn');
+					btn.disabled = true;
+					btn.textContent = 'Re-seeding…';
+					try {
+						const res = await apiJson(`/api/agents/${agentId}/memory/seed/x`, {
+							method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}',
+						});
+						showMsg(msg, 'ok', `Re-seeded ${res.seeded} ${res.seeded === 1 ? 'memory' : 'memories'} from ${res.posts_read} posts by @${res.username}.`);
+						renderXStatus(el, agentId, connectUrl);
+					} catch (e) {
+						showMsg(msg, 'err', e.data?.error_description || 'Seeding failed.');
+						btn.disabled = false;
+						btn.textContent = 'Re-seed';
+					}
+				});
+
+				document.getElementById('x-revoke-btn').addEventListener('click', async () => {
+					if (!confirm(`Revoke consent and delete the ${data.fact_count} memories seeded from @${consent.username || data.username}? This cannot be undone.`)) return;
+					const btn = document.getElementById('x-revoke-btn');
+					btn.disabled = true;
+					btn.textContent = 'Deleting…';
+					try {
+						const res = await apiJson(`/api/agents/${agentId}/memory/seed/x`, { method: 'DELETE' });
+						showMsg(msg, 'ok', `Consent revoked. ${res.deleted} seeded ${res.deleted === 1 ? 'memory' : 'memories'} deleted.`);
+						renderXStatus(el, agentId, connectUrl);
+					} catch (e) {
+						showMsg(msg, 'err', e.data?.error_description || 'Revoke failed.');
+						btn.disabled = false;
+						btn.textContent = 'Revoke and delete';
+					}
+				});
 			}
 
 			// ── Tab routing ───────────────────────────────────────────────
