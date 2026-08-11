@@ -108,7 +108,7 @@ async function main() {
 		assert.ok(poolInfo, 'pool inspection failed (token0/token1 unreadable)');
 		const to = launch.blockNumber + SCAN_STEP > head ? head : launch.blockNumber + SCAN_STEP;
 		const swaps = await withRpcRetry(() => hood.public.getLogs({
-			address: launch.pool, abi: [uniswapSwapEvent], eventName: 'Swap',
+			address: launch.pool, event: uniswapSwapEvent,
 			fromBlock: launch.blockNumber, toBlock: to,
 		}));
 		if (swaps.length) {
