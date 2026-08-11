@@ -208,6 +208,35 @@ check(
 )
 check("lowpoly keeps the source color", np.all(face_colors_of(low)[:, 0] == 220))
 
+# open3d's quadric decimation returns bare geometry with no visuals, so a filter
+# that samples color from the decimated shell loses the model's colors on every
+# deployed image while still passing on a machine without open3d. Force that
+# shape here so the local run covers it too.
+_real_decimate = main._decimate
+
+
+def _stripping_decimate(mesh, target_faces):
+    reduced = _real_decimate(mesh, target_faces)
+    return trimesh.Trimesh(vertices=reduced.vertices, faces=reduced.faces, process=False)
+
+
+main._decimate = _stripping_decimate
+try:
+    stripped_low = main._stylize_lowpoly(source_mesh(), 8)
+    check(
+        "lowpoly keeps the source color when decimation drops visuals",
+        np.all(face_colors_of(stripped_low)[:, 0] == 220),
+        str(face_colors_of(stripped_low)[0]),
+    )
+    stripped_lattice = main._stylize_voronoi(source_mesh(), 12)
+    check(
+        "voronoi keeps the source color when decimation drops visuals",
+        np.all(face_colors_of(stripped_lattice)[:, 0] == 220),
+        str(face_colors_of(stripped_lattice)[0]),
+    )
+finally:
+    main._decimate = _real_decimate
+
 degenerate = trimesh.Trimesh(vertices=np.zeros((3, 3)), faces=np.array([[0, 1, 2]]), process=False)
 for style, transform in main.STYLES.items():
     try:
