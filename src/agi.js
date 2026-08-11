@@ -209,9 +209,19 @@ function updateFilter(d) {
 	// The lens only earns its place once the agent logs both kinds of call.
 	if (!trades || trades === all.length) { host.hidden = true; host.innerHTML = ''; return; }
 	host.hidden = false;
-	const chip = (key, label, n) =>
-		`<button type="button" class="agi-chip" data-filter="${key}" aria-pressed="${state.filter === key}">${label} <span class="agi-chip-n">${n}</span></button>`;
-	host.innerHTML = chip('trade', 'Trading calls', trades) + chip('all', 'Everything it decided', all.length);
+	if (!host.children.length) {
+		const chip = (key, label) =>
+			`<button type="button" class="agi-chip" data-filter="${key}">${label} <span class="agi-chip-n"></span></button>`;
+		host.innerHTML = chip('trade', 'Trading calls') + chip('all', 'Everything it decided');
+	}
+	// Patched in place, never rebuilt: replacing these buttons on every poll would
+	// yank focus out from under anyone driving the page from the keyboard.
+	const counts = { trade: trades, all: all.length };
+	for (const btn of host.querySelectorAll('.agi-chip')) {
+		btn.setAttribute('aria-pressed', String(state.filter === btn.dataset.filter));
+		const n = btn.querySelector('.agi-chip-n');
+		if (n) n.textContent = String(counts[btn.dataset.filter] ?? 0);
+	}
 }
 
 function updateMind(d) {
