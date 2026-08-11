@@ -15,9 +15,11 @@ MIA specifics this module encodes:
   - MIA normalizes the input into its own working frame and composes the
     transform onto db.global_transform; we invert it to bring joints and
     working vertices back into the caller's GLB space.
-  - Output skeleton is the 65-bone Mixamo hierarchy (fingers included), names
-    prefixed "mixamorig:". The platform's glb-canonicalize maps these onto the
-    canonical clip skeleton at ingest, so every clip in the library retargets.
+  - Output skeleton is MIA's 52-bone Mixamo subset (MIXAMO_JOINTS in
+    util/dataset_mixamo.py: 30 finger bones included, no HeadTop_End and no eye
+    bones), names prefixed "mixamorig:". The platform's glb-canonicalize maps
+    these onto the canonical clip skeleton at ingest, so every clip in the
+    library retargets; tests/glb-canonicalize.test.js pins the same 52 names.
 
 Environment:
   MIA_DIR  path to the Make-It-Animatable checkout (default /app/mia); its
