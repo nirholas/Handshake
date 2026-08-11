@@ -172,6 +172,23 @@ function agoServer(ts) {
 	return `${Math.floor(s / 86400)}d ago`;
 }
 
+// Token art lives on public IPFS gateways, and roughly half of pump.fun art is
+// stored as a metadata JSON document rather than an image, sharing one
+// `image_uri` column with the real thing. Hot-linked, both fail in the browser:
+// the gateway answers without CORS headers or with `application/json`, and
+// Chrome blocks it (ERR_BLOCKED_BY_ORB), leaving a broken icon on the hero.
+// /api/img is the platform's answer (SSRF-hardened fetch, multi-gateway retry,
+// one-hop metadata resolution, on-brand placeholder on total failure) and is
+// what src/oracle.js already renders through; the server-rendered header uses
+// the same lane.
+function proxiedImg(url, seed = '') {
+	const raw = String(url || '').trim();
+	if (!raw || !/^(https?|ipfs|ar):/i.test(raw)) return raw;
+	const q = new URLSearchParams({ url: raw });
+	if (seed) q.set('seed', seed);
+	return `/api/img?${q.toString()}`;
+}
+
 function pillarBar(kind, label, val) {
 	const v = val == null ? null : Math.max(0, Math.min(100, Number(val)));
 	return `<div class="pil ${kind}"><div class="lab">${label}<b>${v == null ? '—' : Math.round(v)}</b></div>
@@ -194,7 +211,7 @@ function heroHtml({ mint, row, pump, origin }) {
 	const sw    = Number(row?.smart_wallet_count || 0);
 	const imgUri = row?.image_uri || pump?.image || '';
 	const img   = imgUri
-		? `<img class="coin-icon" src="${esc(imgUri)}" alt="" width="64" height="64" loading="eager" data-no-dark-filter>`
+		? `<img class="coin-icon" src="${esc(proxiedImg(imgUri, mint))}" alt="" width="64" height="64" loading="eager" data-no-dark-filter>`
 		: `<div class="coin-icon oc-icon-letter" aria-hidden="true">${esc(((symRaw || mint)[0] || '?').toUpperCase())}</div>`;
 
 	// Dial: the score for scored coins; a "reading" state for fresh launches that

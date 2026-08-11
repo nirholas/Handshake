@@ -25,6 +25,21 @@
 	const $ = (sel, root = document) => root.querySelector(sel);
 	const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+	// Token art lives on public IPFS gateways, and roughly half of pump.fun art is
+	// a metadata JSON document sharing one `image_uri` column with the real image.
+	// Hot-linked, both fail: the gateway answers without CORS headers or with
+	// `application/json` and Chrome blocks it (ERR_BLOCKED_BY_ORB), leaving a
+	// broken tile. /api/img resolves the metadata hop, retries across gateways and
+	// always hands back a valid image. Buildless file, so this mirrors
+	// proxiedImageURL() from src/ipfs.js rather than importing it.
+	const imgProxy = (url, seed = '') => {
+		const raw = String(url ?? '').trim();
+		if (!raw || !/^(https?|ipfs|ar):/i.test(raw)) return raw;
+		const q = new URLSearchParams({ url: raw });
+		if (seed) q.set('seed', seed);
+		return `/api/img?${q.toString()}`;
+	};
+
 	// ── formatters (ported 1:1 from src/oracle.js) ─────────────────────────────
 	const fmtSol = (n) => (n == null ? '—' : `${Number(n) < 0.01 && Number(n) > 0 ? Number(n).toFixed(4) : Number(n).toFixed(2)}◎`);
 	function fmtUsd(n) {
@@ -832,7 +847,7 @@
 			<div style="display:flex;flex-direction:column;gap:6px">
 				${related.map((r) => {
 					const imgEl = r.image_uri
-						? `<img src="${esc(r.image_uri)}" alt="" style="width:28px;height:28px;border-radius:7px;object-fit:cover;flex:none;border:1px solid var(--line)" loading="lazy">`
+						? `<img src="${esc(imgProxy(r.image_uri, r.mint))}" alt="" style="width:28px;height:28px;border-radius:7px;object-fit:cover;flex:none;border:1px solid var(--line)" loading="lazy">`
 						: `<div style="width:28px;height:28px;border-radius:7px;background:var(--line);display:grid;place-items:center;font:700 11px/1 var(--mono);color:var(--faint);flex:none">${esc((r.symbol || '?')[0])}</div>`;
 					return `<a class="dr-related" href="/oracle/coin/${encodeURIComponent(r.mint)}" data-related-mint="${esc(r.mint)}">
 						${imgEl}
