@@ -65,6 +65,7 @@ ref.current.resetPose();
 |---------------|---------------------------------------|----------------|--------------------------------------------------------|
 | `agentId`     | `string` (required)                   | —              | The three.ws agent ID — its avatar is rendered.        |
 | `avatarId`    | `string`                              | —              | Override the agent's default avatar.                   |
+| `baseUrl`     | `string`                              | `"https://three.ws"` | Embed origin (self-hosted / staging players).    |
 | `controls`    | `"joystick" \| "keyboard" \| "none"`  | `"joystick"`   | Movement controls.                                     |
 | `background`  | `string`                              | transparent    | `"transparent"` or a hex color like `"#1b1b1b"`.       |
 | `environment` | `string`                              | `"studio"`     | Environment preset.                                    |

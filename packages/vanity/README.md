@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/vanity</h1>
 
-<p align="center"><strong>Mine Solana vanity addresses — custom prefix and/or suffix — fast, WASM-accelerated, in the browser or Node.</strong></p>
+<p align="center"><strong>Mine Solana vanity addresses (custom prefix and/or suffix) locally, zero dependencies, in Node or the browser.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/vanity"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/vanity?logo=npm&color=cb3837"></a>
@@ -25,42 +25,39 @@
 ---
 
 > `@three-ws/vanity` grinds Solana addresses whose Base58 form starts with a
-> prefix and/or ends with a suffix of your choosing — `THREE…`, `…pump`, your
-> ticker, your handle. The hot loop is a real Rust + `ed25519-dalek` + `bs58`
-> grinder compiled to WebAssembly (it already ships in the three.ws repo at
-> `src/solana/vanity/wasm`, ~25k keypairs/sec single-threaded). In the browser
-> it fans that WASM module across every CPU core via a Web Worker pool; in Node
-> it runs the same module on the request thread. Keys are generated entirely on
-> your machine and **never leave it**. For agents that can't or won't run WASM,
-> the same capability is exposed as a paid x402 HTTP endpoint and the
-> `vanity_grinder` MCP tool.
+> prefix and/or ends with a suffix of your choosing: `THREE…`, `…pump`, your
+> ticker, your handle. The hot loop runs on the platform's native Ed25519
+> primitive (Node's `crypto.generateKeyPairSync`, the browser's WebCrypto
+> `crypto.subtle`) with zero dependencies, so the package imports everywhere
+> a runtime with Ed25519 exists. Keys are generated entirely on your machine
+> and **never leave it**. For agents that can't grind locally, the same
+> capability is exposed as a paid x402 HTTP endpoint and the `vanity_grinder`
+> MCP tool.
 
 ## Why
 
 Vanity grinding is embarrassingly parallel keypair generation: make an Ed25519
 keypair, Base58-encode the public key, check the prefix/suffix, repeat until a
-hit. The naïve version is twenty lines of JavaScript — and unusably slow,
-because pure-JS Ed25519 manages a few thousand candidates per second. A 4-char
-prefix expects ~11M attempts. You need native-speed crypto, real
-parallelism, and an honest difficulty model so you don't kick off a grind that
-finishes next century.
+hit. The naïve pure-JS version is unusably slow because JS-implemented Ed25519
+manages a few thousand candidates per second. A 4-char prefix expects ~11M
+attempts. You need native-speed crypto and an honest difficulty model so you
+don't kick off a grind that finishes next century.
 
 `@three-ws/vanity` is that, done once:
 
-- **WASM-fast, not JS-slow.** The Rust grinder runs the keygen → encode → match
-  loop in fixed-size batches inside WebAssembly. ~25k/sec per thread.
-- **Every core, automatically.** The browser path races one worker per logical
-  core (capped, configurable). First match wins; the rest are killed instantly.
+- **Native crypto, not JS math.** Keygen runs on the platform's built-in
+  Ed25519 (OpenSSL under Node, the browser's WebCrypto), not a JS
+  reimplementation, with zero dependencies to install or audit.
 - **Difficulty up front.** `expectedAttempts()` and a live ETA tell you whether
-  a pattern is seconds or years *before* you commit a fan.
+  a pattern is seconds or years *before* you commit to a grind.
 - **Keys stay local.** The grind happens client-side. No address, no secret key,
   no telemetry is sent anywhere. That is the entire security posture (see below).
 - **A paid lane when you can't grind.** Short patterns (≤3 chars) are available
-  over x402 — pay per call in USDC, get a fresh keypair, no toolchain.
+  over x402: pay per call in USDC, get a fresh keypair, no toolchain.
 
 This is the SDK twin of the [3D Studio MCP server](https://three.ws/mcp)'s
 `vanity_grinder` tool and the [`/vanity`](https://three.ws/vanity) browser
-grinder — the same engine, exposed as plain functions.
+grinder: the same capability, exposed as plain functions.
 
 ## Install
 
@@ -68,23 +65,23 @@ grinder — the same engine, exposed as plain functions.
 npm install @three-ws/vanity
 ```
 
-Zero runtime dependencies — the WASM binary is bundled. Works in Node 18+ and
-any browser with WebAssembly + Web Workers. To turn the 64-byte secret key into
-a usable wallet, add [`@solana/web3.js`](https://www.npmjs.com/package/@solana/web3.js)
+Zero runtime dependencies. Works in Node 18+ and any browser or runtime with
+WebCrypto Ed25519 support. To turn the 64-byte secret key into a usable
+wallet, add [`@solana/web3.js`](https://www.npmjs.com/package/@solana/web3.js)
 (peer, optional): `Keypair.fromSecretKey(result.secretKey)`.
 
 ## Quick start
 
-Grind an address that starts with `THREE`, across every core:
+Grind an address that starts with `THR`:
 
 ```js
 import { grind } from '@three-ws/vanity';
 
 const { publicKey, secretKey, attempts, durationMs } = await grind({
-  prefix: 'THREE',
+  prefix: 'THR',
 });
 
-console.log(publicKey);  // → THREE… (Base58)
+console.log(publicKey);  // → THR… (Base58)
 console.log(secretKey);  // → Uint8Array(64), Solana's standard keypair layout
 ```
 
@@ -108,7 +105,6 @@ const result = await grind({
   prefix: 'ag',
   suffix: 'nt',
   ignoreCase: true,
-  maxWorkers: 6,
   signal: controller.signal,
   onProgress: ({ attempts, rate, eta }) => {
     console.log(`${attempts.toLocaleString()} tried · ${Math.round(rate)}/s · ETA ${eta}`);
@@ -125,19 +121,17 @@ harder than `58^n` predicts. Suffix characters are uniform.
 
 ### `grind(options) → Promise<GrindResult>`
 
-Grind for a vanity address. In the browser it spawns a Web Worker pool driving
-the WASM module; in Node it runs the WASM module on the calling thread. Rejects
-with `AbortError` if `signal` aborts.
+Grind for a vanity address on the calling thread, yielding to the event loop
+between fixed-size batches so aborts land promptly and progress fires on a
+wall-clock cadence. Rejects with `AbortError` if `signal` aborts.
 
 | Option | Type | Default | Notes |
 |---|---|---|---|
-| `prefix` | `string` | — | Base58 prefix the address must start with. |
-| `suffix` | `string` | — | Base58 suffix the address must end with. |
+| `prefix` | `string` | none | Base58 prefix the address must start with. |
+| `suffix` | `string` | none | Base58 suffix the address must end with. |
 | `ignoreCase` | `boolean` | `false` | Case-insensitive match (folds upper+lower Base58 chars). |
-| `maxWorkers` | `number` | `min(cores, 8)` | Browser worker count, clamped to `hardwareConcurrency`. |
-| `signal` | `AbortSignal` | — | Cancel the grind. |
-| `controller` | `object` | — | Opt-in handle; `grind` attaches `pause()`, `resume()`, `stop()` once the pool is live. |
-| `onProgress` | `(p) => void` | — | Called ~every 250ms with `{ attempts, rate, eta, paused? }`. |
+| `signal` | `AbortSignal` | none | Cancel the grind. |
+| `onProgress` | `(p) => void` | none | Called ~every 250ms with `{ attempts, rate, eta }`. |
 
 At least one of `prefix` / `suffix` is required. Both are validated against the
 Base58 alphabet (`0 O I l` excluded) and a 6-char-per-pattern ceiling before any
@@ -148,19 +142,18 @@ work starts — an invalid pattern rejects immediately with a specific message.
 | Field | Type | Notes |
 |---|---|---|
 | `publicKey` | `string` | Base58 address (matches your pattern). |
-| `secretKey` | `Uint8Array(64)` | Ed25519 secret key — `Keypair.fromSecretKey()`-compatible. |
-| `attempts` | `number` | Total keypairs tried across all workers. |
+| `secretKey` | `Uint8Array(64)` | Ed25519 secret key, `Keypair.fromSecretKey()`-compatible. |
+| `attempts` | `number` | Total keypairs tried. |
 | `durationMs` | `number` | Wall-clock duration. |
-| `workers` | `number` | Workers used (browser; `1` in Node). |
+| `workers` | `number` | Always `1` on the local path. |
 
 **`onProgress` payload**
 
 | Field | Type | Notes |
 |---|---|---|
-| `attempts` | `number` | Running total across the pool. |
-| `rate` | `number` | Combined keypairs/sec. |
-| `eta` | `string` | Human estimate of remaining time — `"~12 seconds"`, `"~3 hours"`, `"paused"`, `"unknown"`. |
-| `paused` | `boolean` | Present and `true` while paused. |
+| `attempts` | `number` | Running total. |
+| `rate` | `number` | Keypairs/sec. |
+| `eta` | `string` | Human estimate of remaining time: `"~12 seconds"`, `"~3 hours"`, `"unknown"`. |
 
 ### `expectedAttempts({ prefix?, suffix?, ignoreCase? }) → number`
 
