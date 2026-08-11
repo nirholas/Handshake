@@ -444,7 +444,12 @@ def _run(req: "InferRequest", dst_dir: str) -> dict:
     conf = predictions.get("world_points_conf")
     keep, sky_dropped = (None, 0)
     if req.mask_sky:
-        keep, sky_dropped = _sky_keep_mask(conf, images_cpu, dst_dir)
+        try:
+            keep, sky_dropped = _sky_keep_mask(conf, images_cpu, dst_dir)
+        except Exception:  # noqa: BLE001 - a cosmetic filter must not lose the job
+            # The reconstruction itself already succeeded and cost minutes of GPU
+            # time; ship the cloud with the sky in it rather than fail the job.
+            log.exception("sky masking failed; returning the unmasked cloud")
 
     pts, cols = fuse_point_cloud(
         predictions["world_points"],
