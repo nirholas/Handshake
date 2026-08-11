@@ -47,7 +47,11 @@ export function tokensXyzConfigured() {
 	return !!process.env.TOKENS_XYZ_API_KEY;
 }
 
+// Nearly every numeric field in the v1 contract is `number | null`, where null
+// means "not cached yet", not zero. Number(null) is 0, so guard the nullish and
+// empty cases explicitly: rendering an unknown liquidity as $0 would be a lie.
 const num = (v) => {
+	if (v === null || v === undefined || v === '') return null;
 	const n = Number(v);
 	return Number.isFinite(n) ? n : null;
 };
