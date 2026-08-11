@@ -9,7 +9,7 @@
  *   const caster = new AgentScreenCaster({ agentId, bearerToken, pushUrl });
  *   await caster.launch();
  *   await caster.navigate('https://pump.fun');
- *   await caster.act('buy', async () => { ... });
+ *   await caster.act('buy', 'Buying the dip', async () => { ... });
  *   caster.startFrameLoop();
  *   // … later …
  *   await caster.close();
@@ -21,6 +21,15 @@ const DEFAULT_PUSH_URL       = 'https://three.ws/api/agent-screen-push';
 const DEFAULT_FRAME_INTERVAL = 400;   // ms between periodic captures
 const DEFAULT_JPEG_QUALITY   = 72;
 const DEFAULT_VIEWPORT       = { width: 1280, height: 720 };
+const ACTIVITY_RETRIES       = 2;     // extra attempts for an activity push
+const RETRY_BACKOFF_MS       = 500;   // multiplied by the attempt number
+
+/** 429 and 5xx are worth another attempt; every other status is a verdict. */
+export function isRetryableStatus(status) {
+	return status === 429 || (status >= 500 && status <= 599);
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export class AgentScreenCaster {
 	/**
@@ -46,11 +55,13 @@ export class AgentScreenCaster {
 		this.page     = null;
 		this._timer   = null;
 		this._pushing = false; // guard against overlapping push calls
+		this._closing = false; // set by close() so a racing capture stays quiet
 	}
 
 	// ── Lifecycle ──────────────────────────────────────────────────────────────
 
 	async launch(headless = true) {
+		this._closing = false;
 		this.browser = await chromium.launch({
 			headless,
 			args: [
@@ -77,6 +88,7 @@ export class AgentScreenCaster {
 	}
 
 	async close() {
+		this._closing = true;
 		this.stopFrameLoop();
 		try { await this.browser?.close(); } catch {}
 		this.browser = this.context = this.page = null;
@@ -130,7 +142,7 @@ export class AgentScreenCaster {
 	 * Capture the current page as JPEG and POST it to screen-push as a data URL.
 	 */
 	async pushFrame() {
-		if (!this.page) return;
+		if (!this.page || this._closing) return;
 
 		const buf = await this.page.screenshot({
 			type:    'jpeg',
@@ -138,10 +150,13 @@ export class AgentScreenCaster {
 			fullPage: false,
 		});
 
+		// Frames are not retried: a dropped screenshot is worthless a second
+		// later, the next capture is already on its way, and a retry backlog
+		// would outlive the frame interval it was meant to protect.
 		await this._post({
 			agentId: this.agentId,
 			frame:   { data: `data:image/jpeg;base64,${buf.toString('base64')}`, type: 'screenshot' },
-		});
+		}, { retries: 0 });
 	}
 
 	/**
@@ -154,10 +169,12 @@ export class AgentScreenCaster {
 	async pushActivity(actions) {
 		for (const a of actions || []) {
 			if (!a?.summary) continue;
+			// Activity is the semantic record of what the agent did, so unlike a
+			// frame it is worth retrying through a rate limit or a server blip.
 			await this._post({
 				agentId: this.agentId,
 				frame:   { activity: String(a.summary), type: a.type },
-			});
+			}, { retries: ACTIVITY_RETRIES });
 		}
 	}
 
@@ -165,32 +182,55 @@ export class AgentScreenCaster {
 
 	/** Non-throwing frame push — safe to call from event handlers and timers. */
 	async _safePushFrame() {
-		if (this._pushing) return;
+		if (this._pushing || this._closing) return;
 		this._pushing = true;
 		try {
 			await this.pushFrame();
 		} catch (err) {
-			console.error('[caster] frame push failed:', err?.message || err);
+			// A capture that loses the race with close() is expected teardown,
+			// not a failure worth printing on every shutdown.
+			if (!this._closing) console.error('[caster] frame push failed:', err?.message || err);
 		} finally {
 			this._pushing = false;
 		}
 	}
 
-	async _post(body) {
-		const res = await fetch(this.pushUrl, {
-			method:  'POST',
-			headers: {
-				'Content-Type':  'application/json',
-				'Authorization': `Bearer ${this.bearerToken}`,
-			},
-			body: JSON.stringify(body),
-		});
+	/**
+	 * POST to the push endpoint, retrying only what a retry can fix.
+	 *
+	 * A 4xx (bad token, agent not owned, malformed frame) is a permanent answer
+	 * and throws immediately. A 429, a 5xx, or a network error is transient, and
+	 * a long-running caster that dies on one of those loses the whole session.
+	 *
+	 * @param {object} body
+	 * @param {{ retries?: number }} [opts]
+	 */
+	async _post(body, { retries = 0 } = {}) {
+		let lastErr;
+		for (let attempt = 0; attempt <= retries; attempt++) {
+			if (attempt > 0) await sleep(RETRY_BACKOFF_MS * attempt);
+			try {
+				const res = await fetch(this.pushUrl, {
+					method:  'POST',
+					headers: {
+						'Content-Type':  'application/json',
+						'Authorization': `Bearer ${this.bearerToken}`,
+					},
+					body: JSON.stringify(body),
+				});
 
-		if (!res.ok) {
-			const text = await res.text().catch(() => '');
-			throw new Error(`screen-push ${res.status}: ${text}`);
+				if (res.ok) return res.json();
+
+				const text = await res.text().catch(() => '');
+				const err = new Error(`screen-push ${res.status}: ${text}`);
+				err.status = res.status;
+				if (!isRetryableStatus(res.status)) throw err;
+				lastErr = err;
+			} catch (err) {
+				if (err?.status && !isRetryableStatus(err.status)) throw err;
+				lastErr = err;
+			}
 		}
-
-		return res.json();
+		throw lastErr;
 	}
 }

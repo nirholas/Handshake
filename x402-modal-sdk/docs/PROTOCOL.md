@@ -17,6 +17,12 @@ when debugging an integration or building the server side.
                                    │  accepts[] = [{ scheme, network, asset,
                                    │                payTo, amount, extra… }, …]
                                    ▼
+      Step 1 is exported on its own as `discover({ endpoint, … })`: it runs
+      exactly this probe, returns the parsed envelope with `accepts[]`
+      normalized, and touches neither the DOM nor a wallet. Use it to price a
+      call, or to check which networks an endpoint takes, before opening the
+      modal (or from a server / CLI / agent that has no modal at all).
+                                   ▼
 ┌── 2. CONNECT ───────────────────────────────────────────────────────────┐
 │  The modal picks accepts it can satisfy:                                  │
 │    • Solana (`solana:*`)  → Phantom (`window.solana` / `window.phantom`)  │

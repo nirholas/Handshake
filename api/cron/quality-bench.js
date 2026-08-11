@@ -22,9 +22,21 @@ import { requireCron } from '../_lib/cron-auth.js';
 
 export const maxDuration = 300;
 
+// Nothing enforces `maxDuration` here. It is a Vercel declaration, and this runs
+// on Cloud Run, where the only ceilings are the Cloud Scheduler job's 320s
+// attempt deadline and Cloud Run's own 900s request timeout. So the sweep has to
+// bound itself. Until it did, "kept deliberately short" was an intention rather
+// than a limit: the 2026-08-10 run spent 900s, collected a 504 from Cloud Run,
+// left Scheduler recording the job as DEADLINE_EXCEEDED, and then logged its
+// summary 21 minutes later into a request nobody was reading.
+const RESPONSE_RESERVE_MS = 20_000;
+const BUDGET_MS = maxDuration * 1000 - RESPONSE_RESERVE_MS;
+// Starting another prompt with less runway than this just burns forge capacity
+// on a result that cannot land, so the sweep skips it and says so instead.
+const MIN_PROMPT_MS = 45_000;
+
 // A small, fixed, cheap-to-run cross-section of the full bench: one
 // people/organic subject, one hard-surface subject, one architecture subject.
-// Kept deliberately short so the whole sweep fits inside maxDuration.
 const SMOKE_PROMPT_IDS = ['qb01', 'qb09', 'qb12'];
 const SMOKE_TIER = 'standard';
 const REGRESSION_THRESHOLD = 1.0;
@@ -65,6 +77,10 @@ export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
 
+	// Clock starts before the catalog fetch: loading the catalog is part of the
+	// budget, not free time in front of it.
+	const startedAt = Date.now();
+	const deadlineAt = startedAt + BUDGET_MS;
 	const baseUrl = `https://${req.headers.host || 'three.ws'}`;
 
 	let catalog;
@@ -84,13 +100,23 @@ export default wrapCron(async (req, res) => {
 	const prompts = SMOKE_PROMPT_IDS.map((id) => allPrompts.find((p) => p.id === id)).filter(Boolean);
 
 	const results = [];
+	const skippedForBudget = [];
 	for (const p of prompts) {
-		results.push(await runOne(baseUrl, p, lane, SMOKE_TIER));
+		if (Date.now() + MIN_PROMPT_MS > deadlineAt) {
+			skippedForBudget.push(p.id);
+			continue;
+		}
+		results.push(await runOne(baseUrl, p, lane, SMOKE_TIER, { deadlineAt }));
 	}
 
 	const scored = results.filter((r) => typeof r.meanScore === 'number');
 	const smokeMean = scored.length ? scored.reduce((s, r) => s + r.meanScore, 0) / scored.length : null;
 	const baseline = await baselineMean(lane, SMOKE_TIER);
+
+	// A sweep that ran out of clock covers fewer prompts than the baseline it
+	// would be compared against, so its delta measures the budget, not the
+	// models. Report it loudly and do not let it trip the regression alarm.
+	const complete = !skippedForBudget.length && !results.some((r) => r.status === 'budget_exhausted');
 
 	const summary = {
 		kind: 'quality-bench-smoke',
@@ -100,12 +126,18 @@ export default wrapCron(async (req, res) => {
 		smokeMean,
 		baselineMean: baseline,
 		delta: smokeMean != null && baseline != null ? smokeMean - baseline : null,
+		complete,
+		skippedForBudget,
+		budgetMs: BUDGET_MS,
+		elapsedMs: Date.now() - startedAt,
 		perPrompt: results.map((r) => ({ promptId: r.promptId, status: r.status, meanScore: r.meanScore, error: r.error || null })),
 	};
 
-	const regressed = summary.delta != null && summary.delta < -REGRESSION_THRESHOLD;
+	const regressed = complete && summary.delta != null && summary.delta < -REGRESSION_THRESHOLD;
 	if (regressed) {
 		console.error('[cron] quality-bench REGRESSION', summary);
+	} else if (!complete) {
+		console.warn('[cron] quality-bench INCOMPLETE (ran out of budget)', summary);
 	} else {
 		console.log('[cron] quality-bench smoke run', summary);
 	}

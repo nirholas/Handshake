@@ -208,21 +208,23 @@ async function fromTokensXyz(mint) {
 	if (!tokensXyzConfigured()) return null;
 	const row = await fetchMintMarket(mint);
 	const m = row?.market;
-	if (!m || !(num(m.price_usd) > 0)) return null;
-	const price = num(m.price_usd);
-	const marketCap = num(m.market_cap);
+	// Fields arrive already normalized to number-or-null by the client, so they
+	// are NOT re-wrapped in the local num() here: Number(null) is 0, and that
+	// would turn every unknown field (holders, liquidity) into a false zero.
+	if (!m || !(m.price_usd > 0)) return null;
+	const { price_usd: price, market_cap: marketCap } = m;
 	return shape(
 		{
 			price_usd: price,
-			price_change_24h: num(m.price_change_24h),
+			price_change_24h: m.price_change_24h,
 			market_cap: marketCap,
-			volume_24h: num(m.volume_24h),
-			liquidity: num(m.liquidity),
-			holders: num(m.holders),
+			volume_24h: m.volume_24h,
+			liquidity: m.liquidity,
+			holders: m.holders,
 			// Prefer the reported circulating supply; fall back to cap / price the
 			// way the DexScreener rung does when the row omits it.
-			supply: num(m.supply) ?? (marketCap && price ? marketCap / price : null),
-			decimals: num(m.decimals) ?? 6,
+			supply: m.supply ?? (marketCap && price ? marketCap / price : null),
+			decimals: m.decimals ?? 6,
 		},
 		'tokensxyz',
 	);

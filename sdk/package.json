@@ -10,33 +10,39 @@
 		".": {
 			"types": "./types/index.d.ts",
 			"import": "./src/index.js",
+			"require": "./dist/index.cjs",
 			"default": "./src/index.js"
 		},
 		"./permissions": {
 			"types": "./types/permissions.d.ts",
 			"import": "./src/permissions.js",
+			"require": "./dist/permissions.cjs",
 			"default": "./src/permissions.js"
 		},
 		"./permissions/advanced": {
 			"types": "./src/permissions/advanced.d.ts",
 			"import": "./src/permissions/advanced.js",
+			"require": "./dist/permissions/advanced.cjs",
 			"default": "./src/permissions/advanced.js"
 		},
 		"./styles": "./src/styles.css",
 		"./solana": {
 			"types": "./types/solana.d.ts",
 			"import": "./src/solana.js",
+			"require": "./dist/solana.cjs",
 			"default": "./src/solana.js"
 		},
 		"./solana-attestations": {
 			"types": "./types/solana-attestations.d.ts",
 			"import": "./src/solana-attestations.js",
+			"require": "./dist/solana-attestations.cjs",
 			"default": "./src/solana-attestations.js"
 		}
 	},
 	"files": [
 		"src",
 		"types",
+		"dist",
 		"README.md",
 		"LICENSE",
 		"CHANGELOG.md"
@@ -67,7 +73,8 @@
 	"license": "SEE LICENSE IN LICENSE",
 	"peerDependencies": {
 		"ethers": "^6.0.0",
-		"@solana/web3.js": "^1.0.0"
+		"@solana/web3.js": "^1.0.0",
+		"viem": "^2.0.0"
 	},
 	"peerDependenciesMeta": {
 		"ethers": {
@@ -75,7 +82,13 @@
 		},
 		"@solana/web3.js": {
 			"optional": true
+		},
+		"viem": {
+			"optional": true
 		}
+	},
+	"devDependencies": {
+		"jsdom": "^27.3.0"
 	},
 	"author": "three.ws <support@three.ws> (https://three.ws)",
 	"homepage": "https://three.ws/",

@@ -160,11 +160,15 @@ export async function buildServer() {
 			version: PKG_VERSION,
 		},
 		{
-			// Declare full tools capability so clients on the strict MCP 2025-06-18
-			// spec know we don't push tools/list_changed notifications (our tool
-			// surface is fixed per-process). `resources` is declared because
-			// agent_hire ships an MCP Apps UI resource (the provenance receipt
-			// card). `logging` stays undeclared — we ship no logging API.
+			// Declare the tools capability explicitly (our tool surface is fixed
+			// per-process, so we never push tools/list_changed). `resources` is
+			// declared because agent_hire ships an MCP Apps UI resource (the
+			// provenance receipt card). `logging` stays undeclared: we ship no
+			// logging API. Note the `listChanged: false` hints below do NOT reach
+			// the client: registerTool()/registerResource() install the SDK's
+			// list-changed notification plumbing, which overrides both to true in
+			// the initialize response. Harmless (listChanged advertises capability,
+			// not obligation), and covered by tests/mcp-server-build.test.js.
 			capabilities: {
 				tools: { listChanged: false },
 				resources: { listChanged: false },

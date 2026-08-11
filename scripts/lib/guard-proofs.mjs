@@ -1,7 +1,8 @@
 // Shared vocabulary for guard proofs: the sandbox, the fixture applier, and the
 // verdict model. scripts/prove-guards.mjs drives it, scripts/audit-guards.mjs
-// validates the declarations against it, and tests/prove-guards.test.js
-// exercises it without touching the real repository.
+// validates the declarations against it, and tests/audit-guards.test.js
+// exercises it against a synthetic registry without touching the real
+// repository.
 //
 // A "proof" answers a question the guard registry could not: does this guard
 // still catch the thing it claims to catch? A registry entry is a claim. A

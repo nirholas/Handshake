@@ -15,10 +15,13 @@ import { startTestServer } from './helpers/test-server.js';
 let BASE;
 let server;
 
+// 90s, not 30s: startTestServer waits up to 60s for readiness because a boot
+// that takes ~1.5s idle takes tens of seconds under full-suite load. A hook
+// budget below that budget just fails first, with a less useful message.
 beforeAll(async () => {
 	server = await startTestServer();
 	BASE = server.base;
-}, 30000);
+}, 90000);
 
 afterAll(() => {
 	server?.close();

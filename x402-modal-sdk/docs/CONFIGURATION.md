@@ -76,6 +76,10 @@ the wallet prompt; a downstream failure rolls the reservation back.
 | `data-x402-solana-web3-url` | `solanaWeb3Url` |
 | `data-x402-noble-hashes-url` | `nobleHashesUrl` |
 
+These are read off whichever `<script>` tag carries them, so every URL shape
+works: the CDN's extensionless `unpkg.com/@three-ws/x402-modal/global` subpath,
+a self-hosted `x402.global.js`, or any filename you rename it to.
+
 ### On a clickable element (per-button `pay()` options)
 
 | attribute | maps to |

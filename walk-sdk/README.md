@@ -162,6 +162,7 @@ control.setAvatar(idOrEntry): void   // persist + hot-swap the live avatar
 control.openPicker(): void
 control.bootstrap(): void            // app-style auto-mount + ?walk= deep links
 control.instance                     // the live companion (or null)
+control.config                       // the resolved options, storage keys included
 ```
 
 ### Roster helpers

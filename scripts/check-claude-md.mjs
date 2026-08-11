@@ -187,6 +187,47 @@ try {
 	// No git, or not a repository. Nothing to verify; never fail on that.
 }
 
+// 4g. Cloud Build service-account pins. CLAUDE.md states that EVERY cloudbuild
+// config must pin one, because the project's default compute SA was deleted: an
+// unpinned config is not a slow build, it is a submission Cloud Build refuses
+// outright, discovered at the moment the owner asked to ship. Cloud Build also
+// rejects a pinned build that has nowhere to put its logs, so the sink that
+// makes the pin usable is part of the same claim. Pinning a dedicated per-worker
+// SA (not just three-ws-build@) is legitimate; relying on the deleted default is
+// the only failure.
+if (/EVERY cloudbuild config must pin/.test(md)) {
+	const { execFileSync: listFiles } = await import('node:child_process');
+	let configs = [];
+	try {
+		configs = listFiles('git', ['ls-files', '-z', '*cloudbuild*.yaml', '*cloudbuild*.yml'], {
+			cwd: root,
+			encoding: 'utf8',
+			stdio: ['ignore', 'pipe', 'ignore'],
+		})
+			.split('\0')
+			.filter(Boolean);
+	} catch {
+		// Not a git repository. Nothing to enumerate; never fail on that.
+	}
+	for (const rel of configs) {
+		const body = readFileSync(path.join(root, rel), 'utf8');
+		if (!/^serviceAccount:/m.test(body)) {
+			failures.push(
+				`${rel} has no top-level \`serviceAccount:\` pin, so \`gcloud builds submit\` on it is refused ` +
+					`(the default compute SA was deleted). Pin three-ws-build@ as the sibling configs do.`,
+			);
+			continue;
+		}
+		const hasSink = /^\s+logging:\s*CLOUD_LOGGING_ONLY\b/m.test(body) || /^logsBucket:/m.test(body);
+		if (!hasSink) {
+			failures.push(
+				`${rel} pins a serviceAccount but declares neither \`logging: CLOUD_LOGGING_ONLY\` nor a \`logsBucket\`. ` +
+					`Cloud Build rejects that combination at submission.`,
+			);
+		}
+	}
+}
+
 // 4e. The retired X changelog lane. If the cron ever calls it again, the
 // "retired" wording in CLAUDE.md becomes a lie in the other direction.
 const cronHandler = path.join(root, 'api/cron/changelog-push.js');

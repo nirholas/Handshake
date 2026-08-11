@@ -67,7 +67,10 @@ try {
 	doc = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 } catch (err) {
 	console.error(`[event-schedule] cannot read public/event.json: ${err?.message || err}`);
-	console.error('[event-schedule] Create it from a previous event (git show HEAD:public/event.json) before scheduling.');
+	console.error('[event-schedule] Between events the file is deleted on purpose, so HEAD may not carry one.');
+	console.error('[event-schedule] Restore the last shipped config, then schedule on top of it:');
+	console.error('[event-schedule]   git show "$(git rev-list -1 HEAD -- public/event.json)^:public/event.json" > public/event.json');
+	console.error('[event-schedule] Or write a fresh one from the template in docs/play-live-events.md.');
 	process.exit(1);
 }
 

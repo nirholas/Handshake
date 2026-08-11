@@ -12,7 +12,9 @@
 
 /**
  * Resolve the websocket origin for the game server, in priority order:
- *   1. `window.GAME_SERVER_URL`   : a runtime override (ops, embeds)
+ *   1. `window.GAME_SERVER_URL` / `window.WALK_SERVER_URL` : a runtime override
+ *      (ops, embeds, tests). Both names are honoured because /walk shipped the
+ *      WALK_ name first and existing embeds still set it.
  *   2. localhost                  : always the local server, never the baked meta
  *   3. `<meta name="game-server">` / `<meta name="walk-server">`
  *   4. `VITE_GAME_SERVER_URL` / `VITE_WALK_SERVER_URL`
@@ -20,7 +22,10 @@
  * @returns {string} a ws://|wss:// origin, or '' when there is no server to reach
  */
 export function defaultGameServerUrl() {
-	if (typeof window !== 'undefined' && window.GAME_SERVER_URL) return window.GAME_SERVER_URL;
+	if (typeof window !== 'undefined') {
+		const override = window.GAME_SERVER_URL || window.WALK_SERVER_URL;
+		if (override) return String(override).trim().replace(/\/$/, '');
+	}
 	// Local dev always talks to the local Colyseus server (`npm run dev:walk-all`),
 	// ignoring the production <meta game-server> baked into the static page.
 	const host = typeof location !== 'undefined' ? location.hostname : '';

@@ -127,6 +127,17 @@ async function invoke(handler, opts) {
 	await handler(req, res);
 	return { res, json: res.body ? JSON.parse(res.body) : null };
 }
+// Every /api/pump/<action> path is rewritten to the consolidated dispatcher, so
+// the dispatcher is the only code a real request runs. This binds one action the
+// way the filesystem router does, which keeps each test naming its endpoint
+// while still exercising exactly what production serves.
+function pumpAction(action) {
+	return async (req, res) => {
+		req.query = { ...(req.query ?? {}), action };
+		const { default: dispatcher } = await import('../../api/pump/[action].js');
+		return dispatcher(req, res);
+	};
+}
 function resetAll() {
 	authState.session = null; authState.bearer = null;
 	sqlState.queue = []; sqlState.calls = [];
@@ -148,7 +159,7 @@ describe('GET /api/pump/balances', () => {
 	beforeEach(resetAll);
 
 	it('returns three vault balances', async () => {
-		const { default: handler } = await import('../../api/pump/balances.js');
+		const handler = pumpAction('balances');
 		const { res, json } = await invoke(handler, {
 			method: 'GET',
 			url: `/api/pump/balances?mint=${mintB58}&network=devnet`,
@@ -161,7 +172,7 @@ describe('GET /api/pump/balances', () => {
 	});
 
 	it('400s on bad mint', async () => {
-		const { default: handler } = await import('../../api/pump/balances.js');
+		const handler = pumpAction('balances');
 		const pumpMod = await import('../../api/_lib/pump.js');
 		pumpMod.solanaPubkey.mockReturnValueOnce(null); // invalid mint
 		const { res, json } = await invoke(handler, {
@@ -176,7 +187,7 @@ describe('POST /api/pump/launch-prep', () => {
 	beforeEach(resetAll);
 
 	it('rejects unauthenticated', async () => {
-		const { default: handler } = await import('../../api/pump/launch-prep.js');
+		const handler = pumpAction('launch-prep');
 		const { res } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/launch-prep',
 			body: { agent_id: '00000000-0000-0000-0000-000000000001',
@@ -192,7 +203,7 @@ describe('POST /api/pump/launch-prep', () => {
 			[{ id: 'agent-1', name: 'Foo' }],      // agent check
 			[],                                     // insert pending
 		];
-		const { default: handler } = await import('../../api/pump/launch-prep.js');
+		const handler = pumpAction('launch-prep');
 		const { res, json } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/launch-prep',
 			body: {
@@ -219,7 +230,7 @@ describe('POST /api/pump/accept-payment-prep', () => {
 			[{ id: 'mint-1', mint: mintB58, network: 'devnet', buyback_bps: 500 }], // mint lookup
 			[{ id: 'pay-1', invoice_id: '1234', start_time: '2026-01-01', end_time: '2026-01-02', status: 'pending' }],
 		];
-		const { default: handler } = await import('../../api/pump/accept-payment-prep.js');
+		const handler = pumpAction('accept-payment-prep');
 		const { res, json } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/accept-payment-prep',
 			body: {
@@ -237,7 +248,7 @@ describe('POST /api/pump/accept-payment-prep', () => {
 	it('404s if mint not registered', async () => {
 		authState.session = { id: 'user-1' };
 		sqlState.queue = [[]]; // mint lookup empty
-		const { default: handler } = await import('../../api/pump/accept-payment-prep.js');
+		const handler = pumpAction('accept-payment-prep');
 		const { res, json } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/accept-payment-prep',
 			body: {
@@ -283,7 +294,7 @@ describe('POST /api/pump/accept-payment-confirm', () => {
 				}],
 			},
 		});
-		const { default: handler } = await import('../../api/pump/accept-payment-confirm.js');
+		const handler = pumpAction('accept-payment-confirm');
 		const { res, json } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/accept-payment-confirm',
 			body: {
@@ -398,7 +409,7 @@ describe('POST /api/pump/withdraw-prep', () => {
 			id: 'mint-1', mint: mintB58, user_id: 'user-1',
 			agent_authority: walletB58, network: 'devnet',
 		}]];
-		const { default: handler } = await import('../../api/pump/withdraw-prep.js');
+		const handler = pumpAction('withdraw-prep');
 		const { res, json } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/withdraw-prep',
 			body: {
@@ -417,7 +428,7 @@ describe('POST /api/pump/withdraw-prep', () => {
 			id: 'mint-1', mint: mintB58, user_id: 'user-1',
 			agent_authority: walletB58, network: 'devnet',
 		}]];
-		const { default: handler } = await import('../../api/pump/withdraw-prep.js');
+		const handler = pumpAction('withdraw-prep');
 		const { res } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/withdraw-prep',
 			body: {
@@ -434,7 +445,7 @@ describe('GET /api/pump/by-agent', () => {
 
 	it('returns null when no mint exists', async () => {
 		sqlState.queue = [[]];
-		const { default: handler } = await import('../../api/pump/by-agent.js');
+		const handler = pumpAction('by-agent');
 		const { res, json } = await invoke(handler, {
 			method: 'GET',
 			url: '/api/pump/by-agent?agent_id=00000000-0000-0000-0000-000000000001',
@@ -449,7 +460,7 @@ describe('GET /api/pump/by-agent', () => {
 			[{ confirmed_payments: 3, unique_payers: 2, total_atomics: '1500000', last_payment_at: '2026-04-29T10:00:00Z' }],
 			[{ runs: 1, total_burned: '50000', last_burn_at: '2026-04-29T11:00:00Z' }],
 		];
-		const { default: handler } = await import('../../api/pump/by-agent.js');
+		const handler = pumpAction('by-agent');
 		const { res, json } = await invoke(handler, {
 			method: 'GET',
 			url: '/api/pump/by-agent?agent_id=00000000-0000-0000-0000-000000000001',
@@ -461,7 +472,7 @@ describe('GET /api/pump/by-agent', () => {
 	});
 
 	it('400s without agent_id', async () => {
-		const { default: handler } = await import('../../api/pump/by-agent.js');
+		const handler = pumpAction('by-agent');
 		const { res } = await invoke(handler, { method: 'GET', url: '/api/pump/by-agent' });
 		expect(res.statusCode).toBe(400);
 	});
@@ -485,7 +496,7 @@ describe('POST /api/pump/withdraw-confirm', () => {
 			slot: 12345,
 			blockTime: 1714492800,
 		});
-		const { default: handler } = await import('../../api/pump/withdraw-confirm.js');
+		const handler = pumpAction('withdraw-confirm');
 		const { res, json } = await invoke(handler, {
 			method: 'POST',
 			url: '/api/pump/withdraw-confirm',
@@ -505,7 +516,7 @@ describe('POST /api/pump/withdraw-confirm', () => {
 		sqlState.queue = [
 			[{ id: 'mint-1', mint: mintB58, user_id: 'user-1', agent_authority: walletB58, network: 'mainnet' }],
 		];
-		const { default: handler } = await import('../../api/pump/withdraw-confirm.js');
+		const handler = pumpAction('withdraw-confirm');
 		const { res } = await invoke(handler, {
 			method: 'POST',
 			url: '/api/pump/withdraw-confirm',
@@ -576,7 +587,7 @@ describe('cookie-CSRF gate on pump mutations (2026-07-23 audit)', () => {
 
 	it('rejects a cross-site POST riding the session cookie before any handler work', async () => {
 		authState.session = { id: 'user-1' };
-		const { default: handler } = await import('../../api/pump/launch-prep.js');
+		const handler = pumpAction('launch-prep');
 		const { res, json } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/launch-prep',
 			headers: { origin: 'https://evil.example' },
@@ -596,7 +607,7 @@ describe('cookie-CSRF gate on pump mutations (2026-07-23 audit)', () => {
 
 	it('rejects a cookie-authed POST with no Origin and no Referer', async () => {
 		authState.session = { id: 'user-1' };
-		const { default: handler } = await import('../../api/pump/launch-prep.js');
+		const handler = pumpAction('launch-prep');
 		const { res } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/launch-prep',
 			headers: { origin: undefined },
@@ -608,7 +619,7 @@ describe('cookie-CSRF gate on pump mutations (2026-07-23 audit)', () => {
 
 	it('does not gate bearer-authed mutations (agent keys, workers)', async () => {
 		authState.bearer = { userId: 'user-1' };
-		const { default: handler } = await import('../../api/pump/launch-prep.js');
+		const handler = pumpAction('launch-prep');
 		const { res } = await invoke(handler, {
 			method: 'POST', url: '/api/pump/launch-prep',
 			headers: { origin: 'https://evil.example' },

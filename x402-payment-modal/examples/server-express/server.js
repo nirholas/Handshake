@@ -45,7 +45,7 @@ app.use('/api/x402-checkout', x402CheckoutRouter({ rpcUrl: SOLANA_RPC_URL }));
 // IMPORTANT: verifying and settling the X-PAYMENT payload against an x402
 // facilitator is OUT OF SCOPE for this demo. In production you would verify the
 // payment proof (and idempotency) before returning 200. See the docs:
-// https://github.com/three-ws/x402-payment-modal/tree/main/docs
+// https://github.com/nirholas/three.ws/tree/main/x402-payment-modal/docs
 //
 // Synthetic placeholders below — replace payTo / feePayer with YOUR addresses.
 const DEMO_PAY_TO = 'So11111111111111111111111111111111111111112'; // replace me

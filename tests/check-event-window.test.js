@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { validateEventConfig, CONFIG_PATH, isoOf, zoneLines } from '../scripts/check-event-window.mjs';
 
 // The shape of public/event.json, minus the fields the validator ignores. Kept
@@ -124,15 +124,20 @@ describe('validateEventConfig', () => {
 
 // The config that ships is the one that matters; a green suite over fixtures
 // while the real file is broken would be the same silent failure in a new place.
-describe('the configured event that ships', () => {
-	const doc = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
+// Between events there is no file at all (the documented "no event scheduled"
+// state every surface handles), so these run only when one is actually shipping.
+// Read inside the tests rather than in the suite body: vitest still collects a
+// skipped suite's body, so an eager read would throw with no event scheduled.
+const shippedEvent = () => JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 
+describe.skipIf(!existsSync(CONFIG_PATH))('the configured event that ships', () => {
 	it('is coherent when judged at its own start', () => {
+		const doc = shippedEvent();
 		const { failures } = validateEventConfig(doc, Date.parse(doc.startsAt));
 		expect(failures).toEqual([]);
 	});
 
 	it('has not already ended', () => {
-		expect(Date.parse(doc.endsAt)).toBeGreaterThan(Date.now());
+		expect(Date.parse(shippedEvent().endsAt)).toBeGreaterThan(Date.now());
 	});
 });

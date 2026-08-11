@@ -58,7 +58,7 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 | 3D Studio (free) | `/api/mcp-studio` | Free text/image→3D and rigged avatars — no auth, no payment |
 | Agent wallet | `/api/mcp-agent` | The agent's custodial wallet: balance, find + pay services, and `monetize_endpoint` |
 | x402 Bazaar | `/api/mcp-bazaar` | Discover and price paid agent services across the facilitator network |
-| pump.fun | `/api/pump-fun-mcp` | Free, read-only pump.fun + Solana token tools |
+| pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `pumpfun_upload_metadata` needs a key |
 | IBM x402 | `/api/ibm-mcp` | Pay-per-use IBM Granite AI |
 
 **Thirty-seven install-and-run servers** on npm under the `@three-ws` scope — each runs over stdio with one command:
@@ -77,6 +77,7 @@ npx -y @three-ws/x402-mcp         # self-custodial wallet: find, inspect & pay a
 npx -y @three-ws/three-token-mcp  # price, hold, and burn $THREE on Solana
 npx -y @three-ws/mcp-bridge       # bridge that pays any x402 endpoint on the open web
 npx -y @three-ws/ibm-x402-mcp     # pay-per-use IBM Granite AI
+npx -y @three-ws/agentcore-payments-mcp # pay x402 endpoints from a governed budget, no private key
 
 # Market data, intel & discovery
 npx -y @three-ws/intel-mcp        # smart-money, signal feeds, KOL & copy-trade intel
@@ -112,6 +113,7 @@ npx -y @three-ws/activity-mcp      # trending agents/coins, $THREE holder board 
 npx -y @three-ws/vision-mcp        # analyze & describe images via the three.ws vision pipeline
 npx -y @three-ws/brain-mcp         # run any LLM through the multi-provider router
 npx -y @three-ws/audio-mcp         # TTS, STT, audio-to-face lipsync & motion-capture clips
+npx -y @three-ws/alibaba-cloud-mcp  # Qwen chat + embeddings on your own DashScope key
 
 # Coordination, gaming & learning
 npx -y @three-ws/agenc-mcp         # AgenC on-chain task marketplace + agent registry

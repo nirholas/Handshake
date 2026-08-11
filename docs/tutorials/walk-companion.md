@@ -224,7 +224,7 @@ createWalkCompanion({
 }).bootstrap();
 ```
 
-Other options worth knowing: `excludedRoutes` (path prefixes where the companion never mounts — full-screen 3D routes by default), `enablePicker` (set `false` to hide the avatar switcher), `greeting` (a `(path) => string | null` to customise the per-page hello), and `storagePrefix` (the localStorage/sessionStorage key namespace, default `walk`).
+Other options worth knowing: `excludedRoutes` (path prefixes where the companion never mounts, defaulting to the full-screen 3D routes), `enablePicker` (set `false` to hide the avatar switcher), `lookAt` (set `false` to stop the companion's chest, neck and head from tracking the visitor's cursor), `greeting` (a `(path) => string | null` to customise the per-page hello), and `storagePrefix` (the localStorage/sessionStorage key namespace, default `walk`).
 
 ---
 

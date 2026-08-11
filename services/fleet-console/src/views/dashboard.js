@@ -7,6 +7,7 @@
 
 import { esc, attr, ago, page, ring, sparkline } from './html.js';
 import { PROBE_STATES } from '../probe.js';
+import { partialReasons } from '../scan.js';
 
 const tone = (value, good, warn) => (value >= good ? 'good' : value >= warn ? 'warn' : 'bad');
 
@@ -186,7 +187,7 @@ export function dashboardPage({ snapshot, history }) {
   npm registry. A repository scores on the promises it makes, so a library with nothing deployed is never marked down for it.</p>
 </section>
 ${statTiles(summary, history)}
-${snapshot.partial ? `<div class="note"><strong>Partial scan.</strong> ${esc(snapshot.summary.repos)} of ${esc(snapshot.totalOwned)} repositories were reachable within the GitHub rate-limit budget${snapshot.rateLimit.resetAt ? `, which resets at ${esc(snapshot.rateLimit.resetAt)}` : ''}.</div>` : ''}
+${snapshot.partial ? `<div class="note"><strong>Partial scan.</strong> ${partialReasons(snapshot).map((reason) => esc(reason)).join(' ')}</div>` : ''}
 ${attentionPanel(snapshot)}
 
 <div class="toolbar" role="search">

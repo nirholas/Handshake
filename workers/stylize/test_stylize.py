@@ -103,6 +103,53 @@ for label, header in (("a missing", None), ("an empty", ""), ("a non-bearer", "t
 main._require_api_key(f"Bearer {main.API_KEY}")
 check("the configured key is accepted", True)
 
+# The helper above is only half the contract: the routes have to declare the
+# header optional so it runs at all. Declared required, FastAPI answers a
+# credential-less caller with a 422 validation dump before the handler is
+# reached, which is what the deployed image did until this was fixed. Drive the
+# real app so a regression to Header(...) is caught here and not in production.
+from fastapi.testclient import TestClient  # noqa: E402
+
+# Not used as a context manager on purpose: entering one runs the lifespan,
+# which builds a GCS client this suite deliberately never touches.
+client = TestClient(main.app)
+JOB = {"mesh": "https://example.com/a.glb", "style": "voxel"}
+
+check(
+    "POST /process without a header is 401, not a 422 validation dump",
+    client.post("/process", json=JOB).status_code == 401,
+    str(client.post("/process", json=JOB).status_code),
+)
+check(
+    "GET /tasks without a header is 401",
+    client.get("/tasks/nope").status_code == 401,
+    str(client.get("/tasks/nope").status_code),
+)
+check(
+    "a wrong key on /process is 401",
+    client.post("/process", json=JOB, headers={"authorization": "Bearer nope"}).status_code == 401,
+)
+for public in ("/styles", "/health"):
+    check(
+        f"{public} stays public",
+        client.get(public).status_code == 200,
+        str(client.get(public).status_code),
+    )
+check(
+    "an authenticated request with a bad style is still a 422",
+    client.post(
+        "/process",
+        json={"mesh": "https://example.com/a.glb", "style": "hologram"},
+        headers={"authorization": f"Bearer {main.API_KEY}"},
+    ).status_code == 422,
+)
+check(
+    "an unknown task id is 404 for an authenticated caller",
+    client.get(
+        "/tasks/nope", headers={"authorization": f"Bearer {main.API_KEY}"}
+    ).status_code == 404,
+)
+
 # ── task tracking ───────────────────────────────────────────────────────────────
 
 main._tasks.clear()

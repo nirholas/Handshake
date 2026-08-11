@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-11T04:38:04.298Z",
+	"generated_at": "2026-08-11T21:39:58.612Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -29,6 +29,16 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "A long clip no longer pretends the whole scene was reconstructed",
+			"summary": "Scene capture turns a video clip into a 3D point cloud, and the worker stops at a frame budget, reconstructing only the part of the clip that fits. The status you got back carried the point count and the frame count but never said the clip had been cut short, so a partial scene read as a finished one. The response now reports that the frames were truncated, along with how many sky points were dropped, so you can tell a complete reconstruction from a clipped one.",
+			"link": "/capture",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "A selfie with no visible face now tells you so, instead of \"generation failed\"",
 			"summary": "Photo-to-avatar could not tell you the one thing that would fix your upload. When the engine found no face in a photo (a hooded figure, a back view, a landscape), it reported that rejection as an anonymous internal error, so the site fell back to a generic \"Generation failed. Try a different prompt.\" You now get the real reason and can act on it: reword the prompt, or use a clear front-facing shot. Rejected uploads also stopped filing themselves as service outages in our error logs, so a genuine failure is visible now instead of buried among them.",
 			"link": "/create",
@@ -46,6 +56,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "A written guide to the Solana Tokens API rung in the price cascade",
+			"summary": "Token panels read prices, liquidity and holder counts from an ordered list of providers, and the Solana Foundation's Tokens API sits second in that list. Nothing explained what that rung adds over the mint-scoped sources above it: it knows which mints represent the same asset, which is what lets a balance be read across every version of a token at once. The Tokens API integration now has its own page in the developer docs, covering the single environment variable that turns the rung on, where it sits in the cascade and why, and the tests that pin the two behaviours easiest to break by accident: the rung is skipped before any request goes out when the key is absent, and a rate-limit answer reaches the circuit breaker instead of being swallowed inside the client.",
+			"link": "/docs/tokens-xyz",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -113,11 +133,33 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "Design your agent's coin before you launch it, and rehearse the launch for free",
+			"summary": "Your agent can now carry a token plan: the name, ticker, story, artwork, pairing, buyback share and dev buy of the coin it is going to become, saved on the agent itself instead of typed into a form and thrown away. The plan shows up on the agent's profile, so visitors can see the coin is coming before it exists, and it tells you what is still missing and what the launch will cost in SOL. There is also a rehearsal: one button builds the real launch transaction from your saved plan and asks Solana to run it on devnet without broadcasting anything, so you find out whether it would work before a single lamport moves. Saving and rehearsing cost nothing and mint nothing; launching stays a separate, deliberate step. Coins launched from your own wallet also now appear in the public launch feed and in your agent's launch history, which they previously did not.",
+			"link": "/launches",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "Embedded agents render on other people's sites again",
 			"summary": "The one-line embed script loads a 3D viewer from a CDN, but never told it how to read the compression every three.ws avatar is saved with, so an embedded agent failed to appear on the host page. The embed now sets that up itself before the viewer starts, which is what pages on three.ws already did.",
 			"link": "/embed/v1/preview",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Every page now shares with its own correct title and description",
+			"summary": "A bug in the tool that reads each blog post's own <head> cut every description short at the first apostrophe, so five posts were being listed and shared with a fragment: 'three.ws is DEXTools' instead of the full sentence. The tool now reads the whole value, and all five read properly again wherever they appear. Twenty-one page descriptions across the site had also been damaged by an earlier find-and-replace that swapped dashes for colons, turning sentences like 'Type a prompt, or drop in photos or a sketch, and get a 3D model' into copy that no longer parsed; those have been rewritten. Three pages that shared a title with another page (the Character Studio doc, the guards reference, and the write-a-guard tutorial) now each say what they actually are, and the NVIDIA Inception overview, which had shipped with no description, canonical link or social card at all, now has the full set. The site's link previews were also only being checked on the 288 pages the checker could find a file for; it can now find all 615, so the whole catalogue is covered.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement",
+				"docs"
 			]
 		},
 		{
@@ -262,6 +304,18 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "The agent-to-agent invocation SDK now states the truth about its Solana program",
+			"summary": "@three-ws/agent-protocol-sdk records agent-to-agent skill calls on Solana against the agent_invocation program. Its docs described that program as live and deployed on mainnet and devnet; the account is not on-chain yet, so anyone building on the promise hit a cluster rejection with no explanation. The README, the package constants table and the architecture reference now say exactly where the program stands and how to check the account yourself. The on-chain smoke harness that covers this path was checking a build artifact instead of the chain, so it reported a missing file rather than the deployment state; it now asks the cluster directly and runs from a clean checkout. Separately, the Solana address guard that verifies the $THREE mint and the pump.fun programs against mainnet on every build was reading a single RPC provider, so an exhausted provider key left it verifying nothing while still printing a clean result. It now walks the same provider failover chain the platform runs on.",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "The character library opens instantly instead of downloading 122 MB first",
 			"summary": "Every card in the 107-character library started streaming its full 3D model the moment the page opened, four of them at once and more than 120 MB before you had asked for anything. Cards now show their picture and load the model when you hover or tab onto one, so the page opens immediately, a phone never pays for a preview it did not ask for, and sweeping the mouse across the grid costs nothing.",
 			"link": "/character-library",
@@ -283,11 +337,34 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "The MCP server directory now tells the truth about auth",
+			"summary": "Anyone pointing an MCP client at three.ws reads /.well-known/mcp.json to decide how to connect. Two of its seven entries were wrong. The pump.fun server was advertised as free and read-only, but one of its nineteen tools uploads coin metadata to IPFS and needs a key, so a client that trusted the label got a payment-required error out of nowhere; the entry now says which tool that is. And the main server accepts x402 pay-per-call alongside sign-in and API keys, which the directory never mentioned, so an agent with a wallet but no account had no way to know it could just pay. Both are fixed, along with the matching lines in the registry manifest and the MCP docs. The free 3D Studio endpoint was also the one hosted server the live health probe never checked; it is in the sweep now, and the manifest audit that runs on every build now fails if the directory and the manifests on disk ever disagree again.",
+			"link": "/mcp-tools",
+			"tags": [
+				"fix",
+				"docs",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "The money map keeps every avatar it can already show",
 			"summary": "Flow drew each wallet's avatar into its canvas in a mode that asks the image host for extra permissions. Those same avatars appear as ordinary images elsewhere on three.ws, and a browser will not reuse a picture it already has when the second request asks for more, so any avatar you had already seen came back blank on the map. The map no longer asks for permissions it never needed.",
 			"link": "/flow",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The paid MCP server's docs now list all 25 tools it actually ships",
+			"summary": "@three-ws/mcp-server is the package a Claude Desktop, Claude Code or Cursor user installs to get three.ws tools inside their assistant. It registers 25 tools, but its README only described 19: one-call text-to-rigged-avatar generation, conversational model refinement, material restyling, the free premium vanity-address browser, and the two agent-hiring tools were installed and callable while being invisible to anyone reading the docs. All six now have a documented row with their real price, what they return, and how they chain with the rest, and the free-to-start list is corrected from four tools to five. A new test connects a real MCP client to the server and checks the tool list, the version it advertises, and the hire receipt card it renders, then fails the build if a future tool ships without a documented row.",
+			"link": "/mcp-tools",
+			"tags": [
+				"docs",
+				"sdk"
 			]
 		},
 		{
@@ -314,12 +391,57 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "The selfie scanner now grades every shot before you commit to a build",
+			"summary": "Taking a selfie for an avatar got a real quality copilot. The viewfinder already tracked your face live; now the hint line names the exact fix (turn back to the camera, hold steady, find better light) instead of a generic warning, and after the countdown fires the captured still itself is re-scored, so motion blur or a lighting change in those last three seconds is caught on the review screen rather than a minute into the build. Uploaded photos get a lighting check too. Every threshold behind these gates is derived from the ways the reconstruction engine actually fails, so a shot that passes on your phone is a shot the engine can build from. And if your browser refreshes mid-capture, the shots you already took come back instead of starting you over.",
+			"link": "/create/selfie",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "The sign-language recognition API now documents the confidence score it returns with every transcription",
 			"summary": "When you fingerspell into the webcam, the recognizer reports how sure it is of what it read, and the page uses that to flag a shaky capture instead of quietly dropping wrong words into your message. That score was in every response but appeared in none of the docs, so anyone building on the recognition API had no way to know it existed. The API reference, the sign-language guide and the worker's own README now list the full response, including the raw decode before the cleanup pass and whether the cleanup changed anything, so a caller can build the same warning we do. The recognizer itself was also capped to a sane number of simultaneous captures per instance, so a burst of signers scales out instead of queueing behind each other.",
 			"link": "/sign-language",
 			"tags": [
 				"docs",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The walking avatar SDK now types the cursor-tracking option it ships",
+			"summary": "@three-ws/walk is the packaged version of the character that walks over three.ws pages, and it lets a host turn off the head tracking that makes the avatar follow the visitor's cursor. That switch worked, and the docs described it, but it was missing from the package's TypeScript definitions, so anyone writing the option in a typed project got an error on working code. The definitions now declare it, along with the resolved-config object every control returns, and the guide lists it with the other options. The package's public entry point also gained a test that imports it the way a host does and checks that every documented export is really there.",
+			"link": "/walk",
+			"tags": [
+				"sdk",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The x402 payment modal SDK can now price a paid call without opening a modal",
+			"summary": "@three-ws/x402-modal is the drop-in checkout that turns an HTTP 402 into a wallet-connect, sign and settle flow on any site. Its first step, reading the endpoint's payment challenge to learn what a call costs and which networks it takes, is now available on its own as discover(). It touches no page and no wallet, so a server, a script or an agent can look up a price, compare the Solana and Base entries, or confirm a route is actually paid before deciding to charge anyone. Two fixes ship with it. Branding and backend settings written on the script tag were silently ignored when the script was loaded from the short CDN address the docs give, because the code recognised its own tag by filename and that address has no filename; it now finds the tag by the settings themselves, so every address works. And the version the package reported had fallen two releases behind what was published, which sent bug reports to the wrong build; it now matches the release, with a test holding the two together.",
+			"link": "/docs/x402",
+			"tags": [
+				"sdk",
+				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Token pages keep their holder count when a data provider runs out of quota",
+			"summary": "Prices, liquidity and holder counts on Solana token panels come from an ordered list of data providers, so one going down never blanks the page. Until now the first provider was the only one that reported a holder count, and it carries a monthly usage cap: once that cap was hit, the next six hours of readings fell to a provider that has no holder data and the number quietly disappeared from the page. The Solana Foundation's Tokens API is now the second provider in that list and reports the full set, holder count and circulating supply included, so a spent quota no longer costs the page a field. It also groups mints that represent the same asset, which is what lets a balance be read across every version of a token instead of one address at a time.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{
@@ -342,6 +464,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Your agent's personality is now signed and published to IPFS",
+			"summary": "Every time you save your agent's persona, three.ws now writes down exactly how that agent is configured, signs it with the platform's signing key, and publishes it to IPFS. You get back a permanent address anyone can open. That means the instructions behind your agent are no longer something people have to take on trust: a visitor, a buyer, or another agent can fetch the record, confirm it really came from three.ws, read the exact prompt, and see whether the agent running today still matches what was published. Anyone can run the check themselves without an account. Only public agents publish automatically, and you can publish a private agent deliberately whenever you choose.",
+			"link": "/agents",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{
@@ -893,12 +1026,33 @@
 		{
 			"date": "2026-08-09",
 			"type": "update",
+			"title": "The in-world meetup recap now tours the rest of the platform",
+			"summary": "The write-up of the first user group meetup held inside three.ws covered the two connectors that ran the session and little else. It now walks a reader through the wider platform: Forge, the Avatar Studio and its universal retargeting, the shared wardrobe layer, and the one-tag agent-3d embed, and closes with partnership roadmap sections on where the conversation goes next. The live-article draft also carries the final peak concurrency figure of 3,145 in place of the publish-day placeholder.",
+			"link": "/blog/ibm-user-group-first-in-world-meetup-recap",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-09",
+			"type": "update",
 			"title": "The Oracle now scores from measured outcomes, and its top tiers finally mean something",
 			"summary": "The Oracle's conviction score was rebuilt on what actually happened to 92,906 real pump.fun launches instead of hand-set rules. Every score is now a measured probability that a coin graduates or pumps 3x or more, and each tier states its real-world odds: on data the model never trained on, Prime picks were good 72.7% of the time while Avoid picks rugged 96.3% of the time. The old engine had never once produced a Strong or Prime score; several of its penalties turned out to be backwards against the data and are fixed. Every verdict now cites its evidence with the observed success rate for each signal, the smart-money wallet ledger grew from 214 to 998 proven wallets under a validated definition, and the learning pipeline that grades every launch was unblocked so the model keeps sharpening daily.",
 			"link": "/oracle",
 			"tags": [
 				"improvement",
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-09",
+			"type": "update",
+			"title": "The Oracle starts learning from every coin again",
+			"summary": "The Oracle scores new coins by learning how earlier ones actually turned out, and the job that records those outcomes had fallen behind: it checked a hundred coins every fifteen minutes against a feed carrying roughly thirty thousand a day, so no new outcome had been recorded since late July and a backlog of 370,000 coins had built up. Labeling now runs eight lookups at a time with batched writes and a wall-clock deadline, and the per-run budget rose to 1,500, which measured 400 coins in 12.5 seconds against production. The labels were also being deleted by the rolling fourteen-day retention sweep, taking the training data with them. A dedicated training set now snapshots the launch-time features, the outcome and the creator record for every labeled coin, backfilled with the 92,546 already done, and is excluded from that sweep.",
+			"link": "/oracle",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -985,7 +1139,7 @@
 			"date": "2026-08-08",
 			"type": "launch",
 			"title": "The Three.ws User Group's First In-World Meetup: How It Went",
-			"summary": "The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, peaking at 3,145 concurrent users in the $THREE home town at three.ws/play.",
+			"summary": "The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, peaking at 3,145 concurrent users in the $THREE home town at three.ws/play. Here's how a nine-hour user group meetup held inside a 3D world actually went.",
 			"link": "/blog/ibm-user-group-first-in-world-meetup-recap",
 			"tags": [
 				"launch"
@@ -1005,11 +1159,32 @@
 		{
 			"date": "2026-08-08",
 			"type": "update",
+			"title": "A cut-off director brief no longer replaces the prompt you typed",
+			"summary": "The forge pipeline behind the ChatGPT integration keeps its own copy of the step that rewrites a prompt into a director brief, so a truncation fix made on the main pipeline never reached it: a rewrite that stopped mid-clause still replaced what the creator asked for. The same guard and the same token budget now apply to the clone, so an incomplete brief is discarded and your own words are used instead.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
 			"title": "A shared world link now says which world you are opening, from the first frame",
 			"summary": "Open a link to a coin's world and the wait used to be anonymous: a generic COIN COMMUNITIES card and \"Joining the community\", with nothing to say whose town was loading, even though the link itself carried the name, the ticker and the artwork all along. The loading screen now reads them straight out of the link and shows them immediately, before any of the game code has arrived: the coin's artwork, its name and its ticker, and \"Entering <name>\". If the artwork cannot be fetched, a letter mark takes its place instead of a broken image, in the loading screen and in the world's own corner banner. The browser tab is named after the world too, so a link parked in a background tab is findable, and it goes back to normal when you return to the community list. Two other fixes to the same first minute: /play was asking for the site's typeface without ever loading it, so every word on the page was rendering in whatever the device had lying around, and the loading card could push its own progress bar off the bottom of a short laptop screen. Both are fixed. On phones, the Controls reference is reachable again after the welcome card is dismissed, and the arrow keys now walk your character instead of paging that card.",
 			"link": "/play",
 			"tags": [
 				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Coin artwork with breakout characters in its address is refused outright",
+			"summary": "Coin images come from wherever a launch put them, and the check deciding whether one is safe to load only inspected the scheme. A value carrying quotes, parentheses, angle brackets, semicolons, backslashes or whitespace still got through, which is exactly the shape a crafted image address uses to break out of the style rule it lands in. Nothing escaped, because the code writing that address percent-encodes it first, but the page still paid for a doomed request and a console error. Those breakout characters are now rejected at the source, and ordinary paths, query strings and percent-encoded addresses are unaffected.",
+			"link": null,
+			"tags": [
+				"security",
 				"fix"
 			]
 		},
@@ -1032,6 +1207,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Event drops pay out cleanly, and Kannada catches up",
+			"summary": "The payout path for a prize drop during a live event in play now handles its edge cases instead of leaving a claim in limbo, and the Kannada locale has been resynced, so the play, AR and gesture strings read in Kannada rather than falling back to English.",
+			"link": "/play",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1199,6 +1384,16 @@
 		{
 			"date": "2026-08-08",
 			"type": "update",
+			"title": "The war portal keeps a leaderboard",
+			"summary": "Playing a war portal round now writes to the shared event leaderboard, souvenirs included, so time in the portal counts toward the same standings as the rest of a live event. The health thresholds for the portal ship alongside it, so a round that stops scoring is caught rather than quietly swallowed.",
+			"link": "/play/war",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
 			"title": "The world economy pays what it says, and the bank makes you walk there",
 			"summary": "An end-to-end pass over the /play money loops. The wheel now checks it has room for every prize it can award before it lets you spin, instead of just one of the three, so a stone win can no longer land in a pack that only had space for wood and quietly turn into two cash; if a pack does fill while you are approving a paid spin in your wallet, the prize converts to cash and the result tells you so in plain words. Store and bank buttons now disable while a trade is in flight, so a double-click can never buy twice, and if the world stops answering the panel says nothing was charged and re-reads your purse instead of leaving a stale balance on screen. Dying reports itself honestly: the HUD empties the moment the tombstone drops rather than eight seconds later at respawn, and the message names what you lost and what the bank protected. Trading and banking are now walk-up actions the server enforces, like fishing and the wheel already were, which is what makes depositing before a fight a real decision. The skills panel shows the XP left to each next level and what the next unlock is, the wheel links its full published paytable, and a boutique purchase that runs out of $THREE now says where to get more.",
 			"link": "/play/economy",
@@ -1225,6 +1420,16 @@
 			"link": "/play",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Voice Lab gets a polish pass",
+			"summary": "The voice lab and the in-browser voice picker were tightened up for the unified synthesis router: the controls read consistently, the state you are in is legible at a glance, and the browser lane behaves like the hosted ones. The runbook for the keyless Solana RPC pool was corrected in the same pass, after one of its providers stopped serving the history the pool relied on.",
+			"link": "/voice",
+			"tags": [
 				"improvement"
 			]
 		},
@@ -1268,6 +1473,16 @@
 			"link": "/event",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-07",
+			"type": "update",
+			"title": "A coin plaza and its Living Stage agree on which room they share",
+			"summary": "Every coin world has a Living Stage room attached to its plaza, and the world client had no way to know which room without asking the server, a round trip it does not always get. The stage id is derived from the coin itself now, so client and server reach the same answer with no network at all, and the stage record carries the coin mint so the API can resolve the pairing from either side.",
+			"link": null,
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1510,6 +1725,16 @@
 				"security",
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Agent identity metadata is fetched with a pinned address and a size cap",
+			"summary": "Registering an on-chain agent identity lets the caller hand us a link to their own metadata, which the server then reads. That read now resolves the host once and connects to exactly that address, closing the window where a hostile host could answer the safety check from one address and the fetch from another, and it stops at 2 MiB so nobody can stream us an endless response. Client-supplied metadata is the one part of registration we do not control, so it gets the strictest handling.",
+			"link": null,
+			"tags": [
+				"security"
 			]
 		},
 		{
@@ -1842,6 +2067,16 @@
 		{
 			"date": "2026-08-06",
 			"type": "update",
+			"title": "The 3D Studio's published API description cannot drift from the served one",
+			"summary": "The 3D Studio ships an OpenAPI description that a GPT builder reads, and a second copy travels in the submission kit. Keeping the two in step was a single test's job, so drift could reach a submission before anyone noticed. That sync is now a first-class guard with an executable proof, and the repository gate fails on drift. The privacy policy link in the submission notes was normalized to the canonical address every other surface already uses.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
 			"title": "The agent payment ring can refill its own spending float again after eight days stuck",
 			"summary": "The platform's closed payment loop keeps one pool of USDC circulating between wallets it controls, and a wallet that pays its own network fees needs both USDC to spend and a little SOL to pay with. Two rules meant to stop those two needs fighting each other combined into a trap: once the payer's total balance could cover neither, it was barred from converting spare SOL into USDC and had nothing to convert the other way, so it did nothing at all. It sat that way from 29 July, holding fee money it had no way to spend, while roughly 2,900 payment attempts a day failed for want of a few cents of float. The wallet now settles on a single sensible target when it cannot afford both, keeping just enough for fees and holding the rest as spendable balance, so it recovers on its own. The revenue share the loop pays out is also taken only from genuine surplus now: because the same money laps the circuit many times a day, a cut on every lap was quietly compounding the working float away rather than sharing earnings. Wallet records for the loop were reconciled at the same time, so every role wallet is registered and there are no stale entries left.",
 			"link": "/economy-lab",
@@ -1942,6 +2177,16 @@
 			"title": "The three.ws 3D Studio GPT now explains why a generation was refused",
 			"summary": "When the free text-to-3D custom GPT hit a rate limit or asked about a job without a handle, three.ws answered with a body the GPT had no field to read, so ChatGPT showed the user nothing useful. Those replies now carry the plain-language message the published Actions contract promises, so the assistant can say what happened and when to try again. A new contract test validates every response the endpoint can produce against the OpenAPI schema three.ws serves, so the two cannot drift apart again.",
 			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The x402 health checks stop paying for rejections",
+			"summary": "Two automated checks that keep the agent payment ring honest, the circuit breaker and the fee validator, were calling one of the paid endpoints with the wrong HTTP method. A request without payment still got the usual payment challenge back, so both looked healthy, but the paid retry was refused outright: the breaker reported the Solana leg as failing every hour, and the validator's live settlement had never once landed. Both now call that endpoint the way it is declared, verified against production with a settlement of $0.001 on Solana.",
+			"link": "/x402",
 			"tags": [
 				"fix"
 			]
@@ -2376,6 +2621,16 @@
 			]
 		},
 		{
+			"date": "2026-08-02",
+			"type": "update",
+			"title": "Why an agent wallet can refuse a payment at noon, written down",
+			"summary": "The wallet fee governor gained an opt-in switch that releases the day's fee budget gradually across the UTC day instead of all at once. On 2026-08-01 production spent its entire heartbeat budget on 1,002 settled payments before midday, then refused roughly 3,500 an hour for the rest of the day. Intraday pacing spreads the same total over 24 hours and grants no extra spend. It stays off by default, because turning it on changes which gate refuses a starved wallet first, and making that distinction visible is what the economy lab is for. The behaviour is now documented, with the lab covering its shape.",
+			"link": "/economy-lab",
+			"tags": [
+				"docs"
+			]
+		},
+		{
 			"date": "2026-08-01",
 			"type": "launch",
 			"title": "Agent Monitor",
@@ -2408,6 +2663,16 @@
 		{
 			"date": "2026-08-01",
 			"type": "launch",
+			"title": "Docs · Freshness",
+			"summary": "Does this documentation still describe the code? Every doc is scored against the source files it documents, and this dashboard ranks the drift so the stalest pages get fixed first.",
+			"link": "/docs/freshness",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-01",
+			"type": "launch",
 			"title": "Docs · Overlay audit",
 			"summary": "The measured report on every UI overlay surface: which pages draw what over the content, what the audit sweep checks, and how to read a finding before fixing it.",
 			"link": "/docs/overlay-audit",
@@ -2423,6 +2688,16 @@
 			"link": "/docs/economy-solver",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-01",
+			"type": "update",
+			"title": "A refused seed mesh tells the creator how to fix it",
+			"summary": "Forge checks an uploaded seed mesh before it enters the pipeline, and a refusal used to come back as a reason code with nothing a creator could act on. Every reason now carries plain-language guidance, including the vertex-count and file-weight ranges a mesh has to sit inside, quoted even when neither bound was the thing that failed.",
+			"link": "/forge",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -2488,6 +2763,16 @@
 			"tags": [
 				"infra",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-01",
+			"type": "update",
+			"title": "Walkthroughs replay the real product, step by step",
+			"summary": "The walkthrough player replays frames captured from the live product, with a spotlight on the element each step is about and a callout explaining it. Every step is deep-linkable, so you can hand someone the exact moment you mean, the whole player works from the keyboard, and it honours a reduced-motion preference.",
+			"link": "/walkthroughs",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -2893,12 +3178,44 @@
 		{
 			"date": "2026-07-31",
 			"type": "update",
+			"title": "The MCP tool catalog is reachable, linkable and legible",
+			"summary": "The catalog of MCP tools was linked from nowhere in the site navigation, and every card ran the tool name and its title together as one line. It sits under Learn now, each card reads as two lines, and opening a tool puts its name in the address bar, so a single tool is a shareable link. A paid tool shows what it costs and the payment step a caller makes, instead of a bare command that answers with a payment demand. Safety and price badges carry plain-language tooltips, and the page is translated like the rest of the site.",
+			"link": "/mcp-tools",
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "update",
 			"title": "The signing avatar stays in frame, and you can now move the camera around it",
 			"summary": "Scrolling the page with your cursor over the 3D signing avatar used to zoom the camera into its torso and leave it stuck out of frame. Plain scrolling now just scrolls the page: zooming takes a pinch, ctrl+scroll, or a scroll after grabbing the model. You can also move the avatar around the frame with a right-click drag (two fingers on touch), and a Reset view button plus double-click snap the camera back home whenever you lose it. The avatar itself looks healthier too: the studio lighting was overexposing skin into a washed-out gray, and a softer, warmer setup now lets natural skin tones through. All of this applies everywhere an avatar poses: the sign language page, the ASL alphabet, and the Animation Studio.",
 			"link": "/sign-language",
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "update",
+			"title": "The tutorials show real pictures of the product",
+			"summary": "Guides used to describe a screen and leave you to picture it. A capture pipeline now shoots every tutorial figure from the live product, so each step of the getting-started, embed, animation, selfie-to-avatar, text-to-3D and mint guides is illustrated by the thing it describes, and the shots are regenerated when the product moves. The sign-language lesson image assets were recaptured at higher quality in the same pass.",
+			"link": null,
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "update",
+			"title": "Try a paid skill before you pay for it",
+			"summary": "A skill listed in the marketplace can offer a trial now: the storefront shows the trial status for the skill you are looking at, starting one is a single call, and the seller's MCP policy travels with the listing so a buyer sees what the skill is allowed to do before it runs. Both ship with executable proofs, so a listing cannot claim a guard it does not actually have.",
+			"link": "/marketplace",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -2975,6 +3292,16 @@
 		{
 			"date": "2026-07-30",
 			"type": "launch",
+			"title": "Docs · Repository guards",
+			"summary": "The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.",
+			"link": "/docs/guards",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
 			"title": "Docs · The 10 SOL trading experiment",
 			"summary": "The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.",
 			"link": "/docs/trading-experiment",
@@ -3018,6 +3345,16 @@
 			"title": "Docs · Tutorial: earn and spend in /play",
 			"summary": "Run the full economic loop in the open world: gather materials, sell them to the vendor, buy a better tool, bank what you cannot afford to lose, and spin the wheel. Explains why cooking triples fish value and why the bank is the only real decision.",
 			"link": "/docs/tutorials/earn-and-spend-in-play",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Docs · Write a repository guard",
+			"summary": "Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.",
+			"link": "/docs/tutorials/write-a-guard",
 			"tags": [
 				"launch"
 			]
@@ -3098,16 +3435,6 @@
 			"title": "Recipe: text to 3D from the command line",
 			"summary": "A standard-library Python CLI that turns a sentence into a downloaded GLB. Handles the inline-versus-queued response split, honors the server poll hint so it never trips the rate limiter, and fails with a message you can act on. No API key.",
 			"link": "/cookbook/text-to-3d-cli",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-07-30",
-			"type": "launch",
-			"title": "Repository guards",
-			"summary": "The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.",
-			"link": "/docs/guards",
 			"tags": [
 				"launch"
 			]
@@ -3248,16 +3575,6 @@
 			"title": "Tutorial · Write a repository guard",
 			"summary": "This repo has no CI, so a guard is the only thing between a mistake and production. Build one that fails the build when an API handler forgets its error boundary, wire it into the gate, cover it with tests, and register it.",
 			"link": "/tutorials/write-a-guard",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-07-30",
-			"type": "launch",
-			"title": "Tutorial · Write a repository guard",
-			"summary": "Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.",
-			"link": "/docs/tutorials/write-a-guard",
 			"tags": [
 				"launch"
 			]
@@ -4567,6 +4884,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "update",
+			"title": "One shared markdown renderer, one toast notification system",
+			"summary": "Text that arrives as markdown, from agent replies to docs panels, was rendered by a handful of separate copies with different ideas about what HTML to allow through. There is a single shared renderer now, sanitized in one place, so the same input looks the same wherever it appears. The small notification that slides in to confirm a copy or report an error had likewise been pasted into page after page; it is one queued toast system now, with a consistent dismiss, so two notifications no longer land on top of each other.",
+			"link": null,
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -8690,7 +9017,7 @@
 			"date": "2026-07-12",
 			"type": "launch",
 			"title": "Docs · The autonomous economy",
-			"summary": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute: plus how to verify there's no leak yourself.",
+			"summary": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute, plus how to verify there's no leak yourself.",
 			"link": "/docs/autonomous-economy",
 			"tags": [
 				"launch"
@@ -8720,7 +9047,7 @@
 			"date": "2026-07-12",
 			"type": "launch",
 			"title": "Robinhood Chain",
-			"summary": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL: plus a real wallet-connect buy flow for its coins.",
+			"summary": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL, plus a real wallet-connect buy flow for its coins.",
 			"link": "/markets/robinhood",
 			"tags": [
 				"launch"
@@ -8730,7 +9057,7 @@
 			"date": "2026-07-12",
 			"type": "launch",
 			"title": "Search",
-			"summary": "One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins: with remixable models remixable straight from the results.",
+			"summary": "One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins. Remix a model straight from the results.",
 			"link": "/search",
 			"tags": [
 				"launch"
@@ -10039,7 +10366,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "BNB Chain: Three Genuinely-Unique Demos",
-			"summary": "The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain: plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",
+			"summary": "The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain, plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",
 			"link": "/bnb",
 			"tags": [
 				"launch"
@@ -10069,7 +10396,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Crypto Categories by Market Cap",
-			"summary": "Every crypto sector ranked by market cap: smart contract platforms, AI agents, memecoins, DeFi, gaming, and more: with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.",
+			"summary": "Every crypto sector ranked by market cap: smart contract platforms, AI agents, memecoins, DeFi, gaming, and more, with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.",
 			"link": "/categories",
 			"tags": [
 				"launch"
@@ -10189,7 +10516,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Tutorial · Animations from data: wire your agent's gestures to real APIs and AI",
-			"summary": "Trigger real body animations: celebrate, dance, flinch: from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.",
+			"summary": "Trigger real body animations (celebrate, dance, flinch) from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.",
 			"link": "/tutorials/emotion-from-data",
 			"tags": [
 				"launch"
@@ -12754,7 +13081,7 @@
 			"date": "2026-07-01",
 			"type": "launch",
 			"title": "Coin Autopilot",
-			"summary": "A hands-off token cockpit: set the rules: buys, sells, and guardrails: and let your agent run the coin autonomously.",
+			"summary": "A hands-off token cockpit. Set the rules (buys, sells, and guardrails) and let your agent run the coin autonomously.",
 			"link": "/autopilot",
 			"tags": [
 				"launch"
@@ -13079,7 +13406,7 @@
 			"date": "2026-06-30",
 			"type": "launch",
 			"title": "Oracle Docs: the conviction engine, end to end",
-			"summary": "The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next: written for everyone from first-time readers to researchers.",
+			"summary": "The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next. Written for everyone from first-time readers to researchers.",
 			"link": "/oracle/docs",
 			"tags": [
 				"launch"
@@ -14678,7 +15005,7 @@
 			"date": "2026-06-27",
 			"type": "launch",
 			"title": "Recording Pipeline: the data loop, live",
-			"summary": "One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result: every stage, in real time.",
+			"summary": "One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result. Every stage, in real time.",
 			"link": "/pipeline",
 			"tags": [
 				"launch"
@@ -16685,7 +17012,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Alpha Co-pilot: your agent narrates its own alpha",
-			"summary": "Your 3D agent reads a real pump.fun launch in character: grounded in live liquidity, holder, and smart-money data: and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
+			"summary": "Your 3D agent reads a real pump.fun launch in character, grounded in live liquidity, holder, and smart-money data, and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
 			"link": "/alpha-copilot",
 			"tags": [
 				"launch"
@@ -16715,7 +17042,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "CA → x402",
-			"summary": "Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel: price, momentum, and a bullish/bearish signal: for $0.01 USDC, discoverable in the x402 bazaar.",
+			"summary": "Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel (price, momentum, and a bullish/bearish signal) for $0.01 USDC, discoverable in the x402 bazaar.",
 			"link": "/ca2x402",
 			"tags": [
 				"launch"
@@ -16855,7 +17182,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Mission Control",
-			"summary": "The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet: a keyboard-driven cockpit with filters and saved views.",
+			"summary": "The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet. A keyboard-driven cockpit with filters and saved views.",
 			"link": "/terminal",
 			"tags": [
 				"launch"
@@ -16905,7 +17232,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "The AGI: narrow by design",
-			"summary": "The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing: trading memecoins on pump.fun (Solana): and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
+			"summary": "The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing, trading memecoins on pump.fun (Solana), and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
 			"link": "/agi",
 			"tags": [
 				"launch"
@@ -18518,7 +18845,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Make Dad a 3D Avatar",
-			"summary": "Turn one photo of your dad into a recognizable, rigged, animated 3D avatar: it idles, walks, and waves: then share a permalink.",
+			"summary": "Turn one photo of your dad into a recognizable, rigged, animated 3D avatar. It idles, walks, and waves, and you can share a permalink.",
 			"link": "/dad",
 			"tags": [
 				"launch"
@@ -18548,7 +18875,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Add the Walk Companion to your site",
-			"summary": "Drop a 3D avatar that strolls across any web page: corner mascot or full-page playground: with one script tag, the npm SDK, or a postMessage bridge.",
+			"summary": "Drop a 3D avatar that strolls across any web page (corner mascot or full-page playground) with one script tag, the npm SDK, or a postMessage bridge.",
 			"link": "/tutorials/walk-companion",
 			"tags": [
 				"launch"
@@ -18568,7 +18895,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Create, enhance & edit agent memory",
-			"summary": "Teach an agent a fact that sticks between sessions: five ways: the dashboard, the agent itself, MCP tools, the REST API, and from a skill. Plus how to sharpen, edit, and forget.",
+			"summary": "Five ways to teach an agent a fact that sticks between sessions: the dashboard, the agent itself, MCP tools, the REST API, and a skill. Plus how to sharpen, edit, and forget.",
 			"link": "/tutorials/create-and-edit-memory",
 			"tags": [
 				"launch"
@@ -23588,7 +23915,7 @@
 			"date": "2026-06-15",
 			"type": "launch",
 			"title": "Trader Leaderboard",
-			"summary": "Pump.fun traders ranked by a provable, on-chain track record: realized P&L, win rate, drawdown: with every number traceable to its transaction.",
+			"summary": "Pump.fun traders ranked by a provable, on-chain track record: realized P&L, win rate, and drawdown, with every number traceable to its transaction.",
 			"link": "/leaderboard",
 			"tags": [
 				"launch"
@@ -24112,7 +24439,7 @@
 			"date": "2026-06-14",
 			"type": "launch",
 			"title": "Building 3D AI Agents Live",
-			"summary": "A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes: then a live Q&A. Hosted by three.ws, in partnership with IBM.",
+			"summary": "A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes, then a live Q&A. Hosted by three.ws, in partnership with IBM.",
 			"link": "/events/build-3d-agents-live",
 			"tags": [
 				"launch"
@@ -24541,7 +24868,7 @@
 			"date": "2026-06-12",
 			"type": "launch",
 			"title": "Tutorial · Prompt Recipes for 3D Generation",
-			"summary": "A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, food: and the four rules behind every good prompt.",
+			"summary": "A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, and food, plus the four rules behind every good prompt.",
 			"link": "/tutorials/prompts-for-3d",
 			"tags": [
 				"launch"
@@ -25194,7 +25521,7 @@
 			"date": "2026-06-09",
 			"type": "launch",
 			"title": "3D + AI + Web3 Just Converged: three.ws Shipped the Whole Stack",
-			"summary": "A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is the only crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, published to npm, and live on Anthropic",
+			"summary": "A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is the only crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, published to npm, and live on Anthropic's MCP Registry.",
 			"link": "/blog/3d-ai-crypto-convergence",
 			"tags": [
 				"launch"
@@ -25214,7 +25541,7 @@
 			"date": "2026-06-09",
 			"type": "launch",
 			"title": "three.ws Wins DEXTools Social Boost: $5,543 $three Buyback",
-			"summary": "three.ws is DEXTools",
+			"summary": "three.ws is DEXTools' Social Boost winner of the week, earning a $5,543 buyback. The DEXTools wallet now holds 2.47M $three.",
 			"link": "/blog/three-ws-dextools-social-boost-buyback",
 			"tags": [
 				"launch"
@@ -25424,7 +25751,7 @@
 			"date": "2026-06-05",
 			"type": "launch",
 			"title": "Labs Showcase",
-			"summary": "A curated gallery of three.ws's most powerful: and most hidden: features. Find and try things you didn't know existed.",
+			"summary": "A curated gallery of three.ws's most powerful (and most hidden) features. Find and try things you didn't know existed.",
 			"link": "/labs",
 			"tags": [
 				"launch"
@@ -25545,7 +25872,7 @@
 			"date": "2026-06-04",
 			"type": "launch",
 			"title": "Forge: Text & Image to 3D",
-			"summary": "Type a prompt: or drop in photos or a sketch: and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
+			"summary": "Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
 			"link": "/forge",
 			"tags": [
 				"launch"
@@ -25706,7 +26033,7 @@
 			"date": "2026-05-31",
 			"type": "launch",
 			"title": "We turned every memecoin into a live 3D world you can walk into",
-			"summary": "How we built /play: isolated multiplayer worlds keyed to a token",
+			"summary": "How we built /play: isolated multiplayer worlds keyed to a token's mint, driven by live on-chain trades, with proximity voice chat, an in-world buy flow, and worlds generated deterministically from the mint address.",
 			"link": "/blog/three-ws-play-coin-communities",
 			"tags": [
 				"launch"
@@ -25888,7 +26215,7 @@
 			"date": "2026-05-27",
 			"type": "launch",
 			"title": "three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement",
-			"summary": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments: for the first fully on-chain 3D AI agent platform.",
+			"summary": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments. It is the first fully on-chain 3D AI agent platform.",
 			"link": "/blog/three-ws-on-aws-marketplace",
 			"tags": [
 				"launch"
@@ -25949,7 +26276,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "$THREE Listed on Coinbase, CoinGecko, Jupiter, and Investing.com",
-			"summary": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com: giving the three.ws community every major on-ramp and price discovery surface.",
+			"summary": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com, giving the three.ws community every major on-ramp and price discovery surface.",
 			"link": "/blog/three-token-listings",
 			"tags": [
 				"launch"
@@ -25959,7 +26286,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "2,500 New 3D Animations Coming to three.ws",
-			"summary": "three.ws is expanding its animation library with 2,500 new 3D animations: giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
+			"summary": "three.ws is expanding its animation library with 2,500 new 3D animations, giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
 			"link": "/blog/2500-new-animations",
 			"tags": [
 				"launch"
@@ -26038,7 +26365,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "Full Animation & Emotion Control: Plus Pump.fun Live Feed",
+			"title": "Full Animation & Emotion Control, Plus Pump.fun Live Feed",
 			"summary": "three.ws now ships full animation and emotion control for 3D agents, with live Pump.fun feed integration. Your agents react to any API or data feed in real time.",
 			"link": "/blog/animation-emotion-control",
 			"tags": [
@@ -26078,7 +26405,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "Real-Time Voice Interaction with 3D AI Agents: Preview",
+			"title": "Real-Time Voice Interaction with 3D AI Agents (Preview)",
 			"summary": "three.ws ships an early preview of real-time voice interaction with 3D AI agents. Agents listen, reason with memory and emotions, respond in voice, and support AR/VR.",
 			"link": "/blog/real-time-voice-interaction",
 			"tags": [
@@ -26119,7 +26446,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "three.ws Integrates the Pump.fun Agent Payments SDK",
-			"summary": "three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn",
+			"summary": "three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn't just execute tasks, it earns on-chain revenue and fuels its own autonomous economy.",
 			"link": "/blog/pumpfun-agent-payments-sdk",
 			"tags": [
 				"launch"
@@ -26129,7 +26456,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "three.ws Is Now Live on CoinMarketCap",
-			"summary": "three.ws is now live on CoinMarketCap: join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
+			"summary": "three.ws is now live on CoinMarketCap. Join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
 			"link": "/blog/three-ws-on-coinmarketcap",
 			"tags": [
 				"launch"
@@ -26149,7 +26476,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "three.ws Listed on Anthropic's Official MCP Registry",
-			"summary": "three.ws is now listed on Anthropic",
+			"summary": "three.ws is now listed on Anthropic's official Model Context Protocol Registry, the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor, and more.",
 			"link": "/blog/three-ws-on-anthropic-mcp-registry",
 			"tags": [
 				"launch"
@@ -26159,7 +26486,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "three.ws Listed on Coinbase x402 Bazaar and agentic.market",
-			"summary": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market: the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
+			"summary": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market, the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
 			"link": "/blog/three-ws-x402-bazaar",
 			"tags": [
 				"launch"
@@ -26169,7 +26496,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face",
-			"summary": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity: and they react to DeFi events in real time.",
+			"summary": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity, and they react to DeFi events in real time.",
 			"link": "/blog/three-ws-speraxusd-integration",
 			"tags": [
 				"launch"
@@ -26443,7 +26770,7 @@
 			"date": "2026-05-17",
 			"type": "launch",
 			"title": "three.ws Listed on BNB Chain's Dappbay Directory",
-			"summary": "three.ws is now listed on Dappbay, BNB Chain",
+			"summary": "three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts the <agent-3d> tag in front of the BNB Chain ecosystem's AI dApp discovery surface.",
 			"link": "/blog/three-ws-on-bnb-chain-dappbay",
 			"tags": [
 				"launch"
@@ -26957,7 +27284,7 @@
 			"date": "2026-05-04",
 			"type": "launch",
 			"title": "How to Embed 3D On-Chain Agents on Your Site",
-			"summary": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component: from setup to CORS configuration and page integration.",
+			"summary": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component, from setup to CORS configuration and page integration.",
 			"link": "/blog/how-to-embed-3d-onchain-agents",
 			"tags": [
 				"launch"

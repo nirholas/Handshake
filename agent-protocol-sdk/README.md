@@ -28,14 +28,19 @@
 > instruction, and submitted on-chain, where it emits a `SkillInvoked` event that
 > anyone can verify. Built for three.ws agent-to-agent (A2A) coordination.
 
-> **Live.** The `agent_invocation` program is deployed and the SDK targets it by
-> default. `AGENT_INVOCATION_PROGRAM_ID` is
-> [`AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo`](https://explorer.solana.com/address/AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo) —
-> the same program id on **mainnet-beta** and **devnet**. Just point `connection`
-> at the cluster you want; the `programId` param is optional and only needed to
-> target a different deployment. Deploy addresses, signatures, and the upgrade
-> authority are recorded in
-> [`contracts/agent-invocation/DEPLOYMENT.md`](https://github.com/nirholas/three.ws/blob/main/contracts/agent-invocation/DEPLOYMENT.md).
+> **Program id, and where it stands.** `AGENT_INVOCATION_PROGRAM_ID` is
+> [`AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo`](https://explorer.solana.com/address/AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo),
+> the id baked into the program's `declare_id!` and therefore the same on every
+> cluster. As of 2026-08-11 that account is **not yet deployed** on mainnet-beta
+> or devnet: `invokeSkill` builds and signs a correct instruction, and the
+> cluster rejects it until the program is published. Verify before you build on
+> it (`solana account AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo`, or run
+> `node scripts/onchain-smoke.mjs --only=solana-invoke` in the repo, which probes
+> the cluster and reports the current state). Build and deploy instructions are
+> in
+> [`contracts/agent-invocation/README.md`](https://github.com/nirholas/three.ws/blob/main/contracts/agent-invocation/README.md).
+> Once it is live, point `connection` at the cluster you want; the `programId`
+> param stays optional and is only needed to target a different deployment.
 
 ## Install
 
@@ -63,7 +68,7 @@ const signature = await invokeSkill({
   targetAuthority,                        // target agent PDA is derived from this
   skillName: 'summarize',                 // 1–64 bytes
   parameters: JSON.stringify({ url: 'https://example.com' }), // ≤512 bytes
-  // programId is optional — defaults to the live AGENT_INVOCATION_PROGRAM_ID.
+  // programId is optional; it defaults to AGENT_INVOCATION_PROGRAM_ID.
 });
 
 console.log('invocation tx:', signature);
@@ -112,7 +117,7 @@ const [agentPda, bump] = deriveAgentPda(authority, programId);
 | --- | --- | --- |
 | `MAX_SKILL_NAME_LEN` | `number` | `64` — max `skillName` length in bytes. |
 | `MAX_PARAMETERS_LEN` | `number` | `512` — max `parameters` length in bytes. |
-| `AGENT_INVOCATION_PROGRAM_ID` | `string` | Live program id (`AgEnt…Zfo`), same on mainnet + devnet. |
+| `AGENT_INVOCATION_PROGRAM_ID` | `string` | The program's `declare_id!` (`AgEnt…Zfo`), same on every cluster. |
 | `IDL` | Anchor `Idl` | The `agent_invocation` IDL (Anchor 0.30+ format). |
 | `AgentInvocation` | `type` | TypeScript type of `IDL` for `new Program<AgentInvocation>(...)`. |
 | `InvokeSkillParams` | `interface` | Parameter shape for `invokeSkill`. |
@@ -132,9 +137,10 @@ validation above.
 - **Node** `>= 18`.
 - **Peers / deps:** `@solana/web3.js@^1.98`, `@coral-xyz/anchor@^0.32`.
 - **A funded invoker.** `invokerAuthority` signs and pays the transaction fee, so
-  it needs a small SOL balance on the target cluster. The program itself is
-  already deployed — `AGENT_INVOCATION_PROGRAM_ID` points at the live program on
-  mainnet and devnet.
+  it needs a small SOL balance on the target cluster.
+- **A deployed program.** `AGENT_INVOCATION_PROGRAM_ID` is not on-chain yet (see
+  the note at the top); until it is, submitting an invocation fails at the
+  cluster. Check the account before you depend on it.
 
 ## Links
 

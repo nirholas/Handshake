@@ -103,7 +103,10 @@ export async function claimCreatorFees({ coin, coinCreator, treasury }) {
 				closeTx.feePayer = treasuryPk;
 				const { blockhash: bh2 } = await connection.getLatestBlockhash('confirmed');
 				closeTx.recentBlockhash = bh2;
-				closeTx.sign(...signers);
+				// Treasury is fee-payer; the creator owns the ATA being closed and
+				// co-signs only when it is a distinct key (dedupe, or web3.js
+				// rejects the duplicate signer).
+				closeTx.sign(treasury, ...extraSigners);
 				await connection.sendRawTransaction(closeTx.serialize(), {
 					skipPreflight: false,
 					maxRetries: 5,

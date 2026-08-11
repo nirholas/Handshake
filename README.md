@@ -8469,6 +8469,7 @@ endsolid threews_avatar
 - [The Club](#the-club)
 - [Walk & Multiplayer](#walk--multiplayer)
 - [Coin Communities](#coin-communities)
+- [Coin Wars & Live Events](#coin-wars--live-events)
 - [City](#city)
 - [Friends, Presence & Social](#friends-presence--social)
 - [In-Game Economy](#in-game-economy)
@@ -9640,7 +9641,8 @@ Launchpad templates are JSON-configured and can embed any combination of `<agent
 **Economics:**
 
 - Tips API at `/api/club/tips` — viewers tip dancers in USDC via x402 (CDP-settled, Permit2-gasless sibling available)
-- Leaderboard at `/api/club/leaderboard` with windowed top-tipper rankings
+- Leaderboard at `/api/club/leaderboard` with windowed top-tipper rankings, memoized for 15s so a full room costs one aggregate per window rather than one per viewer, and answering `503` with a retry hint when the database is over capacity instead of a bare failure
+- Live tip feed at `/api/club/tips-stream` (SSE); a cold stream rewinds its cursor to the moment the first viewer arrives, so a room that went quiet does not replay the banked backlog as if it were live
 - Hourly payouts cron sweeps the tips ledger into the dancers' treasury wallets
 
 **Detail:** performance notes, venue plan, and release checklist live in `docs/internal/` alongside other internal working docs.
@@ -9682,7 +9684,17 @@ Every Solana token gets a **live 3D world**. Coin Communities ([three.ws/communi
 - **Voxel building & spatial voice.** Collaborative block placement (server-capped) and optional geofenced WebRTC voice (`src/game/voice-chat.js`).
 - **Holder-gated rooms.** A coin can require token holders (tier `holders` vs general); gating is enforced server-side via a sealed play-pass.
 
-**Key files:** `src/communities.js` (lobby), `src/game/coincommunities.js` + `coincommunities-ui.js` (3D scene + HUD), `src/game/community-net.js` (socket bridge), `api/community/*` (worlds, messages, ws-ticket, capabilities, me), `api/_lib/coin-communities.js` (CoinCommunities SDK client).
+**Key files:** `src/communities.js` (lobby), `src/game/coincommunities.js` + `coincommunities-ui.js` (3D scene + HUD), `src/game/community-net.js` (socket bridge), `api/community/*` (worlds, messages, ws-ticket, capabilities, me), `api/_lib/coin-communities.js` (CoinCommunities SDK client). Coin art comes through the platform image proxy rather than straight off a launch metadata URI, so a hot-linked image that blocks cross-origin reads still renders instead of leaving a broken tile.
+
+---
+
+## Coin Wars & Live Events
+
+Two coin communities can meet in one arena and fight for their coin. Every world on `/play` carries a **war portal** in its plaza (`src/game/war-portal.js`): walk up to it and the board shows the community's Elo rating, rank, record, K/D, and its last battles. Press `E` to queue; when a second community queues, both sides are handed the same battle and the arena opens at [three.ws/play/war](https://three.ws/play/war).
+
+The gate is server-side, not cosmetic: the arena will not seat you under a community whose coin you do not hold, and the pairing itself is sealed into a signed war ticket so a fighter cannot open an arena against a community that never agreed to fight. Results are written to a battle ledger and the league is folded from that ledger by `multiplayer/src/war-standings.js`, the same module the arena's own league reads, so a portal board is never a second opinion. One endpoint serves all of it: `GET /api/wars` (board), `GET /api/wars?action=live` (spectator poll), `POST /api/wars?action=queue|leave`, and the game server's HMAC-signed `?action=report` write ([api/wars.js](api/wars.js)). Full reference: [docs/coin-wars.md](docs/coin-wars.md).
+
+Live events run in the same world. A countdown, an agenda, per-segment banners, and a synchronized fireworks show are driven from one config file, so an event exists (or stops existing) without a code change (`src/game/meetup-event.js`, `src/game/event-countdown.js`, [docs/play-live-events.md](docs/play-live-events.md)). Everyone who walks into the event world while it is live is handed a free commemorative wearable that is never granted again afterwards and is never purchasable: see [docs/event-souvenirs.md](docs/event-souvenirs.md).
 
 ---
 

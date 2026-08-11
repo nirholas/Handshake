@@ -85,6 +85,9 @@ API_KEY = os.environ["API_KEY"]
 GCS_BUCKET = os.environ["GCS_BUCKET"]
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "2"))
 QUADRIFLOW_BIN = os.environ.get("QUADRIFLOW_BIN", "quadriflow")
+MANIFOLD_BIN = os.environ.get("MANIFOLD_BIN", "manifold")
+MANIFOLD_RESOLUTION = int(os.environ.get("MANIFOLD_RESOLUTION", "50000"))
+MANIFOLD_TIMEOUT = int(os.environ.get("MANIFOLD_TIMEOUT", "120"))
 
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
@@ -298,6 +301,34 @@ QUADRIFLOW_ATTEMPTS = (
 QUADRIFLOW_BUDGET_S = 600.0
 
 
+def _watertight_obj(src: Path, dst: Path) -> bool:
+    """Rebuild an OBJ as a watertight manifold with hjwdzh/Manifold (MIT).
+
+    QuadriFlow requires watertight manifold input and ships this tool by the same
+    author for the purpose. Real character exports are open at the wrists, neck,
+    and hems, and QuadriFlow's index-map solve aborts on them with "wrong init"
+    no matter which flow solver it uses. Returns False when the tool is missing
+    or produced nothing, so the caller falls back to the raw mesh rather than
+    failing outright."""
+    binary = shutil.which(MANIFOLD_BIN) or MANIFOLD_BIN
+    if shutil.which(MANIFOLD_BIN) is None and not os.path.isfile(binary):
+        log.warning("manifold binary not found (%s); using the raw mesh", MANIFOLD_BIN)
+        return False
+    try:
+        proc = subprocess.run(
+            [binary, str(src), str(dst), str(MANIFOLD_RESOLUTION)],
+            capture_output=True, text=True, timeout=MANIFOLD_TIMEOUT, check=False,
+        )
+    except subprocess.TimeoutExpired:
+        log.warning("manifold rebuild timed out after %ss; using the raw mesh", MANIFOLD_TIMEOUT)
+        return False
+    if proc.returncode != 0 or not dst.exists() or dst.stat().st_size == 0:
+        tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-3:]
+        log.warning("manifold rebuild failed (%s); using the raw mesh", " | ".join(tail))
+        return False
+    return True
+
+
 def _quad_remesh(mesh, target_faces: int):
     """Run QuadriFlow to produce quad-dominant topology.
 
@@ -315,6 +346,14 @@ def _quad_remesh(mesh, target_faces: int):
     with tempfile.TemporaryDirectory() as tmp:
         src = Path(tmp) / "in.obj"
         _write_obj_geometry(mesh, src)
+
+        # An open mesh is rebuilt watertight first; a mesh that is already closed
+        # is handed over untouched, since the rebuild is an approximation.
+        if not mesh.is_watertight:
+            healed = Path(tmp) / "watertight.obj"
+            if _watertight_obj(src, healed):
+                log.info("quad remesh: rebuilt an open mesh as watertight for QuadriFlow")
+                src = healed
 
         deadline = time.monotonic() + QUADRIFLOW_BUDGET_S
         last_error = "quad remesh produced no attempts"
@@ -366,6 +405,41 @@ def _quad_remesh(mesh, target_faces: int):
     quads = sum(1 for p in polys if len(p) == 4)
     quad_ratio = quads / len(polys)
     return verts, polys, quad_ratio
+
+
+def _make_manifold(mesh):
+    """Strip the topology QuadriFlow refuses, returning the input unchanged if
+    the cleanup would leave nothing behind.
+
+    QuadriFlow's index-map solve aborts with "wrong init" on a mesh whose edges
+    are shared by more than two faces. Character exports hit that constantly:
+    they are assembled from overlapping parts, so body and clothing seams meet on
+    shared edges. `_repair_mesh` does not help here (trimesh has no non-manifold
+    edge removal); open3d does."""
+    import numpy as np
+    import open3d as o3d
+    import trimesh
+
+    o3d_mesh = o3d.geometry.TriangleMesh()
+    o3d_mesh.vertices = o3d.utility.Vector3dVector(
+        np.asarray(mesh.vertices, dtype=np.float64)
+    )
+    o3d_mesh.triangles = o3d.utility.Vector3iVector(
+        np.asarray(mesh.faces, dtype=np.int32)
+    )
+    o3d_mesh.remove_duplicated_vertices()
+    o3d_mesh.remove_duplicated_triangles()
+    o3d_mesh.remove_degenerate_triangles()
+    o3d_mesh.remove_non_manifold_edges()
+    o3d_mesh.remove_unreferenced_vertices()
+
+    faces = np.asarray(o3d_mesh.triangles)
+    if len(faces) == 0:
+        log.warning("manifold cleanup removed every face; using the source mesh")
+        return mesh
+    return trimesh.Trimesh(
+        vertices=np.asarray(o3d_mesh.vertices), faces=faces, process=False,
+    )
 
 
 def _triangulate_polys(verts, polys):
@@ -762,6 +836,7 @@ def _process_quad(source, target_faces: int, output_format: str, tex_size: int, 
     # QuadriFlow wants a clean watertight-ish triangle mesh as input.
     geom = source.copy()
     _repair_mesh(geom)
+    geom = _make_manifold(geom)
     verts, polys, quad_ratio = _quad_remesh(geom, target_faces)
 
     tri_mesh = _triangulate_polys(verts, polys)

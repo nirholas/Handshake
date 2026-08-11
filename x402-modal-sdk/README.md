@@ -164,6 +164,28 @@ Returns `{ ok: true, result, payment?, siwx?, response }`. `payment` is present
 on a fresh payment (`{ network, payer, transaction }`); `siwx` is present when
 the user re-entered via sign-in instead of paying.
 
+### `discover(options): Promise<PaymentChallenge>`
+
+Step 1 of `pay()` on its own: probe an endpoint and return its parsed `402`
+challenge without opening any UI. Takes `endpoint` (required), `method`, `body`
+and `headers`; touches no DOM and no wallet, so it also runs on a server, in a
+CLI, or inside an agent that has no modal at all.
+
+```js
+import { discover } from '@three-ws/x402-modal';
+
+const challenge = await discover({ endpoint: '/api/paid/summarize' });
+for (const a of challenge.accepts) {
+  console.log(a.network, a.amount, a.extra?.name);  // eip155:8453 1000 USDC
+}
+```
+
+`accepts[]` comes back normalized (spec-canonical `maxAmountRequired` coerced to
+`amount`), read from the response body or the base64 `payment-required` header,
+whichever carries it. It rejects when the endpoint answers with no readable
+challenge, including a free `200`: pointing it at an unpaid route is an error,
+never a silent success.
+
 ### `configure(config): config` · `getConfig(): config`
 
 Set global defaults once at startup. See [Configuration](#configuration).
@@ -266,6 +288,29 @@ import { pay, configure } from '@three-ws/x402-modal';   // ESM, no side effects
 
 or skip the install entirely and use the CDN `/global` build (auto-binds
 `[data-x402-endpoint]`, exposes `window.X402`).
+
+## Development
+
+```sh
+npm install          # esbuild is the only devDependency
+npm run build        # → dist/x402-modal.mjs (ESM) + dist/x402.global.js (IIFE)
+npm test             # node --test, zero extra deps
+```
+
+`npm test` covers the protocol layer (challenge discovery against a real local
+HTTP server, amount/network/caps helpers, the SIWX message format) and the
+config surface. What only a browser can prove (the global build binding
+`data-x402-endpoint`, the modal mounting, live discovery, cancellation,
+script-tag config) runs from the monorepo root against the live demo endpoint:
+
+```sh
+npm --prefix x402-modal-sdk run build
+node scripts/x402-modal-e2e.mjs
+```
+
+It reads a real `402` challenge and never signs or spends anything.
+`examples/index.html` is the same demo page, for driving by hand: build, serve
+this folder, and open it.
 
 ## Security notes
 

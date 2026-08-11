@@ -31,6 +31,37 @@ export const progress = {
 
 const DOC_DIRS = new Set(['docs', 'doc', 'documentation', 'website', 'site']);
 
+/**
+ * Why a snapshot covers less than the whole fleet, in plain sentences.
+ *
+ * Shared by the CLI and the dashboard so the two can never disagree about the
+ * cause. Both reasons can hold at once, in which case both are reported: an
+ * operator who raises FLEET_MAX_REPOS without also raising the request budget
+ * would otherwise fix half the problem and see no change.
+ *
+ * @param {object|null} snapshot
+ * @returns {string[]} one sentence per reason, empty when the scan was complete
+ */
+export function partialReasons(snapshot) {
+	if (!snapshot?.partial) return [];
+	const out = [];
+	const scanned = snapshot.summary?.repos ?? 0;
+	const owned = snapshot.totalOwned ?? scanned;
+
+	if (snapshot.partialReason === 'rate_limit') {
+		const resets = snapshot.rateLimit?.resetAt ? `, which resets at ${snapshot.rateLimit.resetAt}` : '';
+		const raise = snapshot.authenticated ? 'Some measurements are incomplete.' : 'Set GITHUB_TOKEN to raise the budget from 60 to 5000 requests an hour.';
+		out.push(`The GitHub request budget ran out during this scan${resets}. ${raise}`);
+	}
+	if (scanned < owned) {
+		out.push(`Only the ${scanned} most-starred of ${owned} repositories were scanned. Raise FLEET_MAX_REPOS to cover the whole fleet.`);
+	}
+	// A snapshot written before partialReason existed still reloads from disk and
+	// still renders, so it gets an honest sentence rather than an empty banner.
+	if (out.length === 0) out.push(`${scanned} of ${owned} repositories were scanned.`);
+	return out;
+}
+
 async function gatherRepo(repo) {
 	const [readme, manifest, entries, pagesUrl] = await Promise.all([
 		fetchReadme(repo.fullName),
@@ -112,11 +143,19 @@ export async function runScan({ owner = config.owner, limit = config.maxRepos } 
 			}
 		});
 
+		// A capped scan and an exhausted rate-limit budget are both "partial" and
+		// look identical in the data, but they are different problems with
+		// different fixes. Record which one happened so the console never blames
+		// GitHub for a limit this service set itself.
+		const rateLimited = Boolean(rateLimit.exhausted);
+		const capped = selected.length < all.length;
+
 		const snapshot = {
 			owner,
 			generatedAt: new Date().toISOString(),
 			durationMs: Date.now() - startedAt,
-			partial: Boolean(rateLimit.exhausted) || selected.length < all.length,
+			partial: rateLimited || capped,
+			partialReason: rateLimited ? 'rate_limit' : capped ? 'repo_cap' : '',
 			totalOwned: all.length,
 			authenticated: Boolean(config.githubToken),
 			rateLimit: { limit: rateLimit.limit, remaining: rateLimit.remaining, resetAt: rateLimit.resetAt },

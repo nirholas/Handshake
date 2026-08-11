@@ -112,6 +112,28 @@ export function getConfig(): Required<X402Config>;
  */
 export function pay(opts: PayOptions): Promise<PayResult>;
 
+/** What {@link discover} needs to probe an endpoint: everything but the UI options. */
+export type DiscoverOptions = Pick<PayOptions, 'endpoint' | 'method' | 'body' | 'headers'>;
+
+/** An x402 v2 PaymentRequired envelope, with `accepts[]` normalized. */
+export interface PaymentChallenge {
+	x402Version?: number;
+	error?: string;
+	resource?: { url?: string; description?: string; mimeType?: string };
+	accepts: Array<Record<string, unknown> & { network: NetworkId; amount?: string }>;
+	extensions?: Record<string, unknown>;
+	[k: string]: unknown;
+}
+
+/**
+ * Probe an x402 endpoint and return its parsed payment challenge without
+ * opening any UI. Step 1 of {@link pay}, exported on its own: it touches no DOM
+ * and no wallet, so a server, CLI, or agent can price a paid call before
+ * deciding to pay it. Rejects when the endpoint answers with no readable
+ * challenge (including a free `200`).
+ */
+export function discover(opts: DiscoverOptions): Promise<PaymentChallenge>;
+
 /** Scan the document and bind every `[data-x402-endpoint]` element. Idempotent. */
 export function init(): void;
 
@@ -136,6 +158,7 @@ declare global {
 	interface Window {
 		X402?: {
 			pay: typeof pay;
+			discover: typeof discover;
 			init: typeof init;
 			configure: typeof configure;
 			version: string;

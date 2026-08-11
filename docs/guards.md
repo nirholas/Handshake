@@ -2,7 +2,7 @@
 
 This repository has no CI. GitHub Actions is unavailable on this account, so nothing runs your code when you open a pull request, and nothing blocks a bad merge. What protects the codebase instead is a set of small, fast, local guards wired into paths you cannot skip: the prebuild, the gate, the deploy build, and the git pre-push hook.
 
-This page explains what each guard protects, when it runs, and how to add one. Everything here is generated from [`data/guards.json`](https://github.com/nirholas/three.ws/blob/main/data/guards.json), which [`scripts/audit-guards.mjs`](https://github.com/nirholas/three.ws/blob/main/scripts/audit-guards.mjs) verifies on every gate run, so the stage column below cannot quietly go stale.
+This page explains what each guard protects, when it runs, and how to add one. Everything here tracks [`data/guards.json`](https://github.com/nirholas/three.ws/blob/main/data/guards.json), and [`scripts/audit-guards.mjs`](https://github.com/nirholas/three.ws/blob/main/scripts/audit-guards.mjs) checks the two against each other on every gate run: every stage claim has to be true against the real npm chains, and every registered guard has to appear in a table below. So neither the stage column nor the guard list can quietly go stale.
 
 Browse the same data as an interactive page at [/guards](/guards).
 
@@ -120,6 +120,8 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | MCP golden contracts | `npm run audit:mcp-golden` | Tool names, descriptions, and schemas against a committed snapshot. |
 | MCP safety annotations | `npm run audit:mcp-safety` | Declared `readOnlyHint` and `destructiveHint` match what handlers do. |
 | MCP tool catalog freshness | `npm run audit:mcp-catalog` | `public/mcp-catalog.json` matches what the MCP servers actually expose. |
+| 3D Studio OpenAPI sync | `npm run check:studio-openapi` | The Actions file in the OpenAI submission kit is byte-identical to the OpenAPI schema the site serves. |
+| Live event window | `npm run check:event` | `public/event.json` describes an event that will actually happen, on every surface that reads it. |
 | Cron schedule drift | `npm run check:cron-syntax`, `npm run check:cron-drift` | Valid expressions, and agreement with the running Cloud Scheduler jobs. |
 
 ### Build and deploy
@@ -135,7 +137,10 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 
 | Guard | Command | Protects |
 |---|---|---|
+| CSP-safe inline markup | `npm run audit:inline-handlers` | No served HTML carries an inline event handler attribute or a `javascript:` URL. |
+| Live CSP sweep | `npm run audit:csp` | No page violates the Content-Security-Policy the server sends with it. |
 | Console sweep | `npm run audit:console` | A clean browser console on every route, desktop and mobile. |
+| `/play` failure modes | `npm run audit:play-failures` | `/play` stays usable when its dependencies fail, and hostile deep-link params never execute. |
 | Overlapping fixed overlays | `npm run audit:overlays` | No persistent floating widget can cover another one's controls. |
 | Image loading attributes | `npm run check:images` | Every JS-rendered image sets `loading` and `decoding`. |
 | Wardrobe catalog integrity | `npm run audit:garments` | Every garment validates and its GLB hash matches its manifest. |
@@ -168,6 +173,48 @@ These are the rules the existing guards follow. A new guard that breaks one of t
 
 ---
 
+## Proving a guard still works
+
+`npm run audit:guards` proves a guard is *wired*. It cannot prove the guard still *catches* anything. A checker that has rotted into a no-op (a directory it no longer scans, a regex that stopped matching, an exclusion list that grew until it excluded everything) exits 0 forever, and exit 0 is indistinguishable from a clean tree. That is the worst failure mode a safety net has: loudest when it works, silent when it dies.
+
+So every registry entry carries a `proof`: the violation the guard must reject.
+
+```bash
+npm run prove:guards                 # prove all of them, write public/guard-proofs.json
+npm run prove:guards -- --only check-claude-md
+npm run prove:guards -- --stage gate
+npm run prove:guards -- --help
+```
+
+Each proof runs twice inside a throwaway git worktree overlaid with your working tree, and both halves are required:
+
+1. **Control.** The sandbox is arranged so the guard must pass. A clean exit pins a known baseline; without it, "the guard exited non-zero" could just mean the sandbox is broken.
+2. **Violation.** One surgical mutation is applied. The guard must now exit non-zero **and** print the expected fragment, because a guard that fails for the wrong reason is not a working guard.
+
+A mutation proof is a fixture, not code:
+
+```json
+"proof": {
+  "summary": "CLAUDE.md telling an agent to run an npm script that does not exist.",
+  "violation": {
+    "append": { "CLAUDE.md": "\n\nVerify with `npm run guard-proof-nonexistent`.\n" }
+  },
+  "expect": "guard-proof-nonexistent"
+}
+```
+
+`violation` takes any of `write`, `append`, `delete`, `link`, and `json` (each `json` op needs a `file`, a `pointer`, and exactly one of `insert` / `set` / `removeWhere`), and an optional `setup` block arranges the control side first. A guard that genuinely cannot be proven offline (it needs `gcloud`, a browser, live credentials, or the network) declares the honest gap instead of a fake green:
+
+```json
+"proof": { "kind": "live", "reason": "Needs Playwright plus a server serving dist/, because the thing under test is the browser's own policy evaluation." }
+```
+
+`audit-guards` rejects a guard with no proof block at all, so this cannot be skipped. Results land in [`public/guard-proofs.json`](https://github.com/nirholas/three.ws/blob/main/public/guard-proofs.json) with a verdict per guard and the commit they were measured at.
+
+The runner is deliberately safe to run while other agents are working in this same tree: each run gets its own sandbox worktree keyed to its process id, and reclaims sandboxes left behind by runs that were killed before their teardown.
+
+---
+
 ## Adding a guard
 
 The full walkthrough, with a complete worked example you can run, is in the tutorial: [Write a repository guard](/docs/tutorials/write-a-guard).
@@ -176,10 +223,12 @@ The short version:
 
 1. Write `scripts/check-<thing>.mjs`. Exit non-zero with an actionable message.
 2. Add an npm script for it in `package.json`.
-3. Add it to `data/guards.json` with the stage it runs in and the incident that motivated it.
+3. Add it to `data/guards.json` with the stage it runs in, the incident that motivated it, and a `proof` block (see [Proving a guard still works](#proving-a-guard-still-works)).
 4. Wire it into that stage's chain.
-5. Write `tests/check-<thing>.test.js` covering the pass case and the fail case.
-6. Run `npm run audit:guards`. It will tell you if step 3 and step 4 disagree.
+5. Add a row for it to the tables above, so the page that lists every guard still does.
+6. Write `tests/check-<thing>.test.js` covering the pass case and the fail case.
+7. Run `npm run audit:guards`. It will tell you if steps 3, 4, and 5 disagree.
+8. Run `npm run prove:guards -- --only <id>`. It will tell you whether the guard actually catches what you claimed.
 
 ---
 

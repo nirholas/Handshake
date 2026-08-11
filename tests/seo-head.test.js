@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { rewriteHead, hasSeoRoute } from '../server/seo-head.mjs';
+import { rewriteHead, hasSeoRoute, canonicalOf, canonicalUrlFor } from '../server/seo-head.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const docsShell = readFileSync(path.join(ROOT, 'docs/index.html'), 'utf8');
@@ -85,5 +85,32 @@ describe('hasSeoRoute', () => {
 		expect(hasSeoRoute('/docs/swarms')).toBe(true);
 		expect(hasSeoRoute('/docs/swarms/')).toBe(true);
 		expect(hasSeoRoute('/definitely-not-a-page-xyz')).toBe(false);
+	});
+});
+
+// scripts/check-pages.mjs asserts a swept page served its own canonical, using
+// these two exports rather than restating the rule. A drift here would silently
+// turn the production sweep back into the status-only check that let
+// /docs/tokens-xyz pass while it served the generic docs shell.
+describe('the canonical contract check-pages sweeps against', () => {
+	it('names the page, on a fixed origin, trailing slash or not', () => {
+		expect(canonicalUrlFor('/docs/swarms')).toBe('https://three.ws/docs/swarms');
+		expect(canonicalUrlFor('/docs/swarms/')).toBe('https://three.ws/docs/swarms');
+		expect(canonicalUrlFor('/')).toBe('https://three.ws/');
+	});
+
+	it('reads back exactly what rewriteHead wrote', () => {
+		const head = headOf(rewriteHead('/docs/swarms', docsShell));
+		expect(canonicalOf(head)).toBe(canonicalUrlFor('/docs/swarms'));
+	});
+
+	it('reports the shell canonical for a route the shell does not own', () => {
+		// What a declared-but-undeployed page looks like in the sweep: the shell
+		// answers 200 carrying its own canonical, which is not the one requested.
+		expect(canonicalOf(headOf(docsShell))).not.toBe(canonicalUrlFor('/docs/swarms'));
+	});
+
+	it('returns null for a document with no canonical at all', () => {
+		expect(canonicalOf('<head><title>x</title></head>')).toBeNull();
 	});
 });

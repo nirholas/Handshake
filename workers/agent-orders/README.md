@@ -56,6 +56,26 @@ block such as a firewall rug verdict).
 `price_sol`, `mcap_sol`, `mcap_usd`, `price_change_pct`, `smart_money_score`,
 `dev_dump`, `graduated` — all real, code-free (see `api/_lib/orders.js`).
 
+### Sizing a percentage sell (DCA and TWAP differ on purpose)
+
+Both scheduled types accept `sell_pct`, and they mean different things:
+
+- **DCA** measures against the **live bag** every slice. "DCA out 10% an hour"
+  disposes 10% of whatever is still held, so the position asymptotes rather than
+  closing, which is what a dollar-cost exit is.
+- **TWAP** measures against the **bag at creation**. The API divides the owner's
+  total across the slices (`total_pct / slices`), so the worker re-bases each
+  later slice onto what is left of that promise: `sell 100% over 4 slices`
+  disposes a real quarter of the original bag each time and the last slice sells
+  the remainder outright. Applying the stored per-slice percentage to the live
+  holding instead would dispose 25 / 18.75 / 14.06 / 10.55%, strand ~31.6% of the
+  position, and still mark the order `filled`.
+
+One sweep reads at most 500 active orders per network, ordered by
+`COALESCE(next_fire_at, last_eval_at, created_at)`: due slices first, then
+least-recently-evaluated. Past that cap the work set rotates rather than starving
+one side of the book.
+
 ## Run
 
 ```bash
@@ -104,15 +124,30 @@ validation, condition evaluation, price predicates).
 `tests/agent-orders-sweep.test.js` covers this worker: that a matched trigger
 fires exactly once through `executeAgentTrade` with the custody idempotency key,
 that a missing quote holds instead of firing, that terminal vs clearable blocks
-land in `error` vs back in `active`, DCA slice advance, per-agent serialization,
-and the boot-config guards. Only the chain reads and the trade executor are
-stubbed, so the real store SQL and the real trigger predicates run.
+land in `error` vs back in `active`, DCA slice advance, TWAP percentage-sell
+re-basing (including the full-exit last slice), per-agent serialization, and the
+boot-config guards. Only the chain reads and the trade executor are stubbed, so
+the real store SQL and the real trigger predicates run.
+
+Beyond the suites, two checks prove the live edges the stubs replace. The market
+reader against `$THREE` on mainnet returns a real graduated-AMM quote:
+
+```bash
+node --env-file-if-exists=.env -e "import('./workers/agent-orders/market.js').then(async m => \
+  console.log(await m.getSignals({ network: 'mainnet', mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' })))"
+```
+
+And a short `npm run worker:orders` run writes the heartbeat row and answers the
+liveness endpoint (`PORT=8791 npm run worker:orders`, then
+`curl localhost:8791`). Both were last exercised on 2026-08-11: quote resolved in
+~4 s through the RPC failover chain, sweeps ran at 318 ms each.
 
 ## Deploy
 
-**Status: built and wired, not yet running in production.** There is no
-`agent-orders` Cloud Run service or job in `aerial-vehicle-466722-p5` today, so no
-order fires on its own until someone runs the command below. Orders created
+**Status: built and wired, not yet running in production** (re-checked
+2026-08-11: no `agent-orders` service, no job, and no image in the `workers`
+Artifact Registry repo). No order fires on its own until someone runs the command
+below. Orders created
 through the API sit in `active` until then, which is the honest failure mode
 (nothing fires early, nothing fires wrong). Deploys are owner-gated; everything
 else is ready.
@@ -132,8 +167,8 @@ gcloud builds submit --config workers/agent-orders/cloudbuild.yaml . \
 must pass it or the image tag comes out empty. The four secrets the config mounts
 (`agent-orders-database-url`, `agent-orders-jwt-secret`,
 `agent-orders-wallet-encryption-key`, `agent-orders-solana-rpc-url`) already exist
-and are readable by the `three-ws@` runtime service account; their values are
-verified identical to what `three-ws-api` runs with. Do **not** repoint them at
+and are readable by the `three-ws@` runtime service account; all four were
+re-checked on 2026-08-11 and hash identical to what `three-ws-api` runs with. Do **not** repoint them at
 the project's generic `JWT_SECRET` / `WALLET_ENCRYPTION_KEY` secrets: those hold
 older values and would break custodial key recovery on every live fill.
 
@@ -143,24 +178,33 @@ It ships in `ORDERS_MODE=simulate` (real quotes, no broadcast). Flip
 Run **Job** (jobs get no startup probe, so `PORT` is unset and no listener binds;
 the sweep loop is unaffected either way).
 
-Build it locally the same way Cloud Build does:
+### Verifying the image without deploying
+
+The deploy config above always ends in `gcloud run deploy`. To prove the image
+still builds without shipping it, use the build-only config next to it:
 
 ```bash
-docker build -f workers/agent-orders/Dockerfile -t agent-orders .
+gcloud builds submit . \
+  --config workers/agent-orders/cloudbuild.verify.yaml \
+  --ignore-file workers/agent-orders/verify.gcloudignore \
+  --region us-central1 --project aerial-vehicle-466722-p5
 ```
 
-The build context is the repo root because the image copies `api/`, `src/`, and
-the `agent-payments-sdk` workspace it compiles. On a machine that also holds
-built `dist/` artifacts that context is multi-GB; the image needs none of it, so
-a slow or memory-starved local build is the context walk, not the build.
+Same Dockerfile, same repo-root context, no push and no deploy. Last green
+2026-08-11 (build `c5f6ba8a`, 4m30s, all 14 layers).
 
-Two things about that build are worth knowing before you read its log as a
-failure. The repo-root `package-lock.json` is currently out of sync with
-`package.json`, so the image's `npm ci` exits with EUSAGE and the Dockerfile's
-`|| npm install` fallback carries the install: expected today, and shared with
-every other worker image. And the image compiles `agent-payments-sdk` itself
-(`npm run build --prefix agent-payments-sdk`), which is the slowest layer after
-the install.
+The equivalent local build is `docker build -f workers/agent-orders/Dockerfile
+-t agent-orders .`, but expect it to fail on a dev container: the image installs
+the whole root workspace (3078 packages) and then compiles `agent-payments-sdk`,
+which is more memory than a Codespace has, and the local context is not filtered
+by `.gcloudignore` so it also walks a multi-GB `dist/`. Cloud Build is the
+supported path.
+
+One thing about the build log is worth knowing before you read it as a failure:
+the repo-root `package-lock.json` is out of sync with `package.json`, so the
+image's `npm ci` exits with EUSAGE (missing `@ethereum-attestation-service/*`
+and friends) and the Dockerfile's `|| npm install` fallback carries the install.
+Expected today, and shared with every other worker image.
 
 The migration is
 `api/_lib/migrations/20260623160000_programmable_orders.sql` (`npm run db:migrate`).

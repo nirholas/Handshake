@@ -84,7 +84,7 @@ const QUEUE = [
 	"packages/audio-mcp", // @three-ws/audio-mcp 0.1.2 (312 dl/mo)
 	"packages/clash-mcp", // @three-ws/clash-mcp 0.1.2 (305 dl/mo)
 	"packages/provenance-mcp", // @three-ws/provenance-mcp 0.1.2 (297 dl/mo)
-	"x402-modal-sdk", // @three-ws/x402-modal 0.2.2 (283 dl/mo)
+	"x402-modal-sdk", // @three-ws/x402-modal 0.3.0 (283 dl/mo)
 	"solana-agent-sdk", // @three-ws/solana-agent 0.2.2 (275 dl/mo)
 	"sdk", // @three-ws/sdk 0.2.2 (244 dl/mo)
 	"packages/react", // @three-ws/react 1.0.2 (228 dl/mo)

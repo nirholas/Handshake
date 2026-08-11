@@ -1,12 +1,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { configure, getConfig, version, pay, init } from '../src/x402-modal.js';
+import { readFileSync } from 'node:fs';
+import { configure, getConfig, version, pay, discover, init } from '../src/x402-modal.js';
+
+const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 test('public API surface is intact', () => {
 	assert.equal(typeof pay, 'function');
+	assert.equal(typeof discover, 'function');
 	assert.equal(typeof init, 'function');
 	assert.equal(typeof configure, 'function');
 	assert.match(version, /^\d+\.\d+\.\d+$/);
+});
+
+// The exported string is what merchants read in bug reports and what the
+// builder-code echo carries. It was hardcoded and drifted two patch releases
+// behind package.json; pin the two so a release bump cannot leave it behind.
+test('the exported version matches package.json', () => {
+	assert.equal(version, pkg.version);
 });
 
 test('init() is a no-op without a document (does not throw in Node)', () => {

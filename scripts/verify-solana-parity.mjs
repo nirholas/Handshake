@@ -36,13 +36,18 @@
  * Live provenance is configurable:
  *   VERIFY_SOLANA_LIVE=1     (default — probe the mint + pump programs on mainnet)
  *   VERIFY_SOLANA_LIVE=0     (skip the live check entirely)
- *   SOLANA_RPC_URL / HELIUS_API_KEY honored for the RPC endpoint.
+ *   The RPC endpoint chain is the platform's own (api/_lib/solana/connection.js),
+ *   so SOLANA_RPC_URL, the keyed providers, SOLANA_RPC_FALLBACK_URLS and the
+ *   keyless public lanes are all tried in priority order before an account is
+ *   reported unreachable.
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+
+import { solanaRpcEndpoints } from '../api/_lib/solana/connection.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -358,14 +363,34 @@ export async function scanForDrift(
 // confirmed wrong-kind account)
 // ---------------------------------------------------------------------------
 
-function rpcEndpoint(env = process.env) {
-	if (env.SOLANA_RPC_URL && !/api\.mainnet-beta\.solana\.com/.test(env.SOLANA_RPC_URL))
-		return env.SOLANA_RPC_URL;
-	if (env.HELIUS_API_KEY) return `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
-	return env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+/**
+ * Priority-ordered endpoint chain, taken from the platform's own resolver so this
+ * guard fails over exactly like the running code does.
+ *
+ * Reading one endpoint was a silent hole: with the repo's .env loaded, an
+ * exhausted HELIUS_API_KEY answered every probe with HTTP 403, so all 10 accounts
+ * landed in "unreachable", the whole live check degraded to a warning, and the
+ * script still printed "clean" having verified nothing at all.
+ */
+export function rpcEndpoints(env = process.env) {
+	const explicit =
+		env.SOLANA_RPC_URL && !/api\.mainnet-beta\.solana\.com/.test(env.SOLANA_RPC_URL)
+			? env.SOLANA_RPC_URL
+			: null;
+	const chain = solanaRpcEndpoints('mainnet', explicit);
+	return chain.length ? chain : ['https://api.mainnet-beta.solana.com'];
 }
 
-async function getAccountInfo(url, address) {
+/** Endpoint host only. RPC URLs carry api keys, which must never reach a log. */
+function endpointHost(url) {
+	try {
+		return new URL(url).host;
+	} catch {
+		return 'rpc';
+	}
+}
+
+async function rpcAccountInfo(url, address) {
 	try {
 		const res = await fetch(url, {
 			method: 'POST',
@@ -388,6 +413,26 @@ async function getAccountInfo(url, address) {
 }
 
 /**
+ * Fetch one account, walking the endpoint chain until a lane answers. `endpoints`
+ * is mutated so the lane that served moves to the front: the remaining addresses
+ * then start on a lane known to be alive instead of re-paying the timeout of a
+ * dead one, which is the difference between a 4s run and a 150s one.
+ */
+async function getAccountInfo(endpoints, address) {
+	const errors = [];
+	for (const url of [...endpoints]) {
+		const r = await rpcAccountInfo(url, address);
+		if (r.ok) {
+			const at = endpoints.indexOf(url);
+			if (at > 0) endpoints.unshift(...endpoints.splice(at, 1));
+			return { ...r, endpoint: endpointHost(url) };
+		}
+		errors.push(`${endpointHost(url)} ${r.error}`);
+	}
+	return { ok: false, error: errors.join(' / ') || 'no endpoint configured' };
+}
+
+/**
  * For each canonical address, fetch the account and assert it is the right kind:
  *   - program:           exists & executable.
  *   - token-mint:        exists & owned by SPL Token or Token-2022 program.
@@ -396,14 +441,14 @@ async function getAccountInfo(url, address) {
  *                        for it would derive the wrong ATA).
  */
 export async function checkLiveProvenance(registry, { env = process.env } = {}) {
-	const url = rpcEndpoint(env);
+	const endpoints = rpcEndpoints(env);
 	const wrong = [];
 	const unreachable = [];
 	const ok = [];
 
 	for (const entry of registry) {
-		const r = await getAccountInfo(url, entry.address);
-		const ctx = { ...entry, endpoint: url };
+		const r = await getAccountInfo(endpoints, entry.address);
+		const ctx = { ...entry, endpoint: r.endpoint || endpointHost(endpoints[0]) };
 		if (!r.ok) {
 			unreachable.push({ ...ctx, error: r.error });
 			continue;

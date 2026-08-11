@@ -1,11 +1,14 @@
 /**
- * ERC-8004 registry — wallet connection, IPFS pinning, on-chain registration.
+ * ERC-8004 registry: wallet connection, IPFS pinning, on-chain registration.
  *
- * Requires ethers v6 as a peer dependency.
+ * ethers v6 is an OPTIONAL peer dependency and is loaded at call time, so
+ * importing @three-ws/sdk for the panel, the avatar or the manifests works
+ * without it installed. Only the functions below that actually touch a chain
+ * pay for it.
  */
 
-import { BrowserProvider, Contract } from 'ethers';
-import { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS, agentRegistryId } from './abi.js';
+import { loadEthers } from '../peer.js';
+import { IDENTITY_REGISTRY_ABI, agentRegistryId, getRegistry } from './abi.js';
 
 // ---------------------------------------------------------------------------
 // Wallet
@@ -23,6 +26,7 @@ export async function connectWallet() {
 		throw new Error('No wallet detected. Install MetaMask or a compatible wallet.');
 	}
 
+	const { BrowserProvider } = await loadEthers('connectWallet()');
 	_provider = new BrowserProvider(window.ethereum);
 	_signer = await _provider.getSigner();
 	const address = await _signer.getAddress();
@@ -116,19 +120,20 @@ export function buildRegistrationJSON({
 
 /**
  * Get the Identity Registry contract for the connected chain.
+ *
+ * Async because ethers is an optional peer loaded on demand. Address
+ * resolution goes through `getRegistry`, so a `THREE_WS_REGISTRY_IDENTITY_
+ * <chainId>` env override wins over the built-in deployment table and an
+ * unconfigured chain throws instead of returning the zero address.
+ *
  * @param {number} chainId
  * @param {import('ethers').Signer} signer
- * @returns {import('ethers').Contract}
+ * @returns {Promise<import('ethers').Contract>}
  */
-export function getIdentityRegistry(chainId, signer) {
-	const deployment = REGISTRY_DEPLOYMENTS[chainId];
-	if (!deployment?.identityRegistry) {
-		throw new Error(
-			`No Identity Registry configured for chain ${chainId}. ` +
-				`Set REGISTRY_DEPLOYMENTS[${chainId}].identityRegistry in sdk/src/erc8004/abi.js`,
-		);
-	}
-	return new Contract(deployment.identityRegistry, IDENTITY_REGISTRY_ABI, signer);
+export async function getIdentityRegistry(chainId, signer) {
+	const address = getRegistry(chainId, 'identityRegistry');
+	const { Contract } = await loadEthers('getIdentityRegistry()');
+	return new Contract(address, IDENTITY_REGISTRY_ABI, signer);
 }
 
 // ---------------------------------------------------------------------------
@@ -176,7 +181,7 @@ export async function registerAgent({
 		log(`Image pinned: ipfs://${imageCID}`);
 	}
 
-	const registry = getIdentityRegistry(chainId, signer);
+	const registry = await getIdentityRegistry(chainId, signer);
 
 	log('Registering agent on-chain...');
 	const tx = await registry['register(string)'](imageCID ? `ipfs://${imageCID}` : endpoint);
@@ -208,7 +213,7 @@ export async function registerAgent({
 		imageCID,
 		agentId,
 		chainId,
-		registryAddr: REGISTRY_DEPLOYMENTS[chainId].identityRegistry,
+		registryAddr: getRegistry(chainId, 'identityRegistry'),
 		services: allServices,
 	});
 

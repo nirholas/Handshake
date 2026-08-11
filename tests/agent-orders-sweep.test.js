@@ -359,6 +359,76 @@ describe('runOrderSweep: DCA / TWAP slices', () => {
 
 		expect(tradeState.calls).toHaveLength(0);
 	});
+
+	// A TWAP sell divides the owner's TOTAL percentage across the slices, so its
+	// sell_pct is a share of the bag at creation time, not of whatever is left.
+	const twapSell = (over = {}) => order({
+		type: 'twap', side: 'sell', size_sol: null, sell_pct: 25,
+		schedule: { interval_seconds: 300, slices: 4, filled_slices: 0, total_pct: 100 },
+		next_fire_at: new Date(Date.now() - 1_000).toISOString(),
+		...over,
+	});
+
+	it('sells the promised share of the ORIGINAL bag on a later TWAP slice, not of what is left', async () => {
+		// Slice 3 of 4 on a "sell 100%" TWAP: 50% of the bag is already gone, so the
+		// remaining 25 points of the original are 50% of what is still held. Applying
+		// the raw 25% here would leave a third of the position stranded.
+		dbState.activeOrders = [twapSell({
+			schedule: { interval_seconds: 300, slices: 4, filled_slices: 2, total_pct: 100 },
+			fill_count: 2, status: 'partial',
+		})];
+		priceAt(41_000);
+		marketState.holding = { whole: 500, raw: 500_000_000n, decimals: 6 };
+
+		await runOrderSweep(cfg);
+
+		expect(tradeState.calls).toHaveLength(1);
+		expect(tradeState.calls[0].input.amount).toBeCloseTo(250, 6);
+	});
+
+	it('closes the position with a max sell on the final slice of a full-exit TWAP', async () => {
+		dbState.activeOrders = [twapSell({
+			schedule: { interval_seconds: 300, slices: 4, filled_slices: 3, total_pct: 100 },
+			fill_count: 3, status: 'partial',
+		})];
+		priceAt(41_000);
+		marketState.holding = { whole: 250, raw: 250_000_000n, decimals: 6 };
+
+		await runOrderSweep(cfg);
+
+		expect(tradeState.calls).toHaveLength(1);
+		// parseTradeInput turns a "max" sell into the isMax flag with a null amount,
+		// so the executor dusts out the whole balance it reads at fire time.
+		expect(tradeState.calls[0].input.isMax).toBe(true);
+		expect(tradeState.calls[0].input.amount).toBeNull();
+		expect(call('advance').values[0]).toBe('filled');
+	});
+
+	it('leaves the first TWAP slice sized straight off the total percentage', async () => {
+		dbState.activeOrders = [twapSell()];
+		priceAt(41_000);
+		marketState.holding = { whole: 1_000, raw: 1_000_000_000n, decimals: 6 };
+
+		await runOrderSweep(cfg);
+
+		expect(tradeState.calls[0].input.amount).toBe(250);
+	});
+
+	it('keeps a DCA percentage sell measured against the live bag', async () => {
+		// The opposite convention on purpose: "DCA out 10% an hour" means 10% of
+		// whatever is left each time, so a later slice must NOT be re-based.
+		dbState.activeOrders = [dca({
+			side: 'sell', size_sol: null, sell_pct: 10,
+			schedule: { interval_seconds: 3600, slices: 5, filled_slices: 3 },
+			fill_count: 3, status: 'partial',
+		})];
+		priceAt(41_000);
+		marketState.holding = { whole: 700, raw: 700_000_000n, decimals: 6 };
+
+		await runOrderSweep(cfg);
+
+		expect(tradeState.calls[0].input.amount).toBeCloseTo(70, 6);
+	});
 });
 
 // ── conditional + trailing ───────────────────────────────────────────────────

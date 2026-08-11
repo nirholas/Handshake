@@ -61,6 +61,19 @@ function rowToEntry(row) {
 	return entry;
 }
 
+// Decode one record read back out of Redis. The Upstash REST client
+// deserializes JSON responses by default, so a value written as a JSON string
+// comes back as an ALREADY-PARSED object; running JSON.parse over that throws
+// and the record is silently dropped. That is exactly what happened to every
+// live caster's activity log and to every viewer reaction: the frame poll below
+// handled both shapes, these two read paths did not, so the log arrived empty
+// and reactions never fanned out. Returns null only for genuinely unusable data.
+export function parseRedisRecord(value) {
+	if (value && typeof value === 'object') return value;
+	if (typeof value !== 'string') return null;
+	try { return JSON.parse(value); } catch { return null; }
+}
+
 // Fetch the agent's most recent real activity from the database. Used as the
 // always-available fallback when no live caster is pushing a structured log.
 async function fetchDbActivity(agentId) {
@@ -132,12 +145,15 @@ export default async function handleAgentScreenStream(req, res) {
 		try {
 			const logKey = `agent:screen:${agentId}:log`;
 			const raw = await r.lrange(logKey, 0, 49);
-			if (raw?.length) {
+			const entries = (raw || [])
+				.map(parseRedisRecord)
+				.filter(Boolean)
+				.reverse(); // oldest-first for display
+			// Only an entry we could actually decode counts as a live caster log.
+			// An undecodable list must fall through to the DB backfill rather than
+			// leave the panel blank behind a `hasRedisLog` flag it never earned.
+			if (entries.length) {
 				hasRedisLog = true;
-				const entries = raw
-					.map((s) => { try { return JSON.parse(s); } catch { return null; } })
-					.filter(Boolean)
-					.reverse(); // oldest-first for display
 				send('log', { entries });
 			}
 		} catch { /* non-fatal */ }
@@ -204,7 +220,7 @@ export default async function handleAgentScreenStream(req, res) {
 				try {
 					const raw = await r.get(frameKey);
 					if (raw) {
-						const frame = typeof raw === 'string' ? JSON.parse(raw) : raw;
+						const frame = parseRedisRecord(raw);
 						if (frame?.ts && frame.ts !== lastTs) {
 							lastTs = frame.ts;
 							wasDark = false;
@@ -227,7 +243,7 @@ export default async function handleAgentScreenStream(req, res) {
 					const recent = await r.lrange(reactionKey, 0, REACTION_RECENT_CAP - 1);
 					if (recent?.length) {
 						const fresh = recent
-							.map((s) => { try { return JSON.parse(s); } catch { return null; } })
+							.map(parseRedisRecord)
 							.filter((x) => x && Number(x.ts) > lastReactionTs)
 							.sort((a, b) => a.ts - b.ts);
 						if (fresh.length) {

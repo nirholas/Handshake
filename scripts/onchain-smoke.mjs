@@ -78,8 +78,9 @@ import { normalizeGatewayURL } from '../src/ipfs.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
-// Anchor's default placeholder — the agent_invocation program is "deployed" only
-// once this is replaced with a real on-chain id (task 03).
+// Anchor's default placeholder. A configured id equal to this one means no real
+// program id was ever chosen; step 8 also probes the cluster, because a real id
+// in source still says nothing about whether the program is deployed.
 const AGENT_INVOCATION_PLACEHOLDER = 'Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS';
 
 const ERC8004_TYPE = 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1';
@@ -820,18 +821,31 @@ async function stepX402PayByName(cfg) {
 // ---------------------------------------------------------------------------
 
 async function stepSolanaInvoke(cfg) {
-	// Read the program id from the light IDL module first — deciding SKIP without
-	// pulling the heavy Anchor runtime keeps the common (undeployed) path fast.
-	let programId;
-	try {
-		({ AGENT_INVOCATION_PROGRAM_ID: programId } =
-			await import('../agent-protocol-sdk/dist/idl.js'));
-	} catch (err) {
-		return fail(`agent-protocol-sdk not built (run its build): ${err.message}`);
-	}
+	// Program id + invocation path both come from the API runtime module, which is
+	// the code production actually signs with and needs no build step. The earlier
+	// read went through the published SDK's dist/, a gitignored build artifact, so
+	// a clean checkout failed this step on a missing file rather than reporting
+	// anything about the chain.
+	const { AGENT_INVOCATION_PROGRAM_ID: programId, recordInvocationReceipt } = await import(
+		'../api/_lib/agent-invocation-onchain.js'
+	);
 	if (!programId || programId === AGENT_INVOCATION_PLACEHOLDER) {
 		return skip(
-			'agent_invocation program not deployed — id is the Anchor placeholder (task 03 pending)',
+			'agent_invocation program id is still the Anchor placeholder; deploy the program first',
+		);
+	}
+
+	const sol = await loadSolana();
+	const { Connection } = sol;
+	const conn = new Connection(cfg.solanaRpcDevnet, 'confirmed');
+
+	// An id in source is not a deployment: ask the cluster before claiming either
+	// way, so an undeployed program reads as the SKIP this harness promises rather
+	// than as a confusing send failure once a signer is supplied.
+	const programInfo = await conn.getAccountInfo(new sol.PublicKey(programId));
+	if (!programInfo?.executable) {
+		return skip(
+			`agent_invocation ${programId.slice(0, 8)} not deployed to devnet; anchor deploy --provider.cluster devnet (contracts/agent-invocation)`,
 		);
 	}
 	if (!cfg.solanaKey) {
@@ -840,20 +854,17 @@ async function stepSolanaInvoke(cfg) {
 		);
 	}
 
-	const sdk = await import('../agent-protocol-sdk/dist/index.js');
-	const sol = await loadSolana();
-	const { Connection } = sol;
 	const invoker = solanaKeypairFrom(sol, cfg.solanaKey);
 	const target = sol.Keypair.generate(); // synthetic target authority
-	const conn = new Connection(cfg.solanaRpcDevnet, 'confirmed');
 
-	const sig = await sdk.invokeSkill({
-		connection: conn,
-		invokerAuthority: invoker,
+	const { signature: sig } = await recordInvocationReceipt({
+		invokerKeypair: invoker,
 		targetAuthority: target.publicKey,
 		skillName: 'onchain-smoke',
 		parameters: JSON.stringify({ harness: 'scripts/onchain-smoke.mjs' }),
-		programId: new sol.PublicKey(programId),
+		network: 'devnet',
+		programId,
+		connection: conn,
 	});
 
 	// Assert the SkillInvoked event is in the confirmed tx's program logs.

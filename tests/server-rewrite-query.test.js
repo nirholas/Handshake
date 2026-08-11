@@ -19,10 +19,14 @@ const MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 let BASE;
 let server;
 
+// 90s, not 30s: startTestServer waits up to 60s for readiness because a boot
+// that takes ~1.5s idle takes tens of seconds under full-suite load. This suite
+// is the one that proved it, timing out at exactly the old 20s readiness
+// deadline in a full run and passing in 7s on its own.
 beforeAll(async () => {
 	server = await startTestServer();
 	BASE = server.base;
-}, 30000);
+}, 90000);
 
 afterAll(() => {
 	server?.close();

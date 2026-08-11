@@ -9,7 +9,7 @@
  */
 
 import { config } from './config.js';
-import { runScan } from './scan.js';
+import { runScan, partialReasons } from './scan.js';
 import * as store from './store.js';
 import { attention } from './server.js';
 
@@ -35,7 +35,9 @@ const colorFor = (score) => (score >= 75 ? GREEN : score >= 55 ? YELLOW : RED);
 function printReport(snapshot) {
 	const { summary } = snapshot;
 	process.stdout.write(`\n${BOLD}${snapshot.owner}${RESET}  ${summary.repos} repositories, ${summary.stars.toLocaleString()} stars\n`);
-	process.stdout.write(`${DIM}scanned in ${(snapshot.durationMs / 1000).toFixed(1)}s${snapshot.partial ? ', partial (rate limit)' : ''}${RESET}\n\n`);
+	process.stdout.write(`${DIM}scanned in ${(snapshot.durationMs / 1000).toFixed(1)}s${snapshot.partial ? ', partial' : ''}${RESET}\n`);
+	for (const reason of partialReasons(snapshot)) process.stdout.write(`${YELLOW}  ${reason}${RESET}\n`);
+	process.stdout.write('\n');
 	process.stdout.write(`  median health      ${colorFor(summary.medianScore)}${summary.medianScore}/100${RESET}\n`);
 	process.stdout.write(`  live deployments   ${summary.deployments.healthy}/${summary.deployments.total}\n`);
 	process.stdout.write(`  dead README links  ${summary.links.dead}/${summary.links.total}\n`);

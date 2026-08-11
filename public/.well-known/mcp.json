@@ -13,7 +13,7 @@
 			"name": "three.ws",
 			"endpoint": "https://three.ws/api/mcp",
 			"transport": "streamable-http",
-			"auth": "OAuth 2.1 (end-user) or API key (server-to-server)",
+			"auth": "OAuth 2.1 (end-user), API key (server-to-server), or x402 pay-per-call",
 			"description": "Avatars, glTF/GLB validation and inspection, agent data, memory, and copy-trading tools.",
 			"documentation": "https://three.ws/docs/mcp"
 		},
@@ -53,8 +53,8 @@
 			"name": "pump.fun",
 			"endpoint": "https://three.ws/api/pump-fun-mcp",
 			"transport": "streamable-http",
-			"auth": "none",
-			"description": "Free read-only pump.fun and Solana token tools.",
+			"auth": "none for the read-only tools; API key or x402 for pumpfun_upload_metadata",
+			"description": "Free pump.fun and Solana token tools: holders, trades, curve, intel. One write: metadata upload.",
 			"documentation": "https://three.ws/docs/mcp"
 		},
 		{

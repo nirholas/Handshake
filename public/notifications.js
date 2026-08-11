@@ -316,9 +316,10 @@
 		}
 		if (!loaded && !errored) { renderSkeleton(); return; }
 		if (errored && !items.length) {
-			var retry = el('a', 'notif-signin-btn', 'Try again');
-			retry.href = '#';
-			retry.addEventListener('click', function (e) { e.preventDefault(); fetchList(); });
+			// Refetches in place, a control, not a destination, so it's a button.
+			var retry = el('button', 'notif-signin-btn', 'Try again');
+			retry.type = 'button';
+			retry.addEventListener('click', function () { fetchList(); });
 			var blk = stateBlock('!', "Couldn't load notifications", 'Check your connection and try again.');
 			blk.appendChild(retry);
 			body.appendChild(blk);

@@ -13,7 +13,8 @@
  *   Spin up additional AgentScreenCaster instances (each with their own
  *   agentId/bearerToken) and run their task functions concurrently.
  *
- * Env vars (see .env.example for full list):
+ * Env vars (README.md holds the full table, including the trade task's
+ * WALLET_STORAGE_STATE_PATH):
  *   AGENT_ID             UUID of the agent identity (required)
  *   AGENT_BEARER_TOKEN   JWT or API key (required)
  *   PUSH_URL             Override push endpoint (default: https://three.ws/api/agent-screen-push)

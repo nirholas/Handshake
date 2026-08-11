@@ -60,8 +60,14 @@ const CHORE_KEYWORD = /\b(lockfile|package-lock|pnpm-lock|node_modules|gitignore
 
 // Paths that, if a commit touches ONLY these, make it internal regardless of
 // its subject. A commit that also touches product code is kept.
+//
+// The generated block is every file scripts/build-page-index.mjs writes. They
+// are mirrors of data/pages.json + data/changelog.json, which this audit
+// already reads directly, so a commit that only regenerates them ships nothing
+// new by construction. Left out, a bare `npm run build:pages` commit reads as
+// unlogged user-visible work and pads the GAPS count with pure churn.
 const INTERNAL_ONLY_PATH =
-	/^(tests?\/|\.github\/|scripts\/|\.husky\/|\.claude\/|\.agents\/|prompts\/|data\/_generated\/|CHANGELOG\.md$|CLAUDE\.md$|ISSUES\.md$|data\/changelog\.json$|public\/changelog\.(json|xml)$|.*\.lock$|.*\.test\.[jt]s$|.*\.spec\.[jt]s$)/;
+	/^(tests?\/|\.github\/|scripts\/|\.husky\/|\.claude\/|\.agents\/|prompts\/|data\/_generated\/|CHANGELOG\.md$|CLAUDE\.md$|ISSUES\.md$|data\/changelog\.json$|public\/changelog\.(json|xml)$|public\/features\.json$|public\/llms(-full)?\.txt$|public\/sitemap\/|public\/locales\/localized-pages\.json$|.*\.lock$|.*\.test\.[jt]s$|.*\.spec\.[jt]s$)/;
 
 // Plumbing: real shipped work that a $THREE holder still never perceives —
 // container builds, GPU-worker image pins, generated translation bundles,
@@ -70,11 +76,17 @@ const INTERNAL_ONLY_PATH =
 // what trained everyone to ignore this audit. A commit whose files are ALL
 // plumbing gets reported under its own heading instead, outside the count.
 const PLUMBING_PATH =
-	/^(workers\/|crates\/|server\/|deploy\/|marketing\/|specs\/|docs\/|blog\/|public\/locales\/|locales\/|\.env\.example$|STRUCTURE\.md$|ARCHITECTURE\.md$|README\.md$|.*\/README\.md$|.*\/Dockerfile$|.*cloudbuild.*\.ya?ml$|.*\.md$)/;
+	/^(workers\/|services\/|crates\/|server\/|deploy\/|marketing\/|specs\/|docs\/|blog\/|public\/locales\/|locales\/|\.env\.example$|STRUCTURE\.md$|ARCHITECTURE\.md$|README\.md$|.*\/README\.md$|.*\/Dockerfile$|.*cloudbuild.*\.ya?ml$|.*\.md$)/;
 
 // …unless the subject says the plumbing IS the product: a brand-new worker
 // lane or backend is a capability holders can use, however deep it sits.
+//
+// Tested against the subject with its conventional-commit SCOPE removed, type
+// kept: `feat(screen-worker): resolve local Chrome launch options` is a config
+// change inside one worker, not a new lane, and matching "worker" out of the
+// scope escaped every such commit into the GAPS count.
 const PLUMBING_ESCAPE = /\b(lane|backend|worker)\b.*\b(new|add|introduc)|^(feat|feature)\b.*\b(lane|worker)\b/i;
+const escapeSubject = (subject) => subject.replace(/^([a-z]+)\([^)]*\):/i, '$1:');
 
 // --- keyword extraction -----------------------------------------------------
 
@@ -175,7 +187,7 @@ for (const c of commits) {
 	const allPlumbing =
 		files.length > 0 &&
 		files.every((f) => PLUMBING_PATH.test(f) || INTERNAL_ONLY_PATH.test(f)) &&
-		!PLUMBING_ESCAPE.test(c.subject);
+		!PLUMBING_ESCAPE.test(escapeSubject(c.subject));
 	(allPlumbing ? plumbing : gaps).push(row);
 }
 

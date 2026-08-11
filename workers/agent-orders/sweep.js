@@ -100,8 +100,34 @@ async function evaluate(order, now) {
 	return { reason, triggerPrice: metricVal, sliceIndex: 0, terminal: true, nextFireAt: null };
 }
 
+/**
+ * The share of the CURRENT holding a percentage sell disposes on this slice.
+ *
+ * A DCA sell's sell_pct is deliberately a percentage of the live bag every time:
+ * "DCA out 10% an hour" means 10% of whatever is left. A TWAP sell is the
+ * opposite. The API divides the owner's TOTAL percentage across the slices
+ * (api/_lib/orders.js), so sell_pct is a share of the bag AS IT WAS when the
+ * order was created, and every earlier slice already shrank that bag. Applying
+ * it to the live holding each time compounds downward: "sell 100% over 4 slices"
+ * would dispose 25 / 18.75 / 14.06 / 10.55%, leave ~31.6% of the bag behind, and
+ * still mark the order filled. Re-base onto what is left of the promised total,
+ * which lands the final slice on the whole remainder.
+ */
+function sellFractionPct(order, sliceIndex) {
+	const pct = Number(order.sell_pct);
+	const i = Number(sliceIndex) || 0;
+	const slices = Number(order.schedule?.slices ?? 1);
+	if (order.type !== 'twap' || i <= 0 || !(slices > 0)) return pct;
+	// Derive from the owner's total rather than the rounded per-slice figure, so
+	// the last slice lands on exactly 100 instead of leaving rounding dust behind.
+	const perSlice = Number(order.schedule?.total_pct ?? pct * slices) / slices;
+	const bagLeft = 100 - perSlice * i; // percent of the original bag still held
+	if (!(bagLeft > 0)) return 0;
+	return (perSlice / bagLeft) * 100;
+}
+
 /** Build the executeAgentTrade `body` for a fire, or null if it can't be sized. */
-async function buildBody(order, agent) {
+async function buildBody(order, agent, sliceIndex = 0) {
 	const base = { mint: order.mint, slippageBps: order.slippage_bps, network: order.network, side: order.side };
 	if (order.side === 'buy') {
 		if (!(Number(order.size_sol) > 0)) return null;
@@ -109,10 +135,12 @@ async function buildBody(order, agent) {
 	}
 	// sell
 	if (order.sell_pct != null) {
-		if (order.sell_pct >= 100) return { ...base, amount: 'max' };
+		const pct = sellFractionPct(order, sliceIndex);
+		if (!(pct > 0)) return null;
+		if (pct >= 100) return { ...base, amount: 'max' };
 		const holding = await getHolding({ network: order.network, mint: order.mint, owner: agent.meta.solana_address });
 		if (!holding || holding.whole <= 0) return null;
-		const amt = holding.whole * (order.sell_pct / 100);
+		const amt = holding.whole * (pct / 100);
 		return amt > 0 ? { ...base, amount: amt } : null;
 	}
 	if (Number(order.size_tokens) > 0) {
@@ -179,7 +207,7 @@ async function settle(order, fire, result, mode) {
 async function fireOne(order, agent, fire, cfg) {
 	if (!(await claimFire(order.id))) return; // another sweep owns it
 	try {
-		const body = await buildBody(order, agent);
+		const body = await buildBody(order, agent, fire.sliceIndex);
 		if (!body) { await releaseFire(order.id, order.fill_count > 0 ? 'partial' : 'active', 'no_balance_or_size'); return; }
 
 		const tradeLimits = getTradeLimits(agent.meta);
