@@ -24,6 +24,17 @@ instant fallback lane: to roll back, repoint `GCP_HUNYUAN3D_URL` at the
 All three services speak the **same wire contract**, so any URL drops straight
 into the platform's `GCP_HUNYUAN3D_URL` env.
 
+**Which one is live right now:** `model-hunyuan3d-21-rtx`. That is what
+`GCP_HUNYUAN3D_URL` on the `three-ws-api` service points at, and it is the only
+one of the three that runs warm (`min-instances=1`); the two L4 services scale
+to zero and take a multi-minute weight load on their first request. Confirm
+before you assume:
+
+```bash
+gcloud run services describe three-ws-api --region us-central1 \
+	--format='value(spec.template.spec.containers[0].env)' | tr ',' '\n' | grep HUNYUAN
+```
+
 **Why an RTX build exists.** Two hard walls, found live on 2026-07-17:
 
 1. **The L4 2.1 service cannot finish loading at all.** app21 stages ~18 GiB
@@ -64,7 +75,7 @@ only generated GLBs are returned to callers.
 ## Endpoints
 
 `POST /infer`, `POST /reconstruct`, `GET /tasks/{id}`, `GET /jobs/{id}` require
-`Authorization: Bearer $API_KEY`. `GET /health` is unauthenticated.
+`Authorization: Bearer $API_KEY`. `GET /` and `GET /health` are unauthenticated.
 
 ### `POST /infer` → `202`
 
@@ -111,7 +122,8 @@ sanitized `error` string; unknown ids return `404`.
 ### `GET /health`
 
 ```json
-{ "ok": true, "model": "hunyuan3d-2.1", "gpu_available": true, "gpu_name": "NVIDIA L4",
+{ "ok": true, "model": "hunyuan3d-2.1", "gpu_available": true,
+  "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
   "pipeline_loaded": true, "ready": true, "load_error": null }
 ```
 
@@ -119,6 +131,28 @@ The pipeline loads in the **background** after the HTTP port opens, so the
 instance answers `/health` immediately; `ready` flips to `true` once the shape +
 paint models finish loading, and `load_error` carries a sanitized string if the
 load failed.
+
+**These three fields are a wire contract, not diagnostics.** The platform reads
+them in both directions: [`api/_lib/forge-health.js`](../../api/_lib/forge-health.js)
+for the status dashboard and [`api/_lib/forge-lane-health.js`](../../api/_lib/forge-lane-health.js)
+on the generation hot path. A populated `load_error` marks the lane **down**
+(routing skips it); `ready: false` marks it up but never warm (a submit queues
+until the weights land, so the caller widens its ETA). Renaming or dropping one
+silently turns a dead worker back into a green backend. Both probes hit
+`/health` for exactly this reason; before 2026-08-11 they hit the service root
+and read the 404 as healthy.
+
+### `GET /`
+
+```json
+{ "service": "model-hunyuan3d-21", "model": "hunyuan3d-2.1", "health": "/health",
+  "endpoints": ["POST /infer", "POST /reconstruct", "GET /tasks/{id}", "GET /jobs/{id}", "GET /health"] }
+```
+
+Service identity for a bare-root GET. It serves no inference; it exists so a
+probe or an operator landing on the root gets pointed at `/health` instead of a
+404. (Two platform probes did exactly that, at one 404 per minute per service,
+until the readiness fix above.)
 
 ## Quality tiers (2.1)
 
@@ -187,7 +221,11 @@ Submit from the **repo root** (the build step declares
 `SHORT_SHA` explicitly — `gcloud builds submit` does not auto-populate it:
 
 ```bash
-# 2.1 (model-hunyuan3d-21)
+# 2.1 on RTX PRO 6000 (model-hunyuan3d-21-rtx): THE PRODUCTION LANE
+gcloud builds submit --config workers/model-hunyuan3d/cloudbuild.hunyuan21rtx.yaml \
+	--substitutions=SHORT_SHA=$(git rev-parse --short HEAD) .
+
+# 2.1 on L4 (model-hunyuan3d-21): cannot finish a job today, see wall 1 above
 gcloud builds submit --config workers/model-hunyuan3d/cloudbuild.hunyuan21.yaml \
 	--substitutions=SHORT_SHA=21-$(git rev-parse --short HEAD) .
 
@@ -196,13 +234,27 @@ gcloud builds submit --config workers/model-hunyuan3d/cloudbuild.yaml \
 	--substitutions=SHORT_SHA=$(git rev-parse --short HEAD) .
 ```
 
-The 2.1 service deploys in `us-central1`: **1× `nvidia-l4` GPU** (no zonal
-redundancy), 8 vCPU, 32 GiB, 900 s request timeout, `min-instances=1` (kept warm
-so no request pays the multi-GiB weight load), `max-instances=1`. Build/runtime
-service accounts are pinned (`three-ws-build@` / `avatar-reconstruction-sa@`) —
-the project's default compute SA was deleted. The custom_rasterizer CUDA compile
-plus the bpy/torch install push the build past the default timeout, so
-`timeout: 3600s`.
+Every submit deploys as well as builds, so all three are owner-gated production
+deploys, not build checks.
+
+What each config asks Cloud Run for, all in `us-central1`, all with no GPU zonal
+redundancy, a 900 s request timeout, and the `three-ws-build@` /
+`avatar-reconstruction-sa@` service accounts pinned (the project's default
+compute SA was deleted, so an unpinned submit fails outright):
+
+| Config | GPU | CPU / memory | min / max | Build timeout |
+|---|---|---|---|---|
+| `cloudbuild.hunyuan21rtx.yaml` | 1× `nvidia-rtx-pro-6000` | 20 / 80 Gi | 1 / 1 | 7200 s |
+| `cloudbuild.hunyuan21.yaml` | 1× `nvidia-l4` | 8 / 32 Gi | 0 / 1 | 3600 s |
+| `cloudbuild.yaml` | 1× `nvidia-l4` | 8 / 32 Gi | 0 / 1 | 3600 s |
+
+**Only the RTX lane is kept warm.** The L4 GPU allocation in this region is
+scarce and shared with the other model workers, so neither L4 Hunyuan3D service
+pins an instance: the RTX service is the primary and the 2.0 service is a
+fallback that pays its weight load on the first request after an idle period.
+The CUDA compiles (custom_rasterizer plus the mesh-processor pybind extension,
+and on the RTX image both the 8.9 and 12.0 CUDA archs) are what push the build
+timeouts far past the 10-minute default.
 
 ## Wire it into the platform
 
@@ -220,11 +272,37 @@ the same var at the `model-hunyuan3d` service URL. The tier is declared in
 [`api/_lib/forge-tiers.js`](../../api/_lib/forge-tiers.js)
 (`requiresEnv: ['GCP_HUNYUAN3D_URL', 'GCP_RECONSTRUCTION_KEY']`), routed by
 [`api/forge.js`](../../api/forge.js), health-probed by
-[`api/_lib/forge-health.js`](../../api/_lib/forge-health.js), and the
+[`api/_lib/forge-health.js`](../../api/_lib/forge-health.js) and
+[`api/_lib/forge-lane-health.js`](../../api/_lib/forge-lane-health.js) (both
+against `/health`, see the readiness contract above), and the
 [avatar-pipeline-controller](../avatar-pipeline-controller/) also selects it as a
 mesh backend via `MODEL_HUNYUAN3D_URL`. All workers share the platform-side
 bearer secret `GCP_RECONSTRUCTION_KEY`, which must equal each service's
 `API_KEY`.
+
+## Tests
+
+[`test_worker_api.py`](./test_worker_api.py) covers the 2.1 worker's whole
+caller-facing surface with no GPU, no weights, and no network. It can do that
+because `app21.py` defers its `import torch` into the loader thread, so the HTTP
+app imports on a plain CPU box:
+
+```bash
+pip install pytest fastapi httpx pillow pydantic google-cloud-storage
+python3 workers/model-hunyuan3d/test_worker_api.py             # standalone runner
+python3 -m pytest -q workers/model-hunyuan3d/test_worker_api.py # 9 tests
+```
+
+It pins the `/health` readiness contract the platform probes depend on, the
+`/` identity route, bearer auth on every inference and task route, the tier
+budget table above, the SSRF refusals in the image decoder, and the durable
+`tasks/{id}.json` round trip that lets a submit and a later poll land on
+different instances and still agree.
+
+The GPU inference itself is not covered here (it needs the built CUDA image and
+real weights); exercise it with the submit-poll-fetch loop below against a
+deployed service. The 2.0 worker (`main.py`) imports torch at module scope, so
+it is only importable inside its own image.
 
 ## Example — submit, poll, fetch
 

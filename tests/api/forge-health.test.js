@@ -174,6 +174,94 @@ describe('forge-health — per-backend verdicts', () => {
 		expect((await probeForgeHealth()).backends.hunyuan3d.status).toBe('down');
 	});
 
+	// The self-host workers bind their port in seconds and then load multi-GiB
+	// weights in a background thread, so "routable" and "able to generate" are
+	// different questions. The probe used to GET the service root, which no
+	// worker serves, and score the resulting 404 as ok, which made a worker
+	// whose model load had already failed indistinguishable from a working one
+	// (and logged a 404 warning in that worker's log once a minute forever).
+	describe('self-host worker readiness', () => {
+		function mockWorkerHealth(body, status = 200) {
+			global.fetch = vi.fn(async (url) => {
+				if (String(url).includes('world.three.ws')) {
+					return new Response(JSON.stringify({ protected: true, blueprints: [] }), { status: 200 });
+				}
+				if (String(url).includes('hunyuan3d.example.run.app')) {
+					return new Response(typeof body === 'string' ? body : JSON.stringify(body), { status });
+				}
+				throw new Error(`unrouted probe fetch: ${url}`);
+			});
+		}
+
+		beforeEach(() => {
+			process.env.GCP_HUNYUAN3D_URL = 'https://hunyuan3d.example.run.app';
+			process.env.GCP_RECONSTRUCTION_KEY = 'secret';
+		});
+
+		const workerProbeUrl = () =>
+			global.fetch.mock.calls.map((c) => String(c[0])).find((u) => u.includes('hunyuan3d.example.run.app'));
+
+		it('probes /health, not the service root', async () => {
+			mockWorkerHealth({ ok: true, ready: true });
+			await probeForgeHealth();
+			expect(workerProbeUrl()).toBe('https://hunyuan3d.example.run.app/health');
+		});
+
+		it('does not double the slash when the configured URL has a trailing one', async () => {
+			process.env.GCP_HUNYUAN3D_URL = 'https://hunyuan3d.example.run.app/';
+			mockWorkerHealth({ ok: true, ready: true });
+			await probeForgeHealth();
+			expect(workerProbeUrl()).toBe('https://hunyuan3d.example.run.app/health');
+		});
+
+		it('reports a loaded, ready worker ok', async () => {
+			mockWorkerHealth({ ok: true, model: 'hunyuan3d-2.1', pipeline_loaded: true, ready: true, load_error: null });
+			expect((await probeForgeHealth()).backends.hunyuan3d.status).toBe('ok');
+		});
+
+		it('reports a failed model load as down, not ok', async () => {
+			mockWorkerHealth({ ok: true, ready: false, load_error: 'internal error (ref 9f2c1a)' });
+			const health = await probeForgeHealth();
+			expect(health.backends.hunyuan3d.status).toBe('down');
+			expect(health.backends.hunyuan3d.message).toMatch(/failed to load/i);
+			expect(health.status).toBe('degraded');
+		});
+
+		it('reports a worker that is still loading its weights as degraded', async () => {
+			mockWorkerHealth({ ok: true, pipeline_loaded: false, ready: false, load_error: null });
+			const health = await probeForgeHealth();
+			expect(health.backends.hunyuan3d.status).toBe('degraded');
+			expect(health.backends.hunyuan3d.message).toMatch(/still loading/i);
+		});
+
+		// TripoSG publishes model_loaded rather than ready; the probe reads
+		// whichever readiness field the worker actually exposes.
+		it('reads the model_loaded field when the worker publishes no ready flag', async () => {
+			mockWorkerHealth({ ok: true, model: 'triposg', model_loaded: false });
+			expect((await probeForgeHealth()).backends.hunyuan3d.status).toBe('degraded');
+			resetForgeHealthCache();
+			mockWorkerHealth({ ok: true, model: 'triposg', model_loaded: true });
+			expect((await probeForgeHealth()).backends.hunyuan3d.status).toBe('ok');
+		});
+
+		it('stays ok for a worker that publishes no readiness fields at all', async () => {
+			mockWorkerHealth({ ok: true });
+			expect((await probeForgeHealth()).backends.hunyuan3d.status).toBe('ok');
+		});
+
+		it('stays ok when /health is absent (404) rather than dropping a routable worker', async () => {
+			mockWorkerHealth('not found', 404);
+			const health = await probeForgeHealth();
+			expect(health.backends.hunyuan3d.status).toBe('ok');
+			expect(health.backends.hunyuan3d.message).toMatch(/no health contract/i);
+		});
+
+		it('stays ok when the body is not JSON', async () => {
+			mockWorkerHealth('OK', 200);
+			expect((await probeForgeHealth()).backends.hunyuan3d.status).toBe('ok');
+		});
+	});
+
 	it('marks an unreachable upstream down instead of throwing', async () => {
 		process.env.REPLICATE_API_TOKEN = 'r8_test';
 		global.fetch = vi.fn(async () => {
