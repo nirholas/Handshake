@@ -1,0 +1,6 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+# Weights are pulled from the pinned GitHub release inside the build, never
+# from a local copy, so a developer's model.tflite must not enter the context.
+*.tflite
