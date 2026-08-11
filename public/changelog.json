@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-11T05:21:59.981Z",
+	"generated_at": "2026-08-11T05:26:53.363Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -29,6 +29,16 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "A long clip no longer pretends the whole scene was reconstructed",
+			"summary": "Scene capture turns a video clip into a 3D point cloud, and the worker stops at a frame budget, reconstructing only the part of the clip that fits. The status you got back carried the point count and the frame count but never said the clip had been cut short, so a partial scene read as a finished one. The response now reports that the frames were truncated, along with how many sky points were dropped, so you can tell a complete reconstruction from a clipped one.",
+			"link": "/capture",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "A selfie with no visible face now tells you so, instead of \"generation failed\"",
 			"summary": "Photo-to-avatar could not tell you the one thing that would fix your upload. When the engine found no face in a photo (a hooded figure, a back view, a landscape), it reported that rejection as an anonymous internal error, so the site fell back to a generic \"Generation failed. Try a different prompt.\" You now get the real reason and can act on it: reword the prompt, or use a clear front-facing shot. Rejected uploads also stopped filing themselves as service outages in our error logs, so a genuine failure is visible now instead of buried among them.",
 			"link": "/create",
@@ -46,6 +56,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "A written guide to the Solana Tokens API rung in the price cascade",
+			"summary": "Token panels read prices, liquidity and holder counts from an ordered list of providers, and the Solana Foundation's Tokens API sits second in that list. Nothing explained what that rung adds over the mint-scoped sources above it: it knows which mints represent the same asset, which is what lets a balance be read across every version of a token at once. The Tokens API integration now has its own page in the developer docs, covering the single environment variable that turns the rung on, where it sits in the cascade and why, and the tests that pin the two behaviours easiest to break by accident: the rung is skipped before any request goes out when the key is absent, and a rate-limit answer reaches the circuit breaker instead of being swallowed inside the client.",
+			"link": "/docs/tokens-xyz",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -118,6 +138,18 @@
 			"link": "/embed/v1/preview",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Every page now shares with its own correct title and description",
+			"summary": "A bug in the tool that reads each blog post's own <head> cut every description short at the first apostrophe, so five posts were being listed and shared with a fragment: 'three.ws is DEXTools' instead of the full sentence. The tool now reads the whole value, and all five read properly again wherever they appear. Twenty-one page descriptions across the site had also been damaged by an earlier find-and-replace that swapped dashes for colons, turning sentences like 'Type a prompt, or drop in photos or a sketch, and get a 3D model' into copy that no longer parsed; those have been rewritten. Three pages that shared a title with another page (the Character Studio doc, the guards reference, and the write-a-guard tutorial) now each say what they actually are, and the NVIDIA Inception overview, which had shipped with no description, canonical link or social card at all, now has the full set. The site's link previews were also only being checked on the 288 pages the checker could find a file for; it can now find all 615, so the whole catalogue is covered.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement",
+				"docs"
 			]
 		},
 		{
@@ -312,6 +344,17 @@
 			"link": "/flow",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The paid MCP server's docs now list all 25 tools it actually ships",
+			"summary": "@three-ws/mcp-server is the package a Claude Desktop, Claude Code or Cursor user installs to get three.ws tools inside their assistant. It registers 25 tools, but its README only described 19: one-call text-to-rigged-avatar generation, conversational model refinement, material restyling, the free premium vanity-address browser, and the two agent-hiring tools were installed and callable while being invisible to anyone reading the docs. All six now have a documented row with their real price, what they return, and how they chain with the rest, and the free-to-start list is corrected from four tools to five. A new test connects a real MCP client to the server and checks the tool list, the version it advertises, and the hire receipt card it renders, then fails the build if a future tool ships without a documented row.",
+			"link": "/mcp-tools",
+			"tags": [
+				"docs",
+				"sdk"
 			]
 		},
 		{
@@ -951,12 +994,33 @@
 		{
 			"date": "2026-08-09",
 			"type": "update",
+			"title": "The in-world meetup recap now tours the rest of the platform",
+			"summary": "The write-up of the first user group meetup held inside three.ws covered the two connectors that ran the session and little else. It now walks a reader through the wider platform: Forge, the Avatar Studio and its universal retargeting, the shared wardrobe layer, and the one-tag agent-3d embed, and closes with partnership roadmap sections on where the conversation goes next. The live-article draft also carries the final peak concurrency figure of 3,145 in place of the publish-day placeholder.",
+			"link": "/blog/ibm-user-group-first-in-world-meetup-recap",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-09",
+			"type": "update",
 			"title": "The Oracle now scores from measured outcomes, and its top tiers finally mean something",
 			"summary": "The Oracle's conviction score was rebuilt on what actually happened to 92,906 real pump.fun launches instead of hand-set rules. Every score is now a measured probability that a coin graduates or pumps 3x or more, and each tier states its real-world odds: on data the model never trained on, Prime picks were good 72.7% of the time while Avoid picks rugged 96.3% of the time. The old engine had never once produced a Strong or Prime score; several of its penalties turned out to be backwards against the data and are fixed. Every verdict now cites its evidence with the observed success rate for each signal, the smart-money wallet ledger grew from 214 to 998 proven wallets under a validated definition, and the learning pipeline that grades every launch was unblocked so the model keeps sharpening daily.",
 			"link": "/oracle",
 			"tags": [
 				"improvement",
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-09",
+			"type": "update",
+			"title": "The Oracle starts learning from every coin again",
+			"summary": "The Oracle scores new coins by learning how earlier ones actually turned out, and the job that records those outcomes had fallen behind: it checked a hundred coins every fifteen minutes against a feed carrying roughly thirty thousand a day, so no new outcome had been recorded since late July and a backlog of 370,000 coins had built up. Labeling now runs eight lookups at a time with batched writes and a wall-clock deadline, and the per-run budget rose to 1,500, which measured 400 coins in 12.5 seconds against production. The labels were also being deleted by the rolling fourteen-day retention sweep, taking the training data with them. A dedicated training set now snapshots the launch-time features, the outcome and the creator record for every labeled coin, backfilled with the 92,546 already done, and is excluded from that sweep.",
+			"link": "/oracle",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -1063,11 +1127,32 @@
 		{
 			"date": "2026-08-08",
 			"type": "update",
+			"title": "A cut-off director brief no longer replaces the prompt you typed",
+			"summary": "The forge pipeline behind the ChatGPT integration keeps its own copy of the step that rewrites a prompt into a director brief, so a truncation fix made on the main pipeline never reached it: a rewrite that stopped mid-clause still replaced what the creator asked for. The same guard and the same token budget now apply to the clone, so an incomplete brief is discarded and your own words are used instead.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
 			"title": "A shared world link now says which world you are opening, from the first frame",
 			"summary": "Open a link to a coin's world and the wait used to be anonymous: a generic COIN COMMUNITIES card and \"Joining the community\", with nothing to say whose town was loading, even though the link itself carried the name, the ticker and the artwork all along. The loading screen now reads them straight out of the link and shows them immediately, before any of the game code has arrived: the coin's artwork, its name and its ticker, and \"Entering <name>\". If the artwork cannot be fetched, a letter mark takes its place instead of a broken image, in the loading screen and in the world's own corner banner. The browser tab is named after the world too, so a link parked in a background tab is findable, and it goes back to normal when you return to the community list. Two other fixes to the same first minute: /play was asking for the site's typeface without ever loading it, so every word on the page was rendering in whatever the device had lying around, and the loading card could push its own progress bar off the bottom of a short laptop screen. Both are fixed. On phones, the Controls reference is reachable again after the welcome card is dismissed, and the arrow keys now walk your character instead of paging that card.",
 			"link": "/play",
 			"tags": [
 				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Coin artwork with breakout characters in its address is refused outright",
+			"summary": "Coin images come from wherever a launch put them, and the check deciding whether one is safe to load only inspected the scheme. A value carrying quotes, parentheses, angle brackets, semicolons, backslashes or whitespace still got through, which is exactly the shape a crafted image address uses to break out of the style rule it lands in. Nothing escaped, because the code writing that address percent-encodes it first, but the page still paid for a doomed request and a console error. Those breakout characters are now rejected at the source, and ordinary paths, query strings and percent-encoded addresses are unaffected.",
+			"link": null,
+			"tags": [
+				"security",
 				"fix"
 			]
 		},
@@ -1090,6 +1175,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Event drops pay out cleanly, and Kannada catches up",
+			"summary": "The payout path for a prize drop during a live event in play now handles its edge cases instead of leaving a claim in limbo, and the Kannada locale has been resynced, so the play, AR and gesture strings read in Kannada rather than falling back to English.",
+			"link": "/play",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1257,6 +1352,16 @@
 		{
 			"date": "2026-08-08",
 			"type": "update",
+			"title": "The war portal keeps a leaderboard",
+			"summary": "Playing a war portal round now writes to the shared event leaderboard, souvenirs included, so time in the portal counts toward the same standings as the rest of a live event. The health thresholds for the portal ship alongside it, so a round that stops scoring is caught rather than quietly swallowed.",
+			"link": "/play/war",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
 			"title": "The world economy pays what it says, and the bank makes you walk there",
 			"summary": "An end-to-end pass over the /play money loops. The wheel now checks it has room for every prize it can award before it lets you spin, instead of just one of the three, so a stone win can no longer land in a pack that only had space for wood and quietly turn into two cash; if a pack does fill while you are approving a paid spin in your wallet, the prize converts to cash and the result tells you so in plain words. Store and bank buttons now disable while a trade is in flight, so a double-click can never buy twice, and if the world stops answering the panel says nothing was charged and re-reads your purse instead of leaving a stale balance on screen. Dying reports itself honestly: the HUD empties the moment the tombstone drops rather than eight seconds later at respawn, and the message names what you lost and what the bank protected. Trading and banking are now walk-up actions the server enforces, like fishing and the wheel already were, which is what makes depositing before a fight a real decision. The skills panel shows the XP left to each next level and what the next unlock is, the wheel links its full published paytable, and a boutique purchase that runs out of $THREE now says where to get more.",
 			"link": "/play/economy",
@@ -1283,6 +1388,16 @@
 			"link": "/play",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-08",
+			"type": "update",
+			"title": "Voice Lab gets a polish pass",
+			"summary": "The voice lab and the in-browser voice picker were tightened up for the unified synthesis router: the controls read consistently, the state you are in is legible at a glance, and the browser lane behaves like the hosted ones. The runbook for the keyless Solana RPC pool was corrected in the same pass, after one of its providers stopped serving the history the pool relied on.",
+			"link": "/voice",
+			"tags": [
 				"improvement"
 			]
 		},
@@ -1326,6 +1441,16 @@
 			"link": "/event",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-07",
+			"type": "update",
+			"title": "A coin plaza and its Living Stage agree on which room they share",
+			"summary": "Every coin world has a Living Stage room attached to its plaza, and the world client had no way to know which room without asking the server, a round trip it does not always get. The stage id is derived from the coin itself now, so client and server reach the same answer with no network at all, and the stage record carries the coin mint so the API can resolve the pairing from either side.",
+			"link": null,
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1568,6 +1693,16 @@
 				"security",
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "Agent identity metadata is fetched with a pinned address and a size cap",
+			"summary": "Registering an on-chain agent identity lets the caller hand us a link to their own metadata, which the server then reads. That read now resolves the host once and connects to exactly that address, closing the window where a hostile host could answer the safety check from one address and the fetch from another, and it stops at 2 MiB so nobody can stream us an endless response. Client-supplied metadata is the one part of registration we do not control, so it gets the strictest handling.",
+			"link": null,
+			"tags": [
+				"security"
 			]
 		},
 		{
@@ -1900,6 +2035,16 @@
 		{
 			"date": "2026-08-06",
 			"type": "update",
+			"title": "The 3D Studio's published API description cannot drift from the served one",
+			"summary": "The 3D Studio ships an OpenAPI description that a GPT builder reads, and a second copy travels in the submission kit. Keeping the two in step was a single test's job, so drift could reach a submission before anyone noticed. That sync is now a first-class guard with an executable proof, and the repository gate fails on drift. The privacy policy link in the submission notes was normalized to the canonical address every other surface already uses.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
 			"title": "The agent payment ring can refill its own spending float again after eight days stuck",
 			"summary": "The platform's closed payment loop keeps one pool of USDC circulating between wallets it controls, and a wallet that pays its own network fees needs both USDC to spend and a little SOL to pay with. Two rules meant to stop those two needs fighting each other combined into a trap: once the payer's total balance could cover neither, it was barred from converting spare SOL into USDC and had nothing to convert the other way, so it did nothing at all. It sat that way from 29 July, holding fee money it had no way to spend, while roughly 2,900 payment attempts a day failed for want of a few cents of float. The wallet now settles on a single sensible target when it cannot afford both, keeping just enough for fees and holding the rest as spendable balance, so it recovers on its own. The revenue share the loop pays out is also taken only from genuine surplus now: because the same money laps the circuit many times a day, a cut on every lap was quietly compounding the working float away rather than sharing earnings. Wallet records for the loop were reconciled at the same time, so every role wallet is registered and there are no stale entries left.",
 			"link": "/economy-lab",
@@ -2000,6 +2145,16 @@
 			"title": "The three.ws 3D Studio GPT now explains why a generation was refused",
 			"summary": "When the free text-to-3D custom GPT hit a rate limit or asked about a job without a handle, three.ws answered with a body the GPT had no field to read, so ChatGPT showed the user nothing useful. Those replies now carry the plain-language message the published Actions contract promises, so the assistant can say what happened and when to try again. A new contract test validates every response the endpoint can produce against the OpenAPI schema three.ws serves, so the two cannot drift apart again.",
 			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-06",
+			"type": "update",
+			"title": "The x402 health checks stop paying for rejections",
+			"summary": "Two automated checks that keep the agent payment ring honest, the circuit breaker and the fee validator, were calling one of the paid endpoints with the wrong HTTP method. A request without payment still got the usual payment challenge back, so both looked healthy, but the paid retry was refused outright: the breaker reported the Solana leg as failing every hour, and the validator's live settlement had never once landed. Both now call that endpoint the way it is declared, verified against production with a settlement of $0.001 on Solana.",
+			"link": "/x402",
 			"tags": [
 				"fix"
 			]
@@ -2434,6 +2589,16 @@
 			]
 		},
 		{
+			"date": "2026-08-02",
+			"type": "update",
+			"title": "Why an agent wallet can refuse a payment at noon, written down",
+			"summary": "The wallet fee governor gained an opt-in switch that releases the day's fee budget gradually across the UTC day instead of all at once. On 2026-08-01 production spent its entire heartbeat budget on 1,002 settled payments before midday, then refused roughly 3,500 an hour for the rest of the day. Intraday pacing spreads the same total over 24 hours and grants no extra spend. It stays off by default, because turning it on changes which gate refuses a starved wallet first, and making that distinction visible is what the economy lab is for. The behaviour is now documented, with the lab covering its shape.",
+			"link": "/economy-lab",
+			"tags": [
+				"docs"
+			]
+		},
+		{
 			"date": "2026-08-01",
 			"type": "launch",
 			"title": "Agent Monitor",
@@ -2491,6 +2656,16 @@
 			"link": "/docs/economy-solver",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-01",
+			"type": "update",
+			"title": "A refused seed mesh tells the creator how to fix it",
+			"summary": "Forge checks an uploaded seed mesh before it enters the pipeline, and a refusal used to come back as a reason code with nothing a creator could act on. Every reason now carries plain-language guidance, including the vertex-count and file-weight ranges a mesh has to sit inside, quoted even when neither bound was the thing that failed.",
+			"link": "/forge",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -2556,6 +2731,16 @@
 			"tags": [
 				"infra",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-01",
+			"type": "update",
+			"title": "Walkthroughs replay the real product, step by step",
+			"summary": "The walkthrough player replays frames captured from the live product, with a spotlight on the element each step is about and a callout explaining it. Every step is deep-linkable, so you can hand someone the exact moment you mean, the whole player works from the keyboard, and it honours a reduced-motion preference.",
+			"link": "/walkthroughs",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -2961,12 +3146,44 @@
 		{
 			"date": "2026-07-31",
 			"type": "update",
+			"title": "The MCP tool catalog is reachable, linkable and legible",
+			"summary": "The catalog of MCP tools was linked from nowhere in the site navigation, and every card ran the tool name and its title together as one line. It sits under Learn now, each card reads as two lines, and opening a tool puts its name in the address bar, so a single tool is a shareable link. A paid tool shows what it costs and the payment step a caller makes, instead of a bare command that answers with a payment demand. Safety and price badges carry plain-language tooltips, and the page is translated like the rest of the site.",
+			"link": "/mcp-tools",
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "update",
 			"title": "The signing avatar stays in frame, and you can now move the camera around it",
 			"summary": "Scrolling the page with your cursor over the 3D signing avatar used to zoom the camera into its torso and leave it stuck out of frame. Plain scrolling now just scrolls the page: zooming takes a pinch, ctrl+scroll, or a scroll after grabbing the model. You can also move the avatar around the frame with a right-click drag (two fingers on touch), and a Reset view button plus double-click snap the camera back home whenever you lose it. The avatar itself looks healthier too: the studio lighting was overexposing skin into a washed-out gray, and a softer, warmer setup now lets natural skin tones through. All of this applies everywhere an avatar poses: the sign language page, the ASL alphabet, and the Animation Studio.",
 			"link": "/sign-language",
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "update",
+			"title": "The tutorials show real pictures of the product",
+			"summary": "Guides used to describe a screen and leave you to picture it. A capture pipeline now shoots every tutorial figure from the live product, so each step of the getting-started, embed, animation, selfie-to-avatar, text-to-3D and mint guides is illustrated by the thing it describes, and the shots are regenerated when the product moves. The sign-language lesson image assets were recaptured at higher quality in the same pass.",
+			"link": null,
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "update",
+			"title": "Try a paid skill before you pay for it",
+			"summary": "A skill listed in the marketplace can offer a trial now: the storefront shows the trial status for the skill you are looking at, starting one is a single call, and the seller's MCP policy travels with the listing so a buyer sees what the skill is allowed to do before it runs. Both ship with executable proofs, so a listing cannot claim a guard it does not actually have.",
+			"link": "/marketplace",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -4635,6 +4852,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "update",
+			"title": "One shared markdown renderer, one toast notification system",
+			"summary": "Text that arrives as markdown, from agent replies to docs panels, was rendered by a handful of separate copies with different ideas about what HTML to allow through. There is a single shared renderer now, sanitized in one place, so the same input looks the same wherever it appears. The small notification that slides in to confirm a copy or report an error had likewise been pasted into page after page; it is one queued toast system now, with a consistent dismiss, so two notifications no longer land on top of each other.",
+			"link": null,
+			"tags": [
+				"improvement"
 			]
 		},
 		{
