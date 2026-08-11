@@ -199,6 +199,14 @@
 			<description>Our own Hunyuan3D image-to-3D workers answer web requests within seconds of starting, then spend several minutes loading multi-gigabyte model weights in the background. The platform checked only whether a worker answered at all, so a worker that had answered but then failed to load its model looked exactly as healthy as a working one: the forge status page showed it green and generations kept being sent to it. Both the status page and the routing that picks a backend now read the worker's real readiness, so a worker that cannot generate is reported as down and skipped, and one that is still warming up is marked as such instead of promising a fast turnaround it cannot deliver.</description>
 		</item>
 		<item>
+			<title>The agent-to-agent invocation SDK now states the truth about its Solana program</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-11:The agent-to-agent invocation SDK now states the truth about its Solana program</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>@three-ws/agent-protocol-sdk records agent-to-agent skill calls on Solana against the agent_invocation program. Its docs described that program as live and deployed on mainnet and devnet; the account is not on-chain yet, so anyone building on the promise hit a cluster rejection with no explanation. The README, the package constants table and the architecture reference now say exactly where the program stands and how to check the account yourself. The on-chain smoke harness that covers this path was checking a build artifact instead of the chain, so it reported a missing file rather than the deployment state; it now asks the cluster directly and runs from a clean checkout. Separately, the Solana address guard that verifies the $THREE mint and the pump.fun programs against mainnet on every build was reading a single RPC provider, so an exhausted provider key left it verifying nothing while still printing a clean result. It now walks the same provider failover chain the platform runs on.</description>
+		</item>
+		<item>
 			<title>The character library opens instantly instead of downloading 122 MB first</title>
 			<link>https://three.ws/character-library</link>
 			<guid isPermaLink="false">2026-08-11:The character library opens instantly instead of downloading 122 MB first</guid>
@@ -245,6 +253,14 @@
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>When you fingerspell into the webcam, the recognizer reports how sure it is of what it read, and the page uses that to flag a shaky capture instead of quietly dropping wrong words into your message. That score was in every response but appeared in none of the docs, so anyone building on the recognition API had no way to know it existed. The API reference, the sign-language guide and the worker's own README now list the full response, including the raw decode before the cleanup pass and whether the cleanup changed anything, so a caller can build the same warning we do. The recognizer itself was also capped to a sane number of simultaneous captures per instance, so a burst of signers scales out instead of queueing behind each other.</description>
+		</item>
+		<item>
+			<title>The x402 payment modal SDK can now price a paid call without opening a modal</title>
+			<link>https://three.ws/docs/x402</link>
+			<guid isPermaLink="false">2026-08-11:The x402 payment modal SDK can now price a paid call without opening a modal</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>@three-ws/x402-modal is the drop-in checkout that turns an HTTP 402 into a wallet-connect, sign and settle flow on any site. Its first step, reading the endpoint's payment challenge to learn what it costs and which networks it takes, is now available on its own as discover(). It touches no page and no wallet, so a server, a script or an agent can look up a price, compare the Solana and Base entries, or check that a route is actually paid before deciding to charge anyone. The version string the package reports had also fallen two releases behind what was published, so bug reports named the wrong build; it now matches the release and a test keeps the two together.</description>
 		</item>
 		<item>
 			<title>Token pages keep their holder count when a data provider runs out of quota</title>
@@ -756,7 +772,7 @@
 			<guid isPermaLink="false">2026-08-08:The Three.ws User Group's First In-World Meetup: How It Went</guid>
 			<pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, peaking at 3,145 concurrent users in the $THREE home town at three.ws/play.</description>
+			<description>The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, peaking at 3,145 concurrent users in the $THREE home town at three.ws/play. Here's how a nine-hour user group meetup held inside a 3D world actually went.</description>
 		</item>
 		<item>
 			<title>/play tells you the truth when something fails, instead of showing green</title>
@@ -1831,6 +1847,14 @@
 			<description>How crews work: the public directory of every crew with members, invite search with join-state annotations, the headquarters room, and how the friends drawer in the coin worlds links into it.</description>
 		</item>
 		<item>
+			<title>Docs · Freshness</title>
+			<link>https://three.ws/docs/freshness</link>
+			<guid isPermaLink="false">2026-08-01:Docs · Freshness</guid>
+			<pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Does this documentation still describe the code? Every doc is scored against the source files it documents, and this dashboard ranks the drift so the stalest pages get fixed first.</description>
+		</item>
+		<item>
 			<title>Docs · Overlay audit</title>
 			<link>https://three.ws/docs/overlay-audit</link>
 			<guid isPermaLink="false">2026-08-01:Docs · Overlay audit</guid>
@@ -2271,6 +2295,14 @@
 			<description>What an MCP tool's safety annotations mean on three.ws and why you can trust them: read-only tools never change what you asked about, anything that spends is labelled as spending, and a build check verifies every hint against the tool's own code before it can ship.</description>
 		</item>
 		<item>
+			<title>Docs · Repository guards</title>
+			<link>https://three.ws/docs/guards</link>
+			<guid isPermaLink="false">2026-07-30:Docs · Repository guards</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.</description>
+		</item>
+		<item>
 			<title>Docs · The 10 SOL trading experiment</title>
 			<link>https://three.ws/docs/trading-experiment</link>
 			<guid isPermaLink="false">2026-07-30:Docs · The 10 SOL trading experiment</guid>
@@ -2309,6 +2341,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Run the full economic loop in the open world: gather materials, sell them to the vendor, buy a better tool, bank what you cannot afford to lose, and spin the wheel. Explains why cooking triples fish value and why the bank is the only real decision.</description>
+		</item>
+		<item>
+			<title>Docs · Write a repository guard</title>
+			<link>https://three.ws/docs/tutorials/write-a-guard</link>
+			<guid isPermaLink="false">2026-07-30:Docs · Write a repository guard</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.</description>
 		</item>
 		<item>
 			<title>Docs World (immersive 3D docs)</title>
@@ -2373,14 +2413,6 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>A standard-library Python CLI that turns a sentence into a downloaded GLB. Handles the inline-versus-queued response split, honors the server poll hint so it never trips the rate limiter, and fails with a message you can act on. No API key.</description>
-		</item>
-		<item>
-			<title>Repository guards</title>
-			<link>https://three.ws/docs/guards</link>
-			<guid isPermaLink="false">2026-07-30:Repository guards</guid>
-			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.</description>
 		</item>
 		<item>
 			<title>Repository guards</title>
@@ -2493,14 +2525,6 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>This repo has no CI, so a guard is the only thing between a mistake and production. Build one that fails the build when an API handler forgets its error boundary, wire it into the gate, cover it with tests, and register it.</description>
-		</item>
-		<item>
-			<title>Tutorial · Write a repository guard</title>
-			<link>https://three.ws/docs/tutorials/write-a-guard</link>
-			<guid isPermaLink="false">2026-07-30:Tutorial · Write a repository guard</guid>
-			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.</description>
 		</item>
 		<item>
 			<title>Tutorial: build a 3D asset pipeline</title>
@@ -19324,7 +19348,7 @@
 			<guid isPermaLink="false">2026-06-09:3D + AI + Web3 Just Converged: three.ws Shipped the Whole Stack</guid>
 			<pubDate>Tue, 09 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is the only crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, published to npm, and live on Anthropic</description>
+			<description>A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is the only crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, published to npm, and live on Anthropic's MCP Registry.</description>
 		</item>
 		<item>
 			<title>Agent Lookup</title>
@@ -19340,7 +19364,7 @@
 			<guid isPermaLink="false">2026-06-09:three.ws Wins DEXTools Social Boost: $5,543 $three Buyback</guid>
 			<pubDate>Tue, 09 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is DEXTools</description>
+			<description>three.ws is DEXTools' Social Boost winner of the week, earning a $5,543 buyback. The DEXTools wallet now holds 2.47M $three.</description>
 		</item>
 		<item>
 			<title>New Claude models in every agent brain</title>
@@ -19732,7 +19756,7 @@
 			<guid isPermaLink="false">2026-05-31:We turned every memecoin into a live 3D world you can walk into</guid>
 			<pubDate>Sun, 31 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>How we built /play: isolated multiplayer worlds keyed to a token</description>
+			<description>How we built /play: isolated multiplayer worlds keyed to a token's mint, driven by live on-chain trades, with proximity voice chat, an in-world buy flow, and worlds generated deterministically from the mint address.</description>
 		</item>
 		<item>
 			<title>Holder-gated worlds</title>
@@ -19876,7 +19900,7 @@
 			<guid isPermaLink="false">2026-05-27:three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement</guid>
 			<pubDate>Wed, 27 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments: for the first fully on-chain 3D AI agent platform.</description>
+			<description>three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments. It is the first fully on-chain 3D AI agent platform.</description>
 		</item>
 		<item>
 			<title>Unstoppable Agent</title>
@@ -19924,7 +19948,7 @@
 			<guid isPermaLink="false">2026-05-25:$THREE Listed on Coinbase, CoinGecko, Jupiter, and Investing.com</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com: giving the three.ws community every major on-ramp and price discovery surface.</description>
+			<description>$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com, giving the three.ws community every major on-ramp and price discovery surface.</description>
 		</item>
 		<item>
 			<title>2,500 New 3D Animations Coming to three.ws</title>
@@ -19932,7 +19956,7 @@
 			<guid isPermaLink="false">2026-05-25:2,500 New 3D Animations Coming to three.ws</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is expanding its animation library with 2,500 new 3D animations: giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.</description>
+			<description>three.ws is expanding its animation library with 2,500 new 3D animations, giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.</description>
 		</item>
 		<item>
 			<title>Agent Builder Live: Studio Redesign, LLM Chat Upgrade</title>
@@ -19991,9 +20015,9 @@
 			<description>Avatar storage modes (R2 vs IPFS), sessions, your notification inbox, per-category notification channel preferences (in-app/push/email/Telegram), and dashboard preferences.</description>
 		</item>
 		<item>
-			<title>Full Animation &amp; Emotion Control: Plus Pump.fun Live Feed</title>
+			<title>Full Animation &amp; Emotion Control, Plus Pump.fun Live Feed</title>
 			<link>https://three.ws/blog/animation-emotion-control</link>
-			<guid isPermaLink="false">2026-05-25:Full Animation &amp; Emotion Control: Plus Pump.fun Live Feed</guid>
+			<guid isPermaLink="false">2026-05-25:Full Animation &amp; Emotion Control, Plus Pump.fun Live Feed</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>three.ws now ships full animation and emotion control for 3D agents, with live Pump.fun feed integration. Your agents react to any API or data feed in real time.</description>
@@ -20023,9 +20047,9 @@
 			<description>Sandbox for experimenting with agents, prompts, and 3D scenes.</description>
 		</item>
 		<item>
-			<title>Real-Time Voice Interaction with 3D AI Agents: Preview</title>
+			<title>Real-Time Voice Interaction with 3D AI Agents (Preview)</title>
 			<link>https://three.ws/blog/real-time-voice-interaction</link>
-			<guid isPermaLink="false">2026-05-25:Real-Time Voice Interaction with 3D AI Agents: Preview</guid>
+			<guid isPermaLink="false">2026-05-25:Real-Time Voice Interaction with 3D AI Agents (Preview)</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>three.ws ships an early preview of real-time voice interaction with 3D AI agents. Agents listen, reason with memory and emotions, respond in voice, and support AR/VR.</description>
@@ -20060,7 +20084,7 @@
 			<guid isPermaLink="false">2026-05-25:three.ws Integrates the Pump.fun Agent Payments SDK</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn</description>
+			<description>three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn't just execute tasks, it earns on-chain revenue and fuels its own autonomous economy.</description>
 		</item>
 		<item>
 			<title>three.ws Is Now Live on CoinMarketCap</title>
@@ -20068,7 +20092,7 @@
 			<guid isPermaLink="false">2026-05-25:three.ws Is Now Live on CoinMarketCap</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is now live on CoinMarketCap: join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.</description>
+			<description>three.ws is now live on CoinMarketCap. Join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.</description>
 		</item>
 		<item>
 			<title>three.ws Joins Google Cloud for Web3 Startups</title>
@@ -20084,7 +20108,7 @@
 			<guid isPermaLink="false">2026-05-25:three.ws Listed on Anthropic's Official MCP Registry</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is now listed on Anthropic</description>
+			<description>three.ws is now listed on Anthropic's official Model Context Protocol Registry, the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor, and more.</description>
 		</item>
 		<item>
 			<title>three.ws Listed on Coinbase x402 Bazaar and agentic.market</title>
@@ -20092,7 +20116,7 @@
 			<guid isPermaLink="false">2026-05-25:three.ws Listed on Coinbase x402 Bazaar and agentic.market</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market: the app store and discovery layer for AI agents with 480k active agents and $50M in volume.</description>
+			<description>three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market, the app store and discovery layer for AI agents with 480k active agents and $50M in volume.</description>
 		</item>
 		<item>
 			<title>three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face</title>
@@ -20100,7 +20124,7 @@
 			<guid isPermaLink="false">2026-05-25:three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity: and they react to DeFi events in real time.</description>
+			<description>three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity, and they react to DeFi events in real time.</description>
 		</item>
 		<item>
 			<title>three.ws Teams Up with HackerNoon</title>
@@ -20316,7 +20340,7 @@
 			<guid isPermaLink="false">2026-05-17:three.ws Listed on BNB Chain's Dappbay Directory</guid>
 			<pubDate>Sun, 17 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws is now listed on Dappbay, BNB Chain</description>
+			<description>three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts the &lt;agent-3d&gt; tag in front of the BNB Chain ecosystem's AI dApp discovery surface.</description>
 		</item>
 		<item>
 			<title>Agent personalization and on-chain economy scaffolding</title>
@@ -20724,7 +20748,7 @@
 			<guid isPermaLink="false">2026-05-04:How to Embed 3D On-Chain Agents on Your Site</guid>
 			<pubDate>Mon, 04 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the &lt;agent-3d&gt; web component: from setup to CORS configuration and page integration.</description>
+			<description>A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the &lt;agent-3d&gt; web component, from setup to CORS configuration and page integration.</description>
 		</item>
 		<item>
 			<title>Pump Dashboard</title>
