@@ -9,6 +9,7 @@
 
 import { log } from './shared/log.js';
 import { safeUrl } from './safe-url.js';
+import { proxiedImageURL } from './ipfs.js';
 const NAME_STORAGE_KEY = 'walk:player-name';
 const AVATAR_CHOICE_KEY = 'communities:avatar-choice';
 const DEFAULT_AVATAR_URL = '/avatars/default.glb';
@@ -161,7 +162,12 @@ function coinCard(coin) {
 	const mint = coin.mint;
 	const symbol = coin.symbol || '';
 	const name = coin.name || symbol || `${mint.slice(0, 4)}…`;
-	const image = coin.image_uri || '';
+	// Coin art comes from whatever host the launch used: IPFS gateways,
+	// imagedelivery.net, gmgn.ai. Hot-linked they fail in the browser (ORB, or a
+	// Cross-Origin-Resource-Policy that refuses a cross-site load), leaving a
+	// broken tile on the coin grid. /api/img fetches them server-side, follows a
+	// metadata document to the real art, and always hands back a valid image.
+	const image = proxiedImageURL(coin.image_uri || '', coin.mint || '');
 	const mcap = fmtMcap(coin.usd_market_cap ?? coin.market_cap);
 
 	const card = document.createElement('button');
@@ -387,14 +393,17 @@ async function loadCoinProfile(mint) {
 function renderCoinProfile(coin) {
 	const symbol = coin.symbol || '';
 	const name = coin.name || symbol || `${coin.mint.slice(0, 4)}…`;
+	// Raw for the /walk hand-off (that world resolves art its own way); proxied
+	// for what this page paints, so a hot-linked host cannot break the tile.
 	const image = coin.image_uri || coin.image || '';
+	const imageSrc = proxiedImageURL(image, coin.mint || '');
 
 	const avatarEl = $('cp-avatar');
 	const fallback = $('cp-avatar-fallback');
 	avatarEl.querySelectorAll('img').forEach((el) => el.remove());
-	if (image) {
+	if (imageSrc) {
 		const img = document.createElement('img');
-		img.src = image; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
+		img.src = imageSrc; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
 		img.onerror = () => img.remove();
 		avatarEl.appendChild(img);
 	}
