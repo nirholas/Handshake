@@ -65,6 +65,16 @@ Two caveats on spending the new EU/APAC grant:
 - **`gs://three-ws-model-weights` is a us-central1 REGIONAL bucket.** A worker in europe-west4 or asia-southeast1 gcsfuse-mounts it cross-continent, so weight loading is slow and egress is charged. Before pinning a lane there, either dual-region the bucket or accept the cold-start cost. us-east4 is already proven against this bucket (hunyuan3d and trellis run there today).
 - **RTX PRO 6000 is still enforced at 1 instance** despite `grantedValue: 1000`, re-tested 2026-07-28: `--max-instances=4` fails with `requested: 4 allowed: 1`. Treat the preference number as aspirational, exactly as the 2026-07-17 note said.
 
+### 2026-08-11: the same starvation reappeared in us-east4, same fix
+
+The 2026-07-26 lesson repeated verbatim one region over. us-east4's L4 grant is also **3**, and by 2026-08-11 three warm pins held all of it: `model-hunyuan3d` (min 1), `model-trellis` (min 1), and `model-triposr` (min 1, the warm copy ported there 2026-07-28). That left the one us-east4 service production actually routes to, `model-text2motion` (min 0), with zero headroom to cold-start: 13 allocation denials in 7 days, each logged as `exceeded its quota limit for run.googleapis.com/nvidia_l4_gpu_allocation_no_zonal_redundancy`, most of them the 10-minute keep-warm probe.
+
+Measured before touching anything: over 7 days `model-hunyuan3d`, `model-trellis` and `model-triposr` in us-east4 served **zero** `/infer` requests (only gcsfuse GC noise), because every one of their production URLs points at us-central1 (`MODEL_TRELLIS_URL`, and `GCP_HUNYUAN3D_URL` at the RTX build). Only `GCP_TEXT2MOTION_URL` points at us-east4.
+
+Fix applied (config-only, pre-approved): `gcloud run services update model-hunyuan3d --region us-east4 --min-instances=0` → revision `model-hunyuan3d-00002-srg`. Hunyuan's real lane is `model-hunyuan3d-21-rtx` on the RTX PRO 6000 quota, so an L4 warm standby for it bought nothing anywhere.
+
+**The generalized rule: warm pins are per region, and an idle standby in a region starves the lane that region actually serves.** Before pinning a GPU service warm in any region, check which env var routes production traffic there. `trellis` and `triposr` still hold two of the three us-east4 L4s as idle standbys; the next lane that needs headroom there should measure them the same way and unpin rather than wait on the raise (preference `l4-no-zonal-us-east4-8`, filed 2026-07-28, still reconciling).
+
 ## The one constraint that matters: L4 GPU quota
 
 Every 3D generation engine runs on Cloud Run NVIDIA L4s, and all six GPU services draw from ONE quota: `NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion`, currently **granted 3** for us-central1.
