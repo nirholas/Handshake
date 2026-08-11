@@ -510,6 +510,22 @@ async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
     return await _resolve_task(task_id)
 
 
+@app.get("/")
+async def root() -> dict:
+    """Service identity for a bare-root GET.
+
+    Nothing here serves inference, but probes and operators land on the root
+    first, and a 404 tells them nothing while filling the service log with
+    warnings. Point them at the real health route and the endpoint map instead.
+    """
+    return {
+        "service": "model-hunyuan3d",
+        "model": "hunyuan3d-2",
+        "health": "/health",
+        "endpoints": ["POST /infer", "POST /reconstruct", "GET /tasks/{id}", "GET /jobs/{id}", "GET /health"],
+    }
+
+
 @app.get("/health")
 async def health() -> dict:
     return {
