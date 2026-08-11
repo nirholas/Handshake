@@ -192,14 +192,14 @@ function classifyTarget(value) {
 // attribute — only a real navigable attribute (preceded by whitespace or tag-open).
 const htmlAttrRe = /(?<![\w-])(?:href|formaction|action|data-href|data-route|data-link|data-target-href)\s*=\s*("([^"]*)"|'([^']*)')/gi;
 // The `href:` alternative targets an object-literal property (`{ href: '/x' }`).
-// The lookbehind keeps it off a *property read* followed by a ternary colon —
+// The lookbehind keeps it off a *property read* followed by a ternary colon -
 // `new URL(x, origin).href : ''` is a value expression, not a navigation.
 const jsNavRe = /(\.href\s*=|location\.(?:assign|replace)\s*\(|window\.open\s*\(|(?<![.\w$])href\s*:|\bnavigateTo\s*\(|\brouteTo\s*\()\s*("([^"]*)"|'([^']*)'|`([^`$]*)`)/gi;
 const fetchRe = /\bfetch\s*\(\s*("([^"]*)"|'([^']*)'|`([^`$]*)`)/gi;
 
 // A string literal immediately followed by `+` is only the *head* of a computed
 // URL (`dot.href = '#' + section.id`, `fetch('/login?next=' + to)`). Its path
-// prefix is still worth resolving — that catches a renamed route — but it can
+// prefix is still worth resolving, that catches a renamed route, but it can
 // never be a stub: the part that makes the target real is the concatenated tail.
 function concatenatedAfter(content, endIndex) {
 	let i = endIndex;
@@ -265,7 +265,7 @@ function scanFile(file) {
 	jsNavRe.lastIndex = 0;
 	while ((m = jsNavRe.exec(content))) {
 		const target = m[3] ?? m[4] ?? m[5] ?? '';
-		// `window.open('')` opens a blank tab the caller then writes into — a real
+		// `window.open('')` opens a blank tab the caller then writes into, a real
 		// pattern, not a link to nowhere.
 		if (target === '' && /^window\.open/i.test(m[1])) continue;
 		record(target, file, lineOf(content, m.index), concatenatedAfter(content, m.index + m[0].length));

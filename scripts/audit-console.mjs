@@ -175,8 +175,8 @@ const OPTIMIZER_RACE = [
 // Transport-level failures that describe the machine, not the page: the sweep
 // drives many WebGL-heavy routes at once, and on a loaded or shared box a large
 // asset fetch (a GLB, a texture) or a whole navigation can be starved out. They
-// arrive with no attribution — a bare `net::ERR_FAILED` or an unattributed
-// `TypeError: Failed to fetch` from inside a third-party viewer — so no route or
+// arrive with no attribution, a bare `net::ERR_FAILED` or an unattributed
+// `TypeError: Failed to fetch` from inside a third-party viewer, so no route or
 // module owns them, and they land on a different route each run. A page defect
 // reproduces on a second visit; a starved socket does not.
 const TRANSIENT_NETWORK = [

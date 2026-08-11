@@ -4,7 +4,7 @@
  * Pump emits an Anchor CPI event named `CompleteEvent` when a token finishes
  * its bonding curve. It arrives on the program's log stream as a single
  * `Program data: <base64>` line whose first 8 bytes are the Anchor event
- * discriminator, `sha256("event:CompleteEvent")[..8]` — the same fixed bytes
+ * discriminator, `sha256("event:CompleteEvent")[..8]`: the same fixed bytes
  * `@pumpkit/core` matches on.
  *
  * Both index.js (legacy `conn.onLogs`) and carbon-source.js parse with these
@@ -18,7 +18,7 @@ export const PUMP_PROGRAM_ID = new PublicKey('6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14
 
 export const COMPLETE_EVENT_DISCRIMINATOR = Buffer.from([95, 114, 97, 156, 212, 46, 152, 8]);
 
-// discriminator(8) user(32) mint(32) bondingCurve(32) timestamp(i64)
+// Layout: discriminator 8 bytes, then user 32, mint 32, bondingCurve 32, timestamp i64.
 const COMPLETE_EVENT_LEN = 8 + 32 + 32 + 32 + 8;
 
 /**
