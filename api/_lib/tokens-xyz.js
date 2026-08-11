@@ -23,7 +23,7 @@
 // failover cascade in api/_lib/market/token-market.js, which already owns an
 // L1 + L2 + single-flight cache and would otherwise cache the same value twice.
 //
-// Contract reference: docs/integrations/tokens-xyz.md
+// Contract reference: docs/tokens-xyz.md
 
 import { cacheWrap } from './cache.js';
 

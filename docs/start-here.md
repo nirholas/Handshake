@@ -156,6 +156,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Design tokens](./DESIGN-TOKENS.md): the canonical design vocabulary (colors, spacing, type, motion) every surface builds from
 - [NVIDIA models on three.ws](./nvidia-models.md): the free hosted inference layer model by model, one key behind text-to-3D, chat, vision, embeddings, safety, and speech
 - [Free LLM providers](./free-llm-providers.md): the failover chain of a dozen free AI providers behind every text completion, what each free tier gives, and how to add the next rung
+- [Tokens API on three.ws](./tokens-xyz.md): the Solana Foundation asset layer that tells us which mints are the same asset, why it sits second in the market-data cascade, and the one env var that turns it on
 - [NVIDIA Inception membership](./nvidia-inception.md): what the platform already runs on NVIDIA silicon and what the program adds on top
 - [The generator was never the hard part](./nvidia-nemotron-spotlight.md): our Nemotron Nano write-up, published on the NVIDIA Developer Forums
 - [three.ws on the AWS Builder Center](./aws-builder-center.md): the index of our published AWS engineering writing, what code each article documents, and the checklist for publishing the next one
