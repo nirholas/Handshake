@@ -2,8 +2,10 @@
 //
 // Sources, in priority order:
 //   1. Birdeye (keyed) — richest: includes holders + circulating supply.
-//   2. DexScreener (keyless) — price, 24h change, volume, liquidity, market cap.
-//   3. GeckoTerminal (keyless) — price, market cap, volume, liquidity, supply.
+//   2. Tokens API (keyed, api.tokens.xyz): Solana Foundation's canonical asset
+//      layer; price, liquidity, volume, cap, and direct on-chain trade metrics.
+//   3. DexScreener (keyless): price, 24h change, volume, liquidity, market cap.
+//   4. GeckoTerminal (keyless): price, market cap, volume, liquidity, supply.
 //
 // Each source is normalized to one shape; a fallback source that lacks a field
 // (e.g. DexScreener has no holder count) leaves it null rather than failing the
@@ -14,6 +16,7 @@
 
 import { cacheGet, cacheGetFresh, cacheSet, cacheDel, acquireLock, releaseLock } from '../cache.js';
 import { createCache } from '../mem-cache.js';
+import { fetchMintMarket, tokensXyzConfigured } from '../tokens-xyz.js';
 
 const BIRDEYE_BASE = 'https://public-api.birdeye.so';
 const DEXSCREENER_BASE = 'https://api.dexscreener.com/latest/dex/tokens';
@@ -192,6 +195,35 @@ async function fromBirdeye(mint) {
 	);
 }
 
+// Tokens API (api.tokens.xyz, Solana Foundation). Sits behind Birdeye because
+// it carries no holder count, and ahead of the keyless rungs because its
+// numbers can come from `clickhouse_trades`: direct on-chain USD-stable fills
+// rather than an aggregator's pool estimate. Inert without TOKENS_XYZ_API_KEY
+// (fetchMintMarket returns null), so an unconfigured deployment keeps the exact
+// cascade it had before this rung existed.
+async function fromTokensXyz(mint) {
+	if (!tokensXyzConfigured()) return null;
+	const row = await fetchMintMarket(mint);
+	const m = row?.market;
+	if (!m || !(num(m.price_usd) > 0)) return null;
+	const price = num(m.price_usd);
+	const marketCap = num(m.market_cap);
+	return shape(
+		{
+			price_usd: price,
+			price_change_24h: num(m.price_change_24h),
+			market_cap: marketCap,
+			volume_24h: num(m.volume_24h),
+			liquidity: num(m.liquidity),
+			// The endpoint reports no supply field; derive it the same way the
+			// DexScreener rung does rather than leaving the panel blank.
+			supply: marketCap && price ? marketCap / price : null,
+			decimals: num(m.decimals) ?? 6,
+		},
+		'tokensxyz',
+	);
+}
+
 async function fromDexScreener(mint) {
 	const data = await fetchJson(`${DEXSCREENER_BASE}/${mint}`);
 	const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
@@ -261,7 +293,7 @@ async function fromRaydium(mint) {
 	return shape({ price_usd: price }, 'raydium');
 }
 
-const SOURCES = [fromBirdeye, fromDexScreener, fromGeckoTerminal, fromLlamaCoins, fromRaydium];
+const SOURCES = [fromBirdeye, fromTokensXyz, fromDexScreener, fromGeckoTerminal, fromLlamaCoins, fromRaydium];
 
 // Store a value in the per-instance L1 cache (with the bounded-size eviction the
 // fetch path uses) and return it. Shared by the live, L2-hit, and lock-loser
