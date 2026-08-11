@@ -79,6 +79,7 @@ export function buildServer() {
 						error: err?.code || 'unhandled',
 						message: err?.message || String(err),
 						...(err?.status ? { status: err.status } : {}),
+						...(err?.detail ? { detail: err.detail } : {}),
 					};
 					return {
 						content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],

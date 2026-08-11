@@ -4,7 +4,24 @@ startCommand:
   type: stdio
   configSchema:
     type: object
-    properties: {}
+    properties:
+      solanaSecretKey:
+        type: string
+        description: >-
+          Base58 Solana secret of the enlisting wallet. Only needed for the
+          write tools (enlist_faction, rally_faction); reads work without it.
+          Used solely to sign the enlist challenge locally, never a transaction.
+      threeWsBase:
+        type: string
+        description: three.ws API deployment to talk to.
+        default: https://three.ws
     required: []
   commandFunction: |
-    (config) => ({ command: "npx", args: ["-y", "@three-ws/clash-mcp"], env: {} })
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@three-ws/clash-mcp"],
+      env: {
+        ...(config.solanaSecretKey ? { SOLANA_SECRET_KEY: config.solanaSecretKey } : {}),
+        ...(config.threeWsBase ? { THREE_WS_BASE: config.threeWsBase } : {}),
+      },
+    })

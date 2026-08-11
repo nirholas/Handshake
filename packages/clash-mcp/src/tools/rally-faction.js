@@ -39,64 +39,53 @@ export const def = {
 			.optional()
 			.describe('Base58 Solana secret, used only when auto-enlisting from `token`. Falls back to SOLANA_SECRET_KEY env.'),
 	},
+	// Failures throw so the server wrapper formats them and marks the result
+	// isError - the same error channel the read tools use. Business failures
+	// (bad arguments, an ineligible wallet) throw typed errors carrying their
+	// context on `detail`, which the wrapper passes through.
 	async handler(args) {
-		try {
-			let pass = args?.pass ? String(args.pass).trim() : '';
+		let pass = args?.pass ? String(args.pass).trim() : '';
 
-			// Auto-enlist path: no pass but a faction token → run the full proof and
-			// rally with the freshly minted pass.
-			let enlistment = null;
-			if (!pass) {
-				if (!args?.token) {
-					return {
-						ok: false,
-						error: 'validation_error',
-						message: 'Provide a `pass` from enlist_faction, or a `token` to auto-enlist.',
-					};
-				}
-				enlistment = await enlist({ token: args.token, secret: args.secret });
-				if (!enlistment.eligible || !enlistment.warPass) {
-					return {
-						ok: false,
-						error: 'not_eligible',
-						message:
-							enlistment.reason === 'not_a_holder'
-								? `Wallet ${enlistment.wallet} does not hold ${enlistment.faction} — cannot rally for it.`
-								: 'Enlistment was not eligible; no war pass issued.',
-						eligible: false,
-						reason: enlistment.reason,
-						wallet: enlistment.wallet,
-						faction: enlistment.faction,
-					};
-				}
-				pass = enlistment.warPass;
+		// Auto-enlist path: no pass but a faction token → run the full proof and
+		// rally with the freshly minted pass.
+		let enlistment = null;
+		if (!pass) {
+			if (!args?.token) {
+				throw Object.assign(new Error('Provide a `pass` from enlist_faction, or a `token` to auto-enlist.'), {
+					code: 'validation_error',
+				});
 			}
-
-			const data = await apiRequest('/api/clash/rally', {
-				method: 'POST',
-				body: { pass, taps: args.taps },
-			});
-			const d = data?.data ?? {};
-			return {
-				ok: true,
-				...(enlistment ? { enlisted: { wallet: enlistment.wallet, amount: enlistment.amount, usd: enlistment.usd } } : {}),
-				epoch: d.epoch ?? null,
-				mint: d.mint ?? null,
-				added: d.added ?? 0,
-				momentum: d.momentum ?? 1,
-				walletPower: d.walletPower ?? 0,
-				walletCap: d.walletCap ?? null,
-				capped: Boolean(d.capped),
-				factionPower: d.factionPower ?? 0,
-				msLeft: d.msLeft ?? null,
-			};
-		} catch (err) {
-			return {
-				ok: false,
-				error: err?.code || 'rally_failed',
-				message: err?.message || String(err),
-				...(err?.status ? { status: err.status } : {}),
-			};
+			enlistment = await enlist({ token: args.token, secret: args.secret });
+			if (!enlistment.eligible || !enlistment.warPass) {
+				const message =
+					enlistment.reason === 'not_a_holder'
+						? `Wallet ${enlistment.wallet} does not hold ${enlistment.faction} - cannot rally for it.`
+						: 'Enlistment was not eligible; no war pass issued.';
+				throw Object.assign(new Error(message), {
+					code: 'not_eligible',
+					detail: { wallet: enlistment.wallet, faction: enlistment.faction, reason: enlistment.reason },
+				});
+			}
+			pass = enlistment.warPass;
 		}
+
+		const data = await apiRequest('/api/clash/rally', {
+			method: 'POST',
+			body: { pass, taps: args.taps },
+		});
+		const d = data?.data ?? {};
+		return {
+			ok: true,
+			...(enlistment ? { enlisted: { wallet: enlistment.wallet, amount: enlistment.amount, usd: enlistment.usd } } : {}),
+			epoch: d.epoch ?? null,
+			mint: d.mint ?? null,
+			added: d.added ?? 0,
+			momentum: d.momentum ?? 1,
+			walletPower: d.walletPower ?? 0,
+			walletCap: d.walletCap ?? null,
+			capped: Boolean(d.capped),
+			factionPower: d.factionPower ?? 0,
+			msLeft: d.msLeft ?? null,
+		};
 	},
 };
