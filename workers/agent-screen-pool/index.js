@@ -14,9 +14,9 @@
 //   4. When nobody is watching an agent, its page is torn down and the slot frees
 //      up for another. The wall's zero-cost activity view takes over seamlessly.
 //
-// Cost scales with concurrent viewers, not with the number of agents. Deploy one
-// of these anywhere a long-running Node process can live (a small VM, Fly.io,
-// Railway, or the bundled GitHub Actions workflow for bursts).
+// Cost scales with concurrent viewers, not with the number of agents. It ships as
+// a Cloud Run service (workers/agent-screen-pool/cloudbuild.yaml) and runs the
+// same way anywhere a long-running Node process can live.
 //
 // Required env:
 //   SCREEN_WORKER_SECRET   shared secret; must match the value set on the API.
@@ -26,7 +26,9 @@
 //   PUSH_URL=$BASE_URL/api/agent-screen-push
 //   MAX_BROWSERS=6   POLL_MS=3000   FRAME_MS=700   JPEG_QUALITY=58
 //   VIEWPORT_W=1280  VIEWPORT_H=720
+//   PORT                   when set, bind the liveness endpoint (Cloud Run sets it).
 
+import http from 'node:http';
 import { chromium } from 'playwright';
 import { pickTask } from './tasks/index.js';
 import { generateNarration, runTaskSteps } from './task-runner.js';
@@ -117,6 +119,31 @@ const pool = new Map();
 let browser = null;
 let context = null;
 let stopping = false;
+const BOOT_AT = new Date().toISOString();
+
+// Cloud Run requires a service to answer a startup probe on $PORT, and this
+// worker is a background daemon whose real work is the reconcile loop, not HTTP.
+// So bind a tiny liveness endpoint only when PORT is set (the same shape as
+// workers/agent-orders and workers/agent-sniper). It doubles as the ops view of
+// what the pool is casting right now. Run outside Cloud Run and nothing sets
+// PORT, nothing listens, and the loop is unaffected.
+function startHealthServer() {
+	const port = Number(process.env.PORT);
+	if (!Number.isFinite(port) || port <= 0) return;
+	http
+		.createServer((_req, res) => {
+			res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+			res.end(JSON.stringify({
+				ok: true,
+				worker: 'agent-screen-pool',
+				bootAt: BOOT_AT,
+				baseUrl: BASE_URL,
+				max: MAX_BROWSERS,
+				casting: [...pool.values()].map((e) => ({ agentId: e.agentId, name: e.name, mode: e.tour ? 'tour' : 'task', task: e.task?.id || null })),
+			}));
+		})
+		.listen(port, () => log('health server listening', port));
+}
 
 async function ensureBrowser() {
 	if (browser) return;
@@ -520,6 +547,7 @@ process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 log(`starting · base=${BASE_URL} · max=${MAX_BROWSERS} · poll=${POLL_MS}ms · frame=${FRAME_MS}ms · control=${CONTROL_POLL_MS}ms`);
+startHealthServer();
 await reconcile();
 setInterval(reconcile, POLL_MS);
 setInterval(drainControl, CONTROL_POLL_MS);
