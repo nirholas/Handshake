@@ -24,8 +24,8 @@ TripoSR (VAST-AI, MIT): fast single-image -> 3D mesh (~5–15 s, baked single te
 ### `model-triposg/` (GPU L4)
 TripoSG (VAST-AI Research, MIT): 1.5B rectified-flow transformer, single image or sketch -> high-fidelity 3D shape (geometry only — no textures; pair with `texture/`). Two modes on the same `/infer` contract: `mode: "image"` (RMBG-1.4 background removal + recenter, 50 steps — the quality successor to TripoSR in the avatar pipeline pool) and `mode: "scribble"` (drawing + required prompt via the CFG-distilled TripoSG-scribble pipeline, 16 steps — powers the `/forge` sketch→3D path). Decimates to `target_polycount` via pymeshlab when supplied. Weights: `VAST-AI/TripoSG` + `VAST-AI/TripoSG-scribble` + `briaai/RMBG-1.4` (staged by `deploy/stage-weights.sh`, service key `triposg`). Routed two ways: through the controller (`MODEL_TRIPOSG_URL`) for avatar reconstruction, and directly via `api/_providers/gcp.js` (`sketch` mode, `GCP_TRIPOSG_URL`) for forge sketch→3D.
 
-### `unirig/` (GPU L4)
-UniRig (VAST-AI-Research, MIT): takes a raw generated mesh and adds a humanoid skeleton, per-vertex skinning weights, and ARKit-52 blendshapes — turning a static mesh into a riggable avatar.
+### `rig/` (GPU L4, Cloud Run service `model-rig`)
+Make-It-Animatable (jasongzy, MIT): takes a raw generated mesh and adds a 52-bone Mixamo-named skeleton, per-vertex skinning weights, and ICT-FaceKit ARKit-52 blendshapes, turning a static mesh into a riggable avatar. `rig_glb.py` grafts the result into the original GLB bytes, so materials and PBR textures survive untouched. API: `POST /rig` -> `202 { task_id }`, `GET /tasks/:id`, `GET /health`. Callers reach it through `GCP_UNIRIG_URL` (platform API) and `UNIRIG_URL` (pipeline controller); both env names predate the engine swap that retired the old `unirig` worker. Assets stage via `rig/stage-assets.sh`, not `deploy/stage-weights.sh`. See `rig/README.md`.
 
 ### `avatar-reconstruction/` (GPU L4)
 Standalone face-to-avatar service running InstantMesh: accepts 1–6 face photos, synthesizes 6 multi-view renders via Zero123++, reconstructs a textured GLB, and stores it in Cloud Storage. Predates the split pipeline above; see `avatar-reconstruction/README.md`.
@@ -63,7 +63,7 @@ Background removal — strips backgrounds from images using BRIA RMBG-2.0 (Apach
 ## Cloudflare Worker
 
 ### `pump-fun-mcp/`
-Remote Model Context Protocol server (a mirror of `/api/pump-fun-mcp`) deployed as a Cloudflare Worker — `worker.js` + `wrangler.toml`, named `pump-fun-mcp`, with `nodejs_compat`. Exposes pump.fun token tools to MCP clients; configurable via `wrangler secret put` (`SOLANA_RPC_URL`, `PUMPFUN_BOT_URL`, `PUMPFUN_BOT_TOKEN`, ...). Deploy with `wrangler deploy`.
+Remote Model Context Protocol server (a mirror of `/api/pump-fun-mcp`) built as a Cloudflare Worker: `worker.js` + `wrangler.toml`, named `pump-fun-mcp`, with `nodejs_compat`. Exposes the free, read-only pump.fun token tools to MCP clients; configurable via `npx wrangler@4 secret put` (`SOLANA_RPC_URL`, `SOLANA_RPC_FALLBACKS`, `PUMPFUN_BOT_URL`, `PUMPFUN_BOT_TOKEN`, ...), all optional. Not deployed to any Cloudflare account from this repo: production traffic uses `https://three.ws/api/pump-fun-mcp`, and this worker is here to be run locally or on your own account. See its README for the verified run, build, and deploy commands.
 
 ## Always-on Node workers
 
@@ -89,4 +89,4 @@ A Node script that loads stored agent strategies and calls `executeAgentAction` 
 ## Deploy
 
 - Cloud Run services: `gcloud builds submit --config workers/<name>/cloudbuild.yaml` (see each service's README for substitutions and secrets).
-- Cloudflare Worker: `cd workers/pump-fun-mcp && wrangler deploy`.
+- Cloudflare Worker: `cd workers/pump-fun-mcp && npx wrangler@4 deploy` (targets your own Cloudflare account; `--dry-run --outdir <dir>` builds without deploying).
