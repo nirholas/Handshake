@@ -13,7 +13,7 @@
 // operator-funded. See README.md for the full reference.
 
 import { createHttp, ThreeWsError } from './http.js';
-import { resolvePoseLocal } from './local.js';
+import { resolvePoseLocal, resolvePresetLocal } from './local.js';
 import { PRESETS, PRESET_GROUPS, getPresetById } from './pose-presets.js';
 
 export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js';
@@ -84,20 +84,17 @@ export function createPose(options = {}) {
 				{ code: 'invalid_prompt' },
 			);
 		}
-		return remote ? callPoseModel(presetId, opts) : resolveLocally(presetId, opts);
+		if (remote) return callPoseModel(presetId, opts);
+		throwIfAborted(opts);
+		return shape(await resolvePresetLocal(presetId), previewBase);
 	}
 
 	// The zero-config lane: run the pose_model algorithm in-process over the
 	// bundled preset library, then normalize through the same shape() step the
 	// wire response goes through, so both lanes return identical PoseResults.
 	async function resolveLocally(prompt, opts) {
-		if (opts?.signal?.aborted) {
-			const e = new Error('The operation was aborted.');
-			e.name = 'AbortError';
-			throw e;
-		}
-		const sc = await resolvePoseLocal(prompt);
-		return shape(sc, previewBase);
+		throwIfAborted(opts);
+		return shape(await resolvePoseLocal(prompt), previewBase);
 	}
 
 	// One JSON-RPC tools/call to pose_model, shaped into a PoseResult.
@@ -192,4 +189,12 @@ function shape(sc, previewBase) {
 
 function stripTrailingSlash(s) {
 	return String(s).replace(/\/+$/, '');
+}
+
+function throwIfAborted(opts) {
+	if (opts?.signal?.aborted) {
+		const e = new Error('The operation was aborted.');
+		e.name = 'AbortError';
+		throw e;
+	}
 }

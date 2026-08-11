@@ -31,8 +31,8 @@ export type PoseParameters = Record<string, JointVector>;
 export interface PoseMatch {
 	/** Token-overlap score; 0 on the deterministic fallback. */
 	score: number;
-	/** `'token-match'` or `'no-match-deterministic-pick'`. */
-	reason: 'token-match' | 'no-match-deterministic-pick' | string;
+	/** `'token-match'`, `'no-match-deterministic-pick'`, or `'preset-id'` (local presetPose). */
+	reason: 'token-match' | 'no-match-deterministic-pick' | 'preset-id' | string;
 }
 
 export interface PoseResult {

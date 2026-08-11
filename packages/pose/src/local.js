@@ -9,7 +9,7 @@
 // Hashing uses WebCrypto (crypto.subtle), available in Node 18+ and every
 // modern browser, so the package stays dependency-free on both runtimes.
 
-import { PRESETS, PRESET_GROUPS } from './pose-presets.js';
+import { PRESETS, PRESET_GROUPS, getPresetById } from './pose-presets.js';
 
 function tokensOf(str) {
 	return String(str || '')
@@ -87,7 +87,25 @@ async function pickPreset(prompt) {
  */
 export async function resolvePoseLocal(prompt) {
 	const picked = await pickPreset(prompt);
-	const preset = picked.entry.preset;
+	return shapeStructured(prompt, picked.entry.preset, { score: picked.score, reason: picked.reason });
+}
+
+/**
+ * Resolve a preset DIRECTLY by id, bypassing prompt scoring. The scoring
+ * pipeline can shadow an id (group vocabulary ties, first preset wins), which
+ * would violate presetPose()'s "resolve this exact preset" contract; a direct
+ * lookup cannot. The seed uses the same formula with the id as the prompt, so
+ * it matches a scoring run that picks the same preset.
+ * @param {string} presetId
+ * @returns {Promise<object|null>} structuredContent, or null for an unknown id
+ */
+export async function resolvePresetLocal(presetId) {
+	const preset = getPresetById(presetId);
+	if (!preset) return null;
+	return shapeStructured(presetId, preset, { score: 0, reason: 'preset-id' });
+}
+
+async function shapeStructured(prompt, preset, match) {
 	const seed = toHex(await sha256Bytes(`${prompt}|${preset.id}`)).slice(0, 16);
 	return {
 		seed,
@@ -96,7 +114,7 @@ export async function resolvePoseLocal(prompt) {
 		group: preset.group,
 		parameters: preset.pose,
 		preview_url: null,
-		match: { score: picked.score, reason: picked.reason },
+		match,
 		groups: PRESET_GROUPS,
 	};
 }

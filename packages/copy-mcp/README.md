@@ -84,7 +84,7 @@ All reads return live data (counts, intents, and accruals move between calls), s
 
 **`create_subscription`** — `leader_agent_id` (required, UUID), `copier_wallet` (required, base58), `network` (`mainnet` | `devnet`, default `mainnet`), `sizing_rule` (`fixed` | `multiplier` | `pct_balance`, default `fixed`), `fixed_sol` (required for `fixed` sizing), `multiplier` (default `0.1`), `pct_balance` (0–100), `per_trade_cap_sol` (default `0.5`), `min_order_sol` (default `0.02`), `daily_budget_sol` (default `1`), `max_open_copies` (1–100, default `5`), `mcap_floor_usd`, `mcap_ceiling_usd`, `copy_sells` (default `true`), `require_safety_pass` (default `false`), `min_oracle_score` (0–100), `perf_fee_bps` (0–3000, default `1000`), `telegram_chat_id`.
 
-**`update_subscription`** — `id` (required, UUID) plus any of: `status` (`active` | `paused` | `stopped`), and the same sizing/guard fields as `create_subscription` (each optional; pass `null` to clear `mcap_floor_usd` / `mcap_ceiling_usd` / `min_oracle_score` / `telegram_chat_id`). Only the fields you pass change.
+**`update_subscription`** — `id` (required, UUID) plus any of: `status` (`active` | `paused` | `stopped`), and the sizing/guard fields from `create_subscription` (each optional; pass `null` to clear `mcap_floor_usd` / `mcap_ceiling_usd` / `min_oracle_score` / `telegram_chat_id`). Only the fields you pass change. `leader_agent_id` and `network` cannot be changed here: they identify the subscription, so re-pointing them means creating a new follow with `create_subscription`.
 
 **`cancel_subscription`** — `id` (required, UUID).
 
@@ -114,7 +114,10 @@ All reads return live data (counts, intents, and accruals move between calls), s
     "id": "…",
     "status": "active",
     "network": "mainnet",
-    "leader": { "agent_id": "8f3c…", "name": "…", "image": "…", "wallet": "…" },
+    // the create/update responses return the raw subscription row, so leader
+    // name/image are null here; list_subscriptions joins the leader profile
+    // and also adds pending_count / acted_count per row
+    "leader": { "agent_id": "8f3c…", "name": null, "image": null, "wallet": null },
     "copier_wallet": "7Np…YourWallet",
     "sizing": { "rule": "fixed", "fixed_sol": 0.05, "multiplier": 0.1, "pct_balance": 0 },
     "guards": {
@@ -122,9 +125,7 @@ All reads return live data (counts, intents, and accruals move between calls), s
       "max_open_copies": 5, "mcap_floor_usd": 50000, "mcap_ceiling_usd": null,
       "copy_sells": true, "require_safety_pass": true, "min_oracle_score": null
     },
-    "perf_fee_bps": 1000,
-    "pending_count": 0,
-    "acted_count": 0
+    "perf_fee_bps": 1000
   }
 }
 ```
@@ -166,16 +167,31 @@ All reads return live data (counts, intents, and accruals move between calls), s
 
 | Variable              | Required | Default            | Notes                                                    |
 | --------------------- | -------- | ------------------ | -------------------------------------------------------- |
-| `THREE_WS_API_KEY`    | **yes**  | —                  | API key (`sk_live_…`) or OAuth token. Treat like cash.   |
+| `THREE_WS_API_KEY`    | all tools except `get_earnings` with `agent_id` | — | API key (`sk_live_…`) or OAuth token. Treat like cash. |
 | `THREE_WS_BASE`       | no       | `https://three.ws` | Override for self-hosting / preview deployments.         |
 | `THREE_WS_TIMEOUT_MS` | no       | `20000`            | Per-request timeout in ms.                               |
+
+## Errors
+
+A failed tool call returns an MCP error result (`isError: true`) whose text is a single JSON object: `{ "ok": false, "error": "<code>", "message": "…" }`, plus `status` on upstream rejections:
+
+| `error` | Meaning | Recovery |
+| ------- | ------- | -------- |
+| `missing_credential` | The tool needs auth and `THREE_WS_API_KEY` is unset. Thrown before any request is sent. | Set the key. |
+| `validation_error` | Bad arguments caught client-side, e.g. `sizing_rule: "fixed"` without a positive `fixed_sol`. | Fix the call. |
+| `no_changes` | `update_subscription` was called with only an `id`. | Pass at least one field to change. |
+| `not_found` | The subscription `id` does not exist on this account. | Check `list_subscriptions`. |
+| `upstream_error` | The API rejected the request; `status` carries the HTTP code (`400` bad fields, `401` bad/expired credential, `429` rate-limited). | Act on the message and `status`. |
+| `timeout` | No response within `THREE_WS_TIMEOUT_MS`. | Retry or raise the timeout. |
+| `network_error` | The request never reached the API (DNS, offline, TLS). | Check connectivity / `THREE_WS_BASE`. |
+| `bad_config` | `THREE_WS_TIMEOUT_MS` is not a positive number. Thrown while the server starts (module load), so the process exits before serving. | Fix the env var. |
 
 ## Links
 
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, see [LICENSE](./LICENSE)
 
 ---
 

@@ -167,9 +167,11 @@ pose are at rest (`0`).
 
 ### `presetPose(presetId, options?) → Promise<PoseResult>`
 
-Skip selection and resolve a specific preset by id — handy once a user has chosen one
-from a picker. Internally seeds with the preset id as the prompt, so the same preset
-always returns the same seed.
+Skip selection and resolve a specific preset by id, handy once a user has chosen
+one from a picker. The local lane looks the preset up directly (never through
+prompt scoring, so the id you ask for is always the preset you get, with
+`match.reason === 'preset-id'`) and seeds with the preset id as the prompt, so
+the same preset always returns the same seed.
 
 ### `listPresetGroups() → string[]`
 

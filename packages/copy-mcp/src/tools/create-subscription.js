@@ -51,6 +51,13 @@ export const def = {
 		telegram_chat_id: z.string().regex(/^-?[0-9]+$/, 'must be a numeric Telegram chat ID').nullable().optional().describe('Optional Telegram chat ID to receive copy-intent alerts for this subscription.'),
 	},
 	async handler(args) {
+		// Cross-field rule zod's flat shape cannot express: fixed sizing needs its
+		// amount. Fail here with the recovery in the message instead of a 400 round trip.
+		if ((args.sizing_rule ?? 'fixed') === 'fixed' && !(Number(args.fixed_sol) > 0)) {
+			throw Object.assign(new Error('sizing_rule "fixed" requires fixed_sol > 0 (SOL spent per copy).'), {
+				code: 'validation_error',
+			});
+		}
 		const data = await apiRequest('/api/copy/subscriptions', {
 			method: 'POST',
 			body: {
