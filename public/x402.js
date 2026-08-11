@@ -1611,20 +1611,27 @@ class CheckoutModal {
 			// PayAI during /settle.
 			const SolanaWeb3 = await loadSolanaWeb3();
 			const tx = SolanaWeb3.VersionedTransaction.deserialize(txBytes);
-			// The merchant's facilitator only settles the exact transaction that
-			// /prepare built — a wallet that rewrites it before signing (injected
-			// priority-fee or guard instructions) produces a payment the verifier
-			// deterministically rejects. Snapshot the message bytes before the
-			// wallet touches the object (some wallets mutate in place), then
-			// compare after signing: a mismatch becomes an immediate, named
-			// explanation instead of a silent 402-retry loop.
+			// Wallets with auto priority fees or "transaction protection" (Phantom,
+			// Solflare) rewrite a transaction before signing. The facilitator settles
+			// a rewritten tx fine as long as the rewrite only touches ComputeBudget
+			// instructions or the blockhash: it re-validates shape, recipient,
+			// amount, and fee caps server-side on every settle. Anything else (guard
+			// programs, a changed transfer, a swapped fee payer) it deterministically
+			// rejects, so those become an immediate, named explanation here instead
+			// of a silent 402-retry loop. Snapshot the message bytes before the
+			// wallet touches the object (some wallets mutate in place); the deep
+			// classification re-reads the prepared tx from the original bytes.
 			const preparedMsg = tx.message.serialize();
 			const signed = await provider.signTransaction(tx);
 			const signedMsg = signed?.message?.serialize?.();
 			if (signedMsg && !bytesEqual(preparedMsg, signedMsg)) {
-				throw new Error(
-					`${walletName} altered the payment transaction before signing (wallets sometimes inject fee or guard instructions). Nothing was sent or charged. Turn off transaction modification in the wallet settings, or pay with a different Solana wallet.`,
-				);
+				const prepared = SolanaWeb3.VersionedTransaction.deserialize(txBytes);
+				const veto = classifyWalletTxMutation(prepared, signed);
+				if (veto) {
+					throw new Error(
+						`${walletName} rewrote the payment transaction before signing (${veto}), so it can no longer settle. Nothing was sent or charged. Turn off transaction modification in the wallet settings, or pay with a different Solana wallet.`,
+					);
+				}
 			}
 			const signedB64 = uint8ArrayToBase64(signed.serialize());
 
@@ -2145,6 +2152,70 @@ function bytesEqual(a, b) {
 	if (a.length !== b.length) return false;
 	for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
 	return true;
+}
+
+// Wallet-rewrite classifier for the Solana checkout. The self-hosted
+// facilitator's validateRingTransaction in api/_lib/x402/self-facilitator.js
+// accepts any ComputeBudget instruction set within its fee caps and never pins
+// the blockhash to what /prepare issued, so a wallet that only injects or
+// retunes priority-fee instructions (Phantom and Solflare both do) still
+// produces a settleable payment. What it hard-rejects is any other change:
+// foreign programs (e.g. wallet-guard instructions), a modified transfer, or a
+// swapped fee payer. Mirror exactly that line here.
+const COMPUTE_BUDGET_PROGRAM = 'ComputeBudget111111111111111111111111111111';
+
+// Resolve a v0 message's instructions to index-independent form so the
+// comparison survives the wallet reordering or appending account keys.
+function resolveNonBudgetInstructions(message) {
+	const keys = message.staticAccountKeys.map((k) => k.toBase58());
+	return message.compiledInstructions
+		.map((ix) => ({
+			program: keys[ix.programIdIndex],
+			accounts: ix.accountKeyIndexes.map((i) => keys[i]),
+			data: ix.data,
+		}))
+		.filter((ix) => ix.program !== COMPUTE_BUDGET_PROGRAM);
+}
+
+// Decide whether a wallet's pre-signing rewrite of the prepared transaction is
+// benign (ComputeBudget/blockhash only → returns null, proceed to settle) or
+// blocking (returns a short human-readable reason for the checkout error).
+// Never throws on an odd wallet-returned object: unverifiable means blocking,
+// since the facilitator would reject what we cannot vouch for.
+export function classifyWalletTxMutation(preparedTx, signedTx) {
+	try {
+		const prepared = preparedTx.message;
+		const signed = signedTx.message;
+		const preparedFeePayer = prepared.staticAccountKeys[0]?.toBase58();
+		const signedFeePayer = signed.staticAccountKeys[0]?.toBase58();
+		if (preparedFeePayer !== signedFeePayer) {
+			return 'it changed the transaction fee payer';
+		}
+		const preparedIxs = resolveNonBudgetInstructions(prepared);
+		const signedIxs = resolveNonBudgetInstructions(signed);
+		if (signedIxs.length !== preparedIxs.length) {
+			const preparedPrograms = new Set(preparedIxs.map((ix) => ix.program));
+			const added = signedIxs.find((ix) => !preparedPrograms.has(ix.program));
+			return added
+				? `it injected instructions from program ${added.program}`
+				: 'it added or removed payment instructions';
+		}
+		for (let i = 0; i < preparedIxs.length; i++) {
+			const a = preparedIxs[i];
+			const b = signedIxs[i];
+			if (
+				a.program !== b.program ||
+				a.accounts.length !== b.accounts.length ||
+				a.accounts.some((key, j) => key !== b.accounts[j]) ||
+				!bytesEqual(a.data, b.data)
+			) {
+				return 'it changed the payment instructions';
+			}
+		}
+		return null;
+	} catch {
+		return 'the rewrite could not be verified';
+	}
 }
 function randomHex(bytes) {
 	const arr = new Uint8Array(bytes);
