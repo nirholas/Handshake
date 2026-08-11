@@ -438,7 +438,12 @@ def _stylize_lowpoly(mesh, resolution: int):
     target_faces = int(np.clip(resolution * 60, 80, 20_000))
     deci = _decimate(mesh, target_faces)
 
-    color_at = _source_color_sampler(deci)
+    # Sample the SOURCE, not the decimated shell: open3d's quadric decimation
+    # (the path taken whenever open3d imports, which is every deployed image)
+    # returns bare vertices and triangles with no visuals at all, so sampling
+    # `deci` painted every facet the fallback color and threw the model's own
+    # colors away. Voronoi already samples the source for the same reason.
+    color_at = _source_color_sampler(mesh)
     face_colors = color_at(deci.triangles_center)  # (F,4)
 
     # Unweld: each triangle gets three unique vertices so normals are per-face,
