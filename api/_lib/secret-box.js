@@ -104,7 +104,13 @@ export function secretBoxKeyCandidates() {
 	const candidates = [];
 	try { candidates.push(walletMasterSecret()); } catch { /* prod w/o dedicated key: retired + JWT below */ }
 	candidates.push(...retiredSecrets());
-	const jwt = env.JWT_SECRET;
+	// env.JWT_SECRET is a REQUIRED accessor: it throws when unset, which made the
+	// `if (jwt)` guard below unreachable and turned "no JWT_SECRET" into a hard
+	// decrypt failure even for a deployment holding a perfectly good dedicated
+	// WALLET_ENCRYPTION_KEY. JWT_SECRET is only ever a legacy fallback candidate
+	// here, so its absence must degrade the candidate list, not break decryption.
+	let jwt = '';
+	try { jwt = env.JWT_SECRET; } catch { /* no session secret configured: skip the legacy candidate */ }
 	if (jwt) candidates.push(jwt);
 	return [...new Set(candidates.filter(Boolean))];
 }
