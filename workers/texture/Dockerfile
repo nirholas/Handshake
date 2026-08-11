@@ -18,6 +18,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # torch first (big, cached layer)
 RUN pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121
 
+# xformers alongside torch, from the same cu121 index, exactly as
+# workers/model-trellis does. Two reasons it is not in requirements.txt: every
+# xformers release pins one exact torch version (0.0.27 is the one built for
+# 2.3.1), so listing it there made pip refuse the whole file as unsolvable
+# against our torch pin; and the PyPI wheel is built against a different CUDA
+# than the base image, which fails at import rather than at install.
+RUN pip install xformers==0.0.27 --index-url https://download.pytorch.org/whl/cu121
+
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
