@@ -75,3 +75,11 @@
 **/.venv*/
 **/__pycache__/
 **/*.pyc
+# Wrangler's local dev scratch (workers/pump-fun-mcp/.wrangler). Gitignored, but
+# .gcloudignore replaces .gitignore rather than extending it, so a submit from a
+# working directory uploaded it. Worse than wasted bytes: `wrangler dev` creates
+# and deletes files under .wrangler/tmp/ while it runs, so the upload walk hit a
+# path that vanished under it and gcloud CRASHED with
+# "FileNotFoundError: .wrangler/tmp/dev-XXXXXX" - every Cloud Build submit from
+# this repo failing for as long as a dev server happened to be up.
+**/.wrangler/
