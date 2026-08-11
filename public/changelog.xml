@@ -247,6 +247,14 @@
 			<description>When you fingerspell into the webcam, the recognizer reports how sure it is of what it read, and the page uses that to flag a shaky capture instead of quietly dropping wrong words into your message. That score was in every response but appeared in none of the docs, so anyone building on the recognition API had no way to know it existed. The API reference, the sign-language guide and the worker's own README now list the full response, including the raw decode before the cleanup pass and whether the cleanup changed anything, so a caller can build the same warning we do. The recognizer itself was also capped to a sane number of simultaneous captures per instance, so a burst of signers scales out instead of queueing behind each other.</description>
 		</item>
 		<item>
+			<title>Token pages keep their holder count when a data provider runs out of quota</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-11:Token pages keep their holder count when a data provider runs out of quota</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Prices, liquidity and holder counts on Solana token panels come from an ordered list of data providers, so one going down never blanks the page. Until now the first provider was the only one that reported a holder count, and it carries a monthly usage cap: once that cap was hit, the next six hours of readings fell to a provider that has no holder data and the number quietly disappeared from the page. The Solana Foundation's Tokens API is now the second provider in that list and reports the full set, holder count and circulating supply included, so a spent quota no longer costs the page a field. It also groups mints that represent the same asset, which is what lets a balance be read across every version of a token instead of one address at a time.</description>
+		</item>
+		<item>
 			<title>Turning a sketch into 3D no longer loses a finished model when the job and the progress check land on different machines</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-08-11:Turning a sketch into 3D no longer loses a finished model when the job and the progress check land on different machines</guid>
