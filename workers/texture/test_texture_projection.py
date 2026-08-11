@@ -153,6 +153,24 @@ def test_back_projection_lands_the_view_pixels_where_they_belong():
     print("ok  back-projection preserves the view's layout in the atlas")
 
 
+def test_a_view_rendered_at_another_size_still_lands_correctly():
+    """Generating at 1024 and baking at 2048 must not shift the projection."""
+    positions, normals, uv, faces = _unit_plane()
+    atlas_size, image_size = 64, 32
+    view = _quad_view(0, atlas_size)
+
+    image = np.zeros((image_size, image_size, 3), dtype=np.uint8)
+    image[:, : image_size // 2] = (255, 0, 0)
+    image[:, image_size // 2:] = (0, 0, 255)
+
+    atlas, _, _ = tp.project_views_to_uv(
+        positions, normals, uv, faces, [view], [image], texture_size=atlas_size
+    )
+    assert tuple(atlas[32, 8]) == (255, 0, 0), atlas[32, 8]
+    assert tuple(atlas[32, 56]) == (0, 0, 255), atlas[32, 56]
+    print("ok  a view smaller than the atlas maps onto the same surface")
+
+
 def test_back_facing_views_are_refused():
     positions, normals, uv, faces = _unit_plane()
     size = 32
@@ -244,6 +262,7 @@ TESTS = [
     test_depth_control_image_puts_near_at_white,
     test_rasterizer_covers_the_whole_atlas_for_a_full_quad,
     test_back_projection_lands_the_view_pixels_where_they_belong,
+    test_a_view_rendered_at_another_size_still_lands_correctly,
     test_back_facing_views_are_refused,
     test_occluded_texels_are_refused_against_the_depth_buffer,
     test_grazing_views_lose_to_face_on_views,
