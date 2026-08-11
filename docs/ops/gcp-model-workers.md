@@ -7,7 +7,7 @@ money and carries no BYOK dependency. This runbook covers what is deployed, the
 env that wires it in, how routing picks a lane, and how to (re)start a worker.
 
 > Scope: routing + operations for the **forge** generation lanes. The avatar
-> reconstruction pipeline (controller + UniRig) is documented in
+> reconstruction pipeline (controller + the `model-rig` auto-rigger) is documented in
 > `workers/deploy/README.md`; only its shared bearer secret overlaps here.
 
 ---
@@ -65,8 +65,8 @@ faked.
 | `MODEL_TRELLIS_URL`     | `trellis_selfhost`     | Cloud Run URL of `model-trellis`. |
 | `GCP_HUNYUAN3D_URL`     | `hunyuan3d`            | Cloud Run URL of `model-hunyuan3d`. **Not** `GCP_RECONSTRUCTION_URL` — that is the avatar face pipeline, which rejects non-face images. |
 | `GCP_TRIPOSG_URL`       | `triposg` (sketch)     | Cloud Run URL of `model-triposg`. |
-| `GCP_UNIRIG_URL`        | auto-rig (`rerig`)     | Cloud Run URL of `unirig`. Required for rigging: without it, `rerig` falls back to `GCP_RECONSTRUCTION_URL`, whose deployed service exposes no `/rig` — every rig submit 404s. The provider speaks the worker's native schema (`mesh_gcs_url` in, `rigged_gcs_url` out) when this is set. |
-| `GCP_RECONSTRUCTION_KEY`| all of the above       | Shared bearer secret every worker checks (`avatar-reconstruction-key` in Secret Manager — `unirig`'s `API_KEY` references the same secret). |
+| `GCP_UNIRIG_URL`        | auto-rig (`rerig`)     | Cloud Run URL of `model-rig` (the env name predates the engine swap that retired the old `unirig` service). Required for rigging: without it, `rerig` falls back to `GCP_RECONSTRUCTION_URL`, whose deployed service exposes no `/rig`, so every rig submit 404s. The provider speaks the worker's native schema (`mesh_gcs_url` in, `rigged_gcs_url` out) when this is set. |
+| `GCP_RECONSTRUCTION_KEY`| all of the above       | Shared bearer secret every worker checks (`avatar-reconstruction-key` in Secret Manager; `model-rig`'s `API_KEY` references the same secret). |
 | `GCP_REMESH_URL`        | Game-Ready export      | `model`/`remesh` worker (post-gen). |
 | `FORGE_PREFER_FREE`     | routing (optional)     | Defaults on. Set `false` only to restore the paid-default ordering once the paid account is funded. |
 
@@ -208,7 +208,7 @@ gcloud builds submit --config workers/model-trellis/cloudbuild.yaml .
 the `three-ws-api` Cloud Run service env):
 
 ```bash
-PROJECT_ID=<gcp-project> SERVICES="hunyuan3d trellis triposg unirig" \
+PROJECT_ID=<gcp-project> SERVICES="hunyuan3d trellis triposg rig" \
   workers/deploy/deploy-all.sh
 ```
 
