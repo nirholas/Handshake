@@ -1,17 +1,17 @@
 /**
  * Voice-clone modal opened from inside Talk mode.
  *
- * Wraps the existing VoiceRecorder editor component in a modal shell so the
- * avatar's owner can clone their voice in-place without leaving talk mode.
- * On close, the caller is responsible for refreshing whichever cached voice
- * lookup it has — typically TalkController.refreshVoice().
+ * Wraps the shared VoiceSetup panel in a modal shell so the avatar's owner can
+ * clone their voice in-place without leaving talk mode. On close, the caller is
+ * responsible for refreshing whichever cached voice lookup it has — typically
+ * TalkController.refreshVoice().
  *
- * The recorder POSTs to /api/agents/:id/voice/clone (existing endpoint, real
- * ElevenLabs cloning, R2-cached, rate-limited 3/day). We don't reimplement
- * the recording logic — only the modal chrome.
+ * VoiceSetup POSTs to /api/agents/:id/voice/clone (real ElevenLabs cloning,
+ * BYOK or platform key, rate-limited 3/day) and owns every capture, credential,
+ * and failure state. This file is only the modal chrome.
  */
 
-import { VoiceRecorder } from '../editor/voice-recorder.js';
+import { VoiceSetup } from './voice-setup.js';
 import { log } from '../shared/log.js';
 
 let active = null;
@@ -44,15 +44,9 @@ export function openVoiceCloneModal({ agentId, agentName = 'Avatar', onClose } =
 				<button class="tws-vcm-close" data-ref="close" aria-label="Close">✕</button>
 			</div>
 			<p class="tws-vcm-help">
-				Read the line below at a natural pace for 30–60 seconds. Once cloned,
+				Read the script at a natural pace for 30 seconds or more. Once cloned,
 				this avatar speaks in your voice everywhere on three.ws.
 			</p>
-			<div class="tws-vcm-script">
-				<em>"Hello, I'm building this avatar on three.ws. I want it to speak with my own voice
-				so it can hold a real conversation. I'll keep going for half a minute or so to give the
-				model enough material to learn from — the more natural intonation I use, the better the
-				clone will sound when it talks back."</em>
-			</div>
 			<div data-ref="recorder-host"></div>
 		</div>
 	`;
@@ -60,14 +54,16 @@ export function openVoiceCloneModal({ agentId, agentName = 'Avatar', onClose } =
 	document.body.classList.add('tws-vcm-open');
 
 	const host = root.querySelector('[data-ref="recorder-host"]');
-	const recorder = new VoiceRecorder(host, { agentId, agentName });
+	const recorder = new VoiceSetup(host, { bind: 'now', agentId, agentName });
 	recorder.mount();
 
 	const close = () => {
 		if (!active) return;
 		try {
 			recorder.destroy();
-		} catch {}
+		} catch {
+			// Already torn down; closing the modal must never throw.
+		}
 		window.removeEventListener('keydown', onKey);
 		document.body.classList.remove('tws-vcm-open');
 		root.remove();
