@@ -22,6 +22,7 @@ os.environ.setdefault("GCS_BUCKET", "test-bucket")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import numpy as np  # noqa: E402
+import PIL.Image  # noqa: E402
 import trimesh  # noqa: E402
 from pydantic import ValidationError  # noqa: E402
 
@@ -157,6 +158,36 @@ check(
     "sampler returns the source color per face",
     sampled.shape == (len(colored.faces), 4) and np.all(sampled[:, 0] == 220),
     str(sampled[0]),
+)
+
+# A textured mesh is the forge's common case, and until 2026-08-11 it was the
+# one that lost its colors: to_color() returns a ColorVisuals with no mesh
+# attached, so reading .face_colors on it raises and everything fell through to
+# the flat default.
+textured = trimesh.creation.box(extents=(1, 1, 1))
+texture = PIL.Image.new("RGB", (4, 4), (17, 200, 90))
+textured.visual = trimesh.visual.TextureVisuals(
+    uv=np.zeros((len(textured.vertices), 2)),
+    material=trimesh.visual.material.PBRMaterial(baseColorTexture=texture),
+)
+check("a textured mesh is read as a texture", textured.visual.kind == "texture")
+texture_sample = main._source_color_sampler(textured)(textured.triangles_center)
+check(
+    "a texture's colors survive instead of falling back",
+    texture_sample.shape == (len(textured.faces), 4)
+    and np.all(texture_sample[:, :3] == np.array([17, 200, 90], dtype=np.uint8)),
+    str(texture_sample[0]),
+)
+
+face_painted = trimesh.creation.box(extents=(1, 1, 1))
+face_painted.visual.face_colors = np.tile(
+    np.array([9, 130, 240, 255], dtype=np.uint8), (len(face_painted.faces), 1)
+)
+face_sample = main._source_color_sampler(face_painted)(face_painted.triangles_center)
+check(
+    "face colors survive",
+    np.all(face_sample[:, 2] == 240),
+    str(face_sample[0]),
 )
 
 plain = trimesh.creation.box(extents=(1, 1, 1))
