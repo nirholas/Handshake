@@ -67,7 +67,8 @@ actionable items. Each finding carries `class`, `count`, `services`,
 
 Surfaces even the deep sweep does not cover, worth running when the complaint
 points at them: `npm run smoke:mcp` (remote MCP endpoints),
-`npm run smoke:x402-facilitator` (facilitator settles), `npm run audit:web`
+`npm run smoke:x402-facilitator` (facilitator verifies a real signed payment
+without broadcasting it, so it is safe to run any time), `npm run audit:web`
 or `audit:web:login` (real-browser page audit with the QA account).
 
 ## Step 2: act per class, in this order
