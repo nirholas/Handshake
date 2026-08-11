@@ -128,7 +128,7 @@ No key on the client: the Birdeye key that backs portfolio P&L and the Helius ke
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, see [LICENSE](./LICENSE)
 
 ---
 

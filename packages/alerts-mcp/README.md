@@ -147,7 +147,7 @@ At least one delivery channel must be on: `deliver_in_app` (default true), `webh
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, see [LICENSE](./LICENSE)
 
 ---
 
