@@ -1,8 +1,12 @@
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
-rembg[gpu]==2.0.59
+# CPU rembg: the deployed service has no GPU, and the [gpu] extra pulls
+# onnxruntime-gpu plus its CUDA libraries on top of the CPU runtime that rembg
+# already installs. onnxruntime is pinned because rembg leaves it open, which
+# made every rebuild a different inference runtime.
+rembg==2.0.59
+onnxruntime==1.28.0
 Pillow==11.0.0
 google-cloud-storage==2.19.0
 httpx==0.27.2
 pydantic==2.10.3
-torch==2.3.1
