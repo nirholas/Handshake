@@ -8,7 +8,7 @@ substitutions:
   # min=0: this L4 build is the FALLBACK for the 2.1 lane; the warm primary is
   # model-hunyuan3d-21-rtx (see cloudbuild.hunyuan21rtx.yaml), which runs on
   # RTX PRO 6000 where the project quota is 1000 GPUs vs 3 L4s. A pinned L4
-  # here starved trellis/unirig/triposg rollouts of the 3-GPU regional budget.
+  # here starved trellis/model-rig/triposg rollouts of the 3-GPU regional budget.
   # max=1: one L4 fits exactly one in-flight generation.
   _MIN_INSTANCES: "0"
   _MAX_INSTANCES: "1"
