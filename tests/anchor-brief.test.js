@@ -90,6 +90,53 @@ describe('mergeBrief', () => {
 	});
 });
 
+describe('narrative failover', () => {
+	// The aixbt lane is a paid third-party subscription and has gone 503 in
+	// production; the anchor must keep a real narrative spine rather than read a
+	// price-only bulletin. Publisher attribution replaces the observation count.
+	const newsFeed = {
+		articles: [
+			{ title: 'Regulator opens consultation on stablecoin reserves', source: 'Wire Desk', category: 'policy' },
+			{ title: 'Layer two throughput sets a new weekly high', source: 'Chain Report', category: 'defi' },
+			{ title: '', source: 'Empty Desk' },
+		],
+	};
+
+	it('falls back to the publisher feed when the primary lane is down', () => {
+		const brief = mergeBrief({ intel: null, news: newsFeed, sentiment: sentimentFeed, pump: pumpFeed });
+		expect(brief.narrativeSource).toBe('news');
+		expect(brief.offline).not.toContain('narrative');
+		expect(brief.available.narrative).toBe(true);
+		expect(brief.items).toHaveLength(2); // the untitled article is dropped
+		expect(brief.items[0].headline).toMatch(/stablecoin reserves/);
+		expect(brief.items[0].attribution).toBe('Wire Desk');
+	});
+
+	it('keeps feed order on the failover lane', () => {
+		const brief = mergeBrief({ intel: null, news: newsFeed });
+		expect(brief.items.map((i) => i.attribution)).toEqual(['Wire Desk', 'Chain Report']);
+	});
+
+	it('prefers the primary lane whenever it returns items', () => {
+		const brief = mergeBrief({ intel: intelFeed, news: newsFeed, sentiment: sentimentFeed, pump: pumpFeed });
+		expect(brief.narrativeSource).toBe('aixbt');
+		expect(brief.items.every((i) => i.attribution === null)).toBe(true);
+	});
+
+	it('reports the spine offline only when both lanes are empty', () => {
+		const brief = mergeBrief({ intel: null, news: { articles: [] } });
+		expect(brief.narrativeSource).toBeNull();
+		expect(brief.offline).toContain('narrative');
+		expect(brief.isQuiet).toBe(true);
+	});
+
+	it('attributes the publisher in the digest instead of an observation count', () => {
+		const digest = briefDigest(mergeBrief({ intel: null, news: newsFeed }));
+		expect(digest).toMatch(/\(via Wire Desk\)/);
+		expect(digest).not.toMatch(/obs\)/);
+	});
+});
+
 describe('briefDigest + buildAnchorMessages', () => {
 	it('renders a deterministic digest the brain can read', () => {
 		const brief = mergeBrief({ intel: intelFeed, sentiment: sentimentFeed, pump: pumpFeed });
