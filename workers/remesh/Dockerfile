@@ -39,5 +39,11 @@ COPY blender_fbx.py /app/blender_fbx.py
 COPY verify_fbx.py /app/verify_fbx.py
 COPY main.py /app/main.py
 
+# Core-path gate: geometry, unwrap, bake, every export format, and the rigged
+# GLB to FBX round trip run against synthetic fixtures at build time, so a
+# regression fails the image instead of reaching Cloud Run. No network, no GCS.
+COPY test_remesh.py /app/test_remesh.py
+RUN API_KEY=build-gate GCS_BUCKET=build-gate python test_remesh.py
+
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
