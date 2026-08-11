@@ -311,7 +311,7 @@ describe('paid dispatch — verify → engine → settle', () => {
 		expect(settlePaymentMock).toHaveBeenCalledTimes(1);
 	});
 
-	it('rig submits the UniRig job and returns it pollable', async () => {
+	it('rig submits the auto-rig job and returns it pollable', async () => {
 		const res = makeRes();
 		await handler(paidReq('rig', VALID_INPUT.rig), res);
 		expect(res.statusCode).toBe(200);
