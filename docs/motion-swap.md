@@ -29,11 +29,15 @@ the original subject beneath the avatar.
 Three stages, split between one CPU worker and your browser:
 
 1. **Track (server).** MediaPipe PoseLandmarker follows 33 body landmarks
-   through every frame; MediaPipe ImageSegmenter produces a per-frame person
-   mask. Both models are Apache-2.0 and run without a GPU.
+   through every frame, MediaPipe HandLandmarker follows 21 landmarks on each
+   hand, and MediaPipe ImageSegmenter produces a per-frame person mask. All
+   three models are Apache-2.0 and run without a GPU.
 2. **Solve (server).** An in-house solver
    (`workers/model-video2motion/pose_solver.py`) converts the landmark
-   sequence into local joint rotations on the canonical Wolf3D skeleton and
+   sequence into local joint rotations on the canonical Wolf3D skeleton,
+   including wrist orientation taken from the palm and all 30 finger bones
+   when your hands are in frame (a frame that loses hand tracking holds the
+   previous handshape rather than snapping flat), and
    emits a standard three.js `AnimationClip` JSON — the same format the
    [animation library](https://three.ws/animations) serves, so the clip
    retargets onto any rigged avatar with the platform's existing engine.
