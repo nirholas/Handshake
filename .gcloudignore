@@ -51,6 +51,16 @@
 !/walk-sdk/
 !/tour-sdk/
 !/agents/
+# .agents/skills (2.2 MB, 210 files) is the skill catalog workers/okx-chat-bot's
+# Dockerfile copies with `COPY .agents/skills ./.agents/skills`, so the AI
+# subsession answering marketplace buyers boots knowing the task/chat lifecycle
+# instead of improvising it. This allowlist is a root exclude plus re-includes,
+# and .agents was never re-included, so gcloud stripped it from every upload and
+# that COPY failed the build outright: verified 2026-08-11 on build 47b6b6ae
+# ("COPY failed: file not found in build context ... stat .agents/skills"). The
+# worker's only documented deploy path could not have succeeded. Same failure
+# shape as the sniper and agents/ entries above.
+!/.agents/
 # tests/ stays out of the image, but tests/fixtures/ holds one runtime artifact:
 # the 40-claim fact-check benchmark suite. api/fact-check-benchmark.js reads it
 # to render the claim-count summary on /fact-check, and
@@ -83,3 +93,10 @@
 # "FileNotFoundError: .wrangler/tmp/dev-XXXXXX" - every Cloud Build submit from
 # this repo failing for as long as a dev server happened to be up.
 **/.wrangler/
+# workers/*/.cache/ holds per-agent keypairs as raw secret-key byte arrays
+# (workers/agora-citizens/.cache/*.json). Each worker gitignores its own .cache,
+# but .gcloudignore REPLACES .gitignore rather than extending it, so a submit
+# from a working directory uploaded live private keys into the Cloud Build
+# source bucket. Nothing in any image needs them: the runtime reads its keys
+# from Secret Manager. Caught by `npm run check:gcloudignore` on 2026-08-11.
+**/.cache/
