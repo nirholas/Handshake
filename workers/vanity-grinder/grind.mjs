@@ -391,6 +391,10 @@ async function main() {
 				}
 				if (msg.type === 'aborted') {
 					// Preemption: leave the target un-completed so the next run retries it.
+					// Its attempts still count: they were real ed25519 work, and dropping
+					// them made every budget-terminated run report 0 keys/sec, which is
+					// exactly the shape of run MAX_RUNTIME_SEC makes routine.
+					stats.totalAttempts += msg.attempts || 0;
 					active -= 1;
 					maybeFinish();
 				}

@@ -197,6 +197,33 @@ describe('batch vanity grinder end to end', () => {
 		expect(JSON.parse(readFileSync(join(dir, 'summary-quota.json'), 'utf8')).stopReason).toBe('max-found');
 	});
 
+	// The headline production failure: a shard that outlives its Cloud Run
+	// --task-timeout was killed and the whole execution reported FAILED, even
+	// though every key it had sealed was already in the DB. The grinder now stops
+	// itself first, and reports the work it really did.
+	it('winds down and exits 0 when MAX_RUNTIME_SEC expires mid-target', async () => {
+		const targets = join(dir, 'unreachable.json');
+		writeFileSync(targets, JSON.stringify([{ prefix: 'zzzzz', ignoreCase: false }]));
+		const summaryFile = join(dir, 'summary-budget.json');
+		const { stdout } = await runGrind(
+			{
+				TARGETS_FILE: targets,
+				OUTPUT_FILE: join(dir, 'budget.jsonl'),
+				CHECKPOINT_FILE: join(dir, 'checkpoint-budget.json'),
+				SUMMARY_FILE: summaryFile,
+				MAX_RUNTIME_SEC: '2',
+			},
+			{ timeoutMs: 60_000 },
+		);
+		expect(stdout).toContain('runtime budget 2s reached');
+		const parsed = JSON.parse(readFileSync(summaryFile, 'utf8'));
+		expect(parsed.stopReason).toBe('runtime-budget');
+		// A budget stop is intentional, not a preemption needing a shard retry.
+		expect(parsed.preempted).toBe(false);
+		// Aborted targets still report the ed25519 work they actually did.
+		expect(parsed.totalAttempts).toBeGreaterThan(0);
+	});
+
 	it('shards the target list into disjoint slices that cover it exactly once', async () => {
 		const addresses = [];
 		for (const index of ['0', '1']) {
