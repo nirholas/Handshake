@@ -210,9 +210,15 @@ shipping a new image or recovering a wedged service.
 service in one step):
 
 ```bash
-gcloud builds submit --config workers/model-trellis/cloudbuild.yaml .
+gcloud builds submit --config workers/model-trellis/cloudbuild.yaml . \
+  --region us-central1 --project aerial-vehicle-466722-p5 \
+  --substitutions=SHORT_SHA=manual$(date +%s)
 # swap in workers/model-hunyuan3d/… or workers/model-triposg/… as needed
 ```
+
+`SHORT_SHA` is only populated for trigger-driven builds. A manual submit must
+pass it, because these configs tag and deploy `.../server:$SHORT_SHA`, and an
+empty tag fails the deploy step after the whole image has already built.
 
 **Provision/redeploy the whole pipeline** (idempotent; prints the URLs to set on
 the `three-ws-api` Cloud Run service env):
