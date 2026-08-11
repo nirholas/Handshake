@@ -117,7 +117,22 @@ export function createServer(firehose) {
 		}
 	});
 
-	return { server, onEvent, recent };
+	/**
+	 * Shut the server down for real. SSE responses and WebSockets are long-lived
+	 * by design, so a bare `server.close()` waits for subscribers that will never
+	 * hang up — on Cloud Run that turns a revision rollover into a SIGKILL after
+	 * the grace period. Drop the subscribers first, then close.
+	 */
+	async function close() {
+		for (const c of sseClients) { try { c.res.end(); } catch { /* already gone */ } }
+		sseClients.clear();
+		for (const ws of wss.clients) { try { ws.terminate(); } catch { /* already gone */ } }
+		await new Promise((resolve) => { wss.close(() => resolve()); });
+		server.closeAllConnections();
+		await new Promise((resolve) => { server.close(() => resolve()); });
+	}
+
+	return { server, onEvent, recent, close };
 }
 
 function json(res, code, body) {
