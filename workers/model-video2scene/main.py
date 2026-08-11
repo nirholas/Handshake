@@ -336,6 +336,40 @@ def _skyseg_model_path() -> str:
     return local
 
 
+def _world_points_and_conf(predictions: dict):
+    """The world-space points to fuse, and their per-pixel confidence.
+
+    LingBot-Map's GCTStream is built with ``enable_point=False``, so the released
+    checkpoints carry no point head and inference returns depth rather than a
+    point map: the world points come from unprojecting that depth with the camera
+    the model predicted, which is what the upstream viewer and GLB export do too.
+    The ``world_points`` branch stays for a checkpoint that does ship a point head.
+    """
+    if predictions.get("world_points") is not None:
+        return predictions["world_points"], predictions.get("world_points_conf")
+
+    missing = [k for k in ("depth", "extrinsic", "intrinsic") if predictions.get(k) is None]
+    if missing:
+        raise ValueError(
+            "cannot build a point cloud: predictions are missing " + ", ".join(missing)
+        )
+
+    _ensure_lingbot_on_path()
+    from lingbot_map.utils.geometry import (
+        closed_form_inverse_se3,
+        unproject_depth_map_to_point_map,
+    )
+
+    # postprocess() hands back camera-to-world, while the unprojector documents its
+    # extrinsic as world-to-camera and inverts it itself. Undo the conversion so the
+    # points land in front of the cameras instead of mirrored behind them.
+    extrinsic_w2c = closed_form_inverse_se3(predictions["extrinsic"])[:, :3, :4]
+    points = unproject_depth_map_to_point_map(
+        predictions["depth"], extrinsic_w2c, predictions["intrinsic"]
+    )
+    return points, predictions.get("depth_conf")
+
+
 def _sky_keep_mask(conf, images, dst_dir: str) -> tuple[Optional[np.ndarray], int]:
     """Per-point boolean mask with sky pixels removed, plus how many were dropped.
 
@@ -441,7 +475,7 @@ def _run(req: "InferRequest", dst_dir: str) -> dict:
     # "images" key from predictions), so the colours come from its return value.
     predictions, images_cpu = postprocess(predictions, images)
 
-    conf = predictions.get("world_points_conf")
+    world_points, conf = _world_points_and_conf(predictions)
     keep, sky_dropped = (None, 0)
     if req.mask_sky:
         try:
@@ -452,7 +486,7 @@ def _run(req: "InferRequest", dst_dir: str) -> dict:
             log.exception("sky masking failed; returning the unmasked cloud")
 
     pts, cols = fuse_point_cloud(
-        predictions["world_points"],
+        world_points,
         images_cpu,
         conf=conf,
         keep=keep,
