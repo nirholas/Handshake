@@ -65,7 +65,11 @@ export function isValidVanityPrefix(prefix) {
 // leading character by up to 17×, see base58-distribution.js. Getting it wrong
 // meant a "2-character" budget that clears `A?` in a second and cannot clear
 // `z?` at all.
-export { expectedAttempts as estimateAttempts } from './base58-distribution.js';
+// Imported rather than `export … from` because a bare re-export creates no
+// local binding, and the timeout message below calls it in this module.
+import { expectedAttempts as estimateAttempts } from './base58-distribution.js';
+
+export { estimateAttempts };
 
 /**
  * Grind a Solana Keypair whose base58 address matches a prefix and/or suffix.

@@ -96,13 +96,13 @@ different presentations and lipsync capabilities. Every one is rigged.
 | `atlas` | Atlas | realistic  | male     | viseme    |
 | `echo`  | Echo  | stylized   | neutral  | viseme    |
 | `lumen` | Lumen | stylized   | neutral  | jaw       |
-| `kai`   | Kai   | robot      | robot    | full-body |
-| `mira`  | Mira  | stylized   | female   | full-body |
-| `pax`   | Pax   | stylized   | neutral  | full-body |
+| `kai`   | Kai   | robot      | robot    | animation |
+| `mira`  | Mira  | stylized   | female   | animation |
+| `pax`   | Pax   | stylized   | neutral  | animation |
 
 - **viseme** — full Oculus/ARKit viseme morphs; phoneme-accurate mouth shapes.
 - **jaw** — a single jaw/mouthOpen morph driven on a speech envelope.
-- **full-body** — no face morphs; the agent carries speech with a talk body
+- **animation**: no face morphs; the agent carries speech with a talk body
   animation + head motion (Mixamo rigs).
 
 ```js

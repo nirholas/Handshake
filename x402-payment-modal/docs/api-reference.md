@@ -136,7 +136,7 @@ The package version string.
 
 ```js
 import { version } from '@three-ws/x402-payment-modal';
-console.log(version); // "1.1.0"
+console.log(version); // matches the `version` field in package.json
 ```
 
 ---

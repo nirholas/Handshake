@@ -1,165 +1,214 @@
-// three.ws liquidation-collector — standalone always-on Node service.
+// three.ws liquidation-collector: standalone always-on Node service.
 //
 // Subscribes to the PUBLIC futures liquidation WebSocket streams of Binance,
 // Bybit, and OKX, classifies each liquidation by USD size, keeps a rolling
 // 4-hour in-memory window, and serves an aggregate REST snapshot consumed by
-// `api/coin/liquidations.js` (proxy) → the "liquidations pulse" strip on
-// three.ws/coins.
+// `api/coin/liquidations.js` (proxy), which feeds the "liquidations pulse"
+// strip on three.ws/coins.
 //
-// Ported faithfully from the reference SperaxOS collector
-// (_prompts/sperax/ref/liquidation-collector/index.ts) — same stream URLs,
-// per-exchange parsing, size buckets, reconnect/backoff, rolling window, and
-// aggregate math. The only change is swapping the Hono HTTP layer for plain
-// node:http so this package has zero framework dependencies beyond `ws`.
+// This file owns the wiring only: sockets, reconnects, lane health, and the
+// HTTP surface. Message parsing and the aggregate math live in
+// `src/collector.js` so they are testable without a network.
 //
-// This process holds long-lived WebSocket connections — it is NOT deployable
+// This process holds long-lived WebSocket connections, so it is NOT deployable
 // as a Vercel serverless function. Run it on any always-on Node host (see
 // README.md) and point `LIQUIDATION_COLLECTOR_URL` at it.
 
 import { createServer } from 'node:http';
 import { WebSocket } from 'ws';
 
+import {
+	TRACKED,
+	buildSnapshot,
+	bybitTopics,
+	createStore,
+	parseBinanceMessage,
+	parseBybitMessage,
+	parseOkxMessage,
+	readBybitAck,
+} from './collector.js';
+import { createOkxContractRegistry } from './okx-contracts.js';
+
+const RECONNECT_MS = 5_000;
+const PING_MS = 20_000;
+const BINANCE_RECHECK_MS = 60 * 60 * 1000;
+const BINANCE_PING_URL = 'https://fapi.binance.com/fapi/v1/ping';
+
+const store = createStore();
+const okxContracts = createOkxContractRegistry();
+
 // ---------------------------------------------------------------------------
-// Config
+// Lane health
+//
+// A silently dead lane is the failure mode this service is most exposed to:
+// both Bybit (a retired topic name) and Binance (a geo-restricted host) kept
+// an open, quiet socket while contributing nothing. /health reports each lane
+// so "connected" can never be mistaken for "delivering".
 // ---------------------------------------------------------------------------
 
-const TRACKED = [
-	'BTC', 'ETH', 'SOL', 'DOGE', 'XRP', 'ARB', 'OP', 'AVAX', 'LINK',
-	'BNB', 'SUI', 'WIF', 'PEPE', 'BONK', 'INJ', 'TIA', 'APT', 'NEAR',
-];
+const streams = {
+	Binance: { state: 'starting', events: 0, lastEventAt: null, note: '' },
+	Bybit: { state: 'starting', events: 0, lastEventAt: null, note: '' },
+	OKX: { state: 'starting', events: 0, lastEventAt: null, note: '' },
+};
 
-const MAX_CACHE = 10_000;
-const MAX_AGE_MS = 4 * 60 * 60 * 1000; // 4 hours
-
-// ---------------------------------------------------------------------------
-// In-memory store
-// ---------------------------------------------------------------------------
-
-/** @typedef {{ exchange: string, price: number, qty: number, severity: string, side: 'LONG'|'SHORT', symbol: string, time: number, value: number }} LiquidationEntry */
-
-/** @type {LiquidationEntry[]} */
-const cache = [];
-
-function classify(value) {
-	if (value >= 1_000_000) return 'MEGA';
-	if (value >= 100_000) return 'LARGE';
-	if (value >= 10_000) return 'MEDIUM';
-	return 'SMALL';
+function setState(exchange, state, note = '') {
+	streams[exchange].state = state;
+	streams[exchange].note = note;
 }
 
-function push(entry) {
-	cache.push({ ...entry, severity: classify(entry.value) });
-	if (cache.length > MAX_CACHE) cache.shift();
+function record(exchange, entries) {
+	if (entries.length === 0) return;
+	for (const entry of entries) store.push(entry);
+	streams[exchange].events += entries.length;
+	streams[exchange].lastEventAt = Date.now();
+}
+
+/** @type {Set<WebSocket>} */
+const sockets = new Set();
+let shuttingDown = false;
+
+function track(ws) {
+	sockets.add(ws);
+	ws.on('close', () => sockets.delete(ws));
 }
 
 // ---------------------------------------------------------------------------
-// Binance — public stream: wss://fstream.binance.com/ws/!forceOrder@arr
+// Binance: wss://fstream.binance.com/ws/!forceOrder@arr
+//
+// Binance answers 451 "restricted location" to US-hosted callers, and its
+// WebSocket endpoint accepts the connection but never pushes a frame, so an
+// open socket proves nothing. We probe the public REST ping first and report
+// the lane as `restricted` (rechecked hourly) rather than pretending to be
+// connected. Hosting the service outside a restricted region lights it up
+// with no code change.
 // ---------------------------------------------------------------------------
+
+async function binanceAccessible() {
+	try {
+		const resp = await fetch(BINANCE_PING_URL, { signal: AbortSignal.timeout(10_000) });
+		if (resp.ok) return { ok: true, reason: '' };
+		if (resp.status === 451) {
+			return { ok: false, reason: 'Binance blocks this host region (HTTP 451); host the collector outside a restricted region to enable this lane' };
+		}
+		return { ok: false, reason: `Binance ping responded ${resp.status}` };
+	} catch (err) {
+		return { ok: false, reason: `Binance ping failed: ${err.message}` };
+	}
+}
+
+async function startBinance() {
+	if (shuttingDown) return;
+	const access = await binanceAccessible();
+	if (!access.ok) {
+		setState('Binance', 'restricted', access.reason);
+		console.warn(`[Binance] lane disabled: ${access.reason}`);
+		setTimeout(startBinance, BINANCE_RECHECK_MS).unref?.();
+		return;
+	}
+	connectBinance();
+}
 
 function connectBinance() {
+	setState('Binance', 'connecting');
 	const ws = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
+	track(ws);
 	let ping;
 
 	ws.on('open', () => {
+		setState('Binance', 'connected');
 		console.log('[Binance] connected');
-		ping = setInterval(() => ws.ping(), 20_000);
+		ping = setInterval(() => ws.ping(), PING_MS);
 	});
 
 	ws.on('message', (data) => {
-		try {
-			const msg = JSON.parse(data.toString());
-			const o = msg.o;
-			if (!o) return;
-			const base = String(o.s).replace('USDT', '').replace('BUSD', '');
-			if (!TRACKED.includes(base)) return;
-			const price = parseFloat(o.ap || o.p);
-			const qty = parseFloat(o.q);
-			if (isNaN(price) || isNaN(qty)) return;
-			push({
-				exchange: 'Binance',
-				price,
-				qty,
-				side: o.S === 'BUY' ? 'SHORT' : 'LONG',
-				symbol: base,
-				time: o.T ?? Date.now(),
-				value: price * qty,
-			});
-		} catch {}
+		record('Binance', parseBinanceMessage(data.toString(), TRACKED));
 	});
 
 	ws.on('close', () => {
 		clearInterval(ping);
-		console.log('[Binance] disconnected — reconnecting in 5s');
-		setTimeout(connectBinance, 5_000);
+		if (shuttingDown) return;
+		setState('Binance', 'reconnecting');
+		console.log('[Binance] disconnected, reconnecting in 5s');
+		setTimeout(startBinance, RECONNECT_MS).unref?.();
 	});
 
 	ws.on('error', (err) => {
+		setState('Binance', 'error', err.message);
 		console.error('[Binance] error', err.message);
 		ws.terminate();
 	});
 }
 
 // ---------------------------------------------------------------------------
-// Bybit — public stream: wss://stream.bybit.com/v5/public/linear
-// Topics: liquidation.{SYMBOL}USDT
+// Bybit: wss://stream.bybit.com/v5/public/linear
+//
+// One subscribe frame per topic, each tagged with a req_id, so a single
+// unlisted instrument cannot reject the whole batch and every ack is
+// attributable. The retired `liquidation.{SYMBOL}` topic answered
+// "handler not found" for years while the lane looked healthy; failed acks
+// are now logged and surfaced on /health.
 // ---------------------------------------------------------------------------
 
 function connectBybit() {
+	setState('Bybit', 'connecting');
 	const ws = new WebSocket('wss://stream.bybit.com/v5/public/linear');
+	track(ws);
 	let ping;
+	const rejected = [];
 
 	ws.on('open', () => {
+		setState('Bybit', 'connected');
 		console.log('[Bybit] connected');
-		const args = TRACKED.map((s) => `liquidation.${s}USDT`);
-		ws.send(JSON.stringify({ op: 'subscribe', args }));
-		ping = setInterval(() => ws.send(JSON.stringify({ op: 'ping' })), 20_000);
+		for (const topic of bybitTopics(TRACKED)) {
+			ws.send(JSON.stringify({ op: 'subscribe', req_id: topic, args: [topic] }));
+		}
+		ping = setInterval(() => ws.send(JSON.stringify({ op: 'ping' })), PING_MS);
 	});
 
 	ws.on('message', (data) => {
-		try {
-			const msg = JSON.parse(data.toString());
-			// skip pong / subscribe confirmations
-			if (msg.op || !msg.data) return;
-			const d = msg.data;
-			const base = (d.symbol ?? '').replace('USDT', '');
-			if (!TRACKED.includes(base)) return;
-			const price = parseFloat(d.price);
-			const qty = parseFloat(d.size);
-			if (isNaN(price) || isNaN(qty)) return;
-			push({
-				exchange: 'Bybit',
-				price,
-				qty,
-				side: d.side === 'Buy' ? 'SHORT' : 'LONG',
-				symbol: base,
-				time: Number(d.updatedTime ?? d.updateTime) || Date.now(),
-				value: price * qty,
-			});
-		} catch {}
+		const raw = data.toString();
+		const ack = readBybitAck(raw);
+		if (ack) {
+			if (ack.op === 'subscribe' && !ack.ok) {
+				rejected.push(ack.topic || ack.message);
+				setState('Bybit', 'degraded', `rejected topics: ${rejected.join(', ')}`);
+				console.error(`[Bybit] subscribe rejected for ${ack.topic}: ${ack.message}`);
+			}
+			return;
+		}
+		record('Bybit', parseBybitMessage(raw, TRACKED));
 	});
 
 	ws.on('close', () => {
 		clearInterval(ping);
-		console.log('[Bybit] disconnected — reconnecting in 5s');
-		setTimeout(connectBybit, 5_000);
+		if (shuttingDown) return;
+		setState('Bybit', 'reconnecting');
+		console.log('[Bybit] disconnected, reconnecting in 5s');
+		setTimeout(connectBybit, RECONNECT_MS).unref?.();
 	});
 
 	ws.on('error', (err) => {
+		setState('Bybit', 'error', err.message);
 		console.error('[Bybit] error', err.message);
 		ws.terminate();
 	});
 }
 
 // ---------------------------------------------------------------------------
-// OKX — public stream: wss://ws.okx.com:8443/ws/v5/public
-// Channel: liquidation-orders (all SWAP instruments, real-time)
+// OKX: wss://ws.okx.com:8443/ws/v5/public, channel liquidation-orders
+// (all SWAP instruments, real-time). Sizes are converted from contracts to
+// base units via the instrument registry.
 // ---------------------------------------------------------------------------
 
 function connectOKX() {
+	setState('OKX', 'connecting');
 	const ws = new WebSocket('wss://ws.okx.com:8443/ws/v5/public');
+	track(ws);
 	let ping;
 
 	ws.on('open', () => {
+		setState('OKX', 'connected');
 		console.log('[OKX] connected');
 		ws.send(
 			JSON.stringify({
@@ -167,44 +216,23 @@ function connectOKX() {
 				args: [{ channel: 'liquidation-orders', instType: 'SWAP' }],
 			}),
 		);
-		ping = setInterval(() => ws.send('ping'), 20_000);
+		ping = setInterval(() => ws.send('ping'), PING_MS);
 	});
 
 	ws.on('message', (data) => {
-		try {
-			const text = data.toString();
-			if (text === 'pong') return;
-			const msg = JSON.parse(text);
-			if (msg.event) return; // subscribe ack
-			if (!Array.isArray(msg.data)) return;
-			for (const item of msg.data) {
-				const base = String(item.instId).split('-')[0];
-				if (!TRACKED.includes(base)) continue;
-				for (const d of item.details ?? []) {
-					const price = parseFloat(d.bkPx);
-					const qty = parseFloat(d.sz);
-					if (isNaN(price) || isNaN(qty)) continue;
-					push({
-						exchange: 'OKX',
-						price,
-						qty,
-						side: d.side === 'buy' ? 'SHORT' : 'LONG',
-						symbol: base,
-						time: parseInt(d.ts) || Date.now(),
-						value: price * qty,
-					});
-				}
-			}
-		} catch {}
+		record('OKX', parseOkxMessage(data.toString(), okxContracts, TRACKED));
 	});
 
 	ws.on('close', () => {
 		clearInterval(ping);
-		console.log('[OKX] disconnected — reconnecting in 5s');
-		setTimeout(connectOKX, 5_000);
+		if (shuttingDown) return;
+		setState('OKX', 'reconnecting');
+		console.log('[OKX] disconnected, reconnecting in 5s');
+		setTimeout(connectOKX, RECONNECT_MS).unref?.();
 	});
 
 	ws.on('error', (err) => {
+		setState('OKX', 'error', err.message);
 		console.error('[OKX] error', err.message);
 		ws.terminate();
 	});
@@ -213,52 +241,6 @@ function connectOKX() {
 // ---------------------------------------------------------------------------
 // REST API (consumed by api/coin/liquidations.js)
 // ---------------------------------------------------------------------------
-
-function buildSnapshot() {
-	const cutoff = Date.now() - MAX_AGE_MS;
-	const recent = cache
-		.filter((l) => l.time > cutoff)
-		.sort((a, b) => b.time - a.time);
-
-	const longLiqs = recent.filter((l) => l.side === 'LONG');
-	const shortLiqs = recent.filter((l) => l.side === 'SHORT');
-	const longValue = longLiqs.reduce((s, l) => s + l.value, 0);
-	const shortValue = shortLiqs.reduce((s, l) => s + l.value, 0);
-
-	const bySymbol = {};
-	for (const l of recent) {
-		if (!bySymbol[l.symbol]) {
-			bySymbol[l.symbol] = { count: 0, longValue: 0, shortValue: 0, symbol: l.symbol };
-		}
-		bySymbol[l.symbol].count++;
-		if (l.side === 'LONG') bySymbol[l.symbol].longValue += l.value;
-		else bySymbol[l.symbol].shortValue += l.value;
-	}
-
-	return {
-		liquidations: recent.slice(0, 50),
-		summary: {
-			dominantSide:
-				longValue > shortValue * 1.5
-					? 'LONG PAIN'
-					: shortValue > longValue * 1.5
-						? 'SHORT SQUEEZE'
-						: 'BALANCED',
-			largeCount: recent.filter((l) => l.severity === 'LARGE').length,
-			longCount: longLiqs.length,
-			longValue,
-			megaCount: recent.filter((l) => l.severity === 'MEGA').length,
-			shortCount: shortLiqs.length,
-			shortValue,
-			totalCount: recent.length,
-			totalValue: longValue + shortValue,
-		},
-		symbolStats: Object.values(bySymbol).sort(
-			(a, b) => b.longValue + b.shortValue - (a.longValue + a.shortValue),
-		),
-		timestamp: new Date().toISOString(),
-	};
-}
 
 function sendJson(res, status, body) {
 	const payload = JSON.stringify(body);
@@ -288,12 +270,18 @@ const server = createServer((req, res) => {
 	}
 
 	if (url.pathname === '/health') {
-		sendJson(res, 200, { ok: true, cached: cache.length, uptime: process.uptime() });
+		sendJson(res, 200, {
+			ok: true,
+			cached: store.size,
+			uptime: process.uptime(),
+			okxContracts: okxContracts.size,
+			streams,
+		});
 		return;
 	}
 
 	if (url.pathname === '/liquidations') {
-		sendJson(res, 200, buildSnapshot());
+		sendJson(res, 200, buildSnapshot(store.entries));
 		return;
 	}
 
@@ -304,7 +292,23 @@ const server = createServer((req, res) => {
 // Boot
 // ---------------------------------------------------------------------------
 
-connectBinance();
+function shutdown(signal) {
+	if (shuttingDown) return;
+	shuttingDown = true;
+	console.log(`[collector] ${signal} received, closing streams`);
+	okxContracts.stop();
+	for (const ws of sockets) ws.close();
+	server.close(() => process.exit(0));
+	setTimeout(() => process.exit(0), 5_000).unref?.();
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+await okxContracts.refresh();
+okxContracts.start();
+
+startBinance();
 connectBybit();
 connectOKX();
 

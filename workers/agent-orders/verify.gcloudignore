@@ -1,0 +1,21 @@
+# Upload allowlist for cloudbuild.verify.yaml (gitignore syntax; last match wins).
+#
+# Exactly the paths workers/agent-orders/Dockerfile COPYs, and nothing else. The
+# repo-root .gcloudignore also re-includes dist/ and public/ for the three-ws-api
+# image, which this worker never reads and which cost ~1.4 GB of upload.
+#
+# gitignore semantics cannot re-include a file whose parent directory is
+# excluded, so /workers/ has to be re-included whole: an "!/workers/agent-orders/"
+# line alone silently uploads nothing under workers/ and the build dies with
+# "unable to evaluate symlinks in Dockerfile path".
+/*
+!/workers/
+!/api/
+!/src/
+!/agent-payments-sdk/
+!/package.json
+!/package-lock.json
+!/.npmrc
+!/.dockerignore
+**/node_modules/
+**/.git/

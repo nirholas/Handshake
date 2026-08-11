@@ -48,6 +48,14 @@ import { chromium, devices } from 'playwright';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { config as dotenv } from 'dotenv';
+
+// The QA credentials live in .env, so `npm run audit:web:login` has to read it:
+// without this the script only ever saw an inline-prefixed environment and told
+// every caller the credentials were missing while they sat on disk.
+// Shell env wins: dotenv never overrides a var that is already set.
+dotenv({ path: new URL('../.env', import.meta.url), quiet: true });
+dotenv({ path: new URL('../.env.local', import.meta.url), quiet: true });
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const BASE_URL = (process.env.BASE_URL || 'https://three.ws').replace(/\/$/, '');

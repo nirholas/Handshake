@@ -6,12 +6,12 @@
 //      a line of JS,
 //   2. binds every `[data-x402-endpoint]` element and re-scans the DOM as
 //      merchants inject buttons,
-//   3. exposes `window.X402 = { pay, init, configure, version }`.
+//   3. exposes `window.X402 = { pay, discover, init, configure, version }`.
 //
 // For bundler / npm consumers, import the side-effect-free core instead:
 //   import { pay, configure } from '@three-ws/x402-modal';
 
-import { pay, init, configure, version } from './x402-modal.js';
+import { pay, discover, init, configure, version } from './x402-modal.js';
 
 // Pull optional config off the script tag, e.g.
 //   <script src=".../x402.global.js"
@@ -20,9 +20,28 @@ import { pay, init, configure, version } from './x402-modal.js';
 //           data-x402-brand-href="https://acme.com"
 //           data-x402-builder-wallet="acme"
 //           data-x402-builder-service="acme_checkout"></script>
+// Find the <script> tag that loaded us, so its `data-x402-*` attributes can be
+// read. `document.currentScript` answers this for a classic script but is null
+// inside a module, which is exactly how the CDN drop-in is documented
+// (`<script type="module" src="https://unpkg.com/@three-ws/x402-modal/global">`).
+// Matching on the src filename cannot cover that: the CDN subpath is
+// `/global`, with no `x402` in it at all, so a merchant's api-origin/brand
+// attributes were silently ignored on the very URL the README prints. Look for
+// the config itself instead: a <script> carrying any `data-x402-*` attribute is
+// ours, whatever the URL looks like.
+function findOwnScript() {
+	if (document.currentScript) return document.currentScript;
+	const scripts = document.querySelectorAll('script');
+	for (let i = scripts.length - 1; i >= 0; i--) {
+		const ds = scripts[i].dataset;
+		if (ds && Object.keys(ds).some((k) => k.startsWith('x402'))) return scripts[i];
+	}
+	return null;
+}
+
 function readScriptConfig() {
 	if (typeof document === 'undefined') return;
-	const el = document.currentScript || document.querySelector('script[src*="x402.global"], script[src*="/x402.js"]');
+	const el = findOwnScript();
 	const ds = el?.dataset;
 	if (!ds) return;
 	const cfg = {};
@@ -58,7 +77,7 @@ if (typeof document !== 'undefined') {
 
 // Expose to merchants' inline scripts.
 if (typeof window !== 'undefined') {
-	window.X402 = Object.freeze({ pay, init, configure, version });
+	window.X402 = Object.freeze({ pay, discover, init, configure, version });
 }
 
-export { pay, init, configure, version };
+export { pay, discover, init, configure, version };

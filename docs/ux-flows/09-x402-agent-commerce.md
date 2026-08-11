@@ -65,7 +65,7 @@ choreographed two-agent narrative driven by Server-Sent Events.
 - **Entry point:** Directory of live x402-paid endpoints (merged across facilitators) as a card grid with filters.
 - **Prerequisites / gates:** None to browse; a wallet only when paying ("Try it").
 - **Steps (5 required + 2 optional):**
-  1. Page loads → `GET /api/bazaar/list` → renders endpoint cards.
+  1. Page loads → `GET /api/bazaar/list` → renders endpoint cards. The handler merges every configured facilitator behind a 60s in-process catalog memo (`BAZAAR_CATALOG_TTL_MS`), returns at most `limit` rows (default 200) and reports the pre-cut match count as `total`.
   2. (optional) Filter by type (HTTP/MCP), network (EVM/Solana), max price, extension, sort.
   3. (optional) Search (`/api/bazaar/search?query=`) or scroll.
   4. Click a card action: HTTP → **Try it** (pay flow); MCP tool → **Inspect tool** (details only — JSON-RPC, not auto-callable); **Details** → modal + `/api/bazaar/context?resource=`.
@@ -74,7 +74,7 @@ choreographed two-agent narrative driven by Server-Sent Events.
 - **Decision points / branches:** HTTP vs MCP (MCP = inspect only); pay success/cancel/error → distinct receipt states; explorer chosen from endpoint network (Solscan/Basescan/Arbiscan/etc.).
 - **External calls / dependencies:** `/api/bazaar/list|search|context`, `/x402.js`, merchant endpoint, multi-chain explorers.
 - **Success state:** green receipt with tx hash + explorer link + result JSON; SR announcement "Payment succeeded for <service>".
-- **Empty / error states:** no results → "No matching services…"; catalog unreachable → "Couldn't reach the catalog… Retry"; modal load fail → "Payment module failed to load"; cancel → receipt hidden; error → red receipt.
+- **Empty / error states:** no results → "No matching services…"; catalog unreachable → "Couldn't reach the catalog… Retry" (every `/api/bazaar/*` handler answers `502 facilitator_error` when all facilitators fail, so a total outage never renders as an empty catalog); modal load fail → "Payment module failed to load"; cancel → receipt hidden; error → red receipt.
 - **Step count:** 5 required (+2 optional).
 
 ### x402 Arbitrage — `/arbitrage`
@@ -100,7 +100,7 @@ choreographed two-agent narrative driven by Server-Sent Events.
 - **Steps (2 required + 3 optional):**
   1. Directory load → skeleton → `GET /api/bazaar/providers?limit=500` → provider cards (service count, median/min price, tags, networks).
   2. (optional) Sort (most services / cheapest / most expensive / most networks); (optional) search by host/tag.
-  3. Click a card → `/providers?host=…` → profile fetch `GET /api/bazaar/providers?host=` → sidebar (metrics, "Visit site", "Open in catalog") + category/network charts + sorted services table.
+  3. Click a card → `/providers?host=…` → profile fetch `GET /api/bazaar/providers?host=` → sidebar (metrics, "Visit site", "Open in catalog") + category/network charts + sorted services table. The listings array is capped at `limit` (default 200, max 1000) while `listingTotal` carries the provider's real count, so the heading reads "N listings (showing 200)" for the multi-thousand-listing hosts.
   4. (optional) Click a listing row → `/bazaar?q=<service>`.
 - **Decision points / branches:** directory vs profile keyed on `?host`; sort order; real-time search.
 - **External calls / dependencies:** `/api/bazaar/providers` (list + single host), facilitator URLs, downstream explorers via `/bazaar`.
@@ -170,7 +170,7 @@ choreographed two-agent narrative driven by Server-Sent Events.
   1. Load page → render cached data (or skeletons) → auto-poll `GET /api/agents/unstoppable-status` immediately, then every 60s (exponential backoff to 5 min on transient errors).
   2. View data: `200` → hero balance + status + runway, 24h earnings/costs, lifetime net, activity feed (THINK/EARN/REFLECT/IDLE/…), latest reflection. `402` → payment notice + cached data + "Unlock live data — $0.01".
   3. (optional, repeatable) Click **Donate $0.01** → `window.X402.pay({ endpoint: status, method:'GET', action:'Fund the … runway' })` → on success toast + fresh live data; each donation funds one live query and directly funds the agent.
-- **Decision points / branches:** cache present vs not; `200` (unlocked) vs `402` (paywalled); `5xx` → backoff + keep cache; donation low-balance → retry with link to `/pay`; donation cancel → no charge.
+- **Decision points / branches:** cache present vs not; `200` (unlocked) vs `402` (paywalled); `5xx` → backoff + keep cache; donation low-balance → retry with link to `/pay`; donation cancel → no charge. A caller holding the `x402:bypass` install scope is served the live reading for free and is deliberately NOT recorded as revenue, so the runway the page reports stays honest.
 - **External calls / dependencies:** `/api/agents/unstoppable-status` (free 402 challenge + optional paid query), `/x402.js`, Base/Solana settlement.
 - **Success state:** live hero + stats + non-empty activity feed + reflection + "Updated X ago".
 - **Empty / error states:** initial skeleton "Fetching live data…"; `402` notice with cached data; no-cache `402` → zeroed state ("Pay $0.01 to see live data").
@@ -204,10 +204,10 @@ choreographed two-agent narrative driven by Server-Sent Events.
   4. Click **Inscribe forever** → native `confirm()` showing estimated BTC cost + address ("payment is final once broadcast. Continue?").
   5. `POST /api/forever/inscribe` `{ message, receiveAddress, feeRate }` → creates OrdinalsBot order → returns charge address, amount (sats), Lightning invoice, mempool URL; order persisted to `sessionStorage forever:order` → **pay view**.
   6. Pay view: QR (BIP-21), amount, pay-to/Lightning/receive/order-id rows, "Open in wallet" / "View on mempool" / "Cancel". User sends BTC from their own wallet.
-  7. Auto-poll `GET /api/forever/status?id=<orderId>` every 6s → `waiting-payment → payment-received → inscribing → inscribed`.
+  7. Auto-poll `GET /api/forever/status?id=<orderId>` every 6s → `waiting-payment → payment-received → inscribing → inscribed`. Once a reveal txid exists the response also carries `inscription.onchain` (confirmed, confirmations, block height and time) read keyless from Blockstream Esplora, so finality depth comes from the chain rather than from OrdinalsBot's order state; an Esplora outage degrades that field to `null` instead of failing the poll.
   8. On `inscribed` → **win view**: large message, Inscription link (ordinals.com), reveal-tx link (mempool.space), receive address, "Bitcoin mainnet"; share to X / copy permalink / inscribe another.
 - **Decision points / branches:** empty / > 1500 bytes / invalid Taproot / invalid fee rate → inline errors; confirm-dialog cancel → stays in compose; order-create `502/503` → "Inscription failed. Try again."; status `failed` → OrdinalsBot contact note; reload mid-payment → `resumeIfAny()` restores the pay view + resumes polling.
-- **External calls / dependencies:** `/api/forever/inscribe` + `/api/forever/status` → **OrdinalsBot** (`api.ordinalsbot.com`, Bitcoin mainnet Taproot inscription), CoinGecko (USD, best-effort), QR server, mempool.space + ordinals.com for verification.
+- **External calls / dependencies:** `/api/forever/inscribe` + `/api/forever/status` → **OrdinalsBot** (`api.ordinalsbot.com`, Bitcoin mainnet Taproot inscription), Blockstream Esplora (`api/_lib/esplora.js`, keyless reveal-tx confirmations, fail-soft), CoinGecko (USD, best-effort), QR server, mempool.space + ordinals.com for verification.
 - **Success state:** win view with permanent inscription + reveal-tx links + share buttons.
 - **Empty / error states:** compose validation errors; inscribe failure banner; pay-view polling states; order `failed` message with support info.
 - **Step count:** 6 required (+6 optional).
@@ -334,4 +334,5 @@ choreographed two-agent narrative driven by Server-Sent Events.
 - **Auto-play demos:** `/agent-exchange`, `/agent-trade`, `/agent-economy`, `/demo` need one user click to start, then auto-play. `/live` adds an auth gate for real settlement. `/play/arena` is fully autonomous (agents trade themselves; user only watches/moves/inspects) and uses **no x402** — real pre-funded Solana trades.
 - **Forever** is the only **non-x402** payment in the cluster: native Bitcoin (or Lightning) to an OrdinalsBot charge address, inscribing a real Taproot text inscription on Bitcoin mainnet.
 - **Adjacent economy surfaces (2026-08-01, not yet traced as full sections):** `/economy-lab` (Runway Lab, a live digital twin of the x402 payment rail; backend `api/x402/runway-lab.js`), `/pay-simulator` (Spend Policy Simulator: dry-run an agent spending policy against real x402 prices), `/flow` (Money Flow Map, see `docs/money-flow-map.md`), `/play/solver` (see `docs/economy-solver.md`), and `/conversions`.
+- **Inline handlers are gone:** every HTML response in this cluster ships a CSP whose `script-src` lists SHA-256 hashes of the inline scripts in the bytes actually sent, so no page here may carry an `onclick=`/`onerror=` attribute (not even inside a template literal). The card markup these flows render declares intent with `data-fallback`, `data-action="reload"` or `data-stop-propagation` and `public/inline-behaviors.js` delegates it; `scripts/audit-inline-handlers.mjs` fails the build if one comes back.
 - **Source coverage:** all 17 routes located and traced from real source. `/tutor` resolves to `public/tutor.html` + `public/tutor.js` (served statically; no explicit vite map entry needed). No source was missing.

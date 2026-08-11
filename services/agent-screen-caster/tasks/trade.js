@@ -111,7 +111,7 @@ async function executePumpTrade(caster, mint, amountSol) {
 
 	await caster.act('input', `Entering trade amount: ${amountSol} SOL`, async () => {
 		const input = await caster.page.waitForSelector(PUMP_SEL.amountInput, { timeout: 8000 });
-		await input.triple_click?.() ?? await input.click({ clickCount: 3 });
+		await input.click({ clickCount: 3 });
 		await input.fill(String(amountSol));
 		await caster.page.waitForTimeout(300);
 	});

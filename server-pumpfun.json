@@ -10,12 +10,12 @@
 			"sizes": ["any"]
 		}
 	],
-	"description": "Free, read-only pump.fun and Solana token discovery and on-chain analysis tools, by three.ws.",
+	"description": "Free pump.fun and Solana token discovery and on-chain analysis tools, by three.ws.",
 	"repository": {
 		"url": "https://github.com/nirholas/three.ws",
 		"source": "github"
 	},
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"remotes": [
 		{
 			"type": "streamable-http",

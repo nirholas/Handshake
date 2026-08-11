@@ -15,6 +15,16 @@ vi.mock('../api/_lib/auth.js', () => ({
 	getSessionUser: getSessionUserMock,
 	authenticateBearer: async () => null,
 	extractBearer: () => null,
+	// The dispatcher gates cookie-authed mutations on a same-site Origin before
+	// it ever reaches the action; a request without this never gets that far.
+	isSameSiteOrigin: () => true,
+}));
+
+// The bot-delivery path is rate-limited per IP. Any bucket resolves to allowed
+// here; the ceiling itself is not what these tests are about.
+vi.mock('../api/_lib/rate-limit.js', () => ({
+	limits: new Proxy({}, { get: () => vi.fn(async () => ({ success: true })) }),
+	clientIp: vi.fn(() => '127.0.0.1'),
 }));
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -24,7 +34,13 @@ function makeReq(body) {
 		: Readable.from([]);
 	stream.method = 'POST';
 	stream.url = '/api/pump/deliver-telegram';
-	stream.headers = { host: 'localhost', 'content-type': 'application/json' };
+	stream.headers = {
+		host: 'localhost',
+		origin: 'https://three.ws',
+		'content-type': 'application/json',
+	};
+	// Populated by the filesystem router in production; the dispatcher switches on it.
+	stream.query = { action: 'deliver-telegram' };
 	return stream;
 }
 
@@ -45,7 +61,10 @@ function makeRes() {
 }
 
 async function callEndpoint(body) {
-	const { default: handler } = await import('../api/pump/deliver-telegram.js');
+	// /api/pump/deliver-telegram -> /api/pump/[action]?action=deliver-telegram.
+	// The dispatcher is the only thing the route table reaches, so it is the
+	// only thing worth asserting against.
+	const { default: handler } = await import('../api/pump/[action].js');
 	const res = makeRes();
 	await handler(makeReq(body), res);
 	return { res, json: res.body ? JSON.parse(res.body) : null };
@@ -89,6 +108,35 @@ describe('sendTelegramSignal', () => {
 		expect(sent.parse_mode).toBe('Markdown');
 		expect(typeof sent.text).toBe('string');
 		expect(result).toEqual({ ok: true, messageId: 42 });
+	});
+
+	it('escapes Markdown control characters in attacker-supplied signal text', async () => {
+		fetchMock.mockResolvedValueOnce({
+			ok: true,
+			json: async () => ({ result: { message_id: 7 } }),
+		});
+		const { sendTelegramSignal } = await import('../src/pump/telegram-delivery.js');
+		await sendTelegramSignal({
+			botToken: 'bot123',
+			chatId: '1',
+			signal: {
+				kind: 'mint',
+				mint: 'Mint_1',
+				// Token metadata is attacker-controlled. Unescaped, this renders as a
+				// clickable link posted under the platform bot's verified identity.
+				summary: '[claim your airdrop](https://evil.example) *urgent*',
+				refs: ['`ref_one`'],
+				ts: 1700000000000,
+			},
+		});
+
+		const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+		expect(sent.text).toContain('\\[claim your airdrop\\]');
+		expect(sent.text).toContain('\\*urgent\\*');
+		expect(sent.text).toContain('Mint\\_1');
+		expect(sent.text).toContain('\\`ref\\_one\\`');
+		// The bot's own formatting survives: the kind label is still bold.
+		expect(sent.text.startsWith('*New Mint*')).toBe(true);
 	});
 
 	it('throws on a non-2xx Telegram response', async () => {

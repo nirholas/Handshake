@@ -89,6 +89,16 @@ export function sanitizeMm(mm) {
 	return out;
 }
 
+// A pixels-only push (a periodic screenshot with no activity text) belongs in
+// the frame slot, never in the 50-entry activity log: services/agent-screen-caster
+// pushes one every FRAME_INTERVAL_MS, so logging them evicts the agent's real
+// narration within seconds and leaves watchers reading blank lines. Log an entry
+// only when it carries something to read: activity text, or a structured
+// ride-along (PnL / forge meta / market-maker) the viewer renders on its own.
+export function shouldLogEntry({ activity, pnl, meta, mm }) {
+	return Boolean(activity || pnl || meta || mm);
+}
+
 export default async function handleAgentScreenPush(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
@@ -172,10 +182,14 @@ export default async function handleAgentScreenPush(req, res) {
 	// Log entry (no image — the activity log only needs text + metadata)
 	const logEntry = JSON.stringify({ ts: now, activity, type, ...(pnl ? { pnl } : {}), ...(meta ? { meta } : {}), ...(mm ? { mm } : {}) });
 
+	const logs = shouldLogEntry({ activity, pnl, meta, mm });
+
 	await Promise.all([
 		r.set(frameKey, frameRecord, { ex: FRAME_TTL }),
-		r.lpush(logKey, logEntry).then(() => r.ltrim(logKey, 0, LOG_CAP - 1)),
-		r.expire(logKey, FRAME_TTL * 5),
+		...(logs ? [
+			r.lpush(logKey, logEntry).then(() => r.ltrim(logKey, 0, LOG_CAP - 1)),
+			r.expire(logKey, FRAME_TTL * 5),
+		] : []),
 		// Track active agents in a sorted set (score = timestamp) so the walk
 		// scene can discover which agents have live streams to show desks for.
 		r.zadd('agent:screen:active', { score: now, member: agentId }),

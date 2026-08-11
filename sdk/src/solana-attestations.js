@@ -16,15 +16,10 @@
  * Identity itself is the existing Metaplex Core NFT (see solana.js).
  */
 
-import {
-	Connection,
-	PublicKey,
-	Transaction,
-	TransactionInstruction,
-} from '@solana/web3.js';
+import { loadSolanaWeb3 } from './peer.js';
 import { detectSolanaProvider } from './solana.js';
 
-const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
+const MEMO_PROGRAM_ADDRESS = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
 
 const RPC = {
 	mainnet: 'https://api.mainnet-beta.solana.com',
@@ -33,14 +28,15 @@ const RPC = {
 
 const MAX_MEMO_BYTES = 566; // SPL Memo per-tx upper bound; we stay well under.
 
-function buildMemoIx(payload, agentPubkey) {
+async function buildMemoIx(payload, agentAsset) {
 	const bytes = new TextEncoder().encode(payload);
 	if (bytes.length > MAX_MEMO_BYTES) throw new Error('attestation payload too large');
+	const { PublicKey, TransactionInstruction } = await loadSolanaWeb3('Solana attestations');
 	return new TransactionInstruction({
-		programId: MEMO_PROGRAM_ID,
+		programId: new PublicKey(MEMO_PROGRAM_ADDRESS),
 		// Reference the agent asset pubkey as a (non-signer, read-only) key so
 		// it shows up under getSignaturesForAddress(agent).
-		keys: [{ pubkey: agentPubkey, isSigner: false, isWritable: false }],
+		keys: [{ pubkey: new PublicKey(agentAsset), isSigner: false, isWritable: false }],
 		data: Buffer.from(bytes),
 	});
 }
@@ -50,6 +46,7 @@ async function signAndSend({ network, preferred, ix, feePayer }) {
 	if (!provider) throw new Error('No Solana wallet detected');
 	if (!provider.publicKey) await provider.connect();
 
+	const { Connection, Transaction } = await loadSolanaWeb3('Solana attestations');
 	const conn = new Connection(RPC[network] || RPC.devnet, 'confirmed');
 	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('finalized');
 
@@ -94,7 +91,7 @@ export async function attestFeedback({
 		...(uri ? { uri } : {}),
 		ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = buildMemoIx(JSON.stringify(memo), new PublicKey(agentAsset));
+	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
 	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
 	return { signature, memo };
 }
@@ -127,7 +124,7 @@ export async function attestValidation({
 		...(uri ? { uri } : {}),
 		ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = buildMemoIx(JSON.stringify(memo), new PublicKey(agentAsset));
+	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
 	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
 	return { signature, memo };
 }
@@ -148,7 +145,7 @@ export async function createTask({
 		task_id: taskId, scope_hash: scopeHash,
 		...(uri ? { uri } : {}), ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = buildMemoIx(JSON.stringify(memo), new PublicKey(agentAsset));
+	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
 	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
 	return { signature, memo };
 }
@@ -169,7 +166,7 @@ export async function acceptTask({
 		v: 1, kind: 'threews.accept.v1', agent: agentAsset, task_id: taskId,
 		ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = buildMemoIx(JSON.stringify(memo), new PublicKey(agentAsset));
+	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
 	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
 	return { signature, memo };
 }
@@ -191,7 +188,7 @@ export async function attestRevoke({
 		target_signature: targetSignature,
 		...(reason ? { reason } : {}), ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = buildMemoIx(JSON.stringify(memo), new PublicKey(agentAsset));
+	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
 	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
 	return { signature, memo };
 }
@@ -215,7 +212,7 @@ export async function attestDispute({
 		...(uri ? { uri } : {}),
 		ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = buildMemoIx(JSON.stringify(memo), new PublicKey(agentAsset));
+	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
 	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
 	return { signature, memo };
 }
@@ -271,6 +268,7 @@ export async function fetchReputation({
 export async function listAttestations({
 	agentAsset, kind = 'all', limit = 100, network = 'devnet',
 } = {}) {
+	const { Connection, PublicKey } = await loadSolanaWeb3('listAttestations()');
 	const conn = new Connection(RPC[network] || RPC.devnet, 'confirmed');
 	const sigs = await conn.getSignaturesForAddress(new PublicKey(agentAsset), { limit });
 	const wantKind = kind === 'all' ? null

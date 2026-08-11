@@ -79,9 +79,12 @@ function buildRouter(vercel) {
 	for (const r of routes) {
 		if (!r || typeof r.src !== 'string' || typeof r.dest !== 'string') continue;
 		if (r.methods && !r.methods.includes('GET')) continue;
-		// Only care about routes that land on a static .html file.
+		// Only care about routes that land on a static .html file. A dest may carry
+		// `$1`-style backreferences (`/docs/(.*)` → `/docs/$1`), so whether it ends
+		// in .html is only knowable once the capture is substituted at match time.
 		const destPath = r.dest.split('?')[0];
-		if (!destPath.endsWith('.html')) continue;
+		const templated = /\$\d/.test(destPath);
+		if (!templated && !destPath.endsWith('.html')) continue;
 		if (ERROR_DOCS.has(destPath)) continue;
 		let re;
 		try {
@@ -94,15 +97,23 @@ function buildRouter(vercel) {
 	return out;
 }
 
+// Where a router `dest` can live on disk, most specific first. The repo root is
+// last so a `pages/` or `public/` file always wins; it exists because a few
+// shells are authored outside both (the docs SPA is `docs/index.html`, which
+// serves /docs and every /docs/<topic> route it client-routes).
+const DEST_BASES = ['pages', 'public', '.'];
+
 function resolveFile(p, router) {
 	// 1) vercel.json router match.
 	for (const { re, dest } of router) {
-		if (re.test(p)) {
-			const rel = dest.replace(/^\//, '');
-			for (const base of ['pages', 'public']) {
-				const f = path.join(ROOT, base, rel);
-				if (existsSync(f)) return f;
-			}
+		const m = re.exec(p);
+		if (!m) continue;
+		const expanded = dest.replace(/\$(\d)/g, (_, i) => m[Number(i)] ?? '');
+		if (!expanded.endsWith('.html') || ERROR_DOCS.has(expanded)) continue;
+		const rel = expanded.replace(/^\//, '');
+		for (const base of DEST_BASES) {
+			const f = path.join(ROOT, base, rel);
+			if (existsSync(f)) return f;
 		}
 	}
 	// 2) conventional fallbacks.

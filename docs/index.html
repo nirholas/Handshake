@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Docs — three.ws</title>
-		<meta name="description" content="Documentation for three.ws — the open-source platform for 3D AI agents." />
+		<title>Docs · three.ws</title>
+		<meta name="description" content="Documentation for three.ws, the open-source platform for 3D AI agents." />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 		<link rel="canonical" href="https://three.ws/docs" />
 		<meta property="og:type" content="website" />
@@ -604,6 +604,68 @@
 				}
 			}
 
+			/* ── Missing / unreadable article ─────────────
+			   A hash route the reader typed (or an old link) can name a page that
+			   no longer exists, and the network can fail mid-fetch. Both used to
+			   render one gray line of text with nowhere to go. */
+			.docs-notfound {
+				max-width: 44rem;
+				margin: var(--space-2xl) 0;
+				padding: var(--space-lg);
+				border: 1px solid var(--border);
+				border-radius: var(--radius-lg);
+				background: rgba(255, 255, 255, 0.02);
+			}
+			.docs-notfound h2 {
+				margin: 0 0 8px;
+				font-size: var(--text-lg);
+				font-weight: 600;
+				color: #ddd6fe;
+				border: none;
+				padding: 0;
+			}
+			.docs-notfound p {
+				margin: 0 0 var(--space-md);
+				font-size: var(--text-sm);
+				line-height: 1.6;
+				color: rgba(255, 255, 255, 0.55);
+			}
+			.docs-notfound code {
+				color: rgba(255, 255, 255, 0.8);
+				word-break: break-all;
+			}
+			.docs-notfound-actions {
+				display: flex;
+				flex-wrap: wrap;
+				gap: var(--space-sm);
+			}
+			.docs-notfound-btn {
+				display: inline-flex;
+				align-items: center;
+				padding: 7px 14px;
+				font: inherit;
+				font-size: var(--text-sm);
+				text-decoration: none;
+				color: #c4b5fd;
+				background: rgba(139, 92, 246, 0.12);
+				border: 1px solid rgba(139, 92, 246, 0.3);
+				border-radius: var(--radius-md);
+				cursor: pointer;
+				transition: background 0.15s, border-color 0.15s, color 0.15s;
+			}
+			.docs-notfound-btn:hover {
+				color: #ede9fe;
+				background: rgba(139, 92, 246, 0.22);
+				border-color: rgba(139, 92, 246, 0.55);
+			}
+			.docs-notfound-btn:active {
+				background: rgba(139, 92, 246, 0.3);
+			}
+			.docs-notfound-btn:focus-visible {
+				outline: 2px solid rgba(139, 92, 246, 0.7);
+				outline-offset: 2px;
+			}
+
 			/* ── Prev/Next nav ───────────────────────────── */
 			.docs-pager {
 				display: grid;
@@ -880,7 +942,10 @@
 				}
 			}
 		</style>
-	</head>
+	
+	<meta property="og:locale" content="en_US">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Docs","description":"Full documentation: SDKs, API reference, embedding, agent system, smart contracts.","url":"https://three.ws/docs","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=learn&amp;t=Docs&amp;d=Full+documentation%3A+SDKs%2C+API+reference%2C+embedding%2C+agent+system%2C+smart+contracts.&amp;p=%2Fdocs"}]}</script>
+</head>
 	<body>
 		<header class="docs-header">
 			<a href="/" class="docs-logo">
@@ -987,7 +1052,9 @@
 
 			function currentRoute() {
 				const hash = location.hash.slice(1).replace(/^\//, '');
-				const m = location.pathname.match(/^\/docs\/([^/]+)$/);
+				// Nested doc paths (docs/<topic>/chapters/<n>) are served by the same
+				// shell, so the whole tail after /docs/ is the article path.
+				const m = location.pathname.match(/^\/docs\/(.+?)\/?$/);
 				const fromUrl = m ? m[1] : '';
 				if (hash.includes('@')) {
 					const at = hash.indexOf('@');
@@ -1224,6 +1291,72 @@
 				});
 			}
 
+			// Carries the HTTP status so the failure state can tell "this page does
+			// not exist" apart from "the network dropped", which need different
+			// answers: one is a wrong address, the other is worth retrying.
+			class DocLoadError extends Error {
+				constructor(status) {
+					super('doc request failed with ' + status);
+					this.status = status;
+				}
+			}
+
+			function renderLoadFailure(content, path, anchor, err) {
+				const missing = err instanceof DocLoadError && err.status === 404;
+				const box = document.createElement('div');
+				box.className = 'docs-notfound';
+				const slug = path.split('/').pop() || path;
+				box.innerHTML = missing
+					? '<h2>This page does not exist</h2>' +
+						'<p>No documentation lives at <code>/docs/' +
+						escapeHtml(path) +
+						'</code>. It may have been renamed, or the link that sent you here is out of date.</p>'
+					: '<h2>This page could not load</h2>' +
+						'<p>The request for <code>/docs/' +
+						escapeHtml(path) +
+						'.md</code> failed. Your connection may have dropped mid-fetch.</p>';
+
+				const actions = document.createElement('div');
+				actions.className = 'docs-notfound-actions';
+
+				if (!missing) {
+					const retry = document.createElement('button');
+					retry.type = 'button';
+					retry.className = 'docs-notfound-btn';
+					retry.textContent = 'Try again';
+					retry.addEventListener('click', () => loadPage(path, anchor));
+					actions.appendChild(retry);
+				}
+
+				const start = document.createElement('a');
+				start.className = 'docs-notfound-btn';
+				start.href = '#start-here';
+				start.textContent = 'Start here';
+				actions.appendChild(start);
+
+				const search = document.createElement('button');
+				search.type = 'button';
+				search.className = 'docs-notfound-btn';
+				search.textContent = 'Search the docs';
+				search.addEventListener('click', () => {
+					const input = document.getElementById('search-input');
+					input.value = slug.replace(/[-_]+/g, ' ');
+					input.focus();
+					input.dispatchEvent(new Event('input', { bubbles: true }));
+				});
+				actions.appendChild(search);
+
+				const all = document.createElement('a');
+				all.className = 'docs-notfound-btn';
+				all.href = '/sitemap?q=' + encodeURIComponent(slug.replace(/[-_]+/g, ' '));
+				all.textContent = 'Browse all pages';
+				actions.appendChild(all);
+
+				box.appendChild(actions);
+				content.innerHTML = '';
+				content.appendChild(box);
+			}
+
 			async function loadPage(path, anchor) {
 				const content = document.getElementById('docs-content');
 				content.innerHTML =
@@ -1232,7 +1365,7 @@
 				try {
 					const url = '/docs/' + path + '.md';
 					const res = await fetch(url);
-					if (!res.ok) throw new Error(res.status);
+					if (!res.ok) throw new DocLoadError(res.status);
 					const md = await res.text();
 
 					// Turn `figure:` directives into inert slots BEFORE parsing. Left as
@@ -1350,9 +1483,8 @@
 						${next ? `<a href="#${next.path}" class="docs-pager-btn next"><span class="pager-dir">Next →</span><span class="pager-title">${next.label}</span></a>` : '<div class="docs-pager-btn placeholder"></div>'}
 					`;
 					content.appendChild(pager);
-				} catch {
-					content.innerHTML =
-						'<p style="color:rgba(255,255,255,0.35);padding-top:2rem">Page not found.</p>';
+				} catch (err) {
+					renderLoadFailure(content, path, anchor, err);
 				}
 
 				scrollToAnchor(anchor);

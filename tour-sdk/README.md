@@ -119,7 +119,7 @@ npm install @three-ws/tour @three-ws/walk three
 ```
 
 `three` and `@three-ws/walk` are **peer dependencies** — bring your own copies
-(`three` >= 0.150, `@three-ws/walk` >= 0.1). You also need to serve the avatar
+(`three` >= 0.150, `@three-ws/walk` >= 0.2). You also need to serve the avatar
 assets `@three-ws/walk` needs (avatar GLBs + the shared animation manifest) — see
 that package's README. Point the tour at them with `assetBase` / `manifestUrl`.
 
@@ -259,6 +259,7 @@ fails, so a flaky TTS service never breaks the tour.
 | Option | Default | Description |
 | --- | --- | --- |
 | `curriculum` | `'/tour/curriculum.json'` | URL to fetch, or an inline curriculum object. |
+| `mode` | `'guided'` | `'guided'` (the avatar walks itself), `'explore'` (the visitor drives it to checkpoints), or `'platformer'` (explore with gravity + jumping). Anything else falls back to `'guided'`. |
 | `ttsEndpoint` | `null` | `POST { text, voice, speed, format }` → audio. Omit for silent captions. |
 | `defaultVoice` | `'nova'` | Default narration voice id. |
 | `voices` | built-in set | `[{ id, name }]` shown in the voice picker. |
@@ -301,14 +302,21 @@ tour.resume();                // re-hydrate an in-progress tour after navigation
 tour.exit();                  // tear everything down
 tour.isActive();              // boolean — is a tour running?
 tour.bootstrap();             // honour the deep-link param + rehydrate
+tour.startExplore();          // force the checkpoint mode regardless of `mode`
 tour.director;                // the live TourDirector (once one exists)
+tour.explore;                 // the live ExploreMode (once one exists)
 tour.config;                  // the fully-resolved config
 ```
 
-Also exported for advanced/standalone use: `TourDirector`, `resolveTourConfig`,
-`buildCurriculum`, `buildPlaylist`, `trackMeta`, `loadCurriculum`,
-`createTourState`, `stopIndexForPath`, `sectionTitle`, `normalizePath`,
-`DEFAULT_VOICES`, `DEFAULT_COPY`, `VERSION`.
+Nothing heavy is built until a tour starts: `director` and `explore` are both
+`null` on a freshly created controller. In `explore` / `platformer` mode
+`start()`, `resume()`, and `bootstrap()` all route to the checkpoint experience,
+so the same nav button and deep link drive whichever mode you configured.
+
+Also exported for advanced/standalone use: `TourDirector`, `ExploreMode`,
+`resolveTourConfig`, `buildCurriculum`, `buildPlaylist`, `trackMeta`,
+`loadCurriculum`, `createTourState`, `stopIndexForPath`, `sectionTitle`,
+`normalizePath`, `DEFAULT_VOICES`, `DEFAULT_COPY`, `VERSION`.
 
 ---
 

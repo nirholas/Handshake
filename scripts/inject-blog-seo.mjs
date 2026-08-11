@@ -36,6 +36,47 @@ function attr(head, re) {
 	return m ? m[1].trim() : null;
 }
 
+// Read an HTML attribute list into a plain object. Each value is read up to its
+// OWN closing quote, which a `content=["']([^"']+)["']` shorthand cannot do: an
+// apostrophe inside a double-quoted value ends the capture there and silently
+// truncates the copy (a description reading "three.ws is DEXTools" instead of
+// "three.ws is DEXTools' Social Boost winner of the week…").
+function parseAttrs(source) {
+	const attrs = {};
+	const re = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/g;
+	let m;
+	while ((m = re.exec(source))) attrs[m[1].toLowerCase()] = m[2] ?? m[3] ?? m[4] ?? '';
+	return attrs;
+}
+
+// Every `<tagName …>` in `head`, as attribute objects. The body matcher skips
+// over quoted spans so a `>` inside an attribute value cannot close the tag early.
+function tagAttrs(head, tagName) {
+	const re = new RegExp(`<${tagName}\\b((?:"[^"]*"|'[^']*'|[^>])*)>`, 'gi');
+	const out = [];
+	let m;
+	while ((m = re.exec(head))) out.push(parseAttrs(m[1]));
+	return out;
+}
+
+// The `content` of the first <meta> whose `name` or `property` matches `key`.
+function metaContent(head, key) {
+	const want = key.toLowerCase();
+	for (const a of tagAttrs(head, 'meta')) {
+		if ((a.name || a.property || '').toLowerCase() === want) return a.content ?? null;
+	}
+	return null;
+}
+
+// The `href` of the first <link> carrying `rel`.
+function linkHref(head, rel) {
+	const want = rel.toLowerCase();
+	for (const a of tagAttrs(head, 'link')) {
+		if ((a.rel || '').toLowerCase() === want) return a.href ?? null;
+	}
+	return null;
+}
+
 // Decode the handful of HTML entities our authored heads use, so JSON-LD
 // carries clean text (JSON.stringify re-escapes what it needs).
 function decode(s) {
@@ -46,14 +87,6 @@ function decode(s) {
 		.replace(/&quot;/g, '"')
 		.replace(/&#39;/g, "'")
 		.replace(/&times;/g, '×');
-}
-
-function htmlEscape(s) {
-	return String(s)
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;');
 }
 
 function headOf(html) {
@@ -72,19 +105,13 @@ function publishDate(html) {
 }
 
 function metaOf(html, head) {
-	const title = decode(
-		attr(head, /<title[^>]*>([\s\S]*?)<\/title>/i) ||
-			attr(head, /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) ||
-			'',
-	);
+	const title = decode(attr(head, /<title[^>]*>([\s\S]*?)<\/title>/i) || metaContent(head, 'og:title') || '');
 	const description = decode(
-		attr(head, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) ||
-			attr(head, /<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i) ||
-			'',
-	);
-	const keywords = decode(attr(head, /<meta[^>]+name=["']keywords["'][^>]+content=["']([^"']+)["']/i) || '');
-	const ogImage = attr(head, /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
-	const canonical = attr(head, /<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i);
+		metaContent(head, 'description') || metaContent(head, 'og:description') || '',
+	).trim();
+	const keywords = decode(metaContent(head, 'keywords') || '').trim();
+	const ogImage = metaContent(head, 'og:image')?.trim() || null;
+	const canonical = linkHref(head, 'canonical')?.trim() || null;
 	return { title, description, keywords, ogImage, canonical };
 }
 

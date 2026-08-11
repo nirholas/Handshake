@@ -147,8 +147,16 @@ export async function submitForge(baseUrl, { prompt, mode, referenceImageUrl, ti
 	return data;
 }
 
-export async function pollForge(baseUrl, jobId, { timeoutMs = 10 * 60 * 1000, intervalMs = 4000 } = {}) {
-	const deadline = Date.now() + timeoutMs;
+// Two independent ceilings bound the wait: this poll's own patience (timeoutMs,
+// how long one generation is worth waiting for) and `deadlineAt`, an absolute
+// wall-clock instant the CALLER must return inside. Whichever lands first wins,
+// so a caller with 40s of runway left never sits out a 10-minute poll. Callers
+// that pass no deadline (the by-hand full bench) keep the old unbounded-patience
+// behavior exactly.
+export async function pollForge(baseUrl, jobId, { timeoutMs = 10 * 60 * 1000, intervalMs = 4000, deadlineAt = Infinity } = {}) {
+	const ownDeadline = Date.now() + timeoutMs;
+	const budgetBound = deadlineAt < ownDeadline;
+	const deadline = budgetBound ? deadlineAt : ownDeadline;
 	while (Date.now() < deadline) {
 		const res = await fetch(`${baseUrl}/api/forge?job=${encodeURIComponent(jobId)}`);
 		const data = await res.json().catch(() => ({}));
@@ -159,15 +167,22 @@ export async function pollForge(baseUrl, jobId, { timeoutMs = 10 * 60 * 1000, in
 			err.code = 'generation_failed';
 			throw err;
 		}
-		await sleep(intervalMs);
+		// Never sleep past the deadline: the last nap decides how far the caller
+		// overshoots its budget.
+		await sleep(Math.max(0, Math.min(intervalMs, deadline - Date.now())));
+	}
+	if (budgetBound) {
+		const err = new Error('run budget exhausted while waiting for generation');
+		err.code = 'budget_exhausted';
+		throw err;
 	}
 	throw new Error(`poll timed out after ${timeoutMs}ms`);
 }
 
-export async function generate(baseUrl, params) {
+export async function generate(baseUrl, params, { deadlineAt = Infinity } = {}) {
 	const submitted = await submitForge(baseUrl, params);
 	if (submitted.status === 'done' && submitted.glb_url) return submitted;
-	if (submitted.job_id) return pollForge(baseUrl, submitted.job_id);
+	if (submitted.job_id) return pollForge(baseUrl, submitted.job_id, { deadlineAt });
 	throw new Error(`unexpected forge response shape: ${JSON.stringify(submitted).slice(0, 300)}`);
 }
 
@@ -175,7 +190,12 @@ export async function generate(baseUrl, params) {
 // judge each view twice -> average. Never throws for a generation/scoring
 // failure — returns a result object with status set instead, so a caller
 // iterating many combos never has one bad lane abort the whole sweep.
-export async function runOne(baseUrl, promptEntry, lane, tier) {
+// `deadlineAt` is an absolute wall-clock instant this combo must be finished by.
+// A caller running under a request budget passes it so generation waits and the
+// per-view render/judge loop both stop at the line instead of running on past a
+// response nobody is listening to any more. Omitting it keeps the unbounded
+// behavior the by-hand bench relies on.
+export async function runOne(baseUrl, promptEntry, lane, tier, { deadlineAt = Infinity } = {}) {
 	const result = { promptId: promptEntry.id, subjectClass: promptEntry.subjectClass, lane, tier, startedAt: new Date().toISOString() };
 	try {
 		const gen = await generate(baseUrl, {
@@ -184,7 +204,7 @@ export async function runOne(baseUrl, promptEntry, lane, tier) {
 			referenceImageUrl: promptEntry.referenceImageUrl,
 			tier,
 			backend: lane,
-		});
+		}, { deadlineAt });
 		result.glbUrl = gen.glb_url;
 		result.creationId = gen.creation_id ?? null;
 		// /api/forge falls back between lanes internally (a cooling NIM gateway
@@ -197,6 +217,10 @@ export async function runOne(baseUrl, promptEntry, lane, tier) {
 		result.cached = gen.cached === true;
 		result.views = [];
 		for (const view of CANONICAL_VIEWS) {
+			if (Date.now() >= deadlineAt) {
+				result.budgetExhausted = true;
+				break;
+			}
 			const viewResult = { view: view.label };
 			try {
 				const { png } = await renderClip({
@@ -216,12 +240,30 @@ export async function runOne(baseUrl, promptEntry, lane, tier) {
 			result.views.push(viewResult);
 		}
 		const okViews = result.views.filter((v) => v.avg);
-		result.status = okViews.length ? 'ok' : 'scoring_failed';
-		result.meanScore = okViews.length ? okViews.reduce((s, v) => s + v.avg.mean, 0) / okViews.length : null;
+		if (result.budgetExhausted) {
+			// A combo whose view sweep was cut short is not a comparable data point:
+			// scoring it against a baseline built from complete sweeps would read a
+			// short clock as a quality change. Keep the partial views for diagnosis
+			// and withhold the score.
+			result.status = 'budget_exhausted';
+			result.meanScore = null;
+		} else {
+			result.status = okViews.length ? 'ok' : 'scoring_failed';
+			result.meanScore = okViews.length ? okViews.reduce((s, v) => s + v.avg.mean, 0) / okViews.length : null;
+		}
 	} catch (genErr) {
-		result.status = 'lane_failed';
-		result.error = genErr.message;
-		result.meanScore = 0;
+		if (genErr.code === 'budget_exhausted') {
+			// Same reasoning: out of time is not the same finding as a broken lane,
+			// so it must not be scored as a zero.
+			result.status = 'budget_exhausted';
+			result.budgetExhausted = true;
+			result.error = genErr.message;
+			result.meanScore = null;
+		} else {
+			result.status = 'lane_failed';
+			result.error = genErr.message;
+			result.meanScore = 0;
+		}
 	}
 	result.finishedAt = new Date().toISOString();
 	return result;

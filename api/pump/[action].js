@@ -3451,18 +3451,36 @@ async function handleChannelFeed(req, res) {
 	const url = new URL(req.url, `http://${req.headers.host}`);
 	const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit') || 50)), 200);
 	const kinds = url.searchParams.get('kinds') || null;
-	const { getMints, getWhales, getClaims } = await import('../_lib/channel-feed-sources.js');
+	// `signal` is one of the four kinds buildFeed knows and the only one that
+	// carries agent attribution (which agent earned the reputation event, and how
+	// much it weighed). Leaving it out of the fan-out published a feed that could
+	// never answer ?kinds=signal, so the whole agent-attributed lane was invisible.
+	const { getMints, getWhales, getClaims, getSignals } = await import(
+		'../_lib/channel-feed-sources.js'
+	);
 	const { buildFeed } = await import('../../src/pump/channel-feed.js');
-	const [mints, whales, claims] = await Promise.all([
-		getMints(limit),
-		getWhales(limit),
-		getClaims(limit),
+	// buildFeed filters by kind after the fact; skipping the unrequested reads
+	// here keeps ?kinds=mint to one query instead of four. It ignores a `kinds`
+	// naming nothing valid and serves everything, so this must too, or the two
+	// halves disagree and a typo'd filter returns an empty feed.
+	const ALL_KINDS = ['mint', 'whale', 'claim', 'signal'];
+	const named = kinds
+		? kinds.split(',').map((k) => k.trim()).filter((k) => ALL_KINDS.includes(k))
+		: [];
+	const requested = named.length ? new Set(named) : null;
+	const wants = (kind) => !requested || requested.has(kind);
+	const [mints, whales, claims, signals] = await Promise.all([
+		wants('mint') ? getMints(limit) : [],
+		wants('whale') ? getWhales(limit) : [],
+		wants('claim') ? getClaims(limit) : [],
+		wants('signal') ? getSignals(limit) : [],
 	]);
 	const items = buildFeed(
 		[
 			{ kind: 'mint', items: mints },
 			{ kind: 'whale', items: whales },
 			{ kind: 'claim', items: claims },
+			{ kind: 'signal', items: signals },
 		],
 		{ limit, kinds },
 	);
@@ -3741,6 +3759,11 @@ async function handleDeliverTelegram(req, res) {
 	if (!method(req, res, ['POST'])) return;
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+	// This speaks under the platform's verified bot identity, so an authenticated
+	// caller still gets a per-IP ceiling: without one, a single account turns the
+	// bot into a spam/phishing relay one POST at a time.
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl, 'too many delivery requests');
 	const botToken = process.env.TELEGRAM_BOT_TOKEN;
 	if (!botToken) return error(res, 500, 'misconfigured', 'TELEGRAM_BOT_TOKEN is not set');
 	const raw = await readJson(req);

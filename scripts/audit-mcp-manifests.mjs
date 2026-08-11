@@ -13,6 +13,13 @@
 //     packages[0].identifier/version match, mcpName matches server.json name
 //   - remote manifests: every remotes[].url is https
 //
+// Plus the public directory at public/.well-known/mcp.json, which agents fetch
+// to enumerate the hosted fleet in one request: it must list exactly the remote
+// manifests on disk (no orphan entry, no unlisted endpoint), agree with each
+// manifest on transport, and point every documentation link at a doc that
+// exists. /docs/<slug> is served by an SPA shell that answers 200 for any slug,
+// so a live probe cannot catch a dead docs link; only docs/<slug>.md can.
+//
 // Run: node scripts/audit-mcp-manifests.mjs   (exit 1 on any violation)
 
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
@@ -132,6 +139,52 @@ for (const path of remoteManifests) {
 		if (!existsSync(resolve(root, path))) continue;
 		if (!listed.has(path)) {
 			fail(path, `not listed in ${publisher}, so it can never be published or updated`);
+		}
+	}
+}
+
+// The hosted-fleet directory must describe the same servers the repo ships.
+{
+	const dirPath = 'public/.well-known/mcp.json';
+	const dir = load(dirPath);
+	const entries = Array.isArray(dir?.servers) ? dir.servers : null;
+	if (dir && !entries) fail(dirPath, 'missing servers[]');
+
+	if (entries) {
+		const byEndpoint = new Map();
+		for (const s of entries) {
+			for (const field of ['name', 'endpoint', 'transport', 'auth', 'description', 'documentation']) {
+				if (!s[field]) fail(dirPath, `entry "${s.name || s.endpoint || '?'}" missing ${field}`);
+			}
+			if (s.endpoint) {
+				if (byEndpoint.has(s.endpoint)) fail(dirPath, `endpoint listed twice: ${s.endpoint}`);
+				byEndpoint.set(s.endpoint, s);
+			}
+			const doc = s.documentation || '';
+			const slug = doc.startsWith('https://three.ws/docs/') ? doc.slice('https://three.ws/docs/'.length) : null;
+			if (!slug) {
+				fail(dirPath, `documentation must be an https://three.ws/docs/<slug> link (${doc})`);
+			} else if (!existsSync(resolve(root, 'docs', `${slug}.md`))) {
+				fail(dirPath, `documentation ${doc} has no docs/${slug}.md behind it`);
+			}
+		}
+
+		for (const path of remoteManifests) {
+			const m = load(path);
+			for (const r of m?.remotes ?? []) {
+				const entry = byEndpoint.get(r.url);
+				if (!entry) {
+					fail(dirPath, `${path} serves ${r.url} but the directory does not list it`);
+					continue;
+				}
+				if (entry.transport !== r.type) {
+					fail(dirPath, `${r.url}: directory says transport "${entry.transport}", ${path} says "${r.type}"`);
+				}
+				byEndpoint.delete(r.url);
+			}
+		}
+		for (const url of byEndpoint.keys()) {
+			fail(dirPath, `lists ${url}, which no server*.json at the repo root declares`);
 		}
 	}
 }

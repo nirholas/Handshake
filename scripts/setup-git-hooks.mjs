@@ -8,9 +8,14 @@
 // commit-content rules is pre-push: it sees exactly the commits leaving the
 // machine, after all local churn has settled.
 //
+// scripts/check-secrets.mjs rides the same path for the same reason, and with a
+// sharper deadline: a credential that reaches a remote is copied by every clone
+// and fork, so deleting the line later does not undo the leak. Pre-push is the
+// last moment a block is still cheaper than a rotation.
+//
 // Design constraints, in order:
-//   1. Scoped to the push. The hook runs check-rules with --base <remote sha>
-//      --head <local sha> per pushed ref, so it judges only the commits being
+//   1. Scoped to the push. The hook runs both guards with --base <remote sha>
+//      --head <local sha> per pushed ref, so they judge only the commits being
 //      pushed. Concurrent agents' in-flight worktree edits are invisible to it.
 //      This is why the hook does NOT run `npm run gate` or working-tree checks:
 //      on a worktree shared by several agents those block your push on someone
@@ -32,15 +37,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const MARKER = 'three.ws pre-push hook v1';
+const MARKER = 'three.ws pre-push hook v2';
 
 const HOOK = `#!/bin/sh
 # ${MARKER} (installed by scripts/setup-git-hooks.mjs; edits here are overwritten
 # on the next npm install, change the installer instead).
 #
-# Enforces the CLAUDE.md hard rules on the commits being pushed, scoped to
-# exactly those commits (never the shared working tree), then hands the refs to
-# git-lfs. Emergency bypass: SKIP_PUSH_CHECKS=1 git push
+# Enforces the CLAUDE.md hard rules, and the no-credentials-in-git rule, on the
+# commits being pushed, scoped to exactly those commits (never the shared
+# working tree), then hands the refs to git-lfs. Both checks are diff scoped for
+# the same reason: a worktree-state audit would block a requested push on
+# another agent's in-flight work.
+# Emergency bypass: SKIP_PUSH_CHECKS=1 git push
 input="$(cat)"
 
 zero=0000000000000000000000000000000000000000
@@ -56,11 +64,12 @@ if [ -z "$SKIP_PUSH_CHECKS" ] && command -v node >/dev/null 2>&1; then
 			[ "$remote_sha" = "$zero" ] && continue
 			git cat-file -e "$remote_sha" 2>/dev/null || continue
 			node scripts/check-rules.mjs --base "$remote_sha" --head "$local_sha" || { status=1; break; }
+			node scripts/check-secrets.mjs --base "$remote_sha" --head "$local_sha" || { status=1; break; }
 		done
 		exit "$status"
 	} || {
 		echo >&2 ""
-		echo >&2 "pre-push: CLAUDE.md hard-rule violations in the commits being pushed."
+		echo >&2 "pre-push: CLAUDE.md hard-rule or credential violations in the commits being pushed."
 		echo >&2 "pre-push: fix them, or bypass once with: SKIP_PUSH_CHECKS=1 git push"
 		exit 1
 	}

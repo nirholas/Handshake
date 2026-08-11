@@ -43,10 +43,12 @@ os.environ.setdefault("GCS_BUCKET", "test-bucket")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import httpx  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from PIL import Image  # noqa: E402
 
 import app21  # noqa: E402
+import image_source  # noqa: E402
 
 API_KEY = os.environ["API_KEY"]
 AUTH = {"Authorization": f"Bearer {API_KEY}"}
@@ -178,6 +180,133 @@ def test_decode_image_refuses_unsafe_sources():
         except ValueError:
             continue
         raise AssertionError(f"expected a refusal for {src}")
+
+
+def test_decode_image_reports_a_dead_url_as_a_caller_fault():
+    # Every fetch failure must arrive as ImageSourceError naming the host and
+    # the status. Before this, a 403/404 reference image became an opaque
+    # `internal error (ref …)` in forge_creations.error, which hid the single
+    # most common real cause of a failed generation and made the platform
+    # re-dispatch a URL that can never work onto a second GPU lane.
+    def dead(src, timeout=None):
+        request = httpx.Request("GET", src)
+        raise httpx.HTTPStatusError(
+            "404", request=request, response=httpx.Response(404, request=request)
+        )
+
+    original = image_source.fetch_remote_bytes
+    image_source.fetch_remote_bytes = dead
+    try:
+        app21._decode_image("https://cdn.example/missing.png")
+    except image_source.ImageSourceError as exc:
+        assert "cdn.example" in str(exc), str(exc)
+        assert "404" in str(exc), str(exc)
+    else:
+        raise AssertionError("expected an ImageSourceError for a 404 source")
+    finally:
+        image_source.fetch_remote_bytes = original
+
+
+def test_image_fetch_retries_a_read_timeout_then_succeeds():
+    # A single mid-stream read timeout against a public image host used to fail
+    # the whole generation (observed live 2026-08-10, ref 16485b338fc5).
+    calls = {"n": 0}
+    payload = base64.b64decode(_png_data_uri().split(",", 1)[1])
+
+    def flaky(src, timeout=None):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise httpx.ReadTimeout("the read operation timed out")
+        return payload
+
+    original = image_source.fetch_remote_bytes
+    image_source.fetch_remote_bytes = flaky
+    try:
+        img = image_source.decode_image(
+            "https://cdn.example/ref.png", sleep=lambda _delay: None
+        )
+        assert calls["n"] == 2, calls["n"]
+        assert img.size == (8, 8)
+    finally:
+        image_source.fetch_remote_bytes = original
+
+
+def test_image_fetch_does_not_retry_a_permanent_status():
+    # 404/403 will fail identically on every attempt; retrying only adds latency
+    # to a failure the caller must fix. 429/503 do get the retry budget.
+    calls = {"n": 0}
+
+    def gone(src, timeout=None):
+        calls["n"] += 1
+        request = httpx.Request("GET", src)
+        raise httpx.HTTPStatusError(
+            "403", request=request, response=httpx.Response(403, request=request)
+        )
+
+    original = image_source.fetch_remote_bytes
+    image_source.fetch_remote_bytes = gone
+    try:
+        try:
+            image_source.decode_image("https://cdn.example/private.png", sleep=lambda _d: None)
+        except image_source.ImageSourceError:
+            pass
+        else:
+            raise AssertionError("expected an ImageSourceError for a 403 source")
+        assert calls["n"] == 1, calls["n"]
+    finally:
+        image_source.fetch_remote_bytes = original
+
+    for status in (429, 503):
+        request = httpx.Request("GET", "https://cdn.example/x.png")
+        exc = httpx.HTTPStatusError(
+            str(status), request=request, response=httpx.Response(status, request=request)
+        )
+        assert image_source.is_transient_fetch_error(exc), status
+
+
+def test_decode_image_reports_undecodable_bytes_as_a_caller_fault():
+    original = image_source.fetch_remote_bytes
+    image_source.fetch_remote_bytes = lambda src, timeout=None: b"this is not a png"
+    try:
+        app21._decode_image("https://cdn.example/not-an-image.png")
+    except image_source.ImageSourceError as exc:
+        assert "not a decodable image" in str(exc), str(exc)
+    else:
+        raise AssertionError("expected an ImageSourceError for undecodable bytes")
+    finally:
+        image_source.fetch_remote_bytes = original
+
+
+def test_inference_records_an_image_source_failure_verbatim():
+    # The wire contract that makes all of the above visible: a caller-fault
+    # failure lands in the task record (and so in forge_creations.error) as its
+    # own reason, never as an opaque error ref.
+    bucket = RecordingBucket()
+    app21._bucket = bucket
+    app21._tasks.clear()
+    app21._sem = asyncio.Semaphore(1)
+    app21._ready = asyncio.Event()
+    app21._ready.set()
+    original = image_source.fetch_remote_bytes
+    image_source.fetch_remote_bytes = lambda src, timeout=None: (_ for _ in ()).throw(
+        httpx.HTTPStatusError(
+            "404",
+            request=httpx.Request("GET", src),
+            response=httpx.Response(404, request=httpx.Request("GET", src)),
+        )
+    )
+    try:
+        asyncio.run(app21._run_inference("task-img", ["https://cdn.example/missing.png"]))
+        task = app21._tasks["task-img"]
+        assert task["status"] == "failed", task
+        assert "cdn.example" in task["error"], task["error"]
+        assert not task["error"].startswith("internal error (ref "), task["error"]
+    finally:
+        image_source.fetch_remote_bytes = original
+        app21._bucket = None
+        app21._sem = None
+        app21._ready = None
+        app21._tasks.clear()
 
 
 def test_task_records_round_trip_through_the_durable_blob():

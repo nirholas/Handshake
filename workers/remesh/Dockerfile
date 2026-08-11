@@ -19,6 +19,17 @@ RUN git clone --depth 1 --recursive https://github.com/hjwdzh/QuadriFlow /tmp/qu
     && install -m 0755 /tmp/quadriflow/build/quadriflow /usr/local/bin/quadriflow \
     && rm -rf /tmp/quadriflow
 
+# ── Build Manifold (MIT) from source ─────────────────────────────────────────
+# QuadriFlow's own README requires a watertight manifold input and points at this
+# tool by the same author to produce one. Without it, a quad remesh of any real
+# character export (open at the wrists, neck, and hems) aborts in QuadriFlow's
+# index-map solve with "wrong init".
+RUN git clone --depth 1 --recursive https://github.com/hjwdzh/Manifold /tmp/manifold \
+    && cmake -S /tmp/manifold -B /tmp/manifold/build -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build /tmp/manifold/build -j "$(nproc)" \
+    && install -m 0755 /tmp/manifold/build/manifold /usr/local/bin/manifold \
+    && rm -rf /tmp/manifold
+
 # ── Runtime deps for trimesh / open3d / assimp / usd / Blender ───────────────
 # The X11/GL libs are for the `bpy` (Blender) module, which links against them
 # even when running headless for FBX export.

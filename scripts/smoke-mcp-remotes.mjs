@@ -30,6 +30,14 @@ const ENDPOINTS = [
 		// configured AND healthy. Skipped (not failed) when the indexer is absent.
 		indexerProbe: { name: 'get_new_tokens', args: { limit: 3 } },
 	},
+	{
+		// The free generation lane. Every tool here except check_job/get_agent_persona
+		// spends real GPU minutes, so the probe asserts the catalog the manifest and
+		// /.well-known/mcp.json promise instead of firing a generation on every run.
+		path: '/api/mcp-studio',
+		type: 'free',
+		requireTools: ['mesh_forge', 'rig_mesh', 'forge_avatar', 'text_to_avatar', 'check_job'],
+	},
 	{ path: '/api/mcp', type: 'paid' },
 	{ path: '/api/mcp-3d', type: 'paid' },
 	{ path: '/api/mcp-agent', type: 'paid' },
@@ -124,16 +132,23 @@ async function checkFree(ep) {
 		`${tools?.length ?? 0} tools`,
 	]);
 
-	const call = await post(
-		ep.path,
-		rpc('tools/call', { name: ep.probe.name, arguments: ep.probe.args }, 3),
-	);
-	const isErr = !!call.body?.error;
-	checks.push([
-		`call ${ep.probe.name}`,
-		!isErr,
-		isErr ? call.body.error.message?.slice(0, 60) : 'ok',
-	]);
+	for (const want of ep.requireTools ?? []) {
+		const present = (tools || []).some((t) => t.name === want);
+		checks.push([`serves ${want}`, present, present ? 'ok' : 'absent from tools/list']);
+	}
+
+	if (ep.probe) {
+		const call = await post(
+			ep.path,
+			rpc('tools/call', { name: ep.probe.name, arguments: ep.probe.args }, 3),
+		);
+		const isErr = !!call.body?.error;
+		checks.push([
+			`call ${ep.probe.name}`,
+			!isErr,
+			isErr ? call.body.error.message?.slice(0, 60) : 'ok',
+		]);
+	}
 
 	// Indexer-backed tools are conditionally available: pumpfun_bot_status reports
 	// whether PUMPFUN_BOT_URL is wired and the bot answers. Probe an indexer tool

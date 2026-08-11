@@ -58,8 +58,6 @@ Environment variables:
 from __future__ import annotations
 
 import asyncio
-import base64
-import io
 import json
 import logging
 import os
@@ -78,11 +76,11 @@ from PIL import Image
 from pydantic import BaseModel, Field
 
 from worker_security import (
-    UnsafeUrlError,
-    fetch_remote_bytes,
     require_api_key,
     safe_error,
 )
+
+from image_source import FETCH_ATTEMPTS, ImageSourceError, decode_image
 
 logging.basicConfig(
     level=logging.INFO,
@@ -377,18 +375,20 @@ def _require_api_key(authorization: str) -> None:
 
 
 def _decode_image(src: str) -> Image.Image:
-    if src.startswith("data:image"):
-        b64 = src.split(",", 1)[1]
-        return Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
-    if src.startswith("https://"):
-        # SSRF-hardened: https-only, private/loopback/link-local/metadata IPs
-        # rejected after DNS resolution, redirects re-validated per hop, bounded.
-        try:
-            data = fetch_remote_bytes(src, timeout=30)
-        except UnsafeUrlError as exc:
-            raise ValueError(f"refused to fetch image source: {exc}") from exc
-        return Image.open(io.BytesIO(data)).convert("RGB")
-    raise ValueError(f"unsupported image source: {src[:60]}")
+    """Read one caller-supplied image, retrying transient fetch blips.
+
+    Every failure arrives as ImageSourceError so _run_inference can report the
+    real reason (a 404 reference image, an unreachable host) instead of an
+    opaque error ref that tells nobody anything. See image_source.py.
+    """
+
+    def note_retry(number: int, delay: float, exc: BaseException) -> None:
+        log.warning(
+            "image fetch attempt %d/%d failed (%s); retrying in %.1fs",
+            number, FETCH_ATTEMPTS, type(exc).__name__, delay,
+        )
+
+    return decode_image(src, on_retry=note_retry)
 
 
 async def _run_inference(task_id: str, images: list[str], quality: dict | None = None) -> None:
@@ -429,6 +429,17 @@ async def _run_inference(task_id: str, images: list[str], quality: dict | None =
                 elapsed_ms=int(elapsed * 1000),
             )
             log.info("[%s] done in %.1fs — %d bytes → %s", task_id, elapsed, len(glb_bytes), gcs_url)
+        except ImageSourceError as exc:
+            # The request's own `images` entry is at fault, so hand the reason
+            # back verbatim: an opaque error ref would tell the caller nothing
+            # and leaves the router retrying a URL that can never work.
+            log.warning("[%s] image source rejected: %s", task_id, exc)
+            await _update_task(
+                task_id,
+                status="failed",
+                error=str(exc),
+                elapsed_ms=int((time.time() - t0) * 1000),
+            )
         except Exception as exc:
             await _update_task(
                 task_id,

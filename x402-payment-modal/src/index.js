@@ -37,7 +37,10 @@
 // is configurable via `configure({...})` or `data-*` attributes on the script
 // tag — see CONFIG / configure() below and docs/api-reference.md.
 
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
+
+/** Library version. Kept in lockstep with package.json (see test/client.test.js). */
+export const version = VERSION;
 
 // ─────────────────────────────────────────────────────────── configuration ───
 // All host-specific knobs live here so the modal runs unchanged on any site.
@@ -124,21 +127,22 @@ function checkoutBase() {
 // an endpoint re-enter it by signing a challenge instead of paying again. The
 // server advertises support by including `extensions['sign-in-with-x']` in the
 // 402 body; clients submit signed proofs via the `SIGN-IN-WITH-X` header. See
-// prompts/siwx/PLAN.md for the full architecture.
+// docs/siwx.md for the full architecture.
 const SIWX_HEADER = 'SIGN-IN-WITH-X';
 const SIWX_EXTENSION_KEY = 'sign-in-with-x';
 
 const ORIGIN = (() => {
-	// Resolve the origin that hosts this script — used as the API origin for
+	// Resolve the origin that hosts this script, used as the API origin for
 	// the prepare/encode helpers. Falls back to the merchant origin in same-
-	// origin mode.
+	// origin mode, and to '' off-browser: importing this module during SSR (or
+	// in a test runner) must never throw, so every DOM/location read is guarded.
 	try {
 		const script = document.currentScript;
 		if (script?.src) return new URL(script.src).origin;
 		const found = document.querySelector('script[src*="/x402.js"]');
 		if (found?.src) return new URL(found.src).origin;
 	} catch (_) {}
-	return location.origin;
+	return typeof location !== 'undefined' ? location.origin : '';
 })();
 
 // USDC EIP-3009 typed-data sig works against Base USDC at this address. The

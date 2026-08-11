@@ -85,9 +85,21 @@ export function hasSeoRoute(pathname) {
 	return getCatalog().has(normalizePath(pathname));
 }
 
+/**
+ * The canonical URL a catalogued page is required to present. The origin is
+ * fixed rather than taken from the request, so a page served from any host
+ * (a preview revision, a direct Cloud Run URL) still names its public URL.
+ *
+ * Exported so scripts/check-pages.mjs can assert the served canonical against
+ * the same value this module writes, instead of restating the rule and drifting.
+ */
+export function canonicalUrlFor(pathname) {
+	return `${ORIGIN}${normalizePath(pathname)}`;
+}
+
 // Extract the href of an existing <link rel="canonical"> from a head string,
 // attribute order agnostic. Returns null when the head has none.
-function canonicalOf(head) {
+export function canonicalOf(head) {
 	const tag = head.match(/<link[^>]*rel=["']canonical["'][^>]*>/i);
 	if (!tag) return null;
 	const href = tag[0].match(/href=["']([^"']+)["']/i);
@@ -156,7 +168,7 @@ export function rewriteHead(pathname, html) {
 	if (!headMatch) return null;
 
 	const { page, sectionId } = entry;
-	const url = `${ORIGIN}${p}`;
+	const url = canonicalUrlFor(p);
 	const shellCanonical = canonicalOf(headMatch[0]);
 	// The canonical already names this page: it owns its meta. This is every
 	// statically stamped page, and the shell's own route (/docs on docs shell).

@@ -4212,11 +4212,7 @@
 			"dest": "/docs-freshness.html"
 		},
 		{
-			"src": "/docs/([^./]+)/?",
-			"dest": "/docs/index.html"
-		},
-		{
-			"src": "/docs/tutorials/([^./]+)/?",
+			"src": "/docs/([^.]+?)/?",
 			"dest": "/docs/index.html"
 		},
 		{
@@ -4708,6 +4704,10 @@
 		{
 			"src": "/api/swarms",
 			"dest": "/api/swarms"
+		},
+		{
+			"src": "/api/x402/service/([^/?]+)",
+			"dest": "/api/x402/service.js?slug=$1"
 		},
 		{
 			"src": "/api/(.*)",
@@ -5519,10 +5519,6 @@
 		{
 			"src": "/play/ufo/",
 			"dest": "/play/ufo.html"
-		},
-		{
-			"src": "/api/x402/service/([^/?]+)",
-			"dest": "/api/x402/service.js?slug=$1"
 		},
 		{
 			"src": "/api/x402/fact-check",

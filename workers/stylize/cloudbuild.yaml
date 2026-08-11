@@ -55,6 +55,15 @@ steps:
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}
       - --timeout=300
+      # /process answers 202 and finishes the job in a FastAPI BackgroundTask,
+      # so the work runs entirely outside a request. Under Cloud Run's default
+      # throttling the container gets almost no CPU there, and the job also
+      # holds one of only MAX_CONCURRENT=2 semaphore slots while it crawls, so a
+      # caller that stops polling can wedge the instance for everyone. The same
+      # filter has been logged at 8.13s and at 224.89s on this service; the
+      # sibling remesh worker measured the same mechanism at 160s versus 51,173s
+      # before it was given always-on CPU.
+      - --no-cpu-throttling
       - --allow-unauthenticated
       - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MAX_CONCURRENT=2
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest

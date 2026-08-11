@@ -7,7 +7,6 @@
 // Real endpoints:
 //   GET  /api/agents                       { agents: [...] }
 //   GET  /api/pump/by-agent?agent_id=:id   { token, stats }
-//   GET  /api/pump/dashboard               { tokens: [...] }
 //   POST /api/pump/withdraw-prep           body { agent_id, amount }
 //   POST /api/pump/withdraw-confirm        body { tx }
 
@@ -83,21 +82,22 @@ function skeletonMarkup() {
 async function loadTokens(host) {
 	host.innerHTML = skeletonMarkup();
 
-	const [agentsSettled, dashSettled] = await Promise.allSettled([
-		get('/api/agents'),
-		get('/api/pump/dashboard'),
-	]);
-
-	if (agentsSettled.status === 'rejected'
-		&& agentsSettled.reason instanceof ApiError
-		&& agentsSettled.reason.status === 401) {
-		location.href = `/login?return=${encodeURIComponent(location.pathname)}`;
-		return;
-	}
-
-	// Both primary surfaces failing means the network is down — render a retryable
-	// error rather than renderEmpty(), which would wrongly read as "no tokens".
-	if (agentsSettled.status === 'rejected' && dashSettled.status === 'rejected') {
+	// The agent list is the only source of tokens on this page. /api/pump/dashboard
+	// is a per-agent endpoint (it requires agent_id and answers { price, history }),
+	// so the parameterless call this page used to make answered 400 on every load
+	// and its result was always discarded. Per-agent stats come from
+	// /api/pump/by-agent below, which is the endpoint that actually serves them.
+	let agents;
+	try {
+		agents = (await get('/api/agents'))?.agents || [];
+	} catch (err) {
+		if (err instanceof ApiError && err.status === 401) {
+			location.href = `/login?return=${encodeURIComponent(location.pathname)}`;
+			return;
+		}
+		// Losing the agent list means we cannot tell "no tokens" from "could not
+		// load", so render a retryable error rather than renderEmpty(), which
+		// would wrongly read as "no tokens".
 		ensureStateKitStyles();
 		host.innerHTML = errorStateHTML({
 			title: "Couldn't load your tokens",
@@ -106,9 +106,6 @@ async function loadTokens(host) {
 		attachRetry(host, () => loadTokens(host));
 		return;
 	}
-
-	const agents = (agentsSettled.status === 'fulfilled' ? agentsSettled.value?.agents : null) || [];
-	const dashTokens = (dashSettled.status === 'fulfilled' ? dashSettled.value?.tokens : null) || [];
 
 	// Build enriched token list: match pump tokens from agent meta + dashboard data
 	const pumpAgents = agents.filter((a) =>
@@ -120,12 +117,11 @@ async function loadTokens(host) {
 		pumpAgents.map(async (a) => {
 			const mint = a.meta?.pumpfun?.mint || a.meta?.token?.mint || a.meta?.token?.ca;
 			const byAgent = await safeGet(`/api/pump/by-agent?agent_id=${encodeURIComponent(a.id)}`);
-			const fromDash = dashTokens.find((t) => t.mint === mint || t.address === mint);
 			return {
 				agent: a,
 				mint: mint || byAgent?.data?.mint || null,
-				token: byAgent?.token || fromDash || null,
-				stats: byAgent?.stats || fromDash?.stats || null,
+				token: byAgent?.token || null,
+				stats: byAgent?.stats || null,
 				coin: byAgent?.data || null, // { agent_authority, network, symbol, name, sharing_config }
 			};
 		}),

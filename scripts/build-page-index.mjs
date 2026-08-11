@@ -276,36 +276,60 @@ ${items}
 		.map((s) => `\t\t\t<a href="#${escapeHtml(s.id)}">${escapeHtml(s.title)}</a>`)
 		.join('\n');
 
-	const sitemapDescription = `Complete index of every public page on ${site.name}.`;
+	// Copy comes from the catalog entry for /sitemap, not a second hardcoded
+	// string: this file is regenerated on every run, so any drift from the
+	// catalog would be re-applied by scripts/inject-seo-meta.mjs and undone here
+	// on the next build, leaving the pair permanently out of sync.
+	const sitemapEntry = allPages.find((p) => p.path === '/sitemap');
+	const sitemapTitle = sitemapEntry?.title || 'Sitemap';
+	const sitemapDescription =
+		sitemapEntry?.description || `Complete index of every public page on ${site.name}.`;
 	const sitemapOgImage = `${baseUrl}/api/page-og?${new URLSearchParams({
-		s: 'main',
-		t: 'Sitemap',
+		s: sitemapEntry?.section?.id || 'main',
+		t: sitemapTitle,
 		d: sitemapDescription,
 		p: '/sitemap',
 	})}`;
+	const sitemapJsonLd = JSON.stringify({
+		'@context': 'https://schema.org',
+		'@graph': [
+			{
+				'@type': 'WebPage',
+				name: sitemapTitle,
+				description: sitemapDescription,
+				url: `${baseUrl}/sitemap`,
+				isPartOf: { '@type': 'WebSite', name: site.name, url: baseUrl },
+				primaryImageOfPage: sitemapOgImage,
+			},
+		],
+	}).replace(/</g, '\\u003c');
 
 	return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Sitemap · ${escapeHtml(site.name)}</title>
+<title>${escapeHtml(sitemapTitle)} · ${escapeHtml(site.name)}</title>
 <meta name="description" content="${escapeHtml(sitemapDescription)}" />
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 <link rel="canonical" href="${escapeHtml(baseUrl)}/sitemap" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="${escapeHtml(site.name)}" />
+<meta property="og:locale" content="en_US" />
 <meta property="og:url" content="${escapeHtml(baseUrl)}/sitemap" />
-<meta property="og:title" content="Sitemap · ${escapeHtml(site.name)}" />
+<meta property="og:title" content="${escapeHtml(sitemapTitle)} · ${escapeHtml(site.name)}" />
 <meta property="og:description" content="${escapeHtml(sitemapDescription)}" />
 <meta property="og:image" content="${escapeHtml(sitemapOgImage)}" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:alt" content="${escapeHtml(sitemapTitle)} - ${escapeHtml(site.name)}" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:site" content="@trythreews" />
-<meta name="twitter:title" content="Sitemap · ${escapeHtml(site.name)}" />
+<meta name="twitter:title" content="${escapeHtml(sitemapTitle)} · ${escapeHtml(site.name)}" />
 <meta name="twitter:description" content="${escapeHtml(sitemapDescription)}" />
 <meta name="twitter:image" content="${escapeHtml(sitemapOgImage)}" />
+<script type="application/ld+json">${sitemapJsonLd}</script>
 <link rel="alternate" type="application/xml" title="XML sitemap" href="/sitemap.xml" />
 <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
 <link rel="stylesheet" href="/nav.css" />

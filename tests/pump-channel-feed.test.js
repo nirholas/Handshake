@@ -23,7 +23,11 @@ vi.mock('../api/_lib/env.js', () => ({
 	env: { APP_ORIGIN: 'http://test', ISSUER: 'http://test', MCP_RESOURCE: 'http://test' },
 }));
 
-const { default: handler } = await import('../api/pump/channel-feed.js');
+// The endpoint lives in the consolidated pump dispatcher, reached as
+// /api/pump/channel-feed -> /api/pump/[action]?action=channel-feed. Exercising
+// the dispatcher (rather than a sibling file the route table never reaches)
+// is what makes these assertions describe production.
+const { default: handler } = await import('../api/pump/[action].js');
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -44,6 +48,8 @@ function mockReq(search = '') {
 		method: 'GET',
 		headers: { host: 'localhost' },
 		url: `/api/pump/channel-feed${search}`,
+		// Populated by the filesystem router in production; the dispatcher switches on it.
+		query: { action: 'channel-feed' },
 	};
 }
 

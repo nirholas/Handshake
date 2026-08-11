@@ -54,11 +54,16 @@ Cached for 6 hours: a mint-to-asset mapping changes when the upstream registry d
 ### List every variant of an asset
 
 ```js
-const variants = await fetchAssetVariants(asset.asset_id, { sortBy: 'liquidity' });
-for (const v of variants) {
-  console.log(v.label, v.mint, v.market?.price_usd, v.market?.liquidity, v.execution?.score);
-}
+const variants = await fetchAssetVariants('usd', { sortBy: 'liquidity' });
+const aggregate = variants.reduce((sum, v) => sum + (v.market?.liquidity ?? 0), 0);
+console.log(`USD spans ${variants.length} Solana mints, $${Math.round(aggregate).toLocaleString()} pooled`);
+// USD spans 27 Solana mints, $955,077,128 pooled
+//   USDC   EPjFWdd5Au…  liq $623,873,106  holders 7,917,665
+//   USDT   Es9vMFrzaC…  liq $119,596,584  holders 2,894,605
+//   PYUSD  2b1kV6DkPA…  liq  $54,750,632  holders    55,354
 ```
+
+That aggregate is the number no mint-scoped source can produce.
 
 `sortBy` accepts `liquidity` (default), `execution_quality`, or `stock_redeemability`. Optional filters: `kind`, `liquidityTier`, `stockVariantTier`.
 
@@ -68,7 +73,7 @@ Each row carries:
 | --- | --- |
 | `mint`, `chain`, `kind`, `label` | Variant identity (`native`, `wrapped`, `bridged`, `lst`, `tokenized_equity`, …) |
 | `liquidity_tier`, `trust_tier` | Upstream's depth and trust banding, `tier1` strongest |
-| `market` | Price, liquidity, volume, cap, change, decimals, logo, and which upstream produced them |
+| `market` | Price, liquidity, volume, cap, FDV, change, decimals, logo, holders, supply, and which upstream produced them |
 | `execution` | Cached 24h fill quality (score, bot-volume ratio, fee bps, flow sources), or `null` where uncovered |
 | `stock_variant_tier` | Redeemability for tokenized equities. Provider metadata for routing and display, never advice |
 
@@ -105,14 +110,29 @@ Trending ranks individual mints by short-window momentum from direct USD-stable 
 
 [api/\_lib/market/token-market.js](../api/_lib/market/token-market.js) reads a mint through an ordered chain, each rung normalized to one shape:
 
-1. **Birdeye** (keyed) - richest, the only rung carrying a holder count
-2. **Tokens API** (keyed) - price, liquidity, volume, cap, and direct on-chain trade metrics
-3. **DexScreener** (keyless)
-4. **GeckoTerminal** (keyless)
+1. **Birdeye** (keyed) - our direct read, full field set
+2. **Tokens API** (keyed) - the same full field set, holder count and circulating supply included
+3. **DexScreener** (keyless) - no holder count
+4. **GeckoTerminal** (keyless) - no holder count
 5. **DefiLlama coins** (keyless, price only)
 6. **Raydium** (keyless, price only)
 
-Tokens API sits second because it carries no holder count (so it cannot displace Birdeye) but its numbers can come from real fills rather than a pool estimate (so it belongs ahead of the keyless aggregators). It reports `source: 'tokensxyz'` and derives `supply` from cap over price, the same way the DexScreener rung does.
+Tokens API sits second, and the position matters more than it looks. Birdeye's monthly compute-unit quota is the one this platform actually exhausts, and the cascade benches a quota-dead source for six hours. Before this rung, that bench dropped every read to DexScreener, which has no holder count, so the token panel lost a field for the rest of the window. Tokens API carries holders and circulating supply, so the fallback is now like-for-like instead of degraded.
+
+This is not hypothetical. Verified live on 2026-08-11 with the Birdeye key already quota-benched:
+
+```
+wSOL    source: tokensxyz    price: 76.10   holders: 7,709,344  liq: $4,531,185,262
+USDC    source: tokensxyz    price: 0.9998  holders: 7,917,665  liq: $623,873,106
+$THREE  source: dexscreener  price: 0.001547  holders: null     liq: $216,882
+```
+
+$THREE falls through on purpose: it resolves to a `solana-<mint>` singleton with no cached market, so the rung returns null and the cascade continues. Coverage is curated, and a token the registry has not indexed is reported as absent rather than guessed at.
+
+Two mapping details are load-bearing:
+
+- `holder`, `circulatingSupply`, `totalSupply` and `fdv` are **absent from the published v1 type but present on live birdeye-sourced rows**. They are mapped when present and left null otherwise, so a `clickhouse_trades` row that omits them degrades honestly instead of reporting zero holders.
+- Values reaching the rung are already normalized to number-or-null by the client and are deliberately **not** re-wrapped in the cascade's local `num()`. `Number(null)` is `0`, which would render an unknown liquidity as `$0`.
 
 Two behaviors are load-bearing and covered by tests:
 
