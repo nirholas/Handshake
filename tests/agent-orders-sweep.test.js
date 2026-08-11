@@ -94,7 +94,7 @@ const { loadConfig } = await import('../workers/agent-orders/config.js');
 const AGENT_ID = '11111111-1111-4111-8111-111111111111';
 const USER_ID = '22222222-2222-4222-8222-222222222222';
 const MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump'; // $THREE
-const AGENT_ADDRESS = '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM';
+const AGENT_ADDRESS = 'THREEsyntheticAgentWallet11111111111111111111'; // never validated: getHolding is stubbed
 
 const cfg = { network: 'mainnet', mode: 'simulate', concurrency: 4, staleFiringMs: 180_000 };
 
@@ -259,6 +259,32 @@ describe('runOrderSweep: blocked fires', () => {
 		dbState.activeOrders = [order({ type: 'limit', side: 'sell', size_sol: null, sell_pct: 50, limit_price: 40_000 })];
 		priceAt(45_000); // limit sell fires at/above target
 		marketState.holding = { whole: 0, raw: 0n, decimals: 6 };
+
+		await runOrderSweep(cfg);
+
+		expect(tradeState.calls).toHaveLength(0);
+		const release = dbState.calls.find((c) => c.kind === 'set_status' && c.values[1] === 'no_balance_or_size');
+		expect(release).toBeTruthy();
+	});
+
+	it('scales a raw size_tokens sell by the mint decimals before handing it to the trade path', async () => {
+		// size_tokens is persisted in raw base units; executeAgentTrade takes whole
+		// tokens. Unscaled, this would ask for 1e6x the size and bounce off
+		// insufficient_token_balance (a clearable code) on every sweep forever.
+		dbState.activeOrders = [order({ type: 'limit', side: 'sell', size_sol: null, size_tokens: 2_500_000, limit_price: 40_000 })];
+		priceAt(45_000);
+		marketState.holding = { whole: 1_000, raw: 1_000_000_000n, decimals: 6 };
+
+		await runOrderSweep(cfg);
+
+		expect(tradeState.calls).toHaveLength(1);
+		expect(tradeState.calls[0].input.amount).toBe(2.5);
+	});
+
+	it('holds a size_tokens sell when the mint decimals cannot be read', async () => {
+		dbState.activeOrders = [order({ type: 'limit', side: 'sell', size_sol: null, size_tokens: 2_500_000, limit_price: 40_000 })];
+		priceAt(45_000);
+		marketState.holding = null; // RPC could not resolve the mint this sweep
 
 		await runOrderSweep(cfg);
 

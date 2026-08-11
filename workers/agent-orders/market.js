@@ -132,8 +132,10 @@ export function metricValue(market, signals, metric) {
 }
 
 /**
- * Live token holding for an owner. Used to size percentage sells (sell N% of the
- * bag). Returns whole-token + raw base-unit balance + decimals, or null if the
+ * Live token holding for an owner. Sizes percentage sells (sell N% of the bag)
+ * and supplies the mint decimals that convert a raw `size_tokens` order into the
+ * whole-token amount the trade path expects. Returns whole-token + raw
+ * base-unit balance + decimals, or null if the
  * owner holds none / the mint can't be read. Mirrors the resolveHolding logic the
  * trade endpoint uses so a percentage sell is priced against the same balance.
  */

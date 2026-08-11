@@ -323,7 +323,9 @@ function fmt(n) {
 function sizeLabel(o) {
 	if (o.side === 'buy') return `${o.size_sol} SOL`;
 	if (o.sell_pct != null) return `${o.sell_pct}% of the holding`;
-	return `${o.size_tokens} tokens`;
+	// size_tokens is raw base units, not whole tokens; label it as what it is so
+	// the readback can't be misread as a 1e6x larger sell on a 6-decimal mint.
+	return `${o.size_tokens} base units`;
 }
 
 /** A plain-language readback of an order — what it does, in one line. */
@@ -347,7 +349,7 @@ export function describeOrder(o) {
 		}
 		case 'twap': {
 			const every = humanInterval(o.schedule?.interval_seconds);
-			const total = o.side === 'buy' ? `${o.schedule?.total_sol} SOL` : (o.schedule?.total_pct != null ? `${o.schedule.total_pct}%` : `${o.schedule?.total_tokens} tokens`);
+			const total = o.side === 'buy' ? `${o.schedule?.total_sol} SOL` : (o.schedule?.total_pct != null ? `${o.schedule.total_pct}%` : `${o.schedule?.total_tokens} base units`);
 			return `TWAP: ${verb.toLowerCase()} ${total} of ${sym} sliced over ${o.schedule?.slices} fills, one every ${every}.`;
 		}
 		case 'conditional':

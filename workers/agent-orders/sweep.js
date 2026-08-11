@@ -115,7 +115,17 @@ async function buildBody(order, agent) {
 		const amt = holding.whole * (order.sell_pct / 100);
 		return amt > 0 ? { ...base, amount: amt } : null;
 	}
-	if (Number(order.size_tokens) > 0) return { ...base, amount: Number(order.size_tokens) };
+	if (Number(order.size_tokens) > 0) {
+		// size_tokens is stored in RAW base units (see the orders migration and
+		// docs/agent-wallet-api.md) while the trade path takes WHOLE tokens, so it
+		// has to be scaled by the mint's own decimals. Passing the raw figure
+		// through would ask for 10^decimals times the intended size and bounce off
+		// insufficient_token_balance, a clearable code, on every sweep forever.
+		const holding = await getHolding({ network: order.network, mint: order.mint, owner: agent.meta.solana_address });
+		if (!holding) return null; // no decimals to scale by: hold, never guess
+		const whole = Number(order.size_tokens) / 10 ** holding.decimals;
+		return whole > 0 ? { ...base, amount: whole } : null;
+	}
 	return null;
 }
 
