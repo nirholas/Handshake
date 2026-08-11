@@ -29,7 +29,9 @@ steps:
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
       - --cache-from
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
-      - --build-arg=SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
+      # Only the ControlNet is baked into the image (see the Dockerfile). The
+      # SDXL base and inpaint checkpoints come from the staged weights prefix
+      # below, so passing them here would be a build arg nothing reads.
       - --build-arg=CONTROLNET_MODEL=diffusers/controlnet-depth-sdxl-1.0
       - .
 

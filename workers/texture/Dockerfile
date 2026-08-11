@@ -27,17 +27,24 @@ RUN pip install -r /app/requirements.txt
 # a cache written to /weights would be invisible at runtime. /opt/hf-cache is
 # always reachable and is the loader's last-resort fallback when GCS staging
 # (WEIGHTS_GCS_URI) is unset or the staging prefix is empty.
-ARG SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
+#
+# The fp16 variant, matching WEIGHT_VARIANT in main.py. Caching the
+# full-precision files instead would put 4.7 GiB in the image that the runtime
+# then ignores while it downloads the 2.3 GiB it actually asked for.
 ARG CONTROLNET_MODEL=diffusers/controlnet-depth-sdxl-1.0
+ARG WEIGHT_VARIANT=fp16
 RUN python3 -c " \
-from diffusers import ControlNetModel, StableDiffusionXLControlNetPipeline; \
+from diffusers import ControlNetModel; \
 import torch; \
-ControlNetModel.from_pretrained('${CONTROLNET_MODEL}', torch_dtype=torch.float16, cache_dir='/opt/hf-cache'); \
+ControlNetModel.from_pretrained('${CONTROLNET_MODEL}', torch_dtype=torch.float16, use_safetensors=True, variant='${WEIGHT_VARIANT}', cache_dir='/opt/hf-cache'); \
 print('ControlNet cached') \
 "
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
+COPY texture_projection.py /app/texture_projection.py
+COPY test_texture_projection.py /app/test_texture_projection.py
+COPY stage_weights.py /app/stage_weights.py
 COPY main.py /app/main.py
 
 EXPOSE 8080
