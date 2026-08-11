@@ -9,10 +9,11 @@ substitutions:
   _SERVICE: stylize-service
   _REPO: stylize-service
   _GCS_BUCKET: three-ws-avatar-reconstructions
-  # Kept warm (not scale-to-zero): this worker backs interactive material
-  # editing (restyle_material) — a cold start here is a user-facing multi-second
-  # stall mid-edit. CPU-only, no GPU, cheap to keep resident against the $100k
-  # GCP credit pool. 2026-07-16.
+  # Kept warm (not scale-to-zero): this worker backs the forge's interactive
+  # stylize tool (/api/forge-stylize, MCP stylize_model), where a job itself runs
+  # in under ten seconds, so a container cold start on top of it is the dominant
+  # user-facing stall. CPU-only, no GPU, cheap to keep resident against the GCP
+  # credit pool. 2026-07-16.
   _MIN_INSTANCES: "1"
   _MAX_INSTANCES: "3"
 
