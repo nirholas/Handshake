@@ -110,7 +110,16 @@ describe('gcp provider — video2scene mode routing', () => {
 		globalThis.fetch = vi.fn(async (url) => {
 			expect(String(url)).toBe(`${WORKER_URL}/tasks/task-xyz`);
 			return new Response(
-				JSON.stringify({ task_id: 'task-xyz', status: 'done', result_gcs_url: ply, num_points: 1_234_567, frames: 240, bytes: 9999 }),
+				JSON.stringify({
+					task_id: 'task-xyz',
+					status: 'done',
+					result_gcs_url: ply,
+					num_points: 1_234_567,
+					frames: 240,
+					bytes: 9999,
+					frames_truncated: true,
+					sky_points_removed: 4_096,
+				}),
 				{ status: 200, headers: { 'content-type': 'application/json' } },
 			);
 		});
@@ -120,6 +129,10 @@ describe('gcp provider — video2scene mode routing', () => {
 		expect(status.resultPointCloudUrl).toBe(ply);
 		expect(status.numPoints).toBe(1_234_567);
 		expect(status.frames).toBe(240);
+		// A clip longer than the worker's frame budget is reconstructed in part;
+		// the caller has to be able to tell that from a whole-clip result.
+		expect(status.framesTruncated).toBe(true);
+		expect(status.skyPointsRemoved).toBe(4_096);
 		// A point cloud is NOT a GLB mesh — the GLB field must stay unset.
 		expect(status.resultGlbUrl).toBeUndefined();
 	});

@@ -128,6 +128,7 @@ async function pollJob(req, res, jobId) {
 		result_url: result.resultPointCloudUrl || null,
 		num_points: result.numPoints ?? null,
 		frames: result.frames ?? null,
+		frames_truncated: result.framesTruncated ?? null,
 		error: result.error || null,
 	});
 }

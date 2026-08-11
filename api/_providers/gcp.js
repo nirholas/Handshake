@@ -595,6 +595,10 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					if (typeof data.num_points === 'number') result.numPoints = data.num_points;
 					if (typeof data.frames === 'number') result.frames = data.frames;
 					if (typeof data.bytes === 'number') result.bytes = data.bytes;
+					// The worker caps a job at its frame budget; say so rather than let a
+					// partial reconstruction look like the whole clip.
+					if (typeof data.frames_truncated === 'boolean') result.framesTruncated = data.frames_truncated;
+					if (typeof data.sky_points_removed === 'number') result.skyPointsRemoved = data.sky_points_removed;
 				} else {
 					result.resultGlbUrl = url;
 				}
