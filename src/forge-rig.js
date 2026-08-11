@@ -2,7 +2,7 @@
 //
 // Adds a "Rig for animation" button to the result action bar. Click it and the
 // current GLB goes through the same auto-rig lane the MCP `rig_mesh` tool and
-// avatar pipeline use (POST /api/forge?action=rig → self-hosted GCP UniRig,
+// avatar pipeline use (POST /api/forge?action=rig → the self-hosted GCP model-rig worker,
 // falling back to the configured Replicate rerig model), polling through the
 // same GET /api/forge?job=<id> contract every other forge job uses. Nothing
 // here is a separate mesh-generation lane — it is a skeleton + skin-weight
