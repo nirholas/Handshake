@@ -1,24 +1,24 @@
 """
-LongCat Video Avatar service — audio-driven talking avatar video generation.
+LongCat Video Avatar service: audio-driven talking avatar video generation.
 
   POST /generate  { image_url, audio_url, prompt?, job_id? }
-               →  202 { job_id, status: "queued" }
+               ->  202 { job_id, status: "queued" }
 
-  GET  /jobs/:id  → { job_id, status, progress?, segments?, audio_seconds?,
+  GET  /jobs/:id  -> { job_id, status, progress?, segments?, audio_seconds?,
                       video_url?, error?, updated_at }
 
-  GET  /health    → { ok, model_loaded, missing_weights, resolution, ... }
+  GET  /health    -> { ok, model_loaded, missing_weights, resolution, ... }
 
 Environment variables (all required unless noted):
-  API_KEY           — shared bearer secret (set via GCP Secret Manager)
-  GCS_BUCKET        — Cloud Storage bucket for output MP4s
-  FIRESTORE_PROJECT — GCP project hosting Firestore
-  WEIGHTS_DIR         root holding both LongCat repos (default: /weights/longcat;
+  API_KEY             shared bearer secret (set via GCP Secret Manager)
+  GCS_BUCKET          Cloud Storage bucket for output MP4s
+  FIRESTORE_PROJECT   GCP project hosting Firestore
+  WEIGHTS_DIR         root holding both LongCat repos (default: /weights/longcat,
                       see model_weights.py for the required layout)
-  LONGCAT_REPO_DIR  — path to cloned LongCat repo (default: /longcat)
-  MAX_CONCURRENT    — parallel inference jobs (default: 1; GPU-bound)
+  LONGCAT_REPO_DIR    path to cloned LongCat repo (default: /longcat)
+  MAX_CONCURRENT      parallel inference jobs (default: 1; GPU-bound)
   MAX_SEGMENTS        cap on generated segments (default: 8, about 26 s of video)
-  RESOLUTION        — 480p or 720p (default: 720p)
+  RESOLUTION          480p or 720p (default: 720p)
 """
 
 from __future__ import annotations
@@ -329,7 +329,7 @@ def _run_inference(
 
 async def _download_file(url: str, dest: Path) -> None:
     if url.startswith("data:"):
-        # Inline data URI — decode base64 directly, no HTTP request needed.
+        # Inline data URI: decode base64 directly, no HTTP request needed.
         try:
             _, encoded = url.split(",", 1)
             dest.write_bytes(base64.b64decode(encoded))
