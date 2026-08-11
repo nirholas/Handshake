@@ -30,7 +30,7 @@
 // The line family 3 draws is the load-bearing one. A dispatcher that IMPORTS the
 // sibling runs the sibling's code; a dispatcher that reimplements the action
 // inline (`case 'channel-feed':`) does NOT, and the sibling is then a stale
-// duplicate of live logic — a real defect, still reported. So reachability
+// duplicate of live logic, a real defect, still reported. So reachability
 // follows the import graph under api/ (transitively, since a dispatched module
 // may itself dispatch further), seeded from the handlers families 1 and 2 reach.
 //
@@ -414,7 +414,7 @@ for (const h of handlers) {
 // Pass 3: the in-handler dispatch graph (reachability family 3).
 //
 // Seeded with every file a request already reaches, then walked over the import
-// edges between files under api/ — including through api/_lib, since a live
+// edges between files under api/, including through api/_lib, since a live
 // handler routinely reaches a sibling endpoint's module by way of a shared
 // library. Following the edges transitively is what makes the walk correct for
 // api/agents/patronage.js, which api/agents/[id].js reaches only through

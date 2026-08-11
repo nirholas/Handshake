@@ -316,7 +316,7 @@
 		}
 		if (!loaded && !errored) { renderSkeleton(); return; }
 		if (errored && !items.length) {
-			// Refetches in place — a control, not a destination, so it's a button.
+			// Refetches in place, a control, not a destination, so it's a button.
 			var retry = el('button', 'notif-signin-btn', 'Try again');
 			retry.type = 'button';
 			retry.addEventListener('click', function () { fetchList(); });

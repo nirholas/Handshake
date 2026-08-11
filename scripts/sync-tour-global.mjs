@@ -2,7 +2,7 @@
 // Rebuild @three-ws/tour's CDN bundle and sync it into public/tour-builder/.
 // =========================================================================
 // The Tour Builder page (/tour-builder) previews a REAL tour, not a mockup, by
-// loading /tour-builder/tour.global.js — the same IIFE the package publishes to
+// loading /tour-builder/tour.global.js, the same IIFE the package publishes to
 // unpkg. That file used to be a hand-copied build output with nothing producing
 // it, so it drifted: the copy served to visitors was built against an older
 // walk-sdk than the one in this repo. This script is the missing wiring.
@@ -43,7 +43,7 @@ if (current === next) {
 
 if (check) {
 	console.error(
-		'[sync-tour-global] public/tour-builder/tour.global.js is stale — run `npm run build:tour-global`',
+		'[sync-tour-global] public/tour-builder/tour.global.js is stale, run `npm run build:tour-global`',
 	);
 	process.exit(1);
 }

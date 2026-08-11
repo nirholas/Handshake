@@ -37,7 +37,7 @@ describe('unknown routes land on the designed 404', () => {
 		expect(res.headers.get('content-type')).toMatch(/text\/html/);
 		const html = await res.text();
 		// The designed page: its own title, and the ways back into the product.
-		expect(html).toContain('three.ws — 404');
+		expect(html).toContain('three.ws, 404');
 		expect(html).toContain('href="/"');
 		expect(html).toContain('href="/sitemap"');
 	});
@@ -64,7 +64,7 @@ describe('shared-shell surfaces do not soft-404', () => {
 		const res = await get('/docs/definitely-not-a-real-doc-xyz');
 		expect(res.status).toBe(404);
 		const html = await res.text();
-		expect(html).toContain('three.ws — 404');
+		expect(html).toContain('three.ws, 404');
 	});
 
 	it('an unknown nested /docs/ path returns 404', async () => {
@@ -76,7 +76,7 @@ describe('shared-shell surfaces do not soft-404', () => {
 		const res = await get('/tutorials/definitely-not-a-real-tutorial-xyz');
 		expect(res.status).toBe(404);
 		const html = await res.text();
-		expect(html).toContain('three.ws — 404');
+		expect(html).toContain('three.ws, 404');
 	});
 
 	it('a real doc still serves the docs shell', async () => {

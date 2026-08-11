@@ -29,7 +29,7 @@ import { ExploreMode } from './explore.js';
 import { resolveTourConfig } from './config.js';
 import { createTourState, loadCurriculum } from './curriculum.js';
 
-// Kept in lockstep with package.json's version by test/index.test.mjs — the
+// Kept in lockstep with package.json's version by test/index.test.mjs, the
 // CDN bundle reports this string, so a stale constant misidentifies the build.
 export const VERSION = '0.5.1';
 
