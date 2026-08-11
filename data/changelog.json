@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "The agent-to-agent invocation SDK now states the truth about its Solana program",
+			"summary": "@three-ws/agent-protocol-sdk records agent-to-agent skill calls on Solana against the agent_invocation program. Its docs described that program as live and deployed on mainnet and devnet; the account is not on-chain yet, so anyone building on the promise hit a cluster rejection with no explanation. The README, the package constants table and the architecture reference now say exactly where the program stands and how to check the account yourself. The on-chain smoke harness that covers this path was checking a build artifact instead of the chain, so it reported a missing file rather than the deployment state; it now asks the cluster directly and runs from a clean checkout. Separately, the Solana address guard that verifies the $THREE mint and the pump.fun programs against mainnet on every build was reading a single RPC provider, so an exhausted provider key left it verifying nothing while still printing a clean result. It now walks the same provider failover chain the platform runs on.",
+			"tags": [
+				"fix",
+				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-11",
 			"title": "Token pages keep their holder count when a data provider runs out of quota",
 			"summary": "Prices, liquidity and holder counts on Solana token panels come from an ordered list of data providers, so one going down never blanks the page. Until now the first provider was the only one that reported a holder count, and it carries a monthly usage cap: once that cap was hit, the next six hours of readings fell to a provider that has no holder data and the number quietly disappeared from the page. The Solana Foundation's Tokens API is now the second provider in that list and reports the full set, holder count and circulating supply included, so a spent quota no longer costs the page a field. It also groups mints that represent the same asset, which is what lets a balance be read across every version of a token instead of one address at a time.",
 			"tags": [

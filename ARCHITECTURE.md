@@ -2780,8 +2780,8 @@ External / vendored MCP (own repo, not a `@three-ws/*` workspace):
 
 | Artifact | Version | Chain |
 |---------|---------|-------|
-| `skill_license` Anchor program | 0.1.0 | Solana (`EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8`) |
-| `agent_invocation` Anchor program | 0.2.0 | Solana (`AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo`) |
+| `skill_license` Anchor program | 0.1.0, not deployed | Solana (`EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8` is the `declare_id!`; the account is absent on mainnet and devnet as of 2026-08-11) |
+| `agent_invocation` Anchor program | 0.2.0, not deployed | Solana (`AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo` is the `declare_id!`; the account is absent on mainnet and devnet as of 2026-08-11) |
 | `ThreeWSFactory` | deployed-2026-05 | BSC, Base, Arbitrum |
 | `ThreeWSPayments` | deployed-2026-05 | BSC, Arbitrum, Base |
 | `IdentityRegistry` (ERC-8004) | deployed, 12 mainnets | Base, Arbitrum, ETH, Polygon, BNB, Optimism, Avalanche, Gnosis, Fantom, Celo, Linea, Scroll |
