@@ -1,6 +1,6 @@
-/* The Arena — Social Trading Arena. Tournament list, live competition, results.
+/* The Arena: Social Trading Arena. Tournament list, live competition, results.
  *
- * Built entirely on the canonical design tokens (public/tokens.css via nav.css) —
+ * Built entirely on the canonical design tokens (public/tokens.css via nav.css),
  * the same vocabulary as the neighbouring leaderboard.css. Glass-on-near-black,
  * golden-ratio spacing, dark/light via tokens, mono numerics for the trading feel.
  *
@@ -153,7 +153,9 @@
 /* ── Tournament card grid ─────────────────────────────────────────────── */
 .tourn-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	/* min() keeps the track from forcing a 300px column (and a horizontally
+	   scrolling page) inside a narrower container, e.g. a 320px phone. */
+	grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
 	gap: var(--space-md);
 }
 .tourn-card {
@@ -602,14 +604,23 @@
 }
 
 /* Expanded trade proof under a row */
+/* Sibling of its row, not a child: the pills are links, and a role="button" may
+   not contain focusable descendants. The negative margin cancels the board's
+   flex gap so the panel still reads as one card with the row above it. */
 .row-proof {
-	grid-column: 1 / -1;
-	margin-top: 0.5rem;
-	padding-top: 0.5rem;
+	margin-top: calc(-0.4rem - 1px);
+	padding: 0.55rem 0.8rem 0.6rem;
+	border: 1px solid var(--stroke);
 	border-top: 1px dashed var(--stroke);
+	border-radius: 0 0 var(--radius-md) var(--radius-md);
+	background: var(--surface-1);
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.4rem;
+}
+.row[aria-expanded='true'] {
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
 }
 .proof-pill {
 	font-family: var(--font-mono);
@@ -748,10 +759,15 @@
 	border-radius: var(--radius-lg);
 	color: var(--ink-dim);
 }
+/* A state that IS the whole page (load failure, stale link) carries the route's
+   only <h1>, so it has to read identically to the in-page <h3> variants. */
+.state h1,
 .state h3 {
 	margin: 0 0 0.4rem;
 	color: var(--ink-bright);
 	font-size: var(--text-lg);
+	line-height: 1.25;
+	letter-spacing: normal;
 }
 .state p {
 	margin: 0 auto 1rem;
@@ -1064,7 +1080,7 @@
 	padding: 1rem;
 	/* Above the site's fixed corner widgets (getting-started pill 2147482500,
 	   feature-discovery card 2147483600) so a modal is always the top layer and
-	   its actions are never obscured — esp. the bottom sheet on mobile. */
+	   its actions are never obscured, esp. the bottom sheet on mobile. */
 	z-index: 2147483640;
 	font-family: var(--font-body);
 	animation: arena-fade var(--duration-base) var(--ease-out);
@@ -1365,7 +1381,7 @@
 	min-width: 0; /* let the board/ticker shrink inside the grid track */
 }
 
-/* Hero context stats on the list view — reuses .detail-stats layout. */
+/* Hero context stats on the list view: reuses the .detail-stats layout. */
 .arena-hero-stats {
 	margin-top: var(--space-sm);
 }
@@ -1442,7 +1458,7 @@
 	font-variant-numeric: tabular-nums;
 }
 
-/* Aside panels — prize ladder + rules. */
+/* Aside panels: prize ladder + rules. */
 .panel {
 	border: 1px solid var(--stroke);
 	background: var(--surface-1);

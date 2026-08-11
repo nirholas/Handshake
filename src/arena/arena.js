@@ -1,5 +1,5 @@
 /**
- * The Arena — Social Trading Arena front-end.
+ * The Arena: Social Trading Arena front-end.
  *
  * A single-page surface with two views, hash-routed:
  *   #/            → tournament list (Live / Upcoming / Finished tabs + create)
@@ -38,8 +38,10 @@ const h = (tag, attrs = {}, ...kids) => {
 	return node;
 };
 const esc = (s) => String(s ?? '');
-const fmtSol = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${Number(n).toFixed(n && Math.abs(n) < 1 ? 3 : 2)} ◎`);
-const fmtPct = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${Number(n).toFixed(1)}%`);
+/** Rendered in numeric slots that have no value yet (no trades, no pool, unranked). */
+const NO_VALUE = '-';
+const fmtSol = (n) => (n == null ? NO_VALUE : `${n > 0 ? '+' : ''}${Number(n).toFixed(n && Math.abs(n) < 1 ? 3 : 2)} ◎`);
+const fmtPct = (n) => (n == null ? NO_VALUE : `${n > 0 ? '+' : ''}${Number(n).toFixed(1)}%`);
 const fmtThree = (n) => {
 	const v = Number(n || 0);
 	if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
@@ -69,6 +71,21 @@ async function fetchJSON(url, opts) {
 		throw err;
 	}
 	return body;
+}
+
+/**
+ * Speak a short update through the page's dedicated live region (#arena-live in
+ * pages/arena.html). Used for the changes a sighted visitor sees but a screen
+ * reader would otherwise miss: tab switches and the leader flipping mid-stream.
+ */
+function announce(msg) {
+	const region = document.getElementById('arena-live');
+	if (!region) return;
+	// Re-setting identical text does not re-fire the announcement; clear first.
+	region.textContent = '';
+	requestAnimationFrame(() => {
+		region.textContent = msg;
+	});
 }
 
 function toast(msg, isErr = false) {
@@ -140,6 +157,8 @@ const scoringLabel = { score: 'TraderScore', realized_pnl: 'Realized P&L', roi_p
 // ───────────────────────────────────────────────────────────────────────────
 let listCache = null;
 const listState = { tab: 'live' };
+const TAB_KEYS = ['live', 'upcoming', 'finished'];
+const TAB_LABELS = { live: 'Live', upcoming: 'Upcoming', finished: 'Finished' };
 
 async function renderList() {
 	stopStream();
@@ -171,7 +190,7 @@ async function renderList() {
 
 	const tabsBar = h('div', { class: 'arena-tabs', role: 'tablist', 'aria-label': 'Tournament phase' });
 	root.append(tabsBar);
-	const body = h('div', { id: 'list-body' });
+	const body = h('div', { id: 'list-body', role: 'tabpanel', tabindex: '-1' });
 	root.append(body);
 
 	// Loading skeletons.
@@ -206,7 +225,7 @@ async function renderList() {
 		finished: listCache.filter((t) => t.phase === 'finished'),
 	};
 
-	// Hero context strip — real, live counts. Prize/competing only surface when > 0
+	// Hero context strip: real, live counts. Prize/competing only surface when > 0
 	// so an empty Arena never advertises a hollow "0 $THREE at stake".
 	const hs = document.getElementById('hero-stats');
 	if (hs) {
@@ -226,32 +245,57 @@ async function renderList() {
 
 	// If the preferred tab is empty, fall back to the first non-empty one.
 	if (!groups[listState.tab].length) {
-		listState.tab = ['live', 'upcoming', 'finished'].find((k) => groups[k].length) || 'live';
+		listState.tab = TAB_KEYS.find((k) => groups[k].length) || 'live';
 	}
 
-	for (const key of ['live', 'upcoming', 'finished']) {
-		const label = key[0].toUpperCase() + key.slice(1);
+	// Tabs follow the WAI-ARIA tabs pattern: a roving tabindex (one stop for the
+	// whole set), arrow/Home/End to move between them, and each tab owning the
+	// panel it controls so a screen reader can jump straight to the results.
+	const selectTab = (key) => {
+		listState.tab = key;
+		paintGroup(body, groups);
+		for (const b of tabsBar.querySelectorAll('.arena-tab')) {
+			const on = b.dataset.tab === key;
+			b.setAttribute('aria-selected', on ? 'true' : 'false');
+			b.tabIndex = on ? 0 : -1;
+			if (on) body.setAttribute('aria-labelledby', b.id);
+		}
+		announce(`${TAB_LABELS[key]} tournaments: ${groups[key].length}`);
+	};
+
+	for (const key of TAB_KEYS) {
+		const on = key === listState.tab;
 		tabsBar.append(
 			h(
 				'button',
 				{
 					class: 'arena-tab',
+					id: `arena-tab-${key}`,
 					role: 'tab',
 					type: 'button',
-					'aria-selected': key === listState.tab ? 'true' : 'false',
-					onclick: () => {
-						listState.tab = key;
-						paintGroup(body, groups);
-						tabsBar.querySelectorAll('.arena-tab').forEach((b, i) => {
-							b.setAttribute('aria-selected', ['live', 'upcoming', 'finished'][i] === key ? 'true' : 'false');
-						});
+					'aria-controls': 'list-body',
+					'aria-selected': on ? 'true' : 'false',
+					tabindex: on ? '0' : '-1',
+					dataset: { tab: key },
+					onclick: () => selectTab(key),
+					onkeydown: (e) => {
+						const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+						let next = null;
+						if (step) next = TAB_KEYS[(TAB_KEYS.indexOf(key) + step + TAB_KEYS.length) % TAB_KEYS.length];
+						else if (e.key === 'Home') next = TAB_KEYS[0];
+						else if (e.key === 'End') next = TAB_KEYS[TAB_KEYS.length - 1];
+						if (!next) return;
+						e.preventDefault();
+						selectTab(next);
+						tabsBar.querySelector(`#arena-tab-${next}`)?.focus();
 					},
 				},
-				label,
+				TAB_LABELS[key],
 				h('span', { class: 'count' }, String(groups[key].length)),
 			),
 		);
 	}
+	body.setAttribute('aria-labelledby', `arena-tab-${listState.tab}`);
 
 	paintGroup(body, groups);
 	startCountdowns();
@@ -269,7 +313,7 @@ function paintGroup(body, groups) {
 
 function emptyForTab(tab) {
 	const copy = {
-		live: ['No live tournaments right now', 'Create one, or check the upcoming bracket — the next competition could be yours.'],
+		live: ['No live tournaments right now', 'Create one, or check the upcoming bracket. The next competition could be yours.'],
 		upcoming: ['Nothing scheduled yet', 'Be the first to host a competition. Set a window, a prize pool in $THREE, and open the gates.'],
 		finished: ['No finished tournaments yet', 'Completed competitions and their on-chain attested results will appear here.'],
 	}[tab];
@@ -349,16 +393,18 @@ async function renderDetail(id) {
 	try {
 		data = await fetchJSON(`/api/tournaments/${id}`);
 	} catch (err) {
-		// A 404 means the link is stale — retrying it will never succeed. Turn the
+		// A 404 means the link is stale, so retrying it will never succeed. Turn the
 		// dead end into a discovery moment instead of an inert Retry button.
 		if (err.status === 404) return renderNotFound();
+		// This state IS the page, so its heading is the route's <h1>, not an <h3>.
+		document.title = `Tournament unavailable · ${BASE_TITLE}`;
 		root.replaceChildren(
 			backButton(),
 			h(
 				'div',
 				{ class: 'state' },
 				h('div', { class: 'state-icon', 'aria-hidden': 'true' }, '⚠️'),
-				h('h3', {}, 'Could not load this tournament'),
+				h('h1', {}, 'Could not load this tournament'),
 				h('p', {}, err.message || 'Something went wrong reaching the Arena. Check your connection and try again.'),
 				h(
 					'div',
@@ -398,7 +444,7 @@ async function renderNotFound() {
 			'div',
 			{ class: 'state' },
 			h('div', { class: 'state-icon', 'aria-hidden': 'true' }, '🏁'),
-			h('h3', {}, 'This tournament isn’t here'),
+			h('h1', {}, 'This tournament isn’t here'),
 			h(
 				'p',
 				{},
@@ -425,7 +471,7 @@ async function renderNotFound() {
 			startCountdowns();
 		}
 	} catch {
-		/* Suggestions are a bonus — the recovery state stands on its own without them. */
+		/* Suggestions are a bonus: the recovery state stands on its own without them. */
 	}
 }
 
@@ -468,7 +514,7 @@ function paintDetail(data) {
 			{ class: 'title-row' },
 			statusBadge({ derived_status: data.derived_status }),
 			h('h1', {}, t.name),
-			t.bracket === 'practice' ? h('span', { class: 'badge badge-practice' }, 'Practice — no prizes') : null,
+			t.bracket === 'practice' ? h('span', { class: 'badge badge-practice' }, 'Practice, no prizes') : null,
 		),
 		t.description ? h('p', { class: 'desc' }, t.description) : null,
 		detailStats(data, phase),
@@ -525,7 +571,7 @@ function paintDetail(data) {
 function detailStats(data, phase) {
 	const t = data.tournament;
 	const stats = [];
-	stats.push(stat('Prize pool', Number(t.prize_pool_three) > 0 ? `${fmtThree(t.prize_pool_three)} $THREE` : '—'));
+	stats.push(stat('Prize pool', Number(t.prize_pool_three) > 0 ? `${fmtThree(t.prize_pool_three)} $THREE` : 'None'));
 	stats.push(stat('Entrants', String(data.standings?.length || 0)));
 	stats.push(stat('Scoring', scoringLabel[t.scoring] || t.scoring));
 	if (phase === 'upcoming') {
@@ -589,7 +635,7 @@ function renderBoard(board, standings, t, phase) {
 					'p',
 					{},
 					phase === 'upcoming'
-						? 'Be the first to enter. Only trades opened during the window count — fair start for everyone.'
+						? 'Be the first to enter. Only trades opened during the window count, so everyone gets a fair start.'
 						: 'Standings appear as soon as entrants open real, verifiable trades inside the window.',
 				),
 				phase !== 'finished'
@@ -599,7 +645,10 @@ function renderBoard(board, standings, t, phase) {
 		);
 		return;
 	}
-	board.replaceChildren(...ranked.map((s) => boardRow(s, t)), ...dq.map((s) => boardRow(s, t)));
+	// boardRow yields the row plus, when expanded, its proof panel as a SIBLING:
+	// the panel holds links, and focusable descendants inside a role="button" are
+	// unreachable to assistive tech.
+	board.replaceChildren(...[...ranked, ...dq].flatMap((s) => boardRow(s, t)));
 }
 
 function boardRow(s, t) {
@@ -621,6 +670,8 @@ function boardRow(s, t) {
 	const scoreText =
 		t.scoring === 'realized_pnl' ? fmtSol(s.score_value) : t.scoring === 'roi_pct' ? fmtPct(s.score_value) : String(s.score_value);
 
+	const expanded = expandedAgent === s.agent_id;
+	const proofId = `proof-${s.agent_id}`;
 	const row = h(
 		'div',
 		{
@@ -628,7 +679,8 @@ function boardRow(s, t) {
 			role: 'button',
 			tabindex: '0',
 			dataset: { agent: s.agent_id },
-			'aria-expanded': expandedAgent === s.agent_id ? 'true' : 'false',
+			'aria-expanded': expanded ? 'true' : 'false',
+			'aria-controls': expanded ? proofId : null,
 			onclick: () => toggleProof(s),
 			onkeydown: (e) => {
 				if (e.key === 'Enter' || e.key === ' ') {
@@ -637,7 +689,7 @@ function boardRow(s, t) {
 				}
 			},
 		},
-		h('span', { class: 'rank' }, s.rank == null ? '–' : `#${s.rank}`),
+		h('span', { class: 'rank' }, s.rank == null ? NO_VALUE : `#${s.rank}`),
 		h(
 			'div',
 			{ class: 'who' },
@@ -654,18 +706,17 @@ function boardRow(s, t) {
 		h('span', { class: 'prize num' }, Number(prizeShown) > 0 ? `${fmtThree(prizeShown)}` : ''),
 	);
 
-	if (expandedAgent === s.agent_id) row.append(proofPanel(s));
-	return row;
+	return expanded ? [row, proofPanel(s, proofId)] : [row];
 }
 
-function proofPanel(s) {
+function proofPanel(s, id) {
 	const trades = s.sample_trades || [];
 	if (!trades.length) {
-		return h('div', { class: 'row-proof' }, h('span', { class: 'proof-pill' }, 'No closed trades in the window yet'));
+		return h('div', { class: 'row-proof', id }, h('span', { class: 'proof-pill' }, 'No closed trades in the window yet'));
 	}
 	return h(
 		'div',
-		{ class: 'row-proof' },
+		{ class: 'row-proof', id },
 		...trades.map((tr) =>
 			h(
 				tr.tx_url ? 'a' : 'span',
@@ -682,7 +733,12 @@ function toggleProof(s) {
 	expandedAgent = expandedAgent === s.agent_id ? null : s.agent_id;
 	// Re-render just the board against the cached standings without refetch.
 	const board = document.getElementById('board');
-	if (board && currentStandings) renderBoard(board, currentStandings, currentTournament, phaseFromStatus(currentDerived));
+	if (!board || !currentStandings) return;
+	const hadFocus = document.activeElement?.dataset?.agent === s.agent_id;
+	renderBoard(board, currentStandings, currentTournament, phaseFromStatus(currentDerived));
+	// The clicked row is a fresh node after the re-render; keyboard users would
+	// otherwise be dumped back to the top of the document.
+	if (hadFocus) board.querySelector(`.row[data-agent="${s.agent_id}"]`)?.focus();
 }
 
 function tickerFromStandings(standings) {
@@ -709,7 +765,7 @@ function tickerFromStandings(standings) {
 			);
 		}
 	}
-	return h('div', { class: 'ticker' }, h('h4', {}, 'Recent trades — every line traceable on-chain'), list);
+	return h('div', { class: 'ticker' }, h('h4', {}, 'Recent trades: every line traceable on-chain'), list);
 }
 
 function resultsBanner(data) {
@@ -720,7 +776,7 @@ function resultsBanner(data) {
 	if (att?.url) {
 		bits.push(h('a', { class: 'att-link', href: att.url, target: '_blank', rel: 'noopener' }, '⛓ Standings attested on-chain →'));
 	} else if (data.derived_status === 'ended') {
-		bits.push(h('span', { class: 'settle-note' }, 'Final standings frozen — awaiting on-chain attestation by the host.'));
+		bits.push(h('span', { class: 'settle-note' }, 'Final standings frozen, awaiting on-chain attestation by the host.'));
 	}
 	if (Number(t.prize_pool_three) > 0) {
 		const reason = settle.block_reason;
@@ -731,13 +787,13 @@ function resultsBanner(data) {
 					{ class: 'settle-note' },
 					'Prizes computed but ',
 					h('b', {}, 'settlement BLOCKED'),
-					' — set ',
+					'. Set ',
 					h('code', {}, 'THREE_PRIZE_PAYOUT_KEY'),
 					' to fund payouts.',
 				),
 			);
 		} else if (reason === 'devnet_no_prizes') {
-			bits.push(h('span', { class: 'settle-note' }, 'Devnet tournament — no real $THREE prizes are paid.'));
+			bits.push(h('span', { class: 'settle-note' }, 'Devnet tournament: no real $THREE prizes are paid.'));
 		} else {
 			const paid = (settle.winners || []).filter((w) => w.settlement_status === 'settled').length;
 			bits.push(h('span', { class: 'settle-note' }, `${paid}/${(settle.winners || []).length} prizes settled in $THREE.`));
@@ -748,9 +804,9 @@ function resultsBanner(data) {
 
 // ── detail panels ────────────────────────────────────────────────────────────
 const fmtWhen = (v) => {
-	if (v == null) return '—';
+	if (v == null) return NO_VALUE;
 	const d = new Date(v);
-	if (Number.isNaN(d.getTime())) return '—';
+	if (Number.isNaN(d.getTime())) return NO_VALUE;
 	return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 };
 
@@ -785,8 +841,8 @@ function windowTimeline(t, phase) {
 		phase === 'upcoming'
 			? h('span', {}, 'Opens in ', h('b', { dataset: { countdown: t.starts_at, doneLabel: 'now' } }, '…'))
 			: phase === 'live'
-				? h('span', {}, h('span', { class: 'wt-live' }, '● Live'), ' — closes in ', h('b', { dataset: { countdown: t.ends_at, doneLabel: 'now' } }, '…'))
-				: h('span', {}, 'Window closed — final standings frozen');
+				? h('span', {}, h('span', { class: 'wt-live' }, '● Live'), ', closes in ', h('b', { dataset: { countdown: t.ends_at, doneLabel: 'now' } }, '…'))
+				: h('span', {}, 'Window closed, final standings frozen');
 	return h(
 		'div',
 		{ class: `window-timeline wt-${phase}` },
@@ -823,7 +879,7 @@ function prizeLadder(data, phase) {
 				'p',
 				{ class: 'panel-note' },
 				t.bracket === 'practice'
-					? 'Practice bracket — paper trades, no prizes. Pure bragging rights and a verified spot on the board.'
+					? 'Practice bracket: paper trades, no prizes. Pure bragging rights and a verified spot on the board.'
 					: 'No prize pool on this one. Top the board for bragging rights and a permanent, on-chain-attested record.',
 			),
 		);
@@ -852,8 +908,8 @@ function prizeLadder(data, phase) {
 			'p',
 			{ class: 'panel-note' },
 			phase === 'finished'
-				? 'Final split — paid in $THREE to the winners’ agent wallets.'
-				: 'Live projection — the split locks when the window closes and standings attest on-chain.',
+				? 'Final split, paid in $THREE to the winners’ agent wallets.'
+				: 'Live projection. The split locks when the window closes and standings attest on-chain.',
 		),
 	);
 }
@@ -886,7 +942,7 @@ function rulesPanel(data) {
 					h('div', { class: 'gate-pills' }, ...gateBits.map((b) => h('span', { class: 'gate-pill' }, b))),
 				)
 			: null,
-		h('p', { class: 'panel-note' }, 'Only trades opened inside the window count — existing history never carries in. Every ranked trade is verifiable on-chain.'),
+		h('p', { class: 'panel-note' }, 'Only trades opened inside the window count, so existing history never carries in. Every ranked trade is verifiable on-chain.'),
 	);
 }
 function ruleRow(k, v) {
@@ -972,6 +1028,7 @@ function applyLiveStandings(id, data) {
 	if (spot && leader && spot.dataset.leader !== leader.agent_id) {
 		spot.dataset.leader = leader.agent_id;
 		spot.replaceChildren(h('div', { class: 'crown' }, '🏆 Current leader'), leaderVisual(leader));
+		announce(`New leader: ${leader.agent_name || 'an agent'}, ${fmtSol(leader.metrics?.realized_pnl_sol)}`);
 	}
 }
 
@@ -1070,7 +1127,7 @@ function openModal(node) {
 function openCreateModal() {
 	const err = h('p', { class: 'form-error', role: 'alert' });
 	const nameI = h('input', { type: 'text', placeholder: 'Friday Night Snipe-Off', maxlength: '120', required: true });
-	const descI = h('textarea', { rows: '2', placeholder: 'Optional — what makes this competition fun.' });
+	const descI = h('textarea', { rows: '2', placeholder: 'Optional: what makes this competition fun.' });
 	const scoringI = h(
 		'select',
 		{},
@@ -1167,7 +1224,7 @@ async function openJoinModal(t) {
 						body: JSON.stringify({ agent_id: selected }),
 					});
 					overlay.close();
-					toast('Entered the arena — good luck');
+					toast('Entered the arena. Good luck.');
 					renderDetail(t.id);
 				} catch (ex) {
 					err.textContent = ex.message;
@@ -1180,7 +1237,7 @@ async function openJoinModal(t) {
 		h(
 			'p',
 			{ class: 'sub' },
-			'Pick one of your agents. Only trades it opens inside the window count — your existing history won’t carry in.',
+			'Pick one of your agents. Only trades it opens inside the window count, so your existing history won’t carry in.',
 		),
 		body,
 		err,
