@@ -75,6 +75,7 @@ contract ReputationRegistryTest is Test {
         vm.prank(alice);
         identity.register("ipfs://alice");
 
+        vm.deal(alice, 10 ether);
         vm.deal(bob, 10 ether);
         vm.deal(carol, 10 ether);
         vm.deal(dave, 10 ether);
@@ -413,7 +414,9 @@ contract ReputationRegistryTest is Test {
 
         assertTrue(attacker.reentryAttempted(), "the attack must actually have been attempted");
         assertFalse(attacker.reentrySucceeded(), "REP-10: nonReentrant must reject the second entry");
-        assertEq(address(attacker).balance, 1 ether - 0.2 ether + 0.2 ether);
+        // The 0.2 ETH stake came from this test contract, so the attacker keeps
+        // its dealt balance plus exactly one refund, never two.
+        assertEq(address(attacker).balance, 1 ether + 0.2 ether);
         assertEq(rep.getStake(1, address(attacker)), 0);
         assertEq(rep.getStake(1, carol), 0.5 ether, "REP-10: the other staker's escrow is untouched");
     }
