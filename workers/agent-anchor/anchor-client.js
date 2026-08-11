@@ -36,6 +36,20 @@ async function fetchIntel() {
 	}
 }
 
+/**
+ * Narrative failover: the aggregated publisher feed. Only fetched when the
+ * aixbt lane returns nothing, so a healthy cycle still costs three requests.
+ * `featured=1` narrows the 38-source registry to the majors, which is what an
+ * anchor should be reading on air.
+ */
+async function fetchNews() {
+	try {
+		return await getJson(`/api/news/feed?limit=12&featured=1`);
+	} catch {
+		return null;
+	}
+}
+
 /** Sentiment pulse for the house ticker (pump.fun comments, no key needed). */
 async function fetchSentiment() {
 	try {
@@ -78,14 +92,20 @@ async function fetchPump() {
 	}
 }
 
-/** Fetch all three feeds concurrently and merge into an anchor briefing. */
+/**
+ * Fetch the feeds concurrently and merge into an anchor briefing. The narrative
+ * failover only fires when the primary lane came back empty, so it costs a
+ * round trip on degraded cycles and nothing on healthy ones.
+ */
 export async function gatherBrief() {
 	const [intel, sentiment, pump] = await Promise.all([
 		fetchIntel(),
 		fetchSentiment(),
 		fetchPump(),
 	]);
-	return mergeBrief({ intel, sentiment, pump });
+	const hasIntel = Array.isArray(intel?.intel) ? intel.intel.length > 0 : Array.isArray(intel) && intel.length > 0;
+	const news = hasIntel ? null : await fetchNews();
+	return mergeBrief({ intel, news, sentiment, pump });
 }
 
 /**
