@@ -1,0 +1,39 @@
+# robinhood-feed worker: Cloud Build config.
+#
+# Submit from the REPO ROOT (the Dockerfile copies robinhood/robinhood-chain-sdk/
+# and workers/robinhood-feed/):
+#
+#   gcloud builds submit --config workers/robinhood-feed/cloudbuild.yaml \
+#     --region us-central1 --project aerial-vehicle-466722-p5
+#
+# First deploy (creates the service; it serves HTTP, so it is a service, not a job):
+#
+#   gcloud run deploy robinhood-feed --region us-central1 \
+#     --project aerial-vehicle-466722-p5 \
+#     --image us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/workers/robinhood-feed:latest \
+#     --service-account three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
+#     --min-instances 1 --max-instances 1 --no-cpu-throttling --port 8788 --allow-unauthenticated
+#
+# Subsequent rolls (config-only update, pre-approved per CLAUDE.md):
+#
+#   gcloud run services update robinhood-feed --region us-central1 \
+#     --project aerial-vehicle-466722-p5 \
+#     --image us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/workers/robinhood-feed:latest
+#
+# serviceAccount is pinned: the project's default compute SA was deleted, so an
+# unpinned build fails before the first step.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - workers/robinhood-feed/Dockerfile
+      - -t
+      - us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/workers/robinhood-feed:latest
+      - .
+images:
+  - us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/workers/robinhood-feed:latest
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
