@@ -5,7 +5,7 @@
 #
 # Pipeline shape:
 #   selfie photos → controller → mesh model (Hunyuan3D/TRELLIS/TripoSR, L4 GPU)
-#                              → UniRig rigging (L4 GPU) → rigged GLB in GCS
+#                              → rig worker (L4 GPU) → rigged GLB in GCS
 #
 # The Vercel function api/_providers/gcp.js talks ONLY to the controller, so the
 # last thing this prints is the controller URL + API key to put in Vercel env.
@@ -17,12 +17,12 @@
 #
 # Usage:
 #   PROJECT_ID=my-proj ./deploy-all.sh
-#   PROJECT_ID=my-proj SERVICES="hunyuan3d trellis triposr unirig" ./deploy-all.sh
+#   PROJECT_ID=my-proj SERVICES="hunyuan3d trellis triposr rig" ./deploy-all.sh
 #
 # Env:
 #   PROJECT_ID      required — target GCP project
 #   REGION          default us-central1   (must offer Cloud Run nvidia-l4)
-#   SERVICES        default "hunyuan3d unirig"  (mesh model(s) + rigging)
+#   SERVICES        default "hunyuan3d rig"  (mesh model(s) + rigging)
 #   OUTPUT_BUCKET   default three-ws-avatar-reconstructions
 #   WEIGHTS_BUCKET  default three-ws-model-weights
 
@@ -30,7 +30,7 @@ set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:?set PROJECT_ID to your GCP project}"
 REGION="${REGION:-us-central1}"
-SERVICES="${SERVICES:-hunyuan3d unirig}"
+SERVICES="${SERVICES:-hunyuan3d rig}"
 OUTPUT_BUCKET="${OUTPUT_BUCKET:-three-ws-avatar-reconstructions}"
 WEIGHTS_BUCKET="${WEIGHTS_BUCKET:-three-ws-model-weights}"
 SECRET_NAME="avatar-reconstruction-key"
@@ -47,9 +47,12 @@ command -v gcloud >/dev/null 2>&1 || die "gcloud not found on PATH"
 gcloud auth print-access-token >/dev/null 2>&1 || die "gcloud is not authenticated — run 'gcloud auth login'"
 
 # service key -> "worker_dir|cloud_run_service|controller_env_var"
-svc_dir()      { case "$1" in hunyuan3d) echo model-hunyuan3d;; trellis) echo model-trellis;; triposr) echo model-triposr;; triposg) echo model-triposg;; unirig) echo unirig;; *) echo "";; esac; }
-svc_runname()  { case "$1" in hunyuan3d) echo model-hunyuan3d;; trellis) echo model-trellis;; triposr) echo model-triposr;; triposg) echo model-triposg;; unirig) echo unirig;; *) echo "";; esac; }
-svc_ctrlenv()  { case "$1" in hunyuan3d) echo MODEL_HUNYUAN3D_URL;; trellis) echo MODEL_TRELLIS_URL;; triposr) echo MODEL_TRIPOSR_URL;; triposg) echo MODEL_TRIPOSG_URL;; unirig) echo UNIRIG_URL;; *) echo "";; esac; }
+# The `rig` key deploys workers/rig as Cloud Run service `model-rig`. Its
+# controller env var is still named UNIRIG_URL: the name predates the engine
+# swap and is live on the running services, so it is deliberately not renamed.
+svc_dir()      { case "$1" in hunyuan3d) echo model-hunyuan3d;; trellis) echo model-trellis;; triposr) echo model-triposr;; triposg) echo model-triposg;; rig) echo rig;; *) echo "";; esac; }
+svc_runname()  { case "$1" in hunyuan3d) echo model-hunyuan3d;; trellis) echo model-trellis;; triposr) echo model-triposr;; triposg) echo model-triposg;; rig) echo model-rig;; *) echo "";; esac; }
+svc_ctrlenv()  { case "$1" in hunyuan3d) echo MODEL_HUNYUAN3D_URL;; trellis) echo MODEL_TRELLIS_URL;; triposr) echo MODEL_TRIPOSR_URL;; triposg) echo MODEL_TRIPOSG_URL;; rig) echo UNIRIG_URL;; *) echo "";; esac; }
 
 TAG="$(git rev-parse --short HEAD 2>/dev/null || echo manual)"
 
@@ -151,7 +154,7 @@ build_and_deploy() {
 }
 
 for svc in $SERVICES; do
-  [ -n "$(svc_dir "$svc")" ] || die "unknown service '$svc' (valid: hunyuan3d trellis triposr triposg unirig)"
+  [ -n "$(svc_dir "$svc")" ] || die "unknown service '$svc' (valid: hunyuan3d trellis triposr triposg rig)"
   build_and_deploy "$svc"
 done
 

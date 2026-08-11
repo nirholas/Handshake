@@ -15,11 +15,15 @@
 #     box with ~80 GB free disk (e.g. a GCE VM).
 #
 # Usage (Cloud Shell, full fleet):
-#   HF_TOKEN=hf_xxx SERVICES="hunyuan3d trellis triposr triposg unirig" ./stage-weights.sh
+#   HF_TOKEN=hf_xxx SERVICES="hunyuan3d trellis triposr triposg" ./stage-weights.sh
+#
+# The rig worker is NOT staged here: its assets span an LFS-filtered model repo,
+# a gated Mixamo dataset, and a baked ARKit template, which this one-repo-per-
+# service map cannot express. Stage it with `bash workers/rig/stage-assets.sh`.
 #
 # Env:
 #   WEIGHTS_BUCKET  GCS bucket name        (default: three-ws-model-weights)
-#   SERVICES        space-separated subset (default: "hunyuan3d unirig")
+#   SERVICES        space-separated subset (default: "hunyuan3d")
 #   HF_TOKEN        Hugging Face token     (required for gated repos e.g. Hunyuan3D)
 #   LOCAL_STAGE     "1" to use the local-dir+rsync path instead of gcsfuse
 #   MOUNT_DIR       gcsfuse mountpoint     (default: /tmp/three-ws-weights-mnt)
@@ -29,7 +33,7 @@
 set -euo pipefail
 
 WEIGHTS_BUCKET="${WEIGHTS_BUCKET:-three-ws-model-weights}"
-SERVICES="${SERVICES:-hunyuan3d unirig}"
+SERVICES="${SERVICES:-hunyuan3d}"
 LOCAL_STAGE="${LOCAL_STAGE:-0}"
 MOUNT_DIR="${MOUNT_DIR:-/tmp/three-ws-weights-mnt}"
 STAGE_DIR="${STAGE_DIR:-/tmp/three-ws-weights}"
@@ -45,7 +49,6 @@ weight_source() {
     trellis)   echo "microsoft/TRELLIS-image-large|trellis-large" ;;
     triposr)   echo "stabilityai/TripoSR|triposr" ;;
     triposg)   echo "VAST-AI/TripoSG|triposg VAST-AI/TripoSG-scribble|triposg-scribble briaai/RMBG-1.4|rmbg-1.4" ;;
-    unirig)    echo "VAST-AI/UniRig|unirig" ;;
     *)         echo "" ;;
   esac
 }
@@ -100,7 +103,7 @@ fi
 stage_one() {
   local svc="$1" src pair
   src="$(weight_source "$svc")"
-  [ -n "$src" ] || die "unknown service '$svc' (valid: hunyuan3d trellis triposr triposg unirig)"
+  [ -n "$src" ] || die "unknown service '$svc' (valid: hunyuan3d trellis triposr triposg; rig stages via workers/rig/stage-assets.sh)"
   # A service may need several HF repos (triposg) — stage each pair.
   for pair in $src; do
     stage_repo "$svc" "$pair"

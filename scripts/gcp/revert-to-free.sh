@@ -77,7 +77,7 @@ for arg in "$@"; do
 done
 
 REGION="${REGION:-us-central1}"
-SERVICES="${SERVICES:-model-trellis model-hunyuan3d model-triposr model-triposg unirig avatar-pipeline-controller rembg remesh texture segment}"
+SERVICES="${SERVICES:-model-trellis model-hunyuan3d model-triposr model-triposg model-rig avatar-pipeline-controller rembg remesh texture segment}"
 
 # ── styling ───────────────────────────────────────────────────────────────────
 bold()  { printf '\033[1m%s\033[0m\n' "$*"; }

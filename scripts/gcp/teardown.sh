@@ -53,7 +53,7 @@ for arg in "$@"; do
 done
 
 REGION="${REGION:-us-central1}"
-SERVICES="${SERVICES:-model-trellis model-hunyuan3d model-triposr model-triposg unirig avatar-pipeline-controller rembg remesh texture segment}"
+SERVICES="${SERVICES:-model-trellis model-hunyuan3d model-triposr model-triposg model-rig avatar-pipeline-controller rembg remesh texture segment}"
 WEIGHTS_BUCKET="${WEIGHTS_BUCKET:-three-ws-model-weights}"
 OUTPUT_BUCKET="${OUTPUT_BUCKET:-three-ws-avatar-reconstructions}"
 ARTIFACT_REPO="${ARTIFACT_REPO:-three-ws-workers}"
