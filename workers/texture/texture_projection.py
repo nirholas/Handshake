@@ -311,8 +311,8 @@ def view_depth_buffer(
 
     The occluders are the same rasterized surface samples being tested, so a
     sample is always its own nearest hit and the comparison degenerates to
-    "is anything else in front of me". `inf` means no sample landed on that
-    pixel, which is read as nothing occluding.
+    "is anything else in front of me". `inf` means no sample landed in that bin
+    or its neighbours, which is read as nothing occluding.
     """
     size = int(resolution or view.size)
     pixels, depth = view.project(points)
