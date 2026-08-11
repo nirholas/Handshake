@@ -15,11 +15,20 @@
 #     box with ~80 GB free disk (e.g. a GCE VM).
 #
 # Usage (Cloud Shell, full fleet):
-#   HF_TOKEN=hf_xxx SERVICES="hunyuan3d trellis triposr triposg" ./stage-weights.sh
+#   HF_TOKEN=hf_xxx SERVICES="hunyuan3d hunyuan3d21 trellis triposr triposg" ./stage-weights.sh
 #
-# The rig worker is NOT staged here: its assets span an LFS-filtered model repo,
-# a gated Mixamo dataset, and a baked ARKit template, which this one-repo-per-
-# service map cannot express. Stage it with `bash workers/rig/stage-assets.sh`.
+# Workers this script deliberately does NOT stage, and where each one gets its
+# weights instead:
+#   rig (model-rig)  `bash workers/rig/stage-assets.sh`. Its assets span an
+#                    LFS-filtered model repo, a gated Mixamo dataset, and a baked
+#                    ARKit template, which this one-repo-per-service map cannot
+#                    express.
+#   texture          nothing to stage: workers/texture/Dockerfile bakes SDXL +
+#                    ControlNet-Depth into /opt/hf-cache at image build time.
+#   text2motion      the MDM checkpoint is not a Hugging Face repo. Put the
+#                    trained `model.pt` + its `args.json` at
+#                    gs://<bucket>/mdm/ by hand (source: the humanml_trans_enc_512
+#                    release of github.com/GuyTevet/motion-diffusion-model).
 #
 # Env:
 #   WEIGHTS_BUCKET  GCS bucket name        (default: three-ws-model-weights)
@@ -40,16 +49,26 @@ STAGE_DIR="${STAGE_DIR:-/tmp/three-ws-weights}"
 FORCE="${FORCE:-0}"
 
 # service -> "hf_repo|bucket_subdir" (sources documented in each worker's main.py)
-# `triposg` is three repos: the image pipeline, the scribble (sketch→3D)
-# pipeline, and RMBG-1.4 for its image-mode background removal — stage_one
-# handles the multi-repo case.
+# Each subdir MUST match the prefix the worker's cloudbuild.yaml reads
+# (WEIGHTS_DIR / WEIGHTS_GCS_URI / DINO_DIR); tests/workers-deploy-fleet.test.js
+# asserts that, because a mismatch only shows up as a cold-start 503 in prod.
+# Two services need more than one repo, and stage_one handles the multi-repo
+# case: `triposg` (image pipeline + scribble pipeline + RMBG-1.4 for its
+# image-mode background removal) and `hunyuan3d21` (2.1 weights + the DINOv2
+# reference encoder its PBR paint pass loads).
+#
+# hunyuan3d and hunyuan3d21 are DIFFERENT models in different bucket prefixes:
+# `model-hunyuan3d` runs Hunyuan3D-2.0 out of hunyuan3d-2/ via the hy3dgen
+# package, and `model-hunyuan3d-21` / `-rtx` run Hunyuan3D-2.1 out of
+# hunyuan3d-2.1/. Staging 2.1 into the 2.0 service's prefix does not work.
 weight_source() {
   case "$1" in
-    hunyuan3d) echo "tencent/Hunyuan3D-2.1|hunyuan3d-2.1" ;;
-    trellis)   echo "microsoft/TRELLIS-image-large|trellis-large" ;;
-    triposr)   echo "stabilityai/TripoSR|triposr" ;;
-    triposg)   echo "VAST-AI/TripoSG|triposg VAST-AI/TripoSG-scribble|triposg-scribble briaai/RMBG-1.4|rmbg-1.4" ;;
-    *)         echo "" ;;
+    hunyuan3d)   echo "tencent/Hunyuan3D-2|hunyuan3d-2" ;;
+    hunyuan3d21) echo "tencent/Hunyuan3D-2.1|hunyuan3d-2.1 facebook/dinov2-giant|dinov2-giant" ;;
+    trellis)     echo "microsoft/TRELLIS-image-large|trellis-large" ;;
+    triposr)     echo "stabilityai/TripoSR|triposr" ;;
+    triposg)     echo "VAST-AI/TripoSG|triposg VAST-AI/TripoSG-scribble|triposg-scribble briaai/RMBG-1.4|rmbg-1.4" ;;
+    *)           echo "" ;;
   esac
 }
 
@@ -103,7 +122,7 @@ fi
 stage_one() {
   local svc="$1" src pair
   src="$(weight_source "$svc")"
-  [ -n "$src" ] || die "unknown service '$svc' (valid: hunyuan3d trellis triposr triposg; rig stages via workers/rig/stage-assets.sh)"
+  [ -n "$src" ] || die "unknown service '$svc' (valid: hunyuan3d hunyuan3d21 trellis triposr triposg). rig stages via workers/rig/stage-assets.sh; texture bakes its weights into the image; text2motion's MDM checkpoint is staged by hand into gs://${WEIGHTS_BUCKET}/mdm/"
   # A service may need several HF repos (triposg) — stage each pair.
   for pair in $src; do
     stage_repo "$svc" "$pair"
