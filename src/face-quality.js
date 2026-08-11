@@ -20,16 +20,14 @@
  * for subsequent sessions. CDN-hosted for Vite WASM compatibility.
  */
 
+import { SLOT_PRESETS, gradeFrame, grayFaceStats } from './selfie-gates.js';
+
 const TASKS_VISION_URL =
 	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/+esm';
 const WASM_ROOT =
 	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm';
 const MODEL_URL =
 	'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
-
-const BLUR_MIN = 3.5;
-const LUMA_MIN = 40;
-const LUMA_MAX = 218;
 
 let _modPromise = null;
 let _landmarkerPromise = null;
@@ -66,14 +64,11 @@ export function preload() {
 }
 
 /**
- * Slot presets for yaw-angle gating.
- * Yaw sign: looking left (camera's right) → positive.
+ * Slot presets for yaw-angle gating live in selfie-gates.js (the shared,
+ * unit-tested threshold module); re-exported here so existing consumers keep
+ * their import path. Yaw sign: looking left (camera's right) → positive.
  */
-export const SLOT_PRESETS = {
-	frontal: { label: 'Frontal', min: -15, max: 15 },
-	left:    { label: 'Left ~45°', min: 30, max: 60 },
-	right:   { label: 'Right ~45°', min: -60, max: -30 },
-};
+export { SLOT_PRESETS };
 
 /**
  * @typedef {Object} QualityReport
@@ -88,6 +83,7 @@ export const SLOT_PRESETS = {
  * @property {number|null} roll
  * @property {number} blur
  * @property {number} luma
+ * @property {string|null} reason User-facing retake prompt; null when allPass.
  * @property {Array|null} landmarks
  */
 
@@ -168,8 +164,7 @@ export async function createQualitySession(videoEl, canvasEl, opts = {}) {
 		const lms = result.faceLandmarks?.[0];
 		if (!lms || lms.length < 468) {
 			return {
-				faceFound: false, centered: false, yawOk: false,
-				blurOk: false, lumaOk: false, allPass: false,
+				...gradeFrame({ faceFound: false }),
 				yaw: null, pitch: null, roll: null,
 				blur: 0, luma: 0, landmarks: null,
 			};
@@ -179,21 +174,20 @@ export async function createQualitySession(videoEl, canvasEl, opts = {}) {
 
 		const pose = estimateHeadPose(lms);
 		const nose = lms[1] || lms[4];
-		const centered = nose && Math.abs(nose.x - 0.5) < 0.22 && Math.abs(nose.y - 0.5) < 0.28;
 		const q = computeFaceQuality(videoEl, lms);
 
-		const slotCfg = SLOT_PRESETS[_slot] || SLOT_PRESETS.frontal;
-		const yawOk = pose.yaw >= slotCfg.min && pose.yaw <= slotCfg.max;
-		const blurOk = q.blur >= BLUR_MIN;
-		const lumaOk = q.luma >= LUMA_MIN && q.luma <= LUMA_MAX;
+		const grade = gradeFrame({
+			faceFound: true,
+			slot: _slot,
+			yaw: pose.yaw,
+			noseX: nose ? nose.x : null,
+			noseY: nose ? nose.y : null,
+			blur: q.blur,
+			luma: q.luma,
+		});
 
 		return {
-			faceFound: true,
-			centered,
-			yawOk,
-			blurOk,
-			lumaOk,
-			allPass: yawOk && centered && blurOk && lumaOk,
+			...grade,
 			yaw: pose.yaw,
 			pitch: pose.pitch,
 			roll: pose.roll,
@@ -252,30 +246,12 @@ export async function createQualitySession(videoEl, canvasEl, opts = {}) {
 
 		_qCtx.drawImage(video, fx, fy, fw, fh, 0, 0, SIZE, SIZE);
 		const { data: d } = _qCtx.getImageData(0, 0, SIZE, SIZE);
-		const n = SIZE * SIZE;
-		const grays = new Float32Array(n);
-		let lumaSum = 0;
+		const grays = new Float32Array(SIZE * SIZE);
 		for (let i = 0, j = 0; i < d.length; i += 4, j++) {
-			const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-			grays[j] = g;
-			lumaSum += g;
+			grays[j] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
 		}
-		const luma = lumaSum / n;
-		let ls = 0, ls2 = 0, ln = 0;
-		for (let row = 1; row < SIZE - 1; row++) {
-			for (let col = 1; col < SIZE - 1; col++) {
-				const c = grays[row * SIZE + col];
-				const lap = 4 * c
-					- grays[(row - 1) * SIZE + col]
-					- grays[(row + 1) * SIZE + col]
-					- grays[row * SIZE + (col - 1)]
-					- grays[row * SIZE + (col + 1)];
-				ls += lap; ls2 += lap * lap; ln++;
-			}
-		}
-		const mean = ls / ln;
-		const blur = Math.sqrt(Math.max(0, ls2 / ln - mean * mean));
-		return { luma, blur };
+		const { luma, blurStddev } = grayFaceStats(grays, SIZE, SIZE);
+		return { luma, blur: blurStddev };
 	}
 
 	return session;
@@ -304,10 +280,13 @@ export function estimateHeadPose(lms) {
 }
 
 /**
- * Run a one-shot quality check on a static image.
- * Useful for validating uploaded photos.
+ * Run a one-shot quality check on a static image (an upload, or the frozen
+ * still the camera captured after the countdown). Unlike the live session,
+ * this measures the exact pixels that would be submitted, so countdown motion
+ * blur and lighting shifts that happened after the live gates passed are
+ * still caught. Applies the same shared gates as the viewfinder.
  *
- * @param {HTMLImageElement|ImageBitmap} source
+ * @param {HTMLImageElement|ImageBitmap|HTMLCanvasElement} source
  * @param {string} [slot='frontal']
  * @returns {Promise<QualityReport>}
  */
@@ -327,8 +306,7 @@ export async function checkImageQuality(source, slot = 'frontal') {
 	const lms = result.faceLandmarks?.[0];
 	if (!lms || lms.length < 468) {
 		return {
-			faceFound: false, centered: false, yawOk: false,
-			blurOk: true, lumaOk: true, allPass: false,
+			...gradeFrame({ faceFound: false }),
 			yaw: null, pitch: null, roll: null,
 			blur: 0, luma: 0, landmarks: null,
 		};
@@ -336,22 +314,67 @@ export async function checkImageQuality(source, slot = 'frontal') {
 
 	const pose = estimateHeadPose(lms);
 	const nose = lms[1] || lms[4];
-	const centered = nose && Math.abs(nose.x - 0.5) < 0.30 && Math.abs(nose.y - 0.5) < 0.35;
-	const slotCfg = SLOT_PRESETS[slot] || SLOT_PRESETS.frontal;
-	const yawOk = pose.yaw >= slotCfg.min && pose.yaw <= slotCfg.max;
+	const q = measureStillFace(source, lms);
+
+	const grade = gradeFrame({
+		faceFound: true,
+		slot,
+		yaw: pose.yaw,
+		noseX: nose ? nose.x : null,
+		noseY: nose ? nose.y : null,
+		blur: q.blur,
+		luma: q.luma,
+	});
 
 	return {
-		faceFound: true,
-		centered,
-		yawOk,
-		blurOk: true,
-		lumaOk: true,
-		allPass: yawOk && centered,
+		...grade,
 		yaw: pose.yaw,
 		pitch: pose.pitch,
 		roll: pose.roll,
-		blur: 0,
-		luma: 0,
+		blur: q.blur,
+		luma: q.luma,
 		landmarks: lms,
 	};
+}
+
+/**
+ * Blur/luma measurement for a static source: crop to the landmark bounding
+ * box (small padding) and sample at the same 64px working size the live
+ * session uses, so the shared thresholds apply to both paths.
+ *
+ * @param {HTMLImageElement|ImageBitmap|HTMLCanvasElement} source
+ * @param {Array<{x:number,y:number}>} lms normalised landmarks
+ * @returns {{ luma: number, blur: number }}
+ */
+function measureStillFace(source, lms) {
+	const SIZE = 64;
+	const sw = source.videoWidth || source.naturalWidth || source.width;
+	const sh = source.videoHeight || source.naturalHeight || source.height;
+	if (!sw || !sh) return { luma: 0, blur: 0 };
+	let minX = 1, minY = 1, maxX = 0, maxY = 0;
+	for (const lm of lms) {
+		if (lm.x < minX) minX = lm.x;
+		if (lm.y < minY) minY = lm.y;
+		if (lm.x > maxX) maxX = lm.x;
+		if (lm.y > maxY) maxY = lm.y;
+	}
+	const pad = 0.05;
+	const fx = Math.max(0, minX - pad) * sw;
+	const fy = Math.max(0, minY - pad) * sh;
+	const fw = Math.min(sw - fx, (maxX - minX + 2 * pad) * sw);
+	const fh = Math.min(sh - fy, (maxY - minY + 2 * pad) * sh);
+	if (fw < 4 || fh < 4) return { luma: 0, blur: 0 };
+
+	const canvas = document.createElement('canvas');
+	canvas.width = canvas.height = SIZE;
+	const ctx = canvas.getContext('2d', { willReadFrequently: true });
+	if (!ctx) return { luma: 0, blur: 0 };
+	ctx.drawImage(source, fx, fy, fw, fh, 0, 0, SIZE, SIZE);
+	const { data: d } = ctx.getImageData(0, 0, SIZE, SIZE);
+	const grays = new Float32Array(SIZE * SIZE);
+	for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+		grays[j] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+	}
+	const { luma, blurStddev } = grayFaceStats(grays, SIZE, SIZE);
+	return { luma, blur: blurStddev };
 }
