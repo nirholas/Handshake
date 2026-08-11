@@ -7,13 +7,16 @@
 #   selfie photos → controller → mesh model (Hunyuan3D/TRELLIS/TripoSR, L4 GPU)
 #                              → rig worker (L4 GPU) → rigged GLB in GCS
 #
-# The Vercel function api/_providers/gcp.js talks ONLY to the controller, so the
-# last thing this prints is the controller URL + API key to put in Vercel env.
+# The site provider api/_providers/gcp.js talks ONLY to the controller, so the
+# last thing this prints is the controller URL + API key to set on the site's
+# Cloud Run service (three-ws-api). The site has run on Cloud Run since
+# 2026-07-07; there is no Vercel step.
 #
 # Prerequisites (see README.md):
 #   • gcloud authed to a project that has the $THREE GCP credits / billing linked
 #   • Cloud Run L4 GPU quota in $REGION  (request early — approval can take hours)
 #   • Weights already staged:  ./stage-weights.sh   (services won't boot without them)
+#     plus `bash workers/rig/stage-assets.sh` when SERVICES includes rig
 #
 # Usage:
 #   PROJECT_ID=my-proj ./deploy-all.sh
@@ -25,6 +28,10 @@
 #   SERVICES        default "hunyuan3d rig"  (mesh model(s) + rigging)
 #   OUTPUT_BUCKET   default three-ws-avatar-reconstructions
 #   WEIGHTS_BUCKET  default three-ws-model-weights
+#   SITE_SERVICE    default three-ws-api  (the Cloud Run service to wire)
+#   MIN_INSTANCES   override every GPU service's _MIN_INSTANCES; unset keeps each
+#                   worker's own default (1 for hunyuan3d/trellis/rig, which
+#                   holds an L4 allocated and billing 24/7)
 
 set -euo pipefail
 
@@ -33,6 +40,7 @@ REGION="${REGION:-us-central1}"
 SERVICES="${SERVICES:-hunyuan3d rig}"
 OUTPUT_BUCKET="${OUTPUT_BUCKET:-three-ws-avatar-reconstructions}"
 WEIGHTS_BUCKET="${WEIGHTS_BUCKET:-three-ws-model-weights}"
+SITE_SERVICE="${SITE_SERVICE:-three-ws-api}"
 SECRET_NAME="avatar-reconstruction-key"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -66,12 +74,19 @@ gcloud services enable \
   --project "$PROJECT_ID" >/dev/null
 ok "APIs enabled"
 
-PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
-# Build + runtime identity. Hardened orgs (like this project) have NO default
-# compute service account, so we use one explicit SA for both building and
-# running. Override via RUN_SA / BUILD_SA if your project differs.
+# Runtime identity. Hardened orgs (like this project) have NO default compute
+# service account, so every deployed service runs as this explicit SA.
 RUN_SA="${RUN_SA:-avatar-reconstruction-sa@${PROJECT_ID}.iam.gserviceaccount.com}"
-BUILD_SA="${BUILD_SA:-$RUN_SA}"
+# Build identity. Every workers/*/cloudbuild.yaml pins `serviceAccount:` to the
+# canonical build SA, but that pin hardcodes THIS project's number, so a build
+# run against any other project must re-point it; --service-account overrides
+# the pin. Prefer the same name in the target project, and fall back to the
+# runtime SA (which step 5 grants cloudbuild.builds.builder) when it is absent.
+if [ -z "${BUILD_SA:-}" ]; then
+  BUILD_SA="three-ws-build@${PROJECT_ID}.iam.gserviceaccount.com"
+  gcloud iam service-accounts describe "$BUILD_SA" >/dev/null 2>&1 || BUILD_SA="$RUN_SA"
+fi
+log "build service account: $BUILD_SA"
 
 # ── 2. buckets ────────────────────────────────────────────────────────────────
 for b in "$OUTPUT_BUCKET" "$WEIGHTS_BUCKET"; do
@@ -124,6 +139,18 @@ ok "build + runtime IAM configured"
 
 # ── 6. Artifact Registry repos + build/deploy each GPU service ────────────────
 declare -A SERVICE_URL
+
+# Every cloudbuild config here pushes to an Artifact Registry repo named after
+# its Cloud Run service, and a push to a repo that does not exist fails the
+# build. Ensure it up front for every service, the CPU controller included.
+ensure_repo() {
+  local repo="$1"
+  gcloud artifacts repositories describe "$repo" --location="$REGION" >/dev/null 2>&1 && return 0
+  log "creating Artifact Registry repo '$repo'…"
+  gcloud artifacts repositories create "$repo" --repository-format=docker --location="$REGION" >/dev/null \
+    || die "could not create Artifact Registry repo '$repo'"
+}
+
 build_and_deploy() {
   local key="$1" dir runname repo
   dir="workers/$(svc_dir "$key")"
@@ -131,18 +158,21 @@ build_and_deploy() {
   repo="$runname"
   [ -d "$dir" ] || die "worker dir not found: $dir"
 
-  if ! gcloud artifacts repositories describe "$repo" --location="$REGION" >/dev/null 2>&1; then
-    log "creating Artifact Registry repo '$repo'…"
-    gcloud artifacts repositories create "$repo" --repository-format=docker --location="$REGION" >/dev/null
-  fi
+  ensure_repo "$repo"
 
-  log "building + deploying '$runname' (this builds a CUDA GPU image — several minutes)…"
+  local subs="SHORT_SHA=${TAG},_REGION=${REGION},_GCS_BUCKET=${OUTPUT_BUCKET},_WEIGHTS_BUCKET=${WEIGHTS_BUCKET},_RUN_SA=${RUN_SA}"
+  # Several GPU configs default to _MIN_INSTANCES=1, which keeps an L4 allocated
+  # (and billing) around the clock. MIN_INSTANCES=0 opts into cold starts
+  # instead; unset leaves each worker's own default alone.
+  [ -n "${MIN_INSTANCES:-}" ] && subs="${subs},_MIN_INSTANCES=${MIN_INSTANCES}"
+
+  log "building + deploying '$runname' (this builds a CUDA GPU image, several minutes)…"
   gcloud builds submit \
     --config "$dir/cloudbuild.yaml" \
     --region "$REGION" \
     --service-account="projects/${PROJECT_ID}/serviceAccounts/${BUILD_SA}" \
     --default-buckets-behavior=regional-user-owned-bucket \
-    --substitutions="SHORT_SHA=${TAG},_REGION=${REGION},_GCS_BUCKET=${OUTPUT_BUCKET},_WEIGHTS_BUCKET=${WEIGHTS_BUCKET},_RUN_SA=${RUN_SA}" \
+    --substitutions="$subs" \
     . \
     || die "build/deploy failed for $runname — inspect the Cloud Build log above"
 
@@ -160,6 +190,7 @@ done
 
 # ── 7. controller — deploy, then wire to the backend URLs it must call ────────
 log "building + deploying controller (avatar-pipeline-controller, CPU)…"
+ensure_repo "avatar-pipeline-controller"
 gcloud builds submit \
   --config "workers/avatar-pipeline-controller/cloudbuild.yaml" \
   --region "$REGION" \
@@ -192,29 +223,30 @@ log "controller health:"
 curl -fsS -H "authorization: Bearer ${API_KEY_VALUE}" "${CONTROLLER_URL}/health" || warn "health check did not return 200 yet (cold start) — retry in a minute"
 echo
 
-# The forge sketch→3D lane talks to the TripoSG worker directly (not through
-# the controller), so its URL is a separate Vercel env var.
-TRIPOSG_HANDOFF=""
+# The forge sketch to 3D lane talks to the TripoSG worker directly (not through
+# the controller), so its URL is a separate env var on the site service.
+SITE_ENV="AVATAR_REGEN_PROVIDER=gcp,GCP_RECONSTRUCTION_URL=${CONTROLLER_URL}"
 if [ -n "${SERVICE_URL[triposg]:-}" ]; then
-  TRIPOSG_HANDOFF="  GCP_TRIPOSG_URL         = ${SERVICE_URL[triposg]}
-
-  vercel env add GCP_TRIPOSG_URL production         # paste the TripoSG URL (forge sketch→3D)
-"
+  SITE_ENV="${SITE_ENV},GCP_TRIPOSG_URL=${SERVICE_URL[triposg]}"
 fi
 
 cat <<EOF
 
 ────────────────────────────────────────────────────────────────────────
- DEPLOY COMPLETE. Set these in Vercel (Production), then redeploy the site:
+ DEPLOY COMPLETE. Wire the site (Cloud Run ${SITE_SERVICE}) with:
 ────────────────────────────────────────────────────────────────────────
-  AVATAR_REGEN_PROVIDER   = gcp
-  GCP_RECONSTRUCTION_URL  = ${CONTROLLER_URL}
-  GCP_RECONSTRUCTION_KEY  = ${API_KEY_VALUE}
-${TRIPOSG_HANDOFF}
-  vercel env add AVATAR_REGEN_PROVIDER production   # paste: gcp
-  vercel env add GCP_RECONSTRUCTION_URL production  # paste the URL above
-  vercel env add GCP_RECONSTRUCTION_KEY production  # paste the key above
+  gcloud run services update ${SITE_SERVICE} --region ${REGION} \\
+    --project ${PROJECT_ID} \\
+    --update-env-vars ${SITE_ENV}
 
- Then verify: open /scan, capture a selfie, expect a rigged GLB in ~1–2 min.
+ GCP_RECONSTRUCTION_KEY is already mounted from Secret Manager
+ (${SECRET_NAME}); read the current value with:
+  gcloud secrets versions access latest --secret=${SECRET_NAME}
+
+ Use --update-env-vars, never --set-env-vars: the latter REPLACES the
+ service's entire env and would drop every other variable the site needs.
+ The new env takes effect on the revision that update creates.
+
+ Then verify: open /scan, capture a selfie, expect a rigged GLB in 1-2 min.
 ────────────────────────────────────────────────────────────────────────
 EOF
