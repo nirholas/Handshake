@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "A watched agent card no longer promises a live browser that is never coming",
+			"summary": "Every agent on the live wall always has its zero-cost activity feed, and watching one can also start a real browser that casts what the agent is doing. When no caster was running, the card still said \"warming up\" and sat there forever, because the wall assumed a browser was on its way the moment you watched. The wall now checks whether a caster pool is actually running: if one is, you get the same warming and queue-position handoff as before; if none is, the card stays on the honest activity view instead of spinning. The caster itself also got its deploy fixed: its container pinned a browser build its own library no longer matched, so the image would have failed on its first cast, and it now ships as a normal always-on service with a health endpoint that reports exactly which agents it is casting.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/agents-live"
+		},
+		{
+			"date": "2026-08-11",
 			"title": "Turning a sketch into 3D no longer loses a finished model when the job and the progress check land on different machines",
 			"summary": "Sketch to 3D runs on our own GPU service, which can run on more than one machine at a time. The machine that accepted your drawing remembered the job only in its own memory, so a progress check that reached a second machine was answered with \"no such job\" and the generation was marked failed, sometimes after the model had already been built. The same thing happened when a machine was recycled between the submit and the result. Every job now records its progress to durable storage the moment it is accepted, so any machine can answer for it, and a job whose machine really did disappear mid-run is reported as failed with a clear reason after thirty minutes instead of leaving you polling forever. Two related repairs ride along: when the model fails to load on a machine, jobs sent to it now fail immediately with the real reason instead of waiting out a ten-minute timeout, and the service's health check reports that machine as unhealthy instead of claiming it is fine.",
 			"tags": [
