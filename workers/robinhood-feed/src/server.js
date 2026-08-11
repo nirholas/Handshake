@@ -120,7 +120,7 @@ export function createServer(firehose) {
 	/**
 	 * Shut the server down for real. SSE responses and WebSockets are long-lived
 	 * by design, so a bare `server.close()` waits for subscribers that will never
-	 * hang up — on Cloud Run that turns a revision rollover into a SIGKILL after
+	 * hang up, on Cloud Run that turns a revision rollover into a SIGKILL after
 	 * the grace period. Drop the subscribers first, then close.
 	 */
 	async function close() {
