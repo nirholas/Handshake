@@ -689,6 +689,35 @@ Spot preemptible pricing on very large runs, use `--mig` (a GCE Spot MIG); the
 grinder is preemption-safe either way (SIGTERM → checkpoint → resume skips finished
 targets).
 
+**Fixes landed 2026-08-11, worker audit.** Reading the job's execution history
+turned up three defects that only show at production scale:
+
+1. *A long shard reported itself as a failure.* Execution `vanity-grinder-jx97w`
+   ended `2/4` complete, both stragglers with "The configured timeout was reached"
+   at the 3600s `--task-timeout`. The keys they had already found were safely in
+   `vanity_inventory`; only the exit was unclean, and Cloud Run then spent the
+   retry budget re-running them. The grinder now takes a `MAX_RUNTIME_SEC` budget
+   and winds itself down (checkpoint, summary, exit 0) before the platform kill.
+   `vanity-grind-deploy.sh` sets it to `TASK_TIMEOUT - 300`.
+2. *Every retry restarted from zero.* The checkpoint file lives in the task's own
+   `/tmp`, which does not survive the task. With `WRITE_DB=1` the grinder now also
+   seeds its completed-set from `vanity_inventory` (patterns with stock are
+   skipped; sold-out patterns are deliberately re-ground), so a re-run continues
+   the shard instead of re-grinding the shelf.
+3. *Every MIG VM ground shard 0.* A managed instance group gives its VMs identical
+   container-env and randomly suffixed names, so nothing ever set `SHARD_INDEX` and
+   a 20-VM group did one VM's worth of useful work. `workers/vanity-grinder/gce-shard.mjs`
+   resolves each VM's position from the metadata server plus `listManagedInstances`
+   (the deploy script grants the grinder SA `roles/compute.viewer`), falling back to
+   a stable hash of the instance name if the listing is unreachable.
+
+A fourth, in the shared crypto layer: `secretBoxKeyCandidates()` read `env.JWT_SECRET`
+through a REQUIRED accessor, so a deployment holding a perfectly good dedicated
+`WALLET_ENCRYPTION_KEY` but no session secret could not decrypt anything. JWT_SECRET
+is only a legacy fallback candidate there, and its absence now degrades the candidate
+list instead of throwing. `tests/vanity-grinder-batch.test.js` covers the whole
+producer path end to end, including the ciphertext-only guarantee.
+
 ## E2E verification (2026-07-07)
 
 The full production delivery pipeline was exercised against the **real Neon DB and
