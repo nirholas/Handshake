@@ -23,8 +23,12 @@
 #                    LFS-filtered model repo, a gated Mixamo dataset, and a baked
 #                    ARKit template, which this one-repo-per-service map cannot
 #                    express.
-#   texture          nothing to stage: workers/texture/Dockerfile bakes SDXL +
-#                    ControlNet-Depth into /opt/hf-cache at image build time.
+#   texture          `python3 workers/texture/stage_weights.py --prefix sdxl-texture`.
+#                    It passes the staged dir to diffusers as `cache_dir`, so the
+#                    tree has to be a HuggingFace *cache* tree, not the flat
+#                    --local-dir layout stage_repo produces here. Its image bakes
+#                    ControlNet-Depth only; skipping the SDXL staging burns the
+#                    600 s request timeout on a download inside the first request.
 #   text2motion      the MDM checkpoint is not a Hugging Face repo. Put the
 #                    trained `model.pt` + its `args.json` at
 #                    gs://<bucket>/mdm/ by hand (source: the humanml_trans_enc_512
@@ -122,7 +126,7 @@ fi
 stage_one() {
   local svc="$1" src pair
   src="$(weight_source "$svc")"
-  [ -n "$src" ] || die "unknown service '$svc' (valid: hunyuan3d hunyuan3d21 trellis triposr triposg). rig stages via workers/rig/stage-assets.sh; texture bakes its weights into the image; text2motion's MDM checkpoint is staged by hand into gs://${WEIGHTS_BUCKET}/mdm/"
+  [ -n "$src" ] || die "unknown service '$svc' (valid: hunyuan3d hunyuan3d21 trellis triposr triposg). rig stages via workers/rig/stage-assets.sh; texture via workers/texture/stage_weights.py; text2motion's MDM checkpoint is staged by hand into gs://${WEIGHTS_BUCKET}/mdm/"
   # A service may need several HF repos (triposg) — stage each pair.
   for pair in $src; do
     stage_repo "$svc" "$pair"
