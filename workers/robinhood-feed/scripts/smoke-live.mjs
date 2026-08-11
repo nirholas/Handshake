@@ -184,8 +184,15 @@ async function main() {
 	console.log('\nPASS · robinhood-feed live smoke');
 }
 
-main().then(() => process.exit(0), (err) => {
+// process.exit() drops whatever is still buffered when stdout is a pipe or a
+// file, which silently truncates the report. Flush, then exit.
+const flushAndExit = async (code) => {
+	await new Promise((resolve) => process.stdout.write('', resolve));
+	process.exit(code);
+};
+
+main().then(() => flushAndExit(0), (err) => {
 	console.error('\nFAIL · robinhood-feed live smoke');
 	console.error(err);
-	process.exit(1);
+	return flushAndExit(1);
 });
