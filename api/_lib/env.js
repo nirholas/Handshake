@@ -1514,10 +1514,17 @@ export const env = {
 		return opt('RIDER_HELIUS_WEBHOOK_SECRET');
 	},
 
-	// Neynar API key — used by POST /api/agents/:id/memory/seed/farcaster.
-	// When unset, the endpoint returns 501 not_configured.
+	// Neynar API key — the preferred (indexed) rung of the Farcaster read chain
+	// in api/_lib/farcaster-client.js. Optional: without it the chain falls back
+	// to the keyless public hub below, so Farcaster memory seeding still works.
 	get NEYNAR_API_KEY() {
 		return opt('NEYNAR_API_KEY');
+	},
+
+	// Public Farcaster hub HTTP endpoint — the keyless rung of that same chain.
+	// Any hub that speaks the standard /v1 HTTP API works.
+	get FARCASTER_HUB_URL() {
+		return opt('FARCASTER_HUB_URL');
 	},
 
 	// OpenAI API key — used by TTS proxy (/api/tts/speak) and chat endpoints.

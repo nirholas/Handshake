@@ -2285,3 +2285,88 @@ create table if not exists user_badges (
 );
 create unique index if not exists user_badges_uniq on user_badges (user_id, code);
 create index if not exists user_badges_user on user_badges (user_id, unlocked_at desc);
+
+-- ── Farcaster memory seeding consent ────────────────────────────────────────
+-- Mirrors api/_lib/migrations/20260811130000_farcaster_memory_consent.sql. The
+-- challenge table holds the one-time nonce plus the exact text the wallet signs
+-- (stored server-side so verification never trusts a client copy); the consent
+-- table is the durable, revocable grant. Every seeded memory row carries its
+-- consent id in context->>'consent_id' so a revoke deletes exactly that grant.
+create table if not exists farcaster_seed_challenges (
+    nonce       text primary key,
+    user_id     uuid not null references users(id) on delete cascade,
+    agent_id    uuid not null references agent_identities(id) on delete cascade,
+    fid         integer not null,
+    fname       text,
+    message     text not null,
+    cast_limit  int not null,
+    created_at  timestamptz not null default now(),
+    expires_at  timestamptz not null,
+    consumed_at timestamptz
+);
+create index if not exists farcaster_seed_challenges_agent
+    on farcaster_seed_challenges (agent_id) where consumed_at is null;
+create index if not exists farcaster_seed_challenges_expiry
+    on farcaster_seed_challenges (expires_at);
+
+create table if not exists farcaster_memory_consents (
+    id              uuid primary key default gen_random_uuid(),
+    user_id         uuid not null references users(id) on delete cascade,
+    agent_id        uuid not null references agent_identities(id) on delete cascade,
+    fid             integer not null,
+    fname           text,
+    scope           text not null,
+    proof_chain     text not null check (proof_chain in ('solana', 'ethereum')),
+    proof_address   text not null,
+    proof_signature text not null,
+    proof_message   text not null,
+    source_lane     text,
+    granted_at      timestamptz not null default now(),
+    revoked_at      timestamptz,
+    last_seeded_at  timestamptz,
+    memories_seeded int not null default 0,
+    casts_ingested  int not null default 0
+);
+create unique index if not exists farcaster_memory_consents_active_agent
+    on farcaster_memory_consents (agent_id) where revoked_at is null;
+create index if not exists farcaster_memory_consents_user
+    on farcaster_memory_consents (user_id);
+create index if not exists farcaster_memory_consents_fid
+    on farcaster_memory_consents (fid) where revoked_at is null;
+create index if not exists agent_memories_farcaster_consent
+    on agent_memories ((context ->> 'consent_id'))
+    where context ->> 'source' = 'farcaster_seed';
+
+-- ── x_memory_consents ─────────────────────────────────────────────────────────
+-- Consent-gated X memory seeding. See
+-- api/_lib/migrations/20260811140000_x_memory_consent.sql for the rationale and
+-- api/_lib/x-memory-seed.js for the disclosure this grant is recorded against.
+create table if not exists x_memory_consents (
+    id              uuid primary key default gen_random_uuid(),
+    user_id         uuid not null references users(id) on delete cascade,
+    agent_id        uuid not null references agent_identities(id) on delete cascade,
+    x_user_id       text not null,
+    username        text not null,
+    scope_version   text not null,
+    disclosure      jsonb not null default '{}'::jsonb,
+    granted_scopes  text,
+    granted_at      timestamptz not null default now(),
+    revoked_at      timestamptz,
+    revoked_reason  text,
+    last_seeded_at  timestamptz,
+    memories_seeded int not null default 0,
+    posts_read      int not null default 0
+);
+create unique index if not exists x_memory_consents_active_agent
+    on x_memory_consents (agent_id) where revoked_at is null;
+create index if not exists x_memory_consents_user
+    on x_memory_consents (user_id);
+create index if not exists x_memory_consents_x_user
+    on x_memory_consents (x_user_id) where revoked_at is null;
+create index if not exists agent_memories_x_seed_consent
+    on agent_memories ((context ->> 'consent_id'))
+    where context ->> 'source' = 'x_seed';
+
+-- The X OAuth callback never supplied social_connections.scopes, which is NOT
+-- NULL with no default, so every X connect died before writing a row.
+alter table social_connections alter column scopes set default '';
