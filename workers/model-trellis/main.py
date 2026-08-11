@@ -480,18 +480,26 @@ async def _run_inference(
             sources = list(images)
             if do_matte and REMBG_SERVICE_URL:
                 model = rembg_model or REMBG_DEFAULT_MODEL
-                resolved = []
+                imgs = []
                 for src in sources:
-                    new_src, ok = await _matte_via_rembg(src, model)
-                    resolved.append((new_src, ok))
-                    matted_count += 1 if ok else 0
-                sources = [s for s, _ in resolved]
-                # Decode a successful cutout as RGBA (its alpha is the mask);
-                # anything that fell back to the original stays RGB.
-                imgs = [
-                    await loop.run_in_executor(None, _decode_image, s, ok)
-                    for (s, ok) in resolved
-                ]
+                    cutout, ok = await _matte_via_rembg(src, model)
+                    if ok:
+                        # A successful cutout decodes as RGBA so its alpha is the
+                        # subject mask.
+                        try:
+                            imgs.append(
+                                await loop.run_in_executor(None, _decode_image, cutout, True)
+                            )
+                            matted_count += 1
+                            continue
+                        except ImageSourceError as exc:
+                            # Matting is a fidelity boost, never a gate. If the
+                            # cutout cannot be read back, reconstruct from the
+                            # image the caller actually sent.
+                            log.warning(
+                                "matted cutout unreadable (%s); using the original image", exc
+                            )
+                    imgs.append(await loop.run_in_executor(None, _decode_image, src))
             else:
                 imgs = [await loop.run_in_executor(None, _decode_image, src) for src in sources]
 
