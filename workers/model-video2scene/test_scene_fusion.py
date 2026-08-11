@@ -7,6 +7,7 @@ renders. Run:  python -m unittest workers/model-video2scene/test_scene_fusion.py
 
 from __future__ import annotations
 
+import os
 import unittest
 
 import numpy as np
@@ -214,6 +215,76 @@ class CorePathSmokeTest(unittest.TestCase):
         np.testing.assert_array_equal(back_cols[0], [255, 0, 0])
         np.testing.assert_array_equal(back_cols[per_frame], [0, 255, 0])
         np.testing.assert_array_equal(back_cols[2 * per_frame], [0, 0, 255])
+
+
+def worker_module():
+    """The service module, if its runtime is installed.
+
+    Absent on a bare checkout (no torch, no LingBot-Map), present inside the
+    worker image, where the Docker build runs this file. The unprojection test
+    below therefore skips locally and guards the image at build time.
+    """
+    try:
+        import torch  # noqa: F401
+        from lingbot_map.utils.geometry import (  # noqa: F401
+            unproject_depth_map_to_point_map,
+        )
+    except Exception:
+        return None
+    os.environ.setdefault("API_KEY", "test")
+    os.environ.setdefault("GCS_BUCKET", "test")
+    try:
+        import main
+    except Exception:
+        return None
+    return main
+
+
+MAIN = worker_module()
+
+
+@unittest.skipIf(MAIN is None, "needs torch and the LingBot-Map checkout")
+class UnprojectionConventionTest(unittest.TestCase):
+    """The released checkpoints have no point head, so the cloud is unprojected
+    depth. Handing the unprojector camera-to-world instead of world-to-camera
+    puts every point somewhere other than in front of the camera that saw it,
+    which no shape check would catch."""
+
+    def test_points_land_in_front_of_the_camera(self):
+        import torch
+
+        MAIN._ensure_lingbot_on_path()
+        from demo import postprocess
+
+        frames, height, width, depth = 2, 28, 28, 2.0
+        # World-to-camera translation (0, 0, 1) with no rotation puts the camera
+        # at world (0, 0, -1) looking down +z, so a pixel at depth 2 is at z = 1.
+        pose = torch.tensor([0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.8, 0.8])
+        images = torch.rand(frames, 3, height, width)
+        predictions = {
+            "pose_enc": pose.repeat(1, frames, 1),
+            "depth": torch.full((1, frames, height, width, 1), depth),
+            "depth_conf": torch.rand(1, frames, height, width) + 0.5,
+        }
+
+        preds, _images_cpu = postprocess(predictions, images)
+        points, conf = MAIN._world_points_and_conf(preds)
+        points = np.asarray(points)
+
+        self.assertEqual(points.shape, (frames, height, width, 3))
+        self.assertEqual(points.dtype, np.float32)
+        self.assertEqual(np.asarray(conf).shape, (frames, height, width))
+        np.testing.assert_allclose(points[..., 2], 1.0, atol=1e-3)
+
+    def test_a_point_head_checkpoint_would_be_used_directly(self):
+        import torch
+
+        world = torch.randn(2, 4, 4, 3)
+        points, conf = MAIN._world_points_and_conf(
+            {"world_points": world, "world_points_conf": torch.rand(2, 4, 4)}
+        )
+        np.testing.assert_array_equal(np.asarray(points), world.numpy())
+        self.assertEqual(np.asarray(conf).shape, (2, 4, 4))
 
 
 if __name__ == "__main__":
