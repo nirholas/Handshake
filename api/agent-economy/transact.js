@@ -144,8 +144,13 @@ export default wrap(async (req, res) => {
 					10_000,
 				);
 
-				const balance = await getSolBalance(connection, fromKeypair.publicKey);
-				if (balance < lamports + FEE_BUFFER_LAMPORTS) {
+				// getSolBalance returns { lamports, sol }. Comparing the whole object
+				// against a number is always false, so this guard never fired: a dry
+				// wallet sailed straight past it, consumed a slot of the daily spend
+				// ceiling, and died at broadcast with "AccountNotFound" instead of
+				// showing the funding path the UI already has waiting.
+				const { lamports: balanceLamports } = await getSolBalance(connection, fromKeypair.publicKey);
+				if (balanceLamports < lamports + FEE_BUFFER_LAMPORTS) {
 					txResult = { error: 'insufficient_balance', message: 'Fund Agent A\'s wallet to enable live transactions.' };
 				} else {
 					// Global daily spend ceiling, consumed only here, with a send about

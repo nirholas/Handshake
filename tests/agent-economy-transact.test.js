@@ -24,6 +24,9 @@ vi.mock('../api/_lib/llm.js', () => ({
 const sendSolMock = vi.fn();
 const getSolBalanceMock = vi.fn();
 const walletConfigMock = vi.fn();
+
+// The shape avatar-wallet's getSolBalance actually resolves to.
+const solBalance = (lamports) => ({ lamports, sol: lamports / 1_000_000_000 });
 vi.mock('../api/_lib/avatar-wallet.js', () => ({
 	avatarWalletConfig: () => walletConfigMock(),
 	loadAvatarKeypair: () => ({ publicKey: { toBase58: () => 'BUYERaddr1111111111111111111111111111111111' } }),
@@ -85,7 +88,10 @@ beforeEach(() => {
 		text: system ? 'Risk sits at 6. Liquidity is thinning and holder concentration is climbing.' : 'Oracle, price me a market read.',
 	}));
 	sendSolMock.mockReset().mockResolvedValue('SIGNATURE111');
-	getSolBalanceMock.mockReset().mockResolvedValue(5_000_000);
+	// Mirror the real avatar-wallet return shape, { lamports, sol }. Resolving a
+	// bare number here is what let the endpoint compare an object to a number and
+	// still pass this suite while the balance guard was dead in production.
+	getSolBalanceMock.mockReset().mockResolvedValue(solBalance(5_000_000));
 	walletConfigMock.mockReset().mockReturnValue(FUNDED);
 	ipLimitMock.mockReset().mockResolvedValue({ success: true });
 	globalLimitMock.mockReset().mockResolvedValue({ success: true });
@@ -165,7 +171,7 @@ describe('POST /api/agent-economy/transact', () => {
 	});
 
 	it('reports insufficient balance without consuming the daily spend budget', async () => {
-		getSolBalanceMock.mockResolvedValue(1_000);
+		getSolBalanceMock.mockResolvedValue(solBalance(1_000));
 		const res = mkRes();
 		await transact(mkReq({ service: 'risk-score' }), res);
 
