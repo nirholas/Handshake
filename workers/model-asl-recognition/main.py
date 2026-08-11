@@ -10,7 +10,8 @@ on CPU via LiteRT and returns the decoded text. Recognition is in-request
 API (bearer auth via API_KEY, same secret family as the reconstruction lanes):
   GET  /health      → { ok, model_loaded }
   GET  /schema      → { columns: [390 names], max_frames, min_frames }
-  POST /transcribe  { frames: [[390 floats|null]...], } → { text, frames, ms }
+  POST /transcribe  { frames: [[390 floats|null]...] }
+                    → { text, confidence, frames, ms }
 """
 
 from __future__ import annotations
