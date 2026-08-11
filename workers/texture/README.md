@@ -5,9 +5,11 @@ together back the platform's post-generation texturing tools:
 
 - **Full retexture** (`/texture`) — takes an untextured (or poorly-textured) GLB
   plus a text prompt, renders the mesh from 4 or 8 canonical viewpoints, generates
-  coherent per-view textures with **SDXL + ControlNet-Depth**, back-projects each
-  view onto the UV atlas (confidence-weighted by face normal · view direction),
-  fills gaps by nearest-neighbour, and bakes a textured GLB.
+  coherent per-view textures with **SDXL + ControlNet-Depth**, rasterizes the mesh
+  into UV space and back-projects each view through the camera it was rendered
+  with (weighted by how squarely that view sees the texel, and refused outright
+  where the depth buffer says something nearer hides it), fills what no view
+  reached from the nearest neighbouring texel, and bakes a textured GLB.
 - **Magic-brush region retexture** (`/retexture_region`) — repaints **only** a
   masked UV region of an existing texture from a prompt and/or a target colour,
   keeping the rest of the atlas bit-identical and feathering the seam so the edit
@@ -27,44 +29,98 @@ into `src/viewer.js`'s `setContent()`) — this runs regardless of which lane or
 worker produced the mesh, so it is not a texture-worker concern, but it is the
 other half of "the surface reads as real" this campaign targets.
 
-## How it runs
+## Status: built, not currently deployed
 
-Ships as the Cloud Run service **`texture-service`** in **`us-central1`**, built
-by Cloud Build from [`cloudbuild.yaml`](./cloudbuild.yaml). It is a GPU service:
-1× `nvidia-l4`, 8 vCPU, 32 GiB, 600 s request timeout, `min-instances=0`,
-`max-instances=2` (scale-to-zero — the first request after idle pays a one-time
-SDXL + ControlNet model load). CI/deploy is Cloud Build only; there are no GitHub
-Actions.
-
-Deploy from the repo root (the build step declares `dir: workers/texture`, so the
-upload source is the whole repo):
+There is **no `texture-service` running in `aerial-vehicle-466722-p5`** (checked
+in every region on 2026-08-11: no Cloud Run service, no Artifact Registry repo),
+and `three-ws-api` carries no `GCP_TEXTURE_URL`. Both callers below therefore
+take their designed missing-lane path and return `501`/`503` today. Nothing is
+faked and no other lane is affected. Re-check with:
 
 ```bash
-gcloud builds submit --config workers/texture/cloudbuild.yaml .
+gcloud run services list --project aerial-vehicle-466722-p5 --region us-central1 | grep texture
+gcloud run services describe three-ws-api --region us-central1 \
+  --format='value(spec.template.spec.containers[0].env)' | tr ',' '\n' | grep TEXTURE
 ```
 
-Or provision it alongside the other mesh-editing workers with the deploy helper
-(idempotent — `texture` is a GPU extra that needs L4 quota and staged weights):
+## How it runs
+
+Cloud Run service **`texture-service`** in **`us-central1`**, built by Cloud
+Build from [`cloudbuild.yaml`](./cloudbuild.yaml). It is a GPU service: 1x
+`nvidia-l4`, 8 vCPU, 32 GiB, 600 s request timeout, `min-instances=0`,
+`max-instances=2` (scale-to-zero, so the first request after idle pays a
+one-time SDXL + ControlNet model load). CI/deploy is Cloud Build only; there are
+no GitHub Actions.
+
+Bringing it up is three commands, in this order:
+
+```bash
+# 1. stage the checkpoints (~15 GiB, once, and again on any checkpoint change)
+python3 workers/texture/stage_weights.py --prefix sdxl-texture
+
+# 2. build + deploy from the repo root (the build step declares dir: workers/texture,
+#    so the upload source is the whole repo)
+gcloud builds submit --config workers/texture/cloudbuild.yaml . \
+  --region us-central1 --project aerial-vehicle-466722-p5 \
+  --substitutions=SHORT_SHA=manual$(date +%s)
+
+# 3. point the site at it (--update-env-vars merges; --set-env-vars would wipe
+#    every other var on the service)
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars=GCP_TEXTURE_URL=$(gcloud run services describe texture-service \
+    --region us-central1 --format='value(status.url)')
+```
+
+Step 2 is also what `workers/deploy/deploy-editing.sh` runs, alongside the
+bucket, secret and IAM setup, for a project that has never had these workers
+(`texture` is a GPU extra there, so it needs L4 quota):
 
 ```bash
 PROJECT_ID=<gcp-project> SERVICES="texture" workers/deploy/deploy-editing.sh
 ```
 
-The SDXL/ControlNet weights live in the `three-ws-model-weights` bucket, mounted
-read-only at `/weights`; output GLBs are written to
-`three-ws-avatar-reconstructions` under `textured/<task_id>.glb`. See
+Skipping step 1 is the failure that reads as a hang rather than as a missing
+file: with an empty weights prefix the loader falls back to the image cache,
+which holds the depth ControlNet only, and the SDXL download it then issues from
+inside the first request burns the whole 600 s timeout. The two weight sources,
+in the order the loader tries them:
+
+1. **`gs://three-ws-model-weights/sdxl-texture`** (`WEIGHTS_GCS_URI`), copied to
+   local disk at `WEIGHTS_LOCAL_DIR` with the storage client on first load. Not
+   a FUSE mount: nothing is mounted at `/weights` on this service, because a
+   safetensors load stalls on the large sequential reads gcsfuse serves.
+2. **`/opt/hf-cache`** (`WEIGHTS_DIR`), baked into the image by the
+   [`Dockerfile`](./Dockerfile). ControlNet-Depth only.
+
+Only the **fp16** variant of each checkpoint is ever loaded (`WEIGHT_VARIANT`),
+which is what keeps the set at ~15 GiB against the ~44 GiB the full-precision
+files would pull. The staged prefix and the image cache must both match it.
+
+Output GLBs are written to `three-ws-avatar-reconstructions` under
+`textured/<task_id>.glb`. See
 [`docs/ops/gcp-model-workers.md`](../../docs/ops/gcp-model-workers.md) for the
 lane-routing and operations runbook.
 
 ### Local
 
-Requires a CUDA GPU and access to a GCS bucket for output:
+Serving needs a CUDA GPU and a GCS bucket for output:
 
 ```bash
 cd workers/texture
 pip install -r requirements.txt
 API_KEY=dev GCS_BUCKET=your-dev-bucket WEIGHTS_DIR=/tmp/weights \
   uvicorn main:app --host 0.0.0.0 --port 8080
+```
+
+### Tests
+
+The geometry that decides where a generated pixel lands on the surface lives in
+[`texture_projection.py`](./texture_projection.py), kept free of torch and
+pyrender so it runs anywhere, GPU or not:
+
+```bash
+cd workers/texture
+python3 test_texture_projection.py   # camera, rasterizer, occlusion, blend
 ```
 
 ## API
@@ -84,7 +140,7 @@ curl -X POST https://$SERVICE_URL/texture \
     "mesh": "https://storage.googleapis.com/three-ws-avatar-reconstructions/mesh.glb",
     "prompt": "worn leather, dark brown, stitched seams",
     "num_views": 8,
-    "texture_size": 1024
+    "texture_size": 2048
   }'
 # → { "task_id": "…", "status": "queued" }
 ```
@@ -95,7 +151,7 @@ curl -X POST https://$SERVICE_URL/texture \
 | `prompt` | yes | — | 3–500 chars, texture description |
 | `negative_prompt` | no | `blurry, low quality, distorted, watermark` | |
 | `num_views` | no | `8` | `4` or `8` render viewpoints |
-| `texture_size` | no | `1024` | `512`, `1024`, or `2048` |
+| `texture_size` | no | `2048` | `512`, `1024`, or `2048`. Drives the depth render, the per-view SDXL resolution and the baked atlas, so it costs real diffusion compute |
 | `material_class` | no | — | `person`, `metal`, `wood`, `fabric`, `plastic`, or `glass` — bakes measured real-world roughness/metallic factors for that class instead of a flat guess, and appends material-appropriate descriptors to the SDXL prompt (see `MATERIAL_CLASS_PBR` in `main.py`) |
 
 ### `POST /retexture_region` → `202`
@@ -127,7 +183,7 @@ curl -X POST https://$SERVICE_URL/retexture_region \
 | `mask` | mask_b64 or mask | — | public https URL to the UV mask PNG |
 | `color` | — | — | `"#rrggbb"` hint that primes the region hue |
 | `negative_prompt` | no | `blurry, low quality, distorted, watermark, seam` | |
-| `texture_size` | no | `1024` | `512`, `1024`, or `2048` working/output atlas |
+| `texture_size` | no | `2048` | `512`, `1024`, or `2048` working/output atlas. The inpaint itself always runs at SDXL-native 1024, so this costs compositing time only |
 | `strength` | no | `0.85` | inpaint denoise strength, `0.2`–`1.0` |
 | `feather` | no | `24` | seam feather radius in atlas px, `1`–`128` |
 | `seed` | no | `0` | ≥0, reproducible output |
@@ -162,7 +218,10 @@ carries a sanitized `error` string instead of `result_url`.
 |---|---|---|---|
 | `API_KEY` | yes | — | Shared bearer secret (Secret Manager: `avatar-reconstruction-key`) |
 | `GCS_BUCKET` | yes | — | Output bucket (`three-ws-avatar-reconstructions`) |
-| `WEIGHTS_DIR` | no | `/weights` | Model weight cache (GCS volume on Cloud Run) |
+| `WEIGHTS_DIR` | no | `/weights` | Fallback weight cache, used when GCS staging is off or the prefix is empty. Cloud Run sets it to `/opt/hf-cache`, the cache baked into the image; no volume is mounted |
+| `WEIGHTS_GCS_URI` | no | (unset) | `gs://` prefix holding the HuggingFace cache tree. Cloud Run sets `gs://three-ws-model-weights/sdxl-texture`; populate it with `stage_weights.py` |
+| `WEIGHTS_LOCAL_DIR` | no | `/tmp/sdxl-texture` | Where the staged copy lands on the instance |
+| `WEIGHT_VARIANT` | no | `fp16` | Checkpoint variant resolved from every repo. Must match what was staged |
 | `SDXL_MODEL` | no | `stabilityai/stable-diffusion-xl-base-1.0` | Base SDXL checkpoint |
 | `CONTROLNET_MODEL` | no | `diffusers/controlnet-depth-sdxl-1.0` | Depth ControlNet for full retexture |
 | `SDXL_INPAINT_MODEL` | no | `diffusers/stable-diffusion-xl-1.0-inpainting-0.1` | Magic-brush inpainting checkpoint |
