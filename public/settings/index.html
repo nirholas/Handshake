@@ -381,7 +381,8 @@
 					<div class="section">
 						<h3 data-i18n="settings_index.public_profile">Public profile</h3>
 						<p class="muted" style="margin-bottom:14px;font-size:14px" data-i18n="settings_index.your_agents_and_public_avatars_are_visible">Your agents and public avatars are visible on your profile page.</p>
-						<a id="view-profile-link" target="_blank" rel="noopener" class="btn sec" style="display:inline-block;text-decoration:none" data-i18n="settings_index.view_public_profile">View public profile ↗</a>
+						<a id="view-profile-link" target="_blank" rel="noopener" class="btn sec" style="display:none;text-decoration:none" data-i18n="settings_index.view_public_profile">View public profile ↗</a>
+						<p class="hint" id="view-profile-hint" style="display:none;margin:0" data-i18n="settings_index.choose_a_username_to_publish">Choose a username above and save to publish your public profile.</p>
 					</div>
 				</div>
 
@@ -610,8 +611,23 @@
 				}
 				document.getElementById('account-plan').textContent = user.plan || 'free';
 
-				const profileHref = user.username ? `/u/${user.username}` : (user.address ? `/u/${user.address}` : '#');
-				document.getElementById('view-profile-link').href = profileHref;
+				// /api/auth/me returns wallet_address, never `address`, so the old
+				// fallback never resolved and a wallet-only account got a button
+				// pointing at '#'. An account with neither handle nor wallet has no
+				// public profile to open at all, so show the one step that creates
+				// one instead of a live-looking control that goes nowhere.
+				const profileSlug = user.username || user.wallet_address || '';
+				const link = document.getElementById('view-profile-link');
+				const hint = document.getElementById('view-profile-hint');
+				if (profileSlug) {
+					link.href = `/u/${profileSlug}`;
+					link.style.display = 'inline-block';
+					hint.style.display = 'none';
+				} else {
+					link.removeAttribute('href');
+					link.style.display = 'none';
+					hint.style.display = 'block';
+				}
 			}
 
 			function updateProfileUrlPreview() {

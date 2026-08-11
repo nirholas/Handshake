@@ -12,7 +12,7 @@ click ─▶ 402 challenge ─▶ Phantom connect ─▶ sign SPL transfer
 Three things make it a real test, not a mock:
 
 1. **The modal loads from npm.** `public/index.html` pulls
-   `https://unpkg.com/@three-ws/x402-payment-modal@1.1.0` — the exact artifact we
+   `https://unpkg.com/@three-ws/x402-payment-modal@1.2.0` — the exact artifact we
    publish — so you're testing the shipped code, not local source.
 2. **The data is gated for real.** `/api/paid/crypto` returns live CoinGecko
    prices **only** after the payment verifies *and* settles on-chain via the

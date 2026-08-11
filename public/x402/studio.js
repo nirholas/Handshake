@@ -174,7 +174,8 @@ function renderShell() {
 	const topbar = el('header', { class: 'topbar' },
 		el('h1', { id: 'tab-title' }, 'Overview'),
 		el('span', { class: 'spacer' }),
-		el('a', { class: 'btn ghost sm', id: 'view-store', href: '#', target: '_blank', style: 'display:none' }, 'View storefront ↗'),
+		// No href until updateStoreLink() knows the published store handle.
+		el('a', { class: 'btn ghost sm', id: 'view-store', target: '_blank', style: 'display:none' }, 'View storefront ↗'),
 		el('button', { class: 'btn primary sm', onclick: () => go('products') }, '+ New product'),
 	);
 	const content = el('div', { class: 'content', id: 'content' });

@@ -289,6 +289,29 @@ import { pay, configure } from '@three-ws/x402-modal';   // ESM, no side effects
 or skip the install entirely and use the CDN `/global` build (auto-binds
 `[data-x402-endpoint]`, exposes `window.X402`).
 
+## Development
+
+```sh
+npm install          # esbuild is the only devDependency
+npm run build        # → dist/x402-modal.mjs (ESM) + dist/x402.global.js (IIFE)
+npm test             # node --test, zero extra deps
+```
+
+`npm test` covers the protocol layer (challenge discovery against a real local
+HTTP server, amount/network/caps helpers, the SIWX message format) and the
+config surface. What only a browser can prove (the global build binding
+`data-x402-endpoint`, the modal mounting, live discovery, cancellation,
+script-tag config) runs from the monorepo root against the live demo endpoint:
+
+```sh
+npm --prefix x402-modal-sdk run build
+node scripts/x402-modal-e2e.mjs
+```
+
+It reads a real `402` challenge and never signs or spends anything.
+`examples/index.html` is the same demo page, for driving by hand: build, serve
+this folder, and open it.
+
 ## Security notes
 
 - The modal **never holds keys**. Signing happens in the user's wallet; the
