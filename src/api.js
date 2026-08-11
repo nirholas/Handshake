@@ -28,13 +28,38 @@ function routeOf(path) {
 		.replace(/\/\d{4,}(?=\/|$)/g, '/:id');
 }
 
+// Known session state for this tab: null = unknown, true/false = resolved.
+// A CSRF token is bound to the session cookie (api/_lib/auth.js), so for a
+// signed-out visitor the server has nothing to bind it to and answers 401.
+// Asking anyway printed a red 401 in the console of every anonymous visitor on
+// a public page that POSTs a read (the live agent wall's batch balance
+// hydration, for one). Pages that already resolved the answer tell us via
+// noteSession(); the token endpoint itself also teaches us.
+let _sessionKnown = null;
+
+/**
+ * Record whether this visitor has a session, so anonymous public reads can skip
+ * a CSRF pre-flight that could only 401. Pass the resolved answer from
+ * /api/auth/me, which returns 200 with `{ user: null }` when signed out.
+ *
+ * Only `allowAnonymous` requests act on a `false` here, so a genuine mutation
+ * always still fetches its token and can never be weakened by a stale reading.
+ *
+ * @param {boolean} hasSession
+ */
+export function noteSession(hasSession) {
+	_sessionKnown = !!hasSession;
+}
+
 // Fetch a fresh single-use CSRF token for every mutation. Tokens are burned
 // on first use (api/_lib/csrf.js), so caching is unsafe when concurrent
 // mutations share the module — two callers that read the same cached token
 // race: the first succeeds, the second gets 403 csrf_invalid.
 async function freshCsrfToken() {
 	const r = await fetch('/api/csrf-token', { credentials: 'include' });
+	if (r.status === 401) { _sessionKnown = false; return null; }
 	if (!r.ok) return null;
+	_sessionKnown = true;
 	const j = await r.json().catch(() => null);
 	return j?.data?.token || null;
 }
@@ -64,7 +89,11 @@ export async function apiFetch(path, options = {}) {
 
 	const headers = new Headers(init.headers || {});
 	const hasBearer = (headers.get('authorization') || '').startsWith('Bearer ');
-	if (!SAFE_METHODS.has(method) && !hasBearer) {
+	// A known-anonymous caller on an endpoint that accepts anonymous reads has no
+	// session for a token to bind to; skipping the pre-flight keeps a public page
+	// console clean. Anything that is not `allowAnonymous` still asks, always.
+	const skipCsrf = allowAnonymous && _sessionKnown === false;
+	if (!SAFE_METHODS.has(method) && !hasBearer && !skipCsrf) {
 		const token = await freshCsrfToken();
 		if (token) headers.set('x-csrf-token', token);
 	}
