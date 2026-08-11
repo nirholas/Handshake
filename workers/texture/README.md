@@ -34,8 +34,9 @@ other half of "the surface reads as real" this campaign targets.
 There is **no `texture-service` running in `aerial-vehicle-466722-p5`** (checked
 in every region on 2026-08-11: no Cloud Run service, no Artifact Registry repo),
 and `three-ws-api` carries no `GCP_TEXTURE_URL`. Both callers below therefore
-take their designed missing-lane path and return `501`/`503` today. Nothing is
-faked and no other lane is affected. Re-check with:
+take their designed missing-lane path today: the HTTP gateway answers `501
+region_retex_unconfigured` and the MCP tool raises a JSON-RPC error naming the
+two env vars. Nothing is faked and no other lane is affected. Re-check with:
 
 ```bash
 gcloud run services list --project aerial-vehicle-466722-p5 --region us-central1 | grep texture
@@ -243,7 +244,7 @@ Secret Manager `avatar-reconstruction-key`). Both the `retex` (full) and
   opaque `job` token and re-validates that token targets the configured worker
   before polling, so a forged token can never steer the server's fetch.
 
-If `GCP_TEXTURE_URL` (or the key) is unset, these callers return a designed
-`501`/`503` — the lane simply drops out; nothing is faked. Production env vars for
+If `GCP_TEXTURE_URL` (or the key) is unset, both callers fail closed with the
+message above: the lane drops out and nothing is faked. Production env vars for
 `three.ws` live on the `three-ws-api` Cloud Run service (`gcloud run services
 describe three-ws-api --region us-central1`), not in a `.env` file.
