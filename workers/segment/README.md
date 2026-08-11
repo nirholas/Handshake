@@ -36,32 +36,73 @@ Supported input formats: `.glb`, `.gltf`, `.obj`, `.stl`, `.ply`, `.fbx`,
 `worker_security.fetch_remote_bytes` (https-only, private/loopback/metadata IPs
 rejected, redirects re-validated per hop).
 
+The parts are a strict **partition** of the input: same faces, redistributed,
+never repaired and never invented. (trimesh patches holes while splitting by
+default, which grew a real 17031-face forge model to 17050 faces across its
+parts and made the manifest contradict its own `source_faces`.)
+
+## Cost
+
+Measured on this repo's dev machine, whole path, load through GLB export, one
+job at a time:
+
+| Faces in | Wall clock | Peak RSS |
+|---|---|---|
+| 20 k | 1.5 s | 122 MB |
+| 82 k | 6.8 s | 193 MB |
+| 328 k | 23 s | 476 MB |
+| 1.3 M | 81 s | 1.5 GB |
+
+Roughly 1.1 KB of peak memory per input face, so the 128 MiB input cap and
+`MAX_CONCURRENT=2` sit comfortably inside the 16 GiB instance. `JOB_TIMEOUT_S`
+bounds the tail.
+
+These numbers are the point of the 2026-08-11 merge-pass rewrite. The previous
+implementation rebuilt the entire label-adjacency map and rescanned the whole
+label array on *every single merge*, which is cubic in the number of crease
+regions: a 20 k-face mesh took **328 s** in the merge pass alone, and real jobs
+in production ran for **2.9 to 4 hours** while repeatedly OOM-killing the 16 GiB
+instance. The rewrite keeps regions in a union-find with incrementally
+maintained neighbour sets and one lazily-invalidated min-heap, applies exactly
+the same merge policy, and writes the label array once at the end. Verified
+identical output on 20 of 20 mesh/parameter combinations against the original
+implementation.
+
 ## Files
 
 | File | Role |
 |------|------|
-| `main.py` | FastAPI app: request validation, async job queue (`MAX_CONCURRENT` semaphore), GCS upload of the GLB + manifest, task-status store. |
+| `main.py` | FastAPI app: request validation, async job queue (`MAX_CONCURRENT` semaphore), GCS upload of the GLB + manifest, durable task records. |
 | `segment_core.py` | The geometry engine: `load_concatenated`, `segment`, `build_scene`, `manifest`. Trimesh + numpy + scipy. |
-| `worker_security.py` | Shared bearer-auth + SSRF-hardened fetch + opaque error helper. Byte-identical copy across all workers — keep it in sync when editing. |
-| `Dockerfile` | `python:3.11-slim` + native libs (`libgl1`, `libassimp5`, `libopenblas`); serves via `uvicorn` on port 8080. |
-| `cloudbuild.yaml` | Cloud Build → Artifact Registry → Cloud Run deploy. |
+| `test_segment_core.py` | Core-path tests for the geometry engine. No GCS, no network. Run as a Docker build gate. |
+| `worker_security.py` | Shared bearer-auth + SSRF-hardened fetch + opaque error helper. Byte-identical copy across all workers, so keep it in sync when editing. |
+| `Dockerfile` | `python:3.11-slim` + native libs (`libgl1`, `libassimp5`, `libopenblas`); runs the test gate, then serves via `uvicorn` on port 8080. |
+| `cloudbuild.yaml` | Cloud Build to Artifact Registry to Cloud Run deploy. |
 
 ## How it ships
 
 Built and deployed by **Cloud Build** to **Google Cloud Run**:
 
 - Service: **`segment-service`**, region **`us-central1`**
-- Runs on CPU only — `--cpu=8 --memory=16Gi`, no GPU — scale-to-zero
-  (`min-instances=0`, `max-instances=3`), 300 s request timeout.
+- CPU only (`--cpu=8 --memory=16Gi`, no GPU), **kept warm** at
+  `min-instances=1` / `max-instances=3`, 300 s request timeout. It is not
+  scale-to-zero: Parts Studio calls it the moment a user asks to split a model,
+  and a cold start is a visible stall.
 - Service account `avatar-reconstruction-sa`; `API_KEY` is mounted from the
-  `avatar-reconstruction-key` Secret Manager secret — the **same shared bearer
+  `avatar-reconstruction-key` Secret Manager secret, the **same shared bearer
   secret** every model worker checks (`GCP_RECONSTRUCTION_KEY` on the platform
   side).
 
 ```bash
 # from repo root, deploy the current tree
-gcloud builds submit --config workers/segment/cloudbuild.yaml .
+gcloud builds submit --config workers/segment/cloudbuild.yaml \
+  --region us-central1 --project aerial-vehicle-466722-p5 \
+  --substitutions=SHORT_SHA=manual$(date +%s) .
 ```
+
+`SHORT_SHA` is required on a manual submit: the config tags the image with it,
+and an unsubstituted tag fails the build. The build runs `test_segment_core.py`
+as a gate, so a regressed merge pass never reaches a deployed image.
 
 The platform wires it in through `api/_providers/gcp.js` (`segment` mode): set
 **`GCP_SEGMENT_URL`** to this service's Cloud Run URL and **`GCP_RECONSTRUCTION_KEY`**
@@ -142,8 +183,25 @@ Response: `{ "task_id": "<uuid>", "status": "queued" }`.
 ```
 
 `result_url`/`manifest_url` and the enriched fields appear once `status` is
-`done`. On failure, `error` carries an opaque, correlation-id-tagged message
-(the full traceback is logged server-side only, never returned).
+`done`.
+
+**Task records are durable.** Every status change is mirrored to
+`segment/<id>.task.json` in `GCS_BUCKET`, and a poll for an id this instance
+does not know reads that record. Task state used to live only in the
+submitting instance's memory, so with `min-instances=1`/`max=3` a poll routed
+to a sibling, or arriving after a restart, returned a bare `404` and the caller
+reported a phantom failure. Verified by polling a completed job against a
+freshly started instance: it answers `done` with the full manifest, while an id
+that never existed still `404`s.
+
+**Failures say what went wrong when they safely can.** A caller's mistake
+(unknown `only_part`, a mesh with no triangles, an SSRF-refused URL) returns
+the real reason, e.g. `part 'part_99' not found. Available: part_01 (upper-back),
+...` or `refused to fetch mesh: host resolves to a disallowed address:
+169.254.169.254`. Anything unexpected still returns an opaque,
+correlation-id-tagged message with the traceback logged server-side only. The
+split is by exception type (`SegmentInputError` / `SegmentTimeout` are echoed,
+everything else is not), so a library-internal message can never leak.
 
 ### `GET /health` → `200`
 
@@ -153,9 +211,11 @@ Response: `{ "task_id": "<uuid>", "status": "queued" }`.
 
 | Var | Required | Default | Meaning |
 |-----|----------|---------|---------|
-| `API_KEY` | ✅ | — | Bearer secret checked on `/segment` and `/tasks` (constant-time). |
-| `GCS_BUCKET` | ✅ | — | Output bucket for `segment/<id>.glb` + `segment/<id>.parts.json`. Deployed as `three-ws-avatar-reconstructions`. |
+| `API_KEY` | ✅ | n/a | Bearer secret checked on `/segment` and `/tasks` (constant-time). |
+| `GCS_BUCKET` | ✅ | n/a | Output bucket for `segment/<id>.glb`, `segment/<id>.parts.json`, and `segment/<id>.task.json`. Deployed as `three-ws-avatar-reconstructions`. |
 | `MAX_CONCURRENT` | | `2` | In-process semaphore bounding concurrent segmentation jobs. |
+| `JOB_TIMEOUT_S` | | `600` | Wall-clock ceiling per job, covering the mesh fetch and the segmentation. Exceeding it fails the task instead of holding a slot. |
+| `TASK_TTL_S` | | `3600` | How long a finished task stays in instance memory. The durable GCS record outlives it. |
 
 ## Run locally
 
@@ -185,6 +245,31 @@ curl -s http://localhost:8080/tasks/<task_id> \
   -H "Authorization: Bearer $API_KEY" | jq .
 ```
 
-GCS uploads need real credentials — run with Application Default Credentials
+GCS uploads need real credentials: run with Application Default Credentials
 (`gcloud auth application-default login`) pointed at a project that can write
 `GCS_BUCKET`. There is no mock storage path.
+
+Uploads retry on transient transport faults. A single
+`SSLEOFError: UNEXPECTED_EOF_WHILE_READING` from `storage.googleapis.com` used
+to discard an otherwise finished segmentation, because the client library
+treats an upload as non-idempotent and does not retry it by default. Every blob
+is named after a fresh uuid, so replaying the write is safe.
+
+## Tests
+
+```bash
+python3 workers/segment/test_segment_core.py
+```
+
+80 checks over the geometry engine: loading and scene concatenation, connected
+and crease segmentation, the `max_parts` cap, the face-partition property, run
+to run determinism, the time budget, GLB node naming, and the manifest shape.
+No GCS, no network, no GPU. The Docker build runs it, so a regression fails the
+image rather than the deploy.
+
+Two of them are the load-bearing ones: a **performance** check that fails if the
+merge pass regresses toward its pre-2026-08-11 cost, and a **determinism** check
+that the same mesh segments identically twice. Determinism is not cosmetic here:
+the merge picks the largest neighbour, and resolving ties by Python set
+iteration order made the same model produce differently grouped parts between
+runs. Ties now break on the lowest label.

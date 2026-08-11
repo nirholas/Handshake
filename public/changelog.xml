@@ -95,6 +95,14 @@
 			<description>When a sniped coin's market went quiet, the worker sold the bag on-chain but could not record the close, because the database did not recognise the reason it gave. The sale had already happened, so the position was reset and retried forever: it never booked its profit or loss and it kept holding one of the agent's position slots. Those exits now record correctly, the freed slots go back to the agent, and the trade card names the exit in plain language instead of leaving it blank.</description>
 		</item>
 		<item>
+			<title>Splitting a model into parts finishes in seconds instead of hours</title>
+			<link>https://three.ws/segment</link>
+			<guid isPermaLink="false">2026-08-11:Splitting a model into parts finishes in seconds instead of hours</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Parts Studio splits a 3D model into named, separately editable pieces. On detailed models that split could take hours: the step that merges tiny fragments back together got dramatically slower as the fragment count grew, and the longest real jobs ran close to four hours before returning anything, sometimes exhausting the service's memory and taking other people's jobs down with it. That step has been rebuilt and now runs hundreds of times faster while producing exactly the same parts, so a detailed model splits in seconds. Three related fixes came with it: a finished split is no longer lost when a network hiccup interrupts the upload, results stay available if the service restarts while you are waiting, and a rejected request now tells you why (for example, which part names actually exist) instead of showing a generic error.</description>
+		</item>
+		<item>
 			<title>Stylizing a model no longer throws away the finished result over a momentary network hiccup, and plain models keep their intended color</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-08-11:Stylizing a model no longer throws away the finished result over a momentary network hiccup, and plain models keep their intended color</guid>
