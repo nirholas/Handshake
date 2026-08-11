@@ -470,6 +470,38 @@ export async function getDefenseLamports24h(policyId) {
 	return bigintStr(r?.s);
 }
 
+// ── engine liveness ───────────────────────────────────────────────────────────
+// A policy only ever acts when a market-maker worker (workers/agent-mm) is
+// sweeping. Without surfacing that, an enabled policy renders as an armed maker
+// that will never fire, which reads as a broken promise rather than a stopped
+// engine. The worker stamps `bot_heartbeat` every MM_HEARTBEAT_MS (30s default),
+// so six missed beats is a confident "not running".
+
+export const ENGINE_WORKER = 'agent-mm';
+export const ENGINE_STALE_AFTER_SECONDS = 180;
+
+/** Shape a bot_heartbeat row into the public engine-liveness view. Pure. */
+export function engineLivenessFromBeat(row, now = Date.now()) {
+	const beatAt = row?.last_beat_at ? new Date(row.last_beat_at).getTime() : NaN;
+	if (!Number.isFinite(beatAt)) {
+		return { live: false, mode: null, last_beat_at: null, seconds_since_beat: null, stale_after_seconds: ENGINE_STALE_AFTER_SECONDS };
+	}
+	const seconds = Math.max(0, Math.round((now - beatAt) / 1000));
+	return {
+		live: seconds <= ENGINE_STALE_AFTER_SECONDS,
+		mode: row.mode || null,
+		last_beat_at: new Date(beatAt).toISOString(),
+		seconds_since_beat: seconds,
+		stale_after_seconds: ENGINE_STALE_AFTER_SECONDS,
+	};
+}
+
+/** Is a market-maker worker actually sweeping right now? */
+export async function getEngineLiveness() {
+	const [row] = await sql`SELECT mode, last_beat_at FROM bot_heartbeat WHERE worker = ${ENGINE_WORKER} LIMIT 1`;
+	return engineLivenessFromBeat(row || null);
+}
+
 // ── derived view (for API + UI) ───────────────────────────────────────────────
 
 /** A clean, typed, public-safe view of a policy row + its budgets/PnL. */
