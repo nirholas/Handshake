@@ -2729,7 +2729,7 @@
 			"dest": "/api/agents/[id]"
 		},
 		{
-			"src": "/api/agents/([^/]+)/manifest",
+			"src": "/api/agents/([^/]+)/manifest(/.*)?",
 			"dest": "/api/agents/[id]"
 		},
 		{
@@ -2762,7 +2762,7 @@
 		},
 		{
 			"src": "/api/agents/([^/]+)/memory/seed/farcaster",
-			"dest": "/api/agents/[id]"
+			"dest": "/api/agents/[id]/memory-seed-farcaster?id=$1"
 		},
 		{
 			"src": "/api/agents/([^/]+)/memory/([^/]+)",

@@ -1426,6 +1426,16 @@ export const limits = {
 		getLimiter('tts:speak:user', { limit: 40, window: '1 h', critical: true }).limit(userId),
 	ttsSpeakIp: (ip) =>
 		getLimiter('tts:speak:ip', { limit: 10, window: '1 h', critical: true }).limit(ip),
+	// An agent's bound voice speaking to a visitor (api/tts/eleven agent_byok lane).
+	// The agent owner's own ElevenLabs account pays, so this bucket protects THEIR
+	// quota from a scripted visitor: generous enough for a real back-and-forth
+	// conversation, tight enough that one IP cannot drain an owner's character
+	// budget. Keyed per agent AND per IP so one noisy visitor can't mute an agent
+	// for everyone else. Critical — fail closed rather than uncap someone's bill.
+	ttsAgentVoiceIp: (agentIdAndIp) =>
+		getLimiter('tts:agent-voice:ip', { limit: 60, window: '1 h', critical: true }).limit(
+			agentIdAndIp,
+		),
 	// NVIDIA Riva ASR (api/asr) — free upstream but credit-metered, and each call
 	// streams an audio clip the server holds in memory, so meter per principal.
 	// Authenticated users get a generous bucket; anonymous callers (keyed by IP) a
@@ -1515,6 +1525,12 @@ export const limits = {
 	// per run. 1 seed per agent per 6 hours, matching the X lane.
 	githubSeed: (agentId) =>
 		getLimiter('memory:seed:github', { limit: 1, window: '6 h' }).limit(agentId),
+	// Consent-first Farcaster memory seeding: reads a hub (or Neynar) and runs one
+	// LLM pass per seed. 1 seed per agent per 6 hours, matching the X and GitHub
+	// lanes. Issuing a signing challenge is deliberately outside this budget so a
+	// user can retry the wallet step without burning the window.
+	farcasterSeed: (agentId) =>
+		getLimiter('memory:seed:farcaster', { limit: 1, window: '6 h' }).limit(agentId),
 	// Withdrawal requests: 5 per user per day. This is the daily cap on the only
 	// owner-initiated path that sweeps real funds out of custody, so it is critical
 	// — a missing Redis in prod must fail closed rather than fall back to the
