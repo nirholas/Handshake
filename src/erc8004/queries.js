@@ -196,11 +196,15 @@ export { findAvatar3D } from './avatar-meta.js';
  * Resolve any IPFS/Arweave/data/https URI to a fetchable URL and parse JSON.
  *
  * An agent's registration JSON lives wherever its registrant put it, and most
- * of those hosts send no Access-Control-Allow-Origin, so the direct browser
- * fetch below is blocked by CORS for a large share of real agents. When that
- * happens we retry through /api/erc8004/metadata, which fetches server-side
- * (no same-origin policy) behind the SSRF guard. The direct attempt stays
- * first so a CORS-friendly host never pays for the extra hop.
+ * of those hosts send no Access-Control-Allow-Origin, so a direct browser fetch
+ * is blocked by CORS for a large share of real agents. A blocked fetch cannot
+ * be caught quietly: the browser logs "blocked by CORS policy" plus a failed
+ * request before the promise ever rejects, so trying it first made every such
+ * agent's page open with two console errors even though the agent loaded fine.
+ * A cross-origin URI therefore goes to /api/erc8004/metadata first, which
+ * fetches server-side (no same-origin policy) behind the SSRF guard, and falls
+ * back to the direct fetch if our proxy is the one that fails. Same-origin URIs
+ * skip the proxy entirely: there is nothing to work around.
  *
  * @param {string} uri
  * @returns {Promise<{ ok: boolean, data?: any, error?: string, resolvedUrl?: string, viaProxy?: boolean }>}
@@ -224,33 +228,50 @@ export async function fetchAgentMetadata(uri) {
 	if (uri.startsWith('ipfs://')) url = 'https://ipfs.io/ipfs/' + uri.slice(7);
 	else if (uri.startsWith('ar://')) url = 'https://arweave.net/' + uri.slice(5);
 
-	let directError;
+	if (isSameOrigin(url)) return fetchAgentMetadataDirect(url);
+
+	const viaProxy = await fetchAgentMetadataViaProxy(uri, url);
+	if (viaProxy.ok) return viaProxy;
+
+	const direct = await fetchAgentMetadataDirect(url);
+	// Our proxy is the one that failed here, so its reason is the useful one
+	// unless the direct attempt got further and produced its own.
+	return direct.ok ? direct : { ...direct, error: viaProxy.error || direct.error };
+}
+
+function isSameOrigin(url) {
+	if (typeof location === 'undefined') return false;
+	try {
+		return new URL(url, location.href).origin === location.origin;
+	} catch {
+		return false;
+	}
+}
+
+async function fetchAgentMetadataDirect(url) {
 	try {
 		const res = await fetch(url);
 		if (res.ok) return { ok: true, data: await res.json(), resolvedUrl: url };
-		directError = `HTTP ${res.status}`;
+		return { ok: false, error: `HTTP ${res.status}`, resolvedUrl: url };
 	} catch (err) {
 		// A CORS block surfaces here as an opaque TypeError with no status.
-		directError = err.message;
+		return { ok: false, error: err.message, resolvedUrl: url };
 	}
-
-	return fetchAgentMetadataViaProxy(uri, url, directError);
 }
 
-async function fetchAgentMetadataViaProxy(uri, url, directError) {
+async function fetchAgentMetadataViaProxy(uri, url) {
 	try {
 		const res = await fetch(`/api/erc8004/metadata?uri=${encodeURIComponent(uri)}`);
 		const body = await res.json().catch(() => null);
 		if (!res.ok) {
 			return {
 				ok: false,
-				error: body?.error_description || body?.error || directError,
+				error: body?.error_description || body?.error || `HTTP ${res.status}`,
 				resolvedUrl: url,
 			};
 		}
 		return { ok: true, data: body.data, resolvedUrl: body.resolvedUrl || url, viaProxy: true };
-	} catch {
-		// Both rungs failed; report the original failure, which is the useful one.
-		return { ok: false, error: directError, resolvedUrl: url };
+	} catch (err) {
+		return { ok: false, error: err.message, resolvedUrl: url };
 	}
 }
