@@ -1344,7 +1344,7 @@ export function bazaarExtension() {
 			params: {
 				type: 'object',
 				description:
-					'For tools/call: { name, arguments }. Tool names include validate_model, inspect_model, optimize_model, search_public_avatars, solana_register, solana_reputation, and others, see tools/list.',
+					'For tools/call: { name, arguments }. Tool names include validate_model, inspect_model, optimize_model, search_public_avatars, register_agent, solana_agent_reputation, and others, see tools/list.',
 			},
 		},
 	};

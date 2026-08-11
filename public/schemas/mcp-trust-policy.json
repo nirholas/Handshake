@@ -1,0 +1,146 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://three.ws/schemas/mcp-trust-policy.json",
+	"title": "three.ws MCP trust policy",
+	"description": "The JSON document served by GET https://three.ws/api/mcp-policy (format=json). It sorts every tool in the three.ws MCP catalog into allow / confirm / deny buckets for the requested trust profile, so an MCP client can automate exactly the tools whose readOnlyHint has been verified against the handler that implements it. Docs: https://three.ws/docs/mcp-safety",
+	"type": "object",
+	"required": [
+		"$schema",
+		"version",
+		"profile",
+		"profileLabel",
+		"summary",
+		"issuer",
+		"source",
+		"docs",
+		"verification",
+		"counts",
+		"rules"
+	],
+	"additionalProperties": false,
+	"properties": {
+		"$schema": {
+			"type": "string",
+			"const": "https://three.ws/schemas/mcp-trust-policy.json"
+		},
+		"version": {
+			"type": "integer",
+			"const": 1
+		},
+		"profile": {
+			"type": "string",
+			"enum": ["strict", "balanced", "open"],
+			"description": "Which trust ladder rung this policy was generated for. balanced is the default."
+		},
+		"profileLabel": {
+			"type": "string",
+			"description": "Human-readable name of the profile."
+		},
+		"summary": {
+			"type": "string",
+			"description": "One-paragraph statement of what this profile automates and what it gates."
+		},
+		"issuer": {
+			"type": "string",
+			"format": "uri",
+			"description": "Origin that generated and signed off on the policy."
+		},
+		"source": {
+			"type": "string",
+			"format": "uri",
+			"description": "The tool catalog this policy was derived from (https://three.ws/mcp-catalog.json). The policy is regenerated from it on every request, so it always reflects the deployed tools."
+		},
+		"docs": {
+			"type": "string",
+			"format": "uri"
+		},
+		"verification": {
+			"type": "object",
+			"required": ["method", "check", "claim"],
+			"additionalProperties": false,
+			"properties": {
+				"method": {
+					"type": "string",
+					"description": "How the safety labels behind this policy were established."
+				},
+				"check": {
+					"type": "string",
+					"description": "The repo command that re-verifies every label."
+				},
+				"claim": {
+					"type": "string",
+					"description": "What the verification guarantees about the labels."
+				}
+			}
+		},
+		"counts": {
+			"type": "object",
+			"required": ["allow", "confirm", "deny", "total"],
+			"additionalProperties": false,
+			"properties": {
+				"allow": { "type": "integer", "minimum": 0 },
+				"confirm": { "type": "integer", "minimum": 0 },
+				"deny": { "type": "integer", "minimum": 0 },
+				"total": {
+					"type": "integer",
+					"minimum": 0,
+					"description": "Total tools in the catalog; equals allow + confirm + deny."
+				}
+			}
+		},
+		"rules": {
+			"type": "object",
+			"required": ["allow", "confirm", "deny"],
+			"additionalProperties": false,
+			"properties": {
+				"allow": {
+					"type": "array",
+					"items": { "$ref": "#/$defs/rule" },
+					"description": "Tools the client may run without asking under this profile."
+				},
+				"confirm": {
+					"type": "array",
+					"items": { "$ref": "#/$defs/rule" },
+					"description": "Tools the client must ask about before running."
+				},
+				"deny": {
+					"type": "array",
+					"items": { "$ref": "#/$defs/rule" },
+					"description": "Tools the client must refuse to run under this profile."
+				}
+			}
+		}
+	},
+	"$defs": {
+		"rule": {
+			"type": "object",
+			"required": ["name", "permission", "server", "safety", "priceUsd"],
+			"additionalProperties": false,
+			"properties": {
+				"name": {
+					"type": "string",
+					"description": "The tool name as it appears in tools/list."
+				},
+				"permission": {
+					"type": "string",
+					"pattern": "^mcp__[A-Za-z0-9._-]+__[A-Za-z0-9._-]+$",
+					"description": "Namespaced permission id (mcp__<server>__<tool>) as MCP clients write it in their permission lists. The server segment is the id three.ws publishes; a client that named the server differently in its own config must substitute its own name."
+				},
+				"server": {
+					"type": "string",
+					"description": "The three.ws-published server id the tool belongs to."
+				},
+				"safety": {
+					"type": "string",
+					"enum": ["read", "write", "irreversible"],
+					"description": "Verified safety class of the tool handler: read never changes state, write changes state reversibly, irreversible cannot be undone (signs, sends, settles, or deletes)."
+				},
+				"priceUsd": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Price per call in USD. 0 means free."
+				}
+			}
+		}
+	}
+}

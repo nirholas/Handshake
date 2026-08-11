@@ -34,7 +34,7 @@ const { getCatalog } = await import(path.join(root, 'api/_lib/service-catalog/in
 
 const DESCRIPTION =
 	'three.ws — the 3D agent economy. Generate, rig, and animate 3D avatars and worlds; ' +
-	'buy and sell agent services with x402 micropayments (USDC on Solana, Base, BSC, and X Layer); ' +
+	'buy and sell agent services with x402 micropayments (USDC on Solana, Base, and Arbitrum); ' +
 	'and consume live crypto market, DeFi, news, and on-chain intelligence APIs. ' +
 	'Machine-readable paid-service catalog at https://three.ws/.well-known/x402.json.';
 

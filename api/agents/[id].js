@@ -12,6 +12,9 @@
  * /api/agents/:id/animations      — owner-only: replace meta.animations
  * /api/agents/:id/embed-policy    — read/write embed policy
  * /api/agents/:id/manifest        — public canonical manifest JSON
+ * /api/agents/:id/manifest/signed — public signed + IPFS-pinned manifest envelope
+ * /api/agents/:id/manifest/publish — owner-only: re-sign and re-pin the manifest
+ * /api/agents/:id/manifest/history — public: every manifest CID this agent published
  * /api/agents/:id/registration    — public EIP-8004 registry document (Metaplex Agent Registry URI)
  * /api/agents/:id/sign            — owner-only: sign message with server wallet
  * /api/agents/:id/usage           — owner-only: LLM usage stats
@@ -150,6 +153,12 @@ export default wrap(async function handler(req, res) {
 	}
 
 	if (sub === 'manifest') {
+		// /manifest is the live, unsigned public document. The sub-actions below
+		// are the signed, IPFS-pinned envelope built on top of it.
+		if (action === 'signed' || action === 'publish' || action === 'history') {
+			const mod = await import('./_id/manifest-signed.js');
+			return mod.handleSignedManifest(req, res, id, action);
+		}
 		const mod = await import('./_id/_sub.js');
 		return mod.handleManifest(req, res, id);
 	}
@@ -179,9 +188,10 @@ export default wrap(async function handler(req, res) {
 			const mod = await import('./_id/memory/pin.js');
 			return mod.default(req, res);
 		}
+		// /memory/seed/* has its own rewrite per provider (memory-seed-x,
+		// memory-seed-github, memory-seed-farcaster), so it never lands here.
 		if (action === 'seed') {
-			const mod = await import('./_id/memory-seed-farcaster.js');
-			return mod.default(req, res);
+			return error(res, 404, 'not_found', 'unknown memory seed provider');
 		}
 		if (action && CID_RE.test(action)) {
 			const mod = await import('./_id/memory/[cid].js');
