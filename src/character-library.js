@@ -67,7 +67,7 @@ function renderCard(a) {
 				src="${escapeAttr(glbUrl)}"
 				alt="${escapeAttr(alt)}"
 				class="ch-card-mv"
-				reveal="auto"
+				reveal="manual"
 				loading="lazy"
 				disable-zoom
 				disable-pan
@@ -97,6 +97,60 @@ function renderCard(a) {
 		</div>
 	`;
 	return card;
+}
+
+// ── Intent-driven model loading ──────────────────────────────────────────────
+// A library character is a 4-76 MB GLB, so letting every card auto-load streamed
+// hundreds of megabytes nobody had asked for, and any model still in flight when
+// the visitor navigated away logged an aborted fetch in the console. Cards mount
+// with `reveal="manual"`, which paints the poster and downloads nothing; the
+// model streams on real intent only: a hover that settles, or keyboard focus
+// that settles. Tabbing or sweeping the pointer across the grid therefore costs
+// nothing, and a touch visitor taps straight through to the full viewer instead
+// of paying for a preview on cellular.
+const REVEAL_DWELL_MS = 180;
+let pendingReveal = null;
+
+function revealModel(thumb) {
+	if (!thumb || thumb.dataset.revealed) return;
+	const mv = thumb.querySelector('model-viewer');
+	if (!mv) return;
+	thumb.dataset.revealed = '1';
+	thumb.classList.add('is-live');
+	// whenDefined resolves synchronously once the CDN module has upgraded the
+	// element, and waits for it on a slow connection instead of no-opping.
+	customElements.whenDefined('model-viewer').then(() => mv.dismissPoster?.());
+}
+
+function scheduleReveal(thumb) {
+	if (!thumb || thumb.dataset.revealed) return;
+	cancelReveal();
+	pendingReveal = { thumb, timer: setTimeout(() => revealModel(thumb), REVEAL_DWELL_MS) };
+}
+
+function cancelReveal(thumb) {
+	if (!pendingReveal) return;
+	if (thumb && pendingReveal.thumb !== thumb) return;
+	clearTimeout(pendingReveal.timer);
+	pendingReveal = null;
+}
+
+function wireReveal() {
+	if (!els.grid) return;
+	els.grid.addEventListener('pointerover', (e) => {
+		// Touch fires pointerover just before the tap navigates to the viewer, so
+		// starting a download there would be pure waste. Honour Data Saver too.
+		if (e.pointerType === 'touch' || navigator.connection?.saveData) return;
+		scheduleReveal(e.target.closest?.('.ch-card-thumb'));
+	});
+	els.grid.addEventListener('pointerout', (e) => {
+		const thumb = e.target.closest?.('.ch-card-thumb');
+		// pointerout also fires moving between a card's own children; only a
+		// pointer that actually left the card cancels the pending reveal.
+		if (thumb && !thumb.contains(e.relatedTarget)) cancelReveal(thumb);
+	});
+	els.grid.addEventListener('focusin', (e) => scheduleReveal(e.target.closest?.('.ch-card-thumb')));
+	els.grid.addEventListener('focusout', (e) => cancelReveal(e.target.closest?.('.ch-card-thumb')));
 }
 
 function applyView() {
@@ -137,6 +191,9 @@ function applyView() {
 
 	const frag = document.createDocumentFragment();
 	for (const a of list) frag.appendChild(renderCard(a));
+	// A reveal armed against a card this render is about to drop would fire on a
+	// detached element.
+	cancelReveal();
 	els.grid.replaceChildren(frag);
 
 	show(els.loading, false);
@@ -206,4 +263,5 @@ function wire() {
 }
 
 wire();
+wireReveal();
 load();
