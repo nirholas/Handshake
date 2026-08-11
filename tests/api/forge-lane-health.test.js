@@ -1,8 +1,10 @@
 // Self-host lane liveness/warmth probe — the signal health-aware routing consults.
 //
-// A self-host worker is probed with a cheap authenticated GET: <500 = up (warm if
-// fast), 5xx/timeout/unreachable = down. External free lanes are reported unknown
-// (they carry their own breakers). Everything is fail-open and cached per instance.
+// A self-host worker is probed with a cheap authenticated GET against its
+// /health route: 5xx/timeout/unreachable = down, a populated load_error = down,
+// otherwise up (warm only when the answer is fast AND the model is loaded).
+// External free lanes are reported unknown (they carry their own breakers).
+// Everything is fail-open and cached per instance.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { laneHealthSnapshot, resetLaneHealthCache, laneCooldownKey } from '../../api/_lib/forge-lane-health.js';
@@ -33,14 +35,56 @@ describe('laneHealthSnapshot — self-host worker probing', () => {
 		process.env.MODEL_TRELLIS_URL = 'https://trellis.example.run.app';
 		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
 		globalThis.fetch = vi.fn(async (url, opts) => {
-			expect(url).toBe('https://trellis.example.run.app');
+			expect(url).toBe('https://trellis.example.run.app/health');
 			expect(opts.headers.authorization).toBe('Bearer secret');
-			return new Response('ok', { status: 200 });
+			return new Response(JSON.stringify({ ok: true, ready: true }), { status: 200 });
 		});
 
 		const snap = await laneHealthSnapshot(['trellis_selfhost']);
 		expect(snap.statusMap.trellis_selfhost).toBe('ok');
 		expect(snap.byId.trellis_selfhost.warm).toBe(true);
+	});
+
+	// Routing consulted the service ROOT until 2026-08-11 and read the 404 no
+	// worker serves as a healthy lane, so generations kept being routed at a
+	// worker whose weight load had failed. These pin the readiness reading.
+	it('reports a worker whose model load failed as down', async () => {
+		process.env.GCP_HUNYUAN3D_URL = 'https://hunyuan.example.run.app';
+		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
+		globalThis.fetch = vi.fn(
+			async () =>
+				new Response(JSON.stringify({ ok: true, ready: false, load_error: 'internal error (ref 9f2c1a)' }), {
+					status: 200,
+				}),
+		);
+
+		const snap = await laneHealthSnapshot(['hunyuan3d']);
+		expect(snap.statusMap.hunyuan3d).toBe('down');
+		expect(snap.byId.hunyuan3d.warm).toBe(false);
+	});
+
+	it('reports a worker still loading its weights as up but never warm', async () => {
+		process.env.GCP_HUNYUAN3D_URL = 'https://hunyuan.example.run.app';
+		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
+		globalThis.fetch = vi.fn(
+			async () =>
+				new Response(JSON.stringify({ ok: true, pipeline_loaded: false, ready: false, load_error: null }), {
+					status: 200,
+				}),
+		);
+
+		const snap = await laneHealthSnapshot(['hunyuan3d']);
+		expect(snap.statusMap.hunyuan3d).toBe('ok');
+		expect(snap.byId.hunyuan3d.warm).toBe(false);
+	});
+
+	it('falls open to ok for a routable worker that publishes no health body', async () => {
+		process.env.GCP_HUNYUAN3D_URL = 'https://hunyuan.example.run.app';
+		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
+		globalThis.fetch = vi.fn(async () => new Response('not found', { status: 404 }));
+
+		const snap = await laneHealthSnapshot(['hunyuan3d']);
+		expect(snap.statusMap.hunyuan3d).toBe('ok');
 	});
 
 	it('reports a 5xx worker down', async () => {
