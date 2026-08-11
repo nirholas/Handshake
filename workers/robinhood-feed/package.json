@@ -8,8 +8,12 @@
   "license": "SEE LICENSE IN LICENSE",
   "main": "index.js",
   "scripts": {
+    "prestart": "node scripts/ensure-sdk.mjs",
     "start": "node index.js",
-    "test": "node --test tests/**/*.test.js"
+    "test": "node --test tests/**/*.test.js",
+    "presmoke:live": "node scripts/ensure-sdk.mjs",
+    "smoke:live": "node scripts/smoke-live.mjs",
+    "build:sdk": "node scripts/ensure-sdk.mjs"
   },
   "dependencies": {
     "hoodchain": "file:../../robinhood/robinhood-chain-sdk",
