@@ -55,9 +55,10 @@ export function fmtUsd(v) {
  *
  * @param {object} feeds
  * @param {{ intel?: Array }|null} [feeds.intel]      — /api/aixbt/intel result
+ * @param {{ articles?: Array }|null} [feeds.news]      /api/news/feed result (narrative failover)
  * @param {object|null}            [feeds.sentiment]  — /api/social/sentiment-pulse result
  * @param {object|null}            [feeds.pump]       — pump snapshot result
- * @returns {{ items, sentiment, market, available, offline, isQuiet }}
+ * @returns {{ items, sentiment, market, available, offline, isQuiet, narrativeSource }}
  */
 export function mergeBrief(feeds = {}) {
 	const offline = [];
@@ -69,14 +70,14 @@ export function mergeBrief(feeds = {}) {
 			? feeds.intel
 			: null;
 	let items = [];
-	if (rawIntel == null) {
-		offline.push('narrative');
-	} else {
+	let narrativeSource = null;
+	if (rawIntel != null) {
 		items = rawIntel
 			.map((i) => ({
 				category: clean(i?.category) || null,
 				headline: clean(i?.description || i?.summary),
 				project: clean(i?.project) || null,
+				attribution: null,
 				ticker: clean(i?.ticker) || null,
 				observations: num(i?.observations),
 				official: Boolean(i?.official_source),
@@ -87,7 +88,36 @@ export function mergeBrief(feeds = {}) {
 				if (a.official !== b.official) return a.official ? -1 : 1;
 				return (b.observations || 0) - (a.observations || 0);
 			});
+		if (items.length) narrativeSource = 'aixbt';
 	}
+	// Failover rung: when the aixbt lane is down or empty, the aggregated
+	// publisher feed keeps a real narrative spine on air instead of leaving the
+	// anchor to read a price-only bulletin. Already recency-ordered upstream, and
+	// the sort below is stable, so feed order survives.
+	if (!items.length) {
+		const articles = Array.isArray(feeds.news?.articles)
+			? feeds.news.articles
+			: Array.isArray(feeds.news)
+				? feeds.news
+				: null;
+		if (articles) {
+			items = articles
+				.map((a) => ({
+					category: clean(a?.category) || null,
+					headline: clean(a?.title),
+					project: clean(a?.source) || null,
+					attribution: clean(a?.source) || null,
+					ticker: null,
+					observations: null,
+					official: false,
+				}))
+				.filter((i) => i.headline);
+			if (items.length) narrativeSource = 'news';
+		}
+	}
+	// Only a spine with nothing in either lane counts as offline: a live feed
+	// that simply had no items is quiet, not down.
+	if (rawIntel == null && !items.length) offline.push('narrative');
 	const totalItems = items.length;
 	const topItems = items.slice(0, MAX_ITEMS);
 
@@ -139,10 +169,11 @@ export function mergeBrief(feeds = {}) {
 		sentiment,
 		market,
 		available: {
-			narrative: rawIntel != null && topItems.length > 0,
+			narrative: topItems.length > 0,
 			sentiment: !!sentiment,
 			flow: !!market,
 		},
+		narrativeSource,
 		offline,
 		isQuiet,
 	};
@@ -158,8 +189,14 @@ export function briefDigest(brief) {
 		lines.push('NARRATIVES:');
 		brief.items.forEach((it, i) => {
 			const tag = it.category ? ` [${it.category}]` : '';
-			const obs = it.observations ? ` (${it.observations} obs)` : '';
-			lines.push(`${i + 1}.${tag} ${it.headline}${obs}`);
+			// Publisher attribution replaces the observation count on the news
+			// failover lane, where "how many accounts said it" does not exist.
+			const src = it.observations
+				? ` (${it.observations} obs)`
+				: it.attribution
+					? ` (via ${it.attribution})`
+					: '';
+			lines.push(`${i + 1}.${tag} ${it.headline}${src}`);
 		});
 		if (brief.moreItems) lines.push(`(+${brief.moreItems} more narratives moving)`);
 	}
