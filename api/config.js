@@ -58,8 +58,10 @@ export default wrap(async (req, res) => {
 			avatarByokProviders: hasPlatformProvider ? [] : [...BYOK_REGEN_PROVIDERS],
 			// True when the pipeline returns a rigged (animation-ready) model.
 			avatarRigging: riggingEnabled,
-			// /create/video uses the LongCat GPU worker on Cloud Run; only
-			// available once LONGCAT_WORKER_URL is set in Vercel env.
+			// /create/video uses the LongCat GPU worker, which needs an 80 GB
+			// GPU and so runs on Compute Engine, not Cloud Run (see
+			// workers/longcat/README.md). False until LONGCAT_WORKER_URL is set
+			// on the three-ws-api Cloud Run service.
 			videoAvatar: videoAvatarEnabled,
 			// Live webcam body capture. Off until LIVE_BODY_MOCAP is set; the
 			// frontend gates the "go live (body)" affordance on this.
