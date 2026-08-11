@@ -6,7 +6,7 @@ plaza, an agenda that tells you what is on right now and what is next, a banner
 when each segment starts, and a synchronized fireworks show everyone watches
 together.
 
-Everything below is driven by one file, [`public/event.json`](../public/event.json).
+Everything below is driven by one file, `public/event.json`.
 Edit it, redeploy, and the event exists. Delete it and the world goes back to
 normal with no code change and no dead pixels.
 

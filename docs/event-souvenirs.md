@@ -37,7 +37,7 @@ does not give you a second one and does not show the card again.
 
 ## For whoever runs the event
 
-Everything lives in one file: [`public/event.json`](../public/event.json), the
+Everything lives in one file: `public/event.json`, the
 same config that drives the countdown pill, the agenda drawer, and the fireworks
 finale. Add a `souvenir` block:
 
@@ -226,7 +226,7 @@ machine prefer the two above, which cover the same ground between them.
 | Unlock + persistence | `grantCosmetic` / `restoreProfile` in [multiplayer/src/economy.js](../multiplayer/src/economy.js) |
 | The drop card | [src/game/event-souvenir.js](../src/game/event-souvenir.js) |
 | Wardrobe treatment ("New", "Not for sale") | [src/game/cosmetics-wardrobe.js](../src/game/cosmetics-wardrobe.js) |
-| Event config | [public/event.json](../public/event.json) |
+| Event config | `public/event.json` |
 | Asset generators | [scripts/generate-accessory-glbs.mjs](../scripts/generate-accessory-glbs.mjs), [scripts/render-accessory-thumbs.mjs](../scripts/render-accessory-thumbs.mjs) |
 | Verification | [tests/event-souvenir.test.js](../tests/event-souvenir.test.js), [scripts/play-souvenir-conformance.mjs](../scripts/play-souvenir-conformance.mjs), [scripts/play-souvenir-ui-check.mjs](../scripts/play-souvenir-ui-check.mjs), [scripts/play-souvenir-e2e.mjs](../scripts/play-souvenir-e2e.mjs) |
 
