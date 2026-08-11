@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-11T03:25:08.303Z",
+	"generated_at": "2026-08-11T04:38:04.290Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4432,6 +4432,16 @@
 					"title": "Docs · The agent runtime and transaction guard",
 					"description": "The seven-layer policy engine that preflights every fund-moving tool call in chat before the wallet prompts: security blacklist, approval policy, dollar caps with live SOL pricing, spend envelope with a token and destination firewall, MEV slippage clamp, and x402 budgets. Ships as @three-ws/agent-runtime.",
 					"added": "2026-08-07",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/tokens-xyz",
+					"title": "Docs · Tokens API on three.ws",
+					"description": "The Solana Foundation asset layer wired into three.ws: how one canonical asset maps to every Solana mint that represents it, the batch market read that prices a whole portfolio in one call, and where it sits in the price failover chain behind Birdeye.",
+					"added": "2026-08-11",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

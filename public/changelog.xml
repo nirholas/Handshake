@@ -39,6 +39,14 @@
 			<description>Every agent on the live wall always has its zero-cost activity feed, and watching one can also start a real browser that casts what the agent is doing. When no caster was running, the card still said &quot;warming up&quot; and sat there forever, because the wall assumed a browser was on its way the moment you watched. The wall now checks whether a caster pool is actually running: if one is, you get the same warming and queue-position handoff as before; if none is, the card stays on the honest activity view instead of spinning. The caster itself also got its deploy fixed: its container pinned a browser build its own library no longer matched, so the image would have failed on its first cast, and it now ships as a normal always-on service with a health endpoint that reports exactly which agents it is casting.</description>
 		</item>
 		<item>
+			<title>An agent's on-chain profile loads without console errors</title>
+			<link>https://three.ws/discover</link>
+			<guid isPermaLink="false">2026-08-11:An agent's on-chain profile loads without console errors</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Opening an on-chain agent tried to read its registration file straight from whatever host published it. Most of those hosts do not allow that, so the browser reported two errors before three.ws quietly fetched the same file itself one step later. That fetch is now the first step for anything hosted elsewhere, with the direct read kept as the backup.</description>
+		</item>
+		<item>
 			<title>Auto-rigging tells you when a model cannot be rigged, instead of just failing</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-11:Auto-rigging tells you when a model cannot be rigged, instead of just failing</guid>
@@ -61,6 +69,38 @@
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>three.ws keeps a Google-credits model in reserve so chat, the concierge, and the market anchor keep answering when every free provider is throttled at once. That reserve model reasons before it writes, and its reasoning was being charged against the same length limit as the reply, so it regularly spent the entire budget thinking and returned a handful of words that stopped mid-sentence. The reserve lane now funds its reasoning separately, so a reply that falls back to it is as complete as one from any other model. Measured on the market anchor: an 81-character fragment became a full 499-character read.</description>
+		</item>
+		<item>
+			<title>Coin artwork shows up instead of a broken tile</title>
+			<link>https://three.ws/communities</link>
+			<guid isPermaLink="false">2026-08-11:Coin artwork shows up instead of a broken tile</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Token images are hosted wherever the launch put them, and many of those hosts refuse to serve an image to another website. Around half of pump.fun artwork is also stored as a data file that names the picture rather than being the picture. Both cases rendered as a broken tile: three of them on every Oracle coin page and three on the Communities coin grid. Coin art on those pages now loads through three.ws, which fetches the image, follows the data file to the real artwork, retries across mirrors, and falls back to on-brand art if the source is genuinely gone.</description>
+		</item>
+		<item>
+			<title>Deleting a copy of an avatar no longer blanks the original</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-08-11:Deleting a copy of an avatar no longer blanks the original</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A copy, remix or forge variant of an avatar points at the same stored model and thumbnail as the avatar it came from rather than duplicating the file. Deleting any one of them removed those files outright, so the originals that were still in use lost their model and their picture: 32 public avatars ended up with a model that would not load and 33 with a broken thumbnail, showing up as blank tiles across the gallery, Money Pulse and agent cards. Deletion now checks whether any avatar still in use points at a file before removing it. The already-broken thumbnails have been cleared so the thumbnail renderer picks them up again.</description>
+		</item>
+		<item>
+			<title>Embedded agents render on other people's sites again</title>
+			<link>https://three.ws/embed/v1/preview</link>
+			<guid isPermaLink="false">2026-08-11:Embedded agents render on other people's sites again</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The one-line embed script loads a 3D viewer from a CDN, but never told it how to read the compression every three.ws avatar is saved with, so an embedded agent failed to appear on the host page. The embed now sets that up itself before the viewer starts, which is what pages on three.ws already did.</description>
+		</item>
+		<item>
+			<title>Exit Lab loads again</title>
+			<link>https://three.ws/exit-lab</link>
+			<guid isPermaLink="false">2026-08-11:Exit Lab loads again</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The page that replays the sniper fleet's real closed positions under a different exit policy failed for everyone: the endpoint serving that history answered with an error before writing a single byte, so the console showed its error state and nothing else. It now returns the full corpus, currently 269 real closed positions with 263 of them replayable.</description>
 		</item>
 		<item>
 			<title>Exporting a 3D model as FBX or USDZ works again</title>
@@ -93,6 +133,14 @@
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Low-poly bakes and quad retopology keep running in the background after the request that started them has answered. The machine doing that work was only given a full share of its processor while a request was actually in flight, so a job whose page stopped checking on it kept going at a trickle: one 2,000-face bake that takes under three minutes normally ran for more than fourteen hours. The service now holds its processor for the whole job, so it finishes at full speed whether or not anyone is watching.</description>
+		</item>
+		<item>
+			<title>Holder distribution stops failing at random</title>
+			<link>https://three.ws/crypto</link>
+			<guid isPermaLink="false">2026-08-11:Holder distribution stops failing at random</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The free holder-distribution read behind the Crypto page failed roughly one call in three. Each read was given less time overall than a single provider is allowed to take, so one slow provider consumed the entire budget and the eight backups were cut off before they could answer. The read now has room to actually fall through its provider chain, keeps whatever holder pages it managed to gather when a source dies mid-walk, and says in the logs which source failed.</description>
 		</item>
 		<item>
 			<title>Motion Swap's guide now describes the hand and finger capture it has been doing all along</title>
@@ -151,12 +199,28 @@
 			<description>Our own Hunyuan3D image-to-3D workers answer web requests within seconds of starting, then spend several minutes loading multi-gigabyte model weights in the background. The platform checked only whether a worker answered at all, so a worker that had answered but then failed to load its model looked exactly as healthy as a working one: the forge status page showed it green and generations kept being sent to it. Both the status page and the routing that picks a backend now read the worker's real readiness, so a worker that cannot generate is reported as down and skipped, and one that is still warming up is marked as such instead of promising a fast turnaround it cannot deliver.</description>
 		</item>
 		<item>
+			<title>The character library opens instantly instead of downloading 122 MB first</title>
+			<link>https://three.ws/character-library</link>
+			<guid isPermaLink="false">2026-08-11:The character library opens instantly instead of downloading 122 MB first</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every card in the 107-character library started streaming its full 3D model the moment the page opened, four of them at once and more than 120 MB before you had asked for anything. Cards now show their picture and load the model when you hover or tab onto one, so the page opens immediately, a phone never pays for a preview it did not ask for, and sweeping the mouse across the grid costs nothing.</description>
+		</item>
+		<item>
 			<title>The market anchor keeps real headlines on air when its intel feed goes down</title>
 			<link>https://three.ws/agent-screen</link>
 			<guid isPermaLink="false">2026-08-11:The market anchor keeps real headlines on air when its intel feed goes down</guid>
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The newsroom anchor on the agent screen builds every bulletin from a paid narrative-intel feed, and when that subscription started being refused the anchor was left reading a price-only bulletin with nothing to say. It now falls back to the platform's own aggregated news feed, narrowed to major publishers, so the anchor still leads with real, attributed headlines. The fallback only fires when the primary feed comes back empty, and the anchor still refuses to name any ticker other than $THREE.</description>
+		</item>
+		<item>
+			<title>The money map keeps every avatar it can already show</title>
+			<link>https://three.ws/flow</link>
+			<guid isPermaLink="false">2026-08-11:The money map keeps every avatar it can already show</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Flow drew each wallet's avatar into its canvas in a mode that asks the image host for extra permissions. Those same avatars appear as ordinary images elsewhere on three.ws, and a browser will not reuse a picture it already has when the second request asks for more, so any avatar you had already seen came back blank on the map. The map no longer asks for permissions it never needed.</description>
 		</item>
 		<item>
 			<title>The premium vanity address shelf restocks itself without redoing work it already finished</title>

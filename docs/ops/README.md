@@ -16,6 +16,7 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | [solana-rpc-lanes.md](solana-rpc-lanes.md) | The Solana RPC tier end to end: one-sweep diagnosis, per-lane method capability, what must rotate vs fail, config traps, recovery. |
 | [llm-lanes.md](llm-lanes.md) | The LLM provider chain end to end: which rungs serve, why the paid ones are dead, how spend is metered, the one-command Claude rollout, and per-lane probes. |
 | [page-audit.md](page-audit.md) | `scripts/page-audit.mjs`: authed Chromium sweep of every public page, console-error gated. |
+| [avatar-asset-orphans.md](avatar-asset-orphans.md) | Avatar rows whose model or thumbnail is gone from the bucket: why they happened, how to find and repair them. |
 | [db-retention.md](db-retention.md) | Keeping the Neon Postgres branch under its storage cap: what grows, what gets pruned. |
 | [redis.md](redis.md) | Upstash Redis quota, burn rate, and which limiters are distributed vs local. |
 | [runtime-flags.md](runtime-flags.md) | DB-backed feature flags that flip platform behavior without a redeploy. |

@@ -3,6 +3,78 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "Deleting a copy of an avatar no longer blanks the original",
+			"summary": "A copy, remix or forge variant of an avatar points at the same stored model and thumbnail as the avatar it came from rather than duplicating the file. Deleting any one of them removed those files outright, so the originals that were still in use lost their model and their picture: 32 public avatars ended up with a model that would not load and 33 with a broken thumbnail, showing up as blank tiles across the gallery, Money Pulse and agent cards. Deletion now checks whether any avatar still in use points at a file before removing it. The already-broken thumbnails have been cleared so the thumbnail renderer picks them up again.",
+			"tags": [
+				"fix"
+			],
+			"link": "/gallery"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "Coin artwork shows up instead of a broken tile",
+			"summary": "Token images are hosted wherever the launch put them, and many of those hosts refuse to serve an image to another website. Around half of pump.fun artwork is also stored as a data file that names the picture rather than being the picture. Both cases rendered as a broken tile: three of them on every Oracle coin page and three on the Communities coin grid. Coin art on those pages now loads through three.ws, which fetches the image, follows the data file to the real artwork, retries across mirrors, and falls back to on-brand art if the source is genuinely gone.",
+			"tags": [
+				"fix"
+			],
+			"link": "/communities"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "Exit Lab loads again",
+			"summary": "The page that replays the sniper fleet's real closed positions under a different exit policy failed for everyone: the endpoint serving that history answered with an error before writing a single byte, so the console showed its error state and nothing else. It now returns the full corpus, currently 269 real closed positions with 263 of them replayable.",
+			"tags": [
+				"fix"
+			],
+			"link": "/exit-lab"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "Embedded agents render on other people's sites again",
+			"summary": "The one-line embed script loads a 3D viewer from a CDN, but never told it how to read the compression every three.ws avatar is saved with, so an embedded agent failed to appear on the host page. The embed now sets that up itself before the viewer starts, which is what pages on three.ws already did.",
+			"tags": [
+				"fix"
+			],
+			"link": "/embed/v1/preview"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The money map keeps every avatar it can already show",
+			"summary": "Flow drew each wallet's avatar into its canvas in a mode that asks the image host for extra permissions. Those same avatars appear as ordinary images elsewhere on three.ws, and a browser will not reuse a picture it already has when the second request asks for more, so any avatar you had already seen came back blank on the map. The map no longer asks for permissions it never needed.",
+			"tags": [
+				"fix"
+			],
+			"link": "/flow"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "Holder distribution stops failing at random",
+			"summary": "The free holder-distribution read behind the Crypto page failed roughly one call in three. Each read was given less time overall than a single provider is allowed to take, so one slow provider consumed the entire budget and the eight backups were cut off before they could answer. The read now has room to actually fall through its provider chain, keeps whatever holder pages it managed to gather when a source dies mid-walk, and says in the logs which source failed.",
+			"tags": [
+				"fix"
+			],
+			"link": "/crypto"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The character library opens instantly instead of downloading 122 MB first",
+			"summary": "Every card in the 107-character library started streaming its full 3D model the moment the page opened, four of them at once and more than 120 MB before you had asked for anything. Cards now show their picture and load the model when you hover or tab onto one, so the page opens immediately, a phone never pays for a preview it did not ask for, and sweeping the mouse across the grid costs nothing.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/character-library"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "An agent's on-chain profile loads without console errors",
+			"summary": "Opening an on-chain agent tried to read its registration file straight from whatever host published it. Most of those hosts do not allow that, so the browser reported two errors before three.ws quietly fetched the same file itself one step later. That fetch is now the first step for anything hosted elsewhere, with the direct read kept as the backup.",
+			"tags": [
+				"fix"
+			],
+			"link": "/discover"
+		},
+		{
+			"date": "2026-08-11",
 			"title": "Exporting a 3D model as FBX or USDZ works again",
 			"summary": "Game-Ready export offers FBX alongside GLB, and the mesh tools list USDZ for AR viewers, but both formats failed every single time. FBX was the stranger of the two: the converter wrote a perfectly good file, and then Blender crashed while shutting itself down, so the service read the crash as a failed export and threw the finished file away. USDZ had never been connected to anything that could write one. FBX now reports what actually happened instead of the shutdown crash, and USDZ is written properly with its texture packed inside, so it opens in AR Quick Look and Scene Viewer. Converting a rigged model to FBX still keeps its skeleton, skin weights, and blendshapes.",
 			"tags": [

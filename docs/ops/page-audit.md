@@ -87,6 +87,15 @@ what makes the error count worth acting on. `--reverify-cap N` bounds how many
 pairs get re-checked (default 60, `0` disables the pass); anything past the cap
 is reported unverified and named as such.
 
+The cap is spread evenly across viewports rather than spent in arrival order.
+Desktop runs first, so a flat slice handed every slot to desktop: the full sweep
+of 2026-08-11 re-checked 60 desktop pairs and published 28 mobile pages
+unverified as the report's worst offenders, while the desktop pages beside them
+demoted at four in five. Re-running those 28 one at a time confirmed all but two
+were contention artifacts. If a run still reports pairs beyond the cap, raise
+`--reverify-cap` or re-run just those routes with `--concurrency 1` before
+acting on them.
+
 ## Reports
 
 Findings are deduped, grouped per route, scored by severity (error / warn /
