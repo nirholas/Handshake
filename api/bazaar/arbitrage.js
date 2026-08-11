@@ -46,6 +46,12 @@ function tokenize(s) {
 // back to the last literal segment instead.
 const PLACEHOLDER_SEGMENT = /^(?::.+|\{.+\}|<.+>|\[.+\])$/;
 
+// URL percent-encodes brace and angle placeholders inside a pathname, so a
+// `{mint}` segment arrives as `%7Bmint%7D` and never matches the pattern above.
+function decodeSegment(segment) {
+	try { return decodeURIComponent(segment); } catch { return segment; }
+}
+
 // Many facilitators (orbisapi, hyreagent…) ship empty serviceName and put
 // the capability in the URL path with a random suffix:
 //   /proxy/who-to-contact-api-97ccc0  →  "who-to-contact-api"
@@ -59,7 +65,7 @@ const HASH_SUFFIX = /-(?![a-z]+$)[a-z0-9]{4,12}$/i;
 export function tailFromUrl(url) {
 	try {
 		const u = new URL(url);
-		const segments = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+		const segments = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean).map(decodeSegment);
 		while (segments.length && PLACEHOLDER_SEGMENT.test(segments[segments.length - 1])) segments.pop();
 		const tail = segments.pop() || '';
 		return tail.replace(HASH_SUFFIX, '');
