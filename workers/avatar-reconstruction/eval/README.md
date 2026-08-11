@@ -33,9 +33,10 @@ Two numbers give it meaning:
 
 - **template floor** — the same measurement against the unmorphed template. This
   is what a texture-only pipeline scores, and the number to beat.
-- **improvement** — the fraction of that floor a run closes. The Phase-2 morph
-  moves `strength` (default 0.75) of the way toward the person, so ~0.75 is the
-  current implementation's ceiling, not 1.0.
+- **improvement**: the fraction of that floor a run closes. The geometry morph
+  moves `strength` (default 0.6, see `face_geometry.morph_head_to_landmarks`) of
+  the way toward the person, so that value is the current implementation's
+  ceiling, not 1.0.
 
 A region breakdown (oval / nose / cheeks / brow / jaw) says *where* the shape is
 wrong, which is what decides where the next fidelity push goes.
@@ -115,7 +116,8 @@ Sweeps `strength` x `max_displacement_frac` over every reference face and report
 the best mean ISE, the worst individual face, and how many faces a setting makes
 worse than the shipped default. Runs offline — landmarks are detected once, then
 each combination is applied in-process — so a full grid is minutes, not a day of
-job submissions. This is how the current 0.6 / 0.45 defaults were chosen.
+job submissions. This is how the shipped defaults (`strength` 0.6,
+`max_displacement_frac` 0.55) were chosen.
 
 Read its output with the blind spots above in mind. The sweep's numerical optimum
 is not automatically the right ship: a benchmark of clean portraits will always

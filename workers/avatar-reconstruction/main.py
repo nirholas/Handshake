@@ -1,15 +1,22 @@
 """
-Avatar reconstruction service — Phase 1: face texture transfer.
+Avatar reconstruction service: selfie photos to a rigged GLB avatar.
 
-Same external API contract as the original InstantMesh service so the
-Vercel backend (api/_providers/gcp.js) requires zero changes:
+Same external API contract as the original InstantMesh service, so the
+three.ws backend (api/_providers/gcp.js, `reconstruct` mode) requires no
+changes:
 
   POST /reconstruct   { images: [data-uri|https-url, ...], job_id?: str }
                    →  202 { job_id, status: "queued" }
 
-  GET  /jobs/:id    → { job_id, status, glb_url?, error?, updated_at }
+  GET  /jobs/:id    → { job_id, status, glb_url?, error?, error_kind?, updated_at }
 
-  GET  /health      → { ok, pipeline, model_loaded }
+                       On failure, `error_kind` says whose problem it is:
+                       "input"      the photos were unusable; `error` is the
+                                    caller-facing reason ("no face detected …").
+                       "internal"   a service fault; `error` is an opaque
+                                    correlation id to join against the logs.
+
+  GET  /health      → { ok, pipeline, model_loaded, uv_map_ready, geometry_morph }
 
 Environment variables (all required unless noted):
   API_KEY               — shared bearer secret (set via GCP Secret Manager)
@@ -28,7 +35,6 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
-from fastapi.responses import JSONResponse
 from google.cloud import firestore, storage
 from pydantic import BaseModel, Field
 
@@ -126,10 +132,24 @@ async def _process_job(job_id: str, image_sources: list[str], body_type: str) ->
             _set_job(job_id, {"status": "done", "glb_url": glb_url})
             log.info("[%s] done → %s", job_id, glb_url)
 
+        except face_pipeline.InputError as exc:
+            # The photos, not the service. Hand the reason back verbatim, it is
+            # the only thing that tells the user what to change, and the site's
+            # job-error mapping reads it (see face_pipeline.InputError). Logged at
+            # WARNING with no traceback so a rejected upload never looks like an
+            # outage in the error log.
+            log.warning("[%s] rejected input: %s", job_id, exc)
+            _set_job(job_id, {
+                "status": "failed",
+                "error": str(exc),
+                "error_kind": "input",
+            })
+
         except Exception as exc:
             _set_job(job_id, {
                 "status": "failed",
                 "error": safe_error(exc, context=f"[{job_id}] pipeline"),
+                "error_kind": "internal",
             })
 
 

@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Optional
 
 import cv2
+import httpx
 import mediapipe as mp
 import numpy as np
 from PIL import Image, ImageFilter
@@ -38,6 +39,29 @@ import pygltflib
 from worker_security import UnsafeUrlError, fetch_remote_bytes
 
 log = logging.getLogger("face_pipeline")
+
+
+# ── error classification ───────────────────────────────────────────────────────
+
+class InputError(ValueError):
+    """The submitted photos cannot be reconstructed, and no retry will change that.
+
+    Distinct from every other exception the pipeline can raise, because the two
+    need opposite treatment. An internal fault is an operator's problem: it is
+    logged with a traceback and reported to the caller as an opaque
+    correlation id (``worker_security.safe_error``), since its message can carry
+    paths, library internals and upstream response fragments.
+
+    An input rejection is the *user's* problem and its message is the only thing
+    that lets them fix it. "no face detected in any of the provided photos" is
+    safe to hand back verbatim, and the site's job-error mapping keys off exactly
+    that wording (`src/create-prompt.js` / `src/forge-studio/create-prompt.js`
+    match "face" + "detect" to tell the user to reword their prompt). Routing it
+    through the opaque path instead stranded those users on a generic
+    "Generation failed", and buried a legitimate rejection in the ERROR log next
+    to real outages.
+    """
+
 
 # ── paths ──────────────────────────────────────────────────────────────────────
 
@@ -116,16 +140,29 @@ def _get_uv_map() -> dict:
 def _decode_image(src: str) -> Image.Image:
     if src.startswith("data:image"):
         b64 = src.split(",", 1)[1]
-        return Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
+        try:
+            return Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
+        except Exception as exc:
+            raise InputError("an inline image could not be decoded") from exc
     if src.startswith("https://"):
         # SSRF-hardened: https-only, private/loopback/link-local/metadata IPs
         # rejected after DNS resolution, redirects re-validated per hop, bounded.
         try:
             data = fetch_remote_bytes(src, timeout=30)
         except UnsafeUrlError as exc:
-            raise ValueError(f"refused to fetch image source: {exc}") from exc
-        return Image.open(io.BytesIO(data)).convert("RGB")
-    raise ValueError(f"unsupported image source: {src[:60]}")
+            raise InputError(f"refused to fetch image source: {exc}") from exc
+        except httpx.HTTPStatusError as exc:
+            # The caller chose this URL, so its status belongs in their message.
+            raise InputError(
+                f"image source returned HTTP {exc.response.status_code}"
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise InputError(f"could not fetch image source: {type(exc).__name__}") from exc
+        try:
+            return Image.open(io.BytesIO(data)).convert("RGB")
+        except Exception as exc:
+            raise InputError("a fetched image could not be decoded") from exc
+    raise InputError(f"unsupported image source: {src[:60]}")
 
 
 def _select_best_photo(images: list[Image.Image]) -> tuple[Image.Image, list]:
@@ -478,6 +515,14 @@ def _load_template(body_type: str) -> bytes:
     """
     Load the appropriate template GLB.
     body_type: 'male' | 'female' | 'neutral' (default).
+
+    Only `default.glb` ships today, so every body_type resolves to it. A template
+    is not just any avatar: the whole pipeline addresses it by name (a
+    `Wolf3D_Head` mesh with the 52 ARKit blendshapes, and `Wolf3D_Skin` /
+    `Wolf3D_Hair` / `Wolf3D_Eye` materials), and `face_uv_map.json` is
+    precomputed against that exact mesh. A GLB without those, or with a different
+    head topology, cannot be added to this map without regenerating the UV map
+    for it.
     """
     candidates = {
         "male":    TEMPLATES_DIR / "male.glb",
@@ -531,7 +576,7 @@ def process(
                 log.info("[%s] small-face rescue succeeded on image %d", job_id, idx)
                 break
     if landmarks is None:
-        raise ValueError("no face detected in any of the provided photos")
+        raise InputError("no face detected in any of the provided photos")
     log.info("[%s] face selected (%.1fs)", job_id, time.time() - t0)
 
     img_w, img_h = best_img.size
