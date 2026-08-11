@@ -172,6 +172,9 @@ export async function resolveAgentById(
 							provider: 'elevenlabs',
 							voiceId: agent.voice_id,
 							proxyURL: `${origin}/api/tts/eleven`,
+							// Lets the proxy serve this clip on the owner's own
+							// ElevenLabs key, so an embed speaks for visitors too.
+							agentId: agent.id,
 							...(agent.voice_model ? { modelId: agent.voice_model } : {}),
 							...voiceSettingsToConfig(agent.voice_settings),
 						}

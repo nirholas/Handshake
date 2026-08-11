@@ -179,6 +179,7 @@ export class ElevenLabsTTS {
 		modelId = 'eleven_flash_v2_5',
 		apiKey = null,
 		proxyURL = null,
+		agentId = null,
 		rate = 1,
 		pitch = 1,
 		lang = 'en-US',
@@ -192,6 +193,11 @@ export class ElevenLabsTTS {
 		this.modelId = modelId;
 		this.apiKey = apiKey;
 		this.proxyURL = proxyURL;
+		// The agent this voice belongs to. Forwarded to the proxy so it can serve
+		// the clip on the agent owner's own ElevenLabs key, which is what lets a
+		// bound voice speak to visitors and inside cross-origin embeds rather than
+		// only to the signed-in owner.
+		this.agentId = agentId;
 		this.rate = rate;
 		this.pitch = pitch; // unused — see class comment
 		this.lang = lang;
@@ -261,6 +267,7 @@ export class ElevenLabsTTS {
 			// Forwarded for proxies that prefer a single endpoint
 			voiceId: this.voiceId,
 			modelId: this.modelId,
+			...(this.agentId ? { agentId: this.agentId } : {}),
 		});
 
 		let resp;
