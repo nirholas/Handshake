@@ -253,11 +253,15 @@ gcloud services enable run.googleapis.com cloudbuild.googleapis.com \
   artifactregistry.googleapis.com storage.googleapis.com \
   firestore.googleapis.com secretmanager.googleapis.com
 
-# API key secret (the service compares bearer tokens against it in constant time)
+# API key secret (the service compares bearer tokens against it in constant time).
+# Already created on 2026-08-11 as a 64-hex-character version 1, so this line is
+# only for a fresh project.
 openssl rand -hex 32 | tr -d '\n' | \
-  gcloud secrets create longcat-video-avatar-key --data-file=-
+  gcloud secrets create longcat-video-avatar-key --data-file=- \
+    --project aerial-vehicle-466722-p5 --replication-policy=automatic
 
-# Firestore, native mode, if the project has none yet
+# Firestore, native mode. aerial-vehicle-466722-p5 already has a (default)
+# FIRESTORE_NATIVE database in us-central1, so this too is only for a new project.
 gcloud firestore databases create --location=us-central1
 ```
 
@@ -271,7 +275,10 @@ gcloud artifacts repositories create longcat-video-avatar \
 ```
 
 Output MP4s go to `three-ws-avatar-reconstructions`, the bucket the other model
-workers already use, under the `avatar-videos/` prefix; no new bucket is needed. Weights go to
+workers already use, under the `avatar-videos/` prefix; no new bucket is needed.
+That bucket already grants `allUsers` `roles/storage.objectViewer`, which is what
+makes the `https://storage.googleapis.com/<bucket>/avatar-videos/<job>.mp4` URL
+the worker returns readable by a browser without signing. Weights go to
 `three-ws-model-weights` under `longcat/`, which is the same shared bucket the
 rig, text2motion and TripoSG workers mount.
 
