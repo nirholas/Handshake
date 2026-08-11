@@ -1001,7 +1001,13 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/tour-builder/': resolve(root, 'pages/tour-builder.html'),
 					'/agent-identities': resolve(root, 'pages/agent-identities.html'),
 					'/agent-identities/': resolve(root, 'pages/agent-identities.html'),
-					'/app': resolve(root, 'pages/app.html'),
+					// Production routes /app to the Next viewer and leaves app.html
+					// reachable only at /app-classic (vercel.json). Dev has to mirror
+					// that, or every /app change gets exercised against the wrong page.
+					'/app': resolve(root, 'pages/app-next.html'),
+					'/app/': resolve(root, 'pages/app-next.html'),
+					'/app-next': resolve(root, 'pages/app-next.html'),
+					'/app-classic': resolve(root, 'pages/app.html'),
 					'/widget': resolve(root, 'pages/widget.html'),
 					'/widget/': resolve(root, 'pages/widget.html'),
 					'/login': resolve(root, 'public/login.html'),
