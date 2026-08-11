@@ -26,7 +26,7 @@ export function createSupervisor(cfg, p) {
 	function spawnDaemon() {
 		if (stopping) return;
 		rmSync(p.lock, { force: true, recursive: true });
-		child = spawn('okx-a2a', ['run'], {
+		child = spawn(cfg.daemonBin, ['run'], {
 			env: cliEnv(cfg),
 			cwd: cfg.home,
 			stdio: ['ignore', 'pipe', 'pipe'],
@@ -42,10 +42,15 @@ export function createSupervisor(cfg, p) {
 				if (line.trim()) log[level]('daemon', { line: line.slice(0, 2000) });
 			}
 		};
-		child.stdout.on('data', forward('info'));
-		child.stderr.on('data', forward('warn'));
+		child.stdout?.on('data', forward('info'));
+		child.stderr?.on('data', forward('warn'));
 
-		child.on('exit', (code, signal) => {
+		// One spawn can raise both 'error' and 'exit' (a binary missing from PATH
+		// does exactly that), and each must schedule at most one restart.
+		let settled = false;
+		const daemonDied = (detail) => {
+			if (settled) return;
+			settled = true;
 			const aliveMs = Date.now() - startedAt;
 			child = null;
 			if (stopping) return;
@@ -55,10 +60,17 @@ export function createSupervisor(cfg, p) {
 			// immediately is a config fault and must back off, or the restart loop
 			// buries the real error under thousands of log lines.
 			backoffMs = aliveMs > 60_000 ? cfg.restartBaseMs : Math.min(backoffMs * 2, cfg.restartMaxMs);
-			log.error('daemon exited', { code, signal, aliveMs, restarts, restartInMs: backoffMs });
+			log.error('daemon exited', { ...detail, aliveMs, restarts, restartInMs: backoffMs });
 			timer = setTimeout(spawnDaemon, backoffMs);
 			if (typeof timer.unref === 'function') timer.unref();
-		});
+		};
+
+		// Without this listener a spawn failure is an unhandled 'error' event, which
+		// throws and takes the whole worker down. That turns "the daemon binary is
+		// missing" into "the host is gone", losing the health verdict, the heartbeat
+		// and the alert that would have named the real problem.
+		child.on('error', (err) => daemonDied({ code: err?.code ?? null, signal: null, spawnError: err?.message }));
+		child.on('exit', (code, signal) => daemonDied({ code, signal }));
 	}
 
 	return {

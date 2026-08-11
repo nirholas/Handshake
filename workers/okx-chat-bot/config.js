@@ -60,6 +60,11 @@ export function loadConfig(env = process.env) {
 
 		agentId: env.OKX_BOT_AGENT_ID || '2632',
 
+		// The XMTP daemon binary the supervisor owns. Overridable so a host that
+		// installed it under a different name (or a test that needs a spawn to
+		// fail) does not have to patch the supervisor.
+		daemonBin: env.OKX_BOT_DAEMON_BIN || 'okx-a2a',
+
 		// Durable state. Cloud Run's filesystem is in-memory and dies with the
 		// revision, so the tree above is tarred to GCS and restored on boot.
 		// Unset bucket = ephemeral mode (local dev, or a host with a real disk).

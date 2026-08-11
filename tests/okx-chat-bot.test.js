@@ -8,11 +8,19 @@
 //
 // Pure logic only: no daemon, no wallet, no network, no DB.
 
-import { describe, it, expect } from 'vitest';
+import http from 'node:http';
+import { existsSync } from 'node:fs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { afterAll, describe, it, expect, vi } from 'vitest';
 import { classify, loginInstructions } from '../workers/okx-chat-bot/session.js';
 import { resolveProvider, loadConfig, paths } from '../workers/okx-chat-bot/config.js';
+import { createHealthHandler } from '../workers/okx-chat-bot/health-server.js';
+import { createSupervisor } from '../workers/okx-chat-bot/supervisor.js';
 import { STATE_ROOTS, STATE_EXCLUDES } from '../workers/okx-chat-bot/state.js';
-import { SKILLS } from '../workers/okx-chat-bot/workspace.js';
+import { SKILLS, buildWorkspace } from '../workers/okx-chat-bot/workspace.js';
 import { classifyOkxChatBotBeat } from '../api/_lib/ops/subsystem-health.js';
 import { buildChatBriefing } from '../api/_lib/okx-chat-briefing.js';
 import { OKX_CATALOG } from '../api/_lib/okx-catalog.js';
@@ -138,6 +146,23 @@ describe('okx-chat-bot state contract', () => {
 		expect(STATE_EXCLUDES).toContain('.okx-agent-task/logs');
 	});
 
+	// The heartbeat runs on its own timer, not at the end of a probe. A probe is
+	// bounded at 15s + 30s + 90s of CLI calls, which can outlast the freshness
+	// window classifyOkxChatBotBeat judges this host by, so a beat tied to the
+	// probe would let one slow CLI call read as "the host is gone".
+	it('beats well inside the window /api/healthz calls a host stale', () => {
+		const cfg = loadConfig({});
+		const now = Date.parse('2026-08-02T12:00:00Z');
+		const beat = {
+			mode: cfg.provider,
+			last_beat_at: new Date(now - cfg.heartbeatMs).toISOString(),
+			meta: { health: 'ok', activeClients: 1 },
+		};
+		expect(classifyOkxChatBotBeat(beat, now).status).toBe('ok');
+		// And a beat one full worst-case probe old must NOT be what keeps it green.
+		expect(cfg.heartbeatMs).toBeLessThan(135_000);
+	});
+
 	it('roots every CLI path at the configured HOME so a restore is what the daemon reads', () => {
 		const cfg = loadConfig({ OKX_BOT_HOME: '/state' });
 		const p = paths(cfg);
@@ -188,6 +213,145 @@ describe('okx-chat-bot chat briefing', () => {
 		expect(SKILLS).toContain('okx-agent-task');
 		expect(SKILLS).toContain('okx-agent-payments-protocol');
 		expect(SKILLS).toContain('create-3d-avatar');
+	});
+});
+
+// Smoke tests: the core path end to end, over real HTTP and a real filesystem.
+// Still no daemon, wallet, or network, because neither of those two paths needs
+// one: the verdicts are produced by the real classifier and the workspace is
+// staged from the real repo.
+describe('okx-chat-bot health surface (smoke)', () => {
+	const cfg = loadConfig({ OKX_BOT_HOME: '/state', ANTHROPIC_API_KEY: 'sk-ant-smoke' });
+	const stats = () => ({ restarts: 0, pid: 4242, uptimeMs: 1000 });
+
+	/** Serve one `live` record on an ephemeral port and read a path off it. */
+	async function get(live, path) {
+		const server = http.createServer(createHealthHandler(cfg, live, stats, '2026-08-11T00:00:00.000Z'));
+		await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+		try {
+			const { port } = /** @type {import('node:net').AddressInfo} */ (server.address());
+			const resp = await fetch(`http://127.0.0.1:${port}${path}`);
+			return { status: resp.status, body: await resp.json() };
+		} finally {
+			await new Promise((resolve) => server.close(resolve));
+		}
+	}
+
+	const liveRecord = (probe, login = null) => ({
+		verdict: classify(probe),
+		checkedAt: Date.now(),
+		daemon: probe.daemon,
+		wallet: probe.wallet,
+		agents: probe.agents,
+		login,
+		workspace: { briefingBytes: 4096, skills: SKILLS.length },
+		stateRestore: 'restored',
+	});
+
+	it('answers /readyz 200 only when a buyer message can actually land', async () => {
+		const r = await get(liveRecord(ONLINE), '/readyz');
+		expect(r.status).toBe(200);
+		expect(r.body.health.ready).toBe(true);
+		expect(r.body.agents.activeClients).toBe(1);
+	});
+
+	// The defining false-green: process alive, session dead, chat silently lost.
+	it('answers /readyz 503 for a live host whose session expired', async () => {
+		const live = liveRecord(
+			{ ...ONLINE, wallet: { loggedIn: false }, agents: { agentCount: 0, activeClients: 0 } },
+			{ loginUrl: 'https://web3.okx.com/account/sociallogin?authSessionId=smoke', authSessionId: 'smoke' },
+		);
+		const r = await get(live, '/readyz');
+		expect(r.status).toBe(503);
+		expect(r.body.health.reason).toBe('session_logged_out');
+		// The remedy travels with the status, so the fix is not in a runbook.
+		expect(r.body.remedy.join('\n')).toContain('authSessionId=smoke');
+		expect(r.body.remedy.join('\n')).toContain('--session-id smoke');
+	});
+
+	// Cloud Run's startup probe reads /healthz. It must never restart the
+	// container for a logged-out session: a restart cannot renew an OTP, and the
+	// loop would destroy the state snapshot cadence.
+	it('keeps /healthz at 200 even while readiness is refused', async () => {
+		const live = liveRecord({ ...ONLINE, wallet: { loggedIn: false }, agents: { agentCount: 0, activeClients: 0 } });
+		const r = await get(live, '/healthz');
+		expect(r.status).toBe(200);
+		expect(r.body.ok).toBe(true);
+		expect(r.body.health.ready).toBe(false);
+	});
+
+	it('omits the remedy when no human is needed', async () => {
+		const r = await get(liveRecord(ONLINE), '/healthz');
+		expect(r.body.remedy).toBeUndefined();
+	});
+});
+
+describe('okx-chat-bot workspace staging (smoke)', () => {
+	const repoRoot = fileURLToPath(new URL('..', import.meta.url));
+	const homes = [];
+	afterAll(async () => {
+		for (const home of homes) await rm(home, { recursive: true, force: true });
+	});
+
+	it('stages the briefing and every skill the subsession answers from', async () => {
+		const home = await mkdtemp(join(tmpdir(), 'okx-bot-workspace-'));
+		homes.push(home);
+		const cfg = loadConfig({ OKX_BOT_HOME: home, OKX_BOT_REPO_ROOT: repoRoot });
+		const result = await buildWorkspace(cfg, paths(cfg));
+
+		expect(result.skills).toBe(SKILLS.length);
+		expect(result.briefingBytes).toBeGreaterThan(0);
+		// Both names, because which one the subsession reads depends on which AI
+		// CLI the adapter spawns.
+		for (const name of ['CLAUDE.md', 'AGENTS.md']) {
+			expect(existsSync(join(home, '.okx-agent-task', 'workspace', name))).toBe(true);
+		}
+		for (const dir of ['.claude', '.codex']) {
+			for (const skill of SKILLS) {
+				expect(existsSync(join(home, '.okx-agent-task', 'workspace', dir, 'skills', skill, 'SKILL.md'))).toBe(true);
+			}
+		}
+	});
+
+	// Skills are copied, not symlinked: a link into the image survives locally but
+	// points at a path the subsession may not be allowed to traverse.
+	it('rebuilds cleanly over an existing workspace, so a redeploy is idempotent', async () => {
+		const home = await mkdtemp(join(tmpdir(), 'okx-bot-workspace-'));
+		homes.push(home);
+		const cfg = loadConfig({ OKX_BOT_HOME: home, OKX_BOT_REPO_ROOT: repoRoot });
+		const p = paths(cfg);
+		const first = await buildWorkspace(cfg, p);
+		const second = await buildWorkspace(cfg, p);
+		expect(second).toEqual(first);
+	});
+});
+
+describe('okx-chat-bot daemon supervision (smoke)', () => {
+	// A daemon binary that is not on PATH raises 'error', not just 'exit'. With no
+	// listener that is an unhandled event: it throws and takes the whole worker
+	// down, so "the daemon is missing" would surface as "the host is gone" and the
+	// health verdict, heartbeat and alert that name the real problem never fire.
+	it('survives a daemon binary that cannot be spawned and keeps restarting it', async () => {
+		const home = await mkdtemp(join(tmpdir(), 'okx-bot-supervisor-'));
+		const cfg = loadConfig({
+			OKX_BOT_HOME: home,
+			OKX_BOT_DAEMON_BIN: 'okx-a2a-binary-that-does-not-exist',
+			OKX_BOT_RESTART_BASE_MS: '20',
+			OKX_BOT_RESTART_MAX_MS: '40',
+		});
+		const supervisor = createSupervisor(cfg, paths(cfg));
+		try {
+			supervisor.start();
+			await vi.waitFor(() => expect(supervisor.stats().restarts).toBeGreaterThanOrEqual(2), {
+				timeout: 5_000,
+				interval: 25,
+			});
+			// The process is still here to report it, which is the whole point.
+			expect(classify({ daemon: 'stopped', wallet: null, agents: { agentCount: 0, activeClients: 0 }, providerCredentialed: true }).reason).toBe('daemon_down');
+		} finally {
+			await supervisor.stop(1_000);
+			await rm(home, { recursive: true, force: true });
+		}
 	});
 });
 

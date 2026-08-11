@@ -93,7 +93,14 @@ steps:
       - --no-allow-unauthenticated
       - --service-account=three-ws@$PROJECT_ID.iam.gserviceaccount.com
       - --set-env-vars=NODE_ENV=production,OKX_BOT_HOME=/state,OKX_BOT_REPO_ROOT=/app,OKX_BOT_AGENT_ID=2632,OKX_BOT_STATE_BUCKET=${_STATE_BUCKET}
-      - --set-secrets=DATABASE_URL=okx-chat-bot-database-url:latest
+      # The AI-provider key belongs HERE, not patched on after the deploy:
+      # --set-secrets replaces the whole secret set, so a key added by hand would
+      # be silently stripped by the next deploy. The bot would then receive buyer
+      # chat and never answer it, which is the exact failure this worker exists to
+      # kill. A missing secret failing the deploy loudly is the better trade.
+      # Switching the provider to codex means swapping BOTH the variable name and
+      # the secret here (see workers/okx-chat-bot/config.js).
+      - --set-secrets=DATABASE_URL=okx-chat-bot-database-url:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest
       # Liveness only. Readiness is deliberately NOT wired to Cloud Run: a
       # logged-out session fails /readyz and no restart can fix it, so probing it
       # here would put the service in a crash loop instead of paging a human.

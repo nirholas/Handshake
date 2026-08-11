@@ -43,16 +43,17 @@ testable without a daemon, a wallet, or a network.
 
 | File | Role |
 |------|------|
-| `index.js` | Entrypoint. Boot order, health server, session probe, heartbeat, ops alerts, graceful shutdown. |
+| `index.js` | Entrypoint. Boot order, session probe, heartbeat, ops alerts, graceful shutdown. |
 | `config.js` | Env-driven config (`loadConfig`, `paths`) and AI-provider selection (`resolveProvider`). |
 | `cli.js` | Timeout-bounded, non-throwing wrappers around the `okx-a2a` and `onchainos` binaries. |
 | `session.js` | Pure health `classify()` plus `loginInstructions()`, the exact commands a human runs. |
+| `health-server.js` | The HTTP surface: strict `/readyz`, always-200 liveness, and the `remedy` payload. |
 | `state.js` | Tar the wallet/XMTP identity to GCS and restore it on boot (`snapshotState`, `restoreState`). |
 | `supervisor.js` | Owns the `okx-a2a run` child with capped exponential backoff restarts. |
 | `workspace.js` | Rebuilds the AI subsession's briefing and skills from the image on every boot. |
 | `log.js` | Structured JSON lines for Cloud Logging. |
 
-### Three things that are load-bearing
+### Four things that are load-bearing
 
 **The daemon runs in the foreground, never via `daemon start`.** `okx-a2a daemon
 start` delegates to an OS autostart unit (systemd/launchd). There is no systemd
@@ -68,6 +69,14 @@ and `~/.okx-agent-task/` holds the XMTP client database. Cloud Run's filesystem
 is in-memory and dies with the revision, so `state.js` tars both trees to one
 GCS object and restores it on boot. Without that, every deploy would log the bot
 out and need a fresh human OTP.
+
+**A daemon that cannot be spawned must not take the host with it.** A missing or
+unrunnable `okx-a2a` binary raises `error` on the child, not just `exit`. Node
+throws on an unhandled `error` event, so without a listener the whole worker dies
+and "the daemon binary is missing" surfaces as "the host is gone": no health
+verdict, no heartbeat, no alert naming the real problem. `supervisor.js` handles
+both events through one restart path, and a spawn that raises both never
+schedules two restarts.
 
 **The AI workspace is rebuilt from the image, not from the snapshot.** The
 adapter spawns the AI CLI with cwd set to `~/.okx-agent-task/workspace`, and
@@ -91,7 +100,8 @@ locally with no code change. Defaults are the production posture.
 | `OKX_BOT_STATE_OBJECT` | `okx-chat-bot/state.tar.gz` | Object name within that bucket. |
 | `OKX_BOT_REPO_ROOT` | `/app` | Where the briefing and skills are read from. |
 | `OKX_BOT_AI_PROVIDER` | auto | Pin the provider (`claude`, `codex`, `hermes`, `openclaw`). |
-| `OKX_BOT_HEARTBEAT_MS` | `30000` | Heartbeat cadence. |
+| `OKX_BOT_DAEMON_BIN` | `okx-a2a` | The XMTP daemon binary the supervisor owns. |
+| `OKX_BOT_HEARTBEAT_MS` | `30000` | How often the `bot_heartbeat` row is written. Its own timer, not the probe's. |
 | `OKX_BOT_SESSION_PROBE_MS` | `60000` | How often health is re-probed. |
 | `OKX_BOT_SNAPSHOT_MS` | `300000` | Periodic state snapshot cadence. |
 | `OKX_BOT_ALERT_REPEAT_MS` | `21600000` | Re-alert ceiling while a bad state persists (6 h). |
@@ -149,12 +159,19 @@ someone has to go find.
 
 ## Deploying
 
+**Status: built and tested, not yet deployed.** There is no `okx-chat-bot`
+Cloud Run service in `aerial-vehicle-466722-p5` yet, and the one-time setup
+below has not been run: neither `gs://three-ws-okx-bot-state` nor the
+`okx-chat-bot-database-url` and `anthropic-api-key` secrets exist. Deploys are
+owner-gated, so the three setup commands and the build submit below are the
+whole remaining path. Until they run, the bot is hosted wherever it was last
+started by hand and `/api/healthz` reports `okx_chat_bot` as `unknown`.
+
 The service must run `--min-instances=1 --max-instances=1`. This is not a
 capacity choice: the GCS snapshot has exactly one writer, and concurrent
 revisions would interleave snapshots and corrupt the identity.
 
-Production deploys are owner-gated, so everything is pre-staged and shipping is
-one command:
+Shipping is one command once the setup below exists:
 
 ```bash
 gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml \
@@ -170,13 +187,22 @@ required. The bucket and secret commands are at the top of
 Cloud Run's startup probe is wired to `/healthz` and deliberately **not** to
 `/readyz`, for the same reason liveness is always-200.
 
-One-time setup:
+One-time setup (none of it has run yet; the exact commands are at the top of
+[cloudbuild.yaml](cloudbuild.yaml)):
 
 1. Create the state bucket and grant the runtime service account
    `roles/storage.objectAdmin` on it.
-2. Set `OKX_BOT_STATE_BUCKET`, `DATABASE_URL`, and an AI-provider key
-   (`ANTHROPIC_API_KEY` preferred) on the service.
+2. Create the `okx-chat-bot-database-url` and `anthropic-api-key` secrets and
+   grant the runtime service account `roles/secretmanager.secretAccessor` on
+   both. The deploy step wires them by name and **fails if either is missing**,
+   which is deliberate: a bot with no AI credential receives buyer chat and
+   never answers it. `OKX_BOT_STATE_BUCKET` needs no manual step, the deploy
+   sets it.
 3. Confirm the image has both CLIs installed and the repo at `OKX_BOT_REPO_ROOT`.
+
+Never patch the AI key onto the service by hand. `--set-secrets` in the deploy
+step replaces the whole secret set, so a hand-added key survives exactly until
+the next deploy and then vanishes without a single error line.
 
 The first boot logs `no state snapshot yet: first boot for this bucket` and
 comes up logged out, which pages a human to complete the initial OTP as
@@ -201,7 +227,11 @@ curl -s https://three.ws/api/healthz \
 ```
 
 A host that stops beating reads as `down` rather than silently vanishing, which
-is the whole point: a dead host cannot report that it is dead.
+is the whole point: a dead host cannot report that it is dead. The beat runs on
+its own timer (`OKX_BOT_HEARTBEAT_MS`) rather than at the end of a probe,
+because a probe is bounded at 15s + 30s + 90s of CLI calls and can outlast the
+two-minute freshness window `/api/healthz` judges the host by. One slow wallet
+call must not read as "the host is gone".
 
 What a human has to do, read off the service itself:
 
