@@ -1,7 +1,7 @@
 {
   "name": "@three-ws/vanity",
   "version": "0.1.2",
-  "description": "Mine Solana vanity addresses (custom prefix/suffix) fast — WASM-accelerated, in the browser or Node. Ergonomic grind() API over a real Rust/ed25519 grinder, with progress, difficulty/ETA, and a paid x402 fallback.",
+  "description": "Mine Solana vanity addresses (custom prefix/suffix) locally in Node or the browser. Zero-dependency grind() over the platform's native Ed25519, with progress, difficulty/ETA, and a paid x402 fallback.",
   "type": "module",
   "main": "./src/index.js",
   "module": "./src/index.js",
@@ -28,7 +28,6 @@
     "vanity-address",
     "keypair",
     "ed25519",
-    "wasm",
     "bs58",
     "base58",
     "wallet",

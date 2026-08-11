@@ -169,7 +169,7 @@ Returns specific, user-facing error strings (e.g. `invalid character 'O'
 
 ### `grindViaApi(options) → Promise<ApiResult>` — the paid lane
 
-For environments without WASM/Workers, grind a short pattern over the hosted
+For environments that can't grind locally, grind a short pattern over the hosted
 [x402](https://x402.org) endpoint instead of locally. Wraps
 `GET /api/x402/vanity`. Combined pattern capped at 3 chars; pass an
 x402-capable `fetch` to settle the 402 automatically.
@@ -189,48 +189,47 @@ for `format=mnemonic` — `mnemonic`, `wordCount`, `derivationPath`.
 
 ## How it works
 
-Two backends, one `grind()` surface. Picked by environment.
+Two keygen backends, one `grind()` surface. Picked by environment, resolved
+once, then the same batched hot loop runs on either.
 
 ```
-                        grind({ prefix, suffix })
-                                  │
-              ┌───────── browser ─┴─ Node ──────────┐
-              ▼                                      ▼
-     Web Worker pool  (1/core, capped)      WASM on the request thread
-              │  start/pause/resume/stop             │  batched, time-budgeted
-              ▼                                       ▼
-    ┌──────────────────────────────────────────────────────────┐
-    │  Rust + ed25519-dalek + bs58  →  WebAssembly               │
-    │  grind(prefix, suffix, ignoreCase, batchSize, seed)        │
-    │  → null  | { publicKey: string, secretKey: Uint8Array(64) }│
-    └──────────────────────────────────────────────────────────┘
-              │ first match wins → pool terminated
-              ▼
-        { publicKey, secretKey, attempts, durationMs }
+                     grind({ prefix, suffix })
+                               |
+             +------- Node ----+---- browser/Deno ------+
+             v                                          v
+  crypto.generateKeyPairSync('ed25519')    crypto.subtle.generateKey('Ed25519')
+             |                                          |
+             +--------------------+---------------------+
+                                  v
+        batched loop: keygen -> Base58 encode -> prefix/suffix compare
+        (2,000 keys per batch, then yield so aborts + progress land)
+                                  |
+                                  v
+            { publicKey, secretKey, attempts, durationMs, workers: 1 }
 ```
 
-- **WASM core** — the hot loop (CSPRNG seed → Ed25519 keygen → Base58 encode →
-  prefix/suffix compare) runs entirely inside WebAssembly in fixed-size batches.
-  Built from `crates/vanity-grinder` via `npm run build:wasm`; the compiled
-  artifact is checked into `src/solana/vanity/wasm/` so there's no Rust
-  toolchain at install time.
-- **Browser pool** — one worker per logical core (default `min(cores, 8)`).
-  Each worker yields to its event loop between batches, so `pause`/`stop`
-  messages land within one batch (≤~200ms). Pausing genuinely frees the cores;
-  resume continues the attempt count.
-- **Node path** — no Worker pool in a serverless function, so the same WASM
-  module runs single-threaded under a wall-clock budget. The hosted endpoint
-  caps patterns at 3 chars for this reason; anything longer belongs in the
-  browser pool.
+- **Platform crypto core.** The hot loop (Ed25519 keygen, Base58 encode,
+  prefix/suffix compare) uses the runtime's native crypto primitive. Under
+  Node that is OpenSSL via `generateKeyPairSync`; in the browser it is
+  WebCrypto. No JS big-integer math on the keygen path, no dependencies.
+- **Batched and abortable.** The loop checks 2,000 candidates, then yields to
+  the event loop, so an `AbortSignal` lands within one batch and `onProgress`
+  fires on a ~250ms wall-clock cadence.
+- **Single-threaded by design.** The local path runs on the calling thread;
+  `GrindResult.workers` is always `1`. For long patterns, run several
+  `grind()` calls in your own worker threads or processes if you need
+  parallelism. The hosted x402 endpoint caps patterns at 3 chars because it
+  grinds under a server-side wall-clock budget.
 
 ## Security
 
 This is the part that matters for a secret-key tool.
 
 - **Keys are generated locally and never transmitted.** In both the browser and
-  Node SDK paths, the keypair is produced on your machine inside WASM. No
-  address, no secret key, no prefix is sent to three.ws or anywhere else. There
-  is no network call on the local `grind()` path.
+  Node SDK paths, the keypair is produced on your machine by the platform's
+  own crypto primitive. No address, no secret key, no prefix is sent to
+  three.ws or anywhere else. There is no network call on the local `grind()`
+  path.
 - **The secret exists once, in memory.** `grind()` resolves with the
   `secretKey`; nothing persists it. Capture it (write the wallet, store it
   encrypted) before the value goes out of scope.
@@ -276,7 +275,7 @@ The local `grind()` path rejects on:
 | Non-Base58 char (`0 O I l`, etc.) | `Error: invalid prefix: invalid character 'O' …` |
 | Pattern longer than 6 chars | `Error: length 7 exceeds maximum of 6` |
 | `signal` aborted | `AbortError` (`DOMException`) |
-| Worker crash (browser) | The worker's error, rejecting the promise |
+| Runtime without Ed25519 support | `ThreeWsError` (`code: 'no_ed25519'`) naming the required runtimes |
 
 The paid `grindViaApi()` path surfaces the endpoint's HTTP errors:
 
@@ -287,8 +286,8 @@ The paid `grindViaApi()` path surfaces the endpoint's HTTP errors:
 | `grind_exhausted` | 504 | Time budget elapsed without a hit (rare, <1% at 3 chars). | Retry — you weren't charged. |
 | `rate_limited` | 429 | Pre-payment probe rate limit. | Honour `retry-after`. |
 
-Long patterns are designed, not crashed: the server tells you to move to the
-browser pool, where there's no cap and every core is in play.
+Long patterns are designed, not crashed: the server tells you to grind them
+locally with `grind()`, where the only cap is the 6-char-per-pattern ceiling.
 
 ## Examples
 
@@ -303,19 +302,17 @@ writeFileSync(`${publicKey}.json`, JSON.stringify(Array.from(secretKey)));
 // → solana config set --keypair ./<address>.json
 ```
 
-**Browser — pause/resume a long grind with a controller:**
+**Browser — cancel a long grind from the UI:**
 
 ```js
 import { grind } from '@three-ws/vanity';
 
-const controller = {};
-const job = grind({ prefix: 'THREE', controller, onProgress: render });
+const controller = new AbortController();
+const job = grind({ prefix: 'THR', signal: controller.signal, onProgress: render });
 
-document.querySelector('#pause').onclick  = () => controller.pause();
-document.querySelector('#resume').onclick = () => controller.resume();
-document.querySelector('#stop').onclick   = () => controller.stop();
+document.querySelector('#stop').onclick = () => controller.abort();
 
-const { publicKey, secretKey } = await job;
+const { publicKey, secretKey } = await job; // rejects with AbortError on stop
 ```
 
 **Agent — the free MCP tool, no toolchain:**
