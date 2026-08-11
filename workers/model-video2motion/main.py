@@ -14,8 +14,9 @@ Given an https video URL, the worker:
      SAME document shape the animation library and text2motion lane serve, so
      the platform retargets it onto any rigged avatar with the existing engine
      (src/animation-retarget.js),
-  4. runs MediaPipe ImageSegmenter (selfie model, Apache-2.0) per frame and
-     encodes a grayscale person-mask video aligned with the normalized video,
+  4. runs MediaPipe ImageSegmenter (selfie multiclass model, Apache-2.0) per
+     frame, taking the person mask as 1 - background confidence, and encodes a
+     grayscale person-mask video aligned with the normalized video,
   5. uploads clip + mask + normalized video + per-frame screen anchors to GCS.
 
 The browser compositor (/motion-swap) then plays the normalized video as the
@@ -168,6 +169,28 @@ def _ffmpeg(args: list[str]) -> None:
         raise RuntimeError(f"ffmpeg failed: {proc.stderr[-400:]}")
 
 
+def _normalize_video(raw_path: str, out_path: str, fps: int, seconds: float) -> None:
+    """Cap duration, fps and long edge; keep the audio; strip source metadata.
+
+    Everything downstream (frame analysis, the mask video, the anchor track)
+    assumes the normalized video's timebase, so this runs before any inference.
+    """
+    _ffmpeg(
+        [
+            "-i", raw_path,
+            "-t", f"{seconds:.2f}",
+            "-vf",
+            f"fps={fps},scale='if(gt(iw,ih),min(iw,{MAX_EDGE}),-2)':'if(gt(iw,ih),-2,min(ih,{MAX_EDGE}))'",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
+            "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "128k",
+            "-map_metadata", "-1",
+            "-movflags", "+faststart",
+            out_path,
+        ]
+    )
+
+
 def _process(task_id: str, video_url: str, fps: int, seconds: float) -> dict:
     workdir = tempfile.mkdtemp(prefix="v2m-")
     try:
@@ -183,22 +206,8 @@ def _process(task_id: str, video_url: str, fps: int, seconds: float) -> dict:
         with open(raw_path, "wb") as f:
             f.write(data)
 
-        # Normalize: cap duration, fps and resolution; keep audio; strip metadata.
         norm_path = os.path.join(workdir, "video.mp4")
-        _ffmpeg(
-            [
-                "-i", raw_path,
-                "-t", f"{seconds:.2f}",
-                "-vf",
-                f"fps={fps},scale='if(gt(iw,ih),min(iw,{MAX_EDGE}),-2)':'if(gt(iw,ih),-2,min(ih,{MAX_EDGE}))'",
-                "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
-                "-pix_fmt", "yuv420p",
-                "-c:a", "aac", "-b:a", "128k",
-                "-map_metadata", "-1",
-                "-movflags", "+faststart",
-                norm_path,
-            ]
-        )
+        _normalize_video(raw_path, norm_path, fps, seconds)
 
         world, image, vis, hands, masks, width, height = _analyze(norm_path, fps)
         n_frames = world.shape[0]
