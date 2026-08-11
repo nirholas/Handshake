@@ -3,6 +3,37 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "AR Forge stops spinning forever, and its failure states now hand you the model",
+			"summary": "AR Forge at /ar turns a sentence into a real 3D model you can place in your room. Three ways it could leave you stuck are gone. Reopening a model you had already loaded, from the Recent forges row or a shared link you were already viewing, showed a loading spinner that never finished, because the 3D viewer only announces a load when the model actually changes; it now snaps straight back to the loaded model. When a model could not be displayed at all, because the 3D viewer script was blocked or the file would not render, the page offered Download GLB and Open in viewer buttons that had no link behind them and sat underneath an invisible layer that swallowed the click; those buttons are now wired the moment the model URL is known and are clickable, so the advice to download the file is advice you can follow. A model that simply never arrives no longer spins indefinitely either: if nothing has downloaded for thirty seconds it stops and offers the same real exits, and the countdown restarts whenever data is still coming in, so a large model on a slow connection is never cut off. The waiting copy also tells the truth now, moving from sending your prompt through queued on the free lane to sculpting geometry as the generation actually progresses, instead of freezing on the first line for a minute. A network drop used to surface the browser wording Failed to fetch; it now says the forge could not be reached and to check your connection. The View in your space button also keeps the language you are reading the site in rather than flipping back to English once a model loads.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/ar"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The Agent Identity Studio showcase is live data now, and its 3D button goes both ways",
+			"summary": "The gallery at /agent-identities shows what the Identity Studio produces: a brand brief in, a rigged 3D avatar and a set of studio renders out. Until now those demo identities were frozen into the page at build time, and the price in the header was typed into the copy, so a fresh demo run or a price change only showed up at the next site build. The page now reads a live feed at /api/agent-identities, which is also public for anyone else to call: it carries every demo identity, its renders, its rigged model, and the verified joint count, plus the service price read straight from the marketplace catalogue the paid endpoint charges from. Because the page now waits on something, it was given the states to match: shimmering placeholder cards while the feed loads, a real error panel with a working retry if it never arrives, and an honest empty state instead of a blank grid. View in 3D is a proper toggle at last, turning into Back to renders rather than becoming a dead button after one click, and it shows a spinner while the avatar downloads and a link to the full viewer if it fails. A render whose image is missing now says so instead of leaving a broken-image icon. On a phone-width screen the cards no longer push the page sideways.",
+			"tags": [
+				"improvement",
+				"feature",
+				"fix"
+			],
+			"link": "/agent-identities"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The Avatar Engines Atlas tells the truth about Ready Player Me, and two of its links now go where they say",
+			"summary": "The atlas at /avatar-engines is a reference for builders choosing an engine to make a realistic 3D human, so a stale entry there sends someone down a dead end. Ready Player Me, listed as a live commercial platform you could call, shut its avatar creator and developer API on 31 January 2026 after Netflix acquired it. Its card now carries a Retired badge and says plainly what closed and what still works: GLB files exported before the shutdown are ordinary rigged glTF and still load and animate here. Every one of the atlas's 63 outbound links was checked. IMavatar's project page had moved and returned a 404, and the FLAME entry's Paper button opened an unrelated aerodynamics preprint rather than the FLAME paper; both now resolve. Documentation sites that had been sitting in the paper field, and so rendered as a Paper button, are labelled Docs. The page also handles its own bad day now: a skeleton grid while the registry loads, and, if the registry never arrives, an error state that offers a reload and the atlas documentation instead of an empty page.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/avatar-engines"
+		},
+		{
+			"date": "2026-08-11",
 			"title": "Every page now shares with its own correct title and description",
 			"summary": "A bug in the tool that reads each blog post's own <head> cut every description short at the first apostrophe, so five posts were being listed and shared with a fragment: 'three.ws is DEXTools' instead of the full sentence. The tool now reads the whole value, and all five read properly again wherever they appear. Twenty-one page descriptions across the site had also been damaged by an earlier find-and-replace that swapped dashes for colons, turning sentences like 'Type a prompt, or drop in photos or a sketch, and get a 3D model' into copy that no longer parsed; those have been rewritten. Three pages that shared a title with another page (the Character Studio doc, the guards reference, and the write-a-guard tutorial) now each say what they actually are, and the NVIDIA Inception overview, which had shipped with no description, canonical link or social card at all, now has the full set. The site's link previews were also only being checked on the 288 pages the checker could find a file for; it can now find all 615, so the whole catalogue is covered.",
 			"tags": [
@@ -19823,6 +19854,16 @@
 				"sdk"
 			],
 			"link": "/mcp-tools"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The Claude artifact builder now picks your agent for you",
+			"summary": "Embedding an agent in a Claude conversation used to start with a blank box asking for an agent ID that nothing on the page told you how to find. The builder at /artifact now lists real public agents that carry an embeddable avatar, with their thumbnails; click one and the artifact builds, previews in a sandboxed frame and is ready to paste. Everything you configure (agent, theme, idle clip, background) is now carried in the page's address, so the link you copy rebuilds the same artifact for whoever you send it to. Typing an ID that was not an agent UUID used to come back as an internal error with a support reference; it now says plainly that agent IDs are UUIDs and where to find one. The sandbox CSP panel reads from three.ws instead of a third-party mirror, so it fills in even when GitHub is unreachable, and the whole page fits a 320px phone screen without sideways scrolling.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/artifact"
 		}
 	]
 }
