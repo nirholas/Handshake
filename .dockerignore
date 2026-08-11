@@ -24,3 +24,10 @@ test-results
 three.ws-log-export-*.json
 *.pem
 *.key
+
+# Worker signing-key caches. A worker Dockerfile COPYs its own directory wholesale,
+# so a local .cache/ of raw secret keys (workers/agora-citizens/.cache holds one
+# devnet keypair per citizen) would be baked into the pushed image AND would make
+# the deployed fleet drive the same on-chain identities as the local one. They are
+# gitignored; they must be build-ignored too. The worker regenerates them at boot.
+workers/*/.cache
