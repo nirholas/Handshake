@@ -31,6 +31,14 @@
 			<description>Cutting the background out of an image is the step that runs before most 3D generations, and it was doing avoidable work: every image was re-encoded to PNG on the way in, which on a 12 megapixel photo cost more time than the cutout itself. That round trip is gone, so the step now takes about a third of the time, and because the original file goes straight to the model, a photo taken on a phone comes back the way up you took it instead of on its side. Failures explain themselves now too: a link that answers &quot;not found&quot; or &quot;forbidden&quot;, a file that is not an image, or a truncated paste all used to come back as an unexplained server error, and now say which of those happened so you can fix the input.</description>
 		</item>
 		<item>
+			<title>Chat answers no longer stop mid-sentence when the platform falls back to its own Gemini lane</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-11:Chat answers no longer stop mid-sentence when the platform falls back to its own Gemini lane</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>three.ws keeps a Google-credits model in reserve so chat, the concierge, and the market anchor keep answering when every free provider is throttled at once. That reserve model reasons before it writes, and its reasoning was being charged against the same length limit as the reply, so it regularly spent the entire budget thinking and returned a handful of words that stopped mid-sentence. The reserve lane now funds its reasoning separately, so a reply that falls back to it is as complete as one from any other model. Measured on the market anchor: an 81-character fragment became a full 499-character read.</description>
+		</item>
+		<item>
 			<title>Garment generation no longer runs out of memory mid-job</title>
 			<link>https://three.ws/wardrobe</link>
 			<guid isPermaLink="false">2026-08-11:Garment generation no longer runs out of memory mid-job</guid>
@@ -85,6 +93,22 @@
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Our own Hunyuan3D image-to-3D workers answer web requests within seconds of starting, then spend several minutes loading multi-gigabyte model weights in the background. The platform checked only whether a worker answered at all, so a worker that had answered but then failed to load its model looked exactly as healthy as a working one: the forge status page showed it green and generations kept being sent to it. Both the status page and the routing that picks a backend now read the worker's real readiness, so a worker that cannot generate is reported as down and skipped, and one that is still warming up is marked as such instead of promising a fast turnaround it cannot deliver.</description>
+		</item>
+		<item>
+			<title>The market anchor keeps real headlines on air when its intel feed goes down</title>
+			<link>https://three.ws/agent-screen</link>
+			<guid isPermaLink="false">2026-08-11:The market anchor keeps real headlines on air when its intel feed goes down</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The newsroom anchor on the agent screen builds every bulletin from a paid narrative-intel feed, and when that subscription started being refused the anchor was left reading a price-only bulletin with nothing to say. It now falls back to the platform's own aggregated news feed, narrowed to major publishers, so the anchor still leads with real, attributed headlines. The fallback only fires when the primary feed comes back empty, and the anchor still refuses to name any ticker other than $THREE.</description>
+		</item>
+		<item>
+			<title>The premium vanity address shelf restocks itself without redoing work it already finished</title>
+			<link>https://three.ws/vanity/premium</link>
+			<guid isPermaLink="false">2026-08-11:The premium vanity address shelf restocks itself without redoing work it already finished</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Premium vanity addresses (the long, brandable Solana addresses sold from stock) are ground ahead of time on cheap batch machines. Those machines get one hour before the platform stops them, and until now a batch that needed longer was cut off mid-run and reported as a failure, then started over from zero on the retry, re-grinding addresses that were already on the shelf. The grinder now stops itself cleanly a few minutes early, keeps everything it found, and on its next run reads the shelf first and skips every pattern still in stock. Wide multi-machine runs also now split the work properly instead of every machine grinding the same slice.</description>
 		</item>
 		<item>
 			<title>The pump.fun MCP server now returns the real name and symbol for tokens launched today</title>
