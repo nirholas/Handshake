@@ -23,7 +23,7 @@ import {
 	PRESETS, GUARDS, GRADUATION_ACTIONS, PolicyError,
 	normalizePolicyPatch, upsertPolicy, getPolicyByMint, listOwnerPolicies,
 	resolveOwnedLaunch, listActions, getDeployedLamports24h, getDefenseLamports24h,
-	toPublicPolicy, toPublicAction, SOL,
+	getEngineLiveness, toPublicPolicy, toPublicAction, SOL,
 } from '../_lib/market-maker.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -92,10 +92,13 @@ async function handleGet(req, res, url) {
 		return json(res, 200, { data: { policy: pub, owned, presets: presetCatalog(), guards: guardInfo() } });
 	}
 
-	const [actions, deployed, defense] = await Promise.all([
+	const [actions, deployed, defense, engine] = await Promise.all([
 		listActions(policy.id, { limit: 40, includeSkips: true }),
 		getDeployedLamports24h(policy.id),
 		getDefenseLamports24h(policy.id),
+		// An armed policy with no worker sweeping it will never fire. Say so here
+		// rather than letting the dashboard imply a maker that is working.
+		getEngineLiveness(),
 	]);
 	const dailyBudget = BigInt(policy.daily_budget_lamports || 0);
 	const dipBudget = BigInt(policy.dip_buy_budget_lamports || 0);
@@ -109,6 +112,7 @@ async function handleGet(req, res, url) {
 		data: {
 			policy: pub, owned, presets: presetCatalog(), guards: guardInfo(),
 			budget: state,
+			engine,
 			actions: actions.map(toPublicAction),
 		},
 	});
