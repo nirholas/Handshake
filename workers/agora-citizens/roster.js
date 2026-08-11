@@ -132,8 +132,10 @@ function shapeSeeded(agent, i) {
 		kind: 'agent',
 		displayName: agent.name,
 		profession: 'fetcher',
-		// Every seeded citizen can at least Fetch (the one profession shipped in
-		// Task 02). Later tasks widen this from the agent's real skills.
+		// A platform agent primaries Fetcher because its real skills are not mapped
+		// to capability bits yet, and Fetcher is the one craft every citizen can do
+		// against any board task. The specialist crafts live in STANDALONE_CITIZENS
+		// below, which is why they are seated first.
 		professionBits: professionBits(['fetcher']),
 		home,
 		agentDbId: agent.id,
