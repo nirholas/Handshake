@@ -10,11 +10,17 @@
 //   {
 //     job_id,
 //     status:    "queued" | "running" | "done" | "failed",
-//     progress:  number | null,   // 0–1, present while status === "running"
+//     progress:  number | null,   // 0 to 1, monotonic, present once running
+//     segments:  number | null,   // clips the worker is rendering for this audio
+//     audio_seconds: number | null, // measured duration of the driving audio
 //     video_url: string | null,   // present when status === "done"
 //     error:     string | null,   // present when status === "failed"
 //     updated_at: string,         // ISO 8601
 //   }
+//
+// The worker renders a fixed 3.72 s clip per segment and sizes the segment count
+// from the audio duration, so `segments` is what turns `progress` into a real
+// expectation ("3 clips") instead of an opaque percentage.
 //
 // Errors:
 //   400 invalid_request  - missing job_id
@@ -92,6 +98,8 @@ export default wrap(async (req, res) => {
 		job_id:     job.job_id,
 		status:     job.status,
 		progress:   job.progress   ?? null,
+		segments:   job.segments   ?? null,
+		audio_seconds: job.audio_seconds ?? null,
 		video_url:  job.video_url  ?? null,
 		error:      job.error      ?? null,
 		updated_at: job.updated_at ?? null,
