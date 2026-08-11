@@ -2,11 +2,12 @@
 //
 // The Oracle ships a long-lived worker (workers/oracle) with two loops: a score
 // loop that keeps oracle_conviction warm from the data brain, and an agent loop
-// that acts on fresh verdicts for every armed watch. This platform deploys on
-// Vercel (no host for a long-lived process), so this cron drives the same two
-// passes serverlessly — exactly the pattern the intel-learn / smart-money-rollup
-// crons use. With it scheduled, the /oracle feed warms up and armed agents act
-// without anything else running.
+// that acts on fresh verdicts for every armed watch. Rather than run a second
+// always-on service for work that is cheap, DB-bound and idempotent, this cron
+// drives the same passes inside the API container on a Cloud Scheduler tick,
+// exactly the pattern the intel-learn / smart-money-rollup crons use. This IS
+// the production run path for workers/oracle: with it scheduled, the /oracle
+// feed warms up and armed agents act without anything else running.
 //
 // Reuses the worker's real code paths (no duplicated logic):
 //   1. runScorePass            — score recent brain coins missing/stale in the cache.
