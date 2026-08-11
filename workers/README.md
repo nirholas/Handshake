@@ -30,10 +30,12 @@ Make-It-Animatable (jasongzy, MIT): takes a raw generated mesh and adds a 52-bon
 ### `avatar-reconstruction/` (GPU L4)
 Standalone face-to-avatar service running InstantMesh: accepts 1–6 face photos, synthesizes 6 multi-view renders via Zero123++, reconstructs a textured GLB, and stores it in Cloud Storage. Predates the split pipeline above; see `avatar-reconstruction/README.md`.
 
-## Talking-avatar video (Cloud Run)
+## Talking-avatar video (Compute Engine GPU)
 
-### `longcat/` (GPU L4)
-FastAPI service running LongCat-Video-Avatar-1.5 (MIT). Takes a reference image + audio URL and renders a lip-synced talking-avatar MP4 to Cloud Storage. API: `POST /generate` -> `202 { job_id }`, `GET /jobs/:id`, `GET /health`; bearer-auth on every request. Full deploy + cost guide in `longcat/README.md`.
+### `longcat/` (GPU, 80 GB class; built and tested, not deployed)
+FastAPI service running LongCat-Video-Avatar-1.5 (MIT). Takes a reference image + audio URL and renders a lip-synced talking-avatar MP4 to Cloud Storage. API: `POST /generate` -> `202 { job_id }`, `GET /jobs/:id`, `GET /health`; bearer-auth on every request. Sizes its segment count from the real audio duration, so a clip longer than 3.72 s is not truncated.
+
+This is the one worker here that is **not** a Cloud Run service. Upstream puts the DiT, the UMT5 text encoder, the whisper audio encoder and the VAE on a single device with no CPU offload, which is ~45 GB resident even with `--use_int8`. Cloud Run's L4 has 24 GB, and its 96 GB RTX PRO 6000 is sm_120, for which the pinned `torch 2.6.0+cu124` / `flash-attn 2.7.4.post1` wheels ship no kernels. So `longcat/cloudbuild.yaml` builds and publishes the image but does not deploy; it runs on an `a2-ultragpu-1g` or `a3-highgpu-1g`. Weights (44.81 GB, staged by `longcat/stage-weights.sh` into `three-ws-model-weights/longcat/`), the arithmetic, and the run command are in `longcat/README.md`.
 
 ## Mesh stylization (Cloud Run, CPU)
 
@@ -48,7 +50,7 @@ Splits a 3D model into meaningful, separable parts with clean boundaries (head/t
 ## Text-guided texturing (Cloud Run, GPU L4)
 
 ### `texture/`
-Two capabilities on one model server. **Full retexture** (`POST /texture`): takes an untextured or poorly-textured GLB plus a text prompt, renders depth maps from 8 canonical viewpoints (pyrender), generates coherent texture views with SDXL Img2Img + ControlNet-Depth, back-projects them onto the UV map (pytorch3d), blends overlaps by distance-weighted confidence, and bakes a final textured GLB. **Magic-brush region retexture** (`POST /retexture_region`): SDXL inpainting of only a UV-space masked region of an existing atlas, feathering the seam so untouched texels stay bit-identical across repeated passes. API: `POST /texture` (`{ mesh, prompt, negative_prompt?, num_views?, texture_size? }`) and `POST /retexture_region` (`{ mesh, prompt, mask_b64?|mask?, color?, strength?, feather?, seed? }`) -> `202 { task_id }`, `GET /tasks/:id`, `GET /health`; bearer-auth via `API_KEY`. Env: `API_KEY`, `GCS_BUCKET` (required), `SDXL_MODEL`, `CONTROLNET_MODEL`. Routed via `api/_providers/gcp.js` (`retex` / `retex_region` modes, `GCP_TEXTURE_URL`); exposed to the web at `/api/studio/retexture-region`, to agents over MCP as the studio retexture tool, and x402-priced in `api/_lib/pump-pricing.js`.
+Two capabilities on one model server. **Full retexture** (`POST /texture`): takes an untextured or poorly-textured GLB plus a text prompt, renders depth maps from 8 canonical viewpoints (pyrender), generates coherent texture views with SDXL + ControlNet-Depth, rasterizes the mesh into UV space and back-projects each view through the camera it was rendered with (numpy, in `texture_projection.py`), blends overlaps by how squarely each view sees a texel and refuses the ones the depth buffer says are occluded, and bakes a final textured GLB. **Magic-brush region retexture** (`POST /retexture_region`): SDXL inpainting of only a UV-space masked region of an existing atlas, feathering the seam so untouched texels stay bit-identical across repeated passes. API: `POST /texture` (`{ mesh, prompt, negative_prompt?, num_views?, texture_size? }`) and `POST /retexture_region` (`{ mesh, prompt, mask_b64?|mask?, color?, strength?, feather?, seed? }`) -> `202 { task_id }`, `GET /tasks/:id`, `GET /health`; bearer-auth via `API_KEY`. Env: `API_KEY`, `GCS_BUCKET` (required), `SDXL_MODEL`, `CONTROLNET_MODEL`, `SDXL_INPAINT_MODEL`, `WEIGHT_VARIANT`, `WEIGHTS_GCS_URI`. Not deployed today (no `texture-service`, no `GCP_TEXTURE_URL`), so both modes take their designed missing-lane path; `workers/texture/README.md` has the three commands that bring it up. Routed via `api/_providers/gcp.js` (`retex` / `retex_region` modes, `GCP_TEXTURE_URL`); exposed to the web at `/api/studio/retexture-region`, to agents over MCP as the studio retexture tool, and x402-priced in `api/_lib/pump-pricing.js`.
 
 ## Mesh processing (Cloud Run, CPU)
 
