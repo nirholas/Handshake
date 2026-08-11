@@ -126,6 +126,14 @@ describe('sdpRequest', () => {
 		expect(lastRequest.headers.authorization).toBeUndefined();
 	});
 
+	it('omits the key on the public doc surfaces even when one is configured', async () => {
+		process.env.SDP_API_KEY = 'sdp_live_abc';
+		mockFetch(200, { openapi: '3.1.0' });
+		await sdpRequest('openapi.json');
+		expect(lastRequest.url).toBe('https://api.solana.com/openapi.json');
+		expect(lastRequest.headers.authorization).toBeUndefined();
+	});
+
 	it('attaches the Bearer key and honors SDP_API_BASE', async () => {
 		process.env.SDP_API_KEY = 'sdp_live_abc';
 		process.env.SDP_API_BASE = 'https://sandbox.example.com/';

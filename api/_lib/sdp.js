@@ -108,7 +108,10 @@ export async function sdpRequest(
 	}
 
 	const reqHeaders = { accept: 'application/json', ...headers };
-	if (apiKey) reqHeaders.authorization = `Bearer ${apiKey}`;
+	// Only the privileged routes carry our key. The public doc/health surfaces
+	// are reachable unauthenticated, so attributing those fetches to our org key
+	// would let an anonymous caller burn our upstream quota for nothing.
+	if (needsKey && apiKey) reqHeaders.authorization = `Bearer ${apiKey}`;
 
 	const init = { method, headers: reqHeaders, signal: AbortSignal.timeout(timeoutMs) };
 	if (body != null && method !== 'GET' && method !== 'HEAD') {
