@@ -37,6 +37,7 @@ import { rateLimiterHealth } from '../rate-limit.js';
 import { checkRingInvariants } from '../x402/ring-allowlist.js';
 import { gatherX402SettleHealth } from './x402-settle-health.js';
 import { gatherForgeHealth } from './forge-health-sensor.js';
+import { gatherIndexLagHealth } from './index-lag.js';
 import { describeSolvency } from '../sniper-solvency.js';
 
 const DB_PING_TIMEOUT_MS = 2_500;
@@ -547,6 +548,11 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		// Generation SUCCESS RATE, not just lane liveness — reads forge_creations.
 		// DB-gated like the settle sensor; skipped-DB callers get `unknown`.
 		probeDb ? gatherForgeHealth() : Promise.resolve({ name: 'forge_generation', label: 'Forge 3D generation', status: 'unknown', detail: 'forge read skipped' }),
+		// Agent index freshness. A dead crawl cron has NO reachability signature:
+		// every surface still answers 200 while the directory quietly stops
+		// learning about the chains. Reads cursor tables only, so it shares the
+		// probeDb gate with the other DB-backed sensors.
+		probeDb ? gatherIndexLagHealth() : Promise.resolve({ name: 'agent_index', label: 'Agent index freshness', status: 'unknown', detail: 'index read skipped' }),
 		checkWorld(),
 		Promise.resolve(checkX402Config()),
 		probeDb ? checkSniper() : Promise.resolve({ name: 'sniper', label: 'Sniper worker (Cloud Run)', status: 'unknown', detail: 'probe skipped' }),

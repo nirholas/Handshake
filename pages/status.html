@@ -492,6 +492,34 @@
 			const esc = (s) =>
 				String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
+			// Minutes → a compact human duration for the metric pills.
+			const lagWord = (min) => {
+				if (min == null) return 'no data';
+				if (min < 60) return `${min}m`;
+				const h = Math.floor(min / 60);
+				const m = min % 60;
+				return m ? `${h}h ${m}m` : `${h}h`;
+			};
+
+			// Structured numbers a subsystem chose to publish (currently the agent
+			// index lag). Rendered as pills so the freshness of the on-chain index is
+			// a figure you can read at a glance, not prose buried in the detail line.
+			function subMetrics(m) {
+				if (!m || !m.solana || !m.evm) return '';
+				const pills = [
+					['Solana lag', lagWord(m.solana.medianLagMin)],
+					['Solana agents', String(m.solana.agents)],
+					['EVM lag', lagWord(m.evm.lagMin)],
+					['Events indexed', String((m.solana.events || 0) + (m.evm.events || 0))],
+				];
+				return `<span class="st-sub-metrics">${pills
+					.map(
+						([k, v]) =>
+							`<span class="st-metric"><span class="st-metric-k">${esc(k)}</span><b class="st-metric-v">${esc(v)}</b></span>`,
+					)
+					.join('')}</span>`;
+			}
+
 			function renderSubsystems(subs) {
 				// Older API shapes / warming-up omit the block — keep it hidden then.
 				if (!subs || !Array.isArray(subs.items) || subs.items.length === 0) {
@@ -510,6 +538,7 @@
 							<span class="st-sub-name">${esc(it.label || it.name)}</span>
 							<span class="st-sub-state">${esc(word)}</span>
 							${it.detail ? `<span class="st-sub-detail">${esc(it.detail)}</span>` : ''}
+							${subMetrics(it.metrics)}
 							${showHint ? `<span class="st-sub-hint">${esc(it.hint)}</span>` : ''}
 						</div>`;
 					})

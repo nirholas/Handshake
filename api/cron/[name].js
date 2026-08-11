@@ -3164,6 +3164,14 @@ async function handleSolanaAttestEventCleanup(req, res) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const SOL_ATTEST_PER_RUN_MAX = 50; // bound RPC fan-out per cron tick
+// Agents whose full event history (registration, token launch, delegation,
+// transfer, metadata) is walked per tick. Separate from the attestation budget
+// because this half covers the external registry directory too, which is two
+// orders of magnitude larger than the platform's own Solana agents.
+const SOL_EVENT_PER_RUN_MAX = 40;
+// Hard wall-clock budget for the event half, leaving the attestation half its
+// own share of the function's 300s ceiling.
+const SOL_EVENT_BUDGET_MS = 120_000;
 
 async function handleSolanaAttestationsCrawl(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
@@ -3187,7 +3195,7 @@ async function handleSolanaAttestationsCrawl(req, res) {
 		limit ${SOL_ATTEST_PER_RUN_MAX}
 	`;
 
-	const report = { agents: [], errors: [] };
+	const report = { agents: [], errors: [], events: null };
 	for (const row of agents) {
 		try {
 			const r = await crawlAgentAttestations({
@@ -3201,7 +3209,53 @@ async function handleSolanaAttestationsCrawl(req, res) {
 		}
 	}
 
+	// Second half: the cross-chain event index. Draws its batch from the
+	// platform's own agents AND the external Solana registry directory, which
+	// had no event coverage at all before this ran.
+	report.events = await solanaEventSweep();
+
 	return json(res, 200, report);
+}
+
+async function solanaEventSweep() {
+	const { crawlAgentEvents, markAgentEventError, nextAgentBatch } = await import(
+		'../_lib/solana-agent-events.js'
+	);
+
+	const startedAt = Date.now();
+	const summary = { agents: 0, scanned: 0, inserted: 0, rejected: 0, failed: 0, truncated: false };
+
+	let batch;
+	try {
+		batch = await nextAgentBatch({ limit: SOL_EVENT_PER_RUN_MAX });
+	} catch (err) {
+		return { ...summary, error: err.message || String(err) };
+	}
+
+	for (const row of batch) {
+		if (Date.now() - startedAt > SOL_EVENT_BUDGET_MS) {
+			summary.truncated = true;
+			break;
+		}
+		try {
+			const r = await crawlAgentEvents({ agentRef: row.agent_ref, network: row.network });
+			summary.agents += 1;
+			summary.scanned += r.scanned;
+			summary.inserted += r.inserted;
+			summary.rejected += r.rejected;
+		} catch (err) {
+			summary.failed += 1;
+			// Stamp the cursor even on failure so one permanently unreadable
+			// account cannot hold the oldest-first queue head forever.
+			await markAgentEventError({
+				agentRef: row.agent_ref,
+				network: row.network,
+				error: err.message || String(err),
+			}).catch(() => {});
+		}
+	}
+
+	return summary;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
