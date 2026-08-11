@@ -636,14 +636,15 @@ async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
 
 @app.get("/")
 async def root() -> dict:
-    """Service descriptor for the platform's warmth probe.
+    """Service descriptor, and the answer to the platform's warmth ping.
 
-    api/_lib/forge-lane-health.js and api/cron/gpu-keepwarm.js keep this worker
-    resident with an authenticated GET against the root, and treat any status
-    below 500 as "the container is up". Without a route here every one of those
-    probes logged a 404 at WARNING severity, roughly once a minute forever,
-    which buried the real errors in this service's log. Answering 200 with the
-    readiness the probe actually wants costs nothing and keeps the log honest.
+    api/cron/gpu-keepwarm.js holds a scale-to-zero lane resident with an
+    authenticated GET against the worker root and treats any status below 500 as
+    "the container is up". With no route here that ping, and every other probe
+    that ever hit the root, logged a 404 at WARNING severity: 257 of them in the
+    24 h to 2026-08-11, against exactly two real error events, so the noise
+    buried the signal. Answering 200 costs nothing and keeps the log honest.
+    Routing itself reads /health, which carries the load state this cannot.
     Unauthenticated, exposing exactly what /health already does.
     """
     return {

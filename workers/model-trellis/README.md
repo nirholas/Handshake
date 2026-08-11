@@ -19,10 +19,13 @@ served back as an `https://storage.googleapis.com/…` URL.
 
 `POST /infer` and `GET /tasks/{id}` require `Authorization: Bearer $API_KEY`.
 `GET /health` and `GET /` are unauthenticated: they carry no secrets, and the
-platform's warmth probe ([`api/_lib/forge-lane-health.js`](../../api/_lib/forge-lane-health.js),
-[`api/cron/gpu-keepwarm.js`](../../api/cron/gpu-keepwarm.js)) reads the root to
-decide whether this lane is up. Cloud Run's own startup probe is a TCP check on
-port 8080, not an HTTP one.
+platform reads them to decide whether this lane can take work. Routing
+([`api/_lib/forge-lane-health.js`](../../api/_lib/forge-lane-health.js),
+[`api/_lib/forge-health.js`](../../api/_lib/forge-health.js)) reads `/health`,
+because a worker whose weight load failed is reachable but unusable; the
+keep-warm cron ([`api/cron/gpu-keepwarm.js`](../../api/cron/gpu-keepwarm.js))
+pings the root. Cloud Run's own startup probe is a TCP check on port 8080, not
+an HTTP one.
 
 ### `POST /infer` → `202`
 
@@ -149,8 +152,9 @@ window wait for `ready` (up to 600 s) rather than failing.
 
 ### `GET /`
 
-Unauthenticated service descriptor, answered so the platform's warmth probe
-stops recording a 404 every minute in this service's log:
+Unauthenticated service descriptor. It exists so a root ping stops recording a
+404 in this service's log: there were 257 of those in the 24 h to 2026-08-11
+against two real error events, which is how a genuine failure goes unnoticed.
 
 ```json
 {
