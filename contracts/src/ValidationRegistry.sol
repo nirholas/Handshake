@@ -55,12 +55,14 @@ contract ValidationRegistry {
     error NotOwner();
     error NotValidator();
     error UnknownAgent();
+    error ZeroAddress();
 
     // ---------------------------------------------------------------------
     // Constructor
     // ---------------------------------------------------------------------
 
     constructor(address identityRegistry_, address owner_) {
+        if (identityRegistry_ == address(0) || owner_ == address(0)) revert ZeroAddress();
         identityRegistry = IIdentityRegistryV(identityRegistry_);
         owner = owner_;
         emit OwnershipTransferred(address(0), owner_);
@@ -85,7 +87,11 @@ contract ValidationRegistry {
         emit ValidatorRemoved(v);
     }
 
+    /// @notice Hand the allow-list over to a new owner. The zero address is
+    ///         rejected: renouncing here would freeze the validator set forever,
+    ///         with no way to rotate out a compromised validator key.
     function transferOwnership(address newOwner) external onlyOwner {
+        if (newOwner == address(0)) revert ZeroAddress();
         address prev = owner;
         owner = newOwner;
         emit OwnershipTransferred(prev, newOwner);
