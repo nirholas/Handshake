@@ -201,7 +201,7 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 			if (nextVoiceId) {
 				let voices;
 				try {
-					({ voices } = await listVoices());
+					({ voices } = await listVoices({ apiKey }));
 				} catch (err) {
 					console.error('[voice/put] listVoices failed', err);
 					return error(res, 502, 'upstream_error', 'voice library is unavailable');
@@ -215,26 +215,27 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 					);
 
 				if (wasCloned && oldVoiceId && oldVoiceId !== nextVoiceId)
-					deleteVoiceBestEffort(oldVoiceId);
+					deleteVoiceBestEffort(oldVoiceId, oldKey);
 
 				const [row] = await sql`
 					UPDATE agent_identities
 					SET voice_provider = 'elevenlabs', voice_id = ${nextVoiceId}, voice_cloned_at = NULL,
-					    voice_model = ${finalModel}, voice_settings = ${settingsParam}::jsonb
+					    voice_model = ${finalModel}, voice_settings = ${settingsParam}::jsonb,
+					    voice_key_source = ${boundSource}
 					WHERE id = ${id}
-					RETURNING voice_provider, voice_id, voice_cloned_at, voice_model, voice_settings
+					RETURNING voice_provider, voice_id, voice_cloned_at, voice_model, voice_settings, voice_key_source
 				`;
 				return json(res, 200, voiceStatus(row));
 			}
 
 			// Clear to browser — resets every voice column.
-			if (wasCloned && oldVoiceId) deleteVoiceBestEffort(oldVoiceId);
+			if (wasCloned && oldVoiceId) deleteVoiceBestEffort(oldVoiceId, oldKey);
 			const [row] = await sql`
 				UPDATE agent_identities
 				SET voice_provider = 'browser', voice_id = NULL, voice_cloned_at = NULL,
-				    voice_model = NULL, voice_settings = NULL
+				    voice_model = NULL, voice_settings = NULL, voice_key_source = NULL
 				WHERE id = ${id}
-				RETURNING voice_provider, voice_id, voice_cloned_at, voice_model, voice_settings
+				RETURNING voice_provider, voice_id, voice_cloned_at, voice_model, voice_settings, voice_key_source
 			`;
 			return json(res, 200, voiceStatus(row));
 		}
@@ -244,7 +245,7 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 			UPDATE agent_identities
 			SET voice_model = ${finalModel}, voice_settings = ${settingsParam}::jsonb
 			WHERE id = ${id}
-			RETURNING voice_provider, voice_id, voice_cloned_at, voice_model, voice_settings
+			RETURNING voice_provider, voice_id, voice_cloned_at, voice_model, voice_settings, voice_key_source
 		`;
 		return json(res, 200, voiceStatus(row));
 	}
@@ -253,13 +254,21 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 
 	if (req.method === 'DELETE') {
 		const [row] =
-			await sql`SELECT voice_id, voice_cloned_at FROM agent_identities WHERE id = ${id}`;
+			await sql`SELECT voice_id, voice_cloned_at, voice_key_source FROM agent_identities WHERE id = ${id}`;
 		// Only free *cloned* voices on ElevenLabs — library voices are shared
-		// across the account and must never be deleted here.
-		if (row?.voice_id && row?.voice_cloned_at) deleteVoiceBestEffort(row.voice_id);
+		// across the account and must never be deleted here. The clone lives in
+		// whichever account made it, so free it with that same credential.
+		if (row?.voice_id && row?.voice_cloned_at) {
+			const { apiKey } = await resolveAgentElevenKey({
+				ownerId: auth.userId,
+				pin: normalizeKeySource(row.voice_key_source),
+			});
+			deleteVoiceBestEffort(row.voice_id, apiKey);
+		}
 		await sql`
 			UPDATE agent_identities
-			SET voice_provider = 'browser', voice_id = NULL, voice_cloned_at = NULL
+			SET voice_provider = 'browser', voice_id = NULL, voice_cloned_at = NULL,
+			    voice_key_source = NULL
 			WHERE id = ${id}
 		`;
 		return json(res, 200, { voice_provider: 'browser', voice_id: null });
@@ -268,13 +277,8 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 	// ── POST /clone ──────────────────────────────────────────────────────────
 
 	if (req.method === 'POST' && action === 'clone') {
-		if (!isConfigured())
-			return error(
-				res,
-				503,
-				'not_configured',
-				'voice cloning is not configured on this server',
-			);
+		const { apiKey, source: boundSource } = await resolveBindingKey(auth.userId);
+		if (!apiKey) return noCredential(res, 'Voice cloning');
 
 		// Rate limit: 3 clones per user per day.
 		const rl = await limits.voiceClone(auth.userId);
@@ -332,12 +336,14 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 
 		const audioFile = new File([audioBuf], ext, { type: ct });
 
-		// Agent clones always run on the platform key, so the caller pays for
-		// the paid IVC slot: charge the voice.clone catalog action (holder-tier
-		// discount applies) before the upstream call, refunded on any failure.
-		// No free lane (owner policy 2026-08-06).
+		// A clone on the platform key consumes a paid IVC slot the platform pays
+		// for, so the caller pays for it: charge the voice.clone catalog action
+		// (holder-tier discount applies) before the upstream call, refunded on any
+		// failure. No free lane (owner policy 2026-08-06). A BYOK clone lands in
+		// the user's own ElevenLabs account and is billed there, so credits never
+		// apply to it.
 		let creditCharge = null;
-		{
+		if (boundSource === 'platform') {
 			const idempotencyKey = `agent-voice-clone:${randomUUID()}`;
 			try {
 				const charged = await chargeCreditsForAction({
@@ -383,6 +389,7 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 				name: voiceName,
 				description: voiceDescription || undefined,
 				files: [audioFile],
+				apiKey,
 			}));
 		} catch (err) {
 			await refundClone('clone_failed');
@@ -398,6 +405,29 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 					'audio_too_short',
 					'audio is too short or low quality for cloning',
 				);
+			// 401 only ever means the credential itself was rejected. On the BYOK
+			// lane that is the user's own key, and the fix is theirs to make, so
+			// say so instead of blaming a generic upstream failure.
+			if (err.status === 401)
+				return error(
+					res,
+					502,
+					'upstream_error',
+					boundSource === 'owner'
+						? 'ElevenLabs rejected your API key. Check it at /dashboard/account and try again.'
+						: 'ElevenLabs rejected the server key.',
+				);
+			// Instant Voice Cloning is a paid-tier ElevenLabs feature; a free-tier
+			// key returns 403 here. Pass the real reason through.
+			if (err.status === 403)
+				return error(
+					res,
+					502,
+					'upstream_error',
+					boundSource === 'owner'
+						? 'Your ElevenLabs plan does not include voice cloning. Instant Voice Cloning needs a paid ElevenLabs tier.'
+						: 'voice cloning is not available on the server ElevenLabs plan',
+				);
 			return error(res, 502, 'upstream_error', 'voice cloning failed');
 		}
 
@@ -407,12 +437,13 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 		try {
 			await sql`
 				UPDATE agent_identities
-				SET voice_provider = 'elevenlabs', voice_id = ${voiceId}, voice_cloned_at = now()
+				SET voice_provider = 'elevenlabs', voice_id = ${voiceId}, voice_cloned_at = now(),
+				    voice_key_source = ${boundSource}
 				WHERE id = ${id}
 			`;
 		} catch (dbErr) {
 			console.error('[voice/clone] DB persist failed, rolling back clone', dbErr);
-			await deleteVoice(voiceId).catch((err) =>
+			await deleteVoice(voiceId, { apiKey }).catch((err) =>
 				console.warn(
 					'[voice/clone] rollback deleteVoice failed for',
 					voiceId,
@@ -423,7 +454,12 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 			return error(res, 500, 'internal_error', 'failed to save cloned voice');
 		}
 
-		return json(res, 201, { voice_id: voiceId, name: voiceName });
+		return json(res, 201, {
+			voice_id: voiceId,
+			name: voiceName,
+			voice_key_source: boundSource,
+			billing: boundSource === 'owner' ? 'byok' : 'credits',
+		});
 	}
 
 	return error(res, 404, 'not_found', 'unknown voice action');
