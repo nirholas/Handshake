@@ -10,6 +10,12 @@
 //                                            writes a real agent_versions entry.
 // GET    /api/agents/:id/persona/versions — persona version history (for diff).
 // POST   /api/agents/:id/persona/restore  — restore a prior version as a new save.
+//
+// Every write path here also republishes the agent's signed manifest: the
+// compiled prompt is canonicalized, signed with the platform ed25519 attester
+// identity, and pinned to IPFS so the resulting CID is a permanent, portable
+// record of exactly how this agent was configured. See
+// api/_lib/agent-manifest-publish.js and specs/AGENT_MANIFEST.md.
 
 import { createHash, createHmac } from 'node:crypto';
 import { sql } from '../../_lib/db.js';
@@ -22,6 +28,7 @@ import {
 	PersonaExtractionError,
 } from '../../_lib/persona-interview-extract.js';
 import { parse } from '../../_lib/validate.js';
+import { publishAgentManifestSafely } from '../../_lib/agent-manifest-publish.js';
 import { z } from 'zod';
 import {
 	compilePersona,
@@ -33,7 +40,6 @@ import {
 import {
 	INTERVIEW_QUESTIONS,
 	normalizeInterview,
-	interviewTranscript,
 	MAX_INTERVIEW_ANSWERS,
 } from '../../../src/agents/persona-interview.js';
 

@@ -24,6 +24,7 @@ import { pingIndexNow } from './_lib/indexnow.js';
 import { publishFeedEvent } from './_lib/feed.js';
 import { getSkillPrices, skillPriceMap } from './_lib/skill-price-cache.js';
 import { cacheWrap } from './_lib/cache.js';
+import { trackAgentOwnerVisit } from './_lib/retention.js';
 import { env } from './_lib/env.js';
 import { z } from 'zod';
 import { isUuid } from './_lib/validate.js';
@@ -470,6 +471,11 @@ export async function handleGetOne(req, res, id) {
 		// is best-effort — anonymous viewers still get the public projection.
 		const auth = await resolveAuth(req).catch(() => null);
 		const isOwner = auth?.userId === row.user_id;
+		// Week-2 retention signal (README roadmap, phase 2). An owner opening
+		// their own agent is a return visit; one coarse row per owner/agent/UTC
+		// day, written detached so it can never slow or fail this read. Visitors
+		// are not tracked here at all.
+		if (isOwner) trackAgentOwnerVisit({ userId: auth.userId, agentId: row.id });
 		return json(res, 200, { agent: decorate(row, isOwner) });
 	}
 

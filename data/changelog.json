@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "Your agent's personality is now signed and published to IPFS",
+			"summary": "Every time you save your agent's persona, three.ws now writes down exactly how that agent is configured, signs it with the platform's signing key, and publishes it to IPFS. You get back a permanent address anyone can open. That means the instructions behind your agent are no longer something people have to take on trust: a visitor, a buyer, or another agent can fetch the record, confirm it really came from three.ws, read the exact prompt, and see whether the agent running today still matches what was published. Anyone can run the check themselves without an account. Only public agents publish automatically, and you can publish a private agent deliberately whenever you choose.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/agents"
+		},
+		{
+			"date": "2026-08-11",
 			"title": "Deleting a copy of an avatar no longer blanks the original",
 			"summary": "A copy, remix or forge variant of an avatar points at the same stored model and thumbnail as the avatar it came from rather than duplicating the file. Deleting any one of them removed those files outright, so the originals that were still in use lost their model and their picture: 32 public avatars ended up with a model that would not load and 33 with a broken thumbnail, showing up as blank tiles across the gallery, Money Pulse and agent cards. Deletion now checks whether any avatar still in use points at a file before removing it. The already-broken thumbnails have been cleared so the thumbnail renderer picks them up again.",
 			"tags": [

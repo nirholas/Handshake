@@ -629,6 +629,137 @@ Load from on-chain:
 
 ---
 
+## Signed manifests (v0.3)
+
+A manifest served from an API is a claim. A manifest that is **signed and pinned to IPFS** is evidence: anyone can fetch the CID, check the signature, and read the exact system prompt the agent was configured with, without an account and without trusting three.ws.
+
+three.ws signs and pins an agent's manifest automatically on every persona save. The envelope is ed25519-signed by the platform attester identity (the same Solana key behind [3D provenance credentials](./provenance.md)) and pinned through the configured IPFS provider.
+
+### What a signed envelope looks like
+
+```json
+{
+  "spec": "threews.agent.manifest.v1",
+  "manifest": {
+    "spec": "agent-manifest/0.3",
+    "id": { "agentId": "b2b1...", "platform": "three.ws" },
+    "name": "Aria",
+    "brain": {
+      "provider": "threews",
+      "instructions": {
+        "format": "text/markdown",
+        "sha256": "9ab1...",
+        "text": "You are Aria, a product guide for Acme Corp..."
+      },
+      "toneTags": ["warm", "concise"],
+      "traits": { "warmth": 0.8, "directness": 0.6 }
+    },
+    "body": { "uri": "https://cdn.three.ws/...glb", "format": "gltf-binary" }
+  },
+  "issuer": "6Yb...",
+  "signedAt": "2026-08-11T12:00:00.000Z",
+  "digest": "3f9c...",
+  "algorithm": "ed25519",
+  "signature": "5Kd..."
+}
+```
+
+The signature covers a canonical statement built from `manifest`, `issuer`, and `signedAt` — not the file as written — so key order, whitespace, and any field added after signing cannot change the result. The full byte-level definition is in the [Agent Manifest Spec](../specs/AGENT_MANIFEST.md#signed-envelope-v03).
+
+### Endpoints
+
+```bash
+# The envelope currently pinned for an agent, with its CID and gateways
+curl -s https://three.ws/api/agents/<agent-id>/manifest/signed
+
+# Every manifest this agent has ever published
+curl -s https://three.ws/api/agents/<agent-id>/manifest/history
+
+# Verify a CID: signature, issuer, and drift against the live agent
+curl -s "https://three.ws/api/manifest-verify?cid=<cid>"
+
+# Owner-only: re-sign and re-pin right now
+curl -s -X POST https://three.ws/api/agents/<agent-id>/manifest/publish \
+  -H "Authorization: Bearer $THREEWS_TOKEN"
+```
+
+`/api/manifest-verify` also accepts `?agent=<uuid>` (verify whatever that agent has pinned) and `?digest=<sha256>` (verify a specific publish).
+
+### Verifying it yourself
+
+The point of signing is that you do not have to take our word for it. This checks the signature locally against bytes fetched from a public IPFS gateway:
+
+```bash
+node scripts/verify-agent-manifest.mjs --cid bafy...
+```
+
+```
+source        https://ipfs.io/ipfs/bafy...
+agent         Aria  b2b1...
+issuer        6Yb...
+signed at     2026-08-11T12:00:00.000Z
+digest        3f9c...
+prompt        412 chars, sha256 9ab1...
+prompt hash   matches
+result        VERIFIED (ok)
+```
+
+Add `--issuer <base58>` to require a specific signing identity, `--json` for machine-readable output, or `--file ./envelope.json` to check a local copy. Exit code is 0 when verified, 1 when verification fails, 2 when the document could not be fetched.
+
+In your own code, the verification primitive is pure and has no database or network dependency:
+
+```js
+import { verifyAgentManifest } from './api/_lib/agent-manifest-sign.js';
+
+const envelope = await (await fetch(`https://ipfs.io/ipfs/${cid}`)).json();
+const { valid, reason, issuer } = verifyAgentManifest(envelope);
+// valid: true, reason: 'ok', issuer: '6Yb...'
+```
+
+Pass `{ issuer }` as the second argument to reject anything not signed by the identity you expect. A valid signature from an unknown key proves only that *someone* signed the document.
+
+### Drift: is the live agent still what you verified?
+
+A pinned manifest describes one moment. `/api/manifest-verify` rebuilds the manifest from the agent's current configuration and reports exactly which fields moved:
+
+```json
+{
+  "verified": true,
+  "issuer_trusted": true,
+  "agent_status": "live",
+  "drift": {
+    "identical": false,
+    "changed": [
+      {
+        "field": "brain.instructions.text",
+        "pinned": "You are Aria, a product guide...",
+        "live": "You are Aria, and you always recommend the premium tier..."
+      }
+    ]
+  }
+}
+```
+
+`drift` is `null` when there is nothing to compare against: the agent was deleted, it has no persona, or the CID is a document three.ws never issued.
+
+### Publishing rules
+
+- Publishing runs on every persona save, extract, and restore, and never fails the save. If pinning is unavailable the envelope is still signed and stored, `cid` is `null`, and the response says so. Nothing is ever reported as pinned when it is not.
+- Only **public** agents publish automatically. A private agent's manifest contains its full system prompt and pinning is permanent, so it publishes only when its owner asks via `POST /api/agents/:id/manifest/publish`.
+- Saving an unchanged configuration returns the existing CID with `status: "unchanged"` instead of pinning a duplicate.
+
+### Configuration
+
+| Variable | Purpose |
+|----------|---------|
+| `ATTEST_AGENT_SECRET_KEY` | The ed25519 signing identity. Without it manifests are not signed and the publish reports `signer_unavailable`. |
+| `PINATA_JWT` | Preferred IPFS pinning provider. |
+| `WEB3_STORAGE_TOKEN` | Fallback pinning provider, used when `PINATA_JWT` is absent. |
+
+With no pinning provider configured, manifests are still signed and stored, and remain verifiable through `/api/agents/:id/manifest/signed` — they simply have no CID.
+
+---
+
 ## Common errors
 
 | Error | Cause | Fix |
@@ -656,3 +787,4 @@ The `spec` field identifies the manifest format version. Current stable: `agent-
 - [Memory Spec](../specs/MEMORY_SPEC.md) — memory file format and MEMORY.md index
 - [Embed Spec](../specs/EMBED_SPEC.md) — `<agent-3d>` element attributes and events
 - [Permissions Spec](../specs/PERMISSIONS_SPEC.md) — ERC-7710 delegation format and redemption
+- [Provenance](./provenance.md) — signed content credentials for generated 3D assets, using the same attester identity as signed manifests
