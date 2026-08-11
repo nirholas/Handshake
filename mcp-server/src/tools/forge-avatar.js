@@ -39,7 +39,7 @@ const TOOL_NAME = 'forge_avatar';
 const TOOL_DESCRIPTION =
 	'Generate a rigged, ANIMATION-READY 3D avatar from a single text prompt or reference image(s) — in ONE call. ' +
 	'Chains the full three.ws pipeline: an IBM Granite prompt director optimizes the prompt, FLUX + TRELLIS/Hunyuan3D ' +
-	'reconstruct a textured GLB, then the auto-rigger (VAST-AI UniRig) adds a humanoid skeleton and skin weights so the ' +
+	'reconstruct a textured GLB, then the auto-rigger (Make-It-Animatable) adds a humanoid skeleton and skin weights so the ' +
 	'model loads straight into the three.ws pose studio and plays the canonical idle/walk animation library. ' +
 	'Accepts a text prompt, a single image_url, or 1–4 image_urls (front/back/left/right) for higher-fidelity multi-view ' +
 	'reconstruction. A humanoid gate runs first: a clearly non-humanoid subject (furniture, vehicle, quadruped) is ' +
