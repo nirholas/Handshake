@@ -9,7 +9,7 @@
 //   text-to-3d-pro   → Granite art director (fail-soft) + /api/forge submit at
 //                      standard/high tier, the mesh_forge chain
 //   image-to-3d      → /api/forge submit, image lane (TRELLIS reconstruct)
-//   rig              → /api/forge?action=rig submit (UniRig worker)
+//   rig              → /api/forge?action=rig submit (model-rig worker)
 //   avatar           → the forge_avatar chain: generate to completion, then
 //                      submit the rig job (humanoid gate included)
 //   retarget         → apply_animation MCP tool handler (in-process retarget)
@@ -171,7 +171,7 @@ const HANDLERS = {
 		return queuedResponse(job, { mode: 'image_to_3d' });
 	},
 
-	// $0.25, UniRig auto-rigging, submit-then-poll.
+	// $0.25, Make-It-Animatable auto-rigging, submit-then-poll.
 	async rig(args, ctx) {
 		const job = await startRig(ctx.base, args.glb_url);
 		return queuedResponse(job, { mode: 'rig' });
