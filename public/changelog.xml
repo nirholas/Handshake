@@ -63,6 +63,14 @@
 			<description>Turning a photo into a 3D model starts by downloading the image you pointed at. If that download stalled for even a moment, the whole generation failed and you had to start over. The image is now fetched up to three times with a growing pause between tries, so a single slow moment costs a couple of seconds instead of the job. When an image genuinely cannot be used, the failure now names the reason and the host (unreachable, HTTP 404, not a decodable image) instead of an opaque error code, so you can tell a broken link from a hiccup.</description>
 		</item>
 		<item>
+			<title>Sending your agent a task on its live screen actually works again</title>
+			<link>https://three.ws/agent-screen</link>
+			<guid isPermaLink="false">2026-08-11:Sending your agent a task on its live screen actually works again</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The agent screen lets you queue a task for your own agent and watch it browse the web to carry it out. None of that path worked. Queuing a task failed on the server because it looked your agent up in a table that does not exist, so the browser worker polled forever and never saw a task. The worker was broken twice over on its own side too: it read the agent's id from the wrong place, so every frame it published was rejected before it reached the stream, and it drove the browser through a method that moved in version 3 of the automation library, so typing, clicking, reading a page, and even taking a screenshot all failed. All three are fixed and the worker now runs end to end: it picks up your task, navigates, narrates each step, and streams real screenshots. The same bad lookup also blocked grinding a vanity wallet address for an agent, which is fixed as well.</description>
+		</item>
+		<item>
 			<title>Stylizing a model no longer throws away the finished result over a momentary network hiccup, and plain models keep their intended color</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-08-11:Stylizing a model no longer throws away the finished result over a momentary network hiccup, and plain models keep their intended color</guid>

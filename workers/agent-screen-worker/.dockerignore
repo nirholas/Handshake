@@ -1,0 +1,11 @@
+# Build context excludes. The image installs its own deps with `npm ci`, so the
+# host's node_modules must never be copied over them (it would clobber a clean,
+# platform-correct install). Secrets and local logs never enter a build context.
+node_modules
+npm-debug.log
+*.log
+.env
+.env.*
+README.md
+Dockerfile
+.dockerignore
