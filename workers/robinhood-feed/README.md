@@ -24,10 +24,10 @@ trading terminal) already polls.
 
 | File | Role |
 |------|------|
-| `index.js` | Entrypoint — starts the firehose, wires it into the server, probes every configured RPC once so a dead one is visible in the logs, graceful SIGINT/SIGTERM shutdown. |
+| `index.js` | Entrypoint: starts the firehose, wires it into the server, probes every configured RPC once so a dead one is visible in the logs, graceful SIGINT/SIGTERM shutdown. |
 | `src/config.js` | Env-driven config (network, RPC URLs, sequencer feed URL, poll intervals, buffer sizes). Every default works with zero config against the public endpoints. |
 | `src/chain.js` | Shared `hoodchain` (the `robinhood-chain-sdk` npm package) read client over a viem `fallback` transport; cached ERC-20 name/symbol resolution; cached block timestamps; one-time Uniswap v3 pool inspection (which side is the coin, ETH vs USDG quote). |
-| `src/rpc.js` | `withRpcRetry` — the transient-failure classifier the bulk log reads run through. See "Public RPC behaviour" below. |
+| `src/rpc.js` | `withRpcRetry`: the transient-failure classifier the bulk log reads run through. See "Public RPC behaviour" below. |
 | `src/eth-price.js` | ETH/USD spot, 4-source failover (Coinbase → Kraken → CoinGecko → DefiLlama), cached ~60s — the ETH-gas-chain analogue of three.ws's `sol-price.js`. |
 | `src/normalize.js` | **Pure** functions mapping decoded on-chain events to the pump-compatible shape. No chain reads — unit-tests directly against captured real logs (`tests/fixtures/`). |
 | `src/feed.js` | The orchestrator: composes the SDK's `watchLaunches`/`watchCurveTrades`/`watchGraduations` (NOXA + Odyssey via RPC logs), a dynamic Uniswap v3 `Swap` watcher over tracked pools (NOXA pools from block one, Odyssey pools post-graduation), and the sequencer feed as a liveness/gap watchdog. Backfills on cold start, gap-fills on a stalled watcher, dedupes cross-source. |
