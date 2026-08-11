@@ -1,11 +1,55 @@
 {
-	"generated_at": "2026-08-10T18:38:39.650Z",
+	"generated_at": "2026-08-11T01:43:51.251Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "A selfie with no visible face now tells you so, instead of \"generation failed\"",
+			"summary": "Photo-to-avatar could not tell you the one thing that would fix your upload. When the engine found no face in a photo (a hooded figure, a back view, a landscape), it reported that rejection as an anonymous internal error, so the site fell back to a generic \"Generation failed. Try a different prompt.\" You now get the real reason and can act on it: reword the prompt, or use a clear front-facing shot. Rejected uploads also stopped filing themselves as service outages in our error logs, so a genuine failure is visible now instead of buried among them.",
+			"link": "/create",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Background removal in the Forge is faster, keeps phone photos the right way up, and says when the link is the problem",
+			"summary": "Cutting the background out of an image is the step that runs before most 3D generations, and it was doing avoidable work: every image was re-encoded to PNG on the way in, which on a 12 megapixel photo cost more time than the cutout itself. That round trip is gone, so the step now takes about a third of the time, and because the original file goes straight to the model, a photo taken on a phone comes back the way up you took it instead of on its side. Failures explain themselves now too: a link that answers \"not found\" or \"forbidden\", a file that is not an image, or a truncated paste all used to come back as an unexplained server error, and now say which of those happened so you can fix the input.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The sign-language recognition API now documents the confidence score it returns with every transcription",
+			"summary": "When you fingerspell into the webcam, the recognizer reports how sure it is of what it read, and the page uses that to flag a shaky capture instead of quietly dropping wrong words into your message. That score was in every response but appeared in none of the docs, so anyone building on the recognition API had no way to know it existed. The API reference, the sign-language guide and the worker's own README now list the full response, including the raw decode before the cleanup pass and whether the cleanup changed anything, so a caller can build the same warning we do. The recognizer itself was also capped to a sane number of simultaneous captures per instance, so a burst of signers scales out instead of queueing behind each other.",
+			"link": "/sign-language",
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Turning a sketch into 3D no longer loses a finished model when the job and the progress check land on different machines",
+			"summary": "Sketch to 3D runs on our own GPU service, which can run on more than one machine at a time. The machine that accepted your drawing remembered the job only in its own memory, so a progress check that reached a second machine was answered with \"no such job\" and the generation was marked failed, sometimes after the model had already been built. The same thing happened when a machine was recycled between the submit and the result. Every job now records its progress to durable storage the moment it is accepted, so any machine can answer for it, and a job whose machine really did disappear mid-run is reported as failed with a clear reason after thirty minutes instead of leaving you polling forever. Two related repairs ride along: when the model fails to load on a machine, jobs sent to it now fail immediately with the real reason instead of waiting out a ten-minute timeout, and the service's health check reports that machine as unhealthy instead of claiming it is fine.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-08-10",
 			"type": "update",
