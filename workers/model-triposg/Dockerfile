@@ -40,7 +40,12 @@ RUN pip install -r /app/requirements.txt
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
+COPY request_policy.py /app/request_policy.py
 COPY main.py /app/main.py
+# The tests ship in the image so the served contract can be smoke-tested against
+# the exact dependency set that will run in production:
+#   docker run --rm model-triposg python3 test_app_contract.py
+COPY test_request_policy.py test_app_contract.py /app/
 
 EXPOSE 8080
 
