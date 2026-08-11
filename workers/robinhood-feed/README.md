@@ -82,9 +82,15 @@ Documented per the mission brief — fields map 1:1 where semantics align:
 
 ```bash
 cd workers/robinhood-feed
-npm install            # pulls hoodchain via file:../../robinhood/robinhood-chain-sdk
-npm start               # listens on :8788 (mainnet, public RPC + sequencer feed)
+npm install            # symlinks hoodchain from ../../robinhood/robinhood-chain-sdk
+npm start              # listens on :8788 (mainnet, public RPC + sequencer feed)
 ```
+
+`npm install` on a `file:` dependency only symlinks the source directory: npm
+does not build it, and the SDK is TypeScript whose `dist/` is gitignored. So
+`npm start` runs `scripts/ensure-sdk.mjs` first (`prestart`), which builds the
+SDK's `dist/` when it is missing. That takes a few seconds on a fresh clone and
+is a no-op afterwards. To do it by hand: `npm run build:sdk`.
 
 Zero-config defaults hit the public Robinhood Chain endpoints. Every knob is an
 env var:
@@ -92,8 +98,8 @@ env var:
 | Var | Default | Meaning |
 |-----|---------|---------|
 | `RH_NETWORK` | `mainnet` | `mainnet` (4663) or `testnet` (46630). |
-| `RH_RPC_URL` | public RPC | Override the HTTP RPC (e.g. an Alchemy endpoint once `ROBINHOOD_MAINNET` is enabled on the app — see Known limitations). |
-| `ALCHEMY_API_KEY` | — | If set, mainnet RPC calls route through Alchemy automatically. |
+| `RH_RPC_URL` | public RPC | Preferred HTTP RPC. The public RPC always stays in the list behind it as a fallback rung. |
+| `ALCHEMY_API_KEY` | (unset) | If set, mainnet calls try Alchemy first and fall back to the public RPC. See Known limitations. |
 | `RH_FEED_URL` | public sequencer feed | Override the sequencer WS URL. |
 | `RH_USE_FEED` | `1` | Set `0` to disable the sequencer-feed watchdog entirely (RPC-only mode). |
 | `RH_POLL_MS` | `2000` | RPC log poll interval for the SDK watchers. |
@@ -102,9 +108,37 @@ env var:
 | `RH_GAP_BLOCKS` | `2000` | Chain-head lead that triggers a gap-fill rescan (≈3.3 min of blocks at Robinhood Chain's ~100ms cadence — must clear one poll tick's normal advance or every tick misreads itself as stalled). |
 | `RH_MAX_POOLS` | `400` | LRU cap on concurrently-watched Uniswap v3 pools. |
 
+## Public RPC behaviour (measured, not assumed)
+
+Two things about `rpc.mainnet.chain.robinhood.com` shape the worker's design.
+Both were measured live against mainnet, not inferred:
+
+1. **It sheds load with a wrong error code.** Under load it answers a perfectly
+   valid `eth_getLogs` with JSON-RPC `-32602 "Missing or invalid parameters."`
+   The identical request succeeds on the very next attempt (measured: 4/4 on a
+   range that had just failed). viem never retries `-32602`, because that code
+   means "the caller sent nonsense" everywhere else, so one shed request used to
+   abort an entire cold-start backfill. Every bulk read now goes through
+   `withRpcRetry` (`src/rpc.js`), which treats `-32602` as transient and backs
+   off. Retries are reported as `status` events (`src: 'backfill' | 'gap-fill'`)
+   so they show up on `/events` instead of disappearing.
+2. **Ranges are generous.** A 4 000 000-block `eth_getLogs` window is accepted;
+   the SDK's own 10 000-block chunking in `getRecentLaunches` is well inside the
+   limit. The failures above are load, not range.
+
+The launchpads themselves idle for long stretches: at the time of writing the
+newest NOXA launch on mainnet is block 6 880 646 (2026-07-11), roughly 26.4 M
+blocks behind the head. A cold start with the default `RH_BACKFILL_BLOCKS`
+(200 000 blocks ≈ 5.5 h) therefore normally finds nothing and the replay buffer
+starts empty. That is the chain being quiet, not the worker being broken:
+`/healthz` still shows a live `feed.last_sequence` and `last_scanned_block`.
+`npm run smoke:live` proves the decode path end to end regardless, by finding
+the newest launch that actually exists.
+
 ## API
 
-- `GET /healthz` → `{ ok, network, uptime_s, subscribers, buffer, firehose: { last_scanned_block, tracked_pools, feed: { last_sequence, seconds_since_frame } } }`
+- `GET /healthz` → `{ ok, network, uptime_s, subscribers, buffer, firehose: { chain_id, rpc, last_scanned_block, tracked_pools, feed: { last_sequence, seconds_since_frame } } }`
+  (`rpc` lists the configured endpoints with any provider key masked.)
 - `GET /recent?kind=launch|trade|graduation|all&limit=20` → `{ events: [{ kind, data }] }`, newest first.
 - `GET /events?kinds=launch,trade,graduation` (SSE) → replays the buffer (`replay: true`), then streams live. `text/event-stream`, each line `data: {"kind":"trade","data":{...}}`.
 - `WS /ws?kinds=launch,trade,graduation` → identical events over a WebSocket.
@@ -117,8 +151,31 @@ both the legacy pump-compatible fields (`sol_amount`, `usd_amount`, `user`,
 ## Tests
 
 ```bash
-npm test
+npm test          # offline: normalizer + retry classifier + HTTP/WS/SSE plumbing
+npm run smoke:live  # online: the real chain end to end (read-only, ~20s)
 ```
+
+`npm test` never touches the network, so it runs anywhere and never fails
+because a launchpad is quiet:
+
+- `tests/normalize.test.js` runs the pure normalizer against real captured logs
+  (below).
+- `tests/rpc.test.js` pins the transient-error classifier, including the
+  public RPC's `-32602` load-shed response.
+- `tests/server.test.js` is the core-path smoke test: real fixture logs go
+  through the real normalizers into the real server, and are asserted back out
+  over real sockets (`/healthz`, `/recent` ordering + kind filtering + dedupe,
+  SSE replay-then-live with `?kinds=`, WebSocket replay + fan-out, shutdown
+  with a subscriber still attached).
+
+`npm run smoke:live` covers what only the live chain can: that the configured
+RPCs answer, that the SDK's decoding still matches the deployed launchpad
+contracts, that ERC-20 metadata / block times / the ETH price resolve, that a
+real Uniswap swap classifies buy-vs-sell correctly, that the sequencer feed
+delivers frames, and that all of it survives `/recent` and SSE. It reads only:
+no keys, no writes, no spend. Because the launchpads idle for long stretches, it
+scans backward from the head until it finds the newest launch that exists rather
+than assuming recent activity.
 
 Unit tests (`tests/normalize.test.js`) run the pure normalizer against **real
 on-chain logs**, captured live from Robinhood Chain mainnet during development
@@ -140,17 +197,38 @@ const logs = await hood.public.getLogs({
 
 ## Deploying
 
+**Not deployed today.** No `robinhood-feed` service exists on Cloud Run and
+`ROBINHOOD_FEED_URL` is unset on `three-ws-api`, so
+`api/robinhood/coin-trades.js` and `api/robinhood/play-worlds.js` serve their
+designed empty state. Everything needed to change that is in this directory; the
+deploy itself is owner-gated per CLAUDE.md.
+
 Same shape as the other long-lived Node workers in `workers/` (e.g.
-`agent-sniper`): a Cloud Run **service** (not a job — it's a persistent
-WS/SSE server), min instances ≥ 1 so the SDK watchers and replay buffer stay
-warm.
+`agent-sniper`): a Cloud Run **service** (not a job, it is a persistent WS/SSE
+server), min instances 1 so the SDK watchers and replay buffer stay warm.
+
+Build from the **repo root**. `gcloud run deploy --source workers/robinhood-feed`
+cannot work here: the worker depends on the local SDK through
+`file:../../robinhood/robinhood-chain-sdk`, which sits outside that build
+context. `Dockerfile` builds the SDK in a first stage and the worker in a
+second, so the whole thing comes from a clean checkout with no manual step:
 
 ```bash
-gcloud run deploy robinhood-feed \
-  --source workers/robinhood-feed \
-  --region us-central1 \
-  --min-instances 1 --max-instances 1 \
-  --no-cpu-throttling \
+# local
+docker build -f workers/robinhood-feed/Dockerfile -t robinhood-feed .
+docker run --rm -p 8788:8788 robinhood-feed
+
+# Cloud Build (from the repo root)
+gcloud builds submit --config workers/robinhood-feed/cloudbuild.yaml \
+  --region us-central1 --project aerial-vehicle-466722-p5
+
+# first deploy
+gcloud run deploy robinhood-feed --region us-central1 \
+  --project aerial-vehicle-466722-p5 \
+  --image us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/workers/robinhood-feed:latest \
+  --service-account three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
+  --min-instances 1 --max-instances 1 --no-cpu-throttling \
+  --port 8788 --allow-unauthenticated \
   --set-env-vars RH_NETWORK=mainnet
 ```
 
@@ -159,6 +237,11 @@ sequencer feed + replay buffer); running two instances would double the RPC
 load and split subscribers across two independent buffers. Scale reads by
 fronting it with a CDN/cache on `/recent`, not by adding instances.
 
+Do **not** put `ALCHEMY_API_KEY` on the service until the Alchemy app has the
+Robinhood network enabled (see Known limitations). The client falls back to the
+public RPC on its own, so a disabled key costs latency rather than uptime, but
+there is no reason to pay for the failed first hop.
+
 Once deployed, set `ROBINHOOD_FEED_URL` on the three.ws API service (Cloud Run
 `three-ws-api`) to this worker's URL so `api/robinhood/coin-trades.js` and
 `api/robinhood/play-worlds.js` stop falling back to their empty-but-honest
@@ -166,15 +249,22 @@ Once deployed, set `ROBINHOOD_FEED_URL` on the three.ws API service (Cloud Run
 
 ## Known limitations (owner action)
 
-- **Alchemy accelerator not yet enabled**: `ALCHEMY_API_KEY` is set in the
-  environment, but the Alchemy app doesn't have the Robinhood Chain network
-  enabled (`ROBINHOOD_MAINNET is not enabled for this app` — verified live
-  during development). The worker runs correctly against the public RPC
-  without it; enabling it would mainly cut RPC latency, not add capability.
-  Enable at `https://dashboard.alchemy.com/apps/<app>/networks`.
-- **Public RPC rate limits**: the public `rpc.mainnet.chain.robinhood.com`
-  has no documented SLA. Under sustained load, point `RH_RPC_URL` at a paid
-  provider (Alchemy, once enabled).
+- **Alchemy accelerator not enabled**: `ALCHEMY_API_KEY` is set in `.env`, but
+  the Alchemy app does not have the Robinhood Chain network enabled. Re-verified
+  live on 2026-08-11: every call to `robinhood-mainnet.g.alchemy.com` returns
+  `-32600 ROBINHOOD_MAINNET is not enabled for this app`. The worker runs
+  correctly against the public RPC without it (the client lists Alchemy first
+  and falls through), and the boot probe logs the rung as unusable so it is not
+  mistaken for a quiet chain. Enabling it would cut RPC latency, not add
+  capability. Enable at `https://dashboard.alchemy.com/apps/<app>/networks`.
+- **Public RPC has no SLA**: `rpc.mainnet.chain.robinhood.com` sheds load with
+  a misleading `-32602` (see "Public RPC behaviour"). `withRpcRetry` absorbs
+  that, but under sustained load a paid provider is still the right answer:
+  point `RH_RPC_URL` at it and the public RPC stays behind it as a fallback.
+- **Launchpad activity is intermittent**: the newest NOXA launch as of
+  2026-08-11 is a month old (block 6 880 646, 2026-07-11). Nothing to fix, but
+  do not read an empty `/recent` on a fresh deploy as a failure. Confirm with
+  `npm run smoke:live`.
 
 ---
 
