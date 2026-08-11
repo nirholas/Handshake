@@ -283,10 +283,13 @@ async function platformDriver({ origin, email, password }) {
 			const r = await fetch(`${origin}/api/avatars/regenerate-status?jobId=${encodeURIComponent(ref)}`, { headers });
 			if (!r.ok) return { status: 'unknown' };
 			const body = await r.json().catch(() => ({}));
+			// The platform status payload is camelCase (resultGlbUrl), the worker's
+			// is snake_case (glb_url). Reading only one of them makes every job
+			// look stuck forever while it is quietly finishing.
 			return {
 				status: body.status,
-				glbUrl: body.result_glb_url || body.glb_url || null,
-				error: body.error || null,
+				glbUrl: body.resultGlbUrl || body.result_glb_url || null,
+				error: body.error || body.error_description || null,
 			};
 		},
 	};
