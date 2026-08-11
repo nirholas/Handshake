@@ -580,13 +580,87 @@ def _convert_to_fbx_preserving_rig(data: bytes, suffix: str, task_id: str) -> tu
     return [Artifact(f"{task_id}.fbx", fbx_bytes, "application/octet-stream", "model")], meta
 
 
+def _write_usdz(mesh, task_id: str, out_path: Path) -> None:
+    """Write a USDZ package with `pxr` (usd-core).
+
+    trimesh has no USDZ writer, so the geometry is authored directly onto a USD
+    stage and zipped with UsdUtils. A textured mesh gets a UsdPreviewSurface
+    reading a sibling PNG, which the packager pulls into the archive. Y-up and
+    metersPerUnit 1 are what AR Quick Look and Scene Viewer expect."""
+    import numpy as np
+    from pxr import Gf, Sdf, Usd, UsdGeom, UsdShade, UsdUtils, Vt
+
+    work = out_path.parent
+    stage_path = work / f"{task_id}.usdc"
+    stage = Usd.Stage.CreateNew(str(stage_path))
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+
+    root = UsdGeom.Xform.Define(stage, "/Root")
+    stage.SetDefaultPrim(root.GetPrim())
+    usd_mesh = UsdGeom.Mesh.Define(stage, "/Root/Mesh")
+
+    verts = np.ascontiguousarray(mesh.vertices, dtype=np.float32)
+    faces = np.ascontiguousarray(mesh.faces, dtype=np.int32)
+    usd_mesh.CreatePointsAttr(Vt.Vec3fArray.FromNumpy(verts))
+    usd_mesh.CreateFaceVertexCountsAttr(
+        Vt.IntArray.FromNumpy(np.full(len(faces), 3, dtype=np.int32))
+    )
+    usd_mesh.CreateFaceVertexIndicesAttr(Vt.IntArray.FromNumpy(faces.reshape(-1)))
+    usd_mesh.CreateSubdivisionSchemeAttr(UsdGeom.Tokens.none)
+    lo = verts.min(axis=0)
+    hi = verts.max(axis=0)
+    usd_mesh.CreateExtentAttr(
+        Vt.Vec3fArray([Gf.Vec3f(*lo.tolist()), Gf.Vec3f(*hi.tolist())])
+    )
+
+    uv, image = _source_texture(mesh)
+    if uv is not None and image is not None:
+        texture_name = f"{task_id}.png"
+        image.convert("RGB").save(work / texture_name, format="PNG")
+
+        st = UsdGeom.PrimvarsAPI(usd_mesh).CreatePrimvar(
+            "st", Sdf.ValueTypeNames.TexCoord2fArray, UsdGeom.Tokens.vertex
+        )
+        st.Set(Vt.Vec2fArray.FromNumpy(np.ascontiguousarray(uv, dtype=np.float32)))
+
+        material = UsdShade.Material.Define(stage, "/Root/Material")
+        reader = UsdShade.Shader.Define(stage, "/Root/Material/stReader")
+        reader.CreateIdAttr("UsdPrimvarReader_float2")
+        reader.CreateInput("varname", Sdf.ValueTypeNames.Token).Set("st")
+        reader_out = reader.CreateOutput("result", Sdf.ValueTypeNames.Float2)
+
+        sampler = UsdShade.Shader.Define(stage, "/Root/Material/Texture")
+        sampler.CreateIdAttr("UsdUVTexture")
+        sampler.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(texture_name)
+        sampler.CreateInput("st", Sdf.ValueTypeNames.Float2).ConnectToSource(reader_out)
+        sampler_rgb = sampler.CreateOutput("rgb", Sdf.ValueTypeNames.Float3)
+
+        surface = UsdShade.Shader.Define(stage, "/Root/Material/Surface")
+        surface.CreateIdAttr("UsdPreviewSurface")
+        surface.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(0.7)
+        surface.CreateInput("metallic", Sdf.ValueTypeNames.Float).Set(0.0)
+        surface.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).ConnectToSource(
+            sampler_rgb
+        )
+        material.CreateSurfaceOutput().ConnectToSource(
+            surface.CreateOutput("surface", Sdf.ValueTypeNames.Token)
+        )
+        UsdShade.MaterialBindingAPI.Apply(usd_mesh.GetPrim()).Bind(material)
+
+    stage.GetRootLayer().Save()
+    if not UsdUtils.CreateNewUsdzPackage(Sdf.AssetPath(str(stage_path)), str(out_path)):
+        raise RuntimeError("usdz packaging failed")
+
+
 def _export_simple(mesh, output_format: str, task_id: str) -> list:
     """Export a Trimesh to a single self-contained file (GLB embeds textures).
 
-    FBX has no trimesh writer, so it is bridged through a temp GLB and handed to
-    Blender. This path always yields a static FBX — the Trimesh has already lost
-    any rig by the time geometry ops produce it; the rig-preserving route is
-    `_convert_to_fbx_preserving_rig`."""
+    Two formats have no trimesh writer. FBX is bridged through a temp GLB and
+    handed to Blender; this path always yields a static FBX, because the Trimesh
+    has already lost any rig by the time geometry ops produce it (the
+    rig-preserving route is `_convert_to_fbx_preserving_rig`). USDZ is authored
+    with `pxr` in `_write_usdz`."""
     import trimesh
     fmt = output_format.lower()
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -595,7 +669,9 @@ def _export_simple(mesh, output_format: str, task_id: str) -> list:
             glb_path = Path(tmpdir) / f"{task_id}.glb"
             trimesh.scene.scene.Scene(geometry={"mesh": mesh}).export(str(glb_path))
             _blender_to_fbx(glb_path, out_path, static=True)
-        elif fmt in ("glb", "usdz"):
+        elif fmt == "usdz":
+            _write_usdz(mesh, task_id, out_path)
+        elif fmt == "glb":
             trimesh.scene.scene.Scene(geometry={"mesh": mesh}).export(str(out_path))
         else:
             mesh.export(str(out_path))
