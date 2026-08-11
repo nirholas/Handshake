@@ -993,6 +993,55 @@ create table if not exists solana_attestations_cursor (
     last_indexed_at   timestamptz not null default now()
 );
 
+-- ── agent_onchain_events — cross-chain agent lifecycle index (Solana first) ──
+-- One row per indexed on-chain event, every chain in one table. Written by the
+-- erc8004-crawl (EVM registry logs) and solana-attestations-crawl (Solana
+-- account signatures) crons; read by /api/agents/onchain-history and the index
+-- lag monitor on /status. `chain_id` is 0 on Solana so the uniqueness index
+-- never sees a NULL. occurred_at is the ABSOLUTE on-chain timestamp; indexed_at
+-- is ingestion time. Mirrors api/_lib/migrations/20260811090000_agent_onchain_events.sql.
+create table if not exists agent_onchain_events (
+    id            bigserial   primary key,
+    chain         text        not null,
+    chain_id      integer     not null default 0,
+    network       text        not null default 'mainnet',
+    agent_ref     text        not null,
+    event_class   text        not null,
+    event_name    text        not null,
+    tx            text        not null,
+    log_index     integer     not null default 0,
+    block_number  bigint,
+    occurred_at   timestamptz not null,
+    actor         text,
+    counterparty  text,
+    payload       jsonb       not null default '{}'::jsonb,
+    indexed_at    timestamptz not null default now()
+);
+create unique index if not exists agent_onchain_events_uniq
+    on agent_onchain_events(chain, chain_id, tx, log_index);
+create index if not exists agent_onchain_events_agent_time
+    on agent_onchain_events(agent_ref, occurred_at desc);
+create index if not exists agent_onchain_events_class_time
+    on agent_onchain_events(event_class, occurred_at desc);
+create index if not exists agent_onchain_events_chain_indexed
+    on agent_onchain_events(chain, indexed_at desc);
+
+create table if not exists agent_event_cursor (
+    chain           text        not null,
+    chain_id        integer     not null default 0,
+    agent_ref       text        not null,
+    network         text        not null default 'mainnet',
+    last_tx         text,
+    last_slot       bigint,
+    last_event_at   timestamptz,
+    last_indexed_at timestamptz not null default now(),
+    scanned         integer     not null default 0,
+    error           text,
+    primary key (chain, chain_id, agent_ref)
+);
+create index if not exists agent_event_cursor_stale
+    on agent_event_cursor(last_indexed_at nulls first);
+
 -- ── SAS credentials (credentialed attestations issued by three.ws authority) ──
 -- Permissionless attestations live in solana_attestations (memo-based);
 -- this table is the credentialed counterpart for things only we can issue

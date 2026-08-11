@@ -5951,6 +5951,10 @@
 			"schedule": "0 9 * * *"
 		},
 		{
+			"path": "/api/cron/retention-rollup",
+			"schedule": "35 9 * * 1"
+		},
+		{
 			"path": "/api/cron/changelog-push",
 			"schedule": "*/20 * * * *"
 		},
