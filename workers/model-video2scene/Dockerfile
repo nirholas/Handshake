@@ -24,8 +24,12 @@ RUN pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.py
 
 # LingBot-Map (Apache-2.0). Clone, install the package + its deps, then put the
 # repo on PYTHONPATH so demo.py (load_model/load_images/postprocess) is importable.
+# The [vis] extra is required, not cosmetic: lingbot_map.vis is where the sanctioned
+# sky-segmentation pipeline lives (apply_sky_segmentation + the ONNX runtime), and
+# its package __init__ imports the viewer, so the extra's deps must be present for
+# `mask_sky` to work at all.
 RUN git clone --depth 1 https://github.com/Robbyant/lingbot-map.git /opt/lingbot-map \
-    && pip install -e /opt/lingbot-map
+    && pip install -e "/opt/lingbot-map[vis]"
 
 # Accelerated paged-KV attention (recommended by upstream for streaming inference).
 RUN pip install --index-url https://pypi.org/simple flashinfer-python
@@ -35,7 +39,14 @@ RUN pip install -r /app/requirements.txt
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
+COPY scene_fusion.py /app/scene_fusion.py
+COPY test_scene_fusion.py /app/test_scene_fusion.py
 COPY main.py /app/main.py
+
+# Fail the build, not a production request, if the fusion path or the service
+# module is broken in the image we are about to ship.
+RUN python -m unittest test_scene_fusion \
+    && API_KEY=build GCS_BUCKET=build python -c "import main; print('main imports clean')"
 
 EXPOSE 8080
 
