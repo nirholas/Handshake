@@ -58,7 +58,14 @@ steps:
       - --allow-unauthenticated
       - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
       - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/triposr,MAX_CONCURRENT=2
+      # HF_HOME/HF_HUB_OFFLINE are load-bearing, not optional: TripoSR's image
+      # tokenizer is facebook/dino-vitb16, which transformers otherwise pulls
+      # from huggingface.co at model-load time. On 2026-07-28 that pull was
+      # rate-limited on the shared Cloud Run egress IP and the revision crash
+      # looped. The files are staged in the mounted weights bucket under
+      # hf-cache/, so the worker reads them offline. --set-env-vars REPLACES
+      # the whole env set, so dropping these two here re-breaks startup.
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/triposr,MAX_CONCURRENT=2,HF_HOME=/weights/hf-cache,HF_HUB_OFFLINE=1,HF_HUB_ENABLE_HF_TRANSFER=0
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:
