@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "A Launch Copilot market-maker now tells you when its engine is not running",
+			"summary": "The Launch Copilot dashboard showed an armed market-maker the same way whether or not a worker was actually sweeping it, so a saved floor and budget could sit there looking like a maker at work while nothing executed. The policy view now reads the engine's own heartbeat and, when no engine has checked in, the dashboard says so plainly: your policy, floor and budgets are saved and untouched, but no action will execute until it is back.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/launch"
+		},
+		{
+			"date": "2026-08-11",
 			"title": "The premium vanity address shelf restocks itself without redoing work it already finished",
 			"summary": "Premium vanity addresses (the long, brandable Solana addresses sold from stock) are ground ahead of time on cheap batch machines. Those machines get one hour before the platform stops them, and until now a batch that needed longer was cut off mid-run and reported as a failure, then started over from zero on the retry, re-grinding addresses that were already on the shelf. The grinder now stops itself cleanly a few minutes early, keeps everything it found, and on its next run reads the shelf first and skips every pattern still in stock. Wide multi-machine runs also now split the work properly instead of every machine grinding the same slice.",
 			"tags": [
