@@ -153,6 +153,24 @@ async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
     return task
 
 
+@app.get("/")
+async def root() -> dict:
+    """Service identity for a bare-root GET.
+
+    The keep-warm probe (api/cron/gpu-keepwarm.js) pings the root every 10
+    minutes and counts anything under 500 as warm, so a 404 worked but logged 90
+    WARNING lines a day into the triage sweep and told an operator who landed
+    here nothing. Answer with the endpoint map instead, matching the other
+    model-* workers.
+    """
+    return {
+        "service": "model-text2motion",
+        "model": "mdm",
+        "health": "/health",
+        "endpoints": ["POST /infer", "GET /tasks/{id}", "GET /health"],
+    }
+
+
 @app.get("/health")
 async def health() -> dict:
     return {
