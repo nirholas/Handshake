@@ -54,11 +54,14 @@
 		<canvas id="agora-canvas" tabindex="0" aria-label="The Commons — a 3D world of citizens. Use the citizen list to inspect individuals."></canvas>
 
 		<div id="agora-hud" style="display:none">
-			<div id="agora-hud-tl">
+			<!-- The page's one h1. The Commons is a full-bleed canvas, so the title
+			     chip carries the document heading rather than duplicating it in a
+			     hidden node that could drift from what the HUD shows. -->
+			<h1 id="agora-hud-tl">
 				<img src="/three.svg" alt="" width="22" height="22" />
 				<span data-i18n="agora.agora">AGORA</span>
 				<span id="agora-hud-sub" data-i18n="agora.the_commons">the Commons</span>
-			</div>
+			</h1>
 
 			<div id="agora-pop">
 				<span id="agora-count" aria-live="polite">0</span>

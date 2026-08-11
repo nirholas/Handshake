@@ -409,6 +409,12 @@ html, body {
 	.agora-passport.open { transform: none; }
 	#agora-controls-hint { display: none; }
 	.agora-state-card { padding: 28px 22px; }
+	/* The bottom-left population chip (146px) and the bottom-centre CTA (169px)
+	   collide below ~500px viewport width: at 320px they overlap by 86px. The
+	   hint is already hidden at this breakpoint, so the top-left column is free.
+	   Stack the chip under the title there and leave the whole bottom edge to the
+	   CTA and play mode's touch stick. */
+	#agora-pop { top: 48px; bottom: auto; }
 }
 
 @media (max-width: 380px) {

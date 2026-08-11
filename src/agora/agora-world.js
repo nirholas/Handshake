@@ -64,6 +64,20 @@ function citizenPosition(citizen, i) {
 	return layoutPosition(i);
 }
 
+const CITIZENS_URL = '/api/agora/citizens?limit=200';
+
+// The citizens and the buildings are independent fetches, but the population one
+// used to start only after the OSM ladder settled. When Overpass is slow that
+// serialized two waits: a measured production boot spent 40s on the map before
+// the first citizen request even left the browser. Start it here, in parallel
+// with the map, and hold the settled result for loadCitizens. Reveal ordering is
+// unchanged (the world still opens after the square is built), so this is pure
+// latency the visitor no longer waits through. The promise settles into a plain
+// object rather than rejecting, so a failure sits here harmlessly until
+// loadCitizens is ready to render its error state.
+let citizensPrefetch = fetch(CITIZENS_URL, { headers: { accept: 'application/json' } })
+	.then((res) => ({ res }), (err) => ({ err }));
+
 async function main() {
 	progress(6, 'Setting up renderer…');
 	const { renderer, scene, camera } = createCityScene(canvas);
@@ -213,7 +227,18 @@ async function main() {
 		loadInFlight = true;
 		hideState();
 		try {
-			const res = await fetch('/api/agora/citizens?limit=200', { headers: { accept: 'application/json' } });
+			// First pass consumes the boot prefetch above; every later pass (retry,
+			// live join) is a fresh request. A Response body reads once, so the
+			// prefetch is cleared as it is taken.
+			let res;
+			if (citizensPrefetch) {
+				const settled = await citizensPrefetch;
+				citizensPrefetch = null;
+				if (settled.err) throw settled.err;
+				res = settled.res;
+			} else {
+				res = await fetch(CITIZENS_URL, { headers: { accept: 'application/json' } });
+			}
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const data = await res.json();
 			const citizens = Array.isArray(data.citizens) ? data.citizens : [];
