@@ -172,17 +172,6 @@ function injectStylesOnce() {
 	line-height: 1.5;
 	color: #a1a1aa;
 }
-.tws-vcm-script {
-	background: rgba(125, 211, 252, 0.06);
-	border: 1px solid rgba(125, 211, 252, 0.18);
-	border-radius: 10px;
-	padding: 12px 14px;
-	font-size: 13px;
-	line-height: 1.55;
-	color: #d4d4d8;
-	margin-bottom: 16px;
-}
-.tws-vcm-script em { color: #fafafa; font-style: normal; }
 `;
 	document.head.appendChild(s);
 }
