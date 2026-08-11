@@ -22,7 +22,7 @@ export { createSniper } from './engine.js';
 export { loadConfig } from './config.js';
 export { scoreMint, scoreIntel, learnedScore } from './scorer.js';
 export { decideExit } from './exit-logic.js';
-export { createMayhemFilter } from './mayhem-filter.js';
+export { createMayhemFilter, retryWhileNull } from './mayhem-filter.js';
 export {
 	checkConcurrency, checkDailyBudgetLamports, checkSolHeadroom, checkPriceImpact,
 	makeThrottle, makeQueue, SOL_FEE_HEADROOM_LAMPORTS,
