@@ -13,7 +13,7 @@ GCP_UNIRIG_URL wiring is a config-only cutover):
   POST /rig   { mesh_gcs_url: str, template?: str, blendshapes?: bool, job_id?: str }
            -> 202 { task_id, status: "queued" }
   GET  /tasks/:id -> { task_id, status, rigged_gcs_url?, error?, elapsed_ms? }
-  GET  /health    -> { ok, model, gpu_available, model_loaded }
+  GET  /health    -> { ok, model, gpu_available, gpu_name, model_loaded, queued }
 
 Design notes vs the service this replaces:
   - Every task runs under a hard timeout (TASK_TIMEOUT_S, default 420s): a task
@@ -23,6 +23,9 @@ Design notes vs the service this replaces:
   - Task state is in-memory by design: run with min-instances = max-instances
     so pollers always reach the instance that owns the task. A restart 404s
     the poll and the platform fails the job cleanly instead of hanging.
+  - Un-riggable input (not a GLB, no triangles) is rejected before the GPU is
+    touched and reported with the actual reason; only unexpected failures get
+    the opaque correlation id. See rig_glb.validate_input_mesh.
 
 Environment variables:
   API_KEY           shared bearer secret (Secret Manager)
@@ -49,6 +52,7 @@ import httpx
 import torch
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
 from google.cloud import storage
+from google.cloud.storage.retry import DEFAULT_RETRY
 from pydantic import BaseModel
 
 import engine_mia
@@ -116,6 +120,11 @@ def _prune_tasks() -> None:
 
 def _rig_sync(mesh_bytes: bytes, want_blendshapes: bool) -> bytes:
     """The blocking rig pipeline; runs in a worker thread."""
+    # Cheap container/surface check first: a non-GLB or triangle-free input
+    # otherwise burns GPU time only to die inside the predictor with a
+    # traceback that names neither the caller nor the cause.
+    rig_glb.validate_input_mesh(mesh_bytes)
+
     with tempfile.TemporaryDirectory() as tmp:
         glb_path = os.path.join(tmp, "input.glb")
         with open(glb_path, "wb") as fh:
@@ -159,10 +168,15 @@ async def _run_task(task_id: str, mesh_gcs_url: str, want_blendshapes: bool) -> 
 
                 blob_name = f"rigged-meshes/{task_id}.glb"
                 blob = _bucket.blob(blob_name)
+                # upload_from_string defaults to DEFAULT_RETRY_IF_GENERATION_SPECIFIED,
+                # which retries NOTHING when no generation precondition is set, so a
+                # transient RemoteDisconnected on the resumable-upload handshake threw
+                # away a finished rig. The blob name is a fresh uuid per task, so
+                # re-sending can only overwrite this task's own object.
                 await loop.run_in_executor(
                     None,
                     lambda: blob.upload_from_string(
-                        rigged, content_type="model/gltf-binary"
+                        rigged, content_type="model/gltf-binary", retry=DEFAULT_RETRY
                     ),
                 )
                 return f"https://storage.googleapis.com/{GCS_BUCKET}/{blob_name}"
@@ -182,6 +196,16 @@ async def _run_task(task_id: str, mesh_gcs_url: str, want_blendshapes: bool) -> 
                 "elapsed_ms": int((time.time() - t0) * 1000),
             })
             log.error("[%s] rigging timed out", task_id)
+        except rig_glb.InvalidMeshError as exc:
+            # The caller sent something un-riggable. Report what, verbatim: the
+            # message describes only their input, so an opaque correlation id
+            # would cost them the one detail that lets them fix the request.
+            _tasks[task_id].update({
+                "status": "failed",
+                "error": str(exc),
+                "elapsed_ms": int((time.time() - t0) * 1000),
+            })
+            log.warning("[%s] rejected input mesh: %s", task_id, exc)
         except Exception as exc:
             _tasks[task_id].update({
                 "status": "failed",
