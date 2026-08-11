@@ -114,10 +114,36 @@ function sectionPages(id) {
 	return index.pages.filter((p) => p[3] === id);
 }
 
+/**
+ * The designed state for "the index loaded, but it describes nothing". It is
+ * reachable in practice: a build that ships an index generated from an empty or
+ * partial route table serves a valid 200 with zero pages, and without this the
+ * page renders a headline over a void with no way forward.
+ */
+function renderEmpty() {
+	const state = el('div', 'at-state');
+	state.appendChild(el('strong', null, 'The map is empty'));
+	state.appendChild(
+		document.createTextNode('This build shipped a route index with no pages in it. '),
+	);
+	const link = el('a', null, 'The sitemap');
+	link.href = '/sitemap';
+	state.appendChild(link);
+	state.appendChild(document.createTextNode(' is generated separately and still lists every page.'));
+	$body.appendChild(state);
+	$live.textContent = 'The route index is empty. Use the sitemap instead.';
+}
+
 /** Grouped browse view: every section, every page. */
 function renderBrowse() {
 	$body.textContent = '';
 	renderRail(null);
+
+	if (!index.pages.length) {
+		$intentsWrap.hidden = true;
+		renderEmpty();
+		return;
+	}
 
 	for (const section of index.sections) {
 		const pages = sectionPages(section.id);
@@ -142,10 +168,10 @@ function renderBrowse() {
 		$body.appendChild(wrap);
 	}
 
-	$intentsWrap.hidden = false;
 	$intents.textContent = '';
+	$intentsWrap.hidden = index.intents.length === 0;
 	for (const intent of index.intents) $intents.appendChild(intentCard(intent));
-	$intentCount.textContent = `${index.intents.length} shortcuts`;
+	$intentCount.textContent = `${index.intents.length} ${index.intents.length === 1 ? 'shortcut' : 'shortcuts'}`;
 
 	$live.textContent = `${index.pageCount} pages across ${index.sections.length} sections.`;
 	watchSections();
@@ -272,6 +298,10 @@ $clear.addEventListener('click', () => {
 	render();
 	syncUrl();
 });
+
+// The skeletons say "loading" to anyone who can see them. The live region is
+// the same message for anyone who cannot.
+$live.textContent = 'Loading the map.';
 
 fetch(INDEX_URL, { credentials: 'omit' })
 	.then((r) => {

@@ -27,6 +27,35 @@ import { shouldInject, injectInto, ATLAS_TAG } from '../scripts/inject-atlas.mjs
 const root = resolve(import.meta.dirname, '..');
 const index = JSON.parse(readFileSync(resolve(root, 'public/atlas-index.json'), 'utf8'));
 
+/**
+ * Every `document.addEventListener('keydown', …)` call in a source file, with
+ * its handler body and whether it asked for the capture phase. Depth-aware so a
+ * handler containing its own parens and commas is read whole.
+ * @param {string} src
+ * @returns {Array<{ body: string, capture: boolean }>}
+ */
+function keydownRegistrations(src) {
+	const out = [];
+	const OPEN = "document.addEventListener(";
+	for (let i = src.indexOf(OPEN); i !== -1; i = src.indexOf(OPEN, i + 1)) {
+		let depth = 0;
+		let end = -1;
+		for (let j = i + OPEN.length - 1; j < src.length; j++) {
+			const ch = src[j];
+			if (ch === '(') depth++;
+			else if (ch === ')') {
+				depth--;
+				if (depth === 0) { end = j; break; }
+			}
+		}
+		if (end === -1) continue;
+		const args = src.slice(i + OPEN.length, end);
+		if (!/^\s*'keydown'/.test(args)) continue;
+		out.push({ body: args, capture: /,\s*true\s*,?\s*$/.test(args) });
+	}
+	return out;
+}
+
 /** First result's path for a query, which is the only rank most people ever see. */
 const top = (q) => rankPages(q, index.pages)[0]?.page[0];
 const paths = (q, n = 5) => rankPages(q, index.pages).slice(0, n).map((r) => r.page[0]);
@@ -237,6 +266,26 @@ describe('injection coverage', () => {
 		for (const f of ['index.html', 'atlas.html', 'status.html', 'docs/mcp.html']) {
 			expect(shouldInject(`dist/${f}`), `${f} should get the palette`).toBe(true);
 		}
+	});
+
+	it('leaves "/" to the page and keeps Cmd+K for itself', () => {
+		// Atlas used to claim "/" in the CAPTURE phase, which beat every page
+		// listener no matter when it registered. ~20 pages bind "/" to focus their
+		// own search or address field (/airdrops even prints "Press / to focus"
+		// under its form), and all of them were dead on arrival. "/" now listens in
+		// the bubble phase so a page that handled it leaves defaultPrevented set
+		// and Atlas stands down; Cmd+K stays in capture because it belongs to
+		// Atlas everywhere.
+		const src = readFileSync(resolve(root, 'public/atlas.js'), 'utf8');
+		const calls = keydownRegistrations(src);
+		expect(calls.length, 'atlas registers exactly two keydown listeners').toBe(2);
+		const slash = calls.find((c) => c.body.includes("e.key !== '/'") || c.body.includes("e.key === '/'"));
+		const cmdK = calls.find((c) => /e\.key (!==|===) 'k'/.test(c.body));
+		expect(slash, 'a "/" keydown listener').toBeTruthy();
+		expect(cmdK, 'a Cmd+K keydown listener').toBeTruthy();
+		expect(slash.capture, '"/" must NOT be captured, or page shortcuts never fire').toBe(false);
+		expect(cmdK.capture, 'Cmd+K stays in the capture phase').toBe(true);
+		expect(slash.body, '"/" handler must yield to a page that already handled it').toContain('defaultPrevented');
 	});
 
 	it('is wired into the build, not just available to it', () => {

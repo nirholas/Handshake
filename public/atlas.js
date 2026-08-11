@@ -655,27 +655,38 @@ import { rankPages, rankIntents, highlight } from './atlas/score.js';
 		return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 	}
 
+	// Cmd/Ctrl+K belongs to Atlas everywhere, so it is claimed in the capture
+	// phase before any page can intercept it.
 	document.addEventListener(
 		'keydown',
 		function (e) {
 			if (e.defaultPrevented) return;
 			var mod = e.metaKey || e.ctrlKey;
-			if (mod && !e.altKey && (e.key === 'k' || e.key === 'K')) {
-				e.preventDefault();
-				if (open) close();
-				else show('');
-				return;
-			}
-			if (open) return;
-			// "/" is the other muscle-memory shortcut, but only when the visitor
-			// is not already typing somewhere. Never steal it from a form.
-			if (e.key === '/' && !mod && !e.altKey && !isTypingTarget(e.target)) {
-				e.preventDefault();
-				show('');
-			}
+			if (!mod || e.altKey) return;
+			if (e.key !== 'k' && e.key !== 'K') return;
+			e.preventDefault();
+			if (open) close();
+			else show('');
 		},
 		true,
 	);
+
+	// "/" is the other muscle-memory shortcut, but it is shared: ~20 pages bind
+	// it to focus their own search or address field, and the page's field is
+	// what a visitor on that page means by "/". This listener therefore runs in
+	// the BUBBLE phase (no capture flag) and Atlas is injected last on the page,
+	// so every page-level document listener has already had its turn; a page
+	// that handled "/" leaves defaultPrevented set and Atlas stands down. In the
+	// capture phase Atlas won unconditionally and those page shortcuts were dead
+	// on arrival, including the "Press / to focus" hint printed on /airdrops.
+	document.addEventListener('keydown', function (e) {
+		if (e.defaultPrevented || open) return;
+		var mod = e.metaKey || e.ctrlKey;
+		// Never steal it from a form.
+		if (e.key !== '/' || mod || e.altKey || isTypingTarget(e.target)) return;
+		e.preventDefault();
+		show('');
+	});
 
 	// Any element on any page can open Atlas by declaring itself.
 	document.addEventListener('click', function (e) {
