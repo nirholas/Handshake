@@ -7,15 +7,25 @@
 // and the "below SOL floor → engine paused" halts.
 //
 // USAGE (needs the deploy secrets in the environment):
-//   vercel env pull .env.audit.local           # pull Production env locally
-//   node --env-file=.env.audit.local scripts/audit-service-wallets.mjs
-// Or run in any environment that already has the wallet secrets exported.
+//   npm run audit:service-wallets              # whatever .env holds locally
+//
+// A local .env carries only a subset of the signer secrets, so most rows read
+// UNCONFIGURED here. That is a gap in the local env, not a gap in production.
+// Production's authoritative set lives on the Cloud Run service, so to audit
+// what the live service actually signs with, export that env first:
+//   gcloud run services describe three-ws-api --region us-central1 \
+//     --project aerial-vehicle-466722-p5 --format=yaml
+// Do NOT use `vercel env pull`: it returns EMPTY for every secret-type var, so
+// it reports a fully-configured fleet as fully unconfigured. Production has run
+// on Cloud Run since 2026-07-07; Vercel is not the source of truth for any of
+// these keys.
 //
 // Read-only: derives pubkeys and queries RPC. Never logs secret material, only
 // derived public keys, balances, and pass/fail verdicts.
 
 import bs58 from 'bs58';
 import { Keypair, PublicKey } from '@solana/web3.js';
+import { SOLANA_SIGNERS } from '../api/_lib/solana-signers.js';
 
 const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const ORIGIN = process.env.AUDIT_ORIGIN || 'https://three.ws';
@@ -33,36 +43,43 @@ const ORIGIN = process.env.AUDIT_ORIGIN || 'https://three.ws';
 // rpc.magicblock.app is deliberately absent: it 403s every method from our
 // egress, and it is still what SOLANA_RPC_URL points at in some environments,
 // which is exactly how this audit came to read every wallet as empty.
+//
+// Hosts with a hard egress block, pruned from the chain no matter which var
+// names them. Mirrors the pruning of FREE_KEYLESS_MAINNET described in
+// docs/ops/solana-rpc-lanes.md: a 403 block is not a cooldown, it never
+// recovers, so probing it only spends a round trip to relearn the block. This
+// list is why the comment above is true of the code and not just of intent:
+// SOLANA_RPC_URL still resolves to magicblock in this workspace's .env and on
+// the Cloud Run service, so without the filter every read below opened with a
+// guaranteed 403 before failing over.
+const BLOCKED_LANE_HOSTS = new Set(['rpc.magicblock.app']);
+const laneHost = (u) => { try { return new URL(u).host; } catch { return null; } };
 const RPC_LANES = [
 	process.env.SOLANA_RPC_URL,
 	'https://solana-rpc.publicnode.com',
 	'https://api.mainnet-beta.solana.com',
 	'https://solana.leorpc.com/?api_key=FREE',
-].filter(Boolean);
+].filter((u) => u && !BLOCKED_LANE_HOSTS.has(laneHost(u)));
 
-// Mirrors api/_lib/solana-signers.js SIGNER_SPECS (name, secret env, floor). Kept
-// inline so the audit runs standalone without importing the app's module graph.
-const SIGNERS = [
-	{ name: 'economy-master',       env: 'ECONOMY_MASTER_SECRET_BASE58',            minSol: 1.0,  purpose: 'tops up every other service wallet' },
-	{ name: 'pump-cron-relayer',    env: 'PUMP_CRON_RELAYER_SECRET_KEY_B64',        minSol: 0.1,  purpose: 'buyback + distribute-payments gas' },
-	{ name: 'pump-x402-launcher',   env: 'PUMP_X402_LAUNCHER_SECRET_KEY_B64',       minSol: 0.1,  purpose: 'fronts pump.fun x402 deploy cost' },
-	{ name: 'coin-launcher-master', env: 'LAUNCHER_MASTER_SECRET_KEY_B64', fb: 'PUMP_X402_LAUNCHER_SECRET_KEY_B64', minSol: 1.0, purpose: 'coin launch authority' },
-	{ name: 'sns-parent-owner',     env: 'THREEWS_SOL_PARENT_SECRET_BASE58',        minSol: 0.05, purpose: 'owns threews.sol; mints subdomains' },
-	{ name: 'coin-treasury',        env: 'COIN_TREASURY_SECRET_KEY_B64',            minSol: 0.05, purpose: 'lottery/reflection distributions' },
-	{ name: 'three-buyback',        env: 'THREE_BUYBACK_SECRET_KEY_B64',            minSol: 0.05, purpose: 'holds USDC revenue; buys $THREE' },
-	{ name: 'club-treasury',        env: 'CLUB_SOLANA_TREASURY_SECRET_KEY_B64',     minSol: 0.05, purpose: 'club tip-sweep payouts' },
-	{ name: 'platform-treasury',    env: 'PLATFORM_TREASURY_KEYPAIR', fb: 'TREASURY_KEYPAIR', minSol: 0.05, purpose: 'SPL withdrawal gas' },
-	{ name: 'marketplace-payer',    env: 'MARKETPLACE_PAYER_KEYPAIR', fb: 'PLATFORM_TREASURY_KEYPAIR', minSol: 0.05, purpose: 'gasless checkout fee-payer' },
-	{ name: 'a2a-payer',            env: 'A2A_PAYER_SOLANA_SECRET', fb: 'A2A_PAYER_SOLANA_PRIVATE_KEY', minSol: 0.02, purpose: 'agent-to-agent settlement co-signer' },
-	{ name: 'x402-ring-sponsor',    env: 'X402_FEE_PAYER_SECRET_BASE58',            minSol: 0.03, purpose: 'x402 self-facilitator fee-payer (co-signs settles)' },
-	{ name: 'x402-ring-payer',      env: 'X402_SEED_SOLANA_SECRET_BASE58', fb: 'X402_AGENT_SOLANA_SECRET_BASE58', minSol: 0.03, purpose: 'x402 ring payer (self-pay)' },
-	{ name: 'circulation-treasury', env: 'CIRCULATION_TREASURY_SECRET',             minSol: 0.2,  purpose: 'seeds the operated agent pool' },
-	{ name: 'collection-authority', env: 'SOLANA_AGENT_COLLECTION_AUTHORITY_KEY',   minSol: 0.02, purpose: 'agent NFT collection authority' },
-];
+// THE registry, imported rather than mirrored. api/_lib/solana-signers.js has no
+// imports of its own, so this stays a standalone script with no app module graph
+// behind it, which is what an inline copy used to buy.
+//
+// The copy had to go because it could not see the per-signer floor overrides
+// (SIGNER_MIN_SOL_<NAME> / SIGNER_REFILL_TO_SOL_<NAME>) that solana-signers.js
+// applies at module load. Those exist so ops can retune a floor without a deploy,
+// and every other consumer (treasury-topup targets, balance alerts, the floors
+// dashboard) already agreed on the retuned number while this audit alone still
+// judged against the code default. Concretely: with
+// SIGNER_MIN_SOL_COIN_LAUNCHER_MASTER=0.15 set on the Cloud Run service and in
+// .env, the audit still reported coin-launcher-master "below floor 1" and sized
+// the deficit at ~6.7x what the economy actually wants funded. An audit that
+// disagrees with the engine it audits reports fiction.
+const SIGNERS = SOLANA_SIGNERS;
 
 // Address-only vars (public keys advertised in 402 challenges, no secret here).
 const ADVERTISED = [
-	{ name: 'x402 payTo (Solana)',     env: 'X402_PAY_TO_SOLANA', fb: 'X402_PAY_TO' },
+	{ name: 'x402 payTo (Solana)',     env: 'X402_PAY_TO_SOLANA', fallbackEnv: 'X402_PAY_TO' },
 	{ name: 'x402 fee-payer (Solana)', env: 'X402_FEE_PAYER_SOLANA' },
 	{ name: 'credits deposit wallet',  env: 'CREDITS_DEPOSIT_WALLET_SOLANA' },
 	{ name: 'platform fee wallet',     env: 'PUMP_PLATFORM_FEE_WALLET' },
@@ -127,15 +144,18 @@ async function onchain(addr) {
 }
 const fmtSol = (v) => (v === null ? 'unreadable' : v.toFixed(4));
 const fmtUsdc = (v) => (v === null ? 'unreadable' : String(v));
+// One accessor for both tables, so the registry's own `fallbackEnv` field is the
+// only fallback spelling this script knows.
+const rawOf = (spec) => process.env[spec.env] || (spec.fallbackEnv ? process.env[spec.fallbackEnv] : null);
 function pub(spec) {
-	const raw = process.env[spec.env] || (spec.fb ? process.env[spec.fb] : null);
+	const raw = rawOf(spec);
 	if (!raw) return { configured: false };
 	const kp = decodeSecret(raw);
 	if (!kp) return { configured: true, bad: true };
 	return { configured: true, pubkey: kp.publicKey.toBase58() };
 }
 function addrOf(spec) {
-	const raw = process.env[spec.env] || (spec.fb ? process.env[spec.fb] : null);
+	const raw = rawOf(spec);
 	if (!raw) return null;
 	const v = String(raw).trim().replace(/^["']|["']$/g, '');
 	try { new PublicKey(v); return v; } catch { return null; }
