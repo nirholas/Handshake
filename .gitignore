@@ -452,3 +452,11 @@ public/docs-search-index.json
 .failover-report.json
 .meetup-audit/
 .souvenir-ui/
+
+# IBM Partner Plus marketplace onboarding notes (business ops, not platform code)
+ibm-partner/
+
+# garment-forge bakes its reference body into the image at build time by copying
+# public/avatars/parametric-base.glb (see workers/garment-forge/cloudbuild.yaml),
+# so the staged copy is a 4 MB duplicate of a file already in the repo.
+workers/garment-forge/assets/
