@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-11T03:25:08.319Z",
+	"generated_at": "2026-08-11T04:28:01.132Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-11",
+			"type": "launch",
+			"title": "Docs · Tokens API on three.ws",
+			"summary": "The Solana Foundation asset layer wired into three.ws: how one canonical asset maps to every Solana mint that represents it, the batch market read that prices a whole portfolio in one call, and where it sits in the price failover chain behind Birdeye.",
+			"link": "/docs/tokens-xyz",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-08-11",
 			"type": "update",
@@ -73,6 +83,16 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "Exporting a 3D model as FBX or USDZ works again",
+			"summary": "Game-Ready export offers FBX alongside GLB, and the mesh tools list USDZ for AR viewers, but both formats failed every single time. FBX was the stranger of the two: the converter wrote a perfectly good file, and then Blender crashed while shutting itself down, so the service read the crash as a failed export and threw the finished file away. USDZ had never been connected to anything that could write one. FBX now reports what actually happened instead of the shutdown crash, and USDZ is written properly with its texture packed inside, so it opens in AR Quick Look and Scene Viewer. Converting a rigged model to FBX still keeps its skeleton, skin weights, and blendshapes.",
+			"link": "/create",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "Garment generation no longer runs out of memory mid-job",
 			"summary": "The Garment Forge builds two garments at a time on one machine, and when both were at their heaviest stage the machine hit its memory ceiling and was killed outright, taking whichever garment was in flight with it. The ceiling has been doubled to cover two full pipelines at peak, so a garment you submit while someone else's is already building finishes instead of dying. If a job does still lose its machine for any other reason, the ten-minute sweep picks it back up as before.",
 			"link": "/wardrobe",
@@ -87,6 +107,17 @@
 			"title": "Generating an animation from a text prompt no longer fails when the motion engine has been idle",
 			"summary": "Ask for a custom animation (\"a slow tai-chi sweep\") and the motion engine has to wake up before it can generate. In its region three other, idle 3D engines were each holding a graphics card warm, so there was nothing left for the motion engine to start on, and roughly twice a day it was refused a card outright and the request failed. The idle holder has been released, so the motion lane can always start. Generation itself is unchanged: a three second prompt still comes back in under three seconds once warm.",
 			"link": "/animations",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Heavy mesh cleanup no longer slows to a crawl once you stop watching it",
+			"summary": "Low-poly bakes and quad retopology keep running in the background after the request that started them has answered. The machine doing that work was only given a full share of its processor while a request was actually in flight, so a job whose page stopped checking on it kept going at a trickle: one 2,000-face bake that takes under three minutes normally ran for more than fourteen hours. The service now holds its processor for the whole job, so it finishes at full speed whether or not anyone is watching.",
+			"link": null,
 			"tags": [
 				"fix",
 				"infra"
@@ -150,7 +181,7 @@
 			"date": "2026-08-11",
 			"type": "update",
 			"title": "Stylizing a model no longer throws away the finished result over a momentary network hiccup, and plain models keep their intended color",
-			"summary": "The stylize filters (voxel, brick, voronoi shell, low-poly) rebuild your model and then upload the result to storage. A brief interruption on that last upload step was not retried, so roughly once a week a job that had already done all its work was reported to you as failed. That upload now retries by itself. Two more repairs ride along: a model that carries no colors of its own now comes back in the soft neutral tone the filters were designed around, instead of the flat gray the geometry library hands out by default, and a model with no size at all is refused with a clear reason rather than returning a file with nothing visible in it.",
+			"summary": "The stylize filters (voxel, brick, voronoi shell, low-poly) rebuild your model and then upload the result to storage. A brief interruption on that last upload step was not retried, so roughly once a week a job that had already done all its work was reported to you as failed. That upload now retries by itself. Three more repairs ride along. The low-poly filter was returning every model in flat gray: it read the colors off its own simplified copy, which the simplification step hands back stripped of them, so your model's colors were discarded on the way through. It now reads them from your model. A model that carries no colors at all comes back in the soft neutral tone the filters were designed around rather than the geometry library's default gray. And a model with no size at all is refused with a clear reason instead of returning a file with nothing visible in it.",
 			"link": "/forge",
 			"tags": [
 				"fix",

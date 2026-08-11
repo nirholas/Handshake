@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "Exporting a 3D model as FBX or USDZ works again",
+			"summary": "Game-Ready export offers FBX alongside GLB, and the mesh tools list USDZ for AR viewers, but both formats failed every single time. FBX was the stranger of the two: the converter wrote a perfectly good file, and then Blender crashed while shutting itself down, so the service read the crash as a failed export and threw the finished file away. USDZ had never been connected to anything that could write one. FBX now reports what actually happened instead of the shutdown crash, and USDZ is written properly with its texture packed inside, so it opens in AR Quick Look and Scene Viewer. Converting a rigged model to FBX still keeps its skeleton, skin weights, and blendshapes.",
+			"tags": [
+				"fix"
+			],
+			"link": "/create"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "Heavy mesh cleanup no longer slows to a crawl once you stop watching it",
+			"summary": "Low-poly bakes and quad retopology keep running in the background after the request that started them has answered. The machine doing that work was only given a full share of its processor while a request was actually in flight, so a job whose page stopped checking on it kept going at a trickle: one 2,000-face bake that takes under three minutes normally ran for more than fourteen hours. The service now holds its processor for the whole job, so it finishes at full speed whether or not anyone is watching.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
 			"title": "Auto-rigging tells you when a model cannot be rigged, instead of just failing",
 			"summary": "When you rig an avatar and the source file is not actually a 3D model (a broken link that returns an error page) or has no surface to rig (a point cloud rather than a mesh), the job used to end with a generic internal error that gave you nothing to act on. The rigger now checks the file up front and reports the real reason, so you know whether to fix the link or supply a different model, and the check runs before any GPU time is spent. Separately, a finished rig could be thrown away if the network dropped while the result was being saved; uploads now retry, so completed work is no longer lost to a transient blip.",
 			"tags": [
