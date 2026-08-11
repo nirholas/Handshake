@@ -22,14 +22,16 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { maskComments } from './lib/js-comment-ranges.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC_DIR = resolve(root, 'src');
 const strict = process.argv.includes('--strict');
 
-// A real <img> tag: `<img` + whitespace + an attribute name. Excludes bare
-// `<img>` that appears as literal text inside code comments.
-const IMG_TAG = /<img(\s+[a-zA-Z][^>]*?)?>/g;
+// A real <img> tag: `<img` + whitespace + an attribute name. Comments are
+// masked out before matching (see maskComments), so prose that quotes a tag,
+// such as an XSS note about `<img onerror=…>`, is never mistaken for markup
+// this codebase renders.
 const REAL_IMG = /<img(?=\s+[a-zA-Z])([^>]*?)>/g;
 
 function walk(dir) {
@@ -44,7 +46,7 @@ function walk(dir) {
 
 const offenders = [];
 for (const file of walk(SRC_DIR)) {
-	const src = readFileSync(file, 'utf8');
+	const src = maskComments(readFileSync(file, 'utf8'));
 	let m;
 	REAL_IMG.lastIndex = 0;
 	while ((m = REAL_IMG.exec(src)) !== null) {

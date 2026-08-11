@@ -395,7 +395,7 @@ function codeFor(lang) {
 			return `<script type="module" src="${origin}/agent-3d/latest/agent-3d.js"><\/script>\n<agent-3d\n  src="${state.source.url}"\n  style="width: ${state.size}px; height: ${state.size}px; display: block;"\n></agent-3d>`;
 		}
 		if (lang === 'html') {
-			return `<!-- POST /api/render/avatar-clip returns image bytes, so render it\n     server-side and serve the result, or fetch it into an object URL. -->\n<img src="/your-cached-render.png" alt="" width="${state.size}" height="${state.size}" />`;
+			return `<!-- POST /api/render/avatar-clip returns image bytes, so render it\n     server-side and serve the result, or fetch it into an object URL. -->\n<img src="/your-cached-render.png" alt="" width="${state.size}" height="${state.size}" loading="lazy" />`;
 		}
 		return `POST ${origin}/api/render/avatar-clip\n\n${body}`;
 	}

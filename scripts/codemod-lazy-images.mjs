@@ -17,6 +17,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import { commentRanges, isInsideComment } from './lib/js-comment-ranges.mjs';
 
 const dryRun = process.argv.includes('--dry-run');
 const files = execSync('grep -rlE "<img\\b" src/', { encoding: 'utf8' })
@@ -31,11 +32,14 @@ for (const file of files) {
 	const src = readFileSync(file, 'utf8');
 	let edits = 0;
 	// Match a REAL <img tag: `<img` + whitespace + an attribute name (a letter).
-	// This excludes bare `<img>` that appears as literal text inside code
-	// comments. Skip any tag that already declares loading=. We insert the two
-	// attributes immediately after `<img`, preserving the original whitespace
-	// and all existing attributes verbatim.
-	const out = src.replace(/<img(?![^>]*\bloading=)(\s+[a-zA-Z])/g, (_m, next) => {
+	// Matches inside comments are left alone: prose that quotes a tag, such as
+	// an XSS note about `<img onerror=…>`, renders nothing, and rewriting it
+	// would corrupt the explanation. Skip any tag that already declares
+	// loading=. We insert the two attributes immediately after `<img`,
+	// preserving the original whitespace and all existing attributes verbatim.
+	const comments = commentRanges(src);
+	const out = src.replace(/<img(?![^>]*\bloading=)(\s+[a-zA-Z])/g, (m, next, offset) => {
+		if (isInsideComment(comments, offset)) return m;
 		edits++;
 		return `<img loading="lazy" decoding="async"${next}`;
 	});

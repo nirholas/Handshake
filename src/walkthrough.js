@@ -70,7 +70,7 @@ function shellHtml(w) {
 			<span aria-hidden="true">‹</span>
 		</button>
 		<figure class="wt-stage" id="wt-stage" role="group" aria-roledescription="walkthrough" aria-label="${esc(w.title)}">
-			<img class="wt-frame" id="wt-frame" alt="" decoding="async" />
+			<img class="wt-frame" id="wt-frame" alt="" decoding="async" loading="eager" />
 			<div class="wt-spot" id="wt-spot" aria-hidden="true"></div>
 			<div class="wt-callout" id="wt-callout" data-side="right">
 				<p class="wt-callout-count" id="wt-count"></p>
