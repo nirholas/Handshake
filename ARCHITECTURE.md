@@ -1561,7 +1561,7 @@ Defends price floors, recycles profit, manages graduation transitions for `marke
 
 #### `workers/agent-orders` — Order Execution
 
-Sweeps `active_orders`, evaluates triggers/schedules, fires matched orders via `executeAgentTrade` with real-time on-chain quotes.
+Sweeps the `active`/`partial` rows of `orders`, evaluates triggers/schedules, and fires matched orders via `executeAgentTrade` with real-time on-chain quotes, writing an `order_fills` receipt per execution. Built and wired (limit/stop/trailing/DCA/TWAP/conditional), but not yet running as a Cloud Run service, so orders currently sit `active` until it is deployed.
 
 #### `workers/agora-citizens` — Agora Life Engine
 
@@ -2641,7 +2641,7 @@ The worker and `api/sniper/*` are separate processes that **communicate only thr
 
 **API:** `POST /api/agent-screen-push` / `GET /api/agent-screen-stream` / `GET /api/agent-screen-active`, `POST /api/agent/watch-intent` (viewer "I'm watching" + emoji reaction → Redis `screen:wanted`), `GET /api/agent/watch-wanted` (pool reads the set; `SCREEN_WORKER_SECRET`), `GET /api/agent/watch-status` (casting/warming/queued#N/activity handoff), `POST /api/agent/caster-config` (mint scoped `api_keys` row + emit `.env`/docker for the caster). Helper: `api/_lib/agent-screen-frame.js` (`writeScreenFrame()`).
 
-**Frontend:** `pages/agent-screen.html` → `src/agent-screen.js` → `src/shared/agent-screen-client.js` (EventSource wrapper w/ backoff); 3D desks `src/game/agent-desk.js`, `src/walk-agent-desk.js`; live wall `src/agents-live.js`. **Ops:** the pool's first-party host is a self-renewing GitHub Actions burst runner `.github/workflows/agent-screen-pool.yml` (`cron: 0 */5 * * *`, `timeout 320m`), or any Docker VM/Fly/Railway. **Env:** `SCREEN_WORKER_SECRET` (API + pool), `SCREEN_POOL_MAX` (queue math), plus per-producer `AGENT_ID`/`AGENT_JWT`/`AGENT_BEARER_TOKEN`, `PUSH_URL`, `MAX_BROWSERS`, `FRAME_MS`, `BROWSERBASE_API_KEY`. Falls back to the `agent_actions` feed when no live caster is pushing.
+**Frontend:** `pages/agent-screen.html` → `src/agent-screen.js` → `src/shared/agent-screen-client.js` (EventSource wrapper w/ backoff); 3D desks `src/game/agent-desk.js`, `src/walk-agent-desk.js`; live wall `src/agents-live.js`. **Ops:** the pool ships as a long-lived Cloud Run service built by `workers/agent-screen-pool/cloudbuild.yaml` (one submit builds, pushes and deploys; `--no-cpu-throttling`, `min=max=1 instance`), or any always-on Docker host. **Env:** `SCREEN_WORKER_SECRET` (API + pool), `SCREEN_POOL_MAX` (queue math), plus per-producer `AGENT_ID`/`AGENT_JWT`/`AGENT_BEARER_TOKEN`, `PUSH_URL`, `MAX_BROWSERS`, `FRAME_MS`, `BROWSERBASE_API_KEY`. Falls back to the `agent_actions` feed when no live caster is pushing.
 
 ---
 
@@ -2830,7 +2830,7 @@ gRPC protobufs are vendored under `api/_lib/riva-protos/` and `api/_lib/a2f-prot
 
 ## Testing & Quality Assurance
 
-There is **no GitHub Actions CI** — the project deliberately does not use `.github/workflows` for CI/deploy (the one file there, `agent-screen-pool.yml`, is an optional agent-screen worker host, not a pipeline). Deploys run through Cloud Build; schedules through Cloud Scheduler. So a large local test suite + the `gate`/`audit`/`smoke` scripts ARE the quality bar. **~591 test files.**
+There is **no GitHub Actions CI** — the project deliberately does not use `.github/workflows` for CI/deploy, and no workflow file exists (`.github/` holds only CODEOWNERS, FUNDING, SECURITY, and the issue/PR templates). Deploys run through Cloud Build; schedules through Cloud Scheduler. So a large local test suite + the `gate`/`audit`/`smoke` scripts ARE the quality bar. **~591 test files.**
 
 **Runners:**
 
@@ -3028,7 +3028,7 @@ The codebase references **~260 distinct `process.env.*` keys** across `api/`; `a
 | Agora economy | **Launched** (Commons live at `/agora`; Arena/Guild migration 2026-07-02) | Agent + human citizens, professions, verifiable WORK supply chain — see [Agora](#agora--living-agent--human-economy-verifiable-work-supply-chain) |
 | Self-hosted x402 facilitator | Shipped, **off by default** | `X402_SELF_FACILITATOR_ENABLED` + sponsor secret required; `api/x402-facilitator` returns 503 otherwise |
 | Autonomous coin launcher | Live (`launcher_config` defaults flipped to LIVE) | Real SOL, circuit-broken, storage-preflighted |
-| Agent-screen pool hosting | No true 24/7 host | Only first-party host is the self-renewing GitHub Actions burst runner (`cron 0 */5`); a Docker VM/Fly/Railway is recommended for production |
+| Agent-screen pool hosting | Deploy-ready, not yet deployed | `workers/agent-screen-pool/cloudbuild.yaml` builds + deploys it as an always-on Cloud Run service; until that submit runs, watched cards stay on the zero-cost activity view (`/api/agent/watch-status` gates warming/queued on pool liveness) |
 
 ### Technical Debt
 
