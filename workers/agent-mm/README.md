@@ -39,9 +39,22 @@ UI surfaces.
 
 ## Run
 
+The worker reads its configuration from the process environment and loads no
+`.env` file of its own, so export one first:
+
 ```bash
+set -a && . ./.env && set +a
 npm run worker:mm          # simulate (default, safe — real quotes, no spend)
 npm run worker:mm:live     # live fills from agent wallets
+```
+
+It boots, logs one JSON line per event, and sweeps every `MM_POLL_MS`. With no
+active policy attached the sweep is silent (nothing to decide) and only the
+`bot_heartbeat` row advances, which is how you confirm it is alive:
+
+```sql
+SELECT worker, mode, last_beat_at, meta FROM bot_heartbeat WHERE worker = 'agent-mm';
+-- meta.sweeps increments every poll; meta.lastSweepMs is the last sweep's duration
 ```
 
 ### Environment
@@ -56,21 +69,67 @@ npm run worker:mm:live     # live fills from agent wallets
 | `MM_HEARTBEAT_MS` | `30000` | `bot_heartbeat` liveness (0 disables) |
 | `MM_VOLUME_WINDOW_S` | `300` | window for the live-volume cap |
 
-`DATABASE_URL` + `JWT_SECRET` (or `WALLET_ENCRYPTION_KEY`) are required (DB +
-wallet decryption). When Cloud Run sets `PORT`, the worker also binds a tiny
-liveness endpoint on it so the startup probe passes.
+Required at boot (`config.js` refuses to start without them):
+
+| Var | Why |
+|---|---|
+| `DATABASE_URL` | Policies, the action ledger, heartbeats. Any standard alias (`POSTGRES_URL`, `NEON_DATABASE_URL`, …) resolves too. |
+| `JWT_SECRET` | Consumed transitively by the wallet layer. Required in both modes. |
+| `SOLANA_RPC_URL` **or** `HELIUS_API_KEY` | **Live mode only.** Boot fails without one: a public RPC rate-limits under continuous re-quote load and would silently drop fills. |
+
+Optional but recommended: `WALLET_ENCRYPTION_KEY` (the real custodial-wallet key;
+without it `api/_lib/agent-wallet.js` falls back to the legacy `JWT_SECRET`
+scheme with a warning) and `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`
+(live screen frames for the arena floor line and the `/agents-live` badge; the
+sweep runs fine without them, viewers just fall back to the DB activity poll).
+
+When `PORT` is set the worker binds a tiny liveness endpoint on it that answers
+`{ ok, worker, bootAt, mode, network, globalKill }`, so a Cloud Run startup probe
+passes. Nothing else is served on it.
+
+## Tests
+
+```bash
+npx vitest run tests/agent-mm-engine.test.js tests/market-maker.test.js tests/agent-mm-render.test.js
+```
+
+- `tests/agent-mm-engine.test.js` covers the engine's core decision path: the
+  intent ladder, every anti-manipulation gate (interval, side-flip, volume cap,
+  dust floor), the budget/inventory/wallet clamps, simulate-vs-live routing, and
+  the three graduation branches. The chain + DB edges are substituted; the
+  rulebook it reads (`GUARDS`) is the real one, so tightening a cap fails these
+  tests.
+- `tests/market-maker.test.js` covers the policy rulebook and its create-time
+  refusals.
+- `tests/agent-mm-render.test.js` covers the outcome to screen-event projection.
 
 ## Deploy
 
-Deployed on Cloud Run as a **background-daemon service**. It isn't request-driven,
-but `index.js` binds a liveness endpoint on `$PORT` so the startup probe passes;
-`--no-cpu-throttling` + `--min-instances=1` keep the sweep timer ticking between
-probes. Build and deploy from the repo root:
+**Not currently deployed.** No `agent-mm` service exists in `us-central1` on
+`aerial-vehicle-466722-p5` (checked 2026-08-11 with `gcloud run services list`),
+and no policy has been attached yet (`market_maker_policies` is empty), so there
+is nothing for a hosted sweep to act on. Until a launcher attaches one, run it
+locally with the command above; deploying is a single owner-approved command
+whenever the first policy lands.
+
+The target shape is Cloud Run as a **background-daemon service**. It isn't
+request-driven, but `index.js` binds the liveness endpoint on `$PORT` so the
+startup probe passes; `--no-cpu-throttling` + `--min-instances=1` (both already
+in `cloudbuild.yaml`) keep the sweep timer ticking between probes. Build and
+deploy from the repo root:
 
 ```bash
-# one-time secret setup is documented in cloudbuild.yaml
-gcloud builds submit --config workers/agent-mm/cloudbuild.yaml .
+# one-time secret setup is documented at the top of cloudbuild.yaml
+gcloud builds submit --config workers/agent-mm/cloudbuild.yaml . \
+  --region us-central1 --project aerial-vehicle-466722-p5 \
+  --substitutions=SHORT_SHA=manual$(date +%s)
 ```
+
+The `SHORT_SHA` substitution is not optional on a manual submit: the config tags
+and deploys the image by that value, and gcloud leaves it empty outside a trigger,
+which pushes a tag ending in a bare colon and then deploys an image that does not
+exist. The build also runs as the pinned `three-ws-build@` service account (the
+project's default compute SA was deleted), which `cloudbuild.yaml` already sets.
 
 It ships in `MM_MODE=simulate` (real quotes, no broadcast). Flip
 `_MM_MODE=live` (build substitution) or update the running service's `MM_MODE`
