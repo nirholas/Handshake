@@ -2757,6 +2757,10 @@
 			"dest": "/api/agents/[id]/memory-seed-x?id=$1"
 		},
 		{
+			"src": "/api/agents/([^/]+)/memory/seed/github",
+			"dest": "/api/agents/[id]/memory-seed-github?id=$1"
+		},
+		{
 			"src": "/api/agents/([^/]+)/memory/seed/farcaster",
 			"dest": "/api/agents/[id]"
 		},
@@ -2895,6 +2899,10 @@
 		{
 			"src": "/api/auth/github/status",
 			"dest": "/api/auth/github/[action]?action=status"
+		},
+		{
+			"src": "/api/auth/github/disconnect",
+			"dest": "/api/auth/github/[action]?action=disconnect"
 		},
 		{
 			"src": "/api/auth/x/connect",
