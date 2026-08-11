@@ -6,7 +6,8 @@
   "description": "Autonomous market-news anchor worker — pulls real intel, scripts a bulletin via the brain, and pushes lower-third headlines for the lip-synced avatar to read on air.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "smoke": "node smoke.mjs"
   },
   "optionalDependencies": {
     "canvas": "^2.11.2"
