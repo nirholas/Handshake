@@ -172,7 +172,34 @@ const OPTIMIZER_RACE = [
 	/\/.vite\/deps\//,
 ];
 
-function isOptimizerRace(result) {
+// Transport-level failures that describe the machine, not the page: the sweep
+// drives many WebGL-heavy routes at once, and on a loaded or shared box a large
+// asset fetch (a GLB, a texture) or a whole navigation can be starved out. They
+// arrive with no attribution — a bare `net::ERR_FAILED` or an unattributed
+// `TypeError: Failed to fetch` from inside a third-party viewer — so no route or
+// module owns them, and they land on a different route each run. A page defect
+// reproduces on a second visit; a starved socket does not.
+const TRANSIENT_NETWORK = [
+	/net::ERR_FAILED/i,
+	/net::ERR_TIMED_OUT/i,
+	/net::ERR_CONNECTION_RESET/i,
+	/net::ERR_CONNECTION_CLOSED/i,
+	/net::ERR_CONNECTION_ABORTED/i,
+	/net::ERR_NETWORK_CHANGED/i,
+	/net::ERR_EMPTY_RESPONSE/i,
+	/net::ERR_ADDRESS_UNREACHABLE/i,
+	/net::ERR_NAME_NOT_RESOLVED/i,
+	/TypeError: Failed to fetch/i,
+	/TypeError: NetworkError/i,
+	/Load failed/i,
+	/navigation failed: .*Timeout .* exceeded/i,
+	/navigation failed: .*net::ERR_/i,
+];
+
+// Only believe an error that survives a second visit. Both lists demand that
+// EVERY error on the route match, so a route carrying one genuine defect
+// alongside the noise still fails on the first pass and is never retried away.
+function isRetryableNoise(result) {
 	const all = [
 		...result.navErrors,
 		...result.consoleErrors,
@@ -180,13 +207,16 @@ function isOptimizerRace(result) {
 		...result.rejections,
 	];
 	if (all.length === 0) return false;
-	return all.every((e) => OPTIMIZER_RACE.some((re) => re.test(e)));
+	return all.every((e) =>
+		OPTIMIZER_RACE.some((re) => re.test(e)) || TRANSIENT_NETWORK.some((re) => re.test(e)),
+	);
 }
 
 async function checkRoute(context, base, route) {
 	let result = await checkRouteOnce(context, base, route);
-	if (totalErrors(result) > 0 && isOptimizerRace(result)) {
-		// Second visit — deps the first load triggered are now optimized.
+	if (totalErrors(result) > 0 && isRetryableNoise(result)) {
+		// Second visit: deps the first load triggered are now optimized, and a
+		// starved socket gets another chance. Whatever survives is the verdict.
 		result = await checkRouteOnce(context, base, route);
 	}
 	return result;
@@ -389,6 +419,7 @@ for (const vpKey of viewportKeys) {
 
 const rows = [...byPath.values()];
 const failing = rows.filter((row) => viewportKeys.some((k) => totalErrors(row.vp[k]) > 0));
+const warning = rows.filter((row) => viewportKeys.some((k) => row.vp[k].consoleWarnings.length > 0));
 
 console.log('\n' + C.b('═══════════════ SUMMARY ═══════════════\n'));
 let grandErrors = 0;
@@ -415,6 +446,19 @@ if (failing.length === 0) {
 			for (const e of r.failedAssets) console.log(`    ${C.d(k)} asset:  ${C.r(e)}`);
 			for (const e of r.rejections) console.log(`    ${C.d(k)} reject: ${C.r(e)}`);
 		}
+	}
+	console.log('');
+}
+
+// Warnings never fail the sweep, but "our own warnings get fixed" is only
+// actionable if the text is visible, so every distinct warning is printed.
+if (warning.length) {
+	console.log(C.y(`  ${warning.length} route(s) with warnings:\n`));
+	for (const row of warning) {
+		const texts = new Set();
+		for (const k of viewportKeys) for (const w of row.vp[k].consoleWarnings) texts.add(w);
+		console.log(C.y(`! ${row.route.path}  ${C.d('(' + row.route.section + ')')}`));
+		for (const w of texts) console.log(`    ${C.y(w)}`);
 	}
 	console.log('');
 }
@@ -464,6 +508,18 @@ if (wantReport) {
 				for (const e of r.failedAssets) lines.push(`  - asset: ${e}`);
 				for (const e of r.rejections) lines.push(`  - rejection: ${e}`);
 			}
+			lines.push('');
+		}
+	}
+	if (warning.length) {
+		lines.push('');
+		lines.push('## Warnings (detail)');
+		lines.push('');
+		for (const row of warning) {
+			const texts = new Set();
+			for (const k of viewportKeys) for (const w of row.vp[k].consoleWarnings) texts.add(w);
+			lines.push(`### \`${row.route.path}\` (${row.route.section})`);
+			for (const w of texts) lines.push(`- ${w}`);
 			lines.push('');
 		}
 	}
