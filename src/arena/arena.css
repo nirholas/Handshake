@@ -1270,6 +1270,16 @@
 	margin: 0.5rem 0 0;
 	min-height: 1em;
 }
+.form-error-link {
+	color: inherit;
+	font-weight: var(--weight-semibold);
+	text-underline-offset: 2px;
+}
+.form-error-link:focus-visible {
+	outline: var(--focus-ring-width) solid var(--focus-ring-color);
+	outline-offset: var(--focus-ring-offset);
+	border-radius: var(--radius-sm);
+}
 
 /* Toast */
 .arena-toast {

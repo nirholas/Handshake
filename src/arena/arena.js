@@ -1151,20 +1151,36 @@ function openCreateModal() {
 			onsubmit: async (e) => {
 				e.preventDefault();
 				err.textContent = '';
+				// Validate the window BEFORE building the payload: a cleared
+				// datetime-local input yields an Invalid Date, and .toISOString()
+				// would throw out of this handler with nothing shown to the user.
+				const startsAt = new Date(startI.value);
+				const endsAt = new Date(endI.value);
+				if (!nameI.value.trim()) {
+					err.textContent = 'Give your tournament a name.';
+					nameI.focus();
+					return;
+				}
+				if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) {
+					err.textContent = 'Set both a start and an end time for the trading window.';
+					(Number.isNaN(startsAt.getTime()) ? startI : endI).focus();
+					return;
+				}
+				if (endsAt <= startsAt) {
+					err.textContent = 'The window has to end after it starts.';
+					endI.focus();
+					return;
+				}
 				const payload = {
 					name: nameI.value.trim(),
 					description: descI.value.trim() || undefined,
 					network: NETWORK,
 					scoring: scoringI.value,
 					bracket: bracketI.value,
-					starts_at: new Date(startI.value).toISOString(),
-					ends_at: new Date(endI.value).toISOString(),
+					starts_at: startsAt.toISOString(),
+					ends_at: endsAt.toISOString(),
 					prize_pool_three: bracketI.value === 'prize' ? Number(prizeI.value || 0) : 0,
 				};
-				if (!payload.name) {
-					err.textContent = 'Give your tournament a name.';
-					return;
-				}
 				submit.disabled = true;
 				submit.textContent = 'Creating…';
 				try {
@@ -1177,7 +1193,7 @@ function openCreateModal() {
 					toast('Tournament created');
 					location.hash = `#/t/${out.tournament.id}`;
 				} catch (ex) {
-					err.textContent = ex.status === 401 ? 'Sign in to create a tournament.' : ex.message;
+					showFormError(err, ex, 'create a tournament');
 					submit.disabled = false;
 					submit.textContent = 'Create';
 				}
@@ -1227,7 +1243,7 @@ async function openJoinModal(t) {
 					toast('Entered the arena. Good luck.');
 					renderDetail(t.id);
 				} catch (ex) {
-					err.textContent = ex.message;
+					showFormError(err, ex, 'enter a tournament');
 					submit.disabled = false;
 					submit.textContent = 'Join';
 				}
@@ -1298,6 +1314,23 @@ async function openJoinModal(t) {
 			),
 		);
 	}
+}
+
+/**
+ * Render a submit failure into a form's error line. A 401 is the common one and
+ * it needs a way out, not just a sentence: link straight to the sign-in surface
+ * so the visitor is never told to sign in without being shown where.
+ */
+function showFormError(node, ex, action) {
+	if (ex.status === 401) {
+		node.replaceChildren(
+			document.createTextNode(`You need an account to ${action}. `),
+			h('a', { href: '/app', class: 'form-error-link' }, 'Sign in'),
+			document.createTextNode(', then come back to this page.'),
+		);
+		return;
+	}
+	node.textContent = ex.message || 'Something went wrong. Try again.';
 }
 
 function field(label, input, hint) {
