@@ -26,7 +26,14 @@ import { isValidSolanaAddress, isValidEvmAddress } from '../../_lib/validate.js'
 import { fetchTokenMarket } from '../../_lib/token-market.js';
 import { solanaRpcEndpoints, makeRotatingFetch } from '../../_lib/solana/connection.js';
 
-const RPC_TIMEOUT_MS = 8000;
+// Budget for ONE JSON-RPC read across the WHOLE failover chain, not per
+// endpoint. makeRotatingFetch bounds each attempt itself (10s) and composes the
+// caller's signal with AbortSignal.any, so a caller cap below that bound spends
+// the entire budget on the first endpoint and every rotation after it aborts
+// instantly: at 8s a read that hit one slow lane logged "all 9 endpoints failed
+// this request" and answered 503, while a retry seconds later succeeded. Sized
+// to cover a couple of real attempts, matching the wallet-activity lane.
+const RPC_TIMEOUT_MS = 25_000;
 const DAY_MS = 86_400_000;
 
 // One JSON-RPC call across the platform's failover chain. Resolves with the raw

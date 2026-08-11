@@ -29,7 +29,14 @@ import { isGraduated } from './pump-launch-feed.js';
 import { solanaRpcEndpoints, makeRotatingFetch } from './solana/connection.js';
 
 const METADATA_PROGRAM = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
-const RPC_TIMEOUT_MS = 8000;
+// Budget for ONE JSON-RPC read across the WHOLE failover chain, not per
+// endpoint. makeRotatingFetch bounds each attempt itself (10s) and composes the
+// caller's signal with AbortSignal.any, so a caller cap below that bound spends
+// the entire budget on the first endpoint and every rotation after it aborts
+// instantly: at 8s a read that hit one slow lane logged "all 9 endpoints failed
+// this request" and answered 503, while a retry seconds later succeeded. Sized
+// to cover a couple of real attempts, matching the wallet-activity lane.
+const RPC_TIMEOUT_MS = 25_000;
 
 // Concentration thresholds shared with the v1 reader's flags, so the two
 // security surfaces can never disagree about what "concentrated" means.

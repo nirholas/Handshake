@@ -6,6 +6,7 @@ import {
 	top10PctOf,
 	deriveConcentration,
 	composeTokenHolders,
+	heliusHolderWalk,
 	CONCENTRATION_HIGH_PCT,
 	CONCENTRATION_MEDIUM_PCT,
 } from '../api/_lib/crypto-token-holders.js';
@@ -211,5 +212,84 @@ describe('composeTokenHolders — states', () => {
 			fetchLargestAccounts: async () => ({ error: { code: -32429, message: 'Too many requests' } }),
 		}));
 		expect(r.status).toBe('upstream_down');
+	});
+});
+
+// The keyed walk is the preferred lane; when it silently dies every holder read
+// lands on the keyless one, whose getTokenLargestAccounts most public RPCs
+// refuse. These pin the failure shapes that took it down without a trace.
+describe('heliusHolderWalk failure shapes', () => {
+	const MINT = THREE;
+	const page = (n) => ({
+		ok: true,
+		status: 200,
+		text: async () => JSON.stringify({
+			result: { token_accounts: Array.from({ length: n }, (_, i) => ({ owner: W1, address: `a${i}`, amount: '1' })) },
+		}),
+	});
+
+	const withKey = async (fn) => {
+		const had = process.env.HELIUS_API_KEY;
+		process.env.HELIUS_API_KEY = 'test-key';
+		try {
+			return await fn();
+		} finally {
+			if (had === undefined) delete process.env.HELIUS_API_KEY;
+			else process.env.HELIUS_API_KEY = had;
+		}
+	};
+
+	it('returns null without a key so the caller uses the keyless lane', async () => {
+		const had = process.env.HELIUS_API_KEY;
+		delete process.env.HELIUS_API_KEY;
+		try {
+			expect(await heliusHolderWalk(MINT, { fetchImpl: async () => page(0) })).toBeNull();
+		} finally {
+			if (had !== undefined) process.env.HELIUS_API_KEY = had;
+		}
+	});
+
+	it('names an exhausted plan instead of throwing a bare JSON parse error', async () => {
+		await withKey(async () => {
+			const fetchImpl = async () => ({ ok: true, status: 200, text: async () => 'max usage reached' });
+			await expect(heliusHolderWalk(MINT, { fetchImpl })).rejects.toThrow(/non-JSON response .*max usage reached/);
+		});
+	});
+
+	it('names a JSON-RPC error envelope', async () => {
+		await withKey(async () => {
+			const fetchImpl = async () => ({ ok: true, status: 200, text: async () => JSON.stringify({ error: { code: -32603, message: 'nope' } }) });
+			await expect(heliusHolderWalk(MINT, { fetchImpl })).rejects.toThrow(/nope/);
+		});
+	});
+
+	it('keeps the pages already walked when a later page fails', async () => {
+		await withKey(async () => {
+			let call = 0;
+			const fetchImpl = async () => {
+				call++;
+				if (call === 1) return page(1000);
+				throw new Error('gateway timeout');
+			};
+			const out = await heliusHolderWalk(MINT, { fetchImpl });
+			expect(out.accounts).toHaveLength(1000);
+			// Incomplete, so the holder COUNT is still withheld rather than guessed.
+			expect(out.complete).toBe(false);
+		});
+	});
+
+	it('still throws when the very first page fails and there is nothing to keep', async () => {
+		await withKey(async () => {
+			const fetchImpl = async () => { throw new Error('gateway timeout'); };
+			await expect(heliusHolderWalk(MINT, { fetchImpl })).rejects.toThrow(/gateway timeout/);
+		});
+	});
+
+	it('marks a short page as a complete walk', async () => {
+		await withKey(async () => {
+			const out = await heliusHolderWalk(MINT, { fetchImpl: async () => page(3) });
+			expect(out.complete).toBe(true);
+			expect(out.accounts).toHaveLength(3);
+		});
 	});
 });

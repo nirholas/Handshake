@@ -21,7 +21,14 @@
 import { parseMintAccount } from '../v1/token/security.js';
 import { solanaRpcEndpoints, makeRotatingFetch } from './solana/connection.js';
 
-const RPC_TIMEOUT_MS = 8000;
+// Budget for ONE JSON-RPC read across the WHOLE failover chain, not per
+// endpoint. makeRotatingFetch bounds each attempt itself (10s) and composes the
+// caller's signal with AbortSignal.any, so a caller cap below that bound spends
+// the entire budget on the first endpoint and every rotation after it aborts
+// instantly: at 8s a read that hit one slow lane logged "all 9 endpoints failed
+// this request" and answered 503, while a retry seconds later succeeded. Sized
+// to cover a couple of real attempts, matching the wallet-activity lane.
+const RPC_TIMEOUT_MS = 25_000;
 
 // Helius DAS getTokenAccounts pages at up to 1000 accounts; cap the walk so a
 // mega-token (millions of accounts) can't burn the invocation. Within the cap
@@ -127,21 +134,19 @@ export async function heliusHolderWalk(mint, { fetchImpl = fetch } = {}) {
 	const accounts = [];
 	let complete = false;
 	for (let page = 1; page <= HELIUS_MAX_PAGES; page++) {
-		const r = await fetchImpl(url, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({
-				jsonrpc: '2.0',
-				id: 'holders',
-				method: 'getTokenAccounts',
-				params: { mint, page, limit: HELIUS_PAGE_LIMIT },
-			}),
-			signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
-		});
-		if (!r.ok) throw new Error(`helius getTokenAccounts ${r.status}`);
-		const json = await r.json();
-		const batch = json?.result?.token_accounts;
-		if (!Array.isArray(batch)) throw new Error('helius getTokenAccounts: malformed response');
+		let batch;
+		try {
+			batch = await heliusPage(url, mint, page, fetchImpl);
+		} catch (err) {
+			// A page that fails mid-walk does not invalidate the pages already in
+			// hand: 1000 accounts is far more than any top-N needs, and discarding
+			// them dropped the read onto the keyless lane, whose
+			// getTokenLargestAccounts most public RPCs refuse. Keep what we have and
+			// mark the walk incomplete so the holder COUNT is still withheld.
+			if (!accounts.length) throw err;
+			console.log(`[crypto-holders] helius walk stopped at page ${page}: ${err.message}`);
+			return { accounts, complete: false };
+		}
 		accounts.push(...batch.map((a) => ({ owner: a.owner || null, address: a.address, amount: a.amount })));
 		if (batch.length < HELIUS_PAGE_LIMIT) {
 			complete = true;
@@ -149,6 +154,36 @@ export async function heliusHolderWalk(mint, { fetchImpl = fetch } = {}) {
 		}
 	}
 	return { accounts, complete };
+}
+
+// One page of the walk. Helius answers an exhausted plan with HTTP 200 and the
+// plain-text body "max usage reached", so parsing the body as JSON unconditionally
+// surfaced a bare SyntaxError with no hint that the key was the problem. Read the
+// text first and name what came back.
+async function heliusPage(url, mint, page, fetchImpl) {
+	const r = await fetchImpl(url, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({
+			jsonrpc: '2.0',
+			id: 'holders',
+			method: 'getTokenAccounts',
+			params: { mint, page, limit: HELIUS_PAGE_LIMIT },
+		}),
+		signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
+	});
+	const text = await r.text();
+	if (!r.ok) throw new Error(`helius getTokenAccounts ${r.status}: ${text.slice(0, 80)}`);
+	let json;
+	try {
+		json = JSON.parse(text);
+	} catch {
+		throw new Error(`helius getTokenAccounts: non-JSON response "${text.slice(0, 60)}"`);
+	}
+	if (json?.error) throw new Error(`helius getTokenAccounts: ${JSON.stringify(json.error).slice(0, 120)}`);
+	const batch = json?.result?.token_accounts;
+	if (!Array.isArray(batch)) throw new Error('helius getTokenAccounts: malformed response');
+	return batch;
 }
 
 // Default network dependency bundle — injectable for tests.
@@ -232,7 +267,12 @@ export async function composeTokenHolders({ address, limit = DEFAULT_LIMIT }, de
 				};
 			}
 		}
-	} catch { /* keyed path failed — fall through to the keyless truth */ }
+	} catch (err) {
+		// Named, not swallowed: an exhausted Helius plan silently demoted every
+		// holder read to the keyless lane, which then 503'd roughly one call in
+		// three with nothing in the logs pointing at the cause.
+		console.log(`[crypto-holders] helius path unavailable, falling back to keyless RPC: ${err.message}`);
+	}
 
 	// Keyless: top-20 largest token accounts + owner resolution.
 	// `largestAnswered` requires a REAL array answer. A JSON-RPC error envelope
