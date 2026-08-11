@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "Sending your agent a task on its live screen actually works again",
+			"summary": "The agent screen lets you queue a task for your own agent and watch it browse the web to carry it out. None of that path worked. Queuing a task failed on the server because it looked your agent up in a table that does not exist, so the browser worker polled forever and never saw a task. The worker was broken twice over on its own side too: it read the agent's id from the wrong place, so every frame it published was rejected before it reached the stream, and it drove the browser through a method that moved in version 3 of the automation library, so typing, clicking, reading a page, and even taking a screenshot all failed. All three are fixed and the worker now runs end to end: it picks up your task, navigates, narrates each step, and streams real screenshots. The same bad lookup also blocked grinding a vanity wallet address for an agent, which is fixed as well.",
+			"tags": [
+				"fix"
+			],
+			"link": "/agent-screen"
+		},
+		{
+			"date": "2026-08-11",
 			"title": "Generating an animation from a text prompt no longer fails when the motion engine has been idle",
 			"summary": "Ask for a custom animation (\"a slow tai-chi sweep\") and the motion engine has to wake up before it can generate. In its region three other, idle 3D engines were each holding a graphics card warm, so there was nothing left for the motion engine to start on, and roughly twice a day it was refused a card outright and the request failed. The idle holder has been released, so the motion lane can always start. Generation itself is unchanged: a three second prompt still comes back in under three seconds once warm.",
 			"tags": [
@@ -19401,6 +19410,16 @@
 				"security",
 				"improvement"
 			]
+		},
+		{
+			"date": "2026-08-11",
+			"title": "Garment generation no longer runs out of memory mid-job",
+			"summary": "The Garment Forge builds two garments at a time on one machine, and when both were at their heaviest stage the machine hit its memory ceiling and was killed outright, taking whichever garment was in flight with it. The ceiling has been doubled to cover two full pipelines at peak, so a garment you submit while someone else's is already building finishes instead of dying. If a job does still lose its machine for any other reason, the ten-minute sweep picks it back up as before.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/wardrobe"
 		}
 	]
 }

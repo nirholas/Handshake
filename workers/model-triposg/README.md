@@ -16,16 +16,26 @@ Two modes share the one `/infer` endpoint:
 
 The scribble pipeline loads lazily on the first scribble request, so an
 image-only instance pays for one model on cold start. Meshes are optionally
-decimated to `target_polycount` (quadric edge-collapse) before export.
+decimated to `target_polycount` (quadric edge-collapse) before export. Mode
+routing, the prompt gate, and both sets of sampler settings live in
+[`request_policy.py`](./request_policy.py), which imports no torch and no CUDA
+so every one of those decisions is unit tested on any machine.
 
 Work is asynchronous: `POST /infer` returns `202` with a `task_id`; poll
 `GET /tasks/{id}` until the GLB is written to
 `gs://$GCS_BUCKET/raw-meshes/triposg/{task_id}.glb`.
 
+Task records are durable, not instance-local. Cloud Run runs this service across
+up to `max-instances` containers with no session affinity, so a submit and a
+later poll routinely land on different containers. Every state transition is
+written to `gs://$GCS_BUCKET/tasks/{task_id}.json`, which is the source of truth
+the poll reads; the in-process dict is only a cache that saves a round trip when
+a poll happens to hit the container that ran the job.
+
 ## Endpoints
 
 `POST /infer` and `GET /tasks/{id}` require `Authorization: Bearer $API_KEY`.
-`GET /health` is unauthenticated.
+`GET /health` and `GET /` are unauthenticated.
 
 ### `POST /infer` → `202`
 
@@ -57,10 +67,10 @@ Image mode strips the photographic background in-process with RMBG-1.4, so calle
 do not need to pre-run [rembg](../rembg/). Scribble mode flattens alpha onto white
 (no background removal — a sketch has none).
 
-Response:
+Response (the persisted task record, `updated_at` in epoch seconds):
 
 ```json
-{ "task_id": "3f2c…", "status": "queued", "model": "triposg", "mode": "image" }
+{ "task_id": "3f2c…", "status": "queued", "model": "triposg", "mode": "image", "updated_at": 1786411000.42 }
 ```
 
 ### `GET /tasks/{task_id}`
@@ -74,11 +84,17 @@ Response:
 	"model": "triposg",
 	"mode": "image",
 	"result_gcs_url": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/triposg/3f2c….glb",
-	"elapsed_ms": 38110
+	"elapsed_ms": 38110,
+	"updated_at": 1786411038.55
 }
 ```
 
-Failures carry a sanitized `error`; unknown ids return `404`.
+Failures carry a sanitized `error`. An id with no record in memory and none in
+GCS returns `404`; a GCS lookup that fails for any other reason returns `502`
+(never a `404`, which a caller would read as "this task never existed"). A
+`queued` or `running` record that has not advanced in 30 minutes is expired to
+`failed` on the next poll: its runner container is gone, so the alternative is a
+client that polls forever.
 
 ### `GET /health`
 
@@ -89,9 +105,26 @@ Failures carry a sanitized `error`; unknown ids return `404`.
 	"gpu_available": true,
 	"gpu_name": "NVIDIA L4",
 	"model_loaded": true,
-	"scribble_loaded": false
+	"scribble_loaded": false,
+	"ready": true,
+	"load_error": null
 }
 ```
+
+`ok` is `false` once the background model load has failed. The container stays
+up and listening in that state (Cloud Run has nothing to restart), so `ok` and
+`load_error` are the only way to tell a warming instance from a broken one:
+`ready: false, load_error: null` is still loading, `load_error: "…"` is broken
+and every task submitted to it fails immediately with that reason.
+
+### `GET /`
+
+A service descriptor: `service`, `model`, `modes`, `ready`, `endpoints`.
+Unauthenticated and free. This is the route the platform's liveness probes hit
+([`api/_lib/forge-health.js`](../../api/_lib/forge-health.js),
+[`api/_lib/forge-lane-health.js`](../../api/_lib/forge-lane-health.js), and
+[`api/cron/gpu-keepwarm.js`](../../api/cron/gpu-keepwarm.js) all GET the worker
+root and treat any status under 500 as "up").
 
 ## Environment
 
@@ -103,10 +136,23 @@ Failures carry a sanitized `error`; unknown ids return `404`.
 | `SCRIBBLE_WEIGHTS_DIR` | no | `/weights/triposg-scribble` | Scribble-mode weights |
 | `RMBG_WEIGHTS_DIR` | no | `/weights/rmbg-1.4` | In-process background remover |
 | `MAX_CONCURRENT` | no | `1` | One L4 fits one inference |
+| `WEIGHTS_GCS_URI` | no | unset | `gs://` prefix of the image-mode tree, staged to local disk before loading |
+| `SCRIBBLE_WEIGHTS_GCS_URI` | no | unset | Same, for the scribble tree |
+| `RMBG_WEIGHTS_GCS_URI` | no | unset | Same, for RMBG-1.4 |
+| `WEIGHTS_LOCAL_ROOT` | no | `/tmp/triposg-weights` | Where the staged copies land |
 
 All three weight sets live in the `three-ws-model-weights` bucket, mounted at
 `/weights` (see [`workers/deploy/stage-weights.sh`](../deploy/stage-weights.sh)):
 `VAST-AI/TripoSG`, `VAST-AI/TripoSG-scribble`, and `briaai/RMBG-1.4`.
+
+**Weight staging.** Reading a multi-GiB tree through the GCS FUSE mount stalls a
+cold instance for many minutes (revision 00006 sat in `from_pretrained` for over
+10 minutes streaming 7.4 GiB), so when the three `*_GCS_URI` vars are set the
+loader downloads each tree to `WEIGHTS_LOCAL_ROOT` with an 8-way parallel
+storage client first and loads from there. Measured on the live service: 11.78
+GiB in 208 s for the image tree, 0.78 GiB in 15 s for RMBG. Staging never fails a
+boot; if it cannot run, loading falls back to the FUSE mount exactly as before.
+The cloudbuild config sets all four vars, so a normal deploy gets the fast path.
 
 ## Run locally
 
@@ -136,20 +182,44 @@ API_KEY=dev-secret GCS_BUCKET=your-dev-bucket \
 	uvicorn main:app --host 0.0.0.0 --port 8080
 ```
 
-## Deploy
+## Tests
 
-Submit from the **repo root** — the build step declares `dir: workers/model-triposg`,
-so the upload source is the whole repo:
+Two layers, both free of GPU, weights, and credentials:
 
 ```bash
-gcloud builds submit --config workers/model-triposg/cloudbuild.yaml .
+# Routing, the scribble prompt gate, sampler settings, decimation guard.
+# Pure python, runs anywhere.
+python3 workers/model-triposg/test_request_policy.py
+
+# The served contract against the real dependency set. Ships in the image.
+docker run --rm model-triposg python3 test_app_contract.py
+```
+
+The second one is the regression gate that matters most here: revisions 00001
+and 00002 of this service died at import time on a bad transitive resolve of
+`transformers` / `diffusers` / `peft`, before the container could bind `$PORT`,
+which surfaces only as an opaque Cloud Run startup-probe failure. It imports
+both pipelines and both preprocessing helpers, so that failure becomes a red
+test instead of a dead revision.
+
+## Deploy
+
+Submit from the **repo root** (the build step declares `dir: workers/model-triposg`,
+so the upload source is the whole repo). A manual submit has no `SHORT_SHA`, and
+the config tags images with it, so pass one:
+
+```bash
+gcloud builds submit --config workers/model-triposg/cloudbuild.yaml \
+	--region us-central1 --project aerial-vehicle-466722-p5 \
+	--substitutions=SHORT_SHA=manual$(date +%s) .
 ```
 
 Or provision it alongside the fleet (idempotent; prints the URLs to set on the
-`three-ws-api` env):
+`three-ws-api` env). Valid `SERVICES` names are `hunyuan3d trellis triposr
+triposg rig`:
 
 ```bash
-PROJECT_ID=<gcp-project> SERVICES="hunyuan3d trellis triposg unirig" \
+PROJECT_ID=<gcp-project> SERVICES="hunyuan3d trellis triposg rig" \
 	workers/deploy/deploy-all.sh
 ```
 
@@ -158,7 +228,7 @@ GPU**, 8 vCPU, 32 GiB, 900 s request timeout, `min-instances=0`, `max-instances=
 Build `timeout` is `3600s` (the `diso` CUDA compile). Weights bucket mounted at
 `/weights`; `API_KEY` from the `avatar-reconstruction-key` secret.
 
-## Example — sketch → 3D, submit, poll, fetch
+## Example: submit, poll, fetch
 
 ```bash
 BASE=https://model-triposg-xxxxxxxx-uc.a.run.app
@@ -167,7 +237,7 @@ KEY=your-api-key
 TASK=$(curl -s -X POST "$BASE/infer" \
 	-H "Authorization: Bearer $KEY" \
 	-H 'Content-Type: application/json' \
-	-d '{"images":["https://storage.googleapis.com/three-ws-public/samples/owl-sketch.png"],"mode":"scribble","prompt":"a brass steampunk owl"}' \
+	-d '{"images":["https://three.ws/avatars/thumbs/default.png"],"mode":"image"}' \
 	| python3 -c 'import sys,json; print(json.load(sys.stdin)["task_id"])')
 
 while :; do
@@ -180,6 +250,17 @@ done
 
 curl -s "$BASE/tasks/$TASK" -H "Authorization: Bearer $KEY" \
 	| python3 -c 'import sys,json; print(json.load(sys.stdin)["result_gcs_url"])'
+```
+
+For scribble mode, send your own drawing as a data URI and name what it depicts
+(the prompt is required, and the request is otherwise identical):
+
+```bash
+SKETCH="data:image/png;base64,$(base64 -w0 owl-sketch.png)"
+curl -s -X POST "$BASE/infer" \
+	-H "Authorization: Bearer $KEY" \
+	-H 'Content-Type: application/json' \
+	-d "{\"images\":[\"$SKETCH\"],\"mode\":\"scribble\",\"prompt\":\"a brass steampunk owl\",\"scribble_confidence\":0.4}"
 ```
 
 ## How three.ws calls it
