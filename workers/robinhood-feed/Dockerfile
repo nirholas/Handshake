@@ -31,8 +31,17 @@ COPY --from=sdk /sdk/dist ./robinhood/robinhood-chain-sdk/dist
 
 # Worker deps first for layer caching. The file: dependency resolves to the
 # directory copied above, which now carries dist/.
+#
+# The symlink is load-bearing, not a shortcut. npm installs a file: dependency
+# as a symlink to its source directory, and Node resolves modules from the REAL
+# path, so hoodchain's code runs at /app/robinhood/robinhood-chain-sdk/dist and
+# looks for its peer deps (viem, ws) in the ancestors of THAT path, never in the
+# worker's own node_modules. Without a node_modules an ancestor of both trees,
+# the image builds clean and then dies on the first import with
+# "Cannot find package 'viem'". Verified by running the image.
 COPY workers/robinhood-feed/package.json workers/robinhood-feed/package-lock.json ./workers/robinhood-feed/
-RUN npm --prefix workers/robinhood-feed ci --omit=dev --no-audit --no-fund
+RUN npm --prefix workers/robinhood-feed ci --omit=dev --no-audit --no-fund \
+    && ln -s workers/robinhood-feed/node_modules /app/node_modules
 
 COPY workers/robinhood-feed ./workers/robinhood-feed
 

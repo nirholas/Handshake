@@ -7,9 +7,9 @@ shape three.ws's pump.fun consumers already understand, and serves it over
 SSE + WebSocket + a REST snapshot. No mocks — every field comes from a real
 on-chain read (RPC logs + the Arbitrum sequencer feed).
 
-Nothing like this exists for Robinhood Chain today. It's also sellable
-standalone: any RH-chain trading bot, alert bot, or dashboard needs exactly
-this firehose.
+It is also useful standalone: any Robinhood Chain trading bot, alert bot or
+dashboard needs exactly this firehose, and nothing here is three.ws-specific
+apart from the pump-compatible field names.
 
 ## Why it exists
 
@@ -45,9 +45,10 @@ Documented per the mission brief — fields map 1:1 where semantics align:
   are `0x…` (40 hex chars), not base58. `mint` in every event is the coin's ERC-20
   contract address.
 - **Native asset**: ETH, not SOL. The `sol_amount` / `sol_value_usd` field names
-  are kept **verbatim** for compatibility with existing chart-screen.js /
-  market-reactor.js field reads (`src/game/chart-screen.js:186-195`,
-  `src/game/market-reactor.js:78-79`) — the *value* carried is the trade's
+  are kept **verbatim** for compatibility with the existing consumer field
+  reads (`ingest()` in `src/game/chart-screen.js` maps `sol_amount`/`usd_amount`
+  into the `sol`/`usd` the in-world ticker and `MarketReactor` animate from):
+  the *value* carried is the trade's
   native-ETH magnitude, not SOL. A `quote_symbol` field (`'ETH'` or `'USDG'`)
   always tells you which.
 - **Launchpads**: two exist, not one — **NOXA** (instant Uniswap v3 listing,
@@ -107,6 +108,8 @@ env var:
 | `RH_BACKFILL_BLOCKS` | `200000` | How many blocks of launch history to backfill on cold start. |
 | `RH_GAP_BLOCKS` | `2000` | Chain-head lead that triggers a gap-fill rescan (≈3.3 min of blocks at Robinhood Chain's ~100ms cadence — must clear one poll tick's normal advance or every tick misreads itself as stalled). |
 | `RH_MAX_POOLS` | `400` | LRU cap on concurrently-watched Uniswap v3 pools. |
+| `RH_BUFFER_LIMIT` | `40` | Replay-buffer depth per event kind (what a fresh subscriber and `/recent` see). |
+| `RH_SEEN_LIMIT` | `4000` | Cross-source dedupe memory, in event keys. |
 
 ## Public RPC behaviour (measured, not assumed)
 

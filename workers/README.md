@@ -83,6 +83,19 @@ the process is alive, because the outage this worker exists to kill is silent.
 Must run `--min-instances=1 --max-instances=1` (single snapshot writer). Run
 locally with `npm run worker:okx-bot`. See [okx-chat-bot/README.md](okx-chat-bot/README.md).
 
+### `robinhood-feed/`
+Robinhood Chain (4663) firehose: watches the NOXA and The Odyssey launchpads
+plus their Uniswap v3 pools, normalizes every launch/trade/graduation into the
+shape three.ws's pump.fun consumers already read, and serves it over `/healthz`,
+`/recent`, SSE `/events` and WebSocket `/ws`. Feeds
+`api/robinhood/coin-trades.js` and `api/robinhood/play-worlds.js` through
+`ROBINHOOD_FEED_URL`. Not deployed yet. Builds from the repo root
+(`docker build -f workers/robinhood-feed/Dockerfile .`) because it depends on
+the local `hoodchain` SDK, and must run `--min-instances=1 --max-instances=1`
+(one logical stream, one replay buffer). `npm test` is offline;
+`npm run smoke:live` verifies the whole path against the live chain in ~20 s.
+See [robinhood-feed/README.md](robinhood-feed/README.md).
+
 ## Loose scripts
 
 ### `strategy-executor.js`
