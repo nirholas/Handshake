@@ -18,5 +18,12 @@ COPY worker_security.py /app/worker_security.py
 COPY segment_core.py /app/segment_core.py
 COPY main.py /app/main.py
 
+# Build gate: the geometry engine is pure CPU and needs no credentials, so its
+# tests run here. A merge pass that regresses to the pre-2026-08-11 cost, or a
+# segmentation that stops being reproducible, fails the image instead of
+# reaching production.
+COPY test_segment_core.py /app/test_segment_core.py
+RUN python3 test_segment_core.py
+
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
