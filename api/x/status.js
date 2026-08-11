@@ -6,6 +6,7 @@ import { getSessionUser } from '../_lib/auth.js';
 import { cors, method, wrap, error, json } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { getUserTier } from '../_lib/x-post.js';
+import { revokeAllSeedConsentsForUser } from '../_lib/x-seed-consent.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,DELETE,OPTIONS', credentials: true })) return;
@@ -21,7 +22,16 @@ export default wrap(async (req, res) => {
 			set disconnected_at = now(), updated_at = now()
 			where user_id = ${user.id} and provider = 'x' and disconnected_at is null
 		`;
-		return json(res, 200, { disconnected: true });
+		// Disconnecting X revokes the memory-seeding grants it authorized and
+		// deletes the memories they produced. Leaving distilled posts on an agent
+		// after the account is unlinked would make the consent screen a lie.
+		const purge = await revokeAllSeedConsentsForUser(user.id, 'x_disconnected');
+		return json(res, 200, {
+			disconnected: true,
+			seed_consents_revoked: purge.consents,
+			seeded_memories_deleted: purge.deleted,
+			agents_affected: purge.agents,
+		});
 	}
 
 	const tier = await getUserTier(user.id);

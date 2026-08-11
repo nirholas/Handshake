@@ -10,10 +10,9 @@
 //
 // Every call here is a public read. No signer is requested, nothing is written
 // back to Farcaster, and no private endpoint is touched: the wallet proof in
-// api/agents/_id/memory-seed-farcaster.js is what establishes that the caller
+// api/agents/[id]/memory-seed-farcaster.js is what establishes that the caller
 // owns the fid, not an access token.
 
-import { NeynarAPIClient, Configuration } from '@neynar/nodejs-sdk';
 import { env } from './env.js';
 import {
 	normalizeHubCasts,
@@ -35,10 +34,20 @@ export class FarcasterError extends Error {
 	}
 }
 
-let _neynar = null;
-function neynar() {
+// The Neynar SDK is loaded lazily and only when a key is configured. The keyless
+// hub lane is the one that must never fail to boot, so it carries no dependency
+// on a vendor package being present or importable.
+let _neynar;
+async function neynar() {
 	if (!env.NEYNAR_API_KEY) return null;
-	if (!_neynar) _neynar = new NeynarAPIClient(new Configuration({ apiKey: env.NEYNAR_API_KEY }));
+	if (_neynar !== undefined) return _neynar;
+	try {
+		const { NeynarAPIClient, Configuration } = await import('@neynar/nodejs-sdk');
+		_neynar = new NeynarAPIClient(new Configuration({ apiKey: env.NEYNAR_API_KEY }));
+	} catch (err) {
+		console.warn('[farcaster-client] neynar sdk unavailable, using hub lane only', err?.message || err);
+		_neynar = null;
+	}
 	return _neynar;
 }
 
@@ -87,7 +96,7 @@ async function hubMessages(path, limit) {
 export async function resolveFarcasterUser({ fid = null, fname = null }) {
 	if (!fid && !fname) throw new FarcasterError('fid or fname required', { status: 400, code: 'validation_error' });
 
-	const client = neynar();
+	const client = await neynar();
 	if (client) {
 		try {
 			const user = fid
@@ -138,7 +147,7 @@ export async function resolveFarcasterUser({ fid = null, fname = null }) {
  * for this fid, which is what stops one user from seeding another user's casts.
  */
 export async function fetchVerifiedAddresses(fid) {
-	const client = neynar();
+	const client = await neynar();
 	if (client) {
 		try {
 			const user = (await client.fetchBulkUsers({ fids: [Number(fid)] }))?.users?.[0];
@@ -164,7 +173,7 @@ export async function fetchVerifiedAddresses(fid) {
 /** Recent casts for a fid, newest first, normalized across both lanes. */
 export async function fetchRecentCasts(fid, limit = 100) {
 	const bounded = Math.min(Math.max(1, Number(limit) || 100), 200);
-	const client = neynar();
+	const client = await neynar();
 	if (client) {
 		try {
 			const resp = await client.fetchCastsForUser({ fid: Number(fid), limit: bounded, includeReplies: false });
