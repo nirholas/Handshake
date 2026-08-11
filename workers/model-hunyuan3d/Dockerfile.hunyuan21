@@ -93,6 +93,7 @@ print('deps ok:', torch.__version__, torchvision.__version__, transformers.__ver
 # by repo-relative path, so cwd must be /opt/hunyuan3d21.
 WORKDIR /opt/hunyuan3d21
 COPY worker_security.py /opt/hunyuan3d21/worker_security.py
+COPY image_source.py /opt/hunyuan3d21/image_source.py
 COPY app21.py /opt/hunyuan3d21/app21.py
 
 EXPOSE 8080

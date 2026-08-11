@@ -59,6 +59,7 @@ print('deps ok:', torch.__version__, torchvision.__version__, transformers.__ver
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
+COPY image_source.py /app/image_source.py
 COPY main.py /app/main.py
 
 EXPOSE 8080
