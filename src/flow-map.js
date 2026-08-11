@@ -125,7 +125,13 @@ function preloadAvatars() {
 	for (const n of state.view?.nodes || []) {
 		if (!n.avatar_thumbnail_url || state.images.has(n.id)) continue;
 		const img = new Image();
-		img.crossOrigin = 'anonymous';
+		// Deliberately NOT crossOrigin: the map only ever drawImage()s these
+		// thumbnails, never reads the canvas back, so the CORS request mode buys
+		// nothing. It costs plenty though. The same R2 thumbnails render as plain
+		// <img> all over the platform (gallery, agent cards, explore), and Chrome
+		// refuses to reuse a cached no-CORS response for a CORS request: every
+		// avatar the visitor had already seen elsewhere failed here with "blocked
+		// by CORS policy" and left its node without a face.
 		img.decoding = 'async';
 		img.onload = () => { state.images.set(n.id, img); draw(); };
 		// A missing thumbnail is normal, not an error: the node falls back to its
