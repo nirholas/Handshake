@@ -36,8 +36,15 @@ export function freePort() {
  * @param {number} [opts.timeoutMs] how long to wait for readiness
  * @returns {Promise<{ base: string, port: number, close: () => void }>}
  *   `base` is the origin to fetch against; call `close()` in afterAll.
+ *
+ * The readiness budget is deliberately far above the ~1.5s the server needs on
+ * an idle machine: a full `vitest run` puts a worker on every core, so the boot
+ * that takes a second alone can take tens of seconds while 1400 other suites
+ * compete for the same CPU. A budget sized for the idle case turns that
+ * contention into a red suite that passes the moment it is run on its own.
  */
-export async function startTestServer({ env = {}, timeoutMs = 20_000 } = {}) {
+export async function startTestServer({ env = {}, timeoutMs = 60_000 } = {}) {
+	const startedAt = Date.now();
 	const port = await freePort();
 	const base = `http://127.0.0.1:${port}`;
 	const child = spawn(process.execPath, ['server/index.mjs'], {
@@ -61,7 +68,12 @@ export async function startTestServer({ env = {}, timeoutMs = 20_000 } = {}) {
 			const res = await fetch(`${base}/api/healthz`);
 			if (res.status > 0) break;
 		} catch { /* not up yet */ }
-		if (Date.now() >= deadline) throw new Error(`server did not start in time (${base})`);
+		if (Date.now() >= deadline) {
+			throw new Error(
+				`server did not answer /api/healthz within ${Date.now() - startedAt}ms (${base}); `
+				+ 'the process was still alive, so this is a slow boot, not a crash',
+			);
+		}
 		await new Promise((r) => setTimeout(r, 250));
 	}
 

@@ -23,11 +23,20 @@ export async function sendTelegramSignal({ botToken, chatId, signal }) {
 	return { ok: true, messageId: data.result.message_id };
 }
 
+// Every field below is attacker-influenced (a signal summary is derived from
+// on-chain token metadata). Telegram's legacy `Markdown` parse_mode treats
+// _ * ` [ as control characters, so unescaped text can break out of the
+// formatting and smuggle a clickable link posted under the platform bot's
+// verified identity. Escape before interpolating, never after.
+function escapeMarkdown(text) {
+	return String(text ?? '').replace(/[_*`[]/g, '\\$&');
+}
+
 function formatSignal({ kind, mint, summary, refs, ts }) {
-	const label = KIND_LABEL[kind] ?? kind;
+	const label = escapeMarkdown(KIND_LABEL[kind] ?? kind);
 	const time = ts ? new Date(ts).toUTCString() : new Date().toUTCString();
-	let msg = `*${label}*\n\`${mint}\`\n\n${summary}`;
-	if (refs?.length) msg += '\n\n' + refs.map((r) => `• ${r}`).join('\n');
-	msg += `\n\n_${time}_`;
+	let msg = `*${label}*\n\`${escapeMarkdown(mint)}\`\n\n${escapeMarkdown(summary)}`;
+	if (refs?.length) msg += '\n\n' + refs.map((r) => `• ${escapeMarkdown(r)}`).join('\n');
+	msg += `\n\n_${escapeMarkdown(time)}_`;
 	return msg;
 }
