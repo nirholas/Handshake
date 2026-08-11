@@ -124,7 +124,11 @@ MAX_GLB_BYTES = 512 * 1024 * 1024
 async def lifespan(app: FastAPI):
     global _db, _bucket, _http
     _db = firestore.Client(project=FIRESTORE_PROJECT)
-    _bucket = storage.Client().bucket(GCS_BUCKET)
+    # Pass the project explicitly, exactly like the Firestore client above. A
+    # bare storage.Client() infers it from the environment, which works on Cloud
+    # Run (metadata server) but aborts startup anywhere that inference fails,
+    # e.g. running this image locally without GOOGLE_CLOUD_PROJECT set.
+    _bucket = storage.Client(project=FIRESTORE_PROJECT).bucket(GCS_BUCKET)
     _http = httpx.AsyncClient(timeout=httpx.Timeout(30.0, read=300.0))
     log.info(
         "Controller ready — backends=%s, weights=%s, unirig=%s, skip_rigging=%s",
