@@ -24,7 +24,7 @@
 //   rembg        → GCP_REMBG_URL            (workers/rembg)
 //   segment      → GCP_SEGMENT_URL          (workers/segment)
 //   sketch       → GCP_TRIPOSG_URL          (workers/model-triposg, scribble mode)
-//   rerig        → GCP_RECONSTRUCTION_URL   (avatar-pipeline-controller, /rig endpoint)
+//   rerig        → GCP_UNIRIG_URL           (workers/rig, /rig + /tasks/:id)
 //   video2scene  → GCP_VIDEO2SCENE_URL      (workers/model-video2scene, LingBot-Map)
 //                  Streaming video → 3D point cloud. Standard /infer + /tasks/:id
 //                  shape; the result is a .ply point cloud, not a GLB mesh.
@@ -108,13 +108,16 @@ function serviceUrlForMode(mode) {
 			// mask/video/meta sidecar URLs.
 			return readEnv('GCP_VIDEO2MOTION_URL');
 		case 'rerig':
-			// Rigging: prefer the standalone rig worker (workers/rig, Cloud Run
-			// `model-rig`: direct /rig + /tasks/:id, `mesh_gcs_url` request schema)
-			// when GCP_UNIRIG_URL is set; otherwise the legacy pipeline-controller
-			// /rig endpoint behind GCP_RECONSTRUCTION_URL. The deployed
-			// avatar-reconstruction service exposes no /rig, so without
-			// GCP_UNIRIG_URL every rig submit 404s.
-			return readEnv('GCP_UNIRIG_URL') || readEnv('GCP_RECONSTRUCTION_URL');
+			// Rigging: the standalone rig worker only (workers/rig, Cloud Run
+			// `model-rig`: /rig + /tasks/:id, `mesh_gcs_url` request schema).
+			// There is deliberately NO fallback to GCP_RECONSTRUCTION_URL: neither
+			// deployed service behind it (avatar-reconstruction or the pipeline
+			// controller) exposes a /rig endpoint, so the old fallback made
+			// supportsMode('rerig') report true and then 404 on every submit,
+			// which silently downgraded reconstructions to unrigged meshes.
+			// With no GCP_UNIRIG_URL the mode is honestly unsupported and the
+			// finalize stage skips the rig chain cleanly.
+			return readEnv('GCP_UNIRIG_URL');
 		default:
 			return null;
 	}
@@ -340,30 +343,18 @@ function buildWorkerRequest(request) {
 	}
 
 	if (mode === 'rerig') {
-		// Two rig backends share the /rig path but disagree on the schema. The
-		// standalone rig worker behind GCP_UNIRIG_URL (workers/rig, the
+		// The standalone rig worker behind GCP_UNIRIG_URL (workers/rig, the
 		// Make-It-Animatable service; the env name predates it) takes
 		// `mesh_gcs_url` (any https URL, the name is historical) and reports
-		// `rigged_gcs_url`; the legacy pipeline controller takes
-		// `mesh_url`/`rig_type` and reports `glb_url`. Branch on which env the
-		// rerig URL resolved from.
-		if (readEnv('GCP_UNIRIG_URL')) {
-			return {
-				path: '/rig',
-				resultKey: 'rigged_gcs_url',
-				body: {
-					mesh_gcs_url: sourceUrl,
-					template: params?.template || 'wolf3d_neutral',
-					blendshapes: params?.blendshapes !== false,
-				},
-			};
-		}
+		// `rigged_gcs_url`. It is the only rerig backend: serviceUrlForMode
+		// resolves rerig from GCP_UNIRIG_URL alone.
 		return {
 			path: '/rig',
-			resultKey: 'glb_url',
+			resultKey: 'rigged_gcs_url',
 			body: {
-				mesh_url: sourceUrl,
-				rig_type: params?.rig_type || 'biped',
+				mesh_gcs_url: sourceUrl,
+				template: params?.template || 'wolf3d_neutral',
+				blendshapes: params?.blendshapes !== false,
 			},
 		};
 	}
@@ -624,6 +615,15 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 
 			if (status === 'failed') {
 				result.error = data.error || `${mode} failed`;
+				// The avatar workers classify failures ('input' = the caller's
+				// photos were unusable and `error` is caller-facing copy;
+				// 'internal' = service fault, `error` is an opaque correlation
+				// id). Surface the taxonomy so the status endpoint can relay
+				// actionable capture errors instead of masking every failure
+				// into the generic retry message.
+				if (data.error_kind === 'input' || data.error_kind === 'internal') {
+					result.errorKind = data.error_kind;
+				}
 			}
 
 			return result;

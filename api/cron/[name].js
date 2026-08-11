@@ -33,7 +33,7 @@
  *   solana-attestations-crawl     → handleSolanaAttestationsCrawl
  */
 
-import { id as keccakId, AbiCoder, getAddress, Interface } from 'ethers';
+import { Interface } from 'ethers';
 import { createPublicClient, encodeFunctionData, parseAbi } from 'viem';
 import { evmTransport } from '../_lib/evm/rpc.js';
 import { baseSepolia, base } from 'viem/chains';
@@ -299,10 +299,14 @@ async function erc8004CrawlChain(chain) {
 	const chunkSize = chain.blockChunk || ERC8004_BLOCK_CHUNK;
 	const toBlock = Math.min(fromBlock + chunkSize - 1, latestBlock);
 
+	// Topic OR-set, not the single Registered topic: an agent's row used to
+	// freeze at its registration block because ownership transfers, URI updates
+	// and metadata writes were never requested from the RPC at all. See the
+	// coverage census in api/_lib/erc8004-registry-events.js.
 	const logs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
 		{
 			address: chain.registry,
-			topics: [REGISTERED_TOPIC],
+			topics: [REGISTRY_TOPICS],
 			fromBlock: '0x' + fromBlock.toString(16),
 			toBlock: '0x' + toBlock.toString(16),
 		},
@@ -329,34 +333,86 @@ async function erc8004CrawlChain(chain) {
 	}
 
 	let inserted = 0;
+	const byClass = { registration: 0, metadata: 0, transfer: 0 };
+	const events = [];
+
 	for (const log of logs) {
 		try {
-			const agentId = BigInt(log.topics[1]).toString();
-			const ownerHex = '0x' + log.topics[2].slice(-40);
-			const owner = getAddress(ownerHex).toLowerCase();
-			const [agentURI] = ABI_CODER.decode(['string'], log.data);
-			const blockNumber = Number.parseInt(log.blockNumber, 16);
-			const ts = blockTimes[log.blockNumber];
-			const registeredAt = ts ? new Date(ts * 1000).toISOString() : null;
+			const ev = decodeRegistryLog(log);
+			if (!ev) continue;
 
-			await sql`
-				INSERT INTO erc8004_agents_index
-					(chain_id, agent_id, owner, registry, agent_uri,
-					 registered_block, registered_tx, registered_at, last_seen_at)
-				VALUES
-					(${chain.id}, ${agentId}, ${owner}, ${chain.registry.toLowerCase()},
-					 ${agentURI || null}, ${blockNumber}, ${log.transactionHash},
-					 ${registeredAt}, now())
-				ON CONFLICT (chain_id, agent_id) DO UPDATE SET
-					owner = excluded.owner,
-					agent_uri = COALESCE(excluded.agent_uri, erc8004_agents_index.agent_uri),
-					last_seen_at = now()
-			`;
-			inserted += 1;
+			const ts = blockTimes[log.blockNumber];
+			const occurredAt = ts ? new Date(ts * 1000).toISOString() : null;
+			// Absolute on-chain time only. A log whose block timestamp could not be
+			// read is still applied to the agent row, but is NOT written to the event
+			// index, because a timeline entry stamped with ingestion time is a lie.
+			if (occurredAt) {
+				events.push({
+					chain: 'evm',
+					chainId: chain.id,
+					network: chain.testnet ? 'testnet' : 'mainnet',
+					agentRef: agentRef({ chain: 'evm', chainId: chain.id, agentId: ev.agentId }),
+					eventClass: ev.eventClass,
+					eventName: ev.eventName,
+					tx: ev.tx,
+					logIndex: ev.logIndex,
+					blockNumber: ev.blockNumber,
+					occurredAt,
+					actor: ev.type === 'transfer' ? ev.from : ev.owner || null,
+					counterparty: ev.type === 'transfer' ? ev.to : null,
+					payload: erc8004EventPayload(ev, chain),
+				});
+			}
+
+			if (ev.type === 'registered') {
+				await sql`
+					INSERT INTO erc8004_agents_index
+						(chain_id, agent_id, owner, registry, agent_uri,
+						 registered_block, registered_tx, registered_at, last_seen_at)
+					VALUES
+						(${chain.id}, ${ev.agentId}, ${ev.owner}, ${chain.registry.toLowerCase()},
+						 ${ev.agentUri || null}, ${ev.blockNumber}, ${ev.tx},
+						 ${occurredAt}, now())
+					ON CONFLICT (chain_id, agent_id) DO UPDATE SET
+						owner = excluded.owner,
+						agent_uri = COALESCE(excluded.agent_uri, erc8004_agents_index.agent_uri),
+						last_seen_at = now()
+				`;
+				inserted += 1;
+				byClass.registration += 1;
+			} else if (ev.type === 'uri_updated') {
+				// A new agentURI invalidates every enriched field. Clearing
+				// last_metadata_at re-queues the row for the enrichment pass instead
+				// of serving the old name and image for the next seven days.
+				await sql`
+					UPDATE erc8004_agents_index
+					SET agent_uri = ${ev.agentUri || null},
+					    last_metadata_at = null,
+					    metadata_error = null,
+					    last_seen_at = now()
+					WHERE chain_id = ${chain.id} AND agent_id = ${ev.agentId}
+				`;
+				byClass.metadata += 1;
+			} else if (ev.type === 'metadata_set') {
+				byClass.metadata += 1;
+			} else if (ev.type === 'transfer' && !ev.isMint) {
+				// The reason an agent's indexed owner could never change: nothing
+				// watched Transfer. Only a row that already exists is updated; a
+				// transfer of an agent registered before the crawl window is
+				// recorded as history and reconciled when Registered is backfilled.
+				await sql`
+					UPDATE erc8004_agents_index
+					SET owner = ${ev.to}, last_seen_at = now()
+					WHERE chain_id = ${chain.id} AND agent_id = ${ev.agentId}
+				`;
+				byClass.transfer += 1;
+			}
 		} catch (decodeErr) {
 			console.warn('[crawl] decode failed', chain.id, log.transactionHash, decodeErr.message);
 		}
 	}
+
+	const recorded = events.length ? await recordEvents(events) : { inserted: 0, rejected: 0 };
 
 	// Always advance cursor to toBlock so the next run continues from here.
 	await sql`
@@ -367,7 +423,29 @@ async function erc8004CrawlChain(chain) {
 			updated_at = now()
 	`;
 
-	return { inserted, scanned: toBlock - fromBlock + 1, lastBlock: toBlock, fromBlock };
+	return {
+		inserted,
+		scanned: toBlock - fromBlock + 1,
+		lastBlock: toBlock,
+		fromBlock,
+		logs: logs.length,
+		events: recorded.inserted,
+		byClass,
+	};
+}
+
+// Per-class payload for the event index. Keeps the raw on-chain detail that the
+// agent-row columns cannot hold (which metadata key changed, the URI at the time
+// of the event, whether a transfer was the registration mint).
+function erc8004EventPayload(ev, chain) {
+	const base = { registry: chain.registry.toLowerCase(), agentId: ev.agentId };
+	if (ev.type === 'registered' || ev.type === 'uri_updated') {
+		return { ...base, agentUri: ev.agentUri || null, owner: ev.owner };
+	}
+	if (ev.type === 'metadata_set') {
+		return { ...base, key: ev.key, value: ev.value };
+	}
+	return { ...base, from: ev.from, to: ev.to, mint: ev.isMint };
 }
 
 async function erc8004EnrichMetadata(limit, deadline) {

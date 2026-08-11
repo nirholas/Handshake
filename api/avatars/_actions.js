@@ -520,7 +520,7 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 	const jobId = url.searchParams.get('jobId');
 	if (!jobId) return error(res, 400, 'invalid_request', 'jobId required');
 	const rows = await sql`
-		select job_id, status, result_avatar_id, result_glb_url, error, provider, ext_job_id, created_at,
+		select job_id, status, result_avatar_id, result_glb_url, error, error_kind, provider, ext_job_id, created_at,
 		       mode, params, source_avatar_id
 		from avatar_regen_jobs
 		where job_id = ${jobId} and user_id = ${userId}
@@ -552,6 +552,9 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 				let nextStatus = update.status;
 				let nextResultUrl = update.resultGlbUrl ?? null;
 				let nextError = update.error ?? null;
+				// Worker failure taxonomy (gcp adapter only): 'input' means the
+				// error text is caller-facing copy we can relay verbatim.
+				let nextErrorKind = update.errorKind === 'input' || update.errorKind === 'internal' ? update.errorKind : null;
 				// SSRF gate (defense-in-depth): a provider-returned result URL is
 				// attacker-influenceable if the provider account/payload is forged.
 				// Pin it to an allowed provider host BEFORE it ever lands in
@@ -566,6 +569,7 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 					nextStatus = 'failed';
 					nextResultUrl = null;
 					nextError = 'provider returned a disallowed result url';
+					nextErrorKind = null;
 				}
 
 				if (isAutoRig && nextStatus === 'done') autoRigProviderDone = true;
@@ -573,13 +577,15 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 				if (
 					persistStatus !== job.status ||
 					nextResultUrl !== job.result_glb_url ||
-					nextError !== job.error
+					nextError !== job.error ||
+					nextErrorKind !== job.error_kind
 				) {
 					await sql`
 						update avatar_regen_jobs
 						set status = ${persistStatus},
 							result_glb_url = ${nextResultUrl},
 							error = ${nextError},
+							error_kind = ${nextErrorKind},
 							updated_at = now()
 						where job_id = ${jobId} and user_id = ${userId}
 					`;
@@ -588,6 +594,7 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 						status: persistStatus,
 						result_glb_url: nextResultUrl,
 						error: nextError,
+						error_kind: nextErrorKind,
 					};
 				}
 			}
@@ -659,7 +666,13 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 	// Never return the raw provider/job error — it can carry a vendor name, task
 	// id, or upstream status. The DB row keeps the raw value for operators; the
 	// wire gets the masked form only (safe for both the web UI and API consumers).
-	const maskedError = sanitizeJobError(job.error);
+	// One exception: our own avatar workers classify a failure as error_kind
+	// 'input' when the error text is caller-facing by contract ("no face
+	// detected in any of the provided photos"), so relay that copy verbatim
+	// instead of collapsing it into the generic retry message.
+	const maskedError = job.error_kind === 'input' && job.error
+		? String(job.error).slice(0, 300)
+		: sanitizeJobError(job.error);
 	if (maskedError) response.error = maskedError;
 	if (job.provider) response.provider = job.provider;
 	return json(res, 200, response);

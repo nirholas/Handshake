@@ -785,9 +785,10 @@ async function fileToScaledDataUrl(file) {
 		}
 		return new Promise((resolve, reject) => {
 			const img = new Image();
-			img.onload = () => resolve(img);
-			img.onerror = () => reject(new Error('could not decode image'));
-			img.src = URL.createObjectURL(file);
+			const url = URL.createObjectURL(file);
+			img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+			img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('could not decode image')); };
+			img.src = url;
 		});
 	})();
 	const w = bitmap.width || bitmap.naturalWidth;
