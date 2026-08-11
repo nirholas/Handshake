@@ -571,8 +571,9 @@ registerWalletTab({
 						<span class="awh-chip${overDaily ? ' alert' : ''}">Spent today: ${esc(formatUsd(spent) || '$0.00')}</span>
 						<span class="awh-chip">Daily cap: ${lim.daily_usd != null ? esc(formatUsd(lim.daily_usd)) : 'none'}</span>
 						<span class="awh-chip">Per-tx cap: ${lim.per_tx_usd != null ? esc(formatUsd(lim.per_tx_usd)) : 'none'}</span>
+						<span class="awh-chip">Per-counterparty cap: ${lim.per_counterparty_daily_usd != null ? esc(formatUsd(lim.per_counterparty_daily_usd)) : 'none'}</span>
 					</div>
-					<p class="awh-empty" style="margin-top:0;">These ceilings apply to every outbound path — trades, snipes, x402 payments and withdrawals. Leave a field blank for no limit.</p>
+					<p class="awh-empty" style="margin-top:0;">These ceilings apply to every outbound path — trades, snipes, x402 and agent-to-agent payments, and withdrawals. Leave a field blank for no limit.</p>
 					<div class="awh-fld">
 						<label for="awh-daily">Daily spend cap (USD)</label>
 						<input class="awh-in" id="awh-daily" type="text" inputmode="decimal" placeholder="No limit" value="${lim.daily_usd != null ? esc(lim.daily_usd) : ''}">
@@ -580,6 +581,10 @@ registerWalletTab({
 					<div class="awh-fld">
 						<label for="awh-pertx">Per-transaction cap (USD)</label>
 						<input class="awh-in" id="awh-pertx" type="text" inputmode="decimal" placeholder="No limit" value="${lim.per_tx_usd != null ? esc(lim.per_tx_usd) : ''}">
+					</div>
+					<div class="awh-fld">
+						<label for="awh-percp">Per-counterparty daily cap (USD) <span style="opacity:.6">(optional — how much may go to any single payee in 24h)</span></label>
+						<input class="awh-in" id="awh-percp" type="text" inputmode="decimal" placeholder="No limit" value="${lim.per_counterparty_daily_usd != null ? esc(lim.per_counterparty_daily_usd) : ''}">
 					</div>
 					<div class="awh-fld">
 						<label>Withdraw allowlist <span style="opacity:.6">(optional — restrict where funds can be swept)</span></label>
@@ -656,11 +661,13 @@ registerWalletTab({
 				const parse = (v) => (v.trim() === '' ? null : Number(v));
 				const daily = parse(panel.querySelector('#awh-daily').value);
 				const perTx = parse(panel.querySelector('#awh-pertx').value);
+				const perCp = parse(panel.querySelector('#awh-percp').value);
 				if (daily != null && (!Number.isFinite(daily) || daily < 0)) { errEl.hidden = false; errEl.textContent = 'Daily cap must be a non-negative number.'; return; }
 				if (perTx != null && (!Number.isFinite(perTx) || perTx < 0)) { errEl.hidden = false; errEl.textContent = 'Per-tx cap must be a non-negative number.'; return; }
+				if (perCp != null && (!Number.isFinite(perCp) || perCp < 0)) { errEl.hidden = false; errEl.textContent = 'Per-counterparty cap must be a non-negative number.'; return; }
 				saveBtn.disabled = true;
 				saveBtn.innerHTML = '<span class="awh-spin"></span>Saving…';
-				const res = await call(`${base('limits')}?network=${ctx.getNetwork()}`, { method: 'PUT', body: { daily_usd: daily, per_tx_usd: perTx, withdraw_allowlist: allowState } });
+				const res = await call(`${base('limits')}?network=${ctx.getNetwork()}`, { method: 'PUT', body: { daily_usd: daily, per_tx_usd: perTx, per_counterparty_daily_usd: perCp, withdraw_allowlist: allowState } });
 				if (destroyed) return;
 				if (!res.ok) {
 					saveBtn.disabled = false; saveBtn.textContent = 'Save limits';

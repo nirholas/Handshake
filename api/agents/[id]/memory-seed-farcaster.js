@@ -69,6 +69,10 @@ const challengeSchema = z.object({
 	intent: z.literal('challenge'),
 	fid: z.number().int().positive().optional(),
 	fname: z.string().trim().min(1).max(64).optional(),
+	// Which verified wallet to sign with. Omitted on the first call, when the
+	// server picks Solana first; sent when the user chooses another of their
+	// verified wallets, which needs a fresh message naming that address.
+	address: z.string().trim().min(8).max(128).optional(),
 });
 
 const grantSchema = z.object({
@@ -173,9 +177,27 @@ async function handleChallenge(req, res, agentId, userId, body) {
 		);
 	}
 
-	// Solana first: it is the home chain and the wallet UX we lead with.
-	const chain = solana.length > 0 ? 'solana' : 'ethereum';
-	const address = chain === 'solana' ? solana[0] : ethereum[0];
+	// Solana first: it is the home chain and the wallet UX we lead with. A caller
+	// may name another of the fid's verified wallets instead.
+	let chain = solana.length > 0 ? 'solana' : 'ethereum';
+	let address = chain === 'solana' ? solana[0] : ethereum[0];
+	if (body.address) {
+		if (addressMatches(body.address, solana, 'solana')) {
+			chain = 'solana';
+			address = normalizeAddress(body.address, 'solana');
+		} else if (addressMatches(body.address, ethereum, 'ethereum')) {
+			chain = 'ethereum';
+			address = normalizeAddress(body.address, 'ethereum');
+		} else {
+			return error(
+				res,
+				403,
+				'address_not_verified',
+				'that wallet is not one of the addresses this Farcaster account has verified',
+				{ wallets: { solana, ethereum } },
+			);
+		}
+	}
 
 	// 24 alphanumeric chars from the CSPRNG, same shape as the SIWS nonce.
 	let nonce = '';

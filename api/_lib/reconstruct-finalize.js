@@ -26,6 +26,7 @@ import { getRegenProviderForMode } from './regen-provider.js';
 // shared guard: host allowlist + IP-pinned SSRF connect + 64 MB ceiling. No bare
 // fetch() of a provider URL remains in this file.
 import { fetchProviderGlbBuffer } from './provider-result-url.js';
+import { registerReconstructionCreation } from './forge-store.js';
 
 function glbMetaFrom(info) {
 	return info
@@ -122,6 +123,31 @@ async function materializeReconstructAvatar({
 		eventType: 'avatar.created',
 		data: { id: avatar.id, name: avatar.name, slug: avatar.slug, source: 'reconstruct' },
 	}).catch(() => {});
+
+	// Register the result in the Forge store so galleries, share/embed pages,
+	// and leaderboards see reconstructions like any other creation. Visibility
+	// rides along so private captures never surface publicly. Best-effort: the
+	// avatar is already delivered, a store hiccup must not fail the job.
+	try {
+		const referenceUrl =
+			typeof promptMeta.referenceImageUrl === 'string' && /^https:\/\//i.test(promptMeta.referenceImageUrl)
+				? promptMeta.referenceImageUrl
+				: null;
+		await registerReconstructionCreation({
+			userId,
+			avatarId: avatar.id,
+			jobId,
+			provider: job.provider,
+			prompt: fromPrompt && params.prompt ? String(params.prompt) : name,
+			glbKey: storageKey,
+			glbUrl: publicUrl(storageKey),
+			sizeBytes: glbBuf.length,
+			visibility,
+			previewImageUrl: referenceUrl,
+		});
+	} catch (err) {
+		console.warn('[reconstruct] forge registration skipped:', err?.message);
+	}
 
 	return avatar;
 }

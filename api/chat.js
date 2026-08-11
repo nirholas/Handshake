@@ -29,6 +29,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.j
 import { cors, json, method, readJson, wrap, error, rateLimited } from './_lib/http.js';
 import { parse } from './_lib/validate.js';
 import { recordEvent } from './_lib/usage.js';
+import { trackAgentOwnerVisit } from './_lib/retention.js';
 import { costMicroUsd } from './_lib/llm-pricing.js';
 import { captureException } from './_lib/sentry.js';
 import { sql } from './_lib/db.js';
@@ -1002,6 +1003,10 @@ export default wrap(async (req, res) => {
 		userId: auth?.userId ?? null,
 		apiKeyId: auth?.apiKeyId,
 		clientId: auth?.clientId,
+		// Agent attribution on the chat path. Without it a conversation with an
+		// agent was indistinguishable from a bare /api/chat call in usage_events,
+		// so per-agent chat volume and the retention rollup had nothing to key on.
+		agentId: body.agentId ?? null,
 		kind: 'chat',
 		tool: route.model,
 		latencyMs,
@@ -1034,6 +1039,14 @@ export default wrap(async (req, res) => {
 			anonymous,
 		},
 	});
+
+	// Week-2 retention signal: an owner conversing with their OWN agent is the
+	// exact behaviour the phase-2 roadmap metric measures. One coarse row per
+	// owner/agent/UTC day, nothing per-request and nothing identifying beyond the
+	// ids already on this request. Detached — telemetry never delays a reply.
+	if (isOwner) {
+		trackAgentOwnerVisit({ userId: auth.userId, agentId: body.agentId, conversed: true });
+	}
 });
 
 // Govern autonomous value-transfer actions with IBM Granite Guardian before the

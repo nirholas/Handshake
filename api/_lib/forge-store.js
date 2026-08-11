@@ -158,6 +158,64 @@ export async function createCreation({
 	}
 }
 
+// Register a finished selfie/prompt reconstruction (api/_lib/reconstruct-
+// finalize.js) as a first-class creation, so the Forge surfaces — showcase,
+// recent feed, share/embed pages, leaderboards — see reconstructions the same
+// way they see /forge generations. The row lands already 'done': the GLB is
+// durably stored by the avatar pipeline before this is called, so there is no
+// generating phase to track here.
+//
+// Privacy contract: `visibility` mirrors the avatar's setting. Public feeds
+// only serve null/'public' rows (see the visibility predicates on the list
+// readers below); 'unlisted' additionally resolves on the direct share read
+// (getPublicCreation); 'private' rows exist for provenance and the owner's own
+// stores only. The client_key is derived from the owner's user id — it never
+// matches a browser's anonymous key, which keeps these rows out of every
+// anonymous client gallery.
+//
+// Idempotent per job: keyed on replicate_job_id (the regen job id), so the
+// poll/cron race that can double-drive finalize registers one row, not two.
+export async function registerReconstructionCreation({
+	userId,
+	avatarId,
+	jobId,
+	provider,
+	prompt,
+	glbKey,
+	glbUrl,
+	sizeBytes,
+	visibility,
+	previewImageUrl = null,
+}) {
+	if (!forgeStoreEnabled() || !userId || !avatarId || !jobId || !glbUrl) return null;
+	const vis = ['public', 'unlisted', 'private'].includes(visibility) ? visibility : 'private';
+	const promptLine = String(prompt || 'Selfie avatar').slice(0, 500);
+	try {
+		const existing = await sql`
+			select id from forge_creations where replicate_job_id = ${jobId} limit 1
+		`;
+		if (existing[0]) return existing[0].id;
+		const id = randomUUID();
+		await sql`
+			insert into forge_creations
+				(id, client_key, prompt, preview_image_url, replicate_job_id,
+				 glb_key, glb_url, size_bytes, backend, path, status, outcome,
+				 model_category, user_id, visibility, avatar_id)
+			values
+				(${id}, ${hashClient(`user:${userId}`)}, ${promptLine}, ${previewImageUrl},
+				 ${jobId}, ${glbKey ?? null}, ${glbUrl}, ${Number.isFinite(sizeBytes) ? sizeBytes : null},
+				 ${provider ?? null}, 'reconstruct', 'done', 'generated', 'avatar',
+				 ${userId}, ${vis}, ${avatarId})
+		`;
+		await recordGenerationEvent({ phase: 'done', backend: provider ?? 'unknown', path: 'reconstruct', source: 'reconstruct' });
+		return id;
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[forge-store] registerReconstructionCreation skipped (db unavailable):', err?.message);
+		else console.error('[forge-store] registerReconstructionCreation failed:', err?.message);
+		return null;
+	}
+}
+
 // Look up an in-flight creation by its TRELLIS prediction id, scoped to the
 // requesting client so one browser can't poll another's job into existence.
 export async function findByJob({ replicateJobId, clientKey }) {
@@ -574,6 +632,7 @@ export async function getPublicCreation({ id, voterKey = null }) {
 			from forge_creations fc
 			left join users u on u.id = fc.user_id and u.deleted_at is null
 			where fc.id = ${id} and fc.status = 'done' and fc.glb_url is not null
+				and (fc.visibility is null or fc.visibility in ('public', 'unlisted'))
 			limit 1
 		`;
 		const r = rows[0];
@@ -644,6 +703,7 @@ export async function listRelated({ id, category, limit = 6 }) {
 				(model_category = ${cat ?? ''}) as same_category
 			from forge_creations
 			where status = 'done' and glb_url is not null and id != ${id}
+				and (visibility is null or visibility = 'public')
 			order by (model_category = ${cat ?? ''}) desc, created_at desc
 			limit ${capped}
 		`;
@@ -797,6 +857,7 @@ export async function listCreationsByUser({ userId, limit = 24, before } = {}) {
 					parent_creation_id, remixable, created_at
 				from forge_creations
 				where user_id = ${userId} and status = 'done' and glb_url is not null
+					and (visibility is null or visibility = 'public')
 					and created_at < ${before}
 				order by created_at desc
 				limit ${capped}
@@ -806,6 +867,7 @@ export async function listCreationsByUser({ userId, limit = 24, before } = {}) {
 					parent_creation_id, remixable, created_at
 				from forge_creations
 				where user_id = ${userId} and status = 'done' and glb_url is not null
+					and (visibility is null or visibility = 'public')
 				order by created_at desc
 				limit ${capped}
 			`;
@@ -836,6 +898,7 @@ export async function countCreationsByUser({ userId } = {}) {
 			select count(*)::int as n
 			from forge_creations
 			where user_id = ${userId} and status = 'done' and glb_url is not null
+				and (visibility is null or visibility = 'public')
 		`;
 		return row?.n ?? 0;
 	} catch (err) {
@@ -883,6 +946,7 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 				left join forge_votes v on v.creation_id = fc.id and v.voter_key = ${vk}
 				where fc.status = 'done' and fc.glb_url is not null
 					and (fc.outcome is null or fc.outcome != 'rejected')
+					and (fc.visibility is null or fc.visibility = 'public')
 					and (${weekStart}::timestamptz is null or fc.created_at >= ${weekStart}::timestamptz)
 				order by fc.vote_count desc, fc.created_at desc
 				limit ${capped}
@@ -897,6 +961,7 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 				left join forge_votes v on v.creation_id = fc.id and v.voter_key = ${vk}
 				where fc.status = 'done' and fc.glb_url is not null
 					and (fc.outcome is null or fc.outcome != 'rejected')
+					and (fc.visibility is null or fc.visibility = 'public')
 				order by (fc.preview_image_url is not null) desc, fc.created_at desc
 				limit ${capped}
 			`;
@@ -934,6 +999,7 @@ export async function countShowcase() {
 			from forge_creations
 			where status = 'done' and glb_url is not null
 				and (outcome is null or outcome != 'rejected')
+				and (visibility is null or visibility = 'public')
 		`;
 		return row?.n ?? 0;
 	} catch (err) {
@@ -1041,6 +1107,7 @@ export async function listRecentCreations({ limit = 24, before } = {}) {
 				left join users u on u.id = fc.user_id and u.deleted_at is null and u.username is not null
 				where fc.status = 'done' and fc.glb_url is not null
 					and (fc.outcome is null or fc.outcome != 'rejected')
+					and (fc.visibility is null or fc.visibility = 'public')
 					and fc.created_at < ${before}
 				order by fc.created_at desc
 				limit ${capped}`
@@ -1053,6 +1120,7 @@ export async function listRecentCreations({ limit = 24, before } = {}) {
 				left join users u on u.id = fc.user_id and u.deleted_at is null and u.username is not null
 				where fc.status = 'done' and fc.glb_url is not null
 					and (fc.outcome is null or fc.outcome != 'rejected')
+					and (fc.visibility is null or fc.visibility = 'public')
 				order by fc.created_at desc
 				limit ${capped}`;
 		return rows.map((r) => ({

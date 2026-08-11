@@ -4,14 +4,16 @@
  * Returns the ElevenLabs voice list (filtered to safe public fields), served
  * from the shared per-instance cache in _lib/elevenlabs.js. A request carrying
  * its own `x-eleven-key` header (BYOK) lists that account's voices instead,
- * uncached. Returns { enabled: false, voices: [] } when ELEVENLABS_API_KEY is
- * not set and no user key was sent, so the client can gate the UI without a
- * separate config check.
+ * uncached, and so does a caller who saved an ElevenLabs key at
+ * /api/user/provider-keys. Returns { enabled: false, voices: [] } when no
+ * credential resolves at all, so the client can gate the UI without a separate
+ * config check. `key_source` names the lane that answered.
  */
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error } from '../../_lib/http.js';
-import { resolveElevenKey, listVoices, TTS_MODELS } from '../../_lib/elevenlabs.js';
+import { listVoices, TTS_MODELS } from '../../_lib/elevenlabs.js';
+import { resolveAgentElevenKey } from '../../_lib/agent-voice-key.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -21,15 +23,25 @@ export default wrap(async (req, res) => {
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
 
-	// A user-supplied x-eleven-key (BYOK) lists THAT account's voices; otherwise
-	// the platform account's. Unconfigured with no user key stays a soft-off so
-	// the client can gate the UI without a separate config check.
-	const { apiKey, byok } = resolveElevenKey(req);
-	if (!apiKey) return json(res, 200, { enabled: false, voices: [], models: TTS_MODELS });
+	// A user-supplied x-eleven-key (BYOK) lists THAT account's voices, then the
+	// caller's saved key, then the platform account's. No credential at all stays
+	// a soft-off so the client can gate the UI without a separate config check.
+	const { apiKey, source } = await resolveAgentElevenKey({
+		req,
+		ownerId: session?.id ?? bearer?.userId ?? null,
+	});
+	if (!apiKey)
+		return json(res, 200, {
+			enabled: false,
+			voices: [],
+			models: TTS_MODELS,
+			key_source: null,
+			byok_url: '/dashboard/account',
+		});
 
 	let result;
 	try {
-		result = await listVoices(byok ? { apiKey } : {});
+		result = await listVoices(source === 'platform' ? {} : { apiKey });
 	} catch (e) {
 		console.error('[tts/eleven/voices] listVoices failed', e);
 		return error(
@@ -43,7 +55,7 @@ export default wrap(async (req, res) => {
 	return json(
 		res,
 		200,
-		{ enabled: true, voices: result.voices, models: TTS_MODELS },
+		{ enabled: true, voices: result.voices, models: TTS_MODELS, key_source: source },
 		{
 			'cache-control': 'private, max-age=300',
 			'x-voices-cache': result.cached ? 'hit' : 'miss',

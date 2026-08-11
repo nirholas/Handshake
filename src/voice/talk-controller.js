@@ -614,6 +614,10 @@ export class TalkController {
 			body: JSON.stringify({
 				voiceId: voiceId || ELEVEN_DEFAULT_VOICE,
 				text: text.slice(0, 500),
+				// Names the agent whose voice this is, so the proxy can serve the
+				// clip on its owner's own ElevenLabs key (BYOK) rather than the
+				// platform key. Without it, an owner-cloned voice is unreachable.
+				...(this.avatar?.agent_id ? { agentId: this.avatar.agent_id } : {}),
 			}),
 		});
 		if (!r.ok) {

@@ -22,6 +22,7 @@ import { walletChipHTML, wireWalletChips } from '../../shared/agent-wallet-chip.
 import { skeletonHTML, emptyStateHTML, errorStateHTML, attachRetry, ensureStateKitStyles } from '../../shared/state-kit.js';
 import { rigBadgeHTML, matchesRigFilter, RIG_FILTERS } from '../../shared/rig-status.js';
 import { toast } from '../../shared/toast.js';
+import { mountFarcasterSeed } from '../farcaster-seed.js';
 ensureStateKitStyles();
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
@@ -1051,11 +1052,9 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 					<div style="flex:1;min-width:0;font-size:12.5px;color:var(--nxt-ink-dim)">Distil your repos and commits. Uses your connected <strong style="color:var(--nxt-ink)">GitHub</strong> account.</div>
 					<button class="dn-btn" data-action="seed-github" type="button" style="flex-shrink:0">Seed from GitHub</button>
 				</div>
-				<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:0">
-					<input data-slot="seed-farcaster" type="text" maxlength="50" placeholder="Farcaster username or FID" aria-label="Farcaster username or FID"
-						style="padding:8px 11px;border-radius:8px;border:1px solid var(--nxt-stroke);
-						background:rgba(255,255,255,0.04);color:var(--nxt-ink);font:inherit;font-size:13px" />
-					<button class="dn-btn" data-action="seed-farcaster" type="button" style="flex-shrink:0">Seed from Farcaster</button>
+				<div style="border-top:1px solid var(--nxt-stroke);padding-top:12px;margin-top:12px">
+					<div style="font-size:12.5px;font-weight:600;color:var(--nxt-ink);margin-bottom:2px">Farcaster</div>
+					<div data-slot="seed-farcaster"></div>
 				</div>
 				<div data-slot="seed-status" style="font-size:12.5px;color:var(--nxt-ink-dim);margin-top:10px;min-height:18px"></div>
 			</div>
@@ -1118,38 +1117,23 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 	const SEED_LABELS = {
 		'seed-twitter': 'Seed from X',
 		'seed-github': 'Seed from GitHub',
-		'seed-farcaster': 'Seed from Farcaster',
 	};
 	const SOURCE_NAMES = {
 		'seed-twitter': 'X',
 		'seed-github': 'GitHub',
-		'seed-farcaster': 'Farcaster',
 	};
 
 	const seedAction = async (action) => {
 		seedStatus.innerHTML = '';
 
-		// X and GitHub seed from the user's connected OAuth account (no handle).
-		// Farcaster is public, so it takes a username or FID.
-		let endpoint;
-		let body;
-		if (action === 'seed-twitter') {
-			endpoint = `/api/agents/${aid}/memory-seed-x`;
-		} else if (action === 'seed-github') {
-			endpoint = `/api/agents/${aid}/memory-seed`;
-		} else {
-			const handle = overlay
-				.querySelector('[data-slot="seed-farcaster"]')
-				.value.trim()
-				.replace(/^@/, '');
-			if (!handle) {
-				seedStatus.style.color = 'var(--nxt-danger)';
-				seedStatus.textContent = 'Enter a Farcaster username or FID first.';
-				return;
-			}
-			endpoint = `/api/agents/${aid}/memory/seed/farcaster`;
-			body = /^\d+$/.test(handle) ? { fid: Number(handle) } : { fname: handle };
-		}
+		// X and GitHub seed from the user's connected OAuth account. Farcaster has
+		// no OAuth, so it runs its own consent panel below (wallet-signature proof
+		// of the fid) instead of a one-click button here.
+		const endpoint =
+			action === 'seed-twitter'
+				? `/api/agents/${aid}/memory/seed/x`
+				: `/api/agents/${aid}/memory-seed`;
+		const body = undefined;
 
 		const btn = overlay.querySelector(`[data-action="${action}"]`);
 		btn.disabled = true;
@@ -1167,8 +1151,17 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 					: `No new facts found from ${SOURCE_NAMES[action]}.`;
 		} catch (err) {
 			seedStatus.style.color = 'var(--nxt-danger)';
-			// The X/GitHub endpoints require a connected account; guide the user there.
-			if (err?.code === 'not_connected' || err?.status === 412) {
+			// X seeding is consent-gated. Consent can only be given on the screen
+			// that shows the full disclosure of what gets read and stored, so send
+			// the user there rather than granting it from a button labelled "Seed".
+			if (err?.code === 'consent_required' || err?.body?.error === 'consent_required') {
+				seedStatus.innerHTML = 'Seeding from X needs your consent first. ';
+				const link = document.createElement('a');
+				link.href = '/settings#connected-accounts';
+				link.textContent = 'Review what gets read and stored';
+				link.style.color = 'var(--nxt-accent, #6ea8fe)';
+				seedStatus.appendChild(link);
+			} else if (err?.code === 'not_connected' || err?.status === 412) {
 				seedStatus.innerHTML = `Connect ${esc(SOURCE_NAMES[action])} to seed from it. `;
 				const link = document.createElement('a');
 				link.href = '/settings#connected-accounts';
@@ -1193,9 +1186,8 @@ function openPersonaModal(host, agent, allAgents, avatars) {
 	overlay
 		.querySelector('[data-action="seed-github"]')
 		.addEventListener('click', () => seedAction('seed-github'));
-	overlay
-		.querySelector('[data-action="seed-farcaster"]')
-		.addEventListener('click', () => seedAction('seed-farcaster'));
+
+	mountFarcasterSeed(overlay.querySelector('[data-slot="seed-farcaster"]'), { agentId: agent.id });
 }
 
 // ── Screen Caster setup modal ──────────────────────────────────────────────
