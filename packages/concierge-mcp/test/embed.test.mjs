@@ -50,6 +50,21 @@ test('npm snippet is runnable JS with the config object', () => {
 	assert.match(snippets.npm, /"siteName": "Acme"/);
 });
 
+test('web-component snippet is paste-ready: loads the global build, no bare import', () => {
+	const { snippets } = buildEmbed({ siteName: 'Acme' }, 'web-component');
+	assert.match(snippets['web-component'], /concierge\/concierge\.global\.js/);
+	assert.ok(!snippets['web-component'].includes("import '@three-ws/concierge'"));
+});
+
+test('imperative snippet loads the global build and calls mount()', () => {
+	const { snippets: imp } = buildEmbed({ siteName: 'Acme' }, 'imperative');
+	const { snippets: npm } = buildEmbed({ siteName: 'Acme' }, 'npm');
+	assert.match(imp.imperative, /concierge\/concierge\.global\.js/);
+	assert.match(imp.imperative, /window\.ThreeWsConcierge\.mount\(/);
+	assert.match(imp.imperative, /"siteName": "Acme"/);
+	assert.notEqual(imp.imperative, npm.npm);
+});
+
 test('empty/unset fields are omitted from the snippet', () => {
 	const { config } = buildEmbed({ siteName: 'Acme', accent: '', greeting: undefined }, 'script');
 	assert.equal(config.siteName, 'Acme');

@@ -20,7 +20,6 @@ function normalize(config = {}) {
 		if (v !== undefined && v !== null && String(v).trim() !== '') out[k] = String(v).trim();
 	};
 	set('siteName', config.siteName);
-	set('name', config.name);
 	set('accent', config.accent);
 	set('avatar', config.avatar);
 	set('customAvatar', config.customAvatar);
@@ -72,8 +71,13 @@ function scriptTag(cfg) {
 }
 
 function webComponent(cfg) {
+	// The global build registers <three-concierge> on load and only auto-mounts
+	// when the script tag itself carries data-concierge, so this pair is safe to
+	// paste into plain HTML with no bundler. (npm users can instead
+	// `import '@three-ws/concierge'` to register the element.)
+	const src = `${THREE_WS_BASE}/concierge/concierge.global.js`;
 	const attrs = elementAttrs(cfg);
-	return `<script type="module">import '@three-ws/concierge';</script>\n\n<three-concierge${attrs ? '\n' + attrs : ''}>\n</three-concierge>`;
+	return `<script type="module" src="${src}"></script>\n\n<three-concierge${attrs ? '\n' + attrs : ''}>\n</three-concierge>`;
 }
 
 function npmSnippet(cfg) {
@@ -82,7 +86,11 @@ function npmSnippet(cfg) {
 }
 
 function imperativeSnippet(cfg) {
-	return npmSnippet(cfg);
+	// Script-tag consumers without a bundler: the global build exposes the full
+	// API at window.ThreeWsConcierge; mount() returns the controller.
+	const src = `${THREE_WS_BASE}/concierge/concierge.global.js`;
+	const json = JSON.stringify(cfg, null, '\t').replace(/^/gm, '\t').trim();
+	return `<script type="module" src="${src}"></script>\n<script type="module">\n\tconst concierge = window.ThreeWsConcierge.mount(${json});\n</script>`;
 }
 
 /**
@@ -98,7 +106,8 @@ export function buildEmbed(config, flavor = 'all') {
 	for (const f of want) {
 		if (f === 'script') snippets.script = scriptTag(cfg);
 		else if (f === 'web-component') snippets['web-component'] = webComponent(cfg);
-		else if (f === 'npm' || f === 'imperative') snippets[f] = npmSnippet(cfg);
+		else if (f === 'npm') snippets.npm = npmSnippet(cfg);
+		else if (f === 'imperative') snippets.imperative = imperativeSnippet(cfg);
 	}
 	return { flavor, config: cfg, snippets };
 }

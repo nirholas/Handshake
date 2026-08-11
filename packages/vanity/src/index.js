@@ -320,10 +320,14 @@ export async function grind(opts = {}) {
 
 function buildProgress(attempts, durationMs, expected) {
 	const rate = durationMs > 0 ? (attempts / durationMs) * 1000 : 0;
+	// The geometric distribution is memoryless: past attempts don't bring the
+	// next hit closer, so the honest expected-remaining is always the full
+	// expectation. Counting down (expected - attempts) would read "any second
+	// now" for minutes on an unlucky grind.
 	return {
 		attempts,
 		rate,
-		eta: formatTimeEstimate(Math.max(0, expected - attempts), rate),
+		eta: formatTimeEstimate(expected, rate),
 	};
 }
 

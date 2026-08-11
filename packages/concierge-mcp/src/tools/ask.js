@@ -9,7 +9,7 @@
 
 import { z } from 'zod';
 
-import { defineTool, defineExecutor, toMcpTools } from '@three-ws/tool-sdk';
+import { defineTool, defineExecutor, toMcpTools } from '../lib/tool-sdk/index.js';
 
 import { askConcierge, fetchPage } from '../lib/api.js';
 import { harvestHtml } from '../lib/harvest.js';

@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/pose",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Deterministic, named pose seeds for rigged 3D avatars. Map a natural-language prompt to a stable seed + full Euler joint-rotation map from the three.ws pose-studio preset library.",
   "type": "module",
   "main": "./src/index.js",

@@ -30,8 +30,9 @@
 > three.ws humanoid mannequin, picked from an in-repo library of named preset poses.
 > The same prompt always yields the same pose, so it is a perfect way to *seed* or
 > *initialize* a rigged character before you hand off to keyframes or live control.
-> It wraps the public `pose_model` tool on the auth-free `/api/mcp-3d` server — pure,
-> local, deterministic compute, no model inference, no external calls. It pairs with
+> It runs the `pose_model` algorithm **locally** over the bundled preset library
+> (pure, deterministic compute, no model inference, no network), and can optionally
+> call the hosted tool on `/api/mcp-3d` instead. It pairs with
 > [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge) (which *makes & rigs*
 > the avatar) and [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar)
 > (which *renders* it).
@@ -52,11 +53,11 @@ for a curated library of real poses, and exposes it as a single call:
 - **Always a real pose.** Selection scores your prompt against preset labels, ids,
   and groups; on no match it falls back to a deterministic pick. There is no synthetic
   or empty-pose codepath — you always get a usable, hand-tuned pose back.
-- **Free and offline-shaped.** The underlying tool is pure local computation — no
-  GPU, no inference, no key. It is one of the cheapest, fastest surfaces on the
-  platform.
+- **Free and offline.** The algorithm is pure local computation (token scoring +
+  sha256, no GPU, no inference), so the zero-config path runs entirely in-process:
+  no network, no key, no wallet. It works on a plane.
 
-This is the SDK twin of the [3D Studio MCP server](https://three.ws/mcp) — the same
+This is the SDK twin of the [3D Studio MCP server](https://three.ws/mcp): the same
 preset engine, exposed as plain functions instead of an MCP tool.
 
 ## Install
@@ -65,14 +66,15 @@ preset engine, exposed as plain functions instead of an MCP tool.
 npm install @three-ws/pose
 ```
 
-Zero runtime dependencies. Works in Node 18+ and the browser (uses `fetch`).
+Zero runtime dependencies. Works in Node 18+ and the browser (uses WebCrypto,
+and `fetch` only on the optional hosted lane).
 To render or rig the avatar you pose, add
 [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) and
 [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge).
 
 ## Quick start
 
-No key, no wallet:
+No key, no wallet, no network:
 
 ```js
 import { poseSeed } from '@three-ws/pose';
@@ -115,15 +117,35 @@ console.log(a.seed === b.seed); // → true, always
 ### `poseSeed(prompt, options?) → Promise<PoseResult>`
 
 Resolve a natural-language pose description to a deterministic seed and the full
-joint-rotation map. `prompt` is a string, 1–500 characters.
+joint-rotation map. `prompt` is a string, 1–500 characters. Runs locally.
 
-**Options**
+**Per-call options**
 
 | Option | Type | Default | Notes |
 |---|---|---|---|
-| `endpoint` | `string` | `https://three.ws/api/mcp-3d` | Override the Pose Studio MCP endpoint. |
-| `previewBase` | `string` | `https://three.ws/pose` | Base URL for the returned `previewUrl`. |
-| `signal` | `AbortSignal` | — | Cancel an in-flight call. |
+| `signal` | `AbortSignal` | none | Cancel the call. |
+| `headers` | `Record<string,string>` | none | Extra headers (hosted lane only). |
+
+### `createPose(options?) → PoseClient`
+
+Build a client with fixed configuration. With no transport option the client
+resolves poses **locally**, exactly like the top-level `poseSeed`. Passing any
+of `baseUrl`, `apiKey`, or `fetch` switches it to the **hosted** `pose_model`
+tool on `POST /api/mcp-3d` (one JSON-RPC `tools/call` per pose):
+
+| Option | Type | Default | Notes |
+|---|---|---|---|
+| `baseUrl` | `string` | `https://three.ws` | API origin. Selects the hosted lane. |
+| `fetch` | `typeof fetch` | `globalThis.fetch` | E.g. a payment-aware x402 fetch. Selects the hosted lane. |
+| `apiKey` | `string` | none | OAuth bearer; hosted calls run operator-funded. Selects the hosted lane. |
+| `previewBase` | `string` | `https://three.ws/pose` | Base URL for the returned `previewUrl` (both lanes). |
+| `headers` | `Record<string,string>` | none | Default headers on every hosted-lane request. |
+
+On the hosted lane a keyless call is x402-priced per call: the server answers
+`401/402` with a payment challenge, surfaced as `PaymentRequiredError` with the
+`accepts` array. Settle it with a payment-aware `fetch` (e.g.
+[`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch)) or
+pass an `apiKey` to run operator-funded. The local lane never charges anything.
 
 **Returns** `PoseResult`
 
@@ -156,11 +178,11 @@ The four pose groups, returned synchronously for menu scaffolding:
 
 ## How it works
 
-`poseSeed()` issues a single `tools/call` to the `pose_model` tool on the Streamable
-HTTP MCP server at `POST /api/mcp-3d`. The tool is **pure local computation** — it
-scores your prompt against an in-repo library of named presets, picks one, derives a
-seed, and returns the preset's pre-authored rotation map. No image model, no GPU, no
-state.
+`poseSeed()` runs the `pose_model` algorithm in-process, over the preset library
+bundled with the package (the same library the hosted tool serves). It is **pure
+deterministic computation**: it scores your prompt against the named presets, picks
+one, derives a seed, and returns the preset's pre-authored rotation map. No image
+model, no GPU, no state, no network.
 
 ```
 prompt ("warrior stance")
@@ -178,15 +200,19 @@ prompt ("warrior stance")
                           { seed, presetId, parameters, previewUrl, … }
 ```
 
-The preset library spans four groups — **Standing** (T-pose, A-pose, relaxed,
-contrapposto, arms-up, wave, hands-on-hips), **Action** (walk-step, run, jump, punch,
-archery, superhero-landing), **Sitting & Floor** (chair, floor, kneel, crouch,
-thinker), and **Expressive** (praying, meditate, warrior II, arabesque, flex, point) —
-the same data the public [/pose](https://three.ws/pose) page renders.
+The preset library spans four groups: **Standing** (T-pose, A-pose, relaxed,
+contrapposto, arms-up, wave, hands-on-hips, salute), **Action** (walk-step, run,
+jump, punch, archery, superhero-landing, fighting-stance), **Sitting & Floor**
+(chair, floor, kneel, crouch, thinker), and **Expressive** (praying, meditate,
+warrior II, arabesque, flex, point, facepalm, bow). It is the same data the public
+[/pose](https://three.ws/pose) page renders; enumerate it at runtime from the
+exported `PRESETS` array rather than hardcoding.
 
-### Under the hood — the raw HTTP
+### The hosted lane: the raw HTTP
 
-The SDK is a thin wrapper. The wire call is a standard MCP `tools/call`:
+The same engine is hosted as the `pose_model` tool on the 3D Studio MCP server.
+The SDK calls it only when you configure a transport (see `createPose` above);
+the wire call is a standard MCP `tools/call`, x402-priced for keyless callers:
 
 ```js
 const res = await fetch('https://three.ws/api/mcp-3d', {
@@ -209,26 +235,20 @@ const pose = result.structuredContent;
 ```
 
 The HTTP tool returns **snake_case** keys (`preset_id`, `preview_url`); the SDK
-normalizes them to the camelCase `PoseResult` shape above. The identical engine is
-also exposed as the paid stdio MCP tool **`get_pose_seed`** ($0.001 USDC), which
-returns the camelCase fields directly — use that when you are already inside an MCP
-agent session.
+normalizes them to the camelCase `PoseResult` shape above (both lanes go through
+the same normalization, so results are interchangeable).
 
 ## Pricing
 
-The deterministic pose computation is **free** on the public `/api/mcp-3d` endpoint —
-no payment, no key, no wallet. It is pure local compute with nothing to meter.
+The default local lane is **free**: pure in-process compute, no payment, no key,
+no wallet, nothing to meter.
 
-When the same capability is reached through a paid MCP transport, it settles in USDC
-on Solana mainnet over [x402](https://x402.org):
-
-| Surface | Tool | Price | Transport |
-|---|---|---|---|
-| `@three-ws/pose` SDK | `pose_model` | **free** | HTTP (`POST /api/mcp-3d`) |
-| stdio MCP server | `get_pose_seed` | **$0.001 USDC** | stdio (`exact` scheme) |
-
-Prices are authoritative in the server's discovery response — read them at runtime
-rather than hardcoding.
+The hosted `pose_model` tool on `POST /api/mcp-3d` is priced per call over
+[x402](https://x402.org) for keyless callers, alongside the rest of the 3D Studio
+tools. The authoritative price is the one in the server's `402` payment challenge
+(surfaced by this SDK as `PaymentRequiredError.accepts`); read it at runtime
+rather than hardcoding. Calls authenticated with a three.ws OAuth `apiKey` run
+operator-funded instead of paying x402.
 
 ## Errors & edge cases
 
@@ -237,8 +257,9 @@ rather than hardcoding.
 | `code` | Meaning | Recovery |
 |---|---|---|
 | `invalid_prompt` | Prompt empty or over 500 chars (the tool requires 1–500). | Trim to a short phrase. |
-| `network` | The endpoint was unreachable. | Retry; honour the `signal`. |
-| `tool_error` | The MCP server returned a JSON-RPC error. | Inspect `error.data`; retry. |
+| `network_error` | Hosted lane only: the endpoint was unreachable. | Retry; honour the `signal`. |
+| `tool_error` | Hosted lane only: the MCP server returned a JSON-RPC error. | Inspect `error.data`; retry. |
+| `payment_required` | Hosted lane only, keyless: the x402 challenge (a `PaymentRequiredError`). | Pay via `accepts`, pass an `apiKey`, or use the free local lane. |
 
 Designed states, not crashes:
 
@@ -279,17 +300,17 @@ const start = await poseSeed('superhero landing'); // initial pose
 // load rigged.glbUrl, then apply start.parameters to its skeleton
 ```
 
-**Agent / MCP** — the same capability is the `pose_model` tool on the 3D Studio
-server, and `get_pose_seed` on the paid stdio server. An agent that already holds an
-MCP session can call either with `{ prompt: 'kneeling' }` and receive the identical
-preset + seed.
+**Agent / MCP**: the same capability is the `pose_model` tool on the hosted 3D
+Studio MCP server. An agent that already holds an MCP session can call it with
+`{ prompt: 'kneeling' }` and receive the identical preset + seed this package
+computes locally.
 
 ## Related
 
 - [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge) — generate and auto-rig the humanoid GLB you pose.
 - [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) — render and animate the rigged, posed avatar.
 - [`@three-ws/mocap`](https://www.npmjs.com/package/@three-ws/mocap) — go beyond static poses: capture full pose/face/hand clips from webcam or video.
-- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch) — auto-settle the paid stdio `get_pose_seed` lane.
+- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch) — a payment-aware fetch that auto-settles the hosted x402 lane.
 
 ---
 

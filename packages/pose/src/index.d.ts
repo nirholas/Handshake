@@ -62,13 +62,21 @@ export interface PoseRequestOptions {
 	signal?: AbortSignal;
 }
 
+/**
+ * With no transport option (`baseUrl`, `apiKey`, `fetch`) the client resolves
+ * poses locally: no network, no key, no payment. Passing any of the three
+ * switches it to the hosted pose_model tool on /api/mcp-3d.
+ */
 export interface PoseClientOptions {
+	/** API origin (default https://three.ws). Selects the hosted lane. */
 	baseUrl?: string;
+	/** fetch implementation (e.g. a payment-aware x402 fetch). Selects the hosted lane. */
 	fetch?: typeof fetch;
-	/** OAuth bearer — runs the call operator-funded (free) on the paid lane. */
+	/** OAuth bearer, runs hosted calls operator-funded. Selects the hosted lane. */
 	apiKey?: string;
 	/** Base URL for the returned previewUrl (default https://three.ws/pose). */
 	previewBase?: string;
+	/** Extra headers on every hosted-lane request. */
 	headers?: Record<string, string>;
 }
 

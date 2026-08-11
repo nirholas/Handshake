@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 
-import { defineTool, defineExecutor, toMcpTools } from '@three-ws/tool-sdk';
+import { defineTool, defineExecutor, toMcpTools } from '../lib/tool-sdk/index.js';
 
 import { AVATARS, DEFAULT_AVATAR_ID } from '../lib/catalog.js';
 

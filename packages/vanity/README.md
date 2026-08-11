@@ -153,7 +153,7 @@ work starts — an invalid pattern rejects immediately with a specific message.
 |---|---|---|
 | `attempts` | `number` | Running total. |
 | `rate` | `number` | Keypairs/sec. |
-| `eta` | `string` | Human estimate of remaining time: `"~12 seconds"`, `"~3 hours"`, `"unknown"`. |
+| `eta` | `string` | Expected time to a hit at the current rate: `"~12 seconds"`, `"~3 hours"`, `"unknown"`. The distribution is memoryless, so this does not count down as attempts accumulate. |
 
 ### `expectedAttempts({ prefix?, suffix?, ignoreCase? }) → number`
 
