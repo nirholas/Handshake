@@ -1,0 +1,12 @@
+# The image downloads its own MediaPipe bundles (see the Dockerfile); .models/
+# is the local dev copy for local_solve.py and would add ~38 MB to every build
+# context for nothing.
+.models/
+
+# Tests and the local driver run against a source checkout, never inside the
+# image. Mount the directory to run them in the container (see the README).
+test_*.py
+local_solve.py
+__pycache__/
+*.pyc
+.pytest_cache/
