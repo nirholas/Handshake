@@ -24,10 +24,28 @@ On success, prints `FACE_COUNT:<n>` to stdout (polygons across all mesh objects)
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 import bpy
+
+
+def _leave(code: int, message: str = "") -> None:
+    """Exit without running interpreter finalization.
+
+    Tearing down the `bpy` module segfaults in the Cloud Run container once a
+    scene has been imported: the FBX is written, `export finished` is printed,
+    and the process then dies with SIGSEGV in Blender's own shutdown. The worker
+    read that exit code as a failed export and discarded a perfectly good file,
+    so every `output_format: "fbx"` request failed. Nothing here needs
+    finalization, so skip it and report the real result."""
+    if message:
+        print(message, file=sys.stderr)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(code)
+
 
 # Input extensions whose importers ship in the standalone `bpy` wheel. `.dae`
 # (Collada) and `.off` are excluded — the wheel doesn't bundle the Collada
@@ -102,12 +120,12 @@ def main() -> None:
     static = "--static" in args
     positional = [a for a in args if not a.startswith("--")]
     if len(positional) != 2:
-        raise SystemExit("usage: blender_fbx.py <input> <output.fbx> [--static]")
+        _leave(2, "usage: blender_fbx.py <input> <output.fbx> [--static]")
 
     in_path = Path(positional[0])
     out_path = Path(positional[1])
     if in_path.suffix.lower() not in _IMPORTERS:
-        raise SystemExit(f"blender_fbx: cannot import '{in_path.suffix}'")
+        _leave(2, f"blender_fbx: cannot import '{in_path.suffix}'")
 
     _reset_scene()
     _import_source(in_path)
@@ -115,9 +133,12 @@ def main() -> None:
     _export_fbx(out_path, static)
 
     if not out_path.exists() or out_path.stat().st_size == 0:
-        raise SystemExit("blender_fbx: exporter produced no output")
+        _leave(1, "blender_fbx: exporter produced no output")
 
+    # FACE_COUNT is the worker's completion marker: it is printed only after the
+    # exporter returned and the file was confirmed non-empty.
     print(f"FACE_COUNT:{faces}")
+    _leave(0)
 
 
 if __name__ == "__main__":

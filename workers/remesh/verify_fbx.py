@@ -19,10 +19,24 @@ installed — the remesh worker image already has it (see requirements.txt).
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 import bpy
+
+
+def _leave(code: int, message: str = "") -> None:
+    """Exit without interpreter finalization.
+
+    Same reason as `blender_fbx.py`: tearing down `bpy` after a scene has been
+    loaded segfaults in the worker container, which would turn this checker's
+    verdict into an indistinguishable SIGSEGV."""
+    if message:
+        print(message, file=sys.stderr)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(code)
 
 
 def _reset() -> None:
@@ -31,10 +45,10 @@ def _reset() -> None:
 
 def main() -> None:
     if len(sys.argv) != 2:
-        raise SystemExit("usage: verify_fbx.py <model.fbx>")
+        _leave(2, "usage: verify_fbx.py <model.fbx>")
     path = Path(sys.argv[1])
     if not path.exists():
-        raise SystemExit(f"verify_fbx: no such file: {path}")
+        _leave(2, f"verify_fbx: no such file: {path}")
 
     _reset()
     try:
@@ -64,9 +78,10 @@ def main() -> None:
         problems.append("no mesh has vertex groups (skin weights lost)")
 
     if problems:
-        raise SystemExit("FAIL: " + "; ".join(problems))
+        _leave(1, "FAIL: " + "; ".join(problems))
 
     print("PASS: skeleton + skin weights intact")
+    _leave(0)
 
 
 if __name__ == "__main__":

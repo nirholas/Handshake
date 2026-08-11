@@ -526,13 +526,35 @@ def _write_textured_quad_obj(verts, polys, uvs, image, task_id: str) -> list:
     return artifacts
 
 
+def _face_count_marker(stdout: str) -> Optional[int]:
+    """Read blender_fbx.py's completion marker, or None when it never got there.
+
+    The child prints `FACE_COUNT:<n>` only after the exporter returned and the
+    written file was confirmed non-empty, which makes it a stronger success
+    signal than the exit code."""
+    for line in stdout.splitlines():
+        if line.startswith("FACE_COUNT:"):
+            try:
+                return int(line.split(":", 1)[1].strip())
+            except ValueError:
+                return None
+    return None
+
+
 def _blender_to_fbx(in_path: Path, out_path: Path, static: bool) -> int:
     """Convert a local model file to FBX via headless Blender, preserving the
     skeleton, skin weights, and blendshapes when the input carries them.
 
     Returns the exported polygon count. Raises RuntimeError with a clipped log
     tail on failure. `static=True` skips animation baking (used when the upstream
-    geometry op already discarded any rig)."""
+    geometry op already discarded any rig).
+
+    Completion is judged by the child's FACE_COUNT marker plus a non-empty file,
+    not by its exit status. Blender can die in its own interpreter teardown after
+    a fully written export (this is why every FBX request failed until
+    2026-08-11), and throwing away a finished file over that is a bug, not
+    caution. `blender_fbx.py` now exits before finalization, so the fallback
+    should never fire; it stays as the guard that keeps a good export."""
     cmd = [sys.executable, str(BLENDER_FBX_SCRIPT), str(in_path), str(out_path)]
     if static:
         cmd.append("--static")
@@ -543,17 +565,19 @@ def _blender_to_fbx(in_path: Path, out_path: Path, static: bool) -> int:
     except subprocess.TimeoutExpired as exc:
         raise RuntimeError(f"FBX export timed out after {BLENDER_TIMEOUT}s") from exc
 
-    if proc.returncode != 0 or not out_path.exists():
+    faces = _face_count_marker(proc.stdout)
+    written = out_path.exists() and out_path.stat().st_size > 0
+    if faces is None or not written:
         tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-6:]
-        raise RuntimeError("FBX export failed: " + " | ".join(tail))
+        raise RuntimeError(
+            f"FBX export failed (rc={proc.returncode}): " + " | ".join(tail)
+        )
 
-    faces = 0
-    for line in proc.stdout.splitlines():
-        if line.startswith("FACE_COUNT:"):
-            try:
-                faces = int(line.split(":", 1)[1].strip())
-            except ValueError:
-                faces = 0
+    if proc.returncode != 0:
+        log.warning(
+            "blender exited abnormally (rc=%s) after writing a complete %s-byte FBX; keeping it",
+            proc.returncode, out_path.stat().st_size,
+        )
     return faces
 
 

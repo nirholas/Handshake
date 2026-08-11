@@ -294,7 +294,13 @@ with tempfile.TemporaryDirectory() as tmp:
 
     names = zipfile.ZipFile(usdz_path).namelist()
     check("usdz package carries the usd layer", "smoke.usdc" in names, str(names))
-    check("usdz package carries the baked texture", "smoke.png" in names, str(names))
+    # UsdUtils rewrites referenced assets into numbered subdirectories inside
+    # the archive, so match on the file name rather than the authored path.
+    check(
+        "usdz package carries the baked texture",
+        any(name.endswith("smoke.png") for name in names),
+        str(names),
+    )
 
     from pxr import Usd, UsdGeom
 
@@ -427,12 +433,16 @@ for point in stretch.data:
 bpy.ops.export_scene.gltf(filepath=out, export_format="GLB")
 """
 
-try:
-    import bpy  # noqa: F401
-    has_bpy = True
-except Exception as exc:  # pragma: no cover - import guard
-    has_bpy = False
-    skip("rigged FBX export", f"bpy unavailable ({exc})")
+# Probed in a subprocess, and every bpy call below stays in one too: importing
+# bpy here would leave this process to die in Blender's teardown and report a
+# passing run as a crash.
+_probe = subprocess.run(
+    [sys.executable, "-c", "import bpy; print(bpy.app.version_string)"],
+    capture_output=True, text=True,
+)
+has_bpy = _probe.returncode == 0 or bool(_probe.stdout.strip())
+if not has_bpy:
+    skip("rigged FBX export", f"bpy unavailable ({_probe.stderr.strip()[-200:]})")
 
 if has_bpy:
     with tempfile.TemporaryDirectory() as tmp:

@@ -19,12 +19,23 @@ held open.
 ## Why Blender for FBX
 
 FBX is the only format here that needs Blender: `trimesh` has no FBX writer, so
-every other format is written directly and FBX is bridged through a temporary
-GLB handed to a one-shot headless Blender subprocess (`blender_fbx.py`). A plain
-`convert` of a **rigged** GLB to FBX keeps its bone hierarchy, skin weights, and
-blendshapes — that route (`remesh_mode: "triangle"`, `operation: "convert"`,
-`output_format: "fbx"`) skips the geometry pipelines entirely so the skeleton
-survives. Any geometry-changing op discards the rig and yields a static FBX.
+FBX is bridged through a temporary GLB handed to a one-shot headless Blender
+subprocess (`blender_fbx.py`). USDZ has no trimesh writer either, but it needs no
+Blender: it is authored directly on a USD stage with `pxr` (`_write_usdz` in
+[`main.py`](./main.py)). Every other format trimesh writes itself.
+
+That Blender subprocess exits without running interpreter finalization, and the
+worker judges it by the `FACE_COUNT:` marker it prints rather than by its exit
+status. Tearing `bpy` down after a scene has been loaded segfaults in this
+container: the FBX is written in full, then the process dies during Blender's own
+shutdown. Reading that as a failed export is what made every `output_format:
+"fbx"` request fail until 2026-08-11.
+
+A plain `convert` of a **rigged** GLB to FBX keeps its bone hierarchy, skin
+weights, and blendshapes. That route (`remesh_mode: "triangle"`,
+`operation: "convert"`, `output_format: "fbx"`) skips the geometry pipelines
+entirely so the skeleton survives. Any geometry-changing op discards the rig and
+yields a static FBX.
 
 ## Modes
 
