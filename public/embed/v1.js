@@ -43,6 +43,44 @@
 	})();
 
 	var MV_CDN = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+	var MESHOPT_CDN = 'https://cdn.jsdelivr.net/npm/meshoptimizer@0.22.0/meshopt_decoder.js';
+
+	// model-viewer auto-loads the Draco and KTX2 decoders but leaves Meshopt
+	// unset, and every server-baked avatar (the /api/avatars/<id>/glb lane and
+	// Forge output) ships EXT_meshopt_compression. Without this the embed threw
+	// "setMeshoptDecoder must be called before loading compressed files" and the
+	// agent never rendered on the host page. Pages inside three.ws get this from
+	// /model-viewer-meshopt.js; an embed on someone else's site has to carry it.
+	//
+	// Timing matters: model-viewer captures its loader's decoder config when a
+	// load STARTS, so the property has to be set before the element upgrades.
+	// Setting it via a define() interceptor installed BEFORE the CDN script is
+	// appended wins that race; the whenDefined path covers every other ordering.
+	function applyMeshopt(ctor) {
+		if (ctor && !ctor.meshoptDecoderLocation) {
+			try {
+				ctor.meshoptDecoderLocation = MESHOPT_CDN;
+			} catch (_) {
+				/* property not writable in this build: nothing more we can do */
+			}
+		}
+	}
+	function installMeshopt() {
+		if (!window.customElements) return;
+		applyMeshopt(customElements.get('model-viewer'));
+		if (!customElements.get('model-viewer') && !customElements.__meshoptDefinePatched) {
+			customElements.__meshoptDefinePatched = true;
+			var nativeDefine = customElements.define;
+			customElements.define = function (name, ctor, options) {
+				var result = nativeDefine.call(this, name, ctor, options);
+				if (name === 'model-viewer') applyMeshopt(ctor);
+				return result;
+			};
+		}
+		customElements.whenDefined('model-viewer').then(function (resolved) {
+			applyMeshopt(resolved || customElements.get('model-viewer'));
+		});
+	}
 
 	// model-viewer is loaded once, lazily, on first <three-d> instance.
 	// All instances share the same Promise so we never fetch it twice.
@@ -50,6 +88,7 @@
 	function ensureModelViewer() {
 		if (modelViewerReady) return modelViewerReady;
 		modelViewerReady = new Promise(function (resolve, reject) {
+			installMeshopt();
 			if (window.customElements && customElements.get('model-viewer')) return resolve();
 			var s = document.createElement('script');
 			s.type = 'module';
