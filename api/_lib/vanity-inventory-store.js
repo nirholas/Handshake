@@ -165,6 +165,34 @@ export async function inventoryStats() {
 }
 
 /**
+ * Every distinct target pattern that still has stock ON THE SHELF.
+ *
+ * The batch grinder (workers/vanity-grinder) runs on ephemeral spot tasks whose
+ * local checkpoint file dies with the container, so a restart used to re-grind
+ * patterns that were already sitting in this table. This is the durable resume
+ * signal: the grinder seeds its completed-set from here and skips those targets.
+ *
+ * Deliberately filtered to `available` rather than "ever ground": a pattern that
+ * sold out is exactly what the replenish cron wants ground again.
+ *
+ * @returns {Promise<Array<{prefix:string|null, suffix:string|null, ignoreCase:boolean, count:number}>>}
+ */
+export async function availableTargetPatterns() {
+	const rows = await sql`
+		SELECT prefix, suffix, ignore_case, count(*) AS n
+		FROM vanity_inventory
+		WHERE status = 'available'
+		GROUP BY prefix, suffix, ignore_case
+	`;
+	return rows.map((row) => ({
+		prefix: row.prefix,
+		suffix: row.suffix,
+		ignoreCase: Boolean(row.ignore_case),
+		count: Number(row.n || 0),
+	}));
+}
+
+/**
  * Atomically reserve an available item for a paying buyer. This is the FIRST half
  * of purchase: it flips available→reserved only if the row is still available, so
  * two concurrent buyers of the same address can never both win. Idempotent per
