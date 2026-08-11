@@ -52,7 +52,7 @@ import {
 	SMAAEffect,
 	ToneMappingMode,
 } from 'postprocessing';
-import { gltfLoader } from './loaders/gltf.js';
+import { gltfLoader, disposeGltfLoader } from './loaders/gltf.js';
 import { AnimationManager } from './animation-manager.js';
 import { ClubCrowd } from './club-crowd.js';
 import { detectProfile, PROFILES, createFrameWatchdog } from './club-perf.js';
@@ -1113,6 +1113,13 @@ async function start(canvasEl) {
 		disposeObject(scene);
 		composer.dispose();
 		renderer.dispose();
+		// dispose() alone does not release the WebGL context; it lingers until GC,
+		// holding its framebuffers. The club stage runs its own context for the
+		// rest of the session, and mobile Safari budgets ~8-16 live contexts, so
+		// force the loss now. The loader's DRACO/KTX2 worker pools are keyed to
+		// this renderer and die with it.
+		try { renderer.forceContextLoss(); } catch {}
+		try { disposeGltfLoader(renderer); } catch {}
 		try { canvasEl.remove(); } catch {}
 		showHint(false); showJoystick(false); showPrompt(false); showJourney(false); showMinimap(false); showAgentSwitch(false);
 	}

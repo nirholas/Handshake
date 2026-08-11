@@ -2287,23 +2287,35 @@
 			let viewerCount = 1;
 			let viewerSessionId = Math.random().toString(36).slice(2, 10);
 
+			// One in-flight beat at a time, each bounded to 10s: a slow backend must
+			// not stack overlapping presence POSTs. Paused while the tab is hidden
+			// (a backgrounded tab is not a viewer), with a fresh beat on return.
+			let heartbeatInflight = false;
 			async function heartbeat() {
+				if (heartbeatInflight || document.hidden) return;
+				heartbeatInflight = true;
 				try {
 					const res = await fetch('/api/club/presence', {
 						method: 'POST',
 						headers: { 'content-type': 'application/json' },
 						body: JSON.stringify({ session: viewerSessionId }),
+						signal: AbortSignal.timeout(10000),
 					});
 					if (res.ok) {
 						const data = await res.json();
 						viewerCount = data.count || 1;
 						if (viewerEl) viewerEl.textContent = String(viewerCount);
 					}
-				} catch {}
+				} catch {} finally {
+					heartbeatInflight = false;
+				}
 			}
 
 			heartbeat();
 			setInterval(heartbeat, 15000);
+			document.addEventListener('visibilitychange', () => {
+				if (!document.hidden) heartbeat();
+			});
 
 			if (reactCanvas) {
 				document.getElementById('club-reactions')?.addEventListener('click', (e) => {
@@ -2317,10 +2329,15 @@
 						el.className = 'club-float-emoji';
 						el.textContent = emoji;
 						el.style.left = (30 + Math.random() * 40) + '%';
-						el.style.animationDuration = (2 + Math.random()) + 's';
+						const durationSec = 2 + Math.random();
+						el.style.animationDuration = durationSec + 's';
 						el.style.animationDelay = (i * 0.15) + 's';
 						reactCanvas.appendChild(el);
-						el.addEventListener('animationend', () => el.remove());
+						el.addEventListener('animationend', () => el.remove(), { once: true });
+						// Suspended animations (hidden tab, reduced motion) never fire
+						// animationend; without a wall-clock fallback a reaction spam
+						// session grows the DOM without bound.
+						setTimeout(() => el.remove(), (durationSec + 1) * 1000);
 					}
 				});
 			}

@@ -220,13 +220,19 @@ function renderTipRow(rowLike, { live = false, prepend = true } = {}) {
 		tipFeedEl.appendChild(row);
 	}
 
-	// Max 20 visible entries; oldest fade out.
-	while (tipFeedEl.children.length > 20) {
-		const oldest = tipFeedEl.lastElementChild;
-		if (oldest) {
-			oldest.classList.add('is-fading');
-			oldest.addEventListener('animationend', () => oldest.remove(), { once: true });
-		}
+	// Max 20 visible entries; the overflow fades out (tipFadeOut, 0.3s). Trim
+	// decisions must never depend on the animation actually running: fading rows
+	// still count as children until they detach, and CSS animations are suspended
+	// in hidden tabs and under prefers-reduced-motion. So walk the overflow once
+	// per render (no loop over a length that only shrinks asynchronously), mark
+	// each row exactly once, and back the animationend removal with a wall-clock
+	// timeout so a suspended animation can never strand rows in the DOM.
+	for (const el of Array.from(tipFeedEl.children).slice(20)) {
+		if (el.dataset.fading) continue;
+		el.dataset.fading = '1';
+		el.classList.add('is-fading');
+		el.addEventListener('animationend', () => el.remove(), { once: true });
+		setTimeout(() => el.remove(), 600);
 	}
 
 	// If this tip is for the currently-viewed pole, flash its spotlight + card.
@@ -312,6 +318,7 @@ function subscribeTipStream() {
 	let es = null;
 	let consecutiveFailures = 0;
 	let reconnectTimer = 0;
+	let helloResetTimer = 0;
 	let closedByUser = false;
 	// First open is a cold start (initial history already loaded separately);
 	// only reconnections trigger a gap-filling backfill.
@@ -327,7 +334,13 @@ function subscribeTipStream() {
 			return;
 		}
 		es.addEventListener('hello', () => {
-			consecutiveFailures = 0;
+			// Clear the failure counter only after the connection SURVIVES a while.
+			// Resetting on hello alone defeats the backoff when connections open
+			// fine but die young (an LB idle timeout under the first heartbeat,
+			// proxy buffering): each short-lived success would re-arm a ~1s
+			// reconnect loop with a full history fetch per second, forever.
+			clearTimeout(helloResetTimer);
+			helloResetTimer = setTimeout(() => { consecutiveFailures = 0; }, 20_000);
 			setFeedStatus(null);
 			// Pull anything missed while the socket was down. Dedup makes this safe.
 			if (reconnecting) {
@@ -351,6 +364,9 @@ function subscribeTipStream() {
 			try { es?.close(); } catch {}
 			es = null;
 			reconnecting = true;
+			// A connection that died before the survival window must not later
+			// zero the counter mid-outage.
+			clearTimeout(helloResetTimer);
 			consecutiveFailures += 1;
 			if (consecutiveFailures >= 3) {
 				setFeedStatus('Live updates paused', 'paused');
@@ -373,12 +389,14 @@ function subscribeTipStream() {
 	window.addEventListener('beforeunload', () => {
 		closedByUser = true;
 		clearTimeout(reconnectTimer);
+		clearTimeout(helloResetTimer);
 		try { es?.close(); } catch {}
 	});
 	return {
 		close() {
 			closedByUser = true;
 			clearTimeout(reconnectTimer);
+			clearTimeout(helloResetTimer);
 			try { es?.close(); } catch {}
 		},
 	};
@@ -1755,6 +1773,9 @@ function setAutoFollow(on) {
 
 // Track per-pole card elements for status updates.
 const poleCardEls = new Map();
+// Per-pole cached progress-bar elements + last written percent, so the render
+// loop never queries the DOM and only writes styles on a visible change.
+const poleProgressEls = new Map();
 
 function updatePoleCardStatus(poleId, status) {
 	const cardEl = poleCardEls.get(poleId);
@@ -1790,13 +1811,19 @@ function updatePoleCardStatus(poleId, status) {
 	if (avatarBtn) avatarBtn.disabled = status === 'performing';
 }
 
+// Clear the flash on a wall-clock timer matched to the poleFlash animation
+// (0.6s) rather than animationend: suspended animations (hidden tab,
+// prefers-reduced-motion) never fire the event, which stranded the class and
+// piled one orphaned once-listener onto the card per tip.
+const poleFlashTimers = new Map();
 function flashPoleCard(poleId) {
 	const cardEl = poleCardEls.get(poleId);
 	if (!cardEl) return;
 	cardEl.classList.remove('is-flash');
 	void cardEl.offsetWidth; // force reflow for re-triggering animation
 	cardEl.classList.add('is-flash');
-	cardEl.addEventListener('animationend', () => cardEl.classList.remove('is-flash'), { once: true });
+	clearTimeout(poleFlashTimers.get(poleId));
+	poleFlashTimers.set(poleId, setTimeout(() => cardEl.classList.remove('is-flash'), 700));
 }
 
 // ── Avatar selector ──────────────────────────────────────────────────────
@@ -2133,6 +2160,14 @@ function renderPoles() {
 		`;
 		polesPanel.appendChild(card);
 		poleCardEls.set(pole.id, card);
+		// Resolve the progress elements once: the render loop reads this map per
+		// frame per performing dancer, and a querySelector pair at 60fps per
+		// station is sustained layout/AT churn the frame budget can't spare.
+		poleProgressEls.set(pole.id, {
+			bar: card.querySelector('.club-pole-progress-bar'),
+			progress: card.querySelector('.club-pole-progress'),
+			lastPct: -1,
+		});
 	}
 
 	// Tip buttons stay disabled until the x402 payment widget is live, so a tap
@@ -2362,17 +2397,18 @@ function animate(frameNow) {
 				+ (prefersReducedMotion ? 0 : Math.sin(t * 1.5 + station.idx) * 0.01);
 		}
 
-		// Update progress bar for performing stations.
+		// Update progress bar for performing stations. Elements are cached at
+		// renderPoles() time and writes are gated on a whole-percent change, so
+		// a routine costs ~100 style writes total instead of per-frame churn.
 		if (station.performing && station.activeUntil > 0) {
 			const total = (station.activeTicket?.durationSec || 12) * 1000;
 			const elapsed = total - (station.activeUntil - Date.now());
-			const pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
-			const cardEl = poleCardEls.get(station.id);
-			if (cardEl) {
-				const bar = cardEl.querySelector('.club-pole-progress-bar');
-				const progressEl = cardEl.querySelector('.club-pole-progress');
-				if (bar) bar.style.width = `${pct}%`;
-				if (progressEl) progressEl.setAttribute('aria-valuenow', String(Math.round(pct)));
+			const pct = Math.round(Math.min(100, Math.max(0, (elapsed / total) * 100)));
+			const els = poleProgressEls.get(station.id);
+			if (els && els.lastPct !== pct) {
+				els.lastPct = pct;
+				if (els.bar) els.bar.style.width = `${pct}%`;
+				if (els.progress) els.progress.setAttribute('aria-valuenow', String(pct));
 			}
 		}
 	}
