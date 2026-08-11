@@ -34,6 +34,9 @@ const EXIT_LABELS = {
 	kill_switch: 'Kill switch',
 	graduated: 'Graduated to AMM',
 	error: 'Closed on error',
+	signal_flip: 'Signal turned bearish',
+	liquidity_decay: 'Liquidity dried up',
+	take_initials: 'Initials recovered',
 };
 
 /** Accent per outcome. Used by the SVG card and the share page alike. */
