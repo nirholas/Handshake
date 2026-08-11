@@ -45,6 +45,12 @@ export function loadConfig() {
 	if (mode === 'live' && !process.env.SOLANA_RPC_URL && !process.env.HELIUS_API_KEY) {
 		throw new Error('[agent-orders] live mode requires SOLANA_RPC_URL or HELIUS_API_KEY');
 	}
+	// Custodial agent keys are encrypted at rest under WALLET_ENCRYPTION_KEY
+	// (api/_lib/agent-wallet.js). Without it the decrypt silently falls back to
+	// JWT_SECRET, so every live fill dies at key recovery with a NON-terminal
+	// error and the order retries forever. Fail at boot instead. Simulate mode
+	// never touches the key (it stops before signing), so it does not need this.
+	if (mode === 'live') req('WALLET_ENCRYPTION_KEY');
 
 	return {
 		network,
