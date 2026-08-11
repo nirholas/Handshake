@@ -23,20 +23,26 @@ into world-space geometry (glTF ignores a skinned node's own transform, so
 local-space vertices would render misplaced), and a mesh instanced under
 divergent transforms fails loudly instead of corrupting output.
 
-This file began as workers/unirig/rig_glb.py and generalizes it: the caller
+This file began as the retired unirig worker's rig_glb.py and generalizes it: the caller
 supplies explicit `joint_names` (the rig worker passes Mixamo names, which the
 platform's glb-canonicalize maps onto the canonical clip skeleton).
 """
 
 from __future__ import annotations
 
+import io
 import logging
 
 import numpy as np
 import pygltflib
+import trimesh
 from scipy.spatial import cKDTree
 
 log = logging.getLogger("rig.rig_glb")
+
+# Binary glTF container magic (glTF 2.0 spec, 12-byte header: magic/version/length).
+_GLB_MAGIC = b"glTF"
+_GLB_HEADER_BYTES = 12
 
 ARKIT_52_BLENDSHAPES = [
     "browDownLeft", "browDownRight", "browInnerUp", "browOuterUpLeft",
@@ -254,6 +260,52 @@ def _top_influences(weights, n_joints):
     return joint_idx, top
 
 
+class InvalidMeshError(ValueError):
+    """The caller's mesh cannot be rigged: wrong container, or no surface.
+
+    Separate from an internal failure on purpose. The message describes only
+    what the caller supplied, so it is safe to hand back verbatim instead of
+    the opaque correlation id an unexpected error gets.
+    """
+
+
+def validate_input_mesh(mesh_bytes: bytes) -> None:
+    """Reject un-riggable input before the GPU is touched, with a real reason.
+
+    Two classes of caller input used to die deep inside the predictor with a
+    traceback that named neither the caller nor the cause: bytes that are not a
+    GLB at all (an error page saved under a .glb URL) surfaced as trimesh's
+    "incorrect header on GLB file", and a GLB carrying no triangles (a point
+    cloud, a lines-only export) surfaced as an IndexError while surface
+    sampling an empty face list. Both are the caller's to fix, so name them.
+
+    Loading goes through the same trimesh path the predictor uses, so anything
+    accepted here parses there too.
+    """
+    if len(mesh_bytes) < _GLB_HEADER_BYTES or mesh_bytes[:4] != _GLB_MAGIC:
+        raise InvalidMeshError(
+            "input is not a binary glTF: expected a .glb starting with the "
+            "'glTF' magic header"
+        )
+    try:
+        mesh = trimesh.load(io.BytesIO(mesh_bytes), file_type="glb", force="mesh")
+    except Exception as exc:
+        # Full detail stays server-side; the caller gets the category only.
+        log.warning("input GLB failed to parse: %s", exc, exc_info=True)
+        raise InvalidMeshError("input GLB could not be parsed as a mesh") from exc
+
+    faces = getattr(mesh, "faces", None)
+    if faces is None or len(faces) == 0:
+        raise InvalidMeshError(
+            "input GLB contains no triangles; rigging needs a surface mesh, "
+            "not a point cloud or a curves-only export"
+        )
+    if float(np.sum(mesh.area_faces)) <= 0.0:
+        raise InvalidMeshError(
+            "input GLB has zero surface area; every triangle is degenerate"
+        )
+
+
 def build_rigged_glb(mesh_bytes, mesh, joints, parents, weights,
                      blendshape_data=None, joint_names=None):
     """Author a fully rigged GLB from the raw mesh and the model's predictions.
@@ -331,7 +383,7 @@ def build_rigged_glb(mesh_bytes, mesh, joints, parents, weights,
     glb.skins.append(skin)
     skin_idx = len(glb.skins) - 1
 
-    # Smallest legal integer width for joint indices (u8 covers 65 Mixamo joints).
+    # Smallest legal integer width for joint indices (u8 covers the 52 Mixamo joints).
     if n_joints <= 256:
         joint_comp, joint_dtype = _GLTF_UBYTE, np.uint8
     elif n_joints <= 65536:
