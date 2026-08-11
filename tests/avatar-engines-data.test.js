@@ -15,6 +15,7 @@ import {
 	REPRESENTATIONS,
 	enginesByFamily,
 	engineStats,
+	isRetired,
 } from '../src/avatar-engines-data.js';
 
 const FAMILY_IDS = new Set(FAMILIES.map((f) => f.id));
@@ -52,8 +53,32 @@ describe('avatar-engines dataset', () => {
 		for (const e of ENGINES) {
 			expect(e.links?.repo, `${e.id}: no repo`).toMatch(/^https?:\/\//);
 			if (e.links?.paper) expect(e.links.paper).toMatch(/^https?:\/\//);
+			if (e.links?.docs) expect(e.links.docs).toMatch(/^https?:\/\//);
 			if (e.links?.demo) expect(e.links.demo).toMatch(/^(https?:\/\/|\/)/);
 		}
+	});
+
+	it('a link labelled Paper points at a paper, not at a project homepage', () => {
+		// The card labels links.paper "Paper". A docs site or a marketing homepage
+		// parked in that field tells the reader they are opening something they
+		// are not; those belong in links.docs, which renders as "Docs".
+		const PAPER_HOSTS = /(arxiv\.org|\.pdf$|doi\.org|dl\.acm\.org|is\.mpg\.de\/publications|openaccess\.thecvf\.com|files\.is\.tue\.mpg\.de)/;
+		for (const e of ENGINES) {
+			if (!e.links?.paper) continue;
+			expect(e.links.paper, `${e.id}: links.paper is not a paper, move it to links.docs`).toMatch(PAPER_HOSTS);
+		}
+	});
+
+	it('a retired project keeps its card but never claims the present tense', () => {
+		// Engines are marked when they die, not deleted: readers still hold the
+		// assets they produced. What they lose is any live integration claim.
+		for (const e of ENGINES) {
+			if (!isRetired(e)) continue;
+			expect(['live', 'forge'], `${e.id} is retired but claims integration=${e.integration}`).not.toContain(e.integration);
+			expect(e.cta, `${e.id} is retired but still has a call-to-action`).toBeUndefined();
+			expect(e.integrationNote, `${e.id}: a retired entry must say what shut down`).toMatch(/shut down|discontinued|retired|closed/i);
+		}
+		expect(engineStats().retired).toBe(ENGINES.filter(isRetired).length);
 	});
 
 	it('only commercially-licensed engines may deep-link into the generation pipeline (/forge)', () => {

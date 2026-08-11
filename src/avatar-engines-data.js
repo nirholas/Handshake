@@ -1,23 +1,34 @@
-// Avatar Engines Atlas — the curated, factual registry of the open-source and
+// Avatar Engines Atlas: the curated, factual registry of the open-source and
 // commercial engines that produce high-quality / photoreal human avatars.
 //
 // This is a *reference* surface, not an endorsement: it tells a builder, for
 // each engine, what it makes, what it eats, what it runs on, what its license
 // permits, and exactly how (or whether) three.ws can use it today. The
 // `integration` field is the honest answer to "can I click a button here and
-// get an avatar?" — see INTEGRATIONS below.
+// get an avatar?" See INTEGRATIONS below.
 //
 // Licensing is load-bearing. Many of the highest-fidelity research engines
 // (ECON, ICON, the Max-Planck body/face models, the Gaussian-Splatting stack)
 // ship under *non-commercial research* licenses. three.ws is a commercial
 // platform, so those are surfaced for self-hosted/academic use and flagged
-// `commercial: false` — they are deliberately NOT wired into the paid
+// `commercial: false`. They are deliberately NOT wired into the paid
 // generation backend. Only `commercial: true` mesh engines deep-link into the
 // live /forge pipeline.
 //
 // Each entry's facts (repo, venue, license, representation) are sourced from the
 // project's own repository/paper. Keep this file the single source of truth;
 // the /avatar-engines page renders straight from it.
+//
+// Two optional fields carry the parts of that truth that change after an entry
+// lands:
+//   status: 'retired'  the project or service is no longer operating. The card
+//                      shows a Retired badge and the entry can never claim a
+//                      live/forge integration. Engines do not get deleted when
+//                      they die: builders still hold their exported assets and
+//                      need to know what happened.
+//   links.docs         official documentation that is not a paper. Without it a
+//                      docs site rendered as a "Paper" button, which misstated
+//                      what the reader was about to open.
 
 // How three.ws relates to each engine, in plain terms.
 export const INTEGRATIONS = Object.freeze({
@@ -48,20 +59,20 @@ export const INTEGRATIONS = Object.freeze({
 	reference: Object.freeze({
 		id: 'reference',
 		label: 'Reference / self-host',
-		blurb: 'Run it yourself — license or compute profile keeps it out of the commercial pipeline. Linked here for builders.',
+		blurb: 'Run it yourself: license or compute profile keeps it out of the commercial pipeline. Linked here for builders.',
 		tone: 'reference',
 	}),
 });
 
-// Representation the engine outputs — drives the "can the three.ws animation
+// Representation the engine outputs, which drives the "can the three.ws animation
 // pipeline drive it?" intuition. Mesh/glTF → yes; gaussian/nerf → needs the
 // splat/volume renderer, not the skinned-mesh animator.
 export const REPRESENTATIONS = Object.freeze({
-	mesh: { id: 'mesh', label: 'Mesh', note: 'Skinned/standard polygon mesh — riggable, GLB-exportable.' },
-	gltf: { id: 'gltf', label: 'glTF / VRM', note: 'Standard rigged avatar format — loads directly in the viewer.' },
+	mesh: { id: 'mesh', label: 'Mesh', note: 'Skinned/standard polygon mesh. Riggable, GLB-exportable.' },
+	gltf: { id: 'gltf', label: 'glTF / VRM', note: 'Standard rigged avatar format. Loads directly in the viewer.' },
 	parametric: { id: 'parametric', label: 'Parametric model', note: 'A statistical body/face model (SMPL-family) others build on.' },
-	gaussian: { id: 'gaussian', label: '3D Gaussians', note: 'Gaussian-splat radiance field — photoreal, needs a splat renderer.' },
-	nerf: { id: 'nerf', label: 'Neural field', note: 'NeRF/volumetric — photoreal, rendered by ray-marching, not rigged.' },
+	gaussian: { id: 'gaussian', label: '3D Gaussians', note: 'Gaussian-splat radiance field. Photoreal, needs a splat renderer.' },
+	nerf: { id: 'nerf', label: 'Neural field', note: 'NeRF/volumetric. Photoreal, rendered by ray-marching, not rigged.' },
 });
 
 // Engine families, ordered the way the page presents them.
@@ -69,7 +80,7 @@ export const FAMILIES = Object.freeze([
 	{
 		id: 'photoreal-head',
 		label: 'Photoreal head avatars',
-		blurb: 'Gaussian-splat and neural-field heads reconstructed from video — the current state of the art for realistic faces.',
+		blurb: 'Gaussian-splat and neural-field heads reconstructed from video: the current state of the art for realistic faces.',
 	},
 	{
 		id: 'image-to-human',
@@ -79,7 +90,7 @@ export const FAMILIES = Object.freeze([
 	{
 		id: 'text-to-avatar',
 		label: 'Text / image → 3D avatar',
-		blurb: 'Generative pipelines that author a whole avatar from a prompt — the same lane three.ws Forge lives in.',
+		blurb: 'Generative pipelines that author a whole avatar from a prompt: the same lane three.ws Forge lives in.',
 	},
 	{
 		id: 'parametric',
@@ -89,7 +100,7 @@ export const FAMILIES = Object.freeze([
 	{
 		id: 'production',
 		label: 'Production & interop',
-		blurb: 'Battle-tested avatar formats and platforms — the rigs three.ws already loads and animates.',
+		blurb: 'Battle-tested avatar formats and platforms: the rigs three.ws already loads and animates.',
 	},
 ]);
 
@@ -132,7 +143,7 @@ export const ENGINES = Object.freeze([
 		commercial: false,
 		compute: 'GPU training, per-subject',
 		integration: 'splat',
-		integrationNote: 'Ultra-high-fidelity splat output — view exported scenes in the three.ws Splat Viewer.',
+		integrationNote: 'Ultra-high-fidelity splat output: view exported scenes in the three.ws Splat Viewer.',
 		blurb: 'Ultra high-fidelity head avatars via controllable dynamic 3D Gaussians, targeting 2K-resolution rendering.',
 		links: {
 			repo: 'https://github.com/YuelangX/Gaussian-Head-Avatar',
@@ -154,8 +165,8 @@ export const ENGINES = Object.freeze([
 		commercial: false,
 		compute: 'GPU training (minutes)',
 		integration: 'reference',
-		integrationNote: 'Neural-field output — rendered by ray-marching, not the three.ws splat/mesh pipelines. Linked for builders self-hosting.',
-		blurb: 'Instant Volumetric Head Avatars — trains a deformable NeRF head from a short monocular video in about ten minutes.',
+		integrationNote: 'Neural-field output, rendered by ray-marching, not the three.ws splat/mesh pipelines. Linked for builders self-hosting.',
+		blurb: 'Instant Volumetric Head Avatars: trains a deformable NeRF head from a short monocular video in about ten minutes.',
 		links: {
 			repo: 'https://github.com/Zielon/INSTA',
 			paper: 'https://arxiv.org/abs/2211.12499',
@@ -176,12 +187,12 @@ export const ENGINES = Object.freeze([
 		commercial: false,
 		compute: 'GPU training, per-subject',
 		integration: 'reference',
-		integrationNote: 'Implicit field representation — self-host for research. Not wired into the commercial pipeline.',
-		blurb: 'Implicit Morphable head Avatars — learns an animatable implicit head with expression and pose control from video.',
+		integrationNote: 'Implicit field representation: self-host for research. Not wired into the commercial pipeline.',
+		blurb: 'Implicit Morphable head Avatars: learns an animatable implicit head with expression and pose control from video.',
 		links: {
 			repo: 'https://github.com/zhengyuf/IMavatar',
 			paper: 'https://arxiv.org/abs/2112.07471',
-			demo: 'https://ait.ethz.ch/projects/2022/IMavatar/',
+			demo: 'https://ait.ethz.ch/imavatar',
 		},
 	},
 	{
@@ -199,7 +210,7 @@ export const ENGINES = Object.freeze([
 		compute: 'GPU training + inference',
 		integration: 'reference',
 		integrationNote: 'Produces lip-synced talking-head video from speech. Pair conceptually with the three.ws audio2face/voice lane; self-host the renderer.',
-		blurb: 'Generalized and stable audio-driven talking-face generation — real-time lip-sync from arbitrary speech.',
+		blurb: 'Generalized and stable audio-driven talking-face generation: real-time lip-sync from arbitrary speech.',
 		links: {
 			repo: 'https://github.com/yerfor/GeneFacePlusPlus',
 			paper: 'https://arxiv.org/abs/2305.00787',
@@ -222,8 +233,8 @@ export const ENGINES = Object.freeze([
 		commercial: false,
 		compute: 'GPU inference (Colab available)',
 		integration: 'reference',
-		integrationNote: 'The classic single-image human. Non-commercial license keeps it out of the paid pipeline — self-host or use the official Colab.',
-		blurb: 'Pixel-aligned implicit function at high resolution — the reference single-image clothed-human reconstruction baseline.',
+		integrationNote: 'The classic single-image human. Non-commercial license keeps it out of the paid pipeline: self-host or use the official Colab.',
+		blurb: 'Pixel-aligned implicit function at high resolution: the reference single-image clothed-human reconstruction baseline.',
 		links: {
 			repo: 'https://github.com/facebookresearch/pifuhd',
 			paper: 'https://arxiv.org/abs/2004.00452',
@@ -245,7 +256,7 @@ export const ENGINES = Object.freeze([
 		compute: 'GPU inference',
 		integration: 'reference',
 		integrationNote: 'State-of-the-art single-image humans, even in loose clothing. Try the authors’ Hugging Face Space; license blocks commercial wiring.',
-		blurb: 'Explicit Clothed humans Optimized via Normal integration — combines implicit detail with explicit SMPL-X structure for robust in-the-wild reconstruction.',
+		blurb: 'Explicit Clothed humans Optimized via Normal integration: combines implicit detail with explicit SMPL-X structure for robust in-the-wild reconstruction.',
 		links: {
 			repo: 'https://github.com/YuliangXiu/ECON',
 			paper: 'https://arxiv.org/abs/2212.07422',
@@ -267,7 +278,7 @@ export const ENGINES = Object.freeze([
 		compute: 'GPU inference',
 		integration: 'reference',
 		integrationNote: 'Predecessor to ECON; SMPL-conditioned implicit reconstruction. Hugging Face Space available; non-commercial only.',
-		blurb: 'Implicit Clothed humans Obtained from Normals — local-feature implicit reconstruction conditioned on an SMPL body prior.',
+		blurb: 'Implicit Clothed humans Obtained from Normals: local-feature implicit reconstruction conditioned on an SMPL body prior.',
 		links: {
 			repo: 'https://github.com/YuliangXiu/ICON',
 			paper: 'https://arxiv.org/abs/2112.09127',
@@ -289,7 +300,7 @@ export const ENGINES = Object.freeze([
 		compute: 'GPU inference (diffusion)',
 		integration: 'reference',
 		integrationNote: 'Diffusion-based back-view hallucination + mesh reconstruction. Self-host for research.',
-		blurb: 'Single-view Textured Human reconstruction — image-conditioned diffusion hallucinates the unseen back, then lifts both views to a textured mesh.',
+		blurb: 'Single-view Textured Human reconstruction: image-conditioned diffusion hallucinates the unseen back, then lifts both views to a textured mesh.',
 		links: {
 			repo: 'https://github.com/SiTH-Diffusion/SiTH',
 			paper: 'https://arxiv.org/abs/2311.15855',
@@ -310,8 +321,8 @@ export const ENGINES = Object.freeze([
 		commercial: false,
 		compute: 'GPU inference',
 		integration: 'reference',
-		integrationNote: 'The original pixel-aligned implicit function — foundational. Self-host for research and study.',
-		blurb: 'The original Pixel-aligned Implicit Function for clothed-human digitization — the method PIFuHD and most of this column descend from.',
+		integrationNote: 'The original pixel-aligned implicit function, and the foundation of this whole family. Self-host for research and study.',
+		blurb: 'The original Pixel-aligned Implicit Function for clothed-human digitization: the method PIFuHD and most of this column descend from.',
 		links: {
 			repo: 'https://github.com/shunsukesaito/PIFu',
 			paper: 'https://arxiv.org/abs/1905.05172',
@@ -334,8 +345,8 @@ export const ENGINES = Object.freeze([
 		commercial: true,
 		compute: 'Cloud API (NVIDIA NIM / self-host)',
 		integration: 'live',
-		integrationNote: 'Powers the free three.ws Forge lane (forge_free) end-to-end — text/image → rig-ready GLB. Click straight through to /forge.',
-		blurb: 'Structured 3D latents for versatile, high-quality generation — the MIT-licensed engine behind the free three.ws text/image → 3D lane.',
+		integrationNote: 'Powers the free three.ws Forge lane (forge_free) end-to-end: text/image → rig-ready GLB. Click straight through to /forge.',
+		blurb: 'Structured 3D latents for versatile, high-quality generation: the MIT-licensed engine behind the free three.ws text/image → 3D lane.',
 		links: {
 			repo: 'https://github.com/microsoft/TRELLIS',
 			paper: 'https://arxiv.org/abs/2412.01506',
@@ -357,8 +368,8 @@ export const ENGINES = Object.freeze([
 		commercial: false,
 		compute: 'GPU optimization (per-prompt)',
 		integration: 'reference',
-		integrationNote: 'Outputs a CG-ready, riggable SMPL-X avatar — conceptually closest to Forge’s text→avatar lane, but SMPL-X licensing keeps it self-host.',
-		blurb: 'Text to Animatable Digital Avatars — optimizes a displacement-enhanced SMPL-X body plus a texture map into a holistic, animation-ready avatar.',
+		integrationNote: 'Outputs a CG-ready, riggable SMPL-X avatar, conceptually closest to Forge’s text→avatar lane, but SMPL-X licensing keeps it self-host.',
+		blurb: 'Text to Animatable Digital Avatars: optimizes a displacement-enhanced SMPL-X body plus a texture map into a holistic, animation-ready avatar.',
 		links: {
 			repo: 'https://github.com/TingtingLiao/TADA',
 			paper: 'https://arxiv.org/abs/2308.10899',
@@ -379,7 +390,7 @@ export const ENGINES = Object.freeze([
 		commercial: false,
 		compute: 'GPU optimization (per-prompt)',
 		integration: 'splat',
-		integrationNote: 'Generates a full-body Gaussian human from text — export the splat and view it in the three.ws Splat Viewer.',
+		integrationNote: 'Generates a full-body Gaussian human from text: export the splat and view it in the three.ws Splat Viewer.',
 		blurb: 'Text-driven 3D human generation that anchors Gaussian splats to an SMPL-X body, with a structure-aware SDS for fast, detailed results.',
 		links: {
 			repo: 'https://github.com/alvinliu0/HumanGaussian',
@@ -401,8 +412,8 @@ export const ENGINES = Object.freeze([
 		commercial: false,
 		compute: 'GPU optimization',
 		integration: 'reference',
-		integrationNote: 'Zero-shot text-driven generation and animation. Neural representation — self-host for research.',
-		blurb: 'Zero-shot text-driven generation and animation of 3D avatars — CLIP-guided shape, texture, and motion from a single description.',
+		integrationNote: 'Zero-shot text-driven generation and animation. Neural representation: self-host for research.',
+		blurb: 'Zero-shot text-driven generation and animation of 3D avatars: CLIP-guided shape, texture, and motion from a single description.',
 		links: {
 			repo: 'https://github.com/hongfz16/AvatarCLIP',
 			paper: 'https://arxiv.org/abs/2205.08535',
@@ -448,7 +459,7 @@ export const ENGINES = Object.freeze([
 		compute: 'CPU/GPU (real-time)',
 		integration: 'reference',
 		integrationNote: 'The expressive body model underpinning TADA, ECON, HumanGaussian and most methods here. Foundation layer, non-commercial.',
-		blurb: 'SMPL eXpressive — one differentiable model unifying body, hands, and face. The substrate nearly every method on this page builds on.',
+		blurb: 'SMPL eXpressive: one differentiable model unifying body, hands, and face. The substrate nearly every method on this page builds on.',
 		links: {
 			repo: 'https://github.com/vchoutas/smplx',
 			paper: 'https://arxiv.org/abs/1904.05866',
@@ -469,8 +480,8 @@ export const ENGINES = Object.freeze([
 		commercial: false,
 		compute: 'CPU/GPU (real-time)',
 		integration: 'reference',
-		integrationNote: 'The original learned body model — the common language of 3D human research. Non-commercial.',
-		blurb: 'A Skinned Multi-Person Linear body model — the field-defining parametric human that started the modern 3D-body era.',
+		integrationNote: 'The original learned body model: the common language of 3D human research. Non-commercial.',
+		blurb: 'A Skinned Multi-Person Linear body model: the field-defining parametric human that started the modern 3D-body era.',
 		links: {
 			repo: 'https://github.com/vchoutas/smplx',
 			paper: 'https://files.is.tue.mpg.de/black/papers/SMPL2015.pdf',
@@ -492,10 +503,10 @@ export const ENGINES = Object.freeze([
 		compute: 'CPU/GPU (real-time)',
 		integration: 'reference',
 		integrationNote: 'The head model that rigs GaussianAvatars and most photoreal-head methods. Foundation layer, non-commercial.',
-		blurb: 'Faces Learned with an Articulated Model and Expressions — the standard parametric head that drives the photoreal-head column.',
+		blurb: 'Faces Learned with an Articulated Model and Expressions: the standard parametric head that drives the photoreal-head column.',
 		links: {
 			repo: 'https://github.com/Rubikplayer/flame-fitting',
-			paper: 'https://arxiv.org/abs/2003.09232',
+			paper: 'https://ps.is.mpg.de/publications/flame-siggraph-asia-2017',
 			demo: 'https://flame.is.tue.mpg.de/',
 		},
 	},
@@ -514,7 +525,7 @@ export const ENGINES = Object.freeze([
 		compute: 'CPU/GPU (real-time)',
 		integration: 'reference',
 		integrationNote: 'A more accurate, sparser successor to SMPL. Foundation layer, non-commercial.',
-		blurb: 'Sparse Trained Articulated human body Regressor — a successor to SMPL with realistic, localized pose-dependent deformations.',
+		blurb: 'Sparse Trained Articulated human body Regressor: a successor to SMPL with realistic, localized pose-dependent deformations.',
 		links: {
 			repo: 'https://github.com/ahmedosman/STAR',
 			paper: 'https://arxiv.org/abs/2008.08535',
@@ -537,11 +548,10 @@ export const ENGINES = Object.freeze([
 		commercial: true,
 		compute: 'Cloud service',
 		integration: 'live',
-		integrationNote: 'The three.ws animation pipeline canonicalizes against the Mixamo skeleton — every Mixamo rig drives the pre-baked clip library.',
-		blurb: 'Adobe’s auto-rigger and animation library — the de-facto humanoid skeleton the three.ws retargeting pipeline is built around.',
+		integrationNote: 'The three.ws animation pipeline canonicalizes against the Mixamo skeleton, so every Mixamo rig drives the pre-baked clip library.',
+		blurb: 'Adobe’s auto-rigger and animation library: the de-facto humanoid skeleton the three.ws retargeting pipeline is built around.',
 		links: {
 			repo: 'https://www.mixamo.com/',
-			paper: 'https://www.mixamo.com/',
 			demo: '/animations',
 		},
 		cta: { label: 'Animation Gallery', href: '/animations' },
@@ -549,23 +559,22 @@ export const ENGINES = Object.freeze([
 	{
 		id: 'ready-player-me',
 		name: 'Ready Player Me',
-		org: 'Ready Player Me',
+		org: 'Ready Player Me (Netflix)',
 		year: 2020,
-		venue: 'Commercial platform',
+		venue: 'Commercial platform, retired 31 Jan 2026',
 		family: 'production',
 		representation: 'gltf',
 		input: 'Selfie or config',
 		output: 'Rigged glTF avatar (half/full body)',
-		license: 'Commercial SDK (free tier)',
-		commercial: true,
-		compute: 'Cloud API',
-		integration: 'interop',
-		integrationNote: 'Exports standard rigged glTF — loads directly in the three.ws viewer and animates through the canonicalize/retarget pipeline.',
-		blurb: 'Cross-app avatar platform with open glTF output and broad SDK support — drop its GLBs straight into the three.ws viewer.',
+		license: 'Commercial SDK (service discontinued)',
+		commercial: false,
+		compute: 'Cloud API (offline)',
+		status: 'retired',
+		integration: 'reference',
+		integrationNote: 'The avatar creator and developer API shut down on 31 January 2026 after Netflix acquired the company, so no new avatars can be minted. GLB files exported before the shutdown are plain rigged glTF and still load and animate in the three.ws viewer.',
+		blurb: 'The cross-app glTF avatar platform that set the interop bar before Netflix took it in-house and closed the public service. Listed as history, and because millions of exported RPM GLBs are still in circulation.',
 		links: {
 			repo: 'https://github.com/readyplayerme',
-			paper: 'https://readyplayer.me/',
-			demo: 'https://readyplayer.me/',
 		},
 	},
 	{
@@ -582,12 +591,11 @@ export const ENGINES = Object.freeze([
 		commercial: true,
 		compute: 'Client',
 		integration: 'interop',
-		integrationNote: 'three.ws already maps VRM/VRoid bone names in glb-canonicalize.js — VRM avatars animate out of the box.',
-		blurb: 'The open, glTF-based standard for interoperable humanoid avatars — the dominant rig format for VTuber and metaverse pipelines.',
+		integrationNote: 'three.ws already maps VRM/VRoid bone names in glb-canonicalize.js, so VRM avatars animate out of the box.',
+		blurb: 'The open, glTF-based standard for interoperable humanoid avatars: the dominant rig format for VTuber and metaverse pipelines.',
 		links: {
 			repo: 'https://github.com/vrm-c/UniVRM',
-			paper: 'https://vrm.dev/en/',
-			demo: 'https://vrm.dev/en/',
+			docs: 'https://vrm.dev/en/',
 		},
 	},
 	{
@@ -604,11 +612,11 @@ export const ENGINES = Object.freeze([
 		commercial: true,
 		compute: 'Client (Three.js)',
 		integration: 'interop',
-		integrationNote: 'The Three.js VRM loader — same renderer family as the three.ws viewer, so VRM heads/bodies render with no extra runtime.',
-		blurb: 'The official Three.js loader for VRM avatars — spring-bone physics, expressions, and look-at, in the browser.',
+		integrationNote: 'The Three.js VRM loader, same renderer family as the three.ws viewer, so VRM heads/bodies render with no extra runtime.',
+		blurb: 'The official Three.js loader for VRM avatars: spring-bone physics, expressions, and look-at, in the browser.',
 		links: {
 			repo: 'https://github.com/pixiv/three-vrm',
-			paper: 'https://pixiv.github.io/three-vrm/packages/three-vrm/docs/',
+			docs: 'https://pixiv.github.io/three-vrm/packages/three-vrm/docs/',
 			demo: 'https://pixiv.github.io/three-vrm/packages/three-vrm/examples/',
 		},
 	},
@@ -626,12 +634,11 @@ export const ENGINES = Object.freeze([
 		commercial: true,
 		compute: 'Cloud API',
 		integration: 'interop',
-		integrationNote: 'The Avaturn skeleton is the canonical target three.ws retargets onto — its avatars are first-class in the animation pipeline.',
-		blurb: 'Photo-to-avatar that outputs realistic, rigged glTF bodies — the skeleton convention the three.ws animation system canonicalizes to.',
+		integrationNote: 'The Avaturn skeleton is the canonical target three.ws retargets onto, so its avatars are first-class in the animation pipeline.',
+		blurb: 'Photo-to-avatar that outputs realistic, rigged glTF bodies: the skeleton convention the three.ws animation system canonicalizes to.',
 		links: {
 			repo: 'https://avaturn.me/',
-			paper: 'https://avaturn.me/',
-			demo: 'https://avaturn.me/',
+			docs: 'https://docs.avaturn.me/',
 		},
 	},
 ]);
@@ -642,10 +649,15 @@ export function enginesByFamily(familyId) {
 	return ENGINES.filter((e) => e.family === familyId);
 }
 
+export function isRetired(engine) {
+	return engine.status === 'retired';
+}
+
 export function engineStats() {
 	const total = ENGINES.length;
 	const commercial = ENGINES.filter((e) => e.commercial).length;
 	const live = ENGINES.filter((e) => e.integration === 'live' || e.integration === 'forge').length;
 	const splat = ENGINES.filter((e) => e.integration === 'splat').length;
-	return { total, commercial, live, splat, families: FAMILIES.length };
+	const retired = ENGINES.filter(isRetired).length;
+	return { total, commercial, live, splat, retired, families: FAMILIES.length };
 }
