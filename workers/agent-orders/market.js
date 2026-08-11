@@ -112,7 +112,9 @@ export async function getSignals({ network, mint, need = [], referencePrice = nu
 	}
 
 	// price_change_pct vs the metric value captured when the order was created.
-	if ((wants.has('price_change_pct') || true) && referencePrice != null && market) {
+	// Always resolved when a baseline exists: the owner-facing order row shows it
+	// whether or not a condition references the signal.
+	if (referencePrice != null && market) {
 		const cur = metricValue(market, signals, metric);
 		if (cur != null && referencePrice > 0) signals.price_change_pct = ((cur - referencePrice) / referencePrice) * 100;
 	}
