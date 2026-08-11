@@ -5,7 +5,7 @@
  * wire the copy buttons, and drive the live viewer through loading → ready or
  * failed so the section never sits as an empty rectangle.
  *
- * The transcript below is a verbatim capture of the CLI at 0.2.0, not a
+ * The transcript below is a verbatim capture of the CLI at 0.2.1, not a
  * dramatization. If the CLI's output changes, this should be recaptured.
  */
 
@@ -26,14 +26,23 @@ const TRANSCRIPT = [
 	{ kind: 'out', cls: 'dim', text: '  • id        eip155:1:0x742d35Cc6634C0532925a3b844Bc454e4438f44e' },
 	{ kind: 'out', cls: 'dim', text: '  • skeleton  mixamo' },
 	{ kind: 'out', cls: 'dim', text: '  • mesh      glb · 830 kB · sha256:28d788538f7b…' },
+	{ kind: 'out', cls: 'dim', text: '  › next: three-ws-avatar preview manifest.json' },
 	{ kind: 'gap' },
 	{ kind: 'cmd', text: 'three-ws-avatar validate manifest.json' },
 	{ kind: 'out', cls: 'ok', text: '✔ manifest.json is valid' },
 	{ kind: 'gap' },
 	{ kind: 'cmd', text: 'three-ws-avatar preview manifest.json' },
+	{ kind: 'out', cls: 'c', text: 'Nicholas (eip155:1:0x742d35Cc6634C0532925a3b844Bc454e4438f44e)' },
+	{ kind: 'gap' },
+	{ kind: 'out', cls: 'dim', text: '› resolver url' },
+	{ kind: 'out', text: 'https://three.ws/a/eip155%3A1%3A0x742d35Cc6634C0532925a3b844Bc454e4438f44e' },
+	{ kind: 'gap' },
 	{ kind: 'out', cls: 'dim', text: '› web component (loader registers <agent-3d>)' },
-	{ kind: 'out', text: '<script type="module" src="/agent-3d/latest/agent-3d.js"></script>' },
-	{ kind: 'out', text: '<agent-3d src="https://three.ws/avatars/michelle.glb"></agent-3d>' },
+	{ kind: 'out', text: '<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>' },
+	{
+		kind: 'out',
+		text: '<agent-3d src="https://three.ws/avatars/michelle.glb" style="width:400px;height:600px"></agent-3d>',
+	},
 ];
 
 const escapeHtml = (s) =>

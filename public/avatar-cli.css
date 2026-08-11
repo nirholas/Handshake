@@ -608,17 +608,31 @@
 	margin-top: var(--space-sm);
 }
 
+/* The embedded snippet is the CLI's output verbatim, so its 400x600 box is set
+   inline on the element. The frame only centers it and caps its width on narrow
+   screens; the element's ResizeObserver re-lays-out the canvas to match. */
 .cli-live-stage-frame {
 	position: relative;
+	display: grid;
+	/* minmax(0, 1fr) keeps the column from auto-sizing to the viewer's 400px:
+	   an overflowing column would become the percentage basis and defeat the
+	   max-width clamp below. */
+	grid-template-columns: minmax(0, 1fr);
+	place-items: center;
 	border: 1px solid var(--stroke-strong);
 	border-radius: var(--radius-lg);
 	background: var(--surface-2);
 	overflow: hidden;
-	min-height: 420px;
+	min-height: 600px;
 }
 
+/* min-width:0 is load-bearing: a grid item's automatic minimum size is its
+   min-content width, which here is the inline 400px and would win over
+   max-width, cropping the viewer below a 400px-wide frame. */
 .cli-live-stage-frame agent-3d {
 	display: block;
+	min-width: 0;
+	max-width: 100%;
 	opacity: 0;
 	transition: opacity 420ms ease;
 }
