@@ -12,7 +12,7 @@ metadata:
 # Rig a 3D model
 
 Turn a **static GLB** into an **animation-ready** one. The three.ws auto-rig
-pipeline (VAST-AI UniRig) adds a humanoid skeleton and per-vertex skin weights,
+pipeline (Make-It-Animatable) adds a humanoid skeleton and per-vertex skin weights,
 so the model can be posed and play animation clips.
 
 The result is a **`riggedGlbUrl`** plus a **pose-studio link** that opens the
