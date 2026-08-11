@@ -1,0 +1,22 @@
+# Build-context allowlist for THIS image only (BuildKit reads
+# <dockerfile>.dockerignore in preference to the root .dockerignore).
+#
+# The image builds from the repo root so its repo-relative imports (../../src,
+# ../../api) resolve, but it copies four directories and one package.json. The
+# root .dockerignore only drops node_modules and .git, which still leaves ~2.5 GB
+# of dist/, public/, dist-lib/ and character-studio/ to stream into the daemon:
+# enough to OOM the build (exit 144) on a dev machine or a Codespace, for files
+# this Dockerfile never opens. Cloud Build trims its own upload via .gcloudignore;
+# this is the same trimming for a local `docker build`.
+#
+# Keep in sync with the COPY lines in Dockerfile.
+*
+!src/solana
+!src/shared
+!api/_lib
+!workers/vanity-grinder
+!workers/vanity-grinder/package.json
+
+# Never ship run state or a local dep tree into the image.
+**/node_modules
+workers/vanity-grinder/out
