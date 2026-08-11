@@ -1,8 +1,8 @@
-// Agent Economy — two 3D AI agents transacting on-chain.
+// Agent Economy: two 3D AI agents transacting on-chain.
 //
 // Nova (buyer, left) picks a service from Oracle's catalog, pays real SOL,
 // and Oracle delivers the analysis. Every transaction is real: a live Solana
-// wallet sends lamports, the tx signature links to Solana FM.
+// wallet sends lamports, the tx signature links to a Solana explorer.
 //
 // Architecture:
 //   - Two <agent-3d> avatars loaded into iframes (the existing embed pattern).
@@ -10,9 +10,9 @@
 //     delivery on the server. No x402 client lib needed in the browser: the
 //     server signs with AVATAR_WALLET_SECRET.
 //   - Speech bubbles + avatar animations driven by postMessage to each iframe.
-//   - A payment particle arc animates from buyer → seller on real tx confirmation.
+//   - A payment particle arc animates from buyer to seller on real tx confirmation.
 //   - /api/agent-economy/status polled on load to show live wallet balances.
-//   - The tx feed in the center column is pure DOM — no framework.
+//   - The tx feed in the center column is pure DOM, no framework.
 
 import { buildReceiptHTML, buildReceiptText } from './shared/payment-receipt.js';
 import { showAddFunds } from './shared/add-funds.js';
@@ -45,8 +45,10 @@ function renderBal(elId, info) {
 	}
 	const sol = typeof info.sol === 'number' ? info.sol : null;
 	if (sol === null) {
+		// Configured wallet, unreadable balance: say so rather than showing a
+		// dash the reader has to guess at.
 		el.className = 'av-label-bal bal-unknown';
-		el.textContent = '—';
+		el.textContent = 'balance unavailable';
 		return;
 	}
 	const usdStr = info.usd != null ? ` · $${info.usd.toFixed(2)}` : '';
@@ -64,20 +66,22 @@ function renderFundAlert(status) {
 	if (!aCfg) {
 		// Technical detail (env var name) goes to console only
 		log.info('[three.ws] agent-economy: AVATAR_WALLET_SECRET not configured');
-		html = '<strong>Live transactions are paused.</strong> This feature is temporarily unavailable — check back shortly.';
+		html = '<strong>Live transactions are paused.</strong> This feature is temporarily unavailable. Check back shortly.';
 	} else {
 		const addr = status.agentA.address;
 		const exp = status.agentA.explorer || `https://solscan.io/account/${addr}`;
 		html = `<strong>Nova needs a small amount of SOL to transact.</strong> Fund her wallet to get started:
-			<span class="fund-addr">${addr} <a href="${exp}" target="_blank" rel="noopener">↗ Solscan</a></span>
-			<button class="fund-alert-btn" data-addr="${escHtml(addr)}">Add funds →</button>`;
+			<span class="fund-addr">${escHtml(addr)} <a href="${escHtml(exp)}" target="_blank" rel="noopener">↗ Solscan</a></span>
+			<button class="fund-alert-btn" type="button" data-addr="${escHtml(addr)}">Add funds →</button>`;
 	}
 	el.innerHTML = html;
 	el.classList.add('visible');
 
 	el.querySelector('.fund-alert-btn')?.addEventListener('click', (e) => {
 		const addr = e.currentTarget.dataset.addr;
-		if (addr) showAddFunds({ walletAddress: addr }).then(() => refreshWalletStatus());
+		// Nova pays in native lamports, so the onramp has to deliver SOL. Funding
+		// her with USDC would leave her exactly as unable to transact as before.
+		if (addr) showAddFunds({ walletAddress: addr, asset: 'SOL' }).then(() => refreshWalletStatus());
 	});
 }
 
@@ -345,7 +349,7 @@ async function purchase(service) {
 		}));
 	} else if (tx?.error === 'wallet_unconfigured') {
 		// Log technical detail privately; never surface env-var names to users
-		log.info('[three.ws] agent-economy: wallet_unconfigured —', tx.message);
+		log.info('[three.ws] agent-economy: wallet_unconfigured:', tx.message);
 		addFeedItem({
 			icon: '⏸️',
 			type: 'pay',
@@ -356,7 +360,7 @@ async function purchase(service) {
 	} else if (tx?.error === 'insufficient_balance') {
 		const agentAddr = currentWalletStatus?.agentA?.address;
 		const fundBtn = agentAddr
-			? `<button class="tx-add-funds-btn" data-addr="${escHtml(agentAddr)}">Add funds →</button>`
+			? `<button class="tx-add-funds-btn" type="button" data-addr="${escHtml(agentAddr)}">Add funds →</button>`
 			: '';
 		const feedEl = addFeedItem({
 			icon: '💰',
@@ -366,12 +370,12 @@ async function purchase(service) {
 		});
 		feedEl?.querySelector('.tx-add-funds-btn')?.addEventListener('click', (e) => {
 			const addr = e.currentTarget.dataset.addr;
-			if (addr) showAddFunds({ walletAddress: addr }).then(() => refreshWalletStatus());
+			if (addr) showAddFunds({ walletAddress: addr, asset: 'SOL' }).then(() => refreshWalletStatus());
 		});
-		setStatus('Nova\'s wallet needs funds — use "Add funds" above');
+		setStatus('Nova\'s wallet needs funds. Use "Add funds" to top her up.');
 	} else if (tx?.error === 'no_recipient') {
 		// Log technical detail privately; never surface env-var names to users
-		log.info('[three.ws] agent-economy: no_recipient —', tx.message);
+		log.info('[three.ws] agent-economy: no_recipient:', tx.message);
 		addFeedItem({
 			icon: '⏸️',
 			type: 'pay',
@@ -379,9 +383,21 @@ async function purchase(service) {
 			sub: 'This feature is temporarily unavailable. Check back shortly.',
 		});
 		setStatus('Live transactions are temporarily unavailable');
+	} else if (tx?.error === 'rate_limited') {
+		// A spent budget is not a failure, and telling the reader "the network
+		// rejected it" would send them retrying against a ceiling that only
+		// clears tomorrow.
+		addFeedItem({
+			icon: '🧾',
+			type: 'pay',
+			title: 'Daily demo budget reached',
+			sub: 'Oracle still delivered the service. Live payments resume tomorrow.',
+		});
+		setStatus('Daily demo transaction budget reached. Payments resume tomorrow.');
 	} else if (tx?.error) {
 		log.warn('[three.ws] agent-economy tx error:', tx.error, tx.message);
-		addFeedItem({ icon: '⚠️', type: 'pay', title: 'Transaction didn\'t go through', sub: 'The network rejected this transaction — try again in a moment.' });
+		addFeedItem({ icon: '⚠️', type: 'pay', title: 'Transaction didn\'t go through', sub: 'The network rejected this transaction. Try again in a moment.' });
+		setStatus('Payment failed. Try another service or retry in a moment.');
 	}
 
 	// Oracle delivers the service

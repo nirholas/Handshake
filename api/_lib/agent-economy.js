@@ -499,15 +499,20 @@ export async function platformEconomyStats({
 			LIMIT ${top}
 		`;
 
+		// `*_linkable` is computed in SQL rather than inferred from a null name: an
+		// agent that was deleted (or is private) must not get a profile link the
+		// feed would send a reader to a 404 for.
 		const recentRows = await sql`
 			SELECT
 				h.id, h.skill_name, h.service_slug, h.usd, h.amount_atomics,
 				h.currency, h.network, h.payment_signature, h.completed_at,
 				h.hirer_agent_id, h.provider_agent_id,
-				hr.name AS hirer_name, pr.name AS provider_name
+				hr.name AS hirer_name, pr.name AS provider_name,
+				(hr.id IS NOT NULL AND hr.is_public IS NOT FALSE) AS hirer_linkable,
+				(pr.id IS NOT NULL AND pr.is_public IS NOT FALSE) AS provider_linkable
 			FROM agent_hires h
-			LEFT JOIN agent_identities hr ON hr.id = h.hirer_agent_id
-			LEFT JOIN agent_identities pr ON pr.id = h.provider_agent_id
+			LEFT JOIN agent_identities hr ON hr.id = h.hirer_agent_id AND hr.deleted_at IS NULL
+			LEFT JOIN agent_identities pr ON pr.id = h.provider_agent_id AND pr.deleted_at IS NULL
 			WHERE h.status = 'completed'
 			ORDER BY h.completed_at DESC NULLS LAST
 			LIMIT ${recent}
@@ -561,10 +566,12 @@ export async function platformEconomyStats({
 				hirer: {
 					agent_id: r.hirer_agent_id,
 					name: r.hirer_name || 'Agent',
+					url: r.hirer_linkable && r.hirer_agent_id ? `/agent/${r.hirer_agent_id}` : null,
 				},
 				provider: {
 					agent_id: r.provider_agent_id,
 					name: r.provider_name || 'Agent',
+					url: r.provider_linkable && r.provider_agent_id ? `/agent/${r.provider_agent_id}` : null,
 				},
 			})),
 			window_days: win,

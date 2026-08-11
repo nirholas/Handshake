@@ -5,19 +5,19 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title data-i18n="agent_economy.meta_title">Agent Economy — three.ws live demo</title>
+	<title data-i18n="agent_economy.meta_title">Agent Economy: two AI agents paying each other in real SOL</title>
 	<meta name="description" content="Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B. Real SOL. Real Solana transaction. Live now."  data-i18n-attr="content:agent_economy.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/agent-economy" />
-	<meta property="og:title" content="Agent Economy — three.ws live demo"  data-i18n-attr="content:agent_economy.meta_og_title"/>
+	<meta property="og:title" content="Agent Economy: two AI agents paying each other in real SOL"  data-i18n-attr="content:agent_economy.meta_og_title"/>
 	<meta property="og:description" content="Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B. Real SOL. Real Solana transaction. Live now."  data-i18n-attr="content:agent_economy.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Economy%3A+Live+Demo&amp;d=Watch+two+3D+AI+agents+transact+on-chain.+Agent+A+buys+data+from+Agent+B%3A+real+SOL%2C+real+Solana+transaction%2C+live.&amp;p=%2Fagent-economy" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Agent Economy — three.ws live demo"  data-i18n-attr="content:agent_economy.meta_twitter_title"/>
+	<meta name="twitter:title" content="Agent Economy: two AI agents paying each other in real SOL"  data-i18n-attr="content:agent_economy.meta_twitter_title"/>
 	<meta name="twitter:description" content="Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B. Real SOL. Real Solana transaction. Live now."  data-i18n-attr="content:agent_economy.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Economy%3A+Live+Demo&amp;d=Watch+two+3D+AI+agents+transact+on-chain.+Agent+A+buys+data+from+Agent+B%3A+real+SOL%2C+real+Solana+transaction%2C+live.&amp;p=%2Fagent-economy" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -219,6 +219,7 @@
 			border-color: var(--border-hi);
 			background: var(--panel2);
 		}
+		.svc-btn:active:not(:disabled) { transform: translateY(1px); }
 		.svc-btn:disabled { opacity: .45; cursor: not-allowed; }
 		.svc-btn-left { display: flex; flex-direction: column; gap: 1px; text-align: left; }
 		.svc-btn-name { font-weight: 600; font-size: 12px; }
@@ -251,6 +252,25 @@
 		}
 		#topic:focus { border-color: var(--border-hi); }
 		#topic::placeholder { color: var(--muted); }
+
+		/* One focus treatment for every interactive element on the page. Keyboard
+		   users could previously tab through the catalog, the fund button, and the
+		   footer with no visible position at all. */
+		:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 6px; }
+		#topic:focus-visible { outline-offset: 1px; }
+
+		/* Label kept for screen readers only: the field's purpose is carried
+		   visually by its placeholder and by the catalog above it. */
+		.sr-only {
+			position: absolute;
+			width: 1px; height: 1px;
+			padding: 0; margin: -1px;
+			overflow: hidden;
+			clip: rect(0 0 0 0);
+			clip-path: inset(50%);
+			white-space: nowrap;
+			border: 0;
+		}
 
 		/* Transaction feed */
 		#feed {
@@ -432,13 +452,51 @@
 		}
 		#fund-alert.visible { display: block; }
 
-		/* Responsive */
+		/* The two "Add funds" buttons the page injects at runtime: one in the fund
+		   banner, one in the feed's insufficient-balance row. Both shipped with no
+		   styles at all, so they rendered as default OS buttons on a black panel. */
+		.fund-alert-btn,
+		.tx-add-funds-btn {
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
+			margin-top: 7px;
+			padding: 5px 10px;
+			border-radius: 7px;
+			border: 1px solid rgba(247,160,53,.45);
+			background: rgba(247,160,53,.12);
+			color: var(--amber);
+			font: inherit;
+			font-size: 10.5px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: background .15s, border-color .15s, transform .1s;
+		}
+		.fund-alert-btn:hover,
+		.tx-add-funds-btn:hover { background: rgba(247,160,53,.22); border-color: rgba(247,160,53,.7); }
+		.fund-alert-btn:active,
+		.tx-add-funds-btn:active { transform: translateY(1px); }
+
+		/* Responsive.
+		   Both agents stay on screen on narrow viewports. Hiding the buyer used to
+		   leave a page about two agents transacting showing one, and it broke the
+		   payment arc outright: the particle measures the buyer column, and a
+		   display:none column measures zero, so the payment flew out of the corner
+		   of the screen instead of between the agents. */
 		@media (max-width: 700px) {
-			#root { grid-template-columns: 1fr; grid-template-rows: 45vh 1fr auto; }
-			#col-buyer { display: none; }
-			#col-seller { grid-row: 1; }
-			#center { grid-row: 2; border: none; border-top: 1px solid var(--border); }
-			#bottom-bar { grid-row: 3; grid-column: 1; }
+			#root { grid-template-columns: 1fr 1fr; grid-template-rows: 38vh 1fr auto; }
+			#col-buyer  { grid-column: 1; grid-row: 1; }
+			#col-seller { grid-column: 2; grid-row: 1; border-left: 1px solid var(--border); }
+			#center { grid-column: 1 / -1; grid-row: 2; border-left: none; border-right: none; border-top: 1px solid var(--border); }
+			#bottom-bar { grid-row: 3; }
+
+			/* Half-width columns cannot hold the desktop chrome: let the label wrap
+			   and drop the bubble's desktop min-width so neither is clipped. */
+			.av-label { padding: 6px 9px; bottom: 10px; white-space: normal; max-width: calc(100% - 12px); }
+			.av-label-name { font-size: 12px; }
+			.av-label-addr { word-break: break-all; }
+			.av-speech { min-width: 0; max-width: calc(100% - 16px); top: 10px; padding: 8px 10px; font-size: 11px; }
+			#bottom-bar { flex-wrap: wrap; gap: 8px; row-gap: 4px; padding: 8px 12px; }
 		}
 
 		/* Noscript */
@@ -446,11 +504,11 @@
 	</style>
 
 	<link rel="canonical" href="https://three.ws/agent-economy">
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Agent Economy — Live Demo","description":"Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B — real SOL, real Solana transaction, live.","url":"https://three.ws/agent-economy","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Agent Economy: Live Demo","description":"Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B: real SOL, real Solana transaction, live.","url":"https://three.ws/agent-economy","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Agent Economy — Live Demo — three.ws">
+	<meta property="og:image:alt" content="Agent Economy: Live Demo on three.ws">
 </head>
 <body>
 	<noscript>
@@ -488,21 +546,21 @@
 
 			<div id="catalog">
 				<div id="catalog-label">Services offered by Oracle</div>
-				<button class="svc-btn" type="button" data-service="market-analysis" aria-label="Buy Market Analysis from Oracle for $0.001 — live sentiment and trend read" data-i18n-attr="aria-label:agent_economy.buy_market_analysis_from_ora_arialabel">
+				<button class="svc-btn" type="button" data-service="market-analysis" aria-label="Buy Market Analysis from Oracle for $0.001, live sentiment and trend read" data-i18n-attr="aria-label:agent_economy.buy_market_analysis_from_ora_arialabel">
 					<div class="svc-btn-left">
 						<span class="svc-btn-name">Market Analysis</span>
 						<span class="svc-btn-tag">Live sentiment + trend read</span>
 					</div>
 					<span class="svc-btn-price">$0.001</span>
 				</button>
-				<button class="svc-btn" type="button" data-service="onchain-insight" aria-label="Buy On-Chain Insight from Oracle for $0.002 — wallet activity and holder data" data-i18n-attr="aria-label:agent_economy.buy_on_chain_insight_from_or_arialabel">
+				<button class="svc-btn" type="button" data-service="onchain-insight" aria-label="Buy On-Chain Insight from Oracle for $0.002, wallet activity and holder data" data-i18n-attr="aria-label:agent_economy.buy_on_chain_insight_from_or_arialabel">
 					<div class="svc-btn-left">
 						<span class="svc-btn-name">On-Chain Insight</span>
 						<span class="svc-btn-tag">Wallet activity + holder data</span>
 					</div>
 					<span class="svc-btn-price">$0.002</span>
 				</button>
-				<button class="svc-btn" type="button" data-service="risk-score" aria-label="Buy Risk Score from Oracle for $0.003 — AI-generated protocol rating" data-i18n-attr="aria-label:agent_economy.buy_risk_score_from_oracle_f_arialabel">
+				<button class="svc-btn" type="button" data-service="risk-score" aria-label="Buy Risk Score from Oracle for $0.003, AI-generated protocol rating" data-i18n-attr="aria-label:agent_economy.buy_risk_score_from_oracle_f_arialabel">
 					<div class="svc-btn-left">
 						<span class="svc-btn-name">Risk Score</span>
 						<span class="svc-btn-tag">AI-generated protocol rating</span>
@@ -512,12 +570,13 @@
 			</div>
 
 			<div id="topic-wrap">
-				<input id="topic" type="text" placeholder="Topic (optional) — e.g. Solana, JUP, pump.fun" maxlength="120" autocomplete="off" spellcheck="false" />
+				<label class="sr-only" for="topic">Topic for the requested service (optional)</label>
+				<input id="topic" type="text" placeholder="Topic (optional), e.g. Solana or $THREE" maxlength="120" autocomplete="off" spellcheck="false" />
 			</div>
 
 			<div id="feed">
 				<div id="feed-empty">
-					<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+					<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true" focusable="false">
 						<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
 					</svg>
 					<span data-i18n="agent_economy.pick_a_service_above_to_watch_the">Pick a service above to watch the agents transact</span>
@@ -525,7 +584,7 @@
 			</div>
 
 			<div id="status-bar">
-				<span id="status-text" data-i18n="agent_economy.ready_select_a_service_to_start">Ready — select a service to start</span>
+				<span id="status-text" data-i18n="agent_economy.ready_select_a_service_to_start">Ready. Select a service to start.</span>
 				<span id="tx-count"></span>
 			</div>
 		</div>
