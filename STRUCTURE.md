@@ -215,7 +215,7 @@ surface-map row already covers:
 | [workers/agent-anchor/](workers/agent-anchor) | Newsroom Anchor worker: turns market intel into anchor-read segments |
 | [workers/agent-forge/](workers/agent-forge) | Headless Live Avatar Forge caster: forges on a free lane and broadcasts the GLB onto an agent's live screen. Operator-run CLI, not a deployed service |
 | [workers/agent-mm/](workers/agent-mm) | Launch Copilot market-maker engine (rules-based) |
-| [workers/agent-orders/](workers/agent-orders) | Programmable Orders Engine |
+| [workers/agent-orders/](workers/agent-orders) | Programmable Orders Engine: limit / stop / trailing / DCA / TWAP / conditional orders swept against live quotes and fired through the audited agent-trade path. Built and tested, not deployed as a Cloud Run service yet, so orders stay `active` until it runs |
 | [workers/agent-screen-worker/](workers/agent-screen-worker) | Stagehand-driven real browser worker behind the agent screen cast |
 | [workers/avatar-pipeline-controller/](workers/avatar-pipeline-controller) | FastAPI CPU orchestrator behind Scan-yourself-to-3D (multi-backend lane; not deployed today, `GCP_RECONSTRUCTION_URL` points at `avatar-reconstruction`) |
 | [workers/deploy/](workers/deploy) | Cloud Run deploy runbook for the selfie-to-3D pipeline |

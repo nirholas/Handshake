@@ -10,6 +10,8 @@ The Orders tab gives your agent wallet the order tooling pump.fun never had: six
 
 ## How it works
 
+**Rollout status:** the tab, the order model, and every guard below are live; the sweep worker (`workers/agent-orders`) is built and tested but is not yet running as a hosted service, so orders you create today stay `active` and no fill is placed until it is deployed. Nothing fires early or wrong in the meantime.
+
 Orders are validated against a closed, no-code condition language (a fixed set of real signals and operators — never arbitrary expressions) and stored server-side; the exact same validation and trigger-evaluation functions run in both the API and the execution worker so the rules can never drift. A long-lived worker sweeps all active orders every ~10 seconds, re-quoting each token directly off the live pump.fun bonding curve (automatically switching to the AMM pool once a coin graduates), and pulling smart-money scores from the reputation graph, dev-dump flags from coin intelligence, and USD conversion from a live SOL price. When a trigger matches, the order fires through the exact same audited trade pipeline as a manual trade — rug/honeypot firewall (a real simulated buy-then-sell round trip plus a token-authority audit), per-trade cap, rolling daily budget, kill switch, and custody ledger with idempotency keys — so the worker adds no new way to move funds, it only decides when to call the one audited path. The tab itself streams order status to the browser over a live server-sent event feed and diffs updates in without disturbing the form you're typing in.
 
 ## Every feature

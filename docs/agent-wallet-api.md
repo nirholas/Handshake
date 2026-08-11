@@ -259,7 +259,7 @@ The dispatcher only recognizes `GET` with no sub-path, `POST` with no sub-path, 
 
 Source: [`api/agents/orders.js`](../api/agents/orders.js), order model and condition language in [`api/_lib/orders.js`](../api/_lib/orders.js). Product tour: [Orders](agent-abilities/wallet/12-orders.md).
 
-Orders are evaluated by the [`workers/agent-orders`](../workers/agent-orders/README.md) sweep and fire through the same guarded, firewalled, audited trade pipeline as a manual trade. The endpoint creates and manages them; it never signs.
+Orders are evaluated by the [`workers/agent-orders`](../workers/agent-orders/README.md) sweep and fire through the same guarded, firewalled, audited trade pipeline as a manual trade. The endpoint creates and manages them; it never signs. That worker is built and tested but not deployed yet, so orders created today stay `active` until it runs; the endpoint behaves identically either way.
 
 | Method | Route | Purpose |
 |---|---|---|
