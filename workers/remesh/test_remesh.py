@@ -417,6 +417,35 @@ if shutil.which(remesh.QUADRIFLOW_BIN) or os.path.isfile(remesh.QUADRIFLOW_BIN):
         max(max(p) for p in opolys) < len(overts),
     )
 
+    # A bow-tie edge shared by three faces is exactly the topology QuadriFlow
+    # aborts on, and exactly what a character assembled from overlapping parts
+    # carries.
+    nonmanifold = trimesh.Trimesh(
+        vertices=np.array(
+            [[0.0, 0, 0], [1, 0, 0], [0.5, 1, 0], [0.5, -1, 0], [0.5, 0, 1]]
+        ),
+        faces=np.array([[0, 1, 2], [0, 1, 3], [0, 1, 4]]),
+        process=False,
+    )
+    cleaned = remesh._make_manifold(nonmanifold)
+    check(
+        "manifold cleanup drops the non-manifold edge",
+        len(cleaned.faces) < 3,
+        f"{len(cleaned.faces)} faces remain",
+    )
+    check(
+        "manifold cleanup keeps a sound mesh intact",
+        len(remesh._make_manifold(sphere(2)).faces) == len(sphere(2).faces),
+    )
+    check(
+        "manifold cleanup never returns an empty mesh",
+        len(remesh._make_manifold(
+            trimesh.Trimesh(
+                vertices=np.zeros((3, 3)), faces=np.array([[0, 1, 2]]), process=False
+            )
+        ).faces) > 0,
+    )
+
     check(
         "the solver ladder starts with minimum-cost flow and ends bare",
         remesh.QUADRIFLOW_ATTEMPTS[0] == ("-mcf", "-sharp")

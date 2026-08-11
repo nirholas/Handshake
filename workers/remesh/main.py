@@ -368,6 +368,41 @@ def _quad_remesh(mesh, target_faces: int):
     return verts, polys, quad_ratio
 
 
+def _make_manifold(mesh):
+    """Strip the topology QuadriFlow refuses, returning the input unchanged if
+    the cleanup would leave nothing behind.
+
+    QuadriFlow's index-map solve aborts with "wrong init" on a mesh whose edges
+    are shared by more than two faces. Character exports hit that constantly:
+    they are assembled from overlapping parts, so body and clothing seams meet on
+    shared edges. `_repair_mesh` does not help here (trimesh has no non-manifold
+    edge removal); open3d does."""
+    import numpy as np
+    import open3d as o3d
+    import trimesh
+
+    o3d_mesh = o3d.geometry.TriangleMesh()
+    o3d_mesh.vertices = o3d.utility.Vector3dVector(
+        np.asarray(mesh.vertices, dtype=np.float64)
+    )
+    o3d_mesh.triangles = o3d.utility.Vector3iVector(
+        np.asarray(mesh.faces, dtype=np.int32)
+    )
+    o3d_mesh.remove_duplicated_vertices()
+    o3d_mesh.remove_duplicated_triangles()
+    o3d_mesh.remove_degenerate_triangles()
+    o3d_mesh.remove_non_manifold_edges()
+    o3d_mesh.remove_unreferenced_vertices()
+
+    faces = np.asarray(o3d_mesh.triangles)
+    if len(faces) == 0:
+        log.warning("manifold cleanup removed every face; using the source mesh")
+        return mesh
+    return trimesh.Trimesh(
+        vertices=np.asarray(o3d_mesh.vertices), faces=faces, process=False,
+    )
+
+
 def _triangulate_polys(verts, polys):
     """Triangulate a mixed tri/quad polygon list into a Trimesh (for GLB export
     and texture baking — glTF has no native quads)."""
@@ -762,6 +797,7 @@ def _process_quad(source, target_faces: int, output_format: str, tex_size: int, 
     # QuadriFlow wants a clean watertight-ish triangle mesh as input.
     geom = source.copy()
     _repair_mesh(geom)
+    geom = _make_manifold(geom)
     verts, polys, quad_ratio = _quad_remesh(geom, target_faces)
 
     tri_mesh = _triangulate_polys(verts, polys)
