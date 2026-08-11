@@ -3,7 +3,7 @@
 Text-to-motion diffusion models (MDM, MoMask, T2M-GPT) emit motion on the SMPL
 body skeleton: per-frame local joint rotations (axis-angle) plus a root
 translation. three.ws avatars are rigged with the canonical Wolf3D humanoid
-(see workers/unirig/rig_glb.py). This module is the deterministic bridge: it
+(see workers/rig/rig_glb.py). This module is the deterministic bridge: it
 maps SMPL joints → Wolf3D bone names, converts axis-angle → quaternions, and
 emits the exact `THREE.AnimationClip.toJSON()` shape that the rest of the
 platform already consumes — the animation library, the `apply_animation` MCP
