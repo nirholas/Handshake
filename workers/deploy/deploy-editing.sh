@@ -21,9 +21,10 @@
 #   REGION            default us-central1
 #   SERVICES          default "stylize remesh segment rembg" (all CPU).
 #                     GPU extras (need L4 quota): texture text2motion.
-#                     texture bakes its SDXL weights into the image; text2motion
-#                     additionally needs the MDM checkpoint staged by hand at
-#                     gs://$WEIGHTS_BUCKET/mdm/ (see stage-weights.sh's header).
+#                     texture needs its SDXL checkpoints staged first with
+#                     workers/texture/stage_weights.py; text2motion needs the MDM
+#                     checkpoint staged by hand at gs://$WEIGHTS_BUCKET/mdm/
+#                     (see stage-weights.sh's header).
 #   OUTPUT_BUCKET     default three-ws-avatar-reconstructions
 #   WEIGHTS_BUCKET    default three-ws-model-weights (GPU services only)
 #   RUN_SA            default avatar-reconstruction-sa@$PROJECT_ID (created if
@@ -72,12 +73,17 @@ for svc in $SERVICES; do
     warn "'$svc' needs Cloud Run L4 GPU quota in $REGION"
   fi
 done
-# text2motion is the only worker here that reads the weights bucket at runtime
-# (MOTION_MODEL_DIR=/weights/mdm). texture bakes SDXL + ControlNet into
-# /opt/hf-cache at image build time, so it needs no staging at all.
+# Both GPU workers here read the weights bucket at runtime. text2motion reads
+# MOTION_MODEL_DIR=/weights/mdm; texture stages gs://.../sdxl-texture to local
+# disk on first load and only the depth ControlNet is baked into its image, so
+# an unstaged prefix leaves it downloading SDXL inside the first request.
 case " $SERVICES " in
   *" text2motion "*)
     warn "'text2motion' loads the MDM checkpoint from gs://${WEIGHTS_BUCKET}/mdm/ (model.pt + args.json); stage it before the first request or the service 503s on cold start" ;;
+esac
+case " $SERVICES " in
+  *" texture "*)
+    warn "'texture' loads SDXL from gs://${WEIGHTS_BUCKET}/sdxl-texture; run 'python3 workers/texture/stage_weights.py' first or its first request burns the 600s timeout downloading weights" ;;
 esac
 
 TAG="$(git rev-parse --short HEAD 2>/dev/null || echo manual)"
