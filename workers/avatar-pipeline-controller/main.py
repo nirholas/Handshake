@@ -1,15 +1,16 @@
 """
-Avatar Pipeline Controller — orchestrates mesh generation + auto-rigging.
+Avatar Pipeline Controller - orchestrates mesh generation + auto-rigging.
 
-Same external API contract as the original avatar-reconstruction service so
-the Vercel backend (api/_providers/gcp.js) needs zero changes:
+Same external API contract as the avatar-reconstruction service, so the site
+backend (api/_providers/gcp.js, env GCP_RECONSTRUCTION_URL) needs zero changes
+to point at this controller instead:
 
   POST /reconstruct   { images: [...], body_type?: str }
                    →  202 { job_id, status: "queued" }
 
   GET  /jobs/:id    → { job_id, status, glb_url?, error?, updated_at, model }
 
-  GET  /health      → { ok, models, router }
+  GET  /health      → { ok, pipeline, backends, weights, unirig, skip_rigging }
 
 Internally the controller:
   1. Picks a model backend (Hunyuan3D / TRELLIS / TripoSR / TripoSG) via weighted random.
@@ -27,9 +28,9 @@ Environment variables:
   MODEL_TRELLIS_URL     — URL of the TRELLIS Cloud Run service (optional)
   MODEL_TRIPOSR_URL     — URL of the TripoSR Cloud Run service (optional)
   MODEL_TRIPOSG_URL     — URL of the TripoSG Cloud Run service (optional)
-  UNIRIG_URL            — URL of the UniRig Cloud Run service (optional)
+  UNIRIG_URL            - URL of the rig Cloud Run service `model-rig` (optional; name is historical)
   MODEL_WEIGHTS         — JSON routing weights, e.g. '{"hunyuan3d":0.5,"trellis":0.3,"triposg":0.2}'
-  SKIP_RIGGING          — set to "true" to skip the UniRig stage (for testing)
+  SKIP_RIGGING          - set to "true" to skip the rigging stage (for testing)
 """
 
 from __future__ import annotations
@@ -104,10 +105,19 @@ _http: Optional[httpx.AsyncClient] = None
 
 COLLECTION = "avatar_pipeline_jobs"
 
+# A backend never finishes instantly, so the first poll waits less than the
+# steady-state cadence: long enough not to hammer a just-submitted task, short
+# enough that a cached/fast result is not held back by a full interval.
+FIRST_POLL_DELAY = 1.5
 MESH_POLL_INTERVAL = 3.0
 MESH_POLL_TIMEOUT = 300.0
 RIG_POLL_INTERVAL = 3.0
 RIG_POLL_TIMEOUT = 180.0
+
+# Ceiling on a single downloaded GLB. The whole file is held in memory while it
+# is re-uploaded, and the service runs on 2 GiB with two uvicorn workers, so an
+# unbounded read is how one pathological mesh takes the instance down.
+MAX_GLB_BYTES = 512 * 1024 * 1024
 
 
 @asynccontextmanager
@@ -270,7 +280,7 @@ async def _poll_backend(
     deadline = time.time() + timeout
     attempt = 0
     while time.time() < deadline:
-        await asyncio.sleep(interval if attempt > 0 else 1.5)
+        await asyncio.sleep(interval if attempt > 0 else FIRST_POLL_DELAY)
         attempt += 1
         try:
             resp = await _http.get(
@@ -299,6 +309,23 @@ async def _poll_backend(
     raise RuntimeError(f"{stage_label} timed out after {timeout}s")
 
 
+async def _fetch_bounded(url: str) -> bytes:
+    """Stream a GLB into memory, aborting once it exceeds MAX_GLB_BYTES."""
+    async with _http.stream("GET", url) as resp:
+        resp.raise_for_status()
+        declared = resp.headers.get("content-length")
+        if declared is not None and declared.isdigit() and int(declared) > MAX_GLB_BYTES:
+            raise RuntimeError(f"source GLB too large: {declared} bytes")
+        chunks: list[bytes] = []
+        total = 0
+        async for chunk in resp.aiter_bytes(65536):
+            total += len(chunk)
+            if total > MAX_GLB_BYTES:
+                raise RuntimeError(f"source GLB exceeded {MAX_GLB_BYTES} bytes")
+            chunks.append(chunk)
+        return b"".join(chunks)
+
+
 async def _copy_to_output(job_id: str, source_gcs_url: str) -> str:
     """Copy a GLB from a backend's GCS path to the controller's output bucket."""
     loop = asyncio.get_event_loop()
@@ -308,10 +335,9 @@ async def _copy_to_output(job_id: str, source_gcs_url: str) -> str:
     if source_gcs_url.startswith(expected_prefix):
         return source_gcs_url
 
-    # Download from source and re-upload to output bucket.
-    resp = await _http.get(source_gcs_url)
-    resp.raise_for_status()
-    glb_bytes = resp.content
+    # Download from source and re-upload to output bucket. Streamed with a hard
+    # ceiling so a runaway mesh is refused instead of exhausting the instance.
+    glb_bytes = await _fetch_bounded(source_gcs_url)
 
     blob_name = f"avatars/{job_id}.glb"
     blob = _bucket.blob(blob_name)
