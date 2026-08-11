@@ -1,0 +1,42 @@
+# LongCat-Video model dependencies, installed under constraints.txt.
+#
+# Mirrors upstream's requirements.txt + requirements_avatar.txt
+# (github.com/meituan-longcat/LongCat-Video) with four deliberate differences:
+#
+#   * torch / torchvision / torchaudio install separately from the cu124 index,
+#     before this file, so the CUDA build is the one pip resolves against.
+#   * flash-attn installs separately from a pre-built wheel. Upstream's plain
+#     "flash-attn==2.7.4.post1" is an sdist that compiles for ~40 minutes and
+#     needs nvcc, which the CUDA *runtime* base image does not ship.
+#   * opencv-python is swapped for opencv-python-headless: the GUI build pulls
+#     an X11 stack no server needs.
+#   * dropped from requirements_avatar.txt: libsndfile1 (a name squat on PyPI;
+#     the real dependency is the apt package, installed in the Dockerfile),
+#     tritonserverclient (unused), openai (only imported by the optional prompt
+#     enhancer, which this worker does not call), nvidia-ml-py, tzdata, cffi and
+#     chardet (nothing on the avatar path imports them), and streamlit/pyarrow
+#     (the run_streamlit.py demo UI only).
+
+# Core video pipeline.
+numpy==1.26.4
+transformers==4.41.0
+diffusers==0.35.1
+loguru==0.7.2
+einops==0.8.0
+ftfy==6.2.0
+psutil==6.0.0
+av==12.0.0
+opencv-python-headless==4.9.0.80
+imageio==2.37.0
+imageio-ffmpeg==0.6.0
+
+# Avatar path: audio loading, loudness normalisation, and the ONNX vocal
+# separator that run_demo_avatar_single_audio_to_video.py imports at module
+# scope (audio_separator.separator.Separator).
+librosa==0.11.0
+soundfile==0.13.1
+soxr==0.5.0.post1
+scipy==1.15.3
+pyloudnorm==0.1.1
+onnx==1.18.0
+audio-separator==0.30.2
