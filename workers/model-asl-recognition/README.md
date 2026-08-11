@@ -62,21 +62,29 @@ video ever leaves the user's machine, only pose coordinates.
 ```bash
 cd workers/model-asl-recognition
 pip install -r requirements.txt
-# fetch cfg_2/fold-1/model.tflite from the release zip, then:
+gsutil cp gs://three-ws-model-weights/aslfr-1st-place/cfg_2-fold-1/model.tflite .
 MODEL_PATH=./model.tflite API_KEY= uvicorn main:app --port 8087
 ```
 
-Tests. `test_decode.py` is pure NumPy and needs no weights; `test_model_smoke.py`
-runs the real model end to end and skips when the weights are absent, so the way
-to run it is inside the built image:
+That is the platform's mirror of the same 40,946,288-byte file the image pulls
+from the release zip (sha256
+`4dda856e82c4f909c3ae7eb7f070e5fc88afb143daab639683209b631e3cbfaa`); the zip
+itself is 192 MB of every fold, so pull the single model unless you need the
+others.
+
+Tests. `test_decode.py` is pure NumPy and needs no weights. `test_model_smoke.py`
+runs the real model end to end (full capture, a capture with the left hand
+missing, the shortest accepted capture) and skips when no weights are present:
 
 ```bash
-pip install pytest
-python -m pytest -q -p no:cacheprovider        # 11 pass, 3 smoke tests skip
+pip install pytest ai-edge-litert
+python -m pytest -q -p no:cacheprovider                  # 11 pass, 3 skip
+MODEL_PATH=./model.tflite python -m pytest -q -p no:cacheprovider   # 14 pass
 
+# Or against the weights already baked into the image, no test-only install:
 docker build -t model-asl-recognition:local .
 docker run --rm -v "$PWD:/src" -w /src model-asl-recognition:local \
-  python test_model_smoke.py                   # real weights, real decode
+  python test_model_smoke.py
 ```
 
 ## Deploy
@@ -95,7 +103,10 @@ gcloud run services update three-ws-api --region us-central1 \
 ```
 
 The model is baked into the image from the pinned GitHub release, so instances
-cold-start ready and the service scales to zero. Recognition runs inside the
+cold-start ready and the service scales to zero. The same file is mirrored to
+`gs://three-ws-model-weights/aslfr-1st-place/cfg_2-fold-1/model.tflite`, so if
+that third-party release ever disappears the build has a first-party source to
+point at. Recognition runs inside the
 request and stays sub-second at any accepted capture length (measured on the
 live service: 0.32s for 40 frames, 0.77s for both 300 and the 1500-frame cap,
 since the encoder works to a fixed length), which is why the service is billed
