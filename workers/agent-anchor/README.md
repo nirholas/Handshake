@@ -26,15 +26,25 @@ degrades gracefully so a dead feed narrows the read instead of going silent:
    - Dexscreener token API — a live price/volume snapshot for the house ticker
      (the same public, key-free source the `pump_snapshot` MCP tool uses),
      picking the highest-24h-volume pair.
+
+   When the aixbt lane comes back empty (it is a paid third-party subscription
+   and has returned 503 in production), a fourth request fires as the narrative
+   **failover rung**: `GET /api/news/feed?limit=12&featured=1`, the aggregated
+   publisher feed narrowed to the majors. That keeps a real narrative spine on
+   air instead of a price-only bulletin. It costs nothing on a healthy cycle:
+   the failover only runs when the primary lane returned no items.
 2. **Merge** (`brief.js` → `mergeBrief`) — folds the raw payloads into a compact,
-   anchor-ready briefing: top 3 narratives (official/most-observed first), a
-   sentiment label, a market snapshot, and an `offline` list of feeds that
-   didn't return (so the prompt never invents data for them).
+   anchor-ready briefing: top 3 narratives (official/most-observed first, or
+   publisher-attributed and recency-ordered on the failover lane), a sentiment
+   label, a market snapshot, `narrativeSource` naming the lane that fed the
+   spine, and an `offline` list of feeds that didn't return (so the prompt never
+   invents data for them).
 3. **Script** (`scriptBulletin`) — streams `POST /api/brain/chat` (SSE),
-   accumulating the fragments into a 2–4 sentence anchor read. Uses the free,
-   anon-allowed `gpt-oss-120b` provider so it never burns a billed key. The
-   system prompt forbids buy/sell calls and forbids naming any ticker other than
-   $THREE.
+   accumulating the fragments into a 2 to 4 sentence anchor read. Uses the
+   anon-allowed `gpt-oss-120b` provider so it never burns a billed third-party
+   key; if every free rung is throttled the brain's own chain ends on the
+   credits-funded Vertex anchor. The system prompt forbids buy/sell calls and
+   forbids naming any ticker other than $THREE.
 4. **Split** (`splitScript`) — separates the read into a lower-third **headline**
    (≤120 chars) and a spoken **body** (≤700 chars), tolerant of the model
    dropping the `HEADLINE:` marker.
@@ -59,9 +69,12 @@ speech, and lip-sync the avatar to it.
 | `anchor-client.js` | Live integrations — feed fetches, the streamed `/api/brain/chat` call, and the script publish. |
 | `brief.js` | Pure, dependency-free feed-merge + prompt-build + script-split logic (unit-tested, no network). |
 | `screen-push.js` | Fire-and-forget headline push; optional `canvas`-rendered broadcast frame. |
+| `smoke.mjs` | Live core-path check: one real bulletin, every contract asserted, no cadence loop. |
 
 The pure core in `brief.js` is covered by `tests/anchor-brief.test.js`
-(`mergeBrief`, `briefDigest`, `buildAnchorMessages`, `splitScript`).
+(`mergeBrief` incl. the narrative failover, `briefDigest`, `buildAnchorMessages`,
+`splitScript`). The networked path is covered by `smoke.mjs` against the real
+API (see **Verify the pipeline** below).
 
 ## Public exports per module
 
@@ -72,7 +85,7 @@ export the pieces of the pipeline so they can be reused and unit-tested:
 
 | Export | Signature | Purpose |
 |---|---|---|
-| `gatherBrief` | `() → Promise<brief>` | Fetch the three feeds concurrently and return a merged briefing. |
+| `gatherBrief` | `() → Promise<brief>` | Fetch the three feeds concurrently (plus the narrative failover when the primary lane is empty) and return a merged briefing. |
 | `scriptBulletin` | `(brief) → Promise<string>` | Stream `POST /api/brain/chat` (SSE) into the full anchor read; throws on an upstream error or empty script. |
 | `publishScript` | `({ headline, body, brief }) → Promise<void>` | Store the spoken body via `POST /api/agent/anchor-script` (no-op without `AGENT_JWT`/`AGENT_ID`). |
 
@@ -86,7 +99,7 @@ export the pieces of the pipeline so they can be reused and unit-tested:
 | `MAX_ITEMS` | `3` | Narratives read on air per bulletin. |
 | `sentimentLabel` | `(score) → string\|null` | Human label for a `[-1,1]` sentiment score. |
 | `fmtUsd` | `(v) → string\|null` | Compact USD formatting (`$1.2M`, `$940K`, `$0.04`). |
-| `mergeBrief` | `(feeds) → brief` | Fold raw `{ intel, sentiment, pump }` payloads into the anchor briefing. |
+| `mergeBrief` | `(feeds) → brief` | Fold raw `{ intel, news, sentiment, pump }` payloads into the anchor briefing (`news` is the narrative failover lane; the result's `narrativeSource` is `'aixbt'`, `'news'`, or `null`). |
 | `briefDigest` | `(brief) → string` | Deterministic plain-text digest handed to the brain. |
 | `buildAnchorMessages` | `(brief) → { system, messages }` | Build the `POST /api/brain/chat` payload. |
 | `splitScript` | `(script) → { headline, body }` | Split a scripted read into headline + spoken body. |
@@ -111,6 +124,18 @@ export the pieces of the pipeline so they can be reused and unit-tested:
 
 `canvas` is an **optional** dependency: install it to render the desk/lower-third
 PNG frame; omit it for text-only frames.
+
+## Where it runs
+
+**This worker has no container image and no Cloud Run service of its own**, by
+construction: there is no `Dockerfile` and no `cloudbuild.yaml` here (its sibling
+`workers/agent-sniper` has both, and is deployed). It is an operator-launched
+process: start it on any host with Node ≥ 22 and network access to the API, and
+it stays on air until you stop it. Nothing in the repo starts it for you, and no
+cron covers it. The cadence loop lives in this process.
+
+That is why `/agent-screen` shows no anchor unless somebody is running this
+worker. A `null` from the script endpoint below is the definitive check.
 
 ## Run
 
@@ -138,9 +163,24 @@ All are real three.ws API calls (no mocks):
 - `POST /api/brain/chat` — SSE, `{ provider, system, messages, maxTokens }`
 - `POST /api/agent/anchor-script` — `{ agentId, headline, body, offline }` (auth: agent JWT)
 - `POST /api/agent-screen-push` — `{ agentId, frame }` (auth: agent JWT)
+- `GET  /api/news/feed?limit=12&featured=1` (narrative failover)
 - `https://api.dexscreener.com/latest/dex/tokens/<mint>` — public price/volume
 
 ## Verify the pipeline
+
+`smoke.mjs` runs one real bulletin end to end and asserts every contract the
+cadence loop depends on. It never enters the loop, so it is safe to run against
+production while the worker is on air:
+
+```bash
+node workers/agent-anchor/smoke.mjs      # or, from this directory: npm run smoke
+```
+
+It prints the gathered brief (which lane fed the narrative spine, which feeds
+were offline), the scripted read, and the headline/body split, then exits 0 when
+every assertion held and 1 with the failing contract named. With `AGENT_JWT` and
+`AGENT_ID` set it also publishes the script and reads it back through the public
+GET; without them it reports the publish leg as skipped rather than passing it.
 
 Read back the last script the running anchor stored (the GET side is public):
 
