@@ -65,6 +65,7 @@ import {
 	vertexRequestHeaders,
 	toVertexBody,
 } from './_lib/vertex-claude.js';
+import { vertexGeminiBudget } from './_lib/vertex-gemini.js';
 import { z } from 'zod';
 
 // Providers anonymous (unauthenticated) callers may use. Groq and OpenRouter
@@ -1356,7 +1357,11 @@ function makeRoute(name, cfg, apiKey, model) {
 			resolveHeaders: () => vertexRequestHeaders(),
 			buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true }) => ({
 				model,
-				max_tokens: maxTokens,
+				// Gemini reasons by default and its reasoning tokens are billed against
+				// max_tokens without being returned, so a plain budget streams a reply
+				// that stops mid-sentence. vertexGeminiBudget caps the reasoning and
+				// funds it on top of the caller's budget (max_tokens + extra_body).
+				...vertexGeminiBudget(maxTokens),
 				messages: [{ role: 'system', content: systemPrompt }, ...history],
 				...(includeTools ? { tools: OPENAI_TOOLS, tool_choice: 'auto' } : {}),
 				stream: true,
