@@ -37,6 +37,7 @@ import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
 import { hasSeoRoute, renderSeoHead } from './seo-head.mjs';
+import { isMissingShellPage } from './shell-pages.mjs';
 import { hardenHeaderBag } from './csp-hashes.mjs';
 // Route resolution lives in its own module so the audit scripts
 // (scripts/audit-cron-liveness.mjs) exercise the SAME resolver production runs,
@@ -412,7 +413,13 @@ app.use(async (req, res) => {
 
 	// Filesystem phase (GET/HEAD only, like a static host).
 	if (req.method === 'GET' || req.method === 'HEAD') {
-		const file = resolveStatic(currentPath);
+		// /docs/* and /tutorials/* rewrite every slug to one shell, so a typo used
+		// to answer 200 with an empty shell instead of a 404. When the article the
+		// shell would fetch does not exist, this is not a page: serve whatever the
+		// raw path names on disk (/docs/<dir>/index.html), and otherwise skip the
+		// filesystem phase so the request lands on the designed 404 below.
+		const shellMiss = isMissingShellPage(DIST_ROOT, currentPath, url.pathname);
+		const file = shellMiss ? resolveStatic(url.pathname) : resolveStatic(currentPath);
 		if (file) {
 			// A few directory pages render their whole body from client JS, which
 			// leaves crawlers and no-JS visitors an empty shell. For those routes we
