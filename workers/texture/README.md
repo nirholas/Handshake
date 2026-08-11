@@ -56,7 +56,10 @@ no GitHub Actions.
 Bringing it up is three commands, in this order:
 
 ```bash
-# 1. stage the checkpoints (~15 GiB, once, and again on any checkpoint change)
+# 1. stage the checkpoints (~15 GiB, once, and again on any checkpoint change).
+#    Needs huggingface_hub and google-cloud-storage on the host, and credentials
+#    the storage client can find (a service account, or gcloud application
+#    default credentials).
 python3 workers/texture/stage_weights.py --prefix sdxl-texture
 
 # 2. build + deploy from the repo root (the build step declares dir: workers/texture,
