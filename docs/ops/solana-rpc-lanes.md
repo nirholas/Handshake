@@ -118,6 +118,19 @@ unreadable wallet as `‼ unreadable`, and
 never as the `owner` "fund this wallet" finding. On 2026-08-07 the older behaviour turned
 one throttled lane into four fake below-floor money emergencies.
 
+[scripts/audit-wallet-flows.mjs](../../scripts/audit-wallet-flows.mjs) follows the same
+rule as of 2026-08-11. It used to coerce every wallet in a chunk whose lane threw to
+`0`, so a single failed chunk silently shrank the fleet total by whatever those wallets
+held and still exited clean. It now leaves them unread, excludes them from every total,
+lists them under `UNVERIFIED`, and exits `2`. A `null` account inside a *successful*
+`getMultipleAccounts` response is still a real zero: that account does not exist on
+chain. Only a call that threw is an unread.
+
+Both audits prune hosts with a hard egress block from their own lane chains rather than
+trusting `SOLANA_RPC_URL` blindly, because that var still points at MagicBlock in `.env`
+and on the Cloud Run service. Pointing an audit at a 403 lane is how it came to read
+every wallet as empty in the first place.
+
 ## Why a refusal must rotate, and when it must not
 
 The breaker splits JSON-RPC errors into two classes:
