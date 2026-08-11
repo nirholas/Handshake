@@ -1,61 +1,52 @@
 /**
  * Build script for @three-ws/sdk
  *
- * Uses esbuild (available in the root node_modules) to produce:
- *   dist/index.js    — CommonJS bundle
- *   dist/index.mjs   — ESM bundle
+ * The package ships its ESM source as-is (package.json `exports` resolve the
+ * `import` condition straight to src/), so the only thing that has to be built
+ * is the CommonJS interop layer for consumers that `require()` the package.
  *
- * Then copies type declarations into dist/.
+ * Uses esbuild (available in the root node_modules) to bundle every public
+ * entry point to a `.cjs` file under dist/. The `.cjs` extension is
+ * load-bearing: this package is `"type": "module"`, so a CJS bundle named
+ * `.js` is parsed as ESM by Node and resolves to zero exports.
  *
  * Run: node build.mjs (from sdk/ directory)
  */
 
 import { build } from '../node_modules/esbuild/lib/main.js';
-import { copyFileSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { mkdirSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-const entryPoint = join(__dirname, 'src/index.js');
 const outDir = join(__dirname, 'dist');
 
-mkdirSync(outDir, { recursive: true });
+// Every entry point declared in package.json `exports` that has JS behind it.
+// Keep this list in sync with the `require` conditions in package.json.
+const ENTRIES = [
+	{ src: 'src/index.js', out: 'index.cjs' },
+	{ src: 'src/permissions.js', out: 'permissions.cjs' },
+	{ src: 'src/permissions/advanced.js', out: 'permissions/advanced.cjs' },
+	{ src: 'src/solana.js', out: 'solana.cjs' },
+	{ src: 'src/solana-attestations.js', out: 'solana-attestations.cjs' },
+];
 
-const shared = {
-	entryPoints: [entryPoint],
-	bundle: true,
-	// Mark all peer deps and ethers as external — consumers install them.
-	external: ['ethers', '@solana/web3.js'],
-	sourcemap: false,
-	logLevel: 'info',
-};
-
-// ESM build
-await build({
-	...shared,
-	format: 'esm',
-	outfile: join(outDir, 'index.mjs'),
-});
-
-// CJS build
-await build({
-	...shared,
-	format: 'cjs',
-	outfile: join(outDir, 'index.js'),
-});
-
-// Copy type declarations
-copyFileSync(join(__dirname, 'src/index.d.ts'), join(outDir, 'index.d.ts'));
-
-// permissions sub-entry
+rmSync(outDir, { recursive: true, force: true });
 mkdirSync(join(outDir, 'permissions'), { recursive: true });
-copyFileSync(join(__dirname, 'src/permissions.d.ts'), join(outDir, 'permissions.d.ts'));
 
-// permissions/advanced sub-entry
-copyFileSync(join(__dirname, 'src/permissions/advanced.d.ts'), join(outDir, 'permissions/advanced.d.ts'));
+for (const entry of ENTRIES) {
+	await build({
+		entryPoints: [join(__dirname, entry.src)],
+		outfile: join(outDir, entry.out),
+		bundle: true,
+		format: 'cjs',
+		platform: 'node',
+		target: 'node18',
+		// Peer deps stay external: consumers install them.
+		external: ['ethers', '@solana/web3.js', 'viem'],
+		sourcemap: false,
+		logLevel: 'info',
+	});
+}
 
-// Copy styles
-copyFileSync(join(__dirname, 'src/styles.css'), join(outDir, 'styles.css'));
-
-console.log('Build complete — dist/');
+console.log(`Build complete: ${ENTRIES.length} CommonJS entry points in dist/`);

@@ -311,6 +311,7 @@
 		"check:claude": "node scripts/check-claude-md.mjs",
 		"verify:erc8004-validation": "node scripts/erc8004/verify-validation-registry.mjs",
 		"check:rules": "node scripts/check-rules.mjs",
+		"check:secrets": "node scripts/check-secrets.mjs",
 		"check:gcloudignore": "node scripts/check-gcloudignore.mjs",
 		"check:evm-rpc": "node --env-file=.env scripts/probe-evm-rpc.mjs --chain 1 --ens",
 		"awal:pin": "node scripts/update-awal-version.mjs",
