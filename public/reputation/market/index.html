@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Reputation Staking Market &middot; three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta
+			name="description"
+			content="Stake conviction on an agent and earn from its attested action history. Escrowed principal, per-epoch yield derived from signed on-chain attestations, withdraw any time."
+		/>
+		<meta name="theme-color" content="#090909" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/home.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Reputation Staking Market &middot; three.ws" />
+		<meta
+			property="og:description"
+			content="Stake conviction on an agent and earn from its attested action history."
+		/>
+		<meta property="og:url" content="https://three.ws/reputation/market" />
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=agent-tools&amp;t=Reputation+Staking+Market&amp;d=Stake+conviction+on+an+agent+and+earn+from+its+attested+action+history.&amp;p=%2Freputation%2Fmarket"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+		<style>
+			*,
+			*::before,
+			*::after { box-sizing: border-box; }
+			body {
+				background: #090909;
+				color: #e8e9f0;
+				font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+				font-size: 15px;
+				line-height: 1.55;
+				overflow-x: hidden;
+			}
+			h1, h2, h3 {
+				font-family: 'Space Grotesk', -apple-system, sans-serif;
+				font-weight: 700;
+				letter-spacing: -0.03em;
+				margin: 0;
+			}
+			a { color: #fff; text-decoration: none; }
+			a:hover { color: rgba(232, 233, 240, 0.7); }
+			button { font-family: inherit; }
+			:focus-visible {
+				outline: 2px solid #7c7cff;
+				outline-offset: 2px;
+				border-radius: 4px;
+			}
+
+			.rsm-wrap { max-width: 1080px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+
+			/* ── Masthead ── */
+			.rsm-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; margin-bottom: 0.5rem; }
+			.rsm-head h2 { font-size: clamp(1.75rem, 4vw, 2.5rem); }
+			.rsm-sub { color: rgba(232, 233, 240, 0.6); max-width: 62ch; margin: 0.5rem 0 0; }
+			.rsm-net { display: inline-flex; padding: 3px; gap: 3px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 999px; }
+			.rsm-net button {
+				appearance: none;
+				border: 0;
+				background: transparent;
+				color: rgba(232, 233, 240, 0.6);
+				padding: 0.35rem 0.9rem;
+				border-radius: 999px;
+				font-size: 0.8rem;
+				font-weight: 600;
+				cursor: pointer;
+				transition: background 0.15s ease, color 0.15s ease;
+			}
+			.rsm-net button:hover { color: #e8e9f0; background: rgba(255, 255, 255, 0.06); }
+			.rsm-net button[aria-pressed='true'] { background: rgba(124, 124, 255, 0.22); color: #fff; }
+
+			/* ── Stat strip ── */
+			.rsm-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; margin: 1.75rem 0; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; overflow: hidden; }
+			.rsm-stat { background: #0e0e0e; padding: 1.1rem 1.25rem; }
+			.rsm-stat-v { font-family: 'Space Grotesk', monospace; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+			.rsm-stat-l { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; color: rgba(232, 233, 240, 0.45); margin-top: 0.2rem; }
+
+			/* ── Sections ── */
+			.rsm-sec { margin-top: 2.75rem; }
+			.rsm-sec > h3 { font-size: 1.15rem; margin-bottom: 0.35rem; }
+			.rsm-sec-note { color: rgba(232, 233, 240, 0.5); font-size: 0.87rem; margin: 0 0 1rem; max-width: 68ch; }
+
+			/* ── Table ── */
+			.rsm-scroll { overflow-x: auto; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; }
+			table.rsm-table { width: 100%; border-collapse: collapse; min-width: 720px; }
+			.rsm-table th, .rsm-table td { padding: 0.8rem 1rem; text-align: right; white-space: nowrap; }
+			.rsm-table th:first-child, .rsm-table td:first-child { text-align: left; }
+			.rsm-table thead th { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.09em; color: rgba(232, 233, 240, 0.45); background: rgba(255, 255, 255, 0.03); font-weight: 600; }
+			.rsm-table tbody tr { border-top: 1px solid rgba(255, 255, 255, 0.06); transition: background 0.15s ease; }
+			.rsm-table tbody tr:hover { background: rgba(255, 255, 255, 0.035); }
+			.rsm-agent { display: flex; flex-direction: column; gap: 0.1rem; }
+			.rsm-agent-name { font-weight: 600; }
+			.rsm-mono { font-family: 'Space Grotesk', ui-monospace, monospace; font-size: 0.78rem; color: rgba(232, 233, 240, 0.42); }
+			.rsm-num { font-family: 'Space Grotesk', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+			.rsm-pos { color: #4ade80; }
+			.rsm-zero { color: rgba(232, 233, 240, 0.35); }
+
+			/* ── Weight bar ── */
+			.rsm-bar { display: inline-block; width: 74px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); overflow: hidden; vertical-align: middle; margin-left: 0.5rem; }
+			.rsm-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #7c7cff, #4ade80); border-radius: 3px; transition: width 0.4s ease; }
+
+			/* ── Buttons ── */
+			.rsm-btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				padding: 0.5rem 0.95rem;
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				border-radius: 8px;
+				color: #e8e9f0;
+				font-size: 0.83rem;
+				font-weight: 600;
+				cursor: pointer;
+				transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+			}
+			.rsm-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+			.rsm-btn:active:not(:disabled) { transform: translateY(1px); }
+			.rsm-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+			.rsm-btn.primary { background: rgba(124, 124, 255, 0.2); border-color: rgba(124, 124, 255, 0.45); }
+			.rsm-btn.primary:hover:not(:disabled) { background: rgba(124, 124, 255, 0.3); }
+
+			/* ── Forms ── */
+			.rsm-form { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 1rem; }
+			.rsm-input {
+				flex: 1 1 320px;
+				min-width: 0;
+				padding: 0.55rem 0.8rem;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				border-radius: 8px;
+				color: #e8e9f0;
+				font-family: 'Space Grotesk', ui-monospace, monospace;
+				font-size: 0.85rem;
+				transition: border-color 0.15s ease, background 0.15s ease;
+			}
+			.rsm-input::placeholder { color: rgba(232, 233, 240, 0.3); }
+			.rsm-input:hover { background: rgba(255, 255, 255, 0.06); }
+			.rsm-input:focus { border-color: rgba(124, 124, 255, 0.6); background: rgba(255, 255, 255, 0.06); outline: none; }
+
+			/* ── Cards ── */
+			.rsm-cards { display: grid; gap: 0.7rem; }
+			.rsm-card { border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1rem 1.15rem; background: rgba(255, 255, 255, 0.015); transition: border-color 0.15s ease; }
+			.rsm-card:hover { border-color: rgba(255, 255, 255, 0.16); }
+			.rsm-card-top { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: baseline; justify-content: space-between; }
+			.rsm-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-top: 0.8rem; }
+			.rsm-kv-l { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.09em; color: rgba(232, 233, 240, 0.42); }
+			.rsm-kv-v { font-family: 'Space Grotesk', ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 0.95rem; }
+
+			/* ── Chips ── */
+			.rsm-chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+			.rsm-chip.open { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+			.rsm-chip.settling { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+			.rsm-chip.closed { background: rgba(255, 255, 255, 0.08); color: rgba(232, 233, 240, 0.55); }
+
+			/* ── States ── */
+			@keyframes rsm-shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
+			.rsm-skel { border-radius: 6px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.04) 75%); background-size: 1200px 100%; animation: rsm-shimmer 1.5s infinite linear; height: 2.6rem; margin: 1px 0; }
+			@media (prefers-reduced-motion: reduce) { .rsm-skel { animation: none; } .rsm-bar > span { transition: none; } }
+			.rsm-empty, .rsm-error { border: 1px dashed rgba(255, 255, 255, 0.14); border-radius: 14px; padding: 2.25rem 1.5rem; text-align: center; }
+			.rsm-error { border-color: rgba(248, 113, 113, 0.35); border-style: solid; background: rgba(248, 113, 113, 0.05); }
+			.rsm-empty h4, .rsm-error h4 { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; margin: 0 0 0.35rem; }
+			.rsm-empty p, .rsm-error p { color: rgba(232, 233, 240, 0.55); margin: 0 auto 1rem; max-width: 46ch; font-size: 0.88rem; }
+			.rsm-msg { font-size: 0.85rem; margin: 0.6rem 0 0; min-height: 1.2rem; }
+			.rsm-msg.ok { color: #4ade80; }
+			.rsm-msg.bad { color: #f87171; }
+
+			/* ── Model explainer ── */
+			.rsm-model { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+			.rsm-model-card { border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1.1rem 1.2rem; background: rgba(255, 255, 255, 0.015); }
+			.rsm-model-card h4 { font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; margin: 0 0 0.4rem; }
+			.rsm-model-card p { margin: 0; font-size: 0.85rem; color: rgba(232, 233, 240, 0.58); }
+			.rsm-model-card code { font-family: 'Space Grotesk', ui-monospace, monospace; font-size: 0.8rem; color: #a5b4fc; }
+
+			@media (max-width: 640px) {
+				.rsm-wrap { padding: 1.75rem 1rem 4rem; }
+				.rsm-head { align-items: flex-start; }
+			}
+		</style>
+	</head>
+	<body>
+		<a href="#rsm-content" class="h-skip-link">Skip to content</a>
+
+		<header>
+			<h1>
+				<a href="/" aria-label="three.ws home"
+					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a
+				>
+			</h1>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main id="rsm-content">
+			<div class="rsm-wrap">
+				<div class="rsm-head">
+					<div>
+						<h2>Reputation Staking Market</h2>
+						<p class="rsm-sub">
+							Back an agent with escrowed SOL and earn from what it actually did. Yield comes from the agent's signed,
+							on-chain action history, split each UTC day between everyone staked on it. Principal is never slashed and
+							can be withdrawn at any time.
+						</p>
+					</div>
+					<div class="rsm-net" role="group" aria-label="Network">
+						<button type="button" data-network="devnet" aria-pressed="true">Devnet</button>
+						<button type="button" data-network="mainnet" aria-pressed="false">Mainnet</button>
+					</div>
+				</div>
+
+				<div class="rsm-stats" id="rsm-stats" aria-live="polite"></div>
+
+				<section class="rsm-sec" aria-labelledby="rsm-market-h">
+					<h3 id="rsm-market-h">Agents by staked conviction</h3>
+					<p class="rsm-sec-note">
+						Ranked by net principal currently escrowed. <strong>Epoch weight</strong> is today's yield weight derived
+						from the agent's attested work and faults; <strong>realized</strong> is the annualised rate its stakers have
+						actually been paid, never a projection.
+					</p>
+					<div id="rsm-market"></div>
+				</section>
+
+				<section class="rsm-sec" aria-labelledby="rsm-open-h">
+					<h3 id="rsm-open-h">Open a position</h3>
+					<p class="rsm-sec-note">
+						A stake is a transaction you sign: SOL to the market escrow plus a
+						<code>threews.stake.v1</code> memo. Connect a Solana wallet to build it here, or paste the signature of one
+						you already broadcast and the market will verify it against the chain.
+					</p>
+					<form class="rsm-form" id="rsm-stake-form">
+						<input class="rsm-input" id="rsm-stake-agent" placeholder="Agent asset pubkey" aria-label="Agent asset pubkey" autocomplete="off" spellcheck="false" />
+						<input class="rsm-input" id="rsm-stake-amount" type="number" min="0.001" step="0.001" value="0.01" style="flex: 0 1 130px" aria-label="Stake amount in SOL" />
+						<label class="rsm-mono" for="rsm-stake-score" style="color: rgba(232,233,240,0.6)">Conviction</label>
+						<select class="rsm-input" id="rsm-stake-score" style="flex: 0 1 90px" aria-label="Conviction score 1 to 5">
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+							<option value="4" selected>4</option>
+							<option value="5">5</option>
+						</select>
+						<button class="rsm-btn primary" type="submit" id="rsm-stake-go">Connect wallet and stake</button>
+					</form>
+					<form class="rsm-form" id="rsm-record-form">
+						<input class="rsm-input" id="rsm-record-sig" placeholder="Or paste an existing stake transaction signature" aria-label="Stake transaction signature" autocomplete="off" spellcheck="false" />
+						<button class="rsm-btn" type="submit">Verify and index</button>
+					</form>
+					<p class="rsm-msg" id="rsm-stake-msg" role="status" aria-live="polite"></p>
+				</section>
+
+				<section class="rsm-sec" aria-labelledby="rsm-pos-h">
+					<h3 id="rsm-pos-h">Your positions</h3>
+					<p class="rsm-sec-note">
+						Positions belong to the wallet that signed the stake, so anyone can look one up. Earnings shown for an open
+						position are pending: they are recomputed on every read and only fixed when you withdraw.
+					</p>
+					<form class="rsm-form" id="rsm-pos-form">
+						<input class="rsm-input" id="rsm-pos-staker" placeholder="Staker wallet pubkey" aria-label="Staker wallet pubkey" autocomplete="off" spellcheck="false" />
+						<button class="rsm-btn" type="submit">Look up</button>
+						<button class="rsm-btn" type="button" id="rsm-pos-connect">Use my wallet</button>
+					</form>
+					<div id="rsm-positions"></div>
+					<p class="rsm-msg" id="rsm-pos-msg" role="status" aria-live="polite"></p>
+				</section>
+
+				<section class="rsm-sec" aria-labelledby="rsm-model-h">
+					<h3 id="rsm-model-h">How the yield is derived</h3>
+					<p class="rsm-sec-note">
+						Every constant below lives in one place and runs identically in your browser and on the server, so you can
+						re-derive any payout yourself. Full contract:
+						<a href="https://github.com/nirholas/three.ws/blob/main/specs/REPUTATION_STAKING_MARKET.md">the spec</a>.
+					</p>
+					<div class="rsm-model">
+						<div class="rsm-model-card">
+							<h4>Work, from attestations</h4>
+							<p>
+								Accepted tasks, passed validations and task-linked feedback add work. Failed validations, disputes and
+								revocations add faults, charged at double the rate work pays.
+							</p>
+						</div>
+						<div class="rsm-model-card">
+							<h4>Performance</h4>
+							<p>
+								<code>quality &times; integrity</code>, where quality maps the 1-5 feedback scale onto 0-1 and integrity
+								is <code>work / (work + 2 &times; faults)</code>. No feedback reads as neutral, not as bad.
+							</p>
+						</div>
+						<div class="rsm-model-card">
+							<h4>Concave in activity</h4>
+							<p>
+								Weight is <code>performance &times; log2(1 + work)</code>. Doubling output does not double yield, so
+								spraying cheap attestations buys nothing.
+							</p>
+						</div>
+						<div class="rsm-model-card">
+							<h4>A fixed pool, never a rate</h4>
+							<p>
+								Each epoch has a funded budget split by <code>principal &times; time &times; weight</code>. The market can
+								never owe more than the escrow holds, and principal is never at risk.
+							</p>
+						</div>
+					</div>
+				</section>
+			</div>
+		</main>
+
+		<script type="module" src="/reputation/market/market.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
