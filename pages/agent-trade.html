@@ -12,19 +12,19 @@
 		<link rel="manifest" href="/manifest.webmanifest" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title data-i18n="agent_trade.meta_title">Agent Commerce · three.ws</title>
-  <meta name="description" content="Watch two AI agents pay each other on-chain using x402 — a live Solana transaction, in 3D." data-i18n-attr="content:agent_trade.meta_description">
+  <meta name="description" content="Watch two AI agents pay each other on-chain using x402: a live Solana transaction, rendered in 3D." data-i18n-attr="content:agent_trade.meta_description">
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/agent-trade" />
 	<meta property="og:title" content="Agent Commerce · three.ws"  data-i18n-attr="content:agent_trade.meta_og_title"/>
-	<meta property="og:description" content="Watch two AI agents pay each other on-chain using x402 — a live Solana transaction, in 3D."  data-i18n-attr="content:agent_trade.meta_og_description"/>
+	<meta property="og:description" content="Watch two AI agents pay each other on-chain using x402: a live Solana transaction, rendered in 3D."  data-i18n-attr="content:agent_trade.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Commerce&amp;d=Watch+two+AI+agents+pay+each+other+on-chain+using+x402%3A+a+live+Solana+transaction%2C+rendered+in+3D.&amp;p=%2Fagent-trade" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
 	<meta name="twitter:title" content="Agent Commerce · three.ws"  data-i18n-attr="content:agent_trade.meta_twitter_title"/>
-	<meta name="twitter:description" content="Watch two AI agents pay each other on-chain using x402 — a live Solana transaction, in 3D."  data-i18n-attr="content:agent_trade.meta_twitter_description"/>
+	<meta name="twitter:description" content="Watch two AI agents pay each other on-chain using x402: a live Solana transaction, rendered in 3D."  data-i18n-attr="content:agent_trade.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Commerce&amp;d=Watch+two+AI+agents+pay+each+other+on-chain+using+x402%3A+a+live+Solana+transaction%2C+rendered+in+3D.&amp;p=%2Fagent-trade" />
   <link rel="stylesheet" href="/fonts/fonts.css">
   <link rel="stylesheet" href="/tokens.css">
@@ -100,7 +100,8 @@
     /* ── Central floating card ─────────────────────────────────────────── */
     #centralCard {
       position: fixed; left: 50%; transform: translateX(-50%);
-      top: 50%; margin-top: -40px; width: 360px;
+      top: 50%; margin-top: -40px; width: min(360px, calc(100vw - 28px));
+      max-height: calc(100vh - 210px); overflow-y: auto;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); backdrop-filter: blur(18px);
       padding: 18px 22px; z-index: 20;
@@ -114,6 +115,7 @@
     }
     .c-badge-402    { background: color-mix(in srgb, var(--red) 10%, transparent);  border: 1px solid color-mix(in srgb, var(--red) 30%, transparent);  color: var(--red); }
     .c-badge-ok     { background: color-mix(in srgb, var(--green) 10%, transparent); border: 1px solid color-mix(in srgb, var(--green) 30%, transparent); color: var(--green); }
+    .c-badge-idle   { background: rgba(8,189,186,0.1); border: 1px solid rgba(8,189,186,0.3); color: var(--teal); }
     .c-label  { font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 6px; font-family: var(--mono); }
     .c-price  { font-size: 1.7rem; font-weight: 600; font-family: var(--mono); margin: 8px 0 4px; }
     .c-price.blue  { color: var(--blue); }
@@ -129,7 +131,7 @@
     #stepLog {
       position: fixed; bottom: 76px; left: 50%; transform: translateX(-50%);
       display: flex; gap: 7px; flex-wrap: wrap; justify-content: center;
-      z-index: 10; max-width: 600px;
+      z-index: 10; width: min(600px, calc(100vw - 20px));
     }
     .step-chip {
       padding: 4px 11px; border-radius: 20px; font-size: 0.68rem;
@@ -144,18 +146,21 @@
     /* ── CTA bar ────────────────────────────────────────────────────────── */
     #cta {
       position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
-      display: flex; align-items: center; gap: 10px; z-index: 10;
+      display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 10;
+      width: min(520px, calc(100vw - 24px));
     }
     #topicSelect {
       padding: 9px 14px; background: var(--surface); border: 1px solid var(--border);
       border-radius: 8px; color: var(--text); font-family: var(--font);
       font-size: 0.86rem; cursor: pointer; backdrop-filter: blur(10px);
-      min-width: 200px; appearance: none;
+      flex: 1 1 auto; min-width: 0; max-width: 260px; appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238d8d8d' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat; background-position: right 12px center;
       padding-right: 32px;
     }
     #topicSelect:disabled { opacity: 0.45; cursor: default; }
+    #topicSelect:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+    #startBtn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
     #startBtn {
       padding: 10px 24px; background: var(--blue); color: #fff;
       border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500;
@@ -167,12 +172,15 @@
     #startBtn:disabled { opacity: 0.45; cursor: default; }
 
     /* ── Toast ──────────────────────────────────────────────────────────── */
+    /* Anchored to the top: the bottom of the viewport already stacks the step
+       log and the CTA, and a bottom-anchored toast sat on top of both. */
     #toast {
-      position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%);
+      position: fixed; top: 66px; left: 50%; transform: translateX(-50%);
       background: color-mix(in srgb, var(--red) 14%, transparent); border: 1px solid color-mix(in srgb, var(--red) 40%, transparent);
       color: var(--red); padding: 10px 20px; border-radius: 8px;
       font-size: 0.83rem; z-index: 30; opacity: 0;
-      transition: opacity var(--duration-base) var(--ease-standard); pointer-events: none; max-width: 420px; text-align: center;
+      transition: opacity var(--duration-base) var(--ease-standard); pointer-events: none;
+      width: max-content; max-width: min(420px, calc(100vw - 24px)); text-align: center;
     }
     #toast.show { opacity: 1; }
 
@@ -191,6 +199,7 @@
     .env-block {
       background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px;
       padding: 14px 16px; font-family: var(--mono); font-size: 0.75rem; line-height: 2.1;
+      overflow-x: auto;
     }
     .env-k { color: var(--blue); }
     .env-c { color: #525252; }
@@ -200,6 +209,9 @@
     .cfg-gen code {
       font-family: var(--mono); font-size: 0.72rem;
       background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;
+      /* A one-line shell command is wider than a 320px viewport: wrap it rather
+         than letting it push the whole page sideways. */
+      display: inline-block; max-width: 100%; overflow-wrap: anywhere;
     }
     .cfg-close {
       margin-top: 18px; padding: 9px 20px; background: rgba(69,137,255,0.15);
@@ -250,18 +262,51 @@
       .header-links { gap: 2px; margin-left: 4px; }
       .header-links a { padding: 4px 7px; font-size: 0.6rem; }
       #header { padding: 12px 14px; gap: 8px; }
+      /* Stack the controls: side by side they cannot both stay legible at 320px. */
+      #cta { flex-direction: column; gap: 8px; }
+      #topicSelect, #startBtn { width: 100%; max-width: none; }
+      #stepLog { bottom: 128px; }
+      .step-chip { padding: 3px 8px; font-size: 0.62rem; }
+      #centralCard { max-height: calc(100vh - 280px); padding: 16px; }
+      .bubble { max-width: 160px; font-size: 0.76rem; }
+    }
+    @media (max-width: 460px) {
+      /* Decorative protocol badges go; the network badge and the nav stay, and
+         the header wraps to two rows rather than pushing itself off-screen. */
+      .hbadge { display: none; }
+      #header { flex-wrap: wrap; row-gap: 6px; padding: 10px 12px; }
+      .header-links { order: 3; flex: 1 1 100%; margin-left: 0; justify-content: flex-start; }
+      #hright { order: 2; }
+    }
+
+    /* ── No-WebGL fallback layout ───────────────────────────────────────── */
+    /* Without a 3D stage nothing projects the labels and bubbles into place, so
+       they are laid out as a plain two-column read of the same trade. */
+    body.no-3d .agent-label {
+      top: 78px; transform: none; left: auto; right: auto;
+    }
+    body.no-3d #buyerLabel  { left: 16px;  align-items: flex-start; text-align: left; }
+    body.no-3d #sellerLabel { right: 16px; align-items: flex-end;   text-align: right; }
+    body.no-3d .bubble { top: 168px; transform: none; left: auto; right: auto; }
+    body.no-3d .bubble.hidden { transform: none; }
+    body.no-3d #buyerBubble  { left: 16px; }
+    body.no-3d #sellerBubble { right: 16px; }
+    body.no-3d .webgl-fallback {
+      position: fixed; left: 50%; top: 30%; transform: translate(-50%, -50%);
+      width: min(420px, calc(100vw - 32px)); z-index: 1;
     }
   </style>
 
 	<link rel="canonical" href="https://three.ws/agent-trade">
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Agent Commerce","description":"Watch two AI agents pay each other on-chain using x402 — a live Solana transaction, rendered in 3D.","url":"https://three.ws/agent-trade","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Agent Commerce","description":"Watch two AI agents pay each other on-chain using x402: a live Solana transaction, rendered in 3D.","url":"https://three.ws/agent-trade","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Agent Commerce — three.ws">
+	<meta property="og:image:alt" content="Agent Commerce on three.ws">
 </head>
 <body>
-  <canvas id="canvas"></canvas>
+  <h1 class="sr-only" data-i18n="agent_trade.agent_commerce_two_ai_agents_paying_each">Agent Commerce: two AI agents paying each other on Solana with x402</h1>
+  <canvas id="canvas" aria-label="3D scene of the buyer and seller agents trading" role="img"></canvas>
 
   <!-- Header -->
   <div id="header">
@@ -274,22 +319,25 @@
       <a href="/x402" data-i18n="agent_trade.x402">x402</a>
     </nav>
     <div id="hright">
-      <div id="liveDot"></div>
-      <div id="networkBadge">mainnet</div>
+      <div id="liveDot" aria-hidden="true"></div>
+      <div id="networkBadge"><span class="sr-only" data-i18n="agent_trade.solana_network">Solana network </span><span id="networkName">mainnet</span></div>
     </div>
   </div>
+
+  <!-- Screen-reader running commentary for the protocol steps -->
+  <div id="srStatus" class="sr-only" role="status" aria-live="polite"></div>
 
   <!-- Agent labels (JS positions these over the 3D avatars) -->
   <div class="agent-label" id="buyerLabel">
     <div class="al-name">Nexus</div>
     <div class="al-role">Buyer Agent</div>
-    <div class="al-addr" id="buyerAddr">—</div>
+    <div class="al-addr" id="buyerAddr">n/a</div>
     <div class="al-bal"  id="buyerBal"></div>
   </div>
   <div class="agent-label" id="sellerLabel">
     <div class="al-name">Oracle</div>
     <div class="al-role">Seller Agent</div>
-    <div class="al-addr" id="sellerAddr">—</div>
+    <div class="al-addr" id="sellerAddr">n/a</div>
   </div>
 
   <!-- Speech bubbles -->
@@ -297,13 +345,14 @@
   <div class="bubble hidden" id="sellerBubble"></div>
 
   <!-- Central floating card (402 challenge → tx receipt → content) -->
-  <div id="centralCard" class="hidden"></div>
+  <div id="centralCard" class="hidden" aria-live="polite"></div>
 
   <!-- Step log -->
-  <div id="stepLog"></div>
+  <div id="stepLog" role="list" aria-label="x402 protocol steps" data-i18n-attr="aria-label:agent_trade.x402_protocol_steps"></div>
 
   <!-- CTA -->
   <div id="cta">
+    <label class="sr-only" for="topicSelect" data-i18n="agent_trade.analysis_topic">Analysis topic</label>
     <select id="topicSelect">
       <option value="Solana DeFi outlook" data-i18n="agent_trade.solana_defi_outlook">Solana DeFi outlook</option>
       <option value="BTC market sentiment" data-i18n="agent_trade.btc_market_sentiment">BTC market sentiment</option>
@@ -315,18 +364,18 @@
   </div>
 
   <!-- Toast -->
-  <div id="toast"></div>
+  <div id="toast" role="alert"></div>
 
   <!-- Not-configured overlay -->
   <div id="notConfigured" class="hidden" role="dialog" aria-modal="true" aria-labelledby="cfgTitle" aria-describedby="cfgDesc">
     <div class="cfg-card" role="document">
       <h2 id="cfgTitle" data-i18n="agent_trade.live_demo_not_yet_configured">Live demo not yet configured</h2>
-      <p id="cfgDesc" data-i18n-html="agent_trade.this_page_runs_a_real_agent_to">This page runs a <strong>real</strong> agent-to-agent payment: two AI agents settle a tiny SOL transaction on-chain via the x402 protocol. To go live it needs two funded Solana keypairs set as environment variables on the deployment. Until then, here's exactly what the demo does — step by step — and how to enable it.</p>
+      <p id="cfgDesc" data-i18n-html="agent_trade.this_page_runs_a_real_agent_to">This page runs a <strong>real</strong> agent-to-agent payment: two AI agents settle a tiny SOL transaction on-chain via the x402 protocol. To go live it needs two funded Solana keypairs set as environment variables on the deployment. Until then, here is exactly what the demo does, step by step, and how to enable it.</p>
 
       <div class="cfg-walkthrough">
         <div class="cfg-wh-head">
           <span class="cfg-wh-badge" data-i18n="agent_trade.read_only_walkthrough">Read-only walkthrough</span>
-          <span class="cfg-wh-note" data-i18n="agent_trade.a_description_of_the_live_flow_not">A description of the live flow — not a running trade.</span>
+          <span class="cfg-wh-note" data-i18n="agent_trade.a_description_of_the_live_flow_not">A description of the live flow, not a running trade.</span>
         </div>
         <ol class="cfg-steps">
           <li data-i18n-html="agent_trade.request_the_buyer_agent_nexus_asks_the"><b>Request.</b> The buyer agent (Nexus) asks the seller agent (Oracle) for a market analysis.</li>
