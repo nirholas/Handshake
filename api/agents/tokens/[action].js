@@ -1,13 +1,23 @@
 /**
  * Agent Tokens Dispatcher
  * -----------------------
- * POST /api/agents/tokens/launch-prep
- * POST /api/agents/tokens/launch-confirm
- * GET  /api/agents/tokens/launch-quote
+ * GET    /api/agents/tokens/plan          read the agent's saved launch plan
+ * PUT    /api/agents/tokens/plan          save it (owner only)
+ * DELETE /api/agents/tokens/plan          discard an unlaunched plan (owner only)
+ * POST   /api/agents/tokens/plan-dry-run  compile + simulate the plan, no broadcast
+ * POST   /api/agents/tokens/launch-prep
+ * POST   /api/agents/tokens/launch-confirm
+ * GET    /api/agents/tokens/launch-quote
  *
  * Single Vercel function that dispatches on req.query.action (auto-populated
  * from the [action] filename). Consolidated to reduce function count and
  * avoid bundling the heavy Pump.fun/Solana SDKs three times.
+ *
+ * The plan is the agent's token identity before it exists on chain: one saved,
+ * editable configuration per (agent, network) that launch-prep reads instead of
+ * re-collecting, that the profile renders while the coin is still unlaunched,
+ * and that launch-confirm flips to 'launched' with the real mint. The rules live
+ * in api/_lib/agent-token-plan.js; only the HTTP shell is here.
  */
 
 import { z } from 'zod';
@@ -15,7 +25,7 @@ import { solanaConnection } from '../../_lib/solana/connection.js';
 import { createHash } from 'crypto';
 
 import { sql } from '../../_lib/db.js';
-import { getSessionUser } from '../../_lib/auth.js';
+import { getSessionUser, isSameSiteOrigin } from '../../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse } from '../../_lib/validate.js';
@@ -23,6 +33,21 @@ import { randomToken } from '../../_lib/crypto.js';
 import { env } from '../../_lib/env.js';
 import { r2, publicUrl } from '../../_lib/r2.js';
 import { buildTokenMetadata, agentHomeUrl } from '../../_lib/three-brand.js';
+import { usdcMintFor } from '../../_lib/pump-quote.js';
+import {
+	getPlan,
+	upsertPlan,
+	deletePlan,
+	recordDryRun,
+	markPlanLaunched,
+	shapePlan,
+	planReadiness,
+	estimateLaunchCost,
+	normalizePlanInput,
+	FIXED_LAUNCH_COST_SOL,
+	FIXED_LAUNCH_TOTAL_SOL,
+	PLAN_LIMITS,
+} from '../../_lib/agent-token-plan.js';
 
 // Heavy SDKs (Solana web3, Pump.fun, AWS S3 commands) are dynamic-imported
 // inside the handlers that need them. Loading them at module top-level was
@@ -52,6 +77,10 @@ function rpcUrl(cluster) {
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
 	switch (action) {
+		case 'plan':
+			return handlePlan(req, res);
+		case 'plan-dry-run':
+			return handlePlanDryRun(req, res);
 		case 'launch-prep':
 			return handleLaunchPrep(req, res);
 		case 'launch-confirm':
@@ -62,6 +91,398 @@ export default wrap(async (req, res) => {
 			return error(res, 404, 'not_found', 'unknown tokens action');
 	}
 });
+
+// ── plan ─────────────────────────────────────────────────────────────────────
+//
+// The launch configuration bound to the agent record. One plan per (agent,
+// network). Reads are public for a plan the owner has finished ('ready') or
+// already launched — an agent announcing the coin it is about to become is a
+// product feature, and the launch history that follows renders from the same
+// object. Drafts stay private to the owner: an unfinished ticker is not an
+// announcement.
+
+/**
+ * Load an agent and decide whether the caller owns it. Returns null when the
+ * agent does not exist or is deleted, so callers answer a single 404 for both.
+ *
+ * @returns {Promise<{ agent: object, isOwner: boolean, userId: string|null }|null>}
+ */
+async function loadAgentForPlan(req, agentId) {
+	if (!agentId) return null;
+	const [agent] = await sql`
+		select id, name, user_id, wallet_address, meta
+		from agent_identities
+		where id = ${agentId} and deleted_at is null
+		limit 1
+	`;
+	if (!agent) return null;
+	const user = await getSessionUser(req);
+	return { agent, isOwner: !!user && agent.user_id === user.id, userId: user?.id || null };
+}
+
+/** The Solana address a launch from this agent would pay and sign from. */
+function agentLaunchWallet(agent) {
+	const onchain = agent?.meta?.onchain;
+	if (onchain?.family === 'solana' && onchain.wallet) return onchain.wallet;
+	return agent?.meta?.solana_address || agent?.wallet_address || null;
+}
+
+const planSaveSchema = z.object({
+	agent_id: z.string().uuid(),
+	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+	name: z.string().trim().max(PLAN_LIMITS.nameMax).default(''),
+	symbol: z.string().trim().max(PLAN_LIMITS.symbolMax).default(''),
+	description: z.string().trim().max(PLAN_LIMITS.descriptionMax).default(''),
+	image_url: z.string().trim().max(500).default(''),
+	website: z.string().trim().max(500).default(''),
+	twitter: z.string().trim().max(500).default(''),
+	telegram: z.string().trim().max(500).default(''),
+	coin_type: z.enum(['regular', 'mayhem', 'agent']).default('agent'),
+	quote_currency: z.enum(['sol', 'usdc']).default('sol'),
+	buyback_bps: z.coerce.number().int().min(0).max(PLAN_LIMITS.buybackBpsMax).default(0),
+	sol_buy_in: z.coerce.number().min(0).max(PLAN_LIMITS.solBuyInMax).default(0),
+	usdc_buy_in: z.coerce.number().min(0).max(PLAN_LIMITS.usdcBuyInMax).default(0),
+});
+
+async function handlePlan(req, res) {
+	if (cors(req, res, { methods: 'GET,PUT,DELETE,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'PUT', 'DELETE'])) return;
+
+	if (req.method === 'GET') return handlePlanRead(req, res);
+
+	// Writes ride the session cookie, so a cross-site POST must never reach them.
+	if (!isSameSiteOrigin(req)) return error(res, 403, 'forbidden', 'cross-site request blocked');
+
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	if (req.method === 'DELETE') {
+		const url = new URL(req.url, 'http://x');
+		const agentId = url.searchParams.get('agent_id') || '';
+		const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
+		const loaded = await loadAgentForPlan(req, agentId);
+		if (!loaded) return error(res, 404, 'not_found', 'agent not found');
+		if (!loaded.isOwner) return error(res, 403, 'forbidden', 'only the agent owner can edit its token plan');
+		const removed = await deletePlan({ agentId, network });
+		if (!removed) {
+			return error(res, 409, 'conflict', 'no editable plan on this network — a launched plan is permanent');
+		}
+		return json(res, 200, { ok: true, agent_id: agentId, network, plan: null });
+	}
+
+	const body = parse(planSaveSchema, await readJson(req));
+	const loaded = await loadAgentForPlan(req, body.agent_id);
+	if (!loaded) return error(res, 404, 'not_found', 'agent not found');
+	if (!loaded.isOwner) return error(res, 403, 'forbidden', 'only the agent owner can edit its token plan');
+
+	const { locked, row } = await upsertPlan({ agentId: body.agent_id, userId: user.id, input: body });
+	if (locked) {
+		return error(
+			res,
+			409,
+			'conflict',
+			'this agent already launched its token on this network — the plan that minted it is permanent',
+		);
+	}
+	return json(res, 200, { ok: true, plan: shapePlan(row), is_owner: true });
+}
+
+async function handlePlanRead(req, res) {
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const url = new URL(req.url, 'http://x');
+	const agentId = url.searchParams.get('agent_id') || '';
+	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
+	if (!agentId) return error(res, 400, 'validation_error', 'agent_id is required');
+
+	const loaded = await loadAgentForPlan(req, agentId);
+	if (!loaded) return error(res, 404, 'not_found', 'agent not found');
+
+	const row = await getPlan({ agentId, network });
+	// A draft is the owner's private workbench; visitors see it as "no plan yet".
+	const visible = row && (loaded.isOwner || row.status !== 'draft') ? row : null;
+
+	return json(
+		res,
+		200,
+		{
+			agent_id: agentId,
+			network,
+			is_owner: loaded.isOwner,
+			launch_wallet: loaded.isOwner ? agentLaunchWallet(loaded.agent) : null,
+			plan: shapePlan(visible),
+		},
+		// Ownership changes the body, so this must never land in a shared cache.
+		{ 'cache-control': 'private, no-store' },
+	);
+}
+
+// ── plan-dry-run ─────────────────────────────────────────────────────────────
+//
+// The free proof path. It builds the SAME pump.fun create instructions the real
+// launch builds from the SAME saved plan, compiles them into a real transaction
+// against a real blockhash, and simulates that transaction on the cluster. It
+// never signs and never broadcasts, so it costs nothing and mints nothing.
+//
+// Two verdicts come back, deliberately separate:
+//   compiled   — the transaction built and fits Solana's 1232-byte packet limit.
+//                A plan whose name + ticker + metadata URI overflow fails here,
+//                which is the failure a real launch would otherwise hit at
+//                signing time with the owner's money already committed.
+//   simulation — the cluster executed it. `funding_required` is reported apart
+//                from a genuine program failure, because an unfunded devnet
+//                rehearsal wallet is a funding fact, not a broken plan.
+
+const planDryRunSchema = z.object({
+	agent_id: z.string().uuid(),
+	// Devnet is the default: the proof lane should cost nothing and touch nothing
+	// that trades. A mainnet dry run is still read-only, so it stays available.
+	network: z.enum(['mainnet', 'devnet']).default('devnet'),
+});
+
+/** The metadata URI the real launch would carry, derived without pinning. */
+function plannedMetadataUri(meta) {
+	const bytes = Buffer.from(JSON.stringify(buildTokenMetadata(meta)), 'utf-8');
+	const hash = createHash('sha256').update(bytes).digest('hex');
+	return { uri: publicUrl(`tm/${hash.slice(0, 16)}.json`), bytes: bytes.length };
+}
+
+// Did the cluster reject this only because the payer cannot cover it?
+function isFundingFailure(err, logs) {
+	const blob = `${JSON.stringify(err ?? '')} ${(logs || []).join(' ')}`;
+	return /AccountNotFound|InsufficientFundsForRent|insufficient lamports|insufficient funds|Attempt to debit an account but found no record/i.test(
+		blob,
+	);
+}
+
+async function handlePlanDryRun(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+	if (!isSameSiteOrigin(req)) return error(res, 403, 'forbidden', 'cross-site request blocked');
+
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const body = parse(planDryRunSchema, await readJson(req));
+	const loaded = await loadAgentForPlan(req, body.agent_id);
+	if (!loaded) return error(res, 404, 'not_found', 'agent not found');
+	if (!loaded.isOwner) return error(res, 403, 'forbidden', 'only the agent owner can dry-run its token plan');
+
+	const row = await getPlan({ agentId: body.agent_id, network: body.network });
+	if (!row) {
+		return error(
+			res,
+			404,
+			'not_found',
+			`no token plan saved for this agent on ${body.network} — save one first`,
+		);
+	}
+	const plan = normalizePlanInput(row);
+	const readiness = planReadiness(plan);
+	if (!readiness.ready) {
+		return json(res, 409, {
+			ok: false,
+			code: 'plan_not_ready',
+			network: body.network,
+			readiness,
+			plan: shapePlan(row),
+		});
+	}
+
+	const payerAddress = agentLaunchWallet(loaded.agent);
+	if (!payerAddress) {
+		return error(
+			res,
+			409,
+			'precondition_failed',
+			'this agent has no Solana wallet yet — deploy it on Solana before rehearsing a launch',
+		);
+	}
+
+	const result = await simulatePlanLaunch({ plan, agent: loaded.agent, payerAddress });
+	const saved = await recordDryRun({ agentId: body.agent_id, network: body.network, result });
+
+	return json(res, 200, {
+		ok: true,
+		broadcast: false,
+		network: body.network,
+		result,
+		plan: shapePlan(saved || row),
+	});
+}
+
+/**
+ * Compile and simulate the plan's launch transaction. Never signs, never sends.
+ *
+ * @param {{ plan: object, agent: object, payerAddress: string }} o
+ * @returns {Promise<object>} the dry-run result, safe to persist as JSON
+ */
+async function simulatePlanLaunch({ plan, agent, payerAddress }) {
+	const { Keypair, PublicKey, TransactionMessage, VersionedTransaction, ComputeBudgetProgram } =
+		await loadSolanaWeb3();
+	const { PumpSdk, OnlinePumpSdk, getBuyTokenAmountFromSolAmount, BN, isLegacyQuoteMint } =
+		await loadPumpSdk();
+
+	const { uri: metadataUri, bytes: metadataBytes } = plannedMetadataUri({
+		name: plan.name,
+		symbol: plan.symbol,
+		description: plan.description,
+		image: plan.image_url || '',
+		website: plan.website || '',
+		twitter: plan.twitter || '',
+		telegram: plan.telegram || '',
+		agentUrl: agentHomeUrl(agent.id),
+		creatorAddress: payerAddress,
+		createdAt: new Date().toISOString(),
+	});
+
+	const conn = solanaConnection({ url: rpcUrl(plan.network), commitment: 'confirmed' });
+	const onlineSdk = new OnlinePumpSdk(conn);
+	const sdk = new PumpSdk();
+
+	// Ephemeral: a launch mints a brand-new address every time, and this one is
+	// discarded when the request ends. The rehearsal only needs an address of the
+	// right shape for the instruction layout and the size measurement.
+	const mintKeypair = Keypair.generate();
+	const creator = new PublicKey(payerAddress);
+	const quoteMint = plan.quote_currency === 'usdc' ? new PublicKey(usdcMintFor(plan.network)) : null;
+	const isMayhem = plan.coin_type === 'mayhem';
+
+	const ixs = [
+		ComputeBudgetProgram.setComputeUnitLimit({ units: 350_000 }),
+		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100_000 }),
+	];
+
+	const createArgs = {
+		mint: mintKeypair.publicKey,
+		name: plan.name,
+		symbol: plan.symbol,
+		uri: metadataUri,
+		creator,
+		user: creator,
+		mayhemMode: isMayhem,
+	};
+
+	if (quoteMint && !isLegacyQuoteMint(quoteMint)) {
+		if (plan.usdc_buy_in > 0) {
+			const global = await onlineSdk.fetchGlobal();
+			const quoteAmount = new BN(Math.round(plan.usdc_buy_in * 1_000_000));
+			const tokenAmount = getBuyTokenAmountFromSolAmount({
+				global,
+				feeConfig: null,
+				mintSupply: null,
+				bondingCurve: null,
+				amount: quoteAmount,
+				quoteMint,
+			});
+			const built = await sdk.createV2AndBuyV2Instructions({
+				global,
+				...createArgs,
+				quoteAmount,
+				amount: tokenAmount,
+				quoteMint,
+			});
+			ixs.push(...(Array.isArray(built) ? built : [built]));
+		} else {
+			ixs.push(await sdk.createV2Instruction({ ...createArgs, quoteMint }));
+		}
+	} else if (plan.sol_buy_in > 0) {
+		const global = await onlineSdk.fetchGlobal();
+		const solAmount = new BN(Math.floor(plan.sol_buy_in * 1_000_000_000));
+		const tokenAmount = getBuyTokenAmountFromSolAmount({
+			global,
+			feeConfig: null,
+			mintSupply: null,
+			bondingCurve: null,
+			amount: solAmount,
+		});
+		const built = await sdk.createV2AndBuyInstructions({
+			global,
+			...createArgs,
+			amount: tokenAmount,
+			solAmount,
+		});
+		ixs.push(...(Array.isArray(built) ? built : [built]));
+	} else {
+		ixs.push(await sdk.createV2Instruction(createArgs));
+	}
+
+	const { blockhash } = await conn.getLatestBlockhash('confirmed');
+	const message = new TransactionMessage({
+		payerKey: creator,
+		recentBlockhash: blockhash,
+		instructions: ixs,
+	}).compileToV0Message();
+	const tx = new VersionedTransaction(message);
+
+	// Structural proof: a transaction that cannot serialize is a launch that
+	// would have died at signing time, and the byte count says by how much.
+	let txBytes = null;
+	let compileError = null;
+	try {
+		txBytes = tx.serialize().length;
+	} catch (err) {
+		compileError = /too large|overruns/i.test(err?.message || '')
+			? 'transaction exceeds Solana packet limits — shorten the coin name or the metadata'
+			: err?.message || 'transaction failed to serialize';
+	}
+
+	const base = {
+		checked_at: new Date().toISOString(),
+		network: plan.network,
+		payer: payerAddress,
+		mint_preview: mintKeypair.publicKey.toBase58(),
+		metadata_uri: metadataUri,
+		metadata_bytes: metadataBytes,
+		metadata_pinned: false,
+		instruction_count: ixs.length,
+		quote_currency: plan.quote_currency,
+		cost_estimate: estimateLaunchCost(plan),
+		compiled: compileError === null,
+		tx_bytes: txBytes,
+		compile_error: compileError,
+	};
+	if (compileError) return { ...base, verdict: 'compile_failed', simulation: null };
+
+	// `sigVerify: false` because nothing is signed here — the point is to execute
+	// the instructions, not to prove a signature. `replaceRecentBlockhash` keeps
+	// the simulation valid even if the blockhash aged out between the two calls.
+	let sim;
+	try {
+		sim = await conn.simulateTransaction(tx, {
+			sigVerify: false,
+			replaceRecentBlockhash: true,
+			commitment: 'confirmed',
+		});
+	} catch (err) {
+		return {
+			...base,
+			verdict: 'rpc_unavailable',
+			simulation: { error: err?.message || 'simulation RPC call failed', logs: [] },
+		};
+	}
+
+	const value = sim?.value || {};
+	const logs = Array.isArray(value.logs) ? value.logs.slice(-25) : [];
+	const simulation = {
+		error: value.err ? JSON.stringify(value.err) : null,
+		units_consumed: value.unitsConsumed ?? null,
+		logs,
+	};
+	if (!value.err) return { ...base, verdict: 'would_succeed', simulation };
+	return {
+		...base,
+		verdict: isFundingFailure(value.err, logs) ? 'funding_required' : 'would_fail',
+		simulation,
+	};
+}
 
 // ── launch-prep ──────────────────────────────────────────────────────────────
 
@@ -86,7 +507,40 @@ const launchPrepSchema = z.object({
 	twitter: z.string().url().or(z.literal('')).default(''),
 	telegram: z.string().url().or(z.literal('')).default(''),
 	initial_buy_sol: z.number().min(0).max(50).default(0),
+	// When true, the coin identity comes from the agent's saved plan instead of
+	// this body. Anything the caller does supply still wins, so the launch screen
+	// can prefill from the plan and let the owner tweak one field at the last
+	// moment without discarding the rest.
+	use_plan: z.boolean().default(false),
 });
+
+/**
+ * Overlay the agent's saved plan under an inbound launch body. The body wins on
+ * every field it actually carries; the plan fills the rest. Returns null when
+ * the agent has no plan on this cluster.
+ */
+async function launchBodyFromPlan(raw, agentId) {
+	const network = raw.cluster === 'devnet' ? 'devnet' : 'mainnet';
+	const row = await getPlan({ agentId, network });
+	if (!row) return null;
+	const plan = normalizePlanInput(row);
+	const pick = (bodyValue, planValue) =>
+		bodyValue === undefined || bodyValue === null || bodyValue === '' ? planValue : bodyValue;
+	return {
+		...raw,
+		name: pick(raw.name, plan.name),
+		symbol: pick(raw.symbol, plan.symbol),
+		description: pick(raw.description, plan.description),
+		image: pick(raw.image, plan.image_url || ''),
+		website: pick(raw.website, plan.website || ''),
+		twitter: pick(raw.twitter, plan.twitter || ''),
+		telegram: pick(raw.telegram, plan.telegram || ''),
+		// This path launches a SOL-paired coin from the user's own wallet, so only
+		// the SOL dev buy applies; a USDC-paired plan launches from the agent
+		// custodial path (/api/pump/launch-agent) instead.
+		initial_buy_sol: pick(raw.initial_buy_sol, plan.sol_buy_in),
+	};
+}
 
 async function pinTokenMetadata(meta) {
 	const json = buildTokenMetadata(meta);
@@ -138,16 +592,36 @@ async function handleLaunchPrep(req, res) {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const body = parse(launchPrepSchema, await readJson(req));
+	const raw = (await readJson(req)) || {};
+
+	// Ownership resolves before anything reads the plan, so a signed-in stranger
+	// can never probe another owner's unlaunched token configuration through
+	// `use_plan`.
+	const agentId = typeof raw.agent_id === 'string' ? raw.agent_id.trim() : '';
+	if (!agentId) return error(res, 400, 'validation_error', 'agent_id is required');
 
 	// Resolve agent + ownership + Solana deploy state
 	const [agent] = await sql`
 		select id, name, user_id, wallet_address, meta
 		from agent_identities
-		where id = ${body.agent_id} and user_id = ${user.id} and deleted_at is null
+		where id = ${agentId} and user_id = ${user.id} and deleted_at is null
 		limit 1
 	`;
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
+
+	let source = raw;
+	if (raw.use_plan === true) {
+		source = await launchBodyFromPlan(raw, agentId);
+		if (!source) {
+			return error(
+				res,
+				404,
+				'not_found',
+				`no token plan saved for this agent on ${raw.cluster === 'devnet' ? 'devnet' : 'mainnet'} — save one first`,
+			);
+		}
+	}
+	const body = parse(launchPrepSchema, source);
 
 	const onchain = agent.meta?.onchain;
 	if (!onchain || onchain.family !== 'solana') {
@@ -404,6 +878,33 @@ async function handleLaunchConfirm(req, res) {
 			: {}),
 	};
 
+	// Register the launch BEFORE the agent record flips to "has a token". Both
+	// writes below are idempotent, and this order means a failure here leaves the
+	// agent unmarked so the same prep can simply be confirmed again — the reverse
+	// order would strand a confirmed coin outside the launch directory forever,
+	// with the retry rejected by the "already has a launched token" guard.
+	//
+	// pump_agent_mints is the platform's own launch directory: it is what powers
+	// /launches, the agent profile's launch history, and GET /api/v1/pump/launches.
+	// Coins launched from the user's wallet through this path used to be invisible
+	// to all three because only the agent-custodial path (/api/pump/launch-agent)
+	// ever wrote a row. buyback_bps is 0 here on purpose: this path creates no
+	// on-chain pump agent, so claiming a buyback share would be claiming an
+	// enforcement that does not exist.
+	await sql`
+		insert into pump_agent_mints
+			(agent_id, user_id, network, mint, name, symbol, metadata_uri, agent_authority, buyback_bps)
+		values
+			(${agent.id}, ${user.id}, ${prep.cluster}, ${prep.mint}, ${prep.payload.name},
+			 ${prep.payload.symbol}, ${prep.metadata_uri}, ${body.wallet_address}, 0)
+		on conflict (mint, network) do nothing
+	`;
+	const launchedPlan = await markPlanLaunched({
+		agentId: agent.id,
+		network: prep.cluster,
+		mint: prep.mint,
+	});
+
 	const mergedMeta = { ...(agent.meta || {}), token };
 	const [updated] = await sql`
 		update agent_identities
@@ -418,6 +919,7 @@ async function handleLaunchConfirm(req, res) {
 	return json(res, 201, {
 		ok: true,
 		agent: { ...updated, token, home_url: `${env.APP_ORIGIN}/agent/${updated.id}` },
+		plan: shapePlan(launchedPlan),
 	});
 }
 
@@ -428,18 +930,12 @@ const launchQuoteSchema = z.object({
 	cluster: z.enum(['mainnet', 'devnet']).default('mainnet'),
 });
 
-// Conservative upper bounds, in SOL.
-const FIXED_LAUNCH_COST = {
-	mintRent: 0.00146,
-	bondingCurveRent: 0.00203,
-	metadataRent: 0.00561,
-	txFee: 0.000005,
-};
-const FIXED_LAUNCH_TOTAL =
-	FIXED_LAUNCH_COST.mintRent +
-	FIXED_LAUNCH_COST.bondingCurveRent +
-	FIXED_LAUNCH_COST.metadataRent +
-	FIXED_LAUNCH_COST.txFee;
+// Conservative upper bounds, in SOL. These live in api/_lib/agent-token-plan.js
+// so this quote and the cost estimate a saved plan reports are the same numbers:
+// an owner who reads "0.0091 SOL" on the plan card must be quoted the same thing
+// at launch time.
+const FIXED_LAUNCH_COST = FIXED_LAUNCH_COST_SOL;
+const FIXED_LAUNCH_TOTAL = FIXED_LAUNCH_TOTAL_SOL;
 
 async function handleLaunchQuote(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
