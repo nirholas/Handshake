@@ -283,13 +283,28 @@ def _parse_obj(path: Path):
     return np.asarray(verts, dtype=np.float64), faces
 
 
+# QuadriFlow solver ladder, best topology first. `-mcf` (minimum-cost flow)
+# gives the cleanest loops and the fewest singularities, but its index-map solve
+# is fragile on meshes with open boundaries, which is most rigged character
+# exports: on CesiumMan it aborts outright with "wrong init", and on denser
+# inputs it is what ran past the timeout on 2026-08-06. Dropping to QuadriFlow's
+# default solver still produces a genuine quad remesh with a real quad_ratio, so
+# the caller gets what it asked for. Falling back to triangle soup never happens.
+QUADRIFLOW_ATTEMPTS = (
+    ("-mcf", "-sharp"),
+    ("-sharp",),
+    (),
+)
+QUADRIFLOW_BUDGET_S = 600.0
+
+
 def _quad_remesh(mesh, target_faces: int):
     """Run QuadriFlow to produce quad-dominant topology.
 
     Returns (verts, polys, quad_ratio) where polys is a list of 0-based index
-    lists (length 3 or 4). Raises with an actionable message if the binary or
-    the run fails — we never silently fall back to triangle soup for a quad
-    request, which would mislead the caller."""
+    lists (length 3 or 4). Walks QUADRIFLOW_ATTEMPTS until one succeeds, sharing
+    a single wall-clock budget across them. Raises with an actionable message if
+    the binary is missing or every solver fails."""
     binary = shutil.which(QUADRIFLOW_BIN) or QUADRIFLOW_BIN
     if shutil.which(QUADRIFLOW_BIN) is None and not os.path.isfile(binary):
         raise RuntimeError(
@@ -299,27 +314,50 @@ def _quad_remesh(mesh, target_faces: int):
 
     with tempfile.TemporaryDirectory() as tmp:
         src = Path(tmp) / "in.obj"
-        dst = Path(tmp) / "out.obj"
         _write_obj_geometry(mesh, src)
 
-        cmd = [
-            binary,
-            "-i", str(src),
-            "-o", str(dst),
-            "-f", str(max(1000, int(target_faces))),
-            "-mcf",     # minimum-cost-flow solver: fewer singularities, cleaner loops
-            "-sharp",   # preserve sharp feature edges
-        ]
-        try:
-            proc = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=600, check=False,
-            )
-        except subprocess.TimeoutExpired as exc:
-            raise RuntimeError("quad remesh timed out after 600s") from exc
+        deadline = time.monotonic() + QUADRIFLOW_BUDGET_S
+        last_error = "quad remesh produced no attempts"
+        dst = None
 
-        if proc.returncode != 0 or not dst.exists():
+        for attempt, flags in enumerate(QUADRIFLOW_ATTEMPTS):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                last_error = (
+                    f"quad remesh ran out of its {int(QUADRIFLOW_BUDGET_S)}s budget; "
+                    f"last solver said: {last_error}"
+                )
+                break
+
+            candidate = Path(tmp) / f"out{attempt}.obj"
+            cmd = [
+                binary,
+                "-i", str(src),
+                "-o", str(candidate),
+                "-f", str(max(1000, int(target_faces))),
+                *flags,
+            ]
+            try:
+                proc = subprocess.run(
+                    cmd, capture_output=True, text=True, timeout=remaining, check=False,
+                )
+            except subprocess.TimeoutExpired:
+                last_error = f"solver {flags or ('default',)} timed out"
+                log.warning("quad remesh: %s, trying the next solver", last_error)
+                continue
+
+            if proc.returncode == 0 and candidate.exists():
+                dst = candidate
+                if attempt:
+                    log.info("quad remesh: solver %s succeeded after a fallback", flags or ("default",))
+                break
+
             tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-5:]
-            raise RuntimeError("quad remesh failed: " + " | ".join(tail))
+            last_error = f"solver {flags or ('default',)} failed: " + " | ".join(tail)
+            log.warning("quad remesh: %s", last_error)
+
+        if dst is None:
+            raise RuntimeError("quad remesh failed: " + last_error)
 
         verts, polys = _parse_obj(dst)
 

@@ -394,6 +394,35 @@ if shutil.which(remesh.QUADRIFLOW_BIN) or os.path.isfile(remesh.QUADRIFLOW_BIN):
     )
     qtri = remesh._triangulate_polys(qverts, qpolys)
     check("quad output triangulates for glb", len(qtri.faces) > 0)
+
+    # An open-boundary mesh is where QuadriFlow's minimum-cost-flow solver aborts
+    # ("wrong init"), so this is the case the solver ladder exists for: a mesh
+    # with a hole must still come back quad-dominant, via a later rung.
+    open_sphere = sphere(3)
+    keep = np.asarray(open_sphere.vertices)[open_sphere.faces].mean(axis=1)[:, 1] < 0.85
+    open_sphere.update_faces(keep)
+    open_sphere.remove_unreferenced_vertices()
+    check(
+        "open-boundary fixture really has a boundary",
+        len(trimesh.grouping.group_rows(open_sphere.edges_sorted, require_count=1)) > 0,
+    )
+    overts, opolys, oratio = remesh._quad_remesh(open_sphere, 1000)
+    check(
+        "quad remesh survives an open boundary",
+        len(opolys) > 0 and oratio > 0.5,
+        f"{len(opolys)} polys, quad_ratio={oratio}",
+    )
+    check(
+        "open-boundary quad indices stay in range",
+        max(max(p) for p in opolys) < len(overts),
+    )
+
+    check(
+        "the solver ladder starts with minimum-cost flow and ends bare",
+        remesh.QUADRIFLOW_ATTEMPTS[0] == ("-mcf", "-sharp")
+        and remesh.QUADRIFLOW_ATTEMPTS[-1] == (),
+        str(remesh.QUADRIFLOW_ATTEMPTS),
+    )
 else:
     skip("quad remesh", f"quadriflow binary not found ({remesh.QUADRIFLOW_BIN})")
 
