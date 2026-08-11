@@ -268,7 +268,10 @@
 		@media (max-width:640px) {
 			#app { grid-template-rows: auto 1fr auto; }
 			.topbar { flex-wrap:wrap; gap:8px 10px; padding:8px 14px; }
-			.tx-ticker { order:3; flex-basis:100%; font-size:11px; }
+			/* The ticker lives inside .tb-right, so it is that row that has to wrap
+			   for the session total to get its own line rather than run off the edge. */
+			.tb-right { flex-wrap:wrap; justify-content:flex-end; row-gap:8px; }
+			.tx-ticker { order:3; flex-basis:100%; justify-content:flex-end; font-size:11px; }
 			.bubble { display:none; }
 			#exchange { padding:10px 14px 16px; }
 			.pay-btn { align-self:stretch; justify-content:center; }

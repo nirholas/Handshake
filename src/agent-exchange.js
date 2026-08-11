@@ -444,7 +444,7 @@ async function doPurchase() {
 		sessionTotal += paidAmount;
 		const ticker = totalUsdc();
 		if (ticker) {
-			ticker.textContent = `${sessionTotal.toFixed(2)}`;
+			ticker.textContent = `$${sessionTotal.toFixed(2)}`;
 			ticker.classList.add('flash');
 			setTimeout(() => ticker.classList.remove('flash'), 600);
 		}
