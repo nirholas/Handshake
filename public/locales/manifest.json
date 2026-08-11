@@ -212,6 +212,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "kn",
+			"name": "ಕನ್ನಡ",
+			"dir": "ltr"
+		},
+		{
 			"code": "ml",
 			"name": "മലയാളം",
 			"dir": "ltr"
@@ -239,6 +244,11 @@
 		{
 			"code": "az",
 			"name": "Azərbaycan dili",
+			"dir": "ltr"
+		},
+		{
+			"code": "pa",
+			"name": "ਪੰਜਾਬੀ",
 			"dir": "ltr"
 		},
 		{
