@@ -19,6 +19,10 @@ export function ipfsGatewayUrl(cid) {
 	return `https://ipfs.io/ipfs/${cid}`;
 }
 
+// Bounded so a hung provider cannot hold an interactive request (persona save
+// pins inline) open until the platform's own request timeout fires.
+const PIN_TIMEOUT_MS = 25000;
+
 async function pinViaPinata(buf, filename) {
 	const form = new FormData();
 	form.append('file', new Blob([buf]), filename);
@@ -26,6 +30,7 @@ async function pinViaPinata(buf, filename) {
 		method: 'POST',
 		headers: { Authorization: `Bearer ${process.env.PINATA_JWT}` },
 		body: form,
+		signal: AbortSignal.timeout(PIN_TIMEOUT_MS),
 	});
 	if (!resp.ok) {
 		const detail = await resp.text().catch(() => '');
@@ -40,6 +45,7 @@ async function pinViaWeb3Storage(buf, filename) {
 		method: 'POST',
 		headers: { Authorization: `Bearer ${process.env.WEB3_STORAGE_TOKEN}`, 'X-NAME': filename },
 		body: buf,
+		signal: AbortSignal.timeout(PIN_TIMEOUT_MS),
 	});
 	if (!resp.ok) {
 		const detail = await resp.text().catch(() => '');
