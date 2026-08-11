@@ -18,14 +18,24 @@ const alchemyHttp = alchemyKey && network === 'mainnet'
 	? `https://robinhood-mainnet.g.alchemy.com/v2/${alchemyKey}`
 	: '';
 
+const publicRpc = network === 'testnet'
+	? 'https://rpc.testnet.chain.robinhood.com'
+	: 'https://rpc.mainnet.chain.robinhood.com';
+
+// Preference order for the viem fallback transport: an explicit override wins,
+// then the Alchemy accelerator, then the public RPC as the always-present last
+// resort. The public RPC stays in the list even when an override is set: an
+// ALCHEMY_API_KEY whose app has the Robinhood network disabled answers EVERY
+// call with -32600 (verified live), and without a fallback rung that single
+// env var would silently take the whole worker down.
+const rpcUrls = [...new Set([process.env.RH_RPC_URL, alchemyHttp, publicRpc].filter(Boolean))];
+
 export const config = {
 	network,
-	/** HTTP RPC used for eth_getLogs, multicall metadata reads and gap-fill. */
-	rpcUrl: process.env.RH_RPC_URL
-		|| alchemyHttp
-		|| (network === 'testnet'
-			? 'https://rpc.testnet.chain.robinhood.com'
-			: 'https://rpc.mainnet.chain.robinhood.com'),
+	/** Every HTTP RPC the client may use, most-preferred first. */
+	rpcUrls,
+	/** Most-preferred HTTP RPC (logging + health reporting). */
+	rpcUrl: rpcUrls[0],
 	/** Arbitrum Nitro sequencer feed — no auth, sub-second block-tip signal. */
 	feedUrl: process.env.RH_FEED_URL
 		|| (network === 'testnet'
@@ -57,6 +67,25 @@ export const config = {
 	/** Backfill this many blocks of launches on cold start so a fresh subscriber sees history. */
 	backfillBlocks: BigInt(num(process.env.RH_BACKFILL_BLOCKS, 200_000)),
 };
+
+/**
+ * An RPC URL safe to log or serve from /healthz. A provider key lives in the
+ * URL path (Alchemy) or query string, and /healthz is public once the worker is
+ * deployed, so both are masked before the URL ever leaves the process.
+ */
+export function redactRpcUrl(url) {
+	try {
+		const u = new URL(url);
+		for (const k of [...u.searchParams.keys()]) u.searchParams.set(k, '***');
+		const parts = u.pathname.split('/');
+		const last = parts[parts.length - 1];
+		if (last && last.length >= 16) parts[parts.length - 1] = '***';
+		u.pathname = parts.join('/');
+		return u.toString();
+	} catch {
+		return 'invalid-url';
+	}
+}
 
 export const CHAIN_ID = network === 'testnet' ? 46630 : 4663;
 export const EXPLORER_BASE = network === 'testnet'
