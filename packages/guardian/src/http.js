@@ -96,8 +96,17 @@ export function createHttp(opts = {}) {
 		const message = payload?.message || payload?.error_description || payload?.detail || `Request failed with ${res.status}`;
 		const retryAfter = numberOr(res.headers.get('retry-after'), payload?.retry_after);
 
-		if (res.status === 402) {
-			throw new PaymentRequiredError(message, { code, status: 402, accepts: payload?.accepts ?? null, detail: payload?.detail, body: payload });
+		// An x402 challenge is not always HTTP 402: the three.ws MCP transport
+		// issues it over 401 (x402Version + accepts in the body, alongside the
+		// OAuth www-authenticate header). Detect the challenge by payload so the
+		// caller always gets a PaymentRequiredError carrying `accepts`.
+		const isX402Challenge = res.status === 402 ||
+			(res.status === 401 && payload != null && payload.x402Version != null && Array.isArray(payload.accepts));
+		if (isX402Challenge) {
+			// x402 bodies put the human-readable reason under `error`, so prefer it
+			// as the message and keep the stable `payment_required` code.
+			const challengeMessage = typeof payload?.error === 'string' && payload.error ? payload.error : message;
+			throw new PaymentRequiredError(challengeMessage, { code: 'payment_required', status: res.status, accepts: payload?.accepts ?? null, detail: payload?.detail, body: payload });
 		}
 		throw new ThreeWsError(message, { code, status: res.status, detail: payload?.detail, retryAfter, body: payload });
 	};
