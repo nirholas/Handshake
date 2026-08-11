@@ -51,7 +51,12 @@ def head_mask_from_weights(weights: np.ndarray, joint_names: list[str],
                            head_bone: str = "mixamorig:Head",
                            min_weight: float = 0.35) -> np.ndarray:
     """Boolean mask of vertices bound to the head: any vertex whose skinning
-    weight on the head bone (or its children, e.g. eyes) passes the threshold.
+    weight on the head bone passes the threshold.
+
+    Eye bones count toward the head when the rig has them. MIA's 52-bone set
+    does not, so in this worker the mask reduces to mixamorig:Head alone; the
+    clause is here because the function also serves rigs that split the eyes
+    out (test_blendshapes.py covers that case).
 
     `weights` is (V,J) aligned to `joint_names`."""
     head_cols = [
