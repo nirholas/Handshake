@@ -11,8 +11,8 @@ Status legend: **Yes** = the surface was specifically announced or demoed in a p
 | Product pages (main, build, labs, crypto, agent-tools, account, machine) | 298 | 34 | 69 | 195 |
 | npm packages (`packages/*`) | 66 | 5 | 2 | 59 |
 | Top-level SDKs and apps | 9 | 6 | 2 | 1 |
-| GPU workers and services (infrastructure) | 37 | 2 | 4 | 31 |
-| **Total** | **410** | **47** | **77** | **286** |
+| GPU workers and services (infrastructure) | 36 | 2 | 4 | 30 |
+| **Total** | **409** | **47** | **77** | **285** |
 
 On top of that sit 348 learn/docs pages and 39 blog posts (content, not counted as features). Counting those, 673+ committed surfaces have never appeared on X.
 
@@ -522,7 +522,6 @@ These are internal lanes; most should be announced through the features they pow
 | `workers/segment` | No |  |
 | `workers/stylize` | No |  |
 | `workers/texture` | No |  |
-| `workers/unirig` | No |  |
 | `workers/vanity-grinder` | Passing | [2026-04-29](https://x.com/trythreews/status/2049447738434339171) |
 | `services/agent-screen-caster` | No |  |
 | `services/fleet-console` | No |  |
