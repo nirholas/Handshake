@@ -594,5 +594,20 @@ els.reset.addEventListener('click', () => {
 	});
 });
 
+// Inbound deep links carry the search they want run: /arbitrage sends
+// /bazaar?q=<capability>&type=<http|mcp> from its "Avoid" and MCP actions, and
+// the same shape makes any bazaar search shareable. Without this the query
+// string was decorative and every deep link landed on the unfiltered catalog.
+function applyDeepLink() {
+	const p = new URLSearchParams(location.search);
+	const q = p.get('q') || p.get('query') || '';
+	if (q) els.q.value = q;
+	const type = String(p.get('type') || '').toLowerCase();
+	if (type === 'http' || type === 'mcp') els.type.value = type;
+	const network = p.get('network');
+	if (network && [...els.network.options].some((o) => o.value === network)) els.network.value = network;
+}
+
 // Initial render.
+applyDeepLink();
 load();
