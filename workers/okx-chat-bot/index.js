@@ -11,7 +11,7 @@
 //   1. State      restore the wallet/XMTP identity from GCS, snapshot it back
 //   2. Workspace  rebuild the AI subsession's briefing + skills from the image
 //   3. Daemon     supervise `okx-a2a run` with capped backoff restarts
-//   4. Health     /healthz liveness, /readyz strict readiness, /status detail
+//   4. Health     /readyz strict readiness, every other path liveness
 //   5. Heartbeat  bot_heartbeat row → /api/healthz subsystems → gcp-triage
 //   6. Alerts     a logged-out session pages a human WITH the exact commands
 //
@@ -19,12 +19,12 @@
 // Deploy: workers/okx-chat-bot/cloudbuild.yaml. See the README for the one-time
 // bucket/secret setup and why --max-instances=1 is load-bearing.
 
-import http from 'node:http';
 import { mkdir } from 'node:fs/promises';
 import { sendOpsAlert } from '../../api/_lib/alerts.js';
 import { sql } from '../../api/_lib/db.js';
 import { loadConfig, paths } from './config.js';
 import { agentRefresh, beginLogin, daemonStatus, exec, walletStatus } from './cli.js';
+import { startHealthServer } from './health-server.js';
 import { classify, loginInstructions } from './session.js';
 import { restoreState, snapshotState } from './state.js';
 import { createSupervisor } from './supervisor.js';
@@ -45,47 +45,6 @@ const live = {
 	workspace: null,
 	stateRestore: null,
 };
-
-function startHealthServer(cfg, supervisor) {
-	if (!cfg.port) {
-		log.warn('PORT unset: no health server (fine for a local run, never for Cloud Run)');
-		return null;
-	}
-	const server = http.createServer((req, res) => {
-		const url = (req.url || '/').split('?')[0];
-		const body = {
-			worker: WORKER,
-			agentId: cfg.agentId,
-			bootAt: BOOT_AT,
-			provider: { name: cfg.provider, credentialed: cfg.providerCredentialed, reason: cfg.providerReason },
-			daemon: { status: live.daemon, ...supervisor.stats() },
-			session: live.wallet ? { loggedIn: live.wallet.loggedIn, email: live.wallet.email } : null,
-			agents: live.agents,
-			workspace: live.workspace,
-			state: { bucket: cfg.stateBucket || null, restore: live.stateRestore },
-			health: live.verdict,
-			checkedAt: live.checkedAt,
-		};
-		// A logged-out session needs a human, so the remedy travels with the status
-		// instead of living only in a runbook someone has to go find.
-		if (live.verdict.needsHumanLogin) body.remedy = loginInstructions(live.login?.loginUrl, live.login?.authSessionId);
-
-		if (url === '/readyz') {
-			// Strict: "the process is up" is exactly the false-green this worker was
-			// built to end. Not ready unless a buyer's message can actually land.
-			res.writeHead(live.verdict.ready ? 200 : 503, { 'content-type': 'application/json' });
-			res.end(JSON.stringify(body));
-			return;
-		}
-		// /healthz and everything else: liveness. Cloud Run must not restart the
-		// container for a logged-out session: a restart cannot fix it, only a human
-		// can, and a restart loop would destroy the state snapshot cadence.
-		res.writeHead(200, { 'content-type': 'application/json' });
-		res.end(JSON.stringify({ ok: true, ...body }));
-	});
-	server.listen(cfg.port, () => log.info('health server listening', { port: cfg.port }));
-	return server;
-}
 
 async function heartbeat(cfg, supervisor) {
 	const meta = {
@@ -145,7 +104,25 @@ async function maybeAlert(cfg, verdict) {
 	}).catch((err) => log.warn('ops alert failed', { err: err?.message }));
 }
 
+// One probe at a time. A probe can legitimately outrun its own interval (the
+// three CLI calls are bounded at 15s + 30s + 90s), and two in flight would race
+// on the login mint below: both would see `live.login` empty and start a second
+// auth session, invalidating the URL a human is halfway through using.
+let probing = false;
 async function probeSession(cfg, supervisor) {
+	if (probing) {
+		log.warn('probe still running, skipping this tick', { sinceMs: Date.now() - live.checkedAt });
+		return;
+	}
+	probing = true;
+	try {
+		await runProbe(cfg, supervisor);
+	} finally {
+		probing = false;
+	}
+}
+
+async function runProbe(cfg, supervisor) {
 	const daemon = await daemonStatus(cfg);
 	const wallet = daemon.startsWith('running') ? await walletStatus(cfg) : null;
 	const agents = wallet?.loggedIn ? await agentRefresh(cfg) : { agentCount: 0, activeClients: 0 };
@@ -211,10 +188,18 @@ async function main() {
 
 	const supervisor = createSupervisor(cfg, p);
 	supervisor.start();
-	const server = startHealthServer(cfg, supervisor);
+	const server = startHealthServer(cfg, live, supervisor, BOOT_AT);
 
 	const probe = () => probeSession(cfg, supervisor).catch((err) => log.error('probe failed', { err: err?.message }));
 	const probeTimer = setInterval(probe, cfg.sessionProbeMs);
+	// The heartbeat runs on its own timer rather than only at the end of a probe.
+	// A probe can outlast the freshness window /api/healthz judges this host by,
+	// so tying the beat to it would let one slow CLI call read as "the host is
+	// gone" while the bot is perfectly online.
+	const heartbeatTimer = setInterval(
+		() => heartbeat(cfg, supervisor).catch((err) => log.warn('heartbeat failed', { err: err?.message })),
+		cfg.heartbeatMs,
+	);
 	const snapshotTimer = setInterval(
 		() => snapshotState(cfg, { reason: 'timer' }).catch(() => {}),
 		cfg.snapshotMs,
@@ -229,6 +214,7 @@ async function main() {
 		draining = true;
 		log.info('shutdown', { signal });
 		clearInterval(probeTimer);
+		clearInterval(heartbeatTimer);
 		clearInterval(snapshotTimer);
 		server?.close();
 		// Order matters: stop the daemon FIRST so its sqlite files are quiesced,
