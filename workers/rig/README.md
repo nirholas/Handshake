@@ -4,10 +4,12 @@ Turns a static humanoid GLB into a fully animation-ready avatar: Mixamo-named
 skeleton, per-vertex skinning weights, and the ARKit-52 expression blendshapes,
 with the original materials and PBR textures preserved byte-for-byte.
 
-This service replaces the retired `workers/unirig` deployment, whose live
-instance produced generically named 22-bone skeletons (unusable by the
-platform retargeter), no blendshapes, and 20-minute latencies. Same API
-contract, so the platform cutover is one env-var change (see Cutover below).
+This service replaced the retired `unirig` deployment, whose live instance
+produced generically named 22-bone skeletons (unusable by the platform
+retargeter), no blendshapes, and 20-minute latencies. The cutover is done:
+`GCP_UNIRIG_URL` on `three-ws-api` points here, the old Cloud Run service is
+deleted, and its worker directory was removed on 2026-08-11. The env var keeps
+its historical name.
 
 ## How it works
 
@@ -51,8 +53,9 @@ cleanly).
 
 ## Deploy
 
-One-time asset staging (checkpoints ~a few hundred MB from Hugging Face, plus
-the baked ARKit template):
+One-time asset staging (2.2 GiB of checkpoints from Hugging Face, the Mixamo
+bone templates, and the baked ARKit template; ~2.3 GB total under
+`gs://three-ws-model-weights/make-it-animatable/`):
 
 ```bash
 bash workers/rig/stage-assets.sh
@@ -68,7 +71,10 @@ gcloud builds submit --config workers/rig/cloudbuild.yaml \
 Service: `model-rig`, us-central1, 1x L4 (`--no-gpu-zonal-redundancy`),
 min=max instances per the L4 quota plan in `docs/ops/gcp-credits-plan.md`.
 
-## Cutover
+## Cutover (already applied)
+
+`GCP_UNIRIG_URL` on `three-ws-api` already resolves to this service. Re-run
+this only after a redeploy that changes the service URL:
 
 ```bash
 gcloud run services update three-ws-api --region us-central1 \
@@ -76,7 +82,7 @@ gcloud run services update three-ws-api --region us-central1 \
       --region us-central1 --format='value(status.url)')
 ```
 
-Then verify end-to-end (a static humanoid in, canonical rigged GLB out):
+Verify end-to-end (a static humanoid in, canonical rigged GLB out):
 
 ```bash
 curl -sX POST "https://three.ws/api/forge?action=rig" \
@@ -87,16 +93,29 @@ curl -sX POST "https://three.ws/api/forge?action=rig" \
 # with ARKit targetNames present.
 ```
 
-After cutover, retire the old `unirig` Cloud Run service to free one L4 toward
+The old `unirig` Cloud Run service is already retired, freeing one L4 toward
 the quota ceiling.
 
 ## Local tests (no GPU needed)
 
+The three Python suites need only `numpy scipy pygltflib trimesh Pillow` (a
+subset of `requirements.txt`; no torch, no CUDA, no GCP), and must be run from
+this directory because they import the worker modules by name:
+
 ```bash
-python3 workers/rig/test_rig_glb.py
-python3 workers/rig/test_blendshapes.py
-npx vitest run tests/glb-canonicalize.test.js
+cd workers/rig
+python3 test_rig_glb.py     # skin authoring: skeleton, weights, morph targets
+python3 test_blendshapes.py # ARKit transfer: head mask, alignment, falloff
+python3 test_pipeline.py    # core path: the 52-bone Mixamo + ARKit-52 contract
+npx vitest run tests/glb-canonicalize.test.js   # from the repo root
 ```
+
+`test_pipeline.py` runs the two stages composed the way `main.py._rig_sync`
+composes them and asserts what the platform consumes: the exact 52 Mixamo bone
+names, their hierarchy, unit-sum skin weights, 52 ARKit morph targets on the
+head primitive and none on the body, and the source texture surviving
+byte-for-byte. `tests/glb-canonicalize.test.js` pins the same 52 names from the
+JavaScript side, so a drift on either side fails a test.
 
 ## Licensing
 
@@ -114,3 +133,24 @@ licenses, no Hunyuan territory carve-outs, in the rigging path.
 | `ARKIT_TEMPLATE` | `/app/assets/arkit_template.npz` | baked ICT template |
 | `MAX_CONCURRENT` | `1` | parallel rig jobs per instance |
 | `TASK_TIMEOUT_S` | `420` | per-task hard timeout |
+| `WEIGHTS_ROOT` | `/weights/make-it-animatable` | staged assets, read by `entrypoint.sh` |
+
+`entrypoint.sh` copies the checkpoints and Mixamo templates from `WEIGHTS_ROOT`
+(the FUSE-mounted weights bucket) onto local disk before serving, rather than
+symlinking them: `torch.load` over gcsfuse does slow random reads and blew past
+the startup probe.
+
+## Failure modes
+
+A task ends in exactly one of three states, never in limbo:
+
+| Reported `error` | Cause | Fix |
+|---|---|---|
+| `input is not a binary glTF...` | `mesh_gcs_url` returned something that is not a `.glb` (usually an error page) | fix the URL; the worker rejects it before touching the GPU |
+| `input GLB contains no triangles...` | a point cloud or curves-only export | rig a surface mesh; the predictor cannot sample an empty face list |
+| `rigging timed out after 420s` | `TASK_TIMEOUT_S` elapsed | retry, or raise the timeout for very dense meshes |
+| `internal error (ref <id>)` | anything unexpected | grep the service logs for the correlation id; the full traceback is there |
+
+Uploads of the finished GLB retry on transient network faults
+(`DEFAULT_RETRY`); the default policy retries nothing without a generation
+precondition, which once discarded a completed rig on a dropped connection.
