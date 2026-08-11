@@ -1,6 +1,6 @@
 // Auto-rig spend / abuse / privacy / humanoid gates (api/_lib/auto-rig.js).
 //
-// Every gate must land BEFORE the paid UniRig rerig job is submitted: a denied
+// Every gate must land BEFORE the paid rerig job is submitted: a denied
 // rate limit, an ineligible plan, a non-humanoid prompt, or a private avatar
 // without opt-in must all skip the submit AND leave no avatar_regen_jobs row.
 // The whole module is mocked down to the in-memory limiter + a stubbed provider
