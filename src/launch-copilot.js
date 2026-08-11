@@ -407,12 +407,34 @@ export function mountLaunchCopilot(host, opts = {}) {
 	// ── dashboard ─────────────────────────────────────────────────────────────────
 	function buildDashboard() {
 		const wrap = el('div', { class: 'lc-dash' });
+		const engineNotice = buildEngineNotice();
+		if (engineNotice) wrap.appendChild(engineNotice);
 		wrap.appendChild(buildStats());
 		wrap.appendChild(buildBudgets());
 		wrap.appendChild(buildControls());
 		wrap.appendChild(buildActionLog());
 		wrap.appendChild(buildDisclosure());
 		return wrap;
+	}
+
+	// The policy is only half the machine: the other half is a market-maker worker
+	// sweeping it. When no worker has checked in, an armed policy would otherwise
+	// render as a maker that is working, so say plainly that nothing will execute.
+	function buildEngineNotice() {
+		const engine = state.data.engine;
+		const p = state.data.policy;
+		if (!engine || engine.live) return null;
+		if (!p || !p.enabled || p.status === 'killed' || p.status === 'graduated') return null;
+		const last = engine.last_beat_at
+			? `The engine last checked in ${timeAgo(engine.last_beat_at)}.`
+			: 'No engine has ever checked in for this network.';
+		return el('div', { class: 'lc-notice', role: 'status' }, [
+			el('span', { class: 'lc-notice__icon', 'aria-hidden': 'true', text: '◍' }),
+			el('div', {}, [
+				el('p', { class: 'lc-notice__title', text: 'Market-maker engine is not running' }),
+				el('p', { class: 'lc-muted', text: `${last} Your policy, floor and budgets are saved and untouched, but no action will execute until it is back.` }),
+			]),
+		]);
 	}
 
 	function buildStats() {
