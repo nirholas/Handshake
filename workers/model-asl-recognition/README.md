@@ -19,9 +19,9 @@ encoder + transformer decoder, exported to TFLite, run here on CPU via LiteRT.
 
 This is the rare ASL stack with clean commercial provenance end to end; most
 alternatives (WLASL, How2Sign, ASL Citizen derivatives) are research-only and
-must not be shipped. It reads continuous fingerspelling — words, names, URLs,
-phone numbers — not just static letter poses. Realistic webcam accuracy is a
-10–20% character error rate; the chat LLM downstream is robust to that.
+must not be shipped. It reads continuous fingerspelling (words, names, URLs,
+phone numbers), not just static letter poses. Realistic webcam accuracy is a
+10-20% character error rate; the chat LLM downstream is robust to that.
 
 Users meet this worker through the webcam button in agent chat and the demo on
 [/sign-language](https://three.ws/sign-language); the guided walkthrough is the
@@ -37,15 +37,25 @@ the shared `avatar-reconstruction-key` secret).
 ```
 GET  /health      → { ok, model_loaded }
 GET  /schema      → { columns: [390 names], max_frames, min_frames }
-POST /transcribe  { frames: [[390 numbers|null]…] } → { text, frames, ms }
+POST /transcribe  { frames: [[390 numbers|null]…] }
+                  → { text, confidence, frames, ms }
 ```
 
 `frames` is a per-video-frame matrix of the landmark coordinates named by
-`/schema`, in order (`x_face_0 … z_pose_21` — the competition's selected
+`/schema`, in order (`x_face_0 … z_pose_21`, the competition's selected
 MediaPipe Holistic columns; `inference_args.json` is the source of truth).
-`null` marks a missing landmark (NaN to the model, which was trained for it).
+The 390 columns are three blocks of 130: all `x_`, then all `y_`, then all
+`z_`. `null` marks a missing landmark (NaN to the model, which was trained for
+it), so a capture where a hand leaves frame still decodes. Accepted capture
+length is 8 to 1500 frames.
+
+`confidence` is the mean softmax probability of the chosen character over the
+decoded positions: near 1.0 for a clean decode, near 1/vocab for noise, 0.0
+when nothing decodes. Chat uses it to warn instead of silently inserting
+garbage.
+
 The browser extracts landmarks client-side with MediaPipe tasks-vision, so no
-video ever leaves the user's machine — only pose coordinates.
+video ever leaves the user's machine, only pose coordinates.
 
 ## Local run
 
@@ -54,7 +64,19 @@ cd workers/model-asl-recognition
 pip install -r requirements.txt
 # fetch cfg_2/fold-1/model.tflite from the release zip, then:
 MODEL_PATH=./model.tflite API_KEY= uvicorn main:app --port 8087
-python -m pytest test_decode.py -q     # pure decode/schema tests, no model
+```
+
+Tests. `test_decode.py` is pure NumPy and needs no weights; `test_model_smoke.py`
+runs the real model end to end and skips when the weights are absent, so the way
+to run it is inside the built image:
+
+```bash
+pip install pytest
+python -m pytest -q -p no:cacheprovider        # 11 pass, 3 smoke tests skip
+
+docker build -t model-asl-recognition:local .
+docker run --rm -v "$PWD:/src" -w /src model-asl-recognition:local \
+  python test_model_smoke.py                   # real weights, real decode
 ```
 
 ## Deploy
@@ -72,12 +94,27 @@ gcloud run services update three-ws-api --region us-central1 \
   --update-env-vars GCP_ASL_RECOGNITION_URL=<service url>
 ```
 
-The model (40 MB) is baked into the image from the pinned GitHub release, so
-instances cold-start ready and the service scales to zero (recognition runs
-inside the request, sub-second per utterance).
+The model is baked into the image from the pinned GitHub release, so instances
+cold-start ready and the service scales to zero. Recognition runs inside the
+request and stays sub-second at any accepted capture length (measured on the
+live service: 0.32s for 40 frames, 0.77s for both 300 and the 1500-frame cap,
+since the encoder works to a fixed length), which is why the service is billed
+per request rather than kept warm.
+
+## Live
+
+Cloud Run service `model-asl-recognition` in `us-central1`
+(https://model-asl-recognition-93741856042.us-central1.run.app), gen2, CPU
+only, scale to zero, called only through `/api/asl-recognition` on
+`three-ws-api` (`GCP_ASL_RECOGNITION_URL`). Verify it end to end without a key:
+
+```bash
+curl -s https://model-asl-recognition-93741856042.us-central1.run.app/health
+curl -s https://three.ws/api/asl-recognition | jq '.columns | length'   # 390
+```
 
 ## Roadmap
 
 Word-level recognition (250 everyday signs) comes from retraining the MIT
-Kaggle ISLR 1st-place architecture on the PopSign ASL v1.0 corpus (CC BY 4.0)
-— a one-GPU-day job — and compiling both models behind this same endpoint.
+Kaggle ISLR 1st-place architecture on the PopSign ASL v1.0 corpus (CC BY 4.0),
+a one-GPU-day job, and compiling both models behind this same endpoint.
