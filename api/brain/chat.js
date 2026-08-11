@@ -31,6 +31,7 @@ import {
 	vertexGeminiModel,
 	vertexGeminiOpenAIBase,
 	vertexGeminiAccessToken,
+	vertexGeminiBudget,
 } from '../_lib/vertex-gemini.js';
 import { recordEvent } from '../_lib/usage.js';
 import { costMicroUsd } from '../_lib/llm-pricing.js';
@@ -569,6 +570,21 @@ export function freeFallbackChain(providerKey, spec, primary) {
 	return chain;
 }
 
+// Splice Vertex's `extra_body` into an outgoing AI SDK request payload. The SDK
+// serializes the body before its fetch hook runs, so the only place to add a
+// field it does not model is here. Anything unparseable passes through untouched
+// rather than breaking the request.
+function withVertexExtraBody(body, extraBody) {
+	if (typeof body !== 'string' || !extraBody) return body;
+	try {
+		const parsed = JSON.parse(body);
+		if (!parsed || typeof parsed !== 'object') return body;
+		return JSON.stringify({ ...parsed, extra_body: extraBody });
+	} catch {
+		return body;
+	}
+}
+
 // NVIDIA NIM (build.nvidia.com) is OpenAI-*compatible* (Chat Completions, not the
 // Responses API), so — like Groq, ModelScope and OpenRouter — we force the
 // `.chat()` surface. One free `nvapi-...` key unlocks every hosted model.
@@ -1070,11 +1086,20 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 					// minted per attempt (a token-exchange failure throws here and is
 					// handled like any other lane failure). Reuses streamOnce so the
 					// budget/abort/onError machinery is identical to every other lane.
+					// Gemini reasons by default and its reasoning tokens are billed
+					// against max_tokens without being returned, so an uncompensated
+					// budget streams a truncated answer. vertexGeminiBudget caps the
+					// reasoning and funds it on top of the caller's budget; the SDK has
+					// no field for Vertex's `extra_body`, so it rides in on a fetch that
+					// splices it into the outgoing payload.
+					const budget = vertexGeminiBudget(maxTokens);
 					const anchorModel = createOpenAI({
 						apiKey: await vertexGeminiAccessToken(),
 						baseURL: vertexGeminiOpenAIBase(),
+						fetch: (url, init) =>
+							fetch(url, { ...init, body: withVertexExtraBody(init?.body, budget.extra_body) }),
 					}).chat(vertexGeminiModel());
-					meterAttempt(await streamOnce(maxTokens, anchorModel));
+					meterAttempt(await streamOnce(budget.max_tokens, anchorModel));
 				} else meterAttempt(await streamOnce(maxTokens, attempt.model));
 				return;
 			} catch (err) {
