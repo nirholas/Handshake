@@ -98,8 +98,9 @@ export function citizenCanClaim(citizen, task) {
 }
 
 /**
- * Reason a citizen is NOT eligible — used for honest activity/heartbeat notes so
- * the world can narrate "Cole skipped the master bounty (needs rep 20, has 2)".
+ * Reason a citizen is NOT eligible, used for honest activity/heartbeat notes so
+ * the world can narrate "Cole skipped the master bounty (needs rep 5500, has 5000)".
+ * The numbers are absolutes off the chain, so they carry the AgenC baseline.
  * Returns null when the citizen IS eligible.
  */
 export function ineligibilityReason(citizen, task) {
