@@ -21,6 +21,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { collectDeclaredPaths, loadRouteTable, resolveRequest } from './lib/page-routing.mjs';
+import { canonicalOf, canonicalUrlFor, hasSeoRoute } from '../server/seo-head.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -40,6 +41,10 @@ if (paths.length === 0) {
 }
 
 const failures = [];
+// A 200 that served somebody else's page. Tracked apart from `failures`
+// because the fix is different: the route resolves, the content behind it does
+// not exist. See the shared-shell note in the worker below.
+const wrongPage = [];
 
 // How far the running deployment trails the checkout, when both are knowable.
 // Returns a one-line human summary, or null when it cannot be established (no
@@ -81,6 +86,7 @@ async function deployLagReport(target) {
 if (base) {
 	const target = base.replace(/\/$/, '');
 	let done = 0;
+	let verified = 0;
 	const queue = [...paths];
 
 	const worker = async () => {
@@ -98,6 +104,26 @@ if (base) {
 				});
 				status = res.status;
 				if (status >= 300 && status < 400) note = `→ ${res.headers.get('location') || '(no location)'}`;
+				// A 200 is not proof the requested page was served. /docs/* and
+				// /tutorials/* (about 300 declared routes) all rewrite to one
+				// shared shell, so a slug with no content behind it answers 200
+				// with the shell's own head rather than a 404, and a status-only
+				// sweep reads that as reachable. The server's contract for a
+				// catalogued page is that the head names that page
+				// (server/seo-head.mjs rewrites it when the shell does not), so
+				// assert exactly that, reusing the server's own predicate and
+				// canonical builder so this check cannot drift from the rule.
+				// Caught /docs/tokens-xyz serving the generic docs shell while
+				// /docs/tokens-xyz.md was still a hard 404 in production.
+				if (status >= 200 && status < 300 && hasSeoRoute(p)) {
+					const type = res.headers.get('content-type') || '';
+					if (type.includes('text/html')) {
+						const served = canonicalOf(await res.text());
+						const want = canonicalUrlFor(p);
+						if (served === want) verified += 1;
+						else wrongPage.push({ path: p, served, want });
+					}
+				}
 				// A paid endpoint answering 402 IS reachable: the payment
 				// challenge is its correct response to an unpaid request, and
 				// /api/mcp has flagged on every production sweep because of it.
@@ -127,10 +153,23 @@ if (base) {
 	console.log(`[check-pages] sweeping ${paths.length} declared pages against ${target}`);
 	await Promise.all(Array.from({ length: Math.min(concurrency, paths.length) }, worker));
 
-	if (failures.length) {
-		console.error(`\n[check-pages] ${failures.length} unreachable page(s) on ${target}:`);
-		for (const f of failures.sort((a, b) => a.path.localeCompare(b.path))) {
-			console.error(`[check-pages]   ${String(f.status || 'ERR').padEnd(4)} ${f.path} ${f.note}`);
+	if (failures.length || wrongPage.length) {
+		if (failures.length) {
+			console.error(`\n[check-pages] ${failures.length} unreachable page(s) on ${target}:`);
+			for (const f of failures.sort((a, b) => a.path.localeCompare(b.path))) {
+				console.error(`[check-pages]   ${String(f.status || 'ERR').padEnd(4)} ${f.path} ${f.note}`);
+			}
+		}
+		if (wrongPage.length) {
+			console.error(
+				`\n[check-pages] ${wrongPage.length} page(s) answered 200 with another page's content on ${target}:`,
+			);
+			console.error('[check-pages] Each is advertised in the sitemap and llms.txt but is not actually served.');
+			for (const f of wrongPage.sort((a, b) => a.path.localeCompare(b.path))) {
+				console.error(`[check-pages]   ${f.path}`);
+				console.error(`[check-pages]     served canonical: ${f.served ?? '(none)'}`);
+				console.error(`[check-pages]     expected:         ${f.want}`);
+			}
 		}
 		// Separate "the code is broken" from "the deployment is behind the code".
 		// A page whose route landed in a commit the running image predates is a
@@ -142,7 +181,10 @@ if (base) {
 		if (lag) console.error(`\n[check-pages] ${lag}`);
 		process.exit(1);
 	}
-	console.log(`[check-pages] OK — all ${paths.length} declared pages reachable on ${target}`);
+	console.log(
+		`[check-pages] OK - all ${paths.length} declared pages reachable on ${target} ` +
+			`(${verified} also verified to serve their own page, not a shared shell)`,
+	);
 } else {
 	const distRoot = path.join(root, 'dist');
 	if (!existsSync(distRoot)) {
