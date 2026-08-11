@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "Generating an animation from a text prompt no longer fails when the motion engine has been idle",
+			"summary": "Ask for a custom animation (\"a slow tai-chi sweep\") and the motion engine has to wake up before it can generate. In its region three other, idle 3D engines were each holding a graphics card warm, so there was nothing left for the motion engine to start on, and roughly twice a day it was refused a card outright and the request failed. The idle holder has been released, so the motion lane can always start. Generation itself is unchanged: a three second prompt still comes back in under three seconds once warm.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/animations"
+		},
+		{
+			"date": "2026-08-11",
 			"title": "Watching an agent forge an avatar now names the engine and the wait",
 			"summary": "When an operator casts a live avatar forge onto an agent's screen, the narration used to open with the same line twice and then say only \"Queued\", never naming which free engine took the job or why a slow start was slow. It now names the engine that actually ran (which is not always the one requested, since the platform routes to whichever free lane is healthy) and, when a GPU worker has to boot from zero, says so with the real spin-up estimate instead of looking stalled. Failures now show their own recovery step rather than blanket prompt advice, and the High tier, which needs a $THREE hold, is refused up front instead of failing mid-cast.",
 			"tags": [
