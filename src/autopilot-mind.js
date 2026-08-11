@@ -43,10 +43,15 @@ function injectStyles() {
 	if (_stylesInjected || typeof document === 'undefined') return;
 	_stylesInjected = true;
 	const css = `
-	.apm { --apm-line: var(--hairline, #1c1c1c); --apm-s1: var(--surface-1, #111); --apm-s2: var(--surface-2, #181818);
+	/* Tokens live on :root, not only on .apm, because the pieces this module
+	   exports are mounted outside an .apm container too: receiptRow() renders
+	   into the /autopilot-activity ledger and the chip toast is appended to
+	   <body>. Scoped to .apm alone, every var() below resolved to nothing there
+	   and the borders, backgrounds and accents silently vanished. */
+	:root, .apm { --apm-line: var(--hairline, #1c1c1c); --apm-s1: var(--surface-1, #111); --apm-s2: var(--surface-2, #181818);
 		--apm-txt: var(--text, #f6f6f6); --apm-t2: var(--text-2, #a8a8a8); --apm-t3: var(--text-3, #6a6a6a);
-		--apm-accent: var(--mint, #78c88c); --apm-red: var(--red, #ef4444); --apm-amber: var(--amber, #f59e0b);
-		display: flex; flex-direction: column; gap: 1.25rem; }
+		--apm-accent: var(--mint, #78c88c); --apm-red: var(--red, #ef4444); --apm-amber: var(--amber, #f59e0b); }
+	.apm { display: flex; flex-direction: column; gap: 1.25rem; }
 	.apm-card { border: 1px solid var(--apm-line); border-radius: 12px; background: var(--apm-s1); padding: 1.1rem 1.15rem; }
 	.apm-h { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
 	.apm-h h3 { margin: 0; font-size: 0.95rem; letter-spacing: -0.01em; }
@@ -96,6 +101,7 @@ function injectStyles() {
 	.apm-source { display: inline-flex; align-items: center; gap: 0.3rem; max-width: 100%; padding: 0.22rem 0.5rem; border-radius: 99px;
 		background: var(--apm-s2); border: 1px solid var(--apm-line); font-size: 0.72rem; color: var(--apm-t2); text-decoration: none; }
 	.apm-source:hover { border-color: var(--apm-accent); color: var(--apm-txt); }
+	.apm-source:focus-visible { outline: 2px solid var(--apm-accent); outline-offset: 2px; }
 	.apm-source .apm-source-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
 	.apm-source.forgotten { opacity: 0.5; }
 	.apm-prop-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.7rem; }
@@ -586,6 +592,9 @@ export function mountAutopilotMind(container, { agentId }) {
 // ── Shared receipt row (used by the tab + the standalone Activity page) ───────
 
 export function receiptRow(rc, agentId, { undo = false, showAgent = false } = {}) {
+	// Surfaces that reuse the row without mounting the full panel (the
+	// /autopilot-activity ledger) get the stylesheet from here.
+	injectStyles();
 	const km = KIND_META[rc.kind] || { icon: '•', label: rc.kind };
 	const result = rc.result || {};
 	let line = '';

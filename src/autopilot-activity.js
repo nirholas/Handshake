@@ -28,7 +28,9 @@ function url() {
 }
 
 function renderState(html) {
-	$('ledger').innerHTML = html;
+	const ledger = $('ledger');
+	ledger.innerHTML = html;
+	ledger.removeAttribute('aria-busy');
 	$('loadmore').hidden = true;
 }
 
@@ -51,12 +53,36 @@ function renderTrust(trust) {
 	slot.innerHTML = `<span class="apm-badge ${esc(trust.level)}" title="${esc(trust.blurb)}">${esc(trust.label)} · ${esc(String(trust.stats?.executed ?? 0))} actions</span>`;
 }
 
+function emptyState() {
+	if (agentFilter) {
+		return `<div class="state"><div class="ico">🧭</div><h2>Nothing from this agent yet</h2><p>This agent has not acted on your behalf so far. Other agents may have: switch the filter back to every agent.</p><button class="btn" id="clear-filter">Show all agents</button></div>`;
+	}
+	return `<div class="state"><div class="ico">🧭</div><h2>No actions yet</h2><p>When your agent acts on your behalf (sets an alert, writes a briefing, sends $THREE) every move shows up here with the memory that motivated it.</p><a class="btn" href="/dashboard">Set up autopilot →</a></div>`;
+}
+
+function selectAgent(id) {
+	agentFilter = id;
+	cursor = null;
+	const sel = $('agent-filter');
+	if (sel.value !== id) sel.value = id;
+	const next = new URL(location.href);
+	if (agentFilter) next.searchParams.set('agent', agentFilter); else next.searchParams.delete('agent');
+	history.replaceState(null, '', next);
+	load();
+}
+
 async function load({ append = false } = {}) {
 	if (loading) return;
 	loading = true;
 	const ledger = $('ledger');
+	const more = $('loadmore');
+	// Captured per call so the label restored below is whatever the active
+	// locale put there, not a hardcoded English string.
+	const moreLabel = more.textContent;
+	ledger.setAttribute('aria-busy', 'true');
 	if (!append) ledger.innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
-	$('loadmore').disabled = true;
+	more.disabled = true;
+	if (append) more.textContent = 'Loading…';
 	try {
 		const r = await apiFetch(url(), { credentials: 'include', allowAnonymous: true });
 		if (r.status === 401) {
@@ -71,7 +97,8 @@ async function load({ append = false } = {}) {
 
 		const receipts = j.receipts || [];
 		if (!append && !receipts.length) {
-			renderState(`<div class="state"><div class="ico">🧭</div><h2>No actions yet</h2><p>When your agent acts on your behalf — sets an alert, writes a briefing, sends $THREE — every move shows up here with the memory that motivated it.</p><a class="btn" href="/dashboard">Set up autopilot →</a></div>`);
+			renderState(emptyState());
+			$('clear-filter')?.addEventListener('click', () => selectAgent(''));
 			return;
 		}
 
@@ -80,16 +107,23 @@ async function load({ append = false } = {}) {
 		else ledger.innerHTML = html;
 
 		cursor = j.next_cursor;
-		$('loadmore').hidden = !cursor;
+		more.hidden = !cursor;
+		ledger.removeAttribute('aria-busy');
 		wireUndo(ledger);
 	} catch (err) {
-		if (!append) {
+		if (append) {
+			// The already-rendered page stays intact; say what failed and leave the
+			// button armed so another tap retries the same cursor.
+			showReceiptChip(`Couldn't load more: ${err.message}`, { icon: '⚠' });
+			ledger.removeAttribute('aria-busy');
+		} else {
 			renderState(`<div class="state"><div class="ico">⚠️</div><h2>Couldn't load activity</h2><p>${esc(err.message)}</p><button class="btn" id="retry">Retry</button></div>`);
 			$('retry')?.addEventListener('click', () => load());
 		}
 	} finally {
 		loading = false;
-		$('loadmore').disabled = false;
+		more.disabled = false;
+		more.textContent = moreLabel;
 	}
 }
 
@@ -133,14 +167,7 @@ function resolveAgentForUndo(btn) {
 	return agentFilter;
 }
 
-$('agent-filter').addEventListener('change', (e) => {
-	agentFilter = e.target.value;
-	cursor = null;
-	const next = new URL(location.href);
-	if (agentFilter) next.searchParams.set('agent', agentFilter); else next.searchParams.delete('agent');
-	history.replaceState(null, '', next);
-	load();
-});
+$('agent-filter').addEventListener('change', (e) => selectAgent(e.target.value));
 
 $('loadmore').addEventListener('click', () => load({ append: true }));
 

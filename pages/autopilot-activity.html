@@ -5,13 +5,13 @@
 	<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title data-i18n="autopilot_activity.meta_title">Autopilot Activity — three.ws</title>
-	<meta name="description" content="Every autonomous action your three.ws agent took — each with the memory that motivated it, a signed receipt, and a one-tap undo. Explainable autonomy you can trust."  data-i18n-attr="content:autopilot_activity.meta_description"/>
+	<title data-i18n="autopilot_activity.meta_title">Autopilot Activity · three.ws</title>
+	<meta name="description" content="Every autonomous action your three.ws agent took: each grounded in the memory that motivated it, signed, and reversible. Explainable autonomy you can audit."  data-i18n-attr="content:autopilot_activity.meta_description"/>
 	<link rel="canonical" href="https://three.ws/autopilot-activity" />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/autopilot-activity" />
-	<meta property="og:title" content="Autopilot Activity — three.ws"  data-i18n-attr="content:autopilot_activity.meta_og_title"/>
+	<meta property="og:title" content="Autopilot Activity · three.ws"  data-i18n-attr="content:autopilot_activity.meta_og_title"/>
 	<meta property="og:description" content="Explainable autonomy: every action your agent took, with the memory that motivated it and a signed receipt."  data-i18n-attr="content:autopilot_activity.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Autopilot+Activity&amp;d=Explainable+autonomy%3A+every+action+your+agent+took%2C+with+the+memory+that+motivated+it+and+a+signed+receipt.&amp;p=%2Fautopilot-activity" />
 	<meta property="og:image:width" content="1200" />
@@ -46,6 +46,8 @@
 		.topbar nav { display: flex; gap: 4px; margin-left: auto; }
 		.topbar nav a { padding: 6px 10px; font-size: 14px; color: var(--text-2); border-radius: 7px; transition: color .12s, background .12s; }
 		.topbar nav a:hover { color: var(--text); background: var(--surface-1); }
+		.topbar nav a[aria-current="page"] { color: var(--text); background: var(--surface-1); }
+		a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; border-radius: 7px; }
 		.wrap { max-width: 760px; margin: 0 auto; padding: 28px 24px 80px; }
 		.hero h1 { font-family: var(--font-display); font-size: 1.7rem; letter-spacing: -0.03em; margin: 0 0 6px; }
 		.hero p { color: var(--text-2); margin: 0 0 18px; max-width: 60ch; }
@@ -79,13 +81,13 @@
 	<main class="wrap">
 		<section class="hero">
 			<h1 data-i18n="autopilot_activity.autopilot_activity">Autopilot activity</h1>
-			<p data-i18n="autopilot_activity.every_action_your_agent_took_on_your">Every action your agent took on your behalf — each grounded in the memory that motivated it,
+			<p data-i18n="autopilot_activity.every_action_your_agent_took_on_your">Every action your agent took on your behalf, each grounded in the memory that motivated it,
 			signed, and reversible where it can be. This is autonomy you can audit.</p>
 		</section>
 
 		<div class="controls">
 			<label for="agent-filter" data-i18n="autopilot_activity.agent">Agent</label>
-			<select id="agent-filter" aria-label="Filter by agent"><option value="" data-i18n="autopilot_activity.all_your_agents">All your agents</option></select>
+			<select id="agent-filter"><option value="" data-i18n="autopilot_activity.all_your_agents">All your agents</option></select>
 			<span id="trust-slot"></span>
 		</div>
 

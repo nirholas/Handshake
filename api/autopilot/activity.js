@@ -6,6 +6,8 @@
 //     • its full explanation (rationale) and outcome (created rule / tx / briefing)
 //     • the source memories it was grounded in (provenance), hydrated for linking
 //   Omit agentId to aggregate across all of the caller's agents.
+//   `agents` is always the caller's full roster (the UI's picker source), never
+//   just the filtered agent; `receipts` is what agentId narrows.
 //
 // This reads the real, append-only agent_actions log — the same provenance trail
 // every other surface writes to. No mocks. $THREE is the only coin referenced.
@@ -41,8 +43,17 @@ export default wrap(async (req, res) => {
 	if (!parsed.ok) return error(res, 400, 'validation_error', parsed.reason);
 	const cursor = parsed.cursor;
 
-	// Resolve the set of agents to read. A specific agent must be owned by caller;
-	// otherwise aggregate across all of the caller's agents.
+	// `agents` is always the caller's FULL roster, independent of the agentId
+	// filter: it is what the UI builds its agent picker from, so narrowing it to
+	// the filtered agent would strand a deep link like
+	// /autopilot-activity?agent=<id> with a one-entry picker and no way back to
+	// the other agents. `agentIds` is the narrower read set for the log itself.
+	const owned = await sql`
+		SELECT id, name, avatar_id FROM agent_identities WHERE user_id = ${auth.userId} AND deleted_at IS NULL ORDER BY created_at
+	`;
+	const agents = owned.map((a) => ({ id: a.id, name: a.name, avatarId: a.avatar_id }));
+	const agentById = new Map(agents.map((a) => [a.id, a]));
+
 	let agentIds;
 	if (agentId) {
 		const [agent] = await sql`SELECT id, user_id FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL`;
@@ -50,19 +61,13 @@ export default wrap(async (req, res) => {
 		if (agent.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 		agentIds = [agentId];
 	} else {
-		const owned = await sql`SELECT id FROM agent_identities WHERE user_id = ${auth.userId} AND deleted_at IS NULL`;
-		agentIds = owned.map((a) => a.id);
+		agentIds = agents.map((a) => a.id);
 	}
 
 	// A caller with no agents yet has nothing to read: answer before touching the log.
 	if (!agentIds.length) {
-		return json(res, 200, { receipts: [], next_cursor: null, agents: [], trust: null });
+		return json(res, 200, { receipts: [], next_cursor: null, agents, trust: null });
 	}
-
-	const agents = await sql`
-		SELECT id, name, avatar_id FROM agent_identities WHERE id = ANY(${agentIds}::uuid[])
-	`;
-	const agentById = new Map(agents.map((a) => [a.id, { id: a.id, name: a.name, avatarId: a.avatar_id }]));
 
 	const rows = cursor
 		? await sql`
@@ -106,7 +111,7 @@ export default wrap(async (req, res) => {
 	});
 
 	const trust = agentId ? await computeTrust({ agentId }) : null;
-	return json(res, 200, { receipts, next_cursor: nextCursor, agents: [...agentById.values()], trust });
+	return json(res, 200, { receipts, next_cursor: nextCursor, agents, trust });
 });
 
 // The receipt's "what happened" — payload minus the provenance fields the UI
