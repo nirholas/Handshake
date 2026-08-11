@@ -208,6 +208,31 @@ def _load_single_mesh(data: bytes, suffix: str):
 # ── color preservation ─────────────────────────────────────────────────────────────
 
 
+def _face_colors_of(visual, mesh):
+    """Per-face RGBA from a ColorVisuals, whichever way it carries its colors.
+
+    `TextureVisuals.to_color()` hands back a ColorVisuals with no mesh attached,
+    so reading `.face_colors` on it raises and, until 2026-08-11, every textured
+    input therefore fell through to the flat default: the common case in the
+    forge, silently stripped of its colors. Read vertex colors directly and fold
+    them to faces here instead. Returns None when the visual carries neither.
+    """
+    import numpy as np
+    from trimesh.visual.color import vertex_to_face_color
+
+    kind = getattr(visual, "kind", None)
+    if kind == "face":
+        fc = visual.face_colors
+        if fc is not None and len(fc) == len(mesh.faces):
+            return np.asarray(fc, dtype=np.uint8).reshape(-1, 4)
+    if kind == "vertex":
+        vc = np.asarray(visual.vertex_colors)
+        if len(vc) == len(mesh.vertices):
+            folded = vertex_to_face_color(vc, mesh.faces)
+            return np.asarray(folded, dtype=np.uint8).reshape(-1, 4)
+    return None
+
+
 def _source_color_sampler(mesh) -> Callable:
     """Return color_at(points)->(N,4) uint8 sampling the nearest source face color.
 
@@ -224,17 +249,14 @@ def _source_color_sampler(mesh) -> Callable:
     try:
         visual = getattr(mesh, "visual", None)
         if visual is not None:
-            kind = getattr(visual, "kind", None)
-            if kind == "texture" or visual.__class__.__name__ == "TextureVisuals":
+            if getattr(visual, "kind", None) == "texture" or visual.__class__.__name__ == "TextureVisuals":
                 visual = visual.to_color()
             # `defined` is False when trimesh is only synthesizing its stock gray
-            # for a mesh that carries no color of its own. Reading face_colors
+            # for a mesh that carries no color of its own. Reading colors
             # regardless would hand every untextured input that flat 102-gray and
             # leave DEFAULT_COLOR unreachable.
             if getattr(visual, "defined", True):
-                fc = getattr(visual, "face_colors", None)
-                if fc is not None and len(fc) == n_faces:
-                    face_colors = np.asarray(fc, dtype=np.uint8).reshape(-1, 4)
+                face_colors = _face_colors_of(visual, mesh)
     except Exception as exc:  # noqa: BLE001 — any visual quirk falls back to default
         log.info("color extraction fell back to default: %s", exc)
 
