@@ -195,12 +195,15 @@ async function fromBirdeye(mint) {
 	);
 }
 
-// Tokens API (api.tokens.xyz, Solana Foundation). Sits behind Birdeye because
-// it carries no holder count, and ahead of the keyless rungs because its
-// numbers can come from `clickhouse_trades`: direct on-chain USD-stable fills
-// rather than an aggregator's pool estimate. Inert without TOKENS_XYZ_API_KEY
-// (fetchMintMarket returns null), so an unconfigured deployment keeps the exact
-// cascade it had before this rung existed.
+// Tokens API (api.tokens.xyz, Solana Foundation). Carries the same full field
+// set as Birdeye, holder count and circulating supply included, so it is a
+// like-for-like second rather than a degraded fallback: when our own Birdeye
+// key is quota-benched for six hours, the panel keeps every number it had.
+// It sits second rather than first because Birdeye is our direct read, while
+// this is served from their cache.
+//
+// Inert without TOKENS_XYZ_API_KEY (fetchMintMarket returns null), so an
+// unconfigured deployment keeps the exact cascade it had before this existed.
 async function fromTokensXyz(mint) {
 	if (!tokensXyzConfigured()) return null;
 	const row = await fetchMintMarket(mint);
@@ -215,9 +218,10 @@ async function fromTokensXyz(mint) {
 			market_cap: marketCap,
 			volume_24h: num(m.volume_24h),
 			liquidity: num(m.liquidity),
-			// The endpoint reports no supply field; derive it the same way the
-			// DexScreener rung does rather than leaving the panel blank.
-			supply: marketCap && price ? marketCap / price : null,
+			holders: num(m.holders),
+			// Prefer the reported circulating supply; fall back to cap / price the
+			// way the DexScreener rung does when the row omits it.
+			supply: num(m.supply) ?? (marketCap && price ? marketCap / price : null),
 			decimals: num(m.decimals) ?? 6,
 		},
 		'tokensxyz',
