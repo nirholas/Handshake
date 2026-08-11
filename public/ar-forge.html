@@ -48,6 +48,7 @@
 		.brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--ink); font-weight: 700; letter-spacing: .01em; }
 		.brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
 		.brand:hover { color: #fff; }
+		.brand:focus-visible, a.top:focus-visible, footer.foot a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 		.crumb { color: var(--muted); font-size: 13px; }
 		.spacer { flex: 1 1 auto; }
 		a.top { color: var(--muted); font-size: 13px; text-decoration: none; }
@@ -122,7 +123,10 @@
 		@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -20% 0; } }
 		@media (prefers-reduced-motion: reduce) { .skeleton .blob { animation: none; background-position: 40% 0; } }
 
-		.actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--line); background: rgba(10,11,14,0.45); }
+		/* Positioned above the overlays: the failure state keeps the action row
+		   usable ("download the GLB" has to actually be clickable), and an
+		   absolutely positioned overlay would otherwise paint over it. */
+		.actions { position: relative; z-index: 2; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--line); background: rgba(10,11,14,0.45); }
 		.actions .meta { flex: 1 1 100%; color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		a.btn, button.btn {
 			appearance: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
@@ -262,7 +266,26 @@
 		var recentWrap = $('recent'), rail = $('rail'), skeletonEl = $('skeleton');
 
 		var POLL_MS = 3000, MAX_POLL_MS = 300000, LS_KEY = 'twx_ar_forge_recent';
+		// No-progress budget for a model that has been handed to <model-viewer>.
+		// Reset on every progress event, so a big GLB on a slow link is never cut
+		// off; it only fires when nothing is arriving at all (blocked CDN, dead
+		// custom element, silent stall) and turns an endless spinner into a state
+		// with real exits.
+		var LOAD_STALL_MS = 30000;
 		var runSeq = 0, elapsedTimer = null, current = null; // { glb, prompt }
+		var loadedSrc = null, loadWatchdog = null;
+
+		// Runtime copy the script writes has to respect the locale the page was
+		// translated into (public/locales/*.json), or a German visitor watches the
+		// AR button flip back to English the moment a model loads. Falls back to
+		// the English source string before /i18n.js has applied a catalog.
+		function t(key, fallback) {
+			try {
+				var api = window.threewsI18n;
+				var v = api && typeof api.t === 'function' ? api.t(key) : null;
+				return v && v !== key ? v : fallback;
+			} catch (e) { return fallback; }
+		}
 
 		function overlay(el) {
 			[idle, working, failed].forEach(function (n) { n.classList.add('hidden'); });
@@ -275,20 +298,31 @@
 		// approach as src/forge.js#honestFill.
 		var etaSeconds = null, coldStart = false;
 
-		// Map a real /api/forge poll status to a holder-readable stage line, the
-		// same contract as src/shared/forge-frames.js#forgeStageNarration (this
-		// page is a standalone static file with no bundler, so the logic is
-		// mirrored here rather than imported).
+		// Map a real /api/forge status to a holder-readable stage line, following
+		// src/shared/forge-frames.js#forgeStageNarration (this page is a standalone
+		// static file with no bundler, so the logic lives here rather than being
+		// imported). It goes one step past that helper: the free lane can answer the
+		// POST itself, so no poll ever reports a newer status, and the copy has to
+		// advance off the elapsed clock instead.
 		function stageNarration(status, elapsedS) {
-			var remaining = etaSeconds != null ? Math.max(1, Math.round(etaSeconds - elapsedS)) : null;
-			var remainSuffix = remaining ? (' — ~' + remaining + 's left') : '';
+			var remaining = etaSeconds != null ? Math.round(etaSeconds - elapsedS) : null;
+			var remainSuffix = remaining == null ? ''
+				: remaining > 0 ? (', ~' + remaining + 's left')
+				: ', longer than usual, still working';
 			switch (status) {
 				case 'submitting':
-					return coldStart ? 'Waking a cold GPU worker…' : 'Sending your prompt to the forge.';
+					// The free lane answers the POST itself when it can, so this stage
+					// can cover the whole generation and no poll ever moves it along.
+					// Walk the copy forward off the elapsed clock rather than freeze on
+					// "sending" for a minute (same honest-from-elapsed approach as
+					// src/forge.js#honestFill).
+					if (elapsedS < 6) return coldStart ? 'Waking a cold GPU worker.' : 'Sending your prompt to the forge.';
+					if (elapsedS < 25) return (coldStart ? 'Cold-starting a free GPU lane' : 'Queued on the free NVIDIA NIM lane') + remainSuffix + '.';
+					return 'Sculpting geometry and painting textures' + remainSuffix + '.';
 				case 'queued':
-					return coldStart
-						? ('Cold-starting a free GPU lane' + remainSuffix)
-						: ('Queued on the free NVIDIA NIM lane' + remainSuffix);
+					return (coldStart
+						? 'Cold-starting a free GPU lane'
+						: 'Queued on the free NVIDIA NIM lane') + remainSuffix + '.';
 				case 'running':
 					return 'Sculpting geometry and painting textures' + remainSuffix + '.';
 				default:
@@ -299,10 +333,15 @@
 			var elapsedS = elapsedTimer ? (Date.now() - elapsedTimer.t0) / 1000 : 0;
 			workMsg.textContent = stageNarration(status, elapsedS);
 		}
+		// Snapshotted lazily rather than at parse time: /i18n.js applies its catalog
+		// after this script runs, so the first busy toggle is the earliest moment
+		// the button holds its final, localized label.
+		var goIdleHtml = null;
 		function setBusy(b) {
+			if (goIdleHtml === null) goIdleHtml = go.innerHTML;
 			go.disabled = b;
-			go.textContent = b ? 'Forging…' : 'Forge';
-			if (!b) { var s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '✦'; go.appendChild(s); }
+			if (b) go.textContent = t('ar_forge.forging_busy', 'Forging…');
+			else go.innerHTML = goIdleHtml;
 		}
 		function startElapsed(status) {
 			stopElapsed();
@@ -327,8 +366,13 @@
 				body: JSON.stringify({ prompt: prompt, backend: 'nvidia' })
 			}).then(function (res) {
 				return res.json().catch(function () { return {}; }).then(function (data) {
-					if (res.status === 503 || data.error === 'unconfigured') {
+					if (data.error === 'unconfigured') {
+						// The API's own text names the env vars an operator must set; that
+						// is developer copy, not something to show a visitor.
 						throw new Error('The generator is offline right now. Try again in a few minutes.');
+					}
+					if (res.status === 503) {
+						throw new Error(data.message || 'The forge is warming up. Try again in a moment.');
 					}
 					if (res.status === 429 || data.error === 'rate_limited') {
 						var secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 15;
@@ -397,50 +441,107 @@
 				stopElapsed();
 				skeletonEl.classList.remove('show');
 				setBusy(false);
-				failMsg.textContent = (err && err.message) || 'Generation failed.';
+				failMsg.textContent = humanError(err);
 				overlay(failed);
 			});
 		}
 
+		// A thrown browser network error ("Failed to fetch", "NetworkError…") is
+		// not copy anyone can act on. Everything else here is already a message
+		// this page or the API wrote for a person, so it passes through.
+		function humanError(err) {
+			var msg = (err && err.message) || '';
+			if (!msg || /failed to fetch|networkerror|load failed|network request failed/i.test(msg)) {
+				return 'Could not reach the forge. Check your connection and try again.';
+			}
+			return msg;
+		}
+
 		// ── Result ──
-		function showResult(glbUrl, prompt) {
+		// Every exit from a result (download, viewer, AR studio, share, AR) is wired
+		// the moment the GLB url is known, not when it finishes rendering: the
+		// failure states below tell the user to download the model, so those links
+		// have to work even when nothing ever renders.
+		function wireActions(glbUrl, prompt) {
+			var title = encodeURIComponent((prompt || '').slice(0, 80));
+			meta.textContent = prompt || 'Untitled model';
+			meta.title = prompt || '';
+			downloadEl.href = glbUrl;
+			downloadEl.setAttribute('download', fileName(prompt) + '.glb');
+			openViewer.href = '/viewer?src=' + encodeURIComponent(glbUrl) + '&title=' + title;
+			var studioEl = $('open-studio');
+			if (studioEl) studioEl.href = '/ar/studio?src=' + encodeURIComponent(glbUrl) + '&title=' + title;
+		}
+
+		function clearWatchdog() { if (loadWatchdog) { clearTimeout(loadWatchdog); loadWatchdog = null; } }
+		function armWatchdog(glbUrl) {
+			clearWatchdog();
+			loadWatchdog = setTimeout(function () {
+				loadWatchdog = null;
+				if (!current || current.glb !== glbUrl || loadedSrc === glbUrl) return;
+				setBusy(false);
+				failMsg.textContent = customElements.get('model-viewer')
+					? 'The model could not be displayed here. Download the GLB or open it in the full viewer.'
+					: 'The 3D viewer could not load in this browser. Download the GLB or open it in the full viewer.';
+				overlay(failed);
+				actions.classList.remove('hidden');
+			}, LOAD_STALL_MS);
+		}
+
+		function showResult(glbUrl, prompt, heading) {
 			if (!isHttps(glbUrl)) {
 				failMsg.textContent = 'The forge returned an invalid model link.';
 				overlay(failed); setBusy(false); return;
 			}
 			current = { glb: glbUrl, prompt: prompt };
+			wireActions(glbUrl, prompt);
+			// <model-viewer> only fires `load` when `src` actually changes, so
+			// reopening the model already on screen (a Recent chip, a re-shared deep
+			// link) would otherwise sit on the loading overlay forever.
+			if (loadedSrc === glbUrl && mv.getAttribute('src') === glbUrl) { finishLoad(); return; }
 			overlay(working);
-			workTitle.textContent = 'Loading your model…';
+			// `heading` lets a caller keep the headline it already wrote (reopening a
+			// Recent forge, opening a shared link) instead of it flashing past.
+			workTitle.textContent = heading || 'Loading your model…';
 			workMsg.textContent = 'Almost there.';
 			mv.setAttribute('alt', prompt ? '3D model: ' + prompt : 'Generated 3D model');
 			mv.setAttribute('src', glbUrl);
+			armWatchdog(glbUrl);
 		}
 
-		mv.addEventListener('load', function () {
-			if (!current || mv.getAttribute('src') !== current.glb) return;
+		function finishLoad() {
+			clearWatchdog();
+			loadedSrc = current.glb;
 			overlay(null);
 			setBusy(false);
 			mv.classList.remove('veiled');
 			actions.classList.remove('hidden');
-			meta.textContent = current.prompt || 'Untitled model';
-			meta.title = current.prompt || '';
-			downloadEl.href = current.glb;
-			downloadEl.setAttribute('download', fileName(current.prompt) + '.glb');
-			openViewer.href = '/viewer?src=' + encodeURIComponent(current.glb) + '&title=' + encodeURIComponent((current.prompt || '').slice(0, 80));
-			var studioEl = $('open-studio');
-			if (studioEl) studioEl.href = '/ar/studio?src=' + encodeURIComponent(current.glb) + '&title=' + encodeURIComponent((current.prompt || '').slice(0, 80));
+			wireActions(current.glb, current.prompt);
 			if (mv.canActivateAR) {
-				arBtn.textContent = '📱 View in your space';
+				arBtn.textContent = t('ar_forge.view_in_your_space', '📱 View in your space');
 				handoff.classList.remove('show');
 			} else {
-				arBtn.textContent = '📱 Open AR on your phone';
+				arBtn.textContent = t('ar_forge.open_ar_on_your_phone', '📱 Open AR on your phone');
 				renderHandoff(arLink());
 			}
+		}
+
+		mv.addEventListener('load', function () {
+			if (!current || mv.getAttribute('src') !== current.glb) return;
+			finishLoad();
+		});
+		// Bytes are still arriving: give the transfer a fresh stall budget instead
+		// of failing a large model on a slow connection.
+		mv.addEventListener('progress', function (ev) {
+			if (!current || loadedSrc === current.glb) return;
+			if (ev && ev.detail && ev.detail.totalProgress >= 1) return;
+			armWatchdog(current.glb);
 		});
 		mv.addEventListener('error', function () {
 			if (!current) return;
+			clearWatchdog();
 			setBusy(false);
-			failMsg.textContent = 'The model was generated but could not be displayed. You can still download the GLB.';
+			failMsg.textContent = 'The model was generated but could not be displayed here. Download the GLB or open it in the full viewer.';
 			overlay(failed);
 			actions.classList.remove('hidden');
 		});
@@ -476,6 +577,9 @@
 
 		$('retry').addEventListener('click', function () {
 			overlay(idle);
+			// The failure may have come from a model that never rendered, which
+			// leaves its action row on screen. Clear it so retrying starts clean.
+			actions.classList.add('hidden');
 			if (input.value.trim().length >= 3) forge(input.value);
 			else input.focus();
 		});
@@ -530,9 +634,7 @@
 					input.value = e.prompt;
 					setBusy(false);
 					overlay(working);
-					workTitle.textContent = 'Loading "' + (e.prompt.length > 60 ? e.prompt.slice(0, 57) + '…' : e.prompt) + '"';
-					workMsg.textContent = 'Reopening a previous forge.';
-					showResult(e.glb, e.prompt);
+					showResult(e.glb, e.prompt, 'Loading "' + (e.prompt.length > 60 ? e.prompt.slice(0, 57) + '…' : e.prompt) + '"');
 				});
 				rail.appendChild(b);
 			});
@@ -552,21 +654,11 @@
 			if (src && isHttps(src)) {
 				var title = q.get('title') || q.get('prompt') || 'Shared model';
 				overlay(working);
-				workTitle.textContent = 'Loading shared model…';
-				workMsg.textContent = '';
-				showResult(src, title);
+				showResult(src, title, 'Loading shared model…');
 			}
 		})();
 
 		renderRecent();
-
-		// If model-viewer never upgrades (script blocked), surface it instead of spinning forever.
-		setTimeout(function () {
-			if (!customElements.get('model-viewer') && current) {
-				failMsg.textContent = 'The 3D viewer could not load in this browser. Download the GLB and open it in any 3D viewer.';
-				overlay(failed);
-			}
-		}, 12000);
 	})();
 	</script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
