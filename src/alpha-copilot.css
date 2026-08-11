@@ -67,6 +67,8 @@ body {
 	transition: color var(--duration-fast);
 }
 .ac-pick-idtoggle:hover { color: var(--wallet-accent); }
+.ac-pick-idtoggle:active { color: var(--ink-bright); }
+.ac-pick-idtoggle:focus-visible { outline: none; color: var(--wallet-accent); box-shadow: 0 0 0 3px var(--wallet-accent-soft); border-radius: var(--radius-sm); }
 
 .ac-pick-rail {
 	display: flex; gap: var(--space-sm); overflow-x: auto; padding: var(--space-2xs) 2px var(--space-sm);
@@ -83,8 +85,12 @@ body {
 	transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-instant);
 }
 .ac-agent-card:hover { border-color: var(--wallet-stroke); background: var(--surface-1); transform: translateY(-1px); }
-.ac-agent-card:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--wallet-accent-soft); }
 .ac-agent-card.is-active { border-color: var(--wallet-stroke-strong); background: var(--wallet-accent-soft); box-shadow: 0 0 0 1px var(--wallet-stroke-strong) inset; }
+/* After `.is-active` on purpose: both selectors weigh the same, so the later one
+   wins and the selected card would otherwise keep its inset ring and show no
+   focus ring at all when a keyboard user tabs onto it. */
+.ac-agent-card:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--wallet-accent-soft); }
+.ac-agent-card.is-active:focus-visible { box-shadow: 0 0 0 1px var(--wallet-stroke-strong) inset, 0 0 0 3px var(--wallet-accent-soft); }
 .ac-agent-av { flex: 0 0 auto; width: 40px; height: 40px; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); display: grid; place-items: center; }
 .ac-agent-av img { width: 100%; height: 100%; object-fit: cover; }
 .ac-agent-initials { font-family: var(--font-display); font-size: var(--text-sm); color: var(--wallet-accent); font-weight: 700; }
@@ -178,6 +184,8 @@ body {
 .ac-stage-role { font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.05em; color: var(--wallet-accent); }
 .ac-stage-link { flex: 0 0 auto; font-size: var(--text-2xs); font-family: var(--font-mono); color: var(--ink-faint); text-decoration: none; padding: var(--space-2xs) var(--space-xs); border: 1px solid var(--stroke); border-radius: var(--radius-sm); transition: color var(--duration-fast), border-color var(--duration-fast); }
 .ac-stage-link:hover { color: var(--ink); border-color: var(--wallet-stroke); }
+.ac-stage-link:active { transform: translateY(1px); }
+.ac-stage-link:focus-visible { outline: none; color: var(--ink); border-color: var(--wallet-stroke-strong); box-shadow: 0 0 0 3px var(--wallet-accent-soft); }
 .ac-speak { display: flex; gap: var(--space-sm); align-items: flex-start; padding: var(--space-md); border-top: 1px solid var(--stroke); background: var(--wallet-accent-soft); }
 .ac-speak.is-speaking { animation: ac-glow 1.4s ease-in-out infinite; }
 @keyframes ac-glow { 50% { background: var(--wallet-accent-fill); } }
@@ -305,7 +313,9 @@ body {
 .ac-drawer-card { position: relative; width: min(440px, 94vw); background: var(--bg-1); border: 1px solid var(--wallet-stroke); border-radius: var(--radius-lg); box-shadow: var(--shadow-3); padding: var(--space-lg); animation: ac-rise var(--duration-base) var(--ease-emphasized); }
 @keyframes ac-rise { from { transform: translateY(12px); opacity: 0; } }
 .ac-modal-x { position: absolute; top: var(--space-sm); right: var(--space-sm); width: 30px; height: 30px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--stroke); color: var(--ink-dim); cursor: pointer; font-size: 18px; line-height: 1; }
-.ac-modal-x:hover { color: var(--ink); }
+.ac-modal-x:hover { color: var(--ink); border-color: var(--wallet-stroke); }
+.ac-modal-x:active { transform: translateY(1px); }
+.ac-modal-x:focus-visible { outline: none; color: var(--ink); box-shadow: 0 0 0 3px var(--wallet-accent-soft); }
 .ac-drawer-card h3 { font-family: var(--font-display); margin: 0 0 var(--space-md); color: var(--ink-bright); }
 .ac-act-lead { font-size: var(--text-base); color: var(--ink); margin: 0 0 var(--space-md); }
 .ac-act-quote { background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-md); font-size: var(--text-sm); color: var(--ink-dim); }
@@ -320,6 +330,8 @@ body {
 .ac-act-done p { color: var(--ink); margin: 0 0 var(--space-sm); }
 .ac-act-audit { display: inline-block; margin-top: var(--space-sm); color: var(--wallet-accent); font-size: var(--text-sm); text-decoration: none; }
 .ac-act-audit:hover { text-decoration: underline; }
+.ac-act-audit:active { color: var(--ink-bright); }
+.ac-act-audit:focus-visible { outline: none; text-decoration: underline; box-shadow: 0 0 0 3px var(--wallet-accent-soft); border-radius: var(--radius-sm); }
 
 @media (prefers-reduced-motion: reduce) {
 	.ac-live-dot, .ac-thinking span, .ac-skel-line, .ac-skel-orb, .ac-speak.is-speaking, .ac-drawer-card,
