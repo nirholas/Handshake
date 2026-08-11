@@ -5,6 +5,14 @@
 //                                       synthesis model + voice_settings
 // POST   /api/agents/:id/voice/clone  — clone voice from uploaded audio
 // DELETE /api/agents/:id/voice        — remove cloned voice / clear selection
+//
+// Credentials. Every branch that touches ElevenLabs resolves its key through
+// api/_lib/agent-voice-key.js, which picks between an `x-eleven-key` request
+// override, the owner's stored BYOK key, and the platform key. The winning lane
+// is written to agent_identities.voice_key_source so playback replays the same
+// credential — a voice cloned onto the owner's account is invisible to the
+// platform key. Only the platform lane charges $THREE credits; a BYOK clone is
+// billed by ElevenLabs directly to the user whose key made it.
 
 import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
@@ -14,19 +22,19 @@ import { limits } from '../../_lib/rate-limit.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { chargeCreditsForAction, refundCredits } from '../../_lib/credits.js';
 import {
-	isConfigured,
 	listVoices,
 	createClonedVoice,
 	deleteVoice,
 	isValidModel,
 	normalizeVoiceSettings,
 } from '../../_lib/elevenlabs.js';
+import { resolveAgentElevenKey, normalizeKeySource } from '../../_lib/agent-voice-key.js';
 
 // Fire-and-forget ElevenLabs voice deletion. The clone slot is best-effort
 // cleanup — a failure must be logged, never crash the process as an
 // unhandled rejection.
-function deleteVoiceBestEffort(voiceId) {
-	deleteVoice(voiceId).catch((err) =>
+function deleteVoiceBestEffort(voiceId, apiKey) {
+	deleteVoice(voiceId, { apiKey }).catch((err) =>
 		console.warn('[voice] deleteVoice failed for', voiceId, err?.message || err),
 	);
 }
@@ -34,15 +42,39 @@ function deleteVoiceBestEffort(voiceId) {
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10 MB
 const MIN_DURATION_SEC = 30;
 
+// Every ElevenLabs branch shares this shape when no credential is available at
+// all: neither the caller, the owner's saved key, nor the platform. It names the
+// two ways out so the UI can render a real next step instead of a dead 503.
+function noCredential(res, what) {
+	return json(res, 503, {
+		error: 'not_configured',
+		error_description: `${what} needs an ElevenLabs key. Save your own at /dashboard/account, or ask the operator to set ELEVENLABS_API_KEY.`,
+		byok_url: '/dashboard/account',
+		provider: 'elevenlabs',
+	});
+}
+
 // Canonical voice-status response shape, shared by GET and the PUT branches.
-function voiceStatus(row) {
+function voiceStatus(row, extra = {}) {
 	return {
 		voice_provider: row?.voice_provider || 'browser',
 		voice_id: row?.voice_id || null,
 		voice_cloned_at: row?.voice_cloned_at || null,
 		voice_model: row?.voice_model || null,
 		voice_settings: row?.voice_settings || null,
+		voice_key_source: row?.voice_id ? normalizeKeySource(row?.voice_key_source) : null,
+		...extra,
 	};
+}
+
+// Binding a voice to an agent must use a credential that still exists on the
+// next request, because playback has to reach the same ElevenLabs account. The
+// stateless `x-eleven-key` header is explicitly never stored, so it is not a
+// binding lane here: only the owner's saved key (encrypted in users.provider_keys)
+// and the platform key qualify. The per-request override still works on the
+// stateless /api/tts/* endpoints where nothing is persisted.
+function resolveBindingKey(ownerId) {
+	return resolveAgentElevenKey({ ownerId });
 }
 
 async function resolveAuth(req) {
@@ -90,8 +122,11 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 
 	if (req.method === 'GET') {
 		const [row] =
-			await sql`SELECT voice_provider, voice_id, voice_cloned_at, voice_model, voice_settings FROM agent_identities WHERE id = ${id}`;
-		return json(res, 200, voiceStatus(row));
+			await sql`SELECT voice_provider, voice_id, voice_cloned_at, voice_model, voice_settings, voice_key_source FROM agent_identities WHERE id = ${id}`;
+		// Tell the client which lane is actually open, so it can render the
+		// "no key" state up front instead of discovering it on a failed clone.
+		const { source } = await resolveBindingKey(auth.userId);
+		return json(res, 200, voiceStatus(row, { available_key_source: source }));
 	}
 
 	// ── PUT — assign a voice and/or tune its settings ───────────────────────
@@ -108,13 +143,8 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 	// frees the old clone in ElevenLabs to recover the quota slot.
 
 	if (req.method === 'PUT') {
-		if (!isConfigured())
-			return error(
-				res,
-				503,
-				'not_configured',
-				'voice library is not configured on this server',
-			);
+		const { apiKey, source: boundSource } = await resolveBindingKey(auth.userId);
+		if (!apiKey) return noCredential(res, 'The voice library');
 
 		let body;
 		try {
@@ -147,7 +177,16 @@ export const handleVoice = wrap(async (req, res, id, action) => {
 		}
 
 		const [current] =
-			await sql`SELECT voice_id, voice_cloned_at, voice_model, voice_settings FROM agent_identities WHERE id = ${id}`;
+			await sql`SELECT voice_id, voice_cloned_at, voice_model, voice_settings, voice_key_source FROM agent_identities WHERE id = ${id}`;
+		// The old voice lives in whichever account cloned it; free it with that
+		// same credential, not with whichever one is winning today.
+		const oldKey =
+			normalizeKeySource(current?.voice_key_source) === boundSource
+				? apiKey
+				: (await resolveAgentElevenKey({
+						ownerId: auth.userId,
+						pin: normalizeKeySource(current?.voice_key_source),
+					})).apiKey;
 
 		// Carry forward whatever wasn't explicitly provided.
 		const finalModel = hasModel ? model : (current?.voice_model ?? null);
