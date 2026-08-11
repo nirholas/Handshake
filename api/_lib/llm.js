@@ -51,6 +51,7 @@ import {
 	vertexRequestHeaders,
 	toVertexBody,
 } from './vertex-claude.js';
+import { vertexGeminiBudget } from './vertex-gemini.js';
 import { DEFAULT_FREE_MODEL, promptCacheMinChars, isPaidModel } from './chat-models.js';
 
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
@@ -331,7 +332,10 @@ function vertexGeminiProvider() {
 		getHeaders: vertexRequestHeaders,
 		buildBody: (system, user, maxTokens) => ({
 			model: VERTEX_GEMINI_MODEL,
-			max_tokens: maxTokens,
+			// Gemini reasons by default and bills those tokens against max_tokens
+			// without returning them, so an uncompensated budget comes back
+			// truncated. vertexGeminiBudget caps the reasoning and funds it on top.
+			...vertexGeminiBudget(maxTokens),
 			messages: [
 				...(system ? [{ role: 'system', content: system }] : []),
 				{ role: 'user', content: user },
