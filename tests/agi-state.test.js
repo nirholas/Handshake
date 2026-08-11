@@ -34,7 +34,33 @@ describe('shapeDecision', () => {
 		expect(out.seq).toBe(12);
 		expect(out.confidence).toBe(0.72);
 		expect(out.mint).toBe('FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump');
+		expect(out.domain).toBe('trade');
 		expect(out.outcome).toEqual({ status: 'pending' });
+	});
+
+	it('refuses to publish a non-address subject as a mint', () => {
+		// The self-tuner keys its decisions by an internal arm uuid. Publishing that
+		// as `mint` sent the page to solscan.io/token/<uuid>, a link to nothing.
+		const out = shapeDecision(
+			decision({ kind: 'optimize', subject_ref: 'bcb3de15-7b9e-4a22-a653-8076f624c908' }),
+			'mainnet',
+		);
+		expect(out.mint).toBeNull();
+		expect(out.subject_ref).toBe('bcb3de15-7b9e-4a22-a653-8076f624c908');
+		expect(out.domain).toBe('operations');
+	});
+
+	it('classifies a trading verb as a trade even when its subject is not a mint', () => {
+		const out = shapeDecision(decision({ kind: 'exit', subject_ref: 'position-4711' }), 'mainnet');
+		expect(out.mint).toBeNull();
+		expect(out.domain).toBe('trade');
+	});
+
+	it('carries a null subject through without inventing one', () => {
+		const out = shapeDecision(decision({ kind: 'optimize', subject_ref: null }), 'mainnet');
+		expect(out.mint).toBeNull();
+		expect(out.subject_ref).toBeNull();
+		expect(out.domain).toBe('operations');
 	});
 
 	it('attaches the on-chain proof url once an outcome is reconciled', () => {
