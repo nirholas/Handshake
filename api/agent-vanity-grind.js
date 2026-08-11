@@ -100,7 +100,7 @@ export default async function handleAgentVanityGrind(req, res) {
 	}
 
 	// Ownership: the triggering user must own this agent (same check the task bar uses).
-	const [agentRow] = await sql`SELECT id, name FROM agents WHERE id = ${agentId} AND user_id = ${userId} LIMIT 1`;
+	const [agentRow] = await sql`SELECT id, name FROM agent_identities WHERE id = ${agentId} AND user_id = ${userId} AND deleted_at IS NULL LIMIT 1`;
 	if (!agentRow) return error(res, 403, 'forbidden', 'agent not found or not owned by this user');
 	const agentName = agentRow.name || 'agent';
 
