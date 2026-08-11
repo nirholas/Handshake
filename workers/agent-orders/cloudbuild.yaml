@@ -9,20 +9,36 @@
 # Ships in ORDERS_MODE=simulate (real quotes, no broadcast). Flip
 # ORDERS_MODE=live only after the RPC secret is set and agent wallets are funded.
 #
-# ── ONE-TIME SECRET SETUP (never commit these) ────────────────────────────────
-#   printf '%s' "$DATABASE_URL"    | gcloud secrets create agent-orders-database-url --data-file=-
-#   printf '%s' "$JWT_SECRET"      | gcloud secrets create agent-orders-jwt-secret   --data-file=-
-#   printf '%s' "$WALLET_ENCRYPTION_KEY" | gcloud secrets create wallet-encryption-key --data-file=-  # or reuse existing
-#   printf '%s' "$SOLANA_RPC_URL"  | gcloud secrets create agent-orders-solana-rpc-url --data-file=-  # live only
-#   printf '%s' "$UPSTASH_REDIS_REST_URL"   | gcloud secrets create upstash-redis-rest-url   --data-file=-
-#   printf '%s' "$UPSTASH_REDIS_REST_TOKEN" | gcloud secrets create upstash-redis-rest-token --data-file=-
-#   for s in agent-orders-database-url agent-orders-jwt-secret wallet-encryption-key \
-#            agent-orders-solana-rpc-url upstash-redis-rest-url upstash-redis-rest-token; do \
+# ── SECRET SETUP (already done; here for a rebuild from scratch) ──────────────
+# All four secrets below exist in aerial-vehicle-466722-p5 and are readable by the
+# runtime service account, so a deploy needs no secret work. To recreate them
+# (values come from .env / the three-ws-api service env, never from a commit):
+#   printf '%s' "$DATABASE_URL"          | gcloud secrets create agent-orders-database-url --data-file=-
+#   printf '%s' "$JWT_SECRET"            | gcloud secrets create agent-orders-jwt-secret --data-file=-
+#   printf '%s' "$WALLET_ENCRYPTION_KEY" | gcloud secrets create agent-orders-wallet-encryption-key --data-file=-
+#   printf '%s' "$SOLANA_RPC_URL"        | gcloud secrets create agent-orders-solana-rpc-url --data-file=-
+#   for s in agent-orders-database-url agent-orders-jwt-secret \
+#            agent-orders-wallet-encryption-key agent-orders-solana-rpc-url; do \
 #     gcloud secrets add-iam-policy-binding "$s" \
 #       --member=serviceAccount:three-ws@$PROJECT_ID.iam.gserviceaccount.com \
 #       --role=roles/secretmanager.secretAccessor; done
 #
-#   gcloud builds submit --config workers/agent-orders/cloudbuild.yaml .
+# Do NOT point this worker at the project's generic JWT_SECRET / WALLET_ENCRYPTION_KEY
+# secrets: both hold values that no longer match what three-ws-api runs with, so
+# the worker would fail to decrypt custodial agent keys and every live fill would
+# die at key recovery. The agent-orders-* copies above are verified against the
+# running service.
+#
+# The worker never serves user requests, so it needs no rate-limit backend: the
+# execution path (executeAgentTrade + guards + firewall) touches Postgres and RPC
+# only. Nothing here mounts Upstash.
+#
+#   gcloud builds submit --config workers/agent-orders/cloudbuild.yaml . \
+#     --region us-central1 --project aerial-vehicle-466722-p5 \
+#     --substitutions=SHORT_SHA=manual$(date +%s)
+#
+# SHORT_SHA is only populated for trigger-driven builds; a manual submit must pass
+# it or the image tag comes out empty and the build fails at push.
 
 # Builds run as the pinned three-ws-build service account: the project's default
 # compute service account was deleted, so an unpinned submit fails with
@@ -78,7 +94,7 @@ steps:
       - --no-allow-unauthenticated
       - --service-account=three-ws@$PROJECT_ID.iam.gserviceaccount.com
       - --set-env-vars=NODE_ENV=production,ORDERS_MODE=${_ORDERS_MODE},ORDERS_NETWORK=mainnet,ORDERS_GLOBAL_KILL=0,ORDERS_HEARTBEAT_MS=30000
-      - --set-secrets=DATABASE_URL=agent-orders-database-url:latest,JWT_SECRET=agent-orders-jwt-secret:latest,WALLET_ENCRYPTION_KEY=wallet-encryption-key:latest,SOLANA_RPC_URL=agent-orders-solana-rpc-url:latest,UPSTASH_REDIS_REST_URL=upstash-redis-rest-url:latest,UPSTASH_REDIS_REST_TOKEN=upstash-redis-rest-token:latest
+      - --set-secrets=DATABASE_URL=agent-orders-database-url:latest,JWT_SECRET=agent-orders-jwt-secret:latest,WALLET_ENCRYPTION_KEY=agent-orders-wallet-encryption-key:latest,SOLANA_RPC_URL=agent-orders-solana-rpc-url:latest
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
