@@ -27,7 +27,7 @@ Runs the MCP `initialize` handshake, then `tools/list`, and formats every tool.
 Expected output (abridged):
 
 ```
-server:       marketplace-mcp v0.1.1 (stdio)
+server:       marketplace-mcp v0.1.2 (stdio)
 capabilities: tools
 tools:        5
 

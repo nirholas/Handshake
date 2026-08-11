@@ -23,7 +23,9 @@ function stubFetch(responses) {
 	return { fetch, calls };
 }
 
-const CREATOR = 'THREEsynthetic1111111111111111111111111111';
+// A synthetic creator that still base58-decodes to exactly 32 bytes, so the
+// same string works verbatim against the live bridge's pubkey validation.
+const CREATOR = 'THREEsynthetic11111111111111111111111111111';
 
 test('listTasks() shapes the bridge response and defaults to mainnet', async () => {
 	const { fetch, calls } = stubFetch([

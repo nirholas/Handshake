@@ -19,26 +19,34 @@ npm install @three-ws/retarget three
 ## Quick start — play a clip on a rig it was never made for
 
 ```js
+import { AnimationMixer } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { canonicalizeGLBBones, retargetClipToObject, parseClipJSON } from '@three-ws/retarget';
 
 // 1. Canonicalize the avatar's bone names (byte-safe GLB rewrite, in memory).
+//    three.ws GLBs are meshopt-compressed, hence the decoder.
 const raw = await fetch('https://three.ws/avatars/xbot.glb').then((r) => r.arrayBuffer());
 const { buffer } = canonicalizeGLBBones(raw);
-const gltf = await new GLTFLoader().parseAsync(buffer, '');
+const loader = new GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
+const gltf = await loader.parseAsync(buffer, '');
 
-// 2. Retarget a canonical-space clip onto it — rest-pose (A/T-pose) skew and
+// 2. Retarget a canonical-space clip onto it. Rest-pose (A/T-pose) skew and
 //    hip up-axis differences are corrected automatically.
 const clipJSON = await fetch('https://three.ws/animations/clips/walk.json').then((r) => r.json());
 const clip = parseClipJSON(clipJSON, 'walk');
-const retargeted = retargetClipToObject(clip, gltf.scene);
+const result = retargetClipToObject(clip, gltf.scene);
+// result: { clip, coverage, matched, total, dropped, hipScale, face }
 
-// 3. Play it with your own mixer…
-const mixer = new THREE.AnimationMixer(gltf.scene);
-mixer.clipAction(retargeted).play();
+// 3. Play it with your own mixer (result.clip is null below the coverage gate).
+if (result.clip) {
+  const mixer = new AnimationMixer(gltf.scene);
+  mixer.clipAction(result.clip).play();
+}
 ```
 
-`retargetClipToObject` returns `null` when bone coverage is below `MIN_COVERAGE` (50%) — that's the "this isn't a humanoid" gate. Handle it; don't force-play.
+When bone coverage is below `MIN_COVERAGE` (50%), the result comes back with `clip: null` plus the honest `coverage` / `dropped` breakdown. That is the "this isn't a humanoid" gate. Handle it; don't force-play.
 
 ## Or let the runtime drive everything
 
@@ -80,7 +88,7 @@ The clip URLs above are real — three.ws serves its shared clip library with op
 **Retarget** (`animation-retarget`):
 | Export | What it does |
 | --- | --- |
-| `retargetClipToObject(clip, root, opts?)` | Clip → any Object3D hierarchy (most common) |
+| `retargetClipToObject(clip, root, opts?)` | Clip → any Object3D hierarchy (most common). Returns `{ clip, coverage, matched, total, dropped, hipScale, face }`; `clip` is `null` below the coverage gate |
 | `retargetClipToRig(clip, rig, opts?)` / `retargetClip(clip, map, opts?)` | Lower-level variants when you already hold a rig/node map |
 | `canonicalNodeMapFromObject/FromRig`, `canonicalRestMapFrom…`, `canonicalWorldRestMapFrom…` | Build the bone/rest lookups yourself |
 | `hipsParentWorldQuat`, `hipRestHeight`, `hipRestLocalHeight`, `clipHipBaselineY` | Hip-space helpers (root motion, height normalization) |

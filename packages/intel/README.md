@@ -107,6 +107,12 @@ console.log(pulse.breakdown.extra.score); // score of just your snippets
 
 ## API
 
+Public exports: `sentiment`, `intel`, `projects`, `snapshot`, `createIntel`,
+`ThreeWsError`, `PaymentRequiredError`, and `DEFAULT_BASE_URL`. The four reads
+use a shared zero-config client; `createIntel({ baseUrl, fetch, apiKey,
+headers })` builds your own when you need a payment-aware fetch for the paid
+lanes or a custom origin reused across calls.
+
 ### `sentiment(mint, options?) → Promise<SentimentPulse>`
 
 Real-time sentiment pulse for a Solana token. Pulls recent pump.fun comments via
@@ -264,7 +270,7 @@ typed state, never a crash or a fake number.
 | `aixbt_rate_limited` | 429 | intel / projects | aixbt throttled the bridge. Back off and retry. |
 | `aixbt_upstream_error` | 502/504 | intel / projects | aixbt was unreachable or errored. Retry. |
 | `invalid_mint` | — | snapshot | `token` isn't a valid Solana pubkey. Fix it. |
-| `payment_required` | 402 | intel / projects / snapshot | Paid lane with no x402 payment. Attach a payer (see [Pricing](#pricing--payment)). |
+| `payment_required` | 402 or 401 | intel / projects / snapshot | Paid lane with no x402 payment; rejects with `PaymentRequiredError` carrying the challenge in `accepts`. The MCP transport behind `snapshot()` quotes its challenge over HTTP 401 (x402Version + accepts in the body); the SDK maps both to the same typed error. Attach a payer (see [Pricing](#pricing--payment)). |
 | field `= null` | 200 | snapshot | A provider was unreachable. The field is `null` and `sources` shows which one — partial data, never fabricated. |
 
 In the sentiment pulse, a pump.fun failure doesn't fail the whole call:

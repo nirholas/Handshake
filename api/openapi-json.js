@@ -21,6 +21,17 @@ import { providerCatalog } from './v1/_providers.js';
 // `accepts[]` array — see api/_lib/x402-spec.js `paymentRequirements()`.
 const X402_PROTOCOLS = [{ x402: {} }];
 
+// Every /api/x402/* operation is gated by payment, not by a credential: the
+// caller settles the 402 challenge in USDC and needs no key, token, or account.
+// OpenAPI spells that out as an explicit empty security list, and declaring it
+// beats omitting `security` twice over. An operation with no `security` inherits
+// the root-level list, which this document deliberately does not set, so
+// validators report undefined auth; and agent tooling that infers an auth mode
+// from the security list reads the omission as "unknown" rather than "public,
+// pay-per-call". Payment stays advertised where it belongs: each operation's
+// `x-payment-info` plus its documented 402 response.
+const PAYMENT_ONLY_SECURITY = [];
+
 // USDC atomics (6 decimals) → a decimal string, trimmed to the shortest
 // precision that round-trips (min 2 places) — mirrors the formatting already
 // used by hand-authored entries below ('0.001', '5.00', …).
@@ -136,6 +147,14 @@ export default wrap(async (req, res) => {
 					'API for 3D avatar management, AI agent identity, and MCP tool access.',
 				contact: {
 					email: 'support@three.ws',
+				},
+				// Proprietary, not an SPDX identifier, so this carries `url` rather
+				// than `license.identifier`. Generators that surface licensing (Redocly,
+				// Scalar, SDK codegen) otherwise render the API as unlicensed, which
+				// reads as "public domain" to anyone bundling our spec into a client.
+				license: {
+					name: 'Proprietary (all rights reserved)',
+					url: 'https://github.com/nirholas/three.ws/blob/main/LICENSE',
 				},
 				'x-guidance':
 					'Use POST /api/mcp to interact with the MCP server. Send a JSON-RPC 2.0 request body. ' +
@@ -311,6 +330,7 @@ export default wrap(async (req, res) => {
 						],
 						responses: {
 							200: { description: 'Paginated list of public avatars' },
+							405: { description: 'Method not allowed (GET only)' },
 						},
 					},
 				},
@@ -334,6 +354,7 @@ export default wrap(async (req, res) => {
 						security: [],
 						responses: {
 							200: { description: 'Health summary JSON' },
+							405: { description: 'Method not allowed (GET only)' },
 						},
 					},
 				},
@@ -411,6 +432,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/agent-reputation': {
 					get: {
 						operationId: 'x402_agent_reputation',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Agent Reputation snapshot',
 						description:
 							"Pay $0.01 USDC to retrieve a three.ws agent's reputation snapshot synthesized from pump_agent_payments, distribute/buyback success history, and signed Solana memo attestations.",
@@ -437,6 +459,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/onchain-identity-verify': {
 					get: {
 						operationId: 'x402_onchain_identity_verify',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Verify counterparty agent ownership claim',
 						description:
 							'Pay $0.005 USDC to verify whether a three.ws agent_id actually owns/deployed a given contract or mint on a given CAIP-2 chain, using the canonical meta.onchain unified index.',
@@ -474,6 +497,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/pump-agent-audit': {
 					get: {
 						operationId: 'x402_pump_agent_audit',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Operational audit of a pump.fun agent-payments token',
 						description:
 							'Pay $0.02 USDC to retrieve a full operational audit of a pump.fun mint: USDC paid in, distinct payers, distribute/buyback success history, latest error reasons, and derived risk flags.',
@@ -500,6 +524,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/skill-marketplace': {
 					get: {
 						operationId: 'x402_skill_marketplace',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Browse the three.ws skill marketplace',
 						description:
 							'Pay $0.001 USDC to list active skill listings with prices across all three.ws agents. Optional skill filter returns the cheapest provider for that capability.',
@@ -524,6 +549,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/symbol-availability': {
 					get: {
 						operationId: 'x402_symbol_availability',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Check pump.fun ticker collisions before launch',
 						description:
 							'Pay $0.001 USDC to check whether a candidate ticker collides with any three.ws-indexed pump.fun mint. Returns exact matches plus trigram-similar tickers and a recommendation.',
@@ -554,6 +580,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/mint-to-mesh-batch': {
 					post: {
 						operationId: 'x402_mint_to_mesh_batch',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Batch 1–10 mints → themed binary glTF cubes',
 						description:
 							'Pay $0.05 USDC to resolve 1–10 Solana SPL mints to themed binary glTF cubes in a single call. Per-mint failures report ok:false instead of failing the whole batch.',
@@ -594,6 +621,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/model-check': {
 					get: {
 						operationId: 'x402_model_check',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: glTF/GLB structural stats + optimization recommendations',
 						description:
 							'Pay $0.001 USDC to fetch a glTF/GLB model from a URL and return structural stats (vertex/triangle counts, materials, textures, animations, extensions) plus a prioritized list of optimization recommendations.',
@@ -620,6 +648,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/mint-to-mesh': {
 					get: {
 						operationId: 'x402_mint_to_mesh',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Single Solana mint → themed binary glTF cube',
 						description:
 							'Pay $0.001 USDC to resolve a Solana fungible-token mint to a binary glTF (GLB) cube themed for that token. Color is hashed from the mint; the Metaplex JSON image, when present, is embedded as a baseColor texture.',
@@ -646,6 +675,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/forge': {
 					post: {
 						operationId: 'x402_forge_generate',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: text→3D / image→3D generation (returns a job token)',
 						description:
 							'Pay per quality tier in USDC ($0.05 draft / $0.15 standard / $0.50 high) to generate a 3D model. Submit a prompt for text→3D, or up to four public https reference views of one object for image→3D. Runs the FLUX→TRELLIS pipeline. The response returns a job token; poll it for FREE at GET /api/forge?job=<id> to retrieve the finished GLB URL. The 402 challenge quotes the exact price for the requested tier.',
@@ -717,6 +747,7 @@ export default wrap(async (req, res) => {
 							'/api/x402/permit2-paid-demo': {
 								get: {
 									operationId: 'x402_permit2_paid_demo',
+									security: PAYMENT_ONLY_SECURITY,
 									summary: 'Paid: Gasless Permit2 + EIP-2612 settlement demo',
 									description:
 										"Pay $0.001 USDC via the Permit2-only path so a wallet holding USDC but zero ETH can complete the flow. CDP's x402ExactPermit2Proxy submits the EIP-2612 permit + Permit2 transfer atomically; the response surfaces the on-chain tx hash and a Basescan link.",
@@ -736,6 +767,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/three-intel': {
 					get: {
 						operationId: 'x402_three_intel',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Live $THREE market intel from the Town Oracle',
 						description:
 							'Pay $0.01 USDC for live $THREE market intel: price, 24 h change, market cap, ' +
@@ -756,6 +788,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/dance-tip': {
 					get: {
 						operationId: 'x402_dance_tip',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Tip a 3D dancer to perform a routine on the club stage',
 						description:
 							'Pay $0.001 USDC to tip a dancer to perform one routine on the three.ws 3D club stage. ' +
@@ -805,6 +838,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/asset-download': {
 					get: {
 						operationId: 'x402_asset_download',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Unlock a 3D asset (GLB / avatar / accessory)',
 						description:
 							'Pay in USDC once to unlock a 3D asset hosted on R2. Wallets that already paid can re-download for free by signing in with SIWX (CAIP-122). Each asset has its own price and creator payout address; the response carries a short-lived presigned R2 URL.',
@@ -837,6 +871,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/pump-launch': {
 					post: {
 						operationId: 'x402_pump_launch',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Deploy a new pump.fun token in one call',
 						description:
 							'Pay $5.00 USDC to deploy a brand-new pump.fun token. Supply name + symbol and either a pre-pinned metadataUri or an imageUrl (the server pins the image + descriptor to pump.fun IPFS). The server fronts the SOL deploy cost and signs the create-coin tx, so the buyer needs no SOL and no account. Creator rewards accrue to any Solana wallet you nominate; an optional vanity prefix/suffix grinds a custom mint address. Returns mint + tx signature + pump.fun URL.',
@@ -892,6 +927,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/vanity': {
 					get: {
 						operationId: 'x402_vanity',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Grind a vanity Solana keypair',
 						description:
 							'Pay to generate a brand-new Solana keypair whose Base58 address starts with a chosen prefix and/or ends with a chosen suffix. Returns the public address and its secret key (Base58 + 64-byte array) so it imports into any Solana wallet. Ground fresh per request in a Rust/WASM ed25519 engine and never stored. Difficulty-tiered price ($0.01 for 1 char, $0.05 for 2, $0.25 for 3); combined pattern capped at 3 Base58 characters. Settlement runs only after a successful grind, so an exhausted budget costs nothing.',
@@ -934,6 +970,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/fact-check': {
 					post: {
 						operationId: 'x402_fact_check',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Real-time fact check with sourced verdict',
 						description:
 							'Pay $0.10 USDC to verify a factual claim. The server generates search queries, runs multi-source web search, extracts per-source stance with an LLM, computes a weighted verdict + confidence, and returns the supporting sources plus a SHA-256 attestation of the result.',
@@ -980,6 +1017,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/tutor': {
 					post: {
 						operationId: 'x402_tutor',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Pay-as-you-learn tutor (one charge per answer)',
 						description:
 							'Pay $0.01 USDC per answered question. Returns a leveled explanation, key points, a worked example, and a follow-up, plus a running session tab so the UI can render a live itemized invoice. Pass a sessionId to accumulate a tab across questions.',
@@ -1035,6 +1073,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/skill-call': {
 					get: {
 						operationId: 'x402_skill_call',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Invoke a marketplace skill (pay-per-call)',
 						description:
 							"Pay the per-call price of a marketplace skill in USDC (Base or Solana) and receive its executable payload: the tool schema and content the calling agent runs. Payment settles straight to the skill author's wallet. Per-call pricing — every invocation is a fresh payment.",
@@ -1069,6 +1108,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/agent-bouncer': {
 					get: {
 						operationId: 'x402_agent_bouncer',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Admit/refuse a counterparty agent at the door',
 						description:
 							"Pay $0.01 USDC to run the Pole Club door check against a three.ws agent's Solana reputation: confirmed on-chain payments, distinct payers, failure rate, distribute/buyback follow-through, signed attestations, and Club ban/tip ledger. Returns an admit/refuse verdict with a door tier (newcomer / regular / trusted / vip). Vet before you pay, hire, or delegate.",
@@ -1113,6 +1153,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/vanity-verifiable': {
 					get: {
 						operationId: 'x402_vanity_verifiable',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Provably-fair Solana vanity keypair + signed receipt',
 						description:
 							'Grind a fresh Solana keypair whose Base58 address matches a chosen prefix/suffix, with a commit–reveal receipt signed by the service key (published at /.well-known/three-vanity.json) so the buyer can prove the key was ground fresh and never kept. Pass sealTo=<X25519 pubkey> to ECIES-seal the secret. Difficulty-tiered $0.02–$0.40; combined pattern ≤3 Base58 chars; settlement runs only after a successful grind.',
@@ -1155,6 +1196,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/crypto-intel': {
 					post: {
 						operationId: 'x402_crypto_intel',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Live crypto market signal (agent-to-agent intel)',
 						description:
 							'Pay $0.01 USDC per call for a live market signal (bullish / bearish / neutral) on a token with current price, 24h change, and a two-sentence rationale. Powered by CoinGecko live prices.',
@@ -1188,6 +1230,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/cosmetic-purchase': {
 					get: {
 						operationId: 'x402_cosmetic_purchase',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Unlock a premium avatar cosmetic',
 						description:
 							'Pay once in USDC to unlock a premium avatar cosmetic (skin or emote) for an account, wearable across /play and /walk. Price varies by rarity ($0.25–$3.00). Wallets that already purchased re-confirm for free via SIWX (CAIP-122).',
@@ -1247,6 +1290,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/animation-download': {
 					get: {
 						operationId: 'x402_animation_download',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Unlock a 3D avatar animation (GLB)',
 						description:
 							'Pay once in USDC to unlock a 3D avatar animation (GLB). Each animation has its own price; the response carries a short-lived presigned URL the client fetches directly. Wallets that already paid re-download for free via SIWX.',
@@ -1295,6 +1339,7 @@ export default wrap(async (req, res) => {
 				'/api/x402/club-cover': {
 					get: {
 						operationId: 'x402_club_cover',
+						security: PAYMENT_ONLY_SECURITY,
 						summary: 'Paid: Pole Club cover charge (24h entry token)',
 						description:
 							'Pay $0.01 USDC to access the three.ws Pole Club. Once payment settles the caller receives an entry token granting access to the live club scene for 24 hours.',

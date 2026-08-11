@@ -147,7 +147,7 @@ Each selector maps to a real three.ws endpoint. Raw `model` URLs must be `https:
 - Sibling package: [`@three-ws/avatar-agent`](https://www.npmjs.com/package/@three-ws/avatar-agent) — full 3D AI agent (wallet, voice, pump.fun)
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, see [LICENSE](./LICENSE)
 
 ---
 
