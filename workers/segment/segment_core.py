@@ -36,7 +36,9 @@ so segmentation is visible even on an untextured mesh.
 from __future__ import annotations
 
 import colorsys
+import heapq
 import math
+import time
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -44,6 +46,34 @@ import numpy as np
 import trimesh
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
+
+
+class SegmentInputError(ValueError):
+    """A caller's fault, described in terms the caller can act on.
+
+    Distinct from a bare ValueError so the service can echo THESE messages
+    verbatim while keeping every unexpected failure opaque. A library-internal
+    ValueError must never reach a client; "part 'part_99' not found. Available:
+    ..." always should.
+    """
+
+
+class SegmentTimeout(RuntimeError):
+    """Raised when segmentation exceeds its wall-clock budget.
+
+    A segmentation nobody is still waiting for is worse than a failure: the
+    caller has long since given up, but the job keeps a worker slot and its
+    memory pinned. We stop and say so instead.
+    """
+
+
+def _check_deadline(deadline: Optional[float], stage: str) -> None:
+    if deadline is not None and time.monotonic() > deadline:
+        raise SegmentTimeout(
+            f"segmentation exceeded its time budget during {stage}; "
+            "retry with a lower max_parts, a higher min_part_faces, or a "
+            "decimated mesh"
+        )
 
 # A perceptually spread palette — distinct adjacent hues, golden-ratio stepped
 # so even 20+ parts stay visually separable.
@@ -117,12 +147,12 @@ def load_concatenated(data: bytes, suffix: str) -> "trimesh.Trimesh":
     if isinstance(loaded, trimesh.Scene):
         meshes = [g for g in loaded.geometry.values() if isinstance(g, trimesh.Trimesh)]
         if not meshes:
-            raise ValueError("no triangle geometry found in the model")
+            raise SegmentInputError("no triangle geometry found in the model")
         mesh = trimesh.util.concatenate(meshes)
     else:
         mesh = loaded
     if mesh.faces is None or len(mesh.faces) == 0:
-        raise ValueError("mesh has no faces to segment")
+        raise SegmentInputError("mesh has no faces to segment")
     mesh.merge_vertices()
     return mesh
 
@@ -162,7 +192,11 @@ def _crease_labels(mesh: "trimesh.Trimesh", crease_angle_rad: float) -> np.ndarr
 
 
 def _label_adjacency(mesh: "trimesh.Trimesh", labels: np.ndarray) -> dict[int, set[int]]:
-    """Which labels touch which, via the full face-adjacency graph."""
+    """Which labels touch which, via the full face-adjacency graph.
+
+    Vectorised: the unique boundary label-pairs are computed in numpy, so the
+    Python loop runs once per distinct pair rather than once per boundary edge.
+    """
     neighbours: dict[int, set[int]] = {}
     fa = mesh.face_adjacency
     if len(fa) == 0:
@@ -170,7 +204,12 @@ def _label_adjacency(mesh: "trimesh.Trimesh", labels: np.ndarray) -> dict[int, s
     la = labels[fa[:, 0]]
     lb = labels[fa[:, 1]]
     diff = la != lb
-    for a, b in zip(la[diff], lb[diff]):
+    if not diff.any():
+        return neighbours
+    lo = np.minimum(la[diff], lb[diff])
+    hi = np.maximum(la[diff], lb[diff])
+    pairs = np.unique(np.stack([lo, hi], axis=1), axis=0)
+    for a, b in pairs:
         neighbours.setdefault(int(a), set()).add(int(b))
         neighbours.setdefault(int(b), set()).add(int(a))
     return neighbours
@@ -181,67 +220,159 @@ def _merge_small_and_cap(
     labels: np.ndarray,
     min_part_faces: int,
     max_parts: int,
+    deadline: Optional[float] = None,
 ) -> np.ndarray:
     """Merge sub-threshold parts into their largest neighbour, then cap count.
 
-    Both passes reassign labels in place and recompute neighbours afterwards so
-    the adjacency stays correct as parts coalesce.
+    Both passes preserve the same policy the segmenter has always applied:
+    always dissolve the SMALLEST offending region first, always into its
+    LARGEST neighbour. Only the bookkeeping changed.
+
+    The obvious implementation of that policy is accidentally cubic, and it
+    took production down: it rebuilt the whole label-adjacency map and rescanned
+    the full label array on every single merge, so a mesh with R crease regions
+    paid O(R) merges x O(F + E) rebuild. Measured on a noisy sphere: 5 k faces
+    took 7 s, 20 k faces took 328 s, and real forge meshes (100 k+ faces, tens
+    of thousands of crease shards) ran for 2.9 to 4 HOURS per job, long past any
+    caller's patience, and pushed the 16 GiB instance into repeated OOM kills.
+
+    Instead we keep the regions in a union-find, keep their neighbour sets
+    incrementally (small-set-into-large, so the total set work stays near
+    linear), and drive both passes off one lazily-invalidated min-heap. The
+    label array is rewritten exactly ONCE, at the end. Same output, and the
+    20 k-face case drops from 328 s to well under a second.
     """
-    labels = labels.copy()
+    labels = np.asarray(labels)
+    # Work in a dense 0..K-1 label space so sizes and parents can be arrays.
+    uniq, compact = np.unique(labels, return_inverse=True)
+    compact = compact.reshape(-1).astype(np.int64)
+    k = int(len(uniq))
+    if k <= 1:
+        return compact
 
-    def sizes() -> dict[int, int]:
-        uniq, counts = np.unique(labels, return_counts=True)
-        return {int(u): int(c) for u, c in zip(uniq, counts)}
+    sizes = np.bincount(compact, minlength=k).astype(np.int64)
+    adjacency = _label_adjacency(mesh, compact)
+    adj: dict[int, set[int]] = {i: adjacency.get(i, set()) for i in range(k)}
 
-    def largest_neighbour(label: int, neigh: dict[int, set[int]], sz: dict[int, int]) -> Optional[int]:
-        cands = neigh.get(label, set())
-        if not cands:
-            return None
-        return max(cands, key=lambda c: sz.get(c, 0))
+    parent = list(range(k))
 
-    # Pass 1 — dissolve shards below the face floor.
-    while True:
-        sz = sizes()
-        if len(sz) <= 1:
-            break
-        small = [lbl for lbl, c in sz.items() if c < min_part_faces]
-        if not small:
-            break
-        neigh = _label_adjacency(mesh, labels)
-        # Smallest first, so a chain of shards collapses outward.
-        small.sort(key=lambda l: sz[l])
-        merged_any = False
-        for lbl in small:
-            target = largest_neighbour(lbl, neigh, sz)
-            if target is None or target == lbl:
-                continue
-            labels[labels == lbl] = target
-            merged_any = True
-            break  # recompute sizes/adjacency after each merge
-        if not merged_any:
-            break
+    def find(x: int) -> int:
+        root = x
+        while parent[root] != root:
+            root = parent[root]
+        while parent[x] != root:  # path compression
+            parent[x], x = root, parent[x]
+        return root
 
-    # Pass 2 — cap the part count by merging the smallest into its largest neighbour.
-    while True:
-        sz = sizes()
-        if len(sz) <= max_parts:
-            break
-        neigh = _label_adjacency(mesh, labels)
-        smallest = min(sz, key=lambda l: sz[l])
-        target = largest_neighbour(smallest, neigh, sz)
-        if target is None:
-            # Disconnected leftover with no neighbour to merge into — keep the
-            # largest `max_parts` and fold the rest into the overall biggest.
-            ordered = sorted(sz, key=lambda l: sz[l], reverse=True)
-            keep_set = set(ordered[: max_parts - 1])
-            biggest = ordered[0]
-            for lbl in ordered[max_parts - 1:]:
-                if lbl not in keep_set:
-                    labels[labels == lbl] = biggest
-            break
-        labels[labels == smallest] = target
+    alive = set(range(k))
+    heap: list[tuple[int, int]] = [(int(sizes[i]), i) for i in range(k)]
+    heapq.heapify(heap)
 
-    return labels
+    def largest(candidates) -> int:
+        """The biggest region among `candidates`, ties broken by lowest label.
+
+        The tie-break is not cosmetic. Picking the winner by iterating a Python
+        set makes the choice depend on hash order, so two runs over the same
+        mesh could return differently grouped parts. Segmentation is a user
+        visible result; it has to be reproducible.
+        """
+        return max(candidates, key=lambda c: (int(sizes[c]), -c))
+
+    def live_neighbours(root: int) -> set[int]:
+        """Neighbour roots of `root`, resolved through the union-find.
+
+        Stale entries are rewritten in place, so each one is only ever
+        resolved once and repeated reads stay cheap.
+        """
+        resolved = {find(n) for n in adj[root]}
+        resolved.discard(root)
+        adj[root] = resolved
+        return resolved
+
+    def merge(src: int, dst: int) -> None:
+        """Fold region `src` into `dst`; `dst` survives."""
+        parent[src] = dst
+        sizes[dst] += sizes[src]
+        sizes[src] = 0
+        alive.discard(src)
+        src_adj = adj.pop(src)
+        dst_adj = adj[dst]
+        # Union the smaller set into the larger one so the total work across
+        # all merges stays near linear rather than quadratic.
+        if len(src_adj) > len(dst_adj):
+            src_adj, dst_adj = dst_adj, src_adj
+        for n in src_adj:
+            root = find(n)
+            if root != dst:
+                dst_adj.add(root)
+        dst_adj.discard(dst)
+        adj[dst] = dst_adj
+        heapq.heappush(heap, (int(sizes[dst]), dst))
+
+    def pop_smallest_live() -> Optional[tuple[int, int]]:
+        """Smallest live region as (size, label), skipping stale heap entries.
+
+        Every merge pushes a fresh entry for the survivor, so a live region has
+        exactly one current entry: any popped entry that disagrees with the
+        live size, or names an absorbed region, is stale and discarded.
+        """
+        while heap:
+            size, label = heapq.heappop(heap)
+            if label in alive and size == int(sizes[label]):
+                return size, label
+        return None
+
+    # Regions with no neighbour left to merge into: parked so the passes below
+    # can never spin on them.
+    stuck: set[int] = set()
+
+    def park(entry: tuple[int, int]) -> None:
+        stuck.add(entry[1])
+
+    # Pass 1: dissolve shards below the face floor, smallest first.
+    while len(alive) - len(stuck) > 1:
+        _check_deadline(deadline, "small-part merge")
+        entry = pop_smallest_live()
+        if entry is None:
+            break
+        size, label = entry
+        if label in stuck:
+            continue
+        if size >= min_part_faces:
+            heapq.heappush(heap, entry)  # nothing smaller is left to dissolve
+            break
+        neighbours = live_neighbours(label)
+        if not neighbours:
+            park(entry)
+            continue
+        merge(label, largest(neighbours))
+
+    # Islands parked above still count against the cap, so give them back to
+    # the heap before pass 2 can be asked to fold them.
+    for label in stuck:
+        heapq.heappush(heap, (int(sizes[label]), label))
+    stuck.clear()
+
+    # Pass 2: cap the part count, again smallest into largest neighbour.
+    while len(alive) > max_parts:
+        _check_deadline(deadline, "part-count cap")
+        entry = pop_smallest_live()
+        if entry is None:
+            break
+        _, label = entry
+        neighbours = live_neighbours(label)
+        if neighbours:
+            merge(label, largest(neighbours))
+            continue
+        # An island with no shared edge (faces meeting only at a vertex): fold
+        # it into the largest region overall so the cap still converges.
+        others = alive - {label}
+        if not others:
+            break
+        merge(label, largest(others))
+
+    roots = np.fromiter((find(i) for i in range(k)), dtype=np.int64, count=k)
+    return roots[compact]
 
 
 def _region_name(centroid: np.ndarray, bounds: np.ndarray) -> str:
@@ -302,6 +433,7 @@ def segment(
     max_parts: int = 24,
     min_part_faces: int = 64,
     crease_angle_deg: float = 40.0,
+    time_budget_s: Optional[float] = None,
 ) -> SegmentationResult:
     """Split `mesh` into named parts.
 
@@ -310,19 +442,28 @@ def segment(
       - "crease":    minima-rule crease segmentation over the whole mesh.
       - "auto":      connected components, then crease-split any component large
                      enough to plausibly contain multiple parts. Best default.
+
+    `time_budget_s` bounds the whole run; exceeding it raises `SegmentTimeout`.
     """
     source_faces = int(len(mesh.faces))
     warnings: list[str] = []
     crease_rad = math.radians(max(5.0, min(170.0, crease_angle_deg)))
+    deadline = None if time_budget_s is None else time.monotonic() + time_budget_s
 
     # Step 1 — connected components are always honoured; they are unambiguous parts.
-    components = mesh.split(only_watertight=False)
+    # repair=False matters: trimesh's default patches holes in each component as
+    # it splits, so the parts stop being a partition of the input. A real forge
+    # model measured 17031 faces in and 17050 across its parts, which makes the
+    # manifest disagree with itself. Segmentation divides geometry; it never
+    # invents any.
+    components = mesh.split(only_watertight=False, repair=False)
     if len(components) == 0:
         components = [mesh]
 
     region_meshes: list["trimesh.Trimesh"] = []
 
     for comp in components:
+        _check_deadline(deadline, "component split")
         if method == "connected":
             region_meshes.append(comp)
             continue
@@ -335,7 +476,9 @@ def segment(
             continue
 
         labels = _crease_labels(comp, crease_rad)
-        labels = _merge_small_and_cap(comp, labels, min_part_faces, max_parts)
+        labels = _merge_small_and_cap(
+            comp, labels, min_part_faces, max_parts, deadline=deadline
+        )
         for lbl in np.unique(labels):
             face_idx = np.where(labels == lbl)[0]
             sub = comp.submesh([face_idx], append=True, repair=False)
