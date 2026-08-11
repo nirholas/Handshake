@@ -5,9 +5,15 @@ CANONICAL_BONES / REGION_BONES / BODY_REGIONS / GARMENT_SLOTS are copied
 verbatim from their JS sources of truth:
 
   - CANONICAL_BONES               src/glb-canonicalize.js
-  - REGION_BONES / BODY_REGIONS   src/avatar-garment.js
-  - GARMENT_SLOTS                 src/avatar-garment.js
-  - MIN_BIND_COVERAGE             src/avatar-garment.js
+  - REGION_BONES / BODY_REGIONS   src/garment-taxonomy.js
+  - GARMENT_SLOTS                 src/garment-taxonomy.js
+  - MIN_BIND_COVERAGE             src/garment-taxonomy.js
+
+(src/avatar-garment.js only re-exports the four taxonomy constants for its
+own consumers; edit them in src/garment-taxonomy.js.) Nothing imports across
+the language boundary, so the copies are held together by
+tests/garment-forge-taxonomy-parity.test.js, which parses these literals and
+compares them value for value. If it fails, THIS file is the side to fix.
 
 canonicalize_bone_name() is deliberately a SUBSET of the JS canonicalizer:
 this worker controls its whole pipeline, and the only skeleton that ever

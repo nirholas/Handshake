@@ -121,14 +121,17 @@ POST /generate   { prompt, slot, tier?, yaw_deg?, job_id? }
               →  202 { job_id, status: "queued" }
 GET  /jobs/:id → { job_id, status, stage, glb_url?, manifest_url?, thumb_url?,
                    coverage?, occludes?, bones?, error?, updated_at }
-GET  /health   → { ok, refbody_loaded, mesh_backends, rig_url, active_jobs }
+GET  /health   → { ok, pipeline, refbody_loaded, mesh_backends, rig_url,
+                   active_jobs }
+POST /sweep    → { redriving, job_ids }   (orphan recovery, see below)
 ```
 
 `slot` is one of `top, bottom, footwear, outerwear, hair, headwear, glasses,
 accessory`. `stage` walks `image → mesh → compose → rig → extract → validate
 → publish` so pollers can show real progress. Job state is durable in GCS
-(`garments/jobs/<id>.json`), so polls survive instance restarts and the
-service scales to zero.
+(`garment-jobs/<id>.json` in `GCS_BUCKET`, not the public catalog bucket), so
+a POST and a later poll that land on different instances still see one record
+and a reclaimed instance never takes a job with it.
 
 Example:
 
@@ -162,11 +165,25 @@ gcloud builds submit --config workers/garment-forge/cloudbuild.yaml \
 ```
 
 The build stages the reference body out of `public/avatars/` (the repo keeps
-one copy), runs `test_garment_glb.py` as a build gate, and deploys the
-`garment-forge` Cloud Run service (CPU only, scale-to-zero, runtime SA
-`avatar-reconstruction-sa@`, `API_KEY` from the `avatar-reconstruction-key`
-secret). The cloudbuild config pins the `three-ws-build@` service account,
-as every build in this project must.
+one copy), runs all three Python suites as build gates (see **Local tests**),
+and deploys the `garment-forge` Cloud Run service: CPU only (4 vCPU, 16 GiB),
+runtime SA `avatar-reconstruction-sa@`, `API_KEY` from the
+`avatar-reconstruction-key` secret. The cloudbuild config pins the
+`three-ws-build@` service account, as every build in this project must.
+
+Three deploy settings are load-bearing and explained inline in
+[cloudbuild.yaml](cloudbuild.yaml); do not "simplify" them away:
+
+- **`--min-instances=1`, not scale-to-zero.** Jobs run as post-202 background
+  work, so a scale-to-zero reclaim would kill a pipeline mid-flight. The
+  durable queue below is the backstop for the reclaim windows that remain
+  (deploys, crashes), not a licence to let the service idle away.
+- **`--no-cpu-throttling`.** Throttled CPU starves a running job the moment
+  pollers go quiet.
+- **`--memory=16Gi`.** 8 GiB OOMed in production on 2026-08-07 (`8645 MiB
+  used`, container killed on signal 9, taking the in-flight job with it). The
+  ceiling has to cover `MAX_CONCURRENT`=2 pipelines at peak; 16 GiB is the
+  most Cloud Run allows at `--cpu=4`.
 
 One-time infra the service depends on (already applied):
 
@@ -213,10 +230,33 @@ what a stale record becomes.
 
 ## Local tests (no GPU, no network)
 
+All three run on a bare checkout and again inside `docker build`, so a
+regression cannot ship. They need only the pinned `requirements.txt`; the
+reference-image suite stubs the GCS/auth packages it does not touch when they
+are absent, so real modules always win inside the container.
+
 ```bash
-python3 workers/garment-forge/test_garment_glb.py   # pure glTF pipeline
-python3 workers/garment-forge/test_job_queue.py     # durable-queue policy
+python3 workers/garment-forge/test_garment_glb.py      # 50 checks
+python3 workers/garment-forge/test_job_queue.py        # 22 checks
+python3 workers/garment-forge/test_reference_image.py  # 21 checks
 ```
+
+- **`test_garment_glb.py`** covers the pure glTF pipeline: canonicalization,
+  placement math and the size envelope, composition, body-strip + buffer
+  repack, coverage/occludes derivation, and each of the 6 manifest validation
+  rules failing for its own reason.
+- **`test_job_queue.py`** covers the durable-queue policy: who may claim a
+  job, who may never be stolen, and what a stale record becomes.
+- **`test_reference_image.py`** covers the Vertex re-roll: an empty draw is
+  re-rolled, a refused prompt fails immediately with its block reason.
+
+One more gate lives on the JS side and runs in `npm test`:
+[tests/garment-forge-taxonomy-parity.test.js](../../tests/garment-forge-taxonomy-parity.test.js)
+parses this worker's Python literals and asserts they still equal
+`src/garment-taxonomy.js` and `src/glb-canonicalize.js`. The Python copies are
+hand-mirrored across a language boundary with nothing importing anything, so
+without it a slot or threshold changed on the runtime side would leave the
+forge publishing manifests the closet refuses.
 
 ## Catalog quality audit
 
@@ -238,11 +278,6 @@ node scripts/audit-garments.mjs --avatars a.glb,b.glb   # pick your own rigs
 Baseline 2026-07-27: 23 entries, all binding at 1.00 coverage on all four
 rigs, 0 hard failures.
 
-33 checks over the pure glTF pipeline: canonicalization, placement math,
-composition, body-strip + buffer repack, coverage/occludes derivation, and
-each of the 6 manifest validation rules failing for its own reason. The same
-suite runs inside `docker build`, so a regression cannot ship.
-
 ## Environment
 
 | Var | Default | Meaning |
@@ -261,6 +296,15 @@ suite runs inside `docker build`, so a regression cannot ship.
 | `GARMENT_YAW_DEG` | `0` | yaw applied to generator output before placement |
 | `MESH_TIMEOUT_S` / `RIG_TIMEOUT_S` | `1200` / `600` | per-stage poll ceilings |
 | `MAX_CONCURRENT` | `2` | parallel jobs per instance |
+| `JOB_STALE_S` | `2700` | a record not advanced in this long lost its instance |
+| `JOB_MAX_ATTEMPTS` | `3` | re-drives before a job is declared terminally failed |
+
+Only the rows marked `(required)` or `(secret)` are set by
+[cloudbuild.yaml](cloudbuild.yaml) plus `VERTEX_IMAGEN_*`, `VERTEX_IMAGE_SIZE`
+and `MAX_CONCURRENT`; everything else runs on the default shown here. Setting
+one on the live service is a config-only
+`gcloud run services update garment-forge --region us-central1
+--update-env-vars K=V` (never `--set-env-vars`, which replaces the whole set).
 
 ## Provenance and licensing
 
