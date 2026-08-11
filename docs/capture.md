@@ -10,7 +10,7 @@ Photogrammetry and SLAM traditionally mean an offline pipeline: extract frames, 
 
 ## How it works
 
-The endpoint (`api/scene-capture.js`) routes to `workers/model-video2scene`, a GPU worker on Cloud Run running **LingBot-Map**, a feed-forward Geometric Context Transformer that reconstructs dense world-space geometry directly from video frames. You submit a public https URL to an mp4, mov, or webm; the handler resolves and validates the host itself (rejecting private, loopback, and metadata IPs as defense in depth against SSRF) before handing the URL to the worker. Submission returns `202 { job_id, status, eta_seconds }`, and the browser polls `GET /api/scene-capture?job=<id>` until the worker returns a `result_url` for the finished `.ply`, along with `num_points` and `frames`.
+The endpoint (`api/scene-capture.js`) routes to `workers/model-video2scene`, a Cloud Run GPU worker running **LingBot-Map**, a feed-forward Geometric Context Transformer that reconstructs dense world-space geometry directly from video frames. The worker and its model weights are ready; the service itself is not deployed yet, so today `/capture` runs the unconfigured path described below (sample cloud plus bring-your-own `.ply`) until `GCP_VIDEO2SCENE_URL` is set. You submit a public https URL to an mp4, mov, or webm; the handler resolves and validates the host itself (rejecting private, loopback, and metadata IPs as defense in depth against SSRF) before handing the URL to the worker. Submission returns `202 { job_id, status, eta_seconds }`, and the browser polls `GET /api/scene-capture?job=<id>` until the worker returns a `result_url` for the finished `.ply`, along with `num_points` and `frames`.
 
 Reconstruction exposes real, clamped sampling knobs:
 
@@ -25,6 +25,8 @@ Reconstruction exposes real, clamped sampling knobs:
 | `max_points` | 50k-3M | 1.5M | Cap on total output points. |
 | `voxel_size` | 0-10 | 0 | Optional voxel downsampling. |
 | `mask_sky` | bool | true | Drop sky pixels so open scenes don't fill with noise. |
+
+One job covers 512 frames, which is 64 seconds at the default `fps: 8`. Fusion holds every pixel of every frame in memory at once, so the cap is host RAM, not model capability: film longer and lower `fps` rather than expecting a longer clip to be reconstructed whole. A longer input is truncated and the worker reports `frames_truncated`.
 
 The result is a binary `.ply` the page renders client-side with a WebGL point-cloud viewer (`src/scene-capture.js` and `pointcloud-viewer.js`). Every state is designed: idle, submitting, processing (with an elapsed timer and stage hints), live, and error. There is no mock path: when the worker env (`GCP_VIDEO2SCENE_URL` and `GCP_RECONSTRUCTION_KEY`) is not configured, the endpoint returns a clean 503 and the page still proves the renderer end-to-end with a built-in sample room cloud. You can also load any `.ply` you already have by URL or file, so the viewer is useful even where reconstruction is offline.
 
