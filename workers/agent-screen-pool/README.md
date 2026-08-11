@@ -143,13 +143,23 @@ both claim the same watched agents and double-push frames. Budget ~350 MB per
 concurrent page, so raise `--memory` alongside `MAX_BROWSERS`.
 
 The shared secret lives in Secret Manager as `screen-worker-secret` and is mounted
-by the deploy step. The API side must carry the same value:
+by the deploy step. The API side must carry the same value, and the order matters:
 
-```bash
-gcloud run services update three-ws-api --region us-central1 \
-  --project aerial-vehicle-466722-p5 \
-  --update-secrets=SCREEN_WORKER_SECRET=screen-worker-secret:latest
-```
+1. Deploy the API image first, so the running revision carries the pool-liveness
+   gate in [api/agent/watch-status.js](../../api/agent/watch-status.js).
+2. Then hand the API the secret (config-only update, merges into the env set):
+
+   ```bash
+   gcloud run services update three-ws-api --region us-central1 \
+     --project aerial-vehicle-466722-p5 \
+     --update-secrets=SCREEN_WORKER_SECRET=screen-worker-secret:latest
+   ```
+
+3. Then submit the build above.
+
+Setting the secret on an API revision that predates the liveness gate would make
+watched cards claim "warming up" with no pool running, which is the exact thing
+the gate exists to prevent.
 
 Any other always-on container host works the same way (one process is plenty).
 There is no GitHub Actions path: this repo does not use GitHub Actions.
