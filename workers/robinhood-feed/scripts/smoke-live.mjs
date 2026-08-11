@@ -9,7 +9,7 @@
 //
 //   npm run smoke:live
 //
-// It reads the chain only — no keys, no writes, no spend.
+// It reads the chain only, no keys, no writes, no spend.
 
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
@@ -84,7 +84,7 @@ async function main() {
 		transactionHash: launchLog.transactionHash,
 	};
 	ok(`block ${launch.blockNumber} · tx ${launch.transactionHash}`);
-	console.log(`   (head is ${head - launch.blockNumber} blocks newer — the launchpads idle for long stretches)`);
+	console.log(`   (head is ${head - launch.blockNumber} blocks newer, the launchpads idle for long stretches)`);
 
 	step('metadata, block time and ETH price (real reads)');
 	const [meta, atMs, ethUsd] = await Promise.all([
@@ -130,10 +130,10 @@ async function main() {
 			assert.ok(Number.isFinite(tradeEvent.price_usd), 'trade price did not compute');
 			ok(`${tradeEvent.tx_type} · ${tradeEvent.sol_amount} ${tradeEvent.quote_symbol} · $${tradeEvent.usd_amount?.toFixed(4)}`);
 		} else {
-			ok(`no swaps in the ${SCAN_STEP} blocks after launch — pool ${launch.pool} inspected clean`);
+			ok(`no swaps in the ${SCAN_STEP} blocks after launch, pool ${launch.pool} inspected clean`);
 		}
 	} else {
-		ok('launch carries no pool (Odyssey curve coin) — swap leg not applicable');
+		ok('launch carries no pool (Odyssey curve coin), swap leg not applicable');
 	}
 
 	step('sequencer feed liveness');
