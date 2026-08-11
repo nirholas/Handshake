@@ -49,6 +49,9 @@ async function boot() {
 
 	let stage = null;
 	let canSign = false;
+	// The rig is fetched after the page is interactive, so a key pressed during
+	// the download is answered with "still loading" rather than "unavailable".
+	let stageState = 'loading';
 	let playToken = 0;
 	let highlightTimers = [];
 	let current = null;
@@ -74,16 +77,19 @@ async function boot() {
 			const { supported } = await stage.mount();
 			stage.start();
 			canSign = !!supported;
+			stageState = canSign ? 'ready' : 'unavailable';
 			if (!supported) setStatus('This avatar has no finger bones, so it cannot form handshapes. Every description below still applies.');
-			return canSign;
 		} catch (err) {
 			log.warn('[asl-alphabet] stage mount failed', err?.message);
 			canSign = false;
-			setStatus('Live preview unavailable. Every letter is still described below.');
-			return false;
+			stageState = 'unavailable';
+			setStatus('The avatar could not load. Reload the page to try again: every letter is still described in words below.');
 		}
+		// Every path through the mount decides whether the drill can run, including
+		// the remounts a rig switch triggers, so the panel is settled in one place.
+		applyPracticeAvailability();
+		return canSign;
 	};
-	await mountStage();
 
 	// ── Playing letters and words ────────────────────────────────────────────
 	const clearHighlights = () => {
@@ -104,7 +110,11 @@ async function boot() {
 			return null;
 		}
 		if (!stage?.anim || !canSign) {
-			setStatus('Live preview unavailable. Every letter is still described below.');
+			setStatus(
+				stageState === 'loading'
+					? 'The avatar is still loading: the description is ready now, the handshape follows.'
+					: 'The avatar could not load. Reload the page to try again: every letter is still described in words.',
+			);
 			return null;
 		}
 		const token = ++playToken;
@@ -136,7 +146,10 @@ async function boot() {
 					clearHighlightsOnly();
 					const key = document.querySelector(`.aa-key[data-char="${mark.letter}"]`);
 					key?.setAttribute('data-live', 'true');
-					if (describe) showLetter(mark.letter, { quiet: true });
+					// The card follows the spelling, but the share link keeps
+					// pointing at the whole word rather than whichever letter
+					// the hand happened to be on when Share was clicked.
+					if (describe) showLetter(mark.letter, { quiet: true, share: false });
 				}, Math.max(0, mark.start * 1000 - (performance.now() - startedAt))),
 			);
 		}
@@ -158,6 +171,10 @@ async function boot() {
 	const lookEl = $('#aa-look');
 	const motionEl = $('#aa-motion');
 	const shareBtn = $('#aa-share');
+	// What Share hands out: whatever the visitor last asked for, a letter or a
+	// spelled word. Derived at click time so it can never lag the card.
+	let shareTarget = { param: 'letter', value: 'A' };
+	let userPicked = null;
 
 	const markSelected = (char) => {
 		document.querySelectorAll('.aa-key').forEach((el) => {
@@ -165,7 +182,7 @@ async function boot() {
 		});
 	};
 
-	function showLetter(char, { quiet = false } = {}) {
+	function showLetter(char, { quiet = false, share = true } = {}) {
 		const note = LETTER_NOTES[char];
 		if (!note) return;
 		current = char;
@@ -174,11 +191,13 @@ async function boot() {
 		if (lookEl) lookEl.textContent = note.look || '';
 		if (motionEl) motionEl.hidden = !note.motion;
 		markSelected(char);
+		if (share) shareTarget = { param: 'letter', value: char };
 		if (shareBtn) shareBtn.hidden = false;
 		if (!quiet) setStatus(`${char}: ${note.hand}`);
 	}
 
 	const signLetter = async (char) => {
+		userPicked = char;
 		showLetter(char);
 		await play(char, { describe: false });
 	};
@@ -202,6 +221,9 @@ async function boot() {
 	};
 	buildKeys('#aa-letters', LETTERS);
 	buildKeys('#aa-digits', DIGITS);
+	// Populate the card before the rig is fetched: the look-alike note, the
+	// pressed key and the share link are all readable while the GLB downloads.
+	showLetter('A', { quiet: true });
 
 	// Typing a letter signs it: the fastest possible path from "what is a Q"
 	// to seeing a Q, with no pointer involved.
@@ -225,12 +247,15 @@ async function boot() {
 			return;
 		}
 		const normalized = normalizeWord(raw);
-		setStatus(`Spelling ${normalized.toLowerCase()}`);
-		if (shareBtn) {
-			shareBtn.hidden = false;
-			shareBtn.dataset.share = `${location.origin}/asl-alphabet?spell=${encodeURIComponent(normalized)}`;
+		if (!normalized) {
+			setStatus('Letters and numbers only: that is all the manual alphabet can spell.');
+			spellInput?.focus();
+			return;
 		}
-		await play(raw);
+		setStatus(`Spelling ${normalized.toLowerCase()}`);
+		shareTarget = { param: 'spell', value: normalized };
+		if (shareBtn) shareBtn.hidden = false;
+		await play(normalized);
 	};
 	spellBtn?.addEventListener('click', spellIt);
 	spellInput?.addEventListener('keydown', (e) => {
@@ -241,7 +266,8 @@ async function boot() {
 	});
 
 	shareBtn?.addEventListener('click', async () => {
-		const url = shareBtn.dataset.share || `${location.origin}/asl-alphabet?letter=${encodeURIComponent(current || 'A')}`;
+		const { param, value } = shareTarget;
+		const url = `${location.origin}/asl-alphabet?${param}=${encodeURIComponent(value)}`;
 		try {
 			await navigator.clipboard.writeText(url);
 			shareBtn.textContent = '🔗 Link copied';
@@ -282,7 +308,15 @@ async function boot() {
 
 	const nextRound = async () => {
 		if (!canSign) {
-			setStatus('Practice needs the live avatar, which could not load here.');
+			const msg =
+				stageState === 'loading'
+					? 'The avatar is still loading: the drill starts as soon as it is on stage.'
+					: 'This drill needs the live avatar, which could not load. Reload the page to try again.';
+			setStatus(msg);
+			if (practiceFeedback) {
+				practiceFeedback.textContent = msg;
+				practiceFeedback.dataset.state = 'shown';
+			}
 			return;
 		}
 		practice.active = true;
@@ -342,8 +376,24 @@ async function boot() {
 			checkAnswer();
 		}
 	});
-	$('#aa-practice-check')?.addEventListener('click', checkAnswer);
-	if (practiceEl && !canSign) practiceEl.dataset.disabled = 'true';
+	const checkBtn = $('#aa-practice-check');
+	checkBtn?.addEventListener('click', checkAnswer);
+
+	// Reading what the avatar spells is the whole drill, so it needs the avatar.
+	// When the rig cannot sign, the panel says so in its own feedback line and
+	// stops offering controls that can only answer in a status bar elsewhere on
+	// the page. The explanation itself stays at full contrast.
+	const applyPracticeAvailability = () => {
+		if (!practiceEl) return;
+		practiceEl.dataset.disabled = String(!canSign);
+		for (const el of [startBtn, replayBtn, revealBtn, checkBtn, practiceInput, ...modeInputs]) {
+			if (el) el.disabled = !canSign;
+		}
+		if (!canSign && practiceFeedback) {
+			practiceFeedback.textContent = 'This drill needs the live avatar, which could not load. Reload the page to try again.';
+			practiceFeedback.dataset.state = 'shown';
+		}
+	};
 
 	// ── Settings ─────────────────────────────────────────────────────────────
 	const buildOptions = (hostSel, options, pressed, onPick) => {
@@ -413,6 +463,14 @@ async function boot() {
 		},
 	});
 
+	// ── The avatar ───────────────────────────────────────────────────────────
+	// Mounted LAST, on purpose. The keys, the descriptions, the look-alike notes
+	// and the drill are all built above, before a byte of the rig is fetched, so
+	// a visitor on a slow connection is reading and clicking the alphabet while
+	// the GLB downloads instead of waiting at an empty box.
+	setStatus('Loading the avatar…');
+	await mountStage();
+
 	// ── Deep links ───────────────────────────────────────────────────────────
 	// The stage crossfades to its idle clip asynchronously after mounting, so a
 	// letter played the instant boot finishes is overwritten the moment that
@@ -434,12 +492,21 @@ async function boot() {
 		if (!reducedMotion) spellIt();
 		else setStatus(`Ready to spell ${normalizeWord(wantedWord).toLowerCase()}. Press Spell it.`);
 	} else if (CHARS.includes(wanted)) {
-		showLetter(wanted);
 		if (!reducedMotion) signLetter(wanted);
-	} else {
+		else showLetter(wanted);
+	} else if (userPicked) {
+		// Someone who pressed a key while the rig was still downloading has
+		// already chosen: sign what they asked for rather than resetting to A.
+		if (!reducedMotion && canSign) signLetter(userPicked);
+		else showLetter(userPicked);
+	} else if (canSign) {
 		showLetter('A');
-		if (!reducedMotion && canSign) signLetter('A');
+		if (!reducedMotion) signLetter('A');
 		else setStatus('Pick a letter, or press any letter key.');
+	} else {
+		// The mount already said why there is no avatar. Leave that explanation
+		// on screen rather than replacing it with a handshape description.
+		showLetter('A', { quiet: true });
 	}
 }
 

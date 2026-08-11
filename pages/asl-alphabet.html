@@ -144,6 +144,7 @@
 			.aa-btn:hover:not(:disabled) { background: rgba(56,189,248,.3); border-color: rgba(56,189,248,.8); }
 			.aa-btn:active:not(:disabled) { transform: scale(.98); }
 			.aa-btn:focus-visible { outline: 2px solid rgba(56,189,248,.9); outline-offset: 1px; }
+			.aa-btn:disabled, .aa-input:disabled { opacity: .5; cursor: not-allowed; }
 			.aa-btn.aa-btn-quiet { background: transparent; border-color: var(--stroke); color: var(--ink-dim); font-weight: 500; }
 			.aa-btn.aa-btn-quiet:hover { color: var(--ink); border-color: rgba(56,189,248,.6); background: transparent; }
 			.aa-share { margin-top: 12px; font-size: 13px; padding: 7px 12px; }
@@ -161,7 +162,9 @@
 			.aa-feedback[data-state='wrong'] { border-color: rgba(239,68,68,.55); color: var(--ink); }
 			.aa-feedback[data-state='asking'], .aa-feedback[data-state='shown'] { border-color: rgba(56,189,248,.5); }
 			.aa-practice-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-			.aa-panel[data-disabled='true'] { opacity: .55; }
+			/* An unusable drill dims its controls, never its explanation: the text
+			   is the one thing a visitor in that state actually needs to read. */
+			.aa-panel[data-disabled='true'] .aa-modes { opacity: .5; }
 
 			.aa-note { margin-top: clamp(32px, 4vw, 52px); border-left: 2px solid rgba(56,189,248,.5); padding: 4px 0 4px 18px; color: var(--ink-dim); font-size: 14px; line-height: 1.65; max-width: 74ch; }
 			.aa-note a { color: var(--ink); }
