@@ -314,10 +314,11 @@ The same compiler is on the [three.ws MCP server](https://three.ws/mcp-tools) as
 
 ```
 GET  /api/asl-recognition   → { columns: [390 landmark column names], max_frames, min_frames }
-POST /api/asl-recognition   { frames: [[390 numbers|null] …] } → { text, frames, ms }
+POST /api/asl-recognition   { frames: [[390 numbers|null] …] }
+                            → { text, raw, cleaned, confidence, frames, ms }
 ```
 
-`GET` returns the feature schema: the exact MediaPipe Holistic landmark columns, in order, that a frame row must contain (`x_face_0` … `z_pose_21`). `POST` takes one row per video frame and returns the transcription. `null` marks a missing landmark.
+`GET` returns the feature schema: the exact MediaPipe Holistic landmark columns, in order, that a frame row must contain (`x_face_0` … `z_pose_21`). `POST` takes one row per video frame and returns the transcription. `null` marks a missing landmark. `text` is the decode after the LLM cleanup pass, `raw` is the recognizer's untouched output, and `confidence` (0 to 1) is its mean per-character certainty, which the UI uses to warn on a poor read instead of inserting the text silently. Full field reference: [docs/api-reference.md](./api-reference.md#transcribe).
 
 The browser class that does all of this for you is [`src/sign-input.js`](../src/sign-input.js):
 
@@ -327,7 +328,7 @@ import { SignInput } from './sign-input.js';
 const input = new SignInput({ onState: (s) => console.log(s) });
 await input.start();                    // camera on, capturing landmarks
 // … user fingerspells …
-const { text, frames, ms } = await input.stop();   // camera off, transcribed
+const { text, raw, cleaned, confidence, frames, ms } = await input.stop();   // camera off, transcribed
 ```
 
 `input.videoElement` is the live preview to attach to your page (mirror it with `transform: scaleX(-1)`, which is what signers expect). `input.cancel()` abandons a capture without transcribing.
