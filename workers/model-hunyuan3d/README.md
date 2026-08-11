@@ -248,6 +248,35 @@ compute SA was deleted, so an unpinned submit fails outright):
 | `cloudbuild.hunyuan21.yaml` | 1× `nvidia-l4` | 8 / 32 Gi | 0 / 1 | 3600 s |
 | `cloudbuild.yaml` | 1× `nvidia-l4` | 8 / 32 Gi | 0 / 1 | 3600 s |
 
+### The fourth service: a us-east4 standby
+
+A second deployment of the **2.0** image runs in `us-east4` as a standby
+(`https://model-hunyuan3d-93741856042.us-east4.run.app`), alongside the
+equivalent standbys for trellis and triposr (see the GPU-fleet row in
+[`STRUCTURE.md`](../../STRUCTURE.md)). The L4 quota is granted **per region**,
+so a second region is extra capacity that costs nothing while idle.
+
+`cloudbuild.yaml` does not manage it. It was deployed by hand from the
+`us-central1` image, so a rebuild updates `us-central1` only and the standby
+keeps serving the old tag until it is pointed at the new one explicitly:
+
+```bash
+gcloud run deploy model-hunyuan3d --region us-east4 \
+	--image us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/model-hunyuan3d/server:<tag>
+```
+
+Nothing routes to it today (`GCP_HUNYUAN3D_URL` is the RTX service), so it is a
+capacity reserve, not a lane. Scale-to-zero, `max-instances=1`, same env and
+same `avatar-reconstruction-sa@` runtime SA as the us-central1 2.0 service.
+
+**Known benign log entry.** A retiring instance of this standby can log
+`malloc_consolidate(): unaligned fastbin chunk detected` followed by `Container
+terminated on signal 11`. That fires during interpreter teardown, AFTER uvicorn
+has logged a clean `Application shutdown complete`, when the native CUDA and
+mesh libraries unload in an order glibc dislikes. No request is in flight and no
+task is affected; it is an exit-path artifact of a container that is already
+going away, not a crash of a serving instance.
+
 **Only the RTX lane is kept warm.** The L4 GPU allocation in this region is
 scarce and shared with the other model workers, so neither L4 Hunyuan3D service
 pins an instance: the RTX service is the primary and the 2.0 service is a
