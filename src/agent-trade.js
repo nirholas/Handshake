@@ -665,11 +665,11 @@ function handleEvent(ev) {
 
     case 'delivering': {
       setChip('delivering', 'active');
-      setTimeout(() => {
-        hideBubble('seller');
-        showBubble('seller', `Analyzing with ${ev.model}…`);
-        hideCard();
-      }, 200);
+      // Hide the receipt now, not on a timer: a fast stream landed the
+      // `delivered` card first and then this timeout wiped it off the screen.
+      hideBubble('seller');
+      hideCard();
+      setTimeout(() => showBubble('seller', `Analyzing with ${ev.model}…`), 200);
       // Fly back to a wide view
       stage?.flyCamera(vec3(0, 3.0, 9.5), vec3(0, 1.2, 0), 1100);
       break;
