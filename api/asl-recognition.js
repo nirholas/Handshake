@@ -6,8 +6,11 @@
  *       The feature schema the browser must assemble per video frame
  *       (MediaPipe Holistic landmark selection, served by the worker).
  *
- *   POST /api/asl-recognition  { frames: [[390 numbers|null]…] }
- *     → { text, frames, ms }
+ *   POST /api/asl-recognition  { frames: [[390 numbers|null]…], clean?: boolean }
+ *     → { text, raw, cleaned, confidence, frames, ms }
+ *       `text` is the LLM-cleaned decode (send clean:false to skip that pass
+ *       and get the worker's raw output); `confidence` is the recognizer's
+ *       mean per-character softmax, which the UI uses to warn on a bad read.
  *
  * Thin authenticated proxy to workers/model-asl-recognition (Kaggle-2023
  * ASLFR 1st-place model, Apache-2.0 weights, FSboard CC BY 4.0 corpus).
