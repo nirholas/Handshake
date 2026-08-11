@@ -134,6 +134,18 @@
 			transition: color 0.12s;
 		}
 		.al-nav-link:hover { color: var(--al-text); }
+		.al-nav-logo:focus-visible,
+		.al-nav-link:focus-visible,
+		.al-nav-cta:focus-visible,
+		.al-card:focus-visible,
+		.al-card-watch-btn:focus-visible,
+		.al-footer a:focus-visible {
+			outline: 2px solid var(--al-accent);
+			outline-offset: 3px;
+			border-radius: 4px;
+		}
+		.al-card:focus-visible { outline-offset: 2px; border-radius: 12px; }
+
 		.al-nav-cta {
 			padding: 6px 14px;
 			border-radius: 6px;
@@ -146,6 +158,24 @@
 			transition: background 0.12s, border-color 0.12s;
 		}
 		.al-nav-cta:hover { background: rgba(255,255,255,0.12); border-color: var(--al-text); }
+
+		/* The nav carries five real controls; below this width they no longer fit on
+		   one 56px row and used to run straight off the right edge (Walk world and
+		   Dashboard were unreachable at 320px). Wrap instead of clipping, so every
+		   control stays on screen and nothing is hidden from small viewports. */
+		@media (max-width: 620px) {
+			.al-nav {
+				flex-wrap: wrap;
+				height: auto;
+				padding: 8px 14px;
+				row-gap: 8px;
+			}
+			.al-nav-left { gap: 10px; flex-wrap: wrap; }
+			.al-nav-right { gap: 10px; flex-wrap: wrap; }
+			.al-nav-logo { font-size: 16px; }
+			.al-nav-link { font-size: 12px; }
+			.al-nav-cta { padding: 5px 12px; font-size: 12px; }
+		}
 
 		/* ── main content ─────────────────────────────────────────────── */
 		.al-main {
