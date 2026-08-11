@@ -51,7 +51,7 @@ graph TD
         OracleW["oracle (Node.js)"]
         AgoraW["agora-citizens (Cloud Run daemon)"]
         ScreenW["agent-screen-pool / -worker\nPlaywright + services/agent-screen-caster"]
-        GPU["Python / FastAPI on Google Cloud Run\nHunyuan3D · TRELLIS · TripoSR · TripoSG\nunirig · rembg · text2motion (MDM) · video2scene (LingBot-Map)"]
+        GPU["Python / FastAPI on Google Cloud Run\nHunyuan3D · TRELLIS · TripoSR · TripoSG\nmodel-rig · rembg · text2motion (MDM) · video2scene (LingBot-Map)"]
     end
 
     APILayer --> Workers
@@ -1585,7 +1585,7 @@ Detailed above; the production hosted sniper. Its open-source, embeddable twin i
 
 | Worker | Technology | Description |
 |--------|-----------|-------------|
-| `avatar-pipeline-controller` | Python/FastAPI (**CPU**) | Reconstruction orchestrator — the `api/` layer talks ONLY to this (`GCP_RECONSTRUCTION_URL`). Fans out to a mesh model + UniRig and returns one rigged GLB. |
+| `avatar-pipeline-controller` | Python/FastAPI (**CPU**) | Reconstruction orchestrator: fans out to a mesh model + the rig worker and returns one rigged GLB behind a single job id. Speaks the same contract as `avatar-reconstruction`, so `GCP_RECONSTRUCTION_URL` can point at either; it currently points at `avatar-reconstruction` and this controller is not deployed. |
 | `model-hunyuan3d` | Python/FastAPI + CUDA | Image → 3D mesh (Hunyuan3D-2.1, HF license-gated — needs `HF_TOKEN`) |
 | `model-trellis` | Python/FastAPI + CUDA | Image → 3D mesh (TRELLIS) |
 | `model-triposr` | Python/FastAPI + CUDA | Fast single-image → 3D mesh (TripoSR, VAST-AI MIT; 5–15s, baked texture; fast-path/fallback) |
@@ -1594,7 +1594,7 @@ Detailed above; the production hosted sniper. Its open-source, embeddable twin i
 | `model-video2scene` | Python/FastAPI + CUDA | Phone video → explorable 3D point cloud. Wraps LingBot-Map (Apache-2.0) feed-forward monocular reconstruction (~20 FPS), fusing per-frame world points + RGB into one coloured binary PLY on GCS. `POST /infer` · `GET /tasks/:id`. Backs the [Scene Capture](#diorama--scene-capture) page `/capture` via `api/scene-capture.js` (`GCP_VIDEO2SCENE_URL`). |
 | `avatar-reconstruction` | Python/FastAPI + CUDA | "Scan yourself to 3D" — 1–6 face photos → Zero123++ 6-view synthesis → InstantMesh textured GLB → GCS (`face_pipeline.py`, `glb_ops.py`, `precompute_uv.py`, `templates/`). Output bucket `gs://three-ws-avatar-reconstructions`. |
 | `longcat` | Python/FastAPI + CUDA | LongCat-Video-Avatar-1.5 (MIT) — reference image + audio URL → lip-synced talking-avatar MP4 → `gs://three-ws-avatar-videos`. `POST /generate` · `GET /jobs/:id` · `GET /health`. |
-| `unirig` | Python/FastAPI + CUDA | Skeleton + skinning + ARKit-52 blendshapes (UniRig/SIGGRAPH 2025) |
+| `model-rig` | Python/FastAPI + CUDA | Skeleton + skinning + ARKit-52 blendshapes (Make-It-Animatable, MIT; ICT-FaceKit expression transfer). Reached via `GCP_UNIRIG_URL`, an env name that predates the engine swap. |
 
 #### CPU geometry workers (no GPU)
 
@@ -1610,7 +1610,7 @@ Detailed above; the production hosted sniper. Its open-source, embeddable twin i
 
 | Worker | Technology | Description |
 |--------|-----------|-------------|
-| `deploy` | Bash runbooks | Repeatable, idempotent Cloud Run provisioning for the reconstruction pipeline: `deploy-all.sh` (ordered provision of controller + mesh models + UniRig, prints controller URL+key for the Cloud Run service env), `deploy-editing.sh`, `stage-weights.sh` (stages ~80 GB model weights). |
+| `deploy` | Bash runbooks | Repeatable, idempotent Cloud Run provisioning for the reconstruction pipeline: `deploy-all.sh` (ordered provision of controller + mesh models + the `model-rig` rigging worker, prints the `gcloud run services update` that wires the site), `deploy-editing.sh`, `stage-weights.sh` (stages the Hugging Face model weights; `rig`, `texture` and `text2motion` are staged elsewhere, see `workers/deploy/README.md`). |
 | `pump-fun-mcp` | Cloudflare Worker | Stateless **mirror** of `api/pump-fun-mcp.js` — full MCP Streamable HTTP (protocol `2025-06-18`), read-only on-chain/indexer tool subset only, camelCase legacy aliases via `TOOL_NAME_ALIASES`, no auth/x402. Deploy: `wrangler deploy`. (`worker.js`, `wrangler.toml`) |
 
 **Endpoint contracts vary by worker:** the mesh-inference models (`model-*`) expose `POST /infer` + `GET /tasks/:id`; `longcat` exposes `POST /generate` + `GET /jobs/:id` + `GET /health`; `avatar-reconstruction`/controller expose `/reconstruct` + `/rig`; CPU workers expose named verb endpoints (`/texture`, `/retexture_region`, `/segment`, `/convert`, …). Job state in Google Cloud Firestore (native mode), outputs to GCS.
@@ -1876,7 +1876,7 @@ Stores: GLBs · audio clips · thumbnails · manifests · OG images · validatio
 | AWS CDK | `infra/lib/three-ws-stack.ts` | Account `155407237916`, `us-east-1`. `ThreeWsStack`: S3 bucket `3d-agent-avatars` (RETAIN, `tmp/` 1-day lifecycle, CORS), Forge Lambda `three-ws-forge` (NODEJS_22_X, ARM_64, 1536 MB, 20s, public Function URL GET-only), log groups `/three-ws/api` + `/aws/lambda/three-ws-forge`, AppRegistry MyApplications association. CfnOutputs: `ForgeUrl`, `AvatarBucketName`, `AvatarBucketArn`. |
 | GCP Cloud Run (world) | `deploy/world/cloudrun.yaml` | Hyperfy world (`world.three.ws`), SQLite + GCS volume. SA `hyperfy-world-sa@…`, secret `hyperfy-admin-code` (in-world `/admin <code>` claims build rights). Project `aerial-vehicle-466722-p5`, us-central1. |
 | GCP Cloud Run (sniper) | `deploy/sniper/cloudrun.yaml` | `agent-sniper` long-lived worker. **`minScale=maxScale=1` is load-bearing** — the in-process per-agent spend lock (`executor.js`) makes a second instance double-spend. `SNIPER_MODE` defaults to `simulate` (real quotes, no broadcast); `live` is a deliberate separate cutover. SA `agent-sniper-sa@…`, deploy via `scripts/deploy-sniper.mjs`, status at `/api/sniper/status`. |
-| GCP Cloud Run (GPU/CPU fleet) | `workers/*/cloudbuild.yaml` + `workers/deploy/` | Avatar pipeline (controller + mesh models + UniRig + reconstruction/longcat/texture/etc.) on NVIDIA L4. Quota `nvidia_l4_gpu_allocation_no_zonal_redundancy`. Buckets `gs://three-ws-avatar-reconstructions`, `gs://three-ws-avatar-videos`; job state in Firestore. |
+| GCP Cloud Run (GPU/CPU fleet) | `workers/*/cloudbuild.yaml` + `workers/deploy/` | Avatar pipeline (controller + mesh models + the `model-rig` rigging worker + reconstruction/longcat/texture/etc.) on NVIDIA L4. Quota `nvidia_l4_gpu_allocation_no_zonal_redundancy`. Buckets `gs://three-ws-avatar-reconstructions`, `gs://three-ws-avatar-videos`; job state in Firestore. |
 | Colyseus | `multiplayer/` | Authoritative real-time room server (:2567), 4 rooms, HMAC-gated — see [Multiplayer / Networked 3D](#multiplayer--networked-3d-multiplayer). Deploys to Fly.io + Cloud Run |
 | Sentry | `api/_lib/sentry.js` | Error capture via raw envelope API (no SDK weight) |
 | Axiom | `api/_lib/axiom.js` | x402 payment metrics (`AXIOM_TOKEN`, `AXIOM_DATASET`) |
@@ -2803,7 +2803,7 @@ The Python/FastAPI workers in `workers/` run on Google Cloud Run (GPU). Each exp
 | `model-triposr` | `POST /infer` | `GET /tasks/:id` | `GET /health` | Image → 3D mesh (TripoSR) |
 | `model-triposg` | `POST /infer` | `GET /tasks/:id` | `GET /health` | Image → 3D mesh (TripoSG) |
 | `model-text2motion` | `POST /infer` | `GET /tasks/:id` | `GET /health` | Text → SMPL motion (MDM) → canonical AnimationClip JSON |
-| `unirig` | `POST /rig` | `GET /tasks/:id` | `GET /health` | Skeleton + skinning + ARKit-52 blendshapes (UniRig, SIGGRAPH 2025) |
+| `model-rig` | `POST /rig` | `GET /tasks/:id` | `GET /health` | Skeleton + skinning + ARKit-52 blendshapes (Make-It-Animatable, MIT) |
 | `rembg` | `POST /remove` | `GET /tasks/:id` | `GET /health` | Background removal (BRIA RMBG-2.0, u2net, isnet) |
 | `segment` | `POST /segment` | `GET /tasks/:id` | `GET /health` | Mesh part segmentation |
 | `stylize` | `POST /process` | `GET /tasks/:id` | `GET /styles`, `GET /health` | Mesh/texture style transfer (style catalog) |
