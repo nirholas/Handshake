@@ -224,6 +224,7 @@ surface-map row already covers:
 | [workers/texture/](workers/texture) | Text-guided texturing + magic-brush region retexture GPU server |
 | [workers/pump-fun-mcp/](workers/pump-fun-mcp) | Cloudflare Workers mirror of the canonical pump.fun MCP server |
 | [services/agent-screen-caster/](services/agent-screen-caster) | Cloud Run caster rendering an agent's live browser frames for the agent-screen stream |
+| [services/fleet-console/](services/fleet-console) | Health console for an open-source fleet: enumerates a GitHub owner's repositories, probes every deployment URL and npm package they advertise, and scores what each one actually delivers. Ships an HTTP dashboard, a CLI (`scan --attention` exits 1 when anything is broken, so cron can gate on it) and an MCP server over the same snapshot. Not deployed and not meant to be: it runs from a terminal, a cron job, or beside an agent. Tests: [tests/fleet-console.test.js](tests/fleet-console.test.js), [tests/fleet-console-server.test.js](tests/fleet-console-server.test.js) |
 | [services/pump-graduations/](services/pump-graduations) | Standalone watcher for pump.fun bonding-curve graduations |
 
 ## npm workspaces
