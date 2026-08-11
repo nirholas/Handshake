@@ -214,6 +214,27 @@ export async function updateAvatar({ id, userId, patch }) {
 	return row ? decorate(row) : null;
 }
 
+// A copy, remix or forge variant points at the source avatar's R2 objects
+// instead of duplicating the bytes, so two rows routinely share one
+// storage_key or thumbnail_key. Deleting an object for a soft-deleted row
+// therefore blanks every LIVE avatar still pointing at it: that is how live
+// avatars ended up serving 404 models and broken thumbnails across the
+// gallery, /pulse and every agent card. Only a key no live row still
+// references may be removed from the bucket.
+async function unreferencedKeys(keys) {
+	const wanted = [...new Set(keys.filter(Boolean))];
+	if (!wanted.length) return [];
+	const rows = await sql`
+		select storage_key as k from avatars
+		 where deleted_at is null and storage_key = any(${wanted}::text[])
+		union
+		select thumbnail_key as k from avatars
+		 where deleted_at is null and thumbnail_key = any(${wanted}::text[])
+	`;
+	const stillUsed = new Set(rows.map((r) => r.k));
+	return wanted.filter((k) => !stillUsed.has(k));
+}
+
 export async function deleteAvatar({ id, userId }) {
 	const rows = await sql`
 		update avatars set deleted_at = now()
@@ -224,15 +245,22 @@ export async function deleteAvatar({ id, userId }) {
 	if (!row) return false;
 	// Fire-and-forget object delete — DB row is source of truth.
 	queueMicrotask(async () => {
+		let keys;
 		try {
-			await deleteObject(row.storage_key);
+			keys = await unreferencedKeys([row.storage_key, row.thumbnail_key]);
 		} catch (e) {
-			console.warn('r2 delete failed', e?.message);
+			// Never guess when the reference check itself fails: keeping an object
+			// costs storage, deleting a shared one costs a live avatar its model.
+			console.warn('avatar key reference check failed, keeping objects', e?.message);
+			return;
 		}
-		if (row.thumbnail_key)
+		for (const key of keys) {
 			try {
-				await deleteObject(row.thumbnail_key);
-			} catch {}
+				await deleteObject(key);
+			} catch (e) {
+				console.warn('r2 delete failed', e?.message);
+			}
+		}
 	});
 	return true;
 }
