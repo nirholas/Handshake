@@ -2830,7 +2830,7 @@ gRPC protobufs are vendored under `api/_lib/riva-protos/` and `api/_lib/a2f-prot
 
 ## Testing & Quality Assurance
 
-There is **no GitHub Actions CI** — the project deliberately does not use `.github/workflows` for CI/deploy, and no workflow file exists (`.github/` holds only CODEOWNERS, FUNDING, SECURITY, and the issue/PR templates). Deploys run through Cloud Build; schedules through Cloud Scheduler. So a large local test suite + the `gate`/`audit`/`smoke` scripts ARE the quality bar. **~591 test files.**
+There is **no GitHub Actions CI**: the project deliberately does not use `.github/workflows` for CI/deploy, and no workflow file exists (`.github/` holds only CODEOWNERS, FUNDING, SECURITY, and the issue/PR templates). Deploys run through Cloud Build; schedules through Cloud Scheduler. So a large local test suite + the `gate`/`audit`/`smoke` scripts ARE the quality bar. **~591 test files.**
 
 **Runners:**
 
