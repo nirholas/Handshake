@@ -160,12 +160,13 @@ someone has to go find.
 ## Deploying
 
 **Status: built and tested, not yet deployed.** There is no `okx-chat-bot`
-Cloud Run service in `aerial-vehicle-466722-p5` yet, and the one-time setup
-below has not been run: neither `gs://three-ws-okx-bot-state` nor the
-`okx-chat-bot-database-url` and `anthropic-api-key` secrets exist. Deploys are
-owner-gated, so the three setup commands and the build submit below are the
-whole remaining path. Until they run, the bot is hosted wherever it was last
-started by hand and `/api/healthz` reports `okx_chat_bot` as `unknown`.
+Cloud Run service in `aerial-vehicle-466722-p5`, and none of the one-time setup
+below has been run: `gs://three-ws-okx-bot-state`, `okx-chat-bot-database-url`
+and `anthropic-api-key` all still have to be created. `/api/healthz` accordingly
+reports the `okx_chat_bot` subsystem as `unknown` with `no heartbeat reported
+yet`, which is the honest reading: no host has ever beat. Deploys are
+owner-gated, so the setup below plus the build submit are the whole remaining
+path, and the only value not already on this machine is the Anthropic key.
 
 The service must run `--min-instances=1 --max-instances=1`. This is not a
 capacity choice: the GCS snapshot has exactly one writer, and concurrent
