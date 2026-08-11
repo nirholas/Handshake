@@ -20,6 +20,7 @@
 
 	let container = null;
 	let iframe = null;
+	let grip = null;
 	let mounted = false;
 	let narrator = null;
 	let muted = false;
@@ -63,11 +64,22 @@
 	function getPositionStyle(pos) {
 		const m = '16px';
 		switch (pos) {
+			case 'custom':      return customPositionStyle();
 			case 'top-left':    return { top: m, left: m, bottom: 'auto', right: 'auto' };
 			case 'top-right':   return { top: m, right: m, bottom: 'auto', left: 'auto' };
 			case 'bottom-left': return { bottom: m, left: m, top: 'auto', right: 'auto' };
 			default:            return { bottom: m, right: m, top: 'auto', left: 'auto' };
 		}
+	}
+
+	// A dragged avatar is stored as absolute viewport pixels. Re-clamp on every
+	// apply so a spot saved on a wide monitor still lands on screen in a narrow
+	// window instead of parking the avatar off the right edge.
+	function customPositionStyle() {
+		const { width, height } = resolveSize(settings);
+		const x = clamp(Number(settings.customX) || 0, 0, Math.max(0, window.innerWidth - width));
+		const y = clamp(Number(settings.customY) || 0, 0, Math.max(0, window.innerHeight - height));
+		return { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' };
 	}
 
 	// ── Theme ────────────────────────────────────────────────────────────────────
@@ -133,6 +145,104 @@
 		}
 	}
 
+	// ── Drag to reposition ─────────────────────────────────────────────────────
+	// The grip in the hover toolbar is the only drag surface: the iframe below it
+	// swallows pointer events, so move/release listeners live on the document for
+	// the duration of a drag and detach on release.
+	function beginDrag(clientX, clientY) {
+		if (!container) return;
+		const rect = container.getBoundingClientRect();
+		dragging = true;
+		dragOffX = clientX - rect.left;
+		dragOffY = clientY - rect.top;
+		// Pin the container to its current pixel box before switching anchors, so
+		// a bottom/right-anchored avatar doesn't jump on grab.
+		container.style.left = rect.left + 'px';
+		container.style.top = rect.top + 'px';
+		container.style.right = 'auto';
+		container.style.bottom = 'auto';
+		if (grip) grip.style.cursor = 'grabbing';
+		// Without this the iframe eats every move once the cursor crosses into it.
+		if (iframe) iframe.style.pointerEvents = 'none';
+		document.body?.style.setProperty('user-select', 'none');
+	}
+
+	function moveDrag(clientX, clientY) {
+		if (!dragging || !container) return;
+		const x = clamp(clientX - dragOffX, 0, window.innerWidth - container.offsetWidth);
+		const y = clamp(clientY - dragOffY, 0, window.innerHeight - container.offsetHeight);
+		container.style.left = x + 'px';
+		container.style.top = y + 'px';
+	}
+
+	function finishDrag() {
+		if (!dragging) return;
+		dragging = false;
+		if (grip) grip.style.cursor = 'grab';
+		if (iframe) iframe.style.pointerEvents = '';
+		document.body?.style.removeProperty('user-select');
+		// A deliberate drop wins over follow-cursor and over the saved preset:
+		// record it as an explicit 'custom' position so the next mount, and every
+		// other tab, restores the avatar where the user left it.
+		if (!container) return;
+		disableFollowCursor();
+		const next = {
+			position: 'custom',
+			customX: Math.round(parseFloat(container.style.left) || 0),
+			customY: Math.round(parseFloat(container.style.top) || 0),
+		};
+		settings = { ...settings, ...next };
+		chrome.storage.sync.set(next);
+	}
+
+	function startDrag(e) {
+		if (e.button !== 0) return;
+		e.preventDefault();
+		beginDrag(e.clientX, e.clientY);
+		document.addEventListener('mousemove', onDragMove);
+		document.addEventListener('mouseup', onDragEnd);
+	}
+
+	function onDragMove(e) { moveDrag(e.clientX, e.clientY); }
+
+	function onDragEnd() {
+		document.removeEventListener('mousemove', onDragMove);
+		document.removeEventListener('mouseup', onDragEnd);
+		finishDrag();
+	}
+
+	function startDragTouch(e) {
+		const t = e.touches[0];
+		if (!t) return;
+		e.preventDefault();
+		beginDrag(t.clientX, t.clientY);
+		document.addEventListener('touchmove', onDragTouchMove, { passive: false });
+		document.addEventListener('touchend', onDragTouchEnd);
+		document.addEventListener('touchcancel', onDragTouchEnd);
+	}
+
+	function onDragTouchMove(e) {
+		const t = e.touches[0];
+		if (!t) return;
+		e.preventDefault();
+		moveDrag(t.clientX, t.clientY);
+	}
+
+	function onDragTouchEnd() {
+		document.removeEventListener('touchmove', onDragTouchMove);
+		document.removeEventListener('touchend', onDragTouchEnd);
+		document.removeEventListener('touchcancel', onDragTouchEnd);
+		finishDrag();
+	}
+
+	// Unmounting mid-drag would otherwise leave document-level listeners and the
+	// page's user-select lock behind.
+	function cancelDrag() {
+		if (!dragging) return;
+		onDragEnd();
+		onDragTouchEnd();
+	}
+
 	// ── Mount / unmount ──────────────────────────────────────────────────────────
 	function mount(avatarId) {
 		if (mounted) {
@@ -178,7 +288,7 @@
 			z-index: 10;
 		`;
 
-		const grip = document.createElement('div');
+		grip = document.createElement('div');
 		grip.title = 'Drag to move';
 		grip.style.cssText = `
 			flex: 1;
@@ -243,11 +353,13 @@
 		if (!mounted) return;
 		window.removeEventListener('message', onIframeMessage);
 		disableFollowCursor();
+		cancelDrag();
 		narrator?.stop();
 		narrator = null;
 		if (container && container.parentNode) container.parentNode.removeChild(container);
 		container = null;
 		iframe = null;
+		grip = null;
 		mounted = false;
 		window.__threewsWalkLoaded = false; // allow a clean re-mount later
 	}

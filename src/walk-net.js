@@ -15,6 +15,7 @@
 import { Client, getStateCallbacks } from 'colyseus.js';
 import { log } from './shared/log.js';
 import { joinRoomWithTimeout } from './shared/colyseus-connect.js';
+import { defaultGameServerUrl } from './shared/game-server-url.js';
 
 const ROOM_NAME = 'walk_world';
 const SEND_HZ = 15;
@@ -22,47 +23,13 @@ const SEND_INTERVAL_MS = 1000 / SEND_HZ;
 const POSITION_EPSILON = 0.005; // m — skip send if nothing meaningful changed
 const YAW_EPSILON = 0.01;       // rad
 
-function defaultServerUrl() {
-	// Resolution priority:
-	//   1. window.WALK_SERVER_URL            (runtime / test override)
-	//   2. <meta name="walk-server" content> (per-page production config)
-	//   3. VITE_WALK_SERVER_URL              (build-time production config)
-	//   4. Codespaces / Gitpod port-subdomain forwarding (-3000 → -2567)
-	//   5. Same host on :2567                (DEV ONLY convenience)
-	// In production with none of the above set we return '' so the caller stays
-	// in graceful offline mode — the public domain does not expose :2567, so a
-	// same-host fallback would only produce a doomed connect + reconnect storm.
-	if (typeof window !== 'undefined' && window.WALK_SERVER_URL) {
-		return window.WALK_SERVER_URL;
-	}
-	if (typeof document !== 'undefined') {
-		const meta = document.querySelector('meta[name="walk-server"]');
-		const v = meta?.getAttribute('content')?.trim();
-		if (v) return v;
-	}
-	try {
-		const envUrl = import.meta?.env?.VITE_WALK_SERVER_URL;
-		if (envUrl) return String(envUrl).trim().replace(/\/$/, '');
-	} catch (_) {}
-	if (typeof location !== 'undefined') {
-		const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-		const host = location.hostname;
-		// Cloud dev environments expose each forwarded port as its own
-		// subdomain (<name>-<port>.app.github.dev), NOT host:port. The app runs
-		// on -3000; the walk server is the same name on -2567.
-		const fwd = host.match(/^(.*)-(\d+)\.(app\.github\.dev|githubpreview\.dev|gitpod\.io)$/);
-		if (fwd) return `${proto}//${fwd[1]}-2567.${fwd[3]}`;
-		// Same-host:2567 is a dev convenience only. In production the walk server
-		// is a separately-deployed Colyseus host addressed via the meta tag or
-		// VITE_WALK_SERVER_URL above; never assume it lives on the public domain.
-		let isProd = false;
-		try { isProd = import.meta?.env?.PROD === true; } catch (_) {}
-		const isLocalHost = host === 'localhost' || host === '127.0.0.1';
-		if (!isProd || isLocalHost) return `${proto}//${host}:2567`;
-		return '';
-	}
-	return '';
-}
+// Where the Colyseus host lives is one question with one answer, shared with
+// /play and the Coin Wars arena via ./shared/game-server-url.js. This module
+// used to carry its own copy, and the copy had drifted in the one place that
+// matters to anyone running the server locally: it read the production
+// <meta name="walk-server"> baked into pages/temporary.html BEFORE checking for
+// localhost, so `npm run dev:walk-all` started a server the page then ignored,
+// silently joining production instead. The shared resolver puts localhost first.
 
 export class WalkNet {
 	/**
@@ -81,7 +48,7 @@ export class WalkNet {
 	 */
 	constructor(opts = {}) {
 		this.name = opts.name || 'guest';
-		this.url = opts.url || defaultServerUrl();
+		this.url = opts.url || defaultGameServerUrl();
 		this.roomName = opts.room || ROOM_NAME;
 		this.avatar = opts.avatar || '';
 		this.agent = opts.agent || '';

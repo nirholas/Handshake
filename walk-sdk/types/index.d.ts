@@ -79,6 +79,8 @@ export interface WalkCompanionOptions {
 	excludedRoutes?: string[];
 	/** Show the avatar picker button. Defaults to true. */
 	enablePicker?: boolean;
+	/** Companion's chest/neck/head follow the visitor's cursor. Defaults to true. */
+	lookAt?: boolean;
 	/** Override the page-context greeting; return null to fall back to the default. */
 	greeting?: (path: string) => string | null;
 	/** Optional "make your own" link shown in the picker footer. */
@@ -90,6 +92,8 @@ export interface WalkCompanionOptions {
 /** The controller returned by `createWalkCompanion`. */
 export interface WalkCompanionControl {
 	readonly instance: unknown;
+	/** The resolved options this control was built with (storage keys included). */
+	readonly config: WalkConfig;
 	isEnabled(): boolean;
 	enable(): void;
 	disable(): void;
@@ -179,6 +183,7 @@ export interface WalkConfig {
 	manifestUrl: string;
 	excludedRoutes: string[];
 	enablePicker: boolean;
+	lookAt: boolean;
 	greeting: ((path: string) => string | null) | null;
 	docsUrl: string | null;
 	keys: Record<string, string>;

@@ -19,8 +19,17 @@ test('resolveConfig fills sensible defaults', () => {
 	assert.equal(c.manifestUrl, '/animations/manifest.json');
 	assert.equal(c.excludedRoutes, DEFAULT_EXCLUDED_PREFIXES);
 	assert.equal(c.enablePicker, true);
+	assert.equal(c.lookAt, true);
 	assert.equal(c.greeting, null);
 	assert.equal(c.docsUrl, null);
+});
+
+test('lookAt is opt-out only when explicitly false', () => {
+	// Cursor tracking is procedural IK on the live rig, so a host that wants the
+	// fixed gaze has to say so; anything short of `false` keeps it on.
+	assert.equal(resolveConfig({ lookAt: false }).lookAt, false);
+	assert.equal(resolveConfig({ lookAt: undefined }).lookAt, true);
+	assert.equal(resolveConfig({ lookAt: 0 }).lookAt, true);
 });
 
 test('storage keys are namespaced by storagePrefix', () => {

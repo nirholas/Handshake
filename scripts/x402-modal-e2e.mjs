@@ -64,7 +64,7 @@ const origin = `http://127.0.0.1:${server.address().port}`;
 
 const browser = await chromium.launch();
 const checks = [];
-const check = (name, fn) => { fn(); checks.push(name); console.log(`  ok  ${name}`); };
+const check = async (name, fn) => { await fn(); checks.push(name); console.log(`  ok  ${name}`); };
 
 // A 402 is the protocol working, not a page error; everything else is a real failure.
 const watch = (page, errors) => {
@@ -84,8 +84,8 @@ try {
 	await page.goto(`${origin}/examples/index.html`, { waitUntil: 'networkidle' });
 
 	const api = await page.evaluate(() => Object.keys(window.X402 || {}));
-	check('the global build exposes window.X402', () => assert.deepEqual(api.sort(), ['configure', 'discover', 'init', 'pay', 'version']));
-	check('it auto-binds [data-x402-endpoint]', async () => assert.equal(await page.getAttribute('#declarative', 'data-x402-bound'), '1'));
+	await check('the global build exposes window.X402', () => assert.deepEqual(api.sort(), ['configure', 'discover', 'init', 'pay', 'version']));
+	await check('it auto-binds [data-x402-endpoint]', async () => assert.equal(await page.getAttribute('#declarative', 'data-x402-bound'), '1'));
 
 	// Declarative button: modal mounts and runs real discovery against the live route.
 	await page.click('#declarative');
@@ -93,14 +93,14 @@ try {
 	await page.waitForFunction(priceResolved, { timeout: 30_000 });
 	const price = (await page.textContent('[data-price]'))?.trim();
 	const network = (await page.textContent('[data-network]'))?.trim();
-	check('discovery resolves a real price from the live 402', () => assert.match(price, /^[\d.]+\s*USDC$/));
-	check('discovery resolves the network', () => assert.ok(network && network !== 'resolving'));
+	await check('discovery resolves a real price from the live 402', () => assert.match(price, /^[\d.]+\s*USDC$/));
+	await check('discovery resolves the network', () => assert.ok(network && network !== 'resolving'));
 
 	// Escape cancels; cancellation must not surface as an error to the merchant.
 	await page.keyboard.press('Escape');
 	await page.waitForFunction(() => !document.querySelector('.x402-overlay'), { timeout: 10_000 });
 	const out = (await page.textContent('#declarative-out'))?.trim();
-	check('cancelling closes the modal without firing x402:error', () => assert.doesNotMatch(out, /^Error:/));
+	await check('cancelling closes the modal without firing x402:error', () => assert.doesNotMatch(out, /^Error:/));
 
 	// Programmatic pay() rejects with code 'cancelled' when the user closes it.
 	await page.click('#programmatic');
@@ -108,15 +108,15 @@ try {
 	await page.waitForFunction(priceResolved, { timeout: 30_000 });
 	await page.click('.x402-close');
 	await page.waitForFunction(() => document.querySelector('#programmatic-out')?.textContent === 'cancelled.', { timeout: 10_000 });
-	check("pay() rejects with code 'cancelled' on close", () => assert.ok(true));
+	await check("pay() rejects with code 'cancelled' on close", () => assert.ok(true));
 
 	// discover() runs headless in the page, off the ESM build.
 	const accepts = await page.evaluate(async ([o, demo]) => {
 		const { discover } = await import(`${o}/dist/x402-modal.mjs`);
 		return (await discover({ endpoint: demo })).accepts.map((a) => a.network);
 	}, [origin, DEMO]);
-	check('discover() returns accepts[] without opening any UI', () => assert.ok(accepts.length > 0));
-	check('the page logged no unexpected errors', () => assert.deepEqual(errors, []));
+	await check('discover() returns accepts[] without opening any UI', () => assert.ok(accepts.length > 0));
+	await check('the page logged no unexpected errors', () => assert.deepEqual(errors, []));
 	await page.close();
 
 	// The data-x402-* script-tag config must apply under both documented URL shapes.
@@ -127,7 +127,7 @@ try {
 		await p.click('#pay');
 		await p.waitForSelector('.x402-foot', { timeout: 15_000 });
 		const foot = (await p.textContent('.x402-foot'))?.replace(/\s+/g, ' ').trim();
-		check(`brand override applies via ${label}`, () => assert.match(foot, /Powered by Acme/));
+		await check(`brand override applies via ${label}`, () => assert.match(foot, /Powered by Acme/));
 		await p.close();
 	}
 
