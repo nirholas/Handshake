@@ -9,8 +9,15 @@
 //                capacity, so a browser is (or is about to be) spinning up for it.
 //   • queued   — the agent is wanted but the pool is at MAX_BROWSERS; we return a
 //                1-based queue position so the card can say "#N in line".
-//   • activity — not wanted, or Redis is off: the always-available activity view
-//                stays, and we never claim a live state without a real frame.
+//   • activity — not wanted, no caster pool running, or Redis is off: the
+//                always-available activity view stays, and we never claim a live
+//                state without a real frame.
+//
+// "No caster pool running" is load-bearing. warming/queued are promises that a
+// real browser is coming, and only a live pool can keep them. The pool proves it
+// is alive by polling /api/agent/watch-wanted, which refreshes POOL_ALIVE_KEY;
+// with that key absent every wanted agent falls back to the honest activity view
+// instead of spinning "warming up" at a viewer forever.
 //
 // The wall fetches this on mount and refreshes it only while a card is
 // warming/queued — never once it's casting (frames drive that), so steady-state
@@ -24,6 +31,7 @@ import { cors, json, method, error, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getRedis } from '../_lib/redis.js';
 import { isUuid } from '../_lib/validate.js';
+import { POOL_ALIVE_KEY } from './watch-wanted.js';
 
 export const WANTED_KEY = 'screen:wanted';
 const WINDOW_MS = 90_000; // mirrors watch-wanted: agents wanted within 90s are live-watched
@@ -34,7 +42,10 @@ export const POOL_MAX = Math.max(1, Number(process.env.SCREEN_POOL_MAX) || 6);
 // Pure queue-math seam (unit-tested): given an agent's reverse-rank in the wanted
 // set (0 = most-recently-wanted) and the pool size, classify its handoff state.
 // Ranks 0..max-1 are within casting capacity (warming); the rest queue, 1-based.
-export function classifyRank(rank, max = POOL_MAX) {
+// With no caster pool alive there is nothing to warm up or queue behind, so the
+// honest answer is the activity view regardless of rank.
+export function classifyRank(rank, max = POOL_MAX, { poolAlive = true } = {}) {
+	if (!poolAlive) return { state: 'activity' };
 	if (rank == null || rank < 0) return { state: 'activity' };
 	if (rank < max) return { state: 'warming' };
 	return { state: 'queued', position: rank - max + 1 };
@@ -66,14 +77,18 @@ export default wrap(async (req, res) => {
 		// the window) carry lower scores and rank BELOW every in-window member, so a
 		// fresh agent's reverse-rank equals its position among currently-wanted
 		// agents — the same set, in the same order, the worker casts from.
-		const [score, rank] = await Promise.all([
+		const [score, rank, poolAlive] = await Promise.all([
 			r.zscore(WANTED_KEY, agentId),
 			r.zrevrank(WANTED_KEY, agentId),
+			r.exists(POOL_ALIVE_KEY),
 		]);
 		const fresh = score != null && Date.now() - Number(score) <= WINDOW_MS;
 		if (!fresh) return json(res, 200, { state: 'activity', max: POOL_MAX }, { 'cache-control': 'no-store' });
 
-		return json(res, 200, { ...classifyRank(rank, POOL_MAX), max: POOL_MAX }, { 'cache-control': 'no-store' });
+		return json(res, 200, {
+			...classifyRank(rank, POOL_MAX, { poolAlive: !!poolAlive }),
+			max: POOL_MAX,
+		}, { 'cache-control': 'no-store' });
 	} catch {
 		// Redis blip — degrade to the always-available activity view, never an error.
 		return json(res, 200, { state: 'activity', max: POOL_MAX }, { 'cache-control': 'no-store' });
