@@ -102,7 +102,15 @@ gcloud builds submit --project "$PROJECT_ID" --region "$REGION" \
 	--config "$BUILD_CFG" .
 
 # Common env for the grinder. WRITE_DB/VANITY_KMS_KEY flow through from the shell.
-JOB_ENV="RUNNER=cloud-run-job,INCLUDE_5=${INCLUDE_5:-0},IGNORE_CASE=${IGNORE_CASE:-0},WRITE_DB=${WRITE_DB:-1},VANITY_KMS_KEY=${VANITY_KMS_KEY:-}"
+# TASK_TIMEOUT is the platform's hard kill. MAX_RUNTIME_SEC is the grinder's own,
+# deliberately shorter, budget: it winds the run down, writes its summary and exits
+# 0 before the kill lands. Without it a shard that needs longer than the timeout is
+# reported as a FAILED execution even though every sealed key reached the DB
+# (execution vanity-grinder-jx97w, 2026-07-07: 2/4 tasks "The configured timeout
+# was reached"), and Cloud Run then burns the retry budget re-running it.
+TASK_TIMEOUT="${TASK_TIMEOUT:-3600}"
+MAX_RUNTIME_SEC="${MAX_RUNTIME_SEC:-$(( TASK_TIMEOUT - 300 ))}"
+JOB_ENV="RUNNER=cloud-run-job,INCLUDE_5=${INCLUDE_5:-0},IGNORE_CASE=${IGNORE_CASE:-0},WRITE_DB=${WRITE_DB:-1},MAX_RUNTIME_SEC=${MAX_RUNTIME_SEC},VANITY_KMS_KEY=${VANITY_KMS_KEY:-}"
 JOB_SECRETS="WALLET_ENCRYPTION_KEY=WALLET_ENCRYPTION_KEY:latest,JWT_SECRET=JWT_SECRET:latest,DATABASE_URL=DATABASE_URL:latest"
 
 if [[ "$MODE" == "run-job" ]]; then
@@ -113,7 +121,7 @@ if [[ "$MODE" == "run-job" ]]; then
 		--service-account "$GRINDER_SA" \
 		--cpu "$CPU" --memory "$MEM" \
 		--tasks "$TASKS" --parallelism "$TASKS" \
-		--max-retries 3 --task-timeout 3600 \
+		--max-retries 3 --task-timeout "$TASK_TIMEOUT" \
 		--set-env-vars "$JOB_ENV,SHARD_COUNT=${TASKS}" \
 		--update-secrets "$JOB_SECRETS" \
 		--execution-environment gen2 \
@@ -128,6 +136,15 @@ if [[ "$MODE" == "run-job" ]]; then
 		echo "  Run it:  gcloud run jobs execute $JOB --region $REGION"
 	fi
 else
+	# The grinder resolves its SHARD_INDEX by listing its own instance group
+	# (workers/vanity-grinder/gce-shard.mjs), because a MIG gives its VMs identical
+	# container-env and randomly-suffixed names. Without this role every VM falls
+	# back to a name hash; without the role AND the resolver they all ground shard 0.
+	echo "▸ Granting the grinder SA compute.viewer (MIG shard-index resolution)…"
+	gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+		--member "serviceAccount:${GRINDER_SA}" --role roles/compute.viewer \
+		--condition None >/dev/null
+
 	echo "▸ Creating spot MIG template + group (${INSTANCE_COUNT} × ${MACHINE})…"
 	TEMPLATE="${JOB}-tmpl"
 	gcloud compute instance-templates create-with-container "$TEMPLATE" \
@@ -140,7 +157,7 @@ else
 	gcloud compute instance-groups managed create "$JOB" \
 		--project "$PROJECT_ID" --zone "${REGION}-a" \
 		--template "$TEMPLATE" --size "$INSTANCE_COUNT" 2>/dev/null || echo "  (MIG exists)"
-	echo "  ✅ Spot MIG up. Each VM must read SHARD_INDEX from its instance name ordinal."
+	echo "  ✅ Spot MIG up. Each VM resolves its own SHARD_INDEX from the group listing."
 	echo "  Tear down when done:  gcloud compute instance-groups managed delete $JOB --zone ${REGION}-a"
 fi
 
@@ -151,7 +168,10 @@ Notes:
     as its SHARD_INDEX, so TASKS parallel tasks split the target list evenly.
   • Cost: c2d spot ≈ \$0.01–0.02 / vCPU-hour. At ~25k keys/sec/vCPU a 4‑char
     address (~11.3M expected) is ~450 vCPU-seconds ≈ \$0.002. Even 5‑char (~656M)
-    is a few cents. See docs/gcp-credits.md for the measured \$/address table.
+    is a few cents. See docs/ops/gcp-credits.md for the measured \$/address table.
+  • Each task stops itself after MAX_RUNTIME_SEC (${MAX_RUNTIME_SEC}s) and exits 0.
+    Re-run the job to continue: with WRITE_DB=1 it resumes from vanity_inventory
+    and skips every pattern already in stock.
   • Always run scripts/gcp/vanity-kms-setup.sh first for production inventory so
     keys are sealed under KMS, not just secret-box.
 EOF
