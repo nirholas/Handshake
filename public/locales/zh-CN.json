@@ -13522,7 +13522,7 @@
 		"agents": "智能体",
 		"all_news": "← 所有新闻",
 		"an_on_chain_wallet_solana_native_identity": "<strong>链上钱包。</strong> Solana原生身份，加上ERC-8004注册，让代理可寻址、可追溯。",
-		"autonomous_payments_agents_settle_x402_micro": "<strong>自主支付。</strong> 代理以x402结算每次调用的小额支付，全程无需人工干预。",
+		"autonomous_payments_agents_settle_x402_micro": "<strong>自主支付。</strong>智能体按次调用结算x402微支付，单次调用费用为USDC，全程无需人工干预。",
 		"aws": "aws",
 		"aws_marketplace": "aws-marketplace",
 		"aws_procurement_subscribe_through_aws_market": "<strong>AWS采购。</strong> 通过AWS Marketplace订阅，费用将计入您现有的AWS账单。",
