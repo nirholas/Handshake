@@ -1,17 +1,30 @@
-# Cloud Build pipeline: build the longcat-video-avatar Docker image and deploy
-# it to Cloud Run (GPU) in us-central1.
+# Cloud Build pipeline: build the longcat-video-avatar image and publish it to
+# Artifact Registry.
 #
-# Substitution variables (override via --substitutions flag or trigger config):
-#   _REGION         — Cloud Run region            (default: us-central1)
-#   _SERVICE        — Cloud Run service name      (default: longcat-video-avatar)
-#   _REPO           — Artifact Registry repo name  (default: longcat-video-avatar)
-#   _GCS_BUCKET     — Cloud Storage bucket for output MP4s
-#   _WEIGHTS_BUCKET — GCS bucket holding pre-downloaded model weights
-#   _MIN_INSTANCES  — minimum warm instances       (default: 1)
-#   _MAX_INSTANCES  — maximum instances            (default: 2)
+# There is deliberately NO Cloud Run deploy step. Do not add one back without
+# first re-checking the arithmetic in README.md ("Why this is not on Cloud
+# Run"). In short, as of 2026-08-11:
 #
-# Required secrets in Secret Manager (must exist before first deploy):
-#   longcat-video-avatar-key — the API_KEY bearer secret
+#   * the resident weight set for --use_int8 --use_distill --model_type
+#     avatar-v1.5 is about 45 GB (UMT5 text encoder 22.7 GB + INT8 DiT 15.9 GB +
+#     distillation LoRA 2.5 GB + whisper-large-v3 3.1 GB + VAE 0.5 GB), and
+#     upstream's pipeline .to(device) puts all of it on one GPU;
+#   * Cloud Run's L4 has 24 GB of VRAM, so it cannot hold that;
+#   * Cloud Run's other GPU, the RTX PRO 6000 Blackwell, has 96 GB but is
+#     compute capability sm_120, for which the torch 2.6.0+cu124 and
+#     flash-attn 2.7.4.post1 wheels this stack pins ship no kernels.
+#
+# The image this config produces runs on a single 80 GB GPU (A100-80GB or
+# H100-80GB, sm_80/sm_90). README.md has the docker run command.
+#
+# Substitution variables (override via --substitutions or trigger config):
+#   _REGION  Artifact Registry / build region (default: us-central1)
+#   _REPO    Artifact Registry repository name (default: longcat-video-avatar)
+#
+# Manual submit (SHORT_SHA is only populated for trigger builds):
+#   gcloud builds submit --config workers/longcat/cloudbuild.yaml \
+#     --region us-central1 --project aerial-vehicle-466722-p5 \
+#     --substitutions=SHORT_SHA=manual$(date +%s)
 
 # Builds run as the pinned three-ws-build service account: the project's default
 # compute service account was deleted, so an unpinned submit fails with
@@ -20,15 +33,31 @@ serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build
 
 substitutions:
   _REGION: us-central1
-  _SERVICE: longcat-video-avatar
   _REPO: longcat-video-avatar
-  _GCS_BUCKET: three-ws-avatar-videos
-  _WEIGHTS_BUCKET: three-ws-longcat-weights
-  _MIN_INSTANCES: "1"
-  _MAX_INSTANCES: "2"
 
 steps:
+  # ── Ensure the Artifact Registry repository exists ──────────────────────────
+  # Idempotent, so a first build in a fresh project does not fail at the push
+  # step with "repository not found".
+  - id: ensure-repo
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if ! gcloud artifacts repositories describe "${_REPO}" \
+             --location "${_REGION}" --project "$PROJECT_ID" >/dev/null 2>&1; then
+          gcloud artifacts repositories create "${_REPO}" \
+            --repository-format=docker \
+            --location "${_REGION}" \
+            --project "$PROJECT_ID" \
+            --description="LongCat-Video-Avatar-1.5 talking-avatar worker"
+        fi
+
   # ── Build ──────────────────────────────────────────────────────────────────
+  # The Dockerfile runs the worker's three test suites as build gates, so a
+  # green build here also means the unit tests passed.
   - id: build
     name: gcr.io/cloud-builders/docker
     dir: workers/longcat
@@ -50,36 +79,6 @@ steps:
       - --all-tags
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server
 
-  # ── Deploy to Cloud Run ────────────────────────────────────────────────────
-  - id: deploy
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
-    entrypoint: gcloud
-    args:
-      - run
-      - deploy
-      - ${_SERVICE}
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
-      - --region=${_REGION}
-      - --platform=managed
-      - --port=8080
-      # GPU: NVIDIA L4 (24 GB VRAM) — Avatar-1.5 INT8 fits at ~14 GB
-      - --gpu=1
-      - --gpu-type=nvidia-l4
-      - --cpu=8
-      - --memory=32Gi
-      - --min-instances=${_MIN_INSTANCES}
-      - --max-instances=${_MAX_INSTANCES}
-      # Inference timeout: up to 10 min for 720p generation
-      - --timeout=600
-      - --allow-unauthenticated
-      # GCS volume mount for persistent model weights — avoids re-downloading
-      # 14 GB on every cold start. The weights bucket must be pre-populated
-      # (see README.md for the one-time download command).
-      - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
-      - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},FIRESTORE_PROJECT=$PROJECT_ID,RESOLUTION=720p,MAX_CONCURRENT=1
-      - --set-secrets=API_KEY=longcat-video-avatar-key:latest
-
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
@@ -87,3 +86,9 @@ images:
 options:
   machineType: E2_HIGHCPU_32
   logging: CLOUD_LOGGING_ONLY
+  diskSizeGb: 200
+
+# The CUDA base image, the cu124 torch wheels and the ONNX/audio stack push this
+# well past Cloud Build's 10-minute default. Measured locally at roughly 20
+# minutes; 3600s leaves room for a cold cache.
+timeout: 3600s
