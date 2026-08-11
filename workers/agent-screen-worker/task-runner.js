@@ -2,19 +2,22 @@
  * Task runner for agent-screen-worker.
  *
  * Two modes:
- *   1. Queued tasks — user sends a task from /agent-screen?agentId=X via the
- *      platform UI.  The worker polls GET /api/agent-task, receives the task,
+ *   1. Queued tasks. A user sends a task from /agent-screen?agentId=X via the
+ *      platform UI. The worker polls GET /api/agent-task, receives the task,
  *      and executes it with Stagehand.
  *
- *   2. Autonomous loop — when no queued task is waiting, the worker falls back
+ *   2. Autonomous loop. When no queued task is waiting, the worker falls back
  *      to a neutral idle mission: it sits on the agent's three.ws home presence
  *      and narrates that it is standing by for a task. The idle loop is
- *      deliberately content-agnostic — it never surfaces, scans, ranks, or
+ *      deliberately content-agnostic: it never surfaces, scans, ranks, or
  *      narrates third-party tokens or markets. All real work is user-directed
  *      via the queued-task path.
  *
- * Callers: index.js passes { page, context, cfg, push } and runs this forever.
- * push() signature: ({ agentId, page, activity, type }) → Promise<void>
+ * Callers: index.js passes { stagehand, page, cfg, push } and runs this forever.
+ * push() signature: ({ agentId, page, activity, type }) -> Promise<void>
+ *
+ * Stagehand v3 note: act()/extract() are methods on the Stagehand instance and
+ * take the target page as an option. They are NOT methods on the page.
  */
 
 import { z } from 'zod';
@@ -23,18 +26,18 @@ const TASK_POLL_MS = 3_000; // how often to check for a user-queued task
 
 // ── main export ───────────────────────────────────────────────────────────────
 
-export async function runTask({ page, cfg, push }) {
-	const { agentId, CYCLE_MS } = cfg;
+export async function runTask({ stagehand, page, cfg, push }) {
+	const { CYCLE_MS } = cfg;
 
 	while (true) {
 		// ── Check platform for a queued task first ────────────────────────────
 		const queued = await pollForTask(cfg);
 		if (queued) {
-			await runQueuedTask({ page, cfg, push, task: queued });
+			await runQueuedTask({ stagehand, page, cfg, push, task: queued });
 			continue; // check for more queued tasks immediately after
 		}
 
-		// ── No queued task — run autonomous cycle ─────────────────────────────
+		// ── No queued task, run autonomous cycle ──────────────────────────────
 		await runAutonomousCycle({ page, cfg, push });
 		await sleep(CYCLE_MS);
 	}
@@ -42,23 +45,40 @@ export async function runTask({ page, cfg, push }) {
 
 // ── Platform task execution ────────────────────────────────────────────────────
 
-async function pollForTask(cfg) {
+// Repeated poll failures are reported once per distinct reason rather than every
+// 30s, so a broken task endpoint is visible in the log without drowning it.
+let lastPollProblem = '';
+
+function reportPollProblem(reason) {
+	if (reason === lastPollProblem) return;
+	lastPollProblem = reason;
+	console.warn(`[task-runner] task poll unavailable: ${reason}`);
+}
+
+export async function pollForTask(cfg) {
 	try {
 		const url = `${cfg.TASK_URL}?agentId=${encodeURIComponent(cfg.AGENT_ID)}`;
 		const res = await fetch(url, {
 			headers: { authorization: `Bearer ${cfg.AGENT_JWT}` },
 			signal: AbortSignal.timeout(8_000),
 		});
-		if (!res.ok) return null;
+		if (!res.ok) {
+			const body = await res.text().catch(() => '');
+			reportPollProblem(`HTTP ${res.status} ${body.slice(0, 160)}`);
+			return null;
+		}
+		lastPollProblem = '';
 		const j = await res.json();
 		return j.task || null; // { text, type, ts }
-	} catch {
-		return null; // silent — never block the main loop on a network error
+	} catch (err) {
+		// Never block the main loop on a network error, but say so once.
+		reportPollProblem(err.message);
+		return null;
 	}
 }
 
-async function runQueuedTask({ page, cfg, push, task }) {
-	const { agentId } = cfg;
+export async function runQueuedTask({ stagehand, page, cfg, push, task }) {
+	const agentId = cfg.AGENT_ID;
 	const { text, type: taskType } = task;
 
 	console.log(`[task-runner] executing queued task (${taskType}): ${text}`);
@@ -66,30 +86,33 @@ async function runQueuedTask({ page, cfg, push, task }) {
 	await push({ agentId, page: null, activity: `Starting task: ${text}`, type: 'analysis' });
 
 	// Navigate to a sensible starting point based on task type
-	const startUrl = pickStartUrl(text, taskType);
+	const startUrl = pickStartUrl(text);
 	try {
-		await push({ agentId, page, activity: `Navigating to ${new URL(startUrl).hostname}…`, type: 'activity' });
+		await push({ agentId, page, activity: `Navigating to ${new URL(startUrl).hostname}`, type: 'activity' });
 		await page.goto(startUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-		await push({ agentId, page, activity: `Page loaded — beginning task`, type: 'screenshot' });
+		await push({ agentId, page, activity: 'Page loaded, beginning task', type: 'screenshot' });
 	} catch (err) {
 		await push({ agentId, page: null, activity: `Navigation error: ${err.message}`, type: 'activity' });
 	}
 
-	// Execute the task using Stagehand's act() and extract() — natural-language browser control
+	// Execute the task using Stagehand act()/extract(): natural-language browser control
 	const steps = breakTaskIntoSteps(text, taskType);
 	for (const step of steps) {
 		try {
-			await push({ agentId, page: null, activity: step.narration, type: 'analysis' });
+			// Announce intent before a step that can take seconds, so the viewer
+			// isn't staring at a stale frame. An observe step is instantaneous and
+			// narrates itself below, so announcing it first would just print the
+			// same line into the activity log twice.
+			if (step.action !== 'observe') {
+				await push({ agentId, page: null, activity: step.narration, type: 'analysis' });
+			}
 
 			if (step.action === 'act') {
-				await page.act({ action: step.instruction });
-				await push({ agentId, page, activity: step.narration, type: 'screenshot' });
+				await stagehand.act(step.instruction, { page });
+				await push({ agentId, page, activity: `Done: ${step.narration}`, type: 'screenshot' });
 			} else if (step.action === 'extract') {
 				const ResultSchema = z.object({ result: z.string() });
-				const extracted = await page.extract({
-					instruction: step.instruction,
-					schema: ResultSchema,
-				});
+				const extracted = await stagehand.extract(step.instruction, ResultSchema, { page });
 				if (extracted?.result) {
 					await push({
 						agentId,
@@ -111,7 +134,7 @@ async function runQueuedTask({ page, cfg, push, task }) {
 	await push({ agentId, page, activity: `Task complete: ${text.slice(0, 120)}`, type: 'analysis' });
 }
 
-function pickStartUrl(taskText, taskType) {
+export function pickStartUrl(taskText) {
 	const t = taskText.toLowerCase();
 	if (t.includes('flight') || t.includes('travel') || t.includes('fly')) {
 		return 'https://www.google.com/travel/flights';
@@ -134,14 +157,14 @@ function pickStartUrl(taskText, taskType) {
 	return `https://www.google.com/search?q=${encodeURIComponent(taskText)}`;
 }
 
-function breakTaskIntoSteps(taskText, taskType) {
+export function breakTaskIntoSteps(taskText, taskType) {
 	if (taskType === 'research' || taskType === 'general') {
 		return [
-			{ action: 'observe', narration: `Scanning the page for relevant information`, instruction: taskText },
+			{ action: 'observe', narration: 'Scanning the page for relevant information', instruction: taskText },
 			{
 				action: 'extract',
 				narration: 'Extracting key findings',
-				instruction: `Extract the most relevant information for this task: "${taskText}". Summarize in 2–3 sentences.`,
+				instruction: `Extract the most relevant information for this task: "${taskText}". Summarize in 2 to 3 sentences.`,
 			},
 		];
 	}
@@ -165,11 +188,12 @@ function breakTaskIntoSteps(taskText, taskType) {
 //
 // Default behaviour when no user task is queued. Intentionally neutral: the
 // agent rests on its three.ws home presence and signals that it is standing by.
-// It performs NO market/token discovery and narrates NO third-party assets —
-// every real action is user-directed through the queued-task path above.
+// It performs NO market/token discovery and narrates NO third-party assets.
+// Every real action is user-directed through the queued-task path above.
 
-async function runAutonomousCycle({ page, cfg, push }) {
-	const { agentId, HOME_URL } = cfg;
+export async function runAutonomousCycle({ page, cfg, push }) {
+	const agentId = cfg.AGENT_ID;
+	const { HOME_URL } = cfg;
 
 	try {
 		// Only (re)navigate home if we've drifted away during a prior task, so the
@@ -187,7 +211,7 @@ async function runAutonomousCycle({ page, cfg, push }) {
 		await push({
 			agentId,
 			page,
-			activity: 'Standing by — send a task to put this agent to work',
+			activity: 'Standing by, send a task to put this agent to work',
 			type: 'screenshot',
 		});
 	} catch (err) {
