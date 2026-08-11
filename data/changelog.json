@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "Sniper positions that exit on a dead market now close properly",
+			"summary": "When a sniped coin's market went quiet, the worker sold the bag on-chain but could not record the close, because the database did not recognise the reason it gave. The sale had already happened, so the position was reset and retried forever: it never booked its profit or loss and it kept holding one of the agent's position slots. Those exits now record correctly, the freed slots go back to the agent, and the trade card names the exit in plain language instead of leaving it blank.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
 			"title": "A Launch Copilot market-maker now tells you when its engine is not running",
 			"summary": "The Launch Copilot dashboard showed an armed market-maker the same way whether or not a worker was actually sweeping it, so a saved floor and budget could sit there looking like a maker at work while nothing executed. The policy view now reads the engine's own heartbeat and, when no engine has checked in, the dashboard says so plainly: your policy, floor and budgets are saved and untouched, but no action will execute until it is back.",
 			"tags": [

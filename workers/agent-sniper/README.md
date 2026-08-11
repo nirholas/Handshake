@@ -35,6 +35,21 @@ It is deliberately **not** a scheduled cron: periodic ticks can't snipe a launch
 | `positions.js` | `runPositionSweep` — re-quotes open positions (curve OR AMM) and triggers exits. |
 | `graduation-ride.js` | `graduationRideGate` (pure, tested) + `executeBoostRideBuy` — the BOOST-window entry: gate the migration event, wait for the new AMM pool, buy via `executeBuy` with `venue:'amm'`. |
 | `amm-exit.js` | `quoteAmmSell` / `buildAmmSellInstructions` / `isGraduated` — post-graduation AMM pricing + sell build (shared with the user-driven path's pool resolution). |
+| `exit-logic.js` | `decideExit` / `decideLadderedExit`: the pure exit brain. No I/O and no clock of its own, so it is fully unit-tested and replayable. |
+| `reconcile.js` | `reconcileVanishedBag` / `getWalletBaseBalance` makes the CHAIN the source of truth when a sell's confirmation was lost. |
+| `mayhem-gate.js` | The Mayhem exclusion gate (guardrail 8), reading `isMayhemMode` off the bonding curve through the rotating RPC chain. |
+| `oracle-gate.js` / `oracle-crossing.js` | Oracle conviction gate, and the `oracle_crossing` trigger that fires when a coin's conviction crosses upward. |
+| `llm-judge.js` / `judge-knowledge.js` | The `decision_mode='llm'` verdict path, and the tiered budget of what each arm's judge is allowed to see. |
+| `prelaunch-radar.js` + `radar-detect.js` / `radar-scorer.js` / `radar-watchlist.js` | Pre-launch creator-wallet radar: on-chain precursor detection, pure scoring, and the watchlist it works from. |
+| `alpha-hunt.js` | Pure scorer for the `alpha_hunt` strategy. |
+| `swarm.js` | Trading-swarm consensus + settlement loops. |
+| `market-maker.js` | Range-based market maker on pump.fun coins, executed through Jito. |
+| `launcher.js` / `auto-claimer.js` | Autonomous coin launcher, and the creator-fee auto-claimer for agent-launched coins. |
+| `auto-funder.js` | Buy-side auto-funding loop that refills armed agents from the launcher master wallet. |
+| `journal.js` | Trade journal, the "learn what works" surface behind the reasoning ledger. |
+| `heartbeat.js` / `error-tracker.js` / `alerts.js` | Liveness heartbeat, sliding-window error tracker, and ops alerting. |
+| `log.js` / `screen-push.js` | Structured logging, and the fire-and-forget push to the agent screen stream. |
+| `recompute-wallet-graph.js` | The Smart-Money Wallet Graph recompute job. |
 
 State lives in two tables (migrations `…20260615020000_agent_sniper.sql` +
 `…20260615030000_sniper_first_claim.sql`): `agent_sniper_strategies` (owner-armed
@@ -125,6 +140,36 @@ Enforced in `executeBuy`, short-circuiting before any transaction:
 > `node scripts/sniper-reconcile-wedged.mjs` (re-reads every real on-chain balance
 > and skips anything still holding tokens).
 
+## Exit reasons
+
+`exit-logic.js` decides *whether* to exit and *what fraction* to sell;
+`executeSell` writes the outcome to `agent_sniper_positions.exit_reason`. The
+full set the worker can produce:
+
+| Reason | Fired by | Meaning |
+|--------|----------|---------|
+| `stop_loss` | `decideExit` | Hard stop. Always a FULL exit, and it outranks every other reason. |
+| `trailing_stop` | `decideExit` | Gave back `trailing_stop_pct` from the position's peak. |
+| `take_profit` | `decideExit` | Reached `take_profit_pct`. |
+| `timeout` | `decideExit` | Held past `max_hold_seconds`. |
+| `signal_flip` | `decideExit` | Paid x402 sentiment turned confidently bearish on an UNDERWATER position. Opt-in via `SNIPER_EXIT_ON_BEARISH`. |
+| `take_initials` | `decideLadderedExit` | The ladder sold enough to recover the initial cost basis. Normally a PARTIAL sell that leaves a moon bag riding; it only books the position closed when the fraction rounds down to a full exit. |
+| `liquidity_decay` | `positions.js` | The market went dead: quoted value stopped moving for `SNIPER_LIQUIDITY_DECAY_S`. Exits and frees the concurrency slot. A position already on house money keeps its moon bag. |
+| `kill_switch` | `positions.js` | The agent's `kill_switch` column was set; open positions exit at market. |
+| `manual` | `/api/sniper/close` | Closed by the owner. |
+| `graduated` | exit path | Booked against the post-graduation AMM rather than the dead curve. |
+| `error` | `executeSell` | The bag is provably gone but its proceeds are unknowable (`error='reconcile_unresolved'`), so P&L is left NULL rather than invented. |
+
+> **These values are constrained in the database.** `agent_sniper_positions` has a
+> CHECK on `exit_reason`, so adding a reason in JavaScript without widening that
+> constraint produces a close that the database rejects *after* the sell has
+> already landed on-chain. `executeSell` treats any failure of that write as a
+> retryable sell and resets the row to `open`, so the position re-sells nothing,
+> re-fails, and wedges forever while holding a concurrency slot. This is not
+> hypothetical: `liquidity_decay` shipped that way and never once booked an exit.
+> `tests/sniper-exit-reason-constraint.test.js` now pins the two lists together;
+> a new reason must land in a migration in the same change.
+
 ## Decision modes and the experiment fleet
 
 Every strategy row carries a `decision_mode`:
@@ -199,6 +244,32 @@ scoreboard renders it as the "Judgment ledger" section on /sniper/experiments.
 | `SNIPER_CLAIM_POLL_MS` | | `30000` | First-claim trigger: fee-claim poll cadence. |
 | `SNIPER_CLAIM_LOOKBACK_S` | | `600` | First-claim trigger: window scanned each poll (must exceed the poll interval). |
 | `SNIPER_CLAIM_MAX_AGE_S` | | `300` | First-claim trigger: default freshness gate (per-strategy override available). |
+| `SNIPER_LIQUIDITY_DECAY_S` | | `300` | Exit a position whose quoted value has not moved for this long (the `liquidity_decay` exit). `0` disables. |
+| `SNIPER_EXIT_ON_BEARISH` | | `0` | Arm the `signal_flip` exit: read paid sentiment on an underwater position and cut it early. |
+| `SNIPER_EXIT_BEARISH_MIN_CONFIDENCE` | | `0.7` | Confidence floor a bearish verdict must clear before `signal_flip` fires. |
+| `SNIPER_MIN_TRADE_LAMPORTS` | | `10000` | Floor on any single trade; smaller sizes are skipped rather than broadcast as dust. |
+| `SNIPER_STRATEGY_REFRESH_MS` | | `15000` | How often the active-strategy cache is refreshed (floor 5000). |
+| `SNIPER_FEED_WATCHDOG_MS` | | `180000` | Reconnect the mint feed if it goes silent this long (floor 30000). |
+| `SNIPER_HEARTBEAT_MS` | | `30000` | Liveness heartbeat cadence (floor 10000). |
+| `SNIPER_HEARTBEAT_SELF_HEAL_MS` | | see `config.js` | How long a stalled subsystem may run before the heartbeat restarts it. |
+| `SNIPER_ERROR_ALERT_THRESHOLD` / `SNIPER_ERROR_ALERT_WINDOW_MS` | | see `config.js` | Sliding-window error count and window that trip an ops alert. |
+| `SNIPER_ANNOUNCE` | | `1` | Announce worker start/stop. `0` quiets a noisy dev run. |
+
+Subsystem toggles. Each turns a whole side-loop on or off; all default ON except
+where noted, so an unset variable runs the full worker:
+
+| Var | Default | Notes |
+|-----|---------|-------|
+| `SNIPER_INTEL` | `1` | Coin-intel enrichment. `0` for a trade-only worker. Tuned by `SNIPER_INTEL_LLM`, `SNIPER_INTEL_MAX_CONCURRENT`, `SNIPER_INTEL_WINDOW_MS`. |
+| `SNIPER_RADAR` | `1` | Pre-launch creator-wallet radar. `0` degrades to feed-only entries. Tuned by the `SNIPER_RADAR_*` family (`_POLL_MS`, `_MAX_AGE_MS`, `_MAX_WATCH`, `_MIN_FUNDING_LAMPORTS`, `_MIN_GRADUATED`, `_SM_MIN_SCORE`, `_WALLETS_PER_TICK`, `_WATCHLIST_REFRESH_MS`, `_DEPLOY_WATCH_TTL_MS`). |
+| `SNIPER_MARKET_MAKER` | `1` | Range-based market maker. Cadence via `SNIPER_MM_INTERVAL_MS`. |
+| `SNIPER_LAUNCHER` | on iff `AGENT_JWT` | Autonomous coin launcher. Poll cadence via `SNIPER_LAUNCHER_POLL_MS`. |
+| `SNIPER_AUTO_CLAIM` | on iff `AGENT_JWT` | Creator-fee auto-claimer. Poll cadence via `SNIPER_AUTO_CLAIM_POLL_MS`. |
+| `SNIPER_CROSSING_POLL_MS` / `_MAX_AGE_MIN` / `_SCORE_AGE_MIN` | see `config.js` | Oracle conviction-crossing trigger cadence and freshness bounds. |
+| `SNIPER_SENTIMENT_FRESH_MIN` / `SNIPER_RUGPULL_FRESH_MIN` | see `config.js` | How long a cached sentiment or rug-pull read stays usable. |
+
+`config.js` is the authoritative list: every value above is read there through
+`num()` / `bool()` with the default shown.
 
 ## Run locally
 
@@ -211,6 +282,55 @@ SNIPER_MODE=simulate node workers/agent-sniper/index.js
 Arm a test agent (owned by you, wallet funded with a little SOL) by inserting a
 strategy row, then watch it score → open → exit. Flip to `SNIPER_MODE=live`
 with tiny caps to land one real trade. `Ctrl-C` drains in-flight buys and exits.
+
+## Deployment
+
+The worker runs in production as **its own Cloud Run service, `agent-sniper`**
+(project `aerial-vehicle-466722-p5`, region `us-central1`), separate from
+`three-ws-api`. It has no HTTP port: it is a long-lived background process, so
+it runs with `--no-cpu-throttling` and `minScale=maxScale=1` (see the
+single-worker assumption above; a second instance would race the budget and
+concurrency caps).
+
+**It does not ride along with an API deploy.** A fix merged to `main` keeps
+running the old image until this service is explicitly rolled, which has more
+than once made a fixed bug look unfixed. Check what is actually running before
+concluding anything from behaviour:
+
+```bash
+gcloud run services describe agent-sniper --region us-central1 \
+  --project aerial-vehicle-466722-p5 \
+  --format="value(status.latestReadyRevisionName)"
+```
+
+Build (from the REPO ROOT, because the Dockerfile copies `api/`, `src/`, `packages/`,
+and `agent-payments-sdk/`), then roll the service onto the new image:
+
+```bash
+gcloud builds submit --config workers/agent-sniper/cloudbuild.yaml \
+  --region us-central1 --project aerial-vehicle-466722-p5
+
+gcloud run services update agent-sniper --region us-central1 \
+  --project aerial-vehicle-466722-p5 \
+  --image us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/workers/agent-sniper:latest
+```
+
+Both service accounts are pinned deliberately: builds run as `three-ws-build@`
+(the project's default compute SA was deleted, so an unpinned build fails before
+its first step) and the service runs as `agent-sniper-sa@`. That runtime account
+is **not** the API's `three-ws@`, so a permission the API already has is not
+automatically available here. It needs `roles/aiplatform.user` of its own for
+the Vertex rung of the `llmComplete` chain, without which the LLM judge falls
+through to rate-limited free tiers and stops issuing verdicts.
+
+Secrets come from Secret Manager (`sniper-database-url`, `sniper-jwt-secret`,
+`wallet-sniper-master-b64`, `OPENROUTER_API_KEY`); the rest are plain env on the
+service. Update single keys with `--update-env-vars`, never `--set-env-vars`,
+which replaces the entire set.
+
+Some state changes need no deploy at all. The exit-reason CHECK above lives in
+the database, so widening it with `npm run db:migrate` takes effect on the
+already-running worker immediately.
 
 ## Graduated-position exit
 

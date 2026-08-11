@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-11T01:58:57.266Z",
+	"generated_at": "2026-08-11T02:02:28.997Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "A Launch Copilot market-maker now tells you when its engine is not running",
+			"summary": "The Launch Copilot dashboard showed an armed market-maker the same way whether or not a worker was actually sweeping it, so a saved floor and budget could sit there looking like a maker at work while nothing executed. The policy view now reads the engine's own heartbeat and, when no engine has checked in, the dashboard says so plainly: your policy, floor and budgets are saved and untouched, but no action will execute until it is back.",
+			"link": "/launch",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-08-11",
 			"type": "update",
@@ -99,6 +109,16 @@
 			"title": "Sending your agent a task on its live screen actually works again",
 			"summary": "The agent screen lets you queue a task for your own agent and watch it browse the web to carry it out. None of that path worked. Queuing a task failed on the server because it looked your agent up in a table that does not exist, so the browser worker polled forever and never saw a task. The worker was broken twice over on its own side too: it read the agent's id from the wrong place, so every frame it published was rejected before it reached the stream, and it drove the browser through a method that moved in version 3 of the automation library, so typing, clicking, reading a page, and even taking a screenshot all failed. All three are fixed and the worker now runs end to end: it picks up your task, navigates, narrates each step, and streams real screenshots. The same bad lookup also blocked grinding a vanity wallet address for an agent, which is fixed as well.",
 			"link": "/agent-screen",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Sniper positions that exit on a dead market now close properly",
+			"summary": "When a sniped coin's market went quiet, the worker sold the bag on-chain but could not record the close, because the database did not recognise the reason it gave. The sale had already happened, so the position was reset and retried forever: it never booked its profit or loss and it kept holding one of the agent's position slots. Those exits now record correctly, the freed slots go back to the agent, and the trade card names the exit in plain language instead of leaving it blank.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
