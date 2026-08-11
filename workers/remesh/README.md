@@ -42,11 +42,32 @@ yields a static FBX.
 | `remesh_mode` | What it does |
 |---|---|
 | `triangle` (default) | Repair + quadric-error triangle decimation (open3d, trimesh fallback). Geometry only — drops materials. Honors `operation`. |
-| `quad` | Field-aligned quad-dominant topology via QuadriFlow, then xatlas UV re-unwrap + source-texture re-bake. Reports a real `quad_ratio`. |
+| `quad` | Field-aligned quad-dominant topology via QuadriFlow, then xatlas UV re-unwrap + source-texture re-bake. Reports a real `quad_ratio`. An open or non-manifold input is cleaned and rebuilt watertight first (see below); QuadriFlow refuses anything else. |
 | `lowpoly` | Silhouette-preserving QEM decimation + UV re-unwrap + texture re-bake. |
 
 `operation` (`convert` · `simplify` · `repair` · `full`) applies to `triangle`
 mode; `full` (default) runs repair then decimate.
+
+### What quad mode does to your mesh before QuadriFlow
+
+QuadriFlow needs a watertight manifold, and no real character export is one:
+they are assembled from overlapping parts, so seams share edges between more
+than two faces, and they are open at the wrists, neck, and hems. Fed such a mesh
+QuadriFlow aborts in its index-map solve with `wrong init`, whichever flow solver
+it is given. Quad mode therefore runs three preparation steps, each of which
+falls through rather than failing the job:
+
+1. `_repair_mesh` fills holes, drops degenerate faces, and merges vertices.
+2. `_make_manifold` removes duplicate and non-manifold geometry via open3d.
+3. `_watertight_obj` rebuilds an open mesh with
+   [Manifold](https://github.com/hjwdzh/Manifold) (MIT, same author as
+   QuadriFlow, which is what its README prescribes). A mesh that is already
+   watertight skips this, since the rebuild is an approximation.
+
+QuadriFlow then walks a solver ladder (`-mcf -sharp`, `-sharp`, bare) under one
+shared wall-clock budget. Falling back to triangle soup is never one of the
+rungs: a quad request that cannot be met is reported as failed, with the solver
+output in the message.
 
 ## API
 
@@ -122,6 +143,9 @@ Unauthenticated, so Cloud Run's startup probe can reach it.
 | `MAX_CONCURRENT` | no | `2` | In-flight jobs |
 | `QUADRIFLOW_BIN` | no | `quadriflow` | Path to the QuadriFlow executable. The image builds it and sets this to `/usr/local/bin/quadriflow` |
 | `BLENDER_TIMEOUT` | no | `300` | Seconds before a Blender FBX export is killed |
+| `MANIFOLD_BIN` | no | `manifold` | Path to the [Manifold](https://github.com/hjwdzh/Manifold) executable (built into the image). Quad mode rebuilds an open mesh watertight with it before QuadriFlow, which requires watertight manifold input |
+| `MANIFOLD_RESOLUTION` | no | `50000` | Octree resolution for that rebuild |
+| `MANIFOLD_TIMEOUT` | no | `120` | Seconds before the rebuild is abandoned and the raw mesh is used |
 
 ## Build and test locally
 

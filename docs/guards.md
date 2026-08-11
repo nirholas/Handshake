@@ -173,6 +173,48 @@ These are the rules the existing guards follow. A new guard that breaks one of t
 
 ---
 
+## Proving a guard still works
+
+`npm run audit:guards` proves a guard is *wired*. It cannot prove the guard still *catches* anything. A checker that has rotted into a no-op (a directory it no longer scans, a regex that stopped matching, an exclusion list that grew until it excluded everything) exits 0 forever, and exit 0 is indistinguishable from a clean tree. That is the worst failure mode a safety net has: loudest when it works, silent when it dies.
+
+So every registry entry carries a `proof`: the violation the guard must reject.
+
+```bash
+npm run prove:guards                 # prove all of them, write public/guard-proofs.json
+npm run prove:guards -- --only check-claude-md
+npm run prove:guards -- --stage gate
+npm run prove:guards -- --help
+```
+
+Each proof runs twice inside a throwaway git worktree overlaid with your working tree, and both halves are required:
+
+1. **Control.** The sandbox is arranged so the guard must pass. A clean exit pins a known baseline; without it, "the guard exited non-zero" could just mean the sandbox is broken.
+2. **Violation.** One surgical mutation is applied. The guard must now exit non-zero **and** print the expected fragment, because a guard that fails for the wrong reason is not a working guard.
+
+A mutation proof is a fixture, not code:
+
+```json
+"proof": {
+  "summary": "CLAUDE.md telling an agent to run an npm script that does not exist.",
+  "violation": {
+    "append": { "CLAUDE.md": "\n\nVerify with `npm run guard-proof-nonexistent`.\n" }
+  },
+  "expect": "guard-proof-nonexistent"
+}
+```
+
+`violation` takes any of `write`, `append`, `delete`, `link`, and `json` (each `json` op needs a `file`, a `pointer`, and exactly one of `insert` / `set` / `removeWhere`), and an optional `setup` block arranges the control side first. A guard that genuinely cannot be proven offline (it needs `gcloud`, a browser, live credentials, or the network) declares the honest gap instead of a fake green:
+
+```json
+"proof": { "kind": "live", "reason": "Needs Playwright plus a server serving dist/, because the thing under test is the browser's own policy evaluation." }
+```
+
+`audit-guards` rejects a guard with no proof block at all, so this cannot be skipped. Results land in [`public/guard-proofs.json`](https://github.com/nirholas/three.ws/blob/main/public/guard-proofs.json) with a verdict per guard and the commit they were measured at.
+
+The runner is deliberately safe to run while other agents are working in this same tree: each run gets its own sandbox worktree keyed to its process id, and reclaims sandboxes left behind by runs that were killed before their teardown.
+
+---
+
 ## Adding a guard
 
 The full walkthrough, with a complete worked example you can run, is in the tutorial: [Write a repository guard](/docs/tutorials/write-a-guard).
@@ -181,10 +223,12 @@ The short version:
 
 1. Write `scripts/check-<thing>.mjs`. Exit non-zero with an actionable message.
 2. Add an npm script for it in `package.json`.
-3. Add it to `data/guards.json` with the stage it runs in and the incident that motivated it.
+3. Add it to `data/guards.json` with the stage it runs in, the incident that motivated it, and a `proof` block (see [Proving a guard still works](#proving-a-guard-still-works)).
 4. Wire it into that stage's chain.
-5. Write `tests/check-<thing>.test.js` covering the pass case and the fail case.
-6. Run `npm run audit:guards`. It will tell you if step 3 and step 4 disagree.
+5. Add a row for it to the tables above, so the page that lists every guard still does.
+6. Write `tests/check-<thing>.test.js` covering the pass case and the fail case.
+7. Run `npm run audit:guards`. It will tell you if steps 3, 4, and 5 disagree.
+8. Run `npm run prove:guards -- --only <id>`. It will tell you whether the guard actually catches what you claimed.
 
 ---
 
