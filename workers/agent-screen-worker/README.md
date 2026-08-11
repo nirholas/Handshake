@@ -86,6 +86,7 @@ npm start
 | `CHROME_PATH` | no | auto-detected | Chrome/Chromium executable for local browser mode. Ignored in Browserbase mode |
 | `CHROME_HEADLESS` | no | `1` | Set to `0` to watch the browser in a visible window |
 | `CHROME_NO_SANDBOX` | no | auto | The Chrome sandbox stays on wherever it works, and is dropped automatically when running as uid 0 (the container default), where Chrome refuses to start with it. Set to `1` to force it off on a host whose kernel blocks user namespaces |
+| `CHROME_CONNECT_TIMEOUT_MS` | no | `60000` | How long to wait for Chrome to open its debug port at boot. Stagehand's own 15s default is too tight for a cold start on a loaded host, where overrunning it kills the worker with a bare `ECONNREFUSED` |
 | `CYCLE_MS` | no | `30000` | Idle loop cycle time in ms |
 | `SCREENSHOT_INTERVAL_MS` | no | `5000` | Minimum ms between full screenshots (text-only pushes fill the gap) |
 
