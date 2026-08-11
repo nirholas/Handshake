@@ -41,7 +41,7 @@ import { env } from './env.js';
 // the cycle resolves cleanly at call time. Capability denials ARE spend-policy
 // breaches and reuse SpendLimitError so every existing `instanceof SpendLimitError`
 // catch site (x402, trade, snipe, withdraw) handles them with no change.
-import { recordCustodyEvent, SpendLimitError } from './agent-trade-guards.js';
+import { getCounterpartySpendUsd, recordCustodyEvent, SpendLimitError } from './agent-trade-guards.js';
 
 // Back-compat / intent-revealing alias: a capability breach is a SpendLimitError.
 export { SpendLimitError as CapabilityError };
@@ -541,8 +541,11 @@ export async function revokeAllCapabilities(agentId, userId, reason = 'owner_rev
 
 /**
  * Atomically verify a capability covers a spend AND reserve a pending custody row
- * against its aggregate ceiling (and, when supplied, the wallet daily ceiling),
- * under per-capability + per-agent advisory locks. This is the capability analogue
+ * against its aggregate ceiling (and, when supplied, the wallet daily and
+ * per-counterparty ceilings), under per-capability + per-agent advisory locks. Every
+ * wallet-wide ceiling reserveSpendUsd meters has to be metered HERE too: this branch
+ * replaces that reserve, so a cap it forgot would be a cap a capability-authorized
+ * spend simply does not have. This is the capability analogue
  * of reserveSpendUsd: check + reserve are ONE statement, so concurrent uses can
  * never both pass on the same stale total and overspend a leash.
  *
@@ -557,7 +560,8 @@ export async function revokeAllCapabilities(agentId, userId, reason = 'owner_rev
  */
 export async function reserveCapabilitySpend({
 	capabilityId, agentId, userId, action, target = null, usdValue,
-	dailyUsd = null, network = 'mainnet', asset = null, destination = null, rowMeta = {}, now,
+	dailyUsd = null, counterpartyDailyUsd = null,
+	network = 'mainnet', asset = null, destination = null, rowMeta = {}, now,
 }) {
 	const cap = await getCapability(capabilityId);
 	if (!cap || String(cap.agent_id) !== String(agentId)) throw capabilityError('not_found', {});
@@ -571,10 +575,15 @@ export async function reserveCapabilitySpend({
 	const hasUsd = typeof usdValue === 'number' && Number.isFinite(usdValue) && usdValue >= 0;
 	const metaJson = JSON.stringify({ ...(rowMeta || {}), action, target: target ?? null });
 
-	// No priceable amount and no aggregate cap → nothing to meter; still write the
+	// The per-counterparty ceiling only has something to meter when the spend names
+	// a recipient; an unaddressed spend falls back to the wallet-wide ceilings.
+	const cpCap = destination ? counterpartyDailyUsd : null;
+	const cpDestination = cpCap != null ? destination : null;
+
+	// No priceable amount and no metered cap → nothing to meter; still write the
 	// pending row tagged with the capability so it shows on the leash + audit trail.
 	// (Per-use was already checked above; an unpriceable spend can't gate a USD cap.)
-	if (!hasUsd || (cap.aggregate_usd == null && dailyUsd == null)) {
+	if (!hasUsd || (cap.aggregate_usd == null && dailyUsd == null && cpCap == null)) {
 		const reservationId = await reserveUnmetered({ cap, agentId, userId, action, network, asset, destination, usd: hasUsd ? usdValue : null, metaJson });
 		if (reservationId == null) throw capabilityError('revoked', {}); // lost the revoke race
 		return { reservationId, capability: cap, spentBefore: null };
@@ -610,15 +619,24 @@ export async function reserveCapabilitySpend({
 			WHERE agent_id = ${agentId} AND network = ${network}
 			  AND event_type = 'spend' AND status IN ('ok', 'pending', 'confirmed')
 			  AND usd IS NOT NULL AND created_at > now() - interval '24 hours'
+		),
+		cp_spent AS (
+			SELECT COALESCE(SUM(usd), 0)::float8 AS s
+			FROM agent_custody_events
+			WHERE agent_id = ${agentId} AND network = ${network}
+			  AND event_type = 'spend' AND destination = ${cpDestination}
+			  AND status IN ('ok', 'pending', 'confirmed')
+			  AND usd IS NOT NULL AND created_at > now() - interval '24 hours'
 		)
 		INSERT INTO agent_custody_events
 			(agent_id, user_id, event_type, category, network, asset, usd, destination, status, capability_id, meta)
 		SELECT ${agentId}, ${userId ?? null}, 'spend', ${action}, ${network}, ${asset},
 		       ${usdValue}, ${destination ?? null}, 'pending', ${capabilityId}, ${metaJson}::jsonb
-		FROM cap_spent, day_spent, lock_cap, lock_agent
+		FROM cap_spent, day_spent, cp_spent, lock_cap, lock_agent
 		WHERE (SELECT count(*) FROM live) = 1
 		  AND (${aggCap}::float8 IS NULL OR cap_spent.s + ${usdValue}::float8 <= ${aggCap}::float8 + 1e-9)
 		  AND (${dCap}::float8 IS NULL OR day_spent.s + ${usdValue}::float8 <= ${dCap}::float8 + 1e-9)
+		  AND (${cpCap}::float8 IS NULL OR cp_spent.s + ${usdValue}::float8 <= ${cpCap}::float8 + 1e-9)
 		RETURNING id, (SELECT s FROM cap_spent) AS cap_before, (SELECT s FROM day_spent) AS day_before
 	`;
 
@@ -631,7 +649,18 @@ export async function reserveCapabilitySpend({
 		const spent = await capabilitySpentUsd(capabilityId);
 		const agg = checkAggregate(spent, usdValue, cap);
 		if (agg) throw capabilityError(agg.reason, agg.detail);
-		// Otherwise the wallet daily cap is what rejected — surface that uniformly.
+		// Otherwise a wallet-wide ceiling rejected it. Name the right one: telling an
+		// owner to wait out a daily window they never hit hides a concentrated payee.
+		if (cpCap != null) {
+			const cpSpent = await getCounterpartySpendUsd(agentId, destination, network);
+			if (cpSpent + usdValue > cpCap + 1e-9) {
+				throw new SpendLimitError(
+					'counterparty_daily_exceeded',
+					`This spend would bring today’s spend to this counterparty to $${(cpSpent + usdValue).toFixed(2)}, over the per-counterparty limit of $${cpCap.toFixed(2)}.`,
+					{ usd: usdValue, destination, counterparty_spent_usd: cpSpent, per_counterparty_daily_usd: cpCap },
+				);
+			}
+		}
 		throw new SpendLimitError('daily_exceeded', `This spend would exceed the wallet's daily limit of $${Number(dCap).toFixed(2)}.`, { spent_usd: 0, daily_usd: dCap });
 	}
 
