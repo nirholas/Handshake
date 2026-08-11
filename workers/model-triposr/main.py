@@ -6,7 +6,7 @@ Lightest of the three candidate models. Runs in 5-15 seconds. No PBR textures
 
 API contract (consumed by the Pipeline Controller):
   POST /infer   { images: [data-uri|url, ...], body_type?: str, job_id?: str }
-             →  202 { task_id, status: "queued" }
+             →  202 { task_id, status: "queued", model: "triposr" }
 
   GET  /tasks/:id → { task_id, status, result_gcs_url?, error? }
 
@@ -27,7 +27,6 @@ Environment variables:
 from __future__ import annotations
 
 import asyncio
-import base64
 import io
 import logging
 import os
@@ -42,6 +41,12 @@ from google.cloud import storage
 from PIL import Image
 from pydantic import BaseModel, Field
 
+from image_prep import (
+    decode_image,
+    flatten_to_rgb,
+    mesh_blob_name,
+    mesh_public_url,
+)
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes,
@@ -61,6 +66,7 @@ WEIGHTS_DIR = os.environ.get("WEIGHTS_DIR", "/weights/triposr")
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "2"))
 
 _model = None
+_matting_session = None
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
 _tasks: dict[str, dict] = {}
@@ -83,6 +89,25 @@ def _load_model():
     log.info("TripoSR model loaded")
 
 
+def _load_matting_session():
+    """Build the rembg session once, at startup, from the baked-in weights.
+
+    rembg.remove() with no session builds one per call, and an unprimed session
+    downloads its 176 MB u2net model on first use: measured at 19 s of the
+    first job on a fresh instance, and a hard dependency on a third-party
+    download inside a user request. The Dockerfile pre-fetches the model into
+    U2NET_HOME, so this only opens it.
+    """
+    global _matting_session
+    try:
+        from rembg import new_session
+
+        _matting_session = new_session("u2net")
+        log.info("Matting session ready (u2net)")
+    except Exception as exc:
+        log.warning("Matting session unavailable, frames will be used raw: %s", exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _bucket, _sem
@@ -90,6 +115,7 @@ async def lifespan(app: FastAPI):
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, _load_model)
+    await loop.run_in_executor(None, _load_matting_session)
     log.info("Service ready — max_concurrent=%d", MAX_CONCURRENT)
     yield
 
@@ -104,19 +130,17 @@ def _require_api_key(authorization: str) -> None:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 
+def _fetch_image_bytes(url: str) -> bytes:
+    # SSRF-hardened: https-only, private/loopback/link-local/metadata IPs
+    # rejected after DNS resolution, redirects re-validated per hop, bounded.
+    try:
+        return fetch_remote_bytes(url, timeout=30)
+    except UnsafeUrlError as exc:
+        raise ValueError(f"refused to fetch image source: {exc}") from exc
+
+
 def _decode_image(src: str) -> Image.Image:
-    if src.startswith("data:image"):
-        b64 = src.split(",", 1)[1]
-        return Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
-    if src.startswith("https://"):
-        # SSRF-hardened: https-only, private/loopback/link-local/metadata IPs
-        # rejected after DNS resolution, redirects re-validated per hop, bounded.
-        try:
-            data = fetch_remote_bytes(src, timeout=30)
-        except UnsafeUrlError as exc:
-            raise ValueError(f"refused to fetch image source: {exc}") from exc
-        return Image.open(io.BytesIO(data)).convert("RGB")
-    raise ValueError(f"unsupported image source: {src[:60]}")
+    return decode_image(src, fetch=_fetch_image_bytes)
 
 
 def _remove_background(img: Image.Image) -> Image.Image:
@@ -124,19 +148,15 @@ def _remove_background(img: Image.Image) -> Image.Image:
         import rembg
         buf = io.BytesIO()
         img.save(buf, format="PNG")
-        out = rembg.remove(buf.getvalue())
+        out = rembg.remove(buf.getvalue(), session=_matting_session)
         rgba = Image.open(io.BytesIO(out)).convert("RGBA")
-    except Exception:
-        rgba = img.convert("RGBA")
-    # TripoSR's tokenizer normalizes with a 3-channel mean/std (see
-    # tsr/models/tokenizers/image.py) and errors on a 4-channel RGBA tensor
-    # ("size of tensor a (4) must match ... b (3)"). The upstream TripoSR demo
-    # (run.py) matting step fills the removed background with mid-gray (127)
-    # before flattening to RGB — do the same instead of shipping RGBA straight
-    # into the model.
-    background = Image.new("RGB", rgba.size, (127, 127, 127))
-    background.paste(rgba, mask=rgba.split()[3])
-    return background
+    except Exception as exc:
+        # Matting is an enhancement, not a hard requirement: TripoSR still
+        # reconstructs from the raw frame, just with the background baked in.
+        # Log it so a silently degraded lane is visible in the logs.
+        log.warning("background removal failed, using the raw frame: %s", exc)
+        rgba = img
+    return flatten_to_rgb(rgba)
 
 
 async def _run_inference(task_id: str, images: list[str], body_type: str) -> None:
@@ -162,13 +182,13 @@ async def _run_inference(task_id: str, images: list[str], body_type: str) -> Non
 
             glb_bytes = await loop.run_in_executor(None, _generate)
 
-            blob_name = f"raw-meshes/triposr/{task_id}.glb"
+            blob_name = mesh_blob_name(task_id)
             blob = _bucket.blob(blob_name)
             await loop.run_in_executor(
                 None,
                 lambda: blob.upload_from_string(glb_bytes, content_type="model/gltf-binary"),
             )
-            gcs_url = f"https://storage.googleapis.com/{GCS_BUCKET}/{blob_name}"
+            gcs_url = mesh_public_url(GCS_BUCKET, blob_name)
 
             elapsed = time.time() - t0
             _tasks[task_id].update({
@@ -202,7 +222,7 @@ async def infer(
     task_id = str(uuid.uuid4())
     _tasks[task_id] = {"task_id": task_id, "status": "queued", "model": "triposr"}
     background_tasks.add_task(_run_inference, task_id, body.images, body.body_type)
-    return {"task_id": task_id, "status": "queued"}
+    return {"task_id": task_id, "status": "queued", "model": "triposr"}
 
 
 @app.get("/tasks/{task_id}")
