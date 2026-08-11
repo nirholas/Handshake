@@ -159,6 +159,48 @@ Requires auth. Owner only. Soft-deletes the agent on the platform. Does not affe
 
 ---
 
+### Signed manifest
+
+```
+GET  /api/agents/:id/manifest/signed
+GET  /api/agents/:id/manifest/history
+POST /api/agents/:id/manifest/publish
+GET  /api/manifest-verify?cid=<cid>
+```
+
+The agent's full configuration, system prompt included, canonicalized, ed25519-signed by the platform attester identity, and pinned to IPFS. Published automatically on every persona save. The first three reads are public and CORS-open; `publish` is owner-only.
+
+**`GET /manifest/signed` response**
+
+```json
+{
+	"agent_id": "b2b1...",
+	"cid": "bafy...",
+	"pinned": true,
+	"digest": "3f9c...",
+	"issuer": "6Yb...",
+	"signed_at": "2026-08-11T12:00:00.000Z",
+	"verified": true,
+	"gatewayUrls": ["https://ipfs.io/ipfs/bafy..."],
+	"verifyUrl": "/api/manifest-verify?cid=bafy...",
+	"envelope": { "spec": "threews.agent.manifest.v1", "manifest": {} }
+}
+```
+
+Returns `404 not_published` when the agent has never published a manifest.
+
+**`GET /api/manifest-verify`** fetches the envelope from public IPFS gateways (not from our database), verifies the signature, and diffs the pinned manifest against the agent's live configuration. Accepts `cid`, `digest`, or `agent`. `verified` is true only when the signature checks out **and** the issuer is the platform identity; `signature_valid` and `issuer_trusted` are reported separately so an envelope signed by an unknown key can never read as ours. `drift.changed` names every field that moved since the pin.
+
+Verify it yourself, with no account:
+
+```bash
+node scripts/verify-agent-manifest.mjs --cid bafy...
+```
+
+Full reference: [Agent Manifest](./agent-manifest.md#signed-manifests-v03). Wire format: [specs/AGENT_MANIFEST.md](../specs/AGENT_MANIFEST.md#signed-envelope-v03).
+
+---
+
 ### Link wallet to agent
 
 ```
