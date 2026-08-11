@@ -26,7 +26,7 @@ Reconstruction exposes real, clamped sampling knobs:
 | `voxel_size` | 0-10 | 0 | Optional voxel downsampling. |
 | `mask_sky` | bool | true | Drop sky pixels so open scenes don't fill with noise. |
 
-One job covers 512 frames, which is 64 seconds at the default `fps: 8`. Fusion holds every pixel of every frame in memory at once, so the cap is host RAM, not model capability: film longer and lower `fps` rather than expecting a longer clip to be reconstructed whole. A longer input is truncated and the worker reports `frames_truncated`.
+One job covers 512 frames, which is 64 seconds at the default `fps: 8`. Fusion holds every pixel of every frame in memory at once, so the cap is host RAM, not model capability: film longer and lower `fps` rather than expecting a longer clip to be reconstructed whole. A longer input is reconstructed up to the cap, and the poll response carries `frames_truncated: true` so a partial scene never reads as the whole clip.
 
 The result is a binary `.ply` the page renders client-side with a WebGL point-cloud viewer (`src/scene-capture.js` and `pointcloud-viewer.js`). Every state is designed: idle, submitting, processing (with an elapsed timer and stage hints), live, and error. There is no mock path: when the worker env (`GCP_VIDEO2SCENE_URL` and `GCP_RECONSTRUCTION_KEY`) is not configured, the endpoint returns a clean 503 and the page still proves the renderer end-to-end with a built-in sample room cloud. You can also load any `.ply` you already have by URL or file, so the viewer is useful even where reconstruction is offline.
 
