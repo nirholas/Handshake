@@ -4,7 +4,7 @@
 		"https://three.ws/specs/3d-agent-card-v1"
 	],
 	"name": "three.ws",
-	"description": "three.ws — the 3D agent economy. Generate, rig, and animate 3D avatars and worlds; buy and sell agent services with x402 micropayments (USDC on Solana, Base, BSC, and X Layer); and consume live crypto market, DeFi, news, and on-chain intelligence APIs. Machine-readable paid-service catalog at https://three.ws/.well-known/x402.json.",
+	"description": "three.ws: the 3D agent economy. Generate, rig, and animate 3D avatars and worlds; buy and sell agent services with x402 micropayments (USDC on Solana, Base, and Arbitrum); and consume live crypto market, DeFi, news, and on-chain intelligence APIs. Machine-readable paid-service catalog at https://three.ws/.well-known/x402.json.",
 	"image": "https://three.ws/og-image.png",
 	"active": true,
 	"agentCard": "https://three.ws/.well-known/3d-agent-card.json",

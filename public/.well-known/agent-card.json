@@ -1,6 +1,6 @@
 {
 	"name": "three.ws",
-	"description": "three.ws — the 3D agent economy. Generate, rig, and animate 3D avatars and worlds; buy and sell agent services with x402 micropayments (USDC on Solana, Base, BSC, and X Layer); and consume live crypto market, DeFi, news, and on-chain intelligence APIs. Machine-readable paid-service catalog at https://three.ws/.well-known/x402.json.",
+	"description": "three.ws: the 3D agent economy. Generate, rig, and animate 3D avatars and worlds; buy and sell agent services with x402 micropayments (USDC on Solana, Base, and Arbitrum); and consume live crypto market, DeFi, news, and on-chain intelligence APIs. Machine-readable paid-service catalog at https://three.ws/.well-known/x402.json.",
 	"url": "https://three.ws/",
 	"provider": {
 		"organization": "three.ws",
@@ -178,7 +178,7 @@
 		{
 			"id": "x402-service-catalog",
 			"name": "Paid x402 Service Catalog",
-			"description": "75 pay-per-call services settled via x402 (USDC on Solana and Base): market-data (27), 3d (18), agent-infra (17), launch (5), trust (4), payments (4). Every service is listed with price, input schema, and output example in the machine-readable discovery document — fetch it, pick a service, and pay the 402 challenge.",
+			"description": "75 pay-per-call services settled via x402 (USDC on Solana, Base, and Arbitrum): market-data (27), 3d (18), agent-infra (17), launch (5), trust (4), payments (4). Every service is listed with price, input schema, and output example in the machine-readable discovery document: fetch it, pick a service, and pay the 402 challenge.",
 			"tags": [
 				"x402",
 				"paid",
