@@ -301,7 +301,11 @@ async function pollJob(jobId) {
 
 	if (data.status === 'queued' || data.status === 'running') {
 		const pct = data.progress != null ? ` ${Math.round(data.progress * 100)}%` : '';
-		setProgressLabel(`Rendering frames…${pct}`);
+		// The worker renders one 3.72 s clip per segment and reports how many it
+		// planned for this audio, so name them instead of showing a bare percent
+		// on a job that can legitimately run for minutes.
+		const clips = Number(data.segments) > 1 ? `${data.segments} clips` : 'frames';
+		setProgressLabel(`Rendering ${clips}…${pct}`);
 	} else if (data.status === 'done' && data.video_url) {
 		clearInterval(pollTimer);
 		pollTimer = null;
