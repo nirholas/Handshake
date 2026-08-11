@@ -547,11 +547,19 @@ if (AS_JSON) {
 		for (const d of drift.duplicates || []) console.log(`  duplicate job id  ${d.id}`);
 	}
 	if (WITH_DRIFT && drift?.checkedLive) {
-		console.log('\nCloud Scheduler drift:');
-		for (const m of drift.missing || []) console.log(`  MISSING     ${m.path}`);
-		for (const m of drift.mismatched || []) console.log(`  MISMATCH    ${m.path}  declared "${m.declared}" live "${m.live}"`);
-		for (const p of drift.paused || []) console.log(`  NOT ENABLED ${p.path}  ${p.state}`);
-		for (const o of drift.orphaned || []) console.log(`  ORPHANED    ${o.id}`);
+		// A bare "Cloud Scheduler drift:" header over nothing reads as truncated
+		// output, which is the one thing a clean comparison must never look like.
+		const driftRows = [
+			...(drift.missing || []).map((m) => `  MISSING     ${m.path}`),
+			...(drift.mismatched || []).map((m) => `  MISMATCH    ${m.path}  declared "${m.declared}" live "${m.live}"`),
+			...(drift.paused || []).map((p) => `  NOT ENABLED ${p.path}  ${p.state}`),
+			...(drift.orphaned || []).map((o) => `  ORPHANED    ${o.id}`),
+		];
+		console.log(
+			driftRows.length
+				? `\nCloud Scheduler drift:\n${driftRows.join('\n')}`
+				: '\nCloud Scheduler drift: none (every declared cron exists, is enabled, and matches its live schedule).',
+		);
 	} else if (WITH_DRIFT && drift?.liveError) {
 		console.log(`\nCloud Scheduler not readable: ${drift.liveError}`);
 	}

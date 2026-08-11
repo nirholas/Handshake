@@ -164,6 +164,34 @@ for (const rel of onDisk) {
 	);
 }
 
+// docs/guards.md is the prose companion to the registry, and its tables are
+// hand-maintained: nothing generates them. That is fine as long as something
+// notices when a guard lands in the registry and never reaches the page. On
+// 2026-08-11 five had: sync-studio-openapi, audit-inline-handlers, audit-csp,
+// check-event-window, and audit-play-failure-modes ran on real stages while the
+// doc that claims to list every guard did not mention them at all. A reader
+// auditing coverage from the doc would have concluded those areas were
+// unguarded. Matching on the npm command (which the tables print in a code
+// span) rather than on the title keeps this immune to prose edits.
+{
+	const docPath = 'docs/guards.md';
+	if (!existsSync(path.join(root, docPath))) {
+		note(`${docPath} is missing, but it is the page /docs/guards renders and this registry documents`);
+	} else {
+		const doc = read(docPath);
+		const documented = new Set([...doc.matchAll(/`npm run ([a-z0-9:-]+)`/g)].map((m) => m[1]));
+		for (const g of registry.guards || []) {
+			const npmNames = [g.npm, ...(g.npmAliases || [])].filter(Boolean);
+			if (!npmNames.length) continue;
+			if (npmNames.some((n) => documented.has(n))) continue;
+			note(
+				`guard \`${g.id}\` is in the registry but no table in ${docPath} names \`npm run ${npmNames[0]}\`. ` +
+					`Add a row for it, so the page that claims to list every guard actually does.`,
+			);
+		}
+	}
+}
+
 // The published copy the /guards page fetches. data/ is never served, so the
 // page reads public/guards.json; if the two drift, the page and docs/guards.md
 // show different answers and neither looks wrong on its own.

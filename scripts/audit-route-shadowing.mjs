@@ -10,9 +10,9 @@
 // (scripts/lib/vercel-routes.mjs), which mirrors server/index.mjs, so there is
 // no second copy of the routing rules to drift.
 //
-// A handler is REACHABLE if at least one concrete request path resolves to it.
-// Two families of path can do that, and both are modeled here, because checking
-// only the first produces mostly false positives:
+// A handler is REACHABLE if at least one concrete request can run its code.
+// Three families do that, and all three are modeled here, because checking only
+// the first produces mostly false positives:
 //
 //   1. Its own filesystem path: /api/pump/balances for api/pump/balances.js,
 //      with [param] segments filled in by several probe values (a rule regex may
@@ -21,12 +21,26 @@
 //      lands on api/agents/[id]/memory-seed-x.js, whose own filesystem path is
 //      swallowed by the /api/agents catch-all. The handler is alive; only its
 //      literal path is not.
+//   3. IN-HANDLER DISPATCH: the handler that claims the swallowed path imports
+//      the module and hands the request to it. api/agents/[id].js does exactly
+//      that for its ~18 sub-resource modules (`await import('./sns.js')`), and
+//      api/auth/[action].js for api/auth/captcha.js. The request arrives, just
+//      not at the sibling's own URL.
 //
-// For (2) a concrete sample path is synthesised from each rule's `src` regex and
-// then re-tested against the same regex AND pushed through the real matcher, so
-// a rule only counts as delivering traffic when a request provably reaches its
-// own dest. A rule that cannot deliver to its own dest is itself reported as a
-// shadowed rule, which is how the /api/agents catch-all incident presents.
+// The line family 3 draws is the load-bearing one. A dispatcher that IMPORTS the
+// sibling runs the sibling's code; a dispatcher that reimplements the action
+// inline (`case 'channel-feed':`) does NOT, and the sibling is then a stale
+// duplicate of live logic — a real defect, still reported. So reachability
+// follows the import graph under api/ (transitively, since a dispatched module
+// may itself dispatch further), seeded from the handlers families 1 and 2 reach.
+//
+// For (2) a concrete sample path is synthesised from each rule's `src` regex,
+// plus a request that satisfies the rule's `has` conditions (a bot user-agent, a
+// query param), and is then re-tested against the same regex AND pushed through
+// the real matcher, so a rule only counts as delivering traffic when a request
+// provably reaches its own dest. A rule that cannot deliver to its own dest is
+// itself reported as a shadowed rule, which is how the /api/agents catch-all
+// incident presents.
 //
 // Usage:
 //   node scripts/audit-route-shadowing.mjs            # human-readable report
@@ -36,7 +50,7 @@
 // Exit code 1 when a handler has no reachable path, or a rule cannot reach its
 // own destination.
 
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isRoutable, loadRouteTable, resolveApiPath, resolveRequest } from './lib/vercel-routes.mjs';
@@ -98,6 +112,41 @@ function sampleCharClass(pattern) {
 	return null;
 }
 
+// `{8}` / `{8,12}` / `{2,}`: no probe is the right length, so repeat one
+// accepted character the minimum number of times.
+function repeatCount(quant) {
+	const m = /^\{(\d+)(?:,(\d*))?\}$/.exec(quant);
+	return m ? Number(m[1]) : null;
+}
+
+function sampleRepeated(pattern, count) {
+	for (const ch of ALPHABET) if (accepts(pattern, ch)) return ch.repeat(count);
+	return null;
+}
+
+// Read the quantifier that follows a group or class: `?`, `*`, `+`, or `{n,m}`.
+function readQuantifier(src, from) {
+	let i = from;
+	let quant = '';
+	while (i < src.length) {
+		if ('?*+'.includes(src[i])) {
+			quant += src[i++];
+			continue;
+		}
+		if (src[i] === '{') {
+			const close = src.indexOf('}', i);
+			if (close === -1) break;
+			const candidate = src.slice(i, close + 1);
+			if (!/^\{\d+(?:,\d*)?\}$/.test(candidate)) break;
+			quant += candidate;
+			i = close + 1;
+			continue;
+		}
+		break;
+	}
+	return { quant, next: i };
+}
+
 // A group is satisfied by the first probe its own pattern accepts; failing that
 // (nested groups, alternations) its first alternative is sampled recursively.
 function sampleGroup(inner, depth) {
@@ -135,15 +184,14 @@ function sampleFromSrc(src, depth = 0) {
 			const end = closingParen(src, i);
 			if (end === -1) return null;
 			const inner = src.slice(i + 1, end);
-			let j = end + 1;
-			let quant = '';
-			while (j < src.length && '?*+'.includes(src[j])) quant += src[j++];
-			i = j;
+			const grouped = readQuantifier(src, end + 1);
+			i = grouped.next;
 			// An optional or starred group contributes nothing to the shortest path.
-			if (quant.startsWith('?') || quant.startsWith('*')) continue;
-			const piece = sampleGroup(inner, depth);
-			if (piece === null) return null;
-			out += piece;
+			if (grouped.quant.startsWith('?') || grouped.quant.startsWith('*')) continue;
+			const sampled = sampleGroup(inner, depth);
+			if (sampled === null) return null;
+			const groupReps = repeatCount(grouped.quant);
+			out += groupReps === null ? sampled : sampled.repeat(groupReps);
 			continue;
 		}
 		if (ch === '[') {
@@ -151,12 +199,13 @@ function sampleFromSrc(src, depth = 0) {
 			while (j < src.length && src[j] !== ']') j += src[j] === '\\' ? 2 : 1;
 			if (j >= src.length) return null;
 			const cls = src.slice(i, j + 1);
-			let k = j + 1;
-			let quant = '';
-			while (k < src.length && '?*+'.includes(src[k])) quant += src[k++];
-			i = k;
+			const classed = readQuantifier(src, j + 1);
+			const quant = classed.quant;
+			i = classed.next;
 			if (quant.startsWith('?') || quant.startsWith('*')) continue;
-			const piece = sampleCharClass(`${cls}${quant || ''}`);
+			const reps = repeatCount(quant);
+			const piece =
+				reps === null ? sampleCharClass(`${cls}${quant || ''}`) : sampleRepeated(cls, reps);
 			if (piece === null) return null;
 			out += piece;
 			continue;
@@ -195,6 +244,48 @@ function sampleForRoute(route) {
 	const sample = sampleFromSrc(route.src);
 	if (sample === null || !sample.startsWith('/')) return null;
 	return route.re.test(sample) ? sample : null;
+}
+
+// ---------------------------------------------------------------------------
+// `has` conditions: probe the request the rule was written for.
+//
+// A rule can be gated on a header, query param, cookie or host (the OG rules are
+// gated on a crawler user-agent). A plain GET satisfies none of them, so probing
+// one with a default request proves nothing except that the gate works. Build a
+// request that DOES satisfy the gate, and only then ask where it lands.
+// ---------------------------------------------------------------------------
+
+// `has[].value` is matched unanchored and may carry a Perl-style `(?i)` prefix.
+function sampleHasValue(value) {
+	if (value === undefined) return 'probe';
+	const caseInsensitive = value.startsWith('(?i)');
+	const pattern = caseInsensitive ? value.slice(4) : value;
+	const sample = sampleFromSrc(pattern);
+	if (sample === null) return null;
+	try {
+		return new RegExp(pattern, caseInsensitive ? 'i' : undefined).test(sample) ? sample : null;
+	} catch {
+		return null;
+	}
+}
+
+/** @returns {{headers:object, search:string}|null} null when a gate cannot be met. */
+function probeForHas(route) {
+	const headers = { host: 'three.ws' };
+	const params = new URLSearchParams();
+	const cookies = [];
+	for (const cond of route.has || []) {
+		const value = sampleHasValue(cond.value);
+		if (value === null) return null;
+		if (cond.type === 'header') headers[cond.key.toLowerCase()] = value;
+		else if (cond.type === 'query') params.set(cond.key, value);
+		else if (cond.type === 'cookie') cookies.push(`${cond.key}=${encodeURIComponent(value)}`);
+		else if (cond.type === 'host') headers.host = value;
+		else return null;
+	}
+	if (cookies.length) headers.cookie = cookies.join('; ');
+	const search = params.toString();
+	return { headers, search: search ? `?${search}` : '' };
 }
 
 // ---------------------------------------------------------------------------
@@ -270,11 +361,16 @@ for (const route of table.phase1Routes) {
 	const touchesApi = route.src.startsWith('/api/') || (route.dest || '').startsWith('/api/');
 	if (!touchesApi) continue;
 	const sample = sampleForRoute(route);
-	if (!sample) {
+	const probe = probeForHas(route);
+	if (!sample || !probe) {
 		unsampledRules.push({ index: route.index, src: route.src, dest: route.dest ?? null });
 		continue;
 	}
-	const result = resolveRequest(table, sample, { apiRoot: API_ROOT });
+	const result = resolveRequest(table, sample, {
+		apiRoot: API_ROOT,
+		headers: probe.headers,
+		search: probe.search,
+	});
 	const wanted = (route.dest || '').startsWith('/api/')
 		? resolveApiPath(API_ROOT, route.dest.split('?')[0])
 		: null;
@@ -301,8 +397,7 @@ for (const route of table.phase1Routes) {
 // ---------------------------------------------------------------------------
 
 const handlers = collectHandlers(API_ROOT, [], []);
-const unreachable = [];
-const ruleOnly = [];
+const paths = new Map(); // handler file -> { direct[], diverted[] }
 
 for (const h of handlers) {
 	const direct = [];
@@ -312,10 +407,75 @@ for (const h of handlers) {
 		if (result.outcome === 'handler' && result.file === h.file) direct.push(p);
 		else diverted.push({ path: p, to: describe(result), rule: result.rule ?? null });
 	}
+	paths.set(h.file, { handler: h, direct, diverted });
+}
+
+// ---------------------------------------------------------------------------
+// Pass 3: the in-handler dispatch graph (reachability family 3).
+//
+// Seeded with every file a request already reaches, then walked over the import
+// edges between files under api/ — including through api/_lib, since a live
+// handler routinely reaches a sibling endpoint's module by way of a shared
+// library. Following the edges transitively is what makes the walk correct for
+// api/agents/patronage.js, which api/agents/[id].js reaches only through
+// api/agents/solana-wallet.js.
+//
+// Import edges, not name mentions: a dispatcher that reimplements the action
+// inline never imports the sibling, so a stale duplicate of live logic keeps
+// failing this audit instead of hiding behind the dispatcher that replaced it.
+// ---------------------------------------------------------------------------
+
+const IMPORT_RE = /\bfrom\s*['"]([^'"]+)['"]|\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+
+function apiImportsOf(file) {
+	let src;
+	try {
+		src = readFileSync(file, 'utf8');
+	} catch {
+		return [];
+	}
+	const out = [];
+	for (const m of src.matchAll(IMPORT_RE)) {
+		const spec = m[1] ?? m[2];
+		if (!spec.startsWith('.')) continue;
+		const resolved = path.resolve(path.dirname(file), spec);
+		if (!resolved.startsWith(API_ROOT + path.sep)) continue;
+		const target = resolved.endsWith('.js') ? resolved : `${resolved}.js`;
+		if (existsSync(target)) out.push(target);
+	}
+	return out;
+}
+
+const dispatchedFrom = new Map(); // handler file -> the importing file that reaches it
+const queue = [];
+const walked = new Set();
+for (const [file, info] of paths) {
+	if (info.direct.length || (reachableVia.get(file) || []).length) {
+		walked.add(file);
+		queue.push(file);
+	}
+}
+while (queue.length) {
+	const file = queue.shift();
+	for (const target of apiImportsOf(file)) {
+		if (walked.has(target)) continue;
+		walked.add(target);
+		if (paths.has(target)) dispatchedFrom.set(target, file);
+		queue.push(target);
+	}
+}
+
+const unreachable = [];
+const ruleOnly = [];
+const dispatched = [];
+
+for (const [file, info] of paths) {
+	const { handler: h, direct, diverted } = info;
 	if (direct.length === canonicalPaths(h.segments).length) continue;
-	const viaRules = reachableVia.get(h.file) || [];
+	const viaRules = reachableVia.get(file) || [];
+	const dispatcher = dispatchedFrom.get(file);
 	const record = {
-		handler: rel(h.file),
+		handler: rel(file),
 		canonical: canonicalPaths(h.segments)[0],
 		directPaths: direct,
 		divertedTo: diverted.map((d) => ({ path: d.path, to: d.to })),
@@ -323,9 +483,12 @@ for (const h of handlers) {
 			? { index: diverted[0].rule.index, src: diverted[0].rule.src, dest: diverted[0].rule.dest ?? null }
 			: null,
 		reachableVia: viaRules.map((v) => v.path),
+		dispatchedFrom: dispatcher ? rel(dispatcher) : null,
 	};
-	if (direct.length === 0 && viaRules.length === 0) unreachable.push(record);
-	else if (direct.length === 0) ruleOnly.push(record);
+	if (direct.length) continue;
+	if (viaRules.length) ruleOnly.push(record);
+	else if (dispatcher) dispatched.push(record);
+	else unreachable.push(record);
 }
 
 // ---------------------------------------------------------------------------
@@ -338,7 +501,7 @@ const showAll = process.argv.includes('--all');
 if (asJson) {
 	console.log(
 		JSON.stringify(
-			{ scanned: handlers.length, unreachable, ruleOnly, deadRules, unsampledRules },
+			{ scanned: handlers.length, unreachable, ruleOnly, dispatched, deadRules, unsampledRules },
 			null,
 			2,
 		),
@@ -370,6 +533,15 @@ if (asJson) {
 	if (showAll) {
 		for (const r of ruleOnly) console.log(`  ${r.handler}  <-  ${r.reachableVia.join(', ')}`);
 	} else if (ruleOnly.length) {
+		console.log('  (re-run with --all to list them)');
+	}
+
+	console.log(
+		`\nReachable only through in-handler dispatch (a live handler imports it): ${dispatched.length}`,
+	);
+	if (showAll) {
+		for (const r of dispatched) console.log(`  ${r.handler}  <-  ${r.dispatchedFrom}`);
+	} else if (dispatched.length) {
 		console.log('  (re-run with --all to list them)');
 	}
 

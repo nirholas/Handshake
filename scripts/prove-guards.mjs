@@ -36,17 +36,11 @@
 // are reported as such rather than quietly counted as passing: an honest gap
 // beats a fake green.
 //
-// Usage:
-//   node scripts/prove-guards.mjs                 prove everything, write results
-//   node scripts/prove-guards.mjs --only <id,id>  prove a subset
-//   node scripts/prove-guards.mjs --stage gate    prove one stage
-//   node scripts/prove-guards.mjs --no-write      do not touch public/guard-proofs.json
-//   node scripts/prove-guards.mjs --keep          leave the sandbox for inspection
-//
-// Exit 1 if any proof fails. Wired as `npm run prove:guards`.
+// See USAGE below for the flags. Exit 1 if any proof fails. Wired as
+// `npm run prove:guards`.
 
 import { execFileSync, spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -55,17 +49,47 @@ import { FAILING_VERDICTS, VERDICTS, normalizeProof, proveGuard } from './lib/gu
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
 
+const USAGE = `prove-guards: run every guard in data/guards.json against a declared violation.
+
+Usage:
+  node scripts/prove-guards.mjs                 prove everything, write results
+  node scripts/prove-guards.mjs --only <id,id>  prove a subset
+  node scripts/prove-guards.mjs --stage gate    prove one stage
+  node scripts/prove-guards.mjs --no-write      do not touch public/guard-proofs.json
+  node scripts/prove-guards.mjs --keep          leave the sandbox for inspection
+  node scripts/prove-guards.mjs --sandbox <dir> use an explicit sandbox path
+  node scripts/prove-guards.mjs --help          print this and exit
+
+Each run builds a throwaway git worktree, runs every guard twice (clean, then
+mutated), and tears the worktree down. It never writes to the repository except
+public/guard-proofs.json.`;
+
 const flag = (name) => argv.includes(`--${name}`);
 function value(name) {
 	const i = argv.indexOf(`--${name}`);
 	return i === -1 ? null : argv[i + 1];
 }
 
+// Before anything else: an unrecognized flag must not silently become a full
+// destructive run. `--help` did exactly that, and because the sandbox path was
+// shared it wrecked a real proof run in progress in another shell.
+if (flag('help') || argv.includes('-h')) {
+	console.log(USAGE);
+	process.exit(0);
+}
+
 const only = (value('only') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
 const stageFilter = value('stage');
 const write = !flag('no-write');
 const keep = flag('keep');
-const sandboxDir = value('sandbox') ?? path.resolve(root, '..', '.guard-proof-wt');
+
+// The sandbox path is per-process by default. Concurrent agents share this
+// worktree (see CLAUDE.md), so a fixed path meant two simultaneous runs used
+// the SAME throwaway worktree: the second run's `git worktree remove` deleted
+// the first run's checkout mid-proof, and every remaining guard reported
+// "wrong reason" with `Cannot find module` as its evidence. That reads as 40
+// broken guards when nothing was broken but the harness.
+const sandboxDir = value('sandbox') ?? path.resolve(root, '..', `.guard-proof-wt-${process.pid}`);
 
 const registry = JSON.parse(readFileSync(path.join(root, 'data/guards.json'), 'utf8'));
 const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
@@ -101,7 +125,46 @@ if (!selected.length) {
  * would prove the last commit, which is precisely the version you are not
  * asking about.
  */
+/**
+ * Remove sandboxes left behind by runs that died before their teardown.
+ *
+ * The teardown lives in a `finally`, which a SIGKILL or an OOM never reaches,
+ * so a crashed run leaves both a directory and a registered git worktree. They
+ * accumulate on disk exactly like the deploy worktrees `npm run clean:worktrees`
+ * exists to reclaim. A sandbox is only reclaimed when its owning process is
+ * gone, so a concurrent run in another shell is never touched.
+ */
+function reapAbandonedSandboxes() {
+	const parent = path.dirname(sandboxDir);
+	let entries;
+	try {
+		entries = readdirSync(parent);
+	} catch {
+		return;
+	}
+	for (const name of entries) {
+		const match = /^\.guard-proof-wt-(\d+)$/.exec(name);
+		if (!match) continue;
+		const pid = Number(match[1]);
+		if (pid === process.pid) continue;
+		try {
+			process.kill(pid, 0);
+			continue;
+		} catch (err) {
+			// EPERM means the pid exists but belongs to another user, so it is
+			// still live. Only ESRCH proves the owner is gone.
+			if (err.code !== 'ESRCH') continue;
+		}
+		const stale = path.join(parent, name);
+		spawnSync('git', ['worktree', 'remove', '--force', stale], { cwd: root });
+		rmSync(stale, { recursive: true, force: true });
+		console.log(`[prove-guards] reclaimed abandoned sandbox ${stale} (owner pid ${pid} is gone)`);
+	}
+	spawnSync('git', ['worktree', 'prune'], { cwd: root });
+}
+
 function buildSandbox() {
+	reapAbandonedSandboxes();
 	if (existsSync(sandboxDir)) {
 		spawnSync('git', ['worktree', 'remove', '--force', sandboxDir], { cwd: root });
 		rmSync(sandboxDir, { recursive: true, force: true });
