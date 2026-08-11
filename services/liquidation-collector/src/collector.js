@@ -194,6 +194,14 @@ export function okxSize({ contract, sz, price }) {
 	return { qty: units, value: units * px };
 }
 
+/** Liquidated position side for one OKX `details` row. */
+export function okxSide(detail) {
+	const posSide = String(detail.posSide ?? '').toLowerCase();
+	if (posSide === 'long') return 'LONG';
+	if (posSide === 'short') return 'SHORT';
+	return detail.side === 'buy' ? 'SHORT' : 'LONG';
+}
+
 /**
  * @param {string} raw
  * @param {{ get: (instId: string) => ({ ctVal: number, ctMult: number, quoteDenominated: boolean }|undefined) }} contracts
@@ -221,7 +229,9 @@ export function parseOkxMessage(raw, contracts, tracked = TRACKED) {
 				exchange: 'OKX',
 				price: parseFloat(d.bkPx),
 				qty: sized.qty,
-				side: d.side === 'buy' ? 'SHORT' : 'LONG',
+				// `posSide` states the liquidated position outright; `side` is
+				// the closing ORDER's side, where a buy closed a short.
+				side: okxSide(d),
 				symbol: base,
 				time: Number(d.ts) || Date.now(),
 				value: sized.value,

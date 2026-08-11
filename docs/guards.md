@@ -2,7 +2,7 @@
 
 This repository has no CI. GitHub Actions is unavailable on this account, so nothing runs your code when you open a pull request, and nothing blocks a bad merge. What protects the codebase instead is a set of small, fast, local guards wired into paths you cannot skip: the prebuild, the gate, the deploy build, and the git pre-push hook.
 
-This page explains what each guard protects, when it runs, and how to add one. Everything here is generated from [`data/guards.json`](https://github.com/nirholas/three.ws/blob/main/data/guards.json), which [`scripts/audit-guards.mjs`](https://github.com/nirholas/three.ws/blob/main/scripts/audit-guards.mjs) verifies on every gate run, so the stage column below cannot quietly go stale.
+This page explains what each guard protects, when it runs, and how to add one. Everything here tracks [`data/guards.json`](https://github.com/nirholas/three.ws/blob/main/data/guards.json), and [`scripts/audit-guards.mjs`](https://github.com/nirholas/three.ws/blob/main/scripts/audit-guards.mjs) checks the two against each other on every gate run: every stage claim has to be true against the real npm chains, and every registered guard has to appear in a table below. So neither the stage column nor the guard list can quietly go stale.
 
 Browse the same data as an interactive page at [/guards](/guards).
 
@@ -120,6 +120,8 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | MCP golden contracts | `npm run audit:mcp-golden` | Tool names, descriptions, and schemas against a committed snapshot. |
 | MCP safety annotations | `npm run audit:mcp-safety` | Declared `readOnlyHint` and `destructiveHint` match what handlers do. |
 | MCP tool catalog freshness | `npm run audit:mcp-catalog` | `public/mcp-catalog.json` matches what the MCP servers actually expose. |
+| 3D Studio OpenAPI sync | `npm run check:studio-openapi` | The Actions file in the OpenAI submission kit is byte-identical to the OpenAPI schema the site serves. |
+| Live event window | `npm run check:event` | `public/event.json` describes an event that will actually happen, on every surface that reads it. |
 | Cron schedule drift | `npm run check:cron-syntax`, `npm run check:cron-drift` | Valid expressions, and agreement with the running Cloud Scheduler jobs. |
 
 ### Build and deploy
@@ -135,7 +137,10 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 
 | Guard | Command | Protects |
 |---|---|---|
+| CSP-safe inline markup | `npm run audit:inline-handlers` | No served HTML carries an inline event handler attribute or a `javascript:` URL. |
+| Live CSP sweep | `npm run audit:csp` | No page violates the Content-Security-Policy the server sends with it. |
 | Console sweep | `npm run audit:console` | A clean browser console on every route, desktop and mobile. |
+| `/play` failure modes | `npm run audit:play-failures` | `/play` stays usable when its dependencies fail, and hostile deep-link params never execute. |
 | Overlapping fixed overlays | `npm run audit:overlays` | No persistent floating widget can cover another one's controls. |
 | Image loading attributes | `npm run check:images` | Every JS-rendered image sets `loading` and `decoding`. |
 | Wardrobe catalog integrity | `npm run audit:garments` | Every garment validates and its GLB hash matches its manifest. |

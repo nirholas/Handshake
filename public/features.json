@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-11T05:12:20.939Z",
+	"generated_at": "2026-08-11T05:21:09.136Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -168,7 +168,7 @@
 				{
 					"path": "/autopilot",
 					"title": "Coin Autopilot",
-					"description": "A hands-off token cockpit: set the rules: buys, sells, and guardrails: and let your agent run the coin autonomously.",
+					"description": "A hands-off token cockpit. Set the rules (buys, sells, and guardrails) and let your agent run the coin autonomously.",
 					"added": "2026-07-01",
 					"auth": null,
 					"indexable": true,
@@ -238,7 +238,7 @@
 				{
 					"path": "/alpha-copilot",
 					"title": "Alpha Co-pilot: your agent narrates its own alpha",
-					"description": "Your 3D agent reads a real pump.fun launch in character: grounded in live liquidity, holder, and smart-money data: and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
+					"description": "Your 3D agent reads a real pump.fun launch in character, grounded in live liquidity, holder, and smart-money data, and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
 					"added": "2026-06-23",
 					"auth": null,
 					"indexable": true,
@@ -338,7 +338,7 @@
 				{
 					"path": "/search",
 					"title": "Search",
-					"description": "One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins: with remixable models remixable straight from the results.",
+					"description": "One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins. Remix a model straight from the results.",
 					"added": "2026-07-12",
 					"auth": null,
 					"indexable": true,
@@ -675,7 +675,7 @@
 				{
 					"path": "/forge",
 					"title": "Forge: Text & Image to 3D",
-					"description": "Type a prompt: or drop in photos or a sketch: and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
+					"description": "Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
 					"added": "2026-06-04",
 					"auth": null,
 					"indexable": true,
@@ -1025,7 +1025,7 @@
 				{
 					"path": "/dad",
 					"title": "Make Dad a 3D Avatar",
-					"description": "Turn one photo of your dad into a recognizable, rigged, animated 3D avatar: it idles, walks, and waves: then share a permalink.",
+					"description": "Turn one photo of your dad into a recognizable, rigged, animated 3D avatar. It idles, walks, and waves, and you can share a permalink.",
 					"added": "2026-06-21",
 					"auth": null,
 					"indexable": true,
@@ -1035,7 +1035,7 @@
 				{
 					"path": "/ca2x402",
 					"title": "CA → x402",
-					"description": "Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel: price, momentum, and a bullish/bearish signal: for $0.01 USDC, discoverable in the x402 bazaar.",
+					"description": "Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel (price, momentum, and a bullish/bearish signal) for $0.01 USDC, discoverable in the x402 bazaar.",
 					"added": "2026-06-23",
 					"auth": null,
 					"indexable": true,
@@ -1252,7 +1252,7 @@
 				{
 					"path": "/labs",
 					"title": "Labs Showcase",
-					"description": "A curated gallery of three.ws's most powerful: and most hidden: features. Find and try things you didn't know existed.",
+					"description": "A curated gallery of three.ws's most powerful (and most hidden) features. Find and try things you didn't know existed.",
 					"added": "2026-06-05",
 					"auth": null,
 					"indexable": true,
@@ -1359,7 +1359,7 @@
 				{
 					"path": "/agi",
 					"title": "The AGI: narrow by design",
-					"description": "The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing: trading memecoins on pump.fun (Solana): and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
+					"description": "The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing, trading memecoins on pump.fun (Solana), and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
 					"added": "2026-06-23",
 					"auth": null,
 					"indexable": true,
@@ -1379,7 +1379,7 @@
 				{
 					"path": "/oracle/docs",
 					"title": "Oracle Docs: the conviction engine, end to end",
-					"description": "The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next: written for everyone from first-time readers to researchers.",
+					"description": "The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next. Written for everyone from first-time readers to researchers.",
 					"added": "2026-06-30",
 					"auth": null,
 					"indexable": true,
@@ -1409,7 +1409,7 @@
 				{
 					"path": "/pipeline",
 					"title": "Recording Pipeline: the data loop, live",
-					"description": "One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result: every stage, in real time.",
+					"description": "One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result. Every stage, in real time.",
 					"added": "2026-06-27",
 					"auth": null,
 					"indexable": true,
@@ -1599,7 +1599,7 @@
 				{
 					"path": "/leaderboard",
 					"title": "Trader Leaderboard",
-					"description": "Pump.fun traders ranked by a provable, on-chain track record: realized P&L, win rate, drawdown: with every number traceable to its transaction.",
+					"description": "Pump.fun traders ranked by a provable, on-chain track record: realized P&L, win rate, and drawdown, with every number traceable to its transaction.",
 					"added": "2026-06-15",
 					"auth": null,
 					"indexable": true,
@@ -1849,7 +1849,7 @@
 				{
 					"path": "/terminal",
 					"title": "Mission Control",
-					"description": "The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet: a keyboard-driven cockpit with filters and saved views.",
+					"description": "The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet. A keyboard-driven cockpit with filters and saved views.",
 					"added": "2026-06-23",
 					"auth": null,
 					"indexable": true,
@@ -2059,7 +2059,7 @@
 				{
 					"path": "/categories",
 					"title": "Crypto Categories by Market Cap",
-					"description": "Every crypto sector ranked by market cap: smart contract platforms, AI agents, memecoins, DeFi, gaming, and more: with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.",
+					"description": "Every crypto sector ranked by market cap: smart contract platforms, AI agents, memecoins, DeFi, gaming, and more, with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.",
 					"added": "2026-07-08",
 					"auth": null,
 					"indexable": true,
@@ -2179,7 +2179,7 @@
 				{
 					"path": "/bnb",
 					"title": "BNB Chain: Three Genuinely-Unique Demos",
-					"description": "The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain: plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",
+					"description": "The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain, plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",
 					"added": "2026-07-08",
 					"auth": null,
 					"indexable": true,
@@ -2509,7 +2509,7 @@
 				{
 					"path": "/markets/robinhood",
 					"title": "Robinhood Chain",
-					"description": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL: plus a real wallet-connect buy flow for its coins.",
+					"description": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL, plus a real wallet-connect buy flow for its coins.",
 					"added": "2026-07-12",
 					"auth": null,
 					"indexable": true,
@@ -3500,7 +3500,7 @@
 				{
 					"path": "/docs/autonomous-economy",
 					"title": "Docs · The autonomous economy",
-					"description": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute: plus how to verify there's no leak yourself.",
+					"description": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute, plus how to verify there's no leak yourself.",
 					"added": "2026-07-12",
 					"auth": null,
 					"indexable": true,
@@ -4090,7 +4090,7 @@
 				{
 					"path": "/tutorials/prompts-for-3d",
 					"title": "Tutorial · Prompt Recipes for 3D Generation",
-					"description": "A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, food: and the four rules behind every good prompt.",
+					"description": "A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, and food, plus the four rules behind every good prompt.",
 					"added": "2026-06-12",
 					"auth": null,
 					"indexable": true,
@@ -4230,7 +4230,7 @@
 				{
 					"path": "/events/build-3d-agents-live",
 					"title": "Building 3D AI Agents Live",
-					"description": "A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes: then a live Q&A. Hosted by three.ws, in partnership with IBM.",
+					"description": "A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes, then a live Q&A. Hosted by three.ws, in partnership with IBM.",
 					"added": "2026-06-14",
 					"auth": null,
 					"indexable": true,
@@ -5980,7 +5980,7 @@
 				{
 					"path": "/tutorials/walk-companion",
 					"title": "Tutorial · Add the Walk Companion to your site",
-					"description": "Drop a 3D avatar that strolls across any web page: corner mascot or full-page playground: with one script tag, the npm SDK, or a postMessage bridge.",
+					"description": "Drop a 3D avatar that strolls across any web page (corner mascot or full-page playground) with one script tag, the npm SDK, or a postMessage bridge.",
 					"added": "2026-06-21",
 					"auth": null,
 					"indexable": true,
@@ -6090,7 +6090,7 @@
 				{
 					"path": "/tutorials/create-and-edit-memory",
 					"title": "Tutorial · Create, enhance & edit agent memory",
-					"description": "Teach an agent a fact that sticks between sessions: five ways: the dashboard, the agent itself, MCP tools, the REST API, and from a skill. Plus how to sharpen, edit, and forget.",
+					"description": "Five ways to teach an agent a fact that sticks between sessions: the dashboard, the agent itself, MCP tools, the REST API, and a skill. Plus how to sharpen, edit, and forget.",
 					"added": "2026-06-21",
 					"auth": null,
 					"indexable": true,
@@ -6130,7 +6130,7 @@
 				{
 					"path": "/tutorials/emotion-from-data",
 					"title": "Tutorial · Animations from data: wire your agent's gestures to real APIs and AI",
-					"description": "Trigger real body animations: celebrate, dance, flinch: from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.",
+					"description": "Trigger real body animations (celebrate, dance, flinch) from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.",
 					"added": "2026-07-08",
 					"auth": null,
 					"indexable": true,

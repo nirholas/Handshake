@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-11T05:12:21.003Z",
+	"generated_at": "2026-08-11T05:21:09.387Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -295,6 +295,18 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "The MCP server directory now tells the truth about auth",
+			"summary": "Anyone pointing an MCP client at three.ws reads /.well-known/mcp.json to decide how to connect. Two of its seven entries were wrong. The pump.fun server was advertised as free and read-only, but one of its nineteen tools uploads coin metadata to IPFS and needs a key, so a client that trusted the label got a payment-required error out of nowhere; the entry now says which tool that is. And the main server accepts x402 pay-per-call alongside sign-in and API keys, which the directory never mentioned, so an agent with a wallet but no account had no way to know it could just pay. Both are fixed, along with the matching lines in the registry manifest and the MCP docs. The free 3D Studio endpoint was also the one hosted server the live health probe never checked; it is in the sweep now, and the manifest audit that runs on every build now fails if the directory and the manifests on disk ever disagree again.",
+			"link": "/mcp-tools",
+			"tags": [
+				"fix",
+				"docs",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "The money map keeps every avatar it can already show",
 			"summary": "Flow drew each wallet's avatar into its canvas in a mode that asks the image host for extra permissions. Those same avatars appear as ordinary images elsewhere on three.ws, and a browser will not reuse a picture it already has when the second request asks for more, so any avatar you had already seen came back blank on the map. The map no longer asks for permissions it never needed.",
 			"link": "/flow",
@@ -337,12 +349,24 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "The walking avatar SDK now types the cursor-tracking option it ships",
+			"summary": "@three-ws/walk is the packaged version of the character that walks over three.ws pages, and it lets a host turn off the head tracking that makes the avatar follow the visitor's cursor. That switch worked, and the docs described it, but it was missing from the package's TypeScript definitions, so anyone writing the option in a typed project got an error on working code. The definitions now declare it, along with the resolved-config object every control returns, and the guide lists it with the other options. The package's public entry point also gained a test that imports it the way a host does and checks that every documented export is really there.",
+			"link": "/walk",
+			"tags": [
+				"sdk",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "The x402 payment modal SDK can now price a paid call without opening a modal",
-			"summary": "@three-ws/x402-modal is the drop-in checkout that turns an HTTP 402 into a wallet-connect, sign and settle flow on any site. Its first step, reading the endpoint's payment challenge to learn what it costs and which networks it takes, is now available on its own as discover(). It touches no page and no wallet, so a server, a script or an agent can look up a price, compare the Solana and Base entries, or check that a route is actually paid before deciding to charge anyone. The version string the package reports had also fallen two releases behind what was published, so bug reports named the wrong build; it now matches the release and a test keeps the two together.",
+			"summary": "@three-ws/x402-modal is the drop-in checkout that turns an HTTP 402 into a wallet-connect, sign and settle flow on any site. Its first step, reading the endpoint's payment challenge to learn what a call costs and which networks it takes, is now available on its own as discover(). It touches no page and no wallet, so a server, a script or an agent can look up a price, compare the Solana and Base entries, or confirm a route is actually paid before deciding to charge anyone. Two fixes ship with it. Branding and backend settings written on the script tag were silently ignored when the script was loaded from the short CDN address the docs give, because the code recognised its own tag by filename and that address has no filename; it now finds the tag by the settings themselves, so every address works. And the version the package reported had fallen two releases behind what was published, which sent bug reports to the wrong build; it now matches the release, with a test holding the two together.",
 			"link": "/docs/x402",
 			"tags": [
 				"sdk",
-				"feature"
+				"feature",
+				"fix"
 			]
 		},
 		{
@@ -8734,7 +8758,7 @@
 			"date": "2026-07-12",
 			"type": "launch",
 			"title": "Docs · The autonomous economy",
-			"summary": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute: plus how to verify there's no leak yourself.",
+			"summary": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute, plus how to verify there's no leak yourself.",
 			"link": "/docs/autonomous-economy",
 			"tags": [
 				"launch"
@@ -8764,7 +8788,7 @@
 			"date": "2026-07-12",
 			"type": "launch",
 			"title": "Robinhood Chain",
-			"summary": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL: plus a real wallet-connect buy flow for its coins.",
+			"summary": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL, plus a real wallet-connect buy flow for its coins.",
 			"link": "/markets/robinhood",
 			"tags": [
 				"launch"
@@ -8774,7 +8798,7 @@
 			"date": "2026-07-12",
 			"type": "launch",
 			"title": "Search",
-			"summary": "One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins: with remixable models remixable straight from the results.",
+			"summary": "One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins. Remix a model straight from the results.",
 			"link": "/search",
 			"tags": [
 				"launch"
@@ -10083,7 +10107,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "BNB Chain: Three Genuinely-Unique Demos",
-			"summary": "The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain: plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",
+			"summary": "The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain, plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",
 			"link": "/bnb",
 			"tags": [
 				"launch"
@@ -10113,7 +10137,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Crypto Categories by Market Cap",
-			"summary": "Every crypto sector ranked by market cap: smart contract platforms, AI agents, memecoins, DeFi, gaming, and more: with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.",
+			"summary": "Every crypto sector ranked by market cap: smart contract platforms, AI agents, memecoins, DeFi, gaming, and more, with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.",
 			"link": "/categories",
 			"tags": [
 				"launch"
@@ -10233,7 +10257,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Tutorial · Animations from data: wire your agent's gestures to real APIs and AI",
-			"summary": "Trigger real body animations: celebrate, dance, flinch: from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.",
+			"summary": "Trigger real body animations (celebrate, dance, flinch) from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.",
 			"link": "/tutorials/emotion-from-data",
 			"tags": [
 				"launch"
@@ -12798,7 +12822,7 @@
 			"date": "2026-07-01",
 			"type": "launch",
 			"title": "Coin Autopilot",
-			"summary": "A hands-off token cockpit: set the rules: buys, sells, and guardrails: and let your agent run the coin autonomously.",
+			"summary": "A hands-off token cockpit. Set the rules (buys, sells, and guardrails) and let your agent run the coin autonomously.",
 			"link": "/autopilot",
 			"tags": [
 				"launch"
@@ -13123,7 +13147,7 @@
 			"date": "2026-06-30",
 			"type": "launch",
 			"title": "Oracle Docs: the conviction engine, end to end",
-			"summary": "The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next: written for everyone from first-time readers to researchers.",
+			"summary": "The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next. Written for everyone from first-time readers to researchers.",
 			"link": "/oracle/docs",
 			"tags": [
 				"launch"
@@ -14722,7 +14746,7 @@
 			"date": "2026-06-27",
 			"type": "launch",
 			"title": "Recording Pipeline: the data loop, live",
-			"summary": "One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result: every stage, in real time.",
+			"summary": "One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result. Every stage, in real time.",
 			"link": "/pipeline",
 			"tags": [
 				"launch"
@@ -16729,7 +16753,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Alpha Co-pilot: your agent narrates its own alpha",
-			"summary": "Your 3D agent reads a real pump.fun launch in character: grounded in live liquidity, holder, and smart-money data: and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
+			"summary": "Your 3D agent reads a real pump.fun launch in character, grounded in live liquidity, holder, and smart-money data, and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
 			"link": "/alpha-copilot",
 			"tags": [
 				"launch"
@@ -16759,7 +16783,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "CA → x402",
-			"summary": "Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel: price, momentum, and a bullish/bearish signal: for $0.01 USDC, discoverable in the x402 bazaar.",
+			"summary": "Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel (price, momentum, and a bullish/bearish signal) for $0.01 USDC, discoverable in the x402 bazaar.",
 			"link": "/ca2x402",
 			"tags": [
 				"launch"
@@ -16899,7 +16923,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Mission Control",
-			"summary": "The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet: a keyboard-driven cockpit with filters and saved views.",
+			"summary": "The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet. A keyboard-driven cockpit with filters and saved views.",
 			"link": "/terminal",
 			"tags": [
 				"launch"
@@ -16949,7 +16973,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "The AGI: narrow by design",
-			"summary": "The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing: trading memecoins on pump.fun (Solana): and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
+			"summary": "The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing, trading memecoins on pump.fun (Solana), and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
 			"link": "/agi",
 			"tags": [
 				"launch"
@@ -18562,7 +18586,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Make Dad a 3D Avatar",
-			"summary": "Turn one photo of your dad into a recognizable, rigged, animated 3D avatar: it idles, walks, and waves: then share a permalink.",
+			"summary": "Turn one photo of your dad into a recognizable, rigged, animated 3D avatar. It idles, walks, and waves, and you can share a permalink.",
 			"link": "/dad",
 			"tags": [
 				"launch"
@@ -18592,7 +18616,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Add the Walk Companion to your site",
-			"summary": "Drop a 3D avatar that strolls across any web page: corner mascot or full-page playground: with one script tag, the npm SDK, or a postMessage bridge.",
+			"summary": "Drop a 3D avatar that strolls across any web page (corner mascot or full-page playground) with one script tag, the npm SDK, or a postMessage bridge.",
 			"link": "/tutorials/walk-companion",
 			"tags": [
 				"launch"
@@ -18612,7 +18636,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Create, enhance & edit agent memory",
-			"summary": "Teach an agent a fact that sticks between sessions: five ways: the dashboard, the agent itself, MCP tools, the REST API, and from a skill. Plus how to sharpen, edit, and forget.",
+			"summary": "Five ways to teach an agent a fact that sticks between sessions: the dashboard, the agent itself, MCP tools, the REST API, and a skill. Plus how to sharpen, edit, and forget.",
 			"link": "/tutorials/create-and-edit-memory",
 			"tags": [
 				"launch"
@@ -23632,7 +23656,7 @@
 			"date": "2026-06-15",
 			"type": "launch",
 			"title": "Trader Leaderboard",
-			"summary": "Pump.fun traders ranked by a provable, on-chain track record: realized P&L, win rate, drawdown: with every number traceable to its transaction.",
+			"summary": "Pump.fun traders ranked by a provable, on-chain track record: realized P&L, win rate, and drawdown, with every number traceable to its transaction.",
 			"link": "/leaderboard",
 			"tags": [
 				"launch"
@@ -24156,7 +24180,7 @@
 			"date": "2026-06-14",
 			"type": "launch",
 			"title": "Building 3D AI Agents Live",
-			"summary": "A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes: then a live Q&A. Hosted by three.ws, in partnership with IBM.",
+			"summary": "A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes, then a live Q&A. Hosted by three.ws, in partnership with IBM.",
 			"link": "/events/build-3d-agents-live",
 			"tags": [
 				"launch"
@@ -24585,7 +24609,7 @@
 			"date": "2026-06-12",
 			"type": "launch",
 			"title": "Tutorial · Prompt Recipes for 3D Generation",
-			"summary": "A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, food: and the four rules behind every good prompt.",
+			"summary": "A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, and food, plus the four rules behind every good prompt.",
 			"link": "/tutorials/prompts-for-3d",
 			"tags": [
 				"launch"
@@ -25468,7 +25492,7 @@
 			"date": "2026-06-05",
 			"type": "launch",
 			"title": "Labs Showcase",
-			"summary": "A curated gallery of three.ws's most powerful: and most hidden: features. Find and try things you didn't know existed.",
+			"summary": "A curated gallery of three.ws's most powerful (and most hidden) features. Find and try things you didn't know existed.",
 			"link": "/labs",
 			"tags": [
 				"launch"
@@ -25589,7 +25613,7 @@
 			"date": "2026-06-04",
 			"type": "launch",
 			"title": "Forge: Text & Image to 3D",
-			"summary": "Type a prompt: or drop in photos or a sketch: and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
+			"summary": "Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
 			"link": "/forge",
 			"tags": [
 				"launch"

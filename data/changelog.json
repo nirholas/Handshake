@@ -3,6 +3,17 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "The x402 payment modal SDK can now price a paid call without opening a modal",
+			"summary": "@three-ws/x402-modal is the drop-in checkout that turns an HTTP 402 into a wallet-connect, sign and settle flow on any site. Its first step, reading the endpoint's payment challenge to learn what a call costs and which networks it takes, is now available on its own as discover(). It touches no page and no wallet, so a server, a script or an agent can look up a price, compare the Solana and Base entries, or confirm a route is actually paid before deciding to charge anyone. Two fixes ship with it. Branding and backend settings written on the script tag were silently ignored when the script was loaded from the short CDN address the docs give, because the code recognised its own tag by filename and that address has no filename; it now finds the tag by the settings themselves, so every address works. And the version the package reported had fallen two releases behind what was published, which sent bug reports to the wrong build; it now matches the release, with a test holding the two together.",
+			"tags": [
+				"sdk",
+				"feature",
+				"fix"
+			],
+			"link": "/docs/x402"
+		},
+		{
+			"date": "2026-08-11",
 			"title": "The walking avatar SDK now types the cursor-tracking option it ships",
 			"summary": "@three-ws/walk is the packaged version of the character that walks over three.ws pages, and it lets a host turn off the head tracking that makes the avatar follow the visitor's cursor. That switch worked, and the docs described it, but it was missing from the package's TypeScript definitions, so anyone writing the option in a typed project got an error on working code. The definitions now declare it, along with the resolved-config object every control returns, and the guide lists it with the other options. The package's public entry point also gained a test that imports it the way a host does and checks that every documented export is really there.",
 			"tags": [

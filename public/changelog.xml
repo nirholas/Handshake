@@ -223,6 +223,14 @@
 			<description>The newsroom anchor on the agent screen builds every bulletin from a paid narrative-intel feed, and when that subscription started being refused the anchor was left reading a price-only bulletin with nothing to say. It now falls back to the platform's own aggregated news feed, narrowed to major publishers, so the anchor still leads with real, attributed headlines. The fallback only fires when the primary feed comes back empty, and the anchor still refuses to name any ticker other than $THREE.</description>
 		</item>
 		<item>
+			<title>The MCP server directory now tells the truth about auth</title>
+			<link>https://three.ws/mcp-tools</link>
+			<guid isPermaLink="false">2026-08-11:The MCP server directory now tells the truth about auth</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Anyone pointing an MCP client at three.ws reads /.well-known/mcp.json to decide how to connect. Two of its seven entries were wrong. The pump.fun server was advertised as free and read-only, but one of its nineteen tools uploads coin metadata to IPFS and needs a key, so a client that trusted the label got a payment-required error out of nowhere; the entry now says which tool that is. And the main server accepts x402 pay-per-call alongside sign-in and API keys, which the directory never mentioned, so an agent with a wallet but no account had no way to know it could just pay. Both are fixed, along with the matching lines in the registry manifest and the MCP docs. The free 3D Studio endpoint was also the one hosted server the live health probe never checked; it is in the sweep now, and the manifest audit that runs on every build now fails if the directory and the manifests on disk ever disagree again.</description>
+		</item>
+		<item>
 			<title>The money map keeps every avatar it can already show</title>
 			<link>https://three.ws/flow</link>
 			<guid isPermaLink="false">2026-08-11:The money map keeps every avatar it can already show</guid>
@@ -255,12 +263,20 @@
 			<description>When you fingerspell into the webcam, the recognizer reports how sure it is of what it read, and the page uses that to flag a shaky capture instead of quietly dropping wrong words into your message. That score was in every response but appeared in none of the docs, so anyone building on the recognition API had no way to know it existed. The API reference, the sign-language guide and the worker's own README now list the full response, including the raw decode before the cleanup pass and whether the cleanup changed anything, so a caller can build the same warning we do. The recognizer itself was also capped to a sane number of simultaneous captures per instance, so a burst of signers scales out instead of queueing behind each other.</description>
 		</item>
 		<item>
+			<title>The walking avatar SDK now types the cursor-tracking option it ships</title>
+			<link>https://three.ws/walk</link>
+			<guid isPermaLink="false">2026-08-11:The walking avatar SDK now types the cursor-tracking option it ships</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>@three-ws/walk is the packaged version of the character that walks over three.ws pages, and it lets a host turn off the head tracking that makes the avatar follow the visitor's cursor. That switch worked, and the docs described it, but it was missing from the package's TypeScript definitions, so anyone writing the option in a typed project got an error on working code. The definitions now declare it, along with the resolved-config object every control returns, and the guide lists it with the other options. The package's public entry point also gained a test that imports it the way a host does and checks that every documented export is really there.</description>
+		</item>
+		<item>
 			<title>The x402 payment modal SDK can now price a paid call without opening a modal</title>
 			<link>https://three.ws/docs/x402</link>
 			<guid isPermaLink="false">2026-08-11:The x402 payment modal SDK can now price a paid call without opening a modal</guid>
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>sdk</category>
-			<description>@three-ws/x402-modal is the drop-in checkout that turns an HTTP 402 into a wallet-connect, sign and settle flow on any site. Its first step, reading the endpoint's payment challenge to learn what it costs and which networks it takes, is now available on its own as discover(). It touches no page and no wallet, so a server, a script or an agent can look up a price, compare the Solana and Base entries, or check that a route is actually paid before deciding to charge anyone. The version string the package reports had also fallen two releases behind what was published, so bug reports named the wrong build; it now matches the release and a test keeps the two together.</description>
+			<description>@three-ws/x402-modal is the drop-in checkout that turns an HTTP 402 into a wallet-connect, sign and settle flow on any site. Its first step, reading the endpoint's payment challenge to learn what a call costs and which networks it takes, is now available on its own as discover(). It touches no page and no wallet, so a server, a script or an agent can look up a price, compare the Solana and Base entries, or confirm a route is actually paid before deciding to charge anyone. Two fixes ship with it. Branding and backend settings written on the script tag were silently ignored when the script was loaded from the short CDN address the docs give, because the code recognised its own tag by filename and that address has no filename; it now finds the tag by the settings themselves, so every address works. And the version the package reported had fallen two releases behind what was published, which sent bug reports to the wrong build; it now matches the release, with a test holding the two together.</description>
 		</item>
 		<item>
 			<title>Token pages keep their holder count when a data provider runs out of quota</title>
@@ -6660,7 +6676,7 @@
 			<guid isPermaLink="false">2026-07-12:Docs · The autonomous economy</guid>
 			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute: plus how to verify there's no leak yourself.</description>
+			<description>How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute, plus how to verify there's no leak yourself.</description>
 		</item>
 		<item>
 			<title>Notifications</title>
@@ -6684,7 +6700,7 @@
 			<guid isPermaLink="false">2026-07-12:Robinhood Chain</guid>
 			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL: plus a real wallet-connect buy flow for its coins.</description>
+			<description>The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL, plus a real wallet-connect buy flow for its coins.</description>
 		</item>
 		<item>
 			<title>Search</title>
@@ -6692,7 +6708,7 @@
 			<guid isPermaLink="false">2026-07-12:Search</guid>
 			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins: with remixable models remixable straight from the results.</description>
+			<description>One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins. Remix a model straight from the results.</description>
 		</item>
 		<item>
 			<title>Your creator portfolio</title>
@@ -7692,7 +7708,7 @@
 			<guid isPermaLink="false">2026-07-08:BNB Chain: Three Genuinely-Unique Demos</guid>
 			<pubDate>Wed, 08 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain: plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.</description>
+			<description>The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain, plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.</description>
 		</item>
 		<item>
 			<title>Creator Gallery</title>
@@ -7716,7 +7732,7 @@
 			<guid isPermaLink="false">2026-07-08:Crypto Categories by Market Cap</guid>
 			<pubDate>Wed, 08 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Every crypto sector ranked by market cap: smart contract platforms, AI agents, memecoins, DeFi, gaming, and more: with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.</description>
+			<description>Every crypto sector ranked by market cap: smart contract platforms, AI agents, memecoins, DeFi, gaming, and more, with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.</description>
 		</item>
 		<item>
 			<title>Crypto Currency Converter</title>
@@ -7812,7 +7828,7 @@
 			<guid isPermaLink="false">2026-07-08:Tutorial · Animations from data: wire your agent's gestures to real APIs and AI</guid>
 			<pubDate>Wed, 08 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Trigger real body animations: celebrate, dance, flinch: from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.</description>
+			<description>Trigger real body animations (celebrate, dance, flinch) from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.</description>
 		</item>
 		<item>
 			<title>Tutorial · Load a ready-made 3D tour for a DeFi protocol (Sperax)</title>
@@ -9772,7 +9788,7 @@
 			<guid isPermaLink="false">2026-07-01:Coin Autopilot</guid>
 			<pubDate>Wed, 01 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>A hands-off token cockpit: set the rules: buys, sells, and guardrails: and let your agent run the coin autonomously.</description>
+			<description>A hands-off token cockpit. Set the rules (buys, sells, and guardrails) and let your agent run the coin autonomously.</description>
 		</item>
 		<item>
 			<title>Diorama</title>
@@ -10020,7 +10036,7 @@
 			<guid isPermaLink="false">2026-06-30:Oracle Docs: the conviction engine, end to end</guid>
 			<pubDate>Tue, 30 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next: written for everyone from first-time readers to researchers.</description>
+			<description>The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next. Written for everyone from first-time readers to researchers.</description>
 		</item>
 		<item>
 			<title>Viability</title>
@@ -11260,7 +11276,7 @@
 			<guid isPermaLink="false">2026-06-27:Recording Pipeline: the data loop, live</guid>
 			<pubDate>Sat, 27 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result: every stage, in real time.</description>
+			<description>One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result. Every stage, in real time.</description>
 		</item>
 		<item>
 			<title>Scene Capture: Video to 3D Point Cloud</title>
@@ -12772,7 +12788,7 @@
 			<guid isPermaLink="false">2026-06-23:Alpha Co-pilot: your agent narrates its own alpha</guid>
 			<pubDate>Tue, 23 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Your 3D agent reads a real pump.fun launch in character: grounded in live liquidity, holder, and smart-money data: and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.</description>
+			<description>Your 3D agent reads a real pump.fun launch in character, grounded in live liquidity, holder, and smart-money data, and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.</description>
 		</item>
 		<item>
 			<title>Autopilot Activity</title>
@@ -12796,7 +12812,7 @@
 			<guid isPermaLink="false">2026-06-23:CA → x402</guid>
 			<pubDate>Tue, 23 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel: price, momentum, and a bullish/bearish signal: for $0.01 USDC, discoverable in the x402 bazaar.</description>
+			<description>Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel (price, momentum, and a bullish/bearish signal) for $0.01 USDC, discoverable in the x402 bazaar.</description>
 		</item>
 		<item>
 			<title>Cosmos: Living Worlds</title>
@@ -12908,7 +12924,7 @@
 			<guid isPermaLink="false">2026-06-23:Mission Control</guid>
 			<pubDate>Tue, 23 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet: a keyboard-driven cockpit with filters and saved views.</description>
+			<description>The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet. A keyboard-driven cockpit with filters and saved views.</description>
 		</item>
 		<item>
 			<title>Money Pulse</title>
@@ -12948,7 +12964,7 @@
 			<guid isPermaLink="false">2026-06-23:The AGI: narrow by design</guid>
 			<pubDate>Tue, 23 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing: trading memecoins on pump.fun (Solana): and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.</description>
+			<description>The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing, trading memecoins on pump.fun (Solana), and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.</description>
 		</item>
 		<item>
 			<title>The Arena: live PvP trading tournaments</title>
@@ -14196,7 +14212,7 @@
 			<guid isPermaLink="false">2026-06-21:Make Dad a 3D Avatar</guid>
 			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Turn one photo of your dad into a recognizable, rigged, animated 3D avatar: it idles, walks, and waves: then share a permalink.</description>
+			<description>Turn one photo of your dad into a recognizable, rigged, animated 3D avatar. It idles, walks, and waves, and you can share a permalink.</description>
 		</item>
 		<item>
 			<title>Studio: Object + Avatar from text</title>
@@ -14220,7 +14236,7 @@
 			<guid isPermaLink="false">2026-06-21:Tutorial · Add the Walk Companion to your site</guid>
 			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Drop a 3D avatar that strolls across any web page: corner mascot or full-page playground: with one script tag, the npm SDK, or a postMessage bridge.</description>
+			<description>Drop a 3D avatar that strolls across any web page (corner mascot or full-page playground) with one script tag, the npm SDK, or a postMessage bridge.</description>
 		</item>
 		<item>
 			<title>Tutorial · Claim a .threews.sol name &amp; get paid by name</title>
@@ -14236,7 +14252,7 @@
 			<guid isPermaLink="false">2026-06-21:Tutorial · Create, enhance &amp; edit agent memory</guid>
 			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Teach an agent a fact that sticks between sessions: five ways: the dashboard, the agent itself, MCP tools, the REST API, and from a skill. Plus how to sharpen, edit, and forget.</description>
+			<description>Five ways to teach an agent a fact that sticks between sessions: the dashboard, the agent itself, MCP tools, the REST API, and a skill. Plus how to sharpen, edit, and forget.</description>
 		</item>
 		<item>
 			<title>Tutorial · Discover and pay for an x402 service</title>
@@ -18116,7 +18132,7 @@
 			<guid isPermaLink="false">2026-06-15:Trader Leaderboard</guid>
 			<pubDate>Mon, 15 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Pump.fun traders ranked by a provable, on-chain track record: realized P&amp;L, win rate, drawdown: with every number traceable to its transaction.</description>
+			<description>Pump.fun traders ranked by a provable, on-chain track record: realized P&amp;L, win rate, and drawdown, with every number traceable to its transaction.</description>
 		</item>
 		<item>
 			<title>After you launch a coin, jump straight to viewing or managing it</title>
@@ -18524,7 +18540,7 @@
 			<guid isPermaLink="false">2026-06-14:Building 3D AI Agents Live</guid>
 			<pubDate>Sun, 14 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes: then a live Q&amp;A. Hosted by three.ws, in partnership with IBM.</description>
+			<description>A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes, then a live Q&amp;A. Hosted by three.ws, in partnership with IBM.</description>
 		</item>
 		<item>
 			<title>Forge stays up: live Redis quota monitoring and early-warning alerts</title>
@@ -18852,7 +18868,7 @@
 			<guid isPermaLink="false">2026-06-12:Tutorial · Prompt Recipes for 3D Generation</guid>
 			<pubDate>Fri, 12 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, food: and the four rules behind every good prompt.</description>
+			<description>A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, and food, plus the four rules behind every good prompt.</description>
 		</item>
 		<item>
 			<title>Tutorial · Text Prompt to 3D Model</title>
@@ -19532,7 +19548,7 @@
 			<guid isPermaLink="false">2026-06-05:Labs Showcase</guid>
 			<pubDate>Fri, 05 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>A curated gallery of three.ws's most powerful: and most hidden: features. Find and try things you didn't know existed.</description>
+			<description>A curated gallery of three.ws's most powerful (and most hidden) features. Find and try things you didn't know existed.</description>
 		</item>
 		<item>
 			<title>Marketplace: Discover and Fork AI Agents</title>
@@ -19628,7 +19644,7 @@
 			<guid isPermaLink="false">2026-06-04:Forge: Text &amp; Image to 3D</guid>
 			<pubDate>Thu, 04 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Type a prompt: or drop in photos or a sketch: and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.</description>
+			<description>Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.</description>
 		</item>
 		<item>
 			<title>Agent Commerce</title>

@@ -116,11 +116,15 @@ const SKIP_CONTENT = [
 ];
 const skippedContent = (file) => SKIP_CONTENT.some((re) => re.test(file));
 
-// A value that announces itself as fake. Providers never issue these, and docs
-// are full of them, so every content rule consults this before reporting.
-const PLACEHOLDER =
-	/(x{4,}|\.\.\.|your[_-]?|my[_-]?|replace|placeholder|redacted|example|sample|dummy|fake|test[_-]|demo|changeme|insert[_-]|here|abc123|0123456789|1234567890|hunter2|s3cr3t|secret)/i;
+// A value that announces itself as fake. Tested against the MATCHED CREDENTIAL,
+// never the whole line: line-level placeholder matching would exempt a real key
+// merely for sitting on a line that contains the word "secret" or "test", which
+// is most of the lines a real key ever appears on.
+const FAKE_VALUE = /(x{4,}|\.\.\.|your|replace|placeholder|redacted|example|sample|dummy|fake|changeme|insert|abc123|0123456789|1234567890)/i;
 
+// Every rule reports the substring it matched, so the message points at the
+// credential rather than at 200 columns of minified line, and so `except` can
+// judge the value instead of its surroundings.
 const CONTENT_RULES = [
 	{
 		id: 'provider-api-key',
@@ -128,33 +132,30 @@ const CONTENT_RULES = [
 		// Each alternative is a format one vendor issues and nothing else
 		// produces. Lengths are the vendor minimums, so a truncated docs sample
 		// ("sk-ant-...") does not match.
-		test: (line) =>
-			/(sk-ant-api[0-9]{2}-[A-Za-z0-9_-]{40,}|sk-proj-[A-Za-z0-9_-]{40,}|sk-[A-Za-z0-9]{48,}|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{60,}|glpat-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[baprs]-[0-9A-Za-z-]{20,}|hf_[A-Za-z0-9]{34,}|nvapi-[A-Za-z0-9_-]{40,}|r8_[A-Za-z0-9]{37,}|gsk_[A-Za-z0-9]{50,}|sk-or-v1-[a-f0-9]{60,}|SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{30,}|npm_[A-Za-z0-9]{36}|dckr_pat_[A-Za-z0-9_-]{20,}|ya29\.[0-9A-Za-z_-]{60,})/.test(
-				line,
-			),
-		except: (line) => PLACEHOLDER.test(line),
+		find: /(sk-ant-api[0-9]{2}-[A-Za-z0-9_-]{40,}|sk-proj-[A-Za-z0-9_-]{40,}|sk-[A-Za-z0-9]{48,}|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{60,}|glpat-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[baprs]-[0-9A-Za-z-]{20,}|hf_[A-Za-z0-9]{34,}|nvapi-[A-Za-z0-9_-]{40,}|r8_[A-Za-z0-9]{37,}|gsk_[A-Za-z0-9]{50,}|sk-or-v1-[a-f0-9]{60,}|SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{30,}|npm_[A-Za-z0-9]{36}|dckr_pat_[A-Za-z0-9_-]{20,}|ya29\.[0-9A-Za-z_-]{60,})/,
+		except: (value) => FAKE_VALUE.test(value),
 	},
 	{
 		id: 'private-key-block',
 		what: 'a PEM private-key block',
-		test: (line) => /-----BEGIN (RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----/.test(line),
-		// Code that strips the header, and docs that show the shape with an
-		// ellipsis instead of key bytes, both name the header legitimately.
-		except: (line) => /replace\(|RegExp|match\(|split\(|includes\(|…|\.\.\.|MIGH|YOUR|\$\{/.test(line) || PLACEHOLDER.test(line),
+		find: /-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----/,
+		// This header is the one credential marker that legitimately appears in
+		// prose and in code: parsers strip it, docs show the shape with an
+		// ellipsis where the key bytes go. Both are line-level judgements, so
+		// this rule (alone) reads the whole line.
+		exceptLine: (line) => /replace\(|RegExp|match\(|split\(|includes\(|…|\.\.\.|MIGH|YOUR|\$\{/.test(line),
 	},
 	{
 		id: 'connection-string',
 		what: 'a database or broker URL carrying a real password',
-		test: (line) => /(postgres(ql)?|mysql|mongodb(\+srv)?|redis[s]?|amqp[s]?):\/\/[A-Za-z0-9_.-]+:[^@\s"'`/]{6,}@/.test(line),
-		except: (line) => {
-			const pw = line.match(/(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis[s]?|amqp[s]?):\/\/[A-Za-z0-9_.-]+:([^@\s"'`/]{6,})@/)?.[1] ?? '';
-			return PLACEHOLDER.test(pw) || /^pass(word)?$/i.test(pw) || /^\$\{?[A-Z_]/.test(pw);
-		},
+		find: /(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|rediss?|amqps?):\/\/[A-Za-z0-9_.-]+:([^@\s"'`/]{6,})@/,
+		group: 1,
+		except: (pw) => FAKE_VALUE.test(pw) || /^(pass(word)?|hunter2|s3cr3tpw|secret|creds?)$/i.test(pw) || /(secret|password|test)/i.test(pw) || /^\$\{?[A-Z_]/.test(pw),
 	},
 	{
 		id: 'solana-keypair',
 		what: 'a Solana keypair serialized as a 64-byte array',
-		test: (line) => /\[\s*(\d{1,3}\s*,\s*){63}\d{1,3}\s*\]/.test(line),
+		find: /\[\s*(?:\d{1,3}\s*,\s*){63}\d{1,3}\s*\]/,
 	},
 	{
 		id: 'ethereum-private-key',
@@ -162,25 +163,35 @@ const CONTENT_RULES = [
 		// The bare hex is indistinguishable from a transaction hash or a storage
 		// slot, so the name on the left of the assignment is what makes this a
 		// finding.
-		test: (line) => /(private[_-]?key|privkey|secret[_-]?key|mnemonic|seed[_-]?phrase)\W{0,4}["'`]?(0x)?[a-fA-F0-9]{64}\b/i.test(line),
-		except: (line) => {
-			if (PLACEHOLDER.test(line)) return true;
+		find: /(?:private[_-]?key|privkey|secret[_-]?key|mnemonic|seed[_-]?phrase)\W{0,4}["'`]?(?:0x)?([a-fA-F0-9]{64})\b/i,
+		group: 1,
+		except: (hex) => {
 			// The two published test keys every EVM tutorial uses (hardhat and
 			// ethers account #0). Public by design, funded on nothing.
-			if (/0x(59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d|ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)/i.test(line)) return true;
+			if (/^(59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d|ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)$/i.test(hex)) return true;
 			// A template's fill-me-in value: all zeroes, all f's, `deadbeef`
 			// repeated. A key drawn at random uses nearly every hex digit, so a
 			// 64-nibble string spanning fewer than eight distinct ones is a
 			// placeholder with a probability no real key ever reaches.
-			const hex = line.match(/(?:private[_-]?key|privkey|secret[_-]?key|mnemonic|seed[_-]?phrase)\W{0,4}["'`]?(?:0x)?([a-fA-F0-9]{64})\b/i)?.[1] ?? '';
 			return new Set(hex.toLowerCase()).size < 8;
 		},
 	},
 ];
 
 const findings = [];
-const report = (file, line, rule, content) =>
-	findings.push({ file, line, id: rule.id, what: rule.what, content: content.trim().slice(0, 80) });
+
+// Apply every content rule to one line. A rule fires when its pattern matches
+// and the matched value is not a declared placeholder.
+function scanLine(file, lineNo, line) {
+	for (const rule of CONTENT_RULES) {
+		const m = rule.find.exec(line);
+		if (!m) continue;
+		if (rule.exceptLine && rule.exceptLine(line)) continue;
+		const value = rule.group ? m[rule.group] : m[0];
+		if (rule.except && rule.except(value)) continue;
+		findings.push({ file, line: lineNo, id: rule.id, what: rule.what, content: value.slice(0, 24) + (value.length > 24 ? '...' : '') });
+	}
+}
 
 // 1. Filenames, repo-wide. Cheap enough to run in every mode: it reads one
 // `git ls-files`, and a credential file that is already tracked is a finding no
@@ -212,11 +223,7 @@ if (all) {
 		if (body.includes('\u0000')) continue;
 		filesScanned += 1;
 		const lines = body.split('\n');
-		for (let i = 0; i < lines.length; i += 1) {
-			for (const rule of CONTENT_RULES) {
-				if (rule.test(lines[i]) && !(rule.except && rule.except(lines[i]))) report(file, i + 1, rule, lines[i]);
-			}
-		}
+		for (let i = 0; i < lines.length; i += 1) scanLine(file, i + 1, lines[i]);
 	}
 } else {
 	let diffArgs;
@@ -273,11 +280,7 @@ if (all) {
 		}
 		if (!raw.startsWith('+') || raw.startsWith('+++')) continue;
 		const content = raw.slice(1);
-		if (file && !skippedContent(file)) {
-			for (const rule of CONTENT_RULES) {
-				if (rule.test(content) && !(rule.except && rule.except(content))) report(file, lineNo, rule, content);
-			}
-		}
+		if (file && !skippedContent(file)) scanLine(file, lineNo, content);
 		lineNo += 1;
 	}
 }
