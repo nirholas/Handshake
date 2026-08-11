@@ -8,9 +8,10 @@ world-space point cloud from a monocular video or image sequence using
 paged-KV-cache attention (FlashInfer).
 
 The worker drives the upstream repo's own entry points (`demo.load_images`,
-`demo.load_model`, `demo.postprocess`), optionally removes sky pixels with
-LingBot-Map's sky segmentation, fuses the per-frame world points + RGB into a
-single coloured cloud, writes a binary PLY, and uploads it to Cloud Storage. The
+`demo.load_model`, `demo.postprocess`), unprojects the predicted depth with the
+predicted camera to get world-space points, optionally removes sky pixels with
+LingBot-Map's sky segmentation, fuses those points with their per-pixel RGB into
+a single coloured cloud, writes a binary PLY, and uploads it to Cloud Storage. The
 three.ws **Scene Capture** page (`/capture`) renders that PLY directly in a
 WebGL point-cloud viewer ([`src/pointcloud-viewer.js`](../../src/pointcloud-viewer.js)).
 
@@ -44,6 +45,18 @@ matching `GCP_RECONSTRUCTION_KEY` and points at `GCP_VIDEO2SCENE_URL`.
 | `job_id` | none | Caller correlation id, echoed in logs. |
 
 A finished task also reports `frames_truncated` and `sky_points_removed`.
+
+### Where the geometry comes from
+
+The released checkpoints have no point head: `GCTStream` is built with
+`enable_point=False`, so inference returns `depth` and `depth_conf` and never a
+`world_points` map. The cloud is therefore built by unprojecting each depth map
+with the camera the model predicted for that frame, which is what LingBot-Map's
+own viewer and GLB export do. The unprojector documents its extrinsic as
+world-to-camera while `postprocess` hands back camera-to-world, so the worker
+inverts before unprojecting; feeding it the wrong one puts the cloud somewhere
+other than in front of the cameras. If a future checkpoint does ship a point
+head, the worker uses its `world_points` directly.
 
 ### Frame budget
 

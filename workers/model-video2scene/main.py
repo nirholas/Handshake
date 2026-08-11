@@ -4,9 +4,9 @@ model-video2scene: streaming video to 3D point-cloud reconstruction.
 Wraps LingBot-Map (Apache-2.0, github.com/Robbyant/lingbot-map), a feed-forward
 "Geometric Context Transformer" that reconstructs a dense world-space point cloud
 from a monocular video or image sequence. We drive the repo's own demo entry
-points (load_images / load_model / postprocess), fuse the per-frame world points
-+ RGB into a single coloured point cloud, write a binary little-endian PLY, and
-upload it to Cloud Storage. The three.ws Scene Capture page renders that PLY
+points (load_images / load_model / postprocess), unproject the predicted depth
+with the predicted camera, fuse those world points + RGB into a single coloured
+point cloud, write a binary little-endian PLY, and upload it to Cloud Storage. The three.ws Scene Capture page renders that PLY
 directly with a WebGL point-cloud viewer.
 
 API contract (mirrors the other three.ws model workers: triposr, hunyuan3d):
