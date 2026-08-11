@@ -9,7 +9,7 @@
 //                capacity, so a browser is (or is about to be) spinning up for it.
 //   • queued   — the agent is wanted but the pool is at MAX_BROWSERS; we return a
 //                1-based queue position so the card can say "#N in line".
-//   • activity — not wanted, no caster pool running, or Redis is off: the
+//   • activity: not wanted, no caster pool running, or Redis is off: the
 //                always-available activity view stays, and we never claim a live
 //                state without a real frame.
 //
