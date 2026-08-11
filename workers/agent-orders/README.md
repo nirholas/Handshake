@@ -154,6 +154,14 @@ the `agent-payments-sdk` workspace it compiles. On a machine that also holds
 built `dist/` artifacts that context is multi-GB; the image needs none of it, so
 a slow or memory-starved local build is the context walk, not the build.
 
+Two things about that build are worth knowing before you read its log as a
+failure. The repo-root `package-lock.json` is currently out of sync with
+`package.json`, so the image's `npm ci` exits with EUSAGE and the Dockerfile's
+`|| npm install` fallback carries the install: expected today, and shared with
+every other worker image. And the image compiles `agent-payments-sdk` itself
+(`npm run build --prefix agent-payments-sdk`), which is the slowest layer after
+the install.
+
 The migration is
 `api/_lib/migrations/20260623160000_programmable_orders.sql` (`npm run db:migrate`).
 The owner-facing surface is the **Orders** tab in the agent wallet hub
