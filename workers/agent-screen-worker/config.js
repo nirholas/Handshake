@@ -60,6 +60,12 @@ export function loadConfig() {
  * sandboxed browser as uid 0, which is the default inside a container, so the
  * sandbox is dropped only in that case. `CHROME_NO_SANDBOX=1` forces it off for
  * hosts whose kernel blocks user namespaces even for an unprivileged user.
+ *
+ * Stagehand allows 15s for Chrome to open its debug port. A first launch on a
+ * loaded or throttled host regularly needs longer, and overrunning it kills the
+ * worker at boot with a bare ECONNREFUSED that reads like a network fault rather
+ * than a slow browser. 60s costs nothing on a fast host (the wait ends as soon
+ * as the port answers) and turns that crash into a normal cold start.
  */
 function localLaunchOptions() {
 	const runningAsRoot = typeof process.getuid === 'function' && process.getuid() === 0;
@@ -72,6 +78,7 @@ function localLaunchOptions() {
 		...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}),
 		headless: process.env.CHROME_HEADLESS !== '0',
 		chromiumSandbox: !noSandbox,
+		connectTimeoutMs: Number(process.env.CHROME_CONNECT_TIMEOUT_MS || 60_000),
 		args,
 	};
 }
