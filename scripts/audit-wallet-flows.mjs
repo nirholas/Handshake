@@ -21,6 +21,11 @@
 //
 // Requires DATABASE_URL and a Solana RPC in .env (SOLANA_RPC_FALLBACK_URLS /
 // SOLANA_RPC_FALLBACKS / QUICKNODE_RPC_URL are all used, in that order).
+//
+// Exit codes, same split as scripts/audit-service-wallets.mjs: 0 every wallet
+// was read, 2 at least one balance could not be read and is excluded from the
+// totals. A 2 is a monitoring blind spot to clear before trusting any figure
+// here, never a verdict that those wallets are empty.
 
 import { Connection, PublicKey } from '@solana/web3.js';
 import { readFileSync } from 'node:fs';
@@ -30,11 +35,24 @@ for (const line of readFileSync('.env', 'utf8').split('\n')) {
 	if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
 }
 const { sql } = await import('../api/_lib/db.js');
+const { solPriceUsd } = await import('../api/_lib/sol-price.js');
 
 const args = process.argv.slice(2);
 const traceAddr = args.includes('--trace') ? args[args.indexOf('--trace') + 1] : null;
 const maxSigs = args.includes('--max') ? Number(args[args.indexOf('--max') + 1]) : 4000;
-const SOL_USD = Number(process.env.AUDIT_SOL_USD || 73.08);
+
+// Price the fleet from the live oracle (api/_lib/sol-price.js: Redstone, then
+// Switchboard on-demand, then Bitfinex), never from a constant. This used to be
+// a hardcoded 73.08, which silently mispriced every USD figure in the report the
+// moment SOL moved, and a money audit that quotes a stale number as fact is
+// worse than one that quotes no number at all. AUDIT_SOL_USD still wins when
+// set, so a historical run can be repriced deliberately.
+const priceOverride = Number(process.env.AUDIT_SOL_USD);
+const SOL_USD = Number.isFinite(priceOverride) && priceOverride > 0 ? priceOverride : await solPriceUsd();
+const PRICE_SRC = Number.isFinite(priceOverride) && priceOverride > 0 ? 'AUDIT_SOL_USD override' : 'live oracle';
+// solPriceUsd() returns 0 when it has never resolved. Per its own contract that
+// means "unpriced", so render it as such instead of valuing the fleet at $0.00.
+const usd = (sol) => (SOL_USD > 0 ? `$${(sol * SOL_USD).toFixed(2)}` : 'unpriced');
 
 const endpoints = [
 	...(process.env.SOLANA_RPC_FALLBACK_URLS || '').split(',').filter(Boolean),
@@ -98,25 +116,43 @@ const all = [...wallets.values()];
 // ── balances ──────────────────────────────────────────────────────────────────
 // getMultipleAccounts caps vary by provider (QuickNode's free tier allows 5), so
 // keep the chunk small enough to work everywhere and lean on RPC rotation.
+// A balance this audit could not read stays `null` and is EXCLUDED from every
+// total, never coerced to 0. Coercing was the bug: a chunk whose lane threw
+// turned N funded wallets into N zeroes, and the fleet total then understated
+// the money by however much those wallets held while the report still exited
+// clean. That is the same class of failure the service-wallet audit fixed after
+// 2026-08-07, when one throttled lane read as four wallets being empty; see
+// docs/ops/solana-rpc-lanes.md. Unverified must render as unverified.
 const CHUNK = 50;
 for (let i = 0; i < all.length; i += CHUNK) {
 	const chunk = all.slice(i, i + CHUNK);
-	const keyed = chunk.map((w) => { try { return { w, pk: new PublicKey(w.addr) }; } catch { return null; } }).filter(Boolean);
+	const keyed = chunk.map((w) => {
+		try { return { w, pk: new PublicKey(w.addr) }; } catch { w.unreadable = 'not a valid Solana address'; return null; }
+	}).filter(Boolean);
 	try {
 		const infos = await rpc((c) => c.getMultipleAccountsInfo(keyed.map((k) => k.pk)));
+		// A null entry inside a SUCCESSFUL response is a real answer, not a miss:
+		// the account does not exist on chain, so it genuinely holds 0 SOL. Only a
+		// chunk that threw is unread.
 		infos.forEach((info, n) => { keyed[n].w.sol = (info?.lamports || 0) / 1e9; });
 	} catch (e) {
-		console.error(`  balance chunk ${i} failed: ${e?.message}`);
+		const why = e?.message || 'rpc call failed';
+		for (const k of keyed) k.w.unreadable = why;
+		console.error(`  balance chunk ${i} UNREADABLE (${keyed.length} wallets excluded from totals): ${why}`);
 	}
 	await sleep(120);
 }
-all.forEach((w) => { if (w.sol == null) w.sol = 0; });
-const ranked = [...all].sort((a, b) => b.sol - a.sol);
+for (const w of all) if (w.sol == null && !w.unreadable) w.unreadable = 'no balance returned';
+const unreadable = all.filter((w) => w.unreadable);
+const ranked = all.filter((w) => !w.unreadable).sort((a, b) => b.sol - a.sol);
 const total = ranked.reduce((s, w) => s + w.sol, 0);
 
 console.log(`\n${'='.repeat(80)}\nWHERE THE MONEY IS`);
 console.log(`${'='.repeat(80)}`);
-console.log(`fleet total   ${total.toFixed(4)} SOL   ($${(total * SOL_USD).toFixed(2)} at $${SOL_USD}/SOL)   across ${ranked.length} wallets\n`);
+const priceNote = SOL_USD > 0 ? ` at $${SOL_USD.toFixed(2)}/SOL, ${PRICE_SRC}` : `, SOL price unavailable (${PRICE_SRC})`;
+console.log(`fleet total   ${total.toFixed(4)} SOL   (${usd(total)}${priceNote})   across ${ranked.length} wallets`);
+if (unreadable.length) console.log(`  ‼ ${unreadable.length} of ${all.length} wallet(s) UNREADABLE, excluded from every figure below`);
+console.log('');
 
 const buckets = new Map();
 for (const w of ranked) {
@@ -126,7 +162,7 @@ for (const w of ranked) {
 }
 console.log(`${'bucket'.padEnd(32)} ${'SOL'.padStart(10)} ${'USD'.padStart(10)}  wallets  funded`);
 for (const [k, b] of [...buckets].sort((a, b) => b[1].sol - a[1].sol)) {
-	console.log(`${k.padEnd(32)} ${b.sol.toFixed(4).padStart(10)} ${('$' + (b.sol * SOL_USD).toFixed(2)).padStart(10)}  ${String(b.n).padStart(7)}  ${String(b.funded).padStart(6)}`);
+	console.log(`${k.padEnd(32)} ${b.sol.toFixed(4).padStart(10)} ${usd(b.sol).padStart(10)}  ${String(b.n).padStart(7)}  ${String(b.funded).padStart(6)}`);
 }
 
 console.log('\n--- registry engines (the wallets that actually run the economy) ---');
@@ -136,6 +172,19 @@ for (const w of ranked.filter((x) => x.owner === 'PLATFORM')) {
 console.log('\n--- top 15 balances fleet-wide ---');
 for (const w of ranked.slice(0, 15)) {
 	console.log(`  ${w.sol.toFixed(5).padStart(10)}  ${w.label.slice(0, 34).padEnd(34)} ${w.owner}`);
+}
+
+// Blind spots get their own section and their own exit code (2), mirroring the
+// service-wallet audit: "could not read" is a monitoring failure to fix before
+// anyone reasons about the money, not a funding verdict about these wallets.
+if (unreadable.length) {
+	console.log(`\n--- UNVERIFIED: ${unreadable.length} wallet(s) whose balance could not be read ---`);
+	for (const w of unreadable.slice(0, 20)) {
+		console.log(`  ‼ ${w.addr}  ${w.label.slice(0, 34).padEnd(34)} ${w.unreadable}`);
+	}
+	if (unreadable.length > 20) console.log(`  ... and ${unreadable.length - 20} more`);
+	console.log('  These hold an unknown amount. Re-run once a lane recovers before acting on any total above.');
+	process.exitCode = 2;
 }
 
 // ── ledger reconciliation ─────────────────────────────────────────────────────
@@ -185,7 +234,8 @@ if (traceAddr) {
 		await sleep(60);
 	}
 	sigs = sigs.slice(0, maxSigs);
-	if (!sigs.length) { console.log('no signatures'); process.exit(0); }
+	// Preserve any blind-spot exit code set above; an empty trace is not a clean bill.
+	if (!sigs.length) { console.log('no signatures'); process.exit(process.exitCode ?? 0); }
 	console.log(`${sigs.length} signatures  ${new Date(sigs.at(-1).blockTime * 1000).toISOString()} -> ${new Date(sigs[0].blockTime * 1000).toISOString()}`);
 
 	const labelOf = new Map(ranked.map((w) => [w.addr, `${w.label.slice(0, 30)} [${w.owner}]`]));
