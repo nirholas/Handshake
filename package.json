@@ -366,7 +366,8 @@
 		"capture:doc-media": "node scripts/capture-doc-media.mjs",
 		"check:doc-media": "node scripts/check-doc-media.mjs",
 		"sync:studio-openapi": "node scripts/sync-studio-openapi.mjs",
-		"check:studio-openapi": "node scripts/sync-studio-openapi.mjs --check"
+		"check:studio-openapi": "node scripts/sync-studio-openapi.mjs --check",
+		"token:volume": "node scripts/token-volume.mjs"
 	},
 	"dependencies": {
 		"@0xsplits/splits-sdk": "^6.5.0",
