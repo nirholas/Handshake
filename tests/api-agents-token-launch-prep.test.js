@@ -25,6 +25,7 @@ const sqlState = { queue: [] };
 
 vi.mock('../api/_lib/auth.js', () => ({
 	getSessionUser: vi.fn(async () => authState.session),
+	isSameSiteOrigin: vi.fn(() => true),
 }));
 
 vi.mock('../api/_lib/db.js', () => ({
