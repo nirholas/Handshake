@@ -1,19 +1,20 @@
-// Cloudflare Workers mirror of /api/pump-fun-mcp (Vercel).
+// Cloudflare Workers mirror of the canonical pump.fun MCP server, which runs at
+// https://three.ws/api/pump-fun-mcp (api/pump-fun-mcp.js, on Cloud Run).
 //
-// Implements the MCP Streamable HTTP transport: POST — JSON-RPC 2.0 (single +
-// batch), GET/HEAD — SSE handshake, DELETE — session terminate. Tool
-// definitions (and the snake_case ↔ camelCase alias map) are shared with the
-// Vercel handler via src/pump/mcp-tools.js. Handler logic is adapted from
-// api/pump-fun-mcp.js — see README.md for the documented divergences (no
-// auth/x402-gated tools, on-chain + indexer subset only).
+// Implements the MCP Streamable HTTP transport: POST for JSON-RPC 2.0 (single +
+// batch), GET/HEAD for the SSE handshake, DELETE for session terminate. Tool
+// definitions (and the snake_case to camelCase alias map) are shared with the
+// three.ws handler via src/pump/mcp-tools.js. Handler logic is adapted from
+// api/pump-fun-mcp.js. See README.md for the documented divergences (no
+// auth/x402-gated tools, on-chain + indexer subset only), the full config table,
+// and the verified run/build/deploy commands.
 //
-// Secrets (wrangler secret put <NAME>):
-//   SOLANA_RPC_URL          mainnet RPC endpoint (default: public)
-//   SOLANA_RPC_URL_DEVNET   devnet  RPC endpoint (default: public)
-//   PUMPFUN_BOT_URL         upstream indexer endpoint (optional)
-//   PUMPFUN_BOT_TOKEN       bearer token for indexer (optional)
+// Config, all optional (npx wrangler@4 secret put <NAME>, or --var NAME:VALUE
+// under `wrangler dev`): SOLANA_RPC_URL, SOLANA_RPC_FALLBACKS,
+// SOLANA_RPC_URL_DEVNET, SOLANA_RPC_FALLBACKS_DEVNET, PUMPFUN_BOT_URL,
+// PUMPFUN_BOT_TOKEN.
 //
-// Deploy: wrangler deploy
+// Tests: npx vitest run tests/workers/pump-fun-mcp-worker.test.js
 
 import { TOOLS, resolveToolName, rpcError, rpcEnvelope } from '../../src/pump/mcp-tools.js';
 
@@ -45,11 +46,43 @@ const CORS_HEADERS = {
 
 // ── Solana helpers (adapted for CF Workers env bindings) ─────────────────────
 
-function getRpcUrl(env, network = 'mainnet') {
-	if (network === 'devnet') {
-		return env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com';
+// Ordered failover chain: the configured endpoint first, then any comma-separated
+// SOLANA_RPC_FALLBACKS (the same var name the three.ws deployment uses). Public
+// and free-tier RPCs rate-limit and IP-block routinely, so a single-endpoint
+// worker goes dark on every on-chain tool the moment one provider says no.
+// The public endpoint is the chain only when nothing is configured: an operator
+// who pinned their own RPCs gets exactly those, in order, and never a silent
+// downgrade to a shared endpoint.
+function getRpcUrls(env, network = 'mainnet') {
+	const isDevnet = network === 'devnet';
+	const configured = [
+		isDevnet ? env.SOLANA_RPC_URL_DEVNET : env.SOLANA_RPC_URL,
+		...String((isDevnet ? env.SOLANA_RPC_FALLBACKS_DEVNET : env.SOLANA_RPC_FALLBACKS) || '')
+			.split(',')
+			.map((u) => u.trim()),
+	].filter((u) => typeof u === 'string' && /^https?:\/\//.test(u));
+	if (configured.length === 0) {
+		return [isDevnet ? 'https://api.devnet.solana.com' : 'https://api.mainnet-beta.solana.com'];
 	}
-	return env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+	return [...new Set(configured)];
+}
+
+// Run `fn` against each endpoint in the chain until one answers. A tool-level
+// rpcError (invalid mint, account genuinely absent) is a verdict, not a
+// transport failure, so it propagates immediately instead of burning the chain.
+async function withRpc(env, network, fn) {
+	const { Connection } = await import('@solana/web3.js');
+	const urls = getRpcUrls(env, network);
+	let lastError = null;
+	for (const url of urls) {
+		try {
+			return await fn(new Connection(url, 'confirmed'));
+		} catch (err) {
+			if (err?.rpcCode) throw err;
+			lastError = err;
+		}
+	}
+	throw lastError || new Error('no Solana RPC endpoint configured');
 }
 
 // ── On-chain handlers ────────────────────────────────────────────────────────
@@ -63,22 +96,25 @@ async function handleGetBondingCurve({ mint, network = 'mainnet' }, env) {
 		throw rpcError(-32602, 'invalid mint');
 	}
 
-	const conn = new Connection(getRpcUrl(env, network), 'confirmed');
 	const { OnlinePumpSdk, PumpSdk } = await import('@pump-fun/pump-sdk');
 
 	let curve;
 	try {
-		const sdk = new OnlinePumpSdk(conn);
-		if (sdk.fetchBuyState) {
-			const state = await sdk.fetchBuyState(pk, pk);
-			curve = state.bondingCurve;
-		} else if (sdk.fetchBondingCurve) {
-			curve = await sdk.fetchBondingCurve(pk);
-		}
-		if (!curve) {
-			const sdk2 = new PumpSdk(conn);
-			if (sdk2.fetchBondingCurve) curve = await sdk2.fetchBondingCurve(pk);
-		}
+		curve = await withRpc(env, network, async (conn) => {
+			const sdk = new OnlinePumpSdk(conn);
+			let found;
+			if (sdk.fetchBuyState) {
+				const state = await sdk.fetchBuyState(pk, pk);
+				found = state.bondingCurve;
+			} else if (sdk.fetchBondingCurve) {
+				found = await sdk.fetchBondingCurve(pk);
+			}
+			if (!found) {
+				const sdk2 = new PumpSdk(conn);
+				if (sdk2.fetchBondingCurve) found = await sdk2.fetchBondingCurve(pk);
+			}
+			return found;
+		});
 	} catch (e) {
 		throw rpcError(-32004, `bonding curve unavailable: ${e?.message || 'unknown'}`);
 	}
@@ -106,8 +142,8 @@ async function handleGetBondingCurve({ mint, network = 'mainnet' }, env) {
 }
 
 async function handleGetTokenDetails({ mint, network = 'mainnet' }, env) {
-	const { Connection, PublicKey } = await import('@solana/web3.js');
-	const { MintLayout } = await import('@solana/spl-token');
+	const { PublicKey } = await import('@solana/web3.js');
+	const { MintLayout, getTokenMetadata, TOKEN_2022_PROGRAM_ID } = await import('@solana/spl-token');
 
 	let pk;
 	try {
@@ -116,29 +152,64 @@ async function handleGetTokenDetails({ mint, network = 'mainnet' }, env) {
 		throw rpcError(-32602, 'invalid mint');
 	}
 
-	const conn = new Connection(getRpcUrl(env, network), 'confirmed');
-	const info = await conn.getAccountInfo(pk);
-	if (!info) throw rpcError(-32004, 'mint account not found');
-	const mintAccount = MintLayout.decode(info.data);
-
 	const METADATA_PROGRAM = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 	const [metadataPda] = PublicKey.findProgramAddressSync(
 		[Buffer.from('metadata'), METADATA_PROGRAM.toBuffer(), pk.toBuffer()],
 		METADATA_PROGRAM,
 	);
-	let name = null;
-	let symbol = null;
-	let uri = null;
+
+	// Both reads share the endpoint that answered, so metadata never lands on a
+	// provider the mint read already failed over from.
+	let read;
 	try {
-		const metaInfo = await conn.getAccountInfo(metadataPda);
+		read = await withRpc(env, network, async (conn) => {
+			const info = await conn.getAccountInfo(pk);
+			if (!info) throw rpcError(-32004, 'mint account not found');
+			// Token-2022 mints (what pump.fun launches today) carry name/symbol/uri
+			// in the mint's own TokenMetadata extension, not at the legacy Metaplex
+			// PDA, which for them does not exist at all. Read whichever applies.
+			const isToken2022 = info.owner?.equals?.(TOKEN_2022_PROGRAM_ID);
+			const extensionMetadata = isToken2022
+				? await getTokenMetadata(conn, pk, 'confirmed', TOKEN_2022_PROGRAM_ID).catch(() => null)
+				: null;
+			return {
+				info,
+				extensionMetadata,
+				metaInfo: extensionMetadata
+					? null
+					: await conn.getAccountInfo(metadataPda).catch(() => null),
+			};
+		});
+	} catch (e) {
+		// An RPC that is down, rate-limiting, or blocking this egress IP is an
+		// upstream-data failure, not a bug in this worker: report it with the same
+		// -32004 the sibling on-chain tools use rather than leaking a raw provider
+		// body through the generic -32603 catch-all.
+		if (e?.rpcCode) throw e;
+		throw rpcError(-32004, `mint account unavailable: ${e?.message || 'rpc error'}`);
+	}
+	const mintAccount = MintLayout.decode(read.info.data);
+
+	let name = read.extensionMetadata?.name?.trim() || null;
+	let symbol = read.extensionMetadata?.symbol?.trim() || null;
+	let uri = read.extensionMetadata?.uri?.trim() || null;
+	try {
+		const metaInfo = read.metaInfo;
 		if (metaInfo) {
+			// Metaplex Token Metadata v1: 1 key + 32 updateAuthority + 32 mint, then
+			// three borsh strings (name/symbol/uri), each a u32 byte length followed
+			// by that many bytes. Pre-1.3 accounts pad to the field maximum and
+			// report the padded length; 1.3+ accounts store the exact length. So the
+			// cursor must advance by the length ON THE WIRE, while the value we
+			// return is clamped to the field maximum.
 			const buf = Buffer.from(metaInfo.data);
 			let cursor = 1 + 32 + 32;
 			const readStr = (max) => {
-				const len = Math.min(buf.readUInt32LE(cursor), max);
+				const len = buf.readUInt32LE(cursor);
 				cursor += 4;
-				const slice = buf.slice(cursor, cursor + len);
-				cursor += len;
+				const end = Math.min(cursor + len, buf.length);
+				const slice = buf.subarray(cursor, Math.min(cursor + max, end));
+				cursor = end;
 				return slice.toString('utf8').replace(/\0+$/g, '').trim();
 			};
 			name = readStr(32);
@@ -164,7 +235,7 @@ async function handleGetTokenDetails({ mint, network = 'mainnet' }, env) {
 }
 
 async function handleGetTokenHolders({ mint, limit = 10, network = 'mainnet' }, env) {
-	const { Connection, PublicKey } = await import('@solana/web3.js');
+	const { PublicKey } = await import('@solana/web3.js');
 
 	let pk;
 	try {
@@ -173,10 +244,9 @@ async function handleGetTokenHolders({ mint, limit = 10, network = 'mainnet' }, 
 		throw rpcError(-32602, 'invalid mint');
 	}
 
-	const conn = new Connection(getRpcUrl(env, network), 'confirmed');
 	let largest;
 	try {
-		largest = await conn.getTokenLargestAccounts(pk);
+		largest = await withRpc(env, network, (conn) => conn.getTokenLargestAccounts(pk));
 	} catch (e) {
 		throw rpcError(-32004, `holders unavailable: ${e?.message || 'rpc error'}`);
 	}

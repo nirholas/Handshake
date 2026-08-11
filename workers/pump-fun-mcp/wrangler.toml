@@ -3,8 +3,12 @@ main = "worker.js"
 compatibility_date = "2025-01-15"
 compatibility_flags = ["nodejs_compat"]
 
-# Secrets — set with: wrangler secret put <NAME>
-# SOLANA_RPC_URL          mainnet RPC (default: public endpoint)
-# SOLANA_RPC_URL_DEVNET   devnet  RPC (default: public endpoint)
-# PUMPFUN_BOT_URL         upstream indexer MCP endpoint (optional)
-# PUMPFUN_BOT_TOKEN       bearer token for indexer (optional)
+# All configuration is optional. Set with: npx wrangler@4 secret put <NAME>
+# (or --var NAME:VALUE for a local `wrangler dev` run). See README.md.
+#
+# SOLANA_RPC_URL                primary mainnet RPC endpoint
+# SOLANA_RPC_FALLBACKS          comma-separated mainnet failover endpoints
+# SOLANA_RPC_URL_DEVNET         primary devnet RPC endpoint
+# SOLANA_RPC_FALLBACKS_DEVNET   comma-separated devnet failover endpoints
+# PUMPFUN_BOT_URL               upstream indexer MCP endpoint
+# PUMPFUN_BOT_TOKEN             bearer token for the indexer
