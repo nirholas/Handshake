@@ -263,6 +263,22 @@
 			<description>Every card in the 107-character library started streaming its full 3D model the moment the page opened, four of them at once and more than 120 MB before you had asked for anything. Cards now show their picture and load the model when you hover or tab onto one, so the page opens immediately, a phone never pays for a preview it did not ask for, and sweeping the mouse across the grid costs nothing.</description>
 		</item>
 		<item>
+			<title>The Claude artifact builder now picks your agent for you</title>
+			<link>https://three.ws/artifact</link>
+			<guid isPermaLink="false">2026-08-11:The Claude artifact builder now picks your agent for you</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Embedding an agent in a Claude conversation used to start with a blank box asking for an agent ID that nothing on the page told you how to find. The builder at /artifact now lists real public agents that carry an embeddable avatar, with their thumbnails; click one and the artifact builds, previews in a sandboxed frame and is ready to paste. Everything you configure (agent, theme, idle clip, background) is now carried in the page's address, so the link you copy rebuilds the same artifact for whoever you send it to. Typing an ID that was not an agent UUID used to come back as an internal error with a support reference; it now says plainly that agent IDs are UUIDs and where to find one. The sandbox CSP panel reads from three.ws instead of a third-party mirror, so it fills in even when GitHub is unreachable, and the whole page fits a 320px phone screen without sideways scrolling.</description>
+		</item>
+		<item>
+			<title>The Club no longer freezes, and tips survive wallet transaction protection</title>
+			<link>https://three.ws/club</link>
+			<guid isPermaLink="false">2026-08-11:The Club no longer freezes, and tips survive wallet transaction protection</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two ways the 3D club at /club could go wrong for a paying visitor are gone. The live tip feed froze the whole page the moment its 21st tip arrived: the code that trims the feed to 20 rows waited for a fade-out animation that never got a chance to run, and the browser locked up with a 'page unresponsive' warning. The feed now trims cleanly, keeps its fade, and can no longer strand rows even in a background tab. And tipping from a wallet with transaction protection or automatic priority fees turned on (Phantom and Solflare both ship these) was rejected with a 'transaction modification' error before any money moved; the checkout now recognizes that a wallet retuning its network fee is harmless, verifies nothing else about the payment changed, and lets the tip settle. A wallet that alters the actual payment is still refused, now with a message naming exactly what it changed.</description>
+		</item>
+		<item>
 			<title>The market anchor keeps real headlines on air when its intel feed goes down</title>
 			<link>https://three.ws/agent-screen</link>
 			<guid isPermaLink="false">2026-08-11:The market anchor keeps real headlines on air when its intel feed goes down</guid>
