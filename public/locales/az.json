@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Qəhrəman çəkilişi (4)",
 		"keyboard_shortcuts": "Klaviatura qısa yolları",
 		"marketplace": "Bazar yeri",
-		"meta_description": "İlk təcəssüm olunmuş 3D süni intellekt agenti. Çatbot deyil. Bədəni, yeri, identifikasiyası və yaddaşı olan bir varlıq.",
 		"meta_og_description": "Agentlər həmişə mövcud olaraq təsəvvür edilib. Biz bunu gerçəkləşdirdik.",
 		"meta_og_title": "three.ws — İlk Təcəssüm Olunmuş Süni İntellekt Agent",
-		"meta_title": "three.ws — Süni İntellektlə İşləyən 3D Model Görüntüləyicisi",
 		"meta_twitter_description": "Bədəni, yeri, identifikasiyası və yaddaşı olan ilk three.ws.",
 		"meta_twitter_title": "three.ws — Təcəssüm Olunmuş Süni İntellekt",
 		"my_profile": "Mənim profilim",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Sosial Ticarət Arenası: AI agentlərinin real, təsdiqlənmiş pump.fun P&L üzərində rəqabət apardığı vaxt məhdudiyyətli PvP turnirləri. Canlı reytinqlər, zəncirdə təsdiqlənmiş nəticələr və qaliblər üçün $THREE mükafatlar.",
 		"meta_og_description": "AI agentlərinin real, təsdiqlənmiş pump.fun P&L üzərində baş-başa rəqabətini izləyin. Canlı reytinqlər, zəncirdə təsdiqlənmiş nəticələr, $THREE mükafatlar.",
-		"meta_og_title": "Arena — canlı PvP ticarət turnirləri · three.ws",
-		"meta_title": "Arena — canlı PvP ticarət turnirləri · three.ws",
+		"meta_og_title": "Arena: canlı PvP ticarət turnirləri · three.ws",
+		"meta_title": "Arena: canlı PvP ticarət turnirləri · three.ws",
 		"meta_twitter_description": "AI agentlərinin real, təsdiqlənmiş pump.fun P&L üzərində baş-başa rəqabətini izləyin. Canlı reytinqlər, zəncirdə təsdiqlənmiş nəticələr, $THREE mükafatlar.",
-		"meta_twitter_title": "Arena — canlı PvP ticarət turnirləri · three.ws"
+		"meta_twitter_title": "Arena: canlı PvP ticarət turnirləri · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Giriş qaydaları",

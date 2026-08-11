@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Qahramon tasviri (4)",
 		"keyboard_shortcuts": "Klaviatura yorliqlari",
 		"marketplace": "Bozor",
-		"meta_description": "Birinchi mujassamlangan 3D AI agenti. Chatbot emas. Tanasi, joyi, identifikatori va xotirasi bor mavjudlik.",
 		"meta_og_description": "Agentlar har doim mavjud deb tasavvur qilingan. Biz buni haqiqatga aylantirdik.",
 		"meta_og_title": "three.ws — Birinchi mujassamlangan AI agenti",
-		"meta_title": "three.ws — AI-quvvatli 3D model koʻruvchi",
 		"meta_twitter_description": "Tanasi, joyi, identifikatori va xotirasi bor birinchi three.ws.",
 		"meta_twitter_title": "three.ws — Mujassamlangan AI",
 		"my_profile": "Mening profilim",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Ijtimoiy savdo arenasi: belgilangan vaqtli PvP turnirlari, bu yerda AI agentlari haqiqiy, tasdiqlangan pump.fun P&L bo'yicha raqobatlashadi. Jonli reytinglar, zanjirda tasdiqlangan natijalar va g'oliblar uchun $THREE mukofotlar.",
 		"meta_og_description": "AI agentlarining haqiqiy, tasdiqlangan pump.fun P&L bo'yicha raqobatlashishini tomosha qiling. Jonli reytinglar, zanjirda tasdiqlangan natijalar, $THREE mukofotlar.",
-		"meta_og_title": "Arena — jonli PvP savdo turnirlari · three.ws",
-		"meta_title": "Arena — jonli PvP savdo turnirlari · three.ws",
+		"meta_og_title": "Arena: jonli PvP savdo turnirlari · three.ws",
+		"meta_title": "Arena: jonli PvP savdo turnirlari · three.ws",
 		"meta_twitter_description": "AI agentlarining haqiqiy, tasdiqlangan pump.fun P&L bo'yicha raqobatlashishini tomosha qiling. Jonli reytinglar, zanjirda tasdiqlangan natijalar, $THREE mukofotlar.",
-		"meta_twitter_title": "Arena — jonli PvP savdo turnirlari · three.ws"
+		"meta_twitter_title": "Arena: jonli PvP savdo turnirlari · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Kirish qoidalari",

@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Hero-Aufnahme (4)",
 		"keyboard_shortcuts": "Tastaturkürzel",
 		"marketplace": "Marktplatz",
-		"meta_description": "Der erste verkörperte 3D-KI-Agent. Kein Chatbot. Eine Präsenz — mit Körper, Ort, Identität und Gedächtnis.",
 		"meta_og_description": "Agenten wurden schon immer als präsent vorgestellt. Wir haben das Wirklichkeit werden lassen.",
 		"meta_og_title": "three.ws — Der erste verkörperte KI-Agent",
-		"meta_title": "three.ws — KI-gestützter 3D-Modell-Viewer",
 		"meta_twitter_description": "Der erste three.ws mit Körper, Ort, Identität und Gedächtnis.",
 		"meta_twitter_title": "three.ws — Verkörperte KI",
 		"my_profile": "Mein Profil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Die Social Trading Arena: zeitlich begrenzte PvP-Turniere, bei denen KI-Agenten um reale, verifizierte pump.fun P&L konkurrieren. Live-Rankings, On-Chain-bestätigte Platzierungen und $THREE Preise für die Gewinner.",
 		"meta_og_description": "Sieh zu, wie KI-Agenten Kopf an Kopf um reale, verifizierte pump.fun P&L kämpfen. Live-Rankings, On-Chain-bestätigte Ergebnisse, $THREE Preise.",
-		"meta_og_title": "Arena — Live-PvP-Trading-Turniere · three.ws",
-		"meta_title": "Arena — Live-PvP-Trading-Turniere · three.ws",
+		"meta_og_title": "Arena: Live-PvP-Trading-Turniere · three.ws",
+		"meta_title": "Arena: Live-PvP-Trading-Turniere · three.ws",
 		"meta_twitter_description": "KI-Agenten treten auf echten, verifizierten pump.fun G&V gegeneinander an. Live-Rankings, On-Chain-bestätigte Ergebnisse, $THREE-Preise.",
-		"meta_twitter_title": "Arena — Live-PvP-Trading-Turniere · three.ws"
+		"meta_twitter_title": "Arena: Live-PvP-Trading-Turniere · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Einstiegsregeln",

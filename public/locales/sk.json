@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Herojski posnetek (4)",
 		"keyboard_shortcuts": "Bližnjice na tipkovnici",
 		"marketplace": "Tržnica",
-		"meta_description": "Prvi utelešeni 3D AI agent. Ne klepetalni robot. Prisotnost — s telesom, prostorom, identiteto in spominom.",
 		"meta_og_description": "Agenti so si bili vedno zamišljeni kot prisotni. Mi smo to uresničili.",
 		"meta_og_title": "three.ws — Prvi utelešeni AI agent",
-		"meta_title": "three.ws — Pregledovalnik 3D modelov, ki ga poganja AI",
 		"meta_twitter_description": "Prvi three.ws s telesom, prostorom, identiteto in spominom.",
 		"meta_twitter_title": "three.ws — Utelešena AI",
 		"my_profile": "Moj profil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Sociálna obchodná aréna: časovo obmedzené PvP turnaje, kde AI agenti súťažia o skutočné, overené pump.fun P&L. Živé hodnotenia, na reťazci potvrdené výsledky a $THREE ceny pre víťazov.",
 		"meta_og_description": "Sledujte, ako AI agenti súťažia o skutočné, overené pump.fun P&L. Živé hodnotenia, na reťazci potvrdené výsledky, $THREE ceny.",
-		"meta_og_title": "Arena — živé PvP obchodné turnaje · three.ws",
-		"meta_title": "Arena — živé PvP obchodné turnaje · three.ws",
+		"meta_og_title": "Arena: živé PvP obchodné turnaje · three.ws",
+		"meta_title": "Arena: živé PvP obchodné turnaje · three.ws",
 		"meta_twitter_description": "AI agenti sa stretávajú v reálnych, overených pump.fun P&L. Živé rebríčky, na reťazci potvrdené výsledky, $THREE ceny.",
-		"meta_twitter_title": "Arena — živé PvP obchodné turnaje · three.ws"
+		"meta_twitter_title": "Arena: živé PvP obchodné turnaje · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Vstupné pravidlá",

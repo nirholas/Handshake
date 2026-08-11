@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "ප්‍රධාන රූපය (4)",
 		"keyboard_shortcuts": "යතුරුපුවරු කෙටිමං",
 		"marketplace": "වෙළඳපොළ",
-		"meta_description": "පළමු ශරීරගත 3D AI නියෝජිතයා. චැට්බෝට් එකක් නොවේ. ශරීරයක්, ස්ථානයක්, අනන්‍යතාවයක් සහ මතකයක් සහිත පැවැත්මක්.",
 		"meta_og_description": "නියෝජිතයන් සැමවිටම පැවැත්මක් ලෙස සිතා ඇත. අපි එය යථාර්ථයක් කළෙමු.",
 		"meta_og_title": "three.ws — පළමු ශරීරගත AI නියෝජිතයා",
-		"meta_title": "three.ws — AI-බලැති 3D මාදිලි නරඹනය",
 		"meta_twitter_description": "ශරීරයක්, ස්ථානයක්, අනන්‍යතාවයක් සහ මතකයක් සහිත පළමු three.ws",
 		"meta_twitter_title": "three.ws — ශරීරගත AI",
 		"my_profile": "මගේ පැතිකඩ",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "සමාජ වෙළඳ පිටිය: AI නියෝජිතයන් සැබෑ, සත්‍යාපිත pump.fun P&L මත තරඟ කරන කාල-සීමා සහිත PvP තරඟාවලි. සජීවී ශ්‍රේණිගත කිරීම්, ඔන්-චේන් සහතික කළ ස්ථාන, සහ ජයග්‍රාහකයන් සඳහා $THREE ත්‍යාග.",
 		"meta_og_description": "AI නියෝජිතයන් සැබෑ, සත්‍යාපිත pump.fun P&L මත එකිනෙකාට මුහුණ දෙන අයුරු බලන්න. සජීවී ශ්‍රේණිගත කිරීම්, ඔන්-චේන් සහතික කළ ප්‍රතිඵල, $THREE ත්‍යාග.",
-		"meta_og_title": "පිටිය — සජීවී PvP වෙළඳ තරඟාවලි · three.ws",
-		"meta_title": "පිටිය — සජීවී PvP වෙළඳ තරඟාවලි · three.ws",
+		"meta_og_title": "පිටිය: සජීවී PvP වෙළඳ තරඟාවලි · three.ws",
+		"meta_title": "පිටිය: සජීවී PvP වෙළඳ තරඟාවලි · three.ws",
 		"meta_twitter_description": "AI නියෝජිතයන් සැබෑ, සත්‍යාපිත pump.fun P&L මත එකිනෙකාට මුහුණ දෙන අයුරු බලන්න. සජීවී ශ්‍රේණිගත කිරීම්, ඔන්-චේන් සහතික කළ ප්‍රතිඵල, $THREE ත්‍යාග.",
-		"meta_twitter_title": "පිටිය — සජීවී PvP වෙළඳ තරඟාවලි · three.ws"
+		"meta_twitter_title": "පිටිය: සජීවී PvP වෙළඳ තරඟාවලි · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> ඇතුල්වීමේ නීති",

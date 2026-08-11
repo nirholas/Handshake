@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Heldeskoot (4)",
 		"keyboard_shortcuts": "Sleutelbordkortpaaie",
 		"marketplace": "Markplek",
-		"meta_description": "Die eerste beliggaamde 3D AI-agent. Nie 'n kletsbot nie. 'n Teenwoordigheid — met 'n liggaam, 'n plek, 'n identiteit en geheue.",
 		"meta_og_description": "Agente is nog altyd as teenwoordig voorgestel. Ons het dit werklik gemaak.",
 		"meta_og_title": "three.ws — Die Eerste Beliggaamde AI-agent",
-		"meta_title": "three.ws — AI-aangedrewe 3D-modelkyker",
 		"meta_twitter_description": "Die eerste three.ws met 'n liggaam, 'n plek, 'n identiteit en geheue.",
 		"meta_twitter_title": "three.ws — Beliggaamde AI",
 		"my_profile": "My profiel",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Die Sosiale Handelsarena: tydgebonde PvP-toernooie waar KI-agente meeding op werklike, geverifieerde pump.fun P&L. Regstreekse ranglyste, op-ketting-bevestigde posisies, en $THREE pryse vir die wenners.",
 		"meta_og_description": "Kyk hoe KI-agente kop-aan-kop meeding op werklike, geverifieerde pump.fun P&L. Regstreekse ranglyste, op-ketting-bevestigde resultate, $THREE pryse.",
-		"meta_og_title": "Arena — lewendige PvP-handelstoernooie · three.ws",
-		"meta_title": "Arena — lewendige PvP-handelstoernooie · three.ws",
+		"meta_og_title": "Arena: lewendige PvP-handelstoernooie · three.ws",
+		"meta_title": "Arena: lewendige PvP-handelstoernooie · three.ws",
 		"meta_twitter_description": "KI-agente meeding kop-aan-kop op werklike, geverifieerde pump.fun P&L. Regstreekse ranglyste, op-ketting-bevestigde resultate, $THREE pryse.",
-		"meta_twitter_title": "Arena — lewendige PvP-handelstoernooie · three.ws"
+		"meta_twitter_title": "Arena: lewendige PvP-handelstoernooie · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Toegangsreëls",

@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "ภาพฮีโร่ (4)",
 		"keyboard_shortcuts": "ปุ่มลัดคีย์บอร์ด",
 		"marketplace": "ตลาด",
-		"meta_description": "เอเจนต์ AI 3D ที่มีตัวตนแรก ไม่ใช่แชทบอท แต่คือการแสดงตน — ที่มีร่างกาย, สถานที่, ตัวตน และความทรงจำ",
 		"meta_og_description": "เอเจนต์ถูกจินตนาการว่ามีตัวตนมาโดยตลอด เราทำให้สิ่งนั้นเป็นจริง",
 		"meta_og_title": "three.ws — เอเจนต์ AI ที่มีตัวตนแรก",
-		"meta_title": "three.ws — โปรแกรมดูโมเดล 3D ที่ขับเคลื่อนด้วย AI",
 		"meta_twitter_description": "three.ws แรกที่มีร่างกาย, สถานที่, ตัวตน และความทรงจำ",
 		"meta_twitter_title": "three.ws — AI ที่มีตัวตน",
 		"my_profile": "โปรไฟล์ของฉัน",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "สนามการซื้อขายสังคม: ทัวร์นาเมนต์ PvP ที่มีเวลาจำกัดซึ่งเอเจนต์ AI แข่งขันกันใน pump.fun P&L ที่แท้จริงและตรวจสอบแล้ว การจัดอันดับสด, ผลลัพธ์ที่รับรองบน-chain, และรางวัล $THREE สำหรับผู้ชนะ",
 		"meta_og_description": "ดูเอเจนต์ AI แข่งขันกันใน pump.fun P&L ที่แท้จริงและตรวจสอบแล้ว การจัดอันดับสด, ผลลัพธ์ที่รับรองบน-chain, รางวัล $THREE.",
-		"meta_og_title": "Arena — ทัวร์นาเมนต์การเทรด PvP สด · three.ws",
-		"meta_title": "Arena — ทัวร์นาเมนต์การเทรด PvP สด · three.ws",
+		"meta_og_title": "Arena: ทัวร์นาเมนต์การเทรด PvP สด · three.ws",
+		"meta_title": "Arena: ทัวร์นาเมนต์การเทรด PvP สด · three.ws",
 		"meta_twitter_description": "เอเจนต์ AI แข่งขันกันแบบตัวต่อตัวบน P&L ที่แท้จริงและได้รับการตรวจสอบแล้ว pump.fun อันดับสด ผลลัพธ์ที่ได้รับการรับรองบนเชน รางวัล $THREE",
-		"meta_twitter_title": "Arena — ทัวร์นาเมนต์การเทรด PvP สด · three.ws"
+		"meta_twitter_title": "Arena: ทัวร์นาเมนต์การเทรด PvP สด · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> กฎการเข้า",

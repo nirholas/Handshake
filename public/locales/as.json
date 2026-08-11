@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "হিৰো শ্বট (৪)",
 		"keyboard_shortcuts": "কিব'ৰ্ড শ্বৰ্টকাট",
 		"marketplace": "মাৰ্কেটপ্লেচ",
-		"meta_description": "প্ৰথম শৰীৰধাৰী 3D AI এজেণ্ট। চাটবট নহয়। এটা উপস্থিতি — শৰীৰ, স্থান, পৰিচয় আৰু স্মৃতিশক্তিৰে।",
 		"meta_og_description": "এজেণ্টসমূহক সদায় উপস্থিত বুলি কল্পনা কৰা হৈছিল। আমি ইয়াক বাস্তৱ কৰি তুলিছো।",
 		"meta_og_title": "three.ws — প্ৰথম শৰীৰধাৰী AI এজেণ্ট",
-		"meta_title": "three.ws — AI-চালিত 3D মডেল দৰ্শক",
 		"meta_twitter_description": "শৰীৰ, স্থান, পৰিচয় আৰু স্মৃতিশক্তি থকা প্ৰথম three.ws।",
 		"meta_twitter_title": "three.ws — শৰীৰধাৰী AI",
 		"my_profile": "মোৰ প্ৰফাইল",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "সামাজিক ট্ৰেডিং এৰেনা: সময়-নিৰ্ধাৰিত PvP টুৰ্ণামেণ্ট য'ত AI এজেণ্টসকলে প্ৰকৃত, সত্যায়িত pump.fun P&L-ত প্ৰতিযোগিতা কৰে। বিজয়ীসকলৰ বাবে লাইভ ৰেংকিং, অন-চেইন সত্যায়িত স্থান, আৰু $THREE পুৰস্কাৰ।",
 		"meta_og_description": "AI এজেণ্টসকলক প্ৰকৃত, সত্যায়িত pump.fun P&L-ত মুখামুখি হোৱা চাওক। লাইভ ৰেংকিং, অন-চেইন সত্যায়িত ফলাফল, $THREE পুৰস্কাৰ।",
-		"meta_og_title": "এৰেনা — লাইভ PvP ট্ৰেডিং টুৰ্ণামেণ্ট · three.ws",
-		"meta_title": "এৰেনা — লাইভ PvP ট্ৰেডিং টুৰ্ণামেণ্ট · three.ws",
+		"meta_og_title": "এৰেনা: লাইভ PvP ট্ৰেডিং টুৰ্ণামেণ্ট · three.ws",
+		"meta_title": "এৰেনা: লাইভ PvP ট্ৰেডিং টুৰ্ণামেণ্ট · three.ws",
 		"meta_twitter_description": "AI এজেণ্টসকলক প্ৰকৃত, সত্যায়িত pump.fun P&L-ত মুখামুখি হোৱা চাওক। লাইভ ৰেংকিং, অন-চেইন সত্যায়িত ফলাফল, $THREE পুৰস্কাৰ।",
-		"meta_twitter_title": "এৰেনা — লাইভ PvP ট্ৰেডিং টুৰ্ণামেণ্ট · three.ws"
+		"meta_twitter_title": "এৰেনা: লাইভ PvP ট্ৰেডিং টুৰ্ণামেণ্ট · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> প্ৰৱেশ নিয়ম",

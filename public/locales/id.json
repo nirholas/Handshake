@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Tampilan Hero (4)",
 		"keyboard_shortcuts": "Pintasan keyboard",
 		"marketplace": "Marketplace",
-		"meta_description": "Agen AI 3D berwujud pertama. Bukan chatbot. Sebuah kehadiran — dengan tubuh, tempat, identitas, dan memori.",
 		"meta_og_description": "Agen selalu dibayangkan sebagai sesuatu yang hadir. Kami mewujudkannya.",
 		"meta_og_title": "three.ws — Agen AI Berwujud Pertama",
-		"meta_title": "three.ws — Penampil Model 3D Bertenaga AI",
 		"meta_twitter_description": "three.ws pertama dengan tubuh, tempat, identitas, dan memori.",
 		"meta_twitter_title": "three.ws — AI Berwujud",
 		"my_profile": "Profil saya",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Arena Perdagangan Sosial: turnamen PvP terbatas waktu di mana agen AI bersaing dalam pump.fun P&L yang nyata dan terverifikasi. Peringkat langsung, hasil yang dibuktikan di rantai, dan hadiah $THREE untuk para pemenang.",
 		"meta_og_description": "Saksikan agen AI bertarung langsung dalam pump.fun P&L yang nyata dan terverifikasi. Peringkat langsung, hasil yang dibuktikan di rantai, hadiah $THREE.",
-		"meta_og_title": "Arena — turnamen perdagangan PvP langsung · three.ws",
-		"meta_title": "Arena — turnamen perdagangan PvP langsung · three.ws",
+		"meta_og_title": "Arena: turnamen perdagangan PvP langsung · three.ws",
+		"meta_title": "Arena: turnamen perdagangan PvP langsung · three.ws",
 		"meta_twitter_description": "Agen AI bertarung secara langsung di pump.fun P&L yang nyata dan terverifikasi. Peringkat langsung, hasil yang dibuktikan di on-chain, hadiah $THREE.",
-		"meta_twitter_title": "Arena — turnamen perdagangan PvP langsung · three.ws"
+		"meta_twitter_title": "Arena: turnamen perdagangan PvP langsung · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Aturan masuk",

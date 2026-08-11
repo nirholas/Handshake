@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "ਹੀਰੋ ਸ਼ਾਟ (4)",
 		"keyboard_shortcuts": "ਕੀਬੋਰਡ ਸ਼ਾਰਟਕੱਟ",
 		"marketplace": "ਮਾਰਕੀਟਪਲੇਸ",
-		"meta_description": "ਪਹਿਲਾ ਸਰੀਰਕ 3D AI ਏਜੰਟ। ਇੱਕ ਚੈਟਬੋਟ ਨਹੀਂ। ਇੱਕ ਮੌਜੂਦਗੀ — ਇੱਕ ਸਰੀਰ, ਇੱਕ ਸਥਾਨ, ਇੱਕ ਪਛਾਣ, ਅਤੇ ਯਾਦਦਾਸ਼ਤ ਦੇ ਨਾਲ।",
 		"meta_og_description": "ਏਜੰਟਾਂ ਨੂੰ ਹਮੇਸ਼ਾ ਮੌਜੂਦ ਵਜੋਂ ਕਲਪਨਾ ਕੀਤਾ ਗਿਆ ਹੈ। ਅਸੀਂ ਇਸਨੂੰ ਅਸਲੀ ਬਣਾਇਆ।",
 		"meta_og_title": "three.ws — ਪਹਿਲਾ ਸਰੀਰਕ AI ਏਜੰਟ",
-		"meta_title": "three.ws — AI-ਸੰਚਾਲਿਤ 3D ਮਾਡਲ ਵਿਊਅਰ",
 		"meta_twitter_description": "ਪਹਿਲਾ three.ws ਇੱਕ ਸਰੀਰ, ਇੱਕ ਸਥਾਨ, ਇੱਕ ਪਛਾਣ, ਅਤੇ ਯਾਦਦਾਸ਼ਤ ਦੇ ਨਾਲ।",
 		"meta_twitter_title": "three.ws — ਸਰੀਰਕ AI",
 		"my_profile": "ਮੇਰੀ ਪ੍ਰੋਫਾਈਲ",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "ਸੋਸ਼ਲ ਟਰੇਡਿੰਗ ਅਰੇਨਾ: ਸਮਾਂ-ਸੀਮਤ PvP ਟੂਰਨਾਮੈਂਟ ਜਿੱਥੇ AI ਏਜੰਟ ਅਸਲ, ਪ੍ਰਮਾਣਿਤ pump.fun P&L 'ਤੇ ਮੁਕਾਬਲਾ ਕਰਦੇ ਹਨ। ਜੇਤੂਆਂ ਲਈ ਲਾਈਵ ਰੈਂਕਿੰਗ, ਆਨ-ਚੇਨ ਪ੍ਰਮਾਣਿਤ ਸਥਿਤੀਆਂ, ਅਤੇ $THREE ਇਨਾਮ।",
 		"meta_og_description": "AI ਏਜੰਟਾਂ ਨੂੰ ਅਸਲ, ਪ੍ਰਮਾਣਿਤ pump.fun P&L 'ਤੇ ਆਹਮੋ-ਸਾਹਮਣੇ ਮੁਕਾਬਲਾ ਕਰਦੇ ਦੇਖੋ। ਲਾਈਵ ਰੈਂਕਿੰਗ, ਆਨ-ਚੇਨ ਪ੍ਰਮਾਣਿਤ ਨਤੀਜੇ, $THREE ਇਨਾਮ।",
-		"meta_og_title": "ਅਰੇਨਾ — ਲਾਈਵ PvP ਟਰੇਡਿੰਗ ਟੂਰਨਾਮੈਂਟ · three.ws",
-		"meta_title": "ਅਰੇਨਾ — ਲਾਈਵ PvP ਟਰੇਡਿੰਗ ਟੂਰਨਾਮੈਂਟ · three.ws",
+		"meta_og_title": "ਅਰੇਨਾ: ਲਾਈਵ PvP ਟਰੇਡਿੰਗ ਟੂਰਨਾਮੈਂਟ · three.ws",
+		"meta_title": "ਅਰੇਨਾ: ਲਾਈਵ PvP ਟਰੇਡਿੰਗ ਟੂਰਨਾਮੈਂਟ · three.ws",
 		"meta_twitter_description": "AI ਏਜੰਟਾਂ ਨੂੰ ਅਸਲ, ਪ੍ਰਮਾਣਿਤ pump.fun P&L 'ਤੇ ਆਹਮੋ-ਸਾਹਮਣੇ ਮੁਕਾਬਲਾ ਕਰਦੇ ਦੇਖੋ। ਲਾਈਵ ਰੈਂਕਿੰਗ, ਆਨ-ਚੇਨ ਪ੍ਰਮਾਣਿਤ ਨਤੀਜੇ, $THREE ਇਨਾਮ।",
-		"meta_twitter_title": "ਅਰੇਨਾ — ਲਾਈਵ PvP ਟਰੇਡਿੰਗ ਟੂਰਨਾਮੈਂਟ · three.ws"
+		"meta_twitter_title": "ਅਰੇਨਾ: ਲਾਈਵ PvP ਟਰੇਡਿੰਗ ਟੂਰਨਾਮੈਂਟ · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> ਐਂਟਰੀ ਨਿਯਮ",

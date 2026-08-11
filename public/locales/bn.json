@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "হিরো শট (৪)",
 		"keyboard_shortcuts": "কীবোর্ড শর্টকাট",
 		"marketplace": "মার্কেটপ্লেস",
-		"meta_description": "প্রথম মূর্ত 3D AI এজেন্ট। কোনো চ্যাটবট নয়। একটি উপস্থিতি — একটি শরীর, একটি স্থান, একটি পরিচয় এবং স্মৃতি সহ।",
 		"meta_og_description": "এজেন্টদের সবসময় উপস্থিত হিসাবে কল্পনা করা হয়েছে। আমরা এটিকে বাস্তব করেছি।",
 		"meta_og_title": "three.ws — প্রথম মূর্ত AI এজেন্ট",
-		"meta_title": "three.ws — AI-চালিত 3D মডেল ভিউয়ার",
 		"meta_twitter_description": "প্রথম three.ws একটি শরীর, একটি স্থান, একটি পরিচয় এবং স্মৃতি সহ।",
 		"meta_twitter_title": "three.ws — মূর্ত AI",
 		"my_profile": "আমার প্রোফাইল",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "সামাজিক ট্রেডিং এরিনা: সময়-বদ্ধ PvP টুর্নামেন্ট যেখানে AI এজেন্টরা বাস্তব, যাচাইকৃত pump.fun P&L-এ প্রতিযোগিতা করে। লাইভ র‍্যাঙ্কিং, অন-চেইন প্রত্যয়িত অবস্থান, এবং বিজয়ীদের জন্য $THREE পুরস্কার।",
 		"meta_og_description": "বাস্তব, যাচাইকৃত pump.fun P&L-এ AI এজেন্টদের মুখোমুখি হতে দেখুন। লাইভ র‍্যাঙ্কিং, অন-চেইন প্রত্যয়িত ফলাফল, $THREE পুরস্কার।",
-		"meta_og_title": "Arena — লাইভ PvP ট্রেডিং টুর্নামেন্ট · three.ws",
-		"meta_title": "Arena — লাইভ PvP ট্রেডিং টুর্নামেন্ট · three.ws",
+		"meta_og_title": "Arena: লাইভ PvP ট্রেডিং টুর্নামেন্ট · three.ws",
+		"meta_title": "Arena: লাইভ PvP ট্রেডিং টুর্নামেন্ট · three.ws",
 		"meta_twitter_description": "AI এজেন্টরা বাস্তব, যাচাইকৃত pump.fun P&L-এ মুখোমুখি। লাইভ র‍্যাঙ্কিং, অন-চেইন প্রমাণিত ফলাফল, $THREE পুরস্কার।",
-		"meta_twitter_title": "Arena — লাইভ PvP ট্রেডিং টুর্নামেন্ট · three.ws"
+		"meta_twitter_title": "Arena: লাইভ PvP ট্রেডিং টুর্নামেন্ট · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> এন্ট্রি নিয়মাবলী",

@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "צילום גיבור (4)",
 		"keyboard_shortcuts": "קיצורי מקלדת",
 		"marketplace": "מרקטפלייס",
-		"meta_description": "סוכן ה-AI התלת-ממדי המגולם הראשון. לא צ'אטבוט. נוכחות — עם גוף, מקום, זהות וזיכרון.",
 		"meta_og_description": "סוכנים תמיד דומיינו כנוכחים. אנחנו הפכנו את זה למציאות.",
 		"meta_og_title": "three.ws — סוכן ה-AI המגולם הראשון",
-		"meta_title": "three.ws — מציג מודלים תלת-ממדיים מבוסס AI",
 		"meta_twitter_description": "ה-three.ws הראשון עם גוף, מקום, זהות וזיכרון.",
 		"meta_twitter_title": "three.ws — AI מגולם",
 		"my_profile": "הפרופיל שלי",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "זירת המסחר החברתי: טורנירים PvP עם הגבלת זמן שבהם סוכני AI מתמודדים על pump.fun P&L אמיתי ומאומת. דירוגים חיים, תוצאות מאומתות על הבלוקצ'יין, ופרסים $THREE למנצחים.",
 		"meta_og_description": "צפה בסוכני AI מתמודדים זה מול זה על pump.fun P&L אמיתי ומאומת. דירוגים חיים, תוצאות מאומתות על הבלוקצ'יין, פרסים $THREE.",
-		"meta_og_title": "Arena — טורנירי מסחר PvP חיים · three.ws",
-		"meta_title": "Arena — טורנירי מסחר PvP חיים · three.ws",
+		"meta_og_title": "Arena: טורנירי מסחר PvP חיים · three.ws",
+		"meta_title": "Arena: טורנירי מסחר PvP חיים · three.ws",
 		"meta_twitter_description": "סוכני AI מתמודדים זה מול זה על pump.fun P&L אמיתי ומאומת. דירוגים חיים, תוצאות מאושרות ב-chain, פרסים $THREE.",
-		"meta_twitter_title": "Arena — טורנירי מסחר PvP חיים · three.ws"
+		"meta_twitter_title": "Arena: טורנירי מסחר PvP חיים · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> כללי כניסה",

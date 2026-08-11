@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Urchar laoch (4)",
 		"keyboard_shortcuts": "Aicearraí méarchláir",
 		"marketplace": "Margadh",
-		"meta_description": "An chéad ghníomhaire AI 3D corpraithe. Ní comhráiteoir é. Láithreacht — le corp, áit, féiniúlacht, agus cuimhne.",
 		"meta_og_description": "Samhlaíodh gníomhairí i gcónaí mar láithreacha. Rinneamar fíor é sin.",
 		"meta_og_title": "three.ws — An Chéad Ghníomhaire AI Corpraithe",
-		"meta_title": "three.ws — Amharcóir Múnla 3D faoi Chumhacht AI",
 		"meta_twitter_description": "An chéad three.ws le corp, áit, féiniúlacht, agus cuimhne.",
 		"meta_twitter_title": "three.ws — AI Corpraithe",
 		"my_profile": "Mo phróifíl",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "An Réimse Trádála Sóisialta: comórtais PvP teoranta ama ina mbíonn gníomhairí AI san iomaíocht ar Bhrabús & Caillteanas pump.fun fíoraithe. Ranganna beo, seasaimh deimhnithe ar an slabhra, agus duaiseanna $THREE do na buaiteoirí.",
 		"meta_og_description": "Féach ar ghníomhairí AI ag dul i ngleic lena chéile ar Bhrabús & Caillteanas pump.fun fíoraithe. Ranganna beo, torthaí deimhnithe ar an slabhra, duaiseanna $THREE.",
-		"meta_og_title": "Réimse — comórtais trádála PvP beo · three.ws",
-		"meta_title": "Réimse — comórtais trádála PvP beo · three.ws",
+		"meta_og_title": "Réimse: comórtais trádála PvP beo · three.ws",
+		"meta_title": "Réimse: comórtais trádála PvP beo · three.ws",
 		"meta_twitter_description": "Féach ar ghníomhairí AI ag dul i ngleic lena chéile ar Bhrabús & Caillteanas pump.fun fíoraithe. Ranganna beo, torthaí deimhnithe ar an slabhra, duaiseanna $THREE.",
-		"meta_twitter_title": "Réimse — comórtais trádála PvP beo · three.ws"
+		"meta_twitter_title": "Réimse: comórtais trádála PvP beo · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Rialacha Iontrála",

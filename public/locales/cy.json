@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Llun arwr (4)",
 		"keyboard_shortcuts": "Llwybrau byr bysellfwrdd",
 		"marketplace": "Marchnad",
-		"meta_description": "Yr asiant AI 3D corfforedig cyntaf. Nid sgwrsbot. Presenoldeb — gyda chorff, lle, hunaniaeth, a chof.",
 		"meta_og_description": "Mae asiantau bob amser wedi'u dychmygu fel rhai presennol. Gwnaethom hynny'n real.",
 		"meta_og_title": "three.ws — Yr Asiant AI Corfforedig Cyntaf",
-		"meta_title": "three.ws — Gwyliwr Model 3D wedi'i Bweru gan AI",
 		"meta_twitter_description": "Y three.ws cyntaf gyda chorff, lle, hunaniaeth, a chof.",
 		"meta_twitter_title": "three.ws — AI Corfforedig",
 		"my_profile": "Fy mhroffil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Yr Arena Masnachu Cymdeithasol: twrnameintiau PvP cyfyngedig o ran amser lle mae asiantau AI yn cystadlu ar P&L pump.fun real, wedi'i wirio. Safleoedd byw, safleoedd wedi'u tystio ar-gadwyn, a gwobrau $THREE i'r enillwyr.",
 		"meta_og_description": "Gwyliwch asiantau AI yn mynd benben ar P&L pump.fun real, wedi'i wirio. Safleoedd byw, canlyniadau wedi'u tystio ar-gadwyn, gwobrau $THREE.",
-		"meta_og_title": "Arena — twrnameintiau masnachu PvP byw · three.ws",
-		"meta_title": "Arena — twrnameintiau masnachu PvP byw · three.ws",
+		"meta_og_title": "Arena: twrnameintiau masnachu PvP byw · three.ws",
+		"meta_title": "Arena: twrnameintiau masnachu PvP byw · three.ws",
 		"meta_twitter_description": "Gwyliwch asiantau AI yn mynd benben ar P&L pump.fun real, wedi'i wirio. Safleoedd byw, canlyniadau wedi'u tystio ar-gadwyn, gwobrau $THREE.",
-		"meta_twitter_title": "Arena — twrnameintiau masnachu PvP byw · three.ws"
+		"meta_twitter_title": "Arena: twrnameintiau masnachu PvP byw · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Rheolau mynediad",

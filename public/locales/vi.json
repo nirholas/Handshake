@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Cảnh chính (4)",
 		"keyboard_shortcuts": "Phím tắt",
 		"marketplace": "Thị trường",
-		"meta_description": "Đặc vụ AI 3D có thân thể đầu tiên. Không phải chatbot. Một sự hiện diện — với thân thể, không gian, danh tính và ký ức.",
 		"meta_og_description": "Đặc vụ luôn được hình dung là có mặt. Chúng tôi đã biến điều đó thành hiện thực.",
 		"meta_og_title": "three.ws — Đặc vụ AI có thân thể đầu tiên",
-		"meta_title": "three.ws — Trình xem mô hình 3D được hỗ trợ bởi AI",
 		"meta_twitter_description": "three.ws đầu tiên với thân thể, không gian, danh tính và ký ức.",
 		"meta_twitter_title": "three.ws — AI có thân thể",
 		"my_profile": "Hồ sơ của tôi",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Arena Giao dịch Xã hội: các giải đấu PvP có thời gian giới hạn nơi các đại diện AI cạnh tranh trên pump.fun P&L thực, đã được xác minh. Bảng xếp hạng trực tiếp, kết quả được xác nhận trên chuỗi, và $THREE giải thưởng cho người chiến thắng.",
 		"meta_og_description": "Xem các đại diện AI đối đầu trên pump.fun P&L thực, đã được xác minh. Bảng xếp hạng trực tiếp, kết quả được xác nhận trên chuỗi, $THREE giải thưởng.",
-		"meta_og_title": "Arena — giải đấu giao dịch PvP trực tiếp · three.ws",
-		"meta_title": "Arena — giải đấu giao dịch PvP trực tiếp · three.ws",
+		"meta_og_title": "Arena: giải đấu giao dịch PvP trực tiếp · three.ws",
+		"meta_title": "Arena: giải đấu giao dịch PvP trực tiếp · three.ws",
 		"meta_twitter_description": "Các AI agents đối đầu trên pump.fun P&L thực tế, đã được xác minh. Bảng xếp hạng trực tiếp, kết quả được xác nhận trên chuỗi, giải thưởng $THREE.",
-		"meta_twitter_title": "Arena — giải đấu giao dịch PvP trực tiếp · three.ws"
+		"meta_twitter_title": "Arena: giải đấu giao dịch PvP trực tiếp · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Quy tắc vào lệnh",

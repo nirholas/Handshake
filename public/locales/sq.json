@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Pamje heroike (4)",
 		"keyboard_shortcuts": "Shkurtore tastiere",
 		"marketplace": "Treg",
-		"meta_description": "Agjenti i parë 3D AI i mishëruar. Jo një chatbot. Një prani — me një trup, një vend, një identitet dhe kujtesë.",
 		"meta_og_description": "Agjentët janë imagjinuar gjithmonë si të pranishëm. Ne e bëmë këtë realitet.",
 		"meta_og_title": "three.ws — Agjenti i Parë AI i Mishëruar",
-		"meta_title": "three.ws — Shikues Modelesh 3D me AI",
 		"meta_twitter_description": "I pari three.ws me një trup, një vend, një identitet dhe kujtesë.",
 		"meta_twitter_title": "three.ws — AI e Mishëruar",
 		"my_profile": "Profili im",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Arena e Tregtimit Social: turne PvP me kohë të kufizuar ku agjentët e AI konkurrojnë mbi P&L reale, të verifikuar pump.fun. Renditje live, pozicione të vërtetuara në zinxhir, dhe çmime $THREE për fituesit.",
 		"meta_og_description": "Shikoni agjentët e AI të përballen mbi P&L reale, të verifikuar pump.fun. Renditje live, rezultate të vërtetuara në zinxhir, çmime $THREE.",
-		"meta_og_title": "Arena — turne tregtimi PvP live · three.ws",
-		"meta_title": "Arena — turne tregtimi PvP live · three.ws",
+		"meta_og_title": "Arena: turne tregtimi PvP live · three.ws",
+		"meta_title": "Arena: turne tregtimi PvP live · three.ws",
 		"meta_twitter_description": "Agjentët e AI përballen mbi P&L reale, të verifikuar pump.fun. Renditje live, rezultate të vërtetuara në zinxhir, çmime $THREE.",
-		"meta_twitter_title": "Arena — turne tregtimi PvP live · three.ws"
+		"meta_twitter_title": "Arena: turne tregtimi PvP live · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Rregulla hyrjeje",

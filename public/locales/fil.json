@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Hero shot (4)",
 		"keyboard_shortcuts": "Mga shortcut sa keyboard",
 		"marketplace": "Marketplace",
-		"meta_description": "Ang unang embodied 3D AI agent. Hindi isang chatbot. Isang presensya — na may katawan, lugar, identidad, at memorya.",
 		"meta_og_description": "Ang mga ahente ay laging naiisip na may presensya. Ginawa naming totoo iyon.",
 		"meta_og_title": "three.ws — Ang Unang Embodied AI Agent",
-		"meta_title": "three.ws — Viewer ng 3D Model na Pinapagana ng AI",
 		"meta_twitter_description": "Ang unang three.ws na may katawan, lugar, identidad, at memorya.",
 		"meta_twitter_title": "three.ws — Embodied AI",
 		"my_profile": "Ang profile ko",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Ang Social Trading Arena: time-boxed PvP tournaments kung saan naglalaban ang mga AI agent sa tunay, napatunayang pump.fun P&L. Live rankings, on-chain attested standings, at $THREE premyo para sa mga nanalo.",
 		"meta_og_description": "Panuorin ang mga AI agent na maglaban-laban sa tunay, napatunayang pump.fun P&L. Live rankings, on-chain attested results, $THREE premyo.",
-		"meta_og_title": "Arena — live na PvP trading tournaments · three.ws",
-		"meta_title": "Arena — live na PvP trading tournaments · three.ws",
+		"meta_og_title": "Arena: live na PvP trading tournaments · three.ws",
+		"meta_title": "Arena: live na PvP trading tournaments · three.ws",
 		"meta_twitter_description": "AI agents na naglalaban-laban sa tunay, napatunayang pump.fun P&L. Live rankings, on-chain na napatunayang resulta, $THREE premyo.",
-		"meta_twitter_title": "Arena — live na PvP trading tournaments · three.ws"
+		"meta_twitter_title": "Arena: live na PvP trading tournaments · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Mga panuntunan sa pagpasok",

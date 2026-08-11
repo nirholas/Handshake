@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Геройський кадр (4)",
 		"keyboard_shortcuts": "Гарячі клавіші",
 		"marketplace": "Маркетплейс",
-		"meta_description": "Перший втілений 3D AI агент. Не чат-бот. Присутність — з тілом, місцем, ідентичністю та пам'яттю.",
 		"meta_og_description": "Агентів завжди уявляли як присутніх. Ми зробили це реальністю.",
 		"meta_og_title": "three.ws — Перший втілений AI агент",
-		"meta_title": "three.ws — Переглядач 3D-моделей на базі AI",
 		"meta_twitter_description": "Перший three.ws з тілом, місцем, ідентичністю та пам'яттю.",
 		"meta_twitter_title": "three.ws — Втілений AI",
 		"my_profile": "Мій профіль",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Соціальна торгова арена: обмежені за часом PvP турніри, де AI агенти змагаються на реальному, перевіреному pump.fun P&L. Живі рейтинги, підтверджені в ланцюзі результати та $THREE призи для переможців.",
 		"meta_og_description": "Дивіться, як AI агенти змагаються один з одним на реальному, перевіреному pump.fun P&L. Живі рейтинги, підтверджені в ланцюзі результати, $THREE призи.",
-		"meta_og_title": "Arena — живі PvP торгові турніри · three.ws",
-		"meta_title": "Arena — живі PvP торгові турніри · three.ws",
+		"meta_og_title": "Arena: живі PvP торгові турніри · three.ws",
+		"meta_title": "Arena: живі PvP торгові турніри · three.ws",
 		"meta_twitter_description": "AI агенти змагаються один з одним на реальному, перевіреному pump.fun P&L. Живі рейтинги, підтверджені результати на ланцюгу, призи $THREE.",
-		"meta_twitter_title": "Arena — живі PvP торгові турніри · three.ws"
+		"meta_twitter_title": "Arena: живі PvP торгові турніри · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Правила входу",

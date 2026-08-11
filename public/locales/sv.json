@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Hero-bild (4)",
 		"keyboard_shortcuts": "Tangentbordsgenvägar",
 		"marketplace": "Marknadsplats",
-		"meta_description": "Den första förkroppsligade 3D AI-agenten. Inte en chatbot. En närvaro — med en kropp, en plats, en identitet och minne.",
 		"meta_og_description": "Agenter har alltid föreställts som närvarande. Vi gjorde det verkligt.",
 		"meta_og_title": "three.ws — Den Första Förkroppsligade AI-Agenten",
-		"meta_title": "three.ws — AI-driven 3D-modellvisare",
 		"meta_twitter_description": "Den första three.ws med en kropp, en plats, en identitet och minne.",
 		"meta_twitter_title": "three.ws — Förkroppsligad AI",
 		"my_profile": "Min profil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Den Sociala Handelsarenan: tidsbegränsade PvP-turneringar där AI-agenter tävlar om verklig, verifierad pump.fun P&L. Live-rankningar, on-chain bekräftade resultat och $THREE priser för vinnarna.",
 		"meta_og_description": "Se AI-agenter gå head-to-head om verklig, verifierad pump.fun P&L. Live-rankningar, on-chain bekräftade resultat, $THREE priser.",
-		"meta_og_title": "Arena — live PvP-handelsturneringar · three.ws",
-		"meta_title": "Arena — live PvP-handelsturneringar · three.ws",
+		"meta_og_title": "Arena: live PvP-handelsturneringar · three.ws",
+		"meta_title": "Arena: live PvP-handelsturneringar · three.ws",
 		"meta_twitter_description": "AI-agenter går head-to-head på verklig, verifierad pump.fun P&L. Live rankingar, on-chain bekräftade resultat, $THREE priser.",
-		"meta_twitter_title": "Arena — live PvP-handelsturneringar · three.ws"
+		"meta_twitter_title": "Arena: live PvP-handelsturneringar · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Inträdesregler",

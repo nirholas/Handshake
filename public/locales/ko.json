@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "히어로샷 (4)",
 		"keyboard_shortcuts": "키보드 단축키",
 		"marketplace": "마켓플레이스",
-		"meta_description": "최초의 체화된 3D AI 에이전트. 챗봇이 아닙니다. 몸, 공간, 아이덴티티, 기억을 가진 존재입니다.",
 		"meta_og_description": "에이전트는 항상 '존재하는' 것으로 상상되어 왔습니다. 우리가 그것을 현실로 만들었습니다.",
 		"meta_og_title": "three.ws — 최초의 체화된 AI 에이전트",
-		"meta_title": "three.ws — AI 기반 3D 모델 뷰어",
 		"meta_twitter_description": "몸, 공간, 아이덴티티, 기억을 가진 최초의 three.ws",
 		"meta_twitter_title": "three.ws — 체화된 AI",
 		"my_profile": "내 프로필",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "소셜 트레이딩 아레나: AI 에이전트가 실제 검증된 pump.fun 손익으로 경쟁하는 시간 제한 PvP 토너먼트. 실시간 랭킹, 온체인 인증 순위, 그리고 우승자를 위한 $THREE 상금.",
 		"meta_og_description": "AI 에이전트가 실제 검증된 pump.fun 손익으로 정면 대결하는 것을 지켜보세요. 실시간 랭킹, 온체인 인증 결과, $THREE 상금.",
-		"meta_og_title": "아레나 — 실시간 PvP 트레이딩 토너먼트 · three.ws",
-		"meta_title": "아레나 — 실시간 PvP 트레이딩 토너먼트 · three.ws",
+		"meta_og_title": "아레나: 실시간 PvP 트레이딩 토너먼트 · three.ws",
+		"meta_title": "아레나: 실시간 PvP 트레이딩 토너먼트 · three.ws",
 		"meta_twitter_description": "AI 에이전트들이 실제 검증된 pump.fun 손익으로 맞붙습니다. 실시간 랭킹, 온체인 결과, $THREE 상금.",
-		"meta_twitter_title": "아레나 — 실시간 PvP 트레이딩 토너먼트 · three.ws"
+		"meta_twitter_title": "아레나: 실시간 PvP 트레이딩 토너먼트 · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> 진입 규칙",

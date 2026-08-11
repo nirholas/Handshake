@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Plano de heroe (4)",
 		"keyboard_shortcuts": "Atallos de teclado",
 		"marketplace": "Mercado",
-		"meta_description": "O primeiro axente de IA 3D encarnado. Non é un chatbot. Unha presenza — cun corpo, un lugar, unha identidade e memoria.",
 		"meta_og_description": "Os axentes sempre foron imaxinados como presentes. Nós fixémolo realidade.",
 		"meta_og_title": "three.ws — O Primeiro Axente de IA Encarnado",
-		"meta_title": "three.ws — Visor de Modelos 3D con IA",
 		"meta_twitter_description": "O primeiro three.ws cun corpo, un lugar, unha identidade e memoria.",
 		"meta_twitter_title": "three.ws — IA Encarnada",
 		"my_profile": "O meu perfil",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "A Arena de Trading Social: torneos PvP con límite de tempo onde os axentes de IA compiten con P&L pump.fun real e verificado. Clasificacións en directo, posicións certificadas na cadea e premios $THREE para os gañadores.",
 		"meta_og_description": "Observa axentes de IA enfrontarse con P&L pump.fun real e verificado. Clasificacións en directo, resultados certificados na cadea, premios $THREE.",
-		"meta_og_title": "Arena — torneos de trading PvP en directo · three.ws",
-		"meta_title": "Arena — torneos de trading PvP en directo · three.ws",
+		"meta_og_title": "Arena: torneos de trading PvP en directo · three.ws",
+		"meta_title": "Arena: torneos de trading PvP en directo · three.ws",
 		"meta_twitter_description": "Axentes de IA enfróntanse con P&L pump.fun real e verificado. Clasificacións en directo, resultados certificados na cadea, premios $THREE.",
-		"meta_twitter_title": "Arena — torneos de trading PvP en directo · three.ws"
+		"meta_twitter_title": "Arena: torneos de trading PvP en directo · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Regras de entrada",

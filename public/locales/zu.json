@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Isithombe seqhawe (4)",
 		"keyboard_shortcuts": "Izinqamuleli zekhibhodi",
 		"marketplace": "Imakethe",
-		"meta_description": "I-ejenti yokuqala ye-AI ye-3D enomzimba. Akuyona i-chatbot. Ubukhona — inomzimba, indawo, ubunikazi, nememori.",
 		"meta_og_description": "Ama-ejenti ahlale ecatshangwa njengakhona. Sakwenza kwaba yiqiniso.",
 		"meta_og_title": "three.ws — I-Ejenti Yokuqala Ye-AI Enomzimba",
-		"meta_title": "three.ws — Isibukeli Samamodeli E-3D Esisekelwa I-AI",
 		"meta_twitter_description": "I-three.ws yokuqala enomzimba, indawo, ubunikazi, nememori.",
 		"meta_twitter_title": "three.ws — I-AI Enomzimba",
 		"my_profile": "Iphrofayela Yami",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "Inkundla Yokuhweba Komphakathi: imiqhudelwano ye-PvP enesikhathi esinqunyiwe lapho ama-ejenti e-AI eqhudelana khona nge-pump.fun P&L yangempela, eqinisekisiwe. Amazinga abukhoma, izikhundla eziqinisekiswe ku-chain, nemiklomelo ye-$THREE yabawinile.",
 		"meta_og_description": "Buka ama-ejenti e-AI eqhudelana nge-pump.fun P&L yangempela, eqinisekisiwe. Amazinga abukhoma, imiphumela eqinisekiswe ku-chain, imiklomelo ye-$THREE.",
-		"meta_og_title": "Inkundla — imiqhudelwano yokuhweba ye-PvP ebukhoma · three.ws",
-		"meta_title": "Inkundla — imiqhudelwano yokuhweba ye-PvP ebukhoma · three.ws",
+		"meta_og_title": "Inkundla: imiqhudelwano yokuhweba ye-PvP ebukhoma · three.ws",
+		"meta_title": "Inkundla: imiqhudelwano yokuhweba ye-PvP ebukhoma · three.ws",
 		"meta_twitter_description": "Ama-ejenti e-AI aqhudelana nge-pump.fun P&L yangempela, eqinisekisiwe. Amazinga abukhoma, imiphumela eqinisekiswe ku-chain, imiklomelo ye-$THREE.",
-		"meta_twitter_title": "Inkundla — imiqhudelwano yokuhweba ye-PvP ebukhoma · three.ws"
+		"meta_twitter_title": "Inkundla: imiqhudelwano yokuhweba ye-PvP ebukhoma · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Imithetho yokungena",

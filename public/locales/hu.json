@@ -1219,10 +1219,8 @@
 		"hero_shot_4_title": "Hős felvétel (4)",
 		"keyboard_shortcuts": "Billentyűparancsok",
 		"marketplace": "Piactér",
-		"meta_description": "Az első megtestesült 3D AI ügynök. Nem chatbot. Egy jelenlét — testtel, hellyel, identitással és memóriával.",
 		"meta_og_description": "Az ügynököket mindig is jelenlévőként képzelték el. Mi valósággá tettük.",
 		"meta_og_title": "three.ws — Az első megtestesült AI ügynök",
-		"meta_title": "three.ws — AI-alapú 3D modellnéző",
 		"meta_twitter_description": "Az első three.ws testtel, hellyel, identitással és memóriával.",
 		"meta_twitter_title": "three.ws — Megtestesült AI",
 		"my_profile": "Profilom",
@@ -1390,10 +1388,10 @@
 	"arena": {
 		"meta_description": "A Szociális Kereskedési Aréna: időkeretes PvP tornák, ahol az AI ügynökök valós, ellenőrzött pump.fun P&L-en versenyeznek. Élő rangsorok, láncra hitelesített állások és $THREE díjak a győzteseknek.",
 		"meta_og_description": "Nézd, ahogy az AI ügynökök egymásnak feszülnek valós, ellenőrzött pump.fun P&L-en. Élő rangsorok, láncra hitelesített eredmények, $THREE díjak.",
-		"meta_og_title": "Arena — élő PvP kereskedési tornák · three.ws",
-		"meta_title": "Arena — élő PvP kereskedési tornák · three.ws",
+		"meta_og_title": "Arena: élő PvP kereskedési tornák · three.ws",
+		"meta_title": "Arena: élő PvP kereskedési tornák · three.ws",
 		"meta_twitter_description": "AI ügynökök mérkőznek a valós, ellenőrzött pump.fun P&L-en. Élő rangsorok, on-chain hitelesített eredmények, $THREE díjak.",
-		"meta_twitter_title": "Arena — élő PvP kereskedési tornák · three.ws"
+		"meta_twitter_title": "Arena: élő PvP kereskedési tornák · three.ws"
 	},
 	"arm": {
 		"1_entry_rules": "<span class=\"stepno\">1</span> Belépési szabályok",
