@@ -50,6 +50,7 @@ from typing import Callable, Optional
 
 from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
 from google.cloud import storage
+from google.cloud.storage.retry import DEFAULT_RETRY
 from pydantic import BaseModel, Field, field_validator
 
 from worker_security import (
@@ -73,6 +74,11 @@ _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
 _tasks: dict[str, dict] = {}
 
+# Instances are kept warm (min-instances=1), so an unbounded task dict would grow
+# for the life of the instance. At ten seconds a job this is hours of history,
+# far beyond any caller's poll window, and the results themselves live in GCS.
+MAX_TRACKED_TASKS = 500
+
 SUPPORTED_INPUT_FORMATS = {".glb", ".gltf", ".obj", ".stl", ".ply", ".fbx", ".off", ".dae"}
 SUPPORTED_OUTPUT_FORMATS = {"glb", "obj", "stl", "ply"}
 MAX_MESH_BYTES = 128 * 1024 * 1024
@@ -81,6 +87,15 @@ MAX_MESH_BYTES = 128 * 1024 * 1024
 MAX_VOXELS = 60_000          # occupied surface cells rebuilt as cubes
 MAX_LATTICE_EDGES = 6_000    # struts emitted for the voronoi shell
 DEFAULT_COLOR = [196, 198, 214, 255]  # tasteful cool-neutral when source has none
+
+# google-cloud-storage defaults uploads to a ConditionalRetryPolicy that only
+# engages when the caller passes if_generation_match, so out of the box a
+# transient TLS blip on the upload leg discards a job whose geometry work already
+# succeeded (five such losses in the 30 days to 2026-08-11, every one an
+# SSLError: UNEXPECTED_EOF_WHILE_READING). Each result blob is a fresh uuid, so
+# re-sending it is idempotent: retry unconditionally instead.
+UPLOAD_RETRY = DEFAULT_RETRY
+UPLOAD_TIMEOUT_S = 120
 
 
 # ── style catalog ────────────────────────────────────────────────────────────────
@@ -112,6 +127,22 @@ STYLE_CATALOG = {
 }
 
 
+def _remember_task(task: dict) -> None:
+    """Track a task, evicting the oldest finished ones past MAX_TRACKED_TASKS.
+
+    Eviction never touches a queued or running job: a caller polling live work
+    must not get a 404 because someone else's job pushed theirs out.
+    """
+    _tasks[task["task_id"]] = task
+    if len(_tasks) <= MAX_TRACKED_TASKS:
+        return
+    for task_id, tracked in list(_tasks.items()):
+        if len(_tasks) <= MAX_TRACKED_TASKS:
+            break
+        if tracked.get("status") in ("done", "failed"):
+            del _tasks[task_id]
+
+
 def _clamp_resolution(style: str, resolution: Optional[int]) -> int:
     spec = STYLE_CATALOG[style]["resolution"]
     if resolution is None:
@@ -132,7 +163,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="stylize-service", lifespan=lifespan)
 
 
-def _require_api_key(authorization: str) -> None:
+def _require_api_key(authorization: Optional[str]) -> None:
+    """Reject a missing or wrong bearer token with 401.
+
+    The header is declared optional on the routes so this runs on a missing one
+    too: with `Header(...)` FastAPI answers a credential-less caller with a 422
+    validation dump instead of the 401 the contract promises.
+    """
     try:
         require_api_key(authorization, API_KEY)
     except PermissionError as exc:
@@ -190,9 +227,14 @@ def _source_color_sampler(mesh) -> Callable:
             kind = getattr(visual, "kind", None)
             if kind == "texture" or visual.__class__.__name__ == "TextureVisuals":
                 visual = visual.to_color()
-            fc = getattr(visual, "face_colors", None)
-            if fc is not None and len(fc) == n_faces:
-                face_colors = np.asarray(fc, dtype=np.uint8).reshape(-1, 4)
+            # `defined` is False when trimesh is only synthesizing its stock gray
+            # for a mesh that carries no color of its own. Reading face_colors
+            # regardless would hand every untextured input that flat 102-gray and
+            # leave DEFAULT_COLOR unreachable.
+            if getattr(visual, "defined", True):
+                fc = getattr(visual, "face_colors", None)
+                if fc is not None and len(fc) == n_faces:
+                    face_colors = np.asarray(fc, dtype=np.uint8).reshape(-1, 4)
     except Exception as exc:  # noqa: BLE001 — any visual quirk falls back to default
         log.info("color extraction fell back to default: %s", exc)
 
@@ -213,13 +255,24 @@ def _source_color_sampler(mesh) -> Callable:
 # ── filters ─────────────────────────────────────────────────────────────────────
 
 
+def _require_extent(mesh) -> float:
+    """Largest bounding-box dimension, refusing a mesh that has no size at all.
+
+    Every filter derives its feature size (voxel pitch, strut radius) from this,
+    and at zero they all degrade into invisible or empty geometry. Failing the
+    task with a readable reason beats uploading a blob the caller cannot see.
+    """
+    extent = float(mesh.extents.max())
+    if extent <= 0:
+        raise ValueError("mesh has zero extent")
+    return extent
+
+
 def _stylize_voxel(mesh, resolution: int):
     """Voxelize the surface and rebuild it as a mesh of solid, source-colored cubes."""
     import numpy as np
 
-    extent = float(mesh.extents.max())
-    if extent <= 0:
-        raise ValueError("mesh has zero extent")
+    extent = _require_extent(mesh)
     pitch = extent / max(1, resolution)
 
     voxel = mesh.voxelized(pitch=pitch)
@@ -248,9 +301,7 @@ def _stylize_brick(mesh, resolution: int):
     import numpy as np
     import trimesh
 
-    extent = float(mesh.extents.max())
-    if extent <= 0:
-        raise ValueError("mesh has zero extent")
+    extent = _require_extent(mesh)
     pitch = extent / max(1, resolution)
 
     voxel = mesh.voxelized(pitch=pitch)
@@ -326,6 +377,7 @@ def _stylize_voronoi(mesh, resolution: int):
     import numpy as np
     import trimesh
 
+    _require_extent(mesh)
     target_faces = int(np.clip(resolution * 40, 200, 4000))
     shell = _decimate(mesh, target_faces)
 
@@ -382,6 +434,7 @@ def _stylize_lowpoly(mesh, resolution: int):
     import numpy as np
     import trimesh
 
+    _require_extent(mesh)
     target_faces = int(np.clip(resolution * 60, 80, 20_000))
     deci = _decimate(mesh, target_faces)
 
@@ -425,6 +478,17 @@ def _export_mesh(mesh, output_format: str) -> tuple[bytes, str]:
     return data, ("model/gltf-binary" if fmt == "glb" else "application/octet-stream")
 
 
+def _upload_result(blob, data: bytes, content_type: str) -> None:
+    """Upload a finished mesh, retrying the transient transport failures.
+
+    Split out from the request path so the retry policy is directly testable:
+    see test_stylize.py, which pins that an SSLError is retryable under it.
+    """
+    blob.upload_from_string(
+        data, content_type=content_type, retry=UPLOAD_RETRY, timeout=UPLOAD_TIMEOUT_S
+    )
+
+
 def _run_processing(mesh_url: str, style: str, resolution: int, output_format: str):
     data, suffix = _fetch_mesh(mesh_url)
     mesh = _load_single_mesh(data, suffix)
@@ -450,7 +514,7 @@ async def _process(task_id: str, mesh_url: str, style: str, resolution: int, out
             blob_name = f"stylize/{task_id}.{output_format}"
             blob = _bucket.blob(blob_name)
             await loop.run_in_executor(
-                None, lambda: blob.upload_from_string(out_bytes, content_type=content_type)
+                None, lambda: _upload_result(blob, out_bytes, content_type)
             )
             result_url = f"https://storage.googleapis.com/{GCS_BUCKET}/{blob_name}"
 
@@ -504,18 +568,18 @@ class ProcessRequest(BaseModel):
 async def process_mesh(
     body: ProcessRequest,
     background_tasks: BackgroundTasks,
-    authorization: str = Header(...),
+    authorization: Optional[str] = Header(default=None),
 ) -> dict:
     _require_api_key(authorization)
     resolution = _clamp_resolution(body.style, body.resolution)
     task_id = str(uuid.uuid4())
-    _tasks[task_id] = {
+    _remember_task({
         "task_id": task_id,
         "status": "queued",
         "style": body.style,
         "resolution": resolution,
         "output_format": body.output_format,
-    }
+    })
     background_tasks.add_task(
         _process, task_id, body.mesh, body.style, resolution, body.output_format
     )
@@ -523,7 +587,7 @@ async def process_mesh(
 
 
 @app.get("/tasks/{task_id}")
-async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
+async def get_task(task_id: str, authorization: Optional[str] = Header(default=None)) -> dict:
     _require_api_key(authorization)
     task = _tasks.get(task_id)
     if task is None:
