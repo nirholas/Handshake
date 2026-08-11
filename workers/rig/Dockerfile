@@ -42,7 +42,18 @@ RUN git clone https://github.com/jasongzy/Make-It-Animatable.git /app/mia \
 
 WORKDIR /app
 COPY worker_security.py rig_glb.py blendshapes.py engine_mia.py main.py entrypoint.sh /app/
+COPY test_rig_glb.py test_blendshapes.py test_pipeline.py /app/
 RUN chmod +x /app/entrypoint.sh
+
+# Build-time guards, the same pattern workers/garment-forge uses. These three
+# suites need no GPU and no weights, so they run here in seconds and the image
+# does not ship if the rig contract broke: skin authoring (skeleton, unit-sum
+# weights, morph targets), ARKit transfer (head mask, alignment, falloff), and
+# the composed core path (the 52 Mixamo bone names the platform canonicalizer
+# keys on, ARKit-52 targetNames on the head only, textures byte-preserved).
+RUN python3 /app/test_rig_glb.py \
+    && python3 /app/test_blendshapes.py \
+    && python3 /app/test_pipeline.py
 
 # Weights, Mixamo bone templates, and the baked ARKit template are staged in
 # GCS (stage-assets.sh) and mounted at /weights by Cloud Run; entrypoint.sh

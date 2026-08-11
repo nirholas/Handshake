@@ -24,7 +24,12 @@ potpourri3d
 shapely
 spaces
 tqdm
-trimesh>=4.4.0
+# Held below 5 on purpose. The running revision was built on trimesh 4.x and a
+# bare >=4.4.0 now resolves to 5.0.0, so the next rebuild would quietly ship a
+# major-version jump in the loader both MIA and rig_glb parse meshes with.
+# Raising it is a deliberate change to verify on the GPU, not a side effect of
+# redeploying. The local suites pass on 4.12.2 and 5.0.0 alike.
+trimesh>=4.4.0,<5
 
 # Rig authoring + blendshape transfer (rig_glb.py / blendshapes.py)
 pygltflib==1.16.2
