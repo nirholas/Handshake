@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-11T01:43:51.251Z",
+	"generated_at": "2026-08-11T01:50:57.968Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -20,11 +20,98 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "A watched agent card no longer promises a live browser that is never coming",
+			"summary": "Every agent on the live wall always has its zero-cost activity feed, and watching one can also start a real browser that casts what the agent is doing. When no caster was running, the card still said \"warming up\" and sat there forever, because the wall assumed a browser was on its way the moment you watched. The wall now checks whether a caster pool is actually running: if one is, you get the same warming and queue-position handoff as before; if none is, the card stays on the honest activity view instead of spinning. The caster itself also got its deploy fixed: its container pinned a browser build its own library no longer matched, so the image would have failed on its first cast, and it now ships as a normal always-on service with a health endpoint that reports exactly which agents it is casting.",
+			"link": "/agents-live",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "Background removal in the Forge is faster, keeps phone photos the right way up, and says when the link is the problem",
 			"summary": "Cutting the background out of an image is the step that runs before most 3D generations, and it was doing avoidable work: every image was re-encoded to PNG on the way in, which on a 12 megapixel photo cost more time than the cutout itself. That round trip is gone, so the step now takes about a third of the time, and because the original file goes straight to the model, a photo taken on a phone comes back the way up you took it instead of on its side. Failures explain themselves now too: a link that answers \"not found\" or \"forbidden\", a file that is not an image, or a truncated paste all used to come back as an unexplained server error, and now say which of those happened so you can fix the input.",
 			"link": "/forge",
 			"tags": [
 				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Garment generation no longer runs out of memory mid-job",
+			"summary": "The Garment Forge builds two garments at a time on one machine, and when both were at their heaviest stage the machine hit its memory ceiling and was killed outright, taking whichever garment was in flight with it. The ceiling has been doubled to cover two full pipelines at peak, so a garment you submit while someone else's is already building finishes instead of dying. If a job does still lose its machine for any other reason, the ten-minute sweep picks it back up as before.",
+			"link": "/wardrobe",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Generating an animation from a text prompt no longer fails when the motion engine has been idle",
+			"summary": "Ask for a custom animation (\"a slow tai-chi sweep\") and the motion engine has to wake up before it can generate. In its region three other, idle 3D engines were each holding a graphics card warm, so there was nothing left for the motion engine to start on, and roughly twice a day it was refused a card outright and the request failed. The idle holder has been released, so the motion lane can always start. Generation itself is unchanged: a three second prompt still comes back in under three seconds once warm.",
+			"link": "/animations",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Motion Swap's guide now describes the hand and finger capture it has been doing all along",
+			"summary": "The Motion Swap guide described body tracking only, so a reader had no way to know the capture also follows both hands, takes wrist rotation from the palm itself, and solves every finger joint, or that it holds your last handshape when your hands leave the frame. The guide and the capture worker's README now cover all of that, plus the exact files a capture produces, every setting the worker reads, and how to run a real capture on your own machine to check a change before it ships. The worker also gained a second test suite covering the parts around the motion solver: the authentication and input rules on its API, the video normalization step, the person-mask video, and the guard that refuses to fetch a video address pointing at our own internal infrastructure.",
+			"link": "/motion-swap",
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Photo to 3D no longer fails when the image host has one slow moment",
+			"summary": "Turning a photo into a 3D model starts by downloading the image you pointed at. If that download stalled for even a moment, the whole generation failed and you had to start over. The image is now fetched up to three times with a growing pause between tries, so a single slow moment costs a couple of seconds instead of the job. When an image genuinely cannot be used, the failure now names the reason and the host (unreachable, HTTP 404, not a decodable image) instead of an opaque error code, so you can tell a broken link from a hiccup.",
+			"link": "/create",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Stylizing a model no longer throws away the finished result over a momentary network hiccup, and plain models keep their intended color",
+			"summary": "The stylize filters (voxel, brick, voronoi shell, low-poly) rebuild your model and then upload the result to storage. A brief interruption on that last upload step was not retried, so roughly once a week a job that had already done all its work was reported to you as failed. That upload now retries by itself. Two more repairs ride along: a model that carries no colors of its own now comes back in the soft neutral tone the filters were designed around, instead of the flat gray the geometry library hands out by default, and a model with no size at all is refused with a clear reason rather than returning a file with nothing visible in it.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The 3D forge now tells a broken GPU worker apart from a healthy one, and stops routing your generation at it",
+			"summary": "Our own Hunyuan3D image-to-3D workers answer web requests within seconds of starting, then spend several minutes loading multi-gigabyte model weights in the background. The platform checked only whether a worker answered at all, so a worker that had answered but then failed to load its model looked exactly as healthy as a working one: the forge status page showed it green and generations kept being sent to it. Both the status page and the routing that picks a backend now read the worker's real readiness, so a worker that cannot generate is reported as down and skipped, and one that is still warming up is marked as such instead of promising a fast turnaround it cannot deliver.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The pump.fun MCP server now returns the real name and symbol for tokens launched today",
+			"summary": "Ask the pump.fun MCP server for a token's details and it reported no name, no symbol, and no image link for essentially every coin launched recently, including $THREE. The reason: pump.fun now mints Token-2022 tokens, which carry their name and symbol inside the mint itself rather than in the separate metadata account the server was reading. It now reads both places, so a request for a current token returns its actual name, symbol, and metadata link alongside supply and decimals. Older tokens are unaffected.",
+			"link": "/docs/mcp",
+			"tags": [
 				"fix"
 			]
 		},
@@ -48,6 +135,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Watching an agent forge an avatar now names the engine and the wait",
+			"summary": "When an operator casts a live avatar forge onto an agent's screen, the narration used to open with the same line twice and then say only \"Queued\", never naming which free engine took the job or why a slow start was slow. It now names the engine that actually ran (which is not always the one requested, since the platform routes to whichever free lane is healthy) and, when a GPU worker has to boot from zero, says so with the real spin-up estimate instead of looking stalled. Failures now show their own recovery step rather than blanket prompt advice, and the High tier, which needs a $THREE hold, is refused up front instead of failing mid-cast.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
