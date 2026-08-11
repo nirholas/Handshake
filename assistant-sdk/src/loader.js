@@ -86,10 +86,17 @@ function injectStyles(accent) {
 		'.three-assistant-panel{position:fixed;bottom:90px;width:380px;max-width:calc(100vw - 24px);' +
 		`height:640px;max-height:calc(100dvh - 110px);z-index:${Z};` +
 		'border-radius:20px;overflow:hidden;' +
-		'opacity:0;transform:translateY(14px) scale(.98);pointer-events:none;' +
-		'transition:opacity .22s ease,transform .22s ease;transform-origin:bottom right;}' +
+		// visibility, not opacity alone: an opacity-0 panel still holds its
+		// iframe in the tab order, so a keyboard visitor lands inside an
+		// invisible widget. It turns visible instantly on open and only after
+		// the fade on close.
+		'opacity:0;visibility:hidden;transform:translateY(14px) scale(.98);pointer-events:none;' +
+		'transition:opacity .22s ease,transform .22s ease,visibility 0s linear .22s;' +
+		'transform-origin:bottom right;}' +
 		'.three-assistant-panel[data-pos="left"]{transform-origin:bottom left;}' +
-		'.three-assistant-panel[data-open="true"]{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}' +
+		'.three-assistant-panel[data-open="true"]{opacity:1;visibility:visible;' +
+		'transform:translateY(0) scale(1);pointer-events:auto;' +
+		'transition:opacity .22s ease,transform .22s ease,visibility 0s;}' +
 		'.three-assistant-panel[data-chrome="solid"]{background:#0a0a0c;' +
 		'border:1px solid rgba(255,255,255,.1);box-shadow:0 24px 64px rgba(0,0,0,.5);}' +
 		'.three-assistant-panel iframe{width:100%;height:100%;border:0;display:block;background:transparent;color-scheme:normal;}' +
@@ -144,6 +151,9 @@ export class Assistant {
 		panel.dataset.chrome = !bg || bg === 'transparent' ? 'clear' : 'solid';
 		panel.setAttribute('role', 'dialog');
 		panel.setAttribute('aria-label', this.config.name || 'Assistant');
+		// Belt and braces with the CSS above on browsers that support it: a
+		// closed panel is inert, so nothing inside it is focusable or announced.
+		panel.inert = true;
 
 		const iframe = document.createElement('iframe');
 		iframe.title = `${this.config.name || 'Assistant'} 3D avatar assistant`;
@@ -210,6 +220,7 @@ export class Assistant {
 	open() {
 		if (this.isOpen) return;
 		this.isOpen = true;
+		this.panel.inert = false;
 		this.panel.dataset.open = 'true';
 		this.launcher.dataset.open = 'true';
 		this.launcher.setAttribute('aria-expanded', 'true');
@@ -228,6 +239,7 @@ export class Assistant {
 	close() {
 		if (!this.isOpen) return;
 		this.isOpen = false;
+		this.panel.inert = true;
 		this.panel.dataset.open = 'false';
 		this.launcher.dataset.open = 'false';
 		this.launcher.setAttribute('aria-expanded', 'false');
