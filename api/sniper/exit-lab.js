@@ -94,6 +94,7 @@ export default wrap(async (req, res) => {
 		// that looks like "the fleet has never traded".
 		return json(
 			res,
+			503,
 			{ ok: false, error: 'corpus_unavailable', detail: err?.message || 'database read failed', network, window: win, trades: [], excluded: [] },
 			{ 'cache-control': 'no-store' },
 		);
@@ -146,6 +147,7 @@ export default wrap(async (req, res) => {
 
 	return json(
 		res,
+		200,
 		{
 			ok: true,
 			network,
