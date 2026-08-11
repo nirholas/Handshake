@@ -9,10 +9,12 @@ substitutions:
   _SERVICE: rembg-service
   _REPO: rembg-service
   _GCS_BUCKET: three-ws-avatar-reconstructions
-  # Kept warm (not scale-to-zero): this worker backs interactive material
-  # editing (restyle_material) — a cold start here is a user-facing multi-second
-  # stall mid-edit. CPU-only, no GPU, cheap to keep resident against the $100k
-  # GCP credit pool. 2026-07-16.
+  # Kept warm (not scale-to-zero): this worker backs the forge's interactive
+  # background removal (POST /api/forge-rembg) and runs ahead of the image-to-3D
+  # models, so a cold start here is a user-facing multi-second stall mid-flow.
+  # CPU-only, no GPU, cheap to keep resident against the GCP credit pool.
+  # 2026-07-16, rationale corrected 2026-08-11 (it does not serve
+  # restyle_material; that lane is api/material-studio.js).
   _MIN_INSTANCES: "1"
   _MAX_INSTANCES: "4"
 
