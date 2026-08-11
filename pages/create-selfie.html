@@ -1148,6 +1148,27 @@
 				font-size: 13.5px;
 				text-align: center;
 			}
+			#cam-review-verdict {
+				text-align: center;
+				color: rgba(255, 255, 255, 0.85);
+				font-size: 13px;
+				line-height: 1.45;
+				padding: 10px 18px 0;
+				background: rgba(0, 0, 0, 0.7);
+			}
+			#cam-review-verdict.ok {
+				color: var(--accent);
+			}
+			#cam-review-verdict.warn {
+				color: #ffc46b;
+			}
+			#cam-review-verdict.bad {
+				color: #ff6b6b;
+			}
+			.cam-bar button:disabled {
+				opacity: 0.35;
+				cursor: not-allowed;
+			}
 			.cam-bar {
 				padding: 16px 22px calc(env(safe-area-inset-bottom, 18px) + 18px);
 				background: rgba(0, 0, 0, 0.7);
@@ -1966,6 +1987,7 @@
 			</div>
 			<div class="cam-prompt">Take your <strong id="cam-slot-name" data-i18n="create_selfie.photo">photo</strong></div>
 			<div id="cam-error" hidden></div>
+			<div id="cam-review-verdict" role="status" aria-live="polite" hidden></div>
 			<div class="cam-bar">
 				<div id="cam-actions-live" style="display: contents">
 					<button type="button" data-cam-action="cancel" data-i18n="create_selfie.cancel">Cancel</button>
