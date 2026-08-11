@@ -16,8 +16,9 @@ import {
 	odysseyTradedEvent, ODYSSEY_ADDRESSES,
 } from 'hoodchain';
 import { subscribeFeed } from 'hoodchain';
-import { config } from './config.js';
-import { hood, resolveMeta, inspectPool } from './chain.js';
+import { config, CHAIN_ID, redactRpcUrl } from './config.js';
+import { hood, resolveMeta, inspectPool, blockTimeMs } from './chain.js';
+import { withRpcRetry } from './rpc.js';
 import { ethPriceUsd } from './eth-price.js';
 import {
 	normalizeLaunch, normalizeCurveTrade, normalizeUniswapSwap, normalizeGraduation,
@@ -119,8 +120,8 @@ export function startFirehose(onEvent) {
 		if (!token) return;
 		const key = `swap:${log.transactionHash}:${log.logIndex}`;
 		if (!once(key)) return;
-		const [poolInfo, meta, ethUsd] = await Promise.all([
-			inspectPool(pool, token), resolveMeta(token), ethPriceUsd(),
+		const [poolInfo, meta, ethUsd, atMs] = await Promise.all([
+			inspectPool(pool, token), resolveMeta(token), ethPriceUsd(), blockTimeMs(log.blockNumber),
 		]);
 		if (!poolInfo) return;
 		const data = normalizeUniswapSwap({
@@ -133,7 +134,7 @@ export function startFirehose(onEvent) {
 			coinIsToken0: poolInfo.coinIsToken0,
 			quoteSymbol: poolInfo.quoteSymbol,
 			quoteDecimals: poolInfo.quoteDecimals,
-			name: meta.name, symbol: meta.symbol, ethUsd,
+			name: meta.name, symbol: meta.symbol, ethUsd, atMs,
 		});
 		bumpBlock(log.blockNumber);
 		if (active) onEvent({ kind: 'trade', data });
@@ -143,26 +144,30 @@ export function startFirehose(onEvent) {
 		const key = `launch:${launch.transactionHash}:${launch.token}`;
 		if (!once(key)) return;
 		if (launch.pool) trackPool(launch.pool, launch.token);
-		const [meta, ethUsd] = await Promise.all([resolveMeta(launch.token), ethPriceUsd()]);
+		const [meta, ethUsd, atMs] = await Promise.all([
+			resolveMeta(launch.token), ethPriceUsd(), blockTimeMs(launch.blockNumber),
+		]);
 		bumpBlock(launch.blockNumber);
-		if (active) onEvent({ kind: 'launch', data: normalizeLaunch({ launch, name: meta.name, symbol: meta.symbol, ethUsd }) });
+		if (active) onEvent({ kind: 'launch', data: normalizeLaunch({ launch, name: meta.name, symbol: meta.symbol, ethUsd, atMs }) });
 	}
 
 	async function emitCurveTrade(trade) {
 		const key = `trade:${trade.transactionHash}:${trade.token}:${trade.isBuy}:${trade.tokenAmount}`;
 		if (!once(key)) return;
-		const [meta, ethUsd] = await Promise.all([resolveMeta(trade.token), ethPriceUsd()]);
+		const [meta, ethUsd, atMs] = await Promise.all([
+			resolveMeta(trade.token), ethPriceUsd(), blockTimeMs(trade.blockNumber),
+		]);
 		bumpBlock(trade.blockNumber);
-		if (active) onEvent({ kind: 'trade', data: normalizeCurveTrade({ trade, name: meta.name, symbol: meta.symbol, ethUsd }) });
+		if (active) onEvent({ kind: 'trade', data: normalizeCurveTrade({ trade, name: meta.name, symbol: meta.symbol, ethUsd, atMs }) });
 	}
 
 	async function emitGraduation(g) {
 		const key = `grad:${g.transactionHash}:${g.token}`;
 		if (!once(key)) return;
 		trackPool(g.pool, g.token);
-		const meta = await resolveMeta(g.token);
+		const [meta, atMs] = await Promise.all([resolveMeta(g.token), blockTimeMs(g.blockNumber)]);
 		bumpBlock(g.blockNumber);
-		if (active) onEvent({ kind: 'graduation', data: normalizeGraduation({ grad: g, name: meta.name, symbol: meta.symbol }) });
+		if (active) onEvent({ kind: 'graduation', data: normalizeGraduation({ grad: g, name: meta.name, symbol: meta.symbol, atMs }) });
 	}
 
 	// ── liveness + gap watchdog ────────────────────────────────────────────────
@@ -175,21 +180,31 @@ export function startFirehose(onEvent) {
 		if (b > lastScannedBlock) lastScannedBlock = b;
 	}
 
+	// A bulk log read that survives the public RPC's transient -32602 shedding.
+	const retryLogs = (fn, src) => withRpcRetry(fn, {
+		onRetry: ({ attempt, delayMs, error }) => onEvent({
+			kind: 'status',
+			data: { level: 'info', src, message: `rpc retry ${attempt} in ${delayMs}ms: ${error?.message?.split('\n')[0] || 'transient'}` },
+		}),
+	});
+
 	async function gapCheck() {
 		if (!active) return;
 		let head;
-		try { head = await hood.public.getBlockNumber(); } catch { return; }
+		try { head = await withRpcRetry(() => hood.public.getBlockNumber()); } catch { return; }
 		if (lastScannedBlock === 0n) { lastScannedBlock = head; return; }
 		if (head - lastScannedBlock <= BigInt(config.gapCatchupBlocks)) { lastScannedBlock = head; return; }
 		// A gap opened (RPC watcher stalled). Backfill launches + curve trades.
 		const from = lastScannedBlock + 1n;
 		onEvent({ kind: 'status', data: { level: 'info', src: 'gap-fill', from: Number(from), to: Number(head) } });
 		try {
-			const launches = await getRecentLaunches(hood, { lookbackBlocks: head - from + 1n });
+			const launches = await retryLogs(
+				() => getRecentLaunches(hood, { lookbackBlocks: head - from + 1n }), 'gap-fill',
+			);
 			await mapLimit(launches.filter((l) => l.blockNumber >= from), 8, (l) => emitLaunch(l));
-			const logs = await hood.public.getLogs({
+			const logs = await retryLogs(() => hood.public.getLogs({
 				address: ODYSSEY_FACTORIES, event: odysseyTradedEvent, fromBlock: from, toBlock: head,
-			});
+			}), 'gap-fill');
 			await mapLimit(logs, 8, (log) => emitCurveTrade({
 				launchpad: 'odyssey', token: log.args.token, trader: log.args.trader,
 				isBuy: log.args.isBuy, tokenAmount: log.args.tokenAmount, quoteAmount: log.args.quoteAmount,
@@ -211,7 +226,9 @@ export function startFirehose(onEvent) {
 	// only the newest slice gets the full emit (metadata + ETH price + buffer).
 	async function backfill() {
 		try {
-			const launches = await getRecentLaunches(hood, { lookbackBlocks: config.backfillBlocks });
+			const launches = await retryLogs(
+				() => getRecentLaunches(hood, { lookbackBlocks: config.backfillBlocks }), 'backfill',
+			);
 			for (const l of launches) if (l.pool) trackPool(l.pool, l.token);
 			const toEmit = launches.slice(-config.bufferLimit); // oldest-first input → newest last
 			await mapLimit(toEmit, 8, (l) => emitLaunch(l));
@@ -248,7 +265,8 @@ export function startFirehose(onEvent) {
 		health() {
 			return {
 				network: config.network,
-				chain_id: (config.network === 'testnet' ? 46630 : 4663),
+				chain_id: CHAIN_ID,
+				rpc: config.rpcUrls.map(redactRpcUrl),
 				last_scanned_block: Number(lastScannedBlock),
 				tracked_pools: pools.size,
 				feed: {
