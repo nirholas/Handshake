@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-11T01:51:40.906Z",
+	"generated_at": "2026-08-11T01:58:57.266Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -36,6 +36,16 @@
 			"link": "/forge",
 			"tags": [
 				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Chat answers no longer stop mid-sentence when the platform falls back to its own Gemini lane",
+			"summary": "three.ws keeps a Google-credits model in reserve so chat, the concierge, and the market anchor keep answering when every free provider is throttled at once. That reserve model reasons before it writes, and its reasoning was being charged against the same length limit as the reply, so it regularly spent the entire budget thinking and returned a handful of words that stopped mid-sentence. The reserve lane now funds its reasoning separately, so a reply that falls back to it is as complete as one from any other model. Measured on the market anchor: an 81-character fragment became a full 499-character read.",
+			"link": null,
+			"tags": [
 				"fix"
 			]
 		},
@@ -110,6 +120,28 @@
 			"title": "The 3D forge now tells a broken GPU worker apart from a healthy one, and stops routing your generation at it",
 			"summary": "Our own Hunyuan3D image-to-3D workers answer web requests within seconds of starting, then spend several minutes loading multi-gigabyte model weights in the background. The platform checked only whether a worker answered at all, so a worker that had answered but then failed to load its model looked exactly as healthy as a working one: the forge status page showed it green and generations kept being sent to it. Both the status page and the routing that picks a backend now read the worker's real readiness, so a worker that cannot generate is reported as down and skipped, and one that is still warming up is marked as such instead of promising a fast turnaround it cannot deliver.",
 			"link": "/forge",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The market anchor keeps real headlines on air when its intel feed goes down",
+			"summary": "The newsroom anchor on the agent screen builds every bulletin from a paid narrative-intel feed, and when that subscription started being refused the anchor was left reading a price-only bulletin with nothing to say. It now falls back to the platform's own aggregated news feed, narrowed to major publishers, so the anchor still leads with real, attributed headlines. The fallback only fires when the primary feed comes back empty, and the anchor still refuses to name any ticker other than $THREE.",
+			"link": "/agent-screen",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The premium vanity address shelf restocks itself without redoing work it already finished",
+			"summary": "Premium vanity addresses (the long, brandable Solana addresses sold from stock) are ground ahead of time on cheap batch machines. Those machines get one hour before the platform stops them, and until now a batch that needed longer was cut off mid-run and reported as a failure, then started over from zero on the retry, re-grinding addresses that were already on the shelf. The grinder now stops itself cleanly a few minutes early, keeps everything it found, and on its next run reads the shelf first and skips every pattern still in stock. Wide multi-machine runs also now split the work properly instead of every machine grinding the same slice.",
+			"link": "/vanity/premium",
 			"tags": [
 				"fix",
 				"infra"
