@@ -346,6 +346,14 @@ def project_views_to_uv(
         pixels, depth = view.project(flat_pos)
         u, v = pixels[:, 0], pixels[:, 1]
 
+        # The generated view does not have to be the size the camera was defined
+        # at: a lane may generate at SDXL-native 1024 and bake a 2048 atlas.
+        # Rescale pixel centres onto the image's grid rather than silently
+        # projecting into the wrong half of it.
+        if img_w != view.size or img_h != view.size:
+            u = (u + 0.5) * (img_w / view.size) - 0.5
+            v = (v + 0.5) * (img_h / view.size) - 0.5
+
         confidence = np.clip(flat_nrm @ view.view_direction(), 0.0, 1.0) ** FACING_EXPONENT
         confidence = np.where(confidence >= MIN_FACING, confidence, 0.0)
         # Half a pixel of slack at the frame border. A texel on the silhouette
