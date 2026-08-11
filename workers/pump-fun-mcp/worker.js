@@ -52,17 +52,6 @@ function getRpcUrl(env, network = 'mainnet') {
 	return env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 }
 
-function solanaPubkey(s) {
-	if (!s) return null;
-	try {
-		const { PublicKey } = globalThis._solanaWeb3 || {};
-		if (PublicKey) return new PublicKey(s);
-		return null;
-	} catch {
-		return null;
-	}
-}
-
 // ── On-chain handlers ────────────────────────────────────────────────────────
 
 async function handleGetBondingCurve({ mint, network = 'mainnet' }, env) {
