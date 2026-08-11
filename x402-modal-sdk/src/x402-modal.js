@@ -1,8 +1,9 @@
 // @three-ws/x402-modal — a drop-in payment modal for any x402 paid endpoint.
 //
 // This is the canonical, side-effect-free core. It exports the public API
-// (`pay`, `init`, `configure`, `getConfig`, `version`, `CheckoutModal`, and the
-// declarative helpers `bindElement` / `readOptsFrom`) but does NOT touch
+// (`pay`, `discover`, `init`, `configure`, `getConfig`, `version`,
+// `CheckoutModal`, and the declarative helpers `bindElement` /
+// `readOptsFrom`) but does NOT touch
 // `window` or auto-bind anything on import — that lives in `global.js`, which is
 // what the CDN <script> build ships.
 //
@@ -37,7 +38,9 @@ import {
 	buildSiwxMessage,
 } from './util.js';
 
-const VERSION = '0.2.0';
+// Kept byte-identical to package.json's `version`; test/configure.test.js pins
+// the two together so a release bump cannot leave the shipped string behind.
+const VERSION = '0.3.0';
 
 // ─────────────────────────────────────────────────────────── configuration ───
 // Everything the host wants to brand or repoint lives here. Defaults reproduce
@@ -1332,6 +1335,26 @@ async function postJson(url, body) {
 		throw err;
 	}
 	return data;
+}
+
+/**
+ * Probe an x402 endpoint and return its parsed payment challenge without
+ * opening any UI. Accepts HTTP 402 (standard x402) or HTTP 401 with a
+ * `payment-required` header (MCP 2025-06-18 spec), and reads the challenge from
+ * the response body or that header, whichever carries the `accepts` array.
+ *
+ * This is step 1 of the flow `pay()` runs, exported on its own because it is
+ * pure protocol: it touches no DOM and no wallet, so a server, a CLI, or an
+ * agent can price a paid call (or enumerate the networks it accepts) before
+ * deciding to open the modal at all.
+ *
+ * @param {{endpoint: string, method?: string, body?: unknown, headers?: Record<string,string>}} opts
+ * @returns {Promise<object>} the x402 PaymentRequired envelope, `accepts[]` normalized
+ * @throws {Error} when the endpoint does not answer with a readable challenge
+ */
+export async function discover(opts) {
+	if (!opts?.endpoint) throw new Error('X402.discover: endpoint is required');
+	return discoverChallenge(opts);
 }
 
 // Probe the merchant endpoint with a benign request to extract the 402

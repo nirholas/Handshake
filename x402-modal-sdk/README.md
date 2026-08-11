@@ -164,6 +164,28 @@ Returns `{ ok: true, result, payment?, siwx?, response }`. `payment` is present
 on a fresh payment (`{ network, payer, transaction }`); `siwx` is present when
 the user re-entered via sign-in instead of paying.
 
+### `discover(options): Promise<PaymentChallenge>`
+
+Step 1 of `pay()` on its own: probe an endpoint and return its parsed `402`
+challenge without opening any UI. Takes `endpoint` (required), `method`, `body`
+and `headers`; touches no DOM and no wallet, so it also runs on a server, in a
+CLI, or inside an agent that has no modal at all.
+
+```js
+import { discover } from '@three-ws/x402-modal';
+
+const challenge = await discover({ endpoint: '/api/paid/summarize' });
+for (const a of challenge.accepts) {
+  console.log(a.network, a.amount, a.extra?.name);  // eip155:8453 1000 USDC
+}
+```
+
+`accepts[]` comes back normalized (spec-canonical `maxAmountRequired` coerced to
+`amount`), read from the response body or the base64 `payment-required` header,
+whichever carries it. It rejects when the endpoint answers with no readable
+challenge, including a free `200`: pointing it at an unpaid route is an error,
+never a silent success.
+
 ### `configure(config): config` · `getConfig(): config`
 
 Set global defaults once at startup. See [Configuration](#configuration).

@@ -6,12 +6,12 @@
 //      a line of JS,
 //   2. binds every `[data-x402-endpoint]` element and re-scans the DOM as
 //      merchants inject buttons,
-//   3. exposes `window.X402 = { pay, init, configure, version }`.
+//   3. exposes `window.X402 = { pay, discover, init, configure, version }`.
 //
 // For bundler / npm consumers, import the side-effect-free core instead:
 //   import { pay, configure } from '@three-ws/x402-modal';
 
-import { pay, init, configure, version } from './x402-modal.js';
+import { pay, discover, init, configure, version } from './x402-modal.js';
 
 // Pull optional config off the script tag, e.g.
 //   <script src=".../x402.global.js"
@@ -58,7 +58,7 @@ if (typeof document !== 'undefined') {
 
 // Expose to merchants' inline scripts.
 if (typeof window !== 'undefined') {
-	window.X402 = Object.freeze({ pay, init, configure, version });
+	window.X402 = Object.freeze({ pay, discover, init, configure, version });
 }
 
-export { pay, init, configure, version };
+export { pay, discover, init, configure, version };
