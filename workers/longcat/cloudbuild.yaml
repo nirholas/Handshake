@@ -76,6 +76,7 @@ options:
   diskSizeGb: 200
 
 # The CUDA base image, the cu124 torch wheels and the ONNX/audio stack push this
-# well past Cloud Build's 10-minute default. Measured locally at roughly 20
-# minutes; 3600s leaves room for a cold cache.
+# past Cloud Build's 10-minute default. Measured at 10m45s on E2_HIGHCPU_32 with
+# a completely cold cache (build f270edeb, 2026-08-11); 3600s leaves headroom for
+# a slower upstream day.
 timeout: 3600s
