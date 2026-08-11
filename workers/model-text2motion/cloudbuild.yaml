@@ -1,5 +1,13 @@
 substitutions:
+  # _REGION is where the image is built and stored (Artifact Registry). The
+  # SERVING regions are below: us-east4 is the lane production talks to
+  # (GCP_TEXT2MOTION_URL on three-ws-api), us-central1 is a dormant failback
+  # copy. Both are deployed from the same image so the standby can never be
+  # older than the primary. A rebuild that only touched us-central1 would
+  # silently leave production on the previous revision.
   _REGION: us-central1
+  _PRIMARY_REGION: us-east4
+  _STANDBY_REGION: us-central1
   _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
   _SERVICE: model-text2motion
   _REPO: model-text2motion
@@ -29,7 +37,9 @@ steps:
       - --all-tags
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server
 
-  - id: deploy
+  # The production lane. us-east4 pulls the image cross-region from the
+  # us-central1 registry and gcsfuse-mounts the same weights bucket.
+  - id: deploy-primary
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     entrypoint: gcloud
     args:
@@ -37,7 +47,36 @@ steps:
       - deploy
       - ${_SERVICE}
       - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
-      - --region=${_REGION}
+      - --region=${_PRIMARY_REGION}
+      - --service-account=${_RUN_SA}
+      - --platform=managed
+      - --port=8080
+      - --gpu=1
+      - --gpu-type=nvidia-l4
+      - --no-gpu-zonal-redundancy
+      - --no-cpu-throttling
+      - --cpu=4
+      - --memory=16Gi
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --timeout=900
+      - --allow-unauthenticated
+      - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
+      - --add-volume-mount=volume=weights,mount-path=/weights
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MOTION_MODEL_DIR=/weights/mdm,MAX_CONCURRENT=2
+      - --set-secrets=API_KEY=avatar-reconstruction-key:latest
+
+  # The dormant failback copy. Same image, same flags, min 0 so it holds no GPU
+  # until traffic is pointed at it.
+  - id: deploy-standby
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --region=${_STANDBY_REGION}
       - --service-account=${_RUN_SA}
       - --platform=managed
       - --port=8080
