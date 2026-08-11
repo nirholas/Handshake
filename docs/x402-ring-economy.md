@@ -526,7 +526,39 @@ psql "$DATABASE_URL" -f api/_lib/migrations/2026-07-01-x402-ring-economy.sql
 # 5. Confirm the envelope is correct BEFORE funding — config_warnings must be [].
 curl https://three.ws/api/x402-status  | jq '.ring'
 curl https://three.ws/api/x402-ring    | jq '.config_warnings'
+
+# 6. Prove the whole rail end to end without moving a cent (see below).
+npm run smoke:x402-facilitator
 ```
+
+### Proving the rail without spending
+
+`npm run smoke:x402-facilitator`
+([scripts/x402-facilitator-smoke-test.mjs](../scripts/x402-facilitator-smoke-test.mjs))
+runs the checks above plus the part curl cannot reach: it pulls a real 402
+challenge off `/api/x402/ring-settle`, signs a real USDC transfer for it with the
+ring payer keypair, and POSTs that signed payment to the facilitator's `/verify`
+action. `/verify` runs exactly the checks the money path runs
+(`validateRingTransaction` then `assertSettleable`: payTo allowlist, settleable
+mint, instruction shape, fee ceiling, on-chain balance) and it never broadcasts.
+A green run therefore proves the rail while moving zero USDC and burning zero SOL,
+which is why it is safe to run on every sweep and against production.
+
+It targets `https://three.ws` by default; pass `--url=https://<deployment>` for a
+preview. Config comes from the shell first and `.env` / `.env.local` second, so
+the payer keypair (`X402_SEED_SOLANA_SECRET_BASE58`) and `SOLANA_RPC_URL` do not
+have to be exported by hand.
+
+```bash
+npm run smoke:x402-facilitator                                  # verify-only vs production
+npm run smoke:x402-facilitator -- --url=https://<preview>       # verify-only vs a preview
+npm run smoke:x402-facilitator -- --url=https://<preview> --settle --cap=0.05
+```
+
+`--settle` is the one mode that spends: it drives a single, cents-capped real
+settlement through `payX402`, the same call the autonomous loop makes. It refuses
+to run without an explicit `--url`, so a real payment can never leave on an
+implied target.
 
 ### How Solana settlement routes
 
