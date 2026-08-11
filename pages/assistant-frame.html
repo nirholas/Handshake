@@ -496,9 +496,13 @@
 			</div>
 
 			<div id="assistant-composer">
-				<div id="assistant-modes" role="tablist" aria-label="Assistant mode">
-					<button type="button" class="mode-btn" data-mode="chat" role="tab" aria-pressed="true" data-i18n="assistant_frame.chat">Chat</button>
-					<button type="button" class="mode-btn" data-mode="speak" role="tab" aria-pressed="false" data-i18n="assistant_frame.speak">Speak</button>
+				<!-- A pair of toggle buttons, not tabs: role="tab" would promise a
+				     tabpanel relationship and an aria-selected state this control
+				     does not have. Same pattern as the /assistant builder's
+				     segmented control. -->
+				<div id="assistant-modes" role="group" aria-label="Assistant mode">
+					<button type="button" class="mode-btn" data-mode="chat" aria-pressed="true" data-i18n="assistant_frame.chat">Chat</button>
+					<button type="button" class="mode-btn" data-mode="speak" aria-pressed="false" data-i18n="assistant_frame.speak">Speak</button>
 				</div>
 				<div id="assistant-input-row">
 					<textarea id="assistant-input" rows="1" placeholder="Type a question..." aria-label="Message the assistant" maxlength="4000"></textarea>

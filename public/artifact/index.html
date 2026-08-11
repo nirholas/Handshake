@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Artifact Viewer · three.ws</title>
+		<title data-i18n="artifact_index.meta_title">Artifact Viewer · three.ws</title>
 		<meta
 			name="description"
 			content="Embed an interactive three.ws agent inside a Claude.ai artifact. Self-contained HTML, zero external dependencies."
@@ -634,7 +634,7 @@
 			<header class="hero">
 				<span class="eyebrow" data-i18n="artifact_index.claude_ai_artifact">Claude.ai artifact</span>
 				<h1 class="headline" data-i18n="artifact_index.embed_your_agent_in_claude_ai">Embed your agent in Claude.ai</h1>
-				<p class="lede">
+				<p class="lede" data-i18n="artifact_index.paste_a_single_url_into_a_claude">
 					Paste a single URL into a Claude conversation. The response is one self-contained
 					HTML document: three.js, GLTFLoader, and your agent's GLB are all inlined. No
 					script blocked by Claude's sandbox CSP, no fetch that ever leaves the page.
@@ -658,8 +658,8 @@
 
 					<div class="picker">
 						<div class="picker-head">
-							<h3 id="picker-h">Public agents you can embed</h3>
-							<a class="linklike" href="/agents">Browse all</a>
+							<h3 id="picker-h" data-i18n="artifact_index.public_agents_you_can_embed">Public agents you can embed</h3>
+							<a class="linklike" href="/agents" data-i18n="artifact_index.browse_all">Browse all</a>
 						</div>
 						<div id="pickerBody" role="group" aria-labelledby="picker-h" aria-busy="true">
 							<div class="picker-grid" aria-hidden="true">
@@ -764,7 +764,7 @@
 			<section class="facts">
 				<div class="fact">
 					<h3 data-i18n="artifact_index.self_contained">Self-contained</h3>
-					<p>
+					<p data-i18n="artifact_index.three_js_gltfloader_and_the_glb_are">
 						three.js, GLTFLoader, and the GLB are all inlined. The page renders with zero
 						network calls, fully compatible with Claude's sandbox CSP that forbids fetch
 						and external scripts.
@@ -772,14 +772,14 @@
 				</div>
 				<div class="fact">
 					<h3 data-i18n="artifact_index.sandbox_locked_csp">Sandbox-locked CSP</h3>
-					<p>
+					<p data-i18n="artifact_index.the_response_sets_a_csp_mirroring_claude">
 						The response sets a CSP mirroring Claude's own, so behavior in the live preview
 						matches behavior inside Claude.ai. No surprises between staging and prod.
 					</p>
 				</div>
 				<div class="fact">
 					<h3 data-i18n="artifact_index.size_budget">Size budget</h3>
-					<p>
+					<p data-i18n="artifact_index.glbs_over_6_mb_are_rejected_because">
 						GLBs over 6 MB are rejected, because Claude's artifact panel can hang on huge
 						inlined payloads. The viewer adds a flat 565 KB on top of the model.
 					</p>

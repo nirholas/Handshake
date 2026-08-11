@@ -27,6 +27,9 @@ const nameInput = document.getElementById('cfg-name');
 const greetingInput = document.getElementById('cfg-greeting');
 const contextInput = document.getElementById('cfg-context');
 const accentInput = document.getElementById('cfg-accent');
+const previewStatusEl = document.getElementById('preview-status');
+const previewStatusTextEl = document.getElementById('preview-status-text');
+const previewRetryBtn = document.getElementById('preview-retry');
 
 // ── Snippet rendering ─────────────────────────────────────────────────────
 function escapeAttr(value) {
@@ -64,29 +67,67 @@ function snippetText() {
 }
 
 // ── Live widget (the real loader, re-inited on every change) ──────────────
+const PREVIEW_COPY = {
+	loading: 'Starting the live preview...',
+	ready: 'Live preview running in the corner. Every change above re-mounts it.',
+	error:
+		"The live preview couldn't start (the widget script didn't load). Your snippet " +
+		'above is still correct, and the widget works on your own site.',
+};
+
+function setPreviewState(state) {
+	previewStatusEl.dataset.state = state;
+	previewStatusTextEl.textContent = PREVIEW_COPY[state];
+	previewRetryBtn.hidden = state !== 'error';
+}
+
 let loaderReady = null;
 function ensureLoader() {
 	if (loaderReady) return loaderReady;
+	setPreviewState('loading');
 	loaderReady = new Promise((resolve, reject) => {
 		const s = document.createElement('script');
 		s.src = '/assistant/v1.js';
 		s.setAttribute('data-manual', ''); // we drive init ourselves
-		s.onload = resolve;
+		s.onload = () => {
+			if (window.ThreeAssistant) resolve();
+			else reject(new Error('assistant loader loaded without ThreeAssistant'));
+		};
 		s.onerror = () => reject(new Error('assistant loader failed to load'));
 		document.head.appendChild(s);
+	}).catch((err) => {
+		// Drop the rejected promise so Retry re-fetches instead of replaying it.
+		loaderReady = null;
+		removeLoaderTag();
+		throw err;
 	});
 	return loaderReady;
+}
+
+/** Remove a failed loader tag so a retry isn't blocked by a dead script node. */
+function removeLoaderTag() {
+	for (const tag of document.querySelectorAll('script[src="/assistant/v1.js"]')) tag.remove();
 }
 
 let applyTimer = 0;
 function applyLive() {
 	clearTimeout(applyTimer);
 	applyTimer = setTimeout(async () => {
-		await ensureLoader();
-		const wasOpen = Boolean(window.ThreeAssistant?.instance?.isOpen);
-		window.ThreeAssistant.init({ ...config, open: wasOpen });
+		try {
+			await ensureLoader();
+			const wasOpen = Boolean(window.ThreeAssistant?.instance?.isOpen);
+			window.ThreeAssistant.init({ ...config, open: wasOpen });
+			setPreviewState('ready');
+		} catch {
+			setPreviewState('error');
+		}
 	}, 250);
 }
+
+previewRetryBtn.addEventListener('click', () => {
+	setPreviewState('loading');
+	applyLive();
+});
 
 function update(patch) {
 	Object.assign(config, patch);
@@ -135,7 +176,11 @@ greetingInput.addEventListener('input', () => update({ greeting: greetingInput.v
 contextInput.addEventListener('input', () => update({ context: contextInput.value.trim() }));
 accentInput.addEventListener('input', () => update({ accent: sanitizeAccent(accentInput.value) }));
 
+let copyBtnLabel = '';
 copyBtn.addEventListener('click', async () => {
+	// Read the resting label at click time: i18n may have translated it, and
+	// restoring a hardcoded English string below would undo that.
+	if (!copyBtnLabel) copyBtnLabel = copyBtn.textContent.trim();
 	try {
 		await navigator.clipboard.writeText(snippetText());
 		copyBtn.textContent = 'Copied!';
@@ -150,7 +195,7 @@ copyBtn.addEventListener('click', async () => {
 		copyBtn.textContent = 'Press Ctrl+C';
 	}
 	setTimeout(() => {
-		copyBtn.textContent = 'Copy snippet';
+		copyBtn.textContent = copyBtnLabel;
 	}, 1600);
 });
 

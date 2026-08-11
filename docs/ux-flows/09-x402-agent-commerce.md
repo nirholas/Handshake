@@ -79,18 +79,20 @@ choreographed two-agent narrative driven by Server-Sent Events.
 
 ### x402 Arbitrage — `/arbitrage`
 - **Source:** `public/arbitrage.html` + `public/arbitrage.js` + `/x402.js` (loaded on-demand); backend `api/bazaar/arbitrage`.
-- **Entry point:** Cross-provider price-disparity board — one card per capability, ranked providers, spread %.
+- **Entry point:** Cross-provider price-disparity board, one card per capability, ranked providers, spread %.
 - **Prerequisites / gates:** None to browse; wallet only to pay.
+- **Deep links in:** `/arbitrage?focus=<capability>` (what `/bazaar` sends from a listing's priced-peers hint), `?q=<text>`, `?type=http|mcp`. The page writes its own filter state back with `replaceState`, so any filtered view is shareable.
 - **Steps (3 required + 3 optional):**
   1. Page loads → `GET /api/bazaar/arbitrage?minSpreadPct=0&limit=200` → skeleton then arb cards (spread %, up to 5 providers cheapest-first, metrics).
   2. (optional) Filter type All/HTTP/MCP; (optional) search by capability/host.
   3. Click **Pay cheapest · $X** → lazy-loads `/x402.js`, then `window.X402.pay({ endpoint: cheapest.resource, method:'GET', merchant: host, action: capability })`.
   4. Result shows on the button: "✓ Paid" (auto-revert 4s) / "Failed: …" / revert on cancel.
-  5. (optional) Click **Avoid · $Y** → navigates to `/bazaar?q=<capability>` to see the full spectrum.
-- **Decision points / branches:** MCP capability → "Pay" redirects to `/bazaar?q=` (can't call MCP directly); on-demand x402 load; button state management.
+  5. (optional) Click **Avoid · $Y** → navigates to `/bazaar?q=<capability>` (plus `&type=mcp` for MCP capabilities, since the catalog defaults to the HTTP tab) to see the full spectrum.
+- **Decision points / branches:** MCP capability → "Pay" redirects to the catalog (can't call MCP directly); on-demand x402 load; button state management.
+- **What counts as an opportunity (backend):** listings are grouped by capability key (MCP tool name, else service name, else the last literal URL segment; route placeholders like `/:solana_address` and `/{mint}` are skipped because they name the argument, not the capability). A group ships only if it spans two or more provider hosts, or if one host has a single resource quoted at two different prices by two different facilitators (a genuine cross-venue gap). A vendor charging different prices for its own distinct endpoints is not arbitrage and is dropped.
 - **External calls / dependencies:** `/api/bazaar/arbitrage`, `/x402.js`, the cheapest live endpoint, Solscan/Basescan.
 - **Success state:** "✓ Paid" on the cheapest provider; payment settled on-chain.
-- **Empty / error states:** no opportunities → "No arbitrage opportunities right now…"; timeout (20s) → "Request timed out… Retry"; feed error → "Couldn't reach the arbitrage feed…"; modal fail → "Payment modal failed to load".
+- **Empty / error states:** filters exclude everything → "No opportunities match these filters" with a Clear-filters button and a catalog link; feed genuinely has no gap → "No cross-provider price gaps right now" with links to `/bazaar` and `/providers`; timeout (20s) → "Request timed out… Retry"; feed error → "Couldn't reach the arbitrage feed…"; modal fail → "Payment modal failed to load".
 - **Step count:** 3 required (+3 optional).
 
 ### x402 Providers — `/providers`

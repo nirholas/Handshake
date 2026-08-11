@@ -119,8 +119,23 @@ async function fetchAgent(agentId) {
 	return { agent: data.agent };
 }
 
-/** Fetch the caller's own agents. Returns { agents } or { state: 'signed_out' }. */
+/**
+ * Fetch the caller's own agents. Returns { agents } or { state: 'signed_out' }.
+ *
+ * The session is resolved first through /api/auth/me, which answers 200 with a
+ * null user for anonymous visitors. GET /api/agents answers 401 for them, and
+ * the browser logs every 401 response as a console error, so the signed-out
+ * path stops before it fires one.
+ */
 async function fetchOwnAgents() {
+	const me = await fetch('/api/auth/me', {
+		credentials: 'include',
+		headers: { accept: 'application/json' },
+	});
+	if (!me.ok) throw new Error(`HTTP ${me.status}`);
+	const session = await me.json();
+	if (!session?.user?.id) return { state: 'signed_out' };
+
 	const res = await fetch('/api/agents', {
 		credentials: 'include',
 		headers: { accept: 'application/json' },

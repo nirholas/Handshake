@@ -375,9 +375,9 @@ async function doPurchase() {
 		const res = await fetch('/api/x402-pay', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
+			// `endpoint` selects the showcase-pay branch in api/x402-pay.js, which
+			// allowlists it server-side and forwards `body` to the paid route.
 			body: JSON.stringify({
-				tool:   'crypto_intel',
-				topic:  activeTopic,
 				endpoint: '/api/x402/crypto-intel',
 				body: { topic: activeTopic },
 			}),

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-11T21:45:57.459Z",
+	"generated_at": "2026-08-11T23:25:01.689Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -315,6 +315,17 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "The agent economy dashboard now reads clearly while it loads, when it breaks, and on a phone",
+			"summary": "The agent-to-agent volume page got a full pass. Every settlement in the live feed now links to the agents on both sides of it, the way the leaderboards already did, and never to a deleted or private profile. Hovering the volume chart shows that day's date, amount and hire count, and the same series is exposed to screen readers as a table instead of being trapped in a canvas. When the stats cannot load, the page says so and offers Retry instead of shimmering forever, and a failed background refresh keeps the numbers already on screen. Empty sections now point at what to do next, the day buckets line up with the server's UTC days no matter where you are, and the page no longer scrolls sideways on a narrow phone.",
+			"link": "/agent-economy-volume",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "The Agent Identity Studio showcase is live data now, and its 3D button goes both ways",
 			"summary": "The gallery at /agent-identities shows what the Identity Studio produces: a brand brief in, a rigged 3D avatar and a set of studio renders out. Until now those demo identities were frozen into the page at build time, and the price in the header was typed into the copy, so a fresh demo run or a price change only showed up at the next site build. The page now reads a live feed at /api/agent-identities, which is also public for anyone else to call: it carries every demo identity, its renders, its rigged model, and the verified joint count, plus the service price read straight from the marketplace catalogue the paid endpoint charges from. Because the page now waits on something, it was given the states to match: shimmering placeholder cards while the feed loads, a real error panel with a working retry if it never arrives, and an honest empty state instead of a blank grid. View in 3D is a proper toggle at last, turning into Back to renders rather than becoming a dead button after one click, and it shows a spinner while the avatar downloads and a link to the full viewer if it fails. A render whose image is missing now says so instead of leaving a broken-image icon. On a phone-width screen the cards no longer push the page sideways.",
 			"link": "/agent-identities",
@@ -333,6 +344,28 @@
 			"tags": [
 				"fix",
 				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The arbitrage board now compares like with like, and finds four times as many real price gaps",
+			"summary": "The x402 arbitrage board groups listings by what they actually do, so it can show you the same capability priced differently by competing providers. Two things were making it lie. When a provider's URL ended in a parameter (a wallet address, a token mint), the board treated that parameter as the capability, so ten unrelated endpoints from one vendor were being presented as a single opportunity with a 1400% spread. And a vendor charging different prices for its own different endpoints was being counted as cross-provider competition. Both are fixed: an opportunity now needs either two genuinely different provider hosts, or one resource quoted at two prices by two different venues. Grouping also stopped mistaking real words for random URL suffixes, which had been hiding matches. The live board went from 24 mostly-noise cards to 99 real ones. The page picked up polish alongside: a filtered view is now shareable by URL, deep links from the catalog land pre-filtered, the empty state offers a way out instead of a dead end, and cards fit a 320px phone without sideways scrolling.",
+			"link": "/arbitrage",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The Avatar CLI page now shows the exact snippet the CLI prints",
+			"summary": "The /avatar-cli page claims the embed snippet it displays is the real output of `three-ws-avatar preview`, pasted in unchanged. It was not: the loader URL and the sizing had been hand-edited, so anyone copying it got markup that differed from what their own terminal would produce. The displayed snippet, the viewer running beside it, and the replayed terminal session are now captured verbatim from the CLI, including the resolver URL and the next-step hint that init actually prints. The live viewer also no longer gets cropped on narrow phones, and the page's stated package version matches the published one.",
+			"link": "/avatar-cli",
+			"tags": [
+				"fix",
 				"docs"
 			]
 		},
