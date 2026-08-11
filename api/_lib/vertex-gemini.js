@@ -72,3 +72,35 @@ export async function vertexGeminiHeaders() {
 export async function vertexGeminiAccessToken() {
 	return getGcpAccessToken();
 }
+
+// Gemini 2.5 reasons by default, and on the OpenAI-compatible surface those
+// reasoning tokens are billed against `max_tokens` WITHOUT ever being returned.
+// Measured on this endpoint: a 400-token request spent 382 on reasoning and
+// returned 14 visible ones with finish_reason "length", i.e. every answer came
+// back truncated mid-sentence. Capping the reasoning explicitly and funding it
+// on top of the caller's budget makes `maxTokens` mean what the caller meant:
+// tokens the reader actually receives.
+const DEFAULT_THINKING_BUDGET = 512;
+
+/** Reasoning-token ceiling for the anchor; 0 disables reasoning entirely. */
+export function vertexGeminiThinkingBudget() {
+	const raw = Number(process.env.VERTEX_GEMINI_THINKING_BUDGET);
+	return Number.isFinite(raw) && raw >= 0 ? Math.floor(raw) : DEFAULT_THINKING_BUDGET;
+}
+
+/**
+ * Request-body fields that buy `maxTokens` of VISIBLE output on the Gemini
+ * anchor: a hard reasoning cap plus that cap added to the token budget. Spread
+ * into any OpenAI-compatible payload for this endpoint.
+ *
+ * @param {number} maxTokens visible-output budget the caller asked for
+ * @returns {{ max_tokens: number, extra_body: object }}
+ */
+export function vertexGeminiBudget(maxTokens) {
+	const think = vertexGeminiThinkingBudget();
+	const visible = Number.isFinite(Number(maxTokens)) && Number(maxTokens) > 0 ? Math.floor(Number(maxTokens)) : 1024;
+	return {
+		max_tokens: visible + think,
+		extra_body: { google: { thinking_config: { thinking_budget: think } } },
+	};
+}
