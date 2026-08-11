@@ -68,8 +68,14 @@ gcloud builds submit --config workers/rig/cloudbuild.yaml \
   --substitutions=SHORT_SHA=manual$(date +%s) .
 ```
 
-Service: `model-rig`, us-central1, 1x L4 (`--no-gpu-zonal-redundancy`),
-min=max instances per the L4 quota plan in `docs/ops/gcp-credits-plan.md`.
+Service: `model-rig`, us-central1, 1x L4 (`--no-gpu-zonal-redundancy`), one
+warm instance against the per-region L4 quota in `docs/ops/gcp-credits-plan.md`.
+
+`_MIN_INSTANCES` and `_MAX_INSTANCES` must stay equal. Task state is in this
+service's memory, so a second instance lets Cloud Run route `GET /tasks/:id` to
+an instance that does not own the task and 404 a job running fine on the other.
+The config said `max = 2` until 2026-08-11; the live service picks the fix up on
+its next deploy.
 
 ## Cutover (already applied)
 
@@ -142,7 +148,8 @@ the startup probe.
 
 ## Failure modes
 
-A task ends in exactly one of three states, never in limbo:
+A task always reaches `done` or `failed`, never limbo. What a `failed` task
+reports, and what to do about it:
 
 | Reported `error` | Cause | Fix |
 |---|---|---|
