@@ -169,6 +169,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Agent trading spec](./specs/agent-trading.md): the proposed agent trading capability contract
 - [ERC-8004 validation attestation](./erc8004/validation-attestation.md): the attestation written when an agent registers on-chain
 - [zauth](./zauth/index.md): the vendored security infrastructure docs our agent auth builds on
+- [Agent tokens](./agent-tokens.md): configure the coin an agent will become, rehearse the launch for free against a real cluster, then launch it on Solana
 - [pump.fun program docs](./pumpfun-program/README.md): the vendored on-chain program reference behind the launch surfaces
 - [pump-fun-mcp at the edge](./pump-fun-mcp-edge.md): the Cloudflare Workers mirror of the pump.fun MCP endpoint
 - [Package extraction](./package-extraction.md): how reusable packages graduate out of the monorepo

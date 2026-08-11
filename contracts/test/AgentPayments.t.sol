@@ -65,6 +65,91 @@ contract MockRouter {
     receive() external payable {}
 }
 
+/// @notice Currency that burns 1% on every transfer. AP-5 requires the engine
+///         to credit what actually arrived, not what the payer asked for.
+contract FeeOnTransferToken {
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    function mint(address to, uint256 amount) external {
+        balanceOf[to] += amount;
+    }
+
+    function approve(address spender, uint256 amount) external returns (bool) {
+        allowance[msg.sender][spender] = amount;
+        return true;
+    }
+
+    function transfer(address to, uint256 amount) public returns (bool) {
+        uint256 fee = amount / 100;
+        balanceOf[msg.sender] -= amount;
+        balanceOf[to] += amount - fee;
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
+        uint256 a = allowance[from][msg.sender];
+        if (a != type(uint256).max) allowance[from][msg.sender] = a - amount;
+        uint256 fee = amount / 100;
+        balanceOf[from] -= amount;
+        balanceOf[to] += amount - fee;
+        return true;
+    }
+}
+
+/// @notice Router that returns without buying anything, proving AP-9's
+///         "reverts if the swap returned nothing" branch.
+contract EmptyRouter {
+    fallback() external payable {}
+    receive() external payable {}
+}
+
+/// @notice Router that reverts, proving the SwapFailed branch.
+contract FailingRouter {
+    fallback() external payable {
+        revert("swap failed");
+    }
+}
+
+/// @notice Native-currency receiver that rejects ETH, proving the
+///         NativeTransferFailed branch of `withdraw`.
+contract NativeRejecter {}
+
+/// @notice Native receiver that re-enters `withdraw` from its payout callback.
+contract ReentrantReceiver {
+    AgentPayments public immutable ap;
+    address private _agentToken;
+    address private _currency;
+    bool private _armed;
+
+    bool public reentryAttempted;
+    bool public reentrySucceeded;
+
+    constructor(AgentPayments _ap) {
+        ap = _ap;
+    }
+
+    function pull(address agentToken, address currency) external {
+        _agentToken = agentToken;
+        _currency = currency;
+        _armed = true;
+        ap.withdraw(agentToken, currency, address(this));
+    }
+
+    receive() external payable {
+        if (_armed) {
+            _armed = false;
+            reentryAttempted = true;
+            (bool ok,) = address(ap).call(
+                abi.encodeWithSelector(AgentPayments.withdraw.selector, _agentToken, _currency, address(this))
+            );
+            reentrySucceeded = ok;
+        }
+    }
+}
+
+/// @dev Invariants under proof: AP-1 .. AP-13 of
+///      `specs/ECONOMY_CONTRACT_INVARIANTS.md`.
 contract AgentPaymentsTest is Test {
     AgentPayments internal ap;
     MockERC20 internal usdc;
