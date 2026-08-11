@@ -6,7 +6,7 @@ let lastScreenshotAt = 0;
  *
  * @param {object} opts
  * @param {string} opts.agentId
- * @param {import('playwright').Page|null} opts.page  — null for text-only pushes
+ * @param {object|null} opts.page  Stagehand v3 page (from stagehand.context); null for text-only pushes
  * @param {string} opts.activity                      — human-readable narration
  * @param {string} [opts.type]                        — screenshot | activity | trade | analysis
  * @param {string} opts.pushUrl
@@ -24,7 +24,9 @@ export async function pushFrame({
 }) {
 	let data = null;
 	const now = Date.now();
-	const wantScreenshot = type !== 'activity' && page !== null;
+	// Truthiness, not `!== null`: an absent page must degrade to a text-only push
+	// rather than throw inside the screenshot call.
+	const wantScreenshot = type !== 'activity' && !!page;
 	const screenshotDue = now - lastScreenshotAt >= screenshotIntervalMs;
 
 	if (wantScreenshot && screenshotDue) {
