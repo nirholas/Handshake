@@ -1,5 +1,5 @@
 /**
- * Agent token plan panel — the agent's coin before the coin exists.
+ * Agent token plan panel: the agent's coin before the coin exists.
  *
  * An agent token is the economic object an agent becomes. Until it mints, that
  * object had nowhere to live: the launch form collected a name and a ticker,

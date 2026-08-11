@@ -299,6 +299,53 @@
 				margin-top: 16px; padding: 14px 16px;
 				background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
 			}
+			.consent-list {
+				margin: 10px 0 0; padding: 0; list-style: none;
+				max-height: 340px; overflow-y: auto;
+				border: 1px solid var(--border); border-radius: 8px;
+			}
+			.consent-item {
+				display: flex; align-items: flex-start; gap: 10px;
+				padding: 10px 12px; border-bottom: 1px solid var(--border);
+				transition: background 0.15s ease;
+			}
+			.consent-item:last-child { border-bottom: none; }
+			.consent-item:hover { background: rgba(255,255,255,0.03); }
+			.consent-item input[type="checkbox"] { margin-top: 3px; width: auto; flex-shrink: 0; accent-color: #ddd; }
+			.consent-item .ci-body { flex: 1 1 auto; min-width: 0; }
+			.consent-item .ci-title {
+				font-size: 13px; color: #ddd; display: flex; align-items: center; gap: 8px;
+				flex-wrap: wrap;
+			}
+			.consent-item .ci-title a { color: inherit; text-decoration: none; border-bottom: 1px solid #333; }
+			.consent-item .ci-title a:hover { border-bottom-color: #888; }
+			.consent-item .ci-meta {
+				font-size: 12px; color: #777; margin-top: 3px;
+				overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+			}
+			.consent-readme {
+				display: inline-flex; align-items: center; gap: 5px;
+				font-size: 11px; color: #888; cursor: pointer; flex-shrink: 0;
+				padding: 2px 7px; border: 1px solid var(--border); border-radius: 999px;
+				transition: border-color 0.15s ease, color 0.15s ease;
+			}
+			.consent-readme:hover { border-color: #555; color: #bbb; }
+			.consent-readme input[disabled] + span { opacity: 0.45; }
+			.consent-readme:has(input[disabled]) { cursor: not-allowed; opacity: 0.55; }
+			.consent-summary {
+				margin-top: 10px; font-size: 12px; color: #888;
+				display: flex; align-items: center; justify-content: space-between; gap: 12px;
+				flex-wrap: wrap;
+			}
+			.consent-skeleton {
+				height: 44px; margin-bottom: 1px; border-radius: 6px;
+				background: linear-gradient(90deg, #161616 25%, #1e1e1e 50%, #161616 75%);
+				background-size: 200% 100%; animation: consent-shimmer 1.3s ease-in-out infinite;
+			}
+			@keyframes consent-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+			@media (prefers-reduced-motion: reduce) { .consent-skeleton { animation: none; } }
+			.seed-facts { margin: 0; padding-left: 18px; color: #ccc; font-size: 13px; }
+			.seed-facts li { margin-bottom: 5px; }
 			@media (max-width: 768px) {
 				.layout { grid-template-columns: 1fr; }
 				aside {
@@ -528,11 +575,21 @@
 
 					<div class="agent-seed-area" id="seed-area" style="display:none">
 						<h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#666;margin:0 0 10px" data-i18n="settings_index.seed_agent_memory">Seed Agent Memory</h3>
-						<p class="muted" style="font-size:13px;margin:0 0 12px" data-i18n="settings_index.fetch_your_github_activity_and_distill_it">Fetch your GitHub activity and distill it into agent memory facts (once per 24 hours per agent).</p>
-						<label for="inp-seed-agent-id" style="display:block;font-size:12px;color:#888;margin-bottom:6px" data-i18n="settings_index.agent_id">Agent ID</label>
-						<input id="inp-seed-agent-id" type="text" placeholder="Paste agent UUID…" style="max-width:360px" />
-						<div class="row" style="margin-top:8px">
-							<button class="btn" id="seed-btn" data-i18n="settings_index.seed_memory">Seed memory</button>
+						<p class="muted" style="font-size:13px;margin:0 0 12px" data-i18n="settings_index.pick_exactly_what_your_agent_reads">Pick exactly what your agent reads. Only the items you tick below are fetched and stored, and you can delete every seeded memory at any time.</p>
+
+						<label for="sel-seed-agent" style="display:block;font-size:12px;color:#888;margin-bottom:6px" data-i18n="settings_index.agent">Agent</label>
+						<select id="sel-seed-agent" style="max-width:360px"></select>
+						<div id="seed-agent-fallback" style="display:none;margin-top:8px">
+							<label for="inp-seed-agent-id" style="display:block;font-size:12px;color:#888;margin-bottom:6px" data-i18n="settings_index.agent_id">Agent ID</label>
+							<input id="inp-seed-agent-id" type="text" placeholder="Paste agent UUID…" style="max-width:360px" />
+							<button class="btn sec" id="seed-load-btn" style="font-size:12px;padding:5px 14px;margin-top:8px" data-i18n="settings_index.load">Load</button>
+						</div>
+
+						<div id="seed-catalog" style="margin-top:14px" aria-live="polite"></div>
+
+						<div class="row" style="margin-top:12px">
+							<button class="btn" id="seed-btn" disabled data-i18n="settings_index.seed_memory">Seed memory</button>
+							<button class="btn sec" id="seed-revoke-btn" style="display:none" data-i18n="settings_index.delete_seeded_memories">Delete seeded memories</button>
 							<span class="inline-msg" id="seed-msg" style="display:none"></span>
 						</div>
 						<div id="seed-results" style="display:none;margin-top:12px"></div>

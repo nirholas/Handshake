@@ -1,4 +1,4 @@
--- Migration: agent_token_plans — the launch configuration bound to an agent record.
+-- Migration: agent_token_plans, the launch configuration bound to an agent record.
 -- Apply: psql "$DATABASE_URL" -f api/_lib/migrations/20260811130000_agent_token_plans.sql
 -- Idempotent.
 --

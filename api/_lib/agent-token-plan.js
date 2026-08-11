@@ -1,4 +1,4 @@
-// Agent token plans — the launch configuration bound to an agent record.
+// Agent token plans: the launch configuration bound to an agent record.
 //
 // An agent token is the economic object an agent becomes: one coin, on Solana,
 // whose identity belongs to the agent rather than to whichever form the owner
@@ -352,7 +352,7 @@ export async function recordDryRun({ agentId, network, result }) {
 /**
  * Bind a confirmed on-chain launch back to the plan it came from. Idempotent and
  * safe to call when no plan exists (the launch paths accept a launch configured
- * inline, without a saved plan) — it simply writes nothing and returns null.
+ * inline, without a saved plan). It simply writes nothing and returns null.
  *
  * @param {{ agentId: string, network: string, mint: string }} o
  * @returns {Promise<object|null>} the launched plan row, or null
