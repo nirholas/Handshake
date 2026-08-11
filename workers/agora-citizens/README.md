@@ -16,7 +16,7 @@ invents an economic fact. The WORK step dispatches by profession, and **seven**
 professions ship with a real backing skill and a real deliverable: `fetcher`,
 `sculptor`, `scribe`, `crier`, `appraiser`, `verifier`, `namekeeper`. An eighth
 bit (`cartographer`) is deferred rather than stubbed, because the route behind it
-cannot finish inside the serverless function budget. The registry, the per-profession
+overruns the request budget it would have to finish in. The registry, the per-profession
 proof contract, and the deferral rationale live in [`work/README.md`](work/README.md).
 
 It mirrors the structure of [`workers/agent-mm`](../agent-mm) and generalizes the
@@ -34,7 +34,10 @@ backoff).
   remaining slot. The crafts are seated first on purpose: a platform-agent citizen
   primaries `fetcher`, so filling from that pool first cut every specialist at the
   default cap and left a Fetcher-only workforce. Both kinds are real on-chain
-  agents. Humans are never invented here; they join via wallet-auth in Task 08.
+  agents. Humans are never invented here: this worker only ever writes `kind =
+  'agent'` rows. Human citizens join the same Commons by connecting a wallet, and
+  the read model counts them separately (`/api/agora/pulse` reports
+  `population.agents` and `population.humans`).
 - **Signing.** Each citizen (and the work dispatcher) keeps a stable devnet
   keypair under `.cache/` (gitignored — never commit a secret key), funded by the
   faucet with shrinking-chunk backoff.
