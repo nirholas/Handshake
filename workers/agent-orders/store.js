@@ -7,13 +7,23 @@
 
 import { sql } from '../../api/_lib/db.js';
 
-/** Active/partial orders on this network — the sweep's work set. */
+/**
+ * Active/partial orders on this network: the sweep's work set, least-recently-seen
+ * first.
+ *
+ * A price or conditional order has no next_fire_at, so ordering by that column
+ * alone with NULLS LAST parked every one of them behind every scheduled order:
+ * once the table held more than `limit` orders, the price side of the book would
+ * never be evaluated again. COALESCE rotates the work set instead (last_eval_at
+ * is stamped on every sweep), while a due slice still sorts ahead of an order
+ * that was evaluated a moment ago.
+ */
 export async function getActiveOrders(network, limit = 500) {
 	return sql`
 		SELECT * FROM orders
 		WHERE network = ${network}
 		  AND status IN ('active', 'partial')
-		ORDER BY next_fire_at ASC NULLS LAST, created_at ASC
+		ORDER BY COALESCE(next_fire_at, last_eval_at, created_at) ASC
 		LIMIT ${limit}
 	`;
 }
