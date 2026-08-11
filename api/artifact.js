@@ -17,8 +17,7 @@ import { error, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { getObjectBuffer } from './_lib/r2.js';
 import { assertSafePublicUrl } from './_lib/ssrf-guard.js';
-
-const AGENT_ID_RE = /^[a-z0-9_-]{3,64}$/i;
+import { isUuid } from './_lib/validate.js';
 
 // Whitelisted origins for ?model= URLs (must be https). Server-side fetched,
 // then inlined — Claude's sandbox can't reach these directly.
@@ -239,12 +238,16 @@ export default wrap(async (req, res) => {
 	let result;
 
 	if (agentId !== null) {
-		if (!AGENT_ID_RE.test(agentId)) {
+		// agent_identities.id is a uuid column, so anything else can only ever be a
+		// miss. Rejecting it here keeps a hand-typed handle from reaching Postgres,
+		// where "invalid input syntax for type uuid" surfaced as an opaque 500 with a
+		// support ref instead of a message the caller can act on.
+		if (!isUuid(agentId)) {
 			return error(
 				res,
 				400,
 				'invalid_request',
-				'agent id must be 3–64 alphanumeric/hyphen/underscore chars',
+				'agent must be the agent UUID, copied from the agent profile page',
 			);
 		}
 		result = await loadAgentArtifactConfig(agentId, opts);

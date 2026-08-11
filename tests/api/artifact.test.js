@@ -2,8 +2,8 @@
 // that survives Claude.ai's actual sandbox CSP — otherwise the artifact
 // silently breaks when pasted into a Claude conversation. We pin against the
 // real CSP scraped at github.com/simonw/scrape-claude-artifacts (vendored at
-// tests/_fixtures/claude-artifact-csp.txt; refresh via
-// `node scripts/refresh-claude-csp.mjs`).
+// public/claude-artifact-csp.txt, which is also what the builder page at
+// /artifact displays; refresh via `node scripts/refresh-claude-csp.mjs`).
 //
 // What "survive" means here: for every directive that controls fetchable
 // resources (script-src, style-src, connect-src, img-src, font-src), every
@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const FIXTURE = resolve(__dirname, '../_fixtures/claude-artifact-csp.txt');
+const FIXTURE = resolve(__dirname, '../../public/claude-artifact-csp.txt');
 const BUNDLE = resolve(__dirname, '../../public/artifact-viewer.bundle.js');
 
 vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => {}, drain: async () => {} }));
@@ -37,6 +37,9 @@ vi.mock('../../api/_lib/r2.js', () => ({
 // A tiny but valid GLB. The test parses no actual geometry — we only need
 // the byte stream to round-trip through base64 and into the HTML.
 const FAKE_GLB = Buffer.from('glTF\x02\x00\x00\x00' + 'A'.repeat(1024));
+
+// agent_identities.id is a uuid column, so every accepted ?agent= value is one.
+const AGENT_UUID = '27a0f649-3b59-4552-bb0b-faf616ac448b';
 
 function makeReq(qs) {
 	return {
@@ -158,14 +161,14 @@ describe('/api/artifact contract', () => {
 		it('returns 404 when agent missing', async () => {
 			sqlMock.mockResolvedValueOnce([]);
 			const res = makeRes();
-			await handler(makeReq('agent=missing-agent-id-1234'), res);
+			await handler(makeReq('agent=' + AGENT_UUID + ''), res);
 			expect(res.statusCode).toBe(404);
 		});
 
 		it('returns 422 when agent has no avatar', async () => {
 			sqlMock.mockResolvedValueOnce([{ id: 'a1', name: 'Test', storage_key: null }]);
 			const res = makeRes();
-			await handler(makeReq('agent=a1234'), res);
+			await handler(makeReq('agent=' + AGENT_UUID + ''), res);
 			expect(res.statusCode).toBe(422);
 		});
 
@@ -175,13 +178,24 @@ describe('/api/artifact contract', () => {
 			expect(res.statusCode).toBe(400);
 		});
 
+		// A hand-typed handle used to reach Postgres and blow up on
+		// "invalid input syntax for type uuid", which surfaced to the caller as a
+		// 500 with a support ref. It must be rejected before the query runs.
+		it('returns 400 for a non-UUID agent id without touching the database', async () => {
+			const res = makeRes();
+			await handler(makeReq('agent=alice'), res);
+			expect(res.statusCode).toBe(400);
+			expect(JSON.parse(res._body).error).toBe('invalid_request');
+			expect(sqlMock).not.toHaveBeenCalled();
+		});
+
 		it('returns 200 self-contained HTML for a valid agent', async () => {
 			sqlMock.mockResolvedValueOnce([
 				{ id: 'a1', name: 'Aurora', storage_key: 'u/123/aurora.glb' },
 			]);
 			getObjectBufferMock.mockResolvedValueOnce(FAKE_GLB);
 			const res = makeRes();
-			await handler(makeReq('agent=a1234'), res);
+			await handler(makeReq('agent=' + AGENT_UUID + ''), res);
 			expect(res.statusCode).toBe(200);
 			expect(res.getHeader('content-type')).toMatch(/text\/html/);
 			expect(res._body).toContain('<html');
@@ -195,7 +209,7 @@ describe('/api/artifact contract', () => {
 			]);
 			getObjectBufferMock.mockResolvedValueOnce(FAKE_GLB);
 			const res = makeRes();
-			await handler(makeReq('agent=a1234'), res);
+			await handler(makeReq('agent=' + AGENT_UUID + ''), res);
 			const m = res._body.match(/id="artifact-config">([^<]+)</);
 			expect(m).not.toBeNull();
 			const cfg = JSON.parse(m[1]);
@@ -209,7 +223,7 @@ describe('/api/artifact contract', () => {
 			]);
 			getObjectBufferMock.mockResolvedValueOnce(Buffer.alloc(7 * 1024 * 1024));
 			const res = makeRes();
-			await handler(makeReq('agent=a1234'), res);
+			await handler(makeReq('agent=' + AGENT_UUID + ''), res);
 			expect(res.statusCode).toBe(413);
 		});
 
@@ -219,7 +233,7 @@ describe('/api/artifact contract', () => {
 			]);
 			getObjectBufferMock.mockResolvedValueOnce(FAKE_GLB);
 			const res = makeRes();
-			await handler(makeReq('agent=a1234'), res);
+			await handler(makeReq('agent=' + AGENT_UUID + ''), res);
 			expect(res._body).not.toMatch(/<script>alert\(1\)<\/script>/);
 			expect(res._body).toContain('&lt;script&gt;');
 		});
@@ -235,7 +249,7 @@ describe('/api/artifact contract', () => {
 		it('400s when both agent and model are provided', async () => {
 			const res = makeRes();
 			await handler(
-				makeReq('agent=a1234&model=https://three.ws/x.glb'),
+				makeReq('agent=' + AGENT_UUID + '&model=https://three.ws/x.glb'),
 				res,
 			);
 			expect(res.statusCode).toBe(400);
@@ -249,7 +263,7 @@ describe('/api/artifact contract', () => {
 
 		it('rejects non-GET/HEAD', async () => {
 			const res = makeRes();
-			await handler({ ...makeReq('agent=a1234'), method: 'POST' }, res);
+			await handler({ ...makeReq('agent=' + AGENT_UUID + ''), method: 'POST' }, res);
 			expect(res.statusCode).toBe(405);
 		});
 	});
@@ -262,7 +276,7 @@ describe('/api/artifact contract', () => {
 			]);
 			getObjectBufferMock.mockResolvedValueOnce(FAKE_GLB);
 			const res = makeRes();
-			await handler(makeReq('agent=a1234'), res);
+			await handler(makeReq('agent=' + AGENT_UUID + ''), res);
 			return res;
 		}
 
@@ -313,7 +327,7 @@ describe('/api/artifact contract', () => {
 			]);
 			getObjectBufferMock.mockResolvedValueOnce(FAKE_GLB);
 			const res = makeRes();
-			await handler(makeReq('agent=a1234'), res);
+			await handler(makeReq('agent=' + AGENT_UUID + ''), res);
 			expect(res.getHeader('cache-control')).toMatch(/stale-while-revalidate/);
 		});
 
@@ -323,7 +337,7 @@ describe('/api/artifact contract', () => {
 			]);
 			getObjectBufferMock.mockResolvedValueOnce(FAKE_GLB);
 			const res = makeRes();
-			await handler({ ...makeReq('agent=a1234'), method: 'HEAD' }, res);
+			await handler({ ...makeReq('agent=' + AGENT_UUID + ''), method: 'HEAD' }, res);
 			expect(res.statusCode).toBe(200);
 			expect(res._body).toBeUndefined();
 			expect(res.getHeader('content-length')).toBeDefined();

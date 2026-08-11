@@ -14,7 +14,7 @@ GET https://three.ws/api/artifact
 
 | Param   | Required | Pattern                            | Notes                                     |
 | ------- | -------- | ---------------------------------- | ----------------------------------------- |
-| `agent` | one of   | `/^[a-z0-9_-]{3,64}$/i`            | Agent ID; looked up in `agent_identities` |
+| `agent` | one of   | UUID                               | Agent ID; looked up in `agent_identities` (a `uuid` primary key, so a non-UUID value is rejected as `invalid_request` rather than reaching Postgres) |
 | `model` | one of   | `https://` URL, whitelisted origin | GLB URL; viewer-only, no persona          |
 | `theme` | no       | `dark` \| `light`                  | Default `dark`                            |
 | `idle`  | no       | string ≤64 chars                   | Animation clip name to play while idle    |
@@ -83,7 +83,9 @@ response too.
 
 The CSP Claude actually applies to artifact iframes, scraped at
 [`github.com/simonw/scrape-claude-artifacts`](https://github.com/simonw/scrape-claude-artifacts)
-and vendored at [`tests/_fixtures/claude-artifact-csp.txt`](../tests/_fixtures/claude-artifact-csp.txt):
+and vendored at [`public/claude-artifact-csp.txt`](../public/claude-artifact-csp.txt), which is
+served at `https://three.ws/claude-artifact-csp.txt` and is what the builder page at
+[`/artifact`](../public/artifact/index.html) displays:
 
 ```
 default-src https://www.claudeusercontent.com;

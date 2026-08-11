@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title data-i18n="artifact_index.meta_title">three.ws — Claude.ai artifact</title>
+		<title>Artifact Viewer · three.ws</title>
 		<meta
 			name="description"
 			content="Embed an interactive three.ws agent inside a Claude.ai artifact. Self-contained HTML, zero external dependencies."
@@ -113,6 +113,7 @@
 				display: flex;
 				flex-direction: column;
 				gap: 6px;
+				min-width: 0;
 			}
 
 			.field label {
@@ -123,6 +124,12 @@
 
 			.field input,
 			.field select {
+				/* Inputs carry an intrinsic min-width from their `size` default; without
+				   this the two-column field row cannot shrink and the page scrolls
+				   sideways on a 320px screen. */
+				width: 100%;
+				min-width: 0;
+				box-sizing: border-box;
 				background: rgba(0, 0, 0, 0.3);
 				border: 1px solid rgba(255, 255, 255, 0.12);
 				color: #fff;
@@ -142,9 +149,22 @@
 				background: rgba(0, 0, 0, 0.4);
 			}
 
+			.field input:focus-visible,
+			.field select:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+
+			.field-head {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: var(--space-sm);
+			}
+
 			.field-row {
 				display: grid;
-				grid-template-columns: 1fr 1fr;
+				grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
 				gap: var(--space-sm);
 			}
 
@@ -196,6 +216,156 @@
 				filter: none;
 			}
 
+			button.btn:focus-visible,
+			.picker-item:focus-visible,
+			details.snippet > summary:focus-visible,
+			.linklike:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+
+			.linklike {
+				background: none;
+				border: 0;
+				padding: 0;
+				font: inherit;
+				font-size: var(--text-sm);
+				color: var(--accent);
+				cursor: pointer;
+				border-radius: 4px;
+				text-decoration: underline;
+				text-underline-offset: 2px;
+			}
+
+			.linklike:hover {
+				filter: brightness(1.2);
+			}
+
+			.picker {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+
+			.picker-head {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: var(--space-sm);
+			}
+
+			.picker-head h3 {
+				margin: 0;
+				font-size: var(--text-sm);
+				font-weight: 500;
+				color: rgba(255, 255, 255, 0.6);
+			}
+
+			.picker-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+				gap: 8px;
+			}
+
+			.picker-item {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				min-width: 0;
+				text-align: left;
+				background: rgba(0, 0, 0, 0.25);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: var(--radius-md);
+				padding: 7px 9px;
+				color: rgba(255, 255, 255, 0.88);
+				font: inherit;
+				font-size: var(--text-sm);
+				cursor: pointer;
+				transition:
+					border-color 120ms,
+					background 120ms,
+					transform 80ms;
+			}
+
+			.picker-item:hover {
+				background: rgba(255, 255, 255, 0.07);
+				border-color: var(--accent-soft);
+			}
+
+			.picker-item:active {
+				transform: scale(0.98);
+			}
+
+			.picker-item[aria-pressed='true'] {
+				border-color: var(--accent);
+				background: var(--accent-soft);
+			}
+
+			.picker-item img,
+			.picker-item .initial {
+				width: 26px;
+				height: 26px;
+				border-radius: 50%;
+				flex: none;
+				object-fit: cover;
+				background: rgba(255, 255, 255, 0.08);
+			}
+
+			.picker-item .initial {
+				display: grid;
+				place-items: center;
+				font-size: var(--text-xs);
+				font-weight: 600;
+				color: rgba(255, 255, 255, 0.7);
+			}
+
+			.picker-item .name {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+
+			.picker-skeleton {
+				height: 42px;
+				border-radius: var(--radius-md);
+				background: linear-gradient(
+					90deg,
+					rgba(255, 255, 255, 0.04) 0%,
+					rgba(255, 255, 255, 0.09) 50%,
+					rgba(255, 255, 255, 0.04) 100%
+				);
+				background-size: 200% 100%;
+				animation: shimmer 1200ms linear infinite;
+			}
+
+			@keyframes shimmer {
+				to {
+					background-position: -200% 0;
+				}
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				.picker-skeleton,
+				.spinner {
+					animation: none;
+				}
+			}
+
+			.picker-note {
+				margin: 0;
+				font-size: var(--text-sm);
+				color: rgba(255, 255, 255, 0.6);
+				line-height: var(--leading-tight);
+			}
+
+			.picker-note.error {
+				color: #fca5a5;
+			}
+
+			.picker-note a {
+				color: var(--accent);
+			}
+
 			.preview {
 				display: flex;
 				flex-direction: column;
@@ -242,6 +412,26 @@
 
 			.preview-overlay.error {
 				color: #fca5a5;
+			}
+
+			.preview-overlay button.btn {
+				flex: none;
+				min-width: 0;
+			}
+
+			.preview-overlay .hint {
+				color: rgba(255, 255, 255, 0.6);
+				max-width: 34ch;
+			}
+
+			.field-hint {
+				font-size: var(--text-xs);
+				color: #fca5a5;
+				min-height: 1em;
+			}
+
+			.field input[aria-invalid='true'] {
+				border-color: #fca5a5;
 			}
 
 			.spinner {
@@ -431,7 +621,7 @@
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Artifact Viewer — three.ws">
+	<meta property="og:image:alt" content="Artifact Viewer - three.ws">
 	<meta name="twitter:site" content="@trythreews">
 </head>
 	<body>
@@ -444,15 +634,15 @@
 			<header class="hero">
 				<span class="eyebrow" data-i18n="artifact_index.claude_ai_artifact">Claude.ai artifact</span>
 				<h1 class="headline" data-i18n="artifact_index.embed_your_agent_in_claude_ai">Embed your agent in Claude.ai</h1>
-				<p class="lede" data-i18n="artifact_index.paste_a_single_url_into_a_claude">
+				<p class="lede">
 					Paste a single URL into a Claude conversation. The response is one self-contained
-					HTML document — three.js, GLTFLoader, and your agent's GLB are all inlined. No
+					HTML document: three.js, GLTFLoader, and your agent's GLB are all inlined. No
 					script blocked by Claude's sandbox CSP, no fetch that ever leaves the page.
 				</p>
 			</header>
 
 			<section class="builder">
-				<div class="panel" aria-labelledby="config-h">
+				<section class="panel" aria-labelledby="config-h">
 					<h2 id="config-h" data-i18n="artifact_index.configure">Configure</h2>
 
 					<div class="field">
@@ -460,10 +650,25 @@
 						<input
 							type="text"
 							id="agentIdInput"
-							placeholder="e.g. 3f2a4c…  (UUID or handle)"
+							placeholder="e.g. 27a0f649-3b59-4552-bb0b-faf616ac448b"
 							autocomplete="off"
 							spellcheck="false"
 						/>
+					</div>
+
+					<div class="picker">
+						<div class="picker-head">
+							<h3 id="picker-h">Public agents you can embed</h3>
+							<a class="linklike" href="/agents">Browse all</a>
+						</div>
+						<div id="pickerBody" role="group" aria-labelledby="picker-h" aria-busy="true">
+							<div class="picker-grid" aria-hidden="true">
+								<div class="picker-skeleton"></div>
+								<div class="picker-skeleton"></div>
+								<div class="picker-skeleton"></div>
+								<div class="picker-skeleton"></div>
+							</div>
+						</div>
 					</div>
 
 					<div class="field-row">
@@ -495,7 +700,9 @@
 							maxlength="7"
 							autocomplete="off"
 							spellcheck="false"
+							aria-describedby="bgHint"
 						/>
+						<span class="field-hint" id="bgHint" role="status" aria-live="polite"></span>
 					</div>
 
 					<div class="btn-row">
@@ -520,11 +727,11 @@
 
 					<details class="snippet">
 						<summary data-i18n="artifact_index.claude_artifact_sandbox_csp">Claude artifact sandbox CSP</summary>
-						<div class="csp-line" id="cspText">Loading actual CSP from Claude.ai mirror…</div>
+						<div class="csp-line" id="cspText">Loading the vendored sandbox CSP…</div>
 					</details>
-				</div>
+				</section>
 
-				<div class="panel preview" aria-labelledby="preview-h">
+				<section class="panel preview" aria-labelledby="preview-h">
 					<h2 id="preview-h" data-i18n="artifact_index.live_preview">Live preview</h2>
 
 					<div class="preview-frame">
@@ -551,30 +758,30 @@
 						<summary data-i18n="artifact_index.paste_into_claude_snippet">Paste-into-Claude snippet</summary>
 						<pre id="claudeSnippet">Generate to see the snippet…</pre>
 					</details>
-				</div>
+				</section>
 			</section>
 
 			<section class="facts">
 				<div class="fact">
 					<h3 data-i18n="artifact_index.self_contained">Self-contained</h3>
-					<p data-i18n="artifact_index.three_js_gltfloader_and_the_glb_are">
+					<p>
 						three.js, GLTFLoader, and the GLB are all inlined. The page renders with zero
-						network calls — fully compatible with Claude's sandbox CSP that forbids fetch
+						network calls, fully compatible with Claude's sandbox CSP that forbids fetch
 						and external scripts.
 					</p>
 				</div>
 				<div class="fact">
 					<h3 data-i18n="artifact_index.sandbox_locked_csp">Sandbox-locked CSP</h3>
-					<p data-i18n="artifact_index.the_response_sets_a_csp_mirroring_claude">
-						The response sets a CSP mirroring Claude's own. Behavior in the live preview
-						matches behavior inside Claude.ai — no surprises between staging and prod.
+					<p>
+						The response sets a CSP mirroring Claude's own, so behavior in the live preview
+						matches behavior inside Claude.ai. No surprises between staging and prod.
 					</p>
 				</div>
 				<div class="fact">
 					<h3 data-i18n="artifact_index.size_budget">Size budget</h3>
-					<p data-i18n="artifact_index.glbs_over_6_mb_are_rejected_claude">
-						GLBs over 6 MB are rejected — Claude's artifact panel can hang on huge inlined
-						payloads. The viewer adds a flat 565 KB on top of the model.
+					<p>
+						GLBs over 6 MB are rejected, because Claude's artifact panel can hang on huge
+						inlined payloads. The viewer adds a flat 565 KB on top of the model.
 					</p>
 				</div>
 			</section>
@@ -603,24 +810,60 @@
 				snippet: $('claudeSnippet'),
 				toast: $('toast'),
 				cspText: $('cspText'),
+				pickerBody: $('pickerBody'),
+				bgHint: $('bgHint'),
 			};
 
 			const state = { url: null, html: null };
 
-			function showOverlay(message, isError = false) {
+			// Public directory feed for the picker. `avatar=1` is load-bearing: an agent
+			// without a publicly readable GLB cannot be rendered as an artifact at all,
+			// so offering it here would hand the visitor a pick that can only 422.
+			const AGENTS_ENDPOINT = '/api/agents/public?sort=popular&limit=12&avatar=1';
+
+			// Actionable next step per error code from /api/artifact. The endpoint's own
+			// error_description says what went wrong; this says what to do about it.
+			const ERROR_HINTS = {
+				not_found: 'Pick one of the public agents on the left, or paste an agent ID from its profile page.',
+				no_avatar: 'That agent has no avatar yet. Generate one at /create, then come back.',
+				too_large: 'Re-export the avatar under 6 MB, or point the artifact at a lighter GLB.',
+				invalid_request: 'Agent IDs are UUIDs. Copy one from an agent profile page, or pick an agent on the left.',
+				rate_limited: 'The public read limit is 600 requests a minute per IP. Wait a moment and retry.',
+				upstream_error: 'The model host did not answer. Retry, or use a different avatar.',
+			};
+
+			function clear(node) {
+				while (node.firstChild) node.removeChild(node.firstChild);
+			}
+
+			function el(tag, className, text) {
+				const node = document.createElement(tag);
+				if (className) node.className = className;
+				if (text != null) node.textContent = text;
+				return node;
+			}
+
+			function showLoadingOverlay(message) {
 				els.overlay.hidden = false;
-				els.overlay.classList.toggle('error', isError);
-				els.overlay.innerHTML = isError
-					? `<div>${escapeHtml(message)}</div>`
-					: `<div class="spinner"></div><div>${escapeHtml(message)}</div>`;
+				els.overlay.classList.remove('error');
+				clear(els.overlay);
+				els.overlay.append(el('div', 'spinner'), el('div', null, message));
+			}
+
+			function showErrorOverlay(message, hint) {
+				els.overlay.hidden = false;
+				els.overlay.classList.add('error');
+				clear(els.overlay);
+				els.overlay.appendChild(el('div', null, message));
+				if (hint) els.overlay.appendChild(el('div', 'hint', hint));
+				const retry = el('button', 'btn ghost', 'Try again');
+				retry.type = 'button';
+				retry.addEventListener('click', generate);
+				els.overlay.appendChild(retry);
 			}
 
 			function hideOverlay() {
 				els.overlay.hidden = true;
-			}
-
-			function escapeHtml(s) {
-				return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 			}
 
 			function toast(msg) {
@@ -630,17 +873,33 @@
 				toast._t = setTimeout(() => els.toast.classList.remove('show'), 1600);
 			}
 
-			function buildUrl() {
-				const agentId = els.agentInput.value.trim();
-				if (!agentId) return null;
+			function normalizedBg() {
+				const bg = els.bgInput.value.trim().replace(/^#/, '');
+				return /^[0-9a-f]{6}$/i.test(bg) ? bg.toLowerCase() : '';
+			}
+
+			function buildUrl(agentId) {
 				const url = new URL('/api/artifact', window.location.origin);
 				url.searchParams.set('agent', agentId);
 				if (els.themeInput.value === 'light') url.searchParams.set('theme', 'light');
 				const idle = els.idleInput.value.trim();
 				if (idle) url.searchParams.set('idle', idle);
-				const bg = els.bgInput.value.trim().replace(/^#/, '');
-				if (/^[0-9a-f]{6}$/i.test(bg)) url.searchParams.set('bg', bg);
+				const bg = normalizedBg();
+				if (bg) url.searchParams.set('bg', bg);
 				return url.toString();
+			}
+
+			// Keep the address bar carrying the whole configuration, not just the agent:
+			// the link a user copies out of the bar has to rebuild the same artifact.
+			function syncQueryString(agentId) {
+				const p = new URLSearchParams();
+				p.set('agentId', agentId);
+				if (els.themeInput.value === 'light') p.set('theme', 'light');
+				const idle = els.idleInput.value.trim();
+				if (idle) p.set('idle', idle);
+				const bg = normalizedBg();
+				if (bg) p.set('bg', bg);
+				history.replaceState({}, '', `${window.location.pathname}?${p.toString()}`);
 			}
 
 			function fmtBytes(n) {
@@ -649,43 +908,63 @@
 				return `${(n / 1024 / 1024).toFixed(2)} MB`;
 			}
 
+			function setBusy(busy) {
+				els.btnGenerate.disabled = busy;
+				els.btnReload.disabled = busy || !state.url;
+				if (busy) {
+					els.btnCopyUrl.disabled = true;
+					els.btnCopyHtml.disabled = true;
+					els.btnOpen.disabled = true;
+					els.stats.hidden = true;
+				}
+			}
+
 			async function generate() {
-				const url = buildUrl();
-				if (!url) {
-					showOverlay('Enter an agent ID first.', true);
+				const agentId = els.agentInput.value.trim();
+				if (!agentId) {
+					showErrorOverlay(
+						'Enter an agent ID first.',
+						'Pick one of the public agents on the left, or paste an ID from an agent profile.',
+					);
+					els.agentInput.focus();
 					return;
 				}
-				state.url = url;
-				history.replaceState({}, '', '?agentId=' + encodeURIComponent(els.agentInput.value.trim()));
 
-				showOverlay('Fetching artifact…');
-				els.btnReload.disabled = true;
-				els.btnCopyUrl.disabled = true;
-				els.btnCopyHtml.disabled = true;
-				els.btnOpen.disabled = true;
-				els.stats.hidden = true;
+				const url = buildUrl(agentId);
+				state.url = url;
+				syncQueryString(agentId);
+				markSelected(agentId);
+
+				showLoadingOverlay('Fetching artifact…');
+				setBusy(true);
 
 				const t0 = performance.now();
-				let res, html;
+				let res;
 				try {
 					res = await fetch(url, { credentials: 'omit' });
 				} catch (err) {
-					showOverlay(`Network error: ${err.message}`, true);
+					setBusy(false);
+					showErrorOverlay(
+						`Could not reach the artifact endpoint: ${err.message}`,
+						'Check your connection, then try again.',
+					);
 					return;
 				}
 				if (!res.ok) {
-					let body;
+					let body = null;
 					try {
 						body = await res.json();
 					} catch {
 						body = null;
 					}
 					const msg = body?.error_description || body?.error || `HTTP ${res.status}`;
-					showOverlay(`${msg}`, true);
+					setBusy(false);
+					showErrorOverlay(msg, ERROR_HINTS[body?.error] || 'Adjust the configuration and try again.');
 					return;
 				}
-				html = await res.text();
-				const t1 = performance.now();
+
+				const html = await res.text();
+				const elapsed = performance.now() - t0;
 
 				state.html = html;
 				const cspHeader = res.headers.get('content-security-policy') || '';
@@ -695,9 +974,8 @@
 				els.statSize.textContent = fmtBytes(sizeBytes);
 				els.statSize.className =
 					'value ' + (sizeBytes > 8 * 1024 * 1024 ? 'bad' : sizeBytes > 5 * 1024 * 1024 ? 'warn' : 'ok');
-				els.statTtfp.textContent = `${(t1 - t0).toFixed(0)} ms`;
-				els.statTtfp.className =
-					'value ' + (t1 - t0 > 2000 ? 'warn' : t1 - t0 > 5000 ? 'bad' : 'ok');
+				els.statTtfp.textContent = `${elapsed.toFixed(0)} ms`;
+				els.statTtfp.className = 'value ' + (elapsed > 5000 ? 'bad' : elapsed > 2000 ? 'warn' : 'ok');
 				els.statSandbox.textContent = sandboxOk ? 'compliant' : 'mismatch';
 				els.statSandbox.className = 'value ' + (sandboxOk ? 'ok' : 'bad');
 				els.stats.hidden = false;
@@ -705,13 +983,122 @@
 				els.frame.srcdoc = html;
 				hideOverlay();
 
-				els.btnReload.disabled = false;
+				setBusy(false);
 				els.btnCopyUrl.disabled = false;
 				els.btnCopyHtml.disabled = false;
 				els.btnOpen.disabled = false;
 
-				els.snippet.textContent =
-					"Here's my agent for this conversation:\n" + state.url;
+				els.snippet.textContent = "Here's my agent for this conversation:\n" + state.url;
+			}
+
+			async function copyText(text, okMessage, fallbackMessage) {
+				try {
+					if (!navigator.clipboard) throw new Error('clipboard unavailable');
+					await navigator.clipboard.writeText(text);
+					toast(okMessage);
+				} catch {
+					toast(fallbackMessage);
+				}
+			}
+
+			// ── Public agent picker ──────────────────────────────────────────────────
+			function initialTile(name) {
+				const letter = (String(name || '?').trim()[0] || '?').toUpperCase();
+				const tile = el('span', 'initial', letter);
+				tile.setAttribute('aria-hidden', 'true');
+				return tile;
+			}
+
+			function pickerSkeleton() {
+				const grid = el('div', 'picker-grid');
+				grid.setAttribute('aria-hidden', 'true');
+				for (let i = 0; i < 4; i++) grid.appendChild(el('div', 'picker-skeleton'));
+				return grid;
+			}
+
+			function markSelected(agentId) {
+				for (const item of els.pickerBody.querySelectorAll('.picker-item')) {
+					item.setAttribute('aria-pressed', item.dataset.agentId === agentId ? 'true' : 'false');
+				}
+			}
+
+			function renderPickerNote(message, isError, action) {
+				const wrap = el('div', 'picker');
+				wrap.appendChild(el('p', 'picker-note' + (isError ? ' error' : ''), message));
+				if (action) wrap.appendChild(action);
+				clear(els.pickerBody);
+				els.pickerBody.appendChild(wrap);
+			}
+
+			function renderPickerGrid(agents) {
+				const grid = el('div', 'picker-grid');
+				for (const agent of agents) {
+					const btn = el('button', 'picker-item');
+					btn.type = 'button';
+					btn.dataset.agentId = agent.id;
+					btn.setAttribute('aria-pressed', 'false');
+					btn.title = `${agent.name || 'Agent'} (${agent.id})`;
+					if (agent.avatar_thumbnail) {
+						const img = document.createElement('img');
+						img.src = agent.avatar_thumbnail;
+						img.alt = `${agent.name || 'Agent'} avatar`;
+						img.loading = 'lazy';
+						img.decoding = 'async';
+						img.width = 26;
+						img.height = 26;
+						// A thumbnail that 404s degrades to the initial tile instead of the
+						// browser's broken-image glyph.
+						img.addEventListener('error', () => img.replaceWith(initialTile(agent.name)));
+						btn.appendChild(img);
+					} else {
+						btn.appendChild(initialTile(agent.name));
+					}
+					btn.appendChild(el('span', 'name', agent.name || agent.id));
+					btn.addEventListener('click', () => {
+						els.agentInput.value = agent.id;
+						generate();
+					});
+					grid.appendChild(btn);
+				}
+				clear(els.pickerBody);
+				els.pickerBody.appendChild(grid);
+				markSelected(els.agentInput.value.trim());
+			}
+
+			async function loadAgents() {
+				els.pickerBody.setAttribute('aria-busy', 'true');
+				clear(els.pickerBody);
+				els.pickerBody.appendChild(pickerSkeleton());
+
+				let data;
+				try {
+					const res = await fetch(AGENTS_ENDPOINT, { headers: { accept: 'application/json' } });
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					data = await res.json();
+				} catch (err) {
+					els.pickerBody.setAttribute('aria-busy', 'false');
+					const retry = el('button', 'linklike', 'Retry');
+					retry.type = 'button';
+					retry.addEventListener('click', loadAgents);
+					renderPickerNote(`Could not load the agent directory (${err.message}).`, true, retry);
+					return;
+				}
+
+				els.pickerBody.setAttribute('aria-busy', 'false');
+				const agents = Array.isArray(data?.agents) ? data.agents : [];
+				if (!agents.length) {
+					const link = document.createElement('a');
+					link.className = 'linklike';
+					link.href = '/create';
+					link.textContent = 'Create an agent';
+					renderPickerNote(
+						'No public agent carries an embeddable avatar yet. Paste an agent ID above, or make one.',
+						false,
+						link,
+					);
+					return;
+				}
+				renderPickerGrid(agents);
 			}
 
 			els.btnGenerate.addEventListener('click', generate);
@@ -721,42 +1108,65 @@
 				if (e.key === 'Enter') generate();
 			});
 
-			els.btnCopyUrl.addEventListener('click', async () => {
-				if (!state.url) return;
-				await navigator.clipboard.writeText(state.url);
-				toast('URL copied');
+			els.agentInput.addEventListener('input', () => markSelected(els.agentInput.value.trim()));
+
+			els.bgInput.addEventListener('input', () => {
+				const raw = els.bgInput.value.trim().replace(/^#/, '');
+				const bad = raw.length > 0 && !/^[0-9a-f]{6}$/i.test(raw);
+				els.bgInput.setAttribute('aria-invalid', bad ? 'true' : 'false');
+				els.bgHint.textContent = bad ? 'Six hex digits, for example 1a0533.' : '';
 			});
 
-			els.btnCopyHtml.addEventListener('click', async () => {
+			els.btnCopyUrl.addEventListener('click', () => {
+				if (!state.url) return;
+				copyText(
+					state.url,
+					'URL copied',
+					'Copy blocked by the browser. Use "Open in tab" and copy from the address bar.',
+				);
+			});
+
+			els.btnCopyHtml.addEventListener('click', () => {
 				if (!state.html) return;
-				await navigator.clipboard.writeText(state.html);
-				toast(`Raw HTML copied (${fmtBytes(new Blob([state.html]).size)})`);
+				copyText(
+					state.html,
+					`Raw HTML copied (${fmtBytes(new Blob([state.html]).size)})`,
+					'Copy blocked by the browser. Open the artifact in a tab and save the page instead.',
+				);
 			});
 
 			els.btnOpen.addEventListener('click', () => {
 				if (state.url) window.open(state.url, '_blank', 'noopener');
 			});
 
+			// The sandbox CSP is served from our own origin (public/claude-artifact-csp.txt),
+			// the same vendored bytes tests/api/artifact.test.js pins the endpoint against.
+			// `node scripts/refresh-claude-csp.mjs` refreshes it from the upstream scraper.
 			(function loadCsp() {
-				const cspUrl =
-					'https://raw.githubusercontent.com/simonw/scrape-claude-artifacts/main/content-security-policy.txt';
-				fetch(cspUrl)
-					.then((r) => (r.ok ? r.text() : Promise.reject()))
+				fetch('/claude-artifact-csp.txt', { headers: { accept: 'text/plain' } })
+					.then((r) => (r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`))))
 					.then((txt) => {
 						els.cspText.textContent = txt.trim();
 					})
 					.catch(() => {
 						els.cspText.textContent =
-							'Could not reach simonw/scrape-claude-artifacts — see specs/CLAUDE_ARTIFACT.md for the locked-in copy.';
+							'Could not load /claude-artifact-csp.txt. The locked-in copy is in specs/CLAUDE_ARTIFACT.md.';
 					});
 			})();
 
 			(function init() {
-				const initialId = new URLSearchParams(window.location.search).get('agentId');
+				const p = new URLSearchParams(window.location.search);
+				if (p.get('theme') === 'light') els.themeInput.value = 'light';
+				const idle = p.get('idle');
+				if (idle) els.idleInput.value = idle.slice(0, 64);
+				const bg = p.get('bg');
+				if (bg) els.bgInput.value = bg.replace(/^#/, '').slice(0, 6);
+				const initialId = p.get('agentId');
 				if (initialId) {
 					els.agentInput.value = initialId;
 					generate();
 				}
+				loadAgents();
 			})();
 		</script>
 
