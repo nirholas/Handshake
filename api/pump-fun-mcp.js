@@ -112,10 +112,8 @@ async function handleGetTokenDetails({ mint, network = 'mainnet' }) {
 	const pk = solanaPubkey(mint);
 	if (!pk) throw rpcError(-32602, 'invalid mint');
 	const connection = getConnection({ network });
-	const [{ MintLayout }, { PublicKey }] = await Promise.all([
-		import('@solana/spl-token'),
-		import('@solana/web3.js'),
-	]);
+	const [{ MintLayout, getTokenMetadata, TOKEN_2022_PROGRAM_ID }, { PublicKey }] =
+		await Promise.all([import('@solana/spl-token'), import('@solana/web3.js')]);
 
 	const info = await connection.getAccountInfo(pk);
 	if (!info) throw rpcError(-32004, 'mint account not found');
@@ -127,11 +125,17 @@ async function handleGetTokenDetails({ mint, network = 'mainnet' }) {
 		[Buffer.from('metadata'), METADATA_PROGRAM.toBuffer(), pk.toBuffer()],
 		METADATA_PROGRAM,
 	);
-	let name = null;
-	let symbol = null;
-	let uri = null;
+	// Token-2022 mints (what pump.fun launches today) keep name/symbol/uri in the
+	// mint's own TokenMetadata extension and have no Metaplex PDA at all, so the
+	// legacy read alone reported every current pump.fun token as unnamed.
+	const extensionMetadata = info.owner?.equals?.(TOKEN_2022_PROGRAM_ID)
+		? await getTokenMetadata(connection, pk, 'confirmed', TOKEN_2022_PROGRAM_ID).catch(() => null)
+		: null;
+	let name = extensionMetadata?.name?.trim() || null;
+	let symbol = extensionMetadata?.symbol?.trim() || null;
+	let uri = extensionMetadata?.uri?.trim() || null;
 	try {
-		const metaInfo = await connection.getAccountInfo(metadataPda);
+		const metaInfo = extensionMetadata ? null : await connection.getAccountInfo(metadataPda);
 		if (metaInfo) {
 			// Layout: 1 key + 32 updateAuthority + 32 mint + 4-byte string-length-prefixed name/symbol/uri.
 			const buf = metaInfo.data;
