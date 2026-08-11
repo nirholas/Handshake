@@ -259,7 +259,7 @@ check(
     remesh._source_texture(textured_target)[1] is not None,
 )
 
-for fmt, min_bytes in (("glb", 400), ("obj", 100), ("stl", 100), ("ply", 100)):
+for fmt, min_bytes in (("glb", 400), ("obj", 100), ("stl", 100), ("ply", 100), ("3mf", 100)):
     artifacts = remesh._export_simple(sphere(2), fmt, "smoke")
     check(f"export {fmt} yields one model artifact", len(artifacts) == 1)
     art = artifacts[0]
@@ -274,6 +274,61 @@ for fmt, min_bytes in (("glb", 400), ("obj", 100), ("stl", 100), ("ply", 100)):
         len(reloaded.faces) == len(sphere(2).faces),
         f"{len(reloaded.faces)} != {len(sphere(2).faces)}",
     )
+
+# USDZ has no trimesh writer, so it is authored with pxr and has to be read back
+# through pxr to prove the package is more than a well-formed zip.
+usdz_artifacts = remesh._export_simple(textured_target, "usdz", "smoke")
+check("export usdz yields one artifact", len(usdz_artifacts) == 1)
+usdz_bytes = usdz_artifacts[0].data
+check("export usdz produced bytes", len(usdz_bytes) > 500, str(len(usdz_bytes)))
+check(
+    "export usdz uses the usdz content type",
+    usdz_artifacts[0].content_type == "model/vnd.usdz+zip",
+    usdz_artifacts[0].content_type,
+)
+with tempfile.TemporaryDirectory() as tmp:
+    usdz_path = Path(tmp) / "smoke.usdz"
+    usdz_path.write_bytes(usdz_bytes)
+
+    import zipfile
+
+    names = zipfile.ZipFile(usdz_path).namelist()
+    check("usdz package carries the usd layer", "smoke.usdc" in names, str(names))
+    check("usdz package carries the baked texture", "smoke.png" in names, str(names))
+
+    from pxr import Usd, UsdGeom
+
+    stage = Usd.Stage.Open(str(usdz_path))
+    check("usdz opens as a usd stage", stage is not None)
+    check(
+        "usdz declares a default prim",
+        stage.GetDefaultPrim().IsValid(),
+        str(stage.GetDefaultPrim()),
+    )
+    usd_mesh = UsdGeom.Mesh(stage.GetPrimAtPath("/Root/Mesh"))
+    check("usdz holds a mesh prim", bool(usd_mesh))
+    check(
+        "usdz keeps every vertex",
+        len(usd_mesh.GetPointsAttr().Get()) == len(source.vertices),
+        str(len(usd_mesh.GetPointsAttr().Get())),
+    )
+    check(
+        "usdz keeps every face",
+        len(usd_mesh.GetFaceVertexCountsAttr().Get()) == len(source.faces),
+        str(len(usd_mesh.GetFaceVertexCountsAttr().Get())),
+    )
+    check(
+        "usdz faces are triangles",
+        set(usd_mesh.GetFaceVertexCountsAttr().Get()) == {3},
+    )
+    check("usdz is Y-up for AR viewers", UsdGeom.GetStageUpAxis(stage) == "Y")
+    check(
+        "usdz carries st uvs",
+        UsdGeom.PrimvarsAPI(usd_mesh.GetPrim()).HasPrimvar("st"),
+    )
+
+untextured_usdz = remesh._export_simple(sphere(2), "usdz", "smoke")
+check("untextured usdz still exports", len(untextured_usdz[0].data) > 500)
 
 obj_artifacts = remesh._write_textured_quad_obj(
     np.asarray(source.vertices), [[0, 1, 2, 3]], src_uv, src_img, "smoke"
