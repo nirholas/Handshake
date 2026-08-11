@@ -21,7 +21,10 @@ import {
 	vertexGeminiModel,
 	vertexGeminiChatUrl,
 	vertexGeminiOpenAIBase,
+	vertexGeminiBudget,
+	vertexGeminiThinkingBudget,
 } from '../../api/_lib/vertex-gemini.js';
+import { providerChain } from '../../api/_lib/llm.js';
 import { freeFallbackChain } from '../../api/brain/chat.js';
 import { providerChain as copilotProviderChain } from '../../api/agents/copilot.js';
 import { pickProviderChain as widgetProviderChain } from '../../api/widgets/[id]/[action].js';
@@ -34,6 +37,7 @@ const ENV_KEYS = [
 	'GOOGLE_CLOUD_PROJECT',
 	'GOOGLE_CLOUD_LOCATION_GEMINI',
 	'VERTEX_GEMINI_MODEL',
+	'VERTEX_GEMINI_THINKING_BUDGET',
 	'VERTEX_CLAUDE_ENABLED',
 	'VERTEX_CLAUDE_PRIMARY',
 	'GROQ_API_KEY',
@@ -315,5 +319,44 @@ describe('marketplace preview (api/marketplace/[action].js): buildPreviewRoutes 
 		const { buildPreviewRoutes } = await import('../../api/marketplace/[action].js');
 		const routes = buildPreviewRoutes();
 		expect(routes.map((r) => r.name)).not.toContain('vertex-gemini');
+	});
+});
+
+// Second production defect on the same anchor, measured 2026-08-11 against the
+// live Vertex endpoint: Gemini 2.5 reasons by default and the OpenAI-compatible
+// surface bills those tokens against `max_tokens` without returning them. A
+// 400-token request spent 382 on reasoning and returned 14 visible tokens with
+// finish_reason "length", so every anchored answer arrived truncated
+// mid-sentence. vertexGeminiBudget caps the reasoning and funds it on top of the
+// caller's budget; these lock that onto the surfaces that build Gemini payloads.
+describe('vertex-gemini reasoning budget', () => {
+	it('funds the reasoning cap on top of the visible-output budget', () => {
+		const budget = vertexGeminiBudget(400);
+		expect(budget.max_tokens).toBe(400 + vertexGeminiThinkingBudget());
+		expect(budget.extra_body.google.thinking_config.thinking_budget).toBe(vertexGeminiThinkingBudget());
+	});
+
+	it('honors an env-tuned reasoning cap, zero included', () => {
+		process.env.VERTEX_GEMINI_THINKING_BUDGET = '0';
+		expect(vertexGeminiThinkingBudget()).toBe(0);
+		expect(vertexGeminiBudget(256)).toEqual({
+			max_tokens: 256,
+			extra_body: { google: { thinking_config: { thinking_budget: 0 } } },
+		});
+		process.env.VERTEX_GEMINI_THINKING_BUDGET = '1024';
+		expect(vertexGeminiBudget(256).max_tokens).toBe(1280);
+	});
+
+	it('falls back to a sane visible budget when the caller passes none', () => {
+		expect(vertexGeminiBudget(undefined).max_tokens).toBe(1024 + vertexGeminiThinkingBudget());
+		expect(vertexGeminiBudget(0).max_tokens).toBe(1024 + vertexGeminiThinkingBudget());
+	});
+
+	it('the llm.js text anchor carries the cap in its body', () => {
+		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
+		const anchor = providerChain().find((p) => p.name === 'vertex-gemini');
+		const body = anchor.buildBody('sys', 'hello', 300);
+		expect(body.max_tokens).toBe(300 + vertexGeminiThinkingBudget());
+		expect(body.extra_body.google.thinking_config.thinking_budget).toBe(vertexGeminiThinkingBudget());
 	});
 });
