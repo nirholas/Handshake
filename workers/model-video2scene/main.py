@@ -237,10 +237,22 @@ def _weights_present() -> bool:
     return os.path.isfile(os.path.join(WEIGHTS_DIR, MODEL_FILE))
 
 
+def _get_bucket() -> storage.Bucket:
+    """The output bucket, resolved on first use.
+
+    Binding it lazily keeps a credentials hiccup (or a local run with no ADC)
+    from taking the whole service down at startup: the model still loads, health
+    still answers, and only the upload at the end of a job needs the client.
+    """
+    global _bucket
+    if _bucket is None:
+        _bucket = storage.Client().bucket(GCS_BUCKET)
+    return _bucket
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _bucket, _sem, _model_error
-    _bucket = storage.Client().bucket(GCS_BUCKET)
+    global _sem, _model_error
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
     loop = asyncio.get_event_loop()
     try:
@@ -466,10 +478,9 @@ async def _run_inference(task_id: str, req: "InferRequest") -> None:
 
             ply_bytes = result.pop("ply")
             blob_name = f"scenes/video2scene/{task_id}.ply"
-            blob = _bucket.blob(blob_name)
             await loop.run_in_executor(
                 None,
-                lambda: blob.upload_from_string(
+                lambda: _get_bucket().blob(blob_name).upload_from_string(
                     ply_bytes, content_type="application/octet-stream"
                 ),
             )

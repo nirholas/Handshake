@@ -110,6 +110,12 @@ docker run --rm -p 8080:8080 \
 curl -s localhost:8080/health
 ```
 
+The Cloud Storage client binds on first upload, not at startup, so the service
+boots, loads the checkpoint and answers `/health` without credentials. Only the
+upload at the end of a job needs them: add
+`-v $HOME/.config/gcloud:/root/.config/gcloud:ro` after
+`gcloud auth application-default login` to finish a job locally.
+
 ## Deploy
 
 Not currently deployed as its own Cloud Run service. Deploying it is one
