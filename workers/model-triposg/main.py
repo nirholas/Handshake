@@ -15,11 +15,23 @@ API contract (consumed by the Pipeline Controller and api/_providers/gcp.js):
   POST /infer   { images: [data-uri|url, ...], mode?: "image"|"scribble",
                   prompt?: str, scribble_confidence?: float,
                   target_polycount?: int, body_type?: str, job_id?: str }
-             →  202 { task_id, status: "queued" }
+             →  202 { task_id, status: "queued", model, mode }
 
   GET  /tasks/:id → { task_id, status, result_gcs_url?, error? }
 
-  GET  /health    → { ok, model, gpu_available }
+  GET  /health    → { ok, model, gpu_available, ready, load_error }
+
+  GET  /          → service descriptor. Unauthenticated and free: this is the
+                    liveness probe the platform sends (api/_lib/forge-health.js
+                    and api/cron/gpu-keepwarm.js both GET the worker root and
+                    treat any status under 500 as "up").
+
+Task records are durable. Cloud Run runs this service across up to
+max-instances containers with no session affinity, so a POST /infer and a later
+GET /tasks/:id routinely land on different containers; the in-memory dict alone
+answered those polls with 404 ("task not found on gcp service" in
+forge_creations, twice in production). The source of truth is the
+tasks/{task_id}.json blob in GCS, exactly as in workers/model-trellis.
 
 Model weights pre-population (see workers/deploy/stage-weights.sh):
   VAST-AI/TripoSG           → gs://<weights-bucket>/triposg/
@@ -41,6 +53,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import io
+import json
 import logging
 import os
 import tempfile
@@ -54,10 +67,21 @@ import numpy as np
 import torch
 import trimesh
 from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
+from google.api_core.exceptions import NotFound
 from google.cloud import storage
 from PIL import Image
 from pydantic import BaseModel, Field
 
+from request_policy import (
+    DEFAULT_SCRIBBLE_CONFIDENCE,
+    MODES,
+    SCRIBBLE_MODE,
+    PromptRequired,
+    pipeline_settings,
+    resolve_mode,
+    resolve_prompt,
+    should_decimate,
+)
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes,
@@ -91,11 +115,9 @@ WEIGHTS_LOCAL_ROOT = os.environ.get("WEIGHTS_LOCAL_ROOT", "/tmp/triposg-weights"
 
 DTYPE = torch.float16
 
-# Upstream inference defaults (scripts/inference_triposg*.py in the TripoSG repo).
-IMAGE_STEPS = 50
-IMAGE_GUIDANCE = 7.0
-SCRIBBLE_STEPS = 16  # CFG-distilled — few steps, guidance_scale 0
-DEFAULT_SCRIBBLE_CONFIDENCE = 0.4
+# Sampler settings, the prompt gate, and mode routing live in request_policy.py
+# so every decision that shapes a generation is unit tested without torch, CUDA,
+# or the TripoSG source tree (see test_request_policy.py).
 
 _pipe = None
 _scribble_pipe = None
@@ -104,6 +126,16 @@ _scribble_lock = threading.Lock()
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
 _ready: Optional[asyncio.Event] = None
+# Set when the background model load raises. A failed load leaves the container
+# listening (so Cloud Run keeps it), which used to mean every task sat out the
+# full 600s _ready wait before failing with a misleading "timed out". Recording
+# the real reason fails those tasks immediately and surfaces it on /health.
+_load_error: Optional[str] = None
+# In-memory cache only. Cloud Run runs this service across up to max-instances
+# containers with no session affinity, so a POST /infer and a later GET
+# /tasks/:id can land on different containers. The durable source of truth is
+# the tasks/{task_id}.json blob in GCS (see _update_task / _resolve_task); this
+# dict just avoids a GCS round-trip when a poll hits the instance that ran the job.
 _tasks: dict[str, dict] = {}
 
 
@@ -189,12 +221,14 @@ def _ensure_scribble_pipe():
 
 
 async def _load_models_bg() -> None:
+    global _load_error
     loop = asyncio.get_event_loop()
     try:
         await loop.run_in_executor(None, _load_models)
         _ready.set()
         log.info("Service ready, max_concurrent=%d", MAX_CONCURRENT)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001, surfaced via /health and per task
+        _load_error = safe_error(exc, context="model load")
         log.error("TripoSG model load FAILED: %s", exc)
 
 
@@ -269,7 +303,7 @@ def _prepare_sketch(src: str) -> Image.Image:
 def _simplify(mesh: trimesh.Trimesh, target_faces: int | None) -> trimesh.Trimesh:
     """Quadric edge-collapse decimation to the tier's poly budget — mirrors
     upstream's simplify_mesh. No-op when already under budget."""
-    if not target_faces or mesh.faces.shape[0] <= target_faces:
+    if not should_decimate(mesh.faces.shape[0], target_faces):
         return mesh
     import pymeshlab
 
@@ -280,6 +314,76 @@ def _simplify(mesh: trimesh.Trimesh, target_faces: int | None) -> trimesh.Trimes
     return trimesh.Trimesh(m.vertex_matrix(), m.face_matrix())
 
 
+def _task_blob(task_id: str):
+    return _bucket.blob(f"tasks/{task_id}.json")
+
+
+async def _update_task(task_id: str, **fields) -> dict:
+    """Merge `fields` into the task, then persist it to GCS as the source of
+    truth (see the comment on `_tasks`)."""
+    task = _tasks.setdefault(task_id, {"task_id": task_id})
+    task.update(fields)
+    task["updated_at"] = time.time()
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(
+        None,
+        lambda: _task_blob(task_id).upload_from_string(
+            json.dumps(task), content_type="application/json"
+        ),
+    )
+    return task
+
+
+# A queued/running record with no state transition for this long is orphaned:
+# its runner instance died (Cloud Run reclaimed it, or the deploy rolled) and
+# nothing resumes persisted tasks. The ceiling covers the 600s model-load wait
+# plus the longest real generation with margin; expiring it turns an endless
+# client poll into a designed failure the router's poll-time failover can act on.
+_PENDING_TTL_SECS = 1800
+_TERMINAL_STATUSES = frozenset({"done", "failed"})
+
+
+async def _resolve_task(task_id: str) -> dict:
+    """Shared poll reader. The instance-local cache is only trusted for terminal
+    records: caching a queued/running record would freeze that status on this
+    instance while the runner instance advances the durable GCS record (polls
+    have no session affinity)."""
+    task = _tasks.get(task_id)
+    if task is not None and task.get("status") in _TERMINAL_STATUSES:
+        return task
+    loop = asyncio.get_event_loop()
+    try:
+        data = await loop.run_in_executor(None, _task_blob(task_id).download_as_bytes)
+    except NotFound:
+        if task is not None:
+            # Local-only record (the initial persist raced or failed): serve the
+            # in-memory view rather than 404ing a task we know exists.
+            return task
+        raise HTTPException(status_code=404, detail="task not found")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=safe_error(exc, context="task lookup")
+        ) from exc
+    task = json.loads(data)
+    status = task.get("status")
+    if status in _TERMINAL_STATUSES:
+        _tasks[task_id] = task
+        return task
+    updated_at = task.get("updated_at")
+    stale = (
+        not isinstance(updated_at, (int, float))
+        or time.time() - updated_at > _PENDING_TTL_SECS
+    )
+    if status in ("queued", "running") and stale:
+        return await _update_task(
+            task_id,
+            status="failed",
+            error="task orphaned: no progress within 30 minutes "
+            "(runner instance likely restarted mid-job); retry the request",
+        )
+    return task
+
+
 async def _run_inference(
     task_id: str,
     images: list[str],
@@ -288,48 +392,41 @@ async def _run_inference(
     scribble_confidence: float,
     target_polycount: int | None,
 ) -> None:
+    # Wait for the background model load before touching the GPU. A warm
+    # instance passes instantly; a failed load is a designed task error rather
+    # than a ten-minute wait for a timeout that was decided long ago.
+    if _load_error:
+        await _update_task(task_id, status="failed", error=f"pipeline unavailable: {_load_error}")
+        return
     try:
         await asyncio.wait_for(_ready.wait(), timeout=600)
     except asyncio.TimeoutError:
-        _tasks[task_id].update({
-            "status": "failed",
-            "error": "pipeline not ready (model load timed out)",
-        })
+        await _update_task(
+            task_id,
+            status="failed",
+            error=f"pipeline unavailable: {_load_error}" if _load_error
+            else "pipeline not ready (model load timed out)",
+        )
         return
     async with _sem:
-        _tasks[task_id]["status"] = "running"
+        await _update_task(task_id, status="running")
         loop = asyncio.get_event_loop()
         t0 = time.time()
         try:
             def _generate() -> bytes:
                 seed_gen = torch.Generator(device="cuda").manual_seed(0)
-                if mode == "scribble":
+                settings = pipeline_settings(
+                    mode, prompt=prompt, scribble_confidence=scribble_confidence
+                )
+                if mode == SCRIBBLE_MODE:
                     pipe = _ensure_scribble_pipe()
                     img = _prepare_sketch(images[0])
                     with torch.no_grad():
-                        outputs = pipe(
-                            image=img,
-                            prompt=prompt,
-                            generator=seed_gen,
-                            num_inference_steps=SCRIBBLE_STEPS,
-                            guidance_scale=0,
-                            attention_kwargs={
-                                "cross_attention_scale": 1.0,
-                                "cross_attention_2_scale": scribble_confidence,
-                            },
-                            use_flash_decoder=False,
-                            dense_octree_depth=8,
-                            hierarchical_octree_depth=8,
-                        ).samples[0]
+                        outputs = pipe(image=img, generator=seed_gen, **settings).samples[0]
                 else:
                     img = _prepare_photo(images[0])
                     with torch.no_grad():
-                        outputs = _pipe(
-                            image=img,
-                            generator=seed_gen,
-                            num_inference_steps=IMAGE_STEPS,
-                            guidance_scale=IMAGE_GUIDANCE,
-                        ).samples[0]
+                        outputs = _pipe(image=img, generator=seed_gen, **settings).samples[0]
 
                 mesh = trimesh.Trimesh(
                     outputs[0].astype(np.float32),
@@ -351,22 +448,24 @@ async def _run_inference(
             gcs_url = f"https://storage.googleapis.com/{GCS_BUCKET}/{blob_name}"
 
             elapsed = time.time() - t0
-            _tasks[task_id].update({
-                "status": "done",
-                "result_gcs_url": gcs_url,
-                "elapsed_ms": int(elapsed * 1000),
-            })
+            await _update_task(
+                task_id,
+                status="done",
+                result_gcs_url=gcs_url,
+                elapsed_ms=int(elapsed * 1000),
+            )
             log.info(
-                "[%s] %s done in %.1fs — %d bytes → %s",
+                "[%s] %s done in %.1fs, %d bytes, %s",
                 task_id, mode, elapsed, len(glb_bytes), gcs_url,
             )
 
         except Exception as exc:
-            _tasks[task_id].update({
-                "status": "failed",
-                "error": safe_error(exc, context=f"[{task_id}] inference"),
-                "elapsed_ms": int((time.time() - t0) * 1000),
-            })
+            await _update_task(
+                task_id,
+                status="failed",
+                error=safe_error(exc, context=f"[{task_id}] inference"),
+                elapsed_ms=int((time.time() - t0) * 1000),
+            )
 
 
 class InferRequest(BaseModel):
@@ -386,15 +485,16 @@ async def infer(
     authorization: str = Header(...),
 ) -> dict:
     _require_api_key(authorization)
-    mode = body.mode if body.mode in ("image", "scribble") else "image"
-    prompt = body.prompt.strip()
-    if mode == "scribble" and not prompt:
-        raise HTTPException(
-            status_code=422,
-            detail="scribble mode is prompt-conditioned — supply a prompt",
-        )
+    mode = resolve_mode(body.mode)
+    try:
+        prompt = resolve_prompt(mode, body.prompt)
+    except PromptRequired as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     task_id = str(uuid.uuid4())
-    _tasks[task_id] = {"task_id": task_id, "status": "queued", "model": "triposg", "mode": mode}
+    # Persist the queued record BEFORE returning, so a poll that lands on a
+    # different instance (no session affinity, max-instances > 1) resolves it
+    # from GCS instead of 404ing a task that is running fine elsewhere.
+    task = await _update_task(task_id, status="queued", model="triposg", mode=mode)
     background_tasks.add_task(
         _run_inference,
         task_id,
@@ -404,25 +504,41 @@ async def infer(
         body.scribble_confidence,
         body.target_polycount,
     )
-    return {"task_id": task_id, "status": "queued"}
+    return task
 
 
 @app.get("/tasks/{task_id}")
 async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
     _require_api_key(authorization)
-    task = _tasks.get(task_id)
-    if task is None:
-        raise HTTPException(status_code=404, detail="task not found")
-    return task
+    return await _resolve_task(task_id)
 
 
 @app.get("/health")
 async def health() -> dict:
     return {
-        "ok": True,
+        # False once the model load has failed: the container still listens, so
+        # without this a permanently broken instance reports perfect health.
+        "ok": _load_error is None,
         "model": "triposg",
         "gpu_available": torch.cuda.is_available(),
         "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
         "model_loaded": _pipe is not None,
         "scribble_loaded": _scribble_pipe is not None,
+        "ready": bool(_ready and _ready.is_set()),
+        "load_error": _load_error,
+    }
+
+
+@app.get("/")
+async def root() -> dict:
+    """Service descriptor for the platform's liveness probes, which GET the
+    worker root (api/_lib/forge-health.js, api/_lib/forge-lane-health.js,
+    api/cron/gpu-keepwarm.js) and read any status under 500 as "up". It used to
+    404 here, which is indistinguishable in a log from a misrouted request."""
+    return {
+        "service": "model-triposg",
+        "model": "triposg",
+        "modes": list(MODES),
+        "ready": bool(_ready and _ready.is_set()),
+        "endpoints": ["POST /infer", "GET /tasks/{task_id}", "GET /health"],
     }
