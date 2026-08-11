@@ -15,13 +15,9 @@ const CW = 1280, CH = 720;
 // node-canvas is optional. If it isn't installed the worker still pushes
 // text-only frames — the client renders the real lower-third + talking avatar,
 // so the rendered desk frame is a bonus for non-anchor surfaces (the wall).
-let canvasCreate = false;
-(async () => {
-	try {
-		const mod = await import('canvas');
-		canvasCreate = mod.createCanvas;
-	} catch { /* text-only mode */ }
-})();
+// Resolved as a promise every push awaits, so the very first frame (pushed
+// immediately at boot) renders too instead of racing the dynamic import.
+const canvasReady = import('canvas').then((mod) => mod.createCanvas).catch(() => null);
 
 function wrapLines(ctx, text, maxWidth, maxLines) {
 	const words = String(text).split(/\s+/);
@@ -41,9 +37,9 @@ function wrapLines(ctx, text, maxWidth, maxLines) {
 	return lines;
 }
 
-function renderBroadcastFrame(headline) {
-	if (!canvasCreate) return null;
-	const canvas = canvasCreate(CW, CH);
+function renderBroadcastFrame(createCanvas, headline) {
+	if (!createCanvas) return null;
+	const canvas = createCanvas(CW, CH);
 	const ctx = canvas.getContext('2d');
 
 	// Studio backdrop
@@ -93,11 +89,17 @@ function renderBroadcastFrame(headline) {
  */
 export function screenPush(activity, type = 'analysis') {
 	if (!AGENT_JWT || !AGENT_ID) return;
-	const data = type === 'analysis' ? renderBroadcastFrame(activity) : null;
-	const frame = data ? { data, activity, type } : { activity, type };
-	fetch(PUSH_URL, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json', authorization: `Bearer ${AGENT_JWT}` },
-		body: JSON.stringify({ agentId: AGENT_ID, frame }),
-	}).catch(() => {});
+	canvasReady
+		.then((createCanvas) => {
+			const data = type === 'analysis' ? renderBroadcastFrame(createCanvas, activity) : null;
+			const frame = data ? { data, activity, type } : { activity, type };
+			return fetch(PUSH_URL, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json', authorization: `Bearer ${AGENT_JWT}` },
+				body: JSON.stringify({ agentId: AGENT_ID, frame }),
+				// A hung push must not outlive the cadence and stack sockets.
+				signal: AbortSignal.timeout(20_000),
+			});
+		})
+		.catch(() => {});
 }
