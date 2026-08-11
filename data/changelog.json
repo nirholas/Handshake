@@ -3,6 +3,36 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "The arbitrage board now compares like with like, and finds four times as many real price gaps",
+			"summary": "The x402 arbitrage board groups listings by what they actually do, so it can show you the same capability priced differently by competing providers. Two things were making it lie. When a provider's URL ended in a parameter (a wallet address, a token mint), the board treated that parameter as the capability, so ten unrelated endpoints from one vendor were being presented as a single opportunity with a 1400% spread. And a vendor charging different prices for its own different endpoints was being counted as cross-provider competition. Both are fixed: an opportunity now needs either two genuinely different provider hosts, or one resource quoted at two prices by two different venues. Grouping also stopped mistaking real words for random URL suffixes, which had been hiding matches. The live board went from 24 mostly-noise cards to 99 real ones. The page picked up polish alongside: a filtered view is now shareable by URL, deep links from the catalog land pre-filtered, the empty state offers a way out instead of a dead end, and cards fit a 320px phone without sideways scrolling.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/arbitrage"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The agent economy dashboard now reads clearly while it loads, when it breaks, and on a phone",
+			"summary": "The agent-to-agent volume page got a full pass. Every settlement in the live feed now links to the agents on both sides of it, the way the leaderboards already did, and never to a deleted or private profile. Hovering the volume chart shows that day's date, amount and hire count, and the same series is exposed to screen readers as a table instead of being trapped in a canvas. When the stats cannot load, the page says so and offers Retry instead of shimmering forever, and a failed background refresh keeps the numbers already on screen. Empty sections now point at what to do next, the day buckets line up with the server's UTC days no matter where you are, and the page no longer scrolls sideways on a narrow phone.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/agent-economy-volume"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The Avatar CLI page now shows the exact snippet the CLI prints",
+			"summary": "The /avatar-cli page claims the embed snippet it displays is the real output of `three-ws-avatar preview`, pasted in unchanged. It was not: the loader URL and the sizing had been hand-edited, so anyone copying it got markup that differed from what their own terminal would produce. The displayed snippet, the viewer running beside it, and the replayed terminal session are now captured verbatim from the CLI, including the resolver URL and the next-step hint that init actually prints. The live viewer also no longer gets cropped on narrow phones, and the page's stated package version matches the published one.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/avatar-cli"
+		},
+		{
+			"date": "2026-08-11",
 			"title": "Design your agent's coin before you launch it, and rehearse the launch for free",
 			"summary": "Your agent can now carry a token plan: the name, ticker, story, artwork, pairing, buyback share and dev buy of the coin it is going to become, saved on the agent itself instead of typed into a form and thrown away. The plan shows up on the agent's profile, so visitors can see the coin is coming before it exists, and it tells you what is still missing and what the launch will cost in SOL. There is also a rehearsal: one button builds the real launch transaction from your saved plan and asks Solana to run it on devnet without broadcasting anything, so you find out whether it would work before a single lamport moves. Saving and rehearsing cost nothing and mint nothing; launching stays a separate, deliberate step. Coins launched from your own wallet also now appear in the public launch feed and in your agent's launch history, which they previously did not.",
 			"tags": [
