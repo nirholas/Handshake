@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-12T16:44:52.086Z",
+	"generated_at": "2026-08-12T16:54:09.610Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-12",
+			"type": "launch",
+			"title": "Docs · Run an inference node",
+			"summary": "Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.",
+			"link": "/docs/inference-node-operator",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-08-12",
 			"type": "launch",
@@ -35,6 +45,17 @@
 			"link": null,
 			"tags": [
 				"feature",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-12",
+			"type": "update",
+			"title": "The photo-to-avatar lane is now sized for the 10,000 avatars per day launch target",
+			"summary": "The service that turns your selfies into a rigged 3D avatar was measured under real load and one number mattered: it was configured so the autoscaler could never see how busy it was. The service answers each request in milliseconds and does the real work in the background, so the scaling signal looked idle while its processors ground away, and no amount of extra quota would ever have added capacity. The configuration is fixed, and the lane then proved the roadmap's launch target for real: a sustained ten-minute run at the full 10,000-avatars-per-day rate finished every job, with the typical avatar ready in about six seconds and the slowest in under nine. The capacity is there when launch day brings the crowd.",
+			"link": null,
+			"tags": [
+				"improvement",
 				"infra"
 			]
 		},

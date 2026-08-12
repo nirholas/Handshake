@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Run an inference node</title>
+			<link>https://three.ws/docs/inference-node-operator</link>
+			<guid isPermaLink="false">2026-08-12:Docs · Run an inference node</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.</description>
+		</item>
+		<item>
 			<title>Reputation Staking Market</title>
 			<link>https://three.ws/reputation/market</link>
 			<guid isPermaLink="false">2026-08-12:Reputation Staking Market</guid>
@@ -29,6 +37,14 @@
 			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Text-to-3D jobs start by painting a reference image, and that GPU step can now run on the Livepeer network instead of our own lanes, behind a flag, with the same request shape and the same verification our own workers get (safety screening plus byte-level image checks before anything is stored). It ships dark: our measured probe found Livepeer's free public gateway dead at the DNS edge, so the lane goes live only after a funded Studio key lands and clears a 20-job latency, cost, and success comparison run by the new bench script. The full record and the expansion criteria are in the operator docs.</description>
+		</item>
+		<item>
+			<title>The photo-to-avatar lane is now sized for the 10,000 avatars per day launch target</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-12:The photo-to-avatar lane is now sized for the 10,000 avatars per day launch target</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The service that turns your selfies into a rigged 3D avatar was measured under real load and one number mattered: it was configured so the autoscaler could never see how busy it was. The service answers each request in milliseconds and does the real work in the background, so the scaling signal looked idle while its processors ground away, and no amount of extra quota would ever have added capacity. The configuration is fixed, and the lane then proved the roadmap's launch target for real: a sustained ten-minute run at the full 10,000-avatars-per-day rate finished every job, with the typical avatar ready in about six seconds and the slowest in under nine. The capacity is there when launch day brings the crowd.</description>
 		</item>
 		<item>
 			<title>Your agent can now learn your Farcaster voice, and only after you prove the account is yours</title>

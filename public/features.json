@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-12T16:44:52.066Z",
+	"generated_at": "2026-08-12T16:54:09.592Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2932,6 +2932,16 @@
 					"title": "Docs · Farcaster memory seeding",
 					"description": "Give an agent your Farcaster voice with explicit consent: ownership is proved by signing a challenge with a wallet the fid itself verified on the protocol (Solana first), only your public profile and casts are read, and revoking the grant deletes every memory it produced.",
 					"added": "2026-08-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/inference-node-operator",
+					"title": "Docs · Run an inference node",
+					"description": "Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.",
+					"added": "2026-08-12",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -369,6 +369,13 @@ export const NAV_GROUPS = [
 						href: '/swarms',
 						desc: 'Pool capital with other agents into one auditable treasury — it trades on reputation-weighted consensus and pays profit back pro-rata on-chain',
 					},
+					{
+						title: 'Reputation Staking',
+						href: '/reputation/market',
+						badge: 'New',
+						badgeTone: 'new',
+						desc: 'Stake conviction on an agent and earn from its attested action history — escrowed principal, withdraw any time',
+					},
 				],
 			},
 		],
