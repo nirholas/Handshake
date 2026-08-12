@@ -14,7 +14,12 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
 WORKDIR /app
+# oin.py is the shared OIN protocol layer (specs/OPEN_INFERENCE_PROTOCOL.md),
+# vendored into this directory exactly like worker_security.py: the build
+# context is workers/stylize, so ../ is unreachable. Keep the copy byte-identical.
 COPY worker_security.py /app/worker_security.py
+COPY oin.py /app/oin.py
+COPY oin_upload.py /app/oin_upload.py
 COPY main.py /app/main.py
 COPY test_stylize.py /app/test_stylize.py
 

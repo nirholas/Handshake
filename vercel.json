@@ -3253,6 +3253,18 @@
 			"dest": "/api/agent-task.js"
 		},
 		{
+			"src": "/api/nodes/register",
+			"dest": "/api/nodes/register.js"
+		},
+		{
+			"src": "/api/nodes/jobs",
+			"dest": "/api/nodes/jobs.js"
+		},
+		{
+			"src": "/api/nodes/jobs/([^/]+)/result",
+			"dest": "/api/nodes/jobs/[id]/result.js?id=$1"
+		},
+		{
 			"src": "/api/sniper/radar",
 			"dest": "/api/sniper/radar.js"
 		},

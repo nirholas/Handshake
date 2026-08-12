@@ -214,9 +214,11 @@ behind a flag:
   start, so a node can never advertise a key it cannot sign with.
 - With the flag off the worker is byte-for-byte its pre-OIN self.
 
-Job execution is the same pipeline the native `/process` route runs; OIN only
-changes the envelope in and the signature out. That is the point: the protocol
-wraps existing capability instead of replacing it.
+The worker-side protocol layer is [`workers/stylize/oin.py`](../workers/stylize/oin.py),
+vendored byte-identical into any worker that adopts OIN (same pattern as
+`worker_security.py`). Job execution is the same pipeline the native `/process`
+route runs; OIN only changes the envelope in and the signature out. That is the
+point: the protocol wraps existing capability instead of replacing it.
 
 ## Security considerations
 

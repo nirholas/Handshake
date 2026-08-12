@@ -10,6 +10,7 @@ import {
 	base58Encode,
 	base58Decode,
 	createIdentity,
+	createIdentityFromSeed,
 	parseSecretKey,
 } from '../src/identity.js';
 import { receiptPayload, signResult, verifyReceipt, verifyResult, sha256Hex } from '../src/signing.js';
@@ -18,10 +19,11 @@ import { createPlatformClient } from '../src/platform.js';
 import { createJobLoop } from '../src/loop.js';
 
 describe('identity', () => {
-	it('round-trips base58 against the known ed25519 zero-key vector', () => {
-		// 64 zero bytes is a valid ed25519 secret key seed buffer shape; its
-		// base58 encoding must survive a decode round trip exactly.
-		const bytes = new Uint8Array(64).fill(0).map((_, i) => (i * 7 + 13) % 256);
+	it('round-trips base58 against a real ed25519 keypair', () => {
+		// A real generated keypair's secret key must survive a base58 round
+		// trip byte-for-byte; that is the persistence format.
+		const identity = createIdentity();
+		const bytes = identity.secretKey;
 		expect(base58Decode(base58Encode(bytes))).toEqual(bytes);
 	});
 
@@ -31,20 +33,25 @@ describe('identity', () => {
 	});
 
 	it('derives a stable base58 pubkey from a fixed secret key', () => {
-		const secret = new Uint8Array(64).fill(0).map((_, i) => (i * 31 + 1) % 256);
-		const a = createIdentity(secret);
-		const b = createIdentity(secret);
+		const seed = new Uint8Array(32).fill(0).map((_, i) => (i * 31 + 1) % 256);
+		const a = createIdentityFromSeed(seed);
+		const b = createIdentityFromSeed(seed);
 		expect(a.publicKey).toBe(b.publicKey);
 		expect(a.publicKey.length).toBeGreaterThanOrEqual(32);
 		expect(a.publicKey.length).toBeLessThanOrEqual(44);
 	});
 
 	it('parses base58 and base64 secret keys identically', () => {
-		const secret = new Uint8Array(64).fill(0).map((_, i) => (i * 17 + 3) % 256);
+		const seed = new Uint8Array(32).fill(0).map((_, i) => (i * 17 + 3) % 256);
+		const real = createIdentityFromSeed(seed);
+		const secret = real.secretKey;
 		const from58 = parseSecretKey(base58Encode(secret));
 		const from64 = parseSecretKey(Buffer.from(secret).toString('base64'));
 		expect(from58).toEqual(secret);
 		expect(from64).toEqual(secret);
+		// And both decode to a key that reproduces the same identity.
+		expect(createIdentity(from58).publicKey).toBe(real.publicKey);
+		expect(createIdentity(from64).publicKey).toBe(real.publicKey);
 	});
 
 	it('rejects malformed secret keys', () => {
@@ -53,8 +60,13 @@ describe('identity', () => {
 	});
 });
 
-describe('signing', () => {
-	const identity = createIdentity(new Uint8Array(64).fill(0).map((_, i) => (i * 11 + 5) % 256));
+	function seedKey(tag) {
+		const naclSeed = new Uint8Array(32).fill(0).map((_, i) => (i * 11 + tag) % 256);
+		return createIdentityFromSeed(naclSeed);
+	}
+
+	describe('signing', () => {
+	const identity = seedKey(5);
 	const job = {
 		jobId: 'job-123',
 		model: 'Xenova/all-MiniLM-L6-v2',

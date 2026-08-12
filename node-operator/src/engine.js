@@ -197,10 +197,11 @@ function executionProviders() {
 }
 
 export class InferenceEngine {
-	constructor({ session, tokenizer, maxLength }) {
+	constructor({ session, tokenizer, maxLength, config }) {
 		this.session = session;
 		this.tokenizer = tokenizer;
 		this.maxLength = maxLength;
+		this.config = config || {};
 	}
 
 	static async load({ cacheDir, log = () => {} }) {
@@ -216,29 +217,53 @@ export class InferenceEngine {
 		return new InferenceEngine({
 			session,
 			tokenizer,
+			config,
 			maxLength: Math.min(Number(config.n_positions) || 1024, 1024),
 		});
 	}
 
-	// Greedy generation: each step appends the argmax next token. Deterministic,
-	// which is exactly what a verifiable proof workload wants: the same prompt
-	// on an honest node produces the same output hash.
+	// Greedy generation over the merged KV-cache graph. First pass feeds the
+	// whole prompt with an empty cache (zero-filled past_key_values of seq 0 and
+	// use_cache_branch=false); every later pass feeds only the new token plus
+	// the cache returned by the previous pass. Deterministic argmax decode is
+	// what a verifiable proof workload wants: the same prompt on an honest
+	// node produces the same output hash.
 	async generate(prompt, maxNewTokens = 48) {
 		const t0 = Date.now();
-		let ids = this.tokenizer.encode(prompt);
-		if (ids.length === 0) ids = [this.tokenizer.eosTokenId];
-		const budget = Math.min(Math.max(1, maxNewTokens), this.maxLength - ids.length);
-		let generated = 0;
+		const promptIds = this.tokenizer.encode(prompt);
+		const startIds = promptIds.length ? promptIds : [this.tokenizer.eosTokenId];
+		const budget = Math.min(Math.max(1, maxNewTokens), this.maxLength - startIds.length);
+		const nLayers = Number(this.config.n_layer) || 6;
+		const nHeads = Number(this.config.n_head) || 12;
+		const headDim = Math.floor((Number(this.config.n_embd) || 768) / nHeads);
+		const empty = () => new ort.Tensor('float32', new Float32Array(0), [1, nHeads, 0, headDim]);
 
+		let past = new Map();
+		for (let l = 0; l < nLayers; l++) {
+			past.set(`past_key_values.${l}.key`, empty());
+			past.set(`past_key_values.${l}.value`, empty());
+		}
+
+		const inputIds = [...startIds];
+		let stepIds = inputIds; // first pass consumes the full prompt
+		let attentionLen = inputIds.length;
+		let generated = 0;
 		const feedNames = new Set(this.session.inputNames);
+
 		for (let step = 0; step < budget; step++) {
-			const seq = BigInt64Array.from(ids.map(BigInt));
-			const feeds = { input_ids: new ort.Tensor('int64', seq, [1, ids.length]) };
+			const feeds = {
+				input_ids: new ort.Tensor('int64', BigInt64Array.from(stepIds.map(BigInt)), [1, stepIds.length]),
+			};
 			if (feedNames.has('attention_mask')) {
-				feeds.attention_mask = new ort.Tensor('int64', BigInt64Array.from({ length: ids.length }, () => 1n), [1, ids.length]);
+				feeds.attention_mask = new ort.Tensor('int64', BigInt64Array.from({ length: attentionLen }, () => 1n), [1, attentionLen]);
 			}
+			if (feedNames.has('use_cache_branch')) {
+				feeds.use_cache_branch = new ort.Tensor('bool', new Uint8Array([step === 0 ? 0 : 1]), [1]);
+			}
+			for (const [name, tensor] of past) if (feedNames.has(name)) feeds[name] = tensor;
+
 			const outputs = await this.session.run(feeds);
-			const logits = outputs[this.session.outputNames[0]];
+			const logits = outputs.logits;
 			const vocabSize = logits.dims[logits.dims.length - 1];
 			const last = logits.data.subarray(logits.data.length - vocabSize);
 			let best = 0;
@@ -249,12 +274,25 @@ export class InferenceEngine {
 					best = i;
 				}
 			}
-			ids.push(best);
+
+			// Rotate the KV cache for the next step.
+			const nextPast = new Map();
+			for (let l = 0; l < nLayers; l++) {
+				const k = outputs[`present.${l}.key`];
+				const v = outputs[`present.${l}.value`];
+				if (k) nextPast.set(`past_key_values.${l}.key`, k);
+				if (v) nextPast.set(`past_key_values.${l}.value`, v);
+			}
+			if (nextPast.size === past.size) past = nextPast;
+
+			inputIds.push(best);
+			stepIds = [best];
+			attentionLen += 1;
 			generated++;
 			if (best === this.tokenizer.eosTokenId) break;
 		}
 
-		const text = this.tokenizer.decode(ids.slice(ids.length - generated));
+		const text = this.tokenizer.decode(inputIds.slice(inputIds.length - generated));
 		return { text, tokens: generated, latencyMs: Date.now() - t0 };
 	}
 }

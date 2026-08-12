@@ -271,28 +271,40 @@ async function cmdSelftest() {
 }
 
 const cmd = process.argv[2];
-try {
-	switch (cmd) {
-		case 'generate-key':
-			await cmdGenerateKey();
-			break;
-		case 'register':
-			await cmdRegister();
-			break;
-		case 'run':
-			await cmdRun();
-			break;
-		case 'verify':
-			await cmdVerify(process.argv[3]);
-			break;
-		case 'selftest':
-			await cmdSelftest();
-			break;
-		default:
-			console.error('usage: node src/cli.js <generate-key|register|run|verify|selftest>');
-			process.exit(cmd ? 1 : 0);
+// Only run the CLI when invoked directly (`node src/cli.js ...`), not when a
+// test imports createLocalCoordinator from this module.
+const isMain = (() => {
+	try {
+		return process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+	} catch {
+		return false;
 	}
-} catch (err) {
-	console.error('fatal:', err?.message || err);
-	process.exit(1);
+})();
+
+if (isMain) {
+	try {
+		switch (cmd) {
+			case 'generate-key':
+				await cmdGenerateKey();
+				break;
+			case 'register':
+				await cmdRegister();
+				break;
+			case 'run':
+				await cmdRun();
+				break;
+			case 'verify':
+				await cmdVerify(process.argv[3]);
+				break;
+			case 'selftest':
+				await cmdSelftest();
+				break;
+			default:
+				console.error('usage: node src/cli.js <generate-key|register|run|verify|selftest>');
+				process.exit(cmd ? 1 : 0);
+		}
+	} catch (err) {
+		console.error('fatal:', err?.message || err);
+		process.exit(1);
+	}
 }

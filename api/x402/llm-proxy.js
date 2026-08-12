@@ -1,6 +1,6 @@
 // POST /api/x402/llm-proxy   { model, prompt, max_tokens }
 //
-// Paid LLM inference proxy — x402 micropayment endpoint for agents that want
+// Paid LLM inference proxy  -  x402 micropayment endpoint for agents that want
 // to run one-shot text completions without an API key of their own. Payment
 // unlocks one completion through the platform's free-first provider chain:
 // Groq leads for "fast" requests (sub-second latency), the full chain
@@ -8,15 +8,28 @@
 // response always includes measured wall-clock latency, token counts, and
 // the actual provider/model used so callers can benchmark the route.
 //
+// Roadmap phase 4: every paid job is METERED and SETTLED with a
+// cryptographic receipt. After the job runs, the node signs the metered job
+// core (prompt hash, response hash, token counts) with INFERENCE_SIGNING_KEY;
+// after the payment settles, the receipt issuer signs job core + response
+// signature + payment facts (network, payer, amount, asset, tx) into one
+// `inferenceReceipt` object on the response body. Any holder of the receipt
+// can prove the payment covered exactly this job: verify offline with
+// scripts/inference-receipt-verify.mjs or via POST /api/x402/inference-verify.
+// Spec: specs/inference-receipts.md.
+//
 // The autonomous loop calls this every 10 minutes with a minimal "Count to 3."
 // prompt to benchmark p95 latency and alert when it exceeds 3 seconds
 // (api/_lib/x402/autonomous-registry.js → 'llm-proxy-latency').
 //
 // Body:  { model: "fast"|"smart"|string, prompt: string, max_tokens?: number }
-// Price: $0.005 USDC (5 000 atomics) — covers one cheap completion
+// Price: $0.005 USDC (5 000 atomics)  -  covers one cheap completion
 //
 // Response 200:
-//   { content, model, provider, latency_ms, tokens_used, input_tokens, output_tokens }
+//   { content, model, provider, latency_ms, tokens_used, input_tokens, output_tokens,
+//     job_id, metering: {...}, response_signature, response_signer, inferenceReceipt? }
+
+import { randomUUID } from 'node:crypto';
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { readBody } from '../_lib/http.js';
@@ -24,6 +37,13 @@ import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { llmComplete } from '../_lib/llm.js';
+import { env } from '../_lib/env.js';
+import {
+	meterInferenceJob,
+	signJobResponse,
+	issueInferenceReceipt,
+} from '../_lib/inference-settlement.js';
+import { recordInferenceJob } from '../_lib/inference-jobs.js';
 import llmProxyListing from '../_lib/service-catalog/services/llm-proxy.js';
 
 const ROUTE = '/api/x402/llm-proxy';
@@ -44,7 +64,7 @@ function resolveModelOpts(modelAlias) {
 }
 
 // Single source of truth: api/_lib/service-catalog/services/llm-proxy.js is
-// the storefront listing copy — importing it here keeps the live 402 challenge
+// the storefront listing copy  -  importing it here keeps the live 402 challenge
 // from drifting from what /.well-known/x402.json and the OKX projection
 // advertise (same pattern as forge.js → forge-listing.js).
 const DESCRIPTION = llmProxyListing.description;
@@ -89,6 +109,23 @@ const OUTPUT_EXAMPLE = {
 	tokens_used: 11,
 	input_tokens: 5,
 	output_tokens: 6,
+	job_id: '9b2f1c4e-…',
+	metering: {
+		type: 'three-inference-response/v1',
+		jobId: '9b2f1c4e-…',
+		route: '/api/x402/llm-proxy',
+		model: 'llama-3.3-70b-versatile',
+		provider: 'groq',
+		promptSha256: 'a1b2…',
+		responseSha256: 'c3d4…',
+		inputTokens: 5,
+		outputTokens: 6,
+		tokensUsed: 11,
+		latencyMs: 312,
+	},
+	response_signature: '4xY…',
+	response_signer: 'NodePub…',
+	inferenceReceipt: { receiptType: 'three-inference-receipt/v1' },
 };
 
 const OUTPUT_SCHEMA = {
@@ -103,6 +140,11 @@ const OUTPUT_SCHEMA = {
 		tokens_used: { type: 'integer' },
 		input_tokens: { type: 'integer' },
 		output_tokens: { type: 'integer' },
+		job_id: { type: 'string', description: 'Metered job id (uuid).' },
+		metering: { type: 'object', description: 'The signed metered job core (three-inference-response/v1).' },
+		response_signature: { type: 'string', description: 'ed25519 signature over the metered job (present when INFERENCE_SIGNING_KEY is set).' },
+		response_signer: { type: 'string', description: 'base58 public key of the response signer.' },
+		inferenceReceipt: { type: 'object', description: 'Signed settlement receipt tying payment to this exact job (three-inference-receipt/v1).' },
 	},
 };
 
@@ -184,6 +226,25 @@ export default paidEndpoint({
 		const inputTokens = result.usage?.input ?? 0;
 		const outputTokens = result.usage?.output ?? 0;
 
+		// Phase 4 metering: bind the job identity to hashes of the exact prompt
+		// and completion plus the provider-reported token counts, and sign that
+		// core. Unsigned when INFERENCE_SIGNING_KEY is unset (the rollback
+		// toggl metering core still ships so callers can re-hash.
+		const job = meterInferenceJob({
+			jobId: crypto.randomUUID(),
+			route: ROUTE,
+			model: result.model,
+			provider: result.provider,
+			prompt,
+			content: result.text,
+			usage: { input: inputTokens, output: outputTokens },
+			latencyMs,
+		});
+		let signed = null;
+		if (env.INFERENCE_SIGNING_KEY) {
+			signed = signJobResponse(job, env.INFERENCE_SIGNING_KEY);
+		}
+
 		return {
 			content: result.text,
 			model: result.model,
@@ -192,6 +253,51 @@ export default paidEndpoint({
 			tokens_used: inputTokens + outputTokens,
 			input_tokens: inputTokens,
 			output_tokens: outputTokens,
+			// Phase 4: the metered job identity + the node's response signature.
+			// Internal for the metered hook to find the job: the wrapper merges
+			// the hook's return value into this object, so the hook reads the job
+			// back off the result via the `_job` stash below.
+			job_id: job.jobId,
+			metering: job,
+			...(signed
+				? {
+						response_signature: signed.responseSignature,
+						response_signer: signed.responseSigner,
+					}
+				: {}),
 		};
+	},
+
+	// Roadmap phase 4: bind the settled payment to the exact job it paid for.
+	// Runs after settlement (payment facts are final) and before the response
+	// flush, so the receipt attests to the exact body bytes the buyer receives.
+	async metered({ result, settled, payer, requirement }) {
+		if (!env.INFERENCE_SIGNING_KEY) return null;
+		const job = result?.metering;
+		if (!job || job.type !== 'three-inference-response/v1') return null;
+		const responseSignature = result.response_signature;
+		const responseSigner = result.response_signer;
+		if (!responseSignature || !responseSigner) return null;
+
+		const receipt = issueInferenceReceipt({
+			job,
+			responseSignature,
+			responseSigner,
+			payment: {
+				network: settled.network || requirement?.network,
+				payer: payer || settled.payer,
+				payTo: requirement?.payTo,
+				amountAtomics: requirement?.amount,
+				asset: requirement?.asset,
+				transaction: settled.transaction,
+			},
+			secret: env.INFERENCE_RECEIPT_SIGNING_KEY,
+		});
+
+		// Operator-side audit trail (fire-and-forget; a DB hiccup never 5xxs a
+		// settled response). The buyer's copy travels in this response body.
+		recordInferenceJob({ job: { ...job, responseSignature, responseSigner }, receipt });
+
+		return { inferenceReceipt: receipt };
 	},
 });

@@ -838,6 +838,14 @@ export const env = {
 		return opt('PERMISSIONS_RELAYER_ENABLED', 'false') === 'true';
 	},
 
+	// Feature flag (Roadmap phase 3). Set to "true" to let the
+	// settle-royalties cron redeem EIP-7710 delegations for EVM-chain pending
+	// royalty rows. Defaults to false: the flag ships off so no real USDC
+	// moves via delegation redemption until the owner flips it in production.
+	get SKILL_ROYALTIES_EVM_7710_ENABLED() {
+		return opt('SKILL_ROYALTIES_EVM_7710_ENABLED', 'false') === 'true';
+	},
+
 	// IPFS pinning provider credentials. Optional — when unset, pin endpoints
 	// fall back to R2 storage and return a public HTTPS metadataURI.
 	// Set PINATA_JWT in production for real IPFS CIDs on-chain.
@@ -1091,6 +1099,24 @@ export const env = {
 	// Unset is the rollback toggle — no redeploy needed.
 	get X402_RECEIPT_SIGNING_KEY() {
 		return opt('X402_RECEIPT_SIGNING_KEY');
+	},
+	// ── Inference settlement (Roadmap phase 4) ─────────────────────────────
+	// Long-lived ed25519 key that signs the metered job response on
+	// /api/x402/llm-proxy (base58, base64, or JSON byte array; 32-byte seed or
+	// 64-byte secret key). Distinct from every X402_PAY_TO_* wallet and from
+	// X402_RECEIPT_SIGNING_KEY (which is a secp256k1 EIP-712 key): this one
+	// only attests to inference output. Unset = responses ship unsigned and no
+	// inference receipts are issued (rollback toggle). The public half is
+	// published on /api/x402/inference-verify so verifiers can pin it.
+	get INFERENCE_SIGNING_KEY() {
+		return opt('INFERENCE_SIGNING_KEY');
+	},
+	// Optional separate ed25519 key for signing the settlement receipt itself.
+	// Defaults to INFERENCE_SIGNING_KEY (one key wears both hats); operators
+	// who want the "did the work" identity distinct from the "settled the
+	// payment" identity set this explicitly.
+	get INFERENCE_RECEIPT_SIGNING_KEY() {
+		return opt('INFERENCE_RECEIPT_SIGNING_KEY', opt('INFERENCE_SIGNING_KEY'));
 	},
 	// ── AWS Marketplace ──────────────────────────────────────────────────────
 	// IAM credentials with marketplaceMetering:ResolveCustomer,
@@ -1562,6 +1588,19 @@ export const env = {
 	// https://dream-gateway.livepeer.cloud/llm (no key, rate-limited).
 	get LIVEPEER_API_KEY() {
 		return opt('LIVEPEER_API_KEY');
+	},
+
+	// Livepeer federation (Phase 4 compute federation), optional. When set,
+	// the text-to-image chain (api/_mcp3d/text-to-image.js) routes one GPU job
+	// class through api/_providers/livepeer.js on the Livepeer network, behind
+	// the LIVEPEER_FEDERATION_ENABLED flag. LIVEPEER_GATEWAY_URL overrides the
+	// gateway base URL (self-hosted or staging); LIVEPEER_T2I_MODEL overrides
+	// the default ByteDance/SDXL-Lightning pipeline.
+	get LIVEPEER_GATEWAY_URL() {
+		return opt('LIVEPEER_GATEWAY_URL');
+	},
+	get LIVEPEER_T2I_MODEL() {
+		return opt('LIVEPEER_T2I_MODEL');
 	},
 
 	// Dev.to syndication — required for the news admin's "Publish to Dev.to"

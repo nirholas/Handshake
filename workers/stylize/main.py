@@ -53,6 +53,8 @@ from google.cloud import storage
 from google.cloud.storage.retry import DEFAULT_RETRY
 from pydantic import BaseModel, Field, field_validator
 
+import oin
+from oin_upload import make_result_sink
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes,
@@ -153,7 +155,12 @@ def _clamp_resolution(style: str, resolution: Optional[int]) -> int:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _bucket, _sem
-    _bucket = storage.Client().bucket(GCS_BUCKET)
+    # A local OIN run (OIN_RESULT_DIR set) stores artifacts on disk instead of
+    # GCS, so the bucket client is skipped: no credentials needed on a laptop.
+    if not os.environ.get("OIN_RESULT_DIR"):
+        _bucket = storage.Client().bucket(GCS_BUCKET)
+    else:
+        log.info("OIN_RESULT_DIR set: skipping GCS client (bucket %s unused)", GCS_BUCKET)
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
     import trimesh
     log.info("stylize service ready — trimesh %s, styles=%s", trimesh.__version__, ",".join(STYLE_CATALOG))
@@ -636,3 +643,81 @@ async def list_styles() -> dict:
 @app.get("/health")
 async def health() -> dict:
     return {"ok": True, "service": "stylize", "styles": list(STYLE_CATALOG)}
+
+
+# ── Open Inference Protocol (OIN) ─────────────────────────────────────────────
+# specs/OPEN_INFERENCE_PROTOCOL.md. Behind a flag: with OIN_ENABLED unset the
+# worker is byte-for-byte its pre-OIN self; with it set the worker refuses to
+# boot without OIN_SIGNING_KEY so a node can never advertise a key it cannot
+# sign with.
+
+OIN_ENABLED = os.environ.get("OIN_ENABLED") == "true"
+
+
+def _oin_run_job(envelope: dict, report, sink) -> None:
+    """Run one OIN job through the same stylization pipeline as /process.
+
+    The envelope's `input.data` is the mesh URL, `input.model` the style, and
+    `params` the resolution/format knobs. The sink uploads the artifact and the
+    OIN layer signs against the exact bytes it stored.
+    """
+    mesh_url = envelope["input"].get("data", "")
+    style = str(envelope["input"].get("model", "voxel")).lower().strip()
+    params = envelope.get("params") or {}
+    if style not in STYLES:
+        report.failed(code="bad_input", message=f"unknown style: {style}. Choose from {sorted(STYLE_CATALOG)}")
+        return
+    output_format = str(params.get("output_format", "glb")).lower().lstrip(".")
+    if output_format not in SUPPORTED_OUTPUT_FORMATS:
+        report.failed(code="bad_input", message=f"unsupported output format: {output_format}")
+        return
+    resolution = _clamp_resolution(style, params.get("resolution"))
+    try:
+        out_bytes, face_count, content_type = _run_processing(mesh_url, style, resolution, output_format)
+    except ValueError as exc:
+        report.failed(code="bad_input", message=str(exc))
+        return
+    except Exception as exc:  # noqa: BLE001
+        report.failed(code="node_error", message=safe_error(exc, context=f"oin stylize {style}"))
+        return
+    result = sink.put(envelope["job_id"], out_bytes, content_type)
+    log.info(
+        "oin job %s done: %s, %d faces, %d bytes",
+        envelope["job_id"], style, face_count, len(out_bytes),
+    )
+    report.done(url=result.url, data=result.data)
+
+
+if OIN_ENABLED:
+    _oin_key = os.environ.get("OIN_SIGNING_KEY")
+    if not _oin_key:
+        raise RuntimeError("OIN_ENABLED=true requires OIN_SIGNING_KEY (base64 Ed25519 secret)")
+
+    # The sink is bound lazily on first use: the GCS bucket client exists only
+    # after the lifespan opens, and mount_oin registers the routes immediately
+    # (before startup) so the advertisement is servable from the first request.
+    # Local runs set OIN_RESULT_DIR + OIN_RESULT_BASE_URL and skip GCS entirely.
+    def _get_oin_sink():
+        return make_result_sink(_bucket)
+
+    def _run_oin_job(envelope: dict, report) -> None:
+        _oin_run_job(envelope, report, _get_oin_sink())
+
+    oin.mount_oin(
+        app,
+        node_id=os.environ.get("OIN_NODE_ID", "three-ws-stylize"),
+        signing_key_b64=_oin_key,
+        capabilities=[
+            {
+                "key": "mesh.stylize",
+                "version": "0.1",
+                "models": sorted(STYLE_CATALOG),
+                "max_input_bytes": MAX_MESH_BYTES,
+                "pricing": {"currency": "USDC", "unit": "job", "amount": "0"},
+                "sla": {"typical_seconds": 10},
+            }
+        ],
+        auth="bearer",
+        require_auth=_require_api_key,
+        run_job=_run_oin_job,
+    )

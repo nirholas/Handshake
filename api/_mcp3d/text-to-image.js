@@ -4,6 +4,9 @@
 //   1. NVIDIA_API_KEY set       → FLUX.1-schnell on NVIDIA NIM (free, ~1–2s)
 //   2. GOOGLE_CLOUD_PROJECT set → Vertex AI Imagen 3 (high quality, free with GCP credits)
 //   3. REPLICATE_API_TOKEN set  → flux-schnell via Replicate (paid backstop, $0.003/image)
+//   + LIVEPEER_FEDERATION_ENABLED → federated Livepeer network lane (Phase 4
+//     compute federation, dark by default; inserted after the free lanes and
+//     before the paid Replicate backstop, see api/_providers/livepeer.js)
 //
 // The image-to-3D backend (TRELLIS / Hunyuan3D / TripoSR) reconstructs a
 // textured GLB from the generated image. Both steps share the same call site.
@@ -20,6 +23,7 @@
 
 import { markProviderCooldown, providersInCooldown } from '../_lib/provider-health.js';
 import { reserveProviderRateSlot, SCALE_LIMITS } from '../_lib/forge-scale.js';
+import { persistImageBase64 } from '../_lib/image-persist.js';
 
 const REPLICATE_BASE = 'https://api.replicate.com/v1';
 const DEFAULT_TXT2IMG_MODEL = 'black-forest-labs/flux-schnell';
@@ -173,24 +177,11 @@ function parseRetryAfter(headers, message) {
 	return 10;
 }
 
-// Persist a base64 image to object storage and return a durable https URL.
-// Downstream image-to-3D providers take URLs (Replicate caps inline data URIs at
-// ~256 KB — a 1024px image blows straight past that), so neither the Vertex inline
-// data URI nor the NIM base64 artifact can be forwarded as-is.
-//
-// Format is sniffed from the magic bytes so the object key extension and
-// Content-Type always match the real payload: NIM FLUX returns JPEG artifacts
-// (probed live — see tasks/nvidia-nim/probes/flux.md) while Vertex Imagen
-// returns PNG. Unknown bytes keep the PNG label (legacy behavior).
-async function persistImageBase64(b64) {
-	const { putObject, publicUrl } = await import('../_lib/r2.js');
-	const body = Buffer.from(b64, 'base64');
-	const isJpeg = body.length > 2 && body[0] === 0xff && body[1] === 0xd8 && body[2] === 0xff;
-	const ext = isJpeg ? 'jpg' : 'png';
-	const key = `forge/refs/${globalThis.crypto.randomUUID()}.${ext}`;
-	await putObject({ key, body, contentType: isJpeg ? 'image/jpeg' : 'image/png' });
-	return publicUrl(key);
-}
+// Image persistence moved to api/_lib/image-persist.js (shared by the NIM
+// lane, the Vertex reference-image lane, and the Livepeer federation
+// provider). See that module for why every synthesized image is persisted to
+// R2 and handed on as a durable https URL, and why the format is sniffed from
+// magic bytes rather than trusted from the provider's declared type.
 
 // Vertex Imagen returns the PNG inline as a data: URI — persist it the same way
 // the NIM lane persists its base64 artifact.
@@ -430,6 +421,23 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	if (hasVertex && !vertexFirst) {
 		const served = await tryVertex(!!token);
 		if (served) return served;
+	}
+
+	// ── Livepeer federation lane (Phase 4, behind LIVEPEER_FEDERATION_ENABLED) ──
+	// One class of GPU job routed to the decentralized compute network. Sits
+	// after the first-party free lanes (they cost nothing) and before the paid
+	// Replicate backstop (it costs real money per image): a successful federated
+	// call is strictly cheaper than every remaining option. Off by default; the
+	// measured case for flipping it is in docs/ops/livepeer-federation.md.
+	const { livepeerFederationEnabled, livepeerTextToImage } = await import('../_providers/livepeer.js');
+	if (livepeerFederationEnabled()) {
+		try {
+			return logImageProvider(await livepeerTextToImage(prompt, { aspectRatio, seed }));
+		} catch (err) {
+			// Nothing downstream to fall through to → surface the Livepeer error.
+			if (!token) throw err;
+			console.warn(`livepeer federation failed, falling back: ${err?.message}`);
+		}
 	}
 
 	// ── Replicate fallback ───────────────────────────────────────────────────

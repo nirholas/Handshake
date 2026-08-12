@@ -327,6 +327,21 @@ export function paidEndpoint(spec) {
 		payTo,
 		// Optional SIWX (Sign-In-With-X, CAIP-122) opt-in. See file header.
 		siwx,
+		// Optional post-settlement hook for per-job metering (Roadmap phase 4:
+		// inference settlement). Called with the settled payment context BEFORE
+		// the response is flushed; the value it returns is JSON-merged into the
+		// response body (object results only), so a paid route can attach a
+		// signed metered-job core + receipt that provably covers the exact bytes
+		// about to ship. Async; a throw is logged and the response ships
+		// un-metered rather than failing a settled payment.
+		metered,
+		// Optional post-settlement accrual hook (Roadmap phase 3: per-call
+		// royalties). Called fire-and-forget AFTER settlement succeeds, with
+		// { payer, network, txHash, amountAtomics, asset, resourceUrl }. Use it
+		// for ledger writes that must not delay or fail the settled response —
+		// e.g. /api/x402/skill-call recording the author's royalty accrual. Any
+		// throw is logged and swallowed; the payment already settled.
+		onSettled,
 		// Optional per-request resource URL. Default = route path. For routes
 		// that serve multiple distinct goods through query params (e.g.
 		// /api/x402/asset-download?slug=…), pass (req) => string to make each
@@ -1179,6 +1194,24 @@ export function paidEndpoint(spec) {
 				latencyMs: Date.now() - requestStartTime,
 				signature: settled.transaction || undefined,
 			});
+
+			// Post-settlement accrual hook (royalties). Fire-and-forget: the
+			// payment is final and the good is already delivered by the time any
+			// caller observes this, so a ledger hiccup must never surface here.
+			if (typeof onSettled === 'function') {
+				Promise.resolve()
+					.then(() =>
+						onSettled({
+							payer: settled.payer || verified.payer || null,
+							network: settled.network || verified.requirement?.network || null,
+							txHash: settled.transaction || null,
+							amountAtomics: verified.requirement?.amount || null,
+							asset: verified.requirement?.asset || null,
+							resourceUrl,
+						}),
+					)
+					.catch((err) => console.error(`paidEndpoint(${route}): onSettled hook failed`, err));
+			}
 		}
 
 		// STREAMING routes deliver the good by flushing their own body (binary
@@ -1286,6 +1319,35 @@ export function paidEndpoint(spec) {
 		const outcome = await settleAndBuildResponse();
 		if (!outcome) return;
 		const { settled, paymentResponseHeader } = outcome;
+
+		// Roadmap phase 4: per-job metering. The settlement already landed, so
+		// the hook can bind the payment facts (payer, amount, tx) to the exact
+		// job core and sign the receipt. Runs before the flush so the receipt
+		// travels inside the response body it attests to.
+		if (typeof metered === 'function') {
+			try {
+				const metering = await metered({
+					req,
+					result,
+					settled,
+					payer: settled.payer || verified.payer || null,
+					requirement: verified.requirement,
+				});
+				if (
+					metering &&
+					typeof metering === 'object' &&
+					result &&
+					typeof result === 'object' &&
+					!Array.isArray(result)
+				) {
+					result = { ...result, ...metering };
+				}
+			} catch (err) {
+				// A metering failure must never break a settled response: the buyer
+				// paid and the work ran. Log and ship the un-metered result.
+				console.error(`paidEndpoint(${route}): metered hook failed`, err);
+			}
+		}
 
 		const contentType = `${mimeType}; charset=utf-8`;
 		const body = typeof result === 'string' ? result : JSON.stringify(result);

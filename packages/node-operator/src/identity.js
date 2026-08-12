@@ -88,6 +88,21 @@ export function createIdentity(secretKeyBytes) {
 	} else {
 		keypair = nacl.sign.keyPair();
 	}
+	return identityFromKeypair(keypair);
+}
+
+/**
+ * Deterministically derive an identity from a 32-byte seed. The operator
+ * never uses this (it would put the seed in config), but tests and the
+ * platform's fixture nodes need reproducible keypairs.
+ */
+export function createIdentityFromSeed(seed) {
+	const bytes = Uint8Array.from(seed);
+	if (bytes.length !== 32) throw new Error(`seed must be 32 bytes, got ${bytes.length}`);
+	return identityFromKeypair(nacl.sign.keyPair.fromSeed(bytes));
+}
+
+function identityFromKeypair(keypair) {
 	const publicKey = base58Encode(keypair.publicKey);
 	return {
 		publicKey,
