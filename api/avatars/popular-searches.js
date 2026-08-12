@@ -1,4 +1,4 @@
-// GET /api/avatars/popular-searches — popular gallery search suggestions.
+// GET /api/avatars/popular-searches: popular gallery search suggestions.
 //
 // Public, no auth. Powers the "popular searches" suggestion chips on the public
 // avatar gallery. The data is produced by the Avatar Search Index Warmup
@@ -50,7 +50,7 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	// Cold start — the warmup has not populated the cache yet. Serve a static
+	// Cold start: the warmup has not populated the cache yet. Serve a static
 	// seed list (no thumbnails available until the pipeline resolves them) so the
 	// gallery still renders suggestion chips, with a short TTL so the warmed data
 	// takes over as soon as it lands.

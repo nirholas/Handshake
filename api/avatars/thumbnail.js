@@ -1,4 +1,4 @@
-// POST /api/avatars/thumbnail — upload a PNG poster for an existing avatar.
+// POST /api/avatars/thumbnail: upload a PNG poster for an existing avatar.
 // Body: { avatar_id: uuid, png_base64: "data:image/png;base64,..." | "<raw base64>" }
 // The caller must own the avatar OR be an admin (for the backfill script).
 //
@@ -13,9 +13,9 @@ import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { generateAltText } from '../_lib/avatar-alt-text.js';
 
-const MAX_PNG_BYTES = 1_500_000; // 1.5 MB max — generous for 1024² posters.
+const MAX_PNG_BYTES = 1_500_000; // 1.5 MB max, generous for 1024² posters.
 const MIN_PNG_BYTES = 512; // a real poster is KBs; a 1×1 PNG is ~70 bytes.
-const MIN_THUMB_DIM = 64; // reject 1px / degenerate posters — the gallery needs a real image.
+const MIN_THUMB_DIM = 64; // reject 1px / degenerate posters; the gallery needs a real image.
 const PNG_HEADER = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 // Read width/height from a PNG's IHDR chunk, which the spec fixes immediately
@@ -107,7 +107,7 @@ export default wrap(async (req, res) => {
 	`;
 
 	// Generate accessibility alt text from the poster we just received
-	// (Consumer 3). Fire-and-forget on the buffer we already hold — no extra
+	// (Consumer 3). Fire-and-forget on the buffer we already hold: no extra
 	// fetch, no dependency on the object being publicly reachable yet, and it
 	// never delays or fails the upload response (fail-open per generateAltText).
 	queueMicrotask(async () => {

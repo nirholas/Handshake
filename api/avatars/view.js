@@ -1,4 +1,4 @@
-// POST /api/avatars/view — increment view_count for a public avatar.
+// POST /api/avatars/view: increment view_count for a public avatar.
 // Accepts { avatar_id } in the JSON body. Auth is optional; the endpoint
 // counts at most one view per IP per avatar per 30 min so a reader who reopens
 // the same card cannot inflate the counter.
