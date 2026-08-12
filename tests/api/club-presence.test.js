@@ -16,7 +16,8 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 const { default: handler } = await import('../../api/club/presence.js');
 
 function makeReq({ method = 'POST', body = null, headers = {} } = {}) {
-	const chunks = body === null ? [] : [JSON.stringify(body)];
+	// Buffers, not strings: api/_lib/http.js readBody() Buffer.concat()s the chunks.
+	const chunks = body === null ? [] : [Buffer.from(JSON.stringify(body))];
 	const r = Readable.from(chunks);
 	r.method = method;
 	r.url = '/api/club/presence';
