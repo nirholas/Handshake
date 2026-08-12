@@ -17,13 +17,18 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { createCache, cached } from '../_lib/mem-cache.js';
 
 const SLUG_RE = /^[a-z0-9.-]{1,80}$/i;
 const TTL_MS = 300_000;
 const MAX_TVL_POINTS = 400;
 const UA = 'three.ws/1.0';
 
-const _cache = new Map(); // slug -> { value, expiresAt }
+// Per-slug cache, LRU-bounded so a crawl over many slugs evicts the coldest
+// entry rather than discarding every warm one, with single-flight de-dup so
+// concurrent misses on the same slug share one round of the four upstream
+// calls below instead of firing four each.
+const _cache = createCache({ max: 512, ttlMs: TTL_MS });
 
 // Coerce numbers and DeFiLlama's occasional numeric strings (audits count, some
 // summary totals) to a finite number, else null.
@@ -222,24 +227,18 @@ function build(slug, proto, fees, revenue, dexs) {
 }
 
 async function load(slug) {
-	const now = Date.now();
-	const hit = _cache.get(slug);
-	if (hit && hit.expiresAt > now) return hit.value;
+	return cached(_cache, slug, async () => {
+		// Main call is required; the rest are best-effort enrichment fetched in
+		// parallel. The main fetch throwing a 400/404 propagates as not-found.
+		const [proto, fees, revenue, dexs] = await Promise.all([
+			fetchJson(`https://api.llama.fi/protocol/${encodeURIComponent(slug)}`),
+			fetchOptional(`https://api.llama.fi/summary/fees/${encodeURIComponent(slug)}?dataType=dailyFees`),
+			fetchOptional(`https://api.llama.fi/summary/fees/${encodeURIComponent(slug)}?dataType=dailyRevenue`),
+			fetchOptional(`https://api.llama.fi/summary/dexs/${encodeURIComponent(slug)}`),
+		]);
 
-	// Main call is required; the rest are best-effort enrichment fetched in
-	// parallel. The main fetch throwing a 400/404 propagates as not-found.
-	const [proto, fees, revenue, dexs] = await Promise.all([
-		fetchJson(`https://api.llama.fi/protocol/${encodeURIComponent(slug)}`),
-		fetchOptional(`https://api.llama.fi/summary/fees/${encodeURIComponent(slug)}?dataType=dailyFees`),
-		fetchOptional(`https://api.llama.fi/summary/fees/${encodeURIComponent(slug)}?dataType=dailyRevenue`),
-		fetchOptional(`https://api.llama.fi/summary/dexs/${encodeURIComponent(slug)}`),
-	]);
-
-	const value = build(slug, proto, fees, revenue, dexs);
-	// Bound the cache so a scan over many distinct slugs can't grow it unbounded.
-	if (_cache.size > 500) _cache.clear();
-	_cache.set(slug, { value, expiresAt: now + TTL_MS });
-	return value;
+		return build(slug, proto, fees, revenue, dexs);
+	});
 }
 
 export default wrap(async (req, res) => {

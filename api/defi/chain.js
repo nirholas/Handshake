@@ -22,10 +22,12 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { createCache, cached } from '../_lib/mem-cache.js';
 
 const NAME_RE = /^[a-z0-9 ._-]{1,40}$/i;
 
 const CHAINS_URL = 'https://api.llama.fi/v2/chains';
+const PROTOCOLS_URL = 'https://api.llama.fi/protocols';
 const CHAINS_TTL_MS = 300_000;
 const CHAIN_TTL_MS = 300_000;
 
@@ -58,36 +60,44 @@ function downsample(arr, max) {
 
 // ── /v2/chains: canonical-name resolution + market totals ────────────────────
 
-let _chainsCache = null; // { value: { list, totalTvl }, expiresAt }
+// Both feeds below are single-entry caches with single-flight de-dup, so a
+// burst of concurrent requests on a cold or just-expired entry shares one
+// upstream fetch. That matters most for the protocols feed: it is ~8 MB and
+// every distinct chain's profile needs it, so without sharing, warming N chains
+// meant N downloads of the same payload.
+const _chainsCache = createCache({ max: 1, ttlMs: CHAINS_TTL_MS });
+const _protocolsCache = createCache({ max: 1, ttlMs: CHAINS_TTL_MS });
 
 async function loadChains() {
-	const now = Date.now();
-	if (_chainsCache && _chainsCache.expiresAt > now) return _chainsCache.value;
+	return cached(_chainsCache, 'chains', async () => {
+		const raw = await fetchJson(CHAINS_URL);
+		if (!Array.isArray(raw)) throw new Error('unexpected upstream shape');
 
-	const raw = await fetchJson(CHAINS_URL);
-	if (!Array.isArray(raw)) throw new Error('unexpected upstream shape');
+		let totalTvl = 0;
+		const list = [];
+		for (const c of raw) {
+			if (typeof c?.name !== 'string') continue;
+			const tvl = Number(c.tvl);
+			const posTvl = Number.isFinite(tvl) && tvl > 0 ? tvl : 0;
+			totalTvl += posTvl;
+			list.push({
+				name: c.name,
+				tvl: posTvl,
+				tokenSymbol: typeof c.tokenSymbol === 'string' && c.tokenSymbol ? c.tokenSymbol : null,
+				chainId: c.chainId != null && Number.isFinite(Number(c.chainId)) ? Number(c.chainId) : null,
+			});
+		}
+		// Rank is assigned over chains with a positive TVL, highest first.
+		const ranked = list.filter((c) => c.tvl > 0).sort((a, b) => b.tvl - a.tvl);
+		const rankByName = new Map(ranked.map((c, i) => [c.name, i + 1]));
 
-	let totalTvl = 0;
-	const list = [];
-	for (const c of raw) {
-		if (typeof c?.name !== 'string') continue;
-		const tvl = Number(c.tvl);
-		const posTvl = Number.isFinite(tvl) && tvl > 0 ? tvl : 0;
-		totalTvl += posTvl;
-		list.push({
-			name: c.name,
-			tvl: posTvl,
-			tokenSymbol: typeof c.tokenSymbol === 'string' && c.tokenSymbol ? c.tokenSymbol : null,
-			chainId: c.chainId != null && Number.isFinite(Number(c.chainId)) ? Number(c.chainId) : null,
-		});
-	}
-	// Rank is assigned over chains with a positive TVL, highest first.
-	const ranked = list.filter((c) => c.tvl > 0).sort((a, b) => b.tvl - a.tvl);
-	const rankByName = new Map(ranked.map((c, i) => [c.name, i + 1]));
+		return { list, totalTvl, rankByName };
+	});
+}
 
-	const value = { list, totalTvl, rankByName };
-	_chainsCache = { value, expiresAt: now + CHAINS_TTL_MS };
-	return value;
+// The full protocol feed, shared across every chain profile built in this TTL.
+async function loadProtocols() {
+	return cached(_protocolsCache, 'protocols', () => fetchJson(PROTOCOLS_URL));
 }
 
 // Resolve the request name to DeFiLlama's exact casing. Exact hit first, then a
@@ -185,17 +195,21 @@ function shapeFees(raw) {
 
 // ── Per-chain payload (cached by canonical name) ─────────────────────────────
 
-const _chainCache = new Map(); // canonicalName → { value, expiresAt }
+// Per-chain cache, LRU-bounded so a scan across every chain name evicts the
+// coldest profile rather than clearing every warm one.
+const _chainCache = createCache({ max: 512, ttlMs: CHAIN_TTL_MS });
 
 async function buildChain(canonical, chains) {
+	return cached(_chainCache, canonical.name, () => fetchChain(canonical, chains));
+}
+
+async function fetchChain(canonical, chains) {
 	const now = Date.now();
-	const cached = _chainCache.get(canonical.name);
-	if (cached && cached.expiresAt > now) return cached.value;
 
 	const enc = encodeURIComponent(canonical.name);
 	const [tvlRes, protoRes, stableRes, dexRes, feesRes] = await Promise.allSettled([
 		fetchJson(`https://api.llama.fi/v2/historicalChainTvl/${enc}`),
-		fetchJson('https://api.llama.fi/protocols'),
+		loadProtocols(),
 		fetchJson(`https://stablecoins.llama.fi/stablecoincharts/${enc}`),
 		fetchJson(`https://api.llama.fi/overview/dexs/${enc}?excludeTotalDataChartBreakdown=true`),
 		fetchJson(
@@ -216,7 +230,7 @@ async function buildChain(canonical, chains) {
 	const rank = chains.rankByName.get(canonical.name) ?? null;
 	const share_pct = chains.totalTvl > 0 ? (canonical.tvl / chains.totalTvl) * 100 : null;
 
-	const value = {
+	return {
 		chain: {
 			name: canonical.name,
 			token_symbol: canonical.tokenSymbol,
@@ -234,11 +248,6 @@ async function buildChain(canonical, chains) {
 		fees,
 		updated_at: now,
 	};
-
-	// Bound the cache so a scan across every chain name can't grow it unbounded.
-	if (_chainCache.size > 500) _chainCache.clear();
-	_chainCache.set(canonical.name, { value, expiresAt: now + CHAIN_TTL_MS });
-	return value;
 }
 
 export default wrap(async (req, res) => {

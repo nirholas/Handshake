@@ -14,16 +14,19 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { createCache, cached } from '../_lib/mem-cache.js';
 
 const ID_RE = /^\d{1,6}$/;
 const UPSTREAM = (id) => `https://stablecoins.llama.fi/stablecoin/${id}`;
-const TTL_MS = 300_000; // 5 minutes — matches the CDN s-maxage below.
+const TTL_MS = 300_000; // 5 minutes, matches the CDN s-maxage below.
 const MAX_SUPPLY_POINTS = 400;
 const MAX_CHAIN_POINTS = 200;
 const TOP_CHAIN_SERIES = 5;
 
-// Per-id in-memory cache. { [id]: { value, expiresAt } }.
-const _cache = new Map();
+// Per-id cache, LRU-bounded so a scanner walking ids evicts the coldest entry
+// rather than the whole set, with single-flight de-dup so concurrent misses on
+// the same id share one upstream fetch.
+const _cache = createCache({ max: 512, ttlMs: TTL_MS });
 
 const str = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 const httpUrl = (v) => (typeof v === 'string' && /^https?:\/\//.test(v.trim()) ? v.trim() : null);
@@ -172,32 +175,21 @@ function shape(raw, id) {
 // Fetches + shapes one stablecoin, cached per id. Throws { status: 404 } when
 // the id is unknown upstream so the handler can map it to a clean 404.
 async function build(id) {
-	const now = Date.now();
-	const hit = _cache.get(id);
-	if (hit && hit.expiresAt > now) return hit.value;
+	return cached(_cache, id, async () => {
+		const resp = await fetch(UPSTREAM(id), {
+			headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
+			signal: AbortSignal.timeout(10_000),
+		});
+		if (resp.status === 404) throw Object.assign(new Error('not found'), { status: 404 });
+		if (!resp.ok) throw new Error(`llama ${resp.status}`);
 
-	const resp = await fetch(UPSTREAM(id), {
-		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-		signal: AbortSignal.timeout(10_000),
-	});
-	if (resp.status === 404) throw Object.assign(new Error('not found'), { status: 404 });
-	if (!resp.ok) throw new Error(`llama ${resp.status}`);
-
-	const body = await resp.json();
-	if (!body || typeof body !== 'object' || body.id == null) {
-		throw new Error('unexpected upstream shape');
-	}
-
-	const value = shape(body, id);
-	_cache.set(id, { value, expiresAt: now + TTL_MS });
-	// Bound the map — one entry per distinct id is tiny, but a scanner walking
-	// ids could grow it unbounded across a long-lived warm instance.
-	if (_cache.size > 512) {
-		for (const key of _cache.keys()) {
-			if (_cache.get(key).expiresAt <= now) _cache.delete(key);
+		const body = await resp.json();
+		if (!body || typeof body !== 'object' || body.id == null) {
+			throw new Error('unexpected upstream shape');
 		}
-	}
-	return value;
+
+		return shape(body, id);
+	});
 }
 
 export default wrap(async (req, res) => {
