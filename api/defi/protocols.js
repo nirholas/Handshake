@@ -3,7 +3,7 @@
 // Top DeFi protocols by TVL for the /defi page. Fetches DeFiLlama's keyless
 // /protocols feed (no API key), normalizes each entry to the fields the page
 // renders, and returns the top 100 by TVL plus whole-market totals. Cached
-// 5 min in-memory + CDN. DeFiLlama is the data source — see the page's
+// 5 min in-memory + CDN. DeFiLlama is the data source. See the page's
 // attribution line.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
@@ -61,7 +61,7 @@ async function loadProtocols() {
 	const protocols = eligible.slice(0, 100).map((p) => {
 		const chains = Array.isArray(p.chains) ? p.chains.filter((c) => typeof c === 'string') : [];
 		return {
-			// DeFiLlama protocol slug — the /protocol/:slug detail page keys off it.
+			// DeFiLlama protocol slug. The /protocol/:slug detail page keys off it.
 			slug: typeof p.slug === 'string' ? p.slug : null,
 			name: typeof p.name === 'string' ? p.name : 'Unknown',
 			logo: typeof p.logo === 'string' ? p.logo : null,
@@ -101,7 +101,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'DeFi protocol data is unavailable right now — retry shortly',
+			'DeFi protocol data is unavailable right now. Retry shortly',
 		);
 	}
 });

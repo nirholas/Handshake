@@ -6,7 +6,7 @@
 // its on-chain market cap. We surface price (for peg-health), peg mechanism,
 // and the chains it lives on. Aggregate market cap sums every finite asset,
 // then the list is sorted by size and capped at the top 100. Cached 5m
-// in-memory + CDN — the source refreshes on the order of minutes, not seconds.
+// in-memory + CDN. The source refreshes on the order of minutes, not seconds.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -42,7 +42,7 @@ function shape(assets) {
 		const chains = Array.isArray(a.chains) ? a.chains.filter((c) => typeof c === 'string') : [];
 
 		rows.push({
-			// DeFiLlama's numeric asset id ("1", "2", …) — the /stablecoin/:id
+			// DeFiLlama's numeric asset id ("1", "2", …). The /stablecoin/:id
 			// detail page keys off it; null when upstream omits it.
 			id: a.id != null ? String(a.id) : null,
 			name: typeof a.name === 'string' ? a.name : 'Unknown',
@@ -103,7 +103,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'stablecoin data is unavailable right now — retry shortly',
+			'stablecoin data is unavailable right now. Retry shortly',
 		);
 	}
 });

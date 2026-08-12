@@ -2,13 +2,13 @@
 // ---------------------------------------------------------------------------
 // Protocol fees & revenue for the /fees page. Fetches DeFiLlama's keyless
 // /overview/fees dimension feed (no API key). `type=fees` (default) pulls the
-// dailyFees series — the total users pay to use a protocol — and `type=revenue`
-// pulls dailyRevenue — the slice the protocol itself keeps. Returns whole-market
+// dailyFees series (the total users pay to use a protocol) and `type=revenue`
+// pulls dailyRevenue, the slice the protocol itself keeps. Returns whole-market
 // 24h/7d/30d totals, the aggregate daily chart (downsampled to ≤200 points), and
 // the top 100 protocols by 24h. Each protocol's `slug` resolves at
 // api.llama.fi/protocol/{slug} (verified) so the page can deep-link to a
 // protocol detail page. Cached 10 min in-memory + CDN. DeFiLlama is the data
-// source — see the page's attribution line.
+// source. See the page's attribution line.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -71,7 +71,7 @@ async function loadFees(type) {
 		return {
 			name: typeof p.displayName === 'string' && p.displayName ? p.displayName
 				: typeof p.name === 'string' ? p.name : 'Unknown',
-			// `slug` is DeFiLlama's canonical protocol key — it resolves at
+			// `slug` is DeFiLlama's canonical protocol key. It resolves at
 			// /protocol/{slug} (verified against tether / circle-usdc / uniswap-v3).
 			slug: typeof p.slug === 'string' && p.slug ? p.slug : null,
 			logo: typeof p.logo === 'string' ? p.logo : null,
@@ -118,7 +118,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'Protocol fee data is unavailable right now — retry shortly',
+			'Protocol fee data is unavailable right now. Retry shortly',
 		);
 	}
 });

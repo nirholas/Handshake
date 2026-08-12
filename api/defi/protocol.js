@@ -1,19 +1,19 @@
 // GET /api/defi/protocol?slug=<slug>
 // ---------------------------------------------------------------------------
-// Rich profile for one DeFi protocol — powers the /protocol/:slug detail page.
+// Rich profile for one DeFi protocol. Powers the /protocol/:slug detail page.
 // Proxies DeFiLlama's keyless endpoints (no API key) and slims the multi-MB
 // upstream payload to exactly what the page renders:
-//   · /protocol/{slug}          (required) — TVL history, per-chain TVL, raises,
-//                                             hallmarks, mcap, metadata
-//   · /summary/fees/{slug}      (optional) — 24h/7d/30d/all-time fees + revenue
-//                                            (dailyFees + dailyRevenue passes)
-//   · /summary/dexs/{slug}      (optional) — DEX trading volume
+//   · /protocol/{slug}          (required): TVL history, per-chain TVL, raises,
+//                                            hallmarks, mcap, metadata
+//   · /summary/fees/{slug}      (optional): 24h/7d/30d/all-time fees + revenue
+//                                           (dailyFees + dailyRevenue passes)
+//   · /summary/dexs/{slug}      (optional): DEX trading volume
 // The fees/dexs summaries also carry richer metadata (category, audits,
 // methodology, forkedFrom, parentProtocol) than the bare /protocol payload for
 // aggregator ("parent") protocols, so missing metadata is enriched from them.
 // The full daily TVL history (often 2k+ points) is downsampled server-side to
 // ≤400 points so the SVG chart stays light. Cached 5 min in-memory per slug +
-// CDN. DeFiLlama is the data source — see the page's attribution line.
+// CDN. DeFiLlama is the data source. See the page's attribution line.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -40,10 +40,10 @@ const num = (v) => {
 const str = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 const httpUrl = (v) => (typeof v === 'string' && /^https?:\/\//.test(v.trim()) ? v.trim() : null);
 
-// Synthetic per-chain suffixes DeFiLlama appends to `currentChainTvls` — these
+// Synthetic per-chain suffixes DeFiLlama appends to `currentChainTvls`. These
 // are not real TVL a chain holds (they double-count borrowed collateral, staked
 // governance tokens, LP-side liquidity, or locked vesting), so a "TVL by chain"
-// view must exclude them or every chain appears 2–3× with inflated numbers.
+// view must exclude them or every chain appears 2 to 3 times with inflated numbers.
 const SYNTH_SUFFIX = /-(borrowed|staking|pool2|vesting)$/i;
 // …and the whole-protocol aggregates of those same categories.
 const AGGREGATE_KEYS = new Set(['borrowed', 'staking', 'pool2', 'vesting']);
@@ -61,7 +61,7 @@ async function fetchJson(url) {
 	return resp.json();
 }
 
-// Optional upstream — a 4xx (many protocols have no fees/dexs feed) or any other
+// Optional upstream: a 4xx (many protocols have no fees/dexs feed) or any other
 // failure collapses to null so the section is simply hidden, never an error.
 async function fetchOptional(url) {
 	try {
@@ -251,7 +251,7 @@ export default wrap(async (req, res) => {
 	const params = new URL(req.url, 'http://x').searchParams;
 	const slug = (params.get('slug') || '').trim().toLowerCase();
 	if (!SLUG_RE.test(slug)) {
-		return error(res, 400, 'bad_slug', 'slug must be a DeFiLlama protocol slug (1–80 chars: letters, digits, . or -)');
+		return error(res, 400, 'bad_slug', 'slug must be a DeFiLlama protocol slug (1 to 80 chars: letters, digits, . or -)');
 	}
 
 	try {
@@ -261,10 +261,10 @@ export default wrap(async (req, res) => {
 		});
 	} catch (err) {
 		// DeFiLlama answers an unknown slug with 400 "Protocol not found" (and 404
-		// for some paths) — both mean "no such protocol" to the client.
+		// for some paths), and both mean "no such protocol" to the client.
 		if (err?.status === 404 || err?.status === 400) {
 			return error(res, 404, 'not_found', `no DeFi protocol found for "${slug}"`);
 		}
-		return error(res, 502, 'upstream_error', 'DeFi protocol data is unavailable right now — retry shortly');
+		return error(res, 502, 'upstream_error', 'DeFi protocol data is unavailable right now. Retry shortly');
 	}
 });

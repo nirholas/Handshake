@@ -1,8 +1,8 @@
-// GET /api/defi/yields — DeFi yield pools for the /yields explorer.
+// GET /api/defi/yields: DeFi yield pools for the /yields explorer.
 // ---------------------------------------------------------------------------
 // Two modes over DeFiLlama's keyless yields API (yields.llama.fi):
 //
-//   List  — GET /api/defi/yields?chain=&project=&stablecoin=&search=&minTvl=
+//   List:  GET /api/defi/yields?chain=&project=&stablecoin=&search=&minTvl=
 //                &sort=tvl|apy&limit=&offset=
 //           Fetches /pools (a multi-MB payload of ~15k pools), slims each pool
 //           to the fields the page renders, caches the slimmed set in-memory
@@ -10,11 +10,11 @@
 //           also carries filter-agnostic facets (top chains + projects by pool
 //           TVL) for the page's dropdowns and whole-dataset stats.
 //
-//   Chart — GET /api/defi/yields?pool=<uuid>
+//   Chart: GET /api/defi/yields?pool=<uuid>
 //           Fetches /chart/{pool} (per-pool APY + TVL history) and downsamples
 //           it to ≤300 points. Unknown pools 404 rather than 502.
 //
-// DeFiLlama is the data source — see the page's attribution line.
+// DeFiLlama is the data source. See the page's attribution line.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -78,7 +78,7 @@ function median(sorted) {
 }
 
 // Top-N (chain|project) facets by summed pool TVL, with pool counts, over the
-// FULL dataset — the dropdowns must offer every major venue regardless of the
+// FULL dataset. The dropdowns must offer every major venue regardless of the
 // caller's current filters.
 function buildFacets(pools, key, topN) {
 	const agg = new Map(); // name → { tvl, count }
@@ -159,7 +159,7 @@ function clampInt(v, { def, min, max }) {
 	return Math.max(min, Math.min(max, n));
 }
 
-// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// Exported for the paid Market Data API (api/_lib/market-data/), the x402
 // market-yields endpoint sells the same filtered pool explorer this page renders.
 export async function queryYieldPools({
 	chain = '',
@@ -189,7 +189,7 @@ export async function queryYieldPools({
 			.filter((p) => p.tvl_usd >= APY_MIN_TVL && p.apy != null)
 			.sort((a, b) => b.apy - a.apy);
 	}
-	// sort === 'tvl' needs no work — the cache is already TVL desc.
+	// sort === 'tvl' needs no work, the cache is already TVL desc.
 
 	return {
 		pools: rows.slice(offset, offset + limit),
@@ -221,7 +221,11 @@ async function listMode(req, res, params) {
 
 // ── Chart mode ──────────────────────────────────────────────────────────────
 
-const _charts = new Map(); // pool uuid → { value, expiresAt }
+// Per-pool chart cache, LRU-bounded so browsing many pools evicts the coldest
+// entry, with single-flight de-dup on concurrent misses for the same pool. A
+// pool with no history caches its `null` too, so a uuid that upstream does not
+// know is answered from memory instead of re-asking on every request.
+const _charts = createCache({ max: CHART_CACHE_MAX, ttlMs: CHART_TTL_MS });
 
 // Even stride over the series, always keeping the last point (the chart cares
 // most about where the line ends).
@@ -234,40 +238,33 @@ function downsample(points, max) {
 }
 
 async function loadChart(pool) {
-	const now = Date.now();
-	const hit = _charts.get(pool);
-	if (hit && hit.expiresAt > now) return hit.value;
+	return cached(_charts, pool, async () => {
+		const now = Date.now();
 
-	const resp = await fetch(`${CHART_UPSTREAM}${pool}`, {
-		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-		signal: AbortSignal.timeout(15_000),
+		const resp = await fetch(`${CHART_UPSTREAM}${pool}`, {
+			headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
+			signal: AbortSignal.timeout(15_000),
+		});
+		// DeFiLlama answers an unknown pool id with a non-200 or an empty data set;
+		// both mean "no history for this pool", not an outage.
+		if (resp.status === 404 || resp.status === 400) return null;
+		if (!resp.ok) throw new Error(`llama chart ${resp.status}`);
+		const raw = await resp.json();
+		if (!Array.isArray(raw?.data)) throw new Error('unexpected upstream shape');
+
+		const points = [];
+		for (const d of raw.data) {
+			const t = Date.parse(d?.timestamp);
+			if (!Number.isFinite(t)) continue;
+			points.push({ t, apy: finite(Number(d.apy)), tvl_usd: finite(Number(d.tvlUsd)) });
+		}
+		if (!points.length) return null;
+
+		return { pool, points: downsample(points, CHART_MAX_POINTS), updated_at: now };
 	});
-	// DeFiLlama answers an unknown pool id with a non-200 or an empty data set;
-	// both mean "no history for this pool", not an outage.
-	if (resp.status === 404 || resp.status === 400) return null;
-	if (!resp.ok) throw new Error(`llama chart ${resp.status}`);
-	const raw = await resp.json();
-	if (!Array.isArray(raw?.data)) throw new Error('unexpected upstream shape');
-
-	const points = [];
-	for (const d of raw.data) {
-		const t = Date.parse(d?.timestamp);
-		if (!Number.isFinite(t)) continue;
-		points.push({ t, apy: finite(Number(d.apy)), tvl_usd: finite(Number(d.tvlUsd)) });
-	}
-	if (!points.length) return null;
-
-	const value = { pool, points: downsample(points, CHART_MAX_POINTS), updated_at: now };
-	if (_charts.size >= CHART_CACHE_MAX) {
-		// Drop the stalest entry so a browse across many pools stays bounded.
-		const oldest = [..._charts.entries()].sort((a, b) => a[1].expiresAt - b[1].expiresAt)[0];
-		if (oldest) _charts.delete(oldest[0]);
-	}
-	_charts.set(pool, { value, expiresAt: now + CHART_TTL_MS });
-	return value;
 }
 
-// Exported for the paid Market Data API — validates + loads a single pool's
+// Exported for the paid Market Data API, validates + loads a single pool's
 // APY/TVL history; throws {status, code} instead of writing to a response.
 export async function queryYieldChart(pool) {
 	if (!UUID_RE.test(pool || '')) {
@@ -322,7 +319,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'DeFi yield data is unavailable right now — retry shortly',
+			'DeFi yield data is unavailable right now. Retry shortly',
 		);
 	}
 });

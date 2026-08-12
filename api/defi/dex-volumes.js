@@ -7,7 +7,7 @@
 // `share_pct` is its slice of the whole-market summed 24h volume, and its `slug`
 // resolves at api.llama.fi/protocol/{slug} (verified) so the page can deep-link
 // to a protocol detail page. Cached 10 min in-memory + CDN. DeFiLlama is the
-// data source — see the page's attribution line.
+// data source. See the page's attribution line.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -57,7 +57,7 @@ async function loadDexVolumes() {
 
 	const eligible = raw.protocols.filter((p) => Number.isFinite(Number(p?.total24h)));
 	// Denominator for `share_pct` spans every DEX with a positive 24h volume, not
-	// just the top 100 we return — so a DEX's share reflects the whole market.
+	// just the top 100 we return, so a DEX's share reflects the whole market.
 	let marketTotal24h = 0;
 	for (const p of eligible) {
 		const v = Number(p.total24h);
@@ -72,7 +72,7 @@ async function loadDexVolumes() {
 		return {
 			name: typeof p.displayName === 'string' && p.displayName ? p.displayName
 				: typeof p.name === 'string' ? p.name : 'Unknown',
-			// `slug` is DeFiLlama's canonical protocol key — it resolves at
+			// `slug` is DeFiLlama's canonical protocol key. It resolves at
 			// /protocol/{slug} (verified against uniswap-v3 and peers).
 			slug: typeof p.slug === 'string' && p.slug ? p.slug : null,
 			logo: typeof p.logo === 'string' ? p.logo : null,
@@ -111,7 +111,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'DEX volume data is unavailable right now — retry shortly',
+			'DEX volume data is unavailable right now. Retry shortly',
 		);
 	}
 });

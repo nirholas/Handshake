@@ -4,7 +4,7 @@
 // /v2/chains feed (no API key), normalizes each chain to name + TVL + native
 // token, computes each chain's share of total TVL, and returns the top 100 by
 // TVL plus the whole-market total. Cached 5 min in-memory + CDN. DeFiLlama is
-// the data source — see the page's attribution line.
+// the data source. See the page's attribution line.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -81,7 +81,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'Cross-chain TVL data is unavailable right now — retry shortly',
+			'Cross-chain TVL data is unavailable right now. Retry shortly',
 		);
 	}
 });

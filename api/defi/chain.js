@@ -1,6 +1,6 @@
 // GET /api/defi/chain?name=<chain>
 // ---------------------------------------------------------------------------
-// Rich profile for one blockchain — powers the /chain/:name detail page.
+// Rich profile for one blockchain. Powers the /chain/:name detail page.
 // Fans out across DeFiLlama's keyless feeds (no API key) and stitches them into
 // a single payload the page renders:
 //   · /v2/chains                       → this chain's TVL, native token, chainId,
@@ -15,10 +15,10 @@
 // Only the /v2/chains lookup is load-bearing (it resolves the canonical name and
 // the headline stats); every other feed is best-effort via Promise.allSettled,
 // so a chain that has no DEX/stablecoin/fees coverage still renders. DeFiLlama
-// chain names are case-sensitive ("Ethereum", not "ethereum") — the request name
+// chain names are case-sensitive ("Ethereum", not "ethereum"). The request name
 // is matched case-insensitively against /v2/chains and everything downstream uses
 // the canonical casing. Cached ~5 min in-memory per chain + CDN. DeFiLlama is the
-// data source — see the page's attribution line.
+// data source. See the page's attribution line.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -168,7 +168,7 @@ function shapeDex(raw) {
 	const total24h = finite(Number(raw.total24h));
 	const total7d = finite(Number(raw.total7d));
 	// A chain listed on the DEX overview but with no activity returns total24h:
-	// null — nothing to show, so collapse to null and let the page hide the card.
+	// null, nothing to show, so collapse to null and let the page hide the card.
 	if (total24h == null && total7d == null) return null;
 	const chart = Array.isArray(raw.totalDataChart) ? raw.totalDataChart : [];
 	const series = [];
@@ -264,7 +264,7 @@ export default wrap(async (req, res) => {
 			res,
 			400,
 			'bad_name',
-			'name must be a blockchain name (1–40 chars: letters, digits, spaces, or . _ -)',
+			'name must be a blockchain name (1 to 40 chars: letters, digits, spaces, or . _ -)',
 		);
 	}
 
@@ -276,7 +276,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'Chain data is unavailable right now — retry shortly',
+			'Chain data is unavailable right now. Retry shortly',
 		);
 	}
 
@@ -295,7 +295,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'Chain data is unavailable right now — retry shortly',
+			'Chain data is unavailable right now. Retry shortly',
 		);
 	}
 });

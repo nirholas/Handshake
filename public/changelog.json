@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-12T20:41:12.178Z",
+	"generated_at": "2026-08-12T20:49:10.329Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -82,6 +82,17 @@
 		{
 			"date": "2026-08-12",
 			"type": "update",
+			"title": "The DeFi market pages stop hammering their data source when they get busy",
+			"summary": "The /defi, /chains, /yields, /stablecoins, /fees, /dex-volumes and /hacks pages, plus the protocol, chain and stablecoin detail pages, all read live data from DeFiLlama and hold it in memory for a few minutes. The moment that held copy expired, every request that arrived at once went and fetched its own fresh copy instead of sharing one. Ten simultaneous visitors to the DEX volume board meant ten downloads of the same two megabytes, and the protocol leaderboard's feed is closer to eight. That burst lands precisely when the page is busiest, and when the source pushed back, the page showed an error even though the data behind it was perfectly good. Now the first request through fetches, and everyone else waiting shares that one result. A chain profile also reuses a single copy of the protocol list rather than pulling it again for every chain. If a fetch does fail, the failure is no longer held on to, so the next visitor gets a real retry instead of the same error for the rest of the window. One cosmetic fix rode along: a pool whose name is missing on /yields now reads \"Unknown\" instead of a bare dash.",
+			"link": "/defi",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-12",
+			"type": "update",
 			"title": "The Forge can now federate GPU work to the Livepeer decentralized compute network",
 			"summary": "Text-to-3D jobs start by painting a reference image, and that GPU step can now run on the Livepeer network instead of our own lanes, behind a flag, with the same request shape and the same verification our own workers get (safety screening plus byte-level image checks before anything is stored). It ships dark: our measured probe found Livepeer's free public gateway dead at the DNS edge, so the lane goes live only after a funded Studio key lands and clears a 20-job latency, cost, and success comparison run by the new bench script. The full record and the expansion criteria are in the operator docs.",
 			"link": null,
@@ -121,6 +132,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-12",
+			"type": "update",
+			"title": "Token holder and safety checks stop failing when the free data lanes are busy",
+			"summary": "The free crypto API's holder distribution read (/api/crypto/holders) and the holder half of its token safety check (/api/crypto/security) both ask the Solana network for a token's largest accounts. Most of the public nodes we fall back on either refuse that question, answer it with an internal error, or accept it and never reply, and the router treated the last two as real answers, so the call gave up instead of trying the next node. It now moves on from an internal error, charges a silent no-reply to that one question rather than benching an otherwise healthy node, and has one more free node in the rotation that answers it. In a live check the holder read went from succeeding on roughly one call in three to eight out of eight. The error messages across the free crypto endpoints were reworded to match the rest of the platform's plain style at the same time.",
+			"link": "/docs/crypto-api",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

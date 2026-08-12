@@ -1,6 +1,6 @@
 // GET /api/defi/stablecoin?id=<n>
 // ---------------------------------------------------------------------------
-// Rich profile for ONE stablecoin — powers the /stablecoin/:id detail page.
+// Rich profile for ONE stablecoin. Powers the /stablecoin/:id detail page.
 // Proxies the free, keyless DeFiLlama per-coin endpoint
 // (https://stablecoins.llama.fi/stablecoin/{id}) and reshapes its firehose into
 // a lean payload: identity + peg metadata, current per-chain circulation with
@@ -8,7 +8,7 @@
 // circulating history of the top chains. Circulating is denominated in the
 // asset's own peg unit (the on-chain market cap). A USD-family asset's price is
 // turned into a peg-deviation figure so the page can grade peg health. Cached
-// 5m in-memory keyed by id + CDN s-maxage — the source refreshes on the order of
+// 5m in-memory keyed by id + CDN s-maxage. The source refreshes on the order of
 // minutes, not seconds. Mirrors api/defi/stablecoins.js (list) and the
 // api/coin/exchange.js detail-handler pattern.
 
@@ -52,7 +52,7 @@ function pegDisplay(pegType) {
 	return pegType.startsWith('pegged') ? pegType.slice(6) : pegType;
 }
 
-// DeFiLlama's source data carries a persistent typo — "crytpo-backed" — for a
+// DeFiLlama's source data carries a persistent typo ("crytpo-backed") for a
 // slice of assets. Normalize it so the page's fiat/crypto/algorithmic grouping
 // never sees two spellings of the same mechanism.
 function normalizeMechanism(m) {
@@ -140,8 +140,8 @@ function shape(raw, id) {
 	const pegType = str(raw.pegType);
 	const price = num(raw.price);
 	// Peg deviation is only meaningful for USD-family assets, whose peg unit is
-	// $1.00. A EUR/GBP/etc. price is quoted in USD (~1.08, ~1.27) — comparing it
-	// to 1.0 would be nonsense — so it stays null for non-USD pegs.
+	// $1.00. A EUR/GBP/etc. price is quoted in USD (~1.08, ~1.27), and comparing it
+	// to 1.0 would be nonsense, so it stays null for non-USD pegs.
 	const pegDeviationPct =
 		pegType === 'peggedUSD' && price != null ? (price - 1) * 100 : null;
 
@@ -201,7 +201,7 @@ export default wrap(async (req, res) => {
 
 	const id = (new URL(req.url, 'http://x').searchParams.get('id') || '').trim();
 	if (!ID_RE.test(id)) {
-		return error(res, 400, 'bad_id', 'id must be a DeFiLlama stablecoin id (1–6 digits)');
+		return error(res, 400, 'bad_id', 'id must be a DeFiLlama stablecoin id (1 to 6 digits)');
 	}
 
 	try {
@@ -217,7 +217,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'stablecoin data is unavailable right now — retry shortly',
+			'stablecoin data is unavailable right now. Retry shortly',
 		);
 	}
 });

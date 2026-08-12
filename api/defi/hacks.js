@@ -5,10 +5,10 @@
 // renders, computes whole-dataset headline stats, then applies an optional
 // case-insensitive search over name+technique+classification and paginates.
 // The raw upstream is cached ~10 min in-memory + CDN. DeFiLlama's hacks
-// database is the data source — see the page's attribution line.
+// database is the data source. See the page's attribution line.
 //
 // Amount unit: DeFiLlama reports `amount` in raw USD (verified at build time
-// against incidents of known magnitude — the largest bridge exploits land at
+// against incidents of known magnitude, the largest bridge exploits land at
 // hundreds of millions to billions, matching their public post-mortems), so no
 // scaling is applied. `returnedFunds` uses the same unit. `chain` is an array
 // of chain names (or null); it is normalized to an array.
@@ -37,7 +37,7 @@ function normalizeChains(chain) {
 }
 
 // Fetch + normalize the whole upstream feed once, cache it. Returns the full
-// sorted, normalized incident list plus the dataset-wide headline stats — the
+// sorted, normalized incident list plus the dataset-wide headline stats. The
 // per-request search/pagination happens on top of this cached whole.
 async function loadDataset() {
 	return cached(_cache, CACHE_KEY, buildDataset);
@@ -114,7 +114,7 @@ function clampInt(raw, fallback, min, max) {
 	return Math.min(max, Math.max(min, n));
 }
 
-// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// Exported for the paid Market Data API (api/_lib/market-data/), the x402
 // market-hacks endpoint sells the same exploit database this page renders.
 export async function queryHacks({ search = '', limit = DEFAULT_LIMIT, offset = 0 } = {}) {
 	const dataset = await loadDataset();
@@ -172,7 +172,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'DeFi hacks data is unavailable right now — retry shortly',
+			'DeFi hacks data is unavailable right now. Retry shortly',
 		);
 	}
 });

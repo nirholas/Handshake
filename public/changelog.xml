@@ -63,6 +63,14 @@
 			<description>Your agent can now learn how you write from your own X account, and only after you say yes. Connect X in Settings, and the consent screen tells you exactly what is read (your profile and up to 100 of your recent original public posts), what is stored (a handful of short distilled facts about what you talk about and how you talk, never your posts themselves and never links), and what is never touched (messages, likes, bookmarks, your follower list, your credentials). Agree and the agent's next replies already speak from those facts; change your mind and revoking, or disconnecting X, deletes every memory the seed created.</description>
 		</item>
 		<item>
+			<title>The DeFi market pages stop hammering their data source when they get busy</title>
+			<link>https://three.ws/defi</link>
+			<guid isPermaLink="false">2026-08-12:The DeFi market pages stop hammering their data source when they get busy</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The /defi, /chains, /yields, /stablecoins, /fees, /dex-volumes and /hacks pages, plus the protocol, chain and stablecoin detail pages, all read live data from DeFiLlama and hold it in memory for a few minutes. The moment that held copy expired, every request that arrived at once went and fetched its own fresh copy instead of sharing one. Ten simultaneous visitors to the DEX volume board meant ten downloads of the same two megabytes, and the protocol leaderboard's feed is closer to eight. That burst lands precisely when the page is busiest, and when the source pushed back, the page showed an error even though the data behind it was perfectly good. Now the first request through fetches, and everyone else waiting shares that one result. A chain profile also reuses a single copy of the protocol list rather than pulling it again for every chain. If a fetch does fail, the failure is no longer held on to, so the next visitor gets a real retry instead of the same error for the rest of the window. One cosmetic fix rode along: a pool whose name is missing on /yields now reads &quot;Unknown&quot; instead of a bare dash.</description>
+		</item>
+		<item>
 			<title>The Forge can now federate GPU work to the Livepeer decentralized compute network</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-12:The Forge can now federate GPU work to the Livepeer decentralized compute network</guid>
@@ -93,6 +101,14 @@
 			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Anyone can look up the on-chain anchor for a Proof-of-Custody epoch at /api/custody/anchor. Ask it for an epoch number too large to be a real round and it used to fail with an internal server error, which reads like the custody service is down rather than like a typo in the request. It now answers a plain &quot;that is not a valid epoch&quot; for malformed input, keeps 404 for an epoch that has not happened yet, and reads the newest epoch with a single lookup instead of pulling the whole integrity aggregate it then threw away.</description>
+		</item>
+		<item>
+			<title>Token holder and safety checks stop failing when the free data lanes are busy</title>
+			<link>https://three.ws/docs/crypto-api</link>
+			<guid isPermaLink="false">2026-08-12:Token holder and safety checks stop failing when the free data lanes are busy</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The free crypto API's holder distribution read (/api/crypto/holders) and the holder half of its token safety check (/api/crypto/security) both ask the Solana network for a token's largest accounts. Most of the public nodes we fall back on either refuse that question, answer it with an internal error, or accept it and never reply, and the router treated the last two as real answers, so the call gave up instead of trying the next node. It now moves on from an internal error, charges a silent no-reply to that one question rather than benching an otherwise healthy node, and has one more free node in the rotation that answers it. In a live check the holder read went from succeeding on roughly one call in three to eight out of eight. The error messages across the free crypto endpoints were reworded to match the rest of the platform's plain style at the same time.</description>
 		</item>
 		<item>
 			<title>Your agent can now learn your Farcaster voice, and only after you prove the account is yours</title>
