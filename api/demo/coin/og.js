@@ -18,7 +18,7 @@ import { ImageResponse } from '@vercel/og';
 
 import { sql } from '../../_lib/db.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
-import { setRateLimitHeaders } from '../../_lib/http.js';
+import { setRateLimitHeaders, wrap } from '../../_lib/http.js';
 import { loadCoinByMint, listActiveCoins } from '../../_lib/coin/index.js';
 
 const WIDTH = 1200;
@@ -416,16 +416,23 @@ function imageResponseFor(node, { immutable }) {
 }
 
 async function sendImageResponse(res, imageResponse) {
-	// Convert Web Response → Node ServerResponse. Headers first, then stream the body.
+	// Convert Web Response → Node ServerResponse. Render the body FIRST: satori can
+	// throw mid-render, and once headers are on the wire the fallback card below can
+	// no longer be substituted (ERR_HTTP_HEADERS_SENT). Buffering first keeps the
+	// failure recoverable.
+	const ab = await imageResponse.arrayBuffer();
+	if (res.headersSent || res.writableEnded) {
+		if (!res.writableEnded) res.end();
+		return;
+	}
 	for (const [key, value] of imageResponse.headers.entries()) {
 		res.setHeader(key, value);
 	}
-	const ab = await imageResponse.arrayBuffer();
 	res.statusCode = imageResponse.status;
 	res.end(Buffer.from(ab));
 }
 
-export default async function handler(req, res) {
+export default wrap(async (req, res) => {
 	// CORS for cross-origin embeds (Discord, X, etc. fetch OG images server-side
 	// but a permissive header doesn't hurt and makes browser-side <img> tags work).
 	if (req.method === 'OPTIONS') {
@@ -461,7 +468,9 @@ export default async function handler(req, res) {
 	const drawId = url.searchParams.get('draw') || undefined;
 
 	try {
-		const coin = mint || (await listActiveCoins()).length === 1 ? await resolveCoin(mint) : null;
+		// resolveCoin already handles both cases (explicit mint, or the single-active-coin
+		// default) and returns null when neither resolves, so it is the whole condition.
+		const coin = await resolveCoin(mint);
 		if (!coin) {
 			return sendImageResponse(res, imageResponseFor(brandCard(), { immutable: false }));
 		}
@@ -498,8 +507,7 @@ export default async function handler(req, res) {
 	} catch (err) {
 		// Never let an OG image fail open — fall back to the brand card so
 		// share previews still look intentional rather than broken-image grey.
-		res.statusCode = 200;
-		await sendImageResponse(res, imageResponseFor(brandCard(), { immutable: false }));
 		console.error('[og] render failed:', err?.message || err);
+		await sendImageResponse(res, imageResponseFor(brandCard(), { immutable: false }));
 	}
-}
+});

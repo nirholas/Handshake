@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-12T23:17:14.448Z",
+	"generated_at": "2026-08-12T23:29:07.966Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -140,6 +140,17 @@
 			"title": "The free trending and whale feeds stop going blank under their own traffic",
 			"summary": "Ask the trending feed for the 5-minute, 1-hour and 24-hour view back to back and the last two used to come back empty, blaming an upstream outage that was not happening. The cause was our own request volume: each call pulled the trade history of twenty pump.fun coins, and three calls in a row hit pump.fun's rate limiter, which then refused everything for a while. Both feeds now read pump.fun through one shared, short-lived cache, so every window and every caller reuses a single set of pulls instead of re-fetching the same coins, and a repeat call answers in milliseconds. When the limiter does bite, the whale feed serves the last successful pull and marks it stale instead of pretending the market is empty. A token nobody is trading now also reports an honest empty result rather than a false feed-down warning.",
 			"link": "/docs/crypto-api",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-12",
+			"type": "update",
+			"title": "The lottery demo now shows its own pot in shared previews, and the agent trade demo stopped stalling",
+			"summary": "Three repairs to the demo pages. When someone shared the lottery and reflection demo, the preview card was the generic three.ws logo, even though a card built for that page already existed and drew the live lottery pot, the reflection pot and the number of eligible holders. Shared links now show that card, so a preview says what the pot is standing at instead of showing a logo. The two-agent trading demo used to sit through just over two seconds of deliberate pauses that existed only to make the exchange look slower; those are gone, and the steps now appear as the real work behind them finishes. Asking the demo API for a nonsense number of results, such as a page size of zero, a negative number, or a word, returned a server error instead of an answer; those requests now fall back to a sensible page size and return data. The wallet-status reader behind the trading demo is also rate limited now, the same as every other public read on the page, so one caller cannot exhaust the Solana connection everyone shares.",
+			"link": "/demo/coin",
 			"tags": [
 				"fix",
 				"improvement"

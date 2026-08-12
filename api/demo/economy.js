@@ -25,7 +25,7 @@ import {
 	LAMPORTS_PER_SOL,
 } from '../_lib/avatar-wallet.js';
 import { trendingPools } from '../_lib/market/ohlcv.js';
-import { cors, wrap, error } from '../_lib/http.js';
+import { cors, wrap, error, json, rateLimited } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
@@ -109,42 +109,37 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 
 	const url = new URL(req.url, 'http://x');
+	const wantsStatus = url.searchParams.get('status') === '1';
+	const wantsTrade = url.searchParams.get('trade') === '1';
+	if (!wantsStatus && !wantsTrade) {
+		return error(res, 400, 'validation_error', 'use ?status=1 or ?trade=1');
+	}
+
+	// Meter BOTH branches before either runs. Status is not free: it fans out to two
+	// Solana RPC balance reads plus a SOL price lookup on every call, so leaving it
+	// unmetered let any anonymous caller amplify traffic onto our RPC quota. Same
+	// 60/min/IP budget as /api/demo/coin/*.
+	const rl = await limits.publicIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
 	const cfgA = agentAConfig();
 	const cfgB = agentBConfig();
 
 	// ── STATUS: wallet snapshots ──────────────────────────────────────────
-	if (url.searchParams.get('status') === '1') {
+	if (wantsStatus) {
 		const [a, b] = await Promise.all([walletSnapshot(cfgA), walletSnapshot(cfgB)]);
-		res.writeHead(200, {
-			'content-type': 'application/json',
-			'access-control-allow-origin': '*',
-		});
-		res.end(JSON.stringify({ agentA: a, agentB: b, tradeSol: TRADE_SOL }));
-		return;
+		return json(res, 200, { agentA: a, agentB: b, tradeSol: TRADE_SOL });
 	}
 
 	// ── TRADE: SSE stream ─────────────────────────────────────────────────
-	if (url.searchParams.get('trade') !== '1') {
-		res.writeHead(400, { 'content-type': 'application/json' });
-		res.end(JSON.stringify({ error: 'use ?status=1 or ?trade=1' }));
-		return;
-	}
-
 	// The trade branch signs + sends a REAL on-chain SOL transfer from the
 	// platform-held trader wallet — never expose that to anonymous callers.
 	// Read-only callers use ?status=1; the trade stream requires a session
-	// cookie or bearer token on top of the per-IP limit below.
+	// cookie or bearer token on top of the per-IP limit above.
 	const sessionUser = await getSessionUser(req);
 	const bearerUser = sessionUser ? null : await authenticateBearer(extractBearer(req));
 	if (!sessionUser && !bearerUser) {
 		return error(res, 401, 'unauthorized', 'sign in to run the agent-economy trade demo');
-	}
-
-	const rl = await limits.publicIp(clientIp(req));
-	if (!rl.success) {
-		res.writeHead(429, { 'content-type': 'application/json' });
-		res.end(JSON.stringify({ error: 'rate_limited' }));
-		return;
 	}
 
 	sseHeaders(res);
@@ -154,8 +149,6 @@ export default wrap(async (req, res) => {
 		agent: 'B',
 		text: `Trader agent requesting Solana market intelligence from Oracle. Preparing payment of ${TRADE_SOL} SOL.`,
 	});
-
-	await delay(900);
 
 	// Phase 2: payment
 	let paid = false;
@@ -211,8 +204,6 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	await delay(600);
-
 	// Phase 3: Oracle fetches + delivers data
 	emit(res, 'fetching', {
 		agent: 'A',
@@ -228,15 +219,11 @@ export default wrap(async (req, res) => {
 		return;
 	}
 
-	await delay(400);
-
 	emit(res, 'delivering', {
 		agent: 'A',
 		markets,
 		text: `Oracle delivering ${markets.length} live market signals to Trader.`,
 	});
-
-	await delay(300);
 
 	emit(res, 'done', {
 		markets,
@@ -250,7 +237,3 @@ export default wrap(async (req, res) => {
 
 	res.end();
 });
-
-function delay(ms) {
-	return new Promise((r) => setTimeout(r, ms));
-}

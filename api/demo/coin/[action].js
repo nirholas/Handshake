@@ -18,6 +18,7 @@
 
 import { sql } from '../../_lib/db.js';
 import { cors, error, json, method, wrap, rateLimited } from '../../_lib/http.js';
+import { parseLimit } from '../../_lib/http-params.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { listActiveCoins, loadCoinByMint } from '../../_lib/coin/index.js';
 
@@ -198,7 +199,7 @@ async function handleHolder(req, res) {
 async function handleHistory(req, res) {
 	const { coin, err } = await resolveCoin(req);
 	if (err) return error(res, 404, err, err.replace(/_/g, ' '));
-	const limit = Math.min(parseInt(req.query?.limit || '20', 10), 100);
+	const limit = parseLimit(req.query, { fallback: 20, max: 100 });
 
 	const fees = await sql`
 		select payload, tx_signature, created_at
@@ -258,7 +259,7 @@ async function handleHistory(req, res) {
 async function handleEvents(req, res) {
 	const { coin, err } = await resolveCoin(req);
 	if (err) return error(res, 404, err, err.replace(/_/g, ' '));
-	const limit = Math.min(parseInt(req.query?.limit || '50', 10), 200);
+	const limit = parseLimit(req.query, { fallback: 50, max: 200 });
 	const kind = req.query?.kind?.toString() || null;
 
 	const rows = kind
@@ -290,7 +291,7 @@ async function handleEvents(req, res) {
 async function handleWinners(req, res) {
 	const { coin, err } = await resolveCoin(req);
 	if (err) return error(res, 404, err, err.replace(/_/g, ' '));
-	const limit = Math.min(parseInt(req.query?.limit || '20', 10), 100);
+	const limit = parseLimit(req.query, { fallback: 20, max: 100 });
 	const rows = await sql`
 		select draw_id, drand_round, pot_lamports::text as pot, winner_wallet,
 		       drand_randomness, tx_signature, status, created_at, paid_at
@@ -318,7 +319,7 @@ async function handleWinners(req, res) {
 async function handleHolders(req, res) {
 	const { coin, err } = await resolveCoin(req);
 	if (err) return error(res, 404, err, err.replace(/_/g, ' '));
-	const limit = Math.min(parseInt(req.query?.limit || '50', 10), 500);
+	const limit = parseLimit(req.query, { fallback: 50, max: 500 });
 	const rows = await sql`
 		select wallet, balance::text as balance,
 		       accrued_reflection_lamports::text as accrued,

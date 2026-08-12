@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-08-12",
+			"title": "Dashboard settings saved at the same moment no longer overwrite each other",
+			"summary": "Your dashboard preferences are kept on the server as well as in the browser, so they follow you to a new device. Several parts of the dashboard save into that one record independently: finishing a guided tour, the walk page saving where you left off, and the settings form saving a toggle or a default network. The server used to read the whole record, merge the new value in, and write the record back, which meant two of those saves landing together would each write a copy of what they had read and the later one would erase the earlier one. Loading the dashboard can fire three of them within the same second, so a tour would reappear or a toggle would quietly revert. The merge now happens inside the database write itself, so every save keeps its own value regardless of what else is being saved at the same instant. Measured on the fix: eight preferences saved simultaneously kept two of eight before, and all eight after. The 16 KB ceiling on stored preferences is unchanged and is now enforced by that same write.",
+			"tags": [
+				"fix"
+			],
+			"link": "/dashboard/settings"
+		},
+		{
+			"date": "2026-08-12",
+			"title": "The lottery demo now shows its own pot in shared previews, and the agent trade demo stopped stalling",
+			"summary": "Three repairs to the demo pages. When someone shared the lottery and reflection demo, the preview card was the generic three.ws logo, even though a card built for that page already existed and drew the live lottery pot, the reflection pot and the number of eligible holders. Shared links now show that card, so a preview says what the pot is standing at instead of showing a logo. The two-agent trading demo used to sit through just over two seconds of deliberate pauses that existed only to make the exchange look slower; those are gone, and the steps now appear as the real work behind them finishes. Asking the demo API for a nonsense number of results, such as a page size of zero, a negative number, or a word, returned a server error instead of an answer; those requests now fall back to a sensible page size and return data. The wallet-status reader behind the trading demo is also rate limited now, the same as every other public read on the page, so one caller cannot exhaust the Solana connection everyone shares.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/demo/coin"
+		},
+		{
+			"date": "2026-08-12",
 			"title": "A shared coin-world link now opens a world with the coin's name on it",
 			"summary": "Every coin has a 3D world at /play, and the way people reach one is a link someone sent them. That link carries the coin's address plus its name, symbol and artwork, and the decoration falls off constantly: someone types the address by hand, a chat app cuts the rest of the link, a preview card keeps only the address. When it did, the world still opened, but as nobody's world: the sign in the plaza read COMMUNITY, the welcome card offered you \"the Community community\", the browser tab said Community, and the market cap on the big screen and the in-world chart was blank. The world now looks the coin up before it builds, so a link with nothing but the address opens the same named world as a full one, with live market cap on the screens. The market cap was missing from every shared link, complete or not, because a number that moves cannot be baked into a link; it is now read fresh on arrival. The lookup is capped at six seconds and skipped entirely for a link that already arrived complete, so nobody waits longer to get in, and the address bar is rewritten with the resolved name so the next person to receive that link never pays for the lookup at all.",
 			"tags": [
