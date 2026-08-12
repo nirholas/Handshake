@@ -12,13 +12,14 @@
 // in computeSignal + docs/crypto-api.md) — never an LLM. All fetches degrade to
 // an empty result on upstream failure so the endpoint answers 200, never 500.
 //
-// Data source: pump.fun public swap-api (trades) + frontend-api-v3 (top coins).
-// Both are keyless. Reuses the same hosts + trade shape as the paid
-// api/x402/pump-agent-audit.js whale oracle, exposed here free and cleaner.
+// Data source: pump.fun public swap-api (trades) + frontend-api-v3 (top coins),
+// read through api/_lib/pump-feed-fetch.js so a market scan shares its cached
+// board and trade pulls with every other pump.fun reader instead of re-tripping
+// Cloudflare's rate limit. Both are keyless. Reuses the same hosts + trade shape
+// as the paid api/x402/pump-agent-audit.js whale oracle, exposed here free and
+// cleaner.
 
-const PUMP_FRONTEND_BASE =
-	process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
-const PUMP_SWAP_BASE = process.env.PUMP_SWAP_BASE || 'https://swap-api.pump.fun';
+import { fetchPumpTrades, fetchPumpBoard } from './pump-feed-fetch.js';
 
 export const WHALE_MIN_SOL_DEFAULT = Number(process.env.PUMP_WHALE_SOL_THRESHOLD || 5);
 export const WHALE_LIMIT_DEFAULT = 10;
@@ -169,62 +170,50 @@ export function buildWhaleResult({ trades, scope, mint, minSol, limit }) {
 }
 
 // ── Upstream fetches (network boundary — always degrade, never throw) ─────────
-async function fetchJson(url, timeoutMs) {
-	try {
-		const r = await fetch(url, {
-			headers: { accept: 'application/json', 'user-agent': 'three.ws-crypto-whales/1' },
-			signal: AbortSignal.timeout(timeoutMs),
-		});
-		if (!r.ok) return null;
-		return await r.json().catch(() => null);
-	} catch {
-		return null;
-	}
-}
+// Both helpers answer `{ rows, stale }` or null, where null means the call FAILED
+// with nothing cached to fall back on. That lets `degraded` below mean "the feed
+// is down" rather than "this mint is quiet": a mint with no recent trades is a
+// real, reportable answer, not an outage.
 
 export async function fetchCoinTrades(mint, limit = TRADES_PER_COIN) {
-	const body = await fetchJson(
-		`${PUMP_SWAP_BASE}/v2/coins/${encodeURIComponent(mint)}/trades?limit=${limit}`,
-		6000,
-	);
-	if (Array.isArray(body)) return body;
-	if (Array.isArray(body?.trades)) return body.trades;
-	return [];
+	return fetchPumpTrades(mint, { limit });
 }
 
 export async function fetchTopCoins(limit = 20) {
-	const body = await fetchJson(
-		`${PUMP_FRONTEND_BASE}/coins?offset=0&limit=${limit}&sort=market_cap&order=DESC&includeNsfw=false`,
-		7000,
-	);
-	const coins = Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : [];
-	return coins.filter((c) => c && typeof c.mint === 'string' && c.mint.length >= 32);
+	return fetchPumpBoard({ limit });
 }
 
 // Token scope — whale buys of one specific mint. Upstream down → empty result.
 export async function scanTokenWhales({ mint, minSol, limit }) {
-	const trades = await fetchCoinTrades(mint, TRADES_PER_COIN);
-	return {
-		...buildWhaleResult({ trades, scope: 'token', mint, minSol, limit }),
-		degraded: trades.length === 0,
+	const feed = await fetchCoinTrades(mint, TRADES_PER_COIN);
+	const out = {
+		...buildWhaleResult({ trades: feed?.rows || [], scope: 'token', mint, minSol, limit }),
+		degraded: feed === null,
 	};
+	if (feed?.stale) out.stale = true;
+	return out;
 }
 
 // Market scope — top whale wallets across the top pump.fun coins right now.
-// Upstream down → empty result (never throws).
+// Upstream down → empty result (never throws). Degraded only when the board is
+// unreachable or every sampled coin's trade pull failed; a board that is simply
+// quiet reports an honest empty set.
 export async function scanMarketWhales({ minSol, limit }) {
-	const topCoins = await fetchTopCoins(20);
-	if (!topCoins.length) {
+	const board = await fetchTopCoins(20);
+	if (!board || !board.rows.length) {
 		return {
 			...buildWhaleResult({ trades: [], scope: 'market', mint: null, minSol, limit }),
 			degraded: true,
 		};
 	}
-	const sample = topCoins.slice(0, MARKET_COINS_SAMPLE);
+	const sample = board.rows.slice(0, MARKET_COINS_SAMPLE);
 	const results = await Promise.allSettled(sample.map((c) => fetchCoinTrades(c.mint, TRADES_PER_COIN)));
-	const trades = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
-	return {
+	const answered = results.flatMap((r) => (r.status === 'fulfilled' && r.value ? [r.value] : []));
+	const trades = answered.flatMap((f) => f.rows);
+	const out = {
 		...buildWhaleResult({ trades, scope: 'market', mint: null, minSol, limit }),
-		degraded: trades.length === 0,
+		degraded: answered.length === 0,
 	};
+	if (board.stale || answered.some((f) => f.stale)) out.stale = true;
+	return out;
 }

@@ -1,9 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
 	normalizeTrade,
 	computeSignal,
 	buildWhaleResult,
+	scanTokenWhales,
+	scanMarketWhales,
 } from '../api/_lib/pump-whale-scan.js';
+import { fetchPumpTrades, fetchPumpBoard } from '../api/_lib/pump-feed-fetch.js';
+
+// The shared pump.fun read layer is exercised in tests/api/pump-feed-fetch.js;
+// here it is stubbed so the scan's own degraded/stale reasoning is what is under
+// test, with no network involved.
+vi.mock('../api/_lib/pump-feed-fetch.js', () => ({
+	fetchPumpTrades: vi.fn(),
+	fetchPumpBoard: vi.fn(),
+}));
 
 // Synthetic pump.fun trades — no real third-party mints/wallets (CLAUDE.md).
 // Wallets are placeholder base58-ish strings; the aggregation only keys on them.
@@ -114,5 +125,86 @@ describe('buildWhaleResult — empty case', () => {
 		const r = buildWhaleResult({ trades: [], scope: 'token', mint: THREE_MINT, minSol: 5, limit: 10 });
 		expect(r.whales).toEqual([]);
 		expect(r.signal).toBe('neutral');
+	});
+});
+
+// ── scan orchestration: what "degraded" is allowed to mean ───────────────────
+// A quiet mint and a downed feed both produce an empty whale set, and the
+// endpoint prints an outage note for one of them. Conflating the two is what
+// made a brand-new mint with no trades look like a pump.fun outage, so the
+// distinction is pinned here.
+describe('scanTokenWhales / scanMarketWhales — degraded + stale', () => {
+	beforeEach(() => {
+		fetchPumpTrades.mockReset();
+		fetchPumpBoard.mockReset();
+	});
+
+	it('token scope: rows present → not degraded', async () => {
+		fetchPumpTrades.mockResolvedValue({ rows: [buy('W1', 9)], stale: false });
+		const r = await scanTokenWhales({ mint: THREE_MINT, minSol: 5, limit: 10 });
+		expect(r.degraded).toBe(false);
+		expect(r.whales).toHaveLength(1);
+		expect(r.stale).toBeUndefined();
+	});
+
+	it('token scope: a quiet mint answers empty WITHOUT claiming an outage', async () => {
+		fetchPumpTrades.mockResolvedValue({ rows: [], stale: false });
+		const r = await scanTokenWhales({ mint: THREE_MINT, minSol: 5, limit: 10 });
+		expect(r.degraded).toBe(false);
+		expect(r.whales).toEqual([]);
+		expect(r.signal).toBe('neutral');
+	});
+
+	it('token scope: an unreachable feed IS degraded', async () => {
+		fetchPumpTrades.mockResolvedValue(null);
+		const r = await scanTokenWhales({ mint: THREE_MINT, minSol: 5, limit: 10 });
+		expect(r.degraded).toBe(true);
+		expect(r.whales).toEqual([]);
+	});
+
+	it('token scope: last-known-good rows are flagged stale', async () => {
+		fetchPumpTrades.mockResolvedValue({ rows: [buy('W1', 9)], stale: true });
+		const r = await scanTokenWhales({ mint: THREE_MINT, minSol: 5, limit: 10 });
+		expect(r.degraded).toBe(false);
+		expect(r.stale).toBe(true);
+	});
+
+	it('market scope: aggregates the sampled coins and stays live', async () => {
+		fetchPumpBoard.mockResolvedValue({ rows: [{ mint: 'M1' }, { mint: 'M2' }], stale: false });
+		fetchPumpTrades.mockResolvedValue({ rows: [buy('W1', 7)], stale: false });
+		const r = await scanMarketWhales({ minSol: 5, limit: 10 });
+		expect(fetchPumpTrades).toHaveBeenCalledTimes(2);
+		expect(r.degraded).toBe(false);
+		expect(r.whaleCount).toBe(1);
+		expect(r.totalSolMoved).toBe(14);
+	});
+
+	it('market scope: an unreachable board is degraded', async () => {
+		fetchPumpBoard.mockResolvedValue(null);
+		const r = await scanMarketWhales({ minSol: 5, limit: 10 });
+		expect(r.degraded).toBe(true);
+		expect(fetchPumpTrades).not.toHaveBeenCalled();
+	});
+
+	it('market scope: degraded only when EVERY sampled trade pull failed', async () => {
+		fetchPumpBoard.mockResolvedValue({ rows: [{ mint: 'M1' }, { mint: 'M2' }], stale: false });
+		fetchPumpTrades.mockResolvedValue(null);
+		const r = await scanMarketWhales({ minSol: 5, limit: 10 });
+		expect(r.degraded).toBe(true);
+
+		fetchPumpTrades.mockReset();
+		fetchPumpTrades.mockResolvedValueOnce(null).mockResolvedValueOnce({ rows: [buy('W1', 8)], stale: false });
+		const partial = await scanMarketWhales({ minSol: 5, limit: 10 });
+		expect(partial.degraded).toBe(false);
+		expect(partial.whaleCount).toBe(1);
+	});
+
+	it('market scope: one stale leg flags the whole result stale', async () => {
+		fetchPumpBoard.mockResolvedValue({ rows: [{ mint: 'M1' }, { mint: 'M2' }], stale: false });
+		fetchPumpTrades
+			.mockResolvedValueOnce({ rows: [buy('W1', 8)], stale: true })
+			.mockResolvedValueOnce({ rows: [buy('W2', 6)], stale: false });
+		const r = await scanMarketWhales({ minSol: 5, limit: 10 });
+		expect(r.stale).toBe(true);
 	});
 });

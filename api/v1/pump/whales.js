@@ -80,6 +80,9 @@ export default defineEndpoint({
 		if (result.degraded) {
 			body.note = 'pump.fun feed is temporarily unavailable — returning an empty whale set; retry shortly';
 		}
+		// The feed was rate-limited and these rows came from the last-known-good
+		// pull. Real trades, a few minutes old: say so rather than imply live.
+		if (result.stale) body.stale = true;
 		return body;
 	},
 });

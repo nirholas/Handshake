@@ -34,11 +34,9 @@ import { scorePressure } from './x402/pump-trending-score.js';
 import { summarizeWindowUsd, median } from './x402/pump-volume-anomaly.js';
 import { dexScreenerTrending, gmgnSmartMoneyRank } from './gmgn-feed.js';
 import { cacheWrap } from './cache.js';
+import { fetchPumpBoard as fetchPumpBoardRaw, fetchPumpTrades } from './pump-feed-fetch.js';
 import { gmgnTokenUrl } from '../../src/shared/trading-terminals.js';
 
-const PUMP_FRONTEND_BASE = process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
-const PUMP_SWAP_BASE = process.env.PUMP_SWAP_BASE || 'https://swap-api.pump.fun';
-const UA = 'three.ws-crypto-trending/1';
 const FETCH_TIMEOUT_MS = Number(process.env.CRYPTO_TRENDING_TIMEOUT_MS || 6000);
 // How many top board coins to pull trades for (trade fetch is the slow path).
 const PUMP_TRADE_COINS = Number(process.env.CRYPTO_TRENDING_TRADE_COINS || 20);
@@ -165,23 +163,6 @@ export function toOutputRow(t) {
 
 // ── live fetch layer ─────────────────────────────────────────────────────────
 
-async function fetchJson(url) {
-	const ctrl = new AbortController();
-	const tid = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-	try {
-		const r = await fetch(url, {
-			headers: { accept: 'application/json', 'user-agent': UA },
-			signal: ctrl.signal,
-		});
-		if (!r.ok) return null;
-		return await r.json();
-	} catch {
-		return null;
-	} finally {
-		clearTimeout(tid);
-	}
-}
-
 /** Bounded-concurrency map preserving order. */
 async function mapLimit(items, limit, fn) {
 	const out = new Array(items.length);
@@ -197,29 +178,28 @@ async function mapLimit(items, limit, fn) {
 	return out;
 }
 
+// Board + trades come from the shared pump.fun read layer, so the 5m, 1h and 24h
+// rankings reuse one set of trade pulls instead of each re-fetching 20 coins and
+// tripping the upstream rate limit (see api/_lib/pump-feed-fetch.js).
 async function fetchPumpBoard(limit) {
-	const url = new URL('/coins', PUMP_FRONTEND_BASE);
-	url.searchParams.set('offset', '0');
-	url.searchParams.set('limit', String(limit));
-	url.searchParams.set('sort', 'market_cap');
-	url.searchParams.set('order', 'DESC');
-	url.searchParams.set('includeNsfw', 'false');
-	const body = await fetchJson(url.toString());
-	const coins = Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : null;
-	if (!Array.isArray(coins)) return null;
-	return coins
-		.filter((c) => c && typeof c.mint === 'string' && c.mint.length >= 32)
-		.map((c) => ({
-			mint: c.mint,
-			symbol: c.symbol || null,
-			name: c.name || c.symbol || null,
-			marketCapUsd: num(c.usd_market_cap),
-		}));
+	const board = await fetchPumpBoardRaw({ limit, timeoutMs: FETCH_TIMEOUT_MS });
+	if (!board) return null;
+	return board.rows.map((c) => ({
+		mint: c.mint,
+		symbol: c.symbol || null,
+		name: c.name || c.symbol || null,
+		marketCapUsd: num(c.usd_market_cap),
+	}));
 }
 
+// Trade rows keep their own timestamps and summarizeWindowUsd filters on them,
+// so a last-known-good pull can only shrink a window's volume, never invent it.
 async function fetchCoinTrades(mint) {
-	const body = await fetchJson(`${PUMP_SWAP_BASE}/v2/coins/${mint}/trades?limit=${PUMP_TRADES_PER_COIN}`);
-	return Array.isArray(body) ? body : Array.isArray(body?.trades) ? body.trades : [];
+	const feed = await fetchPumpTrades(mint, {
+		limit: PUMP_TRADES_PER_COIN,
+		timeoutMs: FETCH_TIMEOUT_MS,
+	});
+	return feed?.rows || [];
 }
 
 /**
@@ -376,10 +356,11 @@ export async function composeTrending({ window, limit, source, nowMs = Date.now(
 		sources,
 	};
 	if (!sources.length) {
-		out.note = 'All upstream market sources were unavailable. Returning an empty ranking; retry shortly.';
+		out.note =
+			'No market source returned ranked tokens: the upstreams are unavailable, or nothing qualified in this window. Retry shortly or widen the window.';
 	} else if (source === 'all' && sources.length < jobs.length) {
 		const down = settled.filter((s) => s.rows.length === 0).map((s) => s.name);
-		out.note = `Partial data: ${down.join(', ')} unavailable; ranked from ${sources.join(', ')}.`;
+		out.note = `Partial data: ${down.join(', ')} returned nothing; ranked from ${sources.join(', ')}.`;
 	}
 	return out;
 }

@@ -16,8 +16,11 @@
 // computeSignal + docs/crypto-api.md), never an LLM.
 //
 // Never 500 on a well-formed request: no whales over threshold → 200 empty +
-// neutral; feed down → 200 empty + a `note`. A paid, coarser version of this
-// data lives at api/x402/pump-agent-audit.js; this is the free, cleaner read.
+// neutral; feed down → 200 empty + a `note`. When pump.fun rate-limits us the
+// scan falls back to its last-known-good trade pull and the body carries
+// `stale: true`, so an agent can tell live rows from minutes-old ones. A paid,
+// coarser version of this data lives at api/x402/pump-agent-audit.js; this is
+// the free, cleaner read.
 
 import { wrap, cors, method, json, error, rateLimited, setRateLimitHeaders } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
