@@ -1,7 +1,7 @@
 // GET /api/club/tips?limit=&dancer=
 //
 // Returns the most-recent tip events written by /api/x402/dance-tip. Powers
-// the initial render of the /club "Live tips" widget on page boot — the SSE
+// the initial render of the /club "Live tips" widget on page boot; the SSE
 // channel at /api/club/tips/stream takes over for live updates.
 
 import { sql } from '../_lib/db.js';

@@ -19,15 +19,14 @@
 //   X402_SEED_ENABLED                set to 'false' to pause (default: enabled)
 //   X402_SEED_BATCH_SIZE             calls per tick (default: 60)
 
-import { readFileSync } from 'node:fs';
-import bs58 from 'bs58';
+// The transactions come from the ONE shared ring payment builder
+// (api/_lib/x402/pay.js), whose nonce-based (priority price, CU limit) spread
+// keeps every batch member byte-distinct; this cron previously carried a forked
+// copy that only accepted base58 keys and priced fees above the ring floor.
+
+import { PublicKey } from '@solana/web3.js';
 import {
-	PublicKey, Keypair, TransactionMessage, VersionedTransaction,
-	ComputeBudgetProgram,
-} from '@solana/web3.js';
-import {
-	getAssociatedTokenAddressSync, createTransferCheckedInstruction,
-	createAssociatedTokenAccountIdempotentInstruction,
+	getAssociatedTokenAddressSync,
 	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getMint,
 } from '@solana/spl-token';
 
@@ -37,6 +36,9 @@ import { getRedis, isRedisAuthError } from '../_lib/redis.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { logger } from '../_lib/usage.js';
 import { SPONSOR_SOL_FLOOR_LAMPORTS } from '../_lib/x402/self-facilitator.js';
+import {
+	loadSeedKeypair, fetchWithTimeout, parseSolanaAccept, buildPaymentTx,
+} from '../_lib/x402/pay.js';
 import { readPayerUsdcAtomic } from './x402-autonomous-loop.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
@@ -45,7 +47,6 @@ const log = logger('x402-seed-cron');
 const ORIGIN = () => env.APP_ORIGIN || 'https://three.ws';
 const USDC_MINT = env.X402_ASSET_MINT_SOLANA;
 const SOLANA_RPC = env.SOLANA_RPC_URL;
-const FETCH_TIMEOUT_MS = 20_000;
 
 // Mirror of x402-pay.js FEED_KEY so our seeded payments appear on the /pay feed.
 const FEED_KEY = 'x402:pay:feed';
@@ -57,112 +58,10 @@ const STYLES = [
 	'twerk', 'spin', 'climb', 'combo',
 ];
 
-function loadSeedKeypair() {
-	// Dedicated seeder key — allows a separate wallet funded only for seeding
-	// without touching the shared agent/demo wallet.
-	const b58 = process.env.X402_SEED_SOLANA_SECRET_BASE58
-		|| process.env.X402_AGENT_SOLANA_SECRET_BASE58;
-	if (b58) {
-		const raw = bs58.decode(b58);
-		if (raw.length !== 64) throw new Error(`seed keypair decoded to ${raw.length} bytes; expected 64`);
-		return Keypair.fromSecretKey(raw);
-	}
-	// Local dev fallback — same path x402-pay.js uses.
-	if (process.env.NODE_ENV !== 'production') {
-		try {
-			const arr = JSON.parse(readFileSync('/home/codespace/.config/x402-test-wallets/solana.json', 'utf8'));
-			return Keypair.fromSecretKey(Uint8Array.from(arr));
-		} catch { /* fall through */ }
-	}
-	throw new Error('seed keypair not configured (set X402_SEED_SOLANA_SECRET_BASE58)');
-}
-
 // Pick a random element from an array.
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-// Fetch one JSON endpoint — short timeout, returns { ok, status, body }.
-async function fetchJson(url, opts = {}) {
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-	try {
-		const res = await fetch(url, {
-			...opts,
-			signal: controller.signal,
-			headers: { 'user-agent': 'threews-x402-seed/1.0', ...opts.headers },
-		});
-		let body = null;
-		const ct = res.headers.get('content-type') || '';
-		if (ct.includes('application/json')) {
-			try { body = await res.json(); } catch { /* non-JSON */ }
-		} else {
-			const text = await res.text();
-			try { body = JSON.parse(text); } catch { body = text; }
-		}
-		return { ok: res.ok, status: res.status, body };
-	} finally {
-		clearTimeout(timer);
-	}
-}
-
 // Parse a 402 challenge body to find the Solana accept entry.
-function parseSolanaAccept(challengeBody) {
-	if (!challengeBody || !Array.isArray(challengeBody.accepts)) return null;
-	return challengeBody.accepts.find(
-		(a) => typeof a?.network === 'string' && a.network.startsWith('solana'),
-	) || null;
-}
-
-// Build and sign a USDC TransferChecked versioned transaction for x402.
-// Caller provides a pre-fetched blockhash and mint to avoid per-call RPCs.
-export function buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAtaExists, index = 0 }) {
-	const mint = new PublicKey(accept.asset);
-	const payTo = new PublicKey(accept.payTo);
-	const feePayer = new PublicKey(accept.extra.feePayer);
-	const amount = BigInt(accept.amount);
-
-	const senderAta = getAssociatedTokenAddressSync(
-		mint, buyer.publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
-	);
-	const receiverAta = getAssociatedTokenAddressSync(
-		mint, payTo, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
-	);
-
-	const ixs = [
-		ComputeBudgetProgram.setComputeUnitLimit({ units: 60_000 }),
-		// The priority fee is what makes each transaction in a batch DISTINCT, and
-		// it has to be: every other input (blockhash, amount, accounts, decimals) is
-		// identical across the batch, so a fixed price made all N transactions
-		// byte-identical. Identical bytes mean one signature, and the paid endpoint
-		// derives paymentId by hashing the payment proof, so the whole batch
-		// collided on a single id: one call landed and the rest 409'd on
-		// writeConflict, while any that raced past the guard hit the chain as a
-		// duplicate signature and settled as `broadcast_failed` with empty
-		// simulation logs. Measured 2026-07-30: ~40 of 41 calls per tick lost, the
-		// single largest source of 4xx on the fleet at 2,403/hour.
-		// Cost of the spread is negligible: 60k CU * N microLamports is 0.06*N
-		// lamports, so a full batch adds a few lamports in total.
-		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1 + index }),
-	];
-	if (!receiverAtaExists) {
-		ixs.push(createAssociatedTokenAccountIdempotentInstruction(
-			feePayer, receiverAta, payTo, mint,
-			TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
-		));
-	}
-	ixs.push(createTransferCheckedInstruction(
-		senderAta, mint, receiverAta, buyer.publicKey,
-		amount, mintInfo.decimals, [], TOKEN_PROGRAM_ID,
-	));
-
-	const message = new TransactionMessage({
-		payerKey: feePayer,
-		recentBlockhash: blockhash,
-		instructions: ixs,
-	}).compileToV0Message();
-	const vtx = new VersionedTransaction(message);
-	vtx.sign([buyer]);
-	return Buffer.from(vtx.serialize()).toString('base64');
-}
 
 /**
  * Decide what a tick should actually send, from the two wallet balances that
@@ -252,7 +151,9 @@ export default wrapCron(async (req, res) => {
 
 	// ── Step 1: probe dance-tip for live payment requirements ─────────────────
 	const probeUrl = `${origin}/api/x402/dance-tip?dancer=1&dance=hiphop`;
-	const probe = await fetchJson(probeUrl);
+	const probe = await fetchWithTimeout(probeUrl, {
+		headers: { 'user-agent': 'threews-x402-seed/1.0' },
+	});
 	if (probe.status !== 402 || !probe.body) {
 		return json(res, 200, {
 			ok: false,
@@ -324,9 +225,11 @@ export default wrapCron(async (req, res) => {
 	}
 
 	// ── Step 3: build the signed transactions (synchronous) ───────────────────
+	// The nonce spread is what makes each batch member a distinct transaction;
+	// see ringFeeConfig in api/_lib/x402/pay.js for why it costs ~nothing.
 	const affordable = plan.batch;
 	const txBases = Array.from({ length: affordable }, (_, index) =>
-		buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAtaExists, index }),
+		buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAtaExists, nonce: index }),
 	);
 
 	// ── Step 4: fire all in parallel ──────────────────────────────────────────
@@ -348,9 +251,9 @@ export default wrapCron(async (req, res) => {
 				payload: { transaction: txBase64 },
 			})).toString('base64');
 
-			return fetchJson(
+			return fetchWithTimeout(
 				`${origin}/api/x402/dance-tip?dancer=${dancer}&dance=${style}`,
-				{ headers: { 'X-PAYMENT': xPayment } },
+				{ headers: { 'user-agent': 'threews-x402-seed/1.0', 'X-PAYMENT': xPayment } },
 			).then((r) => ({ ok: r.ok, status: r.status, dancer, style, ticket: r.body }));
 		}),
 	);

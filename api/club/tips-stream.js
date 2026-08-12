@@ -1,4 +1,4 @@
-// GET /api/club/tips/stream  — Server-Sent Events
+// GET /api/club/tips/stream: Server-Sent Events
 //
 // Tails the club_tips table and pushes every new row as a `tip` event. The
 // /club page subscribes on boot so two simultaneous visitors see each other's
@@ -12,7 +12,7 @@
 // instance regardless of connection count.
 //
 // ── Adaptive cadence ─────────────────────────────────────────────────────────
-// Tips are bursty — seconds of frenetic activity, then long silences. After
+// Tips are bursty: seconds of frenetic activity, then long silences. After
 // IDLE_RAMP_AFTER consecutive empty polls the interval ramps from POLL_MS_MIN
 // (800ms) up to POLL_MS_MAX (5s). Any tip row immediately resets the interval
 // back to fast. This cuts steady-state Neon reads by ~6× vs fixed 800ms polling.
@@ -28,7 +28,7 @@ import { cors, method } from '../_lib/http.js';
 const clients = new Set();
 let pollTimer = null;
 // Compound cursor (created_at, ticket_id). A plain `created_at >` cursor drops
-// tips that share an identical timestamp at the LIMIT boundary — realistic under
+// tips that share an identical timestamp at the LIMIT boundary, realistic under
 // the bursts this stream exists for. The unique ticket_id breaks ties so the
 // cursor is strictly monotonic and lossless. Empty id sorts before any ticket.
 let sharedCursor = new Date();
