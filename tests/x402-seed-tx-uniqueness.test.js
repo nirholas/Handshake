@@ -1,7 +1,7 @@
 // Every transaction in a seed batch must be DISTINCT on the wire.
 //
 // Regression guard for a live production failure (measured 2026-07-30): the
-// seeder built its batch by calling buildPaymentTx() N times with identical
+// seeder built its batch by calling the payment builder N times with identical
 // arguments. Every input is fixed across a tick (one blockhash, one amount, one
 // pair of token accounts, one decimals value) and the priority fee was the
 // constant `microLamports: 1`, so all N transactions serialized to the SAME
@@ -16,14 +16,21 @@
 // of 4xx on the fleet at ~2,403/hour, and it falsified the cron's own promise of
 // "60 real Solana micropayments per tick".
 //
-// The fix spreads the compute-unit price by index, which is the only field free
-// to vary without changing what the payment DOES. This test pins that: same
-// inputs, different index, different bytes, and the transfer itself untouched.
+// The seeder now delegates to the ONE shared ring builder,
+// api/_lib/x402/pay.js buildPaymentTx, and passes the batch position as `nonce`.
+// ringFeeConfig maps each nonce to a distinct (priority price, CU limit) pair;
+// both are free to vary without changing what the payment DOES: unused compute
+// is never billed, and in sponsor mode the priority fee floors to zero lamports.
+// This test pins the batch-uniqueness contract against that shared builder:
+// same inputs, different nonce, different bytes, and the transfer untouched.
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { Keypair, PublicKey } from '@solana/web3.js';
 
 let buildPaymentTx;
+let ringFeeConfig;
+let expectedFeeLamports;
+let ringMaxFeePerTxLamports;
 let VersionedTransaction;
 
 // A fixed, valid-shaped accept for the Solana exact scheme. The mint is $THREE
@@ -46,13 +53,13 @@ const ACCEPT = accept();
 const args = { accept: ACCEPT, buyer, blockhash, mintInfo: { decimals: 6 }, receiverAtaExists: true };
 
 beforeAll(async () => {
-	({ buildPaymentTx } = await import('../api/cron/x402-seed-cron.js'));
+	({ buildPaymentTx, ringFeeConfig, expectedFeeLamports, ringMaxFeePerTxLamports } = await import('../api/_lib/x402/pay.js'));
 	({ VersionedTransaction } = await import('@solana/web3.js'));
 });
 
-describe('seed batch transactions are unique per index', () => {
-	it('produces different bytes for every index in a batch', () => {
-		const batch = Array.from({ length: 60 }, (_, index) => buildPaymentTx({ ...args, index }));
+describe('seed batch transactions are unique per nonce', () => {
+	it('produces different bytes for every nonce in a batch', () => {
+		const batch = Array.from({ length: 60 }, (_, nonce) => buildPaymentTx({ ...args, nonce }));
 		// The regression: this set had size 1.
 		expect(new Set(batch).size).toBe(60);
 	});
@@ -61,9 +68,9 @@ describe('seed batch transactions are unique per index', () => {
 		// signatures[0] belongs to the fee payer, which the seeder does NOT sign
 		// (the sponsor cosigns at settle), so slot 0 is all zeros on every build.
 		// The buyer's slot is the one that must vary.
-		const buyerSig = (index) => {
+		const buyerSig = (nonce) => {
 			const tx = VersionedTransaction.deserialize(
-				Buffer.from(buildPaymentTx({ ...args, index }), 'base64'),
+				Buffer.from(buildPaymentTx({ ...args, nonce }), 'base64'),
 			);
 			const slot = tx.message.staticAccountKeys
 				.slice(0, tx.message.header.numRequiredSignatures)
@@ -74,29 +81,30 @@ describe('seed batch transactions are unique per index', () => {
 			return sig.toString('base64');
 		};
 
-		const sigs = Array.from({ length: 10 }, (_, index) => buyerSig(index));
+		const sigs = Array.from({ length: 10 }, (_, nonce) => buyerSig(nonce));
 		expect(new Set(sigs).size).toBe(10);
 	});
 
-	it('is deterministic for a given index, so a retry rebuilds the same tx', () => {
-		expect(buildPaymentTx({ ...args, index: 7 })).toBe(buildPaymentTx({ ...args, index: 7 }));
+	it('is deterministic for a given nonce, so a retry rebuilds the same tx', () => {
+		expect(buildPaymentTx({ ...args, nonce: 7 })).toBe(buildPaymentTx({ ...args, nonce: 7 }));
 	});
 
-	it('defaults to index 0 so a single-payment caller is unchanged', () => {
-		expect(buildPaymentTx(args)).toBe(buildPaymentTx({ ...args, index: 0 }));
+	it('defaults to nonce 0 so a single-payment caller is unchanged', () => {
+		expect(buildPaymentTx(args)).toBe(buildPaymentTx({ ...args, nonce: 0 }));
 	});
 
-	it('varies only the priority fee, never the payment itself', () => {
-		const decode = (index) =>
+	it('varies only the compute-budget instructions, never the payment itself', () => {
+		const decode = (nonce) =>
 			VersionedTransaction.deserialize(
-				Buffer.from(buildPaymentTx({ ...args, index }), 'base64'),
+				Buffer.from(buildPaymentTx({ ...args, nonce }), 'base64'),
 			).message;
 
 		const a = decode(0);
 		const b = decode(41);
 
-		// Same accounts, same programs, same instruction shape: only the compute
-		// budget instruction's data differs, so the transfer is byte-identical.
+		// Same accounts, same programs, same instruction shape: only the two
+		// compute-budget instructions (limit, price) may differ, so the transfer
+		// is byte-identical.
 		expect(b.staticAccountKeys.map(String)).toEqual(a.staticAccountKeys.map(String));
 		expect(b.compiledInstructions).toHaveLength(a.compiledInstructions.length);
 
@@ -107,7 +115,10 @@ describe('seed batch transactions are unique per index', () => {
 			}))
 			.filter((x) => !x.same)
 			.map((x) => x.i);
-		expect(differing).toEqual([1]); // index 1 is setComputeUnitPrice
+		// Instructions 0 and 1 are setComputeUnitLimit and setComputeUnitPrice;
+		// the nonce spread may touch either or both, nothing else.
+		expect(differing.length).toBeGreaterThan(0);
+		expect(differing.every((i) => i === 0 || i === 1)).toBe(true);
 
 		// The transfer instruction (last) is untouched: same program, same data.
 		const last = a.compiledInstructions.length - 1;
@@ -119,11 +130,15 @@ describe('seed batch transactions are unique per index', () => {
 		);
 	});
 
-	it('keeps the fee spread small enough to be free in practice', () => {
-		// 60k compute units at (1 + index) microLamports is 0.06 * (1+index)
-		// lamports, so even the last call in a 60-batch costs a few lamports.
-		const worstCaseLamports = (60_000 * (1 + 59)) / 1_000_000;
-		expect(worstCaseLamports).toBeLessThan(5);
+	it('keeps the fee spread under the ring per-transaction ceiling', () => {
+		// Sponsor-mode ringFeeConfig keeps the priority fee at zero lamports by
+		// construction (price slots are capped so price x limit floors to 0), so
+		// the worst case is the 2-signature base fee, exactly at the ceiling.
+		for (const nonce of [0, 1, 10, 41, 59, 119]) {
+			const { microLamports, cuLimit } = ringFeeConfig(nonce, { selfPay: false });
+			const fee = expectedFeeLamports({ selfPay: false, priorityMicrolamports: microLamports, cuLimit });
+			expect(fee).toBeLessThanOrEqual(ringMaxFeePerTxLamports());
+		}
 	});
 
 	it('uses a real payTo account, not the fee payer', () => {
