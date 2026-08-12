@@ -37,7 +37,7 @@ export interface InvokeSkillParams {
   invokerAuthority: Keypair;
   /** Authority that owns the target agent (its agent PDA is re-derived from this). */
   targetAuthority: PublicKey;
-  /** Skill identifier to invoke (1–64 bytes). */
+  /** Skill identifier to invoke (1-64 bytes). */
   skillName: string;
   /** Opaque parameter blob passed to the skill (≤512 bytes), typically JSON. */
   parameters: string;
@@ -78,7 +78,7 @@ export async function invokeSkill({
     commitment: 'confirmed',
   });
   // Anchor 0.30+ camelCases the IDL at runtime (methods.invokeSkill), while our
-  // hand-maintained IDL literal keeps the on-chain snake_case names — so type
+  // hand-maintained IDL literal keeps the on-chain snake_case names, so type
   // the program against the generic Idl rather than the raw literal type.
   const idl = { ...IDL, address: programId.toBase58() } as unknown as Idl;
   const program = new Program(idl, provider);

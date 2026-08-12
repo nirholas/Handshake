@@ -69,7 +69,7 @@ test('deriveAgentPda honors a custom programId (e.g. a devnet deployment)', () =
 });
 
 // invokeSkill validates inputs before constructing the provider/transaction, so
-// these rejections never touch the network — the stub connection proves it.
+// these rejections never touch the network; the stub connection proves it.
 const STUB_CONNECTION = {};
 
 function baseParams(overrides) {

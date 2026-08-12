@@ -66,8 +66,8 @@ const signature = await invokeSkill({
   connection,
   invokerAuthority,                       // signs + pays
   targetAuthority,                        // target agent PDA is derived from this
-  skillName: 'summarize',                 // 1–64 bytes
-  parameters: JSON.stringify({ url: 'https://example.com' }), // ≤512 bytes
+  skillName: 'summarize',                 // 1-64 bytes
+  parameters: JSON.stringify({ url: 'https://example.com' }), // <=512 bytes
   // programId is optional; it defaults to AGENT_INVOCATION_PROGRAM_ID.
 });
 
@@ -90,12 +90,12 @@ transaction signature.
 | `connection` | `Connection` | Live Solana connection used to build and send the tx. |
 | `invokerAuthority` | `Keypair` | Owns the invoking agent. Signs and pays. |
 | `targetAuthority` | `PublicKey` | Owns the target agent; its PDA is re-derived from this. |
-| `skillName` | `string` | Skill identifier, 1–64 bytes (UTF-8). |
-| `parameters` | `string` | Opaque parameter blob, ≤512 bytes (typically JSON). |
+| `skillName` | `string` | Skill identifier, 1-64 bytes (UTF-8). |
+| `parameters` | `string` | Opaque parameter blob, max 512 bytes (typically JSON). |
 | `programId` | `PublicKey` *(optional)* | Override the program id. Required on any live cluster. |
 
 Throws if `skillName` is empty, `skillName` exceeds `MAX_SKILL_NAME_LEN` bytes,
-or `parameters` exceeds `MAX_PARAMETERS_LEN` bytes — so you get a clear local
+or `parameters` exceeds `MAX_PARAMETERS_LEN` bytes, so you get a clear local
 error instead of a failed on-chain simulation.
 
 ### `deriveAgentPda(authority, programId?): [PublicKey, number]`
@@ -115,8 +115,8 @@ const [agentPda, bump] = deriveAgentPda(authority, programId);
 
 | Export | Type | Value / meaning |
 | --- | --- | --- |
-| `MAX_SKILL_NAME_LEN` | `number` | `64` — max `skillName` length in bytes. |
-| `MAX_PARAMETERS_LEN` | `number` | `512` — max `parameters` length in bytes. |
+| `MAX_SKILL_NAME_LEN` | `number` | `64`, max `skillName` length in bytes. |
+| `MAX_PARAMETERS_LEN` | `number` | `512`, max `parameters` length in bytes. |
 | `AGENT_INVOCATION_PROGRAM_ID` | `string` | The program's `declare_id!` (`AgEnt…Zfo`), same on every cluster. |
 | `IDL` | Anchor `Idl` | The `agent_invocation` IDL (Anchor 0.30+ format). |
 | `AgentInvocation` | `type` | TypeScript type of `IDL` for `new Program<AgentInvocation>(...)`. |
@@ -147,13 +147,13 @@ validation above.
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: Apache-2.0, see [LICENSE](./LICENSE)
 
 ---
 
 <p align="center">
   <sub>
-    Part of the <a href="https://three.ws">three.ws</a> SDK suite — 3D AI agents, on-chain identity, and agent payments.<br/>
+    Part of the <a href="https://three.ws">three.ws</a> SDK suite: 3D AI agents, on-chain identity, and agent payments.<br/>
     <a href="https://three.ws">Website</a> · <a href="https://three.ws/changelog">Changelog</a> · <a href="https://github.com/nirholas/three.ws">GitHub</a>
   </sub>
 </p>
