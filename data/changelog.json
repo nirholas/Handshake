@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-12",
+			"title": "The open inference network's node endpoints answer again",
+			"summary": "The three endpoints an inference node uses to join the network and do work (register, claim a job, submit a result) were unreachable. Two of them pointed at internal files that are not where they looked, so any call returned a server error, and all three asked for a rate-limit budget that was never defined, which would have turned every request away as if the caller had flooded us. Node operators can register, poll for jobs, and submit results as documented.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-12",
 			"title": "The developer dashboard's x402 earnings finally show your real revenue",
 			"summary": "The Usage tab on /dashboard/developers has an x402 Payments figure. It read zero for everyone, always, no matter how many paid calls your checkout products had settled: the query behind it looked for columns that do not exist on the receipts table, and the failure was swallowed so the panel reported a confident 0 instead of an error. It now counts settled checkout calls against the products you own and reports both the payment count and the gross in USDC. The rest of the panel got the same treatment: if one of its numbers cannot be read, the response says so by name instead of quietly showing zero. Two more fixes rode along on the developer endpoints: a mistyped webhook or API-key id now comes back as a clean not-found rather than a server error, and registering a webhook for an event type that does not exist is rejected with the list of valid ones instead of silently creating a webhook subscribed to nothing.",
 			"tags": [

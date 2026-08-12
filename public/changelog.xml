@@ -95,6 +95,14 @@
 			<description>Ask the trending feed for the 5-minute, 1-hour and 24-hour view back to back and the last two used to come back empty, blaming an upstream outage that was not happening. The cause was our own request volume: each call pulled the trade history of twenty pump.fun coins, and three calls in a row hit pump.fun's rate limiter, which then refused everything for a while. Both feeds now read pump.fun through one shared, short-lived cache, so every window and every caller reuses a single set of pulls instead of re-fetching the same coins, and a repeat call answers in milliseconds. When the limiter does bite, the whale feed serves the last successful pull and marks it stale instead of pretending the market is empty. A token nobody is trading now also reports an honest empty result rather than a false feed-down warning.</description>
 		</item>
 		<item>
+			<title>The open inference network's node endpoints answer again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-12:The open inference network's node endpoints answer again</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The three endpoints an inference node uses to join the network and do work (register, claim a job, submit a result) were unreachable. Two of them pointed at internal files that are not where they looked, so any call returned a server error, and all three asked for a rate-limit budget that was never defined, which would have turned every request away as if the caller had flooded us. Node operators can register, poll for jobs, and submit results as documented.</description>
+		</item>
+		<item>
 			<title>The photo-to-avatar lane is now sized for the 10,000 avatars per day launch target</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-12:The photo-to-avatar lane is now sized for the 10,000 avatars per day launch target</guid>

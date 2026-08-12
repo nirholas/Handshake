@@ -537,6 +537,18 @@ export const limits = {
 		getLimiter('auth:ip', { limit: 50, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
 	registerIp: (ip) =>
 		getLimiter('register:ip', { limit: 5, window: '1 h', critical: true, degradeToMemory: true }).limit(ip),
+	// Open inference network (api/nodes/*). Node registration is an idempotent
+	// upsert an operator runs once per boot, so it gets a tight per-IP ceiling.
+	// The poll loop and result submission are the node's steady-state traffic:
+	// one long-poll plus one result per job, so the ceiling has to clear a busy
+	// operator running several capabilities without letting an unregistered IP
+	// hammer the claim queue. Both are `local` on purpose: every request already
+	// carries an ed25519 signature the handler verifies, so this bucket is spam
+	// shaping, not the security boundary, and it should not spend the shared
+	// Redis allowance.
+	nodeRegisterIp: (ip) =>
+		getLimiter('node:register:ip', { limit: 30, window: '10 m', local: true }).limit(ip),
+	nodeJobIp: (ip) => getLimiter('node:job:ip', { limit: 600, window: '5 m', local: true }).limit(ip),
 	// Session-scoped READS that fire on ordinary page loads (/api/me, home feed,
 	// credits balance, profile pages, wallet balance lookups). These borrowed the
 	// strict credential `authIp` bucket for years, which meant a few minutes of

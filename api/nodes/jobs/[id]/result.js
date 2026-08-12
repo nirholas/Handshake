@@ -15,16 +15,17 @@
 // 400: malformed  ·  401: bad receipt  ·  403: not the claiming node
 // 404: unknown job  ·  409: job already closed
 
-import { cors, error, json, method, readJson, wrap, rateLimited } from '../../_lib/http.js';
-import { limits, clientIp } from '../../_lib/rate-limit.js';
-import { completeJob, failJob, verifyResultReceipt, verifyNodeSignature } from '../../_lib/inference-nodes.js';
+import { cors, error, json, method, readJson, wrap, rateLimited } from '../../../_lib/http.js';
+import { limits, clientIp } from '../../../_lib/rate-limit.js';
+import { completeJob, failJob, verifyResultReceipt, verifyNodeSignature } from '../../../_lib/inference-nodes.js';
 
 const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 export default wrap(async (req, res) => {
 	cors(req, res);
 	if (!method(req, res, ['POST'])) return;
-	if (await rateLimited(res, limits.lenient(clientIp(req)))) return;
+	const rl = await limits.nodeJobIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, 'http://localhost');
 	const jobId = url.searchParams.get('id') || url.pathname.match(/\/api\/nodes\/jobs\/([^/]+)\/result/)?.[1];

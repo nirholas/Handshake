@@ -10,16 +10,17 @@
 // 200:  { ok: true, node: { id, publicKey, capabilities } }
 // 400:  malformed body  ·  401: bad signature  ·  429: rate limited
 
-import { cors, error, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
-import { limits, clientIp } from './_lib/rate-limit.js';
-import { registerNode, verifyNodeSignature } from './_lib/inference-nodes.js';
+import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
+import { registerNode, verifyNodeSignature } from '../_lib/inference-nodes.js';
 
 const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 export default wrap(async (req, res) => {
 	cors(req, res);
 	if (!method(req, res, ['POST'])) return;
-	if (await rateLimited(res, limits.strict(clientIp(req)))) return;
+	const rl = await limits.nodeRegisterIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 
 	let body;
 	try {

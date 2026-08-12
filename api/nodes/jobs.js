@@ -19,7 +19,8 @@ const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 export default wrap(async (req, res) => {
 	cors(req, res);
 	if (!method(req, res, ['GET'])) return;
-	if (await rateLimited(res, limits.lenient(clientIp(req)))) return;
+	const rl = await limits.nodeJobIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, 'http://localhost');
 	const node = url.searchParams.get('node');
