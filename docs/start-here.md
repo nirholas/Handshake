@@ -177,6 +177,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Troubleshooting and FAQ](./troubleshooting.md): fixes organized by symptom
 - [The 3D viewer](./viewer.md): the rendering layer reference (model loading, cameras, animation, lighting)
 - [Farcaster memory seeding](./farcaster-memory-seeding.md): give an agent your Farcaster voice, proved with a wallet the account already verified, and revoke it in one click
+- [X memory seeding](./x-memory-seeding.md): seed an agent from your public X posts behind an explicit, versioned consent you can revoke (revocation deletes what the seed wrote)
 - [The catalog quality gate](./seed-quality.md): how a platform-seeded model earns its slot in the public catalog, the two stages it must pass, and why a rejected asset is kept rather than deleted
 - [Examples gallery](./examples.md): copy-paste-ready code for common use cases
 - [Cookbook](/cookbook): recipes you download and run, each one a real file executed against the live API, with the prose explaining why it is shaped that way

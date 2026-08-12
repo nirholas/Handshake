@@ -389,7 +389,7 @@ store described above and each revocable by deleting exactly what it wrote:
 | Source | Endpoint | Ownership proof |
 |---|---|---|
 | Farcaster | `/api/agents/:id/memory/seed/farcaster` | Wallet signature against the fid's public verifications. See [Farcaster memory seeding](/docs/farcaster-memory-seeding). |
-| X | `/api/agents/:id/memory/seed/x` | OAuth connection on the user's account |
+| X | `/api/agents/:id/memory/seed/x` | OAuth connection on the user's account. See [X memory seeding](/docs/x-memory-seeding). |
 | GitHub | `/api/agents/:id/memory/seed/github` | OAuth connection on the user's account |
 
 ---
@@ -397,6 +397,7 @@ store described above and each revocable by deleting exactly what it wrote:
 ## Related
 
 - [Farcaster memory seeding](/docs/farcaster-memory-seeding): consent-first seeding from your casts, proved with a Solana wallet
+- [X memory seeding](/docs/x-memory-seeding): consent-first seeding from your public posts, revocable with deletion
 - [Create, enhance & edit agent memory](/docs/tutorials/create-and-edit-memory): the hands-on tutorial
 - [Agent system](/docs/agent-system): how memory feeds the LLM runtime
 - [Skills](/docs/skills): the `ctx.memory` API skills use
