@@ -361,6 +361,7 @@
 		"clean:worktrees": "node scripts/clean-deploy-worktrees.mjs",
 		"check:browser-graph": "node scripts/check-browser-graph.mjs",
 		"prove:guards": "node scripts/prove-guards.mjs",
+		"prove:a2a-spend": "node scripts/a2a-spend-hardening-proof.mjs",
 		"capture:docs-world": "node scripts/capture-docs-media.mjs",
 		"check:runnable-docs": "node scripts/check-runnable-docs.mjs",
 		"capture:doc-media": "node scripts/capture-doc-media.mjs",

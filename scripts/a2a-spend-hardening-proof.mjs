@@ -132,10 +132,26 @@ function startShim(pg) {
 	const shimPath = '/tmp/a2a-spend-proof-shim.mjs';
 	fs.writeFileSync(shimPath, `
 import http from 'node:http';
-import pg from ${JSON.stringify(path.join(root, 'node_modules/pg/index.js'))};
+import pg from ${JSON.stringify(path.join(root, 'node_modules/pg/esm/index.mjs'))};
 const client = new pg.Client(${JSON.stringify(PG_URL)});
-client.setTypeParser = undefined;
 await client.connect();
+// Raw text rows would break the guard SQL: a float8 cap parameter that comes
+// back as the string '1' makes Postgres compare 'double > text', and every cap
+// silently passes. Serialize per column type so the HTTP response carries real
+// JSON values the way Neon's own endpoint does. bool(16), ints(20,21,23,26),
+// floats(700,701,1700), and json/jsonb(114,3802) get typed values; everything
+// else stays text (uuid, timestamptz, ...) exactly like production.
+const NUMERIC_OIDS = new Set([700, 701, 1700]);
+const INT_OIDS = new Set([20, 21, 23, 26]);
+const JSON_OIDS = new Set([114, 3802]);
+function coerce(value, oid) {
+	if (value === null || value === undefined) return null;
+	if (oid === 16) return value === 't' || value === 'true';
+	if (INT_OIDS.has(oid)) { const n = BigInt(value); return n <= 9007199254740991n && n >= -9007199254740991n ? Number(n) : value; }
+	if (NUMERIC_OIDS.has(oid)) return Number(value);
+	if (JSON_OIDS.has(oid)) { try { return JSON.parse(value); } catch { return value; } }
+	return value;
+}
 http.createServer(async (req, res) => {
 	if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
 	let body = '';
@@ -146,10 +162,11 @@ http.createServer(async (req, res) => {
 			text: query, values: params || [], rowMode: 'array',
 			types: { getTypeParser: () => (v) => v },
 		});
+		const rows = r.rows.map((row) => row.map((v, i) => coerce(v, r.fields[i].dataTypeID)));
 		res.writeHead(200, { 'content-type': 'application/json' });
 		res.end(JSON.stringify({
 			fields: r.fields.map((f) => ({ name: f.name, dataTypeID: f.dataTypeID })),
-			rows: r.rows, rowCount: r.rowCount, command: r.command,
+			rows, rowCount: r.rowCount, command: r.command,
 		}));
 	} catch (e) {
 		res.writeHead(500, { 'content-type': 'application/json' });
@@ -226,9 +243,25 @@ async function main() {
 
 	const pg = await loadPg();
 	let db = null;
+	const dbQuery = async (text, params) => {
+		if (!db) throw new Error('db not connected');
+		try {
+			return await db.query(text, params);
+		} catch (e) {
+			// The container or the connection can drop mid-run; reconnect once and retry.
+			if (/terminated|ECONNRESET|Connection/i.test(String(e?.message))) {
+				try { db.end().catch(() => {}); } catch { /* gone */ }
+				db = new pg.Client(PG_URL);
+				await db.connect();
+				return await db.query(text, params);
+			}
+			throw e;
+		}
+	};
 	await waitFor(async () => {
 		try {
 			const c = new pg.Client(PG_URL);
+			c.on('error', () => {});
 			await c.connect();
 			await c.query('select 1');
 			db = c;
@@ -259,21 +292,26 @@ async function main() {
 	const mustHave = ['users', 'sessions', 'csrf_tokens', 'agent_identities', 'agent_custody_events'];
 	const missing = [];
 	for (const t of mustHave) {
-		const { rows } = await db.query('select to_regclass($1) AS r', [`public.${t}`]);
+		const { rows } = await dbQuery('select to_regclass($1) AS r', [`public.${t}`]);
 		if (!rows[0].r) missing.push(t);
 	}
 	check('schema applied', applied > 0 && missing.length === 0,
 		`${applied} files applied, ${skipped.length} skipped from drift; required tables present`);
 	if (missing.length) throw new Error(`required tables missing: ${missing.join(', ')}`);
 
-	// Seed the proof agent (library phase). Direct SQL, real rows.
-	const { rows: [u1] } = await db.query(
+	// Seed the proof agent (library phase). Direct SQL, real rows. The anomaly
+	// guard (the wallet's behavioral immune system) is disabled on proof agents:
+	// it auto-freezes a fresh wallet's first out-of-pattern spend, which is the
+	// correct production behavior but would freeze the harness mid-proof. The
+	// anomaly guard has its own dedicated test coverage; here it is noise.
+	const ANOMALY_OFF = { enabled: false };
+	const { rows: [u1] } = await dbQuery(
 		`insert into users (email, password_hash, email_verified) values ($1, 'x', true) returning id`,
 		[`proof-lib-${Date.now()}@proof.local`],
 	);
-	const { rows: [a1] } = await db.query(
-		`insert into agent_identities (user_id, name) values ($1, $2) returning id`,
-		[u1.id, 'spend-proof-agent'],
+	const { rows: [a1] } = await dbQuery(
+		`insert into agent_identities (user_id, name, meta) values ($1, $2, jsonb_build_object('anomaly', $3::jsonb)) returning id`,
+		[u1.id, 'spend-proof-agent', JSON.stringify(ANOMALY_OFF)],
 	);
 	const agentId = a1.id;
 	pass('proof user + agent seeded', `agent ${agentId}`);
@@ -296,26 +334,39 @@ async function main() {
 import { reserveSpendUsd, enforceSpendLimit, updateCustodyEvent, releaseSpendReservation,
 	recordCustodyEvent, SpendLimitError } from ${JSON.stringify(path.join(root, 'api/_lib/agent-trade-guards.js'))};
 let buf = '';
+// Serialize RPCs: the shim runs one pg client, and pg deprecated overlapping
+// queries on a single connection. Each guard call is a single SQL statement
+// anyway; the concurrency this proof cares about is the DATABASE advisory lock
+// across statements, not socket overlap inside the harness.
+const queue = [];
+let busy = false;
+async function drain() {
+	if (busy) return;
+	busy = true;
+	while (queue.length) {
+		const { id, fn, args } = queue.shift();
+		try {
+			const out = await ({ reserveSpendUsd, enforceSpendLimit, updateCustodyEvent,
+				releaseSpendReservation, recordCustodyEvent })[fn](...(args || []));
+			process.stdout.write(JSON.stringify({ id, ok: true, out: out ?? null }) + '\\n');
+		} catch (e) {
+			process.stdout.write(JSON.stringify({ id, ok: false, err: {
+				name: e?.name, code: e?.code || null, status: e?.status || null,
+				message: String(e?.message || e), detail: e?.detail || null,
+			} }) + '\\n');
+		}
+	}
+	busy = false;
+}
 process.stdin.on('data', (d) => {
 	buf += d;
 	let i;
 	while ((i = buf.indexOf('\\n')) >= 0) {
 		const line = buf.slice(0, i); buf = buf.slice(i + 1);
 		if (!line.trim()) continue;
-		(async () => {
-			const { id, fn, args } = JSON.parse(line);
-			try {
-				const out = await ({ reserveSpendUsd, enforceSpendLimit, updateCustodyEvent,
-					releaseSpendReservation, recordCustodyEvent })[fn](...(args || []));
-				process.stdout.write(JSON.stringify({ id, ok: true, out: out ?? null }) + '\\n');
-			} catch (e) {
-				process.stdout.write(JSON.stringify({ id, ok: false, err: {
-					name: e?.name, code: e?.code || null, status: e?.status || null,
-					message: String(e?.message || e), detail: e?.detail || null,
-				} }) + '\\n');
-			}
-		})();
+		queue.push(JSON.parse(line));
 	}
+	drain();
 });
 `);
 	const worker = spawn('node', ['--import', preloadPath, workerPath], {
@@ -367,9 +418,13 @@ process.stdin.on('data', (d) => {
 		await call('updateCustodyEvent', reservationId, { status: 'ok', signature: sig });
 	};
 	const setLimits = async (patch) => {
-		await db.query(
-			`update agent_identities set meta = jsonb_set(coalesce(meta,'{}'::jsonb), '{spend_limits}', $2::jsonb) where id = $1`,
-			[agentId, JSON.stringify(patch)],
+		await dbQuery(
+			`update agent_identities set meta =
+				jsonb_set(
+					jsonb_set(coalesce(meta,'{}'::jsonb), '{spend_limits}', $2::jsonb),
+					'{anomaly}', $3::jsonb
+				) where id = $1`,
+			[agentId, JSON.stringify(patch), JSON.stringify(ANOMALY_OFF)],
 		);
 	};
 
@@ -417,9 +472,9 @@ process.stdin.on('data', (d) => {
 	step('3. per_counterparty_daily_usd - concentrated-drain ceiling');
 	{
 		// Fresh agent so the wallet-wide cap never fires first.
-		const { rows: [a2] } = await db.query(
-			`insert into agent_identities (user_id, name) values ($1, $2) returning id`,
-			[u1.id, 'spend-proof-agent-cp'],
+		const { rows: [a2] } = await dbQuery(
+			`insert into agent_identities (user_id, name, meta) values ($1, $2, jsonb_build_object('anomaly', $3::jsonb)) returning id`,
+			[u1.id, 'spend-proof-agent-cp', JSON.stringify(ANOMALY_OFF)],
 		);
 		const cpAgent = a2.id;
 		for (const usd of [0.6, 0.3]) {
@@ -428,10 +483,11 @@ process.stdin.on('data', (d) => {
 				asset: 'USDC', usd, destination: PEER_A, status: 'ok', meta: { proof: 'backfill' },
 			});
 		}
-		await db.query(
+		await dbQuery(
 			`update agent_identities set meta = jsonb_set(coalesce(meta,'{}'::jsonb), '{spend_limits}', $2::jsonb) where id = $1`,
 			[cpAgent, JSON.stringify({ daily_usd: null, per_tx_usd: null, per_counterparty_daily_usd: 1, withdraw_allowlist: [], frozen: false, require_capabilities: false })],
 		);
+		// (anomaly already disabled at insert time)
 		const spendCp = (over = {}) => ({
 			agentId: cpAgent, userId: u1.id, category: 'x402', usdValue: 0.2,
 			destination: PEER_A, network: 'mainnet', asset: 'USDC', ...over,
@@ -449,15 +505,19 @@ process.stdin.on('data', (d) => {
 	step('4. kill switch - frozen halts every autonomous path immediately');
 	{
 		// Fresh agent, generous caps, no history: only the freeze can block.
-		const { rows: [a3] } = await db.query(
-			`insert into agent_identities (user_id, name) values ($1, $2) returning id`,
-			[u1.id, 'spend-proof-agent-kill'],
+		const { rows: [a3] } = await dbQuery(
+			`insert into agent_identities (user_id, name, meta) values ($1, $2, jsonb_build_object('anomaly', $3::jsonb)) returning id`,
+			[u1.id, 'spend-proof-agent-kill', JSON.stringify(ANOMALY_OFF)],
 		);
 		const killAgent = a3.id;
 		const open = { daily_usd: 1000, per_tx_usd: 1000, per_counterparty_daily_usd: null, withdraw_allowlist: [], frozen: false, require_capabilities: false };
-		await db.query(
-			`update agent_identities set meta = jsonb_set(coalesce(meta,'{}'::jsonb), '{spend_limits}', $2::jsonb) where id = $1`,
-			[killAgent, JSON.stringify(open)],
+		await dbQuery(
+			`update agent_identities set meta =
+				jsonb_set(
+					jsonb_set(coalesce(meta,'{}'::jsonb), '{spend_limits}', $2::jsonb),
+					'{anomaly}', $3::jsonb
+				) where id = $1`,
+			[killAgent, JSON.stringify(open), JSON.stringify(ANOMALY_OFF)],
 		);
 		const spendKill = (over = {}) => ({
 			agentId: killAgent, userId: u1.id, category: 'x402', usdValue: 0.5,
@@ -467,7 +527,7 @@ process.stdin.on('data', (d) => {
 		check('control: unfrozen agent spends fine', !before.thrown && !!before.out?.reservationId, before.thrown?.message);
 		if (before.out?.reservationId) await call('releaseSpendReservation', before.out.reservationId, 'proof_cleanup');
 
-		await setLimitsOn(db, killAgent, { ...open, frozen: true });
+		await setLimitsOn(dbQuery, killAgent, { ...open, frozen: true });
 		for (const category of ['x402', 'trade', 'snipe']) {
 			const blocked = await callErr('reserveSpendUsd', spendKill({ category }));
 			check(`frozen blocks category=${category} instantly`, blocked.thrown?.code === 'wallet_frozen',
@@ -478,7 +538,7 @@ process.stdin.on('data', (d) => {
 			ownerSweep.thrown?.message || 'a freeze never traps the owner funds');
 		if (ownerSweep.out?.reservationId) await call('releaseSpendReservation', ownerSweep.out.reservationId, 'proof_cleanup');
 
-		await setLimitsOn(db, killAgent, { ...open, frozen: false });
+		await setLimitsOn(dbQuery, killAgent, { ...open, frozen: false });
 		const after = await callErr('reserveSpendUsd', spendKill());
 		check('unfreeze resumes spending', !after.thrown && !!after.out?.reservationId, after.thrown?.message);
 		if (after.out?.reservationId) await call('releaseSpendReservation', after.out.reservationId, 'proof_cleanup');
@@ -499,7 +559,7 @@ process.stdin.on('data', (d) => {
 			if (!r.ok) throw new Error(`receipt seeding reserve blocked unexpectedly: ${r.err?.message}`);
 			await confirm(r.out.reservationId, sigs[i]);
 		}
-		const seeded = await db.query(
+		const seeded = await dbQuery(
 			`select count(*)::int as n from agent_custody_events where agent_id = $1 and event_type = 'spend' and status = 'ok'`,
 			[agentId],
 		);
@@ -566,7 +626,7 @@ process.stdin.on('data', (d) => {
 
 			// The frozen agent must be unable to spend: drive a REAL reserve through
 			// the live meta (read back from the DB the server just wrote).
-			const { rows: [liveRow] } = await db.query('select meta from agent_identities where id = $1', [liveAgentId]);
+			const { rows: [liveRow] } = await dbQuery('select meta from agent_identities where id = $1', [liveAgentId]);
 			const frozenAttempt = await callErr('reserveSpendUsd', {
 				agentId: liveAgentId, userId: null, meta: liveRow.meta, category: 'x402',
 				usdValue: 1, destination: PEER_A, network: 'mainnet', asset: 'USDC',
@@ -636,8 +696,8 @@ process.stdin.on('data', (d) => {
 	}
 }
 
-async function setLimitsOn(db, agentId, limits) {
-	await db.query(
+async function setLimitsOn(dbQuery, agentId, limits) {
+	await dbQuery(
 		`update agent_identities set meta = jsonb_set(coalesce(meta,'{}'::jsonb), '{spend_limits}', $2::jsonb) where id = $1`,
 		[agentId, JSON.stringify(limits)],
 	);
