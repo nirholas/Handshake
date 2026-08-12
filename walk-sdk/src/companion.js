@@ -145,7 +145,16 @@ class WalkCompanion {
 		const bottom = parseFloat(cs.bottom) || 0;
 		const height = parseFloat(cs.height) || 0;
 		if (height <= 0) return;
-		stack.reserve(CORNER_RESERVE_KEY, bottom + height);
+		// Width as well as height: on a phone the stack goes full-width, and a
+		// lift tall enough to clear the companion would strand its chips in the
+		// middle of the page. With the width declared, the stack can step aside
+		// and stay at the bottom instead.
+		const right = parseFloat(cs.right) || 0;
+		const width = parseFloat(cs.width) || 0;
+		stack.reserve(CORNER_RESERVE_KEY, {
+			height: bottom + height,
+			width: width > 0 ? right + width : 0,
+		});
 	}
 
 	async mount() {

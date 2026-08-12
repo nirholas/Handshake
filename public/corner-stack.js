@@ -26,11 +26,19 @@
  * many pixels of corner height", and the stack lifts itself clear of it. Keys
  * are independent and the tallest wins, so two reservations never fight.
  *
+ * Lifting is the right answer on a wide viewport and the wrong one on a phone:
+ * the stack goes full-width below 640px, so a 220px companion pushed a couple
+ * of small chips into the middle of the screen, on top of the page's content
+ * (seen on /create). When a reservation also declares a WIDTH and the narrow
+ * layout leaves a usable column beside it, the stack steps sideways instead
+ * and stays pinned to the bottom, where a helper widget belongs.
+ *
  * API (window.twsCornerStack):
  *   mount(el, { priority })  — move `el` into the stack (sets priority if given)
  *   unmount(el)              — remove `el` from the stack
  *   ensure()                 — create/return the container element
- *   reserve(key, px)         — keep `px` of corner height clear for `key`
+ *   reserve(key, px)         — keep `px` of corner height clear for `key`;
+ *                              pass { height, width } to declare both
  *   release(key)             — drop that reservation
  *   reserved()               — current reserved height in px
  */
@@ -54,14 +62,15 @@
 		'--z-overlay-modal:2147483600;',
 		'}',
 		'#' + STACK_ID + '{',
-		'position:fixed;right:18px;bottom:calc(18px + var(--tws-corner-reserve,0px));',
+		'position:fixed;right:calc(18px + var(--tws-corner-reserve-w,0px));',
+		'bottom:calc(18px + var(--tws-corner-reserve,0px));',
 		'z-index:var(--z-corner-stack,2147482500);',
 		'display:flex;flex-direction:column;align-items:flex-end;',
 		'gap:12px;max-width:min(380px,calc(100vw - 24px));',
 		'max-height:calc(100dvh - 36px - var(--tws-corner-reserve,0px));overflow:visible;',
 		/* Clicks fall through the gaps; members re-enable pointer events. */
 		'pointer-events:none;',
-		'transition:bottom .35s cubic-bezier(.22,1,.36,1);',
+		'transition:bottom .35s cubic-bezier(.22,1,.36,1),right .35s cubic-bezier(.22,1,.36,1);',
 		'}',
 		'@media (prefers-reduced-motion:reduce){#' + STACK_ID + '{transition:none;}}',
 		'#' + STACK_ID + ':empty{display:none;}',
@@ -74,7 +83,7 @@
 		'@media (max-width:640px){',
 		'#' +
 			STACK_ID +
-			'{right:12px;bottom:calc(12px + var(--tws-corner-reserve,0px));left:12px;align-items:stretch;gap:10px;max-width:none;}',
+			'{right:calc(12px + var(--tws-corner-reserve-w,0px));bottom:calc(12px + var(--tws-corner-reserve,0px));left:12px;align-items:stretch;gap:10px;max-width:none;}',
 		'}'
 	].join('');
 
@@ -137,24 +146,52 @@
 	   does — order independence is the whole point of this module. */
 	var reservations = Object.create(null);
 
+	/* Narrow layout only: below this viewport width the stack stretches
+	   edge-to-edge, so lifting it over a corner widget parks it mid-screen. */
+	var SIDE_BY_SIDE_MAX_VW = 640;
+	/* A column narrower than this is not worth stepping aside for: the chips
+	   would wrap into taller blocks than the lift they replaced. */
+	var SIDE_BY_SIDE_MIN_COL = 160;
+	var NARROW_GUTTERS = 24; /* the 12px inset on each side of the narrow rule */
+
 	function applyReserve() {
-		var max = 0;
+		var maxH = 0;
+		var maxW = 0;
 		for (var key in reservations) {
-			if (reservations[key] > max) max = reservations[key];
+			var r = reservations[key];
+			if (r.height > maxH) maxH = r.height;
+			if (r.width > maxW) maxW = r.width;
 		}
+		var vw = typeof window !== 'undefined' ? window.innerWidth || 0 : 0;
+		var beside =
+			maxW > 0 &&
+			vw > 0 &&
+			vw <= SIDE_BY_SIDE_MAX_VW &&
+			vw - NARROW_GUTTERS - maxW >= SIDE_BY_SIDE_MIN_COL;
+		var lift = beside ? 0 : maxH;
+		var inset = beside ? maxW : 0;
 		var root = document.documentElement;
-		if (max > 0) root.style.setProperty('--tws-corner-reserve', max + 'px');
+		if (lift > 0) root.style.setProperty('--tws-corner-reserve', lift + 'px');
 		else root.style.removeProperty('--tws-corner-reserve');
-		return max;
+		if (inset > 0) root.style.setProperty('--tws-corner-reserve-w', inset + 'px');
+		else root.style.removeProperty('--tws-corner-reserve-w');
+		return maxH;
 	}
 
+	/* px: a height in pixels, or { height, width } for a widget that can also be
+	   stepped around horizontally. */
 	function reserve(key, px) {
 		if (!key) return reservedHeight();
-		var n = Number(px);
+		var spec = px && typeof px === 'object' ? px : { height: px };
+		var h = Number(spec.height);
+		var w = Number(spec.width);
 		/* Guard against a mid-transition measurement of 0 (the companion mounts
 		   at opacity 0 and animates in) collapsing the stack back onto it. */
-		if (!Number.isFinite(n) || n <= 0) return release(key);
-		reservations[key] = Math.round(n);
+		if (!Number.isFinite(h) || h <= 0) return release(key);
+		reservations[key] = {
+			height: Math.round(h),
+			width: Number.isFinite(w) && w > 0 ? Math.round(w) : 0
+		};
 		return applyReserve();
 	}
 
@@ -185,6 +222,13 @@
 
 	if (document.body) adoptOrphans();
 	else document.addEventListener('DOMContentLoaded', adoptOrphans);
+
+	/* Lift-vs-step-aside is a function of viewport width, so re-decide whenever
+	   that changes (rotation, a resized window, a phone's URL bar collapsing). */
+	if (typeof window.addEventListener === 'function') {
+		window.addEventListener('resize', applyReserve);
+		window.addEventListener('orientationchange', applyReserve);
+	}
 
 	/* Announce ourselves so a widget that mounted first can (re)claim its
 	   reservation. Orphan adoption already covers stack MEMBERS; this covers

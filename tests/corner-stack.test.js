@@ -45,6 +45,17 @@ function reserveVar(win) {
 	return win.document.documentElement.style.getPropertyValue('--tws-corner-reserve');
 }
 
+/** The custom property the stack's `right` calc() reads. */
+function reserveWidthVar(win) {
+	return win.document.documentElement.style.getPropertyValue('--tws-corner-reserve-w');
+}
+
+/** JSDOM reports a fixed 1024x768 viewport unless it is told otherwise. */
+function setViewport(win, width) {
+	Object.defineProperty(win, 'innerWidth', { value: width, configurable: true });
+	win.dispatchEvent(new win.Event('resize'));
+}
+
 describe('corner stack — membership', () => {
 	let win;
 	beforeEach(() => {
@@ -132,6 +143,53 @@ describe('corner stack — reservations', () => {
 		expect(win.twsCornerStack.reserved()).toBe(0);
 	});
 
+	it('accepts a width alongside the height without changing what it returns', () => {
+		expect(win.twsCornerStack.reserve('walk-companion', { height: 296, width: 160 })).toBe(296);
+	});
+
+	it('steps aside instead of lifting when a phone leaves room beside the widget', () => {
+		// The failure this prevents: on a 390px viewport the stack is full-width,
+		// so a 218px lift parked its chips halfway up the page, on top of the
+		// content. Beside the companion they stay pinned to the bottom.
+		setViewport(win, 390);
+		win.twsCornerStack.reserve('walk-companion', { height: 218, width: 160 });
+		expect(reserveVar(win)).toBe('');
+		expect(reserveWidthVar(win)).toBe('160px');
+	});
+
+	it('falls back to lifting when the leftover column would be unusable', () => {
+		setViewport(win, 390);
+		win.twsCornerStack.reserve('walk-companion', { height: 218, width: 300 });
+		expect(reserveVar(win)).toBe('218px');
+		expect(reserveWidthVar(win)).toBe('');
+	});
+
+	it('keeps lifting on a wide viewport, where the corner has room above it', () => {
+		setViewport(win, 1440);
+		win.twsCornerStack.reserve('walk-companion', { height: 296, width: 160 });
+		expect(reserveVar(win)).toBe('296px');
+		expect(reserveWidthVar(win)).toBe('');
+	});
+
+	it('re-decides when the viewport changes under a live reservation', () => {
+		setViewport(win, 1440);
+		win.twsCornerStack.reserve('walk-companion', { height: 296, width: 160 });
+		setViewport(win, 390);
+		expect(reserveVar(win)).toBe('');
+		expect(reserveWidthVar(win)).toBe('160px');
+		setViewport(win, 1440);
+		expect(reserveVar(win)).toBe('296px');
+		expect(reserveWidthVar(win)).toBe('');
+	});
+
+	it('drops the horizontal inset when the reservation is released', () => {
+		setViewport(win, 390);
+		win.twsCornerStack.reserve('walk-companion', { height: 218, width: 160 });
+		win.twsCornerStack.release('walk-companion');
+		expect(reserveWidthVar(win)).toBe('');
+		expect(reserveVar(win)).toBe('');
+	});
+
 	it('announces itself so a widget that booted first can claim the corner', () => {
 		// The companion module is injected separately by public/nav.js and can win
 		// the load race. Without this event it would find no stack and silently
@@ -159,6 +217,11 @@ describe('corner stack — stylesheet contract', () => {
 
 	it('caps its height against the reserve so a tall stack cannot overflow', () => {
 		expect(SOURCE).toContain('max-height:calc(100dvh - 36px - var(--tws-corner-reserve,0px))');
+	});
+
+	it('offsets both rules horizontally too, so stepping aside works at any width', () => {
+		const rights = SOURCE.match(/right:calc\([^)]*var\(--tws-corner-reserve-w[^)]*\)[^)]*\)/g) || [];
+		expect(rights.length).toBe(2);
 	});
 
 	it('honours prefers-reduced-motion for the lift', () => {
