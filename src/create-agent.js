@@ -22,6 +22,12 @@ import { isValidGlbMagic } from './shared/glb-magic.js';
 import { track, trackFunnelStep, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { draftHasContent, isDraftFresh } from './create-agent-draft.js';
 import { VoiceSetup } from './voice/voice-setup.js';
+import {
+	INTERVIEW_QUESTIONS,
+	normalizeInterview,
+	hasInterviewSignal,
+	MAX_ANSWER_CHARS,
+} from './agents/persona-interview.js';
 
 const TOTAL_STEPS = 6;
 const STEP_LABELS = ['Basics', 'Model', 'Skills', 'Personality', 'Voice', 'Review'];
@@ -114,6 +120,12 @@ const state = {
 	category: '',
 	greeting: '',
 	persona: '',
+	// Onboarding interview (step 4). answers maps question id to raw text;
+	// result is the structured extraction returned by POST /api/persona/interview
+	// ({base, traits, tone_tags, vocabulary, persona_prompt, interview}).
+	// generated remembers the exact base text the extractor produced so skip can
+	// tell "untouched generated profile" apart from "user-edited profile".
+	interview: { answers: {}, result: null, generated: '', busy: false },
 	voice: 'browser',
 	publish: true,
 	submitting: false,
@@ -152,6 +164,11 @@ function saveDraft() {
 			category: state.category,
 			greeting: state.greeting,
 			persona: state.persona,
+			interview: {
+				answers: { ...state.interview.answers },
+				result: state.interview.result,
+				generated: state.interview.generated,
+			},
 			voice: state.voice,
 			publish: state.publish,
 		};
@@ -233,6 +250,7 @@ function restoreDraft(d) {
 		category: d.category,
 		greeting: d.greeting,
 		persona: d.persona,
+		interview: d.interview,
 		voice: d.voice,
 	});
 	state.publish = Boolean(d.publish);
@@ -817,12 +835,36 @@ function applySpec(spec) {
 	$('f-persona').value = state.persona;
 	$('persona-count').textContent = `${state.persona.length} / 2000`;
 
+	// Interview answers and any extraction result ride along with the spec/draft.
+	// A spec without interview data (a fresh magic-generator fill) resets the
+	// interview, so a new concept never inherits the previous one's voice.
+	const iv = spec.interview && typeof spec.interview === 'object' ? spec.interview : null;
+	state.interview.answers = iv?.answers && typeof iv.answers === 'object' ? { ...iv.answers } : {};
+	state.interview.result = iv?.result && typeof iv.result === 'object' ? iv.result : null;
+	state.interview.generated = typeof iv?.generated === 'string' ? iv.generated : '';
+	syncInterviewFields();
+	if (state.interview.result) {
+		renderInterviewTags(state.interview.result.tone_tags);
+		setInterviewStatus(
+			`Profile written from ${normalizeInterview(state.interview.answers).length} of ${INTERVIEW_QUESTIONS.length} answers. Edit it below, or tweak your answers and regenerate.`,
+			'ok',
+		);
+	} else {
+		renderInterviewTags([]);
+		setInterviewStatus('', '');
+	}
+	if (normalizeInterview(state.interview.answers).length) setInterviewOpen(true);
+
 	state.voice = spec.voice === 'custom' ? 'custom' : 'browser';
 	document.querySelectorAll('[data-voice]').forEach((b) => {
 		const on = b.dataset.voice === state.voice;
 		b.classList.toggle('is-selected', on);
 		b.setAttribute('aria-pressed', on ? 'true' : 'false');
 	});
+	// A restored draft (or generated spec) that picked cloning re-opens the
+	// capture panel; the sample itself never survives a reload, by design.
+	if (state.voice === 'custom') mountVoiceSetup();
+	else unmountVoiceSetup();
 
 	// Publishing needs a category + persona; the generator supplies both, so
 	// default the marketplace listing on — the review step lets them opt out.
@@ -1237,6 +1279,8 @@ function wirePersonality() {
 		$('persona-count').textContent = `${persona.value.length} / 2000`;
 	});
 
+	wireInterview();
+
 	document.querySelectorAll('[data-voice]').forEach((btn) => {
 		btn.addEventListener('click', () => {
 			state.voice = btn.dataset.voice;
@@ -1245,11 +1289,251 @@ function wirePersonality() {
 				b.classList.toggle('is-selected', on);
 				b.setAttribute('aria-pressed', on ? 'true' : 'false');
 			});
+			if (state.voice === 'custom') mountVoiceSetup();
+			else unmountVoiceSetup();
 		});
 	});
 }
 
-// ── Step 5: Review ──────────────────────────────────────────────────────────
+// ── Step 4: onboarding interview ────────────────────────────────────────────
+// The interview is the zero-writing path to a real voice: the creator answers
+// any of the shared INTERVIEW_QUESTIONS in their own words, the stateless
+// /api/persona/interview endpoint runs them through the platform LLM chain, and
+// the extracted paragraph lands in the profile field, editable. The structured
+// result (traits, tone tags, vocabulary, answer provenance) rides in state and
+// is persisted through /api/agents/:id/persona/save the moment the agent exists.
+
+function wireInterview() {
+	const box = $('interview-questions');
+	if (!box) return;
+
+	// Render the exact question set the extractor is told about. The module is
+	// the single source of truth shared with the server, so the questions a
+	// user sees can never drift from the extraction contract.
+	box.innerHTML = '';
+	for (const q of INTERVIEW_QUESTIONS) {
+		const field = document.createElement('div');
+		field.className = 'field interview-q';
+		field.innerHTML = `
+			<label class="field-label" for="iq-${q.id}">
+				<span>${escapeHtml(q.prompt)}</span>
+				<span class="count" id="iq-count-${q.id}">0 / ${MAX_ANSWER_CHARS}</span>
+			</label>
+			<textarea class="textarea" id="iq-${q.id}" data-question-id="${q.id}"
+				maxlength="${MAX_ANSWER_CHARS}" placeholder="${escapeHtml(q.placeholder)}"></textarea>
+			<p class="field-hint">${escapeHtml(q.hint)}</p>`;
+		box.appendChild(field);
+		const ta = field.querySelector('textarea');
+		ta.addEventListener('input', () => {
+			state.interview.answers[q.id] = ta.value;
+			$(`iq-count-${q.id}`).textContent = `${ta.value.length} / ${MAX_ANSWER_CHARS}`;
+			// Answers edited after a generation no longer match the written
+			// profile; say so instead of silently shipping a stale voice.
+			if (state.interview.result) {
+				setInterviewStatus(
+					'Answers changed since the profile was written. Regenerate to refresh it.',
+					'',
+				);
+			}
+			syncGenerateButton();
+		});
+	}
+
+	$('interview-toggle').addEventListener('click', () => {
+		setInterviewOpen($('interview-body').hidden, { focus: true });
+	});
+	$('interview-skip').addEventListener('click', skipInterview);
+	$('interview-generate').addEventListener('click', runInterviewExtraction);
+	syncGenerateButton();
+}
+
+function setInterviewOpen(open, { focus = false } = {}) {
+	const body = $('interview-body');
+	const toggle = $('interview-toggle');
+	if (!body || !toggle) return;
+	body.hidden = !open;
+	toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+	toggle.textContent = open ? 'Close' : state.interview.result ? 'Edit answers' : 'Start';
+	if (open && focus) {
+		requestAnimationFrame(() => $(`iq-${INTERVIEW_QUESTIONS[0].id}`)?.focus({ preventScroll: true }));
+	}
+}
+
+function setInterviewStatus(text, kind) {
+	const status = $('interview-status');
+	if (!status) return;
+	status.textContent = text;
+	status.className = 'interview-status' + (kind ? ` ${kind}` : '');
+}
+
+function renderInterviewTags(tags) {
+	const box = $('interview-tags');
+	if (!box) return;
+	box.innerHTML = '';
+	const list = Array.isArray(tags) ? tags.filter((t) => typeof t === 'string' && t.trim()) : [];
+	box.hidden = list.length === 0;
+	for (const t of list) {
+		const chip = document.createElement('span');
+		chip.className = 'interview-tag';
+		chip.textContent = t;
+		box.appendChild(chip);
+	}
+}
+
+function syncGenerateButton() {
+	const btn = $('interview-generate');
+	if (!btn) return;
+	const answered = normalizeInterview(state.interview.answers).length;
+	btn.disabled = state.interview.busy || answered === 0;
+	$('interview-generate-label').textContent = state.interview.result
+		? 'Regenerate'
+		: 'Write the profile';
+}
+
+// Write state.interview.answers back into the question fields (draft restore,
+// skip reset) and refresh the generate button.
+function syncInterviewFields() {
+	for (const q of INTERVIEW_QUESTIONS) {
+		const ta = $(`iq-${q.id}`);
+		if (!ta) continue;
+		const val =
+			typeof state.interview.answers[q.id] === 'string' ? state.interview.answers[q.id] : '';
+		ta.value = val;
+		$(`iq-count-${q.id}`).textContent = `${val.length} / ${MAX_ANSWER_CHARS}`;
+	}
+	syncGenerateButton();
+}
+
+// Skipping is a first-class outcome: clear the answers and any extraction, and
+// when the profile field still holds the untouched generated text, clear that
+// too. A profile the user has since edited is their own words and stays.
+function skipInterview() {
+	const generated = state.interview.generated;
+	state.interview.answers = {};
+	state.interview.result = null;
+	state.interview.generated = '';
+	if (generated && state.persona === generated) {
+		state.persona = '';
+		$('f-persona').value = '';
+		$('persona-count').textContent = '0 / 2000';
+	}
+	syncInterviewFields();
+	renderInterviewTags([]);
+	setInterviewStatus('', '');
+	setInterviewOpen(false);
+	$('f-persona').focus();
+	scheduleDraftSave();
+}
+
+async function runInterviewExtraction() {
+	if (state.interview.busy) return;
+	const answers = normalizeInterview(state.interview.answers);
+	if (!hasInterviewSignal(answers)) {
+		setInterviewStatus('Answer at least one question first, or skip the interview.', 'err');
+		return;
+	}
+	state.interview.busy = true;
+	const btn = $('interview-generate');
+	btn.disabled = true;
+	btn.setAttribute('aria-busy', 'true');
+	setInterviewStatus('Writing the profile from your answers…', '');
+	try {
+		const res = await apiFetch('/api/persona/interview', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				name: state.name.trim(),
+				description: state.description.trim(),
+				greeting: state.greeting.trim(),
+				answers,
+			}),
+		});
+		const data = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			throw Object.assign(
+				new Error(data.error_description || data.error || `Interview failed (${res.status})`),
+				{ status: res.status, code: data.error },
+			);
+		}
+		state.interview.result = {
+			base: typeof data.base === 'string' ? data.base : '',
+			traits: data.traits && typeof data.traits === 'object' ? data.traits : {},
+			tone_tags: Array.isArray(data.tone_tags) ? data.tone_tags : [],
+			vocabulary: Array.isArray(data.vocabulary) ? data.vocabulary : [],
+			persona_prompt: typeof data.persona_prompt === 'string' ? data.persona_prompt : '',
+			interview: Array.isArray(data.interview) ? data.interview : answers,
+		};
+		state.interview.generated = state.interview.result.base;
+		// The extracted paragraph becomes the profile: visible, editable, and
+		// exactly what the ship step persists.
+		state.persona = state.interview.result.base;
+		$('f-persona').value = state.persona;
+		$('persona-count').textContent = `${state.persona.length} / 2000`;
+		renderInterviewTags(state.interview.result.tone_tags);
+		setInterviewStatus(
+			`Profile written from ${answers.length} of ${INTERVIEW_QUESTIONS.length} answers. Edit it below, or tweak your answers and regenerate.`,
+			'ok',
+		);
+		track('persona_interview_generate', {
+			source: 'create_wizard',
+			questions_answered: answers.length,
+			ok: true,
+		});
+		scheduleDraftSave();
+	} catch (err) {
+		log.warn('[create-agent] interview extraction failed', err);
+		trackError('create_agent.interview', err);
+		track('persona_interview_generate', { source: 'create_wizard', ok: false });
+		setInterviewStatus(
+			err?.code === 'llm_unavailable' || err?.status === 503
+				? 'The writer is offline right now. Write the profile yourself below, or try again shortly.'
+				: err?.status === 429
+					? 'Too many tries in a row. Give it a minute, or write the profile yourself below.'
+					: err?.message || 'Something went wrong. Try again, or write the profile yourself below.',
+			'err',
+		);
+	} finally {
+		state.interview.busy = false;
+		btn.removeAttribute('aria-busy');
+		syncGenerateButton();
+	}
+}
+
+// ── Step 5: Voice cloning ───────────────────────────────────────────────────
+
+// The agent does not exist until the ship step, so the panel runs in
+// bind:'later' mode: it holds the recorded/uploaded sample in memory and
+// submit() calls bindTo(agent.id) the moment the agent is real. The same
+// VoiceSetup component powers the editor and talk-mode clone modal, so the
+// wizard gets record/upload, sample validation, and the inline BYOK key entry
+// (PATCH /api/user/provider-keys) for free.
+let voiceSetup = null;
+
+function mountVoiceSetup() {
+	const field = $('voice-clone-field');
+	const host = $('voice-setup-host');
+	if (!field || !host) return;
+	field.hidden = false;
+	if (voiceSetup) return;
+	voiceSetup = new VoiceSetup(host, {
+		bind: 'later',
+		agentName: state.name.trim() || 'Agent',
+		authed: state.authed,
+	});
+	voiceSetup
+		.mount()
+		.catch((err) => log.warn('[create-agent] voice setup mount failed', err));
+	track(ANALYTICS_EVENTS.CTA_CLICKED, { cta: 'voice_custom', location: 'create_agent' });
+}
+
+function unmountVoiceSetup() {
+	const field = $('voice-clone-field');
+	if (field) field.hidden = true;
+	voiceSetup?.destroy();
+	voiceSetup = null;
+}
+
+// ── Step 6: Review ──────────────────────────────────────────────────────────
 
 function renderReview() {
 	const modelLabel =
@@ -1314,8 +1598,13 @@ function renderReview() {
 		},
 		{
 			key: 'Voice',
-			step: 3,
-			html: state.voice === 'browser' ? 'Built-in voice' : 'Custom (set up later)',
+			step: 4,
+			html:
+				state.voice !== 'custom'
+					? 'Built-in voice'
+					: voiceSetup?.ready
+						? 'Your voice (sample ready, clones on create)'
+						: '<span class="dim">Custom, no sample yet: starts on the built-in voice</span>',
 		},
 	];
 
@@ -1486,6 +1775,28 @@ async function submit() {
 			source: 'wizard',
 		});
 
+		// 2.5 Voice: a held sample is cloned onto the agent now that it exists.
+		//     Non-fatal by design: the agent is real either way, and the editor
+		//     (or talk mode) can bind a voice later. A failure here must never
+		//     fail the create.
+		if (state.voice === 'custom' && voiceSetup?.ready) {
+			setMsg('Cloning your voice…', '');
+			voiceSetup.agentName = state.name.trim() || 'Agent';
+			try {
+				const bound = await voiceSetup.bindTo(agent.id);
+				agent._voiceBound = Boolean(bound?.voice_id);
+				track(ANALYTICS_EVENTS.VOICE_CLONE_BOUND, {
+					agent_id: agent.id,
+					billing: bound?.billing,
+					source: 'wizard',
+				});
+			} catch (err) {
+				log.warn('[create-agent] voice bind failed', err);
+				trackError('create_agent.voice_bind', err);
+				agent._voiceWarning = `${err.message} You can bind a voice anytime from the editor.`;
+			}
+		}
+
 		// 3. Personality + marketplace listing. Publish writes the system prompt,
 		//    greeting, category, and tags to the real columns and lists the agent.
 		//    Only attempted when the user opted in AND supplied what publish needs.
@@ -1520,6 +1831,46 @@ async function submit() {
 			}
 		}
 
+		// 4. Interview persona: when the onboarding interview produced a voice,
+		//    persist the structured persona (base, traits, tone, vocabulary) with
+		//    the interview provenance. Chat reads the compiled persona_prompt this
+		//    write produces, and the public manifest reports the interview counts,
+		//    so the interview visibly changes how the agent speaks. Best-effort,
+		//    exactly like publish: identity and listing already exist, so a hiccup
+		//    here is a soft warning, never a failed create.
+		if (state.interview.result) {
+			setMsg('Saving the interviewed voice…', '');
+			try {
+				const personaRes = await apiFetch(`/api/agents/${agent.id}/persona/save`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						// The profile textarea is the source of truth: it holds the
+						// extracted paragraph plus any edits the user made on top.
+						base: state.persona.trim(),
+						traits: state.interview.result.traits,
+						tone_tags: state.interview.result.tone_tags,
+						vocabulary: state.interview.result.vocabulary,
+						interview: state.interview.result.interview,
+						changelog: 'Voice written from the onboarding interview',
+					}),
+				});
+				if (!personaRes.ok) {
+					const pj = await personaRes.json().catch(() => ({}));
+					log.warn('[create-agent] persona save failed', pj);
+					agent._publishWarning =
+						agent._publishWarning ||
+						pj.error_description ||
+						'Created, but saving the interviewed voice failed. Re-run the interview from the Brain Studio.';
+				}
+			} catch (err) {
+				log.warn('[create-agent] persona save error', err);
+				agent._publishWarning =
+					agent._publishWarning ||
+					'Created, but saving the interviewed voice failed. Re-run the interview from the Brain Studio.';
+			}
+		}
+
 		succeed(agent);
 	} catch (err) {
 		log.error('[create-agent] submit failed', err);
@@ -1551,6 +1902,10 @@ function succeed(agent) {
 	// was cleared (the success screen still holds the form state).
 	submitted = true;
 	clearTimeout(draftSaveTimer);
+	// The sample was either bound above or abandoned; release the mic and the
+	// object URLs before the form body is swapped for the success screen.
+	voiceSetup?.destroy();
+	voiceSetup = null;
 	// Swap the form body for the success state.
 	el.panels.forEach((p) => p.classList.remove('is-active'));
 	el.foot.style.display = 'none';
@@ -1558,11 +1913,15 @@ function succeed(agent) {
 	el.success.classList.add('show');
 
 	$('success-title').textContent = `${agent.name} is ready`;
-	const sub = agent._published
-		? 'It now has its own wallet and on-chain identity, and it’s live on the marketplace.'
-		: agent._publishWarning ||
-			'It now has its own wallet and on-chain identity. Open it to chat, customize, or share.';
-	$('success-sub').textContent = sub;
+	const subParts = [
+		agent._published
+			? 'It now has its own wallet and on-chain identity, and it’s live on the marketplace.'
+			: agent._publishWarning ||
+					'It now has its own wallet and on-chain identity. Open it to chat, customize, or share.',
+	];
+	if (agent._voiceBound) subParts.push('It speaks in your cloned voice.');
+	else if (agent._voiceWarning) subParts.push(agent._voiceWarning);
+	$('success-sub').textContent = subParts.join(' ');
 
 	const open = $('success-open');
 	open.href = agent.home_url || `/agent/${agent.id}`;
