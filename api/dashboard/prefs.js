@@ -1,9 +1,9 @@
 /**
  * Dashboard Preferences
  * ---------------------
- * GET   /api/dashboard/prefs — returns the signed-in user's prefs JSON
- * POST  /api/dashboard/prefs — replaces the user's prefs JSON body: { prefs: {...} }
- * PATCH /api/dashboard/prefs — merges partial prefs body: { prefs: {...} }
+ * GET   /api/dashboard/prefs returns the signed-in user's prefs JSON
+ * POST  /api/dashboard/prefs replaces the user's prefs, body: { prefs: {...} }
+ * PATCH /api/dashboard/prefs merges a partial prefs, body: { prefs: {...} }
  *
  * Backed by the user_prefs table. localStorage remains the primary client
  * store; this endpoint provides a durable backup so prefs follow the user
@@ -51,21 +51,32 @@ export default wrap(async (req, res) => {
 	const { prefs: incoming } = parse(prefsBody, await readJson(req));
 
 	if (req.method === 'PATCH') {
-		// Merge: read existing prefs, shallow-merge incoming keys, write back.
-		const [row] = await sql`SELECT prefs FROM user_prefs WHERE user_id = ${auth.userId}`;
-		const merged = { ...(row?.prefs || {}), ...incoming };
-		if (JSON.stringify(merged).length > MAX_BYTES) {
+		// Shallow top-level merge, done inside the statement (`||` is jsonb concat)
+		// rather than as a read-modify-write. The dashboard fires independent
+		// patches for unrelated keys from the same page load (tour completion,
+		// walk state, the settings form), so a JS-side merge between a SELECT and
+		// an UPDATE silently drops whichever write lost the race.
+		//
+		// The size guard rides along as the DO UPDATE predicate: when the merged
+		// document would blow the cap, no row is updated and RETURNING yields
+		// nothing, which is the 400 below. Postgres renders jsonb text slightly
+		// wider than JSON.stringify (a space after each colon and comma), so the
+		// effective ceiling here is a few percent stricter than the zod check on
+		// the incoming patch. Both are guard rails on the same 16 KB budget.
+		const [row] = await sql`
+			INSERT INTO user_prefs (user_id, prefs, updated_at)
+			VALUES (${auth.userId}, ${JSON.stringify(incoming)}::jsonb, now())
+			ON CONFLICT (user_id) DO UPDATE SET
+				prefs = user_prefs.prefs || EXCLUDED.prefs,
+				updated_at = now()
+			WHERE octet_length((user_prefs.prefs || EXCLUDED.prefs)::text) <= ${MAX_BYTES}
+			RETURNING 1 AS ok
+		`;
+		if (!row) {
 			return error(res, 400, 'prefs_too_large', `prefs exceed ${MAX_BYTES} bytes`);
 		}
-		await sql`
-			INSERT INTO user_prefs (user_id, prefs, updated_at)
-			VALUES (${auth.userId}, ${JSON.stringify(merged)}::jsonb, now())
-			ON CONFLICT (user_id) DO UPDATE SET
-				prefs = EXCLUDED.prefs,
-				updated_at = now()
-		`;
 	} else {
-		// POST — replace prefs entirely
+		// POST replaces prefs entirely.
 		await sql`
 			INSERT INTO user_prefs (user_id, prefs, updated_at)
 			VALUES (${auth.userId}, ${JSON.stringify(incoming)}::jsonb, now())

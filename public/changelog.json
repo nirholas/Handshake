@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-12T23:29:07.966Z",
+	"generated_at": "2026-08-12T23:34:40.778Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -56,6 +56,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-12",
+			"type": "update",
+			"title": "Dashboard settings saved at the same moment no longer overwrite each other",
+			"summary": "Your dashboard preferences are kept on the server as well as in the browser, so they follow you to a new device. Several parts of the dashboard save into that one record independently: finishing a guided tour, the walk page saving where you left off, and the settings form saving a toggle or a default network. The server used to read the whole record, merge the new value in, and write the record back, which meant two of those saves landing together would each write a copy of what they had read and the later one would erase the earlier one. Loading the dashboard can fire three of them within the same second, so a tour would reappear or a toggle would quietly revert. The merge now happens inside the database write itself, so every save keeps its own value regardless of what else is being saved at the same instant. Measured on the fix: eight preferences saved simultaneously kept two of eight before, and all eight after. The 16 KB ceiling on stored preferences is unchanged and is now enforced by that same write.",
+			"link": "/dashboard/settings",
+			"tags": [
+				"fix"
 			]
 		},
 		{

@@ -47,6 +47,14 @@
 			<description>The claim page at /cz asked you to connect a wallet and then failed with an internal error the moment it tried to issue the message you were meant to sign. The ledger it writes claims into had never been created in the live database, so every real attempt died at the first step while the page still looked healthy. That table now exists as a tracked migration, and the flow runs end to end: connect, sign one line, and the claim is recorded. The signing step is also stricter now. The one-time code you sign expires after fifteen minutes instead of being valid forever, and a claim can only be redeemed once even if two attempts land at the same instant. A rehearsal switch that showed a fake success screen without touching a wallet is gone, so what you see on the page is always the real result.</description>
 		</item>
 		<item>
+			<title>Dashboard settings saved at the same moment no longer overwrite each other</title>
+			<link>https://three.ws/dashboard/settings</link>
+			<guid isPermaLink="false">2026-08-12:Dashboard settings saved at the same moment no longer overwrite each other</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Your dashboard preferences are kept on the server as well as in the browser, so they follow you to a new device. Several parts of the dashboard save into that one record independently: finishing a guided tour, the walk page saving where you left off, and the settings form saving a toggle or a default network. The server used to read the whole record, merge the new value in, and write the record back, which meant two of those saves landing together would each write a copy of what they had read and the later one would erase the earlier one. Loading the dashboard can fire three of them within the same second, so a tour would reappear or a toggle would quietly revert. The merge now happens inside the database write itself, so every save keeps its own value regardless of what else is being saved at the same instant. Measured on the fix: eight preferences saved simultaneously kept two of eight before, and all eight after. The 16 KB ceiling on stored preferences is unchanged and is now enforced by that same write.</description>
+		</item>
+		<item>
 			<title>Every agent persona is now a signed, IPFS-pinned manifest anyone can verify</title>
 			<link>https://three.ws/agent/4c0e4d18-0544-4c95-a0db-a16896b029be</link>
 			<guid isPermaLink="false">2026-08-12:Every agent persona is now a signed, IPFS-pinned manifest anyone can verify</guid>
