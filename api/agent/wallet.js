@@ -1,4 +1,4 @@
-// GET /api/agent/wallet — public read of the avatar's custodial wallet.
+// GET /api/agent/wallet: public read of the avatar's custodial wallet.
 //
 // Returns the avatar wallet address, network, live SOL balance and USD value,
 // the per-send cap and the default recipient. No secrets are exposed. The

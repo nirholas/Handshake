@@ -4,10 +4,10 @@
 // caster pipeline so the live wall can show an honest handoff between the
 // zero-cost activity terminal and real browser pixels:
 //
-//   • casting  — a real frame exists (a Playwright caster is pushing pixels now).
-//   • warming  — the agent is inside the watch window AND the pool has free
+//   • casting:  a real frame exists (a Playwright caster is pushing pixels now).
+//   • warming:  the agent is inside the watch window AND the pool has free
 //                capacity, so a browser is (or is about to be) spinning up for it.
-//   • queued   — the agent is wanted but the pool is at MAX_BROWSERS; we return a
+//   • queued:   the agent is wanted but the pool is at MAX_BROWSERS; we return a
 //                1-based queue position so the card can say "#N in line".
 //   • activity  not wanted, no caster pool running, or Redis is off: the
 //                always-available activity view stays, and we never claim a live
@@ -20,11 +20,11 @@
 // instead of spinning "warming up" at a viewer forever.
 //
 // The wall fetches this on mount and refreshes it only while a card is
-// warming/queued — never once it's casting (frames drive that), so steady-state
+// warming/queued, never once it's casting (frames drive that), so steady-state
 // adds no per-frame load. Public + per-IP rate-limited like watch-intent.
 //
 // SCREEN_POOL_MAX must mirror the pool worker's MAX_BROWSERS (default 6) for the
-// queue math to be accurate — the worker casts the first MAX_BROWSERS wanted
+// queue math to be accurate: the worker casts the first MAX_BROWSERS wanted
 // agents in recency order, exactly the ordering ZREVRANK reflects here.
 
 import { cors, json, method, error, wrap, rateLimited } from '../_lib/http.js';
@@ -35,7 +35,7 @@ import { POOL_ALIVE_KEY } from './watch-wanted.js';
 
 export const WANTED_KEY = 'screen:wanted';
 const WINDOW_MS = 90_000; // mirrors watch-wanted: agents wanted within 90s are live-watched
-// Read-only mirror of the worker's MAX_BROWSERS. Display/queue-math only — the
+// Read-only mirror of the worker's MAX_BROWSERS. Display/queue-math only: the
 // worker reads its own env; this never casts, it only reports position.
 export const POOL_MAX = Math.max(1, Number(process.env.SCREEN_POOL_MAX) || 6);
 
@@ -76,7 +76,7 @@ export default wrap(async (req, res) => {
 		// Otherwise place the agent in the wanted ordering. Stale members (older than
 		// the window) carry lower scores and rank BELOW every in-window member, so a
 		// fresh agent's reverse-rank equals its position among currently-wanted
-		// agents — the same set, in the same order, the worker casts from.
+		// agents: the same set, in the same order, the worker casts from.
 		const [score, rank, poolAlive] = await Promise.all([
 			r.zscore(WANTED_KEY, agentId),
 			r.zrevrank(WANTED_KEY, agentId),
@@ -90,7 +90,7 @@ export default wrap(async (req, res) => {
 			max: POOL_MAX,
 		}, { 'cache-control': 'no-store' });
 	} catch {
-		// Redis blip — degrade to the always-available activity view, never an error.
+		// Redis blip: degrade to the always-available activity view, never an error.
 		return json(res, 200, { state: 'activity', max: POOL_MAX }, { 'cache-control': 'no-store' });
 	}
 });

@@ -8,7 +8,7 @@
 //
 // Public + IP rate-limited: anyone looking at the live wall or an agent screen
 // can express intent. We store intent in a Redis sorted set keyed by recency, so
-// stale entries fall out of the window automatically — no auth, no DB write.
+// stale entries fall out of the window automatically: no auth, no DB write.
 //
 //   ZADD screen:wanted  <now>  <agentId>     (score = last-seen ms)
 //   ZADD screen:wanted:count:<agentId> tracked via the score being refreshed.
@@ -46,14 +46,14 @@ export default wrap(async (req, res) => {
 	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'valid agentId required');
 
 	// Optional reaction ride-along. A viewer can express intent AND fire a reaction
-	// in the same call. Invalid/absent reactions simply don't react — they never
+   // in the same call. Invalid/absent reactions simply don't react: they never
 	// fail the intent, which is the load-bearing signal for the caster pool.
 	const reaction = normalizeReaction(body?.reaction);
 
 	const r = getRedis();
 	if (!r) {
 		// No Redis: the wall still works (activity view) and the tapper's own
-		// optimistic burst already acknowledged them — we just can't fan out.
+		// optimistic burst already acknowledged them: we just can't fan out.
 		return json(res, 200, { ok: true, queued: false, reaction: reaction ? { emoji: reaction, broadcast: false } : null });
 	}
 
@@ -64,12 +64,12 @@ export default wrap(async (req, res) => {
 			r.zremrangebyscore(WANTED_KEY, 0, now - PRUNE_WINDOW_MS),
 			r.expire(WANTED_KEY, 300),
 		]);
-	} catch { /* non-critical — the wall degrades to the activity view */ }
+	} catch { /* non-critical: the wall degrades to the activity view */ }
 
 	if (!reaction) return json(res, 200, { ok: true, queued: true });
 
 	// Per-IP-per-agent throttle so one viewer can't spam the overlay. SET NX with a
-	// short TTL is the gate — the server is authoritative; client throttling is
+	// short TTL is the gate: the server is authoritative; client throttling is
 	// cosmetic. A throttled reaction still returns 200 (intent succeeded) with
 	// throttled:true so the bar can show a quiet "give it a sec" cue.
 	try {
@@ -78,7 +78,7 @@ export default wrap(async (req, res) => {
 		if (gate !== 'OK' && gate !== true) {
 			return json(res, 200, { ok: true, queued: true, throttled: true });
 		}
-	} catch { /* if the gate read fails, fall through — better to react than to drop */ }
+	} catch { /* if the gate read fails, fall through: better to react than to drop */ }
 
 	let total = null;
 	try {
