@@ -1,4 +1,4 @@
-// Reconstruct-finalize — the shared tail of the selfie → 3D pipeline, called by
+// Reconstruct-finalize - the shared tail of the selfie → 3D pipeline, called by
 // both the /api/avatars/regenerate-status poll and the Replicate webhook so the
 // two completion paths never drift.
 //
@@ -9,7 +9,7 @@
 // mesh has no skeleton AND the active provider has a rig model configured, we
 // chain a 'rerig' job and only surface the avatar once it's rigged. If no rig
 // model is configured, or rigging fails, we deliver the static mesh tagged
-// `unrigged` — the user is never left empty-handed.
+// `unrigged` - the user is never left empty-handed.
 //
 // Auto-rig is dormant by default: it activates only when the provider reports
 // supportsMode('rerig') (e.g. REPLICATE_RERIG_MODEL is set), so existing
@@ -21,8 +21,8 @@ import { storageKeyFor, createAvatar } from './avatars.js';
 import { inspectGlb, isValidGlbHeader } from './glb-inspect.js';
 import { dispatchWebhooks } from './webhook-dispatch.js';
 import { getRegenProviderForMode } from './regen-provider.js';
-// Every provider-returned GLB fetched here — the reconstruct output, the rigged
-// result, and our own stored bare mesh (rig.unriggedUrl) — goes through the
+// Every provider-returned GLB fetched here - the reconstruct output, the rigged
+// result, and our own stored bare mesh (rig.unriggedUrl) - goes through the
 // shared guard: host allowlist + IP-pinned SSRF connect + 64 MB ceiling. No bare
 // fetch() of a provider URL remains in this file.
 import { fetchProviderGlbBuffer } from './provider-result-url.js';
@@ -150,7 +150,7 @@ async function materializeReconstructAvatar({
 	}
 
 	// Roadmap Phase 1: a successful reconstruction is also minted as a draft
-	// on-chain agent identity — Metaplex Core on Solana (devnet is the default
+	// on-chain agent identity - Metaplex Core on Solana (devnet is the default
 	// automated path; mainnet only via the explicit DRAFT_AGENT_MINT_NETWORK
 	// flag), ERC-8004 on EVM behind DRAFT_AGENT_MINT_EVM_ENABLED. Best-effort,
 	// same contract as the webhook + forge steps above: the avatar is already
@@ -210,7 +210,7 @@ export async function finalizeReconstructStage({ userId, jobId, job, glbUrl }) {
 			sourceStorageKey: storageKey,
 		});
 	} catch (rigErr) {
-		// Couldn't even start rigging — deliver the bare mesh now rather than
+		// Couldn't even start rigging - deliver the bare mesh now rather than
 		// failing the whole reconstruction the user already waited for.
 		const avatar = await materializeReconstructAvatar({
 			userId,
@@ -227,8 +227,8 @@ export async function finalizeReconstructStage({ userId, jobId, job, glbUrl }) {
 	}
 
 	// Drop the (multi-MB base64) source images from the persisted params now that
-	// reconstruction is done — the rig stage works off the stored GLB, not the
-	// photos — so the job row stays lean across the remaining 'rigging' polls.
+	// reconstruction is done - the rig stage works off the stored GLB, not the
+	// photos - so the job row stays lean across the remaining 'rigging' polls.
 	const { images: _images, image: _image, ...leanParams } = job.params || {};
 	const nextParams = {
 		...leanParams,
@@ -242,7 +242,7 @@ export async function finalizeReconstructStage({ userId, jobId, job, glbUrl }) {
 	return { status: 'rigging' };
 }
 
-// Stage 2: the parent job is in 'rigging' — poll the child rig job. On success
+// Stage 2: the parent job is in 'rigging' - poll the child rig job. On success
 // swap in the rigged GLB; on failure fall back to the stored bare mesh. Returns
 // { status, resultAvatarId? }; status stays 'rigging' while the rig job runs.
 export async function pollRiggingStage({ userId, jobId, job }) {
@@ -284,7 +284,7 @@ export async function pollRiggingStage({ userId, jobId, job }) {
 	}
 
 	if (update.status === 'failed') {
-		// Rigging failed — deliver the bare mesh we stored before rigging.
+		// Rigging failed - deliver the bare mesh we stored before rigging.
 		const glbBuf = await fetchProviderGlbBuffer(rig.unriggedUrl);
 		const info = isValidGlbHeader(glbBuf) ? inspectGlb(glbBuf) : null;
 		const avatar = await materializeReconstructAvatar({

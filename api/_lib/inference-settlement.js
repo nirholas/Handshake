@@ -1,12 +1,12 @@
-// Inference settlement — per-job metering and cryptographic receipts for paid
+// Inference settlement - per-job metering and cryptographic receipts for paid
 // inference work (Roadmap phase 4). Pure core: no fetch, no chain, no DB, no
 // env. The I/O lives in the callers:
 //
-//   api/x402/llm-proxy.js        — meters each paid job, signs the response,
+//   api/x402/llm-proxy.js        - meters each paid job, signs the response,
 //                                  issues the receipt after settlement.
-//   api/_lib/inference-jobs.js   — durable persistence of metered jobs.
-//   api/x402/inference-verify.js — free HTTP verifier built on verifyInferenceReceipt.
-//   scripts/inference-receipt-verify.mjs — offline CLI for node operators.
+//   api/_lib/inference-jobs.js   - durable persistence of metered jobs.
+//   api/x402/inference-verify.js - free HTTP verifier built on verifyInferenceReceipt.
+//   scripts/inference-receipt-verify.mjs - offline CLI for node operators.
 //
 // Two signature layers, both ed25519 over domain-tagged canonical JSON (the
 // same construction as the 3D provenance credentials in provenance-3d.js):
@@ -157,7 +157,7 @@ export function signerPublicKey(secret) {
 
 /**
  * Sign the metered job core. This is the node's attestation: "this output,
- * these token counts, this prompt hash — I produced them for this job id."
+ * these token counts, this prompt hash - I produced them for this job id."
  * Returns { responseSignature, responseSigner } (both base58).
  */
 export function signJobResponse(job, secret) {

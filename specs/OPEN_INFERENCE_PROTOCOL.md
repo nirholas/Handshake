@@ -24,11 +24,11 @@ forged or tampered with in transit).
 
 ## Terminology
 
-- **Requester** — the party that constructs and submits a job (the platform
+- **Requester** - the party that constructs and submits a job (the platform
   API today; any marketplace contract tomorrow).
-- **Node** — any process that advertises capabilities, accepts job envelopes,
+- **Node** - any process that advertises capabilities, accepts job envelopes,
   executes them, and returns signed responses.
-- **Verifier** — any third party (often the requester, but not necessarily)
+- **Verifier** - any third party (often the requester, but not necessarily)
   that checks a signed response against the job envelope and the node's
   advertised public key.
 
@@ -169,35 +169,35 @@ reputation just as much as a signed success.
 A verifier accepts a signed response only when **all** of the following hold,
 checked in order; the first failure names the verdict:
 
-1. **Shape** — `spec` is `oin/0.1`; `job_digest`, `node_pubkey`,
+1. **Shape** - `spec` is `oin/0.1`; `job_digest`, `node_pubkey`,
    `completed_at`, `status`, and `signature` are present; `status` is `done`
    or `failed`; `done` responses carry `output` and `failed` responses carry
    `error`. (`bad_shape`)
-2. **Job binding** — the verifier recomputes SHA-256 over the JCS-canonical
+2. **Job binding** - the verifier recomputes SHA-256 over the JCS-canonical
    job envelope it holds and requires equality with `job_digest`.
    (`job_digest_mismatch`)
-3. **Key** — `node_pubkey` parses as `ed25519:` followed by 32 bytes of
+3. **Key** - `node_pubkey` parses as `ed25519:` followed by 32 bytes of
    base64. If the verifier pins or looked up the node's advertisement, the key
    MUST equal the advertised `node_pubkey`. (`bad_pubkey` / `untrusted_node`)
-4. **Signature** — removing `signature`, canonicalizing the remaining
+4. **Signature** - removing `signature`, canonicalizing the remaining
    response, and verifying the Ed25519 signature against the decoded public
    key succeeds. (`bad_signature`)
-5. **Freshness** — `completed_at` parses as ISO 8601 and is not later than the
+5. **Freshness** - `completed_at` parses as ISO 8601 and is not later than the
    job's `deadline` (when the job declared one) and not more than 24 hours in
    the future of the verifier's clock. (`stale_response` / `future_response`)
-6. **Output integrity** — for `done` responses, the bytes fetched from
+6. **Output integrity** - for `done` responses, the bytes fetched from
    `output.url` hash (SHA-256, lowercase hex) to `output.sha256` and their
    length equals `output.bytes`. (`output_digest_mismatch`) A verifier that
    only checks the envelope (never fetches the artifact) MAY defer this rule
    and report `verified_unfetched_output`.
 
-A response that passes rules 1–5 is `verified`; rule 6 upgrades it to
+A response that passes rules 1-5 is `verified`; rule 6 upgrades it to
 `verified_with_output`. No verdict short of `verified` entitles the node to
 payment.
 
 ### Reference verifier
 
-[`api/_lib/oin-verify.js`](../api/_lib/oin-verify.js) implements rules 1–5 in
+[`api/_lib/oin-verify.js`](../api/_lib/oin-verify.js) implements rules 1-5 in
 dependency-free Node (Ed25519 via `crypto.createVerify`), plus an opt-in
 `verifyOutput()` for rule 6. It is the conformance target for third-party
 verifiers.

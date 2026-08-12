@@ -18,8 +18,8 @@
 //
 // ── Job envelope ─────────────────────────────────────────────────────────────
 // Same envelope the platform's own image lanes accept and return:
-//   in : (prompt, { aspectRatio, seed }) — identical to textToImage()
-//   out: { imageUrl, model, lane, gateway } — imageUrl is a durable R2 https
+//   in : (prompt, { aspectRatio, seed }) - identical to textToImage()
+//   out: { imageUrl, model, lane, gateway } - imageUrl is a durable R2 https
 //        URL, exactly as the NIM FLUX and Vertex lanes produce, so the
 //        image-to-3D backends downstream cannot tell the difference.
 //
@@ -27,7 +27,7 @@
 // Same verification the platform applies to its own workers at this seam:
 //   1. the gateway must return an images[] entry that is not nsfw-flagged,
 //   2. the fetched bytes must carry a real PNG/JPEG magic-byte signature
-//      (looksLikeImageBytes — a 200 with an HTML error page fails here),
+//      (looksLikeImageBytes - a 200 with an HTML error page fails here),
 //   3. only verified bytes are persisted to R2 and returned.
 // The optional vision QA layer (forge-image-validate) sits above every lane
 // unchanged; this adapter never bypasses it.
@@ -51,7 +51,7 @@ export const DEFAULT_T2I_MODEL = 'ByteDance/SDXL-Lightning';
 
 // Per-call ceiling. SDXL-Lightning renders in a few seconds on a warm
 // orchestrator; the public gateway can sit on a cold one, so this is generous
-// but bounded — a hung federated lane must hand off to the next platform lane,
+// but bounded - a hung federated lane must hand off to the next platform lane,
 // never stall the text→3D pipeline.
 const T2I_TIMEOUT_MS = 90_000;
 

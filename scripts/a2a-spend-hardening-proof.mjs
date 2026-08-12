@@ -65,12 +65,12 @@ function step(name) {
 }
 function pass(name, detail) {
 	results.push({ name, ok: true, detail });
-	console.log(`  ✔ ${name}${detail ? ` — ${detail}` : ''}`);
+	console.log(`  ✔ ${name}${detail ? ` - ${detail}` : ''}`);
 }
 function fail(name, detail) {
 	failed += 1;
 	results.push({ name, ok: false, detail });
-	console.error(`  ✘ ${name} — ${detail}`);
+	console.error(`  ✘ ${name} - ${detail}`);
 }
 function check(name, cond, detail) {
 	if (cond) pass(name, detail);
@@ -206,12 +206,12 @@ function makeHttp() {
 }
 
 async function main() {
-	console.log('a2a spend hardening proof — real Postgres, live local HTTP, no real funds\n');
+	console.log('a2a spend hardening proof - real Postgres, live local HTTP, no real funds\n');
 
 	// ── environment ──────────────────────────────────────────────────────────
 	step('0. environment');
 	for (const [port, name] of [[PG_PORT, 'postgres'], [SHIM_PORT, 'shim'], [HTTP_PORT, 'http']]) {
-		if (!(await portFree(port))) throw new Error(`port ${port} (${name}) is already in use — pick another port or stop the stale process`);
+		if (!(await portFree(port))) throw new Error(`port ${port} (${name}) is already in use - pick another port or stop the stale process`);
 	}
 	check('docker available', run('docker', ['--version']).code === 0);
 	run('docker', ['rm', '-f', PG_CONTAINER]);
@@ -225,12 +225,6 @@ async function main() {
 	pass('throwaway postgres started', `${PG_CONTAINER} on :${PG_PORT}`);
 
 	const pg = await loadPg();
-	const admin = new pg.Client(PG_URL);
-	await waitFor(async () => {
-		try { await admin.connect(); return true; } catch { admin._ending = false; return false; }
-	}, { label: 'postgres ready' }).catch(async () => {
-		// connect() failed once; retry with a fresh client per attempt
-	});
 	let db = null;
 	await waitFor(async () => {
 		try {
@@ -380,7 +374,7 @@ process.stdin.on('data', (d) => {
 	};
 
 	// ── 1. per-transaction ceiling ───────────────────────────────────────────
-	step('1. per_tx_usd — cap per call');
+	step('1. per_tx_usd - cap per call');
 	await setLimits({ daily_usd: null, per_tx_usd: 1, per_counterparty_daily_usd: null, withdraw_allowlist: [], frozen: false, require_capabilities: false });
 	{
 		const over = await callErr('reserveSpendUsd', spend({ usdValue: 1.5 }));
@@ -392,7 +386,7 @@ process.stdin.on('data', (d) => {
 	}
 
 	// ── 2. daily ceiling + concurrency race ──────────────────────────────────
-	step('2. daily_usd — rolling 24h wallet ceiling, race-proof');
+	step('2. daily_usd - rolling 24h wallet ceiling, race-proof');
 	{
 		// Backfill real, priced, confirmed spend rows (history, not reservations).
 		for (const [usd, dest] of [[0.6, PEER_A], [0.3, PEER_B]]) {
@@ -420,7 +414,7 @@ process.stdin.on('data', (d) => {
 	}
 
 	// ── 3. per-counterparty ceiling ──────────────────────────────────────────
-	step('3. per_counterparty_daily_usd — concentrated-drain ceiling');
+	step('3. per_counterparty_daily_usd - concentrated-drain ceiling');
 	{
 		// Fresh agent so the wallet-wide cap never fires first.
 		const { rows: [a2] } = await db.query(
@@ -452,7 +446,7 @@ process.stdin.on('data', (d) => {
 	}
 
 	// ── 4. kill switch ───────────────────────────────────────────────────────
-	step('4. kill switch — frozen halts every autonomous path immediately');
+	step('4. kill switch - frozen halts every autonomous path immediately');
 	{
 		// Fresh agent, generous caps, no history: only the freeze can block.
 		const { rows: [a3] } = await db.query(
@@ -491,7 +485,7 @@ process.stdin.on('data', (d) => {
 	}
 
 	// ── 5. receipts on the live local surface ────────────────────────────────
-	step('5. receipts — queryable per agent on the live HTTP surface');
+	step('5. receipts - queryable per agent on the live HTTP surface');
 	{
 		// Confirmed payments with tx signatures: the receipt rows the owner reads.
 		const sigs = ['proofsigA111', 'proofsigB222', 'proofsigC333'];
@@ -632,13 +626,13 @@ process.stdin.on('data', (d) => {
 
 	// ── transcript ───────────────────────────────────────────────────────────
 	console.log('\n══ transcript ══');
-	for (const r of results) console.log(`  ${r.ok ? 'PASS' : 'FAIL'}  ${r.name}${r.detail ? ` — ${r.detail}` : ''}`);
+	for (const r of results) console.log(`  ${r.ok ? 'PASS' : 'FAIL'}  ${r.name}${r.detail ? ` - ${r.detail}` : ''}`);
 	console.log(`\n${results.length - failed}/${results.length} checks passed`);
 	if (failed) {
 		console.error('PROOF FAILED');
 		process.exitCode = 1;
 	} else {
-		console.log('PROOF PASSED — every limit blocked its over-limit attempt, the kill switch halted spending, and receipts were queryable per agent on the live surface.');
+		console.log('PROOF PASSED - every limit blocked its over-limit attempt, the kill switch halted spending, and receipts were queryable per agent on the live surface.');
 	}
 }
 

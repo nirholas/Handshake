@@ -6,13 +6,12 @@
 // Dependency-free (Node stdlib only) so any requester, relay, or auditor can
 // verify a node's signed response without trusting the transport.
 //
-// Exports:
-//   canonicalize(value)            -> canonical JSON string (RFC 8785)
-//   digestJob(envelope)            -> lowercase hex SHA-256 of the canonical envelope
-//   signResponse(response, keyB64) -> response with `signature` filled in (node side)
-//   signAdvertisement(ad, keyB64)  -> advertisement with `signature` filled in
-//   verifyResponse(job, response, opts) -> { ok, verdict, ... }
-//   verifyOutput(response, fetchImpl?)  -> rule 6: hash the bytes at output.url
+// Exported API surface (see the named exports below):
+//   canonicalize: canonical JSON string per RFC 8785
+//   digestJob: lowercase hex SHA-256 of the canonical envelope
+//   signResponse / signAdvertisement: fill in `signature` on the node side
+//   verifyResponse: returns { ok, verdict, ... } for a job/response pair
+//   verifyOutput: spec rule 6, hash the bytes at output.url and compare
 //
 // Verdicts are the exact codes the spec names: bad_shape, job_digest_mismatch,
 // bad_pubkey, untrusted_node, bad_signature, stale_response, future_response,

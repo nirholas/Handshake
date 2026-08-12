@@ -6,7 +6,7 @@
 // rule it enforces matters enough to live in exactly one place:
 //
 //   Downstream image-to-3D providers take URLs, not inline data (Replicate caps
-//   inline data URIs at ~256 KB — a 1024px image blows straight past that), so
+//   inline data URIs at ~256 KB - a 1024px image blows straight past that), so
 //   every synthesized image is persisted to R2 and handed on as a durable
 //   public https URL.
 //
@@ -17,7 +17,7 @@
 
 import { putObject, publicUrl } from './r2.js';
 
-// 'jpg' | 'png' — sniffed from magic bytes. JPEG: FF D8 FF. Anything else is
+// 'jpg' | 'png' - sniffed from magic bytes. JPEG: FF D8 FF. Anything else is
 // labeled png, matching the legacy behavior of every prior copy of this code.
 export function sniffImageFormat(body) {
 	const isJpeg = body.length > 2 && body[0] === 0xff && body[1] === 0xd8 && body[2] === 0xff;

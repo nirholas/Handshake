@@ -1,22 +1,22 @@
-// Draft agent mint — roadmap Phase 1 deliverable: every successful
+// Draft agent mint - roadmap Phase 1 deliverable: every successful
 // reconstruction output is not only persisted to durable storage (R2, done by
 // reconstruct-finalize.js) but also minted as a DRAFT on-chain agent identity.
 //
 // Solana leads: the draft identity is a Metaplex Core asset minted into the
 // three.ws Agent Collection, reusing the exact machinery of the batch deployer
 // (api/_lib/onchain-deploy.js) so a draft mint is indistinguishable in shape
-// from any other platform mint — collection membership, brand attributes,
+// from any other platform mint - collection membership, brand attributes,
 // royalties, and Metaplex Agent Registry enrolment included.
 //
 // Network policy (the spend gate):
 //   • DRAFT_AGENT_MINT_NETWORK = devnet (default) | mainnet | off
 //     Devnet is the automated proof path: it runs whenever an authority secret
-//     is configured and costs nothing real. MAINNET IS NEVER IMPLICIT — it
+//     is configured and costs nothing real. MAINNET IS NEVER IMPLICIT - it
 //     activates only when an operator explicitly sets
 //     DRAFT_AGENT_MINT_NETWORK=mainnet AND funds
 //     SOLANA_AGENT_COLLECTION_AUTHORITY_KEY on mainnet. That single flag is the
 //     documented mainnet switch.
-//   • Without an authority secret the leg reports 'skipped' — a no-op, so a
+//   • Without an authority secret the leg reports 'skipped' - a no-op, so a
 //     deployment without mint credentials behaves exactly as before.
 //
 // EVM leg (ERC-8004): behind DRAFT_AGENT_MINT_EVM_ENABLED=1 with
@@ -66,7 +66,7 @@ export function resolveDraftMintEvm(e = process.env) {
 // ── Context loading ──────────────────────────────────────────────────────────
 
 /**
- * Load the agent row joined with its avatar's storage keys — the exact shape
+ * Load the agent row joined with its avatar's storage keys - the exact shape
  * deployAgentOnce() (onchain-deploy.js) consumes.
  */
 async function loadAgentContext(agentId) {
