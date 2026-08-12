@@ -2,8 +2,6 @@
 const AGENT_ID = 'cz-preview';
 const AGENT_NAME = 'CZ Agent';
 
-const REHEARSAL = new URLSearchParams(location.search).has('rehearsal');
-
 // --- DOM refs ---
 const stepConnect = document.getElementById('step-connect');
 const stepSign = document.getElementById('step-sign');
@@ -18,7 +16,6 @@ const snippetScript = document.getElementById('snippet-script');
 const snippetTag = document.getElementById('snippet-tag');
 const snippetIframe = document.getElementById('snippet-iframe');
 const errorMsgEl = document.getElementById('error-msg');
-const rehearsalBadge = document.getElementById('rehearsal-badge');
 
 // Wire the preview element. We point at a local body GLB rather than resolving
 // agent-id=cz-preview through /api/agents/* so the on-page preview renders
@@ -27,8 +24,6 @@ const rehearsalBadge = document.getElementById('rehearsal-badge');
 // agent-id form for users to copy.
 document.getElementById('preview').setAttribute('body', '/avatars/cz.glb');
 document.getElementById('preview').setAttribute('name', AGENT_NAME);
-
-if (REHEARSAL) rehearsalBadge.classList.remove('hidden');
 
 let _address = null;
 let _nonce = null;
@@ -65,13 +60,6 @@ btnSign.addEventListener('click', async () => {
 	btnSign.disabled = true;
 	btnSign.textContent = 'Signing…';
 	try {
-		if (REHEARSAL) {
-			// Stub: 2-second fake success, no chain interaction
-			await new Promise((r) => setTimeout(r, 2000));
-			showSuccess();
-			return;
-		}
-
 		const message = claimMessage(_nonce);
 		const signature = await signMessage(message, _address);
 
@@ -114,7 +102,7 @@ function showSuccess() {
 	agentNameDisplay.textContent = AGENT_NAME;
 	const origin = location.origin;
 	snippetScript.textContent = `<script type="module"\n  src="${origin}/agent-3d/latest/agent-3d.js">\n<\/script>`;
-	snippetTag.textContent = `<agent-three.ws-id="${AGENT_ID}" kiosk></agent-3d>`;
+	snippetTag.textContent = `<agent-3d agent-id="${AGENT_ID}" kiosk></agent-3d>`;
 	snippetIframe.textContent = `<iframe\n  src="${origin}/agent/${AGENT_ID}/embed"\n  allow="microphone"\n  width="400" height="600">\n</iframe>`;
 	show(stepSuccess);
 }

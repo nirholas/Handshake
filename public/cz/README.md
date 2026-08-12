@@ -1,129 +1,77 @@
-# CZ Demo — Landing & Claim Flow
+# CZ claim page
 
-The CZ landing page is served at `/cz/` and provides:
-
-- Full-bleed dark landing page with centered three.ws avatar
-- **Claim CZ** button — initiates wallet connection and claim flow
-- **Copy embed** button — copies `<agent-3d>` snippet to clipboard
-- Footer — displays on-chain state (chain, agentId, metadataURI)
-- Custom event analytics via `window.dispatchEvent('cz-demo-event', ...)`
+The CZ agent's claim page, served at `/cz/`. A visitor connects a browser
+wallet, signs a one-line message, and the platform hands them ownership of the
+pre-registered CZ agent. `/cz/offline` is the static fallback shown when the
+page is presented without a network (see `offline/README.md`).
 
 ## Files
 
-- `index.html` — Main landing page
-- `boot.js` — Client-side initialization and claim flow UI
-- `state.json` — On-chain state stub (updated by `prompts/cz-demo/01-pre-register.js`)
+| File | Role |
+|---|---|
+| `index.html` | The page: preview avatar, the connect / sign / success / error steps, and the embed snippets shown after a claim. |
+| `cz.js` | The whole client flow: wallet connect, nonce fetch, `personal_sign`, claim POST, optional on-chain broadcast. |
+| `cz.css` | Page styles. |
 
-## State Schema
+The server side is a single handler, `api/cz/claim.js`, backed by the
+`cz_claims` table (`api/_lib/migrations/20260812140000_cz_claims.sql`).
 
-`state.json` is a JSON file with this shape:
+## The claim flow
 
-```json
-{
-	"status": "pre-onchain" | "onchain",
-	"chainId": null | number,
-	"agentId": null | number,
-	"metadataURI": null | string,
-	"ownerAddress": null | "0x0..." | string,
-	"avatarUrl": "/avatars/cz.glb" | string
-}
-```
+1. **Connect.** `cz.js` asks the injected provider for an account
+   (`eth_requestAccounts`), then calls `GET /api/cz/claim?address=0x...`, which
+   mints a random 16-byte nonce, stores it against the lowercased address as a
+   `pending` row, and returns `{ nonce, expiresInSeconds }`.
+2. **Sign.** The user signs `Claim CZ Agent\n\nNonce: <nonce>` with
+   `personal_sign`. Nothing is sent on-chain at this point and no gas is spent.
+3. **Redeem.** `POST /api/cz/claim` with `{ signerAddress, signature, nonce }`.
+   The handler recovers the signer from the signature, requires it to match both
+   the claimed address and the address the nonce was issued to, requires the
+   nonce to still be `pending` and younger than 15 minutes, and then flips the
+   row to `claimed` with an update guarded on `status = 'pending'` so two
+   concurrent redemptions cannot both succeed.
+4. **Transfer.** The response carries a `txPayload` with
+   `transferAgent(agentId, signer)` calldata for the identity registry. The page
+   broadcasts it with `eth_sendTransaction` only when a registry address is
+   actually configured; with `CZ_REGISTRY_CONTRACT` unset the payload targets the
+   zero address and the page skips the transaction, so the claim is recorded
+   off-chain and the page still shows the embed snippets.
 
-**Fields:**
+### Responses
 
-- `status` — `"pre-onchain"` (not yet registered) or `"onchain"` (registered)
-- `chainId` — Chain ID (e.g., `8453` for Base, `84532` for Base Sepolia), or `null`
-- `agentId` — Token ID from IdentityRegistry, or `null`
-- `metadataURI` — IPFS/HTTPS URL of the full registration JSON, or `null`
-- `ownerAddress` — Current owner address, `"0x0..."` (unclaimed), or `null`
-- `avatarUrl` — GLB URL (default `/avatars/cz.glb`)
+| Status | `error` | When |
+|---|---|---|
+| 200 | | Nonce issued (GET) or claim recorded (POST) |
+| 400 | `validation_error` | Address is not a `0x` + 40 hex string, or a field is missing or not a string |
+| 400 | `invalid_nonce` | No row for that nonce |
+| 400 | `nonce_expired` | The nonce is older than 15 minutes |
+| 400 | `invalid_signature` | The signature bytes do not parse |
+| 403 | `forbidden` | Signature recovers to another address, or the nonce belongs to another address |
+| 409 | `conflict` | The nonce was already redeemed |
+| 429 | `rate_limited` | More than 10 calls in an hour from one IP |
 
-The landing page footer displays the state. In `pre-onchain`, it shows "Not yet onchain".
+## Configuration
 
-## Claim Flow
+All three are optional; the defaults below are what production runs today.
 
-The `startClaim()` function in `src/cz-flow.js` handles:
+| Env var | Default | Meaning |
+|---|---|---|
+| `CZ_AGENT_ID` | `cz-preview` | Agent id encoded into the transfer calldata and the embed snippet |
+| `CZ_AGENT_NAME` | `CZ Agent` | Display name on the success step |
+| `CZ_REGISTRY_CONTRACT` | zero address | Identity registry to call; the zero address disables the on-chain step |
 
-1. **Pre-onchain** — Shows modal: "Claim opens when CZ is registered"
-2. **Unclaimed** (`ownerAddress === "0x0..."`): Calls `IdentityRegistry.claim(agentId)`
-3. **Demo EOA transfer**: Guides user through `transferOwner()`
-4. **Already owned**: Shows modal with current owner
-
-All steps emit progress via `onProgress({ step, status, txHash?, error? })` and fire custom events:
-
-- `landing_view` — Page loaded
-- `claim_start` — Claim button clicked
-- `claim_wallet_connected` — Wallet connected (implicit in flow)
-- `claim_tx_sent` — Transaction sent
-- `claim_complete` — Claim successful
-- `claim_error` — Error occurred
-- `embed_copied` — Embed snippet copied
-
-Listen for these on `window`:
-
-```js
-window.addEventListener('cz-demo-event', (e) => {
-	console.log(e.detail.event, e.detail.props);
-});
-```
-
-## Routing
-
-The page is served at `/cz/` by the Vite dev server and Vercel (`public/cz/` → `/cz/`).
-
-To add `/cz` (without trailing slash) or a custom route, edit:
-
-- **Local dev**: `vite.config.js` — `vercel-rewrites` plugin
-- **Production**: `vercel.json` — `rewrites` array
-
-Example for `vercel.json`:
-
-```json
-{
-	"rewrites": [{ "source": "/cz", "destination": "/cz/" }]
-}
-```
-
-Then run `npm run deploy` to push changes.
-
-## Integration with `prompts/cz-demo/01-pre-register.js`
-
-When the onchain pre-registration is ready, that script will:
-
-1. Deploy / verify the ERC-8004 IdentityRegistry if needed
-2. Call `register()` with the GLB and metadata
-3. Write an updated `public/cz/state.json` with real `chainId`, `agentId`, `metadataURI`, `ownerAddress`
-
-The landing page will automatically reflect this state on next load.
-
-## Accessibility
-
-- Semantic `<h1>` for the headline
-- `aria-label` on all buttons
-- Focus rings visible (2px outline with 2px offset)
-- Reduced motion support (`prefers-reduced-motion`)
-- Modal keyboard-escapable
-
-## Testing
+## Verifying it end to end
 
 ```bash
-npm run dev
-# Open http://localhost:3000/cz/
+# 1. Issue a nonce
+curl -s 'https://three.ws/api/cz/claim?address=0x1111111111111111111111111111111111111111'
+# {"nonce":"a8b1...","expiresInSeconds":900}
 
-# Should show:
-# - Avatar loading from /avatars/cz.glb
-# - "Claim CZ" button clickable
-# - "Copy embed" button copies snippet to clipboard
-# - Footer shows "Not yet onchain"
+# 2. Redeem it with a signature over "Claim CZ Agent\n\nNonce: <nonce>"
+curl -s -X POST https://three.ws/api/cz/claim \
+  -H 'content-type: application/json' \
+  -d '{"signerAddress":"0x...","signature":"0x...","nonce":"a8b1..."}'
 ```
 
-Test the claim flow:
-
-```js
-// Open browser console on /cz/
-window.addEventListener('cz-demo-event', (e) => {
-	console.log('CZ demo event:', e.detail);
-});
-
-// Click "Claim CZ" → follow wallet prompts
-```
+`tests/cz-claim.test.js` covers the same contract with real secp256k1
+signatures, including the replay, expiry, and wrong-signer paths.
