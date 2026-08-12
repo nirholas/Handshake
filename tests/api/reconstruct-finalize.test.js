@@ -37,6 +37,14 @@ vi.mock('../../api/_lib/forge-store.js', () => ({
 	registerReconstructionCreation: (...a) => registerReconstructionCreationMock(...a),
 }));
 
+// Roadmap Phase 1 draft mint fires on every materialize; mocked here so the
+// finalize control flow is what's under test (the mint orchestration itself is
+// covered by tests/api/draft-mint.test.js).
+const mintDraftAgentIdentityMock = vi.fn(async () => ({ status: 'ok' }));
+vi.mock('../../api/_lib/draft-mint.js', () => ({
+	mintDraftAgentIdentity: (...a) => mintDraftAgentIdentityMock(...a),
+}));
+
 const providerMock = { name: 'replicate', instance: null };
 vi.mock('../../api/_lib/regen-provider.js', () => ({
 	getRegenProvider: async () => providerMock,
@@ -129,6 +137,21 @@ describe('finalizeReconstructStage', () => {
 	it('still delivers the avatar when Forge-store registration throws', async () => {
 		inspectGlbMock.mockReturnValue(RIGGED);
 		registerReconstructionCreationMock.mockRejectedValueOnce(new Error('store down'));
+		const out = await finalizeReconstructStage({ userId: 'u1', jobId: 'j1', job: baseJob, glbUrl: 'https://x/m.glb' });
+		expect(out).toEqual({ status: 'done', resultAvatarId: 'avatar-1' });
+	});
+
+	it('fires the draft agent mint for the delivered avatar', async () => {
+		inspectGlbMock.mockReturnValue(RIGGED);
+		const out = await finalizeReconstructStage({ userId: 'u1', jobId: 'j1', job: baseJob, glbUrl: 'https://x/m.glb' });
+		expect(out.status).toBe('done');
+		expect(mintDraftAgentIdentityMock).toHaveBeenCalledOnce();
+		expect(mintDraftAgentIdentityMock.mock.calls[0][0]).toEqual({ userId: 'u1', avatarId: 'avatar-1', jobId: 'j1' });
+	});
+
+	it('still delivers the avatar when the draft mint throws', async () => {
+		inspectGlbMock.mockReturnValue(RIGGED);
+		mintDraftAgentIdentityMock.mockRejectedValueOnce(new Error('mint down'));
 		const out = await finalizeReconstructStage({ userId: 'u1', jobId: 'j1', job: baseJob, glbUrl: 'https://x/m.glb' });
 		expect(out).toEqual({ status: 'done', resultAvatarId: 'avatar-1' });
 	});

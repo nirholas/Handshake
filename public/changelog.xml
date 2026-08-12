@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Your agent can now learn your Farcaster voice, and only after you prove the account is yours</title>
+			<link>https://three.ws/docs/farcaster-memory-seeding</link>
+			<guid isPermaLink="false">2026-08-12:Your agent can now learn your Farcaster voice, and only after you prove the account is yours</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Memory seeding already worked from GitHub and X; Farcaster now joins them, with consent built into the protocol itself. Farcaster has no login button we could use, so instead the account's own public record does the work: every Farcaster account publishes the wallets it controls, and you prove ownership by signing a one-time challenge with one of those wallets, Solana first. Nothing is read, let alone stored, before that signature checks out. The grant is read-only and narrow: your public profile and up to 100 recent casts, distilled into identity, facts, and your strongest posts, so the agent talks the way you talk. Changing your mind is one click: revoking the grant deletes every memory it produced, including anything an earlier grant left behind. The whole flow lives in the agent persona editor, and it works with no API key configured because the reader falls back to a public Farcaster hub.</description>
+		</item>
+		<item>
+			<title>Docs · Farcaster memory seeding</title>
+			<link>https://three.ws/docs/farcaster-memory-seeding</link>
+			<guid isPermaLink="false">2026-08-11:Docs · Farcaster memory seeding</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Give an agent your Farcaster voice with explicit consent: ownership is proved by signing a challenge with a wallet the fid itself verified on the protocol (Solana first), only your public profile and casts are read, and revoking the grant deletes every memory it produced.</description>
+		</item>
+		<item>
 			<title>Docs · Tokens API on three.ws</title>
 			<link>https://three.ws/docs/tokens-xyz</link>
 			<guid isPermaLink="false">2026-08-11:Docs · Tokens API on three.ws</guid>

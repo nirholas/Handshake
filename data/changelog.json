@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-12",
+			"title": "Your agent can now learn your Farcaster voice, and only after you prove the account is yours",
+			"summary": "Memory seeding already worked from GitHub and X; Farcaster now joins them, with consent built into the protocol itself. Farcaster has no login button we could use, so instead the account's own public record does the work: every Farcaster account publishes the wallets it controls, and you prove ownership by signing a one-time challenge with one of those wallets, Solana first. Nothing is read, let alone stored, before that signature checks out. The grant is read-only and narrow: your public profile and up to 100 recent casts, distilled into identity, facts, and your strongest posts, so the agent talks the way you talk. Changing your mind is one click: revoking the grant deletes every memory it produced, including anything an earlier grant left behind. The whole flow lives in the agent persona editor, and it works with no API key configured because the reader falls back to a public Farcaster hub.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/docs/farcaster-memory-seeding"
+		},
+		{
 			"date": "2026-08-11",
 			"title": "The standalone avatar viewer is now embeddable in one click, and never leaves you on a blank screen",
 			"summary": "The Avatar Artifact page is meant to be dropped into other sites, so it now carries its own embed snippet: one button copies a ready-made iframe tag, and if a browser refuses clipboard access (which it does inside a cross-origin frame) the snippet appears in a field you can copy by hand. The 3D runtime now ships with the site instead of being pulled from an outside CDN, so a page that embeds the viewer no longer loads a third-party script the host never agreed to. Every way the viewer can fail now paints a real message with a working Retry, including a browser with no WebGL and a runtime that never arrives at all, and the message clears itself if the scene shows up late. The page also stopped hiding one of its own links on phones, keeps its controls clear of the language switcher and the search chip, respects a reduced-motion preference, and pauses rendering while its tab is hidden so an embedded viewer does not burn a host page GPU in the background.",

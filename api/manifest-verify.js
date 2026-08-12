@@ -17,7 +17,7 @@
 // stored copy is only used as a fallback when every gateway is unreachable, and
 // the response says so in `source`.
 //
-// Spec: specs/AGENT_MANIFEST.md (§ Signed envelope). Docs: docs/agent-manifests.md.
+// Spec: specs/AGENT_MANIFEST.md (§ Signed envelope). Docs: docs/agent-manifest.md.
 
 import { sql } from './_lib/db.js';
 import { cors, json, method, wrap, error, rateLimited } from './_lib/http.js';

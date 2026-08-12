@@ -465,8 +465,10 @@ contract GreenfieldVaultTest is Test {
         vm.deal(address(badSeller), 10 ether);
 
         uint256 saleId = _buy(buyer, OBJECT_ID);
-        vm.prank(address(permissionHub));
-        vault.greenfieldCall(STATUS_SUCCESS, 0x07, 2, 777, abi.encode(saleId));
+        // Settle through the mock hub, not a pranked greenfieldCall: the hub
+        // must record the vault as the policy owner or its deletePolicy
+        // rejects the revoke before the refund path under test is reached.
+        permissionHub.settleCreatePolicy(saleId, STATUS_SUCCESS);
 
         vm.expectRevert(GreenfieldVault.TransferFailed.selector);
         badSeller.doRevoke{value: TOTAL_FEE + 1 ether}(vault, saleId);

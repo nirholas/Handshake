@@ -27,8 +27,12 @@ import ort from 'onnxruntime-node';
 export const DEFAULT_MODEL_ID = 'Xenova/distilgpt2';
 export const DEFAULT_MODEL_REVISION = 'main';
 
+// decoder_model_merged_quantized.onnx is the KV-cache-fused, int8-quantized
+// export: no past_key_values inputs to manage, ~80 MB download. The greedy
+// loop feeds only input_ids + attention_mask. MODEL_ID/MODEL_REVISION must
+// resolve these exact paths.
 const MODEL_FILES = [
-	'onnx/model_quantized.onnx',
+	'onnx/decoder_model_merged_quantized.onnx',
 	'config.json',
 	'tokenizer.json',
 	'vocab.json',
@@ -179,6 +183,19 @@ export class BpeTokenizer {
 
 // ── Inference session ───────────────────────────────────────────────────────
 
+// The npm `onnxruntime-node` build ships a CUDA provider stub that hard-fails
+// session creation when it is listed but the CUDA shared libraries are absent
+// (any CPU-only host). So CUDA is requested only when the runtime reports a
+// GPU build: the GPU image (Dockerfile.gpu) installs the CUDA-enabled
+// onnxruntime build and sets ONNXRUNTIME_CUDA=1; everywhere else the session
+// runs on the CPU provider.
+function executionProviders() {
+	const list = [];
+	if (process.env.ONNXRUNTIME_CUDA === '1') list.push('cuda');
+	list.push('cpu');
+	return list;
+}
+
 export class InferenceEngine {
 	constructor({ session, tokenizer, maxLength }) {
 		this.session = session;
@@ -187,17 +204,15 @@ export class InferenceEngine {
 	}
 
 	static async load({ cacheDir, log = () => {} }) {
-		const modelPath = path.join(cacheDir, 'onnx', 'model_quantized.onnx');
+		const modelPath = path.join(cacheDir, 'onnx', 'decoder_model_merged_quantized.onnx');
 		const config = JSON.parse(await readFile(path.join(cacheDir, 'config.json'), 'utf8'));
 		const tokenizer = await BpeTokenizer.load(cacheDir);
 		const session = await ort.InferenceSession.create(modelPath, {
-			// CUDA is used automatically when the GPU image installs the CUDA
-			// build of onnxruntime-node; the CPU build ignores this entry.
-			executionProviders: ['cuda', 'cpu'],
+			executionProviders: executionProviders(),
 			graphOptimizationLevel: 'all',
 			logSeverityLevel: 3,
 		});
-		log(`model loaded from ${modelPath} (providers: ${session.executionProviders ?? 'cpu'})`);
+		log(`model loaded from ${modelPath}`);
 		return new InferenceEngine({
 			session,
 			tokenizer,
@@ -215,10 +230,13 @@ export class InferenceEngine {
 		const budget = Math.min(Math.max(1, maxNewTokens), this.maxLength - ids.length);
 		let generated = 0;
 
-		const inputName = this.session.inputNames[0];
+		const feedNames = new Set(this.session.inputNames);
 		for (let step = 0; step < budget; step++) {
 			const seq = BigInt64Array.from(ids.map(BigInt));
-			const feeds = { [inputName]: new ort.Tensor('int64', seq, [1, ids.length]) };
+			const feeds = { input_ids: new ort.Tensor('int64', seq, [1, ids.length]) };
+			if (feedNames.has('attention_mask')) {
+				feeds.attention_mask = new ort.Tensor('int64', BigInt64Array.from({ length: ids.length }, () => 1n), [1, ids.length]);
+			}
 			const outputs = await this.session.run(feeds);
 			const logits = outputs[this.session.outputNames[0]];
 			const vocabSize = logits.dims[logits.dims.length - 1];

@@ -14,7 +14,7 @@
  *
  * Exit codes: 0 verified, 1 verification failed, 2 could not fetch or parse.
  *
- * Spec: specs/AGENT_MANIFEST.md (§ Signed envelope). Docs: docs/agent-manifests.md.
+ * Spec: specs/AGENT_MANIFEST.md (§ Signed envelope). Docs: docs/agent-manifest.md.
  */
 
 import { readFile } from 'node:fs/promises';

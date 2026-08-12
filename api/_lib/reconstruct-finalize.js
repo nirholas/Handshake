@@ -149,6 +149,19 @@ async function materializeReconstructAvatar({
 		console.warn('[reconstruct] forge registration skipped:', err?.message);
 	}
 
+	// Roadmap Phase 1: a successful reconstruction is also minted as a draft
+	// on-chain agent identity — Metaplex Core on Solana (devnet is the default
+	// automated path; mainnet only via the explicit DRAFT_AGENT_MINT_NETWORK
+	// flag), ERC-8004 on EVM behind DRAFT_AGENT_MINT_EVM_ENABLED. Best-effort,
+	// same contract as the webhook + forge steps above: the avatar is already
+	// delivered, so a mint hiccup must never fail the job.
+	try {
+		const { mintDraftAgentIdentity } = await import('./draft-mint.js');
+		await mintDraftAgentIdentity({ userId, avatarId: avatar.id, jobId });
+	} catch (err) {
+		console.warn('[reconstruct] draft agent mint skipped:', err?.message);
+	}
+
 	return avatar;
 }
 

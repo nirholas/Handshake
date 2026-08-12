@@ -273,7 +273,7 @@ async function handleGrant(req, res, agentId, userId, body) {
 	if (!challenge) return error(res, 404, 'challenge_not_found', 'no such challenge for this agent');
 	if (challenge.consumed_at) return error(res, 409, 'challenge_used', 'this challenge has already been used');
 	if (new Date(challenge.expires_at) <= new Date()) {
-		return error(res, 410, 'challenge_expired', 'this challenge expired — request a new one');
+		return error(res, 410, 'challenge_expired', 'this challenge expired, request a new one');
 	}
 
 	// Re-read the fid's verifications live rather than trusting the list handed

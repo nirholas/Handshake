@@ -1,11 +1,32 @@
 {
-	"generated_at": "2026-08-12T07:03:01.311Z",
+	"generated_at": "2026-08-12T07:38:25.926Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-12",
+			"type": "update",
+			"title": "Your agent can now learn your Farcaster voice, and only after you prove the account is yours",
+			"summary": "Memory seeding already worked from GitHub and X; Farcaster now joins them, with consent built into the protocol itself. Farcaster has no login button we could use, so instead the account's own public record does the work: every Farcaster account publishes the wallets it controls, and you prove ownership by signing a one-time challenge with one of those wallets, Solana first. Nothing is read, let alone stored, before that signature checks out. The grant is read-only and narrow: your public profile and up to 100 recent casts, distilled into identity, facts, and your strongest posts, so the agent talks the way you talk. Changing your mind is one click: revoking the grant deletes every memory it produced, including anything an earlier grant left behind. The whole flow lives in the agent persona editor, and it works with no API key configured because the reader falls back to a public Farcaster hub.",
+			"link": "/docs/farcaster-memory-seeding",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "launch",
+			"title": "Docs · Farcaster memory seeding",
+			"summary": "Give an agent your Farcaster voice with explicit consent: ownership is proved by signing a challenge with a wallet the fid itself verified on the protocol (Solana first), only your public profile and casts are read, and revoking the grant deletes every memory it produced.",
+			"link": "/docs/farcaster-memory-seeding",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-08-11",
 			"type": "launch",

@@ -2383,6 +2383,14 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/farcaster-memory-seeding",
+					"title": "Docs · Farcaster memory seeding",
+					"description": "Give an agent your Farcaster voice with explicit consent: ownership is proved by signing a challenge with a wallet the fid itself verified on the protocol (Solana first), only your public profile and casts are read, and revoking the grant deletes every memory it produced.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-11"
+				},
+				{
 					"path": "/docs/ibm-community",
 					"title": "Docs · IBM Community post catalog",
 					"description": "The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.",

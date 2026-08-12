@@ -1,0 +1,252 @@
+/**
+ * Unit tests for the node operator client's pure layers: identity, signing,
+ * config, and the job loop. The wire client is exercised against a stub
+ * fetch; the inference model itself is covered by the end-to-end proof
+ * (scripts/e2e-local.mjs) rather than re-downloading weights in unit tests.
+ */
+
+import { describe, it, expect } from 'vitest';
+import {
+	base58Encode,
+	base58Decode,
+	createIdentity,
+	parseSecretKey,
+} from '../src/identity.js';
+import { receiptPayload, signResult, verifyReceipt, verifyResult, sha256Hex } from '../src/signing.js';
+import { loadConfig } from '../src/config.js';
+import { createPlatformClient } from '../src/platform.js';
+import { createJobLoop } from '../src/loop.js';
+
+describe('identity', () => {
+	it('round-trips base58 against the known ed25519 zero-key vector', () => {
+		// 64 zero bytes is a valid ed25519 secret key seed buffer shape; its
+		// base58 encoding must survive a decode round trip exactly.
+		const bytes = new Uint8Array(64).fill(0).map((_, i) => (i * 7 + 13) % 256);
+		expect(base58Decode(base58Encode(bytes))).toEqual(bytes);
+	});
+
+	it('preserves leading zero bytes (Solana address convention)', () => {
+		const bytes = new Uint8Array([0, 0, 0, 5, 6, 7]);
+		expect(base58Decode(base58Encode(bytes))).toEqual(bytes);
+	});
+
+	it('derives a stable base58 pubkey from a fixed secret key', () => {
+		const secret = new Uint8Array(64).fill(0).map((_, i) => (i * 31 + 1) % 256);
+		const a = createIdentity(secret);
+		const b = createIdentity(secret);
+		expect(a.publicKey).toBe(b.publicKey);
+		expect(a.publicKey.length).toBeGreaterThanOrEqual(32);
+		expect(a.publicKey.length).toBeLessThanOrEqual(44);
+	});
+
+	it('parses base58 and base64 secret keys identically', () => {
+		const secret = new Uint8Array(64).fill(0).map((_, i) => (i * 17 + 3) % 256);
+		const from58 = parseSecretKey(base58Encode(secret));
+		const from64 = parseSecretKey(Buffer.from(secret).toString('base64'));
+		expect(from58).toEqual(secret);
+		expect(from64).toEqual(secret);
+	});
+
+	it('rejects malformed secret keys', () => {
+		expect(() => parseSecretKey('not-a-key')).toThrow();
+		expect(() => parseSecretKey(Buffer.from('short').toString('base64'))).toThrow();
+	});
+});
+
+describe('signing', () => {
+	const identity = createIdentity(new Uint8Array(64).fill(0).map((_, i) => (i * 11 + 5) % 256));
+	const job = {
+		jobId: 'job-123',
+		model: 'Xenova/all-MiniLM-L6-v2',
+		prompt: 'hello world',
+		output: { kind: 'text-embedding', embedding: [0.1, 0.2] },
+		startedAt: 1000,
+		finishedAt: 1500,
+	};
+
+	it('sha256Hex matches the known empty-string digest', async () => {
+		expect(await sha256Hex('')).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+	});
+
+	it('produces a receipt that verifies against the node pubkey', async () => {
+		const receipt = await signResult(identity, job);
+		expect(receipt.algorithm).toBe('ed25519');
+		expect(receipt.publicKey).toBe(identity.publicKey);
+		expect(verifyReceipt(receipt, identity.publicKey)).toBe(true);
+	});
+
+	it('fails verification for a different claimed pubkey', async () => {
+		const receipt = await signResult(identity, job);
+		const other = createIdentity();
+		expect(verifyReceipt(receipt, other.publicKey)).toBe(false);
+	});
+
+	it('fails verification when any job field is tampered with', async () => {
+		const receipt = await signResult(identity, job);
+		expect(await verifyResult(job, receipt)).toBe(true);
+		expect(await verifyResult({ ...job, output: { kind: 'text-embedding', embedding: [9, 9] } }, receipt)).toBe(false);
+		expect(await verifyResult({ ...job, jobId: 'job-999' }, receipt)).toBe(false);
+		expect(await verifyResult({ ...job, prompt: 'tampered' }, receipt)).toBe(false);
+	});
+
+	it('is deterministic: same inputs produce the same payload', async () => {
+		const p1 = await receiptPayload(job);
+		const p2 = await receiptPayload({ ...job });
+		expect(p1).toBe(p2);
+	});
+
+	it('rejects receipts with a wrong algorithm tag', async () => {
+		const receipt = await signResult(identity, job);
+		expect(verifyReceipt({ ...receipt, algorithm: 'secp256k1' }, identity.publicKey)).toBe(false);
+	});
+});
+
+describe('config', () => {
+	it('applies defaults when nothing is set', () => {
+		const cfg = loadConfig({ env: {}, cwd: '/nonexistent-dir-that-has-no-config' });
+		expect(cfg.platformUrl).toBe('https://three.ws');
+		expect(cfg.capability).toBe('text-embedding');
+		expect(cfg.pollIntervalMs).toBe(5000);
+	});
+
+	it('prefers env over file over defaults', () => {
+		const cfg = loadConfig({
+			env: { PLATFORM_URL: 'http://localhost:3101', POLL_INTERVAL_MS: '2000' },
+			cwd: '/nonexistent-dir-that-has-no-config',
+		});
+		expect(cfg.platformUrl).toBe('http://localhost:3101');
+		expect(cfg.pollIntervalMs).toBe(2000);
+	});
+
+	it('strips a trailing slash from platformUrl', () => {
+		const cfg = loadConfig({ env: { PLATFORM_URL: 'https://three.ws/' }, cwd: '/nonexistent-dir-that-has-no-config' });
+		expect(cfg.platformUrl).toBe('https://three.ws');
+	});
+
+	it('rejects a non-URL platformUrl', () => {
+		expect(() => loadConfig({ env: { PLATFORM_URL: 'three.ws' }, cwd: '/nonexistent-dir-that-has-no-config' })).toThrow(/absolute http/);
+	});
+
+	it('rejects a too-small poll interval', () => {
+		expect(() => loadConfig({ env: { POLL_INTERVAL_MS: '100' }, cwd: '/nonexistent-dir-that-has-no-config' })).toThrow(/POLL_INTERVAL_MS/);
+	});
+});
+
+describe('platform client', () => {
+	const identity = createIdentity();
+
+	function stubFetch(handlers) {
+		const calls = [];
+		const fetchImpl = async (url, opts) => {
+			calls.push({ url, opts });
+			const u = new URL(url);
+			for (const h of handlers) {
+				if (u.pathname.startsWith(h.match)) {
+					return {
+						ok: h.ok ?? true,
+						status: h.status ?? 200,
+						text: async () => JSON.stringify(h.body),
+					};
+				}
+			}
+			return { ok: false, status: 404, text: async () => JSON.stringify({ error: 'not_found' }) };
+		};
+		return { fetchImpl, calls };
+	}
+
+	it('registers with a signature over the domain-separated register string', async () => {
+		const { fetchImpl, calls } = stubFetch([{ match: '/api/nodes/register', body: { ok: true, node: { id: 'n1', publicKey: identity.publicKey } } }]);
+		const client = createPlatformClient({ platformUrl: 'http://localhost:3101', identity, fetchImpl });
+		const res = await client.register({ label: 'test node', capabilities: [{ capability: 'text-embedding', model: 'm' }] });
+		expect(res.node.id).toBe('n1');
+		const body = JSON.parse(calls[0].opts.body);
+		expect(body.publicKey).toBe(identity.publicKey);
+		expect(identity.verify(`threews-node-register:${identity.publicKey}:${body.registeredAt}`, body.signature)).toBe(true);
+	});
+
+	it('polls with a signed timestamp and returns null on an empty queue', async () => {
+		const { fetchImpl, calls } = stubFetch([{ match: '/api/nodes/jobs', body: { job: null } }]);
+		const client = createPlatformClient({ platformUrl: 'http://localhost:3101', identity, fetchImpl });
+		expect(await client.pollJob({ capability: 'text-embedding' })).toBeNull();
+		const u = new URL(calls[0].url);
+		const ts = u.searchParams.get('ts');
+		expect(identity.verify(`threews-node-poll:${identity.publicKey}:${ts}`, u.searchParams.get('sig'))).toBe(true);
+	});
+
+	it('submits results to the job-scoped URL with the receipt attached', async () => {
+		const receipt = await signResult(identity, { jobId: 'j1', model: 'm', prompt: 'p', output: {}, startedAt: 1, finishedAt: 2 });
+		const { fetchImpl, calls } = stubFetch([{ match: '/api/nodes/jobs/j1/result', body: { ok: true, verified: true } }]);
+		const client = createPlatformClient({ platformUrl: 'http://localhost:3101', identity, fetchImpl });
+		const res = await client.submitResult('j1', { output: {}, startedAt: 1, finishedAt: 2, receipt });
+		expect(res.verified).toBe(true);
+		expect(calls[0].url).toContain('/api/nodes/jobs/j1/result');
+	});
+
+	it('surfaces platform error text on non-2xx', async () => {
+		const { fetchImpl } = stubFetch([{ match: '/api/nodes/register', ok: false, status: 401, body: { error: 'bad_signature' } }]);
+		const client = createPlatformClient({ platformUrl: 'http://localhost:3101', identity, fetchImpl });
+		await expect(client.register({ capabilities: [] })).rejects.toThrow(/bad_signature/);
+	});
+});
+
+describe('job loop', () => {
+	const identity = createIdentity();
+
+	function makeClient(jobs) {
+		const submitted = [];
+		const failed = [];
+		return {
+			submitted,
+			failed,
+			pollJob: async () => jobs.shift() ?? null,
+			submitResult: async (id, payload) => { submitted.push({ id, payload }); return { ok: true, verified: true }; },
+			reportFailure: async (id, payload) => { failed.push({ id, payload }); return { ok: true }; },
+		};
+	}
+
+	it('executes a polled job and submits a signed, verifiable result', async () => {
+		const job = { id: 'j-loop-1', capability: 'text-embedding', model: 'm', input: { text: 'hi' } };
+		const client = makeClient([job]);
+		const loop = createJobLoop({
+			client,
+			identity,
+			capability: 'text-embedding',
+			pollIntervalMs: 10,
+			// A deterministic stand-in for the real model: the loop contract is
+			// what is under test here, not the tensor math.
+			runJobImpl: async (j) => ({ output: { kind: 'text-embedding', model: j.model, embedding: [1, 2, 3], dimensions: 3 }, startedAt: 10, finishedAt: 20 }),
+		});
+		const run = loop.run();
+		await new Promise((r) => setTimeout(r, 100));
+		loop.stop();
+		await run;
+
+		expect(client.submitted).toHaveLength(1);
+		expect(client.submitted[0].id).toBe('j-loop-1');
+		expect(loop.stats.completed).toBe(1);
+		const { payload } = client.submitted[0];
+		expect(await verifyResult(
+			{ jobId: 'j-loop-1', model: 'm', prompt: 'hi', output: payload.output, startedAt: 10, finishedAt: 20 },
+			payload.receipt,
+		)).toBe(true);
+	});
+
+	it('reports a failing job instead of crashing the loop', async () => {
+		const client = makeClient([{ id: 'j-bad', capability: 'text-embedding', model: 'm', input: { text: '' } }]);
+		const loop = createJobLoop({
+			client,
+			identity,
+			capability: 'text-embedding',
+			pollIntervalMs: 10,
+			runJobImpl: async () => { throw new Error('input.text must be a non-empty string'); },
+		});
+		const run = loop.run();
+		await new Promise((r) => setTimeout(r, 100));
+		loop.stop();
+		await run;
+
+		expect(loop.stats.failed).toBe(1);
+		expect(client.failed[0].payload.error).toMatch(/non-empty/);
+		expect(client.submitted).toHaveLength(0);
+	});
+});

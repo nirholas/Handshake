@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-12T07:35:32.465Z",
+	"generated_at": "2026-08-12T07:38:25.916Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2912,6 +2912,16 @@
 					"title": "Docs",
 					"description": "Full documentation: SDKs, API reference, embedding, agent system, smart contracts.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/farcaster-memory-seeding",
+					"title": "Docs · Farcaster memory seeding",
+					"description": "Give an agent your Farcaster voice with explicit consent: ownership is proved by signing a challenge with a wallet the fid itself verified on the protocol (Solana first), only your public profile and casts are read, and revoking the grant deletes every memory it produced.",
+					"added": "2026-08-11",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
