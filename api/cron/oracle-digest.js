@@ -1,4 +1,4 @@
-// GET /api/cron/oracle-digest — daily Oracle conviction digest via Telegram.
+// GET /api/cron/oracle-digest - daily Oracle conviction digest via Telegram.
 //
 // Runs once daily (08:00 UTC). Three lanes:
 //
@@ -77,7 +77,7 @@ async function followedAgentStats(agentIds, network) {
 function buildFollowerMessage(follower, agentStats, coins) {
 	const agentList = follower.agents.map((a) => esc(a.agent_name || 'Agent')).join(', ');
 	const lines = [
-		`🔮 <b>Oracle daily digest — agents you follow</b>`,
+		`🔮 <b>Oracle daily digest - agents you follow</b>`,
 		`Following: ${esc(agentList)}`,
 		``,
 	];
@@ -231,7 +231,7 @@ function buildMessage(watch, stats, coins) {
 	const agentName = esc(watch.agent_name || 'Your agent');
 
 	const lines = [
-		`🔮 <b>Oracle daily digest — ${agentName}</b>`,
+		`🔮 <b>Oracle daily digest - ${agentName}</b>`,
 		armedLabel,
 		``,
 	];

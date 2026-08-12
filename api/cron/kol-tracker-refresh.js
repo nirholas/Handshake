@@ -1,7 +1,7 @@
-// GET/POST /api/cron/kol-tracker-refresh — prewarm the KOL Tracker's caches.
+// GET/POST /api/cron/kol-tracker-refresh - prewarm the KOL Tracker's caches.
 //
 // The tracker (src/kol/tracker.js) computes P&L live per request but caches the
-// X follower/avatar lookup for 15 minutes (src/kol/x-profile.js) — the free X API
+// X follower/avatar lookup for 15 minutes (src/kol/x-profile.js) - the free X API
 // tier's rate limit (75 user lookups/15min) can't absorb every page load hitting
 // it cold. Running this every 10 minutes keeps that cache warm so a visitor's
 // request never blocks on (or exhausts) the X API budget.

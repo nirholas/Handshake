@@ -1,4 +1,4 @@
-// GET /api/cron/mirror-fanout — drive the custodial copy-trade (mirror) engine.
+// GET /api/cron/mirror-fanout - drive the custodial copy-trade (mirror) engine.
 //
 // For every active follow edge whose leader has made a NEW confirmed trade since
 // the edge's cursor, size the trade for the follower and execute it through the

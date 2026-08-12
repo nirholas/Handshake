@@ -1,15 +1,15 @@
-// GET /api/cron/news-archive-append — hourly continuous archiver for the
+// GET /api/cron/news-archive-append - hourly continuous archiver for the
 // crypto-news corpus on gs://three-ws-news-archive.
 //
 // The recovered historical archive ends at 2025-12; this cron keeps it
 // current by appending the live aggregator's articles (api/_lib/news.js,
 // the full publisher registry) to the current month's JSONL, in the exact enriched
 // schema the corpus already uses. Records are content-addressed (16-hex id
-// of the link), so appends are idempotent — an article seen by ten cron
+// of the link), so appends are idempotent - an article seen by ten cron
 // runs lands exactly once.
 //
 // Writes go through the GCS JSON API with the platform's own credentials
-// (api/_lib/gcp-auth.js — GCP_SERVICE_ACCOUNT_JSON or the Cloud Run runtime
+// (api/_lib/gcp-auth.js - GCP_SERVICE_ACCOUNT_JSON or the Cloud Run runtime
 // SA, which holds roles/storage.objectAdmin on the bucket) and are guarded
 // with x-goog-if-generation-match so two overlapping runs can't clobber
 // each other; the loser retries next hour.
@@ -65,7 +65,7 @@ async function gcsPutObject(token, name, body, generation, contentType) {
 	return resp.json();
 }
 
-// ── Record conversion — live article → enriched archive schema ──────────────
+// ── Record conversion - live article → enriched archive schema ──────────────
 
 function detectLanguage(title) {
 	if (/[぀-ヿ]/.test(title)) return 'ja'; // hiragana/katakana
@@ -109,7 +109,7 @@ function toArchiveRecord(a, marketContext, nowIso) {
 	};
 }
 
-// Market context at capture time — real values or null, never fabricated.
+// Market context at capture time - real values or null, never fabricated.
 async function currentMarketContext() {
 	try {
 		const [global, fng] = await Promise.all([
@@ -154,7 +154,7 @@ export default wrapCron(async (req, res) => {
 	let token = null;
 	if (!dryRun) token = await getGcpAccessToken();
 
-	// Live sweep across every source — the aggregator serves from its
+	// Live sweep across every source - the aggregator serves from its
 	// per-source cache, so this is one bounded fan-out at most. The limit must
 	// exceed the whole live corpus (~3k across 159 sources): anything the slice
 	// drops here is silently never archived, and its permalink dies when the
@@ -164,7 +164,7 @@ export default wrapCron(async (req, res) => {
 		return json(res, 200, { ok: true, month, appended: 0, note: 'aggregator returned no articles' });
 	}
 
-	// Bucket each article into ITS publication month — the same month its
+	// Bucket each article into ITS publication month - the same month its
 	// permalink (/markets/news/<YYYY-MM>/<id>) points at. Archiving a late-June
 	// story into the July file would strand its canonical URL forever. One
 	// month of grace covers boundary stragglers; anything older is feed
@@ -195,7 +195,7 @@ export default wrapCron(async (req, res) => {
 			try {
 				seen.add(JSON.parse(line).id);
 			} catch {
-				// malformed line — leave it in place, it just can't dedupe
+				// malformed line - leave it in place, it just can't dedupe
 			}
 		}
 		alreadyArchived += seen.size;

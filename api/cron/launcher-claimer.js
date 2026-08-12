@@ -1,5 +1,5 @@
 // @ts-check
-// GET/POST /api/cron/launcher-claimer — auto-claim pump.fun creator fees from global
+// GET/POST /api/cron/launcher-claimer - auto-claim pump.fun creator fees from global
 // launcher runs. Fires every 5 minutes via Vercel cron. For each minted coin in
 // launcher_runs that has accumulated >= CLAIM_THRESHOLD_SOL in creator fees and hasn't
 // been claimed in the last 24 hours:
@@ -9,7 +9,7 @@
 //
 // This closes the creator-fee loop: launch → creator fees accrue → claim → record.
 // buyback_sol records the buyback-earmarked share of those CREATOR fees (the run's
-// buyback_bps) for revenue tracking — it is NOT a transfer made here. The on-chain
+// buyback_bps) for revenue tracking - it is NOT a transfer made here. The on-chain
 // $THREE-aligned buy pressure for these coins comes from the buyback_bps binding baked
 // into each launch (handleLaunchAgent → PumpAgent.create), which routes a share of TRADE
 // fees into the coin's on-chain buyback vault; the hourly run-buyback cron
@@ -30,7 +30,7 @@ const MAX_PER_TICK = 20;
 let _schemaDone = false;
 async function ensureSchema() {
 	if (_schemaDone) return;
-	// Idempotent — launcher-engine.js creates the same table on runLauncherTick().
+	// Idempotent - launcher-engine.js creates the same table on runLauncherTick().
 	// Duplicated here so the claimer works even when the engine hasn't ticked yet.
 	await sql`
 		create table if not exists launcher_claims (
@@ -106,7 +106,7 @@ async function processMint(run, token) {
 		return { runId, status: 'below-threshold', claimableSol };
 	}
 
-	// 2. Claim — the agent signs its own fee claim (same identity that created the coin).
+	// 2. Claim - the agent signs its own fee claim (same identity that created the coin).
 	const claimRes = await agentFetch(token, '/api/pump/collect-creator-fee-agent', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
@@ -120,7 +120,7 @@ async function processMint(run, token) {
 	// Fall back to the pre-claim claimable figure if the node couldn't be sampled,
 	// so the recorded revenue is never silently zeroed (the prior code read a
 	// non-existent `lamports`/`sig` field, storing 0 SOL + a null signature on
-	// every claim — defeating the revenue rollup and the 24h dedup guard).
+	// every claim - defeating the revenue rollup and the 24h dedup guard).
 	const claimSig = claimData.signature ?? claimData.sig ?? null;
 	const claimedLamports = Number(claimData.lamports ?? Math.round(claimableSol * 1e9));
 	const claimedSol = claimedLamports / 1e9;

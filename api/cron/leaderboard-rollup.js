@@ -1,13 +1,13 @@
-// GET /api/cron/leaderboard-rollup — daily top-10 badge sweep for the
+// GET /api/cron/leaderboard-rollup - daily top-10 badge sweep for the
 // cross-surface leaderboard (prompt 06 of the user-value pack).
 //
-// The leaderboard itself (GET /api/leaderboard/unified) is read live — none of
+// The leaderboard itself (GET /api/leaderboard/unified) is read live - none of
 // its five metrics need a rollup table, the underlying queries are cheap
 // aggregates the same way /api/walk/leaderboard's all-time window already is.
 // The ONE thing that genuinely needs a daily cadence is the "top10_<metric>"
 // badge: a placement earned today shouldn't quietly stop being true if the
 // user's rank slips tomorrow, so it has to be captured at a point in time
-// rather than recomputed live. This cron is that point in time — once daily,
+// rather than recomputed live. This cron is that point in time - once daily,
 // walk the top 10 of each metric and award the badge to whoever is there right
 // now. Idempotent (user_badges is unique on user_id+code), so a user who holds
 // top-10 for a week earns the badge once, on day one.
