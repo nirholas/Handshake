@@ -223,6 +223,32 @@ function mapCoins(raw) {
 	})).filter((c) => c.mint);
 }
 
+// How long a bare deep link waits for the coin's identity before it gives up and
+// builds the world anyway. Entry already has the sign-in gate, the manifest and
+// an avatar GLB ahead of it, so this is the one place a slow upstream must never
+// be allowed to hold the player on a loading screen.
+const COIN_IDENTITY_TIMEOUT_MS = 6000;
+
+// Fill in whatever a shared world link did not carry. The name/symbol/image on
+// /play?coin=<mint>&name=…&symbol=…&image=… are decoration the sharer's client
+// appended, and they go missing constantly: a hand-typed link, a chat client
+// that truncated the query, an unfurl that kept only the mint. The mint alone
+// still identifies the coin exactly, so a link without the decoration must build
+// the same world as a link with it, not a nameless one titled "Community".
+//
+// Only blanks are filled: anything the link did carry is what every peer on that
+// link already sees, so it stays authoritative here even if the feed disagrees.
+function mergeCoinIdentity(coin, fetched) {
+	if (!fetched) return coin;
+	return {
+		...coin,
+		name: coin.name || fetched.name || '',
+		symbol: coin.symbol || fetched.symbol || '',
+		image: coin.image || fetched.image || '',
+		marketCap: coin.marketCap || fetched.marketCap || 0,
+	};
+}
+
 // Compact USD for the jumbotron's market-cap readout: $1.2B / $940M / $12K.
 function formatUsd(n) {
 	const v = Number(n) || 0;
@@ -850,6 +876,39 @@ export class CoinCommunities {
 		}
 	}
 
+	// The identity behind a bare `?coin=<mint>` link, read from the same pump.fun
+	// record the lobby cards are built from. Never throws and never stalls entry:
+	// a miss returns null and the world falls back to its generated art and the
+	// generic label, exactly as it did before.
+	async _fetchCoinIdentity(mint) {
+		// pump.fun's coin lookup is Solana-only, so an EVM world (Robinhood Chain)
+		// has nothing to gain from the round trip.
+		if (!SOLANA_MINT_RE.test(String(mint || '').trim())) return null;
+		const ctrl = new AbortController();
+		const timer = setTimeout(() => ctrl.abort(), COIN_IDENTITY_TIMEOUT_MS);
+		try {
+			const r = await fetch(`${COIN_URL}?mint=${encodeURIComponent(mint)}`, {
+				headers: { accept: 'application/json' }, signal: ctrl.signal,
+			});
+			if (!r.ok) throw new Error('HTTP ' + r.status);
+			const c = await r.json();
+			if (!c || (c.mint && c.mint !== mint)) return null;
+			return {
+				// Clamped to the same caps the URL params are clamped to: the feed is
+				// upstream text, and the room server truncates it for every peer.
+				name: clampParam(c.name, 48),
+				symbol: clampParam(c.symbol, 16),
+				image: proxiedImageURL(c.image_uri || c.image || c.imageUri || c.logo || '', mint),
+				marketCap: c.usd_market_cap || c.market_cap_usd || c.marketCap || 0,
+			};
+		} catch (err) {
+			log.warn('[coincommunities] coin identity lookup failed:', err?.message);
+			return null;
+		} finally {
+			clearTimeout(timer);
+		}
+	}
+
 	// Live search across ALL of pump.fun (not just the trending grid) so any
 	// coin can be turned into a world. Returns mapped coins; throws on failure
 	// so the UI can distinguish "no matches" from "search unavailable".
@@ -1350,6 +1409,19 @@ export class CoinCommunities {
 				biome: HOME_TOWN.biome,
 				official: true,
 			};
+		}
+		if (!coin.name || !coin.symbol || !coin.marketCap) {
+			// Any link that arrives short of a full identity. A bare mint
+			// used to build a real district under a totem reading COMMUNITY, a
+			// welcome card offering "the Community community", and a tab titled
+			// Community, for a coin the platform can name in one request. Even a
+			// full share link carries no market cap (the rewrite below cannot put a
+			// number that moves onto a URL), so the jumbotron and the world's chart
+			// screen both read blank on every link anyone has ever shared. One
+			// lookup fixes both. Lobby cards arrive complete and skip it.
+			const fetched = await this._fetchCoinIdentity(coin.mint);
+			if (this.phase !== 'loading' || epoch !== this._enterEpoch) return; // backed out mid-lookup
+			coin = mergeCoinIdentity(coin, fetched);
 		}
 		coin = { ...coin, tier, holderMinUsd, holderMinTokens };
 		this.coin = coin;

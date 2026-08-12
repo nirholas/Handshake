@@ -81,6 +81,23 @@ The art has a designed failure path in both places it appears. In the loader, a 
 
 The loader also sets a provisional `document.title` from the link and stashes the original in `documentElement.dataset.lobbyTitle`; `_setTabTitle()` in [src/game/coincommunities.js](../src/game/coincommunities.js) replaces it with the resolved coin on entry and restores the stashed original on leave, so the two writers never fight and the localised title is never re-spelled in JS.
 
+### 3b. A link that kept only the mint still opens a named world
+
+**Invariant: `enter()` backfills a missing name, symbol, image or market cap from `/api/pump/coin` before it builds anything, and what the link carried always wins.**
+
+The mint is the only part of `/play?coin=…&name=…&symbol=…&image=…` that identifies the coin. Everything after it is decoration the sharer's client appended to the URL, and it goes missing constantly: a hand-typed link, a chat client that truncated the query, an unfurl that kept only the mint, a link copied out of a screenshot. The market cap was never on the URL at all, because a number that moves cannot be baked into a link people re-share for weeks.
+
+A link short of that decoration used to build the full world anyway, with no identity in it: a totem reading "COMMUNITY", a welcome card offering "the Community community", a tab titled Community, and a blank market cap on both the jumbotron and the in-world chart screen. That is the same failure section 3 refuses for a *broken* mint, arriving through a mint that is perfectly valid.
+
+`_fetchCoinIdentity()` in [src/game/coincommunities.js](../src/game/coincommunities.js) reads the coin from the same feed the lobby cards are built from, and `mergeCoinIdentity()` fills only the blanks: whatever the link did carry is what every peer already on that link sees, so it stays authoritative even if the feed disagrees. The rules from sections 1 through 3 still apply to the result, since it is upstream text like any other: the name and symbol go through `clampParam()`, the image through `proxiedImageURL()`. Four properties keep the lookup from ever being worse than the nameless world it replaces:
+
+- It is skipped entirely for a coin that arrived complete, so a lobby card never pays for it.
+- It is skipped for an EVM mint, which the pump.fun lookup cannot answer for.
+- It is bounded by an `AbortController` at `COIN_IDENTITY_TIMEOUT_MS`, so a slow upstream cannot hold a player on the loading screen; any failure resolves to `null` and the world builds exactly as it did before.
+- It re-checks the entry phase and epoch after awaiting, so backing out mid-lookup bails instead of resurrecting a torn-down world.
+
+The URL rewrite that follows puts the resolved identity back on the address bar, so the next person to receive that link never pays for the lookup at all.
+
 ## 4. Losing the connection recovers cleanly
 
 **Invariant: a reconnect must retire the peers who left while you were offline.**
@@ -213,7 +230,8 @@ The `WebSocket` case is not hypothetical: `/play` opens the multiplayer socket d
 ```bash
 # Pure-logic guards: CSS-injection, mint validation, param clamping,
 # and the image-URL scheme allowlist.
-npx vitest run tests/play-deeplink-safety.test.js tests/ipfs-image-url-safety.test.js
+npx vitest run tests/play-deeplink-safety.test.js tests/play-deeplink-identity.test.js \
+  tests/ipfs-image-url-safety.test.js
 
 # Deliberate failure injection in a real browser: hostile query strings, blocked
 # coin art and GLBs, a dead auth gate, an ad blocker, a total API outage.
