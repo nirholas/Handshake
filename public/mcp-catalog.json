@@ -4570,7 +4570,7 @@
 		{
 			"name": "enlist_faction",
 			"title": "Enlist in a Coin Clash faction",
-			"description": "Enlist the signer's wallet as a soldier in a Coin Clash faction and return a war pass. Requires the wallet to hold the faction coin: the tool requests a challenge, signs it with the wallet's Solana key (from the `secret` arg, or SOLANA_SECRET_KEY env), and the backend verifies the signature then checks a live on-chain holding. Returns `{ eligible, wallet, faction, amount, usd, warPass }`. If `eligible` is false the wallet does not currently hold the coin (`reason: \"not_a_holder\"`) and `warPass` is null — buy/hold the coin and retry. Keep the `warPass`: pass it to rally_faction to spend taps as battle power. No funds move; the pass expires after ~30 minutes.",
+			"description": "Enlist the signer's wallet as a soldier in a Coin Clash faction and return a war pass. Requires the wallet to hold the faction coin: the tool requests a challenge, signs it with the wallet's Solana key (from the `secret` arg, or SOLANA_SECRET_KEY env), and the backend verifies the signature then checks a live on-chain holding. Returns `{ eligible, wallet, faction, amount, usd, warPass, reason, challengeExpiresAt }`. If `eligible` is false the wallet does not currently hold the coin (`reason: \"not_a_holder\"`) and `warPass` is null — buy/hold the coin and retry. Keep the `warPass`: pass it to rally_faction to spend taps as battle power. No funds move; the pass expires after ~30 minutes.",
 			"server": {
 				"id": "clash-mcp",
 				"title": "@three-ws/clash-mcp",
@@ -4824,7 +4824,7 @@
 		{
 			"name": "concierge_embed",
 			"title": "Generate a Concierge embed snippet for a website",
-			"description": "Generate ready-to-paste embed code for adding a three.ws Concierge (an AI chat widget with a talking 3D avatar) to a website. Returns the one-tag <script> install by default, or the <three-concierge> web component / npm snippet / all of them. Configure the accent color, avatar, greeting, curated knowledge, suggested prompts, position and theme. Offline: this only composes the code, it installs nothing.",
+			"description": "Generate ready-to-paste embed code for adding a three.ws Concierge (an AI chat widget with a talking 3D avatar) to a website. Returns every install flavor by default (flavor \"all\"): the one-tag <script> install, the <three-concierge> web component, the npm snippet, and the imperative mount() call; pass `flavor` to get just one. Configure the accent color, avatar, greeting, curated knowledge, suggested prompts, position and theme. Offline: this only composes the code, it installs nothing.",
 			"server": {
 				"id": "concierge-mcp",
 				"title": "@three-ws/concierge-mcp",
@@ -11349,7 +11349,7 @@
 		{
 			"name": "pose_model",
 			"title": "Resolve a text prompt to a pose-studio seed + joint rotations",
-			"description": "Map a natural-language pose description to a deterministic pose-studio seed and the full Euler joint-rotation map for the three.ws humanoid mannequin, picked from the in-repo preset library. Returns the preset id, the complete pose (radians per joint), a stable seed, and a previewUrl on three.ws/pose. Deterministic and free — the same prompt always yields the same pose. Pair with auto_rig_model to pose a rigged character.",
+			"description": "Map a natural-language pose description to a deterministic pose-studio seed and the full Euler joint-rotation map for the three.ws humanoid mannequin, picked from the in-repo preset library. Returns the preset id, the complete pose (radians per joint), a stable seed, and a previewUrl on three.ws/pose. Deterministic: the same prompt always yields the same pose. Same engine as the free local @three-ws/pose npm package. Pair with auto_rig_model to pose a rigged character.",
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",

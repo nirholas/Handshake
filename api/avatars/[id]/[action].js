@@ -413,39 +413,46 @@ async function handleStorageMode(req, res) {
 	const id = req.query?.id || new URL(req.url, 'http://x').pathname.split('/').filter(Boolean)[2];
 	if (!id) return error(res, 400, 'validation_error', 'avatar id required');
 
+	// PUT is owner-only: authenticate BEFORE any avatar lookup so an anonymous
+	// caller can't use the 404-vs-401 split to probe whether an id exists.
+	if (req.method === 'PUT') {
+		const session = await getSessionUser(req);
+		if (!session) return error(res, 401, 'unauthorized', 'sign in required');
+		if (!(await requireCsrf(req, res, session.id))) return;
+
+		const [row] = await sql`
+			SELECT id, owner_id FROM avatars WHERE id = ${id} AND deleted_at IS NULL
+		`;
+		if (!row) return error(res, 404, 'not_found', 'avatar not found');
+		if (session.id !== row.owner_id) return error(res, 403, 'forbidden', 'not your avatar');
+
+		const body = parse(storageModeSchema, await readJson(req));
+
+		// Read current stored mode to preserve attestation fields — clients must not
+		// be able to forge tx_hash / chain_id / attested_at from the UI.
+		const current = await readStorageMode(id);
+		const safeBody = {
+			...body,
+			attestation: current?.attestation ?? defaultStorageMode().attestation,
+		};
+
+		await sql`UPDATE avatars SET storage_mode = ${JSON.stringify(safeBody)}::jsonb WHERE id = ${id}`;
+		return json(res, 200, { storage_mode: safeBody });
+	}
+
+	// GET — public/unlisted anyone; private owner only.
 	const [row] = await sql`
 		SELECT id, owner_id, visibility FROM avatars WHERE id = ${id} AND deleted_at IS NULL
 	`;
 	if (!row) return error(res, 404, 'not_found', 'avatar not found');
 
-	if (req.method === 'GET') {
-		if (row.visibility === 'private') {
-			const session = await getSessionUser(req);
-			if (!session || session.id !== row.owner_id)
-				return error(res, 403, 'forbidden', 'private avatar');
-		}
-		const mode = await readStorageMode(id);
-		return json(res, 200, { storage_mode: mode });
+	if (row.visibility === 'private') {
+		const session = await getSessionUser(req);
+		if (!session || session.id !== row.owner_id)
+			return error(res, 403, 'forbidden', 'private avatar');
 	}
-
-	// PUT — owner only
-	const session = await getSessionUser(req);
-	if (!session) return error(res, 401, 'unauthorized', 'sign in required');
-	if (!(await requireCsrf(req, res, session.id))) return;
-	if (session.id !== row.owner_id) return error(res, 403, 'forbidden', 'not your avatar');
-
-	const body = parse(storageModeSchema, await readJson(req));
-
-	// Read current stored mode to preserve attestation fields — clients must not
-	// be able to forge tx_hash / chain_id / attested_at from the UI.
-	const current = await readStorageMode(id);
-	const safeBody = {
-		...body,
-		attestation: current?.attestation ?? defaultStorageMode().attestation,
-	};
-
-	await sql`UPDATE avatars SET storage_mode = ${JSON.stringify(safeBody)}::jsonb WHERE id = ${id}`;
-	return json(res, 200, { storage_mode: safeBody });
+	const mode = await readStorageMode(id);
+	return json(res, 200, { storage_mode: mode });
 }
 
 // ── versions ───────────────────────────────────────────────────────────────

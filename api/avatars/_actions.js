@@ -7,7 +7,7 @@ import { storageKeyFor, enforceQuotas, searchPublicAvatars, stripOwnerFor } from
 import { listAvatars } from '../_lib/avatars.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
-import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
+import { cors, json, method, readJson, readBody, wrap, error, rateLimited } from '../_lib/http.js';
 import { parse, presignUploadBody, slug as slugSchema, createAvatarBody } from '../_lib/validate.js';
 import { recordEvent } from '../_lib/usage.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -153,6 +153,17 @@ const handleUpload = wrap(async (req, res) => {
 			buffer = await fetchRemoteGlb(sourceUrl, MAX_PROXY_UPLOAD_BYTES);
 		} catch (err) {
 			return error(res, err.status || 502, err.code || 'fetch_failed', err.message || 'failed to fetch source URL');
+		}
+	// Cloud Run's Express layer pre-drains the request stream and stashes the
+	// bytes on req.rawBody / req.body (see readBody in api/_lib/http.js). The
+	// raw-stream listener below never fires for those requests — its 'data' and
+	// 'end' events already emitted — so production uploads must prefer the
+	// captured buffer over the stream, exactly like readBody does.
+	} else if (Buffer.isBuffer(req.rawBody) || req.body !== undefined) {
+		try {
+			buffer = await readBody(req, MAX_PROXY_UPLOAD_BYTES);
+		} catch (err) {
+			return error(res, err.status || 400, err.code || 'invalid_body', err.message || 'failed to read body');
 		}
 	} else {
 		const declaredLength = Number(req.headers['content-length']);

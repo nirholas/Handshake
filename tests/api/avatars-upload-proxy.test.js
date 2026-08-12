@@ -189,4 +189,31 @@ describe('POST /api/avatars/upload', () => {
 		expect(res.statusCode).toBe(200);
 		expect(body.storage_key).toBe('u/user-test-1/my-cool-avatar/abc123.glb');
 	});
+
+	// Regression: Cloud Run's Express layer pre-drains the request stream and
+	// stashes the bytes on req.rawBody/req.body before the handler runs (see
+	// server/index.mjs captureRawBody). A raw-stream reader that ignores those
+	// buffers resolves with zero bytes and 400s every production upload with
+	// `empty_body`. Simulate the Express-shaped request and assert the captured
+	// body is used.
+	it('uses the pre-drained req.rawBody/req.body when the stream is already consumed', async () => {
+		const glbBytes = makeFakeGlb(128);
+		const req = makeReq({ body: Buffer.alloc(0) }); // ended empty stream
+		req.rawBody = glbBytes;
+		req.body = glbBytes;
+		const { res, body } = await dispatchUpload(req, makeRes());
+		expect(res.statusCode).toBe(200);
+		expect(body.size_bytes).toBe(glbBytes.length);
+		expect(putObjectMock).toHaveBeenCalledOnce();
+		expect(putObjectMock.mock.calls[0][0].body).toEqual(glbBytes);
+	});
+
+	it('still 400s empty_body when the pre-drained body is empty', async () => {
+		const req = makeReq({ body: Buffer.alloc(0) });
+		req.rawBody = Buffer.alloc(0);
+		req.body = Buffer.alloc(0);
+		const { res, body } = await dispatchUpload(req, makeRes());
+		expect(res.statusCode).toBe(400);
+		expect(body.error).toBe('empty_body');
+	});
 });

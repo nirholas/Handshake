@@ -15,6 +15,7 @@
 import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
 import { cors, json, method, readJson, error, rateLimited, serverError } from '../../_lib/http.js';
+import { requireCsrf } from '../../_lib/csrf.js';
 import { llmComplete } from '../../_lib/llm.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { parse } from '../../_lib/validate.js';
@@ -48,6 +49,12 @@ export default async function handleMemorySeed(req, res, agentId) {
 		WHERE id = ${agentId} AND user_id = ${userId} AND deleted_at IS NULL
 	`;
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
+
+	// CSRF on state-changing session-cookie requests; bearer tokens are exempt
+	// inside requireCsrf. The sibling providers (memory-seed-x, -farcaster) gate
+	// the same way; this preset route deletes and rewrites the agent's memories,
+	// so a cross-site form post must not be able to drive it.
+	if (!(await requireCsrf(req, res, userId))) return;
 
 	const [conn] = await sql`
 		SELECT access_token, username FROM social_connections
