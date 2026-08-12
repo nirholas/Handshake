@@ -31,6 +31,14 @@
 			<description>Stake conviction on an agent and earn from its attested action history: escrowed principal, per-epoch yield derived from signed on-chain attestations, withdraw any time.</description>
 		</item>
 		<item>
+			<title>A shared coin-world link now opens a world with the coin's name on it</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-12:A shared coin-world link now opens a world with the coin's name on it</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every coin has a 3D world at /play, and the way people reach one is a link someone sent them. That link carries the coin's address plus its name, symbol and artwork, and the decoration falls off constantly: someone types the address by hand, a chat app cuts the rest of the link, a preview card keeps only the address. When it did, the world still opened, but as nobody's world: the sign in the plaza read COMMUNITY, the welcome card offered you &quot;the Community community&quot;, the browser tab said Community, and the market cap on the big screen and the in-world chart was blank. The world now looks the coin up before it builds, so a link with nothing but the address opens the same named world as a full one, with live market cap on the screens. The market cap was missing from every shared link, complete or not, because a number that moves cannot be baked into a link; it is now read fresh on arrival. The lookup is capped at six seconds and skipped entirely for a link that already arrived complete, so nobody waits longer to get in, and the address bar is rewritten with the resolved name so the next person to receive that link never pays for the lookup at all.</description>
+		</item>
+		<item>
 			<title>Claiming the CZ agent works again</title>
 			<link>https://three.ws/cz</link>
 			<guid isPermaLink="false">2026-08-12:Claiming the CZ agent works again</guid>

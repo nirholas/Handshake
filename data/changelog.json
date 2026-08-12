@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-12",
+			"title": "A shared coin-world link now opens a world with the coin's name on it",
+			"summary": "Every coin has a 3D world at /play, and the way people reach one is a link someone sent them. That link carries the coin's address plus its name, symbol and artwork, and the decoration falls off constantly: someone types the address by hand, a chat app cuts the rest of the link, a preview card keeps only the address. When it did, the world still opened, but as nobody's world: the sign in the plaza read COMMUNITY, the welcome card offered you \"the Community community\", the browser tab said Community, and the market cap on the big screen and the in-world chart was blank. The world now looks the coin up before it builds, so a link with nothing but the address opens the same named world as a full one, with live market cap on the screens. The market cap was missing from every shared link, complete or not, because a number that moves cannot be baked into a link; it is now read fresh on arrival. The lookup is capped at six seconds and skipped entirely for a link that already arrived complete, so nobody waits longer to get in, and the address bar is rewritten with the resolved name so the next person to receive that link never pays for the lookup at all.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-12",
 			"title": "The daily check on 3D generation now proves a real model was made, not a remembered one",
 			"summary": "Every day an automated check types a prompt into the Forge and confirms a real 3D model comes back, so a dead generator gets caught within a day instead of by a user. It had stopped proving that. The Forge remembers finished models for a week and hands the saved one back when the same prompt is asked again, and the daily check asked the exact same prompt every time, so it was verifying a model made days earlier and reporting green regardless of whether generation still worked. It now insists on a fresh run, and fails loudly if it is ever handed a remembered result. Measured on the fix: the check went from finishing in half a second to taking 85 seconds of real generation. Two more repairs in the same area: a finished model whose quality review hit a storage hiccup used to be discarded on the spot and never looked at again (two models were lost that way in one day) and is now reviewed again on the next pass before anything is given up on, and a fault in one stage of the gallery-seeding job no longer takes the other three stages down with it.",
 			"tags": [
