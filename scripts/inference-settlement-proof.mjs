@@ -122,7 +122,7 @@ async function airdrop(pubkeyB58, sol = 1) {
 	} catch (err) {
 		attempts.push(`faucet.solana.com: ${err.message}`);
 	}
-	throw new Error(`airdrop failed on every source — ${attempts.join(' | ')}`);
+	throw new Error(`airdrop failed on every source: ${attempts.join(' | ')}`);
 }
 
 async function rpcCall(method, params) {
@@ -272,5 +272,5 @@ if (!verdict.ok) {
 const st = await confirmSig(settled.transaction);
 log('verify', `on-chain settlement confirmed at slot ${st.slot}`);
 
-console.log('\nPROOF RESULT: PASS — one inference job metered, settled on the devnet test lane, receipt verified against the job signature.');
+console.log('\nPROOF RESULT: PASS. One inference job metered, settled on the devnet test lane, receipt verified against the job signature.');
 console.log(JSON.stringify({ jobId: job.jobId, tx: settled.transaction, receipt }, null, 2));

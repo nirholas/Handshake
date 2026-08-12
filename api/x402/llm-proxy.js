@@ -10,8 +10,8 @@
 //
 // Roadmap phase 4: every paid job is METERED and SETTLED with a
 // cryptographic receipt. After the job runs, the node signs the metered job
-// core (prompt hash, response hash, token counts) with INFERENCE_SIGNING_KEY;
-// after the payment settles, the receipt issuer signs job core + response
+// core (prompt hash, response hash, token counts) with INFERENCE_SIGNING_KEY.
+// After the payment settles, the receipt issuer signs job core + response
 // signature + payment facts (network, payer, amount, asset, tx) into one
 // `inferenceReceipt` object on the response body. Any holder of the receipt
 // can prove the payment covered exactly this job: verify offline with

@@ -180,7 +180,7 @@ describe("agent_invocation", () => {
   });
 
   // AI-1 (negative half): a caller cannot present somebody else's agent PDA as
-  // their own — the seeds constraint re-derives the PDA from the signer, and
+  // their own. The seeds constraint re-derives the PDA from the signer, and
   // the mismatched account fails the constraint before the body runs.
   it("rejects an invoker_agent derived from a different authority", async () => {
     const [foreignAgent] = deriveAgentPda(targetAuthority.publicKey, programId);

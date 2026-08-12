@@ -205,7 +205,7 @@ describe("skill_license", () => {
     assert.strictEqual(market.licensesMinted.toNumber(), 1);
   });
 
-  // SL-2 (negative half): the same purchase can never mint twice — the second
+  // SL-2 (negative half): the same purchase can never mint twice. The second
   // init hits existing accounts and the transaction fails.
   it("rejects minting the same (owner, agent, skill) twice", async () => {
     const { license, nftMint, ownerTokenAccount } = deriveLicense(owner.publicKey, agentMint, "summarize");

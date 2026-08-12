@@ -374,7 +374,7 @@ export const NAV_GROUPS = [
 						href: '/reputation/market',
 						badge: 'New',
 						badgeTone: 'new',
-						desc: 'Stake conviction on an agent and earn from its attested action history — escrowed principal, withdraw any time',
+						desc: 'Stake conviction on an agent and earn from its attested action history: escrowed principal, withdraw any time',
 					},
 				],
 			},

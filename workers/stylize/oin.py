@@ -356,7 +356,7 @@ def mount_oin(
             result = run_job(envelope, report)
             if hasattr(result, "__await__"):
                 await result
-        except Exception as exc:  # noqa: BLE001 — an unsigned crash still earns a signed failure
+        except Exception as exc:  # noqa: BLE001 (an unsigned crash still earns a signed failure)
             log.exception("oin job %s crashed; signing a failure response", job_id)
             if not report.called:
                 report.failed(code="node_error", message=str(exc)[:500])

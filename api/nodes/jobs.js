@@ -1,4 +1,4 @@
-// GET /api/nodes/jobs — an inference node claims its next job (phase 4).
+// GET /api/nodes/jobs: an inference node claims its next job (phase 4).
 //
 // The operator client's poll loop hits this endpoint. Auth is a signed
 // timestamp (`sig` = ed25519 over `threews-node-poll:{node}:{ts}`), so only

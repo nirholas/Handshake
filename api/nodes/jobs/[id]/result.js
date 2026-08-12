@@ -1,4 +1,4 @@
-// POST /api/nodes/jobs/[id]/result — an inference node submits a finished job.
+// POST /api/nodes/jobs/[id]/result: an inference node submits a finished job.
 //
 // Success body: { node, output, startedAt, finishedAt, receipt }
 // Failure body: { node, failed: true, error, startedAt, finishedAt, ts, signature }

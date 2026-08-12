@@ -11,7 +11,7 @@
 //   3. stake   : the staker signs a market stake (transfer + rsm.v1 memo)
 //   4. verify  : verifyStakeTx re-derives the position from the chain alone
 //   5. accrue  : quoteEarnings over the on-chain action history (the same
-//                function the HTTP surface and settlement path call)
+//                routine the HTTP surface and settlement path call)
 //   6. withdraw: the escrow signs the settlement (principal + earnings back to
 //                the staker, threews.unstake.v1 memo), then the chain is
 //                re-read to confirm both the transfer and the memo

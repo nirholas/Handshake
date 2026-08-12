@@ -338,7 +338,7 @@ export function paidEndpoint(spec) {
 		// Optional post-settlement accrual hook (Roadmap phase 3: per-call
 		// royalties). Called fire-and-forget AFTER settlement succeeds, with
 		// { payer, network, txHash, amountAtomics, asset, resourceUrl }. Use it
-		// for ledger writes that must not delay or fail the settled response —
+		// for ledger writes that must not delay or fail the settled response,
 		// e.g. /api/x402/skill-call recording the author's royalty accrual. Any
 		// throw is logged and swallowed; the payment already settled.
 		onSettled,

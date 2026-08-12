@@ -92,7 +92,7 @@ export function computeSkillRoyaltySplit({ priceAtomics, platformBps }) {
  * their wallet at settle time, so the row lands 'settled' with the rail's
  * transaction as provenance (source 'x402'). Rows billed by the in-process
  * runtime (source 'skill-runtime') stay 'pending' for the delegation redeem
- * leg instead — settleRoyalties in api/_lib/royalty.js owns those.
+ * leg instead; settleRoyalties in api/_lib/royalty.js owns those.
  *
  * @param {{ skillId: string, authorId: string, payer?: string|null,
  *   network?: string|null, txHash?: string|null, priceAtomics: bigint|number|string,

@@ -130,7 +130,7 @@ beforeEach(() => {
 	resetState();
 });
 
-describe('regenerate-status — capture-to-avatar poll contract', () => {
+describe('regenerate-status: capture-to-avatar poll contract', () => {
 	it('finalizes a finished worker job and returns the new avatar id', async () => {
 		state.job = baseJob();
 		state.statusReturn = { status: 'done', resultGlbUrl: VALID_GLB };

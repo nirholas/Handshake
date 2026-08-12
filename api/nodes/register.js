@@ -1,4 +1,4 @@
-// POST /api/nodes/register — register an inference node (phase 4 open network).
+// POST /api/nodes/register: register an inference node (phase 4 open network).
 //
 // The operator client (packages/node-operator) calls this once at boot. The
 // node's Solana ed25519 public key IS its identity: registration is an
