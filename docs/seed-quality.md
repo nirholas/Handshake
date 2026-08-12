@@ -113,6 +113,28 @@ accept-rate statistics, and you would tune thresholds against an outage. The
 verdict carries `vision.status` (`judged` / `skipped` / `unavailable`) so the
 accept rate can always be computed over the assets that were actually judged.
 
+## A gate that cannot run is retried, not buried
+
+The distinction above (quality verdict vs infrastructure) also decides what
+happens to the *job row*. When the gate itself throws before reaching a verdict
+(the object-storage read fails, the renderer dies, the judge transport is
+unreachable), `api/cron/forge-seed-cron.js` leaves the row in `generated` and
+counts the attempt in `forge_seed_jobs.gate_attempts`. The next tick re-gates it.
+Only after `GATE_MAX_ATTEMPTS` (3) does the row move to the terminal `gate_error`
+state.
+
+That bound matters in both directions. Nothing ever revisits `gate_error`, so
+burying a row on the first fault throws away a finished mesh that already cost
+GPU time: on 2026-08-12 two seed jobs were lost that way inside one day, both to
+the same transient storage error ("We encountered an internal error. Please try
+again."). But an unbounded retry would let one ungateable mesh occupy a slot in
+the `SEED_CRON_GATE` batch forever and starve every newer generation behind it.
+Three attempts costs three ticks (three minutes) and then moves on.
+
+Retries surface as `gate_retry` entries in the tick's `gate_results`, with a
+`gate_retries` count on the response, so a lane that keeps blipping is visible
+without reading the table.
+
 ## Rejects are kept, not deleted
 
 A reject is copied (never moved, so the creator's forge history stays coherent)

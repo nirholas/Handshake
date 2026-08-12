@@ -22,8 +22,10 @@
 //
 // Set FORGE_KEEPWARM_LANES (comma-separated lane ids) to override the default
 // set without a deploy, which is the one-flag change to make when quota lands.
+// An id in that list that matches no lane is reported as unknown_lanes and drops
+// the tick's `ok` to false, so a typo cannot silently warm nothing.
 
-import { error, json, method, wrapCron } from '../_lib/http.js';
+import { json, method, wrapCron } from '../_lib/http.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 // Every self-host GPU lane that scales to zero. `safeByDefault` records whether
@@ -52,13 +54,27 @@ const PING_TIMEOUT_MS = 8_000;
 // is what booted it, which is exactly the cold start a user would have paid.
 const WARM_LATENCY_MS = 1_200;
 
-function selectedLaneIds() {
-	const raw = String(process.env.FORGE_KEEPWARM_LANES || '').trim();
-	if (!raw) return KEEPWARM_LANES.filter((l) => l.safeByDefault).map((l) => l.id);
-	return raw
-		.split(',')
-		.map((s) => s.trim())
-		.filter(Boolean);
+/**
+ * Resolve the override string into the lanes to warm this tick. An id that
+ * matches no lane is reported rather than dropped: FORGE_KEEPWARM_LANES exists to
+ * be edited without a deploy, and a typo in it would otherwise warm nothing at
+ * all while the tick still answered `ok: true`, which is a silent outage of the
+ * exact thing this cron prevents.
+ * @param {string | undefined} raw
+ * @returns {{ lanes: typeof KEEPWARM_LANES, unknown: string[], source: 'default'|'override' }}
+ */
+export function resolveKeepwarmLanes(raw) {
+	const ids = String(raw || '').trim();
+	if (!ids) {
+		return { lanes: KEEPWARM_LANES.filter((l) => l.safeByDefault), unknown: [], source: 'default' };
+	}
+	const wanted = ids.split(',').map((s) => s.trim()).filter(Boolean);
+	const known = new Set(KEEPWARM_LANES.map((l) => l.id));
+	return {
+		lanes: KEEPWARM_LANES.filter((l) => wanted.includes(l.id)),
+		unknown: wanted.filter((id) => !known.has(id)),
+		source: 'override',
+	};
 }
 
 // One authenticated GET against the worker root. Cloud Run answers anything
@@ -105,8 +121,11 @@ export default wrapCron(async (req, res) => {
 		return json(res, 200, { ok: true, skipped: 'no_reconstruction_key', lanes: [] });
 	}
 
-	const wanted = new Set(selectedLaneIds());
-	const lanes = KEEPWARM_LANES.filter((l) => wanted.has(l.id));
+	const { lanes, unknown } = resolveKeepwarmLanes(process.env.FORGE_KEEPWARM_LANES);
+	if (unknown.length) {
+		console.warn(`[gpu-keepwarm] FORGE_KEEPWARM_LANES names ${unknown.length} unknown lane(s): ${unknown.join(', ')}`);
+	}
+	const selected = new Set(lanes.map((l) => l.id));
 	const results = await Promise.all(lanes.map((l) => pingLane(l, key)));
 
 	const booted = results.filter((r) => r.status === 'ok' && r.wasWarm === false).map((r) => r.id);
@@ -119,11 +138,12 @@ export default wrapCron(async (req, res) => {
 	}
 
 	return json(res, 200, {
-		ok: true,
+		ok: unknown.length === 0,
 		checked: results.length,
 		warm: results.filter((r) => r.wasWarm).length,
 		booted,
-		skipped_for_quota: KEEPWARM_LANES.filter((l) => !l.safeByDefault && !wanted.has(l.id)).map((l) => ({
+		unknown_lanes: unknown,
+		skipped_for_quota: KEEPWARM_LANES.filter((l) => !l.safeByDefault && !selected.has(l.id)).map((l) => ({
 			id: l.id,
 			reason: l.reason,
 		})),

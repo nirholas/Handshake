@@ -18,7 +18,9 @@
 //        rigging    → poll the auto-rig job; publish the rigged mesh when it
 //                    lands, and publish the static keeper if the rig failed
 //                    (a gated keeper is never thrown away over a rig fault).
-//        done / rejected / failed / gate_error are terminal.
+//        done / rejected / failed / gate_error are terminal. A gate that could
+//        not RUN is not a verdict: the row stays in `generated` and later ticks
+//        retry it, reaching gate_error only after GATE_MAX_ATTEMPTS.
 //
 //   2. Start: pick the next unused prompt(s) from the library, claim an OG
 //      username for a new user, submit a draft-tier forge job under that user's
@@ -268,7 +270,7 @@ function withDeadline(transport, budgetMs) {
 // Seed generations must never leave the free lanes: this cron runs unattended
 // every minute, so one silent fallthrough to a paid third-party engine bills the
 // platform continuously with nobody watching. A paid lane is recorded on the row
-// and reported, and the asset is still published (the spend already happened, 
+// and reported, and the asset is still published (the spend already happened,
 // throwing the mesh away would waste it twice), but the reason string makes the
 // fallthrough visible in the tick's response and in the accept-rate report.
 function assertFreeBackend(backend) {
@@ -341,9 +343,31 @@ async function pollPending(origin) {
 
 // ── Phase 1b: gate finished generations, then publish or quarantine ──────────
 
+// How many times a generation may fail the gate on infrastructure before it is
+// given up on. A gate fault is a storage read, a renderer, or a judge transport
+// blipping, and every one of those is transient far more often than not, so the
+// first fault must not be fatal. Three keeps a genuinely ungateable mesh from
+// occupying a gate slot indefinitely: it burns three ticks (three minutes) and
+// then goes terminal.
+const GATE_MAX_ATTEMPTS = 3;
+
+/**
+ * What a gate fault means for the row, given how many gate attempts it has
+ * already burned. Pure so the retry-vs-bury decision is testable without a
+ * database: getting it wrong in either direction is expensive (never retrying
+ * throws finished meshes away, never burying starves the gate batch).
+ * @param {number | null | undefined} priorAttempts
+ * @returns {{ attempt: number, terminal: boolean }}
+ */
+export function gateFaultOutcome(priorAttempts) {
+	const attempt = Number(priorAttempts || 0) + 1;
+	return { attempt, terminal: attempt >= GATE_MAX_ATTEMPTS };
+}
+
 async function advanceGates(origin) {
 	const rows = await sql`
-		select id, user_id, raw_client_id, prompt, model_category, creation_id, glb_url, backend
+		select id, user_id, raw_client_id, prompt, model_category, creation_id, glb_url, backend,
+		       gate_attempts
 		from forge_seed_jobs
 		where status = 'generated'
 		order by started_at asc
@@ -420,16 +444,36 @@ async function advanceGates(origin) {
 
 		} catch (err) {
 			// The gate itself broke (storage read, renderer, judge transport). That is
-			// infrastructure, not a quality verdict, so the row is parked in its own
-			// terminal state and never counted against the accept rate.
+			// infrastructure, not a quality verdict, so it is never counted against the
+			// accept rate. Because it is infrastructure, it is also usually transient.
+			// Leave the row in 'generated' so the next tick re-gates it, and only park
+			// it in the terminal state once it has burned its attempts.
+			const { attempt, terminal } = gateFaultOutcome(job.gate_attempts);
+			const detail = String(err?.message || err);
+			if (!terminal) {
+				await sql`
+					update forge_seed_jobs
+					set gate_attempts = ${attempt},
+					    error = ${`gate attempt ${attempt}/${GATE_MAX_ATTEMPTS}: ${detail}`.slice(0, 500)}
+					where id = ${job.id}
+				`;
+				results.push({
+					job_id: job.id,
+					status: 'gate_retry',
+					attempt,
+					error: detail.slice(0, 200),
+				});
+				continue;
+			}
 			await sql`
 				update forge_seed_jobs
 				set status = 'gate_error',
-				    error = ${String(err?.message || err).slice(0, 500)},
+				    gate_attempts = ${attempt},
+				    error = ${detail.slice(0, 500)},
 				    finished_at = now()
 				where id = ${job.id}
 			`;
-			results.push({ job_id: job.id, status: 'gate_error', error: String(err?.message || err).slice(0, 200) });
+			results.push({ job_id: job.id, status: 'gate_error', attempt, error: detail.slice(0, 200) });
 		}
 	}
 	return results;
@@ -618,7 +662,7 @@ async function startNextJob(origin, claimed = new Set()) {
 		select count(*)::int as count from forge_seed_jobs where status = 'pending'
 	`;
 	if (count >= maxPending()) {
-		return { skipped: true, reason: `${count} jobs already pending` };
+		return { skipped: true, reason: `${count} job${count === 1 ? '' : 's'} already pending` };
 	}
 
 	const circuit = await circuitState(CIRCUIT_NAME);
@@ -851,24 +895,46 @@ export default wrapCron(async (req, res) => {
 	const origin = ORIGIN();
 	// Every phase advances a different set of rows, so they are safe to run
 	// together and the tick costs one phase's wall-clock, not four in series.
-	const [polled, gated, rigged, started] = await Promise.all([
-		pollPending(origin),
-		advanceGates(origin),
-		advanceRigs(origin),
-		startBatch(origin),
-	]);
+	//
+	// Isolated per phase, not a bare Promise.all: each phase opens with its own
+	// row query, and a fault there (a schema change mid-rollout, a pooler blip)
+	// is outside the per-job try/catch, so under Promise.all one broken phase
+	// rejected the whole tick. That took down the three healthy phases with it
+	// and cost the minute entirely, including the start phase, which is the one
+	// that keeps the gallery growing. A broken phase now reports itself and the
+	// rest of the tick still runs.
+	const [polled, gated, rigged, started] = await Promise.all(
+		[
+			['poll', () => pollPending(origin)],
+			['gate', () => advanceGates(origin)],
+			['rig', () => advanceRigs(origin)],
+			['start', () => startBatch(origin)],
+		].map(([name, run]) =>
+			run().catch((err) => {
+				const detail = String(err?.message || err);
+				console.warn(`[forge-seed] ${name} phase failed: ${detail}`);
+				return [{ phase: name, status: 'phase_error', error: detail.slice(0, 200) }];
+			}),
+		),
+	);
+	const phaseErrors = [...polled, ...gated, ...rigged, ...started].filter((r) => r?.status === 'phase_error');
 
 	const advanced = [...gated, ...rigged];
 	const published = advanced.filter(j => j.status === 'published').length;
 	const rejected = advanced.filter(j => j.status === 'rejected').length;
 	const failed = polled.filter(j => j.status === 'failed').length;
+	// Surfaced as its own count so a lane that keeps blipping is visible in the
+	// tick response, not just buried in gate_results.
+	const gateRetries = gated.filter(j => j.status === 'gate_retry').length;
 
 	return json(res, 200, {
-		ok: true,
+		ok: phaseErrors.length === 0,
 		polled: polled.length,
 		published,
 		rejected,
 		failed,
+		gate_retries: gateRetries,
+		phase_errors: phaseErrors,
 		accept_rate: await recentAcceptRate(),
 		poll_results: polled,
 		gate_results: gated,

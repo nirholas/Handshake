@@ -6,8 +6,10 @@
 // is the one a stranger hits: a prompt in, a real GLB out. This cron runs that
 // bar once a day against the deployed site (vercel.json crons):
 //
-//   1. POST /api/forge { prompt, tier: 'draft' } — the free NVIDIA lane, so a
-//      daily run costs zero vendor spend.
+//   1. POST /api/forge { prompt, tier: 'draft', force_regenerate: true } against
+//      the free NVIDIA lane, so a daily run costs zero vendor spend. The flag is
+//      load-bearing: see runGeneration for why a cached hit would make this leg
+//      pass while generation is dead.
 //   2. Poll the job (the draft lane usually answers synchronously) and fetch
 //      the resulting GLB's first bytes — only the 'glTF' magic counts as up.
 //   3. GET /api/forge?health — surfaces paid-lane breakage (provider auth,
@@ -86,13 +88,25 @@ async function verifyGlb(glbUrl) {
 }
 
 // Submit a draft generation and follow it to a verified GLB.
-async function runGeneration(origin) {
+//
+// force_regenerate is what makes this a generation test at all. /api/forge keeps
+// a content-addressed result cache keyed on (path, tier, backend, prompt,
+// options) with a 7-day TTL, and a read never refreshes that TTL. SMOKE_PROMPT is
+// a constant and the submit sends no seed, so the key is stable forever: without
+// this flag the daily run gets an instant cache hit, verifyGlb happily reads the
+// GLB some earlier generation produced, and the check reports green while every
+// GPU lane is dead. That is the exact failure this cron exists to catch (the June
+// 2026 audit found flows 100% dead in production while every config check read
+// green), and it was live: an audit run on 2026-08-12 completed all five legs in
+// 0.55 s total, which no real generation can do. The flag skips only the cache
+// READ; a fresh run is still written back, so the cache stays warm for users.
+export async function runGeneration(origin) {
 	const submit = await fetchJson(
 		`${origin}/api/forge`,
 		{
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ prompt: SMOKE_PROMPT, tier: 'draft' }),
+			body: JSON.stringify({ prompt: SMOKE_PROMPT, tier: 'draft', force_regenerate: true }),
 		},
 		SUBMIT_TIMEOUT_MS,
 	);
@@ -101,6 +115,12 @@ async function runGeneration(origin) {
 			ok: false,
 			reason: `submit returned HTTP ${submit.status}: ${submit.body?.error_description || submit.body?.error || 'no body'}`,
 		};
+	}
+	// A cache hit under force_regenerate means the flag stopped being honoured, so
+	// the run proved nothing about generation. Fail loudly rather than pass on a
+	// replayed mesh.
+	if (submit.body?.cached) {
+		return { ok: false, reason: 'submit was served from the forge result cache: force_regenerate is not being honoured, so the generation pipeline was never exercised' };
 	}
 
 	let { status, glb_url: glbUrl, job_id: jobId } = submit.body || {};

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-12",
+			"title": "The daily check on 3D generation now proves a real model was made, not a remembered one",
+			"summary": "Every day an automated check types a prompt into the Forge and confirms a real 3D model comes back, so a dead generator gets caught within a day instead of by a user. It had stopped proving that. The Forge remembers finished models for a week and hands the saved one back when the same prompt is asked again, and the daily check asked the exact same prompt every time, so it was verifying a model made days earlier and reporting green regardless of whether generation still worked. It now insists on a fresh run, and fails loudly if it is ever handed a remembered result. Measured on the fix: the check went from finishing in half a second to taking 85 seconds of real generation. Two more repairs in the same area: a finished model whose quality review hit a storage hiccup used to be discarded on the spot and never looked at again (two models were lost that way in one day) and is now reviewed again on the next pass before anything is given up on, and a fault in one stage of the gallery-seeding job no longer takes the other three stages down with it.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-08-12",
 			"title": "The open inference network's node endpoints answer again",
 			"summary": "The three endpoints an inference node uses to join the network and do work (register, claim a job, submit a result) were unreachable. Two of them pointed at internal files that are not where they looked, so any call returned a server error, and all three asked for a rate-limit budget that was never defined, which would have turned every request away as if the caller had flooded us. Node operators can register, poll for jobs, and submit results as documented.",
 			"tags": [

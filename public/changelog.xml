@@ -63,6 +63,14 @@
 			<description>Your agent can now learn how you write from your own X account, and only after you say yes. Connect X in Settings, and the consent screen tells you exactly what is read (your profile and up to 100 of your recent original public posts), what is stored (a handful of short distilled facts about what you talk about and how you talk, never your posts themselves and never links), and what is never touched (messages, likes, bookmarks, your follower list, your credentials). Agree and the agent's next replies already speak from those facts; change your mind and revoking, or disconnecting X, deletes every memory the seed created.</description>
 		</item>
 		<item>
+			<title>The daily check on 3D generation now proves a real model was made, not a remembered one</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-12:The daily check on 3D generation now proves a real model was made, not a remembered one</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every day an automated check types a prompt into the Forge and confirms a real 3D model comes back, so a dead generator gets caught within a day instead of by a user. It had stopped proving that. The Forge remembers finished models for a week and hands the saved one back when the same prompt is asked again, and the daily check asked the exact same prompt every time, so it was verifying a model made days earlier and reporting green regardless of whether generation still worked. It now insists on a fresh run, and fails loudly if it is ever handed a remembered result. Measured on the fix: the check went from finishing in half a second to taking 85 seconds of real generation. Two more repairs in the same area: a finished model whose quality review hit a storage hiccup used to be discarded on the spot and never looked at again (two models were lost that way in one day) and is now reviewed again on the next pass before anything is given up on, and a fault in one stage of the gallery-seeding job no longer takes the other three stages down with it.</description>
+		</item>
+		<item>
 			<title>The DeFi market pages stop hammering their data source when they get busy</title>
 			<link>https://three.ws/defi</link>
 			<guid isPermaLink="false">2026-08-12:The DeFi market pages stop hammering their data source when they get busy</guid>

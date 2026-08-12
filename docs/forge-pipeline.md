@@ -148,7 +148,7 @@ Async jobs get an opaque HMAC-signed token (`f1.<payload>.<sig>`, `api/_lib/forg
 ### Quality, caching, and scale
 
 - **Quality gate + best-of retry.** `scoreQualityGate` flags degenerate results (near-empty geometry, texture failures); synchronous lanes retry once inline before returning.
-- **Result cache** (`api/_lib/forge-cache.js`). Identical text prompts on platform-keyed non-high lanes are served from cache with `cached: true`.
+- **Result cache** (`api/_lib/forge-cache.js`). Identical text prompts on platform-keyed non-high lanes are served from cache with `cached: true`. The key covers path, tier, backend, the normalized prompt, and the output-affecting options (seed included), with a 7-day TTL that a read never refreshes. `force_regenerate: true` in the request body skips the cache READ while still writing the fresh result back. Any caller that must prove the pipeline is alive rather than that a mesh exists has to send it: the daily smoke cron (`api/cron/forge-smoke.js`) submits a constant prompt with no seed, so without the flag its key never changes and it verifies a replay. Automation that seeds the gallery takes the other route and varies the seed per submit (`api/cron/forge-seed-cron.js`), so a repeated prompt yields a genuinely new asset instead of a second catalog entry pointing at one GLB.
 - **Scale controls** (`api/_lib/forge-scale.js`). In-flight coalescing, blocking-lane slots, and daily paid caps keep a traffic spike from stampeding the GPU fleet or the paid last resort.
 
 ## 6. Persistence and storage

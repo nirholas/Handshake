@@ -38,7 +38,9 @@ job runs. We surface that honestly (see *Cold start*), never as a fake timer,
 and the `gpu-keepwarm` cron (`api/cron/gpu-keepwarm.js`, every 10 min during
 peak hours via Cloud Scheduler) holds allowlisted scale-to-zero lanes resident
 where warming them does not contend for that L4 pool (`FORGE_KEEPWARM_LANES`
-overrides the set without a deploy).
+overrides the set without a deploy). A lane id in that override that matches no
+known lane comes back in the tick's `unknown_lanes` and drops its `ok` to false,
+so a typo in the env var fails visibly instead of quietly warming nothing.
 
 `us-east4` has its own grant of 3 L4s and the same arithmetic applies there. It
 runs standbys of `model-trellis` (pinned at min 1), `model-hunyuan3d`,
