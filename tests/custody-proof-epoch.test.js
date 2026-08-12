@@ -20,6 +20,7 @@ const WALLET_B = '5YNmS1R9nNSCDzb5a7mMJ1dwK9uBAAF4B2wRqGvvQP7A';
 
 const statements = [];
 function sqlMock(strings, ...values) {
+	// strings[0] carries the distinguishing table name for every query here.
 	const text = strings.join('?');
 	statements.push({ text, values });
 	if (text.includes('FROM custody_attestation_epochs')) {
@@ -32,7 +33,7 @@ function sqlMock(strings, ...values) {
 		]);
 	}
 	if (text.includes('FROM agent_custody_events')) {
-		return Promise.resolve([]); // no ledger events yet → 'genesis' head
+		return Promise.resolve([]); // no ledger events yet -> 'genesis' head
 	}
 	return Promise.resolve([]);
 }
@@ -114,9 +115,10 @@ describe('runAttestationEpoch', () => {
 		expect(result.rpc_failures).toBe(2);
 		expect(result.anchor_status).toBe('empty');
 
-		// The empty epoch is still recorded so the chain of epochs stays contiguous.
+		// The empty epoch is still recorded so the chain of epochs stays contiguous,
+		// with a zeroed placeholder root and the 'empty' status folded into the SQL.
 		const epochInsert = statements.find((s) => s.text.includes('INSERT INTO custody_attestation_epochs'));
-		expect(epochInsert.values).toContain('empty');
+		expect(epochInsert.text).toContain("'empty'");
 		expect(statements.some((s) => s.text.includes('custody_attestation_leaves'))).toBe(false);
 	});
 
