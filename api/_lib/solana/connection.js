@@ -1159,7 +1159,7 @@ export function makeRotatingFetch(endpoints) {
 				// The lane accepted the request and never answered within the attempt
 				// bound. Measured 2026-08-12: PublicNode hangs indefinitely on
 				// getTokenLargestAccounts (no response at 35s) while answering
-				// getAccountInfo in milliseconds — a silent per-shape refusal. Cooling the
+				// getAccountInfo in milliseconds, a silent per-shape refusal. Cooling the
 				// whole lane for it benched the primary free lane for every other method,
 				// which is how one unanswerable shape starved the holder and security
 				// readers. Demote the shape instead; markMethodDemotion's breadth guard
