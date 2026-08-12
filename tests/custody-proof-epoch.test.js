@@ -1,9 +1,9 @@
-// api/_lib/custody-proof.js — the prover behind POST /api/cron/custody-attest.
+// api/_lib/custody-proof.js, the prover behind POST /api/cron/custody-attest.
 // The Merkle primitives themselves are pinned in tests/custody-merkle.test.js;
 // this file covers the epoch orchestration around them: the main path persists
 // an epoch + leaves and reports the anchor verdict, and the failure paths
 // (every balance read failing, an unconfigured attester key) degrade to a
-// recorded epoch instead of throwing — the cron must never 500 on an RPC blip
+// recorded epoch instead of throwing: the cron must never 500 on an RPC blip
 // or a missing key.
 //
 // I/O is mocked at the module seams (db.js, solana/connection.js,

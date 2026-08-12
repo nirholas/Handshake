@@ -156,8 +156,8 @@ const handleUpload = wrap(async (req, res) => {
 		}
 	// Cloud Run's Express layer pre-drains the request stream and stashes the
 	// bytes on req.rawBody / req.body (see readBody in api/_lib/http.js). The
-	// raw-stream listener below never fires for those requests — its 'data' and
-	// 'end' events already emitted — so production uploads must prefer the
+	// raw-stream listener below never fires for those requests: its 'data' and
+	// 'end' events already emitted, so production uploads must prefer the
 	// captured buffer over the stream, exactly like readBody does.
 	} else if (Buffer.isBuffer(req.rawBody) || req.body !== undefined) {
 		try {
