@@ -73,6 +73,19 @@ this repo:
    5xx and slow settles. Action: top up or upgrade a plan, or cut call volume
    via the ring cadence knobs. Note GCP credits cannot help here: Blockchain
    Node Engine is Ethereum-only, so there is no GCP-hosted Solana RPC.
+   **Partly relieved 2026-08-12: a fresh Helius key on a new free-plan account
+   is now set as `HELIUS_API_KEY` in the local `.env`.** Probed with metered
+   calls only, it serves 6 of the 7 production call shapes at p50 33 ms, the
+   fastest lane in the chain, and `solanaRpcEndpoints()` places it first, ahead
+   of the keyless free tail (the one miss is `getProgramAccounts`, which every
+   other lane also refuses). Its Helius-only surfaces answer too: DAS `getAsset`
+   and `getTokenAccounts`, `getPriorityFeeEstimate`, the `/v0` parsed
+   transaction history, and the webhooks API. Free plan means the quota is
+   modest, so this restores the DAS and holder surfaces rather than replacing a
+   paid lane. **Production still runs the exhausted key** until the Cloud Run
+   env update lands: `gcloud run services update three-ws-api --region
+   us-central1 --project aerial-vehicle-466722-p5 --update-env-vars
+   HELIUS_API_KEY=<key>` (single-key merge, never `--set-env-vars`).
 
 Carried forward from the retired `prompts/x402-catalog/` tracker (campaign
 closed 2026-07-28; full history in git):
