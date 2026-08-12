@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-12T18:38:16.296Z",
+	"generated_at": "2026-08-12T20:32:31.244Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -34,6 +34,17 @@
 			"link": "/reputation/market",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-12",
+			"type": "update",
+			"title": "Claiming the CZ agent works again",
+			"summary": "The claim page at /cz asked you to connect a wallet and then failed with an internal error the moment it tried to issue the message you were meant to sign. The ledger it writes claims into had never been created in the live database, so every real attempt died at the first step while the page still looked healthy. That table now exists as a tracked migration, and the flow runs end to end: connect, sign one line, and the claim is recorded. The signing step is also stricter now. The one-time code you sign expires after fifteen minutes instead of being valid forever, and a claim can only be redeemed once even if two attempts land at the same instant. A rehearsal switch that showed a fake success screen without touching a wallet is gone, so what you see on the page is always the real result.",
+			"link": "/cz",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -82,12 +93,34 @@
 		{
 			"date": "2026-08-12",
 			"type": "update",
+			"title": "The free trending and whale feeds stop going blank under their own traffic",
+			"summary": "Ask the trending feed for the 5-minute, 1-hour and 24-hour view back to back and the last two used to come back empty, blaming an upstream outage that was not happening. The cause was our own request volume: each call pulled the trade history of twenty pump.fun coins, and three calls in a row hit pump.fun's rate limiter, which then refused everything for a while. Both feeds now read pump.fun through one shared, short-lived cache, so every window and every caller reuses a single set of pulls instead of re-fetching the same coins, and a repeat call answers in milliseconds. When the limiter does bite, the whale feed serves the last successful pull and marks it stale instead of pretending the market is empty. A token nobody is trading now also reports an honest empty result rather than a false feed-down warning.",
+			"link": "/docs/crypto-api",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-12",
+			"type": "update",
 			"title": "The photo-to-avatar lane is now sized for the 10,000 avatars per day launch target",
 			"summary": "The service that turns your selfies into a rigged 3D avatar was measured under real load and one number mattered: it was configured so the autoscaler could never see how busy it was. The service answers each request in milliseconds and does the real work in the background, so the scaling signal looked idle while its processors ground away, and no amount of extra quota would ever have added capacity. The configuration is fixed, and the lane then proved the roadmap's launch target for real: a sustained ten-minute run at the full 10,000-avatars-per-day rate finished every job, with the typical avatar ready in about six seconds and the slowest in under nine. The capacity is there when launch day brings the crowd.",
 			"link": null,
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-12",
+			"type": "update",
+			"title": "The public custody anchor lookup answers a bad epoch instead of erroring out",
+			"summary": "Anyone can look up the on-chain anchor for a Proof-of-Custody epoch at /api/custody/anchor. Ask it for an epoch number too large to be a real round and it used to fail with an internal server error, which reads like the custody service is down rather than like a typo in the request. It now answers a plain \"that is not a valid epoch\" for malformed input, keeps 404 for an epoch that has not happened yet, and reads the newest epoch with a single lookup instead of pulling the whole integrity aggregate it then threw away.",
+			"link": "/integrity",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
