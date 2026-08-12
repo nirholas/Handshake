@@ -18,6 +18,7 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { createCache, cached } from '../_lib/mem-cache.js';
 
 const POOLS_UPSTREAM = 'https://yields.llama.fi/pools';
 const CHART_UPSTREAM = 'https://yields.llama.fi/chart/';
@@ -39,8 +40,10 @@ const finite = (n) => (Number.isFinite(n) ? n : null);
 
 // ── Pools cache ─────────────────────────────────────────────────────────────
 
-let _pools = null; // { value: { pools, facets, stats, updated_at }, expiresAt }
-let _poolsInflight = null; // dedupe concurrent multi-MB upstream fetches
+// Single-entry cache with single-flight de-dup, so concurrent misses share one
+// fetch of this multi-MB pool dump instead of each pulling their own copy.
+const _pools = createCache({ max: 1, ttlMs: POOLS_TTL_MS });
+const POOLS_KEY = 'pools';
 
 function slimPool(p) {
 	const tvl = Number(p?.tvlUsd);
@@ -48,7 +51,10 @@ function slimPool(p) {
 		pool: p.pool,
 		chain: typeof p.chain === 'string' ? p.chain : 'Unknown',
 		project: typeof p.project === 'string' ? p.project : 'unknown',
-		symbol: typeof p.symbol === 'string' ? p.symbol : '—',
+		// Matches the 'Unknown' fallback the sibling fields use. This value is
+		// rendered verbatim as the pool's name on /yields, so it has to read as a
+		// real label rather than a punctuation placeholder.
+		symbol: typeof p.symbol === 'string' && p.symbol ? p.symbol : 'Unknown',
 		tvl_usd: tvl,
 		apy: finite(Number(p.apy)),
 		apy_base: finite(Number(p.apyBase)),
@@ -89,18 +95,14 @@ function buildFacets(pools, key, topN) {
 		.map(([name, { count }]) => ({ name, pool_count: count }));
 }
 
-// Exported for the paid datapoint fabric (api/_lib/market-data/datapoints.js)
-// — per-pool datapoint endpoints resolve a uuid against this cached full set.
+// Exported for the paid datapoint fabric (api/_lib/market-data/datapoints.js),
+// per-pool datapoint endpoints resolve a uuid against this cached full set.
 export async function loadYieldPools() {
 	return loadPools();
 }
 
 async function loadPools() {
-	const now = Date.now();
-	if (_pools && _pools.expiresAt > now) return _pools.value;
-	if (_poolsInflight) return _poolsInflight;
-
-	_poolsInflight = (async () => {
+	return cached(_pools, POOLS_KEY, async () => {
 		const resp = await fetch(POOLS_UPSTREAM, {
 			headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
 			signal: AbortSignal.timeout(20_000),
@@ -125,7 +127,7 @@ async function loadPools() {
 			.map((p) => p.apy)
 			.sort((a, b) => a - b);
 
-		const value = {
+		return {
 			pools,
 			facets: {
 				chains: buildFacets(pools, 'chain', FACET_CHAINS),
@@ -138,15 +140,7 @@ async function loadPools() {
 			},
 			updated_at: Date.now(),
 		};
-		_pools = { value, expiresAt: Date.now() + POOLS_TTL_MS };
-		return value;
-	})();
-
-	try {
-		return await _poolsInflight;
-	} finally {
-		_poolsInflight = null;
-	}
+	});
 }
 
 // ── List mode ───────────────────────────────────────────────────────────────

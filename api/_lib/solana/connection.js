@@ -250,10 +250,21 @@ const PUBLIC_DEVNET = 'https://api.devnet.solana.com';
 // throttled provider escalated into "all N endpoints failed this request"
 // (2026-08-07). They stay in the chain as last-resort depth for the methods they
 // do serve; the classifyRpcBody guard still fails them over on garbage.
+//
+// Solana Vibe Station's public lane was added 2026-08-12 for one measured reason:
+// getTokenLargestAccounts, the call behind /api/crypto/holders and the holder half
+// of /api/crypto/security, had NO healthy free lane left. PublicNode hangs on it
+// forever, mainnet-beta 429s it, Leo answers -32603, and the Tatum pair serves it
+// but at 5 requests per minute, so with Helius and Alchemy both at monthly
+// capacity the read 503'd on most calls. Vibe Station answers it on real mainnet
+// (genesis 5eykt4Us…, slot within 1 of mainnet-beta) and throttles to a handful of
+// requests before -32005, which the capacity classifier already parks correctly.
+// It sits behind Leo because that throttle makes it depth, not a primary.
 const FREE_KEYLESS_MAINNET = [
 	'https://solana-rpc.publicnode.com',
 	PUBLIC_MAINNET,
 	'https://solana.leorpc.com/?api_key=FREE',
+	'https://public.rpc.solanavibestation.com',
 	'https://api.tatum.io/v3/blockchain/node/solana-mainnet',
 	'https://solana-mainnet.gateway.tatum.io',
 ];
