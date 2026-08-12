@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-12T16:54:09.592Z",
+	"generated_at": "2026-08-12T18:38:16.281Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2932,6 +2932,16 @@
 					"title": "Docs · Farcaster memory seeding",
 					"description": "Give an agent your Farcaster voice with explicit consent: ownership is proved by signing a challenge with a wallet the fid itself verified on the protocol (Solana first), only your public profile and casts are read, and revoking the grant deletes every memory it produced.",
 					"added": "2026-08-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/x-memory-seeding",
+					"title": "Docs · X memory seeding",
+					"description": "Seed an agent's memory from your X account behind an explicit, versioned consent: only your profile and recent original public posts are read, they are distilled into short facts (never stored verbatim), and revoking consent or disconnecting X deletes every memory the grant produced.",
+					"added": "2026-08-12",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

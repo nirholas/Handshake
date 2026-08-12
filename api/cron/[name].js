@@ -46,6 +46,7 @@ import { env } from '../_lib/env.js';
 import { llmComplete } from '../_lib/llm.js';
 import { CHAINS } from '../_lib/erc8004-chains.js';
 import { REGISTRY_TOPICS, decodeRegistryLog } from '../_lib/erc8004-registry-events.js';
+import { REPUTATION_TOPICS, decodeReputationLog, reputationRegistryFor } from '../_lib/erc8004-reputation-events.js';
 import { agentRef, recordEvents } from '../_lib/onchain-events.js';
 import { DELEGATION_MANAGER_DEPLOYMENTS, DELEGATION_MANAGER_ABI } from '../../src/erc7710/abi.js';
 import {
@@ -311,10 +312,25 @@ async function erc8004CrawlChain(chain) {
 		},
 	]);
 
+	// The reputation registry lives at its own CREATE2 address on the same
+	// network class; scan the identical block range so an agent's trust signals
+	// (feedback, revocations, responses) reach the index alongside its identity
+	// history. A chain with no reputation deployment yields an empty log list,
+	// not an error.
+	const reputationLogs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
+		{
+			address: reputationRegistryFor(chain.testnet),
+			topics: [REPUTATION_TOPICS],
+			fromBlock: '0x' + fromBlock.toString(16),
+			toBlock: '0x' + toBlock.toString(16),
+		},
+	]);
+
 	// Fetch block timestamps for any blocks that produced events.
 	const blockTimes = {};
-	if (logs.length > 0) {
-		const uniqueBlockHexes = [...new Set(logs.map((l) => l.blockNumber))];
+	const allLogs = [...logs, ...reputationLogs];
+	if (allLogs.length > 0) {
+		const uniqueBlockHexes = [...new Set(allLogs.map((l) => l.blockNumber))];
 		await Promise.all(
 			uniqueBlockHexes.map(async (bn) => {
 				try {
@@ -332,7 +348,7 @@ async function erc8004CrawlChain(chain) {
 	}
 
 	let inserted = 0;
-	const byClass = { registration: 0, metadata: 0, transfer: 0 };
+	const byClass = { registration: 0, metadata: 0, transfer: 0, reputation: 0 };
 	const events = [];
 
 	for (const log of logs) {

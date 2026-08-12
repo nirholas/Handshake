@@ -374,7 +374,7 @@ export const handleManifest = wrap(async (req, res, id) => {
 		return error(res, 400, 'invalid_request', 'agent id required');
 
 	const [row] =
-		await sql`select a.id, a.name, a.description, a.avatar_id, a.skills, a.meta, a.chain_id, a.erc8004_agent_id, a.erc8004_registry, a.registration_cid, a.created_at, a.voice_provider, a.voice_id, a.persona_prompt_hash, a.persona_tone_tags, a.persona_extracted_at, av.id as avatar_db_id, av.storage_key, av.content_type from agent_identities a left join avatars av on av.id = a.avatar_id and av.deleted_at is null where a.id = ${id} and a.deleted_at is null limit 1`;
+		await sql`select a.id, a.name, a.description, a.avatar_id, a.skills, a.meta, a.chain_id, a.erc8004_agent_id, a.erc8004_registry, a.registration_cid, a.created_at, a.voice_provider, a.voice_id, a.persona_prompt_hash, a.persona_tone_tags, a.persona_extracted_at, a.persona_traits, av.id as avatar_db_id, av.storage_key, av.content_type from agent_identities a left join avatars av on av.id = a.avatar_id and av.deleted_at is null where a.id = ${id} and a.deleted_at is null limit 1`;
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
 
 	// Live signal: whether the agent has claimed its activation grant (funded +
@@ -407,6 +407,28 @@ export const handleManifest = wrap(async (req, res, id) => {
 	const host = req.headers['x-forwarded-host'] || req.headers.host || 'three.ws';
 	const origin = process.env.PUBLIC_APP_ORIGIN?.replace(/\/$/, '') || `${proto}://${host}`;
 
+	// Interview provenance counts. persona_traits.interview carries the full
+	// record (including the owner's raw answers), but the public manifest only
+	// ever reports the counts and the source, never the answers themselves.
+	const interviewRaw =
+		row.persona_traits && typeof row.persona_traits === 'object'
+			? row.persona_traits.interview
+			: null;
+	const interview =
+		interviewRaw && typeof interviewRaw === 'object'
+			? {
+					source: typeof interviewRaw.source === 'string' ? interviewRaw.source : null,
+					questions_answered: Number.isFinite(interviewRaw.questions_answered)
+						? interviewRaw.questions_answered
+						: Array.isArray(interviewRaw.answers)
+							? interviewRaw.answers.length
+							: 0,
+					questions_total: Number.isFinite(interviewRaw.questions_total)
+						? interviewRaw.questions_total
+						: null,
+				}
+			: null;
+
 	const manifest = {
 		$schema: 'https://3d-agent.io/schemas/manifest/0.1.json',
 		spec: 'agent-manifest/0.1',
@@ -434,6 +456,9 @@ export const handleManifest = wrap(async (req, res, id) => {
 			has_persona: Boolean(row.persona_prompt_hash),
 			tone_tags: row.persona_tone_tags || [],
 			extracted_at: row.persona_extracted_at || null,
+			// Present only when the agent's voice came from an onboarding
+			// interview. Counts and source only; the answers stay private.
+			...(interview ? { interview } : {}),
 		},
 		// Gesture slot overrides, so an embed plays this agent's own body language
 		// rather than the platform defaults. Only present when the owner set some

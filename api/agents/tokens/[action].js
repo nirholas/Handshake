@@ -896,7 +896,7 @@ async function handleLaunchConfirm(req, res) {
 			(agent_id, user_id, network, mint, name, symbol, metadata_uri, agent_authority, buyback_bps)
 		values
 			(${agent.id}, ${user.id}, ${prep.cluster}, ${prep.mint}, ${prep.payload.name},
-			 ${prep.payload.symbol}, ${prep.metadata_uri}, ${body.wallet_address}, 0)
+			 ${prep.payload.symbol}, ${prep.metadata_uri}, ${body.wallet_address}, ${0})
 		on conflict (mint, network) do nothing
 	`;
 	const launchedPlan = await markPlanLaunched({

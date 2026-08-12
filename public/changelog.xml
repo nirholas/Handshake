@@ -15,6 +15,14 @@
 			<description>Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.</description>
 		</item>
 		<item>
+			<title>Docs · X memory seeding</title>
+			<link>https://three.ws/docs/x-memory-seeding</link>
+			<guid isPermaLink="false">2026-08-12:Docs · X memory seeding</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Seed an agent's memory from your X account behind an explicit, versioned consent: only your profile and recent original public posts are read, they are distilled into short facts (never stored verbatim), and revoking consent or disconnecting X deletes every memory the grant produced.</description>
+		</item>
+		<item>
 			<title>Reputation Staking Market</title>
 			<link>https://three.ws/reputation/market</link>
 			<guid isPermaLink="false">2026-08-12:Reputation Staking Market</guid>
@@ -23,12 +31,28 @@
 			<description>Stake conviction on an agent and earn from its attested action history: escrowed principal, per-epoch yield derived from signed on-chain attestations, withdraw any time.</description>
 		</item>
 		<item>
+			<title>Every agent persona is now a signed, IPFS-pinned manifest anyone can verify</title>
+			<link>https://three.ws/agent/4c0e4d18-0544-4c95-a0db-a16896b029be</link>
+			<guid isPermaLink="false">2026-08-12:Every agent persona is now a signed, IPFS-pinned manifest anyone can verify</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Saving an agent's persona now compiles its full configuration (system prompt, voice, body, skills, on-chain identity) into a canonical manifest, signs it with the platform's ed25519 attester identity, and pins the signed envelope to IPFS. The CID lands on the agent record, so the prompt an agent actually runs is no longer a claim you have to trust: it is a document anyone can fetch from a public gateway and check. A new public endpoint, /api/manifest-verify, verifies the signature against the platform's signing key and diffs the pinned manifest against the agent's live configuration, naming every field that moved since the pin. The standalone verifier script does the same from the command line with nothing but the CID, so buyers of a forked agent can prove what behavior they are getting without asking three.ws for anything. The wire format is specified in the Agent Manifest spec's signed-envelope section.</description>
+		</item>
+		<item>
 			<title>Run your own inference node: the open inference network operator client is here</title>
 			<link>https://three.ws/docs/inference-node-operator</link>
 			<guid isPermaLink="false">2026-08-12:Run your own inference node: the open inference network operator client is here</guid>
 			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Phase 4 of the roadmap (decouple agent inference from any single provider) takes its first concrete step: anyone can now run a node. The new node-operator client is a self-contained daemon that registers with the platform, claims inference jobs, executes them with a real open model (distilgpt2 via ONNX, CPU by default with a one-flag GPU image), and returns every result signed with the node's own Solana key so anyone can verify it. The proof runs end to end locally: register, claim a job, and return a cryptographically verified result, with a built-in selftest that proves the whole loop on a fresh checkout. Operators bring their own hardware; the network supplies the jobs and the on-chain receipts. This is the first piece of the bet that agent inference settles permissionlessly, closer to how blockchains settle blocks than to how today's AI APIs settle bills.</description>
+		</item>
+		<item>
+			<title>Seed your agent's memory from your X account, with your explicit consent</title>
+			<link>https://three.ws/docs/x-memory-seeding</link>
+			<guid isPermaLink="false">2026-08-12:Seed your agent's memory from your X account, with your explicit consent</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Your agent can now learn how you write from your own X account, and only after you say yes. Connect X in Settings, and the consent screen tells you exactly what is read (your profile and up to 100 of your recent original public posts), what is stored (a handful of short distilled facts about what you talk about and how you talk, never your posts themselves and never links), and what is never touched (messages, likes, bookmarks, your follower list, your credentials). Agree and the agent's next replies already speak from those facts; change your mind and revoking, or disconnecting X, deletes every memory the seed created.</description>
 		</item>
 		<item>
 			<title>The Forge can now federate GPU work to the Livepeer decentralized compute network</title>
