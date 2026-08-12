@@ -73,6 +73,8 @@ contract ValidationRegistryTest is Test {
         validation.recordValidation(1, true, bytes32(0), "", "glb-schema");
     }
 
+    /// VR-5: an attestation against an agent id that does not exist in the
+    /// Identity Registry reverts; feedback cannot target a non-agent.
     function testUnknownAgentReverts() public {
         validation.addValidator(validator);
         vm.prank(validator);

@@ -18,6 +18,8 @@ contract WorldMovesTest is Test {
 
     // ── move: event correctness ──────────────────────────────────────────
 
+    /// WM-2 (positive half): a move inside the inclusive bounds emits exactly
+    /// the coordinates, facing, and block metadata the indexer relies on.
     function testMoveEmitsExactArgsAndBlockMetadata() public {
         vm.roll(12345);
         vm.warp(1_700_000_000);
@@ -41,6 +43,7 @@ contract WorldMovesTest is Test {
         wm.move(WORLD, 4, 5, 6, 180);
     }
 
+    /// WM-1 (storage half): move() writes no checkpoint state.
     function testMoveDoesNotWriteAnyCheckpointStorage() public {
         vm.prank(alice);
         wm.move(WORLD, 10, 20, 30, 1);
@@ -61,6 +64,8 @@ contract WorldMovesTest is Test {
         vm.stopPrank();
     }
 
+    /// WM-2 (negative half): a coordinate one past the max on any axis reverts
+    /// instead of being clamped.
     function testMoveRevertsXAboveMax() public {
         int32 max = wm.COORD_MAX();
         vm.expectRevert(WorldMoves.CoordinateOutOfBounds.selector);
@@ -157,6 +162,8 @@ contract WorldMovesTest is Test {
         assertEq(facing, 2);
     }
 
+    /// WM-3: a checkpoint is keyed by (worldId, caller) only; neither another
+    /// world nor another player ever sees it.
     function testCheckpointIsPerWorldAndPerPlayer() public {
         vm.startPrank(alice);
         wm.checkpoint(WORLD, 1, 1, 1, 1);
@@ -191,11 +198,11 @@ contract WorldMovesTest is Test {
 
     // ── gas: the whole point of this contract ────────────────────────────
 
-    /// @notice `move()` must never touch storage (event-only), so gas should
-    ///         stay flat and cheap across repeated calls from the same
-    ///         caller, back to back, exactly the spam pattern a ~0.45s block
-    ///         cadence produces. Asserted well under a plain ERC-20 transfer
-    ///         (~51k gas) to prove the "minimal gas per move" design goal.
+    /// WM-1 (gas half): move() must never touch storage (event-only), so gas
+    /// stays flat and cheap across repeated calls from the same caller, back
+    /// to back, exactly the spam pattern a ~0.45s block cadence produces.
+    /// Asserted well under a plain ERC-20 transfer (~51k gas) to prove the
+    /// "minimal gas per move" design goal.
     function testGasPerMoveIsFlatAndLow() public {
         vm.prank(alice);
         wm.move(WORLD, 1, 1, 1, 1); // warm up: first call ever, cold access is irrelevant to steady state
@@ -235,9 +242,9 @@ contract WorldMovesTest is Test {
         assertApproxEqAbs(gasUsed2, gasUsed3, 100, "move() gas must stay flat across calls");
     }
 
-    /// @notice checkpoint() writes one storage slot; sanity-check it costs
-    ///         meaningfully more than move() so the split is doing its job
-    ///         (callers who don't need queryable state save real gas).
+    /// WM-4: there is no admin surface to strengthen against. What can be
+    /// proven is that checkpoint's storage cost stays meaningfully above the
+    /// event-only move, so the immutable split keeps saving callers real gas.
     function testCheckpointCostsMoreThanMove() public {
         vm.startPrank(alice);
         wm.move(WORLD, 1, 1, 1, 1);

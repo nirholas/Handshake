@@ -1,0 +1,17 @@
+{
+  "name": "skill-license-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "anchor test"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "0.32.1",
+    "@solana/spl-token": "^0.4.9"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "mocha": "^11.0.0",
+    "typescript": "^5.9.0"
+  }
+}

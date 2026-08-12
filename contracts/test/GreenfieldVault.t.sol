@@ -278,6 +278,10 @@ contract GreenfieldVaultTest is Test {
         assertEq(buyer.balance, before - TOTAL_REQUIRED);
     }
 
+    /// GV-2 (negative half): a (objectId, buyer) pair may not buy twice while
+    /// a purchase is open. The retry-after-failure and resell-after-revoke
+    /// halves are proven by testSettlementFailureAllowsRetry and
+    /// testRevokeHappyPath.
     function testDoubleBuySameBuyerReverts() public {
         _list(seller, OBJECT_ID, PRICE);
         _buy(buyer, OBJECT_ID);
@@ -287,6 +291,8 @@ contract GreenfieldVaultTest is Test {
         vault.buy{value: TOTAL_REQUIRED}(OBJECT_ID, POLICY_DATA);
     }
 
+    /// GV-2 (positive half): distinct buyers are independent pairs and may
+    /// each hold an open purchase on the same object.
     function testDifferentBuyersCanEachPurchase() public {
         _list(seller, OBJECT_ID, PRICE);
         uint256 saleId1 = _buy(buyer, OBJECT_ID);
@@ -312,19 +318,22 @@ contract GreenfieldVaultTest is Test {
         assertTrue(saleId2 != saleId);
     }
 
-    // ── greenfieldCall access control ───────────────────────────────────
+    // ── GV-6: greenfieldCall access control ────────────────────────────────
 
+    /// GV-6 (negative half): only the PermissionHub contract may deliver an ack.
     function testGreenfieldCallOnlyPermissionHub() public {
         vm.expectRevert(GreenfieldVault.OnlyPermissionHub.selector);
         vault.greenfieldCall(STATUS_SUCCESS, 0x07, 2, 1, abi.encode(uint256(1)));
     }
 
+    /// GV-6 (negative half): only the permission channel is accepted.
     function testGreenfieldCallBadChannelReverts() public {
         vm.prank(address(permissionHub));
         vm.expectRevert(GreenfieldVault.BadChannel.selector);
         vault.greenfieldCall(STATUS_SUCCESS, 0x05, 2, 1, abi.encode(uint256(1)));
     }
 
+    /// GV-6 (negative half): an ack for a sale that does not exist reverts.
     function testGreenfieldCallUnknownSaleReverts() public {
         vm.prank(address(permissionHub));
         vm.expectRevert(GreenfieldVault.UnknownSale.selector);
