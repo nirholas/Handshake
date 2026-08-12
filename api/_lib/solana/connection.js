@@ -843,6 +843,22 @@ const PROVIDER_CAPACITY_CODES = new Set([
 	429, // Alchemy: monthly capacity exceeded, reported as a JSON-RPC code
 ]);
 
+// -32603 is the JSON-RPC spec's "Internal error": the node accepted the call and
+// then failed on its own side. It is NOT deterministic across providers, which is
+// what separates it from the -32600/-32601/-32602 family excluded above, and in
+// practice it is per (lane, method): measured 2026-08-12, Leo RPC answers EVERY
+// getTokenLargestAccounts with -32603 while serving getAccountInfo and
+// getMultipleAccounts normally.
+//
+// Unclassified it was not a failover signal at all, so the error envelope reached
+// the caller as though it were the chain's answer, with lanes that do serve the
+// method (both Tatum hosts, keylessly) never tried. That is the whole reason
+// /api/crypto/holders answered 503 and /api/crypto/security reported
+// riskLevel:"unknown" with "holder concentration could not be read" on live mints
+// while Helius and Alchemy sat quota-exhausted. Disposition is a (lane, method)
+// demotion, never a lane bench: the lane is healthy for every other shape.
+const JSONRPC_INTERNAL_ERROR = -32603;
+
 // A provider that refuses one call shape — by paid-tier gate, by policy, or by
 // switching the method off — answers with a method-shaped JSON-RPC error, and the
 // dangerous variant answers HTTP 200 so no status-driven rotation fires. Measured
@@ -950,6 +966,19 @@ export function classifyRpcBody(body) {
 				log: `200 + provider error ${code} ${msg.slice(0, 48)}`.trim(),
 				bodyText: msg,
 				methodBlock: isMethodRefusal(msg),
+			};
+		}
+		// The node's own internal fault on this call shape (see JSONRPC_INTERNAL_ERROR).
+		// Fail the request over and demote the shape on this lane so the next caller
+		// spends its budget on a lane that answers it.
+		if (hasError && item.error?.code === JSONRPC_INTERNAL_ERROR) {
+			const msg = String(item.error?.message || '');
+			return {
+				status: 502,
+				reason: 'node internal error',
+				log: `200 + node internal error -32603 ${msg.slice(0, 48)}`.trim(),
+				bodyText: msg,
+				methodBlock: true,
 			};
 		}
 	}
@@ -1112,6 +1141,22 @@ export function makeRotatingFetch(endpoints) {
 					}),
 				};
 			} catch (err) {
+				// The CALLER's budget ran out, not the lane's patience. Rotation is over
+				// either way, and this attempt learned nothing about the endpoint, so
+				// penalising it here would bench a healthy node for the caller's deadline.
+				if (init?.signal?.aborted) return { error: err };
+				// The lane accepted the request and never answered within the attempt
+				// bound. Measured 2026-08-12: PublicNode hangs indefinitely on
+				// getTokenLargestAccounts (no response at 35s) while answering
+				// getAccountInfo in milliseconds — a silent per-shape refusal. Cooling the
+				// whole lane for it benched the primary free lane for every other method,
+				// which is how one unanswerable shape starved the holder and security
+				// readers. Demote the shape instead; markMethodDemotion's breadth guard
+				// still benches a lane that hangs on everything.
+				if (attemptSignal.aborted && methods.length) {
+					penalise(url, 504, '', true, `no answer within ${Math.round(ATTEMPT_TIMEOUT_MS / 1000)}s`);
+					return { error: err };
+				}
 				// A thrown fetch is a transient network/DNS blip, not a quota signal —
 				// cool only briefly so a healthy provider isn't parked for long.
 				_endpointCooldown.set(url, Date.now() + NETWORK_COOLDOWN_MS);
