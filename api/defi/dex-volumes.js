@@ -11,13 +11,17 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { createCache, cached } from '../_lib/mem-cache.js';
 
 const UPSTREAM = 'https://api.llama.fi/overview/dexs?excludeTotalDataChartBreakdown=true';
 const TTL_MS = 600_000;
 const MAX_CHART_POINTS = 200;
 const MAX_PROTOCOLS = 100;
 
-let _cache = null; // { value, expiresAt }
+// Single-entry cache with single-flight de-dup, so a burst of concurrent
+// requests on a cold or just-expired entry shares one fetch of this ~2 MB feed.
+const _cache = createCache({ max: 1, ttlMs: TTL_MS });
+const CACHE_KEY = 'dex-volumes';
 
 const finite = (n) => (Number.isFinite(n) ? n : null);
 
@@ -34,11 +38,14 @@ function normalizeChart(raw) {
 	return out;
 }
 
-// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// Exported for the paid Market Data API (api/_lib/market-data/), the x402
 // market-dex-volumes endpoint sells the same DEX rankings this page renders.
 export async function buildDexVolumes() {
+	return cached(_cache, CACHE_KEY, loadDexVolumes);
+}
+
+async function loadDexVolumes() {
 	const now = Date.now();
-	if (_cache && _cache.expiresAt > now) return _cache.value;
 
 	const resp = await fetch(UPSTREAM, {
 		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
@@ -77,7 +84,7 @@ export async function buildDexVolumes() {
 		};
 	});
 
-	const value = {
+	return {
 		total24h: finite(Number(raw.total24h)),
 		total7d: finite(Number(raw.total7d)),
 		change_7dover7d: finite(Number(raw.change_7dover7d)),
@@ -85,8 +92,6 @@ export async function buildDexVolumes() {
 		protocols,
 		updated_at: now,
 	};
-	_cache = { value, expiresAt: now + TTL_MS };
-	return value;
 }
 
 export default wrap(async (req, res) => {

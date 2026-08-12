@@ -8,19 +8,28 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { createCache, cached } from '../_lib/mem-cache.js';
 
 const UPSTREAM = 'https://api.llama.fi/protocols';
 const TTL_MS = 300_000;
 
-let _cache = null; // { value, expiresAt }
+// Single-entry cache with single-flight de-dup. This feed is ~8 MB; without
+// de-dup every concurrent request arriving on a cold or just-expired entry
+// fired its own copy of it, so one page load by N visitors cost N full
+// downloads and could tip the upstream into refusing the burst.
+const _cache = createCache({ max: 1, ttlMs: TTL_MS });
+const CACHE_KEY = 'protocols';
 
 const finite = (n) => (Number.isFinite(n) ? n : null);
 
-// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// Exported for the paid Market Data API (api/_lib/market-data/), the x402
 // market-defi endpoint sells the same TVL leaderboard this page renders.
 export async function buildProtocols() {
+	return cached(_cache, CACHE_KEY, loadProtocols);
+}
+
+async function loadProtocols() {
 	const now = Date.now();
-	if (_cache && _cache.expiresAt > now) return _cache.value;
 
 	const resp = await fetch(UPSTREAM, {
 		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
@@ -67,14 +76,12 @@ export async function buildProtocols() {
 		};
 	});
 
-	const value = {
+	return {
 		total_tvl: totalTvl,
 		protocol_count: protocolCount,
 		protocols,
 		updated_at: now,
 	};
-	_cache = { value, expiresAt: now + TTL_MS };
-	return value;
 }
 
 export default wrap(async (req, res) => {

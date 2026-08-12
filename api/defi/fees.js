@@ -12,13 +12,16 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { createCache, cached } from '../_lib/mem-cache.js';
 
 const TTL_MS = 600_000;
 const MAX_CHART_POINTS = 200;
 const MAX_PROTOCOLS = 100;
 
-// One cache slot per data type — the two series are independent upstream calls.
-const _cache = new Map(); // type -> { value, expiresAt }
+// One cache slot per data type: the two series are independent upstream calls.
+// Single-flight de-dup means a burst of concurrent requests on a cold or
+// just-expired slot shares one fetch of this ~4 MB feed rather than one each.
+const _cache = createCache({ max: 2, ttlMs: TTL_MS });
 
 const finite = (n) => (Number.isFinite(n) ? n : null);
 
@@ -40,12 +43,17 @@ function normalizeChart(raw) {
 	return out;
 }
 
-// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// Exported for the paid Market Data API (api/_lib/market-data/), the x402
 // market-fees endpoint sells the same fees/revenue rankings this page renders.
+// Anything other than 'revenue' means the fees series, so the key is normalized
+// here and the cache holds exactly the two slots it can ever need.
 export async function buildFees(type) {
+	const key = type === 'revenue' ? 'revenue' : 'fees';
+	return cached(_cache, key, () => loadFees(key));
+}
+
+async function loadFees(type) {
 	const now = Date.now();
-	const hit = _cache.get(type);
-	if (hit && hit.expiresAt > now) return hit.value;
 
 	const resp = await fetch(upstreamFor(type), {
 		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
@@ -78,8 +86,8 @@ export async function buildFees(type) {
 		};
 	});
 
-	const value = {
-		type: type === 'revenue' ? 'revenue' : 'fees',
+	return {
+		type,
 		total24h: finite(Number(raw.total24h)),
 		total7d: finite(Number(raw.total7d)),
 		total30d: finite(Number(raw.total30d)),
@@ -88,8 +96,6 @@ export async function buildFees(type) {
 		protocols,
 		updated_at: now,
 	};
-	_cache.set(type, { value, expiresAt: now + TTL_MS });
-	return value;
 }
 
 export default wrap(async (req, res) => {

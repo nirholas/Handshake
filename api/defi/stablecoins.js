@@ -10,12 +10,16 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { createCache, cached } from '../_lib/mem-cache.js';
 
 const UPSTREAM = 'https://stablecoins.llama.fi/stablecoins?includePrices=true';
-const TTL_MS = 300_000; // 5 minutes — matches the CDN s-maxage below.
+const TTL_MS = 300_000; // 5 minutes, matches the CDN s-maxage below.
 const TOP_N = 100;
 
-let _cache = null; // { value, expiresAt }
+// Single-entry cache with single-flight de-dup, so a burst of concurrent
+// requests on a cold or just-expired entry shares one upstream fetch.
+const _cache = createCache({ max: 1, ttlMs: TTL_MS });
+const CACHE_KEY = 'stablecoins';
 
 // peg_type keeps DeFiLlama's raw token (`peggedUSD`, `peggedEUR`, …) so the
 // client can render the pegged currency (USD, EUR) without a lossy remap; the
@@ -62,12 +66,13 @@ function shape(assets) {
 	};
 }
 
-// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// Exported for the paid Market Data API (api/_lib/market-data/), the x402
 // market-stablecoins endpoint sells the same peg board this page renders.
 export async function buildStablecoins() {
-	const now = Date.now();
-	if (_cache && _cache.expiresAt > now) return _cache.value;
+	return cached(_cache, CACHE_KEY, loadStablecoins);
+}
 
+async function loadStablecoins() {
 	const resp = await fetch(UPSTREAM, {
 		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
 		signal: AbortSignal.timeout(10_000),
@@ -78,9 +83,7 @@ export async function buildStablecoins() {
 	const assets = Array.isArray(body?.peggedAssets) ? body.peggedAssets : null;
 	if (!assets) throw new Error('unexpected upstream shape');
 
-	const value = shape(assets);
-	_cache = { value, expiresAt: now + TTL_MS };
-	return value;
+	return shape(assets);
 }
 
 export default wrap(async (req, res) => {

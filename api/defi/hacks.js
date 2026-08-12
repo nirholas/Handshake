@@ -15,6 +15,7 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { createCache, cached } from '../_lib/mem-cache.js';
 
 const UPSTREAM = 'https://api.llama.fi/hacks';
 const TTL_MS = 600_000;
@@ -22,7 +23,10 @@ const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const MAX_LIMIT = 200;
 const DEFAULT_LIMIT = 100;
 
-let _cache = null; // { value, expiresAt }
+// Single-entry cache with single-flight de-dup, so a burst of concurrent
+// requests on a cold or just-expired entry shares one upstream fetch.
+const _cache = createCache({ max: 1, ttlMs: TTL_MS });
+const CACHE_KEY = 'hacks';
 
 const finiteOrNull = (n) => (Number.isFinite(n) ? n : null);
 
@@ -36,8 +40,11 @@ function normalizeChains(chain) {
 // sorted, normalized incident list plus the dataset-wide headline stats — the
 // per-request search/pagination happens on top of this cached whole.
 async function loadDataset() {
+	return cached(_cache, CACHE_KEY, buildDataset);
+}
+
+async function buildDataset() {
 	const now = Date.now();
-	if (_cache && _cache.expiresAt > now) return _cache.value;
 
 	const resp = await fetch(UPSTREAM, {
 		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
@@ -89,7 +96,7 @@ async function loadDataset() {
 		}
 	}
 
-	const value = {
+	return {
 		hacks,
 		stats: {
 			total_stolen_all_time: totalAllTime,
@@ -99,8 +106,6 @@ async function loadDataset() {
 		},
 		updated_at: now,
 	};
-	_cache = { value, expiresAt: now + TTL_MS };
-	return value;
 }
 
 function clampInt(raw, fallback, min, max) {
