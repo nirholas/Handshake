@@ -3,6 +3,36 @@
 	"entries": [
 		{
 			"date": "2026-08-12",
+			"title": "Claiming the CZ agent works again",
+			"summary": "The claim page at /cz asked you to connect a wallet and then failed with an internal error the moment it tried to issue the message you were meant to sign. The ledger it writes claims into had never been created in the live database, so every real attempt died at the first step while the page still looked healthy. That table now exists as a tracked migration, and the flow runs end to end: connect, sign one line, and the claim is recorded. The signing step is also stricter now. The one-time code you sign expires after fifteen minutes instead of being valid forever, and a claim can only be redeemed once even if two attempts land at the same instant. A rehearsal switch that showed a fake success screen without touching a wallet is gone, so what you see on the page is always the real result.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/cz"
+		},
+		{
+			"date": "2026-08-12",
+			"title": "The public custody anchor lookup answers a bad epoch instead of erroring out",
+			"summary": "Anyone can look up the on-chain anchor for a Proof-of-Custody epoch at /api/custody/anchor. Ask it for an epoch number too large to be a real round and it used to fail with an internal server error, which reads like the custody service is down rather than like a typo in the request. It now answers a plain \"that is not a valid epoch\" for malformed input, keeps 404 for an epoch that has not happened yet, and reads the newest epoch with a single lookup instead of pulling the whole integrity aggregate it then threw away.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/integrity"
+		},
+		{
+			"date": "2026-08-12",
+			"title": "The free trending and whale feeds stop going blank under their own traffic",
+			"summary": "Ask the trending feed for the 5-minute, 1-hour and 24-hour view back to back and the last two used to come back empty, blaming an upstream outage that was not happening. The cause was our own request volume: each call pulled the trade history of twenty pump.fun coins, and three calls in a row hit pump.fun's rate limiter, which then refused everything for a while. Both feeds now read pump.fun through one shared, short-lived cache, so every window and every caller reuses a single set of pulls instead of re-fetching the same coins, and a repeat call answers in milliseconds. When the limiter does bite, the whale feed serves the last successful pull and marks it stale instead of pretending the market is empty. A token nobody is trading now also reports an honest empty result rather than a false feed-down warning.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/docs/crypto-api"
+		},
+		{
+			"date": "2026-08-12",
 			"title": "Seed your agent's memory from your X account, with your explicit consent",
 			"summary": "Your agent can now learn how you write from your own X account, and only after you say yes. Connect X in Settings, and the consent screen tells you exactly what is read (your profile and up to 100 of your recent original public posts), what is stored (a handful of short distilled facts about what you talk about and how you talk, never your posts themselves and never links), and what is never touched (messages, likes, bookmarks, your follower list, your credentials). Agree and the agent's next replies already speak from those facts; change your mind and revoking, or disconnecting X, deletes every memory the seed created.",
 			"tags": [

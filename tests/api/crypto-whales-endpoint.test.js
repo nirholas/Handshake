@@ -1,4 +1,4 @@
-// GET /api/crypto/whales — the free whale-activity endpoint contract.
+// GET /api/crypto/whales: the free whale-activity endpoint contract.
 //
 // The scan engine's pure aggregation (threshold filter, per-scope shaping, the
 // net-flow signal) is covered in tests/crypto-whales.test.js. Here we pin the
@@ -71,7 +71,7 @@ beforeEach(() => {
 	limits.marketDataIp.mockResolvedValue({ success: true, limit: 60, remaining: 59, reset: 0 });
 });
 
-describe('GET /api/crypto/whales — scope selection', () => {
+describe('GET /api/crypto/whales: scope selection', () => {
 	it('no mint scans the market and never calls the token scan', async () => {
 		const { res, body } = await call('/api/crypto/whales');
 		expect(res.statusCode).toBe(200);
@@ -91,7 +91,7 @@ describe('GET /api/crypto/whales — scope selection', () => {
 	});
 });
 
-describe('GET /api/crypto/whales — input validation', () => {
+describe('GET /api/crypto/whales: input validation', () => {
 	it('405s a non-GET method', async () => {
 		const { res, body } = await call('/api/crypto/whales', 'POST');
 		expect(res.statusCode).toBe(405);
@@ -136,7 +136,7 @@ describe('GET /api/crypto/whales — input validation', () => {
 	});
 });
 
-describe('GET /api/crypto/whales — degraded + stale honesty', () => {
+describe('GET /api/crypto/whales: degraded + stale honesty', () => {
 	it('feed down → 200 with an empty set and a retry note, never a 5xx', async () => {
 		scanMarketWhalesMock.mockResolvedValue(
 			scanResult({ whales: [], whaleCount: 0, totalSolMoved: 0, signal: 'neutral', degraded: true }),

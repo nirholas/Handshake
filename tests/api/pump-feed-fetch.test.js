@@ -1,4 +1,4 @@
-// api/_lib/pump-feed-fetch.js — the shared pump.fun read layer behind
+// api/_lib/pump-feed-fetch.js: the shared pump.fun read layer behind
 // /api/crypto/trending and /api/crypto/whales.
 //
 // What is pinned here is exactly what used to break in production: pump.fun sits
@@ -52,7 +52,7 @@ async function withTimers(promise) {
 	return settled;
 }
 
-describe('pumpFetchJson — retry on a rate limit', () => {
+describe('pumpFetchJson: retry on a rate limit', () => {
 	it('retries once on 429 and returns the recovered body', async () => {
 		const fetchMock = vi
 			.fn()
@@ -88,7 +88,7 @@ describe('pumpFetchJson — retry on a rate limit', () => {
 	});
 });
 
-describe('fetchPumpTrades — cache, envelopes, failure contract', () => {
+describe('fetchPumpTrades: cache, envelopes, failure contract', () => {
 	it('accepts both the array and the {trades} envelope', async () => {
 		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonRes({ trades: [tradeRow] })));
 		const wrapped = await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
@@ -131,7 +131,7 @@ describe('fetchPumpTrades — cache, envelopes, failure contract', () => {
 	});
 });
 
-describe('fetchPumpBoard — coin filtering + cache', () => {
+describe('fetchPumpBoard: coin filtering + cache', () => {
 	it('keeps only rows carrying a plausible mint', async () => {
 		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonRes([coinRow, { mint: 'short' }, null, { symbol: 'X' }])));
 		const out = await withTimers(fetchPumpBoard({ limit: 20 }));

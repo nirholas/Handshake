@@ -280,6 +280,8 @@ is thin. This endpoint is a free, high-signal read of large buys.
   (market scope).
 - **`totalSolMoved`** — total SOL across all qualifying whale buys.
 - **`signal`** — see the rule below.
+- **`stale`**: present and `true` only when pump.fun was rate-limiting and the
+  rows came from the last successful pull. Absent means live.
 
 ### The signal rule (deterministic — no LLM)
 
@@ -304,9 +306,13 @@ The implementation is `computeSignal` in
 ### States
 
 - **No whales over threshold** → `200` with `whales: []`, `whaleCount: 0`, and
-  `signal: "neutral"`. Not an error.
+  `signal: "neutral"`. Not an error. A quiet mint reports this, *not* an outage.
 - **pump.fun feed unavailable** → `200` with an empty whale set and a `note`
-  field. Never `500`.
+  field. Never `500`. "Unavailable" means the feed call failed, never that the
+  market happened to be quiet.
+- **pump.fun rate-limited us** → `200` with `stale: true` alongside the normal
+  body. The rows are real trades from the last successful pull (up to ten
+  minutes old) rather than an empty answer; poll again shortly for live data.
 - **Malformed `mint` / `minSol` / `limit`** → `400` with a clear message and an
   `example`.
 - **Rate-limited** → `429` with `RateLimit-*` + `Retry-After` headers.
@@ -562,6 +568,13 @@ existing scoring primitives (`scorePressure`, `summarizeWindowUsd`, `median`); s
 
 - **A source is down** → `200` with whatever ranked data is available, plus a `note`.
 - **Everything down** → `200` with `tokens: []`, `sources: []`, and a retry note. Never `500`.
+  The same shape answers a window in which nothing qualified, so the note names both
+  possibilities rather than blaming an upstream that may be healthy.
+- **pump.fun rate-limited us** → the board and trade pulls are shared through a short
+  cache with a last-known-good tier ([`api/_lib/pump-feed-fetch.js`](../api/_lib/pump-feed-fetch.js)),
+  so consecutive calls across `5m`/`1h`/`24h` reuse one set of pulls instead of each
+  re-fetching every coin and tripping the upstream limiter. Trade rows keep their own
+  timestamps, so a windowed volume built from cached rows stays arithmetically honest.
 - **Bad `window`/`source`** → coerced to the default. **`limit` > 50** → capped at 50.
 - **Rate-limited** → `429` with `RateLimit-*` + `Retry-After` headers.
 

@@ -133,7 +133,7 @@ describe('buildWhaleResult — empty case', () => {
 // endpoint prints an outage note for one of them. Conflating the two is what
 // made a brand-new mint with no trades look like a pump.fun outage, so the
 // distinction is pinned here.
-describe('scanTokenWhales / scanMarketWhales — degraded + stale', () => {
+describe('scanTokenWhales / scanMarketWhales: degraded + stale', () => {
 	beforeEach(() => {
 		fetchPumpTrades.mockReset();
 		fetchPumpBoard.mockReset();

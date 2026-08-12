@@ -74,7 +74,7 @@ Anyone can also re-verify the current root at `three.ws/integrity`, and the stan
 - `Public Solana RPC getTransaction — api.mainnet-beta.solana.com, solana-rpc.publicnode.com, api.devnet.solana.com (browser reads the anchor directly)`
 - `POST /api/solana-rpc?network=… — platform RPC proxy, last-resort failover only`
 - `GET /api/custody/integrity — public no-auth aggregate for the /integrity page`
-- `GET /api/custody/anchor?epoch=N|latest — public anchor reference for one epoch`
+- `GET /api/custody/anchor?epoch=N|latest — public anchor reference for one epoch (omit the param for the newest; a non-integer or out-of-range epoch answers 400, an epoch that has not happened yet answers 404)`
 - `GET/POST /api/cron/custody-attest — scheduled snapshot + on-chain anchor job (bearer-secret protected)`
 
 ## Related
