@@ -919,7 +919,11 @@ export function mountTradingCopilot({ panel, agentId, agentName = 'Copilot', isO
 		try {
 			let resp;
 			if (cfg.provider === 'elevenlabs' && cfg.voiceId) {
-				resp = await fetch('/api/tts/eleven', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ voiceId: cfg.voiceId, text: clean }) });
+				// agentId names the agent whose voice this is, so the proxy can
+				// serve the clip on its owner's saved ElevenLabs key (BYOK). Without
+				// it an owner-cloned voice is unreachable here and silently degrades
+				// to browser speech.
+				resp = await fetch('/api/tts/eleven', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ voiceId: cfg.voiceId, text: clean, agentId }) });
 			} else {
 				resp = await fetch('/api/tts/speak', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: clean, format: 'mp3' }) });
 			}

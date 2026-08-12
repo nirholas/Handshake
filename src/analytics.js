@@ -38,6 +38,8 @@ export const ANALYTICS_EVENTS = Object.freeze({
 	WALLET_CONNECT_FAILED: 'wallet_connect_failed',
 	/** An agent was created. props: { agent_id?, source? } */
 	AGENT_CREATED: 'agent_created',
+	/** A recorded voice sample was cloned onto the agent. props: { agent_id?, billing?, source? } */
+	VOICE_CLONE_BOUND: 'agent_voice_clone_bound',
 	/** First embed/snippet generated for an agent. props: { agent_id?, embed_kind? } */
 	EMBED_GENERATED: 'embed_generated',
 

@@ -523,7 +523,10 @@ async function fetchTtsBlob(agent, text) {
 	const headers = { 'content-type': 'application/json' };
 	try {
 		if (provider === 'elevenlabs' && agent?.voice_id) {
-			const r = await fetch('/api/tts/eleven', { method: 'POST', credentials: 'include', headers, body: JSON.stringify({ voiceId: agent.voice_id, text: text.slice(0, 500) }) });
+			// agentId lets the proxy serve the clip on the agent owner's saved
+			// ElevenLabs key (BYOK); without it an owner-cloned voice is
+			// unreachable on this surface.
+			const r = await fetch('/api/tts/eleven', { method: 'POST', credentials: 'include', headers, body: JSON.stringify({ voiceId: agent.voice_id, text: text.slice(0, 500), agentId: agent.id }) });
 			if (r.ok) return await r.blob();
 		}
 		// Default + cloned-but-non-eleven providers: the server's free TTS lane.
