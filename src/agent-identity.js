@@ -93,6 +93,16 @@ export class AgentIdentity {
 	get isOwner() {
 		return this._record?.isOwner ?? null;
 	}
+	/**
+	 * True only when the LAST load reached the backend and it returned a real
+	 * agent row. False means the record in hand is a localStorage copy or a
+	 * locally synthesised default: readable, but its id may not exist server-side,
+	 * so no write to `/api/agents/:id` can succeed. Owner consoles (Agent Studio)
+	 * must refuse to render edit controls over an unconfirmed record.
+	 */
+	get backendConfirmed() {
+		return this._backendConfirmed;
+	}
 
 	// ── Load + Save ───────────────────────────────────────────────────────────
 

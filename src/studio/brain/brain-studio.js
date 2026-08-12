@@ -75,7 +75,7 @@ class BrainStudio {
 			<div class="brainstudio" data-view="onboard">
 				<div class="brainstudio__onboard" id="bsOnboard">
 					<div class="brainstudio__onboard-inner">
-						<h1>Build your agent's mind</h1>
+						<h2>Build your agent's mind</h2>
 						<p>Fill in persona, model, memory, skills and market reasoning. It wires itself — watch it light up as it thinks.</p>
 						<div class="brainstudio__templates" id="bsTplGrid"></div>
 						<button class="studio__btn studio__btn-primary" id="bsBlank">Start from blank</button>

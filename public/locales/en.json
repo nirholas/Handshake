@@ -794,7 +794,7 @@
 		"1_call_create_identity": "1 · Call create_identity",
 		"2_poll_for_free": "2 · Poll for free",
 		"3_own_the_identity": "3 · Own the identity",
-		"a2mcp_service_1_50_per_identity_live": "A2MCP service · $1.50 per identity · live on OKX.AI rails",
+		"a2mcp_service_live_on_okx_ai_rails": "A2MCP service · live on OKX.AI rails",
 		"costs_nothing_and_drives_the_job_generation": "<code>identity_status</code> costs nothing and drives the job: generation, humanoid auto-rig, then each studio render. Typical time to done: 3–6 minutes.",
 		"deliverables_square_pfp_1024_128_preview_ful": "Deliverables: square PFP (1024 + 128 preview), full-body render set, and the rigged GLB — usable in three.ws scenes, games, and any glTF runtime.",
 		"every_ai_agent_deserves_a_face": "Every AI agent deserves a face.",

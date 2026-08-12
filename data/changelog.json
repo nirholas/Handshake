@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-11",
+			"title": "The standalone avatar viewer is now embeddable in one click, and never leaves you on a blank screen",
+			"summary": "The Avatar Artifact page is meant to be dropped into other sites, so it now carries its own embed snippet: one button copies a ready-made iframe tag, and if a browser refuses clipboard access (which it does inside a cross-origin frame) the snippet appears in a field you can copy by hand. The 3D runtime now ships with the site instead of being pulled from an outside CDN, so a page that embeds the viewer no longer loads a third-party script the host never agreed to. Every way the viewer can fail now paints a real message with a working Retry, including a browser with no WebGL and a runtime that never arrives at all, and the message clears itself if the scene shows up late. The page also stopped hiding one of its own links on phones, keeps its controls clear of the language switcher and the search chip, respects a reduced-motion preference, and pauses rendering while its tab is hidden so an embedded viewer does not burn a host page GPU in the background.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/avatar-artifact"
+		},
+		{
+			"date": "2026-08-11",
 			"title": "The arbitrage board now compares like with like, and finds four times as many real price gaps",
 			"summary": "The x402 arbitrage board groups listings by what they actually do, so it can show you the same capability priced differently by competing providers. Two things were making it lie. When a provider's URL ended in a parameter (a wallet address, a token mint), the board treated that parameter as the capability, so ten unrelated endpoints from one vendor were being presented as a single opportunity with a 1400% spread. And a vendor charging different prices for its own different endpoints was being counted as cross-provider competition. Both are fixed: an opportunity now needs either two genuinely different provider hosts, or one resource quoted at two prices by two different venues. Grouping also stopped mistaking real words for random URL suffixes, which had been hiding matches. The live board went from 24 mostly-noise cards to 99 real ones. The page picked up polish alongside: a filtered view is now shareable by URL, deep links from the catalog land pre-filtered, the empty state offers a way out instead of a dead end, and cards fit a 320px phone without sideways scrolling.",
 			"tags": [

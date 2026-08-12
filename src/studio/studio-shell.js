@@ -193,6 +193,7 @@ class StudioShell {
 
 				<section class="studio-panel" aria-label="Agent editor">
 					<header class="studio-identity">
+						<h1 class="studio-sr-only">Agent Studio</h1>
 						<input id="studio-name" class="studio-name" value="${esc(agent.name || '')}"
 							maxlength="100" aria-label="Agent name" placeholder="Name your agent" />
 						<input id="studio-tagline" class="studio-tagline" value="${esc(agent.description || '')}"

@@ -175,6 +175,17 @@
 		.pill.live { background: rgba(120,200,140,0.12); color: var(--mint); border: 1px solid rgba(120,200,140,0.25); }
 		.pill.paused { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--hairline-strong); }
 		.pill.grad { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(59,130,246,0.22); }
+		.pill.default { background: var(--surface-2); color: var(--text-4); border: 1px dashed var(--hairline-strong); }
+
+		/* Per-coin save state. Every rule change writes immediately, so the card has
+		   to say whether the write landed instead of leaving the UI ahead of the DB. */
+		.save-state { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-4); display: none; align-items: center; gap: 6px; }
+		.save-state[data-state="saving"], .save-state[data-state="saved"], .save-state[data-state="error"] { display: inline-flex; }
+		.save-state[data-state="saved"] { color: var(--mint); }
+		.save-state[data-state="error"] { color: #fca5a5; }
+		.save-retry { background: none; border: 1px solid currentColor; color: inherit; border-radius: 5px; padding: 2px 7px; font: inherit; cursor: pointer; }
+		.save-retry:hover { background: rgba(255,255,255,0.06); }
+		.save-retry:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
 
 		.empty { padding: 56px 24px; text-align: center; border: 1px dashed var(--hairline-strong); border-radius: 14px; color: var(--text-3); }
 		.empty h3 { font-family: var(--font-display); color: var(--text); font-size: 20px; margin: 0 0 8px; font-weight: 600; }
@@ -217,7 +228,7 @@
 			<div class="nav-main">
 				<a href="/discover" data-i18n="autopilot.discover">Discover</a>
 				<a href="/pump-dashboard" data-i18n="autopilot.coins">Coins</a>
-				<a href="/autopilot" class="active" data-i18n="autopilot.autopilot">Autopilot</a>
+				<a href="/autopilot" class="active" aria-current="page" data-i18n="autopilot.autopilot">Autopilot</a>
 				<a href="/temporary" data-i18n="autopilot.walk">Walk</a>
 			</div>
 			<div class="nav-end"><a href="/dashboard" data-i18n="autopilot.dashboard">Dashboard</a></div>
@@ -229,7 +240,7 @@
 			<div class="eyebrow">Autonomous Coin Agent</div>
 			<h1 data-i18n="autopilot.put_your_coin_on_autopilot">Put your coin on autopilot.</h1>
 			<p data-i18n="autopilot.your_agent_runs_the_whole_coin_lifecycle">Your agent runs the whole coin lifecycle on its own: it buys back &amp; burns from creator
-			fees and distributes payments to holders — on the rules you set. Every on-chain move is
+			fees and distributes payments to holders, on the rules you set. Every on-chain move is
 			narrated live by your agent's avatar.</p>
 			<div class="hero-steps">
 				<div class="hero-step"><b>01</b> Earn fees</div>
@@ -238,10 +249,10 @@
 				<div class="hero-step"><b>04</b> Narrate &amp; repeat</div>
 			</div>
 
-			<div class="narrator" id="narrator" style="display:none">
-				<div class="narrator-avatar" id="narratorAvatar"><div class="nf">◆</div><div class="narrator-pulse"></div></div>
+			<div class="narrator" id="narrator" style="display:none" role="status" aria-live="polite">
+				<div class="narrator-avatar" id="narratorAvatar"><div class="nf" aria-hidden="true">◆</div><div class="narrator-pulse"></div></div>
 				<div class="narrator-body">
-					<div class="narrator-line" id="narratorLine">Standing by — no autonomous actions yet.</div>
+					<div class="narrator-line" id="narratorLine">Standing by. No autonomous actions yet.</div>
 					<div class="narrator-meta" id="narratorMeta">Your agent will speak here the moment it acts.</div>
 				</div>
 			</div>
@@ -250,8 +261,8 @@
 
 	<section>
 		<div class="wrap">
-			<div class="section-title">Your coins</div>
-			<div class="coins" id="coins">
+			<h2 class="section-title">Your coins</h2>
+			<div class="coins" id="coins" aria-busy="true">
 				<div class="coin-card"><div class="coin-head">
 					<div class="coin-img skeleton" style="width:44px;height:44px"></div>
 					<div class="coin-id"><div class="skeleton" style="height:14px;width:140px"></div>
@@ -263,8 +274,15 @@
 
 	<section style="border-top:1px solid var(--hairline)">
 		<div class="wrap">
-			<div class="section-title">Autonomous activity</div>
-			<div id="activity"><div class="empty" style="border:none;padding:24px 0;text-align:left;color:var(--text-4)">Loading…</div></div>
+			<div class="section-head">
+				<h2 class="section-title">Autonomous activity</h2>
+				<a class="section-link" href="/autopilot-activity">Full receipt log &rarr;</a>
+			</div>
+			<div id="activity" aria-busy="true">
+				<div class="act-skel"><div class="skeleton" style="width:84px;height:18px"></div><div style="flex:1"><div class="skeleton" style="height:12px;width:60%"></div><div class="skeleton" style="height:9px;width:120px;margin-top:7px"></div></div></div>
+				<div class="act-skel"><div class="skeleton" style="width:84px;height:18px"></div><div style="flex:1"><div class="skeleton" style="height:12px;width:45%"></div><div class="skeleton" style="height:9px;width:100px;margin-top:7px"></div></div></div>
+				<div class="act-skel"><div class="skeleton" style="width:84px;height:18px"></div><div style="flex:1"><div class="skeleton" style="height:12px;width:52%"></div><div class="skeleton" style="height:9px;width:110px;margin-top:7px"></div></div></div>
+			</div>
 		</div>
 	</section>
 

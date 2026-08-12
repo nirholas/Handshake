@@ -285,8 +285,16 @@ class AgentPresenceElement extends HTMLElement {
 			return this._agentBodyUrl(explicitAgent, apiFetch);
 		}
 
-		// Default source: the Studio store's live agent.
-		await studio.load();
+		// Default source: the Studio store's live agent. The store rejects when the
+		// backend never confirmed an agent (signed out, or the API is unreachable):
+		// there is no real body to render, so fall through to the designed no-body
+		// state rather than inventing one from a synthesised local record.
+		try {
+			await studio.load();
+		} catch {
+			this._currentAvatarId = null;
+			return null;
+		}
 		const agent = studio.agent;
 		this._currentAvatarId = agent?.avatarId || null;
 		if (agent?.avatarId) {

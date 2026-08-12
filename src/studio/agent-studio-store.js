@@ -106,6 +106,16 @@ class AgentStudioStore {
 			try {
 				this.identity = new AgentIdentity({ agentId, autoLoad: false });
 				await this.identity.load();
+				// AgentIdentity never throws on a dead backend: it falls back to a
+				// localStorage copy, or synthesises a default whose id exists nowhere
+				// on the server. Editing that record looks normal and silently fails
+				// on every PUT, so the studio treats it as a load failure instead.
+				// Callers then render their real, retryable error state.
+				if (!this.identity.backendConfirmed) {
+					throw Object.assign(new Error('agent could not be confirmed with the server'), {
+						code: 'not_confirmed',
+					});
+				}
 				this._record = this._snapshotFromIdentity();
 				this._notify();
 				return this._record;

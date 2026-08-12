@@ -375,6 +375,14 @@
 			<description>When you fingerspell into the webcam, the recognizer reports how sure it is of what it read, and the page uses that to flag a shaky capture instead of quietly dropping wrong words into your message. That score was in every response but appeared in none of the docs, so anyone building on the recognition API had no way to know it existed. The API reference, the sign-language guide and the worker's own README now list the full response, including the raw decode before the cleanup pass and whether the cleanup changed anything, so a caller can build the same warning we do. The recognizer itself was also capped to a sane number of simultaneous captures per instance, so a burst of signers scales out instead of queueing behind each other.</description>
 		</item>
 		<item>
+			<title>The standalone avatar viewer is now embeddable in one click, and never leaves you on a blank screen</title>
+			<link>https://three.ws/avatar-artifact</link>
+			<guid isPermaLink="false">2026-08-11:The standalone avatar viewer is now embeddable in one click, and never leaves you on a blank screen</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Avatar Artifact page is meant to be dropped into other sites, so it now carries its own embed snippet: one button copies a ready-made iframe tag, and if a browser refuses clipboard access (which it does inside a cross-origin frame) the snippet appears in a field you can copy by hand. The 3D runtime now ships with the site instead of being pulled from an outside CDN, so a page that embeds the viewer no longer loads a third-party script the host never agreed to. Every way the viewer can fail now paints a real message with a working Retry, including a browser with no WebGL and a runtime that never arrives at all, and the message clears itself if the scene shows up late. The page also stopped hiding one of its own links on phones, keeps its controls clear of the language switcher and the search chip, respects a reduced-motion preference, and pauses rendering while its tab is hidden so an embedded viewer does not burn a host page GPU in the background.</description>
+		</item>
+		<item>
 			<title>The walking avatar SDK now types the cursor-tracking option it ships</title>
 			<link>https://three.ws/walk</link>
 			<guid isPermaLink="false">2026-08-11:The walking avatar SDK now types the cursor-tracking option it ships</guid>

@@ -1,5 +1,5 @@
 /**
- * Coin Autopilot — control surface + live narration for the autonomous coin agent.
+ * Coin Autopilot: control surface + live narration for the autonomous coin agent.
  *
  * Reads /api/pump/autopilot (the caller's launched coins, their per-coin policy,
  * recent autonomous actions). Lets the owner tune the rules that gate the
@@ -66,7 +66,7 @@ const NARRATE = {
 			a.amount_atomics && a.amount_atomics !== '0'
 				? `Bought back and burned ${fmtUsdc(a.amount_atomics)} of $${sym}. Supply just got scarcer.`
 				: `Ran a buyback-and-burn on $${sym}. Supply just got scarcer.`,
-		pending: (a, sym) => `Buyback for $${sym} is queued — waiting for a keeper to sign.`,
+		pending: (a, sym) => `Buyback for $${sym} is queued, waiting for a keeper to sign.`,
 		failed: (a, sym) => `Buyback for $${sym} hit a snag: ${a.error || 'unknown error'}.`,
 	},
 	distribute: {

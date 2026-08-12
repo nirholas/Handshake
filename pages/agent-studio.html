@@ -52,6 +52,23 @@
 				display: none !important;
 			}
 
+			/* Same reason as the [hidden] guard above: this page skips style.css and
+			   tokens.css, so it carries its own screen-reader-only utility. The shell's
+			   visible title is the editable agent-name field, so the page's real <h1>
+			   ("Agent Studio") is exposed to assistive tech only. position:absolute also
+			   keeps it out of the identity header's grid flow. */
+			.studio-sr-only {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0, 0, 0, 0);
+				white-space: nowrap;
+				border: 0;
+			}
+
 			html,
 			body {
 				margin: 0;
@@ -400,6 +417,21 @@
 					min-height: clamp(220px, 34vh, 360px);
 				}
 				.sk-stage { min-height: 240px; }
+			}
+			@media (max-width: 560px) {
+				/* Side-by-side identity + actions needs ~430px; below that the action
+				   row overflowed the panel and its `overflow: hidden` clipped "Save
+				   draft" and "View agent" off-screen. Stack the actions under the
+				   name/tagline instead so both stay reachable at 320px. */
+				.studio-identity {
+					grid-template-columns: 1fr;
+					grid-template-areas: 'name' 'tag' 'actions';
+					row-gap: var(--space-sm, 0.618rem);
+				}
+				.studio-actions {
+					justify-content: flex-start;
+					flex-wrap: wrap;
+				}
 			}
 			@media (max-width: 420px) {
 				.studio { padding: var(--space-sm); gap: var(--space-sm); }

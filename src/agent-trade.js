@@ -580,7 +580,28 @@ function setRunning(on) {
   if (!on) stage?.setAutoRotate(true);
 }
 
+// Deferred touches (a chip settling to `done`, a bubble appearing a beat later)
+// belong to the step that scheduled them. When the next event lands the step is
+// over, so its pending timers are dropped: a slow proxy that delivers two events
+// back to back used to let a stale timer re-show the previous step's bubble on
+// top of the finished trade.
+const pendingTimers = new Set();
+
+function after(ms, fn) {
+  const id = setTimeout(() => {
+    pendingTimers.delete(id);
+    fn();
+  }, ms);
+  pendingTimers.add(id);
+}
+
+function clearPendingTimers() {
+  for (const id of pendingTimers) clearTimeout(id);
+  pendingTimers.clear();
+}
+
 function handleEvent(ev) {
+  clearPendingTimers();
   switch (ev.type) {
     case 'init': {
       setChip('init', 'done');
@@ -602,7 +623,7 @@ function handleEvent(ev) {
     case 'request': {
       setChip('request', 'active');
       showBubble('buyer', `"${ev.message || 'I need a market analysis…'}"`);
-      setTimeout(() => setChip('request', 'done'), 900);
+      after(900, () => setChip('request', 'done'));
       break;
     }
 
@@ -623,11 +644,12 @@ function handleEvent(ev) {
         <div class="c-row">Memo      <span>${escHtml(m.memo || NO_VALUE)}</span></div>
         <div class="c-row">Currency  <span>${escHtml(m.currency || 'SOL')}</span></div>
       `);
-      setTimeout(() => setChip('challenged', 'done'), 700);
+      after(700, () => setChip('challenged', 'done'));
       break;
     }
 
     case 'paying': {
+      setChip('challenged', 'done');
       setChip('paying', 'active');
       hideBubble('seller');
       hideCard();
@@ -643,7 +665,7 @@ function handleEvent(ev) {
       setChip('confirmed', 'active');
       stage?.triggerBurst();
       hideBubble('buyer');
-      setTimeout(() => showBubble('seller', 'Payment confirmed ✓'), 350);
+      after(350, () => showBubble('seller', 'Payment confirmed ✓'));
       if (ev.newBuyerSol != null) {
         els.buyerBal.textContent = ev.newBuyerSol.toFixed(4) + ' SOL';
         els.buyerBal.style.color = 'var(--muted)';
@@ -659,17 +681,18 @@ function handleEvent(ev) {
         <div class="c-row">Network   <span>${escHtml(ev.network || 'solana')}</span></div>
         ${explorer ? `<a class="c-link" href="${escHtml(explorer)}" target="_blank" rel="noopener">View on Solscan →</a>` : ''}
       `);
-      setTimeout(() => setChip('confirmed', 'done'), 800);
+      after(800, () => setChip('confirmed', 'done'));
       break;
     }
 
     case 'delivering': {
+      setChip('confirmed', 'done');
       setChip('delivering', 'active');
       // Hide the receipt now, not on a timer: a fast stream landed the
       // `delivered` card first and then this timeout wiped it off the screen.
       hideBubble('seller');
       hideCard();
-      setTimeout(() => showBubble('seller', `Analyzing with ${ev.model}…`), 200);
+      after(200, () => showBubble('seller', `Analyzing with ${ev.model}…`));
       // Fly back to a wide view
       stage?.flyCamera(vec3(0, 3.0, 9.5), vec3(0, 1.2, 0), 1100);
       break;
@@ -720,6 +743,7 @@ let currentEs = null;
 function startDemo() {
   if (currentEs) { currentEs.close(); currentEs = null; }
   const topic = els.topicSelect.value;
+  clearPendingTimers();
   setRunning(true);
   hideCard();
   hideBubble('buyer');
