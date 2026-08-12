@@ -354,6 +354,18 @@ export async function getAnchorRef(epoch) {
 }
 
 /**
+ * Public anchor reference for the newest epoch. One row, one query: the anchor
+ * endpoint used to answer `?epoch=latest` out of getPublicIntegrity(), which
+ * also runs a full-table aggregate and a 12-row recent list it then discards.
+ */
+export async function getLatestAnchorRef() {
+	const [row] = await sql`
+		SELECT * FROM custody_attestation_epochs ORDER BY epoch DESC LIMIT 1
+	`;
+	return epochRowToPublic(row);
+}
+
+/**
  * Owner-gated inclusion proof for one agent's wallet at the latest epoch in which
  * it was attested. Returns the leaf's public fields, the Merkle path to the root,
  * the on-chain anchor reference, and a movement reconciliation against the custody
