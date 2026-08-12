@@ -2,7 +2,7 @@
 // invoke it with synthetic req/res (the same wiring server/index.mjs uses).
 // CRON_SECRET is a session-local value so requireCron passes only when we present it.
 process.env.CRON_SECRET = 'cron03-audit-secret';
-process.env.DATABASE_URL = 'postgres://postgres:cron03audit@127.0.0.1:5545/cron03';
+process.env.DATABASE_URL = process.env.CRON03_AUDIT_DATABASE_URL || 'postgres://127.0.0.1:5545/cron03';
 // Point app origin at loopback so outbound HTTP (forge-smoke, forge-seed submits)
 // fails fast instead of hanging on real HTTPS, and keep every spend lane in its
 // clean-skip path. No lane is configured here, so no real spend can occur.
