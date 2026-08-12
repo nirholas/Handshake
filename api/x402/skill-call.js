@@ -24,6 +24,7 @@ import { priceFor } from '../_lib/x402-prices.js';
 import { sql } from '../_lib/db.js';
 import { error } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
+import { accrueSkillCallRoyalty } from '../_lib/skill-royalty.js';
 import skillCallListing from '../_lib/service-catalog/services/skill-call.js';
 
 const ROUTE = '/api/x402/skill-call';
@@ -216,6 +217,21 @@ export default async function handler(req, res) {
 			tags: ['skill', 'agent', 'tool', 'pay-per-call'],
 		}),
 		payTo: Object.keys(payTo).length ? payTo : undefined,
+		// Roadmap phase 3: per-call author royalties. After settlement lands,
+		// record the author's share (price minus the platform bps) on
+		// royalty_ledger with the rail's tx as provenance. Fire-and-forget by
+		// contract of onSettled; an accrual failure never breaks the response.
+		onSettled: skill.author_id
+			? ({ payer, network, txHash, amountAtomics }) =>
+					accrueSkillCallRoyalty({
+						skillId: skill.id,
+						authorId: skill.author_id,
+						payer,
+						network,
+						txHash,
+						priceAtomics: amountAtomics ?? priceAtomics,
+					})
+			: undefined,
 		// Per-call resource key so payment-identifier idempotency and audit logs
 		// attribute to the specific skill being called.
 		resourceUrlBuilder: () => `${env.APP_ORIGIN}${ROUTE}?skill=${encodeURIComponent(skill.slug)}`,

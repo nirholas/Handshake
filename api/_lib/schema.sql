@@ -1435,12 +1435,19 @@ alter table marketplace_skills add column if not exists price_per_call_usd numer
 create table if not exists royalty_ledger (
     id             uuid        primary key default gen_random_uuid(),
     skill_id       uuid        not null references marketplace_skills(id) on delete cascade,
-    agent_id       uuid        not null references agent_identities(id) on delete cascade,
+    -- nullable: /api/x402/skill-call callers are paying wallets, not agents
+    agent_id       uuid        references agent_identities(id) on delete cascade,
     author_user_id uuid        not null references users(id) on delete cascade,
     price_usd      numeric(10,6) not null,
     status         text        not null default 'pending',
     settled_at     timestamptz,
     tx_hash        text,
+    -- settlement provenance (x402 rail): which network, which paying wallet,
+    -- which lane accrued the row, and the platform's cut in USD
+    network          text,
+    payer            text,
+    source           text        not null default 'skill-runtime',
+    platform_fee_usd numeric(10,6),
     created_at     timestamptz not null default now(),
     constraint royalty_ledger_status_check check (status in ('pending', 'settling', 'settled', 'failed'))
 );

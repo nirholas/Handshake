@@ -79,9 +79,19 @@ const SETTLE_THRESHOLD_USD = 0.01;
  * Groups by (agent_id, chain_id), looks up delegation, redeems via the
  * /api/permissions/redeem relayer endpoint, then marks rows settled or failed.
  *
+ * The EVM delegation-redeem leg is flag-gated
+ * (SKILL_ROYALTIES_EVM_7710_ENABLED): with the flag off, pending groups are
+ * left pending and counted as skipped, so the cron is provably inert until
+ * the owner activates it. x402-rail rows land 'settled' at accrual time and
+ * never pass through here.
+ *
  * @param {string} authorUserId
+ * @returns {Promise<{ skipped?: boolean, groups?: number }>}
  */
 export async function settleRoyalties(authorUserId) {
+	if (!env.SKILL_ROYALTIES_EVM_7710_ENABLED) {
+		return { skipped: true, reason: 'evm_7710_disabled' };
+	}
 	// Aggregate pending rows by agent + chain.
 	const groups = await sql`
 		SELECT
@@ -145,13 +155,19 @@ export async function settleRoyalties(authorUserId) {
 			`;
 		}
 	}
+	return { groups: groups.length };
 }
 
 /**
  * Settle all authors with pending balances above the threshold.
- * Called by the cron job.
+ * Called by the cron job. With the EVM 7710 flag off this is a no-op that
+ * still reports honestly, so the daily cron run stays green while the leg
+ * waits for owner activation.
  */
 export async function settleAllPendingRoyalties() {
+	if (!env.SKILL_ROYALTIES_EVM_7710_ENABLED) {
+		return { settled: 0, failed: 0, authors: 0, skipped: true, reason: 'evm_7710_disabled' };
+	}
 	const authors = await sql`
 		SELECT DISTINCT author_user_id
 		FROM royalty_ledger
