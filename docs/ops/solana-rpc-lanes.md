@@ -111,6 +111,44 @@ Three lanes that a naive latency ranking would promote are traps:
   method demotion parks it. Putting it in front of those readers takes the feature down
   while every dashboard still reads green.
 
+### `getTokenLargestAccounts`: the shape with no free primary (measured 2026-08-12)
+
+Holder distribution reads that shape and nothing else can substitute for it:
+[api/\_lib/crypto-token-holders.js](../../api/_lib/crypto-token-holders.js) behind
+`/api/crypto/holders`, and the concentration half of `/api/crypto/security`. With
+Helius at `max usage reached` and Alchemy at `Monthly capacity limit exceeded` on
+the same day, the keyless tail had to carry it, and every lane in front failed in a
+different way:
+
+| Lane | `getTokenLargestAccounts` |
+|---|---|
+| PublicNode | hangs forever (no answer at 35s) |
+| `api.mainnet-beta.solana.com` | HTTP 429 |
+| Leo RPC | `-32603 Internal JSON-RPC error.` on every call |
+| Solana Vibe Station `public.rpc.solanavibestation.com` | serves it; throttles to a few requests, then `-32005` |
+| Tatum (both hosts) | serves it, at 5 requests/minute |
+
+Three fixes landed together, and the endpoint went from roughly one success in three
+to 8/8 on a warmed instance:
+
+- **`-32603` is now a failover signal** ([classifyRpcBody](../../api/_lib/solana/connection.js)).
+  It is the JSON-RPC spec's "internal error", the node's own fault rather than a
+  deterministic verdict, so unlike `-32601`/`-32602` the next lane may well serve it.
+  Unclassified, Leo's envelope was handed back as though it were the chain's answer
+  and the lanes that do serve the shape were never tried.
+- **A hang past the attempt bound demotes the (lane, method) pair**, not the lane
+  (`throwDisposition`). Charging PublicNode's silent refusal to the whole lane benched
+  the free chain's primary for every other method. This is the behaviour this runbook
+  already described; before 2026-08-12 the code cooled the lane instead.
+- **Solana Vibe Station joined `FREE_KEYLESS_MAINNET`**, behind Leo and ahead of the
+  Tatum pair. Verified real mainnet (genesis `5eykt4Us...`, slot within 1 of
+  mainnet-beta). Its throttle answers `-32005`, which the capacity classifier already
+  parks correctly, so it is depth rather than a primary.
+
+The standing cost is unchanged and is a billing decision, not a code one: while both
+metered lanes sit at their monthly ceiling, this shape is served only by throttled
+free nodes, so it stays the first read to degrade.
+
 A balance read that cannot reach a lane must never be recorded as a balance of zero.
 [scripts/audit-service-wallets.mjs](../../scripts/audit-service-wallets.mjs) reports an
 unreadable wallet as `‼ unreadable`, and

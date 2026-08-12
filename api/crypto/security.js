@@ -1,14 +1,14 @@
-// GET /api/crypto/security — free, keyless token safety / rug-signal check.
+// GET /api/crypto/security: free, keyless token safety / rug-signal check.
 //
 // Agent use-case: before an agent buys or LPs into a token, it needs a fast
-// "is this a honeypot / rug?" read — mint & freeze authority, holder
+// "is this a honeypot / rug?" read: mint & freeze authority, holder
 // concentration, liquidity depth, metadata mutability, LP custody. This is the
 // single most-requested pre-trade check in crypto agent workflows; one keyless
-// GET answers it with on-chain FACTS and a documented, deterministic riskLevel —
+// GET answers it with on-chain FACTS and a documented, deterministic riskLevel,
 // never an LLM opinion, never a guessed "safe".
 //
 // Part of the free Crypto Data API (/api/crypto/*). Plain-handler pattern: no
-// account, no key, generous per-IP limit. Real data only — Solana RPC (failover
+// account, no key, generous per-IP limit. Real data only, from Solana RPC (failover
 // chain), DexScreener, pump.fun public records, Metaplex metadata. Solana-only
 // by design: the checks (SPL authorities, getTokenLargestAccounts) are Solana
 // concepts; an EVM address gets an honest 400, not a half-built passthrough.
@@ -20,7 +20,7 @@
 // Response: { address, chain, checks: { mintAuthorityRevoked,
 //   freezeAuthorityRevoked, metadataMutable, lpBurnedOrLocked, liquidityUsd,
 //   topHolderPctFlag }, riskLevel: low|medium|high|unknown, reasons[], ts,
-//   sources[] } — unknowns are null/'unknown', never guessed.
+//   sources[] }. Unknowns are null/'unknown', never guessed.
 
 import { cors, method, wrap, error, json, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -43,7 +43,7 @@ export default wrap(async (req, res) => {
 	const rawChain = (url.searchParams.get('chain') || '').trim().toLowerCase();
 
 	if (!address) {
-		return error(res, 400, 'missing_address', 'query param `address` is required — pass a Solana token mint', {
+		return error(res, 400, 'missing_address', 'query param `address` is required. Pass a Solana token mint', {
 			example: EXAMPLE,
 		});
 	}
@@ -51,12 +51,12 @@ export default wrap(async (req, res) => {
 	// mint/freeze authorities and getTokenLargestAccounts have no EVM equivalent
 	// here, and a half-answered EVM check would read as a fake "safe".
 	if (isValidEvmAddress(address) || (rawChain && rawChain !== 'solana' && rawChain !== 'sol')) {
-		return error(res, 400, 'unsupported_chain', 'this endpoint checks Solana tokens only — pass a base58 Solana mint address', {
+		return error(res, 400, 'unsupported_chain', 'this endpoint checks Solana tokens only. Pass a base58 Solana mint address', {
 			example: EXAMPLE,
 		});
 	}
 	if (!isValidSolanaAddress(address)) {
-		return error(res, 400, 'invalid_address', '`address` must be a base58 Solana mint address (32–44 chars)', {
+		return error(res, 400, 'invalid_address', '`address` must be a base58 Solana mint address (32-44 chars)', {
 			address,
 			example: EXAMPLE,
 		});
@@ -65,20 +65,20 @@ export default wrap(async (req, res) => {
 	const result = await composeTokenSecurity({ address });
 	const ts = new Date().toISOString();
 
-	// Valid mint shape, but neither the chain nor any market/pump source knows it —
+	// Valid mint shape, but neither the chain nor any market/pump source knows it:
 	// client input, matching the bundle's /token and /bonding conventions.
 	if (result.status === 'not_found') {
-		return error(res, 400, 'token_not_found', `${address} is not a token any live source can resolve — check the mint, or discover live tokens at /api/crypto/trending`, {
+		return error(res, 400, 'token_not_found', `${address} is not a token any live source can resolve. Check the mint, or discover live tokens at /api/crypto/trending`, {
 			address,
 		});
 	}
 
-	// Every source unreachable — never 500, and never a fabricated verdict; 503 +
+	// Every source unreachable: never 500, and never a fabricated verdict; 503 +
 	// Retry-After so the agent backs off and retries.
 	if (result.status === 'upstream_down') {
 		return json(res, 503, {
 			error: 'upstream_unavailable',
-			error_description: 'security data sources are temporarily unreachable — retry shortly; no verdict is fabricated while sources are down',
+			error_description: 'security data sources are temporarily unreachable, retry shortly; no verdict is fabricated while sources are down',
 			address,
 			retry_after: 15,
 			ts,

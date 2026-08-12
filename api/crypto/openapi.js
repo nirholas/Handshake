@@ -1,11 +1,11 @@
 // @ts-check
-// GET /api/crypto/openapi.json — the machine-readable spec for the free Crypto
+// GET /api/crypto/openapi.json: the machine-readable spec for the free Crypto
 // Data API bundle, generated live from the catalog (api/_lib/crypto-catalog).
 //
 // Served at `/api/crypto/openapi.json` via the rewrite in vercel.json; this file
 // also answers `/api/crypto/openapi` directly. An agent points its OpenAPI
 // toolchain (openapi-generator, LangChain's OpenAPIToolkit, Swagger UI) at this
-// URL and gets typed clients / callable tools for every endpoint — no key, no
+// URL and gets typed clients / callable tools for every endpoint, with no key and no
 // account. The doc is never hand-written: paths, params, and response schemas
 // all derive from the catalog entries, so it can't drift from `/api/crypto`.
 
@@ -28,7 +28,7 @@ export default wrap(async (req, res) => {
 	const entries = await loadCatalog();
 	const doc = buildOpenApiDoc(entries, { origin: env.APP_ORIGIN, version: VERSION });
 
-	// Catalog changes only on deploy — safe to CDN-cache briefly.
+	// Catalog changes only on deploy, so it is safe to CDN-cache briefly.
 	return json(res, 200, doc, {
 		'cache-control': 'public, s-maxage=300, stale-while-revalidate=600',
 	});

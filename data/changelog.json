@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-12",
+			"title": "Token holder and safety checks stop failing when the free data lanes are busy",
+			"summary": "The free crypto API's holder distribution read (/api/crypto/holders) and the holder half of its token safety check (/api/crypto/security) both ask the Solana network for a token's largest accounts. Most of the public nodes we fall back on either refuse that question, answer it with an internal error, or accept it and never reply, and the router treated the last two as real answers, so the call gave up instead of trying the next node. It now moves on from an internal error, charges a silent no-reply to that one question rather than benching an otherwise healthy node, and has one more free node in the rotation that answers it. In a live check the holder read went from succeeding on roughly one call in three to eight out of eight. The error messages across the free crypto endpoints were reworded to match the rest of the platform's plain style at the same time.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/docs/crypto-api"
+		},
+		{
+			"date": "2026-08-12",
+			"title": "The DeFi market pages stop hammering their data source when they get busy",
+			"summary": "The /defi, /chains, /yields, /stablecoins, /fees, /dex-volumes and /hacks pages, plus the protocol, chain and stablecoin detail pages, all read live data from DeFiLlama and hold it in memory for a few minutes. The moment that held copy expired, every request that arrived at once went and fetched its own fresh copy instead of sharing one. Ten simultaneous visitors to the DEX volume board meant ten downloads of the same two megabytes, and the protocol leaderboard's feed is closer to eight. That burst lands precisely when the page is busiest, and when the source pushed back, the page showed an error even though the data behind it was perfectly good. Now the first request through fetches, and everyone else waiting shares that one result. A chain profile also reuses a single copy of the protocol list rather than pulling it again for every chain. If a fetch does fail, the failure is no longer held on to, so the next visitor gets a real retry instead of the same error for the rest of the window. One cosmetic fix rode along: a pool whose name is missing on /yields now reads \"Unknown\" instead of a bare dash.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/defi"
+		},
+		{
+			"date": "2026-08-12",
 			"title": "Claiming the CZ agent works again",
 			"summary": "The claim page at /cz asked you to connect a wallet and then failed with an internal error the moment it tried to issue the message you were meant to sign. The ledger it writes claims into had never been created in the live database, so every real attempt died at the first step while the page still looked healthy. That table now exists as a tracked migration, and the flow runs end to end: connect, sign one line, and the claim is recorded. The signing step is also stricter now. The one-time code you sign expires after fifteen minutes instead of being valid forever, and a claim can only be redeemed once even if two attempts land at the same instant. A rehearsal switch that showed a fake success screen without touching a wallet is gone, so what you see on the page is always the real result.",
 			"tags": [

@@ -9,11 +9,11 @@
 // Agent use-case: an agent about to launch a token wants to check candidate
 // tickers for collisions (exact name clashes + look-alikes that dilute search)
 // before minting. A free batch check is the natural top-of-funnel for the paid
-// Pump Launcher (/api/x402/pump-launch) — clear the name here, launch there.
+// Pump Launcher (/api/x402/pump-launch): clear the name here, launch there.
 //
 // Data source: DexScreener's keyless search API (every chain it indexes),
 // deduped by mint and scored locally with a pg_trgm-style trigram Jaccard
-// similarity — the same exact-plus-fuzzy collision model the retired paid route
+// similarity, the same exact-plus-fuzzy collision model the retired paid route
 // (api/x402/symbol-availability.js) ran against three.ws's own mint index, but
 // broadened to the whole market and made free. No key, no account.
 
@@ -48,7 +48,7 @@ function trigrams(str) {
 	return set;
 }
 
-// Jaccard similarity over trigram sets — the same measure Postgres' pg_trgm
+// Jaccard similarity over trigram sets, the same measure Postgres' pg_trgm
 // `similarity()` uses (|intersection| / |union|), so the free route's fuzzy
 // scoring matches what the paid route returned. 1.0 == identical, 0 == disjoint.
 export function symbolSimilarity(a, b) {
@@ -104,15 +104,15 @@ async function checkOne(symbol, chain, fetchImpl) {
 		candidates = await searchTokens(symbol, chain, fetchImpl);
 	} catch {
 		// Registry source down for this symbol: degrade, never fail the batch.
-		// `available: null` signals "could not verify" — distinct from a hard
-		// available/taken — so a caller never reads an outage as a green light.
+		// `available: null` signals "could not verify", distinct from a hard
+		// available/taken, so a caller never reads an outage as a green light.
 		return {
 			symbol,
 			available: null,
 			exactCollisions: [],
 			fuzzyCollisions: [],
 			degraded: true,
-			note: 'collision source unavailable — could not verify this symbol; retry shortly',
+			note: 'collision source unavailable: could not verify this symbol; retry shortly',
 		};
 	}
 
@@ -142,7 +142,7 @@ async function checkOne(symbol, chain, fetchImpl) {
 	};
 }
 
-// Core batch check — pure enough to unit-test with an injected `fetchImpl`.
+// Core batch check, pure enough to unit-test with an injected `fetchImpl`.
 // De-duplicates the input case-insensitively (checking "MOON" and "moon" twice
 // wastes an upstream call and skews the counts).
 export async function checkSymbols({ symbols, chain, fetchImpl = fetch }) {
@@ -217,7 +217,7 @@ export default wrap(async (req, res) => {
 			res,
 			400,
 			'missing_symbols',
-			`provide 1–${SYMBOL_CAP} ticker symbols via ?symbols=A,B,C (GET) or { "symbols": [...] } (POST)`,
+			`provide 1 to ${SYMBOL_CAP} ticker symbols via ?symbols=A,B,C (GET) or { "symbols": [...] } (POST)`,
 			{ cap: SYMBOL_CAP, example: { symbols: ['MOON', 'ROCKET', 'FROG'], chain: 'solana' } },
 		);
 	}
@@ -226,7 +226,7 @@ export default wrap(async (req, res) => {
 			res,
 			400,
 			'too_many_symbols',
-			`at most ${SYMBOL_CAP} symbols per request — you sent ${cleaned.length}`,
+			`at most ${SYMBOL_CAP} symbols per request, you sent ${cleaned.length}`,
 			{ cap: SYMBOL_CAP },
 		);
 	}

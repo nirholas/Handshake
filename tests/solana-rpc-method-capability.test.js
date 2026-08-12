@@ -8,6 +8,7 @@ import {
 	rpcMethodsFromBody,
 	rpcMethodDemotions,
 	classifyRpcBody,
+	throwDisposition,
 } from '../api/_lib/solana/connection.js';
 
 // Lanes are not interchangeable, and the router used to pretend they were.
@@ -333,5 +334,79 @@ describe('makeRotatingFetch: a method refusal demotes the method, never the lane
 		const later = rpcMethodDemotions(Date.now() + 60 * 60_000).filter((d) => d.url === blocked);
 		expect(later).toHaveLength(0);
 		expect(isMethodDemoted(blocked, 'getTokenAccountsByOwner')).toBe(false);
+	});
+});
+
+// Leo RPC answers EVERY getTokenLargestAccounts with the JSON-RPC spec's -32603
+// "Internal error" while serving getAccountInfo and getMultipleAccounts normally
+// (measured live 2026-08-12). Unclassified, -32603 was not a failover signal at
+// all: the error envelope was handed back as though it were the chain's answer,
+// so /api/crypto/holders returned 503 and /api/crypto/security reported
+// riskLevel "unknown" on live mints while lanes that DO serve the method sat
+// untried further down the chain.
+const LEO_INTERNAL_ERROR = {
+	jsonrpc: '2.0',
+	id: 1,
+	error: { code: -32603, message: 'Internal JSON-RPC error.' },
+};
+
+describe('classifyRpcBody: a node internal error is a per-shape failover, not an answer', () => {
+	it('fails a -32603 envelope over and demotes the shape rather than the lane', () => {
+		const bad = classifyRpcBody(JSON.stringify(LEO_INTERNAL_ERROR));
+		expect(bad).toBeTruthy();
+		expect(bad.methodBlock).toBe(true);
+		expect(bad.reason).toBe('node internal error');
+	});
+
+	// The line that separates -32603 from the deterministic family next to it: a
+	// method that does not exist gives the same answer on every lane, so rotating
+	// on it would just retry a guaranteed failure down the whole chain.
+	it('leaves the deterministic -32601/-32602 family alone', () => {
+		expect(classifyRpcBody(JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32601, message: 'Method not found' } }))).toBeNull();
+		expect(classifyRpcBody(JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32602, message: 'Invalid params' } }))).toBeNull();
+	});
+
+	it('rotates a -32603 lane onto one that serves the shape, without cooling it', async () => {
+		const faulting = 'https://cap-k1.test/';
+		const serving = 'https://cap-k2.test/';
+		global.fetch = vi.fn(async (url, init) =>
+			url === faulting && JSON.parse(init.body).method === 'getTokenLargestAccounts'
+				? resp(LEO_INTERNAL_ERROR)
+				: resp(OK),
+		);
+		const rf = makeRotatingFetch([faulting, serving]);
+
+		const r = await rf(null, rpc('getTokenLargestAccounts', ['MintPlaceholder1111111111111111111111111111']));
+		await expect(r.json()).resolves.toEqual(OK);
+		expect(isMethodDemoted(faulting, 'getTokenLargestAccounts')).toBe(true);
+		expect(isEndpointCooling(faulting)).toBe(false);
+
+		// The lane is still the primary for everything it does serve.
+		await rf(null, rpc('getAccountInfo'));
+		expect(global.fetch.mock.calls.at(-1)[0]).toBe(faulting);
+	});
+});
+
+// PublicNode accepts a getTokenLargestAccounts and then never answers it: no
+// response at 35 s, while getAccountInfo comes back in milliseconds. Charging
+// that hang to the LANE parked the free chain's primary for every method, on one
+// shape it silently refuses. throwDisposition is the policy, split out so the
+// three events that reach the same catch can be pinned without waiting on a real
+// 10 s attempt bound.
+describe('throwDisposition: what a thrown attempt charges the lane', () => {
+	it('charges nothing when the CALLER aborted, whatever else is true', () => {
+		expect(throwDisposition({ callerAborted: true, attemptTimedOut: true, hasMethods: true })).toBe('ignore');
+		expect(throwDisposition({ callerAborted: true, attemptTimedOut: false, hasMethods: false })).toBe('ignore');
+	});
+
+	it('demotes the call shape when the lane hung past the attempt bound', () => {
+		expect(throwDisposition({ callerAborted: false, attemptTimedOut: true, hasMethods: true })).toBe('demote-method');
+	});
+
+	// No readable call shape means no shape to demote; fall back to the brief lane
+	// cooldown rather than guessing which method to strike off.
+	it('cools the lane for a transport failure, or a hang whose shape we cannot read', () => {
+		expect(throwDisposition({ callerAborted: false, attemptTimedOut: false, hasMethods: true })).toBe('cool-lane');
+		expect(throwDisposition({ callerAborted: false, attemptTimedOut: true, hasMethods: false })).toBe('cool-lane');
 	});
 });

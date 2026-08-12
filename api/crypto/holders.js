@@ -1,21 +1,21 @@
-// GET /api/crypto/holders — free holder distribution / concentration for a
+// GET /api/crypto/holders: free holder distribution / concentration for a
 // Solana token.
 //
 // Agent use-case: an agent sizing a position needs holder distribution before
-// it commits — how many holders exist, what share the top wallets control, and
+// it commits: how many holders exist, what share the top wallets control, and
 // whether the dev/insiders still dominate. High concentration = exit risk. One
 // keyless call answers it with real on-chain data.
 //
 // Part of the free Crypto Data API (/api/crypto/*). Plain-handler pattern: no
 // account, no key, generous per-IP limit. Two real paths (never a mock): a
 // Helius owner-aggregated walk when the deployment has a key (exact holder
-// count within its cap), else the keyless RPC truth — the chain's 20 largest
+// count within its cap), else the keyless RPC truth, the chain's 20 largest
 // token accounts with owners resolved, marked as such in `sources`/`note`.
 //
 // Query:
 //   address = <Solana mint>   (required)
 //   chain   = solana          (optional; only 'solana'/'sol' accepted)
-//   limit   = 1..50           (default 10) — how many top holders to return
+//   limit   = 1..50           (default 10), how many top holders to return
 //
 // Response: { address, chain, holderCount, top: [{ owner, amount, pct }],
 //   top10Pct, concentration: low|medium|high|unknown, ts, sources[], note? }
@@ -44,18 +44,18 @@ export default wrap(async (req, res) => {
 	const limit = Math.min(MAX_LIMIT, Math.max(1, Number.isFinite(rawLimit) ? Math.floor(rawLimit) : DEFAULT_LIMIT));
 
 	if (!address) {
-		return error(res, 400, 'missing_address', 'query param `address` is required — pass a Solana token mint', {
+		return error(res, 400, 'missing_address', 'query param `address` is required. Pass a Solana token mint', {
 			example: EXAMPLE,
 		});
 	}
 	// Solana-only, honestly: SPL token accounts have no EVM equivalent here.
 	if (isValidEvmAddress(address) || (rawChain && rawChain !== 'solana' && rawChain !== 'sol')) {
-		return error(res, 400, 'unsupported_chain', 'this endpoint reads Solana holder distribution only — pass a base58 Solana mint address', {
+		return error(res, 400, 'unsupported_chain', 'this endpoint reads Solana holder distribution only. Pass a base58 Solana mint address', {
 			example: EXAMPLE,
 		});
 	}
 	if (!isValidSolanaAddress(address)) {
-		return error(res, 400, 'invalid_address', '`address` must be a base58 Solana mint address (32–44 chars)', {
+		return error(res, 400, 'invalid_address', '`address` must be a base58 Solana mint address (32-44 chars)', {
 			address,
 			example: EXAMPLE,
 		});
@@ -65,14 +65,14 @@ export default wrap(async (req, res) => {
 	const ts = new Date().toISOString();
 
 	if (result.status === 'not_found') {
-		return error(res, 400, 'token_not_found', `${address} is not an on-chain token mint — check the address, or discover live tokens at /api/crypto/trending`, {
+		return error(res, 400, 'token_not_found', `${address} is not an on-chain token mint. Check the address, or discover live tokens at /api/crypto/trending`, {
 			address,
 		});
 	}
 	if (result.status === 'upstream_down') {
 		return json(res, 503, {
 			error: 'upstream_unavailable',
-			error_description: 'holder data sources are temporarily unreachable — retry shortly',
+			error_description: 'holder data sources are temporarily unreachable, retry shortly',
 			address,
 			retry_after: 15,
 			ts,

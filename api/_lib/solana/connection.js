@@ -1044,6 +1044,36 @@ export function isTransientRpcError(err) {
 	);
 }
 
+/**
+ * What a THROWN attempt says about the lane, and therefore what to charge it.
+ * Three genuinely different events reach the same catch, and collapsing them cost
+ * us the free chain's primary lane:
+ *
+ *   'ignore':        the CALLER's budget expired. Rotation is over either way
+ *                    and this attempt learned nothing about the endpoint, so
+ *                    charging it would bench a healthy node for the caller's deadline.
+ *   'demote-method': the lane accepted the request and never answered within
+ *                    the attempt bound. Measured 2026-08-12: PublicNode hangs
+ *                    indefinitely on getTokenLargestAccounts (no response at 35s)
+ *                    while answering getAccountInfo in milliseconds, which is a
+ *                    silent per-shape refusal. Cooling the whole lane for it benched
+ *                    the primary free lane for every other method, and that is how
+ *                    one unanswerable shape starved /api/crypto/holders and the
+ *                    holder half of /api/crypto/security. markMethodDemotion's
+ *                    breadth guard still benches a lane that hangs on everything.
+ *   'cool-lane':     a genuine transport failure (DNS, refused connection,
+ *                    socket hang up), or a hang on a request whose call shapes we
+ *                    could not read. Brief cooldown, as before.
+ *
+ * @param {{ callerAborted: boolean, attemptTimedOut: boolean, hasMethods: boolean }} signals
+ * @returns {'ignore'|'demote-method'|'cool-lane'}
+ */
+export function throwDisposition({ callerAborted, attemptTimedOut, hasMethods }) {
+	if (callerAborted) return 'ignore';
+	if (attemptTimedOut && hasMethods) return 'demote-method';
+	return 'cool-lane';
+}
+
 // Rotating fetch backing a Connection. It NEVER surfaces a rotate-worthy status
 // (401/403/429/5xx) to @solana/web3.js — it either returns a healthy response or
 // throws — so web3.js's internal 429 backoff loop ("Server responded with 429 …
@@ -1152,25 +1182,16 @@ export function makeRotatingFetch(endpoints) {
 					}),
 				};
 			} catch (err) {
-				// The CALLER's budget ran out, not the lane's patience. Rotation is over
-				// either way, and this attempt learned nothing about the endpoint, so
-				// penalising it here would bench a healthy node for the caller's deadline.
-				if (init?.signal?.aborted) return { error: err };
-				// The lane accepted the request and never answered within the attempt
-				// bound. Measured 2026-08-12: PublicNode hangs indefinitely on
-				// getTokenLargestAccounts (no response at 35s) while answering
-				// getAccountInfo in milliseconds, a silent per-shape refusal. Cooling the
-				// whole lane for it benched the primary free lane for every other method,
-				// which is how one unanswerable shape starved the holder and security
-				// readers. Demote the shape instead; markMethodDemotion's breadth guard
-				// still benches a lane that hangs on everything.
-				if (attemptSignal.aborted && methods.length) {
+				const disposition = throwDisposition({
+					callerAborted: init?.signal?.aborted === true,
+					attemptTimedOut: attemptSignal.aborted,
+					hasMethods: methods.length > 0,
+				});
+				if (disposition === 'demote-method') {
 					penalise(url, 504, '', true, `no answer within ${Math.round(ATTEMPT_TIMEOUT_MS / 1000)}s`);
-					return { error: err };
+				} else if (disposition === 'cool-lane') {
+					_endpointCooldown.set(url, Date.now() + NETWORK_COOLDOWN_MS);
 				}
-				// A thrown fetch is a transient network/DNS blip, not a quota signal —
-				// cool only briefly so a healthy provider isn't parked for long.
-				_endpointCooldown.set(url, Date.now() + NETWORK_COOLDOWN_MS);
 				return { error: err };
 			}
 		};

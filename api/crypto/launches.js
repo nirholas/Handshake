@@ -1,14 +1,14 @@
-// GET /api/crypto/launches — free, keyless live feed of the freshest pump.fun
+// GET /api/crypto/launches: free, keyless live feed of the freshest pump.fun
 // launches.
 //
 // Agent use-case: a sniper/discovery agent polls for brand-new pump.fun mints
-// with enough signal to filter — name, symbol, age, market cap, bonding-curve
-// progress, dev wallet — then hands the interesting ones to /api/crypto/bonding
+// with enough signal to filter (name, symbol, age, market cap, bonding-curve
+// progress, dev wallet), then hands the interesting ones to /api/crypto/bonding
 // (watch the curve) and /api/crypto/whales (watch the money). A free live feed
 // is exactly what agents poll.
 //
 // Part of the free Crypto Data API (/api/crypto/*). Plain-handler pattern: no
-// account, no key, generous per-IP limit. Real data only — the pump.fun public
+// account, no key, generous per-IP limit. Real data only, the pump.fun public
 // frontend feed via api/_lib/pump-launch-feed.js; curve math shared with
 // /api/crypto/bonding via api/_lib/pump-bonding.js.
 
@@ -95,7 +95,7 @@ export default wrap(async (req, res) => {
 				count: 0,
 				ts,
 				source: 'pumpfun:unavailable',
-				note: 'pump.fun feed is temporarily unreachable — empty sweep, retry shortly',
+				note: 'pump.fun feed is temporarily unreachable: empty sweep, retry shortly',
 			},
 			{ 'cache-control': 'no-store' },
 		);
@@ -107,7 +107,7 @@ export default wrap(async (req, res) => {
 		.map((c) => toLaunch(c, now))
 		.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
-	// A coin whose cap/age is unknown can't prove it clears the bar — filters drop
+	// A coin whose cap/age is unknown can't prove it clears the bar, so filters drop
 	// it rather than guess.
 	if (minMarketCap != null) {
 		launches = launches.filter((l) => l.marketCapUsd != null && l.marketCapUsd >= minMarketCap);
@@ -119,7 +119,7 @@ export default wrap(async (req, res) => {
 
 	const body = { launches, count: launches.length, ts, source: 'pumpfun' };
 	if (!launches.length) {
-		body.note = 'no launches match the current filters — relax minMarketCap / maxAgeMin or retry';
+		body.note = 'no launches match the current filters. Relax minMarketCap / maxAgeMin or retry';
 	}
 	return json(
 		res,

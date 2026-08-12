@@ -1,14 +1,14 @@
 // @ts-check
-// GET /api/crypto — the front door to the free, keyless Crypto Data API bundle.
+// GET /api/crypto: the front door to the free, keyless Crypto Data API bundle.
 //
 // One URL an agent (or a human wiring one up) hits to discover the entire API:
 // every endpoint, its inputs/outputs, and a live example. This is what makes the
 // bundle feel like one product instead of a handful of loose routes. The list is
 // assembled at request time from the catalog (api/_lib/crypto-catalog), so a new
-// sibling endpoint appears here the moment it ships — nothing to wire by hand.
+// sibling endpoint appears here the moment it ships, with nothing to wire by hand.
 //
 // Content negotiation: `Accept: text/html` gets a browsable page; everything
-// else (the agent path) gets JSON. Free means free — keyless, no account, a
+// else (the agent path) gets JSON. Free means free: keyless, no account, a
 // generous per-IP limit that only blunts abuse.
 
 import { wrap, cors, method, json, text, rateLimited } from '../_lib/http.js';
@@ -38,7 +38,7 @@ export default wrap(async (req, res) => {
 		version: VERSION,
 		endpoints,
 		count: endpoints.length,
-		// Zero entries is a valid state, not an error — say so plainly.
+		// Zero entries is a valid state, not an error, so say so plainly.
 		...(endpoints.length === 0
 			? {
 					note: 'Endpoints are coming soon. They list here automatically as they ship.',
@@ -108,7 +108,7 @@ function renderHtml(p, origin) {
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>three.ws Crypto Data API — free & keyless</title>
+	<title>three.ws Crypto Data API: free &amp; keyless</title>
 	<meta name="description" content="A free, keyless crypto data bundle for AI agents. One URL to discover every endpoint." />
 	<style>
 		:root {
@@ -175,7 +175,7 @@ function renderHtml(p, origin) {
 			<span class="badge">Keyless</span>
 			<span class="badge">v${esc(p.version)}</span>
 		</div>
-		<p class="lede">One URL to discover the entire bundle — every endpoint, its inputs and outputs, and a live example. No account, no API key.</p>
+		<p class="lede">One URL to discover the entire bundle: every endpoint, its inputs and outputs, and a live example. No account, no API key.</p>
 		<p class="meta">
 			${p.count} endpoint${p.count === 1 ? '' : 's'} ·
 			<a href="/api/crypto/openapi.json">OpenAPI 3.1</a> ·
