@@ -6,7 +6,7 @@ import { getSessionUser } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { sql } from '../_lib/db.js';
 import { randomToken } from '../_lib/crypto.js';
-import { EVENT_TYPES } from '../_lib/webhook-dispatch.js';
+import { EVENT_TYPES, selectEventTypes } from '../_lib/webhook-dispatch.js';
 import { assertPublicHttpsUrl } from '../_lib/ssrf.js';
 
 const MAX_WEBHOOKS_PER_USER = 10;
@@ -19,29 +19,31 @@ export default wrap(async function handler(req, res) {
 	if (!user) return error(res, 401, 'unauthorized', 'Sign in required');
 
 	if (req.method === 'GET') {
-		const webhooks = await sql`
-			select id, url, events, active, description, created_at, updated_at
-			from developer_webhooks
-			where user_id = ${user.id}
-			order by created_at desc
-		`;
-
-		const withStats = await Promise.all(
-			webhooks.map(async (wh) => {
-				const [stats] = await sql`
+		// One round trip for the list AND its 7-day delivery stats: the lateral
+		// join keeps a 10-webhook dashboard at a single query instead of 1 + N.
+		const rows = await sql`
+			select w.id, w.url, w.events, w.active, w.description, w.created_at, w.updated_at,
+			       s.total, s.succeeded, s.failed, s.last_delivery_at
+			from developer_webhooks w
+			left join lateral (
 				select
 					count(*)::int as total,
 					count(*) filter (where status_code between 200 and 299)::int as succeeded,
 					count(*) filter (where status_code is null or status_code >= 400)::int as failed,
 					max(created_at) as last_delivery_at
-				from webhook_deliveries
-				where webhook_id = ${wh.id} and created_at > now() - interval '7 days'
-			`;
-				return { ...wh, stats_7d: stats };
-			}),
-		);
+				from webhook_deliveries d
+				where d.webhook_id = w.id and d.created_at > now() - interval '7 days'
+			) s on true
+			where w.user_id = ${user.id}
+			order by w.created_at desc
+		`;
 
-		return json(res, 200, { webhooks: withStats, event_types: EVENT_TYPES });
+		const webhooks = rows.map(({ total, succeeded, failed, last_delivery_at, ...wh }) => ({
+			...wh,
+			stats_7d: { total, succeeded, failed, last_delivery_at },
+		}));
+
+		return json(res, 200, { webhooks, event_types: EVENT_TYPES });
 	}
 
 	if (!method(req, res, ['POST'])) return;
@@ -76,9 +78,9 @@ export default wrap(async function handler(req, res) {
 		return error(res, 400, 'bad_request', 'Webhook URL must resolve to a public address');
 	}
 
-	const events = Array.isArray(body.events)
-		? body.events.filter((e) => EVENT_TYPES.includes(e))
-		: [];
+	const selection = selectEventTypes(body.events);
+	if (selection.error) return error(res, 400, 'bad_request', selection.error);
+	const events = selection.events;
 	const description =
 		typeof body.description === 'string' ? body.description.trim().slice(0, 200) : null;
 

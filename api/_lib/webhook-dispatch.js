@@ -28,6 +28,35 @@ const EVENT_TYPES = [
 
 export { EVENT_TYPES };
 
+/**
+ * Resolve a caller-supplied event subscription into the list to store.
+ *
+ * Two failure modes this closes, both of which produced a webhook that looked
+ * healthy in the dashboard and never fired:
+ *
+ *   - An unknown name (a typo like "avatar.create") was silently filtered out.
+ *     It is an error now, and the caller gets the offending names back plus the
+ *     full menu of valid ones.
+ *   - An omitted or empty list became `[]`, i.e. subscribed to nothing, even
+ *     though docs/developer-platform.md has always documented it as "all
+ *     events". The documented contract wins.
+ *
+ * @param {unknown} raw - the request's `events` value.
+ * @returns {{ events: string[] } | { error: string }}
+ */
+export function selectEventTypes(raw) {
+	if (raw === undefined || raw === null) return { events: [...EVENT_TYPES] };
+	if (!Array.isArray(raw)) return { error: 'events must be an array of event types' };
+	const unknown = raw.filter((e) => !EVENT_TYPES.includes(e));
+	if (unknown.length) {
+		return {
+			error: `unknown event type(s): ${unknown.join(', ')}. Valid types: ${EVENT_TYPES.join(', ')}`,
+		};
+	}
+	const events = [...new Set(raw)];
+	return { events: events.length ? events : [...EVENT_TYPES] };
+}
+
 export async function dispatchWebhooks({ userId, eventType, data }) {
 	if (!EVENT_TYPES.includes(eventType)) return;
 

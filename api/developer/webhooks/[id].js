@@ -6,8 +6,9 @@ import { cors, error, json, method, readJson, wrap } from '../../_lib/http.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { sql } from '../../_lib/db.js';
-import { EVENT_TYPES } from '../../_lib/webhook-dispatch.js';
+import { selectEventTypes } from '../../_lib/webhook-dispatch.js';
 import { assertPublicHttpsUrl } from '../../_lib/ssrf.js';
+import { isUuid } from '../../_lib/validate.js';
 
 const URL_MAX_LENGTH = 2048;
 
@@ -20,6 +21,11 @@ export default wrap(async function handler(req, res) {
 	const url = new URL(req.url, 'http://x');
 	const id = url.searchParams.get('id') || extractId(url.pathname);
 	if (!id) return error(res, 400, 'bad_request', 'Webhook ID required');
+	// developer_webhooks.id is a uuid column, so a non-uuid path segment makes
+	// Postgres reject the comparison outright ("invalid input syntax for type
+	// uuid") and turns a plain wrong-id request into a 500. It is a webhook this
+	// caller does not have, which is exactly what the lookup below reports.
+	if (!isUuid(id)) return error(res, 404, 'not_found', 'Webhook not found');
 
 	const [webhook] = await sql`
 		select id, url, events, active, description, created_at, updated_at
@@ -75,8 +81,10 @@ export default wrap(async function handler(req, res) {
 			}
 			updates.url = trimmed;
 		}
-		if (Array.isArray(body.events)) {
-			updates.events = body.events.filter((e) => EVENT_TYPES.includes(e));
+		if (body.events !== undefined) {
+			const selection = selectEventTypes(body.events);
+			if (selection.error) return error(res, 400, 'bad_request', selection.error);
+			updates.events = selection.events;
 		}
 		if (typeof body.active === 'boolean') {
 			updates.active = body.active;

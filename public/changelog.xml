@@ -71,6 +71,14 @@
 			<description>The /defi, /chains, /yields, /stablecoins, /fees, /dex-volumes and /hacks pages, plus the protocol, chain and stablecoin detail pages, all read live data from DeFiLlama and hold it in memory for a few minutes. The moment that held copy expired, every request that arrived at once went and fetched its own fresh copy instead of sharing one. Ten simultaneous visitors to the DEX volume board meant ten downloads of the same two megabytes, and the protocol leaderboard's feed is closer to eight. That burst lands precisely when the page is busiest, and when the source pushed back, the page showed an error even though the data behind it was perfectly good. Now the first request through fetches, and everyone else waiting shares that one result. A chain profile also reuses a single copy of the protocol list rather than pulling it again for every chain. If a fetch does fail, the failure is no longer held on to, so the next visitor gets a real retry instead of the same error for the rest of the window. One cosmetic fix rode along: a pool whose name is missing on /yields now reads &quot;Unknown&quot; instead of a bare dash.</description>
 		</item>
 		<item>
+			<title>The developer dashboard's x402 earnings finally show your real revenue</title>
+			<link>https://three.ws/dashboard/developers</link>
+			<guid isPermaLink="false">2026-08-12:The developer dashboard's x402 earnings finally show your real revenue</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Usage tab on /dashboard/developers has an x402 Payments figure. It read zero for everyone, always, no matter how many paid calls your checkout products had settled: the query behind it looked for columns that do not exist on the receipts table, and the failure was swallowed so the panel reported a confident 0 instead of an error. It now counts settled checkout calls against the products you own and reports both the payment count and the gross in USDC. The rest of the panel got the same treatment: if one of its numbers cannot be read, the response says so by name instead of quietly showing zero. Two more fixes rode along on the developer endpoints: a mistyped webhook or API-key id now comes back as a clean not-found rather than a server error, and registering a webhook for an event type that does not exist is rejected with the list of valid ones instead of silently creating a webhook subscribed to nothing.</description>
+		</item>
+		<item>
 			<title>The Forge can now federate GPU work to the Livepeer decentralized compute network</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-12:The Forge can now federate GPU work to the Livepeer decentralized compute network</guid>

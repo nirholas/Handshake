@@ -17,6 +17,7 @@ import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
+import { isUuid } from '../_lib/validate.js';
 import { limits } from '../_lib/rate-limit.js';
 import { dispatch } from '../_mcp/dispatch.js';
 
@@ -43,6 +44,10 @@ export default wrap(async (req, res) => {
 	const { keyId } = await readJson(req, 4_000).catch(() => ({}));
 	if (!keyId || typeof keyId !== 'string')
 		return error(res, 400, 'bad_request', 'keyId is required');
+	// api_keys.id is a uuid column: a non-uuid keyId makes Postgres reject the
+	// comparison ("invalid input syntax for type uuid") and 500s what is really
+	// just a key the caller doesn't own. Same answer as an unknown id.
+	if (!isUuid(keyId)) return error(res, 404, 'not_found', 'API key not found');
 
 	const [key] = await sql`
 		select id, scope, revoked_at, expires_at

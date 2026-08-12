@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-12",
+			"title": "The developer dashboard's x402 earnings finally show your real revenue",
+			"summary": "The Usage tab on /dashboard/developers has an x402 Payments figure. It read zero for everyone, always, no matter how many paid calls your checkout products had settled: the query behind it looked for columns that do not exist on the receipts table, and the failure was swallowed so the panel reported a confident 0 instead of an error. It now counts settled checkout calls against the products you own and reports both the payment count and the gross in USDC. The rest of the panel got the same treatment: if one of its numbers cannot be read, the response says so by name instead of quietly showing zero. Two more fixes rode along on the developer endpoints: a mistyped webhook or API-key id now comes back as a clean not-found rather than a server error, and registering a webhook for an event type that does not exist is rejected with the list of valid ones instead of silently creating a webhook subscribed to nothing.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/dashboard/developers"
+		},
+		{
+			"date": "2026-08-12",
 			"title": "Token holder and safety checks stop failing when the free data lanes are busy",
 			"summary": "The free crypto API's holder distribution read (/api/crypto/holders) and the holder half of its token safety check (/api/crypto/security) both ask the Solana network for a token's largest accounts. Most of the public nodes we fall back on either refuse that question, answer it with an internal error, or accept it and never reply, and the router treated the last two as real answers, so the call gave up instead of trying the next node. It now moves on from an internal error, charges a silent no-reply to that one question rather than benching an otherwise healthy node, and has one more free node in the rotation that answers it. In a live check the holder read went from succeeding on roughly one call in three to eight out of eight. The error messages across the free crypto endpoints were reworded to match the rest of the platform's plain style at the same time.",
 			"tags": [

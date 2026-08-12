@@ -765,6 +765,14 @@ function wireWebhookForm(el) {
 		if (!url) { urlInput.focus(); return; }
 		const desc = el.querySelector('#wh-desc').value.trim();
 		const events = [...el.querySelectorAll('input[name="wh-events"]:checked')].map(c => c.value);
+		// An empty list means "all events" to the API. From this form, where every
+		// box starts checked, clearing them all reads as "none", so ask rather
+		// than silently subscribing to everything.
+		if (!events.length) {
+			showToast('Select at least one event to subscribe to', 'danger');
+			el.querySelector('input[name="wh-events"]')?.focus();
+			return;
+		}
 
 		saveBtn.disabled = true;
 		saveBtn.textContent = 'Creating...';

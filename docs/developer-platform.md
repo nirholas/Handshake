@@ -171,7 +171,8 @@ or is already revoked.
 ### GET /api/developer/usage
 
 Aggregated activity for your account over a lookback window, built from the
-audit log, webhook deliveries, and x402 receipts. Session required.
+audit log, webhook deliveries, and settled x402 checkout calls against the SKUs
+you own. Session required.
 
 Query parameters:
 
@@ -200,7 +201,8 @@ Response, `200`:
   "timeseries": [ { "day": "2026-07-23", "requests": 61 } ],
   "top_actions": [ { "action": "avatar.render", "count": 118 } ],
   "webhooks": { "total_deliveries": 24, "succeeded": 23, "failed": 1 },
-  "x402": { "payments": 5, "volume_usdc": 5000 }
+  "x402": { "payments": 5, "volume_usdc": 1.25, "volume_atomics": "1250000" },
+  "degraded": []
 }
 ```
 
@@ -214,10 +216,15 @@ Field notes, exactly as computed:
 - `top_actions` is the top 10 actions by count.
 - `webhooks.succeeded` counts deliveries with a 2xx status; `failed` counts
   null status (network failure) or status >= 400.
-- `x402.payments` and `volume_usdc` cover receipts where you were the payee;
-  `volume_usdc` is in USDC base units.
+- `x402.payments` counts settled checkout calls (`response_status < 400`)
+  against the SKUs you own, over the same window. `volume_atomics` is their
+  gross in USDC atomic units as a string; `volume_usdc` is the same figure in
+  whole USDC.
 - Each aggregate degrades independently to zeros or an empty array if its
-  source query fails, so the endpoint never 500s over one missing table.
+  source query fails, so the endpoint never 500s over one missing table. When
+  that happens the section names itself in `degraded` (`["x402"]`,
+  `["timeseries"]`, …) so you can tell "no activity" from "unavailable".
+  `degraded` is `[]` on a healthy response.
 
 Errors: `401 unauthorized`.
 
@@ -276,7 +283,7 @@ Request body:
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `url` | string | yes | HTTPS only, max 2048 characters, must resolve to a public address |
-| `events` | string[] | no | filtered to the known event types; empty or omitted = **all events** |
+| `events` | string[] | no | empty or omitted = **all events**; an unknown event type is rejected, it is never silently dropped |
 | `description` | string | no | trimmed, truncated to 200 characters |
 
 The URL is checked against SSRF at registration time: a hostname that resolves
@@ -315,8 +322,8 @@ Response, `201`:
 Store it; you need it to verify signatures.
 
 Errors: `400 bad_request` (missing/invalid/too-long/non-HTTPS/non-public URL,
-malformed JSON, or a non-JSON content type), `409 limit_reached` at 10
-webhooks, `401`, `403` (CSRF).
+an unknown or non-array `events` value, malformed JSON, or a non-JSON content
+type), `409 limit_reached` at 10 webhooks, `401`, `403` (CSRF).
 
 ### GET /api/developer/webhooks/:id
 
@@ -335,7 +342,8 @@ delivery is
 Partial update. Session + CSRF required. Any subset of:
 
 - `url` (same HTTPS, length, and SSRF validation as create)
-- `events` (replaces the array, filtered to known types)
+- `events` (replaces the array; same validation as create, so an unknown type is
+  a `400` and an empty array resets the webhook to all events)
 - `active` (boolean; pause or resume delivery)
 - `description`
 
@@ -347,8 +355,9 @@ Response, `200`: `{ "webhook": { … } }` with `updated_at` refreshed.
 Delete the webhook and stop all delivery. Session + CSRF required.
 Response, `200`: `{ "deleted": true }`.
 
-Errors for all three `:id` routes: `404 not_found` when the ID does not exist
-or is not yours, `400 bad_request` when the ID is missing.
+Errors for all three `:id` routes: `404 not_found` when the ID does not exist,
+is not yours, or is not a well-formed UUID; `400 bad_request` when the ID is
+missing.
 
 ### Delivery format and signature verification
 
@@ -448,8 +457,8 @@ If either JSON-RPC step returns an error, the HTTP status is still `200` and
 the body is `{ "ok": false, "error": { …JSON-RPC error… } }`.
 
 Errors: `400 bad_request` (`keyId` missing or not a string),
-`404 not_found` (key does not exist or is not yours), `400 revoked`,
-`400 expired`, `401`, `403` (CSRF), `429`.
+`404 not_found` (key does not exist, is not yours, or is not a well-formed
+UUID), `400 revoked`, `400 expired`, `401`, `403` (CSRF), `429`.
 
 See [MCP integration](./mcp.md) for configuring a real client against
 `/api/mcp`.

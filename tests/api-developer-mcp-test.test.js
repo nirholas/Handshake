@@ -72,7 +72,12 @@ beforeEach(() => {
 	dispatchMock.mockReset();
 });
 
-const okKey = { id: 'key-1', scope: 'avatars:read profile', revoked_at: null, expires_at: null };
+// api_keys.id is a uuid column and the handler guards on that before querying,
+// so the fixtures have to be real uuids.
+const KEY_ID = '33333333-3333-4333-8333-333333333333';
+const UNKNOWN_KEY_ID = '44444444-4444-4444-8444-444444444444';
+
+const okKey = { id: KEY_ID, scope: 'avatars:read profile', revoked_at: null, expires_at: null };
 
 function dispatchHappyPath() {
 	dispatchMock.mockImplementation((msg) => {
@@ -96,14 +101,14 @@ describe('mcp-test auth & method', () => {
 	it('returns 401 without a session', async () => {
 		getSessionUserMock.mockResolvedValue(null);
 		const res = mkRes();
-		await handler(mkReq({ body: { keyId: 'key-1' } }), res);
+		await handler(mkReq({ body: { keyId: KEY_ID } }), res);
 		expect(res.statusCode).toBe(401);
 	});
 
 	it('returns 429 when the user is rate limited', async () => {
 		mcpUserMock.mockResolvedValue({ success: false, limit: 1200, remaining: 0, reset: Date.now() + 60_000 });
 		const res = mkRes();
-		await handler(mkReq({ body: { keyId: 'key-1' } }), res);
+		await handler(mkReq({ body: { keyId: KEY_ID } }), res);
 		expect(res.statusCode).toBe(429);
 	});
 });
@@ -118,10 +123,21 @@ describe('mcp-test key validation', () => {
 		expect(parseBody(res).error).toBe('bad_request');
 	});
 
+	it('returns 404 for a malformed keyId without querying Postgres', async () => {
+		const res = mkRes();
+		await handler(mkReq({ body: { keyId: 'not-a-uuid' } }), res);
+		// api_keys.id is a uuid column: handing it a non-uuid used to surface
+		// Postgres error 22P02 to the dashboard as a 500.
+		expect(res.statusCode).toBe(404);
+		expect(parseBody(res).error).toBe('not_found');
+		expect(sqlMock).not.toHaveBeenCalled();
+		expect(dispatchMock).not.toHaveBeenCalled();
+	});
+
 	it('returns 404 when the key is not owned by the caller', async () => {
 		sqlMock.mockResolvedValue([]); // no row
 		const res = mkRes();
-		await handler(mkReq({ body: { keyId: 'nope' } }), res);
+		await handler(mkReq({ body: { keyId: UNKNOWN_KEY_ID } }), res);
 		expect(res.statusCode).toBe(404);
 		expect(dispatchMock).not.toHaveBeenCalled();
 	});
@@ -129,7 +145,7 @@ describe('mcp-test key validation', () => {
 	it('returns 400 for a revoked key', async () => {
 		sqlMock.mockResolvedValue([{ ...okKey, revoked_at: new Date().toISOString() }]);
 		const res = mkRes();
-		await handler(mkReq({ body: { keyId: 'key-1' } }), res);
+		await handler(mkReq({ body: { keyId: KEY_ID } }), res);
 		expect(res.statusCode).toBe(400);
 		expect(parseBody(res).error).toBe('revoked');
 		expect(dispatchMock).not.toHaveBeenCalled();
@@ -138,7 +154,7 @@ describe('mcp-test key validation', () => {
 	it('returns 400 for an expired key', async () => {
 		sqlMock.mockResolvedValue([{ ...okKey, expires_at: new Date(Date.now() - 1000).toISOString() }]);
 		const res = mkRes();
-		await handler(mkReq({ body: { keyId: 'key-1' } }), res);
+		await handler(mkReq({ body: { keyId: KEY_ID } }), res);
 		expect(res.statusCode).toBe(400);
 		expect(parseBody(res).error).toBe('expired');
 		expect(dispatchMock).not.toHaveBeenCalled();
@@ -152,7 +168,7 @@ describe('mcp-test handshake', () => {
 		sqlMock.mockResolvedValue([okKey]);
 		dispatchHappyPath();
 		const res = mkRes();
-		await handler(mkReq({ body: { keyId: 'key-1' } }), res);
+		await handler(mkReq({ body: { keyId: KEY_ID } }), res);
 
 		expect(res.statusCode).toBe(200);
 		const body = parseBody(res);
@@ -177,7 +193,7 @@ describe('mcp-test handshake', () => {
 			),
 		);
 		const res = mkRes();
-		await handler(mkReq({ body: { keyId: 'key-1' } }), res);
+		await handler(mkReq({ body: { keyId: KEY_ID } }), res);
 
 		expect(res.statusCode).toBe(200);
 		const body = parseBody(res);
@@ -191,7 +207,7 @@ describe('mcp-test handshake', () => {
 		sqlMock.mockResolvedValue([{ ...okKey, scope: '' }]);
 		dispatchHappyPath();
 		const res = mkRes();
-		await handler(mkReq({ body: { keyId: 'key-1' } }), res);
+		await handler(mkReq({ body: { keyId: KEY_ID } }), res);
 		expect(parseBody(res).scopes).toEqual([]);
 	});
 });
