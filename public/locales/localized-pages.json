@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 354,
+	"count": 355,
 	"paths": [
 		"/",
 		"/3d",
@@ -70,6 +70,7 @@
 		"/credits",
 		"/crypto",
 		"/crypto-api",
+		"/cz",
 		"/dad",
 		"/daily",
 		"/daily-match",

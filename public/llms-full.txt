@@ -807,6 +807,12 @@ URL: https://three.ws/holo
 
 A live holographic foil sticker rendered in your browser: tilt it with your pointer, peel the corner, switch foils, die-cut your own text, and download the frame as a PNG. Fully procedural, no assets.
 
+### Claim the CZ agent
+
+URL: https://three.ws/cz
+
+Connect a wallet, sign one line, and take ownership of the pre-registered CZ agent, then copy its embed snippet.
+
 ## Crypto
 
 On-chain features: pay-per-call, token launches, vanity wallets.

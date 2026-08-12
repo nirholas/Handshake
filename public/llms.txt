@@ -166,6 +166,7 @@ Experimental features actively shipping. Expect fast iteration.
 - [Agent Symphony](https://three.ws/symphony): The agent economy, played live as generative music. Every real payment, trade, launch and level-up on three.ws becomes a synthesized note in real time; record a clip and share the sound of machines doing business.
 - [Runway Lab](https://three.ws/economy-lab): A live digital twin of the three.ws x402 payment rail. Runs the exact admission-control code the production settle path runs, seeded with live production balances, so you can drag a knob and watch settlement survive or starve, then get the exact command that fixes it.
 - [Holo Sticker](https://three.ws/holo): A live holographic foil sticker rendered in your browser: tilt it with your pointer, peel the corner, switch foils, die-cut your own text, and download the frame as a PNG. Fully procedural, no assets.
+- [Claim the CZ agent](https://three.ws/cz): Connect a wallet, sign one line, and take ownership of the pre-registered CZ agent, then copy its embed snippet.
 
 ## Crypto
 

@@ -1089,6 +1089,14 @@
 					"changefreq": "weekly",
 					"showcase": true,
 					"added": "2026-08-02"
+				},
+				{
+					"path": "/cz",
+					"title": "Claim the CZ agent",
+					"description": "Connect a wallet, sign one line, and take ownership of the pre-registered CZ agent, then copy its embed snippet.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-04-17"
 				}
 			]
 		},

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-12T20:34:07.007Z",
+	"generated_at": "2026-08-12T20:41:12.166Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1328,6 +1328,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": true
+				},
+				{
+					"path": "/cz",
+					"title": "Claim the CZ agent",
+					"description": "Connect a wallet, sign one line, and take ownership of the pre-registered CZ agent, then copy its embed snippet.",
+					"added": "2026-04-17",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				}
 			]
 		},

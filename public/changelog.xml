@@ -21559,6 +21559,14 @@
 			<description>Renders Claude artifact bundles as standalone embeddable apps.</description>
 		</item>
 		<item>
+			<title>Claim the CZ agent</title>
+			<link>https://three.ws/cz</link>
+			<guid isPermaLink="false">2026-04-17:Claim the CZ agent</guid>
+			<pubDate>Fri, 17 Apr 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Connect a wallet, sign one line, and take ownership of the pre-registered CZ agent, then copy its embed snippet.</description>
+		</item>
+		<item>
 			<title>Discover</title>
 			<link>https://three.ws/discover</link>
 			<guid isPermaLink="false">2026-04-17:Discover</guid>

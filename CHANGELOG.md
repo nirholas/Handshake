@@ -2994,6 +2994,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 - **.well-known/chat-plugin.json** (`/.well-known/chat-plugin.json`): ChatGPT-style plugin manifest.
 - **Agents Index** (`/agents`): Browse every registered agent on three.ws.
 - **Artifact Viewer** (`/artifact`): Renders Claude artifact bundles as standalone embeddable apps.
+- **Claim the CZ agent** (`/cz`): Connect a wallet, sign one line, and take ownership of the pre-registered CZ agent, then copy its embed snippet.
 - **Discover** (`/discover`): On-chain agent directory (ERC-8004 + Solana). Browse, search, and inspect every registered agent.
 - **glTF Validator** (`/validation`): Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.
 - **My Agents** (`/my-agents`): Your private collection of agents and avatars. Requires sign-in.
