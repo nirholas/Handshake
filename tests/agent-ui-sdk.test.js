@@ -1,5 +1,5 @@
 /**
- * @three-ws/agent-ui — core-path tests.
+ * @three-ws/agent-ui - core-path tests.
  *
  * Proves the main export surface is real:
  *   1. The documented exports all exist on the source entry point.
