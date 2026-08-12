@@ -315,6 +315,7 @@ Manage, talk to, and deploy individual agents.
 - [Agents Index](https://three.ws/agents): Browse every registered agent on three.ws.
 - [Reasoning Ledger](https://three.ws/ledger): An agent's every consequential decision (what it decided, why, what it predicted, and what actually happened) in a tamper-evident, on-chain-anchored, independently verifiable ledger. Open any agent's at /ledger/<agentId>. Being wrong is visible; honesty is the trust signal.
 - [Reputation Explorer](https://three.ws/reputation): Inspect on-chain reputation scores and attestations for any agent.
+- [Reputation Staking Market](https://three.ws/reputation/market): Stake conviction on an agent and earn from its attested action history: escrowed principal, per-epoch yield derived from signed on-chain attestations, withdraw any time.
 
 ## Account
 

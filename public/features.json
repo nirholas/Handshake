@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-12T07:38:25.916Z",
+	"generated_at": "2026-08-12T16:44:52.066Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2748,6 +2748,16 @@
 					"title": "Reputation Explorer",
 					"description": "Inspect on-chain reputation scores and attestations for any agent.",
 					"added": "2026-04-17",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/reputation/market",
+					"title": "Reputation Staking Market",
+					"description": "Stake conviction on an agent and earn from its attested action history: escrowed principal, per-epoch yield derived from signed on-chain attestations, withdraw any time.",
+					"added": "2026-08-12",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
