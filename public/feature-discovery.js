@@ -45,6 +45,8 @@
 	var K_VISITED = 'threews:fd:visited';     // routes the user has opened (array)
 	var K_TRIED   = 'threews:fd:tried';       // dismissed "have you tried" prompts (map)
 	var REVEAL_DELAY_MS = 6500;               // let the page settle before suggesting
+	// Owned by the Walk Companion (walk-sdk config keys.enabled), read-only here.
+	var K_WALK_ENABLED = 'walk:companion:enabled';
 
 	// ── Feature catalog — friendly labels + plain-language copy (aligns C02). ──
 	// Routes are confirmed live (vercel.json). This is descriptive metadata only;
@@ -150,6 +152,35 @@
 	}
 
 	var CURRENT = normPath(location.pathname);
+
+	// ── The other ambient helper ───────────────────────────────────────────────
+	// The Walk Companion greets, narrates and answers ⌘K, and it owns the same
+	// corner. Two of them talking at once is clutter, so the passive prompt
+	// stands down whenever the companion is live.
+	//
+	// A single read of the enabled flag is not enough: nav.js summons the
+	// companion for first-time visitors from an idle callback (load + 2s, idle
+	// timeout 4s) that regularly lands AFTER our 6.5s reveal, so the flag is
+	// still absent when we look. Checking the mounted host as well closes the
+	// early half of the race; retractOnCompanion() below closes the late half.
+	function companionLive() {
+		try { if (localStorage.getItem(K_WALK_ENABLED) === '1') return true; } catch (_) {}
+		return !!document.querySelector('.walk-companion');
+	}
+
+	// A suggestion the visitor can already see is noise, not discovery: /create
+	// puts a "Generate a 3D model" card on screen that goes straight to /forge.
+	// Only content links count: the nav and footer link to nearly everything,
+	// and counting them would silence the prompt site-wide.
+	function pageLinksTo(route) {
+		var anchors = document.querySelectorAll('a[href^="/"]');
+		for (var i = 0; i < anchors.length; i++) {
+			var a = anchors[i];
+			if (a.closest('#nav-container, nav, footer, #tws-corner-stack')) continue;
+			if (normPath(a.getAttribute('href')) === route) return true;
+		}
+		return false;
+	}
 
 	function visitedSet() {
 		var arr = read(K_VISITED, []);
@@ -345,6 +376,7 @@
 			if (visited[r]) continue;
 			if (isTriedDismissed(r)) continue;
 			if (!FEATURES[r]) continue;
+			if (pageLinksTo(r)) continue;
 			return r;
 		}
 		return null;
@@ -367,7 +399,7 @@
 		// When the companion agent is live it owns ambient discovery (it greets,
 		// narrates, and reacts to ⌘K commands) — don't stack a competing toast in
 		// the same corner. Contextual after-action cross-links still show.
-		try { if (localStorage.getItem('walk:companion:enabled') === '1') return; } catch (_) {}
+		if (companionLive()) return;
 		var route = pickSuggestion();
 		if (!route) return;
 		var f = FEATURES[route];
@@ -382,7 +414,17 @@
 			// timeout is not a rejection, so it does NOT mark the feature tried —
 			// the session throttle already prevents re-prompting until next visit.
 			autoDismissMs: 13000,
-		});
+		}).setAttribute('data-fd-passive', '1');
+	}
+
+	// The late half of the companion race: the prompt is already on screen when
+	// the companion mounts. Retract it the way a timeout does (no "tried" mark,
+	// the feature was never actually rejected) and leave the corner to the
+	// companion. Contextual cross-links are user-earned, so they stay put.
+	function retractOnCompanion() {
+		if (!_card || _card.getAttribute('data-fd-passive') !== '1') return;
+		if (!companionLive()) return;
+		dismissCard();
 	}
 
 	// ── Contextual cross-links after a feature completes ───────────────────────
@@ -480,6 +522,10 @@
 			if (_revealTimer) { clearTimeout(_revealTimer); _revealTimer = null; }
 			showCrossLinks(feature, e.detail);
 		});
+
+		// nav.js fires this when it auto-summons the companion for a first-time
+		// visitor, and the SDK fires it on every enable/disable.
+		window.addEventListener('walk-companion:change', retractOnCompanion);
 
 		_revealTimer = setTimeout(showPassivePrompt, REVEAL_DELAY_MS);
 	}
