@@ -37,7 +37,7 @@
  *   mount(el, { priority })  — move `el` into the stack (sets priority if given)
  *   unmount(el)              — remove `el` from the stack
  *   ensure()                 — create/return the container element
- *   reserve(key, px)         — keep `px` of corner height clear for `key`;
+ *   reserve(key, px)         - keep `px` of corner height clear for `key`;
  *                              pass { height, width } to declare both
  *   release(key)             — drop that reservation
  *   reserved()               — current reserved height in px
