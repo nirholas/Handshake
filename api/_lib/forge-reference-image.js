@@ -56,7 +56,7 @@
 
 import { createHash } from 'node:crypto';
 import { getGcpAccessToken } from './gcp-auth.js';
-import { putObject, publicUrl } from './r2.js';
+import { persistImageBase64 } from './image-persist.js';
 import { subjectNegativePrompt } from '../forge-enhance.js';
 import { isProviderRefusal } from './ai-image-lanes.js';
 import { textToImage } from '../_mcp3d/text-to-image.js';
@@ -175,20 +175,6 @@ export function buildReferenceInstruction(prompt, negativePrompt) {
 		lines.push(`Do NOT include: ${String(negativePrompt).trim()}.`);
 	}
 	return lines.join(' ');
-}
-
-// Persist a base64 image to R2 and return a durable public https URL. The 3D
-// backends take URLs (Replicate caps inline data URIs at ~256 KB), so neither
-// the Vertex inline data nor a NIM artifact can be forwarded as-is. Format is
-// sniffed from the magic bytes so the key extension and Content-Type match the
-// real payload (Gemini image returns PNG; sniff keeps it correct if that changes).
-async function persistImageBase64(b64) {
-	const body = Buffer.from(b64, 'base64');
-	const isJpeg = body.length > 2 && body[0] === 0xff && body[1] === 0xd8 && body[2] === 0xff;
-	const ext = isJpeg ? 'jpg' : 'png';
-	const key = `forge/refs/${globalThis.crypto.randomUUID()}.${ext}`;
-	await putObject({ key, body, contentType: isJpeg ? 'image/jpeg' : 'image/png' });
-	return publicUrl(key);
 }
 
 // One Vertex Gemini image generation. Returns { b64, mime } on success; throws a

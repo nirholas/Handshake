@@ -217,6 +217,8 @@ The env vars that shape a deployment (production values live on the Cloud Run se
 | `FORGE_SELFHOST_PRIMARY` | Default off; hoist self-host lanes above hosted free lanes. |
 | `JWT_SECRET` | Signs job handle tokens. |
 | `DATABASE_URL`, R2 `S3_*` config | Persistence and durable storage; both fail soft. |
+| `LIVEPEER_FEDERATION_ENABLED` | Default off; inserts the federated Livepeer text-to-image lane (`api/_providers/livepeer.js`) into the reference-image chain after the free lanes and before the paid Replicate backstop. See [ops/livepeer-federation.md](./ops/livepeer-federation.md) for the measured state before flipping it. |
+| `LIVEPEER_API_KEY`, `LIVEPEER_GATEWAY_URL`, `LIVEPEER_T2I_MODEL` | Studio gateway key (absent today), gateway base-URL override, and pipeline model override (`ByteDance/SDXL-Lightning` default) for the federated lane. |
 
 Fast diagnostics: `forge_creations` carries per-generation backend, status, error, and prompt, so it is the quickest ground truth for generation issues. `GET /api/forge?health=1` shows the live lane picture.
 
