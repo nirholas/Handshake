@@ -90,7 +90,7 @@ Six GPU services share those 3 GPUs:
 | model-triposr | fast image-to-3D fallback (us-central1 copy stays min 0; the WARM copy runs in us-east4 since 2026-07-28) | 0 | 2 |
 | model-triposg | image-to-3D | 0 | 2 |
 | ~~unirig~~ | retired (superseded by `workers/rig`) — **holds no GPU**, minScale 0 | 0 | — |
-| ~~avatar-reconstruction~~ | photo-to-avatar — **moved to CPU-only 2026-07-25, holds no GPU** (see below) | 1 | 6 |
+| ~~avatar-reconstruction~~ | photo-to-avatar: **moved to CPU-only 2026-07-25, holds no GPU** (see below); sized for the 10k avatars/day launch target 2026-08-12 (min 1, max 12, 4 jobs per instance: docs/ops/avatar-reconstruction-capacity.md) | 1 | 12 |
 | model-hunyuan3d-21 | PBR realism lane, L4 build (min 0 since 2026-07-17; a pinned min 1 here starved every other rollout). KNOWN-BROKEN for actual jobs: 18 GiB tmpfs weight staging + 14 GiB model OOMs the 32 Gi L4 ceiling (signal 9 mid-load); see workers/model-hunyuan3d/README.md | 0 | 1 |
 
 `model-hunyuan3d-21-rtx` (same 2.1 PBR lane, warm min 1 / max 4) does NOT draw

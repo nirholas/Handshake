@@ -3,6 +3,34 @@
 	"entries": [
 		{
 			"date": "2026-08-12",
+			"title": "The photo-to-avatar lane is now sized for the 10,000 avatars per day launch target",
+			"summary": "The service that turns your selfies into a rigged 3D avatar was measured under real load and one number mattered: it was configured so the autoscaler could never see how busy it was. The service answers each request in milliseconds and does the real work in the background, so the scaling signal looked idle while its processors ground away, and no amount of extra quota would ever have added capacity. The configuration is fixed, and the lane then proved the roadmap's launch target for real: a sustained ten-minute run at the full 10,000-avatars-per-day rate finished every job, with the typical avatar ready in about six seconds and the slowest in under nine. The capacity is there when launch day brings the crowd.",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-12",
+			"title": "The Forge can now federate GPU work to the Livepeer decentralized compute network",
+			"summary": "Text-to-3D jobs start by painting a reference image, and that GPU step can now run on the Livepeer network instead of our own lanes, behind a flag, with the same request shape and the same verification our own workers get (safety screening plus byte-level image checks before anything is stored). It ships dark: our measured probe found Livepeer's free public gateway dead at the DNS edge, so the lane goes live only after a funded Studio key lands and clears a 20-job latency, cost, and success comparison run by the new bench script. The full record and the expansion criteria are in the operator docs.",
+			"tags": [
+				"feature",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-12",
+			"title": "Run your own inference node: the open inference network operator client is here",
+			"summary": "Phase 4 of the roadmap (decouple agent inference from any single provider) takes its first concrete step: anyone can now run a node. The new node-operator client is a self-contained daemon that registers with the platform, claims inference jobs, executes them with a real open model (distilgpt2 via ONNX, CPU by default with a one-flag GPU image), and returns every result signed with the node's own Solana key so anyone can verify it. The proof runs end to end locally: register, claim a job, and return a cryptographically verified result, with a built-in selftest that proves the whole loop on a fresh checkout. Operators bring their own hardware; the network supplies the jobs and the on-chain receipts. This is the first piece of the bet that agent inference settles permissionlessly, closer to how blockchains settle blocks than to how today's AI APIs settle bills.",
+			"tags": [
+				"feature",
+				"infra"
+			],
+			"link": "/docs/inference-node-operator"
+		},
+		{
+			"date": "2026-08-12",
 			"title": "Your agent can now learn your Farcaster voice, and only after you prove the account is yours",
 			"summary": "Memory seeding already worked from GitHub and X; Farcaster now joins them, with consent built into the protocol itself. Farcaster has no login button we could use, so instead the account's own public record does the work: every Farcaster account publishes the wallets it controls, and you prove ownership by signing a one-time challenge with one of those wallets, Solana first. Nothing is read, let alone stored, before that signature checks out. The grant is read-only and narrow: your public profile and up to 100 recent casts, distilled into identity, facts, and your strongest posts, so the agent talks the way you talk. Changing your mind is one click: revoking the grant deletes every memory it produced, including anything an earlier grant left behind. The whole flow lives in the agent persona editor, and it works with no API key configured because the reader falls back to a public Farcaster hub.",
 			"tags": [
