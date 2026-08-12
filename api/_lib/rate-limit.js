@@ -559,6 +559,15 @@ export const limits = {
 	// scripted wallet-mint spam per IP.
 	agentCreateIp: (ip) =>
 		getLimiter('agent:create:ip', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
+	// CZ agent claim (/api/cz/claim). The GET mints a nonce row, the POST
+	// redeems it against one ECDSA signature; a real claim is two calls, so 10
+	// per hour leaves room for a wallet rejection and a retry while capping how
+	// many rows one IP can write into cz_claims. `local` because the handler
+	// writes nothing of value on the GET (a random nonce that is useless without
+	// the matching signature) and the money buckets need the shared Redis
+	// allowance more; per-instance is also exactly what this endpoint's previous
+	// hand-rolled in-memory bucket gave, so it is not a regression.
+	czClaimIp: (ip) => getLimiter('cz:claim:ip', { limit: 10, window: '1 h', local: true }).limit(ip),
 	// CAPTCHA-verified login bucket. When a user solves the Altcha proof-of-work
 	// puzzle (api/auth/captcha.js) they receive a signed bypass token that routes
 	// their login through this separate bucket instead of authIp. It is intentionally
