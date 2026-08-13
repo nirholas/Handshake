@@ -177,6 +177,13 @@
 	font-size: var(--text-2xs, 0.72rem);
 	color: var(--ink-faint, #6a6a6a);
 }
+/* Degraded reads are said out loud rather than left to a frozen timestamp. */
+.xr-updated[data-state='stale'] {
+	color: var(--warn, #e0a458);
+}
+.xr-updated[data-state='error'] {
+	color: var(--danger, #e06c75);
+}
 
 /* ── glass surface shared ─────────────────────────────────────────────────── */
 .xr-showcase,
@@ -629,9 +636,15 @@
 .xr-row-meta {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	flex-wrap: wrap;
+	gap: 4px 8px;
+	min-width: 0;
 }
 .xr-row-net {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	font-family: var(--font-mono, monospace);
 	font-size: var(--text-2xs, 0.68rem);
 	text-transform: uppercase;
@@ -727,6 +740,43 @@
 }
 .xr-feed-empty-p a {
 	color: var(--ink-bright, #fff);
+}
+.xr-feed-empty--error {
+	border-style: solid;
+	border-color: color-mix(in srgb, var(--danger, #e06c75) 40%, var(--stroke, #2a2a2a));
+	background: color-mix(in srgb, var(--danger, #e06c75) 6%, transparent);
+}
+/* Shared recovery affordance for the feed and stats error states. */
+.xr-retry {
+	appearance: none;
+	cursor: pointer;
+	margin-top: 16px;
+	padding: 9px 18px;
+	background: transparent;
+	border: 1px solid var(--stroke-strong, #3a3a3a);
+	border-radius: var(--radius-pill, 999px);
+	color: var(--ink-bright, #fff);
+	font-family: var(--font-mono, monospace);
+	font-size: var(--text-2xs, 0.76rem);
+	transition:
+		border-color 0.15s ease,
+		background 0.15s ease,
+		color 0.15s ease;
+}
+.xr-retry:hover:not(:disabled) {
+	border-color: var(--xr-accent);
+	background: color-mix(in srgb, var(--xr-accent) 10%, transparent);
+}
+.xr-retry:active:not(:disabled) {
+	transform: translateY(1px);
+}
+.xr-retry:focus-visible {
+	outline: 2px solid var(--xr-accent);
+	outline-offset: 2px;
+}
+.xr-retry:disabled {
+	cursor: progress;
+	opacity: 0.6;
 }
 .xr-skel {
 	height: 58px;
@@ -846,19 +896,35 @@
 	color: var(--ink-faint, #6a6a6a);
 }
 
-/* network split */
+/* network split: each row filters the feed to that chain */
 .xr-net-row {
 	display: grid;
-	grid-template-columns: 64px 1fr auto;
+	grid-template-columns: minmax(52px, max-content) minmax(0, 1fr) auto;
 	align-items: center;
 	gap: 8px;
-	padding: 6px 0;
+	padding: 6px 8px;
+	margin: 0 -8px;
+	border-radius: var(--radius-md, 8px);
+	cursor: pointer;
+	transition: background 0.15s ease;
+}
+.xr-net-row:hover {
+	background: color-mix(in srgb, var(--xr-accent) 8%, transparent);
+}
+.xr-net-row.active {
+	outline: 1px solid color-mix(in srgb, var(--xr-accent) 50%, transparent);
+}
+.xr-net-row:focus-visible {
+	outline: 2px solid var(--xr-accent);
+	outline-offset: 1px;
 }
 .xr-net-name {
 	font-family: var(--font-mono, monospace);
 	font-size: var(--text-2xs, 0.74rem);
-	text-transform: capitalize;
 	color: var(--ink-bright, #fff);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .xr-net-track {
 	height: 8px;
@@ -877,6 +943,12 @@
 	font-size: var(--text-2xs, 0.72rem);
 	color: var(--ink-dim, #9a9a9a);
 	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+.xr-net-val small {
+	display: block;
+	font-size: var(--text-3xs, 0.64rem);
+	color: var(--ink-faint, #6a6a6a);
 }
 
 .xr-note {
