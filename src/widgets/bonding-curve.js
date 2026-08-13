@@ -45,14 +45,23 @@ const NON_CURVE_MINTS = new Set([
 
 // Address-only pre-filter, mirroring the server's gate in
 // api/_lib/pump-curve-view.js. A pump.fun-ground mint ends in the literal
-// suffix "pump"; a three.ws-launched mint carries the "3ws" mark as a prefix
-// instead (src/solana/vanity/brand.js) and is just as curve-bearing. Anything
-// else — a settlement token, a misconfigured (e.g. USDC) mount — has no curve,
-// so the widget skips the request entirely and shows its empty state rather
-// than contributing to a /api/pump/curve 404 storm.
-export function isPumpMint(mint) {
+// suffix "pump"; a three.ws custodial launch carries the "3ws" mark as a prefix
+// instead (src/solana/vanity/brand.js) and is just as curve-bearing; and on
+// devnet nothing grinds a mark at all, so the shape says nothing and every
+// plausible address is worth asking about. A settlement token is excluded
+// everywhere. Anything else on mainnet is skipped here rather than contributing
+// to a /api/pump/curve 404 storm from a misconfigured (e.g. USDC) mount — the
+// server still recognizes an unmarked coin of ours from its own launch
+// registry, so a real agent token is never left unrendered by this shortcut.
+export function isPumpMint(mint, network = 'mainnet') {
 	if (typeof mint !== 'string' || NON_CURVE_MINTS.has(mint)) return false;
+	if (network === 'devnet') return isPlausibleMint(mint);
 	return mint.endsWith('pump') || hasThreeWsMark(mint);
+}
+
+/** A base58 string of Solana address length — the shape, not the existence. */
+export function isPlausibleMint(s) {
+	return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(String(s || ''));
 }
 
 // SVG geometry. viewBox is fixed; the element scales to its container.
@@ -68,6 +77,17 @@ export function lamportsToSol(lamports) {
 	const n = Number(lamports);
 	if (!Number.isFinite(n)) return 0;
 	return n / LAMPORTS_PER_SOL;
+}
+
+/**
+ * Whole tokens behind a curve. `tokenTotalSupply` is atomic and pump.fun mints
+ * with 6 decimals; a payload without it falls back to the fixed 1B supply every
+ * pump.fun coin is created with.
+ */
+export function totalSupplyTokens(curve) {
+	const atomic = Number(curve?.tokenTotalSupply);
+	if (!Number.isFinite(atomic) || atomic <= 0) return PUMP_TOTAL_SUPPLY;
+	return atomic / 1e6;
 }
 
 export function clamp01(n) {
@@ -217,12 +237,18 @@ export function computeView(data, solUsd = null) {
 	}
 	const progress = isGraduated ? 1 : clamp01(Number(grad.progressBps) / 10_000);
 
-	// The SDK can report a small negative market cap for a freshly-created
-	// curve (real reserves still at zero) — clamp so we never show "-$2".
-	const marketCapSol = Math.max(0, lamportsToSol(price.marketCap));
 	const raisedSol = Math.max(0, lamportsToSol(grad.solAccumulated ?? data.curve.realSolReserves));
 	const priceSol = Math.max(0, lamportsToSol(price.buyPricePerToken));
 	const hasUsd = Number.isFinite(Number(solUsd)) && Number(solUsd) > 0;
+
+	// Market cap is derived here rather than taken from the SDK's `price.marketCap`,
+	// which is not one: on a live devnet curve 95% of the way to graduation it
+	// reports -1.75 SOL while the curve holds 30.3 SOL of virtual reserves. Every
+	// consumer clamped that negative to zero and rendered "◎0" for a coin with a
+	// real price. The curve carries the two honest numbers instead — the current
+	// per-token price and the token's total supply — and pump.fun sells the entire
+	// fixed supply through the curve, so price × supply IS the market cap.
+	const marketCapSol = priceSol * totalSupplyTokens(data.curve);
 
 	return {
 		status: isGraduated ? 'graduated' : 'bonding',
@@ -493,11 +519,13 @@ export function mountBondingCurve(rootEl, opts = {}) {
 	injectStyles(doc);
 
 	const mint = String(opts.mint || '').trim();
-	// A mint that can't have a bonding curve (settlement token / non-"pump" mint)
-	// is treated like no mint at all: paint the empty state, never poll. This stops
-	// a misconfigured mount from firing /api/pump/curve requests that can only 404.
-	const pollable = Boolean(mint) && isPumpMint(mint);
 	const network = opts.network === 'devnet' ? 'devnet' : 'mainnet';
+	// A mint that can't have a bonding curve (a settlement token, or a mainnet
+	// address carrying neither launcher's mark) is treated like no mint at all:
+	// paint the empty state, never poll. This stops a misconfigured mount from
+	// firing /api/pump/curve requests that can only 404. The test is
+	// network-aware because devnet mints carry no mark to test.
+	const pollable = Boolean(mint) && isPumpMint(mint, network);
 	const refreshMs = Math.max(5_000, Number(opts.refreshMs) || 15_000);
 	const showUsd = opts.showUsd !== false;
 	const accent = /^#[0-9a-fA-F]{3,8}$/.test(opts.accent || '') ? opts.accent : '#888888';

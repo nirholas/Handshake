@@ -49,8 +49,27 @@ describe.each(GATES)('isPumpMint (%s)', (_label, isPumpMint) => {
 		expect(isPumpMint(WRAPPED_SOL)).toBe(false);
 	});
 
-	it('rejects an unrelated address so a stray mount cannot start a 404 storm', () => {
+	it('rejects an unmarked mainnet address so a stray mount cannot start a 404 storm', () => {
 		expect(isPumpMint('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM')).toBe(false);
+	});
+
+	// Nothing grinds a mark on devnet: a rehearsal launch from the owner's own
+	// wallet mints a plain generated address, and every real devnet bonding curve
+	// on the cluster today belongs to a mint of exactly that shape. A shape test
+	// there would refuse real curves and answer nothing useful.
+	it('accepts any plausible devnet address, where no mark is ground', () => {
+		expect(isPumpMint('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM', 'devnet')).toBe(true);
+		expect(isPumpMint(THREE_WS_LAUNCH, 'devnet')).toBe(true);
+	});
+
+	it('still excludes settlement tokens on devnet', () => {
+		expect(isPumpMint(USDC_DEVNET, 'devnet')).toBe(false);
+		expect(isPumpMint(WRAPPED_SOL, 'devnet')).toBe(false);
+	});
+
+	it('rejects a malformed devnet address rather than asking the cluster', () => {
+		expect(isPumpMint('not-an-address', 'devnet')).toBe(false);
+		expect(isPumpMint('', 'devnet')).toBe(false);
 	});
 
 	it('rejects non-string input', () => {

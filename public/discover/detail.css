@@ -381,6 +381,130 @@ body.detail-page {
 	border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* ─── On-chain history ───────────────────────────────────────────────────── */
+/* One row per indexed lifecycle event, newest first, read from the platform's
+   own cross-chain index rather than an RPC scan in the browser. */
+
+.detail-history {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	max-height: 420px;
+	overflow-y: auto;
+}
+
+.detail-history-row {
+	display: grid;
+	grid-template-columns: 132px 1fr auto;
+	gap: 12px;
+	align-items: baseline;
+	padding: 8px 10px;
+	border-radius: 8px;
+	transition: background 0.15s ease;
+}
+
+.detail-history-row:hover {
+	background: rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 560px) {
+	.detail-history-row {
+		grid-template-columns: 1fr auto;
+	}
+
+	.detail-history-when {
+		grid-column: 1 / -1;
+	}
+}
+
+.detail-history-when {
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.35);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.detail-history-what {
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.82);
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 8px;
+}
+
+.detail-history-detail {
+	font-size: 11px;
+	font-family: ui-monospace, SF Mono, Menlo, monospace;
+	color: rgba(255, 255, 255, 0.38);
+	word-break: break-all;
+}
+
+.detail-history-class {
+	font-size: 10px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	padding: 2px 7px;
+	border-radius: 99px;
+	background: rgba(255, 255, 255, 0.07);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	color: rgba(255, 255, 255, 0.55);
+	white-space: nowrap;
+}
+
+/* Token launches and reputation are the two classes a reader scans for, so
+   they carry their own accent instead of the neutral chip. */
+.detail-history-class[data-class='token_launch'] {
+	background: rgba(129, 230, 160, 0.12);
+	border-color: rgba(129, 230, 160, 0.28);
+	color: rgba(160, 240, 185, 0.92);
+}
+
+.detail-history-class[data-class='reputation'] {
+	background: rgba(150, 180, 255, 0.12);
+	border-color: rgba(150, 180, 255, 0.28);
+	color: rgba(180, 200, 255, 0.92);
+}
+
+.detail-history-class[data-class='transfer'] {
+	background: rgba(255, 200, 130, 0.1);
+	border-color: rgba(255, 200, 130, 0.24);
+	color: rgba(255, 214, 160, 0.9);
+}
+
+.detail-history-link {
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.4);
+	text-decoration: none;
+	white-space: nowrap;
+	border-radius: 4px;
+}
+
+.detail-history-link:hover {
+	color: #fff;
+}
+
+.detail-history-link:focus-visible,
+.detail-history-row:focus-visible {
+	outline: 2px solid rgba(150, 180, 255, 0.7);
+	outline-offset: 2px;
+}
+
+.detail-history-foot {
+	margin: 12px 0 0;
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.3);
+}
+
+.detail-history-empty {
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.45);
+	margin: 0;
+}
+
 /* ─── Definition list ────────────────────────────────────────────────────── */
 
 .detail-dl {

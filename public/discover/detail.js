@@ -217,6 +217,7 @@ function render(item) {
 		dl.innerHTML = rows.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${v}</dd>`).join('');
 
 		fetchSolanaReputation(item.asset, panel, dl);
+		fetchOnchainHistory({ asset: item.asset }, $);
 	}
 
 	if (item.kind === 'onchain') {
@@ -234,6 +235,7 @@ function render(item) {
 			rows.push(['Reg. tx', `<a href="${escapeAttr(txUrl)}" target="_blank" rel="noopener">${escapeHtml(shortAddr(item.registeredTx))}</a>`]);
 		}
 		dl.innerHTML = rows.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${v}</dd>`).join('');
+		fetchOnchainHistory({ chain: item.chainId, id: item.agentId }, $);
 	}
 
 	// Avatar details panel
@@ -420,6 +422,120 @@ async function fetchSolanaReputation(asset, panel, dl) {
 			dl.innerHTML += extra.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>`).join('');
 		}
 	} catch (_) {}
+}
+
+// ─── On-chain history ────────────────────────────────────────────────────────
+// Reads the platform's own cross-chain index (agent_onchain_events) rather than
+// scanning an RPC in the browser, so an agent's registrations, token launches,
+// reputation attestations, transfers and delegations render on one timeline for
+// both Solana and EVM. Every row links to the transaction on a block explorer,
+// so nothing here has to be taken on trust.
+
+const HISTORY_CLASS_LABEL = {
+	registration: 'Registered',
+	metadata: 'Metadata',
+	transfer: 'Transfer',
+	token_launch: 'Token launch',
+	reputation: 'Reputation',
+	validation: 'Validation',
+	delegation: 'Delegation',
+};
+
+function fmtDateTime(iso) {
+	if (!iso) return '';
+	return new Date(iso).toLocaleString('en-US', {
+		year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+	});
+}
+
+/**
+ * One line of human detail per event class, drawn from the indexed payload.
+ * Returns '' when the payload adds nothing the class name did not already say.
+ */
+function historyDetail(ev) {
+	const p = ev.payload || {};
+	if (ev.eventClass === 'token_launch' && p.mint) return p.mint;
+	if (ev.eventClass === 'transfer' && ev.counterparty) return `→ ${shortAddr(ev.counterparty)}`;
+	if (ev.eventClass === 'metadata' && p.key) return p.value ? `${p.key} = ${p.value}` : p.key;
+	if (ev.eventClass === 'reputation') {
+		if (p.value != null && p.valueDecimals != null) {
+			const scaled = Number(p.value) / 10 ** Number(p.valueDecimals);
+			return Number.isFinite(scaled) ? `${scaled} ${p.tag1 || ''}`.trim() : '';
+		}
+		if (p.score != null) return `${p.score} ★`;
+	}
+	if (ev.eventClass === 'metadata' && p.agentUri) return p.agentUri;
+	return '';
+}
+
+async function fetchOnchainHistory(query, $) {
+	const panel = $('history-panel');
+	if (!panel) return;
+	const list = $('history');
+	const foot = $('history-foot');
+
+	const params = new URLSearchParams(
+		Object.fromEntries(Object.entries(query).filter(([, v]) => v != null && v !== '')),
+	);
+	params.set('limit', '50');
+
+	let data;
+	try {
+		const res = await fetch(`/api/agents/onchain-history?${params}`);
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		data = await res.json();
+	} catch (_) {
+		// The index being unreachable is not the agent having no history, and
+		// saying so is the whole point of showing this panel at all.
+		panel.hidden = false;
+		list.innerHTML = '<li class="detail-history-empty">On-chain history is unavailable right now. Reload to try again.</li>';
+		return;
+	}
+
+	panel.hidden = false;
+	const events = Array.isArray(data.events) ? data.events : [];
+	$('history-count').textContent = String(events.length);
+
+	if (!events.length) {
+		list.innerHTML = data.indexLag?.crawled
+			? '<li class="detail-history-empty">No on-chain events recorded for this agent yet. The indexer has looked and found nothing beyond its registration.</li>'
+			: '<li class="detail-history-empty">This agent has not been crawled yet. Its history will appear here after the next indexer pass.</li>';
+	} else {
+		list.innerHTML = events
+			.map((ev) => {
+				const label = HISTORY_CLASS_LABEL[ev.eventClass] || ev.eventClass;
+				const detail = historyDetail(ev);
+				const link = ev.explorerUrl
+					? `<a class="detail-history-link" href="${escapeAttr(ev.explorerUrl)}" target="_blank" rel="noopener" title="${escapeAttr(ev.tx)}">${escapeHtml(shortAddr(ev.tx))} ↗</a>`
+					: '';
+				return `<li class="detail-history-row">
+					<time class="detail-history-when" datetime="${escapeAttr(ev.occurredAt)}">${escapeHtml(fmtDateTime(ev.occurredAt))}</time>
+					<span class="detail-history-what">
+						<span class="detail-history-class" data-class="${escapeAttr(ev.eventClass)}">${escapeHtml(label)}</span>
+						<span>${escapeHtml(ev.eventName)}</span>
+						${detail ? `<span class="detail-history-detail">${escapeHtml(detail)}</span>` : ''}
+					</span>
+					${link}
+				</li>`;
+			})
+			.join('');
+	}
+
+	// Freshness is part of the answer: "no events" from an index last updated
+	// four hours ago means something different from the same answer live.
+	const lag = data.indexLag || {};
+	if (!lag.crawled) {
+		foot.textContent = 'Not yet crawled by the agent indexer.';
+	} else if (lag.error) {
+		foot.textContent = `Indexer last reported: ${lag.error}`;
+	} else if (lag.lagMinutes != null) {
+		foot.textContent =
+			lag.lagMinutes < 1
+				? 'Index up to date as of less than a minute ago.'
+				: `Index last updated ${lag.lagMinutes} minute${lag.lagMinutes === 1 ? '' : 's'} ago.`;
+	} else {
+		foot.textContent = '';
+	}
 }
 
 function showError(status, onRetry) {

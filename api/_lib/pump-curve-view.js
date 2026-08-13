@@ -31,25 +31,83 @@ export const NON_CURVE_MINTS = new Set([
 export const PUMP_TOTAL_SUPPLY = 1_000_000_000;
 
 // Cheap, RPC-free pre-filter for "could this address carry a pump.fun bonding
-// curve?". Two shapes qualify, both decided from the address alone:
+// curve?". It exists to keep a misconfigured (e.g. USDC) mount, or a probe
+// sweep, from turning into an RPC read per request — not to be the last word on
+// what has a curve. Three shapes qualify, all decided from the address alone:
 //
 //   1. pump.fun's own launcher grinds every mint to end in the literal suffix
 //      "pump".
-//   2. three.ws grinds its own launches to carry the "3ws" mark as a PREFIX
-//      (src/solana/vanity/brand.js) and never the "pump" suffix. Every agent
-//      token this platform mints therefore lands here, and the suffix test
+//   2. three.ws grinds its custodial launches to carry the "3ws" mark as a
+//      PREFIX (src/solana/vanity/brand.js) and never the "pump" suffix. Every
+//      agent token minted that way therefore lands here, and the suffix test
 //      alone used to reject all of them with a 300s-cached `not_a_pump_mint`
 //      404 — the curve read for our own coins could never succeed.
+//   3. Anything on devnet. Nothing grinds a mark on the rehearsal cluster (a
+//      launch from the owner's own wallet mints a plain generated address), so
+//      an address-shape test there rejects real curves and answers nothing.
+//      Devnet traffic is owner rehearsals, not the probe volume the fast-path
+//      is defending against.
 //
-// A known settlement/native token is excluded outright: it has no curve and
-// never will.
-export function isPumpMint(mint) {
+// A known settlement/native token is excluded outright on every cluster: it has
+// no curve and never will. A mainnet mint of an unrecognized shape is NOT
+// settled here — getCurveView asks the platform's own launch registry before it
+// answers, because a coin launched from a user's wallet has no mark to read.
+export function isPumpMint(mint, network = 'mainnet') {
 	if (typeof mint !== 'string' || NON_CURVE_MINTS.has(mint)) return false;
+	if (network === 'devnet') return isPlausibleMint(mint);
 	return mint.endsWith('pump') || hasThreeWsMark(mint);
 }
 
 export function isPlausibleMint(s) {
 	return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
+}
+
+// Mints the platform's own launch registry has confirmed, and mints it has
+// denied, so an unmarked coin costs at most one DB read per TTL rather than one
+// per request. Small and short-lived on purpose: the answer only changes when a
+// launch lands, and a fresh launch's first curve read may wait out one TTL at
+// worst.
+const _registryAnswers = createCache({ max: 512 });
+const REGISTRY_TTL_MS = 5 * 60_000;
+
+/**
+ * Is this mint a coin three.ws itself launched? Reads pump_agent_mints, the
+ * platform's own launch directory — the same table /launches and the agent
+ * profile's launch history render from.
+ *
+ * A launch from the owner's own wallet (/api/agents/tokens/launch-confirm)
+ * mints a plain generated address with no brand mark, so the shape fast-path
+ * cannot recognize it and this registry is the only authority that can. Any
+ * failure (no database configured, a transient error) answers `false`, which
+ * degrades to exactly the pre-existing behaviour instead of a 500.
+ *
+ * @param {string} mint
+ * @param {'mainnet'|'devnet'} network
+ * @returns {Promise<boolean>}
+ */
+async function isRegisteredPlatformLaunch(mint, network) {
+	const key = `${network}:${mint}`;
+	const hit = _registryAnswers.get(key);
+	if (hit && Date.now() - hit.at < REGISTRY_TTL_MS) return hit.known;
+
+	let known = false;
+	try {
+		// Imported lazily: this module is loaded by pure-function tests and by
+		// routes that never reach this branch, and api/_lib/db.js throws at import
+		// time when DATABASE_URL is unset.
+		const { sql } = await import('./db.js');
+		const rows = await sql`
+			select 1 from pump_agent_mints
+			where mint = ${mint} and network = ${network}
+			limit 1
+		`;
+		known = rows.length > 0;
+	} catch (err) {
+		console.warn('[pump-curve-view] launch-registry lookup unavailable: %s', String(err?.message || err).slice(0, 120));
+		return false;
+	}
+	_registryAnswers.set(key, { known, at: Date.now() });
+	return known;
 }
 
 // Last good curve view per network:mint, kept so an RPC flake degrades the read
@@ -116,7 +174,11 @@ export function serializeBNs(obj) {
  * Caller is expected to have already validated `mint` with isPlausibleMint().
  */
 export async function getCurveView({ mint, network = 'mainnet' }) {
-	if (!isPumpMint(mint)) {
+	// The shape fast-path answers for pump.fun-ground and three.ws-marked mints
+	// without touching anything. An unrecognized mainnet address gets one more
+	// question — is it a coin we launched? — before it is refused, because an
+	// agent token launched from the owner's own wallet carries no mark at all.
+	if (!isPumpMint(mint, network) && !(await isRegisteredPlatformLaunch(mint, network))) {
 		// Negative-cacheable so the CDN edge serves repeat probes without hitting
 		// the function at all — no cold start, no RPC reads, no warning spam.
 		return {
