@@ -4,29 +4,37 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title data-i18n="tutorial.meta_title">three.ws — Tutorial</title>
+		<!-- Head copy on this shell is per-slug, not static: server/seo-head.mjs
+		     rewrites it for the tutorial actually requested, and setHeroFromManifest
+		     re-stamps it client-side from the manifest entry. Both would be undone by
+		     a translation pass over the shell's placeholder strings, so every tag the
+		     two of them own carries data-no-i18n and scripts/i18n-annotate.mjs skips
+		     it. The values below are only what a crawler sees on the bare shell. -->
+		<title data-no-i18n>Tutorials · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
+			data-no-i18n
 			content="Step-by-step tutorials for building, embedding, and shipping 3D agents with three.ws."
-		 data-i18n-attr="content:tutorial.meta_description"/>
+		/>
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="article" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="three.ws — Tutorial"  data-i18n-attr="content:tutorial.meta_og_title"/>
+		<meta property="og:title" content="Tutorials · three.ws" data-no-i18n />
 		<meta
 			property="og:description"
+			data-no-i18n
 			content="Step-by-step tutorials for building, embedding, and shipping 3D agents with three.ws."
-		 data-i18n-attr="content:tutorial.meta_og_description"/>
-		<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Tutorial+%C2%B7+Text+Prompt+to+3D+Model&amp;d=Five-minute+beginner+walkthrough+of+the+Forge%3A+type+a+sentence%2C+pick+a+quality+tier%2C+and+download+a+textured+GLB+model.&amp;p=%2Ftutorials%2Ftext-to-3d" />
+		/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Tutorials&amp;d=Step-by-step+build+guides.&amp;p=%2Ftutorials" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="three.ws — Tutorial"  data-i18n-attr="content:tutorial.meta_twitter_title"/>
-		<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Tutorial+%C2%B7+Text+Prompt+to+3D+Model&amp;d=Five-minute+beginner+walkthrough+of+the+Forge%3A+type+a+sentence%2C+pick+a+quality+tier%2C+and+download+a+textured+GLB+model.&amp;p=%2Ftutorials%2Ftext-to-3d" />
+		<meta name="twitter:title" content="Tutorials · three.ws" data-no-i18n />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Tutorials&amp;d=Step-by-step+build+guides.&amp;p=%2Ftutorials" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -872,14 +880,14 @@
 			}
 		</style>
 	
-	<link rel="canonical" href="https://three.ws/tutorials/text-to-3d">
-	<meta property="og:url" content="https://three.ws/tutorials/text-to-3d">
-	<meta name="twitter:description" content="Five-minute beginner walkthrough of the Forge: type a sentence, pick a quality tier, and download a textured GLB model." data-i18n-attr="content:tutorial.meta_twitter_description">
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Tutorial · Text Prompt to 3D Model","description":"Five-minute beginner walkthrough of the Forge: type a sentence, pick a quality tier, and download a textured GLB model.","url":"https://three.ws/tutorials/text-to-3d","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	<link rel="canonical" href="https://three.ws/tutorials">
+	<meta property="og:url" content="https://three.ws/tutorials">
+	<meta name="twitter:description" content="Step-by-step tutorials for building, embedding, and shipping 3D agents with three.ws." data-no-i18n>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Tutorials","description":"Step-by-step tutorials for building, embedding, and shipping 3D agents with three.ws.","url":"https://three.ws/tutorials","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Tutorial · Text Prompt to 3D Model — three.ws">
+	<meta property="og:image:alt" content="Tutorials on three.ws">
 	<meta name="twitter:site" content="@trythreews">
 	<script src="/model-viewer-meshopt.js"></script>
 	<!-- Resolves the `figure:` directives in tutorial markdown into real captured
@@ -1183,6 +1191,31 @@
 			const ICON_LINK =
 				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
 
+			// This shell serves every tutorial, so its static head names none of them.
+			// Stamp the requested tutorial's own title, description and social copy
+			// from the manifest entry, matching what server/seo-head.mjs writes for a
+			// crawler, so the tab, the history entry, and anything reading the live
+			// DOM (in-app share, a headless renderer) all name the right page.
+			function setHead(entry) {
+				const title = `${entry.title} · three.ws`;
+				document.title = title;
+				const set = (selector, value) => {
+					const el = document.querySelector(selector);
+					if (el) el.setAttribute('content', value);
+				};
+				set('meta[name="description"]', entry.blurb);
+				set('meta[property="og:title"]', title);
+				set('meta[property="og:description"]', entry.blurb);
+				set('meta[name="twitter:title"]', title);
+				set('meta[name="twitter:description"]', entry.blurb);
+				// Fixed origin, never location.origin: the canonical names the public
+				// URL even when the page is served from a preview host or localhost.
+				const canonical = `https://three.ws/tutorials/${entry.slug}`;
+				set('meta[property="og:url"]', canonical);
+				const link = document.querySelector('link[rel="canonical"]');
+				if (link) link.setAttribute('href', canonical);
+			}
+
 			function setHeroFromManifest(entry) {
 				const tier = window.TUTORIAL_TIERS[entry.tier];
 				const root = document.documentElement;
@@ -1196,9 +1229,7 @@
 				document.getElementById('tdoc-title').textContent = entry.title;
 				document.getElementById('tdoc-blurb').textContent = entry.blurb;
 				document.getElementById('tdoc-builds').textContent = entry.builds;
-				document.title = `${entry.title} — three.ws tutorials`;
-				const desc = document.querySelector('meta[name="description"]');
-				if (desc) desc.setAttribute('content', entry.blurb);
+				setHead(entry);
 
 				const viewerHost = document.getElementById('tdoc-hero-viewer');
 				viewerHost.innerHTML = `

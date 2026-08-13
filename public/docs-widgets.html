@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title data-i18n="docs_widgets.meta_title">Widget Docs — three.ws</title>
+		<title data-i18n="docs_widgets.meta_title">Docs · Widgets · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
@@ -148,7 +148,7 @@
 		</header>
 		<script src="/nav.js"></script>
 
-		<main class="docs-main">
+		<main id="main-content" class="docs-main">
 			<h1 data-i18n="docs_widgets.widgets">Widgets</h1>
 			<p data-i18n="docs_widgets.embeddable_3d_a_configured_shareable_view_of">
 				Embeddable 3D — a configured, shareable view of an avatar that any site can drop in
@@ -318,6 +318,10 @@
 				Widgets communicate with the parent page via <code>window.postMessage</code>.
 				<strong>Always check <code>event.origin</code> before trusting any message.</strong>
 			</p>
+			<p>
+				Every message carries its event name in <code>data.type</code>; the payload columns
+				below list the other fields on the same object.
+			</p>
 
 			<h3 data-i18n="docs_widgets.iframe_parent">iframe → parent</h3>
 			<table>
@@ -331,36 +335,32 @@
 				<tbody>
 					<tr>
 						<td><code>widget:ready</code></td>
-						<td><code>{ id, type }</code></td>
+						<td><code>{ id, widgetType }</code></td>
 						<td data-i18n="docs_widgets.widget_runtime_has_booted">Widget runtime has booted.</td>
 					</tr>
 					<tr>
-						<td><code>widget:load</code></td>
-						<td><code>{ id, model_url }</code></td>
-						<td data-i18n="docs_widgets.underlying_glb_loaded_successfully">Underlying GLB loaded successfully.</td>
-					</tr>
-					<tr>
 						<td><code>widget:load:error</code></td>
-						<td><code>{ id, error }</code></td>
+						<td><code>{ id, url, error }</code></td>
 						<td data-i18n="docs_widgets.glb_or_config_failed_to_load">GLB or config failed to load.</td>
 					</tr>
 					<tr>
 						<td><code>widget:chat:message</code></td>
-						<td><code>{ role, content }</code></td>
+						<td><code>{ id, role, content }</code></td>
 						<td data-i18n="docs_widgets.talking_agent_only">Talking-agent only.</td>
 					</tr>
 					<tr>
 						<td><code>widget:hotspot:open</code></td>
-						<td><code>{ id, label }</code></td>
-						<td data-i18n="docs_widgets.hotspot_tour_only">Hotspot-tour only.</td>
+						<td><code>{ id, label, widgetId }</code></td>
+						<td>Hotspot-tour only. Here <code>id</code> is the hotspot, <code>widgetId</code> the widget.</td>
 					</tr>
 				</tbody>
 			</table>
 
 			<pre><code>window.addEventListener('message', (e) =&gt; {
-  if (e.origin !== 'https://three.ws/') return;
+  // event.origin never carries a trailing slash. Compare against the bare origin.
+  if (e.origin !== 'https://three.ws') return;
   if (e.data?.type === 'widget:ready') {
-    console.log('Widget mounted:', e.data.id);
+    console.log('Widget mounted:', e.data.id, e.data.widgetType);
   }
 });</code></pre>
 
@@ -440,75 +440,6 @@ img-src https://three.ws/ data:;</code></pre>
 			</p>
 		</main>
 
-		<footer class="h-footer-horizon">
-			<div class="h-footer-glow-line" aria-hidden="true"></div>
-			<div class="h-footer-floor" aria-hidden="true"></div>
-			<div class="h-footer-haze" aria-hidden="true"></div>
-			<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
-			<div class="h-footer-avatar" aria-hidden="true">
-				<model-viewer
-					src="/animations/robotexpressive.glb"
-					auto-rotate
-					auto-rotate-delay="0"
-					rotation-per-second="20deg"
-					interaction-prompt="none"
-					camera-controls="false"
-					disable-zoom
-					shadow-intensity="0"
-					exposure="0.7"
-					environment-image="neutral"
-					camera-orbit="0deg 80deg 9m"
-					field-of-view="35deg"
-					loading="lazy"
-				></model-viewer>
-			</div>
-			<div class="h-footer-inner">
-				<div class="h-footer-brand-col">
-					<div class="h-footer-brand">
-						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
-						<span class="wordmark-dot" aria-hidden="true"></span>
-						<span data-i18n="docs_widgets.three_ws">three.ws</span>
-					</div>
-					<p class="h-footer-tagline" data-i18n="docs_widgets.give_your_ai_a_body">Give your AI a body.</p>
-				</div>
-				<nav class="h-footer-links" aria-label="Footer">
-					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" data-i18n="docs_widgets.github">GitHub</a>
-					<a href="/create" data-i18n="docs_widgets.create">Create</a>
-					<a href="/docs" data-i18n="docs_widgets.docs">Docs</a>
-				</nav>
-					</div>
-					<p class="h-footer-tagline" data-i18n="docs_widgets.give_your_ai_a_body_2">Give your AI a body.</p>
-				</div>
-				<nav class="h-footer-links" aria-label="Footer">
-					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" data-i18n="docs_widgets.github_2">GitHub</a>
-					<a href="/create" data-i18n="docs_widgets.create_2">Create</a>
-					<a href="/studio" data-i18n="docs_widgets.studio">Studio</a>
-					<a href="/widgets" data-i18n="docs_widgets.widgets_2">Widgets</a>
-					<a href="/discover" data-i18n="docs_widgets.discover">Discover</a>
-					<a href="/showcase" data-i18n="docs_widgets.showcase">Showcase</a>
-					<a href="/docs" data-i18n="docs_widgets.docs_2">Docs</a>
-					<a href="/legal/privacy" data-i18n="docs_widgets.privacy">Privacy</a>
-					<a href="/legal/tos" data-i18n="docs_widgets.terms">Terms</a>
-				</nav>
-			</div>
-			<div class="h-footer-bottom">
-				<p class="h-footer-legal" data-i18n="docs_widgets.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
-				<div class="h-footer-badges">
-					<span class="h-footer-badge" aria-label="System status" data-i18n-html="docs_widgets.all_systems_normal" data-i18n-attr="aria-label:docs_widgets.system_status_arialabel">
-						<span class="h-footer-status-dot" aria-hidden="true"></span>
-						<span>All systems normal</span>
-					</span>
-					<span class="h-footer-badge">
-						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 14.5A6.5 6.5 0 1 1 8 1.5a6.5 6.5 0 0 1 0 13zm-1-9.25a1 1 0 1 1 2 0v3.5a1 1 0 1 1-2 0v-3.5zm1 6.5a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2z"/></svg>
-						<span data-i18n="docs_widgets.transparent_by_default">Transparent by default</span>
-					</span>
-					<a class="h-footer-badge" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="View source on GitHub" data-i18n-attr="aria-label:docs_widgets.view_source_on_github_arialabel">
-						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-						<span>Open source</span>
-					</a>
-				</div>
-			</div>
-		</footer>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>

@@ -317,7 +317,7 @@
 				<!-- ── ENDPOINT TABLE ─────────────────────────────────── -->
 				<section class="cx-section" id="cx-endpoints">
 					<div class="eyebrow">Endpoints</div>
-					<h2 data-i18n="crypto.nine_free_reads_one_bundle">Nine free reads, one bundle</h2>
+					<h2 data-i18n="crypto.eleven_free_reads_one_bundle">Eleven free reads, one bundle</h2>
 					<p class="cx-section-lede" data-i18n-html="crypto.each_answers_a_question_an_agent_actually">
 						Each answers a question an agent actually has mid-trade. Status is probed live against
 						production — endpoints still shipping show <b>Coming soon</b> and light up automatically
@@ -392,8 +392,9 @@
 			/* ── The single source of truth for this page ─────────────────
 			   Table, quickstart, reference cards and the live probe all render
 			   from ENDPOINTS. Add a row here and the whole page updates. Response
-			   examples are the endpoints' documented stable schema (see
-			   prompts/x402-overhaul/01–10). ───────────────────────────────── */
+			   examples are the endpoints' documented stable schema; the live roster
+			   and its JSON schemas are served by GET /api/crypto (the discovery
+			   index) and documented in docs/crypto-api.md. ──────────────────── */
 			const BASE = '/api/crypto';
 			const THREE = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump'; // $THREE — the platform coin
 			const SAMPLE_WALLET = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -536,6 +537,48 @@
 						window: '1h',
 						tokens: [{ mint: THREE, symbol: 'THREE', name: 'three.ws', marketCapUsd: 4210000, volumeUsd: 892000, change: 12.4, score: 87.2, url: 'https://dexscreener.com/solana/…' }],
 						count: 1, ts: 1720310400000, sources: ['pump-trending-score', 'dexscreener'],
+					},
+				},
+				{
+					slug: 'portfolio', title: 'Portfolio Overview', method: 'GET', path: '/api/crypto/portfolio',
+					purpose: 'A wallet read shaped for a portfolio view, not a balance dump',
+					agent: 'A <b>treasury or dashboard agent</b> needs the shape of a wallet, not a list: how much sits in stables versus majors versus everything else, which assets dominate, and how the whole book moved in 24h. The aggregate move reports its own <code>coveragePct</code>, so a portfolio full of unpriced dust can never masquerade as a confident number.',
+					probe: `${BASE}/portfolio?address=${SAMPLE_WALLET}&chain=solana`,
+					params: [
+						['address', true, 'Wallet address (Solana base58 or EVM 0x)'],
+						['chain', false, 'solana (keyless, default) | ethereum (needs a provider key)'],
+					],
+					example: {
+						address: SAMPLE_WALLET, chain: 'solana', totalUsd: 6530.28, unpricedCount: 4,
+						change24h: { usd: 89.34, pct: 1.39, coveragePct: 100 },
+						summary: { stable: { usd: 0, pct: 0, count: 0 }, major: { usd: 3598.03, pct: 55.1, count: 1 }, other: { usd: 2932.25, pct: 44.9, count: 11 } },
+						topAssets: [{ id: 'native', symbol: 'SOL', name: 'Solana', usd: 3598.03, pct: 55.1, slot: 1, logo: null }],
+						rows: [{ id: THREE, symbol: 'three', name: 'three.ws', kind: 'token', class: 'other', amount: 4200000, price: 0.000698, usd: 2931.98, sharePct: 44.9, change24h: 3.1, logo: 'https://…' }],
+						tokenCount: 12, truncated: false, ts: '2026-08-13T06:31:48.454Z', sources: ['helius-das', 'jupiter-lite', 'dexscreener'],
+					},
+				},
+				{
+					slug: 'airdrops', title: 'Airdrop Eligibility', method: 'GET', path: '/api/crypto/airdrops',
+					purpose: 'Score a wallet against the live airdrop registry',
+					agent: 'A <b>farming or portfolio agent</b> asks what a wallet already qualifies for and what it is short of. Each opportunity comes back with the criteria it <b>met</b>, the ones still <b>missing</b>, and the <b>manual</b> steps no chain read can prove, scored off the wallet\'s real measured activity. Omit <code>address</code> to get the registry alone.',
+					probe: `${BASE}/airdrops?address=${SAMPLE_WALLET}`,
+					params: [
+						['address', false, 'Wallet to score (Solana base58 or EVM 0x). Omit for the registry alone'],
+					],
+					example: {
+						address: SAMPLE_WALLET, family: 'solana',
+						activity: { family: 'solana', chains_active: 1, tx_count: 2000, days_active: 1, account_age_days: 0, unique_tokens: 12, capped: true, chains: ['solana'] },
+						opportunities: [{
+							id: 'example-protocol', name: 'Example Protocol', chain: 'solana', status: 'speculation',
+							score: 100, eligibility: 'qualified',
+							met: [{ description: '10+ transactions on Solana', met: true, unknown: false, field: 'tx_count', target: 10, actual: 2000 }],
+							missing: [], manual: [{ description: 'Provide liquidity through the protocol' }],
+							estimatedValue: '$50 - $800', deadline: null, source: 'https://…',
+						}],
+						otherFamily: [],
+						summary: { tracked: 6, qualified: 1, in_progress: 5, not_eligible: 0, estimatedValue: { lo: 50, hi: 800, entries: 1 } },
+						thresholds: { qualified: 80, inProgress: 30 },
+						registryUpdated: '2026-08-06', ts: '2026-08-13T06:31:29.103Z',
 					},
 				},
 			];

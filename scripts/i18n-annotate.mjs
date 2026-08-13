@@ -205,8 +205,14 @@ export function planAnnotations(html, file, { seenKeys = new Set() } = {}) {
 	const all = root.querySelectorAll('*');
 
 	// --- head copy: <title>, meta description / og / twitter -----------------
+	// The opt-out (translate="no" / data-no-i18n) applies here exactly as it does
+	// to body copy. Head tags whose value is written at runtime carry it: a shared
+	// shell like pages/tutorial.html serves ~70 routes and stamps its own title and
+	// description per slug, so translating the shell's placeholder back over them
+	// left every one of those routes presenting the generic shell title.
 	for (const el of all) {
 		const tag = (el.rawTagName || '').toLowerCase();
+		if (inSkippedSubtree(el)) continue;
 		if (tag === 'title' && !alreadyAnnotated(el)) {
 			const v = collapse(el.text);
 			if (v && hasLetter(v) && !isDynamic(v)) {
