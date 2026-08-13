@@ -27,9 +27,11 @@ export async function sendTelegramSignal({ botToken, chatId, signal }) {
 // on-chain token metadata). Telegram's legacy `Markdown` parse_mode treats
 // _ * ` [ as control characters, so unescaped text can break out of the
 // formatting and smuggle a clickable link posted under the platform bot's
-// verified identity. Escape before interpolating, never after.
+// verified identity. `]` is escaped too: it closes the link-text span, so a
+// bracketed run in attacker text can never complete into a `[text](url)`
+// entity. Escape before interpolating, never after.
 function escapeMarkdown(text) {
-	return String(text ?? '').replace(/[_*`[]/g, '\\$&');
+	return String(text ?? '').replace(/[_*`[\]]/g, '\\$&');
 }
 
 function formatSignal({ kind, mint, summary, refs, ts }) {
