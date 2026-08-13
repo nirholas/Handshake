@@ -96,7 +96,7 @@ beforeEach(() => {
 	bakeSpy.mockReset();
 	bakeSpy.mockResolvedValue({ url: BAKED_URL });
 	pinRow = {
-		id: 'pin-1',
+		id: PIN_ID,
 		user_id: 'owner-uuid',
 		avatar_url: '/api/avatars/av-1/glb',
 		avatar_base_url: null,
@@ -105,24 +105,29 @@ beforeEach(() => {
 	sessionUser = { id: 'owner-uuid' };
 });
 
+// `irl_pins.id` is a UUID column and the handler rejects any non-UUID id at the
+// boundary, so the fixtures below are real UUIDs rather than readable slugs.
+const PIN_ID = '11111111-1111-4111-8111-111111111111';
+const MISSING_PIN_ID = '22222222-2222-4222-8222-222222222222';
+
 describe('PATCH /api/irl/pins outfit — auth + ownership gate', () => {
 	it('401s an unauthenticated caller (auth gate precedes the handler)', async () => {
 		sessionUser = null;
-		const { res } = await patch({ id: 'pin-1', avatar_manifest: { colors: { outfit: '#7a1f2b' } } });
+		const { res } = await patch({ id: PIN_ID, avatar_manifest: { colors: { outfit: '#7a1f2b' } } });
 		expect(res.statusCode).toBe(401);
 		expect(bakeSpy).not.toHaveBeenCalled();
 	});
 
 	it('404s when the pin no longer exists', async () => {
 		pinRow = null;
-		const { res, body } = await patch({ id: 'gone', avatar_manifest: { colors: { outfit: '#7a1f2b' } } });
+		const { res, body } = await patch({ id: MISSING_PIN_ID, avatar_manifest: { colors: { outfit: '#7a1f2b' } } });
 		expect(res.statusCode).toBe(404);
 		expect(body.error).toMatch(/not found/i);
 	});
 
 	it('403s a signed-in non-owner and never bakes or updates', async () => {
 		sessionUser = { id: 'someone-else' };
-		const { res, body } = await patch({ id: 'pin-1', avatar_manifest: { colors: { outfit: '#7a1f2b' } } });
+		const { res, body } = await patch({ id: PIN_ID, avatar_manifest: { colors: { outfit: '#7a1f2b' } } });
 		expect(res.statusCode).toBe(403);
 		expect(body.error).toMatch(/only the owner/i);
 		expect(bakeSpy).not.toHaveBeenCalled();
@@ -132,21 +137,21 @@ describe('PATCH /api/irl/pins outfit — auth + ownership gate', () => {
 
 describe('PATCH /api/irl/pins outfit — manifest validation (before bake)', () => {
 	it('400s a non-object manifest', async () => {
-		const { res, body } = await patch({ id: 'pin-1', avatar_manifest: ['nope'] });
+		const { res, body } = await patch({ id: PIN_ID, avatar_manifest: ['nope'] });
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toMatch(/must be an object or null/i);
 		expect(bakeSpy).not.toHaveBeenCalled();
 	});
 
 	it('400s an invented colour slot before any bake runs', async () => {
-		const { res, body } = await patch({ id: 'pin-1', avatar_manifest: { colors: { cape: '#000000' } } });
+		const { res, body } = await patch({ id: PIN_ID, avatar_manifest: { colors: { cape: '#000000' } } });
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toMatch(/unknown color slot/i);
 		expect(bakeSpy).not.toHaveBeenCalled();
 	});
 
 	it('400s an invented accessory preset id', async () => {
-		const { res, body } = await patch({ id: 'pin-1', avatar_manifest: { accessories: ['jetpack-9000'] } });
+		const { res, body } = await patch({ id: PIN_ID, avatar_manifest: { accessories: ['jetpack-9000'] } });
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toMatch(/unknown preset id/i);
 		expect(bakeSpy).not.toHaveBeenCalled();
@@ -156,10 +161,10 @@ describe('PATCH /api/irl/pins outfit — manifest validation (before bake)', () 
 describe('PATCH /api/irl/pins outfit — owner re-skin persists for everyone', () => {
 	it('bakes onto the captured base, bumps version, returns the new avatar_url, and emits the realtime hook', async () => {
 		const manifest = { colors: { outfit: '#7a1f2b' }, hidden: ['glasses'] };
-		const { res, body } = await patch({ id: 'pin-1', avatar_manifest: manifest });
+		const { res, body } = await patch({ id: PIN_ID, avatar_manifest: manifest });
 		expect(res.statusCode).toBe(200);
 		// Bake targets the pin's base GLB (avatar_base_url null → falls back to avatar_url).
-		expect(bakeSpy).toHaveBeenCalledWith({ pinId: 'pin-1', baseUrl: '/api/avatars/av-1/glb', manifest });
+		expect(bakeSpy).toHaveBeenCalledWith({ pinId: PIN_ID, baseUrl: '/api/avatars/av-1/glb', manifest });
 		expect(body.pin.avatar_url).toBe(BAKED_URL);
 		expect(body.pin.avatar_version).toBe(1);
 		expect(body.pin.avatar_manifest).toEqual(manifest);
@@ -171,15 +176,15 @@ describe('PATCH /api/irl/pins outfit — owner re-skin persists for everyone', (
 		pinRow.avatar_url = 'https://three.ws/cdn/irl/pins/pin-1/oldhash.glb';
 		pinRow.avatar_version = 3;
 		const manifest = { accessories: ['hat-baseball'] };
-		const { res, body } = await patch({ id: 'pin-1', avatar_manifest: manifest });
+		const { res, body } = await patch({ id: PIN_ID, avatar_manifest: manifest });
 		expect(res.statusCode).toBe(200);
 		// Critically: baseUrl is the captured base, NOT the already-baked avatar_url.
-		expect(bakeSpy).toHaveBeenCalledWith({ pinId: 'pin-1', baseUrl: '/api/avatars/av-1/glb', manifest });
+		expect(bakeSpy).toHaveBeenCalledWith({ pinId: PIN_ID, baseUrl: '/api/avatars/av-1/glb', manifest });
 		expect(body.pin.avatar_version).toBe(4);
 	});
 
 	it('reverts to the bare base for an empty/cleared manifest (no bake)', async () => {
-		const { res, body } = await patch({ id: 'pin-1', avatar_manifest: {} });
+		const { res, body } = await patch({ id: PIN_ID, avatar_manifest: {} });
 		expect(res.statusCode).toBe(200);
 		expect(bakeSpy).not.toHaveBeenCalled();        // nothing bakeable → skip the bake
 		expect(body.pin.avatar_url).toBe('/api/avatars/av-1/glb'); // served base again
@@ -188,7 +193,7 @@ describe('PATCH /api/irl/pins outfit — owner re-skin persists for everyone', (
 
 	it('502s and does not persist when the bake throws', async () => {
 		bakeSpy.mockRejectedValueOnce(new Error('libvips exploded'));
-		const { res, body } = await patch({ id: 'pin-1', avatar_manifest: { colors: { hair: '#0e0e0e' } } });
+		const { res, body } = await patch({ id: PIN_ID, avatar_manifest: { colors: { hair: '#0e0e0e' } } });
 		expect(res.statusCode).toBe(502);
 		expect(body.error).toMatch(/could not bake/i);
 		expect(ranOutfitUpdate()).toBe(false);

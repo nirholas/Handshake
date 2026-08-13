@@ -29,7 +29,7 @@ Why this layer is shaped the way it is:
 | `GET /api/irl/agent-summary?mine=1` | One row per owned pin (identity + derived activity + `status`) so the owner dashboard paints without N calls. Auth required. [`agent-summary.js`](./agent-summary.js) |
 | `GET /api/irl/analytics` | Site-wide usage rollup (pins placed, nearby reads, shares, drop claims). Ops-gated (admin session or `OPS_SECRET`). [`analytics.js`](./analytics.js) |
 | `GET/PATCH/DELETE /api/irl/privacy` | The privacy center: plain-language data summary, `?export=1` full JSON export, unpublish/republish a pin, delete one pin / everything / forget-this-device (purges interactions the device authored elsewhere too). [`privacy.js`](./privacy.js) |
-| `POST /api/irl/report` `{ pinId, reason, deviceToken? }` | Community moderation: distinct-reporter dedup, per-pin 24 h ceiling, threshold hide (never delete, owner can appeal). [`report.js`](./report.js) |
+| `POST /api/irl/report` `{ pinId, reason, detail? }` + `x-irl-device` | Community moderation: distinct-reporter dedup (keyed on the session user, else the device token from the `x-irl-device` header or the body, else the caller IP), per-pin 24 h ceiling, threshold hide (never delete, owner can appeal). [`report.js`](./report.js) |
 | `POST /api/irl/share?pinId=&deviceToken=` | Owner uploads their composite AR photo (raw PNG body) and mints a permanent share token: `{ token, url, imageUrl }`. [`share.js`](./share.js) |
 | `GET /irl/s/:token` | The unfurlable share page (real `og:image` of the capture, caption and agent name only, never coordinates). [`share/[token].js`](./share/%5Btoken%5D.js) |
 

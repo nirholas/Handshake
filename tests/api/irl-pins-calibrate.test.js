@@ -87,7 +87,7 @@ async function patch(body) {
 beforeEach(() => {
 	sqlMock.mockClear();
 	pinRow = {
-		id: 'pin-1',
+		id: PIN_ID,
 		user_id: null,
 		device_token: 'device-A',
 		lat: ORIGIN.lat,
@@ -102,11 +102,16 @@ beforeEach(() => {
 	sessionUser = null;
 });
 
+// `irl_pins.id` is a UUID column and the handler rejects any non-UUID id at the
+// boundary, so the fixtures below are real UUIDs rather than readable slugs.
+const PIN_ID = '11111111-1111-4111-8111-111111111111';
+const MISSING_PIN_ID = '22222222-2222-4222-8222-222222222222';
+
 describe('PATCH /api/irl/pins calibrate — ownership gate', () => {
 	it('404s when the pin no longer exists', async () => {
 		pinRow = null;
 		const { res, body } = await patch({
-			id: 'gone', deviceToken: 'device-A',
+			id: MISSING_PIN_ID, deviceToken: 'device-A',
 			calibrate: { lat: ORIGIN.lat, lng: ORIGIN.lng },
 		});
 		expect(res.statusCode).toBe(404);
@@ -115,7 +120,7 @@ describe('PATCH /api/irl/pins calibrate — ownership gate', () => {
 
 	it('403s a non-owner (device token mismatch, no session)', async () => {
 		const { res, body } = await patch({
-			id: 'pin-1', deviceToken: 'device-B',
+			id: PIN_ID, deviceToken: 'device-B',
 			calibrate: { lat: ORIGIN.lat, lng: ORIGIN.lng },
 		});
 		expect(res.statusCode).toBe(403);
@@ -124,14 +129,14 @@ describe('PATCH /api/irl/pins calibrate — ownership gate', () => {
 
 	it('403s a caller with neither matching session nor device token', async () => {
 		const { res } = await patch({
-			id: 'pin-1',
+			id: PIN_ID,
 			calibrate: { lat: ORIGIN.lat, lng: ORIGIN.lng },
 		});
 		expect(res.statusCode).toBe(403);
 	});
 
 	it('never reaches the UPDATE for a denied caller', async () => {
-		await patch({ id: 'pin-1', deviceToken: 'device-B', calibrate: { lat: ORIGIN.lat, lng: ORIGIN.lng } });
+		await patch({ id: PIN_ID, deviceToken: 'device-B', calibrate: { lat: ORIGIN.lat, lng: ORIGIN.lng } });
 		const ranUpdate = sqlMock.mock.calls.some(([s]) =>
 			/UPDATE irl_pins SET/i.test(Array.isArray(s) ? s.join(' ') : String(s)));
 		expect(ranUpdate).toBe(false);
@@ -141,7 +146,7 @@ describe('PATCH /api/irl/pins calibrate — ownership gate', () => {
 describe('PATCH /api/irl/pins calibrate — bounds enforcement', () => {
 	it('400s on out-of-range coordinates', async () => {
 		const { res, body } = await patch({
-			id: 'pin-1', deviceToken: 'device-A',
+			id: PIN_ID, deviceToken: 'device-A',
 			calibrate: { lat: 999, lng: ORIGIN.lng },
 		});
 		expect(res.statusCode).toBe(400);
@@ -152,7 +157,7 @@ describe('PATCH /api/irl/pins calibrate — bounds enforcement', () => {
 		// ~22 m north — well beyond the ±3 m client clamp and the 5 m server ceiling.
 		const farLat = ORIGIN.lat + 0.0002;
 		const { res, body } = await patch({
-			id: 'pin-1', deviceToken: 'device-A',
+			id: PIN_ID, deviceToken: 'device-A',
 			calibrate: { lat: farLat, lng: ORIGIN.lng },
 		});
 		expect(res.statusCode).toBe(422);
@@ -163,7 +168,7 @@ describe('PATCH /api/irl/pins calibrate — bounds enforcement', () => {
 	it('422s a yaw nudge beyond the rotation ceiling', async () => {
 		// Same spot (move passes), but 90° off the stored 90° bearing → > 46° cap.
 		const { res, body } = await patch({
-			id: 'pin-1', deviceToken: 'device-A',
+			id: PIN_ID, deviceToken: 'device-A',
 			calibrate: { lat: ORIGIN.lat, lng: ORIGIN.lng, anchorYawDeg: 180 },
 		});
 		expect(res.statusCode).toBe(422);
@@ -173,7 +178,7 @@ describe('PATCH /api/irl/pins calibrate — bounds enforcement', () => {
 
 	it('422s a floor-height nudge beyond the rise ceiling', async () => {
 		const { res, body } = await patch({
-			id: 'pin-1', deviceToken: 'device-A',
+			id: PIN_ID, deviceToken: 'device-A',
 			calibrate: { lat: ORIGIN.lat, lng: ORIGIN.lng, anchorHeightM: 5 },
 		});
 		expect(res.statusCode).toBe(422);
@@ -186,7 +191,7 @@ describe('PATCH /api/irl/pins calibrate — accepted nudges persist for everyone
 		// ~1.1 m north, 10° yaw correction, +30 cm — all within the calibrate envelope.
 		const newLat = ORIGIN.lat + 1.1 / M_PER_DEG_LAT;
 		const { res, body } = await patch({
-			id: 'pin-1', deviceToken: 'device-A',
+			id: PIN_ID, deviceToken: 'device-A',
 			calibrate: { lat: newLat, lng: ORIGIN.lng, anchorYawDeg: 100, anchorHeightM: 0.3 },
 		});
 		expect(res.statusCode).toBe(200);
@@ -203,7 +208,7 @@ describe('PATCH /api/irl/pins calibrate — accepted nudges persist for everyone
 		pinRow.device_token = null;
 		sessionUser = { id: 'owner-uuid' };
 		const { res, body } = await patch({
-			id: 'pin-1',
+			id: PIN_ID,
 			calibrate: { lat: ORIGIN.lat, lng: ORIGIN.lng, anchorYawDeg: 90 },
 		});
 		expect(res.statusCode).toBe(200);
@@ -212,7 +217,7 @@ describe('PATCH /api/irl/pins calibrate — accepted nudges persist for everyone
 
 	it('treats yaw as wrap-around (340° vs stored 90° is 110° apart → rejected)', async () => {
 		const { res } = await patch({
-			id: 'pin-1', deviceToken: 'device-A',
+			id: PIN_ID, deviceToken: 'device-A',
 			calibrate: { lat: ORIGIN.lat, lng: ORIGIN.lng, anchorYawDeg: 340 },
 		});
 		expect(res.statusCode).toBe(422);

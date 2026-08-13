@@ -20740,6 +20740,15 @@
 				"docs",
 				"fix"
 			]
+		},
+		{
+			"date": "2026-08-13",
+			"title": "IRL endpoints answer bad input honestly, and the usage rollup works again",
+			"summary": "Audited the ten /api/irl endpoints against a real database. A pin, drop or interaction id that was not a UUID used to reach Postgres and come back as a server error; those requests are now a plain 400 that never touches the database. The site-wide /irl usage rollup had a broken daily-series query, and because the endpoint quietly served an empty summary when a query failed, it had been reporting zeros instead of real numbers; the query is fixed and a failure is now logged. A report filed from a device that sends its id in the header is once again recognised, so an owner cannot accidentally count as an independent reporter of their own pin, and repeat reports from one device still collapse into one. Captions shilling a coin whose ticker runs past ten characters are rejected like every other off-brand ticker.",
+			"tags": [
+				"fix",
+				"security"
+			]
 		}
 	]
 }

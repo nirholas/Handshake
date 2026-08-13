@@ -63,7 +63,7 @@ beforeEach(() => {
 	sqlMock.mockClear();
 	sessionUser = null;
 	pinRow = {
-		id: 'pin-1',
+		id: PIN_ID,
 		user_id: null,
 		device_token: 'device-A',
 		expires_at: null,
@@ -71,9 +71,14 @@ beforeEach(() => {
 	};
 });
 
+// `irl_pins.id` is a UUID column and the handler rejects any non-UUID id at the
+// boundary, so the fixtures below are real UUIDs rather than readable slugs.
+const PIN_ID = '11111111-1111-4111-8111-111111111111';
+const MISSING_PIN_ID = '22222222-2222-4222-8222-222222222222';
+
 describe('PATCH /api/irl/pins { scale } — resize persistence', () => {
 	it('lets the placing device resize its own pin', async () => {
-		const { res, body } = await patch({ id: 'pin-1', deviceToken: 'device-A', scale: 2.5 });
+		const { res, body } = await patch({ id: PIN_ID, deviceToken: 'device-A', scale: 2.5 });
 		expect(res.statusCode).toBe(200);
 		expect(body.pin.anchor_scale).toBe(2.5);
 	});
@@ -82,49 +87,49 @@ describe('PATCH /api/irl/pins { scale } — resize persistence', () => {
 		pinRow.user_id = 'owner-uuid';
 		pinRow.device_token = null;
 		sessionUser = { id: 'owner-uuid' };
-		const { res, body } = await patch({ id: 'pin-1', scale: 0.5 });
+		const { res, body } = await patch({ id: PIN_ID, scale: 0.5 });
 		expect(res.statusCode).toBe(200);
 		expect(body.pin.anchor_scale).toBe(0.5);
 	});
 
 	it('rejects a non-owner — resizing someone else’s agent is denied, never silent', async () => {
-		const { res } = await patch({ id: 'pin-1', deviceToken: 'device-EVIL', scale: 4 });
+		const { res } = await patch({ id: PIN_ID, deviceToken: 'device-EVIL', scale: 4 });
 		expect(res.statusCode).toBe(403);
 	});
 
 	it('clamps to the shared 0.25–4 band', async () => {
-		const { body: huge } = await patch({ id: 'pin-1', deviceToken: 'device-A', scale: 100 });
+		const { body: huge } = await patch({ id: PIN_ID, deviceToken: 'device-A', scale: 100 });
 		expect(huge.pin.anchor_scale).toBe(4);
-		const { body: tiny } = await patch({ id: 'pin-1', deviceToken: 'device-A', scale: 0.001 });
+		const { body: tiny } = await patch({ id: PIN_ID, deviceToken: 'device-A', scale: 0.001 });
 		expect(tiny.pin.anchor_scale).toBe(0.25);
 	});
 
 	it('stores NULL for natural size (scale 1) so legacy readers see no change', async () => {
-		const { res, body } = await patch({ id: 'pin-1', deviceToken: 'device-A', scale: 1 });
+		const { res, body } = await patch({ id: PIN_ID, deviceToken: 'device-A', scale: 1 });
 		expect(res.statusCode).toBe(200);
 		expect(body.pin.anchor_scale).toBeNull();
 	});
 
 	it('rejects garbage scales', async () => {
-		const { res: nan } = await patch({ id: 'pin-1', deviceToken: 'device-A', scale: 'big' });
+		const { res: nan } = await patch({ id: PIN_ID, deviceToken: 'device-A', scale: 'big' });
 		expect(nan.statusCode).toBe(400);
-		const { res: neg } = await patch({ id: 'pin-1', deviceToken: 'device-A', scale: -2 });
+		const { res: neg } = await patch({ id: PIN_ID, deviceToken: 'device-A', scale: -2 });
 		expect(neg.statusCode).toBe(400);
 	});
 
 	it('refuses an expired or hidden pin (nobody would ever see the new size)', async () => {
 		pinRow.expires_at = '2020-01-01T00:00:00Z';
-		const { res: expired } = await patch({ id: 'pin-1', deviceToken: 'device-A', scale: 2 });
+		const { res: expired } = await patch({ id: PIN_ID, deviceToken: 'device-A', scale: 2 });
 		expect(expired.statusCode).toBe(404);
 		pinRow.expires_at = null;
 		pinRow.hidden_at = '2026-01-01T00:00:00Z';
-		const { res: hidden } = await patch({ id: 'pin-1', deviceToken: 'device-A', scale: 2 });
+		const { res: hidden } = await patch({ id: PIN_ID, deviceToken: 'device-A', scale: 2 });
 		expect(hidden.statusCode).toBe(404);
 	});
 
 	it('404s on a pin that does not exist', async () => {
 		pinRow = null;
-		const { res } = await patch({ id: 'pin-1', deviceToken: 'device-A', scale: 2 });
+		const { res } = await patch({ id: PIN_ID, deviceToken: 'device-A', scale: 2 });
 		expect(res.statusCode).toBe(404);
 	});
 });
