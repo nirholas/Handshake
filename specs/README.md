@@ -18,6 +18,8 @@ The specifications that define the three.ws embodied-agent platform: on-chain id
 - [`ENS_AGENT_CLAIM.md`](./ENS_AGENT_CLAIM.md) — ENS / DNS Agent Claim v1. A convention of two cheap-to-set records that bidirectionally bind a human-readable name to an on-chain agent identity, with no new on-chain infrastructure.
 - [`VALIDATORS.md`](./VALIDATORS.md) — Validator Allow-list Policy. Who may write to the on-chain `ValidationRegistry`, how attestations are formed, and how the allow-list is changed.
 - [`SECURITY.md`](./SECURITY.md) — Security & Threat Model for three.ws Card v1. Enumerates abuse vectors specific to three.ws registration on the ERC-8004 registries and the current mitigation for each.
+- [`PROVENANCE_3D.md`](./PROVENANCE_3D.md): Verifiable 3D Provenance v1. C2PA-style signed content credentials for AI-generated 3D: creator, prompt, model, lineage and the GLB's content hash, ed25519-signed and anchored on Solana. Verification is free and public.
+- [`SIM_READINESS.md`](./SIM_READINESS.md): Simulation Readiness v1. The physics grade a 3D asset carries: watertightness, metric scale, mass and inertia, and a convex collision proxy, in four verdicts. Everything is derived from the mesh; anything unknowable from the geometry is reported as unknown rather than invented. Rides the provenance credential when signed.
 
 ## Schema
 

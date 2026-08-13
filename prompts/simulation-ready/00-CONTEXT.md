@@ -119,6 +119,14 @@ world-model surface. It is infrastructure, not a leaf.
 
 ---
 
+## Work orders
+
+| # | Order | State |
+|---|---|---|
+| 01 | [The simulation-readiness grade, v1](01-architecture.md) | designed, ready to build |
+
+---
+
 ## The candidate table (all scored, 1 to 5 per axis)
 
 Pull = who wants it tomorrow. Window = why now and why nobody has. Fit = machinery reused.
