@@ -150,7 +150,13 @@ export function resolveNetworkFilter(input) {
 	if (byId) return { family: byId.family, ids: [...byId.ids] };
 
 	const evm = /^(?:eip155-|eip155:)(\d{1,9})$/.exec(v);
-	if (evm) return { family: `eip155-${evm[1]}`, ids: [`eip155:${evm[1]}`] };
+	if (evm) {
+		// A named chain reached through its numeric form still resolves to its
+		// family, so '?network=eip155-8453' and '?network=base' select the same rows.
+		const named = BY_ID.get(`eip155:${evm[1]}`);
+		if (named) return { family: named.family, ids: [...named.ids] };
+		return { family: `eip155-${evm[1]}`, ids: [`eip155:${evm[1]}`] };
+	}
 
 	return null;
 }
