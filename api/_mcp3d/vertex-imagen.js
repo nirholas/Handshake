@@ -57,6 +57,17 @@ const DEFAULT_MODEL = 'gemini-2.5-flash-image';
 const DEFAULT_EDIT_MODEL = 'gemini-2.5-flash-image';
 const DEFAULT_LOCATION = 'us-central1';
 
+// Node's fetch has no default timeout, so a Vertex connection that opens and
+// then stalls would pin the request open forever instead of failing over to
+// FLUX. The turnaround-view fan-out (text-to-image.js) issues these calls in
+// parallel and only waits, so one hung socket there stalls a whole generation.
+const VERTEX_TIMEOUT_MS = 90_000;
+// The edit lane's source/mask images are ours (R2/S3) in production but the
+// argument is caller-supplied, so it gets the short public-fetch budget and a
+// hard size ceiling like every other inbound-image path (api/_lib/vision.js).
+const SOURCE_IMAGE_TIMEOUT_MS = 8_000;
+const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024;
+
 // Aspect ratios the legacy Imagen `:predict` API accepts (our format → its enum).
 const IMAGEN_ASPECT_MAP = {
   '1:1':  '1:1',
@@ -227,10 +238,14 @@ async function postJson(endpoint, body, token, label) {
         'content-type': 'application/json',
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(VERTEX_TIMEOUT_MS),
     });
   } catch (err) {
+    // A blown VERTEX_TIMEOUT_MS aborts the fetch and lands here too, so a stalled
+    // socket degrades to the same fallback path as a refused connection.
+    const detail = err?.name === 'TimeoutError' ? `no response in ${VERTEX_TIMEOUT_MS}ms` : err?.message;
     throw Object.assign(
-      new Error(`Vertex AI ${label} unreachable: ${err?.message}`),
+      new Error(`Vertex AI ${label} unreachable: ${detail}`),
       { code: 'provider_unreachable' },
     );
   }
@@ -257,24 +272,68 @@ export async function editImage(imageUrl, prompt, { maskUrl = null } = {}) {
   const model = readEnv('VERTEX_IMAGEN_EDIT_MODEL') || DEFAULT_EDIT_MODEL;
   const token = await getGcpAccessToken();
 
-  const sourceB64 = await imageToBase64(imageUrl);
+  const source = await imageToInlineData(imageUrl);
 
   return isImagenPredictModel(model)
-    ? editViaImagenPredict({ sourceB64, prompt, maskUrl, project, location, model, token })
-    : editViaGemini({ sourceB64, prompt, project, location, model, token });
+    ? editViaImagenPredict({ source, prompt, maskUrl, project, location, model, token })
+    : editViaGemini({ source, prompt, project, location, model, token });
 }
 
-async function imageToBase64(imageUrl) {
-  if (imageUrl.startsWith('data:')) return imageUrl.split(',')[1];
+// Vertex rejects an inlineData part whose mimeType disagrees with the bytes, and
+// only accepts image/*. A CDN answering application/octet-stream or a mangled
+// data: header falls back to PNG, which is what this lane's own output always is.
+function normalizeImageMime(value) {
+  const mime = String(value || '').split(';')[0].trim().toLowerCase();
+  return mime.startsWith('image/') ? mime : 'image/png';
+}
+
+// Decode a caller-supplied image (data: URI or public URL) into the inline
+// base64 + real mime type the edit models want.
+async function imageToInlineData(imageUrl) {
+  if (typeof imageUrl !== 'string' || !imageUrl) {
+    throw Object.assign(
+      new Error('editImage needs a base64 data: URI or a public image URL'),
+      { code: 'bad_source_image' },
+    );
+  }
+
+  if (imageUrl.startsWith('data:')) {
+    const comma = imageUrl.indexOf(',');
+    const header = comma === -1 ? '' : imageUrl.slice('data:'.length, comma);
+    const data = comma === -1 ? '' : imageUrl.slice(comma + 1);
+    // A percent-encoded (non-base64) data: URI would previously ride through as
+    // if it were base64 and make Vertex reject the whole call with an opaque 400.
+    if (!header.includes(';base64') || !data) {
+      throw Object.assign(
+        new Error('editImage source data: URI must be base64-encoded'),
+        { code: 'bad_source_image' },
+      );
+    }
+    return { data, mimeType: normalizeImageMime(header) };
+  }
+
   // SSRF-guarded fetch (redirect hops re-validated): the source URL is
   // caller-supplied and the response is render-only input to the edit model.
   const { fetchSafePublicUrl } = await import('../_lib/ssrf-guard.js');
-  const res = await fetchSafePublicUrl(imageUrl);
+  const res = await fetchSafePublicUrl(imageUrl, {
+    signal: AbortSignal.timeout(SOURCE_IMAGE_TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`cannot fetch image for editing (upstream ${res.status})`);
-  return Buffer.from(await res.arrayBuffer()).toString('base64');
+  // Reject on the advertised length first so an oversize body is never buffered.
+  if (Number(res.headers.get('content-length') || 0) > MAX_SOURCE_IMAGE_BYTES) {
+    throw Object.assign(new Error('image for editing exceeds the size cap'), { code: 'source_image_too_large' });
+  }
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (buf.length > MAX_SOURCE_IMAGE_BYTES) {
+    throw Object.assign(new Error('image for editing exceeds the size cap'), { code: 'source_image_too_large' });
+  }
+  return {
+    data: buf.toString('base64'),
+    mimeType: normalizeImageMime(res.headers.get('content-type')),
+  };
 }
 
-async function editViaGemini({ sourceB64, prompt, project, location, model, token }) {
+async function editViaGemini({ source, prompt, project, location, model, token }) {
   const endpoint =
     `${aiplatformHost(location)}/v1/projects/${project}` +
     `/locations/${location}/publishers/google/models/${model}:generateContent`;
@@ -284,7 +343,7 @@ async function editViaGemini({ sourceB64, prompt, project, location, model, toke
         role: 'user',
         parts: [
           { text: prompt },
-          { inlineData: { mimeType: 'image/png', data: sourceB64 } },
+          { inlineData: { mimeType: source.mimeType, data: source.data } },
         ],
       },
     ],
@@ -312,21 +371,22 @@ async function editViaGemini({ sourceB64, prompt, project, location, model, toke
   return { imageUrl: `data:${mime};base64,${b64}`, model: `vertex-ai/${model}` };
 }
 
-async function editViaImagenPredict({ sourceB64, prompt, maskUrl, project, location, model, token }) {
+async function editViaImagenPredict({ source, prompt, maskUrl, project, location, model, token }) {
   const endpoint =
     `${aiplatformHost(location)}/v1/projects/${project}` +
     `/locations/${location}/publishers/google/models/${model}:predict`;
 
   const instance = {
     prompt,
-    image: { bytesBase64Encoded: sourceB64 },
+    image: { bytesBase64Encoded: source.data },
     editConfig: { editMode: maskUrl ? 'inpainting-insert' : 'product-image' },
   };
   if (maskUrl) {
-    const maskB64 = maskUrl.startsWith('data:')
-      ? maskUrl.split(',')[1]
-      : Buffer.from(await fetch(maskUrl).then((r) => r.arrayBuffer())).toString('base64');
-    instance.mask = { image: { bytesBase64Encoded: maskB64 } };
+    // Same guarded decoder as the source image: the mask URL is caller-supplied
+    // too, so it gets the SSRF check, the status check and the size cap rather
+    // than a bare fetch whose error body would base64 straight into the request.
+    const mask = await imageToInlineData(maskUrl);
+    instance.mask = { image: { bytesBase64Encoded: mask.data } };
   }
 
   const body = {

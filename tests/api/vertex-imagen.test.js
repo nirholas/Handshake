@@ -17,6 +17,12 @@ vi.mock('../../api/_lib/gcp-auth.js', () => ({
 	getGcpAccessToken: vi.fn(async () => 'fake-access-token'),
 }));
 
+// The edit lane decodes caller-supplied source/mask URLs through the SSRF guard.
+// Mocking it lets the tests assert that BOTH images take the guarded path (a bare
+// fetch on the mask was a live SSRF hole) without reaching the network.
+const { safeFetch } = vi.hoisted(() => ({ safeFetch: vi.fn() }));
+vi.mock('../../api/_lib/ssrf-guard.js', () => ({ fetchSafePublicUrl: safeFetch }));
+
 import { generateImage, editImage, isConfigured } from '../../api/_mcp3d/vertex-imagen.js';
 
 const ORIGINAL_FETCH = globalThis.fetch;
@@ -184,5 +190,69 @@ describe('vertex-imagen — editImage routing', () => {
 		expect(body.contents[0].parts[0].text).toBe('make it blue');
 		expect(body.contents[0].parts[1].inlineData.data).toBe(Buffer.from('source').toString('base64'));
 		expect(result.model).toBe('vertex-ai/gemini-2.5-flash-image');
+	});
+
+	it('declares the source image its real mime type, not a hardcoded PNG', async () => {
+		const calls = stubFetch(() => geminiImageResponse());
+		await editImage(`data:image/jpeg;base64,${Buffer.from('jpg-source').toString('base64')}`, 'rotate it');
+		expect(calls[0].body.contents[0].parts[1].inlineData.mimeType).toBe('image/jpeg');
+	});
+
+	it('carries the fetched content-type through for an http(s) source', async () => {
+		safeFetch.mockResolvedValueOnce(
+			new Response(Buffer.from('webp-bytes'), { status: 200, headers: { 'content-type': 'image/webp' } }),
+		);
+		const calls = stubFetch(() => geminiImageResponse());
+		await editImage('https://cdn.example.com/ref.webp', 'rotate it');
+
+		expect(safeFetch).toHaveBeenCalledWith('https://cdn.example.com/ref.webp', expect.objectContaining({ signal: expect.anything() }));
+		const part = calls[0].body.contents[0].parts[1].inlineData;
+		expect(part.mimeType).toBe('image/webp');
+		expect(part.data).toBe(Buffer.from('webp-bytes').toString('base64'));
+	});
+
+	it('rejects a non-base64 data: URI instead of forwarding garbage to Vertex', async () => {
+		const calls = stubFetch(() => geminiImageResponse());
+		await expect(editImage('data:image/svg+xml,%3Csvg/%3E', 'x')).rejects.toMatchObject({
+			code: 'bad_source_image',
+		});
+		expect(calls).toHaveLength(0);
+	});
+
+	it('surfaces an unreachable source image instead of editing an error body', async () => {
+		safeFetch.mockResolvedValueOnce(new Response('nope', { status: 404 }));
+		const calls = stubFetch(() => geminiImageResponse());
+		await expect(editImage('https://cdn.example.com/gone.png', 'x')).rejects.toThrow(/upstream 404/);
+		expect(calls).toHaveLength(0);
+	});
+
+	it('refuses a source image past the inline size cap', async () => {
+		safeFetch.mockResolvedValueOnce(
+			new Response('x', { status: 200, headers: { 'content-type': 'image/png', 'content-length': String(64 * 1024 * 1024) } }),
+		);
+		stubFetch(() => geminiImageResponse());
+		await expect(editImage('https://cdn.example.com/huge.png', 'x')).rejects.toMatchObject({
+			code: 'source_image_too_large',
+		});
+	});
+
+	it('routes the legacy :predict mask through the SSRF guard, not a bare fetch', async () => {
+		process.env.VERTEX_IMAGEN_EDIT_MODEL = 'imagen-3.0-capability-001';
+		safeFetch.mockResolvedValueOnce(
+			new Response(Buffer.from('mask-bytes'), { status: 200, headers: { 'content-type': 'image/png' } }),
+		);
+		const calls = stubFetch(() => imagenPredictResponse());
+		const src = `data:image/png;base64,${Buffer.from('source').toString('base64')}`;
+		await editImage(src, 'inpaint', { maskUrl: 'https://cdn.example.com/mask.png' });
+
+		// The only guarded fetch is the mask (the source is an inline data: URI),
+		// and the raw fetch stub saw the Vertex call alone.
+		expect(safeFetch).toHaveBeenCalledTimes(1);
+		expect(safeFetch.mock.calls[0][0]).toBe('https://cdn.example.com/mask.png');
+		expect(calls).toHaveLength(1);
+		expect(calls[0].url).toContain(':predict');
+		const instance = calls[0].body.instances[0];
+		expect(instance.editConfig.editMode).toBe('inpainting-insert');
+		expect(instance.mask.image.bytesBase64Encoded).toBe(Buffer.from('mask-bytes').toString('base64'));
 	});
 });

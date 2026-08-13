@@ -234,10 +234,14 @@ const HANDLERS = {
 	},
 
 	// $0.10, remesh convert (rig-preserving FBX by default), submit-then-poll.
+	// The catalog row speaks the OKX dialect (model_url/format); remesh_model's
+	// own schema is mesh_url/output_format and rejects anything else, so the
+	// rename happens here, at the adapter seam.
 	async 'fbx-export'(args, ctx) {
+		const format = args.format || 'fbx';
 		const result = await callStudioTool(
 			'remesh_model',
-			{ model_url: args.model_url, operation: 'convert', format: args.format || 'fbx' },
+			{ mesh_url: args.model_url, operation: 'convert', output_format: format },
 			ctx,
 		);
 		const sc = result.structuredContent || {};
@@ -247,7 +251,7 @@ const HANDLERS = {
 				job_id: sc.job_id,
 				poll_url: `/api/forge?job=${encodeURIComponent(sc.job_id)}`,
 				mode: 'convert',
-				format: args.format || 'fbx',
+				format,
 			};
 		}
 		return { status: 'done', ...sc };

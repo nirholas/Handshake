@@ -2,6 +2,24 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-13",
+			"title": "Importing an agent you already own on-chain no longer fails because its metadata host is slow",
+			"summary": "If you registered an agent on-chain, the hydrate page finds it from your connected wallets and offers to import it into three.ws. Importing read two things: the registry entry on the chain, and the registration file the registry points at, which usually lives on IPFS. If that file did not load in five seconds, the whole import was refused, even though the part that actually matters, the chain saying you own the agent, had already answered. Public IPFS gateways throttle constantly, so owners were locked out of their own agents by a slow third party. The import now only needs the chain read to succeed; a registration file that will not load means the agent lands under its on-chain name and the metadata fills in on the next crawl. Two more changes went in alongside it: ownership is now re-checked against the live registry rather than the crawler's cached copy, so an agent you transferred away cannot be imported by the old wallet, and a chain that is unreachable now says so plainly and asks you to retry instead of reporting a generic failure. Separately, confirming a new registration now reads the transaction receipt over the same priority provider list the rest of the platform uses, instead of the slowest public fallbacks, which is what made a freshly mined registration occasionally come back as \"not yet mined\".",
+			"tags": [
+				"fix"
+			],
+			"link": "/hydrate"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "A shared walk card no longer sends people to an avatar that is gone",
+			"summary": "Sharing a walk produces a card you can post on Farcaster, with a button that opens that avatar walking. A cast stays up forever, but the avatar behind it does not: it can be deleted, or switched to private. When that happened the button still pointed at the missing avatar, so anyone who tapped it landed on a walk that could never load, and the card's second button pointed at the same place as the first, so both said the same thing. The card now checks the avatar before it builds. If the avatar is gone or private it drops the link and invites you to walk your own instead of handing you a dead button, and if the check itself cannot run the link is kept rather than thrown away. The second button now goes to the avatar builder, so the two buttons finally offer two different things. The card also carries its image dimensions now, which stops the preview from reflowing while it loads.",
+			"tags": [
+				"fix"
+			],
+			"link": "/walk"
+		},
+		{
 			"date": "2026-08-12",
 			"title": "Dashboard settings saved at the same moment no longer overwrite each other",
 			"summary": "Your dashboard preferences are kept on the server as well as in the browser, so they follow you to a new device. Several parts of the dashboard save into that one record independently: finishing a guided tour, the walk page saving where you left off, and the settings form saving a toggle or a default network. The server used to read the whole record, merge the new value in, and write the record back, which meant two of those saves landing together would each write a copy of what they had read and the later one would erase the earlier one. Loading the dashboard can fire three of them within the same second, so a tour would reappear or a toggle would quietly revert. The merge now happens inside the database write itself, so every save keeps its own value regardless of what else is being saved at the same instant. Measured on the fix: eight preferences saved simultaneously kept two of eight before, and all eight after. The 16 KB ceiling on stored preferences is unchanged and is now enforced by that same write.",
