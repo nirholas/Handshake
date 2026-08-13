@@ -153,7 +153,11 @@ async function handlePost(req, res, url) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	let body;
-	try { body = await readJson(req); } catch (e) { return error(res, 400, 'bad_request', e?.message || 'invalid body'); }
+	// readJson tags its rejections with the status the failure actually deserves
+	// (415 for a non-JSON content-type, 413 for an oversized body). Flattening
+	// them all to 400 told a client sending form-encoded data that its JSON was
+	// malformed, which is the one thing it was not.
+	try { body = await readJson(req); } catch (e) { return error(res, e?.status || 400, 'bad_request', e?.message || 'invalid body'); }
 
 	const mint = mintFrom(url, body?.mint);
 	const network = netOf(url, body?.network);
@@ -223,6 +227,10 @@ async function handlePost(req, res, url) {
 async function handleDelete(req, res, url) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in to remove a market-maker');
+	// Same ceiling the create/update POST takes: a delete is a write with two DB
+	// round trips behind it, and it was the one authed verb here with no limiter.
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 	const mint = mintFrom(url, null);
 	const network = netOf(url);
 	if (!mint || !MINT_RE.test(mint)) return error(res, 400, 'invalid_mint', 'a valid mint is required');
@@ -267,8 +275,31 @@ async function handleStream(req, res, url, headProbe = false) {
 	res.flushHeaders?.();
 
 	let active = true;
+	let poll = null;
+	let ping = null;
+	let durationTimer = null;
+
+	const teardown = () => {
+		if (!active) return;
+		active = false;
+		clearTimeout(poll);
+		clearInterval(ping);
+		clearTimeout(durationTimer);
+		try { res.end(); } catch {}
+	};
+
+	// Registered BEFORE the seed query, not after the timers are armed. A client
+	// that hangs up while the seed await is in flight fires 'close' before a
+	// later-attached listener exists, so the listener never runs and the poller
+	// keeps querying a dead socket for the full SSE_MAX_MS (200 wasted round
+	// trips per abandoned connection). Attaching first closes that window.
+	req.on('close', teardown);
+	// A close that already happened leaves no event to catch, so also treat a
+	// destroyed request / ended response as gone on every write.
+	const gone = () => req.destroyed === true || res.writableEnded === true;
 	const send = (event, data) => {
 		if (!active) return;
+		if (gone()) { teardown(); return; }
 		res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 	};
 
@@ -282,15 +313,16 @@ async function handleStream(req, res, url, headProbe = false) {
 	} catch {
 		send('open', { policy_id: policy.id, mint, network, actions: [] });
 	}
+	if (!active) return;
 
 	// Self-rearming rather than setInterval: a tick that outlives SSE_POLL_MS (a
 	// slow DB) would otherwise overlap the next one, and since lastId only
 	// advances after the await, both ticks read the same rows and the client sees
 	// every action twice. Re-arming after the tick finishes also stops queries
 	// piling up on a database that is already struggling.
-	let poll = null;
 	const tick = async () => {
 		if (!active) return;
+		if (gone()) { teardown(); return; }
 		try {
 			const rows = await listActions(policy.id, { sinceId: lastId, limit: 50, includeSkips: true });
 			for (const a of rows) {
@@ -304,19 +336,8 @@ async function handleStream(req, res, url, headProbe = false) {
 		if (active) poll = setTimeout(tick, SSE_POLL_MS);
 	};
 	poll = setTimeout(tick, SSE_POLL_MS);
-
-	const ping = setInterval(() => send('ping', { t: Date.now() }), SSE_PING_MS);
-
-	const teardown = () => {
-		if (!active) return;
-		active = false;
-		clearTimeout(poll);
-		clearInterval(ping);
-		clearTimeout(durationTimer);
-		try { res.end(); } catch {}
-	};
-	const durationTimer = setTimeout(() => { send('close', { reason: 'duration_limit' }); teardown(); }, SSE_MAX_MS);
-	req.on('close', teardown);
+	ping = setInterval(() => send('ping', { t: Date.now() }), SSE_PING_MS);
+	durationTimer = setTimeout(() => { send('close', { reason: 'duration_limit' }); teardown(); }, SSE_MAX_MS);
 }
 
 // ── catalog helpers (presets + disclosed guard caps for the UI) ──────────────

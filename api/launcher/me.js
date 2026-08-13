@@ -81,18 +81,49 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET') return getState(res, userId, config);
 
-	// A JSON body that is not an object (an array, a bare string) carries no
-	// patch this endpoint can honour; say so instead of writing a silent no-op
-	// row. An absent body stays valid: it reads back as an empty patch.
-	const body = (await readJson(req).catch(() => ({}))) ?? {};
-	if (typeof body !== 'object' || Array.isArray(body)) {
-		return error(res, 400, 'invalid_body', 'body must be a JSON object');
-	}
+	const parsed = await readBodyPatch(req);
+	if (!parsed.ok) return error(res, parsed.status, parsed.code, parsed.message);
+	const body = parsed.body;
 	if (body.action === 'preview') return previewCoin(res, config, body);
 	if (body.action === 'funding') return fundingState(res, userId, config);
 	if (body.action === 'resume') return resumeBreaker(res, userId);
 	return postConfig(res, userId, config, body);
 });
+
+// A body this endpoint cannot read must never be swallowed into an empty patch:
+// that answers 200 {ok:true} to a caller whose settings were silently dropped,
+// and this config arms live SOL spend, so "I turned it off and got a 200" has to
+// mean it is off. A body sent under a non-JSON content-type is 415, an
+// unparseable JSON body is 400, and a JSON value that is not an object (an
+// array, a bare string) carries no patch, so it is 400 too. Only a genuinely
+// absent body reads back as an empty patch, which is what a bare
+// { action: ... }-less POST relies on.
+function hasRequestBody(req) {
+	if (req.rawBody?.length) return true;
+	if (req.body != null && !(typeof req.body === 'object' && !Array.isArray(req.body) && Object.keys(req.body).length === 0)) return true;
+	if (req.headers['transfer-encoding']) return true;
+	return Number(req.headers['content-length'] || 0) > 0;
+}
+
+async function readBodyPatch(req) {
+	let body;
+	try {
+		body = (await readJson(req)) ?? {};
+	} catch (err) {
+		if (!hasRequestBody(req)) return { ok: true, body: {} };
+		const status = err?.status === 415 ? 415 : 400;
+		return {
+			ok: false,
+			status,
+			code: status === 415 ? 'unsupported_media_type' : 'invalid_json',
+			message: status === 415 ? 'content-type must be application/json' : 'body must be valid JSON',
+		};
+	}
+	if (typeof body !== 'object' || Array.isArray(body)) {
+		return { ok: false, status: 400, code: 'invalid_body', message: 'body must be a JSON object' };
+	}
+	return { ok: true, body };
+}
 
 // How many of the user's agents the funding readout covers. The rotation is
 // LRU-ordered, so the first funded agent launches next regardless of list size.
