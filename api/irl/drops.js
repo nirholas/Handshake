@@ -62,6 +62,15 @@ function parsePath(req) {
 	return { url, id: parts[3] || null, action: parts[4] || null, query: url.searchParams };
 }
 
+// `irl_drops.id` is a UUID column, so a drop id that isn't a UUID can never name a
+// row: Postgres rejects the cast with `invalid input syntax for type uuid` and the
+// read 500s before any handler logic runs. Validate the path segment at the boundary
+// so `/api/irl/drops/not-a-uuid` is a clean 400 on every verb.
+const DROP_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidDropId(id) {
+	return typeof id === 'string' && DROP_UUID_RE.test(id);
+}
+
 // Presence proof: the same fix token the nearby read enforces, bound to the
 // caller's claimed point. Returns { ok } or { ok:false, reason }.
 async function checkPresence(req, lat, lng) {
@@ -75,6 +84,7 @@ export default wrap(async (req, res) => {
 	if (req.method === 'OPTIONS') return res.end();
 
 	const { id, action, query } = parsePath(req);
+	if (id && !isValidDropId(id)) return error(res, 400, 'bad_request', 'invalid drop id');
 	const session = await getSessionUser(req).catch(() => null);
 	const userId = session?.id ?? null;
 	const deviceToken = readDeviceToken(req);

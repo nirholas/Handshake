@@ -176,23 +176,28 @@ export async function getIrlAnalyticsSummary() {
 		GROUP BY mode ORDER BY n DESC
 	`;
 
+	// The series gets an explicit column alias, `AS d(day)`, and every reference is
+	// qualified. Without it the bare `day` in each join condition is ambiguous between
+	// the series column and the sub-select's own `day`, and Postgres refuses the whole
+	// query with `column reference "day" is ambiguous`, which the caller then reported
+	// as an empty summary rather than as the broken query it was.
 	const dailySeries = await sql`
 		SELECT
-			day::date AS day,
+			d.day::date AS day,
 			coalesce(p.n, 0)::int AS pins_placed,
 			coalesce(n.n, 0)::int AS nearby_fetches
-		FROM generate_series(current_date - interval '29 days', current_date, interval '1 day') AS day
+		FROM generate_series(current_date - interval '29 days', current_date, interval '1 day') AS d(day)
 		LEFT JOIN (
 			SELECT date_trunc('day', created_at) AS day, count(*) AS n
 			FROM irl_events WHERE event_type = 'pin_created' AND created_at > now() - interval '30 days'
 			GROUP BY 1
-		) p ON p.day = day
+		) p ON p.day = d.day
 		LEFT JOIN (
 			SELECT date_trunc('day', created_at) AS day, count(*) AS n
 			FROM irl_events WHERE event_type = 'nearby_fetch' AND created_at > now() - interval '30 days'
 			GROUP BY 1
-		) n ON n.day = day
-		ORDER BY day ASC
+		) n ON n.day = d.day
+		ORDER BY d.day ASC
 	`;
 
 	return {

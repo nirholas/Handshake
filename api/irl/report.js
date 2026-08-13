@@ -33,6 +33,7 @@ import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
+import { readDeviceToken } from '../_lib/irl-auth.js';
 
 // Distinct reporters required before a pin is queued out of public view.
 const REPORT_HIDE_THRESHOLD = 3;
@@ -115,8 +116,13 @@ export default wrap(async (req, res) => {
 	const reasonStored = detail ? `${reason}: ${detail}` : reason;
 
 	const session     = await getSessionUser(req).catch(() => null);
-	const deviceToken = (typeof body.deviceToken === 'string' && body.deviceToken.length)
-		? body.deviceToken : null;
+	// H2 transport: the device credential arrives in the `x-irl-device` HEADER, with
+	// the body as the documented fallback. Reading only `body.deviceToken` (as this
+	// path used to) silently broke both protections that depend on knowing WHICH
+	// device is reporting for a header-only client: the owner could self-report their
+	// own pin as an "independent" reporter, and the per-device dedup collapsed to the
+	// much coarser per-IP fallback. readDeviceToken null-guards empty/whitespace.
+	const deviceToken = readDeviceToken(req);
 
 	// The pin must exist and still be live. A 404 here is honest — you can't report
 	// a pin that isn't there (already expired, deleted, or never existed).

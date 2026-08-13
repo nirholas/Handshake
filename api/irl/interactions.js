@@ -208,6 +208,12 @@ export default wrap(async (req, res) => {
 		const body = req.body ?? {};
 		const pinId = body.pinId;
 		if (!pinId) return json(res, 400, { error: 'pinId required' });
+		// `irl_pins.id` / `irl_interactions.pin_id` are UUID columns, so a non-UUID id
+		// is a malformed request, not a row that happens not to exist. Validate at the
+		// boundary: without this the pin lookup below hands the text straight to
+		// Postgres, which raises `invalid input syntax for type uuid` and 500s the
+		// request. Same strict guard the sibling moderation + privacy paths use.
+		if (!isUuid(pinId)) return json(res, 400, { error: 'invalid pinId' });
 
 		const type = TYPES.has(body.type) ? body.type : 'view';
 		const message = typeof body.message === 'string'
@@ -423,6 +429,9 @@ export default wrap(async (req, res) => {
 
 	// ── GET — public count for a single pin ───────────────────────────────────
 	if (req.method === 'GET' && req.query.pinId) {
+		// Same boundary guard as the POST path: `pin_id` is a UUID column, so a
+		// garbage id must be a 400, never a Postgres cast error surfacing as a 500.
+		if (!isUuid(req.query.pinId)) return json(res, 400, { error: 'invalid pinId' });
 		const [agg] = await sql`
 			SELECT
 				COUNT(*)::int AS total,

@@ -88,8 +88,7 @@ async function ensureTables() {
 	// this table is a hard dependency, not an optional one. Provision it through the
 	// definition that owns it (api/irl/pins.js) rather than a second copy of the DDL:
 	// on a database where no pin has ever been placed, `nearby` and the single-quest
-	// read otherwise 500 with a raw `relation "irl_pins" does not exist`. Imported
-	// lazily so the pins handler's module graph only loads when a World Line is used.
+	// read otherwise 500 with a raw `relation "irl_pins" does not exist`.
 	await ensurePinsSchema();
 	await sql`
 		CREATE TABLE IF NOT EXISTS irl_world_lines (

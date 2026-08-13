@@ -28,7 +28,14 @@ export default wrap(async (req, res) => {
 		return json(res, 200, summary);
 	} catch (err) {
 		// Table absent (pre-deploy) or DB hiccup — report an honest empty summary
-		// rather than 500ing the dashboard.
+		// rather than 500ing the dashboard. LOG it: this degrade is indistinguishable
+		// from "no usage yet" in the response, so an unlogged failure hides a broken
+		// query behind a plausible-looking wall of zeros (exactly how an ambiguous
+		// column reference in the daily-series query survived unnoticed).
+		console.error('[irl/analytics] summary unavailable, serving empty rollup', {
+			endpoint: 'GET /api/irl/analytics',
+			reason: err?.message || String(err),
+		});
 		return json(res, 200, {
 			windows: {},
 			placement_modes_30d: {},
