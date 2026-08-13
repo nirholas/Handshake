@@ -21,6 +21,11 @@ const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
 // Built-in modes — reserved names a custom backend may not shadow.
 const RESERVED_MODES = new Set(['none', 'local', 'remote', 'ipfs', 'encrypted-ipfs']);
 
+// Hard ceiling on MEMORY.md lines injected into the LLM context, per
+// specs/MEMORY_SPEC.md. The index bypasses the token budget by design, so this
+// is the only thing standing between a runaway index and a runaway prompt.
+const INDEX_CONTEXT_MAX_LINES = 200;
+
 // Registry of custom backends: mode name -> backend definition.
 // See Memory.registerBackend and specs/MEMORY_SPEC.md → "Custom backends".
 const BACKENDS = new Map();
@@ -465,11 +470,29 @@ export class Memory {
 		return { cids, memoryCid };
 	}
 
+	/**
+	 * The index as the LLM sees it. MEMORY.md is injected in full regardless of
+	 * the token budget, so an index that grows without bound is the one part of
+	 * the block that can crowd out everything else. specs/MEMORY_SPEC.md caps it
+	 * at 200 lines; enforce that here, at injection time, so an oversized index
+	 * on disk still yields a bounded prompt.
+	 * @returns {string}
+	 */
+	_indexForContext() {
+		const lines = this.indexText.split('\n');
+		if (lines.length <= INDEX_CONTEXT_MAX_LINES) return this.indexText;
+		const dropped = lines.length - INDEX_CONTEXT_MAX_LINES;
+		return [
+			...lines.slice(0, INDEX_CONTEXT_MAX_LINES),
+			`_(${dropped} more index ${dropped === 1 ? 'line' : 'lines'} truncated; keep MEMORY.md under ${INDEX_CONTEXT_MAX_LINES} lines)_`,
+		].join('\n');
+	}
+
 	// Budget-aware context serialization for LLM injection
 	contextBlock({ maxTokens = 8192 } = {}) {
 		// Rough token estimate: 4 chars/token
 		const budget = maxTokens * 4;
-		const parts = ['# Agent Memory', '', this.indexText];
+		const parts = ['# Agent Memory', '', this._indexForContext()];
 		let used = parts.join('\n').length;
 		// Include top-matching file bodies until budget exhausted
 		for (const [file, raw] of this.files) {

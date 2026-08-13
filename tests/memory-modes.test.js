@@ -248,3 +248,35 @@ describe('Memory snapshot/fromSnapshot', () => {
 		expect(restored.indexText).toContain('user_role.md');
 	});
 });
+
+// ── contextBlock index ceiling ───────────────────────────────────────────────
+
+describe('Memory.contextBlock: MEMORY.md index ceiling', () => {
+	it('injects a short index verbatim', async () => {
+		const mem = await Memory.load({ mode: 'local', namespace: 'agent-idx-small' });
+		mem.write('user_role', { name: 'role', description: 'who', type: 'user', body: 'hello' });
+
+		const block = mem.contextBlock({ maxTokens: 8192 });
+		expect(block).toContain('user_role.md');
+		expect(block).not.toContain('index lines truncated');
+	});
+
+	it('caps the index at 200 lines and says how many it dropped', async () => {
+		const mem = await Memory.load({ mode: 'local', namespace: 'agent-idx-big' });
+		// 260 index lines: past the 200-line ceiling specs/MEMORY_SPEC.md declares.
+		mem.indexText = Array.from({ length: 260 }, (_, i) => `- [Memo ${i}](memo_${i}.md) hook ${i}`).join('\n');
+
+		const block = mem.contextBlock({ maxTokens: 8192 });
+		expect(block).toContain('- [Memo 199](memo_199.md)');
+		expect(block).not.toContain('- [Memo 200](memo_200.md)');
+		expect(block).toContain('60 more index lines truncated');
+	});
+
+	it('does not mutate the stored index while truncating for context', async () => {
+		const mem = await Memory.load({ mode: 'local', namespace: 'agent-idx-pure' });
+		mem.indexText = Array.from({ length: 205 }, (_, i) => `- [Memo ${i}](memo_${i}.md)`).join('\n');
+
+		mem.contextBlock({ maxTokens: 8192 });
+		expect(mem.indexText.split('\n')).toHaveLength(205);
+	});
+});
