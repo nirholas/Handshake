@@ -356,21 +356,24 @@ if (!explicitFiles.length) {
 			}
 		})
 		.filter(Boolean);
-	// server/shell-pages.mjs: the shell probes dist/docs/<slug>.md, built from
-	// docs/. A dot is excluded there, so it can never name an article here.
+	// server/shell-pages.mjs: the shell probes dist/docs/<slug>.md. Two source
+	// trees land there, docs/ and public/docs/ (which is copied verbatim), so an
+	// article in either satisfies the route. A dot is excluded from the slug
+	// there, so it can never name an article here.
 	const ARTICLE_SLUG = /^[A-Za-z0-9][A-Za-z0-9_-]*(\/[A-Za-z0-9][A-Za-z0-9_-]*)*$/;
+	const ARTICLE_ROOTS = ['docs', 'public/docs'];
 	for (const declared of declaredPages) {
 		if (!declared.startsWith('/docs/')) continue;
 		const slug = declared.slice('/docs/'.length).replace(/\/+$/, '');
 		if (!slug || !ARTICLE_SLUG.test(slug)) continue;
 		const first = orderedRoutes.find((r) => r.re.test(declared));
 		if (!first || !first.dest.startsWith('/docs/index.html')) continue;
-		if (existsSync(resolve(root, `docs/${slug}.md`))) continue;
+		if (ARTICLE_ROOTS.some((base) => existsSync(resolve(root, `${base}/${slug}.md`)))) continue;
 		findings.push({
 			file: 'data/pages.json',
 			line: 0,
 			kind: 'declared-doc-without-article',
-			detail: `declares ${declared} but no docs/${slug}.md exists, so the route 404s while the sitemap and llms.txt advertise it. Write the doc, or remove the entry.`,
+			detail: `declares ${declared} but neither docs/${slug}.md nor public/docs/${slug}.md exists, so the route 404s while the sitemap and llms.txt advertise it. Write the doc, or remove the entry.`,
 		});
 	}
 }

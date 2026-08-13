@@ -5,7 +5,7 @@ description: What three.ws may and may not show from a publisher's article, how 
 
 # Publisher rights in the news reader
 
-three.ws aggregates 191 crypto news feeds into [/markets/news](https://three.ws/markets/news), gives every story a permalink, and layers its own analysis on top (summary, key points, detected tickers with live prices, market context at publication, sentiment, related coverage).
+three.ws aggregates every feed in its news source registry ([`api/_lib/news-sources.js`](../api/_lib/news-sources.js), just under 200 of them today) into [/markets/news](https://three.ws/markets/news), gives every story a permalink, and layers its own analysis on top (summary, key points, detected tickers with live prices, market context at publication, sentiment, related coverage).
 
 Aggregating headlines and linking out is lawful. Reproducing a publisher's article body under our own URL is not, however the text arrives — a scraped page, a reader proxy, or an RSS feed that ships the whole article in `content:encoded`. This page documents where that line sits and how it is enforced in code.
 
@@ -57,7 +57,7 @@ The script rewrites each affected `gs://three-ws-news-archive/articles/<month>.j
 
 Rights govern how *much* of a story we may show. Curation governs *which* stories appear at all. They are separate filters and live in separate files ([`api/_lib/news-curation.js`](../api/_lib/news-curation.js) is the curation one).
 
-three.ws ingests ~190 feeds. Some are crypto-native — every article is on topic. Others are broad outlets (WSJ, CNBC, Seeking Alpha, the SEC, the Fed, world-news desks) that run crypto coverage *and* a great deal that isn't. We keep pulling the broad ones on purpose: their crypto reporting is high-value, and the macro and regulatory context enriches the archive and the agents' knowledge corpus. But a world-politics headline or a general-markets note should never land in a crypto feed.
+Every registry feed is ingested. Some are crypto-native: every article is on topic. Others are broad outlets (WSJ, CNBC, Seeking Alpha, the SEC, the Fed, world-news desks) that run crypto coverage *and* a great deal that isn't. We keep pulling the broad ones on purpose: their crypto reporting is high-value, and the macro and regulatory context enriches the archive and the agents' knowledge corpus. But a world-politics headline or a general-markets note should never land in a crypto feed.
 
 So the human-facing feeds apply a display gate with two conditions:
 

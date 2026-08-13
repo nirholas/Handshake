@@ -140,7 +140,7 @@ If you're building a custom layer (a 2D sprite avatar, a vector-store memory bac
 The same source tree produces three independent builds:
 
 - **App** — `npm run build`. The full SPA into `dist/`. Editor, agent pages, discover, studio, PWA manifest. Multi-page Rollup config with a Vercel-style dev middleware.
-- **Library** — `npm run build:lib`. `src/lib.js` → `dist-lib/agent-3d.js` (ES module + UMD). Three.js and ethers stay bundled — the file is intentionally self-contained so a single `<script type="module">` is the only thing a third party needs.
+- **Library**: `npm run build:lib`. `src/lib.js` → `dist-lib/agent-3d.js` (ES module). Add the UMD build (`dist-lib/agent-3d.umd.cjs`) with `npm run build:lib:full`, which is what the production deploy chain runs. Three.js and ethers stay bundled, so the file is intentionally self-contained: a single `<script type="module">` is the only thing a third party needs.
 - **Artifact** — `vite.config.artifact.js`. A zero-dependency bundle for Claude artifact embeds. Inlined everything, no external script tags, no dynamic imports.
 
 Versioned CDN bundles are published at `/agent-3d/<version>/agent-3d.js`. Use `latest` for auto-updates or pin to a version for stability. See [changelog.md](./changelog.md) for release history.

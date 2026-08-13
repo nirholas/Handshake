@@ -932,6 +932,14 @@
 					"path": "mcp-x402-bazaar"
 				},
 				{
+					"label": "MCP: Scenes server",
+					"path": "mcp-scenes"
+				},
+				{
+					"label": "MCP: x402 Wallet server",
+					"path": "mcp-x402"
+				},
+				{
 					"label": "AR in ChatGPT",
 					"path": "chatgpt-ar"
 				},

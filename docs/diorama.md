@@ -57,19 +57,30 @@ curl 'https://three.ws/api/diorama?id=<uuid>'
 curl 'https://three.ws/api/diorama?list=featured&limit=12'
 ```
 
-The compose response shape (abridged):
+The compose response shape (abridged). The plan always arrives under a
+`diorama` key, and every read (`?id=`, the save and build actions) returns that
+same object, so one renderer handles all of them. `id` and `createdAt` are empty
+until the world is saved:
 
 ```json
 {
-  "title": "Dusk Lighthouse",
-  "mood": "dusk",
-  "ground": "stone",
-  "island": "craggy",
-  "palette": { "sky": ["#2a2350", "#e0724a"], "ground": "#5b5347", "fog": "#3a3550", "accent": "#ffb066" },
-  "objects": [
-    { "label": "lighthouse", "prompt": "white stone lighthouse with red top", "position": [0, 0, 0], "scale": 2.2, "rotationY": 0, "status": "pending" },
-    { "label": "rock", "prompt": "grey jagged sea rock", "position": [-3.4, 0, 2.1], "scale": 1.1, "rotationY": 1.2, "status": "pending" }
-  ]
+  "diorama": {
+    "id": "",
+    "prompt": "a lighthouse on a rocky islet at dusk",
+    "title": "Lonely Beacon Watch",
+    "mood": "dusk",
+    "ground": "stone",
+    "island": "craggy",
+    "palette": { "sky": ["#2e3a59", "#d67850"], "ground": "#4a4a4a", "fog": "#332d40", "accent": "#ffcc00" },
+    "objects": [
+      { "id": "obj-0", "label": "lighthouse", "prompt": "tall lighthouse made of weathered white brick with a glass lantern room", "position": [0, 0, 0], "scale": 2.2, "rotationY": 0, "status": "pending", "glbUrl": null },
+      { "id": "obj-1", "label": "boulder", "prompt": "jagged grey granite boulder with lichen patches", "position": [3.5, 0, 2], "scale": 1.2, "rotationY": 0.5, "status": "pending", "glbUrl": null }
+    ],
+    "author": null,
+    "createdAt": "",
+    "views": 0,
+    "featured": false
+  }
 }
 ```
 

@@ -108,4 +108,5 @@ Every check that matters happens on the server:
 - Spec (wire formats, resolver contract, token format): [specs/EMBED_SPEC.md § Token Gating](../specs/EMBED_SPEC.md#token-gating)
 - MCP tool: [docs/mcp.md § create_gated_embed](./mcp.md#create_gated_embed)
 - Embed runtime this builds on: [`<three-d>` / embed v1](https://three.ws/embed/v1/preview), [Share & embed](./share-and-embed.md)
+- Nothing rendering where you pasted the snippet? The [Embed Doctor](https://three.ws/embed-doctor) loads your page in a real browser and names the line to change. It checks a `<three-d>` gated snippet exactly like an ungated `<agent-3d>` one, and a locked embed reads as healthy: the lock is the product working, not a failure.
 - Related: [Hold-to-access tiers](./hold-to-access.md) (site-wide $THREE tiers, distinct from per-embed gates)

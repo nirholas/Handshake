@@ -9,7 +9,7 @@ Every crew has:
 
 - a **tag**: 2 to 6 letters or digits, unique across the whole site, rendered
   over its members' avatars in the 3D world,
-- a **name**: up to 32 characters, what people read,
+- a **name**: 2 to 32 characters, what people read,
 - an **owner**: the founder, who can remove members; ownership passes to the
   longest-standing member if the owner leaves,
 - a **roster**: one account belongs to at most one crew at a time.
@@ -108,8 +108,13 @@ A malformed envelope answers with its own status rather than a guess at your
 intent: `415` for a non-JSON content-type, `413` for an oversized body, `400
 bad_body` for anything that is not a JSON object.
 
-Error codes you should handle: `bad_tag`, `tag_taken`, `tag_reserved`,
-`already_in_crew`, `target_in_crew`, `no_invite`, `not_owner`, `not_member`.
+Error codes you should handle: `bad_tag`, `bad_name`, `tag_taken`,
+`tag_reserved`, `already_in_crew`, `target_in_crew`, `no_invite`, `not_owner`,
+`not_member`, `self_invite`, `self_kick`.
+
+`self_invite` and `self_kick` close the two loops a UI can otherwise walk a user
+into: inviting yourself, and an owner removing themselves instead of leaving
+(which is what hands ownership on).
 
 `tag_reserved` covers tags that would collide with a route segment (`SEARCH`,
 `INDEX`, `API`, `ADMIN`, `NEW`, `ME`, `ALL`, `NULL`). Both `/crews/:tag` and

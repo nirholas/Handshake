@@ -69,11 +69,17 @@ The account clip API the studio drives:
 curl 'https://three.ws/api/animations/clips?include_public=true&limit=60' \
   -H 'cookie: <session>'
 
-# Create a clip from a serialized keyframe document.
+# Create a clip. `clip` is a baked THREE.AnimationClip.toJSON(): at least one
+# track, each with its times and flattened values.
 curl -X POST 'https://three.ws/api/animations/clips' \
   -H 'content-type: application/json' -H 'cookie: <session>' \
-  -d '{"name":"wave-loop","visibility":"public","clip":{ "name":"wave-loop","duration":2,"tracks":[] }}'
+  -d '{"name":"wave-loop","visibility":"public","clip":{"name":"wave-loop","duration":2,"tracks":[
+        {"name":"mixamorigRightArm.quaternion","type":"quaternion",
+         "times":[0,1,2],
+         "values":[0,0,0,1, 0,0,0.38,0.92, 0,0,0,1]}]}}'
 ```
+
+An empty `tracks` array is rejected: a clip with no motion is not a clip. Track names are the standard three.js `<node>.<property>` form, so a document exported from Animation Studio posts as-is.
 
 ## States & limits
 

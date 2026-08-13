@@ -1,6 +1,6 @@
 # Image to 3D: turn a photo into a downloadable 3D model
 
-Image to 3D is Forge's photo lane, opened directly. Drop in one to four photos of an object, taken from different angles, and get back a textured, downloadable GLB you can orbit, view in AR, and take into any engine. It is the fastest way to go from a real thing on your desk, or a single reference image, to a real 3D model, with no account and no key on the free lane.
+Image to 3D is Forge's photo lane, opened directly. Drop in one to six photos of an object, taken from different angles, and get back a textured, downloadable GLB you can orbit, view in AR, and take into any engine. It is the fastest way to go from a real thing on your desk, or a single reference image, to a real 3D model, with no account and no key on the free lane.
 
 Page: [/image-to-3d](https://three.ws/image-to-3d) · API: `/api/forge`
 
@@ -8,7 +8,7 @@ Page: [/image-to-3d](https://three.ws/image-to-3d) · API: `/api/forge`
 
 Text-to-3D is great when you can describe a thing. But often you already have the thing, or a picture of it: a prop, a toy, a piece of furniture, a product shot. Reconstructing geometry from photos preserves the real proportions and surface that a text prompt can only approximate. Image to 3D gives that reconstruction its own entry point so a first-time visitor lands directly in photo mode instead of hunting for the tab, while everything else, the engine grid, the tiers, the live health status, the downloadable GLB, is the same Forge machinery underneath.
 
-/ image-to-3d and [/forge](https://three.ws/forge) are the same application (`pages/forge.html`, driven by `src/forge.js`). The `/image-to-3d` route sets the page into photo mode and retitles it; the app is otherwise identical, so any engine, tier, or export you can reach from Forge you can reach here.
+[/image-to-3d](https://three.ws/image-to-3d) and [/forge](https://three.ws/forge) are the same application (`pages/forge.html`, driven by `src/forge.js`). The `/image-to-3d` route sets the page into photo mode and retitles it; the app is otherwise identical, so any engine, tier, or export you can reach from Forge you can reach here.
 
 ## How it works
 
@@ -31,7 +31,7 @@ Image to 3D reconstructs whole objects: a prop, a product, a toy, a sculpture, a
 ## Walkthrough
 
 1. Open [/image-to-3d](https://three.ws/image-to-3d). The page opens in photo mode.
-2. Add one to four photos of the same object. For best results shoot the same object from different angles (front, side, back, three-quarter) on a plain background.
+2. Add one to six photos of the same object, one per view slot (front, back, left, right, top, three-quarter). For best results shoot the same object from different angles on a plain background.
 3. Optionally pick a tier (Draft, Standard, High) and an engine. The default free reconstruction lane carries a **FREE** pill; down lanes are disabled with a reason.
 4. Click Generate. A real elapsed-driven progress line runs against the ETA for the resolved engine and tier; a cold self-host worker adds an honest spin-up estimate.
 5. When the model lands, orbit it, view it in AR, download the GLB, or run the post-generation tools (stylize, optimize, Game-Ready retopology).
@@ -79,7 +79,7 @@ console.log(job.glb_url);
 
 ## States and limits
 
-- **Up to four views** per generation; more views mean tighter multi-view fusion.
+- **Up to six views** per generation (`MAX_VIEWS` in `api/forge.js`); more views mean tighter multi-view fusion.
 - **Free lane** requires no account. The **High tier** is $THREE hold-or-pay gated (quality gate, not vendor-cost recovery); a verified $THREE pass also lifts the free-lane quota.
 - **Loading**: real elapsed counter; cold GPU workers surface an honest spin-up estimate.
 - **Down or unconfigured engine**: disabled with the real reason, or a clean `backend_unconfigured` error. No mock output, ever.

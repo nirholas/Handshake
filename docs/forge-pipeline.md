@@ -198,7 +198,7 @@ The pipeline separates what a generation costs us from what it costs the user. D
 
 - **Direct x402** (`api/x402/forge.js`): per-tier USDC prices from the tier table, exact-settle on Solana mainnet. The order is verify, submit, settle: a failed submit never charges. The returned job token polls free on the standard endpoint.
 - **High-tier gate** (`api/_lib/forge-high-payment.js`): the high tier is $THREE hold-or-pay gated regardless of which free engine serves it. Non-holders pay per generation through the token rail in three phases: `assertForgePayment` validates at the gate, `redeemForgePayment` atomically claims single-use (primary-key race-safe), `releaseForgePayment` undoes the claim if dispatch fails. Settled consumption lands in `token_payments` with `ref_type: 'forge'`.
-- **MCP pricing** (`mcp-server/src/payments.js`): the `paid()` wrapper prices each tool (`mesh_forge` $0.25, `rig_mesh` $0.20, `forge_avatar` $0.45, `refine_model` $0.25, `text_to_avatar` $0.15, `restyle_material` $0.05); `forge_free` needs no payment. The hosted MCP server sums per-tool prices for batched x402 challenges.
+- **MCP pricing**: the `paid()` wrapper (`mcp-server/src/payments.js`) charges the `priceUsd` each tool module declares at its own call site (`mesh_forge` $0.25, `rig_mesh` $0.20, `forge_avatar` $0.45, `refine_model` $0.25, `text_to_avatar` $0.15, `restyle_material` $0.05, all under `mcp-server/src/tools/`); `forge_free` needs no payment. The hosted MCP server sums per-tool prices for batched x402 challenges.
 - **Quota upsell**: the free flagship API allows 10 generations per IP per day, then returns 429 with the x402 endpoint as the paid path.
 - **BYOK lanes** bill the caller's own vendor key and are never charged to a platform account.
 

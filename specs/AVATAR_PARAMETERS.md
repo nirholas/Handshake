@@ -22,7 +22,8 @@ Every three.ws avatar keeps its parameters. The GLB is a *render* of the documen
   "proportions": { "legLength": 1.06, "shoulderWidth": 0.94 },
   "colors": { "skin": "#c99a70", "hair": "#241a12" },
   "hidden": ["hair"],
-  "garments": [{ "slot": "top", "id": "garment-id" }]
+  "garments": [{ "slot": "top", "id": "garment-id" }],
+  "attachments": [{ "bone": "mixamorig:Head", "url": "https://…/crown.glb", "name": "Horned crown" }]
 }
 ```
 
@@ -37,6 +38,7 @@ Every field is optional. An absent field means "default", and a document with no
 | `colors` | slot → hex | Per-slot material tint | `src/avatar-studio.js` |
 | `hidden` | slot[] | Garment layers to drop | `src/avatar-wardrobe.js` |
 | `garments` | {slot, id}[] | Additive catalog wearables | `specs/GARMENT_MANIFEST.md` |
+| `attachments` | {bone, url, name?}[] | Custom bone-mounted props that are in no catalog | `src/agent-accessories.js` |
 
 ## `morphs`: shape
 
@@ -70,6 +72,19 @@ Three invariants any implementation MUST hold:
 3. **Root motion is re-measured.** A clip's hip translation is authored around one hip height and rescaled onto the rig at bind time. After a proportion edit that factor is stale and the avatar foot-slides, so consumers call `AnimationManager.remeasureRigProportions()` with the rig at rest.
 
 Values outside a parameter's range are clamped, unknown ids are dropped, and a value within `1e-4` of `1.0` is removed entirely (`normalizeProportions`). A rig missing a parameter's bones simply does not offer that slider (`availableProportionParams`), so the panel never shows a dead control.
+
+## `attachments`: custom bone-mounted props
+
+`accessories` names entries in the curated preset catalog, which is what makes a hat portable: the id resolves to a GLB the platform ships. A prop generated on demand (Scene Composer forges one from a text prompt and parents it to a bone) is in no catalog, so it carries its own reference instead:
+
+```json
+{ "bone": "mixamorig:Head", "url": "https://…/crown.glb", "name": "Horned crown" }
+```
+
+- `bone` is matched the way every other bone lookup is: exact name first, then the canonical form with the rig prefix stripped (`mixamorig:`, `CC_Base_`, `rig_`), so an outfit saved on one rig lands on another rig's equivalent joint. A bone the loaded rig does not have is skipped, per the processing rules below.
+- `url` MUST be https on a three.ws asset host, or a same-origin path. Producers and consumers BOTH enforce this (`isTrustedAttachmentUrl` in `api/_lib/accessories.js`, `isSafeQueryModelUrl` in `src/shared/safe-model-url.js`), because a stored attachment is fetched by every browser that renders the avatar, including viewers who do not own it. An unrestricted URL would make one owner's public avatar a relay for arbitrary third-party bytes.
+- At most 8 per document, matching `accessories`.
+- Attachments are applied at runtime rather than baked: `bakeAppearance()` merges catalog GLBs it can resolve from the pack it ships with, and does not fetch remote URLs server-side. `isBakeable()` therefore ignores this field, and an avatar whose only appearance is attachments keeps serving its base GLB.
 
 ## Reserved
 

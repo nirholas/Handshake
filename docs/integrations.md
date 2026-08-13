@@ -63,10 +63,10 @@ Avatar Viewer (web component):
 <script src="https://three.ws/embed.js" defer></script>
 
 <!-- Drop anywhere in your HTML -->
-<threews-avatar avatar-id="avatar_demo_disk_cz" hide-chrome pose="idle"></threews-avatar>
+<threews-avatar avatar-id="a4bad2f5-8a07-43cf-82e5-b6ba1314441e" hide-chrome pose="idle"></threews-avatar>
 
-<!-- Optional: JS control -->
-<script>
+<!-- Optional: JS control (type="module" so top-level await is allowed) -->
+<script type="module">
   const el = document.querySelector('threews-avatar');
   await el.ready;
   el.play('wave');
@@ -90,7 +90,7 @@ Walk Companion:
 ```html
 <script
   src="https://three.ws/walk-embed-sdk.js"
-  data-avatar="avatar_demo_disk_cz"
+  data-avatar="a4bad2f5-8a07-43cf-82e5-b6ba1314441e"
   data-position="bottom-right"
   data-env="studio"
   defer

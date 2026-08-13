@@ -264,9 +264,10 @@ if (tone) {
   console.log(tone.body);      // full body text
 }
 
-// Substring search across all files
-const hits = await ctx.memory.recall('how does the user prefer feedback');
-// hits: [{ file, meta, body, score }, ...]
+// Substring search across all files. The whole query must appear verbatim in a
+// memory's name, description, or body, so pass a phrase, not a question.
+const hits = await ctx.memory.recall('direct critique');
+// hits: [{ file, meta, body, score }, ...] where score is the occurrence count
 ```
 
 ### Exporting and importing
