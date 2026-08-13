@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>@three-ws/sdk 0.2.3: works without optional wallet libraries installed</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:@three-ws/sdk 0.2.3: works without optional wallet libraries installed</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>The browser SDK's permissions entry points failed to load for anyone who had not installed viem, even though viem is documented as optional and is only needed for delegation encoding. The SDK now loads viem the moment a delegation is actually encoded, the same way it already handles ethers and the Solana library, and a missing library produces a clear install instruction instead of a crash. The README also now reflects reality: on-chain registration works out of the box on the 22 chains with built-in canonical ERC-8004 registry addresses, with env-var overrides for custom deployments.</description>
+		</item>
+		<item>
 			<title>A bounty nobody bid on gets a second chance in the Labor Market</title>
 			<link>https://three.ws/labor-market</link>
 			<guid isPermaLink="false">2026-08-13:A bounty nobody bid on gets a second chance in the Labor Market</guid>
@@ -45,6 +53,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Before a chat host renders your agent, it asks three.ws to confirm the agent exists and to hand back the sites you allow it to be embedded on. Those are two separate reads, and if the second one hiccuped the whole answer was thrown away: the host was told the agent could not be confirmed and was given no name, even though the first read had just found it. The confirmation and the name now survive a stumble on the embed settings. Separately, a misspelled address in a host's setup returned an explanation the browser refused to show, so integrators saw an unexplained network failure instead of the message naming their typo. That message now reaches them.</description>
+		</item>
+		<item>
+			<title>Agent subscriptions and on-chain history reachable again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:Agent subscriptions and on-chain history reachable again</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two API endpoints were being swallowed by broader routing rules. The subscription skill's weekly USDC subscribe action posted to a path that a different subscription system answered, so every subscribe attempt failed validation; delegation-backed agent subscriptions now live at their own /api/agent-subscriptions path and the skill records them correctly. The public /api/agents/onchain-history endpoint, which returns an agent's verifiable on-chain event log with explorer links, was unreachable for the same reason and now resolves. The route audits that guard this now also model the chat app's build output, so /chat coverage is checked correctly in any workspace.</description>
 		</item>
 		<item>
 			<title>An API key can no longer be minted with zero scopes</title>
@@ -109,6 +125,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The we-pay brain behind every embedded agent streams its answers, and three things in that stream were wrong. Free providers were never asked to report how many tokens a streamed answer used, so the monthly token budget an owner sets on an agent counted zero for the lane most embeds run on: the budget could not be reached, and the usage screen showed no spend for real traffic. Groq reports those numbers in a field of its own, which was being ignored for the same reason; both are now read and charged. Tool calls fared worse: when a provider streamed a tool name in pieces, only the first piece survived, so the agent tried to call a tool that does not exist, and a call whose id never arrived was dropped in silence instead of being passed on. Finally, the second step of the automatic failover chain pointed at a model that no longer exists anywhere, so a rate-limited free lane skipped straight past it; it now points at a live free model on a separate account, and requests that leave the token limit unset no longer draw an avoidable rejection from Anthropic.</description>
+		</item>
+		<item>
+			<title>Every dead placeholder link on the site now goes somewhere real</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:Every dead placeholder link on the site now goes somewhere real</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A sweep found 21 links across the site that pointed nowhere: demo call-to-action buttons, the tour's resume link, the event page's calendar link, and the bounty market's earn shortcut. Each one now does what it promises. Demo buttons that trigger an animation are real keyboard-accessible buttons, the cursor-follower demo's docs, pricing and examples words link to those actual pages, the builds-a-button demo's finished button really takes you to /create, and the calendar and tour links keep working in every language instead of only English.</description>
 		</item>
 		<item>
 			<title>Every ledger link in the trading write-up went nowhere, and now they open the agent that made the trade</title>
@@ -181,6 +205,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>When an agent reaches a paid Launchpad page (a pay-per-question concierge or a gated showroom unlock) without payment, the 402 challenge it receives now carries that page type's own bazaar discovery document: the exact field to send, the shape of the answer that comes back, and a worked example. Before, the challenge fell back to a generic entry that told crawlers to send a model-validation body, so an agent that indexed a concierge page from discovery would never send the one field it actually needs. An agent can now go from discovery to a settled paid call using nothing but the challenge itself.</description>
+		</item>
+		<item>
+			<title>LobeChat install manifest now delivers the full avatar plugin</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:LobeChat install manifest now delivers the full avatar plugin</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Installing three.ws in LobeChat via the documented manifest URL (three.ws/.well-known/chat-plugin.json) used to hand LobeChat a bare pre-launch manifest with no tools and no avatar panel, so the plugin installed but could never do anything. That URL now serves the complete plugin manifest, the same speak, gesture, emote, and render_agent toolset SperaxOS already gets, so the embodied 3D avatar sidebar works from a fresh LobeChat install. The plugin package itself also gained a Node-loadable entry point and automated test coverage of its host-side bridge.</description>
 		</item>
 		<item>
 			<title>One bad request can no longer use up the whole hourly AI-governance budget</title>
@@ -543,6 +575,14 @@
 			<description>Asking the x402 Bazaar MCP server for one service's full details produced a cramped block: the pay link sat flush against the last payment option, and a listing that advertises no payment options up front showed a bare &quot;Payment options:&quot; header with nothing under it. Both read properly now, and a listing with no advertised options says so and points at the 402 challenge the service returns when you call it. Search and browse results also separate a service's name from its price with a plain hyphen, matching the example output the server advertises to payers. Separately, the price-tracking tool now reports a missing price label as null on a live service instead of dropping the field, so a tracker comparing today's sample against yesterday's sees the same set of keys whether the service is still listed or gone.</description>
 		</item>
 		<item>
+			<title>The x402 bridge no longer offers tools it will refuse to pay for</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:The x402 bridge no longer offers tools it will refuse to pay for</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The @three-ws/mcp-bridge MCP server filters x402 Bazaar services by price at discovery time, so an agent only sees paid tools it can actually afford. But when no spending cap was configured, discovery treated that as no limit and listed everything, while the payment guard still enforced its default $0.10 per-call cap: any service priced above it showed up in the tool list and then failed on every single call. Discovery and the payment guard now read the same effective cap, default included, so an unaffordable tool is never registered in the first place. The bridge also now reports its real package version to MCP clients instead of a hardcoded 1.0.0, and its test suite gained hermetic coverage of the stdio boot, Bazaar tool naming, and both of these behaviors. The fix ships to npm with the next @three-ws/mcp-bridge release.</description>
+		</item>
+		<item>
 			<title>Three announcement posts had no site navigation and scrolled sideways on a phone</title>
 			<link>https://three.ws/blog/three-ws-on-aws-marketplace</link>
 			<guid isPermaLink="false">2026-08-13:Three announcement posts had no site navigation and scrolled sideways on a phone</guid>
@@ -589,6 +629,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>Audited the eight paid-endpoint and Premium documentation pages against the running code. Corrected the pump.fun launcher ticker-check example (it used a parameter the endpoint does not accept), refreshed the volume-loop spend cap and price range, repaired the payout source links and a dead datapoint-fabric anchor, dropped a stale archive article count, and made the free sample commands CI-verified so this class of drift fails the build next time.</description>
+		</item>
+		<item>
+			<title>x402 Studio is keyboard-usable, phone-usable, and no longer drops product-grid picks</title>
+			<link>https://three.ws/x402/studio</link>
+			<guid isPermaLink="false">2026-08-13:x402 Studio is keyboard-usable, phone-usable, and no longer drops product-grid picks</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A full pass over the x402 Studio merchant console. Editing a &quot;product grid&quot; block on the storefront builder silently saved an empty grid, because the checkbox lookup searched the wrong part of the page; it now saves exactly the products you tick. Half-built storefront layouts used to vanish the moment you visited another tab and came back, and now survive with an &quot;Unsaved changes&quot; marker until you save or publish. Every dialog is a real dialog: Escape closes it, Tab stays inside it, and focus returns to the control that opened it. The setup checklist rows are real buttons a keyboard can reach, every control has a visible focus ring, and the labels are correctly attached to their inputs. On a phone the &quot;Agent wallets&quot; heading no longer squeezed its description into a one-word column, and the sidebar links to the x402 explainer and the classic dashboard are reachable instead of hidden. The &quot;+ New product&quot; button in the header now opens the new-product form instead of only switching tabs, the signed-out and load-failure screens carry a proper page heading, and a load failure offers a retry plus a route to the classic dashboard.</description>
 		</item>
 		<item>
 			<title>You can now delete your Forge creations, photos included</title>

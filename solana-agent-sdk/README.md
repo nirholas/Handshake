@@ -35,7 +35,7 @@
 npm install @three-ws/solana-agent @solana/web3.js
 ```
 
-`@solana/web3.js` (`^1.98`) is the base it builds on; `@solana/spl-token` and `@coral-xyz/anchor` ship as direct dependencies. `zod` is an optional peer dependency.
+`@solana/web3.js` (`^1.98`) is the base it builds on; `@solana/spl-token` and `@coral-xyz/anchor` ship as direct dependencies. `zod` is an optional peer dependency: the root, `/wallet`, `/x402-exact`, and `/vanity` entries work without it, but importing `/solana-agent-kit` requires it (`npm install zod`).
 
 ## Entry points
 
@@ -141,7 +141,7 @@ Types: `ExactPaymentRequirements` (`scheme`, `network`, `asset`, `amount`, `payT
 
 ## solana-agent-kit plugin
 
-For [solana-agent-kit](https://github.com/sendaifun/solana-agent-kit) v2, register the plugin:
+For [solana-agent-kit](https://github.com/sendaifun/solana-agent-kit) v2, register the plugin. This entry point needs `zod` installed (the `Action` tool-call schemas are zod schemas, per the solana-agent-kit contract):
 
 ```js
 import { SolanaAgentKit } from 'solana-agent-kit';
@@ -215,7 +215,8 @@ Typed error classes (exported from the root) for boundary handling: `SolanaAgent
 
 - **Node** `>= 18`.
 - **Base dep:** `@solana/web3.js@^1.98`. `@solana/spl-token` and
-  `@coral-xyz/anchor` ship as direct dependencies; `zod` is an optional peer dep.
+  `@coral-xyz/anchor` ship as direct dependencies; `zod` is an optional peer dep
+  (required only when importing `/solana-agent-kit`).
 - For browser signing, a `@solana/wallet-adapter` wallet or a user-supplied
   `SignerFn`.
 

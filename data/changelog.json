@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "x402 Studio is keyboard-usable, phone-usable, and no longer drops product-grid picks",
+			"summary": "A full pass over the x402 Studio merchant console. Editing a \"product grid\" block on the storefront builder silently saved an empty grid, because the checkbox lookup searched the wrong part of the page; it now saves exactly the products you tick. Half-built storefront layouts used to vanish the moment you visited another tab and came back, and now survive with an \"Unsaved changes\" marker until you save or publish. Every dialog is a real dialog: Escape closes it, Tab stays inside it, and focus returns to the control that opened it. The setup checklist rows are real buttons a keyboard can reach, every control has a visible focus ring, and the labels are correctly attached to their inputs. On a phone the \"Agent wallets\" heading no longer squeezed its description into a one-word column, and the sidebar links to the x402 explainer and the classic dashboard are reachable instead of hidden. The \"+ New product\" button in the header now opens the new-product form instead of only switching tabs, the signed-out and load-failure screens carry a proper page heading, and a load failure offers a retry plus a route to the classic dashboard.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/x402/studio"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Agent subscriptions and on-chain history reachable again",
+			"summary": "Two API endpoints were being swallowed by broader routing rules. The subscription skill's weekly USDC subscribe action posted to a path that a different subscription system answered, so every subscribe attempt failed validation; delegation-backed agent subscriptions now live at their own /api/agent-subscriptions path and the skill records them correctly. The public /api/agents/onchain-history endpoint, which returns an agent's verifiable on-chain event log with explorer links, was unreachable for the same reason and now resolves. The route audits that guard this now also model the chat app's build output, so /chat coverage is checked correctly in any workspace.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
 			"title": "@three-ws/sdk 0.2.3: works without optional wallet libraries installed",
 			"summary": "The browser SDK's permissions entry points failed to load for anyone who had not installed viem, even though viem is documented as optional and is only needed for delegation encoding. The SDK now loads viem the moment a delegation is actually encoded, the same way it already handles ethers and the Solana library, and a missing library produces a clear install instruction instead of a crash. The README also now reflects reality: on-chain registration works out of the box on the 22 chains with built-in canonical ERC-8004 registry addresses, with env-var overrides for custom deployments.",
 			"tags": [
@@ -20949,6 +20967,15 @@
 			"tags": [
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The x402 bridge no longer offers tools it will refuse to pay for",
+			"summary": "The @three-ws/mcp-bridge MCP server filters x402 Bazaar services by price at discovery time, so an agent only sees paid tools it can actually afford. But when no spending cap was configured, discovery treated that as no limit and listed everything, while the payment guard still enforced its default $0.10 per-call cap: any service priced above it showed up in the tool list and then failed on every single call. Discovery and the payment guard now read the same effective cap, default included, so an unaffordable tool is never registered in the first place. The bridge also now reports its real package version to MCP clients instead of a hardcoded 1.0.0, and its test suite gained hermetic coverage of the stdio boot, Bazaar tool naming, and both of these behaviors. The fix ships to npm with the next @three-ws/mcp-bridge release.",
+			"tags": [
+				"fix",
+				"sdk"
 			]
 		}
 	]
