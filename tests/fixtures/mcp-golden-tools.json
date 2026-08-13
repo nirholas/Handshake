@@ -2073,7 +2073,7 @@
 			"name": "enlist_faction",
 			"title": "Enlist in a Coin Clash faction",
 			"descHead": "Enlist the signer's wallet as a soldier in a Coin Clash faction and retu",
-			"descHash": "3ed7170eeeac",
+			"descHash": "c2bf62757178",
 			"annotations": {
 				"readOnlyHint": false,
 				"idempotentHint": true,
