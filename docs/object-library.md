@@ -41,8 +41,10 @@ Public, no authentication, CORS-open to GET from web origins. The endpoint proxi
 
 | Parameter | Type | Default | Notes |
 |---|---|---|---|
-| `limit` | integer, 1 to 1000 | none | Opt-in pagination. Omit it to get the entire library in one response. Values are clamped into 1..1000. |
-| `offset` | integer, >= 0 | 0 | Only meaningful together with `limit`. |
+| `limit` | integer, 1 to 1000 | none | Opt-in pagination. Omit it to get the entire library in one response. A value above 1000 is clamped to 1000. |
+| `offset` | integer, >= 0 | 0 | Requires `limit`; sent on its own it is an error, not a silent no-op. |
+
+Both cursors are validated strictly. Anything that is not a whole decimal number in range (`?limit=abc`, `?limit=0`, `?limit=2.7`, `?offset=-3`, or `?offset=` with no `limit`) returns `400` with a JSON body of `{ "error": "invalid_limit" | "invalid_offset", "error_description": "..." }` and `Cache-Control: no-store`. A bad cursor never degrades into a page you did not ask for.
 
 ### Response shape
 
@@ -72,7 +74,7 @@ Each entry in `objects`:
 | `license` | string | `"CC0"` |
 | `source` | string | Origin catalog, e.g. `"polyhaven"` |
 
-Before the manifest is first uploaded, the endpoint returns `{ "objects": [], "total": 0 }` rather than an error, so consumers feature-detect by emptiness.
+Before the manifest is first uploaded, the endpoint returns `{ "objects": [], "total": 0 }` rather than an error, so consumers feature-detect by emptiness. A storage outage degrades the same way, but that response carries `Cache-Control: no-store` instead of the 300s edge cache, so the library reappears the moment storage recovers rather than staying empty for the rest of the cache window.
 
 ### Example
 

@@ -9,6 +9,13 @@
 //
 // The server operator supplies WATSONX_* credentials; end users pay USDC per
 // call via x402 (gated in api/ibm-mcp.js) and never need an IBM Cloud account.
+//
+// Tool `name`, `title`, and `description` must stay STATIC string literals:
+// scripts/build-mcp-catalog.mjs parses this file with acorn and reads those
+// fields off the AST, so a template literal lands in public/mcp-catalog.json as
+// the un-evaluated source. Prices quoted in them are held to TOOL_PRICING by
+// tests/api/ibm-mcp.test.js instead. Runtime-only strings (the getting-started
+// payload) read their prices from pricing.js directly.
 
 import { watsonxConfig, watsonxChatComplete, watsonxEmbed } from '../_lib/watsonx.js';
 import { watsonxForecast } from '../_lib/watsonx-forecast.js';
@@ -73,13 +80,13 @@ const deterministicAnnotations = Object.freeze({
 	openWorldHint: true,
 });
 
-// MCP tool result helper. structuredContent carries the full machine-readable
-// object (the same shape the npm package returns); content[0].text is a concise
-// human-readable view for clients that render text.
 function isPlainObject(value) {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+// MCP tool result helper. structuredContent carries the full machine-readable
+// object (the same shape the npm package returns); content[0].text is a concise
+// human-readable view for clients that render text.
 function toolResult(humanText, structured) {
 	return {
 		content: [{ type: 'text', text: humanText }],

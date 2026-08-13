@@ -32,6 +32,19 @@ async function uploadToNftStorage(token, bytes, contentType) {
 	return `ipfs://${data.value.cid}`;
 }
 
+// Strict base64: the scene GLB and its thumbnail arrive base64-encoded, and
+// Buffer.from(x, 'base64') never throws — it silently drops every character
+// outside the alphabet. A truncated or accidentally-URL-encoded upload therefore
+// used to sail through as a shorter, corrupt buffer that we then pinned to IPFS
+// on the platform's own storage token and referenced from a real mint.
+const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
+
+function decodeBase64(value) {
+	const compact = value.replace(/\s+/g, '');
+	if (!compact || compact.length % 4 !== 0 || !BASE64_RE.test(compact)) return null;
+	return Buffer.from(compact, 'base64');
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
@@ -50,7 +63,11 @@ export default wrap(async (req, res) => {
 		return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
 	}
 
-	const body = await readJson(req);
+	// A scene GLB plus its PNG thumbnail, base64-inflated by 4/3, comfortably
+	// clears readJson's 1 MB default — which rejected every real mint with a 413
+	// before the handler saw a byte. 8 MB matches server/index.mjs BODY_LIMIT, the
+	// ceiling express enforces ahead of us anyway.
+	const body = await readJson(req, 8 * 1024 * 1024);
 	const { ownerPubkey, glbBase64, thumbnailBase64, name, description } = body || {};
 
 	if (!ownerPubkey || typeof ownerPubkey !== 'string')
@@ -62,11 +79,29 @@ export default wrap(async (req, res) => {
 	if (!name || typeof name !== 'string' || !name.trim())
 		return error(res, 400, 'validation_error', 'name required');
 
+	const glbBytes = decodeBase64(glbBase64);
+	if (!glbBytes) return error(res, 400, 'validation_error', 'glbBase64 is not valid base64');
+	const thumbBytes = decodeBase64(thumbnailBase64);
+	if (!thumbBytes) return error(res, 400, 'validation_error', 'thumbnailBase64 is not valid base64');
+
+	// Resolve the owner key BEFORE anything is pinned. It used to be parsed only
+	// after all three IPFS uploads, so a typo'd pubkey burned three writes on the
+	// platform's storage token and then answered 400 anyway.
+	const rpcUrl = env.SOLANA_RPC_URL;
+	const umi = createUmi(solanaConnection({ url: rpcUrl })).use(mplCore());
+
+	let ownerPk;
+	try {
+		ownerPk = umiPublicKey(ownerPubkey);
+	} catch {
+		return error(res, 400, 'validation_error', 'invalid ownerPubkey');
+	}
+
 	let glbUri, thumbUri;
 	try {
 		[glbUri, thumbUri] = await Promise.all([
-			uploadToNftStorage(storageToken, Buffer.from(glbBase64, 'base64'), 'model/gltf-binary'),
-			uploadToNftStorage(storageToken, Buffer.from(thumbnailBase64, 'base64'), 'image/png'),
+			uploadToNftStorage(storageToken, glbBytes, 'model/gltf-binary'),
+			uploadToNftStorage(storageToken, thumbBytes, 'image/png'),
 		]);
 	} catch (e) {
 		console.error('[nft/mint-scene] asset upload failed', e?.message);
@@ -99,19 +134,10 @@ export default wrap(async (req, res) => {
 		return respondError(res, e.status || 502, e.code || 'upstream_error', e);
 	}
 
-	// Failover Connection rather than a bare URL: the mint's getLatestBlockhash and
-	// account reads rotate across the endpoint chain, so a single node's
-	// malformed/empty 200 body fails over instead of throwing the StructError crash.
-	const rpcUrl = env.SOLANA_RPC_URL;
-	const umi = createUmi(solanaConnection({ url: rpcUrl })).use(mplCore());
-
-	let ownerPk;
-	try {
-		ownerPk = umiPublicKey(ownerPubkey);
-	} catch {
-		return error(res, 400, 'validation_error', 'invalid ownerPubkey');
-	}
-
+	// The umi instance above uses the failover Connection rather than a bare URL:
+	// the mint's getLatestBlockhash and account reads rotate across the endpoint
+	// chain, so a single node's malformed/empty 200 body fails over instead of
+	// throwing the StructError crash.
 	umi.use(signerIdentity(createNoopSigner(ownerPk)));
 	const assetSigner = generateSigner(umi);
 
@@ -122,8 +148,15 @@ export default wrap(async (req, res) => {
 		uri: metadataUri,
 	});
 
-	const txBytes = await builder.buildAndSign(umi);
-	const unsignedTxBase64 = Buffer.from(txBytes).toString('base64');
+	// buildAndSign resolves to a umi Transaction object ({message, signatures,
+	// serializedMessage}), NOT wire bytes. Handing that straight to Buffer.from
+	// threw "The first argument must be of type string or an instance of Buffer,
+	// ArrayBuffer, or Array" on every otherwise-successful mint, after the three
+	// IPFS uploads had already been paid for. umi.transactions.serialize is the
+	// wire encoder, and is what the sibling mint paths
+	// (api/agents/onchain/[action].js, api/agents/solana/_handlers.js) use.
+	const tx = await builder.buildAndSign(umi);
+	const unsignedTxBase64 = Buffer.from(umi.transactions.serialize(tx)).toString('base64');
 	const mint = assetSigner.publicKey.toString();
 
 	return json(res, 200, { unsignedTxBase64, metadataUri, mint });

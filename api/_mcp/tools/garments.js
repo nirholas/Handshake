@@ -151,8 +151,16 @@ export const toolDefs = [
 				garment_id: job.garment_id || null,
 				error: job.error || null,
 			};
+			// A job can finish without the worker reporting coverage. `null * 100`
+			// is 0, so interpolating it directly announced a measured "0.0%" bind
+			// coverage, a number the pipeline never produced and one that reads as
+			// a failure of the 60% gate the garment actually passed.
+			const coverageText =
+				pub.coverage === null
+					? 'coverage not reported'
+					: `coverage ${(pub.coverage * 100).toFixed(1)}%`;
 			const line = pub.status === 'done'
-				? `Garment ${pub.garment_id} published: ${pub.glb_url} (coverage ${(pub.coverage * 100).toFixed(1)}%, occludes ${pub.occludes?.join(', ') || 'nothing'}).`
+				? `Garment ${pub.garment_id} published: ${pub.glb_url} (${coverageText}, occludes ${pub.occludes?.join(', ') || 'nothing'}).`
 				: pub.status === 'failed'
 					? `Garment job failed: ${pub.error}`
 					: `Garment job ${pub.status} — stage: ${pub.stage}.`;

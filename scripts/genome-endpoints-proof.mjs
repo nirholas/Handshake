@@ -265,9 +265,9 @@ async function main() {
 		const { rows: [a] } = await db.query(
 			`insert into agent_identities (user_id, name, is_public, skills, persona_tone_tags,
 				voice_provider, voice_id, voice_model, voice_settings, meta)
-			 values ($1, $2, $3, $4::jsonb, $5::jsonb, 'elevenlabs', $6, 'eleven_flash_v2_5', $7::jsonb, $8::jsonb)
+			 values ($1, $2, $3, $4::text[], $5::jsonb, 'elevenlabs', $6, 'eleven_flash_v2_5', $7::jsonb, $8::jsonb)
 			 returning id`,
-			[userId, name, isPublic, JSON.stringify(['trading', 'research']), JSON.stringify(['precise']),
+			[userId, name, isPublic, ['trading', 'research'], JSON.stringify(['precise']),
 				`voice-${name}`, JSON.stringify({ stability: 0.4, similarity_boost: 0.8, style: 0.3, use_speaker_boost: true }),
 				JSON.stringify(meta)],
 		);

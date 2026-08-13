@@ -202,7 +202,10 @@ export default wrap(async (req, res) => {
 			owner_secret_hash = COALESCE(launchpad_pages.owner_secret_hash, EXCLUDED.owner_secret_hash),
 			user_id           = COALESCE(EXCLUDED.user_id, launchpad_pages.user_id),
 			config            = EXCLUDED.config,
-			token_mint        = EXCLUDED.token_mint,
+			-- A launched mint is a permanent on-chain fact. Re-publishing from a
+			-- studio draft that predates the launch must not erase it (which would
+			-- also drop the page out of list.js's "already minted" sort).
+			token_mint        = COALESCE(EXCLUDED.token_mint, launchpad_pages.token_mint),
 			updated_at        = now()
 	`;
 

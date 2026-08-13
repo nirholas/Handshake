@@ -1,9 +1,9 @@
 // GET /api/marketplace/trial-status is the marketplace's conversion surface, and
 // the number a seller acts on is the money sitting in the trial queue. That
 // number used to be summed across every mint at once and then labelled with
-// whichever mint happened to head the queue, so a seller pricing one skill in
-// MINT_6DP and another in an 8-decimal token read a headline that was wrong by
-// orders of magnitude. These tests pin the per-mint totals, the trial lifecycle
+// whichever mint happened to head the queue, so a seller pricing one skill in a
+// 6-decimal mint and another in a 9-decimal one read a headline wrong by orders
+// of magnitude. These tests pin the per-mint totals, the trial lifecycle
 // states the buyer view renders against, the atomic formatter (token amounts
 // overflow a JS number, so they never go through Number()), and the auth wall.
 
@@ -148,7 +148,7 @@ describe('sellerView', () => {
 		expect(out.role).toBe('seller');
 		expect(out.summary.warmLeads).toBe(3);
 		expect(out.summary.sold).toBe(2);
-		// MINT_6DP: 2 exhausted x 2 MINT_6DP. $THREE: 1 exhausted x 0.5.
+		// 6dp mint: 2 exhausted buyers x 2 each. $THREE: 1 exhausted buyer x 0.5.
 		expect(out.summary.potentials).toEqual([
 			{ mint: MINT_6DP, decimals: 6, atomic: '4000000', display: '4' },
 			{ mint: THREE, decimals: 9, atomic: '500000000', display: '0.5' },

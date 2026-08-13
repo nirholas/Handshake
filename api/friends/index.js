@@ -90,8 +90,13 @@ async function graphWithPresence(me) {
 	try {
 		graph = await listGraph(me);
 	} catch (err) {
-		// Friends tables may not be migrated yet — return an empty graph rather than 500.
-		if (err?.message?.includes('relation') || err?.message?.includes('does not exist')) {
+		// Friends tables may not be migrated yet: return an empty graph rather than
+		// 500. Keyed on the Postgres undefined_table code, never on a substring of
+		// the message. A missing-COLUMN error reads "column X of relation Y does not
+		// exist", so message matching also swallowed a half-applied migration and
+		// answered 200 with an empty graph: the caller saw "you have no friends"
+		// instead of an error, and nothing surfaced the broken schema.
+		if (err?.code === '42P01') {
 			return { friends: [], incoming: [], outgoing: [] };
 		}
 		throw err;

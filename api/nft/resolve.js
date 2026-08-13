@@ -14,6 +14,30 @@ const RESOLVE_TTL_SECONDS = 6 * 60 * 60; // 6h
 // descriptor during a Helius/Alchemy outage is correct — far better than a 502.
 const RESOLVE_STALE_TTL_SECONDS = 30 * 24 * 60 * 60; // 30d
 
+// Alchemy NFT API host per EVM chainId. An id of the form
+// "chainId:contract:tokenId" (exactly what api/users/[username]/collectibles.js
+// emits for every EVM collectible) used to have its chainId parsed and then
+// thrown away, so a Base or Polygon NFT was always looked up on Ethereum
+// mainnet and came back as a 404 or, worse, as an unrelated Ethereum token that
+// happens to share the contract/tokenId pair. Keep this list aligned with the
+// hosts in api/_lib/evm/rpc.js ALCHEMY_SUBDOMAIN.
+const ALCHEMY_NFT_HOST = {
+	1: 'eth-mainnet',
+	10: 'opt-mainnet',
+	56: 'bnb-mainnet',
+	137: 'polygon-mainnet',
+	324: 'zksync-mainnet',
+	8453: 'base-mainnet',
+	42161: 'arb-mainnet',
+	43114: 'avax-mainnet',
+	59144: 'linea-mainnet',
+	534352: 'scroll-mainnet',
+	84532: 'base-sepolia',
+	421614: 'arb-sepolia',
+	11155111: 'eth-sepolia',
+	11155420: 'opt-sepolia',
+};
+
 export default wrap(async (req, res) => {
 	if (cors(req, res)) return;
 	if (!method(req, res, ['POST'])) return;
@@ -21,7 +45,10 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const body = await readJson(req);
+	// A bare `null` JSON body parses to null, and reading `.chain` off it threw a
+	// TypeError that surfaced as an opaque 500 instead of the 400 every other
+	// malformed body gets.
+	const body = (await readJson(req)) || {};
 	const chain = String(body.chain || '').toLowerCase();
 	const id = String(body.id || '').trim();
 
@@ -102,19 +129,34 @@ export default wrap(async (req, res) => {
 		return json(res, 200, result);
 	}
 
-	// EVM: id is "contract:tokenId" or "chainId:contract:tokenId"
+	// EVM: id is "contract:tokenId" (Ethereum mainnet) or "chainId:contract:tokenId"
 	const parts = id.split(':');
-	let contractAddress, tokenId;
+	let contractAddress, tokenId, chainId;
 	if (parts.length === 2) {
 		[contractAddress, tokenId] = parts;
+		chainId = 1;
 	} else if (parts.length === 3) {
 		[, contractAddress, tokenId] = parts;
+		chainId = Number(parts[0]);
 	} else {
 		return error(res, 400, 'bad_request', 'evm id must be "contract:tokenId" or "chainId:contract:tokenId"');
 	}
 
-	const apiKey = env.ALCHEMY_API_KEY;
-	const url = `https://eth-mainnet.g.alchemy.com/nft/v3/${apiKey}/getNFTMetadata?contractAddress=${encodeURIComponent(contractAddress)}&tokenId=${encodeURIComponent(tokenId)}`;
+	const host = ALCHEMY_NFT_HOST[chainId];
+	if (!host) {
+		return error(res, 400, 'bad_request', `unsupported evm chainId ${parts[0]}`);
+	}
+
+	// `env` exposes no ALCHEMY getter, so the previous `env.ALCHEMY_API_KEY` read
+	// was undefined in every environment: the whole EVM branch built a URL with a
+	// literal "undefined" key and answered 502 on a 401 from Alchemy, configured
+	// or not. Read the raw var (the same way collectibles.js, balances.js and
+	// scene/gate-check.js do) and say plainly when it is missing.
+	const apiKey = process.env.ALCHEMY_API_KEY;
+	if (!apiKey) {
+		return error(res, 503, 'not_configured', 'ALCHEMY_API_KEY not configured — evm nft resolution is unavailable');
+	}
+	const url = `https://${host}.g.alchemy.com/nft/v3/${apiKey}/getNFTMetadata?contractAddress=${encodeURIComponent(contractAddress)}&tokenId=${encodeURIComponent(tokenId)}`;
 	let resp;
 	try {
 		resp = await fetch(url);

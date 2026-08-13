@@ -4,8 +4,17 @@
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
+import { requireCsrf } from '../_lib/csrf.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { z } from 'zod';
+
+// `mocap_clips.id` is a uuid column, so anything that is not a well-formed UUID
+// must be rejected here rather than handed to Postgres: binding e.g. "12345678"
+// raises SQLSTATE 22P02 (invalid input syntax for type uuid), which wrap() can
+// only classify as an unhandled 5xx, so a caller typo answered 500 and fired a
+// Sentry event plus an ops alert. Matches what gen_random_uuid() emits, in any
+// hex case, without demanding a specific version/variant nibble.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const patchSchema = z.object({
 	name: z.string().trim().min(1).max(120).optional(),
@@ -29,14 +38,19 @@ export default wrap(async (req, res) => {
 	const id =
 		req.query?.id ||
 		new URL(req.url, 'http://x').pathname.split('/').filter(Boolean).pop();
-	if (!id || !/^[0-9a-f-]{8,}$/i.test(id)) {
-		return error(res, 400, 'invalid_request', 'id required');
+	if (!id || !UUID_RE.test(id)) {
+		return error(res, 400, 'invalid_request', 'id must be a clip UUID');
 	}
 
 	const auth = await resolveAuth(req);
 
 	if (req.method === 'GET') return handleGet(req, res, auth, id);
 	if (!auth) return error(res, 401, 'unauthorized', 'authentication required');
+	// Cookie-session mutations need a CSRF token; bearer callers self-exempt
+	// inside requireCsrf. Mirrors api/avatars/[id].js — this endpoint is
+	// credentialed CORS, and the allowlist includes partner origins, so a
+	// same-site cookie alone is not proof of intent.
+	if (!(await requireCsrf(req, res, auth.userId))) return;
 	if (req.method === 'PATCH') return handlePatch(req, res, auth, id);
 	return handleDelete(req, res, auth, id);
 });
@@ -52,7 +66,13 @@ async function handleGet(req, res, auth, id) {
 		limit 1
 	`;
 	if (!row) return error(res, 404, 'not_found', 'clip not found');
-	const ownerView = auth?.userId === row.owner_id;
+	// A bearer credential only unlocks the owner's private view when it actually
+	// carries avatars:read. Without this an API key scoped to something else
+	// entirely (say wallet:read) could read its owner's private clips, while the
+	// list endpoint next door correctly refuses. An under-scoped bearer degrades
+	// to the anonymous view so public clips still resolve for it.
+	const scoped = auth?.source === 'session' || hasScope(auth?.scope, 'avatars:read');
+	const ownerView = !!auth && scoped && auth.userId === row.owner_id;
 	if (!ownerView && row.visibility === 'private') {
 		return error(res, 404, 'not_found', 'clip not found');
 	}

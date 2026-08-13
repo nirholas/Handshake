@@ -207,7 +207,7 @@ export default wrap(async (req, res) => {
 	if (windowed.length < 3) {
 		return error(
 			res, 503, 'insufficient_coverage',
-			`only ${windowed.length} articles published in the last ${hours}h — try a wider window`,
+			`only ${windowed.length} articles published in the last ${hours}h; try a wider window`,
 		);
 	}
 

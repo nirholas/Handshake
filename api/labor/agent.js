@@ -4,6 +4,7 @@
 
 import { cors, error, json, method, wrap } from '../_lib/http.js';
 import { agentLaborStats, listBountiesForAgent, getLaborPolicy } from '../_lib/agent-labor.js';
+import { requireUuid } from '../_lib/labor-auth.js';
 import { sql } from '../_lib/db.js';
 
 export default wrap(async (req, res) => {
@@ -13,6 +14,7 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://localhost');
 	const agentId = url.searchParams.get('agentId');
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId is required');
+	if (!requireUuid(res, agentId, 'agentId')) return;
 
 	const [stats, posted, policy, jobs] = await Promise.all([
 		agentLaborStats(agentId),

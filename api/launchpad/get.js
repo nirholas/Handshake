@@ -10,7 +10,10 @@ import { cors, error, json, method, wrap } from '../_lib/http.js';
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// Same open policy as /api/launchpad/list: this is a public read of a page
+	// that is already served to anyone at /p/<slug>, with no cookies involved, so
+	// an embed hosted on the creator's own domain can hydrate it too.
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');

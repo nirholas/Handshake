@@ -492,3 +492,67 @@ describe('pipeline state machine', () => {
 		expect(s.result.structuredContent.error).toBe('invalid_job_id');
 	});
 });
+
+// The fallback template is what a keyless deployment (or a downed LLM chain)
+// actually sends to the generator, so its budget math is load-bearing rather
+// than a nicety: an over-budget prompt is silently mangled by the text encoder.
+describe('prompt shaping', () => {
+	it('leads with the first sentence of the brief plus the style hints, inside the generator budget', () => {
+		const p = identity.fallbackIdentityPrompt({
+			brief: 'A calm on-chain accounting agent. It also files quarterly taxes and audits vaults.',
+			styleHints: 'deep navy and silver',
+		});
+		expect(p).toContain(
+			'full-body humanoid character embodying: A calm on-chain accounting agent, deep navy and silver',
+		);
+		// Later sentences are backstory, not a visual subject.
+		expect(p).not.toContain('quarterly taxes');
+		expect(p).toContain('standing neutral pose');
+		expect(p.length).toBeLessThanOrEqual(identity.MAX_GENERATION_PROMPT_CHARS);
+	});
+
+	it('a CJK brief keeps its first sentence and never crowds out the hints', () => {
+		const p = identity.fallbackIdentityPrompt({
+			brief: '一个冷静精准的链上会计智能体。它还负责季度报税与金库审计工作。',
+			styleHints: 'deep navy and silver',
+		});
+		// A CJK terminator carries no trailing space, so the sentence split has to
+		// cut on a zero-width boundary or the whole brief counts as one sentence.
+		expect(p).toContain('一个冷静精准的链上会计智能体');
+		expect(p).not.toContain('季度报税');
+		expect(p).toContain('deep navy and silver');
+	});
+
+	it('an over-long single-sentence brief is cut clean, hints survive, no dangling punctuation', () => {
+		const p = identity.fallbackIdentityPrompt({
+			brief: `${'a very long rambling description of the agent '.repeat(20)}and more`,
+			styleHints: `${'ultra detailed cinematic lighting '.repeat(10)}chrome`,
+		});
+		expect(p.length).toBeLessThanOrEqual(identity.MAX_GENERATION_PROMPT_CHARS);
+		expect(p).toContain('ultra detailed cinematic lighting');
+		expect(p).not.toMatch(/[,;:.]\s*,/);
+		expect(p).toMatch(/plain background$/);
+	});
+
+	it('shapeIdentityPrompt falls back when the director is down and reports it', async () => {
+		const shaped = await identity.shapeIdentityPrompt({
+			agentName: 'LedgerLynx',
+			brief: 'a calm on-chain accounting agent',
+			styleHints: null,
+		});
+		expect(shaped.directed).toBe(null);
+		expect(shaped.effective).toContain('full-body humanoid character embodying');
+	});
+
+	it('shapeIdentityPrompt rejects a director answer that is prose rather than a prompt', async () => {
+		llmSpy.fn = async () => ({ text: 'x'.repeat(1200) });
+		const shaped = await identity.shapeIdentityPrompt({
+			agentName: 'LedgerLynx',
+			brief: 'a calm on-chain accounting agent',
+			styleHints: null,
+		});
+		expect(shaped.directed).toBe(null);
+		expect(shaped.effective).toContain('full-body humanoid character embodying');
+		expect(shaped.effective.length).toBeLessThanOrEqual(identity.MAX_GENERATION_PROMPT_CHARS);
+	});
+});

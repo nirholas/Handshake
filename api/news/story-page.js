@@ -57,12 +57,30 @@ async function loadShell() {
 
 // Replace the content="…" of every <meta> whose property/name matches `key`,
 // tolerating either attribute order. Values are pre-escaped by the caller.
+//
+// The shell's meta tags carry data-i18n-attr hooks, and src/i18n.js rewrites
+// those attributes from the active catalog on load. A story's own title and
+// description are not translatable shell copy, so the hook is dropped from
+// every tag this fills: otherwise a non-English visitor's i18n pass would
+// overwrite the story-specific og:title/description with reader boilerplate.
 function setMetaContent(html, key, value) {
 	return html.replace(/<meta\b[^>]*>/g, (tag) =>
 		new RegExp(`(?:property|name)=["']${key}["']`).test(tag)
-			? tag.replace(/content=["'][^"']*["']/, () => `content="${value}"`)
+			? tag
+					.replace(/content=["'][^"']*["']/, () => `content="${value}"`)
+					.replace(/\s*data-i18n-attr=["'][^"']*["']/g, '')
 			: tag,
 	);
+}
+
+// Swap the whole <title> element, attributes and all. The shell ships
+// `<title data-i18n="news_article.meta_title">`, so a bare /<title>/ pattern
+// matches nothing and the permalink keeps the generic reader title: the very
+// tag a crawler, a SERP, and a link preview read first. Emitting a plain
+// <title> also hands the tag to the server, the same ownership handoff
+// src/forge.js makes when a route owns the tab title.
+function setTitle(html, title) {
+	return html.replace(/<title\b[^>]*>[\s\S]*?<\/title>/, () => `<title>${title}</title>`);
 }
 
 function fmtDate(iso) {
@@ -157,13 +175,13 @@ function crawlerBodyHtml(a) {
 export function renderStoryHtml(shell, a) {
 	const canonical = storyPath(a);
 	const canonicalAbs = `${ORIGIN}${canonical}`;
-	const description = (a.description || `${a.title} — ${a.source} coverage on the three.ws crypto news reader.`).slice(0, 300);
+	const description = (a.description || `${a.title}. ${a.source} coverage on the three.ws crypto news reader.`).slice(0, 300);
 	const ogFallback = `${ORIGIN}/api/page-og?s=crypto&t=${encodeURIComponent(a.title.slice(0, 80))}&d=${encodeURIComponent(description.slice(0, 160))}&p=${encodeURIComponent(canonical)}`;
 	const ogImage = a.image || ogFallback;
 	const date = fmtDate(a.pub_date);
-	const title = `${a.title} — ${a.source}${date ? `, ${date}` : ''} · three.ws`;
+	const title = `${a.title} (${a.source}${date ? `, ${date}` : ''}) · three.ws`;
 
-	let html = shell.replace(/<title>[\s\S]*?<\/title>/, () => `<title>${esc(title)}</title>`);
+	let html = setTitle(shell, esc(title));
 	html = setMetaContent(html, 'description', esc(description));
 	html = setMetaContent(html, 'robots', 'index, follow');
 	html = setMetaContent(html, 'og:title', esc(a.title));
@@ -228,9 +246,10 @@ function removedHtml(shell, sup) {
 			<p><a class="arc-btn" href="/markets/news">Latest crypto news</a>
 			<a class="arc-btn ghost" href="/markets/archive">Search the archive</a></p>
 		</div>`;
-	let html = shell
-		.replace(/<title>[\s\S]*?<\/title>/, () => `<title>Story removed · Crypto News · three.ws</title>`)
-		.replace(/<article id="art-root"[^>]*>[\s\S]*?<\/article>/, () => `<article id="art-root">${body}</article>`);
+	let html = setTitle(shell, 'Story removed · Crypto News · three.ws').replace(
+		/<article id="art-root"[^>]*>[\s\S]*?<\/article>/,
+		() => `<article id="art-root">${body}</article>`,
+	);
 	// noindex is load-bearing here: this page must not be re-indexed under any
 	// circumstance, including if a crawler ignores the 410.
 	html = setMetaContent(html, 'robots', 'noindex, nofollow');
@@ -250,9 +269,10 @@ function notFoundHtml(shell, month, slug) {
 			<p><a class="arc-btn" href="${esc(searchHref)}">${q ? `Search the archive for “${esc(q)}”` : 'Search the 660k-article archive'}</a>
 			<a class="arc-btn ghost" href="/markets/news">Latest crypto news</a></p>
 		</div>`;
-	return shell
-		.replace(/<title>[\s\S]*?<\/title>/, () => `<title>Story not found · Crypto News · three.ws</title>`)
-		.replace(/<article id="art-root"[^>]*>[\s\S]*?<\/article>/, () => `<article id="art-root">${body}</article>`);
+	return setTitle(shell, 'Story not found · Crypto News · three.ws').replace(
+		/<article id="art-root"[^>]*>[\s\S]*?<\/article>/,
+		() => `<article id="art-root">${body}</article>`,
+	);
 }
 
 export default wrap(async (req, res) => {

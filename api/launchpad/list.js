@@ -15,6 +15,22 @@ import { cors, error, json, method, wrap } from '../_lib/http.js';
 
 const TEMPLATES = ['token-launchpad', 'paid-concierge', 'gated-showroom'];
 
+// Deepest page a caller may ask for. Postgres takes LIMIT/OFFSET as bigints, so
+// a fractional value ("limit=1.5") or one past 2^63 ("offset=1e99") makes the
+// driver reject the whole query and 500 the endpoint. Clamping to a whole
+// number inside a sane window keeps junk query strings a 200 with an empty page
+// instead of an error, which is what a crawler walking `?offset=` deserves.
+const MAX_OFFSET = 100_000;
+
+// Coerce a query-string integer. Missing, empty, non-numeric, and 0 all take the
+// default (matching the previous `Number(x) || default`); anything else is
+// floored and clamped into [min, max].
+function pageInt(raw, fallback, { min, max }) {
+	const n = Number(raw);
+	if (!Number.isFinite(n) || n === 0) return fallback;
+	return Math.min(Math.max(min, Math.floor(n)), max);
+}
+
 // Map a stored page row to the public card projection the gallery renders.
 // Pulls a single representative image (token logo when present) and the brand
 // color so a card is never a blank rectangle even before the 3D avatar loads.
@@ -50,8 +66,8 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
-	const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 24), 60);
-	const offset = Math.max(0, Number(url.searchParams.get('offset')) || 0);
+	const limit = pageInt(url.searchParams.get('limit'), 24, { min: 1, max: 60 });
+	const offset = pageInt(url.searchParams.get('offset'), 0, { min: 0, max: MAX_OFFSET });
 	const template = url.searchParams.get('template') || '';
 	if (template && !TEMPLATES.includes(template)) {
 		return error(res, 400, 'validation_error', 'unknown template filter');
@@ -80,11 +96,18 @@ export default wrap(async (req, res) => {
 	const hasMore = rows.length > limit;
 	const pages = rows.slice(0, limit).map(toCard);
 
-	// Cheap aggregate so the hero can show a real "N pages live" stat. Counts all
-	// public pages; harmless if it races slightly with the list above.
+	// Cheap aggregate so the hero can show a real "N pages live" stat. Counts the
+	// same set the caller is paging through — an unfiltered count next to a
+	// template-filtered list reads as "24 gated showrooms" when only one exists.
+	// Harmless if it races slightly with the list above.
 	let total = null;
 	if (offset === 0) {
-		const [agg] = await sql`SELECT count(*)::int AS n FROM launchpad_pages WHERE is_public = true`;
+		const [agg] = template
+			? await sql`
+					SELECT count(*)::int AS n FROM launchpad_pages
+					WHERE is_public = true AND template = ${template}
+				`
+			: await sql`SELECT count(*)::int AS n FROM launchpad_pages WHERE is_public = true`;
 		total = agg?.n ?? null;
 	}
 

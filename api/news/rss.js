@@ -41,7 +41,7 @@ export default wrap(async (req, res) => {
 	const { articles } = await getNews({ category, limit, curated: true });
 	const feedUrl = `https://three.ws/api/news/rss${category ? `?category=${category}` : ''}`;
 	const pageUrl = `https://three.ws/markets/news${category ? `?category=${category}` : ''}`;
-	const title = `three.ws Crypto News${category ? ` — ${category}` : ''}`;
+	const title = `three.ws Crypto News${category ? `: ${category}` : ''}`;
 
 	const items = articles
 		.map((a) => {
@@ -64,7 +64,7 @@ export default wrap(async (req, res) => {
 		<title>${xml(title)}</title>
 		<link>${xml(pageUrl)}</link>
 		<atom:link href="${xml(feedUrl)}" rel="self" type="application/rss+xml" />
-		<description>Live crypto news aggregated by three.ws from ${SOURCE_COUNT} publisher feeds${category ? ` — ${category} category` : ''}.</description>
+		<description>Live crypto news aggregated by three.ws from ${SOURCE_COUNT} publisher feeds${category ? ` (${category} category)` : ''}.</description>
 		<language>en</language>
 		<lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 		<ttl>5</ttl>

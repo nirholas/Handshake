@@ -53,13 +53,40 @@ function unavailable(err, what) {
 const LIVE = { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true };
 const WRITE = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 
-function traderScore(r) {
-	if (r.score >= 75 && r.verified) return 'copy';
-	if (r.score >= 60 || (r.win_rate >= 60 && r.closed >= 5)) return 'watch';
+// computeTraderMetrics reports win_rate as a 0-to-1 ratio (wins / closed), and
+// both payloads publish it under `win_rate_pct`. Without this scaling a flawless
+// 2-for-2 leader was handed to the calling agent as a "1% win rate", and the
+// `watch` tier below could never fire because a ratio never reaches 60.
+function winRatePct(ratio) {
+	return ratio == null ? null : Math.round(ratio * 1000) / 10;
+}
+
+function recommendationFor({ score, verified, winPct, closed }) {
+	if (score >= 75 && verified) return 'copy';
+	if (score >= 60 || (winPct >= 60 && closed >= 5)) return 'watch';
 	return 'skip';
 }
 
+// shapeClosed() carries opened_at/closed_at, never a duration, so the hold time
+// the profile advertises has to be derived from the two timestamps.
+function holdSeconds(trade) {
+	const opened = Date.parse(trade.opened_at ?? '');
+	const closed = Date.parse(trade.closed_at ?? '');
+	return Number.isFinite(opened) && Number.isFinite(closed)
+		? Math.round((closed - opened) / 1000)
+		: null;
+}
+
+// Only x402 principals carry a rateKey; OAuth and API-key callers carry a userId
+// instead. Falling straight through to 'anon' put every signed-in caller into one
+// shared bucket with every anonymous one, so a single busy account throttled the
+// whole tool for everybody.
+function rateKeyFor(auth) {
+	return auth?.rateKey || (auth?.userId ? `user:${auth.userId}` : 'anon');
+}
+
 function shapeLeaderboardRow(r) {
+	const winPct = winRatePct(r.win_rate);
 	return {
 		rank:             r.rank,
 		agent_id:         r.agent_id,
@@ -71,7 +98,7 @@ function shapeLeaderboardRow(r) {
 		open_positions:   r.open_positions,
 		wins:             r.wins,
 		losses:           r.losses,
-		win_rate_pct:     r.win_rate,
+		win_rate_pct:     winPct,
 		realized_pnl_sol: r.realized_pnl_sol,
 		realized_pnl_usd: r.realized_pnl_usd ?? null,
 		roi_pct:          r.roi_pct,
@@ -79,7 +106,7 @@ function shapeLeaderboardRow(r) {
 		max_drawdown_pct: r.max_drawdown_pct,
 		copiers:          r.copiers,
 		last_active_at:   r.last_active_at,
-		recommendation:   traderScore(r),
+		recommendation:   recommendationFor({ score: r.score, verified: r.verified, winPct, closed: r.closed }),
 		profile_url:      `https://three.ws/trader/${r.agent_id}`,
 	};
 }
@@ -113,7 +140,7 @@ export const toolDefs = [
 			const limit        = Number.isFinite(asked) ? Math.min(50, Math.max(1, Math.floor(asked))) : 10;
 			const verifiedOnly = !!args?.verified_only;
 
-			const rl = await limits.mcpIp(auth.rateKey || 'anon');
+			const rl = await limits.mcpIp(rateKeyFor(auth));
 			if (!rl.success) return mcpErr('Rate limit exceeded, try again in a moment.');
 
 			let result;
@@ -167,7 +194,7 @@ export const toolDefs = [
 			const network = NETWORKS.has(args?.network) ? args.network : 'mainnet';
 			const window  = WINDOWS.has(args?.window) ? args.window : 'all';
 
-			const rl = await limits.mcpIp(auth.rateKey || 'anon');
+			const rl = await limits.mcpIp(rateKeyFor(auth));
 			if (!rl.success) return mcpErr('Rate limit exceeded, try again in a moment.');
 
 			let stats;
@@ -180,16 +207,25 @@ export const toolDefs = [
 			if (!stats.agent.is_public) return mcpErr('This agent\'s track record is not public.');
 
 			const m = stats.metrics;
+			// Field names here must track shapeClosed() in trader-stats.js. They did
+			// not: realized_pnl_sol / realized_pnl_pct / sell_solscan never existed on
+			// a closed trade, so every trade in this tool's headline "verifiable track
+			// record" came back with a null P&L, no Solscan proof, and an outcome of
+			// 'flat' regardless of how big the win was. moonbag_held and self_dealing
+			// ride along because a partial exit and a self-launched coin are exactly
+			// what an agent vetting a leader must not be shown a clean number for.
 			const topTrades = (stats.closed || []).slice(0, 10).map((t) => ({
 				symbol:          t.symbol,
 				mint:            t.mint,
-				outcome:         t.realized_pnl_pct > 5 ? 'win' : t.realized_pnl_pct < -5 ? 'loss' : 'flat',
-				pnl_sol:         t.realized_pnl_sol,
-				pnl_pct:         t.realized_pnl_pct,
-				hold_seconds:    t.hold_seconds,
+				outcome:         t.pnl_pct > 5 ? 'win' : t.pnl_pct < -5 ? 'loss' : 'flat',
+				pnl_sol:         t.pnl_sol ?? null,
+				pnl_pct:         t.pnl_pct ?? null,
+				hold_seconds:    holdSeconds(t),
 				exit_reason:     t.exit_reason,
 				closed_at:       t.closed_at,
-				proof_url:       t.sell_solscan || t.buy_solscan || null,
+				moonbag_held:    t.moonbag_held === true,
+				self_dealing:    t.self_dealing === true,
+				proof_url:       t.sell_url || t.buy_url || null,
 			}));
 
 			// The tool description promises open positions; only the count was ever
@@ -205,7 +241,8 @@ export const toolDefs = [
 				proof_url:      p.buy_url || null,
 			}));
 
-			const rec = traderScore({ score: m.score, verified: m.verified, win_rate: m.win_rate, closed: m.closed_count });
+			const winPct = winRatePct(m.win_rate);
+			const rec = recommendationFor({ score: m.score, verified: m.verified, winPct, closed: m.closed_count });
 
 			const payload = {
 				agent_id:        agentId,
@@ -222,7 +259,7 @@ export const toolDefs = [
 					open_positions:     m.open_count,
 					wins:               m.wins,
 					losses:             m.losses,
-					win_rate_pct:       m.win_rate,
+					win_rate_pct:       winPct,
 					realized_pnl_sol:   m.realized_pnl_sol,
 					realized_pnl_usd:   m.realized_pnl_usd ?? null,
 					roi_pct:            m.roi_pct,
@@ -286,7 +323,7 @@ export const toolDefs = [
 
 			const network = NETWORKS.has(args?.network) ? args.network : 'mainnet';
 
-			const rl = await limits.mcpIp(auth.rateKey || 'anon');
+			const rl = await limits.mcpIp(rateKeyFor(auth));
 			if (!rl.success) return mcpErr('Rate limit exceeded, try again in a moment.');
 
 			// Validate leader exists and is public
@@ -348,6 +385,13 @@ export const toolDefs = [
 			// we still report created vs updated. copy_sells and require_safety_pass are
 			// deliberately absent: this tool does not expose them, so an insert takes
 			// the table defaults and an update leaves whatever the dashboard set.
+			//
+			// The four filter/alert columns coalesce instead of overwriting. They are
+			// the only inputs with no schema default, so omitting one means "leave it
+			// alone", not "clear it". Overwriting silently wiped a copier's Telegram
+			// alert route and, worse, dropped the Oracle-score floor and market-cap
+			// band guarding their money the moment they called this tool again to
+			// change sizing. Clearing a filter stays a dashboard action.
 			let sub;
 			try {
 				[sub] = await sql`
@@ -375,10 +419,10 @@ export const toolDefs = [
 						min_order_sol     = excluded.min_order_sol,
 						daily_budget_sol  = excluded.daily_budget_sol,
 						max_open_copies   = excluded.max_open_copies,
-						min_oracle_score  = excluded.min_oracle_score,
-						mcap_floor_usd    = excluded.mcap_floor_usd,
-						mcap_ceiling_usd  = excluded.mcap_ceiling_usd,
-						telegram_chat_id  = excluded.telegram_chat_id,
+						min_oracle_score  = coalesce(excluded.min_oracle_score, copy_subscriptions.min_oracle_score),
+						mcap_floor_usd    = coalesce(excluded.mcap_floor_usd, copy_subscriptions.mcap_floor_usd),
+						mcap_ceiling_usd  = coalesce(excluded.mcap_ceiling_usd, copy_subscriptions.mcap_ceiling_usd),
+						telegram_chat_id  = coalesce(excluded.telegram_chat_id, copy_subscriptions.telegram_chat_id),
 						perf_fee_bps      = excluded.perf_fee_bps,
 						status            = 'active',
 						updated_at        = now()
@@ -442,7 +486,7 @@ export const toolDefs = [
 		async handler(args, auth) {
 			if (!auth.userId) return mcpErr('Sign in to view your copy subscriptions.');
 
-			const rl = await limits.mcpIp(auth.rateKey || 'anon');
+			const rl = await limits.mcpIp(rateKeyFor(auth));
 			if (!rl.success) return mcpErr('Rate limit exceeded, try again in a moment.');
 
 			const network = NETWORKS.has(args?.network) ? args.network : 'mainnet';

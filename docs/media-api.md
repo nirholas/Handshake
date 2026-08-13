@@ -505,8 +505,12 @@ curl -s 'https://three.ws/api/avatars/library?limit=24&offset=0'
 
 **`GET /api/objects/library`** is the same manifest pattern for the CC0 3D
 prop library: free, commercial-OK objects (Poly Haven and other CC0 sources)
-staged as web-ready GLBs. Identical pagination (`?limit=1..1000`,
-`?offset=`), identical empty-until-staged behavior, no auth.
+staged as web-ready GLBs. Same pagination (`?limit=1..1000`, `?offset=`),
+same empty-until-staged behavior, no auth. One difference from the character
+library: this endpoint validates the cursors strictly, so a malformed
+`?limit`/`?offset` returns `400 invalid_limit` / `400 invalid_offset` instead
+of being coerced into a page. See [the object library doc](./object-library.md)
+for the full parameter table.
 
 ### Response
 

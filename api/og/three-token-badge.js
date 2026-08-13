@@ -9,10 +9,12 @@
  * with image/svg+xml + a CDN cache header, no heavy canvas/satori deps in the
  * serverless bundle. Social crawlers accept image/svg+xml for og:image.
  *
- * Every figure on the card is real: price, 24h change, market cap, holders,
- * volume and on-chain agent count are pulled from the same source the
- * /three-token page uses — GET /api/three-token/stats (Birdeye → DexScreener →
- * GeckoTerminal failover with a stale cache, plus DB-derived protocol metrics).
+ * Every figure on the card is real, and read from the same two sources that back
+ * GET /api/three-token/stats (what the /three-token page renders), so the card
+ * and the page can never disagree:
+ *   market data  — fetchTokenMarketData() (Birdeye → DexScreener → GeckoTerminal
+ *                  failover with a stale cache)
+ *   agent count  — the same agent_identities count the stats endpoint runs
  * Nothing is hardcoded. $THREE is the only coin this card ever references.
  *
  * The card degrades gracefully: if the stats fetch fails or a field is missing
@@ -61,7 +63,24 @@ function fmtPrice(n) {
 	if (n == null || !Number.isFinite(n)) return '—';
 	if (n >= 1) return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 	if (n >= 0.01) return `$${n.toFixed(4)}`;
-	return `$${n.toPrecision(6).replace(/0+$/, '').replace(/\.$/, '')}`;
+	if (n <= 0) return '$0';
+	// Sub-cent: 6 significant figures, but always in plain decimal notation.
+	// toPrecision() flips to exponent form below 1e-7 ("$1.00000e-8"), which is
+	// unreadable on a share card, so derive the decimal count and render fixed.
+	const decimals = Math.min(20, 5 - Math.floor(Math.log10(n)));
+	return `$${n.toFixed(decimals).replace(/0+$/, '').replace(/\.$/, '')}`;
+}
+
+// Approximate advance width of a string in the hero face (Inter, weight 800) so
+// the layout can flow around a rendered figure. SVG has no measurement API at
+// render time and the card ships no font metrics, so the widths below are the
+// per-glyph em advances Inter uses: digits and "$" are tabular-wide, separators
+// are narrow. Used to keep the 24h pill clear of the price at any magnitude.
+const EM_ADVANCE = { '.': 0.27, ',': 0.27 };
+function heroTextWidth(s, fontSize) {
+	let em = 0;
+	for (const ch of String(s)) em += EM_ADVANCE[ch] ?? 0.6;
+	return em * fontSize;
 }
 
 // Compact USD for market cap / volume: $1.2M, $640K, $12.3B.
@@ -120,12 +139,19 @@ function renderCard(d) {
 	const arrow = up ? '▲' : '▼';
 	const mintShort = shortMint(THREE_MINT);
 
-	// 24h-change pill, only when we actually have the datum.
+	// 24h-change pill, only when we actually have the datum. It sits to the right
+	// of the price, so its x follows the price's rendered width: a hardcoded x
+	// collides with the figure as soon as the price gets long (a dollar-plus
+	// price, or a sub-cent one carrying six significant digits).
 	const pillW = pct ? 40 + pct.length * 13 : 0;
+	const pillX = Math.min(
+		1128 - pillW,
+		Math.round(72 + heroTextWidth(priceStr, 84) + 28),
+	);
 	const changePill = pct
-		? `<rect x="468" y="300" width="${pillW}" height="44" rx="22"
+		? `<rect x="${pillX}" y="300" width="${pillW}" height="44" rx="22"
 			fill="${changeColor}" fill-opacity=".12" stroke="${changeColor}" stroke-opacity=".4" stroke-width="1.5"/>
-		   <text x="${468 + pillW / 2}" y="329" text-anchor="middle"
+		   <text x="${pillX + pillW / 2}" y="329" text-anchor="middle"
 			font-family="Inter,system-ui,sans-serif" font-size="20" font-weight="700"
 			fill="${changeColor}">${x(arrow)} ${x(pct)}</text>`
 		: '';
@@ -214,4 +240,6 @@ export default wrap(async (req, res) => {
 
 // Exposed for unit tests: lets a test render the card from fixed figures and
 // assert the SVG shape without touching the network or DB.
-export const __testInternals = { renderCard, fmtPrice, fmtCompactUsd, fmtPct, fmtInt, shortMint };
+export const __testInternals = {
+	renderCard, fmtPrice, fmtCompactUsd, fmtPct, fmtInt, shortMint, heroTextWidth,
+};

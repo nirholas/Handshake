@@ -45,7 +45,11 @@ export async function getPublicProfile(userId) {
 export async function searchUsers(meId, q, limit = 12) {
 	const term = String(q || '').trim();
 	if (term.length < 2) return [];
-	const like = `%${term.replace(/[%_]/g, (m) => `\\${m}`)}%`;
+	// Escape the escape character FIRST, then the wildcards. Escaping only % and _
+	// left a trailing backslash in the term free to consume the closing wildcard
+	// ("qa\" became the pattern %qa\%, matching a literal "qa%"), so a name holding
+	// a backslash was unsearchable and a trailing one silently changed the query.
+	const like = `%${term.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
 	const rows = await sql`
 		select ${publicUserCols()}
 		from users u

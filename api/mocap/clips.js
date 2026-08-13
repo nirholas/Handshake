@@ -6,7 +6,8 @@
 // We store that whole object plus owner / visibility / tagging fields.
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
-import { sql } from '../_lib/db.js';
+import { sql, isDbUnavailableError, isDbCapacityError } from '../_lib/db.js';
+import { requireCsrf } from '../_lib/csrf.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { z } from 'zod';
@@ -23,8 +24,13 @@ const FORMAT_KIND = {
 	'three.ws.hand-mocap.v1': 'hand',
 	'three.ws.vmc.v1': 'vmc',
 };
-const MAX_FRAMES_INLINE = 18_000; // 30s @ 600Hz upper bound — comfortably above realistic capture
+const MAX_FRAMES_INLINE = 18_000; // 30s @ 600Hz upper bound, comfortably above realistic capture
 const MAX_BYTES_INLINE = 2 * 1024 * 1024; // 2 MB JSONB inline cap
+// Kinds the mocap_clips CHECK constraint accepts (see
+// api/_lib/migrations/2026-05-24-mocap-clips.sql). Anything outside this set can
+// never match a row, so the list filter rejects it instead of silently dropping
+// the condition and answering 200 with an unfiltered page.
+const CLIP_KINDS = new Set(['face', 'pose', 'hand', 'composite', 'vmc']);
 
 const slugRe = /^[a-z0-9][a-z0-9-]{0,79}$/;
 
@@ -56,6 +62,9 @@ export default wrap(async (req, res) => {
 	}
 
 	if (req.method === 'GET') return handleList(req, res, auth);
+	// Cookie-session writes need a CSRF token; bearer callers self-exempt inside
+	// requireCsrf. Mirrors api/avatars/[id].js.
+	if (!(await requireCsrf(req, res, auth.userId))) return;
 	return handleCreate(req, res, auth);
 });
 
@@ -67,11 +76,28 @@ async function handleList(req, res, auth) {
 	const includePublic = url.searchParams.get('include_public') === 'true';
 	const onlyPublic = !auth;
 
-	// Build the WHERE with a positional-parameter array. The Neon serverless
-	// client does not interpolate nested `sql`...`` fragments inside another
-	// tagged template — those degrade to a bound parameter and you get
-	// "syntax error at or near $1". Use the same string+params pattern that
-	// searchPublicAvatars() in api/_lib/avatars.js uses.
+	if (kindFilter && !CLIP_KINDS.has(kindFilter)) {
+		return error(
+			res,
+			400,
+			'invalid_request',
+			`kind must be one of: ${[...CLIP_KINDS].join(', ')}`,
+		);
+	}
+	let cursorAt = null;
+	if (cursor) {
+		cursorAt = decodeCursor(cursor);
+		// A cursor that does not decode to a real timestamp used to reach Postgres
+		// as an Invalid Date, whose toISOString() throws inside the driver and
+		// answered 500. It is caller input, so it answers 400 — and never a silent
+		// restart at page one, which would loop a paginating client forever.
+		if (!cursorAt) return error(res, 400, 'invalid_cursor', 'cursor is malformed');
+	}
+
+	// Build the WHERE with a positional-parameter array: the condition list is
+	// dynamic and every branch pushes its own bound value, so the parameter
+	// numbering has to stay under this function's control. Same string+params
+	// pattern searchPublicAvatars() in api/_lib/avatars.js uses.
 	const params = [];
 	const conds = ['deleted_at is null'];
 
@@ -84,16 +110,13 @@ async function handleList(req, res, auth) {
 		params.push(auth.userId);
 		conds.push(`owner_id = $${params.length}`);
 	}
-	if (kindFilter && /^[a-z]+$/.test(kindFilter)) {
+	if (kindFilter) {
 		params.push(kindFilter);
 		conds.push(`kind = $${params.length}`);
 	}
-	if (cursor) {
-		const decoded = decodeCursor(cursor);
-		if (decoded) {
-			params.push(decoded.createdAt);
-			conds.push(`created_at < $${params.length}`);
-		}
+	if (cursorAt) {
+		params.push(cursorAt);
+		conds.push(`created_at < $${params.length}`);
 	}
 	params.push(limit + 1);
 
@@ -111,6 +134,11 @@ async function handleList(req, res, auth) {
 			params,
 		);
 	} catch (err) {
+		// An outage or a full branch is infrastructure, not a bug in this query:
+		// rethrow so wrap() answers the platform-standard 503 + Retry-After with its
+		// throttled single alert, instead of a 500 the CDN cannot back off from and
+		// that reads as a code fault. Genuine statement-level faults still 500 here.
+		if (isDbUnavailableError(err) || isDbCapacityError(err)) throw err;
 		console.error('[mocap/clips/list]', err?.code, err?.message || err);
 		return error(res, 500, 'db_error', 'Failed to list clips');
 	}
@@ -163,7 +191,10 @@ async function handleCreate(req, res, auth) {
 	}
 	const kind = FORMAT_KIND[clip.format] || 'face';
 	const frameJson = JSON.stringify(clip.frames);
-	if (frameJson.length > MAX_BYTES_INLINE) {
+	// byteLength, not .length: a JS string counts UTF-16 code units, so a clip
+	// whose blendshape keys carry non-ASCII characters would clear a .length check
+	// and still blow past the byte budget the JSONB column is sized for.
+	if (Buffer.byteLength(frameJson, 'utf8') > MAX_BYTES_INLINE) {
 		return error(
 			res,
 			413,
@@ -204,7 +235,15 @@ async function handleCreate(req, res, auth) {
 		)
 		returning id, slug, name, description, kind, format, duration_ms, frame_count,
 		          tags, visibility, created_at, updated_at, avatar_id
-	`;
+	`.catch((err) => {
+		// The dupCheck above is advisory: two saves racing on the same slug both
+		// read "free" before either insert lands, and the loser hits the
+		// (owner_id, slug) unique index. That is the same user error the 409 above
+		// describes, so answer it the same way rather than 500ing the second tab.
+		if (String(err?.code) === '23505') return [null];
+		throw err;
+	});
+	if (!row) return error(res, 409, 'duplicate_slug', `slug "${slug}" already exists`);
 
 	return json(res, 201, { clip: row });
 }
@@ -232,10 +271,17 @@ function autoSlug(name) {
 function encodeCursor({ createdAt }) {
 	return Buffer.from(JSON.stringify({ c: createdAt })).toString('base64url');
 }
+// Returns the cursor's Date, or null when the token is not one we issued. The
+// validity check has to cover the decoded value too, not just the base64/JSON
+// decode: `new Date("not-a-date")` yields an Invalid Date that throws inside the
+// driver, and `new Date(null)` yields the epoch, which quietly returns an empty
+// page instead of reporting the bad token.
 function decodeCursor(cursor) {
 	try {
 		const obj = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
-		return { createdAt: new Date(obj.c) };
+		if (typeof obj?.c !== 'string' && typeof obj?.c !== 'number') return null;
+		const at = new Date(obj.c);
+		return Number.isNaN(at.getTime()) ? null : at;
 	} catch {
 		return null;
 	}

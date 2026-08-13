@@ -48,9 +48,20 @@ routes exactly that class:
 
 The same outage is visible from production, so it is not sandbox network
 egress: `POST https://three.ws/api/inference/livepeer` (an existing demo
-endpoint that calls the dream gateway's `/llm` surface from Cloud Run) returns
-`livepeer.ok: false, error: "network_error"` on the public gateway while the
-platform leg answers fine.
+endpoint that calls the dream gateway's `/llm` surface from Cloud Run) returned
+`livepeer.ok: false` on the public gateway while the platform leg answered
+fine.
+
+Both lanes resolve their gateway through one module,
+[`api/_lib/livepeer-gateway.js`](../../api/_lib/livepeer-gateway.js)
+(`LIVEPEER_GATEWAY_URL` override > keyed studio > public gateway), so a
+gateway that moves is a one-file change. That module also marks the public
+gateway unusable, and the LLM comparison lane acts on it: with no key and no
+override, `/api/inference/livepeer` returns
+`livepeer.error: "gateway_unavailable"` without dialing. The point is not the
+failed request, it is that a POST there would hand the user's prompt text to
+whoever now answers for that hostname. Point `LIVEPEER_GATEWAY_URL` at the
+host to dial it again if the domain is ever restored.
 
 ## Measured comparison (2026-08-12)
 

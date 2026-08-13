@@ -65,22 +65,26 @@ function mockRes() {
 // API endpoint shape
 // ---------------------------------------------------------------------------
 
+// The platform's own coin, used as the fixture mint because the handler now
+// requires a real base58 Solana address before it will fan out to the provider.
+const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+
 describe('GET /api/kol/trades — endpoint shape', () => {
 	it('responds 200 with { mint, trades, wallets } for a valid mint', async () => {
-		const req = { headers: {}, method: 'GET', url: '/api/kol/trades?mint=ABC123Mint&limit=5' };
+		const req = { headers: {}, method: 'GET', url: `/api/kol/trades?mint=${THREE_MINT}&limit=5` };
 		const res = mockRes();
 		await tradesHandler(req, res);
 
 		expect(res.statusCode).toBe(200);
 		expect(res.body).toMatchObject({
-			mint: 'ABC123Mint',
+			mint: THREE_MINT,
 			trades: expect.any(Array),
 			wallets: 2,
 		});
 	});
 
 	it('trades is an array', async () => {
-		const req = { headers: {}, method: 'GET', url: '/api/kol/trades?mint=MINT1' };
+		const req = { headers: {}, method: 'GET', url: `/api/kol/trades?mint=${THREE_MINT}` };
 		const res = mockRes();
 		await tradesHandler(req, res);
 
@@ -96,8 +100,18 @@ describe('GET /api/kol/trades — endpoint shape', () => {
 		expect(res.body.error).toBe('validation_error');
 	});
 
+	it('responds 400 for a mint that cannot be a Solana address', async () => {
+		const req = { headers: {}, method: 'GET', url: '/api/kol/trades?mint=NOT_A_MINT' };
+		const res = mockRes();
+		await tradesHandler(req, res);
+
+		expect(res.statusCode).toBe(400);
+		expect(res.body.error).toBe('validation_error');
+		expect(res.body.error_description).toMatch(/base58/);
+	});
+
 	it('wallets count matches the KOL_WALLETS stub length', async () => {
-		const req = { headers: {}, method: 'GET', url: '/api/kol/trades?mint=ANYMINT' };
+		const req = { headers: {}, method: 'GET', url: `/api/kol/trades?mint=${THREE_MINT}` };
 		const res = mockRes();
 		await tradesHandler(req, res);
 

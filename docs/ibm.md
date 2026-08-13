@@ -157,6 +157,8 @@ curl -s https://three.ws/api/guardian/assess \
 
 For autonomous sends, `governSend()` additionally enforces a per-period USD spend cap, so a request can be vetoed either for risk content **or** for exceeding the cap.
 
+**Errors.** Every failure is JSON, never HTML: `400 bad_request` (missing or malformed `text`/`messages`/`risks`/`action`), `405 method_not_allowed`, `413 bad_request` (body over 100 KB), `415 bad_request` (content-type is not `application/json`), `429 rate_limited` (30 requests/min per IP, plus an hourly platform-wide ceiling on watsonx inference that only real assessments charge), `503 guardian_unconfigured` (no `WATSONX_API_KEY` + `WATSONX_PROJECT_ID`, so no verdict is fabricated), and `502 guardian_failed` when watsonx itself fails.
+
 ---
 
 ## Granite Oracle — TimeSeries forecasting

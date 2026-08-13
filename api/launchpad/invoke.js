@@ -7,7 +7,7 @@
 //     price (USDC) to the CREATOR's wallet, then receives an answer generated
 //     on the platform's free-first LLM chain, grounded in the page's brand copy.
 //   • gated-showroom  → an x402-gated unlock. Paying the one-time pass returns
-//     the private scene URL plus a signed 24h grant token.
+//     the private scene URL, which the public read withholds.
 //
 // This is a real x402 v2 endpoint with DYNAMIC pricing and payout: the price
 // and the recipient (`payTo`) are read per-slug from the published page's
@@ -23,7 +23,7 @@
 //      settle on-chain → 200 with the result + X-PAYMENT-RESPONSE header.
 
 import { sql } from '../_lib/db.js';
-import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
+import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { llmComplete } from '../_lib/llm.js';
@@ -37,12 +37,12 @@ import {
 	verifyPayment,
 } from '../_lib/x402-spec.js';
 import { reservePaymentProof } from '../_lib/x402/payment-identifier-server.js';
+import { declareHttpDiscovery } from '../_lib/x402/bazaar-helpers.js';
 
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 const SOL_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const EVM_RE = /^0x[a-fA-F0-9]{40}$/;
 const USDC_DECIMALS = 6;
-const UNLOCK_TTL_SECONDS = 24 * 60 * 60;
 
 // Map the page's configured chain to an x402 network id + an address validator.
 // Only chains the facilitator can settle are accepted; an unsupported chain is
@@ -85,6 +85,83 @@ function buildAccept({ chain, priceAtomics, payTo, resourceUrl }) {
 		extra: { name: 'USDC', decimals: USDC_DECIMALS, feePayer: env.X402_FEE_PAYER_SOLANA },
 	};
 }
+
+// Discovery metadata for the 402 challenge. build402Body() otherwise falls back
+// to the MCP server's default entry, which told every crawler that a launchpad
+// page takes a `tools/call` body for `validate_model` — an agent that indexed a
+// concierge page from that would never send the one field it actually needs.
+const CONCIERGE_BAZAAR = declareHttpDiscovery({
+	method: 'POST',
+	bodyType: 'json',
+	input: { question: 'What does this project do?' },
+	inputSchema: {
+		$schema: 'https://json-schema.org/draft/2020-12/schema',
+		type: 'object',
+		required: ['question'],
+		properties: {
+			question: {
+				type: 'string',
+				minLength: 3,
+				maxLength: 2000,
+				description: 'The visitor question, answered in the page owner’s voice.',
+			},
+		},
+	},
+	output: {
+		example: {
+			slug: 'my-page',
+			action: 'ask',
+			answer: 'It is a 3D agent storefront you can talk to.',
+			model: 'gemini-2.5-flash',
+		},
+		schema: {
+			$schema: 'https://json-schema.org/draft/2020-12/schema',
+			type: 'object',
+			required: ['slug', 'action', 'answer'],
+			properties: {
+				slug: { type: 'string' },
+				action: { type: 'string', const: 'ask' },
+				answer: { type: 'string' },
+				model: { type: ['string', 'null'] },
+				payer: { type: ['string', 'null'] },
+				transaction: { type: ['string', 'null'] },
+				network: { type: 'string' },
+			},
+		},
+	},
+});
+
+const UNLOCK_BAZAAR = declareHttpDiscovery({
+	method: 'POST',
+	bodyType: 'json',
+	input: {},
+	inputSchema: {
+		$schema: 'https://json-schema.org/draft/2020-12/schema',
+		type: 'object',
+		properties: {},
+		description: 'No body fields — the slug in the query string selects the showroom.',
+	},
+	output: {
+		example: {
+			slug: 'my-showroom',
+			action: 'unlock',
+			unlockUrl: 'https://cdn.three.ws/scenes/private.glb',
+		},
+		schema: {
+			$schema: 'https://json-schema.org/draft/2020-12/schema',
+			type: 'object',
+			required: ['slug', 'action', 'unlockUrl'],
+			properties: {
+				slug: { type: 'string' },
+				action: { type: 'string', const: 'unlock' },
+				unlockUrl: { type: 'string', description: 'The private scene URL, revealed on payment.' },
+				payer: { type: ['string', 'null'] },
+				transaction: { type: ['string', 'null'] },
+				network: { type: 'string' },
+			},
+		},
+	},
+});
 
 async function loadPage(slug) {
 	const [row] = await sql`
@@ -133,8 +210,7 @@ function fulfillUnlock({ page }) {
 		err.code = 'scene_missing';
 		throw err;
 	}
-	const expiresAt = Math.floor(Date.now() / 1000) + UNLOCK_TTL_SECONDS;
-	return { unlockUrl: sceneSrc, expiresAt };
+	return { unlockUrl: sceneSrc };
 }
 
 export default wrap(async (req, res) => {
@@ -142,7 +218,7 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST'])) return;
 
 	const rl = await limits.authIp(clientIp(req));
-	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests — slow down');
+	if (!rl.success) return rateLimited(res, rl, 'too many requests — slow down');
 
 	const url = new URL(req.url, 'http://x');
 	const slug = (url.searchParams.get('slug') || '').toLowerCase();

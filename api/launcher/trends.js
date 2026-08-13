@@ -76,7 +76,10 @@ export default wrap(async (req, res) => {
 		about: 'Ranked cultural narratives the autonomous launcher rides, plus three.ws launches on those waves. Themes, not ticker calls.',
 	};
 
-	await cacheSet(cacheKey, body, TTL_S).catch(() => {});
+	// Only cache a response that actually carries signal. A ranking failure or an
+	// empty provider sweep must not be frozen for a minute and served to every
+	// polling agent as if it were the real state of the world.
+	if (terms.length) await cacheSet(cacheKey, body, TTL_S).catch(() => {});
 	return json(res, 200, body, { 'cache-control': 'public, max-age=30, s-maxage=60' });
 });
 
@@ -97,9 +100,18 @@ async function recentLaunches(network) {
 		symbol: r.symbol,
 		mint: r.mint,
 		kind: r.kind,
-		rode: r.trigger_detail?.top_narrative || r.trigger_source || null,
+		rode: topNarrative(r.trigger_detail) || r.trigger_source || null,
 		created_at: r.created_at,
 	}));
+}
+
+// trigger_detail is jsonb; depending on the driver it arrives as an object or as
+// the raw JSON string. Read both so the narrative a coin rode never silently
+// degrades to the bare provider id.
+function topNarrative(detail) {
+	let d = detail;
+	if (typeof d === 'string') { try { d = JSON.parse(d); } catch { return null; } }
+	return d && typeof d === 'object' ? d.top_narrative || null : null;
 }
 
 function clampInt(v, dflt, lo, hi) {

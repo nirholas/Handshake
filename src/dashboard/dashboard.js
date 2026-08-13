@@ -2167,6 +2167,10 @@ async function renderKeys(root) {
 					<label><input type="checkbox" name="scope" value="avatars:write" checked> write</label>
 					<label><input type="checkbox" name="scope" value="avatars:delete"> delete</label>
 					<label><input type="checkbox" name="scope" value="profile"> profile</label>
+					<label><input type="checkbox" name="scope" value="memory:read"> memory:read</label>
+					<label><input type="checkbox" name="scope" value="memory:write"> memory:write</label>
+					<label><input type="checkbox" name="scope" value="agents:read"> agents:read</label>
+					<label><input type="checkbox" name="scope" value="agents:write"> agents:write</label>
 				</fieldset>
 				<button class="btn" type="submit">Create key</button>
 			</form>

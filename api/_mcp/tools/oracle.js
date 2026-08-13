@@ -67,12 +67,16 @@ function mcpErr(msg) {
 	return { content: [{ type: 'text', text: msg }], isError: true };
 }
 
+// Throws on a DB fault rather than swallowing it. Swallowing turned an outage
+// into "that agent does not belong to your account": a confident, false answer
+// that sends the owner off to audit permissions that were never the problem.
+// The dispatcher sanitizes the throw into the transient retry message instead.
 async function ownsAgent(userId, agentId) {
 	const rows = await sql`
 		select id from agent_identities
 		where id = ${agentId} and user_id = ${userId} and deleted_at is null
 		limit 1
-	`.catch(() => []);
+	`;
 	return rows.length > 0;
 }
 
@@ -110,9 +114,17 @@ export const toolDefs = [
 			const rl = await limits.mcpIp(auth.rateKey || 'anon');
 			if (!rl.success) return mcpErr('Rate limit exceeded — try again in a moment.');
 
-			const items = await readFeed({
-				network, limit, minScore, category, sinceSeconds: 6 * 3600,
-			}).catch(() => []);
+			// A degraded feed store is NOT an empty feed. Returning [] on a fault
+			// rendered "no plays at this conviction floor, try lowering min_score",
+			// which reads as a real market answer and coaches the agent into
+			// loosening its filters during an outage. Say it is transient instead,
+			// the way oracle_coin already does.
+			let items;
+			try {
+				items = await readFeed({ network, limit, minScore, category, sinceSeconds: 6 * 3600 });
+			} catch {
+				return mcpErr('Oracle is temporarily unavailable: the feed store is degraded. Retry shortly.');
+			}
 
 			const plays = items.map(shapePlay);
 			const payload = {

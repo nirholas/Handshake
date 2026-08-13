@@ -16,6 +16,7 @@
 
 import { cors, wrap } from '../_lib/http.js';
 import { getDrop } from '../_lib/sealed-drop-store.js';
+import { isValidDropId } from '../../src/solana/vanity/drop-protocol.js';
 
 const CACHE = 'public, max-age=60, s-maxage=600, stale-while-revalidate=120';
 
@@ -108,7 +109,7 @@ export default wrap(async (req, res) => {
 	const id = (url.searchParams.get('id') || '').trim();
 
 	let drop = null;
-	if (/^[0-9a-f]{24}$/.test(id)) {
+	if (isValidDropId(id)) {
 		try {
 			drop = await getDrop(id);
 		} catch {
@@ -131,3 +132,7 @@ export default wrap(async (req, res) => {
 	res.setHeader('cache-control', CACHE);
 	res.end(svg);
 });
+
+// Exposed for unit tests: renders the card from fixed fields so a test can assert
+// the SVG shape (and that no secret ever reaches it) without Redis or a network.
+export const __testInternals = { buildCard, shortAddr, assetLabel, THEME_STYLE };

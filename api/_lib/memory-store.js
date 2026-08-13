@@ -30,6 +30,11 @@ import { extractEntities } from './memory-entities.js';
 
 export const MEMORY_TIERS = ['working', 'recall', 'archival'];
 
+// The four kinds a memory can be. Mirrors the CHECK constraint on
+// agent_memories.type, so a caller filtering by type gets a 400 at the boundary
+// instead of a silently empty result set from a typo.
+export const MEMORY_TYPES = ['user', 'feedback', 'project', 'reference'];
+
 // The working core is kept small on purpose — this is what's always paged into
 // the model's context. ~4 chars/token is the platform's standard estimate
 // (matches widget knowledge chunking).

@@ -13,13 +13,14 @@ import { sql } from './db.js';
 import { TOKEN_MINT } from './token/config.js';
 import {
 	scoreBid, reputationFromStats, defaultRoyaltyBps, settlementSplit,
-	atomicsToThree, threeToAtomics, toBig, SCORE_WEIGHTS, ETA_HALF_LIFE_S,
+	atomicsToThree, threeToAtomics, parseAtomics, parseThree, toBig,
+	SCORE_WEIGHTS, ETA_HALF_LIFE_S,
 } from './labor-economics.js';
 
 // Re-export the pure economics so existing call sites keep importing from here.
 export {
 	scoreBid, reputationFromStats, defaultRoyaltyBps, settlementSplit,
-	atomicsToThree, threeToAtomics, SCORE_WEIGHTS, ETA_HALF_LIFE_S,
+	atomicsToThree, threeToAtomics, parseAtomics, parseThree, SCORE_WEIGHTS, ETA_HALF_LIFE_S,
 };
 
 // ── Lazy schema (self-heals if the formal migration hasn't run) ─────────────
@@ -113,8 +114,16 @@ export async function createBounty(input) {
 	return row;
 }
 
+// The poster's display name is joined in here rather than left to each caller:
+// the detail endpoint shapes this row for the UI, and without the join every
+// bounty page rendered the fallback "Agent" while the feed (which does join)
+// showed the real name for the same bounty.
 export async function getBounty(id) {
-	const [row] = await sql`SELECT * FROM agent_bounties WHERE id = ${id} LIMIT 1`;
+	const [row] = await sql`
+		SELECT b.*, pa.name AS poster_name
+		FROM agent_bounties b
+		LEFT JOIN agent_identities pa ON pa.id = b.poster_agent_id
+		WHERE b.id = ${id} LIMIT 1`;
 	return row || null;
 }
 
@@ -408,7 +417,15 @@ export async function getLaborPolicy(agentId) {
 
 export async function upsertLaborPolicy(agentId, userId, patch) {
 	await ensureLaborTables();
-	const skills = Array.isArray(patch.skills) ? patch.skills.filter((s) => typeof s === 'string').slice(0, 40) : [];
+	// Clamp each entry to the same 80 chars a bounty's required_skill is clamped
+	// to, so an oversized client payload can never bloat the text[] column or
+	// produce a skill string no bounty could ever match.
+	const skills = Array.isArray(patch.skills)
+		? patch.skills
+			.filter((s) => typeof s === 'string' && s.trim())
+			.map((s) => s.trim().slice(0, 80))
+			.slice(0, 40)
+		: [];
 	const [row] = await sql`
 		INSERT INTO agent_labor_policies
 			(agent_id, user_id, worker_enabled, skills, max_bid_atomics, min_reward_atomics,

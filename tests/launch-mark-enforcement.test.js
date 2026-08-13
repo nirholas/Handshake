@@ -191,6 +191,18 @@ async function invoke(handler, opts) {
 	return { res, json: res.body ? JSON.parse(res.body) : null };
 }
 
+// Every /api/pump/<action> path is rewritten onto the consolidated dispatcher
+// (api/pump/[action].js), which routes on req.query.action the way the
+// filesystem router populates it. Binding one action here keeps each test
+// naming its endpoint while running exactly the code production serves.
+function pumpAction(action) {
+	return async (req, res) => {
+		req.query = { ...(req.query ?? {}), action };
+		const { default: dispatcher } = await import('../api/pump/[action].js');
+		return dispatcher(req, res);
+	};
+}
+
 function resetAll() {
 	authState.session = null;
 	sqlState.queue = [];
@@ -233,8 +245,7 @@ describe('POST /api/pump/launch-prep — brand-mark enforcement', () => {
 			[],                                 // insert agent_registrations_pending
 		];
 
-		const { default: handler } = await import('../api/pump/launch-prep.js');
-		const { res, json } = await invoke(handler, {
+		const { res, json } = await invoke(pumpAction('launch-prep'), {
 			method: 'POST', url: '/api/pump/launch-prep',
 			body: basePrepBody,
 		});
@@ -251,8 +262,7 @@ describe('POST /api/pump/launch-prep — brand-mark enforcement', () => {
 			[{ id: 'agent-1', name: 'Foo' }],
 		];
 
-		const { default: handler } = await import('../api/pump/launch-prep.js');
-		const { res, json } = await invoke(handler, {
+		const { res, json } = await invoke(pumpAction('launch-prep'), {
 			method: 'POST', url: '/api/pump/launch-prep',
 			body: { ...basePrepBody, mint_address: 'BadMintNoMark111111111111111111111' },
 		});
@@ -270,8 +280,7 @@ describe('POST /api/pump/launch-prep — brand-mark enforcement', () => {
 		];
 
 		const clientMint = '3wsVanityMintFromClient111111111111';
-		const { default: handler } = await import('../api/pump/launch-prep.js');
-		const { res, json } = await invoke(handler, {
+		const { res, json } = await invoke(pumpAction('launch-prep'), {
 			method: 'POST', url: '/api/pump/launch-prep',
 			body: { ...basePrepBody, mint_address: clientMint },
 		});
@@ -294,8 +303,7 @@ describe('POST /api/pump/launch-prep — brand-mark enforcement', () => {
 				[],
 			];
 
-			const { default: handler } = await import('../api/pump/launch-prep.js');
-			const { res, json } = await invoke(handler, {
+			const { res, json } = await invoke(pumpAction('launch-prep'), {
 				method: 'POST', url: '/api/pump/launch-prep',
 				body: basePrepBody,
 			});
@@ -355,8 +363,7 @@ describe('POST /api/pump/launch-agent — brand-mark enforcement', () => {
 			// agent_actions insert has .catch → empty queue returns [] safely
 		];
 
-		const { default: handler } = await import('../api/pump/launch-agent.js');
-		const { res, json } = await invoke(handler, {
+		const { res, json } = await invoke(pumpAction('launch-agent'), {
 			method: 'POST', url: '/api/pump/launch-agent',
 			body: baseAgentBody,
 		});
@@ -379,8 +386,7 @@ describe('POST /api/pump/launch-agent — brand-mark enforcement', () => {
 		const badSk = Buffer.alloc(64, 0xaa);
 		const badMint = 'SomeBadMint1111111111111111111111111';
 
-		const { default: handler } = await import('../api/pump/launch-agent.js');
-		const { res, json } = await invoke(handler, {
+		const { res, json } = await invoke(pumpAction('launch-agent'), {
 			method: 'POST', url: '/api/pump/launch-agent',
 			body: {
 				...baseAgentBody,

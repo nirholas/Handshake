@@ -37,6 +37,13 @@ const AGG_CACHE_TTL_S = 180;      // ranked-narrative aggregate cache
 const PROVIDER_CACHE_TTL_S = 300; // per external-provider cache
 const EXTERNAL_TIMEOUT_MS = 6_000;
 const MAX_TERMS = 32;
+// How many ranked terms the shared aggregate cache holds. The cache key is
+// limit-free and shared by every consumer (the public /api/launcher/trends feed,
+// /api/launcher/me, and the launcher engine that picks the coin to mint), so the
+// cached list has to cover the largest limit anyone can ask for. The public API
+// caps at 50; this sits above it so a small-limit request can never truncate the
+// pool the next caller reads.
+const CACHED_TERMS = 64;
 
 // Source weights — internal venue signals dominate; culture sources broaden.
 // knowyourmeme is the single best PURE-meme external feed (entries are literally
@@ -527,7 +534,7 @@ export async function rankNarratives({ network = 'mainnet', sources, categories 
 	if (!fresh) {
 		try {
 			const hit = await cacheGet(cacheKey);
-			if (hit) return hit;
+			if (hit) return takeTerms(hit, limit);
 		} catch { /* compute live */ }
 	}
 
@@ -599,7 +606,7 @@ export async function rankNarratives({ network = 'mainnet', sources, categories 
 			};
 		})
 		.sort((a, b) => b.score - a.score)
-		.slice(0, limit);
+		.slice(0, CACHED_TERMS);
 
 	const result = {
 		terms: ranked,
@@ -608,10 +615,22 @@ export async function rankNarratives({ network = 'mainnet', sources, categories 
 		providers,
 	};
 
+	// Cache the full ranked pool, then hand the caller its slice. Caching the
+	// slice instead would let one `?limit=1` request on the public feed starve
+	// every other consumer of this key for the whole TTL.
 	if (ranked.length) {
 		try { await cacheSet(cacheKey, result, AGG_CACHE_TTL_S); } catch { /* ignore */ }
 	}
-	return result;
+	return takeTerms(result, limit);
+}
+
+// Narrow a ranked pool to the caller's limit without disturbing what is cached.
+function takeTerms(result, limit) {
+	const all = Array.isArray(result?.terms) ? result.terms : [];
+	const n = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : MAX_TERMS;
+	if (n >= all.length) return result;
+	const terms = all.slice(0, n);
+	return { terms, themes: terms.map((t) => t.term), top: terms[0] || null, providers: result.providers || [] };
 }
 
 export { EXTERNAL_SOURCES, DEFAULT_SOURCES };

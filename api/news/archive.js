@@ -1,6 +1,6 @@
 // GET /api/news/archive
 // ---------------------------------------------------------------------------
-// The three.ws historical crypto-news archive: 662,047 enriched articles from
+// The three.ws historical crypto-news archive: 660k+ enriched articles from
 // September 2017 onward (CryptoPanic english corpus + Odaily chinese corpus +
 // the cryptocurrency.cv live archiver), recovered from the cryptocurrency.cv
 // archive and hosted on the platform's own GCS bucket
@@ -8,9 +8,10 @@
 // every record carries tickers, tags, sentiment, language, and (where
 // captured) market context at publication time.
 //
-// The imported corpus ends 2025-12-03; api/cron/news-archive-append.js extends
-// it hourly from the live feed. Never hardcode the end date here — read
-// meta/stats.json (last_article_date), which the appender keeps current.
+// The corpus grows hourly (api/cron/news-archive-append.js appends the live
+// feed), so never hardcode its size or end date here: meta/stats.json
+// (total_articles, last_article_date) is the live count, and ?stats=true
+// serves it.
 //
 // Data layout and month-file access live in api/_lib/news-archive-store.js
 // (shared with the story pages and the news sitemap):
@@ -190,7 +191,7 @@ async function archiveSearch(parsed) {
 			},
 		};
 		if (monthsRemaining > 0) {
-			body.hint = `scanned the newest ${scannedMonths.length} months of this range — add start_date/end_date to reach older articles`;
+			body.hint = `scanned the newest ${scannedMonths.length} months of this range; add start_date/end_date to reach older articles`;
 		}
 		return body;
 	} catch (err) {
@@ -205,7 +206,7 @@ async function archiveSearch(parsed) {
 const DESCRIPTION =
 	'Search the largest open crypto-news archive over x402: 660,000+ enriched articles back to ' +
 	'September 2017 (english + chinese corpora, refreshed hourly), queryable by keyword, ticker, ' +
-	'source, date range, sentiment, and language — every record carries tickers, tags, sentiment, ' +
+	'source, date range, sentiment, and language. Every record carries tickers, tags, sentiment, ' +
 	'and (where captured) BTC/ETH price + Fear & Greed at publication. $0.001 USDC per search; a ' +
 	`free daily quota (${FREE_SEARCHES_PER_DAY} searches/day per IP) lets you try it before paying. ` +
 	'Corpus stats and trending modes are always free.';

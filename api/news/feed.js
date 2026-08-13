@@ -1,7 +1,9 @@
 // GET /api/news/feed
 // ---------------------------------------------------------------------------
 // Live aggregated crypto news across the native source registry
-// (api/_lib/news-sources.js — 38 first-party publisher feeds). Powers
+// (api/_lib/news-sources.js, the single source of truth for which first-party
+// publisher feeds we carry; feeds are added and retired there, so read the
+// count from `meta=1` rather than any number written here). Powers
 // /markets/news, the /markets hub strip, and anything else that wants a real
 // cross-source headline feed.
 //

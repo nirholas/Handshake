@@ -46,6 +46,8 @@ const ENV_KEYS = [
 	'REPLICATE_API_TOKEN',
 	'VERTEX_IMAGEN_ENABLED',
 	'VERTEX_IMAGEN_FIRST',
+	'LIVEPEER_FEDERATION_ENABLED',
+	'LIVEPEER_GATEWAY_URL',
 ];
 const ORIGINAL_ENV = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
 
@@ -366,6 +368,64 @@ describe('textToImage — NIM FLUX free lane (legacy NIM-first order)', () => {
 		await textToImage('a blue teapot');
 		const nimAfterSecond = calls.filter((c) => c.url.includes('ai.api.nvidia.com')).length;
 		expect(nimAfterSecond).toBe(1);
+	});
+});
+
+// The Livepeer federation lane sits between the first-party free lanes and the
+// paid Replicate backstop. It is a real downstream lane, so the ladder's
+// "is there anything left to try" test has to count it: before this cover, a
+// deployment whose ONLY downstream lane was Livepeer threw the upstream lane's
+// error instead of handing off, and the configured federated lane never ran.
+function livepeerSuccessResponse(url = 'https://gateway.test/images/out.png') {
+	return new Response(JSON.stringify({ images: [{ url, seed: 1, nsfw: false }] }), {
+		status: 200,
+		headers: { 'content-type': 'application/json' },
+	});
+}
+
+describe('textToImage — Livepeer federation lane counts as a real fallback', () => {
+	beforeEach(() => {
+		process.env.LIVEPEER_FEDERATION_ENABLED = '1';
+		process.env.LIVEPEER_GATEWAY_URL = 'https://gateway.test';
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+	});
+
+	it('hands a failed NIM lane off to Livepeer when it is the only lane downstream', async () => {
+		process.env.NVIDIA_API_KEY = 'nvapi-test';
+		const calls = stubFetch([
+			['ai.api.nvidia.com', () => new Response('boom', { status: 500 })],
+			['gateway.test', () => livepeerSuccessResponse()],
+		]);
+
+		const textToImage = await freshTextToImage();
+		const result = await textToImage('a red teapot');
+
+		expect(result.imageUrl).toBe('https://gateway.test/images/out.png');
+		expect(calls.some((c) => c.url.includes('gateway.test'))).toBe(true);
+	});
+
+	it('hands a failed Vertex lead off to Livepeer when it is the only lane downstream', async () => {
+		process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
+		vertexState.configured = true;
+		vertexState.generate = async () => {
+			throw new Error('vertex exploded');
+		};
+		const calls = stubFetch([['gateway.test', () => livepeerSuccessResponse()]]);
+
+		const textToImage = await freshTextToImage();
+		const result = await textToImage('a red teapot');
+
+		expect(result.imageUrl).toBe('https://gateway.test/images/out.png');
+		expect(calls.some((c) => c.url.includes('gateway.test'))).toBe(true);
+	});
+
+	it('still surfaces the upstream error when Livepeer federation is off', async () => {
+		delete process.env.LIVEPEER_FEDERATION_ENABLED;
+		process.env.NVIDIA_API_KEY = 'nvapi-test';
+		stubFetch([['ai.api.nvidia.com', () => new Response('nope', { status: 401 })]]);
+
+		const textToImage = await freshTextToImage();
+		await expect(textToImage('a red teapot')).rejects.toThrow(/nim flux returned 401/);
 	});
 });
 

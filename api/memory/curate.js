@@ -21,6 +21,11 @@ import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { MEMORY_TIERS, decorateMemory } from '../_lib/memory-store.js';
+import { isUuid } from '../_lib/validate.js';
+
+// A merge folds a handful of duplicates into one target. Bounding it keeps a
+// runaway caller from building a multi-megabyte `id = ANY(...)` statement.
+const MERGE_MAX_IDS = 50;
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -42,6 +47,9 @@ export default wrap(async (req, res) => {
 	const agentId = body.agentId || body.agent_id;
 	const op = body.op;
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId required');
+	// Every id below addresses a uuid column: reject unparseable input here rather
+	// than letting Postgres raise 22P02 and turn a caller mistake into a 500.
+	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
 	if (!op) return error(res, 400, 'validation_error', 'op required');
 
 	const [agentRow] = await sql`
@@ -51,6 +59,8 @@ export default wrap(async (req, res) => {
 	if (agentRow.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 
 	const memoryId = body.memoryId;
+	if (memoryId != null && !isUuid(memoryId)) return error(res, 400, 'validation_error', 'memoryId must be a uuid');
+
 	switch (op) {
 		case 'pin': {
 			if (!memoryId) return error(res, 400, 'validation_error', 'memoryId required');
@@ -148,15 +158,28 @@ async function handleEdit(res, agentId, body) {
 	`;
 	if (!row) return error(res, 404, 'not_found', 'memory not found');
 	// Editing tags also changes the entity surface — re-mine on next graph read.
+	// Stays agent-scoped like every other write here so no curation statement can
+	// ever address a row outside the agent the caller was authorized for.
 	if (hasTags) {
-		await sql`UPDATE agent_memories SET entities_extracted = false WHERE id = ${body.memoryId}`;
+		await sql`
+			UPDATE agent_memories SET entities_extracted = false
+			WHERE id = ${body.memoryId} AND agent_id = ${agentId}
+		`;
 	}
 	return json(res, 200, { entry: decorateMemory(row) });
 }
 
 async function handleMerge(res, agentId, body) {
-	const ids = Array.isArray(body.memoryIds) ? body.memoryIds.filter(Boolean) : [];
-	if (ids.length < 2) return error(res, 400, 'validation_error', 'merge needs at least 2 memoryIds');
+	// Dedupe before counting: a caller that repeats the target ("merge a into a")
+	// must not end up with the target listed among its own duplicates, which would
+	// delete the row the merge just wrote.
+	const ids = [...new Set(Array.isArray(body.memoryIds) ? body.memoryIds.filter(Boolean) : [])];
+	const badId = ids.find((id) => !isUuid(id));
+	if (badId) return error(res, 400, 'validation_error', 'memoryIds must be uuids');
+	if (ids.length < 2) return error(res, 400, 'validation_error', 'merge needs at least 2 distinct memoryIds');
+	if (ids.length > MERGE_MAX_IDS) {
+		return error(res, 400, 'validation_error', `merge accepts at most ${MERGE_MAX_IDS} memoryIds`);
+	}
 	const [targetId, ...dupeIds] = ids;
 
 	const rows = await sql`

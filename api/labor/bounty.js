@@ -4,6 +4,7 @@
 
 import { cors, error, json, method, wrap } from '../_lib/http.js';
 import { getBounty, listBidsForBounty, getJobByBounty, atomicsToThree, _shapeBounty as shapeBounty } from '../_lib/agent-labor.js';
+import { requireUuid } from '../_lib/labor-auth.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -12,6 +13,7 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://localhost');
 	const id = url.searchParams.get('id');
 	if (!id) return error(res, 400, 'validation_error', 'id is required');
+	if (!requireUuid(res, id, 'id')) return;
 
 	const raw = await getBounty(id);
 	if (!raw) return error(res, 404, 'not_found', 'bounty not found');

@@ -1,4 +1,4 @@
-// Persona identity resolve — the live chain-state feed behind the embodiment
+// Persona identity resolve: the live chain-state feed behind the embodiment
 // embed's visual binding (prompt 17: "the avatar IS the wallet").
 //
 //   GET /api/mcp3d/persona-identity?id=persona_xxx[&network=mainnet|devnet]
@@ -7,7 +7,7 @@
 // pages/embodiment/embed.html polls this (only when opened with ?wallet=1) so
 // the body's aura/cosmetic/muted-state/nameplate track LIVE chain state, not a
 // snapshot frozen at the MCP tool call that minted the embed URL. Same core
-// read the `persona_identity` MCP tool uses (api/_lib/persona-wallet.js) — one
+// read the `persona_identity` MCP tool uses (api/_lib/persona-wallet.js): one
 // source of truth, two front doors. Read-only, no private key ever touches
 // this path: getPersonaIdentity only ever derives the PUBLIC key.
 //
@@ -18,6 +18,11 @@
 import { cors, json, wrap } from '../_lib/http.js';
 import { isPersonaId, getPersona, personaPublicView } from '../_lib/persona-store.js';
 import { getPersonaIdentity } from '../_lib/persona-wallet.js';
+
+// Short CDN window: the embed polls roughly every 20s, so a 15s shared cache
+// keeps a crowded room off the RPC/attestation/Bonfida upstreams without ever
+// showing a viewer state older than one poll.
+const CACHE_CONTROL = 'public, s-maxage=15, stale-while-revalidate=60';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,HEAD,OPTIONS', origins: '*' })) return;
@@ -39,7 +44,8 @@ export default wrap(async (req, res) => {
 	let record;
 	try {
 		record = await getPersona(id);
-	} catch {
+	} catch (err) {
+		console.warn('[mcp3d/persona-identity] persona load failed:', err?.message || err);
 		json(res, 503, { error: 'unavailable', message: 'Could not load that persona right now. Please try again.' });
 		return;
 	}
@@ -51,15 +57,18 @@ export default wrap(async (req, res) => {
 	let identity;
 	try {
 		identity = await getPersonaIdentity(id, { network });
-	} catch {
-		// Every sub-read inside getPersonaIdentity already degrades independently
-		// — reaching here means the derivation itself failed (e.g. no
-		// PERSONA_WALLET_SECRET configured). Report that honestly, not a 500.
+	} catch (err) {
+		// Every sub-read inside getPersonaIdentity already degrades independently,
+		// so reaching here means the derivation itself failed (e.g. no
+		// PERSONA_WALLET_SECRET configured). Report that honestly, not a 500, and
+		// log the cause: this branch is a config fault, and an unlogged one costs
+		// an ops session to rediscover.
+		console.warn('[mcp3d/persona-identity] identity derivation failed:', err?.code || err?.message || err);
 		json(res, 503, { error: 'wallet_unavailable', message: 'This persona wallet is not available right now.' });
 		return;
 	}
 
-	res.setHeader('cache-control', 'public, s-maxage=15, stale-while-revalidate=60');
+	res.setHeader('cache-control', CACHE_CONTROL);
 	res.setHeader('cross-origin-resource-policy', 'cross-origin');
 	json(res, 200, { persona: personaPublicView(record), ...identity });
 });

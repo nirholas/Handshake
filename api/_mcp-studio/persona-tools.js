@@ -21,7 +21,7 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { assertSafePublicUrl } from '../_lib/ssrf-guard.js';
+import { assertSafePublicUrl, fetchSafePublicUrlPinned } from '../_lib/ssrf-guard.js';
 import { isValidGlbHeader, inspectGlb } from '../_lib/glb-inspect.js';
 import {
 	createPersona,
@@ -35,6 +35,7 @@ import { embodimentArtifact, buildEmbedUrl } from '../_lib/embodiment-artifact.j
 import { PERSONA_COMPONENT_URI } from './component.js';
 
 const MAX_GLB_BYTES = 64 * 1024 * 1024;
+const GLB_FETCH_TIMEOUT_MS = 30_000;
 
 function toolError(message) {
 	return {
@@ -56,16 +57,30 @@ async function isPublicHttpsUrl(s) {
 // Fetch a GLB into a Buffer with a hard size cap so a persona's body can be copied
 // into durable storage before the provider URL expires. Returns null on any
 // failure (caller surfaces a clean message).
+//
+// Goes through the IP-pinned safe fetch, the same one the material studio uses for
+// exactly this job (api/_lib/material-studio-store.js). The bare global fetch this
+// used before checked the caller's URL once with assertSafePublicUrl and then let
+// the network do whatever it wanted: it followed redirects with no re-validation
+// (a public host answering 302 -> 169.254.169.254 walked straight through the
+// guard), re-resolved DNS on connect (a rebind swaps the address after the check),
+// and carried no timeout. The size cap was post-hoc too, so the whole body was
+// already buffered in memory before anything measured it, which a hostile host
+// turns into an OOM on an unauthenticated public endpoint. The pinned fetch closes
+// all four: per-hop revalidation, a socket pinned to the checked address, an abort
+// signal, and a streaming ceiling that aborts mid-body.
 async function fetchGlbBuffer(url) {
 	try {
-		const resp = await fetch(url);
+		const resp = await fetchSafePublicUrlPinned(
+			url,
+			{ signal: AbortSignal.timeout(GLB_FETCH_TIMEOUT_MS) },
+			{ maxBytes: MAX_GLB_BYTES },
+		);
 		if (!resp.ok) return null;
-		const declared = Number(resp.headers.get('content-length') || 0);
-		if (declared && declared > MAX_GLB_BYTES) return null;
-		const buf = Buffer.from(await resp.arrayBuffer());
-		if (buf.length > MAX_GLB_BYTES) return null;
-		return buf;
+		return Buffer.from(await resp.arrayBuffer());
 	} catch {
+		// Blocked target, over-cap body, timeout: all mean "cannot use this body",
+		// and the caller's one message covers every case.
 		return null;
 	}
 }

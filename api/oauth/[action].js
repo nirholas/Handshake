@@ -58,6 +58,13 @@ function canonicalResource(requested) {
 const REGISTERABLE_SCOPES = new Set([
 	'avatars:read', 'avatars:write', 'avatars:delete', 'profile',
 	'memory:read', 'memory:write', 'agents:read', 'agents:write', 'offline_access',
+	// The wallet/services scopes gate the agent-wallet MCP server
+	// (api/mcp-agent). They are registerable because the user approves each one
+	// by name on the consent screen and every spend they authorize is still
+	// bounded by the server-side caps and THREEWS_AGENT_PAY_ENABLED. Omitting
+	// them left wallet_status, pay_and_call, provision_wallet and
+	// monetize_endpoint unreachable for every dynamically-registered client.
+	'wallet:read', 'wallet:write', 'services:write',
 ]);
 
 function filterRegisterableScope(requested) {

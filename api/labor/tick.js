@@ -16,7 +16,7 @@
 //     used to consume the entire job batch and no autonomous job was ever driven
 //     again. The scan now requires worker_enabled, mirroring the policy join the
 //     bounty scan already had.
-//   • an open bounty holding fewer pending bids than its poster's min_bids, 
+//   • an open bounty holding fewer pending bids than its poster's min_bids.
 //     autoAwardIfReady declines it until more bids arrive, which may be never.
 //     Award-ready bounties now sort ahead of bid-gathering ones, so a bounty
 //     whose money is ready to move cannot be blocked behind ten that are not.

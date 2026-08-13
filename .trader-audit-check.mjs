@@ -1,0 +1,13 @@
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import ws from 'ws';
+neonConfig.webSocketConstructor = ws;
+neonConfig.wsProxy = () => '127.0.0.1:54490/v2';
+neonConfig.useSecureWebSocket = false;
+neonConfig.pipelineConnect = false;
+const pool = new Pool({ connectionString: 'postgres://postgres:pg@127.0.0.1:5432/main' });
+const q = async (t, p) => (await pool.query(t, p)).rows;
+console.log('copy_subscriptions cols:', (await q(`select column_name from information_schema.columns where table_name='copy_subscriptions' order by 1`)).map(r=>r.column_name).join(','));
+console.log('agent_identities has deleted_at:', (await q(`select 1 from information_schema.columns where table_name='agent_identities' and column_name='deleted_at'`)).length === 1);
+console.log('agent_identities has profile_image_url:', (await q(`select 1 from information_schema.columns where table_name='agent_identities' and column_name='profile_image_url'`)).length === 1);
+console.log('copy_executions cols:', (await q(`select column_name from information_schema.columns where table_name='copy_executions' order by 1`)).map(r=>r.column_name).join(','));
+await pool.end();

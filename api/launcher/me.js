@@ -81,7 +81,13 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET') return getState(res, userId, config);
 
-	const body = (await readJson(req).catch(() => ({}))) || {};
+	// A JSON body that is not an object (an array, a bare string) carries no
+	// patch this endpoint can honour; say so instead of writing a silent no-op
+	// row. An absent body stays valid: it reads back as an empty patch.
+	const body = (await readJson(req).catch(() => ({}))) ?? {};
+	if (typeof body !== 'object' || Array.isArray(body)) {
+		return error(res, 400, 'invalid_body', 'body must be a JSON object');
+	}
 	if (body.action === 'preview') return previewCoin(res, config, body);
 	if (body.action === 'funding') return fundingState(res, userId, config);
 	if (body.action === 'resume') return resumeBreaker(res, userId);
@@ -296,6 +302,11 @@ async function postConfig(res, userId, cur, body) {
 // On-demand single-coin synthesis: shows exactly what the launcher would mint next.
 // User-initiated only (it can call the LLM), so never wire this onto a poll.
 async function previewCoin(res, config, body) {
+	// Same mode contract as a config patch: an explicit bad mode is an error, not
+	// a silent substitution that previews something the caller never asked for.
+	if (body.mode != null && !MODES.includes(body.mode)) {
+		return error(res, 400, 'invalid_mode', `mode must be one of ${MODES.join(', ')}`);
+	}
 	const mode = MODES.includes(body.mode) ? body.mode : (config?.mode || 'hybrid');
 	const network = config?.network || 'mainnet';
 	const coin = await pickSource({

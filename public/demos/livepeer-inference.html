@@ -264,6 +264,15 @@
 					const info = await r.json();
 					$('gateway-info').textContent =
 						`gateway · ${info.gateway} · ${info.gateway_url}`;
+					// A deployment with no key and no override has no Livepeer
+					// gateway to dial, and the server says so rather than
+					// dialling a host that stopped being Livepeer. Say it on the
+					// card before the run instead of after a wasted Compare.
+					if (info.usable === false) {
+						const lb = $('livepeer-body');
+						lb.textContent = info.hint || 'No Livepeer gateway is configured for this deployment.';
+						lb.className = 'card-body error';
+					}
 					if (info.hint) logLine(info.hint, 'dim');
 					if (Array.isArray(info.models) && info.models.length) {
 						const sel = $('livepeer-model');

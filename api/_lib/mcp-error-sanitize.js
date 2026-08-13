@@ -12,6 +12,7 @@
 // never diverge in what they leak.
 
 import { randomBytes } from 'node:crypto';
+import { isDbUnavailableError, isDbCapacityError } from './db.js';
 
 // Postgres driver errors carry a `severity` and/or SQLSTATE-ish `code` plus
 // fields like `schema`, `table`, `column`, `routine`. Treat anything with those
@@ -70,6 +71,20 @@ export function sanitizeToolError(err, { tool, server, log } = {}) {
 	const meta = { tool, server, log_id: logId, pg_code: err?.code, detail };
 	if (log && typeof log.error === 'function') log.error('tool_error', meta);
 	else console.error(`[${server || 'mcp'}] tool_error`, meta);
+
+	// A DB outage is transient, not a fault in the caller's request. The Neon HTTP
+	// driver reports it as a plain Error whose message ("Error connecting to
+	// database: fetch failed") carries no SQLSTATE and trips none of the internal
+	// markers above, so it used to reach MCP callers verbatim: driver text an
+	// agent cannot act on. Answer with the same designed, actionable contract the
+	// REST boundary already uses (api/_lib/http.js wrap answers 503 "database
+	// temporarily unavailable, retry shortly"), so an agent retries instead of
+	// concluding the tool is broken. Checked BEFORE the suppression branch: a
+	// capacity error carries SQLSTATE 53100 and would otherwise collapse into the
+	// opaque generic message.
+	if (isDbUnavailableError(err) || isDbCapacityError(err)) {
+		return { message: `database temporarily unavailable, retry shortly (ref ${logId})`, logId };
+	}
 
 	if (isPostgresError(err) || leaksInternalText(rawMessage)) {
 		return { message: `internal error (ref ${logId})`, logId };

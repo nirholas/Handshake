@@ -158,6 +158,12 @@ export const toolDefs = [
 					isError: true,
 				};
 			}
+			// Address, balances and caps are account data, so the token has to
+			// carry a wallet grant. wallet:write satisfies it too: a caller
+			// allowed to spend may obviously read what it is spending.
+			if (!hasScope(auth.scope, 'wallet:read') && !hasScope(auth.scope, 'wallet:write')) {
+				return scopeRequired('wallet:read');
+			}
 			const status = await getUserWalletStatus(auth.userId);
 			const lines = status.provisioned
 				? [
@@ -200,7 +206,10 @@ export const toolDefs = [
 					type: 'string',
 					description: 'CAIP-2 network filter, e.g. "solana:*" or "eip155:8453".',
 				},
-				max_price_usdc: { type: 'number', minimum: 0 },
+				// Bounded: past 1e21 the atomic conversion stringifies in
+				// exponential notation, which filterByMaxPrice rejects with an
+				// internal TypeError. A ceiling keeps it a designed -32602.
+				max_price_usdc: { type: 'number', minimum: 0, maximum: 1_000_000 },
 				limit: { type: 'integer', minimum: 1, maximum: 50, default: 15 },
 			},
 			required: ['query'],
@@ -293,6 +302,12 @@ export const toolDefs = [
 					},
 				};
 			}
+
+			// Spending the user's USDC needs the same wallet:write grant that
+			// provision_wallet requires. Checked after the degrade branch so a
+			// spend-disabled server still answers with the manual pay link, and
+			// before payExternalX402 so no money can move without the grant.
+			if (!hasScope(auth.scope, 'wallet:write')) return scopeRequired('wallet:write');
 
 			try {
 				const res = await payExternalX402({
@@ -400,6 +415,9 @@ export const toolDefs = [
 				`Cluster: ${cluster}`,
 				`Balance: ${balances.sol ?? '?'} SOL, ${balances.usdc ?? '?'} USDC`,
 			];
+			if (cluster === 'mainnet' && args.airdrop) {
+				lines.push('Airdrop skipped: the faucet is devnet only.');
+			}
 			if (airdrop) {
 				lines.push(
 					airdrop.ok

@@ -356,6 +356,13 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	const hasSeed = Number.isInteger(seed) && seed >= 0;
 	const token = readEnv('REPLICATE_API_TOKEN');
 	const hasVertex = !!readEnv('GOOGLE_CLOUD_PROJECT') && vertexImagenEnabled();
+	// The federated lane is resolved UP FRONT, not at its position in the ladder,
+	// because every upstream lane's "is anything left to try" test has to count
+	// it. Reading it late made an enabled Livepeer lane invisible to that test, so
+	// a deployment where it was the only lane downstream threw the upstream error
+	// instead of handing off, and the configured lane never ran.
+	const { livepeerFederationEnabled, livepeerTextToImage } = await import('../_providers/livepeer.js');
+	const hasLivepeer = livepeerFederationEnabled();
 	// Quality-first ordering: the Vertex Gemini image model outdraws 4-step
 	// distilled FLUX for photoreal reference images, and it burns the GCP credit
 	// pool the platform is funded to spend — so when the lane is configured it
@@ -367,8 +374,9 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	// What remains DOWNSTREAM of the NIM lane. When Vertex leads it has already
 	// been consumed by the time NIM runs, so it no longer counts as a fallback —
 	// otherwise a NIM failure after a Vertex failure would "fall through" to a
-	// lane that was already tried and surface the wrong terminal error.
-	const hasFallback = (!vertexFirst && hasVertex) || !!token;
+	// lane that was already tried and surface the wrong terminal error. Livepeer
+	// and Replicate both sit after NIM either way, so both always count.
+	const hasFallback = (!vertexFirst && hasVertex) || hasLivepeer || !!token;
 
 	// One attempt at the Vertex lane, shared by both ladder positions. Returns
 	// null to mean "hand off to the next lane" (unconfigured, or a failure with a
@@ -386,7 +394,7 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	};
 
 	if (vertexFirst) {
-		const served = await tryVertex(!!readEnv('NVIDIA_API_KEY') || !!token);
+		const served = await tryVertex(!!readEnv('NVIDIA_API_KEY') || hasLivepeer || !!token);
 		if (served) return served;
 	}
 
@@ -429,8 +437,7 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	// Replicate backstop (it costs real money per image): a successful federated
 	// call is strictly cheaper than every remaining option. Off by default; the
 	// measured case for flipping it is in docs/ops/livepeer-federation.md.
-	const { livepeerFederationEnabled, livepeerTextToImage } = await import('../_providers/livepeer.js');
-	if (livepeerFederationEnabled()) {
+	if (hasLivepeer) {
 		try {
 			return logImageProvider(await livepeerTextToImage(prompt, { aspectRatio, seed }));
 		} catch (err) {

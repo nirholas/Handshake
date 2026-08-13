@@ -1,14 +1,14 @@
-// Persona resolve — the durable-reload endpoint behind the embodiment embed.
+// Persona resolve: the durable-reload endpoint behind the embodiment embed.
 //
 //   GET /api/mcp3d/persona?id=persona_xxx  → { persona_id, name, glb_url, … }
 //
 // The embodiment embed (pages/embodiment/embed.html) calls this when it is
-// opened with only a persona id (no inline glb param) so a fresh session — a new
-// ChatGPT/Claude turn, a reopened panel, a shared link — reloads the exact same
+// opened with only a persona id (no inline glb param) so a fresh session (a new
+// ChatGPT/Claude turn, a reopened panel, a shared link) reloads the exact same
 // body by id. The persona id is an unguessable capability, so no auth is
 // required to read; the response is the safe public projection only
 // (personaPublicView strips storage keys + owner ids). No token, wallet, or
-// payment surface — a persona is a name and a body.
+// payment surface: a persona is a name and a body.
 //
 // CORS is open and the response is CDN-cacheable for a short window because the
 // embed is framed cross-origin by arbitrary hosts and a persona's body rarely
@@ -16,6 +16,8 @@
 
 import { cors, json, wrap } from '../_lib/http.js';
 import { getPersona, isPersonaId, personaPublicView } from '../_lib/persona-store.js';
+
+const CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=300';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,HEAD,OPTIONS', origins: '*' })) return;
@@ -38,8 +40,11 @@ export default wrap(async (req, res) => {
 	let record;
 	try {
 		record = await getPersona(id);
-	} catch {
-		// A storage hiccup must not leak internals — report a clean unavailable.
+	} catch (err) {
+		// A storage hiccup must not leak internals to the caller, but it must not
+		// vanish either: a silently swallowed cause is an undiagnosable 503 in
+		// production. Log the reason, return the clean unavailable.
+		console.warn('[mcp3d/persona] persona load failed:', err?.message || err);
 		json(res, 503, { error: 'unavailable', message: 'Could not load that persona right now. Please try again.' });
 		return;
 	}
@@ -49,9 +54,9 @@ export default wrap(async (req, res) => {
 		return;
 	}
 
-	// Public projection only — never the storage key or owner id. Short CDN cache:
+	// Public projection only, never the storage key or owner id. Short CDN cache:
 	// the body is durable, and the embed re-fetches on each cold load anyway.
-	res.setHeader('cache-control', 'public, s-maxage=60, stale-while-revalidate=300');
+	res.setHeader('cache-control', CACHE_CONTROL);
 	res.setHeader('cross-origin-resource-policy', 'cross-origin');
 	json(res, 200, personaPublicView(record));
 });

@@ -1582,10 +1582,12 @@ export const env = {
 		return opt('X_OAUTH_CLIENT_SECRET');
 	},
 
-	// Livepeer AI Gateway — optional. When set, /api/inference/livepeer routes
-	// to https://livepeer.studio/api/generate/llm with bearer auth (higher quota).
-	// When unset, the demo falls back to the public dream gateway at
-	// https://dream-gateway.livepeer.cloud/llm (no key, rate-limited).
+	// Livepeer AI Gateway, optional. When set, the Livepeer lanes route to
+	// https://livepeer.studio/api/generate with bearer auth. When unset they
+	// resolve to the no-key public dream gateway, which api/_lib/livepeer-
+	// gateway.js marks unusable (its hostname stopped serving Livepeer in
+	// 2026-08; see docs/ops/livepeer-federation.md), so an unkeyed deployment
+	// reports the leg unavailable rather than dialing it.
 	get LIVEPEER_API_KEY() {
 		return opt('LIVEPEER_API_KEY');
 	},
@@ -1594,8 +1596,9 @@ export const env = {
 	// the text-to-image chain (api/_mcp3d/text-to-image.js) routes one GPU job
 	// class through api/_providers/livepeer.js on the Livepeer network, behind
 	// the LIVEPEER_FEDERATION_ENABLED flag. LIVEPEER_GATEWAY_URL overrides the
-	// gateway base URL (self-hosted or staging); LIVEPEER_T2I_MODEL overrides
-	// the default ByteDance/SDXL-Lightning pipeline.
+	// gateway base URL for BOTH Livepeer lanes (self-hosted or staging), and is
+	// the only way to reach a working no-key gateway today; LIVEPEER_T2I_MODEL
+	// overrides the default ByteDance/SDXL-Lightning pipeline.
 	get LIVEPEER_GATEWAY_URL() {
 		return opt('LIVEPEER_GATEWAY_URL');
 	},

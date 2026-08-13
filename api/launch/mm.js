@@ -5,7 +5,8 @@
 //   GET    /api/launch/mm/:mint?stream=1            → SSE: live action feed
 //   GET    /api/launch/mm?owner=1                   → the caller's policies
 //   POST   /api/launch/mm                           → create/update a policy (owner + CSRF)
-//   POST   /api/launch/mm?action=pause|resume|kill|withdraw   → lifecycle controls (owner + CSRF)
+//   POST   /api/launch/mm?action=pause|resume|kill|withdraw   → lifecycle controls
+//          on an EXISTING policy (owner + CSRF); 404s when none is attached yet
 //   DELETE /api/launch/mm?mint=&network=            → remove the policy (owner + CSRF)
 //
 // A policy can only be attached to a coin launched THROUGH three.ws (a row in
@@ -30,9 +31,15 @@ const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const SSE_PING_MS = 15_000;
 const SSE_POLL_MS = 3_000;
 const SSE_MAX_MS = 10 * 60_000;
+// Lifecycle controls, as opposed to a create/update POST (no `action` param).
+const LIFECYCLE_ACTIONS = ['pause', 'resume', 'kill', 'withdraw'];
 
-function netOf(url) {
-	return url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
+// An explicit network in the body wins over the query string: a POST carries its
+// own mint + network pair, and honouring the query there let a stale `?network=`
+// silently retarget the write at the other network's policy.
+function netOf(url, bodyNetwork) {
+	const raw = bodyNetwork ?? url.searchParams.get('network');
+	return raw === 'devnet' ? 'devnet' : 'mainnet';
 }
 
 // Resolve the mint from the path (/api/launch/mm/:mint), query, or body.
@@ -53,16 +60,22 @@ async function resolveAuth(req) {
 async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
 
+	// HEAD must answer wherever GET does (RFC 9110 §9.3.2). method() normalizes a
+	// HEAD probe to GET and answers 405 + Allow for anything else, so the branches
+	// below only ever see GET, POST, or DELETE. Checking the method AFTER the GET
+	// branch is what made a plain `curl -I` on this endpoint answer 405.
+	const headProbe = req.method === 'HEAD';
+	if (!method(req, res, ['GET', 'POST', 'DELETE'])) return;
+
 	const url = new URL(req.url, `http://${req.headers.host || 'x'}`);
 
 	if (req.method === 'GET') {
-		if (url.searchParams.get('stream') === '1') return handleStream(req, res, url);
+		if (url.searchParams.get('stream') === '1') return handleStream(req, res, url, headProbe);
 		if (url.searchParams.get('owner') === '1') return handleListOwner(req, res);
 		return handleGet(req, res, url);
 	}
 	if (req.method === 'POST') return handlePost(req, res, url);
-	if (req.method === 'DELETE') return handleDelete(req, res, url);
-	return method(req, res, ['GET', 'POST', 'DELETE']) ? error(res, 405, 'method_not_allowed', 'use GET, POST, or DELETE') : undefined;
+	return handleDelete(req, res, url);
 }
 
 // ── GET policy (+ optional live state) ────────────────────────────────────────
@@ -70,6 +83,11 @@ async function handleGet(req, res, url) {
 	const mint = mintFrom(url, null);
 	const network = netOf(url);
 	if (!mint || !MINT_RE.test(mint)) return error(res, 400, 'invalid_mint', 'a valid mint is required');
+
+	// Public read (anyone may inspect a disclosed policy), so it carries the same
+	// per-IP ceiling every other public read on this platform does.
+	const rl = await limits.publicIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 
 	const auth = await resolveAuth(req);
 	const policy = await getPolicyByMint(mint, network);
@@ -138,8 +156,13 @@ async function handlePost(req, res, url) {
 	try { body = await readJson(req); } catch (e) { return error(res, 400, 'bad_request', e?.message || 'invalid body'); }
 
 	const mint = mintFrom(url, body?.mint);
-	const network = body?.network === 'devnet' ? 'devnet' : netOf(url);
+	const network = netOf(url, body?.network);
 	if (!mint || !MINT_RE.test(mint)) return error(res, 400, 'invalid_mint', 'a valid mint is required');
+
+	const action = url.searchParams.get('action') || null;
+	if (action && !LIFECYCLE_ACTIONS.includes(action)) {
+		return error(res, 400, 'invalid_action', `action must be one of ${LIFECYCLE_ACTIONS.join(', ')}`);
+	}
 
 	// Owner-only: the coin must be one this user launched through three.ws.
 	const launch = await resolveOwnedLaunch({ userId: auth.userId, mint, network });
@@ -152,7 +175,14 @@ async function handlePost(req, res, url) {
 	const agentId = launch?.agent_id || existing?.agent_id;
 	if (!agentId) return error(res, 409, 'no_agent', 'this launch has no agent wallet to run the market-maker from');
 
-	const action = url.searchParams.get('action');
+	// A lifecycle control acts on a maker that exists. Without this, pause/kill/
+	// withdraw fell through to the upsert and CREATED the very market-maker they
+	// were trying to stop: a zero-floor policy the owner never configured, which
+	// then rendered as a live maker on the coin's public page.
+	if (action && !existing) {
+		return error(res, 404, 'no_policy', 'no market-maker is attached to this coin yet; configure one before pausing, killing, or withdrawing');
+	}
+
 	try {
 		if (action === 'pause') {
 			const row = await upsertPolicy({ mint, network, agentId, userId: auth.userId, patch: { enabled: false } });
@@ -205,19 +235,35 @@ async function handleDelete(req, res, url) {
 }
 
 // ── SSE live action feed ──────────────────────────────────────────────────────
-async function handleStream(req, res, url) {
+async function handleStream(req, res, url, headProbe = false) {
 	const mint = mintFrom(url, null);
 	const network = netOf(url);
 	if (!mint || !MINT_RE.test(mint)) return error(res, 400, 'invalid_mint', 'a valid mint is required');
+
+	// Every open stream costs a DB round trip every SSE_POLL_MS for up to
+	// SSE_MAX_MS, so it takes the same per-IP ceiling the platform's other public
+	// SSE feeds (api/pump/trades-stream.js, api/oracle/action-stream.js) take.
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
 	const policy = await getPolicyByMint(mint, network);
 	if (!policy) return error(res, 404, 'not_found', 'no market-maker is attached to this coin');
 
-	res.writeHead(200, {
+	const head = {
 		'Content-Type': 'text/event-stream; charset=utf-8',
 		'Cache-Control': 'no-cache, no-transform',
 		Connection: 'keep-alive',
 		'X-Accel-Buffering': 'no',
-	});
+	};
+	// A HEAD probe gets the headers a GET would send and nothing else — holding
+	// the socket open for the full stream duration would answer nothing.
+	if (headProbe) {
+		res.writeHead(200, head);
+		res.end();
+		return;
+	}
+
+	res.writeHead(200, head);
 	res.flushHeaders?.();
 
 	let active = true;
@@ -237,7 +283,13 @@ async function handleStream(req, res, url) {
 		send('open', { policy_id: policy.id, mint, network, actions: [] });
 	}
 
-	const poll = setInterval(async () => {
+	// Self-rearming rather than setInterval: a tick that outlives SSE_POLL_MS (a
+	// slow DB) would otherwise overlap the next one, and since lastId only
+	// advances after the await, both ticks read the same rows and the client sees
+	// every action twice. Re-arming after the tick finishes also stops queries
+	// piling up on a database that is already struggling.
+	let poll = null;
+	const tick = async () => {
 		if (!active) return;
 		try {
 			const rows = await listActions(policy.id, { sinceId: lastId, limit: 50, includeSkips: true });
@@ -248,15 +300,17 @@ async function handleStream(req, res, url) {
 			// Refresh policy aggregates so the UI's PnL/inventory stays live.
 			const fresh = await getPolicyByMint(mint, network);
 			if (fresh) send('state', toPublicPolicy(fresh));
-		} catch { /* transient — next tick */ }
-	}, SSE_POLL_MS);
+		} catch { /* transient, next tick */ }
+		if (active) poll = setTimeout(tick, SSE_POLL_MS);
+	};
+	poll = setTimeout(tick, SSE_POLL_MS);
 
 	const ping = setInterval(() => send('ping', { t: Date.now() }), SSE_PING_MS);
 
 	const teardown = () => {
 		if (!active) return;
 		active = false;
-		clearInterval(poll);
+		clearTimeout(poll);
 		clearInterval(ping);
 		clearTimeout(durationTimer);
 		try { res.end(); } catch {}
