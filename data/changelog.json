@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Your agent learns your GitHub work from a checklist you tick, and nothing else",
+			"summary": "Seeding an agent from GitHub now shows you the exact inventory first: your public profile, the repositories you pinned to your profile, your recent public repositories, and a separate tick for each repository's README. Whatever you leave unticked is never read, and the server rebuilds the same list when you press Seed, so a request naming anything you were not shown is refused outright rather than quietly seeding something else. Private repositories never appear in the list at all. Every stored memory records the exact set of boxes that produced it, so you can always see where a fact came from, and deleting them is one button on the agent or one Disconnect on the account, which removes every GitHub-derived memory across all your agents and revokes the access on GitHub's side too. Two fixes ship with it: the agent picker in Settings was reading the wrong field and never listed your agents, so the panel always fell back to asking for an agent ID by hand, and the Connect button on a deployment with no GitHub app configured now says so instead of opening an error page.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/settings"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Search engines can read the preview image on 69 pages again",
 			"summary": "Pages carry a hidden block of structured data that tells Google, Bing, and social platforms what the page is and which image represents it. On 69 pages that image address had been written with HTML escape codes in place of the plain characters, so anything reading the structured data got an address that would not load. The addresses are now written correctly on every affected page, and the tool that generates them was fixed at the source so newly published pages cannot pick the fault back up. Nothing about the pages themselves changed, only what machines read about them.",
 			"tags": [

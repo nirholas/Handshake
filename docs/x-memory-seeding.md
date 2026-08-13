@@ -189,6 +189,31 @@ distilled posts behind on an agent you forgot about.
 | `account_mismatch` | 409 | The consent was granted for a different X account |
 | rate limited | 429 | One seed per agent per 6 hours |
 
+## Enabling it on a deployment
+
+The lane needs an X app with OAuth 2.0 and read scopes, created at
+https://developer.twitter.com with `https://<your-domain>/api/auth/x/callback`
+registered as the callback. Its two credentials are the only configuration:
+
+```
+X_OAUTH_CLIENT_ID=
+X_OAUTH_CLIENT_SECRET=
+```
+
+On Cloud Run, set them without disturbing the rest of the environment:
+
+```bash
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 \
+  --update-env-vars X_OAUTH_CLIENT_ID=...,X_OAUTH_CLIENT_SECRET=...
+```
+
+Until both are present, `GET /api/agents/:id/memory/seed/x` answers
+`configured: false` and the Settings card says X connections are not enabled on
+this deployment, rather than offering a Connect button that could not complete.
+Nothing else in the lane changes: the disclosure, the consent grant, and
+revocation behave identically once the credentials are in place.
+
 ## Storage
 
 One table, created by `api/_lib/migrations/20260811140000_x_memory_consent.sql`:
