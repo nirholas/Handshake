@@ -265,4 +265,51 @@ check("a zero-span axis is safe", isinstance(seg._region_name(np.array([0.5, 0.0
 check("duplicate regions get numbered", seg._unique_names(["top", "top"]) == ["top-1", "top-2"])
 check("a unique region keeps its name", seg._unique_names(["top", "core"]) == ["top", "core"])
 
+# ── meshopt-compressed input ─────────────────────────────────────────────────
+# Callers segment avatar URLs, and most three.ws avatars are saved with
+# EXT_meshopt_compression, which trimesh cannot read: every segmentation of one
+# failed until main._fetch_mesh started transcoding. gltf_meshopt.py owns the
+# decode (and has its own suite); this pins that load_concatenated takes what it
+# produces.
+
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+import tempfile  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+import gltf_meshopt  # noqa: E402
+
+_source = trimesh.creation.icosphere(subdivisions=2)
+_plain_glb = trimesh.Scene({"a": _source}).export(file_type="glb")
+
+if shutil.which(gltf_meshopt.GLTFPACK_BIN):
+    with tempfile.TemporaryDirectory() as _packdir:
+        _raw = Path(_packdir) / "raw.glb"
+        _packed = Path(_packdir) / "packed.glb"
+        _raw.write_bytes(_plain_glb)
+        subprocess.run(
+            [gltf_meshopt.GLTFPACK_BIN, "-i", str(_raw), "-o", str(_packed), "-cc"],
+            capture_output=True,
+            check=True,
+            timeout=gltf_meshopt.GLTFPACK_TIMEOUT_S,
+        )
+        _packed_bytes = _packed.read_bytes()
+
+    try:
+        seg.load_concatenated(_packed_bytes, ".glb")
+        _raw_failed = False
+    except Exception:  # noqa: BLE001: the exact trimesh error is not the contract
+        _raw_failed = True
+    check("a compressed glb is unreadable without the decode", _raw_failed)
+
+    _decoded, _suffix = gltf_meshopt.decode_if_meshopt(_packed_bytes, ".glb")
+    _mesh = seg.load_concatenated(_decoded, _suffix)
+    check(
+        "the segmenter loads a decoded meshopt glb",
+        len(_mesh.faces) == len(_source.faces),
+        f"{len(_mesh.faces)} vs {len(_source.faces)}",
+    )
+else:
+    print("skip  meshopt decode section (no gltfpack binary)")
+
 print(f"\nOK  {PASS} checks passed")

@@ -58,6 +58,7 @@ from pydantic import BaseModel
 import engine_mia
 import rig_glb
 from blendshapes import head_mask_from_weights, load_template, transfer_blendshapes
+from gltf_meshopt import decode_if_meshopt
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes_async,
@@ -161,6 +162,11 @@ async def _run_task(task_id: str, mesh_gcs_url: str, want_blendshapes: bool) -> 
                         mesh_bytes = await fetch_remote_bytes_async(client, mesh_gcs_url)
                     except UnsafeUrlError as exc:
                         raise RuntimeError(f"refused to fetch mesh url: {exc}") from exc
+
+                # A meshopt-compressed GLB is transcoded before anything reads
+                # it: neither trimesh nor pygltflib can decode that extension,
+                # and it is the format most three.ws avatars ship as.
+                mesh_bytes, _ = decode_if_meshopt(mesh_bytes, ".glb")
 
                 rigged = await loop.run_in_executor(
                     None, _rig_sync, mesh_bytes, want_blendshapes

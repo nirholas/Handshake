@@ -560,4 +560,47 @@ if has_bpy:
         check("fbx convert reports no quads and no bake", meta["quad_ratio"] == 0.0 and meta["textured"] is False)
 
 
+# ── meshopt-compressed input ─────────────────────────────────────────────────
+# Callers hand this worker avatar URLs, and most three.ws avatars are saved with
+# EXT_meshopt_compression, which trimesh cannot read: every remesh of one failed
+# until _fetch_mesh started transcoding. gltf_meshopt.py owns the decode (and
+# has its own suite); this pins that the worker's own loaders accept the result.
+
+import gltf_meshopt  # noqa: E402
+
+_source = trimesh.creation.icosphere(subdivisions=2)
+_plain_glb = trimesh.Scene({"a": _source}).export(file_type="glb")
+
+if shutil.which(gltf_meshopt.GLTFPACK_BIN):
+    with tempfile.TemporaryDirectory() as _packdir:
+        _raw = Path(_packdir) / "raw.glb"
+        _packed = Path(_packdir) / "packed.glb"
+        _raw.write_bytes(_plain_glb)
+        subprocess.run(
+            [gltf_meshopt.GLTFPACK_BIN, "-i", str(_raw), "-o", str(_packed), "-cc"],
+            capture_output=True,
+            check=True,
+            timeout=gltf_meshopt.GLTFPACK_TIMEOUT_S,
+        )
+        _packed_bytes = _packed.read_bytes()
+
+    try:
+        remesh._load_concatenated(_packed_bytes, ".glb")
+        _raw_failed = False
+    except Exception:  # noqa: BLE001: the exact trimesh error is not the contract
+        _raw_failed = True
+    check("a compressed glb is unreadable without the decode", _raw_failed)
+
+    _decoded, _suffix = gltf_meshopt.decode_if_meshopt(_packed_bytes, ".glb")
+    _mesh = remesh._load_concatenated(_decoded, _suffix)
+    check(
+        "the triangle loader accepts a decoded meshopt glb",
+        len(_mesh.faces) == len(_source.faces),
+        f"{len(_mesh.faces)} vs {len(_source.faces)}",
+    )
+    _textured = remesh._load_textured(_decoded, _suffix)
+    check("the textured loader accepts a decoded meshopt glb", len(_textured.faces) > 0)
+else:
+    SKIPPED.append("meshopt decode (no gltfpack binary)")
+
 print(f"\n{PASSED} checks passed" + (f", {len(SKIPPED)} sections skipped: {', '.join(SKIPPED)}" if SKIPPED else ""))

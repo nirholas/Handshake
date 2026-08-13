@@ -34,17 +34,19 @@ WORKDIR /app
 # vendored into this directory exactly like worker_security.py: the build
 # context is workers/stylize, so ../ is unreachable. Keep the copy byte-identical.
 COPY worker_security.py /app/worker_security.py
+COPY gltf_meshopt.py /app/gltf_meshopt.py
 COPY oin.py /app/oin.py
 COPY oin_upload.py /app/oin_upload.py
 COPY main.py /app/main.py
 COPY test_stylize.py /app/test_stylize.py
+COPY test_gltf_meshopt.py /app/test_gltf_meshopt.py
 
 # Build-time guard: the four filters, the color sampler, the export round-trip,
 # the memory caps, the SSRF gate, and the upload retry policy must pass their
 # unit suite or the image does not ship. This is also the only place open3d's
 # decimation path (used by voronoi + lowpoly) and the gltfpack meshopt decode are
 # exercised; the local run falls back to trimesh and skips the meshopt case.
-RUN python /app/test_stylize.py
+RUN python /app/test_stylize.py && python /app/test_gltf_meshopt.py
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]

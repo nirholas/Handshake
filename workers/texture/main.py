@@ -107,6 +107,7 @@ from PIL import Image, ImageFilter
 from pydantic import BaseModel, Field, field_validator
 
 import texture_projection as tp
+from gltf_meshopt import decode_if_meshopt
 from worker_security import (
     fetch_remote_bytes,
     require_api_key,
@@ -371,6 +372,9 @@ def _load_mesh(url: str):
     import trimesh
     data = fetch_remote_bytes(url, timeout=60, max_bytes=128 * 1024 * 1024)
     suffix = Path(url.split("?")[0]).suffix.lower() or ".glb"
+    # A meshopt-compressed asset is transcoded first: trimesh cannot read one,
+    # and it is the format most three.ws avatars ship as.
+    data, suffix = decode_if_meshopt(data, suffix)
     mesh = trimesh.load(io.BytesIO(data), file_type=suffix.lstrip("."), force="mesh", process=True)
     if isinstance(mesh, trimesh.Scene):
         meshes = [g for g in mesh.geometry.values() if isinstance(g, trimesh.Trimesh)]
@@ -600,6 +604,7 @@ def _load_textured_mesh(url: str):
 
     data = fetch_remote_bytes(url, timeout=60, max_bytes=128 * 1024 * 1024)
     suffix = Path(url.split("?")[0]).suffix.lower() or ".glb"
+    data, suffix = decode_if_meshopt(data, suffix)
     loaded = trimesh.load(
         io.BytesIO(data), file_type=suffix.lstrip("."), process=False
     )

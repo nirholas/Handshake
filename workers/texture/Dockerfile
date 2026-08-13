@@ -1,4 +1,19 @@
+# gltfpack (zeux/meshoptimizer, MIT) decodes EXT_meshopt_compression, which
+# trimesh cannot read and which most three.ws avatars ship as. Pinned by release
+# tag and checksum so the image never picks up a binary we did not audit.
+FROM python:3.11-slim AS gltfpack
+ARG GLTFPACK_VERSION=v1.2
+ARG GLTFPACK_SHA256=ebc236f5f6c08c7e5c5750476a187d24805d44d8c680449c4b7369c333f817b1
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl unzip \
+    && curl -fsSL -o /tmp/gltfpack.zip \
+        https://github.com/zeux/meshoptimizer/releases/download/${GLTFPACK_VERSION}/gltfpack-ubuntu.zip \
+    && echo "${GLTFPACK_SHA256}  /tmp/gltfpack.zip" | sha256sum -c - \
+    && unzip -j /tmp/gltfpack.zip gltfpack -d /usr/local/bin \
+    && chmod +x /usr/local/bin/gltfpack \
+    && /usr/local/bin/gltfpack -v
+
 FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+COPY --from=gltfpack /usr/local/bin/gltfpack /usr/local/bin/gltfpack
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -51,10 +66,18 @@ print('ControlNet cached')"
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
+COPY gltf_meshopt.py /app/gltf_meshopt.py
 COPY texture_projection.py /app/texture_projection.py
 COPY test_texture_projection.py /app/test_texture_projection.py
+COPY test_gltf_meshopt.py /app/test_gltf_meshopt.py
 COPY stage_weights.py /app/stage_weights.py
 COPY main.py /app/main.py
+
+# Core-path gate: the UV rasterizer and back-projection that decide where a
+# generated pixel lands, and the meshopt decode every caller mesh passes
+# through. Both are CPU-only, so a regression fails the image instead of
+# reaching a user mid-retexture.
+RUN python3 /app/test_texture_projection.py && python3 /app/test_gltf_meshopt.py
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]

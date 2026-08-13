@@ -68,6 +68,7 @@ from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
 from google.cloud import storage
 from pydantic import BaseModel, Field, field_validator
 
+from gltf_meshopt import decode_if_meshopt
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes,
@@ -148,7 +149,10 @@ def _fetch_mesh(url: str) -> tuple[bytes, str]:
     suffix = Path(url.split("?")[0]).suffix.lower()
     if suffix not in SUPPORTED_INPUT_FORMATS:
         suffix = ".glb"
-    return data, suffix
+    # A meshopt-compressed asset is transcoded here, before any loader sees it:
+    # trimesh cannot read one, and it is the format most three.ws avatars ship
+    # as. Anything else passes through untouched.
+    return decode_if_meshopt(data, suffix)
 
 
 def _load_concatenated(data: bytes, suffix: str):

@@ -209,22 +209,28 @@ import subprocess  # noqa: E402
 import tempfile  # noqa: E402
 from pathlib import Path  # noqa: E402
 
+import gltf_meshopt  # noqa: E402
+
 plain_glb = trimesh.Scene({"a": source_mesh()}).export(file_type="glb")
 check(
     "a plain glb is not sent through the decoder",
-    not main._uses_meshopt(main._gltf_document(plain_glb, ".glb")),
+    not gltf_meshopt.uses_meshopt(gltf_meshopt.gltf_document(plain_glb, ".glb")),
+)
+check(
+    "a plain glb passes through decode_if_meshopt untouched",
+    gltf_meshopt.decode_if_meshopt(plain_glb, ".glb") == (plain_glb, ".glb"),
 )
 check(
     "a non-gltf payload has no gltf document",
-    main._gltf_document(b"ply\nformat ascii 1.0\n", ".ply") is None,
+    gltf_meshopt.gltf_document(b"ply\nformat ascii 1.0\n", ".ply") is None,
 )
 for declared in ("extensionsRequired", "extensionsUsed"):
     check(
-        f"{declared}: {main.MESHOPT_EXTENSION} is detected",
-        main._uses_meshopt({declared: [main.MESHOPT_EXTENSION]}),
+        f"{declared}: {gltf_meshopt.MESHOPT_EXTENSION} is detected",
+        gltf_meshopt.uses_meshopt({declared: [gltf_meshopt.MESHOPT_EXTENSION]}),
     )
 
-if shutil.which(main.GLTFPACK_BIN):
+if shutil.which(gltf_meshopt.GLTFPACK_BIN):
     # Round-trip through the real encoder: compress, then prove the loader gets
     # usable geometry back out of a file trimesh cannot read on its own.
     with tempfile.TemporaryDirectory() as packdir:
@@ -232,16 +238,16 @@ if shutil.which(main.GLTFPACK_BIN):
         packed = Path(packdir) / "packed.glb"
         raw.write_bytes(plain_glb)
         subprocess.run(
-            [main.GLTFPACK_BIN, "-i", str(raw), "-o", str(packed), "-cc"],
+            [gltf_meshopt.GLTFPACK_BIN, "-i", str(raw), "-o", str(packed), "-cc"],
             capture_output=True,
             check=True,
-            timeout=main.GLTFPACK_TIMEOUT_S,
+            timeout=gltf_meshopt.GLTFPACK_TIMEOUT_S,
         )
         packed_bytes = packed.read_bytes()
 
     check(
         "a meshopt glb is detected as needing a decode",
-        main._uses_meshopt(main._gltf_document(packed_bytes, ".glb")),
+        gltf_meshopt.uses_meshopt(gltf_meshopt.gltf_document(packed_bytes, ".glb")),
     )
     try:
         trimesh.load(io.BytesIO(packed_bytes), file_type="glb", force="mesh", process=False)
@@ -262,12 +268,12 @@ else:
     # No gltfpack locally: pin the failure contract instead, so a caller is told
     # what the input needs rather than getting a bare loader crash.
     try:
-        main._transcode_meshopt(plain_glb, ".glb")
+        gltf_meshopt.transcode_meshopt(plain_glb, ".glb")
         check("a missing gltfpack is reported as a readable error", False, "no ValueError raised")
     except ValueError as exc:
         check(
             "a missing gltfpack is reported as a readable error",
-            main.MESHOPT_EXTENSION in str(exc),
+            gltf_meshopt.MESHOPT_EXTENSION in str(exc),
             str(exc),
         )
 
