@@ -53,22 +53,41 @@ export function trialState(remaining, granted) {
 export function formatAtomic(atomic, decimals = 6) {
 	const raw = String(atomic ?? '0').replace(/[^0-9]/g, '') || '0';
 	const d = Number.isFinite(Number(decimals)) ? Math.max(0, Math.min(18, Number(decimals))) : 6;
-	if (d === 0) return raw.replace(/^0+(?=\d)/, '');
+	const group = (s) => s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+	if (d === 0) return group(raw.replace(/^0+(?=\d)/, ''));
 	const padded = raw.padStart(d + 1, '0');
 	const whole = padded.slice(0, -d).replace(/^0+(?=\d)/, '');
 	const frac = padded.slice(-d).replace(/0+$/, '');
-	const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+	const grouped = group(whole);
 	return frac ? `${grouped}.${frac}` : grouped;
 }
 
-/** Sum atomic strings without precision loss. */
-function sumAtomic(values) {
-	let total = 0n;
-	for (const v of values) {
-		const digits = String(v ?? '0').replace(/[^0-9]/g, '');
-		if (digits) total += BigInt(digits);
+/**
+ * Total the queue's potential revenue PER MINT. Atomic amounts are only
+ * comparable inside one mint: adding 10 USDC (6dp) to 10 of an 8dp token and
+ * printing the result under whichever mint happened to sort first produced a
+ * headline number that was wrong by orders of magnitude for any seller who
+ * priced two skills in two currencies. Returns the per-mint buckets sorted by
+ * size, largest first, so a caller that can only render one number renders the
+ * biggest true one rather than a fabricated blend.
+ */
+export function potentialsByMint(entries) {
+	const buckets = new Map();
+	for (const e of entries) {
+		if (!e?.price || !e.potential?.atomic) continue;
+		const key = `${e.price.mint || ''}::${e.price.decimals}`;
+		const digits = String(e.potential.atomic).replace(/[^0-9]/g, '');
+		const prev = buckets.get(key);
+		const total = (prev ? BigInt(prev.atomic) : 0n) + (digits ? BigInt(digits) : 0n);
+		buckets.set(key, {
+			mint: e.price.mint || null,
+			decimals: e.price.decimals,
+			atomic: total.toString(),
+		});
 	}
-	return total.toString();
+	return [...buckets.values()]
+		.sort((a, b) => (BigInt(a.atomic) === BigInt(b.atomic) ? 0 : BigInt(a.atomic) < BigInt(b.atomic) ? 1 : -1))
+		.map((b) => ({ ...b, display: formatAtomic(b.atomic, b.decimals) }));
 }
 
 function priceOf(row) {
@@ -186,8 +205,10 @@ export async function sellerView(userId) {
 		};
 	});
 
-	const decimals = queue.find((q) => q.price)?.price.decimals ?? 6;
-	const potentialAtomic = sumAtomic(queue.map((q) => q.potential?.atomic || '0'));
+	const potentials = potentialsByMint(queue);
+	// The headline figure names its own mint, so the UI never has to guess it
+	// from the first row of the queue (which need not be the mint being summed).
+	const headline = potentials[0] || { atomic: '0', decimals: 6, display: '0', mint: null };
 
 	return {
 		role: 'seller',
@@ -198,7 +219,8 @@ export async function sellerView(userId) {
 			warmLeads: queue.reduce((n, q) => n + q.exhausted, 0),
 			lastRun: queue.reduce((n, q) => n + q.lastRun, 0),
 			sold: queue.reduce((n, q) => n + q.sold, 0),
-			potential: { atomic: potentialAtomic, decimals, display: formatAtomic(potentialAtomic, decimals) },
+			potential: headline,
+			potentials,
 		},
 	};
 }

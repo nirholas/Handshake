@@ -52,11 +52,11 @@ describe('normalizeToken', () => {
 		expect(normalizeToken({ id: 'a', volume24h: -5 }).magnitude).toBe(0);
 	});
 
-	it('derives a label and preserves featured + sentiment', () => {
-		const t = normalizeToken({ id: 'mintmintmint', featured: true, sentiment: { score: 0.4, posPct: 60 } });
+	it('derives a label and preserves featured + the anchor flow pulse', () => {
+		const t = normalizeToken({ id: 'mintmintmint', featured: true, flow: { score: 0.4, buyPct: 70 } });
 		expect(t.label).toBe('mint…');
 		expect(t.featured).toBe(true);
-		expect(t.sentiment.posPct).toBe(60);
+		expect(t.flow.buyPct).toBe(70);
 	});
 });
 
@@ -211,9 +211,9 @@ describe('rankMovers', () => {
 });
 
 describe('buildNarrationContext', () => {
-	it('always names $THREE for the anchor and folds in its sentiment', () => {
+	it('always names $THREE for the anchor and folds in its order flow', () => {
 		const movers = {
-			anchor: { label: 'THREE', featured: true, change24h: 8, sentiment: { score: 0.4, posPct: 62, count: 30 } },
+			anchor: { label: 'THREE', featured: true, change24h: 8, flow: { score: 0.4, buyPct: 70, buys24h: 70, sells24h: 30 } },
 			gainers: [{ label: 'A', change24h: 15 }],
 			losers: [{ label: 'B', change24h: -10 }],
 			avgMomentum: 0.2,
@@ -222,7 +222,7 @@ describe('buildNarrationContext', () => {
 		const ctx = buildNarrationContext({ spikes: [], movers });
 		expect(ctx).toMatch(/\$THREE/);
 		expect(ctx).toMatch(/Heating across the board/);
-		expect(ctx).toMatch(/62% bullish/);
+		expect(ctx).toMatch(/order flow buyers leading \(70% buys of 100 trades 24h\)/);
 	});
 
 	it('describes a cooling tape and a fresh spike', () => {

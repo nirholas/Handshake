@@ -9,9 +9,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const sqlQueue = [];
+const sqlText = [];
 vi.mock('../../api/_lib/db.js', () => ({
 	sql: Object.assign(
-		vi.fn(() => Promise.resolve(sqlQueue.length ? sqlQueue.shift() : [])),
+		vi.fn((strings) => {
+			sqlText.push(strings.join('?').replace(/\s+/g, ' '));
+			return Promise.resolve(sqlQueue.length ? sqlQueue.shift() : []);
+		}),
 		{ transaction: vi.fn(async (fns) => { for (const f of fns) await f; }) },
 	),
 	isDbUnavailableError: () => false,
@@ -61,6 +65,7 @@ const U3 = '00000000-0000-0000-0000-0000000000a3';
 
 beforeEach(() => {
 	sqlQueue.length = 0;
+	sqlText.length = 0;
 	rlState.success = true;
 	authState.session = null;
 	authState.bearer = null;
@@ -91,6 +96,17 @@ describe('GET /api/leaderboard/unified: contract', () => {
 			expect(res.statusCode).toBe(200);
 			expect(body.metric).toBe(metric);
 		}
+	});
+
+	it('counts only finished derivatives by other creators as remixes received', async () => {
+		sqlQueue.push([]);
+		await call({ metric: 'remixes_received' });
+		const q = sqlText[0];
+		// A creator re-refining their own model also writes parent_creation_id
+		// (forge-store's linkRefineLineage), so the ranking query must exclude
+		// self-parented rows and unfinished generations or the board is farmable.
+		expect(q).toContain('c.user_id is distinct from m.user_id');
+		expect(q).toContain("c.status = 'done'");
 	});
 
 	it('serves an empty board without a profile lookup, and never 500s', async () => {

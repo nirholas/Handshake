@@ -13,7 +13,7 @@
 //     (who, which version, from which flow, when, IP, user agent).
 
 import { sql } from './db.js';
-import { logAudit } from './audit.js';
+import { logAuditNow } from './audit.js';
 
 export const TOS_VERSION = 2;
 
@@ -34,33 +34,44 @@ export function tosAcceptanceFromBody(body) {
 }
 
 /**
- * Record a user's ToS acceptance. Fire-and-forget: auth flows must never
- * fail because acceptance bookkeeping had a bad day: the audit trail and
- * column stamp are best-effort, the acceptance UI event already happened.
+ * Record a user's ToS acceptance. Never throws and never rejects: auth flows
+ * must not fail because acceptance bookkeeping had a bad day, and the
+ * acceptance UI event already happened either way.
  *
- * @param {{ userId: string, version: number, context: string, req?: import('http').IncomingMessage }} args
+ * Awaiting is optional. Auth endpoints call it fire-and-forget (an extra DB
+ * round trip on the sign-in path buys them nothing); /api/legal/tos-ack awaits
+ * the returned promise because reporting whether the record landed is that
+ * endpoint's whole job.
+ *
+ * @param {{ userId: string, version: number, context: string, path?: string|null, req?: import('http').IncomingMessage }} args
  *   context: which flow recorded it ('register', 'login', 'siwe', 'siws',
  *   'privy', 'tos-ack', …): stored in the audit row's meta.
+ *   path: the page the acceptance happened on, when the caller knows it.
+ * @returns {Promise<boolean>} true when both the audit row and the user-row
+ *   stamp landed.
  */
-export function recordTosAcceptance({ userId, version, context, req = null }) {
-	logAudit({
-		userId,
-		action: 'tos-accept',
-		resourceId: null,
-		meta: { version, context },
-		req,
-	});
-	queueMicrotask(async () => {
-		try {
-			await sql`
-				update users
-				set tos_accepted_version = ${version},
-					tos_accepted_at = now()
-				where id = ${userId}
-					and coalesce(tos_accepted_version, 0) <= ${version}
-			`;
-		} catch (err) {
-			console.error('[legal] tos acceptance stamp failed', err?.message || err);
-		}
-	});
+export async function recordTosAcceptance({ userId, version, context, path = null, req = null }) {
+	const meta = { version, context };
+	if (path) meta.path = path;
+	const [logged, stamped] = await Promise.all([
+		logAuditNow({ userId, action: 'tos-accept', resourceId: null, meta, req }),
+		stampTosVersion(userId, version),
+	]);
+	return logged && stamped;
+}
+
+async function stampTosVersion(userId, version) {
+	try {
+		await sql`
+			update users
+			set tos_accepted_version = ${version},
+				tos_accepted_at = now()
+			where id = ${userId}
+				and coalesce(tos_accepted_version, 0) <= ${version}
+		`;
+		return true;
+	} catch (err) {
+		console.error('[legal] tos acceptance stamp failed', err?.message || err);
+		return false;
+	}
 }

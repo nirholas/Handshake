@@ -205,6 +205,15 @@ function show(view) {
 let currentOrder = null; // { orderId, message, receiveAddress }
 let pollTimer = null;
 
+// Drop a dead order and return the user to a usable compose view. Used whenever
+// the server reports the id no longer resolves, so a stale sessionStorage entry
+// can never strand the page on a pay screen for an order that does not exist.
+function forgetOrder() {
+	sessionStorage.removeItem('forever:order');
+	currentOrder = null;
+	show('compose');
+}
+
 function setStatePill(state) {
 	els.statePill.classList.remove('ok', 'err');
 	if (state === 'inscribed') els.statePill.classList.add('ok');
@@ -337,6 +346,16 @@ async function pollOnce() {
 			`/api/forever/status?id=${encodeURIComponent(currentOrder.orderId)}`,
 		);
 		const d = await r.json();
+		if (r.status === 404) {
+			// The order id no longer resolves upstream. Polling it again can only
+			// repeat the 404 forever, so retire it instead of spinning silently.
+			stopPolling();
+			forgetOrder();
+			showError(
+				'This inscription order is no longer available from OrdinalsBot. Nothing was charged for it. Write your message again to start a new one.',
+			);
+			return;
+		}
 		if (!r.ok) return;
 		setStatePill(d.state);
 
@@ -451,8 +470,22 @@ document.querySelectorAll('.copy[data-copy]').forEach((btn) => {
 		show('pay');
 		// Refresh the charge details from server.
 		fetch(`/api/forever/status?id=${encodeURIComponent(saved.orderId)}`)
-			.then((r) => r.json())
+			.then(async (r) => {
+				if (r.status === 404) {
+					// A saved id the server can no longer resolve. Without this the
+					// error envelope below reads as an order and repaints an empty
+					// pay screen that polls a dead id for the rest of the session.
+					forgetOrder();
+					showError(
+						'The inscription order saved in this tab is no longer available from OrdinalsBot. Nothing was charged for it. Write your message again to start a new one.',
+					);
+					return null;
+				}
+				if (!r.ok) throw new Error(`status lookup failed (${r.status})`);
+				return r.json();
+			})
 			.then((d) => {
+				if (!d) return;
 				if (d.charge?.address) {
 					const amountBtc = d.charge.amountBtc ?? (d.charge.amount ? d.charge.amount / 1e8 : 0);
 					els.amountBtc.textContent = amountBtc ? amountBtc.toFixed(8) : '—';

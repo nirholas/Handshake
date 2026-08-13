@@ -24,6 +24,7 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 }));
 
 import { Readable } from 'node:stream';
+import { limits } from '../api/_lib/rate-limit.js';
 
 // Handler imported AFTER mocks are registered.
 const { default: handler } = await import('../api/guardian/assess.js');
@@ -68,12 +69,12 @@ afterEach(() => {
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function makeReq(body, method = 'POST') {
+function makeReq(body, method = 'POST', headers = {}) {
 	const json   = JSON.stringify(body);
 	const stream = Readable.from([Buffer.from(json)]);
 	// Attach Express-like properties.
 	stream.method  = method;
-	stream.headers = { 'content-type': 'application/json', origin: 'https://three.ws' };
+	stream.headers = { 'content-type': 'application/json', origin: 'https://three.ws', ...headers };
 	stream.socket  = { remoteAddress: '127.0.0.1' };
 	return stream;
 }
@@ -92,8 +93,8 @@ function makeRes() {
 	return r;
 }
 
-async function call(body) {
-	const req = makeReq(body);
+async function call(body, { method = 'POST', headers } = {}) {
+	const req = makeReq(body, method, headers);
 	const res = makeRes();
 	await handler(req, res);
 	return res;
@@ -125,6 +126,23 @@ describe('input validation', () => {
 	it('400 — non-positive action.usd', async () => {
 		expect((await call({ text: 'hi', action: { type: 'sendSol', usd: -1 } }))._s).toBe(400);
 	});
+	it('400 on a non-object JSON body', async () => {
+		const r = await call(42);
+		expect(r._s).toBe(400);
+		expect(r.json().error_description).toMatch(/JSON object/);
+	});
+	it('415 when content-type is not application/json', async () => {
+		const r = await call({ text: 'hi' }, { headers: { 'content-type': 'text/plain' } });
+		expect(r._s).toBe(415);
+		expect(r.json().error).toBe('bad_request');
+	});
+	it('413 when the body is over the 100 KB read limit', async () => {
+		const r = await call({ text: 'hi', pad: 'x'.repeat(150_000) });
+		expect(r._s).toBe(413);
+	});
+	it('405 on a non-POST method', async () => {
+		expect((await call({ text: 'hi' }, { method: 'GET' }))._s).toBe(405);
+	});
 });
 
 // ── Config gate ───────────────────────────────────────────────────────────────
@@ -148,6 +166,26 @@ describe('rate limiting', () => {
 	it('429 when global bucket exhausted', async () => {
 		rl.globalOk = false;
 		expect((await call({ text: 'hi' }))._s).toBe(429);
+	});
+
+	// The global bucket is the watsonx spend cap. Charging it on requests that
+	// never reach watsonx let one client with a malformed body 429 the whole
+	// platform for the rest of the hour.
+	it('does not charge the global spend cap on an invalid body', async () => {
+		limits.guardianGlobal.mockClear();
+		expect((await call({}))._s).toBe(400);
+		expect(limits.guardianGlobal).not.toHaveBeenCalled();
+	});
+	it('does not charge the global spend cap when watsonx is unconfigured', async () => {
+		delete process.env.WATSONX_API_KEY;
+		limits.guardianGlobal.mockClear();
+		expect((await call({ text: 'hi' }))._s).toBe(503);
+		expect(limits.guardianGlobal).not.toHaveBeenCalled();
+	});
+	it('charges the global spend cap on a real assessment', async () => {
+		limits.guardianGlobal.mockClear();
+		expect((await call({ text: 'hi' }))._s).toBe(200);
+		expect(limits.guardianGlobal).toHaveBeenCalledTimes(1);
 	});
 });
 

@@ -4,21 +4,24 @@
 // embedded into a Taproot witness on Bitcoin mainnet, where it lives forever.
 //
 // Body: { message: string, receiveAddress?: string, feeRate?: number }
-//   - message: 1–1500 chars of UTF-8 text to inscribe
-//   - receiveAddress: optional Taproot (bc1p…) address that receives the
+//   - message: 1 to 1500 chars of UTF-8 text to inscribe
+//   - receiveAddress: optional Taproot (bc1p...) address that receives the
 //     inscription. If omitted, falls back to the platform vault address
 //     (env.BTC_INSCRIPTION_RECEIVE_ADDRESS).
-//   - feeRate: optional sats/vB. Defaults to 8 (medium). Range 1–200.
+//   - feeRate: optional sats/vB. Defaults to 8 (medium). Range 1 to 200.
 //
 // Response 200:
 //   { orderId, charge: { address, amount, currency, lightning_invoice? },
 //     receiveAddress, feeRate, sizeBytes, mempoolUrl, ordinalsUrl?, status }
 //
 // Errors:
-//   400 — invalid message / address / fee rate
-//   502 — OrdinalsBot upstream error
-//   503 — receive address not configured and none provided
+//   400: invalid body / message / address / fee rate
+//   401: not signed in and no valid bearer token
+//   429: per-IP ceiling, or OrdinalsBot throttling the platform key
+//   502: OrdinalsBot upstream error
+//   503: receive address not provided and none configured
 
+import { bech32m } from '@scure/base';
 import { cors, error, json, readJson, rateLimited } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -31,9 +34,41 @@ const MIN_FEE_RATE = 1;
 const MAX_FEE_RATE = 200;
 const DEFAULT_FEE_RATE = 8;
 
-// Bitcoin Taproot (P2TR / bc1p…) — the only address class OrdinalsBot will
+// Bitcoin Taproot (P2TR / bc1p...) is the only address class OrdinalsBot will
 // send inscriptions to. Mainnet HRP "bc", witness version 1, bech32m, 62 chars.
 const TAPROOT_RE = /^bc1p[02-9ac-hj-np-z]{58}$/;
+
+// A P2TR address encodes the witness version plus a 32-byte program, which is
+// 1 + ceil(256 / 5) = 53 bech32 words.
+const TAPROOT_WORD_COUNT = 53;
+
+/**
+ * Full bech32m validation, not just the character shape. A single mistyped
+ * character keeps the bc1p... shape and only the checksum catches it, and
+ * OrdinalsBot answers a bad address with an opaque proxy error that tells the
+ * user nothing. Verifying here turns that into a precise 400 and spares the
+ * upstream order-create call entirely.
+ */
+function hasValidTaprootChecksum(address) {
+	try {
+		const decoded = bech32m.decode(address, 90);
+		return (
+			decoded.prefix === 'bc' &&
+			decoded.words[0] === 1 &&
+			decoded.words.length === TAPROOT_WORD_COUNT
+		);
+	} catch {
+		return false;
+	}
+}
+
+/** OrdinalsBot reports failures as a string or an array of strings. */
+function upstreamMessage(data) {
+	const raw = data?.message ?? data?.error;
+	if (Array.isArray(raw)) return raw.filter(Boolean).map(String).join('; ');
+	if (typeof raw === 'string') return raw;
+	return '';
+}
 
 function validateMessage(raw) {
 	if (typeof raw !== 'string') {
@@ -53,13 +88,20 @@ function validateMessage(raw) {
 }
 
 function validateAddress(raw) {
-	if (!raw) return { address: null };
+	if (raw === undefined || raw === null || raw === '') return { address: null };
 	if (typeof raw !== 'string') return { error: 'receiveAddress must be a string' };
 	const address = raw.trim();
+	if (address === '') return { address: null };
 	if (!TAPROOT_RE.test(address)) {
 		return {
 			error:
-				'receiveAddress must be a Bitcoin Taproot address (bc1p…). Ordinals can only be received by Taproot wallets.',
+				'receiveAddress must be a Bitcoin Taproot address (bc1p...). Ordinals can only be received by Taproot wallets.',
+		};
+	}
+	if (!hasValidTaprootChecksum(address)) {
+		return {
+			error:
+				'receiveAddress failed its bech32m checksum, so it is not a real Taproot address. Copy the bc1p... address again from your wallet.',
 		};
 	}
 	return { address };
@@ -118,10 +160,23 @@ async function createOrdinalsBotOrder({ message, receiveAddress, feeRate }) {
 		err.upstream = text.slice(0, 300);
 		throw err;
 	}
+	// OrdinalsBot signals failure two different ways: a non-2xx status, and a
+	// 200 carrying {status:"error"}. Neither status is usable as our own. It
+	// answers a rejected payload with a bare 404 and echoes its own internal
+	// axios text, and a key or quota fault would arrive as 401/403. Passing any
+	// of those through would tell the caller their request was not found or that
+	// THEY are unauthorized, and the 200 case would ship an error envelope under
+	// a success status that the client reads as a created order. Every upstream
+	// fault is our gateway's fault: 502, except a throttle we can honestly relay.
 	if (!res.ok || data.status === 'error') {
-		const err = new Error(data.message || data.error || `OrdinalsBot returned ${res.status}`);
-		err.status = res.status >= 500 ? 502 : res.status || 502;
-		err.upstream = data;
+		const detail = upstreamMessage(data);
+		const err = new Error(
+			detail
+				? `OrdinalsBot rejected the inscription order: ${detail}`
+				: `OrdinalsBot returned ${res.status}`,
+		);
+		err.status = res.status === 429 ? 429 : 502;
+		err.upstream = detail || null;
 		throw err;
 	}
 	return data;
@@ -178,6 +233,9 @@ export default async function handler(req, res) {
 	} catch (e) {
 		return error(res, e.status || 400, 'bad_request', e.message || 'invalid request body');
 	}
+	if (!body || typeof body !== 'object' || Array.isArray(body)) {
+		return error(res, 400, 'bad_request', 'request body must be a JSON object');
+	}
 
 	const msg = validateMessage(body.message);
 	if (msg.error) return error(res, 400, 'invalid_message', msg.error);
@@ -188,14 +246,25 @@ export default async function handler(req, res) {
 	const fee = validateFeeRate(body.feeRate);
 	if (fee.error) return error(res, 400, 'invalid_fee_rate', fee.error);
 
-	const receiveAddress =
-		addr.address || process.env.BTC_INSCRIPTION_RECEIVE_ADDRESS || null;
+	const vaultAddress = (process.env.BTC_INSCRIPTION_RECEIVE_ADDRESS || '').trim();
+	const receiveAddress = addr.address || vaultAddress || null;
 	if (!receiveAddress) {
 		return error(
 			res,
 			503,
 			'no_receive_address',
-			'No Taproot receive address provided and BTC_INSCRIPTION_RECEIVE_ADDRESS is not configured. Send your bc1p… address in the request body.',
+			'No Taproot receive address provided and BTC_INSCRIPTION_RECEIVE_ADDRESS is not configured. Send your bc1p... address in the request body.',
+		);
+	}
+	// The vault address comes from config, so it skipped the request validation
+	// above. A typo there would mint inscriptions into an unspendable address,
+	// so hold it to the same bar and fail loudly instead of silently upstream.
+	if (!addr.address && !(TAPROOT_RE.test(receiveAddress) && hasValidTaprootChecksum(receiveAddress))) {
+		return error(
+			res,
+			503,
+			'invalid_vault_address',
+			'BTC_INSCRIPTION_RECEIVE_ADDRESS is not a valid Bitcoin Taproot address. Send your own bc1p... address in the request body.',
 		);
 	}
 
@@ -207,9 +276,14 @@ export default async function handler(req, res) {
 			feeRate: fee.feeRate,
 		});
 	} catch (e) {
-		return error(res, e.status || 502, 'inscription_failed', e.message, {
-			upstream: e.upstream,
-		});
+		const status = e.status === 429 ? 429 : 502;
+		return error(
+			res,
+			status,
+			status === 429 ? 'upstream_rate_limited' : 'inscription_failed',
+			e.message,
+			e.upstream ? { upstream: e.upstream } : {},
+		);
 	}
 
 	const shaped = shapeChargeResponse(order, {

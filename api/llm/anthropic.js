@@ -133,6 +133,11 @@ export function sanitizeAnthropicBody(body, modelId) {
 	const out = { ...body };
 	const noSampling = modelRejectsSampling(modelId);
 	if (noSampling) delete out.temperature;
+	// The Messages API requires max_tokens; the request schema does not, and the
+	// OpenAI-shape lanes default it in anthropicBodyToOpenAI. Without the same
+	// default here, an embed that omits the field draws a 400 from every
+	// Anthropic rung and silently degrades onto a lane it never asked for.
+	if (!(typeof out.max_tokens === 'number' && out.max_tokens > 0)) out.max_tokens = 4096;
 	// Thinking-by-default models spend max_tokens on thinking + text together;
 	// floor small caller budgets so the visible reply isn't squeezed out.
 	if (modelThinksByDefault(modelId) && (out.max_tokens ?? 0) < 4096) {
@@ -198,7 +203,14 @@ export function modelFallbackChain(requestedModel) {
 	const chain = [
 		requestedModel,
 		...[
-			'meta-llama/llama-3.1-8b-instruct:free',
+			// Groq's small free model. Every rung here must resolve through
+			// resolveModelRoute or the attempt loop skips it without a trace: the
+			// rung this replaced ('meta-llama/llama-3.1-8b-instruct:free') was in
+			// neither MODELS nor OpenRouter's live catalog, so the documented
+			// second step of the chain never ran. Groq is also a different account
+			// and quota pool from the OpenRouter lane above, so an OpenRouter rate
+			// limit does not carry over into it.
+			'llama-3.1-8b-instant',
 			'meta/llama-4-maverick-17b-128e-instruct',
 			// SambaNova free 70B: an independent quota pool between the NVIDIA
 			// free rung and the paid Anthropic backstop. Skipped at call time
@@ -524,7 +536,7 @@ export default wrap(async (req, res) => {
 
 	// Ordered fallback chain for 429 / 5xx from OpenRouter free tier:
 	//   1. Requested model (e.g. llama-3.3-70b:free)
-	//   2. meta-llama/llama-3.1-8b-instruct:free      (smaller free model)
+	//   2. llama-3.1-8b-instant                       (smaller free model, Groq)
 	//   3. meta/llama-4-maverick-17b-128e-instruct    (free NVIDIA NIM tier)
 	//   4. claude-haiku-4-5-20251001                  (paid Anthropic)
 	//   5. Vertex Gemini credits anchor               (keyless last resort)
@@ -602,7 +614,9 @@ export default wrap(async (req, res) => {
 				build: async () => ({
 					url: vertexGeminiChatUrl(),
 					headers: await vertexGeminiHeaders(),
-					body: JSON.stringify(anthropicBodyToOpenAI({ ...body, model: usedModel })),
+					body: JSON.stringify(
+						anthropicBodyToOpenAI({ ...body, model: usedModel }, { provider: 'vertex-gemini' }),
+					),
 				}),
 			});
 		} else {
@@ -619,7 +633,9 @@ export default wrap(async (req, res) => {
 								? { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws agent' }
 								: {}),
 						},
-						body: JSON.stringify(anthropicBodyToOpenAI({ ...body, model: usedModel })),
+						body: JSON.stringify(
+							anthropicBodyToOpenAI({ ...body, model: usedModel }, { provider: route.provider }),
+						),
 					}),
 				});
 			}

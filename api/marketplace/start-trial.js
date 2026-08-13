@@ -98,14 +98,27 @@ export default wrap(async (req, res) => {
 
 	const reference = crypto.randomBytes(32).toString('hex');
 
-	const [purchase] = await sql`
-		INSERT INTO skill_purchases
-			(user_id, agent_id, skill, status, kind, reference, amount, currency_mint, chain, trial_remaining)
-		VALUES
-			(${userId}, ${agent_id}, ${skill}, 'trial', 'trial', ${reference},
-			 ${price.amount}, ${price.currency_mint}, ${price.chain}, ${price.trial_uses})
-		RETURNING id, trial_remaining, reference, created_at
-	`;
+	// The checks above are advisory: two clicks a few milliseconds apart both
+	// read "no trial yet" and both insert. `skill_purchases_one_active_per_beneficiary`
+	// is what actually enforces one active copy per beneficiary, so the loser of
+	// that race gets a unique violation. That is the same condition the 409 above
+	// describes, not a server fault, so answer it the same way instead of 500ing.
+	let purchase;
+	try {
+		[purchase] = await sql`
+			INSERT INTO skill_purchases
+				(user_id, agent_id, skill, status, kind, reference, amount, currency_mint, chain, trial_remaining)
+			VALUES
+				(${userId}, ${agent_id}, ${skill}, 'trial', 'trial', ${reference},
+				 ${price.amount}, ${price.currency_mint}, ${price.chain}, ${price.trial_uses})
+			RETURNING id, trial_remaining, reference, created_at
+		`;
+	} catch (e) {
+		if (e?.code === '23505' || /duplicate key|unique constraint/i.test(e?.message || '')) {
+			return error(res, 409, 'trial_used', 'you have already used the trial for this skill');
+		}
+		throw e;
+	}
 
 	return json(res, 201, {
 		data: {

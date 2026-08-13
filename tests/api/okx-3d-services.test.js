@@ -12,6 +12,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Readable } from 'node:stream';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 
 process.env.PUBLIC_APP_ORIGIN = 'https://three.ws';
 process.env.X402_PAY_TO_XLAYER ||= '0x75d00a2713565171f33216e5aa2a375e076ecf69';
@@ -370,7 +372,15 @@ describe('paid dispatch — verify → engine → settle', () => {
 	it('fbx-export routes to remesh_model convert with rig-preserving fbx default', async () => {
 		const original = studioCatalog.TOOLS.remesh_model.handler;
 		studioCatalog.TOOLS.remesh_model.handler = vi.fn(async (args) => {
-			expect(args).toMatchObject({ operation: 'convert', format: 'fbx' });
+			// remesh_model speaks mesh_url/output_format, NOT the catalog row's
+			// model_url/format. Passing the OKX names made every paid fbx-export
+			// call 400 on "mesh_url must be a public https URL" and silently drop
+			// the requested format.
+			expect(args).toMatchObject({
+				mesh_url: VALID_INPUT['fbx-export'].model_url,
+				operation: 'convert',
+				output_format: 'fbx',
+			});
 			return { content: [{ type: 'text', text: 'ok' }], structuredContent: { job_id: 'remesh-1' } };
 		});
 		try {
@@ -383,6 +393,46 @@ describe('paid dispatch — verify → engine → settle', () => {
 			studioCatalog.TOOLS.remesh_model.handler = original;
 		}
 	});
+});
+
+// The three tool-backed rows call an MCP tool handler DIRECTLY, bypassing the
+// studio dispatcher that would normally validate arguments — so a renamed key
+// fails at runtime, on a paid call, with nothing catching it in between. This
+// holds each adapter to the engine tool's own published schema.
+describe('engine argument contract', () => {
+	const ENGINE_FOR = {
+		retarget: 'apply_animation',
+		'pose-seed': 'pose_model',
+		'fbx-export': 'remesh_model',
+	};
+	const schemaAjv = new Ajv({ allErrors: true, strict: false });
+	addFormats(schemaAjv);
+
+	for (const [service, tool] of Object.entries(ENGINE_FOR)) {
+		it(`${service} passes arguments ${tool} actually accepts`, async () => {
+			const schema = studioCatalog.TOOL_CATALOG.find((t) => t.name === tool)?.inputSchema;
+			expect(schema, `${tool} publishes an inputSchema`).toBeTruthy();
+			const validate = schemaAjv.compile(schema);
+			const original = studioCatalog.TOOLS[tool].handler;
+			let seen = null;
+			studioCatalog.TOOLS[tool].handler = vi.fn(async (args) => {
+				seen = args;
+				return { content: [{ type: 'text', text: 'ok' }], structuredContent: {} };
+			});
+			try {
+				const res = makeRes();
+				await handler(
+					makeReq({ service, body: VALID_INPUT[service], headers: { 'payment-signature': 'c2ln' } }),
+					res,
+				);
+				expect(res.statusCode).toBe(200);
+			} finally {
+				studioCatalog.TOOLS[tool].handler = original;
+			}
+			expect(seen, `${service} never reached ${tool}`).toBeTruthy();
+			expect(validate(seen) ? [] : validate.errors).toEqual([]);
+		});
+	}
 });
 
 describe('failure paths never charge', () => {

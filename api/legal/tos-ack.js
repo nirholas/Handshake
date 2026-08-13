@@ -1,6 +1,7 @@
 // /api/legal/tos-ack: record a user's acceptance of the Terms of Service.
 //
-//   POST /api/legal/tos-ack   { version?, context?, path? }   → 200 { ok: true, version }
+//   POST /api/legal/tos-ack   { version?, context?, path? }
+//     → 200 { ok: true, version, recorded }
 //
 // The primary acceptance records are written inline by the auth endpoints
 // (register / login / SIWE / SIWS / Privy verify) when the client sends
@@ -12,11 +13,17 @@
 // audit-log-cleanup cron exempts 'tos-accept' rows from its 365-day
 // retention, so acceptance records persist indefinitely); signed-in
 // acceptances additionally stamp users.tos_accepted_version / tos_accepted_at.
+//
+// `recorded` reports whether the durable write actually landed. The write is
+// awaited rather than fired and forgotten, because an acceptance record the
+// caller was told about but that never reached the database is the one failure
+// this endpoint exists to prevent. A dropped write still answers 200: the user
+// did accept, and their flow must not stall on our bookkeeping.
 
 import { getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { logAudit } from '../_lib/audit.js';
+import { logAuditNow } from '../_lib/audit.js';
 import { TOS_VERSION, recordTosAcceptance } from '../_lib/legal.js';
 
 const SLUG = /^[a-z0-9][a-z0-9-]{0,39}$/;
@@ -40,18 +47,16 @@ export default wrap(async function handler(req, res) {
 
 	const user = await getSessionUser(req).catch(() => null);
 
-	if (user) {
-		recordTosAcceptance({ userId: user.id, version, context, req });
-	} else {
-		// Anonymous acceptance (pre-auth surface): audit-only, no user row to stamp.
-		logAudit({
-			userId: null,
-			action: 'tos-accept',
-			resourceId: null,
-			meta: { version, context, path },
-			req,
-		});
-	}
+	const recorded = user
+		? await recordTosAcceptance({ userId: user.id, version, context, path, req })
+		: // Anonymous acceptance (pre-auth surface): audit-only, no user row to stamp.
+			await logAuditNow({
+				userId: null,
+				action: 'tos-accept',
+				resourceId: null,
+				meta: { version, context, path },
+				req,
+			});
 
-	return json(res, 200, { ok: true, version });
+	return json(res, 200, { ok: true, version, recorded });
 });

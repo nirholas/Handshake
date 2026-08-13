@@ -55,29 +55,38 @@ export default wrap(async (req, res) => {
 	const chain = await verifyChain(agentId, entries);
 	const anchorRow = await latestAnchoredAnchor(agentId).catch(() => null);
 
-	let status;
-	let anchor = null;
-	if (!chain.ok) {
-		status = 'verification_failed';
-	} else if (anchorRow) {
-		// The anchored head must equal the recomputed entry_hash at its seq.
+	// The anchored head must equal the entry_hash at its seq. verifyChain only
+	// reports ok after recomputing every entry_hash from its committed contents, so
+	// on an intact chain the stored hash compared here IS the recomputed one; on a
+	// broken chain no stored hash is trusted and the match can only be false.
+	let matchesAnchor = false;
+	if (anchorRow && chain.ok) {
 		const atSeq = entries.find((e) => Number(e.seq) === Number(anchorRow.through_seq));
-		const matches = !!atSeq && String(atSeq.entry_hash) === String(anchorRow.head_hash);
-		status = matches ? 'verified' : 'verification_failed';
-		anchor = {
-			status: anchorRow.status,
-			signature: anchorRow.signature,
-			head_hash: anchorRow.head_hash,
-			through_seq: Number(anchorRow.through_seq),
-			entry_count: Number(anchorRow.entry_count),
-			anchored_at: anchorRow.anchored_at,
-			network: anchorRow.network,
-			explorer_url: solscanUrl(anchorRow.signature, anchorRow.network),
-			matches_chain: matches,
-		};
-	} else {
-		status = 'verified_unanchored';
+		matchesAnchor = !!atSeq && String(atSeq.entry_hash) === String(anchorRow.head_hash);
 	}
+
+	let status;
+	if (!chain.ok) status = 'verification_failed';
+	else if (anchorRow) status = matchesAnchor ? 'verified' : 'verification_failed';
+	else status = 'verified_unanchored';
+
+	// Report the anchor whenever one exists, including on a failed verification:
+	// the on-chain commitment the altered history no longer matches is the most
+	// useful thing an auditor can be handed, and hiding it left `status:
+	// verification_failed` with nothing to check it against.
+	const anchor = anchorRow
+		? {
+				status: anchorRow.status,
+				signature: anchorRow.signature,
+				head_hash: anchorRow.head_hash,
+				through_seq: Number(anchorRow.through_seq),
+				entry_count: Number(anchorRow.entry_count),
+				anchored_at: anchorRow.anchored_at,
+				network: anchorRow.network,
+				explorer_url: solscanUrl(anchorRow.signature, anchorRow.network),
+				matches_chain: matchesAnchor,
+			}
+		: null;
 
 	return json(res, 200, {
 		agent_id: agentId,

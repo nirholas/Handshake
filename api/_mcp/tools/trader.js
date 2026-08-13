@@ -361,7 +361,7 @@ export const toolDefs = [
 						${auth.userId}, ${leaderId}, ${leaderWallet}, ${network}, ${wallet},
 						${cfg.sizing_rule}, ${cfg.fixed_sol}, ${cfg.multiplier}, ${cfg.pct_balance},
 						${cfg.per_trade_cap_sol}, ${cfg.min_order_sol}, ${cfg.daily_budget_sol}, ${cfg.max_open_copies},
-						${cfg.min_oracle_score}, ${cfg.mcap_floor_usd}, ${cfg.mcap_ceiling_usd}, ${cfg.telegramChatId ?? null},
+						${cfg.min_oracle_score}, ${cfg.mcap_floor_usd}, ${cfg.mcap_ceiling_usd}, ${cfg.telegram_chat_id},
 						${cfg.perf_fee_bps}, 'active'
 					)
 					on conflict (copier_user_id, leader_agent_id, network) do update set

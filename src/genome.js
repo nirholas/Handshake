@@ -17,6 +17,7 @@ const state = {
 	preview: null,
 	picking: null, // 'a' | 'b'
 	busy: false,
+	signedIn: false,
 };
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
@@ -54,9 +55,11 @@ async function loadMyAgents() {
 		if (r.status === 401) { note('Sign in to breed your agents.', 'error'); return; }
 		const j = await r.json();
 		state.myAgents = (j.agents || []).map(normalizeAgent);
+		state.signedIn = true;
 	} catch (e) {
 		note('Could not load your agents — check your connection and retry.', 'error');
 	}
+	renderMyStuds();
 }
 
 async function loadStuds() {
@@ -76,6 +79,9 @@ function normalizeAgent(a) {
 		generation: a.meta?.genome?.generation ?? 0,
 		fee: 0,
 		cross_owner: false,
+		is_public: a.is_public !== false,
+		listed: a.is_stud === true,
+		listed_fee: Math.max(0, Number(a.stud_fee_three) || 0),
 	};
 }
 
@@ -365,7 +371,7 @@ async function playVoice(voice) {
 function renderStuds(studs) {
 	const host = $('gnStuds');
 	if (!studs.length) {
-		host.innerHTML = `<p class="gn-pick-sub">No agents are open for stud yet. Open one of yours from its profile to list it here.</p>`;
+		host.innerHTML = `<p class="gn-pick-sub">No agents are open for stud yet. Open one of yours for breeding under <a class="gn-hero-link" href="#gnMyStudsSection">Your stud listings</a> below and it appears here.</p>`;
 		return;
 	}
 	host.innerHTML = studs
@@ -389,6 +395,106 @@ function renderStuds(studs) {
 		el.addEventListener('click', pick);
 		el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
 	});
+}
+
+// ── Your stud listings (the supply side of the market) ───────────────────────
+function renderMyStuds() {
+	const section = $('gnMyStudsSection');
+	const host = $('gnMyStuds');
+	if (!section || !host) return;
+	if (!state.signedIn) { section.hidden = true; return; }
+	section.hidden = false;
+	if (!state.myAgents.length) {
+		host.innerHTML = `<p class="gn-pick-sub">You have no agents to list yet. <a href="/create">Create one →</a></p>`;
+		return;
+	}
+	host.innerHTML = state.myAgents.map(myStudCard).join('');
+	host.querySelectorAll('.gn-mystud').forEach(wireMyStud);
+}
+
+function myStudCard(a) {
+	// A private agent can't be a stud: /api/genome/stud only lists public agents,
+	// so say that here instead of letting the toggle look broken.
+	const blocked = !a.is_public;
+	return `<div class="gn-mystud" data-id="${escapeAttr(a.id)}" data-listed="${a.listed}">
+		<div class="gn-mystud-head">
+			<span class="gn-mystud-name" title="${escapeAttr(a.name)}">${escapeHtml(a.name)}</span>
+			<span class="gn-pick-sub">gen ${a.generation}</span>
+		</div>
+		<label class="gn-switch">
+			<input type="checkbox" class="gn-mystud-toggle" ${a.listed ? 'checked' : ''} ${blocked ? 'disabled' : ''}
+				aria-label="List ${escapeAttr(a.name)} in the stud market" />
+			<span class="gn-switch-track" aria-hidden="true"></span>
+			<span>${a.listed ? 'Listed for stud' : 'Not listed'}</span>
+		</label>
+		<div class="gn-mystud-row">
+			<label class="gn-pick-sub" for="fee-${escapeAttr(a.id)}">Fee</label>
+			<input class="gn-fee-input" id="fee-${escapeAttr(a.id)}" type="number" min="0" step="1" inputmode="numeric"
+				value="${a.listed_fee}" ${blocked ? 'disabled' : ''} aria-label="Stud fee in THREE for ${escapeAttr(a.name)}" />
+			<span class="gn-pick-sub">$THREE</span>
+		</div>
+		<div class="gn-mystud-state"${blocked ? ' data-kind="error"' : ''}>${blocked ? 'Make this agent public to open it for stud.' : ''}</div>
+	</div>`;
+}
+
+function wireMyStud(card) {
+	const toggle = card.querySelector('.gn-mystud-toggle');
+	const fee = card.querySelector('.gn-fee-input');
+	if (!toggle || toggle.disabled) return;
+	toggle.addEventListener('change', () => saveStud(card, { stud: toggle.checked }));
+	// Commit the fee on blur and on Enter, never on every keystroke.
+	fee.addEventListener('change', () => saveStud(card, { stud_fee_three: Math.max(0, Number(fee.value) || 0) }));
+	fee.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); fee.blur(); } });
+}
+
+async function saveStud(card, patch) {
+	const id = card.dataset.id;
+	const agent = state.myAgents.find((x) => x.id === id);
+	const status = card.querySelector('.gn-mystud-state');
+	const toggle = card.querySelector('.gn-mystud-toggle');
+	const fee = card.querySelector('.gn-fee-input');
+	toggle.disabled = true;
+	fee.disabled = true;
+	status.removeAttribute('data-kind');
+	status.textContent = 'Saving…';
+	try {
+		const r = await apiFetch('/api/genome/stud', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ agent_id: id, ...patch }),
+		});
+		const j = await r.json().catch(() => ({}));
+		if (!r.ok) {
+			status.dataset.kind = 'error';
+			status.textContent = j.error_description || 'Could not save that listing. Retry in a moment.';
+			// Snap the controls back to the last state the server confirmed.
+			toggle.checked = !!agent?.listed;
+			fee.value = agent?.listed_fee ?? 0;
+			return;
+		}
+		const policy = j.genome_breeding || {};
+		if (agent) {
+			agent.listed = policy.stud === true;
+			agent.listed_fee = Math.max(0, Number(policy.stud_fee_three) || 0);
+		}
+		toggle.checked = !!agent?.listed;
+		fee.value = agent?.listed_fee ?? 0;
+		card.dataset.listed = String(!!agent?.listed);
+		card.querySelector('.gn-switch span:last-child').textContent = agent?.listed ? 'Listed for stud' : 'Not listed';
+		status.dataset.kind = 'ok';
+		status.textContent = agent?.listed
+			? `Open for stud at ${agent.listed_fee} $THREE.`
+			: 'Unlisted. Nobody can breed with this agent.';
+		loadStuds();
+	} catch {
+		status.dataset.kind = 'error';
+		status.textContent = 'Network error. Your listing was not changed.';
+		toggle.checked = !!agent?.listed;
+		fee.value = agent?.listed_fee ?? 0;
+	} finally {
+		toggle.disabled = false;
+		fee.disabled = false;
+	}
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

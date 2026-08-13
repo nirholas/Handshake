@@ -47,7 +47,7 @@ export function normalizeToken(raw, { maxLogVolume } = {}) {
 		volume24h: vol,
 		marketCap: Number.isFinite(raw?.marketCap) ? raw.marketCap : null,
 		featured: !!raw?.featured,
-		sentiment: raw?.sentiment || null,
+		flow: raw?.flow || null,
 	};
 }
 
@@ -134,9 +134,10 @@ export function buildNarrationContext({ spikes, movers }) {
 	if (movers?.anchor) {
 		const a = movers.anchor;
 		const parts = [`$THREE ${fmtPct(a.change24h)} 24h`];
-		if (a.sentiment && Number.isFinite(a.sentiment.score)) {
-			const mood = a.sentiment.score > 0.15 ? 'positive' : a.sentiment.score < -0.15 ? 'negative' : 'mixed';
-			parts.push(`chat sentiment ${mood} (${a.sentiment.posPct}% bullish, ${a.sentiment.count} msgs)`);
+		if (a.flow && Number.isFinite(a.flow.score)) {
+			const mood = a.flow.score > 0.15 ? 'buyers leading' : a.flow.score < -0.15 ? 'sellers leading' : 'two-sided';
+			const trades = (a.flow.buys24h || 0) + (a.flow.sells24h || 0);
+			parts.push(`order flow ${mood} (${a.flow.buyPct}% buys of ${trades} trades 24h)`);
 		}
 		lines.push(parts.join(', '));
 	}

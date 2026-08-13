@@ -123,7 +123,7 @@ describe('POST /api/legal/tos-ack', () => {
 	it('records an anonymous acceptance in the audit log only', async () => {
 		const { status, body } = await invoke({ context: 'register-page', path: '/register' });
 		expect(status).toBe(200);
-		expect(body).toEqual({ ok: true, version: TOS_VERSION });
+		expect(body).toEqual({ ok: true, version: TOS_VERSION, recorded: true });
 		const audits = sqlState.calls.filter((c) => /insert into audit_log/.test(c.query));
 		expect(audits).toHaveLength(1);
 		expect(audits[0].values).toContain('tos-accept');
@@ -135,12 +135,36 @@ describe('POST /api/legal/tos-ack', () => {
 		sessionState.user = { id: 'user-9' };
 		const { status, body } = await invoke({});
 		expect(status).toBe(200);
-		expect(body.ok).toBe(true);
+		expect(body).toEqual({ ok: true, version: TOS_VERSION, recorded: true });
 		const stamps = sqlState.calls.filter((c) => /update users\s+set tos_accepted_version/.test(c.query));
 		expect(stamps).toHaveLength(1);
 		expect(stamps[0].values).toContain('user-9');
 		const audits = sqlState.calls.filter((c) => /insert into audit_log/.test(c.query));
 		expect(audits).toHaveLength(1);
+	});
+
+	it('keeps the accepting page in the audit meta for a signed-in user', async () => {
+		sessionState.user = { id: 'user-9' };
+		const { status } = await invoke({ context: 'settings', path: '/settings' });
+		expect(status).toBe(200);
+		const audit = sqlState.calls.find((c) => /insert into audit_log/.test(c.query));
+		expect(audit.values).toContainEqual({ version: TOS_VERSION, context: 'settings', path: '/settings' });
+	});
+
+	it('drops a malformed path instead of storing it', async () => {
+		const { status } = await invoke({ context: 'settings', path: 'no-leading-slash' });
+		expect(status).toBe(200);
+		const audit = sqlState.calls.find((c) => /insert into audit_log/.test(c.query));
+		expect(audit.values).toContainEqual({ version: TOS_VERSION, context: 'settings', path: null });
+	});
+
+	it('reports recorded:false when the durable write fails', async () => {
+		// A deterministic SQL error, not a transient connection blip: db-retry
+		// surfaces it on the first attempt instead of retrying.
+		sqlState.queue = [new Error('relation "audit_log" does not exist')];
+		const { status, body } = await invoke({ context: 'register-page' });
+		expect(status).toBe(200);
+		expect(body).toEqual({ ok: true, version: TOS_VERSION, recorded: false });
 	});
 
 	it('rejects a version that does not exist', async () => {

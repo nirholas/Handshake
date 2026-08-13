@@ -30,7 +30,22 @@ export const TOOL_PRICING = Object.freeze({
 });
 
 export function priceFor(toolName) {
-	return TOOL_PRICING[toolName] || null;
+	return Object.hasOwn(TOOL_PRICING, toolName) ? TOOL_PRICING[toolName] : null;
+}
+
+// The advertised display price for a tool ("$0.025"), derived from the same map
+// the 402 challenge and the settle path read. Every human-facing price string on
+// this server (tool titles, the free getting-started payload, the server
+// instructions) is built from this, so a price edit here can never leave a stale
+// number quoted somewhere a caller reads before paying. Keeps at least 2 decimal
+// places and never truncates a fractional-cent price. Returns null for an
+// unpriced tool.
+export function formatUsdPrice(toolName) {
+	const price = priceFor(toolName);
+	if (!price) return null;
+	const amount = Number(price.amount_usdc);
+	const decimals = Math.max(2, (String(amount).split('.')[1] || '').length);
+	return `$${amount.toFixed(decimals)}`;
 }
 
 // USDC (and the platform's other supported stables) are 6-decimal. The x402 wire

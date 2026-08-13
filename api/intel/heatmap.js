@@ -2,18 +2,18 @@
  * GET /api/intel/heatmap?limit=30
  * --------------------------------
  * The live token field behind the 3D sentiment heatmap on agent screens. Returns
- * a normalized set of tokens — $THREE always pinned first and flagged featured —
+ * a normalized set of tokens ($THREE always pinned first and flagged featured),
  * each carrying the two signals the heatmap renders: 24h price momentum and 24h
- * volume (magnitude). The anchor ($THREE) is additionally enriched with a live
- * pump.fun comment sentiment pulse.
+ * volume (magnitude). The anchor ($THREE) is additionally enriched with its live
+ * 24h order-flow pulse (buys vs sells).
  *
  * Data is fully live, no fabricated arrays:
- *   - Field membership  → pump.fun frontend-api-v3 /coins (trending by market cap)
- *   - Momentum + volume → Dexscreener batch /latest/dex/tokens/<mints> (best pair)
- *   - $THREE sentiment  → pump.fun replies scored by the in-repo lexicon scorer
+ *   - Field membership  -> pump.fun frontend-api-v3 /coins (trending by market cap)
+ *   - Momentum + volume -> Dexscreener batch /latest/dex/tokens/<mints> (best pair)
+ *   - $THREE flow pulse -> the same Dexscreener pair's txns.h24 buys/sells
  *
  * $THREE is the only coin three.ws promotes. The rest of the field is generic,
- * coin-agnostic market plumbing rendered from the live trending feed — this
+ * coin-agnostic market plumbing rendered from the live trending feed: this
  * endpoint never names, recommends, or markets any other token. Tiles carry
  * market data only.
  *
@@ -23,9 +23,12 @@
  *     fetchedAt,
  *     anchor: "<$THREE mint>",
  *     tokens: [ { id, symbol, name, image, priceUsd, change24h, volume24h,
- *                 marketCap, featured, sentiment? } ],
+ *                 marketCap, featured, flow? } ],
  *     stale?: true
  *   }
+ *
+ * `flow` (anchor only) is { buys24h, sells24h, buyPct, score }, where score is
+ * (buys - sells) / (buys + sells) in [-1, 1].
  */
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
@@ -44,6 +47,12 @@ const FIELD_MAX = 48; // hard cap on field size (incl. $THREE)
 const DS_BATCH = 30; // Dexscreener accepts up to 30 comma-separated mints per call
 
 let _cache = { value: null, storedAt: 0, expiresAt: 0, limit: 0 };
+
+// Test seam: the field cache is module state, so a suite exercising more than one
+// request has to clear it between cases (mirrors _resetSmartMoneyCache()).
+export function _resetHeatmapCache() {
+	_cache = { value: null, storedAt: 0, expiresAt: 0, limit: 0 };
+}
 
 async function fetchJson(url, init) {
 	let res;
@@ -90,6 +99,8 @@ async function fetchDexBatch(mints) {
 			if (!prev || vol > prev._vol) {
 				byMint.set(mint, {
 					_vol: vol,
+					buys24h: Number(p?.txns?.h24?.buys || 0),
+					sells24h: Number(p?.txns?.h24?.sells || 0),
 					symbol: p.baseToken?.symbol || null,
 					name: p.baseToken?.name || null,
 					priceUsd: p.priceUsd != null ? Number(p.priceUsd) : null,
@@ -104,7 +115,7 @@ async function fetchDexBatch(mints) {
 	return byMint;
 }
 
-// pump.fun metadata for a single mint (name/symbol/image) — fills gaps when a
+// pump.fun metadata for a single mint (name/symbol/image): fills gaps when a
 // token has no Dexscreener pair yet, and supplies $THREE's canonical metadata.
 async function fetchPumpMeta(mint) {
 	const data = await fetchJson(`${PUMP_FRONTEND_BASE}/coins/${mint}`, {
@@ -119,25 +130,20 @@ async function fetchPumpMeta(mint) {
 	};
 }
 
-// Live $THREE sentiment from pump.fun replies, scored by the in-repo lexicon.
-// Single call, anchor-only — keeps the field fast while still surfacing the one
-// coin three.ws actually tracks.
-async function fetchThreeSentiment() {
-	const data = await fetchJson(`${PUMP_FRONTEND_BASE}/replies/${THREE_MINT}?limit=80&offset=0`, {
-		headers: { accept: 'application/json' },
-	});
-	const replies = Array.isArray(data?.replies) ? data.replies : Array.isArray(data) ? data : [];
-	const posts = replies
-		.map((r) => ({ text: String(r.text || r.message || '').slice(0, 2000) }))
-		.filter((p) => p.text);
-	if (!posts.length) return null;
-	try {
-		const { scoreSentiment } = await import('../../src/social/sentiment.js');
-		const s = scoreSentiment(posts);
-		return { score: s.score, posPct: s.posPct, negPct: s.negPct, neuPct: s.neuPct, count: s.count };
-	} catch {
-		return null;
-	}
+// The anchor's live order-flow pulse, read off the Dexscreener pair we already
+// fetched for the tile: how the last 24h of trades split between buyers and
+// sellers. Real observed swaps, no extra upstream call.
+function flowPulse(d) {
+	const buys = Number.isFinite(d?.buys24h) ? d.buys24h : 0;
+	const sells = Number.isFinite(d?.sells24h) ? d.sells24h : 0;
+	const total = buys + sells;
+	if (!total) return null;
+	return {
+		buys24h: buys,
+		sells24h: sells,
+		buyPct: Math.round((buys / total) * 100),
+		score: Math.round(((buys - sells) / total) * 1000) / 1000,
+	};
 }
 
 async function buildField(limit) {
@@ -146,10 +152,9 @@ async function buildField(limit) {
 	const trending = await fetchTrendingMints(Math.min(FIELD_MAX, limit + 8));
 	const mints = [THREE_MINT, ...trending.filter((m) => m !== THREE_MINT)].slice(0, limit);
 
-	const [dex, threeMeta, threeSentiment] = await Promise.all([
+	const [dex, threeMeta] = await Promise.all([
 		fetchDexBatch(mints),
 		fetchPumpMeta(THREE_MINT),
-		fetchThreeSentiment(),
 	]);
 
 	const tokens = [];
@@ -168,9 +173,12 @@ async function buildField(limit) {
 			marketCap: d.marketCap ?? meta?.marketCap ?? null,
 			featured,
 		};
-		if (featured && threeSentiment) token.sentiment = threeSentiment;
+		if (featured) {
+			const flow = flowPulse(d);
+			if (flow) token.flow = flow;
+		}
 		// Drop non-anchor tokens with no usable signal at all (no price + no
-		// volume) so the field never carries dead tiles — $THREE always stays.
+		// volume) so the field never carries dead tiles. $THREE always stays.
 		if (!featured && token.priceUsd == null && !token.volume24h) continue;
 		tokens.push(token);
 	}
@@ -211,7 +219,11 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	if (!tokens.length) {
+	// No cache to fall back on: a field where nothing carries a live price or
+	// volume is the same outage, and the anchor tile alone would render as an
+	// empty void. Say so with the designed error instead of shipping a dead field.
+	const usable = tokens.some((t) => t.priceUsd != null || t.volume24h > 0);
+	if (!tokens.length || !usable) {
 		return error(res, 502, 'upstream_error', 'Market data is temporarily unavailable');
 	}
 

@@ -55,8 +55,10 @@ vi.mock('../../api/_lib/usage.js', () => ({
 }));
 
 const { dispatch, PROTOCOL_VERSION } = await import('../../api/_mcpibm/dispatch.js');
-const { graniteX402Amount, priceFor } = await import('../../api/_mcpibm/pricing.js');
-const { isFreeTool } = await import('../../api/_mcpibm/catalog.js');
+const { graniteX402Amount, priceFor, formatUsdPrice, TOOL_PRICING } = await import(
+	'../../api/_mcpibm/pricing.js'
+);
+const { isFreeTool, TOOL_CATALOG } = await import('../../api/_mcpibm/catalog.js');
 
 const AUTH = { userId: null, rateKey: 'test', scope: '', source: 'x402', x402Paid: true };
 const call = (name, args) =>
@@ -216,6 +218,38 @@ describe('IBM Granite MCP — dispatch', () => {
 		expect(r.result.structuredContent.parse_error).toBeTruthy();
 	});
 
+	it('ibm_granite_analyze rejects JSON that is not an analysis object', async () => {
+		// A bare quoted string is valid JSON. Spreading it into the result would
+		// splatter one numbered key per character, so it takes the raw fallback.
+		wx.chat.mockResolvedValueOnce({
+			text: '"Not enough context to analyze."',
+			usage: {},
+			model: 'ibm/granite-3-8b-instruct',
+		});
+		const r = await call('ibm_granite_analyze', { document: 'x' });
+		const out = r.result.structuredContent;
+		expect(out).toMatchObject({
+			ok: true,
+			analysis_type: 'general',
+			raw_response: '"Not enough context to analyze."',
+		});
+		expect(out.parse_error).toBeTruthy();
+		expect(Object.keys(out)).not.toContain('0');
+	});
+
+	it('ibm_granite_analyze rejects a JSON array the same way', async () => {
+		wx.chat.mockResolvedValueOnce({
+			text: '[{"summary":"ok"}]',
+			usage: {},
+			model: 'ibm/granite-3-8b-instruct',
+		});
+		const r = await call('ibm_granite_analyze', { document: 'x' });
+		const out = r.result.structuredContent;
+		expect(out.parse_error).toBeTruthy();
+		expect(out.raw_response).toBe('[{"summary":"ok"}]');
+		expect(Object.keys(out)).not.toContain('0');
+	});
+
 	it('ibm_granite_forecast returns timestamped forecast points', async () => {
 		const { timestamps, values } = makeSeries(64);
 		const r = await call('ibm_granite_forecast', {
@@ -269,5 +303,75 @@ describe('IBM Granite MCP — pricing', () => {
 	it('returns null for an unpriced / unknown tool', () => {
 		expect(graniteX402Amount('nope')).toBeNull();
 		expect(priceFor('nope')).toBeNull();
+		expect(formatUsdPrice('nope')).toBeNull();
+	});
+
+	it('does not resolve an inherited Object member as a priced tool', () => {
+		for (const name of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+			expect(priceFor(name)).toBeNull();
+			expect(graniteX402Amount(name)).toBeNull();
+			expect(formatUsdPrice(name)).toBeNull();
+		}
+	});
+
+	it('formats the display price without truncating a fractional cent', () => {
+		expect(formatUsdPrice('ibm_granite_chat')).toBe('$0.02');
+		expect(formatUsdPrice('ibm_granite_code')).toBe('$0.025');
+		expect(formatUsdPrice('ibm_granite_embed')).toBe('$0.005');
+	});
+});
+
+// Every human-readable price this server advertises has to agree with
+// TOOL_PRICING, the map the 402 challenge and the settle path both read. A
+// number quoted anywhere else is a number a caller can be shown before paying a
+// different one.
+describe('IBM Granite MCP — advertised prices match the charged price', () => {
+	const PRICED = Object.keys(TOOL_PRICING);
+
+	it('every priced tool title quotes its own price', () => {
+		for (const name of PRICED) {
+			const tool = TOOL_CATALOG.find((t) => t.name === name);
+			expect(tool, name).toBeTruthy();
+			expect(tool.title, `${name}: title`).toContain(formatUsdPrice(name));
+		}
+	});
+
+	it('every priced tool description quotes its own price', () => {
+		for (const name of PRICED) {
+			const tool = TOOL_CATALOG.find((t) => t.name === name);
+			expect(tool.description, `${name}: description`).toContain(formatUsdPrice(name));
+		}
+	});
+
+	it('the catalog pricing block carries the USDC amount from TOOL_PRICING', () => {
+		for (const name of PRICED) {
+			const tool = TOOL_CATALOG.find((t) => t.name === name);
+			expect(tool.pricing.amount_usdc, name).toBe(TOOL_PRICING[name].amount_usdc);
+			expect(tool.pricing.currency).toBe('USDC');
+		}
+	});
+
+	it('the free getting-started payload quotes the same prices', async () => {
+		const r = await call('ibm_granite_getting_started', {});
+		const out = r.result.structuredContent;
+		for (const name of PRICED) {
+			const entry = out.tools.find((t) => t.name === name);
+			expect(entry, name).toBeTruthy();
+			expect(entry.price, `${name}: getting_started price`).toBe(formatUsdPrice(name));
+			expect(out.pricing).toContain(`${name}: ${formatUsdPrice(name)}/call`);
+		}
+		// The list is exhaustive: no paid tool is missing from the orientation.
+		expect(out.tools.map((t) => t.name).sort()).toEqual([...PRICED].sort());
+	});
+
+	it('the server instructions quote the same prices', async () => {
+		const r = await dispatch({ jsonrpc: '2.0', id: 1, method: 'initialize' }, AUTH);
+		const instructions = r.result.instructions;
+		for (const name of PRICED) {
+			expect(instructions, `${name}: instructions`).toContain(
+				`${name}(`,
+			);
+			expect(instructions).toContain(`(${formatUsdPrice(name)})`);
+		}
 	});
 });

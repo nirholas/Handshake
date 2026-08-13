@@ -14,6 +14,7 @@ import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
 import { watsonxForecast, forecastModelFor } from '../_lib/watsonx-forecast.js';
 import { guardianConfig, assessRisk } from '../_lib/granite-guardian.js';
 import { fetchOhlcv, topPoolForToken, trendingPools } from '../_lib/market/ohlcv.js';
+import { marketUpstreamError } from '../_lib/market/upstream-error.js';
 
 const isBase58 = (s) => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
 const isoOf = (unixSec) => new Date(unixSec * 1000).toISOString();
@@ -50,23 +51,6 @@ async function narrate(cfg, { name, symbol, currentPrice, stats }) {
 		temperature: 0.6,
 	});
 	return { text: (text || '').trim(), model, usage };
-}
-
-// Map a GeckoTerminal upstream failure (ohlcv.js attaches the real .status) to
-// a clean client response instead of an unhandled 500. A 429 becomes a
-// retryable 503; 404 passes through; everything else is a 502 bad-gateway.
-function marketUpstreamError(res, err) {
-	const upstream = err?.status;
-	const status = upstream === 429 ? 503 : upstream === 404 ? 404 : 502;
-	const code =
-		status === 503
-			? 'upstream_rate_limited'
-			: status === 404
-				? 'pool_not_found'
-				: 'upstream_error';
-	return error(res, status, code, `market data upstream: ${err?.message || 'unavailable'}`, {
-		retryable: status === 503,
-	});
 }
 
 export default wrap(async (req, res) => {

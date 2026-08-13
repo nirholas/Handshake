@@ -138,15 +138,22 @@ export async function buildGraniteAnalyzeTool(client) {
 						? raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
 						: raw;
 					parsed = JSON.parse(jsonStr);
+					// A bare JSON scalar or array parses fine but is not an analysis
+					// object, and spreading one below would splatter per-character or
+					// per-index keys into the result. Treat it as unparseable.
+					if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+						throw new Error('analysis JSON was not an object');
+					}
 				} catch {
-					// Granite didn't return clean JSON — surface text so client can decide
+					// Granite didn't return a clean JSON object: surface the text so the
+					// client can decide what to do with it.
 					return {
 						ok: true,
 						analysis_type,
 						raw_response: result.text,
 						usage: result.usage,
 						model: result.model,
-						parse_error: 'Model returned non-JSON response; see raw_response.',
+						parse_error: 'Model did not return a JSON analysis object; see raw_response.',
 					};
 				}
 

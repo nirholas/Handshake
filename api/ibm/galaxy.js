@@ -178,8 +178,12 @@ async function graniteThemeLabel(cfg, members) {
 
 // ── Build ────────────────────────────────────────────────────────────────────
 
-async function buildGalaxy(cfg) {
-	const rows = await selectGalaxyAgents();
+// `rows` is the agent set the caller already read and fingerprinted. Reading it
+// again here would not just cost a second identical query: an agent added
+// between the two reads would be embedded into this payload while the cache row
+// carries the pre-add fingerprint, so the stale layout would be served as fresh
+// until the TTL expired.
+async function buildGalaxy(cfg, rows) {
 	const agents = rows.filter((a) => agentEmbedText(a)); // must have embeddable text
 
 	if (agents.length < 2) {
@@ -365,7 +369,7 @@ async function handleGet(req, res) {
 		}
 	}
 
-	const payload = await buildGalaxy(cfg);
+	const payload = await buildGalaxy(cfg, rows);
 	// Persist only fully-built galaxies (with agents) so empty/edge states never
 	// poison the cache.
 	if (payload.agents.length) {

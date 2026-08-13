@@ -451,6 +451,58 @@ describe('rate limiting', () => {
 	});
 });
 
+// ── Market data upstream failures ─────────────────────────────────────────────
+// GeckoTerminal throttles and outages are a third party's problem. They must map
+// to a real client contract rather than bubbling into wrap()'s unhandled-5xx
+// path, which logs, captures to Sentry, and pages ops once per request.
+describe('market data upstream failures', () => {
+	const upstreamFault = (status) =>
+		Object.assign(new Error(`GeckoTerminal ${status}`), { status });
+
+	it('maps a missing pool to 404 pool_not_found', async () => {
+		fetchOhlcv.mockRejectedValueOnce(upstreamFault(404));
+		const { res, body } = await callGet(`/api/ibm/twin?pool=${POOL}`);
+		expect(res.statusCode).toBe(404);
+		expect(body.error).toBe('pool_not_found');
+		expect(body.error_description).not.toMatch(/GeckoTerminal/);
+	});
+
+	it('maps a throttle to a retryable 503', async () => {
+		fetchOhlcv.mockRejectedValueOnce(upstreamFault(429));
+		const { res, body } = await callGet(`/api/ibm/twin?pool=${POOL}`);
+		expect(res.statusCode).toBe(503);
+		expect(body.error).toBe('upstream_rate_limited');
+		expect(body.retryable).toBe(true);
+	});
+
+	it('maps an upstream outage to 502 upstream_error', async () => {
+		fetchOhlcv.mockRejectedValueOnce(upstreamFault(502));
+		const { res, body } = await callGet(`/api/ibm/twin?pool=${POOL}`);
+		expect(res.statusCode).toBe(502);
+		expect(body.error).toBe('upstream_error');
+	});
+
+	it('maps a trending-list failure the same way', async () => {
+		trendingPools.mockRejectedValueOnce(upstreamFault(429));
+		const { res, body } = await callGet('/api/ibm/twin?list=trending');
+		expect(res.statusCode).toBe(503);
+		expect(body.error).toBe('upstream_rate_limited');
+	});
+
+	it('maps a POST what-if upstream failure the same way', async () => {
+		fetchOhlcv.mockRejectedValueOnce(upstreamFault(502));
+		const { res, body } = await callPost({ pool: POOL, scenario: {} });
+		expect(res.statusCode).toBe(502);
+		expect(body.error).toBe('upstream_error');
+	});
+
+	it('keeps the handler own validation errors intact', async () => {
+		const { res, body } = await callGet('/api/ibm/twin?token=not-base58');
+		expect(res.statusCode).toBe(400);
+		expect(body.error).toBe('bad_token');
+	});
+});
+
 // ── Method guard ──────────────────────────────────────────────────────────────
 describe('method guard', () => {
 	it('returns 405 for unsupported methods', async () => {

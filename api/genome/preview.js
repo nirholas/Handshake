@@ -49,7 +49,9 @@ export default wrap(async (req, res) => {
 	if (!eligB.allowed) return error(res, 403, 'parent_ineligible', `parent B: ${eligB.reason}`, { parent: 'b', reason: eligB.reason });
 
 	const seed = typeof body.seed === 'string' && body.seed ? body.seed.slice(0, 64) : makeSeed();
-	const childName = (typeof body.name === 'string' && body.name.trim()) || `${rowA.name} × ${rowB.name}`;
+	// Same 80-char ceiling breed.js applies, so the previewed name is exactly the
+	// name the committed child will carry.
+	const childName = (typeof body.name === 'string' && body.name.trim().slice(0, 80)) || `${rowA.name} × ${rowB.name}`.slice(0, 80);
 	const child = deriveGenome({ parentA: agentGenome(rowA), parentB: agentGenome(rowB), seed });
 
 	const feeThree = (eligA.fee_three || 0) + (eligB.fee_three || 0);

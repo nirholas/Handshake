@@ -1,4 +1,4 @@
-// three.ws native launch lane dispatcher — the self-hosted coin launchpad on
+// three.ws native launch lane dispatcher: the self-hosted coin launchpad on
 // Meteora's Dynamic Bonding Curve (DBC), alongside the pump.fun lane in
 // api/pump/[action].js. Same custody model: the server builds unsigned
 // transactions, the user's wallet (plus the mint keypair) signs client-side,
@@ -25,7 +25,7 @@ import { publicUrl as r2PublicUrl } from '../_lib/r2.js';
 import { env } from '../_lib/env.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { resolveOrCreateAgentForAvatar } from '../_lib/agent-identity.js';
-import { parse } from '../_lib/validate.js';
+import { parse, isUuid } from '../_lib/validate.js';
 import { randomToken } from '../_lib/crypto.js';
 import { publishFeedEvent } from '../_lib/feed.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
@@ -171,7 +171,7 @@ async function handleLaunchPrep(req, res) {
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
 
 	// Mint pubkey: client-supplied (vanity-ground) or server-ground with the
-	// three.ws mark — identical branding rule to the pump lane.
+	// three.ws mark. Identical branding rule to the pump lane.
 	const enforceMark = env.THREE_WS_MARK_ENFORCE !== '0' && env.THREE_WS_MARK_ENFORCE !== 'false';
 	let mintKeypair = null;
 	let mint;
@@ -183,7 +183,7 @@ async function handleLaunchPrep(req, res) {
 				res,
 				400,
 				'unbranded_mint',
-				'three.ws launches must use a mint address carrying the "3ws" mark — grind one client-side or omit mint_address to let the server stamp it',
+				'three.ws launches must use a mint address carrying the "3ws" mark. Grind one client-side, or omit mint_address to let the server stamp it',
 			);
 		}
 		mint = supplied;
@@ -194,7 +194,7 @@ async function handleLaunchPrep(req, res) {
 			mint = mintKeypair.publicKey;
 		} catch (err) {
 			if (err instanceof GrindExhaustedError) {
-				return error(res, 503, 'mark_grind_failed', 'could not stamp the three.ws mark — retry');
+				return error(res, 503, 'mark_grind_failed', 'could not stamp the three.ws mark, retry');
 			}
 			throw err;
 		}
@@ -301,7 +301,7 @@ async function handleLaunchConfirm(req, res) {
 	if (!accountKeys.includes(p.mint)) {
 		return error(res, 422, 'mint_not_in_tx', 'mint pubkey not present in tx');
 	}
-	// The confirmed tx must have run the DBC program itself — a memo/transfer
+	// The confirmed tx must have run the DBC program itself. A memo/transfer
 	// touching the mint account can never be recorded as a launch.
 	if (!txInvokesDbcProgram(tx)) {
 		return error(res, 422, 'not_a_native_launch', 'transaction did not invoke the bonding-curve program');
@@ -348,6 +348,11 @@ async function handleLaunches(req, res) {
 	const url = new URL(req.url, `http://${req.headers.host}`);
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
 	const agentId = url.searchParams.get('agent_id') || null;
+	// agent_id lands in a uuid column: an unvalidated value makes Postgres raise
+	// and the request surface as a 500. Same 400 the pump lane returns.
+	if (agentId && !isUuid(agentId)) {
+		return error(res, 400, 'validation_error', 'agent_id must be a uuid');
+	}
 	const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10) || 0);
 	const limit = Math.max(1, Math.min(100, parseInt(url.searchParams.get('limit') || '24', 10) || 24));
 

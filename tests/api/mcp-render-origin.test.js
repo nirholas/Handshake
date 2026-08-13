@@ -49,6 +49,17 @@ describe('render.js sanitizers', () => {
 		expect(safeCssValue('', 'fallback')).toBe('fallback');
 	});
 
+	// Parens and slashes are legal in gradients, so the character class alone
+	// still let a background smuggle in an external fetch: a beacon that leaks
+	// every viewer's IP and referrer to whoever supplied the value.
+	it('rejects url() even when every character is otherwise allowed', () => {
+		expect(safeCssValue('url(//beacon.example/p.png)', 'transparent')).toBe('transparent');
+		expect(safeCssValue('URL (//beacon.example/p.png)', 'transparent')).toBe('transparent');
+		expect(safeCssValue('linear-gradient(#0b0c10, #6a5cff)', 'transparent')).toBe(
+			'linear-gradient(#0b0c10, #6a5cff)',
+		);
+	});
+
 	it('is idempotent, so re-sanitizing an already-clean value is a no-op', () => {
 		for (const value of ['transparent', '#6a5cff', '0deg 80deg 2m', 'rgb(1, 2, 3)']) {
 			expect(safeCssValue(safeCssValue(value, 'x'), 'x')).toBe(value);
@@ -195,6 +206,20 @@ describe('resolveOrigin', () => {
 		expect(resolveOrigin({ headers: { host: 'three.ws' } })).toBe('https://three.ws');
 		expect(resolveOrigin({ headers: { host: 'localhost:3000' } })).toBe('http://localhost:3000');
 		expect(resolveOrigin({ headers: { host: '127.0.0.1:3000' } })).toBe('http://127.0.0.1:3000');
+		expect(resolveOrigin({ headers: { host: '[::1]:3000' } })).toBe('http://[::1]:3000');
+	});
+
+	// The loopback test used to be an unanchored alternation, so any remote host
+	// merely CONTAINING the loopback literal was served an http:// origin and
+	// every link built from it downgraded off TLS.
+	it('treats a remote host that merely contains a loopback literal as https', () => {
+		clearOriginEnv();
+		expect(resolveOrigin({ headers: { host: 'evil-127.0.0.1.example.com' } })).toBe(
+			'https://evil-127.0.0.1.example.com',
+		);
+		expect(resolveOrigin({ headers: { host: 'localhost.evil.example' } })).toBe(
+			'https://localhost.evil.example',
+		);
 	});
 
 	it('falls back to VERCEL_URL when there is no env origin and no Host', () => {

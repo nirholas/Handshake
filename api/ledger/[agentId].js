@@ -14,10 +14,32 @@ import {
 	getDecisionsWithOutcomes,
 	getReputationRecords,
 	computeReputation,
+	MAX_TIMELINE_LIMIT,
 } from '../_lib/reasoning-ledger.js';
 import { latestAnchor } from '../_lib/ledger-anchor.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Longest `kind` / `q` filter accepted. Both reach the database as bound
+// parameters, so this is not an injection guard: it keeps an unauthenticated
+// caller from driving an unbounded `ilike '%…%'` scan across an agent's history.
+const MAX_FILTER_LEN = 200;
+
+/**
+ * Read a whole-number query param. Absent or empty means "not supplied"; garbage
+ * is a 400 rather than a silent fallback. `before` used to be coerced with
+ * Number(), so `?before=abc` sent NaN into a bigint comparison and answered a
+ * sanitized 500 to what is plainly a client mistake.
+ */
+function intParam(url, name, min, max) {
+	const raw = url.searchParams.get(name);
+	if (raw == null || raw === '') return { value: null, error: null };
+	if (!/^\d+$/.test(raw)) return { value: null, error: `${name} must be a whole number` };
+	const n = Number(raw);
+	if (!Number.isSafeInteger(n) || n < min || n > max) {
+		return { value: null, error: `${name} must be between ${min} and ${max}` };
+	}
+	return { value: n, error: null };
+}
 
 function paramAgentId(req) {
 	if (req.query?.agentId) return String(req.query.agentId);
@@ -67,31 +89,44 @@ export default wrap(async (req, res) => {
 	}
 
 	const url = new URL(req.url, 'http://localhost');
-	const limit = Number(url.searchParams.get('limit')) || 50;
-	const before = url.searchParams.get('before');
+	const limitParam = intParam(url, 'limit', 1, MAX_TIMELINE_LIMIT);
+	if (limitParam.error) return error(res, 400, 'bad_request', limitParam.error);
+	const beforeParam = intParam(url, 'before', 1, Number.MAX_SAFE_INTEGER);
+	if (beforeParam.error) return error(res, 400, 'bad_request', beforeParam.error);
+	const limit = limitParam.value ?? 50;
+	const before = beforeParam.value;
 	const kind = url.searchParams.get('kind');
 	const q = url.searchParams.get('q');
+	if ((kind && kind.length > MAX_FILTER_LEN) || (q && q.length > MAX_FILTER_LEN)) {
+		return error(res, 400, 'bad_request', `kind and q must be ${MAX_FILTER_LEN} characters or fewer`);
+	}
 
 	const [identity, repRecords, decisions, anchor] = await Promise.all([
-		sql`select id, name, profile_image_url, avatar_url, is_public from agent_identities where id = ${agentId} limit 1`
+		sql`select id, name, profile_image_url, avatar_url, is_public, deleted_at from agent_identities where id = ${agentId} limit 1`
 			.then((r) => r[0] || null)
 			.catch(() => null),
 		getReputationRecords(agentId),
 		getDecisionsWithOutcomes(agentId, {
 			limit,
-			beforeSeq: before ? Number(before) : null,
+			beforeSeq: before,
 			kind: kind || null,
 			q: q || null,
 		}),
 		latestAnchor(agentId).catch(() => null),
 	]);
 
+	// The track record is public by design; the agent's identity is not. An
+	// unlisted or deleted agent renders as the bare id, exactly like an id with no
+	// identity row — this endpoint used to select is_public and never read it, so
+	// it published the name and avatar of every agent its owner had made private.
+	const named = !!identity && identity.is_public !== false && !identity.deleted_at;
+
 	const reputation = computeReputation(repRecords);
 	const shaped = decisions.map(shapeDecision);
 	const nextBeforeSeq = shaped.length ? shaped[shaped.length - 1].seq : null;
 
 	return json(res, 200, {
-		agent: identity
+		agent: named
 			? { id: identity.id, name: identity.name, image: identity.profile_image_url || identity.avatar_url || null }
 			: { id: agentId, name: null, image: null },
 		reputation,

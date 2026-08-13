@@ -155,7 +155,7 @@ function renderSeller(data) {
 		{ value: s.sold, label: 'Converted to sales' },
 		{
 			value: s.potential.display,
-			unit: mintLabel(data.queue.find((q) => q.price)?.price.mint),
+			unit: mintLabel(s.potential.mint),
 			label: 'Sitting in the queue',
 			tone: 'money',
 		},

@@ -411,11 +411,19 @@ export async function getChainEntries(agentId) {
 }
 
 /**
+ * Largest page this read will ever return. Exported so the HTTP layer validates
+ * against the SAME bound it will be clamped to here — a caller that asked for
+ * more than one page's worth would otherwise get a silently truncated page and a
+ * `next_before_seq: null` telling them the ledger ended.
+ */
+export const MAX_TIMELINE_LIMIT = 200;
+
+/**
  * Decision timeline joined to outcomes, newest first. Filterable by kind and a
  * free-text query over the rationale/subject. Paginated by `beforeSeq`.
  */
 export async function getDecisionsWithOutcomes(agentId, { limit = 50, beforeSeq = null, kind = null, q = null } = {}) {
-	const lim = clamp(Number(limit) || 50, 1, 200);
+	const lim = clamp(Number(limit) || 50, 1, MAX_TIMELINE_LIMIT);
 	const beforeClause = beforeSeq != null ? sql`and d.seq < ${Number(beforeSeq)}` : sql``;
 	const kindClause = kind ? sql`and d.kind = ${kind}` : sql``;
 	const qClause = q

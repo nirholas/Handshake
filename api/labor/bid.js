@@ -68,6 +68,6 @@ export default wrap(async (req, res) => {
 			price_atomics: String(toBig(bid.price_atomics)), price_three: atomicsToThree(bid.price_atomics),
 			eta_seconds: eta, score, reputation, status: bid.status,
 		},
-		autopilot: autopilot || { bids: 0, awarded: false, settled: null },
+		autopilot: autopilot || { bids: 0, awarded: false, settled: null, settledNow: false },
 	});
 });

@@ -30,7 +30,9 @@ const bodySchema = z.object({
 	currency_mint: z.string().trim().min(1).max(100),
 	chain:         z.string().trim().min(1).max(20).default('solana'),
 	// Pass an array of 2+ recipients to split proceeds; null/[] clears the split.
-	split:         z.array(splitRecipientSchema).min(1).max(50).nullable().optional(),
+	// The empty array is deliberately valid: it is how a caller retracts a split
+	// without also delisting the skill.
+	split:         z.array(splitRecipientSchema).max(50).nullable().optional(),
 });
 
 async function resolveAuth(req) {
@@ -73,12 +75,18 @@ export default wrap(async (req, res) => {
 
 	// Resolve the proceeds split first so a malformed split (shares not summing
 	// to 100%, bad address) is rejected BEFORE we mutate the price row.
+	//
+	// Three ways a split is retracted, and all three must actually land: the
+	// skill is delisted (amount 0), `split` is null, or `split` is []. A clear
+	// that silently failed used to leave the old recipient set attached to a
+	// price the seller then raised, so the next sale paid collaborators who had
+	// been removed. The clear is therefore allowed to fail the request.
+	const clearsSplit = amount === 0 || (split !== undefined && (split === null || split.length === 0));
 	let splitResult = null;
-	if (amount === 0) {
-		// Delisting clears any split too — no orphaned config.
-		await clearListingSplit(sql, agent_id, skill).catch(() => {});
-	} else if (split && split.length > 0) {
-		try {
+	try {
+		if (clearsSplit) {
+			await clearListingSplit(sql, agent_id, skill);
+		} else if (split && split.length > 0) {
 			splitResult = await persistListingSplit(sql, {
 				agentId: agent_id,
 				skill,
@@ -86,12 +94,10 @@ export default wrap(async (req, res) => {
 				recipients: split,
 				createdBy: auth.userId,
 			});
-		} catch (e) {
-			if (e.status) return error(res, e.status, e.code, e.message);
-			throw e;
 		}
-	} else if (split && split.length === 0) {
-		await clearListingSplit(sql, agent_id, skill).catch(() => {});
+	} catch (e) {
+		if (e.status) return error(res, e.status, e.code, e.message);
+		throw e;
 	}
 
 	if (amount === 0) {

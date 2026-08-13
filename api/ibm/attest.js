@@ -26,13 +26,13 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
 import { watsonxForecast, forecastModelFor } from '../_lib/watsonx-forecast.js';
+import { guardianConfig, assessRisk } from '../_lib/granite-guardian.js';
 import { fetchOhlcv, topPoolForToken, trendingPools } from '../_lib/market/ohlcv.js';
-
-// Granite Guardian model — IBM's open safety classifier. Run inline via the
-// stable chat endpoint (system message names the risk, the model answers
-// Yes/No) so this feature is self-contained and does not couple to the
-// repo's churning guardian helper module.
-const GUARDIAN_MODEL = process.env.WATSONX_GUARDIAN_MODEL?.trim() || 'ibm/granite-guardian-3-8b';
+import {
+	callMarket,
+	isMarketUpstreamError,
+	marketUpstreamError,
+} from '../_lib/market/upstream-error.js';
 import {
 	avatarWalletConfig,
 	loadAvatarKeypair,
@@ -147,30 +147,6 @@ async function narrate(cfg, { name, symbol, currentPrice, stats }) {
 	return { text: (text || '').trim(), model };
 }
 
-// Granite Guardian risk classification. Drives the Guardian model through the
-// standard chat endpoint: the system turn states the risk name, the user turn
-// is the text to screen, and the model replies "Yes" (risk present) or "No".
-async function graniteGuardian(cfg, text) {
-	const { text: out, model } = await watsonxChatComplete(cfg, {
-		model: GUARDIAN_MODEL,
-		messages: [
-			{ role: 'system', content: 'harm' },
-			{ role: 'user', content: text },
-		],
-		maxTokens: 16,
-		temperature: 0,
-	});
-	const verdict = (out || '').trim().toLowerCase();
-	const flagged = verdict.startsWith('yes');
-	return {
-		flagged,
-		risk: 'harm',
-		label: flagged ? 'Harm' : 'Safe',
-		verdict: flagged ? 'Yes' : 'No',
-		model: model || GUARDIAN_MODEL,
-	};
-}
-
 // Build the on-chain memo for a claim — kept compact (the SPL-memo write is
 // truncated at 180 bytes by the wallet layer; we stay well under).
 function memoFor({ symbol, stats, governance, digest, tsModel }) {
@@ -194,7 +170,7 @@ async function loadMarket(params) {
 	if (!pool && token) {
 		if (!isBase58(token))
 			throw { status: 400, code: 'bad_token', message: 'token must be a base58 mint' };
-		pool = await topPoolForToken(token, network);
+		pool = await callMarket(() => topPoolForToken(token, network));
 	}
 	if (!pool || !isBase58(pool)) {
 		throw {
@@ -207,13 +183,9 @@ async function loadMarket(params) {
 		? params.timeframe
 		: 'hour';
 	const aggregate = Math.max(1, Math.min(60, parseInt(params.aggregate || '1', 10) || 1));
-	const { candles, base, quote, freq } = await fetchOhlcv({
-		pool,
-		network,
-		timeframe,
-		aggregate,
-		limit: 1000,
-	});
+	const { candles, base, quote, freq } = await callMarket(() =>
+		fetchOhlcv({ pool, network, timeframe, aggregate, limit: 1000 }),
+	);
 	if (candles.length < 64)
 		throw {
 			status: 422,
@@ -297,12 +269,18 @@ async function runGranite(out, market, attesterAddress) {
 		});
 		narration = { text: n.text, model: n.model };
 		try {
-			const g = await graniteGuardian(cfg, n.text);
+			// The canonical Granite Guardian client: real safety-agent framing for the
+			// named risk, plus a probability read back from logprobs. This verdict is
+			// what vetoes an on-chain write, so it runs the same classifier the rest
+			// of the platform is governed by rather than a bespoke prompt that hands
+			// the model the bare word "harm" as its system turn.
+			const g = await assessRisk(guardianConfig(), { risk: 'harm', input: n.text });
 			governance = {
 				passed: !g.flagged,
 				risk: g.risk,
 				label: g.label,
-				verdict: g.verdict,
+				probability: g.probability ?? null,
+				confidence: g.confidence ?? null,
 				model: g.model,
 			};
 		} catch (gErr) {
@@ -399,7 +377,12 @@ export default wrap(async (req, res) => {
 
 	// ── Picker: trending Solana pools ────────────────────────────────────────
 	if (req.method === 'GET' && url.searchParams.get('list') === 'trending') {
-		const pools = await trendingPools('solana', 8);
+		let pools;
+		try {
+			pools = await callMarket(() => trendingPools('solana', 8));
+		} catch (e) {
+			return marketUpstreamError(res, e);
+		}
 		return json(res, 200, { pools }, { 'cache-control': 'public, max-age=30, s-maxage=60' });
 	}
 
@@ -440,7 +423,12 @@ export default wrap(async (req, res) => {
 	try {
 		market = await loadMarket(params);
 	} catch (e) {
-		if (e && e.status) return error(res, e.status, e.code, e.message);
+		// An upstream fault gets the shared market contract; loadMarket's own
+		// validation errors carry a status AND a code, and answering with
+		// `e.code` alone once produced `{"error": undefined}` on an upstream 404,
+		// since those errors only ever carry a status.
+		if (isMarketUpstreamError(e)) return marketUpstreamError(res, e);
+		if (e && e.status && e.code) return error(res, e.status, e.code, e.message);
 		throw e;
 	}
 
@@ -489,9 +477,6 @@ export default wrap(async (req, res) => {
 			out.onchain.error = 'on-chain submission requires sign-in or a valid bearer token';
 			return json(res, 401, out, { 'cache-control': 'no-store' });
 		}
-		const submitRl = await limits.attestSubmitDaily(wallet.address || 'unconfigured');
-		if (!submitRl.success) return rateLimited(res, submitRl, 'daily on-chain attestation limit reached');
-
 		if (!out.proof) {
 			out.onchain.error = 'nothing to notarize: ' + (out.onchain.reason || 'no forecast');
 		} else if (out.governance?.passed === false) {
@@ -499,6 +484,14 @@ export default wrap(async (req, res) => {
 		} else if (!wallet.configured) {
 			out.onchain.error = 'attester wallet not configured';
 		} else {
+			// Consume the daily ceiling only once a broadcast is actually the next
+			// step. Charging it before the preconditions above meant any signed-in
+			// caller could exhaust the platform's shared daily budget with requests
+			// that were never going to reach the chain (no forecast, vetoed
+			// narration, unconfigured wallet).
+			const submitRl = await limits.attestSubmitDaily(wallet.address);
+			if (!submitRl.success)
+				return rateLimited(res, submitRl, 'daily on-chain attestation limit reached');
 			try {
 				const conn = getConnection(wallet.rpcUrl);
 				const keypair = loadAvatarKeypair(process.env.AVATAR_WALLET_SECRET);

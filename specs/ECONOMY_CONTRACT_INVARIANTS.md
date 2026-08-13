@@ -8,9 +8,15 @@ vectors against agent *registration*, this one states the properties the
 
 Read this together with:
 
-- [`contracts/AUDIT-README.md`](../contracts/AUDIT-README.md) - the entry point for a review: scope, versions, build and test commands, deploy status.
-- [`contracts/THREAT_MODEL.md`](../contracts/THREAT_MODEL.md) - assets, actors, trust boundaries, and failure modes per contract.
-- [`contracts/audit/`](../contracts/audit) - committed static-analysis output and the written disposition of every finding.
+- [`contracts/README.md`](../contracts/README.md) - what each registry is, plus the build and test commands a reviewer runs first.
+- [`contracts/DEPLOYMENTS.md`](../contracts/DEPLOYMENTS.md) - the deploy-status table: which bytecode is live, at which address, on which chains, and how each address is verified.
+- [`SECURITY.md`](./SECURITY.md) - the abuse vectors against agent registration that sit upstream of these contracts.
+
+A dedicated audit pack (a single review entry point plus a per-contract threat
+model and committed static-analysis findings) is scoped in
+[`prompts/swarm-100/roadmap-p3-contracts-audit-pack.md`](../prompts/swarm-100/roadmap-p3-contracts-audit-pack.md)
+and has not been written yet. Until it lands, this document plus the two files
+above are the review surface.
 
 ## How to read an invariant
 
@@ -26,7 +32,7 @@ break it). The test that proves an invariant names its id in a comment, so
 `grep -rn "AP-7" contracts/test` finds the proof.
 
 Invariants marked **[deployed]** govern bytecode that is already live on a public
-chain (see the deploy-status table in `contracts/AUDIT-README.md`). Those are the
+chain (see the deploy-status table in [`contracts/DEPLOYMENTS.md`](../contracts/DEPLOYMENTS.md)). Those are the
 ones where a violation is an incident rather than a bug.
 
 ---

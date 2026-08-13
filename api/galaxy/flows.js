@@ -67,12 +67,15 @@ class FeedDeadline extends Error {}
 
 // A valid, empty feed window — the same shape handleFeed returns — so a degraded
 // response is indistinguishable to the client from a genuinely quiet platform.
-function emptyFeed(network, type) {
+// `headCursor` echoes a delta poller's own cursor back (exactly as the success
+// path does when a poll finds nothing new), so a degraded poll costs the client
+// its place in the stream instead of rewinding it.
+function emptyFeed(network, type, headCursor = null) {
 	return {
 		flows: [],
 		has_more: false,
 		next_cursor: null,
-		head_cursor: null,
+		head_cursor: headCursor,
 		network,
 		type,
 		summary: {
@@ -246,7 +249,11 @@ export default async function handler(req, res) {
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
 	const typeRaw = url.searchParams.get('type') || 'all';
 	const type = TYPE_KINDS[typeRaw] ? typeRaw : 'all';
-	const limit = Math.min(MAX_LIMIT, Math.max(1, Number(url.searchParams.get('limit')) || DEFAULT_LIMIT));
+	// Floor before clamping: `limit` reaches Postgres as the LIMIT argument, which
+	// must be an integer. A fractional `?limit=1.5` sent `LIMIT 2.5` and errored the
+	// whole query, degrading a healthy platform to an "honestly empty" window that
+	// was neither honest nor empty.
+	const limit = Math.min(MAX_LIMIT, Math.max(1, Math.floor(Number(url.searchParams.get('limit'))) || DEFAULT_LIMIT));
 	const cursor = url.searchParams.get('cursor');
 	const since = url.searchParams.get('since');
 
@@ -254,6 +261,18 @@ export default async function handler(req, res) {
 	// timeout or DB failure, fall back to the last-good snapshot for this
 	// view, and only then to an empty (but valid) window — so the galaxy degrades
 	// to last-known or calm-empty instead of surfacing a 504/502 the map can't use.
+	//
+	// The last-good snapshot belongs to the FIRST-PAGE view alone. It is the only
+	// request whose result is a self-contained window a degraded response can
+	// honestly stand in for, and the only one keyed unambiguously by
+	// (network, type, limit). A delta poll (`since`) or a backfill page (`cursor`)
+	// shares that key while returning a completely different slice, so letting
+	// either touch it broke the mechanism twice over: the near-empty result of
+	// every 6s delta poll overwrote the real window (leaving nothing good to fall
+	// back to), and reading it handed a live poller a stale full window whose
+	// older head_cursor rewound its position and could replay long-past flows as
+	// new light on the map. Scope both the write and the read to the first page.
+	const isFirstPage = !cursor && !since;
 	const lastGoodKey = `galaxy:flows:lastgood:${network}:${type}:${limit}`;
 	async function buildWithDeadline() {
 		let timer;
@@ -266,7 +285,7 @@ export default async function handler(req, res) {
 			// but at most once per LASTGOOD_REFRESH_MS per view, so the live-feed cache
 			// miss isn't paired with a second large SET on every request.
 			const now = Date.now();
-			if (now - (_lastGoodWrittenAt.get(lastGoodKey) || 0) >= LASTGOOD_REFRESH_MS) {
+			if (isFirstPage && now - (_lastGoodWrittenAt.get(lastGoodKey) || 0) >= LASTGOOD_REFRESH_MS) {
 				_lastGoodWrittenAt.set(lastGoodKey, now);
 				cacheSet(lastGoodKey, body, LASTGOOD_TTL_S).catch(() => {});
 			}
@@ -279,7 +298,6 @@ export default async function handler(req, res) {
 	try {
 		// A first page (no cursor/since) is cached briefly to shield the DB from a
 		// herd of pollers. A delta poll (`since`) is never cached — it must be live.
-		const isFirstPage = !cursor && !since;
 		if (isFirstPage) {
 			const cacheKey = `galaxy:flows:${network}:${type}:${limit}`;
 			let body = await cacheGet(cacheKey);
@@ -303,16 +321,18 @@ export default async function handler(req, res) {
 		const dbDown = !timedOut && isDbUnavailableError(e);
 		if (dbDown) console.warn('[api/galaxy/flows] degraded (db unavailable):', e?.message);
 		else console.error('[api/galaxy/flows] failed', timedOut ? 'soft-deadline' : e?.message, timedOut ? '' : e?.stack);
-		// Degrade gracefully: a delta poll (`since`) returns nothing new rather than
-		// erroring the live map; any view falls back to its last-good snapshot when
-		// one exists, else an empty window. All are valid 200s.
-		const lastGood = await cacheGet(lastGoodKey).catch(() => null);
+		// Degrade gracefully: the first page falls back to its last-good snapshot
+		// when one exists; a delta poll (`since`) or a backfill page (`cursor`)
+		// returns nothing rather than a window that does not answer what was asked,
+		// with the poller's own cursor echoed back so it keeps its place. All are
+		// valid 200s the map renders calmly.
+		const lastGood = isFirstPage ? await cacheGet(lastGoodKey).catch(() => null) : null;
 		if (lastGood) {
 			res.setHeader('cache-control', 'public, max-age=6');
 			res.setHeader('x-galaxy-flows-degraded', timedOut ? 'deadline' : 'error');
 			return json(res, 200, { data: lastGood });
 		}
 		res.setHeader('x-galaxy-flows-degraded', timedOut ? 'deadline-empty' : 'error-empty');
-		return json(res, 200, { data: emptyFeed(network, type) });
+		return json(res, 200, { data: emptyFeed(network, type, decodeCursor(since) ? since : null) });
 	}
 }

@@ -27,6 +27,7 @@ import { r2, publicUrl } from '../_lib/r2.js';
 import { env } from '../_lib/env.js';
 import { attestValidation, AttestError } from '../_lib/validation-attest.js';
 import { fetchSafePublicUrlPinned, SsrfBlockedError, MaxBytesExceededError } from '../_lib/ssrf-guard.js';
+import { redactUrlSecrets } from '../_lib/scrub-secrets.js';
 
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
@@ -180,7 +181,9 @@ async function handleImport(req, res) {
 		return error(res, 403, 'forbidden', 'you do not own this agent');
 	}
 
-	// Resolve on-chain agent metadata.
+	// Resolve on-chain agent metadata. A transport fault here is an upstream
+	// problem, not the caller's, and its message can embed the keyed RPC URL
+	// (…g.alchemy.com/v2/<key>), so it is logged redacted and never echoed.
 	let resolved;
 	try {
 		resolved = await resolveOnChainAgent({
@@ -190,11 +193,25 @@ async function handleImport(req, res) {
 			timeoutMs: 5000,
 		});
 	} catch (err) {
-		return error(res, 500, 'internal', `failed to resolve agent: ${err.message}`);
+		console.error('[erc8004/import] resolve threw:', redactUrlSecrets(err?.message || String(err)));
+		return error(res, 502, 'resolve_failed', 'could not read this agent from the chain; retry shortly');
 	}
 
-	if (resolved.error) {
-		return error(res, 400, 'bad_request', `failed to resolve agent: ${resolved.error}`);
+	// A manifest that will not load is NOT a reason to refuse the import. The
+	// registry read already succeeded and ownership is verified below, so the row
+	// lands with the on-chain fallback name and the crawler backfills metadata on
+	// its next pass. Refusing here meant a throttled ipfs.io gateway locked owners
+	// out of their own agents. Only a failed CHAIN read blocks.
+	if (resolved.error && !String(resolved.error).startsWith('manifest_fetch:')) {
+		console.error('[erc8004/import] resolve failed:', redactUrlSecrets(resolved.error));
+		return error(res, 502, 'resolve_failed', 'could not read this agent from the chain; retry shortly');
+	}
+
+	// The index row is crawler state and goes stale: an agent transferred since the
+	// last crawl would otherwise still import for its former owner. When the live
+	// registry answered with an owner, that answer wins over the cached one.
+	if (resolved.owner && !userWallets.includes(resolved.owner.toLowerCase())) {
+		return error(res, 403, 'forbidden', 'you do not own this agent');
 	}
 
 	const name = (resolved.name || `Agent #${agentId}`).slice(0, 255);
@@ -514,7 +531,7 @@ const MAX_SIZE = 25 * 1024 * 1024; // 25 MB
 
 async function handlePin(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
-	if (req.method !== 'POST') return error(res, 405, 'method_not_allowed', 'POST only');
+	if (!method(req, res, ['POST'])) return;
 
 	const session = await getSessionUser(req);
 	if (!session) return error(res, 401, 'unauthorized', 'sign in required');
@@ -536,14 +553,22 @@ async function handlePin(req, res) {
 	const web3Token = process.env.WEB3_STORAGE_TOKEN;
 	const nftToken = process.env.NFT_STORAGE_TOKEN;
 
-	if (web3Token) {
-		const result = await uploadToWeb3Storage(web3Token, ext, body, ct);
-		return json(res, 200, result);
-	}
+	const pinToIpfs = web3Token
+		? () => uploadToWeb3Storage(web3Token, ext, body, ct)
+		: nftToken
+			? () => uploadToNftStorage(nftToken, ext, body, ct)
+			: null;
 
-	if (nftToken) {
-		const result = await uploadToNftStorage(nftToken, ext, body, ct);
-		return json(res, 200, result);
+	if (pinToIpfs) {
+		// The pinning host is a network boundary: when it rejects the upload the
+		// fault is upstream, so the caller gets a 502 it can retry against instead
+		// of a generic internal_error that reads as a platform bug.
+		try {
+			return json(res, 200, await pinToIpfs());
+		} catch (err) {
+			console.error('[erc8004/pin] ipfs upload failed:', redactUrlSecrets(err?.message || String(err)));
+			return error(res, 502, 'pin_failed', 'the IPFS pinning service did not accept the upload');
+		}
 	}
 
 	// Fallback to R2 with warning
@@ -572,6 +597,8 @@ function getExt(ct) {
 			return 'json';
 		case 'model/gltf-binary':
 			return 'glb';
+		case 'model/gltf+json':
+			return 'gltf';
 		case 'image/png':
 			return 'png';
 		case 'image/jpeg':

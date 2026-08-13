@@ -12,11 +12,16 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 2000, 1), 5000);
 
+	// Inner-joined to the three live agents so a deleted node never leaves a lineage
+	// line hanging off the star map to a star that is no longer drawn.
 	const rows = await sql`
-		select parent_a_agent_id, parent_b_agent_id, child_agent_id, generation, pedigree_tier
-		from genome_breedings
-		where status = 'born' and child_agent_id is not null
-		order by created_at desc
+		select b.parent_a_agent_id, b.parent_b_agent_id, b.child_agent_id, b.generation, b.pedigree_tier
+		from genome_breedings b
+		join agent_identities pa on pa.id = b.parent_a_agent_id and pa.deleted_at is null
+		join agent_identities pb on pb.id = b.parent_b_agent_id and pb.deleted_at is null
+		join agent_identities c  on c.id  = b.child_agent_id    and c.deleted_at  is null
+		where b.status = 'born'
+		order by b.created_at desc
 		limit ${limit}
 	`;
 	const edges = rows.map((r) => ({

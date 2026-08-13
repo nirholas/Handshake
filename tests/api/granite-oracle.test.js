@@ -192,3 +192,34 @@ describe('/api/ibm/oracle', () => {
 		expect(body.error).toBe('bad_request');
 	});
 });
+
+// The shared market-upstream contract (api/_lib/market/upstream-error.js), which
+// every Granite market handler now answers with. The upstream body is never
+// echoed: it carries vendor ref ids and nothing a caller can act on.
+describe('market data upstream failures', () => {
+	const upstreamFault = (status) =>
+		Object.assign(new Error(`GeckoTerminal ${status}: {"meta":{"ref_id":"abc"}}`), { status });
+
+	it('maps a missing pool to 404 pool_not_found', async () => {
+		fetchOhlcv.mockRejectedValueOnce(upstreamFault(404));
+		const { res, body } = await call(`/api/ibm/oracle?pool=${POOL}`);
+		expect(res.statusCode).toBe(404);
+		expect(body.error).toBe('pool_not_found');
+		expect(body.error_description).not.toMatch(/ref_id/);
+	});
+
+	it('maps a throttle to a retryable 503', async () => {
+		fetchOhlcv.mockRejectedValueOnce(upstreamFault(429));
+		const { res, body } = await call(`/api/ibm/oracle?pool=${POOL}`);
+		expect(res.statusCode).toBe(503);
+		expect(body.error).toBe('upstream_rate_limited');
+		expect(body.retryable).toBe(true);
+	});
+
+	it('maps an upstream outage to 502 upstream_error', async () => {
+		trendingPools.mockRejectedValueOnce(upstreamFault(502));
+		const { res, body } = await call('/api/ibm/oracle?list=trending');
+		expect(res.statusCode).toBe(502);
+		expect(body.error).toBe('upstream_error');
+	});
+});

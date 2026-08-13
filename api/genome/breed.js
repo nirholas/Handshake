@@ -89,9 +89,23 @@ export default wrap(async (req, res) => {
 	if (!eligA.allowed) return error(res, 403, 'parent_ineligible', `parent A: ${eligA.reason}`, { parent: 'a', reason: eligA.reason });
 	if (!eligB.allowed) return error(res, 403, 'parent_ineligible', `parent B: ${eligB.reason}`, { parent: 'b', reason: eligB.reason });
 
+	// Cooldown FIRST, before the fee gate. Both parents must be off cooldown, which
+	// keeps deep pedigrees scarce. Checking it after the 402 would have taken a real
+	// $THREE settlement for a breeding this request was always going to refuse.
+	const now = Date.now();
+	const [coolA, coolB] = await Promise.all([cooldownRemainingMs(parentAId, now), cooldownRemainingMs(parentBId, now)]);
+	const cool = Math.max(coolA, coolB);
+	if (cool > 0) {
+		return error(res, 409, 'breeding_cooldown', 'a parent is still on breeding cooldown', {
+			cooldown_remaining_ms: cool,
+			cooldown_remaining_min: Math.ceil(cool / 60000),
+		});
+	}
+
 	const feeThree = (eligA.fee_three || 0) + (eligB.fee_three || 0);
 	const consentOwner = eligA.cross_owner ? eligA.owner_id : eligB.cross_owner ? eligB.owner_id : null;
 	const studFeeSig = (typeof body.stud_fee_signature === 'string' && body.stud_fee_signature.trim()) || '';
+	let studFeeAtomics = '0';
 	// A cross-owner stud with a fee must be paid in $THREE. The caller supplies a
 	// real settlement signature, or we 402 with the exact terms (no breed on credit).
 	if (feeThree > 0) {
@@ -129,17 +143,7 @@ export default wrap(async (req, res) => {
 				stud_wallets: studWallets,
 			});
 		}
-	}
-
-	// Cooldown — both parents must be off cooldown. Keeps deep pedigrees scarce.
-	const now = Date.now();
-	const [coolA, coolB] = await Promise.all([cooldownRemainingMs(parentAId, now), cooldownRemainingMs(parentBId, now)]);
-	const cool = Math.max(coolA, coolB);
-	if (cool > 0) {
-		return error(res, 409, 'breeding_cooldown', 'a parent is still on breeding cooldown', {
-			cooldown_remaining_ms: cool,
-			cooldown_remaining_min: Math.ceil(cool / 60000),
-		});
+		studFeeAtomics = paid.atomics || '0';
 	}
 
 	// Derive the child genome — deterministic, re-derivable from (parents, seed).
@@ -202,6 +206,7 @@ export default wrap(async (req, res) => {
 			return r;
 		});
 	} catch (e) {
+		console.error('[breed] child insert failed', { parents: [rowA.id, rowB.id], error: e?.message });
 		return error(res, 500, 'breed_failed', 'failed to create child agent');
 	}
 
@@ -212,7 +217,11 @@ export default wrap(async (req, res) => {
 	const parentSolanas = [rowA.meta?.solana_address, rowB.meta?.solana_address].filter(Boolean);
 	const parentEvms = [rowA.wallet_address, rowB.wallet_address, rowA.meta?.wallet_address, rowB.meta?.wallet_address].filter(Boolean);
 	if (parentSolanas.includes(wallets.solana) || parentEvms.includes(wallets.evm)) {
-		return error(res, 500, 'ownership_invariant_violation', 'child wallet collided with a parent — breeding aborted');
+		// Retire the row we just inserted. Aborting without it would leave a bred,
+		// genome-carrying agent visible in listings and lineage walks that no
+		// breeding record ever accounts for.
+		await retireChild(child.id, 'ownership_invariant_violation');
+		return error(res, 500, 'ownership_invariant_violation', 'child wallet collided with a parent, breeding aborted');
 	}
 
 	// ── Grant inherited skill licenses on-chain (royalty-provenance recorded) ───
@@ -234,22 +243,43 @@ export default wrap(async (req, res) => {
 
 	// ── Persist the breeding event (the verifiable lineage record) ──────────────
 	const genomeHash = childGenome.genome_hash || hashGenome(childGenome);
+	let recorded = null;
 	try {
-		await sql`
+		[recorded] = await sql`
 			insert into genome_breedings (
 				breeding_key, parent_a_agent_id, parent_b_agent_id, child_agent_id,
 				seed, genome, genome_hash, generation, pedigree_tier, bred_by,
-				stud_fee_lamports, stud_fee_signature, consent_owner, status
+				stud_fee_atomics, stud_fee_signature, consent_owner, status
 			) values (
 				${breedingKey}, ${rowA.id}, ${rowB.id}, ${child.id},
 				${seed}, ${JSON.stringify(childGenome)}::jsonb, ${genomeHash},
 				${childGenome.generation}, ${pedigree.tier}, ${auth.userId},
-				${0}, ${studFeeSig || null}, ${consentOwner}, 'born'
+				${studFeeAtomics}, ${studFeeSig || null}, ${consentOwner}, 'born'
 			)
 			on conflict (breeding_key) do nothing
+			returning child_agent_id
 		`;
 	} catch (e) {
+		// A unique violation on the settlement signature means a request racing this
+		// one already spent the same $THREE payment. The replay SELECT above cannot
+		// see an uncommitted sibling; the index can, and it is the only place this
+		// can be decided atomically. Retire our child rather than let one payment
+		// buy two.
+		if (e?.code === '23505' && /stud_fee_signature/.test(String(e?.constraint || e?.message || ''))) {
+			await retireChild(child.id, 'stud_fee_replayed');
+			return error(res, 409, 'stud_fee_replayed', 'that stud_fee_signature was already used to pay for another breeding');
+		}
 		console.error('[breed] lineage record failed', { child: child.id, error: e?.message });
+	}
+	// No returned row means the breeding key conflicted: a concurrent request (a
+	// double-submitted preview) recorded this exact pairing first. The header
+	// promises no twins, so retire ours and hand back the child that won.
+	if (recorded === undefined) {
+		await retireChild(child.id, 'breeding_key_race');
+		const [winner] = await sql`
+			select child_agent_id from genome_breedings where breeding_key = ${breedingKey} limit 1
+		`;
+		return json(res, 200, { child: await loadChildSummary(winner?.child_agent_id || child.id), deduped: true });
 	}
 
 	dispatchWebhooks({
@@ -398,6 +428,22 @@ async function grantInheritedSkills({ skills, childGenome, childWallet, parentA,
 		grants.push(grant);
 	}
 	return grants;
+}
+
+// Withdraw a child that was inserted but must not exist: a wallet-collision abort,
+// or a lost race for the breeding key. Soft-delete keeps the row for forensics
+// while removing it from every listing, lineage walk, and cooldown calculation.
+async function retireChild(childAgentId, reason) {
+	try {
+		await sql`
+			update agent_identities
+			set deleted_at = now(), updated_at = now(),
+			    meta = jsonb_set(coalesce(meta, '{}'::jsonb), '{bred_from,retired}', ${JSON.stringify(reason)}::jsonb, true)
+			where id = ${childAgentId} and deleted_at is null
+		`;
+	} catch (e) {
+		console.error('[breed] child retire failed', { child: childAgentId, reason, error: e?.message });
+	}
 }
 
 async function loadChildSummary(childAgentId) {

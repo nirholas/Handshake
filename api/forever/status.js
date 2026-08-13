@@ -17,12 +17,32 @@
 //
 //   state ∈ "waiting-payment" | "payment-received" | "inscribing" |
 //           "inscribed" | "failed"
+//
+// Errors:
+//   400: missing or malformed id
+//   404: no OrdinalsBot order exists with that id
+//   429: per-IP polling ceiling
+//   502: OrdinalsBot upstream error
 
-import { cors, error, json } from '../_lib/http.js';
+import { cors, error, json, rateLimited } from '../_lib/http.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getTransactionStatus, getTipHeight, isPlausibleTxid } from '../_lib/esplora.js';
 
 const ORDINALSBOT_BASE_URL =
 	process.env.ORDINALSBOT_BASE_URL || 'https://api.ordinalsbot.com';
+
+// Order ids are opaque upstream tokens (uuid or nanoid shaped). Bounding them
+// here keeps an arbitrary payload from reaching the metered upstream lookup.
+const ORDER_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
+
+// States that can only be reached after the charge was actually settled.
+// "failed" is deliberately absent: an expired or cancelled order is a terminal
+// state the user usually reaches by never paying at all.
+const PAID_STATES = new Set(['payment-received', 'inscribing', 'inscribed']);
+
+// OrdinalsBot answers an unknown id with HTTP 200 and {status:"error"}, so the
+// only signal that an order does not exist is the message text.
+const NOT_FOUND_RE = /invalid\s*order\s*id|not\s*found|no\s*such\s*order|missing\s*params/i;
 
 function deriveState(order) {
 	const raw = String(order.status || order.state || '').toLowerCase();
@@ -114,6 +134,14 @@ async function fetchOnchainStatus(txid) {
 	}
 }
 
+/** OrdinalsBot reports failures as a string or an array of strings. */
+function upstreamMessage(data) {
+	const raw = data?.message ?? data?.error;
+	if (Array.isArray(raw)) return raw.filter(Boolean).map(String).join('; ');
+	if (typeof raw === 'string') return raw;
+	return '';
+}
+
 async function fetchOrdinalsBotOrder(orderId) {
 	const headers = {};
 	if (process.env.ORDINALSBOT_API_KEY) {
@@ -131,8 +159,16 @@ async function fetchOrdinalsBotOrder(orderId) {
 		throw err;
 	}
 	if (!res.ok || data.status === 'error') {
-		const err = new Error(data.message || data.error || `OrdinalsBot returned ${res.status}`);
-		err.status = res.status === 404 ? 404 : 502;
+		const detail = upstreamMessage(data);
+		if (res.status === 404 || NOT_FOUND_RE.test(detail)) {
+			const err = new Error('no OrdinalsBot order exists with that id');
+			err.status = 404;
+			throw err;
+		}
+		const err = new Error(
+			detail ? `OrdinalsBot lookup failed: ${detail}` : `OrdinalsBot returned ${res.status}`,
+		);
+		err.status = res.status === 429 ? 429 : 502;
 		throw err;
 	}
 	return data;
@@ -142,15 +178,27 @@ export default async function handler(req, res) {
 	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
 	if (req.method !== 'GET') return error(res, 405, 'method_not_allowed', 'GET only');
 
+	// Every call spends a slot of the platform's metered OrdinalsBot budget, and
+	// the pay screen polls this endpoint on a timer. The ceiling has to clear a
+	// long wait across a couple of tabs while still capping an anonymous script.
+	const rl = await limits.inscribeStatusIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
 	const url = new URL(req.url, 'http://localhost');
 	const orderId = url.searchParams.get('id');
 	if (!orderId) return error(res, 400, 'missing_id', 'query param "id" is required');
+	if (!ORDER_ID_RE.test(orderId)) {
+		return error(res, 400, 'invalid_id', 'query param "id" is not a valid order id');
+	}
 
 	let order;
 	try {
 		order = await fetchOrdinalsBotOrder(orderId);
 	} catch (e) {
-		return error(res, e.status || 502, 'status_lookup_failed', e.message);
+		const status = e.status || 502;
+		const code =
+			status === 404 ? 'order_not_found' : status === 429 ? 'upstream_rate_limited' : 'status_lookup_failed';
+		return error(res, status, code, e.message);
 	}
 
 	const state = deriveState(order);
@@ -165,7 +213,7 @@ export default async function handler(req, res) {
 	return json(res, 200, {
 		orderId,
 		state,
-		paid: state !== 'waiting-payment',
+		paid: PAID_STATES.has(state),
 		inscribed: state === 'inscribed',
 		charge: chargeAddress
 			? {

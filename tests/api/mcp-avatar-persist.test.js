@@ -261,3 +261,78 @@ describe('render_avatar_image', () => {
 		expect(renderState.fn).not.toHaveBeenCalled();
 	});
 });
+
+describe('render_avatar', () => {
+	const AUTH = { userId: 'user-1', scope: 'avatars:read', source: 'session' };
+	const AVATAR = {
+		id: '11111111-1111-4111-8111-111111111111',
+		name: 'Hero',
+		visibility: 'public',
+		model_url: 'https://cdn.test/m.glb',
+	};
+
+	it('returns viewer HTML as an inline text/html resource, not as chat text', async () => {
+		avState.avatar = AVATAR;
+		const r = await avatarTool('render_avatar').handler({ id: AVATAR.id }, AUTH);
+
+		expect(r.isError).toBeUndefined();
+		// Chat text stays short; the document rides in the resource entry.
+		expect(r.content[0].type).toBe('text');
+		expect(r.content[0].text).not.toContain('<model-viewer');
+		const resource = r.content[1];
+		expect(resource.type).toBe('resource');
+		expect(resource.resource.mimeType).toBe('text/html');
+		expect(resource.resource.uri).toBe(`avatar://${AVATAR.id}`);
+		expect(resource.resource.text).toContain('<model-viewer');
+		expect(resource.resource.text).toContain('src="https://cdn.test/m.glb"');
+		expect(r.structuredContent.html).toBe(resource.resource.text);
+	});
+
+	it('drops CSS and poster arguments that could break out of the document', async () => {
+		avState.avatar = AVATAR;
+		const r = await avatarTool('render_avatar').handler(
+			{
+				id: AVATAR.id,
+				background: 'red;}body{background:url(https://evil.test/beacon)}',
+				poster: 'javascript:alert(1)',
+			},
+			AUTH,
+		);
+		const html = r.structuredContent.html;
+		expect(html).not.toContain('evil.test');
+		expect(html).not.toContain('javascript:alert(1)');
+		expect(html).toContain('background:transparent');
+	});
+
+	// The surfaces.mcp gate: an agent that has switched the MCP surface off must
+	// get a machine-readable slug AND a reason a client can show its user.
+	it('refuses an avatar whose agent disallows the MCP surface', async () => {
+		avState.avatar = AVATAR;
+		const { sql } = await import('../../api/_lib/db.js');
+		sql.mockResolvedValueOnce([{ embed_policy: { surfaces: { mcp: false } } }]);
+
+		await expect(
+			avatarTool('render_avatar').handler({ id: AVATAR.id }, AUTH),
+		).rejects.toMatchObject({
+			code: -32000,
+			message: 'embed_denied_surface',
+			data: { reason: expect.stringContaining('MCP surface'), avatar_id: AVATAR.id },
+		});
+	});
+
+	it('renders normally when the owning agent leaves the MCP surface enabled', async () => {
+		avState.avatar = AVATAR;
+		const { sql } = await import('../../api/_lib/db.js');
+		sql.mockResolvedValueOnce([{ embed_policy: { surfaces: { mcp: true } } }]);
+
+		const r = await avatarTool('render_avatar').handler({ id: AVATAR.id }, AUTH);
+		expect(r.structuredContent.html).toContain('<model-viewer');
+	});
+
+	it('reports a missing avatar as not found', async () => {
+		avState.avatar = null;
+		await expect(avatarTool('render_avatar').handler({ id: AVATAR.id }, AUTH)).rejects.toThrow(
+			/not found/i,
+		);
+	});
+});

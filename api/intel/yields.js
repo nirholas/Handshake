@@ -51,6 +51,6 @@ export default wrap(async (req, res) => {
 			{ 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' },
 		);
 	} catch {
-		return error(res, 502, 'upstream_error', 'DeFi yield data is temporarily unavailable — retry shortly');
+		return error(res, 502, 'upstream_error', 'DeFi yield data is temporarily unavailable, retry shortly');
 	}
 });

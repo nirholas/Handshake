@@ -11,6 +11,7 @@ import { settlePayment, encodePaymentResponseHeader } from './_lib/x402-spec.js'
 import { peekCalledTool } from './_lib/mcp-dispatch.js';
 import { isDiscoveryOnlyBatch } from './_lib/mcp-batch-price.js';
 import { PROTOCOL_VERSION, dispatch, isPublicTool } from './_mcpbazaar/dispatch.js';
+import { BAZAAR_CHALLENGE } from './_mcpbazaar/discovery.js';
 import {
 	send401,
 	sendJsonRpcError,
@@ -21,10 +22,17 @@ import {
 } from './_mcp/auth.js';
 import { sendX402Error, reservePaymentProof } from './_mcp/payments.js';
 
+// Every 402/401 challenge this server issues is scoped to its OWN resource.
+// Passing neither resourcePath nor challenge left the Bazaar advertising
+// https://three.ws/api/mcp and the main server's description to facilitators
+// and to any client about to pay for a discovery call.
+const RESOURCE_PATH = '/api/mcp-bazaar';
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,HEAD,POST,DELETE,OPTIONS', origins: '*' })) return;
 
-	if (req.method === 'GET' || req.method === 'HEAD') return handleSse(req, res);
+	if (req.method === 'GET' || req.method === 'HEAD')
+		return handleSse(req, res, { resourcePath: RESOURCE_PATH, challenge: BAZAAR_CHALLENGE });
 	if (req.method === 'DELETE') return handleTerminate(req, res);
 	if (req.method !== 'POST') return send401(res, 'method not supported');
 
@@ -37,6 +45,8 @@ export default wrap(async (req, res) => {
 	const { toolName } = peekCalledTool(body);
 
 	const result = await authenticateRequest(req, res, {
+		resourcePath: RESOURCE_PATH,
+		challenge: BAZAAR_CHALLENGE,
 		allowFree:
 			Boolean(toolName && isPublicTool(toolName)) ||
 			(isDiscoveryOnlyBatch(body) && !isMcpProtocolClient(req)),

@@ -198,10 +198,16 @@ export async function runSettlement({ job, bounty, verdict: providedVerdict = nu
  * never throws out of the driver (the bounty just stops at a resumable state that
  * the manual endpoints or the /tick cron can pick up). Safe to call repeatedly.
  *
- * @returns {Promise<{ bids: number, awarded: boolean, settled: string|null }>}
+ * `settled` is the job's status after the attempt; `settledNow` is true only when
+ * THIS call won the settle claim and released escrow. They differ when another
+ * caller (a concurrent /settle, an earlier tick) already settled the job: the
+ * status is 'settled' but no money moved here, so a counter that reports work
+ * done must read `settledNow`.
+ *
+ * @returns {Promise<{ bids: number, awarded: boolean, settled: string|null, settledNow: boolean }>}
  */
 export async function runAutopilot(bountyId) {
-	const out = { bids: 0, awarded: false, settled: null };
+	const out = { bids: 0, awarded: false, settled: null, settledNow: false };
 	try {
 		let bounty = await getBounty(bountyId);
 		if (!bounty) return out;
@@ -247,6 +253,7 @@ export async function runAutopilot(bountyId) {
 					return null;
 				});
 				out.settled = result?.status || null;
+				out.settledNow = result?.status === 'settled' && result?.idempotent !== true;
 			}
 		}
 	} catch (e) {

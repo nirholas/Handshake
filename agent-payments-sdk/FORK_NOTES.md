@@ -3,7 +3,7 @@
 This package is a **deliberate, value-added three.ws fork** of pump.fun's
 `@pump-fun/agent-payments-sdk`. It is the on-chain engine behind our **agent
 tokens** product — the flow where a user launches a pump.fun token for their
-agent ([api/pump/launch-agent.js](../api/pump/launch-agent.js)) and then charges
+agent ([api/pump/[action].js](../api/pump/[action].js), action `launch-agent`) and then charges
 users who pay that agent in its token, with buyback and shareholder distribution
 ([api/agents/payments/[action].js](../api/agents/payments/[action].js)).
 

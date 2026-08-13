@@ -26,6 +26,15 @@ function normNetwork(v) {
 	return v === 'devnet' ? 'devnet' : 'mainnet';
 }
 
+// Both params are Solana base58 pubkeys (32-44 chars). Rejecting obvious garbage
+// here keeps the graph lookup off junk keys and matches /api/intel/wallet/:addr,
+// which already 400s rather than echoing whatever the caller sent back at them.
+const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+function badRequest(res, message) {
+	return json(res, 400, { error: 'bad_request', message });
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -34,21 +43,25 @@ export default wrap(async (req, res) => {
 
 	const url = new URL(req.url, 'http://x');
 	const network = normNetwork(url.searchParams.get('network'));
-	const wallet = url.searchParams.get('wallet');
-	const mint = url.searchParams.get('mint');
+	const wallet = (url.searchParams.get('wallet') || '').trim();
+	const mint = (url.searchParams.get('mint') || '').trim();
 
 	if (wallet) {
-		const rep = await getWalletReputation(wallet.trim(), network);
+		if (!BASE58.test(wallet)) return badRequest(res, 'wallet must be a valid Solana address');
+		const rep = await getWalletReputation(wallet, network);
 		return json(res, 200, rep, {
 			'cache-control': 'public, max-age=30, stale-while-revalidate=60',
 		});
 	}
 
 	if (!mint) {
-		return json(res, 400, { error: 'bad_request', message: 'mint or wallet query param required' });
+		return badRequest(res, 'mint or wallet query param required');
+	}
+	if (!BASE58.test(mint)) {
+		return badRequest(res, 'mint must be a valid Solana mint address');
 	}
 
-	const result = await getSmartMoneyForMint(mint.trim(), network);
+	const result = await getSmartMoneyForMint(mint, network);
 	return json(res, 200, result, {
 		'cache-control': 'public, max-age=15, stale-while-revalidate=30',
 	});

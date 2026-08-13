@@ -6,7 +6,7 @@ import { sql } from '../_lib/db.js';
 import {
 	getSessionUser, csrfTokenFor, verifyCsrfToken, isSameSiteOrigin,
 	mintAccessToken, issueRefreshToken, rotateRefreshToken,
-	revokeRefreshToken, authenticateBearer, verifyAccessToken,
+	revokeRefreshToken, verifyAccessToken,
 } from '../_lib/auth.js';
 import { randomToken, sha256, sha256Base64Url, constantTimeEquals } from '../_lib/crypto.js';
 import { cors, method, wrap, error, redirect, readForm, readJson, json, rateLimited } from '../_lib/http.js';
@@ -37,6 +37,20 @@ function intersectScopes(requested, allowed) {
 	return requested.split(/\s+/).filter((s) => a.has(s)).join(' ') || allowed;
 }
 
+// RFC 8707 §2: an authorization server that does not recognize the requested
+// `resource` MUST reject the request with `invalid_target`. Every consumer of an
+// access token on this platform verifies `aud === env.MCP_RESOURCE`
+// (verifyAccessToken in api/_lib/auth.js defaults the audience to it), so
+// honoring an arbitrary resource minted a token that no endpoint here would ever
+// accept: the client got a 200 and a credential that failed everywhere, instead
+// of one clear error at the point the mistake was made.
+// Returns the canonical resource, or null when the request names another one.
+function canonicalResource(requested) {
+	if (requested === undefined || requested === null || requested === '') return env.MCP_RESOURCE;
+	const strip = (s) => String(s).replace(/\/+$/, '');
+	return strip(requested) === strip(env.MCP_RESOURCE) ? env.MCP_RESOURCE : null;
+}
+
 // Scopes a dynamically-registered client may request. Anything outside this set
 // (notably privileged scopes like `permissions:redeem`, which authorizes
 // gas-spending on-chain redemption) is silently dropped at registration so a
@@ -60,7 +74,7 @@ function esc(s) {
 	return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
-function renderConsent(res, { client, user, params, csrf }) {
+function renderConsent(res, { client, user, params, csrf, grantedScope }) {
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
 	res.setHeader('cache-control', 'no-store');
@@ -77,8 +91,12 @@ function renderConsent(res, { client, user, params, csrf }) {
 	res.setHeader('x-content-type-options', 'nosniff');
 	res.setHeader('referrer-policy', 'strict-origin-when-cross-origin');
 	res.setHeader('strict-transport-security', 'max-age=63072000; includeSubDomains; preload');
-	const scope = params.scope || client.scope;
-	const scopeList = scope.split(/\s+/).filter(Boolean);
+	// List exactly what the POST branch will grant, never the raw `scope` the
+	// client asked for. They diverge whenever a client requests a scope it did
+	// not register: intersectScopes drops it and falls back to the client's
+	// registered scope, so showing the request itself made the consent screen
+	// promise one set of permissions and the issued code carry another.
+	const scopeList = grantedScope.split(/\s+/).filter(Boolean);
 	res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Authorize ${esc(client.name)} · three.ws</title><style>:root{color-scheme:light dark}body{font:16px/1.5 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;background:#0b0b10;color:#eee;margin:0;min-height:100vh;display:grid;place-items:center;padding:24px}.card{background:#14141c;border:1px solid #2a2a36;border-radius:16px;padding:28px 28px 24px;max-width:440px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.4)}h1{font-size:20px;margin:0 0 8px}.sub{color:#aaa;margin:0 0 20px}.who{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 12px;background:#1b1b25;border-radius:10px}.dot{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6a5cff,#ff5ca8);display:grid;place-items:center;color:#fff;font-weight:600}ul{margin:12px 0 20px;padding-left:0;list-style:none}li{padding:8px 0;border-bottom:1px solid #22222e;display:flex;gap:10px}li:last-child{border:0}li::before{content:"✓";color:#6a5cff}.actions{display:flex;gap:10px}button{flex:1;padding:12px 16px;border-radius:10px;border:0;font-size:15px;font-weight:600;cursor:pointer}.allow{background:#6a5cff;color:#fff}.deny{background:transparent;color:#aaa;border:1px solid #2a2a36}.foot{margin-top:16px;font-size:12px;color:#777}a{color:#9a8cff}</style></head><body><form class="card" method="post" action="/api/oauth/authorize"><h1>Authorize <b>${esc(client.name)}</b></h1><p class="sub">Grant this application access to your three.ws account.</p><div class="who"><div class="dot">${esc((user.display_name || user.email)[0].toUpperCase())}</div><div><div>${esc(user.display_name || user.email)}</div><div style="color:#888;font-size:13px">${esc(user.email)}</div></div></div><p style="margin:0 0 4px"><b>${esc(client.name)}</b> will be able to:</p><ul>${scopeList.map((s) => `<li>${scopeLabel(s)}</li>`).join('')}</ul><input type="hidden" name="csrf" value="${esc(csrf || '')}"> ${Object.entries(params).filter(([k]) => k !== 'csrf' && k !== 'decision').map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('')}<div class="actions"><button class="deny" type="submit" name="decision" value="deny">Cancel</button><button class="allow" type="submit" name="decision" value="allow">Authorize</button></div><p class="foot">You can revoke access any time from your <a href="/dashboard/connections">dashboard</a>.</p></form></body></html>`);
 }
 
@@ -95,6 +113,8 @@ async function handleAuthorize(req, res) {
 	if (!code_challenge) return error(res, 400, 'invalid_request', 'code_challenge required (PKCE)');
 	if (!code_challenge_method) return error(res, 400, 'invalid_request', 'code_challenge_method required (must be S256)');
 	if (code_challenge_method !== 'S256') return error(res, 400, 'invalid_request', 'code_challenge_method must be S256');
+	const targetResource = canonicalResource(resource);
+	if (!targetResource) return error(res, 400, 'invalid_target', `unknown resource — this server only issues tokens for ${env.MCP_RESOURCE}`);
 	const rows = await sql`select * from oauth_clients where client_id = ${client_id} limit 1`;
 	const client = rows[0];
 	if (!client) return error(res, 400, 'invalid_client', 'unknown client');
@@ -104,9 +124,10 @@ async function handleAuthorize(req, res) {
 		const next = encodeURIComponent(`/oauth/consent?${new URLSearchParams(params).toString()}`);
 		return redirect(res, `/login?next=${next}`);
 	}
+	const grantedScope = intersectScopes(scope || client.scope, client.scope);
 	if (req.method === 'GET') {
 		const csrf = await csrfTokenFor(req);
-		return renderConsent(res, { client, user, params, csrf });
+		return renderConsent(res, { client, user, params, csrf, grantedScope });
 	}
 	if (!isSameSiteOrigin(req)) return error(res, 403, 'forbidden', 'cross-site request blocked');
 	if (!(await verifyCsrfToken(req, params.csrf))) return error(res, 403, 'forbidden', 'invalid csrf token');
@@ -117,8 +138,7 @@ async function handleAuthorize(req, res) {
 		return redirect(res, denied.toString());
 	}
 	const code = randomToken(24);
-	const grantedScope = intersectScopes(scope || client.scope, client.scope);
-	await sql`insert into oauth_auth_codes (code, client_id, user_id, redirect_uri, scope, resource, code_challenge, code_challenge_method, expires_at) values (${code}, ${client_id}, ${user.id}, ${redirect_uri}, ${grantedScope}, ${resource ?? env.MCP_RESOURCE}, ${code_challenge}, 'S256', now() + ${'60 seconds'}::interval)`;
+	await sql`insert into oauth_auth_codes (code, client_id, user_id, redirect_uri, scope, resource, code_challenge, code_challenge_method, expires_at) values (${code}, ${client_id}, ${user.id}, ${redirect_uri}, ${grantedScope}, ${targetResource}, ${code_challenge}, 'S256', now() + ${'60 seconds'}::interval)`;
 	const back = new URL(redirect_uri);
 	back.searchParams.set('code', code);
 	if (state) back.searchParams.set('state', state);

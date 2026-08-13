@@ -9,6 +9,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Readable } from 'node:stream';
 
+const upstreamFault = (status) => Object.assign(new Error(`GeckoTerminal ${status}`), { status });
+
 const ADDR = 'So11111111111111111111111111111111111111112';
 const POOL = '5ByL7MZoLABYnwMPZKPKjf4MGkZ7FeBzrAnos19Pre2z';
 const GUARDIAN_MODEL = 'ibm/granite-guardian-3-8b';
@@ -79,14 +81,27 @@ vi.mock('../../api/_lib/watsonx.js', () => ({
 				}
 			: { configured: false, reason: 'WATSONX_API_KEY + project not set' },
 	),
-	watsonxChatComplete: vi.fn(async (_cfg, opts) =>
-		opts?.model === GUARDIAN_MODEL
-			? { text: state.guardianVerdict, model: GUARDIAN_MODEL }
-			: {
-					text: 'The token climbs steadily. Conviction holds into the next session.',
-					model: 'ibm/granite-3-8b-instruct',
-				},
-	),
+	watsonxChatComplete: vi.fn(async () => ({
+		text: 'The token climbs steadily. Conviction holds into the next session.',
+		model: 'ibm/granite-3-8b-instruct',
+	})),
+}));
+
+// Governance runs through the canonical Granite Guardian client (the same one
+// api/ibm/oracle.js and api/ibm/twin.js use), not a bespoke chat prompt.
+vi.mock('../../api/_lib/granite-guardian.js', () => ({
+	guardianConfig: vi.fn(() => ({ configured: true, wx: {}, model: GUARDIAN_MODEL })),
+	assessRisk: vi.fn(async () => {
+		const flagged = state.guardianVerdict === 'Yes';
+		return {
+			flagged,
+			risk: 'harm',
+			label: flagged ? 'Harm' : 'Safe',
+			probability: flagged ? 0.94 : 0.03,
+			confidence: 'high',
+			model: GUARDIAN_MODEL,
+		};
+	}),
 }));
 
 vi.mock('../../api/_lib/watsonx-forecast.js', () => ({
@@ -124,6 +139,9 @@ vi.mock('../../api/_lib/avatar-wallet.js', () => ({
 	explorerAccountUrl: vi.fn((a) => `https://solscan.io/account/${a}`),
 }));
 
+import { limits } from '../../api/_lib/rate-limit.js';
+import { fetchOhlcv, topPoolForToken, trendingPools } from '../../api/_lib/market/ohlcv.js';
+
 const handler = (await import('../../api/ibm/attest.js')).default;
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -160,6 +178,7 @@ async function invoke(reqOpts) {
 }
 
 beforeEach(() => {
+	vi.clearAllMocks(); // call counts only — the factory implementations survive
 	state.wxConfigured = false;
 	state.guardianVerdict = 'No';
 	state.walletConfigured = false;
@@ -316,5 +335,75 @@ describe('POST /api/ibm/attest (notarize)', () => {
 		const { body } = await invoke({ method: 'POST', body: { pool: POOL, submit: true } });
 		expect(body.onchain.submitted).toBe(false);
 		expect(state.sendSolArgs).toBeNull();
+	});
+
+	// The daily ceiling protects the shared attester wallet's SOL. Charging it
+	// before the preconditions let any signed-in caller exhaust the platform's
+	// budget with requests that could never reach the chain.
+	it('does not consume the daily attestation budget when there is nothing to notarize', async () => {
+		state.wxConfigured = false; // no forecast, so no proof
+		state.walletConfigured = true;
+		const { body } = await invoke({ method: 'POST', body: { pool: POOL, submit: true } });
+		expect(body.onchain.submitted).toBe(false);
+		expect(limits.attestSubmitDaily).not.toHaveBeenCalled();
+	});
+
+	it('does not consume the daily attestation budget on a Guardian veto', async () => {
+		state.wxConfigured = true;
+		state.walletConfigured = true;
+		state.guardianVerdict = 'Yes';
+		await invoke({ method: 'POST', body: { pool: POOL, submit: true } });
+		expect(limits.attestSubmitDaily).not.toHaveBeenCalled();
+		expect(state.sendSolArgs).toBeNull();
+	});
+
+	it('consumes the daily attestation budget only when it actually broadcasts', async () => {
+		state.wxConfigured = true;
+		state.walletConfigured = true;
+		await invoke({ method: 'POST', body: { pool: POOL, submit: true } });
+		expect(limits.attestSubmitDaily).toHaveBeenCalledWith(ADDR);
+		expect(state.sendSolArgs).not.toBeNull();
+	});
+});
+
+// A GeckoTerminal fault is a third party's problem. It must come back with a real
+// error code (an upstream error carries a status but never a code, which used to
+// produce a body with no `error` field at all) and must not read as a 5xx bug.
+describe('GET /api/ibm/attest — market data upstream failures', () => {
+	it('maps a missing pool to 404 pool_not_found', async () => {
+		fetchOhlcv.mockRejectedValueOnce(upstreamFault(404));
+		const { status, body } = await invoke({ url: `/api/ibm/attest?pool=${POOL}` });
+		expect(status).toBe(404);
+		expect(body.error).toBe('pool_not_found');
+		expect(body.error_description).not.toMatch(/GeckoTerminal/);
+	});
+
+	it('maps a throttle to a retryable 503', async () => {
+		fetchOhlcv.mockRejectedValueOnce(upstreamFault(429));
+		const { status, body } = await invoke({ url: `/api/ibm/attest?pool=${POOL}` });
+		expect(status).toBe(503);
+		expect(body.error).toBe('upstream_rate_limited');
+		expect(body.retryable).toBe(true);
+	});
+
+	it('maps an upstream outage to 502 upstream_error instead of an unhandled 500', async () => {
+		fetchOhlcv.mockRejectedValueOnce(upstreamFault(502));
+		const { status, body } = await invoke({ url: `/api/ibm/attest?pool=${POOL}` });
+		expect(status).toBe(502);
+		expect(body.error).toBe('upstream_error');
+	});
+
+	it('maps a token-resolution failure the same way', async () => {
+		topPoolForToken.mockRejectedValueOnce(upstreamFault(429));
+		const { status, body } = await invoke({ url: `/api/ibm/attest?token=${ADDR}` });
+		expect(status).toBe(503);
+		expect(body.error).toBe('upstream_rate_limited');
+	});
+
+	it('maps a trending-list failure the same way', async () => {
+		trendingPools.mockRejectedValueOnce(upstreamFault(502));
+		const { status, body } = await invoke({ url: '/api/ibm/attest?list=trending' });
+		expect(status).toBe(502);
+		expect(body.error).toBe('upstream_error');
 	});
 });

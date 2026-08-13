@@ -870,6 +870,13 @@ function decorate(row, isOwner = true) {
 	}
 	base.breedable = meta.genome_breeding?.breedable !== false;
 	base.is_stud = meta.genome_breeding?.stud === true;
+	// The stud fee and the public flag complete the breeding policy at the top
+	// level, so the genome studio can render an owner's listings (and explain why
+	// a private agent cannot be listed) without reaching into `meta`. Both are
+	// public-safe: the fee is quoted to every breeder by /api/genome/stud, and
+	// visibility is already implied by whether the agent appears in listings.
+	base.stud_fee_three = Math.max(0, Number(meta.genome_breeding?.stud_fee_three) || 0);
+	base.is_public = row.is_public !== false;
 
 	if (isOwner) {
 		base.wallet_address = row.wallet_address;

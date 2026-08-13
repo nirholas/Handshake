@@ -2010,7 +2010,6 @@ async function manageSubscription(subId, btn) {
 
 	try {
 		const token = await getCsrfToken();
-		_csrf = null;
 		const r = await fetch(`/api/subscriptions/${encodeURIComponent(subId)}`, {
 			method: 'DELETE',
 			headers: { 'X-CSRF-Token': token },
@@ -3509,17 +3508,12 @@ function bindAgentPricingModal() {
 		try {
 			await Promise.all(rows.map(async (row) => {
 				const amount = Math.round(parseFloat(row.amount_usd || '0') * 1e6);
-				const r = await fetch(`${API}/marketplace/set-skill-price`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					credentials: 'include',
-					body: JSON.stringify({
-						agent_id: agentId,
-						skill: row.skill,
-						amount,
-						currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-						chain: 'solana',
-					}),
+				const r = await apiPostWithCsrf(`${API}/marketplace/set-skill-price`, {
+					agent_id: agentId,
+					skill: row.skill,
+					amount,
+					currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+					chain: 'solana',
 				});
 				if (!r.ok) {
 					const j = await r.json().catch(() => ({}));
@@ -5714,7 +5708,6 @@ async function deleteReview() {
 	reviewsState.submitting = true;
 	try {
 		const token = await getCsrfToken();
-		_csrf = null;
 		const r = await fetch(`${API}/marketplace/agents/${reviewsState.agentId}/reviews`, {
 			method: 'DELETE',
 			headers: { 'X-CSRF-Token': token },
@@ -6442,17 +6435,12 @@ function bindSubmit() {
 				Promise.all(sfPriceRows.map((row) => {
 					const amount = Math.round(parseFloat(row.amount_usd || '0') * 1e6);
 					if (!amount) return Promise.resolve();
-					return fetch(`${API}/marketplace/set-skill-price`, {
-						method: 'POST',
-						headers: { 'content-type': 'application/json' },
-						credentials: 'include',
-						body: JSON.stringify({
-							agent_id: agentId,
-							skill: row.skill,
-							amount,
-							currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-							chain: 'solana',
-						}),
+					return apiPostWithCsrf(`${API}/marketplace/set-skill-price`, {
+						agent_id: agentId,
+						skill: row.skill,
+						amount,
+						currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+						chain: 'solana',
 					});
 				})).catch(() => {});
 			}
@@ -7263,19 +7251,19 @@ async function openPurchaseFlow(agentId, skill) {
 	updateWalletUI();
 }
 
-// CSRF token cache; single-use, refetched lazily.
-let _csrf = null;
+// A CSRF token is consumed by the request that presents it (the API deletes
+// the row in the same statement that validates it), so every write fetches its
+// own. Caching one is not an optimization here: two writes issued together (a
+// bulk price save fans out one request per skill) would read the same cached
+// token and the second would come back 403.
 async function getCsrfToken() {
-	if (_csrf && _csrf.expiresAt > Date.now() + 5_000) return _csrf.token;
 	const r = await fetch('/api/csrf-token', { credentials: 'include' });
 	if (!r.ok) throw new Error('Could not obtain CSRF token; sign in again.');
 	const j = await r.json();
-	_csrf = { token: j.data.token, expiresAt: Date.now() + (j.data.expires_in - 30) * 1000 };
-	return _csrf.token;
+	return j.data.token;
 }
 async function apiPostWithCsrf(url, body) {
 	const token = await getCsrfToken();
-	_csrf = null;
 	return fetch(url, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },

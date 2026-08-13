@@ -124,7 +124,11 @@ function mapRow(r, rank) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// Public, anonymous, CDN-cached board (docs/api-reference.md): allow any
+	// origin, matching its sibling /api/leaderboard/unified. Without this the
+	// default policy sends no allow-origin header at all, so every cross-origin
+	// fetch of the documented public endpoint fails its preflight.
+	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const rl = await limits.publicIp(clientIp(req));

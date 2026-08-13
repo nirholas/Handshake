@@ -6,6 +6,7 @@ import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/
 import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { CHAIN_BY_ID } from '../_lib/erc8004-chains.js';
+import { evmRpcEndpoints } from '../_lib/evm/rpc.js';
 import { fetchSafePublicUrlPinned, SsrfBlockedError, MaxBytesExceededError } from '../_lib/ssrf-guard.js';
 
 const REGISTERED_TOPIC = keccakId('Registered(uint256,string,address)');
@@ -14,7 +15,9 @@ const bodySchema = z.object({
 	chainId: z.number().int().positive(),
 	txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
 	agentId: z.union([z.string(), z.number()]).transform(String),
-	metadataUri: z.string().min(1),
+	// Stored verbatim as erc8004_agents_index.agent_uri and fetched by
+	// enrichMetadata, so it is bounded here rather than at the DB.
+	metadataUri: z.string().min(1).max(2048),
 	ownerAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
 	// Optional: when binding an EXISTING three.ws agent on-chain, the agent's
 	// UUID. After the mint is verified below we write the unified meta.onchain
@@ -35,7 +38,7 @@ export default wrap(async (req, res) => {
 	const body = parse(bodySchema, await readJson(req));
 	const chain = CHAIN_BY_ID[body.chainId];
 	if (!chain) return error(res, 400, 'bad_request', `unsupported chain ${body.chainId}`);
-	const receipt = await rpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getTransactionReceipt', [body.txHash]);
+	const receipt = await rpcCall(body.chainId, 'eth_getTransactionReceipt', [body.txHash]);
 	if (!receipt) return error(res, 422, 'tx_not_mined', 'transaction not yet mined');
 	if (receipt.status === '0x0') return error(res, 422, 'tx_failed', 'transaction reverted');
 	const log = (receipt.logs ?? []).find(
@@ -130,8 +133,16 @@ async function bindAgentOnchain({
 	return true;
 }
 
-async function rpcCall(urls, m, params) {
-	const urlList = Array.isArray(urls) ? urls : [urls];
+/**
+ * Read a JSON-RPC method over the chain's canonical failover chain: an operator
+ * RPC_URL_<chainId> override, then Alchemy, then the curated public endpoints,
+ * with the known-hard-fail keyless hosts sorted last. This used to read
+ * `chain.rpcUrls` directly, which is only the KEYLESS TAIL of that chain, so a
+ * registration was confirmed against the slowest tier and a tx that was already
+ * mined came back as `tx_not_mined` whenever a public node lagged.
+ */
+async function rpcCall(chainId, m, params) {
+	const urlList = evmRpcEndpoints(chainId);
 	let lastErr;
 	for (const url of urlList) {
 		const ac = new AbortController();
@@ -153,7 +164,17 @@ async function rpcCall(urls, m, params) {
 			clearTimeout(t);
 		}
 	}
-	throw lastErr;
+	// Every endpoint failed: an infrastructure outage, not a caller mistake. An
+	// authored 503 tells the client to retry; letting lastErr bubble produced an
+	// opaque `internal_error` that read as a bug in the registration itself. The
+	// upstream detail rides on `cause` (logged) and never in the response body,
+	// which would otherwise echo a keyed provider URL.
+	throw Object.assign(new Error('no RPC endpoint answered for this chain; retry shortly'), {
+		status: 503,
+		code: 'rpc_unavailable',
+		expose: true,
+		cause: lastErr,
+	});
 }
 
 function resolveGateway(uri) {

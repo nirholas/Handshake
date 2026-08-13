@@ -1894,8 +1894,8 @@ async function boot(id) {
 		if (!token) { hmTooltip.hidden = true; return; }
 		const pct = (n) => (n == null ? '—' : `${n >= 0 ? '+' : ''}${Number(n).toFixed(1)}%`);
 		const vol = token.volume24h ? `$${Intl.NumberFormat('en', { notation: 'compact' }).format(token.volume24h)}` : '—';
-		const sent = token.sentiment && Number.isFinite(token.sentiment.score)
-			? `<div class="asc-hm-tip-row"><span>sentiment</span><b>${token.sentiment.posPct}% bullish</b></div>` : '';
+		const sent = token.flow && Number.isFinite(token.flow.score)
+			? `<div class="asc-hm-tip-row"><span>24h flow</span><b>${token.flow.buyPct}% buys</b></div>` : '';
 		hmTooltip.innerHTML = `
 			<div class="asc-hm-tip-head">${esc(token.label)}${token.featured ? ' <span class="asc-hm-tip-anchor">$THREE</span>' : ''}</div>
 			<div class="asc-hm-tip-row"><span>momentum</span><b>${pct(token.change24h)}</b></div>

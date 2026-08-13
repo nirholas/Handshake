@@ -10,8 +10,12 @@ import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../
 import { requireCsrf } from '../_lib/csrf.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { isUuid } from '../_lib/validate.js';
+import { limits } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
+import { breedingPolicy } from '../_lib/genome-agent.js';
 import { pedigreeScore, normalizeGenome, genomeFromAgent } from '../_lib/genome.js';
+
+const MAX_STUD_FEE_THREE = 1_000_000;
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
@@ -28,21 +32,49 @@ export default wrap(async (req, res) => {
 	const agentId = String(body.agent_id || body.agentId || '').trim();
 	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agent_id is required');
 
+	const rl = await limits.genomeStudWrite(auth.userId);
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many stud listing updates, slow down');
+
 	const [row] = await sql`
 		select id, user_id, meta from agent_identities where id = ${agentId} and deleted_at is null limit 1
 	`;
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
 	if (row.user_id !== auth.userId) return error(res, 403, 'forbidden', 'you do not own this agent');
 
-	const stud = body.stud === true;
-	const fee = Math.max(0, Math.min(1_000_000, Number(body.stud_fee_three) || 0));
-	const breedable = body.breedable !== false;
-	const meta = { ...(row.meta || {}) };
-	meta.genome_breeding = { ...(meta.genome_breeding || {}), breedable, stud, stud_fee_three: fee };
+	// PATCH semantics, not PUT: an omitted field keeps its stored value. A whole-
+	// object read-modify-write meant "set my fee to 40" (a body carrying only
+	// stud_fee_three) silently unlisted the agent and re-enabled breeding, because
+	// the absent `stud` and `breedable` keys fell back to their bare defaults.
+	const current = breedingPolicy(row);
+	const policy = {
+		breedable: typeof body.breedable === 'boolean' ? body.breedable : current.breedable,
+		stud: typeof body.stud === 'boolean' ? body.stud : current.stud,
+		stud_fee_three: has(body, 'stud_fee_three') ? clampFee(body.stud_fee_three) : current.stud_fee_three,
+	};
 
-	await sql`update agent_identities set meta = ${JSON.stringify(meta)}::jsonb, updated_at = now() where id = ${agentId}`;
-	return json(res, 200, { agent_id: agentId, genome_breeding: meta.genome_breeding });
+	// Write only the genome_breeding subtree. Replacing the whole `meta` document
+	// would clobber any key a concurrent write (wallet provisioning, persona save)
+	// landed between our SELECT and our UPDATE.
+	await sql`
+		update agent_identities
+		set meta = jsonb_set(coalesce(meta, '{}'::jsonb), '{genome_breeding}', ${JSON.stringify(policy)}::jsonb, true),
+		    updated_at = now()
+		where id = ${agentId} and user_id = ${auth.userId}
+	`;
+	return json(res, 200, { agent_id: agentId, genome_breeding: policy });
 });
+
+function has(obj, key) {
+	return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+// A fee is $THREE, so it is non-negative, finite, and bounded. A junk value
+// (null, a string, NaN) reads as "no fee" rather than failing the whole update.
+function clampFee(raw) {
+	const n = Number(raw);
+	if (!Number.isFinite(n)) return 0;
+	return Math.max(0, Math.min(MAX_STUD_FEE_THREE, n));
+}
 
 async function listStuds(req, res) {
 	const url = new URL(req.url, 'http://x');

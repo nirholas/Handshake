@@ -696,7 +696,7 @@ ERROR  502 POST /api/pump/launch-agent
 [pump/launch-agent] send failed Error: pre-broadcast simulation failed: {"InstructionError":[1,{"Custom":6015}]}
 ```
 
-- **Source:** [api/pump/launch-agent.js](../../api/pump/launch-agent.js). The
+- **Source:** [api/pump/[action].js](../../api/pump/[action].js), action `launch-agent`. The
   handler simulates every launch transaction before broadcasting it.
 - **What it means:** the simulation REFUSED a launch that would have failed
   on-chain (pump program custom errors: curve state raced another buyer,

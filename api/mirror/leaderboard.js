@@ -1,22 +1,26 @@
-// GET /api/mirror/leaderboard — performance-weighted discovery of followable
+// GET /api/mirror/leaderboard: performance-weighted discovery of followable
 // agents for custodial copy-trading (task 09).
 //
 // Ranks agents by REAL, on-chain-derived performance from real fills (sniper
 // closed positions + the discretionary custody ledger), never inflated. The
 // trust surface of copy-trading: you find a leader by their honest track record
-// — losers included — and every number traces to a real signature.
+// (losers included) and every number traces to a real signature.
 //
 // Public, cached. Sort by: score (default) | pnl | followers | volume | winrate.
 
-import { cors, json, method, rateLimited } from '../_lib/http.js';
+import { cors, json, method, rateLimited, wrap } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const SORTS = new Set(['score', 'pnl', 'followers', 'volume', 'winrate']);
+// Candidate pool the ranking runs over. Bounded so one query stays cheap as the
+// agent count grows; ordered (below) so the window holds the agents with the
+// most evidence rather than an arbitrary 500 rows.
+const CANDIDATE_POOL = 500;
 const lamToSol = (l) => (l == null ? 0 : Number(BigInt(l)) / 1e9);
 
-export default async function handler(req, res) {
+export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
@@ -28,9 +32,14 @@ export default async function handler(req, res) {
 	const sort = SORTS.has(p.get('sort')) ? p.get('sort') : 'score';
 	const limit = Math.min(50, Math.max(1, parseInt(p.get('limit') || '25', 10) || 25));
 
-	// Realized stats per agent from closed sniper round-trips — the honest P&L
+	// Realized stats per agent from closed sniper round-trips: the honest P&L
 	// surface. LEFT JOIN follower counts + discretionary trade activity so an agent
 	// that trades only discretionarily still appears (with volume, no realized P&L).
+	//
+	// A DB failure is NOT caught here on purpose: an empty leaderboard is a real,
+	// meaningful answer ("nobody has traded yet"), so swallowing an outage into
+	// `[]` would hand back a confident lie and the CDN would cache it for a
+	// minute. wrap() turns it into a 503 + Retry-After instead.
 	const rows = await sql`
 		WITH closed AS (
 			SELECT agent_id,
@@ -69,11 +78,27 @@ export default async function handler(req, res) {
 		LEFT JOIN closed c ON c.agent_id = a.id
 		LEFT JOIN activity act ON act.agent_id = a.id
 		LEFT JOIN followers fl ON fl.agent_id = a.id
-		WHERE a.deleted_at IS NULL AND a.is_public <> false
+		WHERE a.deleted_at IS NULL AND a.is_public = true
 		  AND (c.settled IS NOT NULL OR act.trades IS NOT NULL)
-		LIMIT 500
-	`.catch(() => []);
+		ORDER BY COALESCE(c.settled, 0) DESC,
+		         COALESCE(fl.followers, 0) DESC,
+		         COALESCE(act.trades, 0) DESC,
+		         a.id ASC
+		LIMIT ${CANDIDATE_POOL}
+	`;
 
+	res.setHeader?.('cache-control', 'public, max-age=30, s-maxage=60');
+	return json(res, 200, { data: { network, sort, leaders: rankLeaders(rows, { sort, limit }) } });
+});
+
+/**
+ * Rank raw leaderboard rows. Pure: same rows in, same ranking out, so the 60s
+ * edge cache never serves two different orderings of the same data.
+ * @param {Array<object>} rows raw SQL rows (lamport sums arrive as strings)
+ * @param {{sort?: string, limit?: number}} opts
+ * @returns {Array<object>} ranked leaders, rank 1 first
+ */
+export function rankLeaders(rows, { sort = 'score', limit = 25 } = {}) {
 	const leaders = rows.map((r) => {
 		const pnlSol = lamToSol(r.pnl_lamports);
 		const entrySol = lamToSol(r.entry_lamports);
@@ -106,19 +131,20 @@ export default async function handler(req, res) {
 		};
 	});
 
-	const cmp = {
-		score: (a, b) => b.score - a.score,
-		pnl: (a, b) => b.pnl_sol - a.pnl_sol,
-		followers: (a, b) => b.followers - a.followers,
-		volume: (a, b) => b.volume_sol - a.volume_sol,
-		winrate: (a, b) => (b.win_rate ?? -1) - (a.win_rate ?? -1),
-	}[sort];
-	leaders.sort(cmp);
-	const ranked = leaders.slice(0, limit).map((l, i) => ({ rank: i + 1, ...l }));
-
-	res.setHeader?.('cache-control', 'public, max-age=30, s-maxage=60');
-	return json(res, 200, { data: { network, sort, leaders: ranked } });
+	const cmp = COMPARATORS[sort] || COMPARATORS.score;
+	// Tiebreak on agent_id so equal-scoring agents rank in one fixed order
+	// instead of shuffling between cache fills.
+	leaders.sort((a, b) => cmp(a, b) || String(a.agent_id).localeCompare(String(b.agent_id)));
+	return leaders.slice(0, limit).map((l, i) => ({ rank: i + 1, ...l }));
 }
+
+const COMPARATORS = {
+	score: (a, b) => b.score - a.score,
+	pnl: (a, b) => b.pnl_sol - a.pnl_sol,
+	followers: (a, b) => b.followers - a.followers,
+	volume: (a, b) => b.volume_sol - a.volume_sol,
+	winrate: (a, b) => (b.win_rate ?? -1) - (a.win_rate ?? -1),
+};
 
 function round2(x) { return Math.round(x * 100) / 100; }
 function round4(x) { return Math.round(x * 1e4) / 1e4; }

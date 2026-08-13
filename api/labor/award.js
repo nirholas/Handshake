@@ -49,6 +49,6 @@ export default wrap(async (req, res) => {
 	return json(res, 200, {
 		ok: true,
 		award: { bounty_id: bountyId, bid_id: bidId, worker_agent_id: winner.worker_agent_id, rationale, job_id: job?.id || null, status: job?.status || 'working' },
-		autopilot: autopilot || { bids: 0, awarded: true, settled: null },
+		autopilot: autopilot || { bids: 0, awarded: true, settled: null, settledNow: false },
 	});
 });

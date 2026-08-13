@@ -21,6 +21,11 @@ import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
 import { watsonxForecast, forecastModelFor } from '../_lib/watsonx-forecast.js';
 import { guardianConfig, assessRisk } from '../_lib/granite-guardian.js';
 import { fetchOhlcv, topPoolForToken, trendingPools } from '../_lib/market/ohlcv.js';
+import {
+	callMarket,
+	isMarketUpstreamError,
+	marketUpstreamError,
+} from '../_lib/market/upstream-error.js';
 
 const isBase58 = (s) => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
 const isoOf = (unixSec) => new Date(unixSec * 1000).toISOString();
@@ -239,7 +244,7 @@ async function loadSeries(params) {
 				status: 400,
 				code: 'bad_token',
 			});
-		pool = await topPoolForToken(token, network);
+		pool = await callMarket(() => topPoolForToken(token, network));
 	}
 	if (!pool || !isBase58(pool)) {
 		throw Object.assign(new Error('provide ?pool=<addr> or ?token=<mint>, or ?list=trending'), {
@@ -251,13 +256,9 @@ async function loadSeries(params) {
 		? params.timeframe
 		: 'hour';
 	const aggregate = clamp(parseInt(params.aggregate || '1', 10) || 1, 1, 60);
-	const { candles, base, quote, freq } = await fetchOhlcv({
-		pool,
-		network,
-		timeframe,
-		aggregate,
-		limit: 1000,
-	});
+	const { candles, base, quote, freq } = await callMarket(() =>
+		fetchOhlcv({ pool, network, timeframe, aggregate, limit: 1000 }),
+	);
 	if (candles.length < 64) {
 		throw Object.assign(new Error('not enough candle history to model this pool'), {
 			status: 422,
@@ -279,7 +280,7 @@ async function handleGet(req, res) {
 	const params = Object.fromEntries(new URL(req.url, 'http://x').searchParams);
 
 	if (params.list === 'trending') {
-		const pools = await trendingPools('solana', 8);
+		const pools = await callMarket(() => trendingPools('solana', 8));
 		return json(res, 200, { pools }, { 'cache-control': 'public, max-age=30, s-maxage=60' });
 	}
 
@@ -516,6 +517,15 @@ export default wrap(async (req, res) => {
 			return rateLimited(res, global, 'watsonx capacity reached — try again shortly');
 	}
 
-	if (req.method === 'POST') return handlePost(req, res);
-	return handleGet(req, res);
+	// A market-data outage is a third party's problem, not a bug here: answer it
+	// with its real contract instead of letting a 502 reach wrap(), which would
+	// log an unhandled 5xx, capture it to Sentry, and page ops once per request.
+	// The handler's own validation errors and any genuine bug still bubble.
+	try {
+		if (req.method === 'POST') return await handlePost(req, res);
+		return await handleGet(req, res);
+	} catch (err) {
+		if (isMarketUpstreamError(err)) return marketUpstreamError(res, err);
+		throw err;
+	}
 });

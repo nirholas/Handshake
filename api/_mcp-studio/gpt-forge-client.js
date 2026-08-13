@@ -219,6 +219,12 @@ export async function pollJob(base, jobId, { timeoutMs, intervalMs } = {}) {
 // Single status probe for the check_job tool: one GET, no loop. Throws a coded
 // failure only on a definitive non-2xx; the caller decides how to render each
 // status.
+//
+// A definitive 4xx means the HANDLE is wrong, not that the generator broke: forge
+// answers a malformed or unrecognized job id with 400 invalid_job / 404. Those get
+// their own `unknown_job` code so the caller can say "that handle is not valid any
+// more, start a new generation" instead of the generic retry copy, which sends the
+// user back to a probe that can never succeed.
 export async function pollOnce(base, jobId) {
 	let res;
 	try {
@@ -233,6 +239,7 @@ export async function pollOnce(base, jobId) {
 	}
 	const data = await res.json().catch(() => ({}));
 	if (res.status === 429) throw failure('busy', data?.message || 'status checks are rate limited; try again shortly', { retryAfter: data?.retry_after });
+	if (res.status === 400 || res.status === 404) throw failure('unknown_job', data?.message || 'that job id is not recognized');
 	if (!res.ok) throw failure('provider_error', data?.message || `the status check returned ${res.status}`);
 	return data;
 }

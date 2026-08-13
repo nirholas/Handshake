@@ -1,9 +1,10 @@
 // Developer API key management.
-//   GET  /api/keys        — list caller's keys (hashed, no secret)
-//   POST /api/keys        — create a new key; returns plaintext ONCE
+//   GET  /api/keys        list caller's keys (hashed, no secret)
+//   POST /api/keys        create a new key; returns the plaintext secret ONCE
 
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
+import { logAudit } from '../_lib/audit.js';
 import { randomToken, sha256 } from '../_lib/crypto.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
@@ -31,16 +32,21 @@ export default wrap(async (req, res) => {
 	const user = await getSessionUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in to manage API keys');
 
-	const rl = await limits.apiKeyManage(user.id);
-	if (!rl.success) return rateLimited(res, rl);
-
+	// Listing is a read the dashboard performs on every load and after every
+	// mutation; it rides its own bucket so it can never exhaust the mint budget
+	// (or be exhausted by it). See limits.apiKeyList / apiKeyManage.
 	if (req.method === 'GET') {
+		const rlList = await limits.apiKeyList(user.id);
+		if (!rlList.success) return rateLimited(res, rlList);
 		const rows = await sql`
 			select id, name, prefix, scope, last_used_at, expires_at, revoked_at, created_at
 			from api_keys where user_id = ${user.id} order by created_at desc
 		`;
 		return json(res, 200, { keys: rows });
 	}
+
+	const rl = await limits.apiKeyManage(user.id);
+	if (!rl.success) return rateLimited(res, rl);
 
 	if (!(await requireCsrf(req, res, user.id))) return;
 
@@ -63,5 +69,15 @@ export default wrap(async (req, res) => {
 		values (${user.id}, ${body.name}, ${prefix}, ${hash}, ${requestedScopes.join(' ')}, ${expires})
 		returning id, name, prefix, scope, expires_at, created_at
 	`;
+	// Issuing a long-lived credential belongs in the same trail as revoking one:
+	// without it the audit log can say a key died but not that it was ever born.
+	// Never the secret or its hash, only the id, prefix, and granted scope.
+	logAudit({
+		userId: user.id,
+		action: 'create_api_key',
+		resourceId: row.id,
+		meta: { prefix, scope: row.scope, environment: body.environment },
+		req,
+	});
 	return json(res, 201, { key: { ...row, secret: raw } });
 });

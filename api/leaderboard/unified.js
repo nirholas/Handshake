@@ -12,8 +12,9 @@
 //                          + saved worlds (dioramas), per signed-in creator.
 //   · remixes_received   — count of OTHER creators' forge_creations rows whose
 //                          parent_creation_id points at one of this user's
-//                          finished creations (a real derivative count, not a
-//                          view/like count).
+//                          finished creations. Both sides must be status='done',
+//                          and a creator's own refines of their own model never
+//                          count (a real derivative count, not a view/like one).
 //   · launches          — pump.fun coins minted from this user's agents
 //                          (agent_identities.meta->'token'->>'mint').
 //   · followers          — user_follows platform-wide follower count.
@@ -74,21 +75,23 @@ async function rankingRows(metric) {
 		`;
 	}
 	if (metric === 'remixes_received') {
+		// Only finished derivatives by SOMEONE ELSE count. `parent_creation_id` is
+		// also written by the forge's own refine lineage (linkRefineLineage() in
+		// api/_lib/forge-store.js), so counting every child would let a creator
+		// climb this board by re-refining their own model, and would score failed
+		// generations as remixes. `is distinct from` keeps an anonymous remixer
+		// (null user_id) counted, which is a genuinely other creator.
 		return sql`
 			with mine as (
 				select id, user_id
 				from forge_creations
 				where user_id is not null and status = 'done'
-			),
-			children as (
-				select parent_creation_id, count(*) as n
-				from forge_creations
-				where parent_creation_id is not null
-				group by parent_creation_id
 			)
-			select m.user_id, sum(c.n)::bigint as value
+			select m.user_id, count(*)::bigint as value
 			from mine m
-			join children c on c.parent_creation_id = m.id
+			join forge_creations c on c.parent_creation_id = m.id
+			where c.status = 'done'
+			  and c.user_id is distinct from m.user_id
 			group by m.user_id
 		`;
 	}

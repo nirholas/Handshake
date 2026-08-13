@@ -12,6 +12,7 @@
 
 import { watsonxConfig, watsonxChatComplete, watsonxEmbed } from '../_lib/watsonx.js';
 import { watsonxForecast } from '../_lib/watsonx-forecast.js';
+import { formatUsdPrice } from './pricing.js';
 
 function rpcError(code, message, data) {
 	const e = new Error(message);
@@ -75,6 +76,10 @@ const deterministicAnnotations = Object.freeze({
 // MCP tool result helper. structuredContent carries the full machine-readable
 // object (the same shape the npm package returns); content[0].text is a concise
 // human-readable view for clients that render text.
+function isPlainObject(value) {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 function toolResult(humanText, structured) {
 	return {
 		content: [{ type: 'text', text: humanText }],
@@ -95,13 +100,16 @@ const GETTING_STARTED_DESCRIPTION =
 	'their per-call USDC prices, how the x402 pay-per-call flow works, and runnable example calls. ' +
 	'No payment or account required. Call this first to orient before invoking a paid tool.';
 
+// Prices come from pricing.js (the same map the 402 challenge and the settle
+// path read) so this free orientation payload can never quote a number the
+// caller is not actually charged.
 const GS_TOOLS = [
-	{ name: 'ibm_granite_chat', price: '$0.02', summary: 'Conversational AI via IBM Granite 3 8B Instruct.' },
-	{ name: 'ibm_granite_code', price: '$0.025', summary: 'Code generate / review / refactor / explain / test / document.' },
-	{ name: 'ibm_granite_embed', price: '$0.005', summary: 'Batch multilingual text embeddings for RAG and search.' },
-	{ name: 'ibm_granite_analyze', price: '$0.04', summary: 'Structured document analysis: entities, sentiment, risk, summary, next steps.' },
-	{ name: 'ibm_granite_forecast', price: '$0.05', summary: 'Zero-shot time-series forecasting via IBM Granite TTM.' },
-];
+	{ name: 'ibm_granite_chat', summary: 'Conversational AI via IBM Granite 3 8B Instruct.' },
+	{ name: 'ibm_granite_code', summary: 'Code generate / review / refactor / explain / test / document.' },
+	{ name: 'ibm_granite_embed', summary: 'Batch multilingual text embeddings for RAG and search.' },
+	{ name: 'ibm_granite_analyze', summary: 'Structured document analysis: entities, sentiment, risk, summary, next steps.' },
+	{ name: 'ibm_granite_forecast', summary: 'Zero-shot time-series forecasting via IBM Granite TTM.' },
+].map(({ name, summary }) => ({ name, price: formatUsdPrice(name), summary }));
 
 const GS_PAYMENT_FLOW = [
 	'Call any ibm_granite_* tool. With no payment, the server returns an x402 PaymentRequired envelope quoting the exact USDC price and a pay-to address (Base or Solana).',
@@ -203,7 +211,7 @@ const CHAT_DESCRIPTION =
 
 const chatTool = {
 	name: 'ibm_granite_chat',
-	title: 'IBM Granite Chat ($0.02)',
+	title: `IBM Granite Chat (${formatUsdPrice('ibm_granite_chat')})`,
 	description: CHAT_DESCRIPTION,
 	annotations: generativeAnnotations,
 	inputSchema: {
@@ -308,7 +316,7 @@ function buildCodeSystemPrompt(task, language) {
 
 const codeTool = {
 	name: 'ibm_granite_code',
-	title: 'IBM Granite Code ($0.025)',
+	title: `IBM Granite Code (${formatUsdPrice('ibm_granite_code')})`,
 	description: CODE_DESCRIPTION,
 	annotations: generativeAnnotations,
 	inputSchema: {
@@ -381,7 +389,7 @@ const EMBED_DESCRIPTION =
 
 const embedTool = {
 	name: 'ibm_granite_embed',
-	title: 'IBM Granite Embed ($0.005)',
+	title: `IBM Granite Embed (${formatUsdPrice('ibm_granite_embed')})`,
 	description: EMBED_DESCRIPTION,
 	annotations: deterministicAnnotations,
 	inputSchema: {
@@ -478,7 +486,7 @@ function buildAnalysisPrompt(analysis_type, language) {
 
 const analyzeTool = {
 	name: 'ibm_granite_analyze',
-	title: 'IBM Granite Analyze ($0.04)',
+	title: `IBM Granite Analyze (${formatUsdPrice('ibm_granite_analyze')})`,
 	description: ANALYZE_DESCRIPTION,
 	annotations: generativeAnnotations,
 	inputSchema: {
@@ -547,15 +555,20 @@ const analyzeTool = {
 				? raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
 				: raw;
 			parsed = JSON.parse(jsonStr);
+			// A bare JSON scalar or array parses fine but is not an analysis object,
+			// and spreading one below would splatter per-character/per-index keys
+			// into the result. Treat it as an unparseable response.
+			if (!isPlainObject(parsed)) throw new Error('analysis JSON was not an object');
 		} catch {
-			// Granite didn't return clean JSON — surface text so the client can decide.
+			// Granite didn't return clean JSON: surface text so the client can decide.
 			const fallback = {
 				ok: true,
 				analysis_type,
 				raw_response: result.text,
 				usage: result.usage,
 				model: result.model,
-				parse_error: 'Model returned non-JSON response; see raw_response.',
+				parse_error:
+					'Model did not return a JSON analysis object; see raw_response.',
 			};
 			return toolResult(result.text, fallback);
 		}
@@ -583,7 +596,7 @@ const FREQ_EXAMPLES = '1min, 5min, 15min, 30min, 1h, 2h, 4h, 12h, 1D, 1W, 1ME';
 
 const forecastTool = {
 	name: 'ibm_granite_forecast',
-	title: 'IBM Granite Forecast ($0.05)',
+	title: `IBM Granite Forecast (${formatUsdPrice('ibm_granite_forecast')})`,
 	description: FORECAST_DESCRIPTION,
 	annotations: generativeAnnotations,
 	inputSchema: {

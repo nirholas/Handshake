@@ -26,7 +26,7 @@ export default wrap(async (req, res) => {
 	const node = await loadNode(agentId);
 	if (!node) return error(res, 404, 'not_found', 'agent not found');
 
-	if (url.searchParams.get('verify')) {
+	if (isTruthy(url.searchParams.get('verify'))) {
 		return json(res, 200, await verifyNode(agentId), { 'cache-control': 'public, s-maxage=30' });
 	}
 
@@ -38,10 +38,6 @@ export default wrap(async (req, res) => {
 		where b.child_agent_id = ${agentId} and b.status = 'born'
 		order by b.created_at asc limit 1
 	`;
-	const parents = birth
-		? await Promise.all([loadNode(birth.parent_a_agent_id), loadNode(birth.parent_b_agent_id)])
-		: [];
-
 	// Children (every breed this agent was a parent of).
 	const childRows = await sql`
 		select b.child_agent_id, b.generation, b.pedigree_tier, b.created_at,
@@ -51,13 +47,20 @@ export default wrap(async (req, res) => {
 		  and b.status = 'born' and b.child_agent_id is not null
 		order by b.created_at desc limit 100
 	`;
-	const children = await Promise.all(
-		childRows.map(async (r) => ({
-			...(await loadNode(r.child_agent_id)),
-			co_parent: await loadNode(r.co_parent),
-			bred_at: r.created_at,
-		})),
-	);
+
+	// One lookup for the parents plus every child and co-parent. Loading them one
+	// id at a time issued up to 202 round trips for a well-bred agent.
+	const nodes = await loadNodes([
+		birth?.parent_a_agent_id,
+		birth?.parent_b_agent_id,
+		...childRows.flatMap((r) => [r.child_agent_id, r.co_parent]),
+	]);
+	const parents = birth ? [nodes.get(birth.parent_a_agent_id), nodes.get(birth.parent_b_agent_id)] : [];
+	const children = childRows.map((r) => ({
+		...nodes.get(r.child_agent_id),
+		co_parent: nodes.get(r.co_parent) || null,
+		bred_at: r.created_at,
+	}));
 
 	// Ancestors — walk up the pedigree (bounded), so a profile can render depth.
 	const ancestors = await walkAncestors(agentId);
@@ -125,15 +128,22 @@ async function walkAncestors(agentId) {
 			where child_agent_id = any(${frontier}) and status = 'born'
 		`;
 		const next = [];
+		const owner = new Map();
 		for (const r of rows) {
 			for (const pid of [r.parent_a_agent_id, r.parent_b_agent_id]) {
 				if (pid && !seen.has(pid)) {
 					seen.add(pid);
 					next.push(pid);
-					const n = await loadNode(pid);
-					if (n) out.push({ ...n, depth, of: r.child_agent_id });
+					owner.set(pid, r.child_agent_id);
 				}
 			}
+		}
+		// One lookup per generation rather than one per ancestor: a full 8-deep
+		// pedigree fans out to 255 forebears.
+		const nodes = await loadNodes(next);
+		for (const pid of next) {
+			const n = nodes.get(pid);
+			if (n) out.push({ ...n, depth, of: owner.get(pid) });
 		}
 		frontier = next;
 	}
@@ -143,24 +153,42 @@ async function walkAncestors(agentId) {
 // One node of the tree — public-safe. Private agents reveal only that they exist.
 async function loadNode(agentId) {
 	if (!agentId) return null;
-	const [r] = await sql`
+	return (await loadNodes([agentId])).get(agentId) || null;
+}
+
+// Batch form of loadNode: ids in, Map(id → node) out. Missing/deleted ids are
+// simply absent from the map.
+async function loadNodes(agentIds) {
+	const ids = [...new Set(agentIds.filter(Boolean))];
+	if (!ids.length) return new Map();
+	const rows = await sql`
 		select i.id, i.name, i.is_public, i.user_id, i.avatar_id, i.meta,
 		       a.thumbnail_key as avatar_thumbnail_key
 		from agent_identities i
 		left join avatars a on a.id = i.avatar_id and a.deleted_at is null
-		where i.id = ${agentId} and i.deleted_at is null
-		limit 1
+		where i.id = any(${ids}) and i.deleted_at is null
 	`;
-	if (!r) return null;
-	const genome = r.meta?.genome ? normalizeGenome(r.meta.genome) : null;
-	const pedigree = genome ? pedigreeScore(genome) : { tier: 'common', generation: 0, score: 0 };
-	return {
-		id: r.id,
-		name: r.is_public ? r.name : 'Private agent',
-		is_public: !!r.is_public,
-		avatar_id: r.avatar_id,
-		generation: genome?.generation ?? 0,
-		pedigree,
-		bred: !!r.meta?.bred_from,
-	};
+	const out = new Map();
+	for (const r of rows) {
+		const genome = r.meta?.genome ? normalizeGenome(r.meta.genome) : null;
+		const pedigree = genome ? pedigreeScore(genome) : { tier: 'common', generation: 0, score: 0 };
+		out.set(r.id, {
+			id: r.id,
+			name: r.is_public ? r.name : 'Private agent',
+			is_public: !!r.is_public,
+			avatar_id: r.avatar_id,
+			generation: genome?.generation ?? 0,
+			pedigree,
+			bred: !!r.meta?.bred_from,
+		});
+	}
+	return out;
+}
+
+// `?verify=1` verifies; `?verify=0` and `?verify=false` do not. Any non-empty
+// value used to pass, so a client sending an explicit "off" got verification.
+function isTruthy(raw) {
+	if (raw === null) return false;
+	const v = String(raw).trim().toLowerCase();
+	return v !== '' && v !== '0' && v !== 'false' && v !== 'no';
 }

@@ -1,8 +1,8 @@
 /**
  * Platform wire client: registration, job poll, result submit.
  *
- * The wire contract (derived in specs/inference-nodes.md from the platform's
- * existing worker job formats) is:
+ * The wire contract (documented for operators in this package's README.md, and
+ * served by api/nodes/register.js and api/nodes/jobs.js) is:
  *
  *   POST {platformUrl}/api/nodes/register
  *     body: { publicKey, label?, capabilities: [{capability, model}],

@@ -131,8 +131,11 @@ async function handleSubjects(req, res) {
 			LIMIT 18
 		`;
 	} catch (err) {
+		// The lineup is a convenience, not the feature: a DB blip degrades to an
+		// empty gallery rather than a 500. Keep the same response shape as the
+		// success path so a client reading visionModel never sees undefined.
 		console.error('[ibm/vision] subjects query failed', err);
-		return json(res, 200, { subjects: [] });
+		return json(res, 200, { subjects: [], visionModel: VISION_MODEL });
 	}
 
 	const subjects = rows.map((r) => ({
@@ -251,46 +254,74 @@ const MAX_IMAGE_REDIRECTS = 5;
 // link-local/metadata IPs blocked). Bounded by MAX_IMAGE_REDIRECTS.
 async function fetchImageAsDataUrl(url) {
 	const controller = new AbortController();
+	// The timer stays armed until the BODY is fully read, not just the headers:
+	// several allowlisted hosts serve user-supplied content, and a host that
+	// answers headers promptly then trickles the body would otherwise hold the
+	// invocation open for as long as it liked.
 	const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-	let resp;
 	try {
+		let resp;
 		let current = url;
 		let redirects = 0;
-		while (true) {
-			const host = hostOf(current);
-			if (!/^https:\/\//i.test(current) || !host || !allowedImageHost(host)) {
-				throw fail(
-					400,
-					'image_host_not_allowed',
-					'image redirect target host is not allowed',
-				);
-			}
-			await assertSafePublicUrl(current);
-			resp = await fetch(current, { signal: controller.signal, redirect: 'manual' });
-			if (resp.status >= 300 && resp.status < 400 && resp.headers.get('location')) {
-				if (++redirects > MAX_IMAGE_REDIRECTS) {
-					throw fail(502, 'image_fetch_failed', 'too many redirects');
+		try {
+			while (true) {
+				const host = hostOf(current);
+				if (!/^https:\/\//i.test(current) || !host || !allowedImageHost(host)) {
+					throw fail(
+						400,
+						'image_host_not_allowed',
+						'image redirect target host is not allowed',
+					);
 				}
-				current = new URL(resp.headers.get('location'), current).toString();
-				continue;
+				await assertSafePublicUrl(current);
+				resp = await fetch(current, { signal: controller.signal, redirect: 'manual' });
+				if (resp.status >= 300 && resp.status < 400 && resp.headers.get('location')) {
+					if (++redirects > MAX_IMAGE_REDIRECTS) {
+						throw fail(502, 'image_fetch_failed', 'too many redirects');
+					}
+					current = new URL(resp.headers.get('location'), current).toString();
+					continue;
+				}
+				break;
 			}
-			break;
+		} catch (e) {
+			if (e?.status && e?.code) throw e; // already a structured fail()
+			throw fail(502, 'image_fetch_failed', `could not fetch image: ${e.message}`);
 		}
-	} catch (e) {
-		if (e?.status && e?.code) throw e; // already a structured fail()
-		throw fail(502, 'image_fetch_failed', `could not fetch image: ${e.message}`);
+		if (!resp.ok) throw fail(502, 'image_fetch_failed', `image fetch returned ${resp.status}`);
+		const ct = (resp.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+		if (!ct.startsWith('image/'))
+			throw fail(415, 'not_an_image', `unexpected content-type: ${ct || 'unknown'}`);
+		const len = Number(resp.headers.get('content-length') || 0);
+		if (len && len > MAX_IMAGE_BYTES) throw fail(413, 'image_too_large', 'image exceeds 6MB');
+		const buf = await readCappedBody(resp);
+		return `data:${ct};base64,${buf.toString('base64')}`;
 	} finally {
 		clearTimeout(timer);
 	}
-	if (!resp.ok) throw fail(502, 'image_fetch_failed', `image fetch returned ${resp.status}`);
-	const ct = (resp.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
-	if (!ct.startsWith('image/'))
-		throw fail(415, 'not_an_image', `unexpected content-type: ${ct || 'unknown'}`);
-	const len = Number(resp.headers.get('content-length') || 0);
-	if (len && len > MAX_IMAGE_BYTES) throw fail(413, 'image_too_large', 'image exceeds 6MB');
-	const buf = Buffer.from(await resp.arrayBuffer());
-	if (buf.length > MAX_IMAGE_BYTES) throw fail(413, 'image_too_large', 'image exceeds 6MB');
-	return `data:${ct};base64,${buf.toString('base64')}`;
+}
+
+// Read a response body under a hard byte ceiling. content-length is a hint a
+// host can simply omit (or lie about) on a chunked response, so the cap is
+// enforced on the stream itself: buffering the whole body first and checking
+// its size afterwards means an oversized response is already resident in memory
+// by the time it is rejected.
+async function readCappedBody(resp) {
+	if (!resp.body) {
+		const buf = Buffer.from(await resp.arrayBuffer());
+		if (buf.length > MAX_IMAGE_BYTES) throw fail(413, 'image_too_large', 'image exceeds 6MB');
+		return buf;
+	}
+	const chunks = [];
+	let total = 0;
+	// Throwing out of the loop closes the iterator, which cancels the body, so
+	// the rest of an oversized response is never pulled off the socket.
+	for await (const chunk of resp.body) {
+		total += chunk.length;
+		if (total > MAX_IMAGE_BYTES) throw fail(413, 'image_too_large', 'image exceeds 6MB');
+		chunks.push(Buffer.from(chunk));
+	}
+	return Buffer.concat(chunks);
 }
 
 function fail(status, code, message) {
