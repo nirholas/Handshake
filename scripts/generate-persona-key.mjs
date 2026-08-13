@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Generate an ES256 (P-256) keypair for signing Persona Hub tokens.
 //
-// Run once per environment. The private key goes into Vercel env as
+// Run once per environment. The private key goes into the deployment's env as
 // PERSONA_JWKS_PRIVATE_KEY_PEM; the public key is auto-derived from it at
 // runtime (jose's exportJWK on the private CryptoKey emits the public JWK
 // fields), so PERSONA_JWKS_PUBLIC_KEY_PEM is optional and only needed if you
@@ -12,7 +12,7 @@
 //   node scripts/generate-persona-key.mjs --kid persona-2026-05
 //
 // Output is written to stdout as a copy-pasteable block. Nothing is written
-// to disk — review the values, paste into Vercel env, redeploy.
+// to disk: review the values, paste them into the deployment's env, redeploy.
 
 import { generateKeyPair, exportPKCS8, exportSPKI, exportJWK } from 'jose';
 
@@ -29,7 +29,7 @@ const jwk = await exportJWK(publicKey);
 
 const escaped = (pem) => pem.trimEnd().replace(/\n/g, '\\n');
 
-console.log('# Paste into Vercel env (or .env.local for dev):');
+console.log('# Paste into the Cloud Run service env (or .env.local for dev):');
 console.log('# ─────────────────────────────────────────────────');
 console.log(`PERSONA_JWKS_KID=${kid}`);
 console.log(`PERSONA_JWKS_PRIVATE_KEY_PEM="${escaped(privatePem)}"`);

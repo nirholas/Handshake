@@ -3,7 +3,7 @@
  * End-to-end smoke test for Band 7 — MetaMask Advanced Permissions.
  *
  * Usage:
- *   SMOKE_BASE_URL=https://your-app.vercel.app \
+ *   SMOKE_BASE_URL=https://three.ws \
  *   SMOKE_AGENT_ID=<uuid> \
  *   SMOKE_CHAIN_ID=84532 \
  *   SMOKE_DELEGATOR_KEY=0x<test-wallet-private-key> \
