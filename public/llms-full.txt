@@ -1970,7 +1970,7 @@ The five steps between typing a prompt and downloading a 3D model: reference ima
 
 URL: https://three.ws/docs/image-to-3d
 
-Turn 1 to 4 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.
+Turn 1 to 6 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.
 
 ### Docs · Diorama (text to world)
 
@@ -2000,7 +2000,7 @@ Turn a phone video of any space into an explorable coloured 3D point cloud with 
 
 URL: https://three.ws/docs/restyle
 
-Re-skin any GLB without regenerating its mesh: 14 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.
+Re-skin any GLB without regenerating its mesh: 18 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.
 
 ### Docs · Scene Studio
 

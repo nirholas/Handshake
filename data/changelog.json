@@ -3,6 +3,67 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "The two MCP server docs that had drifted now list every tool the servers actually ship",
+			"summary": "The Scenes MCP page documented three tools, but the published server has had five for a while: export_scene merges an already-forged diorama into one GLB with named, selectable nodes, and build_world takes a single sentence all the way to a finished, openable world without a browser. Neither was written up anywhere, so nobody using an MCP client could find them. The x402 Wallet MCP page was missing pay_and_call's session-governed mode entirely, where a three.ws Payment Session pays on your behalf and the platform enforces the budget, allowlist, and per-transaction cap, so no private key sits on your machine at all; the idempotency key that makes a retry safe, and paying in $THREE where an endpoint accepts it, were undocumented too. Both pages also pinned a version number that had moved on, so they now point at the npm page instead of going stale again. Both pages were missing from the documentation sidebar, which meant the only way to reach them was to already know the URL.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/mcp-scenes"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The widget docs page rendered two footers, and eight docs pages were re-checked against the code",
+			"summary": "The Widgets documentation page carried a hand-written footer with broken nesting on top of the site footer, so readers saw the footer twice, with three navigation rows and three taglines. The hand-written copy is gone and the page now uses the shared site footer once. Its postMessage reference was also wrong in ways that would break an integration: the example origin check compared against an address with a trailing slash, which never matches what the browser reports, so every message would have been discarded; the event table listed a widget:load event the runtime never sends and got three payload shapes wrong. Two widget types the Studio has been offering for a while, the smart-money trade feed and the walking avatar, were missing from the type table, and the analytics section claimed a field we do not store. Skip-to-content now lands on the page body, and the tab title matches the rest of the documentation. Separately, the preview image for the demo widgets answered not-found, so sharing one in Slack, Discord, or X showed an error card instead of the widget. Alongside that, eight documentation pages were audited against the code they describe: the four MCP server pages no longer pin a version number that had already moved on, their examples were all executed live against the real servers, the marketplace example now uses a real agent id instead of a placeholder that returned nothing, and two dead links in the API reference were repaired.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/docs/widgets"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Three announcement posts had no site navigation and scrolled sideways on a phone",
+			"summary": "The AWS Marketplace, Alibaba Cloud Marketplace, and BNB Chain Dappbay posts were built on an older bare template: no header, no menu, no way back to the blog or anywhere else on the site once you landed on them from a search result or a shared link. All three now use the same layout as every other post, with the site header, a back link, the publish date, and topic tags. The same three also told search engines their address ended in .html, which does not match the address they are actually served at, so the server threw away the article details they carry (headline, publish date, author) and substituted a generic page description; they now name their real address and keep their own article data, and the Dappbay post's description no longer stops mid-sentence. Across all ten posts in this group, long links and the $THREE contract address no longer push the page wider than a 320px phone screen.",
+			"tags": [
+				"fix"
+			],
+			"link": "/blog/three-ws-on-aws-marketplace"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The Crypto Data API page lists all eleven free endpoints, and six docs pages were re-checked against the code",
+			"summary": "Two free, keyless endpoints that have been live for a while were missing from the Crypto Data API page: Portfolio Overview, which reads a wallet as stables versus majors versus everything else with an honest 24h coverage figure, and Airdrop Eligibility, which scores a wallet against the live airdrop registry and tells you which criteria it met, which it is short of, and which no chain read can prove. Both now have their own reference card with a real example and a Try it live button. The page also stopped firing eleven upstream data reads on every visit just to draw the status column; it reads the API's own discovery index once instead, which is faster and no longer occasionally reported a live endpoint as failing. Alongside that, six documentation pages were audited line by line against the code they describe: the trading hub's surface directory was missing Exit Lab and the exit-policy tutorial, the economy solver and Exit Lab sample responses were stale, the in-game economy's sell table now shows every sellable good with its real label, and the Crews reference documents the full error-code set and the real crew-name length.",
+			"tags": [
+				"improvement",
+				"docs",
+				"fix"
+			],
+			"link": "/crypto"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Scene Composer saves outfits for real, and the studio docs match the studios",
+			"summary": "Saving an outfit in Scene Composer used to report success and store nothing: the attached props went out under a field the avatar API quietly ignored. They are now a real part of the avatar record, so a crown you forge and pin to a head stays on that avatar wherever its look is applied, on top of whatever colors and morphs it already had. Opening the composer with ?avatar=<id> works again too; it had been landing on an empty stage because the page read the wrong field off the avatar response. Alongside that, the eight studio and viewer documentation pages were audited against the code they describe: Restyle Studio documents all 18 material presets instead of 14, Avatar Studio's emote count is right, the Animation Studio clip example now posts successfully instead of being rejected as empty, and the Scene Composer outfit example shows the request the API actually accepts.",
+			"tags": [
+				"fix",
+				"docs",
+				"feature"
+			],
+			"link": "/docs/compose"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Walkthroughs actually play now, and the one that would not name itself does",
+			"summary": "The Walkthroughs library opened to \"Could not load the walkthroughs\" and every individual walkthrough opened to the same failure, because the file the player reads had never been published: only 7 of the 20 frames existed and the manifest tying them together was missing entirely. All four walkthroughs were re-captured against the live site, so the 20 frames you step through are the real product as it looks today, and the index, the covers, and the player all load. Two smaller things went with it: the Forge walkthrough was the one page in the set that served a generic \"Walkthrough\" title and description to search engines and link previews instead of its own, because of a collision between the build-time and serve-time meta systems that is now fixed for every shared page template on the site; and the SDK docs pointed anyone installing the LobeChat plugin at an older descriptor that declares no tools, so the install produced an avatar the model could not talk to.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/walkthroughs"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "The Integrations page and its docs stopped showing \"avatar not found\" where the 3D demo should be",
 			"summary": "Every copy-paste avatar snippet on the Integrations page, the embed demo, and the Integrations doc pointed at a demo avatar whose record had been deleted in an earlier cleanup, so the headline 3D Avatar example rendered the words \"avatar not found\" instead of a character, and anyone who pasted the snippet into their own site got the same empty box. All nine references now use a live featured avatar, verified end to end in a real browser: the web component loads with no failed requests and a real 3D character renders on the page and in the pasted snippet.",
 			"tags": [
@@ -535,6 +596,15 @@
 				"fix"
 			],
 			"link": "/walk"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The Embed Doctor stopped calling working token-gated embeds broken",
+			"summary": "Paste the snippet a gated embed hands you into the Embed Doctor and it used to come back \"broken: the element was never upgraded\", pointing at a page that was rendering perfectly. The doctor only knew one of the two element names the platform's loaders register, so every embed built on the lightweight v1 loader (the one behind gated embeds) was diagnosed as dead on arrival. It now recognises all four, names the tag you actually wrote in its findings and fix snippets, and reports \"could not inspect this page\" instead of inventing a missing element when a page is too busy to answer in time. Diagnosing a heavy page is also bounded now: a run that used to sit for four minutes holding a browser open ends inside its stated time budget.",
+			"tags": [
+				"fix"
+			],
+			"link": "/embed-doctor"
 		},
 		{
 			"date": "2026-08-12",
@@ -20647,6 +20717,15 @@
 			"date": "2026-08-13",
 			"title": "x402 and Premium docs now match the live endpoints",
 			"summary": "Audited the eight paid-endpoint and Premium documentation pages against the running code. Corrected the pump.fun launcher ticker-check example (it used a parameter the endpoint does not accept), refreshed the volume-loop spend cap and price range, repaired the payout source links and a dead datapoint-fabric anchor, dropped a stale archive article count, and made the free sample commands CI-verified so this class of drift fails the build next time.",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The economy and reputation docs stopped pointing at things that are not there",
+			"summary": "Audited the Agent Monitor, Money Flow Map, Money Feed, Reputation, Validation, Solana Reputation and SAS Attestations pages against the running code. The SAS pages gave the wrong API path, so every copied curl came back \"agent not found\"; both read and issue calls now name the route that answers. The Solana attestation list was missing a kind, the Money Feed event table was missing six, the flow-map response example was missing three totals fields, and the reputation contract reference never mentioned staked reviews or how to reclaim that stake. A ninth page, the Economy Health Dashboard, documented an admin panel deleted in the security cleanup: its listing was still advertising a 404, so the listing is gone and audit-docs now fails on any docs page declared without an article behind it.",
 			"tags": [
 				"docs",
 				"fix"
