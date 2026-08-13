@@ -733,7 +733,7 @@ async function handleDetail(req, res, id) {
 		} else if (isDbUnavailableError(err)) {
 			console.warn('[marketplace/detail] db unavailable:', err?.message);
 			res.setHeader('retry-after', '30');
-			return error(res, 503, 'service_unavailable', 'database temporarily unavailable — retry shortly');
+			return error(res, 503, 'service_unavailable', 'database temporarily unavailable, retry shortly');
 		} else {
 			console.error('[marketplace/detail]', err?.message || err);
 			return error(res, 500, 'db_error', 'Failed to load agent');

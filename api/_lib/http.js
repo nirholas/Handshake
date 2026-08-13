@@ -257,7 +257,7 @@ export function serverError(res, status, code, err, extra = {}) {
 		if (typeof res.setHeader === 'function') res.setHeader('retry-after', '30');
 		return json(res, 503, {
 			error: 'service_unavailable',
-			error_description: 'database temporarily unavailable — retry shortly',
+			error_description: 'database temporarily unavailable, retry shortly',
 			ref,
 			...extra,
 		}, { 'cache-control': 'no-store' });
@@ -265,7 +265,7 @@ export function serverError(res, status, code, err, extra = {}) {
 	const ref = reportServerError(err, { code, status });
 	return json(res, status, {
 		error: code,
-		error_description: `internal error — quote ref ${ref} to support`,
+		error_description: `internal error, quote ref ${ref} to support`,
 		ref,
 		...extra,
 	}, { 'cache-control': 'no-store' });
@@ -640,8 +640,8 @@ export function wrap(handler) {
 						json(res, status, {
 							error: dbDegraded ? 'service_unavailable' : 'internal_error',
 							error_description: dbDegraded
-								? 'database temporarily unavailable — retry shortly'
-								: `internal error — quote ref ${ref} to support`,
+								? 'database temporarily unavailable, retry shortly'
+								: `internal error, quote ref ${ref} to support`,
 							ref,
 						}, { 'cache-control': 'no-store' });
 					}

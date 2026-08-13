@@ -61,9 +61,16 @@ export function hardBlocked(text) {
 // `$TICKER` cashtag that isn't $THREE, or a pump.fun-style mint address (…pump)
 // that isn't the $THREE contract. Generic by construction so no competitor is
 // ever written into source; $THREE (cashtag or contract) is explicitly allowed.
+//
+// The cashtag match is deliberately greedy and carries NO trailing word-boundary:
+// a `{1,9}` + `\b` pattern silently missed every ticker longer than ten characters
+// (the boundary could never be satisfied mid-word, so the whole cashtag went
+// unmatched and the caption sailed through the guard). Matching the run of ticker
+// characters as far as it goes means a long ticker is caught like a short one, and
+// a genuine `$THREE` still compares equal after the `$` is stripped.
 export function namesOffBrandCoin(text) {
 	const t = String(text || '');
-	const cashtags = t.match(/\$[A-Za-z][A-Za-z0-9]{1,9}\b/g) || [];
+	const cashtags = t.match(/\$[A-Za-z][A-Za-z0-9]*/g) || [];
 	if (cashtags.some((c) => c.slice(1).toUpperCase() !== 'THREE')) return true;
 	const tokens = t.match(/\b[1-9A-HJ-NP-Za-km-z]{32,48}\b/g) || [];
 	if (tokens.some((m) => /pump$/.test(m) && m !== THREE_MINT)) return true;
@@ -496,21 +503,23 @@ export function readVisibility(body) {
 	return defaultsToPrivate() ? 'private' : 'public';
 }
 
-// Pin ids are server-minted UUIDs (gen_random_uuid()). Validate the format at the
-// top of every mutation path so an oversized / garbage id is a clean 400 and never
-// reaches the DB query or a log line. The SQL is already parameterized (this is
-// not the injection guard) — it's input hygiene + defense in depth, and it lets a
-// "not a pin id" request fail fast with a clear message instead of a confusing 404.
+// Pin ids are server-minted UUIDs (gen_random_uuid()), and `irl_pins.id` is a UUID
+// COLUMN. Validate the format at the top of every mutation path so an oversized /
+// garbage id is a clean 400 and never reaches the DB query or a log line. The SQL is
+// already parameterized (this is not the injection guard) — it's input hygiene, and
+// it lets a "not a pin id" request fail fast with a clear message.
 //
-// A real id is a 36-char UUID; we accept that exactly, plus a conservative
-// opaque-id fallback (1–64 chars, URL/path-safe alphabet only) so the guard is
-// about REJECTING the dangerous shapes — control chars, whitespace, quotes,
-// SQL-injection text, multi-KB blobs — rather than over-fitting to one format.
+// Strict UUID, nothing else. A looser "URL-safe opaque id" fallback used to be
+// accepted here on the theory that the guard should only reject *dangerous* shapes,
+// but the column disagrees: Postgres rejects any non-UUID text with `invalid input
+// syntax for type uuid`, which surfaced as a 500 for every well-formed-looking id
+// (`PATCH {id:'pin-1'}`, `DELETE ?id=not-a-uuid`) instead of the 400 this guard
+// exists to return. api/irl/report.js has always used the strict form; this matches
+// it, and privacy.js (which imports this) inherits the fix.
 const PIN_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const PIN_ID_SAFE_RE = /^[A-Za-z0-9_-]{1,64}$/;
 export function isValidPinId(id) {
 	if (typeof id !== 'string' || !id) return false;
-	return PIN_UUID_RE.test(id) || PIN_ID_SAFE_RE.test(id);
+	return PIN_UUID_RE.test(id);
 }
 
 // Smallest signed distance between two compass bearings, 0–180°.

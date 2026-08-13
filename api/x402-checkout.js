@@ -106,7 +106,7 @@ function toPubkey(value, field) {
 // canonical mints from a local map; ataExists fails open to "missing"), so a
 // transient *total* failover outage — every endpoint in solanaConnection's chain
 // failing within this single request — used to throw straight through wrap() as an
-// opaque "internal error — quote ref … to support" 500 at the modal's Authorize
+// opaque "internal error, quote ref … to support" 500 at the modal's Authorize
 // step. Match the sibling fail-open posture: if the live fetch fails but we still
 // hold a cached blockhash inside the cluster's ~60-90s validity window, serve it.
 // Safe by construction — a blockhash only bounds how long the buyer has to land the
