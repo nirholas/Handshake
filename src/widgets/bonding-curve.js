@@ -15,12 +15,15 @@
  *   lamportsToSol / fmtSol / fmtUsd / fmtPrice  — pure formatters (tested)
  *   curveValue / curvePoints / areaPathFor       — pure curve geometry (tested)
  *   computeView(data, solUsd)                     — pure view-model (tested)
+ *   getSolUsd()                                   — shared, cached SOL/USD read
  *   renderCardShell(view, cfg)                    — pure HTML string (tested)
  *   mountBondingCurve(rootEl, opts)               — full mount + polling + anim
  *
  * The generic <three-ws-widget type="bonding-curve" mint="…"> element is
  * handled by the dispatcher in kol-trades.js.
  */
+
+import { hasThreeWsMark } from '../solana/vanity/brand.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
@@ -40,13 +43,16 @@ const NON_CURVE_MINTS = new Set([
 	'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
 ]);
 
-// Every pump.fun mint is ground to end in the literal suffix "pump". A mint that
-// doesn't end in "pump" (or that is a known settlement token) has no bonding
-// curve — so the widget can skip the network request entirely and show its empty
-// state, never contributing to the /api/pump/curve 404 storm on a misconfigured
-// (e.g. USDC) mount.
+// Address-only pre-filter, mirroring the server's gate in
+// api/_lib/pump-curve-view.js. A pump.fun-ground mint ends in the literal
+// suffix "pump"; a three.ws-launched mint carries the "3ws" mark as a prefix
+// instead (src/solana/vanity/brand.js) and is just as curve-bearing. Anything
+// else — a settlement token, a misconfigured (e.g. USDC) mount — has no curve,
+// so the widget skips the request entirely and shows its empty state rather
+// than contributing to a /api/pump/curve 404 storm.
 export function isPumpMint(mint) {
-	return typeof mint === 'string' && mint.endsWith('pump') && !NON_CURVE_MINTS.has(mint);
+	if (typeof mint !== 'string' || NON_CURVE_MINTS.has(mint)) return false;
+	return mint.endsWith('pump') || hasThreeWsMark(mint);
 }
 
 // SVG geometry. viewBox is fixed; the element scales to its container.
@@ -445,7 +451,7 @@ function injectStyles(doc) {
 let _solUsd = { value: null, at: 0, inflight: null };
 const SOL_USD_TTL = 60_000;
 
-async function getSolUsd() {
+export async function getSolUsd() {
 	const now = Date.now();
 	if (_solUsd.value != null && now - _solUsd.at < SOL_USD_TTL) return _solUsd.value;
 	if (_solUsd.inflight) return _solUsd.inflight;

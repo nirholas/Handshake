@@ -9,9 +9,19 @@
  * its own. This unifies all of that: map the response shape once here, and
  * every consumer benefits when a field name or format changes.
  *
- * Data source: GET /api/pump/coin?mint=<mint> (pump.fun coin object, proxied).
- * The raw shape is normalized exactly once in `mapCoin()`, so renaming an
- * upstream field (e.g. `usd_market_cap` → `mcap`) is a one-line change that
+ * Data sources, in the order the widget tries them:
+ *   1. GET /api/pump/coin?mint=<mint> — pump.fun's indexed coin object. Rich
+ *      (logo, 24h volume, USD market cap) but mainnet-only, and it only knows a
+ *      coin once pump.fun's indexer has picked it up.
+ *   2. GET /api/pump/curve?mint=<mint>&network=<n> — the on-chain bonding curve
+ *      read straight off the cluster. This is the only source that exists on
+ *      devnet, and it answers for a mint the indexer has not seen yet, so it is
+ *      both the devnet lane and the mainnet cold-start fallback. Devnet figures
+ *      are denominated in SOL: devnet SOL has no dollar value, so pricing a
+ *      rehearsal coin in USD would be a fiction.
+ *
+ * Each raw shape is normalized exactly once (`mapCoin()` / `mapCurve()`) into
+ * one coin object, so renaming an upstream field is a one-line change that
  * propagates to all three variants without touching any caller.
  *
  * Variants:
@@ -24,7 +34,10 @@
  * its own refresh timer; callers just hand it a container and call destroy().
  */
 
+import { computeView, getSolUsd } from '../widgets/bonding-curve.js';
+
 const COIN_ENDPOINT = '/api/pump/coin';
+const CURVE_ENDPOINT = '/api/pump/curve';
 const ORACLE_ENDPOINT = '/api/oracle/coin';
 const DEFAULT_REFRESH_MS = 30_000;
 // pump.fun bonding curves complete (graduate) around a ~$69k USD market cap;
@@ -53,6 +66,23 @@ export function formatPrice(n) {
 	if (n < 1) return `$${n.toPrecision(2)}`;
 	if (n < 1000) return `$${n.toFixed(2)}`;
 	return `$${Math.round(n).toLocaleString('en-US')}`;
+}
+
+/** Compact SOL market cap: `◎1.20K`, `◎4.31`, `◎0.0042`. */
+export function formatSolMcap(n) {
+	if (!Number.isFinite(n) || n < 0) return '—';
+	if (n >= 1e6) return `◎${(n / 1e6).toFixed(2)}M`;
+	if (n >= 1e3) return `◎${(n / 1e3).toFixed(2)}K`;
+	if (n >= 1) return `◎${n.toFixed(2)}`;
+	if (n > 0) return `◎${n.toFixed(4)}`;
+	return '◎0';
+}
+
+/** Per-token SOL price — always tiny, so significant digits over fixed places. */
+export function formatSolPrice(n) {
+	if (!Number.isFinite(n) || n <= 0) return '—';
+	if (n >= 0.01) return `◎${n.toFixed(5)}`;
+	return `◎${n.toFixed(12).replace(/0+$/, '')}`;
 }
 
 /** Percentage (0–100 in, clamped): `0%`, `34%`, `7.5%`. */
@@ -88,6 +118,20 @@ function spokenUsd(n) {
 	return `${n.toFixed(2)} dollars`;
 }
 
+// Same, for a SOL-denominated coin — a screen reader must never hear "dollars"
+// for a devnet rehearsal figure.
+function spokenSol(n) {
+	if (!Number.isFinite(n)) return 'unavailable';
+	if (n >= 1e6) return `${(n / 1e6).toFixed(2)} million SOL`;
+	if (n >= 1e3) return `${(n / 1e3).toFixed(1)} thousand SOL`;
+	if (n >= 1) return `${n.toFixed(2)} SOL`;
+	return `${n.toFixed(4)} SOL`;
+}
+
+function spokenValue(coin, n) {
+	return coin.denom === 'sol' ? spokenSol(n) : spokenUsd(n);
+}
+
 // ── field mapping (the single source of truth for the API shape) ─────────────
 
 /**
@@ -95,7 +139,7 @@ function spokenUsd(n) {
  * reads from. This is the ONLY place that knows the upstream field names — a
  * rename here propagates to chip, row, and card at once.
  */
-function mapCoin(raw, mint) {
+export function mapCoin(raw, mint) {
 	const mcap = Number(raw?.usd_market_cap);
 	const supplyAtomic = Number(raw?.total_supply);
 	// pump.fun tokens carry 6 decimals; human supply = atomic / 1e6.
@@ -120,7 +164,66 @@ function mapCoin(raw, mint) {
 		graduated,
 		volume24h: Number.isFinite(volume24h) ? volume24h : null,
 		createdAt: Number(raw?.created_timestamp) || null,
+		denom: 'usd',
+		network: 'mainnet',
+		source: 'indexer',
 	};
+}
+
+/**
+ * Normalize a `/api/pump/curve` response — the on-chain bonding-curve read —
+ * into the same coin shape `mapCoin()` produces, so every variant renders a
+ * cluster-sourced coin without knowing where the numbers came from.
+ *
+ * `computeView` (src/widgets/bonding-curve.js) already turns the raw curve
+ * payload into market cap, per-token price and graduation progress, including
+ * the graduated-coin cases where the curve account is closed or zeroed. This
+ * reuses it rather than re-deriving the curve math a second time.
+ *
+ * @param {object|null} raw     the /api/pump/curve body
+ * @param {string} mint
+ * @param {object} [o]
+ * @param {number|null} [o.solUsd]  SOL price in USD. Passed on mainnet, and
+ *   deliberately omitted on devnet: devnet SOL is not worth dollars, so a
+ *   rehearsal coin is priced in SOL and labelled as such.
+ * @param {string} [o.network]
+ * @param {object} [o.meta]     registry facts (symbol, name, launch time) the
+ *   chain does not carry — the curve knows economics, not identity.
+ * @returns {object|null} null when the mint has no curve to render.
+ */
+export function mapCurve(raw, mint, { solUsd = null, network = 'mainnet', meta = null } = {}) {
+	const view = computeView(raw, solUsd);
+	if (!view || view.status === 'empty') return null;
+
+	const usable = view.hasUsd && Number.isFinite(view.marketCapUsd);
+	return {
+		mint: raw?.mint || mint,
+		symbol: meta?.symbol || '',
+		name: meta?.name || '',
+		image: meta?.image || '',
+		mcap: usable ? view.marketCapUsd : view.marketCapSol,
+		price: usable ? view.priceUsd : view.priceSol,
+		graduationPct: Number.isFinite(view.progressPct) ? view.progressPct : null,
+		graduated: view.status === 'graduated',
+		// The curve carries no trade history, so there is no 24h volume to show.
+		volume24h: null,
+		createdAt: meta?.createdAt ?? null,
+		denom: usable ? 'usd' : 'sol',
+		network: view.network || network,
+		source: 'curve',
+	};
+}
+
+/** Format a market cap in whichever unit this coin's numbers are denominated. */
+function mcapText(coin) {
+	if (coin.mcap == null) return '—';
+	return coin.denom === 'sol' ? formatSolMcap(coin.mcap) : formatMcap(coin.mcap);
+}
+
+/** Format a per-token price in whichever unit this coin's numbers are denominated. */
+function priceText(coin) {
+	if (coin.price == null) return '—';
+	return coin.denom === 'sol' ? formatSolPrice(coin.price) : formatPrice(coin.price);
 }
 
 // ── tiny DOM helper ──────────────────────────────────────────────────────────
@@ -209,11 +312,13 @@ function renderConvictionBadge(conviction) {
 
 function renderChip(coin, opts) {
 	const nodes = [el('span', { class: 'csc-sym', text: coin.symbol ? `$${coin.symbol}` : shortMint(coin.mint) })];
+	const devnetTag = networkTag(coin);
+	if (devnetTag) nodes.push(devnetTag);
 	if (coin.price != null) {
-		nodes.push(el('span', { class: 'csc-price', text: formatPrice(coin.price), 'aria-label': `Price: ${formatPrice(coin.price)} per token` }));
+		nodes.push(el('span', { class: 'csc-price', text: priceText(coin), 'aria-label': `Price: ${priceText(coin)} per token` }));
 	}
 	if (coin.mcap != null) {
-		nodes.push(el('span', { class: 'csc-mcap', text: formatMcap(coin.mcap), 'aria-label': `Market cap: ${spokenUsd(coin.mcap)}` }));
+		nodes.push(el('span', { class: 'csc-mcap', text: mcapText(coin), 'aria-label': `Market cap: ${spokenValue(coin, coin.mcap)}` }));
 	}
 	if (coin.graduationPct != null) {
 		nodes.push(
@@ -223,7 +328,7 @@ function renderChip(coin, opts) {
 			}),
 		);
 	}
-	if (opts.showBuy) nodes.push(buyLink(coin.mint));
+	if (opts.showBuy) nodes.push(buyLink(coin.mint, coin.network));
 	return el('div', { class: 'csc csc-chip' }, nodes);
 }
 
@@ -231,17 +336,18 @@ function renderRow(coin, opts) {
 	const nodes = [
 		el('span', { class: 'csc-sym', text: coin.symbol ? `$${coin.symbol}` : coin.name || '—' }),
 		el('span', { class: 'csc-mono csc-mint', text: shortMint(coin.mint) }),
+		networkTag(coin),
 		el('span', {
 			class: 'csc-mcap',
-			text: coin.mcap != null ? formatMcap(coin.mcap) : '—',
-			'aria-label': `Market cap: ${spokenUsd(coin.mcap)}`,
+			text: mcapText(coin),
+			'aria-label': `Market cap: ${spokenValue(coin, coin.mcap)}`,
 		}),
-	];
+	].filter(Boolean);
 	if (coin.volume24h != null) {
 		nodes.push(el('span', { class: 'csc-vol', text: `Vol ${formatMcap(coin.volume24h)}` }));
 	}
 	if (coin.createdAt) nodes.push(el('span', { class: 'csc-time', text: timeSince(coin.createdAt) }));
-	if (opts.showBuy) nodes.push(buyLink(coin.mint));
+	if (opts.showBuy) nodes.push(buyLink(coin.mint, coin.network));
 	return el('div', { class: 'csc csc-row' }, nodes);
 }
 
@@ -251,7 +357,8 @@ function renderCard(coin, opts) {
 		el('div', { class: 'csc-card-id' }, [
 			el('span', { class: 'csc-card-name', text: coin.name || coin.symbol || 'Coin' }),
 			el('span', { class: 'csc-sym', text: coin.symbol ? `$${coin.symbol}` : shortMint(coin.mint) }),
-		]),
+			networkTag(coin),
+		].filter(Boolean)),
 		coin.graduationPct != null ? graduationRing(coin.graduationPct) : null,
 	]);
 
@@ -260,16 +367,16 @@ function renderCard(coin, opts) {
 			el('span', { class: 'csc-stat-label', text: 'Price' }),
 			el('span', {
 				class: 'csc-stat-value',
-				text: coin.price != null ? formatPrice(coin.price) : '—',
-				'aria-label': coin.price != null ? `Price: ${formatPrice(coin.price)} per token` : null,
+				text: priceText(coin),
+				'aria-label': coin.price != null ? `Price: ${priceText(coin)} per token` : null,
 			}),
 		]),
 		el('div', { class: 'csc-stat' }, [
 			el('span', { class: 'csc-stat-label', text: 'Market cap' }),
 			el('span', {
 				class: 'csc-stat-value',
-				text: coin.mcap != null ? formatMcap(coin.mcap) : '—',
-				'aria-label': `Market cap: ${spokenUsd(coin.mcap)}`,
+				text: mcapText(coin),
+				'aria-label': `Market cap: ${spokenValue(coin, coin.mcap)}`,
 			}),
 		]),
 	]);
@@ -292,7 +399,7 @@ function renderCard(coin, opts) {
 
 	const foot = el('div', { class: 'csc-card-foot' }, [
 		coin.createdAt ? el('span', { class: 'csc-time', text: `Launched ${timeSince(coin.createdAt)}` }) : null,
-		opts.showBuy ? buyLink(coin.mint) : null,
+		opts.showBuy ? buyLink(coin.mint, coin.network) : null,
 	]);
 
 	return el('div', { class: 'csc csc-card' }, [head, stats, coin.graduationPct != null ? bar : null, badge, foot]);
@@ -318,7 +425,33 @@ function coinAvatar(coin, placeholder) {
 	return box;
 }
 
-function buyLink(mint) {
+/**
+ * A "DEVNET" marker, so a rehearsal coin's real-but-worthless numbers can never
+ * read as a live market. Renders nothing on mainnet.
+ */
+function networkTag(coin) {
+	if (coin.network !== 'devnet') return null;
+	return el('span', {
+		class: 'csc-net',
+		text: 'DEVNET',
+		title: 'Launched on Solana devnet — real on-chain state, no real value',
+	});
+}
+
+/**
+ * The outbound market link. A devnet coin has no pump.fun market page, so it
+ * points at the explorer for that cluster instead of a URL that 404s.
+ */
+function buyLink(mint, network = 'mainnet') {
+	if (network === 'devnet') {
+		return el('a', {
+			class: 'csc-buy',
+			href: `https://explorer.solana.com/address/${mint}?cluster=devnet`,
+			target: '_blank',
+			rel: 'noopener noreferrer',
+			text: 'Explorer →',
+		});
+	}
 	return el('a', {
 		class: 'csc-buy',
 		href: `https://pump.fun/${mint}`,
@@ -362,6 +495,8 @@ const STYLES = `
 .csc-price { color: var(--ink-dim, rgba(255,255,255,0.7)); }
 .csc-mcap { font-weight: 600; }
 .csc-grad { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: rgba(120,140,255,0.14); color: rgba(190,200,255,0.95); }
+.csc-net { font-size: 10px; font-weight: 700; letter-spacing: .07em; padding: 1px 6px; border-radius: 999px;
+	background: rgba(245,158,11,0.14); border: 1px solid rgba(245,158,11,0.35); color: #fbbf24; }
 .csc-grad-done { background: rgba(120,200,140,0.16); color: rgba(170,235,190,0.95); }
 .csc-buy { position: relative; z-index: 2; color: var(--accent, #7c83ff); text-decoration: none; font-weight: 600; transition: opacity .15s; }
 .csc-buy:hover { opacity: .8; }
@@ -445,6 +580,14 @@ function injectStyles() {
  *                       Hosts that already batch-fetch conviction (e.g. the
  *                       watchlist) pass false to skip the redundant per-coin
  *                       /api/oracle/coin round trip.
+ * @param {string}      [opts.network]   — 'mainnet' (default) | 'devnet'. A
+ *                       devnet coin is read straight off the cluster's bonding
+ *                       curve and rendered in SOL; there is no indexer, no
+ *                       Oracle score, and no pump.fun market page out there.
+ * @param {object}      [opts.meta]      — registry facts the chain does not
+ *                       carry (symbol, name, image, createdAt). Used to label
+ *                       the cluster-sourced lane, where economics come from the
+ *                       curve and identity comes from our own launch record.
  * @returns {{ destroy: () => void }}   — cleanup handle
  */
 export function mountCoinStatus(container, mint, opts = {}) {
@@ -452,7 +595,11 @@ export function mountCoinStatus(container, mint, opts = {}) {
 	const refreshMs = opts.refreshMs == null ? DEFAULT_REFRESH_MS : Number(opts.refreshMs);
 	const showBuy = !!opts.showBuy;
 	const placeholder = opts.placeholder || null;
-	const wantOracle = opts.oracle !== false;
+	const network = opts.network === 'devnet' ? 'devnet' : 'mainnet';
+	const meta = opts.meta || null;
+	// Devnet has no pump.fun indexer and no Oracle coverage — the cluster is the
+	// only source, so never spend a round trip discovering that again.
+	const wantOracle = opts.oracle !== false && network !== 'devnet';
 	// Optional observer fired with the normalized coin after every successful
 	// load (initial + each refresh). Lets a host surface aggregate the same live
 	// market data it's already paying to fetch — e.g. the launches feed's
@@ -479,6 +626,24 @@ export function mountCoinStatus(container, mint, opts = {}) {
 		container.replaceChildren(node);
 	};
 
+	/**
+	 * Cluster-sourced read: the bonding curve itself. Sole source on devnet, and
+	 * the fallback on mainnet for a coin pump.fun's indexer has not caught up to
+	 * yet — which is every three.ws launch for its first minutes of life.
+	 */
+	async function loadFromCurve(sig) {
+		// A devnet coin is priced in SOL on purpose (see mapCurve): asking for a
+		// USD rate would only let a worthless rehearsal figure render as dollars.
+		const [r, solUsd] = await Promise.all([
+			fetch(`${CURVE_ENDPOINT}?mint=${encodeURIComponent(mint)}&network=${network}`, { signal: sig }),
+			network === 'devnet' ? Promise.resolve(null) : getSolUsd().catch(() => null),
+		]);
+		if (!r.ok) throw new Error(`curve api ${r.status}`);
+		const coin = mapCurve(await r.json(), mint, { solUsd, network, meta });
+		if (!coin) throw new Error('mint has no bonding curve');
+		return coin;
+	}
+
 	async function load({ silent = false } = {}) {
 		if (destroyed) return;
 		if (abort) abort.abort();
@@ -502,10 +667,19 @@ export function mountCoinStatus(container, mint, opts = {}) {
 					.catch(() => null)
 				: null;
 
-			const r = await fetch(`${COIN_ENDPOINT}?mint=${encodeURIComponent(mint)}`, { signal: sig });
-			if (!r.ok) throw new Error(`coin api ${r.status}`);
-			const raw = await r.json();
-			lastCoin = mapCoin(raw, mint);
+			if (network === 'devnet') {
+				lastCoin = await loadFromCurve(sig);
+			} else {
+				const r = await fetch(`${COIN_ENDPOINT}?mint=${encodeURIComponent(mint)}`, { signal: sig });
+				if (r.ok) {
+					lastCoin = mapCoin(await r.json(), mint);
+				} else {
+					// The indexer does not know this coin (yet). The chain always does:
+					// fall through to the curve rather than showing "unavailable" for a
+					// coin that is live and trading.
+					lastCoin = await loadFromCurve(sig);
+				}
+			}
 
 			if (oraclePromise) {
 				const od = await oraclePromise;

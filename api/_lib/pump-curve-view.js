@@ -14,6 +14,7 @@
 
 import { rpcFallbackFromEnv, getBondingCurveState, getTokenPrice, getGraduationProgress } from './solana/index.js';
 import { createCache } from './mem-cache.js';
+import { hasThreeWsMark } from '../../src/solana/vanity/brand.js';
 
 // Mints that can never carry a pump.fun bonding curve. These are coin-agnostic
 // payment-rail / native tokens, listed only so we can *exclude* them from curve
@@ -29,11 +30,22 @@ export const NON_CURVE_MINTS = new Set([
 // these tokens fully-diluted value therefore equals market cap.
 export const PUMP_TOTAL_SUPPLY = 1_000_000_000;
 
-// Every pump.fun mint keypair is ground to end in the literal suffix "pump". A
-// mint that does not end in "pump" (or that is a known settlement token) has no
-// bonding curve and never will — so we can reject it without touching RPC.
+// Cheap, RPC-free pre-filter for "could this address carry a pump.fun bonding
+// curve?". Two shapes qualify, both decided from the address alone:
+//
+//   1. pump.fun's own launcher grinds every mint to end in the literal suffix
+//      "pump".
+//   2. three.ws grinds its own launches to carry the "3ws" mark as a PREFIX
+//      (src/solana/vanity/brand.js) and never the "pump" suffix. Every agent
+//      token this platform mints therefore lands here, and the suffix test
+//      alone used to reject all of them with a 300s-cached `not_a_pump_mint`
+//      404 — the curve read for our own coins could never succeed.
+//
+// A known settlement/native token is excluded outright: it has no curve and
+// never will.
 export function isPumpMint(mint) {
-	return typeof mint === 'string' && mint.endsWith('pump') && !NON_CURVE_MINTS.has(mint);
+	if (typeof mint !== 'string' || NON_CURVE_MINTS.has(mint)) return false;
+	return mint.endsWith('pump') || hasThreeWsMark(mint);
 }
 
 export function isPlausibleMint(s) {
