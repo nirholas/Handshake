@@ -222,8 +222,25 @@
 						<td data-i18n="docs_widgets.annotated_3d_scenes_with_clickable_pois">Annotated 3D scenes with clickable POIs.</td>
 						<td>800 × 600</td>
 					</tr>
+					<tr>
+						<td><code>kol-trades</code></td>
+						<td>Live buy and sell activity from tracked KOL and whale wallets for one token.</td>
+						<td>600 × 600</td>
+					</tr>
+					<tr>
+						<td><code>walking-avatar</code></td>
+						<td>A roaming 3D avatar visitors steer around your page with joystick or keyboard.</td>
+						<td>600 × 600</td>
+					</tr>
 				</tbody>
 			</table>
+			<p>
+				Only the first five types carry a per-type default size (see
+				<code>TYPE_SIZES</code> in <code>/embed.js</code>); every other type falls back to
+				600 × 600 unless you pass <code>data-width</code> / <code>data-height</code>. The
+				<a href="/studio">Studio</a> picker is the authoritative list and also offers the
+				live-market feed widgets, which are configured there rather than documented here.
+			</p>
 
 			<h2 id="urls" data-i18n="docs_widgets.urls_2">URLs</h2>
 			<p data-i18n="docs_widgets.every_widget_has_three_canonical_urls">Every widget has three canonical URLs.</p>
@@ -412,10 +429,11 @@ img-src https://three.ws/ data:;</code></pre>
 
 			<h2 id="privacy" data-i18n="docs_widgets.privacy_analytics_2">Privacy &amp; analytics</h2>
 			<p data-i18n-html="docs_widgets.we_log_a_minimal_first_party_event">
-				We log a minimal first-party event per widget load: <code>widget_id</code>,
-				<code>type</code>, <code>country</code> (Vercel edge header),
-				<code>referer_host</code> (hostname only), <code>created_at</code>. No IPs. No
-				cookies. No user agents. No chat content. No cross-widget tracking.
+				We log a minimal first-party event per widget load, four columns wide:
+				<code>widget_id</code>, <code>country</code> (a two-letter code, only when the edge
+				supplies one, never derived from a raw IP), <code>referer_host</code> (hostname
+				only, no path and no query), and <code>created_at</code>. No IPs. No cookies. No
+				user agents. No chat content. No cross-widget tracking.
 			</p>
 
 			<h2 id="faq" data-i18n="docs_widgets.faq_2">FAQ</h2>

@@ -199,10 +199,11 @@
 			<pre class="code"><code>curl -X POST https://three.ws/api/3d/generate \
   -H 'content-type: application/json' \
   -d '{ "prompt": "a small ceramic robot figurine" }'
+# A lane that finishes inside the request answers right away:
+# → { "status": "done", "glbUrl": "https://…/model.glb", "viewerUrl": "https://three.ws/…" }
+# Otherwise you get a job to poll:
 # → { "status": "pending", "job": "…", "poll": "/api/3d/generate?job=…" }
-# poll the job:
-curl "https://three.ws/api/3d/generate?job=&lt;id&gt;"
-# → { "status": "done", "glbUrl": "https://…/model.glb", "viewerUrl": "https://three.ws/…" }</code></pre>
+curl "https://three.ws/api/3d/generate?job=&lt;id&gt;"</code></pre>
 
 			<h3 style="font-family:var(--font-display);font-size:var(--text-md);margin:var(--space-md) 0 var(--space-2xs)" data-i18n="3d.point_any_openapi_toolchain_at_it">Point any OpenAPI toolchain at it</h3>
 			<pre class="code"><code># LangChain, openapi-generator, Swagger UI, etc.

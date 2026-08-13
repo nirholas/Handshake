@@ -1266,11 +1266,18 @@
 				document.getElementById('tdoc-hero').hidden = false;
 			}
 
+			// Same rule as slugifyHeading() in docs/index.html (and its mirror in
+			// public/docs-search.js): drop punctuation, then turn spaces into
+			// hyphens. Tutorial authors write in-page links against that convention
+			// because it is what the docs surface and GitHub both use, so a viewer
+			// that instead collapsed every punctuation run into one hyphen answered
+			// with dead anchors: #whats-next, #step-5--animations-exact-name-vs-hint.
 			function slugifyHeading(text) {
-				return text
+				return String(text)
+					.trim()
 					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, '-')
-					.replace(/^-|-$/g, '');
+					.replace(/[^\w\- ]+/g, '')
+					.replace(/ /g, '-');
 			}
 
 			function buildToc(article) {

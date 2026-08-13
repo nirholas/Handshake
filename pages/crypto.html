@@ -737,7 +737,26 @@ token = r.json()
 				}
 			}
 
-			/* ── Live probe: classify each endpoint (non-404 = deployed) ── */
+			/* ── Live probe ───────────────────────────────────────────────
+			   One read of the discovery index tells us the deployed roster.
+			   Probing each endpoint's real example URL instead meant every
+			   page view fired eleven upstream reads, the heaviest of which
+			   (holders) walks a token's accounts: under that burst it
+			   occasionally spent its RPC budget and answered 503, which is a
+			   correct answer to a data question and a wrong one to "does this
+			   route exist". The index is static, edge-cached and answers the
+			   question it was built for. Falls back to the per-endpoint probe
+			   when the index itself cannot be read. ─────────────────────── */
+			async function liveSlugs() {
+				try {
+					const res = await fetch(`${BASE}`, { headers: { accept: 'application/json' } });
+					if (!res.ok) return null;
+					const body = await res.json();
+					if (!Array.isArray(body?.endpoints)) return null;
+					return new Set(body.endpoints.map((e) => e.slug).filter(Boolean));
+				} catch { return null; } // network or CORS failure: fall back below
+			}
+
 			async function probe(ep) {
 				try {
 					const res = await fetch(ep.probe, { headers: { accept: 'application/json' } });
@@ -755,8 +774,9 @@ token = r.json()
 			}
 
 			(async () => {
+				const roster = await liveSlugs();
 				const results = await Promise.all(ENDPOINTS.map(async (ep) => {
-					const ok = await probe(ep);
+					const ok = roster ? roster.has(ep.slug) : await probe(ep);
 					setStatus(ep.slug, ok);
 					return ok;
 				}));
