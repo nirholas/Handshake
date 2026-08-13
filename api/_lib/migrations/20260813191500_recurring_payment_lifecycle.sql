@@ -42,7 +42,7 @@ create table if not exists subscription_charges (
     constraint subscription_charges_status_check
         check (status in ('success', 'failed', 'aborted', 'unknown')),
     constraint subscription_charges_outcome_check
-        check (outcome is null or outcome in ('charged', 'fatal', 'retryable', 'ambiguous'))
+        check (outcome is null or outcome in ('charged', 'fatal', 'retryable', 'ambiguous', 'skipped'))
 );
 
 create index if not exists idx_subscription_charges_subscription

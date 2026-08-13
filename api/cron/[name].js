@@ -258,15 +258,31 @@ async function handleErc8004Crawl(req, res) {
 	if (!requireCron(req, res)) return;
 
 	const crawlStart = Date.now();
-	const report = { chains: [], enriched: 0, errors: [] };
+	const report = { chains: [], enriched: 0, errors: [], skipped: 0 };
 
-	for (const chain of CHAINS) {
-		if (Date.now() - crawlStart > CRAWL_BUDGET_MS) break;
+	// Neediest chain first, never the array order. The budget below cuts the
+	// sweep short on a slow tick, and with a fixed order that always cuts the
+	// SAME tail: the chains at the end of CHAINS were starved every single tick,
+	// which is how one cursor reached 107 days stale while the chains above it
+	// stayed current. Ordering by backlog turns a truncated tick into "the worst
+	// chains got served" instead of "the last chains got skipped again".
+	const order = await erc8004CrawlOrder();
+
+	for (const chain of order) {
+		if (Date.now() - crawlStart > CRAWL_BUDGET_MS) {
+			report.skipped += 1;
+			continue;
+		}
 		try {
 			const r = await erc8004CrawlChain(chain);
 			report.chains.push({ chainId: chain.id, name: chain.name, ...r });
 		} catch (err) {
 			report.errors.push({ chainId: chain.id, error: err.message || String(err) });
+			await sql`
+				UPDATE erc8004_crawl_cursor
+				SET last_error = ${String(err.message || err).slice(0, 500)}
+				WHERE chain_id = ${chain.id}
+			`.catch(() => {});
 		}
 	}
 
@@ -284,9 +300,80 @@ async function handleErc8004Crawl(req, res) {
 	return json(res, 200, report);
 }
 
+/**
+ * Every configured chain, worst backlog first. A chain with no cursor row has
+ * never been crawled at all and outranks everything, since it contributes no
+ * coverage whatsoever until its first tick.
+ * @returns {Promise<object[]>}
+ */
+async function erc8004CrawlOrder() {
+	let cursors = [];
+	try {
+		cursors = await sql`SELECT chain_id, blocks_behind, updated_at FROM erc8004_crawl_cursor`;
+	} catch {
+		// An unreadable cursor table must not stop the crawl; fall back to the
+		// declared order, which is what ran before this ordering existed.
+		return [...CHAINS];
+	}
+	const by = new Map(cursors.map((c) => [Number(c.chain_id), c]));
+	return [...CHAINS].sort((a, b) => rank(by.get(b.id)) - rank(by.get(a.id)));
+}
+
+// Never-crawled sorts above every backlog; otherwise the backlog itself ranks,
+// with cursor age breaking ties between two caught-up chains so the sweep still
+// rotates instead of re-serving the same head every tick.
+function rank(cursor) {
+	if (!cursor) return Number.MAX_SAFE_INTEGER;
+	const behind = Number(cursor.blocks_behind || 0);
+	if (behind > 0) return behind;
+	const ageMin = cursor.updated_at ? (Date.now() - new Date(cursor.updated_at).getTime()) / 60_000 : 0;
+	return Math.min(ageMin, 1);
+}
+
+// Ceiling for the adaptive window. Public RPCs commonly cap eth_getLogs at
+// 2,000 to 10,000 blocks; the crawl walks up toward this and backs off the
+// moment a provider says no, so no chain needs its limit hardcoded here.
+const ERC8004_MAX_BLOCK_CHUNK = 8_000;
+const ERC8004_MIN_BLOCK_CHUNK = 100;
+// Range rejections name the range rather than a stable error code, and every
+// provider words it differently.
+const RANGE_REJECTED = /block range|range is too large|too many blocks|limit exceeded|query returned more than|exceed maximum block range|response size|logs matched/i;
+
+/**
+ * The block window to request for a chain this tick.
+ *
+ * A fixed window is the reason five chains could never catch up: it is a bet
+ * that every chain produces blocks slower than the crawl consumes them, and on
+ * Arbitrum One (0.28x of the cron period per 1,000 blocks) that bet loses every
+ * tick, forever. So grow the window while a chain is behind and shrink it when
+ * the provider objects, letting each lane settle at the largest range it will
+ * actually serve.
+ *
+ * Pure, so the growth and backoff curves are testable without an RPC.
+ * @param {{ stored?: number|null, configured?: number|null, behind: number }} a
+ * @returns {number}
+ */
+export function nextChunkSize({ stored, configured, behind }) {
+	const floor = Math.max(ERC8004_MIN_BLOCK_CHUNK, 1);
+	const base = Number(stored) > 0 ? Number(stored) : configured || ERC8004_BLOCK_CHUNK;
+	// Caught up: hold the window rather than growing it for no reason.
+	if (behind <= base) return clampChunk(base, floor);
+	// Behind: double, but never overshoot the backlog itself.
+	return clampChunk(Math.min(base * 2, behind), floor);
+}
+
+/** Halve the window after a provider rejects the range, never below the floor. */
+export function backoffChunkSize(current) {
+	return clampChunk(Math.floor((Number(current) || ERC8004_BLOCK_CHUNK) / 2), ERC8004_MIN_BLOCK_CHUNK);
+}
+
+function clampChunk(n, floor) {
+	return Math.max(floor, Math.min(ERC8004_MAX_BLOCK_CHUNK, Math.trunc(n)));
+}
+
 async function erc8004CrawlChain(chain) {
 	const [cursor] = await sql`
-		SELECT last_block FROM erc8004_crawl_cursor WHERE chain_id = ${chain.id}
+		SELECT last_block, chunk_size FROM erc8004_crawl_cursor WHERE chain_id = ${chain.id}
 	`;
 
 	const latestHex = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_blockNumber', []);
@@ -297,12 +384,17 @@ async function erc8004CrawlChain(chain) {
 		: Math.max(0, latestBlock - ERC8004_DEFAULT_LOOKBACK);
 
 	if (fromBlock > latestBlock) {
-		return { inserted: 0, scanned: 0, lastBlock: latestBlock, fromBlock };
+		await erc8004RecordHead(chain.id, latestBlock, latestBlock);
+		return { inserted: 0, scanned: 0, lastBlock: latestBlock, fromBlock, blocksBehind: 0 };
 	}
 
-	// Per-chain override lets a restrictive RPC use a smaller range without
-	// throttling well-behaved chains. Falls back to the global default.
-	const chunkSize = chain.blockChunk || ERC8004_BLOCK_CHUNK;
+	// Adaptive per chain, seeded by the declared override for a restrictive RPC.
+	// See nextChunkSize: a fixed window is why fast chains never caught up.
+	const chunkSize = nextChunkSize({
+		stored: cursor?.chunk_size,
+		configured: chain.blockChunk,
+		behind: latestBlock - fromBlock + 1,
+	});
 	const toBlock = Math.min(fromBlock + chunkSize - 1, latestBlock);
 
 	// Topic OR-set, not the single Registered topic: an agent's row used to
@@ -2523,7 +2615,7 @@ async function handleRunDca(req, res) {
 			SELECT
 				s.id, s.delegation_id, s.chain_id,
 				s.token_in, s.token_out, s.amount_per_execution,
-				s.period_seconds, s.slippage_bps, s.agent_id,
+				s.period_seconds, s.slippage_bps, s.agent_id, s.consecutive_failures,
 				ad.status AS delegation_status, ad.expires_at AS delegation_expires_at
 			FROM dca_strategies s
 			JOIN agent_delegations ad ON ad.id = s.delegation_id
@@ -2556,32 +2648,55 @@ async function handleRunDca(req, res) {
 			status: 'pending',
 		};
 
-		// Check delegation is still alive before spending gas on a quote
+		// Check delegation is still alive before spending gas on a quote. The
+		// strategy pauses rather than dying: re-granting the permission and
+		// resuming is a two-click recovery, and the owner sees the exact reason.
 		if (strategy.delegation_status !== 'active') {
+			const failure = classifyChargeFailure({
+				code:
+					strategy.delegation_status === 'revoked'
+						? 'delegation_revoked'
+						: 'delegation_expired',
+				message: `delegation is ${strategy.delegation_status}`,
+			});
 			await sql`
-				UPDATE dca_strategies SET status = 'paused' WHERE id = ${strategy.id}
+				UPDATE dca_strategies
+				SET status          = 'paused',
+				    paused_at       = NOW(),
+				    last_error      = ${failure.reason.slice(0, 500)},
+				    last_error_code = ${failure.code}
+				WHERE id = ${strategy.id}
 			`;
 			execRow.status = 'aborted';
-			execRow.error = `Delegation ${strategy.delegation_status}`;
+			execRow.error = failure.reason;
 			await insertDcaExecution(execRow).catch((e) =>
 				dcaLog('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
 			);
-			dcaLog('info', 'skipped', { ...logCtx, reason: execRow.error });
-			results.push({ id: strategy.id, skipped: true, reason: execRow.error });
+			dcaLog('info', 'skipped', { ...logCtx, code: failure.code });
+			results.push({ id: strategy.id, skipped: true, code: failure.code });
 			continue;
 		}
 
 		if (new Date(strategy.delegation_expires_at) <= new Date()) {
+			const failure = classifyChargeFailure({
+				code: 'delegation_expired',
+				message: 'delegation expiry has passed',
+			});
 			await sql`
-				UPDATE dca_strategies SET status = 'expired' WHERE id = ${strategy.id}
+				UPDATE dca_strategies
+				SET status          = 'expired',
+				    paused_at       = NOW(),
+				    last_error      = ${failure.reason.slice(0, 500)},
+				    last_error_code = ${failure.code}
+				WHERE id = ${strategy.id}
 			`;
 			execRow.status = 'aborted';
-			execRow.error = 'Delegation expired';
+			execRow.error = failure.reason;
 			await insertDcaExecution(execRow).catch((e) =>
 				dcaLog('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
 			);
-			dcaLog('info', 'skipped', { ...logCtx, reason: execRow.error });
-			results.push({ id: strategy.id, skipped: true, reason: execRow.error });
+			dcaLog('info', 'skipped', { ...logCtx, code: failure.code });
+			results.push({ id: strategy.id, skipped: true, code: failure.code });
 			continue;
 		}
 
@@ -2621,7 +2736,10 @@ async function handleRunDca(req, res) {
 
 			await sql`
 				UPDATE dca_strategies
-				SET last_execution_at = NOW()
+				SET last_execution_at    = NOW(),
+				    consecutive_failures = 0,
+				    last_error           = NULL,
+				    last_error_code      = NULL
 				WHERE id = ${strategy.id}
 			`;
 
@@ -2632,34 +2750,66 @@ async function handleRunDca(req, res) {
 			});
 			results.push({ id: strategy.id, txHash, quoteAmountOut });
 		} catch (err) {
-			execRow.status = err.code === 'quote_divergence' ? 'aborted' : 'failed';
-			execRow.error = err.message;
+			// One classifier decides what a failure means, shared with the
+			// subscription cron and with the API that renders it to the owner
+			// (api/_lib/recurring.js).
+			const { code, outcome, reason } = classifyChargeFailure({
+				code: err.code,
+				message: err.message,
+			});
+			const applied = applyChargeFailure({
+				outcome,
+				consecutiveFailures: Number(strategy.consecutive_failures ?? 0),
+			});
+
+			execRow.status = chargeStatusFor(outcome);
+			execRow.error = reason;
 			execRow.quote_divergence_bps = err.divergenceBps ?? null;
 
-			// Release the idempotency claim so the next tick can retry this
-			// strategy — but only for transient / recoverable failures. For
-			// aborts (quote_divergence, delegation_gone) leave the advanced
-			// next_execution_at in place so we wait the full period.
-			const shouldRetryNextTick =
-				err.code !== 'quote_divergence' &&
-				err.code !== 'delegation_gone' &&
-				err.code !== 'unsupported_chain';
-			if (shouldRetryNextTick) {
+			// Release the idempotency claim only when the swap provably never went
+			// out AND another attempt is still allowed. Everything else keeps the
+			// advanced next_execution_at, so the period is consumed exactly once.
+			if (applied.retry) {
 				await sql`
 					UPDATE dca_strategies
-					SET next_execution_at = ${nowIso}
+					SET next_execution_at    = ${nowIso},
+					    last_error           = ${reason.slice(0, 500)},
+					    last_error_code      = ${code},
+					    consecutive_failures = ${applied.consecutiveFailures}
 					WHERE id = ${strategy.id}
 				`.catch((e) => dcaLog('error', 'claim_release_failed', { ...logCtx, message: e?.message }));
+			} else if (applied.pause) {
+				await sql`
+					UPDATE dca_strategies
+					SET status               = 'paused',
+					    paused_at            = NOW(),
+					    last_error           = ${reason.slice(0, 500)},
+					    last_error_code      = ${code},
+					    consecutive_failures = ${applied.consecutiveFailures}
+					WHERE id = ${strategy.id}
+				`.catch((e) => dcaLog('error', 'pause_failed', { ...logCtx, message: e?.message }));
+			} else {
+				// A skipped period: the schedule stays active and unpenalised, but
+				// the owner still sees why nothing was bought this time.
+				await sql`
+					UPDATE dca_strategies
+					SET last_error           = ${reason.slice(0, 500)},
+					    last_error_code      = ${code},
+					    consecutive_failures = ${applied.consecutiveFailures}
+					WHERE id = ${strategy.id}
+				`.catch((e) => dcaLog('error', 'note_failure_failed', { ...logCtx, message: e?.message }));
 			}
 
 			dcaLog('error', 'execute_failed', {
 				...logCtx,
-				code: err.code,
+				code,
+				outcome,
 				message: err.message,
 				status: err.status,
-				will_retry_next_tick: shouldRetryNextTick,
+				paused: applied.pause,
+				will_retry_next_tick: applied.retry,
 			});
-			results.push({ id: strategy.id, error: err.message, code: err.code });
+			results.push({ id: strategy.id, error: reason, code, outcome });
 		}
 
 		// Insert execution record regardless of outcome
@@ -3293,13 +3443,10 @@ async function handleSolanaAttestEventCleanup(req, res) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const SOL_ATTEST_PER_RUN_MAX = 50; // bound RPC fan-out per cron tick
-// Agents whose full event history (registration, token launch, delegation,
-// transfer, metadata) is walked per tick. Separate from the attestation budget
-// because this half covers the external registry directory too, which is two
-// orders of magnitude larger than the platform's own Solana agents.
-const SOL_EVENT_PER_RUN_MAX = 40;
 // Hard wall-clock budget for the event half, leaving the attestation half its
-// own share of the function's 300s ceiling.
+// own share of the function's 300s ceiling. This, not the batch size, is what
+// actually bounds the sweep: the batch is drained until the budget runs out and
+// the remainder is reported as `truncated`.
 const SOL_EVENT_BUDGET_MS = 120_000;
 
 async function handleSolanaAttestationsCrawl(req, res) {
@@ -3347,7 +3494,7 @@ async function handleSolanaAttestationsCrawl(req, res) {
 }
 
 async function solanaEventSweep() {
-	const { crawlAgentEvents, markAgentEventError, nextAgentBatch } = await import(
+	const { crawlAgentEvents, markAgentEventError, nextAgentBatch, SOLANA_SWEEP_BATCH } = await import(
 		'../_lib/solana-agent-events.js'
 	);
 
@@ -3356,7 +3503,7 @@ async function solanaEventSweep() {
 
 	let batch;
 	try {
-		batch = await nextAgentBatch({ limit: SOL_EVENT_PER_RUN_MAX });
+		batch = await nextAgentBatch({ limit: SOLANA_SWEEP_BATCH });
 	} catch (err) {
 		return { ...summary, error: err.message || String(err) };
 	}

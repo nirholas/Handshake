@@ -179,7 +179,13 @@ export function classifyChargeFailure({ code, message } = {}) {
  *   again; `pause` means stop scheduling it until the owner resumes.
  */
 export function applyChargeFailure({ outcome, consecutiveFailures = 0 }) {
-	const next = Number(consecutiveFailures) + 1;
+	const current = Number(consecutiveFailures) || 0;
+	// A deliberate skip is not a failure: the counter must not creep toward a
+	// pause across a volatile week.
+	if (outcome === OUTCOME.SKIPPED) {
+		return { pause: false, retry: false, consecutiveFailures: current };
+	}
+	const next = current + 1;
 	if (outcome === OUTCOME.FATAL) return { pause: true, retry: false, consecutiveFailures: next };
 	if (outcome === OUTCOME.AMBIGUOUS) {
 		return { pause: true, retry: false, consecutiveFailures: next };
@@ -191,7 +197,7 @@ export function applyChargeFailure({ outcome, consecutiveFailures = 0 }) {
 /** The charge-row status that goes with an outcome. */
 export function chargeStatusFor(outcome) {
 	if (outcome === OUTCOME.CHARGED) return 'success';
-	if (outcome === OUTCOME.FATAL) return 'aborted';
+	if (outcome === OUTCOME.FATAL || outcome === OUTCOME.SKIPPED) return 'aborted';
 	if (outcome === OUTCOME.AMBIGUOUS) return 'unknown';
 	return 'failed';
 }

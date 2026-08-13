@@ -912,11 +912,24 @@ create index if not exists erc8004_agents_owner
 create index if not exists erc8004_agents_metadata_stale
     on erc8004_agents_index(last_metadata_at nulls first);
 
+-- head_block / blocks_behind exist because `updated_at` alone proves the cron
+-- ran, not that the index caught up: five of the configured chains produce
+-- blocks faster than a fixed chunk can consume them, so their backlog grows
+-- every tick while the cursor looks fresh. chunk_size adapts per chain (grows
+-- while behind, halves on an RPC range rejection) so each provider is used to
+-- its real limit. See migration 20260813210000_erc8004_crawl_head_tracking.sql.
 create table if not exists erc8004_crawl_cursor (
     chain_id       integer primary key,
     last_block     bigint  not null default 0,
-    updated_at     timestamptz not null default now()
+    updated_at     timestamptz not null default now(),
+    head_block     bigint,
+    blocks_behind  bigint  not null default 0,
+    chunk_size     integer not null default 1000,
+    last_error     text
 );
+
+create index if not exists erc8004_crawl_cursor_behind
+    on erc8004_crawl_cursor(blocks_behind desc);
 
 -- ── solana_agents_index — crawled directory of every on-chain Solana agent ──
 -- External agents (NOT three.ws's own agent_identities) from two registries,
@@ -1196,7 +1209,7 @@ create table if not exists subscription_charges (
     constraint subscription_charges_status_check
         check (status in ('success', 'failed', 'aborted', 'unknown')),
     constraint subscription_charges_outcome_check
-        check (outcome is null or outcome in ('charged', 'fatal', 'retryable', 'ambiguous'))
+        check (outcome is null or outcome in ('charged', 'fatal', 'retryable', 'ambiguous', 'skipped'))
 );
 
 create index if not exists idx_subscription_charges_subscription
