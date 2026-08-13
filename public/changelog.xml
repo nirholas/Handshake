@@ -31,12 +31,28 @@
 			<description>The Forever page writes your message into Bitcoin, then keeps a pay screen open while you send the payment from your own wallet. That screen is restored when you come back to the tab. If the inscription order behind it had since expired, the page had no way to say so: the server reported an order it could not find as a server fault, so the pay screen either sat there polling an order that no longer existed, or repainted itself empty with no charge address and no explanation. An order that no longer exists is now reported as exactly that, and the page retires it, tells you nothing was charged, and puts you back at the message box to start a new one. Three related fixes went in with it. An inscription that the provider rejected could come back marked as success, which briefly showed a pay screen for an order that was never created; every provider failure is now reported as one. A receive address with a typo is now caught by its checksum before the order is created, and tells you to recopy it from your wallet, rather than failing later with a message that explained nothing. And an order that expired unpaid is no longer counted as paid.</description>
 		</item>
 		<item>
+			<title>FBX export on the OKX 3D studio works again</title>
+			<link>https://three.ws/api/okx/3d/catalog</link>
+			<guid isPermaLink="false">2026-08-13:FBX export on the OKX 3D studio works again</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The paid FBX export service at /api/okx/3d/fbx-export was handing the conversion engine the wrong parameter names, so every call came back as a rejected request instead of a converted model, and the format you asked for was dropped on the way through. The adapter now speaks the engine's own parameter names, so a rigged GLB converts to FBX (or OBJ, STL, PLY, USDZ, 3MF) and keeps its skeleton, skin weights, and blendshapes. Buyers were never charged for the failed calls. A contract test now checks every OKX studio service against the schema its engine actually publishes, so a renamed parameter cannot slip through again. Separately, a Chinese-language brand brief sent to the Agent Identity Studio now has its first sentence picked out correctly when the prompt director is unavailable, instead of the whole brief crowding out the style hints.</description>
+		</item>
+		<item>
 			<title>Importing an agent you already own on-chain no longer fails because its metadata host is slow</title>
 			<link>https://three.ws/hydrate</link>
 			<guid isPermaLink="false">2026-08-13:Importing an agent you already own on-chain no longer fails because its metadata host is slow</guid>
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>If you registered an agent on-chain, the hydrate page finds it from your connected wallets and offers to import it into three.ws. Importing read two things: the registry entry on the chain, and the registration file the registry points at, which usually lives on IPFS. If that file did not load in five seconds, the whole import was refused, even though the part that actually matters, the chain saying you own the agent, had already answered. Public IPFS gateways throttle constantly, so owners were locked out of their own agents by a slow third party. The import now only needs the chain read to succeed; a registration file that will not load means the agent lands under its on-chain name and the metadata fills in on the next crawl. Two more changes went in alongside it: ownership is now re-checked against the live registry rather than the crawler's cached copy, so an agent you transferred away cannot be imported by the old wallet, and a chain that is unreachable now says so plainly and asks you to retry instead of reporting a generic failure. Separately, confirming a new registration now reads the transaction receipt over the same priority provider list the rest of the platform uses, instead of the slowest public fallbacks, which is what made a freshly mined registration occasionally come back as &quot;not yet mined&quot;.</description>
+		</item>
+		<item>
+			<title>One bad request can no longer use up the whole hourly AI-governance budget</title>
+			<link>https://three.ws/docs/okx-marketplace</link>
+			<guid isPermaLink="false">2026-08-13:One bad request can no longer use up the whole hourly AI-governance budget</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Trust Layer endpoint that screens messages and proposed money moves through IBM Granite Guardian has an hourly platform-wide ceiling on how much model work it will pay for. That ceiling was being charged on every incoming request, including ones that were rejected before any model ran: a malformed body, a missing field, or a request arriving while the service is not configured. A single misbehaving client sending junk could therefore exhaust the shared budget and leave everyone else rate-limited for the rest of the hour without a single real assessment happening. The ceiling is now charged only when an assessment actually runs. Two error replies were also wrong in a way that misled callers: sending the wrong content type or a body over the size limit both came back as generic malformed JSON, so the fix looked like editing your payload when it was really a header or a smaller body. They now return the correct unsupported-media-type and payload-too-large codes, and the endpoint rejects a non-object body with a message that says so.</description>
 		</item>
 		<item>
 			<title>The $THREE tile on the live heatmap shows real buy pressure again</title>
@@ -47,6 +63,14 @@
 			<description>The 3D market heatmap on agent screens pins $THREE as its anchor tile, and that tile was meant to carry a community pulse alongside price and volume. The pulse read pump.fun's public comments feed, which pump.fun has since removed from its open API, so the tile had been quietly shipping without it: no error, just a signal that never appeared. The anchor now carries its 24h order flow instead, read from the same live market data the tile already fetches: how many of the last day's swaps were buys versus sells, as a percentage and a leaning score. Hovering the anchor shows it, and the screen's spoken market narration calls it out. Two related fixes landed with it. The wallet and coin intel endpoints now reject a malformed address with a clear error instead of answering as though the address simply had no history. And a total market-data outage now returns a proper error rather than an anchor tile with no numbers in it.</description>
 		</item>
 		<item>
+			<title>The 3D sentiment heatmap shows live $THREE order flow again after pump.fun retired its comments API</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-08-13:The 3D sentiment heatmap shows live $THREE order flow again after pump.fun retired its comments API</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The heatmap on agent screens pins $THREE at the centre and used to enrich that tile with a sentiment reading scored from pump.fun coin-page comments. pump.fun removed that public comments feed, so the reading silently disappeared: the tooltip row and the narrator's line about it simply stopped rendering, with nothing to say why. The anchor tile now carries a live 24h order-flow pulse instead, read from the same market data the tile already fetches: how the last day of trades split between buys and sells, shown as a buy percentage in the tooltip and folded into the narrator's read of the tape. It is real observed swap activity and costs no extra upstream call. Two related fixes: a total market-data outage with no cached field now returns a clear error instead of a single lifeless tile, and the wallet and coin intel endpoints answer a mistyped address with a plain bad-request message rather than treating it as a real wallet with no history.</description>
+		</item>
+		<item>
 			<title>The AI safety check stays available even when someone floods it with bad requests</title>
 			<link>https://three.ws/docs/ibm</link>
 			<guid isPermaLink="false">2026-08-13:The AI safety check stays available even when someone floods it with bad requests</guid>
@@ -55,12 +79,28 @@
 			<description>Every message and every autonomous money move an avatar makes is screened by the IBM Granite Guardian safety check before it runs. That check has an hourly platform-wide ceiling so one busy hour cannot run up an unbounded inference bill. The ceiling was being charged on every request that arrived, including ones that were rejected on the spot for a malformed body and never reached the safety model at all. A single client sending junk could therefore burn the whole platform hour and leave everyone else refused for real, valid checks. The ceiling is now charged only when an actual screening runs. Two error replies were also corrected: sending the wrong content type now answers 415 and an oversized body answers 413, instead of both being reported as generic bad input, so a caller can see which of the two to fix.</description>
 		</item>
 		<item>
+			<title>The decentralized inference demo stops sending your prompt to a gateway that is no longer Livepeer</title>
+			<link>https://three.ws/demos</link>
+			<guid isPermaLink="false">2026-08-13:The decentralized inference demo stops sending your prompt to a gateway that is no longer Livepeer</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The decentralized inference lab runs the same prompt through our own inference chain and through a Livepeer AI gateway, side by side. The free no-key gateway it used has not been Livepeer since early August: that hostname now points at an unrelated server. The demo kept posting prompts to it on every run and showing a bare connection error. It no longer dials that host at all. The decentralized card now reports the gateway as unavailable and names the two settings that bring it back (a Livepeer Studio key, or the address of a self-hosted gateway), and a self-hosted address is now honored by both this demo and the Forge Livepeer lane from one shared setting. The call also has a time limit, so a gateway that accepts the connection and then goes quiet can no longer hold up the reply from the other side of the comparison.</description>
+		</item>
+		<item>
 			<title>The extra views behind a 3D generation stop being rejected for the wrong file type</title>
 			<link>https://three.ws/create</link>
 			<guid isPermaLink="false">2026-08-13:The extra views behind a 3D generation stop being rejected for the wrong file type</guid>
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Before a prompt becomes a 3D model, the forge draws a reference picture, then draws two more views of it so the reconstruction can see the sides and back instead of guessing them. Those extra views sent the reference picture to the image model labelled as a PNG no matter what it actually was, so a JPEG or WebP reference could be refused outright and you would quietly get fewer views and a rougher model. The real format is now read from the picture and sent with it. A reference that is unreachable, oversized, or not actually an image is now refused with a clear reason instead of being forwarded as-is and failing further down. And every image this step fetches, including the optional edit mask, now goes through the same address safety check the rest of the platform uses, so a supplied link cannot be aimed at an internal address.</description>
+		</item>
+		<item>
+			<title>The image step behind 3D generation now times out, checks its inputs, and stops mislabelling them</title>
+			<link>https://three.ws/create</link>
+			<guid isPermaLink="false">2026-08-13:The image step behind 3D generation now times out, checks its inputs, and stops mislabelling them</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Before a prompt becomes a 3D model, the forge draws a reference picture, then draws two extra views of it so the reconstruction can see the sides and back instead of guessing them. Three problems sat in that step. The calls to the image service had no time limit, so a connection that opened and then stalled held a generation open indefinitely rather than falling back to the free image lane; they now give up after ninety seconds and hand off. The extra views sent the reference picture to the model labelled as a PNG no matter what it actually was, so a JPEG or WebP reference could be rejected and you would quietly get fewer views; the real format is now read from the picture and sent with it. And a reference that is unreachable or oversized is refused with a clear reason instead of being forwarded as-is. Alongside that, every image this step fetches, including the optional mask, now goes through the same address safety check the rest of the platform uses, so a supplied URL cannot be aimed at an internal address.</description>
 		</item>
 		<item>
 			<title>The Money-Cam stops going dark when its feed stumbles, and stops replaying old transfers as new light</title>
@@ -77,6 +117,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Remixes Received board on /rankings was meant to answer one question: how many other people built on top of your work. It was counting more than that. Every time you refined one of your own models the forge recorded the new version as a derivative of the old one, and the board counted it, so re-refining your own model climbed the ranking exactly like someone else remixing you would. Generations that failed partway through were counted too. Both are gone: a row only counts when it is a finished model made by a different creator, and an anonymous remix of your work still counts because that really is someone else. Ranks on that one metric will shift accordingly. Separately, the Daily Match standings endpoint now sends the cross-origin header the rest of our public read-only endpoints send, so anything reading the board from outside three.ws (dashboards, agent tooling, embeds) gets the data instead of a blocked request.</description>
+		</item>
+		<item>
+			<title>The Reasoning Ledger stops hiding older history, and private agents stay private</title>
+			<link>https://three.ws/ledger</link>
+			<guid isPermaLink="false">2026-08-13:The Reasoning Ledger stops hiding older history, and private agents stay private</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every agent's Reasoning Ledger is a public, tamper-evident record of what it decided and why, so the reads behind it have to be honest. Three things were not. Asking for a page larger than the 200-decision maximum quietly returned a trimmed page and then reported that there was nothing after it, so a caller reading the whole history could stop early believing they had seen all of it; page sizes are now checked against the real maximum and the follow-on cursor is always correct. A malformed page cursor (a word where a sequence number belongs) came back as a generic internal error instead of saying what was wrong, and an unbounded search filter could drive a full scan of an agent's history; both now return a clear bad-request reply. And the timeline was publishing the name and picture of agents whose owners had made them private or deleted them: the decision history stays public, but an unlisted agent now appears as its id alone. The independent verification endpoint also shows the on-chain anchor even when verification fails, which is exactly when an auditor needs to see the commitment the altered history no longer matches.</description>
 		</item>
 		<item>
 			<title>Docs · GitHub memory seeding</title>
