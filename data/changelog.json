@@ -3,6 +3,33 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Rate ceilings on stud listings and inscription status polls",
+			"summary": "Two more endpoints joined the platform rate limiter. Listing or unlisting an agent on the stud market is now capped, so a scripted flood cannot churn the market ordering, and the anonymous Bitcoin inscription status poll is capped at a level that still lets a long inscription wait clear across a couple of open tabs. Both ceilings are deliberately non-critical: if the limiter's backing store is ever down, an owner can still unlist their agent and a paying user's status screen keeps working.",
+			"tags": [
+				"improvement",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Launchpad paid pages now describe themselves correctly to paying agents",
+			"summary": "When an agent reaches a paid Launchpad page (a pay-per-question concierge or a gated showroom unlock) without payment, the 402 challenge it receives now carries that page type's own bazaar discovery document: the exact field to send, the shape of the answer that comes back, and a worked example. Before, the challenge fell back to a generic entry that told crawlers to send a model-validation body, so an agent that indexed a concierge page from discovery would never send the one field it actually needs. An agent can now go from discovery to a settled paid call using nothing but the challenge itself.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/launchpad"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "An API key can no longer be minted with zero scopes",
+			"summary": "Sending an explicitly empty scope list to the key-minting endpoint used to succeed and issue a credential that could never pass a permission check: the key looked fine, then failed every call with nothing explaining why. The dashboard already refused an empty selection; the raw API now enforces the same rule for every other client and answers with a clear error instead of minting a dead key. Repeated scopes in one request are also deduplicated, so the grants shown on a key are listed once each.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/api-reference"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Every tutorial page now names itself, its in-page links work, and the free-3D tutorials match the engine that actually runs",
 			"summary": "All 69 tutorials share one page template, and the browser tab, the bookmark, and the shared link for every one of them read the same placeholder: 'three.ws - Tutorial'. The per-tutorial title was being written correctly and then translated back to the placeholder a moment later, so nothing downstream ever saw it; search engines were served the generic title and description on the text-to-3D tutorial too. Each tutorial now carries its own title, description, and social card everywhere. Jump links inside a tutorial (the 'see What's next' style references) were computing heading targets a different way than the documentation viewer does, so they scrolled nowhere; they now match, which also repairs the cross-tutorial links that pointed into them. On content: the free NVIDIA tutorial said every free generation runs on NVIDIA NIM, when draft and standard actually run on our own GPU workers first and fall through to the NVIDIA lane when those are busy, so it now explains both rungs and how to pin the NVIDIA one deliberately. The 3D API tutorial's download script threw away a busy-lane response as a fatal error; it now waits the interval the API asks for and retries, which is what makes a batch of prompts finish unattended. Every command and code sample on these pages was executed against production before publishing.",
 			"tags": [
@@ -790,6 +817,80 @@
 				"security"
 			],
 			"link": "/docs/farcaster-memory-seeding"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The repository guards reference now covers every local guard",
+			"summary": "With no CI on this repository, every protection runs locally, and the guards reference page now names each local guard, what it protects, and at which stage it runs. The page is itself guarded: an audit script checks it against the guard registry on every gate run, so the list and its stage column cannot quietly go stale.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/guards"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The notification tray no longer overlaps the header on narrow screens",
+			"summary": "On narrow widths the notification tray could open on top of the page header, covering the navigation it hangs from. The tray now keeps below the header at every width, across every page that carries it.",
+			"tags": [
+				"fix"
+			],
+			"link": "/notifications"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The AgenC SDK now exports the AgenCError its README promises",
+			"summary": "The package README documents rejections as a typed AgenCError with a .code, but the SDK only exported the class under another name, so the documented catch never matched anything. The same class is now exported under both names as an alias, in the runtime and in the TypeScript definitions, and the test suite asserts a thrown error is an instance of each. Code written from the README now works as written.",
+			"tags": [
+				"sdk",
+				"fix"
+			],
+			"link": "/docs/agenc"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The per-counterparty spending cap now binds capability-authorized spends too",
+			"summary": "A capability-authorized spend takes its own reserve path, and the per-counterparty ceiling was only checked on the ordinary one, so a spend authorized through a capability simply did not have that cap. The counterparty ceiling is now part of the same single check-and-reserve statement on both paths, and a rejection names which cap caught it, so an owner is no longer told to wait out a daily window they never hit when the real cause is a concentrated payee.",
+			"tags": [
+				"security"
+			],
+			"link": "/docs/agent-wallet-api"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "Disconnecting X now deletes the memories it seeded",
+			"summary": "Unlinking your X account used to leave the distilled posts sitting on the agent, which made the consent screen a lie. Disconnect now revokes every seeding grant the link authorized, deletes the memories those grants produced, and reports both counts back. The Farcaster seeding client also loads its vendor SDK lazily, so the keyless hub lane starts even where that package is missing.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/docs/x-memory-seeding"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "Forge stops promising a rig it cannot deliver",
+			"summary": "When no rig worker is configured, the Forge still reported rerig as supported, so every rerig submit failed against a service with no rig endpoint and the reconstruction silently came back unrigged. Rerig support is now resolved from the rig worker's own address alone, so it is honestly unsupported when that worker is absent and the finalize step skips the rig chain cleanly. Rig failures also carry the worker's real error taxonomy, so the status endpoint can tell you what went wrong instead of an opaque id.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "Add funds can now fund a SOL-spending wallet with SOL",
+			"summary": "The Add funds overlay could only ever buy USDC, because the onramp link endpoint had the asset hardcoded. A wallet that pays in native SOL ended up funded with a token it cannot spend. The onramp now takes the asset (USDC or SOL, both settling on Solana), maps each to its own Coinbase Pay ticker and fallback buy page, and the overlay switches its copy, the asset it buys, and the balance it polls together, so a wallet can no longer be funded with the wrong asset.",
+			"tags": [
+				"feature"
+			],
+			"link": "/wallet"
+		},
+		{
+			"date": "2026-08-11",
+			"title": "The status page shows the agent index's freshness as numbers, not prose",
+			"summary": "The agent-index subsystem on the status page now publishes structured freshness metrics as pills beside its sentence: the median Solana indexing lag, how many Solana agents are indexed, the EVM indexing lag, and the total events indexed. A reader can now see at a glance how far behind the on-chain index is, instead of parsing a figure buried in the detail line.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/status"
 		},
 		{
 			"date": "2026-08-11",
@@ -3220,6 +3321,15 @@
 				"feature"
 			],
 			"link": "/mcp-tools"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "The docs world recovers from 3D failures instead of stranding you",
+			"summary": "Three failure paths in the walkable documentation world are now recoverable. When the 3D scene failed to start, the fallback panel focused its retry button while the panel was still hidden, so the recovery action was unreachable without hunting for it; the panel now reveals first, then focuses. Both catch-all error handlers showed a bare fallback with no way back, even though the usual cause (a browser tab that has run out of WebGL contexts) is cleared by a reload; both now explain what happened and offer the reload. And a character whose idle animation failed to load was frozen in a T-pose forever; the player now only records a clip as current once it actually plays, and relaxes undriven arms so unmapped rigs rest naturally.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/docs-world"
 		},
 		{
 			"date": "2026-07-30",
@@ -20769,6 +20879,23 @@
 				"security"
 			],
 			"link": "/forge"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Screen caster: stopping your caster no longer posts a phantom error",
+			"summary": "The self-hosted agent-screen-caster service (the one that gives your agent a live, watchable browser screen) used to push a scary \"Task error\" line into your agent's public activity log every time you stopped it with Ctrl-C, because the shutdown looked like a crash from the inside. Stopping the caster is now recognised as a clean shutdown and leaves the log untouched, so watchers only ever see real errors. The whole path was re-verified end to end against production: key minting from the dashboard flow, live JPEG frames on the watch stream, and the retry policy that keeps a long-running caster alive through rate limits and server blips.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The free inference-receipt verifier is now in the public x402 catalog",
+			"summary": "/api/x402/inference-verify audits a metered-inference receipt from a paid llm-proxy call: it re-checks the issuer signature, the node's response signature, the prompt and response hashes against the raw text you supply, whether the settlement transaction actually confirmed on-chain, and whether the issuer is one of the platform's published signers. It is free and keyless, but it was missing from docs/x402-endpoints.md, so buyers and node operators had no way to find it. It now has a row in the free read surfaces table alongside the other verifier tools.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/x402-endpoints"
 		}
 	]
 }

@@ -94,7 +94,7 @@ async function loadVoices() {
 		for (const v of voices) {
 			const opt = document.createElement('option');
 			opt.value = v.id;
-			opt.textContent = v.name + (v.description ? ` — ${v.description}` : '');
+			opt.textContent = v.name + (v.description ? ` · ${v.description}` : '');
 			select.appendChild(opt);
 		}
 		select.value = state.settings.voice || data.default || voices[0].id;
@@ -244,7 +244,7 @@ async function renderDiagnostics() {
 	if (!state.session) {
 		sessionEl.textContent = 'not signed in';
 		sessionEl.className = 'diag-value offline';
-		accountEl.textContent = '—';
+		accountEl.textContent = 'none';
 		signOutBtn.classList.add('hidden');
 		return;
 	}

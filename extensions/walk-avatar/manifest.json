@@ -3,7 +3,7 @@
 	"name": "three.ws Walk Avatar",
 	"short_name": "Walk Avatar",
 	"version": "1.0.0",
-	"description": "Walk your three.ws avatar on any site and have it read pages aloud — a living 3D browsing companion.",
+	"description": "Walk your three.ws avatar on any site and have it read pages aloud: a living 3D browsing companion.",
 	"homepage_url": "https://three.ws/extension",
 
 	"icons": {

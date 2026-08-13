@@ -271,6 +271,7 @@ directory.
 | `/api/x402/echo`                   | free     | httpbin for x402 — decodes your `X-PAYMENT` header (signatures redacted) and returns a local verify verdict without settling. See [x402 dev tools](x402-dev-tools.md). |
 | `/api/x402/debug`                  | free     | Diagnoses a failed 402 exchange (`{challenge, payment, response}`) into an ordered `{severity, field, problem, fix}` list. See [x402 dev tools](x402-dev-tools.md).     |
 | `/api/x402/verify-receipt`         | free     | Recomputes a paid response's SHA-256 attestation and confirms a settlement tx on-chain. See [x402 dev tools](x402-dev-tools.md).                                       |
+| `/api/x402/inference-verify`       | free     | Audits a metered-inference receipt from a paid `llm-proxy` call: per-check verdicts for the issuer signature, the node's response signature, prompt/response hash re-derivation from raw text, on-chain settlement confirmation, and whether the issuer matches the platform's published signers. See [Run an inference node](inference-node-operator.md). |
 
 ## $THREE only
 

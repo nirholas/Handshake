@@ -144,7 +144,7 @@ function renderEmpty(gridEl, tab) {
 function renderError(gridEl, errorEl, tab, message) {
 	gridEl.innerHTML = '';
 	errorEl.innerHTML = `
-		<span class="err-text">Couldn't load avatars — ${message}</span>
+		<span class="err-text">Couldn't load avatars: ${message}</span>
 		<button class="retry-btn" id="retry-${tab}">Retry</button>`;
 	errorEl.style.display = 'flex';
 	errorEl.querySelector(`#retry-${tab}`)?.addEventListener('click', () => loadAvatars(tab));

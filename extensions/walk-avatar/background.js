@@ -181,6 +181,36 @@ function broadcast(message) {
 	});
 }
 
+// ── Re-mount after full page loads ──────────────────────────────────────────
+// The popup records per-tab enable state in chrome.storage.session
+// (tab_enabled_<tabId>). A full navigation wipes the content scripts, so when
+// an enabled tab finishes loading, re-inject and re-mount the avatar. The
+// allow/blocklist is re-evaluated against the new URL, so navigating an
+// enabled tab onto a filtered site keeps the avatar off it.
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+	if (changeInfo.status !== 'complete' || !tab.url) return;
+	if (!/^https?:/i.test(tab.url)) return;
+	if (tab.url.startsWith(THREEWS_ORIGIN + '/extension/auth-callback')) return;
+
+	const key = `tab_enabled_${tabId}`;
+	chrome.storage.session.get(key).then(async (stored) => {
+		if (!stored[key]) return;
+		const settings = await getSettings();
+		if (!siteAllowed(tab.url, settings)) return;
+		await injectContent(tabId);
+		await chrome.tabs.sendMessage(tabId, {
+			type: 'walk:mount',
+			avatarId: settings.avatarId,
+		}).catch(() => {});
+	}).catch(() => {});
+});
+
+// Drop the per-tab enable flag once its tab is gone, so session storage never
+// accumulates keys for closed tabs.
+chrome.tabs.onRemoved.addListener((tabId) => {
+	chrome.storage.session.remove(`tab_enabled_${tabId}`).catch(() => {});
+});
+
 // ── Auth callback capture ─────────────────────────────────────────────────────
 // The popup opens three.ws/login?next=/extension/auth-callback. After a
 // successful sign-in the site lands on /extension/auth-callback, which mints a
