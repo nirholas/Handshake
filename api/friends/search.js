@@ -8,6 +8,11 @@ import { clientIp, limits } from '../_lib/rate-limit.js';
 import { resolveAccount } from '../_lib/account-auth.js';
 import { searchUsers } from '../_lib/friends-store.js';
 
+// Display names and usernames top out far below this. A term longer than the cap
+// is not a search, it is a large ILIKE pattern pointed at a sequential scan of
+// every account, so it is rejected here rather than handed to Postgres unbounded.
+const MAX_QUERY_LEN = 200;
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -20,6 +25,9 @@ export default wrap(async (req, res) => {
 
 	const url = new URL(req.url, 'http://x');
 	const q = url.searchParams.get('q') || '';
+	if (q.length > MAX_QUERY_LEN) {
+		return error(res, 400, 'bad_query', `keep the search term under ${MAX_QUERY_LEN} characters`);
+	}
 	const results = await searchUsers(auth.userId, q);
 	return json(res, 200, { data: { results } });
 });

@@ -203,13 +203,35 @@ export async function listGraph(meId) {
 // `beforeId` paginates older history (cursor = the oldest id currently shown).
 export async function getThread(meId, otherId, { limit = 50, beforeId = null } = {}) {
 	const cap = Math.min(Math.max(limit, 1), 100);
-	const rows = beforeId
+
+	// Resolve the cursor inside THIS thread before paging on it. Reading
+	// created_at for any id in the table let a caller page against the timestamp
+	// of a message they cannot see, and an id that resolved to no row made the
+	// comparison `created_at < null`, which matches nothing: an unknown, deleted,
+	// or foreign cursor answered "no older messages" instead of saying the cursor
+	// was bad, and the client stopped paginating on a lie.
+	let before = null;
+	if (beforeId) {
+		const [cursor] = await sql`
+			select created_at from direct_messages
+			where id = ${beforeId}
+			  and ((sender_id = ${meId} and recipient_id = ${otherId})
+			    or (sender_id = ${otherId} and recipient_id = ${meId}))
+			limit 1
+		`;
+		if (!cursor) {
+			throw Object.assign(new Error('That cursor is not part of this thread.'), { status: 400, code: 'bad_cursor' });
+		}
+		before = cursor.created_at;
+	}
+
+	const rows = before
 		? await sql`
 			select id, sender_id, recipient_id, body, created_at, read_at
 			from direct_messages
 			where ((sender_id = ${meId} and recipient_id = ${otherId})
 			    or (sender_id = ${otherId} and recipient_id = ${meId}))
-			  and created_at < (select created_at from direct_messages where id = ${beforeId})
+			  and created_at < ${before}
 			order by created_at desc
 			limit ${cap}
 		`
@@ -288,6 +310,13 @@ export async function muteUser(meId, targetId) {
 	if (targetId === meId) {
 		throw Object.assign(new Error('You cannot mute yourself.'), { status: 400, code: 'self_mute' });
 	}
+	// user_mutes.muted_id is a foreign key to users(id). Inserting a well-formed
+	// but unknown id therefore raised a 23503 with no `status` on it, which the
+	// endpoint could only report as a 500 (plus a Sentry capture and an ops alert)
+	// for what is really a caller mistake. Resolve the target first and answer 404,
+	// the same contract sendRequest() already gives an unknown target.
+	const [target] = await sql`select id from users where id = ${targetId} and deleted_at is null`;
+	if (!target) throw Object.assign(new Error('User not found.'), { status: 404, code: 'not_found' });
 	await sql`
 		insert into user_mutes (muter_id, muted_id) values (${meId}, ${targetId})
 		on conflict (muter_id, muted_id) do nothing
