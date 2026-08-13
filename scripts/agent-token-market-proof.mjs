@@ -111,11 +111,38 @@ async function mintsFromCluster() {
 	return found;
 }
 
+/**
+ * The widget calls `/api/pump/curve` as a same-origin relative URL. There is no
+ * HTTP server in a script run, so route that one path to the handler the real
+ * route relays verbatim (api/pump/curve.js is a thin shell over getCurveView).
+ * Same code, same body, same cluster — only the transport is skipped. Every
+ * other request falls through to the network untouched.
+ */
+function routeApiCallsInProcess() {
+	const realFetch = globalThis.fetch;
+	globalThis.fetch = async (input, init) => {
+		const href = String(input?.url || input);
+		if (href.startsWith('/api/pump/curve')) {
+			const params = new URLSearchParams(href.split('?')[1] || '');
+			const result = await getCurveView({
+				mint: params.get('mint') || '',
+				network: params.get('network') === 'devnet' ? 'devnet' : 'mainnet',
+			});
+			return new Response(JSON.stringify(result.body), {
+				status: result.httpStatus,
+				headers: { 'content-type': 'application/json' },
+			});
+		}
+		return realFetch(input, init);
+	};
+}
+
 async function main() {
 	// The renderer is browser code; give it a real DOM to render into.
 	const dom = new JSDOM('<!doctype html><body></body>');
 	globalThis.window = dom.window;
 	globalThis.document = dom.window.document;
+	routeApiCallsInProcess();
 	const { mapCurve, mountCoinStatus } = await import('../src/pump/coin-status-card.js');
 
 	console.log(`\nAgent-token market proof — ${network}`);

@@ -66,8 +66,8 @@ const SOLANA_LANES = {
 	'solana:etwtrabzayq6imfeykouru166vu2xqa1': { label: 'Solana devnet', defaultRpc: 'https://api.devnet.solana.com' },
 };
 
-function laneOf(lowercaseNetwork) {
-	return SOLANA_LANES[lowercaseNetwork] || { label: lowercaseNetwork, defaultRpc: null };
+function laneOf(lowercaseNetwork, network) {
+	return SOLANA_LANES[lowercaseNetwork] || { label: String(network), defaultRpc: null };
 }
 
 // Read-only on-chain confirmation of the settlement transaction. Solana and
@@ -86,7 +86,7 @@ async function confirmOnchain(receipt, rpcUrl) {
 	// Name the lane from the receipt's own CAIP-2 id. Reporting anything that is
 	// not devnet as "mainnet" would tell an operator their payment settled on a
 	// chain it never touched, which is the one thing a verifier must never do.
-	const { label, defaultRpc } = laneOf(n);
+	const { label, defaultRpc } = laneOf(n, network);
 	const url = rpcUrl || defaultRpc;
 	if (!url) {
 		return {
