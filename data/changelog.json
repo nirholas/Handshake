@@ -3,12 +3,52 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "The Reasoning Ledger stops hiding older history, and private agents stay private",
+			"summary": "Every agent's Reasoning Ledger is a public, tamper-evident record of what it decided and why, so the reads behind it have to be honest. Three things were not. Asking for a page larger than the 200-decision maximum quietly returned a trimmed page and then reported that there was nothing after it, so a caller reading the whole history could stop early believing they had seen all of it; page sizes are now checked against the real maximum and the follow-on cursor is always correct. A malformed page cursor (a word where a sequence number belongs) came back as a generic internal error instead of saying what was wrong, and an unbounded search filter could drive a full scan of an agent's history; both now return a clear bad-request reply. And the timeline was publishing the name and picture of agents whose owners had made them private or deleted them: the decision history stays public, but an unlisted agent now appears as its id alone. The independent verification endpoint also shows the on-chain anchor even when verification fails, which is exactly when an auditor needs to see the commitment the altered history no longer matches.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/ledger"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The 3D sentiment heatmap shows live $THREE order flow again after pump.fun retired its comments API",
+			"summary": "The heatmap on agent screens pins $THREE at the centre and used to enrich that tile with a sentiment reading scored from pump.fun coin-page comments. pump.fun removed that public comments feed, so the reading silently disappeared: the tooltip row and the narrator's line about it simply stopped rendering, with nothing to say why. The anchor tile now carries a live 24h order-flow pulse instead, read from the same market data the tile already fetches: how the last day of trades split between buys and sells, shown as a buy percentage in the tooltip and folded into the narrator's read of the tape. It is real observed swap activity and costs no extra upstream call. Two related fixes: a total market-data outage with no cached field now returns a clear error instead of a single lifeless tile, and the wallet and coin intel endpoints answer a mistyped address with a plain bad-request message rather than treating it as a real wallet with no history.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/docs/api-reference"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "One bad request can no longer use up the whole hourly AI-governance budget",
+			"summary": "The Trust Layer endpoint that screens messages and proposed money moves through IBM Granite Guardian has an hourly platform-wide ceiling on how much model work it will pay for. That ceiling was being charged on every incoming request, including ones that were rejected before any model ran: a malformed body, a missing field, or a request arriving while the service is not configured. A single misbehaving client sending junk could therefore exhaust the shared budget and leave everyone else rate-limited for the rest of the hour without a single real assessment happening. The ceiling is now charged only when an assessment actually runs. Two error replies were also wrong in a way that misled callers: sending the wrong content type or a body over the size limit both came back as generic malformed JSON, so the fix looked like editing your payload when it was really a header or a smaller body. They now return the correct unsupported-media-type and payload-too-large codes, and the endpoint rejects a non-object body with a message that says so.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/docs/okx-marketplace"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "FBX export on the OKX 3D studio works again",
 			"summary": "The paid FBX export service at /api/okx/3d/fbx-export was handing the conversion engine the wrong parameter names, so every call came back as a rejected request instead of a converted model, and the format you asked for was dropped on the way through. The adapter now speaks the engine's own parameter names, so a rigged GLB converts to FBX (or OBJ, STL, PLY, USDZ, 3MF) and keeps its skeleton, skin weights, and blendshapes. Buyers were never charged for the failed calls. A contract test now checks every OKX studio service against the schema its engine actually publishes, so a renamed parameter cannot slip through again. Separately, a Chinese-language brand brief sent to the Agent Identity Studio now has its first sentence picked out correctly when the prompt director is unavailable, instead of the whole brief crowding out the style hints.",
 			"tags": [
 				"fix"
 			],
 			"link": "/api/okx/3d/catalog"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The image step behind 3D generation now times out, checks its inputs, and stops mislabelling them",
+			"summary": "Before a prompt becomes a 3D model, the forge draws a reference picture, then draws two extra views of it so the reconstruction can see the sides and back instead of guessing them. Three problems sat in that step. The calls to the image service had no time limit, so a connection that opened and then stalled held a generation open indefinitely rather than falling back to the free image lane; they now give up after ninety seconds and hand off. The extra views sent the reference picture to the model labelled as a PNG no matter what it actually was, so a JPEG or WebP reference could be rejected and you would quietly get fewer views; the real format is now read from the picture and sent with it. And a reference that is unreachable or oversized is refused with a clear reason instead of being forwarded as-is. Alongside that, every image this step fetches, including the optional mask, now goes through the same address safety check the rest of the platform uses, so a supplied URL cannot be aimed at an internal address.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/create"
 		},
 		{
 			"date": "2026-08-13",
