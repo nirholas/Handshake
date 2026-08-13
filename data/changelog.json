@@ -3,6 +3,60 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Retro computing prompts are no longer refused by the 3D Studio safety gate",
+			"summary": "The free 3D Studio screens every prompt for age-inappropriate content before it starts generating. That screen matched the bare abbreviation \"cp\" as a whole word, so ordinary modeling prompts like \"a CP/M retro computer terminal\" or \"a CP violation physics diagram\" were refused, and refused under the harshest category the screen has. The abbreviation is gone and the spelled-out terms it stood for are now matched directly, so those prompts generate normally while the genuinely harmful ones are still blocked before any work starts.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Adding your agent to a LobeHub chat no longer loses its name when one lookup stumbles",
+			"summary": "Before a chat host renders your agent, it asks three.ws to confirm the agent exists and to hand back the sites you allow it to be embedded on. Those are two separate reads, and if the second one hiccuped the whole answer was thrown away: the host was told the agent could not be confirmed and was given no name, even though the first read had just found it. The confirmation and the name now survive a stumble on the embed settings. Separately, a misspelled address in a host's setup returned an explanation the browser refused to show, so integrators saw an unexplained network failure instead of the message naming their typo. That message now reaches them.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The trial queue headline now names the mint that actually holds the most",
+			"summary": "Trial Conversions shows sellers one headline number: the revenue waiting in the trial queue, with the token it is denominated in. Totals are kept separately per token, because ten of a six-decimal token and ten of a nine-decimal one are not the same amount, but the choice of which total to promote to the headline was made by comparing the raw stored integers across tokens. Those integers are scaled differently per token, so 0.9 of one token outranked 5 of another: a seller pricing skills in two currencies saw the smaller pile in the headline while the larger one sat below it. The totals are now compared at the same scale, so the headline is the biggest real one and the per-token list under it is ordered to match.",
+			"tags": [
+				"fix"
+			],
+			"link": "/conversions"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all",
+			"summary": "The API keys table in your developer dashboard listed every key you had ever created, but nothing on the row said which ones were still usable. A key you had already revoked looked exactly like a live one, right down to a Revoke button that could only ever fail, and a key that had passed its expiry date looked perfectly healthy until a request mysteriously stopped working. Every key now carries an Active, Expired, or Revoked label, dead keys are dimmed, and the Revoke button is only shown where it can do something. The connection tester also stops picking an expired key to test with. Separately, creating a key through the API with an explicitly empty permission list used to succeed and hand back a credential that could not do anything, with nothing to tell you so; that request is now rejected with a clear message, and a permission listed twice is stored once.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/dashboard/api"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "A Terms acceptance is only recorded when we could actually read the request",
+			"summary": "When you agree to the Terms of Service or the real-funds risk disclosure, three.ws keeps a durable, permanent record of which version you accepted and when. The Terms endpoint could write one of those records from a request whose contents it never managed to read: a request sent in the wrong format, or one too large to accept, was answered as a successful acceptance of the current Terms even though nothing in it had been understood. That is the one thing an evidentiary record must never do, and it no longer happens. Both acceptance endpoints now refuse an unreadable request and say precisely what was wrong with it (too large, wrong format, or unreadable) instead of blaming the version field, and they record nothing on those paths.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/legal/tos"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The Livepeer comparison demo reads every answer shape an orchestrator can return",
+			"summary": "The side-by-side inference demo runs your prompt on the three.ws provider chain and on a Livepeer AI gateway at the same time. Orchestrators on that network run different inference servers, and some return the answer as a list of text pieces rather than one block of text. The demo could not read that form: a perfectly good answer came back as a card reading 'leg_failed' with a programming error in it, and the gateway and timing details vanished from the card. Those answers now render normally, and a reply in a shape nobody recognises is reported as an empty response with the gateway, latency, and model still shown.",
+			"tags": [
+				"fix"
+			],
+			"link": "/demos/livepeer-inference"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Your friends list no longer goes blank when the database is mid-upgrade, and search finds unusual names",
 			"summary": "Two problems in the friends area. The friends list is built to survive an environment where the social tables have not been created yet: it shows an empty list instead of an error. That safety net was matching on the wording of the database error rather than its type, and the wording it looked for also appears when a single column is missing, which is what a partly-applied upgrade looks like. So during an upgrade the page answered normally and told you that you had no friends, no incoming requests, and no pending invites, with nothing anywhere reporting a fault. The safety net now recognises only a genuinely missing table, and any other database problem is reported as the error it is. Separately, friend search could not find a display name containing a backslash, and a search term ending in one quietly searched for something else, because the search was not escaping the backslash before handing the term to the database.",
 			"tags": [

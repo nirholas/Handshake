@@ -158,6 +158,33 @@ describe('POST /api/keys', () => {
 		expect(sqlState.calls).toHaveLength(0);
 	});
 
+	it('rejects an explicitly empty scope instead of minting a powerless key', async () => {
+		const { status, body } = await invoke(keysHandler, {
+			method: 'POST',
+			url: '/api/keys',
+			body: { name: 'scopeless', scope: '   ' },
+		});
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+		expect(sqlState.calls).toHaveLength(0);
+	});
+
+	it('applies the default scope when the field is omitted entirely', async () => {
+		sqlState.queue.push([{ id: KEY_ID, name: 'defaults', prefix: 'sk_live_abcd', scope: '', expires_at: null, created_at: '2026-08-13T01:04:36.801Z' }]);
+		await invoke(keysHandler, { method: 'POST', url: '/api/keys', body: { name: 'defaults' } });
+		expect(sqlState.calls[0].values).toContain('avatars:read avatars:write');
+	});
+
+	it('stores a repeated scope once', async () => {
+		sqlState.queue.push([{ id: KEY_ID, name: 'dupes', prefix: 'sk_live_abcd', scope: '', expires_at: null, created_at: '2026-08-13T01:04:36.801Z' }]);
+		await invoke(keysHandler, {
+			method: 'POST',
+			url: '/api/keys',
+			body: { name: 'dupes', scope: 'avatars:read avatars:read profile' },
+		});
+		expect(sqlState.calls[0].values).toContain('avatars:read profile');
+	});
+
 	it('rejects a missing name with a structured 400', async () => {
 		const { status, body } = await invoke(keysHandler, {
 			method: 'POST',

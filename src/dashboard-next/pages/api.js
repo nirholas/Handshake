@@ -156,9 +156,11 @@ const KEY_PLACEHOLDER = 'YOUR_API_KEY';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+// The MCP section pre-fills its snippets and its live handshake test with this
+// key, so it has to be one that can still authenticate: an expired key is as
+// unusable as a revoked one and would fail the test with no visible reason.
 function pickDisplayKey(keys) {
-	const live = keys.find((k) => !k.revoked_at);
-	return live || null;
+	return keys.find((k) => !keyStatus(k).dead) || null;
 }
 
 function pickDefaultEmbedTarget(avatars, widgets, agents) {
@@ -492,7 +494,19 @@ function renderKeysEmpty() {
 	});
 }
 
-function renderKeysTable(keys) {
+// GET /api/keys returns the caller's full history, revoked and expired keys
+// included, so the table has to say which rows are still usable. Without this a
+// revoked key rendered identically to a live one and kept an armed Revoke
+// button that could only ever answer 404, and an expired key looked healthy
+// right up until a request failed with no explanation.
+export function keyStatus(k) {
+	if (k.revoked_at) return { label: 'Revoked', tag: 'danger', dead: true, at: k.revoked_at };
+	if (k.expires_at && new Date(k.expires_at) <= new Date())
+		return { label: 'Expired', tag: 'warn', dead: true, at: k.expires_at };
+	return { label: 'Active', tag: 'success', dead: false, at: null };
+}
+
+export function renderKeysTable(keys) {
 	return `
 		<div class="dn-table-wrap">
 			<table class="dn-table">
@@ -500,6 +514,7 @@ function renderKeysTable(keys) {
 					<tr>
 						<th>Name</th>
 						<th>Prefix</th>
+						<th>Status</th>
 						<th>Scopes</th>
 						<th>Created</th>
 						<th>Last used</th>
@@ -507,10 +522,15 @@ function renderKeysTable(keys) {
 					</tr>
 				</thead>
 				<tbody>
-					${keys.map((k) => `
-						<tr>
+					${keys.map((k) => {
+						const st = keyStatus(k);
+						return `
+						<tr${st.dead ? ' class="dn-row-muted"' : ''}>
 							<td>${esc(k.name)}</td>
 							<td><code class="dn-mono-sm">${esc(k.prefix)}…</code></td>
+							<td>
+								<span class="dn-tag ${st.tag}"${st.at ? ` title="${esc(st.label)} ${esc(relTime(st.at))}"` : ''}>${st.label}</span>
+							</td>
 							<td>
 								<div class="dn-chip-row">
 									${(k.scope || '').split(/\s+/).filter(Boolean).map((s) => `<span class="dn-tag">${esc(s)}</span>`).join('')}
@@ -519,10 +539,13 @@ function renderKeysTable(keys) {
 							<td><span class="dn-dim">${esc(relTime(k.created_at))}</span></td>
 							<td><span class="dn-dim">${k.last_used_at ? esc(relTime(k.last_used_at)) : 'never'}</span></td>
 							<td style="text-align:right">
-								<button class="dn-btn danger" data-act="revoke" data-key-id="${esc(k.id)}" data-key-name="${esc(k.name)}" aria-label="Revoke API key ${esc(k.name)}">Revoke</button>
+								${k.revoked_at
+									? '<span class="dn-dim">Revoked</span>'
+									: `<button class="dn-btn danger" data-act="revoke" data-key-id="${esc(k.id)}" data-key-name="${esc(k.name)}" aria-label="Revoke API key ${esc(k.name)}">Revoke</button>`}
 							</td>
 						</tr>
-					`).join('')}
+					`;
+					}).join('')}
 				</tbody>
 			</table>
 		</div>
@@ -1346,6 +1369,10 @@ function injectStyles() {
 		.dn-chip-row { display: flex; flex-wrap: wrap; gap: 4px; }
 		.dn-mono-sm { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; color: var(--nxt-ink-dim); }
 		.dn-dim { color: var(--nxt-ink-dim); }
+		/* A key that can no longer authenticate (revoked or past its expiry) stays
+		   in the table for the record but recedes behind the usable ones. */
+		.dn-table tbody tr.dn-row-muted td { opacity: 0.55; }
+		.dn-table tbody tr.dn-row-muted:hover td { opacity: 1; }
 
 		/* Tabs (pill style — matches Library page) */
 		.dn-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-pill); background: rgba(255,255,255,0.03); margin-bottom: 12px; }

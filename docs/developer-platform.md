@@ -66,8 +66,11 @@ Keys are stored as a SHA-256 hash. The plaintext secret is returned **exactly
 once**, in the create response. Only the 12-character prefix is kept for
 display.
 
-All three key-management routes share one rate limit bucket: **30 requests per
-hour** per user.
+Each key-management route has its own rate limit bucket, per user, so that one
+cannot starve another: minting is **30 per hour**, listing is **120 per
+minute** (the dashboard lists on every load and after every mutation), and
+revoking is **60 per hour** (killing a leaked key must never be blocked by a
+spent mint budget).
 
 ### POST /api/keys
 
@@ -114,9 +117,14 @@ Response, `201`:
 
 Store `secret` now; it is never returned again.
 
+Repeated scopes are stored once. Sending `scope` as an empty or whitespace-only
+string is rejected rather than defaulted: it would mint a key that grants
+nothing. Omit the field entirely to take the default.
+
 Errors: `401 unauthorized`, `403 csrf_missing` / `csrf_invalid`,
-`400 validation_error` (zod issues, or `unknown scopes: <list>` for a scope
-outside the allowed set), `429 rate_limited`.
+`400 validation_error` (zod issues, `unknown scopes: <list>` for a scope
+outside the allowed set, or `scope must name at least one permission`),
+`429 rate_limited`.
 
 ### GET /api/keys
 
@@ -161,8 +169,9 @@ curl -s -X DELETE "https://three.ws/api/keys/$KEY_ID" \
 
 Response, `200`: `{ "ok": true }`
 
-Errors: `404 not_found` when the key does not exist, belongs to someone else,
-or is already revoked.
+Errors: `400 invalid_id` when `:id` is not a UUID, `401 unauthorized`,
+`403 csrf_missing` / `csrf_invalid`, `404 not_found` when the key does not
+exist, belongs to someone else, or is already revoked, `429 rate_limited`.
 
 ---
 

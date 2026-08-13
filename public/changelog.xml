@@ -15,6 +15,22 @@
 			<description>Sharing a walk produces a card you can post on Farcaster, with a button that opens that avatar walking. A cast stays up forever, but the avatar behind it does not: it can be deleted, or switched to private. When that happened the button still pointed at the missing avatar, so anyone who tapped it landed on a walk that could never load, and the card's second button pointed at the same place as the first, so both said the same thing. The card now checks the avatar before it builds. If the avatar is gone or private it drops the link and invites you to walk your own instead of handing you a dead button, and if the check itself cannot run the link is kept rather than thrown away. The second button now goes to the avatar builder, so the two buttons finally offer two different things. The card also carries its image dimensions now, which stops the preview from reflowing while it loads.</description>
 		</item>
 		<item>
+			<title>A Terms acceptance is only recorded when we could actually read the request</title>
+			<link>https://three.ws/legal/tos</link>
+			<guid isPermaLink="false">2026-08-13:A Terms acceptance is only recorded when we could actually read the request</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When you agree to the Terms of Service or the real-funds risk disclosure, three.ws keeps a durable, permanent record of which version you accepted and when. The Terms endpoint could write one of those records from a request whose contents it never managed to read: a request sent in the wrong format, or one too large to accept, was answered as a successful acceptance of the current Terms even though nothing in it had been understood. That is the one thing an evidentiary record must never do, and it no longer happens. Both acceptance endpoints now refuse an unreadable request and say precisely what was wrong with it (too large, wrong format, or unreadable) instead of blaming the version field, and they record nothing on those paths.</description>
+		</item>
+		<item>
+			<title>Adding your agent to a LobeHub chat no longer loses its name when one lookup stumbles</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:Adding your agent to a LobeHub chat no longer loses its name when one lookup stumbles</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Before a chat host renders your agent, it asks three.ws to confirm the agent exists and to hand back the sites you allow it to be embedded on. Those are two separate reads, and if the second one hiccuped the whole answer was thrown away: the host was told the agent could not be confirmed and was given no name, even though the first read had just found it. The confirmation and the name now survive a stumble on the embed settings. Separately, a misspelled address in a host's setup returned an explanation the browser refused to show, so integrators saw an unexplained network failure instead of the message naming their typo. That message now reaches them.</description>
+		</item>
+		<item>
 			<title>An avatar rendered through the MCP server can no longer be turned into a tracking beacon</title>
 			<link>https://three.ws/docs/mcp</link>
 			<guid isPermaLink="false">2026-08-13:An avatar rendered through the MCP server can no longer be turned into a tracking beacon</guid>
@@ -143,6 +159,14 @@
 			<description>Before a prompt becomes a 3D model, the forge draws a reference picture, then draws two extra views of it so the reconstruction can see the sides and back instead of guessing them. Three problems sat in that step. The calls to the image service had no time limit, so a connection that opened and then stalled held a generation open indefinitely rather than falling back to the free image lane; they now give up after ninety seconds and hand off. The extra views sent the reference picture to the model labelled as a PNG no matter what it actually was, so a JPEG or WebP reference could be rejected and you would quietly get fewer views; the real format is now read from the picture and sent with it. And a reference that is unreachable or oversized is refused with a clear reason instead of being forwarded as-is. Alongside that, every image this step fetches, including the optional mask, now goes through the same address safety check the rest of the platform uses, so a supplied URL cannot be aimed at an internal address.</description>
 		</item>
 		<item>
+			<title>The Livepeer comparison demo reads every answer shape an orchestrator can return</title>
+			<link>https://three.ws/demos/livepeer-inference</link>
+			<guid isPermaLink="false">2026-08-13:The Livepeer comparison demo reads every answer shape an orchestrator can return</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The side-by-side inference demo runs your prompt on the three.ws provider chain and on a Livepeer AI gateway at the same time. Orchestrators on that network run different inference servers, and some return the answer as a list of text pieces rather than one block of text. The demo could not read that form: a perfectly good answer came back as a card reading 'leg_failed' with a programming error in it, and the gateway and timing details vanished from the card. Those answers now render normally, and a reply in a shape nobody recognises is reported as an empty response with the gateway, latency, and model still shown.</description>
+		</item>
+		<item>
 			<title>The Money-Cam stops going dark when its feed stumbles, and stops replaying old transfers as new light</title>
 			<link>https://three.ws/galaxy</link>
 			<guid isPermaLink="false">2026-08-13:The Money-Cam stops going dark when its feed stumbles, and stops replaying old transfers as new light</guid>
@@ -173,6 +197,30 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The public directory of coins launched on the three.ws bonding curve accepts an agent filter, so a page can show only the coins one agent launched. A filter value that was not a real agent id went straight to the database, which rejected it and turned the whole request into an unexplained server error. Anything that is not a valid agent id now comes back immediately as a plain validation error naming the problem, so a mistyped link fails clearly instead of looking like the launchpad is down. The endpoint documentation now states the same contract, including the page-size and offset limits, and the behaviour is pinned by tests.</description>
+		</item>
+		<item>
+			<title>The trial queue headline now names the mint that actually holds the most</title>
+			<link>https://three.ws/conversions</link>
+			<guid isPermaLink="false">2026-08-13:The trial queue headline now names the mint that actually holds the most</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Trial Conversions shows sellers one headline number: the revenue waiting in the trial queue, with the token it is denominated in. Totals are kept separately per token, because ten of a six-decimal token and ten of a nine-decimal one are not the same amount, but the choice of which total to promote to the headline was made by comparing the raw stored integers across tokens. Those integers are scaled differently per token, so 0.9 of one token outranked 5 of another: a seller pricing skills in two currencies saw the smaller pile in the headline while the larger one sat below it. The totals are now compared at the same scale, so the headline is the biggest real one and the per-token list under it is ordered to match.</description>
+		</item>
+		<item>
+			<title>Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all</title>
+			<link>https://three.ws/dashboard/api</link>
+			<guid isPermaLink="false">2026-08-13:Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The API keys table in your developer dashboard listed every key you had ever created, but nothing on the row said which ones were still usable. A key you had already revoked looked exactly like a live one, right down to a Revoke button that could only ever fail, and a key that had passed its expiry date looked perfectly healthy until a request mysteriously stopped working. Every key now carries an Active, Expired, or Revoked label, dead keys are dimmed, and the Revoke button is only shown where it can do something. The connection tester also stops picking an expired key to test with. Separately, creating a key through the API with an explicitly empty permission list used to succeed and hand back a credential that could not do anything, with nothing to tell you so; that request is now rejected with a clear message, and a permission listed twice is stored once.</description>
+		</item>
+		<item>
+			<title>Your friends list no longer goes blank when the database is mid-upgrade, and search finds unusual names</title>
+			<link>https://three.ws/walk</link>
+			<guid isPermaLink="false">2026-08-13:Your friends list no longer goes blank when the database is mid-upgrade, and search finds unusual names</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two problems in the friends area. The friends list is built to survive an environment where the social tables have not been created yet: it shows an empty list instead of an error. That safety net was matching on the wording of the database error rather than its type, and the wording it looked for also appears when a single column is missing, which is what a partly-applied upgrade looks like. So during an upgrade the page answered normally and told you that you had no friends, no incoming requests, and no pending invites, with nothing anywhere reporting a fault. The safety net now recognises only a genuinely missing table, and any other database problem is reported as the error it is. Separately, friend search could not find a display name containing a backslash, and a search term ending in one quietly searched for something else, because the search was not escaping the backslash before handing the term to the database.</description>
 		</item>
 		<item>
 			<title>Docs · GitHub memory seeding</title>
