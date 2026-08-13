@@ -216,7 +216,7 @@ registration runs through the CLI runner only
 `api/_lib/onchain-deploy.js` functions the dashboard did, so assets minted
 before and after the removal are identical.
 
-## Tutorial 3 — The full fleet
+## Tutorial 3: The full fleet
 
 Once the canary checks out and the funder holds enough SOL (~0.004 × N):
 

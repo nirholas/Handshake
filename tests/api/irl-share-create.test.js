@@ -1,4 +1,4 @@
-// POST /api/irl/share (api/irl/share.js) — minting a permanent, unfurlable link
+// POST /api/irl/share (api/irl/share.js): minting a permanent, unfurlable link
 // for an AR capture the owner just took.
 //
 // Drives the real handler against an in-memory fake `sql` and a stubbed object

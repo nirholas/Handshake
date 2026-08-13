@@ -506,7 +506,7 @@ export function readVisibility(body) {
 // Pin ids are server-minted UUIDs (gen_random_uuid()), and `irl_pins.id` is a UUID
 // COLUMN. Validate the format at the top of every mutation path so an oversized /
 // garbage id is a clean 400 and never reaches the DB query or a log line. The SQL is
-// already parameterized (this is not the injection guard) — it's input hygiene, and
+// already parameterized (this is not the injection guard), it's input hygiene, and
 // it lets a "not a pin id" request fail fast with a clear message.
 //
 // Strict UUID, nothing else. A looser "URL-safe opaque id" fallback used to be
