@@ -340,6 +340,59 @@ contract GreenfieldVaultTest is Test {
         vault.greenfieldCall(STATUS_SUCCESS, 0x07, 2, 999, abi.encode(uint256(999)));
     }
 
+    // ── GV-9: a declined hub request is never treated as accepted ──────────
+
+    /// GV-9 (negative half): `createPolicy` returning false (the hub declining
+    /// without reverting) unwinds the whole purchase. Nothing is credited to the
+    /// seller, no sale id is retained, and the buyer keeps their money.
+    function testBuyRevertsWhenHubDeclinesCreatePolicy() public {
+        _list(seller, OBJECT_ID, PRICE);
+        permissionHub.setRejectOnCreate(true);
+
+        uint256 buyerBalanceBefore = buyer.balance;
+        vm.prank(buyer);
+        vm.expectRevert(GreenfieldVault.PolicyRequestRejected.selector);
+        vault.buy{value: TOTAL_REQUIRED}(OBJECT_ID, POLICY_DATA);
+
+        assertEq(buyer.balance, buyerBalanceBefore);
+        assertEq(vault.pendingWithdrawals(seller), 0);
+        assertEq(vault.saleIdOf(OBJECT_ID, buyer), 0);
+        assertEq(address(vault).balance, 0);
+    }
+
+    /// GV-9 (positive half): once the hub stops declining, the same buyer can
+    /// purchase normally, so the rejection left no poisoned state behind.
+    function testBuySucceedsAfterHubStopsDeclining() public {
+        _list(seller, OBJECT_ID, PRICE);
+        permissionHub.setRejectOnCreate(true);
+        vm.prank(buyer);
+        vm.expectRevert(GreenfieldVault.PolicyRequestRejected.selector);
+        vault.buy{value: TOTAL_REQUIRED}(OBJECT_ID, POLICY_DATA);
+
+        permissionHub.setRejectOnCreate(false);
+        uint256 saleId = _buy(buyer, OBJECT_ID);
+        assertEq(vault.saleIdOf(OBJECT_ID, buyer), saleId);
+        assertEq(vault.pendingWithdrawals(seller), PRICE);
+    }
+
+    /// GV-9 (negative half, revoke side): `deletePolicy` returning false leaves
+    /// the sale Granted rather than marking it Revoked while the buyer still
+    /// holds a live Greenfield grant.
+    function testRevokeRevertsWhenHubDeclinesDeletePolicy() public {
+        _list(seller, OBJECT_ID, PRICE);
+        uint256 saleId = _buy(buyer, OBJECT_ID);
+        permissionHub.settleCreatePolicy(saleId, STATUS_SUCCESS);
+
+        permissionHub.setRejectOnDelete(true);
+        vm.prank(seller);
+        vm.expectRevert(GreenfieldVault.PolicyRequestRejected.selector);
+        vault.revoke{value: TOTAL_FEE}(saleId);
+
+        (,,,,, GreenfieldVault.SaleStatus status) = vault.sales(saleId);
+        assertEq(uint8(status), uint8(GreenfieldVault.SaleStatus.Granted));
+        assertEq(vault.saleIdOf(OBJECT_ID, buyer), saleId);
+    }
+
     // ── revoke ───────────────────────────────────────────────────────────
 
     function testRevokeHappyPath() public {

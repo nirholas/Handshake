@@ -54,6 +54,11 @@ contract MockPermissionHub is IPermissionHub {
     uint256 public nextPolicyId = 1;
     bool public revertOnCreate;
     bool public revertOnDelete;
+    /// @dev The real hub declines some requests by returning false instead of
+    ///      reverting. These toggles reproduce that branch so `GV-9` can be
+    ///      proven against a rejection that leaves the transaction alive.
+    bool public rejectOnCreate;
+    bool public rejectOnDelete;
 
     struct PendingCreate {
         address caller; // becomes the minted policy's owner on success, mirrors real `_doCreate`
@@ -81,26 +86,38 @@ contract MockPermissionHub is IPermissionHub {
         revertOnDelete = v;
     }
 
+    function setRejectOnCreate(bool v) external {
+        rejectOnCreate = v;
+    }
+
+    function setRejectOnDelete(bool v) external {
+        rejectOnDelete = v;
+    }
+
     /*----------------- IPermissionHub -----------------*/
 
     function createPolicy(bytes calldata data) external payable override returns (bool) {
+        if (rejectOnCreate) return false;
         _createPolicy(data, "", false);
         return true;
     }
 
     function createPolicy(bytes calldata data, ExtraData memory extraData) external payable override returns (bool) {
         require(extraData.failureHandleStrategy == FailureHandleStrategy.SkipOnFail, "only SkipOnFail");
+        if (rejectOnCreate) return false;
         _createPolicy(data, extraData.callbackData, true);
         return true;
     }
 
     function deletePolicy(uint256 id) external payable override returns (bool) {
+        if (rejectOnDelete) return false;
         _deletePolicy(id);
         return true;
     }
 
     function deletePolicy(uint256 id, ExtraData memory extraData) external payable override returns (bool) {
         require(extraData.failureHandleStrategy == FailureHandleStrategy.SkipOnFail, "only SkipOnFail");
+        if (rejectOnDelete) return false;
         _deletePolicy(id);
         return true;
     }

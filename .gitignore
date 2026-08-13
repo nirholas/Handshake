@@ -470,3 +470,9 @@ workers/garment-forge/assets/
 .forge-q.mjs
 .mcp-forge-free-smoke.mjs
 .monetization-proof/
+
+# Rust build output for the on-chain program tests (contracts/program-tests).
+# cargo writes 1.4 GB here; the sources next to it are what we keep.
+contracts/program-tests/target/
+# Scratch output from scripts/retention-metric-proof.mjs.
+.retention-proof/

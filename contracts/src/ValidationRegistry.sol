@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.24;
 
-interface IIdentityRegistryV {
-    function isAgent(uint256 agentId) external view returns (bool);
-    function ownerOf(uint256 agentId) external view returns (address);
-}
+import {IIdentityRegistry} from "./IIdentityRegistry.sol";
 
 /// @title ERC-8004 Validation Registry
 /// @notice Allow-listed validators record validation results for agents. Each
@@ -16,7 +13,7 @@ contract ValidationRegistry {
     // Storage
     // ---------------------------------------------------------------------
 
-    IIdentityRegistryV public immutable identityRegistry;
+    IIdentityRegistry public immutable identityRegistry;
     address public owner;
 
     struct Validation {
@@ -63,7 +60,7 @@ contract ValidationRegistry {
 
     constructor(address identityRegistry_, address owner_) {
         if (identityRegistry_ == address(0) || owner_ == address(0)) revert ZeroAddress();
-        identityRegistry = IIdentityRegistryV(identityRegistry_);
+        identityRegistry = IIdentityRegistry(identityRegistry_);
         owner = owner_;
         emit OwnershipTransferred(address(0), owner_);
     }

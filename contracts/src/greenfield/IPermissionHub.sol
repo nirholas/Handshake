@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.24;
 
 /// @title IPermissionHub
 /// @notice Real ABI of BNB Greenfield's PermissionHub — the BSC-side cross-chain

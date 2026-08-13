@@ -129,6 +129,7 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
     error OnlyPermissionHub();
     error BadChannel();
     error NothingToWithdraw();
+    error PolicyRequestRejected();
 
     constructor(address _permissionHub, address _crossChain, address _objectAccessControl) {
         if (_permissionHub == address(0) || _crossChain == address(0) || _objectAccessControl == address(0)) {
@@ -225,7 +226,11 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
             callbackData: abi.encode(saleId)
         });
 
-        permissionHub.createPolicy{value: requiredFee}(policyData, extraData);
+        // The hub returns false rather than reverting when it declines to queue
+        // the syn-package. Treating that as success would credit the seller and
+        // burn the buyer's relay fee for a permission that will never be minted,
+        // so the whole purchase reverts instead (GV-9).
+        if (!permissionHub.createPolicy{value: requiredFee}(policyData, extraData)) revert PolicyRequestRejected();
 
         emit Purchased(objectId, msg.sender, saleId, listing.price);
 
@@ -297,7 +302,9 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
         uint256 requiredFee = relayFee + minAckRelayFee;
         if (msg.value < requiredFee) revert InsufficientRelayFee();
 
-        permissionHub.deletePolicy{value: requiredFee}(policyId);
+        // Same rule as `buy`: a declined delete request must not leave the sale
+        // marked Revoked while the buyer keeps a live Greenfield grant (GV-9).
+        if (!permissionHub.deletePolicy{value: requiredFee}(policyId)) revert PolicyRequestRejected();
         emit RevokeRequested(sale.objectId, saleId, policyId);
 
         uint256 refund = msg.value - requiredFee;

@@ -2,11 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-
-interface IIdentityRegistry {
-    function isAgent(uint256 agentId) external view returns (bool);
-    function ownerOf(uint256 agentId) external view returns (address);
-}
+import {IIdentityRegistry} from "./IIdentityRegistry.sol";
 
 /// @title ERC-8004 Reputation Registry
 /// @notice Stores signed-by-tx-sender reputation feedback about registered

@@ -1,0 +1,25 @@
+# Standalone workspace: the two Anchor programs next to this crate each declare
+# their own `[workspace]`, so this test harness needs one too.
+[workspace]
+
+[package]
+name = "program-tests"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Invariant tests for the three.ws Solana programs, run against real compiled bytecode in LiteSVM."
+
+[dependencies]
+
+[dev-dependencies]
+litesvm = "=0.15.2"
+solana-sdk = "3"
+borsh = "1.5"
+sha2 = "0.10"
+
+# LiteSVM 0.15.2 destructures `ExecutionRecord` exhaustively, so a later patch
+# release of the runtime crates (which added fields) fails to compile it. These
+# pins hold the runtime at the versions LiteSVM was published against.
+solana-program-runtime = "=4.1.1"
+solana-transaction-context = "=4.1.1"
+solana-builtins = "=4.1.1"
