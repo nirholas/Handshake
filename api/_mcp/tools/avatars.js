@@ -185,11 +185,14 @@ export const toolDefs = [
 			// surfaces.mcp gate — check if a registered agent owns this avatar
 			const _mcpPolicy = await readMcpPolicyByAvatar(avatar.id);
 			if (_mcpPolicy && _mcpPolicy.surfaces?.mcp === false) {
-				throw rpcError(
-					-32000,
-					'embed_denied_surface',
-					'This agent disallows the MCP surface.',
-				);
+				// Slug in `message`, detail in the `data` object: the shape every
+				// other rpcError call site in the MCP tools uses. Passing the
+				// sentence as `data` instead left clients with a bare
+				// "embed_denied_surface" and no explanation to show a user.
+				throw rpcError(-32000, 'embed_denied_surface', {
+					reason: 'This agent disallows the MCP surface.',
+					avatar_id: avatar.id,
+				});
 			}
 			const urlInfo = await resolveAvatarUrl(avatar, { expiresIn: 3600 });
 			const html = renderModelViewerHtml({

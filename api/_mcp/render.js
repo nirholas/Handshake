@@ -18,6 +18,11 @@ export function safeCssValue(s, fallback) {
 	if (!s) return fallback;
 	const str = String(s).trim();
 	if (!/^[a-zA-Z0-9 .,%#()\-_/+]+$/.test(str)) return fallback;
+	// The character class alone still admits `url(//host/pixel.png)`: parens and
+	// slashes are legal in gradients, so a caller-supplied background could make
+	// the rendered viewer fetch an arbitrary external resource (a beacon that
+	// leaks the viewer's IP and referrer). Colors and gradients never need url().
+	if (/url\s*\(/i.test(str)) return fallback;
 	if (str.length > 120) return fallback;
 	return str;
 }
@@ -42,6 +47,16 @@ export function safeHttpsUrl(s) {
 }
 
 export function renderModelViewerHtml({ src, name, poster, background, height, width, autoRotate, ar, arHref, cameraOrbit }) {
+	// Re-sanitize here rather than trusting each call site. The CSS values land
+	// inside a <style> declaration where attribute-escaping does not stop a
+	// `;}body{...}` breakout, and every helper below is idempotent, so a caller
+	// that already ran them (the avatar + studio tools) is unaffected while a
+	// future one that forgets cannot open a hole.
+	const bg = safeCssValue(background, 'transparent');
+	const h = safeCssLength(height, '480px');
+	const w = safeCssLength(width, '100%');
+	const orbit = safeCssValue(cameraOrbit, '');
+	const posterUrl = safeHttpsUrl(poster);
 	const attrs = [
 		`src="${attr(src)}"`,
 		'camera-controls',
@@ -50,8 +65,8 @@ export function renderModelViewerHtml({ src, name, poster, background, height, w
 		'tone-mapping="aces"',
 		autoRotate ? 'auto-rotate' : '',
 		ar ? 'ar ar-modes="webxr scene-viewer quick-look"' : '',
-		poster ? `poster="${attr(poster)}"` : '',
-		cameraOrbit ? `camera-orbit="${attr(cameraOrbit)}"` : '',
+		posterUrl ? `poster="${attr(posterUrl)}"` : '',
+		orbit ? `camera-orbit="${attr(orbit)}"` : '',
 		`alt="${attr(name || 'Avatar')}"`,
 	]
 		.filter(Boolean)
@@ -67,8 +82,8 @@ export function renderModelViewerHtml({ src, name, poster, background, height, w
 		'<!doctype html>',
 		'<html><head><meta charset="utf-8"><title>' + esc(name || 'Avatar') + '</title>',
 		'<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>',
-		'<style>html,body{margin:0;height:100%;background:' + attr(background) + '}',
-		'model-viewer{width:' + attr(width) + ';height:' + attr(height) + ';--progress-bar-color:#6a5cff}',
+		'<style>html,body{margin:0;height:100%;background:' + attr(bg) + '}',
+		'model-viewer{width:' + attr(w) + ';height:' + attr(h) + ';--progress-bar-color:#6a5cff}',
 		'a.ar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;font-family:ui-sans-serif,system-ui,sans-serif;' +
 			'font-size:13px;font-weight:700;color:#0b0c10;background:#6ea8fe;border-radius:999px;padding:9px 16px;' +
 			'text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.35)}',

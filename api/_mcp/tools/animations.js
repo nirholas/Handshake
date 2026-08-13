@@ -61,6 +61,15 @@ async function loadSignatures(origin) {
 	return index;
 }
 
+// Own-property lookup only. The index comes back from JSON.parse, so it carries
+// Object.prototype: a caller-supplied clip name of "constructor" or "toString"
+// would otherwise resolve an inherited member, sail past the not-found guard,
+// and be measured as if it were a motion signature. Same defense dispatch.js
+// applies to the tool table.
+function signatureFor(index, clip) {
+	return Object.hasOwn(index.clips, clip) ? index.clips[clip] : null;
+}
+
 async function loadClipJSON(origin, def) {
 	// def.url is a site-relative path like /animations/clips/idle.json
 	const res = await fetch(`${origin}${def.url}`, { cache: 'no-store' });
@@ -251,7 +260,7 @@ export const toolDefs = [
 		async handler(args, auth, req) {
 			const origin = resolveOrigin(req);
 			const index = await loadSignatures(origin);
-			const sig = index.clips[String(args.clip)];
+			const sig = signatureFor(index, String(args.clip));
 			if (!sig) {
 				throw rpcError(-32602, `No signature for "${args.clip}". Use list_animations for valid names.`);
 			}
@@ -305,7 +314,7 @@ export const toolDefs = [
 		async handler(args, auth, req) {
 			const origin = resolveOrigin(req);
 			const index = await loadSignatures(origin);
-			if (!index.clips[String(args.clip)]) {
+			if (!signatureFor(index, String(args.clip))) {
 				throw rpcError(-32602, `No signature for "${args.clip}". Use list_animations for valid names.`);
 			}
 			const limit = Math.max(1, Math.min(20, Number.parseInt(args.limit ?? 5, 10) || 5));

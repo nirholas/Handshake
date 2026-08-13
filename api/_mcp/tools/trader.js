@@ -17,7 +17,7 @@
 //   copy_status         — auth-gated (agents:read). Check the caller's active
 //                         copy subscriptions and their execution counts.
 
-import { sql } from '../../_lib/db.js';
+import { sql, isDbUnavailableError } from '../../_lib/db.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { getLeaderboard, getTraderStats, WINDOWS, LEADERBOARD_SORTS } from '../../_lib/trader-stats.js';
 import { normalizeSubscriptionInput } from '../../_lib/copy-engine.js';
@@ -36,6 +36,18 @@ function mcpOk(payload) {
 
 function mcpErr(msg) {
 	return { content: [{ type: 'text', text: msg }], isError: true };
+}
+
+// A DB outage and a genuine "no such row" used to look identical here: every
+// query was wrapped in `.catch(() => [])`, so a dropped Neon connection told the
+// caller their leader did not exist or that they had no subscriptions. That is a
+// wrong answer, not a degraded one, and an agent acts on it. Now only transport
+// and configuration failures are folded into an explicit "temporarily
+// unavailable" reply; a real SQL fault propagates to the MCP dispatcher, which
+// sanitizes it, logs it with an id, and returns isError.
+function unavailable(err, what) {
+	if (!isDbUnavailableError(err)) throw err;
+	return mcpErr(`${what} is temporarily unavailable. Retry in a moment.`);
 }
 
 const LIVE = { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true };
@@ -95,14 +107,21 @@ export const toolDefs = [
 			const network      = NETWORKS.has(args?.network) ? args.network : 'mainnet';
 			const window       = WINDOWS.has(args?.window) ? args.window : '30d';
 			const sort         = SORTS.has(args?.sort) ? args.sort : 'score';
-			const limit        = Math.min(50, Math.max(1, Number(args?.limit ?? 10)));
+			const asked        = Number(args?.limit ?? 10);
+			// A non-finite limit reached getLeaderboard's `.slice(0, NaN)` and
+			// silently returned an empty board that read as "no traders".
+			const limit        = Number.isFinite(asked) ? Math.min(50, Math.max(1, Math.floor(asked))) : 10;
 			const verifiedOnly = !!args?.verified_only;
 
 			const rl = await limits.mcpIp(auth.rateKey || 'anon');
-			if (!rl.success) return mcpErr('Rate limit exceeded — try again in a moment.');
+			if (!rl.success) return mcpErr('Rate limit exceeded, try again in a moment.');
 
-			const result = await getLeaderboard({ network, window, sort, limit, verifiedOnly }).catch(() => null);
-			if (!result) return mcpErr('Leaderboard unavailable — try again shortly.');
+			let result;
+			try {
+				result = await getLeaderboard({ network, window, sort, limit, verifiedOnly });
+			} catch (err) {
+				return unavailable(err, 'The trader leaderboard');
+			}
 
 			const traders = (result.leaderboard || []).map(shapeLeaderboardRow);
 			const copyCount = traders.filter((t) => t.recommendation === 'copy').length;
@@ -149,9 +168,14 @@ export const toolDefs = [
 			const window  = WINDOWS.has(args?.window) ? args.window : 'all';
 
 			const rl = await limits.mcpIp(auth.rateKey || 'anon');
-			if (!rl.success) return mcpErr('Rate limit exceeded — try again in a moment.');
+			if (!rl.success) return mcpErr('Rate limit exceeded, try again in a moment.');
 
-			const stats = await getTraderStats({ agentId, network, window }).catch(() => null);
+			let stats;
+			try {
+				stats = await getTraderStats({ agentId, network, window });
+			} catch (err) {
+				return unavailable(err, 'This trader profile');
+			}
 			if (!stats) return mcpErr(`Agent ${agentId} not found or has no public trading history.`);
 			if (!stats.agent.is_public) return mcpErr('This agent\'s track record is not public.');
 
@@ -166,6 +190,19 @@ export const toolDefs = [
 				exit_reason:     t.exit_reason,
 				closed_at:       t.closed_at,
 				proof_url:       t.sell_solscan || t.buy_solscan || null,
+			}));
+
+			// The tool description promises open positions; only the count was ever
+			// returned, so an agent vetting a leader could not see what they are
+			// currently holding. Same shape the /trader page renders.
+			const openPositions = (stats.open || []).map((p) => ({
+				symbol:         p.symbol,
+				mint:           p.mint,
+				entry_sol:      p.entry_sol,
+				current_sol:    p.current_sol,
+				unrealized_pct: p.unrealized_pct,
+				opened_at:      p.opened_at,
+				proof_url:      p.buy_url || null,
 			}));
 
 			const rec = traderScore({ score: m.score, verified: m.verified, win_rate: m.win_rate, closed: m.closed_count });
@@ -199,6 +236,7 @@ export const toolDefs = [
 				copiers:         stats.agent.copiers,
 				oracle:          stats.oracle ?? null,
 				recent_trades:   topTrades,
+				open_positions:  openPositions,
 				profile_url:     `https://three.ws/trader/${agentId}`,
 				generated_at:    new Date().toISOString(),
 			};
@@ -248,13 +286,21 @@ export const toolDefs = [
 
 			const network = NETWORKS.has(args?.network) ? args.network : 'mainnet';
 
+			const rl = await limits.mcpIp(auth.rateKey || 'anon');
+			if (!rl.success) return mcpErr('Rate limit exceeded, try again in a moment.');
+
 			// Validate leader exists and is public
-			const [leader] = await sql`
-				select id, name, is_public from agent_identities
-				where id = ${leaderId} and deleted_at is null limit 1
-			`.catch(() => []);
+			let leader;
+			try {
+				[leader] = await sql`
+					select id, name, is_public from agent_identities
+					where id = ${leaderId} and deleted_at is null limit 1
+				`;
+			} catch (err) {
+				return unavailable(err, 'Copy-trading setup');
+			}
 			if (!leader) return mcpErr(`Leader agent ${leaderId} not found.`);
-			if (leader.is_public === false) return mcpErr('That agent\'s trades are not public — cannot copy them.');
+			if (leader.is_public === false) return mcpErr('That agent\'s trades are not public, so they cannot be copied.');
 
 			const raw = {
 				sizing_rule:      args?.sizing_rule ?? 'fixed',
@@ -276,60 +322,75 @@ export const toolDefs = [
 			if (!norm.ok) return mcpErr(`Invalid subscription parameters: ${norm.error}`);
 			const cfg = norm.value;
 
-			// Upsert: create or update existing subscription for this user+leader+network
-			const [existing] = await sql`
-				select id, status from copy_subscriptions
-				where copier_user_id = ${auth.userId}
-				  and leader_agent_id = ${leaderId}
-				  and network = ${network}
-				limit 1
-			`.catch(() => []);
-
-			let sub;
-			if (existing) {
-				[sub] = await sql`
-					update copy_subscriptions set
-						copier_wallet     = ${wallet},
-						sizing_rule       = ${cfg.sizing_rule},
-						fixed_sol         = ${cfg.fixed_sol ?? null},
-						multiplier        = ${cfg.multiplier ?? null},
-						pct_balance       = ${cfg.pct_balance ?? null},
-						per_trade_cap_sol = ${cfg.per_trade_cap_sol},
-						min_order_sol     = ${cfg.min_order_sol},
-						daily_budget_sol  = ${cfg.daily_budget_sol},
-						max_open_copies   = ${cfg.max_open_copies},
-						min_oracle_score  = ${cfg.min_oracle_score ?? null},
-						mcap_floor_usd    = ${cfg.mcap_floor_usd ?? null},
-						mcap_ceiling_usd  = ${cfg.mcap_ceiling_usd ?? null},
-						telegram_chat_id  = ${cfg.telegramChatId ?? null},
-						perf_fee_bps      = ${cfg.perf_fee_bps},
-						status            = 'active',
-						updated_at        = now()
-					where id = ${existing.id}
-					returning id, status, created_at, updated_at
+			// Denormalize the leader's trading wallet from their most recent position,
+			// exactly as POST /api/copy/subscriptions does. Without it the row carries a
+			// null leader_wallet and /api/copy/settle-fee refuses the leader's
+			// performance fee with leader_wallet_unknown, so an MCP-created
+			// subscription could never pay its leader. coalesce on update keeps a
+			// previously recorded wallet when the leader has no position on this
+			// network yet.
+			let leaderWallet;
+			try {
+				const [pos] = await sql`
+					select wallet from agent_sniper_positions
+					where agent_id = ${leaderId} and network = ${network}
+					order by opened_at desc limit 1
 				`;
-			} else {
+				leaderWallet = pos?.wallet || null;
+			} catch (err) {
+				return unavailable(err, 'Copy-trading setup');
+			}
+
+			// One atomic upsert against the (copier_user_id, leader_agent_id, network)
+			// unique key. The previous select-then-insert lost the race between two
+			// concurrent calls and failed the second with a raw unique violation.
+			// `xmax = 0` is true only for the row this statement inserted, which is how
+			// we still report created vs updated. copy_sells and require_safety_pass are
+			// deliberately absent: this tool does not expose them, so an insert takes
+			// the table defaults and an update leaves whatever the dashboard set.
+			let sub;
+			try {
 				[sub] = await sql`
 					insert into copy_subscriptions (
-						copier_user_id, leader_agent_id, network, copier_wallet,
+						copier_user_id, leader_agent_id, leader_wallet, network, copier_wallet,
 						sizing_rule, fixed_sol, multiplier, pct_balance,
 						per_trade_cap_sol, min_order_sol, daily_budget_sol, max_open_copies,
 						min_oracle_score, mcap_floor_usd, mcap_ceiling_usd, telegram_chat_id,
 						perf_fee_bps, status
 					) values (
-						${auth.userId}, ${leaderId}, ${network}, ${wallet},
-						${cfg.sizing_rule}, ${cfg.fixed_sol ?? null}, ${cfg.multiplier ?? null}, ${cfg.pct_balance ?? null},
+						${auth.userId}, ${leaderId}, ${leaderWallet}, ${network}, ${wallet},
+						${cfg.sizing_rule}, ${cfg.fixed_sol}, ${cfg.multiplier}, ${cfg.pct_balance},
 						${cfg.per_trade_cap_sol}, ${cfg.min_order_sol}, ${cfg.daily_budget_sol}, ${cfg.max_open_copies},
-						${cfg.min_oracle_score ?? null}, ${cfg.mcap_floor_usd ?? null}, ${cfg.mcap_ceiling_usd ?? null},
-						${cfg.telegramChatId ?? null}, ${cfg.perf_fee_bps}, 'active'
+						${cfg.min_oracle_score}, ${cfg.mcap_floor_usd}, ${cfg.mcap_ceiling_usd}, ${cfg.telegramChatId ?? null},
+						${cfg.perf_fee_bps}, 'active'
 					)
-					returning id, status, created_at, updated_at
+					on conflict (copier_user_id, leader_agent_id, network) do update set
+						copier_wallet     = excluded.copier_wallet,
+						leader_wallet     = coalesce(excluded.leader_wallet, copy_subscriptions.leader_wallet),
+						sizing_rule       = excluded.sizing_rule,
+						fixed_sol         = excluded.fixed_sol,
+						multiplier        = excluded.multiplier,
+						pct_balance       = excluded.pct_balance,
+						per_trade_cap_sol = excluded.per_trade_cap_sol,
+						min_order_sol     = excluded.min_order_sol,
+						daily_budget_sol  = excluded.daily_budget_sol,
+						max_open_copies   = excluded.max_open_copies,
+						min_oracle_score  = excluded.min_oracle_score,
+						mcap_floor_usd    = excluded.mcap_floor_usd,
+						mcap_ceiling_usd  = excluded.mcap_ceiling_usd,
+						telegram_chat_id  = excluded.telegram_chat_id,
+						perf_fee_bps      = excluded.perf_fee_bps,
+						status            = 'active',
+						updated_at        = now()
+					returning id, status, created_at, updated_at, (xmax = 0) as inserted
 				`;
+			} catch (err) {
+				return unavailable(err, 'Copy-trading setup');
 			}
 
-			if (!sub) return mcpErr('Failed to save copy subscription — try again.');
+			if (!sub) return mcpErr('Failed to save the copy subscription. Try again.');
 
-			const isNew = !existing;
+			const isNew = sub.inserted !== false;
 			const sizeLabel = cfg.sizing_rule === 'fixed'
 				? `${cfg.fixed_sol} SOL fixed`
 				: cfg.sizing_rule === 'multiplier'
@@ -382,26 +443,31 @@ export const toolDefs = [
 			if (!auth.userId) return mcpErr('Sign in to view your copy subscriptions.');
 
 			const rl = await limits.mcpIp(auth.rateKey || 'anon');
-			if (!rl.success) return mcpErr('Rate limit exceeded — try again in a moment.');
+			if (!rl.success) return mcpErr('Rate limit exceeded, try again in a moment.');
 
 			const network = NETWORKS.has(args?.network) ? args.network : 'mainnet';
 
-			const rows = await sql`
-				select s.id, s.leader_agent_id, s.status, s.network,
-				       s.copier_wallet, s.sizing_rule, s.fixed_sol, s.multiplier, s.pct_balance,
-				       s.per_trade_cap_sol, s.daily_budget_sol, s.max_open_copies,
-				       s.min_oracle_score, s.perf_fee_bps, s.created_at, s.updated_at,
-				       a.name as leader_name, a.profile_image_url as leader_image,
-				       (select count(*) from copy_executions e
-				         where e.subscription_id = s.id and e.status = 'pending') as pending_count,
-				       (select count(*) from copy_executions e
-				         where e.subscription_id = s.id and e.status = 'acted') as acted_count
-				from copy_subscriptions s
-				join agent_identities a on a.id = s.leader_agent_id
-				where s.copier_user_id = ${auth.userId} and s.network = ${network}
-				  and s.status not in ('stopped')
-				order by s.created_at desc
-			`.catch(() => []);
+			let rows;
+			try {
+				rows = await sql`
+					select s.id, s.leader_agent_id, s.status, s.network,
+					       s.copier_wallet, s.sizing_rule, s.fixed_sol, s.multiplier, s.pct_balance,
+					       s.per_trade_cap_sol, s.daily_budget_sol, s.max_open_copies,
+					       s.min_oracle_score, s.perf_fee_bps, s.created_at, s.updated_at,
+					       a.name as leader_name, a.profile_image_url as leader_image,
+					       (select count(*) from copy_executions e
+					         where e.subscription_id = s.id and e.status = 'pending') as pending_count,
+					       (select count(*) from copy_executions e
+					         where e.subscription_id = s.id and e.status = 'acted') as acted_count
+					from copy_subscriptions s
+					join agent_identities a on a.id = s.leader_agent_id
+					where s.copier_user_id = ${auth.userId} and s.network = ${network}
+					  and s.status not in ('stopped')
+					order by s.created_at desc
+				`;
+			} catch (err) {
+				return unavailable(err, 'Your copy subscriptions list');
+			}
 
 			const subs = rows.map((s) => ({
 				id:              s.id,
@@ -426,16 +492,24 @@ export const toolDefs = [
 				profile_url:       `https://three.ws/trader/${s.leader_agent_id}`,
 			}));
 
+			// The query keeps paused rows (only 'stopped' is filtered out), so counting
+			// them all as active misreported a paused subscription as live.
+			const activeCount  = subs.filter((s) => s.status === 'active').length;
+			const pausedCount  = subs.length - activeCount;
+			const pendingTotal = subs.reduce((n, s) => n + s.pending_intents, 0);
+
 			const payload = {
 				user_id:     auth.userId,
 				network,
 				count:       subs.length,
+				active_count: activeCount,
+				paused_count: pausedCount,
 				subscriptions: subs,
-				pending_total: subs.reduce((n, s) => n + s.pending_intents, 0),
+				pending_total: pendingTotal,
 				acted_total:   subs.reduce((n, s) => n + s.acted_intents, 0),
 				hint: subs.length === 0
-					? 'No active copy subscriptions. Use trader_leaderboard to find top performers, then copy_subscribe to mirror them.'
-					: `${subs.length} active subscription${subs.length !== 1 ? 's' : ''}. ${subs.reduce((n, s) => n + s.pending_intents, 0)} intents waiting to be acted on.`,
+					? 'No copy subscriptions yet. Use trader_leaderboard to find top performers, then copy_subscribe to mirror them.'
+					: `${activeCount} active subscription${activeCount !== 1 ? 's' : ''}${pausedCount ? ` (plus ${pausedCount} paused)` : ''}. ${pendingTotal} intent${pendingTotal !== 1 ? 's' : ''} waiting to be acted on.`,
 				links: {
 					dashboard:   'https://three.ws/dashboard/copy',
 					leaderboard: 'https://three.ws/leaderboard',
