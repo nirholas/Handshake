@@ -89,12 +89,12 @@ const OUTPUT_SCHEMA = {
 };
 
 const OUTPUT_EXAMPLE = {
-	agent_id: 'persona_8f2a1c9d4b',
-	glb_url: 'https://pub-xxxx.r2.dev/personas/persona_8f2a1c9d4b.glb',
-	viewer_url: 'https://three.ws/viewer?src=https%3A%2F%2Fpub-xxxx.r2.dev%2Fpersonas%2Fpersona_8f2a1c9d4b.glb',
-	profile_url: 'https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4b',
-	embed_html: '<iframe src="https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4b" width="480" height="640" loading="lazy" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>',
-	reload_url: 'https://three.ws/api/mcp3d/persona?id=persona_8f2a1c9d4b',
+	agent_id: 'persona_8f2a1c9d4be6f70a1b2c',
+	glb_url: 'https://pub-xxxx.r2.dev/personas/persona_8f2a1c9d4be6f70a1b2c.glb',
+	viewer_url: 'https://three.ws/viewer?src=https%3A%2F%2Fpub-xxxx.r2.dev%2Fpersonas%2Fpersona_8f2a1c9d4be6f70a1b2c.glb',
+	profile_url: 'https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c',
+	embed_html: '<iframe src="https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c" width="480" height="640" loading="lazy" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>',
+	reload_url: 'https://three.ws/api/mcp3d/persona?id=persona_8f2a1c9d4be6f70a1b2c',
 	voice: 'nova',
 	rigged: true,
 	name: 'Nova Scout',

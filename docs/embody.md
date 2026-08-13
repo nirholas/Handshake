@@ -34,12 +34,12 @@ Response (`200`):
 
 ```json
 {
-  "agent_id": "persona_8f2a1c9d4b",
-  "glb_url": "https://…/personas/persona_8f2a1c9d4b.glb",
+  "agent_id": "persona_8f2a1c9d4be6f70a1b2c",
+  "glb_url": "https://…/personas/persona_8f2a1c9d4be6f70a1b2c.glb",
   "viewer_url": "https://three.ws/viewer?src=…",
-  "profile_url": "https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4b",
-  "embed_html": "<iframe src=\"https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4b\" width=\"480\" height=\"640\" …></iframe>",
-  "reload_url": "https://three.ws/api/mcp3d/persona?id=persona_8f2a1c9d4b",
+  "profile_url": "https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c",
+  "embed_html": "<iframe src=\"https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c\" width=\"480\" height=\"640\" …></iframe>",
+  "reload_url": "https://three.ws/api/mcp3d/persona?id=persona_8f2a1c9d4be6f70a1b2c",
   "voice": "nova",
   "rigged": true,
   "name": "Nova Scout"
@@ -79,7 +79,7 @@ curl -si https://three.ws/api/x402/embody \
 #    re-send with the X-PAYMENT header. On success you get the bundle above.
 #
 # 3. Reload the body later by id:
-curl -s "https://three.ws/api/mcp3d/persona?id=persona_8f2a1c9d4b"
+curl -s "https://three.ws/api/mcp3d/persona?id=persona_8f2a1c9d4be6f70a1b2c"
 
 # 4. Drop the returned embed_html into any web page — the avatar renders and idles.
 ```
