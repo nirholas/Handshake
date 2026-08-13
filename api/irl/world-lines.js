@@ -36,7 +36,11 @@ import { verifyFixToken, fixEnforced } from '../_lib/irl-presence.js';
 import { insertNotification } from '../_lib/notify.js';
 import { isUuid } from '../_lib/validate.js';
 import { encodeGeohash } from '../_lib/geohash.js';
-import { WORD_BLACKLIST } from '../../src/profanity.js';
+// The content floor and the pin-id shape are the pin feed's, not a second copy of
+// it: a quest's public title/prompt has to clear exactly the gate a pin caption
+// clears, and its anchor id has to satisfy the same UUID column. See the note above
+// ensureTables() for why the pins module is a dependency here either way.
+import { hardBlocked, namesOffBrandCoin, isValidPinId, ensurePinsSchema } from './pins.js';
 import {
 	coarseCell, isCoarseCell, normalizeChallengeSpec, normalizeRewardKind, normalizeDifficulty,
 	canonicalProofMessage, completerHash, signPresenceProof, verifyPresenceProof,
@@ -67,28 +71,6 @@ const DEFAULT_LIFETIME_DAYS = 30;
 const MAX_LIFETIME_DAYS = 90;
 const MAX_COMPLETIONS_CAP = 100_000;    // an explicit sane bound on the cap field
 
-// $THREE is the only coin three.ws references. The off-brand guard is generic by
-// construction (it never names a competing ticker) — same logic the pin feed uses.
-const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
-function hardBlocked(text) {
-	const t = String(text || '').toLowerCase();
-	return WORD_BLACKLIST.some((w) => t.includes(w));
-}
-function namesOffBrandCoin(text) {
-	const t = String(text || '');
-	const cashtags = t.match(/\$[A-Za-z][A-Za-z0-9]{1,9}\b/g) || [];
-	if (cashtags.some((c) => c.slice(1).toUpperCase() !== 'THREE')) return true;
-	const tokens = t.match(/\b[1-9A-HJ-NP-Za-km-z]{32,48}\b/g) || [];
-	if (tokens.some((m) => /pump$/.test(m) && m !== THREE_MINT)) return true;
-	return false;
-}
-// A pin id is a server-minted UUID; accept that plus a conservative opaque-id shape.
-const PIN_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const PIN_ID_SAFE_RE = /^[A-Za-z0-9_-]{1,64}$/;
-function isValidPinId(id) {
-	return typeof id === 'string' && !!id && (PIN_UUID_RE.test(id) || PIN_ID_SAFE_RE.test(id));
-}
-
 function haversineM(lat1, lng1, lat2, lng2) {
 	const R = 6371000;
 	const toRad = (d) => (d * Math.PI) / 180;
@@ -108,7 +90,6 @@ async function ensureTables() {
 	// on a database where no pin has ever been placed, `nearby` and the single-quest
 	// read otherwise 500 with a raw `relation "irl_pins" does not exist`. Imported
 	// lazily so the pins handler's module graph only loads when a World Line is used.
-	const { ensurePinsSchema } = await import('./pins.js');
 	await ensurePinsSchema();
 	await sql`
 		CREATE TABLE IF NOT EXISTS irl_world_lines (
