@@ -1095,6 +1095,11 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/validation/': resolve(root, 'public/validation/index.html'),
 					'/reputation': resolve(root, 'public/reputation/index.html'),
 					'/reputation/': resolve(root, 'public/reputation/index.html'),
+					// vercel.json serves /reputation/(.*) straight off the filesystem, so
+					// the market sub-page needs its own dev entry or every link to it
+					// (the Crypto API page carries one) 404s in dev but works in prod.
+					'/reputation/market': resolve(root, 'public/reputation/market/index.html'),
+					'/reputation/market/': resolve(root, 'public/reputation/market/index.html'),
 					'/hydrate': resolve(root, 'public/hydrate/index.html'),
 					'/hydrate/': resolve(root, 'public/hydrate/index.html'),
 					'/artifact': resolve(root, 'public/artifact/index.html'),
@@ -1699,6 +1704,14 @@ support: resolve(__dirname, 'pages/support.html'),
 					// /tutorials/<slug>  → dedicated tutorial viewer template
 					else if (!filePath && /^\/tutorials\/[a-z0-9-]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/tutorial.html');
+					// /walkthroughs/<slug>  → the walkthrough player shell. The index
+					// (/walkthroughs) resolves through the generic single-segment
+					// fallback below, but a two-segment path never reaches it, so
+					// without this rule every walkthrough 404s in dev only. Mirrors
+					// vercel.json. The `[a-z0-9-]+` shape (no dot) keeps
+					// /walkthroughs/manifest.json on the static path it is served from.
+					else if (!filePath && /^\/walkthroughs\/[a-z0-9-]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/walkthrough.html');
 					// /cookbook/self-correcting-3d  → the committed notebook export, which is a
 					// static nbconvert page, NOT a markdown recipe. It has to be matched before
 					// the generic slug rule below or the viewer would shadow it. Mirrors vercel.json.
@@ -1905,8 +1918,25 @@ support: resolve(__dirname, 'pages/support.html'),
 							? resolve(root, `public/docs/walk/${sub}.html`)
 							: resolve(root, 'public/docs/walk/index.html');
 						if (existsSync(cand)) filePath = cand;
-					} else if (!filePath && /^\/docs\/[a-z0-9][a-z0-9-]*\/?$/.test(path))
-						filePath = resolve(root, 'docs/index.html');
+					}
+					// Mirror vercel.json's `/docs/([^.]+?)/?` plus the server's
+					// shell-page miss check (server/shell-pages.mjs): any dot-free
+					// path under /docs/ naming a real article is a viewer topic,
+					// nested ones (tutorials/first-agent,
+					// agent-abilities/chapters/01-the-body) and capitalized ones
+					// (DESIGN-TOKENS) included. Excluding dots is what keeps
+					// /docs/<topic>.md and /docs/img/*.png resolving as real files.
+					// A narrower pattern here 404s in dev every nested doc link that
+					// works in production, which reads as a dead link; serving the
+					// shell for a topic with no article would hide a real one.
+					else if (!filePath && /^\/docs\/[^.]+?\/?$/.test(path)) {
+						const topic = path.replace(/^\/docs\//, '').replace(/\/$/, '');
+						const article = [
+							resolve(root, `docs/${topic}.md`),
+							resolve(root, `public/docs/${topic}.md`),
+						].find((p) => existsSync(p));
+						if (article) filePath = resolve(root, 'docs/index.html');
+					}
 					// /legal/<slug> -> public/legal/<slug>.html (privacy, tos)
 					else if (!filePath && /^\/legal\/[a-z0-9-]+\/?$/.test(path)) {
 						const slug = path.replace(/^\/legal\//, '').replace(/\/$/, '');
