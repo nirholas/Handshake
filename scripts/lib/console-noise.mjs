@@ -55,6 +55,9 @@ export const IGNORE_CONSOLE = [
 	/X-Amz-Signature.*404/i,
 	// Three.js / WebGL expected notices
 	/THREE\.WebGLRenderer: WebGL 1 is not supported/i,
+	// SwiftShader (headless CI GL) lacks this optional extension; three.js notes
+	// it once per renderer. Real GPUs have it, and our code never emits this.
+	/KHR_parallel_shader_compile extension not supported/i,
 	/THREE\.BufferGeometry\.computeBoundingSphere/i,
 	/WebGL.*swiftshader/i,
 	/Automatic fallback to software WebGL/i,

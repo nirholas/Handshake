@@ -361,8 +361,12 @@ async function runScenario(base, sc) {
 		// it as a goto failure, which reads identically to "the site hung" and would
 		// put a fabricated outage in the report. Hand it back as `infra` so the
 		// caller can retry it and, if it never runs, count it as NOT RUN rather than
-		// as a pass or a finding.
-		if (/Page crashed|Target (page|closed)|browser has been closed|Target crashed/i.test(m)) {
+		// as a pass or a finding. ERR_NETWORK_CHANGED is the same class: this dev
+		// box's interfaces churn (other agents' docker containers add and remove
+		// veths), and Chromium reacts by aborting every in-flight request, even to
+		// localhost. Product code cannot cause it, and a page it hit is half-loaded,
+		// so nothing observed afterwards means anything.
+		if (/Page crashed|Target (page|closed)|browser has been closed|Target crashed|ERR_NETWORK_CHANGED/i.test(m)) {
 			return { infra: m, findings: [], consoleIssues: [], pageErrors: [] };
 		}
 		findings.push(`navigation failed: ${m}`);
@@ -370,6 +374,14 @@ async function runScenario(base, sc) {
 	}
 
 	await page.waitForTimeout(SETTLE_MS);
+
+	// Network churn mid-scenario aborts subresource loads wholesale (see the
+	// infra note above), so every observation below would describe a page the
+	// harness broke, not one /play broke. Surrender the scenario for a retry.
+	if (consoleIssues.some((t) => t.includes('ERR_NETWORK_CHANGED'))) {
+		await teardown();
+		return { infra: 'host network changed mid-scenario (ERR_NETWORK_CHANGED)', findings: [], consoleIssues: [], pageErrors: [] };
+	}
 
 	const o = await page.evaluate(() => {
 		const loader = document.getElementById('kx-loading');
@@ -465,12 +477,15 @@ async function main() {
 			// run this audit, not a verdict on /play.
 			let res = await runScenario(server.base, sc);
 			if (res.infra) {
-				console.log(`      ${C.y('↻')} ${C.d(`browser died (${res.infra.split('\n')[0]}), retrying`)}`);
+				console.log(`      ${C.y('↻')} ${C.d(`harness infra failure (${res.infra.split('\n')[0]}), retrying`)}`);
+				// A network-change storm usually settles within seconds; give it a
+				// moment so the retry does not land inside the same churn window.
+				await new Promise((r) => setTimeout(r, 3000));
 				res = await runScenario(server.base, sc);
 			}
 			if (res.infra) {
 				notRun.push({ sc, why: res.infra.split('\n')[0] });
-				console.log(`      ${C.y('!')} ${C.y('NOT RUN')} ${C.d('browser crashed twice, host out of resources')}`);
+				console.log(`      ${C.y('!')} ${C.y('NOT RUN')} ${C.d('two harness infra failures in a row (starved browser or network churn)')}`);
 				continue;
 			}
 			const { findings, consoleIssues, pageErrors, o } = res;
@@ -499,7 +514,7 @@ async function main() {
 	// audit that says "all clear" while a third of it never executed is worse than
 	// one that says nothing.
 	if (notRun.length) {
-		console.log(C.y(`  ${notRun.length} of ${scenarios.length} scenario(s) NOT RUN (host out of resources):`));
+		console.log(C.y(`  ${notRun.length} of ${scenarios.length} scenario(s) NOT RUN (harness infra: starved browser or network churn):`));
 		for (const { sc, why } of notRun) console.log(`      ${C.y('!')} ${sc.id}: ${why}`);
 		console.log('');
 	}

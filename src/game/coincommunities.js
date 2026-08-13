@@ -773,7 +773,9 @@ export class CoinCommunities {
 			// A malformed mint means the link is broken, not that the world is empty.
 			// Say so and leave them in the lobby, where every real world is one tap
 			// away, instead of building a convincing world nobody else can join.
-			log.warn('[coincommunities] ignoring a malformed ?coin= mint:', mint);
+			// The toast is the signal; this line is telemetry for a designed path,
+			// so it stays below warn level.
+			log.info('[coincommunities] ignoring a malformed ?coin= mint:', mint);
 			this.ui.toast('That world link looks broken, so we left you in the lobby. Pick a community below.', 'warn');
 		} else if (mint) {
 			const tier = p.get('tier') === 'holders' ? 'holders' : 'general';
@@ -854,7 +856,9 @@ export class CoinCommunities {
 			const raw = await r.json();
 			this.ui.setCoins(mapCoins(raw));
 		} catch (err) {
-			log.warn('[coincommunities] coin load failed:', err?.message);
+			// Designed failure state: the lobby shows its manual-retry error card,
+			// so this is expected-path telemetry, not a warning.
+			log.info('[coincommunities] coin load failed:', err?.message);
 			this.ui.setCoinsError(() => this._loadCoins());
 		}
 	}
@@ -872,7 +876,7 @@ export class CoinCommunities {
 			if (coin?.mint) this.ui.setFeatured({ ...HOME_TOWN, ...coin, official: true });
 		} catch (err) {
 			// Non-fatal: the static pin from above stands in until next load.
-			log.warn('[coincommunities] home town refresh failed:', err?.message);
+			log.info('[coincommunities] home town refresh failed:', err?.message);
 		}
 	}
 
@@ -902,7 +906,13 @@ export class CoinCommunities {
 				marketCap: c.usd_market_cap || c.market_cap_usd || c.marketCap || 0,
 			};
 		} catch (err) {
-			log.warn('[coincommunities] coin identity lookup failed:', err?.message);
+			// A designed miss: our own deadline fired, /api is blocked, or the feed
+			// blipped. The world takes its generated-art fallback either way, so
+			// this is expected-path telemetry, not a warning.
+			const why = err?.name === 'AbortError'
+				? `timed out after ${COIN_IDENTITY_TIMEOUT_MS}ms`
+				: (err?.message || String(err));
+			log.info('[coincommunities] coin identity lookup missed, using generated art:', why);
 			return null;
 		} finally {
 			clearTimeout(timer);

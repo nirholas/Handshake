@@ -111,6 +111,11 @@ function mountBody(agent) {
 	el.setAttribute('background', 'transparent');
 	el.setAttribute('name-plate', 'off');
 	el.setAttribute('avatar-chat', 'off');
+	// `chat="off"` keeps the element a bare body. Without it, binding an
+	// agent-id builds the chat shell (focusable log, suggestion chips, send
+	// button) inside a host we label role="img", and axe rightly flags that
+	// as nested-interactive: role="img" makes every descendant presentational.
+	el.setAttribute('chat', 'off');
 	el.setAttribute('responsive', '');
 	el.setAttribute('eager', '');
 	// The body is a graphic: name it for screen readers, since the canvas inside
