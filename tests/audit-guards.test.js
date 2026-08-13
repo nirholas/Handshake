@@ -69,6 +69,16 @@ function makeRepo(name, { guards, exempt = [], stages, scripts, extraScripts = [
 	// fixture would fail on that one note regardless of what it means to test.
 	mkdirSync(join(dir, 'public'), { recursive: true });
 	writeFileSync(join(dir, 'public', 'guards.json'), `${JSON.stringify(registry, null, '\t')}\n`);
+	// Same story for docs/guards.md: the auditor requires every registered guard
+	// to appear in its tables by npm command, so each fixture gets a minimal
+	// table naming its guards.
+	mkdirSync(join(dir, 'docs'), { recursive: true });
+	const docRows = registry.guards
+		.flatMap((g) => [g.npm, ...(g.npmAliases || [])])
+		.filter(Boolean)
+		.map((n) => `| ${n} | \`npm run ${n}\` | fixture |`)
+		.join('\n');
+	writeFileSync(join(dir, 'docs', 'guards.md'), `| Guard | Command | Protects |\n|---|---|---|\n${docRows}\n`);
 	return dir;
 }
 

@@ -250,7 +250,7 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:READ_ONLY_LIVE_FEED",
-			"schemaHash": "87529a9dd287"
+			"schemaHash": "459aa921fdf5"
 		},
 		{
 			"name": "token_snapshot",
@@ -266,14 +266,14 @@
 			"name": "create_gated_embed",
 			"title": "Create a token-gated embed",
 			"descHead": "Turn an avatar or on-chain agent you own into a holder-only interactive ",
-			"descHash": "c75c31fa64bd",
+			"descHash": "085b4a883126",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "a8039900c799"
+			"schemaHash": "fa0c477760b8"
 		},
 		{
 			"name": "get_embed_code",
@@ -286,7 +286,7 @@
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
-			"schemaHash": "19fef9f6debc"
+			"schemaHash": "f6bbfa126bf8"
 		}
 	],
 	"api/_mcp/tools/garments.js": [
@@ -376,7 +376,7 @@
 			"name": "inspect_model",
 			"title": "Inspect glTF/GLB model",
 			"descHead": "Parse a remote GLB or glTF and return structural stats: scene/node/mesh ",
-			"descHash": "b8209ee26651",
+			"descHash": "f60800147b2e",
 			"annotations": "ref:INSPECTION_ANNOTATIONS",
 			"schemaHash": "508ba4931749"
 		},
@@ -392,7 +392,7 @@
 			"name": "validate_model",
 			"title": "Validate glTF/GLB model",
 			"descHead": "Run the Khronos glTF-Validator against a remote GLB or glTF URL. Returns",
-			"descHash": "1ad7ca463dbe",
+			"descHash": "3fcb156b0641",
 			"annotations": "ref:INSPECTION_ANNOTATIONS",
 			"schemaHash": "ec4de14d2fb0"
 		}
@@ -409,13 +409,13 @@
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
-			"schemaHash": "2fd3f728039c"
+			"schemaHash": "78a801b02c68"
 		},
 		{
 			"name": "oracle_coin",
 			"title": "Oracle verdict for one coin",
 			"descHead": "Get Oracle's full conviction verdict for a specific pump.fun coin by min",
-			"descHash": "b2e49ba1236a",
+			"descHash": "142eb41facc8",
 			"annotations": "ref:LIVE_ANNOTATIONS",
 			"schemaHash": "e49439fea65e"
 		},
@@ -423,9 +423,9 @@
 			"name": "oracle_top_plays",
 			"title": "Oracle top conviction plays",
 			"descHead": "Get the current top pump.fun launches ranked by Oracle conviction score.",
-			"descHash": "61cecaf86ed6",
+			"descHash": "27b4496e4141",
 			"annotations": "ref:LIVE_ANNOTATIONS",
-			"schemaHash": "e6121e0129f6"
+			"schemaHash": "76d8cacdebf2"
 		},
 		{
 			"name": "oracle_watch_status",
@@ -500,7 +500,7 @@
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
-			"schemaHash": "c9372440542d"
+			"schemaHash": "712b88a354d8"
 		}
 	],
 	"api/_mcp/tools/solana.js": [
@@ -516,7 +516,7 @@
 			"name": "solana_agent_passport",
 			"title": "Get Solana agent passport",
 			"descHead": "Full discovery card for a Solana agent: identity (Metaplex Core asset), ",
-			"descHash": "6320bafe75df",
+			"descHash": "85982da1c22f",
 			"annotations": "ref:ATTESTATION_READ_ANNOTATIONS",
 			"schemaHash": "dab5747d2c2b"
 		},

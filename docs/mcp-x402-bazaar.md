@@ -43,8 +43,8 @@ disappearance:
       "network": "eip155:8453",
       "amount_atomic": 1000,
       "price": "0.001 USDC",
-      "asset": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-      "pay_to": "0x0E84dDEdAaE6A779c462C22a59F301EC31B6b808",
+      "asset": "0xUSDCassetAddressOnThisNetwork",
+      "pay_to": "0xServiceRecipientAddress",
       "scheme": "exact"
     }
   ]
