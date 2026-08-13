@@ -140,9 +140,10 @@
 		<main class="stage">
 			<p class="crumb" data-i18n-html="demos_livepeer_inference.lab"><a href="/demos/">← lab</a></p>
 			<h1 data-i18n="demos_livepeer_inference.three_ws_decentralized_inference">three.ws · Decentralized inference</h1>
-			<p class="sub" data-i18n="demos_livepeer_inference.same_prompt_two_providers_real_responses_the">
+			<p class="sub" data-i18n="demos_livepeer_inference.same_prompt_two_providers_real_responses_left">
 				Same prompt, two providers, real responses. The left card hits
-				three.ws's default inference (Claude). The right card routes the
+				the three.ws inference chain, which answers from whichever
+				provider is fastest to respond. The right card routes the
 				identical request through a decentralized AI gateway whose
 				orchestrators run open-weight models on commodity GPUs. Phase 4
 				of the roadmap: decoupling inference from any single vendor so
@@ -182,7 +183,7 @@
 				<section class="card claude" id="card-claude">
 					<div class="card-head">
 						<h2 class="card-title" data-i18n="demos_livepeer_inference.three_ws_default">three.ws default</h2>
-						<span class="chip" data-i18n="demos_livepeer_inference.claude_anthropic">Claude · Anthropic</span>
+						<span class="chip" id="claude-chip" data-i18n="demos_livepeer_inference.three_ws_inference_chain">three.ws inference chain</span>
 					</div>
 					<div class="stats">
 						<span data-i18n-html="demos_livepeer_inference.latency">latency <strong id="claude-latency">—</strong></span>
@@ -210,11 +211,13 @@
 
 			<div class="log" id="log">ready.</div>
 
-			<p class="footnote" data-i18n-html="demos_livepeer_inference.powered_by_livepeer_ai_gateway_on_the">
+			<p class="footnote" data-i18n-html="demos_livepeer_inference.powered_by_livepeer_ai_gateway_decentralized">
 				Powered by <a href="https://livepeer.org" target="_blank" rel="noopener">Livepeer</a> AI Gateway
-				on the decentralized side. Claude reply provided by Anthropic. The
-				public decentralized gateway is rate-limited and occasionally
-				slow — typical p50 latency is 2–10 s for an 8B-param model.
+				on the decentralized side. The default reply comes from the
+				three.ws provider chain, and each card names the provider and
+				model that actually answered it. The public decentralized gateway
+				takes no key, so it is rate-limited and often has no orchestrator
+				online for a given model.
 			</p>
 		</main>
 
@@ -261,6 +264,7 @@
 					const info = await r.json();
 					$('gateway-info').textContent =
 						`gateway · ${info.gateway} · ${info.gateway_url}`;
+					if (info.hint) logLine(info.hint, 'dim');
 					if (Array.isArray(info.models) && info.models.length) {
 						const sel = $('livepeer-model');
 						const current = sel.value;
@@ -290,14 +294,19 @@
 				const lb = $('livepeer-body');
 				lb.textContent = 'streaming…';
 				lb.className = 'card-body empty';
+				setText('claude-chip', 'three.ws inference chain');
 				setText('claude-footer', 'model · —');
 				setText('livepeer-footer', 'model · — · gateway · —');
 			}
 
-			function renderClaude(c) {
+			// The platform leg's provider is chosen at request time by the
+			// three.ws chain, so the chip and footer are filled from the
+			// response rather than labelled with a vendor up front.
+			function renderPlatform(c) {
 				setText('claude-latency', fmtMs(c.latency_ms));
 				setText('claude-prompt-tokens', fmtTok(c.prompt_tokens));
 				setText('claude-completion-tokens', fmtTok(c.completion_tokens));
+				setText('claude-chip', c.provider ? `${c.provider} · answered` : 'three.ws inference chain');
 				setText('claude-footer', `model · ${c.model || '—'}`);
 				if (c.ok) {
 					setBody('claude-body', c.reply || '(empty)');
@@ -320,10 +329,10 @@
 				if (lp.ok) {
 					setBody('livepeer-body', lp.reply || '(empty)');
 				} else {
-					const msg = lp.upstream_body
+					const base = lp.upstream_body
 						? `${lp.error || 'error'} (${lp.upstream_status || '?'}):\n${lp.upstream_body}`
 						: lp.error_message || lp.error || 'unknown error';
-					setBody('livepeer-body', msg, 'error');
+					setBody('livepeer-body', lp.hint ? `${base}\n\n${lp.hint}` : base, 'error');
 				}
 			}
 
@@ -368,19 +377,22 @@
 						$('livepeer-body').className = 'card-body error';
 						return;
 					}
-					renderClaude(data.claude);
+					renderPlatform(data.platform);
 					renderLivepeer(data.livepeer);
 
-					const cMs = data.claude?.latency_ms;
+					const cMs = data.platform?.latency_ms;
 					const lMs = data.livepeer?.latency_ms;
-					logLine(`done in ${totalMs}ms · claude ${fmtMs(cMs)} (${data.claude?.ok ? 'ok' : 'fail'}) · livepeer ${fmtMs(lMs)} (${data.livepeer?.ok ? 'ok' : 'fail'})`, 'ok');
+					const pName = data.platform?.provider || 'platform';
+					logLine(`done in ${totalMs}ms · ${pName} ${fmtMs(cMs)} (${data.platform?.ok ? 'ok' : 'fail'}) · livepeer ${fmtMs(lMs)} (${data.livepeer?.ok ? 'ok' : 'fail'})`, 'ok');
 
 					if (!data.livepeer?.ok) {
 						const reason = data.livepeer?.error || 'unknown';
 						const detail = data.livepeer?.upstream_status
 							? ` (upstream ${data.livepeer.upstream_status})`
 							: '';
-						logLine(`livepeer leg failed: ${reason}${detail} — public gateway often has no orchestrators online for a given model. Try another model in settings.`, 'dim');
+						const hint = data.livepeer?.hint
+							|| 'Try another model in settings: an orchestrator may be offline for this one.';
+						logLine(`livepeer leg failed: ${reason}${detail}. ${hint}`, 'dim');
 					}
 				} catch (err) {
 					logLine('fetch failed: ' + err.message, 'err');

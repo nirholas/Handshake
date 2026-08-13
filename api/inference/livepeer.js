@@ -1,36 +1,66 @@
-// POST /api/inference/livepeer — side-by-side LLM inference comparison.
+// POST /api/inference/livepeer: side-by-side LLM inference comparison.
 //
 // Body: { prompt: string, model?: string, max_tokens?: number, temperature?: number }
 // Response:
 //   {
 //     ok: true,
 //     prompt: string,
-//     claude:   { ok, reply, latency_ms, model, prompt_tokens, completion_tokens, network: 'Anthropic' },
-//     livepeer: { ok, reply, latency_ms, model, prompt_tokens, completion_tokens, gateway: 'studio'|'public', network: 'Livepeer' }
+//     platform: { ok, reply, latency_ms, provider, model, prompt_tokens, completion_tokens, network: 'three.ws' },
+//     livepeer: { ok, reply, latency_ms, model, prompt_tokens, completion_tokens, gateway: 'override'|'studio'|'public', network: 'Livepeer' }
 //   }
 //
-// Both providers are called in parallel via Promise.allSettled so a slow
-// or failed Livepeer orchestrator does not block the Claude reply. The
-// Livepeer leg routes to:
-//   - https://livepeer.studio/api/generate/llm   when LIVEPEER_API_KEY is set
-//   - https://dream-gateway.livepeer.cloud/llm   otherwise (public, rate-limited)
+// `platform` is the three.ws inference chain (api/_lib/llm.js), which picks
+// whichever provider answers first; `provider` and `model` always name the one
+// that actually replied, so the card never claims a vendor that did not run.
 //
-// We `import 'livepeer'` so the package version is tied to the call shape —
-// the npm SDK is built for the same Studio API path we hit by raw fetch. The
-// actual request is plain HTTP because the Vercel edge-friendlier path is
-// `fetch`, not a heavyweight SDK client.
+// Both legs are called in parallel via Promise.allSettled so a slow or failed
+// Livepeer orchestrator does not block the platform reply, and each leg
+// reports its own ok/error rather than failing the whole request: a
+// comparison demo that 500s when one side is down shows nothing.
+//
+// The Livepeer gateway is resolved by api/_lib/livepeer-gateway.js, shared
+// with the text-to-image federation provider, so the network's URLs and the
+// LIVEPEER_GATEWAY_URL override live in one file. This leg appends the
+// gateway's OpenAI-compatible `/llm` path and posts with plain `fetch` rather
+// than the npm SDK: the SDK client is a heavyweight dependency to load per
+// cold start for a single JSON POST.
+//
+// Gateway health note: the no-key public dream gateway has not been Livepeer
+// since 2026-08-12 (its hostname resolves to an unrelated host, see
+// docs/ops/livepeer-federation.md). An unkeyed deployment therefore reports
+// `gateway_unavailable` without dialing, instead of shipping the user's
+// prompt at whoever now answers for that name.
 
-// eslint-disable-next-line no-unused-vars -- pinned for version parity with the SDK call shape
-import { Livepeer } from 'livepeer';
-import { env } from '../_lib/env.js';
 import { llmComplete } from '../_lib/llm.js';
+import {
+	livepeerGatewayConfig,
+	livepeerGatewayUsable,
+	PUBLIC_GATEWAY_NOTE,
+} from '../_lib/livepeer-gateway.js';
+import { env } from '../_lib/env.js';
 import { cors, method, readJson, error, json, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
 export const maxDuration = 60;
 
 const DEFAULT_LIVEPEER_MODEL = 'meta-llama/Meta-Llama-3.1-8B-Instruct';
-const PROVIDER_NETWORK = { anthropic: 'Anthropic', groq: 'Groq', openrouter: 'OpenRouter' };
+
+// Per-leg wall-clock ceiling, well under maxDuration so one hung orchestrator
+// cannot eat the whole function budget and strand the other leg's finished
+// answer. The platform leg passes the same budget into the provider chain.
+const LEG_TIMEOUT_MS = 45_000;
+
+// Shown on any failure of a gateway we did dial. Orchestrators on the network
+// come and go per model, so the actionable move is another model, not a retry
+// of the same one.
+const GATEWAY_RETRY_HINT =
+	'An orchestrator serving this model may be offline. Pick another model in settings and run again.';
+
+// Resolve the gateway and the LLM endpoint on it in one place.
+function llmGateway() {
+	const cfg = livepeerGatewayConfig();
+	return { ...cfg, url: `${cfg.base}/llm`, usable: livepeerGatewayUsable(cfg.gateway) };
+}
 
 // Models known to be available on the Livepeer public/studio gateway as of
 // late 2025. Surfaced to the client via the GET handler so the demo's
@@ -58,12 +88,13 @@ function clampTemp(n, fallback = 0.7) {
 	return Math.min(Math.max(v, 0), 2);
 }
 
-// ── Platform LLM leg ────────────────────────────────────────────────────────
+// Platform LLM leg.
 //
 // The non-Livepeer side of the comparison runs on the platform's funded free
-// providers (Groq/OpenRouter) by default, and upgrades to Anthropic when the
-// operator supplies their own key — matching the platform-wide BYOK policy.
-// `network`/`model` always report whichever provider actually answered.
+// providers by default and upgrades to Anthropic when the operator supplies a
+// key, matching the platform-wide BYOK policy. The chain owns the choice, so
+// `provider`/`model` report whichever rung actually answered rather than a
+// vendor name fixed at build time.
 
 async function callPlatformLlm({ prompt, max_tokens }) {
 	const t0 = Date.now();
@@ -73,12 +104,13 @@ async function callPlatformLlm({ prompt, max_tokens }) {
 			user: prompt,
 			maxTokens: max_tokens,
 			anthropicKey: env.ANTHROPIC_API_KEY,
-			timeoutMs: 45_000,
+			timeoutMs: LEG_TIMEOUT_MS,
 		});
 	} catch (e) {
 		return {
 			ok: false,
-			network: PROVIDER_NETWORK.anthropic,
+			network: 'three.ws',
+			provider: null,
 			model: null,
 			latency_ms: Date.now() - t0,
 			error: e.code === 'llm_unavailable' ? 'no_provider_configured' : 'upstream_error',
@@ -87,7 +119,8 @@ async function callPlatformLlm({ prompt, max_tokens }) {
 	}
 	return {
 		ok: true,
-		network: PROVIDER_NETWORK[result.provider] || result.provider,
+		network: 'three.ws',
+		provider: result.provider,
 		model: result.model,
 		latency_ms: Date.now() - t0,
 		reply: (result.text || '').trim(),
@@ -96,17 +129,29 @@ async function callPlatformLlm({ prompt, max_tokens }) {
 	};
 }
 
-// ── Livepeer leg ──────────────────────────────────────────────────────────────
+// Livepeer leg.
 
 async function callLivepeer({ prompt, model, max_tokens, temperature }) {
-	const useStudio = Boolean(env.LIVEPEER_API_KEY);
-	const url = useStudio
-		? 'https://livepeer.studio/api/generate/llm'
-		: 'https://dream-gateway.livepeer.cloud/llm';
-	const gateway = useStudio ? 'studio' : 'public';
+	const { url, gateway, key, usable } = llmGateway();
+
+	// Refused, not attempted: the only gateway left on the no-key path is a
+	// hostname that no longer answers for Livepeer, and a retry loop against it
+	// would be an outbound copy of the user's prompt to an unidentified host.
+	if (!usable) {
+		return {
+			ok: false,
+			network: 'Livepeer',
+			model,
+			gateway,
+			gateway_url: url,
+			latency_ms: 0,
+			error: 'gateway_unavailable',
+			hint: PUBLIC_GATEWAY_NOTE,
+		};
+	}
 
 	const headers = { 'content-type': 'application/json' };
-	if (useStudio) headers.authorization = `Bearer ${env.LIVEPEER_API_KEY}`;
+	if (key) headers.authorization = `Bearer ${key}`;
 
 	// Livepeer AI Gateway LLM pipeline accepts an OpenAI-compatible chat
 	// completions shape: { model, messages, max_tokens, temperature, stream }.
@@ -126,8 +171,16 @@ async function callLivepeer({ prompt, model, max_tokens, temperature }) {
 			method: 'POST',
 			headers,
 			body: JSON.stringify(body),
+			// A federated orchestrator can accept the connection and then sit on
+			// it. Without this ceiling that stall becomes the request's, and the
+			// platform leg's finished answer never reaches the caller.
+			signal: AbortSignal.timeout(LEG_TIMEOUT_MS),
 		});
 	} catch (e) {
+		// A socket/DNS/TLS failure here is the gateway being down, and an abort
+		// is it being too slow to be part of a side-by-side comparison. Code the
+		// two distinctly so the demo can say which one happened.
+		const timedOut = e?.name === 'TimeoutError' || e?.name === 'AbortError';
 		return {
 			ok: false,
 			network: 'Livepeer',
@@ -135,8 +188,11 @@ async function callLivepeer({ prompt, model, max_tokens, temperature }) {
 			gateway,
 			gateway_url: url,
 			latency_ms: Date.now() - t0,
-			error: 'network_error',
-			error_message: String(e?.message || e),
+			error: timedOut ? 'gateway_timeout' : 'gateway_unreachable',
+			error_message: timedOut
+				? `no response within ${Math.round(LEG_TIMEOUT_MS / 1000)}s`
+				: String(e?.message || e),
+			hint: GATEWAY_RETRY_HINT,
 		};
 	}
 	const latency_ms = Date.now() - t0;
@@ -153,6 +209,7 @@ async function callLivepeer({ prompt, model, max_tokens, temperature }) {
 			error: 'upstream_error',
 			upstream_status: upstream.status,
 			upstream_body: text.slice(0, 1000),
+			hint: GATEWAY_RETRY_HINT,
 		};
 	}
 
@@ -207,22 +264,26 @@ async function callLivepeer({ prompt, model, max_tokens, temperature }) {
 	};
 }
 
-// ── handler ──────────────────────────────────────────────────────────────────
+// Handler.
 
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 
 	if (req.method === 'GET') {
 		// Surface the live model list + gateway state so the demo's settings
-		// drawer can render without hard-coding it in HTML.
+		// drawer can render without hard-coding it in HTML. `keyed` and `usable`
+		// let the client say, before a run, that the Livepeer leg cannot answer
+		// on this deployment and which env var fixes it.
+		const { url, gateway, key, usable } = llmGateway();
 		return json(res, 200, {
 			ok: true,
 			default_model: DEFAULT_LIVEPEER_MODEL,
 			models: LIVEPEER_MODELS,
-			gateway: env.LIVEPEER_API_KEY ? 'studio' : 'public',
-			gateway_url: env.LIVEPEER_API_KEY
-				? 'https://livepeer.studio/api/generate/llm'
-				: 'https://dream-gateway.livepeer.cloud/llm',
+			gateway,
+			gateway_url: url,
+			keyed: Boolean(key),
+			usable,
+			...(usable ? {} : { hint: PUBLIC_GATEWAY_NOTE }),
 		});
 	}
 
@@ -247,19 +308,20 @@ export default wrap(async function handler(req, res) {
 	const max_tokens = clampInt(body.max_tokens, 32, 2048, 512);
 	const temperature = clampTemp(body.temperature, 0.7);
 
-	const [claudeRes, livepeerRes] = await Promise.allSettled([
+	const [platformRes, livepeerRes] = await Promise.allSettled([
 		callPlatformLlm({ prompt, max_tokens }),
 		callLivepeer({ prompt, model, max_tokens, temperature }),
 	]);
 
-	const claude = claudeRes.status === 'fulfilled'
-		? claudeRes.value
+	const platform = platformRes.status === 'fulfilled'
+		? platformRes.value
 		: {
 				ok: false,
-				network: PROVIDER_NETWORK.anthropic,
+				network: 'three.ws',
+				provider: null,
 				model: null,
 				error: 'leg_failed',
-				error_message: String(claudeRes.reason?.message || claudeRes.reason || 'unknown'),
+				error_message: String(platformRes.reason?.message || platformRes.reason || 'unknown'),
 			};
 
 	const livepeer = livepeerRes.status === 'fulfilled'
@@ -277,7 +339,7 @@ export default wrap(async function handler(req, res) {
 		prompt,
 		max_tokens,
 		temperature,
-		claude,
+		platform,
 		livepeer,
 	});
 });

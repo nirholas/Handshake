@@ -40,9 +40,11 @@
 
 import { env } from '../_lib/env.js';
 import { looksLikeImageBytes, persistImageBytes } from '../_lib/image-persist.js';
+import { livepeerGatewayConfig } from '../_lib/livepeer-gateway.js';
 
-const PUBLIC_GATEWAY = 'https://dream-gateway.livepeer.cloud';
-const STUDIO_GATEWAY = 'https://livepeer.studio/api/generate';
+// Gateway resolution is shared with the LLM comparison lane
+// (api/inference/livepeer.js) so the network's URLs live in one file.
+export { livepeerGatewayConfig };
 
 // Default pipeline on the Livepeer AI gateway text-to-image surface. A fast
 // distilled SDXL variant, matching the lane's role (cheap reference views, not
@@ -80,17 +82,6 @@ function truthy(v) {
 // set process.env directly between cases.
 export function livepeerFederationEnabled() {
 	return truthy(process.env.LIVEPEER_FEDERATION_ENABLED);
-}
-
-// Resolve the active gateway. Returns { base, gateway, key } where gateway is
-// 'studio' | 'public' | 'override'. LIVEPEER_GATEWAY_URL wins outright; then
-// the keyed studio gateway; then the no-key public one.
-export function livepeerGatewayConfig() {
-	const override = process.env.LIVEPEER_GATEWAY_URL || env.LIVEPEER_GATEWAY_URL;
-	if (override) return { base: String(override).replace(/\/$/, ''), gateway: 'override', key: env.LIVEPEER_API_KEY || null };
-	const key = env.LIVEPEER_API_KEY;
-	if (key) return { base: STUDIO_GATEWAY, gateway: 'studio', key };
-	return { base: PUBLIC_GATEWAY, gateway: 'public', key: null };
 }
 
 // Resolve a possibly gateway-relative image URL against the gateway origin.
