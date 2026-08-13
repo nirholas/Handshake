@@ -28,7 +28,7 @@
 				launches into the CTA.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_skateboard.catch_the_landing"><span>Catch the landing</span><span>→</span></a>
+				<button type="button" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_skateboard.catch_the_landing"><span>Catch the landing</span><span>→</span></button>
 				<button class="btn btn-ghost" id="restart" data-i18n-html="demos_agents_skateboard.drop_in_again"><span>Drop in again</span></button>
 			</div>
 		</div>
@@ -111,6 +111,7 @@
 			let this_dur = 0.5;
 
 			restart.addEventListener('click', startRun);
+			ctaBtn.addEventListener('click', startRun);
 			startRun();
 
 			startLoop(stage.renderer, stage.scene, stage.camera, mixer, () => {

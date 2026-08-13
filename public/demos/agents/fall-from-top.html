@@ -17,7 +17,7 @@
 				onto the CTA — splash, squish, then composes herself.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_fall_from_top.catch_me"><span>Catch me</span><span>↓</span></a>
+				<button type="button" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_fall_from_top.catch_me"><span>Catch me</span><span>↓</span></button>
 				<button class="btn btn-ghost" id="redrop" data-i18n-html="demos_agents_fall_from_top.drop_again"><span>Drop again</span></button>
 			</div>
 		</div>
@@ -82,6 +82,7 @@
 
 			startFall();
 			redrop.addEventListener('click', startFall);
+			ctaBtn.addEventListener('click', startFall);
 
 			startLoop(stage.renderer, stage.scene, stage.camera, mixer, (dt) => {
 				if (phase !== 'falling') return;

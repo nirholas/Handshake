@@ -17,7 +17,7 @@
 				each peak higher than the last. Confetti on the top bounce.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_trampoline.bounce_me"><span>Bounce me</span><span>⤴</span></a>
+				<button type="button" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_trampoline.bounce_me"><span>Bounce me</span><span>⤴</span></button>
 				<button class="btn btn-ghost" id="restart" data-i18n-html="demos_agents_trampoline.restart"><span>Restart</span></button>
 			</div>
 		</div>
@@ -89,6 +89,7 @@
 			}
 
 			restart.addEventListener('click', () => { bounceIdx = 0; startBounce(); });
+			ctaBtn.addEventListener('click', () => { bounceIdx = 0; startBounce(); });
 			startBounce();
 
 			startLoop(stage.renderer, stage.scene, stage.camera, mixer, () => {

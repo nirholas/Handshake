@@ -25,8 +25,8 @@
 				sideways. It wobbles, recovers, and she dangles before letting go.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary" data-i18n-html="demos_agents_wrecking_ball.don_t_mind_her"><span>Don't mind her</span><span>→</span></a>
-				<a href="#" class="btn btn-ghost" id="cta-btn" data-i18n-html="demos_agents_wrecking_ball.hit_this_one"><span>Hit this one</span><span>💥</span></a>
+				<span class="btn btn-primary" data-i18n-html="demos_agents_wrecking_ball.don_t_mind_her"><span>Don't mind her</span><span>→</span></span>
+				<button type="button" class="btn btn-ghost" id="cta-btn" data-i18n-html="demos_agents_wrecking_ball.hit_this_one"><span>Hit this one</span><span>💥</span></button>
 				<button class="btn btn-ghost" id="restart" style="margin-top:8px;" data-i18n-html="demos_agents_wrecking_ball.swing_again"><span>Swing again</span></button>
 			</div>
 		</div>
@@ -103,6 +103,7 @@
 				ctaBtn.style.transform = '';
 			}
 			restart.addEventListener('click', startSwing);
+			ctaBtn.addEventListener('click', startSwing);
 			startSwing();
 
 			function setAvatarToPendulum(angle) {

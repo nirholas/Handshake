@@ -20,7 +20,7 @@
 				CTA and she struggles; click and she drops it.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_holds_cta.build_your_agent_free"><span>Build your agent — free</span><span>→</span></a>
+				<button type="button" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_holds_cta.build_your_agent_free"><span>Build your agent for free</span><span>→</span></button>
 			</div>
 		</div>
 		<canvas id="avatar-canvas"></canvas>
@@ -72,8 +72,7 @@
 
 			ctaBtn.addEventListener('mouseenter', () => { strain = 1; });
 			ctaBtn.addEventListener('mouseleave', () => { strain = 0; });
-			ctaBtn.addEventListener('click', (e) => {
-				e.preventDefault();
+			ctaBtn.addEventListener('click', () => {
 				if (dropped) return;
 				dropped = true;
 				// Button thuds down 50px, she collapses.

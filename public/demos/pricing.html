@@ -250,7 +250,7 @@
 						<li data-i18n="demos_pricing.default_rig_animations">Default rig + animations</li>
 						<li data-i18n="demos_pricing.public_deploy_at_three_ws">Public deploy at three.ws/&lt;name&gt;</li>
 					</ul>
-					<a href="#" class="cta" data-tier-cta="basic" data-i18n="demos_pricing.start_free">Start free</a>
+					<button type="button" class="cta" data-tier-cta="basic" data-i18n="demos_pricing.start_free">Start free</button>
 				</div>
 
 				<div class="tier pro" id="tier-pro" data-tier="pro">
@@ -264,7 +264,7 @@
 						<li data-i18n="demos_pricing.animation_studio_memory_seeds">Animation studio + memory seeds</li>
 						<li data-i18n="demos_pricing.custom_subdomain">Custom subdomain</li>
 					</ul>
-					<a href="#" class="cta" data-tier-cta="pro" data-i18n="demos_pricing.choose_pro">Choose Pro</a>
+					<button type="button" class="cta" data-tier-cta="pro" data-i18n="demos_pricing.choose_pro">Choose Pro</button>
 				</div>
 
 				<div class="tier" id="tier-enterprise" data-tier="enterprise">
@@ -278,7 +278,7 @@
 						<li data-i18n="demos_pricing.custom_rigs_licensing">Custom rigs &amp; licensing</li>
 						<li data-i18n="demos_pricing.sla_dedicated_infra">SLA + dedicated infra</li>
 					</ul>
-					<a href="#" class="cta" data-tier-cta="enterprise" data-i18n="demos_pricing.contact_sales">Contact sales</a>
+					<button type="button" class="cta" data-tier-cta="enterprise" data-i18n="demos_pricing.contact_sales">Contact sales</button>
 				</div>
 			</div>
 
@@ -513,13 +513,11 @@
 			});
 			tiersGrid.addEventListener('mouseleave', () => scheduleMove(null));
 
-			// CTA clicks — tier-specific reaction. Prevent navigation in the
-			// demo so the page doesn't refresh mid-gesture. If she isn't
-			// standing on the clicked tier yet (or is mid-move), queue the
-			// reaction via onArrival so it fires the moment she settles.
+			// CTA clicks: tier-specific reaction. If she isn't standing on
+			// the clicked tier yet (or is mid-move), queue the reaction via
+			// onArrival so it fires the moment she settles.
 			document.querySelectorAll('[data-tier-cta]').forEach(cta => {
-				cta.addEventListener('click', e => {
-					e.preventDefault();
+				cta.addEventListener('click', () => {
 					if (!avatar) return;
 					const tierEl = document.getElementById(`tier-${cta.dataset.tierCta}`);
 					const reactionClip = ctaReactionFor(tierEl);
