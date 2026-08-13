@@ -303,6 +303,14 @@
 			<description>The decentralized inference lab runs the same prompt through our own inference chain and through a Livepeer AI gateway, side by side. The free no-key gateway it used has not been Livepeer since early August: that hostname now points at an unrelated server. The demo kept posting prompts to it on every run and showing a bare connection error. It no longer dials that host at all. The decentralized card now reports the gateway as unavailable and names the two settings that bring it back (a Livepeer Studio key, or the address of a self-hosted gateway), and a self-hosted address is now honored by both this demo and the Forge Livepeer lane from one shared setting. The call also has a time limit, so a gateway that accepts the connection and then goes quiet can no longer hold up the reply from the other side of the comparison.</description>
 		</item>
 		<item>
+			<title>The Examples Gallery came back, and seven docs pages stopped describing code that had changed</title>
+			<link>https://three.ws/docs/examples</link>
+			<guid isPermaLink="false">2026-08-13:The Examples Gallery came back, and seven docs pages stopped describing code that had changed</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The Examples Gallery doc had been reduced to three lines of placeholder text by an interrupted test run, so a page advertised as copy-paste-ready code for the most common use cases opened to nothing at all; the full guide is restored, from the one-tag minimal embed through the React wrapper, the multi-agent scene, and the complete Coach Leo manifest, and its index of every runnable example in the repo is regenerated from what is actually on disk. Alongside it: the JavaScript API reference described a validator toggle, a scene-graph printer, and an alert-based error handler that no longer exist, and missed the load-progress callback and the model-loaded event that do; the Introduction listed five embeddable widgets when ten ship; two pages named older chat models than the brain router now offers; the Internationalization page called its lint command a build gate when nothing runs it for you; and the IRL page linked its retention cron at a live endpoint that answers with an authorization error instead of at the source file.</description>
+		</item>
+		<item>
 			<title>The extra views behind a 3D generation stop being rejected for the wrong file type</title>
 			<link>https://three.ws/create</link>
 			<guid isPermaLink="false">2026-08-13:The extra views behind a 3D generation stop being rejected for the wrong file type</guid>
@@ -325,6 +333,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Before a prompt becomes a 3D model, the forge draws a reference picture, then draws two extra views of it so the reconstruction can see the sides and back instead of guessing them. Three problems sat in that step. The calls to the image service had no time limit, so a connection that opened and then stalled held a generation open indefinitely rather than falling back to the free image lane; they now give up after ninety seconds and hand off. The extra views sent the reference picture to the model labelled as a PNG no matter what it actually was, so a JPEG or WebP reference could be rejected and you would quietly get fewer views; the real format is now read from the picture and sent with it. And a reference that is unreachable or oversized is refused with a clear reason instead of being forwarded as-is. Alongside that, every image this step fetches, including the optional mask, now goes through the same address safety check the rest of the platform uses, so a supplied URL cannot be aimed at an internal address.</description>
+		</item>
+		<item>
+			<title>The Integrations page and its docs stopped showing &quot;avatar not found&quot; where the 3D demo should be</title>
+			<link>https://three.ws/integrations</link>
+			<guid isPermaLink="false">2026-08-13:The Integrations page and its docs stopped showing &quot;avatar not found&quot; where the 3D demo should be</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every copy-paste avatar snippet on the Integrations page, the embed demo, and the Integrations doc pointed at a demo avatar whose record had been deleted in an earlier cleanup, so the headline 3D Avatar example rendered the words &quot;avatar not found&quot; instead of a character, and anyone who pasted the snippet into their own site got the same empty box. All nine references now use a live featured avatar, verified end to end in a real browser: the web component loads with no failed requests and a real 3D character renders on the page and in the pasted snippet.</description>
 		</item>
 		<item>
 			<title>The Livepeer comparison demo reads every answer shape an orchestrator can return</title>
