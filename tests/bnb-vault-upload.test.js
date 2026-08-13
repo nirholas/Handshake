@@ -20,7 +20,7 @@ process.env.WALLET_ENCRYPTION_KEY ||= 'vitest-ephemeral-wallet-key-0000000000000
 process.env.JWT_SECRET ||= 'vitest-ephemeral-jwt-secret-00000000000000';
 
 const SELLER = '0x000000000000000000000000000000000000dEaD';
-const OPERATOR_KEY = '0xd5d59cba0041bfd06b22c90cb1453020c6bc29dc90d370bbba0c84fa257768b7';
+const OPERATOR_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'; // Hardhat's published account #0, public by design (check-secrets allowlists it)
 const SYNTH_GLB = Buffer.concat([Buffer.from('glTF'), Buffer.alloc(16, 7), Buffer.from('synthetic-vault-fixture')]);
 
 const rl = { ok: true };

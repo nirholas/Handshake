@@ -20,8 +20,8 @@ import {
 	MAX_VAULT_OBJECT_BYTES,
 } from '../api/_lib/bnb/greenfield-write.js';
 
-const PRIVATE_KEY = '0xd5d59cba0041bfd06b22c90cb1453020c6bc29dc90d370bbba0c84fa257768b7'; // freshly generated throwaway test key — no funds anywhere real
-const OWNER = '0x3851cF3bB7661ab7250fA01D0d736261a96ef5a9'; // derived from PRIVATE_KEY via viem/accounts
+const PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'; // Hardhat's published account #0, public by design (check-secrets allowlists it)
+const OWNER = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // derived from PRIVATE_KEY via viem/accounts
 const SP_OPERATOR = '0x1111111111111111111111111111111111111111';
 
 function jsonResponse(obj, status = 200) {

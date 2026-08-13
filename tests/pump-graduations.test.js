@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, it, expect, vi } from 'vitest';
 import bs58 from 'bs58';
 import { PublicKey } from '@solana/web3.js';
@@ -84,6 +85,23 @@ function recordingRedis() {
 		},
 	};
 }
+
+describe('COMPLETE_EVENT_DISCRIMINATOR', () => {
+	it('is the Anchor discriminator for CompleteEvent, not a hand-copied constant', () => {
+		expect(COMPLETE_EVENT_DISCRIMINATOR).toEqual(
+			createHash('sha256').update('event:CompleteEvent').digest().subarray(0, 8),
+		);
+	});
+
+	it('does not match the trade event that dominates the Pump log stream', () => {
+		// bddb7fd34ee661ee is Pump's TradeEvent discriminator: 4559 of the 5019
+		// event-carrying entries in a four-minute live capture of the program's
+		// logs. Decoding one as a graduation would flood the feed.
+		const trade = Buffer.alloc(8 + 32 + 32 + 32 + 8);
+		Buffer.from('bddb7fd34ee661ee', 'hex').copy(trade, 0);
+		expect(parseCompleteEvent(SIG, [`Program data: ${trade.toString('base64')}`])).toBeNull();
+	});
+});
 
 describe('parseCompleteEvent', () => {
 	it('decodes the CompleteEvent layout off a real-shaped log line', () => {

@@ -1625,10 +1625,12 @@ Long-running, **stateful** processes that hold persistent connections and so fit
 
 #### `services/pump-graduations` — pump.fun graduations indexer
 
-The only piece that keeps the live graduation WebSocket open. Holds a long-lived Solana WS subscription to the Pump program, detects token "graduations" (bonding-curve → PumpAMM migration) by matching the `complete` anchor event via its 8-byte discriminator (`COMPLETE_EVENT_DISCRIMINATOR`, matching `@pumpkit/core`), and pushes each event into a capped Upstash Redis list. The `api/` handler side reads the events back from Redis.
+The only piece that keeps the live graduation WebSocket open. Holds a long-lived Solana WS subscription to the Pump program, detects token "graduations" (bonding-curve → PumpAMM migration) by matching the `complete` anchor event via its 8-byte discriminator (`COMPLETE_EVENT_DISCRIMINATOR`, matching `@pumpkit/core`), enriches each event with the mint's name/symbol and its canonical PumpSwap pool address, and pushes it into a capped Upstash Redis list. `api/_lib/pumpfun-mcp.js` reads that list as its fallback graduation feed, behind the WS-fed `pumpfun_graduations` Postgres table.
 
-- `index.js` — main loop (Pump program log subscription).
-- `carbon-source.js` — drop-in alternative source backed by a Carbon indexer; same `start(cb)`/`stop()` contract + identical events, selected at startup.
+- `index.js`: process entrypoint wiring a source to Redis; exports the record/push/handler functions for tests.
+- `graduation-event.js`: discriminator, `CompleteEvent` decoding, bounded signature dedupe; shared by both sources.
+- `token-info.js`: pool-address derivation plus Token-2022 / Metaplex metadata reads.
+- `carbon-source.js`: drop-in alternative source over the same program logs and the same decoder; same `start(cb)`/`stop()` contract + identical events, selected at startup.
 - **Env:** `SOLANA_RPC_URL`, `SOLANA_WS_URL`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `GRADUATIONS_LIST_KEY` (default `pf:graduations`), `GRADUATIONS_MAX_LEN` (default `500`), `PUMP_GRADUATIONS_SOURCE` (`legacy` default | `carbon`).
 
 #### `services/agent-screen-caster` — self-hosted agent screen caster
