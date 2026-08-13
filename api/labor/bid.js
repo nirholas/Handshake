@@ -6,10 +6,10 @@
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
-import { authWrite, loadOwnedAgent } from '../_lib/labor-auth.js';
+import { authWrite, loadOwnedAgent, ownershipError, requireUuid } from '../_lib/labor-auth.js';
 import {
-	getBounty, getBid, scoreBid, workerReputation, upsertBid,
-	threeToAtomics, _toBig as toBig, atomicsToThree,
+	getBounty, scoreBid, workerReputation, upsertBid,
+	parseAtomics, parseThree, _toBig as toBig, atomicsToThree,
 } from '../_lib/agent-labor.js';
 import { runAutopilot } from '../_lib/labor-settle.js';
 
@@ -27,12 +27,23 @@ export default wrap(async (req, res) => {
 	const body = (await readJson(req)) || {};
 	const { bountyId, workerAgentId, priceThree, priceAtomics, etaSeconds = null, pitch = null } = body;
 	if (!bountyId || !workerAgentId) return error(res, 400, 'validation_error', 'bountyId and workerAgentId are required');
+	if (!requireUuid(res, bountyId, 'bountyId')) return;
+	if (!requireUuid(res, workerAgentId, 'workerAgentId')) return;
+
+	// Parse the price before touching the database: an unparseable amount is the
+	// caller's mistake, and toBig() would throw a SyntaxError that surfaces as 500.
+	if (priceAtomics == null && priceThree == null) {
+		return error(res, 400, 'validation_error', 'priceThree or priceAtomics is required');
+	}
+	const price = priceAtomics != null ? parseAtomics(priceAtomics) : parseThree(priceThree);
+	if (price == null) return error(res, 400, 'validation_error', 'bid price must be a non-negative amount');
+	if (price <= 0n) return error(res, 400, 'validation_error', 'bid price must be greater than zero');
 
 	let worker;
 	try {
 		worker = await loadOwnedAgent(workerAgentId, userId);
 	} catch (e) {
-		return error(res, e.status || 400, e.code || 'bad_request', e.message);
+		return ownershipError(res, e);
 	}
 
 	const bounty = await getBounty(bountyId);
@@ -41,8 +52,6 @@ export default wrap(async (req, res) => {
 	if (bounty.poster_agent_id === workerAgentId) return error(res, 400, 'self_bid', 'an agent cannot bid on its own bounty');
 
 	const reward = toBig(bounty.reward_atomics);
-	const price = priceAtomics != null ? toBig(priceAtomics) : threeToAtomics(priceThree);
-	if (price <= 0n) return error(res, 400, 'validation_error', 'bid price must be greater than zero');
 	if (price > reward) {
 		return error(res, 400, 'over_reward', `your bid (${atomicsToThree(price)} $THREE) exceeds the reward (${atomicsToThree(reward)} $THREE)`);
 	}
