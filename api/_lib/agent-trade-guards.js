@@ -788,6 +788,11 @@ export async function setPolicyRules(agentId, userId, rules, { english = null, r
 /**
  * Enforce the per-agent spend policy for one outbound movement.
  *
+ * Fails closed on its inputs: pass `limits`, or `meta`, or neither — with
+ * neither, the agent's policy is read from its row rather than defaulting to an
+ * unrestricted wallet. There is no argument shape that silently disables the
+ * ceilings or the kill switch.
+ *
  * @param {object} o
  * @param {string} o.agentId
  * @param {object} [o.meta]            agent meta (limits + policy read from here if absent)
@@ -838,6 +843,37 @@ async function resolveSpendCapability({ agentId, lim, category, usdValue, target
 	return cap;
 }
 
+/**
+ * Fail-closed policy resolution for a spend whose caller supplied NEITHER a
+ * pre-read `limits` object NOR the agent's `meta`. Without this, both shared
+ * guards fell back to `normalizeSpendLimits(undefined)` — every ceiling null,
+ * `frozen` false, no natural-language rules — so a caller that simply forgot to
+ * load the agent row got a wallet with no policy at all and no signal that the
+ * kill switch had been skipped. Autonomy makes that unacceptable: the guarantee
+ * has to hold because the code enforces it, not because every call site
+ * remembers to. One PK read closes it, mirroring what the anomaly guard in
+ * api/_lib/anomaly-events.js already does for the same reason. An agent that no
+ * longer exists (or was deleted mid-flight) can hold no policy, so its spend is
+ * refused rather than waved through.
+ *
+ * @returns {Promise<{ meta: object, userId: string|null }>}
+ * @throws {SpendLimitError} when the agent row is gone
+ */
+async function loadPolicyMeta(agentId) {
+	const [row] = await sql`
+		SELECT user_id, meta FROM agent_identities
+		WHERE id = ${agentId} AND deleted_at IS NULL
+	`;
+	if (!row) {
+		throw new SpendLimitError(
+			'agent_not_found',
+			'That agent no longer exists, so no spend policy can govern this payment. Nothing was spent.',
+			{ agent_id: String(agentId ?? '') },
+		);
+	}
+	return { meta: row.meta || {}, userId: row.user_id ?? null };
+}
+
 export async function enforceSpendLimit({
 	agentId,
 	meta,
@@ -856,6 +892,13 @@ export async function enforceSpendLimit({
 	now,
 	network = 'mainnet',
 }) {
+	// Fail closed: a caller that named neither the limits nor the meta gets the
+	// agent's REAL policy read from the row, never an empty default policy.
+	if (!limits && meta == null) {
+		const loaded = await loadPolicyMeta(agentId);
+		meta = loaded.meta;
+		if (userId == null) userId = loaded.userId;
+	}
 	const lim = limits || getSpendLimits(meta);
 
 	// 0. Wallet freeze — blocks every autonomous path; owner withdraw stays open.
@@ -968,6 +1011,8 @@ export async function enforceSpendLimit({
  * Returns { ok: true, reservationId, dailySpentUsd } on success — finalize the
  * reservation with `updateCustodyEvent(reservationId, { status, signature })` after
  * settlement, or `releaseSpendReservation(reservationId)` if the spend never moved.
+ * Like `enforceSpendLimit`, it fails closed on its inputs: with neither `limits`
+ * nor `meta` it reads the agent's real policy instead of an empty one.
  * @throws {SpendLimitError} on per-tx breach, daily breach, or withdraw-allowlist miss.
  */
 export async function reserveSpendUsd({
@@ -989,6 +1034,15 @@ export async function reserveSpendUsd({
 	asset = 'USDC',
 	rowMeta = {},
 }) {
+	// Fail closed, exactly as enforceSpendLimit does: the reserve is the layer that
+	// runs before any key is touched, so it is the layer that must never default to
+	// an empty policy. Resolving the row here also attributes the reserved custody
+	// row (the payment receipt) to the real owner when the caller passed no userId.
+	if (!limits && meta == null) {
+		const loaded = await loadPolicyMeta(agentId);
+		meta = loaded.meta;
+		if (userId == null) userId = loaded.userId;
+	}
 	const lim = limits || getSpendLimits(meta);
 
 	// Wallet freeze — blocks every autonomous path; owner withdraw stays open.
