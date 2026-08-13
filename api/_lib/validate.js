@@ -46,6 +46,24 @@ export const avatarAppearance = z
 			)
 			.max(8)
 			.optional(),
+		// Custom bone-mounted props: a forged GLB parented to a named bone
+		// (Scene Composer's "Save outfit"). Unlike `accessories`, whose entries
+		// name presets in the curated catalog, these carry their own URL, so the
+		// host allowlist in validateAppearance() (accessories.js) is what keeps
+		// one owner's avatar from pointing every viewer's browser at an
+		// arbitrary third-party host.
+		attachments: z
+			.array(
+				z
+					.object({
+						bone: z.string().min(1).max(64),
+						url: z.string().min(1).max(512),
+						name: z.string().min(1).max(80).optional(),
+					})
+					.strict(),
+			)
+			.max(8)
+			.optional(),
 	})
 	.strict()
 	.superRefine((val, ctx) => {

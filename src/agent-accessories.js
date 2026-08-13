@@ -13,6 +13,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from './viewer/internal.js';
 import { resolveURI } from './ipfs.js';
 import { collectSlotTargets } from './avatar-wardrobe.js';
+import { isSafeQueryModelUrl } from './shared/safe-model-url.js';
 import { log } from './shared/log.js';
 
 const SINGLE_SLOT_KINDS = new Set(['outfit', 'hat', 'glasses']);
@@ -107,6 +108,16 @@ export class AccessoryManager {
 			} else {
 				log.warn(`[accessories] unknown preset id on boot: ${id}`);
 			}
+		}
+
+		// Custom bone-mounted props (Scene Composer's saved outfit). These carry
+		// their own URL instead of naming a catalog preset, so they become
+		// synthetic presets and ride the same load-and-attach path. The URL was
+		// host-checked when it was stored (api/_lib/accessories.js); re-checking
+		// here keeps a record written before that guard from loading a stranger's
+		// bytes into this page.
+		for (const preset of attachmentPresets(appearance.attachments)) {
+			await this.applyPreset(preset);
 		}
 	}
 
@@ -378,6 +389,35 @@ function _disposeObject(obj) {
 			}
 		}
 	});
+}
+
+/**
+ * Turn stored `appearance.attachments` into synthetic presets the normal
+ * apply path understands. Ids are namespaced (`attach:<i>:<bone>`) so they can
+ * never collide with a catalog preset id, and `kind` is 'accessory' because
+ * these stack rather than replacing a single slot the way a hat does.
+ *
+ * @param {Array<{bone: string, url: string, name?: string}> | undefined} attachments
+ * @returns {Array<{id: string, kind: string, glbUrl: string, attachBone: string, label: string}>}
+ */
+export function attachmentPresets(attachments) {
+	if (!Array.isArray(attachments)) return [];
+	const out = [];
+	attachments.forEach((a, i) => {
+		if (!a || typeof a.bone !== 'string' || !a.bone) return;
+		if (!isSafeQueryModelUrl(a.url)) {
+			log.warn(`[accessories] attachment url rejected: ${a.url}`);
+			return;
+		}
+		out.push({
+			id: `attach:${i}:${a.bone}`,
+			kind: 'accessory',
+			glbUrl: a.url,
+			attachBone: a.bone,
+			label: a.name || 'Attachment',
+		});
+	});
+	return out;
 }
 
 let _presetsCache = null;

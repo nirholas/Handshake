@@ -229,12 +229,22 @@ const sceneObjects = new Map(); // id → { group, name, glbUrl, visible, boneAt
 let nextId = 1;
 let selectedId = null;
 let avatarId = null;
+// The three.ws avatar record the loaded model came from, when it came from one.
+// "Save outfit" writes back to this record, so it has to be the id the API
+// answered with, not something parsed out of the model URL: a saved avatar is
+// served from the asset CDN (…r2.dev/u/<owner>/<slug>.glb), a path that carries
+// no record id at all.
+let avatarRecordId = null;
+let avatarAppearance = null; // the record's stored appearance, so a save extends it
 let avatarBones = []; // { name, bone }
 let xformMode = 'translate';
 let xformSpace = 'world';
 let snapEnabled = false;
 let scaleLocked = false;
 const SNAP_SIZE = 0.25;
+// Mirrors the `attachments` cap in api/_lib/validate.js, checked here so the
+// studio says which limit was hit instead of surfacing a raw 400.
+const MAX_SAVED_ATTACHMENTS = 8;
 let forgeJobId = null;
 let forgePollTimer = null;
 let forgePollStart = 0;
@@ -910,7 +920,13 @@ function detachFromBone(itemId, updateUI = true) {
 }
 
 // ── Avatar loading ────────────────────────────────────────────────────────────
-async function loadAvatar(url, name = 'Avatar') {
+/**
+ * @param {string} url          model URL to load
+ * @param {string} name         display name in the hierarchy
+ * @param {object} [record]     the avatar record this model came from, when any:
+ *                              { id, appearance }: what "Save outfit" writes to
+ */
+async function loadAvatar(url, name = 'Avatar', record = null) {
 	showLoading('Loading avatar…');
 	avatarPrompt.classList.add('h');
 	canvasHint.classList.remove('h');
@@ -919,6 +935,8 @@ async function loadAvatar(url, name = 'Avatar') {
 		if (avatarId !== null) removeObject(avatarId);
 		const id = addToScene(group, name, url, 'avatar', false);
 		avatarId = id;
+		avatarRecordId = record?.id || null;
+		avatarAppearance = record?.appearance || null;
 		avatarBones = bones;
 		// Set up AnimationMixer if avatar has animations
 		if (gltf.animations && gltf.animations.length > 0) {
@@ -965,9 +983,17 @@ async function loadAvatar(url, name = 'Avatar') {
 			} else {
 				const res = await fetch(`/api/avatars/${encodeURIComponent(avatarParam)}`);
 				const data = await res.json().catch(() => ({}));
-				const u = data.glbUrl || data.glb_url;
-				if (u) await loadAvatar(u, data.name || 'Avatar');
-				else hideLoading();
+				// GET /api/avatars/:id answers { avatar: { …, model_url } }. Reading
+				// a bare `glbUrl` off the envelope found nothing, so every
+				// ?avatar=<id> deep link opened an empty stage instead of the avatar.
+				const record = data.avatar || data;
+				const u = record.model_url || record.glbUrl || record.glb_url;
+				if (u) await loadAvatar(u, record.name || 'Avatar', record);
+				else {
+					toast(`Avatar ${avatarParam} not found`);
+					avatarPrompt.classList.remove('h');
+					hideLoading();
+				}
 			}
 		} catch { hideLoading(); }
 	} else {
@@ -1022,7 +1048,13 @@ async function openAvatarModal() {
 			lbl.style.cssText = 'position:absolute;bottom:0;left:0;right:0;padding:4px 6px;background:rgba(0,0,0,.65);font-size:10px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
 			lbl.textContent = av.name || 'Avatar';
 			card.appendChild(lbl);
-			card.addEventListener('click', () => { closeAvatarModal(); loadAvatar(glbUrl, av.name || 'Avatar'); });
+			// /api/explore names the avatar record `avatarId`; carrying it through
+			// is what lets "Save outfit" write back to the browsed avatar.
+			const recordId = av.avatarId || av.id || null;
+			card.addEventListener('click', () => {
+				closeAvatarModal();
+				loadAvatar(glbUrl, av.name || 'Avatar', recordId ? { id: recordId } : null);
+			});
 			avatarModalBody.appendChild(card);
 		}
 	} catch {
@@ -1327,23 +1359,33 @@ btnSaveOutfit.addEventListener('click', saveOutfit);
 
 async function saveOutfit() {
 	if (avatarId === null) { toast('Load an avatar first'); return; }
-	const avatarObj = sceneObjects.get(avatarId);
 	const attached = [];
 	sceneObjects.forEach((obj, id) => {
-		if (id !== avatarId && obj.boneAttached) attached.push({ bone: obj.boneName, glbUrl: obj.glbUrl, name: obj.name });
+		if (id !== avatarId && obj.boneAttached) attached.push({ bone: obj.boneName, url: obj.glbUrl, name: obj.name });
 	});
 	if (!attached.length) { toast('Attach at least one item to a bone first'); return; }
-	const urlMatch = avatarObj?.glbUrl?.match(/\/avatars\/([^/?]+)/);
-	const avatarApiId = urlMatch?.[1];
-	if (!avatarApiId) { toast('Use Export GLB to save this scene'); return; }
+	if (attached.length > MAX_SAVED_ATTACHMENTS) {
+		toast(`Save outfit keeps up to ${MAX_SAVED_ATTACHMENTS} attached items; use Export GLB for more`);
+		return;
+	}
+	if (!avatarRecordId) { toast('Use Export GLB to save this scene'); return; }
 	showLoading('Saving outfit…');
 	try {
-		const res = await apiFetch(`/api/avatars/${encodeURIComponent(avatarApiId)}`, {
+		// Extend the record's existing appearance rather than replacing it: an
+		// avatar dressed in Avatar Studio carries colours, morphs and layers here
+		// too, and PATCH replaces the whole appearance document.
+		const appearance = { ...(avatarAppearance || {}), attachments: attached };
+		const res = await apiFetch(`/api/avatars/${encodeURIComponent(avatarRecordId)}`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json', ...CH },
-			body: JSON.stringify({ accessories: attached }),
+			body: JSON.stringify({ appearance }),
 		});
-		if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `HTTP ${res.status}`); }
+		if (!res.ok) {
+			const e = await res.json().catch(() => ({}));
+			throw new Error(e.error_description || e.message || e.error || `HTTP ${res.status}`);
+		}
+		const saved = await res.json().catch(() => ({}));
+		avatarAppearance = saved.avatar?.appearance || appearance;
 		flashSave('Outfit saved ✓');
 	} catch (err) {
 		toast(`Save failed: ${err.message}`);
