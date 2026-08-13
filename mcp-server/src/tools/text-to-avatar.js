@@ -5,9 +5,10 @@
 //
 // Pricing: $0.15 USDC, settled `exact` in USDC on Solana mainnet.
 //
-// The generation logic lives in `_studio-core.js` (runTextToAvatar) so the paid
-// stdio transport and the hosted FREE 3D Studio endpoint (api/_studio,
-// /api/mcp-studio) share ONE implementation and never drift. It synchronously
+// The generation logic lives in `_studio-core.js` (runTextToAvatar), the shared
+// core the stdio server's generators are built on, so none of them drift. The
+// hosted FREE 3D Studio endpoint (/api/mcp-studio) has its own avatar lane in
+// api/_mcp-studio/forge-client.js. It synchronously
 // submits a Replicate prediction and polls until terminal/timeout; the returned
 // GLB URL is the Replicate-hosted output (optionally rehosted on three.ws R2
 // when MCP_TEXT_TO_AVATAR_REHOST is enabled).

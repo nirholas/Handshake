@@ -12,9 +12,10 @@
 // USDC payment gates the call and all GPU work runs on prod.
 //
 // The full chain (humanoid gate → Granite director → generate → auto-rig) lives
-// in `_studio-core.js` (runForgeAvatar) so the paid stdio transport and the
-// hosted FREE 3D Studio endpoint (api/_studio, /api/mcp-studio) share ONE
-// implementation and never drift.
+// in `_studio-core.js` (runForgeAvatar) so every stdio tool that bundles the
+// chain shares ONE implementation and never drifts. The hosted FREE 3D Studio
+// endpoint (/api/mcp-studio) runs the same chain over /api/forge through its own
+// client, api/_mcp-studio/forge-client.js.
 //
 // Money safety (real users, real funds): a humanoid gate runs BEFORE any work —
 // a confidently non-humanoid prompt returns a toolError (which the x402 wrapper

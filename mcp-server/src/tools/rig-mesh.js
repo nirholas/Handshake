@@ -9,9 +9,10 @@
 // credentials; the USDC payment gates the call and all GPU work runs on
 // three.ws prod.
 //
-// The rig logic lives in `_studio-core.js` (runRigMesh) so the paid stdio
-// transport and the hosted FREE 3D Studio endpoint (api/_studio,
-// /api/mcp-studio) share ONE implementation and never drift.
+// The rig logic lives in `_studio-core.js` (runRigMesh) so every stdio tool that
+// rigs shares ONE implementation and never drifts. The hosted FREE 3D Studio
+// endpoint (/api/mcp-studio) rigs over the same /api/forge pipeline through its
+// own client, api/_mcp-studio/forge-client.js.
 //
 // Environment (all optional — sensible prod defaults):
 //   MESH_FORGE_API_BASE  — three.ws origin. Default https://three.ws

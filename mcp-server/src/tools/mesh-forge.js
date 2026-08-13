@@ -8,9 +8,10 @@
 // holds the Replicate / watsonx keys). The x402 USDC payment is what gates the
 // call.
 //
-// The generation logic lives in `_studio-core.js` (runMeshForge) so the paid
-// stdio transport and the hosted FREE 3D Studio endpoint (api/_studio,
-// /api/mcp-studio) share ONE implementation and never drift. Two modes:
+// The generation logic lives in `_studio-core.js` (runMeshForge) so every stdio
+// tool that generates a mesh shares ONE implementation and never drifts. The
+// hosted FREE 3D Studio endpoint (/api/mcp-studio) drives the same /api/forge
+// pipeline through its own client, api/_mcp-studio/forge-client.js. Two modes:
 //   • text→3D — IBM Granite directs the prompt, FLUX renders a reference image,
 //     then TRELLIS / Hunyuan3D reconstruct a textured GLB.
 //   • image→3D — a caller-supplied image_url (or 1–4 multi-view image_urls) is

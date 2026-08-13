@@ -6,18 +6,17 @@
 // text_to_avatar, Replicate: no GPU/LLM work happens here, all of it runs on
 // the operator-funded backend that holds the provider keys.
 //
-// One implementation, two transports:
-//   • the npx-distributed stdio MCP server wraps each core in `paid()`/`free()`
-//     (mcp-server/src/tools/*.js) — x402 USDC gates the call.
-//   • the hosted, FREE 3D Studio endpoint (api/_studio/*, /api/mcp-studio) calls
-//     the SAME cores directly with no payment surface — abuse is bounded by
-//     server-side rate limits instead.
+// One implementation behind the npx-distributed stdio MCP server: every tool in
+// mcp-server/src/tools/*.js wraps a core in `paid()`/`free()`, and x402 USDC
+// gates the paid ones. The hosted FREE 3D Studio endpoint (/api/mcp-studio) is a
+// separate lane over the same /api/forge pipeline, with its own client
+// (api/_mcp-studio/forge-client.js), no payment surface, and per-IP rate limits.
 //
-// Keeping the generation logic here (not forked into each transport) means the
-// stdio and the free HTTP lanes can never drift. This module imports nothing
-// payment- or schema-related: only the global `fetch` and the dependency-free
-// humanoid classifier, so it loads in the Vercel `api/` bundle (which carries
-// neither the @x402 stack nor zod-to-json-schema) unchanged.
+// Keeping the generation logic here (not forked across the stdio tools) means
+// the five generators and refine_model can never drift. This module imports
+// nothing payment- or schema-related: only the global `fetch` and the
+// dependency-free humanoid classifier, so it loads without the @x402 stack or
+// zod-to-json-schema.
 
 import { classifyHumanoidPrompt } from './_humanoid.js';
 import { composeRefinement, seedLineage, appendVersion, buildLineageChain, branchFrom } from './_lineage.js';
@@ -25,8 +24,8 @@ import { resolveLogoPrompt, BRAND_MARK_DIRECTIVE } from './_logo-lexicon.js';
 
 // Standard tool error envelope — identical shape to payments.js `toolError`, so
 // a core's error is indistinguishable whether it is surfaced through the paid
-// stdio wrapper or the free HTTP endpoint. Duplicated (not imported) because
-// payments.js pulls the @x402 stack, which the api/ bundle must not load.
+// wrapper or the free one. Duplicated (not imported) because payments.js pulls
+// the @x402 stack, which a core must stay loadable without.
 export function coreError(code, message, extra) {
 	return { ok: false, error: code, message, ...(extra || {}) };
 }

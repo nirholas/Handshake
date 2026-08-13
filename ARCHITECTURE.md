@@ -770,7 +770,7 @@ Beyond the feature areas above, the `api/` tree exposes many more surfaces. Comp
 | `/api/users/*` (16) vs `/api/user/*` (5) | — | Two namespaces: `users/` = public profiles/follows/referrals/earnings; `user/` = account wallet/settings |
 | `/api/rider/*`, `/api/play/*`, `/api/seed/*`, `/api/club/*` (incl. `tips-stream` SSE), `/api/tournaments/*`, `/api/clash/*` | — | Rider passes / play-pass / fixtures-seed / 3D-club tips / tournament + Coin Clash game surfaces |
 
-> Internal MCP handler implementations live in `api/_mcp`, `api/_mcp3d`, `api/_mcpagent`, `api/_mcpbazaar`, `api/_mcpibm`, `api/_mcp-studio`, `api/_studio` — see [MCP Layer](#mcp-layer).
+> Internal MCP handler implementations live in `api/_mcp`, `api/_mcp3d`, `api/_mcpagent`, `api/_mcpbazaar`, `api/_mcpibm`, `api/_mcp-studio` — see [MCP Layer](#mcp-layer).
 
 ---
 
@@ -2349,7 +2349,7 @@ The serverless tree holds **146 feature directories + 115 top-level handler file
 | x402 & payments | `x402/` · `x402-pay/` · `pay/` · `payments/` · `bazaar/` · `ca2x402/` · `billing/` · `credits/` · `onramp/` · `purchase/` · `subscriptions/` · `monetization/` · `ledger/` · `tx/` · `usage/` |
 | Marketplace & assets | `marketplace/` · `creators/` · `skills/` · `plugins/` · `assets/` · `cosmetics/` · `rider/` · `referral/` |
 | Community & worlds | `agora/` · `agenc/` · `clash/` · `club/` · `community/` · `crews/` · `friends/` · `social/` · `stage/` · `play/` · `world/` · `galaxy/` · `irl/` · `share/` · `tournaments/` · `bounties/` · `labor/` |
-| MCP servers | `_mcp/` · `_mcp3d/` · `_mcp-studio/` · `_mcpagent/` · `_mcpbazaar/` · `_mcpibm/` · `_studio/` · `_providers/` |
+| MCP servers | `_mcp/` · `_mcp3d/` · `_mcp-studio/` · `_mcpagent/` · `_mcpbazaar/` · `_mcpibm/` · `_providers/` |
 | AI / voice / LLM | `chat/` · `llm/` · `tts/` · `watsonx/` · `ibm/` · `guardian/` · `inference/` · `tutor/` |
 | Naming & on-chain | `threews/` · `three/` · `nft/` · `pinning/` · `reputation/` · `sdp/` |
 | Infra, SEO & ops | `cron/` · `sitemap/` · `rss/` · `og/` · `webhooks/` · `push/` · `notifications/` · `developer/` · `platform/` · `jobs/` · `embed/` · `widgets/` · `dashboard/` · `demo/` · `actions/` · `v1/` · `api/` |
@@ -3116,9 +3116,8 @@ All **150+ directories** under `api/` plus many top-level single-file endpoints.
 | Directory | Files | Purpose |
 |---|---|---|
 | `_lib/` | 326 `.js` + 19 sub-pkgs | Shared utility layer (see catalog below). |
-| `_mcp/` `_mcp3d/` `_mcp-studio/` `_mcpagent/` `_mcpbazaar/` `_mcpibm/` | 17/7/5/3/3/5 | Impl dirs behind the remote MCP servers (auth, catalog, dispatch, pricing, render, tools). |
+| `_mcp/` `_mcp3d/` `_mcp-studio/` `_mcpagent/` `_mcpbazaar/` `_mcpibm/` | 21/11/7/3/3/5 | Impl dirs behind the remote MCP servers (auth, catalog, dispatch, pricing, render, tools). |
 | `_providers/` | 10 | 3D/image gen provider adapters (gcp, huggingface, meshy, nvidia, nvidia-cosmos, replicate, rodin, stability, tripo) + BYOK registry. |
-| `_studio/` | 3 | Studio MCP tool registry/dispatch. |
 | `actions/` | avatar, avatar-icon | Farcaster/embed action endpoints. |
 | `admin/` | 16 | Admin console (revenue, health, bulk-launch, withdrawals, register-agents, club/news/user subdirs) + `all-systems`, `circulation-health`, `flags`, `launcher`, `seeder`, `ops`. |
 | `agenc/` | [action] | AgenC / watsonx Orchestrate dispatcher. |

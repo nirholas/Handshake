@@ -6,9 +6,10 @@
 // drafts — so anyone can turn a text prompt into a downloadable, viewable 3D
 // model with NO x402 payment and NO API key.
 //
-// The generation logic lives in `_studio-core.js` (runForgeFree) so the stdio
-// (paid-transport) server and the hosted FREE 3D Studio endpoint
-// (api/_studio, /api/mcp-studio) share ONE implementation and never drift.
+// The generation logic lives in `_studio-core.js` (runForgeFree), the same core
+// the rest of the stdio server's generators are built on, so none of them drift.
+// The hosted FREE 3D Studio endpoint (/api/mcp-studio) pins the same free lane
+// over /api/forge through its own client, api/_mcp-studio/forge-client.js.
 //
 // Environment (all optional — sensible prod defaults):
 //   FORGE_FREE_API_BASE   — three.ws origin. Default https://three.ws
