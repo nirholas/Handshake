@@ -1,9 +1,9 @@
-// Task 07 — automated accessibility floor. Runs axe-core against the top 30
+// Task 07: automated accessibility floor. Runs axe-core against the top 30
 // pages by data/pages.json priority (the same ranking that drives the
-// sitemap/llms.txt), catching contrast-below-AA, missing labels, and
-// keyboard traps before they ship. `wcag2a`/`wcag2aa`/`wcag21aa` rule sets
-// only — no experimental/best-practice rules, so this stays a hard gate and
-// not a taste argument.
+// sitemap/llms.txt) plus ten more high-traffic main/build routes, catching
+// contrast-below-AA, missing labels, and keyboard traps before they ship.
+// `wcag2a`/`wcag2aa`/`wcag21aa` rule sets only (no experimental or
+// best-practice rules), so this stays a hard gate and not a taste argument.
 
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -19,12 +19,33 @@ const top30 = [...allPages]
 	.sort((a, b) => (b.priority ?? 0.5) - (a.priority ?? 0.5))
 	.slice(0, 30);
 
+// Ten more high-traffic routes beyond the priority top 30, drawn from the
+// main/build sections of data/pages.json (the next-highest priorities not
+// already covered above). Extends the floor to 40 pages total.
+const EXTRA_HIGH_TRAFFIC = [
+	'/search',
+	'/characters',
+	'/what-is',
+	'/walk',
+	'/concierge',
+	'/partners',
+	'/openai',
+	'/nvidia',
+	'/pricing',
+	'/irl',
+];
+const coveredPaths = new Set(top30.map((p) => p.path));
+const extraPages = allPages.filter(
+	(p) => EXTRA_HIGH_TRAFFIC.includes(p.path) && !coveredPaths.has(p.path),
+);
+const auditPages = [...top30, ...extraPages];
+
 // Known, accepted contrast exceptions: third-party embeds we don't control
 // the markup of, or pages that intentionally render user-generated content.
 // Keep this list short and named — it is an exception ledger, not a bypass.
 const KNOWN_EXCEPTIONS = new Set([]);
 
-for (const { path } of top30) {
+for (const { path } of auditPages) {
 	test(`a11y floor: ${path}`, async ({ page }) => {
 		if (KNOWN_EXCEPTIONS.has(path)) test.skip();
 		await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 60_000 });
