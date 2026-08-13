@@ -4034,8 +4034,8 @@
 				},
 				{
 					"path": "/docs/character-studio",
-					"title": "Docs · Character Studio builder",
-					"description": "Character Studio is the browser-based builder behind Avatar Studio, a rebranded MIT-licensed fork that lives in character-studio/. Design a customised humanoid (body, hair, face, clothing, accessories) with point-and-click controls, then export it rigged as GLB or VRM.",
+					"title": "Docs · Avatar Studio builder",
+					"description": "Avatar Studio is the browser-based avatar builder, an MIT-licensed fork that lives in character-studio/. Design a customised humanoid (body, hair, face, clothing, accessories) with point-and-click controls, then export it rigged as GLB or VRM.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},

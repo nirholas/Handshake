@@ -440,9 +440,14 @@
 		"reason": "Enumerates the third-party skeleton NAMING CONVENTIONS the retargeter maps bone names from (the same list CLAUDE.md documents). These are rig format identifiers in developer documentation, not a vendor three.ws builds on or presents to users."
 	},
 	{
-		"pattern": "| Ready Player Me | Ready Player Me |",
+		"pattern": "| Ready Player Me (retired) | Ready Player Me (Netflix) |",
 		"file": "docs/avatar-engines.md",
-		"reason": "Factual row in the Avatar Engines Atlas interop table, which the doc opens by stating is a reference surface and not an endorsement. Naming the engine is the content; the row also records its license and integration reality so a builder can compare. Scoped to this one file and to the table row."
+		"reason": "Factual row in the Avatar Engines Atlas interop table, which the doc opens by stating is a reference surface and not an endorsement. Naming the engine is the content; the row also records its retired status, license, and integration reality so a builder can compare. Scoped to this one file and to the table row."
+	},
+	{
+		"pattern": "[Ready Player Me](https://github.com/readyplayerme) is the current example",
+		"file": "docs/avatar-engines.md",
+		"reason": "The doc's `retired` status definition needs a concrete example, and the engine's shutdown (Netflix acquisition, API closed 31 Jan 2026) is that example. Naming the retired engine is the factual content of the sentence, same reference-not-endorsement scope as the table row above."
 	},
 	{
 		"pattern": "| Avaturn | Avaturn |",

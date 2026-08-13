@@ -3136,11 +3136,11 @@ URL: https://three.ws/docs/avatar-wardrobe
 
 Dress any avatar from the garment catalogue. The subtractive half recolours or hides layers a GLB already contains; the additive half fits new garments onto a body that never had them, and this documents both.
 
-### Docs · Character Studio builder
+### Docs · Avatar Studio builder
 
 URL: https://three.ws/docs/character-studio
 
-Character Studio is the browser-based builder behind Avatar Studio, a rebranded MIT-licensed fork that lives in character-studio/. Design a customised humanoid (body, hair, face, clothing, accessories) with point-and-click controls, then export it rigged as GLB or VRM.
+Avatar Studio is the browser-based avatar builder, an MIT-licensed fork that lives in character-studio/. Design a customised humanoid (body, hair, face, clothing, accessories) with point-and-click controls, then export it rigged as GLB or VRM.
 
 ### Docs · Concierge, an AI chat widget with a 3D face
 
