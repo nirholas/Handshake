@@ -249,7 +249,9 @@ describe('GET /api/ibm/galaxy', () => {
 		expect(body.agents).toEqual([]);
 		expect(body.meta.reason).toBe('too_few_agents');
 		// An empty layout must never poison the cache.
-		expect(state.sqlCalls.some((t) => t.includes('INSERT INTO agent_galaxy_cache'))).toBe(false);
+		expect(state.sqlCalls.some((t) => t.includes('INSERT INTO agent_galaxy_cache'))).toBe(
+			false,
+		);
 	});
 
 	it('says so when watsonx is not configured', async () => {
@@ -321,8 +323,9 @@ describe('lazy cache-table create', () => {
 		vi.resetModules();
 		const fresh = (await import('../../api/ibm/galaxy.js')).default;
 		const ddlCalls = () =>
-			state.sqlCalls.filter((t) => t.includes('CREATE TABLE IF NOT EXISTS agent_galaxy_cache'))
-				.length;
+			state.sqlCalls.filter((t) =>
+				t.includes('CREATE TABLE IF NOT EXISTS agent_galaxy_cache'),
+			).length;
 
 		state.ddlFailures = 1;
 		const failed = makeRes();

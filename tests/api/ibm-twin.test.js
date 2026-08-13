@@ -323,6 +323,7 @@ describe('GET /api/ibm/twin — token mint resolution', () => {
 	it('returns 400 when neither pool nor token is provided', async () => {
 		const { res, body } = await callGet('/api/ibm/twin');
 		expect(res.statusCode).toBe(400);
+		expect(body.error).toBe('bad_request');
 	});
 });
 
