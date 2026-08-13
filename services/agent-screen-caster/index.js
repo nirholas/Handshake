@@ -64,6 +64,13 @@ if (!taskPath) fatal(`Unknown task "${task}". Valid tasks: ${Object.keys(TASK_MA
 // ── Boot ───────────────────────────────────────────────────────────────────────
 const caster = new AgentScreenCaster({ agentId, bearerToken, pushUrl, frameIntervalMs: frameMs, jpegQuality });
 
+// Register BEFORE the task runs. Registering after the top-level `await run(...)`
+// means no handler exists while a task is in flight, so Playwright's own SIGINT
+// hook closes the browser first and the task's rejection reads as a real error
+// (isClosing still false) instead of a clean shutdown.
+process.on('SIGTERM', async () => { await caster.close(); process.exit(0); });
+process.on('SIGINT',  async () => { await caster.close(); process.exit(0); });
+
 console.log('[agent-screen-caster] starting');
 console.log('  agentId  :', agentId);
 console.log('  pushUrl  :', pushUrl);
@@ -89,12 +96,20 @@ caster.startFrameLoop();
 try {
 	await run(caster, taskArg);
 } catch (err) {
-	console.error('[agent-screen-caster] task error:', err?.message || err);
-	await caster.pushActivity([{
-		type:    'error',
-		summary: `Task error: ${err?.message || String(err)}`,
-		ts:      Date.now(),
-	}]);
+	if (caster.isClosing) {
+		// SIGINT/SIGTERM closed the browser under the task; the resulting page
+		// rejection is clean shutdown, not an error the agent's watchers should see.
+		console.log('[agent-screen-caster] task interrupted by shutdown');
+	} else {
+		console.error('[agent-screen-caster] task error:', err?.message || err);
+		await caster.pushActivity([{
+			type:    'error',
+			summary: `Task error: ${err?.message || String(err)}`,
+			ts:      Date.now(),
+		}]).catch((pushErr) => {
+			console.error('[agent-screen-caster] could not report task error:', pushErr?.message || pushErr);
+		});
+	}
 } finally {
 	await caster.close();
 	console.log('[agent-screen-caster] shut down');
@@ -131,6 +146,3 @@ function loadEnvFile(path) {
 		if (key && !(key in process.env)) process.env[key] = val;
 	}
 }
-
-process.on('SIGTERM', async () => { await caster.close(); process.exit(0); });
-process.on('SIGINT',  async () => { await caster.close(); process.exit(0); });

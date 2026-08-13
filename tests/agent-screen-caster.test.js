@@ -91,6 +91,11 @@ describe('AgentScreenCaster constructor', () => {
 		expect(() => new AgentScreenCaster({ bearerToken: BEARER })).toThrow(/agentId/);
 		expect(() => new AgentScreenCaster({ agentId: AGENT_ID })).toThrow(/bearerToken/);
 	});
+
+	it('starts out not closing, so a task rejection counts as a real error', () => {
+		const caster = new AgentScreenCaster({ agentId: AGENT_ID, bearerToken: BEARER });
+		expect(caster.isClosing).toBe(false);
+	});
 });
 
 describe('isRetryableStatus', () => {
@@ -220,5 +225,8 @@ describe('live browser core path', () => {
 		}
 		expect(errors.filter((e) => e.includes('frame push failed'))).toHaveLength(0);
 		expect(caster.page).toBeNull();
+		// The entrypoint reads this to tell clean shutdown from a real task error,
+		// so a SIGINT never pushes a spurious error into the agent's activity log.
+		expect(caster.isClosing).toBe(true);
 	});
 });

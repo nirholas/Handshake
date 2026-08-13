@@ -94,6 +94,15 @@ export class AgentScreenCaster {
 		this.browser = this.context = this.page = null;
 	}
 
+	/**
+	 * True once close() has begun. A task whose page call rejects during
+	 * teardown is expected shutdown, not a failure worth narrating: callers
+	 * check this before pushing an error activity to the agent's public log.
+	 */
+	get isClosing() {
+		return this._closing;
+	}
+
 	// ── Navigation & actions ───────────────────────────────────────────────────
 
 	/**
