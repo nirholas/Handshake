@@ -120,7 +120,7 @@
 			import { AgentAvatar } from '/src/agent-avatar.js';
 			import { protocol } from '/src/agent-protocol.js';
 			import { EmbedActionBridge } from '/src/embed-action-bridge.js';
-			import { createTTS } from '/src/runtime/speech.js';
+			import { createTTS, agentVoiceConfig } from '/src/runtime/speech.js';
 
 			const BRIDGE_VERSION = '1';
 			const CAPABILITIES = ['speak', 'gesture', 'look-at', 'emote', 'present-model'];
@@ -509,17 +509,20 @@
 				avatarCtl.attach();
 
 				// Bind real TTS so `speak` actions produce ElevenLabs audio + lip-sync.
-				// Voice id comes from the agent record — no silent fallback to a default
-				// voice; speak reports "agent has no voice configured" when unset.
+				// The whole config (voice id, model, saved settings, and the agent id
+				// that authorizes an owner-BYOK clone for anonymous listeners) comes
+				// from the agent record via agentVoiceConfig — no silent fallback to a
+				// default voice; speak reports "agent has no voice configured" when
+				// nothing is bound.
 				ttsCtx.viewer = viewer;
 				ttsCtx.avatar = avatarCtl;
 				try {
 					const ar = await fetch(`/api/agents/${agentId}`, { credentials: 'include' });
 					if (ar.ok) {
 						const { agent } = await ar.json();
-						const voiceId = agent?.voice_id || null;
-						if (voiceId) {
-							ttsCtx.tts = createTTS({ provider: 'elevenlabs', voiceId, proxyURL: '/api/tts/eleven' });
+						const voiceCfg = agentVoiceConfig(agent, { agentId });
+						if (voiceCfg) {
+							ttsCtx.tts = createTTS(voiceCfg);
 							avatarCtl.setTTS(ttsCtx.tts);
 						}
 					}

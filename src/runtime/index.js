@@ -41,7 +41,15 @@ export class Runtime extends EventTarget {
 			...this.manifest.brain,
 			...providerConfig,
 		});
-		this.tts = createTTS({ ...this.manifest.voice?.tts, ...voiceConfig.tts });
+		// agentId goes in first so an explicit manifest/voiceConfig value still wins,
+		// but a runtime that knows which agent it is never has to be told twice: the
+		// /api/tts/eleven proxy needs it to serve a voice cloned on the owner's own
+		// ElevenLabs key, which is the only lane that works without a platform key.
+		this.tts = createTTS({
+			...(this.agentId ? { agentId: this.agentId } : {}),
+			...this.manifest.voice?.tts,
+			...voiceConfig.tts,
+		});
 		this.stt = createSTT({ ...this.manifest.voice?.stt, ...voiceConfig.stt });
 
 		this.messages = [];

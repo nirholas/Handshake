@@ -541,6 +541,52 @@ export function createTTS(config = {}) {
 	return factory(config);
 }
 
+/**
+ * Turn a public agent record into the TTS config that plays its bound voice.
+ *
+ * Every surface that speaks as an agent (the hosted embed, the SDK runtime)
+ * needs the same three things from the agent row, and getting any of them
+ * wrong is silent: the agent just falls back to a generic voice or goes mute.
+ *
+ *   voice_id       — which voice to speak with.
+ *   agentId        — WHICH AGENT this voice belongs to. The /api/tts/eleven
+ *                    proxy only serves an owner-BYOK clone when the request
+ *                    names its agent, because that is what authorizes spending
+ *                    the owner's ElevenLabs credential. Omit it and a bound
+ *                    voice is unreachable to embed visitors and signed-out
+ *                    listeners, which is exactly who embeds are for.
+ *   voice_model /
+ *   voice_settings — the tuning the owner saved in the editor. Dropping these
+ *                    plays the right voice with the wrong delivery.
+ *
+ * Returns null when the agent has no ElevenLabs voice bound, so callers can
+ * render their own "no voice configured" state rather than guessing a default.
+ *
+ * @param {{id?: string, voice_provider?: string, voice_id?: string|null,
+ *          voice_model?: string|null, voice_settings?: object|null}|null} agent
+ * @param {{ proxyURL?: string, agentId?: string }} [opts]
+ * @returns {object|null} a createTTS config, or null when nothing is bound.
+ */
+export function agentVoiceConfig(agent, { proxyURL = '/api/tts/eleven', agentId } = {}) {
+	const voiceId = agent?.voice_id || null;
+	if (!voiceId || (agent?.voice_provider && agent.voice_provider !== 'elevenlabs')) return null;
+
+	const id = agentId || agent?.id || null;
+	const s = agent?.voice_settings && typeof agent.voice_settings === 'object' ? agent.voice_settings : null;
+
+	return {
+		provider: 'elevenlabs',
+		voiceId,
+		proxyURL,
+		...(id ? { agentId: id } : {}),
+		...(agent?.voice_model ? { modelId: agent.voice_model } : {}),
+		...(s?.stability != null ? { stability: Number(s.stability) } : {}),
+		...(s?.similarity_boost != null ? { similarityBoost: Number(s.similarity_boost) } : {}),
+		...(s?.style != null ? { style: Number(s.style) } : {}),
+		...(s?.use_speaker_boost != null ? { useSpeakerBoost: !!s.use_speaker_boost } : {}),
+	};
+}
+
 export function createSTT(config = {}) {
 	const provider = config.provider || 'browser';
 	const factory = STT_FACTORIES[provider];
