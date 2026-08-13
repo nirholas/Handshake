@@ -33,10 +33,10 @@ async function uploadToNftStorage(token, bytes, contentType) {
 }
 
 // Strict base64: the scene GLB and its thumbnail arrive base64-encoded, and
-// Buffer.from(x, 'base64') never throws — it silently drops every character
-// outside the alphabet. A truncated or accidentally-URL-encoded upload therefore
-// used to sail through as a shorter, corrupt buffer that we then pinned to IPFS
-// on the platform's own storage token and referenced from a real mint.
+// Buffer.from(x, 'base64') never throws. It silently drops every character
+// outside the alphabet, so a truncated or accidentally-URL-encoded upload used
+// to sail through as a shorter, corrupt buffer that we then pinned to IPFS on
+// the platform's own storage token and referenced from a real mint.
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
 function decodeBase64(value) {
@@ -55,7 +55,7 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	// The uploads below run on the platform's NFT.Storage token — never let an
+	// The uploads below run on the platform's NFT.Storage token, never let an
 	// anonymous caller push arbitrary blobs to IPFS on our account.
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
@@ -64,7 +64,7 @@ export default wrap(async (req, res) => {
 	}
 
 	// A scene GLB plus its PNG thumbnail, base64-inflated by 4/3, comfortably
-	// clears readJson's 1 MB default — which rejected every real mint with a 413
+	// clears readJson's 1 MB default, which rejected every real mint with a 413
 	// before the handler saw a byte. 8 MB matches server/index.mjs BODY_LIMIT, the
 	// ceiling express enforces ahead of us anyway.
 	const body = await readJson(req, 8 * 1024 * 1024);

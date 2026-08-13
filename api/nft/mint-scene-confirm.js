@@ -5,8 +5,8 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { confirmOrThrow } from '../_lib/solana/confirm.js';
 
-// Base64 with no stray characters. Buffer.from(x, 'base64') never throws — it
-// drops anything outside the alphabet — so the only way to reject a malformed
+// Base64 with no stray characters. Buffer.from(x, 'base64') never throws: it
+// drops anything outside the alphabet, so the only way to reject a malformed
 // payload up front is to check it before decoding.
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
@@ -62,12 +62,12 @@ export default wrap(async (req, res) => {
 			'confirmed',
 		);
 	} catch (e) {
-		// A confirmed-but-reverted tx is a hard failure, not an uncertain one — never
+		// A confirmed-but-reverted tx is a hard failure, not an uncertain one, never
 		// hand back a soft 200 that reads as success.
 		if (e?.code === 'tx_reverted') {
 			return error(res, 422, 'tx_failed', `Mint transaction reverted on-chain: ${JSON.stringify(e.onChainErr)}`);
 		}
-		// Return the signature even if confirmation polling times out — the tx may still land.
+		// Return the signature even if confirmation polling times out, the tx may still land.
 		return json(res, 200, { signature, warning: `Confirmation uncertain: ${e.message}` });
 	}
 

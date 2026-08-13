@@ -5,13 +5,13 @@ import { cacheGet, cacheSet } from '../_lib/cache.js';
 
 // NFT metadata is effectively immutable, but the Helius `getAsset` (DAS) and
 // Alchemy `getNFTMetadata` calls behind this endpoint are billed per request and
-// were re-resolved on every call — a bot re-requesting the same mint paid the
+// were re-resolved on every call, a bot re-requesting the same mint paid the
 // upstream every time. Cache the resolved descriptor by chain:id so a given
 // asset is fetched from the provider at most once per TTL.
 const RESOLVE_TTL_SECONDS = 6 * 60 * 60; // 6h
 // Last-known-good copy kept far longer, read ONLY when the upstream provider is
 // unreachable. NFT metadata is effectively immutable, so serving a long-stale
-// descriptor during a Helius/Alchemy outage is correct — far better than a 502.
+// descriptor during a Helius/Alchemy outage is correct, far better than a 502.
 const RESOLVE_STALE_TTL_SECONDS = 30 * 24 * 60 * 60; // 30d
 
 // Alchemy NFT API host per EVM chainId. An id of the form
@@ -62,7 +62,7 @@ export default wrap(async (req, res) => {
 	const cached = await cacheGet(cacheKey).catch(() => null);
 	if (cached) return json(res, 200, cached);
 
-	// Only a cache MISS reaches the billed upstream — gate that on the shared DAS
+	// Only a cache MISS reaches the billed upstream, gate that on the shared DAS
 	// cost ceiling so a bot resolving thousands of distinct ids can't run up the
 	// Helius/Alchemy bill past a fixed hourly cap.
 	const ceiling = await limits.heliusDasGlobal();
@@ -79,7 +79,7 @@ export default wrap(async (req, res) => {
 	const serveStaleOr = async (onMiss) => {
 		const lastGood = await cacheGet(staleKey).catch(() => null);
 		if (lastGood) {
-			console.warn('[nft/resolve] upstream unreachable — serving last-known-good for %s', cacheKey);
+			console.warn('[nft/resolve] upstream unreachable, serving last-known-good for %s', cacheKey);
 			return json(res, 200, { ...lastGood, stale: true });
 		}
 		return onMiss();
@@ -154,7 +154,7 @@ export default wrap(async (req, res) => {
 	// scene/gate-check.js do) and say plainly when it is missing.
 	const apiKey = process.env.ALCHEMY_API_KEY;
 	if (!apiKey) {
-		return error(res, 503, 'not_configured', 'ALCHEMY_API_KEY not configured — evm nft resolution is unavailable');
+		return error(res, 503, 'not_configured', 'ALCHEMY_API_KEY not configured; evm nft resolution is unavailable');
 	}
 	const url = `https://${host}.g.alchemy.com/nft/v3/${apiKey}/getNFTMetadata?contractAddress=${encodeURIComponent(contractAddress)}&tokenId=${encodeURIComponent(tokenId)}`;
 	let resp;
