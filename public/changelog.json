@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T17:09:15.795Z",
+	"generated_at": "2026-08-13T17:20:49.429Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -701,6 +701,18 @@
 		{
 			"date": "2026-08-13",
 			"type": "update",
+			"title": "The Solana agent SDK's staking tools are importable again, and its docs stopped overpromising",
+			"summary": "The @three-ws/solana-agent package documented nine tool-call actions on its solana-agent-kit entry point, but the three staking actions (stake, unstake, list stake accounts) were never re-exported, so importing them failed even though the code behind them existed and worked. They are now exported like the rest. The README also caught up with reality in three places: it now documents the fifth entry point (the provably-fair vanity wallet client), states the actual license instead of claiming Apache-2.0 while the LICENSE file says all rights reserved, and explains that zod is only needed when you use the solana-agent-kit entry, so a consumer following the install line no longer hits a surprise import error. The SDK also gained a test suite for its main SolanaAgent class covering both wallet factories and action delegation. Every documented export across all five entry points is now verified to load in both ESM and CommonJS. The fix reaches npm with the next @three-ws/solana-agent release.",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
 			"title": "The speech and avatar guides stopped promising formats, counts, and model orders the code does not deliver",
 			"summary": "Five studio guides carried claims that had drifted away from the code. The Lipsync page's example asked the speech endpoint for an MP3 and saved the reply as one, but the free NVIDIA lane emits raw audio and always answers in WAV, so anyone following it ended up with a file whose name lied about its contents; the example now saves the response headers alongside the audio, and the page explains that the requested format is a request rather than a guarantee and which header tells you what you actually got. Voice Lab claimed roughly 850 voices with about 500 of them from Microsoft, a count the live Microsoft list no longer matches, and the provider tile in the voice picker quoted the same stale figure; both now point at the catalog endpoint, which reports the real per-provider totals for whatever deployment you are talking to. Voice Lab also promised synthesized clips are cached for 30 days, a limit nothing in the code sets, and now describes the cache as it actually behaves. The Genesis page described persona writing as trying a paid model first and falling back to free ones, the reverse of the platform's real free-providers-first order. And the Selfie to Avatar page attributed one step's image-quality setting to the wrong step, so both numbers it quoted belonged to code it was not describing.",
 			"link": "/docs/lipsync",
@@ -743,6 +755,17 @@
 		{
 			"date": "2026-08-13",
 			"type": "update",
+			"title": "The Walk Avatar Chrome extension keeps walking through page reloads, and its install link works",
+			"summary": "Two fixes for the browser extension that walks your three.ws avatar across any website. First, the avatar now survives navigation: once you enable it on a tab, it automatically re-appears after every full page load on that tab instead of vanishing until you re-toggled it from the popup, and your per-site blocklist is re-checked on every navigation so it still never mounts where you told it not to. Second, three.ws/extension used to land on a 404; it now takes you to the extension guide, so the link the extension itself opens after install, and every link to it around the site, actually works. The extension also gained an automated build check so a broken package can no longer ship unnoticed.",
+			"link": "/docs/walk/chrome-extension",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
 			"title": "The widget docs page rendered two footers, and eight docs pages were re-checked against the code",
 			"summary": "The Widgets documentation page carried a hand-written footer with broken nesting on top of the site footer, so readers saw the footer twice, with three navigation rows and three taglines. The hand-written copy is gone and the page now uses the shared site footer once. Its postMessage reference was also wrong in ways that would break an integration: the example origin check compared against an address with a trailing slash, which never matches what the browser reports, so every message would have been discarded; the event table listed a widget:load event the runtime never sends and got three payload shapes wrong. Two widget types the Studio has been offering for a while, the smart-money trade feed and the walking avatar, were missing from the type table, and the analytics section claimed a field we do not store. Skip-to-content now lands on the page body, and the tab title matches the rest of the documentation. Separately, the preview image for the demo widgets answered not-found, so sharing one in Slack, Discord, or X showed an error card instead of the widget. Alongside that, eight documentation pages were audited against the code they describe: the four MCP server pages no longer pin a version number that had already moved on, their examples were all executed live against the real servers, the marketplace example now uses a real agent id instead of a placeholder that returned nothing, and two dead links in the API reference were repaired.",
 			"link": "/docs/widgets",
@@ -771,6 +794,17 @@
 			"tags": [
 				"fix",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "The x402 catalog shows real prices and real 24h activity again",
+			"summary": "Six endpoints on the x402 catalog were labelled \"Free\" when they are not free at all: they price per request (per asset, per rarity, per skill, per vanity pattern), and the page had no way to say so. Those cards now show their price floor, the drawer shows the full band plus a note explaining what sets the exact figure, and the pay button no longer reads \"Pay Free & run\". The live activity strip along the top was reading the revenue report from the wrong place, so 24h settled, volume, success rate and unique payers were showing dashes or a fabricated $0; all four are live numbers again. For the same reason the \"Most used\" sort was doing nothing and no endpoint showed its calls-per-24h badge, so the busiest endpoints now genuinely sort first. Also fixed: the JavaScript and cURL snippets printed raw HTML entities instead of code and used an ellipsis placeholder that URL-encoded into gibberish, the Copy button sat on top of the first line of code, a copy on a browser that blocks the clipboard API now falls back instead of leaving the button stuck on \"copy failed\", pressing Escape to dismiss a payment no longer also closes the endpoint behind it, shared /x402#run= links open the endpoint even when clicked from the page itself, and the search palette and detail drawer are no longer reachable by keyboard while closed.",
+			"link": "/x402",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

@@ -61,6 +61,9 @@ export {
   getSwapQuoteAction,
   getBalanceAction,
   createAtaAction,
+  stakeSolAction,
+  unstakeSolAction,
+  getStakeAccountsAction,
   allActions,
 } from "./actions.js";
 

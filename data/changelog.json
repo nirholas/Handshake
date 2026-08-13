@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "The Walk Avatar Chrome extension keeps walking through page reloads, and its install link works",
+			"summary": "Two fixes for the browser extension that walks your three.ws avatar across any website. First, the avatar now survives navigation: once you enable it on a tab, it automatically re-appears after every full page load on that tab instead of vanishing until you re-toggled it from the popup, and your per-site blocklist is re-checked on every navigation so it still never mounts where you told it not to. Second, three.ws/extension used to land on a 404; it now takes you to the extension guide, so the link the extension itself opens after install, and every link to it around the site, actually works. The extension also gained an automated build check so a broken package can no longer ship unnoticed.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/docs/walk/chrome-extension"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The x402 catalog shows real prices and real 24h activity again",
+			"summary": "Six endpoints on the x402 catalog were labelled \"Free\" when they are not free at all: they price per request (per asset, per rarity, per skill, per vanity pattern), and the page had no way to say so. Those cards now show their price floor, the drawer shows the full band plus a note explaining what sets the exact figure, and the pay button no longer reads \"Pay Free & run\". The live activity strip along the top was reading the revenue report from the wrong place, so 24h settled, volume, success rate and unique payers were showing dashes or a fabricated $0; all four are live numbers again. For the same reason the \"Most used\" sort was doing nothing and no endpoint showed its calls-per-24h badge, so the busiest endpoints now genuinely sort first. Also fixed: the JavaScript and cURL snippets printed raw HTML entities instead of code and used an ellipsis placeholder that URL-encoded into gibberish, the Copy button sat on top of the first line of code, a copy on a browser that blocks the clipboard API now falls back instead of leaving the button stuck on \"copy failed\", pressing Escape to dismiss a payment no longer also closes the endpoint behind it, shared /x402#run= links open the endpoint even when clicked from the page itself, and the search palette and detail drawer are no longer reachable by keyboard while closed.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/x402"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "x402 Studio is keyboard-usable, phone-usable, and no longer drops product-grid picks",
 			"summary": "A full pass over the x402 Studio merchant console. Editing a \"product grid\" block on the storefront builder silently saved an empty grid, because the checkbox lookup searched the wrong part of the page; it now saves exactly the products you tick. Half-built storefront layouts used to vanish the moment you visited another tab and came back, and now survive with an \"Unsaved changes\" marker until you save or publish. Every dialog is a real dialog: Escape closes it, Tab stays inside it, and focus returns to the control that opened it. The setup checklist rows are real buttons a keyboard can reach, every control has a visible focus ring, and the labels are correctly attached to their inputs. On a phone the \"Agent wallets\" heading no longer squeezed its description into a one-word column, and the sidebar links to the x402 explainer and the classic dashboard are reachable instead of hidden. The \"+ New product\" button in the header now opens the new-product form instead of only switching tabs, the signed-out and load-failure screens carry a proper page heading, and a load failure offers a retry plus a route to the classic dashboard.",
 			"tags": [
@@ -20976,6 +20996,16 @@
 			"tags": [
 				"fix",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The Solana agent SDK's staking tools are importable again, and its docs stopped overpromising",
+			"summary": "The @three-ws/solana-agent package documented nine tool-call actions on its solana-agent-kit entry point, but the three staking actions (stake, unstake, list stake accounts) were never re-exported, so importing them failed even though the code behind them existed and worked. They are now exported like the rest. The README also caught up with reality in three places: it now documents the fifth entry point (the provably-fair vanity wallet client), states the actual license instead of claiming Apache-2.0 while the LICENSE file says all rights reserved, and explains that zod is only needed when you use the solana-agent-kit entry, so a consumer following the install line no longer hits a surprise import error. The SDK also gained a test suite for its main SolanaAgent class covering both wallet factories and action delegation. Every documented export across all five entry points is now verified to load in both ESM and CommonJS. The fix reaches npm with the next @three-ws/solana-agent release.",
+			"tags": [
+				"fix",
+				"sdk",
+				"docs"
 			]
 		}
 	]
