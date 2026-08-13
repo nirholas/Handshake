@@ -16,6 +16,14 @@ const {
 	SKILL_ROYALTY_MAX_PLATFORM_BPS,
 } = await import('../api/_lib/skill-royalty.js');
 
+// Imported once, at module scope. env.SKILL_ROYALTIES_EVM_7710_ENABLED is a
+// getter that reads process.env on every access (api/_lib/env.js), so the flag
+// gate is evaluated per call and needs no module reset to flip. Re-importing
+// royalty.js per test after vi.resetModules() re-transformed its whole viem
+// dependency graph from cold each time, which is what pushed these two tests
+// past the 120s timeout whenever the box was busy.
+const { settleAllPendingRoyalties, settleRoyalties } = await import('../api/_lib/royalty.js');
+
 beforeEach(() => {
 	sqlMock.mockClear();
 	sqlMock.mockResolvedValue([{ id: 'ledger-1' }]);
@@ -155,14 +163,11 @@ describe('accrueSkillCallRoyalty', () => {
 describe('settle-royalties EVM flag gate (api/_lib/royalty.js)', () => {
 	afterEach(() => {
 		delete process.env.SKILL_ROYALTIES_EVM_7710_ENABLED;
-		vi.resetModules();
 	});
 
 	it('settleAllPendingRoyalties is a no-op while the flag is off', async () => {
 		delete process.env.SKILL_ROYALTIES_EVM_7710_ENABLED;
-		vi.resetModules();
 		sqlMock.mockClear();
-		const { settleAllPendingRoyalties } = await import('../api/_lib/royalty.js');
 		const report = await settleAllPendingRoyalties();
 		expect(report).toMatchObject({ settled: 0, failed: 0, authors: 0, skipped: true });
 		// No author lookup query ever runs while the leg is gated.
@@ -171,9 +176,7 @@ describe('settle-royalties EVM flag gate (api/_lib/royalty.js)', () => {
 
 	it('settleRoyalties skips an author while the flag is off', async () => {
 		process.env.SKILL_ROYALTIES_EVM_7710_ENABLED = 'false';
-		vi.resetModules();
 		sqlMock.mockClear();
-		const { settleRoyalties } = await import('../api/_lib/royalty.js');
 		const report = await settleRoyalties('22222222-2222-2222-2222-222222222222');
 		expect(report).toMatchObject({ skipped: true, reason: 'evm_7710_disabled' });
 		expect(sqlMock).not.toHaveBeenCalled();
