@@ -2,7 +2,7 @@
 // the number a seller acts on is the money sitting in the trial queue. That
 // number used to be summed across every mint at once and then labelled with
 // whichever mint happened to head the queue, so a seller pricing one skill in
-// USDC and another in an 8-decimal token read a headline that was wrong by
+// MINT_6DP and another in an 8-decimal token read a headline that was wrong by
 // orders of magnitude. These tests pin the per-mint totals, the trial lifecycle
 // states the buyer view renders against, the atomic formatter (token amounts
 // overflow a JS number, so they never go through Number()), and the auth wall.
@@ -38,7 +38,8 @@ const { trialState, formatAtomic, potentialsByMint, buyerView, sellerView, defau
 
 const USER = '11111111-1111-4111-8111-111111111111';
 const AGENT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+// Clearly synthetic, so no third-party mainnet mint is pinned into a fixture.
+const MINT_6DP = 'THREEsynthetic1111111111111111111111111116dp';
 const THREE = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
 function mkReq({ url = '/api/marketplace/trial-status', headers = {}, method = 'GET' } = {}) {
@@ -108,12 +109,12 @@ describe('formatAtomic', () => {
 describe('potentialsByMint', () => {
 	it('totals each mint separately and leads with the largest', () => {
 		const out = potentialsByMint([
-			{ price: { mint: USDC, decimals: 6 }, potential: { atomic: '2000000' } },
-			{ price: { mint: USDC, decimals: 6 }, potential: { atomic: '3000000' } },
+			{ price: { mint: MINT_6DP, decimals: 6 }, potential: { atomic: '2000000' } },
+			{ price: { mint: MINT_6DP, decimals: 6 }, potential: { atomic: '3000000' } },
 			{ price: { mint: THREE, decimals: 9 }, potential: { atomic: '900000000' } },
 		]);
 		expect(out).toHaveLength(2);
-		expect(out[0]).toMatchObject({ mint: USDC, decimals: 6, atomic: '5000000', display: '5' });
+		expect(out[0]).toMatchObject({ mint: MINT_6DP, decimals: 6, atomic: '5000000', display: '5' });
 		expect(out[1]).toMatchObject({ mint: THREE, decimals: 9, atomic: '900000000', display: '0.9' });
 	});
 
@@ -130,7 +131,7 @@ describe('sellerView', () => {
 					agent_id: AGENT, skill: 'icon-set', agent_name: 'Ink', profile_image_url: null,
 					agent_image: null, active_trials: 4, exhausted: 2, last_run: 1,
 					last_activity: '2026-08-01T00:00:00.000Z',
-					trial_uses: 3, amount: '2000000', currency_mint: USDC, chain: 'solana', mint_decimals: 6,
+					trial_uses: 3, amount: '2000000', currency_mint: MINT_6DP, chain: 'solana', mint_decimals: 6,
 				},
 				{
 					agent_id: AGENT, skill: 'lore', agent_name: 'Ink', profile_image_url: null,
@@ -147,12 +148,12 @@ describe('sellerView', () => {
 		expect(out.role).toBe('seller');
 		expect(out.summary.warmLeads).toBe(3);
 		expect(out.summary.sold).toBe(2);
-		// USDC: 2 exhausted x 2 USDC. $THREE: 1 exhausted x 0.5.
+		// MINT_6DP: 2 exhausted x 2 MINT_6DP. $THREE: 1 exhausted x 0.5.
 		expect(out.summary.potentials).toEqual([
-			{ mint: USDC, decimals: 6, atomic: '4000000', display: '4' },
+			{ mint: MINT_6DP, decimals: 6, atomic: '4000000', display: '4' },
 			{ mint: THREE, decimals: 9, atomic: '500000000', display: '0.5' },
 		]);
-		expect(out.summary.potential).toMatchObject({ mint: USDC, atomic: '4000000', display: '4' });
+		expect(out.summary.potential).toMatchObject({ mint: MINT_6DP, atomic: '4000000', display: '4' });
 		expect(out.queue[0]).toMatchObject({ skill: 'icon-set', sold: 2, exhausted: 2 });
 		expect(out.queue[0].conversionRate).toBeCloseTo(2 / 6, 10);
 		expect(out.queue[1].sold).toBe(0);
@@ -174,7 +175,7 @@ describe('buyerView', () => {
 				id: 'p1', agent_id: AGENT, skill: 'icon-set', trial_remaining: 0,
 				created_at: '2026-08-01T00:00:00.000Z', updated_at: '2026-08-03T00:00:00.000Z',
 				agent_name: 'Ink', agent_image: null,
-				trial_uses: 3, amount: '2000000', currency_mint: USDC, chain: 'solana', mint_decimals: 6,
+				trial_uses: 3, amount: '2000000', currency_mint: MINT_6DP, chain: 'solana', mint_decimals: 6,
 			},
 			{
 				id: 'p2', agent_id: AGENT, skill: 'lore', trial_remaining: 3,
@@ -192,7 +193,7 @@ describe('buyerView', () => {
 			purchaseId: 'p1', skill: 'icon-set', state: 'exhausted', agentUrl: `/agent/${AGENT}`,
 		});
 		expect(out.trials[0].price).toEqual({
-			atomic: '2000000', decimals: 6, display: '2', mint: USDC, chain: 'solana',
+			atomic: '2000000', decimals: 6, display: '2', mint: MINT_6DP, chain: 'solana',
 		});
 		// A delisted skill still shows its trial, just without a price to convert at.
 		expect(out.trials[1].price).toBeNull();
