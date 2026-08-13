@@ -47,6 +47,14 @@
 			<description>Before a chat host renders your agent, it asks three.ws to confirm the agent exists and to hand back the sites you allow it to be embedded on. Those are two separate reads, and if the second one hiccuped the whole answer was thrown away: the host was told the agent could not be confirmed and was given no name, even though the first read had just found it. The confirmation and the name now survive a stumble on the embed settings. Separately, a misspelled address in a host's setup returned an explanation the browser refused to show, so integrators saw an unexplained network failure instead of the message naming their typo. That message now reaches them.</description>
 		</item>
 		<item>
+			<title>An API key can no longer be minted with zero scopes</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-08-13:An API key can no longer be minted with zero scopes</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Sending an explicitly empty scope list to the key-minting endpoint used to succeed and issue a credential that could never pass a permission check: the key looked fine, then failed every call with nothing explaining why. The dashboard already refused an empty selection; the raw API now enforces the same rule for every other client and answers with a clear error instead of minting a dead key. Repeated scopes in one request are also deduplicated, so the grants shown on a key are listed once each.</description>
+		</item>
+		<item>
 			<title>An avatar rendered through the MCP server can no longer be turned into a tracking beacon</title>
 			<link>https://three.ws/docs/mcp</link>
 			<guid isPermaLink="false">2026-08-13:An avatar rendered through the MCP server can no longer be turned into a tracking beacon</guid>
@@ -167,6 +175,14 @@
 			<description>Sending a bounty, job or bid id that was not a real id to the Labor Market endpoints produced a server fault, and in a couple of places leaked the database's own error text back to the caller. Every one of those endpoints now checks the id first and answers with a plain message naming the field. Posting a bounty is stricter too: a reward that is not a number is refused as bad input rather than crashing or being quietly read as zero, and a deadline that is not a real date is caught before the bounty is created. A delivered work item's text is now truncated to the documented limit for real, which it was not when the deliverable was sent as an object.</description>
 		</item>
 		<item>
+			<title>Launchpad paid pages now describe themselves correctly to paying agents</title>
+			<link>https://three.ws/launchpad</link>
+			<guid isPermaLink="false">2026-08-13:Launchpad paid pages now describe themselves correctly to paying agents</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When an agent reaches a paid Launchpad page (a pay-per-question concierge or a gated showroom unlock) without payment, the 402 challenge it receives now carries that page type's own bazaar discovery document: the exact field to send, the shape of the answer that comes back, and a worked example. Before, the challenge fell back to a generic entry that told crawlers to send a model-validation body, so an agent that indexed a concierge page from discovery would never send the one field it actually needs. An agent can now go from discovery to a settled paid call using nothing but the challenge itself.</description>
+		</item>
+		<item>
 			<title>One bad request can no longer use up the whole hourly AI-governance budget</title>
 			<link>https://three.ws/docs/okx-marketplace</link>
 			<guid isPermaLink="false">2026-08-13:One bad request can no longer use up the whole hourly AI-governance budget</guid>
@@ -207,6 +223,14 @@
 			<description>The Remixes Received ranking on /rankings was meant to count derivatives other creators made from your work. It was also counting your own refinements of your own model, and generations that never finished, so a creator could climb the board without anyone else touching their work. It now counts only finished derivatives made by someone else, which is what the board always claimed to measure. Separately, the public Daily Match standings endpoint sent no cross-origin permission header, so any site other than three.ws that tried to read the board was blocked by the browser. It now allows any origin, matching the unified leaderboard, and both boards are covered by tests.</description>
 		</item>
 		<item>
+			<title>Rate ceilings on stud listings and inscription status polls</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:Rate ceilings on stud listings and inscription status polls</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Two more endpoints joined the platform rate limiter. Listing or unlisting an agent on the stud market is now capped, so a scripted flood cannot churn the market ordering, and the anonymous Bitcoin inscription status poll is capped at a level that still lets a long inscription wait clear across a couple of open tabs. Both ceilings are deliberately non-critical: if the limiter's backing store is ever down, an owner can still unlist their agent and a paying user's status screen keeps working.</description>
+		</item>
+		<item>
 			<title>Retro computing prompts are no longer refused by the 3D Studio safety gate</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-13:Retro computing prompts are no longer refused by the 3D Studio safety gate</guid>
@@ -229,6 +253,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Saving an outfit in Scene Composer used to report success and store nothing: the attached props went out under a field the avatar API quietly ignored. They are now a real part of the avatar record, so a crown you forge and pin to a head stays on that avatar wherever its look is applied, on top of whatever colors and morphs it already had. Opening the composer with ?avatar=&lt;id&gt; works again too; it had been landing on an empty stage because the page read the wrong field off the avatar response. Alongside that, the eight studio and viewer documentation pages were audited against the code they describe: Restyle Studio documents all 18 material presets instead of 14, Avatar Studio's emote count is right, the Animation Studio clip example now posts successfully instead of being rejected as empty, and the Scene Composer outfit example shows the request the API actually accepts.</description>
+		</item>
+		<item>
+			<title>Screen caster: stopping your caster no longer posts a phantom error</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:Screen caster: stopping your caster no longer posts a phantom error</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The self-hosted agent-screen-caster service (the one that gives your agent a live, watchable browser screen) used to push a scary &quot;Task error&quot; line into your agent's public activity log every time you stopped it with Ctrl-C, because the shutdown looked like a crash from the inside. Stopping the caster is now recognised as a clean shutdown and leaves the log untouched, so watchers only ever see real errors. The whole path was re-verified end to end against production: key minting from the dashboard flow, live JPEG frames on the watch stream, and the retry policy that keeps a long-running caster alive through rate limits and server blips.</description>
 		</item>
 		<item>
 			<title>Scrolling back through a DM no longer stops early, and muting a departed account works</title>
@@ -373,6 +405,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Before a prompt becomes a 3D model, the forge draws a reference picture, then draws two more views of it so the reconstruction can see the sides and back instead of guessing them. Those extra views sent the reference picture to the image model labelled as a PNG no matter what it actually was, so a JPEG or WebP reference could be refused outright and you would quietly get fewer views and a rougher model. The real format is now read from the picture and sent with it. A reference that is unreachable, oversized, or not actually an image is now refused with a clear reason instead of being forwarded as-is and failing further down. And every image this step fetches, including the optional edit mask, now goes through the same address safety check the rest of the platform uses, so a supplied link cannot be aimed at an internal address.</description>
+		</item>
+		<item>
+			<title>The free inference-receipt verifier is now in the public x402 catalog</title>
+			<link>https://three.ws/docs/x402-endpoints</link>
+			<guid isPermaLink="false">2026-08-13:The free inference-receipt verifier is now in the public x402 catalog</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>/api/x402/inference-verify audits a metered-inference receipt from a paid llm-proxy call: it re-checks the issuer signature, the node's response signature, the prompt and response hashes against the raw text you supply, whether the settlement transaction actually confirmed on-chain, and whether the issuer is one of the platform's published signers. It is free and keyless, but it was missing from docs/x402-endpoints.md, so buyers and node operators had no way to find it. It now has a row in the free read surfaces table alongside the other verifier tools.</description>
 		</item>
 		<item>
 			<title>The Granite forecast tool now ships a copy-and-run example</title>
@@ -807,6 +847,14 @@
 			<description>Token panels read prices, liquidity and holder counts from an ordered list of providers, and the Solana Foundation's Tokens API sits second in that list. Nothing explained what that rung adds over the mint-scoped sources above it: it knows which mints represent the same asset, which is what lets a balance be read across every version of a token at once. The Tokens API integration now has its own page in the developer docs, covering the single environment variable that turns the rung on, where it sits in the cascade and why, and the tests that pin the two behaviours easiest to break by accident: the rung is skipped before any request goes out when the key is absent, and a rate-limit answer reaches the circuit breaker instead of being swallowed inside the client.</description>
 		</item>
 		<item>
+			<title>Add funds can now fund a SOL-spending wallet with SOL</title>
+			<link>https://three.ws/wallet</link>
+			<guid isPermaLink="false">2026-08-11:Add funds can now fund a SOL-spending wallet with SOL</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Add funds overlay could only ever buy USDC, because the onramp link endpoint had the asset hardcoded. A wallet that pays in native SOL ended up funded with a token it cannot spend. The onramp now takes the asset (USDC or SOL, both settling on Solana), maps each to its own Coinbase Pay ticker and fallback buy page, and the overlay switches its copy, the asset it buys, and the balance it polls together, so a wallet can no longer be funded with the wrong asset.</description>
+		</item>
+		<item>
 			<title>An agent's on-chain profile loads without console errors</title>
 			<link>https://three.ws/discover</link>
 			<guid isPermaLink="false">2026-08-11:An agent's on-chain profile loads without console errors</guid>
@@ -871,6 +919,14 @@
 			<description>Your agent can now carry a token plan: the name, ticker, story, artwork, pairing, buyback share and dev buy of the coin it is going to become, saved on the agent itself instead of typed into a form and thrown away. The plan shows up on the agent's profile, so visitors can see the coin is coming before it exists, and it tells you what is still missing and what the launch will cost in SOL. There is also a rehearsal: one button builds the real launch transaction from your saved plan and asks Solana to run it on devnet without broadcasting anything, so you find out whether it would work before a single lamport moves. Saving and rehearsing cost nothing and mint nothing; launching stays a separate, deliberate step. Coins launched from your own wallet also now appear in the public launch feed and in your agent's launch history, which they previously did not.</description>
 		</item>
 		<item>
+			<title>Disconnecting X now deletes the memories it seeded</title>
+			<link>https://three.ws/docs/x-memory-seeding</link>
+			<guid isPermaLink="false">2026-08-11:Disconnecting X now deletes the memories it seeded</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Unlinking your X account used to leave the distilled posts sitting on the agent, which made the consent screen a lie. Disconnect now revokes every seeding grant the link authorized, deletes the memories those grants produced, and reports both counts back. The Farcaster seeding client also loads its vendor SDK lazily, so the keyless hub lane starts even where that package is missing.</description>
+		</item>
+		<item>
 			<title>Embedded agents render on other people's sites again</title>
 			<link>https://three.ws/embed/v1/preview</link>
 			<guid isPermaLink="false">2026-08-11:Embedded agents render on other people's sites again</guid>
@@ -901,6 +957,14 @@
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Game-Ready export offers FBX alongside GLB, and the mesh tools list USDZ for AR viewers, but both formats failed every single time. FBX was the stranger of the two: the converter wrote a perfectly good file, and then Blender crashed while shutting itself down, so the service read the crash as a failed export and threw the finished file away. USDZ had never been connected to anything that could write one. FBX now reports what actually happened instead of the shutdown crash, and USDZ is written properly with its texture packed inside, so it opens in AR Quick Look and Scene Viewer. Converting a rigged model to FBX still keeps its skeleton, skin weights, and blendshapes.</description>
+		</item>
+		<item>
+			<title>Forge stops promising a rig it cannot deliver</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-11:Forge stops promising a rig it cannot deliver</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When no rig worker is configured, the Forge still reported rerig as supported, so every rerig submit failed against a service with no rig endpoint and the reconstruction silently came back unrigged. Rerig support is now resolved from the rig worker's own address alone, so it is honestly unsupported when that worker is absent and the finalize step skips the rig chain cleanly. Rig failures also carry the worker's real error taxonomy, so the status endpoint can tell you what went wrong instead of an opaque id.</description>
 		</item>
 		<item>
 			<title>Garment generation no longer runs out of memory mid-job</title>
@@ -989,6 +1053,14 @@
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Our own Hunyuan3D image-to-3D workers answer web requests within seconds of starting, then spend several minutes loading multi-gigabyte model weights in the background. The platform checked only whether a worker answered at all, so a worker that had answered but then failed to load its model looked exactly as healthy as a working one: the forge status page showed it green and generations kept being sent to it. Both the status page and the routing that picks a backend now read the worker's real readiness, so a worker that cannot generate is reported as down and skipped, and one that is still warming up is marked as such instead of promising a fast turnaround it cannot deliver.</description>
+		</item>
+		<item>
+			<title>The AgenC SDK now exports the AgenCError its README promises</title>
+			<link>https://three.ws/docs/agenc</link>
+			<guid isPermaLink="false">2026-08-11:The AgenC SDK now exports the AgenCError its README promises</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>The package README documents rejections as a typed AgenCError with a .code, but the SDK only exported the class under another name, so the documented catch never matched anything. The same class is now exported under both names as an alias, in the runtime and in the TypeScript definitions, and the test suite asserts a thrown error is an instance of each. Code written from the README now works as written.</description>
 		</item>
 		<item>
 			<title>The agent economy dashboard now reads clearly while it loads, when it breaks, and on a phone</title>
@@ -1087,12 +1159,28 @@
 			<description>Flow drew each wallet's avatar into its canvas in a mode that asks the image host for extra permissions. Those same avatars appear as ordinary images elsewhere on three.ws, and a browser will not reuse a picture it already has when the second request asks for more, so any avatar you had already seen came back blank on the map. The map no longer asks for permissions it never needed.</description>
 		</item>
 		<item>
+			<title>The notification tray no longer overlaps the header on narrow screens</title>
+			<link>https://three.ws/notifications</link>
+			<guid isPermaLink="false">2026-08-11:The notification tray no longer overlaps the header on narrow screens</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On narrow widths the notification tray could open on top of the page header, covering the navigation it hangs from. The tray now keeps below the header at every width, across every page that carries it.</description>
+		</item>
+		<item>
 			<title>The paid MCP server's docs now list all 25 tools it actually ships</title>
 			<link>https://three.ws/mcp-tools</link>
 			<guid isPermaLink="false">2026-08-11:The paid MCP server's docs now list all 25 tools it actually ships</guid>
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>@three-ws/mcp-server is the package a Claude Desktop, Claude Code or Cursor user installs to get three.ws tools inside their assistant. It registers 25 tools, but its README only described 19: one-call text-to-rigged-avatar generation, conversational model refinement, material restyling, the free premium vanity-address browser, and the two agent-hiring tools were installed and callable while being invisible to anyone reading the docs. All six now have a documented row with their real price, what they return, and how they chain with the rest, and the free-to-start list is corrected from four tools to five. A new test connects a real MCP client to the server and checks the tool list, the version it advertises, and the hire receipt card it renders, then fails the build if a future tool ships without a documented row.</description>
+		</item>
+		<item>
+			<title>The per-counterparty spending cap now binds capability-authorized spends too</title>
+			<link>https://three.ws/docs/agent-wallet-api</link>
+			<guid isPermaLink="false">2026-08-11:The per-counterparty spending cap now binds capability-authorized spends too</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>A capability-authorized spend takes its own reserve path, and the per-counterparty ceiling was only checked on the ordinary one, so a spend authorized through a capability simply did not have that cap. The counterparty ceiling is now part of the same single check-and-reserve statement on both paths, and a rejection names which cap caught it, so an owner is no longer told to wait out a daily window they never hit when the real cause is a concentrated payee.</description>
 		</item>
 		<item>
 			<title>The premium vanity address shelf restocks itself without redoing work it already finished</title>
@@ -1109,6 +1197,14 @@
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Ask the pump.fun MCP server for a token's details and it reported no name, no symbol, and no image link for essentially every coin launched recently, including $THREE. The reason: pump.fun now mints Token-2022 tokens, which carry their name and symbol inside the mint itself rather than in the separate metadata account the server was reading. It now reads both places, so a request for a current token returns its actual name, symbol, and metadata link alongside supply and decimals. Older tokens are unaffected.</description>
+		</item>
+		<item>
+			<title>The repository guards reference now covers every local guard</title>
+			<link>https://three.ws/docs/guards</link>
+			<guid isPermaLink="false">2026-08-11:The repository guards reference now covers every local guard</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>With no CI on this repository, every protection runs locally, and the guards reference page now names each local guard, what it protects, and at which stage it runs. The page is itself guarded: an audit script checks it against the guard registry on every gate run, so the list and its stage column cannot quietly go stale.</description>
 		</item>
 		<item>
 			<title>The selfie scanner now grades every shot before you commit to a build</title>
@@ -1133,6 +1229,14 @@
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The Avatar Artifact page is meant to be dropped into other sites, so it now carries its own embed snippet: one button copies a ready-made iframe tag, and if a browser refuses clipboard access (which it does inside a cross-origin frame) the snippet appears in a field you can copy by hand. The 3D runtime now ships with the site instead of being pulled from an outside CDN, so a page that embeds the viewer no longer loads a third-party script the host never agreed to. Every way the viewer can fail now paints a real message with a working Retry, including a browser with no WebGL and a runtime that never arrives at all, and the message clears itself if the scene shows up late. The page also stopped hiding one of its own links on phones, keeps its controls clear of the language switcher and the search chip, respects a reduced-motion preference, and pauses rendering while its tab is hidden so an embedded viewer does not burn a host page GPU in the background.</description>
+		</item>
+		<item>
+			<title>The status page shows the agent index's freshness as numbers, not prose</title>
+			<link>https://three.ws/status</link>
+			<guid isPermaLink="false">2026-08-11:The status page shows the agent index's freshness as numbers, not prose</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The agent-index subsystem on the status page now publishes structured freshness metrics as pills beside its sentence: the median Solana indexing lag, how many Solana agents are indexed, the EVM indexing lag, and the total events indexed. A reader can now see at a glance how far behind the on-chain index is, instead of parsing a figure buried in the detail line.</description>
 		</item>
 		<item>
 			<title>The walking avatar SDK now types the cursor-tracking option it ships</title>
@@ -4005,6 +4109,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The documentation sidebar is now built from a shared list of pages that both the classic docs and the new 3D Docs World read, which means it arrives over the network and can occasionally fail. When it does, the contents column used to just sit there empty, which reads like the product has no documentation rather than like one request failed. It now says what happened, notes that the page you are reading is unaffected (it is), and offers a Retry button. Searching the sidebar for something with no matches also says so and offers to clear the search, instead of leaving you looking at a blank space. And opening a stale or mistyped /docs/world link no longer greets you with a load error over the 3D scene; it simply drops you into the world.</description>
+		</item>
+		<item>
+			<title>The docs world recovers from 3D failures instead of stranding you</title>
+			<link>https://three.ws/docs/docs-world</link>
+			<guid isPermaLink="false">2026-07-30:The docs world recovers from 3D failures instead of stranding you</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three failure paths in the walkable documentation world are now recoverable. When the 3D scene failed to start, the fallback panel focused its retry button while the panel was still hidden, so the recovery action was unreachable without hunting for it; the panel now reveals first, then focuses. Both catch-all error handlers showed a bare fallback with no way back, even though the usual cause (a browser tab that has run out of WebGL contexts) is cleared by a reload; both now explain what happened and offer the reload. And a character whose idle animation failed to load was frozen in a T-pose forever; the player now only records a clip as current once it actually plays, and relaxes undriven arms so unmapped rigs rest naturally.</description>
 		</item>
 		<item>
 			<title>The economy's self-refuel can no longer mistake an unreadable balance for an empty wallet</title>

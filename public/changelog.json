@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T08:52:25.580Z",
+	"generated_at": "2026-08-13T16:20:35.820Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -55,6 +55,16 @@
 			"title": "Adding your agent to a LobeHub chat no longer loses its name when one lookup stumbles",
 			"summary": "Before a chat host renders your agent, it asks three.ws to confirm the agent exists and to hand back the sites you allow it to be embedded on. Those are two separate reads, and if the second one hiccuped the whole answer was thrown away: the host was told the agent could not be confirmed and was given no name, even though the first read had just found it. The confirmation and the name now survive a stumble on the embed settings. Separately, a misspelled address in a host's setup returned an explanation the browser refused to show, so integrators saw an unexplained network failure instead of the message naming their typo. That message now reaches them.",
 			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "An API key can no longer be minted with zero scopes",
+			"summary": "Sending an explicitly empty scope list to the key-minting endpoint used to succeed and issue a credential that could never pass a permission check: the key looked fine, then failed every call with nothing explaining why. The dashboard already refused an empty selection; the raw API now enforces the same rule for every other client and answers with a clear error instead of minting a dead key. Repeated scopes in one request are also deduplicated, so the grants shown on a key are listed once each.",
+			"link": "/docs/api-reference",
 			"tags": [
 				"fix"
 			]
@@ -220,6 +230,16 @@
 		{
 			"date": "2026-08-13",
 			"type": "update",
+			"title": "Launchpad paid pages now describe themselves correctly to paying agents",
+			"summary": "When an agent reaches a paid Launchpad page (a pay-per-question concierge or a gated showroom unlock) without payment, the 402 challenge it receives now carries that page type's own bazaar discovery document: the exact field to send, the shape of the answer that comes back, and a worked example. Before, the challenge fell back to a generic entry that told crawlers to send a model-validation body, so an agent that indexed a concierge page from discovery would never send the one field it actually needs. An agent can now go from discovery to a settled paid call using nothing but the challenge itself.",
+			"link": "/launchpad",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
 			"title": "One bad request can no longer use up the whole hourly AI-governance budget",
 			"summary": "The Trust Layer endpoint that screens messages and proposed money moves through IBM Granite Guardian has an hourly platform-wide ceiling on how much model work it will pay for. That ceiling was being charged on every incoming request, including ones that were rejected before any model ran: a malformed body, a missing field, or a request arriving while the service is not configured. A single misbehaving client sending junk could therefore exhaust the shared budget and leave everyone else rate-limited for the rest of the hour without a single real assessment happening. The ceiling is now charged only when an assessment actually runs. Two error replies were also wrong in a way that misled callers: sending the wrong content type or a body over the size limit both came back as generic malformed JSON, so the fix looked like editing your payload when it was really a header or a smaller body. They now return the correct unsupported-media-type and payload-too-large codes, and the endpoint rejects a non-object body with a message that says so.",
 			"link": "/docs/okx-marketplace",
@@ -274,6 +294,17 @@
 		{
 			"date": "2026-08-13",
 			"type": "update",
+			"title": "Rate ceilings on stud listings and inscription status polls",
+			"summary": "Two more endpoints joined the platform rate limiter. Listing or unlisting an agent on the stud market is now capped, so a scripted flood cannot churn the market ordering, and the anonymous Bitcoin inscription status poll is capped at a level that still lets a long inscription wait clear across a couple of open tabs. Both ceilings are deliberately non-critical: if the limiter's backing store is ever down, an owner can still unlist their agent and a paying user's status screen keeps working.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
 			"title": "Retro computing prompts are no longer refused by the 3D Studio safety gate",
 			"summary": "The free 3D Studio screens every prompt for age-inappropriate content before it starts generating. That screen matched the bare abbreviation \"cp\" as a whole word, so ordinary modeling prompts like \"a CP/M retro computer terminal\" or \"a CP violation physics diagram\" were refused, and refused under the harshest category the screen has. The abbreviation is gone and the spelled-out terms it stood for are now matched directly, so those prompts generate normally while the genuinely harmful ones are still blocked before any work starts.",
 			"link": null,
@@ -301,6 +332,16 @@
 				"fix",
 				"docs",
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Screen caster: stopping your caster no longer posts a phantom error",
+			"summary": "The self-hosted agent-screen-caster service (the one that gives your agent a live, watchable browser screen) used to push a scary \"Task error\" line into your agent's public activity log every time you stopped it with Ctrl-C, because the shutdown looked like a crash from the inside. Stopping the caster is now recognised as a clean shutdown and leaves the log untouched, so watchers only ever see real errors. The whole path was re-verified end to end against production: key minting from the dashboard flow, live JPEG frames on the watch stream, and the retry policy that keeps a long-running caster alive through rate limits and server blips.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -495,6 +536,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "The free inference-receipt verifier is now in the public x402 catalog",
+			"summary": "/api/x402/inference-verify audits a metered-inference receipt from a paid llm-proxy call: it re-checks the issuer signature, the node's response signature, the prompt and response hashes against the raw text you supply, whether the settlement transaction actually confirmed on-chain, and whether the issuer is one of the platform's published signers. It is free and keyless, but it was missing from docs/x402-endpoints.md, so buyers and node operators had no way to find it. It now has a row in the free read surfaces table alongside the other verifier tools.",
+			"link": "/docs/x402-endpoints",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -1073,6 +1124,16 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "Add funds can now fund a SOL-spending wallet with SOL",
+			"summary": "The Add funds overlay could only ever buy USDC, because the onramp link endpoint had the asset hardcoded. A wallet that pays in native SOL ended up funded with a token it cannot spend. The onramp now takes the asset (USDC or SOL, both settling on Solana), maps each to its own Coinbase Pay ticker and fallback buy page, and the overlay switches its copy, the asset it buys, and the balance it polls together, so a wallet can no longer be funded with the wrong asset.",
+			"link": "/wallet",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "An agent's on-chain profile loads without console errors",
 			"summary": "Opening an on-chain agent tried to read its registration file straight from whatever host published it. Most of those hosts do not allow that, so the browser reported two errors before three.ws quietly fetched the same file itself one step later. That fetch is now the first step for anything hosted elsewhere, with the direct read kept as the backup.",
 			"link": "/discover",
@@ -1156,6 +1217,17 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "Disconnecting X now deletes the memories it seeded",
+			"summary": "Unlinking your X account used to leave the distilled posts sitting on the agent, which made the consent screen a lie. Disconnect now revokes every seeding grant the link authorized, deletes the memories those grants produced, and reports both counts back. The Farcaster seeding client also loads its vendor SDK lazily, so the keyless hub lane starts even where that package is missing.",
+			"link": "/docs/x-memory-seeding",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "Embedded agents render on other people's sites again",
 			"summary": "The one-line embed script loads a 3D viewer from a CDN, but never told it how to read the compression every three.ws avatar is saved with, so an embedded agent failed to appear on the host page. The embed now sets that up itself before the viewer starts, which is what pages on three.ws already did.",
 			"link": "/embed/v1/preview",
@@ -1191,6 +1263,16 @@
 			"title": "Exporting a 3D model as FBX or USDZ works again",
 			"summary": "Game-Ready export offers FBX alongside GLB, and the mesh tools list USDZ for AR viewers, but both formats failed every single time. FBX was the stranger of the two: the converter wrote a perfectly good file, and then Blender crashed while shutting itself down, so the service read the crash as a failed export and threw the finished file away. USDZ had never been connected to anything that could write one. FBX now reports what actually happened instead of the shutdown crash, and USDZ is written properly with its texture packed inside, so it opens in AR Quick Look and Scene Viewer. Converting a rigged model to FBX still keeps its skeleton, skin weights, and blendshapes.",
 			"link": "/create",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "Forge stops promising a rig it cannot deliver",
+			"summary": "When no rig worker is configured, the Forge still reported rerig as supported, so every rerig submit failed against a service with no rig endpoint and the reconstruction silently came back unrigged. Rerig support is now resolved from the rig worker's own address alone, so it is honestly unsupported when that worker is absent and the finalize step skips the rig chain cleanly. Rig failures also carry the worker's real error taxonomy, so the status endpoint can tell you what went wrong instead of an opaque id.",
+			"link": "/forge",
 			"tags": [
 				"fix"
 			]
@@ -1312,6 +1394,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The AgenC SDK now exports the AgenCError its README promises",
+			"summary": "The package README documents rejections as a typed AgenCError with a .code, but the SDK only exported the class under another name, so the documented catch never matched anything. The same class is now exported under both names as an alias, in the runtime and in the TypeScript definitions, and the test suite asserts a thrown error is an instance of each. Code written from the README now works as written.",
+			"link": "/docs/agenc",
+			"tags": [
+				"sdk",
+				"fix"
 			]
 		},
 		{
@@ -1449,12 +1542,32 @@
 		{
 			"date": "2026-08-11",
 			"type": "update",
+			"title": "The notification tray no longer overlaps the header on narrow screens",
+			"summary": "On narrow widths the notification tray could open on top of the page header, covering the navigation it hangs from. The tray now keeps below the header at every width, across every page that carries it.",
+			"link": "/notifications",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
 			"title": "The paid MCP server's docs now list all 25 tools it actually ships",
 			"summary": "@three-ws/mcp-server is the package a Claude Desktop, Claude Code or Cursor user installs to get three.ws tools inside their assistant. It registers 25 tools, but its README only described 19: one-call text-to-rigged-avatar generation, conversational model refinement, material restyling, the free premium vanity-address browser, and the two agent-hiring tools were installed and callable while being invisible to anyone reading the docs. All six now have a documented row with their real price, what they return, and how they chain with the rest, and the free-to-start list is corrected from four tools to five. A new test connects a real MCP client to the server and checks the tool list, the version it advertises, and the hire receipt card it renders, then fails the build if a future tool ships without a documented row.",
 			"link": "/mcp-tools",
 			"tags": [
 				"docs",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The per-counterparty spending cap now binds capability-authorized spends too",
+			"summary": "A capability-authorized spend takes its own reserve path, and the per-counterparty ceiling was only checked on the ordinary one, so a spend authorized through a capability simply did not have that cap. The counterparty ceiling is now part of the same single check-and-reserve statement on both paths, and a rejection names which cap caught it, so an owner is no longer told to wait out a daily window they never hit when the real cause is a concentrated payee.",
+			"link": "/docs/agent-wallet-api",
+			"tags": [
+				"security"
 			]
 		},
 		{
@@ -1476,6 +1589,16 @@
 			"link": "/docs/mcp",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The repository guards reference now covers every local guard",
+			"summary": "With no CI on this repository, every protection runs locally, and the guards reference page now names each local guard, what it protects, and at which stage it runs. The page is itself guarded: an audit script checks it against the guard registry on every gate run, so the list and its stage column cannot quietly go stale.",
+			"link": "/docs/guards",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -1509,6 +1632,16 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-11",
+			"type": "update",
+			"title": "The status page shows the agent index's freshness as numbers, not prose",
+			"summary": "The agent-index subsystem on the status page now publishes structured freshness metrics as pills beside its sentence: the median Solana indexing lag, how many Solana agents are indexed, the EVM indexing lag, and the total events indexed. A reader can now see at a glance how far behind the on-chain index is, instead of parsing a figure buried in the detail line.",
+			"link": "/status",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -5275,6 +5408,16 @@
 			"tags": [
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "The docs world recovers from 3D failures instead of stranding you",
+			"summary": "Three failure paths in the walkable documentation world are now recoverable. When the 3D scene failed to start, the fallback panel focused its retry button while the panel was still hidden, so the recovery action was unreachable without hunting for it; the panel now reveals first, then focuses. Both catch-all error handlers showed a bare fallback with no way back, even though the usual cause (a browser tab that has run out of WebGL contexts) is cleared by a reload; both now explain what happened and offer the reload. And a character whose idle animation failed to load was frozen in a T-pose forever; the player now only records a clip as current once it actually plays, and relaxes undriven arms so unmapped rigs rest naturally.",
+			"link": "/docs/docs-world",
+			"tags": [
+				"fix"
 			]
 		},
 		{
