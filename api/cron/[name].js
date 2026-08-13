@@ -397,32 +397,58 @@ async function erc8004CrawlChain(chain) {
 	});
 	const toBlock = Math.min(fromBlock + chunkSize - 1, latestBlock);
 
-	// Topic OR-set, not the single Registered topic: an agent's row used to
-	// freeze at its registration block because ownership transfers, URI updates
-	// and metadata writes were never requested from the RPC at all. See the
-	// coverage census in api/_lib/erc8004-registry-events.js.
-	const logs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
-		{
-			address: chain.registry,
-			topics: [REGISTRY_TOPICS],
-			fromBlock: '0x' + fromBlock.toString(16),
-			toBlock: '0x' + toBlock.toString(16),
-		},
-	]);
+	const range = {
+		fromBlock: '0x' + fromBlock.toString(16),
+		toBlock: '0x' + toBlock.toString(16),
+	};
 
-	// The reputation registry lives at its own CREATE2 address on the same
-	// network class; scan the identical block range so an agent's trust signals
-	// (feedback, revocations, responses) reach the index alongside its identity
-	// history. A chain with no reputation deployment yields an empty log list,
-	// not an error.
-	const reputationLogs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
-		{
-			address: reputationRegistryFor(chain.testnet),
-			topics: [REPUTATION_TOPICS],
-			fromBlock: '0x' + fromBlock.toString(16),
-			toBlock: '0x' + toBlock.toString(16),
-		},
-	]);
+	let logs;
+	let reputationLogs;
+	try {
+		// Topic OR-set, not the single Registered topic: an agent's row used to
+		// freeze at its registration block because ownership transfers, URI updates
+		// and metadata writes were never requested from the RPC at all. See the
+		// coverage census in api/_lib/erc8004-registry-events.js.
+		logs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
+			{ address: chain.registry, topics: [REGISTRY_TOPICS], ...range },
+		]);
+
+		// The reputation registry lives at its own CREATE2 address on the same
+		// network class; scan the identical block range so an agent's trust signals
+		// (feedback, revocations, responses) reach the index alongside its identity
+		// history. A chain with no reputation deployment yields an empty log list,
+		// not an error.
+		reputationLogs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
+			{ address: reputationRegistryFor(chain.testnet), topics: [REPUTATION_TOPICS], ...range },
+		]);
+	} catch (err) {
+		// A range the provider will not serve is the growth loop finding this
+		// chain's real ceiling, not an outage. Halve the window, leave the cursor
+		// where it is, and let the next tick retry the same blocks smaller. Any
+		// other RPC failure is a genuine error and propagates.
+		if (!RANGE_REJECTED.test(String(err?.message || err))) throw err;
+		const reduced = backoffChunkSize(chunkSize);
+		await sql`
+			INSERT INTO erc8004_crawl_cursor (chain_id, last_block, updated_at, head_block, blocks_behind, chunk_size, last_error)
+			VALUES (${chain.id}, ${Math.max(0, fromBlock - 1)}, now(), ${latestBlock},
+			        ${Math.max(0, latestBlock - fromBlock + 1)}, ${reduced}, ${'range rejected at ' + chunkSize + ' blocks'})
+			ON CONFLICT (chain_id) DO UPDATE SET
+				updated_at    = now(),
+				head_block    = excluded.head_block,
+				blocks_behind = excluded.blocks_behind,
+				chunk_size    = excluded.chunk_size,
+				last_error    = excluded.last_error
+		`;
+		return {
+			inserted: 0,
+			scanned: 0,
+			lastBlock: fromBlock - 1,
+			fromBlock,
+			blocksBehind: Math.max(0, latestBlock - fromBlock + 1),
+			chunkSize: reduced,
+			rangeRejected: true,
+		};
+	}
 
 	// Fetch block timestamps for any blocks that produced events.
 	const blockTimes = {};
@@ -528,12 +554,20 @@ async function erc8004CrawlChain(chain) {
 	const recorded = events.length ? await recordEvents(events) : { inserted: 0, rejected: 0 };
 
 	// Always advance cursor to toBlock so the next run continues from here.
+	// blocks_behind is the honest freshness signal: updated_at only says the cron
+	// ran, and a chain producing blocks faster than the crawl consumes them keeps
+	// a fresh updated_at forever while falling further behind every tick.
+	const blocksBehind = Math.max(0, latestBlock - toBlock);
 	await sql`
-		INSERT INTO erc8004_crawl_cursor (chain_id, last_block, updated_at)
-		VALUES (${chain.id}, ${toBlock}, now())
+		INSERT INTO erc8004_crawl_cursor (chain_id, last_block, updated_at, head_block, blocks_behind, chunk_size, last_error)
+		VALUES (${chain.id}, ${toBlock}, now(), ${latestBlock}, ${blocksBehind}, ${chunkSize}, null)
 		ON CONFLICT (chain_id) DO UPDATE SET
-			last_block = GREATEST(erc8004_crawl_cursor.last_block, ${toBlock}),
-			updated_at = now()
+			last_block    = GREATEST(erc8004_crawl_cursor.last_block, ${toBlock}),
+			updated_at    = now(),
+			head_block    = excluded.head_block,
+			blocks_behind = excluded.blocks_behind,
+			chunk_size    = excluded.chunk_size,
+			last_error    = null
 	`;
 
 	return {
@@ -544,7 +578,29 @@ async function erc8004CrawlChain(chain) {
 		logs: logs.length,
 		events: recorded.inserted,
 		byClass,
+		headBlock: latestBlock,
+		blocksBehind,
+		chunkSize,
 	};
+}
+
+/**
+ * Stamp a caught-up chain's head so the lag monitor can tell "0 blocks behind"
+ * apart from "never measured". A chain with nothing to scan still reports.
+ * @param {number} chainId
+ * @param {number} headBlock
+ * @param {number} lastBlock
+ */
+async function erc8004RecordHead(chainId, headBlock, lastBlock) {
+	await sql`
+		INSERT INTO erc8004_crawl_cursor (chain_id, last_block, updated_at, head_block, blocks_behind, last_error)
+		VALUES (${chainId}, ${lastBlock}, now(), ${headBlock}, 0, null)
+		ON CONFLICT (chain_id) DO UPDATE SET
+			updated_at    = now(),
+			head_block    = excluded.head_block,
+			blocks_behind = 0,
+			last_error    = null
+	`;
 }
 
 // Per-class payload for the event index. Keeps the raw on-chain detail that the

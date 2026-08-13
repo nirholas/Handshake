@@ -24,6 +24,7 @@
 // the classification is unit-testable against captured mainnet transactions
 // without an RPC round trip.
 
+import { PublicKey } from '@solana/web3.js';
 import { sql } from './db.js';
 import { solanaConnection } from './solana/connection.js';
 import { RPC } from './solana-attestations.js';
@@ -187,19 +188,89 @@ export function classifyAgentTx({ agentRef, signature, slot, blockTime, network,
 }
 
 /**
- * Best-effort mint for a SetAgentTokenV1 transaction: the token balances the
- * transaction touched name the mint directly, which beats guessing from the
- * account list. Returns null when the tx moved no token balance.
- * @param {object} tx
- * @param {string} agentRef
+ * Wrapped SOL. It is the QUOTE side of every agent-token launch that funds a
+ * pool, never the agent's own token, and it is the first mint the naive
+ * "any mint this tx touched" reading finds. See agentTokenMintOf().
+ */
+export const WRAPPED_SOL_MINT = 'So11111111111111111111111111111111111111112';
+
+// spl-token instruction types that can only name a mint being created or
+// finalized, in the order of how strongly each identifies THE launched token.
+// setAuthority qualifies only for the two mint-scoped authority types: renouncing
+// mint/freeze authority is the last step of a launch, and a launchpad emits it
+// for the new token and for nothing else.
+const MINT_AUTHORITY_TYPES = new Set(['mintTokens', 'freezeAccount']);
+
+/**
+ * The mint a SetAgentTokenV1 transaction bound to the agent.
+ *
+ * Reading `meta.*TokenBalances` alone is wrong, and measurably so: on mainnet
+ * transaction 5WtcSn4jJubQnEu71nnjKZJZawtgGNeVayiDgG4QsDsCZreJN2W3MQiJpPWszCFcanFRDMVfojNwrPC7SBumRqw8
+ * the only token balance is wrapped SOL, while the token actually launched and
+ * bound to agent ANeykUs3hCNb9B9hVx4sQg7D8hD6MzAyRPJ2M1ays18 is
+ * X8k6vcAvvmkavecwAGk7U4JVoKdntDSNfBZsq6KPLEX, visible only in the inner
+ * spl-token instructions. Every token_launch event the index recorded that way
+ * named the quote asset instead of the agent's coin.
+ *
+ * So prefer STRUCTURAL evidence, which a launch cannot fake: a mint this
+ * transaction initialized, then renounced authority over, then minted supply
+ * from. Token balances remain the last resort for a binding that touched an
+ * already-existing mint, with wrapped SOL and the agent account itself excluded.
+ *
+ * Requires a PARSED transaction (getParsedTransactions); a raw one exposes no
+ * instruction types and falls through to the balance heuristic.
+ *
+ * @param {object} tx parsed confirmed transaction
+ * @param {string} agentRef the agent account, never its own token
  * @returns {string|null}
  */
 export function agentTokenMintOf(tx, agentRef) {
-	const balances = [...(tx?.meta?.postTokenBalances || []), ...(tx?.meta?.preTokenBalances || [])];
-	for (const b of balances) {
-		if (b?.mint && b.mint !== agentRef) return b.mint;
+	const byPriority = [new Set(), new Set(), new Set()];
+
+	for (const ix of parsedInstructionsOf(tx)) {
+		const info = ix?.parsed?.info;
+		const mint = typeof info?.mint === 'string' ? info.mint : null;
+		if (!mint || mint === WRAPPED_SOL_MINT || mint === agentRef) continue;
+		switch (ix.parsed.type) {
+			case 'initializeMint':
+			case 'initializeMint2':
+				byPriority[0].add(mint);
+				break;
+			case 'setAuthority':
+				if (MINT_AUTHORITY_TYPES.has(info.authorityType)) byPriority[1].add(mint);
+				break;
+			case 'mintTo':
+			case 'mintToChecked':
+				byPriority[2].add(mint);
+				break;
+			default:
+				break;
+		}
+	}
+
+	for (const tier of byPriority) {
+		// A single unambiguous mint at this tier is the answer. Two different
+		// mints initialized in one transaction (a launch plus an LP token, say)
+		// is not something to guess at, so fall through to the next signal.
+		if (tier.size === 1) return [...tier][0];
+	}
+
+	for (const b of [...(tx?.meta?.postTokenBalances || []), ...(tx?.meta?.preTokenBalances || [])]) {
+		if (b?.mint && b.mint !== agentRef && b.mint !== WRAPPED_SOL_MINT) return b.mint;
 	}
 	return null;
+}
+
+/**
+ * Every parsed instruction in a transaction, top level and inner (a launchpad
+ * CPIs the token program, so the mint lives in the inner set).
+ * @param {object} tx
+ * @returns {object[]}
+ */
+export function parsedInstructionsOf(tx) {
+	const top = tx?.transaction?.message?.instructions || [];
+	const inner = (tx?.meta?.innerInstructions || []).flatMap((g) => g?.instructions || []);
+	return [...top, ...inner].filter((ix) => ix && typeof ix.parsed?.type === 'string');
 }
 
 /**
@@ -228,6 +299,25 @@ export function transferRecipientOf(tx, keys) {
 const CHAIN = 'solana';
 
 /**
+ * Agents swept per solana-attestations-crawl tick, and the cron's period.
+ *
+ * These two numbers and the size of the directory decide the index's floor lag:
+ * a queue drained oldest-first has a full-sweep cycle of
+ * `agents / SOLANA_SWEEP_BATCH * SOLANA_SWEEP_PERIOD_MIN` minutes and a median
+ * agent lag of half that. At 40 agents per tick the 1,576-agent directory
+ * measured on 2026-08-13 cycled in 6.6 hours for a 200-minute median, which is
+ * exactly the median the status surface reported: the sweep was not slow, it was
+ * too small. The lag monitor now derives the cycle from these constants, so the
+ * next time the directory outgrows the batch it is visible as a number rather
+ * than as an unexplained median.
+ *
+ * Raising this costs one getSignaturesForAddress per agent per tick; the cron's
+ * wall-clock budget, not this constant, is the real ceiling.
+ */
+export const SOLANA_SWEEP_BATCH = 120;
+export const SOLANA_SWEEP_PERIOD_MIN = 10;
+
+/**
  * Crawl one Solana agent account's recent signatures into the event index.
  * Resumes from agent_event_cursor, so a steady-state run fetches only what
  * landed since the last pass.
@@ -239,13 +329,29 @@ export async function crawlAgentEvents({ agentRef, network = 'mainnet', limit = 
 	const net = network === 'devnet' ? 'devnet' : 'mainnet';
 	const conn = solanaConnection({ url: RPC[net], commitment: 'confirmed' });
 
+	// getSignaturesForAddress takes a PublicKey and calls .toBase58() on it, so
+	// handing it the base58 STRING we carry everywhere else throws
+	// `TypeError: address.toBase58 is not a function` before a single RPC round
+	// trip. That is not a hypothetical: it is why the Solana leg of the index
+	// held 0 events on 2026-08-13 while its 1,576 per-agent cursors all showed
+	// as freshly crawled, since the error path stamps the cursor too.
+	let address;
+	try {
+		address = new PublicKey(agentRef);
+	} catch {
+		// A directory row whose ref is not an account key can never be crawled.
+		// Record it against the cursor instead of throwing every tick forever.
+		await markAgentEventError({ agentRef, network: net, error: 'agent_ref is not a Solana account key' });
+		return { scanned: 0, inserted: 0, rejected: 0 };
+	}
+
 	const [cursor] = await sql`
 		SELECT last_tx FROM agent_event_cursor
 		WHERE chain = ${CHAIN} AND chain_id = 0 AND agent_ref = ${agentRef}
 		LIMIT 1
 	`;
 
-	const sigs = await conn.getSignaturesForAddress(agentRef, {
+	const sigs = await conn.getSignaturesForAddress(address, {
 		limit,
 		until: cursor?.last_tx || undefined,
 	});
@@ -256,8 +362,12 @@ export async function crawlAgentEvents({ agentRef, network = 'mainnet', limit = 
 	}
 
 	const ok = sigs.filter((s) => !s.err);
+	// Parsed, not raw: agentTokenMintOf() reads the inner spl-token instructions
+	// to tell an agent's launched token from the wrapped SOL that funded it, and
+	// only the parsed encoding carries instruction types. accountKeysOf() and
+	// memoPayloadOf() already accept both shapes.
 	const txs = ok.length
-		? await conn.getTransactions(
+		? await conn.getParsedTransactions(
 				ok.map((s) => s.signature),
 				{ maxSupportedTransactionVersion: 0 },
 			)
