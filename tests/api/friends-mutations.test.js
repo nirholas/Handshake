@@ -1,4 +1,4 @@
-// POST /api/friends — the graph-mutation contract.
+// POST /api/friends: the graph-mutation contract.
 //
 // One endpoint fans out to six store actions, so the dispatch table and the
 // input guards in front of it are the whole security surface: an unknown action
@@ -86,7 +86,7 @@ async function post(payload) {
 	return { res, body };
 }
 
-// Every store call this suite could possibly reach — used to assert that a
+// Every store call this suite could possibly reach, used to assert that a
 // rejected request mutated nothing at all, not merely that one action was skipped.
 const mutators = () => [
 	store.sendRequest, store.acceptRequest, store.declineRequest,

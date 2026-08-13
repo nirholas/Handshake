@@ -246,7 +246,7 @@ describe('analyze — the element', () => {
 // <three-ws> rather than <agent-3d>, and it is what the gated-embed snippet in
 // api/embed/gate-create.js hands developers. The doctor accepted that loader
 // but knew only the canonical tag, so a working v1 embed came back "broken".
-describe('analyze — the v1 loader element aliases', () => {
+describe('analyze: the v1 loader element aliases', () => {
 	const V1_LOADER = 'https://three.ws/embed/v1.js';
 
 	function v1Observations(elementOverrides = {}) {
@@ -300,7 +300,7 @@ describe('analyze — the v1 loader element aliases', () => {
 // thread gets its page closed by the watchdog in collectFrom*. What comes back
 // then is "we could not look", and the report has to say exactly that instead of
 // claiming the developer's element is missing.
-describe('analyze — a page that could not be inspected', () => {
+describe('analyze: a page that could not be inspected', () => {
 	it('reports inconclusive rather than inventing a missing element', () => {
 		const report = analyze(
 			healthyObservations({ element: null, probeFailed: true, timedOut: true }),

@@ -1,4 +1,4 @@
-// /api/friends/search and /api/friends/presence-ticket — the two read-only
+// /api/friends/search and /api/friends/presence-ticket: the two read-only
 // friends endpoints.
 //
 // The search endpoint hands its term straight to an ILIKE wrapped in wildcards,
@@ -113,7 +113,7 @@ describe('GET /api/friends/presence-ticket', () => {
 		expect(res.statusCode).toBe(200);
 		expect(body.data).toEqual({ token: 'payload.sig', expiresIn: 600 });
 		// The ticket is bound to the resolved account, never to anything the
-		// client sent — that binding is the whole point of the endpoint.
+		// client sent; that binding is the whole point of the endpoint.
 		expect(signPresenceTicket).toHaveBeenCalledWith(ME);
 	});
 

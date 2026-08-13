@@ -1,4 +1,4 @@
-// api/mocap/clips.js + api/mocap/[id].js — the mocap clip store's HTTP surface.
+// api/mocap/clips.js + api/mocap/[id].js: the mocap clip store's HTTP surface.
 //
 // Covers the success path and the failure path of every method, plus the two
 // boundaries that used to be wrong: the `:idOrSlug` segment (the published

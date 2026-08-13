@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/kol-mcp</h1>
 
-<p align="center"><strong>Track one smart trader — a tracked KOL wallet's holdings, real on-chain P&L, and its trades on a given mint, from any AI agent.</strong></p>
+<p align="center"><strong>Track one smart trader: a tracked KOL wallet's holdings, real on-chain P&L, and its trades on a given mint, from any AI agent.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/kol-mcp"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/kol-mcp?logo=npm&color=cb3837"></a>
@@ -16,9 +16,9 @@
 
 ---
 
-> A [Model Context Protocol](https://modelcontextprotocol.io) server for the **per-wallet KOL deep dive**. Where [`@three-ws/intel-mcp`](https://www.npmjs.com/package/@three-ws/intel-mcp) ranks the whole tracked KOL set (`kol_leaderboard`) and shows everyone's trades on a mint (`kol_trades`), this server zooms in on **one** smart trader: pull their live portfolio card (holdings plus real on-chain P&L), then inspect their own buys/sells of a specific token — everything an agent needs to decide whether to copy or analyze them.
+> A [Model Context Protocol](https://modelcontextprotocol.io) server for the **per-wallet KOL deep dive**. Where [`@three-ws/intel-mcp`](https://www.npmjs.com/package/@three-ws/intel-mcp) ranks the whole tracked KOL set (`kol_leaderboard`) and shows everyone's trades on a mint (`kol_trades`), this server zooms in on **one** smart trader: pull their live portfolio card (holdings plus real on-chain P&L), then inspect their own buys/sells of a specific token: everything an agent needs to decide whether to copy or analyze them.
 
-Holdings come from the three.ws Birdeye proxy (the Birdeye key lives server-side); P&L is FIFO-computed from the wallet's own on-chain trades, and trade history comes from the three.ws Helius-backed KOL feed. All live, read-only — no API key, signer, or payment on the client. Point `THREE_WS_BASE` at a deployment and go.
+Holdings come from the three.ws Birdeye proxy (the Birdeye key lives server-side); P&L is FIFO-computed from the wallet's own on-chain trades, and trade history comes from the three.ws Helius-backed KOL feed. All live, read-only: no API key, signer, or payment on the client. Point `THREE_WS_BASE` at a deployment and go.
 
 ## Install
 
@@ -111,7 +111,7 @@ Both tools read live data: holdings, P&L and trade feeds move between calls, so 
 }
 ```
 
-`has_activity: false` on a portfolio (no holdings and no trades) means the proxy has no recorded history for that address yet — an honest "no data", not a failure. A **null** P&L field with `pnl_source: null` is the same kind of honesty at field level: three.ws has no trade history for that wallet in the window, so it reports nothing rather than a zero that would read as a flat record.
+`has_activity: false` on a portfolio (no holdings and no trades) means the proxy has no recorded history for that address yet: an honest "no data", not a failure. A **null** P&L field with `pnl_source: null` is the same kind of honesty at field level: three.ws has no trade history for that wallet in the window, so it reports nothing rather than a zero that would read as a flat record.
 
 ## Requirements
 

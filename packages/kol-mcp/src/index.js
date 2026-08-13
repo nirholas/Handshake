@@ -5,11 +5,11 @@
 // (kol_leaderboard) and shows everyone's trades on a mint (kol_trades), this
 // server is the per-wallet deep dive: one tracked trader's portfolio P&L and
 // their own trades on a given token, for copy/analysis decisions.
-//   • get_wallet_portfolio — a KOL wallet's holdings + real on-chain P&L card
+//   • get_wallet_portfolio: a KOL wallet's holdings + real on-chain P&L card
 //   • get_wallet_trades    — that wallet's recent trades on a given mint
 //
 // A thin wrapper over the PUBLIC three.ws KOL API. No keys, no signer, no
-// payment on the client — the Birdeye key that backs the holdings half lives
+// payment on the client; the Birdeye key that backs the holdings half lives
 // server-side on three.ws. Point THREE_WS_BASE at a deployment and go.
 //
 // Run standalone:

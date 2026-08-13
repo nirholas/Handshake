@@ -271,7 +271,7 @@ describe('studioX402Amount', () => {
 
 // An unpriced tool is served free, so a new GPU-backed tool that lands in the
 // catalog without a TOOL_PRICING entry silently gives away generation-grade
-// compute — the exact regression api/_mcp3d/pricing.js exists to prevent. These
+// compute, the exact regression api/_mcp3d/pricing.js exists to prevent. These
 // assertions force every catalog tool to be a deliberate paid-or-free decision.
 describe('studio pricing classification covers the whole catalog', () => {
 	const catalogNames = TOOL_CATALOG.map((t) => t.name);

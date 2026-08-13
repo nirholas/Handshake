@@ -1,19 +1,19 @@
 // friends-store: two places where a well-formed caller input reached Postgres
 // unchecked and the failure surfaced as the wrong thing entirely.
 //
-//   muteUser()  — user_mutes.muted_id is a foreign key to users(id). Muting an
+//   muteUser(): user_mutes.muted_id is a foreign key to users(id). Muting an
 //                 id that no longer exists raised a bare 23503 with no `status`
 //                 on it, so api/_lib/http.js wrap() could only report a 500,
 //                 complete with a Sentry capture and an ops alert, for what is
 //                 a caller mistake. sendRequest() already answered 404 for the
 //                 same input; muteUser now matches it.
 //
-//   getThread() — the `before` cursor was resolved with
+//   getThread(): the `before` cursor was resolved with
 //                 `created_at < (select created_at from direct_messages where
 //                 id = $cursor)`, unscoped. Two consequences: a caller could
 //                 page against the timestamp of a message in someone else's
 //                 thread, and an unknown or stale cursor made the comparison
-//                 `created_at < null`, which matches nothing — so the endpoint
+//                 `created_at < null`, which matches nothing, so the endpoint
 //                 answered "no older messages" instead of admitting the cursor
 //                 was bad, and the client stopped paginating on a lie.
 //
