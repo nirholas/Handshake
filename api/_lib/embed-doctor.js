@@ -1178,8 +1178,15 @@ export async function collectFromUrl({
 			};
 		}
 		const bootMs = await waitForEmbed(page, EMBED_SELECTOR, budgetMs);
-		const obs = await harvest(page, { recorders, response, bootMs, platformOrigin, screenshot });
-		return { target, ...obs, timedOut: watchdog.firedAt !== null };
+		const obs = await harvest(page, {
+			recorders,
+			response,
+			bootMs,
+			platformOrigin,
+			screenshot,
+			deadlineAt,
+		});
+		return { target, ...obs, timedOut: obs.probeFailed || watchdog.firedAt !== null };
 	} finally {
 		watchdog.clear();
 		await page.close().catch(() => {});
@@ -1210,7 +1217,9 @@ export async function collectFromSnippet({
 	const browser = await getBrowser();
 	const page = await browser.newPage();
 	const target = { kind: 'snippet', snippet: String(snippet).slice(0, 4000) };
-	const watchdog = pageWatchdog(page, budgetMs + HARVEST_GRACE_MS);
+	const lifetimeMs = pageDeadline(budgetMs);
+	const deadlineAt = Date.now() + lifetimeMs;
+	const watchdog = pageWatchdog(page, lifetimeMs + 2000);
 	try {
 		const recorders = instrument(page);
 		// Served from the platform origin so relative URLs and module imports
@@ -1231,10 +1240,20 @@ export async function collectFromSnippet({
 			}
 			req.continue().catch(() => {});
 		});
-		response = await page.goto(sandboxUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+		response = await page.goto(sandboxUrl, {
+			waitUntil: 'domcontentloaded',
+			timeout: NAV_TIMEOUT_MS,
+		});
 		const bootMs = await waitForEmbed(page, EMBED_SELECTOR, budgetMs);
-		const obs = await harvest(page, { recorders, response, bootMs, platformOrigin, screenshot });
-		return { target, ...obs, timedOut: watchdog.firedAt !== null };
+		const obs = await harvest(page, {
+			recorders,
+			response,
+			bootMs,
+			platformOrigin,
+			screenshot,
+			deadlineAt,
+		});
+		return { target, ...obs, timedOut: obs.probeFailed || watchdog.firedAt !== null };
 	} finally {
 		watchdog.clear();
 		await page.close().catch(() => {});
