@@ -34,11 +34,22 @@
 
 import { assertSafePublicUrl, SsrfBlockedError } from './ssrf-guard.js';
 
-/** The custom element the platform's embed runtime registers. */
+/** The canonical custom element, used in every fix snippet the report writes. */
 export const EMBED_TAG = 'agent-3d';
 
-/** Loader bundles that register {@link EMBED_TAG}. Order is longest-first so a
- *  versioned path is recognised before the generic prefix match. */
+/** Every element name a platform loader registers. `agent-3d` comes from the
+ *  full runtime (src/element.js); the three aliases come from the lightweight
+ *  v1 loader (public/embed/v1.js), which is what the gated-embed snippet in
+ *  api/embed/gate-create.js hands developers. Recognising only the first one
+ *  made the doctor report a perfectly healthy v1 embed as "never upgraded". */
+export const EMBED_TAGS = ['agent-3d', 'three-d', 'three-agent', 'three-ws'];
+
+/** One CSS selector matching any of {@link EMBED_TAGS}, for the in-page probes. */
+export const EMBED_SELECTOR = EMBED_TAGS.join(',');
+
+/** Loader bundles that register an element in {@link EMBED_TAGS}. Order is
+ *  longest-first so a versioned path is recognised before the generic prefix
+ *  match. */
 export const LOADER_PATTERNS = [
 	/\/agent-3d\/[^/]+\/agent-3d(\.min)?\.js(\?|$)/i,
 	/\/embed(\/v1)?\.js(\?|$)/i,
@@ -127,6 +138,9 @@ export function analyze(obs) {
 	const consoleMsgs = Array.isArray(obs?.console) ? obs.console : [];
 	const pageErrors = Array.isArray(obs?.pageErrors) ? obs.pageErrors : [];
 	const scripts = Array.isArray(obs?.scripts) ? obs.scripts : [];
+	// Name the tag the developer actually wrote. Falling back to the canonical
+	// one only matters when there is no element to name.
+	const tag = EMBED_TAGS.includes(el?.tag) ? el.tag : EMBED_TAG;
 
 	// ── 1. The page itself ────────────────────────────────────────────────────
 	if (page.reachable === false) {
@@ -298,7 +312,7 @@ export function analyze(obs) {
 			pass(
 				'element_upgraded',
 				'The element was upgraded by the runtime',
-				`customElements.get('${EMBED_TAG}') resolved, so the tag is a live component rather than an unknown element.`,
+				`customElements.get('${tag}') resolved, so the tag is a live component rather than an unknown element.`,
 				null,
 			),
 		);
@@ -309,7 +323,7 @@ export function analyze(obs) {
 				'fatal',
 				'fail',
 				'The element was never upgraded',
-				`The tag is in the DOM but the browser does not know what <${EMBED_TAG}> is, so it renders as an empty inline element with no size. This is always a consequence of the runtime not executing.`,
+				`The tag is in the DOM but the browser does not know what <${tag}> is, so it renders as an empty inline element with no size. This is always a consequence of the runtime not executing.`,
 				'Fix the loader finding above first. If the loader reports healthy, check that the script tag comes from https://three.ws and is not deferred behind a consent gate that never fires.',
 				null,
 			),
@@ -327,8 +341,8 @@ export function analyze(obs) {
 				'fatal',
 				'fail',
 				'The element has nothing to load',
-				`<${EMBED_TAG}> stays deliberately inert until it is given a source. Without one of ${SOURCE_ATTRIBUTES.map((a) => `\`${a}\``).join(', ')} it renders nothing rather than guessing.`,
-				`Add your agent id:\n<${EMBED_TAG} agent-id="YOUR_AGENT_ID" mode="floating"></${EMBED_TAG}>\n\nYour agent id is the string after /agent/ in its three.ws profile URL.`,
+				`<${tag}> stays deliberately inert until it is given a source. Without one of ${SOURCE_ATTRIBUTES.map((a) => `\`${a}\``).join(', ')} it renders nothing rather than guessing.`,
+				`Add your agent id:\n<${tag} agent-id="YOUR_AGENT_ID" mode="floating"></${tag}>\n\nYour agent id is the string after /agent/ in its three.ws profile URL.`,
 				{ attributes: el.attributes || {} },
 			),
 		);
@@ -395,7 +409,7 @@ export function analyze(obs) {
 				'fail',
 				`The embed has no size (${Math.round(rect.width)}×${Math.round(rect.height)}px)`,
 				'In inline mode the element fills its container, and a container with no height collapses it to nothing. The runtime is running correctly and drawing into a box with zero area.',
-				`Give the element or its parent a height:\n<${EMBED_TAG} agent-id="…" style="display:block;width:100%;height:480px"></${EMBED_TAG}>\n\nOr switch to mode="floating", which pins itself to a corner and sizes itself.`,
+				`Give the element or its parent a height:\n<${tag} agent-id="…" style="display:block;width:100%;height:480px"></${tag}>\n\nOr switch to mode="floating", which pins itself to a corner and sizes itself.`,
 				{ rect, mode: el.attributes?.mode || '(default)' },
 			),
 		);
@@ -680,8 +694,10 @@ export async function closeBrowser() {
 }
 
 /** Runs inside the page. Returns the DOM facts `analyze` needs. Written as a
- *  plain string-serialisable function: it cannot close over anything. */
-function inPageProbe(tag, sourceAttrs) {
+ *  plain string-serialisable function: it cannot close over anything.
+ *  `selector` matches every tag in EMBED_TAGS, so a page using the v1 loader's
+ *  <three-d> is inspected exactly like one using <agent-3d>. */
+function inPageProbe(selector, sourceAttrs) {
 	function deepQueryAll(selector) {
 		const out = [];
 		const walk = (root) => {
@@ -713,10 +729,11 @@ function inPageProbe(tag, sourceAttrs) {
 		webglAvailable = false;
 	}
 
-	const els = deepQueryAll(tag);
+	const els = deepQueryAll(selector);
 	let element = null;
 	if (els.length) {
 		const node = els[0];
+		const tag = node.tagName.toLowerCase();
 		const cs = getComputedStyle(node);
 		const rect = node.getBoundingClientRect();
 
@@ -783,6 +800,7 @@ function inPageProbe(tag, sourceAttrs) {
 
 		element = {
 			count: els.length,
+			tag,
 			defined: !!(window.customElements && window.customElements.get(tag)),
 			attributes,
 			rect: { width: rect.width, height: rect.height, top: rect.top, left: rect.left },
@@ -814,20 +832,22 @@ function inPageProbe(tag, sourceAttrs) {
  * runs out. Polls rather than racing a fixed sleep so a fast page returns fast
  * and a slow one still gets its full allowance.
  */
-async function waitForEmbed(page, tag, budgetMs) {
+async function waitForEmbed(page, selector, budgetMs) {
 	const started = Date.now();
 	while (Date.now() - started < budgetMs) {
 		const state = await page
-			.evaluate((t) => {
-				const el = document.querySelector(t);
+			.evaluate((sel) => {
+				const el = document.querySelector(sel);
 				if (!el) return { canBoot: false, painted: false };
 				const root = el.shadowRoot || el;
 				const cv = root.querySelector('canvas');
 				return {
-					canBoot: !!(window.customElements && window.customElements.get(t)),
+					canBoot: !!(
+						window.customElements && window.customElements.get(el.tagName.toLowerCase())
+					),
 					painted: !!(cv && cv.width > 0 && cv.height > 0),
 				};
-			}, tag)
+			}, selector)
 			.catch(() => ({ canBoot: false, painted: false }));
 
 		if (state.painted) return Date.now() - started;
@@ -851,10 +871,10 @@ async function waitForEmbed(page, tag, budgetMs) {
  *
  * Returns null when the question could not be answered, never a guess.
  */
-async function measurePainted(page, tag) {
+async function measurePainted(page, selector) {
 	try {
-		const box = await page.evaluate((t) => {
-			const el = document.querySelector(t);
+		const box = await page.evaluate((sel) => {
+			const el = document.querySelector(sel);
 			if (!el) return null;
 			const r = el.getBoundingClientRect();
 			if (r.width < 4 || r.height < 4) return null;
@@ -866,7 +886,7 @@ async function measurePainted(page, tag) {
 			const h = Math.min(r.bottom, window.innerHeight) - y;
 			if (w < 4 || h < 4) return null;
 			return { x, y, width: w, height: h };
-		}, tag);
+		}, selector);
 		if (!box) return null;
 
 		const png = await page.screenshot({ type: 'png', clip: box });
@@ -952,7 +972,7 @@ function instrument(page) {
 
 /** Everything a diagnosis needs from a booted page, once it has settled. */
 async function harvest(page, { recorders, response, bootMs, platformOrigin, screenshot }) {
-	const probe = await page.evaluate(inPageProbe, EMBED_TAG, SOURCE_ATTRIBUTES).catch(() => ({
+	const probe = await page.evaluate(inPageProbe, EMBED_SELECTOR, SOURCE_ATTRIBUTES).catch(() => ({
 		scripts: [],
 		element: null,
 		webgl: { available: null, renderer: null },
@@ -972,7 +992,7 @@ async function harvest(page, { recorders, response, bootMs, platformOrigin, scre
 	const agent = agentId ? await resolveAgent(agentId, { platformOrigin }) : null;
 
 	if (probe.element?.canvas?.present) {
-		const painted = await measurePainted(page, EMBED_TAG);
+		const painted = await measurePainted(page, EMBED_SELECTOR);
 		probe.element.canvas.blank = painted === null ? null : !painted;
 	}
 
@@ -1044,7 +1064,7 @@ export async function collectFromUrl({
 				pageErrors: recorders.pageErrors,
 			};
 		}
-		const bootMs = await waitForEmbed(page, EMBED_TAG, budgetMs);
+		const bootMs = await waitForEmbed(page, EMBED_SELECTOR, budgetMs);
 		const obs = await harvest(page, { recorders, response, bootMs, platformOrigin, screenshot });
 		return { target, ...obs };
 	} finally {
@@ -1097,7 +1117,7 @@ export async function collectFromSnippet({
 			req.continue().catch(() => {});
 		});
 		response = await page.goto(sandboxUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
-		const bootMs = await waitForEmbed(page, EMBED_TAG, budgetMs);
+		const bootMs = await waitForEmbed(page, EMBED_SELECTOR, budgetMs);
 		const obs = await harvest(page, { recorders, response, bootMs, platformOrigin, screenshot });
 		return { target, ...obs };
 	} finally {
