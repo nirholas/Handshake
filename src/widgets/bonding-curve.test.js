@@ -171,7 +171,7 @@ describe('computeView', () => {
 		expect(v.progress).toBeCloseTo(0.345, 5);
 		expect(v.progressPct).toBeCloseTo(34.5, 5);
 		// 30 lamports per token × 1B tokens = 30 SOL. The SDK's `price.marketCap`
-		// is deliberately not used — see the derivation note in computeView.
+		// is deliberately not used: see the derivation note in computeView.
 		expect(v.marketCapSol).toBeCloseTo(30, 6);
 		expect(v.raisedSol).toBe(18);
 		expect(v.hasUsd).toBe(false);
@@ -268,7 +268,7 @@ describe('computeView', () => {
 		expect(v.marketCapUsd).toBe(10_000_000);
 	});
 
-	// The SDK's `price.marketCap` goes negative on real curves — a live devnet
+	// The SDK's `price.marketCap` goes negative on real curves: a live devnet
 	// coin 95% of the way to graduation reports -1.75 SOL while holding 30.3 SOL
 	// of virtual reserves. Reading it and clamping rendered "◎0" for a coin with
 	// a real price, which is why the market cap is derived from price × supply.

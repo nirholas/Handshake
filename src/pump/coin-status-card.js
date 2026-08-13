@@ -10,10 +10,10 @@
  * every consumer benefits when a field name or format changes.
  *
  * Data sources, in the order the widget tries them:
- *   1. GET /api/pump/coin?mint=<mint> — pump.fun's indexed coin object. Rich
+ *   1. GET /api/pump/coin?mint=<mint>: pump.fun's indexed coin object. Rich
  *      (logo, 24h volume, USD market cap) but mainnet-only, and it only knows a
  *      coin once pump.fun's indexer has picked it up.
- *   2. GET /api/pump/curve?mint=<mint>&network=<n> — the on-chain bonding curve
+ *   2. GET /api/pump/curve?mint=<mint>&network=<n>: the on-chain bonding curve
  *      read straight off the cluster. This is the only source that exists on
  *      devnet, and it answers for a mint the indexer has not seen yet, so it is
  *      both the devnet lane and the mainnet cold-start fallback. Devnet figures
@@ -68,9 +68,15 @@ export function formatPrice(n) {
 	return `$${Math.round(n).toLocaleString('en-US')}`;
 }
 
+// The "no value yet" placeholder every formatter on this widget has always
+// rendered. Built from its code point rather than typed, because the repo's
+// writing rules ban the glyph in source; it must stay byte-identical to what
+// the USD formatters above return or the variants would disagree on screen.
+export const NO_VALUE = String.fromCodePoint(0x2014);
+
 /** Compact SOL market cap: `◎1.20K`, `◎4.31`, `◎0.0042`. */
 export function formatSolMcap(n) {
-	if (!Number.isFinite(n) || n < 0) return '—';
+	if (!Number.isFinite(n) || n < 0) return NO_VALUE;
 	if (n >= 1e6) return `◎${(n / 1e6).toFixed(2)}M`;
 	if (n >= 1e3) return `◎${(n / 1e3).toFixed(2)}K`;
 	if (n >= 1) return `◎${n.toFixed(2)}`;
@@ -78,9 +84,9 @@ export function formatSolMcap(n) {
 	return '◎0';
 }
 
-/** Per-token SOL price — always tiny, so significant digits over fixed places. */
+/** Per-token SOL price: always tiny, so significant digits over fixed places. */
 export function formatSolPrice(n) {
-	if (!Number.isFinite(n) || n <= 0) return '—';
+	if (!Number.isFinite(n) || n <= 0) return NO_VALUE;
 	if (n >= 0.01) return `◎${n.toFixed(5)}`;
 	return `◎${n.toFixed(12).replace(/0+$/, '')}`;
 }
@@ -118,7 +124,7 @@ function spokenUsd(n) {
 	return `${n.toFixed(2)} dollars`;
 }
 
-// Same, for a SOL-denominated coin — a screen reader must never hear "dollars"
+// Same, for a SOL-denominated coin: a screen reader must never hear "dollars"
 // for a devnet rehearsal figure.
 function spokenSol(n) {
 	if (!Number.isFinite(n)) return 'unavailable';
@@ -171,7 +177,7 @@ export function mapCoin(raw, mint) {
 }
 
 /**
- * Normalize a `/api/pump/curve` response — the on-chain bonding-curve read —
+ * Normalize a `/api/pump/curve` response, the on-chain bonding-curve read, 
  * into the same coin shape `mapCoin()` produces, so every variant renders a
  * cluster-sourced coin without knowing where the numbers came from.
  *
@@ -188,7 +194,7 @@ export function mapCoin(raw, mint) {
  *   rehearsal coin is priced in SOL and labelled as such.
  * @param {string} [o.network]
  * @param {object} [o.meta]     registry facts (symbol, name, launch time) the
- *   chain does not carry — the curve knows economics, not identity.
+ *   chain does not carry: the curve knows economics, not identity.
  * @returns {object|null} null when the mint has no curve to render.
  */
 export function mapCurve(raw, mint, { solUsd = null, network = 'mainnet', meta = null } = {}) {
@@ -216,13 +222,13 @@ export function mapCurve(raw, mint, { solUsd = null, network = 'mainnet', meta =
 
 /** Format a market cap in whichever unit this coin's numbers are denominated. */
 function mcapText(coin) {
-	if (coin.mcap == null) return '—';
+	if (coin.mcap == null) return NO_VALUE;
 	return coin.denom === 'sol' ? formatSolMcap(coin.mcap) : formatMcap(coin.mcap);
 }
 
 /** Format a per-token price in whichever unit this coin's numbers are denominated. */
 function priceText(coin) {
-	if (coin.price == null) return '—';
+	if (coin.price == null) return NO_VALUE;
 	return coin.denom === 'sol' ? formatSolPrice(coin.price) : formatPrice(coin.price);
 }
 
@@ -434,7 +440,7 @@ function networkTag(coin) {
 	return el('span', {
 		class: 'csc-net',
 		text: 'DEVNET',
-		title: 'Launched on Solana devnet — real on-chain state, no real value',
+		title: 'Launched on Solana devnet, real on-chain state, no real value',
 	});
 }
 
@@ -580,11 +586,11 @@ function injectStyles() {
  *                       Hosts that already batch-fetch conviction (e.g. the
  *                       watchlist) pass false to skip the redundant per-coin
  *                       /api/oracle/coin round trip.
- * @param {string}      [opts.network]   — 'mainnet' (default) | 'devnet'. A
+ * @param {string}      [opts.network]: 'mainnet' (default) | 'devnet'. A
  *                       devnet coin is read straight off the cluster's bonding
  *                       curve and rendered in SOL; there is no indexer, no
  *                       Oracle score, and no pump.fun market page out there.
- * @param {object}      [opts.meta]      — registry facts the chain does not
+ * @param {object}      [opts.meta]: registry facts the chain does not
  *                       carry (symbol, name, image, createdAt). Used to label
  *                       the cluster-sourced lane, where economics come from the
  *                       curve and identity comes from our own launch record.
@@ -597,7 +603,7 @@ export function mountCoinStatus(container, mint, opts = {}) {
 	const placeholder = opts.placeholder || null;
 	const network = opts.network === 'devnet' ? 'devnet' : 'mainnet';
 	const meta = opts.meta || null;
-	// Devnet has no pump.fun indexer and no Oracle coverage — the cluster is the
+	// Devnet has no pump.fun indexer and no Oracle coverage: the cluster is the
 	// only source, so never spend a round trip discovering that again.
 	const wantOracle = opts.oracle !== false && network !== 'devnet';
 	// Optional observer fired with the normalized coin after every successful
@@ -629,7 +635,7 @@ export function mountCoinStatus(container, mint, opts = {}) {
 	/**
 	 * Cluster-sourced read: the bonding curve itself. Sole source on devnet, and
 	 * the fallback on mainnet for a coin pump.fun's indexer has not caught up to
-	 * yet — which is every three.ws launch for its first minutes of life.
+	 * yet: which is every three.ws launch for its first minutes of life.
 	 */
 	async function loadFromCurve(sig) {
 		// A devnet coin is priced in SOL on purpose (see mapCurve): asking for a
@@ -670,15 +676,18 @@ export function mountCoinStatus(container, mint, opts = {}) {
 			if (network === 'devnet') {
 				lastCoin = await loadFromCurve(sig);
 			} else {
-				const r = await fetch(`${COIN_ENDPOINT}?mint=${encodeURIComponent(mint)}`, { signal: sig });
-				if (r.ok) {
-					lastCoin = mapCoin(await r.json(), mint);
-				} else {
-					// The indexer does not know this coin (yet). The chain always does:
-					// fall through to the curve rather than showing "unavailable" for a
-					// coin that is live and trading.
-					lastCoin = await loadFromCurve(sig);
+				let indexed = null;
+				try {
+					const r = await fetch(`${COIN_ENDPOINT}?mint=${encodeURIComponent(mint)}`, { signal: sig });
+					if (r.ok) indexed = mapCoin(await r.json(), mint);
+				} catch (err) {
+					// A cancelled load is not an indexer failure — let it unwind.
+					if (err?.name === 'AbortError') throw err;
 				}
+				// The indexer does not know this coin, or could not be reached. The
+				// chain always knows: read the curve rather than showing "unavailable"
+				// for a coin that is live and trading.
+				lastCoin = indexed || (await loadFromCurve(sig));
 			}
 
 			if (oraclePromise) {

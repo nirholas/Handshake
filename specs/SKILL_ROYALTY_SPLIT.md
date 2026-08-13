@@ -79,9 +79,9 @@ One settled call produces at most one `royalty_ledger` row.
 Each invariant is covered by at least one positive and one negative test. The
 suites that prove them:
 
-- [`tests/skill-royalty.test.js`](../tests/skill-royalty.test.js) — the split math (SR-1 … SR-5) and the flag gate (SR-15).
-- [`tests/skill-royalty-earnings.test.js`](../tests/skill-royalty-earnings.test.js) — the read side, including the LEFT JOIN regression guard (SR-14) and separated totals (SR-19).
-- [`scripts/royalty-proof.mjs`](../scripts/royalty-proof.mjs) — an end-to-end proof against a real Postgres, asserting SR-1, SR-4, SR-11, SR-12, SR-13, SR-14 and SR-20 in one run, moving no funds.
+- [`tests/skill-royalty.test.js`](../tests/skill-royalty.test.js): the split math (SR-1 … SR-5) and the flag gate (SR-15).
+- [`tests/skill-royalty-earnings.test.js`](../tests/skill-royalty-earnings.test.js): the read side, including the LEFT JOIN regression guard (SR-14) and separated totals (SR-19).
+- [`scripts/royalty-proof.mjs`](../scripts/royalty-proof.mjs): an end-to-end proof against a real Postgres, asserting SR-1, SR-4, SR-11, SR-12, SR-13, SR-14 and SR-20 in one run, moving no funds.
 
 ## Change control
 

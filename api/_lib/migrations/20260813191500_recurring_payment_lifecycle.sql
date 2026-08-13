@@ -10,7 +10,7 @@
 -- (`dca_executions`) that nothing surfaced.
 --
 -- This adds:
---   * subscription_charges  — one row per charge attempt, the mirror of
+--   * subscription_charges: one row per charge attempt, the mirror of
 --     dca_executions, so incoming revenue is queryable and every failure is
 --     recorded with the classification the cron acted on.
 --   * consecutive_failures / last_error_code / paused_at / resumed_at on both
@@ -19,7 +19,7 @@
 
 begin;
 
--- ── subscription_charges — per-tick charge attempt log ──────────────────────
+-- ── subscription_charges: per-tick charge attempt log ──────────────────────
 create table if not exists subscription_charges (
     id                  uuid primary key default gen_random_uuid(),
     subscription_id     uuid not null references agent_subscriptions(id) on delete cascade,
@@ -53,14 +53,14 @@ create unique index if not exists uq_subscription_charges_period
     on subscription_charges(subscription_id, period_start_at)
     where status = 'success' and period_start_at is not null;
 
--- ── agent_subscriptions — lifecycle columns ─────────────────────────────────
+-- ── agent_subscriptions: lifecycle columns ─────────────────────────────────
 alter table agent_subscriptions add column if not exists consecutive_failures integer not null default 0;
 alter table agent_subscriptions add column if not exists last_error_code      text;
 alter table agent_subscriptions add column if not exists last_tx_hash         text;
 alter table agent_subscriptions add column if not exists paused_at            timestamptz;
 alter table agent_subscriptions add column if not exists resumed_at           timestamptz;
 
--- ── dca_strategies — lifecycle columns ──────────────────────────────────────
+-- ── dca_strategies: lifecycle columns ──────────────────────────────────────
 alter table dca_strategies add column if not exists consecutive_failures integer not null default 0;
 alter table dca_strategies add column if not exists last_error           text;
 alter table dca_strategies add column if not exists last_error_code      text;

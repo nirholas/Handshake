@@ -62,7 +62,7 @@ const RUNTIME_ROW = {
 	agent_name: 'Scout',
 };
 
-describe('getCreatorSalesData — both royalty lanes reach the author', () => {
+describe('getCreatorSalesData: both royalty lanes reach the author', () => {
 	it('LEFT JOINs agent_identities so x402 accruals are not dropped', async () => {
 		const sql = makeSql([[X402_ROW], []]);
 		await new MonetizationService(AUTHOR, { sql }).getCreatorSalesData();

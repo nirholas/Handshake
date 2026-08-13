@@ -120,7 +120,7 @@ async function loadPg() {
 		// A `--no-save` install is transient: any later `npm install` in this
 		// worktree prunes it, so a re-run lands here again. It can also leave a
 		// half-written node_modules/pg that resolves as a directory but has no
-		// entry point — hence the post-install re-import is checked, not assumed.
+		// entry point: hence the post-install re-import is checked, not assumed.
 		console.log('  installing pg (--no-save) for the local Postgres bridge');
 		const r = run('npm', ['i', '--no-save', '--no-audit', '--no-fund', 'pg'], { cwd: root });
 		if (r.code !== 0) throw new Error(`npm i pg failed: ${r.out.slice(-400)}`);
@@ -563,7 +563,7 @@ process.stdin.on('data', (d) => {
 	// ── 5. receipts on the live local surface ────────────────────────────────
 	step('5. receipts - queryable per agent on the live HTTP surface');
 	{
-		// This section proves the receipt surface, not the ceilings — and the proof
+		// This section proves the receipt surface, not the ceilings: and the proof
 		// agent is still carrying section 2's $1/day cap plus its backfilled history.
 		// Open the policy back up so a seeding payment is refused only if something
 		// is genuinely broken.
@@ -634,7 +634,7 @@ process.stdin.on('data', (d) => {
 		// Every later check in this section signs in as that owner, so a failed
 		// registration is a dead end, not a partial result. Stop here with the
 		// server's own log attached rather than emitting a cascade of 401s.
-		if (!registered) throw new Error(`registration failed (${reg.status}) — the receipt-surface checks cannot run${serverTail(20)}`);
+		if (!registered) throw new Error(`registration failed (${reg.status}): the receipt-surface checks cannot run${serverTail(20)}`);
 
 		const csrf1 = await http.freshCsrf();
 		const created = await http.req('POST', '/api/agents', {

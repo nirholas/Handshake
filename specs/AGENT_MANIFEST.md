@@ -89,7 +89,7 @@ Everything is optional except `manifest.json` and a `body` reference.
 		},
 	},
 
-	// Persona — the compiled voice, described but never disclosed
+	// Persona: the compiled voice, described but never disclosed
 	"persona": {
 		"has_persona": true, // false when the agent still runs on no persona at all
 		"tone_tags": ["blunt", "dry", "analytical"],

@@ -15,7 +15,7 @@
  *   lamportsToSol / fmtSol / fmtUsd / fmtPrice  — pure formatters (tested)
  *   curveValue / curvePoints / areaPathFor       — pure curve geometry (tested)
  *   computeView(data, solUsd)                     — pure view-model (tested)
- *   getSolUsd()                                   — shared, cached SOL/USD read
+ *   getSolUsd(): shared, cached SOL/USD read
  *   renderCardShell(view, cfg)                    — pure HTML string (tested)
  *   mountBondingCurve(rootEl, opts)               — full mount + polling + anim
  *
@@ -50,7 +50,7 @@ const NON_CURVE_MINTS = new Set([
 // devnet nothing grinds a mark at all, so the shape says nothing and every
 // plausible address is worth asking about. A settlement token is excluded
 // everywhere. Anything else on mainnet is skipped here rather than contributing
-// to a /api/pump/curve 404 storm from a misconfigured (e.g. USDC) mount — the
+// to a /api/pump/curve 404 storm from a misconfigured (e.g. USDC) mount: the
 // server still recognizes an unmarked coin of ours from its own launch
 // registry, so a real agent token is never left unrendered by this shortcut.
 export function isPumpMint(mint, network = 'mainnet') {
@@ -59,7 +59,7 @@ export function isPumpMint(mint, network = 'mainnet') {
 	return mint.endsWith('pump') || hasThreeWsMark(mint);
 }
 
-/** A base58 string of Solana address length — the shape, not the existence. */
+/** A base58 string of Solana address length: the shape, not the existence. */
 export function isPlausibleMint(s) {
 	return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(String(s || ''));
 }
@@ -245,8 +245,8 @@ export function computeView(data, solUsd = null) {
 	// which is not one: on a live devnet curve 95% of the way to graduation it
 	// reports -1.75 SOL while the curve holds 30.3 SOL of virtual reserves. Every
 	// consumer clamped that negative to zero and rendered "◎0" for a coin with a
-	// real price. The curve carries the two honest numbers instead — the current
-	// per-token price and the token's total supply — and pump.fun sells the entire
+	// real price. The curve carries the two honest numbers instead: the current
+	// per-token price and the token's total supply: and pump.fun sells the entire
 	// fixed supply through the curve, so price × supply IS the market cap.
 	const marketCapSol = priceSol * totalSupplyTokens(data.curve);
 

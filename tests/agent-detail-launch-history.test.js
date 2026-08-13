@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 //
-// The launch history on /agents/:id — the profile half of the agent-token lane.
+// The launch history on /agents/:id, the profile half of the agent-token lane.
 //
 // Every coin an agent launched through three.ws is registered in
 // pump_agent_mints and read back by GET /api/pump/by-agent. The property under
@@ -13,8 +13,8 @@
 //     straight off the cluster, priced in SOL and badged DEVNET.
 //
 // The devnet row used to render as a lifeless symbol-and-address line, which
-// meant the free rehearsal path — the only path that proves this lane end to end
-// without spending real money — produced no market data on the profile at all.
+// meant the free rehearsal path: the only path that proves this lane end to end
+// without spending real money: produced no market data on the profile at all.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderLaunchHistory, destroyCoinStatus } from '../src/agent-detail.js';

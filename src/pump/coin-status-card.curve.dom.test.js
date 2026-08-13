@@ -12,7 +12,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mountCoinStatus } from './coin-status-card.js';
 
 // A three.ws-launched mint: the "3ws" brand mark leads the address (pump.fun's
-// own launcher grinds a "pump" suffix instead — both carry a bonding curve).
+// own launcher grinds a "pump" suffix instead: both carry a bonding curve).
 const MINT = '3wsSynthetic11111111111111111111111111111';
 
 function curveBody(overrides = {}) {
@@ -65,7 +65,7 @@ afterEach(() => {
 	vi.useRealTimers();
 });
 
-describe('mountCoinStatus — devnet lane', () => {
+describe('mountCoinStatus: devnet lane', () => {
 	it('reads the cluster curve and renders SOL-denominated market state', async () => {
 		const fetchMock = routedFetch([['/api/pump/curve', ok(curveBody())]]);
 		vi.stubGlobal('fetch', fetchMock);
@@ -134,7 +134,7 @@ describe('mountCoinStatus — devnet lane', () => {
 	});
 });
 
-describe('mountCoinStatus — mainnet indexer fallback', () => {
+describe('mountCoinStatus: mainnet indexer fallback', () => {
 	it('falls through to the bonding curve when the indexer does not know the coin', async () => {
 		const fetchMock = routedFetch([
 			['/api/pump/coin', notFound()],
@@ -146,7 +146,7 @@ describe('mountCoinStatus — mainnet indexer fallback', () => {
 		const handle = mountCoinStatus(container, MINT, { variant: 'chip', refreshMs: 0 });
 		await vi.waitFor(() => expect(container.querySelector('.csc-mcap')).toBeTruthy());
 
-		// 32 SOL × $200 — real on-chain state, priced in dollars because mainnet
+		// 32 SOL × $200: real on-chain state, priced in dollars because mainnet
 		// SOL has a dollar price.
 		expect(container.querySelector('.csc-mcap').textContent).toBe('$6.4K');
 		expect(container.querySelector('.csc-net')).toBeNull();

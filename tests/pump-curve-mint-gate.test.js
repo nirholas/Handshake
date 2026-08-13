@@ -1,7 +1,7 @@
 // The address-only pre-filter that decides whether a mint can carry a pump.fun
 // bonding curve at all.
 //
-// It exists in two copies on purpose — one in the API (api/_lib/pump-curve-view.js,
+// It exists in two copies on purpose: one in the API (api/_lib/pump-curve-view.js,
 // guarding an RPC read and a 300s-cached 404) and one in the browser widget
 // (src/widgets/bonding-curve.js, guarding the request itself). They must agree:
 // a mint the server would answer for and the widget refuses to ask about renders

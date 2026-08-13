@@ -56,7 +56,7 @@ async function confirmSettlement(network, transaction) {
 		if (isSolana) {
 			const { solanaConnection } = await import('../_lib/solana/connection.js');
 			// Devnet receipts confirm against devnet: the CAIP-2 id tells us which.
-			// Compared in full against the canonical id, never by substring — an
+			// Compared in full against the canonical id, never by substring: an
 			// earlier substring here was missing a character, so it never matched
 			// and every devnet receipt was looked up on MAINNET and reported as
 			// mainnet: a false statement about where the money moved.

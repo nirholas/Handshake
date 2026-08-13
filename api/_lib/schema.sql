@@ -1187,7 +1187,7 @@ alter table agent_subscriptions add column if not exists last_tx_hash         te
 alter table agent_subscriptions add column if not exists paused_at            timestamptz;
 alter table agent_subscriptions add column if not exists resumed_at           timestamptz;
 
--- ── subscription_charges — per-tick charge attempt log ──────────────────────
+-- ── subscription_charges: per-tick charge attempt log ──────────────────────
 -- The subscription mirror of dca_executions: one row per attempt, so a creator
 -- can see what a schedule actually paid and every failure keeps the code the
 -- cron classified it under.

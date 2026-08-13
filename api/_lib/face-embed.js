@@ -14,9 +14,9 @@
 // Two OSS models, both commercially clean, matching the reconstruction worker's
 // standing "Apache-2.0 / MIT only, no non-commercial 3DMM weights" rule:
 //
-//   • YuNet  (MIT, Shiqi Yu / OpenCV Zoo) — face detection plus the five
+//   • YuNet  (MIT, Shiqi Yu / OpenCV Zoo): face detection plus the five
 //     landmarks (eyes, nose tip, mouth corners) that identity models align on.
-//   • SFace  (Apache-2.0, Zhong & Deng / OpenCV Zoo) — 128-d identity
+//   • SFace  (Apache-2.0, Zhong & Deng / OpenCV Zoo): 128-d identity
 //     embedding, the model OpenCV's own FaceRecognizerSF ships.
 //
 // They run on onnxruntime-web's WASM backend (MIT) rather than
@@ -29,12 +29,12 @@
 //
 // Weights are NOT vendored: 39 MB of ONNX does not belong in git. They are
 // fetched once from a commit-pinned OpenCV Zoo URL, verified against a
-// hardcoded SHA-256, and cached on disk. A hash mismatch is fatal — a
+// hardcoded SHA-256, and cached on disk. A hash mismatch is fatal: a
 // silently-swapped identity model would corrupt every score in the table.
 //
 // Cosine similarity is the score. OpenCV publishes SFace's operating point as
-// 0.363 (same identity above, different identity below) on its own benchmark;
-// that constant is exported here rather than buried, because every downstream
+// 0.363 (same identity above, different identity below) on its own benchmark.
+// That constant is exported here rather than buried, because every downstream
 // interpretation of a number this module returns depends on it.
 
 import { createHash } from 'node:crypto';
@@ -82,7 +82,7 @@ const DETECT_NMS_IOU = 0.3;
 // SFace's alignment template: the canonical 112x112 five-point layout every
 // ArcFace-family model was trained against, in YuNet's landmark order
 // (subject's right eye, left eye, nose tip, right mouth corner, left mouth
-// corner — "right" as the subject's, so it sits at the smaller x in frame).
+// corner: "right" as the subject's, so it sits at the smaller x in frame).
 const ALIGN_SIZE = 112;
 const ALIGN_TEMPLATE = [
 	[38.2946, 51.6963],

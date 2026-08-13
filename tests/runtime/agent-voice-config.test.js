@@ -1,9 +1,9 @@
-// agentVoiceConfig — the mapper every surface uses to play an agent's bound voice.
+// agentVoiceConfig: the mapper every surface uses to play an agent's bound voice.
 //
 // The failure this guards against is silent, which is why it is worth a test: an
 // agent whose voice was cloned on its owner's own ElevenLabs key is only served
 // by /api/tts/eleven when the request names the agent. Drop `agentId` from the
-// TTS config and the embed still "works" — it just goes mute for every visitor
+// TTS config and the embed still "works": it just goes mute for every visitor
 // who is not the signed-in owner, which is everyone an embed exists for.
 
 import { describe, it, expect } from 'vitest';

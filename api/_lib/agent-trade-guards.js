@@ -788,7 +788,7 @@ export async function setPolicyRules(agentId, userId, rules, { english = null, r
 /**
  * Enforce the per-agent spend policy for one outbound movement.
  *
- * Fails closed on its inputs: pass `limits`, or `meta`, or neither — with
+ * Fails closed on its inputs: pass `limits`, or `meta`, or neither, with
  * neither, the agent's policy is read from its row rather than defaulting to an
  * unrestricted wallet. There is no argument shape that silently disables the
  * ceilings or the kill switch.
@@ -846,8 +846,8 @@ async function resolveSpendCapability({ agentId, lim, category, usdValue, target
 /**
  * Fail-closed policy resolution for a spend whose caller supplied NEITHER a
  * pre-read `limits` object NOR the agent's `meta`. Without this, both shared
- * guards fell back to `normalizeSpendLimits(undefined)` — every ceiling null,
- * `frozen` false, no natural-language rules — so a caller that simply forgot to
+ * guards fell back to `normalizeSpendLimits(undefined)`: every ceiling null,
+ * `frozen` false, no natural-language rules. A caller that simply forgot to
  * load the agent row got a wallet with no policy at all and no signal that the
  * kill switch had been skipped. Autonomy makes that unacceptable: the guarantee
  * has to hold because the code enforces it, not because every call site

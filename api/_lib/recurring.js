@@ -2,9 +2,9 @@
  * Shared lifecycle rules for recurring on-chain payments.
  *
  * Two schedule kinds ride the same rails:
- *   - `agent_subscriptions` — a fixed USDC transfer per period, charged by the
+ *   - `agent_subscriptions`: a fixed USDC transfer per period, charged by the
  *     run-subscriptions cron through /api/permissions/redeem.
- *   - `dca_strategies` — a fixed USDC swap per period, executed by the run-dca
+ *   - `dca_strategies`: a fixed USDC swap per period, executed by the run-dca
  *     cron through the same relayer.
  *
  * Both used to treat every failure identically: pause the schedule and write a
@@ -13,7 +13,7 @@
  * 'active'. This module is the single place that decides what a failure means,
  * so the crons, the API and the UI all agree on it.
  *
- * The three outcomes:
+ * The outcomes:
  *   fatal      the owner has to change something (revoked or expired
  *              delegation, a scope that no longer covers the charge). Retrying
  *              is guaranteed to fail, so the schedule pauses immediately.
@@ -28,6 +28,13 @@
  *   skipped    the schedule deliberately declined to act this period (a DCA
  *              quote that moved too far between reads). Nothing is wrong, so
  *              the period is simply given up and the next one runs on time.
+ *
+ * One failure is recorded as retryable but handled apart from it: a
+ * platform-side outage (the relayer switched off, or rejecting our own
+ * credentials) is nobody's schedule being wrong. Those retry forever without
+ * counting toward the pause bound, because pausing every schedule on the
+ * platform over one operator config gap would be a far worse outage than the
+ * gap itself, and every one of them would then need a manual resume.
  */
 
 /** Consecutive retryable failures a schedule survives before it is paused. */
@@ -50,13 +57,16 @@ const FATAL_CODES = new Set([
 	'delegation_gone',
 	'delegation_not_found',
 	'delegation_revoked',
-	'feature_disabled',
 	'scope_exceeded',
 	'target_not_allowed',
-	'unauthorized',
 	'unsupported_chain',
 	'validation_error',
 ]);
+
+// Platform-side outages. Recorded as retryable, but never counted against the
+// schedule's pause bound: the owner has nothing to fix and should not have to
+// resume by hand once the operator restores the relayer.
+const PLATFORM_CODES = new Set(['feature_disabled', 'unauthorized']);
 
 // Codes that mean the attempt never landed and the next tick can try again.
 const RETRYABLE_CODES = new Set([
@@ -152,6 +162,14 @@ export function classifyChargeFailure({ code, message } = {}) {
 		};
 	}
 
+	if (PLATFORM_CODES.has(raw)) {
+		return {
+			code: raw,
+			outcome: OUTCOME.RETRYABLE,
+			platform: true,
+			reason: REASONS[raw],
+		};
+	}
 	if (FATAL_CODES.has(raw)) {
 		return { code: raw, outcome: OUTCOME.FATAL, reason: REASONS[raw] };
 	}

@@ -11,6 +11,7 @@ import {
 	formatSolPrice,
 	mapCoin,
 	mapCurve,
+	NO_VALUE,
 } from './coin-status-card.js';
 
 describe('formatMcap', () => {
@@ -78,8 +79,15 @@ describe('SOL denomination', () => {
 
 	it('renders tiny per-token SOL prices without exponent notation', () => {
 		expect(formatSolPrice(0.000000028)).toBe('◎0.000000028');
-		expect(formatSolPrice(0)).toBe('—');
-		expect(formatSolPrice(NaN)).toBe('—');
+		expect(formatSolPrice(0)).toBe(NO_VALUE);
+		expect(formatSolPrice(NaN)).toBe(NO_VALUE);
+	});
+
+	// The SOL and USD formatters must agree on the placeholder, or a row that
+	// switches source mid-refresh would flicker between two "no value" glyphs.
+	it('shares the no-value placeholder with the USD formatters', () => {
+		expect(formatSolMcap(NaN)).toBe(formatMcap(NaN));
+		expect(formatSolPrice(NaN)).toBe(formatPrice(NaN));
 	});
 });
 

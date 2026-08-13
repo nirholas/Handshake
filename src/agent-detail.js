@@ -601,7 +601,7 @@ export async function renderLaunchHistory(container, agent) {
 					'aria-label': `${coin.symbol || coin.name || 'coin'} on three.ws`,
 				});
 			box.appendChild(row);
-			// Live market cap + graduation stream in through the shared widget —
+			// Live market cap + graduation stream in through the shared widget
 			// one fetch per row, mapped and formatted in one place. A mainnet coin
 			// reads from pump.fun's indexer (falling back to its bonding curve
 			// while the indexer catches up); a devnet coin reads its curve off the

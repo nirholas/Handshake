@@ -1,4 +1,4 @@
--- erc8004_crawl_cursor — track how far behind the CHAIN HEAD each EVM leg is,
+-- erc8004_crawl_cursor: track how far behind the CHAIN HEAD each EVM leg is,
 -- not just when the cron last touched the row.
 --
 -- Why. On 2026-08-13 the status surface reported the EVM index healthy on 17 of

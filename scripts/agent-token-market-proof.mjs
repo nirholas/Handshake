@@ -7,8 +7,8 @@
  * agent's pages. That path is:
  *
  *     pump_agent_mints (our launch record)
- *       → GET /api/pump/curve  (api/_lib/pump-curve-view.js — on-chain read)
- *       → mapCurve()           (src/pump/coin-status-card.js — normalization)
+ *       → GET /api/pump/curve  (api/_lib/pump-curve-view.js: on-chain read)
+ *       → mapCurve()           (src/pump/coin-status-card.js: normalization)
  *       → the chip / row the profile renders
  *
  * This script walks exactly that path with real data and prints what a visitor
@@ -23,10 +23,10 @@
  *   node scripts/agent-token-market-proof.mjs --limit 3
  *
  * Where the mints come from when you do not name one:
- *   · mainnet — three.ws's own launch directory, read live from
+ *   · mainnet: three.ws's own launch directory, read live from
  *     https://three.ws/api/pump/launches. Coin-agnostic: no mint is hardcoded
  *     here, the platform's own records supply them at runtime.
- *   · devnet  — the rehearsal cluster has no launch feed to read, so the script
+ *   · devnet: the rehearsal cluster has no launch feed to read, so the script
  *     discovers a live bonding curve straight from the pump.fun program's own
  *     accounts and reverse-resolves its mint through the curve's token account.
  *
@@ -68,7 +68,7 @@ async function rpc(method, params) {
 	return body.result;
 }
 
-/** three.ws's own launch records — the mainnet source of truth for agent tokens. */
+/** three.ws's own launch records: the mainnet source of truth for agent tokens. */
 async function mintsFromLaunchFeed() {
 	const r = await fetch(`${LAUNCH_FEED}?limit=${limit}`);
 	if (!r.ok) throw new Error(`launch feed → HTTP ${r.status}`);
@@ -83,7 +83,7 @@ async function mintsFromLaunchFeed() {
 
 /**
  * Devnet discovery: every live bonding curve is an account of the pump.fun
- * program, and the curve PDA holds the coin's own supply — so its token account
+ * program, and the curve PDA holds the coin's own supply: so its token account
  * names the mint the curve belongs to.
  */
 async function mintsFromCluster() {
@@ -103,7 +103,7 @@ async function mintsFromCluster() {
 			{ encoding: 'jsonParsed' },
 		]);
 		const info = owned?.value?.[0]?.account?.data?.parsed?.info;
-		// A curve holding no supply has already sold out or migrated — skip it, we
+		// A curve holding no supply has already sold out or migrated: skip it, we
 		// want a coin whose curve still has state worth rendering.
 		if (!info?.mint || Number(info.tokenAmount?.uiAmount) <= 0) continue;
 		found.push({ mint: info.mint, meta: null, via: `curve ${curve.pubkey.slice(0, 8)}…` });
@@ -115,13 +115,18 @@ async function mintsFromCluster() {
  * The widget calls `/api/pump/curve` as a same-origin relative URL. There is no
  * HTTP server in a script run, so route that one path to the handler the real
  * route relays verbatim (api/pump/curve.js is a thin shell over getCurveView).
- * Same code, same body, same cluster — only the transport is skipped. Every
+ * Same code, same body, same cluster: only the transport is skipped. Every
  * other request falls through to the network untouched.
  */
 function routeApiCallsInProcess() {
 	const realFetch = globalThis.fetch;
 	globalThis.fetch = async (input, init) => {
 		const href = String(input?.url || input);
+		// pump.fun's indexer proxy has no in-process handler to borrow (it is a
+		// server-side proxy), so a relative call goes to the live site instead.
+		if (href.startsWith('/api/')) {
+			if (!href.startsWith('/api/pump/curve')) return realFetch(`https://three.ws${href}`, init);
+		}
 		if (href.startsWith('/api/pump/curve')) {
 			const params = new URLSearchParams(href.split('?')[1] || '');
 			const result = await getCurveView({

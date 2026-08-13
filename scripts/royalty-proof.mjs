@@ -71,7 +71,7 @@ const PRICE_USD = 0.25;
 const checks = [];
 function check(name, pass, detail) {
 	checks.push({ name, pass, detail });
-	console.log(`  ${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`);
+	console.log(`  ${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? `, ${detail}` : ''}`);
 }
 
 const tag = `royalty-proof-${process.pid}`;

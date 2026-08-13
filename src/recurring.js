@@ -1,5 +1,5 @@
 /**
- * /recurring — the product surface for recurring on-chain payments.
+ * /recurring: the product surface for recurring on-chain payments.
  *
  * Two schedule kinds, one lifecycle:
  *   - subscriptions (`/api/agent-subscriptions`) transfer a fixed USDC amount

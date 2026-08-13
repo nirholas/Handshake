@@ -105,12 +105,12 @@ export default wrap(async (req, res) => {
 
 	// State-changing methods on a cookie session require a CSRF token. These
 	// strategies move real funds on a schedule, so a forged create/pause/cancel
-	// is high-impact — gate every non-GET method.
+	// is high-impact: gate every non-GET method.
 	if (req.method !== 'GET' && !(await requireCsrf(req, res, session.id))) return;
 
 	const url = new URL(req.url, 'http://x');
 
-	// ── PATCH /api/dca-strategies/:id — pause / resume ────────────────────────
+	// ── PATCH /api/dca-strategies/:id, pause / resume ────────────────────────
 	if (req.method === 'PATCH') {
 		const strategyId = strategyIdFrom(url);
 		if (!strategyId) return error(res, 400, 'missing_param', 'strategy id required in path');
@@ -162,7 +162,7 @@ export default wrap(async (req, res) => {
 				res,
 				409,
 				'delegation_inactive',
-				`the signed permission behind this strategy is ${row.delegation_status} — grant a new one to restart it`,
+				`the signed permission behind this strategy is ${row.delegation_status}: grant a new one to restart it`,
 			);
 		}
 		if (row.delegation_expires_at && new Date(row.delegation_expires_at) <= new Date()) {
@@ -170,7 +170,7 @@ export default wrap(async (req, res) => {
 				res,
 				409,
 				'delegation_expired',
-				'the signed permission behind this strategy has expired — grant a new one to restart it',
+				'the signed permission behind this strategy has expired: grant a new one to restart it',
 			);
 		}
 
@@ -207,7 +207,7 @@ export default wrap(async (req, res) => {
 		if (!rl.success) return rateLimited(res, rl);
 
 		// Verify ownership via agent_id → user_id chain. A paused strategy is
-		// cancellable too — cancel is the terminal state from anywhere but itself.
+		// cancellable too: cancel is the terminal state from anywhere but itself.
 		const [row] = await sql`
 			SELECT s.id
 			FROM dca_strategies s
@@ -227,7 +227,7 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { ok: true });
 	}
 
-	// ── GET — one strategy with history, or an agent's list ───────────────────
+	// ── GET: one strategy with history, or an agent's list ───────────────────
 	if (req.method === 'GET') {
 		const ip = clientIp(req);
 		const rl = await limits.authedReadIp(ip);
@@ -397,7 +397,7 @@ export default wrap(async (req, res) => {
 			res,
 			409,
 			'conflict',
-			`a ${existing.status} strategy already exists for this token pair — cancel it first`,
+			`a ${existing.status} strategy already exists for this token pair: cancel it first`,
 		);
 	}
 

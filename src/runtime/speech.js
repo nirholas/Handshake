@@ -548,15 +548,15 @@ export function createTTS(config = {}) {
  * needs the same three things from the agent row, and getting any of them
  * wrong is silent: the agent just falls back to a generic voice or goes mute.
  *
- *   voice_id       — which voice to speak with.
- *   agentId        — WHICH AGENT this voice belongs to. The /api/tts/eleven
+ *   voice_id: which voice to speak with.
+ *   agentId: WHICH AGENT this voice belongs to. The /api/tts/eleven
  *                    proxy only serves an owner-BYOK clone when the request
  *                    names its agent, because that is what authorizes spending
  *                    the owner's ElevenLabs credential. Omit it and a bound
  *                    voice is unreachable to embed visitors and signed-out
  *                    listeners, which is exactly who embeds are for.
  *   voice_model /
- *   voice_settings — the tuning the owner saved in the editor. Dropping these
+ *   voice_settings: the tuning the owner saved in the editor. Dropping these
  *                    plays the right voice with the wrong delivery.
  *
  * Returns null when the agent has no ElevenLabs voice bound, so callers can

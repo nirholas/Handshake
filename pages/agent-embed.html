@@ -511,7 +511,7 @@
 				// Bind real TTS so `speak` actions produce ElevenLabs audio + lip-sync.
 				// The whole config (voice id, model, saved settings, and the agent id
 				// that authorizes an owner-BYOK clone for anonymous listeners) comes
-				// from the agent record via agentVoiceConfig — no silent fallback to a
+				// from the agent record via agentVoiceConfig: no silent fallback to a
 				// default voice; speak reports "agent has no voice configured" when
 				// nothing is bound.
 				ttsCtx.viewer = viewer;

@@ -32,7 +32,7 @@ export const PUMP_TOTAL_SUPPLY = 1_000_000_000;
 
 // Cheap, RPC-free pre-filter for "could this address carry a pump.fun bonding
 // curve?". It exists to keep a misconfigured (e.g. USDC) mount, or a probe
-// sweep, from turning into an RPC read per request — not to be the last word on
+// sweep, from turning into an RPC read per request. It is not the last word on
 // what has a curve. Three shapes qualify, all decided from the address alone:
 //
 //   1. pump.fun's own launcher grinds every mint to end in the literal suffix
@@ -41,7 +41,7 @@ export const PUMP_TOTAL_SUPPLY = 1_000_000_000;
 //      PREFIX (src/solana/vanity/brand.js) and never the "pump" suffix. Every
 //      agent token minted that way therefore lands here, and the suffix test
 //      alone used to reject all of them with a 300s-cached `not_a_pump_mint`
-//      404 — the curve read for our own coins could never succeed.
+//      404: the curve read for our own coins could never succeed.
 //   3. Anything on devnet. Nothing grinds a mark on the rehearsal cluster (a
 //      launch from the owner's own wallet mints a plain generated address), so
 //      an address-shape test there rejects real curves and answers nothing.
@@ -50,7 +50,7 @@ export const PUMP_TOTAL_SUPPLY = 1_000_000_000;
 //
 // A known settlement/native token is excluded outright on every cluster: it has
 // no curve and never will. A mainnet mint of an unrecognized shape is NOT
-// settled here — getCurveView asks the platform's own launch registry before it
+// settled here: getCurveView asks the platform's own launch registry before it
 // answers, because a coin launched from a user's wallet has no mark to read.
 export function isPumpMint(mint, network = 'mainnet') {
 	if (typeof mint !== 'string' || NON_CURVE_MINTS.has(mint)) return false;
@@ -72,7 +72,7 @@ const REGISTRY_TTL_MS = 5 * 60_000;
 
 /**
  * Is this mint a coin three.ws itself launched? Reads pump_agent_mints, the
- * platform's own launch directory — the same table /launches and the agent
+ * platform's own launch directory: the same table /launches and the agent
  * profile's launch history render from.
  *
  * A launch from the owner's own wallet (/api/agents/tokens/launch-confirm)
@@ -176,7 +176,7 @@ export function serializeBNs(obj) {
 export async function getCurveView({ mint, network = 'mainnet' }) {
 	// The shape fast-path answers for pump.fun-ground and three.ws-marked mints
 	// without touching anything. An unrecognized mainnet address gets one more
-	// question — is it a coin we launched? — before it is refused, because an
+	// question (is it a coin we launched?) before it is refused, because an
 	// agent token launched from the owner's own wallet carries no mark at all.
 	if (!isPumpMint(mint, network) && !(await isRegisteredPlatformLaunch(mint, network))) {
 		// Negative-cacheable so the CDN edge serves repeat probes without hitting

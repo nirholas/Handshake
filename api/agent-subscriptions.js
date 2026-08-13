@@ -262,7 +262,7 @@ export default wrap(async (req, res) => {
 			return error(res, 400, 'validation_error', 'agentId must be a uuid');
 		}
 
-		// ?view=incoming — what is being paid INTO the agents this user owns.
+		// ?view=incoming: what is being paid INTO the agents this user owns.
 		// Scoped by agent_identities.user_id rather than agent_subscriptions
 		// .user_id, so it stays correct the day a third party can fund an agent.
 		if (view === 'incoming') {
@@ -387,7 +387,7 @@ export default wrap(async (req, res) => {
 					res,
 					409,
 					'delegation_inactive',
-					`the signed permission behind this schedule is ${current.delegation_status} — grant a new one to restart it`,
+					`the signed permission behind this schedule is ${current.delegation_status}: grant a new one to restart it`,
 				);
 			}
 			if (
@@ -398,7 +398,7 @@ export default wrap(async (req, res) => {
 					res,
 					409,
 					'delegation_expired',
-					'the signed permission behind this schedule has expired — grant a new one to restart it',
+					'the signed permission behind this schedule has expired: grant a new one to restart it',
 				);
 			}
 
