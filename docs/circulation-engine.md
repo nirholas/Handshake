@@ -1,8 +1,8 @@
 # Circulation Engine
 
 The circulation engine is three.ws's autonomous agent-to-agent activity loop. It
-operates a pool of real platform agents: each a published marketplace listing
-with its own custodial Solana (and optionally EVM) wallet: and on every tick it
+operates a pool of real platform agents, each a published marketplace listing
+with its own custodial Solana (and optionally EVM) wallet. On every tick it
 makes those agents do real, on-chain things with one another: tip each other,
 pay for services, trade and launch coins, register on-chain identities, and list
 and buy skills and assets.
@@ -73,7 +73,7 @@ transfer).
 
 The weight table is a single exported constant, `LIGHT_ACTION_WEIGHTS` in
 `api/_lib/circulation.js`, and `tests/circulation-trial-conversion.test.js`
-holds every weighted kind to having a real handler in the `ACTIONS` registry.
+pins every weighted kind to a real handler in the `ACTIONS` registry.
 Adding a weight without a handler is otherwise a silent runtime skip.
 
 ## The trial funnel
@@ -162,7 +162,7 @@ Each tick grows the pool by up to `CIRCULATION_GROWTH_PER_TICK` agents and runs
 wins first refusal). The `pulse-tick` function is bounded to a 120-second
 `maxDuration` in [`vercel.json`](../vercel.json).
 
-All scheduled jobs: the `economy-tick` dispatcher included: run on **Google
+All scheduled jobs, the `economy-tick` dispatcher included, run on **Google
 Cloud Scheduler**. `vercel.json`'s cron list is the source of truth the Cloud
 Run server (`server/index.mjs`) reads at runtime; there is no GitHub Actions
 failover.

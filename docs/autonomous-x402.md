@@ -64,7 +64,7 @@ master holds funds.
 | `X402_AUTONOMOUS_MAX_PER_TICK` | `12` | Max calls per cron tick. Raised from the original demo curve (8) to serve more of the ready backlog each tick; per-endpoint cooldowns still gate how often any one endpoint is hit. |
 | `X402_AUTONOMOUS_DAILY_CAP_ATOMIC` | `15000000` ($15) | Daily USDC cap across the whole loop, in 6-decimal atomics. Raised from $5 so the higher per-tick throughput isn't money-starved mid-day; still a hard, env-tunable ceiling enforced per tick. |
 | `X402_VOLUME_BATCH_PER_RUN` | `6` | Volume Bootstrap Loop: endpoints swept per run (cursor advances by this). Default sized so a default-cadence hour covers the full autobuy rotation — trailing-30-day settle activity is what keeps endpoints ranked on the x402 discovery surfaces. |
-| `X402_VOLUME_PER_RUN_CAP_ATOMIC` | `50000` ($0.05) | Volume Bootstrap Loop: self-imposed per-run cap, on top of the daily cap, so one tick can't drain the day. |
+| `X402_VOLUME_PER_RUN_CAP_ATOMIC` | `1100000` ($1.10) | Volume Bootstrap Loop: self-imposed per-run cap, on top of the daily cap, so one tick can't drain the day. Floor set by `RING_SETTLE_DEFAULT_PRICE_ATOMICS` ($1.00): drop below it and the config validator raises `ring_price_exceeds_run_cap` and the ring skips `ring-settle` every tick. Source of truth: [`api/_lib/x402/ring-constants.js`](../api/_lib/x402/ring-constants.js). |
 | `X402_DATAPOINT_SWEEP_BATCH` | `6` | Datapoint Fabric Volume Sweep: distinct datapoint URLs settled per run (cursor advances by this over the ~5k-URL live pool). |
 | `X402_DATAPOINT_SWEEP_CAP_ATOMIC` | `50000` ($0.05) | Datapoint Fabric Volume Sweep: self-imposed per-run cap, on top of the shared daily cap. |
 | `CRON_SECRET` | _(required)_ | Shared secret authorizing cron invocations (Cloud Scheduler). |
@@ -137,7 +137,9 @@ Redis-backed round-robin cursor, reserves the next `X402_VOLUME_BATCH_PER_RUN`
 endpoints from the autobuy rotation in
 [`api/_lib/x402/ring-catalog.js`](../api/_lib/x402/ring-catalog.js) (mapped into
 the shared driver by [`pipelines/volume-shared.js`](../api/_lib/x402/pipelines/volume-shared.js)),
-and pays each one a real on-chain USDC payment ($0.001–$0.01). It respects both
+and pays each one a real on-chain USDC payment at that endpoint's own price
+(from $0.001 for the cheap probes up to $1.00 for `ring-settle`, the rotation's
+largest single call). It respects both
 the loop's daily cap and its own `X402_VOLUME_PER_RUN_CAP_ATOMIC` per-run cap. It
 records every call in `x402_autonomous_log` and upserts the per-endpoint ledger
 `x402_volume_metrics` (call / success / fail counts, total + last USDC spent, last
