@@ -1421,6 +1421,16 @@
 					// a reference to repo source) can never be fetched by this viewer.
 					// Send those to GitHub rather than hash-routing them into a 404.
 					const REPO = 'https://github.com/nirholas/three.ws/blob/main';
+					// docs/internal, docs/ops and docs/security live in the repo but are
+					// deliberately never copied into dist/docs (the copy-static-docs
+					// plugin in vite.config.js filters them out): they name GCP projects,
+					// service accounts and open security findings. A doc that cites one
+					// is citing repo source, so it goes to GitHub like any other source
+					// link. Hash-routing it would send the reader to a doc the site does
+					// not serve: a 404 that only reproduces in production, because dev
+					// serves the whole docs/ tree off disk.
+					const REPO_ONLY_DOCS = new Set(['internal', 'ops', 'security']);
+					const isRepoOnlyDoc = (abs) => REPO_ONLY_DOCS.has(abs.slice('/docs/'.length).split('/')[0]);
 					content.querySelectorAll('a[href]').forEach(a => {
 						if (a.closest('.docs-pagetools')) return;
 						const h = a.getAttribute('href');
@@ -1438,7 +1448,7 @@
 						const section = hashAt === -1 ? '' : h.slice(hashAt + 1);
 						if (target.endsWith('.md')) {
 							const abs = new URL(target, location.origin + '/docs/' + path).pathname;
-							if (abs.startsWith('/docs/')) {
+							if (abs.startsWith('/docs/') && !isRepoOnlyDoc(abs)) {
 								const doc = abs.slice('/docs/'.length).replace(/\.md$/, '');
 								a.href = '#' + doc + (section ? '@' + section : '');
 							} else {
@@ -1457,7 +1467,7 @@
 						// are left alone.
 						if (target.startsWith('.')) {
 							const abs = new URL(target, location.origin + '/docs/' + path).pathname;
-							if (!abs.startsWith('/docs/')) {
+							if (!abs.startsWith('/docs/') || isRepoOnlyDoc(abs)) {
 								a.href = REPO + abs + (section ? '#' + section : '');
 								a.target = '_blank';
 								a.rel = 'noopener';

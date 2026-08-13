@@ -45,7 +45,26 @@ function extractRewriteBody() {
 	throw new Error('unbalanced braces in the link-rewrite callback');
 }
 
-const run = new Function('a', 'path', 'REPO', 'location', extractRewriteBody());
+/**
+ * Pull the shipped declarations the callback closes over (the repo-only doc set
+ * and its predicate) out of the reader too, so the test runs the real helper
+ * instead of a copy of it.
+ */
+function extractRewritePrelude() {
+	const start = SHELL.indexOf('const REPO_ONLY_DOCS');
+	if (start === -1) throw new Error('REPO_ONLY_DOCS not found in docs/index.html');
+	const end = SHELL.indexOf("content.querySelectorAll('a[href]').forEach(a => {", start);
+	if (end === -1) throw new Error('link-rewrite callback not found after REPO_ONLY_DOCS');
+	return SHELL.slice(start, end);
+}
+
+const run = new Function(
+	'a',
+	'path',
+	'REPO',
+	'location',
+	extractRewritePrelude() + extractRewriteBody(),
+);
 
 /** Minimal stand-in for the anchor the reader mutates. */
 function anchor(href) {
@@ -101,6 +120,22 @@ describe('docs reader: link rewriting', () => {
 	it('sends a doc link that escapes /docs/ to GitHub', () => {
 		expect(rewrite('../../packages/sdk/README.md', 'api/forge-x402').href).toBe(
 			`${REPO}/packages/sdk/README.md`,
+		);
+	});
+
+	it('sends a repo-only doc (ops, internal, security) to GitHub', () => {
+		// docs/ops, docs/internal and docs/security are filtered out of dist/docs
+		// by the copy-static-docs plugin, so hash-routing a link to one produces a
+		// 404 that only appears in production: dev serves the whole docs/ tree off
+		// disk. They are repo source as far as the reader is concerned.
+		const a = rewrite('./ops/livepeer-federation.md', 'forge-pipeline');
+		expect(a.href).toBe(`${REPO}/docs/ops/livepeer-federation.md`);
+		expect(a.target).toBe('_blank');
+		expect(rewrite('../internal/notes.md', 'api/forge-x402').href).toBe(
+			`${REPO}/docs/internal/notes.md`,
+		);
+		expect(rewrite('security/review.md', 'start-here').href).toBe(
+			`${REPO}/docs/security/review.md`,
 		);
 	});
 
