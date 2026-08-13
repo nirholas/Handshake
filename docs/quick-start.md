@@ -211,7 +211,7 @@ Copy `.env.example` to `.env` and fill in:
 | `ANTHROPIC_API_KEY` | Required for AI chat | LLM backend. Without it, the agent falls back to pattern matching. |
 | `VITE_PRIVY_APP_ID` | Optional | Wallet auth via [Privy](https://privy.io). Needed for on-chain identity. |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Optional | Distributed rate limiting. Falls back to in-memory without it. |
-| `VITE_CHARACTER_STUDIO_URL` | Optional | Origin where the [Avatar Studio](https://github.com/m3-org/CharacterStudio) avatar builder iframe is hosted. Defaults to `http://localhost:5173` in dev. |
+| `VITE_CHARACTER_STUDIO_URL` | Optional | Override for the origin hosting the [Avatar Studio](https://github.com/m3-org/CharacterStudio) avatar builder iframe. When unset, the app resolves it same-origin to `<origin>/avatar-studio` in both dev and production. Set it only to point at a standalone studio dev server (e.g. `http://localhost:5173`). See [Configuration](./configuration.md). |
 | `AVATURN_API_KEY` | Optional | Photo-to-avatar pipeline via an external photo-to-avatar provider. |
 | `PINATA_JWT` | Optional | IPFS pinning for on-chain agent registration. |
 
@@ -251,8 +251,8 @@ Without this, the browser will block the fetch and the viewer will show a load e
 GLB files over ~50MB will load slowly on typical connections. Use [Draco compression](https://github.com/google/draco) to shrink geometry by 10–15×:
 
 ```bash
-# Via gltf-transform CLI
-npx gltf-transform draco input.glb output.glb
+# Via the glTF-Transform CLI
+npx --yes @gltf-transform/cli draco input.glb output.glb
 ```
 
 ### HTTPS for voice

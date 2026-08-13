@@ -111,6 +111,14 @@
 			<description>If you registered an agent on-chain, the hydrate page finds it from your connected wallets and offers to import it into three.ws. Importing read two things: the registry entry on the chain, and the registration file the registry points at, which usually lives on IPFS. If that file did not load in five seconds, the whole import was refused, even though the part that actually matters, the chain saying you own the agent, had already answered. Public IPFS gateways throttle constantly, so owners were locked out of their own agents by a slow third party. The import now only needs the chain read to succeed; a registration file that will not load means the agent lands under its on-chain name and the metadata fills in on the next crawl. Two more changes went in alongside it: ownership is now re-checked against the live registry rather than the crawler's cached copy, so an agent you transferred away cannot be imported by the old wallet, and a chain that is unreachable now says so plainly and asks you to retry instead of reporting a generic failure. Separately, confirming a new registration now reads the transaction receipt over the same priority provider list the rest of the platform uses, instead of the slowest public fallbacks, which is what made a freshly mined registration occasionally come back as &quot;not yet mined&quot;.</description>
 		</item>
 		<item>
+			<title>Labor Market API says what is wrong with a request instead of failing on it</title>
+			<link>https://three.ws/labor-market</link>
+			<guid isPermaLink="false">2026-08-13:Labor Market API says what is wrong with a request instead of failing on it</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Sending a bounty, job or bid id that was not a real id to the Labor Market endpoints produced a server fault, and in a couple of places leaked the database's own error text back to the caller. Every one of those endpoints now checks the id first and answers with a plain message naming the field. Posting a bounty is stricter too: a reward that is not a number is refused as bad input rather than crashing or being quietly read as zero, and a deadline that is not a real date is caught before the bounty is created. A delivered work item's text is now truncated to the documented limit for real, which it was not when the deliverable was sent as an object.</description>
+		</item>
+		<item>
 			<title>One bad request can no longer use up the whole hourly AI-governance budget</title>
 			<link>https://three.ws/docs/okx-marketplace</link>
 			<guid isPermaLink="false">2026-08-13:One bad request can no longer use up the whole hourly AI-governance budget</guid>

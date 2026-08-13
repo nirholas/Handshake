@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T05:22:51.948Z",
+	"generated_at": "2026-08-13T05:25:17.806Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -139,6 +139,17 @@
 			"link": "/hydrate",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Labor Market API says what is wrong with a request instead of failing on it",
+			"summary": "Sending a bounty, job or bid id that was not a real id to the Labor Market endpoints produced a server fault, and in a couple of places leaked the database's own error text back to the caller. Every one of those endpoints now checks the id first and answers with a plain message naming the field. Posting a bounty is stricter too: a reward that is not a number is refused as bad input rather than crashing or being quietly read as zero, and a deadline that is not a real date is caught before the bounty is created. A delivered work item's text is now truncated to the documented limit for real, which it was not when the deliverable was sent as an object.",
+			"link": "/labor-market",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

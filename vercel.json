@@ -663,6 +663,10 @@
 			"dest": "/reasoning-ledger.html"
 		},
 		{
+			"src": "/reasoning-ledger/?",
+			"dest": "/reasoning-ledger.html"
+		},
+		{
 			"src": "/api/agi/state",
 			"dest": "/api/agi/state"
 		},

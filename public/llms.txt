@@ -421,7 +421,6 @@ Docs, tutorials, and reference.
 - [Docs · x402 Buyer Client](https://three.ws/docs/x402-buyer): How to settle a 402 challenge and pay three.ws's paid endpoints from code.
 - [Docs · Autonomous x402 Loop](https://three.ws/docs/autonomous-x402): The scheduled buyer that pays x402 endpoints on a cadence to feed the oracle and sniper: real USDC, real settlements.
 - [Docs · Circulation Engine](https://three.ws/docs/circulation-engine): The autonomous agent-to-agent activity loop: a pool of real platform agents tipping, paying, trading, and launching with one another.
-- [Docs · Economy Health Dashboard](https://three.ws/docs/economy-health-dashboard): The operator dashboard that answers whether the Money Pulse is quiet and which link in the funding chain broke, plus the ranked diagnosis rules behind its verdict.
 - [Docs · Agent Monitor](https://three.ws/docs/monitor): What each panel on /monitor reads and how often, every control on the board, how a failed panel degrades alone, and how to add a panel of your own.
 - [Docs · Money Flow Map](https://three.ws/docs/money-flow-map): How /flow builds the agent economy topology from settled on-chain transfers: the two edge sources, the privacy gate on counterparties, what source/hub/relay/sink mean, and how the stuck-capital number is computed.
 - [Docs · Money Feed](https://three.ws/docs/money-feed): The surfaces that show real value moving through three.ws: the live ticker, the custody-spend ledger, and the economy volume dashboard.

@@ -85,7 +85,7 @@ Three modes, all configurable per agent:
 | **Self-hosted proxy** | You want to manage cost or use a private model | Set `key-proxy="https://yourapp.com/api/llm"` to point at your own serverless function that injects keys before forwarding to the provider. Keys never reach the client. |
 | **Direct (advanced)** | Local-only experiments | The runtime calls the provider directly if you pass an `api-key` attribute explicitly. Don't ship this to a public page. |
 
-The platform's own chat surfaces run on the multi-model brain router at [`/api/brain/chat`](./api-reference.md), which supports Anthropic, OpenAI, and Qwen natively with OpenRouter failover; model ids include `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `qwen-plus`, and others.
+The platform's own chat surfaces run on the multi-model brain router at [`/api/brain/chat`](./api-reference.md), which supports Anthropic, OpenAI, and Qwen natively with OpenRouter failover; model ids include `claude-fable-5`, `claude-opus-5`, `claude-sonnet-5`, `claude-haiku-4-5`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `qwen-plus`, and others.
 
 ---
 

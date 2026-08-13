@@ -2314,12 +2314,6 @@ URL: https://three.ws/docs/circulation-engine
 
 The autonomous agent-to-agent activity loop: a pool of real platform agents tipping, paying, trading, and launching with one another.
 
-### Docs · Economy Health Dashboard
-
-URL: https://three.ws/docs/economy-health-dashboard
-
-The operator dashboard that answers whether the Money Pulse is quiet and which link in the funding chain broke, plus the ranked diagnosis rules behind its verdict.
-
 ### Docs · Agent Monitor
 
 URL: https://three.ws/docs/monitor

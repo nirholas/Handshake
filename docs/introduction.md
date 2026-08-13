@@ -67,15 +67,20 @@ A skill is a modular capability bundle installed into an agent. Each skill has a
 
 ### Widget
 
-A widget is a pre-built, embeddable view built on top of the agent and viewer primitives. Five widget types ship with the platform:
+A widget is a pre-built, embeddable view built on top of the agent and viewer primitives. Ten widget types ship with the platform:
 
 | Widget | Description |
 |---|---|
-| **Turntable** | Auto-rotating 3D model viewer, no agent runtime |
+| **Turntable Showcase** | Auto-rotating 3D model viewer, no agent runtime |
 | **Animation Gallery** | Displays and plays named animations from a GLB |
 | **Talking Agent** | Full agent with avatar, voice, and chat UI |
 | **ERC-8004 Passport** | On-chain identity card for a registered agent |
 | **Hotspot Tour** | Annotated model with interactive camera waypoints |
+| **Pump.fun Live Feed** | A Solana agent narrating live pump.fun claims and graduations |
+| **Smart Money Feed** | Live buy/sell activity from KOL and whale wallets for one token |
+| **Live Trades Canvas** | Particle visualization of live buy/sell trades for one token |
+| **Bonding Curve** | Live graduation progress and bonding-curve climb for a token |
+| **Walking Avatar** | A roaming avatar visitors steer around your page by joystick or keyboard |
 
 Widgets can be embedded via iframe with a single line of HTML from Widget Studio at [https://three.ws/studio](https://three.ws/studio).
 
@@ -92,7 +97,7 @@ A minimal manifest looks like:
   "body": { "uri": "./body.glb", "format": "gltf-binary" },
   "brain": {
     "provider": "anthropic",
-    "model": "claude-sonnet-4-6",
+    "model": "claude-sonnet-5",
     "instructions": "./instructions.md"
   }
 }
@@ -191,7 +196,7 @@ To add an AI brain:
 ```html
 <agent-3d
   body="https://three.ws/avatars/michelle.glb"
-  brain="claude-sonnet-4-6"
+  brain="claude-sonnet-5"
   key-proxy="/api/llm"
   instructions="You are Aria, a helpful product guide."
   voice
@@ -210,7 +215,7 @@ Once you have the basics working, the following guides go deeper:
 
 - **[Quick Start](./quick-start.md)** — step-by-step from zero to a talking agent
 - **[Embedding Guide](./embedding.md)** — all attributes, modes, events, and the JS API
-- **[Widget Types](./widgets.md)** — Turntable, Animation Gallery, Talking Agent, Passport, Hotspot Tour
+- **[Widget Types](./widgets.md)**, the five general-purpose widgets in depth (the other five live in [Widget Studio](https://three.ws/studio))
 - **[Agent System Overview](./agent-system.md)** — runtime, skill registry, memory, emotion system
 - **[Manifest Reference](./agent-manifest.md)** — full JSON schema with examples
 - **[REST API](./api-reference.md)** and **[JavaScript API](./js-api.md)** — backend and in-browser surfaces

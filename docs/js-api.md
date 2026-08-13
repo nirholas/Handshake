@@ -34,7 +34,7 @@ new App(el: Element, location: Location)
 | `el`       | `Element`  | Root DOM element (typically `document.body`)       |
 | `location` | `Location` | Browser location object for hash parameter parsing |
 
-Parses the following URL hash parameters via `query-string`:
+Parses the URL hash with `URLSearchParams`. The load-bearing parameters:
 
 | Hash Param       | Type      | Default             | Description                                       |
 | ---------------- | --------- | ------------------- | ------------------------------------------------- |
@@ -42,6 +42,13 @@ Parses the following URL hash parameters via `query-string`:
 | `kiosk`          | `boolean` | `false`             | Hides header; intended for iframe embedding       |
 | `preset`         | `string`  | `''`                | `'assetgenerator'` activates asset generator mode |
 | `cameraPosition` | `string`  | `null`              | Comma-separated `x,y,z` camera coordinates        |
+| `brain`          | `string`  | `'none'`            | Brain/model id for the in-page agent              |
+| `proxyURL`       | `string`  | `''`                | Key-proxy endpoint the brain calls through        |
+| `agent`          | `string`  | `''`                | Agent id to load (legacy hash embed mode)         |
+| `widget`         | `string`  | `''`                | Widget id to render instead of the editor         |
+
+`src/app.js` reads more (embed overrides such as `noChat`, `noControls`,
+`accent`, `bg`); read the `this.options` block there for the full set.
 
 ### Properties
 
@@ -78,7 +85,7 @@ Processes a fileset from a drag-and-drop or file input event.
 1. Iterates the `fileMap` to find the root `.gltf` or `.glb` file
 2. Extracts the `rootPath` (directory portion of the file path)
 3. Calls `this.view(rootFile, rootPath, fileMap)`
-4. Shows an alert if no `.gltf`/`.glb` file is found
+4. Reports through `onError()` if no `.gltf`/`.glb` file is found
 
 #### `view(rootFile: File | string, rootPath: string, fileMap: Map<string, File>)`
 
@@ -100,13 +107,10 @@ Flow:
 
 #### `onError(error: Error | string)`
 
-Normalizes and displays an error message via `window.alert()`. Special case handling:
-
-| Pattern                         | Displayed Message                 |
-| ------------------------------- | --------------------------------- |
-| Contains `ProgressEvent`        | "Unable to retrieve this file..." |
-| Contains `Unexpected token`     | "Unable to parse file content..." |
-| `error.target instanceof Image` | "Missing texture: {filename}"     |
+Console-only diagnostic logging. The user-facing error surface is the
+viewer-status overlay driven by the `LOAD_END` protocol payload (see
+`_classifyLoadError` in `src/app.js`), which turns a failed load into a readable
+message with a recovery action instead of a browser dialog.
 
 #### `showSpinner()` / `hideSpinner()`
 
@@ -218,7 +222,7 @@ Main render loop callback. Called every frame via `requestAnimationFrame`.
 - Advances AnimationMixer by delta time
 - Calls `this.render()`
 
-#### `render()`
+#### `render(deltaTime: number = 0)`
 
 Renders the main scene and the axes helper mini-viewport.
 
@@ -226,15 +230,16 @@ Renders the main scene and the axes helper mini-viewport.
 
 Handles window resize. Updates camera aspect ratio, renderer size, and axes renderer size.
 
-#### `load(url: string, rootPath: string, assetMap: Map<string, File>) → Promise<GLTF>`
+#### `load(url: string, rootPath: string, assetMap: Map<string, File>, onProgress?: (xhr: ProgressEvent) => void) → Promise<GLTF>`
 
 Loads a glTF/GLB model.
 
-| Parameter  | Type                | Description                                  |
-| ---------- | ------------------- | -------------------------------------------- |
-| `url`      | `string`            | URL to the model file (or blob URL)          |
-| `rootPath` | `string`            | Directory prefix for resolving relative URIs |
-| `assetMap` | `Map<string, File>` | Dropped files for local resource resolution  |
+| Parameter    | Type                | Description                                  |
+| ------------ | ------------------- | -------------------------------------------- |
+| `url`        | `string`            | URL to the model file (or blob URL)          |
+| `rootPath`   | `string`            | Directory prefix for resolving relative URIs |
+| `assetMap`   | `Map<string, File>` | Dropped files for local resource resolution  |
+| `onProgress` | `function`          | Optional XHR progress callback (`xhr.total` only when the server sends `Content-Length`) |
 
 Returns a Promise that resolves with the parsed glTF object. The method:
 
@@ -254,9 +259,9 @@ Adds a loaded model to the scene.
 5. Saves initial OrbitControls state
 6. Detects embedded lights (sets `state.punctualLights = false` if found)
 7. Sets up animation clips via `setClips()`
-8. Updates lighting, GUI, environment, and display
-9. Prints the scene graph to the console
-10. Exports the scene to `window.VIEWER.scene`
+8. Updates lighting, the shadow catcher, GUI, environment, display, model info, and annotations
+9. Exports the scene to `window.VIEWER.scene`
+10. Dispatches a `viewer:model-loaded` `CustomEvent` on `window` so overlays can re-read the new rig
 
 #### `setClips(clips: THREE.AnimationClip[])`
 
@@ -346,13 +351,11 @@ Rebuilds the dynamic GUI folders (Animation, Morph Targets, Cameras) based on th
 
 Removes the current model from the scene and disposes all resources:
 
-- Disposes all geometries
+- Detaches the animation manager and removes the animation panel, model-info
+  overlay, and annotation elements
+- Disposes BVH bounds trees, then all geometries
 - Disposes all textures (except `envMap`)
 - Disposes all materials
-
-#### `printGraph(node: THREE.Object3D)`
-
-Recursively prints the scene graph to the console using nested `console.group()` calls. Each line shows `<NodeType> name`.
 
 ---
 
@@ -360,25 +363,24 @@ Recursively prints the scene graph to the console using nested `console.group()`
 
 **File:** `src/validator.js`
 
-Integrates the [Khronos glTF-Validator](https://github.com/KhronosGroup/glTF-Validator) and renders validation results.
+Integrates the [Khronos glTF-Validator](https://github.com/KhronosGroup/glTF-Validator) and normalizes its report into the shape the report UI renders.
 
 ### Constructor
 
 ```javascript
-new Validator(el: Element)
+new Validator(el: Element | null)
 ```
 
-| Parameter | Type      | Description                                   |
-| --------- | --------- | --------------------------------------------- |
-| `el`      | `Element` | Root DOM element for appending the toggle bar |
+| Parameter | Type               | Description                                        |
+| --------- | ------------------ | -------------------------------------------------- |
+| `el`      | `Element \| null`  | Root DOM element (`null` on the `/validation` page) |
 
 ### Properties
 
-| Property   | Type             | Description                  |
-| ---------- | ---------------- | ---------------------------- |
-| `el`       | `Element`        | Root DOM element             |
-| `report`   | `object \| null` | Last validation report       |
-| `toggleEl` | `Element`        | Container for the toggle bar |
+| Property | Type             | Description            |
+| -------- | ---------------- | ---------------------- |
+| `el`     | `Element`        | Root DOM element       |
+| `report` | `object \| null` | Last validation report |
 
 ### Methods
 
@@ -395,7 +397,7 @@ Runs the glTF validator against a loaded model.
 
 Flow:
 
-1. Fetches the model URL as an `ArrayBuffer`
+1. Reuses the `ArrayBuffer` `GLTFLoader` already cached for that URL, or fetches it
 2. Calls `validateBytes()` from `gltf-validator`
 3. Provides `externalResourceFunction` for resolving external resources
 4. Passes the result to `setReport()`
@@ -411,14 +413,18 @@ Resolves an external resource (texture, bin) referenced by the glTF during valid
 
 #### `setReport(report: object, response: object)`
 
-Processes the raw validator report:
+Normalizes the raw validator report and stores it on `this.report`. Via the
+internal `_processReport()`:
 
 1. Extracts the generator string from `report.info.generator`
 2. Determines `maxSeverity` (lowest severity index with > 0 messages)
 3. Splits messages into `errors[]`, `warnings[]`, `infos[]`, `hints[]`
 4. Aggregates high-frequency messages (`ACCESSOR_NON_UNIT`, `ACCESSOR_ANIMATION_INPUT_NON_INCREASING`)
-5. Extracts `asset.extras` metadata (author, license, source, title) from the GLTF response
-6. Renders `ValidatorToggle` HTML into the toggle element
+
+Then `setResponse()` extracts `asset.extras` metadata (author, license, source,
+title) from the GLTF response. Rendering is the caller's job: `App` watches the
+resulting `.validator-toggle` node and re-emits the counts as a `VALIDATE`
+protocol action.
 
 #### `setResponse(response: object)`
 
@@ -429,23 +435,17 @@ Extracts metadata from the glTF `asset.extras` field:
 | `author`  | HTML-escaped then linkified |
 | `license` | HTML-escaped then linkified |
 | `source`  | HTML-escaped then linkified |
-| `title`   | Stored as-is                |
+| `title`   | HTML-escaped                |
 
 #### `setReportException(e: Error)`
 
-Called when validation fails. Sets report to `null` and renders an error message in the toggle.
-
-#### `bindListeners()`
-
-Binds click event on the toggle bar to open the lightbox report, and the close button to dismiss it.
-
-#### `showToggle()` / `hideToggle()`
-
-Add/remove the `hidden` CSS class on the toggle element.
+Called when validation fails. Clears `this.report` so no stale report can be
+shown for the new model.
 
 #### `showLightbox()`
 
-Opens a new browser tab with the full validation report HTML (rendered via `ValidatorReport` component).
+Opens a new browser tab with the full validation report HTML (rendered via the
+`ValidatorReport` component), including a downloadable JSON copy of the report.
 
 ---
 
@@ -587,7 +587,11 @@ The app exports debugging state to `window.VIEWER`:
 | `window.VIEWER.scene` | `THREE.Object3D` | `Viewer.setContent()`        | Current model scene graph              |
 | `window.VIEWER.json`  | `GLTF`           | `Viewer.load()`              | Raw parsed glTF object from GLTFLoader |
 
-The WebGL renderer is also available at `window.renderer`.
+When the agent layer is mounted, `App` also publishes `agent_protocol`,
+`agent_identity`, `agent_skills`, and `agent_runtime` on the same object.
+
+The WebGL renderer is also available at `window.renderer` (nulled on viewer
+dispose).
 
 ### Console Usage Examples
 

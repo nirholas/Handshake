@@ -21,7 +21,7 @@ you sign is exactly the amount that's verified. Live per-tier, per-asset
 pricing: `GET https://three.ws/api/premium/plans`.
 
 **What every tier unlocks today:** unmetered search on the
-[660k-article crypto-news archive](/markets/archive)
+[crypto-news archive](/markets/archive)
 (`GET /api/news/archive`) at your tier's rate limit — versus the free tier's
 60 searches/day and the $0.001-per-search x402 rail. Corpus stats, month
 index, and trending are free for everyone regardless. More premium surfaces

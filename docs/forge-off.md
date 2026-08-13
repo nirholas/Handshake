@@ -1,4 +1,4 @@
-# Forge-Off — community voting on the Forge
+# Forge-Off: community voting on the Forge
 
 Forge-Off turns the passive "Fresh from the Forge" strip on [/forge](/forge)
 into a live, competitive board. Every public creation can be upvoted, the strip

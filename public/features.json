@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T04:53:25.058Z",
+	"generated_at": "2026-08-13T05:25:17.797Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3802,16 +3802,6 @@
 					"title": "Docs · Circulation Engine",
 					"description": "The autonomous agent-to-agent activity loop: a pool of real platform agents tipping, paying, trading, and launching with one another.",
 					"added": "2026-06-29",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false
-				},
-				{
-					"path": "/docs/economy-health-dashboard",
-					"title": "Docs · Economy Health Dashboard",
-					"description": "The operator dashboard that answers whether the Money Pulse is quiet and which link in the funding chain broke, plus the ranked diagnosis rules behind its verdict.",
-					"added": "2026-07-30",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

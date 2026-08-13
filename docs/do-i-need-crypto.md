@@ -47,7 +47,7 @@ three.ws has a set of on-chain features that are entirely optional. They exist f
 
 - **Outlive the platform** — register on Base via ERC-8004 and your agent's identity lives on a blockchain, not just on three.ws servers
 - **Be verifiable** — anyone can check the agent's action history without trusting three.ws
-- **Have a stable address** — `agent://base/42` works anywhere that speaks the protocol
+- **Have a stable address** — `agent://8453/42` (chain id, then agent id) works anywhere that speaks the protocol
 - **Hold a wallet** — agents can receive and send USDC autonomously via x402
 
 If you don't need any of that, you can ignore it entirely. A basic agent — avatar, voice, embedded chat — works without touching any blockchain.

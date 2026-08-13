@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Labor Market API says what is wrong with a request instead of failing on it",
+			"summary": "Sending a bounty, job or bid id that was not a real id to the Labor Market endpoints produced a server fault, and in a couple of places leaked the database's own error text back to the caller. Every one of those endpoints now checks the id first and answers with a plain message naming the field. Posting a bounty is stricter too: a reward that is not a number is refused as bad input rather than crashing or being quietly read as zero, and a deadline that is not a real date is caught before the bounty is created. A delivered work item's text is now truncated to the documented limit for real, which it was not when the deliverable was sent as an object.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/labor-market"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Three trading and fact-check guides now match what the code actually does",
 			"summary": "The Smart Money Radar guide listed the rules that earn a wallet its label but was missing the one added in August: a wallet with a sustained edge over a real sample (8 or more judged coins at a 35 percent or better win rate) counts as smart money even without a 70+ score, which is how most proven wallets qualify today. The Fact Check guide still described the old verdict math, so a reader computing an expected verdict by hand would get the wrong answer: the verdict is now read off the sources that actually took a stance, needs 70 percent agreement rather than 65, calls a single stance in otherwise-silent evidence insufficient, and scores confidence by how much of the evidence engaged the claim. That page also now lists the Google-grounded search rung at the top of its source chain and shows the real number of searches a check runs. The Guardian console guide said only a beneficiary can arm an inheritance when a guardian can too.",
 			"tags": [

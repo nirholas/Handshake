@@ -1077,7 +1077,7 @@ async function harvest(page, { recorders, response, bootMs, platformOrigin, scre
 
 /** Navigation gets its own timeout; a page that will not load is not worth the
  *  rest of the budget. */
-const NAV_TIMEOUT_MS = 25000;
+const NAV_TIMEOUT_MS = 20000;
 /** Per-step ceilings, each also clamped to whatever remains of the deadline. */
 const PROBE_MAX_MS = 8000;
 const AGENT_LOOKUP_MAX_MS = 6000;
@@ -1085,10 +1085,11 @@ const PAINT_MAX_MS = 8000;
 const SCREENSHOT_MAX_MS = 8000;
 /** What the harvest steps above may add on top of navigation and the boot
  *  budget, and the hard ceiling on one page's total lifetime. The ceiling is the
- *  number that matters: it keeps the worst case inside the handler's
- *  `maxDuration = 60`, whatever budget the caller asked for. */
-const HARVEST_GRACE_MS = 15000;
-const MAX_PAGE_LIFETIME_MS = 50000;
+ *  number that matters: it keeps the inspection inside the handler's
+ *  `maxDuration = 60` at the largest budget a caller can ask for, leaving room
+ *  for the one-off chromium boot a cold instance pays on its first request. */
+const HARVEST_GRACE_MS = 12000;
+const MAX_PAGE_LIFETIME_MS = 40000;
 
 function pageDeadline(budgetMs) {
 	return Math.min(MAX_PAGE_LIFETIME_MS, NAV_TIMEOUT_MS + budgetMs + HARVEST_GRACE_MS);

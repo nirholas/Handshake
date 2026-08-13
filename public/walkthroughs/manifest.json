@@ -1,0 +1,442 @@
+{
+	"generatedAt": "2026-08-13T05:22:07.081Z",
+	"baseUrl": "https://three.ws",
+	"viewport": {
+		"width": 1440,
+		"height": 900
+	},
+	"version": 1,
+	"walkthroughs": [
+		{
+			"slug": "forge-your-first-3d-model",
+			"title": "Forge your first 3D model",
+			"outcome": "A textured, downloadable GLB from one sentence of text.",
+			"blurb": "The free text-to-3D lane, end to end: what to type, which engine to pick, and where the finished model lands.",
+			"level": "beginner",
+			"minutes": 3,
+			"accent": "#8b5cf6",
+			"cta": {
+				"label": "Open Forge",
+				"href": "/forge"
+			},
+			"related": [
+				{
+					"label": "Text to 3D tutorial",
+					"href": "/tutorials/text-to-3d"
+				}
+			],
+			"steps": [
+				{
+					"path": "/forge",
+					"focus": "#composer",
+					"title": "One box is the whole product",
+					"body": "Forge opens on a single composer. Describe an object, upload photos of a real one, or scribble a sketch. Every lane below leads to the same place: a textured GLB you own.",
+					"tip": "No account and no wallet are needed to generate. Sign in only when you want the model saved to your library.",
+					"shot": "/walkthroughs/shots/forge-your-first-3d-model-01.jpg",
+					"hotspot": {
+						"x": 0.04,
+						"y": 0.14342,
+						"w": 0.30556,
+						"h": 0.7128
+					},
+					"pageTitle": "Forge · Text & Image → 3D · three.ws"
+				},
+				{
+					"path": "/forge",
+					"focus": "#text-pane",
+					"before": [
+						{
+							"fill": [
+								"#prompt",
+								"a brass compass, weathered, cracked glass"
+							]
+						},
+						{
+							"wait": 500
+						}
+					],
+					"title": "Name one object and one material",
+					"body": "The prompt coach under the box is live: it reads what you typed and tells you what is missing. One object plus one material beats a paragraph of adjectives every time.",
+					"tip": "Stuck? Surprise me writes a known-good prompt, and Enhance rewrites yours without changing the subject.",
+					"shot": "/walkthroughs/shots/forge-your-first-3d-model-02.jpg",
+					"hotspot": {
+						"x": 0.0518,
+						"y": 0.23193,
+						"w": 0.28194,
+						"h": 0.20675
+					},
+					"pageTitle": "Forge · Text & Image → 3D · three.ws"
+				},
+				{
+					"path": "/forge",
+					"focus": "#engine",
+					"title": "Pick an engine, or just take the free one",
+					"body": "Engines are labelled with what they cost you. The ones tagged FREE need no API key and no card. Busy and unavailable states are live, so you are never sent at a lane that cannot answer.",
+					"tip": "Quality steps from Draft to High. High is a $THREE holder perk, and the note under the picker links straight to it.",
+					"shot": "/walkthroughs/shots/forge-your-first-3d-model-03.jpg",
+					"hotspot": {
+						"x": 0.0518,
+						"y": 0.49875,
+						"w": 0.28194,
+						"h": 0.06049
+					},
+					"pageTitle": "Forge · Text & Image → 3D · three.ws"
+				},
+				{
+					"path": "/forge",
+					"focus": "#generate",
+					"title": "Generate, then watch it build",
+					"body": "One button. The stage on the right renders a preview image first, then builds the mesh, so you can bail out early if the silhouette is wrong instead of waiting on a full generation.",
+					"action": {
+						"label": "Try it on the real page",
+						"href": "/forge"
+					},
+					"shot": "/walkthroughs/shots/forge-your-first-3d-model-04.jpg",
+					"hotspot": {
+						"x": 0.0518,
+						"y": 0.69467,
+						"w": 0.28194,
+						"h": 0.05635
+					},
+					"pageTitle": "Forge · Text & Image → 3D · three.ws"
+				},
+				{
+					"path": "/forge",
+					"focus": "#showcase",
+					"title": "Everything lands in the gallery",
+					"body": "Finished models drop into Fresh from the Forge alongside everyone else's. Each card opens the model in 3D, and anything public can be remixed as the starting point for your next one.",
+					"action": {
+						"label": "Browse the gallery",
+						"href": "/creations"
+					},
+					"shot": "/walkthroughs/shots/forge-your-first-3d-model-05.jpg",
+					"hotspot": {
+						"x": 0.37463,
+						"y": 0,
+						"w": 0.58537,
+						"h": 1
+					},
+					"pageTitle": "Forge · Text & Image → 3D · three.ws"
+				}
+			],
+			"cover": "/walkthroughs/shots/forge-your-first-3d-model-01.jpg"
+		},
+		{
+			"slug": "build-your-first-agent",
+			"title": "Build your first agent",
+			"outcome": "A named agent with a body, a personality, and a shareable URL.",
+			"blurb": "Five steps, and the first one fills in the other four for you. Build the whole thing before you ever sign in.",
+			"level": "beginner",
+			"minutes": 4,
+			"accent": "#22d3ee",
+			"cta": {
+				"label": "Open the agent builder",
+				"href": "/create-agent"
+			},
+			"related": [
+				{
+					"label": "Getting started tutorial",
+					"href": "/tutorials/getting-started"
+				}
+			],
+			"steps": [
+				{
+					"path": "/create-agent",
+					"focus": "#stepper",
+					"title": "Five steps, always visible",
+					"body": "Basics, model, skills, personality, review. The stepper is a map, not a cage: every step you have already reached stays clickable, so you can jump back without losing what you typed.",
+					"tip": "Progress is kept locally as you go. Closing the tab does not cost you the agent.",
+					"shot": "/walkthroughs/shots/build-your-first-agent-01.jpg",
+					"hotspot": {
+						"x": 0.25,
+						"y": 0.2921,
+						"w": 0.5,
+						"h": 0.02889
+					},
+					"pageTitle": "Create an agent · three.ws"
+				},
+				{
+					"path": "/create-agent",
+					"focus": "#magic-input",
+					"before": [
+						{
+							"fill": [
+								"#magic-input",
+								"A calm meditation coach who runs short breathing sessions and speaks in a warm, unhurried voice"
+							]
+						},
+						{
+							"wait": 500
+						}
+					],
+					"title": "Describe it once in plain English",
+					"body": "One sentence into this box and Generate fills the name, the description, the skill selection, and the personality sliders across all five steps. The wizard becomes a review pass instead of a form.",
+					"tip": "Everything it writes stays editable. It is a first draft, not a decision.",
+					"shot": "/walkthroughs/shots/build-your-first-agent-02.jpg",
+					"hotspot": {
+						"x": 0.25972,
+						"y": 0.46481,
+						"w": 0.38542,
+						"h": 0.07
+					},
+					"pageTitle": "Create an agent · three.ws"
+				},
+				{
+					"path": "/create-agent",
+					"focus": "#magic-chips",
+					"title": "Or start from a known-good shape",
+					"body": "The chips are complete starting points, not placeholder text: meditation coach, market analyst, 3D art critic, onboarding host. Surprise me picks one you would not have thought of.",
+					"tip": "Pick a chip, then edit one thing. That is usually a better agent than a blank start.",
+					"shot": "/walkthroughs/shots/build-your-first-agent-03.jpg",
+					"hotspot": {
+						"x": 0.25972,
+						"y": 0.48259,
+						"w": 0.48056,
+						"h": 0.03556
+					},
+					"pageTitle": "Create an agent · three.ws"
+				},
+				{
+					"path": "/create-agent",
+					"focus": "#wizard",
+					"title": "The form is short on purpose",
+					"body": "Each step asks for the minimum it genuinely needs and offers a sensible default for the rest. You can walk from the first step to the review screen without typing anything else.",
+					"action": {
+						"label": "Build one now",
+						"href": "/create-agent"
+					},
+					"shot": "/walkthroughs/shots/build-your-first-agent-04.jpg",
+					"hotspot": {
+						"x": 0.22569,
+						"y": 0.00877,
+						"w": 0.54861,
+						"h": 0.96962
+					},
+					"pageTitle": "Create an agent · three.ws"
+				},
+				{
+					"path": "/create-agent",
+					"focus": "#build-free-note",
+					"title": "Sign in only when you ship",
+					"body": "Building costs nothing and needs no account. Signing in is what turns the draft into a hosted agent with its own page, its own URL, and a wallet it can be paid through.",
+					"action": {
+						"label": "See a live agent page",
+						"href": "/agents"
+					},
+					"shot": "/walkthroughs/shots/build-your-first-agent-05.jpg",
+					"hotspot": {
+						"x": 0.225,
+						"y": 0.25417,
+						"w": 0.33403,
+						"h": 0.03793
+					},
+					"pageTitle": "Create an agent · three.ws"
+				}
+			],
+			"cover": "/walkthroughs/shots/build-your-first-agent-01.jpg"
+		},
+		{
+			"slug": "embed-a-3d-avatar",
+			"title": "Embed a 3D avatar on your site",
+			"outcome": "One script tag that puts a live, animated avatar on any page you control.",
+			"blurb": "Configure it by clicking, watch the code rewrite itself, then copy the tag. No build step, no framework.",
+			"level": "beginner",
+			"minutes": 3,
+			"accent": "#f59e0b",
+			"cta": {
+				"label": "Open the playground",
+				"href": "/#embed"
+			},
+			"related": [
+				{
+					"label": "Add a 3D assistant tutorial",
+					"href": "/tutorials/add-a-3d-assistant"
+				}
+			],
+			"steps": [
+				{
+					"path": "/",
+					"focus": "#embed",
+					"title": "The playground is the documentation",
+					"body": "Editor on the left, live avatar on the right. It is not a video or a screenshot of an IDE: the preview is the real web component running the exact code in the box.",
+					"tip": "HTML, React, and Vue tabs emit the same component with the syntax each ecosystem expects.",
+					"shot": "/walkthroughs/shots/embed-a-3d-avatar-01.jpg",
+					"hotspot": {
+						"x": 0,
+						"y": 0,
+						"w": 1,
+						"h": 1
+					},
+					"pageTitle": "three.ws — The 3D Agent Layer of the Internet"
+				},
+				{
+					"path": "/",
+					"focus": "#pg-avatars",
+					"title": "Pick a body by clicking one",
+					"body": "Each swatch swaps the avatar in the preview and rewrites the src attribute in the code. These are the same hosted GLBs your production embed will load.",
+					"tip": "Any model you forge or upload can go here too. Swap the src for your own URL.",
+					"shot": "/walkthroughs/shots/embed-a-3d-avatar-02.jpg",
+					"hotspot": {
+						"x": 0.12904,
+						"y": 0.4804,
+						"w": 0.17914,
+						"h": 0.04
+					},
+					"pageTitle": "three.ws — The 3D Agent Layer of the Internet"
+				},
+				{
+					"path": "/",
+					"focus": "#pg-option-chips",
+					"title": "Toggle the behaviour, not the CSS",
+					"body": "Responsive sizing, a nameplate, the chat dock, eager loading. Each chip is one attribute on the tag, so what you turn on here is exactly what ships.",
+					"tip": "Background chips cover the common cases: transparent over your hero, or a dark or light plate.",
+					"shot": "/walkthroughs/shots/embed-a-3d-avatar-03.jpg",
+					"hotspot": {
+						"x": 0.70486,
+						"y": 0.48707,
+						"w": 0.20556,
+						"h": 0.02667
+					},
+					"pageTitle": "three.ws — The 3D Agent Layer of the Internet"
+				},
+				{
+					"path": "/",
+					"focus": "#pg-editor",
+					"title": "The code is editable, both ways",
+					"body": "Clicking a chip writes into the editor, and typing in the editor updates the preview. Break it on purpose to see how it fails before you paste it into your own page.",
+					"action": {
+						"label": "Read the embed docs",
+						"href": "/docs/embed"
+					},
+					"shot": "/walkthroughs/shots/embed-a-3d-avatar-04.jpg",
+					"hotspot": {
+						"x": 0.07847,
+						"y": 0.2549,
+						"w": 0.42118,
+						"h": 0.49106
+					},
+					"pageTitle": "three.ws — The 3D Agent Layer of the Internet"
+				},
+				{
+					"path": "/",
+					"focus": "#pg-copy",
+					"title": "Copy the tag and you are done",
+					"body": "One script tag and one element. It works in a static HTML file, a WordPress theme, a Shopify template, or a React app, because it is a web component and not a framework plugin.",
+					"action": {
+						"label": "Get the SDK",
+						"href": "/avatar-sdk"
+					},
+					"shot": "/walkthroughs/shots/embed-a-3d-avatar-05.jpg",
+					"hotspot": {
+						"x": 0.86972,
+						"y": 0.48484,
+						"w": 0.0407,
+						"h": 0.03
+					},
+					"pageTitle": "three.ws — The 3D Agent Layer of the Internet"
+				}
+			],
+			"cover": "/walkthroughs/shots/embed-a-3d-avatar-01.jpg"
+		},
+		{
+			"slug": "find-an-agent-worth-using",
+			"title": "Find an agent worth using",
+			"outcome": "A shortlist of working agents, filtered by what they do and what they cost.",
+			"blurb": "The marketplace is thousands of entries deep. Here is the path from the front door to something you would actually run.",
+			"level": "beginner",
+			"minutes": 3,
+			"accent": "#34d399",
+			"cta": {
+				"label": "Open the marketplace",
+				"href": "/marketplace"
+			},
+			"related": [
+				{
+					"label": "Search everything",
+					"href": "/search"
+				}
+			],
+			"steps": [
+				{
+					"path": "/marketplace",
+					"focus": "#market-theme-strip",
+					"title": "Start with the weekly theme",
+					"body": "The strip at the top is a curated cut of the catalogue that rotates. When you do not yet know what you are looking for, it is a far better entry point than an empty search box.",
+					"tip": "Browse opens the full theme as a filtered view rather than a static list.",
+					"shot": "/walkthroughs/shots/find-an-agent-worth-using-01.jpg",
+					"hotspot": {
+						"x": 0.18333,
+						"y": 0.09516,
+						"w": 0.8,
+						"h": 0.25731
+					},
+					"pageTitle": "Agent Marketplace · three.ws"
+				},
+				{
+					"path": "/marketplace",
+					"focus": "#market-hero",
+					"title": "Featured entries load in real 3D",
+					"body": "The hero is a live viewer, not a render. Spin the avatar, open it in the 3D lobby, or fork it straight into a new agent of your own from the same card.",
+					"tip": "Start an agent carries the body over, so you skip the model step in the builder.",
+					"shot": "/walkthroughs/shots/find-an-agent-worth-using-02.jpg",
+					"hotspot": {
+						"x": 0.18333,
+						"y": 0.28469,
+						"w": 0.8,
+						"h": 0.43111
+					},
+					"pageTitle": "Agent Marketplace · three.ws"
+				},
+				{
+					"path": "/marketplace",
+					"focus": "#market-filter-chips",
+					"title": "Filter by kind, then by price",
+					"body": "Agents, avatars, and onchain entries are different things and the chips keep them apart. The price filter is honest about which listings are free and which charge per call.",
+					"tip": "Counts on the chips are live, so an empty result is visible before you click it.",
+					"shot": "/walkthroughs/shots/find-an-agent-worth-using-03.jpg",
+					"hotspot": {
+						"x": 0.3408,
+						"y": 0.47148,
+						"w": 0.19681,
+						"h": 0.05726
+					},
+					"pageTitle": "Agent Marketplace · three.ws"
+				},
+				{
+					"path": "/marketplace",
+					"focus": "#market-cat-chips",
+					"title": "Categories carry real counts",
+					"body": "Academic, career, design, education, and the rest, each with the number of live entries behind it. The number is what tells you whether a category is worth opening.",
+					"tip": "Category and price filters compose. Free plus Design is one click away from here.",
+					"shot": "/walkthroughs/shots/find-an-agent-worth-using-04.jpg",
+					"hotspot": {
+						"x": 0.16667,
+						"y": 0.47998,
+						"w": 0.83333,
+						"h": 0.04073
+					},
+					"pageTitle": "Agent Marketplace · three.ws"
+				},
+				{
+					"path": "/marketplace",
+					"focus": "#market-activity-strip",
+					"title": "Check the pulse before you commit",
+					"body": "Agents live, prompts scored today, win rate, open trades. This strip is the fastest read on whether the thing you are about to depend on is actually being used right now.",
+					"action": {
+						"label": "Watch agents work live",
+						"href": "/agents-live"
+					},
+					"shot": "/walkthroughs/shots/find-an-agent-worth-using-05.jpg",
+					"hotspot": {
+						"x": 0.16667,
+						"y": 0.46293,
+						"w": 0.83333,
+						"h": 0.07339
+					},
+					"pageTitle": "Agent Marketplace · three.ws"
+				}
+			],
+			"cover": "/walkthroughs/shots/find-an-agent-worth-using-01.jpg"
+		}
+	]
+}

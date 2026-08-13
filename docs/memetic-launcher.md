@@ -63,6 +63,25 @@ POST /api/launcher/me { "action": "funding" }   → launch-ready agents with liv
 POST /api/launcher/me { "action": "resume" }    → clear a tripped circuit breaker
 ```
 
+### Errors
+
+A save is only reported as successful when the server actually understood it. Anything
+else comes back as a JSON error envelope (`{ "error": "...", "error_description": "..." }`)
+with the matching status, never a 200 that quietly dropped your patch:
+
+| Status | `error` | When |
+|---|---|---|
+| 401 | `unauthorized` | No session cookie and no valid bearer JWT. |
+| 415 | `unsupported_media_type` | A body was sent without `content-type: application/json`. |
+| 400 | `invalid_json` | The body was sent as JSON but could not be parsed. |
+| 400 | `invalid_body` | Valid JSON, but not an object (an array, a bare string, a number). |
+| 400 | `invalid_mode`, `invalid_network`, `invalid_sources`, `invalid_categories`, `invalid_cadence`, `invalid_max_per_hour`, `invalid_dev_buy_sol`, `invalid_daily_sol_cap` | A field failed validation. Nothing is written, and the message names the accepted range or set. |
+| 429 | `rate_limited` | Per-IP limit; `retry_after` is in the body. |
+| 503 | `preview_unavailable` | `{ "action": "preview" }` could not synthesize a sample right now. |
+
+A POST with no body at all is valid and reads back as an empty patch, so
+`POST /api/launcher/me` with no payload simply returns your current config.
+
 `funding` example response:
 
 ```json

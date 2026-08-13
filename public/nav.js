@@ -214,8 +214,17 @@ function ensureNavStylesheet() {
 // until focused (see .nav-skip in nav.css). Resolves the main landmark at click
 // time so it works whether the page tagged it `#main-content`, a bare <main>,
 // or `[role="main"]`, and makes the target programmatically focusable on demand.
+// Most pages (every blog post, for one) only have a bare <main>, which left
+// `href="#main-content"` pointing at nothing: fine for a normal click, which the
+// handler below intercepts, but broken for the paths that bypass it (opening the
+// link in a new tab, copying its address, or restoring the fragment on reload).
+// So tag the resolved landmark up front and the href always has a real target.
 function ensureSkipLink() {
 	if (!document.body || document.querySelector('.nav-skip')) return;
+	if (!document.getElementById('main-content')) {
+		const landmark = document.querySelector('main, [role="main"]');
+		if (landmark && !landmark.id) landmark.id = 'main-content';
+	}
 	const link = document.createElement('a');
 	link.className = 'nav-skip';
 	link.href = '#main-content';
