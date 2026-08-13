@@ -135,6 +135,14 @@
 			<description>Whole-asset listings let the seller pick any token, but the confirmation step always did its math as if the price were in USDC. For a token with a different number of decimal places that made the expected figure wrong by a factor of ten per decimal, so a buyer who paid exactly the right amount had their purchase recorded as a tip and never received the asset. The confirmation now uses the token's own decimals, and the listing's decimals are stamped onto the purchase the moment it starts, so a seller editing the price mid-checkout cannot change what an in-flight payment is measured against. Alongside it: the animation marketplace serves the first page instead of failing when a browse link carries a damaged position marker, agent reviews answer a browser's preflight check before validating the address so a bad link reads as the error it is, and malformed ids on the asset and skill-access endpoints come back as plain bad-request errors rather than server errors.</description>
 		</item>
 		<item>
+			<title>Compressed models now work across every 3D tool, not just some</title>
+			<link>https://three.ws/create</link>
+			<guid isPermaLink="false">2026-08-13:Compressed models now work across every 3D tool, not just some</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Models saved with meshopt compression, which includes most of the avatars on three.ws, failed with an internal error in five different tools: stylize filters, retopology and game-ready export, retexturing, part segmentation and auto-rigging. None of the mesh readers could open that format. Each of those workers now unpacks the file before it starts, so a compressed avatar behaves like any other model everywhere on the platform. Stylize results also show their face count again in the panel instead of leaving the number blank.</description>
+		</item>
+		<item>
 			<title>Copy-trading set up by an agent now keeps its alerts and can pay its leader</title>
 			<link>https://three.ws/dashboard/copy</link>
 			<guid isPermaLink="false">2026-08-13:Copy-trading set up by an agent now keeps its alerts and can pay its leader</guid>
