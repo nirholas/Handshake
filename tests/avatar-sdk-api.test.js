@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 //
-// @three-ws/avatar public API — the surface the README promises to consumers.
+// @three-ws/avatar public API: the surface the README promises to consumers.
 //
 // The package ships four entry points and only one of them (`./viewer`'s
 // rendering half) genuinely needs WebGL. Everything else is plain DOM and fetch
