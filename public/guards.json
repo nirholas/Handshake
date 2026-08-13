@@ -124,6 +124,28 @@
 			}
 		},
 		{
+			"id": "check-secrets",
+			"script": "scripts/check-secrets.mjs",
+			"npm": "check:secrets",
+			"title": "Credential material, before it leaves the machine",
+			"protects": "No dotenv file, private key, keystore, or downloaded cloud credential becomes a tracked file, and no added line carries a provider-issued key.",
+			"why": "A leaked key in git is not a bug you fix by deleting the line: every clone, fork, and mirror keeps a copy, so the only real remedy is rotating the credential at the provider. That asymmetry is why it runs before the push rather than after. Filenames are judged repo-wide and absolutely (the tree holds zero of them, so there is no legacy to grandfather); contents are judged diff scoped, because a repo-wide content scan drowns in hex addresses and placeholder docs until someone switches it off.",
+			"stages": [
+				"pre-push"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "An SSH private key staged as a tracked file.",
+				"stage": true,
+				"violation": {
+					"write": {
+						"id_ed25519": "not a real key: the filename alone is what this guard judges\n"
+					}
+				},
+				"expect": "id_ed25519"
+			}
+		},
+		{
 			"id": "check-cron-drift",
 			"script": "scripts/check-cron-drift.mjs",
 			"npm": "check:cron-drift",
