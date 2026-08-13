@@ -575,7 +575,7 @@
 			"name": "copy_subscribe",
 			"title": "Subscribe to copy a trader",
 			"descHead": "Set up non-custodial copy-trading: mirror a leader agent's future pump.f",
-			"descHash": "d4c0a89a60dd",
+			"descHash": "b126b5cdfc6b",
 			"annotations": "ref:WRITE",
 			"schemaHash": "4371f009b2b2"
 		},
@@ -583,7 +583,7 @@
 			"name": "trader_leaderboard",
 			"title": "Top pump.fun traders",
 			"descHead": "Get the top pump.fun traders on three.ws ranked by composite TraderScore",
-			"descHash": "51e91774fd99",
+			"descHash": "2cbf1024f3d6",
 			"annotations": "ref:LIVE",
 			"schemaHash": "ab27ab6634a8"
 		},
@@ -2357,7 +2357,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "c9f7c9236088"
+			"schemaHash": "16a602589467"
 		}
 	],
 	"packages/kol-mcp/src/tools/get-wallet-trades.js": [
