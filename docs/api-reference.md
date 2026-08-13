@@ -5058,6 +5058,132 @@ for an unfetchable GLB, `413` for one over the size cap, `502` for a renderer fa
 
 ---
 
+## Forever API (Bitcoin inscriptions)
+
+Backs the [/forever](https://three.ws/forever) page: a message is written into a
+Taproot witness on Bitcoin mainnet through [OrdinalsBot](https://ordinalsbot.com),
+where it stays permanently. three.ws never custodies the payment. The order
+returns a Bitcoin charge address and the user pays it from their own wallet, so
+these endpoints only create and read orders.
+
+### Create an inscription order
+
+```
+POST /api/forever/inscribe
+```
+
+Requires auth (session cookie or bearer token) because each call spends the
+platform's OrdinalsBot quota. Rate limited to 10 orders per IP per 10 minutes.
+
+**Request body**
+
+| Field | Required | Notes |
+|---|---|---|
+| `message` | yes | 1 to 1500 bytes of UTF-8 text. Trimmed before measuring. |
+| `receiveAddress` | no | The Taproot (`bc1p...`) address that receives the inscription. Validated all the way through its bech32m checksum, not just its shape, so a mistyped address is caught here instead of becoming an opaque upstream error. Defaults to `BTC_INSCRIPTION_RECEIVE_ADDRESS`. |
+| `feeRate` | no | Integer sats/vB, 1 to 200. Defaults to 8. |
+
+Ordinals can only be received by Taproot wallets, so a legacy, SegWit v0, or
+testnet address is a `400`.
+
+**Response**
+
+```json
+{
+	"orderId": "order-abc",
+	"status": "waiting-payment",
+	"charge": {
+		"address": "bc1p...",
+		"amount": 24500,
+		"amountBtc": 0.000245,
+		"currency": "BTC",
+		"lightningInvoice": "lnbc245u1p...",
+		"expiresAt": 1786582273
+	},
+	"receiveAddress": "bc1p...",
+	"feeRate": 8,
+	"sizeBytes": 13,
+	"mempoolBaseUrl": "https://mempool.space",
+	"ordinalsViewerBaseUrl": "https://ordinals.com/inscription"
+}
+```
+
+`amount` is in satoshis; `amountBtc` is the same figure in BTC. Pay either the
+`charge.address` or the Lightning invoice when one is offered.
+
+**Errors:** `400` (`bad_request`, `invalid_message`, `invalid_receive_address`,
+`invalid_fee_rate`), `401` (`unauthorized`), `405`, `429` (`rate_limited` for the
+per-IP ceiling, `upstream_rate_limited` when OrdinalsBot throttles the platform
+key), `502` (`inscription_failed`), `503` (`no_receive_address`,
+`invalid_vault_address`).
+
+Every OrdinalsBot fault is reported as `502`, including the ones it returns as
+`HTTP 200` with `{"status":"error"}` or as a bare `404`. Its status codes describe
+its own proxy, not your request, so they are never passed through.
+
+---
+
+### Read an inscription order
+
+```
+GET /api/forever/status?id=<orderId>
+```
+
+No auth: an order id is the bearer of its own status, and the pay screen polls
+this while the user waits on a Bitcoin confirmation. Rate limited to 200 reads
+per IP per 5 minutes, which clears a long wait in several tabs.
+
+**Response**
+
+```json
+{
+	"orderId": "order-abc",
+	"state": "inscribed",
+	"paid": true,
+	"inscribed": true,
+	"charge": { "address": "bc1p...", "amount": 24500, "amountBtc": 0.000245, "paidAmount": 24500 },
+	"inscription": {
+		"id": "<txid>i0",
+		"revealTxid": "<txid>",
+		"commitTxid": "<txid>",
+		"onchain": {
+			"confirmed": true,
+			"confirmations": 11,
+			"blockHeight": 900000,
+			"blockTime": 1786582273,
+			"source": "esplora"
+		}
+	},
+	"links": {
+		"inscription": "https://ordinals.com/inscription/<txid>i0",
+		"inscriptionPreview": "https://ordinals.com/preview/<txid>i0",
+		"revealTx": "https://mempool.space/tx/<txid>",
+		"commitTx": "https://mempool.space/tx/<txid>",
+		"chargeAddress": "https://mempool.space/address/bc1p..."
+	}
+}
+```
+
+`state` is one of `waiting-payment`, `payment-received`, `inscribing`,
+`inscribed`, `failed`. `paid` is true only for the three states that can be
+reached after settlement, so a `failed` order (expired, cancelled, refunded) is
+never reported as paid.
+
+`inscription.onchain` is real Bitcoin confirmation depth for the reveal
+transaction, read keyless from Blockstream Esplora so the caller sees actual
+finality rather than the order's own state. It fails soft: while the reveal
+transaction is unbroadcast or unindexed, or if Esplora is unreachable, it is
+`null` and the rest of the response is unaffected.
+
+**Errors:** `400` (`missing_id`, `invalid_id`), `404` (`order_not_found`), `405`,
+`429` (`rate_limited`, `upstream_rate_limited`), `502` (`status_lookup_failed`).
+
+An id that OrdinalsBot does not know is a `404`, even though OrdinalsBot itself
+reports it as `HTTP 200` with `{"status":"error","error":"invalid orderId"}`.
+Clients should treat `404` as terminal and stop polling.
+
+---
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).
