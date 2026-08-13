@@ -17,25 +17,35 @@ seconds.
 `api/_lib/llm.js` builds it. Free rungs first, always, because the paid keys in
 production are routinely dead and a chain that depends on them fails:
 
-| # | Rung | Key | Cost to us | State (2026-08-02) |
+| # | Rung | Key | Cost to us | State |
 |---|---|---|---|---|
-| 1 | Groq `llama-3.3-70b-versatile` | `GROQ_API_KEY` | free | **serving** (200, ~1.0s) |
+| 1 | Groq `llama-3.3-70b-versatile` | `GROQ_API_KEY` | free | **serving** (200, ~1.0s, 2026-08-02) |
 | 2 | Cerebras `llama-3.3-70b` | `CEREBRAS_API_KEY` | free | not configured in prod |
-| 3 | OpenRouter `:free` routes, one rung per key | `OPENROUTER_API_KEY`, `OPENROUTER_FALLBACK_KEYS` | free | **serving** on the fallback keys |
-| 4 | NVIDIA NIM `meta/llama-3.3-70b-instruct` | `NVIDIA_API_KEY` | free | 429 (rate limited at probe time) |
-| 5 | OVH AI Endpoints `Meta-Llama-3_3-70B-Instruct` | none (keyless) | free | **serving** (200, ~1.2s) |
-| 6 | Gemini Flash-Lite (AI Studio) | `GEMINI_API_KEY` | free | not configured in prod |
-| 7 | **Vertex Gemini Flash** | GCP service account | GCP credits | **serving**, the reliability anchor |
-| 8 | Pollinations `openai-fast` | none (keyless) | free | **serving** (200, ~3.7s) |
-| 9 | Groq `llama-3.1-8b-instant` | `GROQ_API_KEY` | free | serving (separate per-model quota) |
-| 10 | Vertex Claude | GCP service account + `VERTEX_CLAUDE_ENABLED=1` | GCP credits | **off and unentitled** (see below) |
-| 11 | Anthropic first-party | `ANTHROPIC_API_KEY` | paid | **absent** (no key anywhere) |
-| 12 | OpenRouter Claude mirror | `OPENROUTER_CLAUDE_MIRROR_MODEL` | paid | off by default (see below) |
-| 13 | OpenAI `gpt-5.4-nano` | `OPENAI_API_KEY` | paid | **dead**: 429 `billing_not_active` |
-| 14 | xAI Grok | `GROK_API_KEY` | paid | not configured in prod |
+| 3 | OpenRouter `:free` routes, one rung per key | `OPENROUTER_API_KEY`, `OPENROUTER_FALLBACK_KEYS` | free | **serving** on the fallback keys (2026-08-02) |
+| 4 | NVIDIA NIM `meta/llama-3.3-70b-instruct` | `NVIDIA_API_KEY` | free | 429 (rate limited at probe time, 2026-08-02) |
+| 5 | SambaNova `Meta-Llama-3.3-70B-Instruct` | `SAMBANOVA_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
+| 6 | Mistral `mistral-small-latest` (Experiment tier) | `MISTRAL_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
+| 7 | Z.AI `glm-4.7-flash` | `ZAI_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
+| 8 | Cloudflare Workers AI `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_AI_API_TOKEN` | free | added 2026-08-05; skipped when either is unset |
+| 9 | OVH AI Endpoints `Meta-Llama-3_3-70B-Instruct` | none (keyless) | free | **serving** (200, ~1.2s, 2026-08-02) |
+| 10 | Gemini Flash-Lite (AI Studio) | `GEMINI_API_KEY` | free | not configured in prod |
+| 11 | **Vertex Gemini Flash** | GCP service account | GCP credits | **serving**, the reliability anchor |
+| 12 | Pollinations `openai-fast` | none (keyless) | free | **serving** (200, ~3.7s, 2026-08-02) |
+| 13 | LLM7.io `gemini-3.1-flash-lite` | none (keyless) | free | added 2026-08-05, the third keyless rung |
+| 14 | SiliconFlow `Qwen/Qwen3-8B` | `SILICONFLOW_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
+| 15 | Groq `llama-3.1-8b-instant` | `GROQ_API_KEY` | free | serving (separate per-model quota) |
+| 16 | Vertex Claude | GCP service account + `VERTEX_CLAUDE_ENABLED=1` | GCP credits | **off and unentitled** (see below) |
+| 17 | Anthropic first-party | `ANTHROPIC_API_KEY` | paid | **absent** (no key anywhere) |
+| 18 | OpenRouter Claude mirror | `OPENROUTER_CLAUDE_MIRROR_MODEL` | paid | off by default (see below) |
+| 19 | OpenAI `gpt-5.4-nano` | `OPENAI_API_KEY` | paid | **dead**: 429 `billing_not_active` |
+| 20 | xAI Grok | `GROK_API_KEY` | paid | not configured in prod |
 
-Rungs 1 to 9 are not a degradation path any more. They are production. Every one
-of them is covered by a transport-level failover test
+The 2026-08-05 widening (SambaNova, Mistral, Z.AI, Cloudflare, LLM7,
+SiliconFlow) added six independent free quota pools; each is documented with
+its tier limits in `docs/free-llm-providers.md`.
+
+Rungs 1 to 15 are not a degradation path any more. They are production. Every
+one of them is covered by a transport-level failover test
 (`tests/api/llm-free-chain-reachability.test.js`): each case kills the rungs
 above it the way a provider actually dies (dropped socket, abort, empty 503) and
 requires the next rung to answer. A fallback that only catches a parse error is
@@ -44,7 +54,8 @@ exists to prevent.
 
 `/brain` (`api/brain/chat.js`) runs its own chain with the same shape: requested
 model → OpenRouter mirror of that model → free safety net (Groq → OpenRouter
-`:free` per key → NVIDIA) → the Vertex Gemini anchor.
+`:free` per key → NVIDIA → SambaNova → Mistral → Z.AI) → the Vertex Gemini
+anchor.
 
 ### Why the paid rungs are out
 

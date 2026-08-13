@@ -35,10 +35,14 @@
 		     an ERR_UNKNOWN_URL_SCHEME per figure. Same files the tutorial viewer
 		     loads, so a figure looks identical on every surface. -->
 		<link rel="stylesheet" href="/tutorial-figures.css" />
-		<script src="/tutorial-figures.js"></script>
-		<script src="/model-viewer-meshopt.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+		<!-- All four are deferred so they stop blocking the parser; nothing here is
+		     needed before the shell's boot, which waits for DOMContentLoaded (fired
+		     only after every deferred script has executed). -->
+		<script src="/tutorial-figures.js" defer></script>
+		<script src="/model-viewer-meshopt.js" defer></script>
+		<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js" defer></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
 		<style>
 			:root {
 				--sidebar-w: 268px;
@@ -949,7 +953,7 @@
 	<body>
 		<header class="docs-header">
 			<a href="/" class="docs-logo">
-				<img src="/three.svg" class="docs-logo-mark" alt="" aria-hidden="true" />three.ws
+				<img src="/three.svg" class="docs-logo-mark" alt="" aria-hidden="true" width="24" height="24" />three.ws
 			</a>
 			<span class="docs-header-sep"></span>
 			<span class="docs-header-label">Docs</span>
@@ -1171,16 +1175,21 @@
 				}).join('');
 			}
 
-			marked.setOptions({
-				highlight: (code, lang) => {
-					if (lang && hljs.getLanguage(lang)) {
-						return hljs.highlight(code, { language: lang }).value;
-					}
-					return hljs.highlightAuto(code).value;
-				},
-				gfm: true,
-				breaks: false,
-			});
+			// marked/hljs arrive via deferred head scripts, so this must not run at
+			// parse time; the boot below calls it once DOMContentLoaded guarantees
+			// they have executed.
+			function configureMarked() {
+				marked.setOptions({
+					highlight: (code, lang) => {
+						if (lang && hljs.getLanguage(lang)) {
+							return hljs.highlight(code, { language: lang }).value;
+						}
+						return hljs.highlightAuto(code).value;
+					},
+					gfm: true,
+					breaks: false,
+				});
+			}
 
 			const COPY_ICON =
 				'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
@@ -1760,7 +1769,15 @@
 				buildSidebar(document.getElementById('search-input').value);
 				navigate();
 			}
-			loadNav();
+			function boot() {
+				configureMarked();
+				loadNav();
+			}
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', boot);
+			} else {
+				boot();
+			}
 		</script>
 
 		<div id="footer-container"></div>

@@ -35,12 +35,13 @@ Cloud Run service "three-ws-api" (us-central1, min 0, 2 vCPU / 2 Gi, timeout 900
 allow-unauthenticated, runtime SA three-ws@…)
   └─ one Express container (server/index.mjs) serving:
        • static frontend from dist/ (baked into the image)
-       • the 1,047-rule vercel.json route table (headers/rewrites/redirects/404)
+       • the vercel.json route table (1,236 rules as of 2026-08-13:
+         headers/rewrites/redirects/404)
        • all api/** handlers with Vercel-parity filesystem routing
         │
 Data layer (unchanged by the migration — all vendor-neutral HTTP):
   Neon Postgres (DATABASE_URL) · Upstash Redis · Cloudflare R2 (S3_* / R2_*)
-Cloud Scheduler: 76 jobs (one per vercel.json cron) → GET /api/cron/* with
+Cloud Scheduler: one job per vercel.json cron (105 as of 2026-08-13) → GET /api/cron/* with
   `Authorization: Bearer $CRON_SECRET`
 ```
 
@@ -118,9 +119,10 @@ aerial-vehicle-466722-p5 --filter="bindings.members:three-ws-build@"`.
 
 ```bash
 # Frontend changed? Build first — dist/ ships from the local build.
-# build:gcp = site build -> agent-3d CDN lib (build:lib:full) -> publish:lib
-# -> build:info -> check:dist -> check:pages, IN THAT ORDER. The order is
-# load-bearing: the
+# build:gcp = check:conflicts -> check:browser-graph -> ensure:avatar-studio
+# -> build:info:snapshot -> build:chat -> site build -> agent-3d CDN lib
+# (build:lib:full) -> publish:lib -> build:info -> check:dist -> check:pages,
+# IN THAT ORDER. The order is load-bearing: the
 # site `vite build` WIPES dist/, so it must run before publish:lib mirrors the
 # lib into dist/. Plain `npm run build` is NOT enough (skips the lib publish, so
 # /agent-3d/latest/agent-3d.js 404s and the hero avatar dies). Hand-running
@@ -438,9 +440,10 @@ Now every `sendOpsAlert()` **always** persists to the `ops_alerts` table
 (`api/_lib/alerts.js`, migration `20260712000000_ops_alerts.sql`), keyed by the
 alert's stable signature so a recurring condition is one row with a growing
 `count`, not a flood. Read the active feed from the `ops_alerts` table or the
-`x-ops-secret`-gated ops APIs (`/api/ops/health` and friends, `OPS_SECRET`
-falling back to `CRON_SECRET`). This is the primary sink and needs no
-third-party service.
+`x-ops-secret`-gated ops APIs (`/api/ops/health` and friends; the gate is
+`authorizeOps` in `api/_lib/ops-auth.js`: admin session or a dedicated
+`OPS_SECRET`, deliberately never `CRON_SECRET`, fail-closed in production).
+This is the primary sink and needs no third-party service.
 
 Telegram is now an **optional extra push**, off by default. When both
 `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALERTS_CHAT_ID` are set, alerts also push to

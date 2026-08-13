@@ -9361,7 +9361,7 @@ salience: 0.95
 User is a game developer interested in character animation.
 ```
 
-A `MEMORY.md` index file is auto-maintained. At the start of each conversation turn, the memory store is scanned and high-salience entries are injected into the system prompt.
+A `MEMORY.md` index file is auto-maintained. At the start of each conversation turn, the memory store is scanned and high-salience entries are injected into the system prompt; the `MEMORY.md` index itself is injected in full, capped at the spec's 200 lines.
 
 **Storage modes:**
 
@@ -9748,7 +9748,7 @@ Every catalog, gate and odds table above is published live at **[three.ws/play/e
 Two creator tools sit alongside [Pose Studio](#pose-studio):
 
 - **Voice Lab** (`/voice`, `src/voice-lab.js`) — audition and bind voices to an agent, building on the [Voice & Persona Hub](#voice--persona-hub-phase-2).
-- **Mocap Studio** (`/mocap-studio`, `src/mocap-studio.js`, `api/mocap/`) — capture and retarget motion onto a rigged avatar, exporting reusable animation clips.
+- **Mocap Studio** (`/mocap-studio`, `src/mocap-studio.js`, `api/mocap/`): record webcam face mocap (MediaPipe FaceLandmarker) on a rigged avatar, calibrate to a neutral pose, then save, replay, and share the clips via `/api/mocap/clips` (public clips are replayable by anyone, resolved by slug).
 
 ---
 
@@ -9983,7 +9983,7 @@ The full OpenAPI 3.1 spec is available at `/openapi.json`. The key API surface i
 
 Cron schedules are declared in `vercel.json` (still the live cron/route config the server reads) and executed in production by **Google Cloud Scheduler**, which calls each endpoint on its schedule. All cron endpoints are fail-closed — a missing auth token aborts with an error rather than silently skipping (see [Security Hardening](#security-hardening)).
 
-The 103 crons in `vercel.json` are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs); the schedules below match `vercel.json` verbatim.
+The 105 crons in `vercel.json` are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs); the schedules below match `vercel.json` verbatim.
 
 | Schedule             | Endpoint                                | Purpose                                                                                                                      |
 | -------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -10359,7 +10359,7 @@ export default paidEndpoint({
 });
 ```
 
-The helper handles the 402 challenge, Permit2 sibling, receipt write-back, idempotency-token enforcement, and CSRF/SSRF guards. See [api/\_lib/x402-paid-endpoint.js](api/_lib/x402-paid-endpoint.js).
+The helper handles the 402 challenge, Permit2 sibling, receipt write-back, idempotency-token enforcement, and CSRF/SSRF guards. Optional hooks: `metered` attaches a signed metered-job receipt to the response (the inference network's proof-of-work lane), and `onSettled` fires fire-and-forget after settlement (used for per-call skill royalty accrual). See [api/\_lib/x402-paid-endpoint.js](api/_lib/x402-paid-endpoint.js).
 
 ### Wire checks
 
@@ -10648,8 +10648,8 @@ three.ws ships in four phases. Each phase closes a specific gap between the curr
 | **0** | Platform foundations (viewer, runtime, ERC-8004 + Metaplex Core identity, embed layer) | ✅ Shipped                                                                                                     |
 | **1** | Selfie → Avatar engine (3-photo capture, hosted inference)                             | 🟡 In progress — capture UX + quality gates shipped; GPU reconstruction backend wiring                         |
 | **2** | Agent personalization + voice cloning                                                  | 🟡 In progress — voice clone, persona, memory seeds shipped behind `/demos`; main-flow integration next        |
-| **3** | Onchain economy (agent tokens, reputation markets, royalties)                          | 🟡 Scaffolding — bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; contracts + audits next |
-| **4** | Open inference network (decentralized GPU layer)                                       | 🔮 Future — livepeer dep landed for early experimentation                                                      |
+| **3** | Onchain economy (agent tokens, reputation markets, royalties)                          | 🟡 In progress: bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; per-call skill royalties accrue on paid skill calls (`royalty_ledger`); contracts + audits next |
+| **4** | Open inference network (decentralized GPU layer)                                       | 🟡 Live core: open node-operator daemon + `/api/nodes` job queue with signed receipts shipped; Livepeer federation behind a flag                                                      |
 
 ---
 
@@ -10689,7 +10689,7 @@ The full stack is live at [three.ws](https://three.ws): WebGL viewer, LLM agent 
 
 **Deliverables**
 
-- Voice cloning (3–10 seconds of speech → ElevenLabs custom voice bound to the agent)
+- Voice cloning (30+ seconds of speech → ElevenLabs custom voice bound to the agent)
 - Persona extraction from a short onboarding interview (tone, vocabulary, interests)
 - Memory seeding from connected accounts (X, GitHub, Farcaster) with explicit user consent
 - Per-agent fine-tuned system prompt stored in the manifest, signed and pinned to IPFS
@@ -10730,6 +10730,8 @@ The full stack is live at [three.ws](https://three.ws): WebGL viewer, LLM agent 
 - Node operator client (Docker + GPU drivers) with onchain registration
 - Onchain settlement for inference jobs — pay-per-token with cryptographic receipts
 - Federation with existing decentralized compute networks where appropriate
+
+**Shipped so far:** anyone can run a node today. The [node-operator/](node-operator/) daemon registers with the coordinator, claims `llm.completion` jobs from the `/api/nodes` queue, and returns results signed with the node's Solana key over a canonical receipt binding job, model, and input/output hashes. Paid inference on `/api/x402/llm-proxy` settles through the metered hook on the x402 paid-endpoint wrapper, and `POST /api/x402/inference-verify` publishes the platform signing key so receipts verify offline. Operator guide: [docs/inference-node-operator.md](docs/inference-node-operator.md).
 
 **Compute requirements**
 
@@ -10782,8 +10784,8 @@ The avatar isn't just _you_ — the agent _acts_ like you. The Voice & Persona H
 | Persona extraction  | [api/persona/extract.js](api/persona/extract.js)                     | Short onboarding interview → tone, vocabulary, interests profile |
 | Persona preview     | [api/persona/preview.js](api/persona/preview.js)                     | Try the extracted persona against test prompts before saving     |
 | Persona keys        | `scripts/generate-persona-key.mjs`                                   | Per-agent signing key + persona SSO setup                        |
-| Voice clone modal   | [src/voice/voice-clone-modal.js](src/voice/voice-clone-modal.js)     | 3–10s recording → ElevenLabs custom voice bound to the agent     |
-| Talk controller     | [src/voice/talk-controller.js](src/voice/talk-controller.js)         | Push-to-talk and continuous talk modes                           |
+| Voice clone modal   | [src/voice/voice-clone-modal.js](src/voice/voice-clone-modal.js)     | 30s+ recording or upload → ElevenLabs custom voice (BYOK or platform key, 3 clones/day) bound to the agent |
+| Talk controller     | [src/voice/talk-controller.js](src/voice/talk-controller.js)         | Push-to-talk voice loop: mic STT (Riva or browser) → `/api/chat` → ElevenLabs/Edge TTS |
 | ARKit blendshapes   | [src/voice/arkit-blendshapes.js](src/voice/arkit-blendshapes.js)     | Standard ARKit-52 morph table                                    |
 | Lip-sync driver     | [src/voice/lipsync-driver.js](src/voice/lipsync-driver.js)           | Web Audio analyser → blendshape weights per frame                |
 | Avatar morph target | [src/voice/avatar-morph-target.js](src/voice/avatar-morph-target.js) | Per-rig binding of ARKit blendshapes to the loaded GLB           |
@@ -10798,14 +10800,14 @@ The per-agent fine-tuned system prompt is stored in the manifest, signed, and pi
 
 ## Livepeer Inference Network (Phase 4)
 
-three.ws is wiring the **Livepeer** decentralized GPU network as an alternative inference backend for avatar reconstruction and agent conversations.
+three.ws wires the **Livepeer** decentralized GPU network as an alternative inference backend alongside the platform's own open inference network.
 
 - Open protocol: model weights, GPU runtime, signed responses
 - Onchain settlement: pay-per-token with cryptographic receipts, mediated by the same x402 rails described above
 - Node operator client (Docker + GPU drivers) with onchain registration
 - Federation with existing decentralized compute networks where appropriate
 
-The Livepeer dependency landed early so the Phase 1 selfie pipeline can switch its heaviest step (multi-view face fitting) onto external GPU nodes without touching the rest of the system. The goal: ≥50% of production agent traffic served by independent node operators with latency parity to centralized inference.
+Federation is live behind a flag: with `LIVEPEER_FEDERATION_ENABLED` set, the text-to-image chain can route one GPU job class to Livepeer gateways (runbook: [docs/ops/livepeer-federation.md](docs/ops/livepeer-federation.md)). The goal: ≥50% of production agent traffic served by independent node operators with latency parity to centralized inference.
 
 ---
 
@@ -11014,7 +11016,7 @@ npm run build       # frontend build to dist/ (only when frontend changed)
 npm run deploy:gcp  # check:dist + db:check, gcloud builds submit, purge CDN
 ```
 
-`npm run deploy:gcp` runs `gcloud builds submit --config server/cloudbuild.yaml`. Routing, cache headers, and cron schedules are defined in `vercel.json`, which the server reads at runtime. The scheduled jobs (103 at time of writing, one per entry in the `crons` array of `vercel.json`) run on **Cloud Scheduler** (provisioned by [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs)); the GPU inference workers run as their own Cloud Run services. Full ops runbook (load balancer, DNS/TLS, env, rollback, recovery): **[docs/ops/gcp-production.md](docs/ops/gcp-production.md)**.
+`npm run deploy:gcp` runs `gcloud builds submit --config server/cloudbuild.yaml`. Routing, cache headers, and cron schedules are defined in `vercel.json`, which the server reads at runtime. The scheduled jobs (105 at time of writing, one per entry in the `crons` array of `vercel.json`) run on **Cloud Scheduler** (provisioned by [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs)); the GPU inference workers run as their own Cloud Run services. Full ops runbook (load balancer, DNS/TLS, env, rollback, recovery): **[docs/ops/gcp-production.md](docs/ops/gcp-production.md)**.
 
 **Environment variables** live on the Cloud Run service, not in `.env` files — inspect or update them with `gcloud run services describe/update three-ws-api --region us-central1`. See [Environment Variables](#environment-variables) for the full list.
 
@@ -11162,7 +11164,7 @@ VITE_AVATURN_DEVELOPER_ID=...
 
 ## Testing
 
-`npm run test` runs Vitest (unit + integration) followed by Playwright (end-to-end). API tests stub the database and auth layer; frontend tests stub the viewer. The project currently has ~150 test files spread across `tests/`, `tests/api/`, `tests/src/`, and `tests/e2e/`.
+`npm run test` runs Vitest (unit + integration) followed by Playwright (end-to-end). API tests stub the database and auth layer; frontend tests stub the viewer. The project currently has ~1,500 test files spread across `tests/`, `tests/api/`, `tests/src/`, and `tests/e2e/`.
 
 ```bash
 npm run test                            # Vitest then Playwright
