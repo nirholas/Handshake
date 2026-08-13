@@ -57,6 +57,28 @@ const inputZodShape = {
 
 const inputJsonSchema = jsonSchemaFromZod(inputZodShape);
 
+// The published example has to satisfy the input schema, because it is what the
+// x402 discovery payload hands facilitators and agents to copy: a shorter stub
+// reads as runnable and comes straight back as a validation error. The schema
+// floor is 64 points, so the example is a real 64-day daily series with a
+// weekly ripple and a mild uptrend. Kept identical to the hosted transport in
+// api/_mcpibm/tools.js.
+const FORECAST_EXAMPLE_POINTS = 64;
+
+function forecastExampleSeries() {
+	const timestamps = [];
+	const values = [];
+	const start = Date.UTC(2025, 0, 1);
+	for (let i = 0; i < FORECAST_EXAMPLE_POINTS; i++) {
+		timestamps.push(new Date(start + i * 86_400_000).toISOString());
+		const weekly = 90 * Math.sin((2 * Math.PI * i) / 7);
+		values.push(Math.round(1200 + i * 6 + weekly));
+	}
+	return { timestamps, values };
+}
+
+const FORECAST_EXAMPLE = forecastExampleSeries();
+
 export async function buildGraniteForecastTool(client) {
 	const handler = await paid(
 		{
@@ -65,8 +87,8 @@ export async function buildGraniteForecastTool(client) {
 			priceUsd: '$0.05',
 			inputSchema: inputJsonSchema,
 			example: {
-				timestamps: ['2025-01-01T00:00:00Z', '2025-01-02T00:00:00Z'],
-				values: [1200, 1350],
+				timestamps: FORECAST_EXAMPLE.timestamps,
+				values: FORECAST_EXAMPLE.values,
 				freq: '1D',
 				prediction_length: 7,
 				label: 'daily_revenue_usd',

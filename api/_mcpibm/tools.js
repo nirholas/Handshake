@@ -601,6 +601,27 @@ const FORECAST_DESCRIPTION =
 
 const FREQ_EXAMPLES = '1min, 5min, 15min, 30min, 1h, 2h, 4h, 12h, 1D, 1W, 1ME';
 
+// The published example has to satisfy the input schema, because it is what the
+// bazaar discovery extension hands facilitators and agents to copy: a shorter
+// stub reads as runnable and comes straight back as a -32602. The schema floor
+// is 64 points, so the example is a real 64-day daily series with a weekly
+// ripple and a mild uptrend, generated once at module load.
+const FORECAST_EXAMPLE_POINTS = 64;
+
+function forecastExampleSeries() {
+	const timestamps = [];
+	const values = [];
+	const start = Date.UTC(2025, 0, 1);
+	for (let i = 0; i < FORECAST_EXAMPLE_POINTS; i++) {
+		timestamps.push(new Date(start + i * 86_400_000).toISOString());
+		const weekly = 90 * Math.sin((2 * Math.PI * i) / 7);
+		values.push(Math.round(1200 + i * 6 + weekly));
+	}
+	return { timestamps, values };
+}
+
+const FORECAST_EXAMPLE = forecastExampleSeries();
+
 const forecastTool = {
 	name: 'ibm_granite_forecast',
 	title: 'IBM Granite Forecast ($0.05)',
@@ -648,8 +669,8 @@ const forecastTool = {
 		additionalProperties: false,
 	},
 	example: {
-		timestamps: ['2025-01-01T00:00:00Z', '2025-01-02T00:00:00Z'],
-		values: [1200, 1350],
+		timestamps: FORECAST_EXAMPLE.timestamps,
+		values: FORECAST_EXAMPLE.values,
 		freq: '1D',
 		prediction_length: 7,
 		label: 'daily_revenue_usd',

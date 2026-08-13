@@ -7,6 +7,7 @@ process.env.WATSONX_PROJECT_ID ||= 'proj-123';
 
 // ── watsonx.ai clients (no network, no real credentials) ────────────────────
 const wx = {
+	config: vi.fn(() => ({ configured: true })),
 	chat: vi.fn(async () => ({
 		text: 'Granite says hello.',
 		finishReason: 'stop',
@@ -21,7 +22,7 @@ const wx = {
 	})),
 };
 vi.mock('../../api/_lib/watsonx.js', () => ({
-	watsonxConfig: vi.fn(() => ({ configured: true })),
+	watsonxConfig: (...a) => wx.config(...a),
 	watsonxChatComplete: (...a) => wx.chat(...a),
 	watsonxEmbed: (...a) => wx.embed(...a),
 }));
@@ -59,6 +60,8 @@ const { graniteX402Amount, priceFor, formatUsdPrice, TOOL_PRICING } = await impo
 	'../../api/_mcpibm/pricing.js'
 );
 const { isFreeTool, TOOL_CATALOG } = await import('../../api/_mcpibm/catalog.js');
+const { toolDefs } = await import('../../api/_mcpibm/tools.js');
+const { declareMcpDiscovery } = await import('../../api/_lib/x402/bazaar-helpers.js');
 
 const AUTH = { userId: null, rateKey: 'test', scope: '', source: 'x402', x402Paid: true };
 const call = (name, args) =>
@@ -79,6 +82,8 @@ function makeSeries(n) {
 }
 
 beforeEach(() => {
+	wx.config.mockClear();
+	wx.config.mockReturnValue({ configured: true });
 	wx.chat.mockClear();
 	wx.embed.mockClear();
 	fc.forecast.mockClear();
@@ -290,6 +295,73 @@ describe('IBM Granite MCP — dispatch', () => {
 		const r = await call('ibm_granite_chat', { messages: [{ role: 'user', content: 'hi' }] });
 		expect(r.result.isError).toBe(true);
 		expect(r.result.content[0].text).toContain('Error:');
+	});
+
+	it('rejects a forecast whose values do not align with its timestamps', async () => {
+		const { timestamps, values } = makeSeries(64);
+		const r = await call('ibm_granite_forecast', {
+			timestamps,
+			values: [...values, 9999],
+			freq: '1D',
+		});
+		expect(r.error.code).toBe(-32602);
+		expect(r.error.message).toContain('equal length');
+		// The mismatch is caught before any billable watsonx inference runs.
+		expect(fc.forecast).not.toHaveBeenCalled();
+	});
+
+	it('tells the caller which credentials are missing instead of failing deep in watsonx', async () => {
+		wx.config.mockReturnValue({ configured: false });
+		// embed has no OpenRouter equivalent, so it needs real watsonx credentials.
+		const embed = await call('ibm_granite_embed', { inputs: ['hello'] });
+		expect(embed.result.isError).toBe(true);
+		expect(embed.result.content[0].text).toContain('WATSONX_API_KEY');
+		expect(wx.embed).not.toHaveBeenCalled();
+	});
+
+	it('lets the text tools fall over to the OpenRouter Granite backstop', async () => {
+		wx.config.mockReturnValue({ configured: false });
+		const prev = process.env.OPENROUTER_API_KEY;
+		process.env.OPENROUTER_API_KEY = 'or-test-key';
+		try {
+			const r = await call('ibm_granite_chat', { messages: [{ role: 'user', content: 'hi' }] });
+			expect(r.result.isError).toBeUndefined();
+			expect(wx.chat).toHaveBeenCalled();
+		} finally {
+			if (prev === undefined) delete process.env.OPENROUTER_API_KEY;
+			else process.env.OPENROUTER_API_KEY = prev;
+		}
+	});
+});
+
+// Each tool publishes an `example` arguments object, and for the priced tools
+// that object is what the v2 bazaar discovery extension hands x402 facilitators
+// and agents to copy. An example that fails the tool's own inputSchema reads as
+// runnable and comes straight back as a -32602, so every one of them is dialed
+// through the real dispatcher exactly as a client would send it.
+describe('IBM Granite MCP: every published example is a call that actually works', () => {
+	it('each tool example passes its own input schema through the real dispatcher', async () => {
+		for (const tool of toolDefs) {
+			const r = await call(tool.name, structuredClone(tool.example));
+			expect(r.error, `${tool.name}: ${JSON.stringify(r.error)}`).toBeUndefined();
+			expect(r.result.isError, tool.name).toBeUndefined();
+		}
+	});
+
+	it('the forecast example carries a full context window, not a two-point stub', () => {
+		const forecast = toolDefs.find((t) => t.name === 'ibm_granite_forecast');
+		const floor = forecast.inputSchema.properties.timestamps.minItems;
+		expect(forecast.example.timestamps.length).toBeGreaterThanOrEqual(floor);
+		expect(forecast.example.values).toHaveLength(forecast.example.timestamps.length);
+	});
+
+	it('the discovery extension publishes that same example for every priced tool', () => {
+		for (const name of Object.keys(TOOL_PRICING)) {
+			const def = toolDefs.find((t) => t.name === name);
+			const call = declareMcpDiscovery.mock.calls.find((c) => c[0].toolName === name);
+			expect(call, `${name}: no discovery declaration`).toBeTruthy();
+			expect(call[0].example, `${name}: discovery example`).toEqual(def.example);
+		}
 	});
 });
 

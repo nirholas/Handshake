@@ -1,4 +1,4 @@
-// JSON-RPC dispatch for the threews-agent MCP server — thin binding of the
+// JSON-RPC dispatch for the threews-agent MCP server: a thin binding of the
 // shared payment-free dispatcher (api/_lib/mcp-dispatch.js) to this catalog.
 // (The "payment-free" refers to MCP-tool pricing; pay_and_call moves the
 // USER's funds to external services, which is orthogonal to tool billing.)

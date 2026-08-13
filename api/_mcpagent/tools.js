@@ -1,10 +1,10 @@
-// threews-agent MCP — "add a wallet to Claude."
+// threews-agent MCP: "add a wallet to Claude."
 //
 // Three tools turn a Claude (or any MCP client) into an autonomous economic
 // agent on the live x402 network:
-//   • wallet_status   — what the agent's wallet holds and is allowed to spend
-//   • find_services   — discover paid services it can call
-//   • pay_and_call    — pay an x402 endpoint in USDC from the user's own wallet
+//   * wallet_status   what the agent's wallet holds and is allowed to spend
+//   * find_services   discover paid services it can call
+//   * pay_and_call     pay an x402 endpoint in USDC from the user's own wallet
 //                       and return the result, bounded by spending caps
 //
 // pay_and_call moves real money. It requires an authenticated (OAuth) user so
@@ -55,7 +55,7 @@ function payLink(resource) {
 	return u.toString();
 }
 
-// Designed "sign in" result for the null x402 path — these tools write to the
+// Designed "sign in" result for the null x402 path. These tools write to the
 // user's own account, so an anonymous pay-per-call caller can never use them.
 function signInRequired(text) {
 	return {
@@ -113,7 +113,7 @@ async function loadOwnedAgent(agentId, auth) {
 }
 
 // Request a 1 SOL devnet airdrop for a freshly provisioned wallet. Devnet only;
-// never called on mainnet. Returns the signature or a reason on failure — an
+// never called on mainnet. Returns the signature or a reason on failure: an
 // unavailable faucet must not fail the whole provision call.
 async function requestDevnetAirdrop(address) {
 	const { solanaConnection } = await import('../_lib/agent-pumpfun.js');
@@ -145,7 +145,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			"Show the signed-in user's three.ws agent wallet: address, SOL and USDC balance, the per-call/hour/day spending caps, and whether autonomous spending is enabled. Read-only — never moves funds. Call this before pay_and_call to confirm there's balance and headroom.",
+			"Show the signed-in user's three.ws agent wallet: address, SOL and USDC balance, the per-call/hour/day spending caps, and whether autonomous spending is enabled. Read-only, never moves funds. Call this before pay_and_call to confirm there's balance and headroom.",
 		inputSchema: { type: 'object', properties: {}, additionalProperties: false },
 		async handler(args, auth) {
 			await enforce(limits.mcpAgent, auth);
@@ -193,7 +193,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Search the live x402 facilitator network for paid services (HTTP APIs and MCP tools). Returns each match with its price and resource URL — feed a resource into pay_and_call to actually use it.',
+			'Search the live x402 facilitator network for paid services (HTTP APIs and MCP tools). Returns each match with its price and resource URL. Feed a resource into pay_and_call to actually use it.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -235,7 +235,7 @@ export const toolDefs = [
 				? services
 						.map(
 							(s, i) =>
-								`${i + 1}. ${s.name || s.resource}${s.price ? ` — ${s.price}` : ''}\n   ${s.resource}`,
+								`${i + 1}. ${s.name || s.resource}${s.price ? ` - ${s.price}` : ''}\n   ${s.resource}`,
 						)
 						.join('\n')
 				: `No services matched "${args.query}".`;
@@ -248,7 +248,7 @@ export const toolDefs = [
 	{
 		name: 'pay_and_call',
 		title: 'Pay an x402 service and return its result',
-		// Spends the user's USDC — an irreversible transfer, so destructive.
+		// Spends the user's USDC: an irreversible transfer, so destructive.
 		annotations: {
 			readOnlyHint: false,
 			destructiveHint: true,
@@ -336,7 +336,7 @@ export const toolDefs = [
 				const friendly = {
 					spend_disabled: 'Autonomous spending is disabled on this server.',
 					auth_required: 'Sign in to pay from your wallet.',
-					no_wallet: 'No agent wallet found for your account — create one on three.ws.',
+					no_wallet: 'No agent wallet found for your account. Create one on three.ws.',
 					no_solana_wallet: 'Your agent has no Solana wallet provisioned.',
 					invalid_url: 'That resource URL is not a permitted public https endpoint.',
 					blocked_url:
@@ -360,7 +360,7 @@ export const toolDefs = [
 		name: 'provision_wallet',
 		title: "Create the agent's wallet",
 		// Creates a wallet (idempotent for an existing one, but airdrop:true
-		// re-requests the faucet each call — conservative hint is false).
+		// re-requests the faucet each call, so the conservative hint is false).
 		annotations: {
 			readOnlyHint: false,
 			destructiveHint: false,
@@ -368,7 +368,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Create (or return) the custodial Solana wallet for one of your agents so it can hold and earn USDC. Idempotent — if the agent already has a wallet, its address and live SOL/USDC balances are returned unchanged. On devnet you can request a 1 SOL airdrop for testing; mainnet wallets are never airdropped. Requires sign-in; you can only provision wallets for agents on your own account.',
+			'Create (or return) the custodial Solana wallet for one of your agents so it can hold and earn USDC. Idempotent: if the agent already has a wallet, its address and live SOL/USDC balances are returned unchanged. On devnet you can request a 1 SOL airdrop for testing; mainnet wallets are never airdropped. Requires sign-in; you can only provision wallets for agents on your own account.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -381,7 +381,7 @@ export const toolDefs = [
 				airdrop: {
 					type: 'boolean',
 					default: false,
-					description: 'Devnet only — request a 1 SOL faucet airdrop after provisioning.',
+					description: 'Devnet only: request a 1 SOL faucet airdrop after provisioning.',
 				},
 			},
 			required: ['agent_id'],
@@ -400,7 +400,7 @@ export const toolDefs = [
 
 			const { address, created } = await getOrCreateAgentSolanaWallet(args.agent_id);
 
-			// Airdrop is devnet-only and best-effort — never on mainnet, never
+			// Airdrop is devnet-only and best-effort: never on mainnet, never
 			// fabricated. A faucet failure is surfaced as a note, not an error.
 			let airdrop = null;
 			if (cluster === 'devnet' && args.airdrop) {
@@ -444,7 +444,7 @@ export const toolDefs = [
 	{
 		name: 'monetize_endpoint',
 		title: 'Publish a paid endpoint to earn USDC',
-		// Publishes a new listing each call — additive write, never destructive.
+		// Publishes a new listing each call: an additive write, never destructive.
 		annotations: {
 			readOnlyHint: false,
 			destructiveHint: false,
@@ -452,7 +452,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			"Put a price on an upstream API your agent already serves and publish it as an x402 endpoint other agents can pay to call. three.ws hosts the paywall, settles each buyer's USDC to your agent's own wallet, and proxies the call to your target_url. The listing becomes discoverable via find_services / the bazaar and callable by pay_and_call. Requires a provisioned wallet for the chosen network — run provision_wallet first if you haven't. Requires sign-in; you can only monetize agents on your own account.",
+			"Put a price on an upstream API your agent already serves and publish it as an x402 endpoint other agents can pay to call. three.ws hosts the paywall, settles each buyer's USDC to your agent's own wallet, and proxies the call to your target_url. The listing becomes discoverable via find_services / the bazaar and callable by pay_and_call. Requires a provisioned wallet for the chosen network; run provision_wallet first if you haven't. Requires sign-in; you can only monetize agents on your own account.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -479,7 +479,7 @@ export const toolDefs = [
 				// fallback (`args.network === 'solana' ? 'solana' : 'base'`) and
 				// createPaidService's `network = 'base'`. The validator compiles with
 				// Ajv `useDefaults: true`, so this default is written into `args.network`
-				// before the handler runs — a `'solana'` default here silently forced
+				// before the handler runs. A `'solana'` default here silently forced
 				// every default-network call onto the Solana payout path (reading the
 				// usually-empty meta.solana_address) and rejected it as no_payout_wallet,
 				// even for an agent with a Base EVM wallet.
@@ -547,18 +547,34 @@ export const toolDefs = [
 				};
 			}
 
-			const row = await createPaidService({
-				ownerUserId: auth.userId,
-				agentId: args.agent_id,
-				name: args.name,
-				description: args.description,
-				priceUsdc: args.price_usdc,
-				targetUrl,
-				method: args.method || 'POST',
-				inputSchema: args.input_schema || null,
-				network,
-				payoutAddress,
-			});
+			// A MonetizeError carries a designed, caller-safe message and code (e.g.
+			// slug_alloc_failed after four collisions), so it answers in the same
+			// { ok:false, reason } shape as every other refusal above rather than
+			// reaching the dispatcher as a bare "Error: ...". Anything else (a
+			// driver fault) is rethrown so the shared sanitizer strips its
+			// internals before the agent ever sees it.
+			let row;
+			try {
+				row = await createPaidService({
+					ownerUserId: auth.userId,
+					agentId: args.agent_id,
+					name: args.name,
+					description: args.description,
+					priceUsdc: args.price_usdc,
+					targetUrl,
+					method: args.method || 'POST',
+					inputSchema: args.input_schema || null,
+					network,
+					payoutAddress,
+				});
+			} catch (err) {
+				if (!(err instanceof MonetizeError)) throw err;
+				return {
+					content: [{ type: 'text', text: `Could not publish the service: ${err.message}` }],
+					structuredContent: { ok: false, reason: err.code || 'publish_failed', network },
+					isError: true,
+				};
+			}
 
 			const resourceUrl = serviceResourceUrl(row.slug);
 			const priceUsdc = atomicsToUsdc(priceAtomics);
@@ -567,7 +583,7 @@ export const toolDefs = [
 					{
 						type: 'text',
 						text: [
-							`Published "${row.name}" — $${priceUsdc} USDC per call on ${network}.`,
+							`Published "${row.name}" for $${priceUsdc} USDC per call on ${network}.`,
 							`Resource: ${resourceUrl}`,
 							`Payouts settle to ${payoutAddress}.`,
 							'Other agents can now find it via find_services and pay it with pay_and_call.',

@@ -98,6 +98,7 @@ const USER = { userId: 'u-1111-2222', rateKey: 'user:u-1111-2222', scope: 'agent
 const LEADER_ID = '11111111-2222-4333-8444-555555555555';
 const LEADER_WALLET = 'So11111111111111111111111111111111111111112';
 const COPIER_WALLET = '3XmnvxYtNvbYYDkVfsMbrJyVJUxCFyAMBjsqFYPRZUFn';
+const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
 /** Parse the JSON payload an MCP ok-result carries. */
 function payloadOf(result) {
@@ -121,7 +122,7 @@ function boardRow(over = {}) {
 		open_positions: 2,
 		wins: 21,
 		losses: 9,
-		win_rate: 70,
+		win_rate: RATIO(70),
 		realized_pnl_sol: 12.5,
 		realized_pnl_usd: 2500,
 		roi_pct: 41.2,
@@ -132,6 +133,12 @@ function boardRow(over = {}) {
 		...over,
 	};
 }
+
+// computeTraderMetrics publishes win_rate as `wins / closedCount`, a 0-to-1
+// ratio, and both handlers scale it into win_rate_pct on the way out. Fixtures
+// that state it as a percent make a flawless leader assert as 7000% and hide
+// whether the scaling is applied at all, so ratios go in and percents come out.
+const RATIO = (pct) => pct / 100;
 
 beforeEach(() => {
 	queued = [];
@@ -175,7 +182,7 @@ describe('trader_leaderboard', () => {
 			sol_usd: 200,
 			leaderboard: [
 				boardRow(),
-				boardRow({ rank: 2, agent_id: 'aaaa', agent_name: 'Rookie', score: 41, verified: false, win_rate: 30, closed: 3 }),
+				boardRow({ rank: 2, agent_id: 'aaaa', agent_name: 'Rookie', score: 41, verified: false, win_rate: RATIO(30), closed: 3 }),
 			],
 		});
 
@@ -234,16 +241,23 @@ describe('trader_profile', () => {
 		sol_usd: 200,
 		metrics: {
 			score: 82, verified: true, closed_count: 30, open_count: 1, wins: 21, losses: 9,
-			win_rate: 70, realized_pnl_sol: 12.5, realized_pnl_usd: 2500, roi_pct: 41.2,
+			win_rate: RATIO(70), realized_pnl_sol: 12.5, realized_pnl_usd: 2500, roi_pct: 41.2,
 			profit_factor: 2.1, avg_pnl_pct: 8, best_pnl_pct: 120, max_drawdown_pct: 18,
 			avg_hold_seconds: 420, unique_coins: 14,
 		},
+		// Exactly the keys shapeClosed() emits. An earlier fixture invented
+		// realized_pnl_* / *_solscan / hold_seconds, which the handler never reads,
+		// so it asserted nothing about the P&L and proof links the tool advertises
+		// as its verifiable track record. The third row is the flat outcome with no
+		// timestamps: the only path where hold_seconds must come back null rather
+		// than NaN.
 		closed: [
-			{ symbol: 'THREE', mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump', realized_pnl_pct: 42, realized_pnl_sol: 1.2, hold_seconds: 300, exit_reason: 'take_profit', closed_at: '2026-08-10T00:00:00.000Z', sell_solscan: 'https://solscan.io/tx/sell1', buy_solscan: 'https://solscan.io/tx/buy1' },
-			{ symbol: 'THREE', mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump', realized_pnl_pct: -12, realized_pnl_sol: -0.3, hold_seconds: 120, exit_reason: 'stop_loss', closed_at: '2026-08-09T00:00:00.000Z', sell_solscan: null, buy_solscan: 'https://solscan.io/tx/buy2' },
+			{ symbol: 'THREE', mint: THREE_MINT, pnl_pct: 42, pnl_sol: 1.2, exit_reason: 'take_profit', opened_at: '2026-08-09T23:55:00.000Z', closed_at: '2026-08-10T00:00:00.000Z', buy_url: 'https://solscan.io/tx/buy1', sell_url: 'https://solscan.io/tx/sell1', moonbag_held: true, self_dealing: false },
+			{ symbol: 'THREE', mint: THREE_MINT, pnl_pct: -12, pnl_sol: -0.3, exit_reason: 'stop_loss', opened_at: '2026-08-08T23:58:00.000Z', closed_at: '2026-08-09T00:00:00.000Z', buy_url: 'https://solscan.io/tx/buy2', sell_url: null, moonbag_held: false, self_dealing: true },
+			{ symbol: 'THREE', mint: THREE_MINT, pnl_pct: 2, pnl_sol: 0.01, exit_reason: 'manual', opened_at: null, closed_at: null, buy_url: null, sell_url: null, moonbag_held: false, self_dealing: false },
 		],
 		open: [
-			{ id: 'p-1', symbol: 'THREE', mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump', entry_sol: 0.5, current_sol: 0.8, unrealized_pct: 60, opened_at: '2026-08-11T00:00:00.000Z', buy_url: 'https://solscan.io/tx/buy3' },
+			{ id: 'p-1', symbol: 'THREE', mint: THREE_MINT, entry_sol: 0.5, current_sol: 0.8, unrealized_pct: 60, opened_at: '2026-08-11T00:00:00.000Z', buy_url: 'https://solscan.io/tx/buy3' },
 		],
 		oracle: null,
 	};
@@ -255,13 +269,24 @@ describe('trader_profile', () => {
 		expect(out.score).toBe(82);
 		expect(out.recommendation).toBe('copy');
 		expect(out.metrics.win_rate_pct).toBe(70);
-		expect(out.recent_trades).toHaveLength(2);
-		expect(out.recent_trades[0]).toMatchObject({ outcome: 'win', proof_url: 'https://solscan.io/tx/sell1' });
-		expect(out.recent_trades[1]).toMatchObject({ outcome: 'loss', proof_url: 'https://solscan.io/tx/buy2' });
+		expect(out.recent_trades).toHaveLength(3);
+		// pnl_sol / pnl_pct and the Solscan proof are the whole point of this tool:
+		// an agent vets a leader on them before committing money to a copy.
+		expect(out.recent_trades[0]).toMatchObject({
+			outcome: 'win', pnl_sol: 1.2, pnl_pct: 42, hold_seconds: 300,
+			proof_url: 'https://solscan.io/tx/sell1', moonbag_held: true, self_dealing: false,
+		});
+		// Falls back to the buy proof when the sell carries no signature, and keeps
+		// the self-dealing flag so a self-launched coin cannot read as pure skill.
+		expect(out.recent_trades[1]).toMatchObject({
+			outcome: 'loss', pnl_sol: -0.3, pnl_pct: -12, hold_seconds: 120,
+			proof_url: 'https://solscan.io/tx/buy2', moonbag_held: false, self_dealing: true,
+		});
+		expect(out.recent_trades[2]).toMatchObject({ outcome: 'flat', hold_seconds: null, proof_url: null });
 		expect(out.open_positions).toEqual([
 			{
 				symbol: 'THREE',
-				mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+				mint: THREE_MINT,
 				entry_sol: 0.5,
 				current_sol: 0.8,
 				unrealized_pct: 60,
