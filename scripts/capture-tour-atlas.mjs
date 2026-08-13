@@ -329,6 +329,43 @@ async function settleImages() {
 	}
 }
 
+// ── Navigation ───────────────────────────────────────────────────────────────
+// Reaching a page and finishing its JavaScript are two different questions, and
+// conflating them is how a healthy page gets reported dead. `waitUntil:
+// 'domcontentloaded'` makes the navigation itself hostage to script execution:
+// a heavy WebGL stop like /walk or /temporary parses its DOM in under two
+// seconds but does not fire DOMContentLoaded for another ten-plus while its
+// module graph boots, and on a loaded runner that pushes past the timeout. The
+// navigation then throws, the status stays 0, and summarize() counts a page
+// that answered HTTP 200 in 200ms as unreachable, telling whoever reads the
+// report to "fix the page or drop the stop" about a page with nothing wrong.
+//
+// `commit` resolves as soon as the server's response arrives, so the recorded
+// status is the one the server actually sent. A 404 still reads 404, a refused
+// connection or a bad host still throws, and slow scripts read as slow scripts
+// further down. The page's own milestones are then awaited separately, where
+// missing one is a note rather than a verdict about reachability.
+export const NAV_ATTEMPTS = 2;
+
+export async function navigate(page, url, notes, { timeout = NAV_TIMEOUT_MS, attempts = NAV_ATTEMPTS } = {}) {
+	let lastError = null;
+	for (let attempt = 1; attempt <= attempts; attempt++) {
+		try {
+			const response = await page.goto(url, { waitUntil: 'commit', timeout });
+			// A retry that worked is worth recording but must not displace the
+			// anchor diagnostics that follow it, so it lands at the end of the run.
+			if (attempt > 1) return { status: response?.status() ?? 0, attempts: attempt, recovered: lastError };
+			return { status: response?.status() ?? 0, attempts: attempt, recovered: null };
+		} catch (err) {
+			lastError = String(err?.message || err).split('\n')[0].slice(0, 200);
+		}
+	}
+	// Failing every attempt is the honest unreachable case: status 0, which the
+	// summary counts and the gate fails on.
+	notes.push(`navigation failed ${attempts} times, last error: ${lastError}`);
+	return { status: 0, attempts, recovered: null };
+}
+
 // ── Capture ──────────────────────────────────────────────────────────────────
 async function encode(buffer, { file, width, quality }) {
 	const out = resolve(MEDIA_DIR, file);
@@ -371,20 +408,29 @@ async function captureStop(context, stop) {
 		capturedAt: new Date().toISOString(),
 	};
 
+	let recoveredNav = null;
 	try {
-		const response = await page.goto(`${BASE}${stop.path}`, {
-			waitUntil: 'domcontentloaded',
-			timeout: NAV_TIMEOUT_MS,
-		});
-		record.status = response?.status() ?? 0;
+		const nav = await navigate(page, `${BASE}${stop.path}`, notes);
+		record.status = nav.status;
+		recoveredNav = nav.recovered;
 
 		// A 4xx/5xx page has nothing worth photographing, and a shot of the error
-		// page in the atlas would read as a real feature. Record and stop.
+		// page in the atlas would read as a real feature. A status of 0 means every
+		// navigation attempt failed at the transport layer, so there is no page at
+		// all. Record and stop.
 		if (record.status >= 400) {
 			notes.push(`page returned HTTP ${record.status}`);
 			return record;
 		}
+		if (!record.status) return record;
 
+		// The DOM has to exist before an anchor can be resolved against it, but a
+		// stop whose scripts are still booting has a fully parsed DOM long before
+		// DOMContentLoaded fires. Wait for the milestone, and when it does not
+		// arrive say so rather than pretending the page was never served.
+		await page.waitForLoadState('domcontentloaded', { timeout: NAV_TIMEOUT_MS }).catch(() => {
+			notes.push('DOMContentLoaded did not fire within the timeout, anchors resolved against a partial DOM');
+		});
 		await page.waitForLoadState('load', { timeout: NAV_TIMEOUT_MS }).catch(() => {
 			notes.push('load event did not fire within the timeout, captured at domcontentloaded');
 		});
@@ -453,6 +499,7 @@ async function captureStop(context, stop) {
 	} catch (err) {
 		notes.push(String(err?.message || err).slice(0, 300));
 	} finally {
+		if (recoveredNav) notes.push(`the first navigation attempt failed and was retried: ${recoveredNav}`);
 		record.consoleErrors = consoleErrors.length;
 		record.consoleSamples = consoleErrors.slice(0, 3);
 		await page.close().catch(() => {});
@@ -609,7 +656,12 @@ async function main() {
 	);
 }
 
-main().catch((err) => {
-	console.error(err);
-	process.exit(1);
-});
+// Only run when invoked directly, so tests can import navigate() above and hold
+// it to the contract the gate depends on, the way build-tour-atlas.mjs already
+// exposes its pure helpers.
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+	main().catch((err) => {
+		console.error(err);
+		process.exit(1);
+	});
+}

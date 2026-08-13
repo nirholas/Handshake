@@ -36,8 +36,8 @@
 			"description": "Locale codes that render right-to-left."
 		},
 		"provider": {
-			"enum": ["gemini", "vertex", "groq", "openrouter", "nvidia", "openai", "anthropic"],
-			"description": "LLM backend. Free lanes: groq, gemini (free tier), openrouter (:free models), nvidia. vertex bills to the platform's GCP credit pool (GOOGLE_CLOUD_PROJECT + GCP creds) with no free-tier quota to exhaust."
+			"enum": ["gemini", "vertex", "groq", "openrouter", "nvidia", "mistral", "openai", "anthropic", "threews"],
+			"description": "LLM backend. Free lanes: groq, gemini (free tier), openrouter (:free models), nvidia, mistral. vertex bills to the platform's GCP credit pool (GOOGLE_CLOUD_PROJECT + GCP creds) with no free-tier quota to exhaust. threews rides the platform's own we-pay LLM proxy with a QA session (npm run audit:web:login) and THREEWS_I18N_AGENT; the zero-local-credential lane."
 		},
 		"modelName": {
 			"type": "string"

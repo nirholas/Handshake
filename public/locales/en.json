@@ -20098,12 +20098,12 @@
 		"x402_operated_by_three_ws": "x402 · operated by three.ws"
 	},
 	"x402_studio": {
-		"meta_description": "The Stripe of x402. Configure prices, payout and agent wallets, products, security, CORS, charity and round-up giving — and publish a drag-and-drop storefront. All settled on-chain in USDC.",
+		"meta_description": "The Stripe of x402. Configure prices, payout and agent wallets, products, security, CORS, charity and round-up giving, and publish a drag-and-drop storefront. All settled on-chain in USDC.",
 		"meta_og_description": "Run a paid x402 business: agent wallets, products, a drag-and-drop storefront, charity + round-up giving. On-chain USDC settlement.",
-		"meta_og_title": "x402 Studio — the Stripe of x402",
+		"meta_og_title": "x402 Studio: the Stripe of x402",
 		"meta_title": "x402 Studio · three.ws",
 		"meta_twitter_description": "Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security.",
-		"meta_twitter_title": "x402 Studio — the Stripe of x402 · three.ws"
+		"meta_twitter_title": "x402 Studio: the Stripe of x402 · three.ws"
 	},
 	"x_pricing": {
 		"100_x_posts_per_month": "100 X posts per month",

@@ -23,6 +23,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { atlasProblems, renderPublicAtlas } from '../scripts/build-tour-atlas.mjs';
+import { navigate, NAV_ATTEMPTS } from '../scripts/capture-tour-atlas.mjs';
 import {
 	TOUR_FALLBACK_SELECTORS,
 	TOUR_CONTENT_ROOT_SELECTOR,
@@ -235,6 +236,67 @@ describe('atlasProblems()', () => {
 
 	it('treats an empty manifest as a single actionable problem', () => {
 		expect(atlasProblems({ stops: [] }, curriculum, allMediaPresent)).toHaveLength(1);
+	});
+});
+
+describe('navigate()', () => {
+	// The sweep is a live-network gate, so its verdict has to separate "the
+	// server did not serve this page" from "this page's JavaScript is slow".
+	// Waiting for DOMContentLoaded during the navigation itself conflated them:
+	// /walk and /temporary answer HTTP 200 in a fifth of a second but boot a
+	// WebGL scene for ten-plus seconds afterwards, and on a loaded runner that
+	// timed the navigation out, left the status at 0, and made the gate report
+	// two healthy pages as unreachable with "fix the page or drop the stop".
+	const fakePage = (attempts) => {
+		const calls = [];
+		let i = 0;
+		return {
+			calls,
+			async goto(url, options) {
+				calls.push({ url, options });
+				const outcome = attempts[Math.min(i++, attempts.length - 1)];
+				if (outcome instanceof Error) throw outcome;
+				return { status: () => outcome };
+			},
+		};
+	};
+
+	it('records the status the server actually sent, without waiting on scripts', async () => {
+		const page = fakePage([200]);
+		const notes = [];
+		const result = await navigate(page, 'https://three.ws/walk', notes);
+		expect(result).toEqual({ status: 200, attempts: 1, recovered: null });
+		expect(notes).toEqual([]);
+		expect(page.calls[0].options.waitUntil).toBe('commit');
+	});
+
+	it('retries a navigation that failed at the transport layer', async () => {
+		const page = fakePage([new Error('page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating'), 200]);
+		const notes = [];
+		const result = await navigate(page, 'https://three.ws/temporary', notes);
+		expect(result.status).toBe(200);
+		expect(result.attempts).toBe(2);
+		expect(result.recovered).toContain('Timeout 45000ms exceeded.');
+		// The retry is reported by the caller after the anchor diagnostics, so it
+		// never displaces the note a reader actually needs.
+		expect(notes).toEqual([]);
+	});
+
+	it('reports status 0 and one note when every attempt fails', async () => {
+		const page = fakePage([new Error('net::ERR_NAME_NOT_RESOLVED'), new Error('net::ERR_NAME_NOT_RESOLVED')]);
+		const notes = [];
+		const result = await navigate(page, 'https://three.ws/gone', notes);
+		expect(result.status).toBe(0);
+		expect(result.attempts).toBe(NAV_ATTEMPTS);
+		expect(notes).toHaveLength(1);
+		expect(notes[0]).toContain('ERR_NAME_NOT_RESOLVED');
+	});
+
+	it('does not retry a page the server answered, however it answered', async () => {
+		const page = fakePage([404, 200]);
+		const result = await navigate(page, 'https://three.ws/missing', []);
+		expect(result.status).toBe(404);
+		expect(page.calls).toHaveLength(1);
 	});
 });
 

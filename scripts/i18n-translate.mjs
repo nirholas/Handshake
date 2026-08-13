@@ -18,6 +18,14 @@
 //                                          platform GCP credits, no free-tier quota to exhaust)
 //   openai    → Chat Completions          (OPENAI_API_KEY [+ OPENAI_BASE_URL])
 //   anthropic → Messages                  (ANTHROPIC_API_KEY)
+//   threews   → three.ws we-pay LLM proxy (/api/llm/anthropic). The zero-local-credential
+//               rung: it rides the platform's own free-tier provider keys, so it works
+//               from any workspace that can log in as a platform user. Needs
+//               THREEWS_I18N_AGENT (an agent id OWNED by that user; the proxy meters
+//               per-agent, so never point this at someone else's agent) plus a session
+//               saved by `npm run audit:web:login` (or THREEWS_SESSION_FILE). Respects
+//               the agent's default embed-policy limits (10 req/min), so bulk runs are
+//               slow by design; prefer vertex when GCP credentials exist.
 //
 // Usage:
 //   node scripts/i18n-translate.mjs                 # translate missing keys, all locales
@@ -28,7 +36,7 @@
 //   node scripts/i18n-translate.mjs --dry-run       # report what would translate
 //   node scripts/i18n-translate.mjs --concurrency=8 # widen the chunk pool for a bulk run
 
-import { writeFileSync, existsSync } from 'node:fs';
+import { writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { config as dotenv } from 'dotenv';
@@ -159,6 +167,9 @@ const PROVIDER_DEFAULT_MODEL = {
 	mistral: 'mistral-small-latest',
 	openai: 'gpt-4o-mini',
 	anthropic: 'claude-haiku-4-5-20251001',
+	// The proxy's free Groq lane; resolveRequestedModel clamps paid models to the
+	// agent's configured one, so only free-lane ids make sense here.
+	threews: 'llama-3.3-70b-versatile',
 };
 
 // OpenAI-compatible lanes. jsonMode is set only where the endpoint reliably
@@ -317,6 +328,77 @@ async function callAnthropic(prompt) {
 	return data?.content?.map((b) => b.text || '').join('') || '';
 }
 
+// three.ws we-pay LLM proxy (api/llm/anthropic.js) as a translation backend.
+// This is the rung for a workspace with NO provider credentials at all: the
+// proxy spends the platform's own free-tier keys (Groq et al) server-side and
+// speaks the Anthropic Messages shape in both directions, so the call below is
+// callAnthropic with a different host and cookie auth instead of an API key.
+//
+// Auth is a platform session: the proxy admits Origin-less machine callers only
+// when they authenticate, and the sanctioned way to mint a session in an agent
+// workspace is `npm run audit:web:login` (QA account from .env), which saves a
+// Playwright storageState file this reads the session cookie from. The agent id
+// must be one the SAME user owns: the proxy meters calls and tokens against the
+// agent's embed policy, and spending another owner's budget is not acceptable.
+// `GET /api/agents/me` auto-creates a default agent for the QA user, so
+// `THREEWS_I18N_AGENT=$(that id)` is always mintable.
+function threewsSessionCookie() {
+	const file =
+		process.env.THREEWS_SESSION_FILE || resolve(ROOT, '.auth/audit-state.json');
+	if (!existsSync(file))
+		throw configError(
+			`threews session file not found (${file}): run \`npm run audit:web:login\` first, ` +
+				'or point THREEWS_SESSION_FILE at a Playwright storageState JSON with a three.ws session.',
+		);
+	let cookie;
+	try {
+		const state = JSON.parse(readFileSync(file, 'utf8'));
+		cookie = (state.cookies || []).find((c) => c.name === '__Host-sid');
+	} catch {
+		throw configError(`threews session file is not readable storageState JSON: ${file}`);
+	}
+	if (!cookie) throw configError('threews session file has no __Host-sid cookie; session expired? Re-run `npm run audit:web:login`.');
+	return `${cookie.name}=${cookie.value}`;
+}
+
+async function callThreews(prompt) {
+	const agentId = process.env.THREEWS_I18N_AGENT;
+	if (!agentId)
+		throw configError(
+			'THREEWS_I18N_AGENT not set: an agent id owned by the session user ' +
+				'(GET /api/agents/me returns or creates one).',
+		);
+	const base = (process.env.THREEWS_BASE_URL || 'https://three.ws').replace(/\/$/, '');
+	const res = await fetch(`${base}/api/llm/anthropic?agent=${encodeURIComponent(agentId)}`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', cookie: threewsSessionCookie() },
+		body: JSON.stringify({
+			model: modelName(),
+			max_tokens: 8192,
+			stream: false,
+			temperature: cfg.temperature ?? 0.2,
+			messages: [{ role: 'user', content: prompt }],
+		}),
+	});
+	if (res.status === 401 || res.status === 403) {
+		throw configError(
+			`threews ${res.status}: session rejected: re-run \`npm run audit:web:login\` ` +
+				'and confirm THREEWS_I18N_AGENT belongs to that user.',
+		);
+	}
+	if (!res.ok)
+		throw httpError(
+			'threews',
+			res.status,
+			await res.text(),
+			Number(res.headers.get('retry-after')) || 0,
+		);
+	const data = await res.json();
+	const text = data?.content?.map((b) => b.text || '').join('') || '';
+	if (!text) throw new Error('threews proxy returned empty content');
+	return text;
+}
+
 // Vertex AI Gemini — service-account/metadata-server auth, billed to the
 // platform's GCP credit pool instead of a free-tier key. No quota to exhaust
 // (unlike groq/gemini-aistudio/nvidia's shared free tiers, which can 429
@@ -447,9 +529,10 @@ function backend() {
 	if (cfg.provider === 'gemini') return callGemini;
 	if (cfg.provider === 'anthropic') return callAnthropic;
 	if (cfg.provider === 'vertex') return callVertex;
+	if (cfg.provider === 'threews') return callThreews;
 	if (OPENAI_COMPAT[cfg.provider]) return callOpenAICompat;
 	throw new Error(
-		`unknown provider: ${cfg.provider} (use gemini, groq, openrouter, nvidia, mistral, vertex, openai, or anthropic)`,
+		`unknown provider: ${cfg.provider} (use gemini, groq, openrouter, nvidia, mistral, vertex, openai, anthropic, or threews)`,
 	);
 }
 
