@@ -84,6 +84,22 @@ export function livepeerFederationEnabled() {
 	return truthy(process.env.LIVEPEER_FEDERATION_ENABLED);
 }
 
+// Node's fetch reports every transport failure as the opaque message "fetch
+// failed" and hides the real reason on err.cause. That distinction is the whole
+// diagnosis for a federated lane: a certificate that belongs to somebody else
+// (the public gateway's current state) is a different problem, with a different
+// fix, than a refused connection or a DNS miss. Flatten the cause chain into
+// the message so a bench report and a production log line both name the actual
+// fault instead of "fetch failed".
+function describeTransportFailure(err) {
+	const parts = [];
+	for (let cur = err, depth = 0; cur && depth < 5; cur = cur.cause, depth++) {
+		const piece = [cur.code, cur.message].filter(Boolean).join(' ');
+		if (piece && !parts.includes(piece)) parts.push(piece);
+	}
+	return parts.join(': ') || 'unknown transport failure';
+}
+
 // Resolve a possibly gateway-relative image URL against the gateway origin.
 function resolveImageUrl(raw, base) {
 	if (typeof raw !== 'string' || !raw) return null;
@@ -130,7 +146,7 @@ export async function livepeerTextToImage(prompt, { aspectRatio = '1:1', seed, m
 			signal: AbortSignal.timeout(T2I_TIMEOUT_MS),
 		});
 	} catch (err) {
-		throw Object.assign(new Error(`livepeer gateway unreachable: ${err?.message}`), {
+		throw Object.assign(new Error(`livepeer gateway unreachable: ${describeTransportFailure(err)}`), {
 			code: 'provider_unreachable',
 		});
 	}
@@ -164,7 +180,7 @@ export async function livepeerTextToImage(prompt, { aspectRatio = '1:1', seed, m
 			signal: AbortSignal.timeout(T2I_TIMEOUT_MS),
 		});
 	} catch (err) {
-		throw Object.assign(new Error(`livepeer image fetch failed: ${err?.message}`), {
+		throw Object.assign(new Error(`livepeer image fetch failed: ${describeTransportFailure(err)}`), {
 			code: 'provider_unreachable',
 		});
 	}

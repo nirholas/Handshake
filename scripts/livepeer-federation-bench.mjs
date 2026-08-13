@@ -90,11 +90,15 @@ async function timed(fn) {
 	} catch (err) {
 		const msg = String(err?.message || err);
 		let failureClass = 'error';
-		if (err?.code === 'provider_unreachable') failureClass = /certificate|tls|altname/i.test(msg) ? 'tls' : 'unreachable';
+		// The TLS test reads the flattened cause chain the adapter now builds
+		// (describeTransportFailure): Node's own fetch message is the useless
+		// "fetch failed", so matching on it alone could never surface a
+		// certificate fault, which is exactly the failure the public gateway has.
+		if (err?.code === 'provider_unreachable') failureClass = /certificate|tls|altname|ERR_TLS/i.test(msg) ? 'tls' : 'unreachable';
 		else if (err?.code === 'rate_limited') failureClass = 'rate_limited';
 		else if (err?.code === 'verification_failed') failureClass = 'verification_failed';
 		else if (err?.providerStatus) failureClass = `http_${err.providerStatus}`;
-		else if (/unconfigured/.test(msg)) failureClass = 'unconfigured';
+		else if (/unconfigured|not configured/i.test(msg)) failureClass = 'unconfigured';
 		return { ok: false, latencyMs: Math.round(performance.now() - t0), error: msg.slice(0, 240), failureClass };
 	}
 }

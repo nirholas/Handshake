@@ -290,9 +290,29 @@ export async function getRegenProviderCandidates() {
 export async function getRegenProviderForJob(jobProvider, req) {
 	if (!jobProvider) return { name: 'none', instance: null };
 
-	// Platform providers: use the existing env-credential path.
+	// Platform providers: load the adapter for the provider THIS job was
+	// submitted to, not whichever one currently leads the precedence order.
+	// getRegenProvider() returns the primary, so the moment a second platform
+	// credential is added (REPLICATE_API_TOKEN sits above gcp in
+	// PLATFORM_PROVIDER_ORDER) every in-flight gcp job would be polled with the
+	// Replicate adapter, handed a base64 gcp envelope as a prediction id. The
+	// poll then reports a failure that has nothing to do with the real job, and
+	// the capture the user is waiting on dies on a provider that never ran it.
+	// The reconstruct/auto-rig sweeps already refuse to poll across a provider
+	// mismatch; this makes the browser poll agree with them.
 	if (['replicate', 'gcp', 'huggingface', 'hf'].includes(jobProvider)) {
-		return getRegenProvider();
+		const name = canonicalProviderName(jobProvider);
+		// Credentials rotated away since submission: report the job's own
+		// provider with no instance so the caller leaves the row untouched and
+		// the sweep ages it out with an honest reason, rather than polling a
+		// different backend for an id it has never seen.
+		if (!platformProviderConfigured(name)) return { name, instance: null };
+		try {
+			return await loadPlatformProvider(name);
+		} catch (err) {
+			console.warn('[regen] job provider load failed:', name, '-', err?.message);
+			return { name, instance: null };
+		}
 	}
 
 	// BYOK providers: re-resolve the user's stored key at poll time. The key
